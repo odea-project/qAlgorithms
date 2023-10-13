@@ -230,7 +230,8 @@ namespace q {
       const Matrix& beta,
       const std::vector<int>& scaleVec,
       const std::vector<int>& xIndices, 
-      const std::vector<double>& apex_position, 
+      const std::vector<double>& apex_position,
+      std::vector<double>& apex_position_uncertainty,
       const std::vector<double>& valley_position,
       const Matrix& Y,
       const std::vector<double> mse,
@@ -243,6 +244,7 @@ namespace q {
       bool*& fltrVec,
       const Matrix& x_data,
       std::vector<double>& apex_position,
+      std::vector<double>& apex_positions_uncertainty,
       const std::vector<int>& idx1
     );
     
@@ -253,13 +255,13 @@ namespace q {
       const int N,
       const int key,
       const std::vector<double>& apex_position,
+      const std::vector<double>& apex_position_uncertainty,
       const std::vector<double>& peakHeight,
+      const std::vector<double>& peakHeight_uncertainty,
+      const std::vector<double>& peakArea,
+      const std::vector<double>& peakArea_uncertainty,
       const std::vector<int>& idx1,
       int& peakID);
-
-    void calcDQS_peak(
-
-      );
 
     // debugging
     const Peakproperties& operator[](int ID) const;

@@ -58,5 +58,25 @@ int main()
   // print some Peak (the 500th Peak will be printed)
   model[500].print();
 
+  /* Expected output for Orbitrap Test-Data:
+  2484 --> 1212 --> 913 --> 165 --> 46
+  128624 --> 55580 --> 33895 --> 5944 --> 1863
+  65528 --> 28604 --> 18835 --> 3436 --> 1032
+  78424 --> 33969 --> 22003 --> 3955 --> 1204
+  Elapsed time: 0.681646 s
+  Peak Properties:
+  -----------------
+  Sample ID: 1
+  Position: 285.204
+  Height: 3577.47
+  Width: 0
+  Area: 17378.6
+  Position Uncertainty (sigma): 0.000136123
+  Height Uncertainty (sigma): 224.471
+  Width Uncertainty (sigma): 0
+  Area Uncertainty (sigma): 5323.27
+  DQS: 0.664876
+  */
+
   return 0;
 }
