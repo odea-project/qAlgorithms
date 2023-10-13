@@ -6,10 +6,30 @@
 #include <cmath>
 #include <chrono>
 
+
 int main()
 {
+  // Requesting string input with a default value for filename
+  std::cout << "Enter a file name (default is 'test/test_orbitrap.csv'): ";
+  std::string userInputStr;
+  std::getline(std::cin, userInputStr); // Using getline to read a full line (including spaces)
+
+  if (userInputStr.empty()) {
+      userInputStr = "test/test_orbitrap.csv";  // Assigning default value
+  }
+
+  // Requesting integer input for defining the scale limit for the peak model
+  std::cout << "Enter a the Maximum Scale as Integer (default is 5): ";
+  std::string lineInput;
+  std::getline(std::cin, lineInput);
+  std::istringstream iss(lineInput);
+  int userInputInt;
+  if (!(iss >> userInputInt)) {
+        userInputInt = 5;  // Assigning default value if conversion fails
+    }
+
   // LOAD SOME TEST DATA
-  std::ifstream file("test/test_orbitrap.csv");
+  std::ifstream file(userInputStr);
   // std::ifstream file("test/test_tof.csv");
   std::string line;
   std::vector<std::vector<double>> matrix;
@@ -36,7 +56,7 @@ int main()
   q::tValues tVal;
 
   /* Initialize Peakmodel with scales from 2 to 5. A scale is defined as a window of datapoints from -n to n, i.e., a scale of 2 means [-2, -1, 0, 1, 2]. */
-  q::Peakmodel model(5);
+  q::Peakmodel model(userInputInt);
 
   // add tValues to the Peak model
   model.loadTValues(tVal);

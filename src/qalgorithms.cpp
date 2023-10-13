@@ -54,7 +54,7 @@ namespace q {
 
   // Constructor to initialize Peak model based on an upper limit for df
   Peakmodel::Peakmodel(int a_max) {
-    for (size_t a = 2; a <= a_max; a++)
+    for (int a = 2; a <= a_max; a++)
     {
       calculateDesignMatrix(a);
       calculatePseudoInverse(a);
@@ -63,7 +63,7 @@ namespace q {
 
   // Constructor to initialize Peak model based on a lower and an upper limit for df
   Peakmodel::Peakmodel(int a_min, int a_max) {
-    for (size_t a = a_min; a <= a_max; a++)
+    for (int a = a_min; a <= a_max; a++)
     {
       calculateDesignMatrix(a);
       calculatePseudoInverse(a);
@@ -408,7 +408,7 @@ namespace q {
     const Matrix& beta,
     std::vector<int>& idx) {
       // This function extracts peak candidates from beta matrix
-      for (size_t col = 0; col < N; col++) {
+      for (int col = 0; col < N; col++) {
         if (fltrVec[col]) {
           coefficientCriterionCases(scaleVec[col], beta(1,col),beta(2,col),beta(3,col), xIndices[col],apex_positions[col],valley_positions[col],fltrVec[col],idx, col);
         }
@@ -495,24 +495,6 @@ namespace q {
         fltrVal = false;
       }
   }
-
-  void Peakmodel::quadraticTermCriterion_pre(
-      const int N,
-      bool*& fltrVec,
-      const std::vector<int>& scaleVec,
-      const Matrix& beta
-      ) {
-        /* This functions checks if b1/2/b2 is in regression window*/
-        for (size_t i = 0; i < N; i++) {
-          if (fltrVec[i]) {
-            if (std::abs(beta(1,i) *.5 / beta(2,i)) > scaleVec[i]) {
-              if (std::abs(beta(1,i) *.5 / beta(3,i)) > scaleVec[i]) {
-                fltrVec[i] = false;
-              }
-            }
-          }
-        }
-      }
 
   void Peakmodel::quadraticTermCriterion(
     const int N,

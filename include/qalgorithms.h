@@ -115,13 +115,6 @@ namespace q {
       std::vector<int>& idx,
       const size_t IDX);
 
-    void quadraticTermCriterion_pre(
-      const int N,
-      bool*& fltrVec,
-      const std::vector<int>& scaleVec,
-      const Matrix& beta
-      );
-
     void quadraticTermCriterion(
       const int N,
       bool*& fltrVec, 
