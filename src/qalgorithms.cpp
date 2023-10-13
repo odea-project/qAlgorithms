@@ -320,6 +320,7 @@ namespace q {
 
       std::vector<int> xIndices(N);
       std::vector<double> apex_positions(N);
+      std::vector<double> apex_positions_uncertainty(N);
       std::vector<double> valley_positions(N);
       std::vector<double> peakHeight(N);
       std::vector<double> peakHeight_uncertainty(N);
@@ -349,12 +350,12 @@ namespace q {
       std::cout << idx1.size() << " --> ";
       
       idx2.clear();
-      mergeRegressions(N, fltrVec, beta, scaleVec, xIndices, apex_positions, valley_positions, data.col(1), mse, idx1, idx2);
+      mergeRegressions(N, fltrVec, beta, scaleVec, xIndices, apex_positions, apex_positions_uncertainty, valley_positions, data.col(1), mse, idx1, idx2);
       std::cout << idx2.size() << std::endl;
 
-      rescalePosition(N,fltrVec,data.col(0),apex_positions,idx2);
+      rescalePosition(N,fltrVec,data.col(0),apex_positions,apex_positions_uncertainty,idx2);
 
-      exportResults(beta, fltrVec, xIndices, N, key,apex_positions,peakHeight,idx2,peakID);
+      exportResults(beta, fltrVec, xIndices, N, key,apex_positions,apex_positions_uncertainty,peakHeight,peakHeight_uncertainty,peakArea,peakArea_uncertainty,idx2,peakID);
       delete[] fltrVec;
     }
   }
@@ -561,8 +562,6 @@ namespace q {
     const std::vector<int>& idx1,
     std::vector<int>& idx2) {
       /* This function calculates the Peak height and Peak area including their uncertainties and checks for relevances using the 3 sigma criterion, i.e., X is relevant if X > 3s(X)*/
-      // for (size_t col = 0; col < N; col++) {
-      // if (fltrVec[col]) {
       for (int col : idx1) {
         // Peak Height Criterion
         std::pair<double,double> h = calcPeakHeight(beta(0,col), beta(1,col), beta(2,col), beta(3,col));
@@ -572,16 +571,13 @@ namespace q {
         if (3*h_uncertainty > h.second) {
           fltrVec[col] = false;
         } else {
-          // peakHeight[col] = h.second;
-        // }
 
         // Peak Area Criterion
         Matrix J_A = calcJacobianMatrix_Area(beta(0,col), beta(1,col), beta(2,col), beta(3,col));
         double A_uncertainty = std::sqrt((J_A * C * J_A.T()).sumElements());
         double A_notCovered = calcPeakAreaNotCovered(beta(0,col), beta(1,col), beta(2,col), beta(3,col),-scaleVec[col],scaleVec[col]) ;
-        // std::cout << A_notCovered <<  std::endl;
         A_uncertainty += A_notCovered;
-        if (3*A_uncertainty > J_A(0,0)) {
+        if (3*A_uncertainty > J_A(0,0) || J_A(0,0) < 0) {
           fltrVec[col] = false;
         } else {
           peakHeight[col] = h.second;
@@ -797,7 +793,8 @@ namespace q {
       const Matrix& beta,
       const std::vector<int>& scaleVec,
       const std::vector<int>& xIndices, 
-      const std::vector<double>& apex_position, 
+      const std::vector<double>& apex_position,
+      std::vector<double>& apex_position_uncertainty,
       const std::vector<double>& valley_position,
       const Matrix& Y,
       const std::vector<double> mse,
@@ -828,6 +825,7 @@ namespace q {
 
             Matrix J = calcJacobianMatrix_Position(beta(1,col),beta(2,col),beta(3,col));
             var_apex[col] = (J * inverseMatrices[scaleVec[col]] * J.T()).sumElements() * mse[col];
+            apex_position_uncertainty[col] = std::sqrt(var_apex[col]);
             Matrix yhat = designMatrices[scaleVec[col]] * beta.col(col);
             Matrix y = Y.subMatrix(xIndices[col]-scaleVec[col],xIndices[col]+scaleVec[col]+1,0,1);
             
@@ -853,7 +851,8 @@ namespace q {
                 // Check if variance was already calculated
                 if (var_apex[col] == 0) {
                 Matrix J = calcJacobianMatrix_Position(beta(1,col),beta(2,col),beta(3,col));
-                var_apex[col] = (J * inverseMatrices[scaleVec[col]] * J.T()).sumElements() * mse[col];}
+                var_apex[col] = (J * inverseMatrices[scaleVec[col]] * J.T()).sumElements() * mse[col];
+                apex_position_uncertainty[col] = std::sqrt(var_apex[col]);}
 
                 double se_pos = std::sqrt(var_apex[idx] + var_apex[col]);
                 double t_meas = std::abs(apex_position[col] - apex_position[idx]) / se_pos;
@@ -910,6 +909,7 @@ namespace q {
       bool*& fltrVec,
       const Matrix& x_data,
       std::vector<double>& apex_position,
+      std::vector<double>& apex_positions_uncertainty,
       const std::vector<int>& idx1
     ) {
       /*This function rescales the apex positions based in the original x_data. To do so, the */
@@ -918,19 +918,24 @@ namespace q {
         int apex_right = apex_left + 1;
         double dx = x_data(apex_right,0) - x_data(apex_left,0);
         apex_position[col] = x_data(apex_left,0) + (apex_position[col] - apex_left) * dx;
+        apex_positions_uncertainty[col] *= dx;
       }
     }
 
   void Peakmodel::exportResults(
     const Matrix& beta, 
-    bool*& fltrVec, 
-    const std::vector<int>& xIndices, 
-    const int N, 
-    const int key,
-    const std::vector<double>& apex_Position,
-    const std::vector<double>& peakHeight,
-    const std::vector<int>& idx1,
-    int& peakID) {
+      bool*& fltrVec, 
+      const std::vector<int>& xIndices,
+      const int N,
+      const int key,
+      const std::vector<double>& apex_position,
+      const std::vector<double>& apex_position_uncertainty,
+      const std::vector<double>& peakHeight,
+      const std::vector<double>& peakHeight_uncertainty,
+      const std::vector<double>& peakArea,
+      const std::vector<double>& peakArea_uncertainty,
+      const std::vector<int>& idx1,
+      int& peakID) {
     
     /* THIS WAS FOR CSV EXPORT */
     // // Open CSV-file
@@ -955,19 +960,19 @@ namespace q {
       Peakproperties tmp_peak(
         beta.col(col), // Regression Coefficients
         key, // sample ID
-        apex_Position[col], // Peak Position
+        apex_position[col], // Peak Position
         peakHeight[col], // Peak Height
-        0.0, // Peak Width
-        0.0, // Peak Area
-        0.0, // sigma Position
-        0.0, // sigma Height
-        0.0, // sigma Width
-        0.0, // sigma Area
-        0.0); // DQS
+        0.0, // Peak Width <--- This is not yet implemented
+        peakArea[col], // Peak Area
+        apex_position_uncertainty[col], // sigma Position 
+        peakHeight_uncertainty[col], // sigma Height
+        0.0, // sigma Width <--- This is not yet implemented
+        peakArea_uncertainty[col], // sigma Area
+        std::erfc(peakArea_uncertainty[col] / peakArea[col])); // DQS
       
 
       // add tmporary Peak to the List
-      peakProperties[peakID] = tmp_peak;
+      peakProperties.emplace(peakID, tmp_peak);
       peakID++;
     }
   }
