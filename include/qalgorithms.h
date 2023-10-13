@@ -1,0 +1,278 @@
+// qalgorithms.h
+#ifndef QALGORITHMS_H // Include guarde to prevent double inclusion
+#define QALGORITHMS_H
+
+#include <stdexcept>
+#include <cmath> 
+#include <map>
+#include <algorithm>
+#include <fstream>
+#include <sstream>
+#include <iostream>
+#include <vector>
+#include <unordered_set>
+#include "qalgorithms_matrix.h"
+#include "qalgorithms_utils.h"
+
+namespace q {
+  class Peakproperties
+  {
+  public:
+  // constructors
+    Peakproperties();
+
+    Peakproperties(Matrix _coefficients,
+      int _smplID,
+      double _position,
+      double _height,
+      double _width,
+      double _area,
+      double _sigmaPosition,
+      double _sigmaHeight,
+      double _sigmaWidth,
+      double _sigmaArea,
+      double _dqs);
+  
+  // debuging
+    void print() const;
+
+  private:
+    Matrix coefficients;
+    int smplID;
+    double position;
+    double height;
+    double width;
+    double area;
+    double sigmaPosition;
+    double sigmaHeight;
+    double sigmaWidth;
+    double sigmaArea;
+    double dqs;
+  };
+
+  class Peakmodel {
+  public:
+  // Constructors
+    Peakmodel();
+    // Constructor to initialize Peak model based on an upper limit for a
+    Peakmodel(int a_max);
+    // Constructor to initialize Peak model based on a lower and an upper limit for a
+    Peakmodel(int a_min, int a_max);
+    // Constructor to initialize Peak model based on a vector for a
+    Peakmodel(std::vector<int> A);
+
+  // Functions
+    // add t_values
+    void loadTValues(const tValues& tData);
+    // create model
+    void calculateDesignMatrix(int a);
+    void calculatePseudoInverse(int a);
+    // add data
+    void addSingleMeasurement(Matrix& xyData, bool zero_interpolation = true);
+    void addMultipleMeasurements(Matrix& xyData, bool zero_interpolation = true);
+    // correct data
+    void zeroInterpolation(Matrix& xyData);
+    void zeroInterpolation_oneDirection(Matrix& xyData);
+    // get 
+    std::vector<int> getScales() const;
+    std::vector<int> getScaleVec(const std::vector<int>& scales, const int n, const int N) const;
+    Matrix getDesignMatrix(int a) const;
+    Matrix getPseudoInverse(int a) const; 
+    Matrix getData(int idx) const;
+
+    // Perform the Running Peak Regression
+    void runRegression();
+
+    void convolveP(
+      Matrix& beta, 
+      std::vector<int>& xIndices, 
+      const Matrix& P, 
+      const Matrix& ylog, 
+      int& currentIndex);
+
+    double calcMse(const Matrix& yhat, const Matrix& y) const;
+
+    // Filter functions
+    void coefficientCriterion(
+      const int N,
+      bool*& fltrVec, 
+      const std::vector<int>& scaleVec, 
+      std::vector<double>& apex_positions, 
+      std::vector<double>& valley_positions, 
+      const std::vector<int>& xIndices, 
+      const Matrix& beta,
+      std::vector<int>& idx);
+
+    void coefficientCriterionCases(
+      const int scale, 
+      const double b1, 
+      const double b2, 
+      const double b3, 
+      const int xIndex, 
+      double& apex_position, 
+      double& valley_position, 
+      bool& fltrVal,
+      std::vector<int>& idx,
+      const size_t IDX);
+
+    void quadraticTermCriterion_pre(
+      const int N,
+      bool*& fltrVec,
+      const std::vector<int>& scaleVec,
+      const Matrix& beta
+      );
+
+    void quadraticTermCriterion(
+      const int N,
+      bool*& fltrVec, 
+      const std::vector<int>& scaleVec, 
+      const std::vector<int>& xIndices, 
+      const Matrix& beta, 
+      const Matrix& ylog, 
+      std::vector<double>& mse,
+      const std::vector<int>& idx1,
+      std::vector<int>& idx2); 
+
+    void parameterCriterion(
+      const int N,
+      bool*& fltrVec,
+      std::vector<double>& peakHeight,
+      std::vector<double>& peakHeight_uncertainty,
+      std::vector<double>& peakArea,
+      std::vector<double>& peakArea_uncertainty,
+      const std::vector<int>& scaleVec,
+      const Matrix& beta,
+      const std::vector<double>& mse,
+      const std::vector<int>& idx1,
+      std::vector<int>& idx2);
+
+    // Peak Parameter Calculations
+    void calcApex_position(
+      const int scale, 
+      const double b1, 
+      const double b2, 
+      const int xIndex, 
+      double& apex_position, 
+      bool& fltrVal);
+
+    void calcApexValley_position(
+      const int scale, 
+      const double b1, 
+      const double b2, 
+      const double b3, 
+      const int xIndex, 
+      double& apex_position, 
+      double& valley_position, 
+      bool& fltrVal);
+    
+    std::pair<double,double> calcPeakHeight(
+      const double b0,
+      const double b1,
+      const double b2,
+      const double b3
+      ) const;
+
+    Matrix calcJacobianMatrix_Height(
+      const double x_apex,
+      const double y_apex
+      ) const;
+
+    void calcPeakArea(
+
+      );
+    
+    double calcPeakArea_half(
+
+    ) const;
+
+    double calcPeakArea_halfValley(
+
+     ) const;
+
+    Matrix calcJacobianMatrix_Position(
+        const double b1,
+        const double b2,
+        const double b3
+    ) const;
+
+    Matrix calcJacobianMatrix_Area(
+        const double b0,
+        const double b1,
+        const double b2,
+        const double b3
+      ) const;
+    
+    Matrix calcJacobianMatrix_Area_half(
+      const double b0,
+      double b1,
+      const double b2,
+      const bool isLeft
+    ) const;
+
+    Matrix calcJacobianMatrix_Area_half_Valley(
+      const double b0,
+      double b1,
+      const double b2,
+      const bool isLeft
+    ) const;
+
+    double calcPeakAreaNotCovered(
+      const double b0,
+      const double b1,
+      const double b2,
+      const double b3,
+      const double left_edge,
+      const double right_edge) const;
+    
+    void mergeRegressions(
+      const int N,
+      bool*& fltrVec,
+      const Matrix& beta,
+      const std::vector<int>& scaleVec,
+      const std::vector<int>& xIndices, 
+      const std::vector<double>& apex_position, 
+      const std::vector<double>& valley_position,
+      const Matrix& Y,
+      const std::vector<double> mse,
+      const std::vector<int>& idx1,
+      std::vector<int>& idx2
+    );
+
+    void rescalePosition(
+      const int N,
+      bool*& fltrVec,
+      const Matrix& x_data,
+      std::vector<double>& apex_position,
+      const std::vector<int>& idx1
+    );
+    
+    void exportResults(
+      const Matrix& beta, 
+      bool*& fltrVec, 
+      const std::vector<int>& xIndices,
+      const int N,
+      const int key,
+      const std::vector<double>& apex_position,
+      const std::vector<double>& peakHeight,
+      const std::vector<int>& idx1,
+      int& peakID);
+
+    void calcDQS_peak(
+
+      );
+
+    // debugging
+    const Peakproperties& operator[](int ID) const;
+    void printTValues();
+
+  private:
+    std::map<int, Matrix> designMatrices;
+    std::map<int, Matrix> inverseMatrices;
+    std::map<int, Matrix> pseudoInverses;
+    std::map<int, Matrix> measurementData;
+    std::map<int, Peakproperties> peakProperties;
+    std::map<int, double> tVal;
+};
+};
+
+#endif // QALGORITHMS_H
