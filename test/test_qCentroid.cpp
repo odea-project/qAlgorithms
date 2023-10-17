@@ -75,27 +75,31 @@ int main()
   std::chrono::duration<double> elapsed = finish - start;
   std::cout << "Elapsed time: " << elapsed.count() << " s\n";
 
-  // print some Peak (the 500th Peak will be printed)
-  model[500].print();
+  // print some Peak (the 1st Peak will be printed)
+  model[0].print();
+
+  // create a vector of a certain peak property
+  std::vector<double> test = model.getPeakProperties(q::Peakproperties::PEAKID);  
 
   /* Expected output for Orbitrap Test-Data:
-  2484 --> 1212 --> 913 --> 165 --> 46
-  128624 --> 55580 --> 33895 --> 5944 --> 1863
-  65528 --> 28604 --> 18835 --> 3436 --> 1032
-  78424 --> 33969 --> 22003 --> 3955 --> 1204
-  Elapsed time: 0.681646 s
+  (0): 2484 --> 1212 --> 913 --> 165 --> 46
+  (1): 128624 --> 55580 --> 33895 --> 5944 --> 1863
+  (2): 65528 --> 28604 --> 18835 --> 3436 --> 1032
+  (3): 78424 --> 33969 --> 22003 --> 3955 --> 1204
+  Elapsed time: 1.34463 s
   Peak Properties:
   -----------------
-  Sample ID: 1
-  Position: 285.204
-  Height: 3577.47
+  Peak ID: 0
+  Sample ID: 0
+  Position: 534.705
+  Height: 4025.8
   Width: 0
-  Area: 17378.6
-  Position Uncertainty (sigma): 0.000136123
-  Height Uncertainty (sigma): 224.471
+  Area: 21261.3
+  Position Uncertainty (sigma): 0.00107453
+  Height Uncertainty (sigma): 406.339
   Width Uncertainty (sigma): 0
-  Area Uncertainty (sigma): 5323.27
-  DQS: 0.664876
+  Area Uncertainty (sigma): 6118.37
+  DQS: 0.684031
   */
 
   return 0;
