@@ -11,6 +11,7 @@
 #include <iostream>
 #include <vector>
 #include <unordered_set>
+#include <variant>
 #include "qalgorithms_matrix.h"
 #include "qalgorithms_utils.h"
 
@@ -21,24 +22,52 @@ namespace q {
   // constructors
     Peakproperties();
 
-    Peakproperties(Matrix _coefficients,
-      int _smplID,
-      double _position,
-      double _height,
-      double _width,
-      double _area,
-      double _sigmaPosition,
-      double _sigmaHeight,
-      double _sigmaWidth,
-      double _sigmaArea,
-      double _dqs);
+    Peakproperties(
+      const double _coeff_b0,
+      const double _coeff_b1,
+      const double _coeff_b2,
+      const double _coeff_b3,
+      const double _peakID,
+      const double _smplID,
+      const double _position,
+      const double _height,
+      const double _width,
+      const double _area,
+      const double _sigmaPosition,
+      const double _sigmaHeight,
+      const double _sigmaWidth,
+      const double _sigmaArea,
+      const double _dqs);
   
-  // debuging
+  // debuging & printing
+    enum PropertiesNames{
+      COEFF_B0,
+      COEFF_B1,
+      COEFF_B2,
+      COEFF_B3,
+      PEAKID,
+      SMPLID,
+      POSITION,
+      HEIGHT,
+      WIDTH,
+      AREA,
+      SIGMAPOSITION,
+      SIGMAHEIGHT,
+      SIGMAWIDTH,
+      SIGMAAREA,
+      DQS,
+    };
+    
+    double getProperty(PropertiesNames varName) const;
     void print() const;
 
   private:
-    Matrix coefficients;
-    int smplID;
+    double coeff_b0;
+    double coeff_b1;
+    double coeff_b2;
+    double coeff_b3;
+    double peakID;
+    double smplID;
     double position;
     double height;
     double width;
@@ -246,7 +275,7 @@ namespace q {
       bool*& fltrVec, 
       const std::vector<int>& xIndices,
       const int N,
-      const int key,
+      const int smplID,
       const std::vector<double>& apex_position,
       const std::vector<double>& apex_position_uncertainty,
       const std::vector<double>& peakHeight,
@@ -256,9 +285,12 @@ namespace q {
       const std::vector<int>& idx1,
       int& peakID);
 
-    // debugging
+    // debugging & printing
+    std::vector<double> getPeakProperties(const Peakproperties::PropertiesNames& varName) const;
+
     const Peakproperties& operator[](int ID) const;
-    void printTValues();
+
+    void printTValues(); 
 
   private:
     std::map<int, Matrix> designMatrices;

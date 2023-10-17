@@ -9,18 +9,27 @@ namespace q {
   // Constructor
   Peakproperties::Peakproperties(){}
 
-  Peakproperties::Peakproperties(Matrix _coefficients,
-      int _smplID,
-      double _position,
-      double _height,
-      double _width,
-      double _area,
-      double _sigmaPosition,
-      double _sigmaHeight,
-      double _sigmaWidth,
-      double _sigmaArea,
-      double _dqs)
-  : coefficients(_coefficients),
+  Peakproperties::Peakproperties(
+      const double _coeff_b0,
+      const double _coeff_b1,
+      const double _coeff_b2,
+      const double _coeff_b3,
+      const double _peakID,
+      const double _smplID,
+      const double _position,
+      const double _height,
+      const double _width,
+      const double _area,
+      const double _sigmaPosition,
+      const double _sigmaHeight,
+      const double _sigmaWidth,
+      const double _sigmaArea,
+      const double _dqs)
+  : coeff_b0(_coeff_b0),
+    coeff_b1(_coeff_b1),
+    coeff_b2(_coeff_b2),
+    coeff_b3(_coeff_b3),
+    peakID(_peakID),
     smplID(_smplID),
     position(_position),
     height(_height),
@@ -33,10 +42,35 @@ namespace q {
     dqs(_dqs)
     {}
   
-  // debuging
+  // debuging & printing
+    double Peakproperties::getProperty(Peakproperties::PropertiesNames varName) const {
+      switch (varName)
+      {
+      case COEFF_B0: return coeff_b0;
+      case COEFF_B1: return coeff_b1;
+      case COEFF_B2: return coeff_b2;
+      case COEFF_B3: return coeff_b3;
+      case PEAKID:   return peakID;
+      case SMPLID:   return smplID;
+      case POSITION: return position;
+      case HEIGHT:   return height;
+      case WIDTH:    return width;
+      case AREA:     return area;
+      case SIGMAPOSITION: return sigmaPosition;
+      case SIGMAHEIGHT:   return sigmaHeight;
+      case SIGMAWIDTH:    return sigmaWidth;
+      case SIGMAAREA:     return sigmaArea;
+      case DQS:      return dqs;
+      default:
+        break;
+      }
+      return 0.0;
+    }
+
   void Peakproperties::print() const {
     std::cout << "Peak Properties:" << std::endl;
     std::cout << "-----------------" << std::endl;
+    std::cout << "Peak ID: " << peakID << std::endl;
     std::cout << "Sample ID: " << smplID << std::endl;
     std::cout << "Position: " << position << std::endl;
     std::cout << "Height: " << height << std::endl;
@@ -333,7 +367,7 @@ namespace q {
       for (const auto& p : pseudoInverses) {
         convolveP(beta, xIndices, p.second, ylog, currentIndex);
       }
-      std::cout << sum(fltrVec,N) << " --> ";
+      std::cout << "("<< key << "): " << sum(fltrVec,N) << " --> ";
 
       // Filtering Regression Results
       // Vector of Indices that have passed the last filter
@@ -909,7 +943,7 @@ namespace q {
       bool*& fltrVec, 
       const std::vector<int>& xIndices,
       const int N,
-      const int key,
+      const int smplID,
       const std::vector<double>& apex_position,
       const std::vector<double>& apex_position_uncertainty,
       const std::vector<double>& peakHeight,
@@ -940,8 +974,12 @@ namespace q {
     for (int col : idx1) {
       // create a temporary Peakproperties object:
       Peakproperties tmp_peak(
-        beta.col(col), // Regression Coefficients
-        key, // sample ID
+        beta(0,col), // Regression Coefficients
+        beta(1,col), // Regression Coefficients
+        beta(2,col), // Regression Coefficients
+        beta(3,col), // Regression Coefficients
+        peakID, // peak ID
+        smplID, // smpl ID (running number of spectrum or chromatogram)
         apex_position[col], // Peak Position
         peakHeight[col], // Peak Height
         0.0, // Peak Width <--- This is not yet implemented
@@ -951,15 +989,24 @@ namespace q {
         0.0, // sigma Width <--- This is not yet implemented
         peakArea_uncertainty[col], // sigma Area
         std::erfc(peakArea_uncertainty[col] / peakArea[col])); // DQS
-      
-
       // add tmporary Peak to the List
       peakProperties.emplace(peakID, tmp_peak);
       peakID++;
     }
   }
 
-  // debugging
+  // debugging & printing
+  std::vector<double> Peakmodel::getPeakProperties(const Peakproperties::PropertiesNames& varName) const {
+    int N = peakProperties.size();
+    std::vector<double> vals(N);
+    size_t k = 0;
+    for (const auto& peak : peakProperties) {
+        vals[k] = peak.second.getProperty(varName);
+        k++;
+      }
+  return vals;
+  }
+
   const Peakproperties& Peakmodel::operator[](int ID) const {
     auto it = peakProperties.find(ID);
     if (it != peakProperties.end()) {
