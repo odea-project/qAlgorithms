@@ -257,7 +257,6 @@ namespace q {
   }
 
   void Peakmodel::zeroInterpolation(Matrix& xyData) {
-    size_t n = xyData.numRows();
     Matrix left_to_right = xyData;
     zeroInterpolation_oneDirection(left_to_right);
 
