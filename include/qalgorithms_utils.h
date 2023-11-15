@@ -50,5 +50,17 @@ namespace q {
       tValues();
       const double& operator[](size_t degreeOfFreedom) const;
   };
+
+  class ProgressBar {
+    private:
+        int total;
+        int width;
+        std::vector<std::string> colors;
+
+    public:
+        ProgressBar(int total, int width = 50);
+        void update(int current);
+        void complete();
+    };
 }
 #endif // QALGORITHMS_UTILS_H

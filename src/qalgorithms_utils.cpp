@@ -619,4 +619,47 @@ namespace q {
   const double& tValues::operator[](size_t degreeOfFreedom) const {
     return values.at(degreeOfFreedom);
   }
+
+  ProgressBar::ProgressBar(int total, int width)
+    : total(total), width(width), colors({
+        "\033[1;31m", // red
+        "\033[1;31m", // red
+        "\033[1;31m", // red
+        "\033[1;33m", // yellow
+        "\033[1;33m", // yellow
+        "\033[1;33m", // yellow
+        "\033[1;32m", // green
+        "\033[1;32m", // green
+        "\033[1;32m", // green
+        "\033[1;36m", // cyan
+        "\033[1;36m", // cyan
+        "\033[1;36m", // cyan
+        "\033[1;34m", // blue
+        "\033[1;34m", // blue
+        "\033[1;34m", // blue
+        "\033[1;35m"  // magenta
+        "\033[1;35m"  // magenta
+        "\033[1;35m"  // magenta
+    }) {}
+
+  void ProgressBar::update(int current) {
+      int percentage = static_cast<int>(100.0 * current / total);
+      int pos = width * current / total;
+
+      std::string bar;
+      for (int i = 0; i < width; ++i) {
+          std::string color = colors[i % colors.size()];
+          if (i < pos) bar += color + "#";
+          else if (i == pos) bar += color + ">";
+          else bar += "\033[0m ";
+      }
+
+      // std::cout << "\r[" << bar << "\033[0m] " << percentage << "%";
+      std::cout << "\r[" << bar << "\033[0m] " << percentage << "%";
+      std::cout.flush();
+  }
+
+  void ProgressBar::complete() {
+      std::cout << "\033[1;32m" <<  " .... done." << "\033[0m" << std::endl;
+  }
 }

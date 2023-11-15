@@ -4,6 +4,8 @@
 #include "../include/qalgorithms_utils.h"
 #include "../include/qalgorithms_matrix.h"
 
+std::mutex mtx; // Global Mutex
+
 namespace q {
 
   // Constructor
@@ -93,6 +95,8 @@ namespace q {
       calculateDesignMatrix(a);
       calculatePseudoInverse(a);
     } 
+    setMode(Mode::SILENT);
+    n_measurementData = 0;
   }
 
   // Constructor to initialize Peak model based on a lower and an upper limit for df
@@ -102,6 +106,8 @@ namespace q {
       calculateDesignMatrix(a);
       calculatePseudoInverse(a);
     } 
+    setMode(Mode::SILENT);
+    n_measurementData = 0;
   }
 
   // Constructor to initialize Peak model based on a vector for a
@@ -111,6 +117,8 @@ namespace q {
       calculateDesignMatrix(a);
       calculatePseudoInverse(a);
     }
+    setMode(Mode::SILENT);
+    n_measurementData = 0;
   }
 
   // Load t-Values
@@ -209,51 +217,184 @@ namespace q {
   }
 
   // Function to add some Measurement Data to the Peak Model
-  void Peakmodel::addSingleMeasurement(Matrix& xyData, bool zero_interpolation) {
-    int maxKey = measurementData.empty() ? -1 : std::prev(measurementData.end())->first;
-    int newKey = maxKey + 1;
+  // void Peakmodel::addSingleMeasurement(Matrix& xyData, bool zero_interpolation) {
+  //   int maxKey = measurementData.empty() ? -1 : std::prev(measurementData.end())->first;
+  //   int newKey = maxKey + 1;
 
-    // check if sorted by column 1 and sort if unsorted
-    xyData.sort1();
-    if (zero_interpolation) { // default is true
-      zeroInterpolation(xyData);
-    }
-    measurementData[newKey] = xyData;
-  }
+  //   // check if sorted by column 1 and sort if unsorted
+  //   xyData.sort1();
+  //   if (zero_interpolation) { // default is true
+  //     zeroInterpolation(xyData);
+  //   }
+  //   measurementData[newKey] = xyData;
+  //   n_measurementData ++;
+  // }
 
   void Peakmodel::addMultipleMeasurements(Matrix& xyData, bool zero_interpolation) {
     xyData.sort1(); // Sort the entire matrix by the first column
-
+    dataID key;
     // analyze number of groups and members
+    if (mode == Mode::PROGRESS) {
+      std::cout << std::endl << "analyze number of datasets... ";
+    }
     std::map<int, int> groupCount;
     size_t n = xyData.numRows();
-    size_t m = xyData.numCols();
+    size_t m = xyData.numCols();    
     for (size_t i = 0; i < n; ++i) {
         int groupNum = static_cast<int>(xyData(i, 2));
         groupCount[groupNum]++;
     }
+    if (mode == Mode::PROGRESS) {
+      std::cout << "\033[1;32m done" << "\033[0m" << std::endl;
+    }
 
     // initialize data matrices
+    if (mode == Mode::PROGRESS) {
+      std::cout << "initialize data matrices (n=" << groupCount.size()<< ")... ";
+    }
     for (const auto& [groupNum, rowCount] : groupCount) {
-        measurementData.emplace(groupNum, Matrix(rowCount,m));
+        key.sampleID = groupNum;
+        key.subSampleID = 0;
+        measurementData.emplace(key, Matrix(rowCount,m));
+    }
+    if (mode == Mode::PROGRESS) {
+      std::cout << "\033[1;32m done" << "\033[0m" << std::endl;
     }
 
     // fill data matrices
+    if (mode == Mode::PROGRESS) {
+      std::cout << "transfer data to data matrices... ";
+    }
     std::map<int, size_t> currentRowCount; 
     for (size_t i = 0; i < n; ++i) {
         int groupNum = static_cast<int>(xyData(i, 2));
         size_t rowIdx = currentRowCount[groupNum]++;
         for (size_t j = 0; j < m; j++) {
-          measurementData[groupNum](rowIdx,j) = xyData(i,j);
+          dataID key;
+          key.sampleID = groupNum;
+          key.subSampleID = 0;
+          measurementData[key](rowIdx,j) = xyData(i,j);
         }
+    }
+    if (mode == Mode::PROGRESS) {
+      std::cout << "\033[1;32m done" << "\033[0m" << std::endl;
+    }
+
+    // gap-filling, this step will also mark large gaps with (-1, -1)
+    if (mode == Mode::PROGRESS) {
+      std::cout << "fill data gaps... ";
+    }
+    if (zero_interpolation) {
+      for (auto& pair : measurementData) {
+        gapFilling(pair.second);
+        n_measurementData ++;
+      }
+    }
+    if (mode == Mode::PROGRESS) {
+      std::cout << "\033[1;32m done" << "\033[0m" << std::endl;
+    }
+
+    // data splitting
+    if (mode == Mode::PROGRESS) {
+      std::cout << "split datasets into subsets... ";
+    }
+    if (zero_interpolation) {
+      std::map<dataID, Matrix> tempMeasurementData;
+      for (auto& pair : measurementData) {
+        dataSplitting(pair.first, pair.second, tempMeasurementData);
+      }
+      measurementData = tempMeasurementData;
+    }
+    if (mode == Mode::PROGRESS) {
+      std::cout << "(n="<< measurementData.size()<<")"<<"\033[1;32m done" << "\033[0m" << std::endl;
     }
 
     // zero-interpolation
+    if (mode == Mode::PROGRESS) {
+      std::cout << "interpolate zeros... ";
+    }
     if (zero_interpolation) {
       for (auto& pair : measurementData) {
+        // std::cout << pair.first.sampleID << ", " << pair.first.subSampleID << std::endl;
         zeroInterpolation(pair.second);
       }
     }
+    if (mode == Mode::PROGRESS) {
+      std::cout << "\033[1;32m done" << "\033[0m" << std::endl;
+    }
+
+    // for (auto& pair : measurementData) {
+    //     n_measurementData ++;
+    //   }
+  }
+
+  void Peakmodel::gapFilling(Matrix& xyData) {
+    /* This function detects missing data and fills in the gaps. Specifically, when a gap is found, up to four zeros will be added to both sides of it. */
+    if (xyData.numRows() < 3) {
+        return;
+    }
+    // pre-define variables
+    std::vector<double> filledData;
+    std::vector<double> filledData_y;
+    bool skipPrevGapCalculation = false;
+    double lastPreviousGap = 0.0;
+    // add first 
+    filledData.push_back(xyData(0,0));
+    filledData_y.push_back(xyData(0,1));
+    // find gaps
+    for (size_t i = 1; i < xyData.numRows() - 1; ++i) {
+        /* add current row from original data matrix to x and y vectors */
+        filledData.push_back(xyData(i,0));
+        filledData_y.push_back(xyData(i,1));
+        /* define current dinstance between next and current data point */
+        double gap = xyData(i + 1, 0) - xyData(i, 0);
+        /* define distance between current und former data point as reference*/
+        double previousGap = skipPrevGapCalculation ? lastPreviousGap : xyData(i, 0) - xyData(i - 1, 0);
+        
+        lastPreviousGap = previousGap > lastPreviousGap ? previousGap : lastPreviousGap;
+        /* reset skip criterion */
+        skipPrevGapCalculation = false; 
+
+        /* calculate the number of datapoints that should included into the gap */
+        int fillers = static_cast<int>(gap / previousGap) - 1;
+        
+        /* define maximum number of fillers, it is 8 due to statistical conventions that a gap of more than 8 points is seen as full separation of the profiles, i.e., here a split can be performed later.*/
+        int maxFillers = 8;
+        int fillersToAdd = std::min(fillers, maxFillers);
+        // std::cout << gap << ", " << previousGap << ", " << fillersToAdd << std::endl;
+        // Add first 4 fillers
+        for (int j = 0; j < 4 && j < fillersToAdd; ++j) {
+            double fillerValueX = xyData(i, 0) + (j + 1) * (gap / (fillers + 1));
+            filledData.push_back(fillerValueX);
+            filledData_y.push_back(0.0);
+        }
+
+        // If there are more than 4 fillers, add the last 4 fillers
+        if (fillersToAdd > 4) {
+            /* mark a gap */
+            filledData.push_back(-1.0);
+            filledData_y.push_back(-1.0);
+            for (int j = fillers - 4; j < fillers; ++j) {
+                double fillerValueX = xyData(i, 0) + (j + 1) * (gap / (fillers + 1));
+                filledData.push_back(fillerValueX);
+                filledData_y.push_back(0.0);
+            }
+        }
+        if (fillersToAdd > 0) {
+            skipPrevGapCalculation = true;
+        }
+    }
+    // add last 
+    filledData.push_back(xyData(xyData.numRows()-1,0));
+    filledData_y.push_back(xyData(xyData.numRows()-1,1));
+    // Transfer data from filledData to xyData
+    xyData.reinitialize(filledData.size(),2);
+    // Matrix xyData(filledData.size(),2);
+    for (size_t i = 0; i < filledData.size(); ++i) {
+        xyData(i, 0) = filledData[i];
+        xyData(i, 1) = filledData_y[i];
+    }
+    
   }
 
   void Peakmodel::zeroInterpolation(Matrix& xyData) {
@@ -314,8 +455,35 @@ namespace q {
     }
   }
 
-  Matrix Peakmodel::getData(int idx) const {
-    auto it = measurementData.find(idx);
+  void Peakmodel::dataSplitting(dataID key, Matrix& xyData, std::map<dataID, Matrix>& DataSet) {
+    /* This function will splitt data along so-called large data gaps. The gaps need to be marked in the gap filling step with a -1. */
+    size_t start_idx = 0;
+    size_t end_idx = 0;
+    int subSampleID = 0;
+    for (size_t i = 0; i < xyData.numRows(); i++) {
+      if (xyData(i,0) == -1.) {
+        /* gap identified*/
+        end_idx = i;
+        Matrix tmp_data = xyData.subMatrix(start_idx,end_idx,0,2);
+        if (tmp_data.col(1).sumElements() > 0) {
+          dataID newKey;
+          newKey.sampleID = key.sampleID;
+          newKey.subSampleID = subSampleID;
+          DataSet.emplace(newKey, tmp_data);
+          subSampleID ++;
+        }
+        start_idx = i+1;
+      }
+    }
+
+
+  }
+
+  Matrix Peakmodel::getData(int sampleID, int subSampleID) const {
+    dataID key;
+    key.sampleID = sampleID;
+    key.subSampleID = subSampleID;
+    auto it = measurementData.find(key);
         if (it != measurementData.end()) {
             return it->second;
         } else {
@@ -323,74 +491,112 @@ namespace q {
         }
   }
 
-  // Run Regression
-  void Peakmodel::runRegression() {
+  // Main Function
+  void Peakmodel::findPeaks() {
+    /* This is the main function to perform the automated peak detection. */
     // get list of scales
-    std::vector<int> scales = getScales();
+    const std::vector<int> scales = getScales();
     // pre-calculate number of regressions: N = (scales.size()*n - 2*sum(scales)) 
-    size_t k = scales.size(); // number of scales
-    int s = 2*sum(scales); // 2*sum(scales)
-    // initialize peakID
-    int peakID = 0;
+    const size_t k = scales.size(); // number of scales
+    const int s = 2*sum(scales); // 2*sum(scales)
 
-    // iterate through the whole dataset
+
+    int n_meas = measurementData.size();
+    ProgressBar progressBar(n_meas);
+    int progress_i = 0;
+    int updateProgress_nextValue = 0;
+    bool updateProgress = true;
     for (const auto& pair: measurementData)
     {
-      // get key and data
-      int key = pair.first;
-      Matrix data = pair.second;
+      this -> runRegression(pair,scales,k,s);
+      if (mode == Mode::PROGRESS) {
+        progress_i ++;
+        if (static_cast<int>(progress_i * 100 / n_meas) > updateProgress_nextValue) {
+          progressBar.update(progress_i);
+          updateProgress_nextValue ++;
+        }
+      }
 
+    }
+    if (mode == Mode::PROGRESS) {
+      progressBar.complete();
+    }
+  }
+
+  // Run Regression
+  void Peakmodel::runRegression(
+    const std::pair<const dataID, const Matrix>& pair, const std::vector<int>& scales, const size_t k, const int s) {
+    /* This is the main function to perform the automated peak detection. */
+      // get key and data
+      dataID key = pair.first;
+      Matrix data = pair.second;
+      int peakID = 0; 
       // log transform
       Matrix ylog = data.col(1).log(); // 1, i.e., first column (x) will be ignored
 
       // preallocate conv Matrix that later will contain all regression coefficients
       size_t n = ylog.numRows();
-      size_t N = k*n - s;
-      Matrix beta(4,N);
-      bool* fltrVec = new bool[N];
-      std::fill_n(fltrVec, N, true);
+      // check if scales fit with the data size
+      if (n > 2*scales[0]) {
+        size_t k2 = k;
+        int s2 = s;
+        std::vector<int> scales_tmp = scales;
+        int largest_scale = scales_tmp[scales_tmp.size()-1];
+        while (n < 2*largest_scale+1)
+        {
+          scales_tmp.pop_back();
+          k2 = scales_tmp.size();
+          s2 = 2*sum(scales_tmp);
+          largest_scale = scales_tmp[scales_tmp.size() - 1]; 
+        }
 
-      
+        // Variables and Vectors
+        size_t N = k2*n - s2;
+        Matrix beta(4,N);
+        bool* fltrVec = new bool[N];
+        std::fill_n(fltrVec, N, true);
+        
+        std::vector<int> xIndices(N);
+        std::vector<double> apex_positions(N);
+        std::vector<double> apex_positions_uncertainty(N);
+        std::vector<double> valley_positions(N);
+        std::vector<double> peakHeight(N);
+        std::vector<double> peakHeight_uncertainty(N);
+        std::vector<double> peakArea(N);
+        std::vector<double> peakArea_uncertainty(N);
+        std::vector<int> scaleVec = getScaleVec(scales_tmp, n, N);
+        std::vector<double> mse(N);
+        int currentIndex = 0;
+        
+        // iterate through all scales
+        for (const auto& p : pseudoInverses) {
+          // check if data set is too small for full scan
+          if (p.second.numCols() < n) {
+            convolveP(beta, xIndices, p.second, ylog, currentIndex);
+          }
+        }
 
-      std::vector<int> xIndices(N);
-      std::vector<double> apex_positions(N);
-      std::vector<double> apex_positions_uncertainty(N);
-      std::vector<double> valley_positions(N);
-      std::vector<double> peakHeight(N);
-      std::vector<double> peakHeight_uncertainty(N);
-      std::vector<double> peakArea(N);
-      std::vector<double> peakArea_uncertainty(N);
-      std::vector<int> scaleVec = getScaleVec(scales, n, N);
-      std::vector<double> mse(N);
-      int currentIndex = 0;
-      // iterate through all scales
-      for (const auto& p : pseudoInverses) {
-        convolveP(beta, xIndices, p.second, ylog, currentIndex);
-      }
-      std::cout << "("<< key << "): " << sum(fltrVec,N) << " --> ";
+        // Filtering Regression Results
+        // Vector of Indices that have passed the last filter
+        std::vector<int> idx1;
+        coefficientCriterion(N, fltrVec, scaleVec, apex_positions, valley_positions, xIndices, beta, idx1);
 
-      // Filtering Regression Results
-      // Vector of Indices that have passed the last filter
-      std::vector<int> idx1;
-      coefficientCriterion(N, fltrVec, scaleVec, apex_positions, valley_positions, xIndices, beta, idx1);
-      std::cout << idx1.size() << " --> ";
+        std::vector<int> idx2;
+        quadraticTermCriterion(N, fltrVec, scaleVec, xIndices, beta,  ylog, mse, idx1, idx2);
 
-      std::vector<int> idx2;
-      quadraticTermCriterion(N, fltrVec, scaleVec, xIndices, beta,  ylog, mse, idx1, idx2);
-      std::cout << idx2.size() << " --> ";
+        idx1.clear();
+        parameterCriterion(N, fltrVec,peakHeight,peakHeight_uncertainty, peakArea, peakArea_uncertainty,scaleVec, beta, mse, idx2, idx1);
+        
+        idx2.clear();
+        mergeRegressions(N, fltrVec, beta, scaleVec, xIndices, apex_positions, apex_positions_uncertainty, valley_positions, data.col(1), mse, idx1, idx2);
 
-      idx1.clear();
-      parameterCriterion(N, fltrVec,peakHeight,peakHeight_uncertainty, peakArea, peakArea_uncertainty,scaleVec, beta, mse, idx2, idx1);
-      std::cout << idx1.size() << " --> ";
-      
-      idx2.clear();
-      mergeRegressions(N, fltrVec, beta, scaleVec, xIndices, apex_positions, apex_positions_uncertainty, valley_positions, data.col(1), mse, idx1, idx2);
-      std::cout << idx2.size() << std::endl;
+        rescalePosition(N,fltrVec,data.col(0),apex_positions,apex_positions_uncertainty,idx2);
 
-      rescalePosition(N,fltrVec,data.col(0),apex_positions,apex_positions_uncertainty,idx2);
-
-      exportResults(beta, fltrVec, xIndices, N, key,apex_positions,apex_positions_uncertainty,peakHeight,peakHeight_uncertainty,peakArea,peakArea_uncertainty,idx2,peakID);
-      delete[] fltrVec;
+        {
+          std::lock_guard<std::mutex> lock(mtx);
+          exportResults(beta, fltrVec, xIndices, N, key.sampleID,apex_positions,apex_positions_uncertainty,peakHeight,peakHeight_uncertainty,peakArea,peakArea_uncertainty,idx2,peakID);
+        }
+        delete[] fltrVec;
     }
   }
 
@@ -578,13 +784,17 @@ namespace q {
     const std::vector<int>& idx1,
     std::vector<int>& idx2) {
       /* This function calculates the Peak height and Peak area including their uncertainties and checks for relevances using the 3 sigma criterion, i.e., X is relevant if X > 3s(X)*/
+      int df;
+      double t_crit;
       for (int col : idx1) {
         // Peak Height Criterion
         std::pair<double,double> h = calcPeakHeight(beta(0,col), beta(1,col), beta(2,col), beta(3,col));
         Matrix J = calcJacobianMatrix_Height(h.first, h.second);
         Matrix C = inverseMatrices[scaleVec[col]] * mse[col];
         double h_uncertainty = std::sqrt( (J * C * J.T()).sumElements());
-        if (3*h_uncertainty > h.second) {
+        df = scaleVec[col]*2-3; 
+        t_crit = tVal[df];
+        if (h.second / h_uncertainty < t_crit) {
           fltrVec[col] = false;
         } else {
 
@@ -593,7 +803,8 @@ namespace q {
         double A_uncertainty = std::sqrt((J_A * C * J_A.T()).sumElements());
         double A_notCovered = calcPeakAreaNotCovered(beta(0,col), beta(1,col), beta(2,col), beta(3,col),-scaleVec[col],scaleVec[col]) ;
         A_uncertainty += A_notCovered;
-        if (3*A_uncertainty > J_A(0,0) || J_A(0,0) < 0) {
+        // if (3*A_uncertainty > J_A(0,0) || J_A(0,0) < 0) {
+        if (J_A(0,0) / A_uncertainty <  t_crit) {
           fltrVec[col] = false;
         } else {
           peakHeight[col] = h.second;
@@ -604,6 +815,125 @@ namespace q {
         }
         }
       }
+    }
+
+  // void Peakmodel::peakCoverageCriterion(
+  //     const int N,
+  //     bool*& fltrVec,
+  //     std::vector<double>& peakArea,
+  //     const std::vector<int>& scaleVec, 
+  //     const std::vector<int>& xIndices, 
+  //     const std::vector<double>& apex_positions, 
+  //     const std::vector<double>& valley_positions,
+  //     const Matrix& beta,
+  //     const std::vector<int>& idx1,
+  //     std::vector<int>& idx2) {
+  //       /* This function calculates the total peak area A_total and the peak area that is not covered by the data points A_ncov and therefore is uncertain due to extroplation. The filter criterion for this function is {A_ncov / A_tot < .33 && >.05}. This ensures that the peak area is mostly covered by the datapoints but the baseline is not part of the peak.*/
+  //       for (int col : idx1) {
+  //         std::vector<double> areaCoverage_peakArea = calcPeakArea(beta(0,col), beta(1,col), beta(2,col), beta(3,col),scaleVec[col]);
+  //         if (areaCoverage_peakArea[0] > .33) {
+  //           fltrVec[col] = false;
+  //         } else {
+  //           peakArea[col] = areaCoverage_peakArea[1];
+  //           idx2.push_back(col);
+  //         }
+  //       }
+  //     }
+  
+  std::vector<double> Peakmodel::calcPeakArea(
+      const double b0,
+      const double b1,
+      const double b2,
+      const double b3,
+      const double scale
+      ) const {
+         int key = (b1 < 0 ? 4 : 0) + (b2 < 0 ? 2 : 0) + (b3 < 0 ? 1 : 0);
+         // Total Area A
+         double A_L;
+         double A_R;
+         // Not Covered Area B
+         double B_L;
+         double B_R;
+         // Trapezoid
+         double x_l = -scale;
+         double x_r = scale;
+         switch (key) {
+          case 7:  // Case 1a: apex left
+              A_L = calcPeakArea_half(b0,b1,b2,0.0,true,false);
+              A_R = calcPeakArea_half(b0,b1,b3,0.0,false,false);
+              B_L = calcPeakArea_half(b0,b1,b2,-scale,true,false);
+              B_R = calcPeakArea_half(b0,b1,b3,scale,false,false);
+              break;
+          case 3:  // Case 1b: apex right
+              A_R = calcPeakArea_half(b0,b1,b3,0.0,false,false);
+              A_L = calcPeakArea_half(b0,b1,b2,0.0,true,false);
+              B_R = calcPeakArea_half(b0,b1,b3,scale,false,false);
+              B_L = calcPeakArea_half(b0,b1,b2,-scale,true,false);
+              break;
+          case 6:  // Case 2a: apex left | valley right
+              A_L = calcPeakArea_half(b0,b1,b2,0.0,true,false);
+              A_R = calcPeakArea_half(b0,b1,b3,0.0,false,true);
+              B_L = calcPeakArea_half(b0,b1,b2,-scale,true,false);
+              B_R = calcPeakArea_half(b0,b1,b3,scale,false,true);
+              if (std::abs(-b1/2/b3) < scale) {
+                x_r = -b1/2/b3;
+              }
+              break;
+          case 1:  // Case 2b: apex right | valley left
+              A_R = calcPeakArea_half(b0,b1,b3,0.0,false,false);
+              A_L = calcPeakArea_half(b0,b1,b2,0.0,true,true);
+              B_R = calcPeakArea_half(b0,b1,b3,scale,false,false);
+              B_L = calcPeakArea_half(b0,b1,b2,-scale,true,true);
+              if (std::abs(-b1/2/b2) < scale) {
+                x_l = -b1/2/b2;
+              }
+              break;
+          default:
+              break;
+      }
+      const double trapezoid = (x_r - x_l) * .5 * (std::exp(b0 + b1*x_l + b2*x_l*x_l) + std::exp(b0 + b1*x_r + b3*x_r*x_r));
+      std::vector<double> result(3);
+      result[2] = trapezoid + B_L + B_R; // Area not Covered by data points
+      result[1] = A_L + A_R; // total peak Area
+      result[0] = result[2] / result[1]; // uncoverage rate;
+      return result; 
+      }
+  
+  double Peakmodel::calcPeakArea_half(
+      const double b0,
+      const double b1,
+      const double b2,
+      const double edge,
+      const bool isleft,
+      const bool hasvalley
+    ) const {
+      const double sqrtB2 = std::sqrt(std::abs(b2));
+      const double e_expr = std::exp(b0-b1*b1/ 4 / b2);
+      double err_func_expr;
+      if (hasvalley) {
+        // check if valley is inside
+        if (std::abs(-b1/2/b2) < std::abs(edge)) {
+          // valley is in range
+          // check if total area is calculated
+          if (edge != 0) {
+            // total area is not calculated
+            return 0.;
+          }
+
+        }
+        if (isleft) {
+          err_func_expr = erfi((b1+2*b2*edge)/2/sqrtB2);
+        } else {
+          err_func_expr = -erfi((b1+2*b2*edge)/2/sqrtB2);
+        } 
+      } else {
+        if (isleft) {
+          err_func_expr = 1 - std::erf((b1+2*b2*edge)/2/sqrtB2);
+        } else {
+          err_func_expr = 1 + std::erf((b1+2*b2*edge)/2/sqrtB2);
+        }
+      }
+      return e_expr * err_func_expr / M_2_SQRTPI / sqrtB2;
     }
 
   std::pair<double,double> Peakmodel::calcPeakHeight(
@@ -692,23 +1022,25 @@ namespace q {
       const double b2,
       const bool isLeft
     ) const {
-      // side check
-      if (!isLeft) {
-        b1 = -b1;
-      }
       // precalculations:
-      double sqrtPi = std::sqrt(M_PI);
-      double sqrtNeg4B2 = 2*std::sqrt(-b2);
-      double expB0 = std::exp(b0);
-      double expTerm = std::exp(-b1/4/b2);
-      double erfcTerm = std::erfc(b1 / sqrtNeg4B2);
+      const double SQRTB2 = std::sqrt(-b2);
+      const double EXP_B0 = std::exp(b0);
+      const double B1_2_B2 = b1 / 2 / b2;
+      const double EXP_B12 = std::exp(- b1 * B1_2_B2 / 2);
+      double err_func_expr = 0.;
+      /* the err_func_expr depends on the side */
+      if (isLeft) {
+        err_func_expr += std::erfc(b1/2/SQRTB2);
+      } else {
+        err_func_expr += 2 - std::erfc(b1/2/SQRTB2);
+      }
 
       // first term 
-      double J1 = sqrtPi * expB0 * expTerm * erfcTerm / sqrtNeg4B2;
+      double J1 = EXP_B0 * EXP_B12 * err_func_expr / M_2_SQRTPI / SQRTB2;
       // second term
-      double J2 = - (J1 * b1 - expB0) / 2 / b2;
+      double J2 = EXP_B0 / 2 / b2 - B1_2_B2 * J1;
       // third term
-      double J3 = (-expB0 * expTerm * expTerm * b1 + J1 * b1 * b1 - J1 * 4 * b2) / 64 / b2 / b2;
+      double J3 = - J1 / 2 / b2 - B1_2_B2 * J2;
 
       Matrix J(1,4);
       J(0,0) = J1;
@@ -723,22 +1055,26 @@ namespace q {
       const double b2,
       const bool isLeft
     ) const {
-      // Precalculation:
-      if (!isLeft) {
-        b1 = -b1;
-        }
-      double sqrtB2 = std::sqrt(b2);
-      double b1_2_b2 = b1 / 2 / b2;
-      double BaseTerm = std::exp(b0 - b1*b1_2_b2 / 2) / M_2_SQRTPI * erfi(b1_2_b2); 
-
+      // Precalculation:    
+      const double SQRTB2 = std::sqrt(b2);
+      const double EXP_B0 = std::exp(b0);
+      const double B1_2_B2 = b1 / 2 / b2;
+      const double EXP_B12 = std::exp(- b1 * B1_2_B2 / 2);
+      double err_func_expr = 0.;
+      /* the err_func_expr depends on the side */
+      if (isLeft) {
+        err_func_expr += erfi(b1/2/SQRTB2);
+      } else {
+        err_func_expr += -erfi(b1/2/SQRTB2);
+      }
 
       Matrix J(1,4);
-      J(0,0) = - BaseTerm / sqrtB2;
-      J(0,1) = BaseTerm * b1_2_b2 / sqrtB2;
+      J(0,0) = EXP_B0 * EXP_B12 / M_2_SQRTPI / SQRTB2;
+      J(0,1) = EXP_B0 / 2 / b2 - B1_2_B2 * J(0,0);
       if (isLeft) {
-        J(0,2) = J(0,1) / b1 - J(0,1) * b1_2_b2 ;
+        J(0,2) = - J(0,0) / 2 / b2 - B1_2_B2 * J(0,1) ;
       } else {
-        J(0,3) = J(0,1) / b1 - J(0,1) * b1_2_b2 ;
+        J(0,3) = - J(0,0) / 2 / b2 - B1_2_B2 * J(0,1) ;
       }
       return J;
     }
@@ -751,56 +1087,51 @@ namespace q {
       const double left_edge,
       const double right_edge) const {
         /*This function calculates the Peak area NOT covered by regression window*/
-        // constants:
-        double y_left = 0;
-        double y_right = 0;
-        double A_left = 0;
-        double A_right = 0;
-        // left side:
-        double mu_L = -b1 / 2 / b2;
-        double h_L = exp(b0-b1/2*mu_L);
-        double sqrtB2 = sqrt(std::abs(b2));
-        double const_L = h_L / sqrtB2 / M_2_SQRTPI;
-        double range_L = mu_L - left_edge;
-        if (b2 < 0) {
-          // ordinary peak with integration from -inf to left_edge
-          A_left += const_L * erfc(sqrtB2 * range_L);
-          y_left += exp(b0 + b1 * left_edge + b2 * left_edge*left_edge);
-        } else {
-          // check if valley point is inside regression window
-          if (left_edge < mu_L) {
-            // valley point is inside, i.e., integration window from vp to vp
-            y_left += exp(b0 + b1 * mu_L + b2 * mu_L*mu_L);
-          } else {
-            // valley point is outside, i.e., integration window from vp to left_edge
-            A_left += const_L * erfi(- sqrtB2 * range_L);
-            y_left += exp(b0 + b1 * left_edge + b2 * left_edge*left_edge);
-          }
-        }
+        // calculate check sum to find the correct case
+        int key = (b1 < 0 ? 4 : 0) + (b2 < 0 ? 2 : 0) + (b3 < 0 ? 1 : 0);
+        double area_left;
+        double area_right;
+        double area_trapezoid;
+        double x_left;
+        double x_right;
+        switch (key) {
+          case 7:  // Case 1a: apex left
+              area_left = calcPeakArea_half(b0, b1 , b2, left_edge, true, false);
+              area_right = calcPeakArea_half(b0, b1, b3, right_edge, false, false);
+              area_trapezoid = (right_edge - left_edge) * (std::exp(b0 + b1 * left_edge + b2 * left_edge * left_edge) + std::exp(b0 + b1 * right_edge + b3 * right_edge * right_edge)) * .5;
+              break;
+          case 3:  // Case 1b: apex right
+              area_left = calcPeakArea_half(b0, b1 , b2, left_edge, true, false);
+              area_right = calcPeakArea_half(b0, b1, b3, right_edge, false, false);
+              area_trapezoid = (right_edge - left_edge) * (std::exp(b0 + b1 * left_edge + b2 * left_edge * left_edge) + std::exp(b0 + b1 * right_edge + b3 * right_edge * right_edge)) * .5;
+              break;
+          case 6:  // Case 2a: apex left | valley right
+              area_left = calcPeakArea_half(b0, b1 , b2, left_edge, true, false);
+              area_right = calcPeakArea_half(b0, b1, b3, right_edge, false, true);
+              x_left = left_edge;
+              x_right = right_edge;
+              // check if valley is inside regression window:
+              if (-b1/2/b3 < right_edge) {
+                x_right = -b1/2/b3;
+              }
+              area_trapezoid = (x_right - x_left) * (std::exp(b0 + b1 * x_left + b2 * x_left * x_left) + std::exp(b0 + b1 * x_right + b3 * x_right * x_right)) * .5;
+              break;
+          case 1:  // Case 2b: apex right | valley left
+              area_left = calcPeakArea_half(b0, b1 , b2, left_edge, true, true);
+              area_right = calcPeakArea_half(b0, b1, b3, right_edge, false, false);
+              x_left = left_edge;
+              x_right = right_edge;
+              // check if valley is inside regression window:
+              if (-b1/2/b2 > left_edge) {
+                x_left = -b1/2/b2;
+              }
+              area_trapezoid = (x_right - x_left) * (std::exp(b0 + b1 * x_left + b2 * x_left * x_left) + std::exp(b0 + b1 * x_right + b3 * x_right * x_right)) * .5;
+              break;
+          default:
 
-        // right side:
-        double mu_R = -b1 / 2 / b3;
-        double h_R = exp(b0-b1/2*mu_R);
-        double sqrtB3 = sqrt(std::abs(b3));
-        double const_R = h_R / sqrtB3 / M_2_SQRTPI;
-        double range_R = right_edge - mu_R;
-        if (b3 < 0) {
-          // ordinary peak with integration from right_edge to inf
-          A_right += const_R * erfc(sqrtB3 * range_R);
-          y_right += exp(b0 + b1 * right_edge + b3 * right_edge*right_edge);
-        } else {
-          // check if valley point is inside regression window
-          if (right_edge > mu_R) {
-            // valley point is inside, i.e., integration window from vp to vp
-            y_right += exp(b0 + b1 * mu_R + b3 * mu_R*mu_R);
-          } else {
-            // valley point is outside, i.e., integration window from right_edge to vp
-            A_right += const_R * erfi(- sqrtB3 * range_R);
-            y_right += exp(b0 + b1 * right_edge + b3 * right_edge*right_edge);
-          }
-        }
-
-      return A_left - A_right + (right_edge - left_edge) * (y_left + y_right) / 2;
+              break;
+      }
+      return (area_left + area_right + area_trapezoid) / (2 * right_edge - 3 ); // where (2 * right_edge - 3 ) is df 
       }
   
   void Peakmodel::mergeRegressions(
@@ -851,7 +1182,7 @@ namespace q {
             mse_exp[col] = calcMse(yhat, y);
             is_empty = false;
           } else {
-          
+          // std::cout << idx_ref.size() << std::endl;
           // scan through BestPeaks and check for similarity
           n_Candidates = 0;
           for (int idx : idx_ref) {
@@ -860,10 +1191,19 @@ namespace q {
               if (std::abs(apex_position[col] - apex_position[idx]) < 5) {
                 // these peaks cannot be distinguished and are therefore similar
                 n_Candidates ++;
-                idx_candidates.insert(col);
+                idx_candidates.insert(idx);
+                // Check if mse was already calculated
+                if (mse_exp[col] == 0) {
+                  Matrix yhat = designMatrices[scaleVec[col]] * beta.col(col);
+                  Matrix y = Y.subMatrix(xIndices[col]-scaleVec[col],xIndices[col]+scaleVec[col]+1,0,1);
+      
+                  for (size_t j = 0; j < y.numRows(); j++) {
+                    yhat(j,0) = std::exp(yhat(j,0));
+                  }
+                  mse_exp[col] = calcMse(yhat, y);
+                }
               } else {
                 /*These peaks should be tested using t-Test for the peak distances. To do so, we need the uncertainties of the positions.*/
-
                 // Check if variance was already calculated
                 if (var_apex[col] == 0) {
                 Matrix J = calcJacobianMatrix_Position(beta(1,col),beta(2,col),beta(3,col));
@@ -876,7 +1216,7 @@ namespace q {
                 double t_crit = tVal[df];
                 if (t_meas < t_crit) {
                   // these peaks cannot be distinguished and are therefore similar
-                  idx_candidates.insert(col);
+                  idx_candidates.insert(idx);
                   n_Candidates++;
                   // Check if mse was already calculated
                   if (mse_exp[col] == 0) {
@@ -940,60 +1280,42 @@ namespace q {
 
   void Peakmodel::exportResults(
     const Matrix& beta, 
-      bool*& fltrVec, 
-      const std::vector<int>& xIndices,
-      const int N,
-      const int smplID,
-      const std::vector<double>& apex_position,
-      const std::vector<double>& apex_position_uncertainty,
-      const std::vector<double>& peakHeight,
-      const std::vector<double>& peakHeight_uncertainty,
-      const std::vector<double>& peakArea,
-      const std::vector<double>& peakArea_uncertainty,
-      const std::vector<int>& idx1,
-      int& peakID) {
-    
-    /* THIS WAS FOR CSV EXPORT */
-    // // Open CSV-file
-    // std::ofstream file("results.csv", std::ios::app); 
-    // if (!file.is_open()) {
-    //     std::cerr << "Error while opening CSV-File." << std::endl;
-    //     return;
-    // }
+    bool*& fltrVec, 
+    const std::vector<int>& xIndices,
+    const int N,
+    const int smplID,
+    const std::vector<double>& apex_position,
+    const std::vector<double>& apex_position_uncertainty,
+    const std::vector<double>& peakHeight,
+    const std::vector<double>& peakHeight_uncertainty,
+    const std::vector<double>& peakArea,
+    const std::vector<double>& peakArea_uncertainty,
+    const std::vector<int>& idx1,
+    int& peakID) {
 
-    // for (int col : idx1) {
-    //     file << key << ","
-    //          << beta(0, col) << "," 
-    //          << beta(1, col) << "," 
-    //          << beta(2, col) << ","
-    //          << beta(3, col) << "," 
-    //          << xIndices[col] << ","
-    //          << apex_Position[col] << ","
-    //          << peakHeight[col] << std::endl;
-    // }
-    for (int col : idx1) {
-      // create a temporary Peakproperties object:
-      Peakproperties tmp_peak(
-        beta(0,col), // Regression Coefficients
-        beta(1,col), // Regression Coefficients
-        beta(2,col), // Regression Coefficients
-        beta(3,col), // Regression Coefficients
-        peakID, // peak ID
-        smplID, // smpl ID (running number of spectrum or chromatogram)
-        apex_position[col], // Peak Position
-        peakHeight[col], // Peak Height
-        0.0, // Peak Width <--- This is not yet implemented
-        peakArea[col], // Peak Area
-        apex_position_uncertainty[col], // sigma Position 
-        peakHeight_uncertainty[col], // sigma Height
-        0.0, // sigma Width <--- This is not yet implemented
-        peakArea_uncertainty[col], // sigma Area
-        std::erfc(peakArea_uncertainty[col] / peakArea[col])); // DQS
-      // add tmporary Peak to the List
-      peakProperties.emplace(peakID, tmp_peak);
-      peakID++;
+      for (int col : idx1) {
+        // create a temporary Peakproperties object:
+        Peakproperties tmp_peak(
+          beta(0,col), // Regression Coefficients
+          beta(1,col), // Regression Coefficients
+          beta(2,col), // Regression Coefficients
+          beta(3,col), // Regression Coefficients
+          peakID, // peak ID
+          smplID, // smpl ID (running number of spectrum or chromatogram)
+          apex_position[col], // Peak Position
+          peakHeight[col], // Peak Height
+          0.0, // Peak Width <--- This is not yet implemented
+          peakArea[col], // Peak Area
+          apex_position_uncertainty[col], // sigma Position 
+          peakHeight_uncertainty[col], // sigma Height
+          0.0, // sigma Width <--- This is not yet implemented
+          peakArea_uncertainty[col], // sigma Area
+          std::erfc(peakArea_uncertainty[col] / peakArea[col])); // DQS
+        // add tmporary Peak to the List
+        peakProperties.emplace(peakID, tmp_peak);
+        peakID++;
+      }
     }
-  }
 
   // debugging & printing
   std::vector<double> Peakmodel::getPeakProperties(const Peakproperties::PropertiesNames& varName) const {
@@ -1019,6 +1341,10 @@ namespace q {
     for (const auto& kv : tVal) {
             std::cout << "Degree of Freedom: " << kv.first << ", t-Value: " << kv.second << std::endl;
         }
+  }
+
+  bool dataID::operator<(const dataID& other) const {
+    return std::tie(sampleID, subSampleID) < std::tie(other.sampleID, other.subSampleID);
   }
 }
 

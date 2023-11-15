@@ -12,10 +12,25 @@
 #include <vector>
 #include <unordered_set>
 #include <variant>
+#include <thread> // for parallel processing
+#include <mutex> // for parallel processing
 #include "qalgorithms_matrix.h"
 #include "qalgorithms_utils.h"
 
 namespace q {
+  struct dataID {
+    int sampleID;
+    int subSampleID;
+
+    /* comparison operator */
+    bool operator<(const dataID& other) const;
+  };
+  enum class Mode {
+    DEBUGGING,
+    SILENT,
+    PROGRESS
+  };
+
   class Peakproperties
   {
   public:
@@ -100,17 +115,21 @@ namespace q {
     void addSingleMeasurement(Matrix& xyData, bool zero_interpolation = true);
     void addMultipleMeasurements(Matrix& xyData, bool zero_interpolation = true);
     // correct data
+    void gapFilling(Matrix& xyData);
     void zeroInterpolation(Matrix& xyData);
     void zeroInterpolation_oneDirection(Matrix& xyData);
+    void dataSplitting(dataID key, Matrix& xyData, std::map<dataID, Matrix>& DataSet);
     // get 
     std::vector<int> getScales() const;
     std::vector<int> getScaleVec(const std::vector<int>& scales, const int n, const int N) const;
     Matrix getDesignMatrix(int a) const;
     Matrix getPseudoInverse(int a) const; 
-    Matrix getData(int idx) const;
+    Matrix getData(int sampleID, int subSampleID) const;
 
+    // Apply Peakmodel to data (main function)
+    void findPeaks();
     // Perform the Running Peak Regression
-    void runRegression();
+    void runRegression(const std::pair<const dataID, const Matrix>& pair, const std::vector<int>& scales, const size_t k, const int s);
 
     void convolveP(
       Matrix& beta, 
@@ -167,6 +186,18 @@ namespace q {
       const std::vector<double>& mse,
       const std::vector<int>& idx1,
       std::vector<int>& idx2);
+    
+    void peakCoverageCriterion(
+      const int N,
+      bool*& fltrVec,
+      std::vector<double>& peakArea,
+      const std::vector<int>& scaleVec, 
+      const std::vector<int>& xIndices, 
+      const std::vector<double>& apex_positions, 
+      const std::vector<double>& valley_positions,
+      const Matrix& beta,
+      const std::vector<int>& idx1,
+      std::vector<int>& idx2);
 
     // Peak Parameter Calculations
     void calcApex_position(
@@ -199,12 +230,21 @@ namespace q {
       const double y_apex
       ) const;
 
-    void calcPeakArea(
-
-      );
+    std::vector<double> calcPeakArea(
+      const double b0,
+      const double b1,
+      const double b2,
+      const double b3,
+      const double scale
+      ) const;
     
     double calcPeakArea_half(
-
+      const double b0,
+      const double b1,
+      const double b2,
+      const double edge,
+      const bool isleft,
+      const bool hasvalley
     ) const;
 
     double calcPeakArea_halfValley(
@@ -292,14 +332,20 @@ namespace q {
 
     void printTValues(); 
 
+    void setMode(Mode m) {mode = m;};
+    Mode getMode() const {return mode;};
+
   private:
     std::map<int, Matrix> designMatrices;
     std::map<int, Matrix> inverseMatrices;
     std::map<int, Matrix> pseudoInverses;
-    std::map<int, Matrix> measurementData;
+    std::map<dataID, Matrix> measurementData;
     std::map<int, Peakproperties> peakProperties;
     std::map<int, double> tVal;
+    Mode mode;
+    size_t n_measurementData;
 };
+
 };
 
 #endif // QALGORITHMS_H
