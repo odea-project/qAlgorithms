@@ -22,6 +22,7 @@ namespace q {
     Matrix();
     Matrix(size_t rows, size_t cols);
     Matrix(const Matrix& other);
+    void reinitialize(size_t newRows, size_t newCols);
     // Clear Object
     ~Matrix();
     // get dimensions

@@ -13,6 +13,16 @@ namespace q {
     std::copy(other.elements, other.elements + (rows * cols), elements);
   }
 
+  void Matrix::reinitialize(size_t newRows, size_t newCols) {
+    // Free the old memory
+    delete[] elements;
+    
+    // Allocate memory for the new matrix
+    elements = new double[newRows * newCols];
+    rows = newRows;
+    cols = newCols;
+  }
+
   // clear object
   Matrix::~Matrix() {
     delete[] elements;
