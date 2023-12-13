@@ -43,7 +43,7 @@ namespace q {
     sigmaArea(_sigmaArea),
     dqs(_dqs)
     {}
-  
+
   // debuging & printing
     double Peakproperties::getProperty(Peakproperties::PropertiesNames varName) const {
       switch (varName)
@@ -94,7 +94,7 @@ namespace q {
     {
       calculateDesignMatrix(a);
       calculatePseudoInverse(a);
-    } 
+    }
     setMode(Mode::SILENT);
     n_measurementData = 0;
   }
@@ -105,7 +105,7 @@ namespace q {
     {
       calculateDesignMatrix(a);
       calculatePseudoInverse(a);
-    } 
+    }
     setMode(Mode::SILENT);
     n_measurementData = 0;
   }
@@ -129,7 +129,7 @@ namespace q {
   }
 
   // Function to calculate the Designmatrix for a given a
-  void Peakmodel::calculateDesignMatrix(int a) { 
+  void Peakmodel::calculateDesignMatrix(int a) {
     // construct matrix
     size_t m = 4;
     size_t n = 2*a + 1;
@@ -139,26 +139,26 @@ namespace q {
     std::vector<int> x(n);
     for (size_t i = 0; i < n; i++)
     {x[i] = i - a;}
-    
+
     // order vector
     std::vector<int> p = {0, 1, 2, 2};
-    
+
     for (size_t i = 0; i < n; i++)
     {
       for (size_t j = 0; j < m; j++)
       {
-        X(i, j) = std::pow(x[i],p[j]);    
-      }    
+        X(i, j) = std::pow(x[i],p[j]);
+      }
     }
 
     // modification of X due to p(2) and p(3)
     for (size_t i = 0; i < n; i++)
     {
       if (x[i] < 0)
-        {X(i,3) = 0;} 
-      else 
+        {X(i,3) = 0;}
+      else
         {X(i,2) = 0;}
-    }    
+    }
     designMatrices.emplace(a, X);
   }
 
@@ -181,8 +181,8 @@ namespace q {
   }
 
   std::vector<int> Peakmodel::getScaleVec(
-    const std::vector<int>& scales, 
-    const int n, 
+    const std::vector<int>& scales,
+    const int n,
     const int N) const {
       std::vector<int> scaleVec(N);
       int u = 0;
@@ -239,7 +239,7 @@ namespace q {
     }
     std::map<int, int> groupCount;
     size_t n = xyData.numRows();
-    size_t m = xyData.numCols();    
+    size_t m = xyData.numCols();
     for (size_t i = 0; i < n; ++i) {
         int groupNum = static_cast<int>(xyData(i, 2));
         groupCount[groupNum]++;
@@ -265,7 +265,7 @@ namespace q {
     if (mode == Mode::PROGRESS) {
       std::cout << "transfer data to data matrices... ";
     }
-    std::map<int, size_t> currentRowCount; 
+    std::map<int, size_t> currentRowCount;
     for (size_t i = 0; i < n; ++i) {
         int groupNum = static_cast<int>(xyData(i, 2));
         size_t rowIdx = currentRowCount[groupNum]++;
@@ -338,7 +338,7 @@ namespace q {
     std::vector<double> filledData_y;
     bool skipPrevGapCalculation = false;
     double lastPreviousGap = 0.0;
-    // add first 
+    // add first
     filledData.push_back(xyData(0,0));
     filledData_y.push_back(xyData(0,1));
     // find gaps
@@ -350,14 +350,14 @@ namespace q {
         double gap = xyData(i + 1, 0) - xyData(i, 0);
         /* define distance between current und former data point as reference*/
         double previousGap = skipPrevGapCalculation ? lastPreviousGap : xyData(i, 0) - xyData(i - 1, 0);
-        
+
         lastPreviousGap = previousGap > lastPreviousGap ? previousGap : lastPreviousGap;
         /* reset skip criterion */
-        skipPrevGapCalculation = false; 
+        skipPrevGapCalculation = false;
 
         /* calculate the number of datapoints that should included into the gap */
         int fillers = static_cast<int>(gap / previousGap) - 1;
-        
+
         /* define maximum number of fillers, it is 8 due to statistical conventions that a gap of more than 8 points is seen as full separation of the profiles, i.e., here a split can be performed later.*/
         int maxFillers = 8;
         int fillersToAdd = std::min(fillers, maxFillers);
@@ -384,7 +384,7 @@ namespace q {
             skipPrevGapCalculation = true;
         }
     }
-    // add last 
+    // add last
     filledData.push_back(xyData(xyData.numRows()-1,0));
     filledData_y.push_back(xyData(xyData.numRows()-1,1));
     // Transfer data from filledData to xyData
@@ -394,7 +394,7 @@ namespace q {
         xyData(i, 0) = filledData[i];
         xyData(i, 1) = filledData_y[i];
     }
-    
+
   }
 
   void Peakmodel::zeroInterpolation(Matrix& xyData) {
@@ -447,7 +447,7 @@ namespace q {
         xyData(i,1) = (xyData(i-1,1) + xyData(i+1,1)) / 2.;
       }
     }
-    
+
     // Checking the last data point
     if (xyData(n-1,1) == 0.) {
       xyData(n-1,1) = xyData(n-2,1) / 2.;
@@ -495,7 +495,7 @@ namespace q {
     /* This is the main function to perform the automated peak detection. */
     // get list of scales
     const std::vector<int> scales = getScales();
-    // pre-calculate number of regressions: N = (scales.size()*n - 2*sum(scales)) 
+    // pre-calculate number of regressions: N = (scales.size()*n - 2*sum(scales))
     const size_t k = scales.size(); // number of scales
     const int s = 2*sum(scales); // 2*sum(scales)
 
@@ -504,7 +504,7 @@ namespace q {
     ProgressBar progressBar(n_meas);
     int progress_i = 0;
     int updateProgress_nextValue = 0;
-    bool updateProgress = true;
+    // bool updateProgress = true;
     for (const auto& pair: measurementData)
     {
       this -> runRegression(pair,scales,k,s);
@@ -529,24 +529,24 @@ namespace q {
       // get key and data
       dataID key = pair.first;
       Matrix data = pair.second;
-      int peakID = 0; 
+      int peakID = 0;
       // log transform
       Matrix ylog = data.col(1).log(); // 1, i.e., first column (x) will be ignored
 
       // preallocate conv Matrix that later will contain all regression coefficients
       size_t n = ylog.numRows();
       // check if scales fit with the data size
-      if (n > 2*scales[0]) {
+      if (n > 2*(size_t)scales[0]) {
         size_t k2 = k;
         int s2 = s;
         std::vector<int> scales_tmp = scales;
         int largest_scale = scales_tmp[scales_tmp.size()-1];
-        while (n < 2*largest_scale+1)
+        while (n < 2*(size_t)largest_scale+1)
         {
           scales_tmp.pop_back();
           k2 = scales_tmp.size();
           s2 = 2*sum(scales_tmp);
-          largest_scale = scales_tmp[scales_tmp.size() - 1]; 
+          largest_scale = scales_tmp[scales_tmp.size() - 1];
         }
 
         // Variables and Vectors
@@ -554,7 +554,7 @@ namespace q {
         Matrix beta(4,N);
         bool* fltrVec = new bool[N];
         std::fill_n(fltrVec, N, true);
-        
+
         std::vector<int> xIndices(N);
         std::vector<double> apex_positions(N);
         std::vector<double> apex_positions_uncertainty(N);
@@ -566,7 +566,7 @@ namespace q {
         std::vector<int> scaleVec = getScaleVec(scales_tmp, n, N);
         std::vector<double> mse(N);
         int currentIndex = 0;
-        
+
         // iterate through all scales
         for (const auto& p : pseudoInverses) {
           // check if data set is too small for full scan
@@ -585,7 +585,7 @@ namespace q {
 
         idx1.clear();
         parameterCriterion(N, fltrVec,peakHeight,peakHeight_uncertainty, peakArea, peakArea_uncertainty,scaleVec, beta, mse, idx2, idx1);
-        
+
         idx2.clear();
         mergeRegressions(N, fltrVec, beta, scaleVec, xIndices, apex_positions, apex_positions_uncertainty, valley_positions, data.col(1), mse, idx1, idx2);
 
@@ -601,10 +601,10 @@ namespace q {
 
   // Convolution
   void Peakmodel::convolveP(
-    Matrix& beta, 
-    std::vector<int>& xIndices, 
-    const Matrix& P, 
-    const Matrix& ylog, 
+    Matrix& beta,
+    std::vector<int>& xIndices,
+    const Matrix& P,
+    const Matrix& ylog,
     int& currentIndex) {
       size_t n = ylog.numRows();
       size_t k = P.numCols();
@@ -617,12 +617,12 @@ namespace q {
       for (size_t j = 0; j < n_segments; j++)
       {
         beta(0,j + currentIndex) = p1(0, j);
-        beta(1,j + currentIndex) = p2(0, j); 
-        beta(2,j + currentIndex) = p34(0,j); 
-        beta(3,j + currentIndex) = p34(1,j); 
+        beta(1,j + currentIndex) = p2(0, j);
+        beta(2,j + currentIndex) = p34(0,j);
+        beta(3,j + currentIndex) = p34(1,j);
         xIndices[j + currentIndex] = u + k/2;
         u++;
-      } 
+      }
       currentIndex += u;
   }
 
@@ -639,11 +639,11 @@ namespace q {
   // Regression Coefficient Filter Criterion
   void Peakmodel::coefficientCriterion(
     const int N,
-    bool*& fltrVec, 
-    const std::vector<int>& scaleVec, 
-    std::vector<double>& apex_positions, 
-    std::vector<double>& valley_positions, 
-    const std::vector<int>& xIndices, 
+    bool*& fltrVec,
+    const std::vector<int>& scaleVec,
+    std::vector<double>& apex_positions,
+    std::vector<double>& valley_positions,
+    const std::vector<int>& xIndices,
     const Matrix& beta,
     std::vector<int>& idx) {
       // This function extracts peak candidates from beta matrix
@@ -651,17 +651,17 @@ namespace q {
         if (fltrVec[col]) {
           coefficientCriterionCases(scaleVec[col], beta(1,col),beta(2,col),beta(3,col), xIndices[col],apex_positions[col],valley_positions[col],fltrVec[col],idx, col);
         }
-      }   
+      }
   }
 
   void Peakmodel::coefficientCriterionCases(
-    const int scale, 
-    const double b1, 
-    const double b2, 
-    const double b3, 
-    const int xIndex, 
-    double& apex_position, 
-    double& valley_position, 
+    const int scale,
+    const double b1,
+    const double b2,
+    const double b3,
+    const int xIndex,
+    double& apex_position,
+    double& valley_position,
     bool& fltrVal,
     std::vector<int>& idx,
     const size_t IDX) {
@@ -695,11 +695,11 @@ namespace q {
   }
 
   void Peakmodel::calcApex_position(
-    const int scale, 
-    const double b1, 
-    const double b2, 
-    const int xIndex, 
-    double& apex_position, 
+    const int scale,
+    const double b1,
+    const double b2,
+    const int xIndex,
+    double& apex_position,
     bool& fltrVal) {
       apex_position = - b1 / 2 / b2;
       // check if apex position is in window with at least one point buffer
@@ -713,13 +713,13 @@ namespace q {
   }
 
   void Peakmodel::calcApexValley_position(
-    const int scale, 
-    const double b1, 
-    const double b2, 
-    const double b3, 
-    const int xIndex, 
-    double& apex_position, 
-    double& valley_position, 
+    const int scale,
+    const double b1,
+    const double b2,
+    const double b3,
+    const int xIndex,
+    double& apex_position,
+    double& valley_position,
     bool& fltrVal) {
       apex_position = - b1 / 2 / b2;
       valley_position = -b1 / 2 / b3;
@@ -737,11 +737,11 @@ namespace q {
 
   void Peakmodel::quadraticTermCriterion(
     const int N,
-    bool*& fltrVec, 
+    bool*& fltrVec,
     const std::vector<int>& scaleVec,
-    const std::vector<int>& xIndices, 
-    const Matrix& beta, 
-    const Matrix& ylog, 
+    const std::vector<int>& xIndices,
+    const Matrix& beta,
+    const Matrix& ylog,
     std::vector<double>& mse,
     const std::vector<int>& idx1,
     std::vector<int>& idx2) {
@@ -767,7 +767,7 @@ namespace q {
           } else {
             fltrVec[col] = false;
           }
-      }  
+      }
   }
 
   void Peakmodel::parameterCriterion(
@@ -791,7 +791,7 @@ namespace q {
         Matrix J = calcJacobianMatrix_Height(h.first, h.second);
         Matrix C = inverseMatrices[scaleVec[col]] * mse[col];
         double h_uncertainty = std::sqrt( (J * C * J.T()).sumElements());
-        df = scaleVec[col]*2-3; 
+        df = scaleVec[col]*2-3;
         t_crit = tVal[df];
         if (h.second / h_uncertainty < t_crit) {
           fltrVec[col] = false;
@@ -820,9 +820,9 @@ namespace q {
   //     const int N,
   //     bool*& fltrVec,
   //     std::vector<double>& peakArea,
-  //     const std::vector<int>& scaleVec, 
-  //     const std::vector<int>& xIndices, 
-  //     const std::vector<double>& apex_positions, 
+  //     const std::vector<int>& scaleVec,
+  //     const std::vector<int>& xIndices,
+  //     const std::vector<double>& apex_positions,
   //     const std::vector<double>& valley_positions,
   //     const Matrix& beta,
   //     const std::vector<int>& idx1,
@@ -838,7 +838,7 @@ namespace q {
   //         }
   //       }
   //     }
-  
+
   std::vector<double> Peakmodel::calcPeakArea(
       const double b0,
       const double b1,
@@ -895,9 +895,9 @@ namespace q {
       result[2] = trapezoid + B_L + B_R; // Area not Covered by data points
       result[1] = A_L + A_R; // total peak Area
       result[0] = result[2] / result[1]; // uncoverage rate;
-      return result; 
+      return result;
       }
-  
+
   double Peakmodel::calcPeakArea_half(
       const double b0,
       const double b1,
@@ -924,7 +924,7 @@ namespace q {
           err_func_expr = erfi((b1+2*b2*edge)/2/sqrtB2);
         } else {
           err_func_expr = -erfi((b1+2*b2*edge)/2/sqrtB2);
-        } 
+        }
       } else {
         if (isleft) {
           err_func_expr = 1 - std::erf((b1+2*b2*edge)/2/sqrtB2);
@@ -953,7 +953,7 @@ namespace q {
         std::pair<double,double> result = std::make_pair(x_apex, std::exp(y_apex));
         return result;
       }
-  
+
   Matrix Peakmodel::calcJacobianMatrix_Height(
       const double x_apex,
       const double y_apex
@@ -961,10 +961,10 @@ namespace q {
         Matrix J(1,4);
         J(0,0) = y_apex;
         J(0,1) = x_apex * J(0,0);
-        (x_apex < 0) ? J(0,2) = x_apex * J(0,1) : J(0,3) = x_apex * J(0,1); 
+        (x_apex < 0) ? J(0,2) = x_apex * J(0,1) : J(0,3) = x_apex * J(0,1);
         return J;
       }
-  
+
   Matrix Peakmodel::calcJacobianMatrix_Position(
         const double b1,
         const double b2,
@@ -1014,7 +1014,7 @@ namespace q {
       }
       return J_R + J_L;
       }
-  
+
   Matrix Peakmodel::calcJacobianMatrix_Area_half(
       const double b0,
       double b1,
@@ -1034,7 +1034,7 @@ namespace q {
         err_func_expr += 2 - std::erfc(b1/2/SQRTB2);
       }
 
-      // first term 
+      // first term
       double J1 = EXP_B0 * EXP_B12 * err_func_expr / M_2_SQRTPI / SQRTB2;
       // second term
       double J2 = EXP_B0 / 2 / b2 - B1_2_B2 * J1;
@@ -1054,7 +1054,7 @@ namespace q {
       const double b2,
       const bool isLeft
     ) const {
-      // Precalculation:    
+      // Precalculation:
       const double SQRTB2 = std::sqrt(b2);
       const double EXP_B0 = std::exp(b0);
       const double B1_2_B2 = b1 / 2 / b2;
@@ -1130,15 +1130,15 @@ namespace q {
 
               break;
       }
-      return (area_left + area_right + area_trapezoid) / (2 * right_edge - 3 ); // where (2 * right_edge - 3 ) is df 
+      return (area_left + area_right + area_trapezoid) / (2 * right_edge - 3 ); // where (2 * right_edge - 3 ) is df
       }
-  
+
   void Peakmodel::mergeRegressions(
       const int N,
       bool*& fltrVec,
       const Matrix& beta,
       const std::vector<int>& scaleVec,
-      const std::vector<int>& xIndices, 
+      const std::vector<int>& xIndices,
       const std::vector<double>& apex_position,
       std::vector<double>& apex_position_uncertainty,
       const std::vector<double>& valley_position,
@@ -1155,9 +1155,9 @@ namespace q {
 
       // vector of position uncertainties
       double* var_apex = new double[N]();
-      
+
       // create an mse vector for later comparison
-      double* mse_exp = new double[N](); 
+      double* mse_exp = new double[N]();
       // group Vector for candidates that should be compared with the new one
       std::unordered_set<int> idx_candidates;
       size_t n_Candidates = 0;
@@ -1174,7 +1174,7 @@ namespace q {
             apex_position_uncertainty[col] = std::sqrt(var_apex[col]);
             Matrix yhat = designMatrices[scaleVec[col]] * beta.col(col);
             Matrix y = Y.subMatrix(xIndices[col]-scaleVec[col],xIndices[col]+scaleVec[col]+1,0,1);
-            
+
             for (size_t j = 0; j < y.numRows(); j++) {
               yhat(j,0) = std::exp(yhat(j,0));
             }
@@ -1195,7 +1195,7 @@ namespace q {
                 if (mse_exp[col] == 0) {
                   Matrix yhat = designMatrices[scaleVec[col]] * beta.col(col);
                   Matrix y = Y.subMatrix(xIndices[col]-scaleVec[col],xIndices[col]+scaleVec[col]+1,0,1);
-      
+
                   for (size_t j = 0; j < y.numRows(); j++) {
                     yhat(j,0) = std::exp(yhat(j,0));
                   }
@@ -1221,7 +1221,7 @@ namespace q {
                   if (mse_exp[col] == 0) {
                   Matrix yhat = designMatrices[scaleVec[col]] * beta.col(col);
                   Matrix y = Y.subMatrix(xIndices[col]-scaleVec[col],xIndices[col]+scaleVec[col]+1,0,1);
-      
+
                   for (size_t j = 0; j < y.numRows(); j++) {
                     yhat(j,0) = std::exp(yhat(j,0));
                   }
@@ -1278,8 +1278,8 @@ namespace q {
     }
 
   void Peakmodel::exportResults(
-    const Matrix& beta, 
-    bool*& fltrVec, 
+    const Matrix& beta,
+    bool*& fltrVec,
     const std::vector<int>& xIndices,
     const int N,
     const int smplID,
@@ -1305,7 +1305,7 @@ namespace q {
           peakHeight[col], // Peak Height
           0.0, // Peak Width <--- This is not yet implemented
           peakArea[col], // Peak Area
-          apex_position_uncertainty[col], // sigma Position 
+          apex_position_uncertainty[col], // sigma Position
           peakHeight_uncertainty[col], // sigma Height
           0.0, // sigma Width <--- This is not yet implemented
           peakArea_uncertainty[col], // sigma Area
