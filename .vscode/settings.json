@@ -61,6 +61,11 @@
     "variant": "cpp",
     "optional": "cpp",
     "source_location": "cpp",
-    "typeindex": "cpp"
+    "typeindex": "cpp",
+    "condition_variable": "cpp",
+    "mutex": "cpp",
+    "semaphore": "cpp",
+    "stop_token": "cpp",
+    "thread": "cpp"
   }
 }
