@@ -8,24 +8,6 @@ namespace q
     // mean Distances to other elements in vector
     const std::vector<double> fastMeanDistances(const std::vector<double> &x)
     {
-        // const int n = static_cast<int>(x.size()); // always convert to int std::vector<double>
-        // // generate a vector vec_i of lenght n^2 with elements of 1:n repeating n times
-        // std::vector<int> vec_i;
-        // vec_i.reserve(n * n);
-        // for (int i = 1; i < n+1; i++)
-        // {
-        //     std::vector<int> vec_temp(n,i);
-        //     vec_i.insert(vec_i.end(), vec_temp.begin(), vec_temp.end());
-        // }
-        // // generate a vector vec_j of lenght n^2 with the series 1:n repeated n times
-        // std::vector<int> vec_j;
-        // vec_j.reserve(n * n);
-        // for (int i = 1; i < n + 1; i++) // ßßß loop necessary?
-        // {
-        //     std::vector<int> vec_temp(n);
-        //     std::iota(vec_temp.begin(), vec_temp.end(), 1);
-        //     vec_j.insert(vec_j.end(), vec_temp.begin(), vec_temp.end());
-        // }
         const int n = static_cast<int>(x.size());
         std::vector<double> vec_dist;
         vec_dist.reserve(n);
@@ -110,17 +92,70 @@ namespace q
     }
 
     // bin class
-    bin::bin(){}
-    bin::~bin(){}
+    bin::bin() {}
+    bin::~bin() {}
+
+    void subsetBin(const std::vector<double> &nos, std::vector<int> idx)
+    { // void ausgabe, extern vektor initialisieren und mit push_back() anfügen
+        double vcrit;
+        const int n = idx.size();
+        auto pmax = std::max_element(idx.begin(), idx.end()-2); // iterator with the position of maximum. -2 to not include maximum at which the previous cut occurred
+        // int iterator must be implemented outside of the recursive function
+        if (n < 5) // terminate function if bin too small
+        {
+            return;
+        }
+        if (n <= 100) // precalculate crit values if bottleneck
+        {
+            vcrit = 3.05037165842070 * pow(log(n + 1), (-0.4771864667153));
+        }
+        else
+        {
+            vcrit = 3.05037165842070 * pow(log(n + 1), (-0.4771864667153));
+        }
+        if (double max = *pmax < vcrit)
+        {
+            idx.push_back(-1);
+            for (int i = 0; i < n; ++i)
+                std::cout << idx[i] << " ";
+            return; // create bin here
+        }
+        else
+        {
+
+            std::vector<int> range1(idx.begin(), pmax);
+            std::vector<int> range2(pmax, idx.end());
+            subsetBin(nos, range1);
+            subsetBin(nos, range2);
+            // int binstart = idx[0];
+            // for (int i = idx[0]; i == idx.back(); i++) //
+            // {
+            //     if (nos[i] > vcrit)
+            //     {
+            //         std::vector<int> num = std::iota(binstart, i, 1);
+            //         subsetBin(&nos, num);
+            //         int binstart = i+1;
+        }
+        std::cout << "I";
+    }
+
+    // return subsetBin(nos,);
+
 }
 
 int main()
 {
+    const std::vector<double> nos = {0.0178,0.0179,0.0169,0.0175,0.0172,0.0173,0.5580,0.9373,0.2089,0.7187,0.8188,0.7409,0.5495,0.7000,0.7565,0.4286,0.4682,0.1984,0.3768,0.1503,0.2685,0.6151,0.8555,0.4497,0.4177,0.8574,0.2988,0.0278,0.6537,0.0783,0.6358,0.2581,0.7298,0.0919,0.2276,0.3038,0.7050,0.6696,0.7409,0.3830};
+    std::vector<int> index(40); // function runs 12 times for the given dataset
+    std::iota(index.begin(), index.end(), 1);
+
+    q::subsetBin(nos, index);
+
     // std::vector<double> x {1,2,3,4};
-    q::rawData test;
-    test.readcsv("../test/test.csv");
-    std::cout << test.getmz(0);
-    test.help();
+    // q::rawData test;
+    // test.readcsv("../test/test.csv");
+    // std::cout << test.getmz(0);
+    // test.help();
 
     // std::vector<double> y = q::fastMeanDistances(x);
     // int c = 0;
