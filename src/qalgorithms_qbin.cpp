@@ -1,6 +1,6 @@
-// qalgorithms_qbin.cpp
+// qalgorithms_qBin.cpp
 
-#include "../include/qalgorithms_qbin.h"
+#include "../include/qalgorithms_qBin.h"
 
 namespace q
 {
@@ -32,38 +32,40 @@ namespace q
 
     // Classes
     // raw data class
-    rawData::rawData() {}
-    rawData::rawData(std::string path) {}
-    rawData::~rawData() {}
-    double rawData::getmz(int i) const
+    RawData::RawData() {}
+    RawData::RawData(std::string path) {}
+    RawData::~RawData() {}
+    double RawData::getmz(int i) const
     {
         return mz[i];
     }
-    // std::vector<double> rawData::getmz(){}
-    void rawData::setmz(double value, int index) {}
-    void rawData::setmz(const std::vector<double> &vec)
+    std::vector<double> RawData::getmz(){
+        return mz;
+    }
+    void RawData::setmz(double value, int index) {}
+    void RawData::setmz(const std::vector<double> &vec)
     {
         mz = vec;
     }
-    double rawData::getrt(int i) const { return 0.; }
-    // std::vector<double> rawData::getrt(){}
-    void rawData::setrt(double value, int index) {}
-    void rawData::setrt(const std::vector<double> &vec)
+    double RawData::getrt(int i) const { return 0.; }
+    // std::vector<double> RawData::getrt(){}
+    void RawData::setrt(double value, int index) {}
+    void RawData::setrt(const std::vector<double> &vec)
     {
         rt = vec;
     }
-    double rawData::getintensity(int i) const { return 0.; }
-    // std::vector<double> rawData::getintensity(){}
-    void rawData::setintensity(double value, int index) {}
-    void rawData::setintensity(const std::vector<double> &vec)
+    double RawData::getintensity(int i) const { return 0.; }
+    // std::vector<double> RawData::getintensity(){}
+    void RawData::setintensity(double value, int index) {}
+    void RawData::setintensity(const std::vector<double> &vec)
     {
         intensity = vec;
     }
-    void rawData::print()
+    void RawData::print()
     {
         std::cout << "success";
     }
-    void rawData::readcsv(std::string path)
+    void RawData::readcsv(std::string path)
     {
         std::ifstream file(path);
         std::string line;
@@ -86,23 +88,40 @@ namespace q
         rt = df[1];
         intensity = df[2];
     }
-    void rawData::help()
+    void RawData::help()
     {
         std::cout << "\n Your documentation here! \n";
     }
+    const int RawData::size(){
+        return mz.size();
+    }
 
-    // bin class
-    bin::bin() {}
-    bin::~bin() {}
+    // BinContainer class
+    BinContainer::BinContainer(RawData rawData)
+    {
+        const int n = rawData.size();
+        std::vector<int> index(n);
+        std::iota(index.begin(), index.end(), 1);
+        indices = index;
+    }
+    void BinContainer::appendBin(Bin bin){
+        binStorage.push_back(bin);
+        return;
+    }
 
-    void subsetBin(const std::vector<double> &nos, std::vector<int> idx)
+    // Bin class
+    Bin::Bin() {}
+    Bin::~Bin() {}
+
+    void subsetBin(const std::vector<double> &nos, std::vector<int> idx) // idx als pointer
     { // void ausgabe, extern vektor initialisieren und mit push_back() anfügen
         double vcrit;
         const int n = idx.size();
         auto pmax = std::max_element(idx.begin(), idx.end()-2); // iterator with the position of maximum. -2 to not include maximum at which the previous cut occurred
         // int iterator must be implemented outside of the recursive function
-        if (n < 5) // terminate function if bin too small
+        if (n < 5) // terminate function if Bin too small
         {
+            std::cout << "terminate at length" << n << "\n"; //ßßß testing only
             return;
         }
         if (n <= 100) // precalculate crit values if bottleneck
@@ -115,10 +134,11 @@ namespace q
         }
         if (double max = *pmax < vcrit)
         {
-            idx.push_back(-1);
+            // idx.push_back(-1); // not necessary with bin container
             for (int i = 0; i < n; ++i)
-                std::cout << idx[i] << " ";
-            return; // create bin here
+                std::cout << idx[i] << " "; //ßßß testing only
+                std::cout << "\n";
+             // append Bin to bin container here
         }
         else
         {
@@ -127,16 +147,17 @@ namespace q
             std::vector<int> range2(pmax, idx.end());
             subsetBin(nos, range1);
             subsetBin(nos, range2);
-            // int binstart = idx[0];
+            // int Binstart = idx[0];
             // for (int i = idx[0]; i == idx.back(); i++) //
             // {
             //     if (nos[i] > vcrit)
             //     {
-            //         std::vector<int> num = std::iota(binstart, i, 1);
+            //         std::vector<int> num = std::iota(Binstart, i, 1);
             //         subsetBin(&nos, num);
-            //         int binstart = i+1;
+            //         int Binstart = i+1;
+            return;
         }
-        std::cout << "I";
+        std::cout << "I"; // verstehe hier nicht, warum nach return trotzdem I ausgegeben wird
     }
 
     // return subsetBin(nos,);
@@ -145,14 +166,21 @@ namespace q
 
 int main()
 {
+    // test run: create raw data (mz only)
+
+
     const std::vector<double> nos = {0.0178,0.0179,0.0169,0.0175,0.0172,0.0173,0.5580,0.9373,0.2089,0.7187,0.8188,0.7409,0.5495,0.7000,0.7565,0.4286,0.4682,0.1984,0.3768,0.1503,0.2685,0.6151,0.8555,0.4497,0.4177,0.8574,0.2988,0.0278,0.6537,0.0783,0.6358,0.2581,0.7298,0.0919,0.2276,0.3038,0.7050,0.6696,0.7409,0.3830};
     std::vector<int> index(40); // function runs 12 times for the given dataset
     std::iota(index.begin(), index.end(), 1);
 
     q::subsetBin(nos, index);
 
+    std::vector<std::vector<int>> binContainer;
+    binContainer.push_back(index);
+    // std::cout << binContainer[1][20]; // segmentation fault
+
     // std::vector<double> x {1,2,3,4};
-    // q::rawData test;
+    // q::RawData test;
     // test.readcsv("../test/test.csv");
     // std::cout << test.getmz(0);
     // test.help();
