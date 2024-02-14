@@ -1,2 +1,2 @@
 1) m/z, RT etc. werden als vector<double> ausgegeben - Ausgabe sollte mehrere Schreibweisen, z.B. mz, m/z, RT, rt und andere gängige Versionen akzeptieren
-2) .size() Funktion, die direkt die Länge von mz ausgibt
+2) Erste Zeile der csv-Datei wird separat in RawData eingelesen. 

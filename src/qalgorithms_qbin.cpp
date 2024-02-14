@@ -104,7 +104,6 @@ namespace q
     BinContainer::BinContainer(std::string user_desc) //, const RawData rawData, std::optional<std::vector<int>> orderInt, std::optional<std::vector<std::string>> &orderString
     {
         description = user_desc;
-        orderOfImportance = {0, 1}; // ßßß testing only, change later
         // check if an input was made, default to first column as primary and second column as secondary parameter
         // if (orderInt)
         // {
@@ -131,39 +130,52 @@ namespace q
         // std::iota(index.begin(), index.end(), 1);
         // indices = index;
     }
-    void appendBin(Bin bin) // ßßß keep as part of BinStorage
+
+    void BinContainer::initBinning(int dataspace)
     {
-        //binStorage.push_back(bin);
-        return;
-    }
-    void BinContainer::makeNOS(int dimension, bool mostImportant)
-    {
-        if (mostImportant)
+        if (dataspaceDone[dataspace])
         {
-            for (size_t i = 0; i+1 < mainIndices.size(); i++) // +1 to avoid diff outside the vector
+            std::cout << "The selected Dataspace " << dataspace << " was already used for binning.";
+            return;
+        }
+        else
+        {
+            dataspaceDone[dataspace] = true;
+            makeNOS(dataspace);
+            std::vector<int> index(activeNos.size()); // sinnvoll, das so zu lösen? ßßß
+            std::iota(index.begin(), index.end(), 1);
+            subsetBin(activeNos, index);
+        }
+    }
+
+    void BinContainer::makeNOS(int dataspace)
+    {
+        // ßßß mz/rt taken from RawData; implement picker function to retrieve arbitrary columns
+
+        if (dataspace == 0) // ßßß
+        {
+            for (size_t i = 0; i + 1 < mainIndices.size(); i++) // +1 to avoid diff outside the vector
             {
-                double diff = mz[mainIndices[i]] - mz[mainIndices[i+1]];
+                double diff = mz[mainIndices[i]] - mz[mainIndices[i + 1]];
             }
         }
         else // produce new sorted index list for non-primary dimension
         {
-
         }
         activeNos.push_back(-1); // NOS vector has same length as data
     }
 
-    int threadOpen = -1; // ßßß testing only, implemented as private variable in BinContainer
-    void subsetBin(const std::vector<double> &nos, std::vector<int> idx) // idx als pointer
-    {                                                                    // void ausgabe, extern vektor initialisieren und mit push_back() anfügen
-        double vcrit;
+    // int threadOpen = -1;                                                                              // ßßß testing only, implemented as private variable in BinContainer
+    void BinContainer::subsetBin(const std::vector<double> &nos, std::vector<int> idx) // idx als pointer
+    {                                                                                  // void ausgabe, extern vektor initialisieren und mit push_back() anfügen
+
+        double vcrit; // ßßß -1 to threadOpen before calling function!
         const int n = idx.size();
         auto pmax = std::max_element(idx.begin(), idx.end() - 2); // iterator with the position of maximum. -2 to not include maximum at which the previous cut occurred
         // int iterator must be implemented outside of the recursive function
         if (n < 5) // terminate function if Bin too small
         {
             std::cout << "terminate at length" << n << "\n"; // ßßß testing only
-            threadOpen = threadOpen + 1; // this thread terminates, reducing total threads by one
-            std::cout << "open threads: " << threadOpen << "\n";
             return;
         }
         if (n <= 100) // precalculate crit values if bottleneck
@@ -180,16 +192,15 @@ namespace q
             for (int i = 0; i < n; ++i)
                 std::cout << idx[i] << " "; // ßßß testing only
             std::cout << "\n";
-            threadOpen = threadOpen + 1; // this thread terminates, reducing total threads by one
-            // append Bin to bin container 
+            // append Bin to bin container
             Bin output = Bin(idx);
-            //appendBin(output, target); // name of bin container? ßßß redundant if called through bin container, use that
+            binStorage.push_back(output);
+            return;
         }
         else
         {
-            threadOpen = threadOpen - 1; // this thread terminates and creates two new ones, total increase = 1 thread
             std::vector<int> range1(idx.begin(), pmax);
-            std::vector<int> range2(pmax, idx.end());
+            std::vector<int> range2(pmax + 1, idx.end() - 1); // idx.end-1 hier richtig? Sollte eigentlich auf letztes Element des Vektors zeigen
             subsetBin(nos, range1);
             subsetBin(nos, range2);
             // int Binstart = idx[0];
@@ -208,7 +219,8 @@ namespace q
     // return subsetBin(nos,);
 
     // Bin class
-    Bin::Bin(std::vector<int> idx) {
+    Bin::Bin(std::vector<int> idx)
+    {
         index = idx;
         binsize = index.size();
     }
@@ -221,12 +233,9 @@ int main()
     // test run: create raw data (mz only)
     q::BinContainer("test_container"); // name?
 
-
     const std::vector<double> nos = {0.0178, 0.0179, 0.0169, 0.0175, 0.0172, 0.0173, 0.5580, 0.9373, 0.2089, 0.7187, 0.8188, 0.7409, 0.5495, 0.7000, 0.7565, 0.4286, 0.4682, 0.1984, 0.3768, 0.1503, 0.2685, 0.6151, 0.8555, 0.4497, 0.4177, 0.8574, 0.2988, 0.0278, 0.6537, 0.0783, 0.6358, 0.2581, 0.7298, 0.0919, 0.2276, 0.3038, 0.7050, 0.6696, 0.7409, 0.3830};
     std::vector<int> index(40); // function runs 12 times for the given dataset
     std::iota(index.begin(), index.end(), 1);
-
-    q::subsetBin(nos, index);
 
     std::vector<std::vector<int>> binContainer{{-1}};
     binContainer.push_back(index);
