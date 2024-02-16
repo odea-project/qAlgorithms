@@ -213,8 +213,25 @@ int main()
 {
     // test run
     // q::BinContainer test_container("string"); // 
-    q::RawData DATA;
+    rapidcsv::Document DATA("../test/qcentroids_test.csv", rapidcsv::LabelParams(0, 0));
+    // std::vector<std::string> mz = DATA.GetColumnNames();
+    // for (size_t i = 1; i < 8; i++)
+    // {
+    //     std::cout << i << "\n";
+    //     std::cout <<  mz[i] << " / "; 
+    // }
+    std::vector<float> dqs = DATA.GetColumn<float>("Centroid");
+    std::cout << dqs.size();
+    // for (size_t i = 0; i < 8; i++)
+    // {
+    //     std::cout <<  dqs[i] << " / "; 
+    // }
+    
+    
+
     //DATA.readcsv("../test/qcentroids_test.csv");
+
+
 
 
     const std::vector<double> nos = {0.0178, 0.0179, 0.0169, 0.0175, 0.0172, 0.0173, 0.5580, 0.9373, 0.2089, 0.7187, 0.8188, 0.7409, 0.5495, 0.7000, 0.7565, 0.4286, 0.4682, 0.1984, 0.3768, 0.1503, 0.2685, 0.6151, 0.8555, 0.4497, 0.4177, 0.8574, 0.2988, 0.0278, 0.6537, 0.0783, 0.6358, 0.2581, 0.7298, 0.0919, 0.2276, 0.3038, 0.7050, 0.6696, 0.7409, 0.3830};
