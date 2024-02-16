@@ -1,6 +1,8 @@
 // qalgorithms_qBin.cpp
 
 #include "../include/qalgorithms_qBin.h"
+#include "../include/rapidcsv.h"
+
 
 namespace q
 {
@@ -33,40 +35,19 @@ namespace q
     // Classes
     // raw data class
     RawData::RawData() {}
-    RawData::RawData(std::string path) {}
+    // RawData::RawData(std::string path) {}
     RawData::~RawData() {}
-    double RawData::getval_single(int col, int i) const
-    {
-        // return RawData[col][i];
-        return 1.3;
-    }
-    std::vector<double> RawData::getval(int col)
-    {
-        return mz;
-    }
-    void RawData::setval(int col, int i, double value) {}
-    // void RawData::setmz(const std::vector<double> &vec)
+    // double RawData::getval_single(int col, int i) const
     // {
-    //     mz = vec;
+    //     // return RawData[col][i];
+    //     return 1.3;
     // }
-    // double RawData::getrt(int i) const { return 0.; }
-    // // std::vector<double> RawData::getrt(){}
-    // void RawData::setrt(double value, int index) {}
-    // void RawData::setrt(const std::vector<double> &vec)
+    // std::vector<double> RawData::getval(int col)
     // {
-    //     rt = vec;
+    //     return mz;
     // }
-    // double RawData::getintensity(int i) const { return 0.; }
-    // // std::vector<double> RawData::getintensity(){}
-    // void RawData::setintensity(double value, int index) {}
-    // void RawData::setintensity(const std::vector<double> &vec)
-    // {
-    //     intensity = vec;
-    // }
-    void RawData::print()
-    {
-        std::cout << "success";
-    }
+    // void RawData::setval(int col, int i, double value) {}
+    
     void RawData::readcsv(std::string path)
     {
         std::ifstream file(path);
@@ -86,9 +67,9 @@ namespace q
 
             df.push_back(row);
         }
-        mz = df[0];
-        rt = df[1];
-        intensity = df[2];
+        // RawData::mz = df[0];
+        // RawData::rt = df[1];
+        // RawData::intensity = df[2];
     }
     void RawData::help()
     {
@@ -230,8 +211,11 @@ namespace q
 
 int main()
 {
-    // test run: create raw data (mz only)
-    q::BinContainer("test_container"); // name?
+    // test run
+    // q::BinContainer test_container("string"); // 
+    q::RawData DATA;
+    //DATA.readcsv("../test/qcentroids_test.csv");
+
 
     const std::vector<double> nos = {0.0178, 0.0179, 0.0169, 0.0175, 0.0172, 0.0173, 0.5580, 0.9373, 0.2089, 0.7187, 0.8188, 0.7409, 0.5495, 0.7000, 0.7565, 0.4286, 0.4682, 0.1984, 0.3768, 0.1503, 0.2685, 0.6151, 0.8555, 0.4497, 0.4177, 0.8574, 0.2988, 0.0278, 0.6537, 0.0783, 0.6358, 0.2581, 0.7298, 0.0919, 0.2276, 0.3038, 0.7050, 0.6696, 0.7409, 0.3830};
     std::vector<int> index(40); // function runs 12 times for the given dataset
@@ -239,7 +223,7 @@ int main()
 
     std::vector<std::vector<int>> binContainer{{-1}};
     binContainer.push_back(index);
-    std::cout << binContainer[1][1]; // segmentation fault !! Vektoren fangen mit Index 0 an !!
+    std::cout << binContainer[1][1]; // segmentation fault !! Vektoren fangen mit Index 0 an !!ßßß
 
     // std::vector<double> x {1,2,3,4};
     // q::RawData test;

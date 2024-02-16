@@ -7,7 +7,7 @@
 #include <algorithm>
 #include <functional>
 #include <optional>
-#include <thread>
+#include <thread> // wahrscheinlich nicht notwendig
 
 namespace q
 {
@@ -19,35 +19,25 @@ namespace q
     // void appendBin(Bin resultBin, BinContainer target); // implemented as separate function since BinContainer name is unknown
 
     // Classes
-    class RawData
+    class RawData // redundant durch rapidcsv?
     {
     private:
-        std::vector<double> mz; // mass/charge ratio
-        std::vector<double> rt; // retention time
-        std::vector<double> intensity;
+        // std::vector<double> mz; // mass/charge ratio
+        // std::vector<double> rt; // retention time
+        // std::vector<double> intensity;
 
     public:
         RawData();
-        RawData(std::string path);
+        // RawData(std::string path);
         ~RawData();
-        double getval_single(int col, int i) const;
-        std::vector<double> getval(int col);
-        void setval(int col, int i, double value);
-        // double getmz(int i) const;
-        // std::vector<double> getmz();
-        // void setmz(double value, int index);
-        // void setmz(const std::vector<double> &vec);
-        // double getrt(int i) const;
-        // std::vector<double> getrt();
-        // void setrt(double value, int index);
-        // void setrt(const std::vector<double> &vec);
-        // double getintensity(int i) const;
-        // std::vector<double> getintensity();
-        // void setintensity(double value, int index);
-        // void setintensity(const std::vector<double> &vec);
-        void print();
+        // double getval_single(int col, int i) const;
+        // std::vector<double> getval(int col);
+        // void setval(int col, int i, double value);
         void readcsv(std::string path);
-        const int size();
+        const int size(); // necessary?
+        const std::vector<double> mz; // mass/charge ratio
+        const std::vector<double> rt; // retention time
+        const std::vector<double> intensity;
         void help();
     };
 
@@ -125,5 +115,5 @@ namespace q
 -
 -- general --
 re-binning in any dimension should be unnecessary, since the critical value rises with smaller bin size
-multithreading is not automatic, should not be necessary to begin with
+multithreading is not automatic, should not be necessary to begin with - if yes, implement with separate function from make bins
 */
