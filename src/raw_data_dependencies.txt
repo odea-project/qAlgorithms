@@ -1,2 +1,3 @@
 1) m/z, RT etc. werden als vector<double> ausgegeben - Ausgabe sollte mehrere Schreibweisen, z.B. mz, m/z, RT, rt und andere gängige Versionen akzeptieren
 2) Erste Zeile der csv-Datei wird separat in RawData eingelesen. 
+3) Input: Vektor von Vektoren, 1. Zeile enthält Namen
