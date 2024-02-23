@@ -28,7 +28,7 @@ namespace q
 
     public:
         RawData();
-        // RawData(std::string path);
+        RawData(std::vector<std::vector<double>>);
         ~RawData();
         // double getval_single(int col, int i) const;
         // std::vector<double> getval(int col);
