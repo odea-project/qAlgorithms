@@ -19,19 +19,15 @@ namespace q
     // void appendBin(Bin resultBin, BinContainer target); // implemented as separate function since BinContainer name is unknown
 
     // Classes
-    class RawData // redundant durch rapidcsv?
+    class RawData // only contains csv input, find way to make constant
     {
     private:
-        // std::vector<double> mz; // mass/charge ratio
-        // std::vector<double> rt; // retention time
-        // std::vector<double> intensity;
-
     public:
         RawData();
         ~RawData();
         void readcsv(std::string path);
         std::vector<std::string> headers;
-        std::vector<std::vector<double>> data;
+        std::vector<std::vector<double>> data; // ßßß aufbau
         void help();
     };
 
@@ -40,10 +36,10 @@ namespace q
     private:
         std::vector<int> index; // link Bin entries to dataset
         // int t_iterations; // test criteria ßßß not feasible with current approach
-        int BinID;             // random number, hash, checksum? ßßß redundant due to consistent position
-        std::string dataspace; // type of data used ßßß resolved using bin container
+        // int BinID;             // random number, hash, checksum? ßßß redundant due to unique position in container
+        // std::string dataspace; // type of data used ßßß resolved using bin container
         double DQS_B;          // Data quality score
-        int binsize;
+        int binsize;    // test criteria
 
     public:
         Bin(std::vector<int> idx);
@@ -58,27 +54,27 @@ namespace q
     {
     private:
         std::string description;      // generate automatically?
-        std::vector<Bin> binStorage;  // eventuell unsorted map verwenden
+        std::vector<Bin> binStorage;  // eventuell unsorted map verwenden -> nein, vektor erübrigt ID-Abfrage
         std::vector<int> mainIndices; // keep indices of sorted m/z for calculating DQS, implemented as deciding on one dimension
         /*calculate DQS for all dimensions and pick the best one?*/
         // std::vector<bool> retain; // T: keep point for further processing, F: Discard ßßß sollte redundant sein, da nur sortierte m/z bekannt sein müssen
-        std::vector<double> activeNos;      // only one normalised order space is checked at a time
+        std::vector<double> activeNos;      // only one normalised order space is checked at a time ßßß calculate NOS per bin? Possibly less efficient, since bins never need to be reevaluated in one dimension
         std::vector<int> dataspaceSelect;   // user-defined parameters linking to the raw data object
-        std::vector<bool> dataspaceDone;    // prevent repeat operations, use order as determined by raw data
+        std::vector<bool> dataspaceDone;    // prevent repeat operations, primarily intended for testing / time intensive calculations that are better performed stepwise
         std::vector<int> orderOfImportance; // first element is primary dimension
         struct OrderIndices                 // https://stackoverflow.com/questions/25921706/creating-a-vector-of-indices-of-a-sorted-vector
         {
-            const std::vector<int> &target;
-            OrderIndices(const std::vector<int> &target) : target(target) {}
+            const std::vector<double> &target;
+            OrderIndices(const std::vector<double> &target) : target(target) {}
             bool operator()(int a, int b) const { return target[a] < target[b]; }
         };
 
     public:
-        BinContainer(std::string user_desc); // , RawData rawData, std::optional<std::vector<int>> orderInt, std::optional<std::vector<std::string>>& orderString accept arguments as column number or name
+        BinContainer(RawData user_data); // , RawData rawData, std::optional<std::vector<int>> orderInt, std::optional<std::vector<std::string>>& orderString accept arguments as column number or name
         ~BinContainer();
-        void selectDataspace(std::vector<int> selection); // adapt function as to accept different inputs (name), add option to ignore incomplete?
+        // void selectDataspace(std::vector<int> selection); // adapt function as to accept different inputs (name), add option to ignore incomplete? ßßß superfluous
         void startProcessing();                           // wrapper function, iterate over all selected dataspaces
-        void makeNOS(int dataspace);
+        void makeNOS(int dataspace, RawData user_data); // set mainIndices if dataspace[0], set activeNos, only call once per dataspace
         void initBinning(int dataspace); // generate Bins for any one dimension. dataspace is given as all dimensions to bin for as their column number in the imported csv. Binning is performed by iterating over dataspace
         std::vector<int> selectBin(int idx);
         std::vector<int> largestBin();
@@ -98,9 +94,10 @@ namespace q
 }
 
 /* Targeted usage (for testing)
-- create bin container (user input: name)
-- define mz and rt
-- use OoI to select mz as first dimension
+- read csv containing binable dataset
+- create bin container 
+- define order of binning (mz -> RT) // no user input for the time being 
+- create index vector for mz
 - create NOS for mz
 - set first element of dataspaceDone to false
 - bin dataset with mz

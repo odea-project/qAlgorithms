@@ -6,6 +6,18 @@
 
 main()
 {
+
+    std::vector<bool> dataspaceDone;    // prevent repeat operations, use order as determined by raw data
+        std::vector<int> orderOfImportance;
+     orderOfImportance = {0, 1, 2, 3};
+        dataspaceDone.resize(orderOfImportance.size());
+        if (!dataspaceDone[2])
+        {
+            std::cout << dataspaceDone[3] << "\n\n";
+        }
+        
+        
+
     std::ifstream file("./test.csv"); // test.csv must inclide a header line specifying the contents of each column
     std::vector<std::string> data_names;
     std::vector<std::vector<double>> data;

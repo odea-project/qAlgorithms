@@ -50,7 +50,7 @@ namespace q
     void RawData::readcsv(std::string path)
     {
         std::ifstream file(path); // test.csv must inclide a header line specifying the contents of each column
-        
+
         static bool initialised;
 
         std::istringstream stream{};
@@ -80,29 +80,23 @@ namespace q
     }
     void RawData::help()
     {
-        std::cout << "\n Your documentation here! \n";
+        std::cout << "\n Your documentation here! \n"
+                  << "readcsv: The input must include at least one column consisting of a header and one or more numbers written as decimals. Only commas are accepted as deliminators. Headers are case-sensitive. \n";
     }
-   
 
     // BinContainer class
 
-    BinContainer::BinContainer(std::string user_desc) //, const RawData rawData, std::optional<std::vector<int>> orderInt, std::optional<std::vector<std::string>> &orderString
+    BinContainer::BinContainer(RawData user_data) //, const RawData rawData, std::optional<std::vector<int>> orderInt, std::optional<std::vector<std::string>> &orderString
     {
-        description = user_desc;
-        // check if an input was made, default to first column as primary and second column as secondary parameter
-        // if (orderInt)
-        // {
-        //     // orderOfImportance = orderInt.get();
-        //     orderOfImportance = {0, 1};
-        // }
-        // if (orderString)
-        // {
-        //     orderOfImportance = {0, 1}; // ßßß
-        // }
-        // else
-        // {
-        //     orderOfImportance = {0, 1};
-        // }
+        std::cout << "Select the columns you wish to use for binning in decreasing order of resolution by entering the numbers assigned to them comma-separated."
+                    << "\n The availvable columns are:\n";
+        for (size_t i = 0; i < user_data.headers.size(); i++)
+        {
+            std::cout << user_data.headers[i] << " - " << i << " // ";
+        }
+        // ßßß include user input here - include option to skip user input if OoI is given as argument to BinContainer()
+        orderOfImportance = {0, 1};
+        dataspaceDone.resize(orderOfImportance.size()); // default value of bool is false
 
         // // assume rawData is a vector of vectors
         // // sort by first OoI
@@ -120,33 +114,35 @@ namespace q
     {
         if (dataspaceDone[dataspace])
         {
-            std::cout << "The selected Dataspace " << dataspace << " was already used for binning.";
+            std::cout << "Dataspace " << dataspace << " was already used for binning, skipping ahead...\n";
             return;
         }
         else
         {
-            dataspaceDone[dataspace] = true;
-            makeNOS(dataspace);
-            std::vector<int> index(activeNos.size()); // sinnvoll, das so zu lösen? ßßß
-            std::iota(index.begin(), index.end(), 1);
-            subsetBin(activeNos, index);
+            dataspaceDone[dataspace] = true; // erst ganz am Ende ßßß
+            // makeNOS(dataspace);
+            
         }
     }
 
-    void BinContainer::makeNOS(int dataspace)
+    void BinContainer::makeNOS(int dataspace, RawData user_data)
     {
-        // ßßß mz/rt taken from RawData; implement picker function to retrieve arbitrary columns
-
-        if (dataspace == 0) // ßßß
+        // 
+        std::vector<int> index(user_data.data[0].size()); // sinnvoll, das so zu lösen? ßßß
+        std::iota(index.begin(), index.end(), 1);
+        // sort index by size of the active dataspace
+        std::sort(index.begin(), index.end(), OrderIndices(user_data.data[dataspace]));
+        
+        if (dataspace == orderOfImportance[0]) 
         {
+            mainIndices = index;
+        }
+        
             for (size_t i = 0; i + 1 < mainIndices.size(); i++) // +1 to avoid diff outside the vector
             {
                 double diff = mz[mainIndices[i]] - mz[mainIndices[i + 1]];
             }
-        }
-        else // produce new sorted index list for non-primary dimension
-        {
-        }
+        
         activeNos.push_back(-1); // NOS vector has same length as data
     }
 

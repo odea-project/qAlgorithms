@@ -1,3 +1,4 @@
 1) m/z, RT etc. werden als vector<double> ausgegeben - Ausgabe sollte mehrere Schreibweisen, z.B. mz, m/z, RT, rt und andere gängige Versionen akzeptieren
-2) Erste Zeile der csv-Datei wird separat in RawData eingelesen. 
+2) Erste Zeile der csv-Datei wird separat in RawData eingelesen. csv muss mit den Spaltennamen anfangen
 3) Input: Vektor von Vektoren, 1. Zeile enthält Namen
+test.csv: muss mz als 1., RT als 2. spalte haben; es müssen für alle Spalten Werte vorliegen - setze auf nonsense-Wert, um Fehlzuweisungen zu vermeiden?
