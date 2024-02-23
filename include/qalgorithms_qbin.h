@@ -28,16 +28,10 @@ namespace q
 
     public:
         RawData();
-        RawData(std::vector<std::vector<double>>);
         ~RawData();
-        // double getval_single(int col, int i) const;
-        // std::vector<double> getval(int col);
-        // void setval(int col, int i, double value);
         void readcsv(std::string path);
-        const int size(); // necessary?
-        const std::vector<double> mz; // mass/charge ratio
-        const std::vector<double> rt; // retention time
-        const std::vector<double> intensity;
+        std::vector<std::string> headers;
+        std::vector<std::vector<double>> data;
         void help();
     };
 

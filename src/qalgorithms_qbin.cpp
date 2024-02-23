@@ -3,7 +3,6 @@
 #include "../include/qalgorithms_qBin.h"
 #include "../include/rapidcsv.h"
 
-
 namespace q
 {
     // Functions
@@ -47,38 +46,43 @@ namespace q
     //     return mz;
     // }
     // void RawData::setval(int col, int i, double value) {}
-    
+
     void RawData::readcsv(std::string path)
     {
-        std::ifstream file(path);
-        std::string line;
-        std::vector<std::vector<double>> df;
+        std::ifstream file(path); // test.csv must inclide a header line specifying the contents of each column
+        
+        static bool initialised;
 
-        while (std::getline(file, line))
+        std::istringstream stream{};
+
+        for (std::string line{}; std::getline(file, line); stream.clear())
         {
-            std::stringstream ss(line);
-            std::string cell;
-            std::vector<double> row;
+            stream.str(line);
+            std::string number{};
+            std::size_t position = 0;
 
-            while (std::getline(ss, cell, ','))
+            if (!initialised) // only execute this part once - uses same naming as numbers to remove header
             {
-                row.push_back(std::stod(cell));
+                initialised = true;
+                while (std::getline(stream, number, ','))
+                {
+                    headers.push_back(number);
+                }
+                data.resize(headers.size());
             }
 
-            df.push_back(row);
+            while (std::getline(stream, number, ',')) // every subvector contains one column
+            {
+                data[position].push_back(stod(number));
+                ++position;
+            }
         }
-        // RawData::mz = df[0];
-        // RawData::rt = df[1];
-        // RawData::intensity = df[2];
     }
     void RawData::help()
     {
         std::cout << "\n Your documentation here! \n";
     }
-    const int RawData::size()
-    {
-        return mz.size();
-    }
+   
 
     // BinContainer class
 
@@ -212,27 +216,19 @@ namespace q
 int main()
 {
     // test run
-    // q::BinContainer test_container("string"); // 
-    rapidcsv::Document DATA("../test/qcentroids_test.csv", rapidcsv::LabelParams(0, 0));
+    // q::BinContainer test_container("string"); //
     // std::vector<std::string> mz = DATA.GetColumnNames();
     // for (size_t i = 1; i < 8; i++)
     // {
     //     std::cout << i << "\n";
-    //     std::cout <<  mz[i] << " / "; 
+    //     std::cout <<  mz[i] << " / ";
     // }
-    std::vector<float> dqs = DATA.GetColumn<float>("Centroid");
-    std::cout << dqs.size();
     // for (size_t i = 0; i < 8; i++)
     // {
-    //     std::cout <<  dqs[i] << " / "; 
+    //     std::cout <<  dqs[i] << " / ";
     // }
-    
-    
 
-    //DATA.readcsv("../test/qcentroids_test.csv");
-
-
-
+    // DATA.readcsv("../test/qcentroids_test.csv");
 
     const std::vector<double> nos = {0.0178, 0.0179, 0.0169, 0.0175, 0.0172, 0.0173, 0.5580, 0.9373, 0.2089, 0.7187, 0.8188, 0.7409, 0.5495, 0.7000, 0.7565, 0.4286, 0.4682, 0.1984, 0.3768, 0.1503, 0.2685, 0.6151, 0.8555, 0.4497, 0.4177, 0.8574, 0.2988, 0.0278, 0.6537, 0.0783, 0.6358, 0.2581, 0.7298, 0.0919, 0.2276, 0.3038, 0.7050, 0.6696, 0.7409, 0.3830};
     std::vector<int> index(40); // function runs 12 times for the given dataset
