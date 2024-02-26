@@ -2,3 +2,4 @@
 2) Erste Zeile der csv-Datei wird separat in RawData eingelesen. csv muss mit den Spaltennamen anfangen
 3) Input: Vektor von Vektoren, 1. Zeile enthält Namen
 test.csv: muss mz als 1., RT als 2. spalte haben; es müssen für alle Spalten Werte vorliegen - setze auf nonsense-Wert, um Fehlzuweisungen zu vermeiden?
+Parallelisieren: Im 1. Schritt des Binnings wird der Datensatz an allen Stellen mit nos > critval(5) gespalten und auf einen neuen thread gegeben

@@ -1,12 +1,11 @@
 // qalgorithms_qBin.cpp
 
 #include "../include/qalgorithms_qBin.h"
-#include "../include/rapidcsv.h"
 
 namespace q
 {
     // Functions
-    // mean Distances to other elements in vector
+    // mean Distances to other elements in vector ßßß implement as part of bin container class
     const std::vector<double> fastMeanDistances(const std::vector<double> &x)
     {
         const int n = static_cast<int>(x.size());
@@ -31,22 +30,10 @@ namespace q
         return vec_dist;
     }
 
-    // Classes
-    // raw data class
+    
+    // RawData Class
     RawData::RawData() {}
-    // RawData::RawData(std::string path) {}
     RawData::~RawData() {}
-    // double RawData::getval_single(int col, int i) const
-    // {
-    //     // return RawData[col][i];
-    //     return 1.3;
-    // }
-    // std::vector<double> RawData::getval(int col)
-    // {
-    //     return mz;
-    // }
-    // void RawData::setval(int col, int i, double value) {}
-
     void RawData::readcsv(std::string path)
     {
         std::ifstream file(path); // test.csv must inclide a header line specifying the contents of each column
@@ -83,13 +70,12 @@ namespace q
         std::cout << "\n Your documentation here! \n"
                   << "readcsv: The input must include at least one column consisting of a header and one or more numbers written as decimals. Only commas are accepted as deliminators. Headers are case-sensitive. \n";
     }
-
+    
     // BinContainer class
-
-    BinContainer::BinContainer(RawData user_data) //, const RawData rawData, std::optional<std::vector<int>> orderInt, std::optional<std::vector<std::string>> &orderString
+    BinContainer::BinContainer(const RawData user_data) 
     {
         std::cout << "Select the columns you wish to use for binning in decreasing order of resolution by entering the numbers assigned to them comma-separated."
-                    << "\n The availvable columns are:\n";
+                  << "\n The availvable columns are:\n";
         for (size_t i = 0; i < user_data.headers.size(); i++)
         {
             std::cout << user_data.headers[i] << " - " << i << " // ";
@@ -97,17 +83,8 @@ namespace q
         // ßßß include user input here - include option to skip user input if OoI is given as argument to BinContainer()
         orderOfImportance = {0, 1};
         dataspaceDone.resize(orderOfImportance.size()); // default value of bool is false
-
-        // // assume rawData is a vector of vectors
-        // // sort by first OoI
-
-        // for (size_t i = 0; i < x.size(); ++i)
-        //     mainIndices.push_back(i);
-        // std::vector<int> mainIndices =
-        //     const int n = RawData.getval(orderOfImportance[0]);
-        // std::vector<int> index(n);
-        // std::iota(index.begin(), index.end(), 1);
-        // indices = index;
+        std::cout << "Select the column which contains the standard error for your primary parameter by enterin the number assigned to it.";
+        activeNos.reserve(user_data.data[0].size());
     }
 
     void BinContainer::initBinning(int dataspace)
@@ -121,36 +98,37 @@ namespace q
         {
             dataspaceDone[dataspace] = true; // erst ganz am Ende ßßß
             // makeNOS(dataspace);
-            
         }
     }
 
-    void BinContainer::makeNOS(int dataspace, RawData user_data)
+    void BinContainer::makeNOS(int dataspace, std::vector<std::vector<double>> activeDim)
     {
-        // 
-        std::vector<int> index(user_data.data[0].size()); // sinnvoll, das so zu lösen? ßßß
+        //ßßß remove
+        std::vector<int> orderOfImportance = {0, 1};
+        std::vector<double> activeNos;
+        //
+        std::vector<int> index(activeDim[0].size()); // .data
         std::iota(index.begin(), index.end(), 1);
         // sort index by size of the active dataspace
-        std::sort(index.begin(), index.end(), OrderIndices(user_data.data[dataspace]));
-        
-        if (dataspace == orderOfImportance[0]) 
+        std::sort(index.begin(), index.end(), OrderIndices(activeDim[dataspace])); // .data
+
+        if (dataspace == orderOfImportance[0])
         {
             mainIndices = index;
         }
-        
-            for (size_t i = 0; i + 1 < mainIndices.size(); i++) // +1 to avoid diff outside the vector
-            {
-                double diff = mz[mainIndices[i]] - mz[mainIndices[i + 1]];
-            }
-        
+
+        for (size_t i = 0; i + 1 < index.size(); i++) // +1 since difference vector is one short
+        {
+            double diff = activeDim[dataspace][index[i + 1]] - activeDim[dataspace][index[i]];
+            activeNos.push_back(diff);
+        }
+
         activeNos.push_back(-1); // NOS vector has same length as data
     }
 
-    // int threadOpen = -1;                                                                              // ßßß testing only, implemented as private variable in BinContainer
-    void BinContainer::subsetBin(const std::vector<double> &nos, std::vector<int> idx) // idx als pointer
-    {                                                                                  // void ausgabe, extern vektor initialisieren und mit push_back() anfügen
-
-        double vcrit; // ßßß -1 to threadOpen before calling function!
+    void BinContainer::subsetBin(const std::vector<double> &nos, std::vector<int> idx) // idx not a pointer to enable pausing
+    {                                                                                  
+        double vcrit; 
         const int n = idx.size();
         auto pmax = std::max_element(idx.begin(), idx.end() - 2); // iterator with the position of maximum. -2 to not include maximum at which the previous cut occurred
         // int iterator must be implemented outside of the recursive function
@@ -159,7 +137,7 @@ namespace q
             std::cout << "terminate at length" << n << "\n"; // ßßß testing only
             return;
         }
-        if (n <= 100) // precalculate crit values if bottleneck
+        if (n <= 100) // precalculate crit values if bottleneck ßßß removed due to dynamic mz error calc
         {
             vcrit = 3.05037165842070 * pow(log(n + 1), (-0.4771864667153));
         }
@@ -197,7 +175,34 @@ namespace q
         std::cout << "I"; // verstehe hier nicht, warum nach return trotzdem I ausgegeben wird
     }
 
-    // return subsetBin(nos,);
+    std::vector<int> BinContainer::allOfSize(std::vector<int> size){
+        std::vector<int> output;
+        for (size_t i = 0; i < binStorage.size(); i++)
+        {
+            if(std::find(size.begin(), size.end(), binStorage[i].binsize) != size.end()){
+                output.push_back(i);
+            }
+        }
+        return output;
+    }
+
+    std::vector<int> BinContainer::byScore(double score, bool invert = false){
+        std::vector<int> output;
+        for (size_t i = 0; i < binStorage.size(); i++)
+        {
+            if((binStorage[i].DQS_B < score)*invert){
+                output.push_back(i);
+            }
+        }
+        return output;
+    }
+
+    // BinContainer::largestBin
+
+    // BinContainer::selectBin
+
+    // BinContainer::
+
 
     // Bin class
     Bin::Bin(std::vector<int> idx)
@@ -206,25 +211,16 @@ namespace q
         binsize = index.size();
     }
     Bin::~Bin() {}
-
 }
 
 int main()
 {
-    // test run
-    // q::BinContainer test_container("string"); //
-    // std::vector<std::string> mz = DATA.GetColumnNames();
-    // for (size_t i = 1; i < 8; i++)
-    // {
-    //     std::cout << i << "\n";
-    //     std::cout <<  mz[i] << " / ";
-    // }
-    // for (size_t i = 0; i < 8; i++)
-    // {
-    //     std::cout <<  dqs[i] << " / ";
-    // }
+    q::RawData test;
+    test.readcsv("../test/test.csv");
+    // q::BinContainer testCont(test); // compile error if not every function
+    
 
-    // DATA.readcsv("../test/qcentroids_test.csv");
+
 
     const std::vector<double> nos = {0.0178, 0.0179, 0.0169, 0.0175, 0.0172, 0.0173, 0.5580, 0.9373, 0.2089, 0.7187, 0.8188, 0.7409, 0.5495, 0.7000, 0.7565, 0.4286, 0.4682, 0.1984, 0.3768, 0.1503, 0.2685, 0.6151, 0.8555, 0.4497, 0.4177, 0.8574, 0.2988, 0.0278, 0.6537, 0.0783, 0.6358, 0.2581, 0.7298, 0.0919, 0.2276, 0.3038, 0.7050, 0.6696, 0.7409, 0.3830};
     std::vector<int> index(40); // function runs 12 times for the given dataset
@@ -241,13 +237,5 @@ int main()
     // test.help();
 
     // std::vector<double> y = q::fastMeanDistances(x);
-    // int c = 0;
-    // for (int i = 0; i < 10; i++) {
-    //    if (i == 5)
-    //    {
-    //     c = i;
-    //    }
-    // }
-    // std::cout << c;
     return 0;
 }
