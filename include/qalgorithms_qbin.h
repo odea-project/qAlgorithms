@@ -34,13 +34,12 @@ namespace q
     class Bin
     {
     private:
-        std::vector<int> index; // link Bin entries to dataset
+        
         // int BinID;             // random number, hash, checksum? ßßß redundant due to unique position in container
     public:
         Bin(std::vector<int> idx);
         ~Bin();
-        std::vector<int> getIndex();
-        void setIndex(std::vector<int> vec); // ßßß for testing
+        std::vector<int> index; // link Bin entries to dataset
         int binsize;                         // test criteria
         double DQS_B;                        // Data quality score
     };
@@ -48,7 +47,6 @@ namespace q
     class BinContainer
     {
     private:
-        std::string description;      // generate automatically?
         std::vector<Bin> binStorage;  // eventuell unsorted map verwenden -> nein, vektor erübrigt ID-Abfrage
         std::vector<int> mainIndices; // keep indices of sorted m/z for calculating DQS, implemented as deciding on one dimension
         /*calculate DQS for all dimensions and pick the best one?*/
@@ -72,10 +70,9 @@ namespace q
         void makeNOS(int dataspace, std::vector<std::vector<double>> activeDim); // set mainIndices if dataspace[0], set activeNos, only call once per dataspace
         void initBinning(int dataspace);                                         // generate Bins for any one dimension. dataspace is given as all dimensions to bin for as their column number in the imported csv. Binning is performed by iterating over dataspace
         std::vector<int> selectBin(int idx);
-        std::vector<int> largestBin();
         std::vector<int> allOfSize(std::vector<int> size);                // include mod for 2x int -> range entry
-        std::vector<int> byScore(double score, bool invert = false);      // only output bins over a given score, invert for below
-        std::vector<int> t_binsizes();
+        std::vector<int> byScore(double score, bool invert);      // only output bins over a given score, invert for below
+        void t_binsizes();
         void subsetBin(const std::vector<double> &nos, std::vector<int> idx); // index vector to pointers
         /* fürs Subsetting ist es nicht notwendig, die nos zu verändern -
         pointer lösen das Problem, solange der nos-Vektor im Speicher bleiben kann.
