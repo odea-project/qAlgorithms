@@ -5,7 +5,6 @@
 namespace q
 {
     // Functions
-    
 
     // RawData Class
     RawData::RawData() {}
@@ -76,25 +75,22 @@ namespace q
         {
             // create order space
             makeNOS(user_data.data[dataspace]); // dataspace is one element of orderOfImportance vector
-
-            dataspaceDone[dataspace] = true; // erst ganz am Ende ßßß
+            subsetBin(activeNos, user_data.data[errorCol], 0, activeNos.size());
+            dataspaceDone[dataspace] = true;
         }
     }
 
     void BinContainer::makeNOS(std::vector<double> activeDim)
     {
-       
+
         activeNos.reserve(activeDim.size());
         //
-        std::vector<int> index(activeDim.size()); 
-        std::iota(index.begin(), index.end(), 1);
+        std::vector<int> index(activeDim.size());
+        std::iota(index.begin(), index.end(), 0);
         // sort index by size of the active dataspace
-        std::sort(index.begin(), index.end(), OrderIndices(activeDim)); 
+        std::sort(index.begin(), index.end(), OrderIndices(activeDim));
 
-        // if (i == 0) // implement in for loop
-        // {
-        //     mainIndices = index;
-        // }
+        mainIndices = index; // change if binning in more than one dimension / add function to subset bins with vector of bins as input
 
         for (size_t i = 0; i + 1 < index.size(); i++) // +1 since difference vector is one short
         {
@@ -105,11 +101,12 @@ namespace q
         activeNos.push_back(-225); // NOS vector has same length as data, -225 taken from existing code
     }
 
-    void BinContainer::subsetBin(const std::vector<double> &nos, const std::vector<double> &error, std::vector<int> idx) // idx not a pointer to enable pausing ßßß requires error list
-    {
+    void BinContainer::subsetBin(const std::vector<double> &nos, const std::vector<double> &error, int beginBin, int endBin) // idx not a pointer to enable pausing ßßß requires error list
+    {                                                                                                                        // give start and end coordinates of bin instead of whole range
         double vcrit;
-        const int n = idx.size();
-        auto pmax = std::max_element(idx.begin(), idx.end() - 2); // iterator with the position of maximum. -2 to not include maximum at which the previous cut occurred
+        const int n = endBin - beginBin + 1;                                            // size 0 not possible, since then no cut would occur -> saved as Bin
+        auto pmax = std::max_element(nos.begin() + beginBin, nos.begin() + endBin - 1); // -1 to not include maximum at which the previous cut occurred
+        int cutpos = std::distance(nos.begin() + beginBin, pmax);
         // int iterator must be implemented outside of the recursive function
         if (n < 5) // terminate function if Bin too small
         {
@@ -117,19 +114,17 @@ namespace q
             return;
         }
         double meanerror = 0;
-        for (size_t i = 0; i < idx.size(); i++)
+        for (size_t i = beginBin; i == endBin; i++)
         {
-            meanerror += error[idx[i]]; // efficient?
+            meanerror += error[mainIndices[i]]; // efficient?
         }
-        
-        vcrit = 3.05037165842070 * pow(log(n + 1), (-0.4771864667153)) * meanerror/n; // integrate calculation of mean mz error - norm would be mz / error > critval, equivalent to mz > critval * error
+
+        vcrit = 3.05037165842070 * pow(log(n + 1), (-0.4771864667153)) * meanerror / n; // integrate calculation of mean mz error - norm would be mz / error > critval, equivalent to mz > critval * error
 
         if (double max = *pmax < vcrit)
         {
-            // idx.push_back(-1); // not necessary with bin container
-            for (int i = 0; i < n; ++i)
-                std::cout << idx[i] << " "; // ßßß testing only
-            std::cout << "\n";
+            // construct vector containing indices in relation to raw data
+            std::vector<int> idx(&mainIndices[beginBin], &mainIndices[endBin]);
             // append Bin to bin container
             Bin output = Bin(idx);
             binStorage.push_back(output);
@@ -137,21 +132,11 @@ namespace q
         }
         else
         {
-            std::vector<int> range1(idx.begin(), pmax);
-            std::vector<int> range2(pmax + 1, idx.end() - 1); // idx.end-1 hier richtig? Sollte eigentlich auf letztes Element des Vektors zeigen
-            subsetBin(nos, error, range1);
-            subsetBin(nos, error, range2);
-            // int Binstart = idx[0];
-            // for (int i = idx[0]; i == idx.back(); i++) //
-            // {
-            //     if (nos[i] > vcrit)
-            //     {
-            //         std::vector<int> num = std::iota(Binstart, i, 1);
-            //         subsetBin(&nos, num);
-            //         int Binstart = i+1;
+            subsetBin(nos, error, beginBin, beginBin + cutpos);
+            subsetBin(nos, error, beginBin + cutpos + 1, endBin);
             return;
         }
-        std::cout << "I"; // verstehe hier nicht, warum nach return trotzdem I ausgegeben wird
+        std::cout << "I"; // count total number of function calls ßßß remove
     }
 
     std::vector<int> BinContainer::allOfSize(std::vector<int> size)
@@ -203,7 +188,8 @@ namespace q
         std::cout << "\n";
     }
 
-    std::vector<int> BinContainer::selectBin(int idx){
+    std::vector<int> BinContainer::selectBin(int idx)
+    {
         return binStorage[idx].index;
     }
 
@@ -238,7 +224,7 @@ namespace q
         binsize = index.size();
     }
     Bin::~Bin() {}
-    
+
 }
 
 // main
@@ -246,11 +232,8 @@ int main()
 {
     q::RawData test;
     test.readcsv("../test/test.csv");
-    q::BinContainer testCont(test); 
-    testCont.initBinning(0, test);
-
-
-
+    q::BinContainer testCont(test);
+    testCont.initBinning(0, test); // sorting and nos creation works well
 
     // leave
 

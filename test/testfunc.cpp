@@ -51,4 +51,7 @@ int main()
     std::vector<std::vector<double>> testdim{i,i};
     std::vector<double> vtest = makeNOS(0, testdim);
     print("diff: ", vtest);
+
+    auto pmax = std::max_element(v[0], v[3-1]);
+    // print("pmax: ", pmax);
 }
