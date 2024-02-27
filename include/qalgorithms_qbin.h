@@ -67,7 +67,7 @@ namespace q
         std::vector<int> allOfSize(std::vector<int> size);                // include mod for 2x int -> range entry
         std::vector<int> byScore(double score, bool invert);      // only output bins over a given score, invert for below
         void t_binsizes();
-        void subsetBin(const std::vector<double> &nos, const std::vector<double> &error, std::vector<int> idx); // index vector to pointers
+        void subsetBin(const std::vector<double> &nos, const std::vector<double> &error, int beginBin, int endBin); // begin and end of range in nos
         /* fürs Subsetting ist es nicht notwendig, die nos zu verändern -
         pointer lösen das Problem, solange der nos-Vektor im Speicher bleiben kann.
         Erst am Schluss müssen die Indices zurück auf die Daten gemappt werden */
