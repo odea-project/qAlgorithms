@@ -12,12 +12,7 @@
 namespace q
 {
     // Functions
-    const std::vector<double> fastMeanDistances(const std::vector<double> &x); // calculate the mean Distances of one to other elements in vector
-    // q::Bin extractBin(const q::rawData &data);
-    // q::Bin makeBins(const q::Bin &Bin);
-    // q::resultFrame ;
-    // void appendBin(Bin resultBin, BinContainer target); // implemented as separate function since BinContainer name is unknown
-
+    
     // Classes
     class RawData // only contains csv input, find way to make constant
     {
@@ -34,8 +29,6 @@ namespace q
     class Bin
     {
     private:
-        
-        // int BinID;             // random number, hash, checksum? ßßß redundant due to unique position in container
     public:
         Bin(std::vector<int> idx);
         ~Bin();
@@ -55,6 +48,7 @@ namespace q
         // std::vector<int> dataspaceSelect;   //ßßß superfluous user-defined parameters linking to the raw data object
         std::vector<bool> dataspaceDone;    // prevent repeat operations, primarily intended for testing / time intensive calculations that are better performed stepwise
         std::vector<int> orderOfImportance; // first element is primary dimension
+        int errorCol;
         struct OrderIndices                 // https://stackoverflow.com/questions/25921706/creating-a-vector-of-indices-of-a-sorted-vector
         {
             const std::vector<double> &target;
@@ -63,20 +57,21 @@ namespace q
         };
 
     public:
-        BinContainer(RawData user_data); // , RawData rawData, std::optional<std::vector<int>> orderInt, std::optional<std::vector<std::string>>& orderString accept arguments as column number or name
+        BinContainer(const RawData &user_data); // , RawData rawData, std::optional<std::vector<int>> orderInt, std::optional<std::vector<std::string>>& orderString accept arguments as column number or name
         ~BinContainer();
         // void selectDataspace(std::vector<int> selection); // adapt function as to accept different inputs (name), add option to ignore incomplete? ßßß superfluous
         void startProcessing();                                                  // wrapper function, iterate over all selected dataspaces
-        void makeNOS(int dataspace, std::vector<std::vector<double>> activeDim); // set mainIndices if dataspace[0], set activeNos, only call once per dataspace
-        void initBinning(int dataspace);                                         // generate Bins for any one dimension. dataspace is given as all dimensions to bin for as their column number in the imported csv. Binning is performed by iterating over dataspace
+        void makeNOS(std::vector<double> activeDim); // set mainIndices if dataspace[0], set activeNos, only call once per dataspace
+        void initBinning(int dataspace, RawData &user_data);                                         // generate Bins for any one dimension. dataspace is given as all dimensions to bin for as their column number in the imported csv. Binning is performed by iterating over dataspace
         std::vector<int> selectBin(int idx);
         std::vector<int> allOfSize(std::vector<int> size);                // include mod for 2x int -> range entry
         std::vector<int> byScore(double score, bool invert);      // only output bins over a given score, invert for below
         void t_binsizes();
-        void subsetBin(const std::vector<double> &nos, std::vector<int> idx); // index vector to pointers
+        void subsetBin(const std::vector<double> &nos, const std::vector<double> &error, std::vector<int> idx); // index vector to pointers
         /* fürs Subsetting ist es nicht notwendig, die nos zu verändern -
         pointer lösen das Problem, solange der nos-Vektor im Speicher bleiben kann.
         Erst am Schluss müssen die Indices zurück auf die Daten gemappt werden */
+        const std::vector<double> meanDistances(const std::vector<double> &x); // calculate the mean Distances of one to other elements in vector
         void help(); // include documentation for bin object
     };
 

@@ -5,30 +5,7 @@
 namespace q
 {
     // Functions
-    // mean Distances to other elements in vector ßßß implement as part of bin container class
-    const std::vector<double> fastMeanDistances(const std::vector<double> &x)
-    {
-        const int n = static_cast<int>(x.size());
-        std::vector<double> vec_dist;
-        vec_dist.reserve(n);
-        // if not sorted / not sortable: Calculate absolute distance between i and j, add it to the position of i and j.
-        for (int i = 0; i < n; ++i)
-        {
-            for (int j = i + 1; j <= n; ++j)
-            {
-                double dist = abs(x[i] - x[j]);
-                vec_dist[i] = +dist;
-                vec_dist[j] = +dist;
-            }
-            vec_dist[i] == vec_dist[i] / (n - 1);
-        }
-
-        for (int i = 0; i < n; ++i)
-            std::cout << vec_dist[i] << " ";
-
-        // std::cout << x.size() << std::endl;
-        return vec_dist;
-    }
+    
 
     // RawData Class
     RawData::RawData() {}
@@ -71,7 +48,7 @@ namespace q
     }
 
     // BinContainer class
-    BinContainer::BinContainer(const RawData user_data)
+    BinContainer::BinContainer(const RawData &user_data)
     {
         std::cout << "Select the columns you wish to use for binning in decreasing order of resolution by entering the numbers assigned to them comma-separated."
                   << "\n The availvable columns are:\n";
@@ -81,14 +58,14 @@ namespace q
         }
         std::cout << "\n";
         // ßßß include user input here - include option to skip user input if OoI is given as argument to BinContainer()
-        orderOfImportance = {0, 1};
+        orderOfImportance = {0, 5};
         dataspaceDone.resize(orderOfImportance.size()); // default value of bool is false
         std::cout << "Select the column which contains the standard error for your primary parameter by entering the number assigned to it.";
-        activeNos.reserve(user_data.data[0].size());
+        errorCol = 7;
     }
     BinContainer::~BinContainer() {}
 
-    void BinContainer::initBinning(int dataspace)
+    void BinContainer::initBinning(int dataspace, RawData &user_data)
     {
         if (dataspaceDone[dataspace])
         {
@@ -97,37 +74,38 @@ namespace q
         }
         else
         {
+            // create order space
+            makeNOS(user_data.data[dataspace]); // dataspace is one element of orderOfImportance vector
+
             dataspaceDone[dataspace] = true; // erst ganz am Ende ßßß
-            // makeNOS(dataspace);
         }
     }
 
-    void BinContainer::makeNOS(int dataspace, std::vector<std::vector<double>> activeDim)
+    void BinContainer::makeNOS(std::vector<double> activeDim)
     {
-        // ßßß remove
-        std::vector<int> orderOfImportance = {0, 1};
-        std::vector<double> activeNos;
+       
+        activeNos.reserve(activeDim.size());
         //
-        std::vector<int> index(activeDim[0].size()); // .data
+        std::vector<int> index(activeDim.size()); 
         std::iota(index.begin(), index.end(), 1);
         // sort index by size of the active dataspace
-        std::sort(index.begin(), index.end(), OrderIndices(activeDim[dataspace])); // .data
+        std::sort(index.begin(), index.end(), OrderIndices(activeDim)); 
 
-        if (dataspace == orderOfImportance[0])
-        {
-            mainIndices = index;
-        }
+        // if (i == 0) // implement in for loop
+        // {
+        //     mainIndices = index;
+        // }
 
         for (size_t i = 0; i + 1 < index.size(); i++) // +1 since difference vector is one short
         {
-            double diff = activeDim[dataspace][index[i + 1]] - activeDim[dataspace][index[i]];
+            double diff = activeDim[index[i + 1]] - activeDim[index[i]];
             activeNos.push_back(diff);
         }
 
-        activeNos.push_back(-1); // NOS vector has same length as data
+        activeNos.push_back(-225); // NOS vector has same length as data, -225 taken from existing code
     }
 
-    void BinContainer::subsetBin(const std::vector<double> &nos, std::vector<int> idx) // idx not a pointer to enable pausing ßßß requires error list
+    void BinContainer::subsetBin(const std::vector<double> &nos, const std::vector<double> &error, std::vector<int> idx) // idx not a pointer to enable pausing ßßß requires error list
     {
         double vcrit;
         const int n = idx.size();
@@ -138,9 +116,13 @@ namespace q
             std::cout << "terminate at length" << n << "\n"; // ßßß testing only
             return;
         }
-        double meanerror;
-
-        vcrit = 3.05037165842070 * pow(log(n + 1), (-0.4771864667153)) * meanerror; // integrate calculation of mean mz error - norm would be mz / error > critval, equivalent to mz > critval * error
+        double meanerror = 0;
+        for (size_t i = 0; i < idx.size(); i++)
+        {
+            meanerror += error[idx[i]]; // efficient?
+        }
+        
+        vcrit = 3.05037165842070 * pow(log(n + 1), (-0.4771864667153)) * meanerror/n; // integrate calculation of mean mz error - norm would be mz / error > critval, equivalent to mz > critval * error
 
         if (double max = *pmax < vcrit)
         {
@@ -157,8 +139,8 @@ namespace q
         {
             std::vector<int> range1(idx.begin(), pmax);
             std::vector<int> range2(pmax + 1, idx.end() - 1); // idx.end-1 hier richtig? Sollte eigentlich auf letztes Element des Vektors zeigen
-            subsetBin(nos, range1);
-            subsetBin(nos, range2);
+            subsetBin(nos, error, range1);
+            subsetBin(nos, error, range2);
             // int Binstart = idx[0];
             // for (int i = idx[0]; i == idx.back(); i++) //
             // {
@@ -225,7 +207,29 @@ namespace q
         return binStorage[idx].index;
     }
 
-    // BinContainer::
+    const std::vector<double> BinContainer::meanDistances(const std::vector<double> &x)
+    {
+        const int n = static_cast<int>(x.size());
+        std::vector<double> vec_dist;
+        vec_dist.reserve(n);
+        // if not sorted / not sortable: Calculate absolute distance between i and j, add it to the position of i and j.
+        for (int i = 0; i < n; ++i)
+        {
+            for (int j = i + 1; j <= n; ++j)
+            {
+                double dist = abs(x[i] - x[j]);
+                vec_dist[i] = +dist;
+                vec_dist[j] = +dist;
+            }
+            vec_dist[i] == vec_dist[i] / (n - 1);
+        }
+
+        for (int i = 0; i < n; ++i)
+            std::cout << vec_dist[i] << " ";
+
+        // std::cout << x.size() << std::endl;
+        return vec_dist;
+    }
 
     // Bin class
     Bin::Bin(std::vector<int> idx)
@@ -234,6 +238,7 @@ namespace q
         binsize = index.size();
     }
     Bin::~Bin() {}
+    
 }
 
 // main
@@ -242,7 +247,7 @@ int main()
     q::RawData test;
     test.readcsv("../test/test.csv");
     q::BinContainer testCont(test); 
-    testCont.makeNOS(0, test.data);
+    testCont.initBinning(0, test);
 
 
 
