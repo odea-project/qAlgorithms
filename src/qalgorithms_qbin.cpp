@@ -104,7 +104,7 @@ namespace q
     void BinContainer::subsetBin(const std::vector<double> &nos, const std::vector<double> &error, int beginBin, int endBin) // idx not a pointer to enable pausing ßßß requires error list
     {                                                                                                                        // give start and end coordinates of bin instead of whole range
         double vcrit;
-        const int n = endBin - beginBin + 1;                                            // size 0 not possible, since then no cut would occur -> saved as Bin
+        const int n = endBin - beginBin;    // size 0 not possible, since then no cut would occur (in the previous step) -> saved as Bin
         auto pmax = std::max_element(nos.begin() + beginBin, nos.begin() + endBin - 1); // -1 to not include maximum at which the previous cut occurred
         int cutpos = std::distance(nos.begin() + beginBin, pmax);
         // int iterator must be implemented outside of the recursive function
@@ -116,7 +116,7 @@ namespace q
         double meanerror = 0;
         for (size_t i = beginBin; i == endBin; i++)
         {
-            meanerror += error[mainIndices[i]]; // efficient?
+            meanerror += error[mainIndices[i]]; // segmentation fault in this line - fails to access error col through indices?
         }
 
         vcrit = 3.05037165842070 * pow(log(n + 1), (-0.4771864667153)) * meanerror / n; // integrate calculation of mean mz error - norm would be mz / error > critval, equivalent to mz > critval * error
