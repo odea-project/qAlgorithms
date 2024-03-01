@@ -59,7 +59,7 @@ namespace q
         // ßßß include user input here - include option to skip user input if OoI is given as argument to BinContainer()
         orderOfImportance = {0, 5};
         dataspaceDone.resize(orderOfImportance.size()); // default value of bool is false
-        std::cout << "Select the column which contains the standard error for your primary parameter by entering the number assigned to it.";
+        std::cout << "Select the column which contains the standard error for your primary parameter by entering the number assigned to it.\n";
         errorCol = 7;
     }
     BinContainer::~BinContainer() {}
@@ -105,29 +105,33 @@ namespace q
     {                                                                                                                        // give start and end coordinates of bin instead of whole range
         double vcrit;
         const int n = endBin - beginBin;    // size 0 not possible, since then no cut would occur (in the previous step) -> saved as Bin
-        auto pmax = std::max_element(nos.begin() + beginBin, nos.begin() + endBin - 1); // -1 to not include maximum at which the previous cut occurred
-        int cutpos = std::distance(nos.begin() + beginBin, pmax);
-        // int iterator must be implemented outside of the recursive function
         if (n < 5) // terminate function if Bin too small
         {
-            std::cout << "terminate at length" << n << "\n"; // ßßß testing only
+            std::cout << beginBin << "," << endBin << "," << n << "\n"; // ßßß testing only
             return;
         }
+        auto pmax = std::max_element(nos.begin() + beginBin, nos.begin() + endBin - 1); // -1 to not include maximum at which the previous cut occurred
+        int cutpos = std::distance(nos.begin() + beginBin, pmax); 
+        // int iterator must be implemented outside of the recursive function
+
         double meanerror = 0;
-        for (size_t i = beginBin; i == endBin; i++)
+        // std::cout << "error,meanerror\n"; // for checking error distribution
+        for (size_t i = beginBin; i < endBin; i++)
         {
             meanerror += error[mainIndices[i]]; // segmentation fault in this line - fails to access error col through indices?
+            // std::cout << error[mainIndices[i]] << "," << meanerror << "\n";
         }
 
         vcrit = 3.05037165842070 * pow(log(n + 1), (-0.4771864667153)) * meanerror / n; // integrate calculation of mean mz error - norm would be mz / error > critval, equivalent to mz > critval * error
-
-        if (double max = *pmax < vcrit)
+        double max = *pmax;
+        if (max < vcrit) // add max = *pmax in condition
         {
             // construct vector containing indices in relation to raw data
             std::vector<int> idx(&mainIndices[beginBin], &mainIndices[endBin]);
             // append Bin to bin container
             Bin output = Bin(idx);
             binStorage.push_back(output);
+            std::cout << "bin appended!\n";
             return;
         }
         else
@@ -230,6 +234,7 @@ namespace q
 // main
 int main()
 {
+    std::cout << "start,end,length,\n";
     q::RawData test;
     test.readcsv("../test/test.csv");
     q::BinContainer testCont(test);
