@@ -49,17 +49,17 @@ namespace q
     // BinContainer class
     BinContainer::BinContainer(const RawData &user_data)
     {
-        std::cout << "Select the columns you wish to use for binning in decreasing order of resolution by entering the numbers assigned to them comma-separated."
-                  << "\n The availvable columns are:\n";
+        // std::cout << "Select the columns you wish to use for binning in decreasing order of resolution by entering the numbers assigned to them comma-separated."
+        //   << "\n The availvable columns are:\n";
         for (size_t i = 0; i < user_data.headers.size(); i++)
         {
-            std::cout << user_data.headers[i] << " - " << i << " // ";
+            // std::cout << user_data.headers[i] << " - " << i << " // ";
         }
         std::cout << "\n";
         // ßßß include user input here - include option to skip user input if OoI is given as argument to BinContainer()
         orderOfImportance = {0, 5};
         dataspaceDone.resize(orderOfImportance.size()); // default value of bool is false
-        std::cout << "Select the column which contains the standard error for your primary parameter by entering the number assigned to it.\n";
+        // std::cout << "Select the column which contains the standard error for your primary parameter by entering the number assigned to it.\n";
         errorCol = 7;
     }
     BinContainer::~BinContainer() {}
@@ -68,14 +68,19 @@ namespace q
     {
         if (dataspaceDone[dataspace])
         {
-            std::cout << "Dataspace " << dataspace << " was already used for binning, skipping ahead...\n";
+            // std::cout << "Dataspace " << dataspace << " was already used for binning, skipping ahead...\n";
             return;
         }
         else
         {
+            //
+            // pre-calculate error column
+            std::vector<double> errorsum = user_data.data[errorCol];
+            std::sort(errorsum.begin(), errorsum.end(), OrderIndices(user_data.data[dataspace])); // sort error col the same way as mz later
+            std::partial_sum(errorsum.begin(), errorsum.end(), errorsum.begin());                 // cumsum of errorsum
             // create order space
             makeNOS(user_data.data[dataspace]); // dataspace is one element of orderOfImportance vector
-            subsetBin(activeNos, user_data.data[errorCol], 0, activeNos.size());
+            subsetBin(activeNos, errorsum, 0, activeNos.size());
             dataspaceDone[dataspace] = true;
         }
     }
@@ -104,34 +109,25 @@ namespace q
     void BinContainer::subsetBin(const std::vector<double> &nos, const std::vector<double> &error, int beginBin, int endBin) // idx not a pointer to enable pausing ßßß requires error list
     {                                                                                                                        // give start and end coordinates of bin instead of whole range
         double vcrit;
-        const int n = endBin - beginBin;    // size 0 not possible, since then no cut would occur (in the previous step) -> saved as Bin
-        if (n < 5) // terminate function if Bin too small
+        const int n = endBin - beginBin; // size is equal to n+1
+        if (n < 5)                       // terminate function if Bin too small
         {
-            std::cout << beginBin << "," << endBin << "," << n << "\n"; // ßßß testing only
             return;
         }
         auto pmax = std::max_element(nos.begin() + beginBin, nos.begin() + endBin - 1); // -1 to not include maximum at which the previous cut occurred
-        int cutpos = std::distance(nos.begin() + beginBin, pmax); 
+        int cutpos = std::distance(nos.begin() + beginBin, pmax);
         // int iterator must be implemented outside of the recursive function
+        // std::cout << beginBin << "," << endBin << ",cont\n";
 
-        double meanerror = 0;
-        // std::cout << "error,meanerror\n"; // for checking error distribution
-        for (size_t i = beginBin; i < endBin; i++)
-        {
-            meanerror += error[mainIndices[i]]; // segmentation fault in this line - fails to access error col through indices?
-            // std::cout << error[mainIndices[i]] << "," << meanerror << "\n";
-        }
-
-        vcrit = 3.05037165842070 * pow(log(n + 1), (-0.4771864667153)) * meanerror / n; // integrate calculation of mean mz error - norm would be mz / error > critval, equivalent to mz > critval * error
-        double max = *pmax;
-        if (max < vcrit) // add max = *pmax in condition
+        vcrit = 3.05037165842070 * pow(log(n + 1), (-0.4771864667153)) * (error[endBin - error[beginBin]]) / n; // integrate calculation of mean mz error - norm would be mz / error > critval, equivalent to mz > critval * error
+        if (double max = *pmax < vcrit)                                                                         // add max = *pmax in condition
         {
             // construct vector containing indices in relation to raw data
             std::vector<int> idx(&mainIndices[beginBin], &mainIndices[endBin]);
             // append Bin to bin container
             Bin output = Bin(idx);
             binStorage.push_back(output);
-            std::cout << "bin appended!\n";
+            // std::cout << beginBin << "," << endBin << ",bin\n";
             return;
         }
         else
@@ -234,12 +230,16 @@ namespace q
 // main
 int main()
 {
-    std::cout << "start,end,length,\n";
+    // std::ofstream result("qbinning_results.csv");
+    // std::streambuf *coutbuf = std::cout.rdbuf(); //save old buf
+    // std::cout.rdbuf(result.rdbuf()); //redirect std::cout to out.txt!
+    std::cout << "start,end,type\n";
     q::RawData test;
-    test.readcsv("../test/test.csv");
+    test.readcsv("../../rawdata/qCentroid_Warburg_pos_171123_01_Zu_01.csv");
     q::BinContainer testCont(test);
     testCont.initBinning(0, test); // sorting and nos creation works well
 
+    // std::cout.rdbuf(coutbuf); //reset to standard output again
     // leave
 
     const std::vector<double> nos = {0.0178, 0.0179, 0.0169, 0.0175, 0.0172, 0.0173, 0.5580, 0.9373, 0.2089, 0.7187, 0.8188, 0.7409, 0.5495, 0.7000, 0.7565, 0.4286, 0.4682, 0.1984, 0.3768, 0.1503, 0.2685, 0.6151, 0.8555, 0.4497, 0.4177, 0.8574, 0.2988, 0.0278, 0.6537, 0.0783, 0.6358, 0.2581, 0.7298, 0.0919, 0.2276, 0.3038, 0.7050, 0.6696, 0.7409, 0.3830};
@@ -248,7 +248,6 @@ int main()
 
     std::vector<std::vector<int>> binContainer{{-1}};
     binContainer.push_back(index);
-    std::cout << binContainer[1][1]; // segmentation fault !! Vektoren fangen mit Index 0 an !!ßßß
 
     // std::vector<double> x {1,2,3,4};
     // q::RawData test;

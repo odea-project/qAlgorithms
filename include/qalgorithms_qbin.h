@@ -72,6 +72,7 @@ namespace q
         pointer lösen das Problem, solange der nos-Vektor im Speicher bleiben kann.
         Erst am Schluss müssen die Indices zurück auf die Daten gemappt werden */
         const std::vector<double> meanDistances(const std::vector<double> &x); // calculate the mean Distances of one to other elements in vector
+        void fragmentBin(Bin, const std::vector<int> elutionOrder, int tolerance); // remove bins if separation in non-mass dimension is too great ßßß implement in subsetting routine?
         void help(); // include documentation for bin object
     };
 
