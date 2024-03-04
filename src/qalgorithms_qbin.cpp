@@ -106,6 +106,15 @@ namespace q
         activeNos.push_back(-225); // NOS vector has same length as data, -225 taken from existing code
     }
 
+    void BinContainer::makeScanlist(std::vector<double> &scanDim){
+        std::vector<double> timeOfScan = scanDim;
+        std::sort(timeOfScan.begin(), timeOfScan.end()); // wahrscheinlich nicht notwendig, bei relevanter Verzögerung entfernen ßßß
+        std::vector<double>::iterator it;
+        it = std::unique(timeOfScan.begin(), timeOfScan.end());
+        timeOfScan.resize(std::distance(timeOfScan.begin(), it)); // timeOfScan contains all unique RTs in ascending order
+        scanlist = timeOfScan;
+    }
+
     void BinContainer::subsetBin(const std::vector<double> &nos, const std::vector<double> &error, int beginBin, int endBin) // idx not a pointer to enable pausing ßßß requires error list
     {                                                                                                                        // give start and end coordinates of bin instead of whole range
         double vcrit;
@@ -137,6 +146,14 @@ namespace q
             return;
         }
         std::cout << "I"; // count total number of function calls ßßß remove
+    }
+
+    void BinContainer::splitBinByScans(const std::vector<double> &scanlist, const std::vector<int> &bin, const int maxdist){
+        
+        // create vector containing indices of scanlist
+        // check if distance between min and max is > n+maxdist
+        //      -> if no, bin cannot be split by RT --> add to bin storage
+        // dist > n*maxdist --> bin must be split
     }
 
     std::vector<int> BinContainer::allOfSize(std::vector<int> size)
@@ -230,7 +247,7 @@ namespace q
 // main
 int main()
 {
-    // std::ofstream result("qbinning_results.csv");
+    // std::ofstream result("../../qbinning_results.csv");
     // std::streambuf *coutbuf = std::cout.rdbuf(); //save old buf
     // std::cout.rdbuf(result.rdbuf()); //redirect std::cout to out.txt!
     std::cout << "start,end,type\n";
@@ -242,12 +259,6 @@ int main()
     // std::cout.rdbuf(coutbuf); //reset to standard output again
     // leave
 
-    const std::vector<double> nos = {0.0178, 0.0179, 0.0169, 0.0175, 0.0172, 0.0173, 0.5580, 0.9373, 0.2089, 0.7187, 0.8188, 0.7409, 0.5495, 0.7000, 0.7565, 0.4286, 0.4682, 0.1984, 0.3768, 0.1503, 0.2685, 0.6151, 0.8555, 0.4497, 0.4177, 0.8574, 0.2988, 0.0278, 0.6537, 0.0783, 0.6358, 0.2581, 0.7298, 0.0919, 0.2276, 0.3038, 0.7050, 0.6696, 0.7409, 0.3830};
-    std::vector<int> index(40); // function runs 12 times for the given dataset
-    std::iota(index.begin(), index.end(), 1);
-
-    std::vector<std::vector<int>> binContainer{{-1}};
-    binContainer.push_back(index);
 
     // std::vector<double> x {1,2,3,4};
     // q::RawData test;
