@@ -106,15 +106,6 @@ namespace q
         activeNos.push_back(-225); // NOS vector has same length as data, -225 taken from existing code
     }
 
-    void BinContainer::makeScanlist(std::vector<double> &scanDim){
-        std::vector<double> timeOfScan = scanDim;
-        std::sort(timeOfScan.begin(), timeOfScan.end()); // wahrscheinlich nicht notwendig, bei relevanter Verzögerung entfernen ßßß
-        std::vector<double>::iterator it;
-        it = std::unique(timeOfScan.begin(), timeOfScan.end());
-        timeOfScan.resize(std::distance(timeOfScan.begin(), it)); // timeOfScan contains all unique RTs in ascending order
-        scanlist = timeOfScan;
-    }
-
     void BinContainer::subsetBin(const std::vector<double> &nos, const std::vector<double> &error, int beginBin, int endBin) // idx not a pointer to enable pausing ßßß requires error list
     {                                                                                                                        // give start and end coordinates of bin instead of whole range
         double vcrit;
@@ -148,12 +139,75 @@ namespace q
         std::cout << "I"; // count total number of function calls ßßß remove
     }
 
-    void BinContainer::splitBinByScans(const std::vector<double> &scanlist, const std::vector<int> &bin, const int maxdist){
-        
-        // create vector containing indices of scanlist
+    void BinContainer::splitBinByScans(const std::vector<double> &scanDim, std::vector<int> bin, const int maxdist)
+    {
+
+        std::vector<double> timeOfScan = scanDim;
+        std::sort(timeOfScan.begin(), timeOfScan.end()); // wahrscheinlich nicht notwendig, bei relevanter Verzögerung entfernen ßßß
+        std::vector<double>::iterator it;
+        it = std::unique(timeOfScan.begin(), timeOfScan.end());
+        timeOfScan.resize(std::distance(timeOfScan.begin(), it)); // timeOfScan contains all unique RTs in ascending order
+        int n = bin.size();
+        std::vector<int> binTimes(n);
+        std::vector<double>::iterator it;
+        for (size_t i = 0; i < bin.size(); i++)
+        {
+            double binTimesSingle = scanDim[bin[i]];
+            it = std::find(timeOfScan.begin(), timeOfScan.end(), binTimesSingle);
+            binTimes[i] = std::distance(timeOfScan.begin(), it); // binTimes contain scan number in order of mz
+        }
+
+        std::sort(bin.begin(), bin.end(), OrderIndices(timeOfScan)); // implement skip for binning only if sorting 2x is too slow, since condition would have to be evaluated for all bins regardless
+        std::sort(binTimes.begin(), binTimes.end());
+        if (binTimes[0] + n + maxdist > binTimes.back()) // since scans cannot be duplicates, a bin is valid if all steps greater than one do not add up to the maximum allowed distance between two bins
+        {
+            // attach bin
+            return;
+        }
+        else
+        {
+            std::vector<int>::iterator newBinStart = bin.begin(); 
+            std::vector<int>::iterator newBinEnd = bin.end();
+            int previous_i = 0;
+            bool terminate = false;
+            for (size_t i = 0; i < binTimes.size() - 1; i++) // -1 to size since distance is checked
+            {
+                if (binTimes[i + 1] - binTimes[i] > maxdist)
+                {
+                    // if flag: terminate sequence, write bin, stop loop if less than 5 remaining values
+                    if (terminate)
+                    {
+                        /* sort by mz, call order space, mz errors */
+                    }
+                    
+                    if (i - previous_i < 5) // the split off features cannot form a new bin
+                    {
+                        newBinStart = bin.begin()+i;
+                        previous_i = i;
+                    }
+                    else if (binTimes.size() - 1 - i < 5) // the remainder cannot form a new bin
+                    {
+                        // terminate bin splitting, run subsetting
+                        newBinEnd = bin.begin() + i;
+                        i = binTimes.size();
+                    }
+                    else
+                    {
+                        // if no flag: set flag that next transgression is a terminator pointer
+                        newBinEnd = bin.begin() + i;
+                        previous_i = i;
+                        terminate = true;
+                    }
+                }
+            }
+        }
+
+        // create vector containing RTs of bin
         // check if distance between min and max is > n+maxdist
         //      -> if no, bin cannot be split by RT --> add to bin storage
         // dist > n*maxdist --> bin must be split
+
+        // distance check: find smallest element (RT) in bin, place iterator at relevant location, increase up to maxdist, if no other element was found discard first value and continue
     }
 
     std::vector<int> BinContainer::allOfSize(std::vector<int> size)
@@ -258,7 +312,6 @@ int main()
 
     // std::cout.rdbuf(coutbuf); //reset to standard output again
     // leave
-
 
     // std::vector<double> x {1,2,3,4};
     // q::RawData test;
