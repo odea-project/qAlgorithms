@@ -45,7 +45,6 @@ namespace q
         /*calculate DQS for all dimensions and pick the best one?*/
         // std::vector<bool> retain; // T: keep point for further processing, F: Discard ßßß sollte redundant sein, da nur sortierte m/z bekannt sein müssen
         std::vector<double> activeNos; // only one normalised order space is checked at a time ßßß calculate NOS per bin? Possibly less efficient, since bins never need to be reevaluated in one dimension
-        std::vector<double> scanlist;   // contains unique RTs, index is equivalent to scan number
         std::vector<bool> dataspaceDone;    // prevent repeat operations, primarily intended for testing / time intensive calculations that are better performed stepwise
         std::vector<int> orderOfImportance; // first element is primary dimension
         int errorCol;
@@ -62,14 +61,13 @@ namespace q
         // void selectDataspace(std::vector<int> selection); // adapt function as to accept different inputs (name), add option to ignore incomplete? ßßß superfluous
         void startProcessing();                                                  // wrapper function, iterate over all selected dataspaces
         void makeNOS(std::vector<double> activeDim); // set mainIndices if dataspace[0], set activeNos, only call once per dataspace
-        void makeScanlist(std::vector<double> &scanDim);    // converts retention time to number of scans, count starts at 0
         void initBinning(int dataspace, RawData &user_data);                                         // generate Bins for any one dimension. dataspace is given as all dimensions to bin for as their column number in the imported csv. Binning is performed by iterating over dataspace
         std::vector<int> selectBin(int idx);
         std::vector<int> allOfSize(std::vector<int> size);                // include mod for 2x int -> range entry
         std::vector<int> byScore(double score, bool invert);      // only output bins over a given score, invert for below
         void t_binsizes();
         void subsetBin(const std::vector<double> &nos, const std::vector<double> &error, int beginBin, int endBin); // begin and end of range in nos
-        void splitBinByScans(const std::vector<double> &scanlist, const std::vector<int> &bin, const int maxdist);
+        void splitBinByScans(const std::vector<double> &scanlist, std::vector<int> bin, const int maxdist);
         const std::vector<double> meanDistances(const std::vector<double> &x); // calculate the mean Distances of one to other elements in vector
         void fragmentBin(Bin, const std::vector<int> elutionOrder, int tolerance); // remove bins if separation in non-mass dimension is too great ßßß implement in subsetting routine?
         void help(); // include documentation for bin object
