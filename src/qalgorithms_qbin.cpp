@@ -76,8 +76,8 @@ namespace q
             //
             // pre-calculate error column
             std::vector<double> errorsum = user_data.data[errorCol];
-            std::sort(errorsum.begin(), errorsum.end(), OrderIndices(user_data.data[dataspace])); // sort error col the same way as mz later
-            std::partial_sum(errorsum.begin(), errorsum.end(), errorsum.begin());                 // cumsum of errorsum
+            std::sort(errorsum.begin(), errorsum.end(), OrderIndices_double(user_data.data[dataspace])); // sort error col the same way as mz later
+            std::partial_sum(errorsum.begin(), errorsum.end(), errorsum.begin());                 // cumsum of errorsum !! only works if no bins have gaps in mz
             // create order space
             makeNOS(user_data.data[dataspace]); // dataspace is one element of orderOfImportance vector
             subsetBin(activeNos, errorsum, 0, activeNos.size());
@@ -93,7 +93,7 @@ namespace q
         std::vector<int> index(activeDim.size());
         std::iota(index.begin(), index.end(), 0);
         // sort index by size of the active dataspace
-        std::sort(index.begin(), index.end(), OrderIndices(activeDim));
+        std::sort(index.begin(), index.end(), OrderIndices_double(activeDim));
 
         mainIndices = index; // change if binning in more than one dimension / add function to subset bins with vector of bins as input
 
@@ -125,7 +125,8 @@ namespace q
             // construct vector containing indices in relation to raw data
             std::vector<int> idx(&mainIndices[beginBin], &mainIndices[endBin]);
             // append Bin to bin container
-            Bin output = Bin(idx);
+            Bin output = Bin(idx, max);
+            //ßßß add (optional?) implementation of splitting routine
             binStorage.push_back(output);
             // std::cout << beginBin << "," << endBin << ",bin\n";
             return;
@@ -139,64 +140,70 @@ namespace q
         std::cout << "I"; // count total number of function calls ßßß remove
     }
 
-    void BinContainer::splitBinByScans(const std::vector<double> &scanDim, std::vector<int> bin, const int maxdist)
-    {
-
+    void makeScanNums(const std::vector<double> &scanDim){
         std::vector<double> timeOfScan = scanDim;
         std::sort(timeOfScan.begin(), timeOfScan.end()); // wahrscheinlich nicht notwendig, bei relevanter Verzögerung entfernen ßßß
         std::vector<double>::iterator it;
         it = std::unique(timeOfScan.begin(), timeOfScan.end());
         timeOfScan.resize(std::distance(timeOfScan.begin(), it)); // timeOfScan contains all unique RTs in ascending order
-        int n = bin.size();
-        std::vector<int> binTimes(n);
-        std::vector<double>::iterator it;
-        for (size_t i = 0; i < bin.size(); i++)
+        std::vector<int> scanNums(scanDim.size());
+        for (size_t i = 0; i < scanNums.size(); i++)
         {
-            double binTimesSingle = scanDim[bin[i]];
-            it = std::find(timeOfScan.begin(), timeOfScan.end(), binTimesSingle);
-            binTimes[i] = std::distance(timeOfScan.begin(), it); // binTimes contain scan number in order of mz
+            double timeSingle = scanDim[i];
+            it = std::find(timeOfScan.begin(), timeOfScan.end(), timeSingle);
+            scanNums[i] = std::distance(timeOfScan.begin(), it); // scanNums contains scan numbers in order of mz for complete dataset
+        }
+    }
+
+    void BinContainer::splitBinByScans(const std::vector<int> &scanNums, Bin &bin, const int maxdist, const std::vector<double> &error)
+    {
+        // check first element in bin,
+        
+        
+
+        std::vector<int> indexBin = bin.index;
+        int n = indexBin.size();
+        std::vector<int> binTimes(n);
+        for (size_t i = 0; i < n; i++)
+        {
+            binTimes[i] = scanNums[indexBin[i]]; // binTimes contains scan numbers for features in bin
         }
 
-        std::sort(bin.begin(), bin.end(), OrderIndices(timeOfScan)); // implement skip for binning only if sorting 2x is too slow, since condition would have to be evaluated for all bins regardless
+        
+
+        std::sort(indexBin.begin(), indexBin.end(), OrderIndices_int(binTimes)); // implement skip for binning only if sorting 2x is too slow, since condition would have to be evaluated for all bins regardless
         std::sort(binTimes.begin(), binTimes.end());
         if (binTimes[0] + n + maxdist > binTimes.back()) // since scans cannot be duplicates, a bin is valid if all steps greater than one do not add up to the maximum allowed distance between two bins
         {
-            // attach bin
+            binStorage.push_back(bin);
             return;
         }
-        else
+        else 
         {
-            std::vector<int>::iterator newBinStart = bin.begin(); 
-            std::vector<int>::iterator newBinEnd = bin.end();
+            std::vector<int>::iterator newBinStart = indexBin.begin(); 
+            std::vector<int>::iterator newBinEnd = indexBin.end();
             int previous_i = 0;
             bool terminate = false;
             for (size_t i = 0; i < binTimes.size() - 1; i++) // -1 to size since distance is checked
             {
                 if (binTimes[i + 1] - binTimes[i] > maxdist)
                 {
-                    // if flag: terminate sequence, write bin, stop loop if less than 5 remaining values
-                    if (terminate)
-                    {
-                        /* sort by mz, call order space, mz errors */
-                    }
-                    
                     if (i - previous_i < 5) // the split off features cannot form a new bin
                     {
-                        newBinStart = bin.begin()+i;
-                        previous_i = i;
+                        newBinStart = indexBin.begin()+i;
+                        previous_i = i+1;
                     }
-                    else if (binTimes.size() - 1 - i < 5) // the remainder cannot form a new bin
-                    {
-                        // terminate bin splitting, run subsetting
-                        newBinEnd = bin.begin() + i;
-                        i = binTimes.size();
-                    }
-                    else
-                    {
-                        // if no flag: set flag that next transgression is a terminator pointer
-                        newBinEnd = bin.begin() + i;
-                        previous_i = i;
-                        terminate = true;
+                    else {
+                        std::vector<int> binvec(newBinStart,indexBin.begin()+i); // new bin
+                        double binError = 0.0;
+                        n = binvec.size();
+                        for (size_t i = 0; i < n; i++)
+                        {
+                            binError =+ error[binvec[i]];
+                        }
+                        double vcrit = 3.05037165842070 * pow(log(n + 1), (-0.4771864667153)) * binError / n;
+
+                        // if new bin is good, the previous max in order space will be below vcrit
                     }
                 }
             }
@@ -215,7 +222,7 @@ namespace q
         std::vector<int> output;
         for (size_t i = 0; i < binStorage.size(); i++)
         {
-            if (std::find(size.begin(), size.end(), binStorage[i].binsize) != size.end())
+            if (std::find(size.begin(), size.end(), binStorage[i].index.size()) != size.end())
             {
                 output.push_back(i);
             }
@@ -254,7 +261,7 @@ namespace q
         std::cout << "\n";
         for (size_t i = 0; i < binStorage.size(); i++)
         {
-            std::cout << binStorage[i].binsize << " ; ";
+            std::cout << binStorage[i].index.size() << " ; ";
         }
         std::cout << "\n";
     }
@@ -289,10 +296,10 @@ namespace q
     }
 
     // Bin class
-    Bin::Bin(std::vector<int> idx)
+    Bin::Bin(std::vector<int> idx, double maxOS_in)
     {
         index = idx;
-        binsize = index.size();
+        maxOS = maxOS_in;
     }
     Bin::~Bin() {}
 
@@ -308,7 +315,7 @@ int main()
     q::RawData test;
     test.readcsv("../../rawdata/qCentroid_Warburg_pos_171123_01_Zu_01.csv");
     q::BinContainer testCont(test);
-    testCont.initBinning(0, test); // sorting and nos creation works well
+    // testCont.initBinning(0, test); // sorting and nos creation works well
 
     // std::cout.rdbuf(coutbuf); //reset to standard output again
     // leave
