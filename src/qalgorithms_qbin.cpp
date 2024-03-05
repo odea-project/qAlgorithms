@@ -77,7 +77,7 @@ namespace q
             // pre-calculate error column
             std::vector<double> errorsum = user_data.data[errorCol];
             std::sort(errorsum.begin(), errorsum.end(), OrderIndices_double(user_data.data[dataspace])); // sort error col the same way as mz later
-            std::partial_sum(errorsum.begin(), errorsum.end(), errorsum.begin());                 // cumsum of errorsum !! only works if no bins have gaps in mz
+            std::partial_sum(errorsum.begin(), errorsum.end(), errorsum.begin());                        // cumsum of errorsum !! only works if no bins have gaps in mz
             // create order space
             makeNOS(user_data.data[dataspace]); // dataspace is one element of orderOfImportance vector
             subsetBin(activeNos, errorsum, 0, activeNos.size());
@@ -126,7 +126,7 @@ namespace q
             std::vector<int> idx(&mainIndices[beginBin], &mainIndices[endBin]);
             // append Bin to bin container
             Bin output = Bin(idx, max);
-            //ßßß add (optional?) implementation of splitting routine
+            // ßßß add (optional?) implementation of splitting routine
             binStorage.push_back(output);
             // std::cout << beginBin << "," << endBin << ",bin\n";
             return;
@@ -140,7 +140,8 @@ namespace q
         std::cout << "I"; // count total number of function calls ßßß remove
     }
 
-    void makeScanNums(const std::vector<double> &scanDim){
+    void makeScanNums(const std::vector<double> &scanDim)
+    {
         std::vector<double> timeOfScan = scanDim;
         std::sort(timeOfScan.begin(), timeOfScan.end()); // wahrscheinlich nicht notwendig, bei relevanter Verzögerung entfernen ßßß
         std::vector<double>::iterator it;
@@ -157,10 +158,6 @@ namespace q
 
     void BinContainer::splitBinByScans(const std::vector<int> &scanNums, Bin &bin, const int maxdist, const std::vector<double> &error)
     {
-        // check first element in bin,
-        
-        
-
         std::vector<int> indexBin = bin.index;
         int n = indexBin.size();
         std::vector<int> binTimes(n);
@@ -168,9 +165,6 @@ namespace q
         {
             binTimes[i] = scanNums[indexBin[i]]; // binTimes contains scan numbers for features in bin
         }
-
-        
-
         std::sort(indexBin.begin(), indexBin.end(), OrderIndices_int(binTimes)); // implement skip for binning only if sorting 2x is too slow, since condition would have to be evaluated for all bins regardless
         std::sort(binTimes.begin(), binTimes.end());
         if (binTimes[0] + n + maxdist > binTimes.back()) // since scans cannot be duplicates, a bin is valid if all steps greater than one do not add up to the maximum allowed distance between two bins
@@ -178,9 +172,9 @@ namespace q
             binStorage.push_back(bin);
             return;
         }
-        else 
+        else
         {
-            std::vector<int>::iterator newBinStart = indexBin.begin(); 
+            std::vector<int>::iterator newBinStart = indexBin.begin();
             std::vector<int>::iterator newBinEnd = indexBin.end();
             int previous_i = 0;
             bool terminate = false;
@@ -190,20 +184,44 @@ namespace q
                 {
                     if (i - previous_i < 5) // the split off features cannot form a new bin
                     {
-                        newBinStart = indexBin.begin()+i;
-                        previous_i = i+1;
+                        newBinStart = indexBin.begin() + i;
+                        previous_i = i + 1;
                     }
-                    else {
-                        std::vector<int> binvec(newBinStart,indexBin.begin()+i); // new bin
+                    else
+                    {
+                        std::vector<int> binvec(newBinStart, indexBin.begin() + i); // new bin
                         double binError = 0.0;
                         n = binvec.size();
                         for (size_t i = 0; i < n; i++)
                         {
-                            binError =+ error[binvec[i]];
+                            binError = +error[binvec[i]]; // create vector of cumulative error instead
                         }
                         double vcrit = 3.05037165842070 * pow(log(n + 1), (-0.4771864667153)) * binError / n;
 
-                        // if new bin is good, the previous max in order space will be below vcrit
+                        // if new bin is good, the previous max in order space will be below vcrit -> likely, if centroid error is higher outside of bins
+                        if (bin.maxOS < vcrit)
+                        {
+                            Bin newbin(binvec, bin.maxOS);
+                            binStorage.push_back(newbin);
+                        }
+                        else
+                        {
+                            // perform subsetting - new order space, error col must be generated // skip vcrit calc in subset?
+                            std::vector<double> newOS(n); 
+                            for (size_t i = 0; i < n-1; i++)
+                            {
+                                newOS[i] = // hier müssen Rohdaten hin
+                            }
+                            
+                            // binError unsorted
+                            std::vector<double> binErrorSort(n);
+                            for (size_t i = 1; i < n; i++)
+                        {
+                            binErrorSort[i-1] = +error[binvec[i]]; // create vector of cumulative error instead
+                            binErrorSort[i] =+ binErrorSort[i-1];
+                        }
+                            subsetBin(newOS, binErrorSort, 0, newOS.size()-1);
+                        }
                     }
                 }
             }
