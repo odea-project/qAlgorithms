@@ -60,11 +60,13 @@ namespace q
         orderOfImportance = {0, 5};
         dataspaceDone.resize(orderOfImportance.size()); // default value of bool is false
         // std::cout << "Select the column which contains the standard error for your primary parameter by entering the number assigned to it.\n";
-        errorCol = 7;
-
+        
+// implement manual selection of columns ßßß
         rawMZ = user_data.data[0];
-        rawMZerror = user_data.data[5];
-        rawRT = user_data.data[7];
+        rawMZerror = user_data.data[7];
+        rawRT = user_data.data[5];
+        std::vector<int> rawScansPrev(user_data.data[6].begin(),user_data.data[6].end());
+        rawScans = rawScansPrev;
     }
     BinContainer::~BinContainer() {}
 
@@ -130,8 +132,9 @@ namespace q
             std::vector<int> idx(&mainIndices[beginBin], &mainIndices[endBin]);
             // append Bin to bin container
             Bin output = Bin(idx, max);
+            splitBinByScans(rawScans, output, 5, rawMZerror, rawMZ);
             // ßßß add (optional?) implementation of splitting routine
-            binStorage.push_back(output);
+            // binStorage.push_back(output);
             // std::cout << beginBin << "," << endBin << ",bin\n";
             return;
         }
@@ -162,7 +165,7 @@ namespace q
         }
     }
 
-    void BinContainer::splitBinByScans(const std::vector<int> &scanNums, Bin &bin, const int maxdist, const std::vector<double> &error)
+    void BinContainer::splitBinByScans(const std::vector<int> &scanNums, Bin &bin, const int maxdist, const std::vector<double> &error, const std::vector<double> &mz)
     {
         std::vector<int> indexBin = bin.index;
         int n = indexBin.size();
@@ -215,8 +218,10 @@ namespace q
                             std::vector<double> newOS(n);
                             for (size_t i = 0; i < n - 1; i++)
                             {
-                                newOS[i] = 0; // hier müssen Rohdaten hin
+                                newOS[i] = mz[binvec[i]]; // hier müssen Rohdaten hin
                             }
+                            std::sort(binvec.begin(), binvec.end(), OrderIndices_double(newOS));
+                            std::sort(newOS.begin(), newOS.end());
 
                             // binError unsorted
                             std::vector<double> binErrorSort(n);
@@ -229,7 +234,7 @@ namespace q
 
                             subsetBin(newOS, binErrorSort, 0, newOS.size() - 1);
                         }
-                        previous_i = i + 1; // 
+                        previous_i = i + 1; // advance start of control area one beyond break
                     }
                 }
             }
@@ -341,7 +346,7 @@ int main()
     q::RawData test;
     test.readcsv("../../rawdata/qCentroid_Warburg_pos_171123_01_Zu_01.csv");
     q::BinContainer testCont(test);
-    // testCont.initBinning(0); // sorting and nos creation works well
+    testCont.initBinning(0); // sorting and nos creation works well
 
     // std::cout.rdbuf(coutbuf); //reset to standard output again
     // leave
