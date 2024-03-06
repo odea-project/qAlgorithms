@@ -1,0 +1,1 @@
+#include "../include/qalgorithms_qBin2.h"

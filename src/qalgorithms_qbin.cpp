@@ -126,7 +126,8 @@ namespace q
         // std::cout << beginBin << "," << endBin << ",cont\n";
 
         vcrit = 3.05037165842070 * pow(log(n + 1), (-0.4771864667153)) * (error[endBin - error[beginBin]]) / n; // integrate calculation of mean mz error - norm would be mz / error > critval, equivalent to mz > critval * error
-        if (double max = *pmax < vcrit)                                                                         // add max = *pmax in condition
+        double max = *pmax;
+        if (max < vcrit)                                                                         // add max = *pmax in condition
         {
             // construct vector containing indices in relation to raw data
             std::vector<int> idx(&mainIndices[beginBin], &mainIndices[endBin]);
