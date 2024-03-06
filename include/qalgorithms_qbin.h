@@ -7,7 +7,7 @@
 #include <algorithm>
 #include <functional>
 #include <iterator>
-#include <thread> // wahrscheinlich nicht notwendig
+#include <thread> 
 
 namespace q
 {
@@ -40,6 +40,9 @@ namespace q
     class BinContainer
     {
     private:
+        std::vector<double> rawMZ;
+        std::vector<double> rawMZerror;
+        std::vector<double> rawRT;
         std::vector<Bin> binStorage;  // contains every complete bin with a unique ID
         std::vector<int> mainIndices; // keep indices of sorted m/z for calculating DQS, implemented as deciding on one dimension
         /*calculate DQS for all dimensions and pick the best one?*/
@@ -67,7 +70,7 @@ namespace q
         ~BinContainer();
         void startProcessing();                                                  // wrapper function, iterate over all selected dataspaces
         void makeNOS(std::vector<double> activeDim); // set mainIndices if dataspace[0], set activeNos, only call once per dataspace
-        void initBinning(int dataspace, RawData &user_data);                                         // generate Bins for any one dimension. dataspace is given as all dimensions to bin for as their column number in the imported csv. Binning is performed by iterating over dataspace
+        void initBinning(int dataspace);                                         // generate Bins for any one dimension. dataspace is given as all dimensions to bin for as their column number in the imported csv. Binning is performed by iterating over dataspace
         std::vector<int> selectBin(int idx);
         std::vector<int> allOfSize(std::vector<int> size);                // include mod for 2x int -> range entry
         std::vector<int> byScore(double score, bool invert);      // only output bins over a given score, invert for below

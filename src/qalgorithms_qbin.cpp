@@ -61,10 +61,14 @@ namespace q
         dataspaceDone.resize(orderOfImportance.size()); // default value of bool is false
         // std::cout << "Select the column which contains the standard error for your primary parameter by entering the number assigned to it.\n";
         errorCol = 7;
+
+        rawMZ = user_data.data[0];
+        rawMZerror = user_data.data[5];
+        rawRT = user_data.data[7];
     }
     BinContainer::~BinContainer() {}
 
-    void BinContainer::initBinning(int dataspace, RawData &user_data)
+    void BinContainer::initBinning(int dataspace)
     {
         if (dataspaceDone[dataspace])
         {
@@ -75,11 +79,11 @@ namespace q
         {
             //
             // pre-calculate error column
-            std::vector<double> errorsum = user_data.data[errorCol];
-            std::sort(errorsum.begin(), errorsum.end(), OrderIndices_double(user_data.data[dataspace])); // sort error col the same way as mz later
-            std::partial_sum(errorsum.begin(), errorsum.end(), errorsum.begin());                        // cumsum of errorsum !! only works if no bins have gaps in mz
+            std::vector<double> errorsum = rawMZerror;
+            std::sort(errorsum.begin(), errorsum.end(), OrderIndices_double(rawMZ)); // sort error col the same way as order space of mz later
+            std::partial_sum(errorsum.begin(), errorsum.end(), errorsum.begin());    // cumsum of errorsum !! only works if no bins have gaps in mz
             // create order space
-            makeNOS(user_data.data[dataspace]); // dataspace is one element of orderOfImportance vector
+            makeNOS(rawMZ); // dataspace is one element of orderOfImportance vector ßßß rework ooi 
             subsetBin(activeNos, errorsum, 0, activeNos.size());
             dataspaceDone[dataspace] = true;
         }
@@ -135,6 +139,8 @@ namespace q
         {
             subsetBin(nos, error, beginBin, beginBin + cutpos);
             subsetBin(nos, error, beginBin + cutpos + 1, endBin);
+
+            // multithreading probably not a good solution, since the objects need to be copied -> copies all mz for every bin
             return;
         }
         std::cout << "I"; // count total number of function calls ßßß remove
@@ -182,10 +188,9 @@ namespace q
             {
                 if (binTimes[i + 1] - binTimes[i] > maxdist)
                 {
-                    if (i - previous_i < 5) // the split off features cannot form a new bin
+                    if (i - previous_i < 5) // the split off features cannot form a new bin. replaces size check in the else part
                     {
                         newBinStart = indexBin.begin() + i;
-                        previous_i = i + 1;
                     }
                     else
                     {
@@ -194,7 +199,7 @@ namespace q
                         n = binvec.size();
                         for (size_t i = 0; i < n; i++)
                         {
-                            binError = +error[binvec[i]]; // create vector of cumulative error instead
+                            binError = +error[binvec[i]];
                         }
                         double vcrit = 3.05037165842070 * pow(log(n + 1), (-0.4771864667153)) * binError / n;
 
@@ -206,22 +211,25 @@ namespace q
                         }
                         else
                         {
-                            // perform subsetting - new order space, error col must be generated // skip vcrit calc in subset?
-                            std::vector<double> newOS(n); 
-                            for (size_t i = 0; i < n-1; i++)
+                            // perform subsetting - new order space, error col must be generated 
+                            std::vector<double> newOS(n);
+                            for (size_t i = 0; i < n - 1; i++)
                             {
-                                newOS[i] = // hier müssen Rohdaten hin
+                                newOS[i] = 0; // hier müssen Rohdaten hin
                             }
-                            
+
                             // binError unsorted
                             std::vector<double> binErrorSort(n);
                             for (size_t i = 1; i < n; i++)
-                        {
-                            binErrorSort[i-1] = +error[binvec[i]]; // create vector of cumulative error instead
-                            binErrorSort[i] =+ binErrorSort[i-1];
+                            {
+                                binErrorSort[i] = error[binvec[i]]; // create vector of cumulative error instead
+                            }
+                            std::partial_sum(binErrorSort.begin(), binErrorSort.end(), binErrorSort.begin());
+
+
+                            subsetBin(newOS, binErrorSort, 0, newOS.size() - 1);
                         }
-                            subsetBin(newOS, binErrorSort, 0, newOS.size()-1);
-                        }
+                        previous_i = i + 1; // 
                     }
                 }
             }
@@ -333,7 +341,7 @@ int main()
     q::RawData test;
     test.readcsv("../../rawdata/qCentroid_Warburg_pos_171123_01_Zu_01.csv");
     q::BinContainer testCont(test);
-    // testCont.initBinning(0, test); // sorting and nos creation works well
+    // testCont.initBinning(0); // sorting and nos creation works well
 
     // std::cout.rdbuf(coutbuf); //reset to standard output again
     // leave

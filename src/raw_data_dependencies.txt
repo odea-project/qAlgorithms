@@ -6,3 +6,5 @@ Parallelisieren: Im 1. Schritt des Binnings wird der Datensatz an allen Stellen 
 
 Gibt es einen Zusammenhang zwischen Zentroidfehler und der Eigenschaft, nicht in einem Bin zu landen / Anfang Bzw. Ende eines Bins zu sein?
 Config-Datei
+
+Füge den RawData vektor an den Bincontainer an
