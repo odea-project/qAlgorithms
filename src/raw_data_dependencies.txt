@@ -8,3 +8,6 @@ Gibt es einen Zusammenhang zwischen Zentroidfehler und der Eigenschaft, nicht in
 Config-Datei
 
 Füge den RawData vektor an den Bincontainer an
+
+Alles umorganisieren, um in einem Struct alle Eigenschaften eines Features zu speichern?
+https://stackoverflow.com/questions/5174115/sorting-a-vector-of-objects-by-a-property-of-the-object

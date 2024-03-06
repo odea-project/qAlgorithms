@@ -15,43 +15,24 @@ struct OrderIndices
             bool operator()(int a, int b) const { return target[a] < target[b]; }
         };
 
-std::vector<double> makeNOS(int dataspace, std::vector<std::vector<double>> activeDim)
-{
-    std::vector<int> orderOfImportance = {0, 1};
-    std::vector<double> activeNos;
-    //
-    std::vector<int> index(activeDim[0].size()); // .data
-    std::iota(index.begin(), index.end(), 1);
-    // sort index by size of the active dataspace
-    std::sort(index.begin(), index.end(), OrderIndices(activeDim[dataspace])); // .data
-
-    // if (dataspace == orderOfImportance[0])
-    // {
-    //     mainIndices = index;
-    // }
-
-    for (size_t i = 0; i+1 < index.size(); i++) // +1 since difference vector is one short
-    {
-        double diff = activeDim[dataspace][index[i + 1]] - activeDim[dataspace][index[i]];
-        activeNos.push_back(diff);
-    }
-
-    activeNos.push_back(-1); // NOS vector has same length as data
-    return activeNos;
-}
+struct OrderIndices_int                 // ßßß implement as template
+        {
+            const std::vector<int> &target;
+            OrderIndices_int(const std::vector<int> &target) : target(target) {}
+            bool operator()(int a, int b) const { return target[a] < target[b]; }
+        };
 
 int main()
 {
-    std::vector v{0, 4, 6, 9};
-    std::vector<double> i{0,1,2,3};
+    std::vector<double> v{0, 4, 6, 9};
+    std::vector<double> i{2,1,4,3};
     print("Initially, v = ", v);
-    std::adjacent_difference(v.begin(), v.end(), v.begin());
+    std::sort(v.begin(), v.end(), OrderIndices(i));
     print("Modified v = ", v);
 
-    std::vector<std::vector<double>> testdim{i,i};
-    std::vector<double> vtest = makeNOS(0, testdim);
-    print("diff: ", vtest);
-
-    auto pmax = std::max_element(v[0], v[3-1]);
-    // print("pmax: ", pmax);
+    std::sort(v.begin(), v.end(),
+           [&](int A, int B) -> bool {
+                return i[A] < i[B];
+            });
+print("Modified v2 = ", v);
 }
