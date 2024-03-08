@@ -47,13 +47,13 @@ namespace q
     class BinContainer
     {
     private:
-        std::vector<Feature> readcsv();
+        void readcsv(std::string user_file, std::vector<Feature> output, int d_mz, int d_mzError, int d_RT, int d_scanNo);
         std::vector<Bin> binVector;
 
     public:
         BinContainer();
         ~BinContainer();
-        void makeFirstBin();                          // calls readcsv()
+        void makeFirstBin(std::string input_file);    // calls readcsv()
         void subsetBins(std::vector<int> dimensions); // select which of the hard-coded subsetting tools should be used in which order, always applies to binVector. Append to the end, delete from the front
         void printAllBins(std::string path);
         void printBinSummary(std::string path);
