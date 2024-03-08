@@ -29,11 +29,11 @@ namespace q
     {
     private:
         std::vector<Feature> featurelist;
-        std::vector<double> activeOS; // Order Space
         std::vector<double> cumError; // cumulative error in mz
         double prevmax;
 
     public:
+        std::vector<double> activeOS;                                                                                         // Order Space
         Bin(const std::vector<Feature>::iterator &startBin, const std::vector<Feature>::iterator &endBin, const double &max); // const std::vector<Feature> &sourceList,
         ~Bin();
         void makeOS();
