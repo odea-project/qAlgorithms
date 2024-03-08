@@ -7,12 +7,37 @@ namespace q
     BinContainer::BinContainer() {}
     BinContainer::~BinContainer() {}
 
-    void BinContainer::makeFirstBin()
+    void BinContainer::makeFirstBin(std::string input_file)
     {
+        std::vector<Feature> features;
+        readcsv(input_file, features, 0, 7, 5, 6); // ßßß replace hard-coded cols with flexible input
+        Bin firstBin(features.begin(), features.end(), 0);
+        binVector.push_back(firstBin);
     }
 
-    std::vector<Feature> BinContainer::readcsv()
+    void BinContainer::readcsv(std::string user_file, std::vector<Feature> output, int d_mz, int d_mzError, int d_RT, int d_scanNo)
     {
+        std::ifstream file(user_file);
+        std::string line;
+        std::string dummy;
+        std::getline(file, dummy); // do not reas first row ßßß data is probably not going to be passed with headers
+        while (std::getline(file, line))
+        {
+            std::istringstream ss(line);
+            std::string cell;
+            std::vector<double> row;
+
+            while (std::getline(ss, cell, ','))
+            {
+                row.push_back(std::stod(cell));
+            }
+            Feature F;
+            F.mz = row[d_mz];
+            F.mzError = row[d_mzError];
+            F.RT = row[d_RT];
+            F.scanNo = round(row[d_scanNo]); // should work without issue
+            output.push_back(F);
+        }
     }
 
 #pragma endregion "BinContainer"
@@ -85,4 +110,11 @@ namespace q
     }
 
 #pragma endregion "Bin"
+}
+
+int main()
+{
+    q::BinContainer testcontainer;
+    testcontainer.makeFirstBin("../test/test.csv");
+    return 0;
 }
