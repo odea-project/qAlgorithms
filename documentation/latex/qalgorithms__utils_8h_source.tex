@@ -1,0 +1,72 @@
+\doxysection{qalgorithms\+\_\+utils.\+h}
+\hypertarget{qalgorithms__utils_8h_source}{}\label{qalgorithms__utils_8h_source}\index{include/qalgorithms\_utils.h@{include/qalgorithms\_utils.h}}
+\mbox{\hyperlink{qalgorithms__utils_8h}{Go to the documentation of this file.}}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\Hypertarget{qalgorithms__utils_8h_source_l00001}00001\ \textcolor{comment}{//\ qalgorithms\_utils.h}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__utils_8h_source_l00002}00002\ \textcolor{preprocessor}{\#ifndef\ QALGORITHMS\_UTILS\_H\ }\textcolor{comment}{//\ Include\ guarde\ to\ prevent\ double\ inclusion}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__utils_8h_source_l00003}00003\ \textcolor{preprocessor}{\#define\ QALGORITHMS\_UTILS\_H}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__utils_8h_source_l00004}00004\ }
+\DoxyCodeLine{\Hypertarget{qalgorithms__utils_8h_source_l00005}00005\ \textcolor{preprocessor}{\#include\ <vector>}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__utils_8h_source_l00006}00006\ \textcolor{preprocessor}{\#include\ <iostream>}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__utils_8h_source_l00007}00007\ \textcolor{preprocessor}{\#include\ <cmath>}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__utils_8h_source_l00008}00008\ \textcolor{preprocessor}{\#include\ <map>}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__utils_8h_source_l00009}00009\ }
+\DoxyCodeLine{\Hypertarget{qalgorithms__utils_8h_source_l00010}00010\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespaceq}{q}}\ \{}
+\DoxyCodeLine{\Hypertarget{qalgorithms__utils_8h_source_l00011}00011\ \ \ }
+\DoxyCodeLine{\Hypertarget{qalgorithms__utils_8h_source_l00012}00012\ \ \ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{namespaceq_a5ea2b3dedfaa98557b94135396085f23}{sum}}(\textcolor{keyword}{const}\ std::vector<int>\&\ vec);}
+\DoxyCodeLine{\Hypertarget{qalgorithms__utils_8h_source_l00013}00013\ \ \ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{namespaceq_a5ea2b3dedfaa98557b94135396085f23}{sum}}(\textcolor{keyword}{const}\ std::vector<size\_t>\&\ vec);}
+\DoxyCodeLine{\Hypertarget{qalgorithms__utils_8h_source_l00014}00014\ \ \ \textcolor{keywordtype}{double}\ \mbox{\hyperlink{namespaceq_a5ea2b3dedfaa98557b94135396085f23}{sum}}(\textcolor{keyword}{const}\ std::vector<double>\&\ vec);}
+\DoxyCodeLine{\Hypertarget{qalgorithms__utils_8h_source_l00015}00015\ }
+\DoxyCodeLine{\Hypertarget{qalgorithms__utils_8h_source_l00016}00016\ \ \ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{namespaceq_a5ea2b3dedfaa98557b94135396085f23}{sum}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{bool}*\ vec,\ \textcolor{keywordtype}{size\_t}\ n);}
+\DoxyCodeLine{\Hypertarget{qalgorithms__utils_8h_source_l00017}00017\ }
+\DoxyCodeLine{\Hypertarget{qalgorithms__utils_8h_source_l00018}00018\ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ T>}
+\DoxyCodeLine{\Hypertarget{qalgorithms__utils_8h_source_l00019}00019\ \ \ std::vector<bool>\ \mbox{\hyperlink{namespaceq_a911b4e35d854c2c77c1fdd7f11117608}{operator<}}(}
+\DoxyCodeLine{\Hypertarget{qalgorithms__utils_8h_source_l00020}00020\ \ \ \ \ \textcolor{keyword}{const}\ std::vector<T>\&\ vec,\ }
+\DoxyCodeLine{\Hypertarget{qalgorithms__utils_8h_source_l00021}00021\ \ \ \ \ T\ scalar);}
+\DoxyCodeLine{\Hypertarget{qalgorithms__utils_8h_source_l00022}00022\ }
+\DoxyCodeLine{\Hypertarget{qalgorithms__utils_8h_source_l00023}00023\ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ T>}
+\DoxyCodeLine{\Hypertarget{qalgorithms__utils_8h_source_l00024}00024\ \ \ std::vector<bool>\ \mbox{\hyperlink{namespaceq_a59be7d3e00fa2dc756d0ba0f10b6d6dd}{operator>}}(}
+\DoxyCodeLine{\Hypertarget{qalgorithms__utils_8h_source_l00025}00025\ \ \ \ \ \textcolor{keyword}{const}\ std::vector<T>\&\ vec,\ }
+\DoxyCodeLine{\Hypertarget{qalgorithms__utils_8h_source_l00026}00026\ \ \ \ \ T\ scalar);}
+\DoxyCodeLine{\Hypertarget{qalgorithms__utils_8h_source_l00027}00027\ }
+\DoxyCodeLine{\Hypertarget{qalgorithms__utils_8h_source_l00028}00028\ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ T>}
+\DoxyCodeLine{\Hypertarget{qalgorithms__utils_8h_source_l00029}00029\ \ \ std::vector<T>\ \mbox{\hyperlink{namespaceq_afaf7260624b917f9123e4532c7ca68bf}{operator*}}(}
+\DoxyCodeLine{\Hypertarget{qalgorithms__utils_8h_source_l00030}00030\ \ \ \ \ \textcolor{keyword}{const}\ std::vector<T>\&\ A,\ }
+\DoxyCodeLine{\Hypertarget{qalgorithms__utils_8h_source_l00031}00031\ \ \ \ \ \textcolor{keyword}{const}\ std::vector<T>\&\ B);}
+\DoxyCodeLine{\Hypertarget{qalgorithms__utils_8h_source_l00032}00032\ }
+\DoxyCodeLine{\Hypertarget{qalgorithms__utils_8h_source_l00033}00033\ \ \ std::vector<bool>\ \mbox{\hyperlink{namespaceq_a41c88933564219f3744d4cd1a0bbde5b}{operator\&\&}}(}
+\DoxyCodeLine{\Hypertarget{qalgorithms__utils_8h_source_l00034}00034\ \ \ \ \ \textcolor{keyword}{const}\ std::vector<bool>\&\ A,\ }
+\DoxyCodeLine{\Hypertarget{qalgorithms__utils_8h_source_l00035}00035\ \ \ \ \ \textcolor{keyword}{const}\ std::vector<bool>\&\ B);}
+\DoxyCodeLine{\Hypertarget{qalgorithms__utils_8h_source_l00036}00036\ }
+\DoxyCodeLine{\Hypertarget{qalgorithms__utils_8h_source_l00037}00037\ \ \ std::vector<bool>\ \mbox{\hyperlink{namespaceq_a14a55b4b8011f804b40f37925f4b4e8c}{operator!}}(\textcolor{keyword}{const}\ std::vector<bool>\&\ A);}
+\DoxyCodeLine{\Hypertarget{qalgorithms__utils_8h_source_l00038}00038\ }
+\DoxyCodeLine{\Hypertarget{qalgorithms__utils_8h_source_l00039}00039\ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{namespaceq_ae27bcd86eabebd2210e1e89c9c5a9407}{operator|=}}(}
+\DoxyCodeLine{\Hypertarget{qalgorithms__utils_8h_source_l00040}00040\ \ \ \ \ std::vector<bool>\&\ A,\ }
+\DoxyCodeLine{\Hypertarget{qalgorithms__utils_8h_source_l00041}00041\ \ \ \ \ \textcolor{keyword}{const}\ std::vector<bool>\&\ B);}
+\DoxyCodeLine{\Hypertarget{qalgorithms__utils_8h_source_l00042}00042\ \ \ }
+\DoxyCodeLine{\Hypertarget{qalgorithms__utils_8h_source_l00043}00043\ \ \ \textcolor{keywordtype}{double}\ \mbox{\hyperlink{namespaceq_af5bc719469eba45978bfaa23379f329b}{erfi}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{double}\ x);}
+\DoxyCodeLine{\Hypertarget{qalgorithms__utils_8h_source_l00044}00044\ }
+\DoxyCodeLine{\Hypertarget{qalgorithms__utils_8h_source_l00045}\mbox{\hyperlink{classq_1_1t_values}{00045}}\ \ \ \textcolor{keyword}{class\ }\mbox{\hyperlink{classq_1_1t_values}{tValues}}\ \{}
+\DoxyCodeLine{\Hypertarget{qalgorithms__utils_8h_source_l00046}00046\ \ \ \ \ \textcolor{keyword}{private}:}
+\DoxyCodeLine{\Hypertarget{qalgorithms__utils_8h_source_l00047}00047\ \ \ \ \ \ \ std::map<int,\ double>\ values;}
+\DoxyCodeLine{\Hypertarget{qalgorithms__utils_8h_source_l00048}00048\ \ \ \ \ }
+\DoxyCodeLine{\Hypertarget{qalgorithms__utils_8h_source_l00049}00049\ \ \ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{\Hypertarget{qalgorithms__utils_8h_source_l00050}00050\ \ \ \ \ \ \ \mbox{\hyperlink{classq_1_1t_values_a67634ebacf1cfbf2d43cec3c21c559f3}{tValues}}();}
+\DoxyCodeLine{\Hypertarget{qalgorithms__utils_8h_source_l00051}00051\ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{double}\&\ \mbox{\hyperlink{classq_1_1t_values_a116f3869f1d7f5ed0048c025e2c9cbfd}{operator[]}}(\textcolor{keywordtype}{size\_t}\ degreeOfFreedom)\ \textcolor{keyword}{const};}
+\DoxyCodeLine{\Hypertarget{qalgorithms__utils_8h_source_l00052}00052\ \ \ \};}
+\DoxyCodeLine{\Hypertarget{qalgorithms__utils_8h_source_l00053}00053\ }
+\DoxyCodeLine{\Hypertarget{qalgorithms__utils_8h_source_l00054}\mbox{\hyperlink{classq_1_1_progress_bar}{00054}}\ \ \ \textcolor{keyword}{class\ }\mbox{\hyperlink{classq_1_1_progress_bar}{ProgressBar}}\ \{}
+\DoxyCodeLine{\Hypertarget{qalgorithms__utils_8h_source_l00055}00055\ \ \ \ \ \textcolor{keyword}{private}:}
+\DoxyCodeLine{\Hypertarget{qalgorithms__utils_8h_source_l00056}00056\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ total;}
+\DoxyCodeLine{\Hypertarget{qalgorithms__utils_8h_source_l00057}00057\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ width;}
+\DoxyCodeLine{\Hypertarget{qalgorithms__utils_8h_source_l00058}00058\ \ \ \ \ \ \ \ \ std::vector<std::string>\ colors;}
+\DoxyCodeLine{\Hypertarget{qalgorithms__utils_8h_source_l00059}00059\ }
+\DoxyCodeLine{\Hypertarget{qalgorithms__utils_8h_source_l00060}00060\ \ \ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{\Hypertarget{qalgorithms__utils_8h_source_l00061}00061\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classq_1_1_progress_bar}{ProgressBar}}(\textcolor{keywordtype}{int}\ total,\ \textcolor{keywordtype}{int}\ width\ =\ 50);}
+\DoxyCodeLine{\Hypertarget{qalgorithms__utils_8h_source_l00062}00062\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classq_1_1_progress_bar_a094c16409902c5a9439fb0bb20bdf863}{update}}(\textcolor{keywordtype}{int}\ current);}
+\DoxyCodeLine{\Hypertarget{qalgorithms__utils_8h_source_l00063}00063\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classq_1_1_progress_bar_a177347e1a65f6c5ae99a590804d5738c}{complete}}();}
+\DoxyCodeLine{\Hypertarget{qalgorithms__utils_8h_source_l00064}00064\ \ \ \ \ \};}
+\DoxyCodeLine{\Hypertarget{qalgorithms__utils_8h_source_l00065}00065\ \}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__utils_8h_source_l00066}00066\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//\ QALGORITHMS\_UTILS\_H}}
+
+\end{DoxyCode}

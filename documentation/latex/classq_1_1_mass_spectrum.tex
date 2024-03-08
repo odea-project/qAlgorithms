@@ -1,0 +1,211 @@
+\doxysection{q\+::Mass\+Spectrum Class Reference}
+\hypertarget{classq_1_1_mass_spectrum}{}\label{classq_1_1_mass_spectrum}\index{q::MassSpectrum@{q::MassSpectrum}}
+
+
+Class to represent a mass spectrum with additional metadata.  
+
+
+
+
+{\ttfamily \#include $<$qalgorithms\+\_\+datatype\+\_\+mass\+\_\+spectrum.\+h$>$}
+
+Inheritance diagram for q\+::Mass\+Spectrum\+:\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[height=2.000000cm]{classq_1_1_mass_spectrum}
+\end{center}
+\end{figure}
+\doxysubsubsection*{Public Types}
+\begin{DoxyCompactItemize}
+\item 
+enum class \mbox{\hyperlink{classq_1_1_mass_spectrum_a306bc262104d585f4a4ed4e91c2d715f}{MSLevel}} \{ \mbox{\hyperlink{classq_1_1_mass_spectrum_a306bc262104d585f4a4ed4e91c2d715fa3c4708a2cdd3c4bfd03ad04e36b87544}{MS1}}
+, \mbox{\hyperlink{classq_1_1_mass_spectrum_a306bc262104d585f4a4ed4e91c2d715fa5db8c2f5881ff5a19875fe5529b9a987}{MS2}}
+ \}
+\item 
+enum class \mbox{\hyperlink{classq_1_1_mass_spectrum_aa0b795e6c8a61d5b4b1442d3cf0ef99c}{Ionization\+Mode}} \{ \mbox{\hyperlink{classq_1_1_mass_spectrum_aa0b795e6c8a61d5b4b1442d3cf0ef99ca3289297424e01eda5b788c083bbf3147}{Positive}}
+, \mbox{\hyperlink{classq_1_1_mass_spectrum_aa0b795e6c8a61d5b4b1442d3cf0ef99caffb9356ff2b7da85c75c92fa7ea03b8b}{Negative}}
+ \}
+\item 
+enum class \mbox{\hyperlink{classq_1_1_mass_spectrum_af87df55910fd59adca7895b87143ee91}{Data\+Format}} \{ \mbox{\hyperlink{classq_1_1_mass_spectrum_af87df55910fd59adca7895b87143ee91acce99c598cfdb9773ab041d54c3d973a}{Profile}}
+, \mbox{\hyperlink{classq_1_1_mass_spectrum_af87df55910fd59adca7895b87143ee91a9b49197cf2fea5efc68ef8a88489e1b6}{Centroid}}
+ \}
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\hyperlink{classq_1_1_mass_spectrum_ac655e9921b8bcb665971c1475c8b12f7}{Mass\+Spectrum}} (\mbox{\hyperlink{classq_1_1_mass_spectrum_a306bc262104d585f4a4ed4e91c2d715f}{MSLevel}} \mbox{\hyperlink{classq_1_1_mass_spectrum_aaa648e4e6073afea55b2619654d77019}{ms\+Level}}, \mbox{\hyperlink{classq_1_1_mass_spectrum_aa0b795e6c8a61d5b4b1442d3cf0ef99c}{Ionization\+Mode}} \mbox{\hyperlink{classq_1_1_mass_spectrum_a6261271cb5f71d3646af13e8cdddb69a}{mode}}, \mbox{\hyperlink{classq_1_1_mass_spectrum_af87df55910fd59adca7895b87143ee91}{Data\+Format}} \mbox{\hyperlink{classq_1_1_mass_spectrum_a076127a61ec42df60e93bbe3c5e50d3d}{data\+Type}})
+\begin{DoxyCompactList}\small\item\em Construct a new Mass Spectrum object. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsection*{Public Attributes}
+\begin{DoxyCompactItemize}
+\item 
+std\+::vector$<$ \mbox{\hyperlink{structq_1_1_spectral_point}{Spectral\+Point}} $>$ \mbox{\hyperlink{classq_1_1_mass_spectrum_ac26c722a5c22d794650b21aa2957c904}{points}}
+\begin{DoxyCompactList}\small\item\em Vector of spectral data points. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{classq_1_1_mass_spectrum_a306bc262104d585f4a4ed4e91c2d715f}{MSLevel}} \mbox{\hyperlink{classq_1_1_mass_spectrum_aaa648e4e6073afea55b2619654d77019}{ms\+Level}}
+\item 
+\mbox{\hyperlink{classq_1_1_mass_spectrum_aa0b795e6c8a61d5b4b1442d3cf0ef99c}{Ionization\+Mode}} \mbox{\hyperlink{classq_1_1_mass_spectrum_a6261271cb5f71d3646af13e8cdddb69a}{mode}}
+\item 
+\mbox{\hyperlink{classq_1_1_mass_spectrum_af87df55910fd59adca7895b87143ee91}{Data\+Format}} \mbox{\hyperlink{classq_1_1_mass_spectrum_a076127a61ec42df60e93bbe3c5e50d3d}{data\+Type}}
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+Class to represent a mass spectrum with additional metadata. 
+
+This class stores an entire mass spectrum, including spectral data points, and metadata such as the MS level, ionization mode, and data type (profile or centroid).
+
+
+\begin{DoxyParams}{Parameters}
+{\em ms\+Level} & MS1 or MS2 \\
+\hline
+{\em mode} & Ionization Mode \+: Positive or Negative \\
+\hline
+{\em data\+Type} & Profile or Centroid \\
+\hline
+{\em points} & Vector of Structure element contains various categroies, see \doxylink{structq_1_1_spectral_point}{Spectral\+Point} \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line \mbox{\hyperlink{qalgorithms__datatype__mass__spectrum_8h_source_l00037}{37}} of file \mbox{\hyperlink{qalgorithms__datatype__mass__spectrum_8h_source}{qalgorithms\+\_\+datatype\+\_\+mass\+\_\+spectrum.\+h}}.
+
+
+
+\doxysubsection{Member Enumeration Documentation}
+\Hypertarget{classq_1_1_mass_spectrum_af87df55910fd59adca7895b87143ee91}\label{classq_1_1_mass_spectrum_af87df55910fd59adca7895b87143ee91} 
+\index{q::MassSpectrum@{q::MassSpectrum}!DataFormat@{DataFormat}}
+\index{DataFormat@{DataFormat}!q::MassSpectrum@{q::MassSpectrum}}
+\doxysubsubsection{\texorpdfstring{DataFormat}{DataFormat}}
+{\footnotesize\ttfamily enum class \mbox{\hyperlink{classq_1_1_mass_spectrum_af87df55910fd59adca7895b87143ee91}{q\+::\+Mass\+Spectrum\+::\+Data\+Format}}\hspace{0.3cm}{\ttfamily [strong]}}
+
+\begin{DoxyEnumFields}{Enumerator}
+\raisebox{\heightof{T}}[0pt][0pt]{\index{Profile@{Profile}!q::MassSpectrum@{q::MassSpectrum}}\index{q::MassSpectrum@{q::MassSpectrum}!Profile@{Profile}}}\Hypertarget{classq_1_1_mass_spectrum_af87df55910fd59adca7895b87143ee91acce99c598cfdb9773ab041d54c3d973a}\label{classq_1_1_mass_spectrum_af87df55910fd59adca7895b87143ee91acce99c598cfdb9773ab041d54c3d973a} 
+Profile&\\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{Centroid@{Centroid}!q::MassSpectrum@{q::MassSpectrum}}\index{q::MassSpectrum@{q::MassSpectrum}!Centroid@{Centroid}}}\Hypertarget{classq_1_1_mass_spectrum_af87df55910fd59adca7895b87143ee91a9b49197cf2fea5efc68ef8a88489e1b6}\label{classq_1_1_mass_spectrum_af87df55910fd59adca7895b87143ee91a9b49197cf2fea5efc68ef8a88489e1b6} 
+Centroid&\\
+\hline
+
+\end{DoxyEnumFields}
+
+
+Definition at line \mbox{\hyperlink{qalgorithms__datatype__mass__spectrum_8h_source_l00041}{41}} of file \mbox{\hyperlink{qalgorithms__datatype__mass__spectrum_8h_source}{qalgorithms\+\_\+datatype\+\_\+mass\+\_\+spectrum.\+h}}.
+
+\Hypertarget{classq_1_1_mass_spectrum_aa0b795e6c8a61d5b4b1442d3cf0ef99c}\label{classq_1_1_mass_spectrum_aa0b795e6c8a61d5b4b1442d3cf0ef99c} 
+\index{q::MassSpectrum@{q::MassSpectrum}!IonizationMode@{IonizationMode}}
+\index{IonizationMode@{IonizationMode}!q::MassSpectrum@{q::MassSpectrum}}
+\doxysubsubsection{\texorpdfstring{IonizationMode}{IonizationMode}}
+{\footnotesize\ttfamily enum class \mbox{\hyperlink{classq_1_1_mass_spectrum_aa0b795e6c8a61d5b4b1442d3cf0ef99c}{q\+::\+Mass\+Spectrum\+::\+Ionization\+Mode}}\hspace{0.3cm}{\ttfamily [strong]}}
+
+\begin{DoxyEnumFields}{Enumerator}
+\raisebox{\heightof{T}}[0pt][0pt]{\index{Positive@{Positive}!q::MassSpectrum@{q::MassSpectrum}}\index{q::MassSpectrum@{q::MassSpectrum}!Positive@{Positive}}}\Hypertarget{classq_1_1_mass_spectrum_aa0b795e6c8a61d5b4b1442d3cf0ef99ca3289297424e01eda5b788c083bbf3147}\label{classq_1_1_mass_spectrum_aa0b795e6c8a61d5b4b1442d3cf0ef99ca3289297424e01eda5b788c083bbf3147} 
+Positive&\\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{Negative@{Negative}!q::MassSpectrum@{q::MassSpectrum}}\index{q::MassSpectrum@{q::MassSpectrum}!Negative@{Negative}}}\Hypertarget{classq_1_1_mass_spectrum_aa0b795e6c8a61d5b4b1442d3cf0ef99caffb9356ff2b7da85c75c92fa7ea03b8b}\label{classq_1_1_mass_spectrum_aa0b795e6c8a61d5b4b1442d3cf0ef99caffb9356ff2b7da85c75c92fa7ea03b8b} 
+Negative&\\
+\hline
+
+\end{DoxyEnumFields}
+
+
+Definition at line \mbox{\hyperlink{qalgorithms__datatype__mass__spectrum_8h_source_l00040}{40}} of file \mbox{\hyperlink{qalgorithms__datatype__mass__spectrum_8h_source}{qalgorithms\+\_\+datatype\+\_\+mass\+\_\+spectrum.\+h}}.
+
+\Hypertarget{classq_1_1_mass_spectrum_a306bc262104d585f4a4ed4e91c2d715f}\label{classq_1_1_mass_spectrum_a306bc262104d585f4a4ed4e91c2d715f} 
+\index{q::MassSpectrum@{q::MassSpectrum}!MSLevel@{MSLevel}}
+\index{MSLevel@{MSLevel}!q::MassSpectrum@{q::MassSpectrum}}
+\doxysubsubsection{\texorpdfstring{MSLevel}{MSLevel}}
+{\footnotesize\ttfamily enum class \mbox{\hyperlink{classq_1_1_mass_spectrum_a306bc262104d585f4a4ed4e91c2d715f}{q\+::\+Mass\+Spectrum\+::\+MSLevel}}\hspace{0.3cm}{\ttfamily [strong]}}
+
+\begin{DoxyEnumFields}{Enumerator}
+\raisebox{\heightof{T}}[0pt][0pt]{\index{MS1@{MS1}!q::MassSpectrum@{q::MassSpectrum}}\index{q::MassSpectrum@{q::MassSpectrum}!MS1@{MS1}}}\Hypertarget{classq_1_1_mass_spectrum_a306bc262104d585f4a4ed4e91c2d715fa3c4708a2cdd3c4bfd03ad04e36b87544}\label{classq_1_1_mass_spectrum_a306bc262104d585f4a4ed4e91c2d715fa3c4708a2cdd3c4bfd03ad04e36b87544} 
+MS1&\\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{MS2@{MS2}!q::MassSpectrum@{q::MassSpectrum}}\index{q::MassSpectrum@{q::MassSpectrum}!MS2@{MS2}}}\Hypertarget{classq_1_1_mass_spectrum_a306bc262104d585f4a4ed4e91c2d715fa5db8c2f5881ff5a19875fe5529b9a987}\label{classq_1_1_mass_spectrum_a306bc262104d585f4a4ed4e91c2d715fa5db8c2f5881ff5a19875fe5529b9a987} 
+MS2&\\
+\hline
+
+\end{DoxyEnumFields}
+
+
+Definition at line \mbox{\hyperlink{qalgorithms__datatype__mass__spectrum_8h_source_l00039}{39}} of file \mbox{\hyperlink{qalgorithms__datatype__mass__spectrum_8h_source}{qalgorithms\+\_\+datatype\+\_\+mass\+\_\+spectrum.\+h}}.
+
+
+
+\doxysubsection{Constructor \& Destructor Documentation}
+\Hypertarget{classq_1_1_mass_spectrum_ac655e9921b8bcb665971c1475c8b12f7}\label{classq_1_1_mass_spectrum_ac655e9921b8bcb665971c1475c8b12f7} 
+\index{q::MassSpectrum@{q::MassSpectrum}!MassSpectrum@{MassSpectrum}}
+\index{MassSpectrum@{MassSpectrum}!q::MassSpectrum@{q::MassSpectrum}}
+\doxysubsubsection{\texorpdfstring{MassSpectrum()}{MassSpectrum()}}
+{\footnotesize\ttfamily q\+::\+Mass\+Spectrum\+::\+Mass\+Spectrum (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{classq_1_1_mass_spectrum_a306bc262104d585f4a4ed4e91c2d715f}{MSLevel}}}]{ms\+Level,  }\item[{\mbox{\hyperlink{classq_1_1_mass_spectrum_aa0b795e6c8a61d5b4b1442d3cf0ef99c}{Ionization\+Mode}}}]{mode,  }\item[{\mbox{\hyperlink{classq_1_1_mass_spectrum_af87df55910fd59adca7895b87143ee91}{Data\+Format}}}]{data\+Type }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Construct a new Mass Spectrum object. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em ms\+Level} & MS1 or MS2 \\
+\hline
+{\em mode} & Ionization Mode \+: Positive or Negative \\
+\hline
+{\em data\+Type} & Profile or Centroid \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line \mbox{\hyperlink{qalgorithms__datatype__mass__spectrum_8h_source_l00055}{55}} of file \mbox{\hyperlink{qalgorithms__datatype__mass__spectrum_8h_source}{qalgorithms\+\_\+datatype\+\_\+mass\+\_\+spectrum.\+h}}.
+
+
+
+\doxysubsection{Member Data Documentation}
+\Hypertarget{classq_1_1_mass_spectrum_a076127a61ec42df60e93bbe3c5e50d3d}\label{classq_1_1_mass_spectrum_a076127a61ec42df60e93bbe3c5e50d3d} 
+\index{q::MassSpectrum@{q::MassSpectrum}!dataType@{dataType}}
+\index{dataType@{dataType}!q::MassSpectrum@{q::MassSpectrum}}
+\doxysubsubsection{\texorpdfstring{dataType}{dataType}}
+{\footnotesize\ttfamily \mbox{\hyperlink{classq_1_1_mass_spectrum_af87df55910fd59adca7895b87143ee91}{Data\+Format}} q\+::\+Mass\+Spectrum\+::data\+Type}
+
+
+
+Definition at line \mbox{\hyperlink{qalgorithms__datatype__mass__spectrum_8h_source_l00046}{46}} of file \mbox{\hyperlink{qalgorithms__datatype__mass__spectrum_8h_source}{qalgorithms\+\_\+datatype\+\_\+mass\+\_\+spectrum.\+h}}.
+
+\Hypertarget{classq_1_1_mass_spectrum_a6261271cb5f71d3646af13e8cdddb69a}\label{classq_1_1_mass_spectrum_a6261271cb5f71d3646af13e8cdddb69a} 
+\index{q::MassSpectrum@{q::MassSpectrum}!mode@{mode}}
+\index{mode@{mode}!q::MassSpectrum@{q::MassSpectrum}}
+\doxysubsubsection{\texorpdfstring{mode}{mode}}
+{\footnotesize\ttfamily \mbox{\hyperlink{classq_1_1_mass_spectrum_aa0b795e6c8a61d5b4b1442d3cf0ef99c}{Ionization\+Mode}} q\+::\+Mass\+Spectrum\+::mode}
+
+
+
+Definition at line \mbox{\hyperlink{qalgorithms__datatype__mass__spectrum_8h_source_l00045}{45}} of file \mbox{\hyperlink{qalgorithms__datatype__mass__spectrum_8h_source}{qalgorithms\+\_\+datatype\+\_\+mass\+\_\+spectrum.\+h}}.
+
+\Hypertarget{classq_1_1_mass_spectrum_aaa648e4e6073afea55b2619654d77019}\label{classq_1_1_mass_spectrum_aaa648e4e6073afea55b2619654d77019} 
+\index{q::MassSpectrum@{q::MassSpectrum}!msLevel@{msLevel}}
+\index{msLevel@{msLevel}!q::MassSpectrum@{q::MassSpectrum}}
+\doxysubsubsection{\texorpdfstring{msLevel}{msLevel}}
+{\footnotesize\ttfamily \mbox{\hyperlink{classq_1_1_mass_spectrum_a306bc262104d585f4a4ed4e91c2d715f}{MSLevel}} q\+::\+Mass\+Spectrum\+::ms\+Level}
+
+
+
+Definition at line \mbox{\hyperlink{qalgorithms__datatype__mass__spectrum_8h_source_l00044}{44}} of file \mbox{\hyperlink{qalgorithms__datatype__mass__spectrum_8h_source}{qalgorithms\+\_\+datatype\+\_\+mass\+\_\+spectrum.\+h}}.
+
+\Hypertarget{classq_1_1_mass_spectrum_ac26c722a5c22d794650b21aa2957c904}\label{classq_1_1_mass_spectrum_ac26c722a5c22d794650b21aa2957c904} 
+\index{q::MassSpectrum@{q::MassSpectrum}!points@{points}}
+\index{points@{points}!q::MassSpectrum@{q::MassSpectrum}}
+\doxysubsubsection{\texorpdfstring{points}{points}}
+{\footnotesize\ttfamily std\+::vector$<$\mbox{\hyperlink{structq_1_1_spectral_point}{Spectral\+Point}}$>$ q\+::\+Mass\+Spectrum\+::points}
+
+
+
+Vector of spectral data points. 
+
+
+
+Definition at line \mbox{\hyperlink{qalgorithms__datatype__mass__spectrum_8h_source_l00042}{42}} of file \mbox{\hyperlink{qalgorithms__datatype__mass__spectrum_8h_source}{qalgorithms\+\_\+datatype\+\_\+mass\+\_\+spectrum.\+h}}.
+
+
+
+The documentation for this class was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+include/\mbox{\hyperlink{qalgorithms__datatype__mass__spectrum_8h}{qalgorithms\+\_\+datatype\+\_\+mass\+\_\+spectrum.\+h}}\end{DoxyCompactItemize}

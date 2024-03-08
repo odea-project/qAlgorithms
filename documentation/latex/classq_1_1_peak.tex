@@ -1,0 +1,151 @@
+\doxysection{q\+::Peak Class Reference}
+\hypertarget{classq_1_1_peak}{}\label{classq_1_1_peak}\index{q::Peak@{q::Peak}}
+
+
+{\ttfamily \#include $<$qalgorithms\+\_\+peak.\+h$>$}
+
+\doxysubsubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\hyperlink{classq_1_1_peak_a00b71693923d43d7a2d38d257d40e12e}{Peak}} ()
+\item 
+\mbox{\hyperlink{classq_1_1_peak_aa6cc923c2fddc0fe440952376624d787}{\texorpdfstring{$\sim$}{\string~}\+Peak}} ()
+\item 
+double \mbox{\hyperlink{classq_1_1_peak_a76d9c461da59f54aae56acbe09e5687f}{get\+Property}} (\mbox{\hyperlink{namespaceq_ab3bdb9eac069e4e777368ed17431ffaf}{Property}} property) const
+\item 
+void \mbox{\hyperlink{classq_1_1_peak_abeea4d47467decf11b1d2c3c8a150613}{set\+Property}} (\mbox{\hyperlink{namespaceq_ab3bdb9eac069e4e777368ed17431ffaf}{Property}} property, double value)
+\item 
+void \mbox{\hyperlink{classq_1_1_peak_a5312348ee392b1400238b774a2fabba4}{validate}} ()
+\item 
+bool \mbox{\hyperlink{classq_1_1_peak_a7abafe7418d3101a2cd3f0a483345ce2}{validate\+\_\+coefficients}} (const double df, const double b1, const double b2, const double b3, const double x\+Index, double \&apex\+\_\+position, double \&valley\+\_\+position) const
+\item 
+bool \mbox{\hyperlink{classq_1_1_peak_a592bb5eb08f59ae80227dff6372d6551}{calc\+Apex\+\_\+position}} (const double df, const double b1, const double b2, const double x\+Index, double \&apex\+\_\+position) const
+\item 
+bool \mbox{\hyperlink{classq_1_1_peak_aff2bc1e2df11ae6a77089acb48c8fa45}{calc\+Apex\+Valley\+\_\+position}} (const double df, const double b1, const double b2, const double b3, const double x\+Index, double \&apex\+\_\+position, double \&valley\+\_\+position) const
+\item 
+void \mbox{\hyperlink{classq_1_1_peak_ae643256a2b7e955b9a2614f2b12c4d01}{print}} ()
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Static Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+static std\+::map$<$ \mbox{\hyperlink{namespaceq_ab3bdb9eac069e4e777368ed17431ffaf}{Property}}, double $>$ \mbox{\hyperlink{classq_1_1_peak_a09fc913d00b87ae32af9500326b74413}{initialize\+Properties}} ()
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+
+
+Definition at line \mbox{\hyperlink{qalgorithms__peak_8h_source_l00033}{33}} of file \mbox{\hyperlink{qalgorithms__peak_8h_source}{qalgorithms\+\_\+peak.\+h}}.
+
+
+
+\doxysubsection{Constructor \& Destructor Documentation}
+\Hypertarget{classq_1_1_peak_a00b71693923d43d7a2d38d257d40e12e}\label{classq_1_1_peak_a00b71693923d43d7a2d38d257d40e12e} 
+\index{q::Peak@{q::Peak}!Peak@{Peak}}
+\index{Peak@{Peak}!q::Peak@{q::Peak}}
+\doxysubsubsection{\texorpdfstring{Peak()}{Peak()}}
+{\footnotesize\ttfamily q\+::\+Peak\+::\+Peak (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})}
+
+
+
+Definition at line \mbox{\hyperlink{qalgorithms__peak_8cpp_source_l00040}{40}} of file \mbox{\hyperlink{qalgorithms__peak_8cpp_source}{qalgorithms\+\_\+peak.\+cpp}}.
+
+\Hypertarget{classq_1_1_peak_aa6cc923c2fddc0fe440952376624d787}\label{classq_1_1_peak_aa6cc923c2fddc0fe440952376624d787} 
+\index{q::Peak@{q::Peak}!````~Peak@{\texorpdfstring{$\sim$}{\string~}Peak}}
+\index{````~Peak@{\texorpdfstring{$\sim$}{\string~}Peak}!q::Peak@{q::Peak}}
+\doxysubsubsection{\texorpdfstring{\texorpdfstring{$\sim$}{\string~}Peak()}{\string~Peak()}}
+{\footnotesize\ttfamily q\+::\+Peak\+::\texorpdfstring{$\sim$}{\string~}\+Peak (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})}
+
+
+
+Definition at line \mbox{\hyperlink{qalgorithms__peak_8cpp_source_l00045}{45}} of file \mbox{\hyperlink{qalgorithms__peak_8cpp_source}{qalgorithms\+\_\+peak.\+cpp}}.
+
+
+
+\doxysubsection{Member Function Documentation}
+\Hypertarget{classq_1_1_peak_a592bb5eb08f59ae80227dff6372d6551}\label{classq_1_1_peak_a592bb5eb08f59ae80227dff6372d6551} 
+\index{q::Peak@{q::Peak}!calcApex\_position@{calcApex\_position}}
+\index{calcApex\_position@{calcApex\_position}!q::Peak@{q::Peak}}
+\doxysubsubsection{\texorpdfstring{calcApex\_position()}{calcApex\_position()}}
+{\footnotesize\ttfamily bool q\+::\+Peak\+::calc\+Apex\+\_\+position (\begin{DoxyParamCaption}\item[{const double}]{df,  }\item[{const double}]{b1,  }\item[{const double}]{b2,  }\item[{const double}]{x\+Index,  }\item[{double \&}]{apex\+\_\+position }\end{DoxyParamCaption}) const}
+
+
+
+Definition at line \mbox{\hyperlink{qalgorithms__peak_8cpp_source_l00107}{107}} of file \mbox{\hyperlink{qalgorithms__peak_8cpp_source}{qalgorithms\+\_\+peak.\+cpp}}.
+
+\Hypertarget{classq_1_1_peak_aff2bc1e2df11ae6a77089acb48c8fa45}\label{classq_1_1_peak_aff2bc1e2df11ae6a77089acb48c8fa45} 
+\index{q::Peak@{q::Peak}!calcApexValley\_position@{calcApexValley\_position}}
+\index{calcApexValley\_position@{calcApexValley\_position}!q::Peak@{q::Peak}}
+\doxysubsubsection{\texorpdfstring{calcApexValley\_position()}{calcApexValley\_position()}}
+{\footnotesize\ttfamily bool q\+::\+Peak\+::calc\+Apex\+Valley\+\_\+position (\begin{DoxyParamCaption}\item[{const double}]{df,  }\item[{const double}]{b1,  }\item[{const double}]{b2,  }\item[{const double}]{b3,  }\item[{const double}]{x\+Index,  }\item[{double \&}]{apex\+\_\+position,  }\item[{double \&}]{valley\+\_\+position }\end{DoxyParamCaption}) const}
+
+
+
+Definition at line \mbox{\hyperlink{qalgorithms__peak_8cpp_source_l00124}{124}} of file \mbox{\hyperlink{qalgorithms__peak_8cpp_source}{qalgorithms\+\_\+peak.\+cpp}}.
+
+\Hypertarget{classq_1_1_peak_a76d9c461da59f54aae56acbe09e5687f}\label{classq_1_1_peak_a76d9c461da59f54aae56acbe09e5687f} 
+\index{q::Peak@{q::Peak}!getProperty@{getProperty}}
+\index{getProperty@{getProperty}!q::Peak@{q::Peak}}
+\doxysubsubsection{\texorpdfstring{getProperty()}{getProperty()}}
+{\footnotesize\ttfamily double q\+::\+Peak\+::get\+Property (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{namespaceq_ab3bdb9eac069e4e777368ed17431ffaf}{Property}}}]{property }\end{DoxyParamCaption}) const}
+
+
+
+Definition at line \mbox{\hyperlink{qalgorithms__peak_8cpp_source_l00048}{48}} of file \mbox{\hyperlink{qalgorithms__peak_8cpp_source}{qalgorithms\+\_\+peak.\+cpp}}.
+
+\Hypertarget{classq_1_1_peak_a09fc913d00b87ae32af9500326b74413}\label{classq_1_1_peak_a09fc913d00b87ae32af9500326b74413} 
+\index{q::Peak@{q::Peak}!initializeProperties@{initializeProperties}}
+\index{initializeProperties@{initializeProperties}!q::Peak@{q::Peak}}
+\doxysubsubsection{\texorpdfstring{initializeProperties()}{initializeProperties()}}
+{\footnotesize\ttfamily std\+::map$<$ \mbox{\hyperlink{namespaceq_ab3bdb9eac069e4e777368ed17431ffaf}{Property}}, double $>$ q\+::\+Peak\+::initialize\+Properties (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [static]}}
+
+
+
+Definition at line \mbox{\hyperlink{qalgorithms__peak_8cpp_source_l00029}{29}} of file \mbox{\hyperlink{qalgorithms__peak_8cpp_source}{qalgorithms\+\_\+peak.\+cpp}}.
+
+\Hypertarget{classq_1_1_peak_ae643256a2b7e955b9a2614f2b12c4d01}\label{classq_1_1_peak_ae643256a2b7e955b9a2614f2b12c4d01} 
+\index{q::Peak@{q::Peak}!print@{print}}
+\index{print@{print}!q::Peak@{q::Peak}}
+\doxysubsubsection{\texorpdfstring{print()}{print()}}
+{\footnotesize\ttfamily void q\+::\+Peak\+::print (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})}
+
+
+
+Definition at line \mbox{\hyperlink{qalgorithms__peak_8cpp_source_l00144}{144}} of file \mbox{\hyperlink{qalgorithms__peak_8cpp_source}{qalgorithms\+\_\+peak.\+cpp}}.
+
+\Hypertarget{classq_1_1_peak_abeea4d47467decf11b1d2c3c8a150613}\label{classq_1_1_peak_abeea4d47467decf11b1d2c3c8a150613} 
+\index{q::Peak@{q::Peak}!setProperty@{setProperty}}
+\index{setProperty@{setProperty}!q::Peak@{q::Peak}}
+\doxysubsubsection{\texorpdfstring{setProperty()}{setProperty()}}
+{\footnotesize\ttfamily void q\+::\+Peak\+::set\+Property (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{namespaceq_ab3bdb9eac069e4e777368ed17431ffaf}{Property}}}]{property,  }\item[{double}]{value }\end{DoxyParamCaption})}
+
+
+
+Definition at line \mbox{\hyperlink{qalgorithms__peak_8cpp_source_l00057}{57}} of file \mbox{\hyperlink{qalgorithms__peak_8cpp_source}{qalgorithms\+\_\+peak.\+cpp}}.
+
+\Hypertarget{classq_1_1_peak_a5312348ee392b1400238b774a2fabba4}\label{classq_1_1_peak_a5312348ee392b1400238b774a2fabba4} 
+\index{q::Peak@{q::Peak}!validate@{validate}}
+\index{validate@{validate}!q::Peak@{q::Peak}}
+\doxysubsubsection{\texorpdfstring{validate()}{validate()}}
+{\footnotesize\ttfamily void q\+::\+Peak\+::validate (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})}
+
+
+
+Definition at line \mbox{\hyperlink{qalgorithms__peak_8cpp_source_l00062}{62}} of file \mbox{\hyperlink{qalgorithms__peak_8cpp_source}{qalgorithms\+\_\+peak.\+cpp}}.
+
+\Hypertarget{classq_1_1_peak_a7abafe7418d3101a2cd3f0a483345ce2}\label{classq_1_1_peak_a7abafe7418d3101a2cd3f0a483345ce2} 
+\index{q::Peak@{q::Peak}!validate\_coefficients@{validate\_coefficients}}
+\index{validate\_coefficients@{validate\_coefficients}!q::Peak@{q::Peak}}
+\doxysubsubsection{\texorpdfstring{validate\_coefficients()}{validate\_coefficients()}}
+{\footnotesize\ttfamily bool q\+::\+Peak\+::validate\+\_\+coefficients (\begin{DoxyParamCaption}\item[{const double}]{df,  }\item[{const double}]{b1,  }\item[{const double}]{b2,  }\item[{const double}]{b3,  }\item[{const double}]{x\+Index,  }\item[{double \&}]{apex\+\_\+position,  }\item[{double \&}]{valley\+\_\+position }\end{DoxyParamCaption}) const}
+
+
+
+Definition at line \mbox{\hyperlink{qalgorithms__peak_8cpp_source_l00073}{73}} of file \mbox{\hyperlink{qalgorithms__peak_8cpp_source}{qalgorithms\+\_\+peak.\+cpp}}.
+
+
+
+The documentation for this class was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+include/\mbox{\hyperlink{qalgorithms__peak_8h}{qalgorithms\+\_\+peak.\+h}}\item 
+src/\mbox{\hyperlink{qalgorithms__peak_8cpp}{qalgorithms\+\_\+peak.\+cpp}}\end{DoxyCompactItemize}

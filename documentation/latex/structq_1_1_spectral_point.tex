@@ -1,0 +1,106 @@
+\doxysection{q\+::Spectral\+Point Struct Reference}
+\hypertarget{structq_1_1_spectral_point}{}\label{structq_1_1_spectral_point}\index{q::SpectralPoint@{q::SpectralPoint}}
+
+
+Struct to represent a single point in a mass spectrum.  
+
+
+
+
+{\ttfamily \#include $<$qalgorithms\+\_\+datatype\+\_\+mass\+\_\+spectrum.\+h$>$}
+
+\doxysubsubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\hyperlink{structq_1_1_spectral_point_a3bc69437cc85fa363c09ebab28e33b75}{Spectral\+Point}} (double \mbox{\hyperlink{structq_1_1_spectral_point_a0e71dbd203258d198aa13d385d3bcd79}{mz}}, double \mbox{\hyperlink{structq_1_1_spectral_point_a72f9155e7c1b28659f7b982c1b551231}{intensity}}, double \mbox{\hyperlink{structq_1_1_spectral_point_a79207138e359c878e6f916c10febd84a}{quality\+Score}}=0.\+0)
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Public Attributes}
+\begin{DoxyCompactItemize}
+\item 
+double \mbox{\hyperlink{structq_1_1_spectral_point_a0e71dbd203258d198aa13d385d3bcd79}{mz}}
+\begin{DoxyCompactList}\small\item\em Mass-\/to-\/charge ratio. \end{DoxyCompactList}\item 
+double \mbox{\hyperlink{structq_1_1_spectral_point_a72f9155e7c1b28659f7b982c1b551231}{intensity}}
+\begin{DoxyCompactList}\small\item\em Signal intensity. \end{DoxyCompactList}\item 
+double \mbox{\hyperlink{structq_1_1_spectral_point_a79207138e359c878e6f916c10febd84a}{quality\+Score}}
+\begin{DoxyCompactList}\small\item\em Optional quality score for the data point. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+Struct to represent a single point in a mass spectrum. 
+
+This struct holds the mass-\/to-\/charge ratio (m/z), intensity, and an optional quality score for the spectral data point. 
+\begin{DoxyParams}{Parameters}
+{\em mz} & \\
+\hline
+{\em intensity} & \\
+\hline
+{\em quality\+Score} & Optional Qualityparameter for centroids. \cite{reuschenbach2022development} \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line \mbox{\hyperlink{qalgorithms__datatype__mass__spectrum_8h_source_l00017}{17}} of file \mbox{\hyperlink{qalgorithms__datatype__mass__spectrum_8h_source}{qalgorithms\+\_\+datatype\+\_\+mass\+\_\+spectrum.\+h}}.
+
+
+
+\doxysubsection{Constructor \& Destructor Documentation}
+\Hypertarget{structq_1_1_spectral_point_a3bc69437cc85fa363c09ebab28e33b75}\label{structq_1_1_spectral_point_a3bc69437cc85fa363c09ebab28e33b75} 
+\index{q::SpectralPoint@{q::SpectralPoint}!SpectralPoint@{SpectralPoint}}
+\index{SpectralPoint@{SpectralPoint}!q::SpectralPoint@{q::SpectralPoint}}
+\doxysubsubsection{\texorpdfstring{SpectralPoint()}{SpectralPoint()}}
+{\footnotesize\ttfamily q\+::\+Spectral\+Point\+::\+Spectral\+Point (\begin{DoxyParamCaption}\item[{double}]{mz,  }\item[{double}]{intensity,  }\item[{double}]{quality\+Score = {\ttfamily 0.0} }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Definition at line \mbox{\hyperlink{qalgorithms__datatype__mass__spectrum_8h_source_l00022}{22}} of file \mbox{\hyperlink{qalgorithms__datatype__mass__spectrum_8h_source}{qalgorithms\+\_\+datatype\+\_\+mass\+\_\+spectrum.\+h}}.
+
+
+
+\doxysubsection{Member Data Documentation}
+\Hypertarget{structq_1_1_spectral_point_a72f9155e7c1b28659f7b982c1b551231}\label{structq_1_1_spectral_point_a72f9155e7c1b28659f7b982c1b551231} 
+\index{q::SpectralPoint@{q::SpectralPoint}!intensity@{intensity}}
+\index{intensity@{intensity}!q::SpectralPoint@{q::SpectralPoint}}
+\doxysubsubsection{\texorpdfstring{intensity}{intensity}}
+{\footnotesize\ttfamily double q\+::\+Spectral\+Point\+::intensity}
+
+
+
+Signal intensity. 
+
+
+
+Definition at line \mbox{\hyperlink{qalgorithms__datatype__mass__spectrum_8h_source_l00019}{19}} of file \mbox{\hyperlink{qalgorithms__datatype__mass__spectrum_8h_source}{qalgorithms\+\_\+datatype\+\_\+mass\+\_\+spectrum.\+h}}.
+
+\Hypertarget{structq_1_1_spectral_point_a0e71dbd203258d198aa13d385d3bcd79}\label{structq_1_1_spectral_point_a0e71dbd203258d198aa13d385d3bcd79} 
+\index{q::SpectralPoint@{q::SpectralPoint}!mz@{mz}}
+\index{mz@{mz}!q::SpectralPoint@{q::SpectralPoint}}
+\doxysubsubsection{\texorpdfstring{mz}{mz}}
+{\footnotesize\ttfamily double q\+::\+Spectral\+Point\+::mz}
+
+
+
+Mass-\/to-\/charge ratio. 
+
+
+
+Definition at line \mbox{\hyperlink{qalgorithms__datatype__mass__spectrum_8h_source_l00018}{18}} of file \mbox{\hyperlink{qalgorithms__datatype__mass__spectrum_8h_source}{qalgorithms\+\_\+datatype\+\_\+mass\+\_\+spectrum.\+h}}.
+
+\Hypertarget{structq_1_1_spectral_point_a79207138e359c878e6f916c10febd84a}\label{structq_1_1_spectral_point_a79207138e359c878e6f916c10febd84a} 
+\index{q::SpectralPoint@{q::SpectralPoint}!qualityScore@{qualityScore}}
+\index{qualityScore@{qualityScore}!q::SpectralPoint@{q::SpectralPoint}}
+\doxysubsubsection{\texorpdfstring{qualityScore}{qualityScore}}
+{\footnotesize\ttfamily double q\+::\+Spectral\+Point\+::quality\+Score}
+
+
+
+Optional quality score for the data point. 
+
+
+
+Definition at line \mbox{\hyperlink{qalgorithms__datatype__mass__spectrum_8h_source_l00020}{20}} of file \mbox{\hyperlink{qalgorithms__datatype__mass__spectrum_8h_source}{qalgorithms\+\_\+datatype\+\_\+mass\+\_\+spectrum.\+h}}.
+
+
+
+The documentation for this struct was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+include/\mbox{\hyperlink{qalgorithms__datatype__mass__spectrum_8h}{qalgorithms\+\_\+datatype\+\_\+mass\+\_\+spectrum.\+h}}\end{DoxyCompactItemize}
