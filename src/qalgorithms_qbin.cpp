@@ -60,12 +60,12 @@ namespace q
         orderOfImportance = {0, 5};
         dataspaceDone.resize(orderOfImportance.size()); // default value of bool is false
         // std::cout << "Select the column which contains the standard error for your primary parameter by entering the number assigned to it.\n";
-        
-// implement manual selection of columns ßßß
+
+        // implement manual selection of columns ßßß
         rawMZ = user_data.data[0];
         rawMZerror = user_data.data[7];
         rawRT = user_data.data[5];
-        std::vector<int> rawScansPrev(user_data.data[6].begin(),user_data.data[6].end());
+        std::vector<int> rawScansPrev(user_data.data[6].begin(), user_data.data[6].end());
         rawScans = rawScansPrev;
     }
     BinContainer::~BinContainer() {}
@@ -85,7 +85,7 @@ namespace q
             std::sort(errorsum.begin(), errorsum.end(), OrderIndices_double(rawMZ)); // sort error col the same way as order space of mz later
             std::partial_sum(errorsum.begin(), errorsum.end(), errorsum.begin());    // cumsum of errorsum !! only works if no bins have gaps in mz
             // create order space
-            makeNOS(rawMZ); // dataspace is one element of orderOfImportance vector ßßß rework ooi 
+            makeNOS(rawMZ); // dataspace is one element of orderOfImportance vector ßßß rework ooi
             subsetBin(activeNos, errorsum, 0, activeNos.size());
             dataspaceDone[dataspace] = true;
         }
@@ -127,7 +127,7 @@ namespace q
 
         vcrit = 3.05037165842070 * pow(log(n + 1), (-0.4771864667153)) * (error[endBin - error[beginBin]]) / n; // integrate calculation of mean mz error - norm would be mz / error > critval, equivalent to mz > critval * error
         double max = *pmax;
-        if (max < vcrit)                                                                         // add max = *pmax in condition
+        if (max < vcrit) // add max = *pmax in condition
         {
             // construct vector containing indices in relation to raw data
             std::vector<int> idx(&mainIndices[beginBin], &mainIndices[endBin]);
@@ -215,7 +215,7 @@ namespace q
                         }
                         else
                         {
-                            // perform subsetting - new order space, error col must be generated 
+                            // perform subsetting - new order space, error col must be generated
                             std::vector<double> newOS(n);
                             for (size_t i = 0; i < n - 1; i++)
                             {
@@ -231,7 +231,6 @@ namespace q
                                 binErrorSort[i] = error[binvec[i]]; // create vector of cumulative error instead
                             }
                             std::partial_sum(binErrorSort.begin(), binErrorSort.end(), binErrorSort.begin());
-
 
                             subsetBin(newOS, binErrorSort, 0, newOS.size() - 1);
                         }
