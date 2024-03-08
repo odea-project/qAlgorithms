@@ -1,0 +1,88 @@
+#include "../include/qalgorithms_qBin2.h"
+
+namespace q
+{
+#pragma region "BinContainer"
+
+    BinContainer::BinContainer() {}
+    BinContainer::~BinContainer() {}
+
+    void BinContainer::makeFirstBin()
+    {
+    }
+
+    std::vector<Feature> BinContainer::readcsv()
+    {
+    }
+
+#pragma endregion "BinContainer"
+
+#pragma region "Bin"
+
+    Bin::Bin(const std::vector<Feature>::iterator &startBin, const std::vector<Feature>::iterator &endBin, const double &max) // const std::vector<Feature> &sourceList,
+    {
+        prevmax = max;
+        std::copy(startBin, endBin, featurelist.begin());
+    }
+    Bin::~Bin() {}
+
+    void Bin::makeOS()
+    {
+        // sort features by mz
+        std::sort(featurelist.begin(), featurelist.end(), [](const auto &lhs, const auto &rhs)
+                  { return lhs.mz < rhs.mz; });
+
+        activeOS.resize(featurelist.size());             // OS = Order Space
+        for (size_t i = 0; i + 1 < activeOS.size(); i++) // +1 to prevent accessing outside of vector
+        {
+            activeOS[i] = featurelist[i + 1].mz - featurelist[i].mz;
+        }
+        activeOS.back() = -225; // -225 to signify last element in OS
+        makeCumError();         // included here to avoid sorting twice
+    }
+
+    void Bin::makeCumError()
+    {
+        cumError.reserve(featurelist.size());
+        std::transform(featurelist.begin(), featurelist.end(), back_inserter(cumError), [](Feature f)
+                       { return f.mzError; });                                // transfer error values from feature objects
+        std::partial_sum(cumError.begin(), cumError.end(), cumError.begin()); // cumulative sum
+    }
+
+    void Bin::subsetMZ(std::vector<Bin> bincontainer, const std::vector<double> &OS, int startBin, int endBin) // bincontainer is binVector of BinContainer // OS cannot be solved with pointers since index has to be transferred to frature list
+    {
+        const int n = endBin - startBin; // size is equal to n+1
+        if (n < 5)
+        {
+            return;
+        }
+
+        auto pmax = std::max_element(OS.begin() + startBin, OS.begin() + endBin - 1); // -1 to not include maximum at which the previous cut occurred
+
+        double vcrit = 3.05037165842070 * pow(log(n + 1), (-0.4771864667153)) * (cumError[endBin] - cumError[startBin]) / n; // critical value for alpha = 0.01. ßßß add functionality for custom alpha?
+        double max = *pmax;
+        if (max < vcrit) // all values in range are part of one mz bin
+        {
+            // make bin
+            Bin output(featurelist.begin() + startBin, featurelist.begin() + endBin, max); // featurelist,
+            // append Bin to bin container
+            bincontainer.push_back(output);
+            return;
+        }
+        else
+        {
+            int cutpos = std::distance(OS.begin() + startBin, pmax);
+            subsetMZ(bincontainer, OS, startBin, startBin + cutpos);
+            subsetMZ(bincontainer, OS, startBin + cutpos + 1, endBin);
+
+            // multithreading probably not a good solution, since the objects need to be copied -> copies all mz for every bin
+            return;
+        }
+    }
+
+    void Bin::subsetRT(const Bin &target, const int &maxdist)
+    {
+    }
+
+#pragma endregion "Bin"
+}
