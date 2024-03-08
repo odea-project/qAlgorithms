@@ -40,6 +40,36 @@ namespace q
         }
     }
 
+    void BinContainer::subsetBins(std::vector<int> dimensions)
+    {
+        for (size_t i = 0; i < dimensions.size(); i++) // dimensions vector allows user to choose order of executing subsetting actions. It is also possible to only subset in mz or RT
+        {
+            switch (dimensions[i])
+            {
+            case 1:
+                // bin in mz
+                int startpoint = binVector.size();
+                for (size_t i = 0; i < startpoint; i++)
+                {
+                    binVector[i].makeOS();
+                    binVector[i].makeCumError();
+                    binVector[i].subsetMZ(binVector, binVector[i].activeOS, 0, binVector[i].activeOS.size() - 1); // takes element from binVector, starts subsetting, appends bins to binVector
+                    // binVector.pop_front(); // remove the element that was processed from the bin vector, requires bin vector to be std::deque
+                }
+
+                break;
+
+            case 2:
+                /* code */
+                break;
+
+            default:
+                std::cout << "\nSeparation method " << dimensions[i] << " is not a valid parameter, skipping... \n";
+                break;
+            }
+        }
+    }
+
 #pragma endregion "BinContainer"
 
 #pragma region "Bin"
