@@ -16,7 +16,7 @@ namespace DataType {
      * @param msLevel MS1 or MS2
      * @param ionizationMode Ionization Mode : Positive or Negative
      * @param measurementMode Profile or Centroid
-     * @param points: Vector of Structure element contains various categroies, see \ref SpectralPoint
+     * @param dataPoints: Vector of Structure element contains various categroies, see \ref SpectralPoint
      */
     class MassSpectrum {
     public:
@@ -45,11 +45,11 @@ namespace DataType {
         MSLevel msLevel;
         IonizationMode ionizationMode;
         MeasurementMode measurementMode;
-        std::vector<SpectralPoint> points; 
+        std::vector<SpectralPoint> dataPoints; 
 
 
-        MassSpectrum(MSLevel msLevel, IonizationMode ionizationMode, MeasurementMode measurementMode)
-            : msLevel(msLevel), ionizationMode(ionizationMode), measurementMode(measurementMode) {}
+        MassSpectrum(MSLevel msLevel, IonizationMode ionizationMode, MeasurementMode measurementMode, std::vector<SpectralPoint> dataPoints)
+            : msLevel(msLevel), ionizationMode(ionizationMode), measurementMode(measurementMode), dataPoints(dataPoints) {}
 
     };
 
@@ -58,8 +58,8 @@ namespace DataType {
         int scanNumber;
         double retentionTime;
 
-        LC_MS(MSLevel msLevel, IonizationMode ionizationMode, MeasurementMode measurementMode, int scanNumber, double retentionTime)
-            : MassSpectrum(msLevel, ionizationMode, measurementMode), scanNumber(scanNumber), retentionTime(retentionTime) {}
+        LC_MS(MSLevel msLevel, IonizationMode ionizationMode, MeasurementMode measurementMode, std::vector<SpectralPoint> dataPoints, int scanNumber, double retentionTime)
+            : MassSpectrum(msLevel, ionizationMode, measurementMode, dataPoints), scanNumber(scanNumber), retentionTime(retentionTime) {}
     };
 
     class LC_IMS_MS : public MassSpectrum {
@@ -68,8 +68,8 @@ namespace DataType {
         double retentionTime;
         double driftTime;
 
-        LC_IMS_MS(MSLevel msLevel, IonizationMode ionizationMode, MeasurementMode measurementMode, int scanNumber, double retentionTime, double driftTime)
-            : MassSpectrum(msLevel, ionizationMode, measurementMode), scanNumber(scanNumber), retentionTime(retentionTime), driftTime(driftTime) {}
+        LC_IMS_MS(MSLevel msLevel, IonizationMode ionizationMode, MeasurementMode measurementMode, std::vector<SpectralPoint> dataPoints, int scanNumber, double retentionTime, double driftTime)
+            : MassSpectrum(msLevel, ionizationMode, measurementMode, dataPoints), scanNumber(scanNumber), retentionTime(retentionTime), driftTime(driftTime) {}
     };
 
 }; // namespace datatype
