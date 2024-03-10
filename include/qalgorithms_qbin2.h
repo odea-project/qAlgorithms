@@ -9,6 +9,7 @@
 #include <iterator>
 #include <thread>
 #include <ranges>
+#include <deque>
 
 // Goal: all functions modify individual features, which are combined to a bin. The bin contains all features and the functions necessary to summarise which features are present
 
@@ -22,6 +23,13 @@ namespace q
         double mzError;
         double RT;
         int scanNo;
+    };
+
+    class FeatureList
+    {
+    public:
+        std::vector<Feature> allFeatures;
+        // readcsv here
     };
 
     // Bin Class
@@ -38,7 +46,7 @@ namespace q
         ~Bin();
         void makeOS();
         void makeCumError();
-        void subsetMZ(std::vector<Bin> bincontainer, const std::vector<double> &OS, int startBin, int endBin); // mz, error, RT and beginning/end are dictated by bin contents
+        void subsetMZ(std::deque<Bin> bincontainer, const std::vector<double> &OS, int startBin, int endBin); // mz, error, RT and beginning/end are dictated by bin contents
         void subsetRT(const Bin &target, const int &maxdist);
         // Feature makeFeature(); // combine all features to one using means, modify mzError
     };
@@ -48,15 +56,18 @@ namespace q
     {
     private:
         void readcsv(std::string user_file, std::vector<Feature> output, int d_mz, int d_mzError, int d_RT, int d_scanNo);
-        std::vector<Bin> binVector;
+        std::deque<Bin> binDeque;
 
     public:
         BinContainer();
         ~BinContainer();
         void makeFirstBin(std::string input_file);    // calls readcsv()
-        void subsetBins(std::vector<int> dimensions); // select which of the hard-coded subsetting tools should be used in which order, always applies to binVector. Append to the end, delete from the front
+        void subsetBins(std::vector<int> dimensions); // select which of the hard-coded subsetting tools should be used in which order, always applies to binDeque. Append to the end, delete from the front
         void printAllBins(std::string path);
         void printBinSummary(std::string path);
+        void firstBinValid(); // move first bin in binDeque to end
+        void clearFirstBin(); // remove first bin in binDeque
+        // implement way to check for good bin being as long as OS -> no change, move bin to back
     };
 
 }
