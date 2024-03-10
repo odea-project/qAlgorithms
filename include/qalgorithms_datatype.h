@@ -13,6 +13,7 @@ namespace DataType {
         MZ,
         RETENTIONTIME, 
         SCANNUMBER
+        // Add new data fields here
     };
 }; // namespace datatype
 } // namespace q
