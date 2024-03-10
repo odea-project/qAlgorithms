@@ -1,0 +1,355 @@
+\doxysection{q Namespace Reference}
+\hypertarget{namespaceq}{}\label{namespaceq}\index{q@{q}}
+\doxysubsubsection*{Namespaces}
+\begin{DoxyCompactItemize}
+\item 
+namespace \mbox{\hyperlink{namespaceq_1_1_data_type}{Data\+Type}}
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Classes}
+\begin{DoxyCompactItemize}
+\item 
+struct \mbox{\hyperlink{structq_1_1data_i_d}{data\+ID}}
+\item 
+class \mbox{\hyperlink{classq_1_1_l_c_m_s_data}{LCMSData}}
+\begin{DoxyCompactList}\small\item\em Derived class for handling LC-\/\+MS measurement data. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classq_1_1_matrix}{Matrix}}
+\item 
+class \mbox{\hyperlink{classq_1_1_measurement_data}{Measurement\+Data}}
+\begin{DoxyCompactList}\small\item\em Abstract base class for managing measurement data. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classq_1_1_peak}{Peak}}
+\item 
+class \mbox{\hyperlink{classq_1_1_peakmodel}{Peakmodel}}
+\item 
+class \mbox{\hyperlink{classq_1_1_peakproperties}{Peakproperties}}
+\item 
+class \mbox{\hyperlink{classq_1_1_progress_bar}{Progress\+Bar}}
+\item 
+class \mbox{\hyperlink{classq_1_1t_values}{t\+Values}}
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Enumerations}
+\begin{DoxyCompactItemize}
+\item 
+enum class \mbox{\hyperlink{namespaceq_a1ef5b9eb7b9bdd1afc71e98f9b43a174}{Mode}} \{ \mbox{\hyperlink{namespaceq_a1ef5b9eb7b9bdd1afc71e98f9b43a174a6e0d2a351777f8e1349133544e885f8a}{DEBUGGING}}
+, \mbox{\hyperlink{namespaceq_a1ef5b9eb7b9bdd1afc71e98f9b43a174a7e92d833d7720dbe631730a6cea03346}{SILENT}}
+, \mbox{\hyperlink{namespaceq_a1ef5b9eb7b9bdd1afc71e98f9b43a174aee88634543eb5c2b123bab1abd32c497}{PROGRESS}}
+ \}
+\item 
+enum class \mbox{\hyperlink{namespaceq_ab3bdb9eac069e4e777368ed17431ffaf}{Property}} \{ \newline
+\mbox{\hyperlink{namespaceq_ab3bdb9eac069e4e777368ed17431ffafa45d4b98958ff56d24f34445e565cbf4a}{Coeff\+B0}}
+, \mbox{\hyperlink{namespaceq_ab3bdb9eac069e4e777368ed17431ffafa181ef5cc8531adebe749a4c85cc79c52}{Coeff\+B1}}
+, \mbox{\hyperlink{namespaceq_ab3bdb9eac069e4e777368ed17431ffafa439000af4eeabcb2d395a36d47a5c799}{Coeff\+B2}}
+, \mbox{\hyperlink{namespaceq_ab3bdb9eac069e4e777368ed17431ffafa575a0fc5a81196aafb0d114fb1ff43d0}{Coeff\+B3}}
+, \newline
+\mbox{\hyperlink{namespaceq_ab3bdb9eac069e4e777368ed17431ffafa6b4d014ad1b39a31881628934250650e}{Xindex}}
+, \mbox{\hyperlink{namespaceq_ab3bdb9eac069e4e777368ed17431ffafa0b9f7998ac41c70208a48a3acee941b5}{Df}}
+, \mbox{\hyperlink{namespaceq_ab3bdb9eac069e4e777368ed17431ffafab1ff519e62e525bf168c1a5055a5554c}{Peak\+ID}}
+, \mbox{\hyperlink{namespaceq_ab3bdb9eac069e4e777368ed17431ffafaf86ce7af1f9124dd82da986f6c4f3d95}{Smpl\+ID}}
+, \newline
+\mbox{\hyperlink{namespaceq_ab3bdb9eac069e4e777368ed17431ffafa52f5e0bc3859bc5f5e25130b6c7e8881}{Position}}
+, \mbox{\hyperlink{namespaceq_ab3bdb9eac069e4e777368ed17431ffafab166c0c7ce8046a50dc6b7f62c07d126}{Valley\+Position}}
+, \mbox{\hyperlink{namespaceq_ab3bdb9eac069e4e777368ed17431ffafaeec6c4bdbd339edf8cbea68becb85244}{Height}}
+, \mbox{\hyperlink{namespaceq_ab3bdb9eac069e4e777368ed17431ffafa32954654ac8fe66a1d09be19001de2d4}{Width}}
+, \newline
+\mbox{\hyperlink{namespaceq_ab3bdb9eac069e4e777368ed17431ffafadeec4ff19974f12ed781cb9a59064214}{Area}}
+, \mbox{\hyperlink{namespaceq_ab3bdb9eac069e4e777368ed17431ffafaa4cda5627fe50911648d8dfc52dfdb59}{Sigma\+Position}}
+, \mbox{\hyperlink{namespaceq_ab3bdb9eac069e4e777368ed17431ffafa5cef0ebfadec370c9aaae656e8e47e5e}{Sigma\+Height}}
+, \mbox{\hyperlink{namespaceq_ab3bdb9eac069e4e777368ed17431ffafa02b4c1c8933644fbf41a5580f5075fd3}{Sigma\+Width}}
+, \newline
+\mbox{\hyperlink{namespaceq_ab3bdb9eac069e4e777368ed17431ffafae147e029620585539bd6ac137f124be2}{Sigma\+Area}}
+, \mbox{\hyperlink{namespaceq_ab3bdb9eac069e4e777368ed17431ffafa3a167780a83475ac09b0b48775b32ef6}{Dqs}}
+ \}
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+int \mbox{\hyperlink{namespaceq_a5ea2b3dedfaa98557b94135396085f23}{sum}} (const std\+::vector$<$ int $>$ \&vec)
+\item 
+size\+\_\+t \mbox{\hyperlink{namespaceq_afc2558c328148651b80808845132e4c4}{sum}} (const std\+::vector$<$ size\+\_\+t $>$ \&vec)
+\item 
+double \mbox{\hyperlink{namespaceq_a9b008a77f4d4422c9b7c49792541c4e5}{sum}} (const std\+::vector$<$ double $>$ \&vec)
+\item 
+int \mbox{\hyperlink{namespaceq_add47edeb3d76b88ba219b38d803e0a30}{sum}} (const bool \texorpdfstring{$\ast$}{*}vec, size\+\_\+t n)
+\item 
+{\footnotesize template$<$typename T $>$ }\\std\+::vector$<$ bool $>$ \mbox{\hyperlink{namespaceq_a911b4e35d854c2c77c1fdd7f11117608}{operator$<$}} (const std\+::vector$<$ T $>$ \&vec, T scalar)
+\item 
+{\footnotesize template$<$typename T $>$ }\\std\+::vector$<$ bool $>$ \mbox{\hyperlink{namespaceq_a59be7d3e00fa2dc756d0ba0f10b6d6dd}{operator$>$}} (const std\+::vector$<$ T $>$ \&vec, T scalar)
+\item 
+{\footnotesize template$<$typename T $>$ }\\std\+::vector$<$ T $>$ \mbox{\hyperlink{namespaceq_afaf7260624b917f9123e4532c7ca68bf}{operator\texorpdfstring{$\ast$}{*}}} (const std\+::vector$<$ T $>$ \&A, const std\+::vector$<$ T $>$ \&B)
+\item 
+std\+::vector$<$ bool $>$ \mbox{\hyperlink{namespaceq_a41c88933564219f3744d4cd1a0bbde5b}{operator\&\&}} (const std\+::vector$<$ bool $>$ \&A, const std\+::vector$<$ bool $>$ \&B)
+\item 
+std\+::vector$<$ bool $>$ \mbox{\hyperlink{namespaceq_a14a55b4b8011f804b40f37925f4b4e8c}{operator!}} (const std\+::vector$<$ bool $>$ \&A)
+\item 
+void \mbox{\hyperlink{namespaceq_ae27bcd86eabebd2210e1e89c9c5a9407}{operator\texorpdfstring{$\vert$}{|}=}} (std\+::vector$<$ bool $>$ \&A, const std\+::vector$<$ bool $>$ \&B)
+\item 
+double \mbox{\hyperlink{namespaceq_af5bc719469eba45978bfaa23379f329b}{erfi}} (const double x)
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Variables}
+\begin{DoxyCompactItemize}
+\item 
+std\+::map$<$ \mbox{\hyperlink{namespaceq_ab3bdb9eac069e4e777368ed17431ffaf}{Property}}, std\+::string $>$ \mbox{\hyperlink{namespaceq_ac9412ec4dc6d9138e2965665f2651be5}{property\+Labels}}
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Enumeration Type Documentation}
+\Hypertarget{namespaceq_a1ef5b9eb7b9bdd1afc71e98f9b43a174}\label{namespaceq_a1ef5b9eb7b9bdd1afc71e98f9b43a174} 
+\index{q@{q}!Mode@{Mode}}
+\index{Mode@{Mode}!q@{q}}
+\doxysubsubsection{\texorpdfstring{Mode}{Mode}}
+{\footnotesize\ttfamily enum class \mbox{\hyperlink{namespaceq_a1ef5b9eb7b9bdd1afc71e98f9b43a174}{q\+::\+Mode}}\hspace{0.3cm}{\ttfamily [strong]}}
+
+\begin{DoxyEnumFields}{Enumerator}
+\raisebox{\heightof{T}}[0pt][0pt]{\index{DEBUGGING@{DEBUGGING}!q@{q}}\index{q@{q}!DEBUGGING@{DEBUGGING}}}\Hypertarget{namespaceq_a1ef5b9eb7b9bdd1afc71e98f9b43a174a6e0d2a351777f8e1349133544e885f8a}\label{namespaceq_a1ef5b9eb7b9bdd1afc71e98f9b43a174a6e0d2a351777f8e1349133544e885f8a} 
+DEBUGGING&\\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{SILENT@{SILENT}!q@{q}}\index{q@{q}!SILENT@{SILENT}}}\Hypertarget{namespaceq_a1ef5b9eb7b9bdd1afc71e98f9b43a174a7e92d833d7720dbe631730a6cea03346}\label{namespaceq_a1ef5b9eb7b9bdd1afc71e98f9b43a174a7e92d833d7720dbe631730a6cea03346} 
+SILENT&\\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{PROGRESS@{PROGRESS}!q@{q}}\index{q@{q}!PROGRESS@{PROGRESS}}}\Hypertarget{namespaceq_a1ef5b9eb7b9bdd1afc71e98f9b43a174aee88634543eb5c2b123bab1abd32c497}\label{namespaceq_a1ef5b9eb7b9bdd1afc71e98f9b43a174aee88634543eb5c2b123bab1abd32c497} 
+PROGRESS&\\
+\hline
+
+\end{DoxyEnumFields}
+
+
+Definition at line \mbox{\hyperlink{qalgorithms_8h_source_l00028}{28}} of file \mbox{\hyperlink{qalgorithms_8h_source}{qalgorithms.\+h}}.
+
+\Hypertarget{namespaceq_ab3bdb9eac069e4e777368ed17431ffaf}\label{namespaceq_ab3bdb9eac069e4e777368ed17431ffaf} 
+\index{q@{q}!Property@{Property}}
+\index{Property@{Property}!q@{q}}
+\doxysubsubsection{\texorpdfstring{Property}{Property}}
+{\footnotesize\ttfamily enum class \mbox{\hyperlink{namespaceq_ab3bdb9eac069e4e777368ed17431ffaf}{q\+::\+Property}}\hspace{0.3cm}{\ttfamily [strong]}}
+
+\begin{DoxyEnumFields}{Enumerator}
+\raisebox{\heightof{T}}[0pt][0pt]{\index{CoeffB0@{CoeffB0}!q@{q}}\index{q@{q}!CoeffB0@{CoeffB0}}}\Hypertarget{namespaceq_ab3bdb9eac069e4e777368ed17431ffafa45d4b98958ff56d24f34445e565cbf4a}\label{namespaceq_ab3bdb9eac069e4e777368ed17431ffafa45d4b98958ff56d24f34445e565cbf4a} 
+Coeff\+B0&\\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{CoeffB1@{CoeffB1}!q@{q}}\index{q@{q}!CoeffB1@{CoeffB1}}}\Hypertarget{namespaceq_ab3bdb9eac069e4e777368ed17431ffafa181ef5cc8531adebe749a4c85cc79c52}\label{namespaceq_ab3bdb9eac069e4e777368ed17431ffafa181ef5cc8531adebe749a4c85cc79c52} 
+Coeff\+B1&\\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{CoeffB2@{CoeffB2}!q@{q}}\index{q@{q}!CoeffB2@{CoeffB2}}}\Hypertarget{namespaceq_ab3bdb9eac069e4e777368ed17431ffafa439000af4eeabcb2d395a36d47a5c799}\label{namespaceq_ab3bdb9eac069e4e777368ed17431ffafa439000af4eeabcb2d395a36d47a5c799} 
+Coeff\+B2&\\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{CoeffB3@{CoeffB3}!q@{q}}\index{q@{q}!CoeffB3@{CoeffB3}}}\Hypertarget{namespaceq_ab3bdb9eac069e4e777368ed17431ffafa575a0fc5a81196aafb0d114fb1ff43d0}\label{namespaceq_ab3bdb9eac069e4e777368ed17431ffafa575a0fc5a81196aafb0d114fb1ff43d0} 
+Coeff\+B3&\\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{Xindex@{Xindex}!q@{q}}\index{q@{q}!Xindex@{Xindex}}}\Hypertarget{namespaceq_ab3bdb9eac069e4e777368ed17431ffafa6b4d014ad1b39a31881628934250650e}\label{namespaceq_ab3bdb9eac069e4e777368ed17431ffafa6b4d014ad1b39a31881628934250650e} 
+Xindex&\\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{Df@{Df}!q@{q}}\index{q@{q}!Df@{Df}}}\Hypertarget{namespaceq_ab3bdb9eac069e4e777368ed17431ffafa0b9f7998ac41c70208a48a3acee941b5}\label{namespaceq_ab3bdb9eac069e4e777368ed17431ffafa0b9f7998ac41c70208a48a3acee941b5} 
+Df&\\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{PeakID@{PeakID}!q@{q}}\index{q@{q}!PeakID@{PeakID}}}\Hypertarget{namespaceq_ab3bdb9eac069e4e777368ed17431ffafab1ff519e62e525bf168c1a5055a5554c}\label{namespaceq_ab3bdb9eac069e4e777368ed17431ffafab1ff519e62e525bf168c1a5055a5554c} 
+Peak\+ID&\\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{SmplID@{SmplID}!q@{q}}\index{q@{q}!SmplID@{SmplID}}}\Hypertarget{namespaceq_ab3bdb9eac069e4e777368ed17431ffafaf86ce7af1f9124dd82da986f6c4f3d95}\label{namespaceq_ab3bdb9eac069e4e777368ed17431ffafaf86ce7af1f9124dd82da986f6c4f3d95} 
+Smpl\+ID&\\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{Position@{Position}!q@{q}}\index{q@{q}!Position@{Position}}}\Hypertarget{namespaceq_ab3bdb9eac069e4e777368ed17431ffafa52f5e0bc3859bc5f5e25130b6c7e8881}\label{namespaceq_ab3bdb9eac069e4e777368ed17431ffafa52f5e0bc3859bc5f5e25130b6c7e8881} 
+Position&\\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{ValleyPosition@{ValleyPosition}!q@{q}}\index{q@{q}!ValleyPosition@{ValleyPosition}}}\Hypertarget{namespaceq_ab3bdb9eac069e4e777368ed17431ffafab166c0c7ce8046a50dc6b7f62c07d126}\label{namespaceq_ab3bdb9eac069e4e777368ed17431ffafab166c0c7ce8046a50dc6b7f62c07d126} 
+Valley\+Position&\\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{Height@{Height}!q@{q}}\index{q@{q}!Height@{Height}}}\Hypertarget{namespaceq_ab3bdb9eac069e4e777368ed17431ffafaeec6c4bdbd339edf8cbea68becb85244}\label{namespaceq_ab3bdb9eac069e4e777368ed17431ffafaeec6c4bdbd339edf8cbea68becb85244} 
+Height&\\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{Width@{Width}!q@{q}}\index{q@{q}!Width@{Width}}}\Hypertarget{namespaceq_ab3bdb9eac069e4e777368ed17431ffafa32954654ac8fe66a1d09be19001de2d4}\label{namespaceq_ab3bdb9eac069e4e777368ed17431ffafa32954654ac8fe66a1d09be19001de2d4} 
+Width&\\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{Area@{Area}!q@{q}}\index{q@{q}!Area@{Area}}}\Hypertarget{namespaceq_ab3bdb9eac069e4e777368ed17431ffafadeec4ff19974f12ed781cb9a59064214}\label{namespaceq_ab3bdb9eac069e4e777368ed17431ffafadeec4ff19974f12ed781cb9a59064214} 
+Area&\\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{SigmaPosition@{SigmaPosition}!q@{q}}\index{q@{q}!SigmaPosition@{SigmaPosition}}}\Hypertarget{namespaceq_ab3bdb9eac069e4e777368ed17431ffafaa4cda5627fe50911648d8dfc52dfdb59}\label{namespaceq_ab3bdb9eac069e4e777368ed17431ffafaa4cda5627fe50911648d8dfc52dfdb59} 
+Sigma\+Position&\\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{SigmaHeight@{SigmaHeight}!q@{q}}\index{q@{q}!SigmaHeight@{SigmaHeight}}}\Hypertarget{namespaceq_ab3bdb9eac069e4e777368ed17431ffafa5cef0ebfadec370c9aaae656e8e47e5e}\label{namespaceq_ab3bdb9eac069e4e777368ed17431ffafa5cef0ebfadec370c9aaae656e8e47e5e} 
+Sigma\+Height&\\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{SigmaWidth@{SigmaWidth}!q@{q}}\index{q@{q}!SigmaWidth@{SigmaWidth}}}\Hypertarget{namespaceq_ab3bdb9eac069e4e777368ed17431ffafa02b4c1c8933644fbf41a5580f5075fd3}\label{namespaceq_ab3bdb9eac069e4e777368ed17431ffafa02b4c1c8933644fbf41a5580f5075fd3} 
+Sigma\+Width&\\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{SigmaArea@{SigmaArea}!q@{q}}\index{q@{q}!SigmaArea@{SigmaArea}}}\Hypertarget{namespaceq_ab3bdb9eac069e4e777368ed17431ffafae147e029620585539bd6ac137f124be2}\label{namespaceq_ab3bdb9eac069e4e777368ed17431ffafae147e029620585539bd6ac137f124be2} 
+Sigma\+Area&\\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{Dqs@{Dqs}!q@{q}}\index{q@{q}!Dqs@{Dqs}}}\Hypertarget{namespaceq_ab3bdb9eac069e4e777368ed17431ffafa3a167780a83475ac09b0b48775b32ef6}\label{namespaceq_ab3bdb9eac069e4e777368ed17431ffafa3a167780a83475ac09b0b48775b32ef6} 
+Dqs&\\
+\hline
+
+\end{DoxyEnumFields}
+
+
+Definition at line \mbox{\hyperlink{qalgorithms__peak_8h_source_l00010}{10}} of file \mbox{\hyperlink{qalgorithms__peak_8h_source}{qalgorithms\+\_\+peak.\+h}}.
+
+
+
+\doxysubsection{Function Documentation}
+\Hypertarget{namespaceq_af5bc719469eba45978bfaa23379f329b}\label{namespaceq_af5bc719469eba45978bfaa23379f329b} 
+\index{q@{q}!erfi@{erfi}}
+\index{erfi@{erfi}!q@{q}}
+\doxysubsubsection{\texorpdfstring{erfi()}{erfi()}}
+{\footnotesize\ttfamily double q\+::erfi (\begin{DoxyParamCaption}\item[{const double}]{x }\end{DoxyParamCaption})}
+
+
+
+Definition at line \mbox{\hyperlink{qalgorithms__utils_8cpp_source_l00094}{94}} of file \mbox{\hyperlink{qalgorithms__utils_8cpp_source}{qalgorithms\+\_\+utils.\+cpp}}.
+
+\Hypertarget{namespaceq_a14a55b4b8011f804b40f37925f4b4e8c}\label{namespaceq_a14a55b4b8011f804b40f37925f4b4e8c} 
+\index{q@{q}!operator"!@{operator"!}}
+\index{operator"!@{operator"!}!q@{q}}
+\doxysubsubsection{\texorpdfstring{operator"!()}{operator!()}}
+{\footnotesize\ttfamily std\+::vector$<$ bool $>$ q\+::operator! (\begin{DoxyParamCaption}\item[{const std\+::vector$<$ bool $>$ \&}]{A }\end{DoxyParamCaption})}
+
+
+
+Definition at line \mbox{\hyperlink{qalgorithms__utils_8cpp_source_l00075}{75}} of file \mbox{\hyperlink{qalgorithms__utils_8cpp_source}{qalgorithms\+\_\+utils.\+cpp}}.
+
+\Hypertarget{namespaceq_a41c88933564219f3744d4cd1a0bbde5b}\label{namespaceq_a41c88933564219f3744d4cd1a0bbde5b} 
+\index{q@{q}!operator\&\&@{operator\&\&}}
+\index{operator\&\&@{operator\&\&}!q@{q}}
+\doxysubsubsection{\texorpdfstring{operator\&\&()}{operator\&\&()}}
+{\footnotesize\ttfamily std\+::vector$<$ bool $>$ q\+::operator\&\& (\begin{DoxyParamCaption}\item[{const std\+::vector$<$ bool $>$ \&}]{A,  }\item[{const std\+::vector$<$ bool $>$ \&}]{B }\end{DoxyParamCaption})}
+
+
+
+Definition at line \mbox{\hyperlink{qalgorithms__utils_8cpp_source_l00065}{65}} of file \mbox{\hyperlink{qalgorithms__utils_8cpp_source}{qalgorithms\+\_\+utils.\+cpp}}.
+
+\Hypertarget{namespaceq_afaf7260624b917f9123e4532c7ca68bf}\label{namespaceq_afaf7260624b917f9123e4532c7ca68bf} 
+\index{q@{q}!operator\texorpdfstring{$\ast$}{*}@{operator\texorpdfstring{$\ast$}{*}}}
+\index{operator\texorpdfstring{$\ast$}{*}@{operator\texorpdfstring{$\ast$}{*}}!q@{q}}
+\doxysubsubsection{\texorpdfstring{operator\texorpdfstring{$\ast$}{*}()}{operator*()}}
+{\footnotesize\ttfamily template$<$typename T $>$ \\
+std\+::vector$<$ T $>$ q\+::operator\texorpdfstring{$\ast$}{*} (\begin{DoxyParamCaption}\item[{const std\+::vector$<$ T $>$ \&}]{A,  }\item[{const std\+::vector$<$ T $>$ \&}]{B }\end{DoxyParamCaption})}
+
+
+
+Definition at line \mbox{\hyperlink{qalgorithms__utils_8cpp_source_l00055}{55}} of file \mbox{\hyperlink{qalgorithms__utils_8cpp_source}{qalgorithms\+\_\+utils.\+cpp}}.
+
+\Hypertarget{namespaceq_a911b4e35d854c2c77c1fdd7f11117608}\label{namespaceq_a911b4e35d854c2c77c1fdd7f11117608} 
+\index{q@{q}!operator$<$@{operator$<$}}
+\index{operator$<$@{operator$<$}!q@{q}}
+\doxysubsubsection{\texorpdfstring{operator$<$()}{operator<()}}
+{\footnotesize\ttfamily template$<$typename T $>$ \\
+std\+::vector$<$ bool $>$ q\+::operator$<$ (\begin{DoxyParamCaption}\item[{const std\+::vector$<$ T $>$ \&}]{vec,  }\item[{T}]{scalar }\end{DoxyParamCaption})}
+
+
+
+Definition at line \mbox{\hyperlink{qalgorithms__utils_8cpp_source_l00024}{24}} of file \mbox{\hyperlink{qalgorithms__utils_8cpp_source}{qalgorithms\+\_\+utils.\+cpp}}.
+
+\Hypertarget{namespaceq_a59be7d3e00fa2dc756d0ba0f10b6d6dd}\label{namespaceq_a59be7d3e00fa2dc756d0ba0f10b6d6dd} 
+\index{q@{q}!operator$>$@{operator$>$}}
+\index{operator$>$@{operator$>$}!q@{q}}
+\doxysubsubsection{\texorpdfstring{operator$>$()}{operator>()}}
+{\footnotesize\ttfamily template$<$typename T $>$ \\
+std\+::vector$<$ bool $>$ q\+::operator$>$ (\begin{DoxyParamCaption}\item[{const std\+::vector$<$ T $>$ \&}]{vec,  }\item[{T}]{scalar }\end{DoxyParamCaption})}
+
+
+
+Definition at line \mbox{\hyperlink{qalgorithms__utils_8cpp_source_l00042}{42}} of file \mbox{\hyperlink{qalgorithms__utils_8cpp_source}{qalgorithms\+\_\+utils.\+cpp}}.
+
+\Hypertarget{namespaceq_ae27bcd86eabebd2210e1e89c9c5a9407}\label{namespaceq_ae27bcd86eabebd2210e1e89c9c5a9407} 
+\index{q@{q}!operator\texttt{"|}=@{operator\texttt{"|}=}}
+\index{operator\texttt{"|}=@{operator\texttt{"|}=}!q@{q}}
+\doxysubsubsection{\texorpdfstring{operator\texttt{"|}=()}{operator|=()}}
+{\footnotesize\ttfamily void q\+::operator\texorpdfstring{$\vert$}{|}= (\begin{DoxyParamCaption}\item[{std\+::vector$<$ bool $>$ \&}]{A,  }\item[{const std\+::vector$<$ bool $>$ \&}]{B }\end{DoxyParamCaption})}
+
+
+
+Definition at line \mbox{\hyperlink{qalgorithms__utils_8cpp_source_l00083}{83}} of file \mbox{\hyperlink{qalgorithms__utils_8cpp_source}{qalgorithms\+\_\+utils.\+cpp}}.
+
+\Hypertarget{namespaceq_add47edeb3d76b88ba219b38d803e0a30}\label{namespaceq_add47edeb3d76b88ba219b38d803e0a30} 
+\index{q@{q}!sum@{sum}}
+\index{sum@{sum}!q@{q}}
+\doxysubsubsection{\texorpdfstring{sum()}{sum()}\hspace{0.1cm}{\footnotesize\ttfamily [1/4]}}
+{\footnotesize\ttfamily int q\+::sum (\begin{DoxyParamCaption}\item[{const bool \texorpdfstring{$\ast$}{*}}]{vec,  }\item[{size\+\_\+t}]{n }\end{DoxyParamCaption})}
+
+
+
+Definition at line \mbox{\hyperlink{qalgorithms__utils_8cpp_source_l00024}{24}} of file \mbox{\hyperlink{qalgorithms__utils_8cpp_source}{qalgorithms\+\_\+utils.\+cpp}}.
+
+\Hypertarget{namespaceq_a9b008a77f4d4422c9b7c49792541c4e5}\label{namespaceq_a9b008a77f4d4422c9b7c49792541c4e5} 
+\index{q@{q}!sum@{sum}}
+\index{sum@{sum}!q@{q}}
+\doxysubsubsection{\texorpdfstring{sum()}{sum()}\hspace{0.1cm}{\footnotesize\ttfamily [2/4]}}
+{\footnotesize\ttfamily double q\+::sum (\begin{DoxyParamCaption}\item[{const std\+::vector$<$ double $>$ \&}]{vec }\end{DoxyParamCaption})}
+
+
+
+Definition at line \mbox{\hyperlink{qalgorithms__utils_8cpp_source_l00018}{18}} of file \mbox{\hyperlink{qalgorithms__utils_8cpp_source}{qalgorithms\+\_\+utils.\+cpp}}.
+
+\Hypertarget{namespaceq_a5ea2b3dedfaa98557b94135396085f23}\label{namespaceq_a5ea2b3dedfaa98557b94135396085f23} 
+\index{q@{q}!sum@{sum}}
+\index{sum@{sum}!q@{q}}
+\doxysubsubsection{\texorpdfstring{sum()}{sum()}\hspace{0.1cm}{\footnotesize\ttfamily [3/4]}}
+{\footnotesize\ttfamily int q\+::sum (\begin{DoxyParamCaption}\item[{const std\+::vector$<$ int $>$ \&}]{vec }\end{DoxyParamCaption})}
+
+
+
+Definition at line \mbox{\hyperlink{qalgorithms__utils_8cpp_source_l00006}{6}} of file \mbox{\hyperlink{qalgorithms__utils_8cpp_source}{qalgorithms\+\_\+utils.\+cpp}}.
+
+\Hypertarget{namespaceq_afc2558c328148651b80808845132e4c4}\label{namespaceq_afc2558c328148651b80808845132e4c4} 
+\index{q@{q}!sum@{sum}}
+\index{sum@{sum}!q@{q}}
+\doxysubsubsection{\texorpdfstring{sum()}{sum()}\hspace{0.1cm}{\footnotesize\ttfamily [4/4]}}
+{\footnotesize\ttfamily size\+\_\+t q\+::sum (\begin{DoxyParamCaption}\item[{const std\+::vector$<$ size\+\_\+t $>$ \&}]{vec }\end{DoxyParamCaption})}
+
+
+
+Definition at line \mbox{\hyperlink{qalgorithms__utils_8cpp_source_l00012}{12}} of file \mbox{\hyperlink{qalgorithms__utils_8cpp_source}{qalgorithms\+\_\+utils.\+cpp}}.
+
+
+
+\doxysubsection{Variable Documentation}
+\Hypertarget{namespaceq_ac9412ec4dc6d9138e2965665f2651be5}\label{namespaceq_ac9412ec4dc6d9138e2965665f2651be5} 
+\index{q@{q}!propertyLabels@{propertyLabels}}
+\index{propertyLabels@{propertyLabels}!q@{q}}
+\doxysubsubsection{\texorpdfstring{propertyLabels}{propertyLabels}}
+{\footnotesize\ttfamily std\+::map$<$ \mbox{\hyperlink{namespaceq_ab3bdb9eac069e4e777368ed17431ffaf}{Property}}, std\+::string $>$ q\+::property\+Labels}
+
+{\bfseries Initial value\+:}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{=\ \{}
+\DoxyCodeLine{\ \ \ \ \{Property::CoeffB0,\ \textcolor{stringliteral}{"{}CoeffB0"{}}\},}
+\DoxyCodeLine{\ \ \ \ \{Property::CoeffB1,\ \textcolor{stringliteral}{"{}CoeffB1"{}}\},}
+\DoxyCodeLine{\ \ \ \ \{Property::CoeffB2,\ \textcolor{stringliteral}{"{}CoeffB2"{}}\},}
+\DoxyCodeLine{\ \ \ \ \{Property::CoeffB3,\ \textcolor{stringliteral}{"{}CoeffB3"{}}\},}
+\DoxyCodeLine{\ \ \ \ \{Property::Xindex,\ \textcolor{stringliteral}{"{}Xindex"{}}\},}
+\DoxyCodeLine{\ \ \ \ \{Property::Df,\ \textcolor{stringliteral}{"{}Df"{}}\},}
+\DoxyCodeLine{\ \ \ \ \{Property::PeakID,\ \textcolor{stringliteral}{"{}PeakID"{}}\},}
+\DoxyCodeLine{\ \ \ \ \{Property::SmplID,\ \textcolor{stringliteral}{"{}SmplID"{}}\},}
+\DoxyCodeLine{\ \ \ \ \{Property::Position,\ \textcolor{stringliteral}{"{}Position"{}}\},}
+\DoxyCodeLine{\ \ \ \ \{Property::ValleyPosition,\ \textcolor{stringliteral}{"{}ValleyPosition"{}}\},}
+\DoxyCodeLine{\ \ \ \ \{Property::Height,\ \textcolor{stringliteral}{"{}Height"{}}\},}
+\DoxyCodeLine{\ \ \ \ \{Property::Width,\ \textcolor{stringliteral}{"{}Width"{}}\},}
+\DoxyCodeLine{\ \ \ \ \{Property::Area,\ \textcolor{stringliteral}{"{}Area"{}}\},}
+\DoxyCodeLine{\ \ \ \ \{Property::SigmaPosition,\ \textcolor{stringliteral}{"{}SigmaPosition"{}}\},}
+\DoxyCodeLine{\ \ \ \ \{Property::SigmaHeight,\ \textcolor{stringliteral}{"{}SigmaHeight"{}}\},}
+\DoxyCodeLine{\ \ \ \ \{Property::SigmaWidth,\ \textcolor{stringliteral}{"{}SigmaWidth"{}}\},}
+\DoxyCodeLine{\ \ \ \ \{Property::SigmaArea,\ \textcolor{stringliteral}{"{}SigmaArea"{}}\},}
+\DoxyCodeLine{\ \ \ \ \{Property::Dqs,\ \textcolor{stringliteral}{"{}Dqs"{}}\},}
+\DoxyCodeLine{\ \ \}}
+
+\end{DoxyCode}
+
+
+Definition at line \mbox{\hyperlink{qalgorithms__peak_8cpp_source_l00008}{8}} of file \mbox{\hyperlink{qalgorithms__peak_8cpp_source}{qalgorithms\+\_\+peak.\+cpp}}.
+

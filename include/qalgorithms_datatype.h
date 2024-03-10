@@ -3,19 +3,18 @@
 
 namespace q {
 
-class DataType {
-    public:
+namespace DataType {
     enum class DataField{
         DATATYPE,
         DRIFTTIME,
         INTENSITY,
-        MODE,
+        IONIZATIONMODE,
         MSLEVEL,
         MZ,
         RETENTIONTIME, 
         SCANNUMBER
     };
-}; // class datatype
+}; // namespace datatype
 } // namespace q
 
 #endif // QALGORITHMS_DATATYPE_H

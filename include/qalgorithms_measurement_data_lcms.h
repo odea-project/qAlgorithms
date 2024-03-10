@@ -27,7 +27,16 @@ public:
      */
     virtual ~LCMSData() {}
 
-    // Additional methods specific to LC-MS data can be defined here
+    /**
+     * @brief 
+     * 
+     * @param FILE_PATH 
+     * @param row0 
+     * @param rowN 
+     * @param col0 
+     * @param colN 
+     * @param dataFields 
+     */
     void readCSV(std::string FILE_PATH, int row0, int rowN, int col0, int colN, std::vector<DataType::DataField> dataFields) override {}
 
 private:
