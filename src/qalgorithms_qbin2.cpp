@@ -12,7 +12,7 @@ namespace q
         std::vector<Feature> features;
         readcsv(input_file, features, 0, 7, 5, 6); // ßßß replace hard-coded cols with flexible input
         Bin firstBin(features.begin(), features.end(), 0);
-        binVector.push_back(firstBin);
+        binDeque.push_back(firstBin);
     }
 
     void BinContainer::readcsv(std::string user_file, std::vector<Feature> output, int d_mz, int d_mzError, int d_RT, int d_scanNo)
@@ -47,17 +47,20 @@ namespace q
             switch (dimensions[i])
             {
             case 1:
+            { // brackets needed to prevent error
                 // bin in mz
-                int startpoint = binVector.size();
-                for (size_t i = 0; i < startpoint; i++)
+                int startpoint = binDeque.size();
+                for (size_t i = 0; i < startpoint; i++) // random access not needed, first element -> make bins -> move element or make bins, then remove first entry ; do n times
                 {
-                    binVector[i].makeOS();
-                    binVector[i].makeCumError();
-                    binVector[i].subsetMZ(binVector, binVector[i].activeOS, 0, binVector[i].activeOS.size() - 1); // takes element from binVector, starts subsetting, appends bins to binVector
-                    // binVector.pop_front(); // remove the element that was processed from the bin vector, requires bin vector to be std::deque
+                    binDeque[i].makeOS();
+                    binDeque[i].makeCumError();
+                    binDeque[i].subsetMZ(binDeque, binDeque[i].activeOS, 0, binDeque[i].activeOS.size() - 1); // takes element from binDeque, starts subsetting, appends bins to binDeque
+                    binDeque.pop_front();                                                                     // remove the element that was processed from binDeque
+                    // ßßß bad solution, needless copy if bin is ok - only relevant for controlling in rt, so should be fine here
                 }
 
                 break;
+            }
 
             case 2:
                 /* code */
@@ -104,7 +107,7 @@ namespace q
         std::partial_sum(cumError.begin(), cumError.end(), cumError.begin()); // cumulative sum
     }
 
-    void Bin::subsetMZ(std::vector<Bin> bincontainer, const std::vector<double> &OS, int startBin, int endBin) // bincontainer is binVector of BinContainer // OS cannot be solved with pointers since index has to be transferred to frature list
+    void Bin::subsetMZ(std::deque<Bin> bincontainer, const std::vector<double> &OS, int startBin, int endBin) // bincontainer is binDeque of BinContainer // OS cannot be solved with pointers since index has to be transferred to frature list
     {
         const int n = endBin - startBin; // size is equal to n+1
         if (n < 5)
@@ -129,7 +132,7 @@ namespace q
             int cutpos = std::distance(OS.begin() + startBin, pmax);
             subsetMZ(bincontainer, OS, startBin, startBin + cutpos);
             subsetMZ(bincontainer, OS, startBin + cutpos + 1, endBin);
-
+            // multithreading queue producer consumers
             // multithreading probably not a good solution, since the objects need to be copied -> copies all mz for every bin
             return;
         }
