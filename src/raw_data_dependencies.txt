@@ -13,3 +13,5 @@ Alles umorganisieren, um in einem Struct alle Eigenschaften eines Features zu sp
 https://stackoverflow.com/questions/5174115/sorting-a-vector-of-objects-by-a-property-of-the-object
 
 Wenn der Bin nach Teilen in RT/Scans genau so groß ist wie vorher, muss nicht erneut mit mz kontorolliert werden
+
+Duplizierte Features crashen den code
