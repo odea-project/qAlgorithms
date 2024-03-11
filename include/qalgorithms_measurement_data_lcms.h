@@ -3,7 +3,7 @@
 
 #include "qalgorithms_measurement_data.h"
 #include "qalgorithms_datatype_mass_spectrum.h"
-#include <map>
+#include <unordered_map>
 #include <vector>
 #include <string>
 
@@ -39,12 +39,12 @@ public:
      */
     void readCSV(std::string FILE_PATH, int row0, int rowN, int col0, int colN, std::vector<DataType::DataField> dataFields) override {}
 
-private:
-    /**
-     * @brief Specific Data Structure that holds intensity profiles with additional meta information.
-     * 
-     */
-    std::map<int, DataType::LC_MS> data; 
+    private:
+        /**
+         * @brief Specific Data Structure that holds intensity profiles with additional meta information.
+         * 
+         */
+        std::unordered_map<int, DataType::LC_MS> data; 
 
 };
 }
