@@ -43,6 +43,7 @@ namespace q
 
     void BinContainer::subsetBins(std::vector<int> dimensions)
     {
+        // while
         for (size_t i = 0; i < dimensions.size(); i++) // dimensions vector allows user to choose order of executing subsetting actions. It is also possible to only subset in mz or RT
         {
             switch (dimensions[i])
@@ -50,13 +51,13 @@ namespace q
             case 1:
             { // brackets needed to prevent error
                 // bin in mz
-                int startpoint = binDeque.size(); // startpoint is the first element of the deque that will not be subset
-                for (size_t i = 0; i < startpoint; i++) 
-                { //random access not needed, first element -> make bins -> move element or make bins, then remove first entry ; do n times
+                int startpoint = binDeque.size(); // startpoint is the first element of the deque that will not be subset, equivalent to do n times
+                for (size_t i = 0; i < startpoint; i++)
+                { // random access not needed, first element -> make bins -> move element or make bins, then remove first entry ; do n times
                     binDeque.front().makeOS();
-                    binDeque.front().makeCumError(); // always after order space, since the features get sorted
-                    binDeque.front().subsetMZ(binDeque, binDeque[i].activeOS, 0, binDeque[i].activeOS.size() - 1); // takes element from binDeque, starts subsetting, appends bins to binDeque
-                    binDeque.pop_front();                                                                     // remove the element that was processed from binDeque
+                    binDeque.front().makeCumError();                                                               // always after order space, since the features get sorted
+                    binDeque.front().subsetMZ(binDeque, binDeque.front().activeOS, 0, binDeque.front().activeOS.size() - 1); // takes element from binDeque, starts subsetting, appends bins to binDeque
+                    binDeque.pop_front();                                                                          // remove the element that was processed from binDeque
                     // ßßß bad solution, needless copy if bin is ok - only relevant for controlling in rt, so should be fine here
                 }
 
@@ -64,8 +65,17 @@ namespace q
             }
 
             case 2:
-                /* code */
+            {
+                // bin using scan numbers
+                int startpoint = binDeque.size();
+                for (size_t i = 0; i < startpoint; i++)
+                {
+                    binDeque.front().subsetScan(binDeque, 5);
+                    binDeque.pop_front();
+                }
+
                 break;
+            }
 
             default:
                 std::cout << "\nSeparation method " << dimensions[i] << " is not a valid parameter, skipping... \n";
@@ -78,7 +88,7 @@ namespace q
 
 #pragma region "Bin"
 
-    Bin::Bin(const std::vector<Feature>::iterator &startBin, const std::vector<Feature>::iterator &endBin, const double &max) // const std::vector<Feature> &sourceList,
+    Bin::Bin(const std::vector<Feature>::iterator &startBin, const std::vector<Feature>::iterator &endBin) // const std::vector<Feature> &sourceList,
     {
         std::copy(startBin, endBin, featurelist.begin());
     }
@@ -125,7 +135,7 @@ namespace q
         if (max < vcrit) // all values in range are part of one mz bin
         {
             // make bin
-            Bin output(featurelist.begin() + startBin, featurelist.begin() + endBin, max); // featurelist,
+            Bin output(featurelist.begin() + startBin, featurelist.begin() + endBin);
             // append Bin to bin container
             bincontainer.push_back(output);
             return;
@@ -136,13 +146,56 @@ namespace q
             subsetMZ(bincontainer, OS, startBin, startBin + cutpos);
             subsetMZ(bincontainer, OS, startBin + cutpos + 1, endBin);
             // multithreading queue producer consumers
-            // multithreading probably not a good solution, since the objects need to be copied -> copies all mz for every bin
+            // multithreading probably not a good solution, since the objects need to be copied -> copies all mz for every bin ßßß wrong
             return;
         }
     }
 
-    void Bin::subsetRT(const Bin &target, const int &maxdist)
+    void Bin::subsetScan(std::deque<Bin> bincontainer, const int &maxdist)
     {
+        // sort
+        int n = featurelist.size();
+        std::sort(featurelist.begin(), featurelist.end(), [](const auto &lhs, const auto &rhs)
+                  { return lhs.scanNo < rhs.scanNo; });
+        if (featurelist.front().scanNo + n + maxdist > featurelist.back().scanNo) // sum of all gaps is less than max distance, +n since no element will occur twice in one scan
+        {
+            bincontainer.push_back(bincontainer.front()); // moves first element of que to last, since bin is good
+        }
+        else
+        {
+            std::vector<Feature>::iterator newstart = featurelist.begin();
+            // std::vector<Feature>::iterator newend = featurelist.begin();
+            int previ = 0;
+            for (size_t i = 1; i < n; i++)
+            {
+                if (featurelist[i].scanNo - featurelist[i - 1].scanNo > maxdist) // bin needs to be split
+                {
+                    // less than five features in bin
+                    if (i - previ - 1 < 5)
+                    {
+                        newstart = featurelist.begin() + i; // new start is one behind current i
+                    }
+                    else
+                    {
+                        // viable bin, stable in scan dimension
+                        Bin output(newstart, featurelist.begin() + i - 1);
+                        bincontainer.push_back(output);
+                    }
+                    previ = i; // sets previ to the position one i ahead, since current value is i-1
+                }
+            }
+            // check for open bin at the end
+            if (n + 1 - previ > 5)
+            {
+                // viable bin, stable in scan dimension
+                Bin output(newstart, featurelist.end());
+                bincontainer.push_back(output);
+            }
+        }
+
+        // iterate, compare with previous for gap
+        // do split
+        // if prev - push back, pop front
     }
 
 #pragma endregion "Bin"
@@ -150,11 +203,15 @@ namespace q
 
 int main()
 {
+    // std::ofstream result("../../qbinning_results.csv");
+    // std::streambuf *coutbuf = std::cout.rdbuf(); //save old buf
+    // std::cout.rdbuf(result.rdbuf()); //redirect std::cout to out.txt!
     q::FeatureList testdata;
-    testdata.readcsv("../test/test.csv", 0, 7, 5, 6);
+    testdata.readcsv("../../rawdata/qCentroid_Warburg_pos_171123_01_Zu_01.csv", 0, 7, 5, 6);
     q::BinContainer testcontainer;
     testcontainer.makeFirstBin(testdata);
     std::vector<int> dim = {1};
     testcontainer.subsetBins(dim);
+    // std::cout.rdbuf(coutbuf); //reset to standard output again
     return 0;
 }

@@ -207,6 +207,7 @@ namespace q
                         }
                         double vcrit = 3.05037165842070 * pow(log(n + 1), (-0.4771864667153)) * binError / n; // ßßß !! geht nicht, was wenn binA, binB, binC in mz einen Bin bilden und binA und binC in mz aber nicht RT unteschiedlich sind?
 
+// ßßß fatal error in reasoning
                         // if new bin is good, the previous max in order space will be below vcrit -> likely, if centroid error is higher outside of bins
                         if (bin.maxOS < vcrit)
                         {

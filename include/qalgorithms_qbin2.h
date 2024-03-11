@@ -19,10 +19,10 @@ namespace q
     struct Feature // ßßß kann über Feature f{mz, mzError, RT, scanNo} initialisiert werden
     {
         // int idx; // keep as test parameter if at all
-        double mz;
-        double mzError;
-        double RT;
-        int scanNo;
+         double mz;
+         double mzError;
+         double RT;
+         int scanNo;
     };
 
     class FeatureList
@@ -43,13 +43,13 @@ namespace q
 
     public:
         std::vector<double> activeOS;                                                                                         // Order Space
-        Bin(const std::vector<Feature>::iterator &startBin, const std::vector<Feature>::iterator &endBin, const double &max); // const std::vector<Feature> &sourceList,
+        Bin(const std::vector<Feature>::iterator &startBin, const std::vector<Feature>::iterator &endBin); // const std::vector<Feature> &sourceList,
         Bin(FeatureList rawdata);
         ~Bin();
         void makeOS();
         void makeCumError();
         void subsetMZ(std::deque<Bin> bincontainer, const std::vector<double> &OS, int startBin, int endBin); // mz, error, RT and beginning/end are dictated by bin contents
-        void subsetRT(const Bin &target, const int &maxdist);
+        void subsetScan(std::deque<Bin> bincontainer, const int &maxdist);
         // Feature makeFeature(); // combine all features to one using means, modify mzError
     };
 
