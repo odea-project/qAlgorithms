@@ -90,6 +90,7 @@ namespace q
 
     Bin::Bin(const std::vector<Feature>::iterator &startBin, const std::vector<Feature>::iterator &endBin) // const std::vector<Feature> &sourceList,
     {
+        featurelist.resize(std::distance(startBin,endBin));
         std::copy(startBin, endBin, featurelist.begin());
     }
     Bin::Bin(FeatureList rawdata)
@@ -135,6 +136,7 @@ namespace q
         if (max < vcrit) // all values in range are part of one mz bin
         {
             // make bin
+            std::cout << "Bin at " << startBin << ", " << endBin << "\n";
             Bin output(featurelist.begin() + startBin, featurelist.begin() + endBin);
             // append Bin to bin container
             bincontainer.push_back(output);
@@ -207,9 +209,10 @@ int main()
     // std::streambuf *coutbuf = std::cout.rdbuf(); //save old buf
     // std::cout.rdbuf(result.rdbuf()); //redirect std::cout to out.txt!
     q::FeatureList testdata;
-    testdata.readcsv("../../rawdata/qCentroid_Warburg_pos_171123_01_Zu_01.csv", 0, 7, 5, 6);
+    testdata.readcsv("../../rawdata/qCentroid_Warburg_pos_171123_01_Zu_01.csv", 0, 7, 5, 6); // ../../rawdata/qCentroid_Warburg_pos_171123_01_Zu_01.csv ../test/test.csv
     q::BinContainer testcontainer;
     testcontainer.makeFirstBin(testdata);
+    q::Bin testbin(testdata.allFeatures.begin(), testdata.allFeatures.begin()+10);
     std::vector<int> dim = {1};
     testcontainer.subsetBins(dim);
     // std::cout.rdbuf(coutbuf); //reset to standard output again
