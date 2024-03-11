@@ -2,20 +2,10 @@
 
 namespace q
 {
-#pragma region "BinContainer"
-
-    BinContainer::BinContainer() {}
-    BinContainer::~BinContainer() {}
-
-    void BinContainer::makeFirstBin(std::string input_file)
-    {
-        std::vector<Feature> features;
-        readcsv(input_file, features, 0, 7, 5, 6); // ßßß replace hard-coded cols with flexible input
-        Bin firstBin(features.begin(), features.end(), 0);
-        binDeque.push_back(firstBin);
-    }
-
-    void BinContainer::readcsv(std::string user_file, std::vector<Feature> output, int d_mz, int d_mzError, int d_RT, int d_scanNo)
+#pragma region "Featurelist"
+    FeatureList::FeatureList() {}
+    FeatureList::~FeatureList() {}
+    void FeatureList::readcsv(std::string user_file, int d_mz, int d_mzError, int d_RT, int d_scanNo)
     {
         std::ifstream file(user_file);
         std::string line;
@@ -31,13 +21,24 @@ namespace q
             {
                 row.push_back(std::stod(cell));
             }
-            Feature F;
-            F.mz = row[d_mz];
-            F.mzError = row[d_mzError];
-            F.RT = row[d_RT];
-            F.scanNo = round(row[d_scanNo]); // should work without issue
-            output.push_back(F);
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wnarrowing"
+            Feature F{row[d_mz], row[d_mzError], row[d_RT], round(row[d_scanNo])}; // round gives warning, conversion functions as intended
+#pragma GCC diagnostic pop
+            allFeatures.push_back(F);
         }
+    }
+#pragma endregion "Featurelist"
+
+#pragma region "BinContainer"
+
+    BinContainer::BinContainer() {}
+    BinContainer::~BinContainer() {}
+
+    void BinContainer::makeFirstBin(FeatureList rawdata)
+    {
+        Bin firstBin(rawdata);
+        binDeque.push_back(firstBin);
     }
 
     void BinContainer::subsetBins(std::vector<int> dimensions)
@@ -49,12 +50,12 @@ namespace q
             case 1:
             { // brackets needed to prevent error
                 // bin in mz
-                int startpoint = binDeque.size();
-                for (size_t i = 0; i < startpoint; i++) // random access not needed, first element -> make bins -> move element or make bins, then remove first entry ; do n times
-                {
-                    binDeque[i].makeOS();
-                    binDeque[i].makeCumError();
-                    binDeque[i].subsetMZ(binDeque, binDeque[i].activeOS, 0, binDeque[i].activeOS.size() - 1); // takes element from binDeque, starts subsetting, appends bins to binDeque
+                int startpoint = binDeque.size(); // startpoint is the first element of the deque that will not be subset
+                for (size_t i = 0; i < startpoint; i++) 
+                { //random access not needed, first element -> make bins -> move element or make bins, then remove first entry ; do n times
+                    binDeque.front().makeOS();
+                    binDeque.front().makeCumError(); // always after order space, since the features get sorted
+                    binDeque.front().subsetMZ(binDeque, binDeque[i].activeOS, 0, binDeque[i].activeOS.size() - 1); // takes element from binDeque, starts subsetting, appends bins to binDeque
                     binDeque.pop_front();                                                                     // remove the element that was processed from binDeque
                     // ßßß bad solution, needless copy if bin is ok - only relevant for controlling in rt, so should be fine here
                 }
@@ -79,8 +80,11 @@ namespace q
 
     Bin::Bin(const std::vector<Feature>::iterator &startBin, const std::vector<Feature>::iterator &endBin, const double &max) // const std::vector<Feature> &sourceList,
     {
-        prevmax = max;
         std::copy(startBin, endBin, featurelist.begin());
+    }
+    Bin::Bin(FeatureList rawdata)
+    {
+        featurelist = rawdata.allFeatures; // pointers ßßß
     }
     Bin::~Bin() {}
 
@@ -96,7 +100,6 @@ namespace q
             activeOS[i] = featurelist[i + 1].mz - featurelist[i].mz;
         }
         activeOS.back() = -225; // -225 to signify last element in OS
-        makeCumError();         // included here to avoid sorting twice
     }
 
     void Bin::makeCumError()
@@ -147,7 +150,11 @@ namespace q
 
 int main()
 {
+    q::FeatureList testdata;
+    testdata.readcsv("../test/test.csv", 0, 7, 5, 6);
     q::BinContainer testcontainer;
-    testcontainer.makeFirstBin("../test/test.csv");
+    testcontainer.makeFirstBin(testdata);
+    std::vector<int> dim = {1};
+    testcontainer.subsetBins(dim);
     return 0;
 }
