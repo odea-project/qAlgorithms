@@ -2,7 +2,7 @@
 \hypertarget{classq_1_1_measurement_data}{}\label{classq_1_1_measurement_data}\index{q::MeasurementData@{q::MeasurementData}}
 
 
-Abstract base class for managing measurement data.  
+A class to store measurement data.  
 
 
 
@@ -19,17 +19,19 @@ Inheritance diagram for q\+::Measurement\+Data\+:\begin{figure}[H]
 \begin{DoxyCompactItemize}
 \item 
 virtual \mbox{\hyperlink{classq_1_1_measurement_data_a5b13907b217ee6690eef821d4df68479}{\texorpdfstring{$\sim$}{\string~}\+Measurement\+Data}} ()
-\begin{DoxyCompactList}\small\item\em Virtual destructor to ensure proper cleanup of derived classes. \end{DoxyCompactList}\item 
-virtual void \mbox{\hyperlink{classq_1_1_measurement_data_a376ed77b567080c0cc4a6e45c776586a}{read\+CSV}} (std\+::string FILE\+\_\+\+PATH, int row0, int rowN, int col0, int colN, std\+::vector$<$ \mbox{\hyperlink{namespaceq_1_1_data_type_a9fcd47c7d7d77f908f041cad931962aa}{Data\+Type\+::\+Data\+Field}} $>$ data\+Fields)=0
+\item 
+virtual void \mbox{\hyperlink{classq_1_1_measurement_data_a8295223e88004418fcc9fa62b1ced99d}{read\+CSV}} (std\+::string filename, int row\+Start, int row\+End, int col\+Start, int col\+End, char separator, std\+::vector$<$ \mbox{\hyperlink{namespaceq_1_1_data_type_a9fcd47c7d7d77f908f041cad931962aa}{Data\+Type\+::\+Data\+Field}} $>$ variable\+Types)=0
+\item 
+virtual void \mbox{\hyperlink{classq_1_1_measurement_data_a3cf576e649244debcc1c0cf67038e4d3}{print}} ()=0
 \end{DoxyCompactItemize}
 
 
 \doxysubsection{Detailed Description}
-Abstract base class for managing measurement data. 
+A class to store measurement data. 
 
-This class serves as a foundation for handling various types of measurement data. It defines a common interface for processing and accessing the data, ensuring that all derived classes implement these functionalities. The class is designed to be flexible and extensible, allowing for the addition of new data types with different structures such as LC-\/\+HRMS, LC-\/\+IMS-\/\+HRMS, or Raman data, each potentially requiring unique data management and processing strategies. 
+The \doxylink{classq_1_1_measurement_data}{Measurement\+Data} class is a virtual class used to store measurement data. Based on the type of measurement data, the \doxylink{classq_1_1_measurement_data}{Measurement\+Data} class can be subclassed to store different types of measurement data. 
 
-Definition at line \mbox{\hyperlink{qalgorithms__measurement__data_8h_source_l00020}{20}} of file \mbox{\hyperlink{qalgorithms__measurement__data_8h_source}{qalgorithms\+\_\+measurement\+\_\+data.\+h}}.
+Definition at line \mbox{\hyperlink{qalgorithms__measurement__data_8h_source_l00017}{17}} of file \mbox{\hyperlink{qalgorithms__measurement__data_8h_source}{qalgorithms\+\_\+measurement\+\_\+data.\+h}}.
 
 
 
@@ -42,24 +44,30 @@ Definition at line \mbox{\hyperlink{qalgorithms__measurement__data_8h_source_l00
 
 
 
-Virtual destructor to ensure proper cleanup of derived classes. 
-
-
-
-Definition at line \mbox{\hyperlink{qalgorithms__measurement__data_8h_source_l00025}{25}} of file \mbox{\hyperlink{qalgorithms__measurement__data_8h_source}{qalgorithms\+\_\+measurement\+\_\+data.\+h}}.
+Definition at line \mbox{\hyperlink{qalgorithms__measurement__data_8h_source_l00020}{20}} of file \mbox{\hyperlink{qalgorithms__measurement__data_8h_source}{qalgorithms\+\_\+measurement\+\_\+data.\+h}}.
 
 
 
 \doxysubsection{Member Function Documentation}
-\Hypertarget{classq_1_1_measurement_data_a376ed77b567080c0cc4a6e45c776586a}\label{classq_1_1_measurement_data_a376ed77b567080c0cc4a6e45c776586a} 
+\Hypertarget{classq_1_1_measurement_data_a3cf576e649244debcc1c0cf67038e4d3}\label{classq_1_1_measurement_data_a3cf576e649244debcc1c0cf67038e4d3} 
+\index{q::MeasurementData@{q::MeasurementData}!print@{print}}
+\index{print@{print}!q::MeasurementData@{q::MeasurementData}}
+\doxysubsubsection{\texorpdfstring{print()}{print()}}
+{\footnotesize\ttfamily virtual void q\+::\+Measurement\+Data\+::print (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [pure virtual]}}
+
+
+
+Implemented in \mbox{\hyperlink{classq_1_1_l_c_m_s_data_aa808ac2ee343120a4a89f8ee8e9278f6}{q\+::\+LCMSData}}.
+
+\Hypertarget{classq_1_1_measurement_data_a8295223e88004418fcc9fa62b1ced99d}\label{classq_1_1_measurement_data_a8295223e88004418fcc9fa62b1ced99d} 
 \index{q::MeasurementData@{q::MeasurementData}!readCSV@{readCSV}}
 \index{readCSV@{readCSV}!q::MeasurementData@{q::MeasurementData}}
 \doxysubsubsection{\texorpdfstring{readCSV()}{readCSV()}}
-{\footnotesize\ttfamily virtual void q\+::\+Measurement\+Data\+::read\+CSV (\begin{DoxyParamCaption}\item[{std\+::string}]{FILE\+\_\+\+PATH,  }\item[{int}]{row0,  }\item[{int}]{rowN,  }\item[{int}]{col0,  }\item[{int}]{colN,  }\item[{std\+::vector$<$ \mbox{\hyperlink{namespaceq_1_1_data_type_a9fcd47c7d7d77f908f041cad931962aa}{Data\+Type\+::\+Data\+Field}} $>$}]{data\+Fields }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [pure virtual]}}
+{\footnotesize\ttfamily virtual void q\+::\+Measurement\+Data\+::read\+CSV (\begin{DoxyParamCaption}\item[{std\+::string}]{filename,  }\item[{int}]{row\+Start,  }\item[{int}]{row\+End,  }\item[{int}]{col\+Start,  }\item[{int}]{col\+End,  }\item[{char}]{separator,  }\item[{std\+::vector$<$ \mbox{\hyperlink{namespaceq_1_1_data_type_a9fcd47c7d7d77f908f041cad931962aa}{Data\+Type\+::\+Data\+Field}} $>$}]{variable\+Types }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [pure virtual]}}
 
 
 
-Implemented in \mbox{\hyperlink{classq_1_1_l_c_m_s_data_a911f6f40be5f7ef00cd299528773a747}{q\+::\+LCMSData}}.
+Implemented in \mbox{\hyperlink{classq_1_1_l_c_m_s_data_ab4632d3d3138d17fd5a7f479b70c2846}{q\+::\+LCMSData}}.
 
 
 

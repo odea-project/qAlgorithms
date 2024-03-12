@@ -11,8 +11,6 @@ pdf: $(MANUAL_FILE).pdf
 $(MANUAL_FILE).pdf: clean $(MANUAL_FILE).tex
 	$(LATEX_CMD) $(MANUAL_FILE)
 	$(MKIDX_CMD) $(MANUAL_FILE).idx
-	$(BIBTEX_CMD) $(MANUAL_FILE)
-	$(LATEX_CMD) $(MANUAL_FILE)
 	$(LATEX_CMD) $(MANUAL_FILE)
 	latex_count=$(LATEX_COUNT) ; \
 	while grep -E -s 'Rerun (LaTeX|to get cross-references right|to get bibliographical references right)' $(MANUAL_FILE).log && [ $$latex_count -gt 0 ] ;\

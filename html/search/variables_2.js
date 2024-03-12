@@ -1,7 +1,5 @@
 var searchData=
 [
-  ['measurementmode_0',['measurementMode',['../classq_1_1_data_type_1_1_mass_spectrum.html#acf136d30ff0ffdc41b2a62c8da7c4c7c',1,'q::DataType::MassSpectrum']]],
-  ['mslevel_1',['msLevel',['../classq_1_1_data_type_1_1_mass_spectrum.html#a7bba763441f4042bcf283d68d79a4d40',1,'q::DataType::MassSpectrum']]],
-  ['mtx_2',['mtx',['../qalgorithms_8cpp.html#ad5e0dbd36f0d71fce9b00b7f991b2f38',1,'qalgorithms.cpp']]],
-  ['mz_3',['mz',['../structq_1_1_data_type_1_1_mass_spectrum_1_1_spectral_point.html#ae07d9e958a3d70aec214915db9588c74',1,'q::DataType::MassSpectrum::SpectralPoint']]]
+  ['df_0',['df',['../classq_1_1_data_type_1_1_peak.html#a07f16f95997fecb90f447be72d772ff5',1,'q::DataType::Peak']]],
+  ['dqspeak_1',['dqsPeak',['../classq_1_1_data_type_1_1_peak.html#a3b971d7e52d2466ec0fffed263d4f067',1,'q::DataType::Peak']]]
 ];

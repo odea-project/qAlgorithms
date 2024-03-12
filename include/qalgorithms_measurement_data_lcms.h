@@ -37,6 +37,12 @@ namespace q {
              */
             void readCSV(std::string filename,int rowStart, int rowEnd, int colStart, int colEnd, char separator,std::vector<DataType::DataField> variableTypes);
             
+            /**
+             * @brief Identify and fill gaps in the LC-MS data
+             * @details The fillGaps method identifies and fills gaps in the LC-MS data. The method checks the difference between neighboring data points and compares it to the expected difference. If the difference is larger than the expected difference, the method fills the gap with zero values. The expected difference is calculated as the average difference between neighboring data points. However, the maximum number of filling points is limited to 4 per side. I.e. large gaps are filled like this: X 0 0 0 0 large gap 0 0 0 0 X, where X is the original data point.
+             */
+            void zeroFilling();
+            
             // debugging
             void print();
         private:

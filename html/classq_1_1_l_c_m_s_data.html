@@ -80,7 +80,7 @@ $(function() {
 </div><!--header-->
 <div class="contents">
 
-<p>Derived class for handling LC-MS measurement data.  
+<p>A class to store LC-MS measurement data.  
  <a href="classq_1_1_l_c_m_s_data.html#details">More...</a></p>
 
 <p><code>#include &lt;<a class="el" href="qalgorithms__measurement__data__lcms_8h_source.html">qalgorithms_measurement_data_lcms.h</a>&gt;</code></p>
@@ -90,41 +90,46 @@ Inheritance diagram for q::LCMSData:</div>
  <div class="center">
   <img src="classq_1_1_l_c_m_s_data.png" usemap="#q::LCMSData_map" alt=""/>
   <map id="q::LCMSData_map" name="q::LCMSData_map">
-<area href="classq_1_1_measurement_data.html" title="Abstract base class for managing measurement data." alt="q::MeasurementData" shape="rect" coords="0,0,126,24"/>
+<area href="classq_1_1_measurement_data.html" title="A class to store measurement data." alt="q::MeasurementData" shape="rect" coords="0,0,126,24"/>
   </map>
 </div></div>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
 <tr class="memitem:a7466e285c6c4f7a7fd3a67edb15a4cd7"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classq_1_1_l_c_m_s_data.html#a7466e285c6c4f7a7fd3a67edb15a4cd7">LCMSData</a> ()</td></tr>
-<tr class="memdesc:a7466e285c6c4f7a7fd3a67edb15a4cd7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructor for <a class="el" href="classq_1_1_l_c_m_s_data.html" title="Derived class for handling LC-MS measurement data.">LCMSData</a>.  <br /></td></tr>
 <tr class="separator:a7466e285c6c4f7a7fd3a67edb15a4cd7"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ad643884f466521f326c964b355e86e3a"><td class="memItemLeft" align="right" valign="top">virtual&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classq_1_1_l_c_m_s_data.html#ad643884f466521f326c964b355e86e3a">~LCMSData</a> ()</td></tr>
-<tr class="memdesc:ad643884f466521f326c964b355e86e3a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Destructor for <a class="el" href="classq_1_1_l_c_m_s_data.html" title="Derived class for handling LC-MS measurement data.">LCMSData</a>.  <br /></td></tr>
-<tr class="separator:ad643884f466521f326c964b355e86e3a"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a911f6f40be5f7ef00cd299528773a747"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classq_1_1_l_c_m_s_data.html#a911f6f40be5f7ef00cd299528773a747">readCSV</a> (std::string FILE_PATH, int row0, int rowN, int col0, int colN, std::vector&lt; <a class="el" href="namespaceq_1_1_data_type.html#a9fcd47c7d7d77f908f041cad931962aa">DataType::DataField</a> &gt; dataFields) override</td></tr>
-<tr class="separator:a911f6f40be5f7ef00cd299528773a747"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a556f3c0930dd9500376eda81b271b787"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classq_1_1_l_c_m_s_data.html#a556f3c0930dd9500376eda81b271b787">~LCMSData</a> ()</td></tr>
+<tr class="separator:a556f3c0930dd9500376eda81b271b787"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab4632d3d3138d17fd5a7f479b70c2846"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classq_1_1_l_c_m_s_data.html#ab4632d3d3138d17fd5a7f479b70c2846">readCSV</a> (std::string filename, int rowStart, int rowEnd, int colStart, int colEnd, char separator, std::vector&lt; <a class="el" href="namespaceq_1_1_data_type.html#a9fcd47c7d7d77f908f041cad931962aa">DataType::DataField</a> &gt; variableTypes)</td></tr>
+<tr class="memdesc:ab4632d3d3138d17fd5a7f479b70c2846"><td class="mdescLeft">&#160;</td><td class="mdescRight">Read LC-MS data from a CSV file.  <br /></td></tr>
+<tr class="separator:ab4632d3d3138d17fd5a7f479b70c2846"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa808ac2ee343120a4a89f8ee8e9278f6"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classq_1_1_l_c_m_s_data.html#aa808ac2ee343120a4a89f8ee8e9278f6">print</a> ()</td></tr>
+<tr class="separator:aa808ac2ee343120a4a89f8ee8e9278f6"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pub_methods_classq_1_1_measurement_data"><td colspan="2" onclick="javascript:toggleInherit('pub_methods_classq_1_1_measurement_data')"><img src="closed.png" alt="-"/>&#160;Public Member Functions inherited from <a class="el" href="classq_1_1_measurement_data.html">q::MeasurementData</a></td></tr>
 <tr class="memitem:a5b13907b217ee6690eef821d4df68479 inherit pub_methods_classq_1_1_measurement_data"><td class="memItemLeft" align="right" valign="top">virtual&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classq_1_1_measurement_data.html#a5b13907b217ee6690eef821d4df68479">~MeasurementData</a> ()</td></tr>
-<tr class="memdesc:a5b13907b217ee6690eef821d4df68479 inherit pub_methods_classq_1_1_measurement_data"><td class="mdescLeft">&#160;</td><td class="mdescRight">Virtual destructor to ensure proper cleanup of derived classes.  <br /></td></tr>
 <tr class="separator:a5b13907b217ee6690eef821d4df68479 inherit pub_methods_classq_1_1_measurement_data"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a376ed77b567080c0cc4a6e45c776586a inherit pub_methods_classq_1_1_measurement_data"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classq_1_1_measurement_data.html#a376ed77b567080c0cc4a6e45c776586a">readCSV</a> (std::string FILE_PATH, int row0, int rowN, int col0, int colN, std::vector&lt; <a class="el" href="namespaceq_1_1_data_type.html#a9fcd47c7d7d77f908f041cad931962aa">DataType::DataField</a> &gt; dataFields)=0</td></tr>
-<tr class="separator:a376ed77b567080c0cc4a6e45c776586a inherit pub_methods_classq_1_1_measurement_data"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8295223e88004418fcc9fa62b1ced99d inherit pub_methods_classq_1_1_measurement_data"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classq_1_1_measurement_data.html#a8295223e88004418fcc9fa62b1ced99d">readCSV</a> (std::string filename, int rowStart, int rowEnd, int colStart, int colEnd, char separator, std::vector&lt; <a class="el" href="namespaceq_1_1_data_type.html#a9fcd47c7d7d77f908f041cad931962aa">DataType::DataField</a> &gt; variableTypes)=0</td></tr>
+<tr class="separator:a8295223e88004418fcc9fa62b1ced99d inherit pub_methods_classq_1_1_measurement_data"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3cf576e649244debcc1c0cf67038e4d3 inherit pub_methods_classq_1_1_measurement_data"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classq_1_1_measurement_data.html#a3cf576e649244debcc1c0cf67038e4d3">print</a> ()=0</td></tr>
+<tr class="separator:a3cf576e649244debcc1c0cf67038e4d3 inherit pub_methods_classq_1_1_measurement_data"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><p>Derived class for handling LC-MS measurement data. </p>
-<p>This class implements the processing and management of LC-MS (Liquid Chromatography-Mass Spectrometry) measurement data. It extends the <a class="el" href="classq_1_1_measurement_data.html" title="Abstract base class for managing measurement data.">MeasurementData</a> class with specific attributes and methods required to handle LC-MS data, such as managing multiple intensity profiles corresponding to different retention times. </p>
+<div class="textblock"><p>A class to store LC-MS measurement data. </p>
+<p>The <a class="el" href="classq_1_1_l_c_m_s_data.html" title="A class to store LC-MS measurement data.">LCMSData</a> class is a subclass of the <a class="el" href="classq_1_1_measurement_data.html" title="A class to store measurement data.">MeasurementData</a> class used to store LC-MS measurement data.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">data</td><td>A map of LC-MS data /ref <a class="el" href="classq_1_1_data_type_1_1_l_c___m_s.html" title="A class to store LC-MS data.">DataType::LC_MS</a> </td></tr>
+  </table>
+  </dd>
+</dl>
 
-<p class="definition">Definition at line <a class="el" href="qalgorithms__measurement__data__lcms_8h_source.html#l00018">18</a> of file <a class="el" href="qalgorithms__measurement__data__lcms_8h_source.html">qalgorithms_measurement_data_lcms.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="qalgorithms__measurement__data__lcms_8h_source.html#l00016">16</a> of file <a class="el" href="qalgorithms__measurement__data__lcms_8h_source.html">qalgorithms_measurement_data_lcms.h</a>.</p>
 </div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
 <a id="a7466e285c6c4f7a7fd3a67edb15a4cd7" name="a7466e285c6c4f7a7fd3a67edb15a4cd7"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a7466e285c6c4f7a7fd3a67edb15a4cd7">&#9670;&#160;</a></span>LCMSData()</h2>
 
 <div class="memitem">
 <div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
       <table class="memname">
         <tr>
           <td class="memname">q::LCMSData::LCMSData </td>
@@ -133,21 +138,34 @@ Public Member Functions</h2></td></tr>
           <td></td>
         </tr>
       </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
-  </tr>
-</table>
 </div><div class="memdoc">
 
-<p>Constructor for <a class="el" href="classq_1_1_l_c_m_s_data.html" title="Derived class for handling LC-MS measurement data.">LCMSData</a>. </p>
-
-<p class="definition">Definition at line <a class="el" href="qalgorithms__measurement__data__lcms_8h_source.html#l00023">23</a> of file <a class="el" href="qalgorithms__measurement__data__lcms_8h_source.html">qalgorithms_measurement_data_lcms.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="qalgorithms__measurement__data__lcms_8cpp_source.html#l00011">11</a> of file <a class="el" href="qalgorithms__measurement__data__lcms_8cpp_source.html">qalgorithms_measurement_data_lcms.cpp</a>.</p>
 
 </div>
 </div>
-<a id="ad643884f466521f326c964b355e86e3a" name="ad643884f466521f326c964b355e86e3a"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ad643884f466521f326c964b355e86e3a">&#9670;&#160;</a></span>~LCMSData()</h2>
+<a id="a556f3c0930dd9500376eda81b271b787" name="a556f3c0930dd9500376eda81b271b787"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a556f3c0930dd9500376eda81b271b787">&#9670;&#160;</a></span>~LCMSData()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">q::LCMSData::~LCMSData </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="qalgorithms__measurement__data__lcms_8cpp_source.html#l00014">14</a> of file <a class="el" href="qalgorithms__measurement__data__lcms_8cpp_source.html">qalgorithms_measurement_data_lcms.cpp</a>.</p>
+
+</div>
+</div>
+<h2 class="groupheader">Member Function Documentation</h2>
+<a id="aa808ac2ee343120a4a89f8ee8e9278f6" name="aa808ac2ee343120a4a89f8ee8e9278f6"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aa808ac2ee343120a4a89f8ee8e9278f6">&#9670;&#160;</a></span>print()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -156,7 +174,7 @@ Public Member Functions</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">virtual q::LCMSData::~LCMSData </td>
+          <td class="memname">void q::LCMSData::print </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td></td>
@@ -164,20 +182,19 @@ Public Member Functions</h2></td></tr>
       </table>
   </td>
   <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">virtual</span></span>  </td>
+<span class="mlabels"><span class="mlabel">virtual</span></span>  </td>
   </tr>
 </table>
 </div><div class="memdoc">
 
-<p>Destructor for <a class="el" href="classq_1_1_l_c_m_s_data.html" title="Derived class for handling LC-MS measurement data.">LCMSData</a>. </p>
+<p>Implements <a class="el" href="classq_1_1_measurement_data.html#a3cf576e649244debcc1c0cf67038e4d3">q::MeasurementData</a>.</p>
 
-<p class="definition">Definition at line <a class="el" href="qalgorithms__measurement__data__lcms_8h_source.html#l00028">28</a> of file <a class="el" href="qalgorithms__measurement__data__lcms_8h_source.html">qalgorithms_measurement_data_lcms.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="qalgorithms__measurement__data__lcms_8cpp_source.html#l00129">129</a> of file <a class="el" href="qalgorithms__measurement__data__lcms_8cpp_source.html">qalgorithms_measurement_data_lcms.cpp</a>.</p>
 
 </div>
 </div>
-<h2 class="groupheader">Member Function Documentation</h2>
-<a id="a911f6f40be5f7ef00cd299528773a747" name="a911f6f40be5f7ef00cd299528773a747"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a911f6f40be5f7ef00cd299528773a747">&#9670;&#160;</a></span>readCSV()</h2>
+<a id="ab4632d3d3138d17fd5a7f479b70c2846" name="ab4632d3d3138d17fd5a7f479b70c2846"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ab4632d3d3138d17fd5a7f479b70c2846">&#9670;&#160;</a></span>readCSV()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -189,37 +206,43 @@ Public Member Functions</h2></td></tr>
           <td class="memname">void q::LCMSData::readCSV </td>
           <td>(</td>
           <td class="paramtype">std::string&#160;</td>
-          <td class="paramname"><em>FILE_PATH</em>, </td>
+          <td class="paramname"><em>filename</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">int&#160;</td>
-          <td class="paramname"><em>row0</em>, </td>
+          <td class="paramname"><em>rowStart</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">int&#160;</td>
-          <td class="paramname"><em>rowN</em>, </td>
+          <td class="paramname"><em>rowEnd</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">int&#160;</td>
-          <td class="paramname"><em>col0</em>, </td>
+          <td class="paramname"><em>colStart</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">int&#160;</td>
-          <td class="paramname"><em>colN</em>, </td>
+          <td class="paramname"><em>colEnd</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">char&#160;</td>
+          <td class="paramname"><em>separator</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">std::vector&lt; <a class="el" href="namespaceq_1_1_data_type.html#a9fcd47c7d7d77f908f041cad931962aa">DataType::DataField</a> &gt;&#160;</td>
-          <td class="paramname"><em>dataFields</em>&#160;</td>
+          <td class="paramname"><em>variableTypes</em>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -229,30 +252,35 @@ Public Member Functions</h2></td></tr>
       </table>
   </td>
   <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">override</span><span class="mlabel">virtual</span></span>  </td>
+<span class="mlabels"><span class="mlabel">virtual</span></span>  </td>
   </tr>
 </table>
 </div><div class="memdoc">
+
+<p>Read LC-MS data from a CSV file. </p>
+<p>The readCSV method reads LC-MS data from a CSV file and stores it in the <a class="el" href="classq_1_1_l_c_m_s_data.html" title="A class to store LC-MS measurement data.">LCMSData</a> object. The method takes the filename of the CSV file, the start and end rows and columns, the separator, and the variable types. The variable types are used to determine the type of data in each column. The method requires the variable types: <b>scanNumber</b>, <b>retentionTime</b>, <b>mz</b>, and <b>intensity</b>. Other variable types can be added to the list of variable types.<a class="el" href="namespaceq_1_1_data_type.html#a9fcd47c7d7d77f908f041cad931962aa">DataType::DataField</a></p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">FILE_PATH</td><td></td></tr>
-    <tr><td class="paramname">row0</td><td></td></tr>
-    <tr><td class="paramname">rowN</td><td></td></tr>
-    <tr><td class="paramname">col0</td><td></td></tr>
-    <tr><td class="paramname">colN</td><td></td></tr>
-    <tr><td class="paramname">dataFields</td><td></td></tr>
+    <tr><td class="paramname">filename</td><td>The filename of the CSV file </td></tr>
+    <tr><td class="paramname">rowStart</td><td>The start row (0-based index) </td></tr>
+    <tr><td class="paramname">rowEnd</td><td>The end row (if -1, then set to the maximum number of rows) </td></tr>
+    <tr><td class="paramname">colStart</td><td>The start column (0-based index) </td></tr>
+    <tr><td class="paramname">colEnd</td><td>The end column (if -1, then set to the maximum number of columns) </td></tr>
+    <tr><td class="paramname">separator</td><td>The separator, e.g., ',' or '\t' </td></tr>
+    <tr><td class="paramname">variableTypes</td><td>The variable types. Required variable types: DataField::SCANNUMBER, DataField::RETENTIONTIME, DataField::MZ, and DataField::INTENSITY </td></tr>
   </table>
   </dd>
 </dl>
 
-<p>Implements <a class="el" href="classq_1_1_measurement_data.html#a376ed77b567080c0cc4a6e45c776586a">q::MeasurementData</a>.</p>
+<p>Implements <a class="el" href="classq_1_1_measurement_data.html#a8295223e88004418fcc9fa62b1ced99d">q::MeasurementData</a>.</p>
 
-<p class="definition">Definition at line <a class="el" href="qalgorithms__measurement__data__lcms_8h_source.html#l00040">40</a> of file <a class="el" href="qalgorithms__measurement__data__lcms_8h_source.html">qalgorithms_measurement_data_lcms.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="qalgorithms__measurement__data__lcms_8cpp_source.html#l00017">17</a> of file <a class="el" href="qalgorithms__measurement__data__lcms_8cpp_source.html">qalgorithms_measurement_data_lcms.cpp</a>.</p>
 
 </div>
 </div>
-<hr/>The documentation for this class was generated from the following file:<ul>
+<hr/>The documentation for this class was generated from the following files:<ul>
 <li>include/<a class="el" href="qalgorithms__measurement__data__lcms_8h_source.html">qalgorithms_measurement_data_lcms.h</a></li>
+<li>src/<a class="el" href="qalgorithms__measurement__data__lcms_8cpp_source.html">qalgorithms_measurement_data_lcms.cpp</a></li>
 </ul>
 </div><!-- contents -->
 <!-- start footer part -->

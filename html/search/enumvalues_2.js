@@ -1,9 +1,12 @@
 var searchData=
 [
-  ['datatype_0',['DATATYPE',['../namespaceq_1_1_data_type.html#a9fcd47c7d7d77f908f041cad931962aaa02ff2101e64dbed6c34c715aa8d5cfea',1,'q::DataType']]],
-  ['debugging_1',['DEBUGGING',['../namespaceq.html#a1ef5b9eb7b9bdd1afc71e98f9b43a174a6e0d2a351777f8e1349133544e885f8a',1,'q']]],
-  ['df_2',['Df',['../namespaceq.html#ab3bdb9eac069e4e777368ed17431ffafa0b9f7998ac41c70208a48a3acee941b5',1,'q']]],
-  ['dqs_3',['DQS',['../classq_1_1_peakproperties.html#a8e14bc689d53ecc5877b06e0851608bca1f1563e38c684a2c66788df8bdb2afa7',1,'q::Peakproperties']]],
-  ['dqs_4',['Dqs',['../namespaceq.html#ab3bdb9eac069e4e777368ed17431ffafa3a167780a83475ac09b0b48775b32ef6',1,'q']]],
-  ['drifttime_5',['DRIFTTIME',['../namespaceq_1_1_data_type.html#a9fcd47c7d7d77f908f041cad931962aaa4f54562c2571ef451071e2a1a4ab18a4',1,'q::DataType']]]
+  ['centroid_0',['Centroid',['../namespaceq_1_1_data_type.html#a8e76910d22415bfa3dd2086a76f0c5eaa9b49197cf2fea5efc68ef8a88489e1b6',1,'q::DataType']]],
+  ['coeff_5fb0_1',['COEFF_B0',['../classq_1_1_peakproperties.html#a8e14bc689d53ecc5877b06e0851608bca6132a0d57a3adb3514e39a275dcf1162',1,'q::Peakproperties']]],
+  ['coeff_5fb1_2',['COEFF_B1',['../classq_1_1_peakproperties.html#a8e14bc689d53ecc5877b06e0851608bcadb70169dc41d58b548e45e58608f8863',1,'q::Peakproperties']]],
+  ['coeff_5fb2_3',['COEFF_B2',['../classq_1_1_peakproperties.html#a8e14bc689d53ecc5877b06e0851608bca564e94147987e44eaaf4ecd8d79e855d',1,'q::Peakproperties']]],
+  ['coeff_5fb3_4',['COEFF_B3',['../classq_1_1_peakproperties.html#a8e14bc689d53ecc5877b06e0851608bcad7dedb05cfaace49f3065039ed83f9ac',1,'q::Peakproperties']]],
+  ['coeffb0_5',['CoeffB0',['../namespaceq.html#ab3bdb9eac069e4e777368ed17431ffafa45d4b98958ff56d24f34445e565cbf4a',1,'q']]],
+  ['coeffb1_6',['CoeffB1',['../namespaceq.html#ab3bdb9eac069e4e777368ed17431ffafa181ef5cc8531adebe749a4c85cc79c52',1,'q']]],
+  ['coeffb2_7',['CoeffB2',['../namespaceq.html#ab3bdb9eac069e4e777368ed17431ffafa439000af4eeabcb2d395a36d47a5c799',1,'q']]],
+  ['coeffb3_8',['CoeffB3',['../namespaceq.html#ab3bdb9eac069e4e777368ed17431ffafa575a0fc5a81196aafb0d114fb1ff43d0',1,'q']]]
 ];

@@ -2,7 +2,7 @@
 \hypertarget{classq_1_1_l_c_m_s_data}{}\label{classq_1_1_l_c_m_s_data}\index{q::LCMSData@{q::LCMSData}}
 
 
-Derived class for handling LC-\/\+MS measurement data.  
+A class to store LC-\/\+MS measurement data.  
 
 
 
@@ -19,26 +19,37 @@ Inheritance diagram for q\+::LCMSData\+:\begin{figure}[H]
 \begin{DoxyCompactItemize}
 \item 
 \mbox{\hyperlink{classq_1_1_l_c_m_s_data_a7466e285c6c4f7a7fd3a67edb15a4cd7}{LCMSData}} ()
-\begin{DoxyCompactList}\small\item\em Constructor for \doxylink{classq_1_1_l_c_m_s_data}{LCMSData}. \end{DoxyCompactList}\item 
-virtual \mbox{\hyperlink{classq_1_1_l_c_m_s_data_ad643884f466521f326c964b355e86e3a}{\texorpdfstring{$\sim$}{\string~}\+LCMSData}} ()
-\begin{DoxyCompactList}\small\item\em Destructor for \doxylink{classq_1_1_l_c_m_s_data}{LCMSData}. \end{DoxyCompactList}\item 
-void \mbox{\hyperlink{classq_1_1_l_c_m_s_data_a911f6f40be5f7ef00cd299528773a747}{read\+CSV}} (std\+::string FILE\+\_\+\+PATH, int row0, int rowN, int col0, int colN, std\+::vector$<$ \mbox{\hyperlink{namespaceq_1_1_data_type_a9fcd47c7d7d77f908f041cad931962aa}{Data\+Type\+::\+Data\+Field}} $>$ data\+Fields) override
+\item 
+\mbox{\hyperlink{classq_1_1_l_c_m_s_data_a556f3c0930dd9500376eda81b271b787}{\texorpdfstring{$\sim$}{\string~}\+LCMSData}} ()
+\item 
+void \mbox{\hyperlink{classq_1_1_l_c_m_s_data_ab4632d3d3138d17fd5a7f479b70c2846}{read\+CSV}} (std\+::string filename, int row\+Start, int row\+End, int col\+Start, int col\+End, char separator, std\+::vector$<$ \mbox{\hyperlink{namespaceq_1_1_data_type_a9fcd47c7d7d77f908f041cad931962aa}{Data\+Type\+::\+Data\+Field}} $>$ variable\+Types)
+\begin{DoxyCompactList}\small\item\em Read LC-\/\+MS data from a CSV file. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{classq_1_1_l_c_m_s_data_aa808ac2ee343120a4a89f8ee8e9278f6}{print}} ()
 \end{DoxyCompactItemize}
 \doxysubsection*{Public Member Functions inherited from \mbox{\hyperlink{classq_1_1_measurement_data}{q\+::\+Measurement\+Data}}}
 \begin{DoxyCompactItemize}
 \item 
 virtual \mbox{\hyperlink{classq_1_1_measurement_data_a5b13907b217ee6690eef821d4df68479}{\texorpdfstring{$\sim$}{\string~}\+Measurement\+Data}} ()
-\begin{DoxyCompactList}\small\item\em Virtual destructor to ensure proper cleanup of derived classes. \end{DoxyCompactList}\item 
-virtual void \mbox{\hyperlink{classq_1_1_measurement_data_a376ed77b567080c0cc4a6e45c776586a}{read\+CSV}} (std\+::string FILE\+\_\+\+PATH, int row0, int rowN, int col0, int colN, std\+::vector$<$ \mbox{\hyperlink{namespaceq_1_1_data_type_a9fcd47c7d7d77f908f041cad931962aa}{Data\+Type\+::\+Data\+Field}} $>$ data\+Fields)=0
+\item 
+virtual void \mbox{\hyperlink{classq_1_1_measurement_data_a8295223e88004418fcc9fa62b1ced99d}{read\+CSV}} (std\+::string filename, int row\+Start, int row\+End, int col\+Start, int col\+End, char separator, std\+::vector$<$ \mbox{\hyperlink{namespaceq_1_1_data_type_a9fcd47c7d7d77f908f041cad931962aa}{Data\+Type\+::\+Data\+Field}} $>$ variable\+Types)=0
+\item 
+virtual void \mbox{\hyperlink{classq_1_1_measurement_data_a3cf576e649244debcc1c0cf67038e4d3}{print}} ()=0
 \end{DoxyCompactItemize}
 
 
 \doxysubsection{Detailed Description}
-Derived class for handling LC-\/\+MS measurement data. 
+A class to store LC-\/\+MS measurement data. 
 
-This class implements the processing and management of LC-\/\+MS (Liquid Chromatography-\/\+Mass Spectrometry) measurement data. It extends the \doxylink{classq_1_1_measurement_data}{Measurement\+Data} class with specific attributes and methods required to handle LC-\/\+MS data, such as managing multiple intensity profiles corresponding to different retention times. 
+The \doxylink{classq_1_1_l_c_m_s_data}{LCMSData} class is a subclass of the \doxylink{classq_1_1_measurement_data}{Measurement\+Data} class used to store LC-\/\+MS measurement data.
 
-Definition at line \mbox{\hyperlink{qalgorithms__measurement__data__lcms_8h_source_l00018}{18}} of file \mbox{\hyperlink{qalgorithms__measurement__data__lcms_8h_source}{qalgorithms\+\_\+measurement\+\_\+data\+\_\+lcms.\+h}}.
+
+\begin{DoxyParams}{Parameters}
+{\em data} & A map of LC-\/\+MS data /ref \doxylink{classq_1_1_data_type_1_1_l_c___m_s}{Data\+Type\+::\+LC\+\_\+\+MS} \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line \mbox{\hyperlink{qalgorithms__measurement__data__lcms_8h_source_l00016}{16}} of file \mbox{\hyperlink{qalgorithms__measurement__data__lcms_8h_source}{qalgorithms\+\_\+measurement\+\_\+data\+\_\+lcms.\+h}}.
 
 
 
@@ -47,64 +58,79 @@ Definition at line \mbox{\hyperlink{qalgorithms__measurement__data__lcms_8h_sour
 \index{q::LCMSData@{q::LCMSData}!LCMSData@{LCMSData}}
 \index{LCMSData@{LCMSData}!q::LCMSData@{q::LCMSData}}
 \doxysubsubsection{\texorpdfstring{LCMSData()}{LCMSData()}}
-{\footnotesize\ttfamily q\+::\+LCMSData\+::\+LCMSData (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+{\footnotesize\ttfamily q\+::\+LCMSData\+::\+LCMSData (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})}
 
 
 
-Constructor for \doxylink{classq_1_1_l_c_m_s_data}{LCMSData}. 
+Definition at line \mbox{\hyperlink{qalgorithms__measurement__data__lcms_8cpp_source_l00011}{11}} of file \mbox{\hyperlink{qalgorithms__measurement__data__lcms_8cpp_source}{qalgorithms\+\_\+measurement\+\_\+data\+\_\+lcms.\+cpp}}.
 
-
-
-Definition at line \mbox{\hyperlink{qalgorithms__measurement__data__lcms_8h_source_l00023}{23}} of file \mbox{\hyperlink{qalgorithms__measurement__data__lcms_8h_source}{qalgorithms\+\_\+measurement\+\_\+data\+\_\+lcms.\+h}}.
-
-\Hypertarget{classq_1_1_l_c_m_s_data_ad643884f466521f326c964b355e86e3a}\label{classq_1_1_l_c_m_s_data_ad643884f466521f326c964b355e86e3a} 
+\Hypertarget{classq_1_1_l_c_m_s_data_a556f3c0930dd9500376eda81b271b787}\label{classq_1_1_l_c_m_s_data_a556f3c0930dd9500376eda81b271b787} 
 \index{q::LCMSData@{q::LCMSData}!````~LCMSData@{\texorpdfstring{$\sim$}{\string~}LCMSData}}
 \index{````~LCMSData@{\texorpdfstring{$\sim$}{\string~}LCMSData}!q::LCMSData@{q::LCMSData}}
 \doxysubsubsection{\texorpdfstring{\texorpdfstring{$\sim$}{\string~}LCMSData()}{\string~LCMSData()}}
-{\footnotesize\ttfamily virtual q\+::\+LCMSData\+::\texorpdfstring{$\sim$}{\string~}\+LCMSData (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}, {\ttfamily [virtual]}}
+{\footnotesize\ttfamily q\+::\+LCMSData\+::\texorpdfstring{$\sim$}{\string~}\+LCMSData (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})}
 
 
 
-Destructor for \doxylink{classq_1_1_l_c_m_s_data}{LCMSData}. 
-
-
-
-Definition at line \mbox{\hyperlink{qalgorithms__measurement__data__lcms_8h_source_l00028}{28}} of file \mbox{\hyperlink{qalgorithms__measurement__data__lcms_8h_source}{qalgorithms\+\_\+measurement\+\_\+data\+\_\+lcms.\+h}}.
+Definition at line \mbox{\hyperlink{qalgorithms__measurement__data__lcms_8cpp_source_l00014}{14}} of file \mbox{\hyperlink{qalgorithms__measurement__data__lcms_8cpp_source}{qalgorithms\+\_\+measurement\+\_\+data\+\_\+lcms.\+cpp}}.
 
 
 
 \doxysubsection{Member Function Documentation}
-\Hypertarget{classq_1_1_l_c_m_s_data_a911f6f40be5f7ef00cd299528773a747}\label{classq_1_1_l_c_m_s_data_a911f6f40be5f7ef00cd299528773a747} 
+\Hypertarget{classq_1_1_l_c_m_s_data_aa808ac2ee343120a4a89f8ee8e9278f6}\label{classq_1_1_l_c_m_s_data_aa808ac2ee343120a4a89f8ee8e9278f6} 
+\index{q::LCMSData@{q::LCMSData}!print@{print}}
+\index{print@{print}!q::LCMSData@{q::LCMSData}}
+\doxysubsubsection{\texorpdfstring{print()}{print()}}
+{\footnotesize\ttfamily void q\+::\+LCMSData\+::print (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [virtual]}}
+
+
+
+Implements \mbox{\hyperlink{classq_1_1_measurement_data_a3cf576e649244debcc1c0cf67038e4d3}{q\+::\+Measurement\+Data}}.
+
+
+
+Definition at line \mbox{\hyperlink{qalgorithms__measurement__data__lcms_8cpp_source_l00129}{129}} of file \mbox{\hyperlink{qalgorithms__measurement__data__lcms_8cpp_source}{qalgorithms\+\_\+measurement\+\_\+data\+\_\+lcms.\+cpp}}.
+
+\Hypertarget{classq_1_1_l_c_m_s_data_ab4632d3d3138d17fd5a7f479b70c2846}\label{classq_1_1_l_c_m_s_data_ab4632d3d3138d17fd5a7f479b70c2846} 
 \index{q::LCMSData@{q::LCMSData}!readCSV@{readCSV}}
 \index{readCSV@{readCSV}!q::LCMSData@{q::LCMSData}}
 \doxysubsubsection{\texorpdfstring{readCSV()}{readCSV()}}
-{\footnotesize\ttfamily void q\+::\+LCMSData\+::read\+CSV (\begin{DoxyParamCaption}\item[{std\+::string}]{FILE\+\_\+\+PATH,  }\item[{int}]{row0,  }\item[{int}]{rowN,  }\item[{int}]{col0,  }\item[{int}]{colN,  }\item[{std\+::vector$<$ \mbox{\hyperlink{namespaceq_1_1_data_type_a9fcd47c7d7d77f908f041cad931962aa}{Data\+Type\+::\+Data\+Field}} $>$}]{data\+Fields }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}, {\ttfamily [override]}, {\ttfamily [virtual]}}
+{\footnotesize\ttfamily void q\+::\+LCMSData\+::read\+CSV (\begin{DoxyParamCaption}\item[{std\+::string}]{filename,  }\item[{int}]{row\+Start,  }\item[{int}]{row\+End,  }\item[{int}]{col\+Start,  }\item[{int}]{col\+End,  }\item[{char}]{separator,  }\item[{std\+::vector$<$ \mbox{\hyperlink{namespaceq_1_1_data_type_a9fcd47c7d7d77f908f041cad931962aa}{Data\+Type\+::\+Data\+Field}} $>$}]{variable\+Types }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [virtual]}}
+
+
+
+Read LC-\/\+MS data from a CSV file. 
+
+The read\+CSV method reads LC-\/\+MS data from a CSV file and stores it in the \doxylink{classq_1_1_l_c_m_s_data}{LCMSData} object. The method takes the filename of the CSV file, the start and end rows and columns, the separator, and the variable types. The variable types are used to determine the type of data in each column. The method requires the variable types\+: {\bfseries{scan\+Number}}, {\bfseries{retention\+Time}}, {\bfseries{mz}}, and {\bfseries{intensity}}. Other variable types can be added to the list of variable types.\doxylink{namespaceq_1_1_data_type_a9fcd47c7d7d77f908f041cad931962aa}{Data\+Type\+::\+Data\+Field}
 
 
 \begin{DoxyParams}{Parameters}
-{\em FILE\+\_\+\+PATH} & \\
+{\em filename} & The filename of the CSV file \\
 \hline
-{\em row0} & \\
+{\em row\+Start} & The start row (0-\/based index) \\
 \hline
-{\em rowN} & \\
+{\em row\+End} & The end row (if -\/1, then set to the maximum number of rows) \\
 \hline
-{\em col0} & \\
+{\em col\+Start} & The start column (0-\/based index) \\
 \hline
-{\em colN} & \\
+{\em col\+End} & The end column (if -\/1, then set to the maximum number of columns) \\
 \hline
-{\em data\+Fields} & \\
+{\em separator} & The separator, e.\+g., \textquotesingle{},\textquotesingle{} or \textquotesingle{}\textbackslash{}t\textquotesingle{} \\
+\hline
+{\em variable\+Types} & The variable types. Required variable types\+: Data\+Field\+::\+SCANNUMBER, Data\+Field\+::\+RETENTIONTIME, Data\+Field\+::\+MZ, and Data\+Field\+::\+INTENSITY \\
 \hline
 \end{DoxyParams}
 
 
-Implements \mbox{\hyperlink{classq_1_1_measurement_data_a376ed77b567080c0cc4a6e45c776586a}{q\+::\+Measurement\+Data}}.
+Implements \mbox{\hyperlink{classq_1_1_measurement_data_a8295223e88004418fcc9fa62b1ced99d}{q\+::\+Measurement\+Data}}.
 
 
 
-Definition at line \mbox{\hyperlink{qalgorithms__measurement__data__lcms_8h_source_l00040}{40}} of file \mbox{\hyperlink{qalgorithms__measurement__data__lcms_8h_source}{qalgorithms\+\_\+measurement\+\_\+data\+\_\+lcms.\+h}}.
+Definition at line \mbox{\hyperlink{qalgorithms__measurement__data__lcms_8cpp_source_l00017}{17}} of file \mbox{\hyperlink{qalgorithms__measurement__data__lcms_8cpp_source}{qalgorithms\+\_\+measurement\+\_\+data\+\_\+lcms.\+cpp}}.
 
 
 
-The documentation for this class was generated from the following file\+:\begin{DoxyCompactItemize}
+The documentation for this class was generated from the following files\+:\begin{DoxyCompactItemize}
 \item 
-include/\mbox{\hyperlink{qalgorithms__measurement__data__lcms_8h}{qalgorithms\+\_\+measurement\+\_\+data\+\_\+lcms.\+h}}\end{DoxyCompactItemize}
+include/\mbox{\hyperlink{qalgorithms__measurement__data__lcms_8h}{qalgorithms\+\_\+measurement\+\_\+data\+\_\+lcms.\+h}}\item 
+src/\mbox{\hyperlink{qalgorithms__measurement__data__lcms_8cpp}{qalgorithms\+\_\+measurement\+\_\+data\+\_\+lcms.\+cpp}}\end{DoxyCompactItemize}

@@ -1,5 +1,5 @@
 var searchData=
 [
-  ['width_0',['WIDTH',['../classq_1_1_peakproperties.html#a8e14bc689d53ecc5877b06e0851608bca72ed272e8bd3a82825e5a219a9496c1b',1,'q::Peakproperties']]],
-  ['width_1',['Width',['../namespaceq.html#ab3bdb9eac069e4e777368ed17431ffafa32954654ac8fe66a1d09be19001de2d4',1,'q']]]
+  ['valley_5fposition_0',['VALLEY_POSITION',['../namespaceq_1_1_data_type.html#a9fcd47c7d7d77f908f041cad931962aaabde13dbf561a3640b24d506675069dba',1,'q::DataType']]],
+  ['valleyposition_1',['ValleyPosition',['../namespaceq.html#ab3bdb9eac069e4e777368ed17431ffafab166c0c7ce8046a50dc6b7f62c07d126',1,'q']]]
 ];

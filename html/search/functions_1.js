@@ -15,12 +15,13 @@ var searchData=
   ['calcpeakheight_12',['calcPeakHeight',['../classq_1_1_peakmodel.html#aa6aa3d1f36fa0781b3d706eccfeb5626',1,'q::Peakmodel']]],
   ['calculatedesignmatrix_13',['calculateDesignMatrix',['../classq_1_1_peakmodel.html#a78e1dbff931aa1d7a63396af1e791794',1,'q::Peakmodel']]],
   ['calculatepseudoinverse_14',['calculatePseudoInverse',['../classq_1_1_peakmodel.html#ade15a55d5cc786a8282617014024a87e',1,'q::Peakmodel']]],
-  ['coefficientcriterion_15',['coefficientCriterion',['../classq_1_1_peakmodel.html#ae308d29f7b6c9c548f4d2edb8fd8169c',1,'q::Peakmodel']]],
-  ['coefficientcriterioncases_16',['coefficientCriterionCases',['../classq_1_1_peakmodel.html#af75235cd26feb7b8081e6078db34bded',1,'q::Peakmodel']]],
-  ['col_17',['col',['../classq_1_1_matrix.html#ae8c80426ebd00d309a1e79eb9d38f97e',1,'q::Matrix']]],
-  ['complete_18',['complete',['../classq_1_1_progress_bar.html#a177347e1a65f6c5ae99a590804d5738c',1,'q::ProgressBar']]],
-  ['convolveantisymmetric_19',['convolveAntisymmetric',['../classq_1_1_matrix.html#a956aba54c16b1e9c65b8c131d0b9cf6d',1,'q::Matrix']]],
-  ['convolvep_20',['convolveP',['../classq_1_1_peakmodel.html#abc6a79cb45966a252ef3247d3ac95196',1,'q::Peakmodel']]],
-  ['convolverotation_21',['convolveRotation',['../classq_1_1_matrix.html#a549e37550d5df9f221ea8ab647751221',1,'q::Matrix']]],
-  ['convolvesymmetric_22',['convolveSymmetric',['../classq_1_1_matrix.html#a0d2a7bf49f60c2cb4e81f5489a175860',1,'q::Matrix']]]
+  ['clearpeaks_15',['clearPeaks',['../classq_1_1_data_type_1_1_peak_list.html#a65d3ba6fd8d79ca816a575878e382497',1,'q::DataType::PeakList']]],
+  ['coefficientcriterion_16',['coefficientCriterion',['../classq_1_1_peakmodel.html#ae308d29f7b6c9c548f4d2edb8fd8169c',1,'q::Peakmodel']]],
+  ['coefficientcriterioncases_17',['coefficientCriterionCases',['../classq_1_1_peakmodel.html#af75235cd26feb7b8081e6078db34bded',1,'q::Peakmodel']]],
+  ['col_18',['col',['../classq_1_1_matrix.html#ae8c80426ebd00d309a1e79eb9d38f97e',1,'q::Matrix']]],
+  ['complete_19',['complete',['../classq_1_1_progress_bar.html#a177347e1a65f6c5ae99a590804d5738c',1,'q::ProgressBar']]],
+  ['convolveantisymmetric_20',['convolveAntisymmetric',['../classq_1_1_matrix.html#a956aba54c16b1e9c65b8c131d0b9cf6d',1,'q::Matrix']]],
+  ['convolvep_21',['convolveP',['../classq_1_1_peakmodel.html#abc6a79cb45966a252ef3247d3ac95196',1,'q::Peakmodel']]],
+  ['convolverotation_22',['convolveRotation',['../classq_1_1_matrix.html#a549e37550d5df9f221ea8ab647751221',1,'q::Matrix']]],
+  ['convolvesymmetric_23',['convolveSymmetric',['../classq_1_1_matrix.html#a0d2a7bf49f60c2cb4e81f5489a175860',1,'q::Matrix']]]
 ];

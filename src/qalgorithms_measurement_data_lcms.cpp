@@ -126,6 +126,43 @@ namespace q {
 
     }
 
+    void LCMSData::zeroFilling() {
+        for (auto it = this->data.begin(); it != this->data.end(); it++) {
+            // check if the mz and intensity vectors have the same size
+            if (it->second.mz.size() != it->second.intensity.size()) {
+                std::cerr << "The mz and intensity vectors do not have the same size" << std::endl;
+                return;
+            }
+
+            // check if the mz and intensity vectors have at least 2 elements
+            if (it->second.mz.size() < 2) {
+                std::cerr << "The mz and intensity vectors do not have at least 2 elements" << std::endl;
+                return;
+            }
+
+            // calculate the average difference between neighboring data points
+            std::vector<double> diff;
+            for (int i = 1; i < it->second.mz.size(); i++) {
+                diff.push_back(it->second.mz[i] - it->second.mz[i-1]);
+            }
+            double averageDiff = 0;
+            for (int i = 0; i < diff.size(); i++) {
+                averageDiff += diff[i];
+            }
+            averageDiff /= diff.size();
+
+            // fill the gaps
+            for (int i = 1; i < it->second.mz.size(); i++) {
+                if (it->second.mz[i] - it->second.mz[i-1] > 1.5 * averageDiff) {
+                    // fill the gap with zero values
+                    it->second.mz.insert(it->second.mz.begin() + i, 0);
+                    it->second.intensity.insert(it->second.intensity.begin() + i, 0);
+                    i++;
+                }
+            }
+        }
+    }
+
     void LCMSData::print() {
         for (auto it = this->data.begin(); it != this->data.end(); it++) {
             std::cout << "Scan Number: " << it->second.scanNumber << std::endl;

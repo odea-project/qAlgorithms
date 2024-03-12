@@ -1,5 +1,5 @@
 var searchData=
 [
-  ['points_0',['points',['../classq_1_1_data_type_1_1_mass_spectrum.html#af25181868f30fecc1a85404bc026ecdd',1,'q::DataType::MassSpectrum']]],
-  ['propertylabels_1',['propertyLabels',['../namespaceq.html#ac9412ec4dc6d9138e2965665f2651be5',1,'q']]]
+  ['height_0',['height',['../classq_1_1_data_type_1_1_peak.html#ab9e7ba362983b3664e4d8081a4e25d45',1,'q::DataType::Peak']]],
+  ['heightuncertainty_1',['heightUncertainty',['../classq_1_1_data_type_1_1_peak.html#a5b1c4f68af46d9410f9d2d95dba4f761',1,'q::DataType::Peak']]]
 ];

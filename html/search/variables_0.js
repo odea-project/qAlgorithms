@@ -1,4 +1,5 @@
 var searchData=
 [
-  ['drifttime_0',['driftTime',['../classq_1_1_data_type_1_1_l_c___i_m_s___m_s.html#a43077161594ecac33d60fb48774e3bbc',1,'q::DataType::LC_IMS_MS']]]
+  ['area_0',['area',['../classq_1_1_data_type_1_1_peak.html#a71bc44dffcedd3ca701d9d7c45d2d5fd',1,'q::DataType::Peak']]],
+  ['areauncertainty_1',['areaUncertainty',['../classq_1_1_data_type_1_1_peak.html#a973adc0388c70068711aa9cfea4eed5a',1,'q::DataType::Peak']]]
 ];

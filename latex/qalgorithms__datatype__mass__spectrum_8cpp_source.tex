@@ -1,0 +1,106 @@
+\doxysection{qalgorithms\+\_\+datatype\+\_\+mass\+\_\+spectrum.\+cpp}
+\hypertarget{qalgorithms__datatype__mass__spectrum_8cpp_source}{}\label{qalgorithms__datatype__mass__spectrum_8cpp_source}\index{src/qalgorithms\_datatype\_mass\_spectrum.cpp@{src/qalgorithms\_datatype\_mass\_spectrum.cpp}}
+\mbox{\hyperlink{qalgorithms__datatype__mass__spectrum_8cpp}{Go to the documentation of this file.}}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__mass__spectrum_8cpp_source_l00001}00001\ \textcolor{comment}{//\ qalgorhithms\_datatype\_mass\_spectrum.cpp}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__mass__spectrum_8cpp_source_l00002}00002\ }
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__mass__spectrum_8cpp_source_l00003}00003\ \textcolor{comment}{//\ internal}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__mass__spectrum_8cpp_source_l00004}00004\ \textcolor{preprocessor}{\#include\ "{}../include/qalgorithms\_datatype\_mass\_spectrum.h"{}}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__mass__spectrum_8cpp_source_l00005}00005\ }
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__mass__spectrum_8cpp_source_l00006}00006\ \textcolor{comment}{//\ external}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__mass__spectrum_8cpp_source_l00007}00007\ \textcolor{preprocessor}{\#include\ <iostream>}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__mass__spectrum_8cpp_source_l00008}00008\ }
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__mass__spectrum_8cpp_source_l00009}00009\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespaceq}{q}}\ \{}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__mass__spectrum_8cpp_source_l00010}00010\ \ \ \textcolor{keyword}{namespace\ }DataType\ \{}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__mass__spectrum_8cpp_source_l00011}\mbox{\hyperlink{classq_1_1_data_type_1_1_mass_spectrum_ac0a31524c492db17747c333ab9807f8f}{00011}}\ \ \ \ \ \mbox{\hyperlink{classq_1_1_data_type_1_1_mass_spectrum_ac0a31524c492db17747c333ab9807f8f}{MassSpectrum::MassSpectrum}}()\ \{}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__mass__spectrum_8cpp_source_l00012}00012\ \ \ \ \ \ \ \mbox{\hyperlink{classq_1_1_data_type_1_1_mass_spectrum_a8f1e3fa9d341263c22fd7248c6bc3ec0}{intensity}}\ =\ std::vector<double>();}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__mass__spectrum_8cpp_source_l00013}00013\ \ \ \ \ \ \ \mbox{\hyperlink{classq_1_1_data_type_1_1_mass_spectrum_a17cbc542d6c1aaade464cdab7f4c812d}{mz}}\ =\ std::vector<double>();}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__mass__spectrum_8cpp_source_l00014}00014\ \ \ \ \ \ \ \mbox{\hyperlink{classq_1_1_data_type_1_1_mass_spectrum_a7271ac8b3ee5f2560ccbec3e7ac7edae}{ionizationMode}}\ =\ \mbox{\hyperlink{namespaceq_1_1_data_type_a50341ff9d741a5a416eb71a71ffc1fa6a3289297424e01eda5b788c083bbf3147}{IonizationMode::Positive}};}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__mass__spectrum_8cpp_source_l00015}00015\ \ \ \ \ \ \ \mbox{\hyperlink{classq_1_1_data_type_1_1_mass_spectrum_acf136d30ff0ffdc41b2a62c8da7c4c7c}{measurementMode}}\ =\ \mbox{\hyperlink{namespaceq_1_1_data_type_a8e76910d22415bfa3dd2086a76f0c5eaacce99c598cfdb9773ab041d54c3d973a}{MeasurementMode::Profile}};}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__mass__spectrum_8cpp_source_l00016}00016\ \ \ \ \ \ \ \mbox{\hyperlink{classq_1_1_data_type_1_1_mass_spectrum_a7bba763441f4042bcf283d68d79a4d40}{msLevel}}\ =\ \mbox{\hyperlink{namespaceq_1_1_data_type_a90aa4d66e606cf85f2424677d7bf4d34a3c4708a2cdd3c4bfd03ad04e36b87544}{MSLevel::MS1}};}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__mass__spectrum_8cpp_source_l00017}00017\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__mass__spectrum_8cpp_source_l00018}00018\ }
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__mass__spectrum_8cpp_source_l00019}\mbox{\hyperlink{classq_1_1_data_type_1_1_mass_spectrum_a224c7dcd294d2b766f414be88ecd9acf}{00019}}\ \ \ \ \ \mbox{\hyperlink{classq_1_1_data_type_1_1_mass_spectrum_ac0a31524c492db17747c333ab9807f8f}{MassSpectrum::MassSpectrum}}(std::vector<double>\ intensity,\ std::vector<double>\ mz,\ \mbox{\hyperlink{namespaceq_1_1_data_type_a50341ff9d741a5a416eb71a71ffc1fa6}{IonizationMode}}\ ionizationMode,\ \mbox{\hyperlink{namespaceq_1_1_data_type_a8e76910d22415bfa3dd2086a76f0c5ea}{MeasurementMode}}\ measurementMode,\ \mbox{\hyperlink{namespaceq_1_1_data_type_a90aa4d66e606cf85f2424677d7bf4d34}{MSLevel}}\ msLevel)\ \{}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__mass__spectrum_8cpp_source_l00020}00020\ \ \ \ \ \ \ this-\/>intensity\ =\ \mbox{\hyperlink{classq_1_1_data_type_1_1_mass_spectrum_a8f1e3fa9d341263c22fd7248c6bc3ec0}{intensity}};}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__mass__spectrum_8cpp_source_l00021}00021\ \ \ \ \ \ \ this-\/>mz\ =\ \mbox{\hyperlink{classq_1_1_data_type_1_1_mass_spectrum_a17cbc542d6c1aaade464cdab7f4c812d}{mz}};}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__mass__spectrum_8cpp_source_l00022}00022\ \ \ \ \ \ \ this-\/>ionizationMode\ =\ \mbox{\hyperlink{classq_1_1_data_type_1_1_mass_spectrum_a7271ac8b3ee5f2560ccbec3e7ac7edae}{ionizationMode}};}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__mass__spectrum_8cpp_source_l00023}00023\ \ \ \ \ \ \ this-\/>measurementMode\ =\ \mbox{\hyperlink{classq_1_1_data_type_1_1_mass_spectrum_acf136d30ff0ffdc41b2a62c8da7c4c7c}{measurementMode}};}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__mass__spectrum_8cpp_source_l00024}00024\ \ \ \ \ \ \ this-\/>msLevel\ =\ \mbox{\hyperlink{classq_1_1_data_type_1_1_mass_spectrum_a7bba763441f4042bcf283d68d79a4d40}{msLevel}};}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__mass__spectrum_8cpp_source_l00025}00025\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__mass__spectrum_8cpp_source_l00026}00026\ }
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__mass__spectrum_8cpp_source_l00027}\mbox{\hyperlink{classq_1_1_data_type_1_1_mass_spectrum_a394e3640b0c8c69ccb9b6343e6a947f4}{00027}}\ \ \ \ \ \mbox{\hyperlink{classq_1_1_data_type_1_1_mass_spectrum_a394e3640b0c8c69ccb9b6343e6a947f4}{MassSpectrum::\string~MassSpectrum}}()\ \{}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__mass__spectrum_8cpp_source_l00028}00028\ \ \ \ \ \ \ \textcolor{comment}{//\ destructor}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__mass__spectrum_8cpp_source_l00029}00029\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__mass__spectrum_8cpp_source_l00030}00030\ }
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__mass__spectrum_8cpp_source_l00031}\mbox{\hyperlink{classq_1_1_data_type_1_1_mass_spectrum_ab3c0a87d6ff398af1ca1260ce6bdff85}{00031}}\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classq_1_1_data_type_1_1_mass_spectrum_ab3c0a87d6ff398af1ca1260ce6bdff85}{MassSpectrum::setIntensity}}(std::vector<double>\&\ intensity)\ \{}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__mass__spectrum_8cpp_source_l00032}00032\ \ \ \ \ \ \ this-\/>intensity\ =\ \mbox{\hyperlink{classq_1_1_data_type_1_1_mass_spectrum_a8f1e3fa9d341263c22fd7248c6bc3ec0}{intensity}};}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__mass__spectrum_8cpp_source_l00033}00033\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__mass__spectrum_8cpp_source_l00034}00034\ }
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__mass__spectrum_8cpp_source_l00035}\mbox{\hyperlink{classq_1_1_data_type_1_1_mass_spectrum_a3bd822faeb537e596d71c26cd05898b3}{00035}}\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classq_1_1_data_type_1_1_mass_spectrum_a3bd822faeb537e596d71c26cd05898b3}{MassSpectrum::setMz}}(std::vector<double>\&\ mz)\ \{}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__mass__spectrum_8cpp_source_l00036}00036\ \ \ \ \ \ \ this-\/>mz\ =\ \mbox{\hyperlink{classq_1_1_data_type_1_1_mass_spectrum_a17cbc542d6c1aaade464cdab7f4c812d}{mz}};}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__mass__spectrum_8cpp_source_l00037}00037\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__mass__spectrum_8cpp_source_l00038}00038\ }
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__mass__spectrum_8cpp_source_l00039}\mbox{\hyperlink{classq_1_1_data_type_1_1_mass_spectrum_aa673822baefaba4b1b4e3acca219685b}{00039}}\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classq_1_1_data_type_1_1_mass_spectrum_aa673822baefaba4b1b4e3acca219685b}{MassSpectrum::setIonizationMode}}(\mbox{\hyperlink{namespaceq_1_1_data_type_a50341ff9d741a5a416eb71a71ffc1fa6}{IonizationMode}}\ ionizationMode)\ \{}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__mass__spectrum_8cpp_source_l00040}00040\ \ \ \ \ \ \ this-\/>ionizationMode\ =\ \mbox{\hyperlink{classq_1_1_data_type_1_1_mass_spectrum_a7271ac8b3ee5f2560ccbec3e7ac7edae}{ionizationMode}};}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__mass__spectrum_8cpp_source_l00041}00041\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__mass__spectrum_8cpp_source_l00042}00042\ }
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__mass__spectrum_8cpp_source_l00043}\mbox{\hyperlink{classq_1_1_data_type_1_1_mass_spectrum_acbf9fba32142ba1f4e9739d60145794f}{00043}}\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classq_1_1_data_type_1_1_mass_spectrum_acbf9fba32142ba1f4e9739d60145794f}{MassSpectrum::setMeasurementMode}}(\mbox{\hyperlink{namespaceq_1_1_data_type_a8e76910d22415bfa3dd2086a76f0c5ea}{MeasurementMode}}\ measurementMode)\ \{}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__mass__spectrum_8cpp_source_l00044}00044\ \ \ \ \ \ \ this-\/>measurementMode\ =\ \mbox{\hyperlink{classq_1_1_data_type_1_1_mass_spectrum_acf136d30ff0ffdc41b2a62c8da7c4c7c}{measurementMode}};}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__mass__spectrum_8cpp_source_l00045}00045\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__mass__spectrum_8cpp_source_l00046}00046\ }
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__mass__spectrum_8cpp_source_l00047}\mbox{\hyperlink{classq_1_1_data_type_1_1_mass_spectrum_a2b7ca56758bf0017d410727b9fbebc9d}{00047}}\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classq_1_1_data_type_1_1_mass_spectrum_a2b7ca56758bf0017d410727b9fbebc9d}{MassSpectrum::setMSLevel}}(\mbox{\hyperlink{namespaceq_1_1_data_type_a90aa4d66e606cf85f2424677d7bf4d34}{MSLevel}}\ msLevel)\ \{}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__mass__spectrum_8cpp_source_l00048}00048\ \ \ \ \ \ \ this-\/>msLevel\ =\ \mbox{\hyperlink{classq_1_1_data_type_1_1_mass_spectrum_a7bba763441f4042bcf283d68d79a4d40}{msLevel}};}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__mass__spectrum_8cpp_source_l00049}00049\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__mass__spectrum_8cpp_source_l00050}00050\ }
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__mass__spectrum_8cpp_source_l00051}\mbox{\hyperlink{classq_1_1_data_type_1_1_mass_spectrum_a6c6027c12e9a3f41c23f5be1f68153af}{00051}}\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classq_1_1_data_type_1_1_mass_spectrum_a6c6027c12e9a3f41c23f5be1f68153af}{MassSpectrum::print}}()\ \{}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__mass__spectrum_8cpp_source_l00052}00052\ \ \ \ \ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}Intensity:\ "{}};}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__mass__spectrum_8cpp_source_l00053}00053\ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ i\ =\ 0;\ i\ <\ \mbox{\hyperlink{classq_1_1_data_type_1_1_mass_spectrum_a8f1e3fa9d341263c22fd7248c6bc3ec0}{intensity}}.size();\ i++)\ \{}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__mass__spectrum_8cpp_source_l00054}00054\ \ \ \ \ \ \ \ \ std::cout\ <<\ \mbox{\hyperlink{classq_1_1_data_type_1_1_mass_spectrum_a8f1e3fa9d341263c22fd7248c6bc3ec0}{intensity}}[i]\ <<\ \textcolor{stringliteral}{"{}\ "{}};}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__mass__spectrum_8cpp_source_l00055}00055\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__mass__spectrum_8cpp_source_l00056}00056\ \ \ \ \ \ \ std::cout\ <<\ std::endl;}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__mass__spectrum_8cpp_source_l00057}00057\ }
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__mass__spectrum_8cpp_source_l00058}00058\ \ \ \ \ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}MZ:\ "{}};}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__mass__spectrum_8cpp_source_l00059}00059\ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ i\ =\ 0;\ i\ <\ \mbox{\hyperlink{classq_1_1_data_type_1_1_mass_spectrum_a17cbc542d6c1aaade464cdab7f4c812d}{mz}}.size();\ i++)\ \{}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__mass__spectrum_8cpp_source_l00060}00060\ \ \ \ \ \ \ \ \ std::cout\ <<\ \mbox{\hyperlink{classq_1_1_data_type_1_1_mass_spectrum_a17cbc542d6c1aaade464cdab7f4c812d}{mz}}[i]\ <<\ \textcolor{stringliteral}{"{}\ "{}};}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__mass__spectrum_8cpp_source_l00061}00061\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__mass__spectrum_8cpp_source_l00062}00062\ \ \ \ \ \ \ std::cout\ <<\ std::endl;}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__mass__spectrum_8cpp_source_l00063}00063\ }
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__mass__spectrum_8cpp_source_l00064}00064\ \ \ \ \ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}Ionization\ Mode:\ "{}};}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__mass__spectrum_8cpp_source_l00065}00065\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{classq_1_1_data_type_1_1_mass_spectrum_a7271ac8b3ee5f2560ccbec3e7ac7edae}{ionizationMode}}\ ==\ \mbox{\hyperlink{namespaceq_1_1_data_type_a50341ff9d741a5a416eb71a71ffc1fa6a3289297424e01eda5b788c083bbf3147}{IonizationMode::Positive}})\ \{}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__mass__spectrum_8cpp_source_l00066}00066\ \ \ \ \ \ \ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}Positive"{}}\ <<\ std::endl;}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__mass__spectrum_8cpp_source_l00067}00067\ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__mass__spectrum_8cpp_source_l00068}00068\ \ \ \ \ \ \ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}Negative"{}}\ <<\ std::endl;}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__mass__spectrum_8cpp_source_l00069}00069\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__mass__spectrum_8cpp_source_l00070}00070\ }
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__mass__spectrum_8cpp_source_l00071}00071\ \ \ \ \ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}Measurement\ Mode:\ "{}};}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__mass__spectrum_8cpp_source_l00072}00072\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{classq_1_1_data_type_1_1_mass_spectrum_acf136d30ff0ffdc41b2a62c8da7c4c7c}{measurementMode}}\ ==\ \mbox{\hyperlink{namespaceq_1_1_data_type_a8e76910d22415bfa3dd2086a76f0c5eaacce99c598cfdb9773ab041d54c3d973a}{MeasurementMode::Profile}})\ \{}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__mass__spectrum_8cpp_source_l00073}00073\ \ \ \ \ \ \ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}Profile"{}}\ <<\ std::endl;}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__mass__spectrum_8cpp_source_l00074}00074\ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{\ }
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__mass__spectrum_8cpp_source_l00075}00075\ \ \ \ \ \ \ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}Centroid"{}}\ <<\ std::endl;}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__mass__spectrum_8cpp_source_l00076}00076\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__mass__spectrum_8cpp_source_l00077}00077\ }
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__mass__spectrum_8cpp_source_l00078}00078\ \ \ \ \ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}MS\ Level:\ "{}};}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__mass__spectrum_8cpp_source_l00079}00079\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{classq_1_1_data_type_1_1_mass_spectrum_a7bba763441f4042bcf283d68d79a4d40}{msLevel}}\ ==\ \mbox{\hyperlink{namespaceq_1_1_data_type_a90aa4d66e606cf85f2424677d7bf4d34a3c4708a2cdd3c4bfd03ad04e36b87544}{MSLevel::MS1}})\ \{}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__mass__spectrum_8cpp_source_l00080}00080\ \ \ \ \ \ \ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}MS1"{}}\ <<\ std::endl;}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__mass__spectrum_8cpp_source_l00081}00081\ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__mass__spectrum_8cpp_source_l00082}00082\ \ \ \ \ \ \ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}MS2"{}}\ <<\ std::endl;}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__mass__spectrum_8cpp_source_l00083}00083\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__mass__spectrum_8cpp_source_l00084}00084\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__mass__spectrum_8cpp_source_l00085}00085\ }
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__mass__spectrum_8cpp_source_l00086}\mbox{\hyperlink{classq_1_1_data_type_1_1_l_c___m_s_acd09632c007744e0b186f90c523211ad}{00086}}\ \ \ \ \ \mbox{\hyperlink{classq_1_1_data_type_1_1_l_c___m_s_acd09632c007744e0b186f90c523211ad}{LC\_MS::LC\_MS}}()\ \{}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__mass__spectrum_8cpp_source_l00087}00087\ \ \ \ \ \ \ \mbox{\hyperlink{classq_1_1_data_type_1_1_l_c___m_s_ae1d71b3f6d84e051c59c151a167f7912}{retentionTime}}\ =\ 0;}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__mass__spectrum_8cpp_source_l00088}00088\ \ \ \ \ \ \ \mbox{\hyperlink{classq_1_1_data_type_1_1_l_c___m_s_a03e752a7d1d4a15b9d8ab7d17f6745d1}{scanNumber}}\ =\ 0;}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__mass__spectrum_8cpp_source_l00089}00089\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__mass__spectrum_8cpp_source_l00090}00090\ }
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__mass__spectrum_8cpp_source_l00091}\mbox{\hyperlink{classq_1_1_data_type_1_1_l_c___m_s_a1b2a3bbffa945f697412b31e2e45f3b2}{00091}}\ \ \ \ \ \mbox{\hyperlink{classq_1_1_data_type_1_1_l_c___m_s_acd09632c007744e0b186f90c523211ad}{LC\_MS::LC\_MS}}(std::vector<double>\ intensity,\ std::vector<double>\ mz,\ \mbox{\hyperlink{namespaceq_1_1_data_type_a50341ff9d741a5a416eb71a71ffc1fa6}{IonizationMode}}\ ionizationMode,\ \mbox{\hyperlink{namespaceq_1_1_data_type_a8e76910d22415bfa3dd2086a76f0c5ea}{MeasurementMode}}\ measurementMode,\ \mbox{\hyperlink{namespaceq_1_1_data_type_a90aa4d66e606cf85f2424677d7bf4d34}{MSLevel}}\ msLevel,\ \textcolor{keywordtype}{double}\ retentionTime,\ \textcolor{keywordtype}{int}\ scanNumber)\ :\ \mbox{\hyperlink{classq_1_1_data_type_1_1_mass_spectrum}{MassSpectrum}}(intensity,\ mz,\ ionizationMode,\ measurementMode,\ msLevel)\ \{}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__mass__spectrum_8cpp_source_l00092}00092\ \ \ \ \ \ \ this-\/>retentionTime\ =\ \mbox{\hyperlink{classq_1_1_data_type_1_1_l_c___m_s_ae1d71b3f6d84e051c59c151a167f7912}{retentionTime}};}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__mass__spectrum_8cpp_source_l00093}00093\ \ \ \ \ \ \ this-\/>scanNumber\ =\ \mbox{\hyperlink{classq_1_1_data_type_1_1_l_c___m_s_a03e752a7d1d4a15b9d8ab7d17f6745d1}{scanNumber}};}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__mass__spectrum_8cpp_source_l00094}00094\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__mass__spectrum_8cpp_source_l00095}00095\ }
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__mass__spectrum_8cpp_source_l00096}\mbox{\hyperlink{classq_1_1_data_type_1_1_l_c___m_s_a401f07472f082e1039feebbb1a909c32}{00096}}\ \ \ \ \ \mbox{\hyperlink{classq_1_1_data_type_1_1_l_c___m_s_a401f07472f082e1039feebbb1a909c32}{LC\_MS::\string~LC\_MS}}()\ \{}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__mass__spectrum_8cpp_source_l00097}00097\ \ \ \ \ \ \ \textcolor{comment}{//\ destructor}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__mass__spectrum_8cpp_source_l00098}00098\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__mass__spectrum_8cpp_source_l00099}00099\ \ \ \}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__mass__spectrum_8cpp_source_l00100}00100\ \}}
+
+\end{DoxyCode}
