@@ -1,40 +1,29 @@
 #ifndef QALGORITHMS_MEASUREMENT_DATA_H
 #define QALGORITHMS_MEASUREMENT_DATA_H
 
+// internal
 #include "qalgorithms_datatype_mass_spectrum.h"
-#include <map>
-#include <vector>
+
+// external
 #include <string>
+#include <iostream>
 
 namespace q {
-/**
- * @brief Abstract base class for managing measurement data.
- *
- * This class serves as a foundation for handling various types of measurement data.
- * It defines a common interface for processing and accessing the data, ensuring that
- * all derived classes implement these functionalities. The class is designed to be 
- * flexible and extensible, allowing for the addition of new data types with different 
- * structures such as LC-HRMS, LC-IMS-HRMS, or Raman data, each potentially requiring 
- * unique data management and processing strategies.
- */
-class MeasurementData {
-public:
     /**
-     * @brief Virtual destructor to ensure proper cleanup of derived classes.
+     * @brief A class to store measurement data
+     * @details The MeasurementData class is a virtual class used to store measurement data. Based on the type of measurement data, the MeasurementData class can be subclassed to store different types of measurement data.
+     * 
      */
-    virtual ~MeasurementData() {}
+    class MeasurementData {
+    public:
+        // destructor
+        virtual ~MeasurementData() {};
 
-    // You can add more common interfaces here, such as methods for accessing
-    // or modifying the data, depending on what is common across your different data types.
-    virtual void readCSV(std::string FILE_PATH, int row0, int rowN, int col0, int colN, std::vector<DataType::DataField> dataFields) = 0;
+        // methods
+        virtual void readCSV(std::string filename,int rowStart, int rowEnd, int colStart, int colEnd, char separator,std::vector<DataType::DataField> variableTypes) = 0;
 
-protected:
-    // Protected members and methods can be added here, which will be accessible
-    // to derived classes but not to the users of the class.
-
-private:
-    // Private members and methods can be added here, which will be accessible
-    // only within this class and not by derived classes.
-};
+        // debugging
+        virtual void print() = 0;
+    };
 }
 #endif // QALGORITHMS_MEASUREMENT_DATA_H

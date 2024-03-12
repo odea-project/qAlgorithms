@@ -4,7 +4,7 @@
         {
             "label": "build qCentroids",
             "type": "shell",
-            "command": "C:\\msys64\\ucrt64\\bin\\g++.exe",
+            "command": "C:\\msys64\\mingw64\\bin\\g++.exe",
             "args": [
                 "-fdiagnostics-color=always",
                 "-g",
@@ -27,7 +27,7 @@
         {
             "type": "cppbuild",
             "label": "C/C++: g++.exe build active file",
-            "command": "C:\\msys64\\ucrt64\\bin\\g++.exe",
+            "command": "C:\\msys64\\mingw64\\bin\\g++.exe",
             "args": [
                 "-fdiagnostics-color=always",
                 "-g",
@@ -49,12 +49,13 @@
         {
             "label": "build qPeak_class_test",
             "type": "shell",
-            "command": "C:\\msys64\\ucrt64\\bin\\g++.exe",
+            "command": "C:\\msys64\\mingw64\\bin\\g++.exe",
             "args": [
                 "-fdiagnostics-color=always",
                 "-g",
                 "-O3",
-                "src/qalgorithms_peak.cpp",
+                "src/qalgorithms_datatype_mass_spectrum.cpp",
+                "src/qalgorithms_measurement_data_lcms.cpp",
                 "test/test_qPeak_class.cpp",
                 "-o",
                 "test/qPeak_class_test.exe"

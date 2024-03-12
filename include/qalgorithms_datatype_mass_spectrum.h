@@ -8,70 +8,71 @@ namespace q {
 
 namespace DataType {   
     /**
-     * @brief \b MassSpectrum: Class to represent a mass spectrum with additional metadata.
+     * @brief A class to store mass spectrum data
+     * @details The MassSpectrum class is used to store mass spectrum data. It contains the intensity, mz, ionization mode, measurement mode, and MS level of the mass spectrum.  
+     * @param intensity The intensity of the MS signal
+     * @param mz The mass-to-charge ratio of the MS signal
+     * @param ionizationMode The ionization mode, i.e. whether the signal is from positive or negative mode
+     * @param measurementMode The measurement mode, i.e. whether the signal is profile or centroid
+     * @param msLevel The MS level, i.e. whether the signal is from MS1 or MS2
      * 
-     * This class stores an entire mass spectrum, including spectral data points,
-     * and metadata such as the MS level, ionization mode, and data type (profile or centroid).
-     * 
-     * @param msLevel MS1 or MS2
-     * @param ionizationMode Ionization Mode : Positive or Negative
-     * @param measurementMode Profile or Centroid
-     * @param dataPoints: Vector of Structure element contains various categroies, see \ref SpectralPoint
      */
     class MassSpectrum {
-    public:
-        /**
-         * @brief \b SpectralPoint: Struct to represent a single point in a mass spectrum.
-         * 
-         * This struct holds the mass-to-charge ratio (m/z), intensity,
-         * and an optional quality score for the spectral data point.
-         * @param mz
-         * @param intensity
-         * @param qualityScore: Optional Qualityparameter for centroids. \cite reuschenbach2022development
-         */
-        struct SpectralPoint {
-            double mz; 
-            double intensity; 
-            double qualityScore; 
+        public:
+        // constructors
+        MassSpectrum();
+        MassSpectrum(std::vector<double> intensity, std::vector<double> mz, IonizationMode ionizationMode, MeasurementMode measurementMode, MSLevel msLevel);
 
-            SpectralPoint(double mz, double intensity, double qualityScore = 0.0)
-                : mz(mz), intensity(intensity), qualityScore(qualityScore) {}
-        };
+        // destructor
+        ~MassSpectrum();
 
-        enum class MSLevel {MS1, MS2}; 
-        enum class IonizationMode { Positive, Negative };
-        enum class MeasurementMode { Profile, Centroid };
-
-        MSLevel msLevel;
+        // properties
+        std::vector<double> intensity; 
+        std::vector<double> mz;
         IonizationMode ionizationMode;
         MeasurementMode measurementMode;
-        std::vector<SpectralPoint> dataPoints; 
+        MSLevel msLevel;
 
+        // methods
+        void setIntensity(std::vector<double>& intensity);
+        void setMz(std::vector<double>& mz);
+        void setIonizationMode(IonizationMode ionizationMode);
+        void setMeasurementMode(MeasurementMode measurementMode);
+        void setMSLevel(MSLevel msLevel);
 
-        MassSpectrum(MSLevel msLevel, IonizationMode ionizationMode, MeasurementMode measurementMode, std::vector<SpectralPoint> dataPoints)
-            : msLevel(msLevel), ionizationMode(ionizationMode), measurementMode(measurementMode), dataPoints(dataPoints) {}
-
+        // debugging
+        void print();
     };
 
+    /**
+     * @brief A class to store LC-MS data
+     * @details The LC_MS class is used to store LC-MS data. It contains the intensity, mz, ionization mode, measurement mode, MS level, retention time, and scan number of the LC-MS data. The LC_MS class is a subclass of the MassSpectrum class. \ref MassSpectrum
+     * 
+     * @param intensity The intensity of the MS signal
+     * @param mz The mass-to-charge ratio of the MS signal
+     * @param ionizationMode The ionization mode, i.e. whether the signal is from positive or negative mode
+     * @param measurementMode The measurement mode, i.e. whether the signal is profile or centroid
+     * @param msLevel The MS level, i.e. whether the signal is from MS1 or MS2
+     * @param retentionTime The retention time of the LC-MS signal
+     * @param scanNumber The scan number of the LC-MS signal
+     * 
+     */
     class LC_MS : public MassSpectrum {
-    public:
-        int scanNumber;
+        public:
+        // constructors
+        LC_MS();
+        LC_MS(std::vector<double> intensity, std::vector<double> mz, IonizationMode ionizationMode, MeasurementMode measurementMode, MSLevel msLevel, double retentionTime, int scanNumber);
+
+        // destructor
+        ~LC_MS();
+
+        // properties
         double retentionTime;
-
-        LC_MS(MSLevel msLevel, IonizationMode ionizationMode, MeasurementMode measurementMode, std::vector<SpectralPoint> dataPoints, int scanNumber, double retentionTime)
-            : MassSpectrum(msLevel, ionizationMode, measurementMode, dataPoints), scanNumber(scanNumber), retentionTime(retentionTime) {}
-    };
-
-    class LC_IMS_MS : public MassSpectrum {
-    public:
         int scanNumber;
-        double retentionTime;
-        double driftTime;
 
-        LC_IMS_MS(MSLevel msLevel, IonizationMode ionizationMode, MeasurementMode measurementMode, std::vector<SpectralPoint> dataPoints, int scanNumber, double retentionTime, double driftTime)
-            : MassSpectrum(msLevel, ionizationMode, measurementMode, dataPoints), scanNumber(scanNumber), retentionTime(retentionTime), driftTime(driftTime) {}
+        // debugging
+        void print();
     };
-
 }; // namespace datatype
 } // namespace q
 

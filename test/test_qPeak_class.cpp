@@ -1,12 +1,16 @@
-//  #include "../include/qalgorithms_peak.h"
+// test_qPeak_class.cpp
+
+// internal
+#include "../include/qalgorithms_measurement_data_lcms.h"
+
+// external
 #include <iostream>
+
 int main() {
-  // q::Peak peak;
-  // peak.setProperty(q::Property::CoeffB1,-.1);
-  // peak.setProperty(q::Property::CoeffB2,.1);
-  // peak.setProperty(q::Property::CoeffB3,.1);
-  // peak.print();
-  // peak.validate();
-  std::cout << "hello";
+    q::LCMSData lcmsData;
+    lcmsData.readCSV("test/data/test_lcms_data.csv", 1, -1, 0, -1, ',', {q::DataType::DataField::SCANNUMBER, q::DataType::DataField::RETENTIONTIME, q::DataType::DataField::MZ, q::DataType::DataField::INTENSITY});
+
+    lcmsData.print();
+
   return 0;
 }
