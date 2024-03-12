@@ -2,12 +2,21 @@
 #ifndef QALGORITHMS_MATRIX_H // Include guarde to prevent double inclusion
 #define QALGORITHMS_MATRIX_H
 
+// external
 #include <iostream>
 #include <cmath>
 #include <algorithm>
 
 /* This file includes the q::matrix class*/
 namespace q {
+  /**
+   * @brief A class to store a matrix
+   * @details The Matrix class is used to store a matrix of doubles. The class includes methods for matrix operations such as addition, subtraction, multiplication, and inversion.
+   * 
+   * @param elements A pointer to the elements of the matrix
+   * @param rows The number of rows
+   * @param cols The number of columns
+   */
   class Matrix {
   private:
     double *elements;

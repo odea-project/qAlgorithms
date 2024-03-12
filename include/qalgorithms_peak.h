@@ -2,6 +2,7 @@
 #ifndef QALGORITHMS_PEAK_H // Include guarde to prevent double inclusion
 #define QALGORITHMS_PEAK_H
 
+// external
 #include <map>
 #include <iostream>
 
