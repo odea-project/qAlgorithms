@@ -2,15 +2,19 @@
 
 namespace q
 {
+    int subsetcount = 0;
 #pragma region "Featurelist"
     FeatureList::FeatureList() {}
     FeatureList::~FeatureList() {}
     void FeatureList::readcsv(std::string user_file, int d_mz, int d_mzError, int d_RT, int d_scanNo)
     {
         std::ifstream file(user_file);
+
+        if (file.good())
+            std::cout << "failed to open file\n";
         std::string line;
         std::string dummy;
-        std::getline(file, dummy); // do not reas first row ßßß data is probably not going to be passed with headers
+        std::getline(file, dummy); // do not read first row ßßß data is probably not going to be passed with headers
         while (std::getline(file, line))
         {
             std::istringstream ss(line);
@@ -23,7 +27,7 @@ namespace q
             }
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wnarrowing"
-            Feature F{row[d_mz], row[d_mzError], row[d_RT], round(row[d_scanNo])}; // round gives warning, conversion functions as intended
+            Feature *F = new Feature{row[d_mz], row[d_mzError], row[d_RT], round(row[d_scanNo])}; // round gives warning, conversion functions as intended
 #pragma GCC diagnostic pop
             allFeatures.push_back(F);
         }
@@ -37,7 +41,7 @@ namespace q
 
     void BinContainer::makeFirstBin(FeatureList rawdata)
     {
-        Bin firstBin(rawdata);
+        const Bin firstBin(rawdata);
         binDeque.push_back(firstBin);
     }
 
@@ -55,9 +59,9 @@ namespace q
                 for (size_t i = 0; i < startpoint; i++)
                 { // random access not needed, first element -> make bins -> move element or make bins, then remove first entry ; do n times
                     binDeque.front().makeOS();
-                    binDeque.front().makeCumError();                                                               // always after order space, since the features get sorted
-                    binDeque.front().subsetMZ(binDeque, binDeque.front().activeOS, 0, binDeque.front().activeOS.size() - 1); // takes element from binDeque, starts subsetting, appends bins to binDeque
-                    binDeque.pop_front();                                                                          // remove the element that was processed from binDeque
+                    binDeque.front().makeCumError();                                                                          // always after order space, since the features get sorted
+                    binDeque.front().subsetMZ(&binDeque, binDeque.front().activeOS, 0, binDeque.front().activeOS.size() - 1); // takes element from binDeque, starts subsetting, appends bins to binDeque
+                    binDeque.pop_front();                                                                                     // remove the element that was processed from binDeque
                     // ßßß bad solution, needless copy if bin is ok - only relevant for controlling in rt, so should be fine here
                 }
 
@@ -70,7 +74,7 @@ namespace q
                 int startpoint = binDeque.size();
                 for (size_t i = 0; i < startpoint; i++)
                 {
-                    binDeque.front().subsetScan(binDeque, 5);
+                    binDeque.front().subsetScan(&binDeque, 5);
                     binDeque.pop_front();
                 }
 
@@ -88,10 +92,9 @@ namespace q
 
 #pragma region "Bin"
 
-    Bin::Bin(const std::vector<Feature>::iterator &startBin, const std::vector<Feature>::iterator &endBin) // const std::vector<Feature> &sourceList,
+    Bin::Bin(const std::vector<Feature *>::iterator &startBin, const std::vector<Feature *>::iterator &endBin) // const std::vector<Feature> &sourceList,
     {
-        featurelist.resize(std::distance(startBin,endBin));
-        std::copy(startBin, endBin, featurelist.begin());
+        featurelist = std::vector<Feature *>(startBin, endBin);
     }
     Bin::Bin(FeatureList rawdata)
     {
@@ -102,13 +105,13 @@ namespace q
     void Bin::makeOS()
     {
         // sort features by mz
-        std::sort(featurelist.begin(), featurelist.end(), [](const auto &lhs, const auto &rhs)
-                  { return lhs.mz < rhs.mz; });
+        std::sort(featurelist.begin(), featurelist.end(), [](const Feature *lhs, const Feature *rhs)
+                  { return lhs->mz < rhs->mz; });
 
         activeOS.resize(featurelist.size());             // OS = Order Space
-        for (size_t i = 0; i + 1 < activeOS.size(); i++) // +1 to prevent accessing outside of vector
+        for (size_t i = 0; i + 1 < activeOS.size(); ++i) // +1 to prevent accessing outside of vector
         {
-            activeOS[i] = featurelist[i + 1].mz - featurelist[i].mz;
+            activeOS[i] = featurelist[i + 1]->mz - featurelist[i]->mz;
         }
         activeOS.back() = -225; // -225 to signify last element in OS
     }
@@ -116,13 +119,15 @@ namespace q
     void Bin::makeCumError()
     {
         cumError.reserve(featurelist.size());
-        std::transform(featurelist.begin(), featurelist.end(), back_inserter(cumError), [](Feature f)
-                       { return f.mzError; });                                // transfer error values from feature objects
+        std::transform(featurelist.begin(), featurelist.end(), back_inserter(cumError), [](Feature *F)
+                       { return F->mzError; });                               // transfer error values from feature objects
         std::partial_sum(cumError.begin(), cumError.end(), cumError.begin()); // cumulative sum
     }
 
-    void Bin::subsetMZ(std::deque<Bin> bincontainer, const std::vector<double> &OS, int startBin, int endBin) // bincontainer is binDeque of BinContainer // OS cannot be solved with pointers since index has to be transferred to frature list
+    void Bin::subsetMZ(std::deque<Bin> *bincontainer, const std::vector<double> &OS, int startBin, int endBin) // bincontainer is binDeque of BinContainer // OS cannot be solved with pointers since index has to be transferred to frature list
     {
+        ++subsetcount;
+        std::cout << subsetcount << " ";
         const int n = endBin - startBin; // size is equal to n+1
         if (n < 5)
         {
@@ -137,9 +142,9 @@ namespace q
         {
             // make bin
             std::cout << "Bin at " << startBin << ", " << endBin << "\n";
-            Bin output(featurelist.begin() + startBin, featurelist.begin() + endBin);
+            const Bin output(featurelist.begin() + startBin, featurelist.begin() + endBin);
             // append Bin to bin container
-            bincontainer.push_back(output);
+            bincontainer->push_back(output);
             return;
         }
         else
@@ -153,24 +158,24 @@ namespace q
         }
     }
 
-    void Bin::subsetScan(std::deque<Bin> bincontainer, const int &maxdist)
+    void Bin::subsetScan(std::deque<Bin> *bincontainer, const int &maxdist)
     {
         // sort
         int n = featurelist.size();
-        std::sort(featurelist.begin(), featurelist.end(), [](const auto &lhs, const auto &rhs)
-                  { return lhs.scanNo < rhs.scanNo; });
-        if (featurelist.front().scanNo + n + maxdist > featurelist.back().scanNo) // sum of all gaps is less than max distance, +n since no element will occur twice in one scan
+        std::sort(featurelist.begin(), featurelist.end(), [](const Feature *lhs, const Feature *rhs)
+                  { return lhs->scanNo < rhs->scanNo; });
+        if (featurelist.front()->scanNo + n + maxdist > featurelist.back()->scanNo) // sum of all gaps is less than max distance, +n since no element will occur twice in one scan
         {
-            bincontainer.push_back(bincontainer.front()); // moves first element of que to last, since bin is good
+            bincontainer->push_back(bincontainer->front()); // moves first element of que to last, since bin is good
         }
         else
         {
-            std::vector<Feature>::iterator newstart = featurelist.begin();
+            std::vector<Feature *>::iterator newstart = featurelist.begin();
             // std::vector<Feature>::iterator newend = featurelist.begin();
             int previ = 0;
             for (size_t i = 1; i < n; i++)
             {
-                if (featurelist[i].scanNo - featurelist[i - 1].scanNo > maxdist) // bin needs to be split
+                if (featurelist[i]->scanNo - featurelist[i - 1]->scanNo > maxdist) // bin needs to be split
                 {
                     // less than five features in bin
                     if (i - previ - 1 < 5)
@@ -181,7 +186,7 @@ namespace q
                     {
                         // viable bin, stable in scan dimension
                         Bin output(newstart, featurelist.begin() + i - 1);
-                        bincontainer.push_back(output);
+                        bincontainer->push_back(output);
                     }
                     previ = i; // sets previ to the position one i ahead, since current value is i-1
                 }
@@ -191,13 +196,17 @@ namespace q
             {
                 // viable bin, stable in scan dimension
                 Bin output(newstart, featurelist.end());
-                bincontainer.push_back(output);
+                bincontainer->push_back(output);
             }
         }
 
         // iterate, compare with previous for gap
         // do split
         // if prev - push back, pop front
+    }
+
+    void Bin::makeDQSB(const std::vector<Feature *>)
+    {
     }
 
 #pragma endregion "Bin"
@@ -209,10 +218,10 @@ int main()
     // std::streambuf *coutbuf = std::cout.rdbuf(); //save old buf
     // std::cout.rdbuf(result.rdbuf()); //redirect std::cout to out.txt!
     q::FeatureList testdata;
-    testdata.readcsv("../../rawdata/qCentroid_Warburg_pos_171123_01_Zu_01.csv", 0, 7, 5, 6); // ../../rawdata/qCentroid_Warburg_pos_171123_01_Zu_01.csv ../test/test.csv
+    testdata.readcsv("G:/_Studium/Analytik-Praktikum/qbinning/rawdata/qCentroid_Warburg_pos_171123_01_Zu_01.csv", 0, 7, 5, 6); // ../../rawdata/qCentroid_Warburg_pos_171123_01_Zu_01.csv ../test/test.csv
     q::BinContainer testcontainer;
     testcontainer.makeFirstBin(testdata);
-    q::Bin testbin(testdata.allFeatures.begin(), testdata.allFeatures.begin()+10);
+    q::Bin testbin(testdata.allFeatures.begin(), testdata.allFeatures.begin() + 10);
     std::vector<int> dim = {1};
     testcontainer.subsetBins(dim);
     // std::cout.rdbuf(coutbuf); //reset to standard output again
