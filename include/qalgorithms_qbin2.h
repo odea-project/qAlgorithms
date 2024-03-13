@@ -10,6 +10,7 @@
 #include <thread>
 #include <ranges>
 #include <deque>
+#include <string>
 
 // Goal: all functions modify individual features, which are combined to a bin. The bin contains all features and the functions necessary to summarise which features are present
 
@@ -19,10 +20,10 @@ namespace q
     struct Feature // ßßß kann über Feature f{mz, mzError, RT, scanNo} initialisiert werden
     {
         // int idx; // keep as test parameter if at all
-         double mz;
-         double mzError;
-         double RT;
-         int scanNo;
+        double mz;
+        double mzError;
+        double RT;
+        int scanNo;
     };
 
     class FeatureList
@@ -30,7 +31,7 @@ namespace q
     public:
         FeatureList();
         ~FeatureList();
-        std::vector<Feature> allFeatures;
+        std::vector<Feature *> allFeatures;
         void readcsv(std::string user_file, int d_mz, int d_mzError, int d_RT, int d_scanNo);
     };
 
@@ -38,18 +39,20 @@ namespace q
     class Bin
     {
     private:
-        std::vector<Feature> featurelist;
+        std::vector<Feature *> featurelist;
         std::vector<double> cumError; // cumulative error in mz
 
     public:
-        std::vector<double> activeOS;                                                                                         // Order Space
-        Bin(const std::vector<Feature>::iterator &startBin, const std::vector<Feature>::iterator &endBin); // const std::vector<Feature> &sourceList,
+        std::vector<double> activeOS;
+        double DQSB;                                                                                           // Order Space
+        Bin(const std::vector<Feature *>::iterator &startBin, const std::vector<Feature *>::iterator &endBin); // const std::vector<Feature> &sourceList,
         Bin(FeatureList rawdata);
         ~Bin();
         void makeOS();
         void makeCumError();
-        void subsetMZ(std::deque<Bin> bincontainer, const std::vector<double> &OS, int startBin, int endBin); // mz, error, RT and beginning/end are dictated by bin contents
-        void subsetScan(std::deque<Bin> bincontainer, const int &maxdist);
+        void subsetMZ(std::deque<Bin> *bincontainer, const std::vector<double> &OS, int startBin, int endBin); // mz, error, RT and beginning/end are dictated by bin contents
+        void subsetScan(std::deque<Bin> *bincontainer, const int &maxdist);
+        void makeDQSB(const std::vector<Feature *>);
         // Feature makeFeature(); // combine all features to one using means, modify mzError
     };
 
@@ -58,7 +61,7 @@ namespace q
     {
     private:
         // void readcsv(std::string user_file, std::vector<Feature> output, int d_mz, int d_mzError, int d_RT, int d_scanNo); // implemented for featurelist
-        std::deque<Bin> binDeque; //ßßß add case for no viable bins
+        std::deque<Bin> binDeque; // ßßß add case for no viable bins
 
     public:
         BinContainer();

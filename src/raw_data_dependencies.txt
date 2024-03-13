@@ -15,3 +15,4 @@ https://stackoverflow.com/questions/5174115/sorting-a-vector-of-objects-by-a-pro
 Wenn der Bin nach Teilen in RT/Scans genau so groß ist wie vorher, muss nicht erneut mit mz kontorolliert werden
 
 Duplizierte Features crashen den code
+https://www.agner.org/optimize/optimizing_cpp.pdf
