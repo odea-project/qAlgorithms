@@ -8,6 +8,7 @@
 // external
 #include <unordered_map>
 
+/* This file includes the q::DataType::Peak and q::DataType::PeakList classes*/
 namespace q {
   namespace DataType {
     /**

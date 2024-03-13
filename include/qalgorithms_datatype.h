@@ -35,17 +35,17 @@ namespace DataType {
      */
     enum class DataField{
         // general fields
-        INTENSITY,
+        INTENSITY, // signal intensity
 
         // MS fields
-        IONIZATIONMODE,
-        MEASUREMENTMODE,
-        MSLEVEL,
-        MZ,
+        IONIZATIONMODE, // positive or negative
+        MEASUREMENTMODE, // profile or centroid
+        MSLEVEL, // MS1 or MS2
+        MZ, // mass-to-charge ratio
 
         // Chromatography fields
-        RETENTIONTIME,
-        SCANNUMBER,
+        RETENTIONTIME, // retention time
+        SCANNUMBER, // scan number
 
         // Peak-related fields
         PEAK_ID,

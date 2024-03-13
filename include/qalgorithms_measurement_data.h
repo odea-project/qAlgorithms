@@ -7,6 +7,7 @@
 // external
 #include <string>
 #include <iostream>
+#include <algorithm>
 
 namespace q {
     /**
