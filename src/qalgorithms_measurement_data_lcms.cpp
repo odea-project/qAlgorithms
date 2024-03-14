@@ -127,39 +127,41 @@ namespace q {
     }
 
     void LCMSData::zeroFilling() {
-        // find the expected difference
-        std::vector<double> differences;
+        // iterate over all data sets
         for (auto it = this->data.begin(); it != this->data.end(); it++) {
+            // calculate the initial expected difference between mz values
+            double expectedDifference = 0.0;
+            std::vector<double> differences;
             for (int i = 1; i < it->second.mz.size(); i++) {
                 differences.push_back(it->second.mz[i] - it->second.mz[i-1]);
             }
-        }
-        // extract median
-        #include <algorithm>
+            // median of differences
+            std::sort(differences.begin(), differences.end());
+            if (differences.size() % 2 == 0) {
+                expectedDifference = (differences[differences.size()/2 - 1] + differences[differences.size()/2]) / 2;
+            } else {
+                expectedDifference = differences[differences.size()/2];
+            }
 
-        double expectedDifference = 0;
-        std::sort(differences.begin(), differences.end());
-        if (differences.size() % 2 == 0) {
-            double median1 = differences[differences.size()/2 - 1];
-            double median2 = differences[differences.size()/2];
-            expectedDifference = (median1 + median2) / 2;
-        } else {
-            expectedDifference = differences[differences.size()/2];
-        }
-
-        // fill the gaps
-        for (auto it = this->data.begin(); it != this->data.end(); it++) {
+            // fill the gaps
             for (int i = 1; i < it->second.mz.size(); i++) {
-                if (it->second.mz[i] - it->second.mz[i-1] > 1.75*expectedDifference) {
-                    int gapSize = (it->second.mz[i] - it->second.mz[i-1]) / expectedDifference;
+                double difference = it->second.mz[i] - it->second.mz[i-1];
+                if (difference > 1.75 * expectedDifference) {
+                    int gapSize = (int) (difference / expectedDifference);
                     if (gapSize > 8) {
                         gapSize = 8;
                     }
-                    for (int j = 1; j <= gapSize; j++) {
-                        it->second.mz.insert(it->second.mz.begin()+i, it->second.mz[i-1] + j*expectedDifference);
-                        it->second.intensity.insert(it->second.intensity.begin()+i, 0);
+                    /* Check if the gapsSize is larger than 4, as this is the maximum gap size per side. If the gap size is larger less or equal to 4, we add gapSize new data points to the data set between the two data points that show the gap, i.e. (i-1 and i). The new data points are filled with zero values for the intensity and inter/extrapolated values for the x-axis values.
+                    */
+                    if (gapSize <= 4) {
+                        for (int j = 1; j <= gapSize; j++) {
+                            it->second.mz.insert(it->second.mz.begin() + i, it->second.mz[i-1] + j * expectedDifference);
+                            it->second.intensity.insert(it->second.intensity.begin() + i, 0.0);
+                        }
+                        i += gapSize; // Update the index to the next data point
+                    
                     }
-                }
+                }      
             }
         }
     }
