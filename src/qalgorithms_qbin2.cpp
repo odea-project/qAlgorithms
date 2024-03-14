@@ -189,13 +189,13 @@ namespace q
         {
             std::vector<Feature *>::iterator newstart = featurelist.begin();
             // std::vector<Feature>::iterator newend = featurelist.begin();
-            int previ = 0;
+            int lastpos = 0;
             for (size_t i = 1; i < n; i++)
             {
                 if (featurelist[i]->scanNo - featurelist[i - 1]->scanNo > maxdist) // bin needs to be split
                 {
                     // less than five features in bin
-                    if (i - previ - 1 < 5)
+                    if (i - lastpos - 1 < 5)
                     {
                         newstart = featurelist.begin() + i; // new start is one behind current i
                     }
@@ -205,11 +205,11 @@ namespace q
                         Bin output(newstart, featurelist.begin() + i - 1);
                         bincontainer->push_back(output);
                     }
-                    previ = i; // sets previ to the position one i ahead, since current value is i-1
+                    lastpos = i; // sets previ to the position one i ahead, since current value is i-1
                 }
             }
             // check for open bin at the end
-            if (n + 1 - previ > 5)
+            if (n + 1 - lastpos > 5)
             {
                 // viable bin, stable in scan dimension
                 Bin output(newstart, featurelist.end());
@@ -227,7 +227,7 @@ namespace q
         // assumes bin is saved sorted by scans, result from scan gap checks being the final control
         // only the minimum scans - k and the maximum scans + k need to be checked
         // if a value m/z is not lower than the minimum of mz or larger than the maximum while being in the allowed scan interval, it is by definition included in the bin
-        int minScanNo = featurelist.front()->scanNo - maxdist - 1; // -1 to get index of scan interval vector
+        int minScanNo = featurelist.front()->scanNo - maxdist - 1; // -1 to get index of scan interval vector ßßß 1. element des vektors leer lassen
         if (minScanNo < 0)
             ; // first scan is scan number 0 in vector
         {
