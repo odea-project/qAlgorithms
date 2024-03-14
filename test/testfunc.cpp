@@ -35,6 +35,12 @@ struct Employee
 
 int main()
 {
+
+    if (0 < 1 < 2)
+    {
+        std::cout << "works";
+    }
+
     std::vector<Employee> v{{108, "Zaphod"}, {32, "Arthur"}, {108, "Ford"}};
 
     std::sort(v.begin(), v.end(), [](const auto &lhs, const auto &rhs)
