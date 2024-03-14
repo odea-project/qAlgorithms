@@ -32,6 +32,7 @@ namespace q
         FeatureList();
         ~FeatureList();
         std::vector<Feature *> allFeatures;
+        std::vector<int> scanBreaks; // contains start point of new scan window in order; assumes incoming features are sorted by scans
         void readcsv(std::string user_file, int d_mz, int d_mzError, int d_RT, int d_scanNo);
     };
 
@@ -51,8 +52,8 @@ namespace q
         void makeOS();
         void makeCumError();
         void subsetMZ(std::deque<Bin> *bincontainer, const std::vector<double> &OS, int startBin, int endBin); // mz, error, RT and beginning/end are dictated by bin contents
-        void subsetScan(std::deque<Bin> *bincontainer, const int &maxdist);
-        void makeDQSB(const std::vector<Feature *>);
+        void subsetScan(std::deque<Bin> *bincontainer, std::vector<Bin> *finishedBins, const int &maxdist);
+        void makeDQSB(const FeatureList *rawdata, const int &maxdist);
         // Feature makeFeature(); // combine all features to one using means, modify mzError
     };
 
@@ -61,13 +62,14 @@ namespace q
     {
     private:
         // void readcsv(std::string user_file, std::vector<Feature> output, int d_mz, int d_mzError, int d_RT, int d_scanNo); // implemented for featurelist
-        std::deque<Bin> binDeque; // ßßß add case for no viable bins
+        std::deque<Bin> binDeque;      // ßßß add case for no viable bins
+        std::vector<Bin> finishedBins; // only includes bins which cannot be further subdivided, added DQSB
 
     public:
         BinContainer();
         ~BinContainer();
-        void makeFirstBin(FeatureList rawdata);       // calls readcsv()
-        void subsetBins(std::vector<int> dimensions); // select which of the hard-coded subsetting tools should be used in which order, always applies to binDeque. Append to the end, delete from the front
+        void makeFirstBin(FeatureList rawdata);                          // calls readcsv()
+        void subsetBins(std::vector<int> dimensions, int scanDiffLimit); // select which of the hard-coded subsetting tools should be used in which order, always applies to binDeque. Append to the end, delete from the front
         void printAllBins(std::string path);
         void printBinSummary(std::string path);
         void firstBinValid(); // move first bin in binDeque to end

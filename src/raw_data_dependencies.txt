@@ -16,3 +16,5 @@ Wenn der Bin nach Teilen in RT/Scans genau so groß ist wie vorher, muss nicht e
 
 Duplizierte Features crashen den code
 https://www.agner.org/optimize/optimizing_cpp.pdf
+
+pointer -> methode
