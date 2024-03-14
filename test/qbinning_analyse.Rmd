@@ -1,0 +1,40 @@
+---
+title: "Analysis qbinning"
+author: "Daniel Höhn"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_knit$set(root.dir = "G:/_Studium/Analytik-Praktikum/qbinning")
+library(tidyverse)
+library(data.table)
+```
+
+
+```{r}
+bin_termination <- read.csv("opstats_subsetmz.csv")
+```
+
+
+```{r}
+ggplot(bin_termination)+
+  geom_histogram(aes(binend - binstart),binwidth = 1)+
+ # scale_x_continuous(trans='log10')+
+  scale_y_continuous(trans='log10')+
+  xlab("Binsize after mz subsetting")+
+  ylab("Counts")+
+  theme_bw()
+
+ggplot(bin_termination)+
+  geom_histogram(aes(subsets),binwidth = 1)+
+  scale_y_continuous(trans='log10')+
+  xlab("Subsets performed until next bin was found")+
+  ylab("Counts")+
+  theme_bw()
+
+
+#   geom_linerange(aes(xmin = binstart, xmax = binend, y = log(subsets)))
+```
+

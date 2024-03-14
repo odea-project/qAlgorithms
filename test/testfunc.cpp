@@ -36,20 +36,14 @@ struct Employee
 int main()
 {
 
+    const auto v = {3, 9, 1, 4, 2, 5, 9};
+    const auto [min, max] = std::minmax_element(begin(v), end(v));
+
+    std::cout << "min = " << *min << ", max = " << *max << '\n';
     if (0 < 1 < 2)
     {
         std::cout << "works";
     }
-
-    std::vector<Employee> v{{108, "Zaphod"}, {32, "Arthur"}, {108, "Ford"}};
-
-    std::sort(v.begin(), v.end(), [](const auto &lhs, const auto &rhs)
-              { return lhs.age < rhs.age; });
-
-    // std::sort(v.begin(), v.end());
-
-    for (const Employee &e : v)
-        std::cout << e.age << ", " << e.name << '\n';
 }
 
 // int main()

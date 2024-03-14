@@ -6,7 +6,7 @@ namespace q
 #pragma region "Featurelist"
     FeatureList::FeatureList()
     {
-        scanBreaks = {0};
+        scanBreaks = {0, 0}; // two zeros so index 1 is equivalent to scan 1
     }
     FeatureList::~FeatureList() {}
     void FeatureList::readcsv(std::string user_file, int d_mz, int d_mzError, int d_RT, int d_scanNo)
@@ -53,7 +53,7 @@ namespace q
     BinContainer::BinContainer() {}
     BinContainer::~BinContainer() {}
 
-    void BinContainer::makeFirstBin(FeatureList rawdata)
+    void BinContainer::makeFirstBin(FeatureList *rawdata)
     {
         const Bin firstBin(rawdata);
         binDeque.push_back(firstBin);
@@ -112,9 +112,9 @@ namespace q
     {
         featurelist = std::vector<Feature *>(startBin, endBin);
     }
-    Bin::Bin(FeatureList rawdata)
+    Bin::Bin(FeatureList *rawdata)
     {
-        featurelist = rawdata.allFeatures; // pointers ßßß
+        featurelist = rawdata->allFeatures; // pointers ßßß
     }
     Bin::~Bin() {}
 
@@ -143,7 +143,7 @@ namespace q
     void Bin::subsetMZ(std::deque<Bin> *bincontainer, const std::vector<double> &OS, int startBin, int endBin) // bincontainer is binDeque of BinContainer // OS cannot be solved with pointers since index has to be transferred to frature list
     {
         ++subsetcount;
-        std::cout << subsetcount << " ";
+        // std::cout << subsetcount << " ";
         const int n = endBin - startBin; // size is equal to n+1
         if (n < 5)
         {
@@ -157,7 +157,8 @@ namespace q
         if (max < vcrit) // all values in range are part of one mz bin
         {
             // make bin
-            std::cout << "Bin at " << startBin << ", " << endBin << "\n";
+            std::cout << startBin << "," << endBin << "," << subsetcount << "\n";
+            subsetcount = 0;
             const Bin output(featurelist.begin() + startBin, featurelist.begin() + endBin);
             // append Bin to bin container
             bincontainer->push_back(output);
@@ -182,7 +183,7 @@ namespace q
                   { return lhs->scanNo < rhs->scanNo; });
         if (featurelist.front()->scanNo + n + maxdist > featurelist.back()->scanNo) // sum of all gaps is less than max distance, +n since no element will occur twice in one scan
         {
-            // implement new list for elements that are binned to completion ßßß requires separation by scan numbers to always be done last - acceptable compromise?
+            // implement new list for elements that are binned to completion requires separation by scan numbers to always be done last - acceptable compromise?
             finishedBins->push_back(bincontainer->front()); // moves first element of que to vector of complete bins, since bin is good
         }
         else
@@ -204,17 +205,23 @@ namespace q
                         // viable bin, stable in scan dimension
                         Bin output(newstart, featurelist.begin() + i - 1);
                         bincontainer->push_back(output);
+                        newstart = featurelist.begin() + i;
                     }
                     lastpos = i; // sets previ to the position one i ahead, since current value is i-1
                 }
             }
             // check for open bin at the end
-            if (n + 1 - lastpos > 5)
+            if (lastpos == 0) // no cut has occurred
+            {
+                finishedBins->push_back(bincontainer->front());
+            }
+            else if (n + 1 - lastpos > 5)
             {
                 // viable bin, stable in scan dimension
                 Bin output(newstart, featurelist.end());
                 bincontainer->push_back(output);
             }
+            // test condition for the bin being identical to the previous one
         }
 
         // iterate, compare with previous for gap
@@ -227,39 +234,39 @@ namespace q
         // assumes bin is saved sorted by scans, result from scan gap checks being the final control
         // only the minimum scans - k and the maximum scans + k need to be checked
         // if a value m/z is not lower than the minimum of mz or larger than the maximum while being in the allowed scan interval, it is by definition included in the bin
-        int minScanNo = featurelist.front()->scanNo - maxdist - 1; // -1 to get index of scan interval vector ßßß 1. element des vektors leer lassen
-        if (minScanNo < 0)
-            ; // first scan is scan number 0 in vector
-        {
-            minScanNo = 0;
-        }
-        int maxScanNo = featurelist.back()->scanNo + maxdist - 1;
-        if (maxScanNo > rawdata->scanBreaks.size() - 1)
-        {
-            maxScanNo = rawdata->scanBreaks.size() - 1;
-        }
-        // minScanNo to maxScanNo is the part of the feature list that needs to be checked
-        const auto [minMZ, maxMZ] = std::minmax_element(featurelist.front()->mz, featurelist.back()->mz);
-        int newBestMin = 225; // large number as first difference
-        int newBestMax = -225;
-        Feature *closestFmin;
-        Feature *closestFmax; // ßßß kontrolle, dass der Abstand nicht gleich groß ist
+        int minScanNo = featurelist.front()->scanNo - maxdist;
+        // if (minScanNo < 1)
+        // {
+        //     minScanNo = 1;
+        // }
+        // int maxScanNo = featurelist.back()->scanNo + maxdist;
+        // if (maxScanNo > rawdata->scanBreaks.size())
+        // {
+        //     maxScanNo = rawdata->scanBreaks.size();
+        // }
+        // // minScanNo to maxScanNo is the part of the feature list that needs to be checked
+        // const auto [minMZ, maxMZ] = std::minmax_element(featurelist.front(), featurelist.back(), [](const Feature *lhs, const Feature *rhs)
+        //                                                 { return lhs->mz < rhs->mz; });
+        // int newBestMin = 225; // large number as first difference
+        // int newBestMax = -225;
+        // Feature *closestFmin;
+        // Feature *closestFmax; // ßßß kontrolle, dass der Abstand nicht gleich groß ist
 
-        for (size_t i = rawdata->scanBreaks[minScanNo]; i < rawdata->scanBreaks[maxScanNo + 1] - 1; i++) // +1]-1 since the interval ends at the point one before the interval one greater starts
-        {
-            /* since both feature and raw data are ordered by scans, it should be possible to search by pointer address if this step takes too long */
-            if (std::find(featurelist.begin(), featurelist.end(), rawdata->allFeatures[i]) == featurelist.end()) // if the element is not found in the featurelist of the bin
-            {
-                if (0 < minMZ - rawdata->allFeatures[i]->mz < newBestMin)
-                {
-                    /* set as new best feature min */
-                }
-                if (0 < rawdata->allFeatures[i]->mz - newBestMax < newBestMax)
-                {
-                    /* set as new best feature min */
-                }
-            }
-        }
+        // for (size_t i = rawdata->scanBreaks[minScanNo]; i < rawdata->scanBreaks[maxScanNo + 1] - 1; i++) // +1]-1 since the interval ends at the point one before the interval one greater starts
+        // {
+        //     /* since both feature and raw data are ordered by scans, it should be possible to search by pointer address if this step takes too long */
+        //     if (std::find(featurelist.begin(), featurelist.end(), rawdata->allFeatures[i]) == featurelist.end()) // if the element is not found in the featurelist of the bin
+        //     {
+        //         if (0 < minMZ - rawdata->allFeatures[i]->mz < newBestMin)
+        //         {
+        //             /* set as new best feature min */
+        //         }
+        //         if (0 < rawdata->allFeatures[i]->mz - newBestMax < newBestMax)
+        //         {
+        //             /* set as new best feature min */
+        //         }
+        //     }
+        // }
     }
 
 #pragma endregion "Bin"
@@ -267,16 +274,19 @@ namespace q
 
 int main()
 {
-    // std::ofstream result("../../qbinning_results.csv");
-    // std::streambuf *coutbuf = std::cout.rdbuf(); //save old buf
-    // std::cout.rdbuf(result.rdbuf()); //redirect std::cout to out.txt!
+    std::ofstream result("../../qbinning_results.csv");
+    std::streambuf *coutbuf = std::cout.rdbuf(); // save old buf
+    std::cout.rdbuf(result.rdbuf());             // redirect std::cout to out.txt!
+    std::cout << "binstart,binend,subsets\n";
+
     q::FeatureList testdata;
     testdata.readcsv("../../rawdata/qCentroid_Warburg_pos_171123_01_Zu_01.csv", 0, 7, 5, 6); // ../../rawdata/qCentroid_Warburg_pos_171123_01_Zu_01.csv ../test/test.csv
     q::BinContainer testcontainer;
-    testcontainer.makeFirstBin(testdata);
-    q::Bin testbin(testdata.allFeatures.begin(), testdata.allFeatures.begin() + 10);
-    std::vector<int> dim = {1};
+    testcontainer.makeFirstBin(&testdata);
+    std::vector<int> dim = {1, 2}; // last element must be the number of scans ßßß implement outside of the switch statement ßßß endless loop if scan terminator is not included
     testcontainer.subsetBins(dim, 7);
-    // std::cout.rdbuf(coutbuf); //reset to standard output again
+
+    std::cout.rdbuf(coutbuf); // reset to standard output again
+    std::cout << "Done!\n\n";
     return 0;
 }

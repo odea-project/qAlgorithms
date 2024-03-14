@@ -32,3 +32,4 @@
 *.app
 .vscode/settings.json
 src/qalgorithms_qbin2.exe
+test/testfunc.exe

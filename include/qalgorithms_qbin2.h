@@ -47,7 +47,7 @@ namespace q
         std::vector<double> activeOS;
         double DQSB;                                                                                           // Order Space
         Bin(const std::vector<Feature *>::iterator &startBin, const std::vector<Feature *>::iterator &endBin); // const std::vector<Feature> &sourceList,
-        Bin(FeatureList rawdata);
+        Bin(FeatureList *rawdata);
         ~Bin();
         void makeOS();
         void makeCumError();
@@ -68,7 +68,7 @@ namespace q
     public:
         BinContainer();
         ~BinContainer();
-        void makeFirstBin(FeatureList rawdata);                          // calls readcsv()
+        void makeFirstBin(FeatureList *rawdata);
         void subsetBins(std::vector<int> dimensions, int scanDiffLimit); // select which of the hard-coded subsetting tools should be used in which order, always applies to binDeque. Append to the end, delete from the front
         void printAllBins(std::string path);
         void printBinSummary(std::string path);
