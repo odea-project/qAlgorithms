@@ -94,7 +94,7 @@ namespace q
                         binDeque.front().subsetScan(&binDeque, &finishedBins, scanDiffLimit);
                         binDeque.pop_front();
                     }
-                    std::cout << "\nClosed bins: " << finishedBins.size() << " perfect bins: " << perfectbins <<"\nscan subsetting done\nTotal bins: " << binDeque.size();
+                    std::cout << "\nClosed bins: " << finishedBins.size() << " perfect bins: " << perfectbins << "\nscan subsetting done\nTotal bins: " << binDeque.size();
                     perfectbins = 0;
                     break;
                 }
@@ -251,57 +251,76 @@ namespace q
         // create vector containing all mz from min to lowest scan no and highest scan no to max ßßß not needed, since the closest mz will always be one of two distinct values
         // std::vector<double> possible_distances;
 
-        double outMin = 1; // mz outside of the bin closest to the minimum mz in the bin
-        double outMax = featurelist.front()->mz *9001; // mz outside of the bin closest to the maximum mz in the bin
-
         int idxStart_min = rawdata->scanBreaks[minScanNo];
         int idxEnd_min = rawdata->scanBreaks[featurelist.front()->scanNo] - 1; // -1 to not include features found in the first scan that is part of the bin featurelist
         int idxStart_max = rawdata->scanBreaks[minScanNo];
         int idxEnd_max = rawdata->scanBreaks[featurelist.back()->scanNo + 1]; // +1 in the brackets to get first scan greater than the one present in the dataset
 
-        std::vector<Feature *>::const_iterator readfrom = rawdata->allFeatures.begin()+idxStart_min; // points to first element in list sorted by scans that could be relevant
+        std::vector<Feature *>::const_iterator readfrom = rawdata->allFeatures.begin() + idxStart_min; // points to first element in list sorted by scans that could be relevant
         // sort featurelist by mz
         std::sort(featurelist.begin(), featurelist.end(), [](const Feature *lhs, const Feature *rhs)
                   { return lhs->mz < rhs->mz; });
         double inMin = featurelist.front()->mz;
         double inMax = featurelist.back()->mz;
 
-        std::vector<scancomp> compspace;
+        std::vector<scancomp*> compspace;
+        for (int i = minScanNo; i < maxScanNo; i++) // iterate over all scans viable for entire bin
+        {
+            // iterate readfrom over all data, new struct when scan changes
+            double outMin = 1;                              // mz outside of the bin closest to the minimum mz in the bin
+            double outMax = featurelist.front()->mz * 9001; // mz outside of the bin closest to the maximum mz in the bin
+            for (size_t i = rawdata->scanBreaks[i]; i < rawdata->scanBreaks[i+1]; i++) // itertion for one scan level
+            {
+                Feature F = **readfrom;
+            if (outMin < F.mz < inMin)
+            {
+                outMin = F.mz;
+            }
+            else if (inMax < F.mz < outMax)
+            {
+                outMax = F.mz;
+            }
+                ++readfrom;
+            }
+            scancomp *outMinMax = new scancomp{{outMax,outMin},i};
+            compspace.push_back(outMinMax);
+        }
+        // compspace contains largest mz which is less than the minimum mz in a bin and the smallest mz which is greater than the maximum in a bin on a per-scan basis
 
-        for (size_t i = 0; i < idxEnd_min-idxStart_min; i++)
-        {
-            // dereference mz and attach it to possible_distances, then move pointer one forward
-            Feature F = **readfrom;
-            if (outMin < F.mz < inMin)
-            {
-                outMin = F.mz;
-            }
-            else if (inMax < F.mz < outMax)
-            {
-                outMax = F.mz;
-            }
-            // only attach if mz is not inside the bin already ßßß necessary? By definition no such feature should exist
-            // possible_distances.push_back(F.mz);
-            ++readfrom;
-        }
-        readfrom = rawdata->allFeatures.begin()+idxStart_max; // points to first element after bin that could be relevant
-        for (size_t i = 0; i < idxEnd_max-idxStart_max; i++)
-        {
-            Feature F = **readfrom;
-            if (outMin < F.mz < inMin)
-            {
-                outMin = F.mz;
-            }
-            else if (inMax < F.mz < outMax)
-            {
-                outMax = F.mz;
-            }
-            ++readfrom;
-        }
+        // for (size_t i = 0; i < idxEnd_min - idxStart_min; i++)
+        // {
+        //     // dereference mz and attach it to possible_distances, then move pointer one forward
+        //     Feature F = **readfrom;
+        //     if (outMin < F.mz < inMin)
+        //     {
+        //         outMin = F.mz;
+        //     }
+        //     else if (inMax < F.mz < outMax)
+        //     {
+        //         outMax = F.mz;
+        //     }
+        //     // only attach if mz is not inside the bin already ßßß necessary? By definition no such feature should exist
+        //     // possible_distances.push_back(F.mz);
+        //     ++readfrom;
+        // }
+        // readfrom = rawdata->allFeatures.begin() + idxStart_max; // points to first element after bin that could be relevant
+        // for (size_t i = 0; i < idxEnd_max - idxStart_max; i++)
+        // {
+        //     Feature F = **readfrom;
+        //     if (outMin < F.mz < inMin)
+        //     {
+        //         outMin = F.mz;
+        //     }
+        //     else if (inMax < F.mz < outMax)
+        //     {
+        //         outMax = F.mz;
+        //     }
+        //     ++readfrom;
+        // }
         // create vector of mean distance to other features
         int n = featurelist.size();
         std::vector<double> meanDist(n);
-        for (size_t i = 0; i < n-1; i++)
+        for (size_t i = 0; i < n - 1; i++)
         {
             for (int j = i + 1; j < n; ++j)
             {
@@ -311,25 +330,21 @@ namespace q
             }
             meanDist[i] == meanDist[i] / (n - 1);
         }
-        // find closest match in mz for min and max mz - 
-        std::vector<double> minOutDist(n); // vector contains distance to either outMin or outMax, whichever is smaller
-        for (size_t i = 0; i < n; i++)
-        {
-            double a = featurelist[i]->mz - outMin;
-            double b = outMax - featurelist[i]->mz;
-            if (a < b)
-            {
-                minOutDist[i] = a;
-            }
-            else 
-            {
-                minOutDist[i] = b;
-            }
-            
-        }
-        
-
-
+        // find closest match in mz for min and max mz -
+        // std::vector<double> minOutDist(n); // vector contains distance to either outMin or outMax, whichever is smaller
+        // for (size_t i = 0; i < n; i++)
+        // {
+        //     double a = featurelist[i]->mz - outMin;
+        //     double b = outMax - featurelist[i]->mz;
+        //     if (a < b)
+        //     {
+        //         minOutDist[i] = a;
+        //     }
+        //     else
+        //     {
+        //         minOutDist[i] = b;
+        //     }
+        // }
 
         // minScanNo to maxScanNo is the part of the feature list that needs to be checked
         // const auto [minMZ, maxMZ] = std::minmax_element(featurelist.front(), featurelist.back(), [](const Feature *lhs, const Feature *rhs)
