@@ -62,6 +62,7 @@ namespace q
 
     void BinContainer::subsetBins(std::vector<int> dimensions, int scanDiffLimit)
     {
+        std::cout << "\nTotal bins: 1";
         // while elements are in the bin deque -> if any bin is not fully subset
         while (!binDeque.empty())
         {
@@ -159,8 +160,7 @@ namespace q
         if (max < vcrit) // all values in range are part of one mz bin
         {
             // make bin
-            // std::cout << startBin << "," << endBin << "," << subsetcount << "\n";
-
+            // std::cout << startBin << "," << endBin << "," << subsetcount << "\n"; // not all that useful, since knowledge of position in original order space is always lost
             subsetcount = 0;
             const Bin output(featurelist.begin() + startBin, featurelist.begin() + endBin);
             // append Bin to bin container
@@ -205,10 +205,7 @@ namespace q
                     }
                     else
                     {
-                        if (n == 5)
-                        {
-                            std::cout << "suspect\n"; // no bins of size 5 are ever produced when splitting by scans
-                        }
+                        // no bins of size 5 are ever produced when splitting by scans
                         // viable bin, stable in scan dimension
                         Bin output(newstart, featurelist.begin() + i - 1);
                         bincontainer->push_back(output);
@@ -289,7 +286,7 @@ int main()
 
     q::FeatureList testdata;
     testdata.readcsv("../../rawdata/qCentroid_Warburg_pos_171123_01_Zu_01.csv", 0, 7, 5, 6); // ../../rawdata/qCentroid_Warburg_pos_171123_01_Zu_01.csv ../test/test.csv
-    std::cout << "readcsv() done!\n";
+    std::cout << "created feature list\n";
     q::BinContainer testcontainer;
     testcontainer.makeFirstBin(&testdata);
     std::vector<int> dim = {1, 2}; // last element must be the number of scans ßßß implement outside of the switch statement ßßß endless loop if scan terminator is not included

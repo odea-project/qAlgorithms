@@ -10,41 +10,106 @@ knitr::opts_chunk$set(echo = TRUE)
 #knitr::opts_knit$set(root.dir = "G:/_Studium/Analytik-Praktikum/qbinning")
 library(tidyverse)
 library(data.table)
+library(patchwork)
 ```
 
 
 ```{r}
 bin_termination <- read.csv("opstats_subsetmz.csv")
-bin_termination$change = FALSE
+bin_termination$change <- 1
+bin_termination$change[40550:86922] <- 2
+bin_termination$change[86923:93780] <- 3
+bin_termination$change[93781:94537] <- 4
+bin_termination$change[94538:94619] <- 5
+bin_termination$change[94620:94626] <- 6
 
-for (i in 2:length(bin_termination$change)) {
-  if (bin_termination$binstart[i] < bin_termination$binstart[i-1]) {
-    bin_termination$change[i] <- TRUE
-  }
-}
-
-bin_termination$change <- cumsum(bin_termination$change)
 ```
 
 
 ```{r}
-ggplot(bin_termination[1:40549,])+
+ggplot(bin_termination[which(bin_termination$change == 1),])+
   geom_histogram(aes(binend - binstart),binwidth = 1)+
- # scale_x_continuous(trans='log10')+
   scale_y_continuous(trans='log10')+
   xlab("Binsize after mz subsetting (no separation by scans)")+
   ylab("Counts")+
   theme_bw()
 
-ggplot(bin_termination)+
+ggplot(bin_termination[which(bin_termination$change == 1),])+
   geom_histogram(aes(subsets),binwidth = 1)+
   scale_y_continuous(trans='log10')+
   xlab("Subsets performed until next bin was found (no separation by scans)")+
   ylab("Counts")+
   theme_bw()
 
+ggplot(bin_termination[which(bin_termination$change == 2),])+
+  geom_histogram(aes(binend - binstart),binwidth = 1)+
+  scale_y_continuous(trans='log10')+
+  xlab("Binsize after mz subsetting (no separation by scans)")+
+  ylab("Counts")+
+  theme_bw()
 
-#   geom_linerange(aes(xmin = binstart, xmax = binend, y = log(subsets)))
+ggplot(bin_termination[which(bin_termination$change == 2),])+
+  geom_histogram(aes(subsets),binwidth = 1)+
+  scale_y_continuous(trans='log10')+
+  xlab("Subsets performed until next bin was found (no separation by scans)")+
+  ylab("Counts")+
+  theme_bw()
+
+ggplot(bin_termination[which(bin_termination$change == 3),])+
+  geom_histogram(aes(binend - binstart),binwidth = 1)+
+  scale_y_continuous(trans='log10')+
+  xlab("Binsize after mz subsetting (no separation by scans)")+
+  ylab("Counts")+
+  theme_bw()
+
+ggplot(bin_termination[which(bin_termination$change == 3),])+
+  geom_histogram(aes(subsets),binwidth = 1)+
+  scale_y_continuous(trans='log10')+
+  xlab("Subsets performed until next bin was found (no separation by scans)")+
+  ylab("Counts")+
+  theme_bw()
+
+ggplot(bin_termination[which(bin_termination$change == 4),])+
+  geom_histogram(aes(binend - binstart),binwidth = 1)+
+  scale_y_continuous(trans='log10')+
+  xlab("Binsize after mz subsetting (no separation by scans)")+
+  ylab("Counts")+
+  theme_bw()
+
+ggplot(bin_termination[which(bin_termination$change == 4),])+
+  geom_histogram(aes(subsets),binwidth = 1)+
+  scale_y_continuous(trans='log10')+
+  xlab("Subsets performed until next bin was found (no separation by scans)")+
+  ylab("Counts")+
+  theme_bw()
+
+ggplot(bin_termination[which(bin_termination$change == 5),])+
+  geom_histogram(aes(binend - binstart),binwidth = 1)+
+  scale_y_continuous(trans='log10')+
+  xlab("Binsize after mz subsetting (no separation by scans)")+
+  ylab("Counts")+
+  theme_bw()
+
+ggplot(bin_termination[which(bin_termination$change == 5),])+
+  geom_histogram(aes(subsets),binwidth = 1)+
+  scale_y_continuous(trans='log10')+
+  xlab("Subsets performed until next bin was found (no separation by scans)")+
+  ylab("Counts")+
+  theme_bw()
+
+ggplot(bin_termination[which(bin_termination$change == 6),])+
+  geom_histogram(aes(binend - binstart),binwidth = 1)+
+  scale_y_continuous(trans='log10')+
+  xlab("Binsize after mz subsetting (no separation by scans)")+
+  ylab("Counts")+
+  theme_bw()
+
+ggplot(bin_termination[which(bin_termination$change == 6),])+
+  geom_histogram(aes(subsets),binwidth = 1)+
+  scale_y_continuous(trans='log10')+
+  xlab("Subsets performed until next bin was found (no separation by scans)")+
+  ylab("Counts")+
+  theme_bw()
 ```
 
 
