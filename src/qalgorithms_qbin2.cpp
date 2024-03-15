@@ -94,7 +94,7 @@ namespace q
                         binDeque.front().subsetScan(&binDeque, &finishedBins, scanDiffLimit);
                         binDeque.pop_front();
                     }
-                    std::cout << "\nperfect bins: " << perfectbins <<"\nscan subsetting done\nTotal bins: " << binDeque.size();
+                    std::cout << "\nClosed bins: " << finishedBins.size() << " perfect bins: " << perfectbins <<"\nscan subsetting done\nTotal bins: " << binDeque.size();
                     perfectbins = 0;
                     break;
                 }
@@ -235,20 +235,103 @@ namespace q
 
     void Bin::makeDQSB(const FeatureList *rawdata, const int &maxdist)
     {
-        // assumes bin is saved sorted by scans, result from scan gap checks being the final control
+        // assumes bin is saved sorted by scans, since the result from scan gap checks is the final control
         // only the minimum scans - k and the maximum scans + k need to be checked
         // if a value m/z is not lower than the minimum of mz or larger than the maximum while being in the allowed scan interval, it is by definition included in the bin
         int minScanNo = featurelist.front()->scanNo - maxdist;
-        // if (minScanNo < 1)
-        // {
-        //     minScanNo = 1;
-        // }
-        // int maxScanNo = featurelist.back()->scanNo + maxdist;
-        // if (maxScanNo > rawdata->scanBreaks.size())
-        // {
-        //     maxScanNo = rawdata->scanBreaks.size();
-        // }
-        // // minScanNo to maxScanNo is the part of the feature list that needs to be checked
+        if (minScanNo < 1)
+        {
+            minScanNo = 1;
+        }
+        int maxScanNo = featurelist.back()->scanNo + maxdist;
+        if (maxScanNo > rawdata->scanBreaks.size())
+        {
+            maxScanNo = rawdata->scanBreaks.size();
+        }
+        // create vector containing all mz from min to lowest scan no and highest scan no to max ßßß not needed, since the closest mz will always be one of two distinct values
+        // std::vector<double> possible_distances;
+
+        double outMin = 1; // mz outside of the bin closest to the minimum mz in the bin
+        double outMax = featurelist.front()->mz *9001; // mz outside of the bin closest to the maximum mz in the bin
+
+        int idxStart_min = rawdata->scanBreaks[minScanNo];
+        int idxEnd_min = rawdata->scanBreaks[featurelist.front()->scanNo] - 1; // -1 to not include features found in the first scan that is part of the bin featurelist
+        int idxStart_max = rawdata->scanBreaks[minScanNo];
+        int idxEnd_max = rawdata->scanBreaks[featurelist.back()->scanNo + 1]; // +1 in the brackets to get first scan greater than the one present in the dataset
+
+        std::vector<Feature *>::const_iterator readfrom = rawdata->allFeatures.begin()+idxStart_min; // points to first element in list sorted by scans that could be relevant
+        // sort featurelist by mz
+        std::sort(featurelist.begin(), featurelist.end(), [](const Feature *lhs, const Feature *rhs)
+                  { return lhs->mz < rhs->mz; });
+        double inMin = featurelist.front()->mz;
+        double inMax = featurelist.back()->mz;
+
+        std::vector<scancomp> compspace;
+
+        for (size_t i = 0; i < idxEnd_min-idxStart_min; i++)
+        {
+            // dereference mz and attach it to possible_distances, then move pointer one forward
+            Feature F = **readfrom;
+            if (outMin < F.mz < inMin)
+            {
+                outMin = F.mz;
+            }
+            else if (inMax < F.mz < outMax)
+            {
+                outMax = F.mz;
+            }
+            // only attach if mz is not inside the bin already ßßß necessary? By definition no such feature should exist
+            // possible_distances.push_back(F.mz);
+            ++readfrom;
+        }
+        readfrom = rawdata->allFeatures.begin()+idxStart_max; // points to first element after bin that could be relevant
+        for (size_t i = 0; i < idxEnd_max-idxStart_max; i++)
+        {
+            Feature F = **readfrom;
+            if (outMin < F.mz < inMin)
+            {
+                outMin = F.mz;
+            }
+            else if (inMax < F.mz < outMax)
+            {
+                outMax = F.mz;
+            }
+            ++readfrom;
+        }
+        // create vector of mean distance to other features
+        int n = featurelist.size();
+        std::vector<double> meanDist(n);
+        for (size_t i = 0; i < n-1; i++)
+        {
+            for (int j = i + 1; j < n; ++j)
+            {
+                double dist = abs(featurelist[i]->mz - featurelist[j]->mz);
+                meanDist[i] = +dist;
+                meanDist[j] = +dist;
+            }
+            meanDist[i] == meanDist[i] / (n - 1);
+        }
+        // find closest match in mz for min and max mz - 
+        std::vector<double> minOutDist(n); // vector contains distance to either outMin or outMax, whichever is smaller
+        for (size_t i = 0; i < n; i++)
+        {
+            double a = featurelist[i]->mz - outMin;
+            double b = outMax - featurelist[i]->mz;
+            if (a < b)
+            {
+                minOutDist[i] = a;
+            }
+            else 
+            {
+                minOutDist[i] = b;
+            }
+            
+        }
+        
+
+
+
+        // minScanNo to maxScanNo is the part of the feature list that needs to be checked
         // const auto [minMZ, maxMZ] = std::minmax_element(featurelist.front(), featurelist.back(), [](const Feature *lhs, const Feature *rhs)
         //                                                 { return lhs->mz < rhs->mz; });
         // int newBestMin = 225; // large number as first difference
@@ -286,7 +369,7 @@ int main()
 
     q::FeatureList testdata;
     testdata.readcsv("../../rawdata/qCentroid_Warburg_pos_171123_01_Zu_01.csv", 0, 7, 5, 6); // ../../rawdata/qCentroid_Warburg_pos_171123_01_Zu_01.csv ../test/test.csv
-    std::cout << "created feature list\n";
+    std::cout << "created feature list with scan index\n";
     q::BinContainer testcontainer;
     testcontainer.makeFirstBin(&testdata);
     std::vector<int> dim = {1, 2}; // last element must be the number of scans ßßß implement outside of the switch statement ßßß endless loop if scan terminator is not included

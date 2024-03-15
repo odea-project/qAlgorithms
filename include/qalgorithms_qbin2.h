@@ -42,6 +42,12 @@ namespace q
     private:
         std::vector<Feature *> featurelist;
         std::vector<double> cumError; // cumulative error in mz
+        struct scancomp
+        {
+            std::vector<double> outMinMax;
+            int scanNo;
+        };
+        
 
     public:
         std::vector<double> activeOS;
