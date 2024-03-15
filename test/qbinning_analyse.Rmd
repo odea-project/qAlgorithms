@@ -47,3 +47,8 @@ ggplot(bin_termination)+
 #   geom_linerange(aes(xmin = binstart, xmax = binend, y = log(subsets)))
 ```
 
+
+```{r}
+runstats <- data.frame(before_mz = c(1,57649,8716,1040,117,14,0), after_mz = c(40549,46373,6858,757,82,7,0), perfectbins = c(2716,14905,1469,143,7,0,0))
+```
+
