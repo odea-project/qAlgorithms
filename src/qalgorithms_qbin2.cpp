@@ -3,6 +3,7 @@
 namespace q
 {
     int subsetcount = 0;
+    int perfectbins = 0;
 #pragma region "Featurelist"
     FeatureList::FeatureList()
     {
@@ -79,7 +80,7 @@ namespace q
                         binDeque.front().subsetMZ(&binDeque, binDeque.front().activeOS, 0, binDeque.front().activeOS.size() - 1); // takes element from binDeque, starts subsetting, appends bins to binDeque
                         binDeque.pop_front();                                                                                     // remove the element that was processed from binDeque
                     }
-
+                    std::cout << "\nmz subsetting done\nTotal bins: " << binDeque.size();
                     break;
                 }
 
@@ -92,7 +93,8 @@ namespace q
                         binDeque.front().subsetScan(&binDeque, &finishedBins, scanDiffLimit);
                         binDeque.pop_front();
                     }
-
+                    std::cout << "\nperfect bins: " << perfectbins <<"\nscan subsetting done\nTotal bins: " << binDeque.size();
+                    perfectbins = 0;
                     break;
                 }
 
@@ -157,7 +159,8 @@ namespace q
         if (max < vcrit) // all values in range are part of one mz bin
         {
             // make bin
-            std::cout << startBin << "," << endBin << "," << subsetcount << "\n";
+            // std::cout << startBin << "," << endBin << "," << subsetcount << "\n";
+
             subsetcount = 0;
             const Bin output(featurelist.begin() + startBin, featurelist.begin() + endBin);
             // append Bin to bin container
@@ -183,7 +186,7 @@ namespace q
                   { return lhs->scanNo < rhs->scanNo; });
         if (featurelist.front()->scanNo + n + maxdist > featurelist.back()->scanNo) // sum of all gaps is less than max distance, +n since no element will occur twice in one scan
         {
-            // implement new list for elements that are binned to completion requires separation by scan numbers to always be done last - acceptable compromise?
+            ++perfectbins;
             finishedBins->push_back(bincontainer->front()); // moves first element of que to vector of complete bins, since bin is good
         }
         else
@@ -202,6 +205,10 @@ namespace q
                     }
                     else
                     {
+                        if (n == 5)
+                        {
+                            std::cout << "suspect\n"; // no bins of size 5 are ever produced when splitting by scans
+                        }
                         // viable bin, stable in scan dimension
                         Bin output(newstart, featurelist.begin() + i - 1);
                         bincontainer->push_back(output);
@@ -274,19 +281,21 @@ namespace q
 
 int main()
 {
-    std::ofstream result("../../qbinning_results.csv");
-    std::streambuf *coutbuf = std::cout.rdbuf(); // save old buf
-    std::cout.rdbuf(result.rdbuf());             // redirect std::cout to out.txt!
-    std::cout << "binstart,binend,subsets\n";
+    std::cout << "starting...\n";
+    // std::ofstream result("../../qbinning_results.csv");
+    // std::streambuf *coutbuf = std::cout.rdbuf(); // save old buf
+    // std::cout.rdbuf(result.rdbuf());             // redirect std::cout to out.txt!
+    // std::cout << "binstart,binend,subsets\n";
 
     q::FeatureList testdata;
     testdata.readcsv("../../rawdata/qCentroid_Warburg_pos_171123_01_Zu_01.csv", 0, 7, 5, 6); // ../../rawdata/qCentroid_Warburg_pos_171123_01_Zu_01.csv ../test/test.csv
+    std::cout << "readcsv() done!\n";
     q::BinContainer testcontainer;
     testcontainer.makeFirstBin(&testdata);
     std::vector<int> dim = {1, 2}; // last element must be the number of scans ßßß implement outside of the switch statement ßßß endless loop if scan terminator is not included
     testcontainer.subsetBins(dim, 7);
 
-    std::cout.rdbuf(coutbuf); // reset to standard output again
-    std::cout << "Done!\n\n";
+    // std::cout.rdbuf(coutbuf); // reset to standard output again
+    std::cout << "\n\nDone!\n\n";
     return 0;
 }
