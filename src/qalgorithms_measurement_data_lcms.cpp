@@ -154,7 +154,7 @@ namespace q {
                     /* Check if the gapsSize is larger than 4, as this is the maximum gap size per side. If the gap size is larger less or equal to 4, we add gapSize new data points to the data set between the two data points that show the gap, i.e. (i-1 and i). The new data points are filled with zero values for the intensity and inter/extrapolated values for the x-axis values.
                     */
                     if (gapSize <= 4) {
-                        for (int j = 1; j <= gapSize; j++) {
+                        for (int j = gapSize; j >= 1; j--) { // fill the gap backwards
                             it->second.mz.insert(it->second.mz.begin() + i, it->second.mz[i-1] + j * expectedDifference);
                             it->second.intensity.insert(it->second.intensity.begin() + i, 0.0);
                         }
