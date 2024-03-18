@@ -4,6 +4,7 @@ namespace q
 {
     int subsetcount = 0;
     int perfectbins = 0;
+    int OSzero = 0;
 #pragma region "Featurelist"
     FeatureList::FeatureList()
     {
@@ -78,10 +79,12 @@ namespace q
                     for (size_t i = 0; i < startpoint; i++)
                     { // random access not needed, first element -> make bins -> move element or make bins, then remove first entry ; do n times
                         binDeque.front().makeOS();
+                        std::cout << "\nIdentical Masses in Featurelist: " << OSzero; // two pairs of identical masses
                         binDeque.front().makeCumError();                                                                          // always after order space, since the features get sorted
                         binDeque.front().subsetMZ(&binDeque, binDeque.front().activeOS, 0, binDeque.front().activeOS.size() - 1); // takes element from binDeque, starts subsetting, appends bins to binDeque
                         binDeque.pop_front();                                                                                     // remove the element that was processed from binDeque
                     }
+                    
                     std::cout << "\nmz subsetting done\nTotal bins: " << binDeque.size();
                     break;
                 }
@@ -140,6 +143,11 @@ namespace q
         for (size_t i = 0; i + 1 < activeOS.size(); ++i) // +1 to prevent accessing outside of vector
         {
             activeOS[i] = featurelist[i + 1]->mz - featurelist[i]->mz;
+            if (activeOS[i] == 0)
+            {
+                ++OSzero;
+            }
+            
         }
         activeOS.back() = -225; // -225 to signify last element in OS
     }
@@ -244,7 +252,12 @@ namespace q
 
     double Bin::findOuterMinmax(std::vector<Feature *>::const_iterator position, const double &innerMinmax, bool direction)
     { // direction TRUE = forward, direction FALSE = backwards
-        Feature *F = *position;
+    if (innerMinmax == 110.131907489017) // same exact mass exists II
+    {
+        std::cout << "\n";
+    }
+    
+        Feature *F = *position; // position is a null pointer
         if (direction)
         {
             if (F->mz > innerMinmax)
@@ -291,6 +304,7 @@ namespace q
         // if a value m/z is not lower than the minimum of mz or larger than the maximum while being in the allowed scan interval, it is by definition included in the bin
         // check first scan from min and max of bin, next from same position in next scan (add start of scan to both iterators, move inwards if larger than min/max or outwards otherwise)
         int n = featurelist.size();
+        DQSB.reserve(n);
         int minScanNo = featurelist.front()->scanNo - maxdist;
         if (minScanNo < 1)
         {
@@ -310,6 +324,12 @@ namespace q
         std::vector<Feature *>::const_iterator goToMinOut;
         std::vector<Feature *>::const_iterator goToMaxOut;
         std::vector<double> compspace; // even index: minOut, odd index: maxOut
+
+        if (n == 64)
+        {
+            std::cout << inMin <<"," << inMax << "\n"; // exception at the second bin of size 64 (segfault)
+        }
+        
 
         for (int i = minScanNo; i < maxScanNo; i++) // iterate over all scans viable for entire bin
         {
@@ -346,18 +366,18 @@ namespace q
 
             for (size_t j = 2 * i; j < 2 * i + 4 * maxdist + 1; j++) // 2*i since every two elements is one new scan. From this i, the range is traversed until two max distances (*2 per scan). +1 to include both elements of the last scan
             {
-                dist = featurelist[i]->mz - compspace[j];
+                dist = std::abs(featurelist[i]->mz - compspace[j]);
                 if (dist < lowestDist)
                 {
                     lowestDist = dist;
                 }
             }
             minOuter[i] = lowestDist; // minOuter redundant ßßß
-            DQSB[i] = calcDQS(meanDist[i], minOuter[i]);
+            DQSB.push_back(calcDQS(meanDist[i], minOuter[i]));
         }
     }
 
-    double Bin::calcDQS(double MID, double MOD)
+    double Bin::calcDQS(double MID, double MOD) // mean inner distance, minimum outer distance
     {
         double dqs = MID;
         if (dqs < MOD)
