@@ -32,7 +32,10 @@ namespace q {
           xData.insert(xData.begin(), xData[0] - expectedDifference);
           yData.insert(yData.begin(), 0.0);
         }
-        i += gapSize; // Update the index to the next data point
+        // add a separator
+        xData.insert(xData.begin(), -1.0);
+        yData.insert(yData.begin(), -1.0);
+        i += gapSize+1; // Update the index to the next data point
       } else {
         if (difference > 1.75 * expectedDifference) {
           int gapSize = (int) (difference / expectedDifference - 1);
@@ -75,4 +78,15 @@ namespace q {
       yData.push_back(0.0);
     }
   }
-};
+
+  std::vector<size_t> MeasurementData::cutData(std::vector<double>& xData, std::vector<double>& yData) const {
+    // find the separator
+    std::vector<size_t> separators;
+    for (int i = 0; i < xData.size(); i++) {
+      if (xData[i] == -1.0 && yData[i] == -1.0) {
+        separators.push_back(i);
+      }
+    }
+    return separators;
+  }
+} // namespace q

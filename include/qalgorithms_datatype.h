@@ -8,6 +8,7 @@ namespace DataType {
      * @brief Different types of data that can be stored in a data file
      * @details The data fields are used to store different types of data in a data file.
      * @param INTENSITY The intensity of the MS signal
+     * @param SUBID The sub-dataset ID
      * @param IONIZATIONMODE The ionization mode, i.e. whether the signal is from positive or negative mode
      * @param MZ The mass-to-charge ratio of the MS signal
      * @param MSLEVEL The MS level, i.e. whether the signal is from MS1 or MS2
@@ -36,6 +37,7 @@ namespace DataType {
     enum class DataField{
         // general fields
         INTENSITY, // signal intensity
+        SUBID, // sub-dataset ID
 
         // MS fields
         IONIZATIONMODE, // positive or negative

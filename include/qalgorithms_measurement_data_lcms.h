@@ -44,10 +44,17 @@ namespace q {
              */
             void zeroFilling();
 
+            /**
+             * @brief Cut the data into smaller data sets
+             * @details The cutData method cuts the data into smaller data sets. The method uses the separator value to split the data into smaller data sets. The separator value is set to -1.0 for the x-axis and -1.0 for the y-axis. For each cut, the method creates a new data subset and stores it in the data map using a sub-dataset ID as the secondary key.
+             * 
+             */
+            void cutData();
+
             // debugging
             void print();
         private:
-            std::unordered_map<int, DataType::LC_MS> data;
+            std::unordered_map<int, std::unordered_map<int, DataType::LC_MS>> data;
     };
 }
 #endif // QALGORITHMS_MEASUREMENT_DATA_LCMS_H
