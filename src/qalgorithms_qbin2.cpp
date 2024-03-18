@@ -79,7 +79,7 @@ namespace q
                     for (size_t i = 0; i < startpoint; i++)
                     { // random access not needed, first element -> make bins -> move element or make bins, then remove first entry ; do n times
                         binDeque.front().makeOS();
-                        std::cout << "\nIdentical Masses in Featurelist: " << OSzero; // two pairs of identical masses
+                        // std::cout << "\nIdentical Masses in Featurelist: " << OSzero; // two pairs of identical masses
                         binDeque.front().makeCumError();                                                                          // always after order space, since the features get sorted
                         binDeque.front().subsetMZ(&binDeque, binDeque.front().activeOS, 0, binDeque.front().activeOS.size() - 1); // takes element from binDeque, starts subsetting, appends bins to binDeque
                         binDeque.pop_front();                                                                                     // remove the element that was processed from binDeque

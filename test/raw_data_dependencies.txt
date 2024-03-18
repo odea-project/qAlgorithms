@@ -18,3 +18,5 @@ Duplizierte Features crashen den code
 https://www.agner.org/optimize/optimizing_cpp.pdf
 
 pointer -> methode
+
+
