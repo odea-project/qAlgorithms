@@ -42,16 +42,10 @@ namespace q
     private:
         std::vector<Feature *> featurelist;
         std::vector<double> cumError; // cumulative error in mz
-        struct scancomp
-        {
-            std::vector<double> outMinMax;
-            int scanNo;
-        };
-        
 
     public:
         std::vector<double> activeOS;
-        double DQSB;                                                                                           // Order Space
+        std::vector<double> DQSB;                                                                                           // Order Space
         Bin(const std::vector<Feature *>::iterator &startBin, const std::vector<Feature *>::iterator &endBin); // const std::vector<Feature> &sourceList,
         Bin(FeatureList *rawdata);
         ~Bin();
@@ -60,7 +54,8 @@ namespace q
         void subsetMZ(std::deque<Bin> *bincontainer, const std::vector<double> &OS, int startBin, int endBin); // mz, error, RT and beginning/end are dictated by bin contents
         void subsetScan(std::deque<Bin> *bincontainer, std::vector<Bin> *finishedBins, const int &maxdist);
         void makeDQSB(const FeatureList *rawdata, const int &maxdist);
-        double findOuterMinmax(std::vector<Feature *>::const_iterator position, const int &innerMinmax, bool direction);
+        double findOuterMinmax(std::vector<Feature *>::const_iterator position, const double &innerMinmax, bool direction);
+        double calcDQS(double MID, double MOD); // Mean Inner Distance, Minimum Outer Distance
         // Feature makeFeature(); // combine all features to one using means, modify mzError
     };
 
@@ -81,7 +76,7 @@ namespace q
         void printBinSummary(std::string path);
         void firstBinValid(); // move first bin in binDeque to end
         void clearFirstBin(); // remove first bin in binDeque
-        // implement way to check for good bin being as long as OS -> no change, move bin to back
+        void assignDQSB(const FeatureList *rawdata, int maxdist); // apply DQSB function to all completed bins
     };
 
 }
