@@ -233,11 +233,47 @@ namespace q
         // if prev - push back, pop front
     }
 
+    double Bin::findOuterMinmax(std::vector<Feature *>::const_iterator position, const int &innerMinmax, bool direction)
+    {// direction TRUE = forward, direction FALSE = backwards
+        Feature *F = *position;
+        if (direction)
+        {
+            if (F->mz > innerMinmax)
+            {
+                return findOuterMinmax(position, innerMinmax, !direction);;
+            }
+            double closestMZ = F->mz;
+            while (F->mz < innerMinmax)
+            {
+                closestMZ = F->mz;
+                ++position;
+                F = *position;
+            }
+            return closestMZ;
+        }
+        else{
+            if (F->mz < innerMinmax)
+            {
+                return findOuterMinmax(position, innerMinmax, !direction);;
+            }
+            double closestMZ = F->mz;
+            while (F->mz > innerMinmax)
+            {
+                closestMZ = F->mz;
+                --position;
+                F = *position;
+            }
+            return closestMZ;
+        }
+    }
+
     void Bin::makeDQSB(const FeatureList *rawdata, const int &maxdist)
     {
         // assumes bin is saved sorted by scans, since the result from scan gap checks is the final control
+        // featurelist is sorted by scans and by mz within scans (sort_stable for taking unsorted data)
         // only the minimum scans - k and the maximum scans + k need to be checked
         // if a value m/z is not lower than the minimum of mz or larger than the maximum while being in the allowed scan interval, it is by definition included in the bin
+        // check first scan from min and max of bin, next from same position in next scan (add start of scan to both iterators, move inwards if larger than min/max or outwards otherwise)
         int minScanNo = featurelist.front()->scanNo - maxdist;
         if (minScanNo < 1)
         {
@@ -256,33 +292,34 @@ namespace q
         int idxStart_max = rawdata->scanBreaks[minScanNo];
         int idxEnd_max = rawdata->scanBreaks[featurelist.back()->scanNo + 1]; // +1 in the brackets to get first scan greater than the one present in the dataset
 
-        std::vector<Feature *>::const_iterator readfrom = rawdata->allFeatures.begin() + idxStart_min; // points to first element in list sorted by scans that could be relevant
+        std::vector<Feature *>::const_iterator readToMin = rawdata->allFeatures.begin() + idxStart_min; // points to first element in list sorted by scans that could be relevant
+        std::vector<Feature *>::const_iterator readToMax = rawdata->allFeatures.begin() + idxStart_min;
         // sort featurelist by mz
         std::sort(featurelist.begin(), featurelist.end(), [](const Feature *lhs, const Feature *rhs)
                   { return lhs->mz < rhs->mz; });
         double inMin = featurelist.front()->mz;
         double inMax = featurelist.back()->mz;
 
-        std::vector<scancomp*> compspace;
+        std::vector<scancomp *> compspace;
         for (int i = minScanNo; i < maxScanNo; i++) // iterate over all scans viable for entire bin
         {
             // iterate readfrom over all data, new struct when scan changes
-            double outMin = 1;                              // mz outside of the bin closest to the minimum mz in the bin
-            double outMax = featurelist.front()->mz * 9001; // mz outside of the bin closest to the maximum mz in the bin
-            for (size_t i = rawdata->scanBreaks[i]; i < rawdata->scanBreaks[i+1]; i++) // itertion for one scan level
+            double outMin = 1;                                                           // mz outside of the bin closest to the minimum mz in the bin
+            double outMax = featurelist.front()->mz * 9001;                              // mz outside of the bin closest to the maximum mz in the bin
+            for (size_t i = rawdata->scanBreaks[i]; i < rawdata->scanBreaks[i + 1]; i++) // itertion for one scan level
             {
-                Feature F = **readfrom;
-            if (outMin < F.mz < inMin)
-            {
-                outMin = F.mz;
+                Feature *F = *readToMin;
+                if (outMin < F->mz < inMin)
+                {
+                    outMin = F->mz;
+                }
+                else if (inMax < F->mz < outMax)
+                {
+                    outMax = F->mz;
+                }
+                ++readToMin;
             }
-            else if (inMax < F.mz < outMax)
-            {
-                outMax = F.mz;
-            }
-                ++readfrom;
-            }
-            scancomp *outMinMax = new scancomp{{outMax,outMin},i};
+            scancomp *outMinMax = new scancomp{{outMax, outMin}, i};
             compspace.push_back(outMinMax);
         }
         // compspace contains largest mz which is less than the minimum mz in a bin and the smallest mz which is greater than the maximum in a bin on a per-scan basis

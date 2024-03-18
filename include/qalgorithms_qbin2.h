@@ -60,6 +60,7 @@ namespace q
         void subsetMZ(std::deque<Bin> *bincontainer, const std::vector<double> &OS, int startBin, int endBin); // mz, error, RT and beginning/end are dictated by bin contents
         void subsetScan(std::deque<Bin> *bincontainer, std::vector<Bin> *finishedBins, const int &maxdist);
         void makeDQSB(const FeatureList *rawdata, const int &maxdist);
+        double findOuterMinmax(std::vector<Feature *>::const_iterator position, const int &innerMinmax, bool direction);
         // Feature makeFeature(); // combine all features to one using means, modify mzError
     };
 
