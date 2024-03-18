@@ -113,3 +113,9 @@ ggplot(bin_termination[which(bin_termination$change == 6),])+
 runstats <- data.frame(before_mz = c(1,57649,8716,1040,117,14,0), after_mz = c(40549,46373,6858,757,82,7,0), newbins = c(4114, 33589, 5134, 551, 54, 6, 0), perfectbins = c(2716,14905,1469,143,7,0,0))
 ```
 
+```{r scanbreaks}
+scanbreaks <- read.csv("../../qBinning_scanbreaks.csv")
+scanbreaks$size = c(diff(scanbreaks$position),3568034-3566759)
+```
+
+
