@@ -43,7 +43,7 @@ namespace q {
              *  
              */
             void zeroFilling();
-            
+
             // debugging
             void print();
         private:

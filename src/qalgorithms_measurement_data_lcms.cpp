@@ -121,80 +121,13 @@ namespace q {
                     this->data[scanNumber].msLevel = (raw_data[i][j] == "MS1") ? DataType::MSLevel::MS1 : DataType::MSLevel::MS2;
                 }
             }
-
         }
-
     }
 
     void LCMSData::zeroFilling() {
         // iterate over all data sets
         for (auto it = this->data.begin(); it != this->data.end(); it++) {
-            // calculate the initial expected difference between mz values
-            double expectedDifference = 0.0;
-            std::vector<double> differences;
-            for (int i = 1; i < it->second.mz.size(); i++) {
-                differences.push_back(it->second.mz[i] - it->second.mz[i-1]);
-            }
-            // median of differences
-            std::sort(differences.begin(), differences.end());
-            if (differences.size() % 2 == 0) {
-                expectedDifference = (differences[differences.size()/2 - 1] + differences[differences.size()/2]) / 2;
-            } else {
-                expectedDifference = differences[differences.size()/2];
-            }
-
-            // fill the gaps
-            for (int i = 1; i < it->second.mz.size(); i++) {
-                double difference = it->second.mz[i] - it->second.mz[i-1];
-                /* We will always add new data points in the beginning of the data set. */
-                if (i == 1) {
-                    int gapSize = 4;
-                    for (int j = gapSize; j >= 1; j--) { // fill the gap backwards
-                        it->second.mz.insert(it->second.mz.begin(), it->second.mz[0] - expectedDifference);
-                        it->second.intensity.insert(it->second.intensity.begin(), 0.0);
-                    }
-                    i += gapSize; // Update the index to the next data point
-                } else {
-                    if (difference > 1.75 * expectedDifference) {
-                        int gapSize = (int) (difference / expectedDifference - 1);
-                        /* Check if the gapsSize is larger than 8, as this is the maximum gap size. If the gap size is less or equal to 8, we add gapSize new data points to the data set between the two data points that show the gap, i.e. (i-1 and i). The new data points are filled with zero values for the intensity and inter/extrapolated values for the x-axis values.
-                        */
-                        if (gapSize <= 8) {
-                            for (int j = gapSize; j >= 1; j--) { // fill the gap backwards
-                                it->second.mz.insert(it->second.mz.begin() + i, it->second.mz[i-1] + j * expectedDifference);
-                                it->second.intensity.insert(it->second.intensity.begin() + i, 0.0);
-                            }
-                        } else {
-                            /* If the gapSize is larger than 8, we limit the gap size to 8 and add 4 new data points close to the (i-1) data point and 4 new data points close to the (i) data point. The new data points are filled with zero values for the intensity and inter/extrapolated values for the x-axis values. Moreover, we add a separator for later splitting the data set into smaller data sets by adding an additional zero in between where the intensity and x-axis are set to -1.0. This is done to indicate that the data set should be split at this point.  
-                            */
-                            gapSize = 8;
-                            // add 4 new data points close to the (i) data point
-                            for (int j = 1; j <= 4; j++) { // fill the gap forwards
-                                it->second.mz.insert(it->second.mz.begin() + i, it->second.mz[i] -  expectedDifference);
-                                it->second.intensity.insert(it->second.intensity.begin() + i, 0.0);
-                            }
-                            // add a separator
-                            it->second.mz.insert(it->second.mz.begin() + i, -1.0);
-                            it->second.intensity.insert(it->second.intensity.begin() + i, -1.0);
-                            // add 4 new data points close to the (i-1) data point 
-                            for (int j = 4; j >= 1; j--) { // fill the gap backwards
-                                it->second.mz.insert(it->second.mz.begin() + i, it->second.mz[i-1] + j * expectedDifference);
-                                it->second.intensity.insert(it->second.intensity.begin() + i, 0.0);
-                            }     
-                        }
-                        i += gapSize; // Update the index to the next data point
-                    }  else {
-                        // update the expected difference
-                        expectedDifference = (expectedDifference + difference) / 2;
-                    } 
-                }   
-            }
-            /* We will always add new data points in the end of the data set. */
-            int gapSize = 4;
-            for (int j = 1; j <= gapSize; j++) { // fill the gap forwards
-                it->second.mz.push_back(it->second.mz[it->second.mz.size()-1] + expectedDifference);
-                it->second.intensity.push_back(0.0);
-            }
+            this->MeasurementData::zeroFilling(it->second.mz, it->second.intensity, 8);
         }
     }
 

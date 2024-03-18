@@ -56,6 +56,7 @@
                 "-O3",
                 "src/qalgorithms_datatype_mass_spectrum.cpp",
                 "src/qalgorithms_measurement_data_lcms.cpp",
+                "src/qalgorithms_measurement_data.cpp",
                 "test/test_qPeak_class.cpp",
                 "-o",
                 "test/qPeak_class_test.exe"
