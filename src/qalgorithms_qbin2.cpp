@@ -108,6 +108,14 @@ namespace q
         }
     }
 
+    void BinContainer::assignDQSB(const FeatureList *rawdata, int maxdist)
+    {
+        for (size_t i = 0; i < finishedBins.size(); i++)
+        {
+            finishedBins[i].makeDQSB(rawdata, maxdist);
+        }
+    }
+
 #pragma endregion "BinContainer"
 
 #pragma region "Bin"
@@ -234,7 +242,7 @@ namespace q
         // if prev - push back, pop front
     }
 
-    double Bin::findOuterMinmax(std::vector<Feature *>::const_iterator position, const int &innerMinmax, bool direction)
+    double Bin::findOuterMinmax(std::vector<Feature *>::const_iterator position, const double &innerMinmax, bool direction)
     { // direction TRUE = forward, direction FALSE = backwards
         Feature *F = *position;
         if (direction)
@@ -282,6 +290,7 @@ namespace q
         // only the minimum scans - k and the maximum scans + k need to be checked
         // if a value m/z is not lower than the minimum of mz or larger than the maximum while being in the allowed scan interval, it is by definition included in the bin
         // check first scan from min and max of bin, next from same position in next scan (add start of scan to both iterators, move inwards if larger than min/max or outwards otherwise)
+        int n = featurelist.size();
         int minScanNo = featurelist.front()->scanNo - maxdist;
         if (minScanNo < 1)
         {
@@ -298,9 +307,9 @@ namespace q
         double inMin = featurelist.front()->mz;
         double inMax = featurelist.back()->mz;
 
-        std::vector<scancomp *> compspace; // contains structs with scan number and the two closest mz values present in the scan
         std::vector<Feature *>::const_iterator goToMinOut;
         std::vector<Feature *>::const_iterator goToMaxOut;
+        std::vector<double> compspace; // even index: minOut, odd index: maxOut
 
         for (int i = minScanNo; i < maxScanNo; i++) // iterate over all scans viable for entire bin
         {
@@ -308,12 +317,11 @@ namespace q
             goToMaxOut = rawdata->allFeatures.begin() + rawdata->scanBreaks[i + 1] - 1; // end of the currently checked scan
             double minOut = findOuterMinmax(goToMinOut, inMin, true);
             double maxOut = findOuterMinmax(goToMaxOut, inMax, false);
-            scancomp *outMinMax = new scancomp{{minOut, maxOut}, i};
-            compspace.push_back(outMinMax);
+            compspace.push_back(minOut);
+            compspace.push_back(maxOut);
         }
 
         // create vector of mean distance to other features
-        int n = featurelist.size();
         std::vector<double> meanDist(n);
         for (size_t i = 0; i < n - 1; i++)
         {
@@ -326,7 +334,39 @@ namespace q
             meanDist[i] == meanDist[i] / (n - 1);
         }
 
-        // find closest match in mz for min and max mz -
+        // find closest match in mz for min and max mz
+        std::vector<double> minOuter(n); // contains lowest elegible distance for every point
+        int scanMin;
+        int scanMax;
+        double lowestDist;
+        double dist;
+        for (size_t i = 0; i < n; i++)
+        {
+            lowestDist = 225;
+
+            for (size_t j = 2 * i; j < 2 * i + 4 * maxdist + 1; j++) // 2*i since every two elements is one new scan. From this i, the range is traversed until two max distances (*2 per scan). +1 to include both elements of the last scan
+            {
+                dist = featurelist[i]->mz - compspace[j];
+                if (dist < lowestDist)
+                {
+                    lowestDist = dist;
+                }
+            }
+            minOuter[i] = lowestDist; // minOuter redundant ßßß
+            DQSB[i] = calcDQS(meanDist[i], minOuter[i]);
+        }
+    }
+
+    double Bin::calcDQS(double MID, double MOD)
+    {
+        double dqs = MID;
+        if (dqs < MOD)
+        {
+            dqs = MOD;
+        }
+        dqs = (MID - MOD) * 0.5 * (1 + 1 / (1 + MID)) / dqs; // sm(i) term
+        dqs = (dqs + 1) / 2;                                 // interval transform
+        return dqs;
     }
 
 #pragma endregion "Bin"
@@ -350,8 +390,10 @@ int main()
     std::cout << "created feature list with scan index\n";
     q::BinContainer testcontainer;
     testcontainer.makeFirstBin(&testdata);
-    std::vector<int> dim = {1, 2}; // last element must be the number of scans ßßß implement outside of the switch statement ßßß endless loop if scan terminator is not included
-    testcontainer.subsetBins(dim, 7);
+    std::vector<int> dim = {1, 2};    // last element must be the number of scans ßßß implement outside of the switch statement ßßß endless loop if scan terminator is not included
+    testcontainer.subsetBins(dim, 7); // 7 = max dist in scans
+
+    testcontainer.assignDQSB(&testdata, 7);
 
     // std::cout.rdbuf(coutbuf); // reset to standard output again
     std::cout << "\n\nDone!\n\n";
