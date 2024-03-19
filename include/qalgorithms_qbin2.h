@@ -40,10 +40,11 @@ namespace q
     class Bin
     {
     private:
-        std::vector<Feature *> featurelist;
+        
         std::vector<double> cumError; // cumulative error in mz
 
     public:
+        std::vector<Feature *> featurelist;
         std::vector<double> activeOS;
         std::vector<double> DQSB;                                                                                           // Order Space
         Bin(const std::vector<Feature *>::iterator &startBin, const std::vector<Feature *>::iterator &endBin); // const std::vector<Feature> &sourceList,
