@@ -54,7 +54,7 @@ namespace q
         void subsetMZ(std::deque<Bin> *bincontainer, const std::vector<double> &OS, int startBin, int endBin); // mz, error, RT and beginning/end are dictated by bin contents
         void subsetScan(std::deque<Bin> *bincontainer, std::vector<Bin> *finishedBins, const int &maxdist);
         void makeDQSB(const FeatureList *rawdata, const int &maxdist);
-        double findOuterMinmax(std::vector<Feature *>::const_iterator position, const double &innerMinmax, bool direction);
+        double findOuterMinmax(std::vector<Feature *>::const_iterator position, std::vector<Feature *>::const_iterator scanend, const double &innerMinmax, bool direction);
         double calcDQS(double MID, double MOD); // Mean Inner Distance, Minimum Outer Distance
         // Feature makeFeature(); // combine all features to one using means, modify mzError
     };

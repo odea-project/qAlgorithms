@@ -5,6 +5,7 @@ namespace q
     int subsetcount = 0;
     int perfectbins = 0;
     int OSzero = 0;
+    
 #pragma region "Featurelist"
     FeatureList::FeatureList()
     {
@@ -79,12 +80,11 @@ namespace q
                     for (size_t i = 0; i < startpoint; i++)
                     { // random access not needed, first element -> make bins -> move element or make bins, then remove first entry ; do n times
                         binDeque.front().makeOS();
-                        // std::cout << "\nIdentical Masses in Featurelist: " << OSzero; // two pairs of identical masses
                         binDeque.front().makeCumError();                                                                          // always after order space, since the features get sorted
                         binDeque.front().subsetMZ(&binDeque, binDeque.front().activeOS, 0, binDeque.front().activeOS.size() - 1); // takes element from binDeque, starts subsetting, appends bins to binDeque
                         binDeque.pop_front();                                                                                     // remove the element that was processed from binDeque
                     }
-                    
+
                     std::cout << "\nmz subsetting done\nTotal bins: " << binDeque.size();
                     break;
                 }
@@ -143,13 +143,13 @@ namespace q
         for (size_t i = 0; i + 1 < activeOS.size(); ++i) // +1 to prevent accessing outside of vector
         {
             activeOS[i] = featurelist[i + 1]->mz - featurelist[i]->mz;
-            if (activeOS[i] == 0)
-            {
-                ++OSzero;
-            }
-            
+            // if (activeOS[i] == 0)
+            // {
+            //     ++OSzero;
+            // }
         }
-        activeOS.back() = -225; // -225 to signify last element in OS
+        // std::cout << OSzero; // there are two pairs of identical masses in the dataset
+        activeOS.back() = -225; // -225 to denote last element in OS
     }
 
     void Bin::makeCumError()
@@ -222,7 +222,7 @@ namespace q
                     }
                     else
                     {
-                        // no bins of size 5 are ever produced when splitting by scans
+                        // no bins of size 5 are ever produced when splitting by scans - ßßß try reduced maxdist
                         // viable bin, stable in scan dimension
                         Bin output(newstart, featurelist.begin() + i - 1);
                         bincontainer->push_back(output);
@@ -242,21 +242,16 @@ namespace q
                 Bin output(newstart, featurelist.end());
                 bincontainer->push_back(output);
             }
-            // test condition for the bin being identical to the previous one
+        }
+    }
+
+    double Bin::findOuterMinmax(std::vector<Feature *>::const_iterator position, std::vector<Feature *>::const_iterator scanend, const double &innerMinmax, bool direction)
+    {   // direction TRUE = forward, direction FALSE = backwards
+        if (innerMinmax == 100.07621496252899) // same exact mass exists II
+        {
+            std::cout << "\n";
         }
 
-        // iterate, compare with previous for gap
-        // do split
-        // if prev - push back, pop front
-    }
-
-    double Bin::findOuterMinmax(std::vector<Feature *>::const_iterator position, const double &innerMinmax, bool direction)
-    { // direction TRUE = forward, direction FALSE = backwards
-    if (innerMinmax == 110.131907489017) // same exact mass exists II
-    {
-        std::cout << "\n";
-    }
-    
         Feature *F = *position; // position is a null pointer
         if (direction)
         {
@@ -267,7 +262,7 @@ namespace q
             else
             {
                 double closestMZ = F->mz;
-                while (F->mz < innerMinmax)
+                while (F->mz < innerMinmax && position != scanend)
                 {
                     closestMZ = F->mz;
                     ++position;
@@ -285,10 +280,10 @@ namespace q
             else
             {
                 double closestMZ = F->mz;
-                while (F->mz > innerMinmax)
+                while (F->mz > innerMinmax && position != scanend)
                 {
                     closestMZ = F->mz;
-                    --position;
+                    --position; // suspicion: position is moved outside of feature list
                     F = *position;
                 }
                 return closestMZ;
@@ -311,9 +306,9 @@ namespace q
             minScanNo = 1;
         }
         int maxScanNo = featurelist.back()->scanNo + maxdist;
-        if (maxScanNo > rawdata->scanBreaks.size())
+        if (maxScanNo > rawdata->scanBreaks.size() - 1)
         {
-            maxScanNo = rawdata->scanBreaks.size();
+            maxScanNo = rawdata->scanBreaks.size() - 1; // -1 to prevent searching the last value of scandist, which is just the size of the dataset
         }
         // sort featurelist by mz
         std::sort(featurelist.begin(), featurelist.end(), [](const Feature *lhs, const Feature *rhs)
@@ -323,20 +318,18 @@ namespace q
 
         std::vector<Feature *>::const_iterator goToMinOut;
         std::vector<Feature *>::const_iterator goToMaxOut;
+        std::vector<Feature *>::const_iterator minOutOverflow;
+        std::vector<Feature *>::const_iterator maxOutOverflow;
         std::vector<double> compspace; // even index: minOut, odd index: maxOut
-
-        if (n == 64)
-        {
-            std::cout << inMin <<"," << inMax << "\n"; // exception at the second bin of size 64 (segfault)
-        }
-        
 
         for (int i = minScanNo; i < maxScanNo; i++) // iterate over all scans viable for entire bin
         {
             goToMinOut = rawdata->allFeatures.begin() + rawdata->scanBreaks[i];         // start of the currently cheked scan
             goToMaxOut = rawdata->allFeatures.begin() + rawdata->scanBreaks[i + 1] - 1; // end of the currently checked scan
-            double minOut = findOuterMinmax(goToMinOut, inMin, true);
-            double maxOut = findOuterMinmax(goToMaxOut, inMax, false);
+            minOutOverflow = goToMaxOut;
+            maxOutOverflow = goToMinOut;
+            double minOut = findOuterMinmax(goToMinOut, minOutOverflow, inMin, true);
+            double maxOut = findOuterMinmax(goToMaxOut, maxOutOverflow, inMax, false);
             compspace.push_back(minOut);
             compspace.push_back(maxOut);
         }
@@ -412,7 +405,7 @@ int main()
     testcontainer.makeFirstBin(&testdata);
     std::vector<int> dim = {1, 2};    // last element must be the number of scans ßßß implement outside of the switch statement ßßß endless loop if scan terminator is not included
     testcontainer.subsetBins(dim, 7); // 7 = max dist in scans
-
+    std::cout << "\ncalculating DQSBs...\n";
     testcontainer.assignDQSB(&testdata, 7);
 
     // std::cout.rdbuf(coutbuf); // reset to standard output again
