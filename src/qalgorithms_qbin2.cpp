@@ -125,12 +125,12 @@ namespace q
         file_out << "mz,scan,RT,bin,dqs\n";
         for (size_t i = 0; i < finishedBins.size(); i++)
         {
-            std::vector<Feature*> features = finishedBins[i].featurelist;
-            for (size_t j = 0; j < features.size(); j++)
-            {
-                file_out << features[j]->mz << "," << features[j]->scanNo << "," << features[j]->RT << "," << i << "," << finishedBins[i].DQSB[j] << "\n";
-            }
-            
+            // std::vector<Feature*> features = finishedBins[i].featurelist;
+            // for (size_t j = 0; j < features.size(); j++)
+            // {
+            //     file_out << std::setprecision (15) << features[j]->mz << "," << features[j]->scanNo << "," << features[j]->RT << "," << i << "," << finishedBins[i].DQSB[j] << "\n";
+            // }
+            file_out << finishedBins[i].featurelist.size() << "\n";
             
         }
     }
@@ -262,11 +262,6 @@ namespace q
 
     double Bin::findOuterMinmax(std::vector<Feature *>::const_iterator position, std::vector<Feature *>::const_iterator scanend, const double &innerMinmax, bool direction)
     {   // direction TRUE = forward, direction FALSE = backwards
-        if (innerMinmax == 100.07621496252899) // same exact mass exists II
-        {
-            std::cout << "\n";
-        }
-
         Feature *F = *position; // position is a null pointer
         if (direction)
         {

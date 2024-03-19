@@ -20,3 +20,12 @@ https://www.agner.org/optimize/optimizing_cpp.pdf
 pointer -> methode
 
 
+massefehler für mehrere Featurelisten?
+
+qGrouping
+
+ßßß Intensitätsprofile
+
+Kriterium für besseres DQS-berechnen (Subsampling?) // erst nur im selben scan suchen und anschließend die mit gutem DQS priorisieren
+mittlere innendistanz optimieren
+ 
