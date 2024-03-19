@@ -35,7 +35,7 @@ namespace q
             }
 #pragma GCC diagnostic push // do not display the specific warning for rounding a double to integer
 #pragma GCC diagnostic ignored "-Wnarrowing"
-            int i_scanNo = round(row[d_scanNo]); // round gives warning, conversion functions as intended
+            int i_scanNo = (int) row[d_scanNo]; // round gives warning, conversion functions as intended
 #pragma GCC diagnostic pop
             Feature *F = new Feature{row[d_mz], row[d_mzError], row[d_RT], i_scanNo};
             allFeatures.push_back(F);
@@ -119,6 +119,22 @@ namespace q
         }
     }
 
+    void BinContainer::printAllBins(std::string path){
+        std::fstream file_out;
+        file_out.open(path);
+        file_out << "mz,scan,RT,bin,dqs\n";
+        for (size_t i = 0; i < finishedBins.size(); i++)
+        {
+            std::vector<Feature*> features = finishedBins[i].featurelist;
+            for (size_t j = 0; j < features.size(); j++)
+            {
+                file_out << features[j]->mz << "," << features[j]->scanNo << "," << features[j]->RT << "," << i << "," << finishedBins[i].DQSB[j] << "\n";
+            }
+            
+            
+        }
+    }
+
 #pragma endregion "BinContainer"
 
 #pragma region "Bin"
@@ -163,7 +179,6 @@ namespace q
     void Bin::subsetMZ(std::deque<Bin> *bincontainer, const std::vector<double> &OS, int startBin, int endBin) // bincontainer is binDeque of BinContainer // OS cannot be solved with pointers since index has to be transferred to frature list
     {
         ++subsetcount;
-        // std::cout << subsetcount << " ";
         const int n = endBin - startBin; // size is equal to n+1
         if (n < 5)
         {
@@ -359,7 +374,7 @@ namespace q
 
             for (size_t j = 2 * i; j < 2 * i + 4 * maxdist + 1; j++) // 2*i since every two elements is one new scan. From this i, the range is traversed until two max distances (*2 per scan). +1 to include both elements of the last scan
             {
-                dist = std::abs(featurelist[i]->mz - compspace[j]);
+                dist = std::abs(featurelist[i]->mz - compspace[j]); //ßßß start at -maxdist? Y ßßß gewichtung
                 if (dist < lowestDist)
                 {
                     lowestDist = dist;
@@ -410,5 +425,6 @@ int main()
 
     // std::cout.rdbuf(coutbuf); // reset to standard output again
     std::cout << "\n\nDone!\n\n";
+    testcontainer.printAllBins("../../binlist.csv");
     return 0;
 }
