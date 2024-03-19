@@ -63,7 +63,7 @@ namespace q
         void print();
 
     private:
-        std::unordered_map<int, std::unique_ptr<DataType::LC_MS>> data;
+        std::unordered_map<int, std::unique_ptr<DataType::MassSpectrum>> data;
     };
 }
 #endif // QALGORITHMS_MEASUREMENT_DATA_LCMS_H

@@ -5,6 +5,7 @@
 #include <vector>
 #include <unordered_map>
 #include <memory>
+#include <variant>
 
 namespace q
 {
@@ -27,6 +28,8 @@ namespace q
                 double intensity;
                 double mz;
                 int df;
+
+                DataPoint(double intensity, double mz, int df) : intensity(intensity), mz(mz), df(df) {}
             };
 
             // constructors
@@ -36,7 +39,16 @@ namespace q
             ~MassSpectrum();
 
             // properties
-            std::unordered_map<DataField, void*> data;
+            using variableType = std::variant
+            <
+                int,
+                double, 
+                MSLevel, 
+                IonizationMode, 
+                MeasurementMode, 
+                std::unordered_map<int, std::unique_ptr<DataPoint>>
+            >;
+            std::unordered_map<DataField, std::unique_ptr<variableType>> data;
         };
 
         /**

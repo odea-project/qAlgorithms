@@ -7,8 +7,16 @@
 #include <fstream>
 #include <sstream>
 
+
+
 namespace q
 {
+    // usings
+    using VariableType = DataType::MassSpectrum::variableType;
+    using DataField = DataType::DataField;
+    using MassSpectrum = DataType::MassSpectrum;
+    using DataPoint = DataType::MassSpectrum::DataPoint;
+
     LCMSData::LCMSData()
     {
     }
@@ -17,7 +25,7 @@ namespace q
     {
     }
 
-    void LCMSData::readCSV(std::string filename, int rowStart, int rowEnd, int colStart, int colEnd, char separator, std::vector<DataType::DataField> variableTypes)
+    void LCMSData::readCSV(std::string filename, int rowStart, int rowEnd, int colStart, int colEnd, char separator, std::vector<DataField> variableTypes)
     {
         std::ifstream file(filename);
         std::string line;
@@ -39,7 +47,7 @@ namespace q
         int scanNumberIndex = -1;
         for (int i = 0; i < variableTypes.size(); i++)
         {
-            if (variableTypes[i] == DataType::DataField::SCANNUMBER)
+            if (variableTypes[i] == DataField::SCANNUMBER)
             {
                 scanNumberIndex = i;
                 break;
@@ -56,7 +64,7 @@ namespace q
         int retentionTimeIndex = -1;
         for (int i = 0; i < variableTypes.size(); i++)
         {
-            if (variableTypes[i] == DataType::DataField::RETENTIONTIME)
+            if (variableTypes[i] == DataField::RETENTIONTIME)
             {
                 retentionTimeIndex = i;
                 break;
@@ -73,7 +81,7 @@ namespace q
         int mzIndex = -1;
         for (int i = 0; i < variableTypes.size(); i++)
         {
-            if (variableTypes[i] == DataType::DataField::MZ)
+            if (variableTypes[i] == DataField::MZ)
             {
                 mzIndex = i;
                 break;
@@ -90,7 +98,7 @@ namespace q
         int intensityIndex = -1;
         for (int i = 0; i < variableTypes.size(); i++)
         {
-            if (variableTypes[i] == DataType::DataField::INTENSITY)
+            if (variableTypes[i] == DataField::INTENSITY)
             {
                 intensityIndex = i;
                 break;
@@ -145,28 +153,27 @@ namespace q
             // check if the scan number is already in the data map
             if (this->data.find(scanNumber) == this->data.end())
             {
-                // add the LC_MS object to the data map
-                this->data[scanNumber] = std::make_unique<DataType::LC_MS>();
-                // add the scan number to the LC_MS object
-                int* scanNumberPtr = new int(scanNumber);
-                this->data[scanNumber]->data[DataType::DataField::SCANNUMBER] = scanNumberPtr;
+                // add the MassSpectrum object to the data map
+                this->data[scanNumber] = std::make_unique<MassSpectrum>();
+                // add the scan number to the MassSpectrum object
+                this->data[scanNumber]->data[DataField::SCANNUMBER] = std::make_unique<VariableType>(scanNumber);
                 // reset the internal datapoint iterator
                 j = 0;
                 // add the DataPoint Map to the data map
-                this->data[scanNumber]->data[DataType::DataField::DATAPOINT] = new std::unordered_map<int, DataType::MassSpectrum::DataPoint>();
+                this->data[scanNumber]->data[DataField::DATAPOINT] = std::make_unique<VariableType>(std::unordered_map<int, std::unique_ptr<DataPoint>>());
             }
 
             // add the retention time to the data map
-            double* retentionTimePtr = new double(std::stod(raw_data[i][retentionTimeIndex]));
-            this->data[scanNumber]->data[DataType::DataField::RETENTIONTIME] = retentionTimePtr;
+            this->data[scanNumber]->data[DataField::RETENTIONTIME] = std::make_unique<VariableType>(std::stod(raw_data[i][retentionTimeIndex]));
 
             // add the DataPoint to the data map
-            DataType::MassSpectrum::DataPoint* dataPoint = new DataType::MassSpectrum::DataPoint();
-            dataPoint->mz = std::stod(raw_data[i][mzIndex]);
-            dataPoint->intensity = std::stod(raw_data[i][intensityIndex]);
-            dataPoint->df = 1;
-            // add the DataPoint to the DataPoint Map at the internal datapoint iterator
-            static_cast<std::unordered_map<int, DataType::MassSpectrum::DataPoint>*>(this->data[scanNumber]->data[DataType::DataField::DATAPOINT])->insert({j, *dataPoint});
+            auto& dataPointMap = std::get<std::unordered_map<int, std::unique_ptr<DataPoint>>>(*this->data[scanNumber]->data[DataField::DATAPOINT]);
+            dataPointMap[j] = std::make_unique<DataPoint>
+            (
+                std::stod(raw_data[i][mzIndex]), 
+                std::stod(raw_data[i][intensityIndex]), 
+                1
+            );
             j++;
         }
     }
@@ -244,21 +251,23 @@ namespace q
         for (auto it = this->data.begin(); it != this->data.end(); it++)
         {
             std::cout << "Scan Number: " << it->first << std::endl;
-            std::cout << "Retention Time: " << *static_cast<double*>(it->second->data[DataType::DataField::RETENTIONTIME]) << std::endl;
+            auto retentionTime = std::get<double>(*it->second->data[DataField::RETENTIONTIME]);
+            std::cout << "Retention Time: " << retentionTime << std::endl;
+
 
             std::cout << "MZ: ";
             // iterate through the DataPoint Map for MZ
-            for (auto it2 = static_cast<std::unordered_map<int, DataType::MassSpectrum::DataPoint>*>(it->second->data[DataType::DataField::DATAPOINT])->begin(); it2 != static_cast<std::unordered_map<int, DataType::MassSpectrum::DataPoint>*>(it->second->data[DataType::DataField::DATAPOINT])->end(); it2++)
+            for (auto it2 = std::get<std::unordered_map<int, std::unique_ptr<DataPoint>>>(*it->second->data[DataType::DataField::DATAPOINT]).begin(); it2 != std::get<std::unordered_map<int, std::unique_ptr<DataPoint>>>(*it->second->data[DataType::DataField::DATAPOINT]).end(); it2++)
             {
-                std::cout << it2->second.mz << " ";
+                std::cout << it2->second->mz << " ";
             }
             std::cout << std::endl;
 
             std::cout << "Intensity: ";
             // iterate through the DataPoint Map for Intensity
-            for (auto it2 = static_cast<std::unordered_map<int, DataType::MassSpectrum::DataPoint>*>(it->second->data[DataType::DataField::DATAPOINT])->begin(); it2 != static_cast<std::unordered_map<int, DataType::MassSpectrum::DataPoint>*>(it->second->data[DataType::DataField::DATAPOINT])->end(); it2++)
+            for (auto it2 = std::get<std::unordered_map<int, std::unique_ptr<DataPoint>>>(*it->second->data[DataType::DataField::DATAPOINT]).begin(); it2 != std::get<std::unordered_map<int, std::unique_ptr<DataPoint>>>(*it->second->data[DataType::DataField::DATAPOINT]).end(); it2++)
             {
-                std::cout << it2->second.intensity << " ";
+                std::cout << it2->second->intensity << " ";
             }
             std::cout << std::endl;
             
