@@ -51,6 +51,12 @@ namespace q {
              */
             void cutData();
 
+            /**
+            * @brief Interpolate y-axis values
+            * @details The interpolateData method interpolates the y-axis values. The method uses quadratic interpolation to interpolate the y-axis values in the log space.
+            */
+            void interpolateData();
+
             // debugging
             void print();
         private:

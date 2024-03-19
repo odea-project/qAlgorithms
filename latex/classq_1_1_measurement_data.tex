@@ -22,6 +22,12 @@ virtual \mbox{\hyperlink{classq_1_1_measurement_data_a5b13907b217ee6690eef821d4d
 \item 
 virtual void \mbox{\hyperlink{classq_1_1_measurement_data_a8295223e88004418fcc9fa62b1ced99d}{read\+CSV}} (std\+::string filename, int row\+Start, int row\+End, int col\+Start, int col\+End, char separator, std\+::vector$<$ \mbox{\hyperlink{namespaceq_1_1_data_type_a9fcd47c7d7d77f908f041cad931962aa}{Data\+Type\+::\+Data\+Field}} $>$ variable\+Types)=0
 \item 
+void \mbox{\hyperlink{classq_1_1_measurement_data_ae3dfbca5264b979f312f581491addf63}{zero\+Filling}} (std\+::vector$<$ double $>$ \&x\+Data, std\+::vector$<$ double $>$ \&y\+Data, int k)
+\begin{DoxyCompactList}\small\item\em Identify and fill gaps in the data. \end{DoxyCompactList}\item 
+std\+::vector$<$ size\+\_\+t $>$ \mbox{\hyperlink{classq_1_1_measurement_data_a132a6fa74bc575aaeccd260d73b96f00}{cut\+Data}} (std\+::vector$<$ double $>$ \&x\+Data, std\+::vector$<$ double $>$ \&y\+Data) const
+\begin{DoxyCompactList}\small\item\em Cut the data into smaller data sets. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{classq_1_1_measurement_data_afc29734a2b7987f7a7510493c68b3a2c}{interpolate\+Data}} (std\+::vector$<$ double $>$ \&x\+Data, std\+::vector$<$ double $>$ \&y\+Data)
+\begin{DoxyCompactList}\small\item\em Interpolate y-\/axis values. \end{DoxyCompactList}\item 
 virtual void \mbox{\hyperlink{classq_1_1_measurement_data_a3cf576e649244debcc1c0cf67038e4d3}{print}} ()=0
 \end{DoxyCompactItemize}
 
@@ -49,6 +55,44 @@ Definition at line \mbox{\hyperlink{qalgorithms__measurement__data_8h_source_l00
 
 
 \doxysubsection{Member Function Documentation}
+\Hypertarget{classq_1_1_measurement_data_a132a6fa74bc575aaeccd260d73b96f00}\label{classq_1_1_measurement_data_a132a6fa74bc575aaeccd260d73b96f00} 
+\index{q::MeasurementData@{q::MeasurementData}!cutData@{cutData}}
+\index{cutData@{cutData}!q::MeasurementData@{q::MeasurementData}}
+\doxysubsubsection{\texorpdfstring{cutData()}{cutData()}}
+{\footnotesize\ttfamily std\+::vector$<$ size\+\_\+t $>$ q\+::\+Measurement\+Data\+::cut\+Data (\begin{DoxyParamCaption}\item[{std\+::vector$<$ double $>$ \&}]{x\+Data,  }\item[{std\+::vector$<$ double $>$ \&}]{y\+Data }\end{DoxyParamCaption}) const}
+
+
+
+Cut the data into smaller data sets. 
+
+The cut\+Data method cuts the data into smaller data sets. The method uses the separator value to split the data into smaller data sets. The separator value is set to -\/1.\+0 for the x-\/axis and -\/1.\+0 for the y-\/axis. For each cut, the method creates a new data subset and stores it in the data map using a sub-\/dataset ID as the secondary key. 
+\begin{DoxyParams}{Parameters}
+{\em x\+Data} & A vector of x-\/axis values \\
+\hline
+{\em y\+Data} & A vector of y-\/axis values \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+A vector of indices where the data needs to be cut 
+\end{DoxyReturn}
+
+
+Definition at line \mbox{\hyperlink{qalgorithms__measurement__data_8cpp_source_l00082}{82}} of file \mbox{\hyperlink{qalgorithms__measurement__data_8cpp_source}{qalgorithms\+\_\+measurement\+\_\+data.\+cpp}}.
+
+\Hypertarget{classq_1_1_measurement_data_afc29734a2b7987f7a7510493c68b3a2c}\label{classq_1_1_measurement_data_afc29734a2b7987f7a7510493c68b3a2c} 
+\index{q::MeasurementData@{q::MeasurementData}!interpolateData@{interpolateData}}
+\index{interpolateData@{interpolateData}!q::MeasurementData@{q::MeasurementData}}
+\doxysubsubsection{\texorpdfstring{interpolateData()}{interpolateData()}}
+{\footnotesize\ttfamily void q\+::\+Measurement\+Data\+::interpolate\+Data (\begin{DoxyParamCaption}\item[{std\+::vector$<$ double $>$ \&}]{x\+Data,  }\item[{std\+::vector$<$ double $>$ \&}]{y\+Data }\end{DoxyParamCaption})}
+
+
+
+Interpolate y-\/axis values. 
+
+The interpolate\+Data method interpolates the y-\/axis values. The method useses a gaussian model to interpolate the y-\/axis values. To estimate the bandwidth, the function uses the log-\/transform to transform the gaussian data into parabola data\+: \[ \log(y) = \log(A) - \frac{(x - \mu)^2}{2\sigma^2} \] For interpolation, the derivative of this function is of interest\+: \[ \frac{d}{dx} \log(y) = -\frac{x - \mu}{\sigma^2} \] This is a function with two unknowns, i.\+e., having two data points next to the interpolation point, we can solve for the two unknowns. Hereby, $ \mu $ can be estimated like\+: \[ \mu = \frac{\delta y_2 x_1 - \delta y_1 x_2}{\delta y_2 - \delta y_1} \] 
+
+Definition at line \mbox{\hyperlink{qalgorithms__measurement__data_8cpp_source_l00095}{95}} of file \mbox{\hyperlink{qalgorithms__measurement__data_8cpp_source}{qalgorithms\+\_\+measurement\+\_\+data.\+cpp}}.
+
 \Hypertarget{classq_1_1_measurement_data_a3cf576e649244debcc1c0cf67038e4d3}\label{classq_1_1_measurement_data_a3cf576e649244debcc1c0cf67038e4d3} 
 \index{q::MeasurementData@{q::MeasurementData}!print@{print}}
 \index{print@{print}!q::MeasurementData@{q::MeasurementData}}
@@ -69,8 +113,32 @@ Implemented in \mbox{\hyperlink{classq_1_1_l_c_m_s_data_aa808ac2ee343120a4a89f8e
 
 Implemented in \mbox{\hyperlink{classq_1_1_l_c_m_s_data_ab4632d3d3138d17fd5a7f479b70c2846}{q\+::\+LCMSData}}.
 
+\Hypertarget{classq_1_1_measurement_data_ae3dfbca5264b979f312f581491addf63}\label{classq_1_1_measurement_data_ae3dfbca5264b979f312f581491addf63} 
+\index{q::MeasurementData@{q::MeasurementData}!zeroFilling@{zeroFilling}}
+\index{zeroFilling@{zeroFilling}!q::MeasurementData@{q::MeasurementData}}
+\doxysubsubsection{\texorpdfstring{zeroFilling()}{zeroFilling()}}
+{\footnotesize\ttfamily void q\+::\+Measurement\+Data\+::zero\+Filling (\begin{DoxyParamCaption}\item[{std\+::vector$<$ double $>$ \&}]{x\+Data,  }\item[{std\+::vector$<$ double $>$ \&}]{y\+Data,  }\item[{int}]{k }\end{DoxyParamCaption})}
 
 
-The documentation for this class was generated from the following file\+:\begin{DoxyCompactItemize}
+
+Identify and fill gaps in the data. 
+
+The zero\+Filling method identifies and fills gaps in the data. The method uses difference between two neighboring data points to identify gaps. If the difference is 1.\+75 times greater than expected, then the method fills the gap with zero values for y-\/axis and inter/extrapolated values for x-\/axis values. For the expected difference, the method the difference of the last two data points that not show a gap. However, the first expected difference is set to the median of the differences of the total data points. However, the maximum gap size is set to "{}k/2"{} per side, i.\+e., "{}k"{} in total, where there is a gap leftover between the fourth and fifth data points. 
+\begin{DoxyParams}{Parameters}
+{\em x\+Data} & A vector of x-\/axis values \\
+\hline
+{\em y\+Data} & A vector of y-\/axis values \\
+\hline
+{\em k} & The maximum gap size \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line \mbox{\hyperlink{qalgorithms__measurement__data_8cpp_source_l00007}{7}} of file \mbox{\hyperlink{qalgorithms__measurement__data_8cpp_source}{qalgorithms\+\_\+measurement\+\_\+data.\+cpp}}.
+
+
+
+The documentation for this class was generated from the following files\+:\begin{DoxyCompactItemize}
 \item 
-include/\mbox{\hyperlink{qalgorithms__measurement__data_8h}{qalgorithms\+\_\+measurement\+\_\+data.\+h}}\end{DoxyCompactItemize}
+include/\mbox{\hyperlink{qalgorithms__measurement__data_8h}{qalgorithms\+\_\+measurement\+\_\+data.\+h}}\item 
+src/\mbox{\hyperlink{qalgorithms__measurement__data_8cpp}{qalgorithms\+\_\+measurement\+\_\+data.\+cpp}}\end{DoxyCompactItemize}

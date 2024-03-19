@@ -170,6 +170,16 @@ namespace q {
         this->data = updatedData;
     }
 
+    void LCMSData::interpolateData() {
+        // iterate over all data sets
+        for (auto it = this->data.begin(); it != this->data.end(); it++) {
+            // iterate over all sub data sets
+            for (auto it2 = it->second.begin(); it2 != it->second.end(); it2++) {
+                this->MeasurementData::interpolateData(it2->second.mz, it2->second.intensity);
+            }
+        }
+    }
+
     void LCMSData::print() {
         for (auto it = this->data.begin(); it != this->data.end(); it++) {
             // iterate over all sub data sets

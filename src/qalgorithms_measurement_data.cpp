@@ -79,7 +79,9 @@ namespace q {
     }
   }
 
-  std::vector<size_t> MeasurementData::cutData(std::vector<double>& xData, std::vector<double>& yData) const {
+  std::vector<size_t> MeasurementData::cutData(
+    std::vector<double>& xData, 
+    std::vector<double>& yData) const {
     // find the separator
     std::vector<size_t> separators;
     for (int i = 0; i < xData.size(); i++) {
@@ -89,4 +91,126 @@ namespace q {
     }
     return separators;
   }
+
+  void MeasurementData::interpolateData(
+    std::vector<double>& xData, 
+    std::vector<double>& yData) {
+      /* Handle the beginning of the data. Hereby, the data always starts with n zeros. Therefore we need to find the first three data points that are not zero.*/
+      int i = 0;
+      int I = 0;
+      int flag = 0;
+      std::vector<double> xDataTemp;
+      std::vector<double> yDataTemp;
+      while (flag < 3) {
+        if (i >= xData.size()) {
+          std::cerr << "Error: The data set is too small to interpolate." << std::endl;
+          break;
+        }
+        if (yData[i] > 0.0) {
+          xDataTemp.push_back(xData[i]);
+          yDataTemp.push_back(log(yData[i])); // we use log space for interpolation
+          if (flag == 0) {
+            I = i;
+          }
+          flag++;
+        }
+        i++;
+      }
+      // calculate the coefficients b0, b1, and b2 for the quadratic interpolation
+      Matrix B = linreg(xDataTemp, yDataTemp, 2);
+      // calculate the interpolated y-axis values
+      i = 0;
+      while (yData[i] == 0.0) {
+        yData[i] = exp(B(0,0) + B(1,0) * xData[i] + B(2,0) * xData[i] * xData[i]);
+        i++;
+      }
+
+      /* Handle the end of the data. Hereby, the data always ends with n zeros. Therefore we need to find the last three data points that are not zero.*/
+      int j = xData.size() - 1;
+      int J = 0;
+      flag = 0;
+      xDataTemp.clear();
+      yDataTemp.clear();
+      while (flag < 3) {
+        if (j < 0) {
+          std::cerr << "Error: The data set is too small to interpolate." << std::endl;
+          break;
+        }
+        if (yData[j] > 0.0) {
+          xDataTemp.push_back(xData[j]);
+          yDataTemp.push_back(log(yData[j])); // we use log space for interpolation
+          if (flag == 0) {
+            J = j;
+          }
+          flag++;
+        }
+        j--;
+      }
+      // calculate the coefficients b0, b1, and b2 for the quadratic interpolation
+      B = linreg(xDataTemp, yDataTemp, 2);
+      // calculate the interpolated y-axis values
+      j = xData.size() - 1;
+      while (yData[j] == 0.0) {
+        yData[j] = exp(B(0,0) + B(1,0) * xData[j] + B(2,0) * xData[j] * xData[j]);
+        j--;
+      }
+
+      /* Handle the middle of the data. Hereby, we use a quadratic interpolation to fill the gaps between the data points. */
+      // iterate over the data points from I to J
+      for (int i = I; i <= J; i++) {
+        if (yData[i] == 0.0) {
+          // now, we asume the last value before the zero appears at index "i-1" and we need to find the next data point "j" that is not zero to define the range for the interpolation
+          int j = i + 1;
+          while (yData[j] == 0.0) {
+            if (j >= J) {
+              break;
+            }
+            j++;
+          }
+          // now we have the range from "i-1" to "j" for the interpolation and we need to find the next two data points that are not zero on each side of the range to use them for the interpolation as reference points
+          xDataTemp.clear();
+          yDataTemp.clear();
+          int k = i-1; // first reference point to the left
+          int l = j; // first reference point to the right
+          
+          // side: left
+          // find the next two data points that are not zero
+          int flag = 0;
+          while (flag < 2) {
+            if (k < I) {
+              break;
+            }
+            if (yData[k] > 0.0) {
+              xDataTemp.push_back(xData[k]);
+              yDataTemp.push_back(log(yData[k])); // we use log space for interpolation
+              flag++;
+            }
+            k--;
+          }
+          // side: right
+          // find the next two data points that are not zero
+          flag = 0;
+          while (flag < 2) {
+            if (l > J) {
+              break;
+            }
+            if (yData[l] > 0.0) {
+              xDataTemp.push_back(xData[l]);
+              yDataTemp.push_back(log(yData[l])); // we use log space for interpolation
+              flag++;
+            }
+            l++;
+          }
+          // calculate the coefficients b0, b1, and b2 for the quadratic interpolation
+          B = linreg(xDataTemp, yDataTemp, 2);
+          // calculate the interpolated y-axis values
+          for (int n = i; n < j; n++) {
+            yData[n] = exp(B(0,0) + B(1,0) * xData[n] + B(2,0) * xData[n] * xData[n]);
+          }
+        }
+      }
+
+
+  }
+    
 } // namespace q

@@ -3,6 +3,8 @@
 
 // internal
 #include "qalgorithms_datatype_mass_spectrum.h"
+#include "qalgorithms_matrix.h"
+#include "qalgorithms_utils.h"
 
 // external
 #include <string>
@@ -13,7 +15,6 @@ namespace q {
     /**
      * @brief A class to store measurement data
      * @details The MeasurementData class is a virtual class used to store measurement data. Based on the type of measurement data, the MeasurementData class can be subclassed to store different types of measurement data.
-     * 
      */
     class MeasurementData {
     public:
@@ -29,7 +30,6 @@ namespace q {
          * @param xData A vector of x-axis values
          * @param yData A vector of y-axis values
          * @param k The maximum gap size
-         *  
          */
         void zeroFilling(std::vector<double>& xData, std::vector<double>& yData, int k);
 
@@ -39,9 +39,16 @@ namespace q {
          * @param xData A vector of x-axis values
          * @param yData A vector of y-axis values
          * @return A vector of indices where the data needs to be cut
-         * 
          */
         std::vector<size_t> cutData(std::vector<double>& xData, std::vector<double>& yData) const;
+
+        /**
+         * @brief Interpolate y-axis values
+         * @details The interpolateData method interpolates the y-axis values. The method uses quadratic interpolation to interpolate the y-axis values in the log space.
+         * @param xData A vector of x-axis values
+         * @param yData A vector of y-axis values
+         */
+        void interpolateData(std::vector<double>& xData, std::vector<double>& yData);
 
         // debugging
         virtual void print() = 0;

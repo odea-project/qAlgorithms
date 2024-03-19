@@ -1,6 +1,6 @@
 var searchData=
 [
-  ['calcapex_5fposition_0',['calcApex_position',['../classq_1_1_peak.html#a592bb5eb08f59ae80227dff6372d6551',1,'q::Peak::calcApex_position()'],['../classq_1_1_peakmodel.html#a7de8c78779b84539d2106c8df6fccd82',1,'q::Peakmodel::calcApex_position(const int scale, const double b1, const double b2, const int xIndex, double &amp;apex_position, bool &amp;fltrVal)']]],
+  ['calcapex_5fposition_0',['calcApex_position',['../classq_1_1_peakmodel.html#a7de8c78779b84539d2106c8df6fccd82',1,'q::Peakmodel::calcApex_position()'],['../classq_1_1_peak.html#a592bb5eb08f59ae80227dff6372d6551',1,'q::Peak::calcApex_position()']]],
   ['calcapexvalley_5fposition_1',['calcApexValley_position',['../classq_1_1_peakmodel.html#a542dd57336dca49ad04ec7008b927314',1,'q::Peakmodel::calcApexValley_position()'],['../classq_1_1_peak.html#aff2bc1e2df11ae6a77089acb48c8fa45',1,'q::Peak::calcApexValley_position()']]],
   ['calcjacobianmatrix_5farea_2',['calcJacobianMatrix_Area',['../classq_1_1_peakmodel.html#a16319abd9fdca96c7c2cdf752fdd9202',1,'q::Peakmodel']]],
   ['calcjacobianmatrix_5farea_5fhalf_3',['calcJacobianMatrix_Area_half',['../classq_1_1_peakmodel.html#a4e5b741b7bf88fda644ea849cd40ffbc',1,'q::Peakmodel']]],
@@ -32,5 +32,7 @@ var searchData=
   ['convolveantisymmetric_29',['convolveAntisymmetric',['../classq_1_1_matrix.html#a956aba54c16b1e9c65b8c131d0b9cf6d',1,'q::Matrix']]],
   ['convolvep_30',['convolveP',['../classq_1_1_peakmodel.html#abc6a79cb45966a252ef3247d3ac95196',1,'q::Peakmodel']]],
   ['convolverotation_31',['convolveRotation',['../classq_1_1_matrix.html#a549e37550d5df9f221ea8ab647751221',1,'q::Matrix']]],
-  ['convolvesymmetric_32',['convolveSymmetric',['../classq_1_1_matrix.html#a0d2a7bf49f60c2cb4e81f5489a175860',1,'q::Matrix']]]
+  ['convolvesymmetric_32',['convolveSymmetric',['../classq_1_1_matrix.html#a0d2a7bf49f60c2cb4e81f5489a175860',1,'q::Matrix']]],
+  ['current_20offerings_33',['Current Offerings',['../md__r_e_a_d_m_e.html#autotoc_md3',1,'']]],
+  ['cutdata_34',['cutData',['../classq_1_1_measurement_data.html#a132a6fa74bc575aaeccd260d73b96f00',1,'q::MeasurementData::cutData()'],['../classq_1_1_l_c_m_s_data.html#a6c799dc9ef6918446df62515bc7daa8d',1,'q::LCMSData::cutData()']]]
 ];

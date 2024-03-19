@@ -24,6 +24,10 @@ Inheritance diagram for q\+::LCMSData\+:\begin{figure}[H]
 \item 
 void \mbox{\hyperlink{classq_1_1_l_c_m_s_data_ab4632d3d3138d17fd5a7f479b70c2846}{read\+CSV}} (std\+::string filename, int row\+Start, int row\+End, int col\+Start, int col\+End, char separator, std\+::vector$<$ \mbox{\hyperlink{namespaceq_1_1_data_type_a9fcd47c7d7d77f908f041cad931962aa}{Data\+Type\+::\+Data\+Field}} $>$ variable\+Types)
 \begin{DoxyCompactList}\small\item\em Read LC-\/\+MS data from a CSV file. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{classq_1_1_l_c_m_s_data_ae1a62294c43bbe12e97f9293eaa49ea8}{zero\+Filling}} ()
+\begin{DoxyCompactList}\small\item\em Identify and fill gaps in the LC-\/\+MS data. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{classq_1_1_l_c_m_s_data_a6c799dc9ef6918446df62515bc7daa8d}{cut\+Data}} ()
+\begin{DoxyCompactList}\small\item\em Cut the data into smaller data sets. \end{DoxyCompactList}\item 
 void \mbox{\hyperlink{classq_1_1_l_c_m_s_data_aa808ac2ee343120a4a89f8ee8e9278f6}{print}} ()
 \end{DoxyCompactItemize}
 \doxysubsection*{Public Member Functions inherited from \mbox{\hyperlink{classq_1_1_measurement_data}{q\+::\+Measurement\+Data}}}
@@ -31,10 +35,12 @@ void \mbox{\hyperlink{classq_1_1_l_c_m_s_data_aa808ac2ee343120a4a89f8ee8e9278f6}
 \item 
 virtual \mbox{\hyperlink{classq_1_1_measurement_data_a5b13907b217ee6690eef821d4df68479}{\texorpdfstring{$\sim$}{\string~}\+Measurement\+Data}} ()
 \item 
-virtual void \mbox{\hyperlink{classq_1_1_measurement_data_a8295223e88004418fcc9fa62b1ced99d}{read\+CSV}} (std\+::string filename, int row\+Start, int row\+End, int col\+Start, int col\+End, char separator, std\+::vector$<$ \mbox{\hyperlink{namespaceq_1_1_data_type_a9fcd47c7d7d77f908f041cad931962aa}{Data\+Type\+::\+Data\+Field}} $>$ variable\+Types)=0
-\item 
-virtual void \mbox{\hyperlink{classq_1_1_measurement_data_a3cf576e649244debcc1c0cf67038e4d3}{print}} ()=0
-\end{DoxyCompactItemize}
+void \mbox{\hyperlink{classq_1_1_measurement_data_ae3dfbca5264b979f312f581491addf63}{zero\+Filling}} (std\+::vector$<$ double $>$ \&x\+Data, std\+::vector$<$ double $>$ \&y\+Data, int k)
+\begin{DoxyCompactList}\small\item\em Identify and fill gaps in the data. \end{DoxyCompactList}\item 
+std\+::vector$<$ size\+\_\+t $>$ \mbox{\hyperlink{classq_1_1_measurement_data_a132a6fa74bc575aaeccd260d73b96f00}{cut\+Data}} (std\+::vector$<$ double $>$ \&x\+Data, std\+::vector$<$ double $>$ \&y\+Data) const
+\begin{DoxyCompactList}\small\item\em Cut the data into smaller data sets. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{classq_1_1_measurement_data_afc29734a2b7987f7a7510493c68b3a2c}{interpolate\+Data}} (std\+::vector$<$ double $>$ \&x\+Data, std\+::vector$<$ double $>$ \&y\+Data)
+\begin{DoxyCompactList}\small\item\em Interpolate y-\/axis values. \end{DoxyCompactList}\end{DoxyCompactItemize}
 
 
 \doxysubsection{Detailed Description}
@@ -77,6 +83,20 @@ Definition at line \mbox{\hyperlink{qalgorithms__measurement__data__lcms_8cpp_so
 
 
 \doxysubsection{Member Function Documentation}
+\Hypertarget{classq_1_1_l_c_m_s_data_a6c799dc9ef6918446df62515bc7daa8d}\label{classq_1_1_l_c_m_s_data_a6c799dc9ef6918446df62515bc7daa8d} 
+\index{q::LCMSData@{q::LCMSData}!cutData@{cutData}}
+\index{cutData@{cutData}!q::LCMSData@{q::LCMSData}}
+\doxysubsubsection{\texorpdfstring{cutData()}{cutData()}}
+{\footnotesize\ttfamily void q\+::\+LCMSData\+::cut\+Data (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})}
+
+
+
+Cut the data into smaller data sets. 
+
+The cut\+Data method cuts the data into smaller data sets. The method uses the separator value to split the data into smaller data sets. The separator value is set to -\/1.\+0 for the x-\/axis and -\/1.\+0 for the y-\/axis. For each cut, the method creates a new data subset and stores it in the data map using a sub-\/dataset ID as the secondary key. 
+
+Definition at line \mbox{\hyperlink{qalgorithms__measurement__data__lcms_8cpp_source_l00138}{138}} of file \mbox{\hyperlink{qalgorithms__measurement__data__lcms_8cpp_source}{qalgorithms\+\_\+measurement\+\_\+data\+\_\+lcms.\+cpp}}.
+
 \Hypertarget{classq_1_1_l_c_m_s_data_aa808ac2ee343120a4a89f8ee8e9278f6}\label{classq_1_1_l_c_m_s_data_aa808ac2ee343120a4a89f8ee8e9278f6} 
 \index{q::LCMSData@{q::LCMSData}!print@{print}}
 \index{print@{print}!q::LCMSData@{q::LCMSData}}
@@ -89,7 +109,7 @@ Implements \mbox{\hyperlink{classq_1_1_measurement_data_a3cf576e649244debcc1c0cf
 
 
 
-Definition at line \mbox{\hyperlink{qalgorithms__measurement__data__lcms_8cpp_source_l00129}{129}} of file \mbox{\hyperlink{qalgorithms__measurement__data__lcms_8cpp_source}{qalgorithms\+\_\+measurement\+\_\+data\+\_\+lcms.\+cpp}}.
+Definition at line \mbox{\hyperlink{qalgorithms__measurement__data__lcms_8cpp_source_l00173}{173}} of file \mbox{\hyperlink{qalgorithms__measurement__data__lcms_8cpp_source}{qalgorithms\+\_\+measurement\+\_\+data\+\_\+lcms.\+cpp}}.
 
 \Hypertarget{classq_1_1_l_c_m_s_data_ab4632d3d3138d17fd5a7f479b70c2846}\label{classq_1_1_l_c_m_s_data_ab4632d3d3138d17fd5a7f479b70c2846} 
 \index{q::LCMSData@{q::LCMSData}!readCSV@{readCSV}}
@@ -127,6 +147,20 @@ Implements \mbox{\hyperlink{classq_1_1_measurement_data_a8295223e88004418fcc9fa6
 
 
 Definition at line \mbox{\hyperlink{qalgorithms__measurement__data__lcms_8cpp_source_l00017}{17}} of file \mbox{\hyperlink{qalgorithms__measurement__data__lcms_8cpp_source}{qalgorithms\+\_\+measurement\+\_\+data\+\_\+lcms.\+cpp}}.
+
+\Hypertarget{classq_1_1_l_c_m_s_data_ae1a62294c43bbe12e97f9293eaa49ea8}\label{classq_1_1_l_c_m_s_data_ae1a62294c43bbe12e97f9293eaa49ea8} 
+\index{q::LCMSData@{q::LCMSData}!zeroFilling@{zeroFilling}}
+\index{zeroFilling@{zeroFilling}!q::LCMSData@{q::LCMSData}}
+\doxysubsubsection{\texorpdfstring{zeroFilling()}{zeroFilling()}}
+{\footnotesize\ttfamily void q\+::\+LCMSData\+::zero\+Filling (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})}
+
+
+
+Identify and fill gaps in the LC-\/\+MS data. 
+
+The zero\+Filling method identifies and fills gaps in the LC-\/\+MS data. The method uses difference between two neighboring data points to identify gaps. If the difference is 1.\+75 times greater than expected, then the method fills the gap with zero values for intensity and inter/extrapolated values for x-\/axis values. For the expected difference, the method the difference of the last two data points that not show a gap. However, the first expected difference is set to the median of the differences of the total data points. However, the maximum gap size is set to 4 per side, i.\+e., 8 in total, where there is a gap leftover between the fourth and fifth data points. 
+
+Definition at line \mbox{\hyperlink{qalgorithms__measurement__data__lcms_8cpp_source_l00128}{128}} of file \mbox{\hyperlink{qalgorithms__measurement__data__lcms_8cpp_source}{qalgorithms\+\_\+measurement\+\_\+data\+\_\+lcms.\+cpp}}.
 
 
 

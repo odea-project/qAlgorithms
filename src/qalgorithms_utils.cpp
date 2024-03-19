@@ -620,6 +620,31 @@ namespace q {
     return values.at(degreeOfFreedom);
   }
 
+  const Matrix linreg(
+    const std::vector<double>& xData, 
+    const std::vector<double>& yData,
+    const int degree) {
+      // Create the matrix X
+      Matrix X(xData.size(), degree + 1);
+      for (size_t i = 0; i < xData.size(); i++) {
+        for (size_t j = 0; j < degree + 1; j++) {
+          X(i, j) = std::pow(xData[i], j);
+        }
+      }
+      // Create the matrix Y
+      Matrix Y(yData.size(), 1);
+      for (size_t i = 0; i < yData.size(); i++) {
+        Y(i, 0) = yData[i];
+      }
+      // Calculate the coefficients
+      Matrix X_T = X.T();
+      Matrix X_T_X = X_T * X;
+      Matrix X_T_X_inv = X_T_X.inv();
+      Matrix X_T_Y = X_T * Y;
+      Matrix coefficients = X_T_X_inv * X_T_Y;
+      return coefficients;
+  }
+
   ProgressBar::ProgressBar(int total, int width)
     : total(total), width(width), colors({
         "\033[1;31m", // red

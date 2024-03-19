@@ -2,6 +2,10 @@
 #ifndef QALGORITHMS_UTILS_H // Include guarde to prevent double inclusion
 #define QALGORITHMS_UTILS_H
 
+// internal
+#include "qalgorithms_matrix.h"
+
+// external
 #include <vector>
 #include <iostream>
 #include <cmath>
@@ -50,6 +54,11 @@ namespace q {
       tValues();
       const double& operator[](size_t degreeOfFreedom) const;
   };
+
+  const Matrix linreg(
+    const std::vector<double>& xData, 
+    const std::vector<double>& yData,
+    const int degree);
 
   class ProgressBar {
     private:

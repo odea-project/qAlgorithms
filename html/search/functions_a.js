@@ -2,7 +2,7 @@ var searchData=
 [
   ['operator_21_0',['operator!',['../namespaceq.html#a14a55b4b8011f804b40f37925f4b4e8c',1,'q']]],
   ['operator_26_26_1',['operator&amp;&amp;',['../namespaceq.html#a41c88933564219f3744d4cd1a0bbde5b',1,'q']]],
-  ['operator_28_29_2',['operator()',['../classq_1_1_matrix.html#ac738b454c903787bf5cbccc01d4fd38a',1,'q::Matrix::operator()(size_t row, size_t col) const'],['../classq_1_1_matrix.html#a4aeec135a3428209692076e0a0ee8916',1,'q::Matrix::operator()(size_t row, size_t col)']]],
+  ['operator_28_29_2',['operator()',['../classq_1_1_matrix.html#a4aeec135a3428209692076e0a0ee8916',1,'q::Matrix::operator()(size_t row, size_t col)'],['../classq_1_1_matrix.html#ac738b454c903787bf5cbccc01d4fd38a',1,'q::Matrix::operator()(size_t row, size_t col) const']]],
   ['operator_2a_3',['operator*',['../classq_1_1_matrix.html#a7f16a20457843380bafaf8f585f35ed4',1,'q::Matrix::operator*(const Matrix &amp;other) const'],['../classq_1_1_matrix.html#ad33372efca9e45a8f663c8e7b3c56bb3',1,'q::Matrix::operator*(const double scalar) const'],['../namespaceq.html#afaf7260624b917f9123e4532c7ca68bf',1,'q::operator*()']]],
   ['operator_2b_4',['operator+',['../classq_1_1_matrix.html#ae7f2ec1f8496524773607e0994813002',1,'q::Matrix']]],
   ['operator_2d_5',['operator-',['../classq_1_1_matrix.html#af823e1afa35534a75c51e5ce16895f0b',1,'q::Matrix']]],
