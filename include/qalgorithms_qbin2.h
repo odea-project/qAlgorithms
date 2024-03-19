@@ -11,6 +11,7 @@
 #include <ranges>
 #include <deque>
 #include <string>
+#include <iomanip> // for printing with full precision
 
 // Goal: all functions modify individual features, which are combined to a bin. The bin contains all features and the functions necessary to summarise which features are present
 
