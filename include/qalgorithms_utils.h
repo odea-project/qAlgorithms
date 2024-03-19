@@ -11,65 +11,68 @@
 #include <cmath>
 #include <map>
 
-namespace q {
-  
-  int sum(const std::vector<int>& vec);
-  size_t sum(const std::vector<size_t>& vec);
-  double sum(const std::vector<double>& vec);
+namespace q
+{
 
-  int sum(const bool* vec, size_t n);
+  int sum(const std::vector<int> &vec);
+  size_t sum(const std::vector<size_t> &vec);
+  double sum(const std::vector<double> &vec);
+
+  int sum(const bool *vec, size_t n);
 
   template <typename T>
   std::vector<bool> operator<(
-    const std::vector<T>& vec, 
-    T scalar);
+      const std::vector<T> &vec,
+      T scalar);
 
   template <typename T>
   std::vector<bool> operator>(
-    const std::vector<T>& vec, 
-    T scalar);
+      const std::vector<T> &vec,
+      T scalar);
 
   template <typename T>
   std::vector<T> operator*(
-    const std::vector<T>& A, 
-    const std::vector<T>& B);
+      const std::vector<T> &A,
+      const std::vector<T> &B);
 
   std::vector<bool> operator&&(
-    const std::vector<bool>& A, 
-    const std::vector<bool>& B);
+      const std::vector<bool> &A,
+      const std::vector<bool> &B);
 
-  std::vector<bool> operator!(const std::vector<bool>& A);
+  std::vector<bool> operator!(const std::vector<bool> &A);
 
   void operator|=(
-    std::vector<bool>& A, 
-    const std::vector<bool>& B);
-  
+      std::vector<bool> &A,
+      const std::vector<bool> &B);
+
   double erfi(const double x);
 
-  class tValues {
-    private:
-      std::map<int, double> values;
-    
-    public:
-      tValues();
-      const double& operator[](size_t degreeOfFreedom) const;
+  class tValues
+  {
+  private:
+    std::map<int, double> values;
+
+  public:
+    tValues();
+    const double &operator[](size_t degreeOfFreedom) const;
   };
 
   const Matrix linreg(
-    const std::vector<double>& xData, 
-    const std::vector<double>& yData,
-    const int degree);
+      const std::vector<double> &xData,
+      const std::vector<double> &yData,
+      const int degree);
 
-  class ProgressBar {
-    private:
-        int total;
-        int width;
-        std::vector<std::string> colors;
+  class ProgressBar
+  {
+  private:
+    int total;
+    int width;
+    std::vector<std::string> colors;
 
-    public:
-        ProgressBar(int total, int width = 50);
-        void update(int current);
-        void complete();
-    };
+  public:
+    ProgressBar(int total, int width = 50);
+    void update(int current);
+    void complete();
+  };
 }
 #endif // QALGORITHMS_UTILS_H

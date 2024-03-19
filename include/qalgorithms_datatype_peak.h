@@ -9,8 +9,10 @@
 #include <unordered_map>
 
 /* This file includes the q::DataType::Peak and q::DataType::PeakList classes*/
-namespace q {
-  namespace DataType {
+namespace q
+{
+  namespace DataType
+  {
     /**
      * @brief A class to store peak data
      * @details The Peak class is used to store peak data. It contains the position, height, width, and area of the peak. The class also contains the uncertainty of the peak position, height, width, and area, the data quality score of the peak, the regression coefficients, the valley position, the degrees of freedom, and the index of the regression window position.
@@ -32,8 +34,9 @@ namespace q {
      * @param df The degrees of freedom
      * @param xIndex The index of the regression window position
      */
-    class Peak {
-      public:
+    class Peak
+    {
+    public:
       // constructors
       Peak();
       Peak(int peakID, double position, double height);
@@ -46,7 +49,7 @@ namespace q {
       int peakID;
       double position;
       double height;
-     
+
       // optional
       double area;
       double width;
@@ -72,11 +75,12 @@ namespace q {
      * @details The PeakList class is used to store a list of peaks. It contains a map of peaks, where the key is the peak ID and the value is the peak.
      * @param peaks A map of peaks
      */
-    class PeakList {
-      public:
+    class PeakList
+    {
+    public:
       // constructors
       PeakList();
-      PeakList(std::unordered_map<int,Peak> peaks);
+      PeakList(std::unordered_map<int, Peak> peaks);
 
       // destructor
       ~PeakList();
