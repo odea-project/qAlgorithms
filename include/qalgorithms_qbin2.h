@@ -61,7 +61,6 @@ namespace q
         void subsetScan(std::deque<Bin> *bincontainer, std::vector<Bin> *finishedBins, const int &maxdist);
         void makeDQSB(const FeatureList *rawdata, const int &maxdist);
         double findOuterMinmax(std::vector<Feature *>::const_iterator position, std::vector<Feature *>::const_iterator scanend, const double &innerMinmax, bool direction);
-        double calcDQS(double MID, double MOD); // Mean Inner Distance, Minimum Outer Distance
         std::string summarisePerf();
         // Feature makeFeature(); // combine all features to one using means, modify mzError
     };
@@ -85,5 +84,8 @@ namespace q
         void clearFirstBin();                                     // remove first bin in binDeque
         void assignDQSB(const FeatureList *rawdata, int maxdist); // apply DQSB function to all completed bins
     };
+    // utility functions
+    std::vector<double> meanDistance(std::vector<Feature *> featurelistBin);
+    double calcDQS(double MID, double MOD); // Mean Inner Distance, Minimum Outer Distance
 
 }
