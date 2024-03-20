@@ -3,9 +3,9 @@
 namespace q
 {
     int subsetcount = 0;
-    int perfectbins = 0;
     int OSzero = 0;
-    
+    int subsets = 0;
+
 #pragma region "Featurelist"
     FeatureList::FeatureList()
     {
@@ -35,7 +35,7 @@ namespace q
             }
 #pragma GCC diagnostic push // do not display the specific warning for rounding a double to integer
 #pragma GCC diagnostic ignored "-Wnarrowing"
-            int i_scanNo = (int) row[d_scanNo]; // round gives warning, conversion functions as intended
+            int i_scanNo = (int)row[d_scanNo]; // round gives warning, conversion functions as intended
 #pragma GCC diagnostic pop
             Feature *F = new Feature{row[d_mz], row[d_mzError], row[d_RT], i_scanNo};
             allFeatures.push_back(F);
@@ -65,6 +65,8 @@ namespace q
 
     void BinContainer::subsetBins(std::vector<int> dimensions, int scanDiffLimit)
     {
+        auto timeStart = std::chrono::high_resolution_clock::now();
+        auto timeEnd = std::chrono::high_resolution_clock::now();
         std::cout << "\nTotal bins: 1";
         // while elements are in the bin deque -> if any bin is not fully subset
         while (!binDeque.empty())
@@ -84,8 +86,9 @@ namespace q
                         binDeque.front().subsetMZ(&binDeque, binDeque.front().activeOS, 0, binDeque.front().activeOS.size() - 1); // takes element from binDeque, starts subsetting, appends bins to binDeque
                         binDeque.pop_front();                                                                                     // remove the element that was processed from binDeque
                     }
-
-                    std::cout << "\nmz subsetting done\nTotal bins: " << binDeque.size();
+                    timeEnd = std::chrono::high_resolution_clock::now();
+                    std::cout << "\nmz subsetting done\nTotal bins: " << binDeque.size() << " ; time: " << (timeEnd - timeStart).count() << " ns";
+                    timeStart = std::chrono::high_resolution_clock::now();
                     break;
                 }
 
@@ -98,8 +101,10 @@ namespace q
                         binDeque.front().subsetScan(&binDeque, &finishedBins, scanDiffLimit);
                         binDeque.pop_front();
                     }
-                    std::cout << "\nClosed bins: " << finishedBins.size() << " perfect bins: " << perfectbins << "\nscan subsetting done\nTotal bins: " << binDeque.size();
-                    perfectbins = 0;
+                    timeEnd = std::chrono::high_resolution_clock::now();
+                    std::cout << "\nscan subsetting done\nClosed bins: " << finishedBins.size() << " ; time: " << (timeEnd - timeStart).count() << " ns"
+                              << "\nTotal bins: " << binDeque.size();
+                    timeStart = std::chrono::high_resolution_clock::now();
                     break;
                 }
 
@@ -107,6 +112,7 @@ namespace q
                     std::cout << "\nSeparation method " << dimensions[i] << " is not a valid parameter, skipping... \n";
                     break;
                 }
+                ++subsets;
             }
         }
     }
@@ -119,7 +125,8 @@ namespace q
         }
     }
 
-    void BinContainer::printAllBins(std::string path){
+    void BinContainer::printAllBins(std::string path)
+    {
         std::fstream file_out;
         file_out.open(path);
         file_out << "mz,scan,RT,bin,dqs\n";
@@ -131,7 +138,22 @@ namespace q
             //     file_out << std::setprecision (15) << features[j]->mz << "," << features[j]->scanNo << "," << features[j]->RT << "," << i << "," << finishedBins[i].DQSB[j] << "\n";
             // }
             file_out << finishedBins[i].featurelist.size() << "\n";
-            
+        }
+    }
+
+    void BinContainer::printBinSummary(std::string path)
+    {
+        std::fstream file_out;
+        file_out.open(path);
+        if (!file_out.is_open())
+        {
+            std::cout << " ";
+        }
+
+        file_out << "ID,size,mean(mz),mzRange,mean(scans),scanRange,mean(DQS),subsets,time(DQSB)\n";
+        for (size_t i = 0; i < finishedBins.size(); i++)
+        {
+            file_out << i << "," << finishedBins[i].summarisePerf() << "\n";
         }
     }
 
@@ -216,52 +238,53 @@ namespace q
         int n = featurelist.size();
         std::sort(featurelist.begin(), featurelist.end(), [](const Feature *lhs, const Feature *rhs)
                   { return lhs->scanNo < rhs->scanNo; });
-        if (featurelist.front()->scanNo + n + maxdist > featurelist.back()->scanNo) // sum of all gaps is less than max distance, +n since no element will occur twice in one scan
+        // if (featurelist.front()->scanNo + n + maxdist > featurelist.back()->scanNo) // sum of all gaps is less than max distance, +n since no element will occur twice in one scan
+        // { // ßßß only is true if no scan is present more than once
+        //     ++perfectbins;
+        //     finishedBins->push_back(bincontainer->front()); // moves first element of que to vector of complete bins, since bin is good
+        // }
+        // else
+        // {
+        std::vector<Feature *>::iterator newstart = featurelist.begin();
+        // std::vector<Feature>::iterator newend = featurelist.begin();
+        int lastpos = 0;
+        for (size_t i = 1; i < n; i++)
         {
-            ++perfectbins;
-            finishedBins->push_back(bincontainer->front()); // moves first element of que to vector of complete bins, since bin is good
-        }
-        else
-        {
-            std::vector<Feature *>::iterator newstart = featurelist.begin();
-            // std::vector<Feature>::iterator newend = featurelist.begin();
-            int lastpos = 0;
-            for (size_t i = 1; i < n; i++)
+            if (featurelist[i]->scanNo - featurelist[i - 1]->scanNo > maxdist) // bin needs to be split
             {
-                if (featurelist[i]->scanNo - featurelist[i - 1]->scanNo > maxdist) // bin needs to be split
+                // less than five features in bin
+                if (i - lastpos - 1 < 5)
                 {
-                    // less than five features in bin
-                    if (i - lastpos - 1 < 5)
-                    {
-                        newstart = featurelist.begin() + i; // new start is one behind current i
-                    }
-                    else
-                    {
-                        // no bins of size 5 are ever produced when splitting by scans - ßßß try reduced maxdist
-                        // viable bin, stable in scan dimension
-                        Bin output(newstart, featurelist.begin() + i - 1);
-                        bincontainer->push_back(output);
-                        newstart = featurelist.begin() + i;
-                    }
-                    lastpos = i; // sets previ to the position one i ahead, since current value is i-1
+                    newstart = featurelist.begin() + i; // new start is one behind current i
                 }
-            }
-            // check for open bin at the end
-            if (lastpos == 0) // no cut has occurred
-            {
-                finishedBins->push_back(bincontainer->front());
-            }
-            else if (n + 1 - lastpos > 5)
-            {
-                // viable bin, stable in scan dimension
-                Bin output(newstart, featurelist.end());
-                bincontainer->push_back(output);
+                else
+                {
+                    // no bins of size 5 are ever produced when splitting by scans - ßßß try reduced maxdist
+                    // viable bin, stable in scan dimension
+                    Bin output(newstart, featurelist.begin() + i - 1);
+                    bincontainer->push_back(output);
+                    newstart = featurelist.begin() + i;
+                }
+                lastpos = i; // sets previ to the position one i ahead, since current value is i-1
             }
         }
+        // check for open bin at the end
+        if (lastpos == 0) // no cut has occurred
+        {
+            bincontainer->front().subsetcount = subsets; // ßßß rm
+            finishedBins->push_back(bincontainer->front());
+        }
+        else if (n + 1 - lastpos > 5)
+        {
+            // viable bin, stable in scan dimension
+            Bin output(newstart, featurelist.end());
+            bincontainer->push_back(output);
+        }
+        // }
     }
 
     double Bin::findOuterMinmax(std::vector<Feature *>::const_iterator position, std::vector<Feature *>::const_iterator scanend, const double &innerMinmax, bool direction)
-    {   // direction TRUE = forward, direction FALSE = backwards
+    {                           // direction TRUE = forward, direction FALSE = backwards
         Feature *F = *position; // position is a null pointer
         if (direction)
         {
@@ -308,6 +331,8 @@ namespace q
         // only the minimum scans - k and the maximum scans + k need to be checked
         // if a value m/z is not lower than the minimum of mz or larger than the maximum while being in the allowed scan interval, it is by definition included in the bin
         // check first scan from min and max of bin, next from same position in next scan (add start of scan to both iterators, move inwards if larger than min/max or outwards otherwise)
+        auto timeStart = std::chrono::high_resolution_clock::now();
+        auto timeEnd = std::chrono::high_resolution_clock::now();
         int n = featurelist.size();
         DQSB.reserve(n);
         int minScanNo = featurelist.front()->scanNo - maxdist;
@@ -320,11 +345,13 @@ namespace q
         {
             maxScanNo = rawdata->scanBreaks.size() - 1; // -1 to prevent searching the last value of scandist, which is just the size of the dataset
         }
+        scanRange = featurelist.front()->scanNo - featurelist.back()->scanNo;
         // sort featurelist by mz
         std::sort(featurelist.begin(), featurelist.end(), [](const Feature *lhs, const Feature *rhs)
                   { return lhs->mz < rhs->mz; });
         double inMin = featurelist.front()->mz;
         double inMax = featurelist.back()->mz;
+        mzRange = inMax - inMin;
 
         std::vector<Feature *>::const_iterator goToMinOut;
         std::vector<Feature *>::const_iterator goToMaxOut;
@@ -369,7 +396,7 @@ namespace q
 
             for (size_t j = 2 * i; j < 2 * i + 4 * maxdist + 1; j++) // 2*i since every two elements is one new scan. From this i, the range is traversed until two max distances (*2 per scan). +1 to include both elements of the last scan
             {
-                dist = std::abs(featurelist[i]->mz - compspace[j]); //ßßß start at -maxdist? Y ßßß gewichtung
+                dist = std::abs(featurelist[i]->mz - compspace[j]); // ßßß start at -maxdist? Y ßßß gewichtung
                 if (dist < lowestDist)
                 {
                     lowestDist = dist;
@@ -377,6 +404,8 @@ namespace q
             }
             minOuter[i] = lowestDist; // minOuter redundant ßßß
             DQSB.push_back(calcDQS(meanDist[i], minOuter[i]));
+            auto timeEnd = std::chrono::high_resolution_clock::now();
+            perfMakeDQSB = (timeEnd - timeStart).count();
         }
     }
 
@@ -390,6 +419,30 @@ namespace q
         dqs = (MID - MOD) * 0.5 * (1 + 1 / (1 + MID)) / dqs; // sm(i) term
         dqs = (dqs + 1) / 2;                                 // interval transform
         return dqs;
+    }
+
+    std::string Bin::summarisePerf()
+    {
+        // ID, size, mean(mz), mz range, mean(scans), scan range, mean(DQS), subsets, time (DQSB), \n
+        std::stringstream buffer;
+        int n = featurelist.size();
+        double meanMZ = 0;
+        double meanScan = 0;
+        double meanDQS = 0;
+        for (size_t i = 0; i < n; i++)
+        {
+            meanMZ += featurelist[i]->mz;
+            meanScan += featurelist[i]->scanNo;
+            meanDQS += DQSB[i];
+        }
+        std::sort(featurelist.begin(), featurelist.end(), [](const Feature *lhs, const Feature *rhs)
+                  { return lhs->mz < rhs->mz; });
+        meanMZ = meanMZ / n;
+        meanScan = meanScan / n;
+        meanDQS = meanDQS / n;
+        buffer << n << "," << meanMZ << "," << mzRange << "," << meanScan << "," << scanRange << "," << meanDQS << "," << subsetcount << "," << perfMakeDQSB;
+        std::string output = buffer.str();
+        return output;
     }
 
 #pragma endregion "Bin"
@@ -420,6 +473,6 @@ int main()
 
     // std::cout.rdbuf(coutbuf); // reset to standard output again
     std::cout << "\n\nDone!\n\n";
-    testcontainer.printAllBins("../../binlist.csv");
+    testcontainer.printBinSummary("G:\\_Studium\\Analytik-Praktikum\\qbinning\\qAlgorithms\\binstats.csv");
     return 0;
 }

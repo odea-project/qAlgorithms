@@ -7,11 +7,12 @@
 #include <algorithm>
 #include <functional>
 #include <iterator>
-#include <thread>
+#include <thread> // unused as of now
 #include <ranges>
-#include <deque>
+#include <deque> // main bin container is a deque
 #include <string>
 #include <iomanip> // for printing with full precision
+#include <chrono>  // time code execution
 
 // Goal: all functions modify individual features, which are combined to a bin. The bin contains all features and the functions necessary to summarise which features are present
 
@@ -41,13 +42,16 @@ namespace q
     class Bin
     {
     private:
-        
         std::vector<double> cumError; // cumulative error in mz
+        double perfMakeDQSB;
+        int subsetcount;
+        double mzRange;
+        int scanRange;
 
     public:
         std::vector<Feature *> featurelist;
         std::vector<double> activeOS;
-        std::vector<double> DQSB;                                                                                           // Order Space
+        std::vector<double> DQSB;                                                                              // Order Space
         Bin(const std::vector<Feature *>::iterator &startBin, const std::vector<Feature *>::iterator &endBin); // const std::vector<Feature> &sourceList,
         Bin(FeatureList *rawdata);
         ~Bin();
@@ -58,6 +62,7 @@ namespace q
         void makeDQSB(const FeatureList *rawdata, const int &maxdist);
         double findOuterMinmax(std::vector<Feature *>::const_iterator position, std::vector<Feature *>::const_iterator scanend, const double &innerMinmax, bool direction);
         double calcDQS(double MID, double MOD); // Mean Inner Distance, Minimum Outer Distance
+        std::string summarisePerf();
         // Feature makeFeature(); // combine all features to one using means, modify mzError
     };
 
@@ -76,8 +81,8 @@ namespace q
         void subsetBins(std::vector<int> dimensions, int scanDiffLimit); // select which of the hard-coded subsetting tools should be used in which order, always applies to binDeque. Append to the end, delete from the front
         void printAllBins(std::string path);
         void printBinSummary(std::string path);
-        void firstBinValid(); // move first bin in binDeque to end
-        void clearFirstBin(); // remove first bin in binDeque
+        void firstBinValid();                                     // move first bin in binDeque to end
+        void clearFirstBin();                                     // remove first bin in binDeque
         void assignDQSB(const FeatureList *rawdata, int maxdist); // apply DQSB function to all completed bins
     };
 

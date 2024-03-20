@@ -7,7 +7,7 @@ output: html_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
-#knitr::opts_knit$set(root.dir = "G:/_Studium/Analytik-Praktikum/qbinning")
+knitr::opts_knit$set(root.dir = "G:/_Studium/Analytik-Praktikum/qbinning")
 library(tidyverse)
 library(data.table)
 library(patchwork)
@@ -128,5 +128,14 @@ subbin[order(subbin$mz),]
 
 nos <- diff(subbin$mz)
 3.05037165842070 * (log(787 + 1)^(-0.4771864667153))
+```
+
+```{r}
+binstats <- read.csv("binstats.csv")
+hist(log(binstats$time.DQSB.))
+plot(binstats$size, binstats$time.DQSB.)
+plot(binstats$mean.scans., -binstats$scanRange/binstats$size)
+plot(binstats$mean.mz., log(-binstats$scanRange/binstats$size))
+plot(log(binstats$time.DQSB.), binstats$mean.DQS.)
 ```
 

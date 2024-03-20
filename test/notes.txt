@@ -29,3 +29,4 @@ qGrouping
 Kriterium für besseres DQS-berechnen (Subsampling?) // erst nur im selben scan suchen und anschließend die mit gutem DQS priorisieren
 mittlere innendistanz optimieren
  
+ Sortiere Featureliste nur im Bereich von scans, dann suche jeweils nächstes mz 
