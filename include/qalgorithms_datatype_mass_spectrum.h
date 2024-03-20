@@ -22,16 +22,26 @@ namespace q
         class MassSpectrum
         {
         public:
-            // struct for data point
+            /**
+             * @brief Struct to store mass spectrum data points
+             * @details The DataPoint struct is used to store mass spectrum data points. It contains the intensity, mz, and degrees of freedom (important for the uncertainty estimation when interpolating the data is considered).
+             * @param intensity The intensity of the mass spectrum data point
+             * @param mz The mass-to-charge ratio of the mass spectrum data point
+             * @param df The degrees of freedom of the mass spectrum data point
+             * @param DataPoint() Constructor for the DataPoint struct
+             * @param x() Getter for the x-axis value
+             * @param y() Getter for the y-axis value
+             */
             struct DataPoint
             {
                 double intensity;
-                // double mz;
+                double mz;
                 int df;
 
-                DataPoint(double intensity, double mz, int df) : intensity(intensity), df(df) {}
-                // double& x() { return mz; }
-                // double& y() { return intensity; }
+                DataPoint(double intensity, double mz, int df) : intensity(intensity), mz(mz), df(df) {}
+                //getters for x and y
+                double& x() { return mz; }
+                double& y() { return intensity; }
             };
 
             // constructors
@@ -50,39 +60,9 @@ namespace q
                 MSLevel, // e.g. MS1 or MS2
                 IonizationMode, // e.g. positive or negative
                 MeasurementMode, // e.g. profile or centroid
-                std::unordered_map
-                <
-                    std::unique_ptr<double>, // key: i.e., pointer to mz value
-                    std::unique_ptr<DataPoint> // value: i.e., pointer to data point
-                >
+                std::vector<std::unique_ptr<DataPoint>> // e.g. intensity, mz, degrees of freedom
             >;
-            std::unordered_map<DataField, std::unique_ptr<variableType>> data;
-        };
-
-        /**
-         * @brief A class to store LC-MS data
-         * @details The LC_MS class is used to store LC-MS data. It contains the intensity, mz, ionization mode, measurement mode, MS level, retention time, and scan number of the LC-MS data. The LC_MS class is a subclass of the MassSpectrum class. \ref MassSpectrum
-         *
-         * @param intensity The intensity of the MS signal
-         * @param mz The mass-to-charge ratio of the MS signal
-         * @param ionizationMode The ionization mode, i.e. whether the signal is from positive or negative mode
-         * @param measurementMode The measurement mode, i.e. whether the signal is profile or centroid
-         * @param msLevel The MS level, i.e. whether the signal is from MS1 or MS2
-         * @param retentionTime The retention time of the LC-MS signal
-         * @param scanNumber The scan number of the LC-MS signal
-         *
-         */
-        class LC_MS : public MassSpectrum
-        {
-        public:
-            // constructors
-            LC_MS();
-
-            // destructor
-            ~LC_MS();
-
-            // debugging
-            void print();
+            std::unordered_map<DataField, variableType> data;
         };
     }; // namespace datatype
 } // namespace q

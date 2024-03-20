@@ -7,8 +7,6 @@
 #include <fstream>
 #include <sstream>
 
-
-
 namespace q
 {
     // usings
@@ -16,7 +14,7 @@ namespace q
     using DataField = DataType::DataField;
     using MassSpectrum = DataType::MassSpectrum;
     using DataPoint = DataType::MassSpectrum::DataPoint;
-    using DataPointMap = std::unordered_map<std::unique_ptr<double>, std::unique_ptr<DataPoint>>;
+    using DataPointVector = std::vector<std::unique_ptr<DataPoint>>;
 
     LCMSData::LCMSData()
     {
@@ -28,6 +26,7 @@ namespace q
 
     void LCMSData::readCSV(std::string filename, int rowStart, int rowEnd, int colStart, int colEnd, char separator, std::vector<DataField> variableTypes)
     {
+        // open the file
         std::ifstream file(filename);
         std::string line;
         std::vector<std::vector<std::string>> raw_data;
@@ -145,6 +144,7 @@ namespace q
         }
 
         // transfere the raw data to the data map
+        int data_id = 0; // data id is used to identify the data set
         for (int i = 0; i < raw_data.size(); i++)
         {
             // check if the scan number is already in the data map
@@ -154,26 +154,23 @@ namespace q
                 // add the MassSpectrum object to the data map
                 this->data[scanNumber] = std::make_unique<MassSpectrum>();
                 // add the scan number to the MassSpectrum object
-                this->data[scanNumber]->data[DataField::SCANNUMBER] = std::make_unique<VariableType>(scanNumber);
+                this->data[scanNumber]->data[DataField::SCANNUMBER] = VariableType(scanNumber);
                 // add the retention time to the MassSpectrum object
-                this->data[scanNumber]->data[DataField::RETENTIONTIME] = std::make_unique<VariableType>(std::stod(raw_data[i][retentionTimeIndex]));
+                this->data[scanNumber]->data[DataField::RETENTIONTIME] = VariableType(std::stod(raw_data[i][retentionTimeIndex]));
                 // add the DataPoint Map to the MassSpectrum object
-                this->data[scanNumber]->data[DataField::DATAPOINT] = std::make_unique<VariableType>(DataPointMap());
+                this->data[scanNumber]->data[DataField::DATAPOINT] = VariableType(DataPointVector());
             }
-            // create a new DataPoint object
-            std::unique_ptr<DataPoint> dataPoint = std::make_unique<DataPoint>(std::stod(raw_data[i][intensityIndex]), std::stod(raw_data[i][mzIndex]), 1);
-            // add the DataPoint object to the DataPoint Map
-            auto& dataPointMap = std::get<DataPointMap>(*this->data[scanNumber]->data[DataField::DATAPOINT]);
-            dataPointMap[std::make_unique<double>(std::stod(raw_data[i][mzIndex]))] = std::move(dataPoint);
+            // create a new DataPoint object and add it to the DataPoint Vector
+            std::get<DataPointVector>(this->data[scanNumber]->data[DataField::DATAPOINT]).push_back(std::make_unique<DataPoint>(std::stod(raw_data[i][intensityIndex]), std::stod(raw_data[i][mzIndex]), 1));
         }
     }
-    
-    // void LCMSData::zeroFilling()
-    // {
-    //     // iterate over all data sets
-    //     for (auto& it : this->data)
-    //     {
-    //         /* For each data[SCANNUMBER]->data[DATAPOINT], we apply a zerofilling algorithm. */ 
+
+    void LCMSData::zeroFilling()
+    {
+        // iterate over all data sets
+        for (auto& it : this->data)
+        {
+            /* For each data[SCANNUMBER]->data[DATAPOINT], we apply a zerofilling algorithm.*/
 
     //         // Extract mz and intensity data from DataPoints
     //         std::vector<double> mzData, intensityData;
@@ -192,14 +189,14 @@ namespace q
     //             it.second->data[DataField::DATAPOINT][i]->mz = mzData[i];
     //             it.second->data[DataField::DATAPOINT][i]->intensity = intensityData[i];
     //         }
-    //     }
-    // }
+        }
+    }
     // void LCMSData::zeroFilling()
     // {
     //     // iterate over all data sets
     //     for (auto it = this->data.begin(); it != this->data.end(); it++)
     //     {
-    //         /* For each data[SCANNUMBER]->data[DATAPOINT], we apply a zerofilling algorithm. */ 
+    //         /* For each data[SCANNUMBER]->data[DATAPOINT], we apply a zerofilling algorithm. */
     //         // calculate the differences of the mz values
 
     //     }
@@ -274,23 +271,19 @@ namespace q
         for (auto it = this->data.begin(); it != this->data.end(); it++)
         {
             std::cout << "Scan Number: " << it->first << std::endl;
-            auto retentionTime = std::get<double>(*it->second->data[DataField::RETENTIONTIME]);
-            std::cout << "Retention Time: " << retentionTime << std::endl;
-            std::cout << "Size: " << std::get<DataPointMap>(*it->second->data[DataField::DATAPOINT]).size() << std::endl;
-
-            std::cout << "MZ (unordered): ";
-            // iterate through the DataPoint Map for MZ
-            for (auto it2 = std::get<DataPointMap>(*it->second->data[DataField::DATAPOINT]).begin(); it2 != std::get<DataPointMap>(*it->second->data[DataField::DATAPOINT]).end(); it2++)
+            std::cout << "Retention Time: " << std::get<double>(it->second->data[DataField::RETENTIONTIME]) << std::endl;
+            std::cout << "Number of Data Points: " << std::get<DataPointVector>(it->second->data[DataField::DATAPOINT]).size() << std::endl;
+            std::cout << "MZ values: ";
+            for (const auto& dp : std::get<DataPointVector>(it->second->data[DataField::DATAPOINT]))
             {
-                std::cout << *(it2->first) << " ";
+                std::cout << dp->mz << " ";
             }
             std::cout << std::endl;
 
-            std::cout << "Intensity (unordered): ";
-            // iterate through the DataPoint Map for Intensity
-            for (auto it2 = std::get<DataPointMap>(*it->second->data[DataField::DATAPOINT]).begin(); it2 != std::get<DataPointMap>(*it->second->data[DataField::DATAPOINT]).end(); it2++)
+            std::cout << "Intensity values: ";
+            for (const auto& dp : std::get<DataPointVector>(it->second->data[DataField::DATAPOINT]))
             {
-                std::cout << it2->second->intensity << " ";
+                std::cout << dp->intensity << " ";
             }
             std::cout << std::endl;
         }

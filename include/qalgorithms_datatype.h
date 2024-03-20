@@ -10,8 +10,8 @@ namespace q
          * @brief Different types of data that can be stored in a data file
          * @details The data fields are used to store different types of data in a data file.
          * @param INTENSITY The intensity of the MS signal
-         * @param SUBID The sub-dataset ID
-         * @param DATAID The data ID
+         * @param SUB_ID The sub-dataset ID
+         * @param DATA_ID The data ID
          * @param DATAPOINT The data point
          * @param IONIZATIONMODE The ionization mode, i.e. whether the signal is from positive or negative mode
          * @param MZ The mass-to-charge ratio of the MS signal

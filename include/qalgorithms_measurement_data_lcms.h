@@ -44,7 +44,7 @@ namespace q
          * @details The zeroFilling method identifies and fills gaps in the LC-MS data. The method uses difference between two neighboring data points to identify gaps. If the difference is 1.75 times greater than expected, then the method fills the gap with zero values for intensity and inter/extrapolated values for x-axis values. For the expected difference, the method the difference of the last two data points that not show a gap. However, the first expected difference is set to the median of the differences of the total data points. However, the maximum gap size is set to 4 per side, i.e., 8 in total, where there is a gap leftover between the fourth and fifth data points.
          *
          */
-        // void zeroFilling();
+        void zeroFilling();
 
         /**
          * @brief Cut the data into smaller data sets

@@ -11,20 +11,10 @@ namespace q
   {
     MassSpectrum::MassSpectrum()
     {
-      data[DataField::DATAPOINT] = std::make_unique<variableType>(std::unordered_map<std::unique_ptr<double>, std::unique_ptr<DataPoint>>());
+      data[DataField::DATAPOINT] = std::vector<std::unique_ptr<DataPoint>>();
     }
 
     MassSpectrum::~MassSpectrum()
-    {
-      // destructor
-    }
-
-    LC_MS::LC_MS()
-    {
-      // constructor
-    }
-
-    LC_MS::~LC_MS()
     {
       // destructor
     }
