@@ -7,7 +7,7 @@ namespace q {
   void MeasurementData::zeroFilling(
     std::vector<double>& xData, 
     std::vector<double>& yData, 
-    int k) {
+    int k = 8) {
     // calculate the differences
     double expectedDifference = 0.0;
     std::vector<double> differences;

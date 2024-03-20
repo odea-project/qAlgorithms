@@ -16,6 +16,7 @@ namespace q
     using DataField = DataType::DataField;
     using MassSpectrum = DataType::MassSpectrum;
     using DataPoint = DataType::MassSpectrum::DataPoint;
+    using DataPointMap = std::unordered_map<std::unique_ptr<double>, std::unique_ptr<DataPoint>>;
 
     LCMSData::LCMSData()
     {
@@ -144,51 +145,73 @@ namespace q
         }
 
         // transfere the raw data to the data map
-        // internal datapoint iterator
-        int j = 0;
         for (int i = 0; i < raw_data.size(); i++)
         {
-            // add the scan number to the data map
-            int scanNumber = std::stoi(raw_data[i][scanNumberIndex]);
             // check if the scan number is already in the data map
+            int scanNumber = std::stoi(raw_data[i][scanNumberIndex]);
             if (this->data.find(scanNumber) == this->data.end())
-            {
+            { // scan number is not found in the data map; initialize a new MassSpectrum object and add meta information
                 // add the MassSpectrum object to the data map
                 this->data[scanNumber] = std::make_unique<MassSpectrum>();
                 // add the scan number to the MassSpectrum object
                 this->data[scanNumber]->data[DataField::SCANNUMBER] = std::make_unique<VariableType>(scanNumber);
-                // reset the internal datapoint iterator
-                j = 0;
-                // add the DataPoint Map to the data map
-                this->data[scanNumber]->data[DataField::DATAPOINT] = std::make_unique<VariableType>(std::unordered_map<int, std::unique_ptr<DataPoint>>());
+                // add the retention time to the MassSpectrum object
+                this->data[scanNumber]->data[DataField::RETENTIONTIME] = std::make_unique<VariableType>(std::stod(raw_data[i][retentionTimeIndex]));
+                // add the DataPoint Map to the MassSpectrum object
+                this->data[scanNumber]->data[DataField::DATAPOINT] = std::make_unique<VariableType>(DataPointMap());
             }
-
-            // add the retention time to the data map
-            this->data[scanNumber]->data[DataField::RETENTIONTIME] = std::make_unique<VariableType>(std::stod(raw_data[i][retentionTimeIndex]));
-
-            // add the DataPoint to the data map
-            auto& dataPointMap = std::get<std::unordered_map<int, std::unique_ptr<DataPoint>>>(*this->data[scanNumber]->data[DataField::DATAPOINT]);
-            dataPointMap[j] = std::make_unique<DataPoint>
-            (
-                std::stod(raw_data[i][mzIndex]), 
-                std::stod(raw_data[i][intensityIndex]), 
-                1
-            );
-            j++;
+            // create a new DataPoint object
+            std::unique_ptr<DataPoint> dataPoint = std::make_unique<DataPoint>(std::stod(raw_data[i][intensityIndex]), std::stod(raw_data[i][mzIndex]), 1);
+            // add the DataPoint object to the DataPoint Map
+            auto& dataPointMap = std::get<DataPointMap>(*this->data[scanNumber]->data[DataField::DATAPOINT]);
+            dataPointMap[std::make_unique<double>(std::stod(raw_data[i][mzIndex]))] = std::move(dataPoint);
         }
     }
+    
+    // void LCMSData::zeroFilling()
+    // {
+    //     // iterate over all data sets
+    //     for (auto& it : this->data)
+    //     {
+    //         /* For each data[SCANNUMBER]->data[DATAPOINT], we apply a zerofilling algorithm. */ 
 
+    //         // Extract mz and intensity data from DataPoints
+    //         std::vector<double> mzData, intensityData;
+    //         for (const auto& dp : it.second->data[DataField::DATAPOINT])
+    //         {
+    //             mzData.push_back(dp->mz);
+    //             intensityData.push_back(dp->intensity);
+    //         }
+
+    //         // Apply zero filling
+    //         this->MeasurementData::zeroFilling(mzData, intensityData, 8);
+
+    //         // Insert updated data back into DataPoints
+    //         for (size_t i = 0; i < mzData.size(); i++)
+    //         {
+    //             it.second->data[DataField::DATAPOINT][i]->mz = mzData[i];
+    //             it.second->data[DataField::DATAPOINT][i]->intensity = intensityData[i];
+    //         }
+    //     }
+    // }
     // void LCMSData::zeroFilling()
     // {
     //     // iterate over all data sets
     //     for (auto it = this->data.begin(); it != this->data.end(); it++)
     //     {
-    //         // iterate over all sub data sets
-    //         for (auto it2 = it->second.begin(); it2 != it->second.end(); it2++)
-    //         {
-    //             this->MeasurementData::zeroFilling(it2->second.mz, it2->second.intensity, 8);
-    //         }
+    //         /* For each data[SCANNUMBER]->data[DATAPOINT], we apply a zerofilling algorithm. */ 
+    //         // calculate the differences of the mz values
+
     //     }
+    //     // // iterate over all data sets
+    //     // for (auto it = this->data.begin(); it != this->data.end(); it++)
+    //     // {
+    //     //     // iterate over all sub data sets
+    //     //     for (auto it2 = it->second.begin(); it2 != it->second.end(); it2++)
+    //     //     {
+    //     //         this->MeasurementData::zeroFilling(it2->second.mz, it2->second.intensity, 8);
+    //     //     }
+    //     // }
     // }
 
     // void LCMSData::cutData()
@@ -253,26 +276,23 @@ namespace q
             std::cout << "Scan Number: " << it->first << std::endl;
             auto retentionTime = std::get<double>(*it->second->data[DataField::RETENTIONTIME]);
             std::cout << "Retention Time: " << retentionTime << std::endl;
+            std::cout << "Size: " << std::get<DataPointMap>(*it->second->data[DataField::DATAPOINT]).size() << std::endl;
 
-
-            std::cout << "MZ: ";
+            std::cout << "MZ (unordered): ";
             // iterate through the DataPoint Map for MZ
-            for (auto it2 = std::get<std::unordered_map<int, std::unique_ptr<DataPoint>>>(*it->second->data[DataType::DataField::DATAPOINT]).begin(); it2 != std::get<std::unordered_map<int, std::unique_ptr<DataPoint>>>(*it->second->data[DataType::DataField::DATAPOINT]).end(); it2++)
+            for (auto it2 = std::get<DataPointMap>(*it->second->data[DataField::DATAPOINT]).begin(); it2 != std::get<DataPointMap>(*it->second->data[DataField::DATAPOINT]).end(); it2++)
             {
-                std::cout << it2->second->mz << " ";
+                std::cout << *(it2->first) << " ";
             }
             std::cout << std::endl;
 
-            std::cout << "Intensity: ";
+            std::cout << "Intensity (unordered): ";
             // iterate through the DataPoint Map for Intensity
-            for (auto it2 = std::get<std::unordered_map<int, std::unique_ptr<DataPoint>>>(*it->second->data[DataType::DataField::DATAPOINT]).begin(); it2 != std::get<std::unordered_map<int, std::unique_ptr<DataPoint>>>(*it->second->data[DataType::DataField::DATAPOINT]).end(); it2++)
+            for (auto it2 = std::get<DataPointMap>(*it->second->data[DataField::DATAPOINT]).begin(); it2 != std::get<DataPointMap>(*it->second->data[DataField::DATAPOINT]).end(); it2++)
             {
                 std::cout << it2->second->intensity << " ";
             }
             std::cout << std::endl;
-            
-
-            
         }
     }
 

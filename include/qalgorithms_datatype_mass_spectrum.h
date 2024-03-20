@@ -26,10 +26,12 @@ namespace q
             struct DataPoint
             {
                 double intensity;
-                double mz;
+                // double mz;
                 int df;
 
-                DataPoint(double intensity, double mz, int df) : intensity(intensity), mz(mz), df(df) {}
+                DataPoint(double intensity, double mz, int df) : intensity(intensity), df(df) {}
+                // double& x() { return mz; }
+                // double& y() { return intensity; }
             };
 
             // constructors
@@ -38,15 +40,21 @@ namespace q
             // destructor
             ~MassSpectrum();
 
+            // methods
+
             // properties
-            using variableType = std::variant
+            using variableType = std::variant // allowed variable types for mass spectrum data
             <
-                int,
-                double, 
-                MSLevel, 
-                IonizationMode, 
-                MeasurementMode, 
-                std::unordered_map<int, std::unique_ptr<DataPoint>>
+                int, // e.g. scan number
+                double, // e.g. retention time
+                MSLevel, // e.g. MS1 or MS2
+                IonizationMode, // e.g. positive or negative
+                MeasurementMode, // e.g. profile or centroid
+                std::unordered_map
+                <
+                    std::unique_ptr<double>, // key: i.e., pointer to mz value
+                    std::unique_ptr<DataPoint> // value: i.e., pointer to data point
+                >
             >;
             std::unordered_map<DataField, std::unique_ptr<variableType>> data;
         };
