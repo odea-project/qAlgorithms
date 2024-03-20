@@ -372,7 +372,7 @@ namespace q
         }
 
         // create vector of mean distance to other features
-        std::vector<double> meanDist(n);
+        std::vector<double> meanDist = meanDistance(featurelist);
         for (size_t i = 0; i < n - 1; i++)
         {
             for (int j = i + 1; j < n; ++j)
@@ -409,18 +409,6 @@ namespace q
         }
     }
 
-    double Bin::calcDQS(double MID, double MOD) // mean inner distance, minimum outer distance
-    {
-        double dqs = MID;
-        if (dqs < MOD)
-        {
-            dqs = MOD;
-        }
-        dqs = (MID - MOD) * 0.5 * (1 + 1 / (1 + MID)) / dqs; // sm(i) term
-        dqs = (dqs + 1) / 2;                                 // interval transform
-        return dqs;
-    }
-
     std::string Bin::summarisePerf()
     {
         // ID, size, mean(mz), mz range, mean(scans), scan range, mean(DQS), subsets, time (DQSB), \n
@@ -446,6 +434,45 @@ namespace q
     }
 
 #pragma endregion "Bin"
+
+#pragma region "Functions"
+
+    std::vector<double> meanDistance(std::vector<Feature *> featurelistBin)
+    {
+        // assumes bin is sorted by mz
+        int n = featurelistBin.size();
+        double totalSum = 0;
+        std::vector<double> output(n);
+        for (size_t i = 0; i < n; i++)
+        {
+            totalSum = +featurelistBin[i]->mz;
+        }
+        double beforeSum = 0;
+        for (size_t i = 0; i < n; i++)
+        {
+            double v1 = (totalSum - featurelistBin[i]->mz * (n - i));
+            double v2 = (featurelistBin[i]->mz * i - beforeSum);
+            beforeSum += featurelistBin[i]->mz;
+            totalSum -= featurelistBin[i]->mz;
+            output[i] = (v1 + v1) / (n - 1);
+        }
+        return output;
+    }
+
+    double calcDQS(double MID, double MOD) // mean inner distance, minimum outer distance
+    {
+        double dqs = MID;
+        if (dqs < MOD)
+        {
+            dqs = MOD;
+        }
+        dqs = (MID - MOD) * 0.5 * (1 + 1 / (1 + MID)) / dqs; // sm(i) term
+        dqs = (dqs + 1) / 2;                                 // interval transform
+        return dqs;
+    }
+
+#pragma endregion "Functions"
+
 }
 
 int main()
