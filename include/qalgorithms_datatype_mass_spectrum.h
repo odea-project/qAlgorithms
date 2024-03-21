@@ -1,11 +1,16 @@
 #ifndef QALGORITHMS_DATATYPE_MASS_SPECTRUM_H
 #define QALGORITHMS_DATATYPE_MASS_SPECTRUM_H
 
+//internal
 #include "qalgorithms_datatype.h"
+
+//external
 #include <vector>
 #include <unordered_map>
 #include <memory>
 #include <variant>
+#include <algorithm>
+
 
 namespace q
 {
@@ -51,6 +56,8 @@ namespace q
             ~MassSpectrum();
 
             // methods
+            void addDataPoint(double intensity, double mz, int df);
+            void sortDataPoints();
 
             // properties
             using variableType = std::variant // allowed variable types for mass spectrum data

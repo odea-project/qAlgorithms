@@ -18,9 +18,9 @@ int main() {
 
     // Capture the start time
     auto start = std::chrono::high_resolution_clock::now();
-    // std::cout << "zero filling....";
-    // lcmsData.zeroFilling();
-    // std::cout << "done\n";
+    std::cout << "zero filling....";
+    lcmsData.zeroFilling();
+    std::cout << "done\n";
     // std::cout << "cutting data....";
     // lcmsData.cutData();
     // std::cout << "done\n";

@@ -167,49 +167,17 @@ namespace q
 
     void LCMSData::zeroFilling()
     {
-        // iterate over all data sets
-        for (auto& it : this->data)
-        {
-            /* For each data[SCANNUMBER]->data[DATAPOINT], we apply a zerofilling algorithm.*/
-
-    //         // Extract mz and intensity data from DataPoints
-    //         std::vector<double> mzData, intensityData;
-    //         for (const auto& dp : it.second->data[DataField::DATAPOINT])
-    //         {
-    //             mzData.push_back(dp->mz);
-    //             intensityData.push_back(dp->intensity);
-    //         }
-
-    //         // Apply zero filling
-    //         this->MeasurementData::zeroFilling(mzData, intensityData, 8);
-
-    //         // Insert updated data back into DataPoints
-    //         for (size_t i = 0; i < mzData.size(); i++)
-    //         {
-    //             it.second->data[DataField::DATAPOINT][i]->mz = mzData[i];
-    //             it.second->data[DataField::DATAPOINT][i]->intensity = intensityData[i];
-    //         }
-        }
+        // iterate over all data sets and apply zero filling main method
+        std::for_each(data.begin(), data.end(), [this](auto& pair) {
+            varDataType dataObject = std::move(pair.second);
+            this->MeasurementData::zeroFilling(dataObject, 8);
+            // check if the dataObject is a unique Pointer to a MassSpectrum object
+            if (auto massSpectrumPtr = std::get_if<std::unique_ptr<DataType::MassSpectrum>>(&dataObject)) 
+            {
+                pair.second = std::move(*massSpectrumPtr);
+            }
+        });
     }
-    // void LCMSData::zeroFilling()
-    // {
-    //     // iterate over all data sets
-    //     for (auto it = this->data.begin(); it != this->data.end(); it++)
-    //     {
-    //         /* For each data[SCANNUMBER]->data[DATAPOINT], we apply a zerofilling algorithm. */
-    //         // calculate the differences of the mz values
-
-    //     }
-    //     // // iterate over all data sets
-    //     // for (auto it = this->data.begin(); it != this->data.end(); it++)
-    //     // {
-    //     //     // iterate over all sub data sets
-    //     //     for (auto it2 = it->second.begin(); it2 != it->second.end(); it2++)
-    //     //     {
-    //     //         this->MeasurementData::zeroFilling(it2->second.mz, it2->second.intensity, 8);
-    //     //     }
-    //     // }
-    // }
 
     // void LCMSData::cutData()
     // {

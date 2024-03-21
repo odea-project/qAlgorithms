@@ -18,5 +18,16 @@ namespace q
     {
       // destructor
     }
+    // methods
+    void MassSpectrum::addDataPoint(double intensity, double mz, int df)
+    {
+      std::get<std::vector<std::unique_ptr<DataPoint>>>(data[DataField::DATAPOINT]).push_back(std::make_unique<DataPoint>(intensity, mz, df));
+    }
+
+    void MassSpectrum::sortDataPoints()
+    {
+      auto& dataPoints = std::get<std::vector<std::unique_ptr<DataPoint>>>(data[DataField::DATAPOINT]);
+      std::sort(dataPoints.begin(), dataPoints.end(), [](const std::unique_ptr<DataPoint>& a, const std::unique_ptr<DataPoint>& b) { return a->x() < b->x(); });
+    }
   }
 }
