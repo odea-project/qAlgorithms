@@ -167,30 +167,33 @@ namespace q
 
     void LCMSData::zeroFilling()
     {
+        varDataType dataObject = std::move(this->data);
+        this->MeasurementData::zeroFilling(dataObject, 8);
+
         // iterate over all data sets and apply zero filling main method
-        std::for_each(data.begin(), data.end(), [this](auto& pair) {
-            varDataType dataObject = std::move(pair.second);
-            this->MeasurementData::zeroFilling(dataObject, 8);
-            // check if the dataObject is a unique Pointer to a MassSpectrum object
-            if (auto massSpectrumPtr = std::get_if<std::unique_ptr<DataType::MassSpectrum>>(&dataObject)) 
-            {
-                pair.second = std::move(*massSpectrumPtr);
-            }
-        });
+        // std::for_each(data.begin(), data.end(), [this](auto& pair) {
+        //     varDataType dataObject = std::move(pair.second);
+        //     this->MeasurementData::zeroFilling(dataObject, 8);
+        //     // check if the dataObject is a unique Pointer to a MassSpectrum object
+        //     if (auto massSpectrumPtr = std::get_if<std::unique_ptr<DataType::MassSpectrum>>(&dataObject)) 
+        //     {
+        //         pair.second = std::move(*massSpectrumPtr);
+        //     }
+        // });
     }
 
     void LCMSData::cutData()
     {
         // iterate over all data sets and apply cut data main method
-        std::for_each(data.begin(), data.end(), [this](auto& pair) {
-            varDataType dataObject = std::move(pair.second);
-            this->MeasurementData::cutData(dataObject);
-            // check if the dataObject is a unique Pointer to a MassSpectrum object
-            if (auto massSpectrumPtr = std::get_if<std::unique_ptr<DataType::MassSpectrum>>(&dataObject)) 
-            {
-                pair.second = std::move(*massSpectrumPtr);
-            }
-        });
+        // std::for_each(data.begin(), data.end(), [this](auto& pair) {
+        //     varDataType dataObject = std::move(pair.second);
+        //     // this->MeasurementData::cutData(dataObject);
+        //     // // check if the dataObject is a unique Pointer to a MassSpectrum object
+        //     // if (auto massSpectrumPtr = std::get_if<std::unique_ptr<DataType::MassSpectrum>>(&dataObject)) 
+        //     // {
+        //     //     pair.second = std::move(*massSpectrumPtr);
+        //     // }
+        // });
     }
 
     // void LCMSData::cutData()

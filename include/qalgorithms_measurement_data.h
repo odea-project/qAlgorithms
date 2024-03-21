@@ -26,24 +26,22 @@ namespace q
         // methods
         virtual void readCSV(std::string filename, int rowStart, int rowEnd, int colStart, int colEnd, char separator, std::vector<DataType::DataField> variableTypes) = 0;
 
-        using MS = std::unique_ptr<DataType::MassSpectrum>;
+        using MS = std::unordered_map<int, std::unique_ptr<DataType::MassSpectrum>>; // map of mass spectra
         using varDataType = std::variant<MS>; // add more data types if needed
         /**
          * @brief Identify and fill gaps in the data
          * @details The zeroFilling method identifies and fills gaps in the data. The method uses difference between two neighboring data points to identify gaps. If the difference is 1.75 times greater than expected, then the method fills the gap with zero values for y-axis and inter/extrapolated values for x-axis values. For the expected difference, the method the difference of the last two data points that not show a gap. However, the first expected difference is set to the median of the differences of the total data points. However, the maximum gap size is set to "k/2" per side, i.e., "k" in total, where there is a gap leftover between the fourth and fifth data points.
-         * @param data A vector pointer of data points
+         * @param dataMap A map of variant data types
          * @param k The maximum gap size
          */
-        void zeroFilling(varDataType& dataObject, int k);
+        void zeroFilling(varDataType& dataMap, int k);
 
         /**
          * @brief Cut the data into smaller data sets
          * @details The cutData method cuts the data into smaller data sets. The method uses the separator value to split the data into smaller data sets. The separator value is set to -1.0 for the x-axis and -1.0 for the y-axis. For each cut, the method creates a new data subset and stores it in the data map using a sub-dataset ID as the secondary key.
-         * @param xData A vector of x-axis values
-         * @param yData A vector of y-axis values
-         * @return A vector of indices where the data needs to be cut
+         * @param dataObject A variant data type
          */
-        std::vector<size_t> cutData(std::vector<double> &xData, std::vector<double> &yData) const;
+        void cutData(varDataType& dataObject) const;
 
         /**
          * @brief Interpolate y-axis values
