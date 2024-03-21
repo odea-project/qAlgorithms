@@ -31,8 +31,11 @@ mittlere innendistanz optimieren
  
  Sortiere Featureliste nur im Bereich von scans, dann suche jeweils nächstes mz 
 
+überspringe n Werte pro suchvorgang
+1. Relativ viele Suchvorgänge in einem Scan brauchen 0-1 Iterationen
 
- #include <cmath>
+
+#include <cmath>
 #include <cstdlib>
 #include <ctime>
 #include <iostream>
