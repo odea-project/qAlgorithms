@@ -5,8 +5,8 @@ namespace q
     int subsetcount = 0;
     int OSzero = 0;
     int subsets = 0;
-    std::vector<int> stepsForDQS;
-    std::vector<int> scanRelSteps;
+    std::vector<double> stepsForDQS;
+    std::vector<double> scanRelSteps;
 
 #pragma region "Featurelist"
     FeatureList::FeatureList()
@@ -513,7 +513,10 @@ int main()
     // std::cout.rdbuf(result.rdbuf());             // redirect std::cout to out.txt!
     testcontainer.assignDQSB(&testdata, 7);
 
+    std::vector<double> ratio;
     int oneCount = 0;
+    int otherCount = 0;
+    int meanSteps = 0;
     for (size_t i = 0; i < q::stepsForDQS.size(); i++)
     {
         if (q::stepsForDQS[i] == 1)
@@ -521,11 +524,14 @@ int main()
             ++oneCount;
         }
         else{
-
+            ++otherCount;
+            ratio.push_back(q::stepsForDQS[i]/q::scanRelSteps[i]);
+            meanSteps += q::stepsForDQS[i];
         }
         
     }
-    std::cout << oneCount;
+    meanSteps = meanSteps/otherCount;
+    std::cout << oneCount << ", " << meanSteps;
 
     // std::cout.rdbuf(coutbuf); // reset to standard output again
     std::cout << "\n\nDone!\n\n";
