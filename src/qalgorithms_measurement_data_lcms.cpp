@@ -179,6 +179,20 @@ namespace q
         });
     }
 
+    void LCMSData::cutData()
+    {
+        // iterate over all data sets and apply cut data main method
+        std::for_each(data.begin(), data.end(), [this](auto& pair) {
+            varDataType dataObject = std::move(pair.second);
+            this->MeasurementData::cutData(dataObject);
+            // check if the dataObject is a unique Pointer to a MassSpectrum object
+            if (auto massSpectrumPtr = std::get_if<std::unique_ptr<DataType::MassSpectrum>>(&dataObject)) 
+            {
+                pair.second = std::move(*massSpectrumPtr);
+            }
+        });
+    }
+
     // void LCMSData::cutData()
     // {
     //     // create a new data map to store the updated data

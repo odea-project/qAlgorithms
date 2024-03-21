@@ -51,7 +51,7 @@ namespace q
          * @details The cutData method cuts the data into smaller data sets. The method uses the separator value to split the data into smaller data sets. The separator value is set to -1.0 for the x-axis and -1.0 for the y-axis. For each cut, the method creates a new data subset and stores it in the data map using a sub-dataset ID as the secondary key.
          *
          */
-        // void cutData();
+        void cutData();
 
         /**
          * @brief Interpolate y-axis values

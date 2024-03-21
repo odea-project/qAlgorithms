@@ -63,7 +63,6 @@ namespace q
               {
                 // define the new pointer for new data point and add it to the data vector using the addDataPoint method from the respecting class
                 dataObj.addDataPoint(0.0, data[i-1]->x() + j * expectedDifference, 0);
-                std::cout << "Adding new data point at x = " << data[i-1]->x() + j * expectedDifference << std::endl;
               }
             }
             else
