@@ -99,229 +99,287 @@ $(function() { codefold.init(0); });
 <div class="line"><a id="l00007" name="l00007"></a><span class="lineno">    7</span><span class="preprocessor">#include &lt;fstream&gt;</span></div>
 <div class="line"><a id="l00008" name="l00008"></a><span class="lineno">    8</span><span class="preprocessor">#include &lt;sstream&gt;</span></div>
 <div class="line"><a id="l00009" name="l00009"></a><span class="lineno">    9</span> </div>
-<div class="line"><a id="l00010" name="l00010"></a><span class="lineno">   10</span><span class="keyword">namespace </span><a class="code hl_namespace" href="namespaceq.html">q</a> {</div>
-<div class="foldopen" id="foldopen00011" data-start="{" data-end="}">
-<div class="line"><a id="l00011" name="l00011"></a><span class="lineno"><a class="line" href="classq_1_1_l_c_m_s_data.html#a7466e285c6c4f7a7fd3a67edb15a4cd7">   11</a></span>    <a class="code hl_function" href="classq_1_1_l_c_m_s_data.html#a7466e285c6c4f7a7fd3a67edb15a4cd7">LCMSData::LCMSData</a>() {</div>
-<div class="line"><a id="l00012" name="l00012"></a><span class="lineno">   12</span>    }</div>
+<div class="line"><a id="l00010" name="l00010"></a><span class="lineno">   10</span><span class="keyword">namespace </span><a class="code hl_namespace" href="namespaceq.html">q</a></div>
+<div class="line"><a id="l00011" name="l00011"></a><span class="lineno">   11</span>{</div>
+<div class="line"><a id="l00012" name="l00012"></a><span class="lineno">   12</span>    <span class="comment">// usings</span></div>
+<div class="line"><a id="l00013" name="l00013"></a><span class="lineno"><a class="line" href="namespaceq.html#a4df4875ee6a816afd1b447d015e1cb31">   13</a></span>    <span class="keyword">using </span><a class="code hl_typedef" href="namespaceq.html#a4df4875ee6a816afd1b447d015e1cb31">VariableType</a> = <a class="code hl_typedef" href="classq_1_1_data_type_1_1_mass_spectrum.html#a277bbd157af7a60eb393a89859647056">DataType::MassSpectrum::variableType</a>;</div>
+<div class="line"><a id="l00014" name="l00014"></a><span class="lineno"><a class="line" href="namespaceq.html#a9968e255b57c468c531d074738dd9e9d">   14</a></span>    <span class="keyword">using </span><a class="code hl_enumeration" href="namespaceq_1_1_data_type.html#a9fcd47c7d7d77f908f041cad931962aa">DataField</a> = <a class="code hl_enumeration" href="namespaceq_1_1_data_type.html#a9fcd47c7d7d77f908f041cad931962aa">DataType::DataField</a>;</div>
+<div class="line"><a id="l00015" name="l00015"></a><span class="lineno"><a class="line" href="namespaceq.html#a91e90b5b1e688762dd56e4818019c57d">   15</a></span>    <span class="keyword">using </span><a class="code hl_class" href="classq_1_1_data_type_1_1_mass_spectrum.html">MassSpectrum</a> = <a class="code hl_class" href="classq_1_1_data_type_1_1_mass_spectrum.html">DataType::MassSpectrum</a>;</div>
+<div class="line"><a id="l00016" name="l00016"></a><span class="lineno"><a class="line" href="namespaceq.html#ab019e0290c5c4a2d2ca2b0cb30bc9d19">   16</a></span>    <span class="keyword">using </span><a class="code hl_struct" href="structq_1_1_data_type_1_1_mass_spectrum_1_1_data_point.html">DataPoint</a> = <a class="code hl_struct" href="structq_1_1_data_type_1_1_mass_spectrum_1_1_data_point.html">DataType::MassSpectrum::DataPoint</a>;</div>
+<div class="line"><a id="l00017" name="l00017"></a><span class="lineno"><a class="line" href="namespaceq.html#adc792d430932d1bad118dfc033dd8dca">   17</a></span>    <span class="keyword">using </span><a class="code hl_typedef" href="namespaceq.html#adc792d430932d1bad118dfc033dd8dca">DataPointVector</a> = std::vector&lt;std::unique_ptr&lt;DataPoint&gt;&gt;;</div>
+<div class="line"><a id="l00018" name="l00018"></a><span class="lineno">   18</span> </div>
+<div class="foldopen" id="foldopen00019" data-start="{" data-end="}">
+<div class="line"><a id="l00019" name="l00019"></a><span class="lineno"><a class="line" href="classq_1_1_l_c_m_s_data.html#a7466e285c6c4f7a7fd3a67edb15a4cd7">   19</a></span>    <a class="code hl_function" href="classq_1_1_l_c_m_s_data.html#a7466e285c6c4f7a7fd3a67edb15a4cd7">LCMSData::LCMSData</a>()</div>
+<div class="line"><a id="l00020" name="l00020"></a><span class="lineno">   20</span>    {</div>
+<div class="line"><a id="l00021" name="l00021"></a><span class="lineno">   21</span>    }</div>
 </div>
-<div class="line"><a id="l00013" name="l00013"></a><span class="lineno">   13</span> </div>
-<div class="foldopen" id="foldopen00014" data-start="{" data-end="}">
-<div class="line"><a id="l00014" name="l00014"></a><span class="lineno"><a class="line" href="classq_1_1_l_c_m_s_data.html#a556f3c0930dd9500376eda81b271b787">   14</a></span>    <a class="code hl_function" href="classq_1_1_l_c_m_s_data.html#a556f3c0930dd9500376eda81b271b787">LCMSData::~LCMSData</a>() {</div>
-<div class="line"><a id="l00015" name="l00015"></a><span class="lineno">   15</span>    }</div>
+<div class="line"><a id="l00022" name="l00022"></a><span class="lineno">   22</span> </div>
+<div class="foldopen" id="foldopen00023" data-start="{" data-end="}">
+<div class="line"><a id="l00023" name="l00023"></a><span class="lineno"><a class="line" href="classq_1_1_l_c_m_s_data.html#a556f3c0930dd9500376eda81b271b787">   23</a></span>    <a class="code hl_function" href="classq_1_1_l_c_m_s_data.html#a556f3c0930dd9500376eda81b271b787">LCMSData::~LCMSData</a>()</div>
+<div class="line"><a id="l00024" name="l00024"></a><span class="lineno">   24</span>    {</div>
+<div class="line"><a id="l00025" name="l00025"></a><span class="lineno">   25</span>    }</div>
 </div>
-<div class="line"><a id="l00016" name="l00016"></a><span class="lineno">   16</span> </div>
-<div class="foldopen" id="foldopen00017" data-start="{" data-end="}">
-<div class="line"><a id="l00017" name="l00017"></a><span class="lineno"><a class="line" href="classq_1_1_l_c_m_s_data.html#ab4632d3d3138d17fd5a7f479b70c2846">   17</a></span>    <span class="keywordtype">void</span> <a class="code hl_function" href="classq_1_1_l_c_m_s_data.html#ab4632d3d3138d17fd5a7f479b70c2846">LCMSData::readCSV</a>(std::string filename,<span class="keywordtype">int</span> rowStart, <span class="keywordtype">int</span> rowEnd, <span class="keywordtype">int</span> colStart, <span class="keywordtype">int</span> colEnd, <span class="keywordtype">char</span> separator,std::vector&lt;DataType::DataField&gt; variableTypes) {</div>
-<div class="line"><a id="l00018" name="l00018"></a><span class="lineno">   18</span>        std::ifstream file(filename);</div>
-<div class="line"><a id="l00019" name="l00019"></a><span class="lineno">   19</span>        std::string line;</div>
-<div class="line"><a id="l00020" name="l00020"></a><span class="lineno">   20</span>        std::vector&lt;std::vector&lt;std::string&gt;&gt; raw_data;</div>
-<div class="line"><a id="l00021" name="l00021"></a><span class="lineno">   21</span> </div>
-<div class="line"><a id="l00022" name="l00022"></a><span class="lineno">   22</span>        <span class="comment">// if rowEnd is -1, then set it to the maximum number of rows</span></div>
-<div class="line"><a id="l00023" name="l00023"></a><span class="lineno">   23</span>        <span class="keywordflow">if</span> (rowEnd == -1) {</div>
-<div class="line"><a id="l00024" name="l00024"></a><span class="lineno">   24</span>            rowEnd = 1000000;</div>
-<div class="line"><a id="l00025" name="l00025"></a><span class="lineno">   25</span>        }</div>
 <div class="line"><a id="l00026" name="l00026"></a><span class="lineno">   26</span> </div>
-<div class="line"><a id="l00027" name="l00027"></a><span class="lineno">   27</span>        <span class="comment">// if colEnd is -1, then set it to the maximum number of columns</span></div>
-<div class="line"><a id="l00028" name="l00028"></a><span class="lineno">   28</span>        <span class="keywordflow">if</span> (colEnd == -1) {</div>
-<div class="line"><a id="l00029" name="l00029"></a><span class="lineno">   29</span>            colEnd = 1000000;</div>
-<div class="line"><a id="l00030" name="l00030"></a><span class="lineno">   30</span>        }</div>
-<div class="line"><a id="l00031" name="l00031"></a><span class="lineno">   31</span> </div>
-<div class="line"><a id="l00032" name="l00032"></a><span class="lineno">   32</span>        <span class="comment">// find the DataFiled::SCANNUMBER as this is the key for the LCMSData map</span></div>
-<div class="line"><a id="l00033" name="l00033"></a><span class="lineno">   33</span>        <span class="keywordtype">int</span> scanNumberIndex = -1;</div>
-<div class="line"><a id="l00034" name="l00034"></a><span class="lineno">   34</span>        <span class="keywordflow">for</span> (<span class="keywordtype">int</span> i = 0; i &lt; variableTypes.size(); i++) {</div>
-<div class="line"><a id="l00035" name="l00035"></a><span class="lineno">   35</span>            <span class="keywordflow">if</span> (variableTypes[i] == <a class="code hl_enumvalue" href="namespaceq_1_1_data_type.html#a9fcd47c7d7d77f908f041cad931962aaa29e2d681b2cc529fa80582fdca325b02">DataType::DataField::SCANNUMBER</a>) {</div>
-<div class="line"><a id="l00036" name="l00036"></a><span class="lineno">   36</span>                scanNumberIndex = i;</div>
-<div class="line"><a id="l00037" name="l00037"></a><span class="lineno">   37</span>                <span class="keywordflow">break</span>;</div>
-<div class="line"><a id="l00038" name="l00038"></a><span class="lineno">   38</span>            }</div>
-<div class="line"><a id="l00039" name="l00039"></a><span class="lineno">   39</span>        }</div>
-<div class="line"><a id="l00040" name="l00040"></a><span class="lineno">   40</span> </div>
-<div class="line"><a id="l00041" name="l00041"></a><span class="lineno">   41</span>        <span class="comment">// find the DataFiled::RETENTIONTIME </span></div>
-<div class="line"><a id="l00042" name="l00042"></a><span class="lineno">   42</span>        <span class="keywordtype">int</span> retentionTimeIndex = -1;</div>
-<div class="line"><a id="l00043" name="l00043"></a><span class="lineno">   43</span>        <span class="keywordflow">for</span> (<span class="keywordtype">int</span> i = 0; i &lt; variableTypes.size(); i++) {</div>
-<div class="line"><a id="l00044" name="l00044"></a><span class="lineno">   44</span>            <span class="keywordflow">if</span> (variableTypes[i] == <a class="code hl_enumvalue" href="namespaceq_1_1_data_type.html#a9fcd47c7d7d77f908f041cad931962aaa5657758f69fc660569fa4d1de5a11cbc">DataType::DataField::RETENTIONTIME</a>) {</div>
-<div class="line"><a id="l00045" name="l00045"></a><span class="lineno">   45</span>                retentionTimeIndex = i;</div>
-<div class="line"><a id="l00046" name="l00046"></a><span class="lineno">   46</span>                <span class="keywordflow">break</span>;</div>
-<div class="line"><a id="l00047" name="l00047"></a><span class="lineno">   47</span>            }</div>
-<div class="line"><a id="l00048" name="l00048"></a><span class="lineno">   48</span>        }</div>
-<div class="line"><a id="l00049" name="l00049"></a><span class="lineno">   49</span> </div>
-<div class="line"><a id="l00050" name="l00050"></a><span class="lineno">   50</span>        <span class="comment">// find the DataFiled::MZ</span></div>
-<div class="line"><a id="l00051" name="l00051"></a><span class="lineno">   51</span>        <span class="keywordtype">int</span> mzIndex = -1;</div>
-<div class="line"><a id="l00052" name="l00052"></a><span class="lineno">   52</span>        <span class="keywordflow">for</span> (<span class="keywordtype">int</span> i = 0; i &lt; variableTypes.size(); i++) {</div>
-<div class="line"><a id="l00053" name="l00053"></a><span class="lineno">   53</span>            <span class="keywordflow">if</span> (variableTypes[i] == <a class="code hl_enumvalue" href="namespaceq_1_1_data_type.html#a9fcd47c7d7d77f908f041cad931962aaaac6ad5d9b99757c3a878f2d275ace198">DataType::DataField::MZ</a>) {</div>
-<div class="line"><a id="l00054" name="l00054"></a><span class="lineno">   54</span>                mzIndex = i;</div>
-<div class="line"><a id="l00055" name="l00055"></a><span class="lineno">   55</span>                <span class="keywordflow">break</span>;</div>
-<div class="line"><a id="l00056" name="l00056"></a><span class="lineno">   56</span>            }</div>
-<div class="line"><a id="l00057" name="l00057"></a><span class="lineno">   57</span>        }</div>
-<div class="line"><a id="l00058" name="l00058"></a><span class="lineno">   58</span> </div>
-<div class="line"><a id="l00059" name="l00059"></a><span class="lineno">   59</span>        <span class="comment">// find the DataFiled::INTENSITY</span></div>
-<div class="line"><a id="l00060" name="l00060"></a><span class="lineno">   60</span>        <span class="keywordtype">int</span> intensityIndex = -1;</div>
-<div class="line"><a id="l00061" name="l00061"></a><span class="lineno">   61</span>        <span class="keywordflow">for</span> (<span class="keywordtype">int</span> i = 0; i &lt; variableTypes.size(); i++) {</div>
-<div class="line"><a id="l00062" name="l00062"></a><span class="lineno">   62</span>            <span class="keywordflow">if</span> (variableTypes[i] == <a class="code hl_enumvalue" href="namespaceq_1_1_data_type.html#a9fcd47c7d7d77f908f041cad931962aaa3da9993984f423cfc441a286105a9226">DataType::DataField::INTENSITY</a>) {</div>
-<div class="line"><a id="l00063" name="l00063"></a><span class="lineno">   63</span>                intensityIndex = i;</div>
-<div class="line"><a id="l00064" name="l00064"></a><span class="lineno">   64</span>                <span class="keywordflow">break</span>;</div>
-<div class="line"><a id="l00065" name="l00065"></a><span class="lineno">   65</span>            }</div>
-<div class="line"><a id="l00066" name="l00066"></a><span class="lineno">   66</span>        }</div>
-<div class="line"><a id="l00067" name="l00067"></a><span class="lineno">   67</span> </div>
-<div class="line"><a id="l00068" name="l00068"></a><span class="lineno">   68</span>        <span class="comment">// read the file</span></div>
-<div class="line"><a id="l00069" name="l00069"></a><span class="lineno">   69</span>        <span class="keywordtype">int</span> rowCounter = 0;</div>
-<div class="line"><a id="l00070" name="l00070"></a><span class="lineno">   70</span>        <span class="keywordtype">int</span> colCounter = 0;</div>
-<div class="line"><a id="l00071" name="l00071"></a><span class="lineno">   71</span>        <span class="keywordflow">while</span> (std::getline(file, line) &amp;&amp; rowCounter &lt; rowEnd) {</div>
-<div class="line"><a id="l00072" name="l00072"></a><span class="lineno">   72</span>            <span class="keywordflow">if</span> (rowCounter &gt;= rowStart) {</div>
-<div class="line"><a id="l00073" name="l00073"></a><span class="lineno">   73</span>                std::vector&lt;std::string&gt; row;</div>
-<div class="line"><a id="l00074" name="l00074"></a><span class="lineno">   74</span>                std::stringstream lineStream(line);</div>
-<div class="line"><a id="l00075" name="l00075"></a><span class="lineno">   75</span>                std::string cell;</div>
-<div class="line"><a id="l00076" name="l00076"></a><span class="lineno">   76</span>                colCounter = 0;</div>
-<div class="line"><a id="l00077" name="l00077"></a><span class="lineno">   77</span>                <span class="keywordflow">while</span> (std::getline(lineStream, cell, separator)) {</div>
-<div class="line"><a id="l00078" name="l00078"></a><span class="lineno">   78</span>                    <span class="keywordflow">if</span> (colCounter &gt;= colStart &amp;&amp; colCounter &lt; colEnd) {</div>
-<div class="line"><a id="l00079" name="l00079"></a><span class="lineno">   79</span>                      row.push_back(cell);</div>
-<div class="line"><a id="l00080" name="l00080"></a><span class="lineno">   80</span>                    }</div>
-<div class="line"><a id="l00081" name="l00081"></a><span class="lineno">   81</span>                    colCounter++;</div>
-<div class="line"><a id="l00082" name="l00082"></a><span class="lineno">   82</span>                }</div>
-<div class="line"><a id="l00083" name="l00083"></a><span class="lineno">   83</span>                raw_data.push_back(row);</div>
-<div class="line"><a id="l00084" name="l00084"></a><span class="lineno">   84</span>            }</div>
-<div class="line"><a id="l00085" name="l00085"></a><span class="lineno">   85</span>            rowCounter++;</div>
-<div class="line"><a id="l00086" name="l00086"></a><span class="lineno">   86</span>        }</div>
-<div class="line"><a id="l00087" name="l00087"></a><span class="lineno">   87</span>        file.close();</div>
-<div class="line"><a id="l00088" name="l00088"></a><span class="lineno">   88</span> </div>
-<div class="line"><a id="l00089" name="l00089"></a><span class="lineno">   89</span>        <span class="comment">// check if the raw data has same number of columns as the variableTypes</span></div>
-<div class="line"><a id="l00090" name="l00090"></a><span class="lineno">   90</span>        <span class="keywordflow">if</span> (raw_data[0].size() != variableTypes.size()) {</div>
-<div class="line"><a id="l00091" name="l00091"></a><span class="lineno">   91</span>            std::cerr &lt;&lt; <span class="stringliteral">&quot;The number of columns in the raw data does not match the number of variable types&quot;</span> &lt;&lt; std::endl;</div>
-<div class="line"><a id="l00092" name="l00092"></a><span class="lineno">   92</span>            <span class="keywordflow">return</span>;</div>
-<div class="line"><a id="l00093" name="l00093"></a><span class="lineno">   93</span>        }</div>
-<div class="line"><a id="l00094" name="l00094"></a><span class="lineno">   94</span> </div>
-<div class="line"><a id="l00095" name="l00095"></a><span class="lineno">   95</span>        <span class="comment">// transfere the raw data to the data map</span></div>
-<div class="line"><a id="l00096" name="l00096"></a><span class="lineno">   96</span>        <span class="keywordflow">for</span> (<span class="keywordtype">int</span> i = 0; i &lt; raw_data.size(); i++) {</div>
-<div class="line"><a id="l00097" name="l00097"></a><span class="lineno">   97</span>            <span class="comment">// get/set the scan number</span></div>
-<div class="line"><a id="l00098" name="l00098"></a><span class="lineno">   98</span>            <span class="keywordtype">int</span> scanNumber = std::stoi(raw_data[i][scanNumberIndex]);</div>
-<div class="line"><a id="l00099" name="l00099"></a><span class="lineno">   99</span>            <span class="keywordtype">int</span> subID = 0;</div>
-<div class="line"><a id="l00100" name="l00100"></a><span class="lineno">  100</span>            this-&gt;data[scanNumber][subID].scanNumber = scanNumber;</div>
-<div class="line"><a id="l00101" name="l00101"></a><span class="lineno">  101</span> </div>
-<div class="line"><a id="l00102" name="l00102"></a><span class="lineno">  102</span>            <span class="comment">// get/set the retention time</span></div>
-<div class="line"><a id="l00103" name="l00103"></a><span class="lineno">  103</span>            this-&gt;data[scanNumber][subID].retentionTime = std::stod(raw_data[i][retentionTimeIndex]);</div>
-<div class="line"><a id="l00104" name="l00104"></a><span class="lineno">  104</span> </div>
-<div class="line"><a id="l00105" name="l00105"></a><span class="lineno">  105</span>            <span class="comment">// get/set the mz</span></div>
-<div class="line"><a id="l00106" name="l00106"></a><span class="lineno">  106</span>            this-&gt;data[scanNumber][subID].mz.push_back(std::stod(raw_data[i][mzIndex]));</div>
-<div class="line"><a id="l00107" name="l00107"></a><span class="lineno">  107</span> </div>
-<div class="line"><a id="l00108" name="l00108"></a><span class="lineno">  108</span>            <span class="comment">// get/set the intensity</span></div>
-<div class="line"><a id="l00109" name="l00109"></a><span class="lineno">  109</span>            this-&gt;data[scanNumber][subID].intensity.push_back(std::stod(raw_data[i][intensityIndex]));</div>
-<div class="line"><a id="l00110" name="l00110"></a><span class="lineno">  110</span> </div>
-<div class="line"><a id="l00111" name="l00111"></a><span class="lineno">  111</span>            <span class="comment">// get/set optional variable types</span></div>
-<div class="line"><a id="l00112" name="l00112"></a><span class="lineno">  112</span>            <span class="comment">// following fields are allowed:</span></div>
-<div class="line"><a id="l00113" name="l00113"></a><span class="lineno">  113</span>            <span class="comment">// DataField::IONIZATIONMODE,</span></div>
-<div class="line"><a id="l00114" name="l00114"></a><span class="lineno">  114</span>            <span class="comment">// DataField::MEASUREMENTMODE,</span></div>
-<div class="line"><a id="l00115" name="l00115"></a><span class="lineno">  115</span>            <span class="comment">// DataField::MSLEVEL</span></div>
-<div class="line"><a id="l00116" name="l00116"></a><span class="lineno">  116</span>            <span class="keywordflow">for</span> (<span class="keywordtype">int</span> j = 0; j &lt; variableTypes.size(); j++) {</div>
-<div class="line"><a id="l00117" name="l00117"></a><span class="lineno">  117</span>                <span class="keywordflow">if</span> (variableTypes[j] == <a class="code hl_enumvalue" href="namespaceq_1_1_data_type.html#a9fcd47c7d7d77f908f041cad931962aaa5729d168584ff49470d55cca3441f3ea">DataType::DataField::IONIZATIONMODE</a>) {</div>
-<div class="line"><a id="l00118" name="l00118"></a><span class="lineno">  118</span>                    this-&gt;data[scanNumber][subID].ionizationMode = (raw_data[i][j] == <span class="stringliteral">&quot;Positive&quot;</span>) ? <a class="code hl_enumvalue" href="namespaceq_1_1_data_type.html#a50341ff9d741a5a416eb71a71ffc1fa6a3289297424e01eda5b788c083bbf3147">DataType::IonizationMode::Positive</a> : <a class="code hl_enumvalue" href="namespaceq_1_1_data_type.html#a50341ff9d741a5a416eb71a71ffc1fa6affb9356ff2b7da85c75c92fa7ea03b8b">DataType::IonizationMode::Negative</a>;</div>
-<div class="line"><a id="l00119" name="l00119"></a><span class="lineno">  119</span>                } <span class="keywordflow">else</span> <span class="keywordflow">if</span> (variableTypes[j] == <a class="code hl_enumvalue" href="namespaceq_1_1_data_type.html#a9fcd47c7d7d77f908f041cad931962aaade82af5b73c61b0c9d162597fcc4abe6">DataType::DataField::MEASUREMENTMODE</a>) {</div>
-<div class="line"><a id="l00120" name="l00120"></a><span class="lineno">  120</span>                    this-&gt;data[scanNumber][subID].measurementMode = (raw_data[i][j] == <span class="stringliteral">&quot;Profile&quot;</span>) ? <a class="code hl_enumvalue" href="namespaceq_1_1_data_type.html#a8e76910d22415bfa3dd2086a76f0c5eaacce99c598cfdb9773ab041d54c3d973a">DataType::MeasurementMode::Profile</a> : <a class="code hl_enumvalue" href="namespaceq_1_1_data_type.html#a8e76910d22415bfa3dd2086a76f0c5eaa9b49197cf2fea5efc68ef8a88489e1b6">DataType::MeasurementMode::Centroid</a>;</div>
-<div class="line"><a id="l00121" name="l00121"></a><span class="lineno">  121</span>                } <span class="keywordflow">else</span> <span class="keywordflow">if</span> (variableTypes[j] == <a class="code hl_enumvalue" href="namespaceq_1_1_data_type.html#a9fcd47c7d7d77f908f041cad931962aaa9e2fedbc7006aeef70baaca5347088b1">DataType::DataField::MSLEVEL</a>) {</div>
-<div class="line"><a id="l00122" name="l00122"></a><span class="lineno">  122</span>                    this-&gt;data[scanNumber][subID].msLevel = (raw_data[i][j] == <span class="stringliteral">&quot;MS1&quot;</span>) ? <a class="code hl_enumvalue" href="namespaceq_1_1_data_type.html#a90aa4d66e606cf85f2424677d7bf4d34a3c4708a2cdd3c4bfd03ad04e36b87544">DataType::MSLevel::MS1</a> : <a class="code hl_enumvalue" href="namespaceq_1_1_data_type.html#a90aa4d66e606cf85f2424677d7bf4d34a5db8c2f5881ff5a19875fe5529b9a987">DataType::MSLevel::MS2</a>;</div>
-<div class="line"><a id="l00123" name="l00123"></a><span class="lineno">  123</span>                }</div>
-<div class="line"><a id="l00124" name="l00124"></a><span class="lineno">  124</span>            }</div>
-<div class="line"><a id="l00125" name="l00125"></a><span class="lineno">  125</span>        }</div>
-<div class="line"><a id="l00126" name="l00126"></a><span class="lineno">  126</span>    }</div>
-</div>
-<div class="line"><a id="l00127" name="l00127"></a><span class="lineno">  127</span> </div>
-<div class="foldopen" id="foldopen00128" data-start="{" data-end="}">
-<div class="line"><a id="l00128" name="l00128"></a><span class="lineno"><a class="line" href="classq_1_1_l_c_m_s_data.html#ae1a62294c43bbe12e97f9293eaa49ea8">  128</a></span>    <span class="keywordtype">void</span> <a class="code hl_function" href="classq_1_1_l_c_m_s_data.html#ae1a62294c43bbe12e97f9293eaa49ea8">LCMSData::zeroFilling</a>() {</div>
-<div class="line"><a id="l00129" name="l00129"></a><span class="lineno">  129</span>        <span class="comment">// iterate over all data sets</span></div>
-<div class="line"><a id="l00130" name="l00130"></a><span class="lineno">  130</span>        <span class="keywordflow">for</span> (<span class="keyword">auto</span> it = this-&gt;data.begin(); it != this-&gt;data.end(); it++) {</div>
-<div class="line"><a id="l00131" name="l00131"></a><span class="lineno">  131</span>            <span class="comment">// iterate over all sub data sets</span></div>
-<div class="line"><a id="l00132" name="l00132"></a><span class="lineno">  132</span>            <span class="keywordflow">for</span> (<span class="keyword">auto</span> it2 = it-&gt;second.begin(); it2 != it-&gt;second.end(); it2++) {</div>
-<div class="line"><a id="l00133" name="l00133"></a><span class="lineno">  133</span>                this-&gt;<a class="code hl_function" href="classq_1_1_measurement_data.html#ae3dfbca5264b979f312f581491addf63">MeasurementData::zeroFilling</a>(it2-&gt;second.mz, it2-&gt;second.intensity, 8);</div>
+<div class="foldopen" id="foldopen00027" data-start="{" data-end="}">
+<div class="line"><a id="l00027" name="l00027"></a><span class="lineno"><a class="line" href="classq_1_1_l_c_m_s_data.html#ab4632d3d3138d17fd5a7f479b70c2846">   27</a></span>    <span class="keywordtype">void</span> <a class="code hl_function" href="classq_1_1_l_c_m_s_data.html#ab4632d3d3138d17fd5a7f479b70c2846">LCMSData::readCSV</a>(std::string filename, <span class="keywordtype">int</span> rowStart, <span class="keywordtype">int</span> rowEnd, <span class="keywordtype">int</span> colStart, <span class="keywordtype">int</span> colEnd, <span class="keywordtype">char</span> separator, std::vector&lt;DataField&gt; variableTypes)</div>
+<div class="line"><a id="l00028" name="l00028"></a><span class="lineno">   28</span>    {</div>
+<div class="line"><a id="l00029" name="l00029"></a><span class="lineno">   29</span>        <span class="comment">// open the file</span></div>
+<div class="line"><a id="l00030" name="l00030"></a><span class="lineno">   30</span>        std::ifstream file(filename);</div>
+<div class="line"><a id="l00031" name="l00031"></a><span class="lineno">   31</span>        std::string line;</div>
+<div class="line"><a id="l00032" name="l00032"></a><span class="lineno">   32</span>        std::vector&lt;std::vector&lt;std::string&gt;&gt; raw_data;</div>
+<div class="line"><a id="l00033" name="l00033"></a><span class="lineno">   33</span> </div>
+<div class="line"><a id="l00034" name="l00034"></a><span class="lineno">   34</span>        <span class="comment">// if rowEnd is -1, then set it to the maximum number of rows</span></div>
+<div class="line"><a id="l00035" name="l00035"></a><span class="lineno">   35</span>        <span class="keywordflow">if</span> (rowEnd == -1)</div>
+<div class="line"><a id="l00036" name="l00036"></a><span class="lineno">   36</span>        {</div>
+<div class="line"><a id="l00037" name="l00037"></a><span class="lineno">   37</span>            rowEnd = 1000000;</div>
+<div class="line"><a id="l00038" name="l00038"></a><span class="lineno">   38</span>        }</div>
+<div class="line"><a id="l00039" name="l00039"></a><span class="lineno">   39</span> </div>
+<div class="line"><a id="l00040" name="l00040"></a><span class="lineno">   40</span>        <span class="comment">// if colEnd is -1, then set it to the maximum number of columns</span></div>
+<div class="line"><a id="l00041" name="l00041"></a><span class="lineno">   41</span>        <span class="keywordflow">if</span> (colEnd == -1)</div>
+<div class="line"><a id="l00042" name="l00042"></a><span class="lineno">   42</span>        {</div>
+<div class="line"><a id="l00043" name="l00043"></a><span class="lineno">   43</span>            colEnd = 1000000;</div>
+<div class="line"><a id="l00044" name="l00044"></a><span class="lineno">   44</span>        }</div>
+<div class="line"><a id="l00045" name="l00045"></a><span class="lineno">   45</span> </div>
+<div class="line"><a id="l00046" name="l00046"></a><span class="lineno">   46</span>        <span class="comment">// find the DataFiled::SCANNUMBER as this is the key for the LCMSData map</span></div>
+<div class="line"><a id="l00047" name="l00047"></a><span class="lineno">   47</span>        <span class="keywordtype">int</span> scanNumberIndex = -1;</div>
+<div class="line"><a id="l00048" name="l00048"></a><span class="lineno">   48</span>        <span class="keywordflow">for</span> (<span class="keywordtype">int</span> i = 0; i &lt; variableTypes.size(); i++)</div>
+<div class="line"><a id="l00049" name="l00049"></a><span class="lineno">   49</span>        {</div>
+<div class="line"><a id="l00050" name="l00050"></a><span class="lineno">   50</span>            <span class="keywordflow">if</span> (variableTypes[i] == DataField::SCANNUMBER)</div>
+<div class="line"><a id="l00051" name="l00051"></a><span class="lineno">   51</span>            {</div>
+<div class="line"><a id="l00052" name="l00052"></a><span class="lineno">   52</span>                scanNumberIndex = i;</div>
+<div class="line"><a id="l00053" name="l00053"></a><span class="lineno">   53</span>                <span class="keywordflow">break</span>;</div>
+<div class="line"><a id="l00054" name="l00054"></a><span class="lineno">   54</span>            }</div>
+<div class="line"><a id="l00055" name="l00055"></a><span class="lineno">   55</span>        }</div>
+<div class="line"><a id="l00056" name="l00056"></a><span class="lineno">   56</span>        <span class="comment">// check if scanNumberIndex is found</span></div>
+<div class="line"><a id="l00057" name="l00057"></a><span class="lineno">   57</span>        <span class="keywordflow">if</span> (scanNumberIndex == -1)</div>
+<div class="line"><a id="l00058" name="l00058"></a><span class="lineno">   58</span>        {</div>
+<div class="line"><a id="l00059" name="l00059"></a><span class="lineno">   59</span>            std::cerr &lt;&lt; <span class="stringliteral">&quot;The scan number is not found in the variable types&quot;</span> &lt;&lt; std::endl;</div>
+<div class="line"><a id="l00060" name="l00060"></a><span class="lineno">   60</span>            <span class="keywordflow">return</span>;</div>
+<div class="line"><a id="l00061" name="l00061"></a><span class="lineno">   61</span>        }</div>
+<div class="line"><a id="l00062" name="l00062"></a><span class="lineno">   62</span> </div>
+<div class="line"><a id="l00063" name="l00063"></a><span class="lineno">   63</span>        <span class="comment">// find the DataFiled::RETENTIONTIME</span></div>
+<div class="line"><a id="l00064" name="l00064"></a><span class="lineno">   64</span>        <span class="keywordtype">int</span> retentionTimeIndex = -1;</div>
+<div class="line"><a id="l00065" name="l00065"></a><span class="lineno">   65</span>        <span class="keywordflow">for</span> (<span class="keywordtype">int</span> i = 0; i &lt; variableTypes.size(); i++)</div>
+<div class="line"><a id="l00066" name="l00066"></a><span class="lineno">   66</span>        {</div>
+<div class="line"><a id="l00067" name="l00067"></a><span class="lineno">   67</span>            <span class="keywordflow">if</span> (variableTypes[i] == DataField::RETENTIONTIME)</div>
+<div class="line"><a id="l00068" name="l00068"></a><span class="lineno">   68</span>            {</div>
+<div class="line"><a id="l00069" name="l00069"></a><span class="lineno">   69</span>                retentionTimeIndex = i;</div>
+<div class="line"><a id="l00070" name="l00070"></a><span class="lineno">   70</span>                <span class="keywordflow">break</span>;</div>
+<div class="line"><a id="l00071" name="l00071"></a><span class="lineno">   71</span>            }</div>
+<div class="line"><a id="l00072" name="l00072"></a><span class="lineno">   72</span>        }</div>
+<div class="line"><a id="l00073" name="l00073"></a><span class="lineno">   73</span>        <span class="comment">// check if retentionTimeIndex is found</span></div>
+<div class="line"><a id="l00074" name="l00074"></a><span class="lineno">   74</span>        <span class="keywordflow">if</span> (retentionTimeIndex == -1)</div>
+<div class="line"><a id="l00075" name="l00075"></a><span class="lineno">   75</span>        {</div>
+<div class="line"><a id="l00076" name="l00076"></a><span class="lineno">   76</span>            std::cerr &lt;&lt; <span class="stringliteral">&quot;The retention time is not found in the variable types&quot;</span> &lt;&lt; std::endl;</div>
+<div class="line"><a id="l00077" name="l00077"></a><span class="lineno">   77</span>            <span class="keywordflow">return</span>;</div>
+<div class="line"><a id="l00078" name="l00078"></a><span class="lineno">   78</span>        }</div>
+<div class="line"><a id="l00079" name="l00079"></a><span class="lineno">   79</span> </div>
+<div class="line"><a id="l00080" name="l00080"></a><span class="lineno">   80</span>        <span class="comment">// find the DataFiled::MZ</span></div>
+<div class="line"><a id="l00081" name="l00081"></a><span class="lineno">   81</span>        <span class="keywordtype">int</span> mzIndex = -1;</div>
+<div class="line"><a id="l00082" name="l00082"></a><span class="lineno">   82</span>        <span class="keywordflow">for</span> (<span class="keywordtype">int</span> i = 0; i &lt; variableTypes.size(); i++)</div>
+<div class="line"><a id="l00083" name="l00083"></a><span class="lineno">   83</span>        {</div>
+<div class="line"><a id="l00084" name="l00084"></a><span class="lineno">   84</span>            <span class="keywordflow">if</span> (variableTypes[i] == DataField::MZ)</div>
+<div class="line"><a id="l00085" name="l00085"></a><span class="lineno">   85</span>            {</div>
+<div class="line"><a id="l00086" name="l00086"></a><span class="lineno">   86</span>                mzIndex = i;</div>
+<div class="line"><a id="l00087" name="l00087"></a><span class="lineno">   87</span>                <span class="keywordflow">break</span>;</div>
+<div class="line"><a id="l00088" name="l00088"></a><span class="lineno">   88</span>            }</div>
+<div class="line"><a id="l00089" name="l00089"></a><span class="lineno">   89</span>        }</div>
+<div class="line"><a id="l00090" name="l00090"></a><span class="lineno">   90</span>        <span class="comment">// check if mzIndex is found</span></div>
+<div class="line"><a id="l00091" name="l00091"></a><span class="lineno">   91</span>        <span class="keywordflow">if</span> (mzIndex == -1)</div>
+<div class="line"><a id="l00092" name="l00092"></a><span class="lineno">   92</span>        {</div>
+<div class="line"><a id="l00093" name="l00093"></a><span class="lineno">   93</span>            std::cerr &lt;&lt; <span class="stringliteral">&quot;The mz is not found in the variable types&quot;</span> &lt;&lt; std::endl;</div>
+<div class="line"><a id="l00094" name="l00094"></a><span class="lineno">   94</span>            <span class="keywordflow">return</span>;</div>
+<div class="line"><a id="l00095" name="l00095"></a><span class="lineno">   95</span>        }</div>
+<div class="line"><a id="l00096" name="l00096"></a><span class="lineno">   96</span> </div>
+<div class="line"><a id="l00097" name="l00097"></a><span class="lineno">   97</span>        <span class="comment">// find the DataFiled::INTENSITY</span></div>
+<div class="line"><a id="l00098" name="l00098"></a><span class="lineno">   98</span>        <span class="keywordtype">int</span> intensityIndex = -1;</div>
+<div class="line"><a id="l00099" name="l00099"></a><span class="lineno">   99</span>        <span class="keywordflow">for</span> (<span class="keywordtype">int</span> i = 0; i &lt; variableTypes.size(); i++)</div>
+<div class="line"><a id="l00100" name="l00100"></a><span class="lineno">  100</span>        {</div>
+<div class="line"><a id="l00101" name="l00101"></a><span class="lineno">  101</span>            <span class="keywordflow">if</span> (variableTypes[i] == DataField::INTENSITY)</div>
+<div class="line"><a id="l00102" name="l00102"></a><span class="lineno">  102</span>            {</div>
+<div class="line"><a id="l00103" name="l00103"></a><span class="lineno">  103</span>                intensityIndex = i;</div>
+<div class="line"><a id="l00104" name="l00104"></a><span class="lineno">  104</span>                <span class="keywordflow">break</span>;</div>
+<div class="line"><a id="l00105" name="l00105"></a><span class="lineno">  105</span>            }</div>
+<div class="line"><a id="l00106" name="l00106"></a><span class="lineno">  106</span>        }</div>
+<div class="line"><a id="l00107" name="l00107"></a><span class="lineno">  107</span>        <span class="comment">// check if intensityIndex is found</span></div>
+<div class="line"><a id="l00108" name="l00108"></a><span class="lineno">  108</span>        <span class="keywordflow">if</span> (intensityIndex == -1)</div>
+<div class="line"><a id="l00109" name="l00109"></a><span class="lineno">  109</span>        {</div>
+<div class="line"><a id="l00110" name="l00110"></a><span class="lineno">  110</span>            std::cerr &lt;&lt; <span class="stringliteral">&quot;The intensity is not found in the variable types&quot;</span> &lt;&lt; std::endl;</div>
+<div class="line"><a id="l00111" name="l00111"></a><span class="lineno">  111</span>            <span class="keywordflow">return</span>;</div>
+<div class="line"><a id="l00112" name="l00112"></a><span class="lineno">  112</span>        }</div>
+<div class="line"><a id="l00113" name="l00113"></a><span class="lineno">  113</span> </div>
+<div class="line"><a id="l00114" name="l00114"></a><span class="lineno">  114</span>        <span class="comment">// read the file</span></div>
+<div class="line"><a id="l00115" name="l00115"></a><span class="lineno">  115</span>        <span class="keywordtype">int</span> rowCounter = 0;</div>
+<div class="line"><a id="l00116" name="l00116"></a><span class="lineno">  116</span>        <span class="keywordtype">int</span> colCounter = 0;</div>
+<div class="line"><a id="l00117" name="l00117"></a><span class="lineno">  117</span>        <span class="keywordflow">while</span> (std::getline(file, line) &amp;&amp; rowCounter &lt; rowEnd)</div>
+<div class="line"><a id="l00118" name="l00118"></a><span class="lineno">  118</span>        {</div>
+<div class="line"><a id="l00119" name="l00119"></a><span class="lineno">  119</span>            <span class="keywordflow">if</span> (rowCounter &gt;= rowStart)</div>
+<div class="line"><a id="l00120" name="l00120"></a><span class="lineno">  120</span>            {</div>
+<div class="line"><a id="l00121" name="l00121"></a><span class="lineno">  121</span>                std::vector&lt;std::string&gt; row;</div>
+<div class="line"><a id="l00122" name="l00122"></a><span class="lineno">  122</span>                std::stringstream lineStream(line);</div>
+<div class="line"><a id="l00123" name="l00123"></a><span class="lineno">  123</span>                std::string cell;</div>
+<div class="line"><a id="l00124" name="l00124"></a><span class="lineno">  124</span>                colCounter = 0;</div>
+<div class="line"><a id="l00125" name="l00125"></a><span class="lineno">  125</span>                <span class="keywordflow">while</span> (std::getline(lineStream, cell, separator))</div>
+<div class="line"><a id="l00126" name="l00126"></a><span class="lineno">  126</span>                {</div>
+<div class="line"><a id="l00127" name="l00127"></a><span class="lineno">  127</span>                    <span class="keywordflow">if</span> (colCounter &gt;= colStart &amp;&amp; colCounter &lt; colEnd)</div>
+<div class="line"><a id="l00128" name="l00128"></a><span class="lineno">  128</span>                    {</div>
+<div class="line"><a id="l00129" name="l00129"></a><span class="lineno">  129</span>                        row.push_back(cell);</div>
+<div class="line"><a id="l00130" name="l00130"></a><span class="lineno">  130</span>                    }</div>
+<div class="line"><a id="l00131" name="l00131"></a><span class="lineno">  131</span>                    colCounter++;</div>
+<div class="line"><a id="l00132" name="l00132"></a><span class="lineno">  132</span>                }</div>
+<div class="line"><a id="l00133" name="l00133"></a><span class="lineno">  133</span>                raw_data.push_back(row);</div>
 <div class="line"><a id="l00134" name="l00134"></a><span class="lineno">  134</span>            }</div>
-<div class="line"><a id="l00135" name="l00135"></a><span class="lineno">  135</span>        }</div>
-<div class="line"><a id="l00136" name="l00136"></a><span class="lineno">  136</span>    }</div>
+<div class="line"><a id="l00135" name="l00135"></a><span class="lineno">  135</span>            rowCounter++;</div>
+<div class="line"><a id="l00136" name="l00136"></a><span class="lineno">  136</span>        }</div>
+<div class="line"><a id="l00137" name="l00137"></a><span class="lineno">  137</span>        file.close();</div>
+<div class="line"><a id="l00138" name="l00138"></a><span class="lineno">  138</span> </div>
+<div class="line"><a id="l00139" name="l00139"></a><span class="lineno">  139</span>        <span class="comment">// check if the raw data has same number of columns as the variableTypes</span></div>
+<div class="line"><a id="l00140" name="l00140"></a><span class="lineno">  140</span>        <span class="keywordflow">if</span> (raw_data[0].size() != variableTypes.size())</div>
+<div class="line"><a id="l00141" name="l00141"></a><span class="lineno">  141</span>        {</div>
+<div class="line"><a id="l00142" name="l00142"></a><span class="lineno">  142</span>            std::cerr &lt;&lt; <span class="stringliteral">&quot;The number of columns in the raw data does not match the number of variable types&quot;</span> &lt;&lt; std::endl;</div>
+<div class="line"><a id="l00143" name="l00143"></a><span class="lineno">  143</span>            <span class="keywordflow">return</span>;</div>
+<div class="line"><a id="l00144" name="l00144"></a><span class="lineno">  144</span>        }</div>
+<div class="line"><a id="l00145" name="l00145"></a><span class="lineno">  145</span> </div>
+<div class="line"><a id="l00146" name="l00146"></a><span class="lineno">  146</span>        <span class="comment">// transfere the raw data to the data map</span></div>
+<div class="line"><a id="l00147" name="l00147"></a><span class="lineno">  147</span>        <span class="keywordtype">int</span> data_id = 0; <span class="comment">// data id is used to identify the data set</span></div>
+<div class="line"><a id="l00148" name="l00148"></a><span class="lineno">  148</span>        <span class="keywordflow">for</span> (<span class="keywordtype">int</span> i = 0; i &lt; raw_data.size(); i++)</div>
+<div class="line"><a id="l00149" name="l00149"></a><span class="lineno">  149</span>        {</div>
+<div class="line"><a id="l00150" name="l00150"></a><span class="lineno">  150</span>            <span class="comment">// check if the scan number is already in the data map</span></div>
+<div class="line"><a id="l00151" name="l00151"></a><span class="lineno">  151</span>            <span class="keywordtype">int</span> scanNumber = std::stoi(raw_data[i][scanNumberIndex]);</div>
+<div class="line"><a id="l00152" name="l00152"></a><span class="lineno">  152</span>            <span class="keywordflow">if</span> (this-&gt;data.find(scanNumber) == this-&gt;data.end())</div>
+<div class="line"><a id="l00153" name="l00153"></a><span class="lineno">  153</span>            { <span class="comment">// scan number is not found in the data map; initialize a new MassSpectrum object and add meta information</span></div>
+<div class="line"><a id="l00154" name="l00154"></a><span class="lineno">  154</span>                <span class="comment">// add the MassSpectrum object to the data map</span></div>
+<div class="line"><a id="l00155" name="l00155"></a><span class="lineno">  155</span>                this-&gt;data[scanNumber] = std::make_unique&lt;MassSpectrum&gt;();</div>
+<div class="line"><a id="l00156" name="l00156"></a><span class="lineno">  156</span>                <span class="comment">// add the scan number to the MassSpectrum object</span></div>
+<div class="line"><a id="l00157" name="l00157"></a><span class="lineno">  157</span>                (*this-&gt;data[scanNumber]-&gt;metaData)[DataField::SCANNUMBER] = <a class="code hl_typedef" href="namespaceq.html#a4df4875ee6a816afd1b447d015e1cb31">VariableType</a>(scanNumber);</div>
+<div class="line"><a id="l00158" name="l00158"></a><span class="lineno">  158</span>                <span class="comment">// add the retention time to the MassSpectrum object</span></div>
+<div class="line"><a id="l00159" name="l00159"></a><span class="lineno">  159</span>                (*this-&gt;data[scanNumber]-&gt;metaData)[DataField::RETENTIONTIME] = <a class="code hl_typedef" href="namespaceq.html#a4df4875ee6a816afd1b447d015e1cb31">VariableType</a>(std::stod(raw_data[i][retentionTimeIndex]));</div>
+<div class="line"><a id="l00160" name="l00160"></a><span class="lineno">  160</span>                <span class="comment">// add the DataPoint Map to the MassSpectrum object</span></div>
+<div class="line"><a id="l00161" name="l00161"></a><span class="lineno">  161</span>                <span class="comment">// this-&gt;data[scanNumber]-&gt;dataPoints = DataPointVector();</span></div>
+<div class="line"><a id="l00162" name="l00162"></a><span class="lineno">  162</span>            }</div>
+<div class="line"><a id="l00163" name="l00163"></a><span class="lineno">  163</span>            <span class="comment">// create a new DataPoint object and add it to the DataPoint Vector</span></div>
+<div class="line"><a id="l00164" name="l00164"></a><span class="lineno">  164</span>            this-&gt;data[scanNumber]-&gt;dataPoints.push_back(std::make_unique&lt;DataPoint&gt;(std::stod(raw_data[i][intensityIndex]), std::stod(raw_data[i][mzIndex]), 1));</div>
+<div class="line"><a id="l00165" name="l00165"></a><span class="lineno">  165</span>            <span class="comment">// std::get&lt;DataPointVector&gt;(this-&gt;data[scanNumber]-&gt;data[DataField::DATAPOINT]).push_back(std::make_unique&lt;DataPoint&gt;(std::stod(raw_data[i][intensityIndex]), std::stod(raw_data[i][mzIndex]), 1));</span></div>
+<div class="line"><a id="l00166" name="l00166"></a><span class="lineno">  166</span>        }</div>
+<div class="line"><a id="l00167" name="l00167"></a><span class="lineno">  167</span>    }</div>
 </div>
-<div class="line"><a id="l00137" name="l00137"></a><span class="lineno">  137</span> </div>
-<div class="foldopen" id="foldopen00138" data-start="{" data-end="}">
-<div class="line"><a id="l00138" name="l00138"></a><span class="lineno"><a class="line" href="classq_1_1_l_c_m_s_data.html#a6c799dc9ef6918446df62515bc7daa8d">  138</a></span>    <span class="keywordtype">void</span> <a class="code hl_function" href="classq_1_1_l_c_m_s_data.html#a6c799dc9ef6918446df62515bc7daa8d">LCMSData::cutData</a>() {</div>
-<div class="line"><a id="l00139" name="l00139"></a><span class="lineno">  139</span>        <span class="comment">// create a new data map to store the updated data</span></div>
-<div class="line"><a id="l00140" name="l00140"></a><span class="lineno">  140</span>        std::unordered_map&lt;int, std::unordered_map&lt;int, DataType::LC_MS&gt;&gt; updatedData;</div>
-<div class="line"><a id="l00141" name="l00141"></a><span class="lineno">  141</span>        <span class="comment">// iterate over all data sets</span></div>
-<div class="line"><a id="l00142" name="l00142"></a><span class="lineno">  142</span>        <span class="keywordflow">for</span> (<span class="keyword">auto</span> it = this-&gt;data.begin(); it != this-&gt;data.end(); it++) {</div>
-<div class="line"><a id="l00143" name="l00143"></a><span class="lineno">  143</span>            <span class="comment">// iterate over all sub data sets</span></div>
-<div class="line"><a id="l00144" name="l00144"></a><span class="lineno">  144</span>            <span class="keywordflow">for</span> (<span class="keyword">auto</span> it2 = it-&gt;second.begin(); it2 != it-&gt;second.end(); it2++) {</div>
-<div class="line"><a id="l00145" name="l00145"></a><span class="lineno">  145</span>                <span class="comment">// read the indices where the data needs to be cut</span></div>
-<div class="line"><a id="l00146" name="l00146"></a><span class="lineno">  146</span>                std::vector&lt;size_t&gt; indices = this-&gt;<a class="code hl_function" href="classq_1_1_measurement_data.html#a132a6fa74bc575aaeccd260d73b96f00">MeasurementData::cutData</a>(it2-&gt;second.mz, it2-&gt;second.intensity);</div>
-<div class="line"><a id="l00147" name="l00147"></a><span class="lineno">  147</span>                </div>
-<div class="line"><a id="l00148" name="l00148"></a><span class="lineno">  148</span>                <span class="keywordflow">if</span> (indices.size() == 0) {</div>
-<div class="line"><a id="l00149" name="l00149"></a><span class="lineno">  149</span>                    <span class="comment">// no cut is needed. however, zerofilling will add a separator at least at the beginning of the data.</span></div>
-<div class="line"><a id="l00150" name="l00150"></a><span class="lineno">  150</span>                    updatedData[it-&gt;first][it2-&gt;first] = it2-&gt;second;</div>
-<div class="line"><a id="l00151" name="l00151"></a><span class="lineno">  151</span>                } <span class="keywordflow">else</span> {</div>
-<div class="line"><a id="l00152" name="l00152"></a><span class="lineno">  152</span>                    <span class="comment">// cut the data</span></div>
-<div class="line"><a id="l00153" name="l00153"></a><span class="lineno">  153</span>                    <span class="keywordtype">int</span> subID = 0;</div>
-<div class="line"><a id="l00154" name="l00154"></a><span class="lineno">  154</span>                    <span class="comment">// add the last index as the size of the data</span></div>
-<div class="line"><a id="l00155" name="l00155"></a><span class="lineno">  155</span>                    indices.push_back(it2-&gt;second.mz.size());</div>
-<div class="line"><a id="l00156" name="l00156"></a><span class="lineno">  156</span>                    <span class="keywordflow">for</span> (<span class="keywordtype">int</span> i = 0; i &lt; indices.size() - 1; i++) {</div>
-<div class="line"><a id="l00157" name="l00157"></a><span class="lineno">  157</span>                        <span class="comment">// create a new data subset</span></div>
-<div class="line"><a id="l00158" name="l00158"></a><span class="lineno">  158</span>                        <a class="code hl_class" href="classq_1_1_data_type_1_1_l_c___m_s.html">DataType::LC_MS</a> newSubset = it2 -&gt; second;</div>
-<div class="line"><a id="l00159" name="l00159"></a><span class="lineno">  159</span>                        <span class="comment">// adjust the mz and intensity vectors</span></div>
-<div class="line"><a id="l00160" name="l00160"></a><span class="lineno">  160</span>                        newSubset.<a class="code hl_variable" href="classq_1_1_data_type_1_1_mass_spectrum.html#a17cbc542d6c1aaade464cdab7f4c812d">mz</a> = std::vector&lt;double&gt;(it2-&gt;second.mz.begin() + indices[i] + 1, it2-&gt;second.mz.begin() + indices[i+1]);</div>
-<div class="line"><a id="l00161" name="l00161"></a><span class="lineno">  161</span>                        newSubset.<a class="code hl_variable" href="classq_1_1_data_type_1_1_mass_spectrum.html#a8f1e3fa9d341263c22fd7248c6bc3ec0">intensity</a> = std::vector&lt;double&gt;(it2-&gt;second.intensity.begin() + indices[i] + 1, it2-&gt;second.intensity.begin() + indices[i+1]);</div>
-<div class="line"><a id="l00162" name="l00162"></a><span class="lineno">  162</span>                        updatedData[it-&gt;first][subID] = newSubset;</div>
-<div class="line"><a id="l00163" name="l00163"></a><span class="lineno">  163</span>                        subID++;</div>
-<div class="line"><a id="l00164" name="l00164"></a><span class="lineno">  164</span>                    }</div>
-<div class="line"><a id="l00165" name="l00165"></a><span class="lineno">  165</span>                }</div>
-<div class="line"><a id="l00166" name="l00166"></a><span class="lineno">  166</span>            }</div>
-<div class="line"><a id="l00167" name="l00167"></a><span class="lineno">  167</span>        }</div>
 <div class="line"><a id="l00168" name="l00168"></a><span class="lineno">  168</span> </div>
-<div class="line"><a id="l00169" name="l00169"></a><span class="lineno">  169</span>        <span class="comment">// update the data map</span></div>
-<div class="line"><a id="l00170" name="l00170"></a><span class="lineno">  170</span>        this-&gt;data = updatedData;</div>
-<div class="line"><a id="l00171" name="l00171"></a><span class="lineno">  171</span>    }</div>
+<div class="foldopen" id="foldopen00169" data-start="{" data-end="}">
+<div class="line"><a id="l00169" name="l00169"></a><span class="lineno"><a class="line" href="classq_1_1_l_c_m_s_data.html#ae1a62294c43bbe12e97f9293eaa49ea8">  169</a></span>    <span class="keywordtype">void</span> <a class="code hl_function" href="classq_1_1_l_c_m_s_data.html#ae1a62294c43bbe12e97f9293eaa49ea8">LCMSData::zeroFilling</a>()</div>
+<div class="line"><a id="l00170" name="l00170"></a><span class="lineno">  170</span>    {</div>
+<div class="line"><a id="l00171" name="l00171"></a><span class="lineno">  171</span>        <span class="comment">// create a varDataType Object, which is a pointer to a map of mass spectra</span></div>
+<div class="line"><a id="l00172" name="l00172"></a><span class="lineno">  172</span>        <a class="code hl_typedef" href="classq_1_1_measurement_data.html#a0021f29aa0a045d9964cc956528fadac">varDataType</a> dataObject = &amp;(this-&gt;data);</div>
+<div class="line"><a id="l00173" name="l00173"></a><span class="lineno">  173</span>        this-&gt;<a class="code hl_function" href="classq_1_1_measurement_data.html#a3139b3ddc3039bca5c0fb7ccd7052558">MeasurementData::zeroFilling</a>(dataObject, 8);</div>
+<div class="line"><a id="l00174" name="l00174"></a><span class="lineno">  174</span>    }</div>
 </div>
-<div class="line"><a id="l00172" name="l00172"></a><span class="lineno">  172</span> </div>
-<div class="foldopen" id="foldopen00173" data-start="{" data-end="}">
-<div class="line"><a id="l00173" name="l00173"></a><span class="lineno"><a class="line" href="classq_1_1_l_c_m_s_data.html#aa808ac2ee343120a4a89f8ee8e9278f6">  173</a></span>    <span class="keywordtype">void</span> <a class="code hl_function" href="classq_1_1_l_c_m_s_data.html#aa808ac2ee343120a4a89f8ee8e9278f6">LCMSData::print</a>() {</div>
-<div class="line"><a id="l00174" name="l00174"></a><span class="lineno">  174</span>        <span class="keywordflow">for</span> (<span class="keyword">auto</span> it = this-&gt;data.begin(); it != this-&gt;data.end(); it++) {</div>
-<div class="line"><a id="l00175" name="l00175"></a><span class="lineno">  175</span>            <span class="comment">// iterate over all sub data sets</span></div>
-<div class="line"><a id="l00176" name="l00176"></a><span class="lineno">  176</span>            <span class="keywordflow">for</span> (<span class="keyword">auto</span> it2 = it-&gt;second.begin(); it2 != it-&gt;second.end(); it2++) {</div>
-<div class="line"><a id="l00177" name="l00177"></a><span class="lineno">  177</span>                std::cout &lt;&lt; <span class="stringliteral">&quot;Scan Number: &quot;</span> &lt;&lt; it2-&gt;second.scanNumber &lt;&lt; std::endl;</div>
-<div class="line"><a id="l00178" name="l00178"></a><span class="lineno">  178</span>                std::cout &lt;&lt; <span class="stringliteral">&quot;SubID: &quot;</span> &lt;&lt; it2-&gt;first &lt;&lt; std::endl;</div>
-<div class="line"><a id="l00179" name="l00179"></a><span class="lineno">  179</span>                std::cout &lt;&lt; <span class="stringliteral">&quot;Retention Time: &quot;</span> &lt;&lt; it2-&gt;second.retentionTime &lt;&lt; std::endl;</div>
-<div class="line"><a id="l00180" name="l00180"></a><span class="lineno">  180</span>                std::cout &lt;&lt; <span class="stringliteral">&quot;MZ: &quot;</span>;</div>
-<div class="line"><a id="l00181" name="l00181"></a><span class="lineno">  181</span>                <span class="keywordflow">for</span> (<span class="keywordtype">int</span> i = 0; i &lt; it2-&gt;second.mz.size(); i++) {</div>
-<div class="line"><a id="l00182" name="l00182"></a><span class="lineno">  182</span>                    std::cout &lt;&lt; it2-&gt;second.mz[i] &lt;&lt; <span class="stringliteral">&quot; &quot;</span>;</div>
-<div class="line"><a id="l00183" name="l00183"></a><span class="lineno">  183</span>                }</div>
-<div class="line"><a id="l00184" name="l00184"></a><span class="lineno">  184</span>                std::cout &lt;&lt; std::endl;</div>
-<div class="line"><a id="l00185" name="l00185"></a><span class="lineno">  185</span>                std::cout &lt;&lt; <span class="stringliteral">&quot;Intensity: &quot;</span>;</div>
-<div class="line"><a id="l00186" name="l00186"></a><span class="lineno">  186</span>                <span class="keywordflow">for</span> (<span class="keywordtype">int</span> i = 0; i &lt; it2-&gt;second.intensity.size(); i++) {</div>
-<div class="line"><a id="l00187" name="l00187"></a><span class="lineno">  187</span>                    std::cout &lt;&lt; it2-&gt;second.intensity[i] &lt;&lt; <span class="stringliteral">&quot; &quot;</span>;</div>
-<div class="line"><a id="l00188" name="l00188"></a><span class="lineno">  188</span>                }</div>
-<div class="line"><a id="l00189" name="l00189"></a><span class="lineno">  189</span>                std::cout &lt;&lt; std::endl;</div>
-<div class="line"><a id="l00190" name="l00190"></a><span class="lineno">  190</span>            }</div>
-<div class="line"><a id="l00191" name="l00191"></a><span class="lineno">  191</span>        }</div>
-<div class="line"><a id="l00192" name="l00192"></a><span class="lineno">  192</span>    }</div>
+<div class="line"><a id="l00175" name="l00175"></a><span class="lineno">  175</span> </div>
+<div class="foldopen" id="foldopen00176" data-start="{" data-end="}">
+<div class="line"><a id="l00176" name="l00176"></a><span class="lineno"><a class="line" href="classq_1_1_l_c_m_s_data.html#a6c799dc9ef6918446df62515bc7daa8d">  176</a></span>    <span class="keywordtype">void</span> <a class="code hl_function" href="classq_1_1_l_c_m_s_data.html#a6c799dc9ef6918446df62515bc7daa8d">LCMSData::cutData</a>()</div>
+<div class="line"><a id="l00177" name="l00177"></a><span class="lineno">  177</span>    {</div>
+<div class="line"><a id="l00178" name="l00178"></a><span class="lineno">  178</span>        <span class="comment">// create a varDataType Object, which is a pointer to a map of mass spectra</span></div>
+<div class="line"><a id="l00179" name="l00179"></a><span class="lineno">  179</span>        <a class="code hl_typedef" href="classq_1_1_measurement_data.html#a0021f29aa0a045d9964cc956528fadac">varDataType</a> dataObject = &amp;(this-&gt;data);</div>
+<div class="line"><a id="l00180" name="l00180"></a><span class="lineno">  180</span>        this-&gt;<a class="code hl_function" href="classq_1_1_measurement_data.html#ae2b8a3d542b37ac400f2b51ada04a448">MeasurementData::cutData</a>(dataObject);</div>
+<div class="line"><a id="l00181" name="l00181"></a><span class="lineno">  181</span>    }</div>
 </div>
-<div class="line"><a id="l00193" name="l00193"></a><span class="lineno">  193</span> </div>
-<div class="line"><a id="l00194" name="l00194"></a><span class="lineno">  194</span>} <span class="comment">// namespace q</span></div>
-<div class="ttc" id="aclassq_1_1_data_type_1_1_l_c___m_s_html"><div class="ttname"><a href="classq_1_1_data_type_1_1_l_c___m_s.html">q::DataType::LC_MS</a></div><div class="ttdoc">A class to store LC-MS data.</div><div class="ttdef"><b>Definition</b> <a href="qalgorithms__datatype__mass__spectrum_8h_source.html#l00060">qalgorithms_datatype_mass_spectrum.h:60</a></div></div>
-<div class="ttc" id="aclassq_1_1_data_type_1_1_mass_spectrum_html_a17cbc542d6c1aaade464cdab7f4c812d"><div class="ttname"><a href="classq_1_1_data_type_1_1_mass_spectrum.html#a17cbc542d6c1aaade464cdab7f4c812d">q::DataType::MassSpectrum::mz</a></div><div class="ttdeci">std::vector&lt; double &gt; mz</div><div class="ttdef"><b>Definition</b> <a href="qalgorithms__datatype__mass__spectrum_8h_source.html#l00031">qalgorithms_datatype_mass_spectrum.h:31</a></div></div>
-<div class="ttc" id="aclassq_1_1_data_type_1_1_mass_spectrum_html_a8f1e3fa9d341263c22fd7248c6bc3ec0"><div class="ttname"><a href="classq_1_1_data_type_1_1_mass_spectrum.html#a8f1e3fa9d341263c22fd7248c6bc3ec0">q::DataType::MassSpectrum::intensity</a></div><div class="ttdeci">std::vector&lt; double &gt; intensity</div><div class="ttdef"><b>Definition</b> <a href="qalgorithms__datatype__mass__spectrum_8h_source.html#l00030">qalgorithms_datatype_mass_spectrum.h:30</a></div></div>
-<div class="ttc" id="aclassq_1_1_l_c_m_s_data_html_a556f3c0930dd9500376eda81b271b787"><div class="ttname"><a href="classq_1_1_l_c_m_s_data.html#a556f3c0930dd9500376eda81b271b787">q::LCMSData::~LCMSData</a></div><div class="ttdeci">~LCMSData()</div><div class="ttdef"><b>Definition</b> <a href="#l00014">qalgorithms_measurement_data_lcms.cpp:14</a></div></div>
-<div class="ttc" id="aclassq_1_1_l_c_m_s_data_html_a6c799dc9ef6918446df62515bc7daa8d"><div class="ttname"><a href="classq_1_1_l_c_m_s_data.html#a6c799dc9ef6918446df62515bc7daa8d">q::LCMSData::cutData</a></div><div class="ttdeci">void cutData()</div><div class="ttdoc">Cut the data into smaller data sets.</div><div class="ttdef"><b>Definition</b> <a href="#l00138">qalgorithms_measurement_data_lcms.cpp:138</a></div></div>
-<div class="ttc" id="aclassq_1_1_l_c_m_s_data_html_a7466e285c6c4f7a7fd3a67edb15a4cd7"><div class="ttname"><a href="classq_1_1_l_c_m_s_data.html#a7466e285c6c4f7a7fd3a67edb15a4cd7">q::LCMSData::LCMSData</a></div><div class="ttdeci">LCMSData()</div><div class="ttdef"><b>Definition</b> <a href="#l00011">qalgorithms_measurement_data_lcms.cpp:11</a></div></div>
-<div class="ttc" id="aclassq_1_1_l_c_m_s_data_html_aa808ac2ee343120a4a89f8ee8e9278f6"><div class="ttname"><a href="classq_1_1_l_c_m_s_data.html#aa808ac2ee343120a4a89f8ee8e9278f6">q::LCMSData::print</a></div><div class="ttdeci">void print()</div><div class="ttdef"><b>Definition</b> <a href="#l00173">qalgorithms_measurement_data_lcms.cpp:173</a></div></div>
-<div class="ttc" id="aclassq_1_1_l_c_m_s_data_html_ab4632d3d3138d17fd5a7f479b70c2846"><div class="ttname"><a href="classq_1_1_l_c_m_s_data.html#ab4632d3d3138d17fd5a7f479b70c2846">q::LCMSData::readCSV</a></div><div class="ttdeci">void readCSV(std::string filename, int rowStart, int rowEnd, int colStart, int colEnd, char separator, std::vector&lt; DataType::DataField &gt; variableTypes)</div><div class="ttdoc">Read LC-MS data from a CSV file.</div><div class="ttdef"><b>Definition</b> <a href="#l00017">qalgorithms_measurement_data_lcms.cpp:17</a></div></div>
-<div class="ttc" id="aclassq_1_1_l_c_m_s_data_html_ae1a62294c43bbe12e97f9293eaa49ea8"><div class="ttname"><a href="classq_1_1_l_c_m_s_data.html#ae1a62294c43bbe12e97f9293eaa49ea8">q::LCMSData::zeroFilling</a></div><div class="ttdeci">void zeroFilling()</div><div class="ttdoc">Identify and fill gaps in the LC-MS data.</div><div class="ttdef"><b>Definition</b> <a href="#l00128">qalgorithms_measurement_data_lcms.cpp:128</a></div></div>
-<div class="ttc" id="aclassq_1_1_measurement_data_html_a132a6fa74bc575aaeccd260d73b96f00"><div class="ttname"><a href="classq_1_1_measurement_data.html#a132a6fa74bc575aaeccd260d73b96f00">q::MeasurementData::cutData</a></div><div class="ttdeci">std::vector&lt; size_t &gt; cutData(std::vector&lt; double &gt; &amp;xData, std::vector&lt; double &gt; &amp;yData) const</div><div class="ttdoc">Cut the data into smaller data sets.</div><div class="ttdef"><b>Definition</b> <a href="qalgorithms__measurement__data_8cpp_source.html#l00082">qalgorithms_measurement_data.cpp:82</a></div></div>
-<div class="ttc" id="aclassq_1_1_measurement_data_html_ae3dfbca5264b979f312f581491addf63"><div class="ttname"><a href="classq_1_1_measurement_data.html#ae3dfbca5264b979f312f581491addf63">q::MeasurementData::zeroFilling</a></div><div class="ttdeci">void zeroFilling(std::vector&lt; double &gt; &amp;xData, std::vector&lt; double &gt; &amp;yData, int k)</div><div class="ttdoc">Identify and fill gaps in the data.</div><div class="ttdef"><b>Definition</b> <a href="qalgorithms__measurement__data_8cpp_source.html#l00007">qalgorithms_measurement_data.cpp:7</a></div></div>
-<div class="ttc" id="anamespaceq_1_1_data_type_html_a50341ff9d741a5a416eb71a71ffc1fa6a3289297424e01eda5b788c083bbf3147"><div class="ttname"><a href="namespaceq_1_1_data_type.html#a50341ff9d741a5a416eb71a71ffc1fa6a3289297424e01eda5b788c083bbf3147">q::DataType::IonizationMode::Positive</a></div><div class="ttdeci">@ Positive</div></div>
-<div class="ttc" id="anamespaceq_1_1_data_type_html_a50341ff9d741a5a416eb71a71ffc1fa6affb9356ff2b7da85c75c92fa7ea03b8b"><div class="ttname"><a href="namespaceq_1_1_data_type.html#a50341ff9d741a5a416eb71a71ffc1fa6affb9356ff2b7da85c75c92fa7ea03b8b">q::DataType::IonizationMode::Negative</a></div><div class="ttdeci">@ Negative</div></div>
-<div class="ttc" id="anamespaceq_1_1_data_type_html_a8e76910d22415bfa3dd2086a76f0c5eaa9b49197cf2fea5efc68ef8a88489e1b6"><div class="ttname"><a href="namespaceq_1_1_data_type.html#a8e76910d22415bfa3dd2086a76f0c5eaa9b49197cf2fea5efc68ef8a88489e1b6">q::DataType::MeasurementMode::Centroid</a></div><div class="ttdeci">@ Centroid</div></div>
-<div class="ttc" id="anamespaceq_1_1_data_type_html_a8e76910d22415bfa3dd2086a76f0c5eaacce99c598cfdb9773ab041d54c3d973a"><div class="ttname"><a href="namespaceq_1_1_data_type.html#a8e76910d22415bfa3dd2086a76f0c5eaacce99c598cfdb9773ab041d54c3d973a">q::DataType::MeasurementMode::Profile</a></div><div class="ttdeci">@ Profile</div></div>
-<div class="ttc" id="anamespaceq_1_1_data_type_html_a90aa4d66e606cf85f2424677d7bf4d34a3c4708a2cdd3c4bfd03ad04e36b87544"><div class="ttname"><a href="namespaceq_1_1_data_type.html#a90aa4d66e606cf85f2424677d7bf4d34a3c4708a2cdd3c4bfd03ad04e36b87544">q::DataType::MSLevel::MS1</a></div><div class="ttdeci">@ MS1</div></div>
-<div class="ttc" id="anamespaceq_1_1_data_type_html_a90aa4d66e606cf85f2424677d7bf4d34a5db8c2f5881ff5a19875fe5529b9a987"><div class="ttname"><a href="namespaceq_1_1_data_type.html#a90aa4d66e606cf85f2424677d7bf4d34a5db8c2f5881ff5a19875fe5529b9a987">q::DataType::MSLevel::MS2</a></div><div class="ttdeci">@ MS2</div></div>
-<div class="ttc" id="anamespaceq_1_1_data_type_html_a9fcd47c7d7d77f908f041cad931962aaa29e2d681b2cc529fa80582fdca325b02"><div class="ttname"><a href="namespaceq_1_1_data_type.html#a9fcd47c7d7d77f908f041cad931962aaa29e2d681b2cc529fa80582fdca325b02">q::DataType::DataField::SCANNUMBER</a></div><div class="ttdeci">@ SCANNUMBER</div></div>
-<div class="ttc" id="anamespaceq_1_1_data_type_html_a9fcd47c7d7d77f908f041cad931962aaa3da9993984f423cfc441a286105a9226"><div class="ttname"><a href="namespaceq_1_1_data_type.html#a9fcd47c7d7d77f908f041cad931962aaa3da9993984f423cfc441a286105a9226">q::DataType::DataField::INTENSITY</a></div><div class="ttdeci">@ INTENSITY</div></div>
-<div class="ttc" id="anamespaceq_1_1_data_type_html_a9fcd47c7d7d77f908f041cad931962aaa5657758f69fc660569fa4d1de5a11cbc"><div class="ttname"><a href="namespaceq_1_1_data_type.html#a9fcd47c7d7d77f908f041cad931962aaa5657758f69fc660569fa4d1de5a11cbc">q::DataType::DataField::RETENTIONTIME</a></div><div class="ttdeci">@ RETENTIONTIME</div></div>
-<div class="ttc" id="anamespaceq_1_1_data_type_html_a9fcd47c7d7d77f908f041cad931962aaa5729d168584ff49470d55cca3441f3ea"><div class="ttname"><a href="namespaceq_1_1_data_type.html#a9fcd47c7d7d77f908f041cad931962aaa5729d168584ff49470d55cca3441f3ea">q::DataType::DataField::IONIZATIONMODE</a></div><div class="ttdeci">@ IONIZATIONMODE</div></div>
-<div class="ttc" id="anamespaceq_1_1_data_type_html_a9fcd47c7d7d77f908f041cad931962aaa9e2fedbc7006aeef70baaca5347088b1"><div class="ttname"><a href="namespaceq_1_1_data_type.html#a9fcd47c7d7d77f908f041cad931962aaa9e2fedbc7006aeef70baaca5347088b1">q::DataType::DataField::MSLEVEL</a></div><div class="ttdeci">@ MSLEVEL</div></div>
-<div class="ttc" id="anamespaceq_1_1_data_type_html_a9fcd47c7d7d77f908f041cad931962aaaac6ad5d9b99757c3a878f2d275ace198"><div class="ttname"><a href="namespaceq_1_1_data_type.html#a9fcd47c7d7d77f908f041cad931962aaaac6ad5d9b99757c3a878f2d275ace198">q::DataType::DataField::MZ</a></div><div class="ttdeci">@ MZ</div></div>
-<div class="ttc" id="anamespaceq_1_1_data_type_html_a9fcd47c7d7d77f908f041cad931962aaade82af5b73c61b0c9d162597fcc4abe6"><div class="ttname"><a href="namespaceq_1_1_data_type.html#a9fcd47c7d7d77f908f041cad931962aaade82af5b73c61b0c9d162597fcc4abe6">q::DataType::DataField::MEASUREMENTMODE</a></div><div class="ttdeci">@ MEASUREMENTMODE</div></div>
-<div class="ttc" id="anamespaceq_html"><div class="ttname"><a href="namespaceq.html">q</a></div><div class="ttdef"><b>Definition</b> <a href="qalgorithms_8h_source.html#l00020">qalgorithms.h:20</a></div></div>
+<div class="line"><a id="l00182" name="l00182"></a><span class="lineno">  182</span> </div>
+<div class="line"><a id="l00183" name="l00183"></a><span class="lineno">  183</span>    <span class="comment">// void LCMSData::cutData()</span></div>
+<div class="line"><a id="l00184" name="l00184"></a><span class="lineno">  184</span>    <span class="comment">// {</span></div>
+<div class="line"><a id="l00185" name="l00185"></a><span class="lineno">  185</span>    <span class="comment">//     // create a new data map to store the updated data</span></div>
+<div class="line"><a id="l00186" name="l00186"></a><span class="lineno">  186</span>    <span class="comment">//     std::unordered_map&lt;int, std::unordered_map&lt;int, DataType::LC_MS&gt;&gt; updatedData;</span></div>
+<div class="line"><a id="l00187" name="l00187"></a><span class="lineno">  187</span>    <span class="comment">//     // iterate over all data sets</span></div>
+<div class="line"><a id="l00188" name="l00188"></a><span class="lineno">  188</span>    <span class="comment">//     for (auto it = this-&gt;data.begin(); it != this-&gt;data.end(); it++)</span></div>
+<div class="line"><a id="l00189" name="l00189"></a><span class="lineno">  189</span>    <span class="comment">//     {</span></div>
+<div class="line"><a id="l00190" name="l00190"></a><span class="lineno">  190</span>    <span class="comment">//         // iterate over all sub data sets</span></div>
+<div class="line"><a id="l00191" name="l00191"></a><span class="lineno">  191</span>    <span class="comment">//         for (auto it2 = it-&gt;second.begin(); it2 != it-&gt;second.end(); it2++)</span></div>
+<div class="line"><a id="l00192" name="l00192"></a><span class="lineno">  192</span>    <span class="comment">//         {</span></div>
+<div class="line"><a id="l00193" name="l00193"></a><span class="lineno">  193</span>    <span class="comment">//             // read the indices where the data needs to be cut</span></div>
+<div class="line"><a id="l00194" name="l00194"></a><span class="lineno">  194</span>    <span class="comment">//             std::vector&lt;size_t&gt; indices = this-&gt;MeasurementData::cutData(it2-&gt;second.mz, it2-&gt;second.intensity);</span></div>
+<div class="line"><a id="l00195" name="l00195"></a><span class="lineno">  195</span> </div>
+<div class="line"><a id="l00196" name="l00196"></a><span class="lineno">  196</span>    <span class="comment">//             if (indices.size() == 0)</span></div>
+<div class="line"><a id="l00197" name="l00197"></a><span class="lineno">  197</span>    <span class="comment">//             {</span></div>
+<div class="line"><a id="l00198" name="l00198"></a><span class="lineno">  198</span>    <span class="comment">//                 // no cut is needed. however, zerofilling will add a separator at least at the beginning of the data.</span></div>
+<div class="line"><a id="l00199" name="l00199"></a><span class="lineno">  199</span>    <span class="comment">//                 updatedData[it-&gt;first][it2-&gt;first] = it2-&gt;second;</span></div>
+<div class="line"><a id="l00200" name="l00200"></a><span class="lineno">  200</span>    <span class="comment">//             }</span></div>
+<div class="line"><a id="l00201" name="l00201"></a><span class="lineno">  201</span>    <span class="comment">//             else</span></div>
+<div class="line"><a id="l00202" name="l00202"></a><span class="lineno">  202</span>    <span class="comment">//             {</span></div>
+<div class="line"><a id="l00203" name="l00203"></a><span class="lineno">  203</span>    <span class="comment">//                 // cut the data</span></div>
+<div class="line"><a id="l00204" name="l00204"></a><span class="lineno">  204</span>    <span class="comment">//                 int subID = 0;</span></div>
+<div class="line"><a id="l00205" name="l00205"></a><span class="lineno">  205</span>    <span class="comment">//                 // add the last index as the size of the data</span></div>
+<div class="line"><a id="l00206" name="l00206"></a><span class="lineno">  206</span>    <span class="comment">//                 indices.push_back(it2-&gt;second.mz.size());</span></div>
+<div class="line"><a id="l00207" name="l00207"></a><span class="lineno">  207</span>    <span class="comment">//                 for (int i = 0; i &lt; indices.size() - 1; i++)</span></div>
+<div class="line"><a id="l00208" name="l00208"></a><span class="lineno">  208</span>    <span class="comment">//                 {</span></div>
+<div class="line"><a id="l00209" name="l00209"></a><span class="lineno">  209</span>    <span class="comment">//                     // create a new data subset</span></div>
+<div class="line"><a id="l00210" name="l00210"></a><span class="lineno">  210</span>    <span class="comment">//                     DataType::LC_MS newSubset = it2-&gt;second;</span></div>
+<div class="line"><a id="l00211" name="l00211"></a><span class="lineno">  211</span>    <span class="comment">//                     // adjust the mz and intensity vectors</span></div>
+<div class="line"><a id="l00212" name="l00212"></a><span class="lineno">  212</span>    <span class="comment">//                     newSubset.mz = std::vector&lt;double&gt;(it2-&gt;second.mz.begin() + indices[i] + 1, it2-&gt;second.mz.begin() + indices[i + 1]);</span></div>
+<div class="line"><a id="l00213" name="l00213"></a><span class="lineno">  213</span>    <span class="comment">//                     newSubset.intensity = std::vector&lt;double&gt;(it2-&gt;second.intensity.begin() + indices[i] + 1, it2-&gt;second.intensity.begin() + indices[i + 1]);</span></div>
+<div class="line"><a id="l00214" name="l00214"></a><span class="lineno">  214</span>    <span class="comment">//                     updatedData[it-&gt;first][subID] = newSubset;</span></div>
+<div class="line"><a id="l00215" name="l00215"></a><span class="lineno">  215</span>    <span class="comment">//                     subID++;</span></div>
+<div class="line"><a id="l00216" name="l00216"></a><span class="lineno">  216</span>    <span class="comment">//                 }</span></div>
+<div class="line"><a id="l00217" name="l00217"></a><span class="lineno">  217</span>    <span class="comment">//             }</span></div>
+<div class="line"><a id="l00218" name="l00218"></a><span class="lineno">  218</span>    <span class="comment">//         }</span></div>
+<div class="line"><a id="l00219" name="l00219"></a><span class="lineno">  219</span>    <span class="comment">//     }</span></div>
+<div class="line"><a id="l00220" name="l00220"></a><span class="lineno">  220</span> </div>
+<div class="line"><a id="l00221" name="l00221"></a><span class="lineno">  221</span>    <span class="comment">//     // update the data map</span></div>
+<div class="line"><a id="l00222" name="l00222"></a><span class="lineno">  222</span>    <span class="comment">//     this-&gt;data = updatedData;</span></div>
+<div class="line"><a id="l00223" name="l00223"></a><span class="lineno">  223</span>    <span class="comment">// }</span></div>
+<div class="line"><a id="l00224" name="l00224"></a><span class="lineno">  224</span> </div>
+<div class="line"><a id="l00225" name="l00225"></a><span class="lineno">  225</span>    <span class="comment">// void LCMSData::interpolateData()</span></div>
+<div class="line"><a id="l00226" name="l00226"></a><span class="lineno">  226</span>    <span class="comment">// {</span></div>
+<div class="line"><a id="l00227" name="l00227"></a><span class="lineno">  227</span>    <span class="comment">//     // iterate over all data sets</span></div>
+<div class="line"><a id="l00228" name="l00228"></a><span class="lineno">  228</span>    <span class="comment">//     for (auto it = this-&gt;data.begin(); it != this-&gt;data.end(); it++)</span></div>
+<div class="line"><a id="l00229" name="l00229"></a><span class="lineno">  229</span>    <span class="comment">//     {</span></div>
+<div class="line"><a id="l00230" name="l00230"></a><span class="lineno">  230</span>    <span class="comment">//         // iterate over all sub data sets</span></div>
+<div class="line"><a id="l00231" name="l00231"></a><span class="lineno">  231</span>    <span class="comment">//         for (auto it2 = it-&gt;second.begin(); it2 != it-&gt;second.end(); it2++)</span></div>
+<div class="line"><a id="l00232" name="l00232"></a><span class="lineno">  232</span>    <span class="comment">//         {</span></div>
+<div class="line"><a id="l00233" name="l00233"></a><span class="lineno">  233</span>    <span class="comment">//             this-&gt;MeasurementData::interpolateData(it2-&gt;second.mz, it2-&gt;second.intensity);</span></div>
+<div class="line"><a id="l00234" name="l00234"></a><span class="lineno">  234</span>    <span class="comment">//         }</span></div>
+<div class="line"><a id="l00235" name="l00235"></a><span class="lineno">  235</span>    <span class="comment">//     }</span></div>
+<div class="line"><a id="l00236" name="l00236"></a><span class="lineno">  236</span>    <span class="comment">// }</span></div>
+<div class="line"><a id="l00237" name="l00237"></a><span class="lineno">  237</span> </div>
+<div class="foldopen" id="foldopen00238" data-start="{" data-end="}">
+<div class="line"><a id="l00238" name="l00238"></a><span class="lineno"><a class="line" href="classq_1_1_l_c_m_s_data.html#aa808ac2ee343120a4a89f8ee8e9278f6">  238</a></span>    <span class="keywordtype">void</span> <a class="code hl_function" href="classq_1_1_l_c_m_s_data.html#aa808ac2ee343120a4a89f8ee8e9278f6">LCMSData::print</a>()</div>
+<div class="line"><a id="l00239" name="l00239"></a><span class="lineno">  239</span>    {</div>
+<div class="line"><a id="l00240" name="l00240"></a><span class="lineno">  240</span>        <span class="keywordflow">for</span> (<span class="keyword">auto</span> it = this-&gt;data.begin(); it != this-&gt;data.end(); it++)</div>
+<div class="line"><a id="l00241" name="l00241"></a><span class="lineno">  241</span>        {</div>
+<div class="line"><a id="l00242" name="l00242"></a><span class="lineno">  242</span>            std::cout &lt;&lt; <span class="stringliteral">&quot;Scan Number: &quot;</span> &lt;&lt; it-&gt;first &lt;&lt; std::endl;</div>
+<div class="line"><a id="l00243" name="l00243"></a><span class="lineno">  243</span>            std::cout &lt;&lt; <span class="stringliteral">&quot;Retention Time: &quot;</span> &lt;&lt; std::get&lt;double&gt;((*it-&gt;second-&gt;metaData)[DataField::RETENTIONTIME]) &lt;&lt; std::endl;</div>
+<div class="line"><a id="l00244" name="l00244"></a><span class="lineno">  244</span>            std::cout &lt;&lt; <span class="stringliteral">&quot;Number of Data Points: &quot;</span> &lt;&lt; it-&gt;second-&gt;dataPoints.size() &lt;&lt; std::endl;</div>
+<div class="line"><a id="l00245" name="l00245"></a><span class="lineno">  245</span>            std::cout &lt;&lt; <span class="stringliteral">&quot;MZ values: &quot;</span>;</div>
+<div class="line"><a id="l00246" name="l00246"></a><span class="lineno">  246</span>            <span class="keywordflow">for</span> (<span class="keyword">const</span> <span class="keyword">auto</span>&amp; dp : it-&gt;second-&gt;dataPoints)</div>
+<div class="line"><a id="l00247" name="l00247"></a><span class="lineno">  247</span>            {</div>
+<div class="line"><a id="l00248" name="l00248"></a><span class="lineno">  248</span>                std::cout &lt;&lt; dp-&gt;mz &lt;&lt; <span class="stringliteral">&quot; &quot;</span>;</div>
+<div class="line"><a id="l00249" name="l00249"></a><span class="lineno">  249</span>            }</div>
+<div class="line"><a id="l00250" name="l00250"></a><span class="lineno">  250</span>            std::cout &lt;&lt; std::endl;</div>
+<div class="line"><a id="l00251" name="l00251"></a><span class="lineno">  251</span> </div>
+<div class="line"><a id="l00252" name="l00252"></a><span class="lineno">  252</span>            std::cout &lt;&lt; <span class="stringliteral">&quot;Intensity values: &quot;</span>;</div>
+<div class="line"><a id="l00253" name="l00253"></a><span class="lineno">  253</span>            <span class="keywordflow">for</span> (<span class="keyword">const</span> <span class="keyword">auto</span>&amp; dp : it-&gt;second-&gt;dataPoints)</div>
+<div class="line"><a id="l00254" name="l00254"></a><span class="lineno">  254</span>            {</div>
+<div class="line"><a id="l00255" name="l00255"></a><span class="lineno">  255</span>                std::cout &lt;&lt; dp-&gt;intensity &lt;&lt; <span class="stringliteral">&quot; &quot;</span>;</div>
+<div class="line"><a id="l00256" name="l00256"></a><span class="lineno">  256</span>            }</div>
+<div class="line"><a id="l00257" name="l00257"></a><span class="lineno">  257</span>            std::cout &lt;&lt; std::endl;</div>
+<div class="line"><a id="l00258" name="l00258"></a><span class="lineno">  258</span>        }</div>
+<div class="line"><a id="l00259" name="l00259"></a><span class="lineno">  259</span>    }</div>
+</div>
+<div class="line"><a id="l00260" name="l00260"></a><span class="lineno">  260</span> </div>
+<div class="line"><a id="l00261" name="l00261"></a><span class="lineno">  261</span>} <span class="comment">// namespace q</span></div>
+<div class="ttc" id="aclassq_1_1_data_type_1_1_mass_spectrum_html"><div class="ttname"><a href="classq_1_1_data_type_1_1_mass_spectrum.html">q::DataType::MassSpectrum</a></div><div class="ttdoc">A class to store mass spectrum data.</div><div class="ttdef"><b>Definition</b> <a href="qalgorithms__datatype__mass__spectrum_8h_source.html#l00027">qalgorithms_datatype_mass_spectrum.h:28</a></div></div>
+<div class="ttc" id="aclassq_1_1_data_type_1_1_mass_spectrum_html_a277bbd157af7a60eb393a89859647056"><div class="ttname"><a href="classq_1_1_data_type_1_1_mass_spectrum.html#a277bbd157af7a60eb393a89859647056">q::DataType::MassSpectrum::variableType</a></div><div class="ttdeci">std::variant&lt; int, double, MSLevel, IonizationMode, MeasurementMode &gt; variableType</div><div class="ttdef"><b>Definition</b> <a href="qalgorithms__datatype__mass__spectrum_8h_source.html#l00072">qalgorithms_datatype_mass_spectrum.h:72</a></div></div>
+<div class="ttc" id="aclassq_1_1_l_c_m_s_data_html_a556f3c0930dd9500376eda81b271b787"><div class="ttname"><a href="classq_1_1_l_c_m_s_data.html#a556f3c0930dd9500376eda81b271b787">q::LCMSData::~LCMSData</a></div><div class="ttdeci">~LCMSData()</div><div class="ttdef"><b>Definition</b> <a href="#l00023">qalgorithms_measurement_data_lcms.cpp:23</a></div></div>
+<div class="ttc" id="aclassq_1_1_l_c_m_s_data_html_a6c799dc9ef6918446df62515bc7daa8d"><div class="ttname"><a href="classq_1_1_l_c_m_s_data.html#a6c799dc9ef6918446df62515bc7daa8d">q::LCMSData::cutData</a></div><div class="ttdeci">void cutData()</div><div class="ttdoc">Cut the data into smaller data sets.</div><div class="ttdef"><b>Definition</b> <a href="#l00176">qalgorithms_measurement_data_lcms.cpp:176</a></div></div>
+<div class="ttc" id="aclassq_1_1_l_c_m_s_data_html_a7466e285c6c4f7a7fd3a67edb15a4cd7"><div class="ttname"><a href="classq_1_1_l_c_m_s_data.html#a7466e285c6c4f7a7fd3a67edb15a4cd7">q::LCMSData::LCMSData</a></div><div class="ttdeci">LCMSData()</div><div class="ttdef"><b>Definition</b> <a href="#l00019">qalgorithms_measurement_data_lcms.cpp:19</a></div></div>
+<div class="ttc" id="aclassq_1_1_l_c_m_s_data_html_aa808ac2ee343120a4a89f8ee8e9278f6"><div class="ttname"><a href="classq_1_1_l_c_m_s_data.html#aa808ac2ee343120a4a89f8ee8e9278f6">q::LCMSData::print</a></div><div class="ttdeci">void print()</div><div class="ttdoc">Interpolate y-axis values.</div><div class="ttdef"><b>Definition</b> <a href="#l00238">qalgorithms_measurement_data_lcms.cpp:238</a></div></div>
+<div class="ttc" id="aclassq_1_1_l_c_m_s_data_html_ab4632d3d3138d17fd5a7f479b70c2846"><div class="ttname"><a href="classq_1_1_l_c_m_s_data.html#ab4632d3d3138d17fd5a7f479b70c2846">q::LCMSData::readCSV</a></div><div class="ttdeci">void readCSV(std::string filename, int rowStart, int rowEnd, int colStart, int colEnd, char separator, std::vector&lt; DataType::DataField &gt; variableTypes)</div><div class="ttdoc">Read LC-MS data from a CSV file.</div><div class="ttdef"><b>Definition</b> <a href="#l00027">qalgorithms_measurement_data_lcms.cpp:27</a></div></div>
+<div class="ttc" id="aclassq_1_1_l_c_m_s_data_html_ae1a62294c43bbe12e97f9293eaa49ea8"><div class="ttname"><a href="classq_1_1_l_c_m_s_data.html#ae1a62294c43bbe12e97f9293eaa49ea8">q::LCMSData::zeroFilling</a></div><div class="ttdeci">void zeroFilling()</div><div class="ttdoc">Identify and fill gaps in the LC-MS data.</div><div class="ttdef"><b>Definition</b> <a href="#l00169">qalgorithms_measurement_data_lcms.cpp:169</a></div></div>
+<div class="ttc" id="aclassq_1_1_measurement_data_html_a0021f29aa0a045d9964cc956528fadac"><div class="ttname"><a href="classq_1_1_measurement_data.html#a0021f29aa0a045d9964cc956528fadac">q::MeasurementData::varDataType</a></div><div class="ttdeci">std::variant&lt; MS &gt; varDataType</div><div class="ttdef"><b>Definition</b> <a href="qalgorithms__measurement__data_8h_source.html#l00030">qalgorithms_measurement_data.h:30</a></div></div>
+<div class="ttc" id="aclassq_1_1_measurement_data_html_a3139b3ddc3039bca5c0fb7ccd7052558"><div class="ttname"><a href="classq_1_1_measurement_data.html#a3139b3ddc3039bca5c0fb7ccd7052558">q::MeasurementData::zeroFilling</a></div><div class="ttdeci">void zeroFilling(varDataType &amp;dataMap, int k)</div><div class="ttdoc">Identify and fill gaps in the data.</div><div class="ttdef"><b>Definition</b> <a href="qalgorithms__measurement__data_8cpp_source.html#l00008">qalgorithms_measurement_data.cpp:8</a></div></div>
+<div class="ttc" id="aclassq_1_1_measurement_data_html_ae2b8a3d542b37ac400f2b51ada04a448"><div class="ttname"><a href="classq_1_1_measurement_data.html#ae2b8a3d542b37ac400f2b51ada04a448">q::MeasurementData::cutData</a></div><div class="ttdeci">void cutData(varDataType &amp;dataMap)</div><div class="ttdoc">Cut the data into smaller data sets.</div><div class="ttdef"><b>Definition</b> <a href="qalgorithms__measurement__data_8cpp_source.html#l00127">qalgorithms_measurement_data.cpp:127</a></div></div>
+<div class="ttc" id="anamespaceq_1_1_data_type_html_a9fcd47c7d7d77f908f041cad931962aa"><div class="ttname"><a href="namespaceq_1_1_data_type.html#a9fcd47c7d7d77f908f041cad931962aa">q::DataType::DataField</a></div><div class="ttdeci">DataField</div><div class="ttdoc">Different types of data that can be stored in a data file.</div><div class="ttdef"><b>Definition</b> <a href="qalgorithms__datatype_8h_source.html#l00041">qalgorithms_datatype.h:42</a></div></div>
+<div class="ttc" id="anamespaceq_html"><div class="ttname"><a href="namespaceq.html">q</a></div><div class="ttdef"><b>Definition</b> <a href="qalgorithms_8h_source.html#l00020">qalgorithms.h:21</a></div></div>
+<div class="ttc" id="anamespaceq_html_a4df4875ee6a816afd1b447d015e1cb31"><div class="ttname"><a href="namespaceq.html#a4df4875ee6a816afd1b447d015e1cb31">q::VariableType</a></div><div class="ttdeci">DataType::MassSpectrum::variableType VariableType</div><div class="ttdef"><b>Definition</b> <a href="#l00013">qalgorithms_measurement_data_lcms.cpp:13</a></div></div>
+<div class="ttc" id="anamespaceq_html_adc792d430932d1bad118dfc033dd8dca"><div class="ttname"><a href="namespaceq.html#adc792d430932d1bad118dfc033dd8dca">q::DataPointVector</a></div><div class="ttdeci">std::vector&lt; std::unique_ptr&lt; DataPoint &gt; &gt; DataPointVector</div><div class="ttdef"><b>Definition</b> <a href="#l00017">qalgorithms_measurement_data_lcms.cpp:17</a></div></div>
 <div class="ttc" id="aqalgorithms__measurement__data__lcms_8h_html"><div class="ttname"><a href="qalgorithms__measurement__data__lcms_8h.html">qalgorithms_measurement_data_lcms.h</a></div></div>
+<div class="ttc" id="astructq_1_1_data_type_1_1_mass_spectrum_1_1_data_point_html"><div class="ttname"><a href="structq_1_1_data_type_1_1_mass_spectrum_1_1_data_point.html">q::DataType::MassSpectrum::DataPoint</a></div><div class="ttdoc">Struct to store mass spectrum data points.</div><div class="ttdef"><b>Definition</b> <a href="qalgorithms__datatype__mass__spectrum_8h_source.html#l00040">qalgorithms_datatype_mass_spectrum.h:41</a></div></div>
 </div><!-- fragment --></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>

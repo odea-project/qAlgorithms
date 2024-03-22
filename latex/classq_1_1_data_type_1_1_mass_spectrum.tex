@@ -9,68 +9,78 @@ A class to store mass spectrum data.
 
 {\ttfamily \#include $<$qalgorithms\+\_\+datatype\+\_\+mass\+\_\+spectrum.\+h$>$}
 
-Inheritance diagram for q\+::Data\+Type\+::Mass\+Spectrum\+:\begin{figure}[H]
-\begin{center}
-\leavevmode
-\includegraphics[height=2.000000cm]{classq_1_1_data_type_1_1_mass_spectrum}
-\end{center}
-\end{figure}
+\doxysubsubsection*{Classes}
+\begin{DoxyCompactItemize}
+\item 
+struct \mbox{\hyperlink{structq_1_1_data_type_1_1_mass_spectrum_1_1_data_point}{Data\+Point}}
+\begin{DoxyCompactList}\small\item\em Struct to store mass spectrum data points. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsection*{Public Types}
+\begin{DoxyCompactItemize}
+\item 
+using \mbox{\hyperlink{classq_1_1_data_type_1_1_mass_spectrum_a277bbd157af7a60eb393a89859647056}{variable\+Type}}
+\end{DoxyCompactItemize}
 \doxysubsubsection*{Public Member Functions}
 \begin{DoxyCompactItemize}
 \item 
 \mbox{\hyperlink{classq_1_1_data_type_1_1_mass_spectrum_ac0a31524c492db17747c333ab9807f8f}{Mass\+Spectrum}} ()
 \item 
-\mbox{\hyperlink{classq_1_1_data_type_1_1_mass_spectrum_a224c7dcd294d2b766f414be88ecd9acf}{Mass\+Spectrum}} (std\+::vector$<$ double $>$ \mbox{\hyperlink{classq_1_1_data_type_1_1_mass_spectrum_a8f1e3fa9d341263c22fd7248c6bc3ec0}{intensity}}, std\+::vector$<$ double $>$ \mbox{\hyperlink{classq_1_1_data_type_1_1_mass_spectrum_a17cbc542d6c1aaade464cdab7f4c812d}{mz}}, \mbox{\hyperlink{namespaceq_1_1_data_type_a50341ff9d741a5a416eb71a71ffc1fa6}{Ionization\+Mode}} \mbox{\hyperlink{classq_1_1_data_type_1_1_mass_spectrum_a7271ac8b3ee5f2560ccbec3e7ac7edae}{ionization\+Mode}}, \mbox{\hyperlink{namespaceq_1_1_data_type_a8e76910d22415bfa3dd2086a76f0c5ea}{Measurement\+Mode}} \mbox{\hyperlink{classq_1_1_data_type_1_1_mass_spectrum_acf136d30ff0ffdc41b2a62c8da7c4c7c}{measurement\+Mode}}, \mbox{\hyperlink{namespaceq_1_1_data_type_a90aa4d66e606cf85f2424677d7bf4d34}{MSLevel}} \mbox{\hyperlink{classq_1_1_data_type_1_1_mass_spectrum_a7bba763441f4042bcf283d68d79a4d40}{ms\+Level}})
-\item 
+\mbox{\hyperlink{classq_1_1_data_type_1_1_mass_spectrum_a50c0bdf6e0280fd8d3b4dd2732573840}{Mass\+Spectrum}} (\mbox{\hyperlink{classq_1_1_data_type_1_1_mass_spectrum}{Mass\+Spectrum}} \&other, const size\+\_\+t k)
+\begin{DoxyCompactList}\small\item\em Construct a new Mass Spectrum object from another Mass Spectrum object. \end{DoxyCompactList}\item 
 \mbox{\hyperlink{classq_1_1_data_type_1_1_mass_spectrum_a394e3640b0c8c69ccb9b6343e6a947f4}{\texorpdfstring{$\sim$}{\string~}\+Mass\+Spectrum}} ()
 \item 
-void \mbox{\hyperlink{classq_1_1_data_type_1_1_mass_spectrum_ab3c0a87d6ff398af1ca1260ce6bdff85}{set\+Intensity}} (std\+::vector$<$ double $>$ \&\mbox{\hyperlink{classq_1_1_data_type_1_1_mass_spectrum_a8f1e3fa9d341263c22fd7248c6bc3ec0}{intensity}})
+void \mbox{\hyperlink{classq_1_1_data_type_1_1_mass_spectrum_af93a0e8fb934e1e98a225f29981e2e68}{add\+Data\+Point}} (double intensity, double mz, int df)
 \item 
-void \mbox{\hyperlink{classq_1_1_data_type_1_1_mass_spectrum_a3bd822faeb537e596d71c26cd05898b3}{set\+Mz}} (std\+::vector$<$ double $>$ \&\mbox{\hyperlink{classq_1_1_data_type_1_1_mass_spectrum_a17cbc542d6c1aaade464cdab7f4c812d}{mz}})
-\item 
-void \mbox{\hyperlink{classq_1_1_data_type_1_1_mass_spectrum_aa673822baefaba4b1b4e3acca219685b}{set\+Ionization\+Mode}} (\mbox{\hyperlink{namespaceq_1_1_data_type_a50341ff9d741a5a416eb71a71ffc1fa6}{Ionization\+Mode}} \mbox{\hyperlink{classq_1_1_data_type_1_1_mass_spectrum_a7271ac8b3ee5f2560ccbec3e7ac7edae}{ionization\+Mode}})
-\item 
-void \mbox{\hyperlink{classq_1_1_data_type_1_1_mass_spectrum_acbf9fba32142ba1f4e9739d60145794f}{set\+Measurement\+Mode}} (\mbox{\hyperlink{namespaceq_1_1_data_type_a8e76910d22415bfa3dd2086a76f0c5ea}{Measurement\+Mode}} \mbox{\hyperlink{classq_1_1_data_type_1_1_mass_spectrum_acf136d30ff0ffdc41b2a62c8da7c4c7c}{measurement\+Mode}})
-\item 
-void \mbox{\hyperlink{classq_1_1_data_type_1_1_mass_spectrum_a2b7ca56758bf0017d410727b9fbebc9d}{set\+MSLevel}} (\mbox{\hyperlink{namespaceq_1_1_data_type_a90aa4d66e606cf85f2424677d7bf4d34}{MSLevel}} \mbox{\hyperlink{classq_1_1_data_type_1_1_mass_spectrum_a7bba763441f4042bcf283d68d79a4d40}{ms\+Level}})
-\item 
-void \mbox{\hyperlink{classq_1_1_data_type_1_1_mass_spectrum_a6c6027c12e9a3f41c23f5be1f68153af}{print}} ()
+void \mbox{\hyperlink{classq_1_1_data_type_1_1_mass_spectrum_a4e6df96421a82f05158224da9e490fee}{sort\+Data\+Points}} ()
 \end{DoxyCompactItemize}
 \doxysubsubsection*{Public Attributes}
 \begin{DoxyCompactItemize}
 \item 
-std\+::vector$<$ double $>$ \mbox{\hyperlink{classq_1_1_data_type_1_1_mass_spectrum_a8f1e3fa9d341263c22fd7248c6bc3ec0}{intensity}}
+std\+::unordered\+\_\+map$<$ \mbox{\hyperlink{namespaceq_1_1_data_type_a9fcd47c7d7d77f908f041cad931962aa}{Data\+Field}}, \mbox{\hyperlink{classq_1_1_data_type_1_1_mass_spectrum_a277bbd157af7a60eb393a89859647056}{variable\+Type}} $>$ \texorpdfstring{$\ast$}{*} \mbox{\hyperlink{classq_1_1_data_type_1_1_mass_spectrum_a30c0087b21c1b807705187898199e8e4}{meta\+Data}}
 \item 
-std\+::vector$<$ double $>$ \mbox{\hyperlink{classq_1_1_data_type_1_1_mass_spectrum_a17cbc542d6c1aaade464cdab7f4c812d}{mz}}
+std\+::vector$<$ std\+::unique\+\_\+ptr$<$ \mbox{\hyperlink{structq_1_1_data_type_1_1_mass_spectrum_1_1_data_point}{Data\+Point}} $>$ $>$ \mbox{\hyperlink{classq_1_1_data_type_1_1_mass_spectrum_a5ef1b447c6cb624f5535113d602e61cc}{data\+Points}}
 \item 
-\mbox{\hyperlink{namespaceq_1_1_data_type_a50341ff9d741a5a416eb71a71ffc1fa6}{Ionization\+Mode}} \mbox{\hyperlink{classq_1_1_data_type_1_1_mass_spectrum_a7271ac8b3ee5f2560ccbec3e7ac7edae}{ionization\+Mode}}
+std\+::pair$<$ bool, \mbox{\hyperlink{classq_1_1_data_type_1_1_mass_spectrum}{Mass\+Spectrum}} \texorpdfstring{$\ast$}{*} $>$ \mbox{\hyperlink{classq_1_1_data_type_1_1_mass_spectrum_a51f0922e8ad00a37c0e96eaa49c54393}{is\+Parent}}
 \item 
-\mbox{\hyperlink{namespaceq_1_1_data_type_a8e76910d22415bfa3dd2086a76f0c5ea}{Measurement\+Mode}} \mbox{\hyperlink{classq_1_1_data_type_1_1_mass_spectrum_acf136d30ff0ffdc41b2a62c8da7c4c7c}{measurement\+Mode}}
-\item 
-\mbox{\hyperlink{namespaceq_1_1_data_type_a90aa4d66e606cf85f2424677d7bf4d34}{MSLevel}} \mbox{\hyperlink{classq_1_1_data_type_1_1_mass_spectrum_a7bba763441f4042bcf283d68d79a4d40}{ms\+Level}}
-\end{DoxyCompactItemize}
+std\+::vector$<$ std\+::unique\+\_\+ptr$<$ size\+\_\+t $>$ $>$ \mbox{\hyperlink{classq_1_1_data_type_1_1_mass_spectrum_af4fdaf7d30d857d166c49580f6827024}{cutting\+Points}}
+\begin{DoxyCompactList}\small\item\em This vector stores information for cutting the mass spectrum data. \end{DoxyCompactList}\end{DoxyCompactItemize}
 
 
 \doxysubsection{Detailed Description}
 A class to store mass spectrum data. 
 
-The \doxylink{classq_1_1_data_type_1_1_mass_spectrum}{Mass\+Spectrum} class is used to store mass spectrum data. It contains the intensity, mz, ionization mode, measurement mode, and MS level of the mass spectrum. ~\newline
- 
+The \doxylink{classq_1_1_data_type_1_1_mass_spectrum}{Mass\+Spectrum} class is used to store mass spectrum data. It contains a map of Pointers to general property variables that are organized using the Data\+Field as key. \doxylink{namespaceq_1_1_data_type_a9fcd47c7d7d77f908f041cad931962aa}{Data\+Field} Moreover, it contains a struct for the data point. \doxylink{structq_1_1_data_type_1_1_mass_spectrum_1_1_data_point}{Data\+Point} This struct contains the intensity, mz, and degrees of freedom (important for the uncertainty estimation when interpolating the data is considered) and will be organized in a map of Pointers as well. 
 \begin{DoxyParams}{Parameters}
-{\em intensity} & The intensity of the MS signal \\
-\hline
-{\em mz} & The mass-\/to-\/charge ratio of the MS signal \\
-\hline
-{\em ionization\+Mode} & The ionization mode, i.\+e. whether the signal is from positive or negative mode \\
-\hline
-{\em measurement\+Mode} & The measurement mode, i.\+e. whether the signal is profile or centroid \\
-\hline
-{\em ms\+Level} & The MS level, i.\+e. whether the signal is from MS1 or MS2 \\
+{\em data} & The map of Pointers to general property variables that are organized using the Data\+Field as key \\
 \hline
 \end{DoxyParams}
 
 
-Definition at line \mbox{\hyperlink{qalgorithms__datatype__mass__spectrum_8h_source_l00020}{20}} of file \mbox{\hyperlink{qalgorithms__datatype__mass__spectrum_8h_source}{qalgorithms\+\_\+datatype\+\_\+mass\+\_\+spectrum.\+h}}.
+Definition at line \mbox{\hyperlink{qalgorithms__datatype__mass__spectrum_8h_source_l00027}{27}} of file \mbox{\hyperlink{qalgorithms__datatype__mass__spectrum_8h_source}{qalgorithms\+\_\+datatype\+\_\+mass\+\_\+spectrum.\+h}}.
+
+
+
+\doxysubsection{Member Typedef Documentation}
+\Hypertarget{classq_1_1_data_type_1_1_mass_spectrum_a277bbd157af7a60eb393a89859647056}\label{classq_1_1_data_type_1_1_mass_spectrum_a277bbd157af7a60eb393a89859647056} 
+\index{q::DataType::MassSpectrum@{q::DataType::MassSpectrum}!variableType@{variableType}}
+\index{variableType@{variableType}!q::DataType::MassSpectrum@{q::DataType::MassSpectrum}}
+\doxysubsubsection{\texorpdfstring{variableType}{variableType}}
+{\footnotesize\ttfamily using \mbox{\hyperlink{classq_1_1_data_type_1_1_mass_spectrum_a277bbd157af7a60eb393a89859647056}{q\+::\+Data\+Type\+::\+Mass\+Spectrum\+::variable\+Type}}}
+
+{\bfseries Initial value\+:}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\ std::variant\ }
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \ \ \ \ <}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ int,\ }
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ double,\ }
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespaceq_1_1_data_type_a90aa4d66e606cf85f2424677d7bf4d34}{MSLevel}},\ }
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespaceq_1_1_data_type_a50341ff9d741a5a416eb71a71ffc1fa6}{IonizationMode}},\ }
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespaceq_1_1_data_type_a8e76910d22415bfa3dd2086a76f0c5ea}{MeasurementMode}}\ }
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \ \ \ \ >}
+
+\end{DoxyCode}
+
+
+Definition at line \mbox{\hyperlink{qalgorithms__datatype__mass__spectrum_8h_source_l00072}{72}} of file \mbox{\hyperlink{qalgorithms__datatype__mass__spectrum_8h_source}{qalgorithms\+\_\+datatype\+\_\+mass\+\_\+spectrum.\+h}}.
 
 
 
@@ -83,14 +93,28 @@ Definition at line \mbox{\hyperlink{qalgorithms__datatype__mass__spectrum_8h_sou
 
 
 
-Definition at line \mbox{\hyperlink{qalgorithms__datatype__mass__spectrum_8cpp_source_l00011}{11}} of file \mbox{\hyperlink{qalgorithms__datatype__mass__spectrum_8cpp_source}{qalgorithms\+\_\+datatype\+\_\+mass\+\_\+spectrum.\+cpp}}.
+Definition at line \mbox{\hyperlink{qalgorithms__datatype__mass__spectrum_8cpp_source_l00012}{12}} of file \mbox{\hyperlink{qalgorithms__datatype__mass__spectrum_8cpp_source}{qalgorithms\+\_\+datatype\+\_\+mass\+\_\+spectrum.\+cpp}}.
 
-\Hypertarget{classq_1_1_data_type_1_1_mass_spectrum_a224c7dcd294d2b766f414be88ecd9acf}\label{classq_1_1_data_type_1_1_mass_spectrum_a224c7dcd294d2b766f414be88ecd9acf} 
+\Hypertarget{classq_1_1_data_type_1_1_mass_spectrum_a50c0bdf6e0280fd8d3b4dd2732573840}\label{classq_1_1_data_type_1_1_mass_spectrum_a50c0bdf6e0280fd8d3b4dd2732573840} 
 \index{q::DataType::MassSpectrum@{q::DataType::MassSpectrum}!MassSpectrum@{MassSpectrum}}
 \index{MassSpectrum@{MassSpectrum}!q::DataType::MassSpectrum@{q::DataType::MassSpectrum}}
 \doxysubsubsection{\texorpdfstring{MassSpectrum()}{MassSpectrum()}\hspace{0.1cm}{\footnotesize\ttfamily [2/2]}}
-{\footnotesize\ttfamily q\+::\+Data\+Type\+::\+Mass\+Spectrum\+::\+Mass\+Spectrum (\begin{DoxyParamCaption}\item[{std\+::vector$<$ double $>$}]{intensity,  }\item[{std\+::vector$<$ double $>$}]{mz,  }\item[{\mbox{\hyperlink{namespaceq_1_1_data_type_a50341ff9d741a5a416eb71a71ffc1fa6}{Ionization\+Mode}}}]{ionization\+Mode,  }\item[{\mbox{\hyperlink{namespaceq_1_1_data_type_a8e76910d22415bfa3dd2086a76f0c5ea}{Measurement\+Mode}}}]{measurement\+Mode,  }\item[{\mbox{\hyperlink{namespaceq_1_1_data_type_a90aa4d66e606cf85f2424677d7bf4d34}{MSLevel}}}]{ms\+Level }\end{DoxyParamCaption})}
+{\footnotesize\ttfamily q\+::\+Data\+Type\+::\+Mass\+Spectrum\+::\+Mass\+Spectrum (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{classq_1_1_data_type_1_1_mass_spectrum}{Mass\+Spectrum}} \&}]{other,  }\item[{const size\+\_\+t}]{k }\end{DoxyParamCaption})}
 
+
+
+Construct a new Mass Spectrum object from another Mass Spectrum object. 
+
+The \doxylink{classq_1_1_data_type_1_1_mass_spectrum}{Mass\+Spectrum} constructor constructs a new Mass Spectrum object from another Mass Spectrum object. The constructor takes a reference to another Mass Spectrum object. All Meta\+Data will be referenced, and the the last k data points will be moved to the new object.
+
+
+\begin{DoxyParams}{Parameters}
+{\em reference} & mass spectrum object ~\newline
+ \\
+\hline
+{\em k} & number of data points to be moved to the new object, starting from the end of the reference object \\
+\hline
+\end{DoxyParams}
 
 
 Definition at line \mbox{\hyperlink{qalgorithms__datatype__mass__spectrum_8cpp_source_l00019}{19}} of file \mbox{\hyperlink{qalgorithms__datatype__mass__spectrum_8cpp_source}{qalgorithms\+\_\+datatype\+\_\+mass\+\_\+spectrum.\+cpp}}.
@@ -103,123 +127,77 @@ Definition at line \mbox{\hyperlink{qalgorithms__datatype__mass__spectrum_8cpp_s
 
 
 
-Definition at line \mbox{\hyperlink{qalgorithms__datatype__mass__spectrum_8cpp_source_l00027}{27}} of file \mbox{\hyperlink{qalgorithms__datatype__mass__spectrum_8cpp_source}{qalgorithms\+\_\+datatype\+\_\+mass\+\_\+spectrum.\+cpp}}.
+Definition at line \mbox{\hyperlink{qalgorithms__datatype__mass__spectrum_8cpp_source_l00033}{33}} of file \mbox{\hyperlink{qalgorithms__datatype__mass__spectrum_8cpp_source}{qalgorithms\+\_\+datatype\+\_\+mass\+\_\+spectrum.\+cpp}}.
 
 
 
 \doxysubsection{Member Function Documentation}
-\Hypertarget{classq_1_1_data_type_1_1_mass_spectrum_a6c6027c12e9a3f41c23f5be1f68153af}\label{classq_1_1_data_type_1_1_mass_spectrum_a6c6027c12e9a3f41c23f5be1f68153af} 
-\index{q::DataType::MassSpectrum@{q::DataType::MassSpectrum}!print@{print}}
-\index{print@{print}!q::DataType::MassSpectrum@{q::DataType::MassSpectrum}}
-\doxysubsubsection{\texorpdfstring{print()}{print()}}
-{\footnotesize\ttfamily void q\+::\+Data\+Type\+::\+Mass\+Spectrum\+::print (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})}
+\Hypertarget{classq_1_1_data_type_1_1_mass_spectrum_af93a0e8fb934e1e98a225f29981e2e68}\label{classq_1_1_data_type_1_1_mass_spectrum_af93a0e8fb934e1e98a225f29981e2e68} 
+\index{q::DataType::MassSpectrum@{q::DataType::MassSpectrum}!addDataPoint@{addDataPoint}}
+\index{addDataPoint@{addDataPoint}!q::DataType::MassSpectrum@{q::DataType::MassSpectrum}}
+\doxysubsubsection{\texorpdfstring{addDataPoint()}{addDataPoint()}}
+{\footnotesize\ttfamily void q\+::\+Data\+Type\+::\+Mass\+Spectrum\+::add\+Data\+Point (\begin{DoxyParamCaption}\item[{double}]{intensity,  }\item[{double}]{mz,  }\item[{int}]{df }\end{DoxyParamCaption})}
 
 
 
-Definition at line \mbox{\hyperlink{qalgorithms__datatype__mass__spectrum_8cpp_source_l00051}{51}} of file \mbox{\hyperlink{qalgorithms__datatype__mass__spectrum_8cpp_source}{qalgorithms\+\_\+datatype\+\_\+mass\+\_\+spectrum.\+cpp}}.
+Definition at line \mbox{\hyperlink{qalgorithms__datatype__mass__spectrum_8cpp_source_l00038}{38}} of file \mbox{\hyperlink{qalgorithms__datatype__mass__spectrum_8cpp_source}{qalgorithms\+\_\+datatype\+\_\+mass\+\_\+spectrum.\+cpp}}.
 
-\Hypertarget{classq_1_1_data_type_1_1_mass_spectrum_ab3c0a87d6ff398af1ca1260ce6bdff85}\label{classq_1_1_data_type_1_1_mass_spectrum_ab3c0a87d6ff398af1ca1260ce6bdff85} 
-\index{q::DataType::MassSpectrum@{q::DataType::MassSpectrum}!setIntensity@{setIntensity}}
-\index{setIntensity@{setIntensity}!q::DataType::MassSpectrum@{q::DataType::MassSpectrum}}
-\doxysubsubsection{\texorpdfstring{setIntensity()}{setIntensity()}}
-{\footnotesize\ttfamily void q\+::\+Data\+Type\+::\+Mass\+Spectrum\+::set\+Intensity (\begin{DoxyParamCaption}\item[{std\+::vector$<$ double $>$ \&}]{intensity }\end{DoxyParamCaption})}
-
-
-
-Definition at line \mbox{\hyperlink{qalgorithms__datatype__mass__spectrum_8cpp_source_l00031}{31}} of file \mbox{\hyperlink{qalgorithms__datatype__mass__spectrum_8cpp_source}{qalgorithms\+\_\+datatype\+\_\+mass\+\_\+spectrum.\+cpp}}.
-
-\Hypertarget{classq_1_1_data_type_1_1_mass_spectrum_aa673822baefaba4b1b4e3acca219685b}\label{classq_1_1_data_type_1_1_mass_spectrum_aa673822baefaba4b1b4e3acca219685b} 
-\index{q::DataType::MassSpectrum@{q::DataType::MassSpectrum}!setIonizationMode@{setIonizationMode}}
-\index{setIonizationMode@{setIonizationMode}!q::DataType::MassSpectrum@{q::DataType::MassSpectrum}}
-\doxysubsubsection{\texorpdfstring{setIonizationMode()}{setIonizationMode()}}
-{\footnotesize\ttfamily void q\+::\+Data\+Type\+::\+Mass\+Spectrum\+::set\+Ionization\+Mode (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{namespaceq_1_1_data_type_a50341ff9d741a5a416eb71a71ffc1fa6}{Ionization\+Mode}}}]{ionization\+Mode }\end{DoxyParamCaption})}
-
-
-
-Definition at line \mbox{\hyperlink{qalgorithms__datatype__mass__spectrum_8cpp_source_l00039}{39}} of file \mbox{\hyperlink{qalgorithms__datatype__mass__spectrum_8cpp_source}{qalgorithms\+\_\+datatype\+\_\+mass\+\_\+spectrum.\+cpp}}.
-
-\Hypertarget{classq_1_1_data_type_1_1_mass_spectrum_acbf9fba32142ba1f4e9739d60145794f}\label{classq_1_1_data_type_1_1_mass_spectrum_acbf9fba32142ba1f4e9739d60145794f} 
-\index{q::DataType::MassSpectrum@{q::DataType::MassSpectrum}!setMeasurementMode@{setMeasurementMode}}
-\index{setMeasurementMode@{setMeasurementMode}!q::DataType::MassSpectrum@{q::DataType::MassSpectrum}}
-\doxysubsubsection{\texorpdfstring{setMeasurementMode()}{setMeasurementMode()}}
-{\footnotesize\ttfamily void q\+::\+Data\+Type\+::\+Mass\+Spectrum\+::set\+Measurement\+Mode (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{namespaceq_1_1_data_type_a8e76910d22415bfa3dd2086a76f0c5ea}{Measurement\+Mode}}}]{measurement\+Mode }\end{DoxyParamCaption})}
+\Hypertarget{classq_1_1_data_type_1_1_mass_spectrum_a4e6df96421a82f05158224da9e490fee}\label{classq_1_1_data_type_1_1_mass_spectrum_a4e6df96421a82f05158224da9e490fee} 
+\index{q::DataType::MassSpectrum@{q::DataType::MassSpectrum}!sortDataPoints@{sortDataPoints}}
+\index{sortDataPoints@{sortDataPoints}!q::DataType::MassSpectrum@{q::DataType::MassSpectrum}}
+\doxysubsubsection{\texorpdfstring{sortDataPoints()}{sortDataPoints()}}
+{\footnotesize\ttfamily void q\+::\+Data\+Type\+::\+Mass\+Spectrum\+::sort\+Data\+Points (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})}
 
 
 
 Definition at line \mbox{\hyperlink{qalgorithms__datatype__mass__spectrum_8cpp_source_l00043}{43}} of file \mbox{\hyperlink{qalgorithms__datatype__mass__spectrum_8cpp_source}{qalgorithms\+\_\+datatype\+\_\+mass\+\_\+spectrum.\+cpp}}.
 
-\Hypertarget{classq_1_1_data_type_1_1_mass_spectrum_a2b7ca56758bf0017d410727b9fbebc9d}\label{classq_1_1_data_type_1_1_mass_spectrum_a2b7ca56758bf0017d410727b9fbebc9d} 
-\index{q::DataType::MassSpectrum@{q::DataType::MassSpectrum}!setMSLevel@{setMSLevel}}
-\index{setMSLevel@{setMSLevel}!q::DataType::MassSpectrum@{q::DataType::MassSpectrum}}
-\doxysubsubsection{\texorpdfstring{setMSLevel()}{setMSLevel()}}
-{\footnotesize\ttfamily void q\+::\+Data\+Type\+::\+Mass\+Spectrum\+::set\+MSLevel (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{namespaceq_1_1_data_type_a90aa4d66e606cf85f2424677d7bf4d34}{MSLevel}}}]{ms\+Level }\end{DoxyParamCaption})}
-
-
-
-Definition at line \mbox{\hyperlink{qalgorithms__datatype__mass__spectrum_8cpp_source_l00047}{47}} of file \mbox{\hyperlink{qalgorithms__datatype__mass__spectrum_8cpp_source}{qalgorithms\+\_\+datatype\+\_\+mass\+\_\+spectrum.\+cpp}}.
-
-\Hypertarget{classq_1_1_data_type_1_1_mass_spectrum_a3bd822faeb537e596d71c26cd05898b3}\label{classq_1_1_data_type_1_1_mass_spectrum_a3bd822faeb537e596d71c26cd05898b3} 
-\index{q::DataType::MassSpectrum@{q::DataType::MassSpectrum}!setMz@{setMz}}
-\index{setMz@{setMz}!q::DataType::MassSpectrum@{q::DataType::MassSpectrum}}
-\doxysubsubsection{\texorpdfstring{setMz()}{setMz()}}
-{\footnotesize\ttfamily void q\+::\+Data\+Type\+::\+Mass\+Spectrum\+::set\+Mz (\begin{DoxyParamCaption}\item[{std\+::vector$<$ double $>$ \&}]{mz }\end{DoxyParamCaption})}
-
-
-
-Definition at line \mbox{\hyperlink{qalgorithms__datatype__mass__spectrum_8cpp_source_l00035}{35}} of file \mbox{\hyperlink{qalgorithms__datatype__mass__spectrum_8cpp_source}{qalgorithms\+\_\+datatype\+\_\+mass\+\_\+spectrum.\+cpp}}.
-
 
 
 \doxysubsection{Member Data Documentation}
-\Hypertarget{classq_1_1_data_type_1_1_mass_spectrum_a8f1e3fa9d341263c22fd7248c6bc3ec0}\label{classq_1_1_data_type_1_1_mass_spectrum_a8f1e3fa9d341263c22fd7248c6bc3ec0} 
-\index{q::DataType::MassSpectrum@{q::DataType::MassSpectrum}!intensity@{intensity}}
-\index{intensity@{intensity}!q::DataType::MassSpectrum@{q::DataType::MassSpectrum}}
-\doxysubsubsection{\texorpdfstring{intensity}{intensity}}
-{\footnotesize\ttfamily std\+::vector$<$double$>$ q\+::\+Data\+Type\+::\+Mass\+Spectrum\+::intensity}
+\Hypertarget{classq_1_1_data_type_1_1_mass_spectrum_af4fdaf7d30d857d166c49580f6827024}\label{classq_1_1_data_type_1_1_mass_spectrum_af4fdaf7d30d857d166c49580f6827024} 
+\index{q::DataType::MassSpectrum@{q::DataType::MassSpectrum}!cuttingPoints@{cuttingPoints}}
+\index{cuttingPoints@{cuttingPoints}!q::DataType::MassSpectrum@{q::DataType::MassSpectrum}}
+\doxysubsubsection{\texorpdfstring{cuttingPoints}{cuttingPoints}}
+{\footnotesize\ttfamily std\+::vector$<$std\+::unique\+\_\+ptr$<$size\+\_\+t$>$ $>$ q\+::\+Data\+Type\+::\+Mass\+Spectrum\+::cutting\+Points}
 
 
 
-Definition at line \mbox{\hyperlink{qalgorithms__datatype__mass__spectrum_8h_source_l00030}{30}} of file \mbox{\hyperlink{qalgorithms__datatype__mass__spectrum_8h_source}{qalgorithms\+\_\+datatype\+\_\+mass\+\_\+spectrum.\+h}}.
+This vector stores information for cutting the mass spectrum data. 
 
-\Hypertarget{classq_1_1_data_type_1_1_mass_spectrum_a7271ac8b3ee5f2560ccbec3e7ac7edae}\label{classq_1_1_data_type_1_1_mass_spectrum_a7271ac8b3ee5f2560ccbec3e7ac7edae} 
-\index{q::DataType::MassSpectrum@{q::DataType::MassSpectrum}!ionizationMode@{ionizationMode}}
-\index{ionizationMode@{ionizationMode}!q::DataType::MassSpectrum@{q::DataType::MassSpectrum}}
-\doxysubsubsection{\texorpdfstring{ionizationMode}{ionizationMode}}
-{\footnotesize\ttfamily \mbox{\hyperlink{namespaceq_1_1_data_type_a50341ff9d741a5a416eb71a71ffc1fa6}{Ionization\+Mode}} q\+::\+Data\+Type\+::\+Mass\+Spectrum\+::ionization\+Mode}
+The cutting\+Points vector can be seen as a job list for cutting the mass spectrum data. Each element in the vector shows the number of data points counted from the end of the data\+Points vector that should be moved to the new object. The number of elements within the cutting\+Points vector determines the number of new objects that will be created. E.\+g. cutting\+Points = \{10, 5\} will create two new objects. The first object will contain the last 10 data points of the original object while these datapoints are removed from the original object. The second object will contain the next last 5 data points of the original object, while these datapoints are also removed from the original object. The original object will contain all data points except the ones that were moved to the new objects. 
 
+Definition at line \mbox{\hyperlink{qalgorithms__datatype__mass__spectrum_8h_source_l00089}{89}} of file \mbox{\hyperlink{qalgorithms__datatype__mass__spectrum_8h_source}{qalgorithms\+\_\+datatype\+\_\+mass\+\_\+spectrum.\+h}}.
 
-
-Definition at line \mbox{\hyperlink{qalgorithms__datatype__mass__spectrum_8h_source_l00032}{32}} of file \mbox{\hyperlink{qalgorithms__datatype__mass__spectrum_8h_source}{qalgorithms\+\_\+datatype\+\_\+mass\+\_\+spectrum.\+h}}.
-
-\Hypertarget{classq_1_1_data_type_1_1_mass_spectrum_acf136d30ff0ffdc41b2a62c8da7c4c7c}\label{classq_1_1_data_type_1_1_mass_spectrum_acf136d30ff0ffdc41b2a62c8da7c4c7c} 
-\index{q::DataType::MassSpectrum@{q::DataType::MassSpectrum}!measurementMode@{measurementMode}}
-\index{measurementMode@{measurementMode}!q::DataType::MassSpectrum@{q::DataType::MassSpectrum}}
-\doxysubsubsection{\texorpdfstring{measurementMode}{measurementMode}}
-{\footnotesize\ttfamily \mbox{\hyperlink{namespaceq_1_1_data_type_a8e76910d22415bfa3dd2086a76f0c5ea}{Measurement\+Mode}} q\+::\+Data\+Type\+::\+Mass\+Spectrum\+::measurement\+Mode}
+\Hypertarget{classq_1_1_data_type_1_1_mass_spectrum_a5ef1b447c6cb624f5535113d602e61cc}\label{classq_1_1_data_type_1_1_mass_spectrum_a5ef1b447c6cb624f5535113d602e61cc} 
+\index{q::DataType::MassSpectrum@{q::DataType::MassSpectrum}!dataPoints@{dataPoints}}
+\index{dataPoints@{dataPoints}!q::DataType::MassSpectrum@{q::DataType::MassSpectrum}}
+\doxysubsubsection{\texorpdfstring{dataPoints}{dataPoints}}
+{\footnotesize\ttfamily std\+::vector$<$std\+::unique\+\_\+ptr$<$\mbox{\hyperlink{structq_1_1_data_type_1_1_mass_spectrum_1_1_data_point}{Data\+Point}}$>$ $>$ q\+::\+Data\+Type\+::\+Mass\+Spectrum\+::data\+Points}
 
 
 
-Definition at line \mbox{\hyperlink{qalgorithms__datatype__mass__spectrum_8h_source_l00033}{33}} of file \mbox{\hyperlink{qalgorithms__datatype__mass__spectrum_8h_source}{qalgorithms\+\_\+datatype\+\_\+mass\+\_\+spectrum.\+h}}.
+Definition at line \mbox{\hyperlink{qalgorithms__datatype__mass__spectrum_8h_source_l00082}{82}} of file \mbox{\hyperlink{qalgorithms__datatype__mass__spectrum_8h_source}{qalgorithms\+\_\+datatype\+\_\+mass\+\_\+spectrum.\+h}}.
 
-\Hypertarget{classq_1_1_data_type_1_1_mass_spectrum_a7bba763441f4042bcf283d68d79a4d40}\label{classq_1_1_data_type_1_1_mass_spectrum_a7bba763441f4042bcf283d68d79a4d40} 
-\index{q::DataType::MassSpectrum@{q::DataType::MassSpectrum}!msLevel@{msLevel}}
-\index{msLevel@{msLevel}!q::DataType::MassSpectrum@{q::DataType::MassSpectrum}}
-\doxysubsubsection{\texorpdfstring{msLevel}{msLevel}}
-{\footnotesize\ttfamily \mbox{\hyperlink{namespaceq_1_1_data_type_a90aa4d66e606cf85f2424677d7bf4d34}{MSLevel}} q\+::\+Data\+Type\+::\+Mass\+Spectrum\+::ms\+Level}
-
-
-
-Definition at line \mbox{\hyperlink{qalgorithms__datatype__mass__spectrum_8h_source_l00034}{34}} of file \mbox{\hyperlink{qalgorithms__datatype__mass__spectrum_8h_source}{qalgorithms\+\_\+datatype\+\_\+mass\+\_\+spectrum.\+h}}.
-
-\Hypertarget{classq_1_1_data_type_1_1_mass_spectrum_a17cbc542d6c1aaade464cdab7f4c812d}\label{classq_1_1_data_type_1_1_mass_spectrum_a17cbc542d6c1aaade464cdab7f4c812d} 
-\index{q::DataType::MassSpectrum@{q::DataType::MassSpectrum}!mz@{mz}}
-\index{mz@{mz}!q::DataType::MassSpectrum@{q::DataType::MassSpectrum}}
-\doxysubsubsection{\texorpdfstring{mz}{mz}}
-{\footnotesize\ttfamily std\+::vector$<$double$>$ q\+::\+Data\+Type\+::\+Mass\+Spectrum\+::mz}
+\Hypertarget{classq_1_1_data_type_1_1_mass_spectrum_a51f0922e8ad00a37c0e96eaa49c54393}\label{classq_1_1_data_type_1_1_mass_spectrum_a51f0922e8ad00a37c0e96eaa49c54393} 
+\index{q::DataType::MassSpectrum@{q::DataType::MassSpectrum}!isParent@{isParent}}
+\index{isParent@{isParent}!q::DataType::MassSpectrum@{q::DataType::MassSpectrum}}
+\doxysubsubsection{\texorpdfstring{isParent}{isParent}}
+{\footnotesize\ttfamily std\+::pair$<$bool, \mbox{\hyperlink{classq_1_1_data_type_1_1_mass_spectrum}{Mass\+Spectrum}}\texorpdfstring{$\ast$}{*}$>$ q\+::\+Data\+Type\+::\+Mass\+Spectrum\+::is\+Parent}
 
 
 
-Definition at line \mbox{\hyperlink{qalgorithms__datatype__mass__spectrum_8h_source_l00031}{31}} of file \mbox{\hyperlink{qalgorithms__datatype__mass__spectrum_8h_source}{qalgorithms\+\_\+datatype\+\_\+mass\+\_\+spectrum.\+h}}.
+Definition at line \mbox{\hyperlink{qalgorithms__datatype__mass__spectrum_8h_source_l00083}{83}} of file \mbox{\hyperlink{qalgorithms__datatype__mass__spectrum_8h_source}{qalgorithms\+\_\+datatype\+\_\+mass\+\_\+spectrum.\+h}}.
+
+\Hypertarget{classq_1_1_data_type_1_1_mass_spectrum_a30c0087b21c1b807705187898199e8e4}\label{classq_1_1_data_type_1_1_mass_spectrum_a30c0087b21c1b807705187898199e8e4} 
+\index{q::DataType::MassSpectrum@{q::DataType::MassSpectrum}!metaData@{metaData}}
+\index{metaData@{metaData}!q::DataType::MassSpectrum@{q::DataType::MassSpectrum}}
+\doxysubsubsection{\texorpdfstring{metaData}{metaData}}
+{\footnotesize\ttfamily std\+::unordered\+\_\+map$<$\mbox{\hyperlink{namespaceq_1_1_data_type_a9fcd47c7d7d77f908f041cad931962aa}{Data\+Field}}, \mbox{\hyperlink{classq_1_1_data_type_1_1_mass_spectrum_a277bbd157af7a60eb393a89859647056}{variable\+Type}}$>$\texorpdfstring{$\ast$}{*} q\+::\+Data\+Type\+::\+Mass\+Spectrum\+::meta\+Data}
+
+
+
+Definition at line \mbox{\hyperlink{qalgorithms__datatype__mass__spectrum_8h_source_l00081}{81}} of file \mbox{\hyperlink{qalgorithms__datatype__mass__spectrum_8h_source}{qalgorithms\+\_\+datatype\+\_\+mass\+\_\+spectrum.\+h}}.
 
 
 

@@ -9,16 +9,39 @@
 \DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00005}00005\ }
 \DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00006}00006\ \textcolor{comment}{//\ external}}
 \DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00007}00007\ \textcolor{preprocessor}{\#include\ <iostream>}}
-\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00008}00008\ }
-\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00009}\mbox{\hyperlink{test__q_peak__class_8cpp_ae66f6b31b5ad750f1fe042a706a4e3d4}{00009}}\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{test__q_peak__class_8cpp_ae66f6b31b5ad750f1fe042a706a4e3d4}{main}}()\ \{}
-\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00010}00010\ \ \ \ \ \mbox{\hyperlink{classq_1_1_l_c_m_s_data}{q::LCMSData}}\ lcmsData;}
-\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00011}00011\ \ \ \ \ lcmsData.\mbox{\hyperlink{classq_1_1_l_c_m_s_data_ab4632d3d3138d17fd5a7f479b70c2846}{readCSV}}(\textcolor{stringliteral}{"{}test/data/test\_lcms\_data.csv"{}},\ 1,\ -\/1,\ 0,\ -\/1,\ \textcolor{charliteral}{','},\ \{\mbox{\hyperlink{namespaceq_1_1_data_type_a9fcd47c7d7d77f908f041cad931962aaa29e2d681b2cc529fa80582fdca325b02}{q::DataType::DataField::SCANNUMBER}},\ \mbox{\hyperlink{namespaceq_1_1_data_type_a9fcd47c7d7d77f908f041cad931962aaa5657758f69fc660569fa4d1de5a11cbc}{q::DataType::DataField::RETENTIONTIME}},\ \mbox{\hyperlink{namespaceq_1_1_data_type_a9fcd47c7d7d77f908f041cad931962aaaac6ad5d9b99757c3a878f2d275ace198}{q::DataType::DataField::MZ}},\ \mbox{\hyperlink{namespaceq_1_1_data_type_a9fcd47c7d7d77f908f041cad931962aaa3da9993984f423cfc441a286105a9226}{q::DataType::DataField::INTENSITY}}\});}
-\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00012}00012\ }
-\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00013}00013\ \ \ \ \ lcmsData.\mbox{\hyperlink{classq_1_1_l_c_m_s_data_ae1a62294c43bbe12e97f9293eaa49ea8}{zeroFilling}}();}
-\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00014}00014\ \ \ \ \ lcmsData.\mbox{\hyperlink{classq_1_1_l_c_m_s_data_a6c799dc9ef6918446df62515bc7daa8d}{cutData}}();}
-\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00015}00015\ \ \ \ \ lcmsData.\mbox{\hyperlink{classq_1_1_l_c_m_s_data_aa808ac2ee343120a4a89f8ee8e9278f6}{print}}();}
-\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00016}00016\ }
-\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00017}00017\ \ \ \textcolor{keywordflow}{return}\ 0;}
-\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00018}00018\ \}}
+\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00008}00008\ \textcolor{preprocessor}{\#include\ <chrono>}}
+\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00009}00009\ }
+\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00010}\mbox{\hyperlink{test__q_peak__class_8cpp_ae66f6b31b5ad750f1fe042a706a4e3d4}{00010}}\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{test__q_peak__class_8cpp_ae66f6b31b5ad750f1fe042a706a4e3d4}{main}}()\ \{}
+\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00011}00011\ \ \ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}create\ LCMSData\ object...."{}};}
+\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00012}00012\ \ \ \ \ \mbox{\hyperlink{classq_1_1_l_c_m_s_data}{q::LCMSData}}\ lcmsData;}
+\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00013}00013\ \ \ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}done\(\backslash\)n"{}};}
+\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00014}00014\ \ \ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}read\ csv...."{}};}
+\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00015}00015\ \ \ \ \ lcmsData.\mbox{\hyperlink{classq_1_1_l_c_m_s_data_ab4632d3d3138d17fd5a7f479b70c2846}{readCSV}}(\textcolor{stringliteral}{"{}test/data/test\_lcms\_data.csv"{}},\ 1,\ -\/1,\ 0,\ -\/1,\ \textcolor{charliteral}{','},\ \{q::DataType::DataField::SCANNUMBER,\ q::DataType::DataField::RETENTIONTIME,\ q::DataType::DataField::MZ,\ q::DataType::DataField::INTENSITY\});}
+\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00016}00016\ \ \ \ \ \textcolor{comment}{//\ lcmsData.readCSV("{}test/data/test\_lcms\_data2.csv"{},0,-\/1,0,-\/1,';',\{q::DataType::DataField::MZ,\ q::DataType::DataField::INTENSITY,\ q::DataType::DataField::SCANNUMBER,\ q::DataType::DataField::RETENTIONTIME\});}}
+\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00017}00017\ \ \ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}done\(\backslash\)n"{}};}
+\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00018}00018\ }
+\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00019}00019\ \ \ \ \ \textcolor{comment}{//\ Capture\ the\ start\ time}}
+\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00020}00020\ \ \ \ \ \textcolor{keyword}{auto}\ start\ =\ std::chrono::high\_resolution\_clock::now();}
+\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00021}00021\ \ \ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}zero\ filling...."{}};}
+\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00022}00022\ \ \ \ \ lcmsData.\mbox{\hyperlink{classq_1_1_l_c_m_s_data_ae1a62294c43bbe12e97f9293eaa49ea8}{zeroFilling}}();}
+\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00023}00023\ \ \ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}done\(\backslash\)n"{}};}
+\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00024}00024\ \ \ \ \ \textcolor{comment}{//\ std::cout\ <<\ "{}cutting\ data...."{};}}
+\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00025}00025\ \ \ \ \ \textcolor{comment}{//\ lcmsData.cutData();}}
+\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00026}00026\ \ \ \ \ \textcolor{comment}{//\ std::cout\ <<\ "{}done\(\backslash\)n"{};}}
+\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00027}00027\ \ \ \ \ \textcolor{comment}{//\ std::cout\ <<\ "{}interpolating\ data...."{};}}
+\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00028}00028\ \ \ \ \ \textcolor{comment}{//\ lcmsData.interpolateData();}}
+\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00029}00029\ \ \ \ \ \textcolor{comment}{//\ std::cout\ <<\ "{}done\(\backslash\)n"{};}}
+\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00030}00030\ \ \ \ \ }
+\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00031}00031\ \ \ \ \ \textcolor{comment}{//\ Capture\ the\ end\ time}}
+\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00032}00032\ \ \ \ \ \textcolor{keyword}{auto}\ finish\ =\ std::chrono::high\_resolution\_clock::now();}
+\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00033}00033\ }
+\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00034}00034\ \ \ \ \ lcmsData.\mbox{\hyperlink{classq_1_1_l_c_m_s_data_aa808ac2ee343120a4a89f8ee8e9278f6}{print}}();}
+\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00035}00035\ \ \ \ \ \textcolor{comment}{//\ Calculate\ and\ print\ the\ elapsed\ time}}
+\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00036}00036\ \ \ \ \ std::chrono::duration<double>\ elapsed\ =\ finish\ -\/\ start;}
+\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00037}00037\ \ \ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}Elapsed\ time:\ "{}}\ <<\ elapsed.count()\ <<\ \textcolor{stringliteral}{"{}\ s\(\backslash\)n"{}};}
+\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00038}00038\ }
+\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00039}00039\ }
+\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00040}00040\ \ \ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00041}00041\ \}}
 
 \end{DoxyCode}

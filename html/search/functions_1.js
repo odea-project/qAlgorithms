@@ -24,5 +24,5 @@ var searchData=
   ['convolvep_21',['convolveP',['../classq_1_1_peakmodel.html#abc6a79cb45966a252ef3247d3ac95196',1,'q::Peakmodel']]],
   ['convolverotation_22',['convolveRotation',['../classq_1_1_matrix.html#a549e37550d5df9f221ea8ab647751221',1,'q::Matrix']]],
   ['convolvesymmetric_23',['convolveSymmetric',['../classq_1_1_matrix.html#a0d2a7bf49f60c2cb4e81f5489a175860',1,'q::Matrix']]],
-  ['cutdata_24',['cutData',['../classq_1_1_measurement_data.html#a132a6fa74bc575aaeccd260d73b96f00',1,'q::MeasurementData::cutData()'],['../classq_1_1_l_c_m_s_data.html#a6c799dc9ef6918446df62515bc7daa8d',1,'q::LCMSData::cutData()']]]
+  ['cutdata_24',['cutData',['../classq_1_1_measurement_data.html#ae2b8a3d542b37ac400f2b51ada04a448',1,'q::MeasurementData::cutData()'],['../classq_1_1_l_c_m_s_data.html#a6c799dc9ef6918446df62515bc7daa8d',1,'q::LCMSData::cutData()']]]
 ];

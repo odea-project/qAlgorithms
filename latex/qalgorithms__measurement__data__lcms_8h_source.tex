@@ -8,30 +8,35 @@
 \DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8h_source_l00004}00004\ \textcolor{comment}{//\ internal}}
 \DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8h_source_l00005}00005\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{qalgorithms__measurement__data_8h}{qalgorithms\_measurement\_data.h}}"{}}}
 \DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8h_source_l00006}00006\ }
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8h_source_l00007}00007\ \textcolor{preprocessor}{\#include\ <unordered\_map>}\ }
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8h_source_l00007}00007\ \textcolor{preprocessor}{\#include\ <unordered\_map>}}
 \DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8h_source_l00008}00008\ }
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8h_source_l00009}00009\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespaceq}{q}}\ \{}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8h_source_l00016}\mbox{\hyperlink{classq_1_1_l_c_m_s_data}{00016}}\ \ \ \ \ \textcolor{keyword}{class\ }\mbox{\hyperlink{classq_1_1_l_c_m_s_data}{LCMSData}}\ :\ \textcolor{keyword}{public}\ \mbox{\hyperlink{classq_1_1_measurement_data}{MeasurementData}}\ \{}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8h_source_l00017}00017\ \ \ \ \ \ \ \ \ \textcolor{keyword}{public}:}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8h_source_l00018}00018\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ constructors}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8h_source_l00019}00019\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classq_1_1_l_c_m_s_data_a7466e285c6c4f7a7fd3a67edb15a4cd7}{LCMSData}}();}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8h_source_l00020}00020\ \ \ \ \ \ \ \ \ \ \ \ \ }
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8h_source_l00021}00021\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ destructor}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8h_source_l00022}00022\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classq_1_1_l_c_m_s_data_a556f3c0930dd9500376eda81b271b787}{\string~LCMSData}}();}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8h_source_l00023}00023\ }
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8h_source_l00024}00024\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ methods}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8h_source_l00038}00038\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classq_1_1_l_c_m_s_data_ab4632d3d3138d17fd5a7f479b70c2846}{readCSV}}(std::string\ filename,\textcolor{keywordtype}{int}\ rowStart,\ \textcolor{keywordtype}{int}\ rowEnd,\ \textcolor{keywordtype}{int}\ colStart,\ \textcolor{keywordtype}{int}\ colEnd,\ \textcolor{keywordtype}{char}\ separator,std::vector<DataType::DataField>\ variableTypes);}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8h_source_l00039}00039\ \ \ \ \ \ \ \ \ \ \ \ \ }
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8h_source_l00045}00045\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classq_1_1_l_c_m_s_data_ae1a62294c43bbe12e97f9293eaa49ea8}{zeroFilling}}();}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8h_source_l00046}00046\ }
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8h_source_l00052}00052\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classq_1_1_l_c_m_s_data_a6c799dc9ef6918446df62515bc7daa8d}{cutData}}();}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8h_source_l00053}00053\ }
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8h_source_l00054}00054\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ debugging}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8h_source_l00055}00055\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classq_1_1_l_c_m_s_data_aa808ac2ee343120a4a89f8ee8e9278f6}{print}}();}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8h_source_l00056}00056\ \ \ \ \ \ \ \ \ \textcolor{keyword}{private}:}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8h_source_l00057}00057\ \ \ \ \ \ \ \ \ \ \ \ \ std::unordered\_map<int,\ std::unordered\_map<int,\ DataType::LC\_MS>>\ data;}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8h_source_l00058}00058\ \ \ \ \ \};}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8h_source_l00059}00059\ \}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8h_source_l00060}00060\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//\ QALGORITHMS\_MEASUREMENT\_DATA\_LCMS\_H}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8h_source_l00009}00009\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespaceq}{q}}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8h_source_l00010}00010\ \{}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8h_source_l00017}\mbox{\hyperlink{classq_1_1_l_c_m_s_data}{00017}}\ \ \ \ \ \textcolor{keyword}{class\ }\mbox{\hyperlink{classq_1_1_l_c_m_s_data}{LCMSData}}\ :\ \textcolor{keyword}{public}\ \mbox{\hyperlink{classq_1_1_measurement_data}{MeasurementData}}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8h_source_l00018}00018\ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8h_source_l00019}00019\ \ \ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8h_source_l00020}00020\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ constructors}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8h_source_l00021}00021\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classq_1_1_l_c_m_s_data_a7466e285c6c4f7a7fd3a67edb15a4cd7}{LCMSData}}();}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8h_source_l00022}00022\ }
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8h_source_l00023}00023\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ destructor}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8h_source_l00024}00024\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classq_1_1_l_c_m_s_data_a556f3c0930dd9500376eda81b271b787}{\string~LCMSData}}();}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8h_source_l00025}00025\ }
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8h_source_l00026}00026\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ methods}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8h_source_l00040}00040\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classq_1_1_l_c_m_s_data_ab4632d3d3138d17fd5a7f479b70c2846}{readCSV}}(std::string\ filename,\ \textcolor{keywordtype}{int}\ rowStart,\ \textcolor{keywordtype}{int}\ rowEnd,\ \textcolor{keywordtype}{int}\ colStart,\ \textcolor{keywordtype}{int}\ colEnd,\ \textcolor{keywordtype}{char}\ separator,\ std::vector<DataType::DataField>\ variableTypes);}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8h_source_l00041}00041\ }
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8h_source_l00047}00047\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classq_1_1_l_c_m_s_data_ae1a62294c43bbe12e97f9293eaa49ea8}{zeroFilling}}();}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8h_source_l00048}00048\ }
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8h_source_l00054}00054\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classq_1_1_l_c_m_s_data_a6c799dc9ef6918446df62515bc7daa8d}{cutData}}();}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8h_source_l00055}00055\ }
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8h_source_l00060}00060\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ void\ interpolateData();}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8h_source_l00061}00061\ }
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8h_source_l00062}00062\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ debugging}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8h_source_l00063}00063\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classq_1_1_l_c_m_s_data_aa808ac2ee343120a4a89f8ee8e9278f6}{print}}();}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8h_source_l00064}00064\ }
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8h_source_l00065}00065\ \ \ \ \ \textcolor{keyword}{private}:}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8h_source_l00066}00066\ \ \ \ \ \ \ \ \ std::unordered\_map<int,\ std::unique\_ptr<DataType::MassSpectrum>>\ data;}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8h_source_l00067}00067\ \ \ \ \ \};}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8h_source_l00068}00068\ \}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8h_source_l00069}00069\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//\ QALGORITHMS\_MEASUREMENT\_DATA\_LCMS\_H}}
 
 \end{DoxyCode}

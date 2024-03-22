@@ -26,6 +26,19 @@ class \mbox{\hyperlink{classq_1_1_progress_bar}{Progress\+Bar}}
 \item 
 class \mbox{\hyperlink{classq_1_1t_values}{t\+Values}}
 \end{DoxyCompactItemize}
+\doxysubsubsection*{Typedefs}
+\begin{DoxyCompactItemize}
+\item 
+using \mbox{\hyperlink{namespaceq_a4df4875ee6a816afd1b447d015e1cb31}{Variable\+Type}} = \mbox{\hyperlink{classq_1_1_data_type_1_1_mass_spectrum_a277bbd157af7a60eb393a89859647056}{Data\+Type\+::\+Mass\+Spectrum\+::variable\+Type}}
+\item 
+using \mbox{\hyperlink{namespaceq_a9968e255b57c468c531d074738dd9e9d}{Data\+Field}} = \mbox{\hyperlink{namespaceq_1_1_data_type_a9fcd47c7d7d77f908f041cad931962aa}{Data\+Type\+::\+Data\+Field}}
+\item 
+using \mbox{\hyperlink{namespaceq_a91e90b5b1e688762dd56e4818019c57d}{Mass\+Spectrum}} = \mbox{\hyperlink{classq_1_1_data_type_1_1_mass_spectrum}{Data\+Type\+::\+Mass\+Spectrum}}
+\item 
+using \mbox{\hyperlink{namespaceq_ab019e0290c5c4a2d2ca2b0cb30bc9d19}{Data\+Point}} = \mbox{\hyperlink{structq_1_1_data_type_1_1_mass_spectrum_1_1_data_point}{Data\+Type\+::\+Mass\+Spectrum\+::\+Data\+Point}}
+\item 
+using \mbox{\hyperlink{namespaceq_adc792d430932d1bad118dfc033dd8dca}{Data\+Point\+Vector}} = std\+::vector$<$std\+::unique\+\_\+ptr$<$\mbox{\hyperlink{namespaceq_ab019e0290c5c4a2d2ca2b0cb30bc9d19}{Data\+Point}}$>$$>$
+\end{DoxyCompactItemize}
 \doxysubsubsection*{Enumerations}
 \begin{DoxyCompactItemize}
 \item 
@@ -83,12 +96,67 @@ std\+::vector$<$ bool $>$ \mbox{\hyperlink{namespaceq_a14a55b4b8011f804b40f37925
 void \mbox{\hyperlink{namespaceq_ae27bcd86eabebd2210e1e89c9c5a9407}{operator\texorpdfstring{$\vert$}{|}=}} (std\+::vector$<$ bool $>$ \&A, const std\+::vector$<$ bool $>$ \&B)
 \item 
 double \mbox{\hyperlink{namespaceq_af5bc719469eba45978bfaa23379f329b}{erfi}} (const double x)
+\item 
+const \mbox{\hyperlink{classq_1_1_matrix}{Matrix}} \mbox{\hyperlink{namespaceq_ae93c50d74740a6cd3f42a1cf8f299f3a}{linreg}} (const std\+::vector$<$ double $>$ \&x\+Data, const std\+::vector$<$ double $>$ \&y\+Data, const int degree)
 \end{DoxyCompactItemize}
 \doxysubsubsection*{Variables}
 \begin{DoxyCompactItemize}
 \item 
 std\+::map$<$ \mbox{\hyperlink{namespaceq_ab3bdb9eac069e4e777368ed17431ffaf}{Property}}, std\+::string $>$ \mbox{\hyperlink{namespaceq_ac9412ec4dc6d9138e2965665f2651be5}{property\+Labels}}
 \end{DoxyCompactItemize}
+
+
+\doxysubsection{Typedef Documentation}
+\Hypertarget{namespaceq_a9968e255b57c468c531d074738dd9e9d}\label{namespaceq_a9968e255b57c468c531d074738dd9e9d} 
+\index{q@{q}!DataField@{DataField}}
+\index{DataField@{DataField}!q@{q}}
+\doxysubsubsection{\texorpdfstring{DataField}{DataField}}
+{\footnotesize\ttfamily using \mbox{\hyperlink{namespaceq_1_1_data_type_a9fcd47c7d7d77f908f041cad931962aa}{q\+::\+Data\+Field}} = \mbox{\hyperlink{namespaceq_1_1_data_type_a9fcd47c7d7d77f908f041cad931962aa}{Data\+Type\+::\+Data\+Field}}}
+
+
+
+Definition at line \mbox{\hyperlink{qalgorithms__measurement__data__lcms_8cpp_source_l00014}{14}} of file \mbox{\hyperlink{qalgorithms__measurement__data__lcms_8cpp_source}{qalgorithms\+\_\+measurement\+\_\+data\+\_\+lcms.\+cpp}}.
+
+\Hypertarget{namespaceq_ab019e0290c5c4a2d2ca2b0cb30bc9d19}\label{namespaceq_ab019e0290c5c4a2d2ca2b0cb30bc9d19} 
+\index{q@{q}!DataPoint@{DataPoint}}
+\index{DataPoint@{DataPoint}!q@{q}}
+\doxysubsubsection{\texorpdfstring{DataPoint}{DataPoint}}
+{\footnotesize\ttfamily using \mbox{\hyperlink{namespaceq_ab019e0290c5c4a2d2ca2b0cb30bc9d19}{q\+::\+Data\+Point}} = \mbox{\hyperlink{structq_1_1_data_type_1_1_mass_spectrum_1_1_data_point}{Data\+Type\+::\+Mass\+Spectrum\+::\+Data\+Point}}}
+
+
+
+Definition at line \mbox{\hyperlink{qalgorithms__measurement__data__lcms_8cpp_source_l00016}{16}} of file \mbox{\hyperlink{qalgorithms__measurement__data__lcms_8cpp_source}{qalgorithms\+\_\+measurement\+\_\+data\+\_\+lcms.\+cpp}}.
+
+\Hypertarget{namespaceq_adc792d430932d1bad118dfc033dd8dca}\label{namespaceq_adc792d430932d1bad118dfc033dd8dca} 
+\index{q@{q}!DataPointVector@{DataPointVector}}
+\index{DataPointVector@{DataPointVector}!q@{q}}
+\doxysubsubsection{\texorpdfstring{DataPointVector}{DataPointVector}}
+{\footnotesize\ttfamily using \mbox{\hyperlink{namespaceq_adc792d430932d1bad118dfc033dd8dca}{q\+::\+Data\+Point\+Vector}} = std\+::vector$<$std\+::unique\+\_\+ptr$<$\mbox{\hyperlink{namespaceq_ab019e0290c5c4a2d2ca2b0cb30bc9d19}{Data\+Point}}$>$$>$}
+
+
+
+Definition at line \mbox{\hyperlink{qalgorithms__measurement__data__lcms_8cpp_source_l00017}{17}} of file \mbox{\hyperlink{qalgorithms__measurement__data__lcms_8cpp_source}{qalgorithms\+\_\+measurement\+\_\+data\+\_\+lcms.\+cpp}}.
+
+\Hypertarget{namespaceq_a91e90b5b1e688762dd56e4818019c57d}\label{namespaceq_a91e90b5b1e688762dd56e4818019c57d} 
+\index{q@{q}!MassSpectrum@{MassSpectrum}}
+\index{MassSpectrum@{MassSpectrum}!q@{q}}
+\doxysubsubsection{\texorpdfstring{MassSpectrum}{MassSpectrum}}
+{\footnotesize\ttfamily using \mbox{\hyperlink{namespaceq_a91e90b5b1e688762dd56e4818019c57d}{q\+::\+Mass\+Spectrum}} = \mbox{\hyperlink{classq_1_1_data_type_1_1_mass_spectrum}{Data\+Type\+::\+Mass\+Spectrum}}}
+
+
+
+Definition at line \mbox{\hyperlink{qalgorithms__measurement__data__lcms_8cpp_source_l00015}{15}} of file \mbox{\hyperlink{qalgorithms__measurement__data__lcms_8cpp_source}{qalgorithms\+\_\+measurement\+\_\+data\+\_\+lcms.\+cpp}}.
+
+\Hypertarget{namespaceq_a4df4875ee6a816afd1b447d015e1cb31}\label{namespaceq_a4df4875ee6a816afd1b447d015e1cb31} 
+\index{q@{q}!VariableType@{VariableType}}
+\index{VariableType@{VariableType}!q@{q}}
+\doxysubsubsection{\texorpdfstring{VariableType}{VariableType}}
+{\footnotesize\ttfamily using \mbox{\hyperlink{namespaceq_a4df4875ee6a816afd1b447d015e1cb31}{q\+::\+Variable\+Type}} = \mbox{\hyperlink{classq_1_1_data_type_1_1_mass_spectrum_a277bbd157af7a60eb393a89859647056}{Data\+Type\+::\+Mass\+Spectrum\+::variable\+Type}}}
+
+
+
+Definition at line \mbox{\hyperlink{qalgorithms__measurement__data__lcms_8cpp_source_l00013}{13}} of file \mbox{\hyperlink{qalgorithms__measurement__data__lcms_8cpp_source}{qalgorithms\+\_\+measurement\+\_\+data\+\_\+lcms.\+cpp}}.
+
 
 
 \doxysubsection{Enumeration Type Documentation}
@@ -114,7 +182,7 @@ PROGRESS&\\
 \end{DoxyEnumFields}
 
 
-Definition at line \mbox{\hyperlink{qalgorithms_8h_source_l00028}{28}} of file \mbox{\hyperlink{qalgorithms_8h_source}{qalgorithms.\+h}}.
+Definition at line \mbox{\hyperlink{qalgorithms_8h_source_l00030}{30}} of file \mbox{\hyperlink{qalgorithms_8h_source}{qalgorithms.\+h}}.
 
 \Hypertarget{namespaceq_ab3bdb9eac069e4e777368ed17431ffaf}\label{namespaceq_ab3bdb9eac069e4e777368ed17431ffaf} 
 \index{q@{q}!Property@{Property}}
@@ -198,7 +266,7 @@ Dqs&\\
 \end{DoxyEnumFields}
 
 
-Definition at line \mbox{\hyperlink{qalgorithms__peak_8h_source_l00011}{11}} of file \mbox{\hyperlink{qalgorithms__peak_8h_source}{qalgorithms\+\_\+peak.\+h}}.
+Definition at line \mbox{\hyperlink{qalgorithms__peak_8h_source_l00012}{12}} of file \mbox{\hyperlink{qalgorithms__peak_8h_source}{qalgorithms\+\_\+peak.\+h}}.
 
 
 
@@ -212,6 +280,16 @@ Definition at line \mbox{\hyperlink{qalgorithms__peak_8h_source_l00011}{11}} of 
 
 
 Definition at line \mbox{\hyperlink{qalgorithms__utils_8cpp_source_l00094}{94}} of file \mbox{\hyperlink{qalgorithms__utils_8cpp_source}{qalgorithms\+\_\+utils.\+cpp}}.
+
+\Hypertarget{namespaceq_ae93c50d74740a6cd3f42a1cf8f299f3a}\label{namespaceq_ae93c50d74740a6cd3f42a1cf8f299f3a} 
+\index{q@{q}!linreg@{linreg}}
+\index{linreg@{linreg}!q@{q}}
+\doxysubsubsection{\texorpdfstring{linreg()}{linreg()}}
+{\footnotesize\ttfamily const \mbox{\hyperlink{classq_1_1_matrix}{Matrix}} q\+::linreg (\begin{DoxyParamCaption}\item[{const std\+::vector$<$ double $>$ \&}]{x\+Data,  }\item[{const std\+::vector$<$ double $>$ \&}]{y\+Data,  }\item[{const int}]{degree }\end{DoxyParamCaption})}
+
+
+
+Definition at line \mbox{\hyperlink{qalgorithms__utils_8cpp_source_l00623}{623}} of file \mbox{\hyperlink{qalgorithms__utils_8cpp_source}{qalgorithms\+\_\+utils.\+cpp}}.
 
 \Hypertarget{namespaceq_a14a55b4b8011f804b40f37925f4b4e8c}\label{namespaceq_a14a55b4b8011f804b40f37925f4b4e8c} 
 \index{q@{q}!operator"!@{operator"!}}

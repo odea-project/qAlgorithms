@@ -83,6 +83,7 @@ $(function() {
 </div><!-- top -->
 <div class="header">
   <div class="summary">
+<a href="#pub-types">Public Types</a> &#124;
 <a href="#pub-methods">Public Member Functions</a> &#124;
 <a href="classq_1_1_measurement_data-members.html">List of all members</a>  </div>
   <div class="headertitle"><div class="title">q::MeasurementData Class Reference<span class="mlabels"><span class="mlabel">abstract</span></span></div></div>
@@ -103,30 +104,68 @@ Inheritance diagram for q::MeasurementData:</div>
   </map>
 </div></div>
 <table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-types" name="pub-types"></a>
+Public Types</h2></td></tr>
+<tr class="memitem:ada565fa17ac43f31f81e8a7f78d86058" id="r_ada565fa17ac43f31f81e8a7f78d86058"><td class="memItemLeft" align="right" valign="top">using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ada565fa17ac43f31f81e8a7f78d86058">MS</a> = std::unordered_map&lt;int, std::unique_ptr&lt;<a class="el" href="classq_1_1_data_type_1_1_mass_spectrum.html">DataType::MassSpectrum</a>&gt;&gt;*</td></tr>
+<tr class="separator:ada565fa17ac43f31f81e8a7f78d86058"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0021f29aa0a045d9964cc956528fadac" id="r_a0021f29aa0a045d9964cc956528fadac"><td class="memItemLeft" align="right" valign="top">using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a0021f29aa0a045d9964cc956528fadac">varDataType</a> = std::variant&lt;<a class="el" href="#ada565fa17ac43f31f81e8a7f78d86058">MS</a>&gt;</td></tr>
+<tr class="separator:a0021f29aa0a045d9964cc956528fadac"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
 <tr class="memitem:a5b13907b217ee6690eef821d4df68479" id="r_a5b13907b217ee6690eef821d4df68479"><td class="memItemLeft" align="right" valign="top">virtual&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a5b13907b217ee6690eef821d4df68479">~MeasurementData</a> ()</td></tr>
 <tr class="separator:a5b13907b217ee6690eef821d4df68479"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a8295223e88004418fcc9fa62b1ced99d" id="r_a8295223e88004418fcc9fa62b1ced99d"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a8295223e88004418fcc9fa62b1ced99d">readCSV</a> (std::string filename, int rowStart, int rowEnd, int colStart, int colEnd, char separator, std::vector&lt; <a class="el" href="namespaceq_1_1_data_type.html#a9fcd47c7d7d77f908f041cad931962aa">DataType::DataField</a> &gt; variableTypes)=0</td></tr>
 <tr class="separator:a8295223e88004418fcc9fa62b1ced99d"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ae3dfbca5264b979f312f581491addf63" id="r_ae3dfbca5264b979f312f581491addf63"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ae3dfbca5264b979f312f581491addf63">zeroFilling</a> (std::vector&lt; double &gt; &amp;xData, std::vector&lt; double &gt; &amp;yData, int k)</td></tr>
-<tr class="memdesc:ae3dfbca5264b979f312f581491addf63"><td class="mdescLeft">&#160;</td><td class="mdescRight">Identify and fill gaps in the data.  <br /></td></tr>
-<tr class="separator:ae3dfbca5264b979f312f581491addf63"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a132a6fa74bc575aaeccd260d73b96f00" id="r_a132a6fa74bc575aaeccd260d73b96f00"><td class="memItemLeft" align="right" valign="top">std::vector&lt; size_t &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a132a6fa74bc575aaeccd260d73b96f00">cutData</a> (std::vector&lt; double &gt; &amp;xData, std::vector&lt; double &gt; &amp;yData) const</td></tr>
-<tr class="memdesc:a132a6fa74bc575aaeccd260d73b96f00"><td class="mdescLeft">&#160;</td><td class="mdescRight">Cut the data into smaller data sets.  <br /></td></tr>
-<tr class="separator:a132a6fa74bc575aaeccd260d73b96f00"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3139b3ddc3039bca5c0fb7ccd7052558" id="r_a3139b3ddc3039bca5c0fb7ccd7052558"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a3139b3ddc3039bca5c0fb7ccd7052558">zeroFilling</a> (<a class="el" href="#a0021f29aa0a045d9964cc956528fadac">varDataType</a> &amp;dataMap, int k)</td></tr>
+<tr class="memdesc:a3139b3ddc3039bca5c0fb7ccd7052558"><td class="mdescLeft">&#160;</td><td class="mdescRight">Identify and fill gaps in the data.  <br /></td></tr>
+<tr class="separator:a3139b3ddc3039bca5c0fb7ccd7052558"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae2b8a3d542b37ac400f2b51ada04a448" id="r_ae2b8a3d542b37ac400f2b51ada04a448"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ae2b8a3d542b37ac400f2b51ada04a448">cutData</a> (<a class="el" href="#a0021f29aa0a045d9964cc956528fadac">varDataType</a> &amp;dataMap)</td></tr>
+<tr class="memdesc:ae2b8a3d542b37ac400f2b51ada04a448"><td class="mdescLeft">&#160;</td><td class="mdescRight">Cut the data into smaller data sets.  <br /></td></tr>
+<tr class="separator:ae2b8a3d542b37ac400f2b51ada04a448"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:afc29734a2b7987f7a7510493c68b3a2c" id="r_afc29734a2b7987f7a7510493c68b3a2c"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#afc29734a2b7987f7a7510493c68b3a2c">interpolateData</a> (std::vector&lt; double &gt; &amp;xData, std::vector&lt; double &gt; &amp;yData)</td></tr>
 <tr class="memdesc:afc29734a2b7987f7a7510493c68b3a2c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Interpolate y-axis values.  <br /></td></tr>
 <tr class="separator:afc29734a2b7987f7a7510493c68b3a2c"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a3cf576e649244debcc1c0cf67038e4d3" id="r_a3cf576e649244debcc1c0cf67038e4d3"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a3cf576e649244debcc1c0cf67038e4d3">print</a> ()=0</td></tr>
-<tr class="separator:a3cf576e649244debcc1c0cf67038e4d3"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>A class to store measurement data. </p>
 <p>The <a class="el" href="classq_1_1_measurement_data.html" title="A class to store measurement data.">MeasurementData</a> class is a virtual class used to store measurement data. Based on the type of measurement data, the <a class="el" href="classq_1_1_measurement_data.html" title="A class to store measurement data.">MeasurementData</a> class can be subclassed to store different types of measurement data. </p>
 
-<p class="definition">Definition at line <a class="el" href="qalgorithms__measurement__data_8h_source.html#l00017">17</a> of file <a class="el" href="qalgorithms__measurement__data_8h_source.html">qalgorithms_measurement_data.h</a>.</p>
-</div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
+<p class="definition">Definition at line <a class="el" href="qalgorithms__measurement__data_8h_source.html#l00020">20</a> of file <a class="el" href="qalgorithms__measurement__data_8h_source.html">qalgorithms_measurement_data.h</a>.</p>
+</div><h2 class="groupheader">Member Typedef Documentation</h2>
+<a id="ada565fa17ac43f31f81e8a7f78d86058" name="ada565fa17ac43f31f81e8a7f78d86058"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ada565fa17ac43f31f81e8a7f78d86058">&#9670;&#160;</a></span>MS</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">using <a class="el" href="#ada565fa17ac43f31f81e8a7f78d86058">q::MeasurementData::MS</a> = std::unordered_map&lt;int, std::unique_ptr&lt;<a class="el" href="classq_1_1_data_type_1_1_mass_spectrum.html">DataType::MassSpectrum</a>&gt;&gt;*</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="qalgorithms__measurement__data_8h_source.html#l00029">29</a> of file <a class="el" href="qalgorithms__measurement__data_8h_source.html">qalgorithms_measurement_data.h</a>.</p>
+
+</div>
+</div>
+<a id="a0021f29aa0a045d9964cc956528fadac" name="a0021f29aa0a045d9964cc956528fadac"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a0021f29aa0a045d9964cc956528fadac">&#9670;&#160;</a></span>varDataType</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">using <a class="el" href="#a0021f29aa0a045d9964cc956528fadac">q::MeasurementData::varDataType</a> = std::variant&lt;<a class="el" href="#ada565fa17ac43f31f81e8a7f78d86058">MS</a>&gt;</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="qalgorithms__measurement__data_8h_source.html#l00030">30</a> of file <a class="el" href="qalgorithms__measurement__data_8h_source.html">qalgorithms_measurement_data.h</a>.</p>
+
+</div>
+</div>
+<h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
 <a id="a5b13907b217ee6690eef821d4df68479" name="a5b13907b217ee6690eef821d4df68479"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a5b13907b217ee6690eef821d4df68479">&#9670;&#160;</a></span>~MeasurementData()</h2>
 
@@ -150,26 +189,22 @@ Public Member Functions</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="qalgorithms__measurement__data_8h_source.html#l00020">20</a> of file <a class="el" href="qalgorithms__measurement__data_8h_source.html">qalgorithms_measurement_data.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="qalgorithms__measurement__data_8h_source.html#l00024">24</a> of file <a class="el" href="qalgorithms__measurement__data_8h_source.html">qalgorithms_measurement_data.h</a>.</p>
 
 </div>
 </div>
 <h2 class="groupheader">Member Function Documentation</h2>
-<a id="a132a6fa74bc575aaeccd260d73b96f00" name="a132a6fa74bc575aaeccd260d73b96f00"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a132a6fa74bc575aaeccd260d73b96f00">&#9670;&#160;</a></span>cutData()</h2>
+<a id="ae2b8a3d542b37ac400f2b51ada04a448" name="ae2b8a3d542b37ac400f2b51ada04a448"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ae2b8a3d542b37ac400f2b51ada04a448">&#9670;&#160;</a></span>cutData()</h2>
 
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">std::vector&lt; size_t &gt; q::MeasurementData::cutData </td>
+          <td class="memname">void q::MeasurementData::cutData </td>
           <td>(</td>
-          <td class="paramtype">std::vector&lt; double &gt; &amp;</td>          <td class="paramname"><span class="paramname"><em>xData</em>, </span></td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
+          <td class="paramtype"><a class="el" href="#a0021f29aa0a045d9964cc956528fadac">varDataType</a> &amp;</td>          <td class="paramname"><span class="paramname"><em>dataMap</em></span></td><td>)</td>
           <td></td>
-          <td class="paramtype">std::vector&lt; double &gt; &amp;</td>          <td class="paramname"><span class="paramname"><em>yData</em></span>&#160;) const</td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -177,14 +212,12 @@ Public Member Functions</h2></td></tr>
 <p>Cut the data into smaller data sets. </p>
 <p>The cutData method cuts the data into smaller data sets. The method uses the separator value to split the data into smaller data sets. The separator value is set to -1.0 for the x-axis and -1.0 for the y-axis. For each cut, the method creates a new data subset and stores it in the data map using a sub-dataset ID as the secondary key. </p><dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">xData</td><td>A vector of x-axis values </td></tr>
-    <tr><td class="paramname">yData</td><td>A vector of y-axis values </td></tr>
+    <tr><td class="paramname">dataObject</td><td>A variant data type </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>A vector of indices where the data needs to be cut </dd></dl>
 
-<p class="definition">Definition at line <a class="el" href="qalgorithms__measurement__data_8cpp_source.html#l00082">82</a> of file <a class="el" href="qalgorithms__measurement__data_8cpp_source.html">qalgorithms_measurement_data.cpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="qalgorithms__measurement__data_8cpp_source.html#l00127">127</a> of file <a class="el" href="qalgorithms__measurement__data_8cpp_source.html">qalgorithms_measurement_data.cpp</a>.</p>
 
 </div>
 </div>
@@ -208,44 +241,13 @@ Public Member Functions</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Interpolate y-axis values. </p>
-<p>The interpolateData method interpolates the y-axis values. The method useses a gaussian model to interpolate the y-axis values. To estimate the bandwidth, the function uses the log-transform to transform the gaussian data into parabola data: </p><p class="formulaDsp">
-\[ \log(y) = \log(A) - \frac{(x - \mu)^2}{2\sigma^2} \]
-</p>
-<p> For interpolation, the derivative of this function is of interest: </p><p class="formulaDsp">
-\[ \frac{d}{dx} \log(y) = -\frac{x - \mu}{\sigma^2} \]
-</p>
-<p> This is a function with two unknowns, i.e., having two data points next to the interpolation point, we can solve for the two unknowns. Hereby, \( \mu \) can be estimated like: </p><p class="formulaDsp">
-\[ \mu = \frac{\delta y_2 x_1 - \delta y_1 x_2}{\delta y_2 - \delta y_1} \]
-</p>
- 
-<p class="definition">Definition at line <a class="el" href="qalgorithms__measurement__data_8cpp_source.html#l00095">95</a> of file <a class="el" href="qalgorithms__measurement__data_8cpp_source.html">qalgorithms_measurement_data.cpp</a>.</p>
-
-</div>
-</div>
-<a id="a3cf576e649244debcc1c0cf67038e4d3" name="a3cf576e649244debcc1c0cf67038e4d3"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a3cf576e649244debcc1c0cf67038e4d3">&#9670;&#160;</a></span>print()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">virtual void q::MeasurementData::print </td>
-          <td>(</td>
-          <td class="paramname"><span class="paramname"></span></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">pure virtual</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p>Implemented in <a class="el" href="classq_1_1_l_c_m_s_data.html#aa808ac2ee343120a4a89f8ee8e9278f6">q::LCMSData</a>.</p>
+<p>The interpolateData method interpolates the y-axis values. The method uses quadratic interpolation to interpolate the y-axis values in the log space. </p><dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">xData</td><td>A vector of x-axis values </td></tr>
+    <tr><td class="paramname">yData</td><td>A vector of y-axis values </td></tr>
+  </table>
+  </dd>
+</dl>
 
 </div>
 </div>
@@ -305,8 +307,8 @@ Public Member Functions</h2></td></tr>
 
 </div>
 </div>
-<a id="ae3dfbca5264b979f312f581491addf63" name="ae3dfbca5264b979f312f581491addf63"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ae3dfbca5264b979f312f581491addf63">&#9670;&#160;</a></span>zeroFilling()</h2>
+<a id="a3139b3ddc3039bca5c0fb7ccd7052558" name="a3139b3ddc3039bca5c0fb7ccd7052558"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a3139b3ddc3039bca5c0fb7ccd7052558">&#9670;&#160;</a></span>zeroFilling()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -314,12 +316,7 @@ Public Member Functions</h2></td></tr>
         <tr>
           <td class="memname">void q::MeasurementData::zeroFilling </td>
           <td>(</td>
-          <td class="paramtype">std::vector&lt; double &gt; &amp;</td>          <td class="paramname"><span class="paramname"><em>xData</em>, </span></td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">std::vector&lt; double &gt; &amp;</td>          <td class="paramname"><span class="paramname"><em>yData</em>, </span></td>
+          <td class="paramtype"><a class="el" href="#a0021f29aa0a045d9964cc956528fadac">varDataType</a> &amp;</td>          <td class="paramname"><span class="paramname"><em>dataMap</em>, </span></td>
         </tr>
         <tr>
           <td class="paramkey"></td>
@@ -332,14 +329,13 @@ Public Member Functions</h2></td></tr>
 <p>Identify and fill gaps in the data. </p>
 <p>The zeroFilling method identifies and fills gaps in the data. The method uses difference between two neighboring data points to identify gaps. If the difference is 1.75 times greater than expected, then the method fills the gap with zero values for y-axis and inter/extrapolated values for x-axis values. For the expected difference, the method the difference of the last two data points that not show a gap. However, the first expected difference is set to the median of the differences of the total data points. However, the maximum gap size is set to "k/2" per side, i.e., "k" in total, where there is a gap leftover between the fourth and fifth data points. </p><dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">xData</td><td>A vector of x-axis values </td></tr>
-    <tr><td class="paramname">yData</td><td>A vector of y-axis values </td></tr>
+    <tr><td class="paramname">dataMap</td><td>A map of variant data types </td></tr>
     <tr><td class="paramname">k</td><td>The maximum gap size </td></tr>
   </table>
   </dd>
 </dl>
 
-<p class="definition">Definition at line <a class="el" href="qalgorithms__measurement__data_8cpp_source.html#l00007">7</a> of file <a class="el" href="qalgorithms__measurement__data_8cpp_source.html">qalgorithms_measurement_data.cpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="qalgorithms__measurement__data_8cpp_source.html#l00008">8</a> of file <a class="el" href="qalgorithms__measurement__data_8cpp_source.html">qalgorithms_measurement_data.cpp</a>.</p>
 
 </div>
 </div>

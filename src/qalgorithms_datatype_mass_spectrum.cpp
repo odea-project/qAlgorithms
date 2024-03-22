@@ -12,14 +12,22 @@ namespace q
     MassSpectrum::MassSpectrum()
     {
       dataPoints = std::vector<std::unique_ptr<DataPoint>>();
-      metaData = std::unordered_map<DataField, variableType>();
-      isReference = std::pair<bool, MassSpectrum*>(true, nullptr);
+      metaData = new std::unordered_map<DataField, variableType>();
+      isParent = std::pair<bool, MassSpectrum*>(true, nullptr);
     }
-
-    MassSpectrum::MassSpectrum(const MassSpectrum& other, const size_t k)
+    // HERE I NEED TO FIX SOME THINGS. To be continued...
+    MassSpectrum MassSpectrum::createChild(MassSpectrum& other, const size_t k)
     {
-      // reference MetaData
-
+      // define the new object as a child of the other object
+      isParent = std::pair<bool, MassSpectrum*>(false, &other);
+      // create a reference to the other object's metadata
+      metaData = other.metaData; // shared metadata from the parent object
+      // move the last k data points to the new object
+      for (size_t i = 0; i < k; i++)
+      {
+        dataPoints.push_back(std::move(other.dataPoints.back()));
+        other.dataPoints.pop_back();
+      }
     }
 
     MassSpectrum::~MassSpectrum()

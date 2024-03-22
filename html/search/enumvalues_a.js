@@ -12,5 +12,5 @@ var searchData=
   ['silent_9',['SILENT',['../namespaceq.html#a1ef5b9eb7b9bdd1afc71e98f9b43a174a7e92d833d7720dbe631730a6cea03346',1,'q']]],
   ['smplid_10',['SMPLID',['../classq_1_1_peakproperties.html#a8e14bc689d53ecc5877b06e0851608bcae5d32d57f27f00ffd73c495b77732a54',1,'q::Peakproperties']]],
   ['smplid_11',['SmplID',['../namespaceq.html#ab3bdb9eac069e4e777368ed17431ffafaf86ce7af1f9124dd82da986f6c4f3d95',1,'q']]],
-  ['subid_12',['SUBID',['../namespaceq_1_1_data_type.html#a9fcd47c7d7d77f908f041cad931962aaa5632099513a846190dff2303566ebaf7',1,'q::DataType']]]
+  ['sub_5fid_12',['SUB_ID',['../namespaceq_1_1_data_type.html#a9fcd47c7d7d77f908f041cad931962aaa806cf3aff64de59d4d99cff566c546b7',1,'q::DataType']]]
 ];

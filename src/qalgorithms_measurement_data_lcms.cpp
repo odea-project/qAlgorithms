@@ -154,9 +154,9 @@ namespace q
                 // add the MassSpectrum object to the data map
                 this->data[scanNumber] = std::make_unique<MassSpectrum>();
                 // add the scan number to the MassSpectrum object
-                this->data[scanNumber]->metaData[DataField::SCANNUMBER] = VariableType(scanNumber);
+                (*this->data[scanNumber]->metaData)[DataField::SCANNUMBER] = VariableType(scanNumber);
                 // add the retention time to the MassSpectrum object
-                this->data[scanNumber]->metaData[DataField::RETENTIONTIME] = VariableType(std::stod(raw_data[i][retentionTimeIndex]));
+                (*this->data[scanNumber]->metaData)[DataField::RETENTIONTIME] = VariableType(std::stod(raw_data[i][retentionTimeIndex]));
                 // add the DataPoint Map to the MassSpectrum object
                 // this->data[scanNumber]->dataPoints = DataPointVector();
             }
@@ -240,7 +240,7 @@ namespace q
         for (auto it = this->data.begin(); it != this->data.end(); it++)
         {
             std::cout << "Scan Number: " << it->first << std::endl;
-            std::cout << "Retention Time: " << std::get<double>(it->second->metaData[DataField::RETENTIONTIME]) << std::endl;
+            std::cout << "Retention Time: " << std::get<double>((*it->second->metaData)[DataField::RETENTIONTIME]) << std::endl;
             std::cout << "Number of Data Points: " << it->second->dataPoints.size() << std::endl;
             std::cout << "MZ values: ";
             for (const auto& dp : it->second->dataPoints)
@@ -253,6 +253,12 @@ namespace q
             for (const auto& dp : it->second->dataPoints)
             {
                 std::cout << dp->intensity << " ";
+            }
+            std::cout << std::endl;
+            std::cout << "cuttingPoints: ";
+            for (const auto& cp : it->second->cuttingPoints)
+            {
+                std::cout << *cp << " ";
             }
             std::cout << std::endl;
         }

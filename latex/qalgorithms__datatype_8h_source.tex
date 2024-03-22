@@ -5,54 +5,70 @@
 \DoxyCodeLine{\Hypertarget{qalgorithms__datatype_8h_source_l00001}00001\ \textcolor{preprocessor}{\#ifndef\ QALGORITHMS\_DATATYPE\_H}}
 \DoxyCodeLine{\Hypertarget{qalgorithms__datatype_8h_source_l00002}00002\ \textcolor{preprocessor}{\#define\ QALGORITHMS\_DATATYPE\_H}}
 \DoxyCodeLine{\Hypertarget{qalgorithms__datatype_8h_source_l00003}00003\ }
-\DoxyCodeLine{\Hypertarget{qalgorithms__datatype_8h_source_l00004}00004\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespaceq}{q}}\ \{}
-\DoxyCodeLine{\Hypertarget{qalgorithms__datatype_8h_source_l00005}00005\ }
-\DoxyCodeLine{\Hypertarget{qalgorithms__datatype_8h_source_l00006}\mbox{\hyperlink{namespaceq_1_1_data_type}{00006}}\ \textcolor{keyword}{namespace\ }DataType\ \{}
-\DoxyCodeLine{\Hypertarget{qalgorithms__datatype_8h_source_l00037}\mbox{\hyperlink{namespaceq_1_1_data_type_a9fcd47c7d7d77f908f041cad931962aa}{00037}}\ \ \ \ \ \textcolor{keyword}{enum\ class}\ \mbox{\hyperlink{namespaceq_1_1_data_type_a9fcd47c7d7d77f908f041cad931962aa}{DataField}}\{}
-\DoxyCodeLine{\Hypertarget{qalgorithms__datatype_8h_source_l00038}00038\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ general\ fields}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__datatype_8h_source_l00039}00039\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespaceq_1_1_data_type_a9fcd47c7d7d77f908f041cad931962aaa3da9993984f423cfc441a286105a9226}{INTENSITY}},\ \textcolor{comment}{//\ signal\ intensity}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__datatype_8h_source_l00040}00040\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespaceq_1_1_data_type_a9fcd47c7d7d77f908f041cad931962aaa5632099513a846190dff2303566ebaf7}{SUBID}},\ \textcolor{comment}{//\ sub-\/dataset\ ID}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__datatype_8h_source_l00041}00041\ }
-\DoxyCodeLine{\Hypertarget{qalgorithms__datatype_8h_source_l00042}00042\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ MS\ fields}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__datatype_8h_source_l00043}00043\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespaceq_1_1_data_type_a9fcd47c7d7d77f908f041cad931962aaa5729d168584ff49470d55cca3441f3ea}{IONIZATIONMODE}},\ \textcolor{comment}{//\ positive\ or\ negative}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__datatype_8h_source_l00044}00044\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespaceq_1_1_data_type_a9fcd47c7d7d77f908f041cad931962aaade82af5b73c61b0c9d162597fcc4abe6}{MEASUREMENTMODE}},\ \textcolor{comment}{//\ profile\ or\ centroid}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__datatype_8h_source_l00045}00045\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespaceq_1_1_data_type_a9fcd47c7d7d77f908f041cad931962aaa9e2fedbc7006aeef70baaca5347088b1}{MSLEVEL}},\ \textcolor{comment}{//\ MS1\ or\ MS2}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__datatype_8h_source_l00046}00046\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespaceq_1_1_data_type_a9fcd47c7d7d77f908f041cad931962aaaac6ad5d9b99757c3a878f2d275ace198}{MZ}},\ \textcolor{comment}{//\ mass-\/to-\/charge\ ratio}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__datatype_8h_source_l00047}00047\ }
-\DoxyCodeLine{\Hypertarget{qalgorithms__datatype_8h_source_l00048}00048\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Chromatography\ fields}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__datatype_8h_source_l00049}00049\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespaceq_1_1_data_type_a9fcd47c7d7d77f908f041cad931962aaa5657758f69fc660569fa4d1de5a11cbc}{RETENTIONTIME}},\ \textcolor{comment}{//\ retention\ time}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__datatype_8h_source_l00050}00050\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespaceq_1_1_data_type_a9fcd47c7d7d77f908f041cad931962aaa29e2d681b2cc529fa80582fdca325b02}{SCANNUMBER}},\ \textcolor{comment}{//\ scan\ number}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__datatype_8h_source_l00051}00051\ }
-\DoxyCodeLine{\Hypertarget{qalgorithms__datatype_8h_source_l00052}00052\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Peak-\/related\ fields}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__datatype_8h_source_l00053}00053\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespaceq_1_1_data_type_a9fcd47c7d7d77f908f041cad931962aaa46017062ea59e88ad29fcc1590e715de}{PEAK\_ID}},}
-\DoxyCodeLine{\Hypertarget{qalgorithms__datatype_8h_source_l00054}00054\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespaceq_1_1_data_type_a9fcd47c7d7d77f908f041cad931962aaaa45d8321e5be5bbedb49a19ec6198cef}{PEAK\_AREA}},}
-\DoxyCodeLine{\Hypertarget{qalgorithms__datatype_8h_source_l00055}00055\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespaceq_1_1_data_type_a9fcd47c7d7d77f908f041cad931962aaa927b26aaa39c5bf7ae459737164466c2}{PEAK\_HEIGHT}},}
-\DoxyCodeLine{\Hypertarget{qalgorithms__datatype_8h_source_l00056}00056\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespaceq_1_1_data_type_a9fcd47c7d7d77f908f041cad931962aaac7ff75aa22a1c1a7fba42916c0991d95}{PEAK\_WIDTH}},}
-\DoxyCodeLine{\Hypertarget{qalgorithms__datatype_8h_source_l00057}00057\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespaceq_1_1_data_type_a9fcd47c7d7d77f908f041cad931962aaa2e0f89197cf16309d969821f0d905573}{PEAK\_POSITION}},}
-\DoxyCodeLine{\Hypertarget{qalgorithms__datatype_8h_source_l00058}00058\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespaceq_1_1_data_type_a9fcd47c7d7d77f908f041cad931962aaa0147e31b9c023f6576cfbecb1b004e93}{DQS\_PEAK}},\ \textcolor{comment}{//\ DQS:\ Data\ Quality\ Score\ \(\backslash\)cite\{reuschenbach2022development\}}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__datatype_8h_source_l00059}00059\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespaceq_1_1_data_type_a9fcd47c7d7d77f908f041cad931962aaaafc9af1b15f6850c23708678235fa0cd}{PEAK\_AREA\_UNCERTAINTY}},}
-\DoxyCodeLine{\Hypertarget{qalgorithms__datatype_8h_source_l00060}00060\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespaceq_1_1_data_type_a9fcd47c7d7d77f908f041cad931962aaa4190299866354e57b7996e658aafbb99}{PEAK\_HEIGHT\_UNCERTAINTY}},}
-\DoxyCodeLine{\Hypertarget{qalgorithms__datatype_8h_source_l00061}00061\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespaceq_1_1_data_type_a9fcd47c7d7d77f908f041cad931962aaa49ba34c41cc438a2f7c43a416fd15cca}{PEAK\_WIDTH\_UNCERTAINTY}},}
-\DoxyCodeLine{\Hypertarget{qalgorithms__datatype_8h_source_l00062}00062\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespaceq_1_1_data_type_a9fcd47c7d7d77f908f041cad931962aaaf8b16a8eaa6f88fcc576c194fbb7edc8}{PEAK\_POSITION\_UNCERTAINTY}},}
-\DoxyCodeLine{\Hypertarget{qalgorithms__datatype_8h_source_l00063}00063\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespaceq_1_1_data_type_a9fcd47c7d7d77f908f041cad931962aaa8e75d396b2a83070724bc8dafad28bbf}{BETA\_0}},\ \textcolor{comment}{//\ regression\ coefficients}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__datatype_8h_source_l00064}00064\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespaceq_1_1_data_type_a9fcd47c7d7d77f908f041cad931962aaab7b831f876038b64a133c7423c62031a}{BETA\_1}},\ \textcolor{comment}{//\ regression\ coefficients}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__datatype_8h_source_l00065}00065\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespaceq_1_1_data_type_a9fcd47c7d7d77f908f041cad931962aaaa2c71b0236449388278b4a908bdb23be}{BETA\_2}},\ \textcolor{comment}{//\ regression\ coefficients}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__datatype_8h_source_l00066}00066\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespaceq_1_1_data_type_a9fcd47c7d7d77f908f041cad931962aaaf5825cb54039871cf36f043252f455d8}{BETA\_3}},\ \textcolor{comment}{//\ regression\ coefficients}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__datatype_8h_source_l00067}00067\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespaceq_1_1_data_type_a9fcd47c7d7d77f908f041cad931962aaabde13dbf561a3640b24d506675069dba}{VALLEY\_POSITION}},\ \textcolor{comment}{//\ optional:\ some\ peaks\ have\ a\ valley\ position}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__datatype_8h_source_l00068}00068\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespaceq_1_1_data_type_a9fcd47c7d7d77f908f041cad931962aaab98f83032f6e8ca0c8f5a38bca1e3d75}{DF}},\ \textcolor{comment}{//\ degrees\ of\ freedom}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__datatype_8h_source_l00069}00069\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespaceq_1_1_data_type_a9fcd47c7d7d77f908f041cad931962aaabfeb9688cb9cec99a16d630b5b8139d0}{X\_INDEX}},\ \textcolor{comment}{//\ index\ of\ the\ regression\ window\ position}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__datatype_8h_source_l00070}00070\ }
-\DoxyCodeLine{\Hypertarget{qalgorithms__datatype_8h_source_l00071}00071\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Add\ new\ data\ fields\ here}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__datatype_8h_source_l00072}00072\ \ \ \ \ \};}
-\DoxyCodeLine{\Hypertarget{qalgorithms__datatype_8h_source_l00073}00073\ }
-\DoxyCodeLine{\Hypertarget{qalgorithms__datatype_8h_source_l00074}00074\ \ \ \ \ \textcolor{comment}{//\ additional\ categorical\ data\ sub\ types}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__datatype_8h_source_l00075}\mbox{\hyperlink{namespaceq_1_1_data_type_a50341ff9d741a5a416eb71a71ffc1fa6}{00075}}\ \ \ \ \ \textcolor{keyword}{enum\ class}\ \mbox{\hyperlink{namespaceq_1_1_data_type_a50341ff9d741a5a416eb71a71ffc1fa6}{IonizationMode}}\ \{\ \mbox{\hyperlink{namespaceq_1_1_data_type_a50341ff9d741a5a416eb71a71ffc1fa6a3289297424e01eda5b788c083bbf3147}{Positive}},\ \mbox{\hyperlink{namespaceq_1_1_data_type_a50341ff9d741a5a416eb71a71ffc1fa6affb9356ff2b7da85c75c92fa7ea03b8b}{Negative}}\ \};}
-\DoxyCodeLine{\Hypertarget{qalgorithms__datatype_8h_source_l00076}\mbox{\hyperlink{namespaceq_1_1_data_type_a8e76910d22415bfa3dd2086a76f0c5ea}{00076}}\ \ \ \ \ \textcolor{keyword}{enum\ class}\ \mbox{\hyperlink{namespaceq_1_1_data_type_a8e76910d22415bfa3dd2086a76f0c5ea}{MeasurementMode}}\ \{\ \mbox{\hyperlink{namespaceq_1_1_data_type_a8e76910d22415bfa3dd2086a76f0c5eaacce99c598cfdb9773ab041d54c3d973a}{Profile}},\ \mbox{\hyperlink{namespaceq_1_1_data_type_a8e76910d22415bfa3dd2086a76f0c5eaa9b49197cf2fea5efc68ef8a88489e1b6}{Centroid}}\ \};}
-\DoxyCodeLine{\Hypertarget{qalgorithms__datatype_8h_source_l00077}\mbox{\hyperlink{namespaceq_1_1_data_type_a90aa4d66e606cf85f2424677d7bf4d34}{00077}}\ \ \ \ \ \textcolor{keyword}{enum\ class}\ \mbox{\hyperlink{namespaceq_1_1_data_type_a90aa4d66e606cf85f2424677d7bf4d34}{MSLevel}}\ \{\mbox{\hyperlink{namespaceq_1_1_data_type_a90aa4d66e606cf85f2424677d7bf4d34a3c4708a2cdd3c4bfd03ad04e36b87544}{MS1}},\ \mbox{\hyperlink{namespaceq_1_1_data_type_a90aa4d66e606cf85f2424677d7bf4d34a5db8c2f5881ff5a19875fe5529b9a987}{MS2}}\};}
-\DoxyCodeLine{\Hypertarget{qalgorithms__datatype_8h_source_l00078}00078\ }
-\DoxyCodeLine{\Hypertarget{qalgorithms__datatype_8h_source_l00079}00079\ \};\ \textcolor{comment}{//\ namespace\ datatype}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__datatype_8h_source_l00080}00080\ \}\ \textcolor{comment}{//\ namespace\ q}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__datatype_8h_source_l00081}00081\ }
-\DoxyCodeLine{\Hypertarget{qalgorithms__datatype_8h_source_l00082}00082\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//\ QALGORITHMS\_DATATYPE\_H}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype_8h_source_l00004}00004\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespaceq}{q}}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype_8h_source_l00005}00005\ \{}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype_8h_source_l00006}00006\ }
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype_8h_source_l00007}\mbox{\hyperlink{namespaceq_1_1_data_type}{00007}}\ \ \ \ \ \textcolor{keyword}{namespace\ }DataType}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype_8h_source_l00008}00008\ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype_8h_source_l00041}\mbox{\hyperlink{namespaceq_1_1_data_type_a9fcd47c7d7d77f908f041cad931962aa}{00041}}\ \ \ \ \ \ \ \ \ \textcolor{keyword}{enum\ class}\ \mbox{\hyperlink{namespaceq_1_1_data_type_a9fcd47c7d7d77f908f041cad931962aa}{DataField}}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype_8h_source_l00042}00042\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype_8h_source_l00043}00043\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ general\ fields}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype_8h_source_l00044}00044\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespaceq_1_1_data_type_a9fcd47c7d7d77f908f041cad931962aaa3da9993984f423cfc441a286105a9226}{INTENSITY}},\ \textcolor{comment}{//\ signal\ intensity}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype_8h_source_l00045}00045\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespaceq_1_1_data_type_a9fcd47c7d7d77f908f041cad931962aaa806cf3aff64de59d4d99cff566c546b7}{SUB\_ID}},\ \ \ \ \ \textcolor{comment}{//\ sub-\/dataset\ ID}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype_8h_source_l00046}00046\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespaceq_1_1_data_type_a9fcd47c7d7d77f908f041cad931962aaab41b70bc1aa58eac18aff58b15e31204}{DATA\_ID}},\ \ \ \textcolor{comment}{//\ data\ ID}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype_8h_source_l00047}00047\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespaceq_1_1_data_type_a9fcd47c7d7d77f908f041cad931962aaa71fd77a5547d88e2281dc6a1fa7a8bff}{DATAPOINT}},\ \textcolor{comment}{//\ data\ point}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype_8h_source_l00048}00048\ }
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype_8h_source_l00049}00049\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ MS\ fields}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype_8h_source_l00050}00050\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespaceq_1_1_data_type_a9fcd47c7d7d77f908f041cad931962aaa5729d168584ff49470d55cca3441f3ea}{IONIZATIONMODE}},\ \ \textcolor{comment}{//\ positive\ or\ negative}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype_8h_source_l00051}00051\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespaceq_1_1_data_type_a9fcd47c7d7d77f908f041cad931962aaade82af5b73c61b0c9d162597fcc4abe6}{MEASUREMENTMODE}},\ \textcolor{comment}{//\ profile\ or\ centroid}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype_8h_source_l00052}00052\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespaceq_1_1_data_type_a9fcd47c7d7d77f908f041cad931962aaa9e2fedbc7006aeef70baaca5347088b1}{MSLEVEL}},\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ MS1\ or\ MS2}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype_8h_source_l00053}00053\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespaceq_1_1_data_type_a9fcd47c7d7d77f908f041cad931962aaaac6ad5d9b99757c3a878f2d275ace198}{MZ}},\ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ mass-\/to-\/charge\ ratio}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype_8h_source_l00054}00054\ }
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype_8h_source_l00055}00055\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Chromatography\ fields}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype_8h_source_l00056}00056\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespaceq_1_1_data_type_a9fcd47c7d7d77f908f041cad931962aaa5657758f69fc660569fa4d1de5a11cbc}{RETENTIONTIME}},\ \textcolor{comment}{//\ retention\ time}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype_8h_source_l00057}00057\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespaceq_1_1_data_type_a9fcd47c7d7d77f908f041cad931962aaa29e2d681b2cc529fa80582fdca325b02}{SCANNUMBER}},\ \ \ \ \textcolor{comment}{//\ scan\ number}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype_8h_source_l00058}00058\ }
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype_8h_source_l00059}00059\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Peak-\/related\ fields}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype_8h_source_l00060}00060\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespaceq_1_1_data_type_a9fcd47c7d7d77f908f041cad931962aaa46017062ea59e88ad29fcc1590e715de}{PEAK\_ID}},}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype_8h_source_l00061}00061\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespaceq_1_1_data_type_a9fcd47c7d7d77f908f041cad931962aaaa45d8321e5be5bbedb49a19ec6198cef}{PEAK\_AREA}},}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype_8h_source_l00062}00062\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespaceq_1_1_data_type_a9fcd47c7d7d77f908f041cad931962aaa927b26aaa39c5bf7ae459737164466c2}{PEAK\_HEIGHT}},}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype_8h_source_l00063}00063\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespaceq_1_1_data_type_a9fcd47c7d7d77f908f041cad931962aaac7ff75aa22a1c1a7fba42916c0991d95}{PEAK\_WIDTH}},}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype_8h_source_l00064}00064\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespaceq_1_1_data_type_a9fcd47c7d7d77f908f041cad931962aaa2e0f89197cf16309d969821f0d905573}{PEAK\_POSITION}},}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype_8h_source_l00065}00065\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespaceq_1_1_data_type_a9fcd47c7d7d77f908f041cad931962aaa0147e31b9c023f6576cfbecb1b004e93}{DQS\_PEAK}},\ \textcolor{comment}{//\ DQS:\ Data\ Quality\ Score\ \(\backslash\)cite\{reuschenbach2022development\}}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype_8h_source_l00066}00066\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespaceq_1_1_data_type_a9fcd47c7d7d77f908f041cad931962aaaafc9af1b15f6850c23708678235fa0cd}{PEAK\_AREA\_UNCERTAINTY}},}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype_8h_source_l00067}00067\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespaceq_1_1_data_type_a9fcd47c7d7d77f908f041cad931962aaa4190299866354e57b7996e658aafbb99}{PEAK\_HEIGHT\_UNCERTAINTY}},}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype_8h_source_l00068}00068\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespaceq_1_1_data_type_a9fcd47c7d7d77f908f041cad931962aaa49ba34c41cc438a2f7c43a416fd15cca}{PEAK\_WIDTH\_UNCERTAINTY}},}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype_8h_source_l00069}00069\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespaceq_1_1_data_type_a9fcd47c7d7d77f908f041cad931962aaaf8b16a8eaa6f88fcc576c194fbb7edc8}{PEAK\_POSITION\_UNCERTAINTY}},}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype_8h_source_l00070}00070\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespaceq_1_1_data_type_a9fcd47c7d7d77f908f041cad931962aaa8e75d396b2a83070724bc8dafad28bbf}{BETA\_0}},\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ regression\ coefficients}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype_8h_source_l00071}00071\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespaceq_1_1_data_type_a9fcd47c7d7d77f908f041cad931962aaab7b831f876038b64a133c7423c62031a}{BETA\_1}},\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ regression\ coefficients}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype_8h_source_l00072}00072\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespaceq_1_1_data_type_a9fcd47c7d7d77f908f041cad931962aaaa2c71b0236449388278b4a908bdb23be}{BETA\_2}},\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ regression\ coefficients}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype_8h_source_l00073}00073\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespaceq_1_1_data_type_a9fcd47c7d7d77f908f041cad931962aaaf5825cb54039871cf36f043252f455d8}{BETA\_3}},\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ regression\ coefficients}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype_8h_source_l00074}00074\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespaceq_1_1_data_type_a9fcd47c7d7d77f908f041cad931962aaabde13dbf561a3640b24d506675069dba}{VALLEY\_POSITION}},\ \textcolor{comment}{//\ optional:\ some\ peaks\ have\ a\ valley\ position}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype_8h_source_l00075}00075\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespaceq_1_1_data_type_a9fcd47c7d7d77f908f041cad931962aaab98f83032f6e8ca0c8f5a38bca1e3d75}{DF}},\ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ degrees\ of\ freedom}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype_8h_source_l00076}00076\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespaceq_1_1_data_type_a9fcd47c7d7d77f908f041cad931962aaabfeb9688cb9cec99a16d630b5b8139d0}{X\_INDEX}},\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ index\ of\ the\ regression\ window\ position}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype_8h_source_l00077}00077\ }
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype_8h_source_l00078}00078\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Add\ new\ data\ fields\ here}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype_8h_source_l00079}00079\ \ \ \ \ \ \ \ \ \};}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype_8h_source_l00080}00080\ }
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype_8h_source_l00081}00081\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ additional\ categorical\ data\ sub\ types}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype_8h_source_l00082}\mbox{\hyperlink{namespaceq_1_1_data_type_a50341ff9d741a5a416eb71a71ffc1fa6}{00082}}\ \ \ \ \ \ \ \ \ \textcolor{keyword}{enum\ class}\ \mbox{\hyperlink{namespaceq_1_1_data_type_a50341ff9d741a5a416eb71a71ffc1fa6}{IonizationMode}}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype_8h_source_l00083}00083\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype_8h_source_l00084}00084\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespaceq_1_1_data_type_a50341ff9d741a5a416eb71a71ffc1fa6a3289297424e01eda5b788c083bbf3147}{Positive}},}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype_8h_source_l00085}00085\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespaceq_1_1_data_type_a50341ff9d741a5a416eb71a71ffc1fa6affb9356ff2b7da85c75c92fa7ea03b8b}{Negative}}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype_8h_source_l00086}00086\ \ \ \ \ \ \ \ \ \};}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype_8h_source_l00087}\mbox{\hyperlink{namespaceq_1_1_data_type_a8e76910d22415bfa3dd2086a76f0c5ea}{00087}}\ \ \ \ \ \ \ \ \ \textcolor{keyword}{enum\ class}\ \mbox{\hyperlink{namespaceq_1_1_data_type_a8e76910d22415bfa3dd2086a76f0c5ea}{MeasurementMode}}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype_8h_source_l00088}00088\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype_8h_source_l00089}00089\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespaceq_1_1_data_type_a8e76910d22415bfa3dd2086a76f0c5eaacce99c598cfdb9773ab041d54c3d973a}{Profile}},}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype_8h_source_l00090}00090\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespaceq_1_1_data_type_a8e76910d22415bfa3dd2086a76f0c5eaa9b49197cf2fea5efc68ef8a88489e1b6}{Centroid}}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype_8h_source_l00091}00091\ \ \ \ \ \ \ \ \ \};}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype_8h_source_l00092}\mbox{\hyperlink{namespaceq_1_1_data_type_a90aa4d66e606cf85f2424677d7bf4d34}{00092}}\ \ \ \ \ \ \ \ \ \textcolor{keyword}{enum\ class}\ \mbox{\hyperlink{namespaceq_1_1_data_type_a90aa4d66e606cf85f2424677d7bf4d34}{MSLevel}}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype_8h_source_l00093}00093\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype_8h_source_l00094}00094\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespaceq_1_1_data_type_a90aa4d66e606cf85f2424677d7bf4d34a3c4708a2cdd3c4bfd03ad04e36b87544}{MS1}},}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype_8h_source_l00095}00095\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespaceq_1_1_data_type_a90aa4d66e606cf85f2424677d7bf4d34a5db8c2f5881ff5a19875fe5529b9a987}{MS2}}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype_8h_source_l00096}00096\ \ \ \ \ \ \ \ \ \};}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype_8h_source_l00097}00097\ \ \ \ \ \};\ \textcolor{comment}{//\ namespace\ datatype}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype_8h_source_l00098}00098\ \}\ \textcolor{comment}{//\ namespace\ q}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype_8h_source_l00099}00099\ }
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype_8h_source_l00100}00100\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//\ QALGORITHMS\_DATATYPE\_H}}
 
 \end{DoxyCode}

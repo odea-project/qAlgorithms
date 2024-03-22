@@ -1,5 +1,4 @@
 var searchData=
 [
-  ['df_0',['df',['../classq_1_1_data_type_1_1_peak.html#a07f16f95997fecb90f447be72d772ff5',1,'q::DataType::Peak']]],
-  ['dqspeak_1',['dqsPeak',['../classq_1_1_data_type_1_1_peak.html#a3b971d7e52d2466ec0fffed263d4f067',1,'q::DataType::Peak']]]
+  ['cuttingpoints_0',['cuttingPoints',['../classq_1_1_data_type_1_1_mass_spectrum.html#af4fdaf7d30d857d166c49580f6827024',1,'q::DataType::MassSpectrum']]]
 ];

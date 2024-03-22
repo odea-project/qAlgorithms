@@ -51,6 +51,8 @@ namespace q
           /* analyze the data for gaps, i.e., differences > 1.75 * expectedDifference, and fill the gaps by adding new data points at the end of the vector
           */
           n++; // adjust n to fit with the size of the data vector
+          size_t counter = k/2; // counter for the number of added data points to store separator positions. it is initialized with k/2 to address that later k/2 data points will be added at the front of the vector
+          std::vector<size_t> separators; 
           for (int i = 1; i < n; i++)
           {
             // consider the difference between two neighboring data points from differences vector and compare it with 1.75 * expectedDifference
@@ -67,6 +69,7 @@ namespace q
                   // define the new pointer for new data point and add it to the data vector using the addDataPoint method from the respecting class
                   dataObj.addDataPoint(0.0, data[i-1]->x() + j * expectedDifference, 0);
                 }
+                counter += gapSize;
               }
               else
               {
@@ -79,10 +82,13 @@ namespace q
                   dataObj.addDataPoint(0.0, data[i]->x() - j * expectedDifference, 0);
                   dataObj.addDataPoint(0.0, data[i - 1]->x() + j * expectedDifference, 0);
                 }
-                // add a separator
-                dataObj.addDataPoint(-1.0, data[i]->x() / 2 + data[i - 1]->x() / 2, -1.0);
+                counter += k/2;
+                // add the separator to the vector
+                separators.push_back(counter);
+                counter += k/2;
               }
             }
+            counter++;
           }
           // extrapolate the data by adding k/2 new data points at the end of the vector
           int gapSize = (int)k / 2;
@@ -92,8 +98,25 @@ namespace q
             dataObj.addDataPoint(0.0, data[n - 1]->x() + j * expectedDifference, 0);
             dataObj.addDataPoint(0.0, data[0]->x() - j * expectedDifference, 0);
           }
-          // add a separator
-          dataObj.addDataPoint(-1.0, data[0]->x() - (gapSize + 1) * expectedDifference, -1.0);
+          // flip separators vector 
+          std::reverse(separators.begin(), separators.end());
+          // cumulative difference for separators
+          for (int i = 0; i < separators.size(); i++)
+          {
+            if (i == 0)
+            {
+              separators[i] = dataObj.dataPoints.size() - separators[i] - 1;
+            }
+            else
+            {
+              separators[i] = (dataObj.dataPoints.size() - separators[i] - 1 - separators[i - 1]);
+            }
+          }
+          // add the separators to the Object's cuttingPoints vector, which is a vector of unique pointers to size_t objects
+          for (int i = 0; i < separators.size(); i++)
+          {
+            dataObj.cuttingPoints.push_back(std::make_unique<size_t>(separators[i]));
+          }
           // sort the data points by x-axis values
           dataObj.sortDataPoints();
         } // end of for loop
@@ -112,9 +135,12 @@ namespace q
         {
           // de-reference the unique pointer of the object
           auto &dataObj = *(pair.second.get());
-          // iterate over data point vector, which is a vector of unique pointers to data points structures
-          // auto& data = std::get<std::vector<std::unique_ptr<typename std::pointer_traits<T>::element_type::mapped_type::element_type::DataPoint>>>(dataObj.dataPoints);
-          
+          auto& cuttingPoints = dataObj.cuttingPoints;
+            // iterate over the cutting points vector
+          for (int i = 0; i < cuttingPoints.size(); i++)
+          {
+            
+          }
         } // end of for loop
       } // end of if statement
     }, dataMap); // end of visit

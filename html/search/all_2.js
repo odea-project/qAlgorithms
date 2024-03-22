@@ -34,5 +34,6 @@ var searchData=
   ['convolverotation_31',['convolveRotation',['../classq_1_1_matrix.html#a549e37550d5df9f221ea8ab647751221',1,'q::Matrix']]],
   ['convolvesymmetric_32',['convolveSymmetric',['../classq_1_1_matrix.html#a0d2a7bf49f60c2cb4e81f5489a175860',1,'q::Matrix']]],
   ['current_20offerings_33',['Current Offerings',['../md__r_e_a_d_m_e.html#autotoc_md3',1,'']]],
-  ['cutdata_34',['cutData',['../classq_1_1_measurement_data.html#a132a6fa74bc575aaeccd260d73b96f00',1,'q::MeasurementData::cutData()'],['../classq_1_1_l_c_m_s_data.html#a6c799dc9ef6918446df62515bc7daa8d',1,'q::LCMSData::cutData()']]]
+  ['cutdata_34',['cutData',['../classq_1_1_measurement_data.html#ae2b8a3d542b37ac400f2b51ada04a448',1,'q::MeasurementData::cutData()'],['../classq_1_1_l_c_m_s_data.html#a6c799dc9ef6918446df62515bc7daa8d',1,'q::LCMSData::cutData()']]],
+  ['cuttingpoints_35',['cuttingPoints',['../classq_1_1_data_type_1_1_mass_spectrum.html#af4fdaf7d30d857d166c49580f6827024',1,'q::DataType::MassSpectrum']]]
 ];

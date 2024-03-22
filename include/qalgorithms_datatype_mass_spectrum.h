@@ -59,7 +59,7 @@ namespace q
              * @param reference mass spectrum object  
              * @param k number of data points to be moved to the new object, starting from the end of the reference object
              */
-            MassSpectrum(const MassSpectrum& other, const size_t k);
+            MassSpectrum createChild(MassSpectrum& other, const size_t k);
 
             // destructor
             ~MassSpectrum();
@@ -78,9 +78,15 @@ namespace q
                 MeasurementMode // e.g. profile or centroid
             >;
 
-            std::unordered_map<DataField, variableType> metaData;
+            std::unordered_map<DataField, variableType>* metaData;
             std::vector<std::unique_ptr<DataPoint>> dataPoints;
-            std::pair<bool, MassSpectrum*> isReference;
+            std::pair<bool, MassSpectrum*> isParent;
+            /**
+             * @brief This vector stores information for cutting the mass spectrum data.
+             * @details The cuttingPoints vector can be seen as a job list for cutting the mass spectrum data. Each element in the vector shows the number of data points counted from the end of the dataPoints vector that should be moved to the new object. The number of elements within the cuttingPoints vector determines the number of new objects that will be created. E.g. cuttingPoints = {10, 5} will create two new objects. The first object will contain the last 10 data points of the original object while these datapoints are removed from the original object. The second object will contain the next last 5 data points of the original object, while these datapoints are also removed from the original object. The original object will contain all data points except the ones that were moved to the new objects.
+             * 
+             */
+            std::vector<std::unique_ptr<size_t>> cuttingPoints;
         };
     }; // namespace datatype
 } // namespace q

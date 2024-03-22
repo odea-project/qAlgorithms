@@ -7,29 +7,35 @@
 \DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8h_source_l00003}00003\ }
 \DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8h_source_l00004}00004\ \textcolor{comment}{//\ internal}}
 \DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8h_source_l00005}00005\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{qalgorithms__datatype__mass__spectrum_8h}{qalgorithms\_datatype\_mass\_spectrum.h}}"{}}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8h_source_l00006}00006\ }
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8h_source_l00007}00007\ \textcolor{comment}{//\ external}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8h_source_l00008}00008\ \textcolor{preprocessor}{\#include\ <string>}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8h_source_l00009}00009\ \textcolor{preprocessor}{\#include\ <iostream>}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8h_source_l00010}00010\ \textcolor{preprocessor}{\#include\ <algorithm>}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8h_source_l00011}00011\ }
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8h_source_l00012}00012\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespaceq}{q}}\ \{}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8h_source_l00017}\mbox{\hyperlink{classq_1_1_measurement_data}{00017}}\ \ \ \ \ \textcolor{keyword}{class\ }\mbox{\hyperlink{classq_1_1_measurement_data}{MeasurementData}}\ \{}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8h_source_l00018}00018\ \ \ \ \ \textcolor{keyword}{public}:}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8h_source_l00019}00019\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ destructor}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8h_source_l00020}\mbox{\hyperlink{classq_1_1_measurement_data_a5b13907b217ee6690eef821d4df68479}{00020}}\ \ \ \ \ \ \ \ \ \textcolor{keyword}{virtual}\ \mbox{\hyperlink{classq_1_1_measurement_data_a5b13907b217ee6690eef821d4df68479}{\string~MeasurementData}}()\ \{\};}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8h_source_l00021}00021\ }
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8h_source_l00022}00022\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ methods}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8h_source_l00023}\mbox{\hyperlink{classq_1_1_measurement_data_a8295223e88004418fcc9fa62b1ced99d}{00023}}\ \ \ \ \ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classq_1_1_measurement_data_a8295223e88004418fcc9fa62b1ced99d}{readCSV}}(std::string\ filename,\textcolor{keywordtype}{int}\ rowStart,\ \textcolor{keywordtype}{int}\ rowEnd,\ \textcolor{keywordtype}{int}\ colStart,\ \textcolor{keywordtype}{int}\ colEnd,\ \textcolor{keywordtype}{char}\ separator,std::vector<DataType::DataField>\ variableTypes)\ =\ 0;}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8h_source_l00024}00024\ }
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8h_source_l00032}00032\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classq_1_1_measurement_data_ae3dfbca5264b979f312f581491addf63}{zeroFilling}}(std::vector<double>\&\ xData,\ std::vector<double>\&\ yData,\ \textcolor{keywordtype}{int}\ k);}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8h_source_l00033}00033\ }
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8h_source_l00041}00041\ \ \ \ \ \ \ \ \ std::vector<size\_t>\ \mbox{\hyperlink{classq_1_1_measurement_data_a132a6fa74bc575aaeccd260d73b96f00}{cutData}}(std::vector<double>\&\ xData,\ std::vector<double>\&\ yData)\ \textcolor{keyword}{const};}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8h_source_l00042}00042\ }
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8h_source_l00052}00052\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classq_1_1_measurement_data_afc29734a2b7987f7a7510493c68b3a2c}{interpolateData}}(std::vector<double>\&\ xData,\ std::vector<double>\&\ yData);}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8h_source_l00006}00006\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{qalgorithms__matrix_8h}{qalgorithms\_matrix.h}}"{}}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8h_source_l00007}00007\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{qalgorithms__utils_8h}{qalgorithms\_utils.h}}"{}}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8h_source_l00008}00008\ }
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8h_source_l00009}00009\ \textcolor{comment}{//\ external}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8h_source_l00010}00010\ \textcolor{preprocessor}{\#include\ <string>}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8h_source_l00011}00011\ \textcolor{preprocessor}{\#include\ <iostream>}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8h_source_l00012}00012\ \textcolor{preprocessor}{\#include\ <algorithm>}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8h_source_l00013}00013\ }
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8h_source_l00014}00014\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespaceq}{q}}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8h_source_l00015}00015\ \{}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8h_source_l00020}\mbox{\hyperlink{classq_1_1_measurement_data}{00020}}\ \ \ \ \ \textcolor{keyword}{class\ }\mbox{\hyperlink{classq_1_1_measurement_data}{MeasurementData}}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8h_source_l00021}00021\ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8h_source_l00022}00022\ \ \ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8h_source_l00023}00023\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ destructor}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8h_source_l00024}\mbox{\hyperlink{classq_1_1_measurement_data_a5b13907b217ee6690eef821d4df68479}{00024}}\ \ \ \ \ \ \ \ \ \textcolor{keyword}{virtual}\ \mbox{\hyperlink{classq_1_1_measurement_data_a5b13907b217ee6690eef821d4df68479}{\string~MeasurementData}}()\{\};}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8h_source_l00025}00025\ }
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8h_source_l00026}00026\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ methods}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8h_source_l00027}\mbox{\hyperlink{classq_1_1_measurement_data_a8295223e88004418fcc9fa62b1ced99d}{00027}}\ \ \ \ \ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classq_1_1_measurement_data_a8295223e88004418fcc9fa62b1ced99d}{readCSV}}(std::string\ filename,\ \textcolor{keywordtype}{int}\ rowStart,\ \textcolor{keywordtype}{int}\ rowEnd,\ \textcolor{keywordtype}{int}\ colStart,\ \textcolor{keywordtype}{int}\ colEnd,\ \textcolor{keywordtype}{char}\ separator,\ std::vector<DataType::DataField>\ variableTypes)\ =\ 0;}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8h_source_l00028}00028\ }
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8h_source_l00029}\mbox{\hyperlink{classq_1_1_measurement_data_ada565fa17ac43f31f81e8a7f78d86058}{00029}}\ \ \ \ \ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{classq_1_1_measurement_data_ada565fa17ac43f31f81e8a7f78d86058}{MS}}\ =\ std::unordered\_map<int,\ std::unique\_ptr<DataType::MassSpectrum>>*;\ \textcolor{comment}{//\ pointer\ to\ a\ map\ of\ mass\ spectra}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8h_source_l00030}\mbox{\hyperlink{classq_1_1_measurement_data_a0021f29aa0a045d9964cc956528fadac}{00030}}\ \ \ \ \ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{classq_1_1_measurement_data_a0021f29aa0a045d9964cc956528fadac}{varDataType}}\ =\ std::variant<MS>;\ \textcolor{comment}{//\ add\ more\ data\ types\ if\ needed}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8h_source_l00037}00037\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classq_1_1_measurement_data_a3139b3ddc3039bca5c0fb7ccd7052558}{zeroFilling}}(\mbox{\hyperlink{classq_1_1_measurement_data_a0021f29aa0a045d9964cc956528fadac}{varDataType}}\&\ dataMap,\ \textcolor{keywordtype}{int}\ k);}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8h_source_l00038}00038\ }
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8h_source_l00044}00044\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classq_1_1_measurement_data_ae2b8a3d542b37ac400f2b51ada04a448}{cutData}}(\mbox{\hyperlink{classq_1_1_measurement_data_a0021f29aa0a045d9964cc956528fadac}{varDataType}}\&\ dataMap);}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8h_source_l00045}00045\ }
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8h_source_l00052}\mbox{\hyperlink{classq_1_1_measurement_data_afc29734a2b7987f7a7510493c68b3a2c}{00052}}\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classq_1_1_measurement_data_afc29734a2b7987f7a7510493c68b3a2c}{interpolateData}}(std::vector<double>\ \&xData,\ std::vector<double>\ \&yData);}
 \DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8h_source_l00053}00053\ }
 \DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8h_source_l00054}00054\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ debugging}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8h_source_l00055}\mbox{\hyperlink{classq_1_1_measurement_data_a3cf576e649244debcc1c0cf67038e4d3}{00055}}\ \ \ \ \ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classq_1_1_measurement_data_a3cf576e649244debcc1c0cf67038e4d3}{print}}()\ =\ 0;}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8h_source_l00055}00055\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ virtual\ void\ print()\ =\ 0;}}
 \DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8h_source_l00056}00056\ \ \ \ \ \};}
 \DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8h_source_l00057}00057\ \}}
 \DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8h_source_l00058}00058\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//\ QALGORITHMS\_MEASUREMENT\_DATA\_H}}

@@ -7,101 +7,304 @@
 \DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00003}00003\ \textcolor{comment}{//\ internal}}
 \DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00004}00004\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{qalgorithms__measurement__data_8h}{../include/qalgorithms\_measurement\_data.h}}"{}}}
 \DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00005}00005\ }
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00006}00006\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespaceq}{q}}\ \{}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00007}\mbox{\hyperlink{classq_1_1_measurement_data_ae3dfbca5264b979f312f581491addf63}{00007}}\ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classq_1_1_measurement_data_ae3dfbca5264b979f312f581491addf63}{MeasurementData::zeroFilling}}(}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00008}00008\ \ \ \ \ std::vector<double>\&\ xData,\ }
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00009}00009\ \ \ \ \ std::vector<double>\&\ yData,\ }
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00010}00010\ \ \ \ \ \textcolor{keywordtype}{int}\ k)\ \{}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00011}00011\ \ \ \ \ \textcolor{comment}{//\ calculate\ the\ differences}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00012}00012\ \ \ \ \ \textcolor{keywordtype}{double}\ expectedDifference\ =\ 0.0;}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00013}00013\ \ \ \ \ std::vector<double>\ differences;}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00014}00014\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ i\ =\ 1;\ i\ <\ xData.size();\ i++)\ \{}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00015}00015\ \ \ \ \ \ \ \ \ differences.push\_back(xData[i]\ -\/\ xData[i-\/1]);}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00016}00016\ \ \ \ \ \}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00017}00017\ \ \ \ \ \textcolor{comment}{//\ median\ of\ differences}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00018}00018\ \ \ \ \ std::sort(differences.begin(),\ differences.end());}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00019}00019\ \ \ \ \ \textcolor{keywordflow}{if}\ (differences.size()\ \%\ 2\ ==\ 0)\ \{}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00020}00020\ \ \ \ \ \ \ \ \ expectedDifference\ =\ (differences[differences.size()/2\ -\/\ 1]\ +\ differences[differences.size()/2])\ /\ 2;}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00021}00021\ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00022}00022\ \ \ \ \ \ \ \ \ expectedDifference\ =\ differences[differences.size()/2];}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00023}00023\ \ \ \ \ \}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00024}00024\ }
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00025}00025\ \ \ \ \ \textcolor{comment}{//\ fill\ the\ gaps}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00026}00026\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ i\ =\ 1;\ i\ <\ xData.size();\ i++)\ \{}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00027}00027\ \ \ \ \ \ \ \textcolor{keywordtype}{double}\ difference\ =\ xData[i]\ -\/\ xData[i-\/1];}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00028}00028\ \ \ \ \ \ \ \textcolor{comment}{/*\ We\ will\ always\ add\ new\ data\ points\ in\ the\ beginning\ of\ the\ data\ set.\ */}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00029}00029\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (i\ ==\ 1)\ \{}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00030}00030\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ gapSize\ =\ (int)\ k/2;}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00031}00031\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ j\ =\ gapSize;\ j\ >=\ 1;\ j-\/-\/)\ \{\ \textcolor{comment}{//\ fill\ the\ gap\ backwards}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00032}00032\ \ \ \ \ \ \ \ \ \ \ xData.insert(xData.begin(),\ xData[0]\ -\/\ expectedDifference);}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00033}00033\ \ \ \ \ \ \ \ \ \ \ yData.insert(yData.begin(),\ 0.0);}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00034}00034\ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00035}00035\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ add\ a\ separator}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00036}00036\ \ \ \ \ \ \ \ \ xData.insert(xData.begin(),\ -\/1.0);}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00037}00037\ \ \ \ \ \ \ \ \ yData.insert(yData.begin(),\ -\/1.0);}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00038}00038\ \ \ \ \ \ \ \ \ i\ +=\ gapSize+1;\ \textcolor{comment}{//\ Update\ the\ index\ to\ the\ next\ data\ point}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00039}00039\ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00040}00040\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (difference\ >\ 1.75\ *\ expectedDifference)\ \{}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00041}00041\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ gapSize\ =\ (int)\ (difference\ /\ expectedDifference\ -\/\ 1);}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00042}00042\ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ Check\ if\ the\ gapsSize\ is\ larger\ than\ k,\ as\ this\ is\ the\ maximum\ gap\ size.\ If\ the\ gap\ size\ is\ less\ or\ equal\ to\ k,\ we\ add\ gapSize\ new\ data\ points\ to\ the\ data\ set\ between\ the\ two\ data\ points\ that\ show\ the\ gap,\ i.e.\ (i-\/1\ and\ i).\ The\ new\ data\ points\ are\ filled\ with\ zero\ values\ for\ the\ intensity\ and\ inter/extrapolated\ values\ for\ the\ x-\/axis\ values.}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00043}00043\ \textcolor{comment}{\ \ \ \ \ \ \ \ \ \ */}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00044}00044\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (gapSize\ <=\ k)\ \{}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00045}00045\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ j\ =\ gapSize;\ j\ >=\ 1;\ j-\/-\/)\ \{\ \textcolor{comment}{//\ fill\ the\ gap\ backwards}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00046}00046\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ xData.insert(xData.begin()\ +\ i,\ xData[i-\/1]\ +\ j\ *\ expectedDifference);}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00047}00047\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ yData.insert(yData.begin()\ +\ i,\ 0.0);}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00048}00048\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00049}00049\ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00050}00050\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ If\ the\ gapSize\ is\ larger\ than\ k,\ we\ limit\ the\ gap\ size\ to\ k\ and\ add\ k/2\ new\ data\ points\ close\ to\ the\ (i-\/1)\ data\ point\ and\ k/2\ new\ data\ points\ close\ to\ the\ (i)\ data\ point.\ The\ new\ data\ points\ are\ filled\ with\ zero\ values\ for\ the\ intensity\ and\ inter/extrapolated\ values\ for\ the\ x-\/axis\ values.\ Moreover,\ we\ add\ a\ separator\ for\ later\ splitting\ the\ data\ set\ into\ smaller\ data\ sets\ by\ adding\ an\ additional\ zero\ in\ between\ where\ the\ intensity\ and\ x-\/axis\ are\ set\ to\ -\/1.0.\ This\ is\ done\ to\ indicate\ that\ the\ data\ set\ should\ be\ split\ at\ this\ point.\ \ }}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00051}00051\ \textcolor{comment}{\ \ \ \ \ \ \ \ \ \ \ \ */}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00052}00052\ \ \ \ \ \ \ \ \ \ \ \ \ gapSize\ =\ k;}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00053}00053\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ add\ k/2\ new\ data\ points\ close\ to\ the\ (i)\ data\ point}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00054}00054\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ j\ =\ 1;\ j\ <=\ k/2;\ j++)\ \{\ \textcolor{comment}{//\ fill\ the\ gap\ forwards}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00055}00055\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ xData.insert(xData.begin()\ +\ i,\ xData[i]\ -\/\ \ expectedDifference);}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00056}00056\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ yData.insert(yData.begin()\ +\ i,\ 0.0);}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00057}00057\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00058}00058\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ add\ a\ separator}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00059}00059\ \ \ \ \ \ \ \ \ \ \ \ \ xData.insert(xData.begin()\ +\ i,\ -\/1.0);}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00060}00060\ \ \ \ \ \ \ \ \ \ \ \ \ yData.insert(yData.begin()\ +\ i,\ -\/1.0);}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00061}00061\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ add\ k/2\ new\ data\ points\ close\ to\ the\ (i-\/1)\ data\ point\ }}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00062}00062\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ j\ =\ k/2;\ j\ >=\ 1;\ j-\/-\/)\ \{\ \textcolor{comment}{//\ fill\ the\ gap\ backwards}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00063}00063\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ xData.insert(xData.begin()\ +\ i,\ xData[i-\/1]\ +\ j\ *\ expectedDifference);}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00064}00064\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ yData.insert(yData.begin()\ +\ i,\ 0.0);}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00065}00065\ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \ \ \ \ }
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00066}00066\ \ \ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00067}00067\ \ \ \ \ \ \ \ \ \ \ i\ +=\ gapSize;\ \textcolor{comment}{//\ Update\ the\ index\ to\ the\ next\ data\ point}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00068}00068\ \ \ \ \ \ \ \ \ \}\ \ \textcolor{keywordflow}{else}\ \{}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00069}00069\ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ update\ the\ expected\ difference}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00070}00070\ \ \ \ \ \ \ \ \ \ \ expectedDifference\ =\ (expectedDifference\ +\ difference)\ /\ 2;}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00071}00071\ \ \ \ \ \ \ \ \ \}\ }
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00072}00072\ \ \ \ \ \ \ \}\ \ \ }
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00073}00073\ \ \ \ \ \}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00074}00074\ \ \ \ \ \textcolor{comment}{/*\ We\ will\ always\ add\ new\ data\ points\ in\ the\ end\ of\ the\ data\ set.\ */}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00075}00075\ \ \ \ \ \textcolor{keywordtype}{int}\ gapSize\ =\ (int)\ k/2;}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00076}00076\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ j\ =\ 1;\ j\ <=\ gapSize;\ j++)\ \{\ \textcolor{comment}{//\ fill\ the\ gap\ forwards}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00077}00077\ \ \ \ \ \ \ xData.push\_back(xData[xData.size()-\/1]\ +\ expectedDifference);}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00078}00078\ \ \ \ \ \ \ yData.push\_back(0.0);}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00079}00079\ \ \ \ \ \}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00080}00080\ \ \ \}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00081}00081\ }
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00082}\mbox{\hyperlink{classq_1_1_measurement_data_a132a6fa74bc575aaeccd260d73b96f00}{00082}}\ \ \ std::vector<size\_t>\ \mbox{\hyperlink{classq_1_1_measurement_data_a132a6fa74bc575aaeccd260d73b96f00}{MeasurementData::cutData}}(}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00083}00083\ \ \ \ \ std::vector<double>\&\ xData,\ }
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00084}00084\ \ \ \ \ std::vector<double>\&\ yData)\textcolor{keyword}{\ const\ }\{}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00085}00085\ \ \ \ \ \textcolor{comment}{//\ find\ the\ separator}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00086}00086\ \ \ \ \ std::vector<size\_t>\ separators;}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00087}00087\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ i\ =\ 0;\ i\ <\ xData.size();\ i++)\ \{}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00088}00088\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (xData[i]\ ==\ -\/1.0\ \&\&\ yData[i]\ ==\ -\/1.0)\ \{}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00089}00089\ \ \ \ \ \ \ \ \ separators.push\_back(i);}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00090}00090\ \ \ \ \ \ \ \}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00091}00091\ \ \ \ \ \}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00092}00092\ \ \ \ \ \textcolor{keywordflow}{return}\ separators;}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00093}00093\ \ \ \}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00094}00094\ }
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00095}\mbox{\hyperlink{classq_1_1_measurement_data_afc29734a2b7987f7a7510493c68b3a2c}{00095}}\ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classq_1_1_measurement_data_afc29734a2b7987f7a7510493c68b3a2c}{MeasurementData::interpolateData}}(}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00096}00096\ \ \ \ \ std::vector<double>\&\ xData,\ }
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00097}00097\ \ \ \ \ std::vector<double>\&\ yData)\ \{}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00098}00098\ }
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00099}00099\ \ \ \}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00100}00100\ \ \ \ \ }
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00101}00101\ \}\ \textcolor{comment}{//\ namespace\ q}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00006}00006\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespaceq}{q}}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00007}00007\ \{}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00008}\mbox{\hyperlink{classq_1_1_measurement_data_a3139b3ddc3039bca5c0fb7ccd7052558}{00008}}\ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classq_1_1_measurement_data_a3139b3ddc3039bca5c0fb7ccd7052558}{MeasurementData::zeroFilling}}(\mbox{\hyperlink{classq_1_1_measurement_data_a0021f29aa0a045d9964cc956528fadac}{varDataType}}\ \&dataMap,\ \textcolor{keywordtype}{int}\ k)}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00009}00009\ \ \ \{}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00010}00010\ \ \ \ \ std::visit([k](\textcolor{keyword}{auto}\ \&\&arg)\ }
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00011}00011\ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00012}00012\ \ \ \ \ \ \ \textcolor{keyword}{using\ }T\ =\ std::decay\_t<\textcolor{keyword}{decltype}(arg)>;}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00013}00013\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ \textcolor{keyword}{constexpr}\ (std::is\_same\_v<T,\ std::unordered\_map<int,\ std::unique\_ptr<DataType::MassSpectrum>>*>)}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00014}00014\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00015}00015\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ iterate\ over\ the\ map\ of\ varDataType\ objects}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00016}00016\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keyword}{auto}\&\ pair\ :\ *arg)}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00017}00017\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00018}00018\ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ de-\/reference\ the\ unique\ pointer\ of\ the\ object}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00019}00019\ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ \&dataObj\ =\ *(pair.second.get());}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00020}00020\ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ initialize\ the\ expected\ difference}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00021}00021\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{double}\ expectedDifference\ =\ 0.0;}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00022}00022\ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ initialize\ the\ vector\ of\ differences}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00023}00023\ \ \ \ \ \ \ \ \ \ \ std::vector<double>\ differences;}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00024}00024\ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ iterate\ over\ data\ point\ vector,\ which\ is\ a\ vector\ of\ unique\ pointers\ to\ data\ points\ structures}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00025}00025\ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\&\ data\ =\ dataObj.dataPoints;}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00026}00026\ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00027}00027\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{double}\ previousX\ =\ data[0]-\/>x();}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00028}00028\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ i\ =\ 1;\ i\ <\ data.size();\ i++)}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00029}00029\ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00030}00030\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{double}\ difference\ =\ data[i]-\/>x()\ -\/\ previousX;}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00031}00031\ \ \ \ \ \ \ \ \ \ \ \ \ differences.push\_back(difference);}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00032}00032\ \ \ \ \ \ \ \ \ \ \ \ \ previousX\ =\ data[i]-\/>x();}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00033}00033\ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00034}00034\ }
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00035}00035\ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ median\ of\ differences}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00036}00036\ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ copy\ the\ differences\ vector\ and\ sort\ it}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00037}00037\ \ \ \ \ \ \ \ \ \ \ std::vector<double>\ differences\_copy\ =\ differences;}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00038}00038\ \ \ \ \ \ \ \ \ \ \ std::sort(differences\_copy.begin(),\ differences\_copy.end());}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00039}00039\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ n\ =\ differences\_copy.size();}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00040}00040\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (n\ \%\ 2\ ==\ 0)}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00041}00041\ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00042}00042\ \ \ \ \ \ \ \ \ \ \ \ \ expectedDifference\ =\ (differences\_copy[n\ /\ 2\ -\/\ 1]\ +\ differences\_copy[n\ /\ 2])\ /\ 2;}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00043}00043\ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00044}00044\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00045}00045\ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00046}00046\ \ \ \ \ \ \ \ \ \ \ \ \ expectedDifference\ =\ differences\_copy[n\ /\ 2];}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00047}00047\ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00048}00048\ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ delete\ the\ copy\ of\ the\ differences\ vector}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00049}00049\ \ \ \ \ \ \ \ \ \ \ std::vector<double>().swap(differences\_copy);}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00050}00050\ }
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00051}00051\ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ analyze\ the\ data\ for\ gaps,\ i.e.,\ differences\ >\ 1.75\ *\ expectedDifference,\ and\ fill\ the\ gaps\ by\ adding\ new\ data\ points\ at\ the\ end\ of\ the\ vector}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00052}00052\ \textcolor{comment}{\ \ \ \ \ \ \ \ \ \ */}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00053}00053\ \ \ \ \ \ \ \ \ \ \ n++;\ \textcolor{comment}{//\ adjust\ n\ to\ fit\ with\ the\ size\ of\ the\ data\ vector}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00054}00054\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{size\_t}\ counter\ =\ k/2;\ \textcolor{comment}{//\ counter\ for\ the\ number\ of\ added\ data\ points\ to\ store\ separator\ positions.\ it\ is\ initialized\ with\ k/2\ to\ address\ that\ later\ k/2\ data\ points\ will\ be\ added\ at\ the\ front\ of\ the\ vector}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00055}00055\ \ \ \ \ \ \ \ \ \ \ std::vector<size\_t>\ separators;\ }
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00056}00056\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ i\ =\ 1;\ i\ <\ n;\ i++)}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00057}00057\ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00058}00058\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ consider\ the\ difference\ between\ two\ neighboring\ data\ points\ from\ differences\ vector\ and\ compare\ it\ with\ 1.75\ *\ expectedDifference}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00059}00059\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (differences[i\ -\/\ 1]\ >\ 1.75\ *\ expectedDifference)}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00060}00060\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00061}00061\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ calculate\ the\ gap\ size}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00062}00062\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ gapSize\ =\ (int)(differences[i\ -\/\ 1]\ /\ expectedDifference\ -\/\ 1);}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00063}00063\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ check\ if\ the\ gapSize\ is\ larger\ than\ k,\ as\ this\ is\ the\ maximum\ gap\ size}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00064}00064\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (gapSize\ <=\ k)}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00065}00065\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00066}00066\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ add\ gapSize\ new\ data\ points\ at\ the\ end\ of\ the\ vector}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00067}00067\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ j\ =\ 1;\ j\ <=\ gapSize;\ j++)}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00068}00068\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00069}00069\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ define\ the\ new\ pointer\ for\ new\ data\ point\ and\ add\ it\ to\ the\ data\ vector\ using\ the\ addDataPoint\ method\ from\ the\ respecting\ class}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00070}00070\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dataObj.addDataPoint(0.0,\ data[i-\/1]-\/>x()\ +\ j\ *\ expectedDifference,\ 0);}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00071}00071\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00072}00072\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ counter\ +=\ gapSize;}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00073}00073\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00074}00074\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00075}00075\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00076}00076\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ limit\ the\ gap\ size\ to\ k\ and\ add\ k/2\ new\ data\ points\ close\ to\ the\ (i-\/1)\ data\ point\ and\ k/2\ new\ data\ points\ close\ to\ the\ (i)\ data\ point}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00077}00077\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ gapSize\ =\ k;}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00078}00078\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ add\ k/2\ new\ data\ points\ close\ to\ the\ (i)\ and\ (i-\/1)\ data\ point}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00079}00079\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ j\ =\ 1;\ j\ <=\ k\ /\ 2;\ j++)}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00080}00080\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00081}00081\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ define\ the\ new\ pointer\ for\ new\ data\ point\ and\ add\ it\ to\ the\ data\ vector}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00082}00082\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dataObj.addDataPoint(0.0,\ data[i]-\/>x()\ -\/\ j\ *\ expectedDifference,\ 0);}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00083}00083\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dataObj.addDataPoint(0.0,\ data[i\ -\/\ 1]-\/>x()\ +\ j\ *\ expectedDifference,\ 0);}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00084}00084\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00085}00085\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ counter\ +=\ k/2;}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00086}00086\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ add\ the\ separator\ to\ the\ vector}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00087}00087\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ separators.push\_back(counter);}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00088}00088\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ counter\ +=\ k/2;}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00089}00089\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00090}00090\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00091}00091\ \ \ \ \ \ \ \ \ \ \ \ \ counter++;}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00092}00092\ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00093}00093\ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ extrapolate\ the\ data\ by\ adding\ k/2\ new\ data\ points\ at\ the\ end\ of\ the\ vector}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00094}00094\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ gapSize\ =\ (int)k\ /\ 2;}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00095}00095\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ j\ =\ 1;\ j\ <=\ gapSize;\ j++)}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00096}00096\ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00097}00097\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ define\ the\ new\ pointer\ for\ new\ data\ point\ and\ add\ it\ to\ the\ data\ vector}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00098}00098\ \ \ \ \ \ \ \ \ \ \ \ \ dataObj.addDataPoint(0.0,\ data[n\ -\/\ 1]-\/>x()\ +\ j\ *\ expectedDifference,\ 0);}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00099}00099\ \ \ \ \ \ \ \ \ \ \ \ \ dataObj.addDataPoint(0.0,\ data[0]-\/>x()\ -\/\ j\ *\ expectedDifference,\ 0);}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00100}00100\ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00101}00101\ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ flip\ separators\ vector\ }}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00102}00102\ \ \ \ \ \ \ \ \ \ \ std::reverse(separators.begin(),\ separators.end());}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00103}00103\ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ cumulative\ difference\ for\ separators}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00104}00104\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ i\ =\ 0;\ i\ <\ separators.size();\ i++)}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00105}00105\ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00106}00106\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (i\ ==\ 0)}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00107}00107\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00108}00108\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ separators[i]\ =\ dataObj.dataPoints.size()\ -\/\ separators[i]\ -\/\ 1;}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00109}00109\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00110}00110\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00111}00111\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00112}00112\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ separators[i]\ =\ (dataObj.dataPoints.size()\ -\/\ separators[i]\ -\/\ 1\ -\/\ separators[i\ -\/\ 1]);}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00113}00113\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00114}00114\ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00115}00115\ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ add\ the\ separators\ to\ the\ Object's\ cuttingPoints\ vector,\ which\ is\ a\ vector\ of\ unique\ pointers\ to\ size\_t\ objects}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00116}00116\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ i\ =\ 0;\ i\ <\ separators.size();\ i++)}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00117}00117\ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00118}00118\ \ \ \ \ \ \ \ \ \ \ \ \ dataObj.cuttingPoints.push\_back(std::make\_unique<size\_t>(separators[i]));}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00119}00119\ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00120}00120\ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ sort\ the\ data\ points\ by\ x-\/axis\ values}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00121}00121\ \ \ \ \ \ \ \ \ \ \ dataObj.sortDataPoints();}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00122}00122\ \ \ \ \ \ \ \ \ \}\ \textcolor{comment}{//\ end\ of\ for\ loop}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00123}00123\ \ \ \ \ \ \ \}\ \textcolor{comment}{//\ end\ of\ if\ statement}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00124}00124\ \ \ \ \ \},\ dataMap);\ \textcolor{comment}{//\ end\ of\ visit}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00125}00125\ \ \ \}\ \textcolor{comment}{//\ end\ of\ zeroFilling}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00126}00126\ }
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00127}\mbox{\hyperlink{classq_1_1_measurement_data_ae2b8a3d542b37ac400f2b51ada04a448}{00127}}\ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classq_1_1_measurement_data_ae2b8a3d542b37ac400f2b51ada04a448}{MeasurementData::cutData}}(\mbox{\hyperlink{classq_1_1_measurement_data_a0021f29aa0a045d9964cc956528fadac}{varDataType}}\ \&dataMap)\ \{}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00128}00128\ \ \ \ \ std::visit([](\textcolor{keyword}{auto}\ \&\&arg)\ }
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00129}00129\ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00130}00130\ \ \ \ \ \ \ \textcolor{keyword}{using\ }T\ =\ std::decay\_t<\textcolor{keyword}{decltype}(arg)>;}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00131}00131\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ \textcolor{keyword}{constexpr}\ (std::is\_same\_v<T,\ std::unordered\_map<int,\ std::unique\_ptr<DataType::MassSpectrum>>*>)}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00132}00132\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00133}00133\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ iterate\ over\ the\ map\ of\ varDataType\ objects}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00134}00134\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keyword}{auto}\&\ pair\ :\ *arg)}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00135}00135\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00136}00136\ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ de-\/reference\ the\ unique\ pointer\ of\ the\ object}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00137}00137\ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ \&dataObj\ =\ *(pair.second.get());}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00138}00138\ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ iterate\ over\ data\ point\ vector,\ which\ is\ a\ vector\ of\ unique\ pointers\ to\ data\ points\ structures}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00139}00139\ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ auto\&\ data\ =\ std::get<std::vector<std::unique\_ptr<typename\ std::pointer\_traits<T>::element\_type::mapped\_type::element\_type::DataPoint>>>(dataObj.dataPoints);}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00140}00140\ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00141}00141\ \ \ \ \ \ \ \ \ \}\ \textcolor{comment}{//\ end\ of\ for\ loop}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00142}00142\ \ \ \ \ \ \ \}\ \textcolor{comment}{//\ end\ of\ if\ statement}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00143}00143\ \ \ \ \ \},\ dataMap);\ \textcolor{comment}{//\ end\ of\ visit}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00144}00144\ \ \ \}\ \textcolor{comment}{//\ end\ of\ cutData}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00145}00145\ }
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00146}00146\ }
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00147}00147\ \ \ \textcolor{comment}{//\ std::vector<size\_t>\ MeasurementData::cutData(}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00148}00148\ \ \ \textcolor{comment}{//\ \ \ \ \ std::vector<double>\ \&xData,}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00149}00149\ \ \ \textcolor{comment}{//\ \ \ \ \ std::vector<double>\ \&yData)\ const}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00150}00150\ \ \ \textcolor{comment}{//\ \{}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00151}00151\ \ \ \textcolor{comment}{//\ \ \ //\ find\ the\ separator}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00152}00152\ \ \ \textcolor{comment}{//\ \ \ std::vector<size\_t>\ separators;}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00153}00153\ \ \ \textcolor{comment}{//\ \ \ for\ (int\ i\ =\ 0;\ i\ <\ xData.size();\ i++)}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00154}00154\ \ \ \textcolor{comment}{//\ \ \ \{}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00155}00155\ \ \ \textcolor{comment}{//\ \ \ \ \ if\ (xData[i]\ ==\ -\/1.0\ \&\&\ yData[i]\ ==\ -\/1.0)}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00156}00156\ \ \ \textcolor{comment}{//\ \ \ \ \ \{}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00157}00157\ \ \ \textcolor{comment}{//\ \ \ \ \ \ \ separators.push\_back(i);}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00158}00158\ \ \ \textcolor{comment}{//\ \ \ \ \ \}}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00159}00159\ \ \ \textcolor{comment}{//\ \ \ \}}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00160}00160\ \ \ \textcolor{comment}{//\ \ \ return\ separators;}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00161}00161\ \ \ \textcolor{comment}{//\ \}}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00162}00162\ }
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00163}00163\ \ \ \textcolor{comment}{//\ void\ MeasurementData::interpolateData(}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00164}00164\ \ \ \textcolor{comment}{//\ \ \ \ \ std::vector<double>\ \&xData,}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00165}00165\ \ \ \textcolor{comment}{//\ \ \ \ \ std::vector<double>\ \&yData)}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00166}00166\ \ \ \textcolor{comment}{//\ \{}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00167}00167\ \ \ \textcolor{comment}{//\ \ \ /*\ Handle\ the\ beginning\ of\ the\ data.\ Hereby,\ the\ data\ always\ starts\ with\ n\ zeros.\ Therefore\ we\ need\ to\ find\ the\ first\ three\ data\ points\ that\ are\ not\ zero.*/}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00168}00168\ \ \ \textcolor{comment}{//\ \ \ int\ i\ =\ 0;}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00169}00169\ \ \ \textcolor{comment}{//\ \ \ int\ I\ =\ 0;}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00170}00170\ \ \ \textcolor{comment}{//\ \ \ int\ flag\ =\ 0;}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00171}00171\ \ \ \textcolor{comment}{//\ \ \ std::vector<double>\ xDataTemp;}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00172}00172\ \ \ \textcolor{comment}{//\ \ \ std::vector<double>\ yDataTemp;}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00173}00173\ \ \ \textcolor{comment}{//\ \ \ while\ (flag\ <\ 3)}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00174}00174\ \ \ \textcolor{comment}{//\ \ \ \{}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00175}00175\ \ \ \textcolor{comment}{//\ \ \ \ \ if\ (i\ >=\ xData.size())}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00176}00176\ \ \ \textcolor{comment}{//\ \ \ \ \ \{}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00177}00177\ \ \ \textcolor{comment}{//\ \ \ \ \ \ \ std::cerr\ <<\ "{}Error:\ The\ data\ set\ is\ too\ small\ to\ interpolate."{}\ <<\ std::endl;}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00178}00178\ \ \ \textcolor{comment}{//\ \ \ \ \ \ \ break;}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00179}00179\ \ \ \textcolor{comment}{//\ \ \ \ \ \}}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00180}00180\ \ \ \textcolor{comment}{//\ \ \ \ \ if\ (yData[i]\ >\ 0.0)}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00181}00181\ \ \ \textcolor{comment}{//\ \ \ \ \ \{}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00182}00182\ \ \ \textcolor{comment}{//\ \ \ \ \ \ \ xDataTemp.push\_back(xData[i]);}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00183}00183\ \ \ \textcolor{comment}{//\ \ \ \ \ \ \ yDataTemp.push\_back(log(yData[i]));\ //\ we\ use\ log\ space\ for\ interpolation}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00184}00184\ \ \ \textcolor{comment}{//\ \ \ \ \ \ \ if\ (flag\ ==\ 0)}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00185}00185\ \ \ \textcolor{comment}{//\ \ \ \ \ \ \ \{}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00186}00186\ \ \ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ I\ =\ i;}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00187}00187\ \ \ \textcolor{comment}{//\ \ \ \ \ \ \ \}}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00188}00188\ \ \ \textcolor{comment}{//\ \ \ \ \ \ \ flag++;}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00189}00189\ \ \ \textcolor{comment}{//\ \ \ \ \ \}}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00190}00190\ \ \ \textcolor{comment}{//\ \ \ \ \ i++;}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00191}00191\ \ \ \textcolor{comment}{//\ \ \ \}}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00192}00192\ \ \ \textcolor{comment}{//\ \ \ //\ calculate\ the\ coefficients\ b0,\ b1,\ and\ b2\ for\ the\ quadratic\ interpolation}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00193}00193\ \ \ \textcolor{comment}{//\ \ \ Matrix\ B\ =\ linreg(xDataTemp,\ yDataTemp,\ 2);}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00194}00194\ \ \ \textcolor{comment}{//\ \ \ //\ calculate\ the\ interpolated\ y-\/axis\ values}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00195}00195\ \ \ \textcolor{comment}{//\ \ \ i\ =\ 0;}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00196}00196\ \ \ \textcolor{comment}{//\ \ \ while\ (yData[i]\ ==\ 0.0)}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00197}00197\ \ \ \textcolor{comment}{//\ \ \ \{}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00198}00198\ \ \ \textcolor{comment}{//\ \ \ \ \ yData[i]\ =\ exp(B(0,\ 0)\ +\ B(1,\ 0)\ *\ xData[i]\ +\ B(2,\ 0)\ *\ xData[i]\ *\ xData[i]);}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00199}00199\ \ \ \textcolor{comment}{//\ \ \ \ \ i++;}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00200}00200\ \ \ \textcolor{comment}{//\ \ \ \}}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00201}00201\ }
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00202}00202\ \ \ \textcolor{comment}{//\ /*\ Handle\ the\ end\ of\ the\ data.\ Hereby,\ the\ data\ always\ ends\ with\ n\ zeros.\ Therefore\ we\ need\ to\ find\ the\ last\ three\ data\ points\ that\ are\ not\ zero.*/}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00203}00203\ \ \ \textcolor{comment}{//\ int\ j\ =\ xData.size()\ -\/\ 1;}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00204}00204\ \ \ \textcolor{comment}{//\ int\ J\ =\ 0;}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00205}00205\ \ \ \textcolor{comment}{//\ flag\ =\ 0;}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00206}00206\ \ \ \textcolor{comment}{//\ xDataTemp.clear();}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00207}00207\ \ \ \textcolor{comment}{//\ yDataTemp.clear();}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00208}00208\ \ \ \textcolor{comment}{//\ while\ (flag\ <\ 3)}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00209}00209\ \ \ \textcolor{comment}{//\ \{}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00210}00210\ \ \ \textcolor{comment}{//\ \ \ if\ (j\ <\ 0)}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00211}00211\ \ \ \textcolor{comment}{//\ \ \ \{}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00212}00212\ \ \ \textcolor{comment}{//\ \ \ \ \ std::cerr\ <<\ "{}Error:\ The\ data\ set\ is\ too\ small\ to\ interpolate."{}\ <<\ std::endl;}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00213}00213\ \ \ \textcolor{comment}{//\ \ \ \ \ break;}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00214}00214\ \ \ \textcolor{comment}{//\ \ \ \}}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00215}00215\ \ \ \textcolor{comment}{//\ \ \ if\ (yData[j]\ >\ 0.0)}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00216}00216\ \ \ \textcolor{comment}{//\ \ \ \{}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00217}00217\ \ \ \textcolor{comment}{//\ \ \ \ \ xDataTemp.push\_back(xData[j]);}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00218}00218\ \ \ \textcolor{comment}{//\ \ \ \ \ yDataTemp.push\_back(log(yData[j]));\ //\ we\ use\ log\ space\ for\ interpolation}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00219}00219\ \ \ \textcolor{comment}{//\ \ \ \ \ if\ (flag\ ==\ 0)}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00220}00220\ \ \ \textcolor{comment}{//\ \ \ \ \ \{}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00221}00221\ \ \ \textcolor{comment}{//\ \ \ \ \ \ \ J\ =\ j;}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00222}00222\ \ \ \textcolor{comment}{//\ \ \ \ \ \}}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00223}00223\ \ \ \textcolor{comment}{//\ \ \ \ \ flag++;}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00224}00224\ \ \ \textcolor{comment}{//\ \ \ \}}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00225}00225\ \ \ \textcolor{comment}{//\ \ \ j-\/-\/;}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00226}00226\ \ \ \textcolor{comment}{//\ \}}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00227}00227\ \ \ \textcolor{comment}{//\ //\ calculate\ the\ coefficients\ b0,\ b1,\ and\ b2\ for\ the\ quadratic\ interpolation}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00228}00228\ \ \ \textcolor{comment}{//\ B\ =\ linreg(xDataTemp,\ yDataTemp,\ 2);}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00229}00229\ \ \ \textcolor{comment}{//\ //\ calculate\ the\ interpolated\ y-\/axis\ values}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00230}00230\ \ \ \textcolor{comment}{//\ j\ =\ xData.size()\ -\/\ 1;}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00231}00231\ \ \ \textcolor{comment}{//\ while\ (yData[j]\ ==\ 0.0)}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00232}00232\ \ \ \textcolor{comment}{//\ \{}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00233}00233\ \ \ \textcolor{comment}{//\ \ \ yData[j]\ =\ exp(B(0,\ 0)\ +\ B(1,\ 0)\ *\ xData[j]\ +\ B(2,\ 0)\ *\ xData[j]\ *\ xData[j]);}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00234}00234\ \ \ \textcolor{comment}{//\ \ \ j-\/-\/;}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00235}00235\ \ \ \textcolor{comment}{//\ \}}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00236}00236\ }
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00237}00237\ \ \ \textcolor{comment}{//\ /*\ Handle\ the\ middle\ of\ the\ data.\ Hereby,\ we\ use\ a\ quadratic\ interpolation\ to\ fill\ the\ gaps\ between\ the\ data\ points.\ */}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00238}00238\ \ \ \textcolor{comment}{//\ //\ iterate\ over\ the\ data\ points\ from\ I\ to\ J}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00239}00239\ \ \ \textcolor{comment}{//\ for\ (int\ i\ =\ I;\ i\ <=\ J;\ i++)}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00240}00240\ \ \ \textcolor{comment}{//\ \{}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00241}00241\ \ \ \textcolor{comment}{//\ \ \ if\ (yData[i]\ ==\ 0.0)}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00242}00242\ \ \ \textcolor{comment}{//\ \ \ \{}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00243}00243\ \ \ \textcolor{comment}{//\ \ \ \ \ //\ now,\ we\ asume\ the\ last\ value\ before\ the\ zero\ appears\ at\ index\ "{}i-\/1"{}\ and\ we\ need\ to\ find\ the\ next\ data\ point\ "{}j"{}\ that\ is\ not\ zero\ to\ define\ the\ range\ for\ the\ interpolation}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00244}00244\ \ \ \textcolor{comment}{//\ \ \ \ \ int\ j\ =\ i\ +\ 1;}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00245}00245\ \ \ \textcolor{comment}{//\ \ \ \ \ while\ (yData[j]\ ==\ 0.0)}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00246}00246\ \ \ \textcolor{comment}{//\ \ \ \ \ \{}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00247}00247\ \ \ \textcolor{comment}{//\ \ \ \ \ \ \ if\ (j\ >=\ J)}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00248}00248\ \ \ \textcolor{comment}{//\ \ \ \ \ \ \ \{}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00249}00249\ \ \ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ break;}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00250}00250\ \ \ \textcolor{comment}{//\ \ \ \ \ \ \ \}}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00251}00251\ \ \ \textcolor{comment}{//\ \ \ \ \ \ \ j++;}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00252}00252\ \ \ \textcolor{comment}{//\ \ \ \ \ \}}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00253}00253\ \ \ \textcolor{comment}{//\ \ \ \ \ //\ now\ we\ have\ the\ range\ from\ "{}i-\/1"{}\ to\ "{}j"{}\ for\ the\ interpolation\ and\ we\ need\ to\ find\ the\ next\ two\ data\ points\ that\ are\ not\ zero\ on\ each\ side\ of\ the\ range\ to\ use\ them\ for\ the\ interpolation\ as\ reference\ points}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00254}00254\ \ \ \textcolor{comment}{//\ \ \ \ \ xDataTemp.clear();}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00255}00255\ \ \ \textcolor{comment}{//\ \ \ \ \ yDataTemp.clear();}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00256}00256\ \ \ \textcolor{comment}{//\ \ \ \ \ int\ k\ =\ i\ -\/\ 1;\ //\ first\ reference\ point\ to\ the\ left}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00257}00257\ \ \ \textcolor{comment}{//\ \ \ \ \ int\ l\ =\ j;\ \ \ \ \ //\ first\ reference\ point\ to\ the\ right}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00258}00258\ }
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00259}00259\ \ \ \textcolor{comment}{//\ \ \ \ \ //\ side:\ left}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00260}00260\ \ \ \textcolor{comment}{//\ \ \ \ \ //\ find\ the\ next\ two\ data\ points\ that\ are\ not\ zero}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00261}00261\ \ \ \textcolor{comment}{//\ \ \ \ \ int\ flag\ =\ 0;}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00262}00262\ \ \ \textcolor{comment}{//\ \ \ \ \ while\ (flag\ <\ 2)}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00263}00263\ \ \ \textcolor{comment}{//\ \ \ \ \ \{}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00264}00264\ \ \ \textcolor{comment}{//\ \ \ \ \ \ \ if\ (k\ <\ I)}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00265}00265\ \ \ \textcolor{comment}{//\ \ \ \ \ \ \ \{}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00266}00266\ \ \ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ break;}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00267}00267\ \ \ \textcolor{comment}{//\ \ \ \ \ \ \ \}}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00268}00268\ \ \ \textcolor{comment}{//\ \ \ \ \ \ \ if\ (yData[k]\ >\ 0.0)}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00269}00269\ \ \ \textcolor{comment}{//\ \ \ \ \ \ \ \{}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00270}00270\ \ \ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ xDataTemp.push\_back(xData[k]);}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00271}00271\ \ \ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ yDataTemp.push\_back(log(yData[k]));\ //\ we\ use\ log\ space\ for\ interpolation}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00272}00272\ \ \ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ flag++;}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00273}00273\ \ \ \textcolor{comment}{//\ \ \ \ \ \ \ \}}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00274}00274\ \ \ \textcolor{comment}{//\ \ \ \ \ \ \ k-\/-\/;}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00275}00275\ \ \ \textcolor{comment}{//\ \ \ \ \ \}}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00276}00276\ \ \ \textcolor{comment}{//\ \ \ \ \ //\ side:\ right}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00277}00277\ \ \ \textcolor{comment}{//\ \ \ \ \ //\ find\ the\ next\ two\ data\ points\ that\ are\ not\ zero}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00278}00278\ \ \ \textcolor{comment}{//\ \ \ \ \ flag\ =\ 0;}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00279}00279\ \ \ \textcolor{comment}{//\ \ \ \ \ while\ (flag\ <\ 2)}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00280}00280\ \ \ \textcolor{comment}{//\ \ \ \ \ \{}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00281}00281\ \ \ \textcolor{comment}{//\ \ \ \ \ \ \ if\ (l\ >\ J)}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00282}00282\ \ \ \textcolor{comment}{//\ \ \ \ \ \ \ \{}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00283}00283\ \ \ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ break;}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00284}00284\ \ \ \textcolor{comment}{//\ \ \ \ \ \ \ \}}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00285}00285\ \ \ \textcolor{comment}{//\ \ \ \ \ \ \ if\ (yData[l]\ >\ 0.0)}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00286}00286\ \ \ \textcolor{comment}{//\ \ \ \ \ \ \ \{}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00287}00287\ \ \ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ xDataTemp.push\_back(xData[l]);}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00288}00288\ \ \ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ yDataTemp.push\_back(log(yData[l]));\ //\ we\ use\ log\ space\ for\ interpolation}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00289}00289\ \ \ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ flag++;}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00290}00290\ \ \ \textcolor{comment}{//\ \ \ \ \ \ \ \}}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00291}00291\ \ \ \textcolor{comment}{//\ \ \ \ \ \ \ l++;}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00292}00292\ \ \ \textcolor{comment}{//\ \ \ \ \ \}}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00293}00293\ \ \ \textcolor{comment}{//\ \ \ \ \ //\ calculate\ the\ coefficients\ b0,\ b1,\ and\ b2\ for\ the\ quadratic\ interpolation}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00294}00294\ \ \ \textcolor{comment}{//\ \ \ \ \ B\ =\ linreg(xDataTemp,\ yDataTemp,\ 2);}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00295}00295\ \ \ \textcolor{comment}{//\ \ \ \ \ //\ calculate\ the\ interpolated\ y-\/axis\ values}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00296}00296\ \ \ \textcolor{comment}{//\ \ \ \ \ for\ (int\ n\ =\ i;\ n\ <\ j;\ n++)}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00297}00297\ \ \ \textcolor{comment}{//\ \ \ \ \ \{}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00298}00298\ \ \ \textcolor{comment}{//\ \ \ \ \ \ \ yData[n]\ =\ exp(B(0,\ 0)\ +\ B(1,\ 0)\ *\ xData[n]\ +\ B(2,\ 0)\ *\ xData[n]\ *\ xData[n]);}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00299}00299\ \ \ \textcolor{comment}{//\ \ \ \ \ \}}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00300}00300\ \ \ \textcolor{comment}{//\ \ \ \}}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00301}00301\ \ \ \textcolor{comment}{//\ \}}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00302}00302\ \ \ \textcolor{comment}{//\ \}}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00303}00303\ }
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data_8cpp_source_l00304}00304\ \}\ \textcolor{comment}{//\ namespace\ q}}
 
 \end{DoxyCode}
