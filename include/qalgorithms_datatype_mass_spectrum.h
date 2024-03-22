@@ -52,6 +52,15 @@ namespace q
             // constructors
             MassSpectrum();
 
+            /**
+             * @brief Construct a new Mass Spectrum object from another Mass Spectrum object
+             * @details The MassSpectrum constructor constructs a new Mass Spectrum object from another Mass Spectrum object. The constructor takes a reference to another Mass Spectrum object. All MetaData will be referenced, and the the last k data points will be moved to the new object. 
+             * 
+             * @param reference mass spectrum object  
+             * @param k number of data points to be moved to the new object, starting from the end of the reference object
+             */
+            MassSpectrum(const MassSpectrum& other, const size_t k);
+
             // destructor
             ~MassSpectrum();
 
@@ -66,10 +75,12 @@ namespace q
                 double, // e.g. retention time
                 MSLevel, // e.g. MS1 or MS2
                 IonizationMode, // e.g. positive or negative
-                MeasurementMode, // e.g. profile or centroid
-                std::vector<std::unique_ptr<DataPoint>> // e.g. intensity, mz, degrees of freedom
+                MeasurementMode // e.g. profile or centroid
             >;
-            std::unordered_map<DataField, variableType> data;
+
+            std::unordered_map<DataField, variableType> metaData;
+            std::vector<std::unique_ptr<DataPoint>> dataPoints;
+            std::pair<bool, MassSpectrum*> isReference;
         };
     }; // namespace datatype
 } // namespace q

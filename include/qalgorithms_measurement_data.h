@@ -26,7 +26,7 @@ namespace q
         // methods
         virtual void readCSV(std::string filename, int rowStart, int rowEnd, int colStart, int colEnd, char separator, std::vector<DataType::DataField> variableTypes) = 0;
 
-        using MS = std::unordered_map<int, std::unique_ptr<DataType::MassSpectrum>>; // map of mass spectra
+        using MS = std::unordered_map<int, std::unique_ptr<DataType::MassSpectrum>>*; // pointer to a map of mass spectra
         using varDataType = std::variant<MS>; // add more data types if needed
         /**
          * @brief Identify and fill gaps in the data
@@ -41,7 +41,7 @@ namespace q
          * @details The cutData method cuts the data into smaller data sets. The method uses the separator value to split the data into smaller data sets. The separator value is set to -1.0 for the x-axis and -1.0 for the y-axis. For each cut, the method creates a new data subset and stores it in the data map using a sub-dataset ID as the secondary key.
          * @param dataObject A variant data type
          */
-        void cutData(varDataType& dataObject) const;
+        void cutData(varDataType& dataMap);
 
         /**
          * @brief Interpolate y-axis values

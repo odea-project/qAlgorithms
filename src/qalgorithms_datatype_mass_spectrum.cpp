@@ -11,7 +11,15 @@ namespace q
   {
     MassSpectrum::MassSpectrum()
     {
-      data[DataField::DATAPOINT] = std::vector<std::unique_ptr<DataPoint>>();
+      dataPoints = std::vector<std::unique_ptr<DataPoint>>();
+      metaData = std::unordered_map<DataField, variableType>();
+      isReference = std::pair<bool, MassSpectrum*>(true, nullptr);
+    }
+
+    MassSpectrum::MassSpectrum(const MassSpectrum& other, const size_t k)
+    {
+      // reference MetaData
+
     }
 
     MassSpectrum::~MassSpectrum()
@@ -21,12 +29,11 @@ namespace q
     // methods
     void MassSpectrum::addDataPoint(double intensity, double mz, int df)
     {
-      std::get<std::vector<std::unique_ptr<DataPoint>>>(data[DataField::DATAPOINT]).push_back(std::make_unique<DataPoint>(intensity, mz, df));
+      dataPoints.push_back(std::make_unique<DataPoint>(intensity, mz, df));
     }
 
     void MassSpectrum::sortDataPoints()
     {
-      auto& dataPoints = std::get<std::vector<std::unique_ptr<DataPoint>>>(data[DataField::DATAPOINT]);
       std::sort(dataPoints.begin(), dataPoints.end(), [](const std::unique_ptr<DataPoint>& a, const std::unique_ptr<DataPoint>& b) { return a->x() < b->x(); });
     }
   }

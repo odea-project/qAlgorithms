@@ -154,46 +154,30 @@ namespace q
                 // add the MassSpectrum object to the data map
                 this->data[scanNumber] = std::make_unique<MassSpectrum>();
                 // add the scan number to the MassSpectrum object
-                this->data[scanNumber]->data[DataField::SCANNUMBER] = VariableType(scanNumber);
+                this->data[scanNumber]->metaData[DataField::SCANNUMBER] = VariableType(scanNumber);
                 // add the retention time to the MassSpectrum object
-                this->data[scanNumber]->data[DataField::RETENTIONTIME] = VariableType(std::stod(raw_data[i][retentionTimeIndex]));
+                this->data[scanNumber]->metaData[DataField::RETENTIONTIME] = VariableType(std::stod(raw_data[i][retentionTimeIndex]));
                 // add the DataPoint Map to the MassSpectrum object
-                this->data[scanNumber]->data[DataField::DATAPOINT] = VariableType(DataPointVector());
+                // this->data[scanNumber]->dataPoints = DataPointVector();
             }
             // create a new DataPoint object and add it to the DataPoint Vector
-            std::get<DataPointVector>(this->data[scanNumber]->data[DataField::DATAPOINT]).push_back(std::make_unique<DataPoint>(std::stod(raw_data[i][intensityIndex]), std::stod(raw_data[i][mzIndex]), 1));
+            this->data[scanNumber]->dataPoints.push_back(std::make_unique<DataPoint>(std::stod(raw_data[i][intensityIndex]), std::stod(raw_data[i][mzIndex]), 1));
+            // std::get<DataPointVector>(this->data[scanNumber]->data[DataField::DATAPOINT]).push_back(std::make_unique<DataPoint>(std::stod(raw_data[i][intensityIndex]), std::stod(raw_data[i][mzIndex]), 1));
         }
     }
 
     void LCMSData::zeroFilling()
     {
-        varDataType dataObject = std::move(this->data);
+        // create a varDataType Object, which is a pointer to a map of mass spectra
+        varDataType dataObject = &(this->data);
         this->MeasurementData::zeroFilling(dataObject, 8);
-
-        // iterate over all data sets and apply zero filling main method
-        // std::for_each(data.begin(), data.end(), [this](auto& pair) {
-        //     varDataType dataObject = std::move(pair.second);
-        //     this->MeasurementData::zeroFilling(dataObject, 8);
-        //     // check if the dataObject is a unique Pointer to a MassSpectrum object
-        //     if (auto massSpectrumPtr = std::get_if<std::unique_ptr<DataType::MassSpectrum>>(&dataObject)) 
-        //     {
-        //         pair.second = std::move(*massSpectrumPtr);
-        //     }
-        // });
     }
 
     void LCMSData::cutData()
     {
-        // iterate over all data sets and apply cut data main method
-        // std::for_each(data.begin(), data.end(), [this](auto& pair) {
-        //     varDataType dataObject = std::move(pair.second);
-        //     // this->MeasurementData::cutData(dataObject);
-        //     // // check if the dataObject is a unique Pointer to a MassSpectrum object
-        //     // if (auto massSpectrumPtr = std::get_if<std::unique_ptr<DataType::MassSpectrum>>(&dataObject)) 
-        //     // {
-        //     //     pair.second = std::move(*massSpectrumPtr);
-        //     // }
-        // });
+        // create a varDataType Object, which is a pointer to a map of mass spectra
+        varDataType dataObject = &(this->data);
+        this->MeasurementData::cutData(dataObject);
     }
 
     // void LCMSData::cutData()
@@ -256,17 +240,17 @@ namespace q
         for (auto it = this->data.begin(); it != this->data.end(); it++)
         {
             std::cout << "Scan Number: " << it->first << std::endl;
-            std::cout << "Retention Time: " << std::get<double>(it->second->data[DataField::RETENTIONTIME]) << std::endl;
-            std::cout << "Number of Data Points: " << std::get<DataPointVector>(it->second->data[DataField::DATAPOINT]).size() << std::endl;
+            std::cout << "Retention Time: " << std::get<double>(it->second->metaData[DataField::RETENTIONTIME]) << std::endl;
+            std::cout << "Number of Data Points: " << it->second->dataPoints.size() << std::endl;
             std::cout << "MZ values: ";
-            for (const auto& dp : std::get<DataPointVector>(it->second->data[DataField::DATAPOINT]))
+            for (const auto& dp : it->second->dataPoints)
             {
                 std::cout << dp->mz << " ";
             }
             std::cout << std::endl;
 
             std::cout << "Intensity values: ";
-            for (const auto& dp : std::get<DataPointVector>(it->second->data[DataField::DATAPOINT]))
+            for (const auto& dp : it->second->dataPoints)
             {
                 std::cout << dp->intensity << " ";
             }

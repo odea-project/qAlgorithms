@@ -10,21 +10,20 @@ namespace q
     std::visit([k](auto &&arg) 
     {
       using T = std::decay_t<decltype(arg)>;
-      if constexpr (std::is_same_v<T, std::unordered_map<int, std::unique_ptr<DataType::MassSpectrum>>>)
+      if constexpr (std::is_same_v<T, std::unordered_map<int, std::unique_ptr<DataType::MassSpectrum>>*>)
       {
         // iterate over the map of varDataType objects
-        std::for_each(arg.begin(), arg.end(), [k](auto &pair) 
-        { 
+        for (auto& pair : *arg)
+        {
           // de-reference the unique pointer of the object
           auto &dataObj = *(pair.second.get());
           // initialize the expected difference
           double expectedDifference = 0.0;
           // initialize the vector of differences
           std::vector<double> differences;
-
           // iterate over data point vector, which is a vector of unique pointers to data points structures
-          // auto& data = std::get<std::vector<std::unique_ptr<typename T::element_type::DataPoint>>>(dataObj.data[DataType::DataField::DATAPOINT]);
-          auto& data = std::get<std::vector<std::unique_ptr<typename T::mapped_type::element_type::DataPoint>>>(dataObj.data[DataType::DataField::DATAPOINT]);
+          auto& data = dataObj.dataPoints;
+        
           double previousX = data[0]->x();
           for (int i = 1; i < data.size(); i++)
           {
@@ -97,10 +96,30 @@ namespace q
           dataObj.addDataPoint(-1.0, data[0]->x() - (gapSize + 1) * expectedDifference, -1.0);
           // sort the data points by x-axis values
           dataObj.sortDataPoints();
-        });
-      }
-    }, dataMap);
-  }
+        } // end of for loop
+      } // end of if statement
+    }, dataMap); // end of visit
+  } // end of zeroFilling
+
+  void MeasurementData::cutData(varDataType &dataMap) {
+    std::visit([](auto &&arg) 
+    {
+      using T = std::decay_t<decltype(arg)>;
+      if constexpr (std::is_same_v<T, std::unordered_map<int, std::unique_ptr<DataType::MassSpectrum>>*>)
+      {
+        // iterate over the map of varDataType objects
+        for (auto& pair : *arg)
+        {
+          // de-reference the unique pointer of the object
+          auto &dataObj = *(pair.second.get());
+          // iterate over data point vector, which is a vector of unique pointers to data points structures
+          // auto& data = std::get<std::vector<std::unique_ptr<typename std::pointer_traits<T>::element_type::mapped_type::element_type::DataPoint>>>(dataObj.dataPoints);
+          
+        } // end of for loop
+      } // end of if statement
+    }, dataMap); // end of visit
+  } // end of cutData
+
 
   // std::vector<size_t> MeasurementData::cutData(
   //     std::vector<double> &xData,
