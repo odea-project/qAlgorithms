@@ -249,13 +249,23 @@ namespace q
               }
               i++;
             }
+            // use p = 2 for quadratic interpolation if xDataTemp.size() > 3 otherwise use p = 1
+            int p = (xDataTemp.size() > 3) ? 2 : 1;
             // calculate the coefficients b0, b1, and b2 for the quadratic interpolation
-            Matrix B = linreg(xDataTemp, yDataTemp, 2);
+            Matrix B = linreg(xDataTemp, yDataTemp, p);
             // calculate the interpolated y-axis values
             i = 0;
             while (dataPoints[i]->y() == 0.0)
             {
-              dataPoints[i]->setY(exp(B(0, 0) + B(1, 0) * dataPoints[i]->x() + B(2, 0) * dataPoints[i]->x() * dataPoints[i]->x()));
+              if (xDataTemp.size() > 3)
+              {
+                dataPoints[i]->setY(exp(B(0, 0) + B(1, 0) * dataPoints[i]->x() + B(2, 0) * dataPoints[i]->x() * dataPoints[i]->x()));
+              }
+              else
+              {
+                dataPoints[i]->setY(exp(B(0, 0) + B(1, 0) * dataPoints[i]->x()));
+              }
+              // dataPoints[i]->setY(exp(B(0, 0) + B(1, 0) * dataPoints[i]->x() + B(2, 0) * dataPoints[i]->x() * dataPoints[i]->x()));
               dataPoints[i]->df = 0;
               // check if the interpolated value is larger than 3 * MAX
               if (dataPoints[i]->y() > 3 * MAX)
