@@ -9,9 +9,6 @@ Config-Datei
 
 Füge den RawData vektor an den Bincontainer an
 
-Alles umorganisieren, um in einem Struct alle Eigenschaften eines Features zu speichern?
-https://stackoverflow.com/questions/5174115/sorting-a-vector-of-objects-by-a-property-of-the-object
-
 Wenn der Bin nach Teilen in RT/Scans genau so groß ist wie vorher, muss nicht erneut mit mz kontorolliert werden
 
 Duplizierte Features crashen den code
@@ -35,56 +32,10 @@ mittlere innendistanz optimieren
 1. Relativ viele Suchvorgänge in einem Scan brauchen 0-1 Iterationen - 4399 von > 7^6 -> nicht relevant, insbesodere da im Rasterfall nur 4k zusätzliche Operationen hinzukommen
 2. Im Schnitt 147 Schritte
 
-#include <cmath>
-#include <cstdlib>
-#include <ctime>
-#include <iostream>
-#include <stdio.h>
-#include <stdlib.h>
-#include <sys/time.h>
-
-long sum(int *array, long length) {
-  long sum = 0;
-  for (long i = 0; i < length; i++) {
-    sum += array[i];
-  }
-  return sum;
-}
-
-int cmp(const void *a, const void *b) { return *(int *)a > *(int *)b; }
-
-int main() {
-    long length = 200000000;
-    int *v1 = (int *)malloc(sizeof(int) * length);
-    srand(0);
-    std::cout << "test";
-    for (long i = 0; i < length; i++) {
-      v1[i] = rand();
-    }
-
-    qsort(v1, length, sizeof(int), cmp);
-    volatile long *results = (long *)malloc(sizeof(long) * length);
-    time_t start = time(0);
-    long beforeSum = sum(v1, length);
-    long afterSum = 0;
-    for (long i = 0; i < length; i++) {
-      long val = (beforeSum - v1[i] * (length - i));
-      long val2 = (v1[i] * i - afterSum);
-      results[i] = val + val2 /n-1;
-      beforeSum -= v1[i];
-      afterSum += v1[i];
-    }
-    time_t end = time(0);
-//    for (int i = 0; i < length; i++) {
-//      printf("|%d|\n", v1[i]);
-//    }
-//    for (int i = 0; i < length; i++) {
-//      printf("|%ld|\n", results[i]);
-//    }
-//    printf("done in: %ld", end - start);
-}
-
 doubles -> floats
 
 prüfen, wie das Programm skaliert -> subdatensätze
 reduce nutzen?
+
+Mehrere Datenstrukturen sind nicht-exklusiv 
+Die Featureliste eines Bins ist bereits eine andere Datenstruktur als die Featureliste, die anfangs erstellt wurde
