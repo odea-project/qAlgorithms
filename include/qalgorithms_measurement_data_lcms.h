@@ -11,7 +11,6 @@ namespace q
     /**
      * @brief A class to store LC-MS measurement data
      * @details The LCMSData class is a subclass of the MeasurementData class used to store LC-MS measurement data.
-     *
      * @param data A map of LC-MS data /ref DataType::LC_MS
      */
     class LCMSData : public MeasurementData
@@ -27,7 +26,6 @@ namespace q
         /**
          * @brief Read LC-MS data from a CSV file
          * @details The readCSV method reads LC-MS data from a CSV file and stores it in the LCMSData object. The method takes the filename of the CSV file, the start and end rows and columns, the separator, and the variable types. The variable types are used to determine the type of data in each column. The method requires the variable types: \b scanNumber, \b retentionTime, \b mz, and \b intensity. Other variable types can be added to the list of variable types.\ref DataType::DataField
-         *
          * @param filename The filename of the CSV file
          * @param rowStart The start row (0-based index)
          * @param rowEnd The end row (if -1, then set to the maximum number of rows)
@@ -35,14 +33,12 @@ namespace q
          * @param colEnd The end column (if -1, then set to the maximum number of columns)
          * @param separator The separator, e.g., ',' or '\t'
          * @param variableTypes The variable types. Required variable types: DataField::SCANNUMBER, DataField::RETENTIONTIME, DataField::MZ, and DataField::INTENSITY
-         *
          */
         void readCSV(std::string filename, int rowStart, int rowEnd, int colStart, int colEnd, char separator, std::vector<DataType::DataField> variableTypes);
 
         /**
          * @brief Write LC-MS data to a CSV file
          * @details The writeCSV method writes LC-MS data to a CSV file. The method takes the filename of the CSV file and writes the LC-MS data to the file.
-         *
          * @param filename The filename of the CSV file
          */
         void writeCSV(std::string filename);
@@ -57,14 +53,12 @@ namespace q
         /**
          * @brief Cut the data into smaller data sets
          * @details The cutData method cuts the data into smaller data sets. The method uses the separator value to split the data into smaller data sets. The separator value is set to -1.0 for the x-axis and -1.0 for the y-axis. For each cut, the method creates a new data subset and stores it in the data map using a sub-dataset ID as the secondary key.
-         *
          */
         void cutData();
 
         /**
          * @brief Filter small data sets
          * @details The filterSmallDataSets method filters small data sets. The method removes data sets with less than 5 data points. This is due to the regression analysis that includes 4 coefficients and therefore requires at least 5 data points.
-         *
          */
         void filterSmallDataSets();
 
@@ -75,7 +69,15 @@ namespace q
         void interpolateData();
 
         // debugging
+        /**
+         * @brief Print the LC-MS datapoints and metadata
+         * @details The print method prints the LC-MS data to the console.
+         */
         void print();
+        /**
+         * @brief Print the LC-MS number of data sets
+         * @details The print method prints the LC-MS data to the console.
+         */
         void info();
 
     private:

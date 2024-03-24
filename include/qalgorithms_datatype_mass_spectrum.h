@@ -36,6 +36,7 @@ namespace q
              * @param DataPoint() Constructor for the DataPoint struct
              * @param x() Getter for the x-axis value
              * @param y() Getter for the y-axis value
+             * @param setY() Setter for the y-axis value
              */
             struct DataPoint
             {
@@ -66,7 +67,19 @@ namespace q
             ~MassSpectrum();
 
             // methods
+            /**
+             * @brief Add a data point to the mass spectrum
+             * @details The addDataPoint method adds a data point to the mass spectrum. The method takes the intensity, mz, and degrees of freedom of the data point.
+             * 
+             * @param intensity The intensity of the mass spectrum data point
+             * @param mz The mass-to-charge ratio of the mass spectrum data point
+             * @param df The degrees of freedom of the mass spectrum data point
+             */
             void addDataPoint(double intensity, double mz, int df);
+            /**
+             * @brief Sort the mass spectrum data points
+             * @details The sortDataPoints method sorts the mass spectrum data points based on the x-axis values.
+             */
             void sortDataPoints();
 
             // properties
@@ -85,7 +98,6 @@ namespace q
             /**
              * @brief This vector stores information for cutting the mass spectrum data.
              * @details The cuttingPoints vector can be seen as a job list for cutting the mass spectrum data. Each element in the vector shows the number of data points counted from the end of the dataPoints vector that should be moved to the new object. The number of elements within the cuttingPoints vector determines the number of new objects that will be created. E.g. cuttingPoints = {10, 5} will create two new objects. The first object will contain the last 10 data points of the original object while these datapoints are removed from the original object. The second object will contain the next last 5 data points of the original object, while these datapoints are also removed from the original object. The original object will contain all data points except the ones that were moved to the new objects.
-             * 
              */
             std::vector<std::unique_ptr<size_t>> cuttingPoints;
         };
