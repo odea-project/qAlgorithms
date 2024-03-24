@@ -5,7 +5,7 @@
 \DoxyCodeLine{\Hypertarget{qalgorithms__datatype__mass__spectrum_8cpp_source_l00001}00001\ \textcolor{comment}{//\ qalgorhithms\_datatype\_mass\_spectrum.cpp}}
 \DoxyCodeLine{\Hypertarget{qalgorithms__datatype__mass__spectrum_8cpp_source_l00002}00002\ }
 \DoxyCodeLine{\Hypertarget{qalgorithms__datatype__mass__spectrum_8cpp_source_l00003}00003\ \textcolor{comment}{//\ internal}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__mass__spectrum_8cpp_source_l00004}00004\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{qalgorithms__datatype__mass__spectrum_8h}{../include/qalgorithms\_datatype\_mass\_spectrum.h}}"{}}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__mass__spectrum_8cpp_source_l00004}00004\ \textcolor{preprocessor}{\#include\ "{}../include/qalgorithms\_datatype\_mass\_spectrum.h"{}}}
 \DoxyCodeLine{\Hypertarget{qalgorithms__datatype__mass__spectrum_8cpp_source_l00005}00005\ }
 \DoxyCodeLine{\Hypertarget{qalgorithms__datatype__mass__spectrum_8cpp_source_l00006}00006\ \textcolor{comment}{//\ external}}
 \DoxyCodeLine{\Hypertarget{qalgorithms__datatype__mass__spectrum_8cpp_source_l00007}00007\ }
@@ -19,36 +19,38 @@
 \DoxyCodeLine{\Hypertarget{qalgorithms__datatype__mass__spectrum_8cpp_source_l00015}00015\ \ \ \ \ \ \ \mbox{\hyperlink{classq_1_1_data_type_1_1_mass_spectrum_a30c0087b21c1b807705187898199e8e4}{metaData}}\ =\ \textcolor{keyword}{new}\ std::unordered\_map<DataField,\ variableType>();}
 \DoxyCodeLine{\Hypertarget{qalgorithms__datatype__mass__spectrum_8cpp_source_l00016}00016\ \ \ \ \ \ \ \mbox{\hyperlink{classq_1_1_data_type_1_1_mass_spectrum_a51f0922e8ad00a37c0e96eaa49c54393}{isParent}}\ =\ std::pair<bool,\ MassSpectrum*>(\textcolor{keyword}{true},\ \textcolor{keyword}{nullptr});}
 \DoxyCodeLine{\Hypertarget{qalgorithms__datatype__mass__spectrum_8cpp_source_l00017}00017\ \ \ \ \ \}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__mass__spectrum_8cpp_source_l00018}00018\ }
-\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__mass__spectrum_8cpp_source_l00019}\mbox{\hyperlink{classq_1_1_data_type_1_1_mass_spectrum_a50c0bdf6e0280fd8d3b4dd2732573840}{00019}}\ \ \ \ \ \mbox{\hyperlink{classq_1_1_data_type_1_1_mass_spectrum_ac0a31524c492db17747c333ab9807f8f}{MassSpectrum::MassSpectrum}}(\mbox{\hyperlink{classq_1_1_data_type_1_1_mass_spectrum}{MassSpectrum}}\&\ other,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{size\_t}\ k)}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__mass__spectrum_8cpp_source_l00018}00018\ \ \ \ }
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__mass__spectrum_8cpp_source_l00019}\mbox{\hyperlink{classq_1_1_data_type_1_1_mass_spectrum_a6c8729294ee61bd4cffe6d223ff9ad04}{00019}}\ \ \ \ \ \mbox{\hyperlink{classq_1_1_data_type_1_1_mass_spectrum_ac0a31524c492db17747c333ab9807f8f}{MassSpectrum::MassSpectrum}}(\mbox{\hyperlink{classq_1_1_data_type_1_1_mass_spectrum}{MassSpectrum}}\&\ parent,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{size\_t}\ k)}
 \DoxyCodeLine{\Hypertarget{qalgorithms__datatype__mass__spectrum_8cpp_source_l00020}00020\ \ \ \ \ \{}
 \DoxyCodeLine{\Hypertarget{qalgorithms__datatype__mass__spectrum_8cpp_source_l00021}00021\ \ \ \ \ \ \ \textcolor{comment}{//\ define\ the\ new\ object\ as\ a\ child\ of\ the\ other\ object}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__mass__spectrum_8cpp_source_l00022}00022\ \ \ \ \ \ \ \mbox{\hyperlink{classq_1_1_data_type_1_1_mass_spectrum_a51f0922e8ad00a37c0e96eaa49c54393}{isParent}}\ =\ std::pair<bool,\ MassSpectrum*>(\textcolor{keyword}{false},\ \&other);}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__mass__spectrum_8cpp_source_l00022}00022\ \ \ \ \ \ \ \mbox{\hyperlink{classq_1_1_data_type_1_1_mass_spectrum_a51f0922e8ad00a37c0e96eaa49c54393}{isParent}}\ =\ std::pair<bool,\ MassSpectrum*>(\textcolor{keyword}{false},\ \&parent);}
 \DoxyCodeLine{\Hypertarget{qalgorithms__datatype__mass__spectrum_8cpp_source_l00023}00023\ \ \ \ \ \ \ \textcolor{comment}{//\ create\ a\ reference\ to\ the\ other\ object's\ metadata}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__mass__spectrum_8cpp_source_l00024}00024\ \ \ \ \ \ \ \mbox{\hyperlink{classq_1_1_data_type_1_1_mass_spectrum_a30c0087b21c1b807705187898199e8e4}{metaData}}\ =\ other.\mbox{\hyperlink{classq_1_1_data_type_1_1_mass_spectrum_a30c0087b21c1b807705187898199e8e4}{metaData}};\ \textcolor{comment}{//\ shared\ metadata\ from\ the\ parent\ object}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__mass__spectrum_8cpp_source_l00024}00024\ \ \ \ \ \ \ \mbox{\hyperlink{classq_1_1_data_type_1_1_mass_spectrum_a30c0087b21c1b807705187898199e8e4}{metaData}}\ =\ parent.\mbox{\hyperlink{classq_1_1_data_type_1_1_mass_spectrum_a30c0087b21c1b807705187898199e8e4}{metaData}};\ \textcolor{comment}{//\ shared\ metadata\ from\ the\ parent\ object}}
 \DoxyCodeLine{\Hypertarget{qalgorithms__datatype__mass__spectrum_8cpp_source_l00025}00025\ \ \ \ \ \ \ \textcolor{comment}{//\ move\ the\ last\ k\ data\ points\ to\ the\ new\ object}}
 \DoxyCodeLine{\Hypertarget{qalgorithms__datatype__mass__spectrum_8cpp_source_l00026}00026\ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{size\_t}\ i\ =\ 0;\ i\ <\ k;\ i++)}
 \DoxyCodeLine{\Hypertarget{qalgorithms__datatype__mass__spectrum_8cpp_source_l00027}00027\ \ \ \ \ \ \ \{}
-\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__mass__spectrum_8cpp_source_l00028}00028\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classq_1_1_data_type_1_1_mass_spectrum_a5ef1b447c6cb624f5535113d602e61cc}{dataPoints}}.push\_back(std::move(other.\mbox{\hyperlink{classq_1_1_data_type_1_1_mass_spectrum_a5ef1b447c6cb624f5535113d602e61cc}{dataPoints}}.back()));}
-\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__mass__spectrum_8cpp_source_l00029}00029\ \ \ \ \ \ \ \ \ other.\mbox{\hyperlink{classq_1_1_data_type_1_1_mass_spectrum_a5ef1b447c6cb624f5535113d602e61cc}{dataPoints}}.pop\_back();}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__mass__spectrum_8cpp_source_l00028}00028\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classq_1_1_data_type_1_1_mass_spectrum_a5ef1b447c6cb624f5535113d602e61cc}{dataPoints}}.push\_back(std::move(parent.\mbox{\hyperlink{classq_1_1_data_type_1_1_mass_spectrum_a5ef1b447c6cb624f5535113d602e61cc}{dataPoints}}.back()));}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__mass__spectrum_8cpp_source_l00029}00029\ \ \ \ \ \ \ \ \ parent.\mbox{\hyperlink{classq_1_1_data_type_1_1_mass_spectrum_a5ef1b447c6cb624f5535113d602e61cc}{dataPoints}}.pop\_back();}
 \DoxyCodeLine{\Hypertarget{qalgorithms__datatype__mass__spectrum_8cpp_source_l00030}00030\ \ \ \ \ \ \ \}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__mass__spectrum_8cpp_source_l00031}00031\ \ \ \ \ \}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__mass__spectrum_8cpp_source_l00032}00032\ }
-\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__mass__spectrum_8cpp_source_l00033}\mbox{\hyperlink{classq_1_1_data_type_1_1_mass_spectrum_a394e3640b0c8c69ccb9b6343e6a947f4}{00033}}\ \ \ \ \ \mbox{\hyperlink{classq_1_1_data_type_1_1_mass_spectrum_a394e3640b0c8c69ccb9b6343e6a947f4}{MassSpectrum::\string~MassSpectrum}}()}
-\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__mass__spectrum_8cpp_source_l00034}00034\ \ \ \ \ \{}
-\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__mass__spectrum_8cpp_source_l00035}00035\ \ \ \ \ \ \ \textcolor{comment}{//\ destructor}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__mass__spectrum_8cpp_source_l00036}00036\ \ \ \ \ \}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__mass__spectrum_8cpp_source_l00037}00037\ \ \ \ \ \textcolor{comment}{//\ methods}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__mass__spectrum_8cpp_source_l00038}\mbox{\hyperlink{classq_1_1_data_type_1_1_mass_spectrum_af93a0e8fb934e1e98a225f29981e2e68}{00038}}\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classq_1_1_data_type_1_1_mass_spectrum_af93a0e8fb934e1e98a225f29981e2e68}{MassSpectrum::addDataPoint}}(\textcolor{keywordtype}{double}\ intensity,\ \textcolor{keywordtype}{double}\ mz,\ \textcolor{keywordtype}{int}\ df)}
-\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__mass__spectrum_8cpp_source_l00039}00039\ \ \ \ \ \{}
-\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__mass__spectrum_8cpp_source_l00040}00040\ \ \ \ \ \ \ \mbox{\hyperlink{classq_1_1_data_type_1_1_mass_spectrum_a5ef1b447c6cb624f5535113d602e61cc}{dataPoints}}.push\_back(std::make\_unique<DataPoint>(intensity,\ mz,\ df));}
-\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__mass__spectrum_8cpp_source_l00041}00041\ \ \ \ \ \}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__mass__spectrum_8cpp_source_l00042}00042\ }
-\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__mass__spectrum_8cpp_source_l00043}\mbox{\hyperlink{classq_1_1_data_type_1_1_mass_spectrum_a4e6df96421a82f05158224da9e490fee}{00043}}\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classq_1_1_data_type_1_1_mass_spectrum_a4e6df96421a82f05158224da9e490fee}{MassSpectrum::sortDataPoints}}()}
-\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__mass__spectrum_8cpp_source_l00044}00044\ \ \ \ \ \{}
-\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__mass__spectrum_8cpp_source_l00045}00045\ \ \ \ \ \ \ std::sort(\mbox{\hyperlink{classq_1_1_data_type_1_1_mass_spectrum_a5ef1b447c6cb624f5535113d602e61cc}{dataPoints}}.begin(),\ \mbox{\hyperlink{classq_1_1_data_type_1_1_mass_spectrum_a5ef1b447c6cb624f5535113d602e61cc}{dataPoints}}.end(),\ [](\textcolor{keyword}{const}\ std::unique\_ptr<DataPoint>\&\ a,\ \textcolor{keyword}{const}\ std::unique\_ptr<DataPoint>\&\ b)\ \{\ return\ a-\/>x()\ <\ b-\/>x();\ \});}
-\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__mass__spectrum_8cpp_source_l00046}00046\ \ \ \ \ \}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__mass__spectrum_8cpp_source_l00047}00047\ \ \ \}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__mass__spectrum_8cpp_source_l00048}00048\ \}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__mass__spectrum_8cpp_source_l00031}00031\ \ \ \ \ \ \ \textcolor{comment}{//\ flip\ dataPoints}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__mass__spectrum_8cpp_source_l00032}00032\ \ \ \ \ \ \ std::reverse(\mbox{\hyperlink{classq_1_1_data_type_1_1_mass_spectrum_a5ef1b447c6cb624f5535113d602e61cc}{dataPoints}}.begin(),\ \mbox{\hyperlink{classq_1_1_data_type_1_1_mass_spectrum_a5ef1b447c6cb624f5535113d602e61cc}{dataPoints}}.end());}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__mass__spectrum_8cpp_source_l00033}00033\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__mass__spectrum_8cpp_source_l00034}00034\ }
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__mass__spectrum_8cpp_source_l00035}\mbox{\hyperlink{classq_1_1_data_type_1_1_mass_spectrum_a394e3640b0c8c69ccb9b6343e6a947f4}{00035}}\ \ \ \ \ \mbox{\hyperlink{classq_1_1_data_type_1_1_mass_spectrum_a394e3640b0c8c69ccb9b6343e6a947f4}{MassSpectrum::\string~MassSpectrum}}()}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__mass__spectrum_8cpp_source_l00036}00036\ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__mass__spectrum_8cpp_source_l00037}00037\ \ \ \ \ \ \ \textcolor{comment}{//\ destructor}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__mass__spectrum_8cpp_source_l00038}00038\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__mass__spectrum_8cpp_source_l00039}00039\ \ \ \ \ \textcolor{comment}{//\ methods}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__mass__spectrum_8cpp_source_l00040}\mbox{\hyperlink{classq_1_1_data_type_1_1_mass_spectrum_af93a0e8fb934e1e98a225f29981e2e68}{00040}}\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classq_1_1_data_type_1_1_mass_spectrum_af93a0e8fb934e1e98a225f29981e2e68}{MassSpectrum::addDataPoint}}(\textcolor{keywordtype}{double}\ intensity,\ \textcolor{keywordtype}{double}\ mz,\ \textcolor{keywordtype}{int}\ df)}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__mass__spectrum_8cpp_source_l00041}00041\ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__mass__spectrum_8cpp_source_l00042}00042\ \ \ \ \ \ \ \mbox{\hyperlink{classq_1_1_data_type_1_1_mass_spectrum_a5ef1b447c6cb624f5535113d602e61cc}{dataPoints}}.push\_back(std::make\_unique<DataPoint>(intensity,\ mz,\ df));}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__mass__spectrum_8cpp_source_l00043}00043\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__mass__spectrum_8cpp_source_l00044}00044\ }
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__mass__spectrum_8cpp_source_l00045}\mbox{\hyperlink{classq_1_1_data_type_1_1_mass_spectrum_a4e6df96421a82f05158224da9e490fee}{00045}}\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classq_1_1_data_type_1_1_mass_spectrum_a4e6df96421a82f05158224da9e490fee}{MassSpectrum::sortDataPoints}}()}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__mass__spectrum_8cpp_source_l00046}00046\ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__mass__spectrum_8cpp_source_l00047}00047\ \ \ \ \ \ \ std::sort(\mbox{\hyperlink{classq_1_1_data_type_1_1_mass_spectrum_a5ef1b447c6cb624f5535113d602e61cc}{dataPoints}}.begin(),\ \mbox{\hyperlink{classq_1_1_data_type_1_1_mass_spectrum_a5ef1b447c6cb624f5535113d602e61cc}{dataPoints}}.end(),\ [](\textcolor{keyword}{const}\ std::unique\_ptr<DataPoint>\&\ a,\ \textcolor{keyword}{const}\ std::unique\_ptr<DataPoint>\&\ b)\ \{\ return\ a-\/>x()\ <\ b-\/>x();\ \});}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__mass__spectrum_8cpp_source_l00048}00048\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__mass__spectrum_8cpp_source_l00049}00049\ \ \ \}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__mass__spectrum_8cpp_source_l00050}00050\ \}}
 
 \end{DoxyCode}
