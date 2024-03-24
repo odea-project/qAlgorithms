@@ -39,17 +39,24 @@ namespace q
         /**
          * @brief Cut the data into smaller data sets
          * @details The cutData method cuts the data into smaller data sets. The method uses the separator value to split the data into smaller data sets. The separator value is set to -1.0 for the x-axis and -1.0 for the y-axis. For each cut, the method creates a new data subset and stores it in the data map using a sub-dataset ID as the secondary key.
-         * @param dataObject A variant data type
+         * @param dataMap A variant data type
+         * @param maxKey The maximum key value in the current data map. This value is used to create a new key for the new data subset.
          */
-        void cutData(varDataType& dataMap);
+        void cutData(varDataType& dataMap, int& maxKey);
+
+        /**
+         * @brief Filter small data sets
+         * @details The filterSmallDataSets method filters small data sets. The method removes data sets with less than 5 data points. This is due to the regression analysis that includes 4 coefficients and therefore requires at least 5 data points.
+         * @param dataMap A variant data type
+         */
+        void filterSmallDataSets(varDataType& dataMap);
 
         /**
          * @brief Interpolate y-axis values
          * @details The interpolateData method interpolates the y-axis values. The method uses quadratic interpolation to interpolate the y-axis values in the log space.
-         * @param xData A vector of x-axis values
-         * @param yData A vector of y-axis values
+         * @param dataMap A variant data type
          */
-        void interpolateData(std::vector<double> &xData, std::vector<double> &yData);
+        void interpolateData(varDataType& dataMap);
 
         // debugging
         // virtual void print() = 0;

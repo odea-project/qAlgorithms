@@ -40,6 +40,14 @@ namespace q
         void readCSV(std::string filename, int rowStart, int rowEnd, int colStart, int colEnd, char separator, std::vector<DataType::DataField> variableTypes);
 
         /**
+         * @brief Write LC-MS data to a CSV file
+         * @details The writeCSV method writes LC-MS data to a CSV file. The method takes the filename of the CSV file and writes the LC-MS data to the file.
+         *
+         * @param filename The filename of the CSV file
+         */
+        void writeCSV(std::string filename);
+
+        /**
          * @brief Identify and fill gaps in the LC-MS data
          * @details The zeroFilling method identifies and fills gaps in the LC-MS data. The method uses difference between two neighboring data points to identify gaps. If the difference is 1.75 times greater than expected, then the method fills the gap with zero values for intensity and inter/extrapolated values for x-axis values. For the expected difference, the method the difference of the last two data points that not show a gap. However, the first expected difference is set to the median of the differences of the total data points. However, the maximum gap size is set to 4 per side, i.e., 8 in total, where there is a gap leftover between the fourth and fifth data points.
          *
@@ -54,16 +62,25 @@ namespace q
         void cutData();
 
         /**
+         * @brief Filter small data sets
+         * @details The filterSmallDataSets method filters small data sets. The method removes data sets with less than 5 data points. This is due to the regression analysis that includes 4 coefficients and therefore requires at least 5 data points.
+         *
+         */
+        void filterSmallDataSets();
+
+        /**
          * @brief Interpolate y-axis values
          * @details The interpolateData method interpolates the y-axis values. The method uses quadratic interpolation to interpolate the y-axis values in the log space.
          */
-        // void interpolateData();
+        void interpolateData();
 
         // debugging
         void print();
+        void info();
 
     private:
         std::unordered_map<int, std::unique_ptr<DataType::MassSpectrum>> data;
+        int maxKey;
     };
 }
 #endif // QALGORITHMS_MEASUREMENT_DATA_LCMS_H

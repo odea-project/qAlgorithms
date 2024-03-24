@@ -145,6 +145,7 @@ namespace q
 
         // transfere the raw data to the data map
         int data_id = 0; // data id is used to identify the data set
+        maxKey = 0;
         for (int i = 0; i < raw_data.size(); i++)
         {
             // check if the scan number is already in the data map
@@ -157,13 +158,36 @@ namespace q
                 (*this->data[scanNumber]->metaData)[DataField::SCANNUMBER] = VariableType(scanNumber);
                 // add the retention time to the MassSpectrum object
                 (*this->data[scanNumber]->metaData)[DataField::RETENTIONTIME] = VariableType(std::stod(raw_data[i][retentionTimeIndex]));
-                // add the DataPoint Map to the MassSpectrum object
-                // this->data[scanNumber]->dataPoints = DataPointVector();
+                // update the maxKey
+                if (scanNumber > maxKey)
+                {
+                    maxKey = scanNumber;
+                }
             }
             // create a new DataPoint object and add it to the DataPoint Vector
-            this->data[scanNumber]->dataPoints.push_back(std::make_unique<DataPoint>(std::stod(raw_data[i][intensityIndex]), std::stod(raw_data[i][mzIndex]), 1));
-            // std::get<DataPointVector>(this->data[scanNumber]->data[DataField::DATAPOINT]).push_back(std::make_unique<DataPoint>(std::stod(raw_data[i][intensityIndex]), std::stod(raw_data[i][mzIndex]), 1));
+            double intensity = std::stod(raw_data[i][intensityIndex]);
+            int df = (intensity > 0) ? 1 : 0;
+            this->data[scanNumber]->dataPoints.push_back(std::make_unique<DataPoint>(intensity, std::stod(raw_data[i][mzIndex]), df));
         }
+    }
+
+    void LCMSData::writeCSV(std::string filename)
+    {
+        // open the file
+        std::ofstream file(filename);
+        // write header using: ID, ScanNumber, RetentionTime, MZ, Intensity (ID is the key for the data map)
+        file << "ID,ScanNumber,RetentionTime,MZ,Intensity" << std::endl;
+        // iterate over all data sets
+        for (auto it = this->data.begin(); it != this->data.end(); it++)
+        {
+            // iterate over all data points
+            for (const auto& dp : it->second->dataPoints)
+            {
+                file << it->first << "," << std::get<int>((*it->second->metaData)[DataField::SCANNUMBER]) << "," << std::get<double>((*it->second->metaData)[DataField::RETENTIONTIME]) << "," << dp->mz << "," << dp->intensity << std::endl;
+            }
+        }
+        //close the file
+        file.close();
     }
 
     void LCMSData::zeroFilling()
@@ -177,63 +201,22 @@ namespace q
     {
         // create a varDataType Object, which is a pointer to a map of mass spectra
         varDataType dataObject = &(this->data);
-        this->MeasurementData::cutData(dataObject);
+        this->MeasurementData::cutData(dataObject, maxKey);
     }
 
-    // void LCMSData::cutData()
-    // {
-    //     // create a new data map to store the updated data
-    //     std::unordered_map<int, std::unordered_map<int, DataType::LC_MS>> updatedData;
-    //     // iterate over all data sets
-    //     for (auto it = this->data.begin(); it != this->data.end(); it++)
-    //     {
-    //         // iterate over all sub data sets
-    //         for (auto it2 = it->second.begin(); it2 != it->second.end(); it2++)
-    //         {
-    //             // read the indices where the data needs to be cut
-    //             std::vector<size_t> indices = this->MeasurementData::cutData(it2->second.mz, it2->second.intensity);
+    void LCMSData::filterSmallDataSets()
+    {
+        // create a varDataType Object, which is a pointer to a map of mass spectra
+        varDataType dataObject = &(this->data);
+        this->MeasurementData::filterSmallDataSets(dataObject);
+    }
 
-    //             if (indices.size() == 0)
-    //             {
-    //                 // no cut is needed. however, zerofilling will add a separator at least at the beginning of the data.
-    //                 updatedData[it->first][it2->first] = it2->second;
-    //             }
-    //             else
-    //             {
-    //                 // cut the data
-    //                 int subID = 0;
-    //                 // add the last index as the size of the data
-    //                 indices.push_back(it2->second.mz.size());
-    //                 for (int i = 0; i < indices.size() - 1; i++)
-    //                 {
-    //                     // create a new data subset
-    //                     DataType::LC_MS newSubset = it2->second;
-    //                     // adjust the mz and intensity vectors
-    //                     newSubset.mz = std::vector<double>(it2->second.mz.begin() + indices[i] + 1, it2->second.mz.begin() + indices[i + 1]);
-    //                     newSubset.intensity = std::vector<double>(it2->second.intensity.begin() + indices[i] + 1, it2->second.intensity.begin() + indices[i + 1]);
-    //                     updatedData[it->first][subID] = newSubset;
-    //                     subID++;
-    //                 }
-    //             }
-    //         }
-    //     }
-
-    //     // update the data map
-    //     this->data = updatedData;
-    // }
-
-    // void LCMSData::interpolateData()
-    // {
-    //     // iterate over all data sets
-    //     for (auto it = this->data.begin(); it != this->data.end(); it++)
-    //     {
-    //         // iterate over all sub data sets
-    //         for (auto it2 = it->second.begin(); it2 != it->second.end(); it2++)
-    //         {
-    //             this->MeasurementData::interpolateData(it2->second.mz, it2->second.intensity);
-    //         }
-    //     }
-    // }
+    void LCMSData::interpolateData()
+    {
+        // create a varDataType Object, which is a pointer to a map of mass spectra
+        varDataType dataObject = &(this->data);
+        this->MeasurementData::interpolateData(dataObject);
+    }
 
     void LCMSData::print()
     {
@@ -262,6 +245,11 @@ namespace q
             }
             std::cout << std::endl;
         }
+    }
+
+    void LCMSData::info()
+    {
+        std::cout << "Number of data sets: " << this->data.size() << std::endl;
     }
 
 } // namespace q

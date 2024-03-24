@@ -47,6 +47,7 @@ namespace q
                 //getters for x and y
                 double& x() { return mz; }
                 double& y() { return intensity; }
+                void setY(double y) { intensity = y; }
             };
 
             // constructors
@@ -59,7 +60,7 @@ namespace q
              * @param reference mass spectrum object  
              * @param k number of data points to be moved to the new object, starting from the end of the reference object
              */
-            MassSpectrum createChild(MassSpectrum& other, const size_t k);
+            MassSpectrum(MassSpectrum& parent, const size_t k);
 
             // destructor
             ~MassSpectrum();
