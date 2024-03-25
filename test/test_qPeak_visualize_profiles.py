@@ -12,26 +12,37 @@ def plot_mz_vs_intensity(file1, file2):
     df1 = df1.groupby('scan').agg({'mz': list, 'int': list}).reset_index()
 
     # group df2 by 'ID' and aggregate 'MZ' and 'Intensity'
-    df2 = df2.groupby('ID').agg({'MZ': list, 'Intensity': list}).reset_index()
+    df2 = df2.groupby('ScanNumber').agg({'MZ': list, 'Intensity': list}).reset_index()
 
     # iterate over each group in df1
     plt.figure()
-    for index, row in df1.iterrows():
-        # create a new figure for each plot
-        # plot 'mz' against 'int' for this group
-        plt.plot(row['mz'], row['int'], 'o', label='File 1')
-        # set the title of the plot to the 'scan' value of this group
-        plt.title(f"Scan: {row['scan']}")
-        # display the plot
 
-    # iterate over each group in df2
-    for index, row in df2.iterrows():
-        # create a new figure for each plot
-        # plot 'MZ' against 'Intensity' for this group
-        plt.plot(row['MZ'], row['Intensity'], 'x', label='File 2')
-        # set the title of the plot to the 'ID' value of this group
-        plt.title(f"ID: {row['ID']}")
-        # display the plot
+    # For df1
+    row = df1.iloc[0]
+    plt.plot(row['mz'], row['int'], 'o', label='File 1')
+    plt.title(f"Scan: {row['scan']}")
+
+    # For df2
+    row = df2.iloc[0]
+    plt.plot(row['MZ'], row['Intensity'], 'x', label='File 2')
+    plt.title(f"ScanNumber: {row['ScanNumber']}")
+
+    # for index, row in df1.iterrows():
+    #     # create a new figure for each plot
+    #     # plot 'mz' against 'int' for this group
+    #     plt.plot(row['mz'], row['int'], 'o', label='File 1')
+    #     # set the title of the plot to the 'scan' value of this group
+    #     plt.title(f"Scan: {row['scan']}")
+    #     # display the plot
+
+    # # iterate over each group in df2
+    # for index, row in df2.iterrows():
+    #     # create a new figure for each plot
+    #     # plot 'MZ' against 'Intensity' for this group
+    #     plt.plot(row['MZ'], row['Intensity'], 'x', label='File 2')
+    #     # set the title of the plot to the 'ScanNumber' value of this group
+    #     plt.title(f"ScanNumber: {row['ScanNumber']}")
+    #     # display the plot
     plt.show()
 
 

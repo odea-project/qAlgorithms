@@ -6,6 +6,7 @@
 // external
 #include <fstream>
 #include <sstream>
+#include <iomanip>
 
 namespace q
 {
@@ -183,7 +184,7 @@ namespace q
             // iterate over all data points
             for (const auto& dp : it->second->dataPoints)
             {
-                file << it->first << "," << std::get<int>((*it->second->metaData)[DataField::SCANNUMBER]) << "," << std::get<double>((*it->second->metaData)[DataField::RETENTIONTIME]) << "," << dp->mz << "," << dp->intensity << std::endl;
+                file << it->first << "," << std::get<int>((*it->second->metaData)[DataField::SCANNUMBER]) << "," << std::get<double>((*it->second->metaData)[DataField::RETENTIONTIME]) << "," << std::setprecision(7) << dp->mz << "," << std::setprecision(4) << dp->intensity << std::endl;
             }
         }
         //close the file

@@ -50,21 +50,21 @@ int main() {
     std::cout << "Elapsed time: " << elapsed.count() << " s\n";
 
 
-    // // export the data to a CSV file
-    // // define the filename
-    // std::string filename_output = "test/data/test_lcms_data_out.csv";
-    // // check if the file exists
-    // if (std::ifstream file(filename_output); file)
-    // {
-    //   // remove the file
-    //   std::remove(filename_output.c_str());
-    // }
-    // lcmsData.writeCSV(filename_output);
+    // export the data to a CSV file
+    // define the filename
+    std::string filename_output = "test/data/test_lcms_data_out.csv";
+    // check if the file exists
+    if (std::ifstream file(filename_output); file)
+    {
+      // remove the file
+      std::remove(filename_output.c_str());
+    }
+    lcmsData.writeCSV(filename_output);
 
     // Call the Python script to plot the data
-    // std::string pythonPath = "C:\\Python312\\python.exe";
-    // std::string command = pythonPath + " test/test_qPeak_visualize_profiles.py" + " " + filename_input + " " + filename_output;
-    // std::system(command.c_str());
+    std::string pythonPath = "C:\\Python312\\python.exe";
+    std::string command = pythonPath + " test/test_qPeak_visualize_profiles.py" + " " + filename_input + " " + filename_output;
+    std::system(command.c_str());
 
 
   return 0;
