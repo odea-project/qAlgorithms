@@ -58,8 +58,8 @@ namespace q
             // consider the difference between two neighboring data points from differences vector and compare it with 1.75 * expectedDifference
             if (differences[i - 1] > 1.75 * expectedDifference)
             {
-              // calculate the gap size
-              int gapSize = (int)(differences[i - 1] / expectedDifference - 1);
+              // calculate the gap size; need to be rounded to the nearest integer
+              int gapSize =  std::round(differences[i - 1] / expectedDifference - 1);
               // check if the gapSize is larger than k, as this is the maximum gap size
               if (gapSize <= k)
               {
@@ -87,6 +87,11 @@ namespace q
                 separators.push_back(counter);
                 counter += k/2;
               }
+            }
+            else
+            {
+              // update expectedDifference
+              expectedDifference = expectedDifference*.5 + differences[i - 1]*.5;
             }
             counter++;
           }
