@@ -43,12 +43,14 @@ namespace q
     {
     private:
         std::vector<double> cumError; // cumulative error in mz
-        double perfMakeDQSB;
-        int subsetcount;
-        double mzRange;
-        int scanRange;
+        double pt_MakeDQSB;
+        int pt_subsetcount;
 
     public:
+        double pt_mzmin;
+        double pt_mzmax;
+        int pt_scanmin;
+        int pt_scanmax;
         std::vector<Feature *> featurelist;
         std::vector<double> activeOS;
         std::vector<double> DQSB;                                                                              // Order Space
@@ -78,7 +80,7 @@ namespace q
         ~BinContainer();
         void makeFirstBin(FeatureList *rawdata);
         void subsetBins(std::vector<int> dimensions, int scanDiffLimit); // select which of the hard-coded subsetting tools should be used in which order, always applies to binDeque. Append to the end, delete from the front
-        void printAllBins(std::string path);
+        void printAllBins(std::string path, FeatureList *rawdata);
         void printBinSummary(std::string path);
         void firstBinValid();                                     // move first bin in binDeque to end
         void clearFirstBin();                                     // remove first bin in binDeque

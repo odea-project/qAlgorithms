@@ -132,7 +132,11 @@ nos <- diff(subbin$mz)
 
 ```{r steps per bin}
 getwd()
-vec <- as.vector(read.csv("../../qBinning_stepsForDQS.csv"))
+qbins <- read.csv("../../qBinning_binposition.csv")
+qbins$index <- c(1:length(qbins$mzmin))
+
+ggplot(qbins)+
+  geom_rect(aes(xmin = scanmin, xmax = scanmax, ymin = mzmin, ymax = mzmax, colour = index))
 ```
 
 
@@ -143,5 +147,18 @@ plot(binstats$size, binstats$time.DQSB.)
 plot(binstats$mean.scans., -binstats$scanRange/binstats$size)
 plot(binstats$mean.mz., log(-binstats$scanRange/binstats$size))
 plot(log(binstats$time.DQSB.), binstats$mean.DQS.)
+```
+
+
+```{r}
+bins <- read.csv("C:/Users/unisys/Documents/Studium/Analytik-Praktikum/qBinning_binlist.csv")
+allfeats <- bins[1:3568034,]
+bins <- bins[3568035:5932735,] # 66% der feature sind in bins
+for (i in c(1:3568034)) {
+  if (allfeats$mz[i] %in% bins$mz){
+  allfeats <- allfeats[-i,]}
+}
+
+
 ```
 

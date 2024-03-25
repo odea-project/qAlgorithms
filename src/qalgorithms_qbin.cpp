@@ -2,11 +2,11 @@
 
 namespace q
 {
-    int subsetcount = 0;
-    int OSzero = 0;
-    int subsets = 0;
-    std::vector<double> stepsForDQS;
-    std::vector<double> scanRelSteps;
+    int pt_subsetcount = 0;
+    int pt_OSzero = 0;
+    int pt_subsets = 0;
+    std::vector<double> pt_stepsForDQS;
+    std::vector<double> pt_scanRelSteps;
 
 #pragma region "Featurelist"
     FeatureList::FeatureList()
@@ -114,7 +114,7 @@ namespace q
                     std::cout << "\nSeparation method " << dimensions[i] << " is not a valid parameter, skipping... \n";
                     break;
                 }
-                ++subsets;
+                ++pt_subsets;
             }
         }
     }
@@ -127,19 +127,29 @@ namespace q
         }
     }
 
-    void BinContainer::printAllBins(std::string path)
+    void BinContainer::printAllBins(std::string path, FeatureList *rawdata)
     {
         std::fstream file_out;
         file_out.open(path);
-        file_out << "mz,scan,RT,bin,dqs\n";
+        if (!file_out.is_open())
+        {
+            throw;
+        }
+
+        file_out << "mz,rt,ID\n";
+        for (size_t i = 0; i < rawdata->allFeatures.size(); i++)
+        {
+            file_out << std::setprecision(15) << rawdata->allFeatures[i]->mz << "," << rawdata->allFeatures[i]->scanNo << "," << 0 << "\n";
+        }
+
         for (size_t i = 0; i < finishedBins.size(); i++)
         {
-            // std::vector<Feature*> features = finishedBins[i].featurelist;
-            // for (size_t j = 0; j < features.size(); j++)
-            // {
-            //     file_out << std::setprecision (15) << features[j]->mz << "," << features[j]->scanNo << "," << features[j]->RT << "," << i << "," << finishedBins[i].DQSB[j] << "\n";
-            // }
-            file_out << finishedBins[i].featurelist.size() << "\n";
+            std::vector<Feature *> features = finishedBins[i].featurelist;
+            for (size_t j = 0; j < features.size(); j++)
+            {
+                file_out << std::setprecision(15) << features[j]->mz << "," << features[j]->scanNo << "," << i+1 << "\n";
+            }
+            // file_out << finishedBins[i].featurelist.size() << "\n";
         }
     }
 
@@ -152,10 +162,10 @@ namespace q
             std::cout << " ";
         }
 
-        file_out << "ID,size,mean(mz),mzRange,mean(scans),scanRange,mean(DQS),subsets,time(DQSB)\n";
+        file_out << "mzmin,mzmax,scanmin,scanmax\n";
         for (size_t i = 0; i < finishedBins.size(); i++)
         {
-            file_out << i << "," << finishedBins[i].summarisePerf() << "\n";
+            file_out << finishedBins[i].pt_mzmin << "," << finishedBins[i].pt_mzmax << "," << finishedBins[i].pt_scanmin << "," << finishedBins[i].pt_scanmax << "\n";
         }
     }
 
@@ -202,7 +212,7 @@ namespace q
 
     void Bin::subsetMZ(std::deque<Bin> *bincontainer, const std::vector<double> &OS, int startBin, int endBin) // bincontainer is binDeque of BinContainer // OS cannot be solved with pointers since index has to be transferred to frature list
     {
-        ++subsetcount;
+        ++pt_subsetcount;
         const int n = endBin - startBin; // size is equal to n+1
         if (n < 5)
         {
@@ -217,7 +227,7 @@ namespace q
         {
             // make bin
             // std::cout << startBin << "," << endBin << "," << subsetcount << "\n"; // not all that useful, since knowledge of position in original order space is always lost
-            subsetcount = 0;
+            pt_subsetcount = 0;
             const Bin output(featurelist.begin() + startBin, featurelist.begin() + endBin);
             // append Bin to bin container
             bincontainer->push_back(output);
@@ -238,6 +248,8 @@ namespace q
     {
         // sort
         int n = featurelist.size();
+        double tmp_pt_mzmin = featurelist.front()->mz;
+        double tmp_pt_mzmax = featurelist.back()->mz;
         std::sort(featurelist.begin(), featurelist.end(), [](const Feature *lhs, const Feature *rhs)
                   { return lhs->scanNo < rhs->scanNo; });
         // if (featurelist.front()->scanNo + n + maxdist > featurelist.back()->scanNo) // sum of all gaps is less than max distance, +n since no element will occur twice in one scan
@@ -273,7 +285,11 @@ namespace q
         // check for open bin at the end
         if (lastpos == 0) // no cut has occurred
         {
-            bincontainer->front().subsetcount = subsets; // ßßß rm
+            bincontainer->front().pt_mzmin = tmp_pt_mzmin;
+            bincontainer->front().pt_mzmax = tmp_pt_mzmax;
+            bincontainer->front().pt_scanmin = featurelist.front()->scanNo;
+            bincontainer->front().pt_scanmax = featurelist.back()->scanNo;
+            bincontainer->front().pt_subsetcount = pt_subsets; // ßßß rm
             finishedBins->push_back(bincontainer->front());
         }
         else if (n + 1 - lastpos > 5)
@@ -300,14 +316,14 @@ namespace q
                 double closestMZ = F->mz;
                 while (F->mz < innerMinmax && position != scanend)
                 {
-                    ++counter; //ßßß
+                    ++counter; // ßßß
                     closestMZ = F->mz;
                     ++position;
                     F = *position;
                 }
                 // std::cout << counter << ",";
-                stepsForDQS.push_back(counter);
-                scanRelSteps.push_back(scansize);
+                pt_stepsForDQS.push_back(counter);
+                pt_scanRelSteps.push_back(scansize);
                 return closestMZ;
             }
         }
@@ -323,17 +339,16 @@ namespace q
                 double closestMZ = F->mz;
                 while (F->mz > innerMinmax && position != scanend)
                 {
-                    ++counter; //ßßß
+                    ++counter; // ßßß
                     closestMZ = F->mz;
                     --position; // suspicion: position is moved outside of feature list
                     F = *position;
                 }
-                stepsForDQS.push_back(counter);
-                scanRelSteps.push_back(scansize);
+                pt_stepsForDQS.push_back(counter);
+                pt_scanRelSteps.push_back(scansize);
                 return closestMZ;
             }
         }
-        
     }
 
     void Bin::makeDQSB(const FeatureList *rawdata, const int &maxdist)
@@ -357,13 +372,13 @@ namespace q
         {
             maxScanNo = rawdata->scanBreaks.size() - 1; // -1 to prevent searching the last value of scandist, which is just the size of the dataset
         }
-        scanRange = featurelist.front()->scanNo - featurelist.back()->scanNo;
+        pt_scanmin = featurelist.front()->scanNo - featurelist.back()->scanNo;
         // sort featurelist by mz
         std::sort(featurelist.begin(), featurelist.end(), [](const Feature *lhs, const Feature *rhs)
                   { return lhs->mz < rhs->mz; });
         double inMin = featurelist.front()->mz;
         double inMax = featurelist.back()->mz;
-        mzRange = inMax - inMin;
+        pt_mzmin = inMax - inMin;
 
         std::vector<Feature *>::const_iterator goToMinOut;
         std::vector<Feature *>::const_iterator goToMaxOut;
@@ -377,8 +392,8 @@ namespace q
             goToMaxOut = rawdata->allFeatures.begin() + rawdata->scanBreaks[i + 1] - 1; // end of the currently checked scan
             minOutOverflow = goToMaxOut;
             maxOutOverflow = goToMinOut;
-            double minOut = findOuterMinmax(goToMinOut, minOutOverflow, inMin, true, rawdata->scanBreaks[i + 1]-rawdata->scanBreaks[i]);
-            double maxOut = findOuterMinmax(goToMaxOut, maxOutOverflow, inMax, false, rawdata->scanBreaks[i + 1]-rawdata->scanBreaks[i]);
+            double minOut = findOuterMinmax(goToMinOut, minOutOverflow, inMin, true, rawdata->scanBreaks[i + 1] - rawdata->scanBreaks[i]);
+            double maxOut = findOuterMinmax(goToMaxOut, maxOutOverflow, inMax, false, rawdata->scanBreaks[i + 1] - rawdata->scanBreaks[i]);
             compspace.push_back(minOut);
             compspace.push_back(maxOut);
         }
@@ -402,22 +417,38 @@ namespace q
         int scanMax;
         double lowestDist;
         double dist;
-        for (size_t i = 0; i < n; i++)
+        // compspace goes from min(scans)-maxdist to min(scans)+maxdist
+        // iterate over vector backwards if minScanNo is 1, otherwise frameshift
+        if (minScanNo == 1)
         {
-            lowestDist = 225;
-
-            for (size_t j = 2 * i; j < 2 * i + 4 * maxdist + 1; j++) // 2*i since every two elements is one new scan. From this i, the range is traversed until two max distances (*2 per scan). +1 to include both elements of the last scan
+            for (size_t i = 0; i < n; i++)
             {
-                dist = std::abs(featurelist[i]->mz - compspace[j]); // ßßß start at -maxdist? Y ßßß gewichtung
-                if (dist < lowestDist)
+                lowestDist = 225;
+                for (size_t i = 0; i < 1; i++)
                 {
-                    lowestDist = dist;
+                    /* code */
                 }
             }
-            minOuter[i] = lowestDist; // minOuter redundant ßßß
-            DQSB.push_back(calcDQS(meanDist[i], minOuter[i]));
-            auto timeEnd = std::chrono::high_resolution_clock::now();
-            perfMakeDQSB = (timeEnd - timeStart).count();
+        }
+        else
+        {
+            for (size_t i = 0; i < n; i++) // does not account for doubles or gaps in scans -> rework
+            {
+                lowestDist = 225;
+
+                for (size_t j = 2 * i; j < 2 * i + 4 * maxdist + 1; j++) // 2*i since every two elements is one new scan. From this i, the range is traversed until two max distances (*2 per scan). +1 to include both elements of the last scan
+                {
+                    dist = std::abs(featurelist[i]->mz - compspace[j]); // ßßß start at -maxdist? Y ßßß gewichtung
+                    if (dist < lowestDist)
+                    {
+                        lowestDist = dist;
+                    }
+                }
+                minOuter[i] = lowestDist; // minOuter redundant ßßß
+                DQSB.push_back(calcDQS(meanDist[i], minOuter[i]));
+                auto timeEnd = std::chrono::high_resolution_clock::now();
+                pt_MakeDQSB = (timeEnd - timeStart).count();
+            }
         }
     }
 
@@ -440,7 +471,7 @@ namespace q
         meanMZ = meanMZ / n;
         meanScan = meanScan / n;
         meanDQS = meanDQS / n;
-        buffer << n << "," << meanMZ << "," << mzRange << "," << meanScan << "," << scanRange << "," << meanDQS << "," << subsetcount << "," << perfMakeDQSB;
+        buffer << n << "," << meanMZ << "," << pt_mzmin << "," << meanScan << "," << pt_scanmin << "," << meanDQS << "," << pt_subsetcount << "," << pt_MakeDQSB;
         std::string output = buffer.str();
         return output;
     }
@@ -507,31 +538,33 @@ int main()
     testcontainer.makeFirstBin(&testdata);
     std::vector<int> dim = {1, 2};    // last element must be the number of scans ßßß implement outside of the switch statement ßßß endless loop if scan terminator is not included
     testcontainer.subsetBins(dim, 7); // 7 = max dist in scans
-    std::cout << "\ncalculating DQSBs...\n";
-    // std::ofstream result("../../qbinning_stepsForDQS.csv");
+                                      // std::cout << "\ncalculating DQSBs...\n";
+
+    // std::ofstream result("../../qbinning_binposition.csv");
     // std::streambuf *coutbuf = std::cout.rdbuf(); // save old buf
     // std::cout.rdbuf(result.rdbuf());             // redirect std::cout to out.txt!
-    testcontainer.assignDQSB(&testdata, 7);
+    // testcontainer.assignDQSB(&testdata, 7);
 
-    std::vector<double> ratio;
-    int oneCount = 0;
-    int otherCount = 0;
-    int meanSteps = 0;
-    for (size_t i = 0; i < q::stepsForDQS.size(); i++)
-    {
-        if (q::stepsForDQS[i] == 1)
-        {
-            ++oneCount;
-        }
-        else{
-            ++otherCount;
-            ratio.push_back(q::stepsForDQS[i]/q::scanRelSteps[i]);
-            meanSteps += q::stepsForDQS[i];
-        }
-        
-    }
-    meanSteps = meanSteps/otherCount;
-    std::cout << oneCount << ", " << meanSteps;
+    testcontainer.printAllBins("../../qbinning_binlist.csv", &testdata);
+    // std::vector<double> ratio;
+    // int oneCount = 0;
+    // int otherCount = 0;
+    // int meanSteps = 0;
+    // for (size_t i = 0; i < q::pt_stepsForDQS.size(); i++)
+    // {
+    //     if (q::pt_stepsForDQS[i] == 1)
+    //     {
+    //         ++oneCount;
+    //     }
+    //     else
+    //     {
+    //         ++otherCount;
+    //         ratio.push_back(q::pt_stepsForDQS[i] / q::pt_scanRelSteps[i]);
+    //         meanSteps += q::pt_stepsForDQS[i];
+    //     }
+    // }
+    // meanSteps = meanSteps / otherCount;
+    // std::cout << oneCount << ", " << meanSteps;
 
     // std::cout.rdbuf(coutbuf); // reset to standard output again
     std::cout << "\n\nDone!\n\n";
