@@ -62,7 +62,8 @@ int main() {
     lcmsData.writeCSV(filename_output);
 
     // Call the Python script to plot the data
-    std::string pythonPath = "C:\\Python312\\python.exe";
+    // std::string pythonPath = "C:\\Python312\\python.exe";
+    std::string pythonPath = "C:\\Users\\gerri\\AppData\\Local\\Programs\\Python\\Python312\\python.exe";
     std::string command = pythonPath + " test/test_qPeak_visualize_profiles.py" + " " + filename_input + " " + filename_output;
     std::system(command.c_str());
 

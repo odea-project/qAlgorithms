@@ -214,6 +214,7 @@ namespace q
                  using T = std::decay_t<decltype(arg)>;
                  if constexpr (std::is_same_v<T, std::unordered_map<int, std::unique_ptr<DataType::MassSpectrum>> *>)
                  {
+                   std::vector<int> keysToDelete;
                    // iterate over the map of varDataType objects
                    for (auto &pair : *arg)
                    {
@@ -234,98 +235,87 @@ namespace q
                          }
                        }
 
-                       /* Handle the beginning of the data. Hereby, the data always starts with n zeros. Therefore we need to find the first four data points that are not zero.*/
-                       int i = 0;
-                       int I = 0;
-                       int flag = 0;
+                       /* Data points at the edges will be extrapolated. Therefore, first and last non-zero data points and maximum data point are log-transformed and considered for parabola definition. Edge data points are then replaced by the extrapolated values from parabola and back transformed into linear space using exp function.*/
+                       // find the first and last data points in dataPoints->y() that are not zero and store them in xDataTemp and yDataTemp
                        std::vector<double> xDataTemp;
                        std::vector<double> yDataTemp;
-                       while (flag < 4)
+                       int I = 0;
+                       int J = 0;
+                       // iterate over the data points to find the first data point that is not zero
+                       for (int i = 0; i < dataPoints.size(); i++)
                        {
-                         if (i >= dataPoints.size())
-                         {
-                           std::cerr << "Error: The data set is too small to interpolate." << std::endl;
-                           break;
-                         }
                          if (dataPoints[i]->y() > 0.0)
                          {
+                           I = i;
                            xDataTemp.push_back(dataPoints[i]->x() - dataPoints[0]->x());
-                           yDataTemp.push_back(log(dataPoints[i]->y())); // we use log space for interpolation
-                           if (flag == 0)
-                           {
-                             I = i; // store the index of the first data point that is not zero
-                           }
-                           flag++;
+                           yDataTemp.push_back(log(dataPoints[i]->y())); // we use log space for extrapolation
+                           break;
                          }
-                         i++;
                        }
-                       // calculate the coefficients b0, b1, and b2 for the quadratic interpolation
-                       Matrix B = linreg(xDataTemp, yDataTemp, 2);
-                       // check if B(2, 0) is positive -> the regression is not valid and has to be repeated with p = 1
-                       if (B(2, 0) > 0)
+                       // iterate over the data points to find the last data point that is not zero
+                       for (int j = dataPoints.size() - 1; j >= 0; j--)
                        {
-                         B = linreg(xDataTemp, yDataTemp, 1);
+                         if (dataPoints[j]->y() > 0.0)
+                         {
+                           J = j;
+                           xDataTemp.push_back(dataPoints[j]->x() - dataPoints[0]->x());
+                           yDataTemp.push_back(log(dataPoints[j]->y())); // we use log space for extrapolation
+                           break;
+                         }
                        }
-                       // calculate the interpolated y-axis values
-                       i = 0;
-                       while (dataPoints[i]->y() == 0.0)
+                       // find the maximum data point
+                       double max = 0.0;
+                       int maxIndex = 0;
+                       for (int k = I; k < J; k++)
+                       {
+                         if (dataPoints[k]->y() > max)
+                         {
+                           max = dataPoints[k]->y();
+                           maxIndex = k;
+                         }
+                       }
+                       xDataTemp.push_back(dataPoints[maxIndex]->x() - dataPoints[0]->x());
+                       yDataTemp.push_back(log(dataPoints[maxIndex]->y())); // we use log space for extrapolation
+
+                       /* For later peak detection, it has to be ensured that the maximum of y values is not the first or last non-zero data point.*/
+                       if (maxIndex == I || maxIndex == J)
+                       {
+                         // delete /clear the arg map entry
+                         if (dataObj.isParent.first == false)
+                         {
+                           // Store the key of the element to delete
+                           keysToDelete.push_back(pair.first);
+                         }
+                         else
+                         {
+                           // clean dataPoints vector
+                           dataPoints.clear();
+                         }
+                         continue;
+                       }
+
+                       // calculate the coefficients b0, b1, and b2 for the quadratic extrapolation
+                       Matrix B = linreg(xDataTemp, yDataTemp, 2);
+                       // extrapolate the y-axis values for i=0 to I-1 and j=J+1 to dataPoints.size()-1
+                       for (int i = 0; i < I; i++)
                        {
                          dataPoints[i]->setY(exp(B(0, 0) + B(1, 0) * (dataPoints[i]->x() - dataPoints[0]->x()) + B(2, 0) * (dataPoints[i]->x() - dataPoints[0]->x()) * (dataPoints[i]->x() - dataPoints[0]->x())));
                          dataPoints[i]->df = 0;
-
-                         // check if the interpolated value is larger than 3 * MAX
+                         // check if the extrapolated value is larger than 3 * MAX
                          if (dataPoints[i]->y() > 3 * MAX)
                          {
                            dataPoints[i]->setY(3 * MAX);
                          }
-                         i++;
                        }
-
-                       /* Handle the end of the data. Hereby, the data always ends with n zeros. Therefore we need to find the last four data points that are not zero.*/
-                       int j = dataPoints.size() - 1;
-                       int J = 0;
-                       flag = 0;
-                       xDataTemp.clear();
-                       yDataTemp.clear();
-                       while (flag < 4)
-                       {
-                         if (j < 0)
-                         {
-                           std::cerr << "Error: The data set is too small to interpolate." << std::endl;
-                           break;
-                         }
-                         if (dataPoints[j]->y() > 0.0)
-                         {
-                           xDataTemp.push_back(dataPoints[j]->x() - dataPoints[0]->x());
-                           yDataTemp.push_back(log(dataPoints[j]->y())); // we use log space for interpolation
-                           if (flag == 0)
-                           {
-                             J = j; // store the index of the last data point that is not zero
-                           }
-                           flag++;
-                         }
-                         j--;
-                       }
-                       // calculate the coefficients b0, b1, and b2 for the quadratic interpolation
-                       B = linreg(xDataTemp, yDataTemp, 2);
-                       // check if B(2, 0) is positive -> the regression is not valid and has to be repeated with p = 1
-                       if (B(2, 0) > 0)
-                       {
-                         B = linreg(xDataTemp, yDataTemp, 1);
-                       }
-                       // calculate the interpolated y-axis values
-                       j = dataPoints.size() - 1;
-                       while (dataPoints[j]->y() == 0.0)
+                       for (int j = J + 1; j < dataPoints.size(); j++)
                        {
                          dataPoints[j]->setY(exp(B(0, 0) + B(1, 0) * (dataPoints[j]->x() - dataPoints[0]->x()) + B(2, 0) * (dataPoints[j]->x() - dataPoints[0]->x()) * (dataPoints[j]->x() - dataPoints[0]->x())));
                          dataPoints[j]->df = 0;
-
-                         // check if the interpolated value is larger than 3 * MAX
+                         // check if the extrapolated value is larger than 3 * MAX
                          if (dataPoints[j]->y() > 3 * MAX)
                          {
                            dataPoints[j]->setY(3 * MAX);
                          }
-                         j--;
                        }
 
                        /* Handle the middle of the data. Hereby, we use a quadratic interpolation to fill the gaps between the data points. */
@@ -386,32 +376,11 @@ namespace q
                            }
                            // calculate the coefficients b0, b1, and b2 for the quadratic interpolation
                            B = linreg(xDataTemp, yDataTemp, 2);
-                          //  // check if when p = 2 and B(2, 0) is positive -> the regression is not valid and has to be repeated with p = 1
-                          //  if (B(2, 0) > 0)
-                          //  {
-                          //    B = linreg(xDataTemp, yDataTemp, 1);
-                          //  }
                            // calculate the interpolated y-axis values
                            for (int n = i; n < j; n++)
                            {
                              dataPoints[n]->setY(exp(B(0, 0) + B(1, 0) * (dataPoints[n]->x() - dataPoints[0]->x()) + B(2, 0) * (dataPoints[n]->x() - dataPoints[0]->x()) * (dataPoints[n]->x() - dataPoints[0]->x())));
                              dataPoints[n]->df = 0;
-                             // check if the interpolated value is nan
-                             if (std::isnan(dataPoints[n]->y()))
-                             {
-                               std::cout << "NAN in the middle of the data: ";
-                               // print xDataTemp and yDataTemp
-                               for (int k = 0; k < xDataTemp.size(); k++)
-                               {
-                                 std::cout << xDataTemp[k] << " ";
-                               }
-                               std::cout << " || ";
-                               for (int k = 0; k < yDataTemp.size(); k++)
-                               {
-                                 std::cout << yDataTemp[k] << " ";
-                               }
-                               std::cout << std::endl;
-                             }
                              // check if the interpolated value is larger than 3 * MAX
                              if (dataPoints[n]->y() > 3 * MAX)
                              {
@@ -421,6 +390,11 @@ namespace q
                          }
                        }
                      }
+                   }
+                   // Delete the elements after the iteration
+                   for (const auto &key : keysToDelete)
+                   {
+                     arg->erase(key);
                    }
                  } // end of if statement
                },
