@@ -26,16 +26,18 @@ namespace q
         double mzError;
         double RT;
         int scanNo;
+        int pt_binID;
     };
 
     class FeatureList
     {
     public:
-        FeatureList();
+        FeatureList(int in_numberOfScans);
         ~FeatureList();
-        std::vector<Feature *> allFeatures;
+        int numberOfScans;
+        std::vector<std::vector<Feature *>> allFeatures;
         std::vector<int> scanBreaks; // contains start point of new scan window in order; assumes incoming features are sorted by scans
-        void readcsv(std::string user_file, int d_mz, int d_mzError, int d_RT, int d_scanNo);
+        void readcsv(std::string user_file, int d_mz, int d_mzError, int d_RT, int d_scanNo, int pt_d_binID);
     };
 
     // Bin Class

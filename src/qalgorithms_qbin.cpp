@@ -9,48 +9,45 @@ namespace q
     std::vector<double> pt_scanRelSteps;
 
 #pragma region "Featurelist"
-    FeatureList::FeatureList()
+    FeatureList::FeatureList(int in_numberOfScans)
     {
-        scanBreaks = {0, 0}; // two zeros so index 1 is equivalent to scan 1
+        numberOfScans = in_numberOfScans;
+        scanBreaks = {0, 0}; // two zeros so index 1 is equivalent to scan 1 ßßß superfluous
     }
     FeatureList::~FeatureList() {}
-    void FeatureList::readcsv(std::string user_file, int d_mz, int d_mzError, int d_RT, int d_scanNo)
+    void FeatureList::readcsv(std::string user_file, int d_mz, int d_mzError, int d_RT, int d_scanNo, int pt_d_binID)
     {
+        allFeatures.resize(numberOfScans, std::vector<Feature *>(0));
         std::ifstream file(user_file);
+        if (!file.is_open())
+            std::cout << "the file could not be opened\n";
 
         if (!file.good())
             std::cout << "something is wrong with the input file\n";
         std::string line;
         std::string dummy;
         std::getline(file, dummy); // do not read first row ßßß data is probably not going to be passed with headers
-        int linecounter = 0;
-        int prevScan = 1;
         while (std::getline(file, line))
         {
             std::istringstream ss(line);
             std::string cell;
             std::vector<double> row;
+            row.reserve(5); // ßßß adjust to input length
 
             while (std::getline(ss, cell, ','))
             {
                 row.push_back(std::stod(cell));
             }
-#pragma GCC diagnostic push // do not display the specific warning for rounding a double to integer
-#pragma GCC diagnostic ignored "-Wnarrowing"
-            int i_scanNo = (int)row[d_scanNo]; // round gives warning, conversion functions as intended
-#pragma GCC diagnostic pop
-            Feature *F = new Feature{row[d_mz], row[d_mzError], row[d_RT], i_scanNo};
-            allFeatures.push_back(F);
-            // check if scan changed from previous line
-            if (i_scanNo != prevScan)
-            {
-                prevScan = i_scanNo;
-                scanBreaks.push_back(linecounter); // scan == 1 from scanBreaks[0] to scanBreaks[1]-1 etc.
-            }
+            int i_scanNo = (int)row[d_scanNo] - 1; // gives warning, conversion functions as intended; -1 so all scans are 0-indexed ßßß control for output
+            Feature *F = new Feature{row[d_mz], row[d_mzError], row[d_RT], i_scanNo, row[pt_d_binID]};
 
-            ++linecounter;
+            allFeatures[i_scanNo].push_back(F); // every subvector in allFeatures is one complete scan - does not require a sorted input file!
         }
-        scanBreaks.push_back(linecounter); // last entry is size of the dataset
+        // ßßß remove if no benefit
+        for (size_t i = 0; i < numberOfScans; i++)
+        {
+            allFeatures[i].resize(allFeatures[i].size());
+        }
     }
 #pragma endregion "Featurelist"
 
@@ -137,17 +134,17 @@ namespace q
         }
 
         file_out << "mz,rt,ID\n";
-        for (size_t i = 0; i < rawdata->allFeatures.size(); i++)
-        {
-            file_out << std::setprecision(15) << rawdata->allFeatures[i]->mz << "," << rawdata->allFeatures[i]->scanNo << "," << 0 << "\n";
-        }
+        // for (size_t i = 0; i < rawdata->allFeatures.size(); i++)
+        // {
+        //     file_out << std::setprecision(15) << rawdata->allFeatures[i]->mz << "," << rawdata->allFeatures[i]->scanNo << "," << 0 << "\n";
+        // }
 
         for (size_t i = 0; i < finishedBins.size(); i++)
         {
             std::vector<Feature *> features = finishedBins[i].featurelist;
             for (size_t j = 0; j < features.size(); j++)
             {
-                file_out << std::setprecision(15) << features[j]->mz << "," << features[j]->scanNo << "," << i+1 << "\n";
+                file_out << std::setprecision(15) << features[j]->mz << "," << features[j]->scanNo << "," << i + 1 << "\n";
             }
             // file_out << finishedBins[i].featurelist.size() << "\n";
         }
@@ -179,7 +176,16 @@ namespace q
     }
     Bin::Bin(FeatureList *rawdata)
     {
-        featurelist = rawdata->allFeatures; // pointers ßßß
+        for (size_t i = 0; i < rawdata->numberOfScans; i++)
+        {
+            featurelist.insert(featurelist.end(), rawdata->allFeatures[i].begin(), rawdata->allFeatures[i].end());
+            // std::copy(rawdata->allFeatures[i].begin(), rawdata->allFeatures[i].end(), featurelist.end());
+            // featurelist.insert( // move vector
+            //     featurelist.end(),
+            //     std::make_move_iterator(rawdata->allFeatures[i].begin()),
+            //     std::make_move_iterator(rawdata->allFeatures[i].end()));
+        }
+        featurelist.resize(featurelist.size());
     }
     Bin::~Bin() {}
 
@@ -301,6 +307,26 @@ namespace q
         // }
     }
 
+    // void Bin::makeDQSB(const FeatureList *rawdata, const int &maxdist)
+    // {
+    //     int n = featurelist.size();
+    //     DQSB.reserve(n);
+    //     // determine start and end of relevant scan section, used as repeats for the for loop
+    //     int minScanNo = featurelist.front()->scanNo - maxdist - 1;
+    //     if (minScanNo < 0)
+    //     {
+    //         minScanNo = 0;
+    //     }
+    //     int maxScanNo = featurelist.back()->scanNo + maxdist;
+    //     if (maxScanNo > rawdata->allFeatures.size())
+    //     {
+    //         maxScanNo = rawdata->allFeatures.size();
+    //     }
+    //     // determine min and max in mz
+
+    //     // place iterator at p0, check conditions; Advance one, then advance in steps of 1/10 scan size
+    // }
+
     double Bin::findOuterMinmax(std::vector<Feature *>::const_iterator position, std::vector<Feature *>::const_iterator scanend, const double &innerMinmax, bool direction, int scansize)
     {                           // direction TRUE = forward, direction FALSE = backwards
         Feature *F = *position; // position is a null pointer
@@ -388,14 +414,14 @@ namespace q
 
         for (int i = minScanNo; i < maxScanNo; i++) // iterate over all scans viable for entire bin
         {
-            goToMinOut = rawdata->allFeatures.begin() + rawdata->scanBreaks[i];         // start of the currently cheked scan
-            goToMaxOut = rawdata->allFeatures.begin() + rawdata->scanBreaks[i + 1] - 1; // end of the currently checked scan
-            minOutOverflow = goToMaxOut;
-            maxOutOverflow = goToMinOut;
-            double minOut = findOuterMinmax(goToMinOut, minOutOverflow, inMin, true, rawdata->scanBreaks[i + 1] - rawdata->scanBreaks[i]);
-            double maxOut = findOuterMinmax(goToMaxOut, maxOutOverflow, inMax, false, rawdata->scanBreaks[i + 1] - rawdata->scanBreaks[i]);
-            compspace.push_back(minOut);
-            compspace.push_back(maxOut);
+            // goToMinOut = rawdata->allFeatures.begin() + rawdata->scanBreaks[i];         // start of the currently cheked scan
+            // goToMaxOut = rawdata->allFeatures.begin() + rawdata->scanBreaks[i + 1] - 1; // end of the currently checked scan
+            // minOutOverflow = goToMaxOut;
+            // maxOutOverflow = goToMinOut;
+            // double minOut = findOuterMinmax(goToMinOut, minOutOverflow, inMin, true, rawdata->scanBreaks[i + 1] - rawdata->scanBreaks[i]);
+            // double maxOut = findOuterMinmax(goToMaxOut, maxOutOverflow, inMax, false, rawdata->scanBreaks[i + 1] - rawdata->scanBreaks[i]);
+            // compspace.push_back(minOut);
+            // compspace.push_back(maxOut);
         }
 
         // create vector of mean distance to other features
@@ -526,8 +552,8 @@ int main()
     // std::cout.rdbuf(result.rdbuf());             // redirect std::cout to out.txt!
     // std::cout << "scan,position\n";
 
-    q::FeatureList testdata;
-    testdata.readcsv("../../rawdata/qCentroid_Warburg_pos_171123_01_Zu_01.csv", 0, 7, 5, 6); // ../../rawdata/qCentroid_Warburg_pos_171123_01_Zu_01.csv ../test/test.csv
+    q::FeatureList testdata(2533);                                                              // 2533 scans in Warburg dataset
+    testdata.readcsv("../../rawdata/qBinnings_Warburg_pos_171123_01_Zu_01.csv", 0, 4, 1, 2, 7); // ../../rawdata/qCentroid_Warburg_pos_171123_01_Zu_01.csv ../test/test.csv
     // for (size_t i = 0; i < testdata.scanBreaks.size(); i++)
     // {
     //     std::cout << i << "," << testdata.scanBreaks[i] << "\n";
@@ -538,7 +564,7 @@ int main()
     testcontainer.makeFirstBin(&testdata);
     std::vector<int> dim = {1, 2};    // last element must be the number of scans ßßß implement outside of the switch statement ßßß endless loop if scan terminator is not included
     testcontainer.subsetBins(dim, 7); // 7 = max dist in scans
-                                      // std::cout << "\ncalculating DQSBs...\n";
+    std::cout << "\ncalculating DQSBs...\n";
 
     // std::ofstream result("../../qbinning_binposition.csv");
     // std::streambuf *coutbuf = std::cout.rdbuf(); // save old buf
