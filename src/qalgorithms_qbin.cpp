@@ -7,6 +7,7 @@ namespace q
     int pt_subsets = 0;
     std::vector<double> pt_stepsForDQS;
     std::vector<double> pt_scanRelSteps;
+    std::vector<Feature *> pt_outOfBins;
 
 #pragma region "Featurelist"
     FeatureList::FeatureList(int in_numberOfScans)
@@ -38,6 +39,7 @@ namespace q
             {
                 row.push_back(std::stod(cell));
             }
+            // add conditional here to set feature error to mz* x ppm ßßß
             int i_scanNo = (int)row[d_scanNo] - 1; // gives warning, conversion functions as intended; -1 so all scans are 0-indexed ßßß control for output
             Feature *F = new Feature{row[d_mz], row[d_mzError], row[d_RT], i_scanNo, row[pt_d_binID]};
 
@@ -114,6 +116,7 @@ namespace q
                 ++pt_subsets;
             }
         }
+        // finishedBins.resize(finishedBins.size()); //ßßß why does this result in an error?
     }
 
     void BinContainer::assignDQSB(const FeatureList *rawdata, int maxdist)
@@ -219,22 +222,31 @@ namespace q
     void Bin::subsetMZ(std::deque<Bin> *bincontainer, const std::vector<double> &OS, int startBin, int endBin) // bincontainer is binDeque of BinContainer // OS cannot be solved with pointers since index has to be transferred to frature list
     {
         ++pt_subsetcount;
-        const int n = endBin - startBin; // size is equal to n+1
+        const int n = endBin - startBin + 1; // +1 to avoid lenth zero
         if (n < 5)
         {
+            if (n == 1)
+            {
+                pt_outOfBins.push_back(*featurelist.begin() + startBin);
+            }
+            else
+            {
+
+                pt_outOfBins.insert(pt_outOfBins.end(), featurelist.begin() + startBin, featurelist.begin() + endBin + 1); // ßßß place discarded features in separate table
+            }
             return;
         }
 
         auto pmax = std::max_element(OS.begin() + startBin, OS.begin() + endBin - 1); // -1 to not include maximum at which the previous cut occurred
 
-        double vcrit = 3.05037165842070 * pow(log(n + 1), (-0.4771864667153)) * (cumError[endBin] - cumError[startBin]) / n; // critical value for alpha = 0.01. ßßß add functionality for custom alpha?
+        double vcrit = 3.05037165842070 * pow(log(n), (-0.4771864667153)) * (cumError[endBin] - cumError[startBin]) / (n - 1); // critical value for alpha = 0.01. ßßß add functionality for custom alpha?
         double max = *pmax;
         if (max < vcrit) // all values in range are part of one mz bin
         {
             // make bin
             // std::cout << startBin << "," << endBin << "," << subsetcount << "\n"; // not all that useful, since knowledge of position in original order space is always lost
             pt_subsetcount = 0;
-            const Bin output(featurelist.begin() + startBin, featurelist.begin() + endBin);
+            const Bin output(featurelist.begin() + startBin, featurelist.begin() + endBin + 1);
             // append Bin to bin container
             bincontainer->push_back(output);
             return;
@@ -258,15 +270,7 @@ namespace q
         double tmp_pt_mzmax = featurelist.back()->mz;
         std::sort(featurelist.begin(), featurelist.end(), [](const Feature *lhs, const Feature *rhs)
                   { return lhs->scanNo < rhs->scanNo; });
-        // if (featurelist.front()->scanNo + n + maxdist > featurelist.back()->scanNo) // sum of all gaps is less than max distance, +n since no element will occur twice in one scan
-        // { // ßßß only is true if no scan is present more than once
-        //     ++perfectbins;
-        //     finishedBins->push_back(bincontainer->front()); // moves first element of que to vector of complete bins, since bin is good
-        // }
-        // else
-        // {
         std::vector<Feature *>::iterator newstart = featurelist.begin();
-        // std::vector<Feature>::iterator newend = featurelist.begin();
         int lastpos = 0;
         for (size_t i = 1; i < n; i++)
         {
@@ -275,7 +279,8 @@ namespace q
                 // less than five features in bin
                 if (i - lastpos - 1 < 5)
                 {
-                    newstart = featurelist.begin() + i; // new start is one behind current i
+                    pt_outOfBins.insert(pt_outOfBins.end(), newstart, featurelist.begin() + i - 1); // ßßß place discarded features in separate table
+                    newstart = featurelist.begin() + i;                                             // new start is one behind current i
                 }
                 else
                 {
@@ -304,7 +309,10 @@ namespace q
             Bin output(newstart, featurelist.end());
             bincontainer->push_back(output);
         }
-        // }
+        else
+        {
+            pt_outOfBins.insert(pt_outOfBins.end(), newstart, featurelist.end()); // ßßß place discarded features in separate table
+        }
     }
 
     // void Bin::makeDQSB(const FeatureList *rawdata, const int &maxdist)
@@ -558,7 +566,7 @@ int main()
     // {
     //     std::cout << i << "," << testdata.scanBreaks[i] << "\n";
     // }
-
+    q::pt_outOfBins;
     std::cout << "created feature list with scan index\n";
     q::BinContainer testcontainer;
     testcontainer.makeFirstBin(&testdata);
@@ -572,6 +580,24 @@ int main()
     // testcontainer.assignDQSB(&testdata, 7);
 
     testcontainer.printAllBins("../../qbinning_binlist.csv", &testdata);
+
+    std::fstream file_out;
+    file_out.open("../../qbinning_notbinned.csv");
+    if (!file_out.is_open())
+    {
+        throw;
+    }
+
+    file_out << "mz,rt,ID\n";
+    // for (size_t i = 0; i < rawdata->allFeatures.size(); i++)
+    // {
+    //     file_out << std::setprecision(15) << rawdata->allFeatures[i]->mz << "," << rawdata->allFeatures[i]->scanNo << "," << 0 << "\n";
+    // }
+
+    for (size_t i = 0; i < q::pt_outOfBins.size(); i++)
+    {
+        file_out << std::setprecision(15) << q::pt_outOfBins[i]->mz << "," << q::pt_outOfBins[i]->scanNo << "," << -1 << "\n";
+    }
     // std::vector<double> ratio;
     // int oneCount = 0;
     // int otherCount = 0;
