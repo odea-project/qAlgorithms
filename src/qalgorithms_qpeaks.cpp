@@ -62,6 +62,15 @@ namespace q
                     X.assignRef(i, 0, data[i]->x());
                     Y.assignRef(i, 0, data[i]->y());
                   }
+                  // add network structure here:
+                  // struct Node {
+                  //     Regression regression;
+                  //     std::vector<std::shared_ptr<Node>> connections;
+                  //     std::vector<std::weak_ptr<Node>> incomingConnections;
+                  // };
+                  // unordered_map<int, std::shared_ptr<Node>> network; // key should be organized like a matrix structure
+                  // perform running regression
+                  runningRegression(X, Y);
                  } },
                dataMap);
   } // end findPeaks
