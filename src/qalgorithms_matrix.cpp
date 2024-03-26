@@ -204,6 +204,10 @@ namespace q {
     return *this;
   }
 
+  void Matrix::assign(size_t row, size_t col, double& value) {
+    elements[row * cols + col] = value;
+  }
+
   // log of Matrix elements
   Matrix Matrix::log() const {
     Matrix result(rows,cols);

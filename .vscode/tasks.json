@@ -59,6 +59,8 @@
                 "src/qalgorithms_measurement_data.cpp",
                 "src/qalgorithms_utils.cpp",
                 "src/qalgorithms_matrix.cpp",
+                "src/qalgorithms_refmatrix.cpp",
+                "src/qalgorithms_qpeaks.cpp",
                 "test/test_qPeak_class.cpp",
                 "-o",
                 "test/qPeak_class_test.exe"

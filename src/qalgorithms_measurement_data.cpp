@@ -9,120 +9,116 @@ namespace q
   {
     std::visit([k](auto &&arg)
                {
-                 using T = std::decay_t<decltype(arg)>;
-                 if constexpr (std::is_same_v<T, std::unordered_map<int, std::unique_ptr<DataType::MassSpectrum>> *>)
+                 // iterate over the map of varDataType datatype objects
+                 for (auto &pair : *arg)
                  {
-                   // iterate over the map of varDataType datatype objects
-                   for (auto &pair : *arg)
+                   // de-reference the unique pointer of the object
+                   auto &dataObj = *(pair.second.get());
+                   // initialize the expected difference
+                   double expectedDifference = 0.0;
+                   // initialize the vector of differences
+                   std::vector<double> differences;
+                   // iterate over data point vector, which is a vector of unique pointers to data points structures
+                   auto &data = dataObj.dataPoints;
+
+                   double previousX = data[0]->x();
+                   for (int i = 1; i < data.size(); i++)
                    {
-                     // de-reference the unique pointer of the object
-                     auto &dataObj = *(pair.second.get());
-                     // initialize the expected difference
-                     double expectedDifference = 0.0;
-                     // initialize the vector of differences
-                     std::vector<double> differences;
-                     // iterate over data point vector, which is a vector of unique pointers to data points structures
-                     auto &data = dataObj.dataPoints;
+                     double difference = data[i]->x() - previousX;
+                     differences.push_back(difference);
+                     previousX = data[i]->x();
+                   }
 
-                     double previousX = data[0]->x();
-                     for (int i = 1; i < data.size(); i++)
-                     {
-                       double difference = data[i]->x() - previousX;
-                       differences.push_back(difference);
-                       previousX = data[i]->x();
-                     }
+                   // median of differences
+                   // copy the differences vector and sort it
+                   std::vector<double> differences_copy = differences;
+                   std::sort(differences_copy.begin(), differences_copy.end());
+                   int n = differences_copy.size();
+                   if (n % 2 == 0)
+                   {
+                     expectedDifference = (differences_copy[n / 2 - 1] + differences_copy[n / 2]) / 2;
+                   }
+                   else
+                   {
+                     expectedDifference = differences_copy[n / 2];
+                   }
+                   // delete the copy of the differences vector
+                   std::vector<double>().swap(differences_copy);
 
-                     // median of differences
-                     // copy the differences vector and sort it
-                     std::vector<double> differences_copy = differences;
-                     std::sort(differences_copy.begin(), differences_copy.end());
-                     int n = differences_copy.size();
-                     if (n % 2 == 0)
+                   /* analyze the data for gaps, i.e., differences > 1.75 * expectedDifference, and fill the gaps by adding new data points at the end of the vector
+                    */
+                   n++;                    // adjust n to fit with the size of the data vector
+                   size_t counter = k / 2; // counter for the number of added data points to store separator positions. it is initialized with k/2 to address that later k/2 data points will be added at the front of the vector
+                   std::vector<size_t> separators;
+                   for (int i = 1; i < n; i++)
+                   {
+                     // consider the difference between two neighboring data points from differences vector and compare it with 1.75 * expectedDifference
+                     if (differences[i - 1] > 1.75 * expectedDifference)
                      {
-                       expectedDifference = (differences_copy[n / 2 - 1] + differences_copy[n / 2]) / 2;
-                     }
-                     else
-                     {
-                       expectedDifference = differences_copy[n / 2];
-                     }
-                     // delete the copy of the differences vector
-                     std::vector<double>().swap(differences_copy);
-
-                     /* analyze the data for gaps, i.e., differences > 1.75 * expectedDifference, and fill the gaps by adding new data points at the end of the vector
-                      */
-                     n++;                    // adjust n to fit with the size of the data vector
-                     size_t counter = k / 2; // counter for the number of added data points to store separator positions. it is initialized with k/2 to address that later k/2 data points will be added at the front of the vector
-                     std::vector<size_t> separators;
-                     for (int i = 1; i < n; i++)
-                     {
-                       // consider the difference between two neighboring data points from differences vector and compare it with 1.75 * expectedDifference
-                       if (differences[i - 1] > 1.75 * expectedDifference)
+                       // calculate the gap size; need to be rounded to the nearest integer
+                       int gapSize = std::round(differences[i - 1] / expectedDifference - 1);
+                       // check if the gapSize is larger than k, as this is the maximum gap size
+                       if (gapSize <= k)
                        {
-                         // calculate the gap size; need to be rounded to the nearest integer
-                         int gapSize = std::round(differences[i - 1] / expectedDifference - 1);
-                         // check if the gapSize is larger than k, as this is the maximum gap size
-                         if (gapSize <= k)
+                         // add gapSize new data points at the end of the vector
+                         for (int j = 1; j <= gapSize; j++)
                          {
-                           // add gapSize new data points at the end of the vector
-                           for (int j = 1; j <= gapSize; j++)
-                           {
-                             // define the new pointer for new data point and add it to the data vector using the addDataPoint method from the respecting class
-                             dataObj.addDataPoint(0.0, data[i - 1]->x() + j * expectedDifference, 0);
-                           }
-                           counter += gapSize;
+                           // define the new pointer for new data point and add it to the data vector using the addDataPoint method from the respecting class
+                           dataObj.addDataPoint(0.0, data[i - 1]->x() + j * expectedDifference, 0);
                          }
-                         else
-                         {
-                           // limit the gap size to k and add k/2 new data points close to the (i-1) data point and k/2 new data points close to the (i) data point
-                           gapSize = k;
-                           // add k/2 new data points close to the (i) and (i-1) data point
-                           for (int j = 1; j <= k / 2; j++)
-                           {
-                             // define the new pointer for new data point and add it to the data vector
-                             dataObj.addDataPoint(0.0, data[i]->x() - j * expectedDifference, 0);
-                             dataObj.addDataPoint(0.0, data[i - 1]->x() + j * expectedDifference, 0);
-                           }
-                           counter += k / 2;
-                           // add the separator to the vector
-                           separators.push_back(counter);
-                           counter += k / 2;
-                         }
+                         counter += gapSize;
                        }
                        else
                        {
-                         // update expectedDifference
-                         expectedDifference = expectedDifference * .5 + differences[i - 1] * .5;
+                         // limit the gap size to k and add k/2 new data points close to the (i-1) data point and k/2 new data points close to the (i) data point
+                         gapSize = k;
+                         // add k/2 new data points close to the (i) and (i-1) data point
+                         for (int j = 1; j <= k / 2; j++)
+                         {
+                           // define the new pointer for new data point and add it to the data vector
+                           dataObj.addDataPoint(0.0, data[i]->x() - j * expectedDifference, 0);
+                           dataObj.addDataPoint(0.0, data[i - 1]->x() + j * expectedDifference, 0);
+                         }
+                         counter += k / 2;
+                         // add the separator to the vector
+                         separators.push_back(counter);
+                         counter += k / 2;
                        }
-                       counter++;
                      }
-                     // extrapolate the data by adding k/2 new data points at the end of the vector
-                     int gapSize = (int)k / 2;
-                     for (int j = 1; j <= gapSize; j++)
+                     else
                      {
-                       // define the new pointer for new data point and add it to the data vector
-                       dataObj.addDataPoint(0.0, data[n - 1]->x() + j * expectedDifference, 0);
-                       dataObj.addDataPoint(0.0, data[0]->x() - j * expectedDifference, 0);
+                       // update expectedDifference
+                       expectedDifference = expectedDifference * .5 + differences[i - 1] * .5;
                      }
-                     // add the last index of data vector to the separators vector
-                     separators.push_back(dataObj.dataPoints.size() - 1);
-                     // flip separators vector
-                     std::reverse(separators.begin(), separators.end());
-                     // cumulative difference for separators // HERE IS SOME ERROR
-                     for (int i = 0; i < separators.size() - 1; i++)
-                     {
-                       separators[i] = separators[i] - separators[i + 1];
-                     }
-                     // delete the last element of the separators vector
-                     separators.pop_back();
-                     // add the separators to the Object's cuttingPoints vector, which is a vector of unique pointers to size_t objects
-                     for (int i = 0; i < separators.size(); i++)
-                     {
-                       dataObj.cuttingPoints.push_back(std::make_unique<size_t>(separators[i]));
-                     }
-                     // sort the data points by x-axis values
-                     dataObj.sortDataPoints();
-                   } // end of for loop
-                 }   // end of if statement
+                     counter++;
+                   }
+                   // extrapolate the data by adding k/2 new data points at the end of the vector
+                   int gapSize = (int)k / 2;
+                   for (int j = 1; j <= gapSize; j++)
+                   {
+                     // define the new pointer for new data point and add it to the data vector
+                     dataObj.addDataPoint(0.0, data[n - 1]->x() + j * expectedDifference, 0);
+                     dataObj.addDataPoint(0.0, data[0]->x() - j * expectedDifference, 0);
+                   }
+                   // add the last index of data vector to the separators vector
+                   separators.push_back(dataObj.dataPoints.size() - 1);
+                   // flip separators vector
+                   std::reverse(separators.begin(), separators.end());
+                   // cumulative difference for separators // HERE IS SOME ERROR
+                   for (int i = 0; i < separators.size() - 1; i++)
+                   {
+                     separators[i] = separators[i] - separators[i + 1];
+                   }
+                   // delete the last element of the separators vector
+                   separators.pop_back();
+                   // add the separators to the Object's cuttingPoints vector, which is a vector of unique pointers to size_t objects
+                   for (int i = 0; i < separators.size(); i++)
+                   {
+                     dataObj.cuttingPoints.push_back(std::make_unique<size_t>(separators[i]));
+                   }
+                   // sort the data points by x-axis values
+                   dataObj.sortDataPoints();
+                 } // end of for loop
                },
                dataMap); // end of visit
   }                      // end of zeroFilling
@@ -131,36 +127,32 @@ namespace q
   {
     std::visit([&maxKey](auto &&arg)
                {
-                 using T = std::decay_t<decltype(arg)>;
-                 if constexpr (std::is_same_v<T, std::unordered_map<int, std::unique_ptr<DataType::MassSpectrum>> *>)
+                 std::vector<int> keys;
+                 for (const auto &pair : *arg)
                  {
-                   std::vector<int> keys;
-                   for (const auto &pair : *arg)
+                   keys.push_back(pair.first);
+                 }
+                 // iterate over the map of varDataType objects
+                 for (const auto &key : keys)
+                 {
+                   // de-reference the unique pointer of the datatype object
+                   auto &dataObj = *((*arg)[key].get());
+                   auto &cuttingPoints = dataObj.cuttingPoints;
+                   // iterate over the cutting points vector
+                   for (auto &uniquePtr : cuttingPoints)
                    {
-                     keys.push_back(pair.first);
+                     auto &k = *(uniquePtr.get());
+                     // create a new object from the parent object
+                     // get the Object Type from T
+                     using ObjectType = std::decay_t<decltype(dataObj)>;
+                     // create a new object from the parent object and add it to the arg map as pointer considering maximum key value + 1
+                     // update the maxKey
+                     maxKey++;
+                     arg->emplace(maxKey, std::make_unique<ObjectType>(dataObj, k));
                    }
-                   // iterate over the map of varDataType objects
-                   for (const auto &key : keys)
-                   {
-                     // de-reference the unique pointer of the datatype object
-                     auto &dataObj = *((*arg)[key].get());
-                     auto &cuttingPoints = dataObj.cuttingPoints;
-                     // iterate over the cutting points vector
-                     for (auto &uniquePtr : cuttingPoints)
-                     {
-                       auto &k = *(uniquePtr.get());
-                       // create a new object from the parent object
-                       // get the Object Type from T
-                       using ObjectType = std::decay_t<decltype(dataObj)>;
-                       // create a new object from the parent object and add it to the arg map as pointer considering maximum key value + 1
-                       // update the maxKey
-                       maxKey++;
-                       arg->emplace(maxKey, std::make_unique<ObjectType>(dataObj, k));
-                     }
-                     // delete the cutting points vector
-                     std::vector<std::unique_ptr<size_t>>().swap(cuttingPoints);
-                   } // end of for loop
-                 }   // end of if statement
+                   // delete the cutting points vector
+                   std::vector<std::unique_ptr<size_t>>().swap(cuttingPoints);
+                 } // end of for loop
                },
                dataMap); // end of visit
   }                      // end of cutData
@@ -169,9 +161,6 @@ namespace q
   {
     std::visit([](auto &&arg)
                {
-                 using T = std::decay_t<decltype(arg)>;
-                 if constexpr (std::is_same_v<T, std::unordered_map<int, std::unique_ptr<DataType::MassSpectrum>> *>)
-                 {
                    // iterate over the map of varDataType objects
                    for (auto &pair : *arg)
                    {
@@ -201,9 +190,7 @@ namespace q
                          dataPoints.clear();
                        }
                      }
-                   }
-                 } // end of if statement
-               },
+                   } },
                dataMap); // end of visit
   }                      // end of filterSmallDataSets
 
@@ -211,9 +198,6 @@ namespace q
   {
     std::visit([](auto &&arg)
                {
-                 using T = std::decay_t<decltype(arg)>;
-                 if constexpr (std::is_same_v<T, std::unordered_map<int, std::unique_ptr<DataType::MassSpectrum>> *>)
-                 {
                    std::vector<int> keysToDelete;
                    // iterate over the map of varDataType objects
                    for (auto &pair : *arg)
@@ -395,9 +379,7 @@ namespace q
                    for (const auto &key : keysToDelete)
                    {
                      arg->erase(key);
-                   }
-                 } // end of if statement
-               },
+                   } },
                dataMap); // end of visit
   }                      // end of interpolateData
 

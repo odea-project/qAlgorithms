@@ -62,6 +62,7 @@ namespace q
     Matrix operator+(const Matrix &other) const;
     Matrix operator^(const double power) const;
     Matrix &operator=(const Matrix &other);
+    void assign(size_t row, size_t col, double& value);
     Matrix log() const;
 
     double sumElements() const;

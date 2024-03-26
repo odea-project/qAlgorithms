@@ -80,8 +80,9 @@ namespace q
          */
         void info();
 
-    private:
         std::unordered_map<int, std::unique_ptr<DataType::MassSpectrum>> data;
+    private:
+        
         int maxKey;
     };
 }
