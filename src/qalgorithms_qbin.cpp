@@ -137,8 +137,10 @@ namespace q
         {
             throw;
         }
+        // possible symbols
+        char shapes[] = "acGuxnoQzRsTvjIEf";
 
-        file_out << "mz,rt,ID\n";
+        file_out << "mz,rt,ID,color,shape\n";
         // for (size_t i = 0; i < rawdata->allFeatures.size(); i++)
         // {
         //     file_out << std::setprecision(15) << rawdata->allFeatures[i]->mz << "," << rawdata->allFeatures[i]->scanNo << "," << 0 << "\n";
@@ -146,10 +148,12 @@ namespace q
 
         for (size_t i = 0; i < finishedBins.size(); i++)
         {
+            char x = shapes[rand() % 17];
+            int colour = i % 9; // 10 colours total
             std::vector<Feature *> features = finishedBins[i].featurelist;
             for (size_t j = 0; j < features.size(); j++)
             {
-                file_out << std::setprecision(15) << features[j]->mz << "," << features[j]->scanNo << "," << i + 1 << "\n";
+                file_out << std::setprecision(15) << features[j]->mz << "," << features[j]->scanNo << "," << i + 1 << "," << colour << "," << x << "\n";
             }
             // file_out << finishedBins[i].featurelist.size() << "\n";
         }
@@ -594,16 +598,12 @@ int main()
         throw;
     }
 
-    file_out << "mz,rt,ID\n";
-    // for (size_t i = 0; i < rawdata->allFeatures.size(); i++)
-    // {
-    //     file_out << std::setprecision(15) << rawdata->allFeatures[i]->mz << "," << rawdata->allFeatures[i]->scanNo << "," << 0 << "\n";
-    // }
+    file_out << "mz,rt,ID,color,shape\n";
     q::pt_outOfBins.resize(q::pt_outOfBins.size());
     for (size_t i = 0; i < q::pt_outOfBins.size(); i++)
     {
         q::Feature *F = q::pt_outOfBins[i];
-        file_out << std::setprecision(15) << q::pt_outOfBins[i]->mz << "," << q::pt_outOfBins[i]->scanNo << "," << -1 << "\n";
+        file_out << std::setprecision(15) << q::pt_outOfBins[i]->mz << "," << q::pt_outOfBins[i]->scanNo << "," << -1 << "," << -1 << "," << "Y\n";
     }
     // std::vector<double> ratio;
     // int oneCount = 0;

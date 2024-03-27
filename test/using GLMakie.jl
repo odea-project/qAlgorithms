@@ -4,17 +4,24 @@ using DataFrames
 using ColorSchemes
 
 
-tdd = CSV.read("C:/Users/unisys/Documents/Studium/Analytik-Praktikum/qBinning_binlist_full.csv", DataFrame)
+tdd = CSV.read("C:/Users/unisys/Documents/Studium/Analytik-Praktikum/qBinning_binlist.csv", DataFrame)
 
-tdd .= sort!(tdd, [:ID,:rt])
+tdd .= sort!(tdd, [:ID,:mz])
 mz = tdd.mz
 rt = tdd.rt
 ID = tdd.ID
+colour = tdd.color
+shape = tdd.shape
+
+# tdd:shape = repeat("a")
+
+# transform(tdd, :ID)
 
 
 
-#Binning Plot :glasbey_bw_minc_20_n256
-fig = plot(mz,rt,color = ID,colormap=:Set1_9)
+
+# Binning Plot :glasbey_bw_minc_20_n256
+fig = scatter(mz,rt,color = colour,colormap=:tab10)
 DataInspector(fig)
 fig
 
