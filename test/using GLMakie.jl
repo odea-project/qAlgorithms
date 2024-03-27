@@ -4,7 +4,7 @@ using DataFrames
 using ColorSchemes
 
 
-tdd = CSV.read("C:/Users/unisys/Documents/Studium/Analytik-Praktikum/qBinning_binlist.csv", DataFrame)
+tdd = CSV.read("C:/Users/unisys/Documents/Studium/Analytik-Praktikum/qBinning_binlist_full.csv", DataFrame)
 
 tdd .= sort!(tdd, [:ID,:rt])
 mz = tdd.mz
@@ -14,8 +14,9 @@ ID = tdd.ID
 
 
 #Binning Plot :glasbey_bw_minc_20_n256
-plot(mz,rt,color = ID,colormap=:glasbey_bw_minc_20_n256)
-
+fig = plot(mz,rt,color = ID,colormap=:Set1_9)
+DataInspector(fig)
+fig
 
 
 # Binning EICs
