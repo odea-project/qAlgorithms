@@ -39,10 +39,12 @@ namespace q
             {
                 row.push_back(std::stod(cell));
             }
-            // add conditional here to set feature error to mz* x ppm ßßß
+// add conditional here to set feature error to mz* x ppm ßßß
+#pragma GCC diagnostic push // do not display the specific warning for rounding a double to integer
+#pragma GCC diagnostic ignored "-Wnarrowing"
             int i_scanNo = (int)row[d_scanNo] - 1; // gives warning, conversion functions as intended; -1 so all scans are 0-indexed ßßß control for output
             Feature *F = new Feature{row[d_mz], row[d_mzError], row[d_RT], i_scanNo, row[pt_d_binID]};
-
+#pragma GCC diagnostic pop
             allFeatures[i_scanNo].push_back(F); // every subvector in allFeatures is one complete scan - does not require a sorted input file!
         }
         // ßßß remove if no benefit
@@ -227,17 +229,23 @@ namespace q
         {
             if (n == 1)
             {
-                pt_outOfBins.push_back(*featurelist.begin() + startBin);
+                Feature *F = *(featurelist.begin() + startBin);
+                pt_outOfBins.push_back(F);
             }
             else
             {
+                for (size_t i = 0; i < n; i++)
+                {
+                    Feature *F = *(featurelist.begin() + startBin + i);
+                    pt_outOfBins.push_back(F);
+                }
 
-                pt_outOfBins.insert(pt_outOfBins.end(), featurelist.begin() + startBin, featurelist.begin() + endBin + 1); // ßßß place discarded features in separate table
+                // pt_outOfBins.insert(pt_outOfBins.end(), featurelist.begin() + startBin, featurelist.begin() + endBin + 1); // ßßß place discarded features in separate table
             }
             return;
         }
 
-        auto pmax = std::max_element(OS.begin() + startBin, OS.begin() + endBin - 1); // -1 to not include maximum at which the previous cut occurred
+        auto pmax = std::max_element(OS.begin() + startBin, OS.begin() + endBin); // ´ßßß -1 to not include maximum at which the previous cut occurred
 
         double vcrit = 3.05037165842070 * pow(log(n), (-0.4771864667153)) * (cumError[endBin] - cumError[startBin]) / (n - 1); // critical value for alpha = 0.01. ßßß add functionality for custom alpha?
         double max = *pmax;
@@ -246,7 +254,7 @@ namespace q
             // make bin
             // std::cout << startBin << "," << endBin << "," << subsetcount << "\n"; // not all that useful, since knowledge of position in original order space is always lost
             pt_subsetcount = 0;
-            const Bin output(featurelist.begin() + startBin, featurelist.begin() + endBin + 1);
+            const Bin output(featurelist.begin() + startBin, featurelist.begin() + endBin + 1); // endBin+1 since the iterator has to point behind the last element to put into the vector
             // append Bin to bin container
             bincontainer->push_back(output);
             return;
@@ -256,8 +264,6 @@ namespace q
             int cutpos = std::distance(OS.begin() + startBin, pmax);
             subsetMZ(bincontainer, OS, startBin, startBin + cutpos);
             subsetMZ(bincontainer, OS, startBin + cutpos + 1, endBin);
-            // multithreading queue producer consumers
-            // multithreading probably not a good solution, since the objects need to be copied -> copies all mz for every bin ßßß wrong
             return;
         }
     }
@@ -593,9 +599,10 @@ int main()
     // {
     //     file_out << std::setprecision(15) << rawdata->allFeatures[i]->mz << "," << rawdata->allFeatures[i]->scanNo << "," << 0 << "\n";
     // }
-
+    q::pt_outOfBins.resize(q::pt_outOfBins.size());
     for (size_t i = 0; i < q::pt_outOfBins.size(); i++)
     {
+        q::Feature *F = q::pt_outOfBins[i];
         file_out << std::setprecision(15) << q::pt_outOfBins[i]->mz << "," << q::pt_outOfBins[i]->scanNo << "," << -1 << "\n";
     }
     // std::vector<double> ratio;
