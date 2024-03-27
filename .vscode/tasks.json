@@ -88,6 +88,7 @@
                 "src/qalgorithms_matrix.cpp",
                 "src/qalgorithms_refmatrix.cpp",
                 "src/qalgorithms_qpeaks.cpp",
+                "src/qalgorithms_peak.cpp",
                 "test/test_qPeak_class.cpp",
                 "-o",
                 "test/qPeak_class_test.exe"

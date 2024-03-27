@@ -6,6 +6,7 @@
 #include "qalgorithms_matrix.h"
 #include "qalgorithms_refmatrix.h"
 #include "qalgorithms_measurement_data.h"
+#include "qalgorithms_peak.h"
 
 // external
 #include <vector>
@@ -42,6 +43,14 @@ namespace q
     void findPeaks(const varDataType &dataMap);
 
     void runningRegression(const RefMatrix &X, const RefMatrix &Y);
+
+    /**
+     * @brief Calculate the number of regressions for the given number of data points.
+     * 
+     * @param n : number of data points
+     * @return int : number of regressions
+     */
+    int calculateNumberOfRegressions(const int n) const;
 
     // debugging
     void info() const;

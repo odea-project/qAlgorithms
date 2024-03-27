@@ -4,6 +4,8 @@
 #include "../include/qalgorithms_measurement_data_lcms.h"
 #include "../include/qalgorithms_qpeaks.h"
 #include "../include/qalgorithms_refmatrix.h"
+#include "../include/qalgorithms_matrix.h"
+#include "../include/qalgorithms_peak.h"
 
 // external
 #include <iostream>

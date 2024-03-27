@@ -5,85 +5,74 @@
 // external
 #include <map>
 #include <iostream>
+#include <array>
 
 /* This file includes the q::peak class*/
 namespace q
 {
-  enum class Property
-  {
-    CoeffB0, // THIS MUST BE THE FIRST ENTRY
-    CoeffB1,
-    CoeffB2,
-    CoeffB3,
-    Xindex,
-    Df,
-    PeakID,
-    SmplID,
-    Position,
-    ValleyPosition,
-    Height,
-    Width,
-    Area,
-    SigmaPosition,
-    SigmaHeight,
-    SigmaWidth,
-    SigmaArea,
-    Dqs // THIS MUST BE THE LAST ENTRY
-  };
-
-  extern std::map<Property, std::string> propertyLabels;
-
   class Peak
   {
-  public: /* List of Properties */
-  private:
-    std::map<Property, double> properties;
+    public:
+      // Constructor
+      Peak();
+      Peak(int index, int scale);
+      // Destructor
+      ~Peak();
 
-  public:
-    /* support function to create the Peak object*/
-    static std::map<Property, double> initializeProperties();
+      // methods
+      // getters
+      int getIndex() const;
+      int getScale() const;
+      const std::array<double, 4>& getB() const;
+      double getPositionNorm() const;
+      double getPosition() const;
+      double getHeight() const;
+      double getWidth() const;
+      double getArea() const;
+      int getDf() const;
+      double getPositionUncertainty() const;
+      double getHeightUncertainty() const;
+      double getWidthUncertainty() const;
+      double getAreaUncertainty() const;
+      double getMse() const;
+      // setters
+      void setIndex(int index);
+      void setScale(int scale);
+      void setB(const std::array<double, 4> &B);
+      void setPositionNorm(double position_norm);
+      void setPosition(double position);
+      void setHeight(double height);
+      void setWidth(double width);
+      void setArea(double area);
+      void setDf(int df);
+      void setPositionUncertainty(double position_uncertainty);
+      void setHeightUncertainty(double height_uncertainty);
+      void setWidthUncertainty(double width_uncertainty);
+      void setAreaUncertainty(double area_uncertainty);
+      void setMse(double mse);
+      // debugging
+      void print() const;
+    private:
+      // Member variables
+      // regression information
+      int index; // index of the center of the regression window within the original data set
+      int scale; // scale of the regression window (e.g., 2 means 5 data points, i.e., -2:2)
+      std::array<double, 4> B; // regression coefficients
+      double position_norm; // normalized position of the peak within the regression window
 
-    // Constructor
-    Peak();
+      // peak information
+      double position; // position of the peak in the original data set
+      double height; // height of the peak
+      double width; // width of the peak
+      double area; // area of the peak (area under the curve till the baseline=0)
 
-    // Cleaning
-    ~Peak();
-
-    // Access methods
-    double getProperty(Property property) const;
-    void setProperty(Property property, double value);
-
-    // Validation Methods
-    void validate(); /* wrapper function for multiple validation methods */
-
-    bool validate_coefficients(
-        const double df,
-        const double b1,
-        const double b2,
-        const double b3,
-        const double xIndex,
-        double &apex_position,
-        double &valley_position) const;
-
-    // Calculate Property Methods
-    bool calcApex_position(
-        const double df,
-        const double b1,
-        const double b2,
-        const double xIndex,
-        double &apex_position) const;
-
-    bool calcApexValley_position(
-        const double df,
-        const double b1,
-        const double b2,
-        const double b3,
-        const double xIndex,
-        double &apex_position,
-        double &valley_position) const;
-
-    // Export methods
-    void print();
+      // uncertainty information
+      int df; // degrees of freedom
+      double position_uncertainty; // uncertainty of the position
+      double height_uncertainty; // uncertainty of the height
+      double width_uncertainty; // uncertainty of the width
+      double area_uncertainty; // uncertainty of the area
+      double mse; // mean squared error of the regression
   };
 }
 #endif // QALGORITHMS_PEAK_H

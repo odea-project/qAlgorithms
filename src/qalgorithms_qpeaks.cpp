@@ -54,22 +54,32 @@ namespace q
                   // de-reference the unique pointer of the object
                   auto &dataObj = *(pair.second.get());
                   auto &data = dataObj.dataPoints;
+                  int n = data.size();
                   // store x and y values in RefMatrix objects
-                  RefMatrix X(data.size(), 1);
-                  RefMatrix Y(data.size(), 1);
-                  for (size_t i = 0; i < data.size(); i++)
+                  RefMatrix X(n, 1);
+                  RefMatrix Y(n, 1);
+                  for (size_t i = 0; i < n; i++)
                   {
                     X.assignRef(i, 0, data[i]->x());
                     Y.assignRef(i, 0, data[i]->y());
                   }
-                  // add network structure here:
-                  // struct Node {
-                  //     Regression regression;
-                  //     std::vector<std::shared_ptr<Node>> connections;
-                  //     std::vector<std::weak_ptr<Node>> incomingConnections;
-                  // };
-                  // unordered_map<int, std::shared_ptr<Node>> network; // key should be organized like a matrix structure
-                  // perform running regression
+                  // initialize the network structure of peaks
+                  std::unordered_map<int, std::unique_ptr<Peak>> peaklist;
+
+                  /* THIS IS TOO SLOW TO ADD ALL REGRESSIONS
+                  // add Peak objects to the peaklist
+                  int currentScale = 2;
+                  int currentScaleIndexLimit = currentScale * (n - currentScale - 1) - n + 2;
+                  for (int i = 0; i < numRegressions; i++)
+                  {
+                    if (i == currentScaleIndexLimit)
+                    {
+                      currentScale++;
+                      currentScaleIndexLimit += n - currentScale * 2;
+                    }
+                    peaklist.emplace(i, std::make_unique<Peak>(i, currentScale));
+                  }
+                  */
                   runningRegression(X, Y);
                  } },
                dataMap);
@@ -142,6 +152,13 @@ namespace q
     Matrix XtX = Xt * X;
     inverseMatrices.push_back(std::make_unique<Matrix>(XtX.inv()));
     psuedoInverses.push_back(std::make_unique<Matrix>(*(inverseMatrices.back()) * Xt));
+  }
+  
+  int qPeaks::calculateNumberOfRegressions(const int n) const
+  {
+    int maxScale = (int) (n - 1) / 2;
+    int sumScales = (int) (maxScale * (maxScale + 1) / 2) - 1;
+    return n * (maxScale-1) - sumScales*2;
   }
 
   void qPeaks::info() const
