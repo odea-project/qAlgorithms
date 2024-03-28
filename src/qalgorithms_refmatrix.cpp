@@ -57,6 +57,20 @@ namespace q
     elements[row * cols + col] = std::ref(value);
   }
 
+  // matrix operations
+  Matrix RefMatrix::log() const
+  {
+    Matrix result(rows, cols);
+    for (size_t i = 0; i < rows; i++)
+    {
+      for (size_t j = 0; j < cols; j++)
+      {
+        result(i, j) = std::log(elements[i * cols + j]);
+      }
+    }
+    return result;
+  }
+
   // debugging
   void RefMatrix::print() const
   {

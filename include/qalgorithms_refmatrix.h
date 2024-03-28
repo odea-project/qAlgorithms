@@ -35,6 +35,9 @@ namespace q
     void assignRef(size_t row, size_t col, double& value);
     void assignVal(size_t row, size_t col, double value);
 
+    // matrix operations
+    Matrix log() const;
+
     // debugging
     void print() const;
   };

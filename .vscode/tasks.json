@@ -53,6 +53,7 @@
             "args": [
                 "-fdiagnostics-color=always",
                 "-g",
+                "-fopenmp",
                 "-O3",
                 "src/qalgorithms_datatype_mass_spectrum.cpp",
                 "src/qalgorithms_measurement_data_lcms.cpp",
@@ -61,6 +62,7 @@
                 "src/qalgorithms_matrix.cpp",
                 "src/qalgorithms_refmatrix.cpp",
                 "src/qalgorithms_qpeaks.cpp",
+                "src/qalgorithms_peak.cpp",
                 "test/test_qPeak_class.cpp",
                 "-o",
                 "test/qPeak_class_test.exe"

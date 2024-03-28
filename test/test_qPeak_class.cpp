@@ -39,14 +39,18 @@ int main()
   q::qPeaks qpeaks(dataObject);
   // Capture the start time
   auto start = std::chrono::high_resolution_clock::now();
-  qpeaks.findPeaks(dataObject);
-  // Capture the end time
-  auto finish = std::chrono::high_resolution_clock::now();
-  // qpeaks.info();
 
-  // Calculate and print the elapsed time
-  std::chrono::duration<double> elapsed = finish - start;
-  std::cout << "Elapsed time: " << elapsed.count() << " s\n";
+  qpeaks.findPeaks(dataObject);
+
+  // Capture the end time
+  auto end = std::chrono::high_resolution_clock::now();
+  // Calculate the duration
+  std::chrono::duration<double> duration = end - start;
+  std::cout << "Duration: " << duration.count() << " seconds" << std::endl;
+
+
+
+
 
 
   // // export the data to a CSV file

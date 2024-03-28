@@ -11,6 +11,7 @@
 // external
 #include <vector>
 #include <memory>
+#include <omp.h>
 
 /* This file includes the q::qPeaks class*/
 namespace q
@@ -46,7 +47,7 @@ namespace q
 
     /**
      * @brief Calculate the number of regressions for the given number of data points.
-     * 
+     *
      * @param n : number of data points
      * @return int : number of regressions
      */
@@ -62,7 +63,15 @@ namespace q
     std::vector<std::unique_ptr<Matrix>> psuedoInverses;
     std::vector<std::unique_ptr<double>> tValues;
 
+
     // methods
+
+    void convolveP(
+        Matrix &beta,
+        std::vector<int> &xIndices,
+        const Matrix &P,
+        const Matrix &ylog);
+
     /**
      * @brief Create a Design Matrix object for the given scale.
      * @details The design matrix is a matrix of size (2*scale+1) x 4. The basis for x is a vector of integers from -scale to scale. The first column is a vector of ones, the second column is a vector of x values, the third and fourth columns are vectors of x^2 values. However, the third column is only filled with x^2 values if x is less than 0. The fourth column is only filled with x^2 values if x is greater than 0.
