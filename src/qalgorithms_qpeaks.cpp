@@ -114,6 +114,7 @@ namespace q
     {
       convolveP(B, xIndices, *(psuedoInverses[scale-2]), Ylog);
     } // end for scale loop
+    
 
   } // end runningRegression
 
