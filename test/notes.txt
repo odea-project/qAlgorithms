@@ -32,3 +32,8 @@ Mehrere Datenstrukturen sind nicht-exklusiv
 Die Featureliste eines Bins ist bereits eine andere Datenstruktur als die Featureliste, die anfangs erstellt wurde
 
 Auf alle Bins sind die einzelnen mz eher nebensächlich - jeder Bin wird primär über eine Masse und den Bereich der Scans, den er abdeckt, definiert
+
+ctime:
+int now = time(0)
+
+time(o) - now
