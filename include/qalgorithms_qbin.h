@@ -13,6 +13,7 @@
 #include <string>
 #include <iomanip> // for printing with full precision
 #include <chrono>  // time code execution
+#include <ctime>
 
 // Goal: all functions modify individual features, which are combined to a bin. The bin contains all features and the functions necessary to summarise which features are present
 
@@ -35,6 +36,7 @@ namespace q
         FeatureList(int in_numberOfScans);
         ~FeatureList();
         int numberOfScans;
+        int lengthAllFeatures;
         std::vector<std::vector<Feature *>> allFeatures;
         std::vector<int> scanBreaks; // contains start point of new scan window in order; assumes incoming features are sorted by scans
         void readcsv(std::string user_file, int d_mz, int d_mzError, int d_RT, int d_scanNo, int pt_d_binID);
