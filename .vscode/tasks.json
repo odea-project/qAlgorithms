@@ -82,6 +82,7 @@
             "args": [
                 "-fdiagnostics-color=always",
                 "-g",
+                "-fopenmp",
                 "-O3",
                 "src/qalgorithms_datatype_mass_spectrum.cpp",
                 "src/qalgorithms_measurement_data_lcms.cpp",

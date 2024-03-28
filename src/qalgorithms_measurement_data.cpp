@@ -9,11 +9,11 @@ namespace q
   {
     std::visit([k](auto &&arg)
                {
-                 // iterate over the map of varDataType datatype objects
+                 // iterate over the vector of varDataType datatype objects
                  for (auto &pair : *arg)
                  {
                    // de-reference the unique pointer of the object
-                   auto &dataObj = *(pair.second.get());
+                   auto &dataObj = *(pair.get());
                    // initialize the expected difference
                    double expectedDifference = 0.0;
                    // initialize the vector of differences
@@ -128,11 +128,12 @@ namespace q
     std::visit([&maxKey](auto &&arg)
                {
                  std::vector<int> keys;
-                 for (const auto &pair : *arg)
+                 for (int i = 0; i <= maxKey; i++)
                  {
-                   keys.push_back(pair.first);
+                   keys.push_back(i);
                  }
-                 // iterate over the map of varDataType objects
+
+                 // iterate over the vector of varDataType objects
                  for (const auto &key : keys)
                  {
                    // de-reference the unique pointer of the datatype object
@@ -145,10 +146,10 @@ namespace q
                      // create a new object from the parent object
                      // get the Object Type from T
                      using ObjectType = std::decay_t<decltype(dataObj)>;
-                     // create a new object from the parent object and add it to the arg map as pointer considering maximum key value + 1
+                     // create a new object from the parent object and add it to the arg vector as pointer considering maximum key value + 1
                      // update the maxKey
                      maxKey++;
-                     arg->emplace(maxKey, std::make_unique<ObjectType>(dataObj, k));
+                     arg->push_back(std::make_unique<ObjectType>(dataObj, k));
                    }
                    // delete the cutting points vector
                    std::vector<std::unique_ptr<size_t>>().swap(cuttingPoints);
@@ -161,15 +162,24 @@ namespace q
   {
     std::visit([](auto &&arg)
                {
-                   // iterate over the map of varDataType objects
+                  // delete all children < 5
+                  arg->erase(std::remove_if(arg->begin(), arg->end(),
+                    [](const auto& pair) {
+                      auto &dataObj = *(pair.get());
+                      auto &dataPoints = dataObj.dataPoints;
+                      double sum = 0.0;
+                      for (int i = 0; i < dataPoints.size(); i++)
+                      {
+                        sum += dataPoints[i]->df;
+                      }
+                      return sum < 5 && dataObj.isParent.first == false;
+                    }), arg->end());
+
+                   // clean all parents < 5
                    for (auto &pair : *arg)
                    {
-                     // de-reference the unique pointer of the datatype object
-                     auto &dataObj = *(pair.second.get());
-                     // check if dataObj is child object (only children can be deleted)
-
+                     auto &dataObj = *(pair.get());
                      auto &dataPoints = dataObj.dataPoints;
-                     // sum the df values
                      double sum = 0.0;
                      for (int i = 0; i < dataPoints.size(); i++)
                      {
@@ -179,12 +189,7 @@ namespace q
                      if (sum < 5)
                      {
 
-                       if (dataObj.isParent.first == false)
-                       {
-                         // delete the data set
-                         arg->erase(pair.first);
-                       }
-                       else
+                       if (dataObj.isParent.first == true)
                        {
                          // clean dataPoints vector
                          dataPoints.clear();
@@ -199,11 +204,11 @@ namespace q
     std::visit([](auto &&arg)
                {
                    std::vector<int> keysToDelete;
-                   // iterate over the map of varDataType objects
-                   for (auto &pair : *arg)
+                   // iterate over the vector of varDataType objects
+                   for (auto it = arg->begin(); it != arg->end(); ++it)
                    {
                      // de-reference the unique pointer of the datatype object
-                     auto &dataObj = *(pair.second.get());
+                     auto &dataObj = *(it->get());
                      auto &dataPoints = dataObj.dataPoints;
                      // check if dataPoints is empty
                      if (dataPoints.size() > 0)
@@ -264,11 +269,12 @@ namespace q
                        /* For later peak detection, it has to be ensured that the maximum of y values is not the first or last non-zero data point.*/
                        if (maxIndex == I || maxIndex == J)
                        {
-                         // delete /clear the arg map entry
+                         // delete /clear the arg vector entry
                          if (dataObj.isParent.first == false)
                          {
                            // Store the key of the element to delete
-                           keysToDelete.push_back(pair.first);
+                           int indexToDelete = std::distance(arg->begin(), it);
+                           keysToDelete.push_back(indexToDelete);
                          }
                          else
                          {
@@ -376,10 +382,11 @@ namespace q
                      }
                    }
                    // Delete the elements after the iteration
-                   for (const auto &key : keysToDelete)
-                   {
-                     arg->erase(key);
-                   } },
+                   arg->erase(std::remove_if(arg->begin(), arg->end(),
+                      [&keysToDelete, &arg](const auto& item) {
+                          // Check if the current index is in keysToDelete
+                          return std::find(keysToDelete.begin(), keysToDelete.end(), &item - &arg->front()) != keysToDelete.end();
+                      }), arg->end()); },
                dataMap); // end of visit
   }                      // end of interpolateData
 

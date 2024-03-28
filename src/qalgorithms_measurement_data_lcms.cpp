@@ -44,7 +44,7 @@ namespace q
             colEnd = 1000000;
         }
 
-        // find the DataFiled::SCANNUMBER as this is the key for the LCMSData map
+        // find the DataFiled::SCANNUMBER as this is the key for the LCMSData vector
         int scanNumberIndex = -1;
         for (int i = 0; i < variableTypes.size(); i++)
         {
@@ -142,19 +142,19 @@ namespace q
         {
             std::cerr << "The number of columns in the raw data does not match the number of variable types" << std::endl;
             return;
-        }
+        }      
 
-        // transfere the raw data to the data map
+        // transfere the raw data to the data vector
         int data_id = 0; // data id is used to identify the data set
         maxKey = 0;
         for (int i = 0; i < raw_data.size(); i++)
         {
-            // check if the scan number is already in the data map
+            // check if the scan number is already in the data vector 
             int scanNumber = std::stoi(raw_data[i][scanNumberIndex]);
-            if (this->data.find(scanNumber) == this->data.end())
-            { // scan number is not found in the data map; initialize a new MassSpectrum object and add meta information
-                // add the MassSpectrum object to the data map
-                this->data[scanNumber] = std::make_unique<MassSpectrum>();
+            if (this->data.size() < scanNumber+1)
+            { // scan number is not found in the data vector; initialize a new MassSpectrum object and add meta information
+                // add the MassSpectrum object to the data vector
+                this->data.push_back(std::make_unique<MassSpectrum>());
                 // add the scan number to the MassSpectrum object
                 (*this->data[scanNumber]->metaData)[DataField::SCANNUMBER] = VariableType(scanNumber);
                 // add the retention time to the MassSpectrum object
@@ -176,16 +176,20 @@ namespace q
     {
         // open the file
         std::ofstream file(filename);
-        // write header using: ID, ScanNumber, RetentionTime, MZ, Intensity (ID is the key for the data map)
+        // write header using: ID, ScanNumber, RetentionTime, MZ, Intensity (ID is the key for the data vector)
         file << "ID,ScanNumber,RetentionTime,MZ,Intensity" << std::endl;
-        // iterate over all data sets
-        for (auto it = this->data.begin(); it != this->data.end(); it++)
+        // iterate over all data sets in the data vector
+        for (const auto& spectrum : this->data)
         {
-            // iterate over all data points
-            for (const auto& dp : it->second->dataPoints)
+            for (const auto& dp : spectrum->dataPoints)
             {
-                file << it->first << "," << std::get<int>((*it->second->metaData)[DataField::SCANNUMBER]) << "," << std::get<double>((*it->second->metaData)[DataField::RETENTIONTIME]) << "," << std::setprecision(7) << dp->mz << "," << std::setprecision(4) << dp->intensity << std::endl;
+                file << std::get<int>((*spectrum->metaData)[DataField::SCANNUMBER]) << "," 
+                     << std::get<int>((*spectrum->metaData)[DataField::SCANNUMBER]) << "," 
+                     << std::get<double>((*spectrum->metaData)[DataField::RETENTIONTIME]) << "," 
+                     << std::setprecision(7) << dp->mz << "," 
+                     << std::setprecision(4) << dp->intensity << std::endl;
             }
+            //iterate over all data points
         }
         //close the file
         file.close();
@@ -193,54 +197,54 @@ namespace q
 
     void LCMSData::zeroFilling()
     {
-        // create a varDataType Object, which is a pointer to a map of mass spectra
+        // create a varDataType Object, which is a pointer to a vector of mass spectra
         varDataType dataObject = &(this->data);
         this->MeasurementData::zeroFilling(dataObject, 8);
     }
 
     void LCMSData::cutData()
     {
-        // create a varDataType Object, which is a pointer to a map of mass spectra
+        // create a varDataType Object, which is a pointer to a vector of mass spectra
         varDataType dataObject = &(this->data);
         this->MeasurementData::cutData(dataObject, maxKey);
     }
 
     void LCMSData::filterSmallDataSets()
     {
-        // create a varDataType Object, which is a pointer to a map of mass spectra
+        // create a varDataType Object, which is a pointer to a vector of mass spectra
         varDataType dataObject = &(this->data);
         this->MeasurementData::filterSmallDataSets(dataObject);
     }
 
     void LCMSData::interpolateData()
     {
-        // create a varDataType Object, which is a pointer to a map of mass spectra
+        // create a varDataType Object, which is a pointer to a vector of mass spectra
         varDataType dataObject = &(this->data);
         this->MeasurementData::interpolateData(dataObject);
     }
 
     void LCMSData::print()
     {
-        for (auto it = this->data.begin(); it != this->data.end(); it++)
+        for (const auto& spectrum : this->data)
         {
-            std::cout << "Scan Number: " << it->first << std::endl;
-            std::cout << "Retention Time: " << std::get<double>((*it->second->metaData)[DataField::RETENTIONTIME]) << std::endl;
-            std::cout << "Number of Data Points: " << it->second->dataPoints.size() << std::endl;
+            std::cout << "Scan Number: " << std::get<double>((*spectrum->metaData)[DataField::SCANNUMBER]) << std::endl;
+            std::cout << "Retention Time: " << std::get<double>((*spectrum->metaData)[DataField::RETENTIONTIME]) << std::endl;
+            std::cout << "Number of Data Points: " << spectrum->dataPoints.size() << std::endl;
             std::cout << "MZ values: ";
-            for (const auto& dp : it->second->dataPoints)
+            for (const auto& dp : spectrum->dataPoints)
             {
                 std::cout << dp->mz << " ";
             }
             std::cout << std::endl;
 
             std::cout << "Intensity values: ";
-            for (const auto& dp : it->second->dataPoints)
+            for (const auto& dp : spectrum->dataPoints)
             {
                 std::cout << dp->intensity << " ";
             }
             std::cout << std::endl;
             std::cout << "cuttingPoints: ";
-            for (const auto& cp : it->second->cuttingPoints)
+            for (const auto& cp : spectrum->cuttingPoints)
             {
                 std::cout << *cp << " ";
             }

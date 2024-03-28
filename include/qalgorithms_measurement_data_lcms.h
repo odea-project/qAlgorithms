@@ -4,7 +4,7 @@
 // internal
 #include "qalgorithms_measurement_data.h"
 
-#include <unordered_map>
+#include <vector>
 
 namespace q
 {
@@ -80,7 +80,7 @@ namespace q
          */
         void info();
 
-        std::unordered_map<int, std::unique_ptr<DataType::MassSpectrum>> data;
+        std::vector<std::unique_ptr<DataType::MassSpectrum>> data;
     private:
         
         int maxKey;

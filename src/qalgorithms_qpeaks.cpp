@@ -20,7 +20,7 @@ namespace q
                  for (auto &pair : *arg)
                  {
                    // de-reference the unique pointer of the object
-                   auto &dataObj = *(pair.second.get());
+                   auto &dataObj = *(pair.get());
                    // iterate over data point vector, which is a vector of unique pointers to data points structures
                    auto &data = dataObj.dataPoints;
                    // compare the size of the data vector to the maxDataPoints variable
@@ -50,11 +50,11 @@ namespace q
                {
                 // iterate over the map of varDataType datatype objects
                 // use parallel for loop to iterate over the dataMap
-                // #pragma omp parallel for
+                #pragma omp parallel for
                 for (auto &pair : *arg)
                  {
                   // de-reference the unique pointer of the object
-                  auto &dataObj = *(pair.second.get());
+                  auto &dataObj = *(pair.get());
                   auto &data = dataObj.dataPoints;
                   int n = data.size();
                   // store x and y values in RefMatrix objects
