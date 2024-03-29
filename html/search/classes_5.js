@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['tvalues_0',['tValues',['../classq_1_1t_values.html',1,'q']]]
+  ['refmatrix_0',['RefMatrix',['../classq_1_1_ref_matrix.html',1,'q']]]
 ];

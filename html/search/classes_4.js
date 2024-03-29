@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['tvalues_0',['tValues',['../classq_1_1t_values.html',1,'q']]]
+  ['qpeaks_0',['qPeaks',['../classq_1_1q_peaks.html',1,'q']]]
 ];

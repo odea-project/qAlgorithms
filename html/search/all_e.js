@@ -17,7 +17,12 @@ var searchData=
   ['qalgorithms_5fmeasurement_5fdata_5flcms_2eh_14',['qalgorithms_measurement_data_lcms.h',['../qalgorithms__measurement__data__lcms_8h.html',1,'']]],
   ['qalgorithms_5fpeak_2ecpp_15',['qalgorithms_peak.cpp',['../qalgorithms__peak_8cpp.html',1,'']]],
   ['qalgorithms_5fpeak_2eh_16',['qalgorithms_peak.h',['../qalgorithms__peak_8h.html',1,'']]],
-  ['qalgorithms_5futils_2ecpp_17',['qalgorithms_utils.cpp',['../qalgorithms__utils_8cpp.html',1,'']]],
-  ['qalgorithms_5futils_2eh_18',['qalgorithms_utils.h',['../qalgorithms__utils_8h.html',1,'']]],
-  ['quadratictermcriterion_19',['quadraticTermCriterion',['../classq_1_1_peakmodel.html#a17528cf3ee26c76315d2564426fe68ab',1,'q::Peakmodel']]]
+  ['qalgorithms_5fqpeaks_2ecpp_17',['qalgorithms_qpeaks.cpp',['../qalgorithms__qpeaks_8cpp.html',1,'']]],
+  ['qalgorithms_5fqpeaks_2eh_18',['qalgorithms_qpeaks.h',['../qalgorithms__qpeaks_8h.html',1,'']]],
+  ['qalgorithms_5frefmatrix_2ecpp_19',['qalgorithms_refmatrix.cpp',['../qalgorithms__refmatrix_8cpp.html',1,'']]],
+  ['qalgorithms_5frefmatrix_2eh_20',['qalgorithms_refmatrix.h',['../qalgorithms__refmatrix_8h.html',1,'']]],
+  ['qalgorithms_5futils_2ecpp_21',['qalgorithms_utils.cpp',['../qalgorithms__utils_8cpp.html',1,'']]],
+  ['qalgorithms_5futils_2eh_22',['qalgorithms_utils.h',['../qalgorithms__utils_8h.html',1,'']]],
+  ['qpeaks_23',['qPeaks',['../classq_1_1q_peaks.html',1,'q::qPeaks'],['../classq_1_1q_peaks.html#a401e618cceed5b32fae8b6e9e5e57005',1,'q::qPeaks::qPeaks()'],['../classq_1_1q_peaks.html#a2d61ca92c700c43e8bfcb573326748dc',1,'q::qPeaks::qPeaks(const varDataType &amp;dataVec)']]],
+  ['quadratictermcriterion_24',['quadraticTermCriterion',['../classq_1_1_peakmodel.html#a17528cf3ee26c76315d2564426fe68ab',1,'q::Peakmodel']]]
 ];

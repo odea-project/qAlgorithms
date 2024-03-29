@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['x_0',['x',['../structq_1_1_data_type_1_1_mass_spectrum_1_1_data_point.html#a6819785cf78dcfd79254e34c3ddd3ec1',1,'q::DataType::MassSpectrum::DataPoint']]]
+  ['y_0',['y',['../structq_1_1_data_type_1_1_mass_spectrum_1_1_data_point.html#a0f5379f989aba76f61041728e2dcb5bc',1,'q::DataType::MassSpectrum::DataPoint']]]
 ];

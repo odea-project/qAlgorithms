@@ -9,7 +9,7 @@ var searchData=
   ['mergeregressions_6',['mergeRegressions',['../classq_1_1_peakmodel.html#a3d77feae871fa79dd7daf2d6bdda9ca0',1,'q::Peakmodel']]],
   ['metadata_7',['metaData',['../classq_1_1_data_type_1_1_mass_spectrum.html#a30c0087b21c1b807705187898199e8e4',1,'q::DataType::MassSpectrum']]],
   ['mode_8',['Mode',['../namespaceq.html#a1ef5b9eb7b9bdd1afc71e98f9b43a174',1,'q']]],
-  ['ms_9',['MS',['../classq_1_1_measurement_data.html#acf49c0270dd400621a4a7697422a0970',1,'q::MeasurementData']]],
+  ['ms_9',['MS',['../namespaceq.html#ab39989523b38776d0880ac7c41d5f784',1,'q']]],
   ['ms1_10',['MS1',['../namespaceq_1_1_data_type.html#a90aa4d66e606cf85f2424677d7bf4d34a3c4708a2cdd3c4bfd03ad04e36b87544',1,'q::DataType']]],
   ['ms2_11',['MS2',['../namespaceq_1_1_data_type.html#a90aa4d66e606cf85f2424677d7bf4d34a5db8c2f5881ff5a19875fe5529b9a987',1,'q::DataType']]],
   ['mslevel_12',['MSLevel',['../namespaceq_1_1_data_type.html#a90aa4d66e606cf85f2424677d7bf4d34',1,'q::DataType']]],

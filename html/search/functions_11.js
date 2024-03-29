@@ -1,5 +1,4 @@
 var searchData=
 [
-  ['validate_0',['validate',['../classq_1_1_peak.html#a5312348ee392b1400238b774a2fabba4',1,'q::Peak']]],
-  ['validate_5fcoefficients_1',['validate_coefficients',['../classq_1_1_peak.html#a7abafe7418d3101a2cd3f0a483345ce2',1,'q::Peak']]]
+  ['writecsv_0',['writeCSV',['../classq_1_1_l_c_m_s_data.html#a5d7411d87663980b683c51a2f969b4c0',1,'q::LCMSData']]]
 ];

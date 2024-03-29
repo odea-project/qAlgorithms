@@ -82,6 +82,7 @@ $(function() {
 <div class="header">
   <div class="summary">
 <a href="#pub-methods">Public Member Functions</a> &#124;
+<a href="#pub-attribs">Public Attributes</a> &#124;
 <a href="classq_1_1_l_c_m_s_data-members.html">List of all members</a>  </div>
   <div class="headertitle"><div class="title">q::LCMSData Class Reference</div></div>
 </div><!--header-->
@@ -136,26 +137,23 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:a5b13907b217ee6690eef821d4df68479 inherit pub_methods_classq_1_1_measurement_data"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a8295223e88004418fcc9fa62b1ced99d inherit pub_methods_classq_1_1_measurement_data"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classq_1_1_measurement_data.html#a8295223e88004418fcc9fa62b1ced99d">readCSV</a> (std::string filename, int rowStart, int rowEnd, int colStart, int colEnd, char separator, std::vector&lt; <a class="el" href="namespaceq_1_1_data_type.html#a9fcd47c7d7d77f908f041cad931962aa">DataType::DataField</a> &gt; variableTypes)=0</td></tr>
 <tr class="separator:a8295223e88004418fcc9fa62b1ced99d inherit pub_methods_classq_1_1_measurement_data"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a3139b3ddc3039bca5c0fb7ccd7052558 inherit pub_methods_classq_1_1_measurement_data"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classq_1_1_measurement_data.html#a3139b3ddc3039bca5c0fb7ccd7052558">zeroFilling</a> (<a class="el" href="classq_1_1_measurement_data.html#a0021f29aa0a045d9964cc956528fadac">varDataType</a> &amp;dataMap, int k)</td></tr>
-<tr class="memdesc:a3139b3ddc3039bca5c0fb7ccd7052558 inherit pub_methods_classq_1_1_measurement_data"><td class="mdescLeft">&#160;</td><td class="mdescRight">Identify and fill gaps in the data.  <br /></td></tr>
-<tr class="separator:a3139b3ddc3039bca5c0fb7ccd7052558 inherit pub_methods_classq_1_1_measurement_data"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a9a22a34f93ed1aa17227dee44ab20a2d inherit pub_methods_classq_1_1_measurement_data"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classq_1_1_measurement_data.html#a9a22a34f93ed1aa17227dee44ab20a2d">cutData</a> (<a class="el" href="classq_1_1_measurement_data.html#a0021f29aa0a045d9964cc956528fadac">varDataType</a> &amp;dataMap, int &amp;maxKey)</td></tr>
-<tr class="memdesc:a9a22a34f93ed1aa17227dee44ab20a2d inherit pub_methods_classq_1_1_measurement_data"><td class="mdescLeft">&#160;</td><td class="mdescRight">Cut the data into smaller data sets.  <br /></td></tr>
-<tr class="separator:a9a22a34f93ed1aa17227dee44ab20a2d inherit pub_methods_classq_1_1_measurement_data"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a55e26101276ae6e8aed310e790e90ff0 inherit pub_methods_classq_1_1_measurement_data"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classq_1_1_measurement_data.html#a55e26101276ae6e8aed310e790e90ff0">filterSmallDataSets</a> (<a class="el" href="classq_1_1_measurement_data.html#a0021f29aa0a045d9964cc956528fadac">varDataType</a> &amp;dataMap)</td></tr>
-<tr class="memdesc:a55e26101276ae6e8aed310e790e90ff0 inherit pub_methods_classq_1_1_measurement_data"><td class="mdescLeft">&#160;</td><td class="mdescRight">Filter small data sets.  <br /></td></tr>
-<tr class="separator:a55e26101276ae6e8aed310e790e90ff0 inherit pub_methods_classq_1_1_measurement_data"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a73961e75fc2d3b418bd9109e88842f22 inherit pub_methods_classq_1_1_measurement_data"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classq_1_1_measurement_data.html#a73961e75fc2d3b418bd9109e88842f22">interpolateData</a> (<a class="el" href="classq_1_1_measurement_data.html#a0021f29aa0a045d9964cc956528fadac">varDataType</a> &amp;dataMap)</td></tr>
-<tr class="memdesc:a73961e75fc2d3b418bd9109e88842f22 inherit pub_methods_classq_1_1_measurement_data"><td class="mdescLeft">&#160;</td><td class="mdescRight">Interpolate y-axis values.  <br /></td></tr>
-<tr class="separator:a73961e75fc2d3b418bd9109e88842f22 inherit pub_methods_classq_1_1_measurement_data"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a745fd8731072a4f0d058f889bbca158e inherit pub_methods_classq_1_1_measurement_data"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classq_1_1_measurement_data.html#a745fd8731072a4f0d058f889bbca158e">zeroFilling</a> (<a class="el" href="namespaceq.html#aab5cf99505e4325617dbe9365f547a35">varDataType</a> &amp;dataVec, int k)</td></tr>
+<tr class="memdesc:a745fd8731072a4f0d058f889bbca158e inherit pub_methods_classq_1_1_measurement_data"><td class="mdescLeft">&#160;</td><td class="mdescRight">Identify and fill gaps in the data.  <br /></td></tr>
+<tr class="separator:a745fd8731072a4f0d058f889bbca158e inherit pub_methods_classq_1_1_measurement_data"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab1f64fdddef6f6549b6f2a18b4b4bd7e inherit pub_methods_classq_1_1_measurement_data"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classq_1_1_measurement_data.html#ab1f64fdddef6f6549b6f2a18b4b4bd7e">cutData</a> (<a class="el" href="namespaceq.html#aab5cf99505e4325617dbe9365f547a35">varDataType</a> &amp;dataVec, int &amp;maxKey)</td></tr>
+<tr class="memdesc:ab1f64fdddef6f6549b6f2a18b4b4bd7e inherit pub_methods_classq_1_1_measurement_data"><td class="mdescLeft">&#160;</td><td class="mdescRight">Cut the data into smaller data sets.  <br /></td></tr>
+<tr class="separator:ab1f64fdddef6f6549b6f2a18b4b4bd7e inherit pub_methods_classq_1_1_measurement_data"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad2a87250fbe7e4e9003fe09d84dd5dec inherit pub_methods_classq_1_1_measurement_data"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classq_1_1_measurement_data.html#ad2a87250fbe7e4e9003fe09d84dd5dec">filterSmallDataSets</a> (<a class="el" href="namespaceq.html#aab5cf99505e4325617dbe9365f547a35">varDataType</a> &amp;dataVec)</td></tr>
+<tr class="memdesc:ad2a87250fbe7e4e9003fe09d84dd5dec inherit pub_methods_classq_1_1_measurement_data"><td class="mdescLeft">&#160;</td><td class="mdescRight">Filter small data sets.  <br /></td></tr>
+<tr class="separator:ad2a87250fbe7e4e9003fe09d84dd5dec inherit pub_methods_classq_1_1_measurement_data"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0427a744f86c44ae9039e9b4a8a59188 inherit pub_methods_classq_1_1_measurement_data"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classq_1_1_measurement_data.html#a0427a744f86c44ae9039e9b4a8a59188">interpolateData</a> (<a class="el" href="namespaceq.html#aab5cf99505e4325617dbe9365f547a35">varDataType</a> &amp;dataVec)</td></tr>
+<tr class="memdesc:a0427a744f86c44ae9039e9b4a8a59188 inherit pub_methods_classq_1_1_measurement_data"><td class="mdescLeft">&#160;</td><td class="mdescRight">Interpolate y-axis values.  <br /></td></tr>
+<tr class="separator:a0427a744f86c44ae9039e9b4a8a59188 inherit pub_methods_classq_1_1_measurement_data"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="inherited" name="inherited"></a>
-Additional Inherited Members</h2></td></tr>
-<tr class="inherit_header pub_types_classq_1_1_measurement_data"><td colspan="2" onclick="javascript:toggleInherit('pub_types_classq_1_1_measurement_data')"><img src="closed.png" alt="-"/>&#160;Public Types inherited from <a class="el" href="classq_1_1_measurement_data.html">q::MeasurementData</a></td></tr>
-<tr class="memitem:acf49c0270dd400621a4a7697422a0970 inherit pub_types_classq_1_1_measurement_data"><td class="memItemLeft" align="right" valign="top">using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classq_1_1_measurement_data.html#acf49c0270dd400621a4a7697422a0970">MS</a> = std::unordered_map&lt; int, std::unique_ptr&lt; <a class="el" href="classq_1_1_data_type_1_1_mass_spectrum.html">DataType::MassSpectrum</a> &gt; &gt; *</td></tr>
-<tr class="separator:acf49c0270dd400621a4a7697422a0970 inherit pub_types_classq_1_1_measurement_data"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a0021f29aa0a045d9964cc956528fadac inherit pub_types_classq_1_1_measurement_data"><td class="memItemLeft" align="right" valign="top">using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classq_1_1_measurement_data.html#a0021f29aa0a045d9964cc956528fadac">varDataType</a> = std::variant&lt; <a class="el" href="classq_1_1_measurement_data.html#acf49c0270dd400621a4a7697422a0970">MS</a> &gt;</td></tr>
-<tr class="separator:a0021f29aa0a045d9964cc956528fadac inherit pub_types_classq_1_1_measurement_data"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-attribs" name="pub-attribs"></a>
+Public Attributes</h2></td></tr>
+<tr class="memitem:ac08611a3fc7649d1e5b2ae257090388a"><td class="memItemLeft" align="right" valign="top">std::vector&lt; std::unique_ptr&lt; <a class="el" href="classq_1_1_data_type_1_1_mass_spectrum.html">DataType::MassSpectrum</a> &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classq_1_1_l_c_m_s_data.html#ac08611a3fc7649d1e5b2ae257090388a">data</a></td></tr>
+<tr class="separator:ac08611a3fc7649d1e5b2ae257090388a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>A class to store LC-MS measurement data. </p>
@@ -183,7 +181,7 @@ Additional Inherited Members</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="qalgorithms__measurement__data__lcms_8cpp_source.html#l00019">19</a> of file <a class="el" href="qalgorithms__measurement__data__lcms_8cpp_source.html">qalgorithms_measurement_data_lcms.cpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="qalgorithms__measurement__data__lcms_8cpp_source.html#l00020">20</a> of file <a class="el" href="qalgorithms__measurement__data__lcms_8cpp_source.html">qalgorithms_measurement_data_lcms.cpp</a>.</p>
 
 </div>
 </div>
@@ -202,7 +200,7 @@ Additional Inherited Members</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="qalgorithms__measurement__data__lcms_8cpp_source.html#l00023">23</a> of file <a class="el" href="qalgorithms__measurement__data__lcms_8cpp_source.html">qalgorithms_measurement_data_lcms.cpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="qalgorithms__measurement__data__lcms_8cpp_source.html#l00024">24</a> of file <a class="el" href="qalgorithms__measurement__data__lcms_8cpp_source.html">qalgorithms_measurement_data_lcms.cpp</a>.</p>
 
 </div>
 </div>
@@ -225,7 +223,7 @@ Additional Inherited Members</h2></td></tr>
 <p>Cut the data into smaller data sets. </p>
 <p>The cutData method cuts the data into smaller data sets. The method uses the separator value to split the data into smaller data sets. The separator value is set to -1.0 for the x-axis and -1.0 for the y-axis. For each cut, the method creates a new data subset and stores it in the data map using a sub-dataset ID as the secondary key. </p>
 
-<p class="definition">Definition at line <a class="el" href="qalgorithms__measurement__data__lcms_8cpp_source.html#l00200">200</a> of file <a class="el" href="qalgorithms__measurement__data__lcms_8cpp_source.html">qalgorithms_measurement_data_lcms.cpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="qalgorithms__measurement__data__lcms_8cpp_source.html#l00205">205</a> of file <a class="el" href="qalgorithms__measurement__data__lcms_8cpp_source.html">qalgorithms_measurement_data_lcms.cpp</a>.</p>
 
 </div>
 </div>
@@ -247,7 +245,7 @@ Additional Inherited Members</h2></td></tr>
 <p>Filter small data sets. </p>
 <p>The filterSmallDataSets method filters small data sets. The method removes data sets with less than 5 data points. This is due to the regression analysis that includes 4 coefficients and therefore requires at least 5 data points. </p>
 
-<p class="definition">Definition at line <a class="el" href="qalgorithms__measurement__data__lcms_8cpp_source.html#l00207">207</a> of file <a class="el" href="qalgorithms__measurement__data__lcms_8cpp_source.html">qalgorithms_measurement_data_lcms.cpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="qalgorithms__measurement__data__lcms_8cpp_source.html#l00212">212</a> of file <a class="el" href="qalgorithms__measurement__data__lcms_8cpp_source.html">qalgorithms_measurement_data_lcms.cpp</a>.</p>
 
 </div>
 </div>
@@ -269,7 +267,7 @@ Additional Inherited Members</h2></td></tr>
 <p>Print the LC-MS number of data sets. </p>
 <p>The print method prints the LC-MS data to the console. </p>
 
-<p class="definition">Definition at line <a class="el" href="qalgorithms__measurement__data__lcms_8cpp_source.html#l00250">250</a> of file <a class="el" href="qalgorithms__measurement__data__lcms_8cpp_source.html">qalgorithms_measurement_data_lcms.cpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="qalgorithms__measurement__data__lcms_8cpp_source.html#l00255">255</a> of file <a class="el" href="qalgorithms__measurement__data__lcms_8cpp_source.html">qalgorithms_measurement_data_lcms.cpp</a>.</p>
 
 </div>
 </div>
@@ -291,7 +289,7 @@ Additional Inherited Members</h2></td></tr>
 <p>Interpolate y-axis values. </p>
 <p>The interpolateData method interpolates the y-axis values. The method uses quadratic interpolation to interpolate the y-axis values in the log space. </p>
 
-<p class="definition">Definition at line <a class="el" href="qalgorithms__measurement__data__lcms_8cpp_source.html#l00214">214</a> of file <a class="el" href="qalgorithms__measurement__data__lcms_8cpp_source.html">qalgorithms_measurement_data_lcms.cpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="qalgorithms__measurement__data__lcms_8cpp_source.html#l00219">219</a> of file <a class="el" href="qalgorithms__measurement__data__lcms_8cpp_source.html">qalgorithms_measurement_data_lcms.cpp</a>.</p>
 
 </div>
 </div>
@@ -313,7 +311,7 @@ Additional Inherited Members</h2></td></tr>
 <p>Print the LC-MS datapoints and metadata. </p>
 <p>The print method prints the LC-MS data to the console. </p>
 
-<p class="definition">Definition at line <a class="el" href="qalgorithms__measurement__data__lcms_8cpp_source.html#l00221">221</a> of file <a class="el" href="qalgorithms__measurement__data__lcms_8cpp_source.html">qalgorithms_measurement_data_lcms.cpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="qalgorithms__measurement__data__lcms_8cpp_source.html#l00226">226</a> of file <a class="el" href="qalgorithms__measurement__data__lcms_8cpp_source.html">qalgorithms_measurement_data_lcms.cpp</a>.</p>
 
 </div>
 </div>
@@ -397,7 +395,7 @@ Additional Inherited Members</h2></td></tr>
 
 <p>Implements <a class="el" href="classq_1_1_measurement_data.html#a8295223e88004418fcc9fa62b1ced99d">q::MeasurementData</a>.</p>
 
-<p class="definition">Definition at line <a class="el" href="qalgorithms__measurement__data__lcms_8cpp_source.html#l00027">27</a> of file <a class="el" href="qalgorithms__measurement__data__lcms_8cpp_source.html">qalgorithms_measurement_data_lcms.cpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="qalgorithms__measurement__data__lcms_8cpp_source.html#l00028">28</a> of file <a class="el" href="qalgorithms__measurement__data__lcms_8cpp_source.html">qalgorithms_measurement_data_lcms.cpp</a>.</p>
 
 </div>
 </div>
@@ -425,7 +423,7 @@ Additional Inherited Members</h2></td></tr>
   </dd>
 </dl>
 
-<p class="definition">Definition at line <a class="el" href="qalgorithms__measurement__data__lcms_8cpp_source.html#l00174">174</a> of file <a class="el" href="qalgorithms__measurement__data__lcms_8cpp_source.html">qalgorithms_measurement_data_lcms.cpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="qalgorithms__measurement__data__lcms_8cpp_source.html#l00175">175</a> of file <a class="el" href="qalgorithms__measurement__data__lcms_8cpp_source.html">qalgorithms_measurement_data_lcms.cpp</a>.</p>
 
 </div>
 </div>
@@ -447,7 +445,24 @@ Additional Inherited Members</h2></td></tr>
 <p>Identify and fill gaps in the LC-MS data. </p>
 <p>The zeroFilling method identifies and fills gaps in the LC-MS data. The method uses difference between two neighboring data points to identify gaps. If the difference is 1.75 times greater than expected, then the method fills the gap with zero values for intensity and inter/extrapolated values for x-axis values. For the expected difference, the method the difference of the last two data points that not show a gap. However, the first expected difference is set to the median of the differences of the total data points. However, the maximum gap size is set to 4 per side, i.e., 8 in total, where there is a gap leftover between the fourth and fifth data points. </p>
 
-<p class="definition">Definition at line <a class="el" href="qalgorithms__measurement__data__lcms_8cpp_source.html#l00193">193</a> of file <a class="el" href="qalgorithms__measurement__data__lcms_8cpp_source.html">qalgorithms_measurement_data_lcms.cpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="qalgorithms__measurement__data__lcms_8cpp_source.html#l00198">198</a> of file <a class="el" href="qalgorithms__measurement__data__lcms_8cpp_source.html">qalgorithms_measurement_data_lcms.cpp</a>.</p>
+
+</div>
+</div>
+<h2 class="groupheader">Member Data Documentation</h2>
+<a id="ac08611a3fc7649d1e5b2ae257090388a" name="ac08611a3fc7649d1e5b2ae257090388a"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ac08611a3fc7649d1e5b2ae257090388a">&#9670;&#160;</a></span>data</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::vector&lt;std::unique_ptr&lt;<a class="el" href="classq_1_1_data_type_1_1_mass_spectrum.html">DataType::MassSpectrum</a>&gt; &gt; q::LCMSData::data</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="qalgorithms__measurement__data__lcms_8h_source.html#l00083">83</a> of file <a class="el" href="qalgorithms__measurement__data__lcms_8h_source.html">qalgorithms_measurement_data_lcms.h</a>.</p>
 
 </div>
 </div>

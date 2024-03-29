@@ -10,252 +10,257 @@
 \DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00006}00006\ \textcolor{comment}{//\ external}}
 \DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00007}00007\ \textcolor{preprocessor}{\#include\ <fstream>}}
 \DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00008}00008\ \textcolor{preprocessor}{\#include\ <sstream>}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00009}00009\ }
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00010}00010\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespaceq}{q}}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00011}00011\ \{}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00012}00012\ \ \ \ \ \textcolor{comment}{//\ usings}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00013}\mbox{\hyperlink{namespaceq_a23bdccee34b821e7d4ee0f698d4c6701}{00013}}\ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{namespaceq_a23bdccee34b821e7d4ee0f698d4c6701}{VariableType}}\ =\ \mbox{\hyperlink{classq_1_1_data_type_1_1_mass_spectrum_a45d5ddc2ce29c805760e326039ea93b8}{DataType::MassSpectrum::variableType}};}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00014}\mbox{\hyperlink{namespaceq_a463ddd687acb437210a8e06253ebc078}{00014}}\ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{namespaceq_1_1_data_type_a9fcd47c7d7d77f908f041cad931962aa}{DataField}}\ =\ \mbox{\hyperlink{namespaceq_1_1_data_type_a9fcd47c7d7d77f908f041cad931962aa}{DataType::DataField}};}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00015}\mbox{\hyperlink{namespaceq_af793f3fc556aa1db800aea6f1ae8b56f}{00015}}\ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{classq_1_1_data_type_1_1_mass_spectrum}{MassSpectrum}}\ =\ \mbox{\hyperlink{classq_1_1_data_type_1_1_mass_spectrum}{DataType::MassSpectrum}};}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00016}\mbox{\hyperlink{namespaceq_ad2e5a48ff360341725405e45b33f9c9e}{00016}}\ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{structq_1_1_data_type_1_1_mass_spectrum_1_1_data_point}{DataPoint}}\ =\ \mbox{\hyperlink{structq_1_1_data_type_1_1_mass_spectrum_1_1_data_point}{DataType::MassSpectrum::DataPoint}};}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00017}\mbox{\hyperlink{namespaceq_a2ce4afc69ea08399771ec175f5b546e6}{00017}}\ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{namespaceq_a2ce4afc69ea08399771ec175f5b546e6}{DataPointVector}}\ =\ std::vector<std::unique\_ptr<DataPoint>>;}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00018}00018\ }
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00019}\mbox{\hyperlink{classq_1_1_l_c_m_s_data_a7466e285c6c4f7a7fd3a67edb15a4cd7}{00019}}\ \ \ \ \ \mbox{\hyperlink{classq_1_1_l_c_m_s_data_a7466e285c6c4f7a7fd3a67edb15a4cd7}{LCMSData::LCMSData}}()}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00020}00020\ \ \ \ \ \{}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00021}00021\ \ \ \ \ \}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00022}00022\ }
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00023}\mbox{\hyperlink{classq_1_1_l_c_m_s_data_a556f3c0930dd9500376eda81b271b787}{00023}}\ \ \ \ \ \mbox{\hyperlink{classq_1_1_l_c_m_s_data_a556f3c0930dd9500376eda81b271b787}{LCMSData::\string~LCMSData}}()}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00024}00024\ \ \ \ \ \{}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00025}00025\ \ \ \ \ \}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00026}00026\ }
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00027}\mbox{\hyperlink{classq_1_1_l_c_m_s_data_ab4632d3d3138d17fd5a7f479b70c2846}{00027}}\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classq_1_1_l_c_m_s_data_ab4632d3d3138d17fd5a7f479b70c2846}{LCMSData::readCSV}}(std::string\ filename,\ \textcolor{keywordtype}{int}\ rowStart,\ \textcolor{keywordtype}{int}\ rowEnd,\ \textcolor{keywordtype}{int}\ colStart,\ \textcolor{keywordtype}{int}\ colEnd,\ \textcolor{keywordtype}{char}\ separator,\ std::vector<DataField>\ variableTypes)}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00028}00028\ \ \ \ \ \{}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00029}00029\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ open\ the\ file}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00030}00030\ \ \ \ \ \ \ \ \ std::ifstream\ file(filename);}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00031}00031\ \ \ \ \ \ \ \ \ std::string\ line;}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00032}00032\ \ \ \ \ \ \ \ \ std::vector<std::vector<std::string>>\ raw\_data;}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00033}00033\ }
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00034}00034\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ if\ rowEnd\ is\ -\/1,\ then\ set\ it\ to\ the\ maximum\ number\ of\ rows}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00035}00035\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (rowEnd\ ==\ -\/1)}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00036}00036\ \ \ \ \ \ \ \ \ \{}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00037}00037\ \ \ \ \ \ \ \ \ \ \ \ \ rowEnd\ =\ 1000000;}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00038}00038\ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00039}00039\ }
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00040}00040\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ if\ colEnd\ is\ -\/1,\ then\ set\ it\ to\ the\ maximum\ number\ of\ columns}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00041}00041\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (colEnd\ ==\ -\/1)}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00042}00042\ \ \ \ \ \ \ \ \ \{}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00043}00043\ \ \ \ \ \ \ \ \ \ \ \ \ colEnd\ =\ 1000000;}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00044}00044\ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00045}00045\ }
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00046}00046\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ find\ the\ DataFiled::SCANNUMBER\ as\ this\ is\ the\ key\ for\ the\ LCMSData\ map}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00047}00047\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ scanNumberIndex\ =\ -\/1;}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00048}00048\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ i\ =\ 0;\ i\ <\ variableTypes.size();\ i++)}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00049}00049\ \ \ \ \ \ \ \ \ \{}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00050}00050\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (variableTypes[i]\ ==\ DataField::SCANNUMBER)}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00051}00051\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00052}00052\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ scanNumberIndex\ =\ i;}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00053}00053\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00054}00054\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00055}00055\ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00056}00056\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ check\ if\ scanNumberIndex\ is\ found}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00057}00057\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (scanNumberIndex\ ==\ -\/1)}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00058}00058\ \ \ \ \ \ \ \ \ \{}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00059}00059\ \ \ \ \ \ \ \ \ \ \ \ \ std::cerr\ <<\ \textcolor{stringliteral}{"{}The\ scan\ number\ is\ not\ found\ in\ the\ variable\ types"{}}\ <<\ std::endl;}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00060}00060\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return};}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00061}00061\ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00062}00062\ }
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00063}00063\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ find\ the\ DataFiled::RETENTIONTIME}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00064}00064\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ retentionTimeIndex\ =\ -\/1;}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00065}00065\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ i\ =\ 0;\ i\ <\ variableTypes.size();\ i++)}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00066}00066\ \ \ \ \ \ \ \ \ \{}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00067}00067\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (variableTypes[i]\ ==\ DataField::RETENTIONTIME)}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00068}00068\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00069}00069\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ retentionTimeIndex\ =\ i;}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00070}00070\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00071}00071\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00072}00072\ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00073}00073\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ check\ if\ retentionTimeIndex\ is\ found}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00074}00074\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (retentionTimeIndex\ ==\ -\/1)}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00075}00075\ \ \ \ \ \ \ \ \ \{}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00076}00076\ \ \ \ \ \ \ \ \ \ \ \ \ std::cerr\ <<\ \textcolor{stringliteral}{"{}The\ retention\ time\ is\ not\ found\ in\ the\ variable\ types"{}}\ <<\ std::endl;}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00077}00077\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return};}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00078}00078\ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00079}00079\ }
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00080}00080\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ find\ the\ DataFiled::MZ}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00081}00081\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ mzIndex\ =\ -\/1;}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00082}00082\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ i\ =\ 0;\ i\ <\ variableTypes.size();\ i++)}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00083}00083\ \ \ \ \ \ \ \ \ \{}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00084}00084\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (variableTypes[i]\ ==\ DataField::MZ)}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00085}00085\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00086}00086\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ mzIndex\ =\ i;}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00087}00087\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00088}00088\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00089}00089\ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00090}00090\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ check\ if\ mzIndex\ is\ found}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00091}00091\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (mzIndex\ ==\ -\/1)}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00092}00092\ \ \ \ \ \ \ \ \ \{}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00093}00093\ \ \ \ \ \ \ \ \ \ \ \ \ std::cerr\ <<\ \textcolor{stringliteral}{"{}The\ mz\ is\ not\ found\ in\ the\ variable\ types"{}}\ <<\ std::endl;}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00094}00094\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return};}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00095}00095\ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00096}00096\ }
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00097}00097\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ find\ the\ DataFiled::INTENSITY}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00098}00098\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ intensityIndex\ =\ -\/1;}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00099}00099\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ i\ =\ 0;\ i\ <\ variableTypes.size();\ i++)}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00100}00100\ \ \ \ \ \ \ \ \ \{}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00101}00101\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (variableTypes[i]\ ==\ DataField::INTENSITY)}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00102}00102\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00103}00103\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ intensityIndex\ =\ i;}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00104}00104\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00105}00105\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00106}00106\ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00107}00107\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ check\ if\ intensityIndex\ is\ found}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00108}00108\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (intensityIndex\ ==\ -\/1)}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00109}00109\ \ \ \ \ \ \ \ \ \{}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00110}00110\ \ \ \ \ \ \ \ \ \ \ \ \ std::cerr\ <<\ \textcolor{stringliteral}{"{}The\ intensity\ is\ not\ found\ in\ the\ variable\ types"{}}\ <<\ std::endl;}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00111}00111\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return};}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00112}00112\ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00113}00113\ }
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00114}00114\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ read\ the\ file}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00115}00115\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ rowCounter\ =\ 0;}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00116}00116\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ colCounter\ =\ 0;}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00117}00117\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{while}\ (std::getline(file,\ line)\ \&\&\ rowCounter\ <\ rowEnd)}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00118}00118\ \ \ \ \ \ \ \ \ \{}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00119}00119\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (rowCounter\ >=\ rowStart)}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00120}00120\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00121}00121\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::vector<std::string>\ row;}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00122}00122\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::stringstream\ lineStream(line);}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00123}00123\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::string\ cell;}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00124}00124\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ colCounter\ =\ 0;}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00125}00125\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{while}\ (std::getline(lineStream,\ cell,\ separator))}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00126}00126\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00127}00127\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (colCounter\ >=\ colStart\ \&\&\ colCounter\ <\ colEnd)}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00128}00128\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00129}00129\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ row.push\_back(cell);}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00130}00130\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00131}00131\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ colCounter++;}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00132}00132\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00133}00133\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ raw\_data.push\_back(row);}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00134}00134\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00135}00135\ \ \ \ \ \ \ \ \ \ \ \ \ rowCounter++;}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00136}00136\ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00137}00137\ \ \ \ \ \ \ \ \ file.close();}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00138}00138\ }
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00139}00139\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ check\ if\ the\ raw\ data\ has\ same\ number\ of\ columns\ as\ the\ variableTypes}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00140}00140\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (raw\_data[0].size()\ !=\ variableTypes.size())}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00141}00141\ \ \ \ \ \ \ \ \ \{}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00142}00142\ \ \ \ \ \ \ \ \ \ \ \ \ std::cerr\ <<\ \textcolor{stringliteral}{"{}The\ number\ of\ columns\ in\ the\ raw\ data\ does\ not\ match\ the\ number\ of\ variable\ types"{}}\ <<\ std::endl;}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00143}00143\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return};}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00144}00144\ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00145}00145\ }
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00146}00146\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ transfere\ the\ raw\ data\ to\ the\ data\ map}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00147}00147\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ data\_id\ =\ 0;\ \textcolor{comment}{//\ data\ id\ is\ used\ to\ identify\ the\ data\ set}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00148}00148\ \ \ \ \ \ \ \ \ maxKey\ =\ 0;}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00149}00149\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ i\ =\ 0;\ i\ <\ raw\_data.size();\ i++)}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00150}00150\ \ \ \ \ \ \ \ \ \{}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00151}00151\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ check\ if\ the\ scan\ number\ is\ already\ in\ the\ data\ map}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00152}00152\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ scanNumber\ =\ std::stoi(raw\_data[i][scanNumberIndex]);}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00153}00153\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (this-\/>data.find(scanNumber)\ ==\ this-\/>data.end())}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00154}00154\ \ \ \ \ \ \ \ \ \ \ \ \ \{\ \textcolor{comment}{//\ scan\ number\ is\ not\ found\ in\ the\ data\ map;\ initialize\ a\ new\ MassSpectrum\ object\ and\ add\ meta\ information}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00155}00155\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ add\ the\ MassSpectrum\ object\ to\ the\ data\ map}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00156}00156\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ this-\/>data[scanNumber]\ =\ std::make\_unique<MassSpectrum>();}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00157}00157\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ add\ the\ scan\ number\ to\ the\ MassSpectrum\ object}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00158}00158\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (*this-\/>data[scanNumber]-\/>metaData)[DataField::SCANNUMBER]\ =\ \mbox{\hyperlink{namespaceq_a23bdccee34b821e7d4ee0f698d4c6701}{VariableType}}(scanNumber);}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00159}00159\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ add\ the\ retention\ time\ to\ the\ MassSpectrum\ object}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00160}00160\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (*this-\/>data[scanNumber]-\/>metaData)[DataField::RETENTIONTIME]\ =\ \mbox{\hyperlink{namespaceq_a23bdccee34b821e7d4ee0f698d4c6701}{VariableType}}(std::stod(raw\_data[i][retentionTimeIndex]));}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00161}00161\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ update\ the\ maxKey}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00162}00162\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (scanNumber\ >\ maxKey)}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00163}00163\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00164}00164\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ maxKey\ =\ scanNumber;}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00165}00165\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00166}00166\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00167}00167\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ create\ a\ new\ DataPoint\ object\ and\ add\ it\ to\ the\ DataPoint\ Vector}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00168}00168\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{double}\ intensity\ =\ std::stod(raw\_data[i][intensityIndex]);}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00169}00169\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ df\ =\ (intensity\ >\ 0)\ ?\ 1\ :\ 0;}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00170}00170\ \ \ \ \ \ \ \ \ \ \ \ \ this-\/>data[scanNumber]-\/>dataPoints.push\_back(std::make\_unique<DataPoint>(intensity,\ std::stod(raw\_data[i][mzIndex]),\ df));}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00171}00171\ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00172}00172\ \ \ \ \ \}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00173}00173\ }
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00174}\mbox{\hyperlink{classq_1_1_l_c_m_s_data_a5d7411d87663980b683c51a2f969b4c0}{00174}}\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classq_1_1_l_c_m_s_data_a5d7411d87663980b683c51a2f969b4c0}{LCMSData::writeCSV}}(std::string\ filename)}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00175}00175\ \ \ \ \ \{}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00176}00176\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ open\ the\ file}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00177}00177\ \ \ \ \ \ \ \ \ std::ofstream\ file(filename);}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00178}00178\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ write\ header\ using:\ ID,\ ScanNumber,\ RetentionTime,\ MZ,\ Intensity\ (ID\ is\ the\ key\ for\ the\ data\ map)}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00179}00179\ \ \ \ \ \ \ \ \ file\ <<\ \textcolor{stringliteral}{"{}ID,ScanNumber,RetentionTime,MZ,Intensity"{}}\ <<\ std::endl;}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00180}00180\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ iterate\ over\ all\ data\ sets}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00181}00181\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keyword}{auto}\ it\ =\ this-\/>data.begin();\ it\ !=\ this-\/>data.end();\ it++)}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00182}00182\ \ \ \ \ \ \ \ \ \{}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00183}00183\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ iterate\ over\ all\ data\ points}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00184}00184\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keyword}{const}\ \textcolor{keyword}{auto}\&\ dp\ :\ it-\/>second-\/>dataPoints)}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00009}00009\ \textcolor{preprocessor}{\#include\ <iomanip>}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00010}00010\ }
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00011}00011\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespaceq}{q}}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00012}00012\ \{}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00013}00013\ \ \ \ \ \textcolor{comment}{//\ usings}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00014}\mbox{\hyperlink{namespaceq_a23bdccee34b821e7d4ee0f698d4c6701}{00014}}\ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{namespaceq_a23bdccee34b821e7d4ee0f698d4c6701}{VariableType}}\ =\ \mbox{\hyperlink{classq_1_1_data_type_1_1_mass_spectrum_a45d5ddc2ce29c805760e326039ea93b8}{DataType::MassSpectrum::variableType}};}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00015}\mbox{\hyperlink{namespaceq_a463ddd687acb437210a8e06253ebc078}{00015}}\ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{namespaceq_1_1_data_type_a9fcd47c7d7d77f908f041cad931962aa}{DataField}}\ =\ \mbox{\hyperlink{namespaceq_1_1_data_type_a9fcd47c7d7d77f908f041cad931962aa}{DataType::DataField}};}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00016}\mbox{\hyperlink{namespaceq_af793f3fc556aa1db800aea6f1ae8b56f}{00016}}\ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{classq_1_1_data_type_1_1_mass_spectrum}{MassSpectrum}}\ =\ \mbox{\hyperlink{classq_1_1_data_type_1_1_mass_spectrum}{DataType::MassSpectrum}};}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00017}\mbox{\hyperlink{namespaceq_ad2e5a48ff360341725405e45b33f9c9e}{00017}}\ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{structq_1_1_data_type_1_1_mass_spectrum_1_1_data_point}{DataPoint}}\ =\ \mbox{\hyperlink{structq_1_1_data_type_1_1_mass_spectrum_1_1_data_point}{DataType::MassSpectrum::DataPoint}};}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00018}\mbox{\hyperlink{namespaceq_a2ce4afc69ea08399771ec175f5b546e6}{00018}}\ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{namespaceq_a2ce4afc69ea08399771ec175f5b546e6}{DataPointVector}}\ =\ std::vector<std::unique\_ptr<DataPoint>>;}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00019}00019\ }
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00020}\mbox{\hyperlink{classq_1_1_l_c_m_s_data_a7466e285c6c4f7a7fd3a67edb15a4cd7}{00020}}\ \ \ \ \ \mbox{\hyperlink{classq_1_1_l_c_m_s_data_a7466e285c6c4f7a7fd3a67edb15a4cd7}{LCMSData::LCMSData}}()}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00021}00021\ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00022}00022\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00023}00023\ }
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00024}\mbox{\hyperlink{classq_1_1_l_c_m_s_data_a556f3c0930dd9500376eda81b271b787}{00024}}\ \ \ \ \ \mbox{\hyperlink{classq_1_1_l_c_m_s_data_a556f3c0930dd9500376eda81b271b787}{LCMSData::\string~LCMSData}}()}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00025}00025\ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00026}00026\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00027}00027\ }
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00028}\mbox{\hyperlink{classq_1_1_l_c_m_s_data_ab4632d3d3138d17fd5a7f479b70c2846}{00028}}\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classq_1_1_l_c_m_s_data_ab4632d3d3138d17fd5a7f479b70c2846}{LCMSData::readCSV}}(std::string\ filename,\ \textcolor{keywordtype}{int}\ rowStart,\ \textcolor{keywordtype}{int}\ rowEnd,\ \textcolor{keywordtype}{int}\ colStart,\ \textcolor{keywordtype}{int}\ colEnd,\ \textcolor{keywordtype}{char}\ separator,\ std::vector<DataField>\ variableTypes)}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00029}00029\ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00030}00030\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ open\ the\ file}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00031}00031\ \ \ \ \ \ \ \ \ std::ifstream\ file(filename);}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00032}00032\ \ \ \ \ \ \ \ \ std::string\ line;}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00033}00033\ \ \ \ \ \ \ \ \ std::vector<std::vector<std::string>>\ raw\_data;}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00034}00034\ }
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00035}00035\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ if\ rowEnd\ is\ -\/1,\ then\ set\ it\ to\ the\ maximum\ number\ of\ rows}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00036}00036\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (rowEnd\ ==\ -\/1)}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00037}00037\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00038}00038\ \ \ \ \ \ \ \ \ \ \ \ \ rowEnd\ =\ 1000000;}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00039}00039\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00040}00040\ }
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00041}00041\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ if\ colEnd\ is\ -\/1,\ then\ set\ it\ to\ the\ maximum\ number\ of\ columns}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00042}00042\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (colEnd\ ==\ -\/1)}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00043}00043\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00044}00044\ \ \ \ \ \ \ \ \ \ \ \ \ colEnd\ =\ 1000000;}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00045}00045\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00046}00046\ }
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00047}00047\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ find\ the\ DataFiled::SCANNUMBER\ as\ this\ is\ the\ key\ for\ the\ LCMSData\ vector}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00048}00048\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ scanNumberIndex\ =\ -\/1;}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00049}00049\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ i\ =\ 0;\ i\ <\ variableTypes.size();\ i++)}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00050}00050\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00051}00051\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (variableTypes[i]\ ==\ DataField::SCANNUMBER)}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00052}00052\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00053}00053\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ scanNumberIndex\ =\ i;}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00054}00054\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00055}00055\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00056}00056\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00057}00057\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ check\ if\ scanNumberIndex\ is\ found}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00058}00058\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (scanNumberIndex\ ==\ -\/1)}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00059}00059\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00060}00060\ \ \ \ \ \ \ \ \ \ \ \ \ std::cerr\ <<\ \textcolor{stringliteral}{"{}The\ scan\ number\ is\ not\ found\ in\ the\ variable\ types"{}}\ <<\ std::endl;}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00061}00061\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00062}00062\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00063}00063\ }
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00064}00064\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ find\ the\ DataFiled::RETENTIONTIME}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00065}00065\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ retentionTimeIndex\ =\ -\/1;}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00066}00066\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ i\ =\ 0;\ i\ <\ variableTypes.size();\ i++)}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00067}00067\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00068}00068\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (variableTypes[i]\ ==\ DataField::RETENTIONTIME)}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00069}00069\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00070}00070\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ retentionTimeIndex\ =\ i;}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00071}00071\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00072}00072\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00073}00073\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00074}00074\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ check\ if\ retentionTimeIndex\ is\ found}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00075}00075\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (retentionTimeIndex\ ==\ -\/1)}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00076}00076\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00077}00077\ \ \ \ \ \ \ \ \ \ \ \ \ std::cerr\ <<\ \textcolor{stringliteral}{"{}The\ retention\ time\ is\ not\ found\ in\ the\ variable\ types"{}}\ <<\ std::endl;}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00078}00078\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00079}00079\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00080}00080\ }
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00081}00081\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ find\ the\ DataFiled::MZ}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00082}00082\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ mzIndex\ =\ -\/1;}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00083}00083\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ i\ =\ 0;\ i\ <\ variableTypes.size();\ i++)}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00084}00084\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00085}00085\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (variableTypes[i]\ ==\ DataField::MZ)}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00086}00086\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00087}00087\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ mzIndex\ =\ i;}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00088}00088\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00089}00089\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00090}00090\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00091}00091\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ check\ if\ mzIndex\ is\ found}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00092}00092\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (mzIndex\ ==\ -\/1)}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00093}00093\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00094}00094\ \ \ \ \ \ \ \ \ \ \ \ \ std::cerr\ <<\ \textcolor{stringliteral}{"{}The\ mz\ is\ not\ found\ in\ the\ variable\ types"{}}\ <<\ std::endl;}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00095}00095\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00096}00096\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00097}00097\ }
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00098}00098\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ find\ the\ DataFiled::INTENSITY}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00099}00099\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ intensityIndex\ =\ -\/1;}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00100}00100\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ i\ =\ 0;\ i\ <\ variableTypes.size();\ i++)}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00101}00101\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00102}00102\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (variableTypes[i]\ ==\ DataField::INTENSITY)}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00103}00103\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00104}00104\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ intensityIndex\ =\ i;}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00105}00105\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00106}00106\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00107}00107\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00108}00108\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ check\ if\ intensityIndex\ is\ found}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00109}00109\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (intensityIndex\ ==\ -\/1)}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00110}00110\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00111}00111\ \ \ \ \ \ \ \ \ \ \ \ \ std::cerr\ <<\ \textcolor{stringliteral}{"{}The\ intensity\ is\ not\ found\ in\ the\ variable\ types"{}}\ <<\ std::endl;}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00112}00112\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00113}00113\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00114}00114\ }
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00115}00115\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ read\ the\ file}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00116}00116\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ rowCounter\ =\ 0;}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00117}00117\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ colCounter\ =\ 0;}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00118}00118\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{while}\ (std::getline(file,\ line)\ \&\&\ rowCounter\ <\ rowEnd)}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00119}00119\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00120}00120\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (rowCounter\ >=\ rowStart)}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00121}00121\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00122}00122\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::vector<std::string>\ row;}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00123}00123\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::stringstream\ lineStream(line);}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00124}00124\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::string\ cell;}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00125}00125\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ colCounter\ =\ 0;}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00126}00126\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{while}\ (std::getline(lineStream,\ cell,\ separator))}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00127}00127\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00128}00128\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (colCounter\ >=\ colStart\ \&\&\ colCounter\ <\ colEnd)}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00129}00129\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00130}00130\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ row.push\_back(cell);}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00131}00131\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00132}00132\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ colCounter++;}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00133}00133\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00134}00134\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ raw\_data.push\_back(row);}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00135}00135\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00136}00136\ \ \ \ \ \ \ \ \ \ \ \ \ rowCounter++;}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00137}00137\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00138}00138\ \ \ \ \ \ \ \ \ file.close();}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00139}00139\ }
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00140}00140\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ check\ if\ the\ raw\ data\ has\ same\ number\ of\ columns\ as\ the\ variableTypes}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00141}00141\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (raw\_data[0].size()\ !=\ variableTypes.size())}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00142}00142\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00143}00143\ \ \ \ \ \ \ \ \ \ \ \ \ std::cerr\ <<\ \textcolor{stringliteral}{"{}The\ number\ of\ columns\ in\ the\ raw\ data\ does\ not\ match\ the\ number\ of\ variable\ types"{}}\ <<\ std::endl;}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00144}00144\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00145}00145\ \ \ \ \ \ \ \ \ \}\ \ \ \ \ \ }
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00146}00146\ }
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00147}00147\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ transfere\ the\ raw\ data\ to\ the\ data\ vector}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00148}00148\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ data\_id\ =\ 0;\ \textcolor{comment}{//\ data\ id\ is\ used\ to\ identify\ the\ data\ set}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00149}00149\ \ \ \ \ \ \ \ \ maxKey\ =\ 0;}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00150}00150\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ i\ =\ 0;\ i\ <\ raw\_data.size();\ i++)}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00151}00151\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00152}00152\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ check\ if\ the\ scan\ number\ is\ already\ in\ the\ data\ vector\ }}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00153}00153\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ scanNumber\ =\ std::stoi(raw\_data[i][scanNumberIndex]);}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00154}00154\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (this-\/>\mbox{\hyperlink{classq_1_1_l_c_m_s_data_ac08611a3fc7649d1e5b2ae257090388a}{data}}.size()\ <\ scanNumber+1)}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00155}00155\ \ \ \ \ \ \ \ \ \ \ \ \ \{\ \textcolor{comment}{//\ scan\ number\ is\ not\ found\ in\ the\ data\ vector;\ initialize\ a\ new\ MassSpectrum\ object\ and\ add\ meta\ information}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00156}00156\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ add\ the\ MassSpectrum\ object\ to\ the\ data\ vector}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00157}00157\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ this-\/>\mbox{\hyperlink{classq_1_1_l_c_m_s_data_ac08611a3fc7649d1e5b2ae257090388a}{data}}.push\_back(std::make\_unique<MassSpectrum>());}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00158}00158\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ add\ the\ scan\ number\ to\ the\ MassSpectrum\ object}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00159}00159\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (*this-\/>\mbox{\hyperlink{classq_1_1_l_c_m_s_data_ac08611a3fc7649d1e5b2ae257090388a}{data}}[scanNumber]-\/>metaData)[DataField::SCANNUMBER]\ =\ \mbox{\hyperlink{namespaceq_a23bdccee34b821e7d4ee0f698d4c6701}{VariableType}}(scanNumber);}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00160}00160\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ add\ the\ retention\ time\ to\ the\ MassSpectrum\ object}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00161}00161\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (*this-\/>\mbox{\hyperlink{classq_1_1_l_c_m_s_data_ac08611a3fc7649d1e5b2ae257090388a}{data}}[scanNumber]-\/>metaData)[DataField::RETENTIONTIME]\ =\ \mbox{\hyperlink{namespaceq_a23bdccee34b821e7d4ee0f698d4c6701}{VariableType}}(std::stod(raw\_data[i][retentionTimeIndex]));}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00162}00162\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ update\ the\ maxKey}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00163}00163\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (scanNumber\ >\ maxKey)}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00164}00164\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00165}00165\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ maxKey\ =\ scanNumber;}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00166}00166\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00167}00167\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00168}00168\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ create\ a\ new\ DataPoint\ object\ and\ add\ it\ to\ the\ DataPoint\ Vector}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00169}00169\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{double}\ intensity\ =\ std::stod(raw\_data[i][intensityIndex]);}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00170}00170\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ df\ =\ (intensity\ >\ 0)\ ?\ 1\ :\ 0;}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00171}00171\ \ \ \ \ \ \ \ \ \ \ \ \ this-\/>\mbox{\hyperlink{classq_1_1_l_c_m_s_data_ac08611a3fc7649d1e5b2ae257090388a}{data}}[scanNumber]-\/>dataPoints.push\_back(std::make\_unique<DataPoint>(intensity,\ std::stod(raw\_data[i][mzIndex]),\ df));}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00172}00172\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00173}00173\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00174}00174\ }
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00175}\mbox{\hyperlink{classq_1_1_l_c_m_s_data_a5d7411d87663980b683c51a2f969b4c0}{00175}}\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classq_1_1_l_c_m_s_data_a5d7411d87663980b683c51a2f969b4c0}{LCMSData::writeCSV}}(std::string\ filename)}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00176}00176\ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00177}00177\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ open\ the\ file}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00178}00178\ \ \ \ \ \ \ \ \ std::ofstream\ file(filename);}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00179}00179\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ write\ header\ using:\ ID,\ ScanNumber,\ RetentionTime,\ MZ,\ Intensity\ (ID\ is\ the\ key\ for\ the\ data\ vector)}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00180}00180\ \ \ \ \ \ \ \ \ file\ <<\ \textcolor{stringliteral}{"{}ID,ScanNumber,RetentionTime,MZ,Intensity"{}}\ <<\ std::endl;}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00181}00181\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ iterate\ over\ all\ data\ sets\ in\ the\ data\ vector}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00182}00182\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keyword}{const}\ \textcolor{keyword}{auto}\&\ spectrum\ :\ this-\/>\mbox{\hyperlink{classq_1_1_l_c_m_s_data_ac08611a3fc7649d1e5b2ae257090388a}{data}})}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00183}00183\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00184}00184\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keyword}{const}\ \textcolor{keyword}{auto}\&\ dp\ :\ spectrum-\/>dataPoints)}
 \DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00185}00185\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00186}00186\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ file\ <<\ it-\/>first\ <<\ \textcolor{stringliteral}{"{},"{}}\ <<\ std::get<int>((*it-\/>second-\/>metaData)[DataField::SCANNUMBER])\ <<\ \textcolor{stringliteral}{"{},"{}}\ <<\ std::get<double>((*it-\/>second-\/>metaData)[DataField::RETENTIONTIME])\ <<\ \textcolor{stringliteral}{"{},"{}}\ <<\ dp-\/>mz\ <<\ \textcolor{stringliteral}{"{},"{}}\ <<\ dp-\/>intensity\ <<\ std::endl;}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00187}00187\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00188}00188\ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00189}00189\ \ \ \ \ \ \ \ \ \textcolor{comment}{//close\ the\ file}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00190}00190\ \ \ \ \ \ \ \ \ file.close();}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00191}00191\ \ \ \ \ \}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00192}00192\ }
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00193}\mbox{\hyperlink{classq_1_1_l_c_m_s_data_ae1a62294c43bbe12e97f9293eaa49ea8}{00193}}\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classq_1_1_l_c_m_s_data_ae1a62294c43bbe12e97f9293eaa49ea8}{LCMSData::zeroFilling}}()}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00194}00194\ \ \ \ \ \{}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00195}00195\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ create\ a\ varDataType\ Object,\ which\ is\ a\ pointer\ to\ a\ map\ of\ mass\ spectra}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00196}00196\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classq_1_1_measurement_data_a0021f29aa0a045d9964cc956528fadac}{varDataType}}\ dataObject\ =\ \&(this-\/>data);}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00197}00197\ \ \ \ \ \ \ \ \ this-\/>\mbox{\hyperlink{classq_1_1_measurement_data_a3139b3ddc3039bca5c0fb7ccd7052558}{MeasurementData::zeroFilling}}(dataObject,\ 8);}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00198}00198\ \ \ \ \ \}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00199}00199\ }
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00200}\mbox{\hyperlink{classq_1_1_l_c_m_s_data_a6c799dc9ef6918446df62515bc7daa8d}{00200}}\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classq_1_1_l_c_m_s_data_a6c799dc9ef6918446df62515bc7daa8d}{LCMSData::cutData}}()}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00201}00201\ \ \ \ \ \{}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00202}00202\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ create\ a\ varDataType\ Object,\ which\ is\ a\ pointer\ to\ a\ map\ of\ mass\ spectra}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00203}00203\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classq_1_1_measurement_data_a0021f29aa0a045d9964cc956528fadac}{varDataType}}\ dataObject\ =\ \&(this-\/>data);}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00204}00204\ \ \ \ \ \ \ \ \ this-\/>\mbox{\hyperlink{classq_1_1_measurement_data_a9a22a34f93ed1aa17227dee44ab20a2d}{MeasurementData::cutData}}(dataObject,\ maxKey);}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00205}00205\ \ \ \ \ \}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00206}00206\ }
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00207}\mbox{\hyperlink{classq_1_1_l_c_m_s_data_a5411843e0ea71a7719a7550dc3dccd71}{00207}}\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classq_1_1_l_c_m_s_data_a5411843e0ea71a7719a7550dc3dccd71}{LCMSData::filterSmallDataSets}}()}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00208}00208\ \ \ \ \ \{}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00209}00209\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ create\ a\ varDataType\ Object,\ which\ is\ a\ pointer\ to\ a\ map\ of\ mass\ spectra}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00210}00210\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classq_1_1_measurement_data_a0021f29aa0a045d9964cc956528fadac}{varDataType}}\ dataObject\ =\ \&(this-\/>data);}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00211}00211\ \ \ \ \ \ \ \ \ this-\/>\mbox{\hyperlink{classq_1_1_measurement_data_a55e26101276ae6e8aed310e790e90ff0}{MeasurementData::filterSmallDataSets}}(dataObject);}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00212}00212\ \ \ \ \ \}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00213}00213\ }
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00214}\mbox{\hyperlink{classq_1_1_l_c_m_s_data_a6bcb7c6df660ff834fbfb86dcb5a81a5}{00214}}\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classq_1_1_l_c_m_s_data_a6bcb7c6df660ff834fbfb86dcb5a81a5}{LCMSData::interpolateData}}()}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00215}00215\ \ \ \ \ \{}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00216}00216\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ create\ a\ varDataType\ Object,\ which\ is\ a\ pointer\ to\ a\ map\ of\ mass\ spectra}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00217}00217\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classq_1_1_measurement_data_a0021f29aa0a045d9964cc956528fadac}{varDataType}}\ dataObject\ =\ \&(this-\/>data);}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00218}00218\ \ \ \ \ \ \ \ \ this-\/>\mbox{\hyperlink{classq_1_1_measurement_data_a73961e75fc2d3b418bd9109e88842f22}{MeasurementData::interpolateData}}(dataObject);}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00219}00219\ \ \ \ \ \}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00220}00220\ }
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00221}\mbox{\hyperlink{classq_1_1_l_c_m_s_data_aa808ac2ee343120a4a89f8ee8e9278f6}{00221}}\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classq_1_1_l_c_m_s_data_aa808ac2ee343120a4a89f8ee8e9278f6}{LCMSData::print}}()}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00222}00222\ \ \ \ \ \{}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00223}00223\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keyword}{auto}\ it\ =\ this-\/>data.begin();\ it\ !=\ this-\/>data.end();\ it++)}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00224}00224\ \ \ \ \ \ \ \ \ \{}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00225}00225\ \ \ \ \ \ \ \ \ \ \ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}Scan\ Number:\ "{}}\ <<\ it-\/>first\ <<\ std::endl;}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00226}00226\ \ \ \ \ \ \ \ \ \ \ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}Retention\ Time:\ "{}}\ <<\ std::get<double>((*it-\/>second-\/>metaData)[DataField::RETENTIONTIME])\ <<\ std::endl;}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00227}00227\ \ \ \ \ \ \ \ \ \ \ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}Number\ of\ Data\ Points:\ "{}}\ <<\ it-\/>second-\/>dataPoints.size()\ <<\ std::endl;}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00228}00228\ \ \ \ \ \ \ \ \ \ \ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}MZ\ values:\ "{}};}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00229}00229\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keyword}{const}\ \textcolor{keyword}{auto}\&\ dp\ :\ it-\/>second-\/>dataPoints)}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00230}00230\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00231}00231\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::cout\ <<\ dp-\/>mz\ <<\ \textcolor{stringliteral}{"{}\ "{}};}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00232}00232\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00233}00233\ \ \ \ \ \ \ \ \ \ \ \ \ std::cout\ <<\ std::endl;}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00234}00234\ }
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00235}00235\ \ \ \ \ \ \ \ \ \ \ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}Intensity\ values:\ "{}};}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00236}00236\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keyword}{const}\ \textcolor{keyword}{auto}\&\ dp\ :\ it-\/>second-\/>dataPoints)}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00237}00237\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00238}00238\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::cout\ <<\ dp-\/>intensity\ <<\ \textcolor{stringliteral}{"{}\ "{}};}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00239}00239\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00240}00240\ \ \ \ \ \ \ \ \ \ \ \ \ std::cout\ <<\ std::endl;}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00241}00241\ \ \ \ \ \ \ \ \ \ \ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}cuttingPoints:\ "{}};}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00242}00242\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keyword}{const}\ \textcolor{keyword}{auto}\&\ cp\ :\ it-\/>second-\/>cuttingPoints)}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00243}00243\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00244}00244\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::cout\ <<\ *cp\ <<\ \textcolor{stringliteral}{"{}\ "{}};}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00245}00245\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00246}00246\ \ \ \ \ \ \ \ \ \ \ \ \ std::cout\ <<\ std::endl;}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00247}00247\ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00248}00248\ \ \ \ \ \}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00249}00249\ }
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00250}\mbox{\hyperlink{classq_1_1_l_c_m_s_data_a5ca3f008825795ef7caef0aeb69285ff}{00250}}\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classq_1_1_l_c_m_s_data_a5ca3f008825795ef7caef0aeb69285ff}{LCMSData::info}}()}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00251}00251\ \ \ \ \ \{}
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00252}00252\ \ \ \ \ \ \ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}Number\ of\ data\ sets:\ "{}}\ <<\ this-\/>data.size()\ <<\ std::endl;}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00186}00186\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ file\ <<\ std::get<int>((*spectrum-\/>metaData)[DataField::SCANNUMBER])\ <<\ \textcolor{stringliteral}{"{},"{}}\ }
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00187}00187\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ <<\ std::get<int>((*spectrum-\/>metaData)[DataField::SCANNUMBER])\ <<\ \textcolor{stringliteral}{"{},"{}}\ }
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00188}00188\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ <<\ std::get<double>((*spectrum-\/>metaData)[DataField::RETENTIONTIME])\ <<\ \textcolor{stringliteral}{"{},"{}}\ }
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00189}00189\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ <<\ std::setprecision(7)\ <<\ dp-\/>mz\ <<\ \textcolor{stringliteral}{"{},"{}}\ }
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00190}00190\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ <<\ std::setprecision(4)\ <<\ dp-\/>intensity\ <<\ std::endl;}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00191}00191\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00192}00192\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//iterate\ over\ all\ data\ points}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00193}00193\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00194}00194\ \ \ \ \ \ \ \ \ \textcolor{comment}{//close\ the\ file}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00195}00195\ \ \ \ \ \ \ \ \ file.close();}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00196}00196\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00197}00197\ }
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00198}\mbox{\hyperlink{classq_1_1_l_c_m_s_data_ae1a62294c43bbe12e97f9293eaa49ea8}{00198}}\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classq_1_1_l_c_m_s_data_ae1a62294c43bbe12e97f9293eaa49ea8}{LCMSData::zeroFilling}}()}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00199}00199\ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00200}00200\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ create\ a\ varDataType\ Object,\ which\ is\ a\ pointer\ to\ a\ vector\ of\ mass\ spectra}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00201}00201\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespaceq_aab5cf99505e4325617dbe9365f547a35}{varDataType}}\ dataObject\ =\ \&(this-\/>\mbox{\hyperlink{classq_1_1_l_c_m_s_data_ac08611a3fc7649d1e5b2ae257090388a}{data}});}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00202}00202\ \ \ \ \ \ \ \ \ this-\/>\mbox{\hyperlink{classq_1_1_measurement_data_a745fd8731072a4f0d058f889bbca158e}{MeasurementData::zeroFilling}}(dataObject,\ 8);}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00203}00203\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00204}00204\ }
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00205}\mbox{\hyperlink{classq_1_1_l_c_m_s_data_a6c799dc9ef6918446df62515bc7daa8d}{00205}}\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classq_1_1_l_c_m_s_data_a6c799dc9ef6918446df62515bc7daa8d}{LCMSData::cutData}}()}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00206}00206\ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00207}00207\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ create\ a\ varDataType\ Object,\ which\ is\ a\ pointer\ to\ a\ vector\ of\ mass\ spectra}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00208}00208\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespaceq_aab5cf99505e4325617dbe9365f547a35}{varDataType}}\ dataObject\ =\ \&(this-\/>\mbox{\hyperlink{classq_1_1_l_c_m_s_data_ac08611a3fc7649d1e5b2ae257090388a}{data}});}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00209}00209\ \ \ \ \ \ \ \ \ this-\/>\mbox{\hyperlink{classq_1_1_measurement_data_ab1f64fdddef6f6549b6f2a18b4b4bd7e}{MeasurementData::cutData}}(dataObject,\ maxKey);}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00210}00210\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00211}00211\ }
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00212}\mbox{\hyperlink{classq_1_1_l_c_m_s_data_a5411843e0ea71a7719a7550dc3dccd71}{00212}}\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classq_1_1_l_c_m_s_data_a5411843e0ea71a7719a7550dc3dccd71}{LCMSData::filterSmallDataSets}}()}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00213}00213\ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00214}00214\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ create\ a\ varDataType\ Object,\ which\ is\ a\ pointer\ to\ a\ vector\ of\ mass\ spectra}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00215}00215\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespaceq_aab5cf99505e4325617dbe9365f547a35}{varDataType}}\ dataObject\ =\ \&(this-\/>\mbox{\hyperlink{classq_1_1_l_c_m_s_data_ac08611a3fc7649d1e5b2ae257090388a}{data}});}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00216}00216\ \ \ \ \ \ \ \ \ this-\/>\mbox{\hyperlink{classq_1_1_measurement_data_ad2a87250fbe7e4e9003fe09d84dd5dec}{MeasurementData::filterSmallDataSets}}(dataObject);}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00217}00217\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00218}00218\ }
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00219}\mbox{\hyperlink{classq_1_1_l_c_m_s_data_a6bcb7c6df660ff834fbfb86dcb5a81a5}{00219}}\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classq_1_1_l_c_m_s_data_a6bcb7c6df660ff834fbfb86dcb5a81a5}{LCMSData::interpolateData}}()}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00220}00220\ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00221}00221\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ create\ a\ varDataType\ Object,\ which\ is\ a\ pointer\ to\ a\ vector\ of\ mass\ spectra}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00222}00222\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespaceq_aab5cf99505e4325617dbe9365f547a35}{varDataType}}\ dataObject\ =\ \&(this-\/>\mbox{\hyperlink{classq_1_1_l_c_m_s_data_ac08611a3fc7649d1e5b2ae257090388a}{data}});}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00223}00223\ \ \ \ \ \ \ \ \ this-\/>\mbox{\hyperlink{classq_1_1_measurement_data_a0427a744f86c44ae9039e9b4a8a59188}{MeasurementData::interpolateData}}(dataObject);}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00224}00224\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00225}00225\ }
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00226}\mbox{\hyperlink{classq_1_1_l_c_m_s_data_aa808ac2ee343120a4a89f8ee8e9278f6}{00226}}\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classq_1_1_l_c_m_s_data_aa808ac2ee343120a4a89f8ee8e9278f6}{LCMSData::print}}()}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00227}00227\ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00228}00228\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keyword}{const}\ \textcolor{keyword}{auto}\&\ spectrum\ :\ this-\/>\mbox{\hyperlink{classq_1_1_l_c_m_s_data_ac08611a3fc7649d1e5b2ae257090388a}{data}})}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00229}00229\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00230}00230\ \ \ \ \ \ \ \ \ \ \ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}Scan\ Number:\ "{}}\ <<\ std::get<double>((*spectrum-\/>metaData)[DataField::SCANNUMBER])\ <<\ std::endl;}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00231}00231\ \ \ \ \ \ \ \ \ \ \ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}Retention\ Time:\ "{}}\ <<\ std::get<double>((*spectrum-\/>metaData)[DataField::RETENTIONTIME])\ <<\ std::endl;}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00232}00232\ \ \ \ \ \ \ \ \ \ \ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}Number\ of\ Data\ Points:\ "{}}\ <<\ spectrum-\/>dataPoints.size()\ <<\ std::endl;}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00233}00233\ \ \ \ \ \ \ \ \ \ \ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}MZ\ values:\ "{}};}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00234}00234\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keyword}{const}\ \textcolor{keyword}{auto}\&\ dp\ :\ spectrum-\/>dataPoints)}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00235}00235\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00236}00236\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::cout\ <<\ dp-\/>mz\ <<\ \textcolor{stringliteral}{"{}\ "{}};}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00237}00237\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00238}00238\ \ \ \ \ \ \ \ \ \ \ \ \ std::cout\ <<\ std::endl;}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00239}00239\ }
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00240}00240\ \ \ \ \ \ \ \ \ \ \ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}Intensity\ values:\ "{}};}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00241}00241\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keyword}{const}\ \textcolor{keyword}{auto}\&\ dp\ :\ spectrum-\/>dataPoints)}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00242}00242\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00243}00243\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::cout\ <<\ dp-\/>intensity\ <<\ \textcolor{stringliteral}{"{}\ "{}};}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00244}00244\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00245}00245\ \ \ \ \ \ \ \ \ \ \ \ \ std::cout\ <<\ std::endl;}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00246}00246\ \ \ \ \ \ \ \ \ \ \ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}cuttingPoints:\ "{}};}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00247}00247\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keyword}{const}\ \textcolor{keyword}{auto}\&\ cp\ :\ spectrum-\/>cuttingPoints)}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00248}00248\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00249}00249\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::cout\ <<\ *cp\ <<\ \textcolor{stringliteral}{"{}\ "{}};}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00250}00250\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00251}00251\ \ \ \ \ \ \ \ \ \ \ \ \ std::cout\ <<\ std::endl;}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00252}00252\ \ \ \ \ \ \ \ \ \}}
 \DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00253}00253\ \ \ \ \ \}}
 \DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00254}00254\ }
-\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00255}00255\ \}\ \textcolor{comment}{//\ namespace\ q}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00255}\mbox{\hyperlink{classq_1_1_l_c_m_s_data_a5ca3f008825795ef7caef0aeb69285ff}{00255}}\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classq_1_1_l_c_m_s_data_a5ca3f008825795ef7caef0aeb69285ff}{LCMSData::info}}()}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00256}00256\ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00257}00257\ \ \ \ \ \ \ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}Number\ of\ data\ sets:\ "{}}\ <<\ this-\/>\mbox{\hyperlink{classq_1_1_l_c_m_s_data_ac08611a3fc7649d1e5b2ae257090388a}{data}}.size()\ <<\ std::endl;}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00258}00258\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00259}00259\ }
+\DoxyCodeLine{\Hypertarget{qalgorithms__measurement__data__lcms_8cpp_source_l00260}00260\ \}\ \textcolor{comment}{//\ namespace\ q}}
 
 \end{DoxyCode}

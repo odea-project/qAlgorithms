@@ -54,6 +54,8 @@ double \& \mbox{\hyperlink{classq_1_1_matrix_a4a4963603504ed65e1072090a4659ee5}{
 \item 
 \mbox{\hyperlink{classq_1_1_matrix}{Matrix}} \& \mbox{\hyperlink{classq_1_1_matrix_a9652371f4e2ef6c30e02d4e9a1e9add7}{operator=}} (const \mbox{\hyperlink{classq_1_1_matrix}{Matrix}} \&other)
 \item 
+void \mbox{\hyperlink{classq_1_1_matrix_a93143de3b9feb83e5a324044b9ef3516}{assign}} (size\+\_\+t \mbox{\hyperlink{classq_1_1_matrix_a5e49d77fb787a2ac14f4d764434d2407}{row}}, size\+\_\+t \mbox{\hyperlink{classq_1_1_matrix_ae8c80426ebd00d309a1e79eb9d38f97e}{col}}, double \&value)
+\item 
 \mbox{\hyperlink{classq_1_1_matrix}{Matrix}} \mbox{\hyperlink{classq_1_1_matrix_a34a6a5e87cf0b5a9eb832caaec1b9ab4}{log}} () const
 \item 
 double \mbox{\hyperlink{classq_1_1_matrix_aee288bc348a3b8c71d3a2ff637269424}{sum\+Elements}} () const
@@ -65,6 +67,8 @@ double \mbox{\hyperlink{classq_1_1_matrix_aee288bc348a3b8c71d3a2ff637269424}{sum
 \mbox{\hyperlink{classq_1_1_matrix}{Matrix}} \mbox{\hyperlink{classq_1_1_matrix_a549e37550d5df9f221ea8ab647751221}{convolve\+Rotation}} (const \mbox{\hyperlink{classq_1_1_matrix}{Matrix}} \&kernel) const
 \item 
 \mbox{\hyperlink{classq_1_1_matrix}{Matrix}} \mbox{\hyperlink{classq_1_1_matrix_a956aba54c16b1e9c65b8c131d0b9cf6d}{convolve\+Antisymmetric}} (const \mbox{\hyperlink{classq_1_1_matrix}{Matrix}} \&kernel) const
+\item 
+\mbox{\hyperlink{classq_1_1_matrix}{Matrix}} \mbox{\hyperlink{classq_1_1_matrix_aceb7f09f0eea5817c7e46d7cdbb7870d}{convole\+Combiend}} (const \mbox{\hyperlink{classq_1_1_matrix}{Matrix}} \&kernel) const
 \item 
 void \mbox{\hyperlink{classq_1_1_matrix_a4ffb497b5997865e4a0ce103a193e2c0}{sort1}} ()
 \item 
@@ -88,7 +92,7 @@ The \doxylink{classq_1_1_matrix}{Matrix} class is used to store a matrix of doub
 \end{DoxyParams}
 
 
-Definition at line \mbox{\hyperlink{qalgorithms__matrix_8h_source_l00021}{21}} of file \mbox{\hyperlink{qalgorithms__matrix_8h_source}{qalgorithms\+\_\+matrix.\+h}}.
+Definition at line \mbox{\hyperlink{qalgorithms__matrix_8h_source_l00022}{22}} of file \mbox{\hyperlink{qalgorithms__matrix_8h_source}{qalgorithms\+\_\+matrix.\+h}}.
 
 
 
@@ -101,7 +105,7 @@ Definition at line \mbox{\hyperlink{qalgorithms__matrix_8h_source_l00021}{21}} o
 
 
 
-Definition at line \mbox{\hyperlink{qalgorithms__matrix_8cpp_source_l00007}{7}} of file \mbox{\hyperlink{qalgorithms__matrix_8cpp_source}{qalgorithms\+\_\+matrix.\+cpp}}.
+Definition at line \mbox{\hyperlink{qalgorithms__matrix_8cpp_source_l00009}{9}} of file \mbox{\hyperlink{qalgorithms__matrix_8cpp_source}{qalgorithms\+\_\+matrix.\+cpp}}.
 
 \Hypertarget{classq_1_1_matrix_a447d9e154320c8d275769f4269864ef0}\label{classq_1_1_matrix_a447d9e154320c8d275769f4269864ef0} 
 \index{q::Matrix@{q::Matrix}!Matrix@{Matrix}}
@@ -111,7 +115,7 @@ Definition at line \mbox{\hyperlink{qalgorithms__matrix_8cpp_source_l00007}{7}} 
 
 
 
-Definition at line \mbox{\hyperlink{qalgorithms__matrix_8cpp_source_l00008}{8}} of file \mbox{\hyperlink{qalgorithms__matrix_8cpp_source}{qalgorithms\+\_\+matrix.\+cpp}}.
+Definition at line \mbox{\hyperlink{qalgorithms__matrix_8cpp_source_l00010}{10}} of file \mbox{\hyperlink{qalgorithms__matrix_8cpp_source}{qalgorithms\+\_\+matrix.\+cpp}}.
 
 \Hypertarget{classq_1_1_matrix_ac535c9ec9436893a61befeea232b37c4}\label{classq_1_1_matrix_ac535c9ec9436893a61befeea232b37c4} 
 \index{q::Matrix@{q::Matrix}!Matrix@{Matrix}}
@@ -121,7 +125,7 @@ Definition at line \mbox{\hyperlink{qalgorithms__matrix_8cpp_source_l00008}{8}} 
 
 
 
-Definition at line \mbox{\hyperlink{qalgorithms__matrix_8cpp_source_l00011}{11}} of file \mbox{\hyperlink{qalgorithms__matrix_8cpp_source}{qalgorithms\+\_\+matrix.\+cpp}}.
+Definition at line \mbox{\hyperlink{qalgorithms__matrix_8cpp_source_l00014}{14}} of file \mbox{\hyperlink{qalgorithms__matrix_8cpp_source}{qalgorithms\+\_\+matrix.\+cpp}}.
 
 \Hypertarget{classq_1_1_matrix_a1313e75663d3119dc6395d0f9ce8a74e}\label{classq_1_1_matrix_a1313e75663d3119dc6395d0f9ce8a74e} 
 \index{q::Matrix@{q::Matrix}!````~Matrix@{\texorpdfstring{$\sim$}{\string~}Matrix}}
@@ -131,11 +135,21 @@ Definition at line \mbox{\hyperlink{qalgorithms__matrix_8cpp_source_l00011}{11}}
 
 
 
-Definition at line \mbox{\hyperlink{qalgorithms__matrix_8cpp_source_l00027}{27}} of file \mbox{\hyperlink{qalgorithms__matrix_8cpp_source}{qalgorithms\+\_\+matrix.\+cpp}}.
+Definition at line \mbox{\hyperlink{qalgorithms__matrix_8cpp_source_l00032}{32}} of file \mbox{\hyperlink{qalgorithms__matrix_8cpp_source}{qalgorithms\+\_\+matrix.\+cpp}}.
 
 
 
 \doxysubsection{Member Function Documentation}
+\Hypertarget{classq_1_1_matrix_a93143de3b9feb83e5a324044b9ef3516}\label{classq_1_1_matrix_a93143de3b9feb83e5a324044b9ef3516} 
+\index{q::Matrix@{q::Matrix}!assign@{assign}}
+\index{assign@{assign}!q::Matrix@{q::Matrix}}
+\doxysubsubsection{\texorpdfstring{assign()}{assign()}}
+{\footnotesize\ttfamily void q\+::\+Matrix\+::assign (\begin{DoxyParamCaption}\item[{size\+\_\+t}]{row,  }\item[{size\+\_\+t}]{col,  }\item[{double \&}]{value }\end{DoxyParamCaption})}
+
+
+
+Definition at line \mbox{\hyperlink{qalgorithms__matrix_8cpp_source_l00249}{249}} of file \mbox{\hyperlink{qalgorithms__matrix_8cpp_source}{qalgorithms\+\_\+matrix.\+cpp}}.
+
 \Hypertarget{classq_1_1_matrix_ae8c80426ebd00d309a1e79eb9d38f97e}\label{classq_1_1_matrix_ae8c80426ebd00d309a1e79eb9d38f97e} 
 \index{q::Matrix@{q::Matrix}!col@{col}}
 \index{col@{col}!q::Matrix@{q::Matrix}}
@@ -144,7 +158,17 @@ Definition at line \mbox{\hyperlink{qalgorithms__matrix_8cpp_source_l00027}{27}}
 
 
 
-Definition at line \mbox{\hyperlink{qalgorithms__matrix_8cpp_source_l00067}{67}} of file \mbox{\hyperlink{qalgorithms__matrix_8cpp_source}{qalgorithms\+\_\+matrix.\+cpp}}.
+Definition at line \mbox{\hyperlink{qalgorithms__matrix_8cpp_source_l00081}{81}} of file \mbox{\hyperlink{qalgorithms__matrix_8cpp_source}{qalgorithms\+\_\+matrix.\+cpp}}.
+
+\Hypertarget{classq_1_1_matrix_aceb7f09f0eea5817c7e46d7cdbb7870d}\label{classq_1_1_matrix_aceb7f09f0eea5817c7e46d7cdbb7870d} 
+\index{q::Matrix@{q::Matrix}!convoleCombiend@{convoleCombiend}}
+\index{convoleCombiend@{convoleCombiend}!q::Matrix@{q::Matrix}}
+\doxysubsubsection{\texorpdfstring{convoleCombiend()}{convoleCombiend()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{classq_1_1_matrix}{Matrix}} q\+::\+Matrix\+::convole\+Combiend (\begin{DoxyParamCaption}\item[{const \mbox{\hyperlink{classq_1_1_matrix}{Matrix}} \&}]{kernel }\end{DoxyParamCaption}) const}
+
+
+
+Definition at line \mbox{\hyperlink{qalgorithms__matrix_8cpp_source_l00493}{493}} of file \mbox{\hyperlink{qalgorithms__matrix_8cpp_source}{qalgorithms\+\_\+matrix.\+cpp}}.
 
 \Hypertarget{classq_1_1_matrix_a956aba54c16b1e9c65b8c131d0b9cf6d}\label{classq_1_1_matrix_a956aba54c16b1e9c65b8c131d0b9cf6d} 
 \index{q::Matrix@{q::Matrix}!convolveAntisymmetric@{convolveAntisymmetric}}
@@ -154,7 +178,7 @@ Definition at line \mbox{\hyperlink{qalgorithms__matrix_8cpp_source_l00067}{67}}
 
 
 
-Definition at line \mbox{\hyperlink{qalgorithms__matrix_8cpp_source_l00332}{332}} of file \mbox{\hyperlink{qalgorithms__matrix_8cpp_source}{qalgorithms\+\_\+matrix.\+cpp}}.
+Definition at line \mbox{\hyperlink{qalgorithms__matrix_8cpp_source_l00442}{442}} of file \mbox{\hyperlink{qalgorithms__matrix_8cpp_source}{qalgorithms\+\_\+matrix.\+cpp}}.
 
 \Hypertarget{classq_1_1_matrix_a549e37550d5df9f221ea8ab647751221}\label{classq_1_1_matrix_a549e37550d5df9f221ea8ab647751221} 
 \index{q::Matrix@{q::Matrix}!convolveRotation@{convolveRotation}}
@@ -164,7 +188,7 @@ Definition at line \mbox{\hyperlink{qalgorithms__matrix_8cpp_source_l00332}{332}
 
 
 
-Definition at line \mbox{\hyperlink{qalgorithms__matrix_8cpp_source_l00309}{309}} of file \mbox{\hyperlink{qalgorithms__matrix_8cpp_source}{qalgorithms\+\_\+matrix.\+cpp}}.
+Definition at line \mbox{\hyperlink{qalgorithms__matrix_8cpp_source_l00372}{372}} of file \mbox{\hyperlink{qalgorithms__matrix_8cpp_source}{qalgorithms\+\_\+matrix.\+cpp}}.
 
 \Hypertarget{classq_1_1_matrix_a0d2a7bf49f60c2cb4e81f5489a175860}\label{classq_1_1_matrix_a0d2a7bf49f60c2cb4e81f5489a175860} 
 \index{q::Matrix@{q::Matrix}!convolveSymmetric@{convolveSymmetric}}
@@ -174,7 +198,7 @@ Definition at line \mbox{\hyperlink{qalgorithms__matrix_8cpp_source_l00309}{309}
 
 
 
-Definition at line \mbox{\hyperlink{qalgorithms__matrix_8cpp_source_l00282}{282}} of file \mbox{\hyperlink{qalgorithms__matrix_8cpp_source}{qalgorithms\+\_\+matrix.\+cpp}}.
+Definition at line \mbox{\hyperlink{qalgorithms__matrix_8cpp_source_l00340}{340}} of file \mbox{\hyperlink{qalgorithms__matrix_8cpp_source}{qalgorithms\+\_\+matrix.\+cpp}}.
 
 \Hypertarget{classq_1_1_matrix_a4a4963603504ed65e1072090a4659ee5}\label{classq_1_1_matrix_a4a4963603504ed65e1072090a4659ee5} 
 \index{q::Matrix@{q::Matrix}!getElement@{getElement}}
@@ -184,7 +208,7 @@ Definition at line \mbox{\hyperlink{qalgorithms__matrix_8cpp_source_l00282}{282}
 
 
 
-Definition at line \mbox{\hyperlink{qalgorithms__matrix_8cpp_source_l00053}{53}} of file \mbox{\hyperlink{qalgorithms__matrix_8cpp_source}{qalgorithms\+\_\+matrix.\+cpp}}.
+Definition at line \mbox{\hyperlink{qalgorithms__matrix_8cpp_source_l00064}{64}} of file \mbox{\hyperlink{qalgorithms__matrix_8cpp_source}{qalgorithms\+\_\+matrix.\+cpp}}.
 
 \Hypertarget{classq_1_1_matrix_a13a3b5de2eb14cebc6c2e00f37647d51}\label{classq_1_1_matrix_a13a3b5de2eb14cebc6c2e00f37647d51} 
 \index{q::Matrix@{q::Matrix}!inv@{inv}}
@@ -194,7 +218,7 @@ Definition at line \mbox{\hyperlink{qalgorithms__matrix_8cpp_source_l00053}{53}}
 
 
 
-Definition at line \mbox{\hyperlink{qalgorithms__matrix_8cpp_source_l00226}{226}} of file \mbox{\hyperlink{qalgorithms__matrix_8cpp_source}{qalgorithms\+\_\+matrix.\+cpp}}.
+Definition at line \mbox{\hyperlink{qalgorithms__matrix_8cpp_source_l00277}{277}} of file \mbox{\hyperlink{qalgorithms__matrix_8cpp_source}{qalgorithms\+\_\+matrix.\+cpp}}.
 
 \Hypertarget{classq_1_1_matrix_a34a6a5e87cf0b5a9eb832caaec1b9ab4}\label{classq_1_1_matrix_a34a6a5e87cf0b5a9eb832caaec1b9ab4} 
 \index{q::Matrix@{q::Matrix}!log@{log}}
@@ -204,7 +228,7 @@ Definition at line \mbox{\hyperlink{qalgorithms__matrix_8cpp_source_l00226}{226}
 
 
 
-Definition at line \mbox{\hyperlink{qalgorithms__matrix_8cpp_source_l00208}{208}} of file \mbox{\hyperlink{qalgorithms__matrix_8cpp_source}{qalgorithms\+\_\+matrix.\+cpp}}.
+Definition at line \mbox{\hyperlink{qalgorithms__matrix_8cpp_source_l00255}{255}} of file \mbox{\hyperlink{qalgorithms__matrix_8cpp_source}{qalgorithms\+\_\+matrix.\+cpp}}.
 
 \Hypertarget{classq_1_1_matrix_add6e3df948019df92282a9dec666b38f}\label{classq_1_1_matrix_add6e3df948019df92282a9dec666b38f} 
 \index{q::Matrix@{q::Matrix}!numCols@{numCols}}
@@ -214,7 +238,7 @@ Definition at line \mbox{\hyperlink{qalgorithms__matrix_8cpp_source_l00208}{208}
 
 
 
-Definition at line \mbox{\hyperlink{qalgorithms__matrix_8cpp_source_l00036}{36}} of file \mbox{\hyperlink{qalgorithms__matrix_8cpp_source}{qalgorithms\+\_\+matrix.\+cpp}}.
+Definition at line \mbox{\hyperlink{qalgorithms__matrix_8cpp_source_l00043}{43}} of file \mbox{\hyperlink{qalgorithms__matrix_8cpp_source}{qalgorithms\+\_\+matrix.\+cpp}}.
 
 \Hypertarget{classq_1_1_matrix_a3fed230885b4ee378d389c5660bd488e}\label{classq_1_1_matrix_a3fed230885b4ee378d389c5660bd488e} 
 \index{q::Matrix@{q::Matrix}!numel@{numel}}
@@ -224,7 +248,7 @@ Definition at line \mbox{\hyperlink{qalgorithms__matrix_8cpp_source_l00036}{36}}
 
 
 
-Definition at line \mbox{\hyperlink{qalgorithms__matrix_8cpp_source_l00040}{40}} of file \mbox{\hyperlink{qalgorithms__matrix_8cpp_source}{qalgorithms\+\_\+matrix.\+cpp}}.
+Definition at line \mbox{\hyperlink{qalgorithms__matrix_8cpp_source_l00048}{48}} of file \mbox{\hyperlink{qalgorithms__matrix_8cpp_source}{qalgorithms\+\_\+matrix.\+cpp}}.
 
 \Hypertarget{classq_1_1_matrix_a960d477bd9b1ff50e43856bdb778ec1c}\label{classq_1_1_matrix_a960d477bd9b1ff50e43856bdb778ec1c} 
 \index{q::Matrix@{q::Matrix}!numRows@{numRows}}
@@ -234,7 +258,7 @@ Definition at line \mbox{\hyperlink{qalgorithms__matrix_8cpp_source_l00040}{40}}
 
 
 
-Definition at line \mbox{\hyperlink{qalgorithms__matrix_8cpp_source_l00032}{32}} of file \mbox{\hyperlink{qalgorithms__matrix_8cpp_source}{qalgorithms\+\_\+matrix.\+cpp}}.
+Definition at line \mbox{\hyperlink{qalgorithms__matrix_8cpp_source_l00038}{38}} of file \mbox{\hyperlink{qalgorithms__matrix_8cpp_source}{qalgorithms\+\_\+matrix.\+cpp}}.
 
 \Hypertarget{classq_1_1_matrix_a4aeec135a3428209692076e0a0ee8916}\label{classq_1_1_matrix_a4aeec135a3428209692076e0a0ee8916} 
 \index{q::Matrix@{q::Matrix}!operator()@{operator()}}
@@ -244,7 +268,7 @@ Definition at line \mbox{\hyperlink{qalgorithms__matrix_8cpp_source_l00032}{32}}
 
 
 
-Definition at line \mbox{\hyperlink{qalgorithms__matrix_8cpp_source_l00045}{45}} of file \mbox{\hyperlink{qalgorithms__matrix_8cpp_source}{qalgorithms\+\_\+matrix.\+cpp}}.
+Definition at line \mbox{\hyperlink{qalgorithms__matrix_8cpp_source_l00054}{54}} of file \mbox{\hyperlink{qalgorithms__matrix_8cpp_source}{qalgorithms\+\_\+matrix.\+cpp}}.
 
 \Hypertarget{classq_1_1_matrix_ac738b454c903787bf5cbccc01d4fd38a}\label{classq_1_1_matrix_ac738b454c903787bf5cbccc01d4fd38a} 
 \index{q::Matrix@{q::Matrix}!operator()@{operator()}}
@@ -254,7 +278,7 @@ Definition at line \mbox{\hyperlink{qalgorithms__matrix_8cpp_source_l00045}{45}}
 
 
 
-Definition at line \mbox{\hyperlink{qalgorithms__matrix_8cpp_source_l00049}{49}} of file \mbox{\hyperlink{qalgorithms__matrix_8cpp_source}{qalgorithms\+\_\+matrix.\+cpp}}.
+Definition at line \mbox{\hyperlink{qalgorithms__matrix_8cpp_source_l00059}{59}} of file \mbox{\hyperlink{qalgorithms__matrix_8cpp_source}{qalgorithms\+\_\+matrix.\+cpp}}.
 
 \Hypertarget{classq_1_1_matrix_ad33372efca9e45a8f663c8e7b3c56bb3}\label{classq_1_1_matrix_ad33372efca9e45a8f663c8e7b3c56bb3} 
 \index{q::Matrix@{q::Matrix}!operator\texorpdfstring{$\ast$}{*}@{operator\texorpdfstring{$\ast$}{*}}}
@@ -264,7 +288,7 @@ Definition at line \mbox{\hyperlink{qalgorithms__matrix_8cpp_source_l00049}{49}}
 
 
 
-Definition at line \mbox{\hyperlink{qalgorithms__matrix_8cpp_source_l00131}{131}} of file \mbox{\hyperlink{qalgorithms__matrix_8cpp_source}{qalgorithms\+\_\+matrix.\+cpp}}.
+Definition at line \mbox{\hyperlink{qalgorithms__matrix_8cpp_source_l00159}{159}} of file \mbox{\hyperlink{qalgorithms__matrix_8cpp_source}{qalgorithms\+\_\+matrix.\+cpp}}.
 
 \Hypertarget{classq_1_1_matrix_a7f16a20457843380bafaf8f585f35ed4}\label{classq_1_1_matrix_a7f16a20457843380bafaf8f585f35ed4} 
 \index{q::Matrix@{q::Matrix}!operator\texorpdfstring{$\ast$}{*}@{operator\texorpdfstring{$\ast$}{*}}}
@@ -274,7 +298,7 @@ Definition at line \mbox{\hyperlink{qalgorithms__matrix_8cpp_source_l00131}{131}
 
 
 
-Definition at line \mbox{\hyperlink{qalgorithms__matrix_8cpp_source_l00110}{110}} of file \mbox{\hyperlink{qalgorithms__matrix_8cpp_source}{qalgorithms\+\_\+matrix.\+cpp}}.
+Definition at line \mbox{\hyperlink{qalgorithms__matrix_8cpp_source_l00133}{133}} of file \mbox{\hyperlink{qalgorithms__matrix_8cpp_source}{qalgorithms\+\_\+matrix.\+cpp}}.
 
 \Hypertarget{classq_1_1_matrix_ae7f2ec1f8496524773607e0994813002}\label{classq_1_1_matrix_ae7f2ec1f8496524773607e0994813002} 
 \index{q::Matrix@{q::Matrix}!operator+@{operator+}}
@@ -284,7 +308,7 @@ Definition at line \mbox{\hyperlink{qalgorithms__matrix_8cpp_source_l00110}{110}
 
 
 
-Definition at line \mbox{\hyperlink{qalgorithms__matrix_8cpp_source_l00163}{163}} of file \mbox{\hyperlink{qalgorithms__matrix_8cpp_source}{qalgorithms\+\_\+matrix.\+cpp}}.
+Definition at line \mbox{\hyperlink{qalgorithms__matrix_8cpp_source_l00197}{197}} of file \mbox{\hyperlink{qalgorithms__matrix_8cpp_source}{qalgorithms\+\_\+matrix.\+cpp}}.
 
 \Hypertarget{classq_1_1_matrix_af823e1afa35534a75c51e5ce16895f0b}\label{classq_1_1_matrix_af823e1afa35534a75c51e5ce16895f0b} 
 \index{q::Matrix@{q::Matrix}!operator-\/@{operator-\/}}
@@ -294,7 +318,7 @@ Definition at line \mbox{\hyperlink{qalgorithms__matrix_8cpp_source_l00163}{163}
 
 
 
-Definition at line \mbox{\hyperlink{qalgorithms__matrix_8cpp_source_l00140}{140}} of file \mbox{\hyperlink{qalgorithms__matrix_8cpp_source}{qalgorithms\+\_\+matrix.\+cpp}}.
+Definition at line \mbox{\hyperlink{qalgorithms__matrix_8cpp_source_l00170}{170}} of file \mbox{\hyperlink{qalgorithms__matrix_8cpp_source}{qalgorithms\+\_\+matrix.\+cpp}}.
 
 \Hypertarget{classq_1_1_matrix_a9652371f4e2ef6c30e02d4e9a1e9add7}\label{classq_1_1_matrix_a9652371f4e2ef6c30e02d4e9a1e9add7} 
 \index{q::Matrix@{q::Matrix}!operator=@{operator=}}
@@ -304,7 +328,7 @@ Definition at line \mbox{\hyperlink{qalgorithms__matrix_8cpp_source_l00140}{140}
 
 
 
-Definition at line \mbox{\hyperlink{qalgorithms__matrix_8cpp_source_l00194}{194}} of file \mbox{\hyperlink{qalgorithms__matrix_8cpp_source}{qalgorithms\+\_\+matrix.\+cpp}}.
+Definition at line \mbox{\hyperlink{qalgorithms__matrix_8cpp_source_l00234}{234}} of file \mbox{\hyperlink{qalgorithms__matrix_8cpp_source}{qalgorithms\+\_\+matrix.\+cpp}}.
 
 \Hypertarget{classq_1_1_matrix_aad7c69850887dc228579ae975a2f5587}\label{classq_1_1_matrix_aad7c69850887dc228579ae975a2f5587} 
 \index{q::Matrix@{q::Matrix}!operator\texorpdfstring{$^\wedge$}{\string^}@{operator\texorpdfstring{$^\wedge$}{\string^}}}
@@ -314,7 +338,7 @@ Definition at line \mbox{\hyperlink{qalgorithms__matrix_8cpp_source_l00194}{194}
 
 
 
-Definition at line \mbox{\hyperlink{qalgorithms__matrix_8cpp_source_l00186}{186}} of file \mbox{\hyperlink{qalgorithms__matrix_8cpp_source}{qalgorithms\+\_\+matrix.\+cpp}}.
+Definition at line \mbox{\hyperlink{qalgorithms__matrix_8cpp_source_l00224}{224}} of file \mbox{\hyperlink{qalgorithms__matrix_8cpp_source}{qalgorithms\+\_\+matrix.\+cpp}}.
 
 \Hypertarget{classq_1_1_matrix_abbf7241e8b245ff44b42750ce5c67a46}\label{classq_1_1_matrix_abbf7241e8b245ff44b42750ce5c67a46} 
 \index{q::Matrix@{q::Matrix}!print@{print}}
@@ -324,7 +348,7 @@ Definition at line \mbox{\hyperlink{qalgorithms__matrix_8cpp_source_l00186}{186}
 
 
 
-Definition at line \mbox{\hyperlink{qalgorithms__matrix_8cpp_source_l00403}{403}} of file \mbox{\hyperlink{qalgorithms__matrix_8cpp_source}{qalgorithms\+\_\+matrix.\+cpp}}.
+Definition at line \mbox{\hyperlink{qalgorithms__matrix_8cpp_source_l00582}{582}} of file \mbox{\hyperlink{qalgorithms__matrix_8cpp_source}{qalgorithms\+\_\+matrix.\+cpp}}.
 
 \Hypertarget{classq_1_1_matrix_ac12e9523879dd04637f844250e0efbdd}\label{classq_1_1_matrix_ac12e9523879dd04637f844250e0efbdd} 
 \index{q::Matrix@{q::Matrix}!reinitialize@{reinitialize}}
@@ -334,7 +358,7 @@ Definition at line \mbox{\hyperlink{qalgorithms__matrix_8cpp_source_l00403}{403}
 
 
 
-Definition at line \mbox{\hyperlink{qalgorithms__matrix_8cpp_source_l00016}{16}} of file \mbox{\hyperlink{qalgorithms__matrix_8cpp_source}{qalgorithms\+\_\+matrix.\+cpp}}.
+Definition at line \mbox{\hyperlink{qalgorithms__matrix_8cpp_source_l00020}{20}} of file \mbox{\hyperlink{qalgorithms__matrix_8cpp_source}{qalgorithms\+\_\+matrix.\+cpp}}.
 
 \Hypertarget{classq_1_1_matrix_a5e49d77fb787a2ac14f4d764434d2407}\label{classq_1_1_matrix_a5e49d77fb787a2ac14f4d764434d2407} 
 \index{q::Matrix@{q::Matrix}!row@{row}}
@@ -344,7 +368,7 @@ Definition at line \mbox{\hyperlink{qalgorithms__matrix_8cpp_source_l00016}{16}}
 
 
 
-Definition at line \mbox{\hyperlink{qalgorithms__matrix_8cpp_source_l00058}{58}} of file \mbox{\hyperlink{qalgorithms__matrix_8cpp_source}{qalgorithms\+\_\+matrix.\+cpp}}.
+Definition at line \mbox{\hyperlink{qalgorithms__matrix_8cpp_source_l00070}{70}} of file \mbox{\hyperlink{qalgorithms__matrix_8cpp_source}{qalgorithms\+\_\+matrix.\+cpp}}.
 
 \Hypertarget{classq_1_1_matrix_a4ffb497b5997865e4a0ce103a193e2c0}\label{classq_1_1_matrix_a4ffb497b5997865e4a0ce103a193e2c0} 
 \index{q::Matrix@{q::Matrix}!sort1@{sort1}}
@@ -354,7 +378,7 @@ Definition at line \mbox{\hyperlink{qalgorithms__matrix_8cpp_source_l00058}{58}}
 
 
 
-Definition at line \mbox{\hyperlink{qalgorithms__matrix_8cpp_source_l00377}{377}} of file \mbox{\hyperlink{qalgorithms__matrix_8cpp_source}{qalgorithms\+\_\+matrix.\+cpp}}.
+Definition at line \mbox{\hyperlink{qalgorithms__matrix_8cpp_source_l00553}{553}} of file \mbox{\hyperlink{qalgorithms__matrix_8cpp_source}{qalgorithms\+\_\+matrix.\+cpp}}.
 
 \Hypertarget{classq_1_1_matrix_a07c0774f01bfbaa556f923e9523f71b8}\label{classq_1_1_matrix_a07c0774f01bfbaa556f923e9523f71b8} 
 \index{q::Matrix@{q::Matrix}!subMatrix@{subMatrix}}
@@ -364,7 +388,7 @@ Definition at line \mbox{\hyperlink{qalgorithms__matrix_8cpp_source_l00377}{377}
 
 
 
-Definition at line \mbox{\hyperlink{qalgorithms__matrix_8cpp_source_l00076}{76}} of file \mbox{\hyperlink{qalgorithms__matrix_8cpp_source}{qalgorithms\+\_\+matrix.\+cpp}}.
+Definition at line \mbox{\hyperlink{qalgorithms__matrix_8cpp_source_l00092}{92}} of file \mbox{\hyperlink{qalgorithms__matrix_8cpp_source}{qalgorithms\+\_\+matrix.\+cpp}}.
 
 \Hypertarget{classq_1_1_matrix_aee288bc348a3b8c71d3a2ff637269424}\label{classq_1_1_matrix_aee288bc348a3b8c71d3a2ff637269424} 
 \index{q::Matrix@{q::Matrix}!sumElements@{sumElements}}
@@ -374,7 +398,7 @@ Definition at line \mbox{\hyperlink{qalgorithms__matrix_8cpp_source_l00076}{76}}
 
 
 
-Definition at line \mbox{\hyperlink{qalgorithms__matrix_8cpp_source_l00217}{217}} of file \mbox{\hyperlink{qalgorithms__matrix_8cpp_source}{qalgorithms\+\_\+matrix.\+cpp}}.
+Definition at line \mbox{\hyperlink{qalgorithms__matrix_8cpp_source_l00266}{266}} of file \mbox{\hyperlink{qalgorithms__matrix_8cpp_source}{qalgorithms\+\_\+matrix.\+cpp}}.
 
 \Hypertarget{classq_1_1_matrix_a46ee64f57387c7f5cb71d3174f234d88}\label{classq_1_1_matrix_a46ee64f57387c7f5cb71d3174f234d88} 
 \index{q::Matrix@{q::Matrix}!T@{T}}
@@ -384,7 +408,7 @@ Definition at line \mbox{\hyperlink{qalgorithms__matrix_8cpp_source_l00217}{217}
 
 
 
-Definition at line \mbox{\hyperlink{qalgorithms__matrix_8cpp_source_l00097}{97}} of file \mbox{\hyperlink{qalgorithms__matrix_8cpp_source}{qalgorithms\+\_\+matrix.\+cpp}}.
+Definition at line \mbox{\hyperlink{qalgorithms__matrix_8cpp_source_l00117}{117}} of file \mbox{\hyperlink{qalgorithms__matrix_8cpp_source}{qalgorithms\+\_\+matrix.\+cpp}}.
 
 
 

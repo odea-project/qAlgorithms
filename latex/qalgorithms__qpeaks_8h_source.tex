@@ -1,0 +1,67 @@
+\doxysection{qalgorithms\+\_\+qpeaks.\+h}
+\hypertarget{qalgorithms__qpeaks_8h_source}{}\label{qalgorithms__qpeaks_8h_source}\index{include/qalgorithms\_qpeaks.h@{include/qalgorithms\_qpeaks.h}}
+\mbox{\hyperlink{qalgorithms__qpeaks_8h}{Go to the documentation of this file.}}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8h_source_l00001}00001\ \textcolor{comment}{//\ qalgorithms\_qpeaks.h}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8h_source_l00002}00002\ \textcolor{preprocessor}{\#ifndef\ QALGORITHMS\_QPEAKS\_H}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8h_source_l00003}00003\ \textcolor{preprocessor}{\#define\ QALGORITHMS\_QPEAKS\_H}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8h_source_l00004}00004\ }
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8h_source_l00005}00005\ \textcolor{comment}{//\ internal}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8h_source_l00006}00006\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{qalgorithms__matrix_8h}{qalgorithms\_matrix.h}}"{}}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8h_source_l00007}00007\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{qalgorithms__refmatrix_8h}{qalgorithms\_refmatrix.h}}"{}}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8h_source_l00008}00008\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{qalgorithms__measurement__data_8h}{qalgorithms\_measurement\_data.h}}"{}}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8h_source_l00009}00009\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{qalgorithms__peak_8h}{qalgorithms\_peak.h}}"{}}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8h_source_l00010}00010\ }
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8h_source_l00011}00011\ \textcolor{comment}{//\ external}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8h_source_l00012}00012\ \textcolor{preprocessor}{\#include\ <vector>}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8h_source_l00013}00013\ \textcolor{preprocessor}{\#include\ <memory>}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8h_source_l00014}00014\ \textcolor{preprocessor}{\#include\ <omp.h>}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8h_source_l00015}00015\ }
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8h_source_l00016}00016\ \textcolor{comment}{/*\ This\ file\ includes\ the\ q::qPeaks\ class*/}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8h_source_l00017}00017\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespaceq}{q}}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8h_source_l00018}00018\ \{}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8h_source_l00022}\mbox{\hyperlink{classq_1_1q_peaks}{00022}}\ \ \ \textcolor{keyword}{class\ }\mbox{\hyperlink{classq_1_1q_peaks}{qPeaks}}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8h_source_l00023}00023\ \ \ \{}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8h_source_l00024}00024\ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8h_source_l00025}00025\ \ \ \ \ \textcolor{comment}{//\ Constructor}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8h_source_l00026}00026\ \ \ \ \ \mbox{\hyperlink{classq_1_1q_peaks_a401e618cceed5b32fae8b6e9e5e57005}{qPeaks}}();}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8h_source_l00027}00027\ }
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8h_source_l00033}00033\ \ \ \ \ \mbox{\hyperlink{classq_1_1q_peaks_a401e618cceed5b32fae8b6e9e5e57005}{qPeaks}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{namespaceq_aab5cf99505e4325617dbe9365f547a35}{varDataType}}\ \&dataVec);}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8h_source_l00034}00034\ }
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8h_source_l00035}00035\ \ \ \ \ \textcolor{comment}{//\ Destructor}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8h_source_l00036}00036\ \ \ \ \ \mbox{\hyperlink{classq_1_1q_peaks_a6fe1f39896e39558ac88cbeb7fab5a6c}{\string~qPeaks}}();}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8h_source_l00037}00037\ }
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8h_source_l00038}00038\ \ \ \ \ \textcolor{comment}{//\ methods}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8h_source_l00044}00044\ \textcolor{comment}{}\ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classq_1_1q_peaks_ada5be6820b1e303b23db55815875cf99}{findPeaks}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{namespaceq_aab5cf99505e4325617dbe9365f547a35}{varDataType}}\ \&dataVec);}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8h_source_l00045}00045\ }
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8h_source_l00046}00046\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classq_1_1q_peaks_abb10dc6eddd96ef3a676f533b654a77c}{runningRegression}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classq_1_1_ref_matrix}{RefMatrix}}\ \&X,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{classq_1_1_ref_matrix}{RefMatrix}}\ \&Y);}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8h_source_l00047}00047\ }
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8h_source_l00054}00054\ \ \ \ \ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{classq_1_1q_peaks_a36126b35fb916b8beb1c97ce23b36614}{calculateNumberOfRegressions}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ n)\ \textcolor{keyword}{const};}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8h_source_l00055}00055\ }
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8h_source_l00056}00056\ \ \ \ \ \textcolor{comment}{//\ debugging}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8h_source_l00057}00057\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classq_1_1q_peaks_afa5891d8281a1d12003c307a08c6a2c0}{info}}()\ \textcolor{keyword}{const};}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8h_source_l00058}00058\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classq_1_1q_peaks_a6ea06a52051f8ab0776f9949fd811179}{printMatrices}}(\textcolor{keywordtype}{int}\ scale)\ \textcolor{keyword}{const};}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8h_source_l00059}00059\ }
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8h_source_l00060}00060\ \ \ \textcolor{keyword}{private}:}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8h_source_l00061}00061\ \ \ \ \ std::vector<std::unique\_ptr<Matrix>>\ designMatrices;}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8h_source_l00062}00062\ \ \ \ \ std::vector<std::unique\_ptr<Matrix>>\ inverseMatrices;}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8h_source_l00063}00063\ \ \ \ \ std::vector<std::unique\_ptr<Matrix>>\ psuedoInverses;}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8h_source_l00064}00064\ \ \ \ \ std::vector<std::unique\_ptr<double>>\ \mbox{\hyperlink{classq_1_1t_values}{tValues}};}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8h_source_l00065}00065\ }
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8h_source_l00066}00066\ \ \ \ \ \textcolor{keywordtype}{int}\ global\_maxScale;}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8h_source_l00067}00067\ }
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8h_source_l00068}00068\ \ \ \ \ \textcolor{comment}{//\ methods}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8h_source_l00069}00069\ \ \ \ \ \textcolor{keywordtype}{void}\ validateRegressions(\textcolor{keyword}{const}\ \mbox{\hyperlink{classq_1_1_matrix}{Matrix}}\ \&B,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{classq_1_1_matrix}{Matrix}}\ \&Ylog);}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8h_source_l00070}00070\ }
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8h_source_l00071}00071\ \ \ \ \ \textcolor{keywordtype}{void}\ validateCoefficients(}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8h_source_l00072}00072\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{classq_1_1_matrix}{Matrix}}\ \&B);}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8h_source_l00073}00073\ }
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8h_source_l00081}00081\ \ \ \ \ \textcolor{keywordtype}{void}\ createDesignMatrix(\textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ scale);}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8h_source_l00082}00082\ }
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8h_source_l00088}00088\ \ \ \ \ \textcolor{keywordtype}{void}\ createInverseAndPseudoInverse(\textcolor{keyword}{const}\ \mbox{\hyperlink{classq_1_1_matrix}{Matrix}}\ \&X);}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8h_source_l00089}00089\ \ \ \};}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8h_source_l00090}00090\ \}\ \textcolor{comment}{//\ namespace\ q}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8h_source_l00091}00091\ }
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8h_source_l00092}00092\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//\ QALGORITHMS\_QPEAKS\_H}}
+
+\end{DoxyCode}

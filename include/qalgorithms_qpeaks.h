@@ -7,6 +7,7 @@
 #include "qalgorithms_refmatrix.h"
 #include "qalgorithms_measurement_data.h"
 #include "qalgorithms_peak.h"
+#include "qalgorithms_utils.h"
 
 // external
 #include <vector>
@@ -61,16 +62,16 @@ namespace q
     std::vector<std::unique_ptr<Matrix>> designMatrices;
     std::vector<std::unique_ptr<Matrix>> inverseMatrices;
     std::vector<std::unique_ptr<Matrix>> psuedoInverses;
-    std::vector<std::unique_ptr<double>> tValues;
 
+    int global_maxScale;
 
     // methods
+    void validateRegressions(const Matrix &B, const Matrix &Ylog, const int scale);
 
-    void convolveP(
-        Matrix &beta,
-        std::vector<int> &xIndices,
-        const Matrix &P,
-        const Matrix &ylog);
+    void validateCoefficients(
+        const Matrix &B);
+
+    double calcMse(const Matrix& yhat, const Matrix& y) const;
 
     /**
      * @brief Create a Design Matrix object for the given scale.

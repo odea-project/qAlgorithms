@@ -9,87 +9,76 @@
 \DoxyCodeLine{\Hypertarget{qalgorithms__peak_8h_source_l00005}00005\ \textcolor{comment}{//\ external}}
 \DoxyCodeLine{\Hypertarget{qalgorithms__peak_8h_source_l00006}00006\ \textcolor{preprocessor}{\#include\ <map>}}
 \DoxyCodeLine{\Hypertarget{qalgorithms__peak_8h_source_l00007}00007\ \textcolor{preprocessor}{\#include\ <iostream>}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8h_source_l00008}00008\ }
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8h_source_l00009}00009\ \textcolor{comment}{/*\ This\ file\ includes\ the\ q::peak\ class*/}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8h_source_l00010}00010\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespaceq}{q}}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8h_source_l00011}00011\ \{}
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8h_source_l00012}\mbox{\hyperlink{namespaceq_ab3bdb9eac069e4e777368ed17431ffaf}{00012}}\ \ \ \textcolor{keyword}{enum\ class}\ \mbox{\hyperlink{namespaceq_ab3bdb9eac069e4e777368ed17431ffaf}{Property}}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8h_source_l00013}00013\ \ \ \{}
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8h_source_l00014}00014\ \ \ \ \ \mbox{\hyperlink{namespaceq_ab3bdb9eac069e4e777368ed17431ffafa45d4b98958ff56d24f34445e565cbf4a}{CoeffB0}},\ \textcolor{comment}{//\ THIS\ MUST\ BE\ THE\ FIRST\ ENTRY}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8h_source_l00015}00015\ \ \ \ \ \mbox{\hyperlink{namespaceq_ab3bdb9eac069e4e777368ed17431ffafa181ef5cc8531adebe749a4c85cc79c52}{CoeffB1}},}
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8h_source_l00016}00016\ \ \ \ \ \mbox{\hyperlink{namespaceq_ab3bdb9eac069e4e777368ed17431ffafa439000af4eeabcb2d395a36d47a5c799}{CoeffB2}},}
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8h_source_l00017}00017\ \ \ \ \ \mbox{\hyperlink{namespaceq_ab3bdb9eac069e4e777368ed17431ffafa575a0fc5a81196aafb0d114fb1ff43d0}{CoeffB3}},}
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8h_source_l00018}00018\ \ \ \ \ \mbox{\hyperlink{namespaceq_ab3bdb9eac069e4e777368ed17431ffafa6b4d014ad1b39a31881628934250650e}{Xindex}},}
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8h_source_l00019}00019\ \ \ \ \ \mbox{\hyperlink{namespaceq_ab3bdb9eac069e4e777368ed17431ffafa0b9f7998ac41c70208a48a3acee941b5}{Df}},}
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8h_source_l00020}00020\ \ \ \ \ \mbox{\hyperlink{namespaceq_ab3bdb9eac069e4e777368ed17431ffafab1ff519e62e525bf168c1a5055a5554c}{PeakID}},}
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8h_source_l00021}00021\ \ \ \ \ \mbox{\hyperlink{namespaceq_ab3bdb9eac069e4e777368ed17431ffafaf86ce7af1f9124dd82da986f6c4f3d95}{SmplID}},}
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8h_source_l00022}00022\ \ \ \ \ \mbox{\hyperlink{namespaceq_ab3bdb9eac069e4e777368ed17431ffafa52f5e0bc3859bc5f5e25130b6c7e8881}{Position}},}
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8h_source_l00023}00023\ \ \ \ \ \mbox{\hyperlink{namespaceq_ab3bdb9eac069e4e777368ed17431ffafab166c0c7ce8046a50dc6b7f62c07d126}{ValleyPosition}},}
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8h_source_l00024}00024\ \ \ \ \ \mbox{\hyperlink{namespaceq_ab3bdb9eac069e4e777368ed17431ffafaeec6c4bdbd339edf8cbea68becb85244}{Height}},}
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8h_source_l00025}00025\ \ \ \ \ \mbox{\hyperlink{namespaceq_ab3bdb9eac069e4e777368ed17431ffafa32954654ac8fe66a1d09be19001de2d4}{Width}},}
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8h_source_l00026}00026\ \ \ \ \ \mbox{\hyperlink{namespaceq_ab3bdb9eac069e4e777368ed17431ffafadeec4ff19974f12ed781cb9a59064214}{Area}},}
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8h_source_l00027}00027\ \ \ \ \ \mbox{\hyperlink{namespaceq_ab3bdb9eac069e4e777368ed17431ffafaa4cda5627fe50911648d8dfc52dfdb59}{SigmaPosition}},}
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8h_source_l00028}00028\ \ \ \ \ \mbox{\hyperlink{namespaceq_ab3bdb9eac069e4e777368ed17431ffafa5cef0ebfadec370c9aaae656e8e47e5e}{SigmaHeight}},}
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8h_source_l00029}00029\ \ \ \ \ \mbox{\hyperlink{namespaceq_ab3bdb9eac069e4e777368ed17431ffafa02b4c1c8933644fbf41a5580f5075fd3}{SigmaWidth}},}
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8h_source_l00030}00030\ \ \ \ \ \mbox{\hyperlink{namespaceq_ab3bdb9eac069e4e777368ed17431ffafae147e029620585539bd6ac137f124be2}{SigmaArea}},}
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8h_source_l00031}00031\ \ \ \ \ \mbox{\hyperlink{namespaceq_ab3bdb9eac069e4e777368ed17431ffafa3a167780a83475ac09b0b48775b32ef6}{Dqs}}\ \textcolor{comment}{//\ THIS\ MUST\ BE\ THE\ LAST\ ENTRY}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8h_source_l00032}00032\ \ \ \};}
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8h_source_l00033}00033\ }
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8h_source_l00034}00034\ \ \ \textcolor{keyword}{extern}\ std::map<Property,\ std::string>\ \mbox{\hyperlink{namespaceq_ac9412ec4dc6d9138e2965665f2651be5}{propertyLabels}};}
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8h_source_l00035}00035\ }
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8h_source_l00036}\mbox{\hyperlink{classq_1_1_peak}{00036}}\ \ \ \textcolor{keyword}{class\ }\mbox{\hyperlink{classq_1_1_peak}{Peak}}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8h_source_l00037}00037\ \ \ \{}
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8h_source_l00038}00038\ \ \ \textcolor{keyword}{public}:\ \textcolor{comment}{/*\ List\ of\ Properties\ */}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8h_source_l00039}00039\ \ \ \textcolor{keyword}{private}:}
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8h_source_l00040}00040\ \ \ \ \ std::map<Property,\ double>\ properties;}
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8h_source_l00041}00041\ }
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8h_source_l00042}00042\ \ \ \textcolor{keyword}{public}:}
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8h_source_l00043}00043\ \ \ \ \ \textcolor{comment}{/*\ support\ function\ to\ create\ the\ Peak\ object*/}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8h_source_l00044}00044\ \ \ \ \ \textcolor{keyword}{static}\ std::map<Property,\ double>\ \mbox{\hyperlink{classq_1_1_peak_a09fc913d00b87ae32af9500326b74413}{initializeProperties}}();}
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8h_source_l00045}00045\ }
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8h_source_l00046}00046\ \ \ \ \ \textcolor{comment}{//\ Constructor}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8h_source_l00047}00047\ \ \ \ \ \mbox{\hyperlink{classq_1_1_peak_a00b71693923d43d7a2d38d257d40e12e}{Peak}}();}
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8h_source_l00048}00048\ }
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8h_source_l00049}00049\ \ \ \ \ \textcolor{comment}{//\ Cleaning}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8h_source_l00050}00050\ \ \ \ \ \mbox{\hyperlink{classq_1_1_peak_aa6cc923c2fddc0fe440952376624d787}{\string~Peak}}();}
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8h_source_l00051}00051\ }
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8h_source_l00052}00052\ \ \ \ \ \textcolor{comment}{//\ Access\ methods}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8h_source_l00053}00053\ \ \ \ \ \textcolor{keywordtype}{double}\ \mbox{\hyperlink{classq_1_1_peak_a76d9c461da59f54aae56acbe09e5687f}{getProperty}}(\mbox{\hyperlink{namespaceq_ab3bdb9eac069e4e777368ed17431ffaf}{Property}}\ property)\ \textcolor{keyword}{const};}
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8h_source_l00054}00054\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classq_1_1_peak_abeea4d47467decf11b1d2c3c8a150613}{setProperty}}(\mbox{\hyperlink{namespaceq_ab3bdb9eac069e4e777368ed17431ffaf}{Property}}\ property,\ \textcolor{keywordtype}{double}\ value);}
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8h_source_l00055}00055\ }
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8h_source_l00056}00056\ \ \ \ \ \textcolor{comment}{//\ Validation\ Methods}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8h_source_l00057}00057\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classq_1_1_peak_a5312348ee392b1400238b774a2fabba4}{validate}}();\ \textcolor{comment}{/*\ wrapper\ function\ for\ multiple\ validation\ methods\ */}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8h_source_l00058}00058\ }
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8h_source_l00059}00059\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classq_1_1_peak_a7abafe7418d3101a2cd3f0a483345ce2}{validate\_coefficients}}(}
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8h_source_l00060}00060\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{double}\ df,}
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8h_source_l00061}00061\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{double}\ b1,}
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8h_source_l00062}00062\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{double}\ b2,}
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8h_source_l00063}00063\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{double}\ b3,}
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8h_source_l00064}00064\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{double}\ xIndex,}
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8h_source_l00065}00065\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{double}\ \&apex\_position,}
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8h_source_l00066}00066\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{double}\ \&valley\_position)\ \textcolor{keyword}{const};}
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8h_source_l00067}00067\ }
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8h_source_l00068}00068\ \ \ \ \ \textcolor{comment}{//\ Calculate\ Property\ Methods}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8h_source_l00069}00069\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classq_1_1_peak_a592bb5eb08f59ae80227dff6372d6551}{calcApex\_position}}(}
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8h_source_l00070}00070\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{double}\ df,}
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8h_source_l00071}00071\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{double}\ b1,}
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8h_source_l00072}00072\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{double}\ b2,}
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8h_source_l00073}00073\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{double}\ xIndex,}
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8h_source_l00074}00074\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{double}\ \&apex\_position)\ \textcolor{keyword}{const};}
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8h_source_l00075}00075\ }
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8h_source_l00076}00076\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classq_1_1_peak_aff2bc1e2df11ae6a77089acb48c8fa45}{calcApexValley\_position}}(}
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8h_source_l00077}00077\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{double}\ df,}
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8h_source_l00078}00078\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{double}\ b1,}
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8h_source_l00079}00079\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{double}\ b2,}
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8h_source_l00080}00080\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{double}\ b3,}
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8h_source_l00081}00081\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{double}\ xIndex,}
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8h_source_l00082}00082\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{double}\ \&apex\_position,}
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8h_source_l00083}00083\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{double}\ \&valley\_position)\ \textcolor{keyword}{const};}
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8h_source_l00084}00084\ }
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8h_source_l00085}00085\ \ \ \ \ \textcolor{comment}{//\ Export\ methods}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8h_source_l00086}00086\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classq_1_1_peak_ae643256a2b7e955b9a2614f2b12c4d01}{print}}();}
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8h_source_l00087}00087\ \ \ \};}
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8h_source_l00088}00088\ \}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8h_source_l00089}00089\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//\ QALGORITHMS\_PEAK\_H}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8h_source_l00008}00008\ \textcolor{preprocessor}{\#include\ <array>}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8h_source_l00009}00009\ }
+\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8h_source_l00010}00010\ \textcolor{comment}{/*\ This\ file\ includes\ the\ q::peak\ class*/}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8h_source_l00011}00011\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespaceq}{q}}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8h_source_l00012}00012\ \{}
+\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8h_source_l00013}\mbox{\hyperlink{classq_1_1_peak}{00013}}\ \ \ \textcolor{keyword}{class\ }\mbox{\hyperlink{classq_1_1_peak}{Peak}}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8h_source_l00014}00014\ \ \ \{}
+\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8h_source_l00015}00015\ \ \ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8h_source_l00016}00016\ \ \ \ \ \ \ \textcolor{comment}{//\ Constructor}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8h_source_l00017}00017\ \ \ \ \ \ \ \mbox{\hyperlink{classq_1_1_peak_a00b71693923d43d7a2d38d257d40e12e}{Peak}}();}
+\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8h_source_l00018}00018\ \ \ \ \ \ \ \mbox{\hyperlink{classq_1_1_peak_a00b71693923d43d7a2d38d257d40e12e}{Peak}}(\textcolor{keywordtype}{int}\ index,\ \textcolor{keywordtype}{int}\ scale);}
+\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8h_source_l00019}00019\ \ \ \ \ \ \ \textcolor{comment}{//\ Destructor}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8h_source_l00020}00020\ \ \ \ \ \ \ \mbox{\hyperlink{classq_1_1_peak_aa6cc923c2fddc0fe440952376624d787}{\string~Peak}}();}
+\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8h_source_l00021}00021\ }
+\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8h_source_l00022}00022\ \ \ \ \ \ \ \textcolor{comment}{//\ methods}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8h_source_l00023}00023\ \ \ \ \ \ \ \textcolor{comment}{//\ getters}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8h_source_l00024}00024\ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{classq_1_1_peak_ad839c086d90d023778fdcedcf6b1e3b7}{getIndex}}()\ \textcolor{keyword}{const};}
+\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8h_source_l00025}00025\ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{classq_1_1_peak_af3898e4d087df32a988366127e40f996}{getScale}}()\ \textcolor{keyword}{const};}
+\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8h_source_l00026}00026\ \ \ \ \ \ \ \textcolor{keyword}{const}\ std::array<double,\ 4>\&\ \mbox{\hyperlink{classq_1_1_peak_a68edf87e9a91f47e2822f71cda5cf5a0}{getB}}()\ \textcolor{keyword}{const};}
+\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8h_source_l00027}00027\ \ \ \ \ \ \ \textcolor{keywordtype}{double}\ \mbox{\hyperlink{classq_1_1_peak_a6de1eefa9edf2d9bfe262d0747d3cd2c}{getPositionNorm}}()\ \textcolor{keyword}{const};}
+\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8h_source_l00028}00028\ \ \ \ \ \ \ \textcolor{keywordtype}{double}\ \mbox{\hyperlink{classq_1_1_peak_aa7998680ef217158c9e71f0c9caf534e}{getPosition}}()\ \textcolor{keyword}{const};}
+\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8h_source_l00029}00029\ \ \ \ \ \ \ \textcolor{keywordtype}{double}\ \mbox{\hyperlink{classq_1_1_peak_a44a0d2ff5fe9e9227b9262dbdaf7d721}{getHeight}}()\ \textcolor{keyword}{const};}
+\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8h_source_l00030}00030\ \ \ \ \ \ \ \textcolor{keywordtype}{double}\ \mbox{\hyperlink{classq_1_1_peak_aeb0ff53bed731bb990de86e7f478dafe}{getWidth}}()\ \textcolor{keyword}{const};}
+\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8h_source_l00031}00031\ \ \ \ \ \ \ \textcolor{keywordtype}{double}\ \mbox{\hyperlink{classq_1_1_peak_ab1581071b7fb2dbd9ebd4f0a475b7907}{getArea}}()\ \textcolor{keyword}{const};}
+\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8h_source_l00032}00032\ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{classq_1_1_peak_a3f481f07cc416ebc17436ffbb0916733}{getDf}}()\ \textcolor{keyword}{const};}
+\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8h_source_l00033}00033\ \ \ \ \ \ \ \textcolor{keywordtype}{double}\ \mbox{\hyperlink{classq_1_1_peak_a73b60085499d3fed3bf8f09c489185fe}{getPositionUncertainty}}()\ \textcolor{keyword}{const};}
+\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8h_source_l00034}00034\ \ \ \ \ \ \ \textcolor{keywordtype}{double}\ \mbox{\hyperlink{classq_1_1_peak_a997436a32c4241b8034e28cc31701075}{getHeightUncertainty}}()\ \textcolor{keyword}{const};}
+\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8h_source_l00035}00035\ \ \ \ \ \ \ \textcolor{keywordtype}{double}\ \mbox{\hyperlink{classq_1_1_peak_aa0ea9797ddbdb4c3f1e34c469b2cedb5}{getWidthUncertainty}}()\ \textcolor{keyword}{const};}
+\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8h_source_l00036}00036\ \ \ \ \ \ \ \textcolor{keywordtype}{double}\ \mbox{\hyperlink{classq_1_1_peak_a155bf5c6a72c30199a64f1a87d72a0d0}{getAreaUncertainty}}()\ \textcolor{keyword}{const};}
+\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8h_source_l00037}00037\ \ \ \ \ \ \ \textcolor{keywordtype}{double}\ \mbox{\hyperlink{classq_1_1_peak_a170f77da47a2ae40013d64616b636e52}{getMse}}()\ \textcolor{keyword}{const};}
+\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8h_source_l00038}00038\ \ \ \ \ \ \ \textcolor{comment}{//\ setters}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8h_source_l00039}00039\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classq_1_1_peak_a5058fbb5f5b1554beffbae7103271ca7}{setIndex}}(\textcolor{keywordtype}{int}\ index);}
+\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8h_source_l00040}00040\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classq_1_1_peak_a4eaf1e91b31e29c5089ba8624e76f4f2}{setScale}}(\textcolor{keywordtype}{int}\ scale);}
+\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8h_source_l00041}00041\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classq_1_1_peak_a07e856d7e9dc61adc47861b71c71640c}{setB}}(\textcolor{keyword}{const}\ std::array<double,\ 4>\ \&B);}
+\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8h_source_l00042}00042\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classq_1_1_peak_abf3390fa706edd276a316b26e92d00a4}{setPositionNorm}}(\textcolor{keywordtype}{double}\ position\_norm);}
+\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8h_source_l00043}00043\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classq_1_1_peak_aea6afb1346ad5da6aaff2f6241ca8e81}{setPosition}}(\textcolor{keywordtype}{double}\ position);}
+\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8h_source_l00044}00044\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classq_1_1_peak_a50444052eab6aa78635a15d6d3fc6624}{setHeight}}(\textcolor{keywordtype}{double}\ height);}
+\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8h_source_l00045}00045\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classq_1_1_peak_a24e4f48dd955f6ecb334f30a83ea49ca}{setWidth}}(\textcolor{keywordtype}{double}\ width);}
+\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8h_source_l00046}00046\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classq_1_1_peak_a159cd04a7ba139a1b9025e074aaa0b17}{setArea}}(\textcolor{keywordtype}{double}\ area);}
+\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8h_source_l00047}00047\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classq_1_1_peak_a8363b88150b3d1e26069bedab21043da}{setDf}}(\textcolor{keywordtype}{int}\ df);}
+\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8h_source_l00048}00048\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classq_1_1_peak_a56bcef396ec18ecd39cf7984dc0d65a9}{setPositionUncertainty}}(\textcolor{keywordtype}{double}\ position\_uncertainty);}
+\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8h_source_l00049}00049\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classq_1_1_peak_acf04f1fe0bbd7266031821425b4b1b2e}{setHeightUncertainty}}(\textcolor{keywordtype}{double}\ height\_uncertainty);}
+\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8h_source_l00050}00050\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classq_1_1_peak_a7f1b3dbded72b7be39a6619d9914765c}{setWidthUncertainty}}(\textcolor{keywordtype}{double}\ width\_uncertainty);}
+\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8h_source_l00051}00051\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classq_1_1_peak_af840fd4d25d4ac453cb207b9b7e3618d}{setAreaUncertainty}}(\textcolor{keywordtype}{double}\ area\_uncertainty);}
+\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8h_source_l00052}00052\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classq_1_1_peak_a13490374cad55f373b95c1eb65720c1e}{setMse}}(\textcolor{keywordtype}{double}\ mse);}
+\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8h_source_l00053}00053\ \ \ \ \ \ \ \textcolor{comment}{//\ debugging}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8h_source_l00054}00054\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classq_1_1_peak_af7c385e099b67193608ab3b163493ed0}{print}}()\ \textcolor{keyword}{const};}
+\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8h_source_l00055}00055\ \ \ \ \ \textcolor{keyword}{private}:}
+\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8h_source_l00056}00056\ \ \ \ \ \ \ \textcolor{comment}{//\ Member\ variables}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8h_source_l00057}00057\ \ \ \ \ \ \ \textcolor{comment}{//\ regression\ information}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8h_source_l00058}00058\ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ index;\ \textcolor{comment}{//\ index\ of\ the\ center\ of\ the\ regression\ window\ within\ the\ original\ data\ set}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8h_source_l00059}00059\ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ scale;\ \textcolor{comment}{//\ scale\ of\ the\ regression\ window\ (e.g.,\ 2\ means\ 5\ data\ points,\ i.e.,\ -\/2:2)}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8h_source_l00060}00060\ \ \ \ \ \ \ std::array<double,\ 4>\ B;\ \textcolor{comment}{//\ regression\ coefficients}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8h_source_l00061}00061\ \ \ \ \ \ \ \textcolor{keywordtype}{double}\ position\_norm;\ \textcolor{comment}{//\ normalized\ position\ of\ the\ peak\ within\ the\ regression\ window}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8h_source_l00062}00062\ }
+\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8h_source_l00063}00063\ \ \ \ \ \ \ \textcolor{comment}{//\ peak\ information}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8h_source_l00064}00064\ \ \ \ \ \ \ \textcolor{keywordtype}{double}\ position;\ \textcolor{comment}{//\ position\ of\ the\ peak\ in\ the\ original\ data\ set}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8h_source_l00065}00065\ \ \ \ \ \ \ \textcolor{keywordtype}{double}\ height;\ \textcolor{comment}{//\ height\ of\ the\ peak}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8h_source_l00066}00066\ \ \ \ \ \ \ \textcolor{keywordtype}{double}\ width;\ \textcolor{comment}{//\ width\ of\ the\ peak}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8h_source_l00067}00067\ \ \ \ \ \ \ \textcolor{keywordtype}{double}\ area;\ \textcolor{comment}{//\ area\ of\ the\ peak\ (area\ under\ the\ curve\ till\ the\ baseline=0)}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8h_source_l00068}00068\ }
+\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8h_source_l00069}00069\ \ \ \ \ \ \ \textcolor{comment}{//\ uncertainty\ information}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8h_source_l00070}00070\ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ df;\ \textcolor{comment}{//\ degrees\ of\ freedom}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8h_source_l00071}00071\ \ \ \ \ \ \ \textcolor{keywordtype}{double}\ position\_uncertainty;\ \textcolor{comment}{//\ uncertainty\ of\ the\ position}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8h_source_l00072}00072\ \ \ \ \ \ \ \textcolor{keywordtype}{double}\ height\_uncertainty;\ \textcolor{comment}{//\ uncertainty\ of\ the\ height}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8h_source_l00073}00073\ \ \ \ \ \ \ \textcolor{keywordtype}{double}\ width\_uncertainty;\ \textcolor{comment}{//\ uncertainty\ of\ the\ width}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8h_source_l00074}00074\ \ \ \ \ \ \ \textcolor{keywordtype}{double}\ area\_uncertainty;\ \textcolor{comment}{//\ uncertainty\ of\ the\ area}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8h_source_l00075}00075\ \ \ \ \ \ \ \textcolor{keywordtype}{double}\ mse;\ \textcolor{comment}{//\ mean\ squared\ error\ of\ the\ regression}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8h_source_l00076}00076\ \ \ \};}
+\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8h_source_l00077}00077\ \}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8h_source_l00078}00078\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//\ QALGORITHMS\_PEAK\_H}}
 
 \end{DoxyCode}

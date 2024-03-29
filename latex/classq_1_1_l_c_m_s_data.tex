@@ -45,21 +45,18 @@ virtual \mbox{\hyperlink{classq_1_1_measurement_data_a5b13907b217ee6690eef821d4d
 \item 
 virtual void \mbox{\hyperlink{classq_1_1_measurement_data_a8295223e88004418fcc9fa62b1ced99d}{read\+CSV}} (std\+::string filename, int row\+Start, int row\+End, int col\+Start, int col\+End, char separator, std\+::vector$<$ \mbox{\hyperlink{namespaceq_1_1_data_type_a9fcd47c7d7d77f908f041cad931962aa}{Data\+Type\+::\+Data\+Field}} $>$ variable\+Types)=0
 \item 
-void \mbox{\hyperlink{classq_1_1_measurement_data_a3139b3ddc3039bca5c0fb7ccd7052558}{zero\+Filling}} (\mbox{\hyperlink{classq_1_1_measurement_data_a0021f29aa0a045d9964cc956528fadac}{var\+Data\+Type}} \&data\+Map, int k)
+void \mbox{\hyperlink{classq_1_1_measurement_data_a745fd8731072a4f0d058f889bbca158e}{zero\+Filling}} (\mbox{\hyperlink{namespaceq_aab5cf99505e4325617dbe9365f547a35}{var\+Data\+Type}} \&data\+Vec, int k)
 \begin{DoxyCompactList}\small\item\em Identify and fill gaps in the data. \end{DoxyCompactList}\item 
-void \mbox{\hyperlink{classq_1_1_measurement_data_a9a22a34f93ed1aa17227dee44ab20a2d}{cut\+Data}} (\mbox{\hyperlink{classq_1_1_measurement_data_a0021f29aa0a045d9964cc956528fadac}{var\+Data\+Type}} \&data\+Map, int \&max\+Key)
+void \mbox{\hyperlink{classq_1_1_measurement_data_ab1f64fdddef6f6549b6f2a18b4b4bd7e}{cut\+Data}} (\mbox{\hyperlink{namespaceq_aab5cf99505e4325617dbe9365f547a35}{var\+Data\+Type}} \&data\+Vec, int \&max\+Key)
 \begin{DoxyCompactList}\small\item\em Cut the data into smaller data sets. \end{DoxyCompactList}\item 
-void \mbox{\hyperlink{classq_1_1_measurement_data_a55e26101276ae6e8aed310e790e90ff0}{filter\+Small\+Data\+Sets}} (\mbox{\hyperlink{classq_1_1_measurement_data_a0021f29aa0a045d9964cc956528fadac}{var\+Data\+Type}} \&data\+Map)
+void \mbox{\hyperlink{classq_1_1_measurement_data_ad2a87250fbe7e4e9003fe09d84dd5dec}{filter\+Small\+Data\+Sets}} (\mbox{\hyperlink{namespaceq_aab5cf99505e4325617dbe9365f547a35}{var\+Data\+Type}} \&data\+Vec)
 \begin{DoxyCompactList}\small\item\em Filter small data sets. \end{DoxyCompactList}\item 
-void \mbox{\hyperlink{classq_1_1_measurement_data_a73961e75fc2d3b418bd9109e88842f22}{interpolate\+Data}} (\mbox{\hyperlink{classq_1_1_measurement_data_a0021f29aa0a045d9964cc956528fadac}{var\+Data\+Type}} \&data\+Map)
+void \mbox{\hyperlink{classq_1_1_measurement_data_a0427a744f86c44ae9039e9b4a8a59188}{interpolate\+Data}} (\mbox{\hyperlink{namespaceq_aab5cf99505e4325617dbe9365f547a35}{var\+Data\+Type}} \&data\+Vec)
 \begin{DoxyCompactList}\small\item\em Interpolate y-\/axis values. \end{DoxyCompactList}\end{DoxyCompactItemize}
-\doxysubsubsection*{Additional Inherited Members}
-\doxysubsection*{Public Types inherited from \mbox{\hyperlink{classq_1_1_measurement_data}{q\+::\+Measurement\+Data}}}
+\doxysubsubsection*{Public Attributes}
 \begin{DoxyCompactItemize}
 \item 
-using \mbox{\hyperlink{classq_1_1_measurement_data_acf49c0270dd400621a4a7697422a0970}{MS}} = std\+::unordered\+\_\+map$<$ int, std\+::unique\+\_\+ptr$<$ \mbox{\hyperlink{classq_1_1_data_type_1_1_mass_spectrum}{Data\+Type\+::\+Mass\+Spectrum}} $>$ $>$ \texorpdfstring{$\ast$}{*}
-\item 
-using \mbox{\hyperlink{classq_1_1_measurement_data_a0021f29aa0a045d9964cc956528fadac}{var\+Data\+Type}} = std\+::variant$<$ \mbox{\hyperlink{classq_1_1_measurement_data_acf49c0270dd400621a4a7697422a0970}{MS}} $>$
+std\+::vector$<$ std\+::unique\+\_\+ptr$<$ \mbox{\hyperlink{classq_1_1_data_type_1_1_mass_spectrum}{Data\+Type\+::\+Mass\+Spectrum}} $>$ $>$ \mbox{\hyperlink{classq_1_1_l_c_m_s_data_ac08611a3fc7649d1e5b2ae257090388a}{data}}
 \end{DoxyCompactItemize}
 
 
@@ -86,7 +83,7 @@ Definition at line \mbox{\hyperlink{qalgorithms__measurement__data__lcms_8h_sour
 
 
 
-Definition at line \mbox{\hyperlink{qalgorithms__measurement__data__lcms_8cpp_source_l00019}{19}} of file \mbox{\hyperlink{qalgorithms__measurement__data__lcms_8cpp_source}{qalgorithms\+\_\+measurement\+\_\+data\+\_\+lcms.\+cpp}}.
+Definition at line \mbox{\hyperlink{qalgorithms__measurement__data__lcms_8cpp_source_l00020}{20}} of file \mbox{\hyperlink{qalgorithms__measurement__data__lcms_8cpp_source}{qalgorithms\+\_\+measurement\+\_\+data\+\_\+lcms.\+cpp}}.
 
 \Hypertarget{classq_1_1_l_c_m_s_data_a556f3c0930dd9500376eda81b271b787}\label{classq_1_1_l_c_m_s_data_a556f3c0930dd9500376eda81b271b787} 
 \index{q::LCMSData@{q::LCMSData}!````~LCMSData@{\texorpdfstring{$\sim$}{\string~}LCMSData}}
@@ -96,7 +93,7 @@ Definition at line \mbox{\hyperlink{qalgorithms__measurement__data__lcms_8cpp_so
 
 
 
-Definition at line \mbox{\hyperlink{qalgorithms__measurement__data__lcms_8cpp_source_l00023}{23}} of file \mbox{\hyperlink{qalgorithms__measurement__data__lcms_8cpp_source}{qalgorithms\+\_\+measurement\+\_\+data\+\_\+lcms.\+cpp}}.
+Definition at line \mbox{\hyperlink{qalgorithms__measurement__data__lcms_8cpp_source_l00024}{24}} of file \mbox{\hyperlink{qalgorithms__measurement__data__lcms_8cpp_source}{qalgorithms\+\_\+measurement\+\_\+data\+\_\+lcms.\+cpp}}.
 
 
 
@@ -113,7 +110,7 @@ Cut the data into smaller data sets.
 
 The cut\+Data method cuts the data into smaller data sets. The method uses the separator value to split the data into smaller data sets. The separator value is set to -\/1.\+0 for the x-\/axis and -\/1.\+0 for the y-\/axis. For each cut, the method creates a new data subset and stores it in the data map using a sub-\/dataset ID as the secondary key. 
 
-Definition at line \mbox{\hyperlink{qalgorithms__measurement__data__lcms_8cpp_source_l00200}{200}} of file \mbox{\hyperlink{qalgorithms__measurement__data__lcms_8cpp_source}{qalgorithms\+\_\+measurement\+\_\+data\+\_\+lcms.\+cpp}}.
+Definition at line \mbox{\hyperlink{qalgorithms__measurement__data__lcms_8cpp_source_l00205}{205}} of file \mbox{\hyperlink{qalgorithms__measurement__data__lcms_8cpp_source}{qalgorithms\+\_\+measurement\+\_\+data\+\_\+lcms.\+cpp}}.
 
 \Hypertarget{classq_1_1_l_c_m_s_data_a5411843e0ea71a7719a7550dc3dccd71}\label{classq_1_1_l_c_m_s_data_a5411843e0ea71a7719a7550dc3dccd71} 
 \index{q::LCMSData@{q::LCMSData}!filterSmallDataSets@{filterSmallDataSets}}
@@ -127,7 +124,7 @@ Filter small data sets.
 
 The filter\+Small\+Data\+Sets method filters small data sets. The method removes data sets with less than 5 data points. This is due to the regression analysis that includes 4 coefficients and therefore requires at least 5 data points. 
 
-Definition at line \mbox{\hyperlink{qalgorithms__measurement__data__lcms_8cpp_source_l00207}{207}} of file \mbox{\hyperlink{qalgorithms__measurement__data__lcms_8cpp_source}{qalgorithms\+\_\+measurement\+\_\+data\+\_\+lcms.\+cpp}}.
+Definition at line \mbox{\hyperlink{qalgorithms__measurement__data__lcms_8cpp_source_l00212}{212}} of file \mbox{\hyperlink{qalgorithms__measurement__data__lcms_8cpp_source}{qalgorithms\+\_\+measurement\+\_\+data\+\_\+lcms.\+cpp}}.
 
 \Hypertarget{classq_1_1_l_c_m_s_data_a5ca3f008825795ef7caef0aeb69285ff}\label{classq_1_1_l_c_m_s_data_a5ca3f008825795ef7caef0aeb69285ff} 
 \index{q::LCMSData@{q::LCMSData}!info@{info}}
@@ -141,7 +138,7 @@ Print the LC-\/\+MS number of data sets.
 
 The print method prints the LC-\/\+MS data to the console. 
 
-Definition at line \mbox{\hyperlink{qalgorithms__measurement__data__lcms_8cpp_source_l00250}{250}} of file \mbox{\hyperlink{qalgorithms__measurement__data__lcms_8cpp_source}{qalgorithms\+\_\+measurement\+\_\+data\+\_\+lcms.\+cpp}}.
+Definition at line \mbox{\hyperlink{qalgorithms__measurement__data__lcms_8cpp_source_l00255}{255}} of file \mbox{\hyperlink{qalgorithms__measurement__data__lcms_8cpp_source}{qalgorithms\+\_\+measurement\+\_\+data\+\_\+lcms.\+cpp}}.
 
 \Hypertarget{classq_1_1_l_c_m_s_data_a6bcb7c6df660ff834fbfb86dcb5a81a5}\label{classq_1_1_l_c_m_s_data_a6bcb7c6df660ff834fbfb86dcb5a81a5} 
 \index{q::LCMSData@{q::LCMSData}!interpolateData@{interpolateData}}
@@ -155,7 +152,7 @@ Interpolate y-\/axis values.
 
 The interpolate\+Data method interpolates the y-\/axis values. The method uses quadratic interpolation to interpolate the y-\/axis values in the log space. 
 
-Definition at line \mbox{\hyperlink{qalgorithms__measurement__data__lcms_8cpp_source_l00214}{214}} of file \mbox{\hyperlink{qalgorithms__measurement__data__lcms_8cpp_source}{qalgorithms\+\_\+measurement\+\_\+data\+\_\+lcms.\+cpp}}.
+Definition at line \mbox{\hyperlink{qalgorithms__measurement__data__lcms_8cpp_source_l00219}{219}} of file \mbox{\hyperlink{qalgorithms__measurement__data__lcms_8cpp_source}{qalgorithms\+\_\+measurement\+\_\+data\+\_\+lcms.\+cpp}}.
 
 \Hypertarget{classq_1_1_l_c_m_s_data_aa808ac2ee343120a4a89f8ee8e9278f6}\label{classq_1_1_l_c_m_s_data_aa808ac2ee343120a4a89f8ee8e9278f6} 
 \index{q::LCMSData@{q::LCMSData}!print@{print}}
@@ -169,7 +166,7 @@ Print the LC-\/\+MS datapoints and metadata.
 
 The print method prints the LC-\/\+MS data to the console. 
 
-Definition at line \mbox{\hyperlink{qalgorithms__measurement__data__lcms_8cpp_source_l00221}{221}} of file \mbox{\hyperlink{qalgorithms__measurement__data__lcms_8cpp_source}{qalgorithms\+\_\+measurement\+\_\+data\+\_\+lcms.\+cpp}}.
+Definition at line \mbox{\hyperlink{qalgorithms__measurement__data__lcms_8cpp_source_l00226}{226}} of file \mbox{\hyperlink{qalgorithms__measurement__data__lcms_8cpp_source}{qalgorithms\+\_\+measurement\+\_\+data\+\_\+lcms.\+cpp}}.
 
 \Hypertarget{classq_1_1_l_c_m_s_data_ab4632d3d3138d17fd5a7f479b70c2846}\label{classq_1_1_l_c_m_s_data_ab4632d3d3138d17fd5a7f479b70c2846} 
 \index{q::LCMSData@{q::LCMSData}!readCSV@{readCSV}}
@@ -204,7 +201,7 @@ Implements \mbox{\hyperlink{classq_1_1_measurement_data_a8295223e88004418fcc9fa6
 
 
 
-Definition at line \mbox{\hyperlink{qalgorithms__measurement__data__lcms_8cpp_source_l00027}{27}} of file \mbox{\hyperlink{qalgorithms__measurement__data__lcms_8cpp_source}{qalgorithms\+\_\+measurement\+\_\+data\+\_\+lcms.\+cpp}}.
+Definition at line \mbox{\hyperlink{qalgorithms__measurement__data__lcms_8cpp_source_l00028}{28}} of file \mbox{\hyperlink{qalgorithms__measurement__data__lcms_8cpp_source}{qalgorithms\+\_\+measurement\+\_\+data\+\_\+lcms.\+cpp}}.
 
 \Hypertarget{classq_1_1_l_c_m_s_data_a5d7411d87663980b683c51a2f969b4c0}\label{classq_1_1_l_c_m_s_data_a5d7411d87663980b683c51a2f969b4c0} 
 \index{q::LCMSData@{q::LCMSData}!writeCSV@{writeCSV}}
@@ -223,7 +220,7 @@ The write\+CSV method writes LC-\/\+MS data to a CSV file. The method takes the 
 \end{DoxyParams}
 
 
-Definition at line \mbox{\hyperlink{qalgorithms__measurement__data__lcms_8cpp_source_l00174}{174}} of file \mbox{\hyperlink{qalgorithms__measurement__data__lcms_8cpp_source}{qalgorithms\+\_\+measurement\+\_\+data\+\_\+lcms.\+cpp}}.
+Definition at line \mbox{\hyperlink{qalgorithms__measurement__data__lcms_8cpp_source_l00175}{175}} of file \mbox{\hyperlink{qalgorithms__measurement__data__lcms_8cpp_source}{qalgorithms\+\_\+measurement\+\_\+data\+\_\+lcms.\+cpp}}.
 
 \Hypertarget{classq_1_1_l_c_m_s_data_ae1a62294c43bbe12e97f9293eaa49ea8}\label{classq_1_1_l_c_m_s_data_ae1a62294c43bbe12e97f9293eaa49ea8} 
 \index{q::LCMSData@{q::LCMSData}!zeroFilling@{zeroFilling}}
@@ -237,7 +234,20 @@ Identify and fill gaps in the LC-\/\+MS data.
 
 The zero\+Filling method identifies and fills gaps in the LC-\/\+MS data. The method uses difference between two neighboring data points to identify gaps. If the difference is 1.\+75 times greater than expected, then the method fills the gap with zero values for intensity and inter/extrapolated values for x-\/axis values. For the expected difference, the method the difference of the last two data points that not show a gap. However, the first expected difference is set to the median of the differences of the total data points. However, the maximum gap size is set to 4 per side, i.\+e., 8 in total, where there is a gap leftover between the fourth and fifth data points. 
 
-Definition at line \mbox{\hyperlink{qalgorithms__measurement__data__lcms_8cpp_source_l00193}{193}} of file \mbox{\hyperlink{qalgorithms__measurement__data__lcms_8cpp_source}{qalgorithms\+\_\+measurement\+\_\+data\+\_\+lcms.\+cpp}}.
+Definition at line \mbox{\hyperlink{qalgorithms__measurement__data__lcms_8cpp_source_l00198}{198}} of file \mbox{\hyperlink{qalgorithms__measurement__data__lcms_8cpp_source}{qalgorithms\+\_\+measurement\+\_\+data\+\_\+lcms.\+cpp}}.
+
+
+
+\doxysubsection{Member Data Documentation}
+\Hypertarget{classq_1_1_l_c_m_s_data_ac08611a3fc7649d1e5b2ae257090388a}\label{classq_1_1_l_c_m_s_data_ac08611a3fc7649d1e5b2ae257090388a} 
+\index{q::LCMSData@{q::LCMSData}!data@{data}}
+\index{data@{data}!q::LCMSData@{q::LCMSData}}
+\doxysubsubsection{\texorpdfstring{data}{data}}
+{\footnotesize\ttfamily std\+::vector$<$std\+::unique\+\_\+ptr$<$\mbox{\hyperlink{classq_1_1_data_type_1_1_mass_spectrum}{Data\+Type\+::\+Mass\+Spectrum}}$>$ $>$ q\+::\+LCMSData\+::data}
+
+
+
+Definition at line \mbox{\hyperlink{qalgorithms__measurement__data__lcms_8h_source_l00083}{83}} of file \mbox{\hyperlink{qalgorithms__measurement__data__lcms_8h_source}{qalgorithms\+\_\+measurement\+\_\+data\+\_\+lcms.\+h}}.
 
 
 

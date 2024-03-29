@@ -81,8 +81,7 @@ $(function() {
 <a href="#nested-classes">Classes</a> &#124;
 <a href="#typedef-members">Typedefs</a> &#124;
 <a href="#enum-members">Enumerations</a> &#124;
-<a href="#func-members">Functions</a> &#124;
-<a href="#var-members">Variables</a>  </div>
+<a href="#func-members">Functions</a>  </div>
   <div class="headertitle"><div class="title">q Namespace Reference</div></div>
 </div><!--header-->
 <div class="contents">
@@ -113,11 +112,20 @@ Classes</h2></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classq_1_1_progress_bar.html">ProgressBar</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classq_1_1q_peaks.html">qPeaks</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">A class to store and apply a peak evaluation model.  <a href="classq_1_1q_peaks.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classq_1_1_ref_matrix.html">RefMatrix</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classq_1_1t_values.html">tValues</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="typedef-members" name="typedef-members"></a>
 Typedefs</h2></td></tr>
+<tr class="memitem:ab39989523b38776d0880ac7c41d5f784"><td class="memItemLeft" align="right" valign="top">using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceq.html#ab39989523b38776d0880ac7c41d5f784">MS</a> = std::vector&lt; std::unique_ptr&lt; <a class="el" href="classq_1_1_data_type_1_1_mass_spectrum.html">DataType::MassSpectrum</a> &gt; &gt; *</td></tr>
+<tr class="separator:ab39989523b38776d0880ac7c41d5f784"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aab5cf99505e4325617dbe9365f547a35"><td class="memItemLeft" align="right" valign="top">using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceq.html#aab5cf99505e4325617dbe9365f547a35">varDataType</a> = std::variant&lt; <a class="el" href="namespaceq.html#ab39989523b38776d0880ac7c41d5f784">MS</a> &gt;</td></tr>
+<tr class="separator:aab5cf99505e4325617dbe9365f547a35"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a23bdccee34b821e7d4ee0f698d4c6701"><td class="memItemLeft" align="right" valign="top">using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceq.html#a23bdccee34b821e7d4ee0f698d4c6701">VariableType</a> = <a class="el" href="classq_1_1_data_type_1_1_mass_spectrum.html#a45d5ddc2ce29c805760e326039ea93b8">DataType::MassSpectrum::variableType</a></td></tr>
 <tr class="separator:a23bdccee34b821e7d4ee0f698d4c6701"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a463ddd687acb437210a8e06253ebc078"><td class="memItemLeft" align="right" valign="top">using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceq.html#a463ddd687acb437210a8e06253ebc078">DataField</a> = <a class="el" href="namespaceq_1_1_data_type.html#a9fcd47c7d7d77f908f041cad931962aa">DataType::DataField</a></td></tr>
@@ -136,32 +144,6 @@ Enumerations</h2></td></tr>
 , <a class="el" href="namespaceq.html#a1ef5b9eb7b9bdd1afc71e98f9b43a174aee88634543eb5c2b123bab1abd32c497">PROGRESS</a>
  }</td></tr>
 <tr class="separator:a1ef5b9eb7b9bdd1afc71e98f9b43a174"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ab3bdb9eac069e4e777368ed17431ffaf"><td class="memItemLeft" align="right" valign="top">enum class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceq.html#ab3bdb9eac069e4e777368ed17431ffaf">Property</a> { <br />
-&#160;&#160;<a class="el" href="namespaceq.html#ab3bdb9eac069e4e777368ed17431ffafa45d4b98958ff56d24f34445e565cbf4a">CoeffB0</a>
-, <a class="el" href="namespaceq.html#ab3bdb9eac069e4e777368ed17431ffafa181ef5cc8531adebe749a4c85cc79c52">CoeffB1</a>
-, <a class="el" href="namespaceq.html#ab3bdb9eac069e4e777368ed17431ffafa439000af4eeabcb2d395a36d47a5c799">CoeffB2</a>
-, <a class="el" href="namespaceq.html#ab3bdb9eac069e4e777368ed17431ffafa575a0fc5a81196aafb0d114fb1ff43d0">CoeffB3</a>
-, <br />
-&#160;&#160;<a class="el" href="namespaceq.html#ab3bdb9eac069e4e777368ed17431ffafa6b4d014ad1b39a31881628934250650e">Xindex</a>
-, <a class="el" href="namespaceq.html#ab3bdb9eac069e4e777368ed17431ffafa0b9f7998ac41c70208a48a3acee941b5">Df</a>
-, <a class="el" href="namespaceq.html#ab3bdb9eac069e4e777368ed17431ffafab1ff519e62e525bf168c1a5055a5554c">PeakID</a>
-, <a class="el" href="namespaceq.html#ab3bdb9eac069e4e777368ed17431ffafaf86ce7af1f9124dd82da986f6c4f3d95">SmplID</a>
-, <br />
-&#160;&#160;<a class="el" href="namespaceq.html#ab3bdb9eac069e4e777368ed17431ffafa52f5e0bc3859bc5f5e25130b6c7e8881">Position</a>
-, <a class="el" href="namespaceq.html#ab3bdb9eac069e4e777368ed17431ffafab166c0c7ce8046a50dc6b7f62c07d126">ValleyPosition</a>
-, <a class="el" href="namespaceq.html#ab3bdb9eac069e4e777368ed17431ffafaeec6c4bdbd339edf8cbea68becb85244">Height</a>
-, <a class="el" href="namespaceq.html#ab3bdb9eac069e4e777368ed17431ffafa32954654ac8fe66a1d09be19001de2d4">Width</a>
-, <br />
-&#160;&#160;<a class="el" href="namespaceq.html#ab3bdb9eac069e4e777368ed17431ffafadeec4ff19974f12ed781cb9a59064214">Area</a>
-, <a class="el" href="namespaceq.html#ab3bdb9eac069e4e777368ed17431ffafaa4cda5627fe50911648d8dfc52dfdb59">SigmaPosition</a>
-, <a class="el" href="namespaceq.html#ab3bdb9eac069e4e777368ed17431ffafa5cef0ebfadec370c9aaae656e8e47e5e">SigmaHeight</a>
-, <a class="el" href="namespaceq.html#ab3bdb9eac069e4e777368ed17431ffafa02b4c1c8933644fbf41a5580f5075fd3">SigmaWidth</a>
-, <br />
-&#160;&#160;<a class="el" href="namespaceq.html#ab3bdb9eac069e4e777368ed17431ffafae147e029620585539bd6ac137f124be2">SigmaArea</a>
-, <a class="el" href="namespaceq.html#ab3bdb9eac069e4e777368ed17431ffafa3a167780a83475ac09b0b48775b32ef6">Dqs</a>
-<br />
- }</td></tr>
-<tr class="separator:ab3bdb9eac069e4e777368ed17431ffaf"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="func-members" name="func-members"></a>
 Functions</h2></td></tr>
@@ -192,11 +174,6 @@ Functions</h2></td></tr>
 <tr class="separator:af5bc719469eba45978bfaa23379f329b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ae93c50d74740a6cd3f42a1cf8f299f3a"><td class="memItemLeft" align="right" valign="top">const <a class="el" href="classq_1_1_matrix.html">Matrix</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceq.html#ae93c50d74740a6cd3f42a1cf8f299f3a">linreg</a> (const std::vector&lt; double &gt; &amp;xData, const std::vector&lt; double &gt; &amp;yData, const int degree)</td></tr>
 <tr class="separator:ae93c50d74740a6cd3f42a1cf8f299f3a"><td class="memSeparator" colspan="2">&#160;</td></tr>
-</table><table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="var-members" name="var-members"></a>
-Variables</h2></td></tr>
-<tr class="memitem:ac9412ec4dc6d9138e2965665f2651be5"><td class="memItemLeft" align="right" valign="top">std::map&lt; <a class="el" href="namespaceq.html#ab3bdb9eac069e4e777368ed17431ffaf">Property</a>, std::string &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceq.html#ac9412ec4dc6d9138e2965665f2651be5">propertyLabels</a></td></tr>
-<tr class="separator:ac9412ec4dc6d9138e2965665f2651be5"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <h2 class="groupheader">Typedef Documentation</h2>
 <a id="a463ddd687acb437210a8e06253ebc078" name="a463ddd687acb437210a8e06253ebc078"></a>
@@ -211,7 +188,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="qalgorithms__measurement__data__lcms_8cpp_source.html#l00014">14</a> of file <a class="el" href="qalgorithms__measurement__data__lcms_8cpp_source.html">qalgorithms_measurement_data_lcms.cpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="qalgorithms__measurement__data__lcms_8cpp_source.html#l00015">15</a> of file <a class="el" href="qalgorithms__measurement__data__lcms_8cpp_source.html">qalgorithms_measurement_data_lcms.cpp</a>.</p>
 
 </div>
 </div>
@@ -227,7 +204,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="qalgorithms__measurement__data__lcms_8cpp_source.html#l00016">16</a> of file <a class="el" href="qalgorithms__measurement__data__lcms_8cpp_source.html">qalgorithms_measurement_data_lcms.cpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="qalgorithms__measurement__data__lcms_8cpp_source.html#l00017">17</a> of file <a class="el" href="qalgorithms__measurement__data__lcms_8cpp_source.html">qalgorithms_measurement_data_lcms.cpp</a>.</p>
 
 </div>
 </div>
@@ -243,7 +220,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="qalgorithms__measurement__data__lcms_8cpp_source.html#l00017">17</a> of file <a class="el" href="qalgorithms__measurement__data__lcms_8cpp_source.html">qalgorithms_measurement_data_lcms.cpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="qalgorithms__measurement__data__lcms_8cpp_source.html#l00018">18</a> of file <a class="el" href="qalgorithms__measurement__data__lcms_8cpp_source.html">qalgorithms_measurement_data_lcms.cpp</a>.</p>
 
 </div>
 </div>
@@ -259,7 +236,39 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="qalgorithms__measurement__data__lcms_8cpp_source.html#l00015">15</a> of file <a class="el" href="qalgorithms__measurement__data__lcms_8cpp_source.html">qalgorithms_measurement_data_lcms.cpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="qalgorithms__measurement__data__lcms_8cpp_source.html#l00016">16</a> of file <a class="el" href="qalgorithms__measurement__data__lcms_8cpp_source.html">qalgorithms_measurement_data_lcms.cpp</a>.</p>
+
+</div>
+</div>
+<a id="ab39989523b38776d0880ac7c41d5f784" name="ab39989523b38776d0880ac7c41d5f784"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ab39989523b38776d0880ac7c41d5f784">&#9670;&#160;</a></span>MS</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">using <a class="el" href="namespaceq.html#ab39989523b38776d0880ac7c41d5f784">q::MS</a> = typedef std::vector&lt;std::unique_ptr&lt;<a class="el" href="classq_1_1_data_type_1_1_mass_spectrum.html">DataType::MassSpectrum</a>&gt; &gt;*</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="qalgorithms__measurement__data_8h_source.html#l00017">17</a> of file <a class="el" href="qalgorithms__measurement__data_8h_source.html">qalgorithms_measurement_data.h</a>.</p>
+
+</div>
+</div>
+<a id="aab5cf99505e4325617dbe9365f547a35" name="aab5cf99505e4325617dbe9365f547a35"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aab5cf99505e4325617dbe9365f547a35">&#9670;&#160;</a></span>varDataType</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">using <a class="el" href="namespaceq.html#aab5cf99505e4325617dbe9365f547a35">q::varDataType</a> = typedef std::variant&lt;<a class="el" href="namespaceq.html#ab39989523b38776d0880ac7c41d5f784">MS</a>&gt;</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="qalgorithms__measurement__data_8h_source.html#l00018">18</a> of file <a class="el" href="qalgorithms__measurement__data_8h_source.html">qalgorithms_measurement_data.h</a>.</p>
 
 </div>
 </div>
@@ -275,7 +284,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="qalgorithms__measurement__data__lcms_8cpp_source.html#l00013">13</a> of file <a class="el" href="qalgorithms__measurement__data__lcms_8cpp_source.html">qalgorithms_measurement_data_lcms.cpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="qalgorithms__measurement__data__lcms_8cpp_source.html#l00014">14</a> of file <a class="el" href="qalgorithms__measurement__data__lcms_8cpp_source.html">qalgorithms_measurement_data_lcms.cpp</a>.</p>
 
 </div>
 </div>
@@ -306,50 +315,6 @@ Variables</h2></td></tr>
 </table>
 
 <p class="definition">Definition at line <a class="el" href="qalgorithms_8h_source.html#l00030">30</a> of file <a class="el" href="qalgorithms_8h_source.html">qalgorithms.h</a>.</p>
-
-</div>
-</div>
-<a id="ab3bdb9eac069e4e777368ed17431ffaf" name="ab3bdb9eac069e4e777368ed17431ffaf"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ab3bdb9eac069e4e777368ed17431ffaf">&#9670;&#160;</a></span>Property</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">enum class <a class="el" href="namespaceq.html#ab3bdb9eac069e4e777368ed17431ffaf">q::Property</a></td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">strong</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-<table class="fieldtable">
-<tr><th colspan="2">Enumerator</th></tr><tr><td class="fieldname"><a id="ab3bdb9eac069e4e777368ed17431ffafa45d4b98958ff56d24f34445e565cbf4a" name="ab3bdb9eac069e4e777368ed17431ffafa45d4b98958ff56d24f34445e565cbf4a"></a>CoeffB0&#160;</td><td class="fielddoc"></td></tr>
-<tr><td class="fieldname"><a id="ab3bdb9eac069e4e777368ed17431ffafa181ef5cc8531adebe749a4c85cc79c52" name="ab3bdb9eac069e4e777368ed17431ffafa181ef5cc8531adebe749a4c85cc79c52"></a>CoeffB1&#160;</td><td class="fielddoc"></td></tr>
-<tr><td class="fieldname"><a id="ab3bdb9eac069e4e777368ed17431ffafa439000af4eeabcb2d395a36d47a5c799" name="ab3bdb9eac069e4e777368ed17431ffafa439000af4eeabcb2d395a36d47a5c799"></a>CoeffB2&#160;</td><td class="fielddoc"></td></tr>
-<tr><td class="fieldname"><a id="ab3bdb9eac069e4e777368ed17431ffafa575a0fc5a81196aafb0d114fb1ff43d0" name="ab3bdb9eac069e4e777368ed17431ffafa575a0fc5a81196aafb0d114fb1ff43d0"></a>CoeffB3&#160;</td><td class="fielddoc"></td></tr>
-<tr><td class="fieldname"><a id="ab3bdb9eac069e4e777368ed17431ffafa6b4d014ad1b39a31881628934250650e" name="ab3bdb9eac069e4e777368ed17431ffafa6b4d014ad1b39a31881628934250650e"></a>Xindex&#160;</td><td class="fielddoc"></td></tr>
-<tr><td class="fieldname"><a id="ab3bdb9eac069e4e777368ed17431ffafa0b9f7998ac41c70208a48a3acee941b5" name="ab3bdb9eac069e4e777368ed17431ffafa0b9f7998ac41c70208a48a3acee941b5"></a>Df&#160;</td><td class="fielddoc"></td></tr>
-<tr><td class="fieldname"><a id="ab3bdb9eac069e4e777368ed17431ffafab1ff519e62e525bf168c1a5055a5554c" name="ab3bdb9eac069e4e777368ed17431ffafab1ff519e62e525bf168c1a5055a5554c"></a>PeakID&#160;</td><td class="fielddoc"></td></tr>
-<tr><td class="fieldname"><a id="ab3bdb9eac069e4e777368ed17431ffafaf86ce7af1f9124dd82da986f6c4f3d95" name="ab3bdb9eac069e4e777368ed17431ffafaf86ce7af1f9124dd82da986f6c4f3d95"></a>SmplID&#160;</td><td class="fielddoc"></td></tr>
-<tr><td class="fieldname"><a id="ab3bdb9eac069e4e777368ed17431ffafa52f5e0bc3859bc5f5e25130b6c7e8881" name="ab3bdb9eac069e4e777368ed17431ffafa52f5e0bc3859bc5f5e25130b6c7e8881"></a>Position&#160;</td><td class="fielddoc"></td></tr>
-<tr><td class="fieldname"><a id="ab3bdb9eac069e4e777368ed17431ffafab166c0c7ce8046a50dc6b7f62c07d126" name="ab3bdb9eac069e4e777368ed17431ffafab166c0c7ce8046a50dc6b7f62c07d126"></a>ValleyPosition&#160;</td><td class="fielddoc"></td></tr>
-<tr><td class="fieldname"><a id="ab3bdb9eac069e4e777368ed17431ffafaeec6c4bdbd339edf8cbea68becb85244" name="ab3bdb9eac069e4e777368ed17431ffafaeec6c4bdbd339edf8cbea68becb85244"></a>Height&#160;</td><td class="fielddoc"></td></tr>
-<tr><td class="fieldname"><a id="ab3bdb9eac069e4e777368ed17431ffafa32954654ac8fe66a1d09be19001de2d4" name="ab3bdb9eac069e4e777368ed17431ffafa32954654ac8fe66a1d09be19001de2d4"></a>Width&#160;</td><td class="fielddoc"></td></tr>
-<tr><td class="fieldname"><a id="ab3bdb9eac069e4e777368ed17431ffafadeec4ff19974f12ed781cb9a59064214" name="ab3bdb9eac069e4e777368ed17431ffafadeec4ff19974f12ed781cb9a59064214"></a>Area&#160;</td><td class="fielddoc"></td></tr>
-<tr><td class="fieldname"><a id="ab3bdb9eac069e4e777368ed17431ffafaa4cda5627fe50911648d8dfc52dfdb59" name="ab3bdb9eac069e4e777368ed17431ffafaa4cda5627fe50911648d8dfc52dfdb59"></a>SigmaPosition&#160;</td><td class="fielddoc"></td></tr>
-<tr><td class="fieldname"><a id="ab3bdb9eac069e4e777368ed17431ffafa5cef0ebfadec370c9aaae656e8e47e5e" name="ab3bdb9eac069e4e777368ed17431ffafa5cef0ebfadec370c9aaae656e8e47e5e"></a>SigmaHeight&#160;</td><td class="fielddoc"></td></tr>
-<tr><td class="fieldname"><a id="ab3bdb9eac069e4e777368ed17431ffafa02b4c1c8933644fbf41a5580f5075fd3" name="ab3bdb9eac069e4e777368ed17431ffafa02b4c1c8933644fbf41a5580f5075fd3"></a>SigmaWidth&#160;</td><td class="fielddoc"></td></tr>
-<tr><td class="fieldname"><a id="ab3bdb9eac069e4e777368ed17431ffafae147e029620585539bd6ac137f124be2" name="ab3bdb9eac069e4e777368ed17431ffafae147e029620585539bd6ac137f124be2"></a>SigmaArea&#160;</td><td class="fielddoc"></td></tr>
-<tr><td class="fieldname"><a id="ab3bdb9eac069e4e777368ed17431ffafa3a167780a83475ac09b0b48775b32ef6" name="ab3bdb9eac069e4e777368ed17431ffafa3a167780a83475ac09b0b48775b32ef6"></a>Dqs&#160;</td><td class="fielddoc"></td></tr>
-</table>
-
-<p class="definition">Definition at line <a class="el" href="qalgorithms__peak_8h_source.html#l00012">12</a> of file <a class="el" href="qalgorithms__peak_8h_source.html">qalgorithms_peak.h</a>.</p>
 
 </div>
 </div>
@@ -673,43 +638,6 @@ template&lt;typename T &gt; </div>
 </div><div class="memdoc">
 
 <p class="definition">Definition at line <a class="el" href="qalgorithms__utils_8cpp_source.html#l00012">12</a> of file <a class="el" href="qalgorithms__utils_8cpp_source.html">qalgorithms_utils.cpp</a>.</p>
-
-</div>
-</div>
-<h2 class="groupheader">Variable Documentation</h2>
-<a id="ac9412ec4dc6d9138e2965665f2651be5" name="ac9412ec4dc6d9138e2965665f2651be5"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ac9412ec4dc6d9138e2965665f2651be5">&#9670;&#160;</a></span>propertyLabels</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">std::map&lt; <a class="el" href="namespaceq.html#ab3bdb9eac069e4e777368ed17431ffaf">Property</a>, std::string &gt; q::propertyLabels</td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-<b>Initial value:</b><div class="fragment"><div class="line">= {</div>
-<div class="line">    {Property::CoeffB0, <span class="stringliteral">&quot;CoeffB0&quot;</span>},</div>
-<div class="line">    {Property::CoeffB1, <span class="stringliteral">&quot;CoeffB1&quot;</span>},</div>
-<div class="line">    {Property::CoeffB2, <span class="stringliteral">&quot;CoeffB2&quot;</span>},</div>
-<div class="line">    {Property::CoeffB3, <span class="stringliteral">&quot;CoeffB3&quot;</span>},</div>
-<div class="line">    {Property::Xindex, <span class="stringliteral">&quot;Xindex&quot;</span>},</div>
-<div class="line">    {Property::Df, <span class="stringliteral">&quot;Df&quot;</span>},</div>
-<div class="line">    {Property::PeakID, <span class="stringliteral">&quot;PeakID&quot;</span>},</div>
-<div class="line">    {Property::SmplID, <span class="stringliteral">&quot;SmplID&quot;</span>},</div>
-<div class="line">    {Property::Position, <span class="stringliteral">&quot;Position&quot;</span>},</div>
-<div class="line">    {Property::ValleyPosition, <span class="stringliteral">&quot;ValleyPosition&quot;</span>},</div>
-<div class="line">    {Property::Height, <span class="stringliteral">&quot;Height&quot;</span>},</div>
-<div class="line">    {Property::Width, <span class="stringliteral">&quot;Width&quot;</span>},</div>
-<div class="line">    {Property::Area, <span class="stringliteral">&quot;Area&quot;</span>},</div>
-<div class="line">    {Property::SigmaPosition, <span class="stringliteral">&quot;SigmaPosition&quot;</span>},</div>
-<div class="line">    {Property::SigmaHeight, <span class="stringliteral">&quot;SigmaHeight&quot;</span>},</div>
-<div class="line">    {Property::SigmaWidth, <span class="stringliteral">&quot;SigmaWidth&quot;</span>},</div>
-<div class="line">    {Property::SigmaArea, <span class="stringliteral">&quot;SigmaArea&quot;</span>},</div>
-<div class="line">    {Property::Dqs, <span class="stringliteral">&quot;Dqs&quot;</span>},</div>
-<div class="line">  }</div>
-</div><!-- fragment -->
-<p class="definition">Definition at line <a class="el" href="qalgorithms__peak_8cpp_source.html#l00008">8</a> of file <a class="el" href="qalgorithms__peak_8cpp_source.html">qalgorithms_peak.cpp</a>.</p>
 
 </div>
 </div>

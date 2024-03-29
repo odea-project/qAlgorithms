@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['writecsv_0',['writeCSV',['../classq_1_1_l_c_m_s_data.html#a5d7411d87663980b683c51a2f969b4c0',1,'q::LCMSData']]]
+  ['x_0',['x',['../structq_1_1_data_type_1_1_mass_spectrum_1_1_data_point.html#a6819785cf78dcfd79254e34c3ddd3ec1',1,'q::DataType::MassSpectrum::DataPoint']]]
 ];

@@ -24,10 +24,18 @@ class \mbox{\hyperlink{classq_1_1_peakproperties}{Peakproperties}}
 \item 
 class \mbox{\hyperlink{classq_1_1_progress_bar}{Progress\+Bar}}
 \item 
+class \mbox{\hyperlink{classq_1_1q_peaks}{q\+Peaks}}
+\begin{DoxyCompactList}\small\item\em A class to store and apply a peak evaluation model. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classq_1_1_ref_matrix}{Ref\+Matrix}}
+\item 
 class \mbox{\hyperlink{classq_1_1t_values}{t\+Values}}
 \end{DoxyCompactItemize}
 \doxysubsubsection*{Typedefs}
 \begin{DoxyCompactItemize}
+\item 
+using \mbox{\hyperlink{namespaceq_ab39989523b38776d0880ac7c41d5f784}{MS}} = std\+::vector$<$ std\+::unique\+\_\+ptr$<$ \mbox{\hyperlink{classq_1_1_data_type_1_1_mass_spectrum}{Data\+Type\+::\+Mass\+Spectrum}} $>$ $>$ \texorpdfstring{$\ast$}{*}
+\item 
+using \mbox{\hyperlink{namespaceq_aab5cf99505e4325617dbe9365f547a35}{var\+Data\+Type}} = std\+::variant$<$ \mbox{\hyperlink{namespaceq_ab39989523b38776d0880ac7c41d5f784}{MS}} $>$
 \item 
 using \mbox{\hyperlink{namespaceq_a23bdccee34b821e7d4ee0f698d4c6701}{Variable\+Type}} = \mbox{\hyperlink{classq_1_1_data_type_1_1_mass_spectrum_a45d5ddc2ce29c805760e326039ea93b8}{Data\+Type\+::\+Mass\+Spectrum\+::variable\+Type}}
 \item 
@@ -45,31 +53,6 @@ using \mbox{\hyperlink{namespaceq_a2ce4afc69ea08399771ec175f5b546e6}{Data\+Point
 enum class \mbox{\hyperlink{namespaceq_a1ef5b9eb7b9bdd1afc71e98f9b43a174}{Mode}} \{ \mbox{\hyperlink{namespaceq_a1ef5b9eb7b9bdd1afc71e98f9b43a174a6e0d2a351777f8e1349133544e885f8a}{DEBUGGING}}
 , \mbox{\hyperlink{namespaceq_a1ef5b9eb7b9bdd1afc71e98f9b43a174a7e92d833d7720dbe631730a6cea03346}{SILENT}}
 , \mbox{\hyperlink{namespaceq_a1ef5b9eb7b9bdd1afc71e98f9b43a174aee88634543eb5c2b123bab1abd32c497}{PROGRESS}}
- \}
-\item 
-enum class \mbox{\hyperlink{namespaceq_ab3bdb9eac069e4e777368ed17431ffaf}{Property}} \{ \newline
-\mbox{\hyperlink{namespaceq_ab3bdb9eac069e4e777368ed17431ffafa45d4b98958ff56d24f34445e565cbf4a}{Coeff\+B0}}
-, \mbox{\hyperlink{namespaceq_ab3bdb9eac069e4e777368ed17431ffafa181ef5cc8531adebe749a4c85cc79c52}{Coeff\+B1}}
-, \mbox{\hyperlink{namespaceq_ab3bdb9eac069e4e777368ed17431ffafa439000af4eeabcb2d395a36d47a5c799}{Coeff\+B2}}
-, \mbox{\hyperlink{namespaceq_ab3bdb9eac069e4e777368ed17431ffafa575a0fc5a81196aafb0d114fb1ff43d0}{Coeff\+B3}}
-, \newline
-\mbox{\hyperlink{namespaceq_ab3bdb9eac069e4e777368ed17431ffafa6b4d014ad1b39a31881628934250650e}{Xindex}}
-, \mbox{\hyperlink{namespaceq_ab3bdb9eac069e4e777368ed17431ffafa0b9f7998ac41c70208a48a3acee941b5}{Df}}
-, \mbox{\hyperlink{namespaceq_ab3bdb9eac069e4e777368ed17431ffafab1ff519e62e525bf168c1a5055a5554c}{Peak\+ID}}
-, \mbox{\hyperlink{namespaceq_ab3bdb9eac069e4e777368ed17431ffafaf86ce7af1f9124dd82da986f6c4f3d95}{Smpl\+ID}}
-, \newline
-\mbox{\hyperlink{namespaceq_ab3bdb9eac069e4e777368ed17431ffafa52f5e0bc3859bc5f5e25130b6c7e8881}{Position}}
-, \mbox{\hyperlink{namespaceq_ab3bdb9eac069e4e777368ed17431ffafab166c0c7ce8046a50dc6b7f62c07d126}{Valley\+Position}}
-, \mbox{\hyperlink{namespaceq_ab3bdb9eac069e4e777368ed17431ffafaeec6c4bdbd339edf8cbea68becb85244}{Height}}
-, \mbox{\hyperlink{namespaceq_ab3bdb9eac069e4e777368ed17431ffafa32954654ac8fe66a1d09be19001de2d4}{Width}}
-, \newline
-\mbox{\hyperlink{namespaceq_ab3bdb9eac069e4e777368ed17431ffafadeec4ff19974f12ed781cb9a59064214}{Area}}
-, \mbox{\hyperlink{namespaceq_ab3bdb9eac069e4e777368ed17431ffafaa4cda5627fe50911648d8dfc52dfdb59}{Sigma\+Position}}
-, \mbox{\hyperlink{namespaceq_ab3bdb9eac069e4e777368ed17431ffafa5cef0ebfadec370c9aaae656e8e47e5e}{Sigma\+Height}}
-, \mbox{\hyperlink{namespaceq_ab3bdb9eac069e4e777368ed17431ffafa02b4c1c8933644fbf41a5580f5075fd3}{Sigma\+Width}}
-, \newline
-\mbox{\hyperlink{namespaceq_ab3bdb9eac069e4e777368ed17431ffafae147e029620585539bd6ac137f124be2}{Sigma\+Area}}
-, \mbox{\hyperlink{namespaceq_ab3bdb9eac069e4e777368ed17431ffafa3a167780a83475ac09b0b48775b32ef6}{Dqs}}
  \}
 \end{DoxyCompactItemize}
 \doxysubsubsection*{Functions}
@@ -99,11 +82,6 @@ double \mbox{\hyperlink{namespaceq_af5bc719469eba45978bfaa23379f329b}{erfi}} (co
 \item 
 const \mbox{\hyperlink{classq_1_1_matrix}{Matrix}} \mbox{\hyperlink{namespaceq_ae93c50d74740a6cd3f42a1cf8f299f3a}{linreg}} (const std\+::vector$<$ double $>$ \&x\+Data, const std\+::vector$<$ double $>$ \&y\+Data, const int degree)
 \end{DoxyCompactItemize}
-\doxysubsubsection*{Variables}
-\begin{DoxyCompactItemize}
-\item 
-std\+::map$<$ \mbox{\hyperlink{namespaceq_ab3bdb9eac069e4e777368ed17431ffaf}{Property}}, std\+::string $>$ \mbox{\hyperlink{namespaceq_ac9412ec4dc6d9138e2965665f2651be5}{property\+Labels}}
-\end{DoxyCompactItemize}
 
 
 \doxysubsection{Typedef Documentation}
@@ -115,7 +93,7 @@ std\+::map$<$ \mbox{\hyperlink{namespaceq_ab3bdb9eac069e4e777368ed17431ffaf}{Pro
 
 
 
-Definition at line \mbox{\hyperlink{qalgorithms__measurement__data__lcms_8cpp_source_l00014}{14}} of file \mbox{\hyperlink{qalgorithms__measurement__data__lcms_8cpp_source}{qalgorithms\+\_\+measurement\+\_\+data\+\_\+lcms.\+cpp}}.
+Definition at line \mbox{\hyperlink{qalgorithms__measurement__data__lcms_8cpp_source_l00015}{15}} of file \mbox{\hyperlink{qalgorithms__measurement__data__lcms_8cpp_source}{qalgorithms\+\_\+measurement\+\_\+data\+\_\+lcms.\+cpp}}.
 
 \Hypertarget{namespaceq_ad2e5a48ff360341725405e45b33f9c9e}\label{namespaceq_ad2e5a48ff360341725405e45b33f9c9e} 
 \index{q@{q}!DataPoint@{DataPoint}}
@@ -125,7 +103,7 @@ Definition at line \mbox{\hyperlink{qalgorithms__measurement__data__lcms_8cpp_so
 
 
 
-Definition at line \mbox{\hyperlink{qalgorithms__measurement__data__lcms_8cpp_source_l00016}{16}} of file \mbox{\hyperlink{qalgorithms__measurement__data__lcms_8cpp_source}{qalgorithms\+\_\+measurement\+\_\+data\+\_\+lcms.\+cpp}}.
+Definition at line \mbox{\hyperlink{qalgorithms__measurement__data__lcms_8cpp_source_l00017}{17}} of file \mbox{\hyperlink{qalgorithms__measurement__data__lcms_8cpp_source}{qalgorithms\+\_\+measurement\+\_\+data\+\_\+lcms.\+cpp}}.
 
 \Hypertarget{namespaceq_a2ce4afc69ea08399771ec175f5b546e6}\label{namespaceq_a2ce4afc69ea08399771ec175f5b546e6} 
 \index{q@{q}!DataPointVector@{DataPointVector}}
@@ -135,7 +113,7 @@ Definition at line \mbox{\hyperlink{qalgorithms__measurement__data__lcms_8cpp_so
 
 
 
-Definition at line \mbox{\hyperlink{qalgorithms__measurement__data__lcms_8cpp_source_l00017}{17}} of file \mbox{\hyperlink{qalgorithms__measurement__data__lcms_8cpp_source}{qalgorithms\+\_\+measurement\+\_\+data\+\_\+lcms.\+cpp}}.
+Definition at line \mbox{\hyperlink{qalgorithms__measurement__data__lcms_8cpp_source_l00018}{18}} of file \mbox{\hyperlink{qalgorithms__measurement__data__lcms_8cpp_source}{qalgorithms\+\_\+measurement\+\_\+data\+\_\+lcms.\+cpp}}.
 
 \Hypertarget{namespaceq_af793f3fc556aa1db800aea6f1ae8b56f}\label{namespaceq_af793f3fc556aa1db800aea6f1ae8b56f} 
 \index{q@{q}!MassSpectrum@{MassSpectrum}}
@@ -145,7 +123,27 @@ Definition at line \mbox{\hyperlink{qalgorithms__measurement__data__lcms_8cpp_so
 
 
 
-Definition at line \mbox{\hyperlink{qalgorithms__measurement__data__lcms_8cpp_source_l00015}{15}} of file \mbox{\hyperlink{qalgorithms__measurement__data__lcms_8cpp_source}{qalgorithms\+\_\+measurement\+\_\+data\+\_\+lcms.\+cpp}}.
+Definition at line \mbox{\hyperlink{qalgorithms__measurement__data__lcms_8cpp_source_l00016}{16}} of file \mbox{\hyperlink{qalgorithms__measurement__data__lcms_8cpp_source}{qalgorithms\+\_\+measurement\+\_\+data\+\_\+lcms.\+cpp}}.
+
+\Hypertarget{namespaceq_ab39989523b38776d0880ac7c41d5f784}\label{namespaceq_ab39989523b38776d0880ac7c41d5f784} 
+\index{q@{q}!MS@{MS}}
+\index{MS@{MS}!q@{q}}
+\doxysubsubsection{\texorpdfstring{MS}{MS}}
+{\footnotesize\ttfamily using \mbox{\hyperlink{namespaceq_ab39989523b38776d0880ac7c41d5f784}{q\+::\+MS}} = typedef std\+::vector$<$std\+::unique\+\_\+ptr$<$\mbox{\hyperlink{classq_1_1_data_type_1_1_mass_spectrum}{Data\+Type\+::\+Mass\+Spectrum}}$>$ $>$\texorpdfstring{$\ast$}{*}}
+
+
+
+Definition at line \mbox{\hyperlink{qalgorithms__measurement__data_8h_source_l00017}{17}} of file \mbox{\hyperlink{qalgorithms__measurement__data_8h_source}{qalgorithms\+\_\+measurement\+\_\+data.\+h}}.
+
+\Hypertarget{namespaceq_aab5cf99505e4325617dbe9365f547a35}\label{namespaceq_aab5cf99505e4325617dbe9365f547a35} 
+\index{q@{q}!varDataType@{varDataType}}
+\index{varDataType@{varDataType}!q@{q}}
+\doxysubsubsection{\texorpdfstring{varDataType}{varDataType}}
+{\footnotesize\ttfamily using \mbox{\hyperlink{namespaceq_aab5cf99505e4325617dbe9365f547a35}{q\+::var\+Data\+Type}} = typedef std\+::variant$<$\mbox{\hyperlink{namespaceq_ab39989523b38776d0880ac7c41d5f784}{MS}}$>$}
+
+
+
+Definition at line \mbox{\hyperlink{qalgorithms__measurement__data_8h_source_l00018}{18}} of file \mbox{\hyperlink{qalgorithms__measurement__data_8h_source}{qalgorithms\+\_\+measurement\+\_\+data.\+h}}.
 
 \Hypertarget{namespaceq_a23bdccee34b821e7d4ee0f698d4c6701}\label{namespaceq_a23bdccee34b821e7d4ee0f698d4c6701} 
 \index{q@{q}!VariableType@{VariableType}}
@@ -155,7 +153,7 @@ Definition at line \mbox{\hyperlink{qalgorithms__measurement__data__lcms_8cpp_so
 
 
 
-Definition at line \mbox{\hyperlink{qalgorithms__measurement__data__lcms_8cpp_source_l00013}{13}} of file \mbox{\hyperlink{qalgorithms__measurement__data__lcms_8cpp_source}{qalgorithms\+\_\+measurement\+\_\+data\+\_\+lcms.\+cpp}}.
+Definition at line \mbox{\hyperlink{qalgorithms__measurement__data__lcms_8cpp_source_l00014}{14}} of file \mbox{\hyperlink{qalgorithms__measurement__data__lcms_8cpp_source}{qalgorithms\+\_\+measurement\+\_\+data\+\_\+lcms.\+cpp}}.
 
 
 
@@ -183,90 +181,6 @@ PROGRESS&\\
 
 
 Definition at line \mbox{\hyperlink{qalgorithms_8h_source_l00030}{30}} of file \mbox{\hyperlink{qalgorithms_8h_source}{qalgorithms.\+h}}.
-
-\Hypertarget{namespaceq_ab3bdb9eac069e4e777368ed17431ffaf}\label{namespaceq_ab3bdb9eac069e4e777368ed17431ffaf} 
-\index{q@{q}!Property@{Property}}
-\index{Property@{Property}!q@{q}}
-\doxysubsubsection{\texorpdfstring{Property}{Property}}
-{\footnotesize\ttfamily enum class \mbox{\hyperlink{namespaceq_ab3bdb9eac069e4e777368ed17431ffaf}{q\+::\+Property}}\hspace{0.3cm}{\ttfamily [strong]}}
-
-\begin{DoxyEnumFields}{Enumerator}
-\raisebox{\heightof{T}}[0pt][0pt]{\index{CoeffB0@{CoeffB0}!q@{q}}\index{q@{q}!CoeffB0@{CoeffB0}}}\Hypertarget{namespaceq_ab3bdb9eac069e4e777368ed17431ffafa45d4b98958ff56d24f34445e565cbf4a}\label{namespaceq_ab3bdb9eac069e4e777368ed17431ffafa45d4b98958ff56d24f34445e565cbf4a} 
-Coeff\+B0&\\
-\hline
-
-\raisebox{\heightof{T}}[0pt][0pt]{\index{CoeffB1@{CoeffB1}!q@{q}}\index{q@{q}!CoeffB1@{CoeffB1}}}\Hypertarget{namespaceq_ab3bdb9eac069e4e777368ed17431ffafa181ef5cc8531adebe749a4c85cc79c52}\label{namespaceq_ab3bdb9eac069e4e777368ed17431ffafa181ef5cc8531adebe749a4c85cc79c52} 
-Coeff\+B1&\\
-\hline
-
-\raisebox{\heightof{T}}[0pt][0pt]{\index{CoeffB2@{CoeffB2}!q@{q}}\index{q@{q}!CoeffB2@{CoeffB2}}}\Hypertarget{namespaceq_ab3bdb9eac069e4e777368ed17431ffafa439000af4eeabcb2d395a36d47a5c799}\label{namespaceq_ab3bdb9eac069e4e777368ed17431ffafa439000af4eeabcb2d395a36d47a5c799} 
-Coeff\+B2&\\
-\hline
-
-\raisebox{\heightof{T}}[0pt][0pt]{\index{CoeffB3@{CoeffB3}!q@{q}}\index{q@{q}!CoeffB3@{CoeffB3}}}\Hypertarget{namespaceq_ab3bdb9eac069e4e777368ed17431ffafa575a0fc5a81196aafb0d114fb1ff43d0}\label{namespaceq_ab3bdb9eac069e4e777368ed17431ffafa575a0fc5a81196aafb0d114fb1ff43d0} 
-Coeff\+B3&\\
-\hline
-
-\raisebox{\heightof{T}}[0pt][0pt]{\index{Xindex@{Xindex}!q@{q}}\index{q@{q}!Xindex@{Xindex}}}\Hypertarget{namespaceq_ab3bdb9eac069e4e777368ed17431ffafa6b4d014ad1b39a31881628934250650e}\label{namespaceq_ab3bdb9eac069e4e777368ed17431ffafa6b4d014ad1b39a31881628934250650e} 
-Xindex&\\
-\hline
-
-\raisebox{\heightof{T}}[0pt][0pt]{\index{Df@{Df}!q@{q}}\index{q@{q}!Df@{Df}}}\Hypertarget{namespaceq_ab3bdb9eac069e4e777368ed17431ffafa0b9f7998ac41c70208a48a3acee941b5}\label{namespaceq_ab3bdb9eac069e4e777368ed17431ffafa0b9f7998ac41c70208a48a3acee941b5} 
-Df&\\
-\hline
-
-\raisebox{\heightof{T}}[0pt][0pt]{\index{PeakID@{PeakID}!q@{q}}\index{q@{q}!PeakID@{PeakID}}}\Hypertarget{namespaceq_ab3bdb9eac069e4e777368ed17431ffafab1ff519e62e525bf168c1a5055a5554c}\label{namespaceq_ab3bdb9eac069e4e777368ed17431ffafab1ff519e62e525bf168c1a5055a5554c} 
-Peak\+ID&\\
-\hline
-
-\raisebox{\heightof{T}}[0pt][0pt]{\index{SmplID@{SmplID}!q@{q}}\index{q@{q}!SmplID@{SmplID}}}\Hypertarget{namespaceq_ab3bdb9eac069e4e777368ed17431ffafaf86ce7af1f9124dd82da986f6c4f3d95}\label{namespaceq_ab3bdb9eac069e4e777368ed17431ffafaf86ce7af1f9124dd82da986f6c4f3d95} 
-Smpl\+ID&\\
-\hline
-
-\raisebox{\heightof{T}}[0pt][0pt]{\index{Position@{Position}!q@{q}}\index{q@{q}!Position@{Position}}}\Hypertarget{namespaceq_ab3bdb9eac069e4e777368ed17431ffafa52f5e0bc3859bc5f5e25130b6c7e8881}\label{namespaceq_ab3bdb9eac069e4e777368ed17431ffafa52f5e0bc3859bc5f5e25130b6c7e8881} 
-Position&\\
-\hline
-
-\raisebox{\heightof{T}}[0pt][0pt]{\index{ValleyPosition@{ValleyPosition}!q@{q}}\index{q@{q}!ValleyPosition@{ValleyPosition}}}\Hypertarget{namespaceq_ab3bdb9eac069e4e777368ed17431ffafab166c0c7ce8046a50dc6b7f62c07d126}\label{namespaceq_ab3bdb9eac069e4e777368ed17431ffafab166c0c7ce8046a50dc6b7f62c07d126} 
-Valley\+Position&\\
-\hline
-
-\raisebox{\heightof{T}}[0pt][0pt]{\index{Height@{Height}!q@{q}}\index{q@{q}!Height@{Height}}}\Hypertarget{namespaceq_ab3bdb9eac069e4e777368ed17431ffafaeec6c4bdbd339edf8cbea68becb85244}\label{namespaceq_ab3bdb9eac069e4e777368ed17431ffafaeec6c4bdbd339edf8cbea68becb85244} 
-Height&\\
-\hline
-
-\raisebox{\heightof{T}}[0pt][0pt]{\index{Width@{Width}!q@{q}}\index{q@{q}!Width@{Width}}}\Hypertarget{namespaceq_ab3bdb9eac069e4e777368ed17431ffafa32954654ac8fe66a1d09be19001de2d4}\label{namespaceq_ab3bdb9eac069e4e777368ed17431ffafa32954654ac8fe66a1d09be19001de2d4} 
-Width&\\
-\hline
-
-\raisebox{\heightof{T}}[0pt][0pt]{\index{Area@{Area}!q@{q}}\index{q@{q}!Area@{Area}}}\Hypertarget{namespaceq_ab3bdb9eac069e4e777368ed17431ffafadeec4ff19974f12ed781cb9a59064214}\label{namespaceq_ab3bdb9eac069e4e777368ed17431ffafadeec4ff19974f12ed781cb9a59064214} 
-Area&\\
-\hline
-
-\raisebox{\heightof{T}}[0pt][0pt]{\index{SigmaPosition@{SigmaPosition}!q@{q}}\index{q@{q}!SigmaPosition@{SigmaPosition}}}\Hypertarget{namespaceq_ab3bdb9eac069e4e777368ed17431ffafaa4cda5627fe50911648d8dfc52dfdb59}\label{namespaceq_ab3bdb9eac069e4e777368ed17431ffafaa4cda5627fe50911648d8dfc52dfdb59} 
-Sigma\+Position&\\
-\hline
-
-\raisebox{\heightof{T}}[0pt][0pt]{\index{SigmaHeight@{SigmaHeight}!q@{q}}\index{q@{q}!SigmaHeight@{SigmaHeight}}}\Hypertarget{namespaceq_ab3bdb9eac069e4e777368ed17431ffafa5cef0ebfadec370c9aaae656e8e47e5e}\label{namespaceq_ab3bdb9eac069e4e777368ed17431ffafa5cef0ebfadec370c9aaae656e8e47e5e} 
-Sigma\+Height&\\
-\hline
-
-\raisebox{\heightof{T}}[0pt][0pt]{\index{SigmaWidth@{SigmaWidth}!q@{q}}\index{q@{q}!SigmaWidth@{SigmaWidth}}}\Hypertarget{namespaceq_ab3bdb9eac069e4e777368ed17431ffafa02b4c1c8933644fbf41a5580f5075fd3}\label{namespaceq_ab3bdb9eac069e4e777368ed17431ffafa02b4c1c8933644fbf41a5580f5075fd3} 
-Sigma\+Width&\\
-\hline
-
-\raisebox{\heightof{T}}[0pt][0pt]{\index{SigmaArea@{SigmaArea}!q@{q}}\index{q@{q}!SigmaArea@{SigmaArea}}}\Hypertarget{namespaceq_ab3bdb9eac069e4e777368ed17431ffafae147e029620585539bd6ac137f124be2}\label{namespaceq_ab3bdb9eac069e4e777368ed17431ffafae147e029620585539bd6ac137f124be2} 
-Sigma\+Area&\\
-\hline
-
-\raisebox{\heightof{T}}[0pt][0pt]{\index{Dqs@{Dqs}!q@{q}}\index{q@{q}!Dqs@{Dqs}}}\Hypertarget{namespaceq_ab3bdb9eac069e4e777368ed17431ffafa3a167780a83475ac09b0b48775b32ef6}\label{namespaceq_ab3bdb9eac069e4e777368ed17431ffafa3a167780a83475ac09b0b48775b32ef6} 
-Dqs&\\
-\hline
-
-\end{DoxyEnumFields}
-
-
-Definition at line \mbox{\hyperlink{qalgorithms__peak_8h_source_l00012}{12}} of file \mbox{\hyperlink{qalgorithms__peak_8h_source}{qalgorithms\+\_\+peak.\+h}}.
 
 
 
@@ -393,41 +307,4 @@ Definition at line \mbox{\hyperlink{qalgorithms__utils_8cpp_source_l00006}{6}} o
 
 
 Definition at line \mbox{\hyperlink{qalgorithms__utils_8cpp_source_l00012}{12}} of file \mbox{\hyperlink{qalgorithms__utils_8cpp_source}{qalgorithms\+\_\+utils.\+cpp}}.
-
-
-
-\doxysubsection{Variable Documentation}
-\Hypertarget{namespaceq_ac9412ec4dc6d9138e2965665f2651be5}\label{namespaceq_ac9412ec4dc6d9138e2965665f2651be5} 
-\index{q@{q}!propertyLabels@{propertyLabels}}
-\index{propertyLabels@{propertyLabels}!q@{q}}
-\doxysubsubsection{\texorpdfstring{propertyLabels}{propertyLabels}}
-{\footnotesize\ttfamily std\+::map$<$ \mbox{\hyperlink{namespaceq_ab3bdb9eac069e4e777368ed17431ffaf}{Property}}, std\+::string $>$ q\+::property\+Labels}
-
-{\bfseries Initial value\+:}
-\begin{DoxyCode}{0}
-\DoxyCodeLine{=\ \{}
-\DoxyCodeLine{\ \ \ \ \{Property::CoeffB0,\ \textcolor{stringliteral}{"{}CoeffB0"{}}\},}
-\DoxyCodeLine{\ \ \ \ \{Property::CoeffB1,\ \textcolor{stringliteral}{"{}CoeffB1"{}}\},}
-\DoxyCodeLine{\ \ \ \ \{Property::CoeffB2,\ \textcolor{stringliteral}{"{}CoeffB2"{}}\},}
-\DoxyCodeLine{\ \ \ \ \{Property::CoeffB3,\ \textcolor{stringliteral}{"{}CoeffB3"{}}\},}
-\DoxyCodeLine{\ \ \ \ \{Property::Xindex,\ \textcolor{stringliteral}{"{}Xindex"{}}\},}
-\DoxyCodeLine{\ \ \ \ \{Property::Df,\ \textcolor{stringliteral}{"{}Df"{}}\},}
-\DoxyCodeLine{\ \ \ \ \{Property::PeakID,\ \textcolor{stringliteral}{"{}PeakID"{}}\},}
-\DoxyCodeLine{\ \ \ \ \{Property::SmplID,\ \textcolor{stringliteral}{"{}SmplID"{}}\},}
-\DoxyCodeLine{\ \ \ \ \{Property::Position,\ \textcolor{stringliteral}{"{}Position"{}}\},}
-\DoxyCodeLine{\ \ \ \ \{Property::ValleyPosition,\ \textcolor{stringliteral}{"{}ValleyPosition"{}}\},}
-\DoxyCodeLine{\ \ \ \ \{Property::Height,\ \textcolor{stringliteral}{"{}Height"{}}\},}
-\DoxyCodeLine{\ \ \ \ \{Property::Width,\ \textcolor{stringliteral}{"{}Width"{}}\},}
-\DoxyCodeLine{\ \ \ \ \{Property::Area,\ \textcolor{stringliteral}{"{}Area"{}}\},}
-\DoxyCodeLine{\ \ \ \ \{Property::SigmaPosition,\ \textcolor{stringliteral}{"{}SigmaPosition"{}}\},}
-\DoxyCodeLine{\ \ \ \ \{Property::SigmaHeight,\ \textcolor{stringliteral}{"{}SigmaHeight"{}}\},}
-\DoxyCodeLine{\ \ \ \ \{Property::SigmaWidth,\ \textcolor{stringliteral}{"{}SigmaWidth"{}}\},}
-\DoxyCodeLine{\ \ \ \ \{Property::SigmaArea,\ \textcolor{stringliteral}{"{}SigmaArea"{}}\},}
-\DoxyCodeLine{\ \ \ \ \{Property::Dqs,\ \textcolor{stringliteral}{"{}Dqs"{}}\},}
-\DoxyCodeLine{\ \ \}}
-
-\end{DoxyCode}
-
-
-Definition at line \mbox{\hyperlink{qalgorithms__peak_8cpp_source_l00008}{8}} of file \mbox{\hyperlink{qalgorithms__peak_8cpp_source}{qalgorithms\+\_\+peak.\+cpp}}.
 

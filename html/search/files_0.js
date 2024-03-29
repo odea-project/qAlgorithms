@@ -14,6 +14,10 @@ var searchData=
   ['qalgorithms_5fmeasurement_5fdata_5flcms_2eh_11',['qalgorithms_measurement_data_lcms.h',['../qalgorithms__measurement__data__lcms_8h.html',1,'']]],
   ['qalgorithms_5fpeak_2ecpp_12',['qalgorithms_peak.cpp',['../qalgorithms__peak_8cpp.html',1,'']]],
   ['qalgorithms_5fpeak_2eh_13',['qalgorithms_peak.h',['../qalgorithms__peak_8h.html',1,'']]],
-  ['qalgorithms_5futils_2ecpp_14',['qalgorithms_utils.cpp',['../qalgorithms__utils_8cpp.html',1,'']]],
-  ['qalgorithms_5futils_2eh_15',['qalgorithms_utils.h',['../qalgorithms__utils_8h.html',1,'']]]
+  ['qalgorithms_5fqpeaks_2ecpp_14',['qalgorithms_qpeaks.cpp',['../qalgorithms__qpeaks_8cpp.html',1,'']]],
+  ['qalgorithms_5fqpeaks_2eh_15',['qalgorithms_qpeaks.h',['../qalgorithms__qpeaks_8h.html',1,'']]],
+  ['qalgorithms_5frefmatrix_2ecpp_16',['qalgorithms_refmatrix.cpp',['../qalgorithms__refmatrix_8cpp.html',1,'']]],
+  ['qalgorithms_5frefmatrix_2eh_17',['qalgorithms_refmatrix.h',['../qalgorithms__refmatrix_8h.html',1,'']]],
+  ['qalgorithms_5futils_2ecpp_18',['qalgorithms_utils.cpp',['../qalgorithms__utils_8cpp.html',1,'']]],
+  ['qalgorithms_5futils_2eh_19',['qalgorithms_utils.h',['../qalgorithms__utils_8h.html',1,'']]]
 ];

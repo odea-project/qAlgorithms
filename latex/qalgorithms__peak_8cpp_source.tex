@@ -2,159 +2,69 @@
 \hypertarget{qalgorithms__peak_8cpp_source}{}\label{qalgorithms__peak_8cpp_source}\index{src/qalgorithms\_peak.cpp@{src/qalgorithms\_peak.cpp}}
 \mbox{\hyperlink{qalgorithms__peak_8cpp}{Go to the documentation of this file.}}
 \begin{DoxyCode}{0}
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00001}00001\ \textcolor{comment}{//\ qalgorithms\_peak.cpp}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00001}00001\ \textcolor{comment}{//\ qalgorithms\_Peak.cpp}}
 \DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00002}00002\ }
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00003}00003\ \textcolor{preprocessor}{\#include\ "{}../include/qalgorithms\_peak.h"{}}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00003}00003\ \textcolor{preprocessor}{\#include\ "{}../include/qalgorithms\_Peak.h"{}}}
 \DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00004}00004\ }
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00005}00005\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespaceq}{q}}\ \{}
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00006}00006\ }
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00007}00007\ \ \ \textcolor{comment}{/*\ Global\ Map\ for\ Enum\ Items\ to\ Label\ strings.\ This\ is\ mostly\ used\ for\ exporting\ data\ */}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00008}\mbox{\hyperlink{namespaceq_ac9412ec4dc6d9138e2965665f2651be5}{00008}}\ \ \ std::map<Property,\ std::string>\ \mbox{\hyperlink{namespaceq_ac9412ec4dc6d9138e2965665f2651be5}{propertyLabels}}\ =\ \{}
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00009}00009\ \ \ \ \ \{\mbox{\hyperlink{namespaceq_ab3bdb9eac069e4e777368ed17431ffafa45d4b98958ff56d24f34445e565cbf4a}{Property::CoeffB0}},\ \textcolor{stringliteral}{"{}CoeffB0"{}}\},}
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00010}00010\ \ \ \ \ \{\mbox{\hyperlink{namespaceq_ab3bdb9eac069e4e777368ed17431ffafa181ef5cc8531adebe749a4c85cc79c52}{Property::CoeffB1}},\ \textcolor{stringliteral}{"{}CoeffB1"{}}\},}
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00011}00011\ \ \ \ \ \{\mbox{\hyperlink{namespaceq_ab3bdb9eac069e4e777368ed17431ffafa439000af4eeabcb2d395a36d47a5c799}{Property::CoeffB2}},\ \textcolor{stringliteral}{"{}CoeffB2"{}}\},}
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00012}00012\ \ \ \ \ \{\mbox{\hyperlink{namespaceq_ab3bdb9eac069e4e777368ed17431ffafa575a0fc5a81196aafb0d114fb1ff43d0}{Property::CoeffB3}},\ \textcolor{stringliteral}{"{}CoeffB3"{}}\},}
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00013}00013\ \ \ \ \ \{\mbox{\hyperlink{namespaceq_ab3bdb9eac069e4e777368ed17431ffafa6b4d014ad1b39a31881628934250650e}{Property::Xindex}},\ \textcolor{stringliteral}{"{}Xindex"{}}\},}
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00014}00014\ \ \ \ \ \{\mbox{\hyperlink{namespaceq_ab3bdb9eac069e4e777368ed17431ffafa0b9f7998ac41c70208a48a3acee941b5}{Property::Df}},\ \textcolor{stringliteral}{"{}Df"{}}\},}
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00015}00015\ \ \ \ \ \{\mbox{\hyperlink{namespaceq_ab3bdb9eac069e4e777368ed17431ffafab1ff519e62e525bf168c1a5055a5554c}{Property::PeakID}},\ \textcolor{stringliteral}{"{}PeakID"{}}\},}
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00016}00016\ \ \ \ \ \{\mbox{\hyperlink{namespaceq_ab3bdb9eac069e4e777368ed17431ffafaf86ce7af1f9124dd82da986f6c4f3d95}{Property::SmplID}},\ \textcolor{stringliteral}{"{}SmplID"{}}\},}
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00017}00017\ \ \ \ \ \{\mbox{\hyperlink{namespaceq_ab3bdb9eac069e4e777368ed17431ffafa52f5e0bc3859bc5f5e25130b6c7e8881}{Property::Position}},\ \textcolor{stringliteral}{"{}Position"{}}\},}
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00018}00018\ \ \ \ \ \{\mbox{\hyperlink{namespaceq_ab3bdb9eac069e4e777368ed17431ffafab166c0c7ce8046a50dc6b7f62c07d126}{Property::ValleyPosition}},\ \textcolor{stringliteral}{"{}ValleyPosition"{}}\},}
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00019}00019\ \ \ \ \ \{\mbox{\hyperlink{namespaceq_ab3bdb9eac069e4e777368ed17431ffafaeec6c4bdbd339edf8cbea68becb85244}{Property::Height}},\ \textcolor{stringliteral}{"{}Height"{}}\},}
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00020}00020\ \ \ \ \ \{\mbox{\hyperlink{namespaceq_ab3bdb9eac069e4e777368ed17431ffafa32954654ac8fe66a1d09be19001de2d4}{Property::Width}},\ \textcolor{stringliteral}{"{}Width"{}}\},}
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00021}00021\ \ \ \ \ \{\mbox{\hyperlink{namespaceq_ab3bdb9eac069e4e777368ed17431ffafadeec4ff19974f12ed781cb9a59064214}{Property::Area}},\ \textcolor{stringliteral}{"{}Area"{}}\},}
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00022}00022\ \ \ \ \ \{\mbox{\hyperlink{namespaceq_ab3bdb9eac069e4e777368ed17431ffafaa4cda5627fe50911648d8dfc52dfdb59}{Property::SigmaPosition}},\ \textcolor{stringliteral}{"{}SigmaPosition"{}}\},}
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00023}00023\ \ \ \ \ \{\mbox{\hyperlink{namespaceq_ab3bdb9eac069e4e777368ed17431ffafa5cef0ebfadec370c9aaae656e8e47e5e}{Property::SigmaHeight}},\ \textcolor{stringliteral}{"{}SigmaHeight"{}}\},}
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00024}00024\ \ \ \ \ \{\mbox{\hyperlink{namespaceq_ab3bdb9eac069e4e777368ed17431ffafa02b4c1c8933644fbf41a5580f5075fd3}{Property::SigmaWidth}},\ \textcolor{stringliteral}{"{}SigmaWidth"{}}\},}
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00025}00025\ \ \ \ \ \{\mbox{\hyperlink{namespaceq_ab3bdb9eac069e4e777368ed17431ffafae147e029620585539bd6ac137f124be2}{Property::SigmaArea}},\ \textcolor{stringliteral}{"{}SigmaArea"{}}\},}
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00026}00026\ \ \ \ \ \{\mbox{\hyperlink{namespaceq_ab3bdb9eac069e4e777368ed17431ffafa3a167780a83475ac09b0b48775b32ef6}{Property::Dqs}},\ \textcolor{stringliteral}{"{}Dqs"{}}\},}
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00027}00027\ \ \ \};}
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00028}00028\ }
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00029}\mbox{\hyperlink{classq_1_1_peak_a09fc913d00b87ae32af9500326b74413}{00029}}\ \ \ std::map<Property,\ double>\ \mbox{\hyperlink{classq_1_1_peak_a09fc913d00b87ae32af9500326b74413}{Peak::initializeProperties}}()\ \{}
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00030}00030\ \ \ \ \ std::map<Property,\ double>\ props;}
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00031}00031\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ i\ =\ \textcolor{keyword}{static\_cast<}\textcolor{keywordtype}{int}\textcolor{keyword}{>}(\mbox{\hyperlink{namespaceq_ab3bdb9eac069e4e777368ed17431ffafa45d4b98958ff56d24f34445e565cbf4a}{Property::CoeffB0}});\ }
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00032}00032\ \ \ \ \ \ \ \ \ \ \ i\ <\ static\_cast<int>(\mbox{\hyperlink{namespaceq_ab3bdb9eac069e4e777368ed17431ffafa3a167780a83475ac09b0b48775b32ef6}{Property::Dqs}});\ }
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00033}00033\ \ \ \ \ \ \ \ \ \ \ i++)\ \{}
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00034}00034\ \ \ \ \ \ \ \ \ \ \ \ \ props[\textcolor{keyword}{static\_cast<}\mbox{\hyperlink{namespaceq_ab3bdb9eac069e4e777368ed17431ffaf}{Property}}\textcolor{keyword}{>}(i)]\ =\ 0.0;\ \textcolor{comment}{//}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00035}00035\ \ \ \ \ \}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00036}00036\ \ \ \ \ \textcolor{keywordflow}{return}\ props;}
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00037}00037\ \ \ \}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00038}00038\ }
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00039}00039\ \ \ \textcolor{comment}{//\ Constructor}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00040}\mbox{\hyperlink{classq_1_1_peak_a00b71693923d43d7a2d38d257d40e12e}{00040}}\ \ \ \mbox{\hyperlink{classq_1_1_peak_a00b71693923d43d7a2d38d257d40e12e}{Peak::Peak}}()\ :\ properties(initializeProperties())\ \{}
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00041}00041\ \ \ \ \ \textcolor{comment}{/*\ optional\ code\ for\ initialization\ */}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00042}00042\ \ \ \}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00043}00043\ }
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00044}00044\ \ \ \textcolor{comment}{//\ Destructor}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00045}\mbox{\hyperlink{classq_1_1_peak_aa6cc923c2fddc0fe440952376624d787}{00045}}\ \ \ \mbox{\hyperlink{classq_1_1_peak_aa6cc923c2fddc0fe440952376624d787}{Peak::\string~Peak}}()\ \{\};}
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00046}00046\ }
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00047}00047\ \ \ \textcolor{comment}{//\ Access}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00048}\mbox{\hyperlink{classq_1_1_peak_a76d9c461da59f54aae56acbe09e5687f}{00048}}\ \ \ \textcolor{keywordtype}{double}\ \mbox{\hyperlink{classq_1_1_peak_a76d9c461da59f54aae56acbe09e5687f}{Peak::getProperty}}(\mbox{\hyperlink{namespaceq_ab3bdb9eac069e4e777368ed17431ffaf}{Property}}\ property)\textcolor{keyword}{\ const\ }\{}
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00049}00049\ \ \ \ \ \textcolor{keyword}{auto}\ it\ =\ properties.find(property);}
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00050}00050\ \ \ \ \ \textcolor{keywordflow}{if}\ (it\ !=\ properties.end())\ \{}
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00051}00051\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ it\ -\/>\ second;}
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00052}00052\ \ \ \ \ \}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00053}00053\ \ \ \ \ \textcolor{comment}{/*\ error\ if\ property\ does\ not\ exist*/}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00054}00054\ \ \ \ \ \textcolor{keywordflow}{throw}\ std::out\_of\_range(\textcolor{stringliteral}{"{}Property\ not\ found"{}});}
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00055}00055\ \ \ \}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00056}00056\ }
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00057}\mbox{\hyperlink{classq_1_1_peak_abeea4d47467decf11b1d2c3c8a150613}{00057}}\ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classq_1_1_peak_abeea4d47467decf11b1d2c3c8a150613}{Peak::setProperty}}(\mbox{\hyperlink{namespaceq_ab3bdb9eac069e4e777368ed17431ffaf}{Property}}\ property,\ \textcolor{keywordtype}{double}\ value)\ \{}
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00058}00058\ \ \ \ \ properties[property]\ =\ value;}
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00059}00059\ \ \ \}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00060}00060\ }
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00061}00061\ \ \ \textcolor{comment}{//\ Validation\ Methods}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00062}\mbox{\hyperlink{classq_1_1_peak_a5312348ee392b1400238b774a2fabba4}{00062}}\ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classq_1_1_peak_a5312348ee392b1400238b774a2fabba4}{Peak::validate}}()\ \{}
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00063}00063\ \ \ \ \ std::cout\ <<\ \mbox{\hyperlink{classq_1_1_peak_a7abafe7418d3101a2cd3f0a483345ce2}{validate\_coefficients}}(}
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00064}00064\ \ \ \ \ \ \ properties[\mbox{\hyperlink{namespaceq_ab3bdb9eac069e4e777368ed17431ffafa0b9f7998ac41c70208a48a3acee941b5}{Property::Df}}],}
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00065}00065\ \ \ \ \ \ \ properties[\mbox{\hyperlink{namespaceq_ab3bdb9eac069e4e777368ed17431ffafa181ef5cc8531adebe749a4c85cc79c52}{Property::CoeffB1}}],}
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00066}00066\ \ \ \ \ \ \ properties[\mbox{\hyperlink{namespaceq_ab3bdb9eac069e4e777368ed17431ffafa439000af4eeabcb2d395a36d47a5c799}{Property::CoeffB2}}],}
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00067}00067\ \ \ \ \ \ \ properties[\mbox{\hyperlink{namespaceq_ab3bdb9eac069e4e777368ed17431ffafa575a0fc5a81196aafb0d114fb1ff43d0}{Property::CoeffB3}}],}
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00068}00068\ \ \ \ \ \ \ properties[\mbox{\hyperlink{namespaceq_ab3bdb9eac069e4e777368ed17431ffafa6b4d014ad1b39a31881628934250650e}{Property::Xindex}}],}
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00069}00069\ \ \ \ \ \ \ properties[\mbox{\hyperlink{namespaceq_ab3bdb9eac069e4e777368ed17431ffafa52f5e0bc3859bc5f5e25130b6c7e8881}{Property::Position}}],}
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00070}00070\ \ \ \ \ \ \ properties[\mbox{\hyperlink{namespaceq_ab3bdb9eac069e4e777368ed17431ffafab166c0c7ce8046a50dc6b7f62c07d126}{Property::ValleyPosition}}])\ <<\ std::endl;}
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00071}00071\ \ \ \}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00072}00072\ }
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00073}\mbox{\hyperlink{classq_1_1_peak_a7abafe7418d3101a2cd3f0a483345ce2}{00073}}\ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classq_1_1_peak_a7abafe7418d3101a2cd3f0a483345ce2}{Peak::validate\_coefficients}}(}
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00074}00074\ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{double}\ df,}
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00075}00075\ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{double}\ b1,}
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00076}00076\ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{double}\ b2,}
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00077}00077\ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{double}\ b3,}
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00078}00078\ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{double}\ xIndex,}
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00079}00079\ \ \ \ \ \ \ \textcolor{keywordtype}{double}\&\ apex\_position,}
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00080}00080\ \ \ \ \ \ \ \textcolor{keywordtype}{double}\&\ valley\_position)\textcolor{keyword}{\ const\ }\{}
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00081}00081\ \ \ \ \ \textcolor{comment}{/*}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00082}00082\ \textcolor{comment}{\ \ \ \ This\ functions\ checks\ if\ a\ set\ of\ regression\ coefficients\ (b0,\ b1,\ b2,\ b3)\ are\ valid}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00083}00083\ \textcolor{comment}{\ \ \ \ and\ describe\ an\ analytical\ peak\ after\ exp-\/transform.}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00084}00084\ \textcolor{comment}{\ \ \ \ \ \#\ valid\ peak\ case\ 1:\ b2<0\ \&\ b3<0\ \&\ apex\ in\ window}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00085}00085\ \textcolor{comment}{\ \ \ \ \ \#\ valid\ peak\ case\ 2a:\ b2>0\ \&\ b3<0\ \&\ b1>0\ \&\ |valley\ -\/\ apex|\ >\ 2\ \&\ apex\ in\ window}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00086}00086\ \textcolor{comment}{\ \ \ \ \ \#\ valud\ peak\ case\ 2b:\ b2<0\ \&\ b3>0\ \&\ b1<0\ \&\ |valley\ -\/\ apex|\ >\ 2\ \&\ apex\ in\ window}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00087}00087\ \textcolor{comment}{\ \ \ \ */}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00088}00088\ }
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00089}00089\ \ \ \ \ \textcolor{comment}{/*\ creating\ unique\ checksum\ */}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00090}00090\ \ \ \ \ \textcolor{keywordtype}{int}\ key\ =\ (b1\ <\ 0\ ?\ 4\ :\ 0)\ +\ (b2\ <\ 0\ ?\ 2\ :\ 0)\ +\ (b3\ <\ 0\ ?\ 1\ :\ 0);}
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00091}00091\ }
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00092}00092\ \ \ \ \ \textcolor{keywordflow}{switch}\ (key)\ \{}
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00093}00093\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ 7:\ \ \textcolor{comment}{//\ Case\ 1a:\ apex\ left}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00094}00094\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classq_1_1_peak_a592bb5eb08f59ae80227dff6372d6551}{calcApex\_position}}(df,\ b1,\ b2,\ xIndex,\ apex\_position);}
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00095}00095\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ 3:\ \ \textcolor{comment}{//\ Case\ 1b:\ apex\ right}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00096}00096\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classq_1_1_peak_a592bb5eb08f59ae80227dff6372d6551}{calcApex\_position}}(df,\ b1,\ b3,\ xIndex,\ apex\_position);}
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00097}00097\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ 6:\ \ \textcolor{comment}{//\ Case\ 2a:\ apex\ left\ |\ valley\ right}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00098}00098\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classq_1_1_peak_aff2bc1e2df11ae6a77089acb48c8fa45}{calcApexValley\_position}}(df,\ b1,\ b2,\ b3,\ xIndex,\ apex\_position,\ valley\_position);}
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00099}00099\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ 1:\ \ \textcolor{comment}{//\ Case\ 2b:\ apex\ right\ |\ valley\ left}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00100}00100\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classq_1_1_peak_aff2bc1e2df11ae6a77089acb48c8fa45}{calcApexValley\_position}}(df,\ b1,\ b3,\ b2,\ xIndex,\ apex\_position,\ valley\_position);}
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00101}00101\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{default}:}
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00102}00102\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00103}00103\ \ \ \ \ \};}
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00104}00104\ \ \ \}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00105}00105\ }
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00106}00106\ \ \ \textcolor{comment}{//\ Calculate\ Property\ Methods}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00107}\mbox{\hyperlink{classq_1_1_peak_a592bb5eb08f59ae80227dff6372d6551}{00107}}\ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classq_1_1_peak_a592bb5eb08f59ae80227dff6372d6551}{Peak::calcApex\_position}}(}
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00108}00108\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{double}\ df,\ }
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00109}00109\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{double}\ b1,\ }
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00110}00110\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{double}\ b2,\ }
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00111}00111\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{double}\ xIndex,\ }
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00112}00112\ \ \ \ \ \textcolor{keywordtype}{double}\&\ apex\_position\ }
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00113}00113\ \ \ \ \ )\textcolor{keyword}{\ const\ }\{}
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00114}00114\ \ \ \ \ \ \ apex\_position\ =\ -\/\ b1\ /\ 2\ /\ b2;}
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00115}00115\ \ \ \ \ \ \ \textcolor{comment}{/*\ check\ if\ apex\ position\ is\ in\ window\ with\ at\ least\ one\ point\ buffer\ */}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00116}00116\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (abs(apex\_position)\ <\ (df+3)/2)\ \{}
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00117}00117\ \ \ \ \ \ \ \ \ apex\_position\ +=\ xIndex;}
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00118}00118\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00119}00119\ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00120}00120\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00121}00121\ \ \ \ \ \ \ \}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00122}00122\ \ \ \}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00123}00123\ }
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00124}\mbox{\hyperlink{classq_1_1_peak_aff2bc1e2df11ae6a77089acb48c8fa45}{00124}}\ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classq_1_1_peak_aff2bc1e2df11ae6a77089acb48c8fa45}{Peak::calcApexValley\_position}}(}
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00125}00125\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{double}\ df,\ }
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00126}00126\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{double}\ b1,\ }
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00127}00127\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{double}\ b2,\ }
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00128}00128\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{double}\ b3,\ }
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00129}00129\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{double}\ xIndex,\ }
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00130}00130\ \ \ \ \ \textcolor{keywordtype}{double}\&\ apex\_position,\ }
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00131}00131\ \ \ \ \ \textcolor{keywordtype}{double}\&\ valley\_position)\textcolor{keyword}{\ const\ }\{}
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00132}00132\ \ \ \ \ \ \ apex\_position\ =\ -\/\ b1\ /\ 2\ /\ b2;}
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00133}00133\ \ \ \ \ \ \ valley\_position\ =\ -\/b1\ /\ 2\ /\ b3;}
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00134}00134\ \ \ \ \ \ \ \textcolor{comment}{/*\ check\ if\ apex\ position\ is\ in\ window\ with\ at\ least\ one\ point\ buffer\ */}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00135}00135\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ ((abs(apex\_position)\ <\ (df+3)/2)\ \&\ (abs(apex\_position\ -\/\ valley\_position)\ >\ 2))\ \{}
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00136}00136\ \ \ \ \ \ \ \ \ apex\_position\ +=\ xIndex;}
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00137}00137\ \ \ \ \ \ \ \ \ valley\_position\ +=\ xIndex;}
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00138}00138\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00139}00139\ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00140}00140\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00141}00141\ \ \ \ \ \ \ \}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00142}00142\ \ \ \}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00143}00143\ }
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00144}\mbox{\hyperlink{classq_1_1_peak_ae643256a2b7e955b9a2614f2b12c4d01}{00144}}\ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classq_1_1_peak_ae643256a2b7e955b9a2614f2b12c4d01}{Peak::print}}()\ \{}
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00145}00145\ \ \ \ \ std::cout\ <<\ std::endl;}
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00146}00146\ \ \ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#"{}}\ <<\ std::endl;}
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00147}00147\ \ \ \ \ \textcolor{comment}{/*\ Printing\ all\ properties\ */}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00148}00148\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keyword}{const}\ \textcolor{keyword}{auto}\&\ prop\ :\ properties)\ \{}
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00149}00149\ \ \ \ \ \ \ \ \ \ \ \ \ std::cout\ <<\ \mbox{\hyperlink{namespaceq_ac9412ec4dc6d9138e2965665f2651be5}{propertyLabels}}[prop.first]\ <<\ \textcolor{stringliteral}{"{}:\ "{}}\ <<\ prop.second\ <<\ std::endl;}
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00150}00150\ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00151}00151\ \ \ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#"{}}\ <<\ std::endl;}
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00152}00152\ \ \ \ \ std::cout\ <<\ std::endl;}
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00153}00153\ \ \ \}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00154}00154\ \}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00005}00005\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespaceq}{q}}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00006}00006\ \{}
+\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00007}00007\ \ \ \textcolor{comment}{//\ Constructor}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00008}\mbox{\hyperlink{classq_1_1_peak_a00b71693923d43d7a2d38d257d40e12e}{00008}}\ \ \ \mbox{\hyperlink{classq_1_1_peak_a00b71693923d43d7a2d38d257d40e12e}{Peak::Peak}}()\ :\ B(\{0,\ 0,\ 0,\ 0\})\ \{\}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00009}00009\ }
+\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00010}\mbox{\hyperlink{classq_1_1_peak_ac527083c805ae85f419276f979c51bc0}{00010}}\ \ \ \mbox{\hyperlink{classq_1_1_peak_a00b71693923d43d7a2d38d257d40e12e}{Peak::Peak}}(\textcolor{keywordtype}{int}\ index,\ \textcolor{keywordtype}{int}\ scale)\ :\ index(index),\ scale(scale),\ B(\{0,\ 0,\ 0,\ 0\})\ \{\}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00011}00011\ }
+\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00012}00012\ \ \ \textcolor{comment}{//\ Destructor}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00013}\mbox{\hyperlink{classq_1_1_peak_aa6cc923c2fddc0fe440952376624d787}{00013}}\ \ \ \mbox{\hyperlink{classq_1_1_peak_aa6cc923c2fddc0fe440952376624d787}{Peak::\string~Peak}}()\ \{\}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00014}00014\ }
+\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00015}00015\ \ \ \textcolor{comment}{//\ methods}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00016}00016\ \ \ \textcolor{comment}{//\ getters}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00017}\mbox{\hyperlink{classq_1_1_peak_ad839c086d90d023778fdcedcf6b1e3b7}{00017}}\ \ \ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{classq_1_1_peak_ad839c086d90d023778fdcedcf6b1e3b7}{Peak::getIndex}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ index;\ \}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00018}\mbox{\hyperlink{classq_1_1_peak_af3898e4d087df32a988366127e40f996}{00018}}\ \ \ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{classq_1_1_peak_af3898e4d087df32a988366127e40f996}{Peak::getScale}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ scale;\ \}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00019}\mbox{\hyperlink{classq_1_1_peak_a68edf87e9a91f47e2822f71cda5cf5a0}{00019}}\ \ \ \textcolor{keyword}{const}\ std::array<double,\ 4>\ \&\mbox{\hyperlink{classq_1_1_peak_a68edf87e9a91f47e2822f71cda5cf5a0}{Peak::getB}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ B;\ \}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00020}\mbox{\hyperlink{classq_1_1_peak_a6de1eefa9edf2d9bfe262d0747d3cd2c}{00020}}\ \ \ \textcolor{keywordtype}{double}\ \mbox{\hyperlink{classq_1_1_peak_a6de1eefa9edf2d9bfe262d0747d3cd2c}{Peak::getPositionNorm}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ position\_norm;\ \}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00021}\mbox{\hyperlink{classq_1_1_peak_aa7998680ef217158c9e71f0c9caf534e}{00021}}\ \ \ \textcolor{keywordtype}{double}\ \mbox{\hyperlink{classq_1_1_peak_aa7998680ef217158c9e71f0c9caf534e}{Peak::getPosition}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ position;\ \}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00022}\mbox{\hyperlink{classq_1_1_peak_a44a0d2ff5fe9e9227b9262dbdaf7d721}{00022}}\ \ \ \textcolor{keywordtype}{double}\ \mbox{\hyperlink{classq_1_1_peak_a44a0d2ff5fe9e9227b9262dbdaf7d721}{Peak::getHeight}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ height;\ \}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00023}\mbox{\hyperlink{classq_1_1_peak_aeb0ff53bed731bb990de86e7f478dafe}{00023}}\ \ \ \textcolor{keywordtype}{double}\ \mbox{\hyperlink{classq_1_1_peak_aeb0ff53bed731bb990de86e7f478dafe}{Peak::getWidth}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ width;\ \}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00024}\mbox{\hyperlink{classq_1_1_peak_ab1581071b7fb2dbd9ebd4f0a475b7907}{00024}}\ \ \ \textcolor{keywordtype}{double}\ \mbox{\hyperlink{classq_1_1_peak_ab1581071b7fb2dbd9ebd4f0a475b7907}{Peak::getArea}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ area;\ \}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00025}\mbox{\hyperlink{classq_1_1_peak_a3f481f07cc416ebc17436ffbb0916733}{00025}}\ \ \ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{classq_1_1_peak_a3f481f07cc416ebc17436ffbb0916733}{Peak::getDf}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ df;\ \}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00026}\mbox{\hyperlink{classq_1_1_peak_a73b60085499d3fed3bf8f09c489185fe}{00026}}\ \ \ \textcolor{keywordtype}{double}\ \mbox{\hyperlink{classq_1_1_peak_a73b60085499d3fed3bf8f09c489185fe}{Peak::getPositionUncertainty}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ position\_uncertainty;\ \}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00027}\mbox{\hyperlink{classq_1_1_peak_a997436a32c4241b8034e28cc31701075}{00027}}\ \ \ \textcolor{keywordtype}{double}\ \mbox{\hyperlink{classq_1_1_peak_a997436a32c4241b8034e28cc31701075}{Peak::getHeightUncertainty}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ height\_uncertainty;\ \}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00028}\mbox{\hyperlink{classq_1_1_peak_aa0ea9797ddbdb4c3f1e34c469b2cedb5}{00028}}\ \ \ \textcolor{keywordtype}{double}\ \mbox{\hyperlink{classq_1_1_peak_aa0ea9797ddbdb4c3f1e34c469b2cedb5}{Peak::getWidthUncertainty}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ width\_uncertainty;\ \}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00029}\mbox{\hyperlink{classq_1_1_peak_a155bf5c6a72c30199a64f1a87d72a0d0}{00029}}\ \ \ \textcolor{keywordtype}{double}\ \mbox{\hyperlink{classq_1_1_peak_a155bf5c6a72c30199a64f1a87d72a0d0}{Peak::getAreaUncertainty}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ area\_uncertainty;\ \}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00030}\mbox{\hyperlink{classq_1_1_peak_a170f77da47a2ae40013d64616b636e52}{00030}}\ \ \ \textcolor{keywordtype}{double}\ \mbox{\hyperlink{classq_1_1_peak_a170f77da47a2ae40013d64616b636e52}{Peak::getMse}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ mse;\ \}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00031}00031\ \ \ \textcolor{comment}{//\ setters}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00032}\mbox{\hyperlink{classq_1_1_peak_a5058fbb5f5b1554beffbae7103271ca7}{00032}}\ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classq_1_1_peak_a5058fbb5f5b1554beffbae7103271ca7}{Peak::setIndex}}(\textcolor{keywordtype}{int}\ index)\ \{\ this-\/>index\ =\ index;\ \}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00033}\mbox{\hyperlink{classq_1_1_peak_a4eaf1e91b31e29c5089ba8624e76f4f2}{00033}}\ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classq_1_1_peak_a4eaf1e91b31e29c5089ba8624e76f4f2}{Peak::setScale}}(\textcolor{keywordtype}{int}\ scale)\ \{\ this-\/>scale\ =\ scale;\ \}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00034}\mbox{\hyperlink{classq_1_1_peak_a07e856d7e9dc61adc47861b71c71640c}{00034}}\ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classq_1_1_peak_a07e856d7e9dc61adc47861b71c71640c}{Peak::setB}}(\textcolor{keyword}{const}\ std::array<double,\ 4>\ \&B)\ \{\ this-\/>B\ =\ B;\ \}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00035}\mbox{\hyperlink{classq_1_1_peak_abf3390fa706edd276a316b26e92d00a4}{00035}}\ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classq_1_1_peak_abf3390fa706edd276a316b26e92d00a4}{Peak::setPositionNorm}}(\textcolor{keywordtype}{double}\ position\_norm)\ \{\ this-\/>position\_norm\ =\ position\_norm;\ \}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00036}\mbox{\hyperlink{classq_1_1_peak_aea6afb1346ad5da6aaff2f6241ca8e81}{00036}}\ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classq_1_1_peak_aea6afb1346ad5da6aaff2f6241ca8e81}{Peak::setPosition}}(\textcolor{keywordtype}{double}\ position)\ \{\ this-\/>position\ =\ position;\ \}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00037}\mbox{\hyperlink{classq_1_1_peak_a50444052eab6aa78635a15d6d3fc6624}{00037}}\ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classq_1_1_peak_a50444052eab6aa78635a15d6d3fc6624}{Peak::setHeight}}(\textcolor{keywordtype}{double}\ height)\ \{\ this-\/>height\ =\ height;\ \}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00038}\mbox{\hyperlink{classq_1_1_peak_a24e4f48dd955f6ecb334f30a83ea49ca}{00038}}\ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classq_1_1_peak_a24e4f48dd955f6ecb334f30a83ea49ca}{Peak::setWidth}}(\textcolor{keywordtype}{double}\ width)\ \{\ this-\/>width\ =\ width;\ \}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00039}\mbox{\hyperlink{classq_1_1_peak_a159cd04a7ba139a1b9025e074aaa0b17}{00039}}\ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classq_1_1_peak_a159cd04a7ba139a1b9025e074aaa0b17}{Peak::setArea}}(\textcolor{keywordtype}{double}\ area)\ \{\ this-\/>area\ =\ area;\ \}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00040}\mbox{\hyperlink{classq_1_1_peak_a8363b88150b3d1e26069bedab21043da}{00040}}\ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classq_1_1_peak_a8363b88150b3d1e26069bedab21043da}{Peak::setDf}}(\textcolor{keywordtype}{int}\ df)\ \{\ this-\/>df\ =\ df;\ \}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00041}\mbox{\hyperlink{classq_1_1_peak_a56bcef396ec18ecd39cf7984dc0d65a9}{00041}}\ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classq_1_1_peak_a56bcef396ec18ecd39cf7984dc0d65a9}{Peak::setPositionUncertainty}}(\textcolor{keywordtype}{double}\ position\_uncertainty)\ \{\ this-\/>position\_uncertainty\ =\ position\_uncertainty;\ \}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00042}\mbox{\hyperlink{classq_1_1_peak_acf04f1fe0bbd7266031821425b4b1b2e}{00042}}\ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classq_1_1_peak_acf04f1fe0bbd7266031821425b4b1b2e}{Peak::setHeightUncertainty}}(\textcolor{keywordtype}{double}\ height\_uncertainty)\ \{\ this-\/>height\_uncertainty\ =\ height\_uncertainty;\ \}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00043}\mbox{\hyperlink{classq_1_1_peak_a7f1b3dbded72b7be39a6619d9914765c}{00043}}\ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classq_1_1_peak_a7f1b3dbded72b7be39a6619d9914765c}{Peak::setWidthUncertainty}}(\textcolor{keywordtype}{double}\ width\_uncertainty)\ \{\ this-\/>width\_uncertainty\ =\ width\_uncertainty;\ \}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00044}\mbox{\hyperlink{classq_1_1_peak_af840fd4d25d4ac453cb207b9b7e3618d}{00044}}\ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classq_1_1_peak_af840fd4d25d4ac453cb207b9b7e3618d}{Peak::setAreaUncertainty}}(\textcolor{keywordtype}{double}\ area\_uncertainty)\ \{\ this-\/>area\_uncertainty\ =\ area\_uncertainty;\ \}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00045}\mbox{\hyperlink{classq_1_1_peak_a13490374cad55f373b95c1eb65720c1e}{00045}}\ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classq_1_1_peak_a13490374cad55f373b95c1eb65720c1e}{Peak::setMse}}(\textcolor{keywordtype}{double}\ mse)\ \{\ this-\/>mse\ =\ mse;\ \}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00046}00046\ \ \ \textcolor{comment}{//\ debugging}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00047}\mbox{\hyperlink{classq_1_1_peak_af7c385e099b67193608ab3b163493ed0}{00047}}\ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classq_1_1_peak_af7c385e099b67193608ab3b163493ed0}{Peak::print}}()\textcolor{keyword}{\ const}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00048}00048\ \textcolor{keyword}{\ \ }\{}
+\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00049}00049\ \ \ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}index:\ "{}}\ <<\ index\ <<\ std::endl;}
+\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00050}00050\ \ \ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}scale:\ "{}}\ <<\ scale\ <<\ std::endl;}
+\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00051}00051\ \ \ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}B:\ "{}}\ <<\ B[0]\ <<\ \textcolor{stringliteral}{"{},\ "{}}\ <<\ B[1]\ <<\ \textcolor{stringliteral}{"{},\ "{}}\ <<\ B[2]\ <<\ \textcolor{stringliteral}{"{},\ "{}}\ <<\ B[3]\ <<\ std::endl;}
+\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00052}00052\ \ \ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}position\_norm:\ "{}}\ <<\ position\_norm\ <<\ std::endl;}
+\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00053}00053\ \ \ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}position:\ "{}}\ <<\ position\ <<\ std::endl;}
+\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00054}00054\ \ \ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}height:\ "{}}\ <<\ height\ <<\ std::endl;}
+\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00055}00055\ \ \ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}width:\ "{}}\ <<\ width\ <<\ std::endl;}
+\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00056}00056\ \ \ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}area:\ "{}}\ <<\ area\ <<\ std::endl;}
+\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00057}00057\ \ \ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}df:\ "{}}\ <<\ df\ <<\ std::endl;}
+\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00058}00058\ \ \ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}position\_uncertainty:\ "{}}\ <<\ position\_uncertainty\ <<\ std::endl;}
+\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00059}00059\ \ \ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}height\_uncertainty:\ "{}}\ <<\ height\_uncertainty\ <<\ std::endl;}
+\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00060}00060\ \ \ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}width\_uncertainty:\ "{}}\ <<\ width\_uncertainty\ <<\ std::endl;}
+\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00061}00061\ \ \ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}area\_uncertainty:\ "{}}\ <<\ area\_uncertainty\ <<\ std::endl;}
+\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00062}00062\ \ \ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}mse:\ "{}}\ <<\ mse\ <<\ std::endl;}
+\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00063}00063\ \ \ \}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__peak_8cpp_source_l00064}00064\ \}}
 
 \end{DoxyCode}

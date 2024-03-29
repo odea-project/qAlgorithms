@@ -1,0 +1,193 @@
+\doxysection{qalgorithms\+\_\+qpeaks.\+cpp}
+\hypertarget{qalgorithms__qpeaks_8cpp_source}{}\label{qalgorithms__qpeaks_8cpp_source}\index{src/qalgorithms\_qpeaks.cpp@{src/qalgorithms\_qpeaks.cpp}}
+\mbox{\hyperlink{qalgorithms__qpeaks_8cpp}{Go to the documentation of this file.}}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8cpp_source_l00001}00001\ \textcolor{comment}{//\ qalgorithms\_qpeaks.cpp}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8cpp_source_l00002}00002\ \textcolor{comment}{//}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8cpp_source_l00003}00003\ \textcolor{comment}{//\ internal}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8cpp_source_l00004}00004\ \textcolor{preprocessor}{\#include\ "{}../include/qalgorithms\_qpeaks.h"{}}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8cpp_source_l00005}00005\ }
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8cpp_source_l00006}00006\ \textcolor{comment}{//\ external}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8cpp_source_l00007}00007\ }
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8cpp_source_l00008}00008\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespaceq}{q}}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8cpp_source_l00009}00009\ \{}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8cpp_source_l00010}00010\ \ \ \textcolor{comment}{//\ Constructor}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8cpp_source_l00011}\mbox{\hyperlink{classq_1_1q_peaks_a401e618cceed5b32fae8b6e9e5e57005}{00011}}\ \ \ \mbox{\hyperlink{classq_1_1q_peaks_a401e618cceed5b32fae8b6e9e5e57005}{qPeaks::qPeaks}}()\ \{\}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8cpp_source_l00012}00012\ }
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8cpp_source_l00013}\mbox{\hyperlink{classq_1_1q_peaks_a2d61ca92c700c43e8bfcb573326748dc}{00013}}\ \ \ \mbox{\hyperlink{classq_1_1q_peaks_a401e618cceed5b32fae8b6e9e5e57005}{qPeaks::qPeaks}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{namespaceq_aab5cf99505e4325617dbe9365f547a35}{varDataType}}\ \&dataVec)}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8cpp_source_l00014}00014\ \ \ \{}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8cpp_source_l00015}00015\ \ \ \ \ std::visit([\textcolor{keyword}{this}](\textcolor{keyword}{auto}\ \&\&arg)}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8cpp_source_l00016}00016\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8cpp_source_l00017}00017\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8cpp_source_l00018}00018\ \textcolor{comment}{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ //\ get\ the\ largest\ number\ of\ data\ points\ in\ a\ single\ data\ set\ within\ the\ dataVec}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8cpp_source_l00019}00019\ \textcolor{comment}{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ int\ maxDataPoints\ =\ 0;}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8cpp_source_l00020}00020\ \textcolor{comment}{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ //\ iterate\ over\ the\ map\ of\ varDataType\ datatype\ objects}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8cpp_source_l00021}00021\ \textcolor{comment}{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ for\ (auto\ \&pair\ :\ *arg)}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8cpp_source_l00022}00022\ \textcolor{comment}{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8cpp_source_l00023}00023\ \textcolor{comment}{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ //\ de-\/reference\ the\ unique\ pointer\ of\ the\ object}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8cpp_source_l00024}00024\ \textcolor{comment}{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ auto\ \&dataObj\ =\ *(pair.get());}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8cpp_source_l00025}00025\ \textcolor{comment}{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ //\ iterate\ over\ data\ point\ vector,\ which\ is\ a\ vector\ of\ unique\ pointers\ to\ data\ points\ structures}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8cpp_source_l00026}00026\ \textcolor{comment}{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ auto\ \&data\ =\ dataObj.dataPoints;}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8cpp_source_l00027}00027\ \textcolor{comment}{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ //\ compare\ the\ size\ of\ the\ data\ vector\ to\ the\ maxDataPoints\ variable}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8cpp_source_l00028}00028\ \textcolor{comment}{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ if\ (data.size()\ >\ maxDataPoints)}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8cpp_source_l00029}00029\ \textcolor{comment}{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8cpp_source_l00030}00030\ \textcolor{comment}{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ //\ if\ the\ size\ of\ the\ data\ vector\ is\ larger\ than\ the\ maxDataPoints\ variable,\ set\ the\ maxDataPoints\ variable\ to\ the\ size\ of\ the\ data\ vector}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8cpp_source_l00031}00031\ \textcolor{comment}{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ maxDataPoints\ =\ data.size();}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8cpp_source_l00032}00032\ \textcolor{comment}{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8cpp_source_l00033}00033\ \textcolor{comment}{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8cpp_source_l00034}00034\ \textcolor{comment}{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ int\ maxScale\ =\ (int)\ (maxDataPoints-\/1)/2;}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8cpp_source_l00035}00035\ \textcolor{comment}{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ */}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8cpp_source_l00036}00036\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ this-\/>global\_maxScale\ =\ 10;}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8cpp_source_l00037}00037\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ iterate\ over\ the\ range\ of\ the\ maxScale\ to\ create\ Matrices\ for\ each\ scale}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8cpp_source_l00038}00038\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ scale\ =\ 2;\ scale\ <=\ this-\/>global\_maxScale;\ scale++)}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8cpp_source_l00039}00039\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8cpp_source_l00040}00040\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ createDesignMatrix(scale);}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8cpp_source_l00041}00041\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ createInverseAndPseudoInverse(*(designMatrices.back()));}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8cpp_source_l00042}00042\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \},}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8cpp_source_l00043}00043\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dataVec);}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8cpp_source_l00044}00044\ \ \ \}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8cpp_source_l00045}00045\ }
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8cpp_source_l00046}00046\ \ \ \textcolor{comment}{//\ Destructor}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8cpp_source_l00047}\mbox{\hyperlink{classq_1_1q_peaks_a6fe1f39896e39558ac88cbeb7fab5a6c}{00047}}\ \ \ \mbox{\hyperlink{classq_1_1q_peaks_a6fe1f39896e39558ac88cbeb7fab5a6c}{qPeaks::\string~qPeaks}}()\ \{\}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8cpp_source_l00048}00048\ }
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8cpp_source_l00049}\mbox{\hyperlink{classq_1_1q_peaks_ada5be6820b1e303b23db55815875cf99}{00049}}\ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classq_1_1q_peaks_ada5be6820b1e303b23db55815875cf99}{qPeaks::findPeaks}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{namespaceq_aab5cf99505e4325617dbe9365f547a35}{varDataType}}\ \&dataVec)}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8cpp_source_l00050}00050\ \ \ \{}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8cpp_source_l00051}00051\ \ \ \ \ std::visit([\textcolor{keyword}{this}](\textcolor{keyword}{auto}\ \&\&arg)}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8cpp_source_l00052}00052\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8cpp_source_l00053}00053\ \textcolor{comment}{//\ iterate\ over\ the\ map\ of\ varDataType\ datatype\ objects}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8cpp_source_l00054}00054\ \textcolor{comment}{//\ use\ parallel\ for\ loop\ to\ iterate\ over\ the\ dataVec}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8cpp_source_l00055}00055\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \#pragma\ omp\ parallel\ for}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8cpp_source_l00056}00056\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keyword}{auto}\ \&pair\ :\ *arg)}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8cpp_source_l00057}00057\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8cpp_source_l00058}00058\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ de-\/reference\ the\ unique\ pointer\ of\ the\ object}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8cpp_source_l00059}00059\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ \&dataObj\ =\ *(pair.get());}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8cpp_source_l00060}00060\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ \&data\ =\ dataObj.dataPoints;}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8cpp_source_l00061}00061\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ n\ =\ data.size();}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8cpp_source_l00062}00062\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ store\ x\ and\ y\ values\ in\ RefMatrix\ objects}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8cpp_source_l00063}00063\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classq_1_1_ref_matrix}{RefMatrix}}\ X(n,\ 1);}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8cpp_source_l00064}00064\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classq_1_1_ref_matrix}{RefMatrix}}\ Y(n,\ 1);}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8cpp_source_l00065}00065\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{size\_t}\ i\ =\ 0;\ i\ <\ n;\ i++)}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8cpp_source_l00066}00066\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8cpp_source_l00067}00067\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ X.\mbox{\hyperlink{classq_1_1_ref_matrix_ac8c6b743d600620b0179551ec291caf5}{assignRef}}(i,\ 0,\ data[i]-\/>x());}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8cpp_source_l00068}00068\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ Y.\mbox{\hyperlink{classq_1_1_ref_matrix_ac8c6b743d600620b0179551ec291caf5}{assignRef}}(i,\ 0,\ data[i]-\/>y());}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8cpp_source_l00069}00069\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8cpp_source_l00070}00070\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classq_1_1q_peaks_abb10dc6eddd96ef3a676f533b654a77c}{runningRegression}}(X,\ Y);}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8cpp_source_l00071}00071\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \},}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8cpp_source_l00072}00072\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dataVec);}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8cpp_source_l00073}00073\ \ \ \}\ \textcolor{comment}{//\ end\ findPeaks}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8cpp_source_l00074}00074\ }
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8cpp_source_l00075}\mbox{\hyperlink{classq_1_1q_peaks_abb10dc6eddd96ef3a676f533b654a77c}{00075}}\ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classq_1_1q_peaks_abb10dc6eddd96ef3a676f533b654a77c}{qPeaks::runningRegression}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classq_1_1_ref_matrix}{RefMatrix}}\ \&X,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{classq_1_1_ref_matrix}{RefMatrix}}\ \&Y)}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8cpp_source_l00076}00076\ \ \ \{}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8cpp_source_l00077}00077\ \ \ \ \ \textcolor{comment}{//\ perform\ log-\/transform\ on\ Y}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8cpp_source_l00078}00078\ \ \ \ \ \textcolor{keywordtype}{size\_t}\ n\ =\ Y.\mbox{\hyperlink{classq_1_1_ref_matrix_aa6ff0334fecaafa324c7ae2a18b00cf0}{getRows}}();}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8cpp_source_l00079}00079\ \ \ \ \ \mbox{\hyperlink{classq_1_1_matrix}{Matrix}}\ Ylog\ =\ Y.\mbox{\hyperlink{classq_1_1_ref_matrix_a1f47d87b4144f587178f1ca228712a48}{log}}();}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8cpp_source_l00080}00080\ }
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8cpp_source_l00081}00081\ \ \ \ \ \textcolor{comment}{//\ perform\ the\ running\ regression}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8cpp_source_l00082}00082\ \ \ \ \ \textcolor{keywordtype}{int}\ maxScale\ =\ std::min(this-\/>global\_maxScale,\ (\textcolor{keywordtype}{int})(n\ -\/\ 1)\ /\ 2);}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8cpp_source_l00083}00083\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ scale\ =\ 2;\ scale\ <=\ maxScale;\ scale++)}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8cpp_source_l00084}00084\ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8cpp_source_l00085}00085\ \ \ \ \ \ \ \mbox{\hyperlink{classq_1_1_matrix}{Matrix}}\ b\ =\ Ylog.\mbox{\hyperlink{classq_1_1_matrix_aceb7f09f0eea5817c7e46d7cdbb7870d}{convoleCombiend}}(*(psuedoInverses[scale\ -\/\ 2]));}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8cpp_source_l00086}00086\ \ \ \ \ \ \ validateRegressions(b,\ Ylog);}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8cpp_source_l00087}00087\ \ \ \ \ \}\ \textcolor{comment}{//\ end\ for\ scale\ loop}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8cpp_source_l00088}00088\ \ \ \}\ \textcolor{comment}{//\ end\ runningRegression}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8cpp_source_l00089}00089\ }
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8cpp_source_l00090}00090\ \ \ \textcolor{keywordtype}{void}\ qPeaks::validateRegressions(\textcolor{keyword}{const}\ \mbox{\hyperlink{classq_1_1_matrix}{Matrix}}\ \&B,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{classq_1_1_matrix}{Matrix}}\ \&Ylog)}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8cpp_source_l00091}00091\ \ \ \{}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8cpp_source_l00092}00092\ \ \ \ \ \textcolor{comment}{//\ coefficients\ filter}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8cpp_source_l00093}00093\ \ \ \ \ \textcolor{comment}{//\ iterate\ columwise\ over\ the\ coefficients\ matrix}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8cpp_source_l00094}00094\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{size\_t}\ i\ =\ 0;\ i\ <\ B.\mbox{\hyperlink{classq_1_1_matrix_add6e3df948019df92282a9dec666b38f}{numCols}}();\ i++)}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8cpp_source_l00095}00095\ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8cpp_source_l00096}00096\ \ \ \ \ \ \ \textcolor{comment}{//\ calculate\ the\ checksum\ for\ case\ differentiation\ }}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8cpp_source_l00097}00097\ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ key\ =\ (B(1,i)\ <\ 0\ ?\ 4\ :\ 0)\ +\ (B(2,i)\ <\ 0\ ?\ 2\ :\ 0)\ +\ (B(3,i)\ <\ 0\ ?\ 1\ :\ 0);}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8cpp_source_l00098}00098\ \ \ \ \ \ \ }
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8cpp_source_l00099}00099\ }
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8cpp_source_l00100}00100\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8cpp_source_l00101}00101\ \ \ \ \ }
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8cpp_source_l00102}00102\ \ \ \ \ }
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8cpp_source_l00103}00103\ \ \ \}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8cpp_source_l00104}00104\ }
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8cpp_source_l00105}00105\ \ \ \textcolor{keywordtype}{void}\ qPeaks::createDesignMatrix(\textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ scale)}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8cpp_source_l00106}00106\ \ \ \{}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8cpp_source_l00107}00107\ \ \ \ \ \textcolor{comment}{//\ construct\ matrix}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8cpp_source_l00108}00108\ \ \ \ \ \textcolor{keywordtype}{size\_t}\ m\ =\ 4;}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8cpp_source_l00109}00109\ \ \ \ \ \textcolor{keywordtype}{size\_t}\ n\ =\ 2\ *\ scale\ +\ 1;}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8cpp_source_l00110}00110\ \ \ \ \ Matrix\ X(n,\ m);}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8cpp_source_l00111}00111\ }
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8cpp_source_l00112}00112\ \ \ \ \ \textcolor{comment}{//\ x\ vector}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8cpp_source_l00113}00113\ \ \ \ \ std::vector<int>\ x(n);}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8cpp_source_l00114}00114\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{size\_t}\ i\ =\ 0;\ i\ <\ n;\ i++)}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8cpp_source_l00115}00115\ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8cpp_source_l00116}00116\ \ \ \ \ \ \ x[i]\ =\ i\ -\/\ scale;}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8cpp_source_l00117}00117\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8cpp_source_l00118}00118\ }
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8cpp_source_l00119}00119\ \ \ \ \ \textcolor{comment}{//\ order\ vector}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8cpp_source_l00120}00120\ \ \ \ \ std::vector<int>\ p\ =\ \{0,\ 1,\ 2,\ 2\};}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8cpp_source_l00121}00121\ }
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8cpp_source_l00122}00122\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{size\_t}\ i\ =\ 0;\ i\ <\ n;\ i++)}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8cpp_source_l00123}00123\ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8cpp_source_l00124}00124\ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{size\_t}\ j\ =\ 0;\ j\ <\ m;\ j++)}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8cpp_source_l00125}00125\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8cpp_source_l00126}00126\ \ \ \ \ \ \ \ \ X(i,\ j)\ =\ std::pow(x[i],\ p[j]);}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8cpp_source_l00127}00127\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8cpp_source_l00128}00128\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8cpp_source_l00129}00129\ }
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8cpp_source_l00130}00130\ \ \ \ \ \textcolor{comment}{//\ modification\ of\ X\ due\ to\ p(2)\ and\ p(3)}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8cpp_source_l00131}00131\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{size\_t}\ i\ =\ 0;\ i\ <\ n;\ i++)}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8cpp_source_l00132}00132\ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8cpp_source_l00133}00133\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (x[i]\ <\ 0)}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8cpp_source_l00134}00134\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8cpp_source_l00135}00135\ \ \ \ \ \ \ \ \ X(i,\ 3)\ =\ 0;}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8cpp_source_l00136}00136\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8cpp_source_l00137}00137\ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8cpp_source_l00138}00138\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8cpp_source_l00139}00139\ \ \ \ \ \ \ \ \ X(i,\ 2)\ =\ 0;}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8cpp_source_l00140}00140\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8cpp_source_l00141}00141\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8cpp_source_l00142}00142\ }
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8cpp_source_l00143}00143\ \ \ \ \ \textcolor{comment}{//\ add\ the\ matrix\ to\ the\ designMatrices\ vector}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8cpp_source_l00144}00144\ \ \ \ \ designMatrices.push\_back(std::make\_unique<Matrix>(X));}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8cpp_source_l00145}00145\ \ \ \}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8cpp_source_l00146}00146\ }
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8cpp_source_l00147}00147\ \ \ \textcolor{keywordtype}{void}\ qPeaks::createInverseAndPseudoInverse(\textcolor{keyword}{const}\ Matrix\ \&X)}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8cpp_source_l00148}00148\ \ \ \{}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8cpp_source_l00149}00149\ \ \ \ \ Matrix\ Xt\ =\ X.T();}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8cpp_source_l00150}00150\ \ \ \ \ Matrix\ XtX\ =\ Xt\ *\ X;}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8cpp_source_l00151}00151\ \ \ \ \ inverseMatrices.push\_back(std::make\_unique<Matrix>(XtX.inv()));}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8cpp_source_l00152}00152\ \ \ \ \ psuedoInverses.push\_back(std::make\_unique<Matrix>(*(inverseMatrices.back())\ *\ Xt));}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8cpp_source_l00153}00153\ \ \ \}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8cpp_source_l00154}00154\ }
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8cpp_source_l00155}\mbox{\hyperlink{classq_1_1q_peaks_a36126b35fb916b8beb1c97ce23b36614}{00155}}\ \ \ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{classq_1_1q_peaks_a36126b35fb916b8beb1c97ce23b36614}{qPeaks::calculateNumberOfRegressions}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ n)\textcolor{keyword}{\ const}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8cpp_source_l00156}00156\ \textcolor{keyword}{\ \ }\{}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8cpp_source_l00157}00157\ \ \ \ \ \textcolor{comment}{/*}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8cpp_source_l00158}00158\ \textcolor{comment}{\ \ \ \ int\ maxScale\ =\ (int)\ (n\ -\/\ 1)\ /\ 2;}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8cpp_source_l00159}00159\ \textcolor{comment}{\ \ \ \ int\ sumScales\ =\ (int)\ (maxScale\ *\ (maxScale\ +\ 1)\ /\ 2)\ -\/\ 1;}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8cpp_source_l00160}00160\ \textcolor{comment}{\ \ \ \ return\ n\ *\ (maxScale-\/1)\ -\/\ sumScales*2;}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8cpp_source_l00161}00161\ \textcolor{comment}{\ \ \ \ */}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8cpp_source_l00162}00162\ \ \ \ \ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{namespaceq_a5ea2b3dedfaa98557b94135396085f23}{sum}}\ =\ 0;}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8cpp_source_l00163}00163\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ i\ =\ 4;\ i\ <=\ this-\/>global\_maxScale*2;\ i\ +=\ 2)}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8cpp_source_l00164}00164\ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8cpp_source_l00165}00165\ \ \ \ \ \ \ \mbox{\hyperlink{namespaceq_a5ea2b3dedfaa98557b94135396085f23}{sum}}\ +=\ std::max(0,\ n\ -\/\ i);}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8cpp_source_l00166}00166\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8cpp_source_l00167}00167\ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{namespaceq_a5ea2b3dedfaa98557b94135396085f23}{sum}};}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8cpp_source_l00168}00168\ \ \ \}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8cpp_source_l00169}00169\ }
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8cpp_source_l00170}\mbox{\hyperlink{classq_1_1q_peaks_afa5891d8281a1d12003c307a08c6a2c0}{00170}}\ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classq_1_1q_peaks_afa5891d8281a1d12003c307a08c6a2c0}{qPeaks::info}}()\textcolor{keyword}{\ const}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8cpp_source_l00171}00171\ \textcolor{keyword}{\ \ }\{}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8cpp_source_l00172}00172\ \ \ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}qPeaks\ object\(\backslash\)n"{}};}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8cpp_source_l00173}00173\ \ \ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}designMatrices\ size:\ "{}}\ <<\ designMatrices.size()\ <<\ \textcolor{stringliteral}{"{}\(\backslash\)n"{}};}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8cpp_source_l00174}00174\ \ \ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}inverseMatrices\ size:\ "{}}\ <<\ inverseMatrices.size()\ <<\ \textcolor{stringliteral}{"{}\(\backslash\)n"{}};}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8cpp_source_l00175}00175\ \ \ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}psuedoInverses\ size:\ "{}}\ <<\ psuedoInverses.size()\ <<\ \textcolor{stringliteral}{"{}\(\backslash\)n"{}};}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8cpp_source_l00176}00176\ \ \ \}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8cpp_source_l00177}00177\ }
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8cpp_source_l00178}\mbox{\hyperlink{classq_1_1q_peaks_a6ea06a52051f8ab0776f9949fd811179}{00178}}\ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classq_1_1q_peaks_a6ea06a52051f8ab0776f9949fd811179}{qPeaks::printMatrices}}(\textcolor{keywordtype}{int}\ scale)\textcolor{keyword}{\ const}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8cpp_source_l00179}00179\ \textcolor{keyword}{\ \ }\{}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8cpp_source_l00180}00180\ \ \ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}Design\ Matrix\(\backslash\)n"{}};}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8cpp_source_l00181}00181\ \ \ \ \ designMatrices[scale\ -\/\ 2]-\/>print();}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8cpp_source_l00182}00182\ \ \ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}Inverse\ Matrix\(\backslash\)n"{}};}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8cpp_source_l00183}00183\ \ \ \ \ inverseMatrices[scale\ -\/\ 2]-\/>print();}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8cpp_source_l00184}00184\ \ \ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}Pseudo-\/Inverse\ Matrix\(\backslash\)n"{}};}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8cpp_source_l00185}00185\ \ \ \ \ psuedoInverses[scale\ -\/\ 2]-\/>print();}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8cpp_source_l00186}00186\ \ \ \}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__qpeaks_8cpp_source_l00187}00187\ \}\ \textcolor{comment}{//\ namespace\ q}}
+
+\end{DoxyCode}

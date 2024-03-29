@@ -16,39 +16,50 @@
 \DoxyCodeLine{\Hypertarget{test__q_peak__visualize__profiles_8py_source_l00012}00012\ \ \ \ \ df1\ =\ df1.groupby(\textcolor{stringliteral}{'scan'}).agg(\{\textcolor{stringliteral}{'mz'}:\ list,\ \textcolor{stringliteral}{'int'}:\ list\}).reset\_index()}
 \DoxyCodeLine{\Hypertarget{test__q_peak__visualize__profiles_8py_source_l00013}00013\ }
 \DoxyCodeLine{\Hypertarget{test__q_peak__visualize__profiles_8py_source_l00014}00014\ \ \ \ \ \textcolor{comment}{\#\ group\ df2\ by\ 'ID'\ and\ aggregate\ 'MZ'\ and\ 'Intensity'}}
-\DoxyCodeLine{\Hypertarget{test__q_peak__visualize__profiles_8py_source_l00015}00015\ \ \ \ \ df2\ =\ df2.groupby(\textcolor{stringliteral}{'ID'}).agg(\{\textcolor{stringliteral}{'MZ'}:\ list,\ \textcolor{stringliteral}{'Intensity'}:\ list\}).reset\_index()}
+\DoxyCodeLine{\Hypertarget{test__q_peak__visualize__profiles_8py_source_l00015}00015\ \ \ \ \ df2\ =\ df2.groupby(\textcolor{stringliteral}{'ScanNumber'}).agg(\{\textcolor{stringliteral}{'MZ'}:\ list,\ \textcolor{stringliteral}{'Intensity'}:\ list\}).reset\_index()}
 \DoxyCodeLine{\Hypertarget{test__q_peak__visualize__profiles_8py_source_l00016}00016\ }
 \DoxyCodeLine{\Hypertarget{test__q_peak__visualize__profiles_8py_source_l00017}00017\ \ \ \ \ \textcolor{comment}{\#\ iterate\ over\ each\ group\ in\ df1}}
 \DoxyCodeLine{\Hypertarget{test__q_peak__visualize__profiles_8py_source_l00018}00018\ \ \ \ \ plt.figure()}
-\DoxyCodeLine{\Hypertarget{test__q_peak__visualize__profiles_8py_source_l00019}00019\ \ \ \ \ \textcolor{keywordflow}{for}\ index,\ row\ \textcolor{keywordflow}{in}\ df1.iterrows():}
-\DoxyCodeLine{\Hypertarget{test__q_peak__visualize__profiles_8py_source_l00020}00020\ \ \ \ \ \ \ \ \ \textcolor{comment}{\#\ create\ a\ new\ figure\ for\ each\ plot}}
-\DoxyCodeLine{\Hypertarget{test__q_peak__visualize__profiles_8py_source_l00021}00021\ \ \ \ \ \ \ \ \ \textcolor{comment}{\#\ plot\ 'mz'\ against\ 'int'\ for\ this\ group}}
-\DoxyCodeLine{\Hypertarget{test__q_peak__visualize__profiles_8py_source_l00022}00022\ \ \ \ \ \ \ \ \ plt.plot(row[\textcolor{stringliteral}{'mz'}],\ row[\textcolor{stringliteral}{'int'}],\ \textcolor{stringliteral}{'o'},\ label=\textcolor{stringliteral}{'File\ 1'})}
-\DoxyCodeLine{\Hypertarget{test__q_peak__visualize__profiles_8py_source_l00023}00023\ \ \ \ \ \ \ \ \ \textcolor{comment}{\#\ set\ the\ title\ of\ the\ plot\ to\ the\ 'scan'\ value\ of\ this\ group}}
-\DoxyCodeLine{\Hypertarget{test__q_peak__visualize__profiles_8py_source_l00024}00024\ \ \ \ \ \ \ \ \ plt.title(f\textcolor{stringliteral}{"{}Scan:\ \{row['scan']\}"{}})}
-\DoxyCodeLine{\Hypertarget{test__q_peak__visualize__profiles_8py_source_l00025}00025\ \ \ \ \ \ \ \ \ \textcolor{comment}{\#\ display\ the\ plot}}
-\DoxyCodeLine{\Hypertarget{test__q_peak__visualize__profiles_8py_source_l00026}00026\ }
-\DoxyCodeLine{\Hypertarget{test__q_peak__visualize__profiles_8py_source_l00027}00027\ \ \ \ \ \textcolor{comment}{\#\ iterate\ over\ each\ group\ in\ df2}}
-\DoxyCodeLine{\Hypertarget{test__q_peak__visualize__profiles_8py_source_l00028}00028\ \ \ \ \ \textcolor{keywordflow}{for}\ index,\ row\ \textcolor{keywordflow}{in}\ df2.iterrows():}
-\DoxyCodeLine{\Hypertarget{test__q_peak__visualize__profiles_8py_source_l00029}00029\ \ \ \ \ \ \ \ \ \textcolor{comment}{\#\ create\ a\ new\ figure\ for\ each\ plot}}
-\DoxyCodeLine{\Hypertarget{test__q_peak__visualize__profiles_8py_source_l00030}00030\ \ \ \ \ \ \ \ \ \textcolor{comment}{\#\ plot\ 'MZ'\ against\ 'Intensity'\ for\ this\ group}}
-\DoxyCodeLine{\Hypertarget{test__q_peak__visualize__profiles_8py_source_l00031}00031\ \ \ \ \ \ \ \ \ plt.plot(row[\textcolor{stringliteral}{'MZ'}],\ row[\textcolor{stringliteral}{'Intensity'}],\ \textcolor{stringliteral}{'x'},\ label=\textcolor{stringliteral}{'File\ 2'})}
-\DoxyCodeLine{\Hypertarget{test__q_peak__visualize__profiles_8py_source_l00032}00032\ \ \ \ \ \ \ \ \ \textcolor{comment}{\#\ set\ the\ title\ of\ the\ plot\ to\ the\ 'ID'\ value\ of\ this\ group}}
-\DoxyCodeLine{\Hypertarget{test__q_peak__visualize__profiles_8py_source_l00033}00033\ \ \ \ \ \ \ \ \ plt.title(f\textcolor{stringliteral}{"{}ID:\ \{row['ID']\}"{}})}
-\DoxyCodeLine{\Hypertarget{test__q_peak__visualize__profiles_8py_source_l00034}00034\ \ \ \ \ \ \ \ \ \textcolor{comment}{\#\ display\ the\ plot}}
-\DoxyCodeLine{\Hypertarget{test__q_peak__visualize__profiles_8py_source_l00035}00035\ \ \ \ \ plt.show()}
-\DoxyCodeLine{\Hypertarget{test__q_peak__visualize__profiles_8py_source_l00036}00036\ }
+\DoxyCodeLine{\Hypertarget{test__q_peak__visualize__profiles_8py_source_l00019}00019\ }
+\DoxyCodeLine{\Hypertarget{test__q_peak__visualize__profiles_8py_source_l00020}00020\ \ \ \ \ \textcolor{comment}{\#\ For\ df1}}
+\DoxyCodeLine{\Hypertarget{test__q_peak__visualize__profiles_8py_source_l00021}00021\ \ \ \ \ row\ =\ df1.iloc[0]}
+\DoxyCodeLine{\Hypertarget{test__q_peak__visualize__profiles_8py_source_l00022}00022\ \ \ \ \ plt.plot(row[\textcolor{stringliteral}{'mz'}],\ row[\textcolor{stringliteral}{'int'}],\ \textcolor{stringliteral}{'o'},\ label=\textcolor{stringliteral}{'File\ 1'})}
+\DoxyCodeLine{\Hypertarget{test__q_peak__visualize__profiles_8py_source_l00023}00023\ \ \ \ \ plt.title(f\textcolor{stringliteral}{"{}Scan:\ \{row['scan']\}"{}})}
+\DoxyCodeLine{\Hypertarget{test__q_peak__visualize__profiles_8py_source_l00024}00024\ }
+\DoxyCodeLine{\Hypertarget{test__q_peak__visualize__profiles_8py_source_l00025}00025\ \ \ \ \ \textcolor{comment}{\#\ For\ df2}}
+\DoxyCodeLine{\Hypertarget{test__q_peak__visualize__profiles_8py_source_l00026}00026\ \ \ \ \ row\ =\ df2.iloc[0]}
+\DoxyCodeLine{\Hypertarget{test__q_peak__visualize__profiles_8py_source_l00027}00027\ \ \ \ \ plt.plot(row[\textcolor{stringliteral}{'MZ'}],\ row[\textcolor{stringliteral}{'Intensity'}],\ \textcolor{stringliteral}{'x'},\ label=\textcolor{stringliteral}{'File\ 2'})}
+\DoxyCodeLine{\Hypertarget{test__q_peak__visualize__profiles_8py_source_l00028}00028\ \ \ \ \ plt.title(f\textcolor{stringliteral}{"{}ScanNumber:\ \{row['ScanNumber']\}"{}})}
+\DoxyCodeLine{\Hypertarget{test__q_peak__visualize__profiles_8py_source_l00029}00029\ }
+\DoxyCodeLine{\Hypertarget{test__q_peak__visualize__profiles_8py_source_l00030}00030\ \ \ \ \ \textcolor{comment}{\#\ for\ index,\ row\ in\ df1.iterrows():}}
+\DoxyCodeLine{\Hypertarget{test__q_peak__visualize__profiles_8py_source_l00031}00031\ \ \ \ \ \textcolor{comment}{\#\ \ \ \ \ \#\ create\ a\ new\ figure\ for\ each\ plot}}
+\DoxyCodeLine{\Hypertarget{test__q_peak__visualize__profiles_8py_source_l00032}00032\ \ \ \ \ \textcolor{comment}{\#\ \ \ \ \ \#\ plot\ 'mz'\ against\ 'int'\ for\ this\ group}}
+\DoxyCodeLine{\Hypertarget{test__q_peak__visualize__profiles_8py_source_l00033}00033\ \ \ \ \ \textcolor{comment}{\#\ \ \ \ \ plt.plot(row['mz'],\ row['int'],\ 'o',\ label='File\ 1')}}
+\DoxyCodeLine{\Hypertarget{test__q_peak__visualize__profiles_8py_source_l00034}00034\ \ \ \ \ \textcolor{comment}{\#\ \ \ \ \ \#\ set\ the\ title\ of\ the\ plot\ to\ the\ 'scan'\ value\ of\ this\ group}}
+\DoxyCodeLine{\Hypertarget{test__q_peak__visualize__profiles_8py_source_l00035}00035\ \ \ \ \ \textcolor{comment}{\#\ \ \ \ \ plt.title(f"{}Scan:\ \{row['scan']\}"{})}}
+\DoxyCodeLine{\Hypertarget{test__q_peak__visualize__profiles_8py_source_l00036}00036\ \ \ \ \ \textcolor{comment}{\#\ \ \ \ \ \#\ display\ the\ plot}}
 \DoxyCodeLine{\Hypertarget{test__q_peak__visualize__profiles_8py_source_l00037}00037\ }
-\DoxyCodeLine{\Hypertarget{test__q_peak__visualize__profiles_8py_source_l00038}00038\ \textcolor{keywordflow}{if}\ \_\_name\_\_\ ==\ \textcolor{stringliteral}{'\_\_main\_\_'}:}
-\DoxyCodeLine{\Hypertarget{test__q_peak__visualize__profiles_8py_source_l00039}\mbox{\hyperlink{namespacetest__q_peak__visualize__profiles_ad43ee3e3bc8be8e9fb17c4b9ad5bb152}{00039}}\ \ \ \ \ parser\ =\ argparse.ArgumentParser(description=\textcolor{stringliteral}{'Visualize\ LCMS\ profiles'})}
-\DoxyCodeLine{\Hypertarget{test__q_peak__visualize__profiles_8py_source_l00040}\mbox{\hyperlink{namespacetest__q_peak__visualize__profiles_a7a736d2c2ac3e2b47e8b3d098e62c888}{00040}}\ \ \ \ \ parser.add\_argument(\textcolor{stringliteral}{'file1'},\ type=str,\ help=\textcolor{stringliteral}{'Path\ to\ the\ first\ CSV\ file'})}
-\DoxyCodeLine{\Hypertarget{test__q_peak__visualize__profiles_8py_source_l00041}00041\ \ \ \ \ parser.add\_argument(\textcolor{stringliteral}{'file2'},\ type=str,\ help=\textcolor{stringliteral}{'Path\ to\ the\ second\ CSV\ file'})}
-\DoxyCodeLine{\Hypertarget{test__q_peak__visualize__profiles_8py_source_l00042}\mbox{\hyperlink{namespacetest__q_peak__visualize__profiles_a3aa26e6d421a4fc42600d32079a57249}{00042}}\ \ \ \ \ args\ =\ parser.parse\_args()}
-\DoxyCodeLine{\Hypertarget{test__q_peak__visualize__profiles_8py_source_l00043}00043\ \ \ \ \ \mbox{\hyperlink{namespacetest__q_peak__visualize__profiles_a60ec4ecfacca19b995c02d130b42c9a4}{plot\_mz\_vs\_intensity}}(args.file1,\ args.file2)}
-\DoxyCodeLine{\Hypertarget{test__q_peak__visualize__profiles_8py_source_l00044}00044\ }
-\DoxyCodeLine{\Hypertarget{test__q_peak__visualize__profiles_8py_source_l00045}00045\ \textcolor{comment}{\#\ \#\ Example\ usage}}
-\DoxyCodeLine{\Hypertarget{test__q_peak__visualize__profiles_8py_source_l00046}00046\ \textcolor{comment}{\#\ file1\ =\ 'test/data/test\_lcms\_data.csv'}}
-\DoxyCodeLine{\Hypertarget{test__q_peak__visualize__profiles_8py_source_l00047}00047\ \textcolor{comment}{\#\ file2\ =\ 'test/data/test\_lcms\_data\_out.csv'}}
-\DoxyCodeLine{\Hypertarget{test__q_peak__visualize__profiles_8py_source_l00048}00048\ \textcolor{comment}{\#\ plot\_mz\_vs\_intensity(file1,\ file2)}}
+\DoxyCodeLine{\Hypertarget{test__q_peak__visualize__profiles_8py_source_l00038}00038\ \ \ \ \ \textcolor{comment}{\#\ \#\ iterate\ over\ each\ group\ in\ df2}}
+\DoxyCodeLine{\Hypertarget{test__q_peak__visualize__profiles_8py_source_l00039}00039\ \ \ \ \ \textcolor{comment}{\#\ for\ index,\ row\ in\ df2.iterrows():}}
+\DoxyCodeLine{\Hypertarget{test__q_peak__visualize__profiles_8py_source_l00040}00040\ \ \ \ \ \textcolor{comment}{\#\ \ \ \ \ \#\ create\ a\ new\ figure\ for\ each\ plot}}
+\DoxyCodeLine{\Hypertarget{test__q_peak__visualize__profiles_8py_source_l00041}00041\ \ \ \ \ \textcolor{comment}{\#\ \ \ \ \ \#\ plot\ 'MZ'\ against\ 'Intensity'\ for\ this\ group}}
+\DoxyCodeLine{\Hypertarget{test__q_peak__visualize__profiles_8py_source_l00042}00042\ \ \ \ \ \textcolor{comment}{\#\ \ \ \ \ plt.plot(row['MZ'],\ row['Intensity'],\ 'x',\ label='File\ 2')}}
+\DoxyCodeLine{\Hypertarget{test__q_peak__visualize__profiles_8py_source_l00043}00043\ \ \ \ \ \textcolor{comment}{\#\ \ \ \ \ \#\ set\ the\ title\ of\ the\ plot\ to\ the\ 'ScanNumber'\ value\ of\ this\ group}}
+\DoxyCodeLine{\Hypertarget{test__q_peak__visualize__profiles_8py_source_l00044}00044\ \ \ \ \ \textcolor{comment}{\#\ \ \ \ \ plt.title(f"{}ScanNumber:\ \{row['ScanNumber']\}"{})}}
+\DoxyCodeLine{\Hypertarget{test__q_peak__visualize__profiles_8py_source_l00045}00045\ \ \ \ \ \textcolor{comment}{\#\ \ \ \ \ \#\ display\ the\ plot}}
+\DoxyCodeLine{\Hypertarget{test__q_peak__visualize__profiles_8py_source_l00046}00046\ \ \ \ \ plt.show()}
+\DoxyCodeLine{\Hypertarget{test__q_peak__visualize__profiles_8py_source_l00047}00047\ }
+\DoxyCodeLine{\Hypertarget{test__q_peak__visualize__profiles_8py_source_l00048}00048\ }
+\DoxyCodeLine{\Hypertarget{test__q_peak__visualize__profiles_8py_source_l00049}00049\ \textcolor{keywordflow}{if}\ \_\_name\_\_\ ==\ \textcolor{stringliteral}{'\_\_main\_\_'}:}
+\DoxyCodeLine{\Hypertarget{test__q_peak__visualize__profiles_8py_source_l00050}\mbox{\hyperlink{namespacetest__q_peak__visualize__profiles_ad43ee3e3bc8be8e9fb17c4b9ad5bb152}{00050}}\ \ \ \ \ parser\ =\ argparse.ArgumentParser(description=\textcolor{stringliteral}{'Visualize\ LCMS\ profiles'})}
+\DoxyCodeLine{\Hypertarget{test__q_peak__visualize__profiles_8py_source_l00051}\mbox{\hyperlink{namespacetest__q_peak__visualize__profiles_a7a736d2c2ac3e2b47e8b3d098e62c888}{00051}}\ \ \ \ \ parser.add\_argument(\textcolor{stringliteral}{'file1'},\ type=str,\ help=\textcolor{stringliteral}{'Path\ to\ the\ first\ CSV\ file'})}
+\DoxyCodeLine{\Hypertarget{test__q_peak__visualize__profiles_8py_source_l00052}00052\ \ \ \ \ parser.add\_argument(\textcolor{stringliteral}{'file2'},\ type=str,\ help=\textcolor{stringliteral}{'Path\ to\ the\ second\ CSV\ file'})}
+\DoxyCodeLine{\Hypertarget{test__q_peak__visualize__profiles_8py_source_l00053}\mbox{\hyperlink{namespacetest__q_peak__visualize__profiles_a3aa26e6d421a4fc42600d32079a57249}{00053}}\ \ \ \ \ args\ =\ parser.parse\_args()}
+\DoxyCodeLine{\Hypertarget{test__q_peak__visualize__profiles_8py_source_l00054}00054\ \ \ \ \ \mbox{\hyperlink{namespacetest__q_peak__visualize__profiles_a60ec4ecfacca19b995c02d130b42c9a4}{plot\_mz\_vs\_intensity}}(args.file1,\ args.file2)}
+\DoxyCodeLine{\Hypertarget{test__q_peak__visualize__profiles_8py_source_l00055}00055\ }
+\DoxyCodeLine{\Hypertarget{test__q_peak__visualize__profiles_8py_source_l00056}00056\ \textcolor{comment}{\#\ \#\ Example\ usage}}
+\DoxyCodeLine{\Hypertarget{test__q_peak__visualize__profiles_8py_source_l00057}00057\ \textcolor{comment}{\#\ file1\ =\ 'test/data/test\_lcms\_data.csv'}}
+\DoxyCodeLine{\Hypertarget{test__q_peak__visualize__profiles_8py_source_l00058}00058\ \textcolor{comment}{\#\ file2\ =\ 'test/data/test\_lcms\_data\_out.csv'}}
+\DoxyCodeLine{\Hypertarget{test__q_peak__visualize__profiles_8py_source_l00059}00059\ \textcolor{comment}{\#\ plot\_mz\_vs\_intensity(file1,\ file2)}}
 
 \end{DoxyCode}

@@ -1,0 +1,159 @@
+\doxysection{q\+::q\+Peaks Class Reference}
+\hypertarget{classq_1_1q_peaks}{}\label{classq_1_1q_peaks}\index{q::qPeaks@{q::qPeaks}}
+
+
+A class to store and apply a peak evaluation model.  
+
+
+
+
+{\ttfamily \#include $<$qalgorithms\+\_\+qpeaks.\+h$>$}
+
+\doxysubsubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\hyperlink{classq_1_1q_peaks_a401e618cceed5b32fae8b6e9e5e57005}{q\+Peaks}} ()
+\item 
+\mbox{\hyperlink{classq_1_1q_peaks_a2d61ca92c700c43e8bfcb573326748dc}{q\+Peaks}} (const \mbox{\hyperlink{namespaceq_aab5cf99505e4325617dbe9365f547a35}{var\+Data\+Type}} \&data\+Vec)
+\begin{DoxyCompactList}\small\item\em Construct a new q Peaks object using var\+Data\+Type object to initialize the object Matrices. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{classq_1_1q_peaks_a6fe1f39896e39558ac88cbeb7fab5a6c}{\texorpdfstring{$\sim$}{\string~}q\+Peaks}} ()
+\item 
+void \mbox{\hyperlink{classq_1_1q_peaks_ada5be6820b1e303b23db55815875cf99}{find\+Peaks}} (const \mbox{\hyperlink{namespaceq_aab5cf99505e4325617dbe9365f547a35}{var\+Data\+Type}} \&data\+Vec)
+\begin{DoxyCompactList}\small\item\em Find the peaks in the data. Container function to call the find\+Peaks method. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{classq_1_1q_peaks_abb10dc6eddd96ef3a676f533b654a77c}{running\+Regression}} (const \mbox{\hyperlink{classq_1_1_ref_matrix}{Ref\+Matrix}} \&X, const \mbox{\hyperlink{classq_1_1_ref_matrix}{Ref\+Matrix}} \&Y)
+\item 
+int \mbox{\hyperlink{classq_1_1q_peaks_a36126b35fb916b8beb1c97ce23b36614}{calculate\+Number\+Of\+Regressions}} (const int n) const
+\begin{DoxyCompactList}\small\item\em Calculate the number of regressions for the given number of data points. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{classq_1_1q_peaks_afa5891d8281a1d12003c307a08c6a2c0}{info}} () const
+\item 
+void \mbox{\hyperlink{classq_1_1q_peaks_a6ea06a52051f8ab0776f9949fd811179}{print\+Matrices}} (int scale) const
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+A class to store and apply a peak evaluation model. 
+
+Definition at line \mbox{\hyperlink{qalgorithms__qpeaks_8h_source_l00022}{22}} of file \mbox{\hyperlink{qalgorithms__qpeaks_8h_source}{qalgorithms\+\_\+qpeaks.\+h}}.
+
+
+
+\doxysubsection{Constructor \& Destructor Documentation}
+\Hypertarget{classq_1_1q_peaks_a401e618cceed5b32fae8b6e9e5e57005}\label{classq_1_1q_peaks_a401e618cceed5b32fae8b6e9e5e57005} 
+\index{q::qPeaks@{q::qPeaks}!qPeaks@{qPeaks}}
+\index{qPeaks@{qPeaks}!q::qPeaks@{q::qPeaks}}
+\doxysubsubsection{\texorpdfstring{qPeaks()}{qPeaks()}\hspace{0.1cm}{\footnotesize\ttfamily [1/2]}}
+{\footnotesize\ttfamily q\+::q\+Peaks\+::q\+Peaks (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})}
+
+
+
+Definition at line \mbox{\hyperlink{qalgorithms__qpeaks_8cpp_source_l00011}{11}} of file \mbox{\hyperlink{qalgorithms__qpeaks_8cpp_source}{qalgorithms\+\_\+qpeaks.\+cpp}}.
+
+\Hypertarget{classq_1_1q_peaks_a2d61ca92c700c43e8bfcb573326748dc}\label{classq_1_1q_peaks_a2d61ca92c700c43e8bfcb573326748dc} 
+\index{q::qPeaks@{q::qPeaks}!qPeaks@{qPeaks}}
+\index{qPeaks@{qPeaks}!q::qPeaks@{q::qPeaks}}
+\doxysubsubsection{\texorpdfstring{qPeaks()}{qPeaks()}\hspace{0.1cm}{\footnotesize\ttfamily [2/2]}}
+{\footnotesize\ttfamily q\+::q\+Peaks\+::q\+Peaks (\begin{DoxyParamCaption}\item[{const \mbox{\hyperlink{namespaceq_aab5cf99505e4325617dbe9365f547a35}{var\+Data\+Type}} \&}]{data\+Vec }\end{DoxyParamCaption})}
+
+
+
+Construct a new q Peaks object using var\+Data\+Type object to initialize the object Matrices. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em data\+Vec} & \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line \mbox{\hyperlink{qalgorithms__qpeaks_8cpp_source_l00013}{13}} of file \mbox{\hyperlink{qalgorithms__qpeaks_8cpp_source}{qalgorithms\+\_\+qpeaks.\+cpp}}.
+
+\Hypertarget{classq_1_1q_peaks_a6fe1f39896e39558ac88cbeb7fab5a6c}\label{classq_1_1q_peaks_a6fe1f39896e39558ac88cbeb7fab5a6c} 
+\index{q::qPeaks@{q::qPeaks}!````~qPeaks@{\texorpdfstring{$\sim$}{\string~}qPeaks}}
+\index{````~qPeaks@{\texorpdfstring{$\sim$}{\string~}qPeaks}!q::qPeaks@{q::qPeaks}}
+\doxysubsubsection{\texorpdfstring{\texorpdfstring{$\sim$}{\string~}qPeaks()}{\string~qPeaks()}}
+{\footnotesize\ttfamily q\+::q\+Peaks\+::\texorpdfstring{$\sim$}{\string~}q\+Peaks (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})}
+
+
+
+Definition at line \mbox{\hyperlink{qalgorithms__qpeaks_8cpp_source_l00047}{47}} of file \mbox{\hyperlink{qalgorithms__qpeaks_8cpp_source}{qalgorithms\+\_\+qpeaks.\+cpp}}.
+
+
+
+\doxysubsection{Member Function Documentation}
+\Hypertarget{classq_1_1q_peaks_a36126b35fb916b8beb1c97ce23b36614}\label{classq_1_1q_peaks_a36126b35fb916b8beb1c97ce23b36614} 
+\index{q::qPeaks@{q::qPeaks}!calculateNumberOfRegressions@{calculateNumberOfRegressions}}
+\index{calculateNumberOfRegressions@{calculateNumberOfRegressions}!q::qPeaks@{q::qPeaks}}
+\doxysubsubsection{\texorpdfstring{calculateNumberOfRegressions()}{calculateNumberOfRegressions()}}
+{\footnotesize\ttfamily int q\+::q\+Peaks\+::calculate\+Number\+Of\+Regressions (\begin{DoxyParamCaption}\item[{const int}]{n }\end{DoxyParamCaption}) const}
+
+
+
+Calculate the number of regressions for the given number of data points. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em n} & \+: number of data points \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+int \+: number of regressions 
+\end{DoxyReturn}
+
+
+Definition at line \mbox{\hyperlink{qalgorithms__qpeaks_8cpp_source_l00155}{155}} of file \mbox{\hyperlink{qalgorithms__qpeaks_8cpp_source}{qalgorithms\+\_\+qpeaks.\+cpp}}.
+
+\Hypertarget{classq_1_1q_peaks_ada5be6820b1e303b23db55815875cf99}\label{classq_1_1q_peaks_ada5be6820b1e303b23db55815875cf99} 
+\index{q::qPeaks@{q::qPeaks}!findPeaks@{findPeaks}}
+\index{findPeaks@{findPeaks}!q::qPeaks@{q::qPeaks}}
+\doxysubsubsection{\texorpdfstring{findPeaks()}{findPeaks()}}
+{\footnotesize\ttfamily void q\+::q\+Peaks\+::find\+Peaks (\begin{DoxyParamCaption}\item[{const \mbox{\hyperlink{namespaceq_aab5cf99505e4325617dbe9365f547a35}{var\+Data\+Type}} \&}]{data\+Vec }\end{DoxyParamCaption})}
+
+
+
+Find the peaks in the data. Container function to call the find\+Peaks method. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em data\+Vec} & \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line \mbox{\hyperlink{qalgorithms__qpeaks_8cpp_source_l00049}{49}} of file \mbox{\hyperlink{qalgorithms__qpeaks_8cpp_source}{qalgorithms\+\_\+qpeaks.\+cpp}}.
+
+\Hypertarget{classq_1_1q_peaks_afa5891d8281a1d12003c307a08c6a2c0}\label{classq_1_1q_peaks_afa5891d8281a1d12003c307a08c6a2c0} 
+\index{q::qPeaks@{q::qPeaks}!info@{info}}
+\index{info@{info}!q::qPeaks@{q::qPeaks}}
+\doxysubsubsection{\texorpdfstring{info()}{info()}}
+{\footnotesize\ttfamily void q\+::q\+Peaks\+::info (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption}) const}
+
+
+
+Definition at line \mbox{\hyperlink{qalgorithms__qpeaks_8cpp_source_l00170}{170}} of file \mbox{\hyperlink{qalgorithms__qpeaks_8cpp_source}{qalgorithms\+\_\+qpeaks.\+cpp}}.
+
+\Hypertarget{classq_1_1q_peaks_a6ea06a52051f8ab0776f9949fd811179}\label{classq_1_1q_peaks_a6ea06a52051f8ab0776f9949fd811179} 
+\index{q::qPeaks@{q::qPeaks}!printMatrices@{printMatrices}}
+\index{printMatrices@{printMatrices}!q::qPeaks@{q::qPeaks}}
+\doxysubsubsection{\texorpdfstring{printMatrices()}{printMatrices()}}
+{\footnotesize\ttfamily void q\+::q\+Peaks\+::print\+Matrices (\begin{DoxyParamCaption}\item[{int}]{scale }\end{DoxyParamCaption}) const}
+
+
+
+Definition at line \mbox{\hyperlink{qalgorithms__qpeaks_8cpp_source_l00178}{178}} of file \mbox{\hyperlink{qalgorithms__qpeaks_8cpp_source}{qalgorithms\+\_\+qpeaks.\+cpp}}.
+
+\Hypertarget{classq_1_1q_peaks_abb10dc6eddd96ef3a676f533b654a77c}\label{classq_1_1q_peaks_abb10dc6eddd96ef3a676f533b654a77c} 
+\index{q::qPeaks@{q::qPeaks}!runningRegression@{runningRegression}}
+\index{runningRegression@{runningRegression}!q::qPeaks@{q::qPeaks}}
+\doxysubsubsection{\texorpdfstring{runningRegression()}{runningRegression()}}
+{\footnotesize\ttfamily void q\+::q\+Peaks\+::running\+Regression (\begin{DoxyParamCaption}\item[{const \mbox{\hyperlink{classq_1_1_ref_matrix}{Ref\+Matrix}} \&}]{X,  }\item[{const \mbox{\hyperlink{classq_1_1_ref_matrix}{Ref\+Matrix}} \&}]{Y }\end{DoxyParamCaption})}
+
+
+
+Definition at line \mbox{\hyperlink{qalgorithms__qpeaks_8cpp_source_l00075}{75}} of file \mbox{\hyperlink{qalgorithms__qpeaks_8cpp_source}{qalgorithms\+\_\+qpeaks.\+cpp}}.
+
+
+
+The documentation for this class was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+include/\mbox{\hyperlink{qalgorithms__qpeaks_8h}{qalgorithms\+\_\+qpeaks.\+h}}\item 
+src/\mbox{\hyperlink{qalgorithms__qpeaks_8cpp}{qalgorithms\+\_\+qpeaks.\+cpp}}\end{DoxyCompactItemize}

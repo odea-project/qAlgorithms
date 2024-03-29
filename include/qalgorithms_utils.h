@@ -74,5 +74,7 @@ namespace q
     void update(int current);
     void complete();
   };
-}
+
+  extern double tValuesArray[500];
+} // namespace q
 #endif // QALGORITHMS_UTILS_H

@@ -2,10 +2,12 @@
 #ifndef QALGORITHMS_MATRIX_H // Include guarde to prevent double inclusion
 #define QALGORITHMS_MATRIX_H
 
+
 // external
 #include <iostream>
 #include <cmath>
 #include <algorithm>
+#include <array>
 
 /* This file includes the q::matrix class*/
 namespace q
@@ -71,6 +73,7 @@ namespace q
     Matrix convolveSymmetric(const Matrix &kernel) const;
     Matrix convolveRotation(const Matrix &kernel) const;
     Matrix convolveAntisymmetric(const Matrix &kernel) const;
+    Matrix convoleCombiend(const Matrix &kernel) const;
     void sort1(); // sorting by the first column
     void print() const;
   };

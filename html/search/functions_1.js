@@ -1,7 +1,7 @@
 var searchData=
 [
-  ['calcapex_5fposition_0',['calcApex_position',['../classq_1_1_peak.html#a592bb5eb08f59ae80227dff6372d6551',1,'q::Peak::calcApex_position()'],['../classq_1_1_peakmodel.html#a7de8c78779b84539d2106c8df6fccd82',1,'q::Peakmodel::calcApex_position(const int scale, const double b1, const double b2, const int xIndex, double &amp;apex_position, bool &amp;fltrVal)']]],
-  ['calcapexvalley_5fposition_1',['calcApexValley_position',['../classq_1_1_peakmodel.html#a542dd57336dca49ad04ec7008b927314',1,'q::Peakmodel::calcApexValley_position()'],['../classq_1_1_peak.html#aff2bc1e2df11ae6a77089acb48c8fa45',1,'q::Peak::calcApexValley_position()']]],
+  ['calcapex_5fposition_0',['calcApex_position',['../classq_1_1_peakmodel.html#a7de8c78779b84539d2106c8df6fccd82',1,'q::Peakmodel']]],
+  ['calcapexvalley_5fposition_1',['calcApexValley_position',['../classq_1_1_peakmodel.html#a542dd57336dca49ad04ec7008b927314',1,'q::Peakmodel']]],
   ['calcjacobianmatrix_5farea_2',['calcJacobianMatrix_Area',['../classq_1_1_peakmodel.html#a16319abd9fdca96c7c2cdf752fdd9202',1,'q::Peakmodel']]],
   ['calcjacobianmatrix_5farea_5fhalf_3',['calcJacobianMatrix_Area_half',['../classq_1_1_peakmodel.html#a4e5b741b7bf88fda644ea849cd40ffbc',1,'q::Peakmodel']]],
   ['calcjacobianmatrix_5farea_5fhalf_5fvalley_4',['calcJacobianMatrix_Area_half_Valley',['../classq_1_1_peakmodel.html#a2c2d46444af989d434546febe4ca96ff',1,'q::Peakmodel']]],
@@ -14,15 +14,17 @@ var searchData=
   ['calcpeakareanotcovered_11',['calcPeakAreaNotCovered',['../classq_1_1_peakmodel.html#aae34486dfec89dba267ea6c62a4f3895',1,'q::Peakmodel']]],
   ['calcpeakheight_12',['calcPeakHeight',['../classq_1_1_peakmodel.html#aa6aa3d1f36fa0781b3d706eccfeb5626',1,'q::Peakmodel']]],
   ['calculatedesignmatrix_13',['calculateDesignMatrix',['../classq_1_1_peakmodel.html#a78e1dbff931aa1d7a63396af1e791794',1,'q::Peakmodel']]],
-  ['calculatepseudoinverse_14',['calculatePseudoInverse',['../classq_1_1_peakmodel.html#ade15a55d5cc786a8282617014024a87e',1,'q::Peakmodel']]],
-  ['clearpeaks_15',['clearPeaks',['../classq_1_1_data_type_1_1_peak_list.html#a65d3ba6fd8d79ca816a575878e382497',1,'q::DataType::PeakList']]],
-  ['coefficientcriterion_16',['coefficientCriterion',['../classq_1_1_peakmodel.html#ae308d29f7b6c9c548f4d2edb8fd8169c',1,'q::Peakmodel']]],
-  ['coefficientcriterioncases_17',['coefficientCriterionCases',['../classq_1_1_peakmodel.html#af75235cd26feb7b8081e6078db34bded',1,'q::Peakmodel']]],
-  ['col_18',['col',['../classq_1_1_matrix.html#ae8c80426ebd00d309a1e79eb9d38f97e',1,'q::Matrix']]],
-  ['complete_19',['complete',['../classq_1_1_progress_bar.html#a177347e1a65f6c5ae99a590804d5738c',1,'q::ProgressBar']]],
-  ['convolveantisymmetric_20',['convolveAntisymmetric',['../classq_1_1_matrix.html#a956aba54c16b1e9c65b8c131d0b9cf6d',1,'q::Matrix']]],
-  ['convolvep_21',['convolveP',['../classq_1_1_peakmodel.html#abc6a79cb45966a252ef3247d3ac95196',1,'q::Peakmodel']]],
-  ['convolverotation_22',['convolveRotation',['../classq_1_1_matrix.html#a549e37550d5df9f221ea8ab647751221',1,'q::Matrix']]],
-  ['convolvesymmetric_23',['convolveSymmetric',['../classq_1_1_matrix.html#a0d2a7bf49f60c2cb4e81f5489a175860',1,'q::Matrix']]],
-  ['cutdata_24',['cutData',['../classq_1_1_measurement_data.html#a9a22a34f93ed1aa17227dee44ab20a2d',1,'q::MeasurementData::cutData()'],['../classq_1_1_l_c_m_s_data.html#a6c799dc9ef6918446df62515bc7daa8d',1,'q::LCMSData::cutData()']]]
+  ['calculatenumberofregressions_14',['calculateNumberOfRegressions',['../classq_1_1q_peaks.html#a36126b35fb916b8beb1c97ce23b36614',1,'q::qPeaks']]],
+  ['calculatepseudoinverse_15',['calculatePseudoInverse',['../classq_1_1_peakmodel.html#ade15a55d5cc786a8282617014024a87e',1,'q::Peakmodel']]],
+  ['clearpeaks_16',['clearPeaks',['../classq_1_1_data_type_1_1_peak_list.html#a65d3ba6fd8d79ca816a575878e382497',1,'q::DataType::PeakList']]],
+  ['coefficientcriterion_17',['coefficientCriterion',['../classq_1_1_peakmodel.html#ae308d29f7b6c9c548f4d2edb8fd8169c',1,'q::Peakmodel']]],
+  ['coefficientcriterioncases_18',['coefficientCriterionCases',['../classq_1_1_peakmodel.html#af75235cd26feb7b8081e6078db34bded',1,'q::Peakmodel']]],
+  ['col_19',['col',['../classq_1_1_matrix.html#ae8c80426ebd00d309a1e79eb9d38f97e',1,'q::Matrix']]],
+  ['complete_20',['complete',['../classq_1_1_progress_bar.html#a177347e1a65f6c5ae99a590804d5738c',1,'q::ProgressBar']]],
+  ['convolecombiend_21',['convoleCombiend',['../classq_1_1_matrix.html#aceb7f09f0eea5817c7e46d7cdbb7870d',1,'q::Matrix']]],
+  ['convolveantisymmetric_22',['convolveAntisymmetric',['../classq_1_1_matrix.html#a956aba54c16b1e9c65b8c131d0b9cf6d',1,'q::Matrix']]],
+  ['convolvep_23',['convolveP',['../classq_1_1_peakmodel.html#abc6a79cb45966a252ef3247d3ac95196',1,'q::Peakmodel']]],
+  ['convolverotation_24',['convolveRotation',['../classq_1_1_matrix.html#a549e37550d5df9f221ea8ab647751221',1,'q::Matrix']]],
+  ['convolvesymmetric_25',['convolveSymmetric',['../classq_1_1_matrix.html#a0d2a7bf49f60c2cb4e81f5489a175860',1,'q::Matrix']]],
+  ['cutdata_26',['cutData',['../classq_1_1_measurement_data.html#ab1f64fdddef6f6549b6f2a18b4b4bd7e',1,'q::MeasurementData::cutData()'],['../classq_1_1_l_c_m_s_data.html#a6c799dc9ef6918446df62515bc7daa8d',1,'q::LCMSData::cutData()']]]
 ];

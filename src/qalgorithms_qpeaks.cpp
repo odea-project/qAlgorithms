@@ -14,8 +14,9 @@ namespace q
   {
     std::visit([this](auto &&arg)
                {
+                /*
                 // get the largest number of data points in a single data set within the dataVec
-                size_t maxDataPoints = 0;
+                int maxDataPoints = 0;
                 // iterate over the map of varDataType datatype objects
                  for (auto &pair : *arg)
                  {
@@ -30,10 +31,11 @@ namespace q
                       maxDataPoints = data.size();
                     }
                  }
-                 // set the maxScale to floor of (maxDataPoints-1)/2
-                 int maxScale = (int) (maxDataPoints-1)/2;
+                int maxScale = (int) (maxDataPoints-1)/2;
+                */
+                  this->global_maxScale = 10;
                   // iterate over the range of the maxScale to create Matrices for each scale
-                  for (int scale = 2; scale <= maxScale; scale++)
+                  for (int scale = 2; scale <= this->global_maxScale; scale++)
                   {
                     createDesignMatrix(scale);
                     createInverseAndPseudoInverse(*(designMatrices.back()));
@@ -48,9 +50,9 @@ namespace q
   {
     std::visit([this](auto &&arg)
                {
-                // iterate over the map of varDataType datatype objects
-                // use parallel for loop to iterate over the dataVec
-                #pragma omp parallel for
+    // iterate over the map of varDataType datatype objects
+    // use parallel for loop to iterate over the dataVec
+#pragma omp parallel for
                 for (auto &pair : *arg)
                  {
                   // de-reference the unique pointer of the object
@@ -65,23 +67,6 @@ namespace q
                     X.assignRef(i, 0, data[i]->x());
                     Y.assignRef(i, 0, data[i]->y());
                   }
-                  // initialize the network structure of peaks
-                  // std::unordered_map<int, std::unique_ptr<Peak>> peaklist;
-
-                  /* THIS IS TOO SLOW TO ADD ALL REGRESSIONS
-                  // add Peak objects to the peaklist
-                  int currentScale = 2;
-                  int currentScaleIndexLimit = currentScale * (n - currentScale - 1) - n + 2;
-                  for (int i = 0; i < numRegressions; i++)
-                  {
-                    if (i == currentScaleIndexLimit)
-                    {
-                      currentScale++;
-                      currentScaleIndexLimit += n - currentScale * 2;
-                    }
-                    peaklist.emplace(i, std::make_unique<Peak>(i, currentScale));
-                  }
-                  */
                   runningRegression(X, Y);
                 } },
                dataVec);
@@ -93,56 +78,83 @@ namespace q
     size_t n = Y.getRows();
     Matrix Ylog = Y.log();
 
-    int numRegressions = calculateNumberOfRegressions(n);
-    // reserve space for regression coefficients matrix, which is a matrix of size 4 x numRegressions
-    Matrix B(4, numRegressions);
-    // add the organization structure for filtering and iterating over the regressions
-    std::vector<int> regression_indices;
-    regression_indices.reserve(numRegressions);
-    for (int i = 0; i < numRegressions; i++)
-    {
-      regression_indices.push_back(i);
-    }
-
-    // initialize the regression support vectors
-    std::vector<int> xIndices;
-    xIndices.reserve(n);
-
     // perform the running regression
-    int maxScale = (int) (n-1)/2;
+    int maxScale = std::min(this->global_maxScale, (int)(n - 1) / 2);
     for (int scale = 2; scale <= maxScale; scale++)
     {
-      convolveP(B, xIndices, *(psuedoInverses[scale-2]), Ylog);
+      Matrix b = Ylog.convoleCombiend(*(psuedoInverses[scale - 2]));
+      validateRegressions(b, Ylog, scale);
     } // end for scale loop
-    
+  }   // end runningRegression
 
-  } // end runningRegression
-
-  // Convolution
-  void qPeaks::convolveP(
-    Matrix& beta, 
-    std::vector<int>& xIndices, 
-    const Matrix& P, 
-    const Matrix& ylog) {
-      int currentIndex = 0;
-      size_t n = ylog.numRows();
-      size_t k = P.numCols();
-      size_t n_segments = n - k + 1;
-
-      Matrix p1 = ylog.convolveSymmetric(P.row(0));
-      Matrix p2 = ylog.convolveRotation(P.row(1));
-      Matrix p34 = ylog.convolveAntisymmetric(P.row(2));
-      int u = 0;
-      for (size_t j = 0; j < n_segments; j++)
+  void qPeaks::validateRegressions(const Matrix &B, const Matrix &Ylog, const int scale)
+  {
+    // declare variables
+    int valley_position;
+    int apex_position;
+    double inverseMatrix_2_2 = (*(inverseMatrices[scale - 2]))(2, 2);
+    double inverseMatrix_3_3 = (*(inverseMatrices[scale - 2]))(3, 3);
+    Matrix &X = *(designMatrices[scale - 2]);
+    // coefficients filter
+    // iterate columwise over the coefficients matrix
+    for (size_t i = 0; i < B.numCols(); i++)
+    {
+      // calculate the checksum for case differentiation
+      int key = (B(1, i) < 0 ? 4 : 0) + (B(2, i) < 0 ? 2 : 0) + (B(3, i) < 0 ? 1 : 0);
+      switch (key)
       {
-        beta(0,j + currentIndex) = p1(0, j);
-        beta(1,j + currentIndex) = p2(0, j); 
-        beta(2,j + currentIndex) = p34(0,j); 
-        beta(3,j + currentIndex) = p34(1,j); 
-        xIndices[j + currentIndex] = u + k/2;
-        u++;
-      } 
-      currentIndex += u;
+      case 7: // Case 1a: apex left
+        if (-B(1, i) / 2 / B(2, i) <= -scale)
+        {
+          continue; // invalid apex position
+        }
+        break;
+      case 3: // Case 1b: apex right
+        if (-B(1, i) / 2 / B(3, i) >= scale)
+        {
+          continue; // invalid apex position
+        }
+        break;
+      case 6:                                     // Case 2a: apex left | valley right
+        apex_position = -B(1, i) / 2 / B(2, i);   // is negative
+        valley_position = -B(1, i) / 2 / B(3, i); // is positive
+        if (apex_position <= -scale || valley_position - apex_position <= 2)
+        {
+          continue; // invalid apex and valley positions
+        }
+        break;
+      case 1:                                     // Case 2b: apex right | valley left
+        apex_position = -B(1, i) / 2 / B(3, i);   // is positive
+        valley_position = -B(1, i) / 2 / B(2, i); // is negative
+        if (apex_position >= scale || apex_position - valley_position <= 2)
+        {
+          continue; // invalid apex and valley positions
+        }
+        break;
+      default:
+        continue; // invalid case
+      }           // end switch
+
+      // quadratic term filter
+      double mse = calcMse(X * B.col(i), Ylog);
+      double tValue = std::max(std::abs(B(2, i)) * std::sqrt(inverseMatrix_2_2 * mse), std::abs(B(3, i)) * std::sqrt(inverseMatrix_3_3 * mse));
+      if (tValue < tValuesArray[scale * 2 - 4]) // df is scale*2-3 but tValuesArray is zero-based
+      {
+        continue; // statistical insignificance of the quadratic term
+      }
+    } // end for loop
+  }   // end validateRegressions
+
+  double qPeaks::calcMse(const Matrix &yhat, const Matrix &y) const
+  {
+    size_t n = yhat.numel();
+    double sum = 0.0;
+    for (size_t i = 0; i < n; ++i)
+    {
+      double diff = yhat.getElement(i) - y.getElement(i);
+      sum += diff * diff;
+    }
+    return sum / (n - 4);
   }
 
   void qPeaks::createDesignMatrix(const int scale)
@@ -194,12 +206,20 @@ namespace q
     inverseMatrices.push_back(std::make_unique<Matrix>(XtX.inv()));
     psuedoInverses.push_back(std::make_unique<Matrix>(*(inverseMatrices.back()) * Xt));
   }
-  
+
   int qPeaks::calculateNumberOfRegressions(const int n) const
   {
+    /*
     int maxScale = (int) (n - 1) / 2;
     int sumScales = (int) (maxScale * (maxScale + 1) / 2) - 1;
     return n * (maxScale-1) - sumScales*2;
+    */
+    int sum = 0;
+    for (int i = 4; i <= this->global_maxScale * 2; i += 2)
+    {
+      sum += std::max(0, n - i);
+    }
+    return sum;
   }
 
   void qPeaks::info() const

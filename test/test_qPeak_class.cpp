@@ -47,11 +47,7 @@ int main()
   // Calculate the duration
   std::chrono::duration<double> duration = end - start;
   std::cout << "Duration: " << duration.count() << " seconds" << std::endl;
-
-
-
-
-
+  
   /*
   // export the data to a CSV file
   // define the filename
