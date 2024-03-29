@@ -90,11 +90,12 @@ namespace q
   void qPeaks::validateRegressions(const Matrix &B, const Matrix &Ylog, const int scale)
   {
     // declare variables
-    int valley_position;
-    int apex_position;
+    double valley_position;
+    double apex_position;
     double inverseMatrix_2_2 = (*(inverseMatrices[scale - 2]))(2, 2);
     double inverseMatrix_3_3 = (*(inverseMatrices[scale - 2]))(3, 3);
     Matrix &X = *(designMatrices[scale - 2]);
+    Matrix Jacobian_height(1,4);
     // coefficients filter
     // iterate columwise over the coefficients matrix
     for (size_t i = 0; i < B.numCols(); i++)
@@ -104,13 +105,15 @@ namespace q
       switch (key)
       {
       case 7: // Case 1a: apex left
-        if (-B(1, i) / 2 / B(2, i) <= -scale)
+        apex_position = -B(1, i) / 2 / B(2, i); // is negative
+        if (apex_position <= -scale)
         {
           continue; // invalid apex position
         }
         break;
       case 3: // Case 1b: apex right
-        if (-B(1, i) / 2 / B(3, i) >= scale)
+        apex_position = -B(1, i) / 2 / B(3, i); // is positive
+        if (apex_position >= scale)
         {
           continue; // invalid apex position
         }
@@ -136,12 +139,50 @@ namespace q
       }           // end switch
 
       // quadratic term filter
-      double mse = calcMse(X * B.col(i), Ylog);
+      double mse = calcMse(X * B.col(i), (Ylog.subMatrix(i, i+2*scale+1,0,1)));
       double tValue = std::max(std::abs(B(2, i)) * std::sqrt(inverseMatrix_2_2 * mse), std::abs(B(3, i)) * std::sqrt(inverseMatrix_3_3 * mse));
       if (tValue < tValuesArray[scale * 2 - 4]) // df is scale*2-3 but tValuesArray is zero-based
       {
         continue; // statistical insignificance of the quadratic term
       }
+      
+      // height filter
+      double height = std::exp(B(0, i) + (apex_position * B(1, i) * .5));
+      Jacobian_height(0,0) = height;
+      Jacobian_height(0,1) = apex_position * height;
+      if (apex_position < 0)
+      {
+        Jacobian_height(0,2) = apex_position * Jacobian_height(0,1);
+        Jacobian_height(0,3) = 0;
+      }
+      else
+      {
+        Jacobian_height(0,2) = 0;
+        Jacobian_height(0,3) = apex_position * Jacobian_height(0,1);
+      }
+      Matrix C_height = (*inverseMatrices[scale - 2]) * mse;
+      double h_uncertainty = std::sqrt( (Jacobian_height * C_height * Jacobian_height.T()).sumElements());
+      if (height / h_uncertainty < tValuesArray[scale * 2 - 4])
+      {
+        // std::cout << "height: " << height << " h_uncertainty: " << h_uncertainty << std::endl;
+        // std::cout << " tValue: " << height / h_uncertainty << " tValuesArray: " << tValuesArray[scale * 2 - 4] << "\n";
+        // std::cout << "scale: " << scale << " i: " << i << "\n";
+        // std::cout << "MSE: " << mse << "\n";
+        // std::cout << "B: \n";
+        // (B.col(i)).print();
+        // std::cout << "Ylog: \n";
+        // (Ylog.subMatrix(i, i+2*scale+1,0,1)).print();
+        // std::cout << "yhat: \n";
+        // (X * B.col(i)).print();
+        // std::cout << "C_height: \n";
+        // C_height.print();
+        // std::cout << "Jacobian_height: \n";
+        // Jacobian_height.print();
+        // exit(0);
+        continue; // statistical insignificance of the height
+      }
+      std::cout << "Y\n";
+
     } // end for loop
   }   // end validateRegressions
 
