@@ -10,11 +10,11 @@ namespace q
   // Constructor
   qPeaks::qPeaks() {}
 
-  qPeaks::qPeaks(const varDataType &dataMap)
+  qPeaks::qPeaks(const varDataType &dataVec)
   {
     std::visit([this](auto &&arg)
                {
-                // get the largest number of data points in a single data set within the dataMap
+                // get the largest number of data points in a single data set within the dataVec
                 size_t maxDataPoints = 0;
                 // iterate over the map of varDataType datatype objects
                  for (auto &pair : *arg)
@@ -38,18 +38,18 @@ namespace q
                     createDesignMatrix(scale);
                     createInverseAndPseudoInverse(*(designMatrices.back()));
                   } },
-               dataMap);
+               dataVec);
   }
 
   // Destructor
   qPeaks::~qPeaks() {}
 
-  void qPeaks::findPeaks(const varDataType &dataMap)
+  void qPeaks::findPeaks(const varDataType &dataVec)
   {
     std::visit([this](auto &&arg)
                {
                 // iterate over the map of varDataType datatype objects
-                // use parallel for loop to iterate over the dataMap
+                // use parallel for loop to iterate over the dataVec
                 #pragma omp parallel for
                 for (auto &pair : *arg)
                  {
@@ -84,7 +84,7 @@ namespace q
                   */
                   runningRegression(X, Y);
                 } },
-               dataMap);
+               dataVec);
   } // end findPeaks
 
   void qPeaks::runningRegression(const RefMatrix &X, const RefMatrix &Y)

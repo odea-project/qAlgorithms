@@ -33,32 +33,32 @@ namespace q
         /**
          * @brief Identify and fill gaps in the data
          * @details The zeroFilling method identifies and fills gaps in the data. The method uses difference between two neighboring data points to identify gaps. If the difference is 1.75 times greater than expected, then the method fills the gap with zero values for y-axis and inter/extrapolated values for x-axis values. For the expected difference, the method the difference of the last two data points that not show a gap. However, the first expected difference is set to the median of the differences of the total data points. However, the maximum gap size is set to "k/2" per side, i.e., "k" in total, where there is a gap leftover between the fourth and fifth data points.
-         * @param dataMap A vector of variant data types
+         * @param dataVec A vector of variant data types
          * @param k The maximum gap size
          */
-        void zeroFilling(varDataType& dataMap, int k);
+        void zeroFilling(varDataType& dataVec, int k);
 
         /**
          * @brief Cut the data into smaller data sets
          * @details The cutData method cuts the data into smaller data sets. The method uses the separator value to split the data into smaller data sets. The separator value is set to -1.0 for the x-axis and -1.0 for the y-axis. For each cut, the method creates a new data subset and stores it in the data vector using a sub-dataset ID as the secondary key.
-         * @param dataMap A variant data type
+         * @param dataVec A variant data type
          * @param maxKey The maximum key value in the current data vector. This value is used to create a new key for the new data subset.
          */
-        void cutData(varDataType& dataMap, int& maxKey);
+        void cutData(varDataType& dataVec, int& maxKey);
 
         /**
          * @brief Filter small data sets
          * @details The filterSmallDataSets method filters small data sets. The method removes data sets with less than 5 data points. This is due to the regression analysis that includes 4 coefficients and therefore requires at least 5 data points.
-         * @param dataMap A variant data type
+         * @param dataVec A variant data type
          */
-        void filterSmallDataSets(varDataType& dataMap);
+        void filterSmallDataSets(varDataType& dataVec);
 
         /**
          * @brief Interpolate y-axis values
          * @details The interpolateData method interpolates the y-axis values. The method uses quadratic interpolation to interpolate the y-axis values in the log space.
-         * @param dataMap A variant data type
+         * @param dataVec A variant data type
          */
-        void interpolateData(varDataType& dataMap);
+        void interpolateData(varDataType& dataVec);
 
         // debugging
         // virtual void print() = 0;

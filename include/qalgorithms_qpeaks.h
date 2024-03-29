@@ -28,9 +28,9 @@ namespace q
     /**
      * @brief Construct a new q Peaks object using varDataType object to initialize the object Matrices.
      *
-     * @param dataMap
+     * @param dataVec
      */
-    qPeaks(const varDataType &dataMap);
+    qPeaks(const varDataType &dataVec);
 
     // Destructor
     ~qPeaks();
@@ -39,9 +39,9 @@ namespace q
     /**
      * @brief Find the peaks in the data. Container function to call the findPeaks method.
      *
-     * @param dataMap
+     * @param dataVec
      */
-    void findPeaks(const varDataType &dataMap);
+    void findPeaks(const varDataType &dataVec);
 
     void runningRegression(const RefMatrix &X, const RefMatrix &Y);
 

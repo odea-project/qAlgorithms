@@ -5,7 +5,7 @@
 
 namespace q
 {
-  void MeasurementData::zeroFilling(varDataType &dataMap, int k)
+  void MeasurementData::zeroFilling(varDataType &dataVec, int k)
   {
     std::visit([k](auto &&arg)
                {
@@ -120,10 +120,10 @@ namespace q
                    dataObj.sortDataPoints();
                  } // end of for loop
                },
-               dataMap); // end of visit
+               dataVec); // end of visit
   }                      // end of zeroFilling
 
-  void MeasurementData::cutData(varDataType &dataMap, int &maxKey)
+  void MeasurementData::cutData(varDataType &dataVec, int &maxKey)
   {
     std::visit([&maxKey](auto &&arg)
                {
@@ -155,10 +155,10 @@ namespace q
                    std::vector<std::unique_ptr<size_t>>().swap(cuttingPoints);
                  } // end of for loop
                },
-               dataMap); // end of visit
+               dataVec); // end of visit
   }                      // end of cutData
 
-  void MeasurementData::filterSmallDataSets(varDataType &dataMap)
+  void MeasurementData::filterSmallDataSets(varDataType &dataVec)
   {
     std::visit([](auto &&arg)
                {
@@ -196,10 +196,10 @@ namespace q
                        }
                      }
                    } },
-               dataMap); // end of visit
+               dataVec); // end of visit
   }                      // end of filterSmallDataSets
 
-  void MeasurementData::interpolateData(varDataType &dataMap)
+  void MeasurementData::interpolateData(varDataType &dataVec)
   {
     std::visit([](auto &&arg)
                {
@@ -387,7 +387,7 @@ namespace q
                           // Check if the current index is in keysToDelete
                           return std::find(keysToDelete.begin(), keysToDelete.end(), &item - &arg->front()) != keysToDelete.end();
                       }), arg->end()); },
-               dataMap); // end of visit
+               dataVec); // end of visit
   }                      // end of interpolateData
 
 } // namespace q
