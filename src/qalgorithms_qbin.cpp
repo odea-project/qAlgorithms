@@ -330,17 +330,22 @@ namespace q
 
     void Bin::makeDQSB(const FeatureList *rawdata, const int &maxdist)
     {
+        // assumes bin is saved sorted by scans, since the result from scan gap checks is the final control
         const int n = featurelist.size();
         DQSB.reserve(n);
         // determine start and end of relevant scan section, used as repeats for the for loop; -1 since accessed vector is zero-indexed
         int minScanNo = featurelist.front()->scanNo - maxdist - 1;
+        int maxScanNo = featurelist.back()->scanNo + maxdist;
+        std::vector<double> minMaxOuter; // contains both values (per scan) next or closest to all m/z in the bin
+        minMaxOuter.reserve((n + 2 * maxdist) * 2);
+        int maxScansReduced = 0;
         if (minScanNo < 0)
         {
             minScanNo = 0;
         }
-        int maxScanNo = featurelist.back()->scanNo + maxdist;
-        if (maxScanNo > rawdata->allFeatures.size())
+        else if (maxScanNo > rawdata->allFeatures.size())
         {
+            maxScansReduced = maxScanNo - rawdata->allFeatures.size(); // dummy values have to be added later
             maxScanNo = rawdata->allFeatures.size();
         }
         // determine min and max in mz - sort, since then calculation of inner distances is significantly faster
@@ -348,41 +353,38 @@ namespace q
                   { return lhs->mz < rhs->mz; });
         const int minInnerMZ = featurelist.front()->mz;
         const int maxInnerMZ = featurelist.back()->mz;
+        std::vector<double> meanInnerDistances = meanDistance(featurelist);
 
-        std::vector<double> minMaxOuter; // contains both values (per scan) next or closest to all m/z in the bin
-        minMaxOuter.reserve((n + maxdist) * 2);
         // for all scans relevant to the bin
         int accessPoint = 0; // position in scan where a value was found - starts at 0 for first scan
         for (size_t i = minScanNo; i < maxScanNo; i++)
         {
             bool minFound = false; // only execute search if min or max is present in the scan
             bool maxFound = false;
-            int scansize = rawdata->allFeatures[i].size() - 1; // -1 since 0-indexed
+            int scansize = rawdata->allFeatures[i].size() - 1; // -1 since 0-indexed, last element of scan
             if (accessPoint > scansize)
                 accessPoint = scansize; // prevent searching outside of the valid scan region
 
             int minMaxFound = 0; // only advance to next scan once both min and max have been found
-            // check begin of bin
-            // check end of bin
-            if (rawdata->allFeatures[i][accessPoint]->mz < minInnerMZ)
+            // check begin of bin for possible segfault
+            if (rawdata->allFeatures[i][0]->mz > minInnerMZ)
             {
-                if (accessPoint == scansize) // if the last element of the scan is smaller than the minimum of the bin
+                minMaxOuter.push_back(-225);
+                minFound = true;
+                if (rawdata->allFeatures[i][0]->mz > maxInnerMZ)
                 {
-                    minMaxOuter.push_back(-225);
-                    minMaxOuter.push_back(rawdata->allFeatures[i][accessPoint]->mz);
+                    minMaxOuter.push_back(rawdata->allFeatures[i][0]->mz);
                     maxFound = true;
-                    minFound = true;
-                }
-                else if (/* condition */) // if the smallest
-                {
-                    /* code */
                 }
             }
-            else
+            // check end of bin
+            if (rawdata->allFeatures[i][scansize]->mz < maxInnerMZ)
             {
-                if (accessPoint == 0) // if the first element of the scan is greater than the minimum of the bin
+                minMaxOuter.push_back(-225);
+                maxFound = true;
+                if (rawdata->allFeatures[i][scansize]->mz < minInnerMZ)
                 {
-                    minMaxOuter.push_back(-225);
+                    minMaxOuter.push_back(rawdata->allFeatures[i][scansize]->mz);
                     minFound = true;
                 }
             }
@@ -413,146 +415,29 @@ namespace q
                 minMaxOuter.push_back(rawdata->allFeatures[i][accessPoint]->mz);
             }
         }
-    }
-
-    double Bin::findOuterMinmax(std::vector<Feature *>::const_iterator position, std::vector<Feature *>::const_iterator scanend, const double &innerMinmax, bool direction, int scansize)
-    {                           // direction TRUE = forward, direction FALSE = backwards
-        Feature *F = *position; // position is a null pointer
-        if (direction)
+        // minMaxOuter contains the relevant distances in order of scans, with both min and max per scan being stored for comparison
+        if (maxScansReduced != 0)
         {
-            if (F->mz > innerMinmax)
+            for (size_t i = 0; i < 2 * maxScansReduced; i++)
             {
-                return -225; // there exists no feature in the scan with an mz which is outside the bin at the lower end. Sets to -225 so it is never considered for the smallest distance
-            }
-            else
-            {
-                int counter = 0;
-                double closestMZ = F->mz;
-                while (F->mz < innerMinmax && position != scanend)
-                {
-                    ++counter; // ßßß
-                    closestMZ = F->mz;
-                    ++position;
-                    F = *position;
-                }
-                // std::cout << counter << ",";
-                pt_stepsForDQS.push_back(counter);
-                pt_scanRelSteps.push_back(scansize);
-                return closestMZ;
+                minMaxOuter.push_back(-225);
             }
         }
-        else
+
+        // find min distance in minMaxOuter, assign to minOuterDistances in order of the featurelist
+        for (size_t i = 0; i < n; i++)
         {
-            int counter = 0;
-            if (F->mz < innerMinmax)
+            double minDist = 225;
+            double currentMZ = featurelist[i]->mz;
+            int currentRange = featurelist[i]->scanNo - minScanNo;  // minScanNo already includes -maxdist necessary for complete range ßßß does not work
+            for (size_t j = currentRange; j < maxdist * 2 + 1; j++) // from lowest scan to highest scan relevant to feature, +1 since scan no of feature has to be included
             {
-                return -225; // as above, but upper end
+                double dist = abs(currentMZ - minMaxOuter[j]);
+                if (dist < minDist)
+                    minDist = dist;
             }
-            else
-            {
-                double closestMZ = F->mz;
-                while (F->mz > innerMinmax && position != scanend)
-                {
-                    ++counter; // ßßß
-                    closestMZ = F->mz;
-                    --position; // suspicion: position is moved outside of feature list
-                    F = *position;
-                }
-                pt_stepsForDQS.push_back(counter);
-                pt_scanRelSteps.push_back(scansize);
-                return closestMZ;
-            }
-        }
-    }
-
-    void Bin::makeDQSB(const FeatureList *rawdata, const int &maxdist)
-    {
-        // assumes bin is saved sorted by scans, since the result from scan gap checks is the final control
-        // featurelist is sorted by scans and by mz within scans (sort_stable for taking unsorted data)
-        // only the minimum scans - k and the maximum scans + k need to be checked
-        // if a value m/z is not lower than the minimum of mz or larger than the maximum while being in the allowed scan interval, it is by definition included in the bin
-        // check first scan from min and max of bin, next from same position in next scan (add start of scan to both iterators, move inwards if larger than min/max or outwards otherwise)
-        auto timeStart = std::chrono::high_resolution_clock::now();
-        auto timeEnd = std::chrono::high_resolution_clock::now();
-        int n = featurelist.size();
-        DQSB.reserve(n);
-        int minScanNo = featurelist.front()->scanNo - maxdist;
-        if (minScanNo < 1)
-        {
-            minScanNo = 1;
-        }
-        int maxScanNo = featurelist.back()->scanNo + maxdist;
-        if (maxScanNo > rawdata->scanBreaks.size() - 1)
-        {
-            maxScanNo = rawdata->scanBreaks.size() - 1; // -1 to prevent searching the last value of scandist, which is just the size of the dataset
-        }
-        pt_scanmin = featurelist.front()->scanNo - featurelist.back()->scanNo;
-        // sort featurelist by mz
-        std::sort(featurelist.begin(), featurelist.end(), [](const Feature *lhs, const Feature *rhs)
-                  { return lhs->mz < rhs->mz; });
-        double inMin = featurelist.front()->mz;
-        double inMax = featurelist.back()->mz;
-        pt_mzmin = inMax - inMin;
-
-        std::vector<Feature *>::const_iterator goToMinOut;
-        std::vector<Feature *>::const_iterator goToMaxOut;
-        std::vector<Feature *>::const_iterator minOutOverflow;
-        std::vector<Feature *>::const_iterator maxOutOverflow;
-        std::vector<double> compspace; // even index: minOut, odd index: maxOut
-
-        for (int i = minScanNo; i < maxScanNo; i++) // iterate over all scans viable for entire bin
-        {
-            // goToMinOut = rawdata->allFeatures.begin() + rawdata->scanBreaks[i];         // start of the currently cheked scan
-            // goToMaxOut = rawdata->allFeatures.begin() + rawdata->scanBreaks[i + 1] - 1; // end of the currently checked scan
-            // minOutOverflow = goToMaxOut;
-            // maxOutOverflow = goToMinOut;
-            // double minOut = findOuterMinmax(goToMinOut, minOutOverflow, inMin, true, rawdata->scanBreaks[i + 1] - rawdata->scanBreaks[i]);
-            // double maxOut = findOuterMinmax(goToMaxOut, maxOutOverflow, inMax, false, rawdata->scanBreaks[i + 1] - rawdata->scanBreaks[i]);
-            // compspace.push_back(minOut);
-            // compspace.push_back(maxOut);
-        }
-
-        // create vector of mean distance to other features
-        std::vector<double> meanDist = meanDistance(featurelist);
-
-        // find closest match in mz for min and max mz
-        std::vector<double> minOuter(n); // contains lowest elegible distance for every point
-        int scanMin;
-        int scanMax;
-        double lowestDist;
-        double dist;
-        // compspace goes from min(scans)-maxdist to min(scans)+maxdist
-        // iterate over vector backwards if minScanNo is 1, otherwise frameshift
-        if (minScanNo == 1)
-        {
-            for (size_t i = 0; i < n; i++)
-            {
-                lowestDist = 225;
-                for (size_t i = 0; i < 1; i++)
-                {
-                    /* code */
-                }
-            }
-        }
-        else
-        {
-            for (size_t i = 0; i < n; i++) // does not account for doubles or gaps in scans -> rework
-            {
-                lowestDist = 225;
-
-                for (size_t j = 2 * i; j < 2 * i + 4 * maxdist + 1; j++) // 2*i since every two elements is one new scan. From this i, the range is traversed until two max distances (*2 per scan). +1 to include both elements of the last scan
-                {
-                    dist = std::abs(featurelist[i]->mz - compspace[j]); // ßßß start at -maxdist? Y ßßß gewichtung
-                    if (dist < lowestDist)
-                    {
-                        lowestDist = dist;
-                    }
-                }
-                minOuter[i] = lowestDist; // minOuter redundant ßßß
-                DQSB.push_back(calcDQS(meanDist[i], minOuter[i]));
-                auto timeEnd = std::chrono::high_resolution_clock::now();
-                pt_MakeDQSB = (timeEnd - timeStart).count();
-            }
+            // calculate DQSB on a per-feature basis
+            DQSB[i] = calcDQS(meanInnerDistances[i], minDist);
         }
     }
 
@@ -663,7 +548,8 @@ int main()
     for (size_t i = 0; i < q::pt_outOfBins.size(); i++)
     {
         q::Feature *F = q::pt_outOfBins[i];
-        file_out << std::setprecision(15) << q::pt_outOfBins[i]->mz << "," << q::pt_outOfBins[i]->scanNo << "," << -1 << "," << -1 << "," << "Y\n";
+        file_out << std::setprecision(15) << q::pt_outOfBins[i]->mz << "," << q::pt_outOfBins[i]->scanNo << "," << -1 << "," << -1 << ","
+                 << "Y\n";
     }
     // std::vector<double> ratio;
     // int oneCount = 0;
