@@ -77,16 +77,21 @@ namespace q
     // perform log-transform on Y
     size_t n = Y.getRows();
     Matrix Ylog = Y.log();
-    // perform the running regression
+
     int maxScale = std::min(this->global_maxScale, (int)(n - 1) / 2);
+    std::vector<int> valid_regressions;
+    valid_regressions.reserve(calculateNumberOfRegressions(n));
     for (int scale = 2; scale <= maxScale; scale++)
     {
+      // coeffiencts matrix B of the running regression
       Matrix b = Ylog.convoleCombiend(*(psuedoInverses[scale - 2]));
-      validateRegressions(b, Ylog, scale);
+      validateRegressions(b, Ylog, scale, valid_regressions);
     } // end for scale loop
-  }   // end runningRegression
+    
+    
+  } // end runningRegression
 
-  void qPeaks::validateRegressions(const Matrix &B, const Matrix &Ylog, const int scale)
+  void qPeaks::validateRegressions(const Matrix &B, const Matrix &Ylog, const int scale, std::vector<int> &valid_regressions)
   {
     // declare variables
     double valley_position;
@@ -95,6 +100,7 @@ namespace q
     double inverseMatrix_3_3 = (*(inverseMatrices[scale - 2]))(3, 3);
     Matrix &X = *(designMatrices[scale - 2]);
     Matrix Jacobian_height(1, 4);
+    std::vector<std::pair<int, double>> valid_regressions_tmp; // temporary vector to store valid regressions <index, apex_position>
 
     // iterate columwise over the coefficients matrix
     for (size_t i = 0; i < B.numCols(); i++)
@@ -174,9 +180,59 @@ namespace q
       {
         continue; // statistical insignificance of the peak area
       }
-      
 
+      // at this point, the peak is validated
+      valid_regressions_tmp.push_back(std::make_pair(i, apex_position));
     } // end for loop
+
+    // early return if no or only one valid peak
+    if (valid_regressions_tmp.size() < 2)
+    {
+      if (valid_regressions_tmp.empty())
+      {
+        return; // no valid peaks
+      }
+      valid_regressions.push_back(valid_regressions_tmp[0].first + (scale-2)*Ylog.numRows()-scale*(scale-1)+2);
+      return; // not enough peaks to form a group
+    }
+    
+    // group the valid peaks
+    std::vector<std::vector<int>> groups;
+    // initialize iterators for valid_regressions_tmp
+    auto it = valid_regressions_tmp.begin();
+    auto it_next = std::next(it);
+    // iterate over the temporary vector of valid regressions
+    while (it_next != valid_regressions_tmp.end())
+    {
+      if (std::abs(it->second + it->first - it_next->second - it_next->first) >= 2 * scale + 1)
+      { // create a new group
+        if (groups.empty())
+        {
+          groups.push_back(std::vector<int>{it->first});
+          groups.push_back(std::vector<int>{it_next->first});
+        }
+        else
+        {
+          groups.push_back(std::vector<int>{it_next->first});
+        }
+      }
+      else
+      { // add to the current group
+        if (groups.empty())
+        {
+          groups.push_back(std::vector<int>{it->first});
+          groups.back().push_back(it_next->first);
+        }
+        else
+        {
+          groups.back().push_back(it_next->first);
+        }
+      }
+      ++it_next;
+      ++it;
+    } // end for loop
+
+    // at this point, the groups within a scale are formed; now survival of the fittest peak in each group is performed
   }   // end validateRegressions
 
   double qPeaks::calcMse(const Matrix &yhat, const Matrix &y) const

@@ -66,10 +66,7 @@ namespace q
     int global_maxScale;
 
     // methods
-    void validateRegressions(const Matrix &B, const Matrix &Ylog, const int scale);
-
-    void validateCoefficients(
-        const Matrix &B);
+    void validateRegressions(const Matrix &B, const Matrix &Ylog, const int scale, std::vector<int> &validRegressions);
 
     double calcMse(const Matrix &yhat, const Matrix &y) const;
 
