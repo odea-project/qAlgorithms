@@ -71,7 +71,9 @@ namespace q
     void validateCoefficients(
         const Matrix &B);
 
-    double calcMse(const Matrix& yhat, const Matrix& y) const;
+    double calcMse(const Matrix &yhat, const Matrix &y) const;
+
+    std::pair<Matrix, double> jacobianMatrix_PeakArea(const Matrix &B, int scale) const;
 
     /**
      * @brief Create a Design Matrix object for the given scale.

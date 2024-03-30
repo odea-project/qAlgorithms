@@ -94,23 +94,24 @@ namespace q
     double inverseMatrix_2_2 = (*(inverseMatrices[scale - 2]))(2, 2);
     double inverseMatrix_3_3 = (*(inverseMatrices[scale - 2]))(3, 3);
     Matrix &X = *(designMatrices[scale - 2]);
-    Matrix Jacobian_height(1,4);
-    // coefficients filter
+    Matrix Jacobian_height(1, 4);
+
     // iterate columwise over the coefficients matrix
     for (size_t i = 0; i < B.numCols(); i++)
     {
+      // coefficients filter
       // calculate the checksum for case differentiation
       int key = (B(1, i) < 0 ? 4 : 0) + (B(2, i) < 0 ? 2 : 0) + (B(3, i) < 0 ? 1 : 0);
       switch (key)
       {
-      case 7: // Case 1a: apex left
+      case 7:                                   // Case 1a: apex left
         apex_position = -B(1, i) / 2 / B(2, i); // is negative
         if (apex_position <= -scale)
         {
           continue; // invalid apex position
         }
         break;
-      case 3: // Case 1b: apex right
+      case 3:                                   // Case 1b: apex right
         apex_position = -B(1, i) / 2 / B(3, i); // is positive
         if (apex_position >= scale)
         {
@@ -138,32 +139,40 @@ namespace q
       }           // end switch
 
       // quadratic term filter
-      double mse = calcMse(X * B.col(i), (Ylog.subMatrix(i, i+2*scale+1,0,1)));
+      double mse = calcMse(X * B.col(i), (Ylog.subMatrix(i, i + 2 * scale + 1, 0, 1)));
       double tValue = std::max(std::abs(B(2, i)) / std::sqrt(inverseMatrix_2_2 * mse), std::abs(B(3, i)) / std::sqrt(inverseMatrix_3_3 * mse));
       if (tValue < tValuesArray[scale * 2 - 4]) // df is scale*2-3 but tValuesArray is zero-based
       {
         continue; // statistical insignificance of the quadratic term
       }
-      
+
       // height filter
       double height = std::exp(B(0, i) + (apex_position * B(1, i) * .5));
-      Jacobian_height(0,0) = height;
-      Jacobian_height(0,1) = apex_position * height;
+      Jacobian_height(0, 0) = height;
+      Jacobian_height(0, 1) = apex_position * height;
       if (apex_position < 0)
       {
-        Jacobian_height(0,2) = apex_position * Jacobian_height(0,1);
-        Jacobian_height(0,3) = 0;
+        Jacobian_height(0, 2) = apex_position * Jacobian_height(0, 1);
+        Jacobian_height(0, 3) = 0;
       }
       else
       {
-        Jacobian_height(0,2) = 0;
-        Jacobian_height(0,3) = apex_position * Jacobian_height(0,1);
+        Jacobian_height(0, 2) = 0;
+        Jacobian_height(0, 3) = apex_position * Jacobian_height(0, 1);
       }
-      Matrix C_height = (*inverseMatrices[scale - 2]) * mse;
-      double h_uncertainty = std::sqrt( (Jacobian_height * C_height * Jacobian_height.T()).sumElements());
+      Matrix C = (*inverseMatrices[scale - 2]) * mse; // variance-covariance matrix of the coefficients
+      double h_uncertainty = std::sqrt((Jacobian_height * C * Jacobian_height.T()).sumElements());
       if (height / h_uncertainty < tValuesArray[scale * 2 - 4])
       {
         continue; // statistical insignificance of the height
+      }
+
+      // peak area filter
+      std::pair<Matrix, double> Jacobian_area = jacobianMatrix_PeakArea(B.col(i), scale);
+      double area_uncertainty = std::sqrt((Jacobian_area.first * C * Jacobian_area.first.T()).sumElements()) + (Jacobian_area.first(0, 0) - Jacobian_area.second); // uncertainty of the peak area based on the Jacobian matrix and the non-covered peak area
+      if (Jacobian_area.first(0, 0) / area_uncertainty < tValuesArray[scale * 2 - 4])
+      {
+        continue; // statistical insignificance of the peak area
       }
       
 
@@ -180,6 +189,46 @@ namespace q
       sum += diff * diff;
     }
     return sum / (n - 4);
+  }
+
+  std::pair<Matrix, double> qPeaks::jacobianMatrix_PeakArea(const Matrix &B, int scale) const
+  {
+    // predefine expressions
+    const double SQRTB2 = std::sqrt(std::abs(-B(2, 0)));
+    const double SQRTB3 = std::sqrt(std::abs(-B(3, 0)));
+    const double EXP_B0 = std::exp(B(0, 0));
+    const double B1_2_B2 = B(1, 0) / 2 / B(2, 0);
+    const double EXP_B12 = std::exp(-B(1, 0) * B1_2_B2 / 2);
+    const double B1_2_B3 = B(1, 0) / 2 / B(3, 0);
+    const double EXP_B13 = std::exp(-B(1, 0) * B1_2_B3 / 2);
+    // here we have to check if there is a valley point or not
+    const double err_L = (B(2, 0) < 0)
+                             ? std::erf(-B(1, 0) / 2 / SQRTB2) + 1 // ordinary peak
+                             : erfi(B(1, 0) / 2 / SQRTB2);         // peak with valley point
+
+    const double err_R = (B(3, 0) < 0)
+                             ? std::erfc(-B(1, 0) / 2 / SQRTB3) // ordinary peak
+                             : -erfi(B(1, 0) / 2 / SQRTB3);     // peak with valley point
+
+    const double err_L_covered = (-B1_2_B2 < -scale)
+                                     ? 0                                             // erfi(B(1, 0) / 2 / SQRTB2)
+                                     : -erfi(B(1, 0) / 2 / SQRTB2 + scale * SQRTB2); // + erfi(B(1, 0) / 2 / SQRTB2)
+
+    const double err_R_covered = (-B1_2_B3 > scale)
+                                     ? 0                                           //- erfi(B(1, 0) / 2 / SQRTB3)
+                                     : erf(B(1, 0) / 2 / SQRTB3 + scale * SQRTB3); //- erfi(B(1, 0) / 2 / SQRTB3);
+
+    // calculate the Jacobian matrix terms
+    Matrix J(1, 4);
+    J(0, 0) = SQRTPI_2 * ((EXP_B0 * EXP_B12) / SQRTB2 * err_L + (EXP_B0 * EXP_B13) / SQRTB3 * err_R);
+    J(0, 1) = (EXP_B0 / 2) * (1 / B(2, 0) + 1 / B(3, 0)) - J(0, 0) * (B1_2_B2 + B1_2_B3);
+    J(0, 2) = -J(0, 0) / 2 / B(2, 0) - B1_2_B2 * J(0, 1);
+    J(0, 3) = -J(0, 0) / 2 / B(3, 0) - B1_2_B3 * J(0, 1);
+
+    // calculate the the peak area covered by data points
+    const double peak_area_covered = SQRTPI_2 * ((EXP_B0 * EXP_B12) / SQRTB2 * (err_L + err_L_covered) + (EXP_B0 * EXP_B13) / SQRTB3 * (err_R + err_R_covered));
+
+    return std::pair<Matrix, double>(J, peak_area_covered);
   }
 
   void qPeaks::createDesignMatrix(const int scale)
