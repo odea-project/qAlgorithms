@@ -77,7 +77,6 @@ namespace q
     // perform log-transform on Y
     size_t n = Y.getRows();
     Matrix Ylog = Y.log();
-
     // perform the running regression
     int maxScale = std::min(this->global_maxScale, (int)(n - 1) / 2);
     for (int scale = 2; scale <= maxScale; scale++)
@@ -140,7 +139,7 @@ namespace q
 
       // quadratic term filter
       double mse = calcMse(X * B.col(i), (Ylog.subMatrix(i, i+2*scale+1,0,1)));
-      double tValue = std::max(std::abs(B(2, i)) * std::sqrt(inverseMatrix_2_2 * mse), std::abs(B(3, i)) * std::sqrt(inverseMatrix_3_3 * mse));
+      double tValue = std::max(std::abs(B(2, i)) / std::sqrt(inverseMatrix_2_2 * mse), std::abs(B(3, i)) / std::sqrt(inverseMatrix_3_3 * mse));
       if (tValue < tValuesArray[scale * 2 - 4]) // df is scale*2-3 but tValuesArray is zero-based
       {
         continue; // statistical insignificance of the quadratic term
@@ -164,24 +163,9 @@ namespace q
       double h_uncertainty = std::sqrt( (Jacobian_height * C_height * Jacobian_height.T()).sumElements());
       if (height / h_uncertainty < tValuesArray[scale * 2 - 4])
       {
-        // std::cout << "height: " << height << " h_uncertainty: " << h_uncertainty << std::endl;
-        // std::cout << " tValue: " << height / h_uncertainty << " tValuesArray: " << tValuesArray[scale * 2 - 4] << "\n";
-        // std::cout << "scale: " << scale << " i: " << i << "\n";
-        // std::cout << "MSE: " << mse << "\n";
-        // std::cout << "B: \n";
-        // (B.col(i)).print();
-        // std::cout << "Ylog: \n";
-        // (Ylog.subMatrix(i, i+2*scale+1,0,1)).print();
-        // std::cout << "yhat: \n";
-        // (X * B.col(i)).print();
-        // std::cout << "C_height: \n";
-        // C_height.print();
-        // std::cout << "Jacobian_height: \n";
-        // Jacobian_height.print();
-        // exit(0);
         continue; // statistical insignificance of the height
       }
-      std::cout << "Y\n";
+      
 
     } // end for loop
   }   // end validateRegressions
