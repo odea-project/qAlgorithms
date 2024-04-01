@@ -72,6 +72,12 @@ namespace q
         binDeque.push_back(firstBin);
     }
 
+    enum SubsetMethods
+    {
+        mz,
+        scans
+    };
+
     void BinContainer::subsetBins(std::vector<int> dimensions, int scanDiffLimit)
     {
         auto timeStart = std::chrono::high_resolution_clock::now();
@@ -82,13 +88,13 @@ namespace q
         {
             for (size_t i = 0; i < dimensions.size(); i++) // dimensions vector allows user to choose order of executing subsetting actions. It is also possible to only subset in mz or RT
             {
-                switch (dimensions[i])
+                switch (dimensions[i]) // TODO name case statements, enums
                 {
                 case 1:
                 { // brackets needed to prevent error
                     // bin in mz
-                    int startpoint = binDeque.size(); // startpoint is the first element of the deque that will not be subset, equivalent to do n times
-                    for (int i = 0; i < startpoint; i++)
+                    size_t startpoint = binDeque.size(); // startpoint is the first element of the deque that will not be subset, equivalent to do n times
+                    for (size_t i = 0; i < startpoint; i++)
                     { // random access not needed, first element -> make bins -> move element or make bins, then remove first entry ; do n times
                         binDeque.front().makeOS();
                         binDeque.front().makeCumError();                                                                          // always after order space, since the features get sorted
@@ -104,8 +110,8 @@ namespace q
                 case 2:
                 {
                     // bin using scan numbers
-                    int startpoint = binDeque.size();
-                    for (int i = 0; i < startpoint; i++)
+                    size_t startpoint = binDeque.size();
+                    for (size_t i = 0; i < startpoint; i++)
                     {
                         binDeque.front().subsetScan(&binDeque, &finishedBins, scanDiffLimit);
                         binDeque.pop_front();
@@ -332,26 +338,33 @@ namespace q
         size_t n = featurelist.size(); //  TODO rename
         DQSB.reserve(n);
         // determine start and end of relevant scan section, used as repeats for the for loop; -1 since accessed vector is zero-indexed
-        unsigned int scanRangeStart = featurelist.front()->scanNo - maxdist;
+        unsigned int minScanInner = featurelist.front()->scanNo; //
+        int scanRangeStart = minScanInner - maxdist;
         unsigned int scanRangeEnd = featurelist.back()->scanNo + maxdist;
 
-        int maxScansReduced = 0;
-        if (scanRangeStart < 0)
+        int maxScansReduced = 0;              // add this many dummy values to prevent segfault when bin is in one of the last scans
+        std::vector<double> minMaxOutPerScan; // contains both mz values (per scan) next or closest to all m/z in the bin
+        minMaxOutPerScan.reserve((scanRangeEnd - scanRangeStart) * 2);
+        if (scanRangeStart < 1)
         {
-            scanRangeStart = 0;
+            for (int i = 0; i < (1 - scanRangeStart) * 2; i++) // fill with dummy values to prevent segfault when distance checker expects negative scan number
+            {
+                minMaxOutPerScan.push_back(IGNORE);
+            }
+
+            scanRangeStart = 1;
         }
         else if (scanRangeEnd > rawdata->allFeatures.size())
         {
             maxScansReduced = scanRangeEnd - rawdata->allFeatures.size(); // dummy values have to be added later
             scanRangeEnd = rawdata->allFeatures.size();
         }
-        std::vector<double> minMaxOutPerScan; // contains both mz values (per scan) next or closest to all m/z in the bin
-        minMaxOutPerScan.reserve((scanRangeEnd - scanRangeStart) * 2);
+
         // determine min and max in mz - sort, since then calculation of inner distances is significantly faster
         std::sort(featurelist.begin(), featurelist.end(), [](const Feature *lhs, const Feature *rhs)
                   { return lhs->mz < rhs->mz; });
-        const int minInnerMZ = featurelist.front()->mz;
-        const int maxInnerMZ = featurelist.back()->mz;
+        const double minInnerMZ = featurelist.front()->mz;
+        const double maxInnerMZ = featurelist.back()->mz;
         std::vector<double> meanInnerDistances = meanDistance(featurelist);
 
         // for all scans relevant to the bin
@@ -386,7 +399,6 @@ namespace q
                     minFound = true;
                 }
             }
-            // ßßß consider starting at a place other than the first element of a scan, zB (minMZ/maxMZ(scan)) * number of features in scan
             // rawdata is always sorted by mz within scans
             if (!minFound)
             {
@@ -415,7 +427,7 @@ namespace q
             }
         }
         // minMaxOutPerScan contains the relevant distances in order of scans, with both min and max per scan being stored for comparison
-        if (maxScansReduced != 0)
+        if (maxScansReduced != 0) // add dummy values after last scan
         {
             for (int i = 0; i < 2 * maxScansReduced; i++)
             {
@@ -428,8 +440,8 @@ namespace q
         {
             double minDist = 225;
             double currentMZ = featurelist[i]->mz;
-            int currentRange = featurelist[i]->scanNo - scanRangeStart; // scanRangeStart already includes -maxdist necessary for complete range ßßß does not work
-            for (int j = currentRange; j < maxdist * 2 + 1; j++)        // from lowest scan to highest scan relevant to feature, +1 since scan no of feature has to be included
+            int currentRangeStart = (featurelist[i]->scanNo - minScanInner) * 2; // gives position of the first value in minMaxOutPerScan that must be considered, assuming the first value in minMaxOutPerScan (index 0) is only relevant to the Feature in the lowest scan. For every increase in scans, that range starts two elements later
+            for (int j = currentRangeStart; j <= maxdist * 2 + 1; j++)           // from lowest scan to highest scan relevant to feature, +1 since scan no of feature has to be included
             {
                 double dist = abs(currentMZ - minMaxOutPerScan[j]);
                 if (dist < minDist)
@@ -530,7 +542,7 @@ int main()
     // std::ofstream result("../../qbinning_binposition.csv");
     // std::streambuf *coutbuf = std::cout.rdbuf(); // save old buf
     // std::cout.rdbuf(result.rdbuf());             // redirect std::cout to out.txt!
-    // testcontainer.assignDQSB(&testdata, 7);
+    testcontainer.assignDQSB(&testdata, 7);
 
     testcontainer.printAllBins("../../qbinning_binlist.csv", &testdata);
 
