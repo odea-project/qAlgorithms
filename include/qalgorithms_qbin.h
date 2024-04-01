@@ -20,7 +20,7 @@
 namespace q
 {
     // Feature Struct (contains all user-specified variables found in raw data and an index)
-    struct Feature // ßßß kann über Feature f{mz, mzError, RT, scanNo} initialisiert werden
+    struct Feature
     {
         // int idx; // keep as test parameter if at all
         double mz;
@@ -37,9 +37,8 @@ namespace q
         ~FeatureList();
         int numberOfScans;
         int lengthAllFeatures;
-        std::vector<std::vector<Feature *>> allFeatures;
-        std::vector<int> scanBreaks; // contains start point of new scan window in order; assumes incoming features are sorted by scans
-        void readcsv(std::string user_file, int d_mz, int d_mzError, int d_RT, int d_scanNo, int pt_d_binID);
+        std::vector<std::vector<Feature>> allFeatures;
+        bool readcsv(std::string user_file, int d_mz, int d_mzError, int d_RT, int d_scanNo, int pt_d_binID);
     };
 
     // Bin Class
