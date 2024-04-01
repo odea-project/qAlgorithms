@@ -66,6 +66,7 @@ namespace q
     Matrix &operator=(const Matrix &other);
     void assign(size_t row, size_t col, double& value);
     Matrix log() const;
+    Matrix exp() const;
 
     double sumElements() const;
     Matrix inv() const;

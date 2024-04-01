@@ -262,6 +262,16 @@ namespace q
     return result;
   }
 
+  Matrix Matrix::exp() const
+  {
+    Matrix result(rows,cols);
+    for (size_t i = 0; i < cols * rows; i++)
+    {
+      result.elements[i] = std::exp(elements[i]);
+    }
+    return result;
+  }
+
   // Matrix Sum of all elements
   double Matrix::sumElements() const
   {

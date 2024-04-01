@@ -13,6 +13,7 @@
 #include <vector>
 #include <memory>
 #include <omp.h>
+#include <limits>
 
 /* This file includes the q::qPeaks class*/
 namespace q
@@ -63,10 +64,22 @@ namespace q
     std::vector<std::unique_ptr<Matrix>> inverseMatrices;
     std::vector<std::unique_ptr<Matrix>> psuedoInverses;
 
+    // define valid regression struct
+    struct validRegression
+    {
+      int index;
+      int scale;
+      double apex_position;
+      double mse;
+      Matrix B;
+
+      validRegression(int index, int scale, double apex_position, double mse, Matrix B) : index(index), scale(scale), apex_position(apex_position), mse(mse), B(B) {}
+    };
+
     int global_maxScale;
 
     // methods
-    void validateRegressions(const Matrix &B, const Matrix &Ylog, const int scale, std::vector<int> &validRegressions);
+    void validateRegressions(const Matrix &B, const Matrix &Ylog, const int scale, std::vector<std::unique_ptr<validRegression>> &validRegressions);
 
     double calcMse(const Matrix &yhat, const Matrix &y) const;
 
