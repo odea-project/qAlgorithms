@@ -52,6 +52,7 @@ namespace q
                {
     // iterate over the map of varDataType datatype objects
     // use parallel for loop to iterate over the dataVec
+    int nPeaks = 0;
 #pragma omp parallel for
                 for (auto &pair : *arg)
                  {
@@ -67,12 +68,13 @@ namespace q
                     X.assignRef(i, 0, data[i]->x());
                     Y.assignRef(i, 0, data[i]->y());
                   }
-                  runningRegression(X, Y);
-                } },
+                  runningRegression(X, Y, nPeaks);
+                } 
+                std::cout << "Number of peaks: " << nPeaks << "\n";},
                dataVec);
   } // end findPeaks
 
-  void qPeaks::runningRegression(const RefMatrix &X, const RefMatrix &Y)
+  void qPeaks::runningRegression(const RefMatrix &X, const RefMatrix &Y, int &nPeaks)
   { 
     // perform log-transform on Y
     size_t n = Y.getRows();
@@ -95,6 +97,7 @@ namespace q
     int highestScale = validRegressions.back()->scale;
     if (lowestScale == highestScale)
     {
+      nPeaks += validRegressions.size();
       return; // only one scale @todo: return the results
     }
     // apply survival of the fittest considering different scales
@@ -121,34 +124,36 @@ namespace q
         
         (*peak)->mse = calcMse(((*designMatrices[(*peak)->scale-2]) * (*peak)->B).exp(), (Ylog.subMatrix((*peak)->index, (*peak)->index + 2 * (*peak)->scale + 1, 0, 1)).exp());
       }
+      double mean_mse = 0;
+      for (auto candidate_peak = candidate_peak_iterators.begin(); candidate_peak != candidate_peak_iterators.end(); ++candidate_peak)
+      {
+        if ((**candidate_peak)->mse == 0)
+        { // calculate the mse of the current peak
+          (**candidate_peak)->mse = calcMse(((*designMatrices[(**candidate_peak)->scale-2]) * (**candidate_peak)->B).exp(), (Ylog.subMatrix((**candidate_peak)->index, (**candidate_peak)->index + 2 * (**candidate_peak)->scale + 1, 0, 1)).exp());
+        }
+        mean_mse += (**candidate_peak)->mse;
+      }
+      mean_mse /= candidate_peak_iterators.size();
+      if ((*peak)->mse < mean_mse)
+      {
+        // remove the candidates from the best peaks
+        for (auto candidate_peak = candidate_peak_iterators.begin(); candidate_peak != candidate_peak_iterators.end(); ++candidate_peak)
+        {
+          for (auto best_peak = best_peak_iterators.begin(); best_peak != best_peak_iterators.end(); ++best_peak)
+          {
+            if (*candidate_peak == *best_peak)
+            {
+              best_peak_iterators.erase(best_peak);
+              break;
+            }
+          }
+        }
+        best_peak_iterators.push_back(peak);
+      }
       candidate_peak_iterators.clear();
-    }
-
-    // auto beginRange = validRegressions.end();
-    // auto endRange = validRegressions.end();
-    // // iterate over the validRegressions vector
-    // for (auto it = validRegressions.begin(); it != validRegressions.end();)
-    // {
-    //   if ((*it)->scale > lowestScale)
-    //   {
-    //     // iterate forward from the beginning of the vector to first elemement that has equal scale to current one.
-    //     auto it_again = validRegressions.begin();
-    //     int currentScale = (*it)->scale;
-    //     while ((*it_again)->scale != currentScale)
-    //     {
-    //       // @todo: add some code to set the beginRange and endRange iterators
-    //       ++it_again;
-    //     }
-    //     ++it;
-    //   }
-    //   else
-    //   {
-    //     ++it;
-    //   }
-    // }
-    
-    
-
+    } // end for loop
+    // return the best peaks
+    nPeaks += best_peak_iterators.size();
   } // end runningRegression
 
   void qPeaks::validateRegressions(const Matrix &B, const Matrix &Ylog, const int scale, std::vector<std::unique_ptr<validRegression>> &validRegressions)

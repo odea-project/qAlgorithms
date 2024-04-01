@@ -45,7 +45,7 @@ namespace q
      */
     void findPeaks(const varDataType &dataVec);
 
-    void runningRegression(const RefMatrix &X, const RefMatrix &Y);
+    void runningRegression(const RefMatrix &X, const RefMatrix &Y, int &nPeaks);
 
     /**
      * @brief Calculate the number of regressions for the given number of data points.
