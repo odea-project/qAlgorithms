@@ -162,12 +162,12 @@ namespace q
         {
             char x = shapes[rand() % 17];
             int colour = i % 9; // 10 colours total
-            std::vector<Feature *> features = finishedBins[i].featurelist;
+            std::vector<Feature *> features = finishedBins[i].featuresInBin;
             for (size_t j = 0; j < features.size(); j++)
             {
                 file_out << std::setprecision(15) << features[j]->mz << "," << features[j]->scanNo << "," << i + 1 << "," << colour << "," << x << "\n";
             }
-            // file_out << finishedBins[i].featurelist.size() << "\n";
+            // file_out << finishedBins[i].featuresInBin.size() << "\n";
         }
     }
 
@@ -187,22 +187,30 @@ namespace q
         }
     }
 
+    void BinContainer::controlAllBins(){
+        for (size_t i = 0; i < finishedBins.size(); i++)
+        {
+            finishedBins[i].controlBin(i);
+        }
+        
+    }
+
 #pragma endregion "BinContainer"
 
 #pragma region "Bin"
 
     Bin::Bin(const std::vector<Feature *>::iterator &binStartInOS, const std::vector<Feature *>::iterator &binEndInOS) // const std::vector<Feature> &sourceList,
     {
-        featurelist = std::vector<Feature *>(binStartInOS, binEndInOS);
+        featuresInBin = std::vector<Feature *>(binStartInOS, binEndInOS);
     }
     Bin::Bin(FeatureList *rawdata) // relatively time intensive, better solution?
     {
-        featurelist.reserve(rawdata->lengthAllFeatures);
+        featuresInBin.reserve(rawdata->lengthAllFeatures);
         for (int i = 1; i < rawdata->numberOfScans; i++)
         {
             for (size_t j = 0; j < rawdata->allFeatures[i].size(); j++)
             {
-                featurelist.push_back(&rawdata->allFeatures[i][j]);
+                featuresInBin.push_back(&rawdata->allFeatures[i][j]);
             }
         }
     }
@@ -211,21 +219,21 @@ namespace q
     void Bin::makeOS()
     {
         // sort features by mz
-        std::sort(featurelist.begin(), featurelist.end(), [](const Feature *lhs, const Feature *rhs)
+        std::sort(featuresInBin.begin(), featuresInBin.end(), [](const Feature *lhs, const Feature *rhs)
                   { return lhs->mz < rhs->mz; });
 
-        activeOS.reserve(featurelist.size());               // OS = Order Space
-        for (size_t i = 0; i + 1 < featurelist.size(); i++) // +1 to prevent accessing outside of vector
+        activeOS.reserve(featuresInBin.size());               // OS = Order Space
+        for (size_t i = 0; i + 1 < featuresInBin.size(); i++) // +1 to prevent accessing outside of vector
         {
-            activeOS.push_back(featurelist[i + 1]->mz - featurelist[i]->mz);
+            activeOS.push_back(featuresInBin[i + 1]->mz - featuresInBin[i]->mz);
         }
         activeOS.push_back(IGNORE); // IGNORE to denote last element in OS
     }
 
     void Bin::makeCumError()
     {
-        cumError.reserve(featurelist.size());
-        std::transform(featurelist.begin(), featurelist.end(), back_inserter(cumError), [](Feature *F)
+        cumError.reserve(featuresInBin.size());
+        std::transform(featuresInBin.begin(), featuresInBin.end(), back_inserter(cumError), [](Feature *F)
                        { return F->mzError; });                               // transfer error values from feature objects
         std::partial_sum(cumError.begin(), cumError.end(), cumError.begin()); // cumulative sum
     }
@@ -240,18 +248,18 @@ namespace q
         {
             if (binsizeInOS == 1)
             {
-                Feature *F = *(featurelist.begin() + binStartInOS);
+                Feature *F = *(featuresInBin.begin() + binStartInOS);
                 pt_outOfBins.push_back(F);
             }
             else
             {
                 for (int i = 0; i < binsizeInOS; i++)
                 {
-                    Feature *F = *(featurelist.begin() + binStartInOS + i);
+                    Feature *F = *(featuresInBin.begin() + binStartInOS + i);
                     pt_outOfBins.push_back(F);
                 }
 
-                // pt_outOfBins.insert(pt_outOfBins.end(), featurelist.begin() + binStartInOS, featurelist.begin() + binEndInOS + 1); // ßßß place discarded features in separate table
+                // pt_outOfBins.insert(pt_outOfBins.end(), featuresInBin.begin() + binStartInOS, featuresInBin.begin() + binEndInOS + 1); // ßßß place discarded features in separate table
             }
             return;
         }
@@ -265,7 +273,7 @@ namespace q
             // make bin
             // std::cout << binStartInOS << "," << binEndInOS << "," << subsetcount << "\n"; // not all that useful, since knowledge of position in original order space is always lost
             pt_subsetcount = 0;
-            const Bin output(featurelist.begin() + binStartInOS, featurelist.begin() + binEndInOS + 1); // binEndInOS+1 since the iterator has to point behind the last element to put into the vector
+            const Bin output(featuresInBin.begin() + binStartInOS, featuresInBin.begin() + binEndInOS + 1); // binEndInOS+1 since the iterator has to point behind the last element to put into the vector
             // append Bin to bin container
             bincontainer->push_back(output);
             return;
@@ -282,30 +290,30 @@ namespace q
     void Bin::subsetScan(std::deque<Bin> *bincontainer, std::vector<Bin> *finishedBins, const int &maxdist)
     {
         // sort
-        size_t n = featurelist.size(); // TODO rename n
-        double tmp_pt_mzmin = featurelist.front()->mz;
-        double tmp_pt_mzmax = featurelist.back()->mz;
-        std::sort(featurelist.begin(), featurelist.end(), [](const Feature *lhs, const Feature *rhs)
+        size_t n = featuresInBin.size(); // TODO rename n
+        double tmp_pt_mzmin = featuresInBin.front()->mz;
+        double tmp_pt_mzmax = featuresInBin.back()->mz;
+        std::sort(featuresInBin.begin(), featuresInBin.end(), [](const Feature *lhs, const Feature *rhs)
                   { return lhs->scanNo < rhs->scanNo; });
-        std::vector<Feature *>::iterator newstart = featurelist.begin();
+        std::vector<Feature *>::iterator newstart = featuresInBin.begin();
         int lastpos = 0;
         for (size_t i = 1; i < n; i++)
         {
-            if (featurelist[i]->scanNo - featurelist[i - 1]->scanNo > maxdist) // bin needs to be split
+            if (featuresInBin[i]->scanNo - featuresInBin[i - 1]->scanNo > maxdist) // bin needs to be split
             {
                 // less than five features in bin
                 if (i - lastpos - 1 < 5)
                 {
-                    pt_outOfBins.insert(pt_outOfBins.end(), newstart, featurelist.begin() + i - 1); // ßßß place discarded features in separate table
-                    newstart = featurelist.begin() + i;                                             // new start is one behind current i
+                    pt_outOfBins.insert(pt_outOfBins.end(), newstart, featuresInBin.begin() + i - 1); // ßßß place discarded features in separate table
+                    newstart = featuresInBin.begin() + i;                                             // new start is one behind current i
                 }
                 else
                 {
                     // no bins of size 5 are ever produced when splitting by scans - ßßß try reduced maxdist
                     // viable bin, stable in scan dimension
-                    Bin output(newstart, featurelist.begin() + i - 1);
+                    Bin output(newstart, featuresInBin.begin() + i - 1);
                     bincontainer->push_back(output);
-                    newstart = featurelist.begin() + i;
+                    newstart = featuresInBin.begin() + i;
                 }
                 lastpos = i; // sets previ to the position one i ahead, since current value is i-1
             }
@@ -315,32 +323,32 @@ namespace q
         {
             bincontainer->front().pt_mzmin = tmp_pt_mzmin;
             bincontainer->front().pt_mzmax = tmp_pt_mzmax;
-            bincontainer->front().pt_scanmin = featurelist.front()->scanNo;
-            bincontainer->front().pt_scanmax = featurelist.back()->scanNo;
+            bincontainer->front().pt_scanmin = featuresInBin.front()->scanNo;
+            bincontainer->front().pt_scanmax = featuresInBin.back()->scanNo;
             bincontainer->front().pt_subsetcount = pt_subsets; // ßßß rm
             finishedBins->push_back(bincontainer->front());
         }
         else if (n + 1 - lastpos > 5)
         {
             // viable bin, stable in scan dimension
-            Bin output(newstart, featurelist.end());
+            Bin output(newstart, featuresInBin.end());
             bincontainer->push_back(output);
         }
         else
         {
-            pt_outOfBins.insert(pt_outOfBins.end(), newstart, featurelist.end()); // ßßß place discarded features in separate table
+            pt_outOfBins.insert(pt_outOfBins.end(), newstart, featuresInBin.end()); // ßßß place discarded features in separate table
         }
     }
 
     void Bin::makeDQSB(const FeatureList *rawdata, const int &maxdist)
     {
         // assumes bin is saved sorted by scans, since the result from scan gap checks is the final control
-        size_t n = featurelist.size(); //  TODO rename
+        size_t n = featuresInBin.size(); //  TODO rename
         DQSB.reserve(n);
         // determine start and end of relevant scan section, used as repeats for the for loop; -1 since accessed vector is zero-indexed
-        unsigned int minScanInner = featurelist.front()->scanNo; //
+        unsigned int minScanInner = featuresInBin.front()->scanNo; //
         int scanRangeStart = minScanInner - maxdist;
-        unsigned int scanRangeEnd = featurelist.back()->scanNo + maxdist;
+        unsigned int scanRangeEnd = featuresInBin.back()->scanNo + maxdist;
 
         int maxScansReduced = 0;              // add this many dummy values to prevent segfault when bin is in one of the last scans
         std::vector<double> minMaxOutPerScan; // contains both mz values (per scan) next or closest to all m/z in the bin
@@ -361,28 +369,28 @@ namespace q
         }
 
         // determine min and max in mz - sort, since then calculation of inner distances is significantly faster
-        std::sort(featurelist.begin(), featurelist.end(), [](const Feature *lhs, const Feature *rhs)
+        std::sort(featuresInBin.begin(), featuresInBin.end(), [](const Feature *lhs, const Feature *rhs)
                   { return lhs->mz < rhs->mz; });
-        const double minInnerMZ = featurelist.front()->mz;
-        const double maxInnerMZ = featurelist.back()->mz;
-        std::vector<double> meanInnerDistances = meanDistance(featurelist);
+        const double minInnerMZ = featuresInBin.front()->mz;
+        const double maxInnerMZ = featuresInBin.back()->mz;
+        std::vector<double> meanInnerDistances = meanDistance(featuresInBin);
 
         // for all scans relevant to the bin
         int needle = 0; // position in scan where a value was found - starts at 0 for first scan
-        for (unsigned int i = scanRangeStart; i <= scanRangeEnd; i++)
+        for (unsigned int i = scanRangeStart; i < scanRangeEnd; i++)
         {
             bool minFound = false; // only execute search if min or max is present in the scan
             bool maxFound = false;
-            int scansize = rawdata->allFeatures[i].size() - 1; // -1 since 0-indexed, last element of scan
+            int scansize = rawdata->allFeatures[i].size();
             if (needle > scansize)
                 needle = scansize; // prevent searching outside of the valid scan region
 
             // check begin of bin for possible segfault
-            if (rawdata->allFeatures[i][0].mz > minInnerMZ)
+            if (rawdata->allFeatures[i][1].mz > minInnerMZ)
             {
                 minMaxOutPerScan.push_back(NO_MIN_FOUND);
                 minFound = true;
-                if (rawdata->allFeatures[i][0].mz > maxInnerMZ)
+                if (rawdata->allFeatures[i][1].mz > maxInnerMZ)
                 {
                     minMaxOutPerScan.push_back(rawdata->allFeatures[i][0].mz);
                     maxFound = true;
@@ -435,12 +443,12 @@ namespace q
             }
         }
 
-        // find min distance in minMaxOutPerScan, assign to minOuterDistances in order of the featurelist
+        // find min distance in minMaxOutPerScan, assign to minOuterDistances in order of the featuresInBin
         for (size_t i = 0; i < n; i++)
         {
-            double minDist = 225;
-            double currentMZ = featurelist[i]->mz;
-            int currentRangeStart = (featurelist[i]->scanNo - minScanInner) * 2; // gives position of the first value in minMaxOutPerScan that must be considered, assuming the first value in minMaxOutPerScan (index 0) is only relevant to the Feature in the lowest scan. For every increase in scans, that range starts two elements later
+            double minDist = 256;
+            double currentMZ = featuresInBin[i]->mz;
+            int currentRangeStart = (featuresInBin[i]->scanNo - minScanInner) * 2; // gives position of the first value in minMaxOutPerScan that must be considered, assuming the first value in minMaxOutPerScan (index 0) is only relevant to the Feature in the lowest scan. For every increase in scans, that range starts two elements later
             for (int j = currentRangeStart; j <= maxdist * 2 + 1; j++)           // from lowest scan to highest scan relevant to feature, +1 since scan no of feature has to be included
             {
                 double dist = abs(currentMZ - minMaxOutPerScan[j]);
@@ -456,17 +464,17 @@ namespace q
     {
         // ID, size, mean(mz), mz range, mean(scans), scan range, mean(DQS), subsets, time (DQSB), \n
         std::stringstream buffer;
-        size_t n = featurelist.size(); // TODO rename
+        size_t n = featuresInBin.size(); // TODO rename
         double meanMZ = 0;
         double meanScan = 0;
         double meanDQS = 0;
         for (size_t i = 0; i < n; i++)
         {
-            meanMZ += featurelist[i]->mz;
-            meanScan += featurelist[i]->scanNo;
+            meanMZ += featuresInBin[i]->mz;
+            meanScan += featuresInBin[i]->scanNo;
             meanDQS += DQSB[i];
         }
-        std::sort(featurelist.begin(), featurelist.end(), [](const Feature *lhs, const Feature *rhs)
+        std::sort(featuresInBin.begin(), featuresInBin.end(), [](const Feature *lhs, const Feature *rhs)
                   { return lhs->mz < rhs->mz; });
         meanMZ = meanMZ / n;
         meanScan = meanScan / n;
@@ -476,6 +484,17 @@ namespace q
         return output;
     }
 
+    void Bin::controlBin(int binID){
+        for (size_t i = 0; i < featuresInBin.size()-1; i++)
+        {
+            if (featuresInBin[i]->pt_binID != featuresInBin[i+1]->pt_binID) // color 11 for mismatch  mz,rt,ID,color,shape
+            {
+                std::cout << featuresInBin[i]->mz << "," << featuresInBin[i]->scanNo << "," << binID << ",11,L\n";
+            }
+        }
+        return;
+    }
+
 #pragma endregion "Bin"
 
 #pragma region "Functions"
@@ -483,21 +502,21 @@ namespace q
     std::vector<double> meanDistance(std::vector<Feature *> featurelistBin)
     {
         // assumes bin is sorted by mz
-        size_t n = featurelistBin.size(); // TODO rename
+        size_t binsize = featurelistBin.size(); // TODO rename
         double totalSum = 0;
-        std::vector<double> output(n);
-        for (size_t i = 0; i < n; i++)
+        std::vector<double> output(binsize);
+        for (size_t i = 0; i < binsize; i++)
         {
             totalSum = +featurelistBin[i]->mz;
         }
         double beforeSum = 0;
-        for (size_t i = 0; i < n; i++)
+        for (size_t i = 0; i < binsize; i++)
         {
-            double v1 = (totalSum - featurelistBin[i]->mz * (n - i));
+            double v1 = (totalSum - featurelistBin[i]->mz * (binsize - i));
             double v2 = (featurelistBin[i]->mz * i - beforeSum);
             beforeSum += featurelistBin[i]->mz;
             totalSum -= featurelistBin[i]->mz;
-            output[i] = (v1 + v2) / (n - 1);
+            output[i] = (v1 + v2) / (binsize - 1);
         }
         return output;
     }
@@ -539,10 +558,16 @@ int main()
     testcontainer.subsetBins(dim, 7); // 7 = max dist in scans
     std::cout << "\ncalculating DQSBs...\n";
 
-    // std::ofstream result("../../qbinning_binposition.csv");
-    // std::streambuf *coutbuf = std::cout.rdbuf(); // save old buf
-    // std::cout.rdbuf(result.rdbuf());             // redirect std::cout to out.txt!
-    testcontainer.assignDQSB(&testdata, 7);
+
+
+    std::ofstream result("../../qbinning_faultybins.csv");
+    std::streambuf *coutbuf = std::cout.rdbuf(); // save old buf
+    std::cout.rdbuf(result.rdbuf());             // redirect std::cout to out.txt!
+
+    std::cout << "mz,rt,ID,color,shape\n";
+    testcontainer.controlAllBins();   
+
+    std::cout.rdbuf(coutbuf); // reset to standard output again 
 
     testcontainer.printAllBins("../../qbinning_binlist.csv", &testdata);
 
@@ -560,28 +585,10 @@ int main()
         file_out << std::setprecision(15) << q::pt_outOfBins[i]->mz << "," << q::pt_outOfBins[i]->scanNo << "," << -1 << "," << -1 << ","
                  << "Y\n";
     }
-    // std::vector<double> ratio;
-    // int oneCount = 0;
-    // int otherCount = 0;
-    // int meanSteps = 0;
-    // for (size_t i = 0; i < q::pt_stepsForDQS.size(); i++)
-    // {
-    //     if (q::pt_stepsForDQS[i] == 1)
-    //     {
-    //         ++oneCount;
-    //     }
-    //     else
-    //     {
-    //         ++otherCount;
-    //         ratio.push_back(q::pt_stepsForDQS[i] / q::pt_scanRelSteps[i]);
-    //         meanSteps += q::pt_stepsForDQS[i];
-    //     }
-    // }
-    // meanSteps = meanSteps / otherCount;
-    // std::cout << oneCount << ", " << meanSteps;
 
-    // std::cout.rdbuf(coutbuf); // reset to standard output again
+    testcontainer.assignDQSB(&testdata, 7);
+
+    
     std::cout << "\n\nDone!\n\n";
-    // testcontainer.printBinSummary("G:\\_Studium\\Analytik-Praktikum\\qbinning\\qAlgorithms\\binstats.csv");
     return 0;
 }

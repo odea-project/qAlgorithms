@@ -54,9 +54,9 @@ namespace q
         double pt_mzmax;
         int pt_scanmin;
         int pt_scanmax;
-        std::vector<Feature *> featurelist;
-        std::vector<double> activeOS;
-        std::vector<double> DQSB;                                                                              // Order Space
+        std::vector<Feature *> featuresInBin;
+        std::vector<double> activeOS; // Order Space
+        std::vector<double> DQSB;                                                                              
         Bin(const std::vector<Feature *>::iterator &startBin, const std::vector<Feature *>::iterator &endBin); // const std::vector<Feature> &sourceList,
         Bin(FeatureList *rawdata);
         ~Bin();
@@ -67,7 +67,7 @@ namespace q
         void makeDQSB(const FeatureList *rawdata, const int &maxdist);
         double findOuterMinmax(std::vector<Feature *>::const_iterator position, std::vector<Feature *>::const_iterator scanend, const double &innerMinmax, bool direction, int scansize);
         std::string summarisePerf();
-        // Feature makeFeature(); // combine all features to one using means, modify mzError
+        void controlBin(int binID);
     };
 
     // BinContainer
@@ -88,6 +88,7 @@ namespace q
         void firstBinValid();                                     // move first bin in binDeque to end
         void clearFirstBin();                                     // remove first bin in binDeque
         void assignDQSB(const FeatureList *rawdata, int maxdist); // apply DQSB function to all completed bins
+        void controlAllBins();
     };
     // utility functions
     std::vector<double> meanDistance(std::vector<Feature *> featurelistBin);

@@ -5,6 +5,9 @@ using ColorSchemes
 
 
 tdd = CSV.read("C:/Users/unisys/Documents/Studium/Analytik-Praktikum/qBinning_binlist.csv", DataFrame)
+notbinned = CSV.read("C:/Users/unisys/Documents/Studium/Analytik-Praktikum/qBinning_notbinned.csv", DataFrame)
+wrongbins = CSV.read("C:/Users/unisys/Documents/Studium/Analytik-Praktikum/qBinning_faultybins.csv", DataFrame)
+
 
 tdd .= sort!(tdd, [:ID,:mz])
 mz = tdd.mz
@@ -12,6 +15,9 @@ rt = tdd.rt
 ID = tdd.ID
 colour = tdd.color
 shape = tdd.shape
+
+w_mz = wrongbins.mz
+w_rt = wrongbins.rt
 
 # tdd:shape = repeat("a")
 
@@ -21,9 +27,11 @@ shape = tdd.shape
 
 
 # Binning Plot :glasbey_bw_minc_20_n256
-fig = scatter(mz,rt,color = colour,colormap=:tab10)
-DataInspector(fig)
-fig
+fig = Figure()
+# DataInspector(fig)
+# fig
+scatter(mz,rt,color = colour,colormap=:tab10)
+# scatter!(w_mz, w_rt, color = "red")
 
 
 # Binning EICs
