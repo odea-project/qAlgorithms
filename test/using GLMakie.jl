@@ -19,6 +19,9 @@ shape = tdd.shape
 w_mz = wrongbins.mz
 w_rt = wrongbins.rt
 
+n_mz = notbinned.mz
+n_rt = notbinned.rt
+
 # tdd:shape = repeat("a")
 
 # transform(tdd, :ID)
@@ -28,12 +31,12 @@ w_rt = wrongbins.rt
 
 # Binning Plot :glasbey_bw_minc_20_n256
 fig = Figure()
-# DataInspector(fig)
-# fig
-scatter(mz,rt,color = colour,colormap=:tab10)
-# scatter!(w_mz, w_rt, color = "red")
-
-
+Axis(fig[1, 1])
+scatter!(mz,rt,color = colour,colormap=:tab10)
+scatter!(w_mz, w_rt, color = "red", shape = "L")
+scatter!(n_mz, n_rt, color = "black", alpha = 0.7)
+DataInspector(fig)
+fig
 # Binning EICs
 # f = Figure()
 # Axis(f[1, 1])

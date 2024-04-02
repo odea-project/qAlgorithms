@@ -19,8 +19,8 @@
 
 namespace q
 {
-    // Feature Struct (contains all user-specified variables found in raw data and an index)
-    struct Feature
+    // Datapoint Struct (contains all user-specified variables found in raw data and an index)
+    struct Datapoint
     {
         // int idx; // keep as test parameter if at all
         double mz;
@@ -30,14 +30,14 @@ namespace q
         int pt_binID;
     };
 
-    class FeatureList
+    class RawData
     {
     public:
-        FeatureList(int in_numberOfScans);
-        ~FeatureList();
+        RawData(int in_numberOfScans);
+        ~RawData();
         int numberOfScans;
         int lengthAllFeatures;
-        std::vector<std::vector<Feature>> allFeatures;
+        std::vector<std::vector<Datapoint>> allDatapoints;
         bool readcsv(std::string user_file, int d_mz, int d_mzError, int d_RT, int d_scanNo, int pt_d_binID);
     };
 
@@ -54,18 +54,18 @@ namespace q
         double pt_mzmax;
         int pt_scanmin;
         int pt_scanmax;
-        std::vector<Feature *> featuresInBin;
+        std::vector<Datapoint *> pointsInBin;
         std::vector<double> activeOS; // Order Space
         std::vector<double> DQSB;                                                                              
-        Bin(const std::vector<Feature *>::iterator &startBin, const std::vector<Feature *>::iterator &endBin); // const std::vector<Feature> &sourceList,
-        Bin(FeatureList *rawdata);
+        Bin(const std::vector<Datapoint *>::iterator &startBin, const std::vector<Datapoint *>::iterator &endBin); // const std::vector<Datapoint> &sourceList,
+        Bin(RawData *rawdata);
         ~Bin();
         void makeOS();
         void makeCumError();
         void subsetMZ(std::deque<Bin> *bincontainer, const std::vector<double> &OS, int startBin, int endBin); // mz, error, RT and beginning/end are dictated by bin contents
         void subsetScan(std::deque<Bin> *bincontainer, std::vector<Bin> *finishedBins, const int &maxdist);
-        void makeDQSB(const FeatureList *rawdata, const int &maxdist);
-        double findOuterMinmax(std::vector<Feature *>::const_iterator position, std::vector<Feature *>::const_iterator scanend, const double &innerMinmax, bool direction, int scansize);
+        void makeDQSB(const RawData *rawdata, const int &maxdist);
+        double findOuterMinmax(std::vector<Datapoint *>::const_iterator position, std::vector<Datapoint *>::const_iterator scanend, const double &innerMinmax, bool direction, int scansize);
         std::string summarisePerf();
         void controlBin(int binID);
     };
@@ -74,24 +74,24 @@ namespace q
     class BinContainer
     {
     private:
-        // void readcsv(std::string user_file, std::vector<Feature> output, int d_mz, int d_mzError, int d_RT, int d_scanNo); // implemented for featurelist
+        // void readcsv(std::string user_file, std::vector<Datapoint> output, int d_mz, int d_mzError, int d_RT, int d_scanNo); // implemented for featurelist
         std::deque<Bin> binDeque;      // ßßß add case for no viable bins
         std::vector<Bin> finishedBins; // only includes bins which cannot be further subdivided, added DQSB
 
     public:
         BinContainer();
         ~BinContainer();
-        void makeFirstBin(FeatureList *rawdata);
+        void makeFirstBin(RawData *rawdata);
         void subsetBins(std::vector<int> dimensions, int scanDiffLimit); // select which of the hard-coded subsetting tools should be used in which order, always applies to binDeque. Append to the end, delete from the front
-        void printAllBins(std::string path, FeatureList *rawdata);
+        void printAllBins(std::string path, RawData *rawdata);
         void printBinSummary(std::string path);
         void firstBinValid();                                     // move first bin in binDeque to end
         void clearFirstBin();                                     // remove first bin in binDeque
-        void assignDQSB(const FeatureList *rawdata, int maxdist); // apply DQSB function to all completed bins
+        void assignDQSB(const RawData *rawdata, int maxdist); // apply DQSB function to all completed bins
         void controlAllBins();
     };
     // utility functions
-    std::vector<double> meanDistance(std::vector<Feature *> featurelistBin);
+    std::vector<double> meanDistance(std::vector<Datapoint *> pointsInBin);
     double calcDQS(double MID, double MOD); // Mean Inner Distance, Minimum Outer Distance
 
 }

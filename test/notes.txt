@@ -39,3 +39,5 @@ int now = time(0)
 time(o) - now
 
 gcc -Wall -Werror .\src\qalgorithms_qbin.cpp  
+
+first vector: check first feature in scan 1925
