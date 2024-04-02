@@ -52,7 +52,6 @@ namespace q
                {
     // iterate over the map of varDataType datatype objects
     // use parallel for loop to iterate over the dataVec
-    int nPeaks = 0;
 #pragma omp parallel for
                 for (auto &pair : *arg)
                  {
@@ -68,14 +67,14 @@ namespace q
                     X.assignRef(i, 0, data[i]->x());
                     Y.assignRef(i, 0, data[i]->y());
                   }
-                  runningRegression(X, Y, nPeaks);
+                  runningRegression(X, Y);
                 } 
-                std::cout << "Number of peaks: " << nPeaks << "\n";},
+                ; },
                dataVec);
   } // end findPeaks
 
-  void qPeaks::runningRegression(const RefMatrix &X, const RefMatrix &Y, int &nPeaks)
-  { 
+  void qPeaks::runningRegression(const RefMatrix &X, const RefMatrix &Y)
+  {
     // perform log-transform on Y
     size_t n = Y.getRows();
     Matrix Ylog = Y.log();
@@ -89,71 +88,7 @@ namespace q
       Matrix b = Ylog.convoleCombiend(*(psuedoInverses[scale - 2]));
       validateRegressions(b, Ylog, scale, validRegressions);
     } // end for scale loop
-    if (validRegressions.empty())
-    {
-      return; // no valid peaks at all
-    }
-    int lowestScale = validRegressions.front()->scale;
-    int highestScale = validRegressions.back()->scale;
-    if (lowestScale == highestScale)
-    {
-      nPeaks += validRegressions.size();
-      return; // only one scale @todo: return the results
-    }
-    // apply survival of the fittest considering different scales
-    std::vector<std::vector<std::unique_ptr<validRegression>>::iterator> best_peak_iterators; // iterators to the best peaks
-    std::vector<std::vector<std::unique_ptr<validRegression>>::iterator> candidate_peak_iterators; // iterators to the candidate peaks
-    auto it = validRegressions.begin();
-    best_peak_iterators.push_back(it);
-    // iterate over the validRegressions vector
-    for (auto peak = std::next(it); peak != validRegressions.end(); ++peak)
-    {
-      double left_limit = (*peak)->index - (*peak)->scale;
-      double right_limit = (*peak)->index + (*peak)->scale;
-      // iterate over the best peaks
-      for (auto best_peak = best_peak_iterators.begin(); best_peak != best_peak_iterators.end(); ++best_peak)
-      {
-        if ((**best_peak)->apex_position > left_limit && (**best_peak)->apex_position < right_limit)
-        {
-          candidate_peak_iterators.push_back(*best_peak);
-        }
-      }
-      // compare mse of best and mean mse of candidates
-      if ((*peak)->mse == 0)
-      { // calculate the mse of the current peak
-        
-        (*peak)->mse = calcMse(((*designMatrices[(*peak)->scale-2]) * (*peak)->B).exp(), (Ylog.subMatrix((*peak)->index, (*peak)->index + 2 * (*peak)->scale + 1, 0, 1)).exp());
-      }
-      double mean_mse = 0;
-      for (auto candidate_peak = candidate_peak_iterators.begin(); candidate_peak != candidate_peak_iterators.end(); ++candidate_peak)
-      {
-        if ((**candidate_peak)->mse == 0)
-        { // calculate the mse of the current peak
-          (**candidate_peak)->mse = calcMse(((*designMatrices[(**candidate_peak)->scale-2]) * (**candidate_peak)->B).exp(), (Ylog.subMatrix((**candidate_peak)->index, (**candidate_peak)->index + 2 * (**candidate_peak)->scale + 1, 0, 1)).exp());
-        }
-        mean_mse += (**candidate_peak)->mse;
-      }
-      mean_mse /= candidate_peak_iterators.size();
-      if ((*peak)->mse < mean_mse)
-      {
-        // remove the candidates from the best peaks
-        for (auto candidate_peak = candidate_peak_iterators.begin(); candidate_peak != candidate_peak_iterators.end(); ++candidate_peak)
-        {
-          for (auto best_peak = best_peak_iterators.begin(); best_peak != best_peak_iterators.end(); ++best_peak)
-          {
-            if (*candidate_peak == *best_peak)
-            {
-              best_peak_iterators.erase(best_peak);
-              break;
-            }
-          }
-        }
-        best_peak_iterators.push_back(peak);
-      }
-      candidate_peak_iterators.clear();
-    } // end for loop
-    // return the best peaks
-    nPeaks += best_peak_iterators.size();
+    mergeRegressionsOverScales(validRegressions, Ylog);
   } // end runningRegression
 
   void qPeaks::validateRegressions(const Matrix &B, const Matrix &Ylog, const int scale, std::vector<std::unique_ptr<validRegression>> &validRegressions)
@@ -249,7 +184,7 @@ namespace q
       }
 
       // at this point, the peak is validated
-      valid_regressions_tmp.push_back(std::make_pair(i, apex_position+i +scale));
+      valid_regressions_tmp.push_back(std::make_pair(i, apex_position + i + scale));
     } // end for loop
 
     // early return if no or only one valid peak
@@ -304,7 +239,7 @@ namespace q
     {
       if (group.size() == 1)
       { // already isolated peak => push to valid regressions
-        validRegressions.push_back(std::make_unique<validRegression>(group[0], scale, B(1,group[0]) > 0 ? -B(1,group[0]) / 2 / B(3,group[0]) + scale + group[0] : -B(1,group[0]) / 2 / B(2,group[0]) + scale + group[0], 0, B.col(group[0])));
+        validRegressions.push_back(std::make_unique<validRegression>(group[0], scale, B(1, group[0]) > 0 ? -B(1, group[0]) / 2 / B(3, group[0]) + scale + group[0] : -B(1, group[0]) / 2 / B(2, group[0]) + scale + group[0], 0, B.col(group[0])));
       }
       else
       { // survival of the fittest based on mse between original data and reconstructed (exp transform of regression)
@@ -319,10 +254,88 @@ namespace q
             best_idx = index;
           }
         } // end for loop (indices in group)
-        validRegressions.push_back(std::make_unique<validRegression>(best_idx, scale, B(1,best_idx) > 0 ? -B(1,best_idx) / 2 / B(3,best_idx) + scale + best_idx : -B(1,best_idx) / 2 / B(2,best_idx) + scale + best_idx, best_mse, B.col(best_idx)));
+        validRegressions.push_back(std::make_unique<validRegression>(best_idx, scale, B(1, best_idx) > 0 ? -B(1, best_idx) / 2 / B(3, best_idx) + scale + best_idx : -B(1, best_idx) / 2 / B(2, best_idx) + scale + best_idx, best_mse, B.col(best_idx)));
       } // end if; single item or group with multiple members
     }   // end for loop (group in vector of groups)
   }     // end validateRegressions
+
+  void qPeaks::mergeRegressionsOverScales(std::vector<std::unique_ptr<validRegression>> &validRegressions, Matrix &Ylog)
+  {
+    if (validRegressions.empty())
+    {
+      return; // no valid peaks at all
+    }
+
+    int lowestScale = validRegressions.front()->scale;
+    int highestScale = validRegressions.back()->scale;
+    if (lowestScale == highestScale)
+    {
+      return; // only one scale; validRegressions is already fine.
+    }
+
+    // apply survival of the fittest considering different scales
+    // iterate over the validRegressions vector
+    for (auto it = validRegressions.begin(); it != validRegressions.end(); ++it)
+    {
+      double left_limit = (*it)->index;
+      double right_limit = (*it)->index + 2 * (*it)->scale + 1;
+      double mean_mse = 0;
+      int grpSize = 0;
+      // iterate over the validRegressions vector till the current regression's scale
+      for (auto it2 = validRegressions.begin(); (*it2)->scale < (*it)->scale; ++it2)
+      {
+        if (!(*it2)->isValid)
+          continue; // skip the invalid peaks
+        if ((*it2)->apex_position > left_limit && (*it2)->index < right_limit)
+        {
+          if ((*it2)->mse == 0)
+          { // calculate the mse of the current peak
+            (*it2)->mse = calcMse(((*designMatrices[(*it2)->scale - 2]) * (*it2)->B).exp(), (Ylog.subMatrix((*it2)->index, (*it2)->index + 2 * (*it2)->scale + 1, 0, 1)).exp());
+          }
+          grpSize++;
+          mean_mse += (*it2)->mse;
+        }
+      } // end for loop, inner loop, it2
+
+      if (grpSize > 0)
+      {
+        mean_mse /= grpSize;
+      }
+      else
+      {
+        continue; // no peaks in the group
+      }
+
+      if ((*it)->mse == 0.0)
+      { // calculate the mse of the current peak
+        (*it)->mse = calcMse(((*designMatrices[(*it)->scale - 2]) * (*it)->B).exp(), (Ylog.subMatrix((*it)->index, (*it)->index + 2 * (*it)->scale + 1, 0, 1)).exp());
+      }
+
+      if ((*it)->mse < mean_mse)
+      {
+        // Set isValid to false for the candidates
+        for (auto it2 = validRegressions.begin(); (*it2)->scale < (*it)->scale; ++it2)
+        {
+          if (!(*it2)->isValid)
+            continue; // skip the invalid peaks
+          if ((*it2)->apex_position > left_limit && (*it2)->index < right_limit)
+          {
+            (*it2)->isValid = false;
+          }
+        }
+      }
+      else
+      {
+        (*it)->isValid = false;
+      }
+    } // end for loop, outer loop, it
+
+    // Remove the peaks with isValid == false from the validRegressions
+    validRegressions.erase(std::remove_if(validRegressions.begin(), validRegressions.end(),
+                                          [](const auto &peak)
+                                          { return !peak->isValid; }),
+                           validRegressions.end());
+  }
 
   double qPeaks::calcMse(const Matrix &yhat, const Matrix &y) const
   {

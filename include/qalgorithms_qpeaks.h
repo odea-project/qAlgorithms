@@ -45,16 +45,8 @@ namespace q
      */
     void findPeaks(const varDataType &dataVec);
 
-    void runningRegression(const RefMatrix &X, const RefMatrix &Y, int &nPeaks);
 
-    /**
-     * @brief Calculate the number of regressions for the given number of data points.
-     *
-     * @param n : number of data points
-     * @return int : number of regressions
-     */
-    int calculateNumberOfRegressions(const int n) const;
-
+    
     // debugging
     void info() const;
     void printMatrices(int scale) const;
@@ -72,14 +64,21 @@ namespace q
       double apex_position;
       double mse;
       Matrix B;
+      bool isValid;
 
-      validRegression(int index, int scale, double apex_position, double mse, Matrix B) : index(index), scale(scale), apex_position(apex_position), mse(mse), B(B) {}
+      validRegression(int index, int scale, double apex_position, double mse, Matrix B, bool isValid = true) : index(index), scale(scale), apex_position(apex_position), mse(mse), B(B), isValid(isValid) {}
     };
 
     int global_maxScale;
 
     // methods
+    int calculateNumberOfRegressions(const int n) const;
+
+    void runningRegression(const RefMatrix &X, const RefMatrix &Y);
+
     void validateRegressions(const Matrix &B, const Matrix &Ylog, const int scale, std::vector<std::unique_ptr<validRegression>> &validRegressions);
+
+    void mergeRegressionsOverScales(std::vector<std::unique_ptr<validRegression>> &validRegressions, Matrix &Ylog);
 
     double calcMse(const Matrix &yhat, const Matrix &y) const;
 
