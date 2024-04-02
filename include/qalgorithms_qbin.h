@@ -1,19 +1,9 @@
-#include <iostream>
+#ifndef _QALGORITHMS_QBIN_INCLUDED
+#define _QALGORITHMS_QBIN_INCLUDED
+
+#include <deque>
 #include <vector>
-#include <numeric>
-#include <math.h>
-#include <fstream>
-#include <sstream>
-#include <algorithm>
-#include <functional>
-#include <iterator>
-#include <thread> // unused as of now
-#include <ranges>
-#include <deque> // main bin container is a deque
 #include <string>
-#include <iomanip> // for printing with full precision
-#include <chrono>  // time code execution
-#include <ctime>
 
 // Goal: all functions modify individual features, which are combined to a bin. The bin contains all features and the functions necessary to summarise which features are present
 
@@ -56,7 +46,7 @@ namespace q
         int pt_scanmax;
         std::vector<Datapoint *> pointsInBin;
         std::vector<double> activeOS; // Order Space
-        std::vector<double> DQSB;                                                                              
+        std::vector<double> DQSB;
         Bin(const std::vector<Datapoint *>::iterator &startBin, const std::vector<Datapoint *>::iterator &endBin); // const std::vector<Datapoint> &sourceList,
         Bin(RawData *rawdata);
         ~Bin();
@@ -85,8 +75,8 @@ namespace q
         void subsetBins(std::vector<int> dimensions, int scanDiffLimit); // select which of the hard-coded subsetting tools should be used in which order, always applies to binDeque. Append to the end, delete from the front
         void printAllBins(std::string path, RawData *rawdata);
         void printBinSummary(std::string path);
-        void firstBinValid();                                     // move first bin in binDeque to end
-        void clearFirstBin();                                     // remove first bin in binDeque
+        void firstBinValid();                                 // move first bin in binDeque to end
+        void clearFirstBin();                                 // remove first bin in binDeque
         void assignDQSB(const RawData *rawdata, int maxdist); // apply DQSB function to all completed bins
         void controlAllBins();
     };
@@ -95,3 +85,5 @@ namespace q
     double calcDQS(double MID, double MOD); // Mean Inner Distance, Minimum Outer Distance
 
 }
+
+#endif

@@ -1,5 +1,21 @@
 #include "../include/qalgorithms_qBin.h"
 #include <cassert>
+#include <iostream>
+#include <vector>
+#include <numeric>
+#include <math.h>
+#include <fstream>
+#include <sstream>
+#include <algorithm>
+#include <functional>
+#include <iterator>
+#include <thread> // unused as of now
+#include <ranges>
+#include <deque> // main bin container is a deque
+#include <string>
+#include <iomanip> // for printing with full precision
+#include <chrono>  // time code execution
+#include <ctime>
 
 namespace q
 {
@@ -187,12 +203,12 @@ namespace q
         }
     }
 
-    void BinContainer::controlAllBins(){
+    void BinContainer::controlAllBins()
+    {
         for (size_t i = 0; i < finishedBins.size(); i++)
         {
             finishedBins[i].controlBin(i);
         }
-        
     }
 
 #pragma endregion "BinContainer"
@@ -343,8 +359,8 @@ namespace q
     void Bin::makeDQSB(const RawData *rawdata, const int &maxdist)
     {
         // assumes bin is saved sorted by scans, since the result from scan gap checks is the final control
-        size_t n = pointsInBin.size(); //  TODO rename
-        DQSB.reserve(n);
+        size_t binsize = pointsInBin.size();
+        DQSB.reserve(binsize);
         // determine start and end of relevant scan section, used as repeats for the for loop; -1 since accessed vector is zero-indexed
         unsigned int minScanInner = pointsInBin.front()->scanNo; //
         int scanRangeStart = minScanInner - maxdist;
@@ -377,7 +393,7 @@ namespace q
 
         // for all scans relevant to the bin
         int needle = 0; // position in scan where a value was found - starts at 0 for first scan
-        for (unsigned int i = scanRangeStart; i < scanRangeEnd; i++)
+        for (int i = scanRangeStart; i < scanRangeEnd; i++)
         {
             bool minFound = false; // only execute search if min or max is present in the scan
             bool maxFound = false;
@@ -386,7 +402,7 @@ namespace q
                 needle = scansize; // prevent searching outside of the valid scan region
 
             // check begin of bin for possible segfault
-            double firstmz = rawdata->allDatapoints[i][1].mz;
+            // double firstmz = rawdata->allDatapoints[i][1].mz;
             if (rawdata->allDatapoints[i][1].mz > minInnerMZ)
             {
                 minMaxOutPerScan.push_back(NO_MIN_FOUND);
@@ -398,7 +414,7 @@ namespace q
                 }
             }
             // check end of bin
-            double lastmz = rawdata->allDatapoints[i][scansize].mz;
+            // double lastmz = rawdata->allDatapoints[i][scansize].mz;
             if (rawdata->allDatapoints[i][scansize].mz < maxInnerMZ)
             {
                 minMaxOutPerScan.push_back(NO_MAX_FOUND);
@@ -446,13 +462,13 @@ namespace q
         }
 
         // find min distance in minMaxOutPerScan, assign to minOuterDistances in order of the pointsInBin
-        for (size_t i = 0; i < n; i++)
+        for (size_t i = 0; i < binsize; i++)
         {
             double minDist = 256;
             double currentMZ = pointsInBin[i]->mz;
             unsigned int currentRangeStart = (pointsInBin[i]->scanNo - minScanInner) * 2; // gives position of the first value in minMaxOutPerScan that must be considered, assuming the first value in minMaxOutPerScan (index 0) is only relevant to the Datapoint in the lowest scan. For every increase in scans, that range starts two elements later
             unsigned int currentRangeEnd = currentRangeStart + maxdist * 2 + 1;
-            for (int j = currentRangeStart; j <= currentRangeEnd; j++)           // from lowest scan to highest scan relevant to feature, +1 since scan no of feature has to be included
+            for (unsigned int j = currentRangeStart; j <= currentRangeEnd; j++) // from lowest scan to highest scan relevant to feature, +1 since scan no of feature has to be included
             {
                 double dist = std::abs(currentMZ - minMaxOutPerScan[j]);
                 if (dist < minDist)
@@ -488,10 +504,11 @@ namespace q
         return output;
     }
 
-    void Bin::controlBin(int binID){
-        for (size_t i = 0; i < pointsInBin.size()-1; i++)
+    void Bin::controlBin(int binID)
+    {
+        for (size_t i = 0; i < pointsInBin.size() - 1; i++)
         {
-            if (pointsInBin[i]->pt_binID != pointsInBin[i+1]->pt_binID) // color 11 for mismatch  mz,rt,ID,color,shape
+            if (pointsInBin[i]->pt_binID != pointsInBin[i + 1]->pt_binID) // color 11 for mismatch  mz,rt,ID,color,shape
             {
                 std::cout << pointsInBin[i]->mz << "," << pointsInBin[i]->scanNo << "," << binID << ",11,L\n";
             }
@@ -549,7 +566,7 @@ int main()
     // std::cout.rdbuf(result.rdbuf());             // redirect std::cout to out.txt!
     // std::cout << "scan,position\n";
 
-    q::RawData testdata(2533);                                                              // 2533 scans in Warburg dataset
+    q::RawData testdata(2533);                                                                  // 2533 scans in Warburg dataset
     testdata.readcsv("../../rawdata/qBinnings_Warburg_pos_171123_01_Zu_01.csv", 0, 4, 1, 2, 7); // ../../rawdata/qCentroid_Warburg_pos_171123_01_Zu_01.csv ../test/test.csv
     // for (size_t i = 0; i < testdata.scanBreaks.size(); i++)
     // {
@@ -562,16 +579,14 @@ int main()
     testcontainer.subsetBins(dim, 7); // 7 = max dist in scans
     std::cout << "\ncalculating DQSBs...\n";
 
-
-
     // std::ofstream result("../../qbinning_faultybins.csv");
     // std::streambuf *coutbuf = std::cout.rdbuf(); // save old buf
     // std::cout.rdbuf(result.rdbuf());             // redirect std::cout to out.txt!
 
     // std::cout << "mz,rt,ID,color,shape\n";
-    // testcontainer.controlAllBins();   
+    // testcontainer.controlAllBins();
 
-    // std::cout.rdbuf(coutbuf); // reset to standard output again 
+    // std::cout.rdbuf(coutbuf); // reset to standard output again
 
     // testcontainer.printAllBins("../../qbinning_binlist.csv", &testdata);
 
@@ -593,7 +608,7 @@ int main()
     testcontainer.assignDQSB(&testdata, 7);
 
     testcontainer.printBinSummary("../../qbinning_binsummary.csv");
-    
+
     std::cout << "\n\nDone!\n\n";
     return 0;
 }
