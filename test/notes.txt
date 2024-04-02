@@ -41,3 +41,13 @@ time(o) - now
 gcc -Wall -Werror .\src\qalgorithms_qbin.cpp  
 
 first vector: check first feature in scan 1925
+
+structs für minMaxOuter (nicht in header)
+
+Header verallgemeinern
+
+Methode: I/O, minimalbeispiel (Reihenfolge, ~10E array), paper verlinken (Seitenzahl),
+
+Gerrit soll code aufräumen -> Namen, Funktionen trennen, Kommentare selber schreiben, redundanten Müll entfernen, echte pointer statt &, eckige Klammern für operator overload (matrixcode durch besse Bibliothek ersetzen, da jede Operation die gesamte Matrix kopiert),
+
+Erstelle Output-Datei, wenn sie nicht existiert

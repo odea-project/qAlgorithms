@@ -4,9 +4,9 @@ using DataFrames
 using ColorSchemes
 
 
-tdd = CSV.read("C:/Users/unisys/Documents/Studium/Analytik-Praktikum/qBinning_binlist.csv", DataFrame)
-notbinned = CSV.read("C:/Users/unisys/Documents/Studium/Analytik-Praktikum/qBinning_notbinned.csv", DataFrame)
-wrongbins = CSV.read("C:/Users/unisys/Documents/Studium/Analytik-Praktikum/qBinning_faultybins.csv", DataFrame)
+tdd = CSV.read("G:/_Studium/Analytik-Praktikum/qbinning/qbinning_binlist.csv", DataFrame) # C:/Users/unisys/Documents/Studium/Analytik-Praktikum/qBinning_binlist.csv
+notbinned = CSV.read("G:/_Studium/Analytik-Praktikum/qbinning/qbinning_notbinned.csv", DataFrame)
+# wrongbins = CSV.read("C:/Users/unisys/Documents/Studium/Analytik-Praktikum/qBinning_faultybins.csv", DataFrame)
 
 
 tdd .= sort!(tdd, [:ID,:mz])
@@ -16,8 +16,8 @@ ID = tdd.ID
 colour = tdd.color
 shape = tdd.shape
 
-w_mz = wrongbins.mz
-w_rt = wrongbins.rt
+# w_mz = wrongbins.mz
+# w_rt = wrongbins.rt
 
 n_mz = notbinned.mz
 n_rt = notbinned.rt
@@ -33,7 +33,7 @@ n_rt = notbinned.rt
 fig = Figure()
 Axis(fig[1, 1])
 scatter!(mz,rt,color = colour,colormap=:tab10)
-scatter!(w_mz, w_rt, color = "red", shape = "L")
+# scatter!(w_mz, w_rt, color = "red", shape = "L")
 scatter!(n_mz, n_rt, color = "black", alpha = 0.7)
 DataInspector(fig)
 fig
