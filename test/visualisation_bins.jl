@@ -4,8 +4,8 @@ using DataFrames
 using ColorSchemes
 
 
-tdd = CSV.read("G:/_Studium/Analytik-Praktikum/qbinning/qbinning_binlist.csv", DataFrame) # C:/Users/unisys/Documents/Studium/Analytik-Praktikum/qBinning_binlist.csv
-notbinned = CSV.read("G:/_Studium/Analytik-Praktikum/qbinning/qbinning_notbinned.csv", DataFrame)
+tdd = CSV.read("../qbinning_binlist.csv", DataFrame) # C:/Users/unisys/Documents/Studium/Analytik-Praktikum/qBinning_binlist.csv
+notbinned = CSV.read("../qbinning_notbinned.csv", DataFrame)
 # wrongbins = CSV.read("C:/Users/unisys/Documents/Studium/Analytik-Praktikum/qBinning_faultybins.csv", DataFrame)
 
 

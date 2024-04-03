@@ -51,3 +51,5 @@ Methode: I/O, minimalbeispiel (Reihenfolge, ~10E array), paper verlinken (Seiten
 Gerrit soll code aufräumen -> Namen, Funktionen trennen, Kommentare selber schreiben, redundanten Müll entfernen, echte pointer statt &, eckige Klammern für operator overload (matrixcode durch besse Bibliothek ersetzen, da jede Operation die gesamte Matrix kopiert), wenn es getter und setter gibt sollte die variable public sein
 
 Erstelle Output-Datei, wenn sie nicht existiert
+
+mögliche Anwendung für std::variant?
