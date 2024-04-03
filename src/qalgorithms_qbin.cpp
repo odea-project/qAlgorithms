@@ -403,19 +403,20 @@ namespace q
 
             // check begin of bin for possible segfault
             // double firstmz = rawdata->allDatapoints[i][1].mz;
-            if (rawdata->allDatapoints[i][1].mz > minInnerMZ)
+            if (rawdata->allDatapoints[i][0].mz >= minInnerMZ)
             {
                 minMaxOutPerScan.push_back(NO_MIN_FOUND);
                 minFound = true;
-                if (rawdata->allDatapoints[i][1].mz > maxInnerMZ)
+                if (rawdata->allDatapoints[i][0].mz > maxInnerMZ)
                 {
                     minMaxOutPerScan.push_back(rawdata->allDatapoints[i][0].mz);
                     maxFound = true;
-                }
+                } 
+                else {needle = 0;}
             }
             // check end of bin
             // double lastmz = rawdata->allDatapoints[i][scansize].mz;
-            if (rawdata->allDatapoints[i][scansize].mz < maxInnerMZ)
+            if (rawdata->allDatapoints[i][scansize].mz <= maxInnerMZ)
             {
                 minMaxOutPerScan.push_back(NO_MAX_FOUND);
                 maxFound = true;
@@ -424,6 +425,7 @@ namespace q
                     minMaxOutPerScan.push_back(rawdata->allDatapoints[i][scansize].mz);
                     minFound = true;
                 }
+                else {needle = scansize;}
             }
             // rawdata is always sorted by mz within scans
             if (!minFound)
@@ -432,7 +434,7 @@ namespace q
                 {
                     ++needle; // steps through the dataset and increments until needle is the first value >= minInnerMZ
                 }
-                while (rawdata->allDatapoints[i][needle].mz > minInnerMZ)
+                while (rawdata->allDatapoints[i][needle].mz >= minInnerMZ)
                 {
                     --needle; // steps through the dataset and decrements until needle is the desired mz value
                 }
@@ -445,7 +447,7 @@ namespace q
                 {
                     --needle;
                 }
-                while (rawdata->allDatapoints[i][needle].mz < maxInnerMZ)
+                while (rawdata->allDatapoints[i][needle].mz <= maxInnerMZ)
                 {
                     ++needle;
                 }
@@ -472,9 +474,12 @@ namespace q
             {
                 double dist = std::abs(currentMZ - minMaxOutPerScan[j]);
                 if (dist < minDist)
+                {
                     minDist = dist;
+                    assert(minDist > 0);
+                }
             }
-            assert(minDist > 0);
+
             // calculate DQSB on a per-feature basis
             DQSB.push_back(calcDQS(meanInnerDistances[i], minDist));
         }
@@ -572,7 +577,7 @@ int main()
     // {
     //     std::cout << i << "," << testdata.scanBreaks[i] << "\n";
     // }
-    std::cout << "created feature list with scan index\n";
+    std::cout << "finished reading data\n";
     q::BinContainer testcontainer;
     testcontainer.makeFirstBin(&testdata);
     std::vector<int> dim = {1, 2};    // last element must be the number of scans ßßß implement outside of the switch statement ßßß endless loop if scan terminator is not included
