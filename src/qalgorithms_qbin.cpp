@@ -94,7 +94,7 @@ namespace q
         scans
     };
 
-    void BinContainer::subsetBins(std::vector<int> dimensions, int scanDiffLimit)
+    void BinContainer::subsetBins(std::vector<int> dimensions, int maxdist)
     {
         auto timeStart = std::chrono::high_resolution_clock::now();
         auto timeEnd = std::chrono::high_resolution_clock::now();
@@ -129,7 +129,7 @@ namespace q
                     size_t startpoint = binDeque.size();
                     for (size_t i = 0; i < startpoint; i++)
                     {
-                        binDeque.front().subsetScan(&binDeque, &finishedBins, scanDiffLimit);
+                        binDeque.front().subsetScan(&binDeque, &finishedBins, maxdist);
                         binDeque.pop_front();
                     }
                     timeEnd = std::chrono::high_resolution_clock::now();
