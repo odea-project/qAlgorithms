@@ -18,6 +18,7 @@ namespace q
         double RT;
         int scanNo;
         int pt_binID;
+        double intensity = 1;
     };
 
     class RawData
@@ -29,6 +30,7 @@ namespace q
         int lengthAllFeatures;
         std::vector<std::vector<Datapoint>> allDatapoints;
         bool readcsv(std::string user_file, int d_mz, int d_mzError, int d_RT, int d_scanNo, int pt_d_binID);
+        bool readtxt(std::string user_file);
     };
 
     // Bin Class

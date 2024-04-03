@@ -16,6 +16,7 @@
 #include <iomanip> // for printing with full precision
 #include <chrono>  // time code execution
 #include <ctime>
+#include <regex>
 
 namespace q
 {
@@ -29,7 +30,7 @@ namespace q
 #define NO_MIN_FOUND -256
 #define NO_MAX_FOUND -256
 
-#pragma region "Featurelist"
+#pragma region "Rawdata"
     RawData::RawData(int in_numberOfScans)
     {
         numberOfScans = in_numberOfScans;
@@ -75,7 +76,32 @@ namespace q
         }
         return true;
     }
-#pragma endregion "Featurelist"
+
+    bool RawData::readtxt(std::string user_file){
+        std::ifstream file(user_file);
+        assert(file.is_open());
+        assert(file.good());
+        std::string line;
+        int currentScan;
+        double currentRT;
+        Datapoint F;
+        const char newScan = *"N";
+        std::regex number("[0-9\.]*");
+        std::smatch match;
+        while (std::getline(file, line))
+        {
+            if (line[0] == newScan)
+            {
+                /* code */
+            }
+            
+            F.scanNo = currentScan;
+            F.RT = currentRT;
+        }
+
+    }
+
+#pragma endregion "Rawdata"
 
 #pragma region "BinContainer"
 
