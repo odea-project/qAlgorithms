@@ -16,7 +16,7 @@ namespace q
         double mz;
         double mzError;
         double RT;
-        int scanNo;
+        unsigned int scanNo;
         int pt_binID;
         double intensity = 1;
     };
@@ -24,9 +24,8 @@ namespace q
     class RawData //@todo rename to centroided data?
     {
     public:
-        RawData(int in_numberOfScans); // @todo add handling for reading in data without centroid error
+        RawData(); // @todo add handling for reading in data without centroid error
         ~RawData();
-        int numberOfScans;
         int lengthAllFeatures;
         std::vector<std::vector<Datapoint>> allDatapoints;
         bool readcsv(std::string user_file, int d_mz, int d_mzError, int d_RT, int d_scanNo, int pt_d_binID);

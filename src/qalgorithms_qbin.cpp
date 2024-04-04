@@ -31,14 +31,12 @@ namespace q
 #define NO_MAX_FOUND -256
 
 #pragma region "Rawdata"
-    RawData::RawData(int in_numberOfScans)
-    {
-        numberOfScans = in_numberOfScans;
-    }
+    RawData::RawData() {}
     q::RawData::~RawData() {}
     bool RawData::readcsv(std::string user_file, int d_mz, int d_mzError, int d_RT, int d_scanNo, int pt_d_binID)
     {
-        allDatapoints.resize(numberOfScans + 1, std::vector<Datapoint>(0)); // first element empty since scans are 1-indexed
+        lengthAllFeatures = 0;
+        allDatapoints.push_back(std::vector<Datapoint>(0)); // first element empty since scans are 1-indexed
         std::ifstream file(user_file);
         if (!file.is_open())
         {
@@ -67,13 +65,21 @@ namespace q
             }
 // add conditional here to set feature error to mz* x ppm ßßß
 #pragma GCC diagnostic push // do not display the specific warning for rounding a double to integer
-#pragma GCC diagnostic ignored "-Wnarrowing"
-            int i_scanNo = (int)row[d_scanNo]; // gives warning, conversion functions as intended;
+#pragma GCC diagnostic ignored "-Wall"
+            unsigned int i_scanNo = (unsigned int)row[d_scanNo]; // gives warning, conversion functions as intended;
+            if (i_scanNo > allDatapoints.size() - 1)
+            {
+                for (size_t i = allDatapoints.size() - 1; i < i_scanNo; i++)
+                {
+                    allDatapoints.push_back(std::vector<Datapoint>(0));
+                }
+            }
             Datapoint F = Datapoint{row[d_mz], row[d_mzError], row[d_RT], i_scanNo, row[pt_d_binID]};
-            ++lengthAllFeatures;
 #pragma GCC diagnostic pop
+            ++lengthAllFeatures;
             allDatapoints[i_scanNo].push_back(F); // every subvector in allDatapoints is one complete scan - does not require a sorted input file!
         }
+        std::cout << "Finished reading file\n";
         return true;
     }
 
@@ -248,7 +254,7 @@ namespace q
     Bin::Bin(RawData *rawdata) // relatively time intensive, better solution?
     {
         pointsInBin.reserve(rawdata->lengthAllFeatures);
-        for (int i = 1; i < rawdata->numberOfScans; i++)
+        for (size_t i = 1; i < rawdata->allDatapoints.size(); i++)
         {
             for (size_t j = 0; j < rawdata->allDatapoints[i].size(); j++)
             {
@@ -341,7 +347,7 @@ namespace q
         int lastpos = 0;
         for (size_t i = 1; i < n; i++)
         {
-            if (pointsInBin[i]->scanNo - pointsInBin[i - 1]->scanNo > maxdist) // bin needs to be split
+            if (pointsInBin[i]->scanNo - pointsInBin[i - 1]->scanNo > maxdist) // bin needs to be split @todo suppress warning
             {
                 // less than five features in bin
                 if (i - lastpos - 1 < 5)
@@ -606,7 +612,7 @@ int main()
     // std::cout.rdbuf(result.rdbuf());             // redirect std::cout to out.txt!
     // std::cout << "scan,position\n";
 
-    q::RawData testdata(2533);                                                                  // 2533 scans in Warburg dataset
+    q::RawData testdata;                                                                        // 2533 scans in Warburg dataset
     testdata.readcsv("../../rawdata/qBinnings_Warburg_pos_171123_01_Zu_01.csv", 0, 4, 1, 2, 7); // ../../rawdata/qCentroid_Warburg_pos_171123_01_Zu_01.csv ../test/test.csv
     // for (size_t i = 0; i < testdata.scanBreaks.size(); i++)
     // {
