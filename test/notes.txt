@@ -53,3 +53,5 @@ Gerrit soll code aufräumen -> Namen, Funktionen trennen, Kommentare selber schr
 Erstelle Output-Datei, wenn sie nicht existiert
 
 mögliche Anwendung für std::variant?
+
+https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0125108

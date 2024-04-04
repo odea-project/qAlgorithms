@@ -1,4 +1,4 @@
-#include "../include/qalgorithms_qBin.h"
+#include "../include/qalgorithms_qbin.h"
 #include <cassert>
 #include <iostream>
 #include <vector>
@@ -77,7 +77,8 @@ namespace q
         return true;
     }
 
-    bool RawData::readtxt(std::string user_file){
+    bool RawData::readtxt(std::string user_file)
+    {
         std::ifstream file(user_file);
         assert(file.is_open());
         assert(file.good());
@@ -94,11 +95,10 @@ namespace q
             {
                 /* code */
             }
-            
+
             F.scanNo = currentScan;
             F.RT = currentRT;
         }
-
     }
 
 #pragma endregion "Rawdata"
@@ -437,8 +437,11 @@ namespace q
                 {
                     minMaxOutPerScan.push_back(rawdata->allDatapoints[i][0].mz);
                     maxFound = true;
-                } 
-                else {needle = 0;}
+                }
+                else
+                {
+                    needle = 0;
+                }
             }
             // check end of bin
             // double lastmz = rawdata->allDatapoints[i][scansize].mz;
@@ -451,7 +454,10 @@ namespace q
                     minMaxOutPerScan.push_back(rawdata->allDatapoints[i][scansize].mz);
                     minFound = true;
                 }
-                else {needle = scansize;}
+                else
+                {
+                    needle = scansize;
+                }
             }
             // rawdata is always sorted by mz within scans
             if (!minFound)
@@ -641,5 +647,5 @@ int main()
     testcontainer.printBinSummary("../../qbinning_binsummary.csv");
 
     std::cout << "\n\nDone!\n\n";
-    return 0;
+    return;
 }
