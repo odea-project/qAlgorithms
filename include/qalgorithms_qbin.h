@@ -30,7 +30,7 @@ namespace q
         int lengthAllFeatures;
         std::vector<std::vector<Datapoint>> allDatapoints;
         bool readcsv(std::string user_file, int d_mz, int d_mzError, int d_RT, int d_scanNo, int pt_d_binID);
-        bool readtxt(std::string user_file);
+        // bool readtxt(std::string user_file); // @todo move to qCentroiding
     };
 
     // Bin Class
