@@ -23,6 +23,7 @@
 * RT - Retention Time
 * GC - Gas Chromatography
 * (HP)LC - (High Performance) Liquid Chromatography
+* EIC - Extracted Ion Chromatogram
 * OS - Order Space
 * DQS(B) - Data Quality Score (of a Bin)
 
@@ -47,9 +48,11 @@ One DataPoint contains mz, RT, intensity, scan number, the centroid error and an
 control value which assigns it to a bin. Data points are never modified during the binning process.
 
 ### - The RawData object
-Centroided data is stored as individual scans. Within the scans, data points are 
+Centroided data is stored as individual scans. Within the scans, data points are sorted by mz.
+Scans are accessed through a vector containing all scans.
 
 ### - Bin objects
+Every Bin stores all data points which were determined to belong to the same EIC
 
 ### Core Functions
 The following functions, not including constructors and other utility functions, are included 
@@ -105,7 +108,8 @@ If a bin cannot be split further, it is added to the container for open bins.
 This function takes a bin, sorts it by the scan number of its datapoints and splits it if the
 difference in scans exceeds a given number. @todo reasoning for maxdist = 7
 After splitting the bin, only subsets with more than five elements are returned as bins to
-the container for open bins. If a bin was not split, it can be considered complete 
+the container for open bins. If a bin was not split, it can be considered complete and is 
+closed. Closed bins are added to a separate container.
 
 
 ## Evaluation
@@ -118,6 +122,6 @@ OpenMS uses binary format for raw data, similar approach (save intermediates of 
 improve processing speeds)
 more subsetting
 concrete validation
-implement into proper pipeline by returning closed bins with DQSB - datapoint basis or as EIC?
-
+implement into proper pipeline by returning closed bins with DQSB - datapoint basis or as EIC objects?
+Implement a way to handle MS^2 / MS^n
 

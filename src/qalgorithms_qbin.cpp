@@ -77,29 +77,29 @@ namespace q
         return true;
     }
 
-    bool RawData::readtxt(std::string user_file)
-    {
-        std::ifstream file(user_file);
-        assert(file.is_open());
-        assert(file.good());
-        std::string line;
-        int currentScan;
-        double currentRT;
-        Datapoint F;
-        const char newScan = *"N";
-        std::regex number("[0-9\.]*");
-        std::smatch match;
-        while (std::getline(file, line))
-        {
-            if (line[0] == newScan)
-            {
-                /* code */
-            }
+    // bool RawData::readtxt(std::string user_file) @todo function must be defined for qcentroid
+    // {
+    //     std::ifstream file(user_file);
+    //     assert(file.is_open());
+    //     assert(file.good());
+    //     std::string line;
+    //     int currentScan;
+    //     double currentRT;
+    //     Datapoint F;
+    //     const char newScan = *"N";
+    //     std::regex number("[0-9\.]*");
+    //     std::smatch match;
+    //     while (std::getline(file, line))
+    //     {
+    //         if (line[0] == newScan)
+    //         {
+    //             /* code */
+    //         }
 
-            F.scanNo = currentScan;
-            F.RT = currentRT;
-        }
-    }
+    //         F.scanNo = currentScan;
+    //         F.RT = currentRT;
+    //     }
+    // }
 
 #pragma endregion "Rawdata"
 
@@ -418,8 +418,11 @@ namespace q
         std::vector<double> meanInnerDistances = meanDistance(pointsInBin);
 
         // for all scans relevant to the bin
-        int needle = 0; // position in scan where a value was found - starts at 0 for first scan
+        int needle = 0;     // position in scan where a value was found - starts at 0 for first scan
+#pragma GCC diagnostic push // do not display the specific warning for rounding a double to integer
+#pragma GCC diagnostic ignored "-Wsign-compare"
         for (int i = scanRangeStart; i < scanRangeEnd; i++)
+#pragma GCC diagnostic pop
         {
             bool minFound = false; // only execute search if min or max is present in the scan
             bool maxFound = false;
@@ -647,5 +650,5 @@ int main()
     testcontainer.printBinSummary("../../qbinning_binsummary.csv");
 
     std::cout << "\n\nDone!\n\n";
-    return;
+    return 0;
 }

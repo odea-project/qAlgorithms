@@ -9,16 +9,16 @@
 #include <fstream>
 #include <sstream>
 
-
 int main()
 {
   // Requesting string input with a default value for filename
-  std::cout << "Enter a file name (default is 'test/test_orbitrap.csv'): ";
+  std::cout << "Enter a file name (default is '../test/test_orbitrap.csv'): ";
   std::string userInputStr;
   std::getline(std::cin, userInputStr); // Using getline to read a full line (including spaces)
 
-  if (userInputStr.empty()) {
-      userInputStr = "test/test_orbitrap.csv";  // Assigning default value
+  if (userInputStr.empty())
+  {
+    userInputStr = "test/test_orbitrap.csv"; // Assigning default value
   }
 
   // Requesting integer input for defining the scale limit for the peak model
@@ -27,22 +27,24 @@ int main()
   std::getline(std::cin, lineInput);
   std::istringstream iss(lineInput);
   int userInputInt;
-  if (!(iss >> userInputInt)) {
-        userInputInt = 5;  // Assigning default value if conversion fails
-    }
+  if (!(iss >> userInputInt))
+  {
+    userInputInt = 5; // Assigning default value if conversion fails
+  }
 
   // Requesting integer input for defining the running Mode
   std::cout << "Choose the Running Mode: " << std::endl;
   std::cout << "0: Debugging" << std::endl;
   std::cout << "1: Silent Mode (default)" << std::endl;
-  std::cout << "2: Progressbar Mode   : "; 
+  std::cout << "2: Progressbar Mode   : ";
   std::string lineInputMode;
   std::getline(std::cin, lineInputMode);
   std::istringstream issMode(lineInputMode);
   int userInputIntMode;
-  if (!(issMode >> userInputIntMode)) {
-        userInputIntMode = 1;  // Assigning default value if conversion fails
-    }
+  if (!(issMode >> userInputIntMode))
+  {
+    userInputIntMode = 1; // Assigning default value if conversion fails
+  }
 
   // LOAD SOME TEST DATA
   std::ifstream file(userInputStr);
@@ -50,22 +52,25 @@ int main()
   std::string line;
   std::vector<std::vector<double>> matrix;
 
-  while (std::getline(file, line)) {
-      std::stringstream ss(line);
-      std::string cell;
-      std::vector<double> row;
+  while (std::getline(file, line))
+  {
+    std::stringstream ss(line);
+    std::string cell;
+    std::vector<double> row;
 
-      while (std::getline(ss, cell, ',')) {
-          row.push_back(std::stod(cell));
-      }
+    while (std::getline(ss, cell, ','))
+    {
+      row.push_back(std::stod(cell));
+    }
 
-      matrix.push_back(row);
+    matrix.push_back(row);
   }
-  q::Matrix xyData(matrix.size(),3);
-  for (int i = 0; i < matrix.size(); i++) {
-    xyData(i,0) = matrix[i][0];
-    xyData(i,1) = matrix[i][1];
-    xyData(i,2) = matrix[i][2];
+  q::Matrix xyData(matrix.size(), 3);
+  for (int i = 0; i < matrix.size(); i++)
+  {
+    xyData(i, 0) = matrix[i][0];
+    xyData(i, 1) = matrix[i][1];
+    xyData(i, 2) = matrix[i][2];
   }
 
   // Initialize tValues for statistical Tests
@@ -78,21 +83,21 @@ int main()
   case 0:
     model.setMode(q::Mode::DEBUGGING);
     break;
-  
+
   case 2:
     model.setMode(q::Mode::PROGRESS);
     break;
-  
+
   default:
     break;
   }
-  
+
   // add tValues to the Peak model
   model.loadTValues(tVal);
 
   // add measurement data to the Peak model
   model.addMultipleMeasurements(xyData);
-  
+
   // Capture the start time
   auto start = std::chrono::high_resolution_clock::now();
   model.findPeaks();
@@ -104,28 +109,27 @@ int main()
   std::chrono::duration<double> elapsed = finish - start;
   std::cout << "Elapsed time: " << elapsed.count() << " s\n";
 
-
   /* print some Peak (the 1st Peak will be printed) */
   // model[0].print();
 
   /* create a vector of a certain peak property */
-  // std::vector<double> test = model.getPeakProperties(q::Peakproperties::PEAKID);  
+  // std::vector<double> test = model.getPeakProperties(q::Peakproperties::PEAKID);
 
   /* get raw pre-processed raw data (gapfilled, zero-interpolated) */
   // q::Matrix DATA = model.getData(1,0);
 
   /* Export pre-processed raw data */
-  // std::ofstream outputfile2("data.csv", std::ios::app); 
+  // std::ofstream outputfile2("data.csv", std::ios::app);
   //   if (!outputfile2.is_open()) {
   //       std::cerr << "Error while opening CSV-File." << std::endl;
   //   }
   //   for (size_t i = 0; i < DATA.numRows();i++) {
   //     outputfile2 << DATA(i,0) << ", " << DATA(i,1) << std::endl;
-  //   } 
+  //   }
 
   /* EXPORT RESULTS */
   //   // Open CSV-file
-  //   std::ofstream outputfile("results.csv", std::ios::app); 
+  //   std::ofstream outputfile("results.csv", std::ios::app);
   //   if (!outputfile.is_open()) {
   //       std::cerr << "Error while opening CSV-File." << std::endl;
   //   }
@@ -136,8 +140,8 @@ int main()
   //   std::vector<double> dqs = model.getPeakProperties(q::Peakproperties::DQS);
   //   for (size_t i = 0; i < peak_id.size(); i++) {
   //       outputfile << peak_id[i] << ","
-  //            << smpl_id[i] << "," 
-  //            << position[i] << "," 
+  //            << smpl_id[i] << ","
+  //            << position[i] << ","
   //            << height[i] << ","
   //            << dqs[i] << std::endl;
   //   }
