@@ -6,6 +6,7 @@ using ColorSchemes
 
 tdd = CSV.read("../qbinning_binlist.csv", DataFrame) # C:/Users/unisys/Documents/Studium/Analytik-Praktikum/qBinning_binlist.csv
 notbinned = CSV.read("../qbinning_notbinned.csv", DataFrame)
+control = CSV.read("../rawdata/df_qBinning_test.csv", DataFrame)
 # wrongbins = CSV.read("C:/Users/unisys/Documents/Studium/Analytik-Praktikum/qBinning_faultybins.csv", DataFrame)
 
 
@@ -15,6 +16,10 @@ rt = tdd.rt
 ID = tdd.ID
 colour = tdd.color
 shape = tdd.shape
+
+c_mz = control.mz
+c_rt = control.rt
+c_color = control.ID 
 
 # w_mz = wrongbins.mz
 # w_rt = wrongbins.rt
@@ -32,9 +37,10 @@ n_rt = notbinned.rt
 # Binning Plot :glasbey_bw_minc_20_n256
 fig = Figure()
 Axis(fig[1, 1])
-scatter!(mz,rt,color = colour,colormap=:tab10)
+# scatter!(mz,rt,color = colour,colormap=:tab10)
 # scatter!(w_mz, w_rt, color = "red", shape = "L")
-scatter!(n_mz, n_rt, color = "black", alpha = 0.7)
+# scatter!(n_mz, n_rt, color = "black", alpha = 0.7)
+scatter!(c_mz,c_rt,color = c_color, colormap=:tab10)
 DataInspector(fig)
 fig
 # Binning EICs

@@ -63,7 +63,7 @@ namespace q
             }
 // add conditional here to set feature error to mz* x ppm ßßß
 #pragma GCC diagnostic push // do not display the specific warning for rounding a double to integer
-#pragma GCC diagnostic ignored "-Wall"
+#pragma GCC diagnostic ignored "-Wnarrowing"
             unsigned int i_scanNo = (unsigned int)row[d_scanNo]; // gives warning, conversion functions as intended;
             if (i_scanNo > allDatapoints.size() - 1)
             {
@@ -585,8 +585,9 @@ namespace q
         {
             dqs = MOD;
         }
-        dqs = (MID - MOD) * 0.5 * (1 + 1 / (1 + MID)) / dqs; // sm(i) term
+        dqs = (MOD - MID) * (1 / (1 + MID)) / dqs; // sm(i) term
         dqs = (dqs + 1) / 2;                                 // interval transform
+        assert(0 <= dqs <= 1);
         return dqs;
     }
 
@@ -608,7 +609,6 @@ int main()
     // {
     //     std::cout << i << "," << testdata.scanBreaks[i] << "\n";
     // }
-    std::cout << "finished reading data\n";
     q::BinContainer testcontainer;
     testcontainer.makeFirstBin(&testdata);
     std::vector<int> dim = {1, 2};    // last element must be the number of scans ßßß implement outside of the switch statement ßßß endless loop if scan terminator is not included

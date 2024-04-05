@@ -1,22 +1,21 @@
-# Presenting an implemetation of the qBinning-algorithm developed by Reuschenbach et al. in c++
-## Report concluding the analytical practical by Daniel Höhn, supervised by Gerrit Renner
+# Presenting an implemetation of the qBinning-algorithm developed by Reuschenbach et al. in c++ <!-- omit in toc -->
+## Report concluding the analytical practical by Daniel Höhn, supervised by Gerrit Renner <!-- omit in toc -->
 
-@todo clickable table of contents in markdown
+- [Abbreviations](#abbreviations)
+- [general NTS concepts](#general-nts-concepts)
+- [qBinning @todo better name](#qbinning-todo-better-name)
+	- [why is binning necessary?](#why-is-binning-necessary)
+	- [generation of EIC in other software](#generation-of-eic-in-other-software)
+	- [](#)
+- [Implementation](#implementation)
+	- [Differences to the Original Implementation in R](#differences-to-the-original-implementation-in-r)
+	- [Module Requirements](#module-requirements)
+	- [Data Organisation](#data-organisation)
+	- [Core Functions](#core-functions)
+- [Evaluation](#evaluation)
+	- [Result Comparison with R Script](#result-comparison-with-r-script)
+- [Future Improvements and Additions](#future-improvements-and-additions)
 
-## Table of Contents
-* Abbreviations 
-* Area of application (NTS)
-* qBinning overview @todo section name
-	* Bin Criteria
-	* Data Quality Score
-* Implementation
-	* Differences to the Original Implementation in R
-	* Module Requirements
-	* Data Organisation
-	* Core Functions
-* Evaluation
-	* Result Comparison with R Script
-* Future Improvements and Additions
 
 ## Abbreviations
 * (HR)MS - (High Resolution) Mass Spectrometry 
@@ -31,14 +30,24 @@
 * MOD - Minimum Outer Distance: The shortest distance in mz to an element not in the bin
 * CPU - Central Processing Unit
 
-## qBinning
+## general NTS concepts
+necessary?
 
+## qBinning @todo better name
+### why is binning necessary?
+
+### generation of EIC in other software
+
+### advantages of qBinning
+parameter-free, quality score for feature priorisation, ideally faster (time) @todo measure
 
 ## Implementation
 Terminology: open/closed Bin; maxdist
+A bin is a data construct with associated data points and defined operations, an EIC is just a set of data points.
 @todo capitalisation for data objects?
 
 ### Differences to the Original Implementation in R
+necessary?
 
 ### Module Requirements
 The modlue has few requirements, only requiring centroided data and a measurement of the 
@@ -61,6 +70,8 @@ Scans are accessed through a vector containing all scans.
 <b> Bin objects: </b>
 Every Bin stores all data points which were determined to belong to the same EIC. All subsetting 
 methods are called on the bin without requiring knowledge of data points outside of the bin.
+The main difference between Bins and EICs is that a Bin only operates with pointers to data
+points in RawData while the EIC can be used independently of the RawData it was generated from.
 
 <b> The BinContainer object: </b>
 The BinContainer supplies wrapper functions to access all bins. The access for subsetting is 
@@ -154,7 +165,7 @@ as closed by a different subsetting function.
 ## Evaluation
 Performance evaluation was performed using the following CPUs: 
 * Intel(R) Core(TM) i5-7400 CPU @ 3.00GHz (referred to as i5)
-* 
+* AMD Ryzen 3 3250U (referred to as Ryzen)
 
 <b> Issues after binning: </b>
 Images of common undesired outputs / elements that need to be cleaned up: 
@@ -175,4 +186,4 @@ more subsetting
 concrete validation
 implement into proper pipeline by returning closed bins with DQSB - datapoint basis or as EIC objects?
 Implement a way to handle MS^2 / MS^n
-
+automatic tests to verify program after user modifies it
