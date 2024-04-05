@@ -57,8 +57,6 @@ namespace q
             std::istringstream ss(line);
             std::string cell;
             std::vector<double> row;
-            row.reserve(5); // ßßß adjust to input length
-
             while (std::getline(ss, cell, ','))
             {
                 row.push_back(std::stod(cell));
@@ -83,7 +81,7 @@ namespace q
         return true;
     }
 
-    // bool RawData::readtxt(std::string user_file) @todo function must be defined for qcentroid
+    // bool RawData::readtxt(std::string user_file) // @todo function must be defined for qcentroid
     // {
     //     std::ifstream file(user_file);
     //     assert(file.is_open());
@@ -193,10 +191,7 @@ namespace q
     {
         std::fstream file_out;
         file_out.open(path);
-        if (!file_out.is_open())
-        {
-            throw;
-        }
+        assert(file_out.is_open());
         // possible symbols
         char shapes[] = "acGuxnoQzRsTvjIEf";
 
@@ -223,15 +218,11 @@ namespace q
     {
         std::fstream file_out;
         file_out.open(path);
-        if (!file_out.is_open())
-        {
-            std::cout << " ";
-        }
-
+        assert(file_out.is_open());
         file_out << "ID,size,mean_mz,mean_scans,mean_DQS\n";
         for (size_t i = 0; i < finishedBins.size(); i++)
         {
-            file_out << i << "," << finishedBins[i].summarisePerf() << "\n";
+            file_out << i << "," << finishedBins[i].summariseBin() << "\n";
         }
     }
 
@@ -337,15 +328,15 @@ namespace q
 
     void Bin::subsetScan(std::deque<Bin> *bincontainer, std::vector<Bin> *finishedBins, const int &maxdist)
     {
-        // sort
-        size_t n = pointsInBin.size(); // TODO rename n
+        // function is called on a bin sorted by mz
+        size_t binSize = pointsInBin.size();
         double tmp_pt_mzmin = pointsInBin.front()->mz;
         double tmp_pt_mzmax = pointsInBin.back()->mz;
         std::sort(pointsInBin.begin(), pointsInBin.end(), [](const Datapoint *lhs, const Datapoint *rhs)
                   { return lhs->scanNo < rhs->scanNo; });
         std::vector<Datapoint *>::iterator newstart = pointsInBin.begin();
         int lastpos = 0;
-        for (size_t i = 1; i < n; i++)
+        for (size_t i = 1; i < binSize; i++)
         {
             if (pointsInBin[i]->scanNo - pointsInBin[i - 1]->scanNo > maxdist) // bin needs to be split @todo suppress warning
             {
@@ -376,7 +367,7 @@ namespace q
             bincontainer->front().pt_subsetcount = pt_subsets; // ßßß rm
             finishedBins->push_back(bincontainer->front());
         }
-        else if (n + 1 - lastpos > 5)
+        else if (binSize + 1 - lastpos > 5)
         {
             // viable bin, stable in scan dimension
             Bin output(newstart, pointsInBin.end());
@@ -526,7 +517,7 @@ namespace q
         }
     }
 
-    std::string Bin::summarisePerf()
+    std::string Bin::summariseBin()
     {
         // ID, size, mean_mz, mean_scans, mean_DQS \n
         std::stringstream buffer;
@@ -540,8 +531,7 @@ namespace q
             meanScan += pointsInBin[i]->scanNo;
             meanDQS += DQSB[i];
         }
-        std::sort(pointsInBin.begin(), pointsInBin.end(), [](const Datapoint *lhs, const Datapoint *rhs)
-                  { return lhs->mz < rhs->mz; });
+
         meanMZ = meanMZ / binsize;
         meanScan = meanScan / binsize;
         meanDQS = meanDQS / binsize;

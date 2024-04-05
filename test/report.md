@@ -15,6 +15,7 @@
 	* Data Organisation
 	* Core Functions
 * Evaluation
+	* Result Comparison with R Script
 * Future Improvements and Additions
 
 ## Abbreviations
@@ -155,10 +156,17 @@ Performance evaluation was performed using the following CPUs:
 * Intel(R) Core(TM) i5-7400 CPU @ 3.00GHz (referred to as i5)
 * 
 
+<b> Issues after binning: </b>
+Images of common undesired outputs / elements that need to be cleaned up: 
+Centroid error too small, points were not binned
+	-> negative effect on DQS
+Very small bins from noise (shoud get removed by peak fitting)
 
 runtimes on different processors
 performance bottlenecks
 effectiveness of binning for different datasets
+
+### Result Comparison with R Script
 
 ## Future Improvements and Additions
 OpenMS uses binary format for raw data, similar approach (save intermediates of workflow in binary to 

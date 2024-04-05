@@ -94,12 +94,12 @@ namespace q
         /// @brief generate the data quality score for all data points in a bin
         /// @details for every point in the bin the mean distance in mz to other elements of the bin and the shortest distance to an
         /// element not in the bin is calculated. The outer distance may not be to a point more than maxdist scans away from the
-        /// binned datapoint.
+        /// binned datapoint. It is assumed that the bin is sorted by scans when makeDQSB is called @todo change to more generic solution?
         /// @param rawdata the RawData object from which the bin was generated
         /// @param maxdist the largest gap in scans which a bin can have while still being considered valid
         void makeDQSB(const RawData *rawdata, const int &maxdist);
 
-        std::string summarisePerf();
+        std::string summariseBin();
         void controlBin(int binID);
     };
 
