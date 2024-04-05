@@ -8,6 +8,7 @@
 #include "qalgorithms_measurement_data.h"
 #include "qalgorithms_peak.h"
 #include "qalgorithms_utils.h"
+#include "qalgorithms_datatype_peak.h"
 
 // external
 #include <vector>
@@ -74,11 +75,13 @@ namespace q
     // methods
     int calculateNumberOfRegressions(const int n) const;
 
-    void runningRegression(const RefMatrix &X, const RefMatrix &Y);
+    void runningRegression(const RefMatrix &X, const RefMatrix &Y, std::vector<std::unique_ptr<validRegression>> &validRegressions);
 
     void validateRegressions(const Matrix &B, const Matrix &Ylog, const int scale, std::vector<std::unique_ptr<validRegression>> &validRegressions);
 
     void mergeRegressionsOverScales(std::vector<std::unique_ptr<validRegression>> &validRegressions, Matrix &Ylog);
+
+    std::vector<std::unique_ptr<DataType::Peak>> createPeaks(const std::vector<std::unique_ptr<validRegression>> &validRegressions, const RefMatrix &Y, const int scanNumber);
 
     double calcMse(const Matrix &yhat, const Matrix &y) const;
 

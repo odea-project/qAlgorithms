@@ -16,7 +16,7 @@ namespace q
     /**
      * @brief A class to store peak data
      * @details The Peak class is used to store peak data. It contains the position, height, width, and area of the peak. The class also contains the uncertainty of the peak position, height, width, and area, the data quality score of the peak, the regression coefficients, the valley position, the degrees of freedom, and the index of the regression window position.
-     * @param peakID The peak ID
+     * @param sampleID The sample ID
      * @param position The position of the peak
      * @param height The height of the peak
      * @param width The width of the peak
@@ -39,14 +39,14 @@ namespace q
     public:
       // constructors
       Peak();
-      Peak(int peakID, double position, double height);
+      Peak(int sampleID, double position, double height);
 
       // destructor
       ~Peak();
 
       // properties
       // required
-      int peakID;
+      int sampleID;
       double position;
       double height;
 

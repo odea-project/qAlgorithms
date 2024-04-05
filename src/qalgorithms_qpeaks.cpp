@@ -50,12 +50,15 @@ namespace q
   {
     std::visit([this](auto &&arg)
                {
+                std::vector<std::vector<std::unique_ptr<DataType::Peak>>> all_peaks(arg->size());
     // iterate over the map of varDataType datatype objects
     // use parallel for loop to iterate over the dataVec
 #pragma omp parallel for
-                for (auto &pair : *arg)
+                // for (auto &pair : *arg)
+                for (int i = 0; i < arg->size(); i++)
                  {
                   // de-reference the unique pointer of the object
+                  auto &pair =  (*arg)[i];
                   auto &dataObj = *(pair.get());
                   auto &data = dataObj.dataPoints;
                   int n = data.size();
@@ -67,20 +70,21 @@ namespace q
                     X.assignRef(i, 0, data[i]->x());
                     Y.assignRef(i, 0, data[i]->y());
                   }
-                  runningRegression(X, Y);
+                  std::vector<std::unique_ptr<validRegression>> validRegressions; // index in B, scale, apex_position and MSE
+                  runningRegression(X, Y, validRegressions);
+                  all_peaks[i] = createPeaks(validRegressions, Y, dataObj.getScanNumber());
                 } 
                 ; },
                dataVec);
   } // end findPeaks
 
-  void qPeaks::runningRegression(const RefMatrix &X, const RefMatrix &Y)
+  void qPeaks::runningRegression(const RefMatrix &X, const RefMatrix &Y, std::vector<std::unique_ptr<validRegression>> &validRegressions)
   {
     // perform log-transform on Y
     size_t n = Y.getRows();
     Matrix Ylog = Y.log();
 
     int maxScale = std::min(this->global_maxScale, (int)(n - 1) / 2);
-    std::vector<std::unique_ptr<validRegression>> validRegressions; // index in B, scale, apex_position and MSE
     validRegressions.reserve(calculateNumberOfRegressions(n));
     for (int scale = 2; scale <= maxScale; scale++)
     {
@@ -335,6 +339,22 @@ namespace q
                                           [](const auto &peak)
                                           { return !peak->isValid; }),
                            validRegressions.end());
+  }
+
+  std::vector<std::unique_ptr<DataType::Peak>> qPeaks::createPeaks(const std::vector<std::unique_ptr<validRegression>> &validRegressions, const RefMatrix &Y, const int scanNumber)
+  {
+    std::vector<std::unique_ptr<DataType::Peak>> peaks; // peak list
+    // iterate over the validRegressions vector
+    for (auto &regression : validRegressions)
+    {
+      // create a new peak object and push it to the peaks vector; the peak object is created using the scan number, the apex position and the peak height
+      peaks.push_back(std::make_unique<DataType::Peak>(scanNumber, regression->apex_position, 
+      (regression->B(1, 0) > 0) 
+      ? std::exp(regression->B(0, 0) - regression->B(1, 0) * regression->B(1,0) / 4 / regression->B(3, 0)) 
+      : std::exp(regression->B(0, 0) - regression->B(1, 0) * regression->B(1,0) / 4 / regression->B(2, 0))));
+    }
+
+    return peaks;
   }
 
   double qPeaks::calcMse(const Matrix &yhat, const Matrix &y) const
