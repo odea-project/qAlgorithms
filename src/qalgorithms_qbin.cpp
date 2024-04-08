@@ -79,7 +79,7 @@ namespace q
         for (size_t i = 1; i < allDatapoints.size(); i++) // necessary if features aren't already sorted, performance impact should be very small
         {
             std::sort(allDatapoints[i].begin(), allDatapoints[i].end(), [](const Datapoint lhs, const Datapoint rhs)
-                  { return lhs.mz < rhs.mz; });
+                      { return lhs.mz < rhs.mz; });
         }
         std::cout << "Finished reading file in " << time(0) - now << " seconds\n";
         return true;
@@ -129,7 +129,7 @@ namespace q
         scans
     };
 
-    void BinContainer::subsetBins(std::vector<int> dimensions, const unsigned int maxdist)
+    void BinContainer::subsetBins(std::vector<int> dimensions, const unsigned int maxdist, const double massError = -1)
     {
         auto timeStart = std::chrono::high_resolution_clock::now();
         auto timeEnd = std::chrono::high_resolution_clock::now();
@@ -148,7 +148,14 @@ namespace q
                     for (size_t i = 0; i < startpoint; i++)
                     { // random access not needed, first element -> make bins -> move element or make bins, then remove first entry ; do n times
                         binDeque.front().makeOS();
-                        binDeque.front().makeCumError();                                                                          // always after order space, since the features get sorted @todo remember ppm
+                        if (massError < 0) // no noticeable performance impact
+                        {
+                            binDeque.front().makeCumError();
+                        }
+                        else
+                        {
+                            binDeque.front().makeCumError(massError);
+                        } // always after order space, since the features get sorted 
                         binDeque.front().subsetMZ(&binDeque, binDeque.front().activeOS, 0, binDeque.front().activeOS.size() - 1); // takes element from binDeque, starts subsetting, appends bins to binDeque
                         binDeque.pop_front();                                                                                     // remove the element that was processed from binDeque
                     }
@@ -617,7 +624,7 @@ int main()
     // std::cout.rdbuf(result.rdbuf());             // redirect std::cout to out.txt!
     // std::cout << "scan,position\n";
 
-    q::RawData testdata;                                                                        
+    q::RawData testdata;
     // path to data, mz column, centroid error column, RT column, scan number column, control ID column (optional)
     testdata.readcsv("../../rawdata/qBinnings_Warburg_pos_171123_01_Zu_01.csv", 0, 4, 1, 2, 7); // ../../rawdata/qCentroid_Warburg_pos_171123_01_Zu_01.csv ../test/test.csv
     // for (size_t i = 0; i < testdata.scanBreaks.size(); i++)
@@ -627,7 +634,7 @@ int main()
     q::BinContainer testcontainer;
     testcontainer.makeFirstBin(&testdata);
     std::vector<int> dim = {1, 2};    // last element must be the number of scans ßßß implement outside of the switch statement ßßß endless loop if scan terminator is not included
-    testcontainer.subsetBins(dim, 7); // 7 = max dist in scans
+    testcontainer.subsetBins(dim, 7); // 7 = max dist in scans; add value after 7 for error in ppm
     std::cout << "\ncalculating DQSBs...\n";
 
     std::ofstream result("../../qbinning_faultybins.csv");

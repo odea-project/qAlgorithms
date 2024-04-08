@@ -14,6 +14,7 @@
 	- [Core Functions](#core-functions)
 - [Evaluation](#evaluation)
 	- [Result Comparison with R Script](#result-comparison-with-r-script)
+	- [Effect of Different Error Thresholds (ppm)](#effect-of-different-error-thresholds-ppm)
 - [Future Improvements and Additions](#future-improvements-and-additions)
 
 
@@ -29,6 +30,7 @@
 * MIN - Mean Inner Distance: The average distance in mz of an element to all other elements in a bin
 * MOD - Minimum Outer Distance: The shortest distance in mz to an element not in the bin
 * CPU - Central Processing Unit
+* ppm - Parts Per Million (10e-6)
 
 ## general NTS concepts
 necessary?
@@ -50,6 +52,7 @@ A bin is a data construct with associated data points and defined operations, an
 necessary?
 R: 1-2 GB (factor 2 to 4 of in-place operation) of memory needed for Warburg, 
 30% CPU use on Ryzen + 10% from RStudio, very long runtime (640 s)
+writing to csv is significantly slower in R @todo necessary?
 
 ### Module Requirements
 The modlue has few requirements, only requiring centroided data and a measurement of the 
@@ -115,7 +118,8 @@ required by subsetMZ.
 
 <b> makeCumError: </b>
 This function creates a vector which contains the cumulative error of all datapoints in a bin.
-It is called after makeOS and requires the bin to be sorted by mz.
+It is called after makeOS and requires the bin to be sorted by mz. In case data without a 
+centroid error is used, makeCumError can take an arbitrary error in ppm. 
 
 <b> subsetMZ : </b>
 This function takes a bin after it was sorted by mz and splits it according to approach 
@@ -161,7 +165,8 @@ exrcuted are listed in the order they are to be applied. Since closing a bin is 
 integrated into the subsetScan function, it must be the last function specified by the user
 unless an alternative function with equivalent code exists. This design also allows for use 
 cases in which a specific subsetting operation is only necessary for bins which were not marked
-as closed by a different subsetting function. 
+as closed by a different subsetting function. subsetBins can take an error (in ppm) as an
+optional argument. If none is supplied, the centroid error is used.
 
 
 ## Evaluation
@@ -185,6 +190,8 @@ comparison between centroid error and ppm
 
 ### Result Comparison with R Script
 
+### Effect of Different Error Thresholds (ppm)
+
 ## Future Improvements and Additions
 OpenMS uses binary format for raw data, similar approach (save intermediates of workflow in binary to 
 improve processing speeds)
@@ -194,7 +201,7 @@ implement into proper pipeline by returning closed bins with DQSB - datapoint ba
 Implement a way to handle MS^2 / MS^n
 automatic tests to verify program after user modifies it
 Implement error handling, especially for cases where nonsense data can be detected - ideally implemented 
-with qCentroids for data. Error handling for new subsetting: Make sure only one subset writes to
-finished bins, control that bins are valid before DQS calculation
+with qCentroids for data. Error handling for new subsetting: control that bins are valid before DQS 
+calculation (sorted by scans)
 How certain is scan number as a good parameter?
 Add compile-time toggle for creating list of non-binned objects
