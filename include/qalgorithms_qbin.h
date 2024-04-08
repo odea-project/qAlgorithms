@@ -28,7 +28,7 @@ namespace q
         ~RawData();
         int lengthAllFeatures;
         std::vector<std::vector<Datapoint>> allDatapoints;
-        bool readcsv(std::string user_file, int d_mz, int d_mzError, int d_RT, int d_scanNo, int pt_d_binID);
+        bool readcsv(std::string user_file, int d_mz, int d_mzError, int d_RT, int d_scanNo, int pt_d_binID = -1);
         // bool readtxt(std::string user_file); // @todo move to qCentroiding
     };
 
