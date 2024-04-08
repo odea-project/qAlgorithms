@@ -89,7 +89,7 @@ namespace q
         /// @param bincontainer if the input bin was split, the newly created bins will be added to this
         /// @param finishedBins if the input bin was not split, it will be added to this
         /// @param maxdist the largest gap in scans which a bin can have while still being considered valid
-        void subsetScan(std::deque<Bin> *bincontainer, std::vector<Bin> *finishedBins, const int &maxdist);
+        void subsetScan(std::deque<Bin> *bincontainer, std::vector<Bin> *finishedBins, const unsigned int &maxdist);
 
         /// @brief generate the data quality score for all data points in a bin
         /// @details for every point in the bin the mean distance in mz to other elements of the bin and the shortest distance to an
@@ -97,7 +97,7 @@ namespace q
         /// binned datapoint. It is assumed that the bin is sorted by scans when makeDQSB is called @todo change to more generic solution?
         /// @param rawdata the RawData object from which the bin was generated
         /// @param maxdist the largest gap in scans which a bin can have while still being considered valid
-        void makeDQSB(const RawData *rawdata, const int &maxdist);
+        void makeDQSB(const RawData *rawdata, const unsigned int &maxdist);
 
         std::string summariseBin();
         void controlBin(int binID);
@@ -123,12 +123,12 @@ namespace q
         /// @param dimensions which dimensions should be used for subsetting in what order. 1 = subsetting by mz, 2 = subsetting by scans.
         /// Important: The last element of dimensions must determine bins to be finished, and no other subsetter may add to finsihedBins.
         /// @param maxdist the largest gap in scans which a bin can have while still being considered valid
-        void subsetBins(std::vector<int> dimensions, int maxdist);
+        void subsetBins(std::vector<int> dimensions, const unsigned int maxdist);
 
         /// @brief apply DQSB function to all completed bins
         /// @param rawdata the RawData object from which all bins in finishedBins were generated
         /// @param maxdist the largest gap in scans which a bin can have while still being considered valid
-        void assignDQSB(const RawData *rawdata, int maxdist);
+        void assignDQSB(const RawData *rawdata, const unsigned int maxdist);
 
         void printAllBins(std::string path, RawData *rawdata);
         void printBinSummary(std::string path);
