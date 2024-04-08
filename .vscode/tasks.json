@@ -86,6 +86,7 @@
                 "-fopenmp",
                 "-O3",
                 "src/qalgorithms_datatype_mass_spectrum.cpp",
+                "src/qalgorithms_datatype_peak.cpp",
                 "src/qalgorithms_measurement_data_lcms.cpp",
                 "src/qalgorithms_measurement_data.cpp",
                 "src/qalgorithms_utils.cpp",

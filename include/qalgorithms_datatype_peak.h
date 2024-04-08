@@ -8,6 +8,7 @@
 // external
 #include <unordered_map>
 #include <iostream>
+#include <vector>
 
 /* This file includes the q::DataType::Peak and q::DataType::PeakList classes*/
 namespace q
@@ -68,6 +69,8 @@ namespace q
       int xIndex;
 
       // debugging
+      std::vector<double> xFit;
+      std::vector<double> yFit;
       void print();
     };
 

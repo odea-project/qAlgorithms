@@ -54,7 +54,7 @@ namespace q
                 all_peaks.resize(arg->size());
     // iterate over the map of varDataType datatype objects
     // use parallel for loop to iterate over the dataVec
-#pragma omp parallel for
+// #pragma omp parallel for
                 // for (auto &pair : *arg)
                 for (int i = 0; i < arg->size(); i++)
                  {
@@ -185,7 +185,7 @@ namespace q
 
       // peak area filter
       std::pair<Matrix, double> Jacobian_area = jacobianMatrix_PeakArea(B.col(i), scale);
-      double area_uncertainty = std::sqrt((Jacobian_area.first * C * Jacobian_area.first.T()).sumElements()) + (Jacobian_area.first(0, 0) - Jacobian_area.second); // uncertainty of the peak area based on the Jacobian matrix and the non-covered peak area
+      double area_uncertainty = std::sqrt((Jacobian_area.first * C * Jacobian_area.first.T()).sumElements() + (Jacobian_area.first(0, 0) - Jacobian_area.second) * (Jacobian_area.first(0, 0) - Jacobian_area.second) / (2*scale-3) / (2*scale-3)); // uncertainty of the peak area based on the Jacobian matrix and the non-covered peak area
       if (Jacobian_area.first(0, 0) / area_uncertainty < tValuesArray[scale * 2 - 4])
       {
         continue; // statistical insignificance of the peak area
@@ -352,14 +352,39 @@ namespace q
     for (auto &regression : validRegressions)
     {
       // re-scale the apex position to x-axis
-      double x0 = X[regression->scale*0 + (int) std::floor(regression->apex_position)];
-      double dx = X[regression->scale*0 + (int) std::ceil(regression->apex_position)] - x0;
+      double x0 = X[(int) std::floor(regression->apex_position)];
+      double dx = X[(int) std::ceil(regression->apex_position)] - x0;
       double apex_position = x0 + dx * (regression->apex_position - std::floor(regression->apex_position));
       // create a new peak object and push it to the peaks vector; the peak object is created using the scan number, the apex position and the peak height
       peaks.push_back(std::make_unique<DataType::Peak>(scanNumber, apex_position, 
       (regression->B(1, 0) > 0) 
       ? std::exp(regression->B(0, 0) - regression->B(1, 0) * regression->B(1,0) / 4 / regression->B(3, 0)) 
       : std::exp(regression->B(0, 0) - regression->B(1, 0) * regression->B(1,0) / 4 / regression->B(2, 0))));
+
+      // debugging
+      // get scale
+      int scale = regression->scale;
+      // get the index of the regression
+      int index = regression->index;
+      // get the coefficients matrix
+      Matrix B = regression->B;
+      // design matrix
+      Matrix Xdesign = *(designMatrices[scale - 2]);
+      // calculate yfit
+      Matrix yfit_matrix = (Xdesign * B).exp();
+      std::vector<double> yfit;
+      for (int i = 0; i < yfit_matrix.numRows(); i++)
+      {
+        yfit.push_back(yfit_matrix(i, 0));
+      }
+      // extract xfit, i.e., from X vector index to index + 2*scale+1
+      std::vector<double> xfit;
+      for (int i = index; i < index + 2 * scale + 1; i++)
+      {
+        xfit.push_back(X[i]);
+      }
+      peaks.back()->xFit = xfit;
+      peaks.back()->yFit = yfit;
     }
 
     // // this is just for debugging: check if x has points between 365.0 and 365.2 print the regressions
@@ -406,13 +431,13 @@ namespace q
                              ? std::erfc(-B(1, 0) / 2 / SQRTB3) // ordinary peak
                              : -erfi(B(1, 0) / 2 / SQRTB3);     // peak with valley point
 
-    const double err_L_covered = (-B1_2_B2 < -scale)
-                                     ? 0                                             // erfi(B(1, 0) / 2 / SQRTB2)
-                                     : -erfi(B(1, 0) / 2 / SQRTB2 + scale * SQRTB2); // + erfi(B(1, 0) / 2 / SQRTB2)
+    const double err_L_covered = (-B1_2_B2 < -scale) 
+                                     ? erfi(B(1, 0) / 2 / SQRTB2) // peak with valley point beeing at the edge of the data                                             
+                                     : erfi(B(1, 0) / 2 / SQRTB2 + scale * SQRTB2); // ordinary peak
 
     const double err_R_covered = (-B1_2_B3 > scale)
-                                     ? 0                                           //- erfi(B(1, 0) / 2 / SQRTB3)
-                                     : erf(B(1, 0) / 2 / SQRTB3 + scale * SQRTB3); //- erfi(B(1, 0) / 2 / SQRTB3);
+                                     ? - erfi(B(1, 0) / 2 / SQRTB3) // peak with valley point beeing at the edge of the data                                           
+                                     : erfi(B(1, 0) / 2 / SQRTB3 + scale * SQRTB3); // ordinary peak
 
     // calculate the Jacobian matrix terms
     Matrix J(1, 4);
@@ -421,8 +446,15 @@ namespace q
     J(0, 2) = -J(0, 0) / 2 / B(2, 0) - B1_2_B2 * J(0, 1);
     J(0, 3) = -J(0, 0) / 2 / B(3, 0) - B1_2_B3 * J(0, 1);
 
+    // calculate the trapezoid under the peak covered by data points
+    const double x_left = (-B1_2_B2 < -scale) ? -B1_2_B2 : -scale;
+    const double x_right = (-B1_2_B3 > scale) ? -B1_2_B3 : scale;
+    const double y_left = std::exp(B(0, 0) + B(1, 0) * x_left + B(2, 0) * x_left * x_left);
+    const double y_right = std::exp(B(0, 0) + B(1, 0) * x_right + B(3, 0) * x_right * x_right);
+    const double peak_area_covered_trapezoid = (y_left + y_right) * (x_right - x_left) / 2;
+
     // calculate the the peak area covered by data points
-    const double peak_area_covered = SQRTPI_2 * ((EXP_B0 * EXP_B12) / SQRTB2 * (err_L + err_L_covered) + (EXP_B0 * EXP_B13) / SQRTB3 * (err_R + err_R_covered));
+    const double peak_area_covered = SQRTPI_2 * ((EXP_B0 * EXP_B12) / SQRTB2 * err_L_covered + (EXP_B0 * EXP_B13) / SQRTB3 * err_R_covered) - peak_area_covered_trapezoid;
 
     return std::pair<Matrix, double>(J, peak_area_covered);
   }
