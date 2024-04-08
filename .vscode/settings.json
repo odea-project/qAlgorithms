@@ -63,6 +63,8 @@
         "variant": "cpp",
         "codecvt": "cpp",
         "shared_mutex": "cpp",
-        "ranges": "cpp"
+        "ranges": "cpp",
+        "bitset": "cpp",
+        "regex": "cpp"
     }
 }

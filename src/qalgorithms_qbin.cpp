@@ -26,14 +26,14 @@ namespace q
     std::vector<double> pt_stepsForDQS;
     std::vector<double> pt_scanRelSteps;
     std::vector<Datapoint *> pt_outOfBins;
-#define IGNORE -256 // nonsense value if no real number exists
+#define IGNORE -256 // nonsense value if no real number exists. Must be negative since it is used later when searching for the smallest distance
 #define NO_MIN_FOUND -256
 #define NO_MAX_FOUND -256
 
 #pragma region "Rawdata"
     RawData::RawData() {}
     q::RawData::~RawData() {}
-    bool RawData::readcsv(std::string user_file, int d_mz, int d_mzError, int d_RT, int d_scanNo, int pt_d_binID)
+    bool RawData::readcsv(std::string user_file, int d_mz, int d_mzError, int d_RT, int d_scanNo, int pt_d_binID = -1)
     {
         lengthAllFeatures = 0;
         allDatapoints.push_back(std::vector<Datapoint>(0)); // first element empty since scans are 1-indexed
@@ -77,8 +77,14 @@ namespace q
             ++lengthAllFeatures;
             allDatapoints[i_scanNo].push_back(F); // every subvector in allDatapoints is one complete scan - does not require a sorted input file!
         }
+        for (size_t i = 0; i < allDatapoints.size(); i++) // necessary if features aren't already sorted, performance impact should be very small
+        {
+            std::sort(allDatapoints[i].begin(), allDatapoints[i].end(), [](const Datapoint *lhs, const Datapoint *rhs)
+                  { return lhs->mz < rhs->mz; });
+        }
         std::cout << "Finished reading file\n";
         return true;
+        // RawData is always a vector of vectors where the first index is the scan number (starting at 1) and every scsn is sorted by mz
     }
 
     // bool RawData::readtxt(std::string user_file) // @todo function must be defined for qcentroid
@@ -603,7 +609,8 @@ int main()
     // std::cout.rdbuf(result.rdbuf());             // redirect std::cout to out.txt!
     // std::cout << "scan,position\n";
 
-    q::RawData testdata;                                                                        // 2533 scans in Warburg dataset
+    q::RawData testdata;                                                                        
+    // path to data, mz column, centroid error column, RT column, scan number column, control ID column (optional)
     testdata.readcsv("../../rawdata/qBinnings_Warburg_pos_171123_01_Zu_01.csv", 0, 4, 1, 2, 7); // ../../rawdata/qCentroid_Warburg_pos_171123_01_Zu_01.csv ../test/test.csv
     // for (size_t i = 0; i < testdata.scanBreaks.size(); i++)
     // {
