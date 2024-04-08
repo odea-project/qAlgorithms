@@ -9,15 +9,14 @@
 
 namespace q
 {
-    // Datapoint Struct (contains all user-specified variables found in raw data and an index)
+    // Datapoint Struct (contains all user-specified variables found in source file); Output of qCentroiding
     struct Datapoint
     {
-        // int idx; // keep as test parameter if at all
         double mz;
-        double mzError;
+        double mzError = -1;
         double RT;
         unsigned int scanNo;
-        int pt_binID;
+        int pt_binID = -1;
         double intensity = 1;
     };
 
@@ -28,7 +27,7 @@ namespace q
         ~RawData();
         int lengthAllFeatures;
         std::vector<std::vector<Datapoint>> allDatapoints;
-        bool readcsv(std::string user_file, int d_mz, int d_mzError, int d_RT, int d_scanNo, int pt_d_binID = -1);
+        bool readcsv(std::string user_file, int d_mz, int d_mzError, int d_RT, int d_scanNo, int pt_d_binID);
         // bool readtxt(std::string user_file); // @todo move to qCentroiding
     };
 
@@ -64,6 +63,7 @@ namespace q
 
         /// @brief generate the cumError vector for this bin
         void makeCumError();
+        void makeCumError(const double ppm); // if no centroid error exists
 
         /// @brief divide a bin sorted by mz the difference in mz of its members and return the new bins to the bin deque. Recursive function.
         /// @details this function iterates over the order space of a previously generated bin by searching for the maximum

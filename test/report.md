@@ -6,7 +6,7 @@
 - [qBinning @todo better name](#qbinning-todo-better-name)
 	- [why is binning necessary?](#why-is-binning-necessary)
 	- [generation of EIC in other software](#generation-of-eic-in-other-software)
-	- [](#)
+	- [advantages of qBinning](#advantages-of-qbinning)
 - [Implementation](#implementation)
 	- [Differences to the Original Implementation in R](#differences-to-the-original-implementation-in-r)
 	- [Module Requirements](#module-requirements)
@@ -48,6 +48,8 @@ A bin is a data construct with associated data points and defined operations, an
 
 ### Differences to the Original Implementation in R
 necessary?
+R: 1-2 GB (factor 2 to 4 of in-place operation) of memory needed for Warburg, 
+30% CPU use on Ryzen + 10% from RStudio, very long runtime (640 s)
 
 ### Module Requirements
 The modlue has few requirements, only requiring centroided data and a measurement of the 
@@ -167,6 +169,9 @@ Performance evaluation was performed using the following CPUs:
 * Intel(R) Core(TM) i5-7400 CPU @ 3.00GHz (referred to as i5)
 * AMD Ryzen 3 3250U (referred to as Ryzen)
 
+@todo all performance tests were conducted with the compiled program and 
+optimisation level 2 (gcc)
+
 <b> Issues after binning: </b>
 Images of common undesired outputs / elements that need to be cleaned up: 
 Centroid error too small, points were not binned
@@ -176,6 +181,7 @@ Very small bins from noise (shoud get removed by peak fitting)
 runtimes on different processors
 performance bottlenecks
 effectiveness of binning for different datasets
+comparison between centroid error and ppm
 
 ### Result Comparison with R Script
 
@@ -187,3 +193,8 @@ concrete validation
 implement into proper pipeline by returning closed bins with DQSB - datapoint basis or as EIC objects?
 Implement a way to handle MS^2 / MS^n
 automatic tests to verify program after user modifies it
+Implement error handling, especially for cases where nonsense data can be detected - ideally implemented 
+with qCentroids for data. Error handling for new subsetting: Make sure only one subset writes to
+finished bins, control that bins are valid before DQS calculation
+How certain is scan number as a good parameter?
+Add compile-time toggle for creating list of non-binned objects

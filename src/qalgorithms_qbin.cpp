@@ -33,8 +33,9 @@ namespace q
 #pragma region "Rawdata"
     RawData::RawData() {}
     q::RawData::~RawData() {} // potential memory leak
-    bool RawData::readcsv(std::string user_file, int d_mz, int d_mzError, int d_RT, int d_scanNo, int pt_d_binID = -1)
+    bool RawData::readcsv(std::string user_file, int d_mz, int d_mzError, int d_RT, int d_scanNo, int pt_d_binID)
     {
+        int now = time(0);
         lengthAllFeatures = 0;
         allDatapoints.push_back(std::vector<Datapoint>(0)); // first element empty since scans are 1-indexed
         std::ifstream file(user_file);
@@ -75,12 +76,12 @@ namespace q
             ++lengthAllFeatures;
             allDatapoints[i_scanNo].push_back(F); // every subvector in allDatapoints is one complete scan - does not require a sorted input file!
         }
-        for (size_t i = 0; i < allDatapoints.size(); i++) // necessary if features aren't already sorted, performance impact should be very small
+        for (size_t i = 1; i < allDatapoints.size(); i++) // necessary if features aren't already sorted, performance impact should be very small
         {
-            std::sort(allDatapoints[i].begin(), allDatapoints[i].end(), [](const Datapoint *lhs, const Datapoint *rhs)
-                  { return lhs->mz < rhs->mz; });
+            std::sort(allDatapoints[i].begin(), allDatapoints[i].end(), [](const Datapoint lhs, const Datapoint rhs)
+                  { return lhs.mz < rhs.mz; });
         }
-        std::cout << "Finished reading file\n";
+        std::cout << "Finished reading file in " << time(0) - now << " seconds\n";
         return true;
         // RawData is always a vector of vectors where the first index is the scan number (starting at 1) and every scsn is sorted by mz
     }
@@ -147,7 +148,7 @@ namespace q
                     for (size_t i = 0; i < startpoint; i++)
                     { // random access not needed, first element -> make bins -> move element or make bins, then remove first entry ; do n times
                         binDeque.front().makeOS();
-                        binDeque.front().makeCumError();                                                                          // always after order space, since the features get sorted
+                        binDeque.front().makeCumError();                                                                          // always after order space, since the features get sorted @todo remember ppm
                         binDeque.front().subsetMZ(&binDeque, binDeque.front().activeOS, 0, binDeque.front().activeOS.size() - 1); // takes element from binDeque, starts subsetting, appends bins to binDeque
                         binDeque.pop_front();                                                                                     // remove the element that was processed from binDeque
                     }
@@ -279,6 +280,14 @@ namespace q
         std::transform(pointsInBin.begin(), pointsInBin.end(), back_inserter(cumError), [](Datapoint *F)
                        { return F->mzError; });                               // transfer error values from feature objects
         std::partial_sum(cumError.begin(), cumError.end(), cumError.begin()); // cumulative sum
+    }
+
+    void Bin::makeCumError(const double ppm)
+    {
+        cumError.reserve(pointsInBin.size());
+        std::transform(pointsInBin.begin(), pointsInBin.end(), back_inserter(cumError), [ppm](Datapoint *F)
+                       { return F->mz * 0.000001 * ppm; });
+        std::partial_sum(cumError.begin(), cumError.end(), cumError.begin());
     }
 
     void Bin::subsetMZ(std::deque<Bin> *bincontainer, const std::vector<double> &OS, int binStartInOS, int binEndInOS) // bincontainer is binDeque of BinContainer // OS cannot be solved with pointers since index has to be transferred to frature list
@@ -621,31 +630,31 @@ int main()
     testcontainer.subsetBins(dim, 7); // 7 = max dist in scans
     std::cout << "\ncalculating DQSBs...\n";
 
-    // std::ofstream result("../../qbinning_faultybins.csv");
-    // std::streambuf *coutbuf = std::cout.rdbuf(); // save old buf
-    // std::cout.rdbuf(result.rdbuf());             // redirect std::cout to out.txt!
+    std::ofstream result("../../qbinning_faultybins.csv");
+    std::streambuf *coutbuf = std::cout.rdbuf(); // save old buf
+    std::cout.rdbuf(result.rdbuf());             // redirect std::cout to out.txt!
 
-    // std::cout << "mz,rt,ID,color,shape\n";
-    // testcontainer.controlAllBins();
+    std::cout << "mz,rt,ID,color,shape\n";
+    testcontainer.controlAllBins();
 
-    // std::cout.rdbuf(coutbuf); // reset to standard output again
+    std::cout.rdbuf(coutbuf); // reset to standard output again
 
-    // testcontainer.printAllBins("../../qbinning_binlist.csv", &testdata);
+    testcontainer.printAllBins("../../qbinning_binlist.csv", &testdata);
 
-    // std::fstream file_out;
-    // file_out.open("../../qbinning_notbinned.csv");
-    // if (!file_out.is_open())
-    // {
-    //     throw;
-    // }
+    std::fstream file_out;
+    file_out.open("../../qbinning_notbinned.csv");
+    if (!file_out.is_open())
+    {
+        throw;
+    }
 
-    // file_out << "mz,rt,ID,color,shape\n";
-    // q::pt_outOfBins.resize(q::pt_outOfBins.size());
-    // for (size_t i = 0; i < q::pt_outOfBins.size(); i++)
-    // {
-    //     file_out << std::setprecision(15) << q::pt_outOfBins[i]->mz << "," << q::pt_outOfBins[i]->scanNo << "," << -1 << "," << -1 << ","
-    //              << "Y\n";
-    // }
+    file_out << "mz,rt,ID,color,shape\n";
+    q::pt_outOfBins.resize(q::pt_outOfBins.size());
+    for (size_t i = 0; i < q::pt_outOfBins.size(); i++)
+    {
+        file_out << std::setprecision(15) << q::pt_outOfBins[i]->mz << "," << q::pt_outOfBins[i]->scanNo << "," << -1 << "," << -1 << ","
+                 << "Y\n";
+    }
 
     testcontainer.assignDQSB(&testdata, 7);
 
