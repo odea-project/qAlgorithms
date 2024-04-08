@@ -32,7 +32,7 @@ namespace q
 
 #pragma region "Rawdata"
     RawData::RawData() {}
-    q::RawData::~RawData() {}
+    q::RawData::~RawData() {} // potential memory leak
     bool RawData::readcsv(std::string user_file, int d_mz, int d_mzError, int d_RT, int d_scanNo, int pt_d_binID = -1)
     {
         lengthAllFeatures = 0;
@@ -61,10 +61,8 @@ namespace q
             {
                 row.push_back(std::stod(cell));
             }
-// add conditional here to set feature error to mz* x ppm ßßß
-#pragma GCC diagnostic push // do not display the specific warning for rounding a double to integer
-#pragma GCC diagnostic ignored "-Wnarrowing"
-            unsigned int i_scanNo = (unsigned int)row[d_scanNo]; // gives warning, conversion functions as intended;
+            // add conditional here to set feature error to mz* x ppm ßßß
+            unsigned int i_scanNo = (unsigned int)row[d_scanNo];
             if (i_scanNo > allDatapoints.size() - 1)
             {
                 for (size_t i = allDatapoints.size() - 1; i < i_scanNo; i++)
@@ -72,8 +70,8 @@ namespace q
                     allDatapoints.push_back(std::vector<Datapoint>(0));
                 }
             }
-            Datapoint F = Datapoint{row[d_mz], row[d_mzError], row[d_RT], i_scanNo, row[pt_d_binID]};
-#pragma GCC diagnostic pop
+            Datapoint F = Datapoint{row[d_mz], row[d_mzError], row[d_RT], i_scanNo, (int)row[pt_d_binID]};
+
             ++lengthAllFeatures;
             allDatapoints[i_scanNo].push_back(F); // every subvector in allDatapoints is one complete scan - does not require a sorted input file!
         }
@@ -130,7 +128,7 @@ namespace q
         scans
     };
 
-    void BinContainer::subsetBins(std::vector<int> dimensions, int maxdist)
+    void BinContainer::subsetBins(std::vector<int> dimensions, const unsigned int maxdist)
     {
         auto timeStart = std::chrono::high_resolution_clock::now();
         auto timeEnd = std::chrono::high_resolution_clock::now();
@@ -185,7 +183,7 @@ namespace q
         // finishedBins.resize(finishedBins.size()); //ßßß why does this result in an error?
     }
 
-    void BinContainer::assignDQSB(const RawData *rawdata, int maxdist)
+    void BinContainer::assignDQSB(const RawData *rawdata, const unsigned int maxdist)
     {
         for (size_t i = 0; i < finishedBins.size(); i++)
         {
@@ -332,7 +330,7 @@ namespace q
         }
     }
 
-    void Bin::subsetScan(std::deque<Bin> *bincontainer, std::vector<Bin> *finishedBins, const int &maxdist)
+    void Bin::subsetScan(std::deque<Bin> *bincontainer, std::vector<Bin> *finishedBins, const unsigned int &maxdist)
     {
         // function is called on a bin sorted by mz
         size_t binSize = pointsInBin.size();
@@ -385,7 +383,7 @@ namespace q
         }
     }
 
-    void Bin::makeDQSB(const RawData *rawdata, const int &maxdist)
+    void Bin::makeDQSB(const RawData *rawdata, const unsigned int &maxdist)
     {
         // assumes bin is saved sorted by scans, since the result from scan gap checks is the final control
         size_t binsize = pointsInBin.size();
@@ -466,6 +464,7 @@ namespace q
                 }
             }
             // rawdata is always sorted by mz within scans
+            // use two while loops to find desired value from any place in the scan, accounts for large shifts between scans
             if (!minFound)
             {
                 while (rawdata->allDatapoints[i][needle].mz < minInnerMZ)
@@ -592,8 +591,8 @@ namespace q
             dqs = MOD;
         }
         dqs = (MOD - MID) * (1 / (1 + MID)) / dqs; // sm(i) term
-        dqs = (dqs + 1) / 2;                                 // interval transform
-        assert(0 <= dqs <= 1);
+        dqs = (dqs + 1) / 2;                       // interval transform
+        assert(0 <= dqs && dqs <= 1);
         return dqs;
     }
 
