@@ -123,7 +123,7 @@ namespace q
         /// @param dimensions which dimensions should be used for subsetting in what order. 1 = subsetting by mz, 2 = subsetting by scans.
         /// Important: The last element of dimensions must determine bins to be finished, and no other subsetter may add to finsihedBins.
         /// @param maxdist the largest gap in scans which a bin can have while still being considered valid
-        void subsetBins(std::vector<int> dimensions, const unsigned int maxdist);
+        void subsetBins(std::vector<int> dimensions, const unsigned int maxdist, const double massError);
 
         /// @brief apply DQSB function to all completed bins
         /// @param rawdata the RawData object from which all bins in finishedBins were generated
