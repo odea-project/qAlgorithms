@@ -44,7 +44,7 @@ namespace q
      *
      * @param dataVec
      */
-    void findPeaks(const varDataType &dataVec);
+    std::vector<std::vector<std::unique_ptr<DataType::Peak>>> findPeaks(const varDataType &dataVec);
 
 
     
@@ -75,13 +75,13 @@ namespace q
     // methods
     int calculateNumberOfRegressions(const int n) const;
 
-    void runningRegression(const RefMatrix &X, const RefMatrix &Y, std::vector<std::unique_ptr<validRegression>> &validRegressions);
+    void runningRegression(const RefMatrix &Y, std::vector<std::unique_ptr<validRegression>> &validRegressions);
 
     void validateRegressions(const Matrix &B, const Matrix &Ylog, const int scale, std::vector<std::unique_ptr<validRegression>> &validRegressions);
 
     void mergeRegressionsOverScales(std::vector<std::unique_ptr<validRegression>> &validRegressions, Matrix &Ylog);
 
-    std::vector<std::unique_ptr<DataType::Peak>> createPeaks(const std::vector<std::unique_ptr<validRegression>> &validRegressions, const RefMatrix &Y, const int scanNumber);
+    std::vector<std::unique_ptr<DataType::Peak>> createPeaks(const std::vector<std::unique_ptr<validRegression>> &validRegressions, const RefMatrix &Y, const std::vector<double> &X, const int scanNumber);
 
     double calcMse(const Matrix &yhat, const Matrix &y) const;
 

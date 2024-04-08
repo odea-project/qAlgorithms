@@ -46,11 +46,12 @@ namespace q
   // Destructor
   qPeaks::~qPeaks() {}
 
-  void qPeaks::findPeaks(const varDataType &dataVec)
+  std::vector<std::vector<std::unique_ptr<DataType::Peak>>> qPeaks::findPeaks(const varDataType &dataVec)
   {
-    std::visit([this](auto &&arg)
+    std::vector<std::vector<std::unique_ptr<DataType::Peak>>> all_peaks;
+    std::visit([&all_peaks, this](auto &&arg)
                {
-                std::vector<std::vector<std::unique_ptr<DataType::Peak>>> all_peaks(arg->size());
+                all_peaks.resize(arg->size());
     // iterate over the map of varDataType datatype objects
     // use parallel for loop to iterate over the dataVec
 #pragma omp parallel for
@@ -63,22 +64,25 @@ namespace q
                   auto &data = dataObj.dataPoints;
                   int n = data.size();
                   // store x and y values in RefMatrix objects
-                  RefMatrix X(n, 1);
+                  // RefMatrix X(n, 1);
                   RefMatrix Y(n, 1);
+                  std::vector<double> X(n);
                   for (size_t i = 0; i < n; i++)
                   {
-                    X.assignRef(i, 0, data[i]->x());
+                    // X.assignRef(i, 0, data[i]->x());
+                    X[i] = data[i]->x();
                     Y.assignRef(i, 0, data[i]->y());
                   }
                   std::vector<std::unique_ptr<validRegression>> validRegressions; // index in B, scale, apex_position and MSE
-                  runningRegression(X, Y, validRegressions);
-                  all_peaks[i] = createPeaks(validRegressions, Y, dataObj.getScanNumber());
-                } 
+                  runningRegression(Y, validRegressions);
+                  all_peaks[i] = createPeaks(validRegressions, Y, X, dataObj.getScanNumber());
+                } // end parallel for loop
                 ; },
-               dataVec);
+               dataVec); // end visit
+    return all_peaks;
   } // end findPeaks
 
-  void qPeaks::runningRegression(const RefMatrix &X, const RefMatrix &Y, std::vector<std::unique_ptr<validRegression>> &validRegressions)
+  void qPeaks::runningRegression(const RefMatrix &Y, std::vector<std::unique_ptr<validRegression>> &validRegressions)
   {
     // perform log-transform on Y
     size_t n = Y.getRows();
@@ -118,14 +122,14 @@ namespace q
       {
       case 7:                                   // Case 1a: apex left
         apex_position = -B(1, i) / 2 / B(2, i); // is negative
-        if (apex_position <= -scale)
+        if (apex_position <= -scale+1) // scale +1: prevent appex position to be at the edge of the data
         {
           continue; // invalid apex position
         }
         break;
       case 3:                                   // Case 1b: apex right
         apex_position = -B(1, i) / 2 / B(3, i); // is positive
-        if (apex_position >= scale)
+        if (apex_position >= scale-1) // scale -1: prevent appex position to be at the edge of the data
         {
           continue; // invalid apex position
         }
@@ -133,7 +137,7 @@ namespace q
       case 6:                                     // Case 2a: apex left | valley right
         apex_position = -B(1, i) / 2 / B(2, i);   // is negative
         valley_position = -B(1, i) / 2 / B(3, i); // is positive
-        if (apex_position <= -scale || valley_position - apex_position <= 2)
+        if (apex_position <= -scale+1 || valley_position - apex_position <= 2) // scale +1: prevent appex position to be at the edge of the data
         {
           continue; // invalid apex and valley positions
         }
@@ -141,7 +145,7 @@ namespace q
       case 1:                                     // Case 2b: apex right | valley left
         apex_position = -B(1, i) / 2 / B(3, i);   // is positive
         valley_position = -B(1, i) / 2 / B(2, i); // is negative
-        if (apex_position >= scale || apex_position - valley_position <= 2)
+        if (apex_position >= scale-1 || apex_position - valley_position <= 2) // scale -1: prevent appex position to be at the edge of the data
         {
           continue; // invalid apex and valley positions
         }
@@ -203,14 +207,14 @@ namespace q
     }
 
     // group the valid peaks
-    std::vector<std::vector<int>> groups;
+    std::vector<std::vector<int>> groups; // vector of peak indices
     // initialize iterators for valid_regressions_tmp
     auto it = valid_regressions_tmp.begin();
     auto it_next = std::next(it);
     // iterate over the temporary vector of valid regressions
     while (it_next != valid_regressions_tmp.end())
     {
-      if (std::abs(it->second - it_next->second) >= 2 * scale + 1)
+      if (std::abs(it->second - it_next->second) > 2 * scale + 1) // difference between two peaks is larger than the window size (2*scale+1)
       { // create a new group
         if (groups.empty())
         {
@@ -341,18 +345,32 @@ namespace q
                            validRegressions.end());
   }
 
-  std::vector<std::unique_ptr<DataType::Peak>> qPeaks::createPeaks(const std::vector<std::unique_ptr<validRegression>> &validRegressions, const RefMatrix &Y, const int scanNumber)
+  std::vector<std::unique_ptr<DataType::Peak>> qPeaks::createPeaks(const std::vector<std::unique_ptr<validRegression>> &validRegressions, const RefMatrix &Y, const std::vector<double> &X, const int scanNumber)
   {
     std::vector<std::unique_ptr<DataType::Peak>> peaks; // peak list
     // iterate over the validRegressions vector
     for (auto &regression : validRegressions)
     {
+      // re-scale the apex position to x-axis
+      double x0 = X[regression->scale*0 + (int) std::floor(regression->apex_position)];
+      double dx = X[regression->scale*0 + (int) std::ceil(regression->apex_position)] - x0;
+      double apex_position = x0 + dx * (regression->apex_position - std::floor(regression->apex_position));
       // create a new peak object and push it to the peaks vector; the peak object is created using the scan number, the apex position and the peak height
-      peaks.push_back(std::make_unique<DataType::Peak>(scanNumber, regression->apex_position, 
+      peaks.push_back(std::make_unique<DataType::Peak>(scanNumber, apex_position, 
       (regression->B(1, 0) > 0) 
       ? std::exp(regression->B(0, 0) - regression->B(1, 0) * regression->B(1,0) / 4 / regression->B(3, 0)) 
       : std::exp(regression->B(0, 0) - regression->B(1, 0) * regression->B(1,0) / 4 / regression->B(2, 0))));
     }
+
+    // // this is just for debugging: check if x has points between 365.0 and 365.2 print the regressions
+    // if (X[0] <= 365.0 && X[X.size() - 1] >= 365.2 && scanNumber == 0)
+    // {
+    //   for (auto &regression : validRegressions)
+    //   {
+    //       std::cout << "Apex position: " << regression->apex_position << std::endl;
+    //       std::cout << "Scale: " << regression->scale << std::endl;
+    //   }
+    // }
 
     return peaks;
   }
