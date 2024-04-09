@@ -52,7 +52,8 @@ A bin is a data construct with associated data points and defined operations, an
 necessary?
 R: 1-2 GB (factor 2 to 4 of in-place operation) of memory needed for Warburg, 
 30% CPU use on Ryzen + 10% from RStudio, very long runtime (640 s)
-writing to csv is significantly slower in R @todo necessary?
+writing to csv is significantly slower in R -> probably main timesink
+Why do centroids not in bins get a centroid error?
 
 ### Module Requirements
 The modlue has few requirements, only requiring centroided data and a measurement of the 

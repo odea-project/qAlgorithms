@@ -14,17 +14,21 @@ library(patchwork)
 ```
 
 ```{r bin results}
-qbins <- read.csv("../../qBinning_binsummary.csv")
-qcontrol <- read.csv("../../rawdata/df_qBinning_test.csv")
-qcontrol <- qcontrol[which(qcontrol$ID != -1),]
+qbins <- read.csv("../../process_comparison/maxdist6_binlist.csv")
+nobins <- read.csv("../../process_comparison/maxdist6_notbinned.csv")
 
-# plot(qbins$mean_mz, qbins$mean_scans)
+sum(nobins$control_ID != -1)
+sum(qbins$control_ID == -1)
+sum((round(qbins$DQS - qbins$control_DQSB, digits = 10) == 0))
+difflevelsDQS <- data.frame(digits = c(1:10),
+                            matching = c(2032619, 1740838, 1190492, 794114, 454395, 313191, 289840, 286934, 286397, 250458))
+plot(difflevelsDQS$matching/length(qbins$mz)) # reaches stable level at 6 digits
 
-hist(qbins$mean_mz)
-hist(qbins$mean_scans)
-hist(qbins$mean_DQS)
-hist(qbins$size)
+plot(nobins$mz[which(nobins$control_ID != -1)], nobins$scan[which(nobins$control_ID != -1)])
+plot(qbins$mz[which(qbins$control_ID == -1)], qbins$scan[which(qbins$control_ID == -1)])
 
+mean(qbins$DQS)
+mean(qbins$DQS[which(qbins$control_ID == -1)])
 ```
 
 ```{r steps per bin}
@@ -58,4 +62,14 @@ last(bins$scanNo)
 write.csv(bins, file = "control_bins_full.csv", row.names = FALSE)
 ```
 
+```{r merge}
+prebinned <- read.csv("../../rawdata/control_bins_base.csv")
+rawdata <- read.csv("../../rawdata/qCentroid_Warburg_pos_171123_01_Zu_01.csv")
+prebinned$mzError <- rawdata$Centroid.Error
+#mz column, centroid error column, RT column, scan number column, control ID column 
+export <- data.frame(mz = prebinned$mz, mzError = prebinned$mzError, RT = prebinned$rt, scanNo = prebinned$scanNo, intensity = prebinned$intensity, controlID = prebinned$ID, controlCentroidDQS = prebinned$DQScen, controlBinDQS = prebinned$DQSbin)
+
+write.csv(export, "../../rawdata/control_bins_full.csv", row.names = FALSE)
+getwd()
+```
 

@@ -4,24 +4,7 @@ Parallelisieren: Ein thread je subset-Operation; wahrscheinlich nicht signifikan
 Gibt es einen Zusammenhang zwischen Zentroidfehler und der Eigenschaft, nicht in einem Bin zu landen / Anfang Bzw. Ende eines Bins zu sein?
 Config-Datei
 
-Wenn der Bin nach Teilen in RT/Scans genau so groß ist wie vorher, muss nicht erneut mit mz kontorolliert werden
-
-Duplizierte Features crashen den code
 https://www.agner.org/optimize/optimizing_cpp.pdf
-
-massefehler für mehrere Featurelisten?
-
-qGrouping
-
-ßßß Intensitätsprofile
-
-Kriterium für besseres DQS-berechnen (Subsampling?) // erst nur im selben scan suchen und anschließend die mit gutem DQS priorisieren
- 
-Sortiere Featureliste nur im Bereich von scans, dann suche jeweils nächstes mz 
-
-überspringe n Werte pro suchvorgang
-1. Relativ viele Suchvorgänge in einem Scan brauchen 0-1 Iterationen - 4399 von > 7^6 -> nicht relevant, insbesodere da im Rasterfall nur 4k zusätzliche Operationen hinzukommen
-2. Im Schnitt 147 Schritte
 
 doubles -> floats
 
@@ -48,10 +31,12 @@ Header verallgemeinern
 
 Methode: I/O, minimalbeispiel (Reihenfolge, ~10E array), paper verlinken (Seitenzahl),
 
-Gerrit soll code aufräumen -> Namen, Funktionen trennen, Kommentare selber schreiben, redundanten Müll entfernen, echte pointer statt &, eckige Klammern für operator overload (matrixcode durch besse Bibliothek ersetzen, da jede Operation die gesamte Matrix kopiert), wenn es getter und setter gibt sollte die variable public sein
+Gerrit soll code aufräumen -> Namen, Funktionen trennen, Kommentare selber schreiben, redundanten Müll entfernen, echte pointer statt &, eckige Klammern für operator overload (matrixcode durch besse Bibliothek ersetzen, da jede Operation die gesamte Matrix kopiert @todo kontrollieren), wenn es getter und setter gibt sollte die variable public sein
 
 Erstelle Output-Datei, wenn sie nicht existiert
 
 mögliche Anwendung für std::variant?
 
 https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0125108
+
+Maxdist bestätigen
