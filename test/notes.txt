@@ -40,3 +40,8 @@ mögliche Anwendung für std::variant?
 https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0125108
 
 Maxdist bestätigen
+
+Punkte, die dem falschen Bin zugeordnet wurden, werden nicht eindeutig erkannt
+
+Beide Programme mit weniger genauigkeit in vcrit laufen lassen
+double-Ungenauigkeit eröhen

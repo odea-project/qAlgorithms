@@ -22,7 +22,7 @@ sum(qbins$control_ID == -1)
 sum((round(qbins$DQS - qbins$control_DQSB, digits = 10) == 0))
 difflevelsDQS <- data.frame(digits = c(1:10),
                             matching = c(2032619, 1740838, 1190492, 794114, 454395, 313191, 289840, 286934, 286397, 250458))
-plot(difflevelsDQS$matching/length(qbins$mz)) # reaches stable level at 6 digits
+plot(difflevelsDQS$matching / length(qbins$mz)) # reaches stable level at 6 digits
 
 plot(nobins$mz[which(nobins$control_ID != -1)], nobins$scan[which(nobins$control_ID != -1)])
 plot(qbins$mz[which(qbins$control_ID == -1)], qbins$scan[which(qbins$control_ID == -1)])

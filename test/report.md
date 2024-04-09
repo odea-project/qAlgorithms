@@ -53,7 +53,11 @@ necessary?
 R: 1-2 GB (factor 2 to 4 of in-place operation) of memory needed for Warburg, 
 30% CPU use on Ryzen + 10% from RStudio, very long runtime (640 s)
 writing to csv is significantly slower in R -> probably main timesink
-Why do centroids not in bins get a centroid error?
+@todo Why do centroids not in bins get a centroid error?
+
+The most significant difference to the original implementation is that 
+while previously a dataframe object was used to handle binning by
+changing the order of data points, now a bin 
 
 ### Module Requirements
 The modlue has few requirements, only requiring centroided data and a measurement of the 
@@ -188,6 +192,18 @@ runtimes on different processors
 performance bottlenecks
 effectiveness of binning for different datasets
 comparison between centroid error and ppm
+compare results for different alpha when calculating the critical value
+Bins with both false negatives and false positives (relating to the r script results,
+which are assumed to be perfectly true) exist: Larger distance between FP and TP than
+TP and FN
+Main cause of multiple data points being marked as FP / FN is only one link existing
+to the correct assignment
+Is there a relationship between high DQSB and reduced occurrence of FPs and FNs?
+@todo compare bins after only the first mz and scan subsetting 
+
+comparison criteria: FP%, bins in which all bins are FNs, bins with FPs that were taken from 
+other bins, 
+Amount of correct bins with differences in DQS?
 
 ### Result Comparison with R Script
 
