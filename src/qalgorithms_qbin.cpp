@@ -33,8 +33,8 @@ namespace q
 #pragma region "Rawdata"
     RawData::RawData() {}
     q::RawData::~RawData() {} // potential memory leak
-    bool RawData::readcsv(std::string user_file, int d_mz, int d_mzError, int d_RT, int d_scanNo, int pt_d_binID)
-    {
+    bool RawData::readcsv(std::string user_file, int d_mz, int d_mzError, int d_RT, int d_scanNo, int d_intensity, int d_control_binID, int d_control_DQScentroid, int d_control_DQSbin)
+    { // @todo stop segfaults when reading empty lines
         int now = time(0);
         lengthAllFeatures = 0;
         allDatapoints.push_back(std::vector<Datapoint>(0)); // first element empty since scans are 1-indexed
@@ -71,7 +71,7 @@ namespace q
                     allDatapoints.push_back(std::vector<Datapoint>(0));
                 }
             }
-            Datapoint F = Datapoint{row[d_mz], row[d_mzError], row[d_RT], i_scanNo, (int)row[pt_d_binID]};
+            Datapoint F = Datapoint{row[d_mz], row[d_mzError], row[d_RT], i_scanNo, row[d_intensity], (int)row[d_control_binID], row[d_control_DQScentroid], row[d_control_DQSbin]};
 
             ++lengthAllFeatures;
             allDatapoints[i_scanNo].push_back(F); // every subvector in allDatapoints is one complete scan - does not require a sorted input file!
@@ -155,7 +155,7 @@ namespace q
                         else
                         {
                             binDeque.front().makeCumError(massError);
-                        } // always after order space, since the features get sorted 
+                        }                                                                                                         // always after order space, since the features get sorted
                         binDeque.front().subsetMZ(&binDeque, binDeque.front().activeOS, 0, binDeque.front().activeOS.size() - 1); // takes element from binDeque, starts subsetting, appends bins to binDeque
                         binDeque.pop_front();                                                                                     // remove the element that was processed from binDeque
                     }
@@ -193,10 +193,13 @@ namespace q
 
     void BinContainer::assignDQSB(const RawData *rawdata, const unsigned int maxdist)
     {
+        auto timeStart = std::chrono::high_resolution_clock::now();
         for (size_t i = 0; i < finishedBins.size(); i++)
         {
             finishedBins[i].makeDQSB(rawdata, maxdist);
         }
+        auto timeEnd = std::chrono::high_resolution_clock::now();
+        std::cout << "Finished Calculating DQSBs in " << (timeEnd - timeStart).count() << " ns\n";
     }
 
     void BinContainer::printAllBins(std::string path, RawData *rawdata)
@@ -205,24 +208,20 @@ namespace q
         file_out.open(path);
         assert(file_out.is_open());
         // possible symbols
-        char shapes[] = "acGuxnoQzRsTvjIEf";
+        // char shapes[] = "acGuxnoQzRsTvjIEf"; // random shape when displaying with makie @todo does not work
 
-        file_out << "mz,rt,ID,color,shape\n";
-        // for (size_t i = 0; i < rawdata->allDatapoints.size(); i++)
-        // {
-        //     file_out << std::setprecision(15) << rawdata->allDatapoints[i]->mz << "," << rawdata->allDatapoints[i]->scanNo << "," << 0 << "\n";
-        // }
+        file_out << "mz,scan,ID,DQS,control_ID,control_DQS,control_DQSB\n";
 
         for (size_t i = 0; i < finishedBins.size(); i++)
         {
-            char x = shapes[rand() % 17];
-            int colour = i % 9; // 10 colours total
+            // char x = shapes[rand() % 17];
+            // int colour = i % 9; // 10 colours total
             std::vector<Datapoint *> binnedPoints = finishedBins[i].pointsInBin;
             for (size_t j = 0; j < binnedPoints.size(); j++)
             {
-                file_out << std::setprecision(15) << binnedPoints[j]->mz << "," << binnedPoints[j]->scanNo << "," << i + 1 << "," << colour << "," << x << "\n";
+                file_out << std::setprecision(15) << binnedPoints[j]->mz << "," << binnedPoints[j]->scanNo << "," << i + 1 << "," << finishedBins[i].DQSB[j]
+                         << "," << binnedPoints[j]->control_binID << "," << binnedPoints[j]->control_DQScentroid << "," << binnedPoints[j]->control_DQSbin << "\n";
             }
-            // file_out << finishedBins[i].pointsInBin.size() << "\n";
         }
     }
 
@@ -565,7 +564,7 @@ namespace q
     {
         for (size_t i = 0; i < pointsInBin.size() - 1; i++)
         {
-            if (pointsInBin[i]->pt_binID != pointsInBin[i + 1]->pt_binID) // color 11 for mismatch  mz,rt,ID,color,shape
+            if (pointsInBin[i]->control_binID != pointsInBin[i + 1]->control_binID) // color 11 for mismatch  mz,rt,ID,color,shape
             {
                 std::cout << pointsInBin[i]->mz << "," << pointsInBin[i]->scanNo << "," << binID << ",11,L\n";
             }
@@ -626,7 +625,7 @@ int main()
 
     q::RawData testdata;
     // path to data, mz column, centroid error column, RT column, scan number column, control ID column (optional)
-    testdata.readcsv("../../rawdata/qBinnings_Warburg_pos_171123_01_Zu_01.csv", 0, 4, 1, 2, 7); // ../../rawdata/qCentroid_Warburg_pos_171123_01_Zu_01.csv ../test/test.csv
+    testdata.readcsv("../../rawdata/control_bins_full.csv", 0, 1, 2, 3, 4, 5, 6, 7); // ../../rawdata/qCentroid_Warburg_pos_171123_01_Zu_01.csv ../test/test.csv
     // for (size_t i = 0; i < testdata.scanBreaks.size(); i++)
     // {
     //     std::cout << i << "," << testdata.scanBreaks[i] << "\n";
@@ -634,17 +633,18 @@ int main()
     q::BinContainer testcontainer;
     testcontainer.makeFirstBin(&testdata);
     std::vector<int> dim = {1, 2};    // last element must be the number of scans ßßß implement outside of the switch statement ßßß endless loop if scan terminator is not included
-    testcontainer.subsetBins(dim, 7); // 7 = max dist in scans; add value after 7 for error in ppm
+    testcontainer.subsetBins(dim, 6); // 7 = max dist in scans; add value after 7 for error in ppm
     std::cout << "\ncalculating DQSBs...\n";
+    testcontainer.assignDQSB(&testdata, 6); // 7 = max dist in scans
 
-    std::ofstream result("../../qbinning_faultybins.csv");
-    std::streambuf *coutbuf = std::cout.rdbuf(); // save old buf
-    std::cout.rdbuf(result.rdbuf());             // redirect std::cout to out.txt!
+    // std::ofstream result("../../qbinning_faultybins.csv");
+    // std::streambuf *coutbuf = std::cout.rdbuf(); // save old buf
+    // std::cout.rdbuf(result.rdbuf());             // redirect std::cout to out.txt!
 
-    std::cout << "mz,rt,ID,color,shape\n";
-    testcontainer.controlAllBins();
+    // std::cout << "mz,rt,ID,color,shape\n";
+    // testcontainer.controlAllBins();
 
-    std::cout.rdbuf(coutbuf); // reset to standard output again
+    // std::cout.rdbuf(coutbuf); // reset to standard output again
 
     testcontainer.printAllBins("../../qbinning_binlist.csv", &testdata);
 
@@ -655,17 +655,15 @@ int main()
         throw;
     }
 
-    file_out << "mz,rt,ID,color,shape\n";
+    file_out << "mz,scan,ID,control_ID,control_DQSB\n";
     q::pt_outOfBins.resize(q::pt_outOfBins.size());
     for (size_t i = 0; i < q::pt_outOfBins.size(); i++)
     {
-        file_out << std::setprecision(15) << q::pt_outOfBins[i]->mz << "," << q::pt_outOfBins[i]->scanNo << "," << -1 << "," << -1 << ","
-                 << "Y\n";
+        file_out << std::setprecision(15) << q::pt_outOfBins[i]->mz << "," << q::pt_outOfBins[i]->scanNo << ",-1," << q::pt_outOfBins[i]->control_binID
+                 << q::pt_outOfBins[i]->control_DQSbin << "\n";
     }
 
-    testcontainer.assignDQSB(&testdata, 7);
-
-    testcontainer.printBinSummary("../../qbinning_binsummary.csv");
+    // testcontainer.printBinSummary("../../qbinning_binsummary.csv");
 
     std::cout << "\n\nDone!\n\n";
     return 0;
