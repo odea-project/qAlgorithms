@@ -20,12 +20,15 @@
 
 namespace q
 {
-    int pt_subsetcount = 0;
-    int pt_OSzero = 0;
-    int pt_subsets = 0;
+    // @todo remove test values
+    int control_subsetcount = 0;
     std::vector<double> pt_stepsForDQS;
     std::vector<double> pt_scanRelSteps;
     std::vector<Datapoint *> pt_outOfBins;
+    std::vector<double> control_vcritMZ; // critval
+    std::vector<double> control_maxMZ;   // mz which
+    std::vector<bool> control_splitMZ;   // critval
+
 #define IGNORE -256 // nonsense value if no real number exists. Must be negative since it is used later when searching for the smallest distance
 #define NO_MIN_FOUND -256
 #define NO_MAX_FOUND -256
@@ -139,7 +142,7 @@ namespace q
         {
             for (size_t i = 0; i < dimensions.size(); i++) // dimensions vector allows user to choose order of executing subsetting actions. It is also possible to only subset in mz or RT
             {
-                switch (dimensions[i]) // TODO name case statements, enums
+                switch (dimensions[i]) // @todo name case statements, enums
                 {
                 case 1:
                 { // brackets needed to prevent error
@@ -155,14 +158,25 @@ namespace q
                         else
                         {
                             binDeque.front().makeCumError(massError);
-                        }                                                                                                         // always after order space, since the features get sorted
+                        } // always after order space, since the features get sorted
                         binDeque.front().subsetMZ(&binDeque, binDeque.front().activeOS, 0, binDeque.front().activeOS.size() - 1); // takes element from binDeque, starts subsetting, appends bins to binDeque
                         binDeque.pop_front();                                                                                     // remove the element that was processed from binDeque
                     }
+                    // output subsetting data @todo remove
+                    std::fstream file_out;
+                    file_out.open("../../control_cpp_mzsplit1.csv");
+                    assert(file_out.is_open());
+                    file_out << "max,vcrit,splitYN\n";
+                    for (size_t i = 0; i < control_maxMZ.size(); i++)
+                    {
+                        file_out << control_maxMZ[i] << "," << control_vcritMZ[i] << "," << control_splitMZ[i] << "\n";
+                    }
+
                     timeEnd = std::chrono::high_resolution_clock::now();
                     std::cout << "\nmz subsetting done\nTotal bins: " << binDeque.size() << " ; time: " << (timeEnd - timeStart).count() << " ns";
                     timeStart = std::chrono::high_resolution_clock::now();
                     break;
+                    std::cout << dimensions[10]; // @todo remove
                 }
 
                 case 2:
@@ -185,7 +199,6 @@ namespace q
                     std::cout << "\nSeparation method " << dimensions[i] << " is not a valid parameter, skipping... \n";
                     break;
                 }
-                ++pt_subsets;
             }
         }
         // finishedBins.resize(finishedBins.size()); //ßßß why does this result in an error?
@@ -298,7 +311,6 @@ namespace q
 
     void Bin::subsetMZ(std::deque<Bin> *bincontainer, const std::vector<double> &OS, int binStartInOS, int binEndInOS) // bincontainer is binDeque of BinContainer // OS cannot be solved with pointers since index has to be transferred to frature list
     {
-        ++pt_subsetcount;
         assert(binStartInOS >= 0);
         assert(binEndInOS >= 0);
         const int binsizeInOS = binEndInOS - binStartInOS + 1; // +1 to avoid length zero
@@ -321,23 +333,25 @@ namespace q
             }
             return;
         }
+        std::pair<double, bool> control_singleSplit;
 
-        auto pmax = std::max_element(OS.begin() + binStartInOS, OS.begin() + binEndInOS); // @TODO check if correct
+        auto pmax = std::max_element(OS.begin() + binStartInOS, OS.begin() + binEndInOS); // @todo check if correct
 
         double vcrit = 3.05037165842070 * pow(log(binsizeInOS), (-0.4771864667153)) * (cumError[binEndInOS] - cumError[binStartInOS]) / (binsizeInOS - 1); // critical value for alpha = 0.01. ßßß add functionality for custom alpha?
         double max = *pmax;
+        control_vcritMZ.push_back(vcrit);
+        control_maxMZ.push_back(max);
+
         if (max < vcrit) // all values in range are part of one mz bin
         {
-            // make bin
-            // std::cout << binStartInOS << "," << binEndInOS << "," << subsetcount << "\n"; // not all that useful, since knowledge of position in original order space is always lost
-            pt_subsetcount = 0;
+            control_splitMZ.push_back(false);
             const Bin output(pointsInBin.begin() + binStartInOS, pointsInBin.begin() + binEndInOS + 1); // binEndInOS+1 since the iterator has to point behind the last element to put into the vector
-            // append Bin to bin container
             bincontainer->push_back(output);
             return;
         }
         else
         {
+            control_splitMZ.push_back(true);
             int cutpos = std::distance(OS.begin() + binStartInOS, pmax);
             subsetMZ(bincontainer, OS, binStartInOS, binStartInOS + cutpos);
             subsetMZ(bincontainer, OS, binStartInOS + cutpos + 1, binEndInOS);
@@ -383,7 +397,6 @@ namespace q
             bincontainer->front().pt_mzmax = tmp_pt_mzmax;
             bincontainer->front().pt_scanmin = pointsInBin.front()->scanNo;
             bincontainer->front().pt_scanmax = pointsInBin.back()->scanNo;
-            bincontainer->front().pt_subsetcount = pt_subsets; // ßßß rm
             finishedBins->push_back(bincontainer->front());
         }
         else if (binSize + 1 - lastpos > 5)
@@ -632,10 +645,10 @@ int main()
     // }
     q::BinContainer testcontainer;
     testcontainer.makeFirstBin(&testdata);
-    std::vector<int> dim = {1, 2};    // last element must be the number of scans ßßß implement outside of the switch statement ßßß endless loop if scan terminator is not included
-    testcontainer.subsetBins(dim, 6); // 7 = max dist in scans; add value after 7 for error in ppm
+    std::vector<int> dim = {1, 2};    // last element must be the number of scans ßßß endless loop if scan terminator is not included, check before compilation?
+    testcontainer.subsetBins(dim, 6); // int = max dist in scans; add value after for error in ppm instead of centroid error
     std::cout << "\ncalculating DQSBs...\n";
-    testcontainer.assignDQSB(&testdata, 6); // 7 = max dist in scans
+    testcontainer.assignDQSB(&testdata, 6); // int = max dist in scans
 
     // std::ofstream result("../../qbinning_faultybins.csv");
     // std::streambuf *coutbuf = std::cout.rdbuf(); // save old buf

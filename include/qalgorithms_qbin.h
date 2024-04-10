@@ -40,7 +40,6 @@ namespace q
     private:
         std::vector<double> cumError; // cumulative error in mz
         double pt_MakeDQSB;
-        int pt_subsetcount;
 
     public:
         double pt_mzmin;
