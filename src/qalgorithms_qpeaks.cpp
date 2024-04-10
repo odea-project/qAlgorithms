@@ -184,15 +184,22 @@ namespace q
       }
 
       // peak area filter
-      std::pair<Matrix, double> Jacobian_area = jacobianMatrix_PeakArea(B.col(i), scale);
-      double area_uncertainty = std::sqrt((Jacobian_area.first * C * Jacobian_area.first.T()).sumElements() + (Jacobian_area.first(0, 0) - Jacobian_area.second) * (Jacobian_area.first(0, 0) - Jacobian_area.second) / (2*scale-3) / (2*scale-3)); // uncertainty of the peak area based on the Jacobian matrix and the non-covered peak area
+      std::pair<Matrix, double> Jacobian_area = jacobianMatrix_PeakArea(B.col(i), scale); // first: Jacobian matrix, second: non-covered peak area divided by degrees of freedom
+      double area_uncertainty = std::sqrt((Jacobian_area.first * C * Jacobian_area.first.T()).sumElements() + Jacobian_area.second * Jacobian_area.second); // uncertainty of the peak area based on the Jacobian matrix and the non-covered peak area
       if (Jacobian_area.first(0, 0) / area_uncertainty < tValuesArray[scale * 2 - 4])
       {
+        // @todo: debugging
+        //if peak height is > 200.000, print scale
+        if (height > 200000)
+        {
+          std::cout << " scale: " << scale << " area: " << Jacobian_area.first(0, 0) << " area not cov.: " << Jacobian_area.second << " Bmax: " << std::max(B(2,i),B(3,i)) << std::endl;
+        }
         continue; // statistical insignificance of the peak area
       }
 
       // at this point, the peak is validated
       valid_regressions_tmp.push_back(std::make_pair(i, apex_position + i + scale));
+
     } // end for loop
 
     // early return if no or only one valid peak
@@ -385,17 +392,7 @@ namespace q
       }
       peaks.back()->xFit = xfit;
       peaks.back()->yFit = yfit;
-    }
-
-    // // this is just for debugging: check if x has points between 365.0 and 365.2 print the regressions
-    // if (X[0] <= 365.0 && X[X.size() - 1] >= 365.2 && scanNumber == 0)
-    // {
-    //   for (auto &regression : validRegressions)
-    //   {
-    //       std::cout << "Apex position: " << regression->apex_position << std::endl;
-    //       std::cout << "Scale: " << regression->scale << std::endl;
-    //   }
-    // }
+    } // end for loop
 
     return peaks;
   }
@@ -424,21 +421,32 @@ namespace q
     const double EXP_B13 = std::exp(-B(1, 0) * B1_2_B3 / 2);
     // here we have to check if there is a valley point or not
     const double err_L = (B(2, 0) < 0)
-                             ? std::erf(-B(1, 0) / 2 / SQRTB2) + 1 // ordinary peak
-                             : erfi(B(1, 0) / 2 / SQRTB2);         // peak with valley point
+                             ? std::erf(B(1, 0) / 2 / SQRTB2) + 1 // ordinary peak
+                             : erfi(B(1, 0) / 2 / SQRTB2);         // peak with valley point; 
 
     const double err_R = (B(3, 0) < 0)
-                             ? std::erfc(-B(1, 0) / 2 / SQRTB3) // ordinary peak
-                             : -erfi(B(1, 0) / 2 / SQRTB3);     // peak with valley point
+                             ? std::erf(B(1, 0) / 2 / SQRTB3) + 1 // ordinary peak
+                             : -erfi(B(1, 0) / 2 / SQRTB3);     // peak with valley point ;
 
-    const double err_L_covered = (-B1_2_B2 < -scale) 
-                                     ? erfi(B(1, 0) / 2 / SQRTB2) // peak with valley point beeing at the edge of the data                                             
-                                     : erfi(B(1, 0) / 2 / SQRTB2 + scale * SQRTB2); // ordinary peak
-
-    const double err_R_covered = (-B1_2_B3 > scale)
-                                     ? - erfi(B(1, 0) / 2 / SQRTB3) // peak with valley point beeing at the edge of the data                                           
-                                     : erfi(B(1, 0) / 2 / SQRTB3 + scale * SQRTB3); // ordinary peak
-
+    const double err_L_covered = (B(2,0) < 0)
+      ? // ordinary peak half, take always scale as integration limit; we use erf instead of erfi due to the sqrt of absoulte value
+        std::erf(B(1, 0) / 2 / SQRTB2) - std::erf(B(1, 0) / 2 / SQRTB2 - scale * SQRTB2) 
+      : // valley point, i.e., check position
+        (-B1_2_B2 < -scale) 
+        ? // valley point is outside the window, use scale as limit
+          erfi(B(1, 0) / 2 / SQRTB2) - erfi(B(1, 0) / 2 / SQRTB2 - scale * SQRTB2)
+        : // valley point is inside the window, use valley point as limit
+          erfi(B(1, 0) / 2 / SQRTB2);
+    
+    const double err_R_covered = (B(3,0) < 0)
+      ? // ordinary peak half, take always scale as integration limit; we use erf instead of erfi due to the sqrt of absoulte value
+        -std::erf(B(1, 0) / 2 / SQRTB3) + std::erf(B(1, 0) / 2 / SQRTB3 + scale * SQRTB3) 
+      : // valley point, i.e., check position
+        (-B1_2_B3 > scale) 
+        ? // valley point is outside the window, use scale as limit
+          -erfi(B(1, 0) / 2 / SQRTB3) + erfi(B(1, 0) / 2 / SQRTB3 + scale * SQRTB3)
+        : // valley point is inside the window, use valley point as limit
+          -erfi(B(1, 0) / 2 / SQRTB3);
     // calculate the Jacobian matrix terms
     Matrix J(1, 4);
     J(0, 0) = SQRTPI_2 * ((EXP_B0 * EXP_B12) / SQRTB2 * err_L + (EXP_B0 * EXP_B13) / SQRTB3 * err_R);
@@ -447,16 +455,35 @@ namespace q
     J(0, 3) = -J(0, 0) / 2 / B(3, 0) - B1_2_B3 * J(0, 1);
 
     // calculate the trapezoid under the peak covered by data points
-    const double x_left = (-B1_2_B2 < -scale) ? -B1_2_B2 : -scale;
-    const double x_right = (-B1_2_B3 > scale) ? -B1_2_B3 : scale;
+    const double x_left = (B(2, 0) < 0)
+      ? // ordinary peak half, take always scale as integration limit
+        -scale
+      : // valley point, i.e., check position
+        (-B1_2_B2 < -scale)
+        ? // valley point is outside the window, use scale as limit
+          -scale
+        : // valley point is inside the window, use valley point as limit
+          -B1_2_B2;
+    
+    const double x_right = (B(3, 0) < 0)
+      ? // ordinary peak half, take always scale as integration limit
+        scale
+      : // valley point, i.e., check position
+        (-B1_2_B3 > scale)
+        ? // valley point is outside the window, use scale as limit
+          scale
+        : // valley point is inside the window, use valley point as limit
+          -B1_2_B3;
+
     const double y_left = std::exp(B(0, 0) + B(1, 0) * x_left + B(2, 0) * x_left * x_left);
     const double y_right = std::exp(B(0, 0) + B(1, 0) * x_right + B(3, 0) * x_right * x_right);
-    const double peak_area_covered_trapezoid = (y_left + y_right) * (x_right - x_left) / 2;
+    const double ymin = std::min(y_left, y_right); // @todo: this changes trapzoid to rectangle
+    const double peak_area_covered_trapezoid = (ymin + ymin) * (x_right - x_left) / 2;
 
     // calculate the the peak area covered by data points
-    const double peak_area_covered = SQRTPI_2 * ((EXP_B0 * EXP_B12) / SQRTB2 * err_L_covered + (EXP_B0 * EXP_B13) / SQRTB3 * err_R_covered) - peak_area_covered_trapezoid;
+    const double peak_area_covered = SQRTPI_2 * ((EXP_B0 * EXP_B12) / SQRTB2 * err_L_covered + (EXP_B0 * EXP_B13) / SQRTB3 * err_R_covered) - peak_area_covered_trapezoid*0;
 
-    return std::pair<Matrix, double>(J, peak_area_covered);
+    return std::pair<Matrix, double>(J, (J(0,0) - peak_area_covered));// / (int) (x_right - x_left-3));
   }
 
   void qPeaks::createDesignMatrix(const int scale)
