@@ -22,11 +22,12 @@ namespace q
 {
     // @todo remove test values
     int control_subsetcount = 0;
+    int control_critvalCalcCount;
     std::vector<double> pt_stepsForDQS;
     std::vector<double> pt_scanRelSteps;
     std::vector<Datapoint *> pt_outOfBins;
     std::vector<double> control_vcritMZ; // critval
-    std::vector<double> control_maxMZ;   // mz which
+    std::vector<double> control_maxOS;   // mz which
     std::vector<bool> control_splitMZ;   // critval
 
 #define IGNORE -256 // nonsense value if no real number exists. Must be negative since it is used later when searching for the smallest distance
@@ -134,9 +135,10 @@ namespace q
 
     void BinContainer::subsetBins(std::vector<int> dimensions, const unsigned int maxdist, const double massError = -1)
     {
+        control_subsetcount = 0;
         auto timeStart = std::chrono::high_resolution_clock::now();
         auto timeEnd = std::chrono::high_resolution_clock::now();
-        std::cout << "\nTotal bins: 1";
+        std::cout << "\nOpen Bins: 1 - ";
         // while elements are in the bin deque -> if any bin is not fully subset
         while (!binDeque.empty())
         {
@@ -147,6 +149,10 @@ namespace q
                 case 1:
                 { // brackets needed to prevent error
                     // bin in mz
+                    control_maxOS = {0};
+                    control_vcritMZ = {0};
+                    control_splitMZ = {0}; // 0 = bin was created
+                    control_critvalCalcCount = 0;
                     size_t startpoint = binDeque.size(); // startpoint is the first element of the deque that will not be subset, equivalent to do n times
                     for (size_t i = 0; i < startpoint; i++)
                     { // random access not needed, first element -> make bins -> move element or make bins, then remove first entry ; do n times
@@ -158,25 +164,29 @@ namespace q
                         else
                         {
                             binDeque.front().makeCumError(massError);
-                        } // always after order space, since the features get sorted
+                        }                                                                                                         // always after order space, since the features get sorted
                         binDeque.front().subsetMZ(&binDeque, binDeque.front().activeOS, 0, binDeque.front().activeOS.size() - 1); // takes element from binDeque, starts subsetting, appends bins to binDeque
                         binDeque.pop_front();                                                                                     // remove the element that was processed from binDeque
                     }
                     // output subsetting data @todo remove
+                    ++control_subsetcount;
+                    std::string outname("../../control_cpp_mzsplit");
+                    outname = outname + std::to_string(control_subsetcount);
+                    outname.append(".csv");
                     std::fstream file_out;
-                    file_out.open("../../control_cpp_mzsplit1.csv");
+                    file_out.open(outname, std::ios::out);
                     assert(file_out.is_open());
-                    file_out << "max,vcrit,splitYN\n";
-                    for (size_t i = 0; i < control_maxMZ.size(); i++)
+                    file_out << "maxOS,vcrit,splitYN\n";
+                    for (size_t i = 1; i < control_maxOS.size(); i++)
                     {
-                        file_out << control_maxMZ[i] << "," << control_vcritMZ[i] << "," << control_splitMZ[i] << "\n";
+                        file_out << control_maxOS[i] << "," << control_vcritMZ[i] << "," << control_splitMZ[i] << "\n";
                     }
 
                     timeEnd = std::chrono::high_resolution_clock::now();
-                    std::cout << "\nmz subsetting done\nTotal bins: " << binDeque.size() << " ; time: " << (timeEnd - timeStart).count() << " ns";
+                    std::cout << "subset in mz\nTime: " << (timeEnd - timeStart).count() << " ns\nSubsets performed: " << control_critvalCalcCount
+                              << "\nClosed Bins: " << finishedBins.size() << "\n--\nOpen Bins: " << binDeque.size() << " - ";
                     timeStart = std::chrono::high_resolution_clock::now();
                     break;
-                    std::cout << dimensions[10]; // @todo remove
                 }
 
                 case 2:
@@ -189,8 +199,9 @@ namespace q
                         binDeque.pop_front();
                     }
                     timeEnd = std::chrono::high_resolution_clock::now();
-                    std::cout << "\nscan subsetting done\nClosed bins: " << finishedBins.size() << " ; time: " << (timeEnd - timeStart).count() << " ns"
-                              << "\nTotal bins: " << binDeque.size();
+                    std::cout << "subset in scans\nTime: " << (timeEnd - timeStart).count() << " ns\nSubsets performed: "
+                              << "implementation missing!" //@todo
+                              << "\nClosed Bins: " << finishedBins.size() << "\n--\nOpen Bins: " << binDeque.size() << " - ";
                     timeStart = std::chrono::high_resolution_clock::now();
                     break;
                 }
@@ -201,7 +212,7 @@ namespace q
                 }
             }
         }
-        // finishedBins.resize(finishedBins.size()); //ßßß why does this result in an error?
+        std::cout << "completed subsetting\n";
     }
 
     void BinContainer::assignDQSB(const RawData *rawdata, const unsigned int maxdist)
@@ -218,7 +229,7 @@ namespace q
     void BinContainer::printAllBins(std::string path, RawData *rawdata)
     {
         std::fstream file_out;
-        file_out.open(path);
+        file_out.open(path, std::ios::out);
         assert(file_out.is_open());
         // possible symbols
         // char shapes[] = "acGuxnoQzRsTvjIEf"; // random shape when displaying with makie @todo does not work
@@ -241,7 +252,7 @@ namespace q
     void BinContainer::printBinSummary(std::string path)
     {
         std::fstream file_out;
-        file_out.open(path);
+        file_out.open(path, std::ios::out);
         assert(file_out.is_open());
         file_out << "ID,size,mean_mz,mean_scans,mean_DQS\n";
         for (size_t i = 0; i < finishedBins.size(); i++)
@@ -314,6 +325,7 @@ namespace q
         assert(binStartInOS >= 0);
         assert(binEndInOS >= 0);
         const int binsizeInOS = binEndInOS - binStartInOS + 1; // +1 to avoid length zero
+        ++control_critvalCalcCount;
         if (binsizeInOS < 5)
         {
             if (binsizeInOS == 1)
@@ -333,14 +345,12 @@ namespace q
             }
             return;
         }
-        std::pair<double, bool> control_singleSplit;
-
         auto pmax = std::max_element(OS.begin() + binStartInOS, OS.begin() + binEndInOS); // @todo check if correct
 
         double vcrit = 3.05037165842070 * pow(log(binsizeInOS), (-0.4771864667153)) * (cumError[binEndInOS] - cumError[binStartInOS]) / (binsizeInOS - 1); // critical value for alpha = 0.01. ßßß add functionality for custom alpha?
         double max = *pmax;
         control_vcritMZ.push_back(vcrit);
-        control_maxMZ.push_back(max);
+        control_maxOS.push_back(max);
 
         if (max < vcrit) // all values in range are part of one mz bin
         {
@@ -662,7 +672,7 @@ int main()
     testcontainer.printAllBins("../../qbinning_binlist.csv", &testdata);
 
     std::fstream file_out;
-    file_out.open("../../qbinning_notbinned.csv");
+    file_out.open("../../qbinning_notbinned.csv", std::ios::out);
     if (!file_out.is_open())
     {
         throw;
