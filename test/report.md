@@ -222,3 +222,4 @@ with qCentroids for data. Error handling for new subsetting: control that bins a
 calculation (sorted by scans)
 How certain is scan number as a good parameter?
 Add compile-time toggle for creating list of non-binned objects
+Cache optimisation
