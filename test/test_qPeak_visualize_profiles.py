@@ -1,7 +1,7 @@
 import argparse
 import pandas as pd
 import csv
-
+import numpy as np
 import matplotlib.pyplot as plt
 
 def plot_mz_vs_intensity(file1, file2, file3, file4, file5):
@@ -36,33 +36,41 @@ def plot_mz_vs_intensity(file1, file2, file3, file4, file5):
     df1 = df1.groupby('scan').agg({'mz': list, 'int': list}).reset_index()
 
     # group df2 by 'ID' and aggregate 'MZ' and 'Intensity'
+    df2 = df2.sort_values('MZ')
     df2 = df2.groupby('ScanNumber').agg({'MZ': list, 'Intensity': list}).reset_index()
 
     # group df3 by 'SampleID' and aggregate 'position' and 'height'
+    df3['height'] *= -1
     df3 = df3.groupby('sampleID').agg({'position': list, 'height': list}).reset_index()
+    
 
     # Plot the first row of the dataframes
     plt.figure()
 
     # For df1
     row = df1.iloc[0]
-    plt.plot(row['mz'], row['int'], 'o', label='File 1')
+    # plt.plot(row['mz'], row['int'], 'o', label='File 1')
     # plt.title(f"Scan: {row['scan']}")
 
     # For df2
     row = df2.iloc[0]
-    plt.plot(row['MZ'], row['Intensity'], 'x', label='File 2')
+    plt.plot(row['MZ'], row['Intensity'], '-', label='File 2')
     # plt.title(f"ScanNumber: {row['ScanNumber']}")
 
     # For df3
     row = df3.iloc[0]
-    plt.stem(row['position'], row['height'], 'k', markerfmt='ko', linefmt='r-', basefmt='k-', label='File 3')
+    plt.stem(row['position'], row['height'], 'k', markerfmt='', linefmt='r-', basefmt='k-', label='File 3')
 
     # For df4 and df5 which are x and y values
-    for i in range(len(df4)):
-        if df4[i][0] == 0:
-            plt.plot(df4[i][1:], df5[i][1:], 'k--')
-
+    # for i in range(len(df4)):
+    #     if df4[i][0] == 0:
+    #         x = np.array(df4[i][1:])
+    #         y = np.array(df5[i][1:])
+    #         _filt = np.where(x > 0)
+    #         plt.plot(x[_filt], y[_filt], 'k--')
+    plt.axis('off')
+    plt.xlim(0, 1000)
+    plt.tight_layout(pad=1)
     plt.show()
 
 

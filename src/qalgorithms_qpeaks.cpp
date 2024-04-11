@@ -54,7 +54,7 @@ namespace q
                 all_peaks.resize(arg->size());
     // iterate over the map of varDataType datatype objects
     // use parallel for loop to iterate over the dataVec
-// #pragma omp parallel for
+#pragma omp parallel for
                 // for (auto &pair : *arg)
                 for (int i = 0; i < arg->size(); i++)
                  {
@@ -110,7 +110,7 @@ namespace q
     double inverseMatrix_3_3 = (*(inverseMatrices[scale - 2]))(3, 3);
     Matrix &X = *(designMatrices[scale - 2]);
     Matrix Jacobian_height(1, 4);
-    std::vector<std::pair<int, double>> valid_regressions_tmp; // temporary vector to store valid regressions <index, apex_position>
+    std::vector<std::tuple<int, double, double>> valid_regressions_tmp; // temporary vector to store valid regressions <index, apex_position>
 
     // iterate columwise over the coefficients matrix
     for (size_t i = 0; i < B.numCols(); i++)
@@ -188,17 +188,11 @@ namespace q
       double area_uncertainty = std::sqrt((Jacobian_area.first * C * Jacobian_area.first.T()).sumElements() + Jacobian_area.second * Jacobian_area.second); // uncertainty of the peak area based on the Jacobian matrix and the non-covered peak area
       if (Jacobian_area.first(0, 0) / area_uncertainty < tValuesArray[scale * 2 - 4])
       {
-        // @todo: debugging
-        //if peak height is > 200.000, print scale
-        if (height > 200000)
-        {
-          std::cout << " scale: " << scale << " area: " << Jacobian_area.first(0, 0) << " area not cov.: " << Jacobian_area.second << " Bmax: " << std::max(B(2,i),B(3,i)) << std::endl;
-        }
-        continue; // statistical insignificance of the peak area
+        // continue; // statistical insignificance of the peak area
       }
 
       // at this point, the peak is validated
-      valid_regressions_tmp.push_back(std::make_pair(i, apex_position + i + scale));
+      valid_regressions_tmp.push_back(std::make_tuple(i, apex_position + i + scale,Jacobian_area.first(0, 0) / area_uncertainty));
 
     } // end for loop
 
@@ -209,7 +203,7 @@ namespace q
       {
         return; // no valid peaks
       }
-      validRegressions.push_back(std::make_unique<validRegression>(valid_regressions_tmp[0].first, scale, valid_regressions_tmp[0].second, 0, B.col(valid_regressions_tmp[0].first)));
+      validRegressions.push_back(std::make_unique<validRegression>(std::get<0>(valid_regressions_tmp[0]), scale, std::get<1>(valid_regressions_tmp[0]), 0, B.col(std::get<0>(valid_regressions_tmp[0]))));
       return; // not enough peaks to form a group
     }
 
@@ -221,28 +215,28 @@ namespace q
     // iterate over the temporary vector of valid regressions
     while (it_next != valid_regressions_tmp.end())
     {
-      if (std::abs(it->second - it_next->second) > 2 * scale + 1) // difference between two peaks is larger than the window size (2*scale+1)
+      if (std::abs(std::get<1>(*it) - std::get<1>(*it_next)) > 2 * scale + 1) // difference between two peaks is larger than the window size (2*scale+1)
       { // create a new group
         if (groups.empty())
         {
-          groups.push_back(std::vector<int>{it->first});
-          groups.push_back(std::vector<int>{it_next->first});
+          groups.push_back(std::vector<int>{std::get<0>(*it)});
+          groups.push_back(std::vector<int>{std::get<0>(*it_next)});
         }
         else
         {
-          groups.push_back(std::vector<int>{it_next->first});
+          groups.push_back(std::vector<int>{std::get<0>(*it_next)});
         }
       }
       else
       { // add to the current group
         if (groups.empty())
         {
-          groups.push_back(std::vector<int>{it->first});
-          groups.back().push_back(it_next->first);
+          groups.push_back(std::vector<int>{std::get<0>(*it)});
+          groups.back().push_back(std::get<0>(*it_next));
         }
         else
         {
-          groups.back().push_back(it_next->first);
+          groups.back().push_back(std::get<0>(*it_next));
         }
       }
       ++it_next;
@@ -326,7 +320,7 @@ namespace q
         (*it)->mse = calcMse(((*designMatrices[(*it)->scale - 2]) * (*it)->B).exp(), (Ylog.subMatrix((*it)->index, (*it)->index + 2 * (*it)->scale + 1, 0, 1)).exp());
       }
 
-      if ((*it)->mse < mean_mse)
+      if ((*it)->mse < mean_mse || grpSize == 1)
       {
         // Set isValid to false for the candidates
         for (auto it2 = validRegressions.begin(); (*it2)->scale < (*it)->scale; ++it2)
@@ -369,12 +363,14 @@ namespace q
       : std::exp(regression->B(0, 0) - regression->B(1, 0) * regression->B(1,0) / 4 / regression->B(2, 0))));
 
       // debugging
-      // get scale
-      int scale = regression->scale;
-      // get the index of the regression
-      int index = regression->index;
       // get the coefficients matrix
       Matrix B = regression->B;
+      
+      // get the index of the regression
+      int index = regression->index;
+      // get scale
+      int scale = regression->scale;
+
       // design matrix
       Matrix Xdesign = *(designMatrices[scale - 2]);
       // calculate yfit
@@ -440,7 +436,7 @@ namespace q
     
     const double err_R_covered = (B(3,0) < 0)
       ? // ordinary peak half, take always scale as integration limit; we use erf instead of erfi due to the sqrt of absoulte value
-        -std::erf(B(1, 0) / 2 / SQRTB3) + std::erf(B(1, 0) / 2 / SQRTB3 + scale * SQRTB3) 
+        std::erf(B(1, 0) / 2 / SQRTB3) - std::erf(B(1, 0) / 2 / SQRTB3 + scale * SQRTB3) 
       : // valley point, i.e., check position
         (-B1_2_B3 > scale) 
         ? // valley point is outside the window, use scale as limit
@@ -478,12 +474,12 @@ namespace q
     const double y_left = std::exp(B(0, 0) + B(1, 0) * x_left + B(2, 0) * x_left * x_left);
     const double y_right = std::exp(B(0, 0) + B(1, 0) * x_right + B(3, 0) * x_right * x_right);
     const double ymin = std::min(y_left, y_right); // @todo: this changes trapzoid to rectangle
-    const double peak_area_covered_trapezoid = (ymin + ymin) * (x_right - x_left) / 2;
+    const double peak_area_covered_trapezoid = (y_right + y_left) * (x_right - x_left) / 2;
 
     // calculate the the peak area covered by data points
-    const double peak_area_covered = SQRTPI_2 * ((EXP_B0 * EXP_B12) / SQRTB2 * err_L_covered + (EXP_B0 * EXP_B13) / SQRTB3 * err_R_covered) - peak_area_covered_trapezoid*0;
-
-    return std::pair<Matrix, double>(J, (J(0,0) - peak_area_covered));// / (int) (x_right - x_left-3));
+    const double peak_area_covered = SQRTPI_2 * ((EXP_B0 * EXP_B12) / SQRTB2 * err_L_covered + (EXP_B0 * EXP_B13) / SQRTB3 * err_R_covered) - peak_area_covered_trapezoid;
+    
+    return std::pair<Matrix, double>(J, (J(0,0) - peak_area_covered) / (int) (x_right - x_left-3));
   }
 
   void qPeaks::createDesignMatrix(const int scale)
