@@ -331,9 +331,10 @@ namespace q
         {
             for (int i = 0; i < binsizeInOS; i++)
             {
-                if (control_outOfBins.size() == 348347)
+                if (control_outOfBins.size() == 348399)
                 {
-                    std::cout << " ";
+                    std::cout << std::setprecision(15) << q::control_outOfBins[348349]->mz << "," << q::control_outOfBins[348349]->scanNo << ",-1,"
+                              << q::control_outOfBins[348349]->control_binID << "," << q::control_outOfBins[348349]->control_DQSbin << "\n";
                 }
 
                 Datapoint *F = *(pointsInBin.begin() + binStartInOS + i);
@@ -375,34 +376,31 @@ namespace q
                   { return lhs->scanNo < rhs->scanNo; });
         std::vector<Datapoint *>::iterator newstart = pointsInBin.begin();
         int lastpos = 0;
-        for (size_t i = 1; i < binSize; i++)
+        for (size_t i = 0; i < binSize - 1; i++) // -1 since difference to next data point is checked @todo rework to start at i = 0
         {
-            if (pointsInBin[i]->scanNo - pointsInBin[i - 1]->scanNo > maxdist) // bin needs to be split
+            if (pointsInBin[i - 1]->scanNo - pointsInBin[i]->scanNo > maxdist) // bin needs to be split
             {
                 // less than five features in bin
-                if (i - lastpos - 1 < 5)
+                if (i - lastpos + 1 < 5) // +1 since i starts at 0
                 {
-                    for (int j = 0; j < i - lastpos - 1; j++)
+                    for (size_t j = 0; j < i - lastpos - 1; j++)
                     {
-                        if (control_outOfBins.size() == 348347)
+                        if (control_outOfBins.size() == 348399)
                         {
                             std::cout << " ";
                         }
                         Datapoint *F = *(pointsInBin.begin() + i - lastpos - 1 + j);
                         control_outOfBins.push_back(F);
                     }
-
-                    newstart = pointsInBin.begin() + i; // new start is one behind current i
                 }
                 else
                 {
-                    // no bins of size 5 are ever produced when splitting by scans - ßßß try reduced maxdist
-                    // viable bin, stable in scan dimension
-                    Bin output(newstart, pointsInBin.begin() + i - 1);
+                    // viable bin, stable in scan dimension @todo control correct results
+                    Bin output(newstart, pointsInBin.begin() + i);
                     bincontainer->push_back(output);
-                    newstart = pointsInBin.begin() + i;
                 }
-                lastpos = i; // sets previ to the position one i ahead, since current value is i-1
+                lastpos = i + 1;                        // sets previous i to the position one i ahead, since
+                newstart = pointsInBin.begin() + i + 1; // for the next split this is the first element
             }
         }
         // check for open bin at the end
@@ -414,7 +412,7 @@ namespace q
             bincontainer->front().pt_scanmax = pointsInBin.back()->scanNo;
             finishedBins->push_back(bincontainer->front());
         }
-        else if (binSize + 1 - lastpos > 5)
+        else if (binSize - lastpos > 5) // binsize starts at 1
         {
             // viable bin, stable in scan dimension
             Bin output(newstart, pointsInBin.end());
@@ -422,13 +420,15 @@ namespace q
         }
         else
         {
-            for (int j = 0; j < binSize + 1 - lastpos; j--)
+            for (size_t j = 0; j < binSize + 1 - lastpos; j--)
             {
-                if (control_outOfBins.size() == 348347)
+                if (control_outOfBins.size() == 348399)
                 {
-                    std::cout << " ";
+                    std::cout << "";
+                    // std::setprecision(15) << q::control_outOfBins[348349]->mz << "," << q::control_outOfBins[348349]->scanNo << ",-1,"
+                    //   << q::control_outOfBins[348349]->control_binID << "," << q::control_outOfBins[348349]->control_DQSbin << "\n";
                 }
-                Datapoint *F = *(pointsInBin.end() + -j);
+                Datapoint *F = *(pointsInBin.end() - j - 1);
                 control_outOfBins.push_back(F);
             }
         }
@@ -689,7 +689,7 @@ int main()
     file_out.open("../../qbinning_notbinned.csv", std::ios::out);
     if (!file_out.is_open())
     {
-        std::cout << "could not openfile\n";
+        std::cout << "could not open file\n";
     }
 
     file_out << "mz,scan,ID,control_ID,control_DQSB\n";

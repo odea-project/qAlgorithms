@@ -381,8 +381,8 @@ qBinning <- function(path,minBinsize){
 
 
 #ßßß does not return not-binned features
-EICs <- qBinning(path = "/Users/unisys/Documents/Studium/Analytik-Praktikum/rawdata/qCentroid_Warburg_pos_171123_01_Zu_01.csv",minBinsize = 5)
-write.csv(EICs, file = "control_bins.csv", row.names = FALSE)
+EICs <- qBinning(path = "../../rawdata/qCentroid_Warburg_pos_171123_01_Zu_01.csv",minBinsize = 5)
+write.csv(EICs, file = "../../rawdata/control_bins.csv", row.names = FALSE)
 print("done")
 
 ```
