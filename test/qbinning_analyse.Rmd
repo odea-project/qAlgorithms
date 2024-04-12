@@ -31,6 +31,11 @@ mean(qbins$DQS)
 mean(qbins$DQS[which(qbins$control_ID == -1)])
 ```
 
+```{r FP-FN comparison}
+
+```
+
+
 ```{r steps per bin}
 getwd()
 qbins <- read.csv("../../qBinning_binposition.csv")

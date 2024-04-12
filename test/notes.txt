@@ -6,13 +6,8 @@ Config-Datei
 
 https://www.agner.org/optimize/optimizing_cpp.pdf
 
-doubles -> floats
-
 prüfen, wie das Programm skaliert -> subdatensätze
 reduce nutzen?
-
-Mehrere Datenstrukturen sind nicht-exklusiv 
-Die Featureliste eines Bins ist bereits eine andere Datenstruktur als die Featureliste, die anfangs erstellt wurde
 
 Auf alle Bins sind die einzelnen mz eher nebensächlich - jeder Bin wird primär über eine Masse und den Bereich der Scans, den er abdeckt, definiert
 
@@ -23,17 +18,9 @@ time(o) - now
 
 gcc -Wall -Werror .\src\qalgorithms_qbin.cpp  
 
-first vector: check first feature in scan 1925
-
-structs für minMaxOuter (nicht in header)
-
-Header verallgemeinern
-
 Methode: I/O, minimalbeispiel (Reihenfolge, ~10E array), paper verlinken (Seitenzahl),
 
 Gerrit soll code aufräumen -> Namen, Funktionen trennen, Kommentare selber schreiben, redundanten Müll entfernen, echte pointer statt &, eckige Klammern für operator overload (matrixcode durch besse Bibliothek ersetzen, da jede Operation die gesamte Matrix kopiert @todo kontrollieren), wenn es getter und setter gibt sollte die variable public sein
-
-Erstelle Output-Datei, wenn sie nicht existiert
 
 mögliche Anwendung für std::variant?
 
@@ -47,3 +34,5 @@ Beide Programme mit weniger genauigkeit in vcrit laufen lassen
 double-Ungenauigkeit eröhen
 
 Überprüfe, ob critvals in R gleiche Ergebnisse liefern und gleich angenommen werden (nur 1. Subsetting)
+
+data points in centroids umbenennen?
