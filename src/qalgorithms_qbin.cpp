@@ -25,10 +25,10 @@ namespace q
     int control_critvalCalcCount;
     std::vector<double> pt_stepsForDQS;
     std::vector<double> pt_scanRelSteps;
-    std::vector<Datapoint *> pt_outOfBins;
+    std::vector<Datapoint *> control_outOfBins;
     std::vector<double> control_vcritMZ; // critval
     std::vector<double> control_maxOS;   // mz which
-    std::vector<bool> control_splitMZ;   // critval
+    std::vector<int> control_splitMZ;    // critval
 
 #define IGNORE -256 // nonsense value if no real number exists. Must be negative since it is used later when searching for the smallest distance
 #define NO_MIN_FOUND -256
@@ -164,7 +164,7 @@ namespace q
                         else
                         {
                             binDeque.front().makeCumError(massError);
-                        }                                                                                                         // always after order space, since the features get sorted
+                        } // always after order space, since the features get sorted
                         binDeque.front().subsetMZ(&binDeque, binDeque.front().activeOS, 0, binDeque.front().activeOS.size() - 1); // takes element from binDeque, starts subsetting, appends bins to binDeque
                         binDeque.pop_front();                                                                                     // remove the element that was processed from binDeque
                     }
@@ -328,20 +328,10 @@ namespace q
         ++control_critvalCalcCount;
         if (binsizeInOS < 5)
         {
-            if (binsizeInOS == 1)
+            for (int i = 0; i < binsizeInOS; i++)
             {
-                Datapoint *F = *(pointsInBin.begin() + binStartInOS);
-                pt_outOfBins.push_back(F);
-            }
-            else
-            {
-                for (int i = 0; i < binsizeInOS; i++)
-                {
-                    Datapoint *F = *(pointsInBin.begin() + binStartInOS + i);
-                    pt_outOfBins.push_back(F);
-                }
-
-                // pt_outOfBins.insert(pt_outOfBins.end(), pointsInBin.begin() + binStartInOS, pointsInBin.begin() + binEndInOS + 1); // ßßß place discarded features in separate table
+                Datapoint *F = *(pointsInBin.begin() + binStartInOS + i);
+                control_outOfBins.push_back(F);
             }
             return;
         }
@@ -381,12 +371,17 @@ namespace q
         int lastpos = 0;
         for (size_t i = 1; i < binSize; i++)
         {
-            if (pointsInBin[i]->scanNo - pointsInBin[i - 1]->scanNo > maxdist) // bin needs to be split @todo suppress warning
+            if (pointsInBin[i]->scanNo - pointsInBin[i - 1]->scanNo > maxdist) // bin needs to be split 
             {
                 // less than five features in bin
                 if (i - lastpos - 1 < 5)
                 {
-                    pt_outOfBins.insert(pt_outOfBins.end(), newstart, pointsInBin.begin() + i - 1); // ßßß place discarded features in separate table
+                    for (int j = 0; j < i - lastpos - 1 ; j++)
+                    {
+                        Datapoint *F = *(pointsInBin.begin() + i - lastpos - 1 + j);
+                        control_outOfBins.push_back(F);
+                    }
+                    
                     newstart = pointsInBin.begin() + i;                                             // new start is one behind current i
                 }
                 else
@@ -417,7 +412,11 @@ namespace q
         }
         else
         {
-            pt_outOfBins.insert(pt_outOfBins.end(), newstart, pointsInBin.end()); // ßßß place discarded features in separate table
+            for (int j = 0; j < binSize + 1 - lastpos ; j--)
+                    {
+                        Datapoint *F = *(pointsInBin.end() + -j);
+                        control_outOfBins.push_back(F);
+                    }
         }
     }
 
@@ -647,8 +646,8 @@ int main()
     // std::cout << "scan,position\n";
 
     q::RawData testdata;
-    // path to data, mz column, centroid error column, RT column, scan number column, control ID column (optional)
-    testdata.readcsv("../../rawdata/control_bins_full.csv", 0, 1, 2, 3, 4, 5, 6, 7); // ../../rawdata/qCentroid_Warburg_pos_171123_01_Zu_01.csv ../test/test.csv
+    // path to data, mz, centroid error, RT, scan number, intensity, control ID, DQS centroid, control DQS Bin
+    testdata.readcsv("../../rawdata/control_bins.csv", 0, 1, 2, 3, 4, 5, 6, 7); // ../../rawdata/qCentroid_Warburg_pos_171123_01_Zu_01.csv ../test/test.csv
     // for (size_t i = 0; i < testdata.scanBreaks.size(); i++)
     // {
     //     std::cout << i << "," << testdata.scanBreaks[i] << "\n";
@@ -679,11 +678,11 @@ int main()
     }
 
     file_out << "mz,scan,ID,control_ID,control_DQSB\n";
-    q::pt_outOfBins.resize(q::pt_outOfBins.size());
-    for (size_t i = 0; i < q::pt_outOfBins.size(); i++)
+    q::control_outOfBins.resize(q::control_outOfBins.size());
+    for (size_t i = 0; i < q::control_outOfBins.size(); i++)
     {
-        file_out << std::setprecision(15) << q::pt_outOfBins[i]->mz << "," << q::pt_outOfBins[i]->scanNo << ",-1," << q::pt_outOfBins[i]->control_binID
-                 << q::pt_outOfBins[i]->control_DQSbin << "\n";
+        file_out << std::setprecision(15) << q::control_outOfBins[i]->mz << "," << q::control_outOfBins[i]->scanNo << ",-1,"
+                 << q::control_outOfBins[i]->control_binID << "," << q::control_outOfBins[i]->control_DQSbin << "\n";
     }
 
     // testcontainer.printBinSummary("../../qbinning_binsummary.csv");
