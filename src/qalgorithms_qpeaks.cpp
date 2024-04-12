@@ -33,7 +33,7 @@ namespace q
                  }
                 int maxScale = (int) (maxDataPoints-1)/2;
                 */
-                  this->global_maxScale = 10;
+                  this->global_maxScale = 20;
                   // iterate over the range of the maxScale to create Matrices for each scale
                   for (int scale = 2; scale <= this->global_maxScale; scale++)
                   {
@@ -52,9 +52,13 @@ namespace q
     std::visit([&all_peaks, this](auto &&arg)
                {
                 all_peaks.resize(arg->size());
+                int left =0;
+                int right =0;
+                double left_value = 0;
+                double right_value = 0;
     // iterate over the map of varDataType datatype objects
     // use parallel for loop to iterate over the dataVec
-#pragma omp parallel for
+// #pragma omp parallel for
                 // for (auto &pair : *arg)
                 for (int i = 0; i < arg->size(); i++)
                  {
@@ -75,8 +79,16 @@ namespace q
                   }
                   std::vector<std::unique_ptr<validRegression>> validRegressions; // index in B, scale, apex_position and MSE
                   runningRegression(Y, validRegressions);
+                  for (auto &validRegression : validRegressions)
+                  {
+                    (validRegression->B(1,0)< 0) ? left++ : right++;
+                    (validRegression->B(1,0)< 0) ? left_value += validRegression->B(1,0) : right_value += validRegression->B(1,0);
+                  }
                   all_peaks[i] = createPeaks(validRegressions, Y, X, dataObj.getScanNumber());
                 } // end parallel for loop
+                std::cout << "Left: " << left << " Right: " << right << std::endl;
+                std::cout << "Left Value: " << left_value/left << " Right Value: " << right_value/right << std::endl;
+                std::cout << "TOTAL: " << (left_value + right_value) / (left + right) << std::endl;
                 ; },
                dataVec); // end visit
     return all_peaks;
