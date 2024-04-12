@@ -206,6 +206,18 @@ other bins,
 Amount of correct bins with differences in DQS?
 
 ### Result Comparison with R Script
+how many operations are identical, when does the largest difference occur?
+
+Some differences between the two implementations exist - of ~ 2.4 M data points (centroids?),
+~ 50 k were binned only in the c++ version and ~ 20 k only in the R version. @todo mathematical model of this problem
+Many of these incongruencies result from one point being binned (or not binned) and this
+point being a connecting element in either dimension to another group of points, which 
+either form a bin of their own or are not binned. No clear trend for one approach
+being more or less conservative than the other was observed. One possible reason for this 
+is rounding errors in floating-point operations.
+@todo control if first subset (after mz) is identical - only time the process should result in same binned
+results; Differences in subsetting by scans should not exist since only the absolute
+distance is enforced
 
 ### Effect of Different Error Thresholds (ppm)
 

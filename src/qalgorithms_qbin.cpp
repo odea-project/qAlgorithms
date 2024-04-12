@@ -38,7 +38,7 @@ namespace q
     RawData::RawData() {}
     q::RawData::~RawData() {} // potential memory leak
     bool RawData::readcsv(std::string user_file, int d_mz, int d_mzError, int d_RT, int d_scanNo, int d_intensity, int d_control_binID, int d_control_DQScentroid, int d_control_DQSbin)
-    { // @todo stop segfaults when reading empty lines
+    { // @todo stop segfaults when reading empty lines; use buffers for speedup
         int now = time(0);
         lengthAllFeatures = 0;
         allDatapoints.push_back(std::vector<Datapoint>(0)); // first element empty since scans are 1-indexed
@@ -210,6 +210,7 @@ namespace q
                     std::cout << "\nSeparation method " << dimensions[i] << " is not a valid parameter, skipping... \n";
                     break;
                 }
+                // @todo move progress output here, including timer
             }
         }
         std::cout << "completed subsetting\n";
@@ -471,7 +472,7 @@ namespace q
 
             // check begin of bin for possible segfault
             // double firstmz = rawdata->allDatapoints[i][1].mz;
-            if (rawdata->allDatapoints[i][0].mz >= minInnerMZ)
+            if (rawdata->allDatapoints[i][0].mz >= minInnerMZ) // @todo segfault at i = 2534 if .readcsv() is called twice
             {
                 minMaxOutPerScan.push_back(NO_MIN_FOUND);
                 minFound = true;
@@ -649,10 +650,7 @@ int main()
     q::RawData testdata;
     // path to data, mz column, centroid error column, RT column, scan number column, control ID column (optional)
     testdata.readcsv("../../rawdata/control_bins_full.csv", 0, 1, 2, 3, 4, 5, 6, 7); // ../../rawdata/qCentroid_Warburg_pos_171123_01_Zu_01.csv ../test/test.csv
-    // for (size_t i = 0; i < testdata.scanBreaks.size(); i++)
-    // {
-    //     std::cout << i << "," << testdata.scanBreaks[i] << "\n";
-    // }
+
     q::BinContainer testcontainer;
     testcontainer.makeFirstBin(&testdata);
     std::vector<int> dim = {1, 2};    // last element must be the number of scans ßßß endless loop if scan terminator is not included, check before compilation?
