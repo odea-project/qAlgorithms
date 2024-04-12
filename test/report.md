@@ -207,7 +207,8 @@ Amount of correct bins with differences in DQS?
 
 ### Result Comparison with R Script
 Some differences exist between the results of the R script and the implementation
-in C++. 
+in C++. In the R script, 55910 bins were found while the C++ version results
+in 50913 bins. not binned: 799332 for C++
 Calculation process:
 1.C++: Calculate the order space in one vector, Add all errors together and save as a different vector
 1.R: Create order space, then divide every element of the vector by the centroid error of that data point
@@ -219,7 +220,11 @@ Calculation process:
 calculating the cumulative error first is likely to be the main cause for inaccuracies, since 
 every addition occurs an additional error @todo try changing cumerror function and compare results
 If cumerror is the culprit, it is likely to be more extreme in bins that are higher in mz
-and later in the order of subsetting steps
+and later in the order of subsetting steps. 
+https://ece.uwaterloo.ca/~dwharder/NumericalAnalysis/02Numerics/Double/paper.pdf p. 185
+Accuracy with doubles is limited to 16 digits, round as first operation when creating 
+a data point should happen automatically
+
 
 ### Effect of Different Error Thresholds (ppm)
 
