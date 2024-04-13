@@ -2,11 +2,11 @@ using GLMakie
 using CSV
 using DataFrames
 using ColorSchemes
-using CairoMakie
+# using CairoMakie
 
 
-tdd = CSV.read("C:/Users/unisys/Documents/Studium/Analytik-Praktikum/qbinning_binlist.csv", DataFrame) # C:/Users/unisys/Documents/ ; G:/_
-notbinned = CSV.read("C:/Users/unisys/Documents/Studium/Analytik-Praktikum/qbinning_notbinned.csv", DataFrame)
+tdd = CSV.read("qbinning_binlist.csv", DataFrame) # C:/Users/unisys/Documents/ ; G:/_
+notbinned = CSV.read("qbinning_notbinned.csv", DataFrame)
 # control = CSV.read("../rawdata/df_qBinning_test.csv", DataFrame)
 # wrongbins = CSV.read("C:/Users/unisys/Documents/Studium/Analytik-Praktikum/qBinning_faultybins.csv", DataFrame)
 
@@ -24,9 +24,11 @@ notbinned_both = notbinned_cpp - FNs_cpp
 binned_R = binned_both + FNs_cpp
 notbinned_R = notbinned_both + FPs_cpp
 size_total = binned_cpp + notbinned_cpp
+size_missing = 3568035 - size_total - 1 # -1 due to header, 3568035 are line numbers
 
-ratios = [binned_both, FNs_cpp, notbinned_both, FPs_cpp]
-colors = [:green, :blue, :orange, :red]
+
+ratios = [binned_both, FNs_cpp, notbinned_both, FPs_cpp, size_missing]
+colors = [:green, :blue, :orange, :red, :black]
 
 f, ax, plt = pie(ratios,
                  color = colors,
