@@ -174,12 +174,13 @@ namespace q
                     outname = outname + std::to_string(control_subsetcount);
                     outname.append(".csv");
                     std::fstream file_out;
+                    std::stringstream output;
                     file_out.open(outname, std::ios::out);
                     assert(file_out.is_open());
-                    file_out << "maxOS,vcrit,splitYN\n";
+                    output << "maxOS,vcrit,splitYN\n";
                     for (size_t i = 1; i < control_maxOS.size(); i++)
                     {
-                        file_out << control_maxOS[i] << "," << control_vcritMZ[i] << "," << control_splitMZ[i] << "\n";
+                        output << control_maxOS[i] << "," << control_vcritMZ[i] << "," << control_splitMZ[i] << "\n";
                     }
 
                     timeEnd = std::chrono::high_resolution_clock::now();
@@ -230,36 +231,41 @@ namespace q
     void BinContainer::printAllBins(std::string path, RawData *rawdata)
     {
         std::fstream file_out;
+        std::stringstream output;
         file_out.open(path, std::ios::out);
         assert(file_out.is_open());
         // possible symbols
         // char shapes[] = "acGuxnoQzRsTvjIEf"; // random shape when displaying with makie @todo does not work
 
-        file_out << "mz,scan,ID,DQS,control_ID,control_DQS,control_DQSB\n";
+        output << "mz,scan,ID,DQS,control_ID,control_DQS,control_DQSB\n";
 
         for (size_t i = 0; i < finishedBins.size(); i++)
         {
             // char x = shapes[rand() % 17];
-            // int colour = i % 9; // 10 colours total
+            // int colour = i % 9; // 10 colours total @todo printf
             std::vector<Datapoint *> binnedPoints = finishedBins[i].pointsInBin;
             for (size_t j = 0; j < binnedPoints.size(); j++)
             {
-                file_out << std::setprecision(15) << binnedPoints[j]->mz << "," << binnedPoints[j]->scanNo << "," << i + 1 << "," << finishedBins[i].DQSB[j]
-                         << "," << binnedPoints[j]->control_binID << "," << binnedPoints[j]->control_DQScentroid << "," << binnedPoints[j]->control_DQSbin << "\n";
+                output << std::setprecision(15) << binnedPoints[j]->mz << "," << binnedPoints[j]->scanNo << "," << i + 1 << "," << finishedBins[i].DQSB[j]
+                       << "," << binnedPoints[j]->control_binID << "," << binnedPoints[j]->control_DQScentroid << "," << binnedPoints[j]->control_DQSbin << "\n";
             }
+            // fprintf(path, "a");
         }
+        file_out << output.str();
     }
 
     void BinContainer::printBinSummary(std::string path)
     {
         std::fstream file_out;
+        std::stringstream output;
         file_out.open(path, std::ios::out);
         assert(file_out.is_open());
-        file_out << "ID,size,mean_mz,mean_scans,mean_DQS\n";
+        output << "ID,size,mean_mz,mean_scans,mean_DQS\n";
         for (size_t i = 0; i < finishedBins.size(); i++)
         {
-            file_out << i << "," << finishedBins[i].summariseBin() << "\n";
+            output << i << "," << finishedBins[i].summariseBin() << "\n";
         }
+        file_out << output.str();
     }
 
     void BinContainer::controlAllBins()
@@ -327,16 +333,14 @@ namespace q
         assert(binEndInOS >= 0);
         const int binsizeInOS = binEndInOS - binStartInOS + 1; // +1 to avoid length zero
         ++control_critvalCalcCount;
+        if (OS.size() < 20)
+        {
+            std::cout << "";
+        }
         if (binsizeInOS < 5)
         {
             for (int i = 0; i < binsizeInOS; i++)
             {
-                if (control_outOfBins.size() == 348399)
-                {
-                    std::cout << std::setprecision(15) << q::control_outOfBins[348349]->mz << "," << q::control_outOfBins[348349]->scanNo << ",-1,"
-                              << q::control_outOfBins[348349]->control_binID << "," << q::control_outOfBins[348349]->control_DQSbin << "\n";
-                }
-
                 Datapoint *F = *(pointsInBin.begin() + binStartInOS + i);
                 control_outOfBins.push_back(F);
             }
@@ -376,27 +380,28 @@ namespace q
                   { return lhs->scanNo < rhs->scanNo; });
         std::vector<Datapoint *>::iterator newstart = pointsInBin.begin();
         int lastpos = 0;
+        if (binSize < 20)
+        {
+            std::cout << "";
+        }
+
         for (size_t i = 0; i < binSize - 1; i++) // -1 since difference to next data point is checked @todo rework to start at i = 0
         {
-            if (pointsInBin[i - 1]->scanNo - pointsInBin[i]->scanNo > maxdist) // bin needs to be split
+            if (pointsInBin[i + 1]->scanNo - pointsInBin[i]->scanNo > maxdist) // bin needs to be split
             {
                 // less than five features in bin
                 if (i - lastpos + 1 < 5) // +1 since i starts at 0
                 {
-                    for (size_t j = 0; j < i - lastpos - 1; j++)
+                    for (size_t j = lastpos; j <= i; j++) // @todo checked for correctness
                     {
-                        if (control_outOfBins.size() == 348399)
-                        {
-                            std::cout << " ";
-                        }
-                        Datapoint *F = *(pointsInBin.begin() + i - lastpos - 1 + j);
+                        Datapoint *F = *(pointsInBin.begin() + j);
                         control_outOfBins.push_back(F);
                     }
                 }
                 else
                 {
-                    // viable bin, stable in scan dimension @todo control correct results
-                    Bin output(newstart, pointsInBin.begin() + i);
+                    // viable bin, stable in scan dimension @todo fixed error of last element being omitted
+                    Bin output(newstart, pointsInBin.begin() + i + 1); // +1 since otherwise last element of the correct range is not included
                     bincontainer->push_back(output);
                 }
                 lastpos = i + 1;                        // sets previous i to the position one i ahead, since
@@ -414,21 +419,15 @@ namespace q
         }
         else if (binSize - lastpos > 5) // binsize starts at 1
         {
-            // viable bin, stable in scan dimension
+            // viable bin, stable in scan dimension @todo checked for correctness
             Bin output(newstart, pointsInBin.end());
             bincontainer->push_back(output);
         }
         else
         {
-            for (size_t j = 0; j < binSize + 1 - lastpos; j--)
+            for (size_t j = lastpos; j < pointsInBin.size(); j++) // @todo checked for correctness
             {
-                if (control_outOfBins.size() == 348399)
-                {
-                    std::cout << "";
-                    // std::setprecision(15) << q::control_outOfBins[348349]->mz << "," << q::control_outOfBins[348349]->scanNo << ",-1,"
-                    //   << q::control_outOfBins[348349]->control_binID << "," << q::control_outOfBins[348349]->control_DQSbin << "\n";
-                }
-                Datapoint *F = *(pointsInBin.end() - j - 1);
+                Datapoint *F = *(pointsInBin.begin() + j);
                 control_outOfBins.push_back(F);
             }
         }
@@ -453,7 +452,6 @@ namespace q
             {
                 minMaxOutPerScan.push_back(IGNORE);
             }
-
             scanRangeStart = 1;
         }
         else if (scanRangeEnd > rawdata->allDatapoints.size())
@@ -686,19 +684,20 @@ int main()
     std::cout << "printed all bins\n";
 
     std::fstream file_out;
+    std::stringstream output;
     file_out.open("../../qbinning_notbinned.csv", std::ios::out);
     if (!file_out.is_open())
     {
         std::cout << "could not open file\n";
     }
 
-    file_out << "mz,scan,ID,control_ID,control_DQSB\n";
+    output << "mz,scan,ID,control_ID,control_DQSB\n";
     for (size_t i = 0; i < q::control_outOfBins.size(); i++) // segfault at 348348
     {
-        file_out << std::setprecision(15) << q::control_outOfBins[i]->mz << "," << q::control_outOfBins[i]->scanNo << ",-1,"
-                 << q::control_outOfBins[i]->control_binID << "," << q::control_outOfBins[i]->control_DQSbin << "\n";
+        output << std::setprecision(15) << q::control_outOfBins[i]->mz << "," << q::control_outOfBins[i]->scanNo << ",-1,"
+               << q::control_outOfBins[i]->control_binID << "," << q::control_outOfBins[i]->control_DQSbin << "\n";
     }
-
+    file_out << output.str();
     // testcontainer.printBinSummary("../../qbinning_binsummary.csv");
 
     std::cout << "\n\nDone!\n\n";
