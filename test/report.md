@@ -82,6 +82,7 @@ Every Bin stores all data points which were determined to belong to the same EIC
 methods are called on the bin without requiring knowledge of data points outside of the bin.
 The main difference between Bins and EICs is that a Bin only operates with pointers to data
 points in RawData while the EIC can be used independently of the RawData it was generated from.
+Creating a bin requires all of its members to be aligned sequentially in an existing array.
 
 <b> The BinContainer object: </b>
 The BinContainer supplies wrapper functions to access all bins. The access for subsetting is 
@@ -255,3 +256,6 @@ How certain is scan number as a good parameter?
 Add compile-time toggle for creating list of non-binned objects
 Cache optimisation
 Round to most accurate number that fits into a double
+Values in OS, mzError and critval are very small, same with distances for DQSBs. Quantify effect of 
+floating point inaccuracies and implement a mitigation if possible
+create a template for including a new subsetting method
