@@ -50,7 +50,7 @@ namespace q
         std::vector<double> activeOS; // Order Space
         std::vector<double> DQSB;
 
-        /// @brief generate a bin that is a subset of an existing bin
+        /// @brief generate a bin that is a subset of an existing bin using two iterators in one existing bin
         /// @param startBin left border of the new bin
         /// @param endBin right border of the new bin
         Bin(const std::vector<Datapoint *>::iterator &startBin, const std::vector<Datapoint *>::iterator &endBin);
@@ -81,7 +81,7 @@ namespace q
         /// @param OS the order space generated for the bin using makeOS()
         /// @param startBin index relating to the order space at which the bin starts
         /// @param endBin index relating to the order space at which the bin ends
-        void subsetMZ(std::deque<Bin> *bincontainer, const std::vector<double> &OS, int startBin, int endBin);
+        void subsetMZ(std::deque<Bin> *bincontainer, const std::vector<double> &OS, int startBin, int endBin, unsigned int &counter);
 
         /// @brief divide a bin sorted by scans if there are gaps greater than maxdist in it. Bins that cannot be divided are closed.
         /// @details this function sorts all members of a bin by scans and iterates over them. If a gap greater than maxdist exists,
@@ -91,7 +91,7 @@ namespace q
         /// @param bincontainer if the input bin was split, the newly created bins will be added to this
         /// @param finishedBins if the input bin was not split, it will be added to this
         /// @param maxdist the largest gap in scans which a bin can have while still being considered valid
-        void subsetScan(std::deque<Bin> *bincontainer, std::vector<Bin> *finishedBins, const unsigned int &maxdist);
+        void subsetScan(std::deque<Bin> *bincontainer, std::vector<Bin> *finishedBins, const unsigned int &maxdist, unsigned int &counter);
 
         /// @brief generate the data quality score for all data points in a bin
         /// @details for every point in the bin the mean distance in mz to other elements of the bin and the shortest distance to an
@@ -112,6 +112,7 @@ namespace q
         // void readcsv(std::string user_file, std::vector<Datapoint> output, int d_mz, int d_mzError, int d_RT, int d_scanNo); // implemented for featurelist
         std::deque<Bin> binDeque;      // TODO add case for no viable bins
         std::vector<Bin> finishedBins; // only includes bins which cannot be further subdivided, added DQSB
+        unsigned int subsetCount;
 
     public:
         BinContainer();
