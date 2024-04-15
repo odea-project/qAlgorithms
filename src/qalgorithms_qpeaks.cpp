@@ -7,6 +7,7 @@
 
 namespace q
 {
+#pragma region Constructors
   // Constructor
   qPeaks::qPeaks() {}
 
@@ -44,9 +45,14 @@ namespace q
         },
         dataVec);
   }
+#pragma endregion
 
+#pragma region Destructor
   // Destructor
   qPeaks::~qPeaks() {}
+#pragma endregion
+
+#pragma region Methods
 
   std::vector<std::vector<std::unique_ptr<DataType::Peak>>> qPeaks::findPeaks(
       const varDataType &dataVec)
@@ -81,7 +87,6 @@ namespace q
             runningRegression(Y, df, validRegressions);
             all_peaks[i] = createPeaks(validRegressions, Y, X, dataObj.getScanNumber());
           } // end parallel for loop
-
         ; },
         dataVec); // end visit
     return all_peaks;
@@ -143,7 +148,7 @@ namespace q
 
       if (df_sum < 5)
       {
-        continue; // degree of freedom less than 5
+        continue; // degree of freedom less than 5; i.e., less then 5 measured data points
       }
 
       /*
@@ -240,7 +245,7 @@ namespace q
 
       if (Jacobian_area.first(0, 0) / area_uncertainty < tValuesArray[df_sum - 5])
       {
-        continue; // statistical insignificance of the peak area
+        // continue; // statistical insignificance of the peak area
       }
 
       /*
@@ -258,7 +263,7 @@ namespace q
             std::cout << ".";
           }
         }
-        continue; // statistical insignificance of the peak area
+        // continue; // statistical insignificance of the peak area
       }
 
       // at this point, the peak is validated
@@ -653,4 +658,5 @@ namespace q
     std::cout << "Pseudo-Inverse Matrix\n";
     psuedoInverses[scale - 2]->print();
   }
+#pragma endregion
 } // namespace q
