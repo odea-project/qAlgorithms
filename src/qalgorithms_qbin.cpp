@@ -28,11 +28,12 @@ namespace q
     std::vector<Datapoint *> control_outOfBins;
     std::vector<double> control_vcritMZ; // critval
     std::vector<double> control_maxOS;   // mz which
-    std::vector<int> control_splitMZ;    // critval
+    std::vector<int> control_splitYN;    // critval
+    std::vector<double> control_mzPos; // position of cut
 
 #define IGNORE -256 // nonsense value if no real number exists. Must be negative since it is used later when searching for the smallest distance
-#define NO_MIN_FOUND -256
-#define NO_MAX_FOUND -256
+#define NO_MIN_FOUND -INFINITY
+#define NO_MAX_FOUND -INFINITY
 
 #pragma region "Rawdata"
     RawData::RawData() {}
@@ -156,7 +157,7 @@ namespace q
                     subsetType = "MZ";
                     control_maxOS = {0};
                     control_vcritMZ = {0};
-                    control_splitMZ = {0}; // 0 = bin was created
+                    control_splitYN = {0}; // 0 = bin was created
                     control_critvalCalcCount = 0;
 
                     for (size_t j = 0; j < startpoint; j++)
@@ -173,21 +174,22 @@ namespace q
                         binDeque.front().subsetMZ(&binDeque, binDeque.front().activeOS, 0, binDeque.front().activeOS.size() - 1, subsetCount); // takes element from binDeque, starts subsetting, appends bins to binDeque
                         binDeque.pop_front();                                                                                                  // remove the element that was processed from binDeque
                     }
-                    break;
                     // output subsetting data @todo remove
-                    // ++control_subsetcount;
-                    // std::string outname("../../control_cpp_mzsplit");
-                    // outname = outname + std::to_string(control_subsetcount);
-                    // outname.append(".csv");
-                    // std::fstream file_out;
-                    // std::stringstream output;
-                    // file_out.open(outname, std::ios::out);
-                    // assert(file_out.is_open());
-                    // output << "maxOS,vcrit,splitYN\n";
-                    // for (size_t i = 1; i < control_maxOS.size(); i++)
-                    // {
-                    //     output << control_maxOS[i] << "," << control_vcritMZ[i] << "," << control_splitMZ[i] << "\n";
-                    // }
+                    ++control_subsetcount;
+                    std::string outname("../../control_cpp_mzsplit");
+                    outname = outname + std::to_string(control_subsetcount);
+                    outname.append(".csv");
+                    std::fstream file_out;
+                    std::stringstream output;
+                    file_out.open(outname, std::ios::out);
+                    assert(file_out.is_open());
+                    output << "mz,maxOS,vcrit,splitYN\n";
+                    for (size_t i = 1; i < control_maxOS.size(); i++)
+                    {
+                        output << std::setprecision(14) << control_mzPos[i] << "," << control_maxOS[i] << "," << control_vcritMZ[i] << "," << control_splitYN[i] << "\n";
+                    }
+                    file_out << output.str();
+                    break;
                 }
 
                 case scans:
@@ -305,16 +307,16 @@ namespace q
         activeOS.reserve(pointsInBin.size());               // OS = Order Space
         for (size_t i = 0; i + 1 < pointsInBin.size(); i++) // +1 to prevent accessing outside of vector
         {
-            activeOS.push_back(pointsInBin[i + 1]->mz - pointsInBin[i]->mz);
+            activeOS.push_back((pointsInBin[i + 1]->mz - pointsInBin[i]->mz)*1000000);
         }
-        activeOS.push_back(IGNORE); // IGNORE to denote last element in OS
+        activeOS.push_back(NAN); // last element of OS is never checked, dummy value due to recursive function
     }
 
     void Bin::makeCumError()
     {
         cumError.reserve(pointsInBin.size());
         std::transform(pointsInBin.begin(), pointsInBin.end(), back_inserter(cumError), [](Datapoint *F)
-                       { return F->mzError; });                               // transfer error values from feature objects
+                       { return F->mzError * 1000000; });                               // transfer error values from feature objects
         std::partial_sum(cumError.begin(), cumError.end(), cumError.begin()); // cumulative sum
     }
 
@@ -322,7 +324,7 @@ namespace q
     {
         cumError.reserve(pointsInBin.size());
         std::transform(pointsInBin.begin(), pointsInBin.end(), back_inserter(cumError), [ppm](Datapoint *F)
-                       { return F->mz * 0.000001 * ppm; });
+                       { return F->mz * ppm; });
         std::partial_sum(cumError.begin(), cumError.end(), cumError.begin());
     }
 
@@ -341,24 +343,27 @@ namespace q
             }
             return;
         }
-        auto pmax = std::max_element(OS.begin() + binStartInOS, OS.begin() + binEndInOS); // @todo check if correct
+        auto pmax = std::max_element(OS.begin() + binStartInOS, OS.begin() + binEndInOS); 
 
-        double vcrit = 3.05037165842070 * pow(log(binsizeInOS), (-0.4771864667153)) * (cumError[binEndInOS] - cumError[binStartInOS]) / (binsizeInOS - 1); // critical value for alpha = 0.01. ßßß add functionality for custom alpha?
+        double vcrit = 3.05037165842070 * pow(log(binsizeInOS), (-0.4771864667153)) * 
+            (cumError[binEndInOS] - cumError[binStartInOS]) / binsizeInOS; // critical value for alpha = 0.01. @todo add functionality for custom alpha?
         double max = *pmax;
         control_vcritMZ.push_back(vcrit);
         control_maxOS.push_back(max);
+int cutpos = std::distance(OS.begin() + binStartInOS, pmax); // rm
+        control_mzPos.push_back(bincontainer->front().pointsInBin[binStartInOS + cutpos]->mz);
 
         if (max < vcrit) // all values in range are part of one mz bin
         {
-            control_splitMZ.push_back(false);
+            control_splitYN.push_back(false);
             const Bin output(pointsInBin.begin() + binStartInOS, pointsInBin.begin() + binEndInOS + 1); // binEndInOS+1 since the iterator has to point behind the last element to put into the vector
             bincontainer->push_back(output);
             return;
         }
         else
         {
-            control_splitMZ.push_back(true);
-            int cutpos = std::distance(OS.begin() + binStartInOS, pmax);
+            control_splitYN.push_back(true);
+            // int cutpos = std::distance(OS.begin() + binStartInOS, pmax);
             subsetMZ(bincontainer, OS, binStartInOS, binStartInOS + cutpos, counter);
             subsetMZ(bincontainer, OS, binStartInOS + cutpos + 1, binEndInOS, counter);
             return;
