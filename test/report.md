@@ -259,3 +259,4 @@ Round to most accurate number that fits into a double
 Values in OS, mzError and critval are very small, same with distances for DQSBs. Quantify effect of 
 floating point inaccuracies and implement a mitigation if possible
 create a template for including a new subsetting method
+change error to use error * 10^6, for no centroid error just add mz. divide at critval step -> same results
