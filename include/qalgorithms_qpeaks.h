@@ -15,6 +15,7 @@
 #include <memory>
 #include <omp.h>
 #include <limits>
+#include <numeric>
 
 /* This file includes the q::qPeaks class*/
 namespace q
@@ -46,8 +47,6 @@ namespace q
      */
     std::vector<std::vector<std::unique_ptr<DataType::Peak>>> findPeaks(const varDataType &dataVec);
 
-
-    
     // debugging
     void info() const;
     void printMatrices(int scale) const;
@@ -67,7 +66,19 @@ namespace q
       Matrix B;
       bool isValid;
 
-      validRegression(int index, int scale, double apex_position, double mse, Matrix B, bool isValid = true) : index(index), scale(scale), apex_position(apex_position), mse(mse), B(B), isValid(isValid) {}
+      validRegression(
+          int index,
+          int scale,
+          double apex_position,
+          double mse,
+          Matrix B,
+          bool isValid = true)
+          : index(index),
+            scale(scale),
+            apex_position(apex_position),
+            mse(mse),
+            B(B),
+            isValid(isValid) {}
     };
 
     int global_maxScale;
@@ -75,17 +86,31 @@ namespace q
     // methods
     int calculateNumberOfRegressions(const int n) const;
 
-    void runningRegression(const RefMatrix &Y, std::vector<std::unique_ptr<validRegression>> &validRegressions);
+    void runningRegression(
+        const RefMatrix &Y,
+        const std::vector<int*> &df,
+        std::vector<std::unique_ptr<validRegression>> &validRegressions);
 
-    void validateRegressions(const Matrix &B, const Matrix &Ylog, const int scale, std::vector<std::unique_ptr<validRegression>> &validRegressions);
+    void validateRegressions(
+        const Matrix &B,
+        const Matrix &Ylog,
+        const std::vector<int*> &df,
+        const int scale,
+        std::vector<std::unique_ptr<validRegression>> &validRegressions);
 
-    void mergeRegressionsOverScales(std::vector<std::unique_ptr<validRegression>> &validRegressions, Matrix &Ylog);
+    void mergeRegressionsOverScales(
+        std::vector<std::unique_ptr<validRegression>> &validRegressions,
+        Matrix &Ylog);
 
-    std::vector<std::unique_ptr<DataType::Peak>> createPeaks(const std::vector<std::unique_ptr<validRegression>> &validRegressions, const RefMatrix &Y, const std::vector<double> &X, const int scanNumber);
+    std::vector<std::unique_ptr<DataType::Peak>> createPeaks(
+        const std::vector<std::unique_ptr<validRegression>> &validRegressions,
+        const RefMatrix &Y,
+        const std::vector<double *> &X,
+        const int scanNumber);
 
     double calcMse(const Matrix &yhat, const Matrix &y) const;
 
-    std::pair<Matrix, double> jacobianMatrix_PeakArea(const Matrix &B, int scale) const;
+    std::pair<Matrix, Matrix> jacobianMatrix_PeakArea(const Matrix &B, int scale) const;
 
     /**
      * @brief Create a Design Matrix object for the given scale.

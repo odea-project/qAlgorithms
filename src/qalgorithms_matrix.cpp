@@ -406,49 +406,6 @@ namespace q
     return conv;
   }
 
-  // Matrix Matrix::convolveAntisymmetric(const Matrix& kernel) const {
-  //   size_t n =numRows();
-  //   size_t k = kernel.numel();
-  //   size_t n_segments = n - k + 1;
-  //   size_t center_point = k/2 + 1;
-
-  //   Matrix conv(2,n_segments);
-  //   // calculation from left to center (including center)
-  //   for (size_t i = 0; i < center_point; i++) {
-  //     double* products = new double[n-2*i];
-  //     int u = 0;
-  //     for (size_t j = i; j < (n-i); j++) {
-  //       products[u] = kernel(0,i) * operator()(j, 0);
-  //       u++;
-  //     }
-  //     for (size_t j = 0; j < n_segments; j++) {
-  //       conv(0, j) += products[j];
-  //       conv(1, j) += products[k-1-2*i+j];
-  //     }
-  //     delete[] products; // kill object
-  //   }
-  //   // calculation from center + 1  to right edge
-  //   int u = 1;
-  //   for (size_t i = center_point; i < k; i++)
-  //   {
-  //     int s = k - i - 1;
-  //     double* products = new double[n-2*k + 2*i+2];
-  //     int v = 0;
-  //     for (size_t j = s; j < (n-s); j++) {
-  //       products[v] = kernel(0,i) * operator()(j, 0);
-  //       v++;
-  //     }
-  //     for (size_t j = 0; j < n_segments; j++) {
-  //       conv(0, j) += products[2*u+j];
-  //       conv(1, j) += products[j];
-  //     }
-  //     u++;
-  //     delete[] products; // kill object
-  //   }
-
-  //   return conv;
-  // }
-
   Matrix Matrix::convolveAntisymmetric(const Matrix &kernel) const
   {
     size_t n = numRows();
