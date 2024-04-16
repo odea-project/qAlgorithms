@@ -28,6 +28,7 @@ notbinned_R = notbinned_both + FPs_cpp
 size_total = binned_cpp + notbinned_cpp
 size_missing = 3568033 - size_total # size of the dataset
 
+3568033 - 371034 # total size - out of bins
 
 ratios = [binned_both, FNs_cpp, notbinned_both, FPs_cpp, size_missing]
 colors = [:green, :blue, :orange, :red, :black]

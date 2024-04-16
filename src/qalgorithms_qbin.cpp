@@ -30,6 +30,11 @@ namespace q
     std::vector<double> control_maxOS;   // mz which
     std::vector<int> control_splitYN;    // critval
     std::vector<double> control_mzPos; // position of cut
+    std::vector<int> control_cIDleft;
+    std::vector<int> control_cIDright;
+    std::vector<int> control_sourcebin;
+    std::vector<int> binsize;
+    int binNum;
 
 #define IGNORE -256 // nonsense value if no real number exists. Must be negative since it is used later when searching for the smallest distance
 #define NO_MIN_FOUND -INFINITY
@@ -159,6 +164,12 @@ namespace q
                     control_vcritMZ = {0};
                     control_splitYN = {0}; // 0 = bin was created
                     control_critvalCalcCount = 0;
+                    control_cIDleft = {0};
+                    control_cIDright = {0};
+                    control_mzPos = {0};
+                    control_sourcebin = {0};
+                    binNum = 0;
+                    binsize = {0};
 
                     for (size_t j = 0; j < startpoint; j++)
                     { // random access not needed, first element -> make bins -> move element or make bins, then remove first entry ; do n times
@@ -173,6 +184,7 @@ namespace q
                         }                                                                                                                      // always after order space, since the features get sorted
                         binDeque.front().subsetMZ(&binDeque, binDeque.front().activeOS, 0, binDeque.front().activeOS.size() - 1, subsetCount); // takes element from binDeque, starts subsetting, appends bins to binDeque
                         binDeque.pop_front();                                                                                                  // remove the element that was processed from binDeque
+                        ++binNum;
                     }
                     // output subsetting data @todo remove
                     ++control_subsetcount;
@@ -183,12 +195,33 @@ namespace q
                     std::stringstream output;
                     file_out.open(outname, std::ios::out);
                     assert(file_out.is_open());
-                    output << "mz,maxOS,vcrit,splitYN\n";
+                    output << "mz,maxOS,vcrit,sourcebin,size,leftID,rightID,splitYN\n";
                     for (size_t i = 1; i < control_maxOS.size(); i++)
                     {
-                        output << std::setprecision(14) << control_mzPos[i] << "," << control_maxOS[i] << "," << control_vcritMZ[i] << "," << control_splitYN[i] << "\n";
+                        char buffer[60];
+                        sprintf(buffer, "%0.12f,%0.12f,%0.12f,%d,%d,%d,%d,%d", control_mzPos[i], control_maxOS[i], control_vcritMZ[i],
+                            control_sourcebin[i], binsize[i], control_cIDleft[i], control_cIDright[i], control_splitYN[i]);
+                        // output << std::setprecision(14) << control_mzPos[i] << "," << control_maxOS[i] << "," << control_vcritMZ[i] << "," 
+                            // << control_cIDleft[i] << "," << control_cIDright[i] << "," << control_splitYN[i] << "\n";
+                            output << buffer << "\n";
                     }
                     file_out << output.str();
+
+                    // std::fstream file_out;
+                    // std::stringstream output;
+                    // file_out.open("../../bins_mzonly.csv", std::ios::out);
+                    // assert(file_out.is_open());
+                    // output << "mzfirst,mzlast,size\n";
+                    // for (size_t i = 0; i < binDeque.size(); i++)
+                    // {
+                    //     auto F = binDeque.front().pointsInBin;
+                    //     char buffer[60];
+                    //     sprintf(buffer, "%0.12f,%0.12f,%d", F.front()->mz, F.back()->mz, F.size());
+                    //     output << buffer << "\n";
+                    //     binDeque.pop_front();
+                    // }
+                    // file_out << output.str();
+
                     break;
                 }
 
@@ -333,7 +366,7 @@ namespace q
         assert(binStartInOS >= 0);
         assert(binEndInOS >= 0);
         const int binsizeInOS = binEndInOS - binStartInOS + 1; // +1 to avoid length zero
-        ++counter;
+        
         if (binsizeInOS < 5)
         {
             for (int i = 0; i < binsizeInOS; i++)
@@ -343,6 +376,7 @@ namespace q
             }
             return;
         }
+        ++counter;
         auto pmax = std::max_element(OS.begin() + binStartInOS, OS.begin() + binEndInOS); 
 
         double vcrit = 3.05037165842070 * pow(log(binsizeInOS), (-0.4771864667153)) * 
@@ -350,11 +384,15 @@ namespace q
         double max = *pmax;
         control_vcritMZ.push_back(vcrit);
         control_maxOS.push_back(max);
-int cutpos = std::distance(OS.begin() + binStartInOS, pmax); // rm
+        int cutpos = std::distance(OS.begin() + binStartInOS, pmax); // rm
         control_mzPos.push_back(bincontainer->front().pointsInBin[binStartInOS + cutpos]->mz);
+        control_cIDleft.push_back(bincontainer->front().pointsInBin[binStartInOS + cutpos]->control_binID);
+        control_cIDright.push_back(bincontainer->front().pointsInBin[binStartInOS + cutpos + 1]->control_binID);
+        control_sourcebin.push_back(binNum);
 
         if (max < vcrit) // all values in range are part of one mz bin
         {
+            binsize.push_back(binsizeInOS);
             control_splitYN.push_back(false);
             const Bin output(pointsInBin.begin() + binStartInOS, pointsInBin.begin() + binEndInOS + 1); // binEndInOS+1 since the iterator has to point behind the last element to put into the vector
             bincontainer->push_back(output);
@@ -362,6 +400,7 @@ int cutpos = std::distance(OS.begin() + binStartInOS, pmax); // rm
         }
         else
         {
+            binsize.push_back(-1);
             control_splitYN.push_back(true);
             // int cutpos = std::distance(OS.begin() + binStartInOS, pmax);
             subsetMZ(bincontainer, OS, binStartInOS, binStartInOS + cutpos, counter);
@@ -655,7 +694,7 @@ int main()
 
     q::RawData testdata;
     // path to data, mz, centroid error, RT, scan number, intensity, control ID, DQS centroid, control DQS Bin
-    testdata.readcsv("../../rawdata/control_bins.csv", 0, 1, 2, 3, 4, 5, 6, 7); // ../../rawdata/qCentroid_Warburg_pos_171123_01_Zu_01.csv ../test/test.csv
+    testdata.readcsv("../../rawdata/reduced_data_warburg.csv", 0, 1, 2, 3, 4, 5, 6, 7); // ../../rawdata/qCentroid_Warburg_pos_171123_01_Zu_01.csv ../test/test.csv
     // for (size_t i = 0; i < testdata.scanBreaks.size(); i++)
     // {
     //     std::cout << i << "," << testdata.scanBreaks[i] << "\n";
@@ -663,7 +702,8 @@ int main()
     q::BinContainer testcontainer;
     testcontainer.makeFirstBin(&testdata);
     std::vector<int> dim = {q::SubsetMethods::mz, q::SubsetMethods::scans}; // at least one element must be terminator
-    testcontainer.subsetBins(dim, 6);                                       // int = max dist in scans; add value after for error in ppm instead of centroid error
+    testcontainer.subsetBins(dim, 6);     
+    // return 0;                                  // int = max dist in scans; add value after for error in ppm instead of centroid error
     std::cout << "\ncalculating DQSBs...\n";
     testcontainer.assignDQSB(&testdata, 6); // int = max dist in scans
 

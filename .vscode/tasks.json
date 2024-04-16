@@ -7,7 +7,6 @@
             "args": [
                 "-fdiagnostics-color=always",
                 "-g",
-                "-O2",
                 "${file}",
                 "-o",
                 "${workspaceRoot}\\bin\\${fileBasenameNoExtension}.exe"
