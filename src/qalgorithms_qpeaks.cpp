@@ -354,24 +354,24 @@ namespace q
       { // already isolated peak => push to valid regressions
         validRegressions.push_back(
             std::make_unique<validRegression>(
-                group[0],                                                      // index in B
-                scale,                                                         // scale
-                B(1, group[0]) > 0                                             // apex position in x-axis 0:n
-                    ? -B(1, group[0]) / 2 / B(3, group[0]) + scale + group[0]  // apex is right
-                    : -B(1, group[0]) / 2 / B(2, group[0]) + scale + group[0], // apex is left
-                0,                                                             // initial MSE
-                B.col(group[0]),                                               // coefficients matrix
-                true,                                                          // isValid
-                B(1, group[0]) > 0 && B(2, group[0]) > 0                       // left_limit
-                    ? std::max(                                                // check if the valley point is within the window
-                      (double) group[0],                                       // window start
-                      -B(1, group[0]) / 2 / B(2, group[0]) + scale + group[0]) // valley point
-                    : (double) group[0],                                       // window start
-                B(1, group[0]) < 0 && B(3, group[0]) > 0                       // right_limit
-                    ? std::min(                                                // check if the valley point is within the window
-                      (double) group[0] + 2 * scale,                           // window end
-                      -B(1, group[0]) / 2 / B(3, group[0]) + scale + group[0]) // valley point
-                    : (double) group[0] + 2 * scale));                         // window end
+                group[0],                                                          // index in B
+                scale,                                                             // scale
+                B(1, group[0]) > 0                                                 // apex position in x-axis 0:n
+                    ? -B(1, group[0]) / 2 / B(3, group[0]) + scale + group[0]      // apex is right
+                    : -B(1, group[0]) / 2 / B(2, group[0]) + scale + group[0],     // apex is left
+                0,                                                                 // initial MSE
+                B.col(group[0]),                                                   // coefficients matrix
+                true,                                                              // isValid
+                B(1, group[0]) > 0 && B(2, group[0]) > 0                           // left_limit
+                    ? std::max(                                                    // check if the valley point is within the window
+                          (double)group[0],                                        // window start
+                          -B(1, group[0]) / 2 / B(2, group[0]) + scale + group[0]) // valley point
+                    : (double)group[0],                                            // window start
+                B(1, group[0]) < 0 && B(3, group[0]) > 0                           // right_limit
+                    ? std::min(                                                    // check if the valley point is within the window
+                          (double)group[0] + 2 * scale,                            // window end
+                          -B(1, group[0]) / 2 / B(3, group[0]) + scale + group[0]) // valley point
+                    : (double)group[0] + 2 * scale));                              // window end
       }
       else
       { // survival of the fittest based on mse between original data and reconstructed (exp transform of regression)
@@ -388,24 +388,24 @@ namespace q
         } // end for loop (indices in group)
         validRegressions.push_back(
             std::make_unique<validRegression>(
-                best_idx,                                                      // index in B
-                scale,                                                         // scale
-                B(1, best_idx) > 0                                             // apex position in x-axis 0:n
-                    ? -B(1, best_idx) / 2 / B(3, best_idx) + scale + best_idx  // apex is right
-                    : -B(1, best_idx) / 2 / B(2, best_idx) + scale + best_idx, // apex is left
-                best_mse,                                                      // MSE
-                B.col(best_idx),                                               // coefficients matrix
-                true,                                                          // isValid
-                B(1, best_idx) > 0 && B(2, best_idx) > 0                       // left_limit
-                    ? std::max(                                                // check if the valley point is within the window
-                      (double) best_idx,                                       // window start
-                      -B(1, best_idx) / 2 / B(2, best_idx) + scale + best_idx) // valley point
-                    : (double) best_idx,                                       // window start
-                B(1, best_idx) < 0 && B(3, best_idx) > 0                       // right_limit
-                    ? std::min(                                                // check if the valley point is within the window
-                      (double) best_idx + 2 * scale,                           // window end
-                      -B(1, best_idx) / 2 / B(3, best_idx) + scale + best_idx) // valley point
-                    : (double) best_idx + 2 * scale));                         // window end
+                best_idx,                                                          // index in B
+                scale,                                                             // scale
+                B(1, best_idx) > 0                                                 // apex position in x-axis 0:n
+                    ? -B(1, best_idx) / 2 / B(3, best_idx) + scale + best_idx      // apex is right
+                    : -B(1, best_idx) / 2 / B(2, best_idx) + scale + best_idx,     // apex is left
+                best_mse,                                                          // MSE
+                B.col(best_idx),                                                   // coefficients matrix
+                true,                                                              // isValid
+                B(1, best_idx) > 0 && B(2, best_idx) > 0                           // left_limit
+                    ? std::max(                                                    // check if the valley point is within the window
+                          (double)best_idx,                                        // window start
+                          -B(1, best_idx) / 2 / B(2, best_idx) + scale + best_idx) // valley point
+                    : (double)best_idx,                                            // window start
+                B(1, best_idx) < 0 && B(3, best_idx) > 0                           // right_limit
+                    ? std::min(                                                    // check if the valley point is within the window
+                          (double)best_idx + 2 * scale,                            // window end
+                          -B(1, best_idx) / 2 / B(3, best_idx) + scale + best_idx) // valley point
+                    : (double)best_idx + 2 * scale));                              // window end
 
       } // end if; single item or group with multiple members
     }   // end for loop (group in vector of groups)
@@ -429,27 +429,41 @@ namespace q
 
     // apply survival of the fittest considering different scales
     // iterate over the validRegressions vector
-    for (auto it = validRegressions.begin(); it != validRegressions.end(); ++it)
+    for (auto it_current_peak = validRegressions.begin(); it_current_peak != validRegressions.end(); ++it_current_peak)
     {
-      double left_limit = (*it)->index;
-      double right_limit = (*it)->index + 2 * (*it)->scale + 1;
+      double left_limit = (*it_current_peak)->left_limit;
+      double right_limit = (*it_current_peak)->right_limit;
       double mean_mse = 0;
       int grpSize = 0;
       // iterate over the validRegressions vector till the current regression's scale
-      for (auto it2 = validRegressions.begin(); (*it2)->scale < (*it)->scale; ++it2)
+      for (auto it_ref_peak = validRegressions.begin(); (*it_ref_peak)->scale < (*it_current_peak)->scale; ++it_ref_peak)
       {
-        if (!(*it2)->isValid)
+        if (!(*it_ref_peak)->isValid)
           continue; // skip the invalid peaks
-        if ((*it2)->apex_position > left_limit && (*it2)->index < right_limit)
+        if (
+            (
+                (*it_ref_peak)->apex_position > left_limit &&   // ref peak matches the left limit
+                (*it_ref_peak)->apex_position < right_limit) || // ref peak matches the right limit
+            (
+                (*it_current_peak)->apex_position > (*it_ref_peak)->left_limit && // current peak matches the left limit
+                (*it_current_peak)->apex_position < (*it_ref_peak)->right_limit)) // current peak matches the right limit
         {
-          if ((*it2)->mse == 0)
-          { // calculate the mse of the current peak
-            (*it2)->mse = calcMse(((*designMatrices[(*it2)->scale - 2]) * (*it2)->B).exp(), (Ylog.subMatrix((*it2)->index, (*it2)->index + 2 * (*it2)->scale + 1, 0, 1)).exp());
+          if ((*it_ref_peak)->mse == 0)
+          { // calculate the mse of the ref peak
+            (*it_ref_peak)->mse = calcMse(
+                ((*designMatrices[(*it_ref_peak)->scale - 2]) * (*it_ref_peak)->B).exp(),
+                (Ylog.subMatrix(
+                     (*it_ref_peak)->index,                                 // start row index
+                     (*it_ref_peak)->index + 2 * (*it_ref_peak)->scale + 1, // end row index
+                     0,                                                     // start column index
+                     1))                                                    // end column index
+                    .exp());
           }
           grpSize++;
-          mean_mse += (*it2)->mse;
+          mean_mse += (*it_ref_peak)->mse;
+          /// @todo: adjust df for mse calculation
         }
-      } // end for loop, inner loop, it2
+      } // end for loop, inner loop, it_ref_peak
 
       if (grpSize > 0)
       {
@@ -460,27 +474,43 @@ namespace q
         continue; // no peaks in the group
       }
 
-      if ((*it)->mse == 0.0)
+      if ((*it_current_peak)->mse == 0.0)
       { // calculate the mse of the current peak
-        (*it)->mse = calcMse(((*designMatrices[(*it)->scale - 2]) * (*it)->B).exp(), (Ylog.subMatrix((*it)->index, (*it)->index + 2 * (*it)->scale + 1, 0, 1)).exp());
+        (*it_current_peak)->mse = calcMse(
+            ((*designMatrices[(*it_current_peak)->scale - 2]) * (*it_current_peak)->B).exp(),
+            (Ylog.subMatrix(
+                 (*it_current_peak)->index,                                     // start row index
+                 (*it_current_peak)->index + 2 * (*it_current_peak)->scale + 1, // end row index
+                 0,                                                             // start column index
+                 1))                                                            // end column index
+                .exp());
       }
 
-      if ((*it)->mse < mean_mse || grpSize == 1)
+      if ((*it_current_peak)->mse < mean_mse)
       {
         // Set isValid to false for the candidates
-        for (auto it2 = validRegressions.begin(); (*it2)->scale < (*it)->scale; ++it2)
+        for (
+            auto it_ref_peak = validRegressions.begin();
+            (*it_ref_peak)->scale < (*it_current_peak)->scale;
+            ++it_ref_peak)
         {
-          if (!(*it2)->isValid)
+          if (!(*it_ref_peak)->isValid)
             continue; // skip the invalid peaks
-          if ((*it2)->apex_position > left_limit && (*it2)->index < right_limit)
+          if (
+              (
+                  (*it_ref_peak)->apex_position > left_limit &&   // ref peak matches the left limit
+                  (*it_ref_peak)->apex_position < right_limit) || // ref peak matches the right limit
+              (
+                  (*it_current_peak)->apex_position > (*it_ref_peak)->left_limit && // current peak matches the left limit
+                  (*it_current_peak)->apex_position < (*it_ref_peak)->right_limit)) // current peak matches the right limit)
           {
-            (*it2)->isValid = false;
+            (*it_ref_peak)->isValid = false;
           }
         }
       }
       else
-      {
-        (*it)->isValid = false;
+      { // Set isValid to false for the current peak
+        (*it_current_peak)->isValid = false;
       }
     } // end for loop, outer loop, it
 
@@ -560,6 +590,16 @@ namespace q
     return sum / (n - 4);
   } // end calcMse
 #pragma endregion calcMse
+
+#pragma region calcExtendedMse
+  std::pair<double, int> qPeaks::calcExtendedMse(
+      const RefMatrix &Y,
+      const Matrix &B,
+      const std::vector<int> &groupIndices,
+      const int scale) const
+  {
+  }
+#pragma endregion calcExtendedMse
 
 #pragma region jacobianMatrix_PeakArea
   std::pair<Matrix, Matrix> qPeaks::jacobianMatrix_PeakArea(const Matrix &B, int scale) const

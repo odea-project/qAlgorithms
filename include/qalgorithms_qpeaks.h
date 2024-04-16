@@ -94,13 +94,13 @@ namespace q
 
     void runningRegression(
         const RefMatrix &Y,
-        const std::vector<int*> &df,
+        const std::vector<int *> &df,
         std::vector<std::unique_ptr<validRegression>> &validRegressions);
 
     void validateRegressions(
         const Matrix &B,
         const Matrix &Ylog,
-        const std::vector<int*> &df,
+        const std::vector<int *> &df,
         const int scale,
         std::vector<std::unique_ptr<validRegression>> &validRegressions);
 
@@ -115,6 +115,22 @@ namespace q
         const int scanNumber);
 
     double calcMse(const Matrix &yhat, const Matrix &y) const;
+
+    /**
+     * @brief Calculate the best mean squared error of the regression model with different regression windows but same window size.
+     * @details The function extends the regression windows that all the windows cover the range from the lowest x value to the highest x value. I.e., if window A is [4,5,6,7,8,9,10] and window B is [6,7,8,9,10,11,12], the extended window is [4,5,6,7,8,9,10,11,12]. The function calculates the mean squared error of the regression model with the extended window and returns the mean squared error and the index of the best regression.
+     *
+     * @param Y : Measurement data (not log transformed)
+     * @param B : Matrix of regression coefficients
+     * @param groupIndices : Indices of the regression windows
+     * @param scale : Window size scale, e.g., 5 means the window size is 11 (2*5+1)
+     * @return std::pair<double,int> : MSE and index of the best regression window
+     */
+    std::pair<double, int> calcExtendedMse(
+        const RefMatrix &Y,
+        const Matrix &B,
+        const std::vector<int> &groupIndices,
+        const int scale) const;
 
     std::pair<Matrix, Matrix> jacobianMatrix_PeakArea(const Matrix &B, int scale) const;
 
