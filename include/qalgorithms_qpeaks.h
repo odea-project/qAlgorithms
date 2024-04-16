@@ -65,6 +65,8 @@ namespace q
       double mse;
       Matrix B;
       bool isValid;
+      double left_limit;
+      double right_limit;
 
       validRegression(
           int index,
@@ -72,13 +74,17 @@ namespace q
           double apex_position,
           double mse,
           Matrix B,
-          bool isValid = true)
+          bool isValid = true,
+          double left_limit = 0.0,
+          double right_limit = 0.0)
           : index(index),
             scale(scale),
             apex_position(apex_position),
             mse(mse),
             B(B),
-            isValid(isValid) {}
+            isValid(isValid),
+            left_limit(left_limit),
+            right_limit(right_limit) {}
     };
 
     int global_maxScale;

@@ -67,7 +67,7 @@ def plot_mz_vs_intensity(file1, file2, file3, file4, file5):
             x = np.array(df4[i][1:])
             y = np.array(df5[i][1:])
             _filt = np.where(x > 0)
-            plt.plot(x[_filt], y[_filt], 'k--')
+            plt.plot(x[_filt], y[_filt], 'r', alpha=0.3, lw=6)
     plt.axis('off')
     plt.xlim(0, 1000)
     plt.tight_layout(pad=1)

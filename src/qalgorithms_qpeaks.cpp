@@ -45,15 +45,15 @@ namespace q
         },
         dataVec);
   }
-#pragma endregion
+#pragma endregion Constructors
 
 #pragma region Destructor
   // Destructor
   qPeaks::~qPeaks() {}
-#pragma endregion
+#pragma endregion Destructor
 
 #pragma region Methods
-
+#pragma region findPeaks
   std::vector<std::vector<std::unique_ptr<DataType::Peak>>> qPeaks::findPeaks(
       const varDataType &dataVec)
   {
@@ -91,7 +91,9 @@ namespace q
         dataVec); // end visit
     return all_peaks;
   } // end findPeaks
+#pragma endregion findPeaks
 
+#pragma region runningRegression
   void qPeaks::runningRegression(
       const RefMatrix &Y,
       const std::vector<int *> &df,
@@ -111,7 +113,9 @@ namespace q
     } // end for scale loop
     mergeRegressionsOverScales(validRegressions, Ylog);
   } // end runningRegression
+#pragma endregion runningRegression
 
+#pragma region validateRegressions
   void qPeaks::validateRegressions(
       const Matrix &B,
       const Matrix &Ylog,
@@ -125,11 +129,11 @@ namespace q
     int df_sum = 0;
     double valley_position;
     double apex_position;
-    double inverseMatrix_2_2 = (*(inverseMatrices[scale - 2]))(2, 2);   // variance of the quadratic term left side of the peak
-    double inverseMatrix_3_3 = (*(inverseMatrices[scale - 2]))(3, 3);   // variance of the quadratic term right side of the peak
-    Matrix &X = *(designMatrices[scale - 2]);                           // design matrix
-    Matrix Jacobian_height(1, 4);                                       // Jacobian matrix for the height
-    std::vector<std::tuple<int, double, double>> valid_regressions_tmp; // temporary vector to store valid regressions <index, apex_position>
+    double inverseMatrix_2_2 = (*(inverseMatrices[scale - 2]))(2, 2);                   // variance of the quadratic term left side of the peak
+    double inverseMatrix_3_3 = (*(inverseMatrices[scale - 2]))(3, 3);                   // variance of the quadratic term right side of the peak
+    Matrix &X = *(designMatrices[scale - 2]);                                           // design matrix
+    Matrix Jacobian_height(1, 4);                                                       // Jacobian matrix for the height
+    std::vector<std::tuple<int, double, double, double, double>> valid_regressions_tmp; // temporary vector to store valid regressions <index, apex_position>
 
     // iterate columwise over the coefficients matrix
     for (size_t i = 0; i < B.numCols(); i++)
@@ -161,6 +165,7 @@ namespace q
       {
       case 7:                                   // Case 1a: apex left
         apex_position = -B(1, i) / 2 / B(2, i); // is negative
+        valley_position = 0;                    // no valley point
         if (apex_position <= -scale + 1)        // scale +1: prevent appex position to be at the edge of the data
         {
           continue; // invalid apex position
@@ -168,6 +173,7 @@ namespace q
         break;
       case 3:                                   // Case 1b: apex right
         apex_position = -B(1, i) / 2 / B(3, i); // is positive
+        valley_position = 0;                    // no valley point
         if (apex_position >= scale - 1)         // scale -1: prevent appex position to be at the edge of the data
         {
           continue; // invalid apex position
@@ -256,18 +262,19 @@ namespace q
           (Jacobian_area.second * C * Jacobian_area.second.T()).sumElements());
       if (Jacobian_area.second(0, 0) / area_uncertainty_covered < tValuesArray[df_sum - 5])
       {
-        if (area_uncertainty_covered > area_uncertainty)
-        {
-          if (height > 200000)
-          {
-            std::cout << ".";
-          }
-        }
         // continue; // statistical insignificance of the peak area
       }
 
       // at this point, the peak is validated
-      valid_regressions_tmp.push_back(std::make_tuple(i, apex_position + i + scale, Jacobian_area.first(0, 0) / area_uncertainty));
+      double left_limit = (valley_position < 0) ? std::max((double)i, valley_position + i + scale) : i;
+      double right_limit = (valley_position > 0) ? std::min((double)i + 2 * scale, valley_position + i + scale) : i + 2 * scale;
+      valid_regressions_tmp.push_back(
+          std::make_tuple(
+              i,                                            // <0> index in B
+              apex_position + i + scale,                    // <1> apex position in x-axis 0:n
+              Jacobian_area.first(0, 0) / area_uncertainty, // <2> t-value for the peak area
+              left_limit,                                   // <3> left_limit
+              right_limit));                                // <4> right_limit
 
     } // end for loop
 
@@ -278,52 +285,93 @@ namespace q
       {
         return; // no valid peaks
       }
-      validRegressions.push_back(std::make_unique<validRegression>(std::get<0>(valid_regressions_tmp[0]), scale, std::get<1>(valid_regressions_tmp[0]), 0, B.col(std::get<0>(valid_regressions_tmp[0]))));
-      return; // not enough peaks to form a group
+      validRegressions.push_back(
+          std::make_unique<validRegression>(
+              std::get<0>(valid_regressions_tmp[0]),        // index in B
+              scale,                                        // scale
+              std::get<1>(valid_regressions_tmp[0]),        // apex position in x-axis 0:n
+              0,                                            // initial MSE
+              B.col(std::get<0>(valid_regressions_tmp[0])), // coefficients matrix
+              true,                                         // isValid
+              std::get<3>(valid_regressions_tmp[0]),        // left_limit
+              std::get<4>(valid_regressions_tmp[0])));      // right_limit
+      return;                                               // not enough peaks to form a group
     }
 
-    // group the valid peaks
+    /*
+      Grouping:
+      This block of code implements the grouping. It groups the valid peaks based on the apex positions. Peaks are defined as similar, i.e., members of the same group, if they fullfill at least one of the following conditions:
+      - The difference between two peak apexes is less than 4. (Nyquist Shannon Sampling Theorem, separation of two maxima)
+      - At least one apex of a pair of peaks is within the window of the other peak. (Overlap of two maxima)
+    */
     std::vector<std::vector<int>> groups; // vector of peak indices
     // initialize iterators for valid_regressions_tmp
-    auto it = valid_regressions_tmp.begin();
-    auto it_next = std::next(it);
+    auto it_peak = valid_regressions_tmp.begin();
+    auto it_peak_next = std::next(it_peak);
     // iterate over the temporary vector of valid regressions
-    while (it_next != valid_regressions_tmp.end())
+    while (it_peak_next != valid_regressions_tmp.end())
     {
-      if (std::abs(std::get<1>(*it) - std::get<1>(*it_next)) > 2 * scale + 1) // difference between two peaks is larger than the window size (2*scale+1)
-      {                                                                       // create a new group
+      // check if the difference between two peaks is less than 4 (Nyquist Shannon Sampling Theorem, separation of two maxima), or if the apex of a peak is within the window of the other peak (Overlap of two maxima)
+      if (
+          std::abs(std::get<1>(*it_peak) - std::get<1>(*it_peak_next)) > 4 && // Nyquist Shannon Sampling Theorem, separation of two maxima
+          std::get<1>(*it_peak) < std::get<3>(*it_peak_next) &&               // Left peak is not within the window of the right peak
+          std::get<1>(*it_peak_next) > std::get<4>(*it_peak)                  // Right peak is not within the window of the left peak
+      )
+      { // create a new group
         if (groups.empty())
-        {
-          groups.push_back(std::vector<int>{std::get<0>(*it)});
-          groups.push_back(std::vector<int>{std::get<0>(*it_next)});
+        {                                                                 // in case there is no group yet, two new groups are created
+          groups.push_back(std::vector<int>{std::get<0>(*it_peak)});      // add the first peak to the first group
+          groups.push_back(std::vector<int>{std::get<0>(*it_peak_next)}); // add the second peak to the second group
         }
         else
-        {
-          groups.push_back(std::vector<int>{std::get<0>(*it_next)});
+        {                                                                 // create a new group
+          groups.push_back(std::vector<int>{std::get<0>(*it_peak_next)}); // add the second peak to the new group
         }
       }
       else
       { // add to the current group
         if (groups.empty())
-        {
-          groups.push_back(std::vector<int>{std::get<0>(*it)});
-          groups.back().push_back(std::get<0>(*it_next));
+        {                                                            // in case there is no group yet, create a new group and add both peaks to it
+          groups.push_back(std::vector<int>{std::get<0>(*it_peak)}); // add the first peak to the group
+          groups.back().push_back(std::get<0>(*it_peak_next));       // add the second peak to the group
         }
         else
         {
-          groups.back().push_back(std::get<0>(*it_next));
+          groups.back().push_back(std::get<0>(*it_peak_next)); // add the second peak to the current group
         }
       }
-      ++it_next;
-      ++it;
+      ++it_peak_next;
+      ++it_peak;
     } // end for loop
 
-    // at this point, the groups within a scale are formed; now survival of the fittest peak in each group is performed
+    /*
+      Survival of the Fittest Filter:
+      This block of code implements the survival of the fittest filter. It selects the peak with the lowest mean squared error (MSE) as the representative of the group. If the group contains only one peak, the peak is directly pushed to the valid regressions. If the group contains multiple peaks, the peak with the lowest MSE is selected as the representative of the group and pushed to the valid regressions.
+    */
     for (auto &group : groups)
     {
       if (group.size() == 1)
       { // already isolated peak => push to valid regressions
-        validRegressions.push_back(std::make_unique<validRegression>(group[0], scale, B(1, group[0]) > 0 ? -B(1, group[0]) / 2 / B(3, group[0]) + scale + group[0] : -B(1, group[0]) / 2 / B(2, group[0]) + scale + group[0], 0, B.col(group[0])));
+        validRegressions.push_back(
+            std::make_unique<validRegression>(
+                group[0],                                                      // index in B
+                scale,                                                         // scale
+                B(1, group[0]) > 0                                             // apex position in x-axis 0:n
+                    ? -B(1, group[0]) / 2 / B(3, group[0]) + scale + group[0]  // apex is right
+                    : -B(1, group[0]) / 2 / B(2, group[0]) + scale + group[0], // apex is left
+                0,                                                             // initial MSE
+                B.col(group[0]),                                               // coefficients matrix
+                true,                                                          // isValid
+                B(1, group[0]) > 0 && B(2, group[0]) > 0                       // left_limit
+                    ? std::max(                                                // check if the valley point is within the window
+                      (double) group[0],                                       // window start
+                      -B(1, group[0]) / 2 / B(2, group[0]) + scale + group[0]) // valley point
+                    : (double) group[0],                                       // window start
+                B(1, group[0]) < 0 && B(3, group[0]) > 0                       // right_limit
+                    ? std::min(                                                // check if the valley point is within the window
+                      (double) group[0] + 2 * scale,                           // window end
+                      -B(1, group[0]) / 2 / B(3, group[0]) + scale + group[0]) // valley point
+                    : (double) group[0] + 2 * scale));                         // window end
       }
       else
       { // survival of the fittest based on mse between original data and reconstructed (exp transform of regression)
@@ -338,11 +386,33 @@ namespace q
             best_idx = index;
           }
         } // end for loop (indices in group)
-        validRegressions.push_back(std::make_unique<validRegression>(best_idx, scale, B(1, best_idx) > 0 ? -B(1, best_idx) / 2 / B(3, best_idx) + scale + best_idx : -B(1, best_idx) / 2 / B(2, best_idx) + scale + best_idx, best_mse, B.col(best_idx)));
+        validRegressions.push_back(
+            std::make_unique<validRegression>(
+                best_idx,                                                      // index in B
+                scale,                                                         // scale
+                B(1, best_idx) > 0                                             // apex position in x-axis 0:n
+                    ? -B(1, best_idx) / 2 / B(3, best_idx) + scale + best_idx  // apex is right
+                    : -B(1, best_idx) / 2 / B(2, best_idx) + scale + best_idx, // apex is left
+                best_mse,                                                      // MSE
+                B.col(best_idx),                                               // coefficients matrix
+                true,                                                          // isValid
+                B(1, best_idx) > 0 && B(2, best_idx) > 0                       // left_limit
+                    ? std::max(                                                // check if the valley point is within the window
+                      (double) best_idx,                                       // window start
+                      -B(1, best_idx) / 2 / B(2, best_idx) + scale + best_idx) // valley point
+                    : (double) best_idx,                                       // window start
+                B(1, best_idx) < 0 && B(3, best_idx) > 0                       // right_limit
+                    ? std::min(                                                // check if the valley point is within the window
+                      (double) best_idx + 2 * scale,                           // window end
+                      -B(1, best_idx) / 2 / B(3, best_idx) + scale + best_idx) // valley point
+                    : (double) best_idx + 2 * scale));                         // window end
+
       } // end if; single item or group with multiple members
     }   // end for loop (group in vector of groups)
   }     // end validateRegressions
+#pragma endregion validateRegressions
 
+#pragma region mergeRegressionsOverScales
   void qPeaks::mergeRegressionsOverScales(std::vector<std::unique_ptr<validRegression>> &validRegressions, Matrix &Ylog)
   {
     if (validRegressions.empty())
@@ -419,8 +489,10 @@ namespace q
                                           [](const auto &peak)
                                           { return !peak->isValid; }),
                            validRegressions.end());
-  }
+  } // end mergeRegressionsOverScales
+#pragma endregion mergeRegressionsOverScales
 
+#pragma region createPeaks
   std::vector<std::unique_ptr<DataType::Peak>> qPeaks::createPeaks(
       const std::vector<std::unique_ptr<validRegression>> &validRegressions,
       const RefMatrix &Y,
@@ -472,8 +544,10 @@ namespace q
     } // end for loop
 
     return peaks;
-  }
+  } // end createPeaks
+#pragma endregion createPeaks
 
+#pragma region calcMse
   double qPeaks::calcMse(const Matrix &yhat, const Matrix &y) const
   {
     size_t n = yhat.numel();
@@ -484,8 +558,10 @@ namespace q
       sum += diff * diff;
     }
     return sum / (n - 4);
-  }
+  } // end calcMse
+#pragma endregion calcMse
 
+#pragma region jacobianMatrix_PeakArea
   std::pair<Matrix, Matrix> qPeaks::jacobianMatrix_PeakArea(const Matrix &B, int scale) const
   {
     // predefine expressions
@@ -574,8 +650,10 @@ namespace q
     J_covered(0, 2) -= (x_left * x_left * y_left) * (x_right - x_left) / 2;
     J_covered(0, 3) -= (x_right * x_right * y_right) * (x_right - x_left) / 2;
     return std::pair<Matrix, Matrix>(J, J_covered);
-  }
+  } // end jacobianMatrix_PeakArea
+#pragma endregion jacobianMatrix_PeakArea
 
+#pragma region createDesignMatrix
   void qPeaks::createDesignMatrix(const int scale)
   {
     // construct matrix
@@ -617,7 +695,9 @@ namespace q
     // add the matrix to the designMatrices vector
     designMatrices.push_back(std::make_unique<Matrix>(X));
   }
+#pragma endregion createDesignMatrix
 
+#pragma region createInverseAndPseudoInverse
   void qPeaks::createInverseAndPseudoInverse(const Matrix &X)
   {
     Matrix Xt = X.T();
@@ -640,7 +720,9 @@ namespace q
     }
     return sum;
   }
+#pragma endregion createInverseAndPseudoInverse
 
+#pragma region info
   void qPeaks::info() const
   {
     std::cout << "qPeaks object\n";
@@ -648,7 +730,9 @@ namespace q
     std::cout << "inverseMatrices size: " << inverseMatrices.size() << "\n";
     std::cout << "psuedoInverses size: " << psuedoInverses.size() << "\n";
   }
+#pragma endregion info
 
+#pragma region printMatrices
   void qPeaks::printMatrices(int scale) const
   {
     std::cout << "Design Matrix\n";
@@ -658,5 +742,6 @@ namespace q
     std::cout << "Pseudo-Inverse Matrix\n";
     psuedoInverses[scale - 2]->print();
   }
-#pragma endregion
+#pragma endregion printMatrices
+#pragma endregion Methods
 } // namespace q
