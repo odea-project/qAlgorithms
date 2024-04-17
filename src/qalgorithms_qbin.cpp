@@ -242,6 +242,15 @@ namespace q
                     {
                         binDeque.front().subsetScan(&binDeque, &finishedBins, maxdist, subsetCount);
                         binDeque.pop_front();
+// ---
+                        std::vector<double> controlScanDist;
+                        std::transform(binDeque.back().pointsInBin.begin(), binDeque.back().pointsInBin.end(), back_inserter(controlScanDist), [](Datapoint *F)
+                       { return F->scanNo; });
+                       for (size_t i = 1; i < controlScanDist.size(); i++)
+                       {
+                        assert(controlScanDist[i] - controlScanDist[i-1] <= 6);
+                       }
+                       
                     }
                     break;
                 }
@@ -441,15 +450,17 @@ namespace q
                         Datapoint *F = *(pointsInBin.begin() + j);
                         control_outOfBins.push_back(F);
                     }
+                    lastpos = i + 1;// sets previous i to the position one i ahead, since
+                    newstart += lastpos;// for the next split this is the first element
                 }
                 else
                 {
                     // viable bin, stable in scan dimension @todo fixed error of last element being omitted
                     Bin output(newstart, pointsInBin.begin() + i + 1); // +1 since otherwise last element of the correct range is not included
                     bincontainer->push_back(output);
+                    lastpos = i + 1;
+                    newstart += lastpos;
                 }
-                lastpos = i + 1;                        // sets previous i to the position one i ahead, since
-                newstart = pointsInBin.begin() + i + 1; // for the next split this is the first element
             }
         }
         // check for open bin at the end
@@ -721,7 +732,7 @@ int main()
     testcontainer.makeFirstBin(&testdata);
     std::vector<int> dim = {q::SubsetMethods::mz, q::SubsetMethods::scans}; // at least one element must be terminator
     testcontainer.subsetBins(dim, 6);
-    // return 0;                                  // int = max dist in scans; add value after for error in ppm instead of centroid error
+    return 0;                                  // int = max dist in scans; add value after for error in ppm instead of centroid error
     std::cout << "\ncalculating DQSBs...\n";
     testcontainer.assignDQSB(&testdata, 6); // int = max dist in scans
 
