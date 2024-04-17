@@ -27,7 +27,7 @@ namespace q
     public:
         RawData(); // @todo add handling for reading in data without centroid error
         ~RawData();
-        int lengthAllFeatures;
+        int lengthAllPoints;
         std::vector<std::vector<Datapoint>> allDatapoints;
         // "mz" "mzError" "RT" "scanNo" "intensity" "controlID" "controlCentroidDQS" "controlBinDQS"
         bool readcsv(std::string user_file, int d_mz, int d_mzError, int d_RT, int d_scanNo, int d_intensity, int d_control_binID, int d_control_DQScentroid, int d_control_DQSbin);
