@@ -228,13 +228,6 @@ a data point should happen automatically
 
 how many operations are identical, when does the largest difference occur?
 
-Some differences between the two implementations exist - of ~ 2.4 M data points (centroids?),
-~ 50 k were binned only in the c++ version and ~ 20 k only in the R version. @todo mathematical model of this problem
-Many of these incongruencies result from one point being binned (or not binned) and this
-point being a connecting element in either dimension to another group of points, which 
-either form a bin of their own or are not binned. No clear trend for one approach
-being more or less conservative than the other was observed. One possible reason for this 
-is rounding errors in floating-point operations.
 @todo control if first subset (after mz) is identical - only time the process should result in same binned
 results; Differences in subsetting by scans should not exist since only the absolute
 distance is enforced
@@ -255,8 +248,4 @@ calculation (sorted by scans)
 How certain is scan number as a good parameter?
 Add compile-time toggle for creating list of non-binned objects
 Cache optimisation
-Round to most accurate number that fits into a double
-Values in OS, mzError and critval are very small, same with distances for DQSBs. Quantify effect of 
-floating point inaccuracies and implement a mitigation if possible
 create a template for including a new subsetting method
-change error to use error * 10^6, for no centroid error just add mz. divide at critval step -> same results
