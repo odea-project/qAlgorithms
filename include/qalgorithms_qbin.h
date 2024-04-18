@@ -163,7 +163,7 @@ namespace q
     /// @param MID mean inner distance in mz to all other elements in the bin
     /// @param MOD minimum outer distance - the shortest distance in mz to a data point that is within maxdist and not in the bin
     /// @return the data quality score for the specified element
-    double calcDQS(double MID, double MOD); // Mean Inner Distance, Minimum Outer Distance
+    double calcDQS(const double MID, const double MOD); // Mean Inner Distance, Minimum Outer Distance
 
 }
 
