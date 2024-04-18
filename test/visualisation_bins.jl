@@ -16,6 +16,8 @@ match = filter(:control_ID => !=( -1), tdd)
 FN = filter(:control_ID => !=(-1), notbinned)
 FP  = filter(:control_ID => ==( -1), tdd)
 
+matchDQS = match[match.DQS .== match.control_DQSB, :] # 0.3% of DQS match exactly, not all DQS in a bin with matching DQS are identical
+
 
 binned_cpp = size(tdd)[1]
 binned_both = size(match)[1]
@@ -26,7 +28,7 @@ notbinned_both = notbinned_cpp - FNs_cpp
 binned_R = binned_both + FNs_cpp
 notbinned_R = notbinned_both + FPs_cpp
 size_total = binned_cpp + notbinned_cpp
-size_missing = 3568033 - size_total # size of the dataset
+size_missing = 3568034 - size_total # size of the dataset
 
 3568033 - 371034 # total size - out of bins
 
