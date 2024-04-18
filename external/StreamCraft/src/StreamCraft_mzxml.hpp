@@ -10,8 +10,9 @@
 
 #ifndef PUGIXML_PATH
 #define PUGIXML_PATH "../../pugixml-1.14/src/pugixml.hpp"
-#include PUGIXML_PATH
 #endif
+
+#include PUGIXML_PATH
 
 #define STREAMCRAFT_HEADER_ONLY
 #include "StreamCraft_utils.hpp"

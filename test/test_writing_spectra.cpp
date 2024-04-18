@@ -1,7 +1,6 @@
-#include "../external/StreamCraft/src/StreamCraft_mzml.hpp"
 
 #define STREAMCRAT_HEADER_ONLY
-
+#include "../external/StreamCraft/src/StreamCraft_mzml.hpp"
 
 int main() {
 
