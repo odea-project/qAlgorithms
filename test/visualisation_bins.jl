@@ -4,9 +4,9 @@ using DataFrames
 using ColorSchemes
 # using CairoMakie
 
-raw = CSV.read("../rawdata/control_bins.csv", DataFrame)
-tdd = CSV.read("../qbinning_binlist.csv", DataFrame) # C:/Users/unisys/Documents/ ; G:/_
-notbinned = CSV.read("../qbinning_notbinned.csv", DataFrame)
+raw = CSV.read("./rawdata/control_bins.csv", DataFrame)
+tdd = CSV.read("./qbinning_binlist.csv", DataFrame) # C:/Users/unisys/Documents/ ; G:/_
+notbinned = CSV.read("./qbinning_notbinned.csv", DataFrame)
 
 mzsplit1 = CSV.read("../control_cpp_mzsplit1.csv", DataFrame)
 # control = CSV.read("../rawdata/df_qBinning_test.csv", DataFrame)
