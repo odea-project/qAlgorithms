@@ -61,30 +61,39 @@ namespace q
     {
       int index;
       int scale;
+      int df;
       double apex_position;
       double mse;
       Matrix B;
       bool isValid;
       double left_limit;
       double right_limit;
+      int X_row_0;
+      int X_row_1;
 
       validRegression(
           int index,
           int scale,
+          int df,
           double apex_position,
           double mse,
           Matrix B,
           bool isValid = true,
           double left_limit = 0.0,
-          double right_limit = 0.0)
+          double right_limit = 0.0,
+          int X_row_0 = 0,
+          int X_row_1 = 0)
           : index(index),
             scale(scale),
+            df(df),
             apex_position(apex_position),
             mse(mse),
             B(B),
             isValid(isValid),
             left_limit(left_limit),
-            right_limit(right_limit) {}
+            right_limit(right_limit),
+            X_row_0(X_row_0),
+            X_row_1(X_row_1) {}
     };
 
     int global_maxScale;
@@ -99,6 +108,7 @@ namespace q
 
     void validateRegressions(
         const Matrix &B,
+        const RefMatrix &Y,
         const Matrix &Ylog,
         const std::vector<int *> &df,
         const int scale,
@@ -106,7 +116,7 @@ namespace q
 
     void mergeRegressionsOverScales(
         std::vector<std::unique_ptr<validRegression>> &validRegressions,
-        Matrix &Ylog);
+        const Matrix &Ylog, const RefMatrix &Y);
 
     std::vector<std::unique_ptr<DataType::Peak>> createPeaks(
         const std::vector<std::unique_ptr<validRegression>> &validRegressions,
@@ -116,8 +126,10 @@ namespace q
 
     double calcMse(const Matrix &yhat, const Matrix &y) const;
 
+    double calcMse(const Matrix &yhat, const RefMatrix &y) const;
+
     /**
-     * @brief Calculate the best mean squared error of the regression model with different regression windows but same window size.
+     * @brief Calculate the best mean squared error of the regression model with different regression windows BUT same window size.
      * @details The function extends the regression windows that all the windows cover the range from the lowest x value to the highest x value. I.e., if window A is [4,5,6,7,8,9,10] and window B is [6,7,8,9,10,11,12], the extended window is [4,5,6,7,8,9,10,11,12]. The function calculates the mean squared error of the regression model with the extended window and returns the mean squared error and the index of the best regression.
      *
      * @param Y : Measurement data (not log transformed)
@@ -126,11 +138,12 @@ namespace q
      * @param scale : Window size scale, e.g., 5 means the window size is 11 (2*5+1)
      * @return std::pair<double,int> : MSE and index of the best regression window
      */
-    std::pair<double, int> calcExtendedMse(
+    std::tuple<double, int, int, int, int, int, int, int> calcExtendedMse(
         const RefMatrix &Y,
         const Matrix &B,
         const std::vector<int> &groupIndices,
-        const int scale) const;
+        const int scale,
+        const std::vector<int *> &df);
 
     std::pair<Matrix, Matrix> jacobianMatrix_PeakArea(const Matrix &B, int scale) const;
 

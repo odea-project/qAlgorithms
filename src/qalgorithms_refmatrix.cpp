@@ -47,6 +47,11 @@ namespace q
     return elements[row * cols + col];
   }
 
+  double &RefMatrix::getElement(size_t idx) const
+  {
+    return elements[idx];
+  }
+
   void RefMatrix::assignRef(size_t row, size_t col, double& value)
   {
     elements[row * cols + col] = std::ref(value);
@@ -55,6 +60,20 @@ namespace q
   void RefMatrix::assignVal(size_t row, size_t col, double value)
   {
     elements[row * cols + col] = std::ref(value);
+  }
+
+  // submatrix
+  RefMatrix RefMatrix::subMatrix(size_t row_start, size_t row_end, size_t col_start, size_t col_end) const
+  {
+    RefMatrix result(row_end - row_start, col_end - col_start);
+    for (size_t i = row_start; i < row_end; i++)
+    {
+      for (size_t j = col_start; j < col_end; j++)
+      {
+        result.assignRef(i - row_start, j - col_start, elements[i * cols + j]);
+      }
+    }
+    return result;
   }
 
   // matrix operations

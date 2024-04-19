@@ -88,7 +88,8 @@ namespace q
     return colMatrix;
   }
 
-  // get sub-Matrix
+  // get sub-Matrix 
+  /// @todo: submatrix should extract a submatrix from the matrix as Reference (RefMatrix)
   Matrix Matrix::subMatrix(
       size_t startRow,
       size_t endRow,
@@ -97,6 +98,7 @@ namespace q
   {
     if (startRow >= rows || startCol >= cols || endRow > rows || endCol > cols || startRow > endRow || startCol > endCol)
     {
+      std::cout << startRow << " " << endRow << " " << startCol << " " << endCol << std::endl;
       throw std::out_of_range("Indices are out of range");
     }
 

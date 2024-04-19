@@ -31,9 +31,13 @@ namespace q
     // access
     double &operator()(size_t row, size_t col);
     double operator()(size_t row, size_t col) const;
+    double &getElement(size_t idx) const;
     // assign new reference matrix using row and col and the value
     void assignRef(size_t row, size_t col, double& value);
     void assignVal(size_t row, size_t col, double value);
+
+    // submatrix
+    RefMatrix subMatrix(size_t row_start, size_t row_end, size_t col_start, size_t col_end) const;
 
     // matrix operations
     Matrix log() const;

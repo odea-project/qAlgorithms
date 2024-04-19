@@ -54,7 +54,7 @@ def plot_mz_vs_intensity(file1, file2, file3, file4, file5):
 
     # For df2
     row = df2.iloc[0]
-    # plt.plot(row['MZ'], row['Intensity'], '-', label='File 2')
+    plt.plot(row['MZ'], row['Intensity'], '-', label='File 2')
     # plt.title(f"ScanNumber: {row['ScanNumber']}")
 
     # For df3
