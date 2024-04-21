@@ -46,8 +46,8 @@ namespace q
         double pt_mzmax;
         int pt_scanmin;
         int pt_scanmax;
-        std::vector<Datapoint *> pointsInBin;
-        std::vector<double> activeOS; // Order Space
+        std::vector<Datapoint *> pointsInBin; // @todo does not change after bin creation, check for performance improvement when using cast const
+        std::vector<double> activeOS;         // Order Space
         std::vector<double> DQSB;
 
         /// @brief generate a bin that is a subset of an existing bin using two iterators in one existing bin
@@ -81,7 +81,7 @@ namespace q
         /// @param OS the order space generated for the bin using makeOS()
         /// @param startBin index relating to the order space at which the bin starts
         /// @param endBin index relating to the order space at which the bin ends
-        void subsetMZ(std::deque<Bin> *bincontainer, const std::vector<double> &OS, int startBin, int endBin, unsigned int &counter);
+        void subsetMZ(std::deque<Bin> *bincontainer, const std::vector<double> &OS, const int startBin, const int endBin, unsigned int &counter);
 
         /// @brief divide a bin sorted by scans if there are gaps greater than maxdist in it. Bins that cannot be divided are closed.
         /// @details this function sorts all members of a bin by scans and iterates over them. If a gap greater than maxdist exists,
@@ -120,20 +120,20 @@ namespace q
 
         /// @brief create a bin out of rawdata and add it to the binDeque. This function exists since all subsetting functions require a bin to start
         /// @param rawdata a set of raw data on which binning is to be performed
-        void makeFirstBin(RawData *rawdata);
+        void makeFirstBin(RawData *rawdata); // @todo find way for rawdata to be const
 
         /// @brief perform the specified subsetting operations on the binDeque. Elements are added to the back and deleted from the front
         /// @param dimensions which dimensions should be used for subsetting in what order. 1 = subsetting by mz, 2 = subsetting by scans.
         /// Important: The last element of dimensions must determine bins to be finished, and no other subsetter may add to finsihedBins.
         /// @param maxdist the largest gap in scans which a bin can have while still being considered valid
-        void subsetBins(std::vector<int> dimensions, const unsigned int maxdist, const double massError);
+        void subsetBins(const std::vector<int> dimensions, const unsigned int maxdist, const double massError);
 
         /// @brief apply DQSB function to all completed bins
         /// @param rawdata the RawData object from which all bins in finishedBins were generated
         /// @param maxdist the largest gap in scans which a bin can have while still being considered valid
         void assignDQSB(const RawData *rawdata, const unsigned int maxdist);
 
-        void printAllBins(std::string path, RawData *rawdata);
+        void printAllBins(std::string path, const RawData *rawdata);
         void printBinSummary(std::string path);
 
         void controlAllBins();
@@ -144,8 +144,8 @@ namespace q
     // extracted ion chromatogram
     struct EIC
     {
-        std::vector<Datapoint> pointsInEIC;
-        std::vector<double> DQSB;
+        const std::vector<Datapoint> pointsInEIC;
+        const std::vector<double> DQSB;
         // mean DQS?
         // size?
         // mean mz?
@@ -157,7 +157,7 @@ namespace q
     /// @brief calculate the mean distance in mz to all other elements of a sorted vector for one element
     /// @param pointsInBin vector of data points sorted by mz
     /// @return vector of the mean inner distances for all elements in the same order as pointsInBin
-    std::vector<double> meanDistance(std::vector<Datapoint *> pointsInBin);
+    std::vector<double> meanDistance(const std::vector<Datapoint *> pointsInBin);
 
     /// @brief calculate the data quality score as described by Reuschenbach et al. for one datapoint in a bin
     /// @param MID mean inner distance in mz to all other elements in the bin
