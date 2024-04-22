@@ -24,6 +24,10 @@ for (i in 0:15) {
 plot(c(0:15), accurate/length(qbins$mz))
 plot(c(0:15), cumsum(accurate))
 
+qbins$DQSacc = qbins$DQS - qbins$control_DQSB
+
+plot(qbins$control_DQSB, qbins$DQS)
+
 ```
 
 ```{r FP-FN comparison}

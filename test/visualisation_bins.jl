@@ -16,7 +16,7 @@ match = filter(:control_ID => !=( -1), tdd)
 FN = filter(:control_ID => !=(-1), notbinned)
 FP  = filter(:control_ID => ==( -1), tdd)
 
-matchDQS = match[match.DQS .== match.control_DQSB, :] # 0.87% of DQS match exactly, not all DQS in a bin with matching DQS are identical
+matchDQS = match[tdd.DQS .== tdd.control_DQSB, :] # 0.87% of DQS match exactly, not all DQS in a bin with matching DQS are identical
 
 
 export_fp = filter(:Scans => >=(1913), raw)

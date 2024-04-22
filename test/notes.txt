@@ -26,3 +26,6 @@ https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0125108
 
 data points in centroids umbenennen?
 
+Kein Zshg zwischen DQS-differenz und mz, scans
+
+bis ~0.7 ist DQS manchmal größer, danach große Menge an Punkten schlechter eingeschätzt
