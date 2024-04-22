@@ -595,7 +595,8 @@ namespace q
         {
             dqs = MOD;
         }
-        dqs = (MOD - MID) * (1 / (1 + MID)) / dqs; // sm(i) term
+        // dqs = (MOD - MID) * (1 / (1 + MID)) / dqs; // sm(i) term
+        dqs = (MOD - MID) / ((1 + MID) * dqs);
         dqs = (dqs + 1) / 2;                       // interval transform
         assert(0 <= dqs && dqs <= 1);
         return dqs;
