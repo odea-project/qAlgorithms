@@ -432,7 +432,7 @@ namespace q
                 needle = scansize; // prevent searching outside of the valid scan region
             }
 
-            if (rawdata->allDatapoints[i][0].mz >= minInnerMZ) // @todo segfault at i = 2534 if .readcsv() is called twice
+            if (rawdata->allDatapoints[i][0].mz >= minInnerMZ) 
             {
                 minMaxOutPerScan.push_back(NO_MIN_FOUND);
                 minFound = true;
@@ -457,7 +457,7 @@ namespace q
                 {
                     minMaxOutPerScan.push_back(rawdata->allDatapoints[i][scansize].mz);
                     minFound = true;
-                    continue;
+                    continue; // @todo work with goto here
                 }
                 else
                 {
@@ -508,7 +508,7 @@ namespace q
             double minDist = INFINITY;
             const double currentMZ = pointsInBin[i]->mz;
             const unsigned int currentRangeStart = (pointsInBin[i]->scanNo - minScanInner) * 2; // gives position of the first value in minMaxOutPerScan that must be considered, assuming the first value in minMaxOutPerScan (index 0) is only relevant to the Datapoint in the lowest scan. For every increase in scans, that range starts two elements later
-            const unsigned int currentRangeEnd = currentRangeStart + maxdist * 2 + 1;
+            const unsigned int currentRangeEnd = currentRangeStart + maxdist * 4 + 1;
             for (unsigned int j = currentRangeStart; j <= currentRangeEnd; j++) // from lowest scan to highest scan relevant to feature, +1 since scan no of feature has to be included
             {
                 const double dist = std::abs(currentMZ - minMaxOutPerScan[j]);
@@ -524,7 +524,7 @@ namespace q
             // assert(tmp_DQS == pointsInBin[i]->control_DQSbin);
             DQSB.push_back(tmp_DQS);
         }
-        throw; // rm
+        // throw; // rm
     }
 
     std::string Bin::summariseBin()
@@ -621,7 +621,7 @@ int main()
 
     q::RawData testdata;
     // path to data, mz, centroid error, RT, scan number, intensity, control ID, DQS centroid, control DQS Bin
-    testdata.readcsv("../../rawdata/control_bins.csv", 0, 1, 2, 3, 4, 5, 6, 7); // ../../rawdata/qCentroid_Warburg_pos_171123_01_Zu_01.csv ../test/test.csv
+    testdata.readcsv("../../rawdata/control_bins.csv", 0, 1, 2, 3, 4, 5, 6, 7); // ../../rawdata/control_bins.csv reduced_DQSdiff
     // for (size_t i = 0; i < testdata.scanBreaks.size(); i++)
     // {
     //     std::cout << i << "," << testdata.scanBreaks[i] << "\n";
@@ -632,7 +632,7 @@ int main()
     testcontainer.subsetBins(dim, 6);                                       // int = max dist in scans; add value after for error in ppm instead of centroid error
     std::cout << "\ncalculating DQSBs...\n";
     testcontainer.assignDQSB(&testdata, 6); // int = max dist in scans
-    return 0;
+    // return 0;
 
     // std::ofstream result("../../qbinning_faultybins.csv");
     // std::streambuf *coutbuf = std::cout.rdbuf(); // save old buf
@@ -646,21 +646,21 @@ int main()
     testcontainer.printAllBins("../../qbinning_binlist.csv", &testdata);
     std::cout << "printed all bins\n";
 
-    std::fstream file_out;
-    std::stringstream output;
-    file_out.open("../../qbinning_notbinned.csv", std::ios::out);
-    if (!file_out.is_open())
-    {
-        std::cout << "could not open file\n";
-    }
+    // std::fstream file_out;
+    // std::stringstream output;
+    // file_out.open("../../qbinning_notbinned.csv", std::ios::out);
+    // if (!file_out.is_open())
+    // {
+    //     std::cout << "could not open file\n";
+    // }
 
-    output << "mz,scan,ID,control_ID,control_DQSB\n";
-    for (size_t i = 0; i < q::control_outOfBins.size(); i++) // segfault at 348348
-    {
-        output << std::setprecision(15) << q::control_outOfBins[i]->mz << "," << q::control_outOfBins[i]->scanNo << ",-1,"
-               << q::control_outOfBins[i]->control_binID << "," << q::control_outOfBins[i]->control_DQSbin << "\n";
-    }
-    file_out << output.str();
+    // output << "mz,scan,ID,control_ID,control_DQSB\n";
+    // for (size_t i = 0; i < q::control_outOfBins.size(); i++) // segfault at 348348
+    // {
+    //     output << std::setprecision(15) << q::control_outOfBins[i]->mz << "," << q::control_outOfBins[i]->scanNo << ",-1,"
+    //            << q::control_outOfBins[i]->control_binID << "," << q::control_outOfBins[i]->control_DQSbin << "\n";
+    // }
+    // file_out << output.str();
     // testcontainer.printBinSummary("../../qbinning_binsummary.csv");
 
     std::cout << "\n\nDone!\n\n";
