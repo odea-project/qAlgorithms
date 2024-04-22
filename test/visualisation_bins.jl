@@ -4,11 +4,11 @@ using DataFrames
 using ColorSchemes
 # using CairoMakie
 
-raw = CSV.read("./rawdata/control_bins.csv", DataFrame)
-tdd = CSV.read("./qbinning_binlist.csv", DataFrame) # C:/Users/unisys/Documents/ ; G:/_
-notbinned = CSV.read("./qbinning_notbinned.csv", DataFrame)
+raw = CSV.read("../rawdata/qCentroid_Warburg_pos_171123_01_Zu_01.csv", DataFrame)
+tdd = CSV.read("../qbinning_binlist.csv", DataFrame) # C:/Users/unisys/Documents/ ; G:/_
+notbinned = CSV.read("../qbinning_notbinned.csv", DataFrame)
 
-mzsplit1 = CSV.read("../control_cpp_mzsplit1.csv", DataFrame)
+# mzsplit1 = CSV.read("../control_cpp_mzsplit1.csv", DataFrame)
 # control = CSV.read("../rawdata/df_qBinning_test.csv", DataFrame)
 # wrongbins = CSV.read("C:/Users/unisys/Documents/Studium/Analytik-Praktikum/qBinning_faultybins.csv", DataFrame)
 
@@ -16,33 +16,14 @@ match = filter(:control_ID => !=( -1), tdd)
 FN = filter(:control_ID => !=(-1), notbinned)
 FP  = filter(:control_ID => ==( -1), tdd)
 
-matchDQS = match[match.DQS .== match.control_DQSB, :] # 0.3% of DQS match exactly, not all DQS in a bin with matching DQS are identical
+matchDQS = match[match.DQS .== match.control_DQSB, :] # 0.87% of DQS match exactly, not all DQS in a bin with matching DQS are identical
 
 
-binned_cpp = size(tdd)[1]
-binned_both = size(match)[1]
-FPs_cpp = size(FP)[1]
-notbinned_cpp = size(notbinned)[1]
-FNs_cpp = size(FN)[1]
-notbinned_both = notbinned_cpp - FNs_cpp 
-binned_R = binned_both + FNs_cpp
-notbinned_R = notbinned_both + FPs_cpp
-size_total = binned_cpp + notbinned_cpp
-size_missing = 3568034 - size_total # size of the dataset
+export_fp = filter(:Scans => >=(1913), raw)
+export_fp = filter(:Scans => <=(1957), export_fp)
+export_fp = filter(:Centroid => <=(200), export_fp)
+CSV.write("../rawdata/reduced_DQSdiff.csv", DF)
 
-3568033 - 371034 # total size - out of bins
-
-ratios = [binned_both, FNs_cpp, notbinned_both, FPs_cpp, size_missing]
-colors = [:green, :blue, :orange, :red, :black]
-
-f, ax, plt = pie(ratios,
-                 color = colors,
-                 radius = 4,
-                 inner_radius = 2,
-                 strokecolor = :white,
-                 strokewidth = 0,
-                 axis = (autolimitaspect = 1, )
-                )
 
 # Binning Plot :glasbey_bw_minc_20_n256
 fig = Figure()

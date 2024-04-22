@@ -166,14 +166,14 @@ end
 
 function loadData(df::DataFrame)
     DF = deepcopy(df)
-    mz = deepcopy(DF[!, "Centroids"])
+    mz = deepcopy(DF[!, "Centroid"])
     err_mz = deepcopy(DF[!, "Centroid Error"])
     rt = deepcopy(DF[!, "Scans"]) 
-    nos = append!(diff(DF[!, "Centroids"]),-255.)#./mean(df[!, "Centroid Error"])
+    nos = append!(diff(DF[!, "Centroid"]),-255.)#./mean(df[!, "Centroid Error"])
     minBinSize = 5 # Minimum Bin Size
     minGapSize_Scans = 6
     I = deepcopy(DF[!, "Peak area"])
-    critVal_lib = qBinCrit(append!(critVal(collect(1:length(df.Centroids))),Float64(minGapSize_Scans)))
+    critVal_lib = qBinCrit(append!(critVal(collect(1:length(df.Centroid))),Float64(minGapSize_Scans)))
     idxDictHash = [1.] # Initial HashValue 
     idxDict = createIndex([mz,nos, err_mz],critVal_lib)
     nnd = deepcopy(DF[!, "nearestNeighbourDistance"])
@@ -240,6 +240,7 @@ function qBinning(df::DataFrame) ::DataFrame
 
     RT = [df[!,"RT [s]"][u.idx] for u in idxDict]
     MZ = [mz[u.idx] for u in idxDict]
+    scans = [df[!,"Scans"][u.idx] for u in idxDict]
     I = [I[u.idx] for u in idxDict]
     NND = [nndw[u.idx] for u in idxDict]
     DQScen = [df[!,"DQS"][u.idx] for u in idxDict]
@@ -255,6 +256,7 @@ function qBinning(df::DataFrame) ::DataFrame
     DF = DataFrame([])
     DF[!, "mz"] = reduce(vcat, MZ)
     DF[!, "RT"] = reduce(vcat, RT)
+    DF[!, "scan"] = reduce(vcat, scans)
     DF[!, "I"] = reduce(vcat, I)
     DF[!, "DQScen"] = reduce(vcat, DQScen)
     DF[!, "DQSbin"] = reduce(vcat, DQSbin)
@@ -264,14 +266,14 @@ end
 
 ### RUN
 if @isdefined(df)
-    import_file ="PATH OF YOUR TEST DATA/test_data_qBinning.csv"
+    import_file ="../rawdata/reduced_DQSog.csv"
     # The CSV must contain at least the following labels:
-    # Centroids, Centroid Error, Peak area, DQS, RT [s]
+    # Centroid, Centroid Error, Peak area, DQS, RT [s]
     df = DataFrame(CSV.File(import_file))
     sort!(df, "RT [s]")
-    df[!, "nearestNeighbourDistance"] = nearestNeighbourDistance(df[!,"Centroids"])
+    df[!, "nearestNeighbourDistance"] = nearestNeighbourDistance(df[!,"Centroid"])
     df.Scans = cumsum(append!([1.], sign.(diff(df[!,"RT [s]"]))))
-    sort!(df, :Centroids)
+    sort!(df, :Centroid)
 end
 DF = qBinning(df)
 
