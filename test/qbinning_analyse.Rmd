@@ -13,6 +13,28 @@ library(data.table)
 library(patchwork)
 ```
 
+```{r new bin}
+monobin = read.csv("../../rawdata/monobin_base.csv")
+
+# erstelle je 1 Eintrag für alle scans zwischen 1913 und 1957
+for (i in 1913:1957) {
+  r = runif(1, 2, 4)
+  a = c(55*r, r*r/1000000, runif(1, 700, 2000), i, 1, -1, 0, -1)
+  monobin = rbind(monobin, a)
+}
+for (i in 1:length(monobin$mz)) {
+  t1 = c(monobin$mz[i]*runif(1, 2, 6), monobin$error[i], runif(1, 700, 2000), monobin$scans[i], 1, -1, 0, -1)
+  t2 = c(monobin$mz[i]*runif(1, 2, 6), monobin$error[i], runif(1, 700, 2000), monobin$scans[i], 1, -1, 0, -1)
+  monobin = rbind(monobin, t1)
+  monobin = rbind(monobin, t2)
+}
+
+write.csv(monobin, "../../rawdata/monobin.csv", row.names = FALSE)
+
+
+```
+
+
 ```{r bin results}
 qbins <- read.csv("../../qbinning_binlist.csv")
 accurate = c(1:16)

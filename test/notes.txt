@@ -29,3 +29,6 @@ data points in centroids umbenennen?
 Kein Zshg zwischen DQS-differenz und mz, scans
 
 bis ~0.7 ist DQS manchmal größer, danach große Menge an Punkten schlechter eingeschätzt
+
+Bins mit besserem DQS, da Punkte im gleichen Bin mit einbezogen werden
+Signifikant weniger Übereinstimmung wenn maxdist = 0

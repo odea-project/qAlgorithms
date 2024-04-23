@@ -42,6 +42,7 @@ namespace q
         double pt_MakeDQSB;
 
     public:
+        bool duplicateScan = false;
         double pt_mzmin;
         double pt_mzmax;
         int pt_scanmin;

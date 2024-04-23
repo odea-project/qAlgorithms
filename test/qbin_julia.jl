@@ -166,14 +166,14 @@ end
 
 function loadData(df::DataFrame)
     DF = deepcopy(df)
-    mz = deepcopy(DF[!, "Centroid"])
-    err_mz = deepcopy(DF[!, "Centroid Error"])
-    rt = deepcopy(DF[!, "Scans"]) 
-    nos = append!(diff(DF[!, "Centroid"]),-255.)#./mean(df[!, "Centroid Error"])
+    mz = deepcopy(DF[!, "mz"])
+    err_mz = deepcopy(DF[!, "error"])
+    rt = deepcopy(DF[!, "scans"]) 
+    nos = append!(diff(DF[!, "mz"]),-255.)#./mean(df[!, "error"])
     minBinSize = 5 # Minimum Bin Size
-    minGapSize_Scans = 6
-    I = deepcopy(DF[!, "Peak area"])
-    critVal_lib = qBinCrit(append!(critVal(collect(1:length(df.Centroid))),Float64(minGapSize_Scans)))
+    minGapSize_scans = 6
+    I = deepcopy(DF[!, "intensity"])
+    critVal_lib = qBinCrit(append!(critVal(collect(1:length(df.mz))),Float64(minGapSize_scans)))
     idxDictHash = [1.] # Initial HashValue 
     idxDict = createIndex([mz,nos, err_mz],critVal_lib)
     nnd = deepcopy(DF[!, "nearestNeighbourDistance"])
@@ -236,45 +236,52 @@ function qBinning(df::DataFrame) ::DataFrame
     mz, err_mz, rt, nos, minBinSize, critVal_lib, idxDictHash, idxDict, I, nnd = loadData(df)
     @time findBins!(mz,err_mz,rt,minBinSize,critVal_lib,idxDictHash,idxDict)
     nndw = zeros(length(nnd))
-    nearestNeighbourDistanceWindow!(nndw,mz,nnd,6)
+    nearestNeighbourDistanceWindow!(nndw,mz,nnd,0)
 
-    RT = [df[!,"RT [s]"][u.idx] for u in idxDict]
+    RT = [df[!,"rt"][u.idx] for u in idxDict]
     MZ = [mz[u.idx] for u in idxDict]
-    scans = [df[!,"Scans"][u.idx] for u in idxDict]
+    scans = [df[!,"scans"][u.idx] for u in idxDict]
+    error_fin = [df[!,"error"][u.idx] for u in idxDict]
     I = [I[u.idx] for u in idxDict]
     NND = [nndw[u.idx] for u in idxDict]
-    DQScen = [df[!,"DQS"][u.idx] for u in idxDict]
+    DQScen = [df[!,"DQScen"][u.idx] for u in idxDict]
     sortRT_idxVec = [sortperm(u) for u in RT]
     sortLists!(RT, sortRT_idxVec)
     sortLists!(MZ, sortRT_idxVec)
     sortLists!(I, sortRT_idxVec)
     sortLists!(NND, sortRT_idxVec)
     sortLists!(DQScen, sortRT_idxVec)
+    sortLists!(error_fin, sortRT_idxVec)
+    sortLists!(scans, sortRT_idxVec)
+
     DQSbin = [calculateDQSbin(u,v) for (u,v) in zip(MZ, NND)]
     BinID = [ones(length(u))*v for (u,v) in zip(MZ,1:length(MZ))]
 
     DF = DataFrame([])
     DF[!, "mz"] = reduce(vcat, MZ)
-    DF[!, "RT"] = reduce(vcat, RT)
-    DF[!, "scan"] = reduce(vcat, scans)
-    DF[!, "I"] = reduce(vcat, I)
+    DF[!, "error"] = reduce(vcat, error_fin)
+    DF[!, "rt"] = reduce(vcat, RT)
+    DF[!, "scans"] = reduce(vcat, scans)
+    DF[!, "intensity"] = reduce(vcat, I)
+    DF[!, "ID"] = reduce(vcat, BinID)
     DF[!, "DQScen"] = reduce(vcat, DQScen)
     DF[!, "DQSbin"] = reduce(vcat, DQSbin)
-    DF[!, "ID"] = reduce(vcat, BinID)
+    DF[!, "NND"] = reduce(vcat, NND)
     return DF
 end
 
 ### RUN
-if @isdefined(df)
-    import_file ="../rawdata/reduced_DQSog.csv"
+
+    import_file ="../rawdata/monobin.csv" # reduced_DQSog
     # The CSV must contain at least the following labels:
-    # Centroid, Centroid Error, Peak area, DQS, RT [s]
+    # mz, error, intensity, DQScen, rt
     df = DataFrame(CSV.File(import_file))
-    sort!(df, "RT [s]")
-    df[!, "nearestNeighbourDistance"] = nearestNeighbourDistance(df[!,"Centroid"])
-    df.Scans = cumsum(append!([1.], sign.(diff(df[!,"RT [s]"]))))
-    sort!(df, :Centroid)
-end
+    # df = export_fp
+    sort!(df, "rt")
+    df[!, "nearestNeighbourDistance"] = nearestNeighbourDistance(df[!,"mz"])
+    df.scans = cumsum(append!([1.], sign.(diff(df[!,"rt"]))))
+    sort!(df, :mz)
+
 DF = qBinning(df)
 
 "complete"

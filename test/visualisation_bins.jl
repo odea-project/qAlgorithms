@@ -19,10 +19,10 @@ FP  = filter(:control_ID => ==( -1), tdd)
 matchDQS = match[tdd.DQS .== tdd.control_DQSB, :] # 0.87% of DQS match exactly, not all DQS in a bin with matching DQS are identical
 
 
-export_fp = filter(:Scans => >=(1913), raw)
-export_fp = filter(:Scans => <=(1957), export_fp)
-export_fp = filter(:Centroid => <=(200), export_fp)
-CSV.write("../rawdata/reduced_DQSdiff.csv", DF)
+export_fp = filter(:scans => >=(1910), df)
+export_fp = filter(:scans => <=(1960), export_fp)
+export_fp = filter(:mz => <=(600), export_fp)
+CSV.write("../rawdata/DQSis0.csv", DF)
 
 
 # Binning Plot :glasbey_bw_minc_20_n256
@@ -49,3 +49,4 @@ hist(mzsplit1_close.close; bins = 100)
 # <100  : 83869;  51390;  32479
 # <10   : 18156;  9199;   8957
 # >1    : 2022;   1008;   1014
+
