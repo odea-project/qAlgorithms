@@ -24,6 +24,7 @@ namespace q
     std::vector<double> pt_stepsForDQS;
     std::vector<double> pt_scanRelSteps;
     std::vector<Datapoint *> control_outOfBins;
+    int control_duplicates;
 
 #define IGNORE -256 // nonsense value if no real number exists. Must be negative since it is used later when searching for the smallest distance
 #define NO_MIN_FOUND -INFINITY
@@ -136,7 +137,7 @@ namespace q
                         else
                         {
                             binDeque.front().makeCumError(massError);
-                        }                                                                                                                      // always after order space, since the features get sorted
+                        } // always after order space, since the features get sorted
                         binDeque.front().subsetMZ(&binDeque, binDeque.front().activeOS, 0, binDeque.front().activeOS.size() - 1, subsetCount); // takes element from binDeque, starts subsetting, appends bins to binDeque
                         binDeque.pop_front();                                                                                                  // remove the element that was processed from binDeque
                     }
@@ -188,7 +189,7 @@ namespace q
         // possible symbols
         // char shapes[] = "acGuxnoQzRsTvjIEf"; // random shape when displaying with makie @todo does not work
 
-        output << "mz,scan,ID,DQS,control_ID,control_DQS,control_DQSB\n";
+        output << "mz,scan,ID,DQS,control_ID,control_DQSB\n";
 
         for (size_t i = 0; i < finishedBins.size(); i++) // @todo make faster
         {
@@ -199,8 +200,8 @@ namespace q
             for (size_t j = 0; j < binnedPoints.size(); j++)
             {
                 char buffer[128];
-                sprintf(buffer, "%0.15f,%d,%zu,%0.15f,%d,%0.15f,%0.15f\n", binnedPoints[j]->mz, binnedPoints[j]->scanNo, i + 1, finishedBins[i].DQSB[j],
-                        binnedPoints[j]->control_binID, binnedPoints[j]->control_DQScentroid, binnedPoints[j]->control_DQSbin);
+                sprintf(buffer, "%0.15f,%d,%zu,%0.15f,%d,%0.15f\n", binnedPoints[j]->mz, binnedPoints[j]->scanNo, i + 1, finishedBins[i].DQSB[j],
+                        binnedPoints[j]->control_binID, binnedPoints[j]->control_DQSbin);
                 output << buffer;
             }
         }
@@ -321,6 +322,7 @@ namespace q
     void Bin::subsetScan(std::deque<Bin> *bincontainer, std::vector<Bin> *finishedBins, const unsigned int &maxdist, unsigned int &counter)
     {
         // function is called on a bin sorted by mz
+        int control_duplicatesIn = 0;
         const size_t binSize = pointsInBin.size();
         double tmp_pt_mzmin = pointsInBin.front()->mz;
         double tmp_pt_mzmax = pointsInBin.back()->mz;
@@ -330,7 +332,8 @@ namespace q
         int lastpos = 0;
         for (size_t i = 0; i < binSize - 1; i++) // -1 since difference to next data point is checked @todo rework to start at i = 0
         {
-            if (pointsInBin[i + 1]->scanNo - pointsInBin[i]->scanNo > maxdist) // bin needs to be split
+            const int distanceScan = pointsInBin[i + 1]->scanNo - pointsInBin[i]->scanNo;
+            if (distanceScan > maxdist) // bin needs to be split
             {
                 ++counter;
                 // less than five features in bin
@@ -351,6 +354,11 @@ namespace q
                 lastpos = i + 1;                          // sets previous i to the position one i ahead, since
                 newstart = pointsInBin.begin() + lastpos; // for the next split this is the first element
             }
+            else if (distanceScan == 0)
+            {
+                // duplicateScan = true;
+                ++control_duplicatesIn;
+            }
         }
         // check for open bin at the end
         if (lastpos == 0) // no cut has occurred
@@ -360,6 +368,8 @@ namespace q
             bincontainer->front().pt_scanmin = pointsInBin.front()->scanNo;
             bincontainer->front().pt_scanmax = pointsInBin.back()->scanNo;
             finishedBins->push_back(bincontainer->front());
+            // ++control_duplicates;
+            control_duplicates += control_duplicatesIn;
         }
         else if (binSize - lastpos >= 5) // binsize starts at 1 // @todo check for correctness
         {
@@ -432,7 +442,7 @@ namespace q
                 needle = scansize; // prevent searching outside of the valid scan region
             }
 
-            if (rawdata->allDatapoints[i][0].mz >= minInnerMZ) 
+            if (rawdata->allDatapoints[i][0].mz >= minInnerMZ)
             {
                 minMaxOutPerScan.push_back(NO_MIN_FOUND);
                 minFound = true;
@@ -502,7 +512,8 @@ namespace q
             }
         }
 
-        // find min distance in minMaxOutPerScan, assign to minOuterDistances in order of the pointsInBin
+
+        // find min distance in minMaxOutPerScan, then calculate DQS for that point
         for (size_t i = 0; i < binsize; i++)
         {
             double minDist = INFINITY;
@@ -518,13 +529,13 @@ namespace q
                     assert(minDist > 0);
                 }
             }
-
+            std::cout << minDist << "\n";
             // calculate DQSB on a per-feature basis
             double tmp_DQS = calcDQS(meanInnerDistances[i], minDist);
             // assert(tmp_DQS == pointsInBin[i]->control_DQSbin);
             DQSB.push_back(tmp_DQS);
         }
-        // throw; // rm
+        throw; // rm
     }
 
     std::string Bin::summariseBin()
@@ -597,7 +608,7 @@ namespace q
         }
         // dqs = (MOD - MID) * (1 / (1 + MID)) / dqs; // sm(i) term
         dqs = (MOD - MID) / ((1 + MID) * dqs);
-        dqs = (dqs + 1) / 2;                       // interval transform
+        dqs = (dqs + 1) / 2; // interval transform
         assert(0 <= dqs && dqs <= 1);
         return dqs;
     }
@@ -614,6 +625,7 @@ namespace q
 
 int main()
 {
+    q::control_duplicates = 0;
     std::cout << "starting...\n";
     // std::ofstream result("../../qbinning_ßßß.csv");
     // std::streambuf *coutbuf = std::cout.rdbuf(); // save old buf
@@ -622,7 +634,7 @@ int main()
 
     q::RawData testdata;
     // path to data, mz, centroid error, RT, scan number, intensity, control ID, DQS centroid, control DQS Bin
-    testdata.readcsv("../../rawdata/control_bins.csv", 0, 1, 2, 3, 4, 5, 6, 7); // ../../rawdata/control_bins.csv reduced_DQSdiff
+    testdata.readcsv("../../rawdata/monobin.csv", 0, 1, 2, 3, 4, 5, 6, 7); // ../../rawdata/control_bins.csv reduced_DQSdiff
     // for (size_t i = 0; i < testdata.scanBreaks.size(); i++)
     // {
     //     std::cout << i << "," << testdata.scanBreaks[i] << "\n";
@@ -631,8 +643,8 @@ int main()
     testcontainer.makeFirstBin(&testdata);
     std::vector<int> dim = {q::SubsetMethods::mz, q::SubsetMethods::scans}; // at least one element must be terminator
     testcontainer.subsetBins(dim, 6);                                       // int = max dist in scans; add value after for error in ppm instead of centroid error
-    std::cout << "\ncalculating DQSBs...\n";
-    testcontainer.assignDQSB(&testdata, 6); // int = max dist in scans
+    std::cout << "Total duplicates: " << q::control_duplicates << "\n--\ncalculating DQSBs...\n";
+    testcontainer.assignDQSB(&testdata, 0); // int = max dist in scans
     // return 0;
 
     // std::ofstream result("../../qbinning_faultybins.csv");
