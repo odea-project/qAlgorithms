@@ -32,3 +32,4 @@ bis ~0.7 ist DQS manchmal größer, danach große Menge an Punkten schlechter ei
 
 Bins mit besserem DQS, da Punkte im gleichen Bin mit einbezogen werden
 Signifikant weniger Übereinstimmung wenn maxdist = 0
+Fehler bei Abstandsberechnung des DQS beachten

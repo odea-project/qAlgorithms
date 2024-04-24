@@ -259,12 +259,12 @@ function qBinning(df::DataFrame) ::DataFrame
 
     DF = DataFrame([])
     DF[!, "mz"] = reduce(vcat, MZ)
-    DF[!, "error"] = reduce(vcat, error_fin)
+    # DF[!, "error"] = reduce(vcat, error_fin)
     DF[!, "rt"] = reduce(vcat, RT)
-    DF[!, "scans"] = reduce(vcat, scans)
+    # DF[!, "scans"] = reduce(vcat, scans)
     DF[!, "intensity"] = reduce(vcat, I)
-    DF[!, "ID"] = reduce(vcat, BinID)
-    DF[!, "DQScen"] = reduce(vcat, DQScen)
+    # DF[!, "ID"] = reduce(vcat, BinID)
+    # DF[!, "DQScen"] = reduce(vcat, DQScen)
     DF[!, "DQSbin"] = reduce(vcat, DQSbin)
     DF[!, "NND"] = reduce(vcat, NND)
     return DF
@@ -272,7 +272,7 @@ end
 
 ### RUN
 
-    import_file ="../rawdata/monobin.csv" # reduced_DQSog
+    import_file ="./rawdata/monobin.csv" # reduced_DQSog
     # The CSV must contain at least the following labels:
     # mz, error, intensity, DQScen, rt
     df = DataFrame(CSV.File(import_file))

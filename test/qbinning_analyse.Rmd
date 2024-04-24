@@ -15,6 +15,7 @@ library(patchwork)
 
 ```{r new bin}
 monobin = read.csv("../../rawdata/monobin_base.csv")
+monobin = monobin[which(1912 < monobin$scans & monobin$scans < 1958),]
 
 # erstelle je 1 Eintrag für alle scans zwischen 1913 und 1957
 for (i in 1913:1957) {
@@ -23,8 +24,8 @@ for (i in 1913:1957) {
   monobin = rbind(monobin, a)
 }
 for (i in 1:length(monobin$mz)) {
-  t1 = c(monobin$mz[i]*runif(1, 2, 6), monobin$error[i], runif(1, 700, 2000), monobin$scans[i], 1, -1, 0, -1)
-  t2 = c(monobin$mz[i]*runif(1, 2, 6), monobin$error[i], runif(1, 700, 2000), monobin$scans[i], 1, -1, 0, -1)
+  t1 = c(monobin$mz[i]*runif(1, 2, 3), monobin$error[i], runif(1, 700, 2000), monobin$scans[i], 1, -1, 0, -1)
+  t2 = c(monobin$mz[i]*runif(1, 2, 4), monobin$error[i], runif(1, 700, 2000), monobin$scans[i], 1, -1, 0, -1)
   monobin = rbind(monobin, t1)
   monobin = rbind(monobin, t2)
 }

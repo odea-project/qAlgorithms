@@ -79,7 +79,7 @@ namespace q
             allDatapoints[i_scanNo].push_back(F); // every subvector in allDatapoints is one complete scan - does not require a sorted input file!
             // }
         }
-        for (size_t i = 1; i < allDatapoints.size(); i++) // necessary if features aren't already sorted, performance impact should be very small
+        for (size_t i = 1; i < allDatapoints.size(); i++) // make sure data conforms to expectations
         {
             std::sort(allDatapoints[i].begin(), allDatapoints[i].end(), [](const Datapoint lhs, const Datapoint rhs)
                       { return lhs.mz < rhs.mz; });
@@ -132,14 +132,15 @@ namespace q
                         binDeque.front().makeOS();
                         if (massError < 0) // @todo more efficient solution?
                         {
-                            binDeque.front().makeCumError();
+                            binDeque.front().makeCumError(); // always after order space, since makeOS sorts
                         }
                         else
                         {
                             binDeque.front().makeCumError(massError);
-                        } // always after order space, since the features get sorted
-                        binDeque.front().subsetMZ(&binDeque, binDeque.front().activeOS, 0, binDeque.front().activeOS.size() - 1, subsetCount); // takes element from binDeque, starts subsetting, appends bins to binDeque
-                        binDeque.pop_front();                                                                                                  // remove the element that was processed from binDeque
+                        }
+                        // takes element from binDeque, starts subsetting, appends bins to binDeque
+                        binDeque.front().subsetMZ(&binDeque, binDeque.front().activeOS, 0, binDeque.front().activeOS.size() - 1, subsetCount);
+                        binDeque.pop_front(); // remove the element that was processed from binDeque
                     }
                     break;
                 }
@@ -222,14 +223,6 @@ namespace q
         file_out << output.str();
     }
 
-    void BinContainer::controlAllBins()
-    {
-        for (size_t i = 0; i < finishedBins.size(); i++)
-        {
-            finishedBins[i].controlBin(i);
-        }
-    }
-
 #pragma endregion "BinContainer"
 
 #pragma region "Bin"
@@ -253,7 +246,6 @@ namespace q
 
     void Bin::makeOS()
     {
-        // sort features by mz
         std::sort(pointsInBin.begin(), pointsInBin.end(), [](const Datapoint *lhs, const Datapoint *rhs)
                   { return lhs->mz < rhs->mz; });
 
@@ -270,7 +262,7 @@ namespace q
         cumError.reserve(pointsInBin.size());
         cumError.push_back(0); // the first element has a precursor error of 0
         std::transform(pointsInBin.begin(), pointsInBin.end(), back_inserter(cumError), [](Datapoint *F)
-                       { return F->mzError * 1000000; });                     // transfer error values from feature objects
+                       { return F->mzError * 1000000; });                     // *1000000 for compatibility with ppm
         std::partial_sum(cumError.begin(), cumError.end(), cumError.begin()); // cumulative sum
     }
 
@@ -333,10 +325,13 @@ namespace q
         for (size_t i = 0; i < binSize - 1; i++) // -1 since difference to next data point is checked @todo rework to start at i = 0
         {
             const int distanceScan = pointsInBin[i + 1]->scanNo - pointsInBin[i]->scanNo;
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wsign-compare"
             if (distanceScan > maxdist) // bin needs to be split
+#pragma GCC diagnostic pop
             {
                 ++counter;
-                // less than five features in bin
+                // less than five points in bin
                 if (i - lastpos + 1 < 5) // +1 since i starts at 0
                 {
                     for (size_t j = lastpos; j <= i; j++) // @todo checked for correctness
@@ -419,11 +414,11 @@ namespace q
                   { return lhs->mz < rhs->mz; });
         const double minInnerMZ = pointsInBin.front()->mz;
         const double maxInnerMZ = pointsInBin.back()->mz;
-        const std::vector<double> meanInnerDistances = meanDistance(pointsInBin);
+        const std::vector<long double> meanInnerDistances = meanDistance(pointsInBin);
 
         // for all scans relevant to the bin
-        int needle = 0;     // position in scan where a value was found - starts at 0 for first scan
-#pragma GCC diagnostic push // do not display the specific warning for rounding a double to integer
+        int needle = 0; // position in scan where a value was found - starts at 0 for first scan
+#pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wsign-compare"
         for (int i = scanRangeStart; i < scanRangeEnd; i++)
 #pragma GCC diagnostic pop
@@ -512,7 +507,6 @@ namespace q
             }
         }
 
-
         // find min distance in minMaxOutPerScan, then calculate DQS for that point
         for (size_t i = 0; i < binsize; i++)
         {
@@ -520,7 +514,7 @@ namespace q
             const double currentMZ = pointsInBin[i]->mz;
             const unsigned int currentRangeStart = (pointsInBin[i]->scanNo - minScanInner) * 2; // gives position of the first value in minMaxOutPerScan that must be considered, assuming the first value in minMaxOutPerScan (index 0) is only relevant to the Datapoint in the lowest scan. For every increase in scans, that range starts two elements later
             const unsigned int currentRangeEnd = currentRangeStart + maxdist * 4 + 1;
-            for (unsigned int j = currentRangeStart; j <= currentRangeEnd; j++) // from lowest scan to highest scan relevant to feature, +1 since scan no of feature has to be included
+            for (unsigned int j = currentRangeStart; j <= currentRangeEnd; j++) // from lowest scan to highest scan relevant to this point, +1 since scan no of point has to be included
             {
                 const double dist = std::abs(currentMZ - minMaxOutPerScan[j]);
                 if (dist < minDist)
@@ -529,13 +523,11 @@ namespace q
                     assert(minDist > 0);
                 }
             }
-            std::cout << minDist << "\n";
-            // calculate DQSB on a per-feature basis
-            double tmp_DQS = calcDQS(meanInnerDistances[i], minDist);
-            // assert(tmp_DQS == pointsInBin[i]->control_DQSbin);
+            std::cout << std::setprecision(15) << meanInnerDistances[i] << "\n";
+            double tmp_DQS = calcDQS(meanInnerDistances[i], minDist); // @todo scale DQS with distance from point, gaussian - maxdist + 1 = alpha?
             DQSB.push_back(tmp_DQS);
         }
-        throw; // rm
+        // throw; // rm
     }
 
     std::string Bin::summariseBin()
@@ -561,56 +553,49 @@ namespace q
         return output;
     }
 
-    void Bin::controlBin(int binID)
-    {
-        for (size_t i = 0; i < pointsInBin.size() - 1; i++)
-        {
-            if (pointsInBin[i]->control_binID != pointsInBin[i + 1]->control_binID) // color 11 for mismatch  mz,rt,ID,color,shape
-            {
-                std::cout << pointsInBin[i]->mz << "," << pointsInBin[i]->scanNo << "," << binID << ",11,L\n";
-            }
-        }
-        return;
-    }
-
 #pragma endregion "Bin"
 
 #pragma region "Functions"
 
-    std::vector<double> meanDistance(const std::vector<Datapoint *> featurelistBin)
+    std::vector<long double> meanDistance(const std::vector<Datapoint *> pointsInBin)
     {
         // assumes bin is sorted by mz
-        const size_t binsize = featurelistBin.size();
-        double totalSum = 0;
-        std::vector<double> output(binsize);
+        const size_t binsize = pointsInBin.size();
+        const long double ld_binsize(binsize);
+        long double totalSum = 0;
+        std::vector<long double> output(binsize);
         for (size_t i = 0; i < binsize; i++)
         {
-            totalSum += featurelistBin[i]->mz;
+            totalSum += pointsInBin[i]->mz; // totalSum is the sum of all mz ahead of the current element
         }
-        double beforeSum = 0;
+        double beforeSum = 0; // beforeSum is the sum of all mz past the current element
         for (size_t i = 0; i < binsize; i++)
         {
-            const double v1 = (totalSum - featurelistBin[i]->mz * (binsize - i));
-            const double v2 = (featurelistBin[i]->mz * i - beforeSum);
-            beforeSum += featurelistBin[i]->mz;
-            totalSum -= featurelistBin[i]->mz;
-            output[i] = (v1 + v2) / (binsize - 1);
+            const long double ld_i(i);
+            const long double v1 = fmal(pointsInBin[i]->mz, -(ld_binsize - ld_i), totalSum); // sum of all distances to mz ahead of the current element
+            // (totalSum - pointsInBin[i]->mz * (binsize - i));
+            const long double v2 = fmal(pointsInBin[i]->mz, ld_i, -beforeSum); // sum of all distances to mz past the current element (starts at 0)
+            // (pointsInBin[i]->mz * i - beforeSum);
+            beforeSum += pointsInBin[i]->mz;
+            totalSum -= pointsInBin[i]->mz;
+            output[i] = (v1 + v2) / (binsize - 1); // -1 since the distance of an element to itself is not factored in
         }
         return output;
     }
 
-    inline double calcDQS(const double MID, const double MOD) // mean inner distance, minimum outer distance
+    inline double calcDQS(const long double MID, const double MOD) // mean inner distance, minimum outer distance
     {
-        double dqs = MID;
-        if (dqs < MOD)
+        long double dqs = MID;
+        long double MOD_ld(MOD);
+        if (dqs < MOD_ld)
         {
-            dqs = MOD;
+            dqs = MOD_ld;
         }
         // dqs = (MOD - MID) * (1 / (1 + MID)) / dqs; // sm(i) term
-        dqs = (MOD - MID) / ((1 + MID) * dqs);
-        dqs = (dqs + 1) / 2; // interval transform
+        dqs = (MOD_ld - MID) / fmal(MID, dqs, dqs); //  ((1 + MID) * dqs);
+        dqs = fmal(dqs, 0.5, 0.5);                  // interval transform, equivalent to (dqs + 1) / 2;
         assert(0 <= dqs && dqs <= 1);
-        return dqs;
+        return double(dqs);
     }
 
     inline double calcVcrit(const int binSize, const double errorStart, const double errorEnd)
@@ -630,15 +615,11 @@ int main()
     // std::ofstream result("../../qbinning_ßßß.csv");
     // std::streambuf *coutbuf = std::cout.rdbuf(); // save old buf
     // std::cout.rdbuf(result.rdbuf());             // redirect std::cout to out.txt!
-    // std::cout << "scan,position\n";
 
     q::RawData testdata;
     // path to data, mz, centroid error, RT, scan number, intensity, control ID, DQS centroid, control DQS Bin
     testdata.readcsv("../../rawdata/monobin.csv", 0, 1, 2, 3, 4, 5, 6, 7); // ../../rawdata/control_bins.csv reduced_DQSdiff
-    // for (size_t i = 0; i < testdata.scanBreaks.size(); i++)
-    // {
-    //     std::cout << i << "," << testdata.scanBreaks[i] << "\n";
-    // }
+
     q::BinContainer testcontainer;
     testcontainer.makeFirstBin(&testdata);
     std::vector<int> dim = {q::SubsetMethods::mz, q::SubsetMethods::scans}; // at least one element must be terminator
@@ -646,15 +627,6 @@ int main()
     std::cout << "Total duplicates: " << q::control_duplicates << "\n--\ncalculating DQSBs...\n";
     testcontainer.assignDQSB(&testdata, 0); // int = max dist in scans
     // return 0;
-
-    // std::ofstream result("../../qbinning_faultybins.csv");
-    // std::streambuf *coutbuf = std::cout.rdbuf(); // save old buf
-    // std::cout.rdbuf(result.rdbuf());             // redirect std::cout to out.txt!
-
-    // std::cout << "mz,rt,ID,color,shape\n";
-    // testcontainer.controlAllBins();
-
-    // std::cout.rdbuf(coutbuf); // reset to standard output again
 
     testcontainer.printAllBins("../../qbinning_binlist.csv", &testdata);
     std::cout << "printed all bins\n";
