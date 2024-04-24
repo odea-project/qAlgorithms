@@ -34,15 +34,45 @@ namespace q
         // bool readtxt(std::string user_file); // @todo move to qCentroiding
     };
 
+    // return object of qbinning
+    class ReturnEICs
+    {
+    private:
+        /* data */
+    public:
+        struct DatapointEIC
+        {
+            const double mz;
+            const double rt;
+            const int scan;
+            const double intensity; // convert to int here?
+            const double DQS;
+        };
+
+        struct EIC // Extracted Ion Chromatogram
+        {
+            const std::vector<DatapointEIC> pointsInEIC;
+            const double meanDQS;
+            const double meanMZ;
+            const int medianScans;
+            const double maxInt;
+        };
+
+        std::vector<EIC> viableEICs;
+
+        ReturnEICs(/* args */);
+        ~ReturnEICs();
+    };
+
     // Bin Class
     class Bin
     {
     private:
         std::vector<double> cumError; // cumulative error in mz
         double pt_MakeDQSB;
+        bool duplicateScan = false; // are two points with the same scan number in this bin?
 
     public:
-        bool duplicateScan = false;
         double pt_mzmin;
         double pt_mzmax;
         int pt_scanmin;
@@ -103,7 +133,8 @@ namespace q
         void makeDQSB(const RawData *rawdata, const unsigned int &maxdist);
 
         std::string summariseBin();
-        void controlBin(int binID);
+
+        void createEIC(const ReturnEICs *results);
     };
 
     // BinContainer
@@ -137,20 +168,7 @@ namespace q
         void printAllBins(std::string path, const RawData *rawdata);
         void printBinSummary(std::string path);
 
-        void controlAllBins();
-
         // @todo add wrapper function which has bins independent from RawData as return value
-    };
-
-    // extracted ion chromatogram
-    struct EIC
-    {
-        const std::vector<Datapoint> pointsInEIC;
-        const std::vector<double> DQSB;
-        // mean DQS?
-        // size?
-        // mean mz?
-        // RT range?
     };
 
     // utility functions
@@ -158,13 +176,13 @@ namespace q
     /// @brief calculate the mean distance in mz to all other elements of a sorted vector for one element
     /// @param pointsInBin vector of data points sorted by mz
     /// @return vector of the mean inner distances for all elements in the same order as pointsInBin
-    std::vector<double> meanDistance(const std::vector<Datapoint *> pointsInBin);
+    std::vector<long double> meanDistance(const std::vector<Datapoint *> pointsInBin);
 
     /// @brief calculate the data quality score as described by Reuschenbach et al. for one datapoint in a bin
     /// @param MID mean inner distance in mz to all other elements in the bin
     /// @param MOD minimum outer distance - the shortest distance in mz to a data point that is within maxdist and not in the bin
     /// @return the data quality score for the specified element
-    double calcDQS(const double MID, const double MOD); // Mean Inner Distance, Minimum Outer Distance
+    double calcDQS(const long double MID, const double MOD); // Mean Inner Distance, Minimum Outer Distance
 
 }
 
