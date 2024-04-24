@@ -64,7 +64,7 @@ namespace q
           all_peaks.resize(arg->size());
       // iterate over the map of varDataType datatype objects
       // use parallel for loop to iterate over the dataVec
-// #pragma omp parallel for
+#pragma omp parallel for
           for (int i = 0; i < arg->size(); i++)
           {
             // de-reference the unique pointer of the object
@@ -221,7 +221,7 @@ namespace q
           X * B.col(i),
           (Ylog.subMatrix(i, i + 2 * scale + 1, 0, 1)));
       // adjust mse by considering the real df
-      mse *= df_sum * (2 * scale - 3) / (df_sum - 4);
+      mse *= (2 * scale - 3) / (df_sum - 4);
 
       double tValue = std::max(                                    // t-value for the quadratic term
           std::abs(B(2, i)) / std::sqrt(inverseMatrix_2_2 * mse),  // t-value for the quadratic term left side of the peak
@@ -250,16 +250,9 @@ namespace q
       }
       Matrix C = (*inverseMatrices[scale - 2]) * mse; // variance-covariance matrix of the coefficients
       double h_uncertainty = std::sqrt((Jacobian_height * C * Jacobian_height.T()).sumElements());
-      if (Jacobian_height(0, 0) > 10000) 
-      {
-        std::cout << "Height: " << Jacobian_height(0, 0) << std::endl;
-        std::cout << "Uncertainty: " << h_uncertainty << std::endl;
-        std::cout << "T-value: " << Jacobian_height(0, 0) / h_uncertainty << std::endl;
-        std::cout << "T-value threshold: " << tValuesArray[df_sum - 5] << std::endl;
-      }
       if (height / h_uncertainty < tValuesArray[df_sum - 5])
       {
-        // continue; // statistical insignificance of the height
+        continue; // statistical insignificance of the height
       }
 
       /*
@@ -272,7 +265,7 @@ namespace q
 
       if (Jacobian_area.first(0, 0) / area_uncertainty < tValuesArray[df_sum - 5])
       {
-        // continue; // statistical insignificance of the peak area
+        continue; // statistical insignificance of the peak area
       }
 
       /*
@@ -283,7 +276,7 @@ namespace q
           (Jacobian_area.second * C * Jacobian_area.second.T()).sumElements());
       if (Jacobian_area.second(0, 0) / area_uncertainty_covered < tValuesArray[df_sum - 5])
       {
-        // continue; // statistical insignificance of the peak area
+        continue; // statistical insignificance of the peak area
       }
 
       /*
@@ -323,13 +316,8 @@ namespace q
               true,                                         // isValid
               std::get<3>(valid_regressions_tmp[0]),        // left_limit
               std::get<4>(valid_regressions_tmp[0])));      // right_limit
-      
-      if (Jacobian_height(0, 0) > 10000) 
-      {
-        std::cout << "Height: " << Jacobian_height(0, 0) << std::endl;
-      }
-      
-      return;                                               // not enough peaks to form a group
+
+      return; // not enough peaks to form a group
     }
 
     /*
@@ -430,7 +418,7 @@ namespace q
                 std::get<5>(extendedMse),                                                                 // right_limit
                 std::get<6>(extendedMse),                                                                 // X_row_0
                 std::get<7>(extendedMse)));                                                               // X_row_1
-        
+
       } // end if; single item or group with multiple members
     }   // end for loop (group in vector of groups)
   }     // end validateRegressions
@@ -724,7 +712,7 @@ namespace q
       if (df_sum <= 4)
       {
         continue; // not enough degrees of freedom
-      } 
+      }
 
       mse *= df_sum * (yhat.numRows() - 4) / (df_sum - 4);
 
@@ -749,90 +737,107 @@ namespace q
   std::pair<Matrix, Matrix> qPeaks::jacobianMatrix_PeakArea(const Matrix &B, int scale) const
   {
     // predefine expressions
-    const double SQRTB2 = std::sqrt(std::abs(-B(2, 0)));
-    const double SQRTB3 = std::sqrt(std::abs(-B(3, 0)));
-    const double EXP_B0 = std::exp(B(0, 0));
-    const double B1_2_B2 = B(1, 0) / 2 / B(2, 0);
-    const double EXP_B12 = std::exp(-B(1, 0) * B1_2_B2 / 2);
-    const double B1_2_B3 = B(1, 0) / 2 / B(3, 0);
-    const double EXP_B13 = std::exp(-B(1, 0) * B1_2_B3 / 2);
+    const double b0 = B(0, 0);
+    const double b1 = B(1, 0);
+    const double b2 = B(2, 0);
+    const double b3 = B(3, 0);
+    const double SQRTB2 = std::sqrt(std::abs(-b2));
+    const double SQRTB3 = std::sqrt(std::abs(-b3));
+    const double EXP_B0 = std::exp(b0);
+    const double B1_2_B2 = b1 / 2 / b2;
+    const double EXP_B12 = std::exp(-b1 * B1_2_B2 / 2);
+    const double B1_2_B3 = b1 / 2 / b3;
+    const double EXP_B13 = std::exp(-b1 * B1_2_B3 / 2);
+
+    // initialize variables
+    Matrix J(1, 4);         // Jacobian matrix
+    Matrix J_covered(1, 4); // Jacobian matrix for the covered peak area
+    double x_left = -scale; // left limit due to the window
+    double x_right = scale; // right limit due to the window
+    double y_left = 0;      // y value at the left limit
+    double y_right = 0;     // y value at the right limit
+
     // here we have to check if there is a valley point or not
     const double err_L =
-        (B(2, 0) < 0)
-            ? std::erf(B(1, 0) / 2 / SQRTB2) + 1 // ordinary peak
-            : erfi(B(1, 0) / 2 / SQRTB2);        // peak with valley point;
+        (b2 < 0)
+            ? 1 - std::erf(b1 / 2 / SQRTB2) // ordinary peak
+            : erfi(b1 / 2 / SQRTB2);        // peak with valley point;
 
     const double err_R =
-        (B(3, 0) < 0)
-            ? std::erf(B(1, 0) / 2 / SQRTB3) + 1 // ordinary peak
-            : -erfi(B(1, 0) / 2 / SQRTB3);       // peak with valley point ;
+        (b3 < 0)
+            ? 1 + std::erf(b1 / 2 / SQRTB3) // ordinary peak
+            : -erfi(b1 / 2 / SQRTB3);       // peak with valley point ;
 
-    const double err_L_covered =
-        (B(2, 0) < 0)
+    const double err_L_covered = ///@todo : need to be revised
+        (b2 < 0)
             ? // ordinary peak half, take always scale as integration limit; we use erf instead of erfi due to the sqrt of absoulte value
-            std::erf(B(1, 0) / 2 / SQRTB2) - std::erf(B(1, 0) / 2 / SQRTB2 - scale * SQRTB2)
+            std::erf((b1 - 2 * b2 * scale) / 2 / SQRTB2) + err_L - 1
             : // valley point, i.e., check position
             (-B1_2_B2 < -scale)
                 ? // valley point is outside the window, use scale as limit
-                erfi(B(1, 0) / 2 / SQRTB2) - erfi(B(1, 0) / 2 / SQRTB2 - scale * SQRTB2)
+                err_L - erfi((b1 - 2 * b2 * scale) / 2 / SQRTB2)
                 : // valley point is inside the window, use valley point as limit
-                erfi(B(1, 0) / 2 / SQRTB2);
+                err_L;
 
-    const double err_R_covered =
-        (B(3, 0) < 0)
+    const double err_R_covered = ///@todo : need to be revised
+        (b3 < 0)
             ? // ordinary peak half, take always scale as integration limit; we use erf instead of erfi due to the sqrt of absoulte value
-            std::erf(B(1, 0) / 2 / SQRTB3) - std::erf(B(1, 0) / 2 / SQRTB3 + scale * SQRTB3)
+            err_R - 1 - std::erf((b1 + 2 * b3 * scale) / 2 / SQRTB3)
             : // valley point, i.e., check position
             (-B1_2_B3 > scale)
                 ? // valley point is outside the window, use scale as limit
-                -erfi(B(1, 0) / 2 / SQRTB3) + erfi(B(1, 0) / 2 / SQRTB3 + scale * SQRTB3)
+                erfi((b1 + 2 * b3 * scale) / 2 / SQRTB3) + err_R
                 : // valley point is inside the window, use valley point as limit
-                -erfi(B(1, 0) / 2 / SQRTB3);
+                err_R;
+
+    // adjust x limits
+    if (b2 > 0 && -B1_2_B2 > -scale)
+    { // valley point is inside the window, use valley point as limit
+      x_left = -B1_2_B2;
+    }
+
+    if (b3 > 0 && -B1_2_B3 < scale)
+    { // valley point is inside the window, use valley point as limit
+      x_right = -B1_2_B3;
+    }
+
+    // calculate the y values at the left and right limits
+    y_left = std::exp(b0 + b1 * x_left + b2 * x_left * x_left);
+    y_right = std::exp(b0 + b1 * x_right + b3 * x_right * x_right);
+    const double dX = x_right - x_left;
+
+    // calculate the trapzoid correction terms for the jacobian matrix
+    const double trpzd_b0 = (y_right + y_left) * dX / 2;
+    const double trpzd_b1 = (x_right * y_right + x_left * y_left) * dX / 2;
+    const double trpzd_b2 = (x_left * x_left * y_left) * dX / 2;
+    const double trpzd_b3 = (x_right * x_right * y_right) * dX / 2;
 
     // calculate the Jacobian matrix terms
-    Matrix J(1, 4);
-    J(0, 0) = SQRTPI_2 * ((EXP_B0 * EXP_B12) / SQRTB2 * err_L + (EXP_B0 * EXP_B13) / SQRTB3 * err_R);
-    J(0, 1) = (EXP_B0 / 2) * (1 / B(2, 0) + 1 / B(3, 0)) - J(0, 0) * (B1_2_B2 + B1_2_B3);
-    J(0, 2) = -J(0, 0) / 2 / B(2, 0) - B1_2_B2 * J(0, 1);
-    J(0, 3) = -J(0, 0) / 2 / B(3, 0) - B1_2_B3 * J(0, 1);
+    const double J_1_common_L = SQRTPI_2 * EXP_B0 * EXP_B12 / SQRTB2;
+    const double J_1_common_R = SQRTPI_2 * EXP_B0 * EXP_B13 / SQRTB3;
+    const double J_2_common_L = B1_2_B2 * EXP_B0 / b1;
+    const double J_2_common_R = B1_2_B3 * EXP_B0 / b1;
 
-    // calculate the trapezoid under the peak covered by data points
-    const double x_left =
-        (B(2, 0) < 0)
-            ? // ordinary peak half, take always scale as integration limit
-            -scale
-            : // valley point, i.e., check position
-            (-B1_2_B2 < -scale)
-                ? // valley point is outside the window, use scale as limit
-                -scale
-                : // valley point is inside the window, use valley point as limit
-                -B1_2_B2;
+    const double J_1_L = J_1_common_L * err_L;
+    const double J_1_L_covered = J_1_common_L * err_L_covered;
+    const double J_1_R = J_1_common_R * err_R;
+    const double J_1_R_covered = J_1_common_R * err_R_covered;
 
-    const double x_right =
-        (B(3, 0) < 0)
-            ? // ordinary peak half, take always scale as integration limit
-            scale
-            : // valley point, i.e., check position
-            (-B1_2_B3 > scale)
-                ? // valley point is outside the window, use scale as limit
-                scale
-                : // valley point is inside the window, use valley point as limit
-                -B1_2_B3;
+    const double J_2_L = J_2_common_L - J_1_L * B1_2_B2;
+    const double J_2_L_covered = J_2_common_L - J_1_L_covered * B1_2_B2;
+    const double J_2_R = - J_2_common_R - J_1_R * B1_2_B3;
+    const double J_2_R_covered = - J_2_common_R - J_1_R_covered * B1_2_B3;
 
-    const double y_left = std::exp(B(0, 0) + B(1, 0) * x_left + B(2, 0) * x_left * x_left);
-    const double y_right = std::exp(B(0, 0) + B(1, 0) * x_right + B(3, 0) * x_right * x_right);
-    const double peak_area_covered_trapezoid = (y_right + y_left) * (x_right - x_left) / 2;
+    J(0, 0) = J_1_R + J_1_L;
+    J(0, 1) = J_2_R + J_2_L;
+    J(0, 2) = - B1_2_B2 * (J_2_L + J_1_L / b1);
+    J(0, 3) = - B1_2_B3 * (J_2_R + J_1_R / b1);
 
-    // calculate the jacobi matrix for the covered peak area
-    Matrix J_covered(1, 4);
-    J_covered(0, 0) = SQRTPI_2 * ((EXP_B0 * EXP_B12) / SQRTB2 * err_L_covered + (EXP_B0 * EXP_B13) / SQRTB3 * err_R_covered);
-    J_covered(0, 1) = (EXP_B0 / 2) * (1 / B(2, 0) + 1 / B(3, 0)) - J_covered(0, 0) * (B1_2_B2 + B1_2_B3);
-    J_covered(0, 2) = -J_covered(0, 0) / 2 / B(2, 0) - B1_2_B2 * J_covered(0, 1);
-    J_covered(0, 3) = -J_covered(0, 0) / 2 / B(3, 0) - B1_2_B3 * J_covered(0, 1);
-    J_covered(0, 0) -= peak_area_covered_trapezoid;
-    J_covered(0, 1) -= (x_right * y_right + x_left * y_left) * (x_right - x_left) / 2;
-    J_covered(0, 2) -= (x_left * x_left * y_left) * (x_right - x_left) / 2;
-    J_covered(0, 3) -= (x_right * x_right * y_right) * (x_right - x_left) / 2;
+    J_covered(0, 0) = J_1_R_covered + J_1_L_covered - trpzd_b0;
+    J_covered(0, 1) = J_2_R_covered + J_2_L_covered - trpzd_b1;
+    J_covered(0, 2) = - B1_2_B2 * (J_2_L_covered + J_1_L_covered / b1) - trpzd_b2;
+    J_covered(0, 3) = - B1_2_B3 * (J_2_R_covered + J_1_R_covered / b1) - trpzd_b3;
+    
     return std::pair<Matrix, Matrix>(J, J_covered);
   } // end jacobianMatrix_PeakArea
 #pragma endregion jacobianMatrix_PeakArea
