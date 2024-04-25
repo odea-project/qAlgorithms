@@ -24,11 +24,13 @@ for (i in 1913:1957) {
   monobin = rbind(monobin, a)
 }
 for (i in 1:length(monobin$mz)) {
-  t1 = c(monobin$mz[i]*runif(1, 2, 3), monobin$error[i], runif(1, 700, 2000), monobin$scans[i], 1, -1, 0, -1)
-  t2 = c(monobin$mz[i]*runif(1, 2, 4), monobin$error[i], runif(1, 700, 2000), monobin$scans[i], 1, -1, 0, -1)
+  t1 = c(monobin$mz[i]*runif(1, 2, 3), monobin$error[i], NA, monobin$scans[i], 1, -1, 0, -1)
+  t2 = c(monobin$mz[i]*runif(1, 2, 4), monobin$error[i], NA, monobin$scans[i], 1, -1, 0, -1)
   monobin = rbind(monobin, t1)
   monobin = rbind(monobin, t2)
 }
+monobin$rt = monobin$scans * 0.65
+monobin = monobin[with(monobin, order(scans, mz)), ]
 
 write.csv(monobin, "../../rawdata/monobin.csv", row.names = FALSE)
 
@@ -49,7 +51,7 @@ plot(c(0:15), cumsum(accurate))
 
 qbins$DQSacc = qbins$DQS - qbins$control_DQSB
 
-plot(qbins$control_DQSB, qbins$DQS)
+plot(round(qbins$control_DQSB, digits = 3), round(qbins$DQS, digits = 3))
 
 ```
 
