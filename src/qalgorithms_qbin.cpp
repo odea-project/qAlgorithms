@@ -362,7 +362,10 @@ namespace q
             bincontainer->front().pt_mzmax = tmp_pt_mzmax;
             bincontainer->front().pt_scanmin = pointsInBin.front()->scanNo;
             bincontainer->front().pt_scanmax = pointsInBin.back()->scanNo;
-            finishedBins->push_back(bincontainer->front());
+            if (control_duplicatesIn == 0)
+            {
+                finishedBins->push_back(bincontainer->front());
+            }
             // ++control_duplicates;
             control_duplicates += control_duplicatesIn;
         }
@@ -423,6 +426,11 @@ namespace q
         for (int i = scanRangeStart; i < scanRangeEnd; i++)
 #pragma GCC diagnostic pop
         {
+            if (i == 1932)
+            {
+                std::cout << "";
+            }
+
             bool minFound = false; // only execute search if min or max is present in the scan
             bool maxFound = false;
             const int scansize = rawdata->allDatapoints[i].size() - 1;
@@ -516,16 +524,16 @@ namespace q
             const unsigned int currentRangeEnd = currentRangeStart + maxdist * 4 + 1;
             for (unsigned int j = currentRangeStart; j <= currentRangeEnd; j++) // from lowest scan to highest scan relevant to this point, +1 since scan no of point has to be included
             {
-                const double dist = std::abs(currentMZ - minMaxOutPerScan[j]);
+                const double dist = std::abs(currentMZ - minMaxOutPerScan[j]); // apply scaling here
                 if (dist < minDist)
                 {
                     minDist = dist;
                     assert(minDist > 0);
                 }
             }
-            std::cout << std::setprecision(15) << meanInnerDistances[i] << "\n";
             double tmp_DQS = calcDQS(meanInnerDistances[i], minDist); // @todo scale DQS with distance from point, gaussian - maxdist + 1 = alpha?
             DQSB.push_back(tmp_DQS);
+            // std::cout << std::setprecision(15) << minDist << ",";
         }
         // throw; // rm
     }
@@ -625,7 +633,7 @@ int main()
     std::vector<int> dim = {q::SubsetMethods::mz, q::SubsetMethods::scans}; // at least one element must be terminator
     testcontainer.subsetBins(dim, 6);                                       // int = max dist in scans; add value after for error in ppm instead of centroid error
     std::cout << "Total duplicates: " << q::control_duplicates << "\n--\ncalculating DQSBs...\n";
-    testcontainer.assignDQSB(&testdata, 0); // int = max dist in scans
+    testcontainer.assignDQSB(&testdata, 1); // int = max dist in scans
     // return 0;
 
     testcontainer.printAllBins("../../qbinning_binlist.csv", &testdata);
