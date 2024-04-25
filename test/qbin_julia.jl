@@ -218,8 +218,8 @@ function calculateDQSbin(mz ::Vector{Float64},nnd::Vector{Float64})::Vector{Floa
     dqs = ((nnd .- a) .* A ./ nominator .+ 1) ./ 2
     println(issorted(mz))
     # print(mz)
-    # print(nnd)
-    print(a)
+    print(nnd)
+    # print(a)
     print(dqs)
     return dqs
 end
@@ -278,7 +278,7 @@ end
 
 ### RUN
 
-    import_file ="./rawdata/monobin.csv" # reduced_DQSog
+    import_file ="./qAlgorithms/test/monobin.csv" # reduced_DQSog
     # The CSV must contain at least the following labels:
     # mz, error, intensity, DQScen, rt
     df = DataFrame(CSV.File(import_file))
