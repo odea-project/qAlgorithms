@@ -223,6 +223,11 @@ namespace q
         file_out << output.str();
     }
 
+    const std::vector<EIC> BinContainer::returnBins()
+    {
+        // @todo
+    }
+
 #pragma endregion "BinContainer"
 
 #pragma region "Bin"
@@ -394,6 +399,16 @@ namespace q
         const unsigned int minScanInner = pointsInBin.front()->scanNo; //
         int scanRangeStart = minScanInner - maxdist;
         unsigned int scanRangeEnd = pointsInBin.back()->scanNo + maxdist;
+        // calculate median of scans here
+        if (binsize % 2)
+        {
+            tmp_median = pointsInBin[binsize / 2 + 1]->scanNo;
+        }
+        else
+        {
+            const int n = binsize / 2;
+            tmp_median = (pointsInBin[n]->scanNo + pointsInBin[n + 1]->scanNo + 1) / 2; // +1 to round to nearest, since integers are truncated
+        }
 
         int maxScansReduced = 0;              // add this many dummy values to prevent segfault when bin is in one of the last scans
         std::vector<double> minMaxOutPerScan; // contains both mz values (per scan) next or closest to all m/z in the bin
@@ -561,6 +576,36 @@ namespace q
         return output;
     }
 
+    const EIC Bin::createEIC()
+    {
+        const size_t binsize = pointsInBin.size();
+        std::vector<DatapointEIC> tmp_pointsInEIC;
+        double tmp_meanDQS = 0;
+        double tmp_meanMZ = 0;
+        double tmp_maxInt = 0;
+        for (size_t i = 0; i < binsize; i++)
+        {
+            tmp_meanDQS += DQSB[i];
+            tmp_meanMZ += pointsInBin[i]->mz;
+            tmp_maxInt = std::max(tmp_maxInt, pointsInBin[i]->intensity);
+            const DatapointEIC F = {
+                pointsInBin[i]->mz,
+                pointsInBin[i]->RT,
+                pointsInBin[i]->scanNo,
+                pointsInBin[i]->intensity,
+                DQSB[i]};
+            tmp_pointsInEIC.push_back(F);
+        }
+        // tmp_median is determined with the DQSB
+        const EIC returnEIC = {
+            tmp_pointsInEIC,
+            tmp_meanDQS / binsize,
+            tmp_meanMZ / binsize,
+            tmp_median,
+            tmp_maxInt};
+        return returnEIC;
+    }
+
 #pragma endregion "Bin"
 
 #pragma region "Functions"
@@ -633,7 +678,7 @@ int main()
     std::vector<int> dim = {q::SubsetMethods::mz, q::SubsetMethods::scans}; // at least one element must be terminator
     testcontainer.subsetBins(dim, 6);                                       // int = max dist in scans; add value after for error in ppm instead of centroid error
     std::cout << "Total duplicates: " << q::control_duplicates << "\n--\ncalculating DQSBs...\n";
-    testcontainer.assignDQSB(&testdata, 1); // int = max dist in scans
+    testcontainer.assignDQSB(&testdata, 2); // int = max dist in scans
     // return 0;
 
     testcontainer.printAllBins("../../qbinning_binlist.csv", &testdata);
