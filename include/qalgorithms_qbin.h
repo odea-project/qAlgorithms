@@ -35,33 +35,25 @@ namespace q
     };
 
     // return object of qbinning
-    class ReturnEICs
+
+    struct DatapointEIC
     {
-    private:
-        /* data */
-    public:
-        struct DatapointEIC
-        {
-            const double mz;
-            const double rt;
-            const int scan;
-            const double intensity; // convert to int here?
-            const double DQS;
-        };
+        const double mz;
+        const double rt;
+        const int scan;
+        const double intensity; // convert to int here?
+        const double DQS;
 
-        struct EIC // Extracted Ion Chromatogram
-        {
-            const std::vector<DatapointEIC> pointsInEIC;
-            const double meanDQS;
-            const double meanMZ;
-            const int medianScans;
-            const double maxInt;
-        };
+        DatapointEIC::DatapointEIC();
+    };
 
-        std::vector<EIC> viableEICs;
-
-        ReturnEICs(/* args */);
-        ~ReturnEICs();
+    struct EIC // Extracted Ion Chromatogram
+    {
+        const std::vector<DatapointEIC> pointsInEIC;
+        const double meanDQS;
+        const double meanMZ;
+        const int medianScans;
+        const double maxInt;
     };
 
     // Bin Class
@@ -71,6 +63,7 @@ namespace q
         std::vector<double> cumError; // cumulative error in mz
         double pt_MakeDQSB;
         bool duplicateScan = false; // are two points with the same scan number in this bin?
+        int tmp_median;
 
     public:
         double pt_mzmin;
@@ -134,7 +127,7 @@ namespace q
 
         std::string summariseBin();
 
-        void createEIC(const ReturnEICs *results);
+        const EIC createEIC();
     };
 
     // BinContainer
@@ -168,7 +161,7 @@ namespace q
         void printAllBins(std::string path, const RawData *rawdata);
         void printBinSummary(std::string path);
 
-        // @todo add wrapper function which has bins independent from RawData as return value
+        const std::vector<EIC> returnBins();
     };
 
     // utility functions

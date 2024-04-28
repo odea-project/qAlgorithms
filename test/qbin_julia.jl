@@ -216,7 +216,7 @@ function calculateDQSbin(mz ::Vector{Float64},nnd::Vector{Float64})::Vector{Floa
     A = 1 ./ (1 .+ a)
     nominator = [i > j ? i : j for (i,j) in zip(a,nnd)]
     dqs = ((nnd .- a) .* A ./ nominator .+ 1) ./ 2
-    println(issorted(mz))
+    # println(issorted(mz))
     # print(mz)
     print(nnd)
     # print(a)
@@ -242,7 +242,7 @@ function qBinning(df::DataFrame) ::DataFrame
     mz, err_mz, rt, nos, minBinSize, critVal_lib, idxDictHash, idxDict, I, nnd = loadData(df)
     @time findBins!(mz,err_mz,rt,minBinSize,critVal_lib,idxDictHash,idxDict)
     nndw = zeros(length(nnd))
-    nearestNeighbourDistanceWindow!(nndw,mz,nnd,1) # ßßß
+    nearestNeighbourDistanceWindow!(nndw,mz,nnd,2) # ßßß
 
     RT = [df[!,"rt"][u.idx] for u in idxDict]
     MZ = [mz[u.idx] for u in idxDict]
