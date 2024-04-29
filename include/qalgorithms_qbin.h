@@ -38,22 +38,20 @@ namespace q
 
     struct DatapointEIC
     {
-        const double mz;
-        const double rt;
-        const int scan;
-        const double intensity; // convert to int here?
-        const double DQS;
-
-        DatapointEIC::DatapointEIC();
+        double mz;
+        double rt;
+        unsigned int scan;
+        double intensity; // convert to int here?
+        double DQS;
     };
 
     struct EIC // Extracted Ion Chromatogram
     {
-        const std::vector<DatapointEIC> pointsInEIC;
-        const double meanDQS;
-        const double meanMZ;
-        const int medianScans;
-        const double maxInt;
+        std::vector<DatapointEIC> pointsInEIC;
+        double meanDQS;
+        double meanMZ;
+        unsigned int medianScans;
+        double maxInt;
     };
 
     // Bin Class
@@ -63,7 +61,7 @@ namespace q
         std::vector<double> cumError; // cumulative error in mz
         double pt_MakeDQSB;
         bool duplicateScan = false; // are two points with the same scan number in this bin?
-        int tmp_median;
+        unsigned int tmp_median;
 
     public:
         double pt_mzmin;

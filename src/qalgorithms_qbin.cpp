@@ -84,7 +84,7 @@ namespace q
             std::sort(allDatapoints[i].begin(), allDatapoints[i].end(), [](const Datapoint lhs, const Datapoint rhs)
                       { return lhs.mz < rhs.mz; });
         }
-        std::cout << "Finished reading file in " << time(0) - now << " seconds\n Read " << lengthAllPoints << " datapoints in " << allDatapoints.size() << " scans\n";
+        std::cout << "Finished reading file in " << time(0) - now << " seconds\nRead " << lengthAllPoints << " datapoints in " << allDatapoints.size() << " scans\n";
         return true;
         // RawData is always a vector of vectors where the first index is the scan number (starting at 1) and every scsn is sorted by mz
     }
@@ -548,7 +548,7 @@ namespace q
             }
             double tmp_DQS = calcDQS(meanInnerDistances[i], minDist); // @todo scale DQS with distance from point, gaussian - maxdist + 1 = alpha?
             DQSB.push_back(tmp_DQS);
-            // std::cout << std::setprecision(15) << minDist << ",";
+            // std::cout << std::setprecision(15) << tmp_DQS << ",";
         }
         // throw; // rm
     }
@@ -638,17 +638,17 @@ namespace q
 
     inline double calcDQS(const long double MID, const double MOD) // mean inner distance, minimum outer distance
     {
-        long double dqs = MID;
+        long double dqs(MOD); //switch MID to MOD here, less assignments
         long double MOD_ld(MOD);
-        if (dqs < MOD_ld)
+        if (dqs < MID)
         {
-            dqs = MOD_ld;
+            dqs = MID;
         }
         // dqs = (MOD - MID) * (1 / (1 + MID)) / dqs; // sm(i) term
         dqs = (MOD_ld - MID) / fmal(MID, dqs, dqs); //  ((1 + MID) * dqs);
         dqs = fmal(dqs, 0.5, 0.5);                  // interval transform, equivalent to (dqs + 1) / 2;
-        assert(0 <= dqs && dqs <= 1);
-        return double(dqs);
+        // assert(0 <= dqs && dqs <= 1); // does not apply if a datapoint has no neighbours
+        return double(dqs); // if dqs = nan, set it to 1 during EIC construction
     }
 
     inline double calcVcrit(const int binSize, const double errorStart, const double errorEnd)
@@ -663,6 +663,8 @@ namespace q
 
 int main()
 {
+    q::calcDQS(1.2, INFINITY);
+
     q::control_duplicates = 0;
     std::cout << "starting...\n";
     // std::ofstream result("../../qbinning_ßßß.csv");
@@ -671,14 +673,14 @@ int main()
 
     q::RawData testdata;
     // path to data, mz, centroid error, RT, scan number, intensity, control ID, DQS centroid, control DQS Bin
-    testdata.readcsv("../../rawdata/monobin.csv", 0, 1, 2, 3, 4, 5, 6, 7); // ../../rawdata/control_bins.csv reduced_DQSdiff
+    testdata.readcsv("../../rawdata/control_bins.csv", 0, 1, 2, 3, 4, 5, 6, 7); // ../../rawdata/control_bins.csv reduced_DQSdiff
 
     q::BinContainer testcontainer;
     testcontainer.makeFirstBin(&testdata);
     std::vector<int> dim = {q::SubsetMethods::mz, q::SubsetMethods::scans}; // at least one element must be terminator
     testcontainer.subsetBins(dim, 6);                                       // int = max dist in scans; add value after for error in ppm instead of centroid error
     std::cout << "Total duplicates: " << q::control_duplicates << "\n--\ncalculating DQSBs...\n";
-    testcontainer.assignDQSB(&testdata, 2); // int = max dist in scans
+    testcontainer.assignDQSB(&testdata, 6); // int = max dist in scans
     // return 0;
 
     testcontainer.printAllBins("../../qbinning_binlist.csv", &testdata);
