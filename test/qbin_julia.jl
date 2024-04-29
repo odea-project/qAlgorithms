@@ -242,7 +242,7 @@ function qBinning(df::DataFrame) ::DataFrame
     mz, err_mz, rt, nos, minBinSize, critVal_lib, idxDictHash, idxDict, I, nnd = loadData(df)
     @time findBins!(mz,err_mz,rt,minBinSize,critVal_lib,idxDictHash,idxDict)
     nndw = zeros(length(nnd))
-    nearestNeighbourDistanceWindow!(nndw,mz,nnd,2) # ßßß
+    nearestNeighbourDistanceWindow!(nndw,mz,nnd,6) # ßßß
 
     RT = [df[!,"rt"][u.idx] for u in idxDict]
     MZ = [mz[u.idx] for u in idxDict]
@@ -250,6 +250,9 @@ function qBinning(df::DataFrame) ::DataFrame
     error_fin = [df[!,"error"][u.idx] for u in idxDict]
     I = [I[u.idx] for u in idxDict]
     NND = [nndw[u.idx] for u in idxDict]
+    println("--")
+    print(idxDict)
+    println("--")
     DQScen = [df[!,"DQScen"][u.idx] for u in idxDict]
     sortRT_idxVec = [sortperm(u) for u in RT]
     sortLists!(RT, sortRT_idxVec)
@@ -266,10 +269,10 @@ function qBinning(df::DataFrame) ::DataFrame
     DF = DataFrame([])
     DF[!, "mz"] = reduce(vcat, MZ)
     # DF[!, "error"] = reduce(vcat, error_fin)
-    DF[!, "rt"] = reduce(vcat, RT)
+    # DF[!, "rt"] = reduce(vcat, RT)
     # DF[!, "scans"] = reduce(vcat, scans)
-    DF[!, "intensity"] = reduce(vcat, I)
-    # DF[!, "ID"] = reduce(vcat, BinID)
+    # DF[!, "intensity"] = reduce(vcat, I)
+    DF[!, "ID"] = reduce(vcat, BinID)
     # DF[!, "DQScen"] = reduce(vcat, DQScen)
     DF[!, "DQSbin"] = reduce(vcat, DQSbin)
     DF[!, "NND"] = reduce(vcat, NND)
@@ -278,7 +281,7 @@ end
 
 ### RUN
 
-    import_file ="./qAlgorithms/test/monobin.csv" # reduced_DQSog
+    import_file ="../rawdata/artbin.csv" # reduced_DQSog
     # The CSV must contain at least the following labels:
     # mz, error, intensity, DQScen, rt
     df = DataFrame(CSV.File(import_file))

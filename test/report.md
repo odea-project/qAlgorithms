@@ -13,7 +13,8 @@
 	- [Data Organisation](#data-organisation)
 	- [Core Functions](#core-functions)
 - [Evaluation](#evaluation)
-	- [Result Comparison with R Script](#result-comparison-with-r-script)
+	- [Result Comparison with R and julia implementation](#result-comparison-with-r-and-julia-implementation)
+	- [Performance Evaluation](#performance-evaluation)
 	- [Effect of Different Error Thresholds (ppm)](#effect-of-different-error-thresholds-ppm)
 - [Future Improvements and Additions](#future-improvements-and-additions)
 
@@ -176,6 +177,52 @@ optional argument. If none is supplied, the centroid error is used.
 
 
 ## Evaluation
+
+### Result Comparison with R and julia implementation
+All three implementations result in identical bins after completed subsetting.
+Bin identity was controlled by matching the result frames by m/z. Since
+all points could be matched this way, no false positives or negatives exist.
+For a small test dataset, subsetting results were confirmed by hand.
+
+The DQS calculation was not identical between any of the approaches. 
+In order to determine a correct result for the DQS, it was calculated
+by hand using two reduced datasets. To locate the source of the discrepancy,
+intermediate results were also compared. Here, the calculation of the
+MID was identical between all approaches. For identical parameters, all
+implementations of the function which calculates the DQS obtained identical
+results. 
+
+There exist significant differences between the two original implementations, with the 
+julia script producing wrong estimates frequently. To account for floating
+point errors, a DQS is considered identical if it is identical when rounded
+to nine digits. 
+The error is located in the method used for finding the data point not in 
+the bin which is most similar to the data point for which the DQS is to be 
+determined. More precisely, the function nearestNeighbourDistanceWindow!
+gives wrong results for a tolerance window of greater than zero. With the
+window parameter set to zero, only points in the same scan are considered 
+when calculating the DQS. It is also possible that some error is present in the
+idxDict struct, but since it is also used for binning errors are less likely here.
+Both possible errors result in the definite error of wrong values for NND 
+(Nearest Neighbour Distance). For both reduced datasets, a total of one distance 
+was determined correctly. Due to the small effect even large absolute 
+differences in distance have, three DQS total matched the verified result for both 
+(to nine decimal digits). When applied to real data, which is bound to have 
+smaller MOD distances than the test data. This effect likely leads to better
+matching with the correct results. distance window bezog sich nur auf eigenens bin - 
+The bug was successfully fixed by ßßß
+
+When comparing with the implementation in R, the DQS is sometimes identical.
+For the entire dataset, 79.1 % of the DQS matched when rounded to nine digits.
+This result does not change significantly (ßßß 5. Nachkommastelle) if bins which
+contain two points from the same scan are excluded (ßßß total). Even when rounded
+to three digits, only 93.2% of the DQS match. (Grafik)
+
+
+
+
+
+### Performance Evaluation
 Performance evaluation was performed using the following CPUs: 
 * Intel(R) Core(TM) i5-7400 CPU @ 3.00GHz (referred to as i5)
 * AMD Ryzen 3 3250U (referred to as Ryzen)
@@ -196,8 +243,7 @@ comparison between centroid error and ppm
 compare results for different alpha when calculating the critical value
 Less cases where DQS matches, identify cause for this
 
-### Result Comparison with R Script
-Both approaches result in identical bins after completed subsetting.
+
 
 @todo runtime comparison
 

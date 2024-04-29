@@ -7,7 +7,6 @@ Config-Datei
 https://www.agner.org/optimize/optimizing_cpp.pdf
 
 prüfen, wie das Programm skaliert -> subdatensätze
-reduce nutzen?
 
 ctime:
 int now = time(0)
@@ -20,18 +19,10 @@ Methode: I/O, minimalbeispiel (Reihenfolge, ~10E array), paper verlinken (Seiten
 
 Gerrit soll code aufräumen -> Namen, Funktionen trennen, Kommentare selber schreiben, redundanten Müll entfernen, echte pointer statt &, eckige Klammern für operator overload (matrixcode durch besse Bibliothek ersetzen, da jede Operation die gesamte Matrix kopiert @todo kontrollieren), wenn es getter und setter gibt sollte die variable public sein
 
-mögliche Anwendung für std::variant?
-
 https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0125108
-
-data points in centroids umbenennen?
 
 Kein Zshg zwischen DQS-differenz und mz, scans
 
-bis ~0.7 ist DQS manchmal größer, danach große Menge an Punkten schlechter eingeschätzt
-
-Bins mit besserem DQS, da Punkte im gleichen Bin mit einbezogen werden
-Signifikant weniger Übereinstimmung wenn maxdist = 0
-Fehler bei Abstandsberechnung des DQS beachten
-
 Entwicklung des DQS mit maxdist
+
+https://link.springer.com/article/10.1007/s41060-021-00275-z#Sec2
