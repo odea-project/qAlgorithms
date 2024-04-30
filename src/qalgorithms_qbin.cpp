@@ -25,6 +25,8 @@ namespace q
     std::vector<double> pt_scanRelSteps;
     std::vector<Datapoint *> control_outOfBins;
     int control_duplicates;
+    int control_baddist;
+    std::stringstream control_tvals;
 
 #define IGNORE -256 // nonsense value if no real number exists. Must be negative since it is used later when searching for the smallest distance
 #define NO_MIN_FOUND -INFINITY
@@ -400,13 +402,13 @@ namespace q
         int scanRangeStart = minScanInner - maxdist;
         unsigned int scanRangeEnd = pointsInBin.back()->scanNo + maxdist;
         // calculate median of scans here
-        if (binsize % 2)
+        const int n = binsize / 2;
+        if (binsize % 2) // if binsize is odd
         {
-            tmp_median = pointsInBin[binsize / 2 + 1]->scanNo;
+            tmp_median = pointsInBin[n]->scanNo; // for lenght 1: index 0
         }
         else
         {
-            const int n = binsize / 2;
             tmp_median = (pointsInBin[n]->scanNo + pointsInBin[n + 1]->scanNo + 1) / 2; // +1 to round to nearest, since integers are truncated
         }
 
@@ -433,6 +435,15 @@ namespace q
         const double minInnerMZ = pointsInBin.front()->mz;
         const double maxInnerMZ = pointsInBin.back()->mz;
         const std::vector<long double> meanInnerDistances = meanDistance(pointsInBin);
+        // find median in mz
+        if (binsize % 2) // if binsize is odd
+        {
+            medianMZ = pointsInBin[n]->mz; // for lenght 1: index 0
+        }
+        else
+        {
+            medianMZ = (pointsInBin[n]->mz + pointsInBin[n + 1]->mz) / 2; // +1 to round to nearest, since integers are truncated
+        }
 
         // for all scans relevant to the bin
         int needle = 0; // position in scan where a value was found - starts at 0 for first scan
@@ -606,6 +617,23 @@ namespace q
         return returnEIC;
     }
 
+    void Bin::controlMedianMZ()
+    {
+        // t-test if the bin mean is equal to the median
+        const size_t n = pointsInBin.size();
+        double meanMZ = std::accumulate(pointsInBin.begin(), pointsInBin.end(), 0, [](double acc, const Datapoint *point)
+            {return acc + point->mz;});
+        meanMZ = meanMZ / n;
+        double sumOfDist = 0;
+        std::for_each(pointsInBin.begin(), pointsInBin.end(), [&](const Datapoint *point)
+                      { sumOfDist += (point->mz - meanMZ) * (point->mz - meanMZ); });
+        const double stdev = sqrt(sumOfDist/(n-1));
+        // t value for mean == median
+        double bin_tval = (meanMZ - medianMZ) * sqrt(n) / (stdev);
+        double meanDQS = std::accumulate(DQSB.begin(), DQSB.end(), 0) / n;
+        control_tvals << n << "," << bin_tval << meanDQS << "\n";
+    }
+
 #pragma endregion "Bin"
 
 #pragma region "Functions"
@@ -638,7 +666,7 @@ namespace q
 
     inline double calcDQS(const long double MID, const double MOD) // mean inner distance, minimum outer distance
     {
-        long double dqs(MOD); //switch MID to MOD here, less assignments
+        long double dqs(MOD); // switch MID to MOD here, less assignments
         long double MOD_ld(MOD);
         if (dqs < MID)
         {
@@ -666,6 +694,8 @@ int main()
     q::calcDQS(1.2, INFINITY);
 
     q::control_duplicates = 0;
+    q::control_baddist = 0;
+    q::control_tvals << "n,tval\n";
     std::cout << "starting...\n";
     // std::ofstream result("../../qbinning_ßßß.csv");
     // std::streambuf *coutbuf = std::cout.rdbuf(); // save old buf
@@ -683,18 +713,16 @@ int main()
     testcontainer.assignDQSB(&testdata, 6); // int = max dist in scans
     // return 0;
 
-    testcontainer.printAllBins("../../qbinning_binlist.csv", &testdata);
+    // testcontainer.printAllBins("../../qbinning_binlist.csv", &testdata);
     std::cout << "printed all bins\n";
 
-    // std::fstream file_out;
-    // std::stringstream output;
-    // file_out.open("../../qbinning_notbinned.csv", std::ios::out);
-    // if (!file_out.is_open())
-    // {
-    //     std::cout << "could not open file\n";
-    // }
-
-    // output << "mz,scan,ID,control_ID,control_DQSB\n";
+    std::fstream file_out;
+    file_out.open("../../qbins_tvals.csv", std::ios::out);
+    if (!file_out.is_open())
+    {
+        std::cout << "could not open file\n";
+    }
+    file_out << q::control_tvals.str();
     // for (size_t i = 0; i < q::control_outOfBins.size(); i++) // segfault at 348348
     // {
     //     output << std::setprecision(15) << q::control_outOfBins[i]->mz << "," << q::control_outOfBins[i]->scanNo << ",-1,"

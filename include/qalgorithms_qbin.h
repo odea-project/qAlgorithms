@@ -62,6 +62,7 @@ namespace q
         double pt_MakeDQSB;
         bool duplicateScan = false; // are two points with the same scan number in this bin?
         unsigned int tmp_median;
+        double medianMZ;
 
     public:
         double pt_mzmin;
@@ -126,6 +127,8 @@ namespace q
         std::string summariseBin();
 
         const EIC createEIC();
+
+        void controlMedianMZ();
     };
 
     // BinContainer
