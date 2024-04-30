@@ -28,3 +28,5 @@ Entwicklung des DQS mit maxdist
 https://link.springer.com/article/10.1007/s41060-021-00275-z#Sec2
 
 Gradheit eines bins als Qualitätskriterium?
+
+Schlechtmöglichste MID, schlechteste MOD => Schlechtmöglichster DQS in Abhängigkeit von n

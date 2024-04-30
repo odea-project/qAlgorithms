@@ -225,10 +225,26 @@ namespace q
         file_out << output.str();
     }
 
-    const std::vector<EIC> BinContainer::returnBins()
+    // const std::vector<EIC> BinContainer::returnBins()
+    // {
+    //     // @todo
+    // };
+
+    void BinContainer::printTstats()
     {
-        // @todo
-    }
+        std::fstream file_out;
+        file_out.open("../../qbins_tvals.csv", std::ios::out);
+        if (!file_out.is_open())
+        {
+            std::cout << "could not open file\n";
+        }
+        q::control_tvals << "n,tval,dqs\n";
+        for (size_t i = 0; i < finishedBins.size(); i++)
+        {
+            finishedBins[i].controlMedianMZ();
+        }
+        file_out << q::control_tvals.str();
+    };
 
 #pragma endregion "BinContainer"
 
@@ -621,17 +637,17 @@ namespace q
     {
         // t-test if the bin mean is equal to the median
         const size_t n = pointsInBin.size();
-        double meanMZ = std::accumulate(pointsInBin.begin(), pointsInBin.end(), 0, [](double acc, const Datapoint *point)
-            {return acc + point->mz;});
+        double meanMZ = std::accumulate(pointsInBin.begin(), pointsInBin.end(), 0.0, [](double acc, const Datapoint *point)
+                                        { return acc + point->mz; });
         meanMZ = meanMZ / n;
         double sumOfDist = 0;
         std::for_each(pointsInBin.begin(), pointsInBin.end(), [&](const Datapoint *point)
                       { sumOfDist += (point->mz - meanMZ) * (point->mz - meanMZ); });
-        const double stdev = sqrt(sumOfDist/(n-1));
+        const double stdev = sqrt(sumOfDist / (n - 1));
         // t value for mean == median
-        double bin_tval = (meanMZ - medianMZ) * sqrt(n) / (stdev);
-        double meanDQS = std::accumulate(DQSB.begin(), DQSB.end(), 0) / n;
-        control_tvals << n << "," << bin_tval << meanDQS << "\n";
+        double bin_tval = abs((meanMZ - medianMZ) * sqrt(n) / (stdev));
+        double meanDQS = std::accumulate(DQSB.begin(), DQSB.end(), 0.0) / n;
+        control_tvals << n << "," << bin_tval << "," << meanDQS << "\n";
     }
 
 #pragma endregion "Bin"
@@ -695,7 +711,6 @@ int main()
 
     q::control_duplicates = 0;
     q::control_baddist = 0;
-    q::control_tvals << "n,tval\n";
     std::cout << "starting...\n";
     // std::ofstream result("../../qbinning_ßßß.csv");
     // std::streambuf *coutbuf = std::cout.rdbuf(); // save old buf
@@ -713,16 +728,17 @@ int main()
     testcontainer.assignDQSB(&testdata, 6); // int = max dist in scans
     // return 0;
 
+    testcontainer.printTstats();
     // testcontainer.printAllBins("../../qbinning_binlist.csv", &testdata);
     std::cout << "printed all bins\n";
 
-    std::fstream file_out;
-    file_out.open("../../qbins_tvals.csv", std::ios::out);
-    if (!file_out.is_open())
-    {
-        std::cout << "could not open file\n";
-    }
-    file_out << q::control_tvals.str();
+    // std::fstream file_out;
+    // file_out.open("../../qbins_tvals.csv", std::ios::out);
+    // if (!file_out.is_open())
+    // {
+    //     std::cout << "could not open file\n";
+    // }
+    // file_out << q::control_tvals.str();
     // for (size_t i = 0; i < q::control_outOfBins.size(); i++) // segfault at 348348
     // {
     //     output << std::setprecision(15) << q::control_outOfBins[i]->mz << "," << q::control_outOfBins[i]->scanNo << ",-1,"

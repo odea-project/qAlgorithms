@@ -76,40 +76,18 @@ plot(round(qbins$control_DQSB, digits = 3), round(qbins$DQS, digits = 3))
 
 ```
 
-```{r FP-FN comparison}
+```{r control notbinned}
+# outliers should be normally distributed throughout the dataset
+notbinned = read.csv("../../qbinning_notbinned.csv")[,1:2]
 
 ```
 
-
-```{r steps per bin}
-getwd()
-qbins <- read.csv("../../qBinning_binposition.csv")
-qbins$index <- c(1:length(qbins$mzmin))
-
-ggplot(qbins)+
-  geom_rect(aes(xmin = scanmin, xmax = scanmax, ymin = mzmin, ymax = mzmax, colour = index))
-```
-
-
-```{r}
-binstats <- read.csv("binstats.csv")
-hist(log(binstats$time.DQSB.))
-plot(binstats$size, binstats$time.DQSB.)
-plot(binstats$mean.scans., -binstats$scanRange/binstats$size)
-plot(binstats$mean.mz., log(-binstats$scanRange/binstats$size))
-plot(log(binstats$time.DQSB.), binstats$mean.DQS.)
-```
-
-
-```{r reformat}
-bins <- read.csv("C:/Users/unisys/Documents/Studium/Analytik-Praktikum/rawdata/df_qBinning_test.csv")
-
-bins <- bins[order(bins$rt),]
-bins$scanNo <- c(1,ceiling(diff(bins$rt)))
-bins$scanNo <- cumsum(bins$scanNo)
-last(bins$scanNo)
-
-write.csv(bins, file = "control_bins_full.csv", row.names = FALSE)
+```{r control median of mz}
+medianMZ = read.csv("../../qbins_tvals.csv")
+medianMZ$critTval = qt(0.05, medianMZ$n, lower.tail = FALSE)
+medianMZ$check = medianMZ$critTval - medianMZ$tval
+sum(medianMZ$check < 0)
+hist(log10(medianMZ$n[which(medianMZ$check < 0)])) # no strict correlation between binsize, dqs and the median being a bad estimate of the distribution mean
 ```
 
 ```{r merge}
@@ -121,5 +99,16 @@ export <- data.frame(mz = prebinned$mz, mzError = prebinned$mzError, RT = prebin
 
 write.csv(export, "../../rawdata/control_bins_full.csv", row.names = FALSE)
 getwd()
+```
+
+```{r worst dqs possible}
+worstDQS <- function(n, mz){
+  vcrit = 3.05037165842070 * log(n)^(-0.4771864667153) * mz * 5 * 10^-6 # assumes 5ppm error
+  # assuming MOD is equal to vcrit
+  
+  
+}
+
+
 ```
 

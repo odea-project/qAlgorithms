@@ -163,6 +163,8 @@ namespace q
         void printBinSummary(std::string path);
 
         const std::vector<EIC> returnBins();
+
+        void printTstats();
     };
 
     // utility functions
