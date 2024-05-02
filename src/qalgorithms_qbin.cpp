@@ -357,7 +357,7 @@ namespace q
                 // less than five points in bin
                 if (i - lastpos + 1 < 5) // +1 since i starts at 0
                 {
-                    for (size_t j = lastpos; j <= i; j++) // @todo checked for correctness
+                    for (size_t j = lastpos; j <= i; j++) // @todo make macro for compile time exclusion
                     {
                         Datapoint *F = *(pointsInBin.begin() + j);
                         control_outOfBins.push_back(F);
@@ -468,11 +468,6 @@ namespace q
         for (int i = scanRangeStart; i < scanRangeEnd; i++)
 #pragma GCC diagnostic pop
         {
-            if (i == 1932)
-            {
-                std::cout << "";
-            }
-
             bool minFound = false; // only execute search if min or max is present in the scan
             bool maxFound = false;
             const int scansize = rawdata->allDatapoints[i].size() - 1;
@@ -519,7 +514,7 @@ namespace q
                     needle = scansize;
                 }
             }
-            // rawdata is always sorted by mz within scans
+            // rawdata is always sorted by mz within scans @todo add goto to skip needless loop steps
             // use two while loops to find desired value from any place in the scan, accounts for large shifts between scans
             if (!minFound)
             {
@@ -659,13 +654,10 @@ namespace q
         // assumes bin is sorted by mz
         const size_t binsize = pointsInBin.size();
         const long double ld_binsize(binsize);
-        long double totalSum = 0;
         std::vector<long double> output(binsize);
-        for (size_t i = 0; i < binsize; i++)
-        {
-            totalSum += pointsInBin[i]->mz; // totalSum is the sum of all mz ahead of the current element
-        }
-        double beforeSum = 0; // beforeSum is the sum of all mz past the current element
+        long double totalSum = std::accumulate(pointsInBin.begin(), pointsInBin.end(), 0.0, [](double acc, const Datapoint *point)
+                                               { return acc + point->mz; }); // totalSum is the sum of all mz ahead of the current element
+        double beforeSum = 0;                                                // beforeSum is the sum of all mz which had their distance calculated already
         for (size_t i = 0; i < binsize; i++)
         {
             const long double ld_i(i);
