@@ -75,8 +75,9 @@ One DataPoint contains mz, RT, intensity, scan number, the centroid error and an
 control value which assigns it to a bin. Data points are never modified during the binning process.
 
 <b> The RawData object: </b>
-Centroided data is stored as individual scans. Within the scans, data points are sorted by mz.
-Scans are accessed through a vector containing all scans.
+Centroided data is stored as individual scans, with one vector per scan. Within the scans, 
+data points are sorted by mz. Scans are accessed through a vector containing all scans. 
+It is possible to account for empty scans.
 
 <b> Bin objects: </b>
 Every Bin stores all data points which were determined to belong to the same EIC. All subsetting 
@@ -173,7 +174,7 @@ integrated into the subsetScan function, it must be the last function specified 
 unless an alternative function with equivalent code exists. This design also allows for use 
 cases in which a specific subsetting operation is only necessary for bins which were not marked
 as closed by a different subsetting function. subsetBins can take an error (in ppm) as an
-optional argument. If none is supplied, the centroid error is used.
+optional argument. If none is supplied, the centroid error is used. 
 
 
 ## Evaluation
@@ -195,22 +196,17 @@ results.
 There exist significant differences between the two original implementations, with the 
 julia script producing wrong estimates frequently. To account for floating
 point errors, a DQS is considered identical if it is identical when rounded
-to nine digits. 
-The error is located in the method used for finding the data point not in 
-the bin which is most similar to the data point for which the DQS is to be 
-determined. More precisely, the function nearestNeighbourDistanceWindow!
-gives wrong results for a tolerance window of greater than zero. With the
-window parameter set to zero, only points in the same scan are considered 
-when calculating the DQS. It is also possible that some error is present in the
-idxDict struct, but since it is also used for binning errors are less likely here.
-Both possible errors result in the definite error of wrong values for NND 
-(Nearest Neighbour Distance). For both reduced datasets, a total of one distance 
+to nine digits. As a consequence, there exist multiple cases where a DQS
+is considered identical despite the MID differing by upwards of 30. 
+The error is located in the function nearestNeighbourDistanceWindow!(),
+where only the scan an element is placed in is considered for finding the 
+MOD distances. For both reduced datasets, a total of one distance 
 was determined correctly. Due to the small effect even large absolute 
 differences in distance have, three DQS total matched the verified result for both 
 (to nine decimal digits). When applied to real data, which is bound to have 
-smaller MOD distances than the test data. This effect likely leads to better
-matching with the correct results. distance window bezog sich nur auf eigenens bin - 
-The bug was successfully fixed by ßßß
+smaller MOD distances than the test data, this effect likely leads to better
+matching with the correct results. 
+The bug was successfully fixed following its discovery.
 
 When comparing with the implementation in R, the DQS is sometimes identical.
 For the entire dataset, 79.1 % of the DQS matched when rounded to nine digits.
@@ -249,7 +245,42 @@ Less cases where DQS matches, identify cause for this
 
 ### Effect of Different Error Thresholds (ppm)
 
-## Future Improvements and Additions
+## Discussion
+
+### The Lower DQS Limit
+When using the DQS as the singular descriptor of bin quality, it is
+difficult to draw conclusions beyond some points being more similar
+to points outside the bin than other bin members. When taking the 
+mean of all DQS for example as an exclusion criteria, such information 
+is lost. Without knowledge of the data environment, borders other than
+0.5 are not readily apparent. At DQS = 0.5, MID and MOD are equal for a
+given point. It follows that a bin with a mean DQS at or below 0.5 contains
+more datapoints that are less similar to their group than the surrounding
+data. Even above 0.5, it is possible for a large percentage of the bin to
+have very low scores. When given a bin the masses of which show drift,
+meaning it is not necessarily one ion trace, large enough distances to
+other points can compensate for massive discrepancies within the bin. 
+While such an error is easily identified with a test for normality, 
+the reverse situation is more difficult to detect. Here, a bin is formed @todo image here
+by points with a very low centroid error, leading to other points which
+represent the same mass being placed in a seperate bin. These two bins 
+will have a very low MID, which makes the MOD largely irrelevant as 
+long as it is ~2 orders of magnitude greater than the MID. To identify
+such cases, there needs to be a reference value for the DQS past which 
+bins need to be reevaluated.
+As a first step towards this, it is possible to calculate a lower limit
+for the DQS on a per-bin basis. This limit follows two assumptions:
+* The bin follows a single normal distriution in mz
+* The MOD is equal for all points and equal to the critical value used for binning
+Heuristic tests with the MID function show that the mean of all MIDs for any normal
+distribution is 1.128 * sigma. Since sigma and critical value (normalised to centroid
+error) of any given bin are known, the worst DQS possible for these data points
+can be calculated. This additional criteria is especially sensitive to bins 
+like (image ...), because here the critical value will be very similar to the 
+distance between neighbours. 
+@todo relation of DQSmin to DQS
+
+### Future Improvements and Additions
 OpenMS uses binary format for raw data, similar approach (save intermediates of workflow in binary to 
 improve processing speeds)
 more subsetting

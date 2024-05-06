@@ -1,5 +1,6 @@
 using CSV
 using DataFrames
+using Statistics
 
 cpp = CSV.read("./qbinning_binlist.csv", DataFrame)
 cpp = select!(cpp, Not(:control_ID, :control_DQSB))
@@ -103,13 +104,13 @@ compDF_cpp = DataFrame(mz = mz_cpp, MOD_cpp = MOD_cpp, MID_cpp = MID_cpp, DQS_cp
 
 dqs_truediff = innerjoin(compDF_cpp, compDF_jl, on = :mz)
 
-
+maximum(dqs_truediff.MOD_cpp - dqs_truediff.MOD_jl)
 
 
 
 # meandist as implemented in c++
 
-function dist_cpp(sorted_array::Vector{Float64})::Vector{Float64}
+function dist_cpp(sorted_array::Vector{Float64})::Float64
     binsize = length(sorted_array)
     totalSum = 0.0
     output = zeros(binsize)
@@ -124,10 +125,10 @@ function dist_cpp(sorted_array::Vector{Float64})::Vector{Float64}
         totalSum -= sorted_array[i]
         output[i] = (v1 + v2) / (binsize - 1)
     end
-    return output
+    return mean(output)
 end
 
-dist_cpp([1.0,2.0,3.0,4.0])
+dist_cpp([1.0,2.0,3.0,4.0,5.0,6.0,7.0,8.0,9.0])
 mean_distances([1.0,2.0,3.0,4.0])
 
 dist_cpp(cpp.mz)
@@ -139,3 +140,4 @@ sort!(artbin, :mz)
 dist_cpp(artbin.mz[1:10])
 dist_cpp(artbin.mz[12:21])
 dist_cpp(artbin.mz[23:32])
+

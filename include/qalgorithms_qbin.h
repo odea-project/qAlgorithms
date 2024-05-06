@@ -129,6 +129,8 @@ namespace q
         const EIC createEIC();
 
         void controlMedianMZ();
+
+        const double calcDQSmin();
     };
 
     // BinContainer
@@ -165,6 +167,8 @@ namespace q
         const std::vector<EIC> returnBins();
 
         void printTstats();
+
+        void printworstDQS();
     };
 
     // utility functions
