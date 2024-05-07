@@ -1,8 +1,9 @@
-# Presenting an implemetation of the qBinning-algorithm developed by Reuschenbach et al. in c++ <!-- omit in toc -->
-## Report concluding the analytical practical by Daniel Höhn, supervised by Gerrit Renner <!-- omit in toc -->
+Presenting an implemetation of the qBinning-algorithm developed by Reuschenbach et al. in c++ <!-- omit in toc -->
+-----------------------------------------------------------------------------------------------
+Report concluding the analytical practical by Daniel Höhn, supervised by Gerrit Renner <!-- omit in toc -->
 
 - [Abbreviations](#abbreviations)
-- [general NTS concepts](#general-nts-concepts)
+- [Introduction](#introduction)
 - [qBinning @todo better name](#qbinning-todo-better-name)
 	- [why is binning necessary?](#why-is-binning-necessary)
 	- [generation of EIC in other software](#generation-of-eic-in-other-software)
@@ -15,8 +16,9 @@
 - [Evaluation](#evaluation)
 	- [Result Comparison with R and julia implementation](#result-comparison-with-r-and-julia-implementation)
 	- [Performance Evaluation](#performance-evaluation)
-	- [Effect of Different Error Thresholds (ppm)](#effect-of-different-error-thresholds-ppm)
-- [Future Improvements and Additions](#future-improvements-and-additions)
+- [Discussion](#discussion)
+	- [The Lower DQS Limit](#the-lower-dqs-limit)
+	- [Future Improvements and Additions](#future-improvements-and-additions)
 
 
 ## Abbreviations
@@ -28,13 +30,16 @@
 * EIC - Extracted Ion Chromatogram
 * OS - Order Space
 * DQS(B) - Data Quality Score (of a Bin)
-* MIN - Mean Inner Distance: The average distance in mz of an element to all other elements in a bin
+* MID - Mean Inner Distance: The average distance in mz of an element to all other elements in a bin
 * MOD - Minimum Outer Distance: The shortest distance in mz to an element not in the bin
 * CPU - Central Processing Unit
 * ppm - Parts Per Million (10e-6)
 
-## general NTS concepts
-necessary?
+## Introduction
+What is HRMS? 
+Importance of NTS
+Steps of finding a feature, mention qCentroids / describe pipeline in general
+specific goal of this project
 
 ## qBinning @todo better name
 ### why is binning necessary?
@@ -54,16 +59,18 @@ necessary?
 R: 1-2 GB (factor 2 to 4 of in-place operation) of memory needed for Warburg, 
 30% CPU use on Ryzen + 10% from RStudio, very long runtime (640 s)
 writing to csv is significantly slower in R -> probably main timesink
-@todo Why do centroids not in bins get a centroid error?
 
 The most significant difference to the original implementation is that 
 while previously a dataframe object was used to handle binning by
 changing the order of data points, now a bin 
 
 ### Module Requirements
-The modlue has few requirements, only requiring centroided data and a measurement of the 
-error each centroid @todo rename data point to centroid?
-has. The error is supplied with the centroid by the qCentroids module. 
+The modlue has few requirements, only requiring centroided data with values
+for mz and the scan number and a measurement of the mass error each centroid has. 
+While, if used as part of the qAlgorithms pipeline, these measures are generated 
+in the qCentroiding step, the program also allows the user to specify a 
+per-centroid error when reading in a .csv or to assume a static error of x ppm. 
+
 
 ### Data Organisation
 Data is represented as DataPoint objects, which are handled in one of two ways:
@@ -84,7 +91,10 @@ Every Bin stores all data points which were determined to belong to the same EIC
 methods are called on the bin without requiring knowledge of data points outside of the bin.
 The main difference between Bins and EICs is that a Bin only operates with pointers to data
 points in RawData while the EIC can be used independently of the RawData it was generated from.
-Creating a bin requires all of its members to be aligned sequentially in an existing array.
+A new bin is created by specifying start and end of it within an existing bin. As such, the
+program starts by creating a bin which contains every data point in the dataset.
+Bins also keep track of information which can later be used for filtering or weighing
+purposes, such as if any scans appear more than once in the data.
 
 <b> The BinContainer object: </b>
 The BinContainer supplies wrapper functions to access all bins. The access for subsetting is 
@@ -243,9 +253,9 @@ Less cases where DQS matches, identify cause for this
 
 @todo runtime comparison
 
-### Effect of Different Error Thresholds (ppm)
-
 ## Discussion
+
+Centroid error is underestimated, leading to more strict binning than ideal
 
 ### The Lower DQS Limit
 When using the DQS as the singular descriptor of bin quality, it is

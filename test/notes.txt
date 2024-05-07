@@ -42,3 +42,5 @@ hin optimiert werden
 Mögliche Optimierung: Reduziere Datapoint auf mz, rt, pointer für bessere Cachenutzung
 
 Vorgehen DQS: Arbeite mit empirischer Stabw * 1.128 für MID, MOD = maxdist(n) => genauere Bestimmung des Faktors, test auf Abhängigkeit von n
+
+quantile function ist inverse der normalverteilung

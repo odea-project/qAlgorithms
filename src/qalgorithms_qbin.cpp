@@ -395,11 +395,7 @@ namespace q
             bincontainer->front().pt_mzmax = tmp_pt_mzmax;
             bincontainer->front().pt_scanmin = pointsInBin.front()->scanNo;
             bincontainer->front().pt_scanmax = pointsInBin.back()->scanNo;
-            if (control_duplicatesIn == 0)
-            {
                 finishedBins->push_back(bincontainer->front());
-            }
-            // ++control_duplicates;
             control_duplicates += control_duplicatesIn;
         }
         else if (binSize - lastpos >= 5) // binsize starts at 1 // @todo check for correctness
@@ -569,9 +565,11 @@ namespace q
             const double currentMZ = pointsInBin[i]->mz;
             const unsigned int currentRangeStart = (pointsInBin[i]->scanNo - minScanInner) * 2; // gives position of the first value in minMaxOutPerScan that must be considered, assuming the first value in minMaxOutPerScan (index 0) is only relevant to the Datapoint in the lowest scan. For every increase in scans, that range starts two elements later
             const unsigned int currentRangeEnd = currentRangeStart + maxdist * 4 + 1;
-            for (unsigned int j = currentRangeStart; j <= currentRangeEnd; j++) // from lowest scan to highest scan relevant to this point, +1 since scan no of point has to be included
+            for (unsigned int j = currentRangeStart; j <= currentRangeEnd; j++) // from lowest scan to highest scan relevant to this 
+            // point, +1 since scan no of point has to be included.
             {
-                const double dist = std::abs(currentMZ - minMaxOutPerScan[j]); // apply scaling here
+                const double scalar = 1; // 1 for same scan, 0 for maxdist + 1
+                const double dist = std::abs(currentMZ - scalar * minMaxOutPerScan[j]); // apply scaling here
                 if (dist < minDist)
                 {
                     minDist = dist;
