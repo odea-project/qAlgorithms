@@ -39,7 +39,9 @@ Report concluding the analytical practical by Daniel Höhn, supervised by Gerrit
 What is HRMS? 
 Importance of NTS
 Steps of finding a feature, mention qCentroids / describe pipeline in general
+
 specific goal of this project
+
 
 ## qBinning @todo better name
 ### why is binning necessary?
@@ -291,6 +293,11 @@ distance between neighbours.
 @todo relation of DQSmin to DQS
 
 ### Future Improvements and Additions
+**Performance Improvements**
+As of now, the algorithm is not multithreaded. Doing so would provide a 
+significant increase in execution speed. 
+
+
 OpenMS uses binary format for raw data, similar approach (save intermediates of workflow in binary to 
 improve processing speeds)
 more subsetting

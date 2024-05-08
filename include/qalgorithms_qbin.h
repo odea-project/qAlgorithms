@@ -17,8 +17,7 @@ namespace q
         double RT;
         unsigned int scanNo;
         double intensity;
-        int control_binID;
-        double control_DQScentroid;
+        double DQScentroid;
         double control_DQSbin;
     };
 
@@ -30,8 +29,7 @@ namespace q
         int lengthAllPoints;
         std::vector<std::vector<Datapoint>> allDatapoints;
         // "mz" "mzError" "RT" "scanNo" "intensity" "controlID" "controlCentroidDQS" "controlBinDQS"
-        bool readcsv(std::string user_file, int d_mz, int d_mzError, int d_RT, int d_scanNo, int d_intensity, int d_control_binID, int d_control_DQScentroid, int d_control_DQSbin);
-        // bool readtxt(std::string user_file); // @todo move to qCentroiding
+        bool readcsv(std::string user_file, int d_mz, int d_mzError, int d_RT, int d_scanNo, int d_intensity, int d_DQScentroid, int d_control_DQSbin);
     };
 
     // return object of qbinning

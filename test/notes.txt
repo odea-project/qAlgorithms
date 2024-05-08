@@ -44,3 +44,16 @@ Mögliche Optimierung: Reduziere Datapoint auf mz, rt, pointer für bessere Cach
 Vorgehen DQS: Arbeite mit empirischer Stabw * 1.128 für MID, MOD = maxdist(n) => genauere Bestimmung des Faktors, test auf Abhängigkeit von n
 
 quantile function ist inverse der normalverteilung
+
+gibt es ein MID > vcrit im Datensatz?
+
+Instead of returning a composite object, you may consider the following alternatives:
+• Make the function a constructor for the object.
+• Make the function modify an existing object rather than making a new one. The
+existing object can be made available to the function through a pointer or reference,
+or the function could be a member of the object's class.
+• Make the function return a pointer or reference to a static object defined inside the
+function. This is efficient, but risky. The returned pointer or reference is valid only
+until the next time the function is called and the local object is overwritten, possibly in
+a different thread. If you forget to make the local object static then it becomes invalid
+as soon as the function returns.
