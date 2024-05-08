@@ -35,7 +35,7 @@ namespace q
 #pragma region "Rawdata"
     RawData::RawData() {}
     q::RawData::~RawData() {} // potential memory leak
-    bool RawData::readcsv(std::string user_file, int d_mz, int d_mzError, int d_RT, int d_scanNo, int d_intensity, int d_control_binID, int d_control_DQScentroid, int d_control_DQSbin)
+    bool RawData::readcsv(std::string user_file, int d_mz, int d_mzError, int d_RT, int d_scanNo, int d_intensity, int d_DQScentroid, int d_control_DQSbin)
     { // @todo stop segfaults when reading empty lines; use buffers for speedup
         int now = time(0);
         lengthAllPoints = 0;
@@ -73,7 +73,7 @@ namespace q
                 }
             }
             const Datapoint F = Datapoint{row[d_mz], row[d_mzError], row[d_RT], i_scanNo, row[d_intensity],
-                                          (int)row[d_control_binID], row[d_control_DQScentroid], row[d_control_DQSbin]};
+                                          row[d_DQScentroid], row[d_control_DQSbin]};
 
             // if (F.mz > 993.7895 && F.mz < 993.8005) // rm
             // {
@@ -192,7 +192,7 @@ namespace q
         // possible symbols
         // char shapes[] = "acGuxnoQzRsTvjIEf"; // random shape when displaying with makie @todo does not work
 
-        output << "mz,scan,ID,DQS,control_ID,control_DQSB\n";
+        output << "mz,scan,ID,DQSC,DQSB,control_DQSB\n";
 
         for (size_t i = 0; i < finishedBins.size(); i++) // @todo make faster
         {
@@ -203,8 +203,8 @@ namespace q
             for (size_t j = 0; j < binnedPoints.size(); j++)
             {
                 char buffer[128];
-                sprintf(buffer, "%0.15f,%d,%zu,%0.15f,%d,%0.15f\n", binnedPoints[j]->mz, binnedPoints[j]->scanNo, i + 1, finishedBins[i].DQSB[j],
-                        binnedPoints[j]->control_binID, binnedPoints[j]->control_DQSbin);
+                sprintf(buffer, "%0.15f,%d,%zu,%0.15f,%0.15f,%0.15f\n", binnedPoints[j]->mz, binnedPoints[j]->scanNo, i + 1, 
+                        binnedPoints[i]->DQScentroid, finishedBins[i].DQSB[j], binnedPoints[j]->control_DQSbin);
                 output << buffer;
             }
         }
@@ -558,6 +558,7 @@ namespace q
             }
         }
 
+        double nearestToVcrit = INFINITY; // always set to the smallest difference between mindist and vcrit in a bin
         // find min distance in minMaxOutPerScan, then calculate DQS for that point
         for (size_t i = 0; i < binsize; i++)
         {
@@ -578,9 +579,9 @@ namespace q
             }
             double tmp_DQS = calcDQS(meanInnerDistances[i], minDist); // @todo scale DQS with distance from point, gaussian - maxdist + 1 = alpha?
             DQSB.push_back(tmp_DQS);
-            // std::cout << std::setprecision(15) << tmp_DQS << ",";
+            // @todo inline, compare all minDist with critval and save smallest difference in bin
         }
-        // throw; // rm
+        return;
     }
 
     std::string Bin::summariseBin()
@@ -666,7 +667,9 @@ namespace q
                       { sumOfDist += (point->mz - meanMZ) * (point->mz - meanMZ); }); // squared
         const double stdev = sqrt(sumOfDist / (n - 1));
         const double worstCaseMOD = 3.05037165842070 * pow(log(n), (-0.4771864667153)) * (errorSum) / n;
-        return calcDQS(stdev * 1.128, worstCaseMOD); // es muss das normalisierte OS genutzt werden
+        std::vector<long double> MIDs = meanDistance(pointsInBin);
+        double MID = std::accumulate(MIDs.begin(), MIDs.end(), 0.0);
+        return calcDQS(MID/n, worstCaseMOD); // es muss das normalisierte OS genutzt werden stdev * 1.128
     }
 
 #pragma endregion "Bin"
@@ -733,8 +736,8 @@ int main()
     // std::cout.rdbuf(result.rdbuf());             // redirect std::cout to out.txt!
 
     q::RawData testdata;
-    // path to data, mz, centroid error, RT, scan number, intensity, control ID, DQS centroid, control DQS Bin
-    testdata.readcsv("../../rawdata/monobin.csv", 0, 1, 2, 3, 4, 5, 6, 7); // ../../rawdata/control_bins.csv reduced_DQSdiff
+    // path to data, mz, centroid error, RT, scan number, intensity, DQS centroid, control DQS Bin
+    testdata.readcsv("../../rawdata/monobin.csv", 0, 1, 2, 3, 4, 5, 7); // ../../rawdata/control_bins.csv reduced_DQSdiff
 
     q::BinContainer testcontainer;
     testcontainer.makeFirstBin(&testdata);
@@ -758,7 +761,7 @@ int main()
     // for (size_t i = 0; i < q::control_outOfBins.size(); i++) // segfault at 348348
     // {
     //     output << std::setprecision(15) << q::control_outOfBins[i]->mz << "," << q::control_outOfBins[i]->scanNo << ",-1,"
-    //            << q::control_outOfBins[i]->control_binID << "," << q::control_outOfBins[i]->control_DQSbin << "\n";
+    //            << "," << q::control_outOfBins[i]->control_DQSbin << "\n";
     // }
     // file_out << output.str();
     // testcontainer.printBinSummary("../../qbinning_binsummary.csv");
