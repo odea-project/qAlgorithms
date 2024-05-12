@@ -295,13 +295,48 @@ distance between neighbours.
 ### Future Improvements and Additions
 **Performance Improvements**
 As of now, the algorithm is not multithreaded. Doing so would provide a 
-significant increase in execution speed. 
+significant increase in execution speed. Multithreading is possible
+to use after the first bin is split, since every bin is treated independently.
+
+**Feature Additions**
+While the algorithm works well for LC-MS data, MS^2 datasets can only be 
+binned according to the precursor ion. An additional method to subset
+closed bins further according to MS^2 or MS^n data could be implemented
+with relative ease as a separate step following the existing subset methods.
+
+Besides single-dimension chromatography, separation by Ion Mobility Spectrometry
+or two dimensional chromatography is employed for NTS. Accounting for this
+instrumentation during the subsetting step requires additional methods to
+be written. Here, the way the DQS is calculated also needs to be revised.
+
+**Usability Changes**
+The program does not feature error handling in any capacity. Additionally,
+only one dataset @todo adjust if testing SFC/GC
+has been used to confirm error-free operation on two different @todo test on linux
+computers, both running Windows 10. When running without an attached debugger,
+error management will be impossible for a possible end user. For the qAlgorithms
+tool to find widespread adoption, possible error sources need to be identified,
+adressed or effectively communicated to the end user. This task requires 
+extensive testing with a broad sample group of potential users.
+
+Contributions to open source software like this are more likely to occur
+if automated tests exist which can verify the validity of results quickly
+after modification. Such tests should cover all stages of the program
+at which potential errors can occur, such as after reading data,
+after forming the initial bin, after completing a subsetting operation,
+when adding a bin to the vector of closed bins and after the DQS calculation.
+The test dataset for this purpose should contain multiple bins which display 
+different behaviour, that is bins with good scores, bins with correctly
+assigned bad scores and bins with bad scores due to either being too large
+and including more than one ion trace (case @todo mention in discussion)
+or one bin being split in two (@todo see above). These cases need to be
+included so that a potential improvement of the algorithm is not discarded
+for not obtaining exactly matching results.
 
 
 OpenMS uses binary format for raw data, similar approach (save intermediates of workflow in binary to 
 improve processing speeds)
 more subsetting
-concrete validation
 implement into proper pipeline by returning closed bins with DQSB - datapoint basis or as EIC objects?
 Implement a way to handle MS^2 / MS^n
 automatic tests to verify program after user modifies it
