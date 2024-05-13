@@ -203,7 +203,7 @@ namespace q
             for (size_t j = 0; j < binnedPoints.size(); j++)
             {
                 char buffer[128];
-                sprintf(buffer, "%0.15f,%d,%zu,%0.15f,%0.15f,%0.15f\n", binnedPoints[j]->mz, binnedPoints[j]->scanNo, i + 1, 
+                sprintf(buffer, "%0.15f,%d,%zu,%0.15f,%0.15f,%0.15f\n", binnedPoints[j]->mz, binnedPoints[j]->scanNo, i + 1,
                         binnedPoints[i]->DQScentroid, finishedBins[i].DQSB[j], binnedPoints[j]->control_DQSbin);
                 output << buffer;
             }
@@ -217,10 +217,10 @@ namespace q
         std::stringstream output;
         file_out.open(path, std::ios::out);
         assert(file_out.is_open());
-        output << "ID,size,mean_mz,mean_scans,mean_DQS\n";
+        output << "ID,size,mean_mz,median_mz,stdev_mz,mean_scans,median_scans,DQSB,DQSB_control,DQSB_worst,min_DQSC,meanError\n";
         for (size_t i = 0; i < finishedBins.size(); i++)
         {
-            output << i << "," << finishedBins[i].summariseBin() << "\n";
+            output << i + 1 << "," << finishedBins[i].summariseBin();
         }
         file_out << output.str();
     }
@@ -243,7 +243,7 @@ namespace q
         {
             finishedBins[i].controlMedianMZ();
         }
-        file_out << q::control_tvals.str();
+        // file_out << q::control_tvals.str();
     };
 
     void BinContainer::printworstDQS()
@@ -395,7 +395,7 @@ namespace q
             bincontainer->front().pt_mzmax = tmp_pt_mzmax;
             bincontainer->front().pt_scanmin = pointsInBin.front()->scanNo;
             bincontainer->front().pt_scanmax = pointsInBin.back()->scanNo;
-                finishedBins->push_back(bincontainer->front());
+            finishedBins->push_back(bincontainer->front());
             control_duplicates += control_duplicatesIn;
         }
         else if (binSize - lastpos >= 5) // binsize starts at 1 // @todo check for correctness
@@ -566,10 +566,10 @@ namespace q
             const double currentMZ = pointsInBin[i]->mz;
             const unsigned int currentRangeStart = (pointsInBin[i]->scanNo - minScanInner) * 2; // gives position of the first value in minMaxOutPerScan that must be considered, assuming the first value in minMaxOutPerScan (index 0) is only relevant to the Datapoint in the lowest scan. For every increase in scans, that range starts two elements later
             const unsigned int currentRangeEnd = currentRangeStart + maxdist * 4 + 1;
-            for (unsigned int j = currentRangeStart; j <= currentRangeEnd; j++) // from lowest scan to highest scan relevant to this 
+            for (unsigned int j = currentRangeStart; j <= currentRangeEnd; j++) // from lowest scan to highest scan relevant to this
             // point, +1 since scan no of point has to be included.
             {
-                const double scalar = 1; // 1 for same scan, 0 for maxdist + 1
+                const double scalar = 1;                                                // 1 for same scan, 0 for maxdist + 1
                 const double dist = std::abs(currentMZ - scalar * minMaxOutPerScan[j]); // apply scaling here
                 if (dist < minDist)
                 {
@@ -586,25 +586,44 @@ namespace q
 
     std::string Bin::summariseBin()
     {
-        // ID, size, mean_mz, mean_scans, mean_DQS \n
-        std::stringstream buffer;
         size_t binsize = pointsInBin.size();
         double meanMZ = 0;
         double meanScan = 0;
         double meanDQS = 0;
+        double DQS_control = 0;
+        double meanCenError = 0;
+        double DQSmin = calcDQSmin();
+        double worstCentroid = INFINITY;
         for (size_t i = 0; i < binsize; i++)
         {
             meanMZ += pointsInBin[i]->mz;
             meanScan += pointsInBin[i]->scanNo;
+            DQS_control += pointsInBin[i]->control_DQSbin;
+            meanCenError += pointsInBin[i]->mzError;
+            if (pointsInBin[i]->DQScentroid < worstCentroid)
+            {
+                worstCentroid = pointsInBin[i]->DQScentroid;
+            }
+            
             meanDQS += DQSB[i];
         }
 
         meanMZ = meanMZ / binsize;
         meanScan = meanScan / binsize;
         meanDQS = meanDQS / binsize;
-        buffer << binsize << "," << meanMZ << "," << meanScan << "," << meanDQS;
-        std::string output = buffer.str();
-        return output;
+        meanCenError = meanCenError / binsize;
+        DQS_control = DQS_control / binsize;
+
+        double sumOfDist = 0;
+        std::for_each(pointsInBin.begin(), pointsInBin.end(), [&](const Datapoint *point)
+                      { sumOfDist += (point->mz - meanMZ) * (point->mz - meanMZ); }); // squared
+        const double stdev = sqrt(sumOfDist / (binsize - 1));
+
+        // (binID), binsize, meanMZ, medianMZ, standard deviation mz, meanScan, medianScan, DQSB, DQSB_control, worst-case DQS (empirical), lowest DQScen, mean centroid error
+        char buffer[256];
+        sprintf(buffer, "%d,%0.15f,%0.15f,%0.15f,%0.2f,%d,%0.15f,%0.15f,%0.15f,%0.15f,%0.15f\n", 
+                binsize, meanMZ, medianMZ, stdev, meanScan, tmp_median, meanDQS, DQS_control, DQSmin, worstCentroid, meanCenError);
+        return buffer;
     }
 
     const EIC Bin::createEIC()
@@ -651,6 +670,10 @@ namespace q
         // t value for mean == median
         double bin_tval = abs((meanMZ - medianMZ) * sqrt(n) / (stdev));
         double meanDQS = std::accumulate(DQSB.begin(), DQSB.end(), 0.0) / n;
+        double lowerBound = meanMZ - 3*stdev;
+        double upperBound = meanMZ + 3* stdev;
+        std::cout << pointsInBin.front()->mz - lowerBound << " | " << upperBound - pointsInBin.back()->mz << "\n";
+
         control_tvals << n << "," << bin_tval << "," << meanDQS << "\n";
     }
 
@@ -669,7 +692,7 @@ namespace q
         const double worstCaseMOD = 3.05037165842070 * pow(log(n), (-0.4771864667153)) * (errorSum) / n;
         std::vector<long double> MIDs = meanDistance(pointsInBin);
         double MID = std::accumulate(MIDs.begin(), MIDs.end(), 0.0);
-        return calcDQS(MID/n, worstCaseMOD); // es muss das normalisierte OS genutzt werden stdev * 1.128
+        return calcDQS(MID / n, worstCaseMOD); // es muss das normalisierte OS genutzt werden stdev * 1.128
     }
 
 #pragma endregion "Bin"
@@ -737,7 +760,7 @@ int main()
 
     q::RawData testdata;
     // path to data, mz, centroid error, RT, scan number, intensity, DQS centroid, control DQS Bin
-    testdata.readcsv("../../rawdata/monobin.csv", 0, 1, 2, 3, 4, 5, 7); // ../../rawdata/control_bins.csv reduced_DQSdiff
+    testdata.readcsv("../../rawdata/control_bins.csv", 0, 1, 2, 3, 4, 6, 7); // ../../rawdata/control_bins.csv reduced_DQSdiff
 
     q::BinContainer testcontainer;
     testcontainer.makeFirstBin(&testdata);
@@ -746,7 +769,9 @@ int main()
     std::cout << "Total duplicates: " << q::control_duplicates << "\n--\ncalculating DQSBs...\n";
     testcontainer.assignDQSB(&testdata, 6); // int = max dist in scans
     // return 0;
-    testcontainer.printworstDQS();
+
+    testcontainer.printBinSummary("../../summary_bins.csv");
+    // testcontainer.printworstDQS();
     // testcontainer.printTstats();
     // testcontainer.printAllBins("../../qbinning_binlist.csv", &testdata);
     std::cout << "printed all bins\n";
