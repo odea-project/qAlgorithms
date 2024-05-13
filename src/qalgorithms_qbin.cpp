@@ -220,6 +220,11 @@ namespace q
         output << "ID,size,mean_mz,median_mz,stdev_mz,mean_scans,median_scans,DQSB,DQSB_control,DQSB_worst,min_DQSC,meanError\n";
         for (size_t i = 0; i < finishedBins.size(); i++)
         {
+            if (i == 307)
+            {
+                std::cout << "";
+            }
+            
             output << i + 1 << "," << finishedBins[i].summariseBin();
         }
         file_out << output.str();

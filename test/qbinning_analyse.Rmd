@@ -110,7 +110,14 @@ for (i in 0:15) {
 }
 
 plot(c(0:15), accurate/length(summary$ID))
-plot(c(0:15), cumsum(accurate))
+plot(summary$DQSB, summary$DQSB_worst) 
+sum((summary$DQSB - summary$DQSB_worst) < 0)
+
+summary[which((summary$DQSB - summary$DQSB_worst) < 0),] # for some points, the worst DQS is better than the actual one - why?
+hist(summary$stdev_mz[which((summary$DQSB - summary$DQSB_worst) < 0)])
+
+hist(abs(summary$mean_scans - summary$median_scans))
+sum((abs(summary$mean_scans - summary$median_scans)) > 6) # 1005
 
 ```
 

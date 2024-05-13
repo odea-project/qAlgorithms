@@ -47,6 +47,10 @@ quantile function ist inverse der normalverteilung
 
 gibt es ein MID > vcrit im Datensatz?
 
+großen Multistandard-Datensatz bei DFG anfragen
+
+kein klarer unterschied zwischen median und mean mz, für 1005 ein Abstand > 6 in scans
+
 Instead of returning a composite object, you may consider the following alternatives:
 • Make the function a constructor for the object.
 • Make the function modify an existing object rather than making a new one. The
