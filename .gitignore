@@ -35,3 +35,6 @@ src/qalgorithms_qbin2.exe
 test/testfunc.exe
 .Rhistory
 ./process_comparison/*
+
+# Other
+*.html

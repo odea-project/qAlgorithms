@@ -101,14 +101,16 @@ write.csv(export, "../../rawdata/control_bins_full.csv", row.names = FALSE)
 getwd()
 ```
 
-```{r worst dqs possible}
-worstDQS <- function(n, mz){
-  vcrit = 3.05037165842070 * log(n)^(-0.4771864667153) * mz * 5 * 10^-6 # assumes 5ppm error
-  # assuming MOD is equal to vcrit
-  
-  
+```{r check bin summary}
+summary <- read.csv("../../summary_bins.csv")
+accurate = c(1:16)
+
+for (i in 0:15) {
+  accurate[i+1] = sum((round(summary$DQSB - summary$DQSB_control, digits = i) == 0))
 }
 
+plot(c(0:15), accurate/length(summary$ID))
+plot(c(0:15), cumsum(accurate))
 
 ```
 

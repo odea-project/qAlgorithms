@@ -41,6 +41,9 @@ Importance of NTS
 Steps of finding a feature, mention qCentroids / describe pipeline in general
 
 specific goal of this project
+The purpose of the presented project is to provide a user-friendly and
+programmer-friendly implementation of the qBinning algorithm [@reuschenbachQBinningDataQualityBased2023].
+
 
 
 ## qBinning @todo better name
@@ -298,6 +301,14 @@ As of now, the algorithm is not multithreaded. Doing so would provide a
 significant increase in execution speed. Multithreading is possible
 to use after the first bin is split, since every bin is treated independently.
 
+When performing the splitting in the m/z dimension, for small bins the 
+greatest order space is often at the border. This leads to many redundant
+calculations, especially towards the end of a subsetting step. If it is
+possible to implement a check that does not require a lot of processing
+time, a medium to large boost in efficiency can be assumed. For reference,
+A test dataset with 261 centroids took 98 subsets in m/z total to identify 
+one bin with ten members. 
+
 **Feature Additions**
 While the algorithm works well for LC-MS data, MS^2 datasets can only be 
 binned according to the precursor ion. An additional method to subset
@@ -347,3 +358,4 @@ How certain is scan number as a good parameter?
 Add compile-time toggle for creating list of non-binned objects using macros
 Cache optimisation
 include an example for creating a new subsetting method
+
