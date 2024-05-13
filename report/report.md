@@ -43,7 +43,10 @@ Steps of finding a feature, mention qCentroids / describe pipeline in general
 specific goal of this project
 The purpose of the presented project is to provide a user-friendly and
 programmer-friendly implementation of the qBinning algorithm [@reuschenbachQBinningDataQualityBased2023].
-
+This is realised through thoroughly commented code, included
+diagnostic functions which can be rewritten for specific use
+cases with minimal effort, flexible data input and comparatively
+high performance. 
 
 
 ## qBinning @todo better name
@@ -193,6 +196,15 @@ optional argument. If none is supplied, the centroid error is used.
 
 
 ## Evaluation
+As already concluded in the original paper, the binning process results
+in a dataset of EICs the vast majority of which possess very good
+separation from their enviroment. While some errors still persist,
+it is also important to note that this binning step is only part of
+a larger analysis process. As such, even if the intermediate result 
+table contains false positives, the peak detection step will likely
+heavily reduce their impact through filtering for false positive EICs
+and the fitted regression for single centroids being assigned to the 
+wrong bin.
 
 ### Result Comparison with R and julia implementation
 All three implementations result in identical bins after completed subsetting.
@@ -229,6 +241,14 @@ This result does not change significantly (ßßß 5. Nachkommastelle) if bins wh
 contain two points from the same scan are excluded (ßßß total). Even when rounded
 to three digits, only 93.2% of the DQS match. (Grafik)
 
+A significant advantage over R and julia implementations is that a 
+single executable can be provided. This means the user is not
+required to install a complete programing language and scripting
+environment on his device or troubleshoot problems caused by
+future changes to packages. While automated package installation
+and version control could be implemented for both R and julia,
+this is presently not the case. As such, a significant 
+improvement in terms of user-friendliness was achieved.
 
 
 

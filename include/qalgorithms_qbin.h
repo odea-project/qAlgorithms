@@ -59,7 +59,7 @@ namespace q
         std::vector<double> cumError; // cumulative error in mz
         double pt_MakeDQSB;
         bool duplicateScan = false; // are two points with the same scan number in this bin?
-        unsigned int tmp_median;
+        unsigned int medianScan;
         double medianMZ;
 
     public:
@@ -122,7 +122,7 @@ namespace q
         /// @param maxdist the largest gap in scans which a bin can have while still being considered valid
         void makeDQSB(const RawData *rawdata, const unsigned int &maxdist);
 
-        std::string summariseBin();
+        std::pair<std::string, int> summariseBin();
 
         const EIC createEIC();
 
@@ -160,6 +160,7 @@ namespace q
         void assignDQSB(const RawData *rawdata, const unsigned int maxdist);
 
         void printAllBins(std::string path, const RawData *rawdata);
+
         void printBinSummary(std::string path);
 
         const std::vector<EIC> returnBins();
@@ -167,6 +168,10 @@ namespace q
         void printTstats();
 
         void printworstDQS();
+
+        const std::vector<int> makeBinSelection(); // hard code for now, add criteria vector later
+
+        void printSelectBins(const std::vector<int>);
     };
 
     // utility functions

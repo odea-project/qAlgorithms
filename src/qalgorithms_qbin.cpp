@@ -224,8 +224,8 @@ namespace q
             {
                 std::cout << "";
             }
-            
-            output << i + 1 << "," << finishedBins[i].summariseBin();
+
+            output << i + 1 << "," << finishedBins[i].summariseBin().first;
         }
         file_out << output.str();
     }
@@ -432,11 +432,11 @@ namespace q
         const int n = binsize / 2;
         if (binsize % 2) // if binsize is odd
         {
-            tmp_median = pointsInBin[n]->scanNo; // for lenght 1: index 0
+            medianScan = pointsInBin[n]->scanNo; // for lenght 1: index 0
         }
         else
         {
-            tmp_median = (pointsInBin[n]->scanNo + pointsInBin[n + 1]->scanNo + 1) / 2; // +1 to round to nearest, since integers are truncated
+            medianScan = (pointsInBin[n]->scanNo + pointsInBin[n + 1]->scanNo + 1) / 2; // +1 to round to nearest, since integers are truncated
         }
 
         int maxScansReduced = 0;              // add this many dummy values to prevent segfault when bin is in one of the last scans
@@ -589,7 +589,7 @@ namespace q
         return;
     }
 
-    std::string Bin::summariseBin()
+    std::pair<std::string, int> Bin::summariseBin()
     {
         size_t binsize = pointsInBin.size();
         double meanMZ = 0;
@@ -609,7 +609,7 @@ namespace q
             {
                 worstCentroid = pointsInBin[i]->DQScentroid;
             }
-            
+
             meanDQS += DQSB[i];
         }
 
@@ -626,9 +626,32 @@ namespace q
 
         // (binID), binsize, meanMZ, medianMZ, standard deviation mz, meanScan, medianScan, DQSB, DQSB_control, worst-case DQS (empirical), lowest DQScen, mean centroid error
         char buffer[256];
-        sprintf(buffer, "%d,%0.15f,%0.15f,%0.15f,%0.2f,%d,%0.15f,%0.15f,%0.15f,%0.15f,%0.15f\n", 
-                binsize, meanMZ, medianMZ, stdev, meanScan, tmp_median, meanDQS, DQS_control, DQSmin, worstCentroid, meanCenError);
-        return buffer;
+        sprintf(buffer, "%d,%0.15f,%0.15f,%0.15f,%0.2f,%d,%0.15f,%0.15f,%0.15f,%0.15f,%0.15f\n",
+                binsize, meanMZ, medianMZ, stdev, meanScan, medianScan, meanDQS, DQS_control, DQSmin, worstCentroid, meanCenError);
+
+        int selector = 0; // selector returns true or false, depending on criteria checked
+        if (selector)
+        {
+            goto returning;
+        }
+        if (DQSmin > meanDQS)
+        {
+            selector = 1;
+            goto returning;
+        }
+        if (abs(meanMZ - medianMZ) > 2 * meanCenError)
+        {
+            selector = 2;
+            goto returning;
+        }
+        if (abs(meanScan - medianScan) > 6) // greater than maxdist
+        {
+            selector = 3;
+            goto returning;
+        }
+
+    returning:
+        return std::make_pair(buffer, selector);
     }
 
     const EIC Bin::createEIC()
@@ -651,12 +674,12 @@ namespace q
                 DQSB[i]};
             tmp_pointsInEIC.push_back(F);
         }
-        // tmp_median is determined with the DQSB
+        // medianScan is determined with the DQSB
         const EIC returnEIC = {
             tmp_pointsInEIC,
             tmp_meanDQS / binsize,
             tmp_meanMZ / binsize,
-            tmp_median,
+            medianScan,
             tmp_maxInt};
         return returnEIC;
     }
@@ -675,8 +698,8 @@ namespace q
         // t value for mean == median
         double bin_tval = abs((meanMZ - medianMZ) * sqrt(n) / (stdev));
         double meanDQS = std::accumulate(DQSB.begin(), DQSB.end(), 0.0) / n;
-        double lowerBound = meanMZ - 3*stdev;
-        double upperBound = meanMZ + 3* stdev;
+        double lowerBound = meanMZ - 3 * stdev;
+        double upperBound = meanMZ + 3 * stdev;
         std::cout << pointsInBin.front()->mz - lowerBound << " | " << upperBound - pointsInBin.back()->mz << "\n";
 
         control_tvals << n << "," << bin_tval << "," << meanDQS << "\n";
