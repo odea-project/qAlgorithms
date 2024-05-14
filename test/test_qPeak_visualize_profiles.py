@@ -49,9 +49,9 @@ def plot_mz_vs_intensity(file1, file2, file3, file4, file5):
 
     # For df1
     row = df1.iloc[0]
-    plt.plot(row['mz'], row['int'], '-', label='File 1')
+    # plt.plot(row['mz'], row['int'], '-', label='File 1')
     # plt.title(f"Scan: {row['scan']}")
-
+    ymax = max(row['int'])*1.2
     # For df2
     row = df2.iloc[0]
     plt.plot(row['MZ'], row['Intensity'], '-', label='File 2')
@@ -66,10 +66,15 @@ def plot_mz_vs_intensity(file1, file2, file3, file4, file5):
         if df4[i][0] == 0:
             x = np.array(df4[i][1:])
             y = np.array(df5[i][1:])
+            if len(x) != len(y):
+                x = x[:len(y)]
             _filt = np.where(x > 0)
-            plt.plot(x[_filt], y[_filt], 'r', alpha=0.3, lw=6)
+            xtmp = x[_filt]
+            ytmp = y[_filt]
+            plt.plot(xtmp, ytmp, 'r', alpha=0.3, lw=6)
     plt.axis('off')
-    plt.xlim(0, 1000)
+    # plt.xlim(0, 1000)
+    plt.ylim(0, ymax)
     plt.tight_layout(pad=1)
     plt.show()
 

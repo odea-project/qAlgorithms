@@ -2,6 +2,8 @@
 #ifndef QALGORITHMS_MATRIX_H // Include guarde to prevent double inclusion
 #define QALGORITHMS_MATRIX_H
 
+// internal
+
 
 // external
 #include <iostream>
@@ -29,6 +31,9 @@ namespace q
     // Methods for inv()
     Matrix choleskyDecomposition() const;
     Matrix inverseLowerTriangle() const;
+
+    double fasterpow2(double p) const;
+    double fasterexp(double p) const;
 
   public:
     // Constructors and member functions

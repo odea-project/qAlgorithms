@@ -50,6 +50,19 @@ namespace q
     return cols * rows;
   }
 
+  #define cast_uint32_t static_cast<uint32_t>
+  double Matrix::fasterpow2(double p) const
+  {
+    double clipp = (p < -126) ? -126.0f : p;
+    union { uint32_t i; double f; } v = { cast_uint32_t ( (1 << 23) * (clipp + 126.94269504f) ) };
+    return v.f;
+  }
+
+  double Matrix::fasterexp (double p) const
+  {
+    return fasterpow2 (1.442695040f * p);
+  }
+
   // access
   double &Matrix::operator()(size_t row, size_t col)
   {
@@ -270,6 +283,7 @@ namespace q
     for (size_t i = 0; i < cols * rows; i++)
     {
       result.elements[i] = std::exp(elements[i]);
+      // result.elements[i] = fasterexp(elements[i]); // this function does not work properly
     }
     return result;
   }
