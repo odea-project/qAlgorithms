@@ -122,6 +122,12 @@ namespace q
         /// @param maxdist the largest gap in scans which a bin can have while still being considered valid
         void makeDQSB(const RawData *rawdata, const unsigned int &maxdist);
 
+        /// @brief summarise the bin to one line, with the parameters size, mean_mz, median_mz, stdev_mz, mean_scans, median_scans,
+        /// DQSB, DQSB_control, DQSB_worst, min_DQSC, meanError. DQSB_worst is calculated by assuming the MOD of all points in the
+        /// bin to be equal to the critical value. Additionally, the function computes a 1-byte code for up to 8 states of interest.
+        /// The respective bit is set to 1 if the defined state is present. Possible states of interest are too large a discrepancy
+        /// between mean and median or the presence of duplicate values.
+        /// @return The pair contains the bin summary as a comma-separated string and the byte coding for possible errors
         std::pair<std::string, std::byte> summariseBin();
 
         const EIC createEIC();
@@ -159,7 +165,7 @@ namespace q
         /// @param maxdist the largest gap in scans which a bin can have while still being considered valid
         void assignDQSB(const RawData *rawdata, const unsigned int maxdist);
 
-        void printAllBins(std::string path, const RawData *rawdata);
+        void printAllBins(std::string path, const RawData *rawdata); // @todo remove rawdata dependency
 
         void printBinSummary(std::string path);
 
@@ -169,8 +175,14 @@ namespace q
 
         void printworstDQS();
 
-        const std::vector<int> makeBinSelection(); // hard code for now, add criteria vector later
+        /// @brief The function calculates the summary of a bin and selects bins with at least one state of interest.
+        /// @return A vector of all closed bins which have at least one state of interest
+        const std::vector<int> makeBinSelection();
 
+        /// @brief Print the individual bin members and optionally the bin summary in a separate .csv
+        /// @param indices A vector of the selected bins, probably makeBinSelection()
+        /// @param summary Should a summary table be printed
+        /// @param location path to the folder in which both files should be created
         void printSelectBins(const std::vector<int> indices, bool summary, const std::string location);
     };
 

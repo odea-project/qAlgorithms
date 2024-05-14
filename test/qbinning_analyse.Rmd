@@ -121,3 +121,12 @@ sum((abs(summary$mean_scans - summary$median_scans)) > 6) # 1005
 
 ```
 
+```{r error analysis}
+summary_error <- read.csv("../../selectbins_summary.csv")
+
+table(summary_error$errorcode)
+
+ggplot(summary_error)+
+  geom_point(aes(x = mean_mz, y = mean_scans, colour = as.factor(errorcode)))
+```
+

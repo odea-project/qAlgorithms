@@ -9,10 +9,11 @@ Report concluding the analytical practical by Daniel Höhn, supervised by Gerrit
 	- [generation of EIC in other software](#generation-of-eic-in-other-software)
 	- [advantages of qBinning](#advantages-of-qbinning)
 - [Implementation](#implementation)
-	- [Differences to the Original Implementation in R](#differences-to-the-original-implementation-in-r)
+	- [Differences to the Original Implementation in R -\> discussion / conclusion; Konkrete Beobachtungen / wertende zusammenfassung + addressat, kontext existierender literatur ; vergleichbare Ergebnisse?](#differences-to-the-original-implementation-in-r---discussion--conclusion-konkrete-beobachtungen--wertende-zusammenfassung--addressat-kontext-existierender-literatur--vergleichbare-ergebnisse)
 	- [Module Requirements](#module-requirements)
 	- [Data Organisation](#data-organisation)
 	- [Core Functions](#core-functions)
+	- [Diagnostic Functions](#diagnostic-functions)
 - [Evaluation](#evaluation)
 	- [Result Comparison with R and julia implementation](#result-comparison-with-r-and-julia-implementation)
 	- [Performance Evaluation](#performance-evaluation)
@@ -50,16 +51,18 @@ was ist binning
 specific goal of this project
 The purpose of the presented project is to provide a user-friendly and
 programmer-friendly implementation of the qBinning algorithm [@reuschenbachQBinningDataQualityBased2023].
-
-funktionsweise
-
 This is realised through thoroughly commented code, included
 diagnostic functions which can be rewritten for specific use
 cases with minimal effort, flexible data input and comparatively
 high performance. 
+With the newly written code, it is possible to introduce the
+qBinning algorithm to existing, open-source analysis platforms
+like MZmine @todo citation.
+
+
 Idee: Implementieren des Algorithmus in einer größeren Plattform
 Fokus auch auf größerer Datensätze; Datenmenge nimmt wahrscheinlich zu
-
+funktionsweise
 Feature: Nur bins weitergeben, wenn in Serie gemessen
 
 ## qBinning @todo better name
@@ -208,6 +211,8 @@ cases in which a specific subsetting operation is only necessary for bins which 
 as closed by a different subsetting function. subsetBins can take an error (in ppm) as an
 optional argument. If none is supplied, the centroid error is used. 
 
+### Diagnostic Functions
+
 
 ## Evaluation
 As already concluded in the original paper, the binning process results
@@ -254,6 +259,8 @@ For the entire dataset, 79.1 % of the DQS matched when rounded to nine digits.
 This result does not change significantly (ßßß 5. Nachkommastelle) if bins which
 contain two points from the same scan are excluded (ßßß total). Even when rounded
 to three digits, only 93.2% of the DQS match. (Grafik)
+This behaviour is independent from Bin association, which results in lower 
+agreement when only comparing DQS per bin. (Grafik)
 
 A significant advantage over R and julia implementations is that a 
 single executable can be provided. This means the user is not
