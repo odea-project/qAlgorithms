@@ -220,12 +220,7 @@ namespace q
         output << "ID,size,mean_mz,median_mz,stdev_mz,mean_scans,median_scans,DQSB,DQSB_control,DQSB_worst,min_DQSC,meanError\n";
         for (size_t i = 0; i < finishedBins.size(); i++)
         {
-            if (i == 307)
-            {
-                std::cout << "";
-            }
-
-            output << i + 1 << "," << finishedBins[i].summariseBin().first;
+            output << i + 1 << "," << finishedBins[i].summariseBin().first << "\n";
         }
         file_out << output.str();
     }
@@ -249,6 +244,65 @@ namespace q
             finishedBins[i].controlMedianMZ();
         }
         // file_out << q::control_tvals.str();
+    };
+
+    const std::vector<int> BinContainer::makeBinSelection()
+    {
+        std::vector<int> indices;
+        for (int i = 0; i < finishedBins.size(); i++)
+        {
+            std::byte code = finishedBins[i].summariseBin().second;
+            if (bool(code)) // should be false if any bit is not 0
+            {
+                indices.push_back(i);
+            }
+        }
+        return indices;
+    };
+
+    void BinContainer::printSelectBins(const std::vector<int> indices, bool summary, const std::string location)
+    {
+        // print optional summary file
+        const std::string binsSummary = location + "/selectBins_summary.csv";
+        std::fstream file_out_sum;
+        std::stringstream output_sum;
+        if (summary)
+        {
+            file_out_sum.open(binsSummary, std::ios::out);
+            assert(file_out_sum.is_open());
+            output_sum << "ID,size,mean_mz,median_mz,stdev_mz,mean_scans,median_scans,DQSB,DQSB_control,DQSB_worst,min_DQSC,meanError,errorcode\n";
+            for (size_t i = 0; i < indices.size(); i++)
+            {
+                int pos = indices[i];
+                auto pair = finishedBins[pos].summariseBin();
+                output_sum << pos + 1 << "," + pair.first + "," << unsigned(pair.second) << "\n"; 
+                // the errorcode is a 8-bit number translating to any combination of 8 error states
+            }
+            file_out_sum << output_sum.str();
+            file_out_sum.close();
+        }
+        // print all bins
+        const std::string binsFull = location + "/selectBins_full.csv";
+        std::fstream file_out_all;
+        std::stringstream output_all;
+        file_out_all.open(binsFull, std::ios::out);
+        assert(file_out_all.is_open());
+        output_all << "mz,scan,ID,DQSC,DQSB,control_DQSB\n";
+        for (size_t i = 0; i < indices.size(); i++)
+        {
+            int pos = indices[i];
+            const std::vector<Datapoint *> binnedPoints = finishedBins[pos].pointsInBin;
+
+            for (size_t j = 0; j < binnedPoints.size(); j++)
+            {
+                char buffer[128];
+                sprintf(buffer, "%0.15f,%d,%zu,%0.15f,%0.15f,%0.15f\n", binnedPoints[j]->mz, binnedPoints[j]->scanNo, pos + 1,
+                        binnedPoints[j]->DQScentroid, finishedBins[pos].DQSB[j], binnedPoints[j]->control_DQSbin);
+                output_all << buffer;
+            }
+        }
+        file_out_all << output_all.str();
+        file_out_all.close();
     };
 
     void BinContainer::printworstDQS()
@@ -389,7 +443,7 @@ namespace q
             }
             else if (distanceScan == 0)
             {
-                // duplicateScan = true;
+                duplicateScan = true;
                 ++control_duplicatesIn;
             }
         }
@@ -589,7 +643,7 @@ namespace q
         return;
     }
 
-    std::pair<std::string, int> Bin::summariseBin()
+    std::pair<std::string, std::byte> Bin::summariseBin()
     {
         size_t binsize = pointsInBin.size();
         double meanMZ = 0;
@@ -624,33 +678,29 @@ namespace q
                       { sumOfDist += (point->mz - meanMZ) * (point->mz - meanMZ); }); // squared
         const double stdev = sqrt(sumOfDist / (binsize - 1));
 
-        // (binID), binsize, meanMZ, medianMZ, standard deviation mz, meanScan, medianScan, DQSB, DQSB_control, worst-case DQS (empirical), lowest DQScen, mean centroid error
-        char buffer[256];
-        sprintf(buffer, "%d,%0.15f,%0.15f,%0.15f,%0.2f,%d,%0.15f,%0.15f,%0.15f,%0.15f,%0.15f\n",
-                binsize, meanMZ, medianMZ, stdev, meanScan, medianScan, meanDQS, DQS_control, DQSmin, worstCentroid, meanCenError);
-
-        int selector = 0; // selector returns true or false, depending on criteria checked
-        if (selector)
+        std::byte selector{0b00000000}; // selector returns true or false, depending on criteria checked
+        if (duplicateScan)
         {
-            goto returning;
+            selector |= std::byte{0b10000000};
         }
         if (DQSmin > meanDQS)
         {
-            selector = 1;
-            goto returning;
+            selector |= std::byte{0b01000000};
         }
         if (abs(meanMZ - medianMZ) > 2 * meanCenError)
         {
-            selector = 2;
-            goto returning;
+            selector |= std::byte{0b00100000};
         }
         if (abs(meanScan - medianScan) > 6) // greater than maxdist
         {
-            selector = 3;
-            goto returning;
+            selector |= std::byte{0b00010000};
         }
 
-    returning:
+        // (binID), binsize, meanMZ, medianMZ, standard deviation mz, meanScan, medianScan, DQSB, DQSB_control, worst-case DQS (empirical), lowest DQScen, mean centroid error
+        char buffer[256];
+        sprintf(buffer, "%u,%0.15f,%0.15f,%0.15f,%0.2f,%d,%0.15f,%0.15f,%0.15f,%0.15f,%0.15f",
+                binsize, meanMZ, medianMZ, stdev, meanScan, medianScan, meanDQS, DQS_control, DQSmin, worstCentroid, meanCenError);
+
         return std::make_pair(buffer, selector);
     }
 
@@ -796,9 +846,12 @@ int main()
     testcontainer.subsetBins(dim, 6);                                       // int = max dist in scans; add value after for error in ppm instead of centroid error
     std::cout << "Total duplicates: " << q::control_duplicates << "\n--\ncalculating DQSBs...\n";
     testcontainer.assignDQSB(&testdata, 6); // int = max dist in scans
-    // return 0;
+    
+    // print bin selection
+    testcontainer.printSelectBins(testcontainer.makeBinSelection(), 1, "../..");
 
-    testcontainer.printBinSummary("../../summary_bins.csv");
+
+    // testcontainer.printBinSummary("../../summary_bins.csv");
     // testcontainer.printworstDQS();
     // testcontainer.printTstats();
     // testcontainer.printAllBins("../../qbinning_binlist.csv", &testdata);

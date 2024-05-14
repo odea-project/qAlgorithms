@@ -36,20 +36,35 @@ Report concluding the analytical practical by Daniel Höhn, supervised by Gerrit
 * ppm - Parts Per Million (10e-6)
 
 ## Introduction
-What is HRMS? 
-Importance of NTS
+// What is HRMS? 
+Importance of NTS, Datenprozessierung und Analyse entscheidende Größe bei NTS; ergebnisse verschiedeneer
+Workflows haben keine Vergleichbarkeit; hoher Einfluss durch den Nutzer
+QA unterscheidet nicht zwischen flaschen parametern und instrumentation
+Es gibt keine spezifische QA für NTS
+Neuerung: qualitätsparameter für einzelne Schritte in der Prouessierung
 Steps of finding a feature, mention qCentroids / describe pipeline in general
 
+was ist binning
+
+--
 specific goal of this project
 The purpose of the presented project is to provide a user-friendly and
 programmer-friendly implementation of the qBinning algorithm [@reuschenbachQBinningDataQualityBased2023].
+
+funktionsweise
+
 This is realised through thoroughly commented code, included
 diagnostic functions which can be rewritten for specific use
 cases with minimal effort, flexible data input and comparatively
 high performance. 
+Idee: Implementieren des Algorithmus in einer größeren Plattform
+Fokus auch auf größerer Datensätze; Datenmenge nimmt wahrscheinlich zu
 
+Feature: Nur bins weitergeben, wenn in Serie gemessen
 
 ## qBinning @todo better name
+wie funktioniert der algorithmus?
+
 ### why is binning necessary?
 
 ### generation of EIC in other software
@@ -62,8 +77,7 @@ Terminology: open/closed Bin; maxdist
 A bin is a data construct with associated data points and defined operations, an EIC is just a set of data points.
 @todo capitalisation for data objects?
 
-### Differences to the Original Implementation in R
-necessary?
+### Differences to the Original Implementation in R -> discussion / conclusion; Konkrete Beobachtungen / wertende zusammenfassung + addressat, kontext existierender literatur ; vergleichbare Ergebnisse?
 R: 1-2 GB (factor 2 to 4 of in-place operation) of memory needed for Warburg, 
 30% CPU use on Ryzen + 10% from RStudio, very long runtime (640 s)
 writing to csv is significantly slower in R -> probably main timesink
@@ -233,7 +247,7 @@ differences in distance have, three DQS total matched the verified result for bo
 (to nine decimal digits). When applied to real data, which is bound to have 
 smaller MOD distances than the test data, this effect likely leads to better
 matching with the correct results. 
-The bug was successfully fixed following its discovery.
+// The bug was successfully fixed following its discovery.
 
 When comparing with the implementation in R, the DQS is sometimes identical.
 For the entire dataset, 79.1 % of the DQS matched when rounded to nine digits.
