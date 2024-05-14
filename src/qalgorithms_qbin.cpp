@@ -275,8 +275,17 @@ namespace q
             {
                 int pos = indices[i];
                 auto pair = finishedBins[pos].summariseBin();
-                output_sum << pos + 1 << "," + pair.first + "," << unsigned(pair.second) << "\n"; 
+                output_sum << pos + 1 << "," + pair.first + "," << unsigned(pair.second) << "\n";
                 // the errorcode is a 8-bit number translating to any combination of 8 error states
+                // 16 = 00010000 = abs(meanScan - medianScan) > 6
+                // 32 = 00100000 = abs(meanMZ - medianMZ) > 2 * meanCenError
+                // 48 = 00110000 = both
+                // 64 = 01000000 = DQSmin > meanDQS
+                // 128 = 10000000 = duplicate scans
+                // 144 = 10010000 = duplicate && abs(meanScan - medianScan) > 6
+                // 160 = 10100000 = duplicate && abs(meanMZ - medianMZ) > 2 * meanCenError
+                // 176 = 10110000 = duplicate + both
+                // 192 = 11000000 = duplicate + DQSmin > meanDQS
             }
             file_out_sum << output_sum.str();
             file_out_sum.close();
@@ -846,10 +855,9 @@ int main()
     testcontainer.subsetBins(dim, 6);                                       // int = max dist in scans; add value after for error in ppm instead of centroid error
     std::cout << "Total duplicates: " << q::control_duplicates << "\n--\ncalculating DQSBs...\n";
     testcontainer.assignDQSB(&testdata, 6); // int = max dist in scans
-    
+
     // print bin selection
     testcontainer.printSelectBins(testcontainer.makeBinSelection(), 1, "../..");
-
 
     // testcontainer.printBinSummary("../../summary_bins.csv");
     // testcontainer.printworstDQS();
