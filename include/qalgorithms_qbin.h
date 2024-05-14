@@ -122,7 +122,7 @@ namespace q
         /// @param maxdist the largest gap in scans which a bin can have while still being considered valid
         void makeDQSB(const RawData *rawdata, const unsigned int &maxdist);
 
-        std::pair<std::string, int> summariseBin();
+        std::pair<std::string, std::byte> summariseBin();
 
         const EIC createEIC();
 
@@ -171,7 +171,7 @@ namespace q
 
         const std::vector<int> makeBinSelection(); // hard code for now, add criteria vector later
 
-        void printSelectBins(const std::vector<int>);
+        void printSelectBins(const std::vector<int> indices, bool summary, const std::string location);
     };
 
     // utility functions
