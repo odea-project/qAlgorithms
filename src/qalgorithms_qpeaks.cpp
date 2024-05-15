@@ -134,21 +134,12 @@ namespace q
     int df_sum = 0;
     double valley_position;
     double apex_position;
-    double inverseMatrix_2_2 = (*(inverseMatrices[scale - 2]))(2, 2); // variance of the quadratic term left side of the peak
-    double inverseMatrix_3_3 = (*(inverseMatrices[scale - 2]))(3, 3); // variance of the quadratic term right side of the peak
-    Matrix &X = *(designMatrices[scale - 2]);                         // design matrix
-    Matrix Jacobian_height(1, 4);                                     // Jacobian matrix for the height
-    std::vector<
-        std::tuple<
-            int,
-            double,
-            double,
-            double,
-            double,
-            int,
-            double>>
-        valid_regressions_tmp;                                // temporary vector to store valid regressions <index, apex_position>
-    std::vector<int> indexInValidRegressionsTmp(B.numCols()); // temporary vector to store the index of the valid regressions
+    double inverseMatrix_2_2 = (*(inverseMatrices[scale - 2]))(2, 2);  // variance of the quadratic term left side of the peak
+    double inverseMatrix_3_3 = (*(inverseMatrices[scale - 2]))(3, 3);  // variance of the quadratic term right side of the peak
+    Matrix &X = *(designMatrices[scale - 2]);                          // design matrix
+    Matrix Jacobian_height(1, 4);                                      // Jacobian matrix for the height
+    std::vector<std::unique_ptr<validRegression>> validRegressionsTmp; // temporary vector to store valid regressions <index, apex_position>
+    std::vector<int> indexInValidRegressionsTmp(B.numCols());          // temporary vector to store the index of the valid regressions
 
     // iterate columwise over the coefficients matrix
     for (size_t i = 0; i < B.numCols(); i++)
@@ -287,41 +278,34 @@ namespace q
       // at this point, the peak is validated
       double left_limit = (valley_position < 0) ? std::max((double)i, valley_position + i + scale) : i;
       double right_limit = (valley_position > 0) ? std::min((double)i + 2 * scale, valley_position + i + scale) : i + 2 * scale;
-      valid_regressions_tmp.push_back(
-          std::make_tuple(
-              i,                                                            // <0> index in B
-              apex_position + i + scale,                                    // <1> apex position in x-axis 0:n
-              Jacobian_area.first(0, 0) / area_uncertainty,                 // <2> t-value for the peak area
-              left_limit,                                                   // <3> left_limit
-              right_limit,                                                  // <4> right_limit
-              df_sum - 4,                                                   // <5> df
-              1 - std::erf(area_uncertainty / Jacobian_area.first(0, 0)))); // <6> dqs
-      // store the index of the valid regression
-      indexInValidRegressionsTmp[i] = valid_regressions_tmp.size() - 1;
+
+      validRegressionsTmp.push_back(
+          std::make_unique<validRegression>(
+              i + scale,                                                    // index of the center of the window (x==0) in the Y matrix
+              scale,                                                        // scale
+              df_sum - 4,                                                   // df
+              apex_position + i + scale,                                    // apex position in x-axis 0:n
+              0,                                                            // initial MSE
+              B.col(i),                                                     // coefficients matrix
+              true,                                                         // isValid
+              left_limit,                                                   // left_limit
+              right_limit,                                                  // right_limit
+              left_limit - i,                                               // X_row_0
+              right_limit - i + 1,                                          // X_row_1
+              1 - std::erf(area_uncertainty / Jacobian_area.first(0, 0)))); // dqs
+
+      indexInValidRegressionsTmp[i] = validRegressionsTmp.size() - 1;
 
     } // end for loop
+
     // early return if no or only one valid peak
-    if (valid_regressions_tmp.size() < 2)
+    if (validRegressionsTmp.size() < 2)
     {
-      if (valid_regressions_tmp.empty())
+      if (validRegressionsTmp.empty())
       {
         return; // no valid peaks
       }
-      validRegressions.push_back(
-          std::make_unique<validRegression>(
-              std::get<0>(valid_regressions_tmp[0]) + scale,                                     // index of the center of the window (x==0) in the Y matrix
-              scale,                                                                             // scale
-              std::get<5>(valid_regressions_tmp[0]),                                             // df
-              std::get<1>(valid_regressions_tmp[0]),                                             // apex position in x-axis 0:n
-              0,                                                                                 // initial MSE
-              B.col(std::get<0>(valid_regressions_tmp[0])),                                      // coefficients matrix
-              true,                                                                              // isValid
-              std::get<3>(valid_regressions_tmp[0]),                                             // left_limit
-              std::get<4>(valid_regressions_tmp[0]),                                             // right_limit
-              std::get<3>(valid_regressions_tmp[0]) - std::get<0>(valid_regressions_tmp[0]),     // X_row_0
-              std::get<4>(valid_regressions_tmp[0]) - std::get<0>(valid_regressions_tmp[0]) + 1, // X_row_1
-              std::get<6>(valid_regressions_tmp[0])));                                           // dqs
-
+      validRegressions.push_back(std::move(validRegressionsTmp[0]));
       return; // not enough peaks to form a group
     }
 
@@ -333,38 +317,38 @@ namespace q
     */
     std::vector<std::vector<int>> groups; // vector of peak indices
     // initialize iterators for valid_regressions_tmp
-    auto it_peak = valid_regressions_tmp.begin();
+    auto it_peak = validRegressionsTmp.begin();
     auto it_peak_next = std::next(it_peak);
     // iterate over the temporary vector of valid regressions
-    while (it_peak_next != valid_regressions_tmp.end())
+    while (it_peak_next != validRegressionsTmp.end())
     {
       // check if the difference between two peak apexes is less than 4 (Nyquist Shannon Sampling Theorem, separation of two maxima), or if the apex of a peak is within the window of the other peak (Overlap of two maxima)
       if (
-          std::abs(std::get<1>(*it_peak) - std::get<1>(*it_peak_next)) > 4 && // Nyquist Shannon Sampling Theorem, separation of two maxima
-          std::get<1>(*it_peak) < std::get<3>(*it_peak_next) &&               // Left peak is not within the window of the right peak
-          std::get<1>(*it_peak_next) > std::get<4>(*it_peak)                  // Right peak is not within the window of the left peak
+          std::abs((*it_peak)->apex_position - (*it_peak_next)->apex_position) > 4 && // Nyquist Shannon Sampling Theorem, separation of two maxima
+          (*it_peak)->apex_position < (*it_peak_next)->left_limit &&                  // Left peak is not within the window of the right peak
+          (*it_peak_next)->apex_position > (*it_peak)->right_limit                    // Right peak is not within the window of the left peak
       )
       { // create a new group
         if (groups.empty())
-        {                                                                 // in case there is no group yet, two new groups are created
-          groups.push_back(std::vector<int>{std::get<0>(*it_peak)});      // add the first peak to the first group
-          groups.push_back(std::vector<int>{std::get<0>(*it_peak_next)}); // add the second peak to the second group
+        { // in case there is no group yet, two new groups are created
+          groups.push_back(std::vector<int>{(*it_peak)->index_x0 - scale});      // add the first peak to the first group
+          groups.push_back(std::vector<int>{(*it_peak_next)->index_x0 - scale}); // add the second peak to the second group
         }
         else
-        {                                                                 // create a new group
-          groups.push_back(std::vector<int>{std::get<0>(*it_peak_next)}); // add the second peak to the new group
+        { // create a new group
+          groups.push_back(std::vector<int>{(*it_peak_next)->index_x0 - scale}); // add the second peak to the new group
         }
       }
       else
       { // add to the current group
         if (groups.empty())
-        {                                                            // in case there is no group yet, create a new group and add both peaks to it
-          groups.push_back(std::vector<int>{std::get<0>(*it_peak)}); // add the first peak to the group
-          groups.back().push_back(std::get<0>(*it_peak_next));       // add the second peak to the group
+        { // in case there is no group yet, create a new group and add both peaks to it
+          groups.push_back(std::vector<int>{(*it_peak)->index_x0 - scale}); // add the first peak to the group
+          groups.back().push_back((*it_peak_next)->index_x0 - scale);       // add the second peak to the group
         }
         else
         {
-          groups.back().push_back(std::get<0>(*it_peak_next)); // add the second peak to the current group
+          groups.back().push_back((*it_peak_next)->index_x0 - scale); // add the second peak to the current group
         }
       }
       ++it_peak_next;
@@ -379,20 +363,7 @@ namespace q
     {
       if (group.size() == 1)
       { // already isolated peak => push to valid regressions
-        validRegressions.push_back(
-            std::make_unique<validRegression>(
-                group[0] + scale,                                                                        // index of the center of the window (x==0) in the Y matrix
-                scale,                                                                                   // scale
-                std::get<5>(valid_regressions_tmp[indexInValidRegressionsTmp[group[0]]]),                // df
-                std::get<1>(valid_regressions_tmp[indexInValidRegressionsTmp[group[0]]]),                // apex position in x-axis 0:n
-                0,                                                                                       // initial MSE
-                B.col(group[0]),                                                                         // coefficients matrix
-                true,                                                                                    // isValid
-                std::get<3>(valid_regressions_tmp[indexInValidRegressionsTmp[group[0]]]),                // left_limit
-                std::get<4>(valid_regressions_tmp[indexInValidRegressionsTmp[group[0]]]),                // right_limit
-                std::get<3>(valid_regressions_tmp[indexInValidRegressionsTmp[group[0]]]) - group[0],     // X_row_0
-                std::get<4>(valid_regressions_tmp[indexInValidRegressionsTmp[group[0]]]) - group[0] + 1, // X_row_1
-                std::get<6>(valid_regressions_tmp[indexInValidRegressionsTmp[group[0]]])));              // dqs
+        validRegressions.push_back(std::move(validRegressionsTmp[indexInValidRegressionsTmp[group[0]]]));
       }
       else
       { // survival of the fittest based on mse between original data and reconstructed (exp transform of regression)
@@ -401,21 +372,9 @@ namespace q
         {
           continue; // no valid peak in the group; due to the degree of freedom filter
         }
-        // push the peak with the lowest MSE to the valid regressions
-        validRegressions.push_back(
-            std::make_unique<validRegression>(
-                extendedMse.index,                                                                           // index of the center of the window (x==0) in the Y matrix
-                extendedMse.scale,                                                                           // scale
-                extendedMse.df,                                                                              // df
-                std::get<1>(valid_regressions_tmp[indexInValidRegressionsTmp[extendedMse.index - scale]]),   // apex position in x-axis 0:n
-                extendedMse.mse,                                                                             // MSE
-                B.col(extendedMse.index - scale),                                                            // coefficients matrix
-                true,                                                                                        // isValid
-                extendedMse.left_limit,                                                                      // left_limit
-                extendedMse.right_limit,                                                                     // right_limit
-                extendedMse.X_row_0,                                                                         // X_row_0
-                extendedMse.X_row_1,                                                                         // X_row_1
-                std::get<6>(valid_regressions_tmp[indexInValidRegressionsTmp[extendedMse.index - scale]]))); // dqs
+        validRegressions.push_back(std::move(validRegressionsTmp[indexInValidRegressionsTmp[extendedMse.index - scale]]));
+        // update the MSE of the group
+        validRegressions.back()->mse = extendedMse.mse;
       } // end if; single item or group with multiple members
     } // end for loop (group in vector of groups)
   } // end validateRegressions
