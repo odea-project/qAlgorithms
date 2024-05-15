@@ -3,6 +3,8 @@ using SpecialFunctions
 using DataFrames
 using Dictionaries
 using Statistics
+using Profile
+using BenchmarkTools
 
 ### FOR IMPORT DATA
 using CSV
@@ -218,9 +220,9 @@ function calculateDQSbin(mz ::Vector{Float64},nnd::Vector{Float64})::Vector{Floa
     dqs = ((nnd .- a) .* A ./ nominator .+ 1) ./ 2
     # println(issorted(mz))
     # print(mz)
-    print(nnd)
+    # print(nnd)
     # print(a)
-    print(dqs)
+    # print(dqs)
     return dqs
 end
 
@@ -250,9 +252,9 @@ function qBinning(df::DataFrame) ::DataFrame
     error_fin = [df[!,"error"][u.idx] for u in idxDict]
     I = [I[u.idx] for u in idxDict]
     NND = [nndw[u.idx] for u in idxDict]
-    println("--")
-    print(idxDict)
-    println("--")
+    # println("--")
+    # print(idxDict)
+    # println("--")
     DQScen = [df[!,"DQScen"][u.idx] for u in idxDict]
     sortRT_idxVec = [sortperm(u) for u in RT]
     sortLists!(RT, sortRT_idxVec)
@@ -280,8 +282,9 @@ function qBinning(df::DataFrame) ::DataFrame
 end
 
 ### RUN
-
-    import_file ="../rawdata/artbin.csv" # reduced_DQSog
+function mainFunc()
+   
+    import_file ="./rawdata/control_bins.csv" # reduced_DQSog
     # The CSV must contain at least the following labels:
     # mz, error, intensity, DQScen, rt
     df = DataFrame(CSV.File(import_file))
@@ -292,5 +295,11 @@ end
     sort!(df, :mz)
 
 DF = qBinning(df)
+return DF
+end
 
-"complete"
+
+@benchmark mainFunc()
+
+print("complete")
+

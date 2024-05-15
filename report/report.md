@@ -35,6 +35,7 @@ Report concluding the analytical practical by Daniel Höhn, supervised by Gerrit
 * MOD - Minimum Outer Distance: The shortest distance in mz to an element not in the bin
 * CPU - Central Processing Unit
 * ppm - Parts Per Million (10e-6)
+* gcc - GNU compiler collection (always referring to version 13.2.0)
 
 ## Introduction
 // What is HRMS? 
@@ -119,7 +120,8 @@ points in RawData while the EIC can be used independently of the RawData it was 
 A new bin is created by specifying start and end of it within an existing bin. As such, the
 program starts by creating a bin which contains every data point in the dataset.
 Bins also keep track of information which can later be used for filtering or weighing
-purposes, such as if any scans appear more than once in the data.
+purposes, such as if any scans appear more than once in the data and median values
+for scans.
 
 <b> The BinContainer object: </b>
 The BinContainer supplies wrapper functions to access all bins. The access for subsetting is 
@@ -132,6 +134,10 @@ The subsetting methods are applied to all bins sequentially, with every iteratio
 user-specified order and removing bins which can no longer be subset (closed Bins) from the deque.
 Once a Bin is closed, it is added to a vector which contains all closed Bins. Once binning is 
 complete, the DQSB is calculated for all bin members in all bins.
+
+Since Bins contain superfluous methods and variables, while additionally depending on the RawData
+object for their content, they are not suited for passing forward to the peak fitting
+algorithm. Instead, all necessary data is copied and the binning infrastructure freed.
 
 ### Core Functions
 The following functions, not including constructors and other utility functions, are included 
@@ -153,6 +159,7 @@ individual scans. Within each scan, datapoints are ordered by m/z in increasing 
 primarily exist for testing purposes, since the qBinning module is designed to accept centroided data 
 from the previous step in the qAlgorithms pipeline. However, when the user specifies an error (in ppm), 
 this is used in place of the centroid error for all following operations.
+This function returns a boolean to indicate if it executed successfully. 
 ```@todo one line of example in code style, same for others```
 
 <b> makeOS: </b>
@@ -212,7 +219,21 @@ as closed by a different subsetting function. subsetBins can take an error (in p
 optional argument. If none is supplied, the centroid error is used. 
 
 ### Diagnostic Functions
-
+In order to provide a fast way to assess binning quality to a greater 
+extent than just the DQS, the functions **makeBinSelection**, **summariseBin**
+and **printBinSelection** were written. 
+In the summariseBin function, up to
+eight test properties can be hard-coded. These are, for example, checking
+if two points in the bin have the same scan number or if median and mean
+of any dimension deviate by more than a defined value. The tests are limited
+to eight because their results are stored in a single byte. If conditions
+override other tests, such as 0b11111111 being set if a highest-priority
+condition applies, more bin properties can be stored.
+The makeBinSelection function uses the test byte to return a vector
+containing all bins for which at least one criteria is true. 
+printBinSelection then returns all bin specified by the vector and
+writes their members to a .csv file. Optionally, the summary information
+can be written to a separate file. 
 
 ## Evaluation
 As already concluded in the original paper, the binning process results
@@ -222,8 +243,8 @@ it is also important to note that this binning step is only part of
 a larger analysis process. As such, even if the intermediate result 
 table contains false positives, the peak detection step will likely
 heavily reduce their impact through filtering for false positive EICs
-and the fitted regression for single centroids being assigned to the 
-wrong bin.
+and through the fitted regression compensating for single centroids 
+being assigned to the wrong bin.
 
 ### Result Comparison with R and julia implementation
 All three implementations result in identical bins after completed subsetting.
@@ -278,9 +299,44 @@ improvement in terms of user-friendliness was achieved.
 Performance evaluation was performed using the following CPUs: 
 * Intel(R) Core(TM) i5-7400 CPU @ 3.00GHz (referred to as i5)
 * AMD Ryzen 3 3250U (referred to as Ryzen)
+@todo SSD speeds
+Writing the results to disk was not included in the profiling tests,
+since this is not the main task of the presented program and was
+as such not optimised beyond the point of sufficient efficiency.
 
-@todo all performance tests were conducted with the compiled program and 
-optimisation level 2 (gcc)
+For R, the Rprof function was used to profile code execution.
+A total execution time of 299 seconds on the i5 and @todo
+seconds on the Ryzen was measured. in both tests, 46% of the execution time 
+were spent in the function responsible for binning, 10% on copying
+data and 6% on calculating the MID. The remaining time was spent 
+on various r internal data representation, largely table management.
+Especially the MID calculation, implemented as fast_mean_distance,
+is massively slower than necessary due to creating four additional
+tables, each with a lenght of the bin size to the power of two.
+The total time spent on reading data from disk was 1.3 seconds.
+
+For julia, code was run once before timing to not measure time spent
+on compiling instead of executing code. Since no data is written to
+disk during code execution, the entire code is considered for timing.
+The total execution time on the i5 was 15 seconds. @todo more specific
+// further teting was not performed due to a fatal error persisting
+// in the code, which would likely change performance if fixed.
+
+
+For the c++ implementation, the majority of time is spent on reading the
+data from disk. This is, in part, due to the data structure being constructed
+and to a greater degree because the parsing is very inefficient.
+No attempt to optimise this part of the program was made, since it only
+exists as a debugging tool. 
+@todo optimised timing
+At optimisation level 2, the highest possible optimisation when compiling
+with gcc, ßßß seconds were spent on subsetting in mz, ßßß s on subsetting
+in scans, ßßß s on calculating the DQS and ßßß s on other tasks, mainly
+moving data from the container for open bins to the container for closed bins.
+
+Performance is roughly equal to the julia script, while more detailed and
+easier to access information over the entire process is provided. 
+
 
 <b> Issues after binning: </b>
 Images of common undesired outputs / elements that need to be cleaned up: 
@@ -341,6 +397,10 @@ distance between neighbours.
 As of now, the algorithm is not multithreaded. Doing so would provide a 
 significant increase in execution speed. Multithreading is possible
 to use after the first bin is split, since every bin is treated independently.
+
+The transferred data always contains a control DQS and centroid error,
+even if those are not needed. By implementing them as optional parameters,
+the total memory allocation which needs to be performed is reduced.
 
 When performing the splitting in the m/z dimension, for small bins the 
 greatest order space is often at the border. This leads to many redundant

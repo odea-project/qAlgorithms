@@ -375,16 +375,23 @@ qBinning <- function(path,minBinsize){
   df$DQSbin[df$ID>0] <- Qscore_binning(mz = df$mz,ID = df$ID,Scans = df$Scans)# 
   df_export <- data.frame(mz=df$mz, error=df$err_mz, rt=df$rt, scans=df$Scans, intensity=df$I, ID= df$ID, DQScen=df$DQS, DQSbin=df$DQSbin)
    #df_export <- df_export[df_export$ID>0,]
+  print(Sys.time())
   return(df_export)
   
 }
 
 
 #ßßß does not return not-binned features
+Rprof(tf <- "log.log", memory.profiling = TRUE)
 EICs <- qBinning(path = "../../rawdata/qCentroid_Warburg_pos_171123_01_Zu_01.csv",minBinsize = 5)
-write.csv(EICs, file = "../../rawdata/control_bins.csv", row.names = FALSE)
+Rprof (NULL) ; print(summaryRprof(tf))
+
+#write.csv(EICs, file = "../../rawdata/control_bins.csv", row.names = FALSE)
 print("done")
 
+Rprof(tf_read <- "log.log", memory.profiling = TRUE)
+xt22 <- data.table::fread(file = "../../rawdata/qCentroid_Warburg_pos_171123_01_Zu_01.csv",sep = ",") 
+Rprof (NULL) ; print(summaryRprof(tf_read))
 ```
 
 

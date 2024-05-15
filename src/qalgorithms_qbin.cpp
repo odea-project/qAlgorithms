@@ -249,7 +249,7 @@ namespace q
     const std::vector<int> BinContainer::makeBinSelection()
     {
         std::vector<int> indices;
-        for (int i = 0; i < finishedBins.size(); i++)
+        for (int i = 0; i < int(finishedBins.size()); i++)
         {
             std::byte code = finishedBins[i].summariseBin().second;
             if (bool(code)) // should be false if any bit is not 0
@@ -299,13 +299,13 @@ namespace q
         output_all << "mz,scan,ID,DQSC,DQSB,control_DQSB\n";
         for (size_t i = 0; i < indices.size(); i++)
         {
-            int pos = indices[i];
+            const unsigned int pos = indices[i];
             const std::vector<Datapoint *> binnedPoints = finishedBins[pos].pointsInBin;
 
             for (size_t j = 0; j < binnedPoints.size(); j++)
             {
                 char buffer[128];
-                sprintf(buffer, "%0.15f,%d,%zu,%0.15f,%0.15f,%0.15f\n", binnedPoints[j]->mz, binnedPoints[j]->scanNo, pos + 1,
+                sprintf(buffer, "%0.15f,%d,%d,%0.15f,%0.15f,%0.15f\n", binnedPoints[j]->mz, binnedPoints[j]->scanNo, pos + 1,
                         binnedPoints[j]->DQScentroid, finishedBins[pos].DQSB[j], binnedPoints[j]->control_DQSbin);
                 output_all << buffer;
             }
@@ -626,7 +626,7 @@ namespace q
             }
         }
 
-        double nearestToVcrit = INFINITY; // always set to the smallest difference between mindist and vcrit in a bin
+        double nearestToVcrit = INFINITY; // always set to the smallest difference between mindist and vcrit in a bin @todo implement this
         // find min distance in minMaxOutPerScan, then calculate DQS for that point
         for (size_t i = 0; i < binsize; i++)
         {
@@ -686,28 +686,32 @@ namespace q
         std::for_each(pointsInBin.begin(), pointsInBin.end(), [&](const Datapoint *point)
                       { sumOfDist += (point->mz - meanMZ) * (point->mz - meanMZ); }); // squared
         const double stdev = sqrt(sumOfDist / (binsize - 1));
-
+        // @todo use enums here
         std::byte selector{0b00000000}; // selector returns true or false, depending on criteria checked
         if (duplicateScan)
         {
-            selector |= std::byte{0b10000000};
+            selector |= std::byte{0b00000001};
         }
         if (DQSmin > meanDQS)
         {
-            selector |= std::byte{0b01000000};
+            selector |= std::byte{0b00000010};
         }
         if (abs(meanMZ - medianMZ) > 2 * meanCenError)
         {
-            selector |= std::byte{0b00100000};
+            selector |= std::byte{0b00000100};
         }
         if (abs(meanScan - medianScan) > 6) // greater than maxdist
+        {
+            selector |= std::byte{0b00001000};
+        }
+        if ((3 * stdev < pt_mzmax - meanMZ) | (3 * stdev < meanMZ - pt_mzmin)) // if a value in the bin is outside of 2 sigma
         {
             selector |= std::byte{0b00010000};
         }
 
         // (binID), binsize, meanMZ, medianMZ, standard deviation mz, meanScan, medianScan, DQSB, DQSB_control, worst-case DQS (empirical), lowest DQScen, mean centroid error
         char buffer[256];
-        sprintf(buffer, "%u,%0.15f,%0.15f,%0.15f,%0.2f,%d,%0.15f,%0.15f,%0.15f,%0.15f,%0.15f",
+        sprintf(buffer, "%llu,%0.15f,%0.15f,%0.15f,%0.2f,%d,%0.15f,%0.15f,%0.15f,%0.15f,%0.15f",
                 binsize, meanMZ, medianMZ, stdev, meanScan, medianScan, meanDQS, DQS_control, DQSmin, worstCentroid, meanCenError);
 
         return std::make_pair(buffer, selector);
@@ -764,7 +768,7 @@ namespace q
         control_tvals << n << "," << bin_tval << "," << meanDQS << "\n";
     }
 
-    const double Bin::calcDQSmin()
+    const double Bin::calcDQSmin() // @todo integrate into summary function
     {
         const size_t n = pointsInBin.size();
         double errorSum = std::accumulate(pointsInBin.begin(), pointsInBin.end(), 0.0, [](double acc, const Datapoint *point)
@@ -775,7 +779,7 @@ namespace q
         double sumOfDist = 0;
         std::for_each(pointsInBin.begin(), pointsInBin.end(), [&](const Datapoint *point)
                       { sumOfDist += (point->mz - meanMZ) * (point->mz - meanMZ); }); // squared
-        const double stdev = sqrt(sumOfDist / (n - 1));
+        // const double stdev = sqrt(sumOfDist / (n - 1));
         const double worstCaseMOD = 3.05037165842070 * pow(log(n), (-0.4771864667153)) * (errorSum) / n;
         std::vector<long double> MIDs = meanDistance(pointsInBin);
         double MID = std::accumulate(MIDs.begin(), MIDs.end(), 0.0);
@@ -847,7 +851,10 @@ int main()
 
     q::RawData testdata;
     // path to data, mz, centroid error, RT, scan number, intensity, DQS centroid, control DQS Bin
-    testdata.readcsv("../../rawdata/control_bins.csv", 0, 1, 2, 3, 4, 6, 7); // ../../rawdata/control_bins.csv reduced_DQSdiff
+    if (!testdata.readcsv("../../rawdata/control_bins.csv", 0, 1, 2, 3, 4, 6, 7)) // ../../rawdata/control_bins.csv reduced_DQSdiff
+    {
+        exit(1);
+    }
 
     q::BinContainer testcontainer;
     testcontainer.makeFirstBin(&testdata);
