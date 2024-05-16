@@ -11,6 +11,12 @@ knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
 library(data.table)
 library(patchwork)
+
+makeDQS <- function(MID, MOD){
+  dqs = (MOD - MID) * (1 / (1 + MID)) / max(MID, MOD)
+  dqs = (dqs + 1) / 2
+  return(dqs)
+}
 ```
 
 ```{r new bin}
@@ -127,11 +133,38 @@ sum((abs(summary$mean_scans - summary$median_scans)) > 6) # 1005
 ```
 
 ```{r error analysis}
+library(TeachingDemos)
 summary_error <- read.csv("../../selectbins_summary.csv")
+bins_error <- read.csv("../../selectbins_full.csv")
 
-table(summary_error$errorcode)
+stats = as.data.frame(table(summary_error$errorcode)) # alle ungeraden Zahlen haben duplikate
+stats$Var1 = as.numeric(levels(stats$Var1))
+stats$Var1 = as.numeric(lapply(stats$Var1, bits))
+stats$Freq = as.numeric(stats$Freq)
+
+stats[stats$Var1 %% 2 != 0,]
+ 
+stats[stats$Var1 - round(stats$Var1, -2) >= 10,] # Seltsame DQS korrelierern nicht mit anderen Fehlern
+
+# MZ außerhalb 3 sigma korreliert mit 
+stats[stats$Var1 >= 10000,]
+
+summary_error$errorcode = as.numeric(lapply(summary_error$errorcode, bits))
 
 ggplot(summary_error)+
   geom_point(aes(x = mean_mz, y = mean_scans, colour = as.factor(errorcode)))
+
+summary_error %>% group_by(errorcode) %>% summarise(bin_count = n(), total_points = sum(size), ratio = sum(size)/n())
+
+bins_error[bins_error$ID == 308,]
+minDists308 = c(6.2961233993519272e-05, 8.8906114996234464e-05, 9.4137318995990427e-05, 0.0001178799969920874, 8.2152471009067085e-05, 7.1812920992897489e-05)
+errors308 = c(2.62158179102052e-05, 0.000221785977937405, 1.7943534787886702e-05, 3.6100375305253397e-05, 1.8813454471750598e-05, 7.20372773346827e-05)
+MIDs308 = fast_mean_distance(bins_error[bins_error$ID == 308,1])
+maxdist308 = critVal(6) * mean(errors308)
+maxdist308_7 = critVal(7) * mean(errors308)
+
+for (i in 1:6) {
+  print(sprintf("%0.10f /// %0.10f", makeDQS(MIDs308[i], minDists308[i]), makeDQS(MIDs308[i], maxdist308)))
+}
 ```
 

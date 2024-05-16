@@ -47,9 +47,14 @@ quantile function ist inverse der normalverteilung
 
 gibt es ein MID > vcrit im Datensatz?
 
-großen Multistandard-Datensatz bei DFG anfragen
+großen Multistandard-Datensatz anfragen
 
-kein klarer unterschied zwischen median und mean mz, für 1005 ein Abstand > 6 in scans
+long doubles wieder entfernen
+
+Korrelationen mit Anzahl fehlender scans?
+
+Falsche DQS: Bin wurde von einem viel größeren abgetrennt, der critVal entsprechend reduziert hat.
+    zeigen kein besonders auffälliges Verhalten Bzgl. subsetting-Schritt
 
 Instead of returning a composite object, you may consider the following alternatives:
 • Make the function a constructor for the object.

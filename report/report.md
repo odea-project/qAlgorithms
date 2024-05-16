@@ -18,8 +18,9 @@ Report concluding the analytical practical by Daniel Höhn, supervised by Gerrit
 	- [Result Comparison with R and julia implementation](#result-comparison-with-r-and-julia-implementation)
 	- [Performance Evaluation](#performance-evaluation)
 - [Discussion](#discussion)
-	- [The Lower DQS Limit](#the-lower-dqs-limit)
+	- [Error Criteria](#error-criteria)
 	- [Future Improvements and Additions](#future-improvements-and-additions)
+- [Software and Data](#software-and-data)
 
 
 ## Abbreviations
@@ -228,7 +229,11 @@ if two points in the bin have the same scan number or if median and mean
 of any dimension deviate by more than a defined value. The tests are limited
 to eight because their results are stored in a single byte. If conditions
 override other tests, such as 0b11111111 being set if a highest-priority
-condition applies, more bin properties can be stored.
+condition applies, more bin properties can be stored. However, at 256 possible
+different results, it is most likely too imprecise to work with more 
+simultaneous test criteria.
+The limit to eight values is a design choice to encourage the user to
+focus on essential properties and limit the amount of high-overlap bins.
 The makeBinSelection function uses the test byte to return a vector
 containing all bins for which at least one criteria is true. 
 printBinSelection then returns all bin specified by the vector and
@@ -319,7 +324,7 @@ For julia, code was run once before timing to not measure time spent
 on compiling instead of executing code. Since no data is written to
 disk during code execution, the entire code is considered for timing.
 The total execution time on the i5 was 15 seconds. @todo more specific
-// further teting was not performed due to a fatal error persisting
+// further testing was not performed due to a fatal error persisting
 // in the code, which would likely change performance if fixed.
 
 
@@ -350,7 +355,8 @@ effectiveness of binning for different datasets
 comparison between centroid error and ppm
 compare results for different alpha when calculating the critical value
 Less cases where DQS matches, identify cause for this
-
+Specify error cases
+Large bins > 100 are overrepresented in error crits
 
 
 @todo runtime comparison
@@ -359,7 +365,39 @@ Less cases where DQS matches, identify cause for this
 
 Centroid error is underestimated, leading to more strict binning than ideal
 
-### The Lower DQS Limit
+### Error Criteria
+Not all bins conform to a set of "ideal" parameters. These parameters 
+are defined such that a bin which adheres to all of them is as close
+as possible to the theoretical model of a Peak-forming EIC.
+Since all bins exist independently, only parameters which can be
+calculated from the bin members are considered.
+Criteria are implemented using the summaiseBin function and
+as such are only evaluated in terms of being true or false.
+
+**1) Duplicates in Scans**
+The theoretical bin contains one element for every scan it extends
+over. Since a declared puropse of this algorithm is to detect bins
+even when single points are missing from a series, only a scan being
+represented twice can be counted as an error.
+
+**2) Too Strict Separation**
+To detect too strict separation between either two bins or one bin
+and one discarded point, the DQSB is used as a measure of distance
+and compared with a hypothetical DQSB. For this hypothetical score,
+it is assumed that every point has a nearest neighbour with a 
+distance the critical value for the binsize + 1 normed to the mean
+centroid error of the bin. The resulting score should always be lower
+than the real DQSB. If it is not, the nearest point outside of the 
+bin could be added to it without being discarded again due to lowering
+the critical value. 
+Ideally, the hypothetical score is above 0.5 but lower than the real
+DQS on a per-point basis. This means that every point is, on average,
+closer to other bin members than another point would have to be
+counted as outside of the bin while being distant enough to another
+real point as to not count it towards the bin in a vacuum.
+
+
+// passage outdated
 When using the DQS as the singular descriptor of bin quality, it is
 difficult to draw conclusions beyond some points being more similar
 to points outside the bin than other bin members. When taking the 
@@ -391,6 +429,24 @@ can be calculated. This additional criteria is especially sensitive to bins
 like (image ...), because here the critical value will be very similar to the 
 distance between neighbours. 
 @todo relation of DQSmin to DQS
+// end outdated
+
+**3) Deviation of Median and Mean**
+In a perfect normal distribution, mean and median are identical.
+To account for deviations, error thresholds are defined based on
+the established process parameters.
+For deviations in the scan dimension, a discrepancy of up to six
+is deemed acceptable. This is equal to the largest tolerated gap
+during the binning step.
+For mz deviations, the mean centroid error times two is accepted.
+This allows both values to be at the fringe of their respective
+extension and still be counted.
+
+**4) Points Outside the 4-sigma Interval**
+This functions as a simple test for normality and too heavy scattering.
+At 4 sigma, the likelihood of a point being part of a normally distributed
+sample is orders of magnitude lower than the 1% error margin used to
+calculate the critical value during binning.
 
 ### Future Improvements and Additions
 **Performance Improvements**
@@ -449,14 +505,18 @@ for not obtaining exactly matching results.
 OpenMS uses binary format for raw data, similar approach (save intermediates of workflow in binary to 
 improve processing speeds)
 more subsetting
-implement into proper pipeline by returning closed bins with DQSB - datapoint basis or as EIC objects?
+implement into proper pipeline by returning closed bins // almost implemented
 Implement a way to handle MS^2 / MS^n
 automatic tests to verify program after user modifies it
 Implement error handling, especially for cases where nonsense data can be detected - ideally implemented 
-with qCentroids for data. Error handling for new subsetting: control that bins are valid before DQS 
-calculation (sorted by scans)
-How certain is scan number as a good parameter?
+	with qCentroids for data. Error handling for new subsetting: control that bins are valid before DQS 
+	calculation (sorted by scans) - best included in readcsv()
 Add compile-time toggle for creating list of non-binned objects using macros
 Cache optimisation
 include an example for creating a new subsetting method
 
+## Software and Data
+R + package versions
+Julia + package versions
+C++ and compiler version
+Describe Warburg dataset?
