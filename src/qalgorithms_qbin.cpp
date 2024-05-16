@@ -177,6 +177,11 @@ namespace q
         auto timeStart = std::chrono::high_resolution_clock::now();
         for (size_t i = 0; i < finishedBins.size(); i++)
         {
+            if (i == 307)
+            {
+                std::cout << "";
+            }
+            
             finishedBins[i].makeDQSB(rawdata, maxdist);
         }
         auto timeEnd = std::chrono::high_resolution_clock::now();
@@ -493,7 +498,8 @@ namespace q
         unsigned int scanRangeEnd = pointsInBin.back()->scanNo + maxdist;
         // calculate median of scans here
         const int n = binsize / 2;
-        if (binsize % 2) // if binsize is odd
+        bool isOdd = binsize % 2;
+        if (isOdd) // if binsize is odd
         {
             medianScan = pointsInBin[n]->scanNo; // for lenght 1: index 0
         }
@@ -526,7 +532,7 @@ namespace q
         const double maxInnerMZ = pointsInBin.back()->mz;
         const std::vector<long double> meanInnerDistances = meanDistance(pointsInBin);
         // find median in mz
-        if (binsize % 2) // if binsize is odd
+        if (isOdd) 
         {
             medianMZ = pointsInBin[n]->mz; // for lenght 1: index 0
         }
@@ -660,7 +666,6 @@ namespace q
         double meanDQS = 0;
         double DQS_control = 0;
         double meanCenError = 0;
-        double DQSmin = calcDQSmin();
         double worstCentroid = INFINITY;
         for (size_t i = 0; i < binsize; i++)
         {
@@ -675,22 +680,29 @@ namespace q
 
             meanDQS += DQSB[i];
         }
-
+        
         meanMZ = meanMZ / binsize;
         meanScan = meanScan / binsize;
         meanDQS = meanDQS / binsize;
         meanCenError = meanCenError / binsize;
         DQS_control = DQS_control / binsize;
 
+        // calc DQS when assuming the MOD to be critval
         double sumOfDist = 0;
         std::for_each(pointsInBin.begin(), pointsInBin.end(), [&](const Datapoint *point)
                       { sumOfDist += (point->mz - meanMZ) * (point->mz - meanMZ); }); // squared
+        const double worstCaseMOD = 3.05037165842070 * pow(log(binsize + 1), (-0.4771864667153)) * meanCenError; 
+        // binsize + 1 to not include cases where adding in the next point would make the distance greater than vcrit again
+        std::vector<long double> MIDs = meanDistance(pointsInBin);
+        double MID = std::accumulate(MIDs.begin(), MIDs.end(), 0.0);
+        double DQSmin = calcDQS(MID / binsize, worstCaseMOD);
+
         const double stdev = sqrt(sumOfDist / (binsize - 1));
         // @todo use enums here
         std::byte selector{0b00000000}; // selector returns true or false, depending on criteria checked
         if (duplicateScan)
         {
-            selector |= std::byte{0b00000001};
+            selector |= std::byte{0b00000001}; // checks if most points in a bin were assigned wrongly @todo point-wise
         }
         if (DQSmin > meanDQS)
         {
@@ -704,7 +716,7 @@ namespace q
         {
             selector |= std::byte{0b00001000};
         }
-        if ((3 * stdev < pt_mzmax - meanMZ) | (3 * stdev < meanMZ - pt_mzmin)) // if a value in the bin is outside of 2 sigma
+        if ((4 * stdev < pt_mzmax - meanMZ) | (4 * stdev < meanMZ - pt_mzmin)) // if a value in the bin is outside of 2 sigma
         {
             selector |= std::byte{0b00010000};
         }
