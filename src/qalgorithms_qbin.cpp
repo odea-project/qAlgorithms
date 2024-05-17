@@ -493,9 +493,9 @@ namespace q
         const size_t binsize = pointsInBin.size();
         DQSB.reserve(binsize);
         // determine start and end of relevant scan section, used as repeats for the for loop; -1 since accessed vector is zero-indexed
-        const unsigned int minScanInner = pointsInBin.front()->scanNo; //
-        int scanRangeStart = minScanInner - maxdist;
-        unsigned int scanRangeEnd = pointsInBin.back()->scanNo + maxdist;
+        const unsigned int minScanInner = pointsInBin.front()->scanNo; 
+        int scanRangeStart = pointsInBin.front()->scanNo - maxdist;
+        int scanRangeEnd = pointsInBin.back()->scanNo + maxdist;
         // calculate median of scans here
         const int n = binsize / 2;
         bool isOdd = binsize % 2;
@@ -543,10 +543,8 @@ namespace q
 
         // for all scans relevant to the bin
         int needle = 0; // position in scan where a value was found - starts at 0 for first scan
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wsign-compare"
+
         for (int i = scanRangeStart; i < scanRangeEnd; i++)
-#pragma GCC diagnostic pop
         {
             bool minFound = false; // only execute search if min or max is present in the scan
             bool maxFound = false;
@@ -726,7 +724,7 @@ namespace q
         sprintf(buffer, "%llu,%0.15f,%0.15f,%0.15f,%0.2f,%d,%0.15f,%0.15f,%0.15f,%0.15f,%0.15f",
                 binsize, meanMZ, medianMZ, stdev, meanScan, medianScan, meanDQS, DQS_control, DQSmin, worstCentroid, meanCenError);
 
-        return std::make_pair(buffer, selector);
+        return std::make_pair(buffer, selector); // @todo this should probably return the summary as numeric data for further processing
     }
 
     const EIC Bin::createEIC()
@@ -845,6 +843,160 @@ namespace q
         const double vcrit = 3.05037165842070 * pow(log(binSize), (-0.4771864667153)) * (errorEnd - errorStart) / binSize;
         return vcrit;
     }
+
+    // void check_MOD_outOfBins(const Bin *target, std::vector<q::Datapoint *> notBinned, const int maxdist){ // @todo find better solution
+    //     const int binsize = target->DQSB.size();
+    //     std::vector<double> alt_DQS(binsize);
+    //     // unique pointers for keeping track of bin members?
+
+    //     const unsigned int minScanInner = target->pointsInBin.front()->scanNo; 
+    //     int scanRangeStart = target->pointsInBin.front()->scanNo - maxdist;
+    //     int scanRangeEnd = target->pointsInBin.back()->scanNo + maxdist;
+        
+    //     int maxScansReduced = 0;              // add this many dummy values to prevent segfault when bin is in one of the last scans
+    //     std::vector<double> minMaxOutPerScan; // contains both mz values (per scan) next or closest to all m/z in the bin
+    //     minMaxOutPerScan.reserve((scanRangeEnd - scanRangeStart) * 2);
+    //     if (scanRangeStart < 1)
+    //     {
+    //         for (int i = 0; i < (1 - scanRangeStart) * 2; i++) // fill with dummy values to prevent segfault when distance checker expects negative scan number
+    //         {
+    //             minMaxOutPerScan.push_back(IGNORE);
+    //         }
+    //         scanRangeStart = 1;
+    //     }
+    //     else if (scanRangeEnd > rawdata->allDatapoints.size())
+    //     {
+    //         maxScansReduced = scanRangeEnd - rawdata->allDatapoints.size(); // dummy values have to be added later
+    //         scanRangeEnd = rawdata->allDatapoints.size();
+    //     }
+
+    //     // determine min and max in mz - sort, since then calculation of inner distances is significantly faster
+    //     std::sort(pointsInBin.begin(), pointsInBin.end(), [](const Datapoint *lhs, const Datapoint *rhs)
+    //               { return lhs->mz < rhs->mz; });
+    //     const double minInnerMZ = pointsInBin.front()->mz;
+    //     const double maxInnerMZ = pointsInBin.back()->mz;
+    //     const std::vector<long double> meanInnerDistances = meanDistance(pointsInBin);
+    //     // find median in mz
+    //     if (isOdd) 
+    //     {
+    //         medianMZ = pointsInBin[n]->mz; // for lenght 1: index 0
+    //     }
+    //     else
+    //     {
+    //         medianMZ = (pointsInBin[n]->mz + pointsInBin[n + 1]->mz) / 2; // +1 to round to nearest, since integers are truncated
+    //     }
+
+    //     // for all scans relevant to the bin
+    //     int needle = 0; // position in scan where a value was found - starts at 0 for first scan
+
+    //     for (int i = scanRangeStart; i < scanRangeEnd; i++)
+    //     {
+    //         bool minFound = false; // only execute search if min or max is present in the scan
+    //         bool maxFound = false;
+    //         const int scansize = rawdata->allDatapoints[i].size() - 1;
+    //         if (scansize == -1)
+    //         {
+    //             minMaxOutPerScan.push_back(NO_MIN_FOUND);
+    //             minMaxOutPerScan.push_back(NO_MAX_FOUND);
+    //             continue;
+    //         }
+    //         else if (needle > scansize)
+    //         {
+    //             needle = scansize; // prevent searching outside of the valid scan region
+    //         }
+
+    //         if (rawdata->allDatapoints[i][0].mz >= minInnerMZ)
+    //         {
+    //             minMaxOutPerScan.push_back(NO_MIN_FOUND);
+    //             minFound = true;
+    //             if (rawdata->allDatapoints[i][0].mz > maxInnerMZ)
+    //             {
+    //                 minMaxOutPerScan.push_back(rawdata->allDatapoints[i][0].mz);
+    //                 maxFound = true;
+    //                 continue;
+    //             }
+    //             else
+    //             {
+    //                 needle = 0;
+    //             }
+    //         }
+    //         // check end of bin
+    //         // double lastmz = rawdata->allDatapoints[i][scansize].mz;
+    //         if (rawdata->allDatapoints[i][scansize].mz <= maxInnerMZ)
+    //         {
+    //             minMaxOutPerScan.push_back(NO_MAX_FOUND);
+    //             maxFound = true;
+    //             if (rawdata->allDatapoints[i][scansize].mz < minInnerMZ)
+    //             {
+    //                 minMaxOutPerScan.push_back(rawdata->allDatapoints[i][scansize].mz);
+    //                 minFound = true;
+    //                 continue; // @todo work with goto here
+    //             }
+    //             else
+    //             {
+    //                 needle = scansize;
+    //             }
+    //         }
+    //         // rawdata is always sorted by mz within scans @todo add goto to skip needless loop steps
+    //         // use two while loops to find desired value from any place in the scan, accounts for large shifts between scans
+    //         if (!minFound)
+    //         {
+    //             while (rawdata->allDatapoints[i][needle].mz < minInnerMZ)
+    //             {
+    //                 ++needle; // steps through the dataset and increments until needle is the first value >= minInnerMZ
+    //             }
+    //             while (rawdata->allDatapoints[i][needle].mz >= minInnerMZ)
+    //             {
+    //                 --needle; // steps through the dataset and decrements until needle is the desired mz value
+    //             }
+    //             minMaxOutPerScan.push_back(rawdata->allDatapoints[i][needle].mz);
+    //         }
+
+    //         if (!maxFound)
+    //         {
+    //             while (rawdata->allDatapoints[i][needle].mz > maxInnerMZ)
+    //             {
+    //                 --needle;
+    //             }
+    //             while (rawdata->allDatapoints[i][needle].mz <= maxInnerMZ)
+    //             {
+    //                 ++needle;
+    //             }
+
+    //             minMaxOutPerScan.push_back(rawdata->allDatapoints[i][needle].mz);
+    //         }
+    //     }
+    //     // minMaxOutPerScan contains the relevant distances in order of scans, with both min and max per scan being stored for comparison
+    //     if (maxScansReduced != 0) // add dummy values after last scan
+    //     {
+    //         for (int i = 0; i < 2 * maxScansReduced; i++)
+    //         {
+    //             minMaxOutPerScan.push_back(IGNORE);
+    //         }
+    //     }
+
+    //     double nearestToVcrit = INFINITY; // always set to the smallest difference between mindist and vcrit in a bin @todo implement this
+    //     // find min distance in minMaxOutPerScan, then calculate DQS for that point
+    //     for (size_t i = 0; i < binsize; i++)
+    //     {
+    //         double minDist = INFINITY;
+    //         const double currentMZ = pointsInBin[i]->mz;
+    //         const unsigned int currentRangeStart = (pointsInBin[i]->scanNo - minScanInner) * 2; // gives position of the first value in minMaxOutPerScan that must be considered, assuming the first value in minMaxOutPerScan (index 0) is only relevant to the Datapoint in the lowest scan. For every increase in scans, that range starts two elements later
+    //         const unsigned int currentRangeEnd = currentRangeStart + maxdist * 4 + 1;
+    //         for (unsigned int j = currentRangeStart; j <= currentRangeEnd; j++) // from lowest scan to highest scan relevant to this
+    //         // point, +1 since scan no of point has to be included.
+    //         {
+    //             const double scalar = 1;                                                // 1 for same scan, 0 for maxdist + 1
+    //             const double dist = std::abs(currentMZ - scalar * minMaxOutPerScan[j]); // apply scaling here
+    //             if (dist < minDist)
+    //             {
+    //                 minDist = dist;
+    //                 assert(minDist > 0);
+    //             }
+    //         }
+    //         double tmp_DQS = calcDQS(meanInnerDistances[i], minDist); // @todo scale DQS with distance from point, gaussian - maxdist + 1 = alpha?
+    //         DQSB.push_back(tmp_DQS);
+    // }
 
 #pragma endregion "Functions"
 
