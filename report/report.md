@@ -5,9 +5,9 @@ Report concluding the analytical practical by Daniel Höhn, supervised by Gerrit
 - [Abbreviations](#abbreviations)
 - [Introduction](#introduction)
 - [qBinning @todo better name](#qbinning-todo-better-name)
-	- [why is binning necessary?](#why-is-binning-necessary)
-	- [generation of EIC in other software](#generation-of-eic-in-other-software)
-	- [advantages of qBinning](#advantages-of-qbinning)
+	- [Why is binning necessary?](#why-is-binning-necessary)
+	- [Generation of EIC in other software](#generation-of-eic-in-other-software)
+	- [Advantages of qBinning](#advantages-of-qbinning)
 - [Implementation](#implementation)
 	- [Algorithm](#algorithm)
 	- [Module Requirements](#module-requirements)
@@ -15,7 +15,7 @@ Report concluding the analytical practical by Daniel Höhn, supervised by Gerrit
 	- [Core Functions](#core-functions)
 	- [Diagnostic Functions](#diagnostic-functions)
 - [Evaluation](#evaluation)
-	- [Result Comparison with R and julia implementation](#result-comparison-with-r-and-julia-implementation)
+	- [Result Comparison with R and Julia Implementation](#result-comparison-with-r-and-julia-implementation)
 	- [Performance Evaluation](#performance-evaluation)
 - [Discussion](#discussion)
 	- [Error Criteria](#error-criteria)
@@ -91,13 +91,15 @@ A bin is a data construct with associated data points and defined operations; an
 (@gerrit: not yet completed)
 
 ### Algorithm
-From a high-level perspective, the algorithm searches for similar groups of
-masses (@gerrit: it should be groups of similar masses) in a given dataset and ensures no group has too much space
-between masses (@gerrit: isn't it datapoints instead of masses?) in the chromatographic column. This is realized over an
-iterative approach, where first groups of masses are formed, those then split
-in places with too great a gap, and the resulting fragments are checked
+From a high-level perspective, the algorithm searches for groups of similar masses
+in a given dataset and ensures no group has too much space in the chromatographic
+dimension between included points.
+This is realized over an iterative approach, where first groups of masses are formed, 
+those then split in places with too great a gap, and the resulting fragments are checked
 for being grouped in mz. The process continues until all groups contain no
-gaps anymore. The group size defines the greatest possible distance between two neighboring masses (@gerrit: here, it is not neighboring masses but the neighboring orders of the masses, so it is sorted. However, sorting is not mentioned at all. Moreover, this is based on the assumption, that a normally distributed variable provides a characteristic order space between first and second or last and last-1 masses. This order space is distributed similarly to an exponential distribution with a decreasing probability for increasing distances. Here, we assume, that a cumulative probability of 99 % can be used to estimate a threshold for an acceptable distance.)
+gaps anymore. The group size defines the greatest possible distance between two neighboring masses 
+(@gerrit: here, it is not neighboring masses but the neighboring orders of the masses, so it is sorted. However, sorting is not mentioned at all. Moreover, this is based on the assumption, that a normally distributed variable provides a characteristic order space between first and second or last and last-1 masses. This order space is distributed similarly to an exponential distribution with a decreasing probability for increasing distances. Here, we assume, that a cumulative probability of 99 % can be used to estimate a threshold for an acceptable distance.)
+// 
 and is normalized to the centroid error (@gerrit: This is due to our assumption; however, it is important to mention that the centroid error is also just an estimate for the standard deviation of the assumed normal distribution.), while the largest allowed gap in the scan dimension is set to six. (@gerrit: This should be explained.)
 After grouping is complete, a silhouette score is calculated for all points
 in groups and scaled to the interval [0,1] for weighing in a later step. (@gerrit: this should include the corresponding literature.)
@@ -105,7 +107,8 @@ in groups and scaled to the interval [0,1] for weighing in a later step. (@gerri
 ### Module Requirements
 The module has few requirements, only depending on centroided data with values
 for mz and the scan number, as well as a measurement of each centroid's mass error. 
-While these measures are generated in the qCentroiding step if used as part of the qAlgorithms pipeline, the program also allows the user to specify a 
+While these measures are generated in the qCentroiding step if used as part of the 
+qAlgorithms pipeline, the program also allows the user to specify a 
 per-centroid error when reading in a .csv or to assume a static error of x ppm. 
 
 
@@ -116,7 +119,8 @@ Data is represented as DataPoint objects, which are handled in one of two ways:
 
 <b> DataPoint objects: </b>
 One DataPoint contains mz, RT, intensity, scan number, the centroid error, and an optional 
-control value that assigns it to a bin. Data points are never modified during the binning process. (@gerrit: here, a small tree would be nice for overview like:
+control value that assigns it to a bin. Data points are never modified during the binning process. 
+(@gerrit: here, a small tree would be nice for overview like:
 DataPoint
 |
 |-- mz (mass-to-charge ratio)
@@ -138,26 +142,32 @@ It is possible to account for empty scans. (@gerrit: a tree would be nice.)
 Every Bin stores all data points that were determined to belong to the same EIC. All subsetting 
 methods are called on the bin without requiring knowledge of data points outside of the bin.
 The main difference between Bins and EICs is that a Bin only operates with pointers to data
-points in RawData, while the EIC can be used independently of the RawData it was generated from. (@gerrit: so, what is the reason for using the structure of these bins instead of just EICs?-> this should be explained)
+points in RawData, while the EIC can be used independently of the RawData it was generated from. 
+(@gerrit: so, what is the reason for using the structure of these bins instead of just EICs?-> this should be explained)
+=> Additionally, bins keep track of information which can later be used for filtering or weighing
+purposes, such as if any scans appear more than once in the data and median values
+for scans and masses. These details are not relevant to the peak finding process and
+are consequently not passed up the pipeline to minimise memory allocations.
+Since Bins contain superfluous methods and variables while additionally depending on the RawData
+object for their content, they are not suited for passing forward to the peak fitting
+algorithm. Instead, all necessary data is copied, and the binning infrastructure is freed.
 A new bin is created by specifying its start and end within an existing bin. As such, the
 program starts by creating a bin that contains every data point in the dataset.
-Bins also keep track of information which can later be used for filtering or weighing
-purposes, such as if any scans appear more than once in the data and median values
-for scans.
 
 <b> The BinContainer object: </b>
-The BinContainer supplies wrapper functions to access all bins. The access for subsetting is organized so that the user specifies all methods and the order in which they are to be applied. While currently only two methods exist, this makes the program easy to
+The BinContainer supplies wrapper functions to access all bins. The access for subsetting 
+is organized so that the user specifies all methods and the order in which they are to be applied. 
+While currently only two methods exist, this makes the program easy to
 expand for the use of further parameters. 
 Bins are organized in two different data structures: Bins that were newly created are added to 
 a deque object that contains only Bins that require further subsetting (open Bins). 
 The subsetting methods are applied to all bins sequentially, with every iteration following the 
-user-specified order and removing bins that can no longer be a subset (closed Bins) from the deque. (@gerrit: it should be mentioned, that closing a bin is based on the criteria: no significant gap in the data group is left.)
+user-specified order. If the last subsetting step does not change the bin, it is considered
+closed. For the present program, this means no significant gaps exist in the bin.
+ and removing bins that can no longer be a subset (closed Bins) from the deque. (@gerrit: it should be mentioned, that closing a bin is based on the criteria: no significant gap in the data group is left.)
 Once a Bin is closed, it is added to a vector that contains all closed Bins. Once binning is 
 complete, the DQSB is calculated for all bin members in all bins.
 
-Since Bins contain superfluous methods and variables while additionally depending on the RawData
-object for their content, they are not suited for passing forward to the peak fitting
-algorithm. Instead, all necessary data is copied, and the binning infrastructure is freed.
 
 ### Core Functions
 The following functions, not including constructors and other utility functions, are included 
@@ -177,7 +187,9 @@ as part of the qBinning module:
 Both functions parse data points from a text file and construct a vector that contains the 
 individual scans. Within each scan, data points are ordered by m/z in increasing order. These functions
 primarily exist for testing purposes since the qBinning module is designed to accept centroided data 
-from the previous step in the qAlgorithms pipeline. However, when the user specifies an error (in ppm), 
+from the previous step in the qAlgorithms pipeline. 
+=> the user specified error is NOT in ppm, and must be defined per centroid ßßß
+However, when the user specifies an error (in ppm), 
 it is used instead of the centroid error for all following operations.
 This function returns a boolean to indicate if it executed successfully. 
 ```@todo one line of example in code style, same for others```
@@ -189,26 +201,31 @@ required by subsetMZ.
 <b> makeCumError: </b>
 This function creates a vector that contains the cumulative error of all data points in a bin.
 It is called after makeOS and requires the bin to be sorted by mz. If data without a 
-centroid error is used, makeCumError can take an arbitrary error in ppm. 
+centroid error is used, 
+makeCumError can take an arbitrary error in ppm. 
+// makeCumError can use the mass of a point to generate an arbitrary error in ppm.
 
 <b> subsetMZ : </b>
 This function takes a bin after it was sorted by mz and splits it according to the approach 
-described in @todo reference
+described in [@reuschenbachQBinningDataQualityBased2023].
 It starts by taking the OS of the bin that calls it and searching for the maximum, corresponding
 to the largest difference between two neighboring mz values in the sorted bin. If the maximum
-is greater than the critical value (@gerrit: based on the above-mentioned assumption), the bin is split at this position, and subsetMZ is called for both
-resulting halves. 
+is greater than the critical value (@gerrit: based on the above-mentioned assumption), 
+the bin is split at this position, and subsetMZ is called for both resulting halves. 
 The critical value is calculated for an @todo unicode 
 alpha of 0.05 and normalized to the mean centroid error. The mean error is derived from the cumulative
 error by dividing the difference between the cumulative error at the start and end of the bin by the 
-number of data points in the bin.(@gerrit: why mean error?->please explain) Since a bin created as a subset of another bin shares OS and
+number of data points in the bin.
+(@gerrit: why mean error?->please explain) 
+Since a bin created as a subset of another bin shares OS and
 the cumulative error with its precursor, both do not need to be calculated more than once.
-The function terminates if the bin it is called on has less than five data points. @todo reasoning (@gerrit: what happens to these small bins?)
+The function terminates if the bin it is called on has less than five data points.
+These points are then added to a vector which can later be used by diagnostic functions. @todo reasoning (@gerrit: what happens to these small bins?)
 If a bin cannot be split further, it is added to the container for open bins.
 
 <b> subsetScan: </b>
 This function takes a bin, sorts it by the scan number of its datapoints, and splits it if the
-difference in scans exceeds a given number. @todo reasoning for maxdist = 7
+difference in scans exceeds a given number. @todo reasoning for maxdist = 6
 After splitting the bin, only subsets with more than five elements are returned as bins to
 the container for open bins. If a bin is not split, it can be considered complete and is 
 closed. Closed bins are added to a separate container.
