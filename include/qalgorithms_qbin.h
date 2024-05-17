@@ -199,6 +199,8 @@ namespace q
     /// @return the data quality score for the specified element
     double calcDQS(const long double MID, const double MOD); // Mean Inner Distance, Minimum Outer Distance
 
+    void check_MOD_outOfBins(const Bin *target, const std::vector<q::Datapoint *> notBinned, const int maxdist);
+
 }
 
 #endif
