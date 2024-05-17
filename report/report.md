@@ -9,7 +9,7 @@ Report concluding the analytical practical by Daniel Höhn, supervised by Gerrit
 	- [generation of EIC in other software](#generation-of-eic-in-other-software)
 	- [advantages of qBinning](#advantages-of-qbinning)
 - [Implementation](#implementation)
-	- [Differences to the Original Implementation in R -\> discussion / conclusion; Konkrete Beobachtungen / wertende zusammenfassung + addressat, kontext existierender literatur ; vergleichbare Ergebnisse?](#differences-to-the-original-implementation-in-r---discussion--conclusion-konkrete-beobachtungen--wertende-zusammenfassung--addressat-kontext-existierender-literatur--vergleichbare-ergebnisse)
+	- [Algorithm](#algorithm)
 	- [Module Requirements](#module-requirements)
 	- [Data Organisation](#data-organisation)
 	- [Core Functions](#core-functions)
@@ -42,7 +42,7 @@ Report concluding the analytical practical by Daniel Höhn, supervised by Gerrit
 // What is HRMS? 
 Importance of NTS, Datenprozessierung und Analyse entscheidende Größe bei NTS; ergebnisse verschiedeneer
 Workflows haben keine Vergleichbarkeit; hoher Einfluss durch den Nutzer
-QA unterscheidet nicht zwischen flaschen parametern und instrumentation
+QA unterscheidet nicht zwischen falschen parametern und instrumentation
 Es gibt keine spezifische QA für NTS
 Neuerung: qualitätsparameter für einzelne Schritte in der Prouessierung
 Steps of finding a feature, mention qCentroids / describe pipeline in general
@@ -59,7 +59,7 @@ cases with minimal effort, flexible data input and comparatively
 high performance. 
 With the newly written code, it is possible to introduce the
 qBinning algorithm to existing, open-source analysis platforms
-like MZmine @todo citation.
+like MZmine @todo citation. 
 
 
 Idee: Implementieren des Algorithmus in einer größeren Plattform
@@ -82,17 +82,21 @@ Terminology: open/closed Bin; maxdist
 A bin is a data construct with associated data points and defined operations, an EIC is just a set of data points.
 @todo capitalisation for data objects?
 
-### Differences to the Original Implementation in R -> discussion / conclusion; Konkrete Beobachtungen / wertende zusammenfassung + addressat, kontext existierender literatur ; vergleichbare Ergebnisse?
-R: 1-2 GB (factor 2 to 4 of in-place operation) of memory needed for Warburg, 
-30% CPU use on Ryzen + 10% from RStudio, very long runtime (640 s)
-writing to csv is significantly slower in R -> probably main timesink
-
-The most significant difference to the original implementation is that 
-while previously a dataframe object was used to handle binning by
-changing the order of data points, now a bin 
+### Algorithm
+From a high-level perspective, the algorithm searches for similar groups of
+masses in a given dataset and makes then sure no group has too much space
+between masses in the chromatographic column. This is realised over an
+iterative approach, where first groups of masses are formed, those then split
+in places with too great a gap and the resulting fragments are checked
+for being grouped in mz. The process continues until all groups contain no
+gaps anymore. The greatest possible distance between two neighbouring masses
+is defined by the group size and normalised to the centroid error while the
+largest allowed gap in the scan dimension is set to six.
+After grouping is complete, a silhouette score is calculated for all points
+in groups and scaled to the interval [0,1] for weighing in a later step.
 
 ### Module Requirements
-The modlue has few requirements, only requiring centroided data with values
+The modlue has few requirements, only depending on centroided data with values
 for mz and the scan number and a measurement of the mass error each centroid has. 
 While, if used as part of the qAlgorithms pipeline, these measures are generated 
 in the qCentroiding step, the program also allows the user to specify a 
@@ -309,6 +313,10 @@ Writing the results to disk was not included in the profiling tests,
 since this is not the main task of the presented program and was
 as such not optimised beyond the point of sufficient efficiency.
 
+All tests were performed with one dataset containing 3.5 million
+centroids. Scaling of performance criteria with data set size was
+not investigated.
+
 For R, the Rprof function was used to profile code execution.
 A total execution time of 299 seconds on the i5 and @todo
 seconds on the Ryzen was measured. in both tests, 46% of the execution time 
@@ -319,6 +327,9 @@ Especially the MID calculation, implemented as fast_mean_distance,
 is massively slower than necessary due to creating four additional
 tables, each with a lenght of the bin size to the power of two.
 The total time spent on reading data from disk was 1.3 seconds.
+Additionally, the R code required up to 2 GB of memory during 
+execution. This is roughly four times the size of the dataset
+as plain text.
 
 For julia, code was run once before timing to not measure time spent
 on compiling instead of executing code. Since no data is written to
@@ -364,6 +375,9 @@ Large bins > 100 are overrepresented in error crits
 ## Discussion
 
 Centroid error is underestimated, leading to more strict binning than ideal
+Differences to the Original Implementation in R
+Konkrete Beobachtungen / wertende zusammenfassung + addressat, 
+kontext existierender literatur ; vergleichbare Ergebnisse?
 
 ### Error Criteria
 Not all bins conform to a set of "ideal" parameters. These parameters 
@@ -477,6 +491,22 @@ or two dimensional chromatography is employed for NTS. Accounting for this
 instrumentation during the subsetting step requires additional methods to
 be written. Here, the way the DQS is calculated also needs to be revised.
 
+While the use of a set maximum distance between scans of a bin is in relation
+to the chance a real signal has of being a false negative, the result of
+this reasoning is still a more or less arbitrary value a certain estimate
+of the false negative rate can be attached to. Ideally, this distance
+could be derived from the dataset itself or the instrumentation used.
+Since it it required to be an integer number, this parameter is limited
+in the degree it can be optimised.
+
+Similarly, the critical value is always calculated for an alpha of 0.01.
+There is no analytical solution to the parameters of this value, but
+it is possibe some links to the instrumentation itself can be made.
+Further research into this area and a decision table for the right
+alpha could help firstly draw the users attention to this slightly
+obfuscated property and secondly - assuming any such links can
+be established - increase the 
+
 **Usability Changes**
 The program does not feature error handling in any capacity. Additionally,
 only one dataset @todo adjust if testing SFC/GC
@@ -501,7 +531,11 @@ or one bin being split in two (@todo see above). These cases need to be
 included so that a potential improvement of the algorithm is not discarded
 for not obtaining exactly matching results.
 
+Also to reduce the effort needed for a substantial contribution, the entire
+project should compile and run correctly on a Linux-distribution. For the
+qBinning program, this is the case.
 
+--
 OpenMS uses binary format for raw data, similar approach (save intermediates of workflow in binary to 
 improve processing speeds)
 more subsetting
