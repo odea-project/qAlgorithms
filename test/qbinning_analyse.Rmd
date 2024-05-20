@@ -11,6 +11,8 @@ knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
 library(data.table)
 library(patchwork)
+library(TeachingDemos)
+library(pracma)
 
 makeDQS <- function(MID, MOD){
   dqs = (MOD - MID) * (1 / (1 + MID)) / max(MID, MOD)
@@ -133,7 +135,7 @@ sum((abs(summary$mean_scans - summary$median_scans)) > 6) # 1005
 ```
 
 ```{r error analysis}
-library(TeachingDemos)
+
 summary_error <- read.csv("../../selectbins_summary.csv")
 bins_error <- read.csv("../../selectbins_full.csv")
 

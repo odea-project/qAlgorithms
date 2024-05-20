@@ -119,8 +119,9 @@ Data is represented as DataPoint objects, which are handled in one of two ways:
 
 <b> DataPoint objects: </b>
 One DataPoint contains mz, RT, intensity, scan number, the centroid error, and an optional 
-control value that assigns it to a bin. Data points are never modified during the binning process. 
-(@gerrit: here, a small tree would be nice for overview like:
+control value specifying the correct DQS. Data points are never modified during the binning process. 
+=> DataPoints are Structs as defined in the c++ 21 standard.
+(@gerrit: here, a small tree would be nice for overview like: // puts too much emphasis on implementation detail, just read the code at that point
 DataPoint
 |
 |-- mz (mass-to-charge ratio)
@@ -136,7 +137,7 @@ DataPoint
 <b> The RawData object: </b>
 Centroided data is stored as individual scans, with one vector per scan. Within the scans, 
 data points are sorted by mz. Scans are accessed through a vector containing all scans. 
-It is possible to account for empty scans. (@gerrit: a tree would be nice.)
+It is possible to account for empty scans. (@gerrit: a tree would be nice.) // see above
 
 <b> Bin objects: </b>
 Every Bin stores all data points that were determined to belong to the same EIC. All subsetting 
@@ -160,11 +161,11 @@ is organized so that the user specifies all methods and the order in which they 
 While currently only two methods exist, this makes the program easy to
 expand for the use of further parameters. 
 Bins are organized in two different data structures: Bins that were newly created are added to 
-a deque object that contains only Bins that require further subsetting (open Bins). 
+a deque object that contains only Bins which require further subsetting (open Bins). 
 The subsetting methods are applied to all bins sequentially, with every iteration following the 
 user-specified order. If the last subsetting step does not change the bin, it is considered
 closed. For the present program, this means no significant gaps exist in the bin.
- and removing bins that can no longer be a subset (closed Bins) from the deque. (@gerrit: it should be mentioned, that closing a bin is based on the criteria: no significant gap in the data group is left.)
+and removing bins that can no longer be a subset (closed Bins) from the deque. (@gerrit: it should be mentioned, that closing a bin is based on the criteria: no significant gap in the data group is left.)
 Once a Bin is closed, it is added to a vector that contains all closed Bins. Once binning is 
 complete, the DQSB is calculated for all bin members in all bins.
 
@@ -200,10 +201,9 @@ required by subsetMZ.
 
 <b> makeCumError: </b>
 This function creates a vector that contains the cumulative error of all data points in a bin.
-It is called after makeOS and requires the bin to be sorted by mz. If data without a 
-centroid error is used, 
-makeCumError can take an arbitrary error in ppm. 
-// makeCumError can use the mass of a point to generate an arbitrary error in ppm.
+It is called after makeOS and requires the bin to be sorted by mz. 
+If specified, makeCumError overrides the centroid error with an error in ppm of the
+centroid m/z. 
 
 <b> subsetMZ : </b>
 This function takes a bin after it was sorted by mz and splits it according to the approach 
@@ -512,6 +512,10 @@ time, a medium to large boost in efficiency can be assumed. For reference,
 A test dataset with 261 centroids took 98 subsets in m/z total to identify 
 one bin with ten members. 
 
+The critical value, before normalisation, is calculated often and 
+repeaqtedly for the same binsize. Including it as a table would
+likely save some time during the calculations.
+
 **Feature Additions**
 While the algorithm works well for LC-MS data, MS^2 datasets can only be 
 binned according to the precursor ion. An additional method to subset
@@ -537,7 +541,22 @@ it is possible some links to the instrumentation itself can be made.
 Further research into this area and a decision table for the right
 alpha could help firstly draw the user's attention to this slightly
 obfuscated property and secondly - assuming any such links can
-be established - increase the 
+be established - increase the comparability of results for similar
+samples between labs employing different separation.
+
+It could be demonstrated that during specific steps of the algorithm,
+members of a group are erroneously split off. By identifying these
+bins and revising their members, ca. 2% of all bins found in the
+test dataset could be improved. One possible approach for this is to
+re-add all "bad" bins to the dataset of discarded points and redo
+the entire binning. This results in an operation which iterates over about
+1/3 of the entire dataset again, and does not guarantee that this error
+will not occur once more.
+An alternative approach is binning is a mass window. Given a more 
+elaborate structure of of discarded points, for example organising them
+in steps of 0.5 mz, the area needed for binning is 
+
+Isotope ratio priorisation during binning
 
 **Usability Changes**
 The program does not feature error handling in any capacity. Additionally,
