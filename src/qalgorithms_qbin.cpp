@@ -181,7 +181,7 @@ namespace q
             {
                 std::cout << "";
             }
-            
+
             finishedBins[i].makeDQSB(rawdata, maxdist);
         }
         auto timeEnd = std::chrono::high_resolution_clock::now();
@@ -251,13 +251,13 @@ namespace q
         // file_out << q::control_tvals.str();
     };
 
-    const std::vector<int> BinContainer::makeBinSelection()
+    const std::vector<int> BinContainer::makeBinSelection(std::byte mask)
     {
         std::vector<int> indices;
         for (int i = 0; i < int(finishedBins.size()); i++)
         {
             std::byte code = finishedBins[i].summariseBin().second;
-            if (bool(code)) // should be false if any bit is not 0
+            if (bool(code & mask)) // any test which is set to 0 will not be included; condition is true if any selected test bit is set
             {
                 indices.push_back(i);
             }
@@ -265,7 +265,7 @@ namespace q
         return indices;
     };
 
-    void BinContainer::printSelectBins(const std::vector<int> indices, bool summary, const std::string location)
+    void BinContainer::printSelectBins(const std::vector<int> indices, bool summary, const std::string location) // @todo combine with makeBinSelection
     {
         // print optional summary file
         const std::string binsSummary = location + "/selectBins_summary.csv";
@@ -493,7 +493,7 @@ namespace q
         const size_t binsize = pointsInBin.size();
         DQSB.reserve(binsize);
         // determine start and end of relevant scan section, used as repeats for the for loop; -1 since accessed vector is zero-indexed
-        const unsigned int minScanInner = pointsInBin.front()->scanNo; 
+        const unsigned int minScanInner = pointsInBin.front()->scanNo;
         int scanRangeStart = pointsInBin.front()->scanNo - maxdist;
         int scanRangeEnd = pointsInBin.back()->scanNo + maxdist;
         // calculate median of scans here
@@ -519,7 +519,7 @@ namespace q
             }
             scanRangeStart = 1;
         }
-        else if (scanRangeEnd > rawdata->allDatapoints.size())
+        else if (scanRangeEnd > int(rawdata->allDatapoints.size()))
         {
             maxScansReduced = scanRangeEnd - rawdata->allDatapoints.size(); // dummy values have to be added later
             scanRangeEnd = rawdata->allDatapoints.size();
@@ -532,7 +532,7 @@ namespace q
         const double maxInnerMZ = pointsInBin.back()->mz;
         const std::vector<long double> meanInnerDistances = meanDistance(pointsInBin);
         // find median in mz
-        if (isOdd) 
+        if (isOdd)
         {
             medianMZ = pointsInBin[n]->mz; // for lenght 1: index 0
         }
@@ -678,7 +678,7 @@ namespace q
 
             meanDQS += DQSB[i];
         }
-        
+
         meanMZ = meanMZ / binsize;
         meanScan = meanScan / binsize;
         meanDQS = meanDQS / binsize;
@@ -689,7 +689,7 @@ namespace q
         double sumOfDist = 0;
         std::for_each(pointsInBin.begin(), pointsInBin.end(), [&](const Datapoint *point)
                       { sumOfDist += (point->mz - meanMZ) * (point->mz - meanMZ); }); // squared
-        const double worstCaseMOD = 3.05037165842070 * pow(log(binsize + 1), (-0.4771864667153)) * meanCenError; 
+        const double worstCaseMOD = 3.05037165842070 * pow(log(binsize + 1), (-0.4771864667153)) * meanCenError;
         // binsize + 1 to not include cases where adding in the next point would make the distance greater than vcrit again
         std::vector<long double> MIDs = meanDistance(pointsInBin);
         double MID = std::accumulate(MIDs.begin(), MIDs.end(), 0.0);
@@ -849,10 +849,10 @@ namespace q
     //     std::vector<double> alt_DQS(binsize);
     //     // unique pointers for keeping track of bin members?
 
-    //     const unsigned int minScanInner = target->pointsInBin.front()->scanNo; 
+    //     const unsigned int minScanInner = target->pointsInBin.front()->scanNo;
     //     int scanRangeStart = target->pointsInBin.front()->scanNo - maxdist;
     //     int scanRangeEnd = target->pointsInBin.back()->scanNo + maxdist;
-        
+
     //     int maxScansReduced = 0;              // add this many dummy values to prevent segfault when bin is in one of the last scans
     //     std::vector<double> minMaxOutPerScan; // contains both mz values (per scan) next or closest to all m/z in the bin
     //     minMaxOutPerScan.reserve((scanRangeEnd - scanRangeStart) * 2);
@@ -877,7 +877,7 @@ namespace q
     //     const double maxInnerMZ = pointsInBin.back()->mz;
     //     const std::vector<long double> meanInnerDistances = meanDistance(pointsInBin);
     //     // find median in mz
-    //     if (isOdd) 
+    //     if (isOdd)
     //     {
     //         medianMZ = pointsInBin[n]->mz; // for lenght 1: index 0
     //     }
@@ -1028,7 +1028,7 @@ int main()
     testcontainer.assignDQSB(&testdata, 6); // int = max dist in scans
 
     // print bin selection
-    testcontainer.printSelectBins(testcontainer.makeBinSelection(), 1, "../..");
+    testcontainer.printSelectBins(testcontainer.makeBinSelection(std::byte{0b00000010}), 1, "../..");
 
     // testcontainer.printBinSummary("../../summary_bins.csv");
     // testcontainer.printworstDQS();

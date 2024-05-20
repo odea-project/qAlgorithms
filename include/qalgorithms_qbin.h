@@ -69,7 +69,7 @@ namespace q
         int pt_scanmax;
         std::vector<Datapoint *> pointsInBin; // @todo does not change after bin creation, check for performance improvement when using cast const
         std::vector<double> activeOS;         // Order Space
-        std::vector<double> DQSB;
+        std::vector<double> DQSB;             // @todo change this to a vector of MODs, add separate scaling vector?
 
         /// @brief generate a bin that is a subset of an existing bin using two iterators in one existing bin
         /// @param startBin left border of the new bin
@@ -176,8 +176,11 @@ namespace q
         void printworstDQS();
 
         /// @brief The function calculates the summary of a bin and selects bins with at least one state of interest.
+        /// @param mask every bit of this byte controls if the corresponding test is considered for returning the
+        /// selection. For example, for returning only bins in which the first test condition applies,
+        /// the input would have to be std::byte{0b00000001}
         /// @return A vector of all closed bins which have at least one state of interest
-        const std::vector<int> makeBinSelection();
+        const std::vector<int> makeBinSelection(std::byte mask);
 
         /// @brief Print the individual bin members and optionally the bin summary in a separate .csv
         /// @param indices A vector of the selected bins, probably makeBinSelection()
