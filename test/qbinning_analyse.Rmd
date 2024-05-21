@@ -19,6 +19,12 @@ makeDQS <- function(MID, MOD){
   dqs = (dqs + 1) / 2
   return(dqs)
 }
+critVal <- function(n){
+  ## Function generating the critical mz difference using order statistics
+  
+  critVal <- 3.05037165842070*log(n)^(-0.4771864667153)
+  return(critVal)
+}
 ```
 
 ```{r new bin}
@@ -135,9 +141,13 @@ sum((abs(summary$mean_scans - summary$median_scans)) > 6) # 1005
 ```
 
 ```{r error analysis}
+points_total = 3568033
+bins_total = 55910
 
 summary_error <- read.csv("../../selectbins_summary.csv")
 bins_error <- read.csv("../../selectbins_full.csv")
+
+summary_error = summary_error[order(summary_error$mean_mz),]
 
 stats = as.data.frame(table(summary_error$errorcode)) # alle ungeraden Zahlen haben duplikate
 stats$Var1 = as.numeric(levels(stats$Var1))

@@ -17,9 +17,11 @@ Report concluding the analytical practical by Daniel Höhn, supervised by Gerrit
 - [Evaluation](#evaluation)
 	- [Result Comparison with R and Julia Implementation](#result-comparison-with-r-and-julia-implementation)
 	- [Performance Evaluation](#performance-evaluation)
+	- [Test Criteria for Bin Correctness](#test-criteria-for-bin-correctness)
 - [Discussion](#discussion)
-	- [Error Criteria](#error-criteria)
+	- [Test Results](#test-results)
 	- [Future Improvements and Additions](#future-improvements-and-additions)
+- [Conclusion](#conclusion)
 - [Software and Data](#software-and-data)
 
 
@@ -421,33 +423,7 @@ moving data from the container for open bins to the container for closed bins.
 Performance is roughly equal to the Julia script, while more detailed and
 easier to access information over the entire process is provided. 
 
-
-<b> Issues after binning: </b>
-Images of common undesired outputs/elements that need to be cleaned up: 
-Centroid error too small, points were not binned
-	-> Negative effect on DQS
-Very small bins from noise (should get removed by peak fitting)
-
-runtimes on different processors
-performance bottlenecks
-effectiveness of binning for different datasets
-comparison between centroid error and ppm
-compare results for different alpha when calculating the critical value
-Less cases where DQS matches, identify the cause for this
-Specify error cases
-Large bins > 100 are overrepresented in error crits
-
-
-@todo runtime comparison
-
-## Discussion
-
-Centroid error is underestimated, leading to more strict binning than ideal
-Differences to the Original Implementation in R
-Konkrete Beobachtungen / wertende zusammenfassung + addressat, 
-kontext existierender literatur ; vergleichbare Ergebnisse?
-
-### Error Criteria
+### Test Criteria for Bin Correctness
 Not all bins conform to a set of "ideal" parameters. These parameters 
 are defined such that a bin that adheres to all of them is as close
 as possible to the theoretical model of a Peak-forming EIC.
@@ -455,19 +431,23 @@ Since all bins exist independently, only parameters that can be
 calculated from the bin members are considered.
 Criteria are implemented using the summaiseBin function and
 as such are only evaluated in terms of being true or false.
+Results of the tests are presented here (@todo add link).
 
 **1) Duplicates in Scans**
 The theoretical bin contains one element for every scan it extends
 over. Since a declared purpose of this algorithm is to detect bins
 even when single points are missing from a series, only a scan being
 represented twice can be counted as an error. (@gerrit: what are the consequences of this observation?) 
+=> If a scan appears twice at a different mass, it is possible that two 
+very similar bins were combined into one due to the centroid error
+being too large. 
 
 **2) Too Strict Separation**
 To detect too strict separation between either two bins or one bin
 and one discarded point, the DQSB is used as a measure of distance
 and compared with a hypothetical DQSB. For this hypothetical score,
 it is assumed that every point has a nearest neighbor with a 
-distance the critical value for the bin size + 1 normed to the mean
+distance of the critical value for the bin size + 1, normed to the mean
 centroid error of the bin. The resulting score should always be lower
 than the real DQSB. If it is not, the nearest point outside of the 
 bin could be added to it without being discarded again due to lowering
@@ -530,11 +510,58 @@ At 4 sigma, the likelihood of a point being part of a normally distributed
 sample is orders of magnitude lower than the 1% error margin used to
 calculate the critical value during binning.
 
+<b> Issues after binning: </b>
+Images of common undesired outputs/elements that need to be cleaned up: 
+Centroid error too small, points were not binned
+	-> Negative effect on DQS
+Very small bins from noise (should get removed by peak fitting)
+
+runtimes on different processors
+performance bottlenecks
+effectiveness of binning for different datasets
+comparison between centroid error and ppm
+compare results for different alpha when calculating the critical value
+Less cases where DQS matches, identify the cause for this
+Specify error cases
+Large bins > 100 are overrepresented in error crits
+
+
+@todo runtime comparison
+
+## Discussion
+
+Centroid error is underestimated, leading to more strict binning than ideal
+Differences to the Original Implementation in R
+Konkrete Beobachtungen / wertende zusammenfassung + addressat, 
+kontext existierender literatur ; vergleichbare Ergebnisse?
+
+
+
+### Test Results
+The tests presented here (@todo add link) were performed on the
+Warburg-Dataset after binning. 
+
+**2) Too Strict Separation** 
+1.3% of all bins fulfilled this criteria. Notably, they were smaller
+than average with a majority having a binsize of 5. The average binsize was larger
+when other tests were positive, but still ~10% of the normal binsize
+for these groups. This resulted in 0.1% of all points being affected.
+For @todo bins it was possible to find at least one point in the vector of
+discarded points which could be associated with the bin in question.
+@todo control for neighbours in binned dataset
+There is very little overlap between this condition and others, with over
+97% being exclusively "too close" to another point.
+Of these, some are two incorrectly separated bins. // ID 39242 + 39343; 16501 + 16510; check if both form a valid bin
+// both cases are close together in operation order
+
 ### Future Improvements and Additions
 **Performance Improvements**
-As of now, the algorithm is not multithreaded. Doing so would provide a 
-significant increase in execution speed. Multithreading is possible
-to use after the first bin is split since every bin is treated independently.
+The first subsetting is not multithreaded, since omp macros
+only work on for loops with no greater modification. If, before normal
+bin subsetting starts, the bin could be divided by some criteria,
+there is some additional time which could be saved. An improvement
+in this direction would also enable datasets to be binned if they are
+too large to fit into RAM. 
 
 The transferred data always contains a control DQS and centroid error,
 even if those are not needed. By implementing them as optional parameters,
@@ -590,7 +617,9 @@ the entire binning. This results in an operation which iterates over about
 will not occur once more.
 An alternative approach is binning is a mass window. Given a more 
 elaborate structure of of discarded points, for example organising them
-in steps of 0.5 mz, the area needed for binning is ßßß
+in steps of 0.5 mz, the area needed for binning always spans 1 mz. 
+This massively reduces the amount of subsets that need to be performed
+per control.
 
 While it already functions as a measure of separation, a secondary
 statistic to the DQSB would allow to control the generated values.
@@ -632,6 +661,34 @@ for not obtaining exactly matching results.
 Also to reduce the effort needed for a substantial contribution, the entire
 project should compile and run correctly on a Linux distribution. For the
 qBinning program, this is the case.
+
+
+## Conclusion
+
+It could be shown that the qBinning algorithm creates largely good results,
+and more importantly provides quality criteria that can be used to improve
+the clustering results. 
+
+Furthermore, an error in calculating the DQS was identified in both original
+implementations. The alternative approach chosen here avoids incorrect results
+and was verified under different edge cases.
+
+Expansion of the program gives access to many optional tests for bin quality,
+which enable a sophisticated pre-selection of bins before the peak fitting
+algorithm begins work. For example, only those bins which do not contain duplicate scans,
+are well-separated from the dataset and do not have points outside of 2 sigma 
+(tests 1, 2 and 4 are negative) could be returned by this program.
+The tests also grant better insight into the weaknesses of the algorithm.
+Through them, a probable cause for incorrect splits in bins could be identified
+as an acceptable gap in a small bin which was too large while the correct bin
+was still part of another, orders of magnitude greater bin.
+
+The program is now flexible and accessible for future expansions. It is now
+possible to pass centroided data as an object which will not be modified,
+and data can be returned in a reduced form, skipping the reading from and
+writing to csv steps. Through other differences in implementation, a massive
+improvement in terms of execution time was achieved in comparison to the R code,
+while performing additional calculations for bin metadata and test conditions.
 
 --
 OpenMS uses a binary format for raw data, a similar approach (save intermediates of workflow in binary to 
