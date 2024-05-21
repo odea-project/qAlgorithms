@@ -56,6 +56,8 @@ Korrelationen mit Anzahl fehlender scans?
 Falsche DQS: Bin wurde von einem viel größeren abgetrennt, der critVal entsprechend reduziert hat.
     zeigen kein besonders auffälliges Verhalten Bzgl. subsetting-Schritt
 
+pracma omp wird nicht standardmäßig vom compiler akzeptiert
+
 Instead of returning a composite object, you may consider the following alternatives:
 • Make the function a constructor for the object.
 • Make the function modify an existing object rather than making a new one. The
