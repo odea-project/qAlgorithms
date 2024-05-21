@@ -17,6 +17,7 @@
 #include <chrono>  // time code execution
 #include <ctime>
 #include <regex>
+#include <omp.h>
 
 namespace q
 {
@@ -54,7 +55,7 @@ namespace q
         }
         std::string line;
         std::string dummy;
-        std::getline(file, dummy); // do not read first row @todo check if first row starts with a number
+        std::getline(file, dummy); // do not read first row @todo check if first row starts with a number; parralelise?
         while (std::getline(file, line))
         {
             std::istringstream ss(line);
@@ -81,6 +82,7 @@ namespace q
             allDatapoints[i_scanNo].push_back(F); // every subvector in allDatapoints is one complete scan - does not require a sorted input file!
             // }
         }
+#pragma omp parallel for
         for (size_t i = 1; i < allDatapoints.size(); i++) // make sure data conforms to expectations
         {
             std::sort(allDatapoints[i].begin(), allDatapoints[i].end(), [](const Datapoint lhs, const Datapoint rhs)
@@ -129,6 +131,7 @@ namespace q
                 { // brackets needed to prevent error
                     // bin in mz
                     subsetType = "MZ";
+#pragma omp parallel for
                     for (size_t j = 0; j < startpoint; j++) // for every element in the deque before writing new bins
                     {
                         binDeque.front().makeOS();
@@ -151,6 +154,7 @@ namespace q
                 {
                     // bin using scan numbers
                     subsetType = "Scans";
+#pragma omp parallel for
                     for (size_t j = 0; j < startpoint; j++)
                     {
                         binDeque.front().subsetScan(&binDeque, &finishedBins, maxdist, subsetCount);
@@ -160,8 +164,8 @@ namespace q
                 }
 
                 default:
-                    std::cout << "\nSeparation method " << dimensions[i] << " is not a valid parameter, skipping... \n";
-                    break;
+                    std::cout << "\nSeparation method " << dimensions[i] << " is not a valid parameter, terminating program\n";
+                    exit(201);
                 }
                 timeEnd = std::chrono::high_resolution_clock::now();
                 std::cout << "subset in " << subsetType << "\nTime: " << (timeEnd - timeStart).count() << " ns\nSubsets performed: "
@@ -175,13 +179,9 @@ namespace q
     void BinContainer::assignDQSB(const RawData *rawdata, const unsigned int maxdist)
     {
         auto timeStart = std::chrono::high_resolution_clock::now();
+        #pragma omp parallel for
         for (size_t i = 0; i < finishedBins.size(); i++)
         {
-            if (i == 307)
-            {
-                std::cout << "";
-            }
-
             finishedBins[i].makeDQSB(rawdata, maxdist);
         }
         auto timeEnd = std::chrono::high_resolution_clock::now();
@@ -280,17 +280,10 @@ namespace q
             {
                 int pos = indices[i];
                 auto pair = finishedBins[pos].summariseBin();
-                output_sum << pos + 1 << "," + pair.first + "," << unsigned(pair.second) << "\n";
-                // the errorcode is a 8-bit number translating to any combination of 8 error states
-                // 16 = 00010000 = abs(meanScan - medianScan) > 6
-                // 32 = 00100000 = abs(meanMZ - medianMZ) > 2 * meanCenError
-                // 48 = 00110000 = both
-                // 64 = 01000000 = DQSmin > meanDQS
-                // 128 = 10000000 = duplicate scans
-                // 144 = 10010000 = duplicate && abs(meanScan - medianScan) > 6
-                // 160 = 10100000 = duplicate && abs(meanMZ - medianMZ) > 2 * meanCenError
-                // 176 = 10110000 = duplicate + both
-                // 192 = 11000000 = duplicate + DQSmin > meanDQS
+                char buffer[128];
+                sprintf(buffer, "%d,%s,%u\n", pos + 1, pair.first, unsigned(pair.second));
+                output_sum << buffer;
+                // output_sum << pos + 1 << "," + pair.first + "," << unsigned(pair.second) << "\n";
             }
             file_out_sum << output_sum.str();
             file_out_sum.close();
@@ -342,6 +335,7 @@ namespace q
         pointsInBin.reserve(rawdata->lengthAllPoints);
         for (size_t i = 1; i < rawdata->allDatapoints.size(); i++)
         {
+            #pragma omp parallel for
             for (size_t j = 0; j < rawdata->allDatapoints[i].size(); j++)
             {
                 pointsInBin.push_back(&rawdata->allDatapoints[i][j]);
@@ -356,6 +350,7 @@ namespace q
                   { return lhs->mz < rhs->mz; });
 
         activeOS.reserve(pointsInBin.size());               // OS = Order Space
+        #pragma omp parallel for
         for (size_t i = 0; i + 1 < pointsInBin.size(); i++) // +1 to prevent accessing outside of vector
         {
             activeOS.push_back((pointsInBin[i + 1]->mz - pointsInBin[i]->mz) * 1000000);
@@ -417,7 +412,7 @@ namespace q
         }
     }
 
-    void Bin::subsetScan(std::deque<Bin> *bincontainer, std::vector<Bin> *finishedBins, const unsigned int &maxdist, unsigned int &counter)
+    void Bin::subsetScan(std::deque<Bin> *bincontainer, std::vector<Bin> *finishedBins, const int maxdist, unsigned int &counter)
     {
         // function is called on a bin sorted by mz
         int control_duplicatesIn = 0;
@@ -431,10 +426,7 @@ namespace q
         for (size_t i = 0; i < binSize - 1; i++) // -1 since difference to next data point is checked @todo rework to start at i = 0
         {
             const int distanceScan = pointsInBin[i + 1]->scanNo - pointsInBin[i]->scanNo;
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wsign-compare"
             if (distanceScan > maxdist) // bin needs to be split
-#pragma GCC diagnostic pop
             {
                 ++counter;
                 // less than five points in bin
@@ -487,7 +479,7 @@ namespace q
         }
     }
 
-    void Bin::makeDQSB(const RawData *rawdata, const unsigned int &maxdist)
+    void Bin::makeDQSB(const RawData *rawdata, const unsigned int maxdist)
     {
         // assumes bin is saved sorted by scans, since the result from scan gap checks is the final control
         const size_t binsize = pointsInBin.size();
@@ -651,12 +643,12 @@ namespace q
             }
             double tmp_DQS = calcDQS(meanInnerDistances[i], minDist); // @todo scale DQS with distance from point, gaussian - maxdist + 1 = alpha?
             DQSB.push_back(tmp_DQS);
-            // @todo inline, compare all minDist with critval and save smallest difference in bin
+            // @todo inline, compare all minDist with critval and save smallest difference in bin; add omp
         }
         return;
     }
 
-    std::pair<std::string, std::byte> Bin::summariseBin()
+    std::pair<char, std::byte> Bin::summariseBin()
     {
         size_t binsize = pointsInBin.size();
         double meanMZ = 0;
@@ -714,10 +706,15 @@ namespace q
         {
             selector |= std::byte{0b00001000};
         }
-        if ((4 * stdev < pt_mzmax - meanMZ) | (4 * stdev < meanMZ - pt_mzmin)) // if a value in the bin is outside of 2 sigma
+        if ((4 * stdev < pt_mzmax - meanMZ) | (4 * stdev < meanMZ - pt_mzmin)) // if a value in the bin is outside of 4 sigma
         {
             selector |= std::byte{0b00010000};
         }
+        if (meanDQS < 0.5)
+        {
+            selector |= std::byte{0b00100000};
+        }
+        
 
         // (binID), binsize, meanMZ, medianMZ, standard deviation mz, meanScan, medianScan, DQSB, DQSB_control, worst-case DQS (empirical), lowest DQScen, mean centroid error
         char buffer[256];
@@ -1017,7 +1014,7 @@ int main()
     // path to data, mz, centroid error, RT, scan number, intensity, DQS centroid, control DQS Bin
     if (!testdata.readcsv("../../rawdata/control_bins.csv", 0, 1, 2, 3, 4, 6, 7)) // ../../rawdata/control_bins.csv reduced_DQSdiff
     {
-        exit(1);
+        exit(101); // error codes: 1.. = reading / writing failed, 2.. = improper input,
     }
 
     q::BinContainer testcontainer;

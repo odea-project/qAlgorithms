@@ -73,6 +73,7 @@ Feature: Nur bins weitergeben, wenn in Serie gemessen
 ## qBinning @todo better name
 wie funktioniert der algorithmus?
 (@gerrit: not yet completed)
+=> Moved to Implementation -> Algorithm
 
 ### Why is binning necessary?
 (@gerrit: not yet completed)
@@ -93,16 +94,52 @@ A bin is a data construct with associated data points and defined operations; an
 ### Algorithm
 From a high-level perspective, the algorithm searches for groups of similar masses
 in a given dataset and ensures no group has too much space in the chromatographic
-dimension between included points.
-This is realized over an iterative approach, where first groups of masses are formed, 
-those then split in places with too great a gap, and the resulting fragments are checked
-for being grouped in mz. The process continues until all groups contain no
-gaps anymore. The group size defines the greatest possible distance between two neighboring masses 
+dimension between included points. 
+\ 
+From this point, a group will be referred to as
+a *closed bin* if the algorithm determines that it cannot be subdivided further
+and as *open bin* if one or more of the subsetting functions (@todo link to functions)
+still has to check the grouping. Bins always refers to a grouping of centroided
+MS data with the parameter mz and at least one additional dimension of separation.
+Groups are only referred to as bins if they have not yet been handed to the peak 
+fitting algorithm, meaning there are still secondary tests requiring bin metadata. (@todo link to bin object)
+
+The user specifies which subsetting methods should be used and, if applicable, 
+parameters of these methods. The selection must be made before compiling the program.
+The following description only concerns the grouping by mz and scan number of centroids.
+It is assumed centroiding has been performed with the qCentroids algorithm [@reuschenbachDevelopmentScoringParameter2022],
+meaning all centroids have a specified mass error.
+
+Grouping is performed iteratively over all open bins. Since the algorithm requires a
+bin to start, all centroids in the dataset are collected and merged into one bin.
+Grouping always involves separating a bin into two or more smaller bins until no
+smaller bin can be created. This process is referred to as subsetting (of an open bin).
+
+First, open bins are subset by mz. Grouping in mz utilises the order spaces of
+neighbouring masses, which are calculated after sorting points in the bin by mz.
+Assuming that members of a correct bin are normally distributed in mz, a test statistic
+can be calculated given an alpha and the bin size. The 
+
+// shorten; for details refer to original publication?
+
+After being subset in mz, a bin is subset in the scan dimension. For this, it is
+sorted by scans and then subset at every position where the difference between
+two neighbouring points is greater than six.
+// reasoning
+Created fragments are turned into open bins. If the bin was not changed during
+this subsetting step, it is considered closed.
+
+Both functions are executed alternating until no open bins exist.
+
+After all bins are closed, the DQS is calculated for all bin members.
+
+
 (@gerrit: here, it is not neighboring masses but the neighboring orders of the masses, so it is sorted. However, sorting is not mentioned at all. Moreover, this is based on the assumption, that a normally distributed variable provides a characteristic order space between first and second or last and last-1 masses. This order space is distributed similarly to an exponential distribution with a decreasing probability for increasing distances. Here, we assume, that a cumulative probability of 99 % can be used to estimate a threshold for an acceptable distance.)
 // 
 and is normalized to the centroid error (@gerrit: This is due to our assumption; however, it is important to mention that the centroid error is also just an estimate for the standard deviation of the assumed normal distribution.), while the largest allowed gap in the scan dimension is set to six. (@gerrit: This should be explained.)
 After grouping is complete, a silhouette score is calculated for all points
 in groups and scaled to the interval [0,1] for weighing in a later step. (@gerrit: this should include the corresponding literature.)
+
 
 ### Module Requirements
 The module has few requirements, only depending on centroided data with values
@@ -164,10 +201,10 @@ Bins are organized in two different data structures: Bins that were newly create
 a deque object that contains only Bins which require further subsetting (open Bins). 
 The subsetting methods are applied to all bins sequentially, with every iteration following the 
 user-specified order. If the last subsetting step does not change the bin, it is considered
-closed. For the present program, this means no significant gaps exist in the bin.
+closed. For the present program, this means no significant gaps exist in the bin (refer: @todo link).
 and removing bins that can no longer be a subset (closed Bins) from the deque. (@gerrit: it should be mentioned, that closing a bin is based on the criteria: no significant gap in the data group is left.)
 Once a Bin is closed, it is added to a vector that contains all closed Bins. Once binning is 
-complete, the DQSB is calculated for all bin members in all bins.
+complete, the DQSB is calculated for all bin members in all closed bins.
 
 
 ### Core Functions
@@ -189,9 +226,8 @@ Both functions parse data points from a text file and construct a vector that co
 individual scans. Within each scan, data points are ordered by m/z in increasing order. These functions
 primarily exist for testing purposes since the qBinning module is designed to accept centroided data 
 from the previous step in the qAlgorithms pipeline. 
-=> the user specified error is NOT in ppm, and must be defined per centroid ßßß
-However, when the user specifies an error (in ppm), 
-it is used instead of the centroid error for all following operations.
+If used to read in data, an error has to be specified for each centroid. If the error is supposed to
+be a certain ppm of the mass, a dummy value suffices since this is handled in **makeCumError**.
 This function returns a boolean to indicate if it executed successfully. 
 ```@todo one line of example in code style, same for others```
 
@@ -215,7 +251,7 @@ the bin is split at this position, and subsetMZ is called for both resulting hal
 The critical value is calculated for an @todo unicode 
 alpha of 0.05 and normalized to the mean centroid error. The mean error is derived from the cumulative
 error by dividing the difference between the cumulative error at the start and end of the bin by the 
-number of data points in the bin.
+number of data points in the bin. This is identical to normalising the order space for every point.
 (@gerrit: why mean error?->please explain) 
 Since a bin created as a subset of another bin shares OS and
 the cumulative error with its precursor, both do not need to be calculated more than once.
@@ -554,7 +590,18 @@ the entire binning. This results in an operation which iterates over about
 will not occur once more.
 An alternative approach is binning is a mass window. Given a more 
 elaborate structure of of discarded points, for example organising them
-in steps of 0.5 mz, the area needed for binning is 
+in steps of 0.5 mz, the area needed for binning is ßßß
+
+While it already functions as a measure of separation, a secondary
+statistic to the DQSB would allow to control the generated values.
+This test would, depending on calculation effort, not be included
+as part of the standard DQSB function. Instead it seves as a control
+of clustering validity unrelated to the test statistic used for binning.
+One possible measure for this is the Quadratic Renyi’s Negentropy Separation [@martinsNewClusteringSeparation2015],
+which is interesting since it decides if two generated clusters should
+be combined. Since it does not depend on the error of a point,
+bins with suboptimal separation could be detected even if the grouping
+itself is correct.
 
 Isotope ratio priorisation during binning
 
