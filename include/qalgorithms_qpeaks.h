@@ -146,6 +146,13 @@ namespace q
         const int scale,
         std::vector<std::unique_ptr<validRegression>> &validRegressions);
 
+    void mergeRegressionsWithinScale(
+        std::vector<std::unique_ptr<validRegression>> &validRegressions,
+        std::vector<std::unique_ptr<validRegression>> &validRegressionsTmp,
+        const RefMatrix &Y,
+        const int scale,
+        const std::vector<int *> &df);
+
     void mergeRegressionsOverScales(
         std::vector<std::unique_ptr<validRegression>> &validRegressions,
         const Matrix &Ylog, 
@@ -174,11 +181,11 @@ namespace q
      * @param scale : Window size scale, e.g., 5 means the window size is 11 (2*5+1)
      * @return std::pair<double,int> : MSE and index of the best regression window
      */
-    extendedMSE calcExtendedMse(
+    void calcExtendedMse(
         const RefMatrix &Y,
-        const Matrix &B,
-        const std::vector<int> &groupIndices,
-        const int scale,
+        // const Matrix &B,
+        const std::vector<std::unique_ptr<validRegression>> &regressions,
+        // const int scale,
         const std::vector<int *> &df);
 
     void calcExtendedMse(

@@ -139,7 +139,6 @@ namespace q
     Matrix &X = *(designMatrices[scale - 2]);                          // design matrix
     Matrix Jacobian_height(1, 4);                                      // Jacobian matrix for the height
     std::vector<std::unique_ptr<validRegression>> validRegressionsTmp; // temporary vector to store valid regressions <index, apex_position>
-    std::vector<int> indexInValidRegressionsTmp(B.numCols());          // temporary vector to store the index of the valid regressions
 
     // iterate columwise over the coefficients matrix
     for (size_t i = 0; i < B.numCols(); i++)
@@ -281,23 +280,22 @@ namespace q
 
       validRegressionsTmp.push_back(
           std::make_unique<validRegression>(
-              i + scale,                                                    // index of the center of the window (x==0) in the Y matrix
-              scale,                                                        // scale
-              df_sum - 4,                                                   // df
-              apex_position + i + scale,                                    // apex position in x-axis 0:n
-              0,                                                            // initial MSE
-              B.col(i),                                                     // coefficients matrix
-              true,                                                         // isValid
-              left_limit,                                                   // left_limit
-              right_limit,                                                  // right_limit
-              left_limit - i,                                               // X_row_0
-              right_limit - i + 1,                                          // X_row_1
-              1 - std::erf(area_uncertainty / Jacobian_area.first(0, 0)))); // dqs
-
-      indexInValidRegressionsTmp[i] = validRegressionsTmp.size() - 1;
-
+              i + scale,                                            // index of the center of the window (x==0) in the Y matrix
+              scale,                                                // scale
+              df_sum - 4,                                           // df
+              apex_position + i + scale,                            // apex position in x-axis 0:n
+              0,                                                    // initial MSE
+              B.col(i),                                             // coefficients matrix
+              true,                                                 // isValid
+              left_limit,                                           // left_limit
+              right_limit,                                          // right_limit
+              left_limit - i,                                       // X_row_0
+              right_limit - i + 1,                                  // X_row_1
+              area_uncertainty_covered / Jacobian_area.second(0, 0) // dqs
+              ));
+      // std::erf(                  // dqs (experimental)
+      //     (1 - std::erf(area_uncertainty / Jacobian_area.first(0, 0))) / (1 - std::erf(1 / tValuesArray[df_sum - 5])) - 1)));
     } // end for loop
-
     // early return if no or only one valid peak
     if (validRegressionsTmp.size() < 2)
     {
@@ -308,19 +306,19 @@ namespace q
       validRegressions.push_back(std::move(validRegressionsTmp[0]));
       return; // not enough peaks to form a group
     }
-
     /*
       Grouping:
       This block of code implements the grouping. It groups the valid peaks based on the apex positions. Peaks are defined as similar, i.e., members of the same group, if they fullfill at least one of the following conditions:
       - The difference between two peak apexes is less than 4. (Nyquist Shannon Sampling Theorem, separation of two maxima)
       - At least one apex of a pair of peaks is within the window of the other peak. (Overlap of two maxima)
     */
-    std::vector<std::vector<int>> groups; // vector of peak indices
-    // initialize iterators for valid_regressions_tmp
-    auto it_peak = validRegressionsTmp.begin();
-    auto it_peak_next = std::next(it_peak);
-    // iterate over the temporary vector of valid regressions
-    while (it_peak_next != validRegressionsTmp.end())
+
+    std::vector<std::vector<std::unique_ptr<validRegression>>> regressionGroups; // vector of vectors of valid regressions, i.e., groups of valid regressions
+
+    auto it_peak = validRegressionsTmp.begin(); // iterator for the peak
+    auto it_peak_next = std::next(it_peak);     // iterator for the next peak
+
+    while (it_peak_next != validRegressionsTmp.end()) // iterate over the temporary vector of valid regressions
     {
       // check if the difference between two peak apexes is less than 4 (Nyquist Shannon Sampling Theorem, separation of two maxima), or if the apex of a peak is within the window of the other peak (Overlap of two maxima)
       if (
@@ -328,53 +326,41 @@ namespace q
           (*it_peak)->apex_position < (*it_peak_next)->left_limit &&                  // Left peak is not within the window of the right peak
           (*it_peak_next)->apex_position > (*it_peak)->right_limit                    // Right peak is not within the window of the left peak
       )
-      { // create a new group
-        if (groups.empty())
-        { // in case there is no group yet, two new groups are created
-          groups.push_back(std::vector<int>{(*it_peak)->index_x0 - scale});      // add the first peak to the first group
-          groups.push_back(std::vector<int>{(*it_peak_next)->index_x0 - scale}); // add the second peak to the second group
-        }
-        else
-        { // create a new group
-          groups.push_back(std::vector<int>{(*it_peak_next)->index_x0 - scale}); // add the second peak to the new group
-        }
+      { // the two regressions differ, i.e. create a new group and move all regressions from start to it_peak to this group
+
+        regressionGroups.push_back(std::vector<std::unique_ptr<q::qPeaks::validRegression>>());            // create a new group
+        std::move(validRegressionsTmp.begin(), it_peak_next, std::back_inserter(regressionGroups.back())); // move all regressions from start to it_peak to this group
+        it_peak_next = validRegressionsTmp.erase(validRegressionsTmp.begin(), it_peak_next);               // erase the moved regressions from the temporary vector of valid regressions
       }
-      else
-      { // add to the current group
-        if (groups.empty())
-        { // in case there is no group yet, create a new group and add both peaks to it
-          groups.push_back(std::vector<int>{(*it_peak)->index_x0 - scale}); // add the first peak to the group
-          groups.back().push_back((*it_peak_next)->index_x0 - scale);       // add the second peak to the group
-        }
-        else
-        {
-          groups.back().push_back((*it_peak_next)->index_x0 - scale); // add the second peak to the current group
-        }
-      }
+      it_peak = it_peak_next;
       ++it_peak_next;
-      ++it_peak;
-    } // end for loop
+      if (it_peak_next == validRegressionsTmp.end())
+      {                                                                                                    // the last peak is reached
+        regressionGroups.push_back(std::vector<std::unique_ptr<q::qPeaks::validRegression>>());            // create a new group
+        std::move(validRegressionsTmp.begin(), it_peak_next, std::back_inserter(regressionGroups.back())); // move all regressions from start to it_peak to this group
+      }
+    } // end while loop
 
     /*
       Survival of the Fittest Filter:
       This block of code implements the survival of the fittest filter. It selects the peak with the lowest mean squared error (MSE) as the representative of the group. If the group contains only one peak, the peak is directly pushed to the valid regressions. If the group contains multiple peaks, the peak with the lowest MSE is selected as the representative of the group and pushed to the valid regressions.
     */
-    for (auto &group : groups)
+    for (auto &group : regressionGroups)
     {
       if (group.size() == 1)
       { // already isolated peak => push to valid regressions
-        validRegressions.push_back(std::move(validRegressionsTmp[indexInValidRegressionsTmp[group[0]]]));
+        validRegressions.push_back(std::move(group.front()));
       }
       else
       { // survival of the fittest based on mse between original data and reconstructed (exp transform of regression)
-        extendedMSE extendedMse = calcExtendedMse(Y, B, group, scale, df);
-        if (extendedMse.index == -1)
+        calcExtendedMse(Y, group, df);
+        for (auto &regression : group)
         {
-          continue; // no valid peak in the group; due to the degree of freedom filter
+          if (regression->isValid)
+          {
+            validRegressions.push_back(std::move(regression));
+          }
         }
-        validRegressions.push_back(std::move(validRegressionsTmp[indexInValidRegressionsTmp[extendedMse.index - scale]]));
-        // update the MSE of the group
-        validRegressions.back()->mse = extendedMse.mse;
       } // end if; single item or group with multiple members
     } // end for loop (group in vector of groups)
   } // end validateRegressions
@@ -552,6 +538,11 @@ namespace q
 
       peaks.back()->xFit = xfit;
       peaks.back()->yFit = yfit;
+
+      // std::cout << "-----------------------------------\n";
+      // std::cout << "Apex Position: " << apex_position << std::endl;
+      // std::cout << "Height: " << peaks.back()->height << std::endl;
+      // std::cout << "DQS: " << regression->dqs << std::endl;
     } // end for loop
 
     return peaks;
@@ -597,12 +588,10 @@ namespace q
 #pragma endregion calcMse
 
 #pragma region calcExtendedMse
-  qPeaks::extendedMSE qPeaks::calcExtendedMse(
-      const RefMatrix &Y,                   // measured data (not log-transformed data)
-      const Matrix &B,                      // coefficients matrix
-      const std::vector<int> &groupIndices, // indices of the grouped regression windows (index in B)
-      const int scale,                      // scale: window size = 2*scale+1
-      const std::vector<int *> &df)
+  void qPeaks::calcExtendedMse(
+      const RefMatrix &Y,                                               // measured data (not log-transformed data)
+      const std::vector<std::unique_ptr<validRegression>> &regressions, // regressions to compare
+      const std::vector<int *> &df)                                     // degrees of freedom
   {
     /*
       The function consists of the following steps:
@@ -613,36 +602,18 @@ namespace q
     */
     // declare variables
     double best_mse = std::numeric_limits<double>::infinity();
-    int best_idx = -1;
-    int best_extendedScale = -1;
-    int best_df = 0;
-    int best_left_limit = -1;
-    int best_right_limit = -1;
-    int best_X_row_0 = -1;
-    int best_X_row_1 = -1;
+    auto best_regression = regressions.begin();
+
     // step 1: identify left and right limit of the grouped regression windows
-    int left_limit = (B(1, groupIndices.front()) > 0 && B(2, groupIndices.front()) > 0)
-                         ? // has a valley point
-                         std::max(
-                             (double)groupIndices.front(),
-                             -B(1, groupIndices.front()) / 2 / B(2, groupIndices.front()) + scale + groupIndices.front())
-                         : // no valley point
-                         groupIndices.front();
+    int left_limit = regressions.front()->left_limit;
+    int right_limit = regressions.back()->right_limit;
 
-    int right_limit = (B(1, groupIndices.back()) < 0 && B(3, groupIndices.back()) > 0)
-                          ? // has a valley point
-                          std::min(
-                              (double)groupIndices.back() + 2 * scale,
-                              -B(1, groupIndices.back()) / 2 / B(3, groupIndices.back()) + scale + groupIndices.back())
-                          : // no valley point
-                          groupIndices.back() + 2 * scale;
-
-    for (auto &index : groupIndices)
+    for (auto regression = regressions.begin(); regression != regressions.end(); ++regression)
     {
       // get the extended scale
       int extendedScale = std::max(
-          index + scale - left_limit, // left limit
-          right_limit - index - scale // right limit
+          (*regression)->index_x0 - left_limit, // left limit
+          right_limit - (*regression)->index_x0 // right limit
       );
 
       // check if it is necessary to create new design matrices based on the extended scale
@@ -661,387 +632,357 @@ namespace q
 
       // step 2: calculate yhat based on the coefficients matrix B and the extended design matrix X
       // extract and cut the design matrix based on the extended scale
-      int row_0 = left_limit - index - scale + extendedScale;      // start row index for cutting Design Matrix
-      int row_1 = right_limit - index - scale + extendedScale + 1; // end row index for cutting Design Matrix
-      // add an adjustment if there is a valleypoint between row_0 and row_1
-      int left_valley_adjust = (B(2, index) < 0)
-                                   ? // no valley point
-                                   0
-                                   : // has a valley point
-                                   std::max(
-                                       0,                                                                   // valley point is outside the window
-                                       (int)(-B(1, index) / 2 / B(2, index) + scale + index - left_limit)); // valley point is inside the window
-      int right_valley_adjust = (B(3, index) < 0)
-                                    ? // no valley point
-                                    0
-                                    : // has a valley point
-                                    std::max(
-                                        0,                                                                   // valley point is outside the window
-                                        (int)(right_limit + B(1, index) / 2 / B(3, index) - scale - index)); // valley point is inside the window
+      int row_0 = extendedScale - (*regression)->index_x0 + left_limit;      // start row index for cutting Design Matrix
+      int row_1 = extendedScale - (*regression)->index_x0 + right_limit + 1; // end row index for cutting Design Matrix
 
-      Matrix X = (*designMatrices[extendedScale - 2]).subMatrix(row_0 + left_valley_adjust, row_1 - right_valley_adjust, 0, 4);
+      Matrix X = (*designMatrices[extendedScale - 2]).subMatrix(row_0, row_1, 0, 4);
       // calculate yhat based on the coefficients matrix B and the extended design matrix X
-      Matrix yhat = X * B.col(index);
+      Matrix yhat = X * (*regression)->B;
 
       // step 3: calculate the mean squared error (MSE) between the predicted and actual values
-      double mse = calcMseEXP(yhat, Y.subMatrix(left_limit + left_valley_adjust, right_limit + 1 - right_valley_adjust, 0, 1));
+      double mse = calcMseEXP(yhat, Y.subMatrix(left_limit, right_limit + 1, 0, 1));
       // correct the df for the mse calculation
       int df_sum = 0;
-      for (int i = left_limit + left_valley_adjust; i < right_limit + 1 - right_valley_adjust; i++)
+      for (int i = left_limit; i < right_limit + 1; i++)
       {
         df_sum += *df[i];
       }
-
       if (df_sum <= 4)
       {
         continue; // not enough degrees of freedom
       }
-
       mse *= (yhat.numRows() - 4) / (df_sum - 4);
 
       // step 4: identify the best regression based on the MSE and return the MSE and the index of the best regression
       if (mse < best_mse)
       {
         best_mse = mse;
-        best_idx = index + scale;
-        best_extendedScale = extendedScale;
-        best_df = df_sum;
-        best_left_limit = (B(2, index) < 0)
-                              ? // no valley point
-                              index
-                              : // has a valley point
-                              std::max(
-                                  index,                                             // valley point is outside the window
-                                  (int)(-B(1, index) / 2 / B(2, index) + best_idx)); // valley point is inside the window
-        best_right_limit = (B(3, index) < 0)
-                               ? // no valley point
-                               index + 2 * scale
-                               : // has a valley point
-                               std::min(
-                                   index + 2 * scale,                                 // valley point is outside the window
-                                   (int)(-B(1, index) / 2 / B(3, index) + best_idx)); // valley point is inside the window
-        best_X_row_0 = best_left_limit - index;
-        best_X_row_1 = best_right_limit - index;
+        (*regression)->mse = mse;
+        best_regression = regression;
       }
     } // end for loop (index in groupIndices)
-
-    return extendedMSE(best_mse, best_idx, scale, best_df - 4, best_left_limit, best_right_limit, best_X_row_0, best_X_row_1);
-    // return std::make_tuple(best_mse, best_idx, best_extendedScale, best_df - 4, best_left_limit, best_right_limit, best_X_row_0, best_X_row_1);
-  } // end calcExtendedMse
-
-  void qPeaks::calcExtendedMse(
-      const RefMatrix &Y,                 // measured data (not log-transformed data)
-      validRegression &currentRegression, // current regression
-      validRegression &refRegression,     // reference regression
-      const std::vector<int *> &df        // degrees of freedom
-  )
-  {
-    /*
-      The function consists of the following steps:
-      1. Identify left and right limit of the grouped regression windows.
-      2. Calculate yhat based on the coefficients matrix B and the extended design matrix X.
-      3. Calculate the mean squared error (MSE) between the predicted and actual values.
-      4. Identify the best regression based on the MSE and return the MSE and the index of the best regression.
-    */
-    // declare variables
-    double best_mse = std::numeric_limits<double>::infinity();
-    int best_idx = -1;
-    int best_extendedScale = -1;
-    int best_df = 0;
-    int best_left_limit = -1;
-    int best_right_limit = -1;
-    int best_X_row_0 = -1;
-    int best_X_row_1 = -1;
-    // step 1: identify left and right limit of the grouped regression windows
-    int left_limit = std::min(currentRegression.left_limit, refRegression.left_limit);
-    int right_limit = std::max(currentRegression.right_limit, refRegression.right_limit);
-    int flag = 0;
-    int stepInLoop = 0;
-    for (auto regression : {&currentRegression, &refRegression})
+    // set isValid to false for all regressions except the best one
+    for (auto regression = regressions.begin(); regression != regressions.end(); ++regression)
     {
-      // get the extended scale
-      int extendedScale = std::max(
-          regression->index_x0 - left_limit, // left limit
-          right_limit - regression->index_x0 // right limit
-      );
-
-      // check if it is necessary to create new design matrices based on the extended scale
-      if (designMatrices.size() < (extendedScale - 1)) // -1 because the design matrices are zero-based and start with scale 2
+      if (regression != best_regression)
       {
-#pragma omp critical
+        (*regression)->isValid = false;
+      }
+    } 
+  }   // end qPeaks::calcExtendedMse
+
+    void qPeaks::calcExtendedMse(
+        const RefMatrix &Y,                 // measured data (not log-transformed data)
+        validRegression &currentRegression, // current regression
+        validRegression &refRegression,     // reference regression
+        const std::vector<int *> &df        // degrees of freedom
+    )
+    {
+      /*
+        The function consists of the following steps:
+        1. Identify left and right limit of the grouped regression windows.
+        2. Calculate yhat based on the coefficients matrix B and the extended design matrix X.
+        3. Calculate the mean squared error (MSE) between the predicted and actual values.
+        4. Identify the best regression based on the MSE and return the MSE and the index of the best regression.
+      */
+      // declare variables
+      double best_mse = std::numeric_limits<double>::infinity();
+      int best_idx = -1;
+      int best_extendedScale = -1;
+      int best_df = 0;
+      int best_left_limit = -1;
+      int best_right_limit = -1;
+      int best_X_row_0 = -1;
+      int best_X_row_1 = -1;
+      // step 1: identify left and right limit of the grouped regression windows
+      int left_limit = std::min(currentRegression.left_limit, refRegression.left_limit);
+      int right_limit = std::max(currentRegression.right_limit, refRegression.right_limit);
+      int flag = 0;
+      int stepInLoop = 0;
+      for (auto regression : {&currentRegression, &refRegression})
+      {
+        // get the extended scale
+        int extendedScale = std::max(
+            regression->index_x0 - left_limit, // left limit
+            right_limit - regression->index_x0 // right limit
+        );
+
+        // check if it is necessary to create new design matrices based on the extended scale
+        if (designMatrices.size() < (extendedScale - 1)) // -1 because the design matrices are zero-based and start with scale 2
         {
-          // scale is not available; create new design matrices from last available scale to the extended scale in steps of 1
-          for (int new_scale = designMatrices.size() + 2; new_scale < extendedScale + 1; new_scale++)
+#pragma omp critical
           {
-            createDesignMatrix(new_scale);
-            createInverseAndPseudoInverse(*(designMatrices.back()));
+            // scale is not available; create new design matrices from last available scale to the extended scale in steps of 1
+            for (int new_scale = designMatrices.size() + 2; new_scale < extendedScale + 1; new_scale++)
+            {
+              createDesignMatrix(new_scale);
+              createInverseAndPseudoInverse(*(designMatrices.back()));
+            }
           }
         }
-      }
-      // step 2: calculate yhat based on the coefficients matrix B and the extended design matrix X
-      // extract and cut the design matrix based on the extended scale
-      int row_0 = left_limit - regression->index_x0 + extendedScale;      // start row index for cutting Design Matrix
-      int row_1 = right_limit - regression->index_x0 + extendedScale + 1; // end row index for cutting Design Matrix
-      // add an adjustment if there is a valleypoint between row_0 and row_1
-      int left_valley_adjust = (regression->B(2, 0) < 0)
-                                   ? // no valley point
-                                   0
-                                   : // has a valley point
-                                   std::max(
-                                       0,                                                                                          // valley point is outside the window
-                                       (int)(-regression->B(1, 0) / 2 / regression->B(2, 0) + regression->index_x0 - left_limit)); // valley point is inside the window
-      int right_valley_adjust = (regression->B(3, 0) < 0)
-                                    ? // no valley point
-                                    0
-                                    : // has a valley point
-                                    std::max(
-                                        0,                                                                                          // valley point is outside the window
-                                        (int)(right_limit + regression->B(1, 0) / 2 / regression->B(3, 0) - regression->index_x0)); // valley point is inside the window
+        // step 2: calculate yhat based on the coefficients matrix B and the extended design matrix X
+        // extract and cut the design matrix based on the extended scale
+        int row_0 = left_limit - regression->index_x0 + extendedScale;      // start row index for cutting Design Matrix
+        int row_1 = right_limit - regression->index_x0 + extendedScale + 1; // end row index for cutting Design Matrix
+        // add an adjustment if there is a valleypoint between row_0 and row_1
+        int left_valley_adjust = (regression->B(2, 0) < 0)
+                                     ? // no valley point
+                                     0
+                                     : // has a valley point
+                                     std::max(
+                                         0,                                                                                          // valley point is outside the window
+                                         (int)(-regression->B(1, 0) / 2 / regression->B(2, 0) + regression->index_x0 - left_limit)); // valley point is inside the window
+        int right_valley_adjust = (regression->B(3, 0) < 0)
+                                      ? // no valley point
+                                      0
+                                      : // has a valley point
+                                      std::max(
+                                          0,                                                                                          // valley point is outside the window
+                                          (int)(right_limit + regression->B(1, 0) / 2 / regression->B(3, 0) - regression->index_x0)); // valley point is inside the window
+        Matrix X = (*designMatrices[extendedScale - 2]).subMatrix(row_0 + left_valley_adjust, row_1 - right_valley_adjust, 0, 4);
+        // calculate yhat based on the coefficients matrix B and the extended design matrix X
+        Matrix yhat = X * regression->B;
 
-      Matrix X = (*designMatrices[extendedScale - 2]).subMatrix(row_0 + left_valley_adjust, row_1 - right_valley_adjust, 0, 4);
-      // calculate yhat based on the coefficients matrix B and the extended design matrix X
-      Matrix yhat = X * regression->B;
+        // step 3: calculate the mean squared error (MSE) between the predicted and actual values
+        double mse = calcMseEXP(yhat, Y.subMatrix(left_limit + left_valley_adjust, right_limit + 1 - right_valley_adjust, 0, 1));
+        // correct the df for the mse calculation
+        int df_sum = 0;
+        for (int i = left_limit + left_valley_adjust; i < right_limit + 1 - right_valley_adjust; i++)
+        {
+          df_sum += *df[i];
+        }
 
-      // step 3: calculate the mean squared error (MSE) between the predicted and actual values
-      double mse = calcMseEXP(yhat, Y.subMatrix(left_limit + left_valley_adjust, right_limit + 1 - right_valley_adjust, 0, 1));
-      // correct the df for the mse calculation
-      int df_sum = 0;
-      for (int i = left_limit + left_valley_adjust; i < right_limit + 1 - right_valley_adjust; i++)
-      {
-        df_sum += *df[i];
-      }
+        if (df_sum <= 4)
+        {
+          regression->isValid = false;
+          stepInLoop++;
+          continue; // not enough degrees of freedom
+        }
 
-      if (df_sum <= 4)
-      {
-        regression->isValid = false;
-        stepInLoop++;
-        continue; // not enough degrees of freedom
-      }
-
-      mse *= (yhat.numRows() - 4) / (df_sum - 4);
-      // step 4: identify the best regression based on the MSE and return the MSE and the index of the best regression
-      if (mse < best_mse)
-      {
-        best_mse = mse;
-        flag = stepInLoop;
-        stepInLoop++;
+        mse *= (yhat.numRows() - 4) / (df_sum - 4);
+        // step 4: identify the best regression based on the MSE and return the MSE and the index of the best regression
+        if (mse < best_mse)
+        {
+          best_mse = mse;
+          flag = stepInLoop;
+          stepInLoop++;
+        }
+        else
+        {
+          regression->isValid = false;
+          stepInLoop++;
+        }
+      } // end for loop
+      // set worse regression to invalid
+      if (flag == 0)
+      { // current regression is better than ref regression
+        refRegression.isValid = false;
       }
       else
-      {
-        regression->isValid = false;
-        stepInLoop++;
+      { // ref regression is better than current regression
+        currentRegression.isValid = false;
       }
-    } // end for loop
-    // set worse regression to invalid
-    if (flag == 0)
-    { // current regression is better than ref regression
-      refRegression.isValid = false;
     }
-    else
-    { // ref regression is better than current regression
-      currentRegression.isValid = false;
-    }
-  }
 #pragma endregion calcExtendedMse
 
 #pragma region jacobianMatrix_PeakArea
-  std::pair<Matrix, Matrix> qPeaks::jacobianMatrix_PeakArea(const Matrix &B, int scale) const
-  {
-    // predefine expressions
-    const double b0 = B(0, 0);
-    const double b1 = B(1, 0);
-    const double b2 = B(2, 0);
-    const double b3 = B(3, 0);
-    const double SQRTB2 = std::sqrt(std::abs(-b2));
-    const double SQRTB3 = std::sqrt(std::abs(-b3));
-    const double EXP_B0 = std::exp(b0);
-    const double B1_2_B2 = b1 / 2 / b2;
-    const double EXP_B12 = std::exp(-b1 * B1_2_B2 / 2);
-    const double B1_2_B3 = b1 / 2 / b3;
-    const double EXP_B13 = std::exp(-b1 * B1_2_B3 / 2);
+    std::pair<Matrix, Matrix> qPeaks::jacobianMatrix_PeakArea(const Matrix &B, int scale) const
+    {
+      // predefine expressions
+      const double b0 = B(0, 0);
+      const double b1 = B(1, 0);
+      const double b2 = B(2, 0);
+      const double b3 = B(3, 0);
+      const double SQRTB2 = std::sqrt(std::abs(-b2));
+      const double SQRTB3 = std::sqrt(std::abs(-b3));
+      const double EXP_B0 = std::exp(b0);
+      const double B1_2_B2 = b1 / 2 / b2;
+      const double EXP_B12 = std::exp(-b1 * B1_2_B2 / 2);
+      const double B1_2_B3 = b1 / 2 / b3;
+      const double EXP_B13 = std::exp(-b1 * B1_2_B3 / 2);
 
-    // initialize variables
-    Matrix J(1, 4);         // Jacobian matrix
-    Matrix J_covered(1, 4); // Jacobian matrix for the covered peak area
-    double x_left = -scale; // left limit due to the window
-    double x_right = scale; // right limit due to the window
-    double y_left = 0;      // y value at the left limit
-    double y_right = 0;     // y value at the right limit
+      // initialize variables
+      Matrix J(1, 4);         // Jacobian matrix
+      Matrix J_covered(1, 4); // Jacobian matrix for the covered peak area
+      double x_left = -scale; // left limit due to the window
+      double x_right = scale; // right limit due to the window
+      double y_left = 0;      // y value at the left limit
+      double y_right = 0;     // y value at the right limit
 
-    // here we have to check if there is a valley point or not
-    const double err_L =
-        (b2 < 0)
-            ? 1 - std::erf(b1 / 2 / SQRTB2) // ordinary peak
-            : erfi(b1 / 2 / SQRTB2);        // peak with valley point;
+      // here we have to check if there is a valley point or not
+      const double err_L =
+          (b2 < 0)
+              ? 1 - std::erf(b1 / 2 / SQRTB2) // ordinary peak
+              : erfi(b1 / 2 / SQRTB2);        // peak with valley point;
 
-    const double err_R =
-        (b3 < 0)
-            ? 1 + std::erf(b1 / 2 / SQRTB3) // ordinary peak
-            : -erfi(b1 / 2 / SQRTB3);       // peak with valley point ;
+      const double err_R =
+          (b3 < 0)
+              ? 1 + std::erf(b1 / 2 / SQRTB3) // ordinary peak
+              : -erfi(b1 / 2 / SQRTB3);       // peak with valley point ;
 
-    const double err_L_covered = ///@todo : need to be revised
-        (b2 < 0)
-            ? // ordinary peak half, take always scale as integration limit; we use erf instead of erfi due to the sqrt of absoulte value
-            std::erf((b1 - 2 * b2 * scale) / 2 / SQRTB2) + err_L - 1
-            : // valley point, i.e., check position
-            (-B1_2_B2 < -scale)
-                ? // valley point is outside the window, use scale as limit
-                err_L - erfi((b1 - 2 * b2 * scale) / 2 / SQRTB2)
-                : // valley point is inside the window, use valley point as limit
-                err_L;
+      const double err_L_covered = ///@todo : need to be revised
+          (b2 < 0)
+              ? // ordinary peak half, take always scale as integration limit; we use erf instead of erfi due to the sqrt of absoulte value
+              std::erf((b1 - 2 * b2 * scale) / 2 / SQRTB2) + err_L - 1
+              : // valley point, i.e., check position
+              (-B1_2_B2 < -scale)
+                  ? // valley point is outside the window, use scale as limit
+                  err_L - erfi((b1 - 2 * b2 * scale) / 2 / SQRTB2)
+                  : // valley point is inside the window, use valley point as limit
+                  err_L;
 
-    const double err_R_covered = ///@todo : need to be revised
-        (b3 < 0)
-            ? // ordinary peak half, take always scale as integration limit; we use erf instead of erfi due to the sqrt of absoulte value
-            err_R - 1 - std::erf((b1 + 2 * b3 * scale) / 2 / SQRTB3)
-            : // valley point, i.e., check position
-            (-B1_2_B3 > scale)
-                ? // valley point is outside the window, use scale as limit
-                erfi((b1 + 2 * b3 * scale) / 2 / SQRTB3) + err_R
-                : // valley point is inside the window, use valley point as limit
-                err_R;
+      const double err_R_covered = ///@todo : need to be revised
+          (b3 < 0)
+              ? // ordinary peak half, take always scale as integration limit; we use erf instead of erfi due to the sqrt of absoulte value
+              err_R - 1 - std::erf((b1 + 2 * b3 * scale) / 2 / SQRTB3)
+              : // valley point, i.e., check position
+              (-B1_2_B3 > scale)
+                  ? // valley point is outside the window, use scale as limit
+                  erfi((b1 + 2 * b3 * scale) / 2 / SQRTB3) + err_R
+                  : // valley point is inside the window, use valley point as limit
+                  err_R;
 
-    // adjust x limits
-    if (b2 > 0 && -B1_2_B2 > -scale)
-    { // valley point is inside the window, use valley point as limit
-      x_left = -B1_2_B2;
-    }
+      // adjust x limits
+      if (b2 > 0 && -B1_2_B2 > -scale)
+      { // valley point is inside the window, use valley point as limit
+        x_left = -B1_2_B2;
+      }
 
-    if (b3 > 0 && -B1_2_B3 < scale)
-    { // valley point is inside the window, use valley point as limit
-      x_right = -B1_2_B3;
-    }
+      if (b3 > 0 && -B1_2_B3 < scale)
+      { // valley point is inside the window, use valley point as limit
+        x_right = -B1_2_B3;
+      }
 
-    // calculate the y values at the left and right limits
-    y_left = std::exp(b0 + b1 * x_left + b2 * x_left * x_left);
-    y_right = std::exp(b0 + b1 * x_right + b3 * x_right * x_right);
-    const double dX = x_right - x_left;
+      // calculate the y values at the left and right limits
+      y_left = std::exp(b0 + b1 * x_left + b2 * x_left * x_left);
+      y_right = std::exp(b0 + b1 * x_right + b3 * x_right * x_right);
+      const double dX = x_right - x_left;
 
-    // calculate the trapzoid correction terms for the jacobian matrix
-    const double trpzd_b0 = (y_right + y_left) * dX / 2;
-    const double trpzd_b1 = (x_right * y_right + x_left * y_left) * dX / 2;
-    const double trpzd_b2 = (x_left * x_left * y_left) * dX / 2;
-    const double trpzd_b3 = (x_right * x_right * y_right) * dX / 2;
+      // calculate the trapzoid correction terms for the jacobian matrix
+      const double trpzd_b0 = (y_right + y_left) * dX / 2;
+      const double trpzd_b1 = (x_right * y_right + x_left * y_left) * dX / 2;
+      const double trpzd_b2 = (x_left * x_left * y_left) * dX / 2;
+      const double trpzd_b3 = (x_right * x_right * y_right) * dX / 2;
 
-    // calculate the Jacobian matrix terms
-    const double J_1_common_L = SQRTPI_2 * EXP_B0 * EXP_B12 / SQRTB2;
-    const double J_1_common_R = SQRTPI_2 * EXP_B0 * EXP_B13 / SQRTB3;
-    const double J_2_common_L = B1_2_B2 * EXP_B0 / b1;
-    const double J_2_common_R = B1_2_B3 * EXP_B0 / b1;
+      // calculate the Jacobian matrix terms
+      const double J_1_common_L = SQRTPI_2 * EXP_B0 * EXP_B12 / SQRTB2;
+      const double J_1_common_R = SQRTPI_2 * EXP_B0 * EXP_B13 / SQRTB3;
+      const double J_2_common_L = B1_2_B2 * EXP_B0 / b1;
+      const double J_2_common_R = B1_2_B3 * EXP_B0 / b1;
 
-    const double J_1_L = J_1_common_L * err_L;
-    const double J_1_L_covered = J_1_common_L * err_L_covered;
-    const double J_1_R = J_1_common_R * err_R;
-    const double J_1_R_covered = J_1_common_R * err_R_covered;
+      const double J_1_L = J_1_common_L * err_L;
+      const double J_1_L_covered = J_1_common_L * err_L_covered;
+      const double J_1_R = J_1_common_R * err_R;
+      const double J_1_R_covered = J_1_common_R * err_R_covered;
 
-    const double J_2_L = J_2_common_L - J_1_L * B1_2_B2;
-    const double J_2_L_covered = J_2_common_L - J_1_L_covered * B1_2_B2;
-    const double J_2_R = -J_2_common_R - J_1_R * B1_2_B3;
-    const double J_2_R_covered = -J_2_common_R - J_1_R_covered * B1_2_B3;
+      const double J_2_L = J_2_common_L - J_1_L * B1_2_B2;
+      const double J_2_L_covered = J_2_common_L - J_1_L_covered * B1_2_B2;
+      const double J_2_R = -J_2_common_R - J_1_R * B1_2_B3;
+      const double J_2_R_covered = -J_2_common_R - J_1_R_covered * B1_2_B3;
 
-    J(0, 0) = J_1_R + J_1_L;
-    J(0, 1) = J_2_R + J_2_L;
-    J(0, 2) = -B1_2_B2 * (J_2_L + J_1_L / b1);
-    J(0, 3) = -B1_2_B3 * (J_2_R + J_1_R / b1);
+      J(0, 0) = J_1_R + J_1_L;
+      J(0, 1) = J_2_R + J_2_L;
+      J(0, 2) = -B1_2_B2 * (J_2_L + J_1_L / b1);
+      J(0, 3) = -B1_2_B3 * (J_2_R + J_1_R / b1);
 
-    J_covered(0, 0) = J_1_R_covered + J_1_L_covered - trpzd_b0;
-    J_covered(0, 1) = J_2_R_covered + J_2_L_covered - trpzd_b1;
-    J_covered(0, 2) = -B1_2_B2 * (J_2_L_covered + J_1_L_covered / b1) - trpzd_b2;
-    J_covered(0, 3) = -B1_2_B3 * (J_2_R_covered + J_1_R_covered / b1) - trpzd_b3;
+      J_covered(0, 0) = J_1_R_covered + J_1_L_covered - trpzd_b0;
+      J_covered(0, 1) = J_2_R_covered + J_2_L_covered - trpzd_b1;
+      J_covered(0, 2) = -B1_2_B2 * (J_2_L_covered + J_1_L_covered / b1) - trpzd_b2;
+      J_covered(0, 3) = -B1_2_B3 * (J_2_R_covered + J_1_R_covered / b1) - trpzd_b3;
 
-    return std::pair<Matrix, Matrix>(J, J_covered);
-  } // end jacobianMatrix_PeakArea
+      return std::pair<Matrix, Matrix>(J, J_covered);
+    } // end jacobianMatrix_PeakArea
 #pragma endregion jacobianMatrix_PeakArea
 
 #pragma region createDesignMatrix
-  void qPeaks::createDesignMatrix(const int scale)
-  {
-    // construct matrix
-    size_t m = 4;
-    size_t n = 2 * scale + 1;
-    Matrix X(n, m);
-
-    // x vector
-    std::vector<int> x(n);
-    for (size_t i = 0; i < n; i++)
+    void qPeaks::createDesignMatrix(const int scale)
     {
-      x[i] = i - scale;
-    }
+      // construct matrix
+      size_t m = 4;
+      size_t n = 2 * scale + 1;
+      Matrix X(n, m);
 
-    // order vector
-    std::vector<int> p = {0, 1, 2, 2};
-
-    for (size_t i = 0; i < n; i++)
-    {
-      for (size_t j = 0; j < m; j++)
+      // x vector
+      std::vector<int> x(n);
+      for (size_t i = 0; i < n; i++)
       {
-        X(i, j) = std::pow(x[i], p[j]);
+        x[i] = i - scale;
       }
-    }
 
-    // modification of X due to p(2) and p(3)
-    for (size_t i = 0; i < n; i++)
-    {
-      if (x[i] < 0)
-      {
-        X(i, 3) = 0;
-      }
-      else
-      {
-        X(i, 2) = 0;
-      }
-    }
+      // order vector
+      std::vector<int> p = {0, 1, 2, 2};
 
-    // add the matrix to the designMatrices vector
-    designMatrices.push_back(std::make_unique<Matrix>(X));
-  }
+      for (size_t i = 0; i < n; i++)
+      {
+        for (size_t j = 0; j < m; j++)
+        {
+          X(i, j) = std::pow(x[i], p[j]);
+        }
+      }
+
+      // modification of X due to p(2) and p(3)
+      for (size_t i = 0; i < n; i++)
+      {
+        if (x[i] < 0)
+        {
+          X(i, 3) = 0;
+        }
+        else
+        {
+          X(i, 2) = 0;
+        }
+      }
+
+      // add the matrix to the designMatrices vector
+      designMatrices.push_back(std::make_unique<Matrix>(X));
+    }
 #pragma endregion createDesignMatrix
 
 #pragma region createInverseAndPseudoInverse
-  void qPeaks::createInverseAndPseudoInverse(const Matrix &X)
-  {
-    Matrix Xt = X.T();
-    Matrix XtX = Xt * X;
-    inverseMatrices.push_back(std::make_unique<Matrix>(XtX.inv()));
-    psuedoInverses.push_back(std::make_unique<Matrix>(*(inverseMatrices.back()) * Xt));
-  }
-
-  int qPeaks::calculateNumberOfRegressions(const int n) const
-  {
-    /*
-    int maxScale = (int) (n - 1) / 2;
-    int sumScales = (int) (maxScale * (maxScale + 1) / 2) - 1;
-    return n * (maxScale-1) - sumScales*2;
-    */
-    int sum = 0;
-    for (int i = 4; i <= this->global_maxScale * 2; i += 2)
+    void qPeaks::createInverseAndPseudoInverse(const Matrix &X)
     {
-      sum += std::max(0, n - i);
+      Matrix Xt = X.T();
+      Matrix XtX = Xt * X;
+      inverseMatrices.push_back(std::make_unique<Matrix>(XtX.inv()));
+      psuedoInverses.push_back(std::make_unique<Matrix>(*(inverseMatrices.back()) * Xt));
     }
-    return sum;
-  }
+
+    int qPeaks::calculateNumberOfRegressions(const int n) const
+    {
+      /*
+      int maxScale = (int) (n - 1) / 2;
+      int sumScales = (int) (maxScale * (maxScale + 1) / 2) - 1;
+      return n * (maxScale-1) - sumScales*2;
+      */
+      int sum = 0;
+      for (int i = 4; i <= this->global_maxScale * 2; i += 2)
+      {
+        sum += std::max(0, n - i);
+      }
+      return sum;
+    }
 #pragma endregion createInverseAndPseudoInverse
 
 #pragma region info
-  void qPeaks::info() const
-  {
-    std::cout << "qPeaks object\n";
-    std::cout << "designMatrices size: " << designMatrices.size() << "\n";
-    std::cout << "inverseMatrices size: " << inverseMatrices.size() << "\n";
-    std::cout << "psuedoInverses size: " << psuedoInverses.size() << "\n";
-  }
+    void qPeaks::info() const
+    {
+      std::cout << "qPeaks object\n";
+      std::cout << "designMatrices size: " << designMatrices.size() << "\n";
+      std::cout << "inverseMatrices size: " << inverseMatrices.size() << "\n";
+      std::cout << "psuedoInverses size: " << psuedoInverses.size() << "\n";
+    }
 #pragma endregion info
 
 #pragma region printMatrices
-  void qPeaks::printMatrices(int scale) const
-  {
-    std::cout << "Design Matrix\n";
-    designMatrices[scale - 2]->print();
-    std::cout << "Inverse Matrix\n";
-    inverseMatrices[scale - 2]->print();
-    std::cout << "Pseudo-Inverse Matrix\n";
-    psuedoInverses[scale - 2]->print();
-  }
+    void qPeaks::printMatrices(int scale) const
+    {
+      std::cout << "Design Matrix\n";
+      designMatrices[scale - 2]->print();
+      std::cout << "Inverse Matrix\n";
+      inverseMatrices[scale - 2]->print();
+      std::cout << "Pseudo-Inverse Matrix\n";
+      psuedoInverses[scale - 2]->print();
+    }
 #pragma endregion printMatrices
 #pragma endregion Methods
-} // namespace q
+  } // namespace q
