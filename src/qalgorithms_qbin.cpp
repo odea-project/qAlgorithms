@@ -179,7 +179,7 @@ namespace q
     void BinContainer::assignDQSB(const RawData *rawdata, const unsigned int maxdist)
     {
         auto timeStart = std::chrono::high_resolution_clock::now();
-        #pragma omp parallel for
+#pragma omp parallel for
         for (size_t i = 0; i < finishedBins.size(); i++)
         {
             finishedBins[i].makeDQSB(rawdata, maxdist);
@@ -335,7 +335,7 @@ namespace q
         pointsInBin.reserve(rawdata->lengthAllPoints);
         for (size_t i = 1; i < rawdata->allDatapoints.size(); i++)
         {
-            #pragma omp parallel for
+#pragma omp parallel for
             for (size_t j = 0; j < rawdata->allDatapoints[i].size(); j++)
             {
                 pointsInBin.push_back(&rawdata->allDatapoints[i][j]);
@@ -349,8 +349,8 @@ namespace q
         std::sort(pointsInBin.begin(), pointsInBin.end(), [](const Datapoint *lhs, const Datapoint *rhs)
                   { return lhs->mz < rhs->mz; });
 
-        activeOS.reserve(pointsInBin.size());               // OS = Order Space
-        #pragma omp parallel for
+        activeOS.reserve(pointsInBin.size()); // OS = Order Space
+#pragma omp parallel for
         for (size_t i = 0; i + 1 < pointsInBin.size(); i++) // +1 to prevent accessing outside of vector
         {
             activeOS.push_back((pointsInBin[i + 1]->mz - pointsInBin[i]->mz) * 1000000);
@@ -648,7 +648,7 @@ namespace q
         return;
     }
 
-    std::pair<char, std::byte> Bin::summariseBin()
+    std::pair<char *, std::byte> Bin::summariseBin()
     {
         size_t binsize = pointsInBin.size();
         double meanMZ = 0;
@@ -714,13 +714,12 @@ namespace q
         {
             selector |= std::byte{0b00100000};
         }
-        
 
         // (binID), binsize, meanMZ, medianMZ, standard deviation mz, meanScan, medianScan, DQSB, DQSB_control, worst-case DQS (empirical), lowest DQScen, mean centroid error
         char buffer[256];
         sprintf(buffer, "%llu,%0.15f,%0.15f,%0.15f,%0.2f,%d,%0.15f,%0.15f,%0.15f,%0.15f,%0.15f",
                 binsize, meanMZ, medianMZ, stdev, meanScan, medianScan, meanDQS, DQS_control, DQSmin, worstCentroid, meanCenError);
-            
+
         return std::make_pair(buffer, selector); // @todo this should probably return the summary as numeric data for further processing
     }
 
@@ -1025,7 +1024,7 @@ int main()
     testcontainer.assignDQSB(&testdata, 6); // int = max dist in scans
 
     // print bin selection
-    testcontainer.printSelectBins(testcontainer.makeBinSelection(std::byte{0b11111111}), 1, "../..");
+    testcontainer.printSelectBins(testcontainer.makeBinSelection(std::byte{0b11111111}), true, "../..");
 
     // testcontainer.printBinSummary("../../summary_bins.csv");
     // testcontainer.printworstDQS();
