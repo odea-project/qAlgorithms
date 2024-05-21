@@ -74,7 +74,7 @@ namespace q
         /// @brief generate a bin that is a subset of an existing bin using two iterators in one existing bin
         /// @param startBin left border of the new bin
         /// @param endBin right border of the new bin
-        Bin(const std::vector<Datapoint *>::iterator &startBin, const std::vector<Datapoint *>::iterator &endBin);
+        Bin(const std::vector<Datapoint *>::iterator &startBin, const std::vector<Datapoint *>::iterator &endBin); // @todo pass by reference correct?
 
         /// @brief generate a bin by adding pointers to all points in rawdata to pointsInBin
         /// @param rawdata a set of raw data on which binning is to be performed
@@ -102,6 +102,7 @@ namespace q
         /// @param OS the order space generated for the bin using makeOS()
         /// @param startBin index relating to the order space at which the bin starts
         /// @param endBin index relating to the order space at which the bin ends
+        /// @param counter counter shared between all calls of the recursive function, used to count number of function calls
         void subsetMZ(std::deque<Bin> *bincontainer, const std::vector<double> &OS, const int startBin, const int endBin, unsigned int &counter);
 
         /// @brief divide a bin sorted by scans if there are gaps greater than maxdist in it. Bins that cannot be divided are closed.
@@ -112,7 +113,8 @@ namespace q
         /// @param bincontainer if the input bin was split, the newly created bins will be added to this
         /// @param finishedBins if the input bin was not split, it will be added to this
         /// @param maxdist the largest gap in scans which a bin can have while still being considered valid
-        void subsetScan(std::deque<Bin> *bincontainer, std::vector<Bin> *finishedBins, const unsigned int &maxdist, unsigned int &counter);
+        /// @param counter counter shared between all calls of the recursive function, used to count number of function calls
+        void subsetScan(std::deque<Bin> *bincontainer, std::vector<Bin> *finishedBins, const int maxdist, unsigned int &counter);
 
         /// @brief generate the data quality score for all data points in a bin
         /// @details for every point in the bin the mean distance in mz to other elements of the bin and the shortest distance to an
@@ -120,7 +122,7 @@ namespace q
         /// binned datapoint. It is assumed that the bin is sorted by scans when makeDQSB is called @todo change to more generic solution?
         /// @param rawdata the RawData object from which the bin was generated
         /// @param maxdist the largest gap in scans which a bin can have while still being considered valid
-        void makeDQSB(const RawData *rawdata, const unsigned int &maxdist);
+        void makeDQSB(const RawData *rawdata, const unsigned int maxdist);
 
         /// @brief summarise the bin to one line, with the parameters size, mean_mz, median_mz, stdev_mz, mean_scans, median_scans,
         /// DQSB, DQSB_control, DQSB_worst, min_DQSC, meanError. DQSB_worst is calculated by assuming the MOD of all points in the
@@ -128,7 +130,7 @@ namespace q
         /// The respective bit is set to 1 if the defined state is present. Possible states of interest are too large a discrepancy
         /// between mean and median or the presence of duplicate values.
         /// @return The pair contains the bin summary as a comma-separated string and the byte coding for possible errors
-        std::pair<std::string, std::byte> summariseBin();
+        std::pair<char, std::byte> summariseBin();
 
         const EIC createEIC();
 
