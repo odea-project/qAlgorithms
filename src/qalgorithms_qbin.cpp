@@ -131,7 +131,6 @@ namespace q
                 { // brackets needed to prevent error
                     // bin in mz
                     subsetType = "MZ";
-#pragma omp parallel for
                     for (size_t j = 0; j < startpoint; j++) // for every element in the deque before writing new bins
                     {
                         binDeque.front().makeOS();
@@ -154,7 +153,6 @@ namespace q
                 {
                     // bin using scan numbers
                     subsetType = "Scans";
-#pragma omp parallel for
                     for (size_t j = 0; j < startpoint; j++)
                     {
                         binDeque.front().subsetScan(&binDeque, &finishedBins, maxdist, subsetCount);
@@ -335,7 +333,6 @@ namespace q
         pointsInBin.reserve(rawdata->lengthAllPoints);
         for (size_t i = 1; i < rawdata->allDatapoints.size(); i++)
         {
-#pragma omp parallel for
             for (size_t j = 0; j < rawdata->allDatapoints[i].size(); j++)
             {
                 pointsInBin.push_back(&rawdata->allDatapoints[i][j]);
@@ -349,9 +346,8 @@ namespace q
         std::sort(pointsInBin.begin(), pointsInBin.end(), [](const Datapoint *lhs, const Datapoint *rhs)
                   { return lhs->mz < rhs->mz; });
 
-        activeOS.reserve(pointsInBin.size()); // OS = Order Space
-#pragma omp parallel for
-        for (size_t i = 0; i + 1 < pointsInBin.size(); i++) // +1 to prevent accessing outside of vector
+        activeOS.reserve(pointsInBin.size());               // OS = Order Space
+        for (size_t i = 0; i < pointsInBin.size() - 1; i++) // -1 to prevent accessing outside of vector
         {
             activeOS.push_back((pointsInBin[i + 1]->mz - pointsInBin[i]->mz) * 1000000);
         }
