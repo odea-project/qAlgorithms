@@ -130,7 +130,7 @@ namespace q
         /// The respective bit is set to 1 if the defined state is present. Possible states of interest are too large a discrepancy
         /// between mean and median or the presence of duplicate values.
         /// @return The pair contains the bin summary as a comma-separated string and the byte coding for possible errors
-        std::pair<char, std::byte> summariseBin();
+        std::pair<char *, std::byte> summariseBin();
 
         const EIC createEIC();
 
