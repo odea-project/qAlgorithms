@@ -720,7 +720,7 @@ namespace q
         char buffer[256];
         sprintf(buffer, "%llu,%0.15f,%0.15f,%0.15f,%0.2f,%d,%0.15f,%0.15f,%0.15f,%0.15f,%0.15f",
                 binsize, meanMZ, medianMZ, stdev, meanScan, medianScan, meanDQS, DQS_control, DQSmin, worstCentroid, meanCenError);
-
+            
         return std::make_pair(buffer, selector); // @todo this should probably return the summary as numeric data for further processing
     }
 
@@ -1025,7 +1025,7 @@ int main()
     testcontainer.assignDQSB(&testdata, 6); // int = max dist in scans
 
     // print bin selection
-    testcontainer.printSelectBins(testcontainer.makeBinSelection(std::byte{0b00000010}), 1, "../..");
+    testcontainer.printSelectBins(testcontainer.makeBinSelection(std::byte{0b11111111}), 1, "../..");
 
     // testcontainer.printBinSummary("../../summary_bins.csv");
     // testcontainer.printworstDQS();
