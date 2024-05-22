@@ -143,6 +143,7 @@ sum((abs(summary$mean_scans - summary$median_scans)) > 6) # 1005
 ```{r error analysis}
 points_total = 3568033
 bins_total = 55910
+notbinned_total = 1102746
 
 summary_error <- read.csv("../../selectbins_summary.csv")
 bins_error <- read.csv("../../selectbins_full.csv")
@@ -163,8 +164,9 @@ stats[stats$Var1 >= 10000,]
 
 summary_error$errorcode = as.numeric(lapply(summary_error$errorcode, bits))
 
-ggplot(summary_error)+
-  geom_point(aes(x = mean_mz, y = mean_scans, colour = as.factor(errorcode)))
+ggplot(summary_error[which(summary_error$errorcode == 10000),])+ #[which(summary_error$errorcode == 10000),]
+  geom_point(aes(x = mean_mz, y = mean_scans, colour = log10(meanError)))+
+  scale_color_viridis_b()
 
 summary_error %>% group_by(errorcode) %>% summarise(bin_count = n(), total_points = sum(size), ratio = sum(size)/n())
 
@@ -178,5 +180,10 @@ maxdist308_7 = critVal(7) * mean(errors308)
 for (i in 1:6) {
   print(sprintf("%0.10f /// %0.10f", makeDQS(MIDs308[i], minDists308[i]), makeDQS(MIDs308[i], maxdist308)))
 }
+
+length(bins_error$mz)/points_total
+length(bins_error$mz)/(points_total - notbinned_total)
+mean(summary_error$size)
+(points_total - notbinned_total)/(bins_total - length(summary_error$size))
 ```
 

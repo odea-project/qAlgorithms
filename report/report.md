@@ -440,7 +440,8 @@ even when single points are missing from a series, only a scan being
 represented twice can be counted as an error. (@gerrit: what are the consequences of this observation?) 
 => If a scan appears twice at a different mass, it is possible that two 
 very similar bins were combined into one due to the centroid error
-being too large. 
+being too large. As such, duplicate scans can serve as an indicator
+for separation not being strict enough.
 
 **2) Too Strict Separation**
 To detect too strict separation between either two bins or one bin
@@ -493,22 +494,43 @@ distance between neighbours.
 @todo relation of DQSmin to DQS
 // end outdated
 
-**3) Deviation of Median and Mean**
+**3+4) Deviation of Median and Mean**
 In a perfect normal distribution, the mean and median are identical.
 To account for deviations, error thresholds are defined based on
 the established process parameters.
-For deviations in the scan dimension, a discrepancy of up to six
+Test 3) checks for deviations in the scan dimension, a discrepancy of up to six
 is deemed acceptable. This is equal to the largest tolerated gap
-during the binning step.
-For mz deviations, the mean centroid error times two is accepted.
+during the binning step. 
+Test 4) checks for mz deviations, the mean centroid error times two is accepted.
 This allows both values to be at the fringe of their respective
 extension and still be counted. (@gerrit: explain what you are investigating with this test. and discuss the results from it)
+If either condition is not fulfilled, it is possible that the generated
+bin encompasses multiple bins and/or noise, leading to a skewed distribution
 
-**4) Points Outside the 4-sigma Interval**
+**5) Points Outside the 3-sigma Interval**
 This functions as a simple test for normality and too-heavy scattering.
-At 4 sigma, the likelihood of a point being part of a normally distributed
+At 3 sigma, the likelihood of a point being part of a normally distributed
 sample is orders of magnitude lower than the 1% error margin used to
 calculate the critical value during binning.
+
+**6) DQSB below 0.5**
+If the DQSB is less than 0.5, points in the bin are on average closer 
+to a point outside of the bin than other bin members. Since the DQSB
+is calculated using the internal deviation and distances to points 
+outside of the bin, either very high internal deviation or very high
+noise levels (or both) can be the cause for a very low DQSB.
+
+**7) Correctly Separated Point Within Critical Distance**
+This condition depends on test condition 2). It performs the same
+operation, but calculates the critical value using the binsize instead
+of the binsize plus one. Only bins which do not fulfill condition 2)
+are considered. If this condition is positive, there exists a point
+with a distance to any other point in the bin below the critical distance.
+However, upon adding this point to the bin, the change in critical
+value will lead to this distance being too great and the bin being
+split again. A bin for which this condition is true could possibly
+benefit from slightly increasing the estimated centroid error, but
+should not be considered an undesireable grouping.
 
 <b> Issues after binning: </b>
 Images of common undesired outputs/elements that need to be cleaned up: 
@@ -539,7 +561,21 @@ kontext existierender literatur ; vergleichbare Ergebnisse?
 
 ### Test Results
 The tests presented here (@todo add link) were performed on the
-Warburg-Dataset after binning. 
+Warburg-Dataset after binning. It contains 55910 total bins, 2205
+(4%) fulfilled at least one test condition. The points in these
+bins make up 28% of the entire dataset, or 41% of all binned
+points. Binsize is the most strongly correlating parameter for
+a test being positive, with the detected bins averaging around 
+265 members and the remaining bins around 47.
+
+**1) Duplicates in Scans**
+
+Notably, there exists no overlap between test 1) and tests 6) and 7), while 
+at least one bin for the criteria 2) to 5) contains a duplicate scan.
+This translates to bins with bad separation not containing multiple "true"
+bins for test 6), so somehow decreasing the critical value in order to
+improve the results is unlikely to work.
+
 
 **2) Too Strict Separation** 
 1.3% of all bins fulfilled this criteria. Notably, they were smaller
@@ -553,6 +589,34 @@ There is very little overlap between this condition and others, with over
 97% being exclusively "too close" to another point.
 Of these, some are two incorrectly separated bins. // ID 39242 + 39343; 16501 + 16510; check if both form a valid bin
 // both cases are close together in operation order
+
+**6) DQSB below 0.5**
+Notable for this test is that it occurs very rarely with only ten cases
+total, six of which also fulfill test condition 2). For the other four,
+exclusively case 6) applies. Bins have an average size of 10. There is 
+
+**7) Correctly Separated Point Within Critical Distance**
+Condition 7) does not occur in connection with any other condition.
+This conforms to the idea that these bins are correctly formed.
+Bins are around 6 points large on average, making up 0.2% of all bins.
+Centroid errors are not extraordinarily low, ranging from 10^-5
+to 10^-3. It is unlikely that decreasing them will compensate for the
+large difference between the critical values for 5 and 6.
+Notable is that this effect occurs primarily at low masses
+and at the beginning and end of the chromoatographic dimension (@todo picture).
+Since such points are less likely to correspond to peaks, efforts to
+change the grouping are not warranted.
+
+Throughout all tests, the presence of "too large" bins; those being
+groupings which show traits that could be caused by the bin either 
+including a lot of noise or multiple other bins, could be observed.
+They generally have a high member count and high deviation in the mz
+dimension, the scan dimension less so. @todo 
+
+Different from these are bin which were subset at the wrong position
+due to how the algorithm works. @todo finish julia test code
+It is generally possible to reassemble these cases, potentially improving
+
 
 ### Future Improvements and Additions
 **Performance Improvements**

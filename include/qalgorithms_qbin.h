@@ -129,8 +129,8 @@ namespace q
         /// bin to be equal to the critical value. Additionally, the function computes a 1-byte code for up to 8 states of interest.
         /// The respective bit is set to 1 if the defined state is present. Possible states of interest are too large a discrepancy
         /// between mean and median or the presence of duplicate values.
-        /// @return The pair contains the bin summary as a comma-separated string and the byte coding for possible errors
-        std::pair<char *, std::byte> summariseBin();
+        /// @return A tuple containing the summary information. The first entry is the error code.
+        std::tuple<std::byte, size_t, double, double, double, double, unsigned int, double, double, double, double, double> summariseBin();
 
         const EIC createEIC();
 
