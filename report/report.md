@@ -508,10 +508,12 @@ If either condition is not fulfilled, it is possible that the generated
 bin encompasses multiple bins and/or noise, leading to a skewed distribution
 
 **5) Points Outside the 3-sigma Interval**
-This functions as a simple test for normality and too-heavy scattering.
+This functions as a simple test for normality and too heavy scattering.
 At 3 sigma, the likelihood of a point being part of a normally distributed
-sample is orders of magnitude lower than the 1% error margin used to
-calculate the critical value during binning.
+sample is similar to the 1% error margin used to calculate the critical 
+value during binning. Since this estimate does not consider the absoute
+deviation of the outliers, it should only be used as a component of 
+estimating high scattering in bins.
 
 **6) DQSB below 0.5**
 If the DQSB is less than 0.5, points in the bin are on average closer 
@@ -589,6 +591,9 @@ There is very little overlap between this condition and others, with over
 97% being exclusively "too close" to another point.
 Of these, some are two incorrectly separated bins. // ID 39242 + 39343; 16501 + 16510; check if both form a valid bin
 // both cases are close together in operation order
+
+**3) Difference Between Median and Mean in Scans**
+
 
 **6) DQSB below 0.5**
 Notable for this test is that it occurs very rarely with only ten cases

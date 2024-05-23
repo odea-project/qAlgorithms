@@ -63,10 +63,10 @@ namespace q
         double medianMZ;
 
     public:
-        double pt_mzmin;
-        double pt_mzmax;
-        int pt_scanmin;
-        int pt_scanmax;
+        double mzmin;
+        double mzmax;
+        int scanmin;
+        int scanmax;
         std::vector<Datapoint *> pointsInBin; // @todo does not change after bin creation, check for performance improvement when using cast const
         std::vector<double> activeOS;         // Order Space
         std::vector<double> DQSB;             // @todo change this to a vector of MODs, add separate scaling vector?
@@ -134,7 +134,7 @@ namespace q
 
         const EIC createEIC();
 
-        void controlMedianMZ();
+        // void controlMedianMZ();
 
         const double calcDQSmin();
     };
@@ -173,9 +173,9 @@ namespace q
 
         const std::vector<EIC> returnBins();
 
-        void printTstats();
+        // void printTstats();
 
-        void printworstDQS();
+        // void printworstDQS();
 
         /// @brief The function calculates the summary of a bin and selects bins with at least one state of interest.
         /// @param mask every bit of this byte controls if the corresponding test is considered for returning the
