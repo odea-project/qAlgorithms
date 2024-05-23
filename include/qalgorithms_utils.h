@@ -76,7 +76,8 @@ namespace q
     void complete();
   };
 
-  extern double tValuesArray[500];
+  extern const double tValuesArray[500];
+  extern const double chiSquareArray[500];
   extern const double SQRTPI_2;
 } // namespace q
 #endif // QALGORITHMS_UTILS_H

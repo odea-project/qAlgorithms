@@ -194,6 +194,17 @@ namespace q
         validRegression &refReggression,
         const std::vector<int *> &df);
 
+    /**
+     * @brief Calculate the chi square value of the regression model with the given regression window in the exponential space.
+     * 
+     * @param yhat_log : Log transformed prediction 
+     * @param y_exp : Exponential transformed measurement data
+     * @return double : Chi square value
+     */
+    double calcChiSquareEXP(
+        const Matrix &yhat_log,
+        const RefMatrix &y_exp) const;
+
     std::pair<Matrix, Matrix> jacobianMatrix_PeakArea(const Matrix &B, int scale) const;
 
     /**

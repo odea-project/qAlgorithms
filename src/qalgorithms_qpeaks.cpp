@@ -208,8 +208,9 @@ namespace q
         Quadratic Term Filter:
         This block of code implements the quadratic term filter. It calculates the mean squared error (MSE) between the predicted and actual values. Then it calculates the t-value for the quadratic term. If the t-value is less than the corresponding value in the tValuesArray, the quadratic term is considered statistically insignificant, and the loop continues to the next iteration.
       */
+      const Matrix yhat = X * B.col(i); // predicted values
       double mse = calcMse( // mean squared error
-          X * B.col(i),
+          yhat,
           (Ylog.subMatrix(i, i + 2 * scale + 1, 0, 1)));
       // adjust mse by considering the real df
       mse *= (2 * scale - 3) / (df_sum - 4);
@@ -268,6 +269,19 @@ namespace q
       if (Jacobian_area.second(0, 0) / area_uncertainty_covered < tValuesArray[df_sum - 5])
       {
         continue; // statistical insignificance of the peak area
+      }
+
+      /*
+        Chi-Square Filter:
+        This block of code implements the chi-square filter. It calculates the chi-square value based on the weighted chi squared sum of expected and measured y values in the exponential domain. If the chi-square value is less than the corresponding value in the chiSquareArray, the loop continues to the next iteration.
+      */
+      double chiSquare = calcChiSquareEXP(
+          yhat,
+          Y.subMatrix(i, i + 2 * scale + 1, 0, 1)
+          );
+      if (chiSquare < chiSquareArray[df_sum - 5])
+      {
+        continue; // statistical insignificance of the chi-square value
       }
 
       /*
@@ -784,6 +798,21 @@ namespace q
       }
     }
 #pragma endregion calcExtendedMse
+
+#pragma region calcChiSquareEXP
+    double qPeaks::calcChiSquareEXP(const Matrix &yhat_log, const RefMatrix &Y) const
+    {
+      size_t n = yhat_log.numel();
+      double sum = 0.0;
+      for (size_t i = 0; i < n; ++i)
+      {
+        double yhat_exp = std::exp(yhat_log.getElement(i));
+        double diff = yhat_exp - Y.getElement(i);
+        sum += diff * diff / yhat_exp;
+      }
+      return sum;
+    } // end calcChiSquareEXP
+#pragma endregion calcChiSquareEXP
 
 #pragma region jacobianMatrix_PeakArea
     std::pair<Matrix, Matrix> qPeaks::jacobianMatrix_PeakArea(const Matrix &B, int scale) const

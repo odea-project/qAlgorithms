@@ -17,9 +17,9 @@ int main()
 {
   // define input filename
   // std::string filename_input = "test/data/test_lcms_data.csv";
-  std::string filename_input = "test/data/test_lcms_data2.csv";
+  // std::string filename_input = "test/data/test_lcms_data2.csv";
   // std::string filename_input = "test/data/test_ftir.csv";
-  // std::string filename_input = "test/data/test_chrom.csv";
+  std::string filename_input = "test/data/test_chrom.csv";
   // std::string filename_input = "test/data/test_orbitrap.csv";
   std::cout << "create LCMSData object....";
   q::LCMSData lcmsData;
