@@ -93,6 +93,12 @@ namespace q
 
 #pragma region "BinContainer"
 
+    enum SubsetMethods
+    {
+        mz,
+        scans
+    };
+
     BinContainer::BinContainer() {}
     BinContainer::~BinContainer() {}
 
@@ -101,12 +107,6 @@ namespace q
         const Bin firstBin(rawdata);
         binDeque.push_back(firstBin);
     }
-
-    enum SubsetMethods
-    {
-        mz,
-        scans
-    };
 
     void BinContainer::subsetBins(const std::vector<int> dimensions, const unsigned int maxdist, const double massError = -1)
     {
@@ -277,8 +277,8 @@ namespace q
                 const auto result = finishedBins[pos].summariseBin();
                 char buffer[256];
                 sprintf(buffer, "%d,%d,%llu,%0.15f,%0.15f,%0.15f,%0.2f,%d,%0.15f,%0.15f,%0.15f,%0.15f,%0.15f\n",
-                        pos + 1, std::get<0>(result), std::get<1>(result), std::get<2>(result), std::get<3>(result), 
-                        std::get<4>(result), std::get<5>(result), std::get<6>(result), std::get<7>(result), 
+                        pos + 1, std::get<0>(result), std::get<1>(result), std::get<2>(result), std::get<3>(result),
+                        std::get<4>(result), std::get<5>(result), std::get<6>(result), std::get<7>(result),
                         std::get<8>(result), std::get<9>(result), std::get<10>(result), std::get<11>(result));
                 // sprintf(buffer, "%d,%s,%u\n", pos + 1, pair.first, int(pair.second));
                 output_sum << buffer;
@@ -519,7 +519,7 @@ namespace q
                   { return lhs->mz < rhs->mz; });
         const double minInnerMZ = pointsInBin.front()->mz;
         const double maxInnerMZ = pointsInBin.back()->mz;
-        const std::vector<long double> meanInnerDistances = meanDistance(pointsInBin);
+        const std::vector<double> meanInnerDistances = meanDistance(pointsInBin);
         // find median in mz
         if (isOdd)
         {
@@ -681,7 +681,7 @@ namespace q
         const double worstCaseMOD = 3.05037165842070 * pow(log(binsize + 1), (-0.4771864667153)) * meanCenError;
         // binsize + 1 to not include cases where adding in the next point would make the distance greater than vcrit again
         const double MODlessVcrit = 3.05037165842070 * pow(log(binsize), (-0.4771864667153)) * meanCenError;
-        std::vector<long double> MIDs = meanDistance(pointsInBin);
+        std::vector<double> MIDs = meanDistance(pointsInBin);
         double MID = std::accumulate(MIDs.begin(), MIDs.end(), 0.0);
         double DQSminWith = calcDQS(MID / binsize, worstCaseMOD);
         double DQSminWithout = calcDQS(MID / binsize, MODlessVcrit);
@@ -721,7 +721,6 @@ namespace q
         {
             selector |= std::byte{0b10000000};
         }
-        
 
         // (binID), binsize, meanMZ, medianMZ, standard deviation mz, meanScan, medianScan, DQSB, DQSB_control, worst-case DQS (empirical), lowest DQScen, mean centroid error
         char buffer[256];
@@ -796,7 +795,7 @@ namespace q
     //                   { sumOfDist += (point->mz - meanMZ) * (point->mz - meanMZ); }); // squared
     //     // const double stdev = sqrt(sumOfDist / (n - 1));
     //     const double worstCaseMOD = 3.05037165842070 * pow(log(n), (-0.4771864667153)) * (errorSum) / n;
-    //     std::vector<long double> MIDs = meanDistance(pointsInBin);
+    //     std::vector<double> MIDs = meanDistance(pointsInBin);
     //     double MID = std::accumulate(MIDs.begin(), MIDs.end(), 0.0);
     //     return calcDQS(MID / n, worstCaseMOD); // es muss das normalisierte OS genutzt werden stdev * 1.128
     // }
@@ -805,21 +804,21 @@ namespace q
 
 #pragma region "Functions"
 
-    std::vector<long double> meanDistance(const std::vector<Datapoint *> pointsInBin)
+    std::vector<double> meanDistance(const std::vector<Datapoint *> pointsInBin)
     {
         // assumes bin is sorted by mz
         const size_t binsize = pointsInBin.size();
-        const long double ld_binsize(binsize);
-        std::vector<long double> output(binsize);
-        long double totalSum = std::accumulate(pointsInBin.begin(), pointsInBin.end(), 0.0, [](double acc, const Datapoint *point)
+        const double ld_binsize(binsize);
+        std::vector<double> output(binsize);
+        double totalSum = std::accumulate(pointsInBin.begin(), pointsInBin.end(), 0.0, [](double acc, const Datapoint *point)
                                                { return acc + point->mz; }); // totalSum is the sum of all mz ahead of the current element
         double beforeSum = 0;                                                // beforeSum is the sum of all mz which had their distance calculated already
         for (size_t i = 0; i < binsize; i++)
         {
-            const long double ld_i(i);
-            const long double v1 = fmal(pointsInBin[i]->mz, -(ld_binsize - ld_i), totalSum); // sum of all distances to mz ahead of the current element
+            const double ld_i(i);
+            const double v1 = fmal(pointsInBin[i]->mz, -(ld_binsize - ld_i), totalSum); // sum of all distances to mz ahead of the current element
             // (totalSum - pointsInBin[i]->mz * (binsize - i));
-            const long double v2 = fmal(pointsInBin[i]->mz, ld_i, -beforeSum); // sum of all distances to mz past the current element (starts at 0)
+            const double v2 = fmal(pointsInBin[i]->mz, ld_i, -beforeSum); // sum of all distances to mz past the current element (starts at 0)
             // (pointsInBin[i]->mz * i - beforeSum);
             beforeSum += pointsInBin[i]->mz;
             totalSum -= pointsInBin[i]->mz;
@@ -828,10 +827,10 @@ namespace q
         return output;
     }
 
-    inline double calcDQS(const long double MID, const double MOD) // mean inner distance, minimum outer distance
+    inline double calcDQS(const double MID, const double MOD) // mean inner distance, minimum outer distance
     {
-        long double dqs(MOD); // switch MID to MOD here, less assignments
-        long double MOD_ld(MOD);
+        double dqs(MOD); // switch MID to MOD here, less assignments
+        double MOD_ld(MOD);
         if (dqs < MID)
         {
             dqs = MID;
@@ -872,13 +871,13 @@ int main()
 
     q::BinContainer testcontainer;
     testcontainer.makeFirstBin(&testdata);
-    std::vector<int> dim = {q::SubsetMethods::mz, q::SubsetMethods::scans}; // at least one element must be terminator
-    testcontainer.subsetBins(dim, 6);                                       // int = max dist in scans; add value after for error in ppm instead of centroid error
+    std::vector<int> measurementDimensions = {q::SubsetMethods::mz, q::SubsetMethods::scans}; // at least one element must be terminator
+    testcontainer.subsetBins(measurementDimensions, 6);                                       // int = max dist in scans; add value after for error in ppm instead of centroid error
     std::cout << "Total duplicates: " << q::duplicatesTotal << "\n--\ncalculating DQSBs...\n";
     testcontainer.assignDQSB(&testdata, 6); // int = max dist in scans
 
     // print bin selection
-    testcontainer.printSelectBins(testcontainer.makeBinSelection(std::byte{0b11111111}), true, "../..");
+    testcontainer.printSelectBins(testcontainer.makeBinSelection(std::byte{0b11111111}), true, "../.."); // one bit per test
 
     // testcontainer.printBinSummary("../../summary_bins.csv");
     // testcontainer.printworstDQS();

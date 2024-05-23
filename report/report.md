@@ -4,7 +4,6 @@ Report concluding the analytical practical by Daniel Höhn, supervised by Gerrit
 
 - [Abbreviations](#abbreviations)
 - [Introduction](#introduction)
-- [qBinning @todo better name](#qbinning-todo-better-name)
 	- [Why is binning necessary?](#why-is-binning-necessary)
 	- [Generation of EIC in other software](#generation-of-eic-in-other-software)
 	- [Advantages of qBinning](#advantages-of-qbinning)
@@ -22,6 +21,7 @@ Report concluding the analytical practical by Daniel Höhn, supervised by Gerrit
 	- [Test Results](#test-results)
 	- [Future Improvements and Additions](#future-improvements-and-additions)
 - [Conclusion](#conclusion)
+- [peak quality or result correcness to justify being made.](#peak-quality-or-result-correcness-to-justify-being-made)
 - [Software and Data](#software-and-data)
 
 
@@ -41,6 +41,23 @@ Report concluding the analytical practical by Daniel Höhn, supervised by Gerrit
 * gcc - GNU compiler collection (always referring to version 13.2.0)
 
 ## Introduction
+
+The purpose of the presented project is to provide a user-friendly and
+programmer-friendly implementation of the qBinning algorithm [@reuschenbachQBinningDataQualityBased2023].
+This is realized through thoroughly commented code, included
+diagnostic functions which can be rewritten for specific use
+cases with minimal effort, flexible data input, and comparatively
+high performance. 
+With the newly written code, it is possible to introduce the
+qBinning algorithm to existing, open-source analysis platforms
+like MZmine, PatRoon and StreamFind [@pluskalMZmineModularFramework2010; @helmusPatRoonImprovedNontarget2022; @helmusPatRoonOpenSource2021; @cunhaStreamFindFrameworkWorkflows2024]. 
+
+Idee: Implementieren des Algorithmus in einer größeren Plattform
+Fokus auch auf größerer Datensätze; Datenmenge nimmt wahrscheinlich zu
+funktionsweise
+Feature: Nur bins weitergeben, wenn in Serie gemessen
+(@gerrit: pls translate and complete this part)
+
 // What is HRMS? 
 Importance of NTS, Datenprozessierung und Analyse entscheidende Größe bei NTS; ergebnisse verschiedeneer
 Workflows haben keine Vergleichbarkeit; hoher Einfluss durch den Nutzer
@@ -53,30 +70,6 @@ was ist binning
 
 (@gerrit: not yet completed)
 
---
-specific goal of this project
-The purpose of the presented project is to provide a user-friendly and
-programmer-friendly implementation of the qBinning algorithm [@reuschenbachQBinningDataQualityBased2023].
-This is realized through thoroughly commented code, included
-diagnostic functions which can be rewritten for specific use
-cases with minimal effort, flexible data input, and comparatively
-high performance. 
-With the newly written code, it is possible to introduce the
-qBinning algorithm to existing, open-source analysis platforms
-like MZmine @todo citation (@gerrit: add PatRoon and StreamFind). 
-
-
-Idee: Implementieren des Algorithmus in einer größeren Plattform
-Fokus auch auf größerer Datensätze; Datenmenge nimmt wahrscheinlich zu
-funktionsweise
-Feature: Nur bins weitergeben, wenn in Serie gemessen
-(@gerrit: pls translate and complete this part)
-
-## qBinning @todo better name
-wie funktioniert der algorithmus?
-(@gerrit: not yet completed)
-=> Moved to Implementation -> Algorithm
-
 ### Why is binning necessary?
 (@gerrit: not yet completed)
 
@@ -88,10 +81,6 @@ parameter-free, quality score for feature priorisation, ideally faster (time) @t
 (@gerrit: not yet completed)
 
 ## Implementation
-Terminology: open/closed Bin; maxdist
-A bin is a data construct with associated data points and defined operations; an EIC is just a set of data points.
-@todo capitalization for data objects?
-(@gerrit: not yet completed)
 
 ### Algorithm
 From a high-level perspective, the algorithm searches for groups of similar masses
@@ -120,27 +109,53 @@ smaller bin can be created. This process is referred to as subsetting (of an ope
 First, open bins are subset by mz. Grouping in mz utilises the order spaces of
 neighbouring masses, which are calculated after sorting points in the bin by mz.
 Assuming that members of a correct bin are normally distributed in mz, a test statistic
-can be calculated given an alpha and the bin size. The 
+can be calculated given an alpha and the bin size. This statistic describes the largest
+difference between two order spaces that is still within bounds for points belonging to
+the same distribution. This distance decreases exponentially with group size, meaning it
+is much less likely for a dissimilar mass to belong into a large bin with a high 
+density towards the edges of the probability distribution than a small bin with
+low coverage of the entire distribution. 
+The order spaces are normaliesd to the centroid error, which serves as an
+estimate of the standard deviation of the assumed normal distribution This cannot
+be empirically determined before binning is complete.
+(@gerrit: This is due to our assumption; however, it is important to mention that the 
+centroid error is also just an estimate for the standard deviation of the assumed normal distribution.)
+This criteria is then checked for the largest order space of every bin. When the
+critical distance is surpassed, the two resulting fragments are controlled.
+If no order space is greater than the critical distance and there are more than
+five points in a fragment, it is turned into a new open bin. The limitation of five
+points is imposed since no peak can be fitted to smaller ones.
+Once no fragment can be subset further, the resulting bins are subset by scans.
 
-// shorten; for details refer to original publication?
+(@gerrit: here, it is not neighboring masses but the neighboring orders of the masses, 
+so it is sorted. However, sorting is not mentioned at all. Moreover, this is based on 
+the assumption, that a normally distributed variable provides a characteristic order 
+space between first and second or last and last-1 masses. This order space is distributed 
+similarly to an exponential distribution with a decreasing probability for increasing 
+distances. Here, we assume, that a cumulative probability of 99 % can be used to 
+estimate a threshold for an acceptable distance.)
 
-After being subset in mz, a bin is subset in the scan dimension. For this, it is
-sorted by scans and then subset at every position where the difference between
-two neighbouring points is greater than six.
-// reasoning
-Created fragments are turned into open bins. If the bin was not changed during
-this subsetting step, it is considered closed.
+For subsetting a bin by scans, it is sorted by scans and then subset at every 
+position where the difference between two neighbouring points is greater than six.
+The distance results from the assumption that, if a point is at the limit of
+detection, it is detected with a probability of 0.5. If a point has not been
+detected for six consecutive scans, the probability that the sixth point was 
+present, but at the limit of detection, amounts to 1.6%. 
+Created fragments are turned into open bins, unless they would have less than
+five members. If the bin was not changed during this subsetting step, it 
+is considered closed.
 
 Both functions are executed alternating until no open bins exist.
 
 After all bins are closed, the DQS is calculated for all bin members.
-
-
-(@gerrit: here, it is not neighboring masses but the neighboring orders of the masses, so it is sorted. However, sorting is not mentioned at all. Moreover, this is based on the assumption, that a normally distributed variable provides a characteristic order space between first and second or last and last-1 masses. This order space is distributed similarly to an exponential distribution with a decreasing probability for increasing distances. Here, we assume, that a cumulative probability of 99 % can be used to estimate a threshold for an acceptable distance.)
-// 
-and is normalized to the centroid error (@gerrit: This is due to our assumption; however, it is important to mention that the centroid error is also just an estimate for the standard deviation of the assumed normal distribution.), while the largest allowed gap in the scan dimension is set to six. (@gerrit: This should be explained.)
-After grouping is complete, a silhouette score is calculated for all points
-in groups and scaled to the interval [0,1] for weighing in a later step. (@gerrit: this should include the corresponding literature.)
+It uses the modified shilouette score [@starczewskiModificationSilhouetteIndex2016]
+to assess the separation of a bin from the surrounding points. The MID in mz is
+calculated per point while the MOD is searched for in all scans that are no
+more than six scans away from the centroid. For the calculation, refer
+to calcDQS in the Functions region of qalgorithms_qbin.cpp.
+The DQS is scaled to the interval [0,1] to allow for weighing in later steps. The DQSB
+is the mean DQS of all bin members.
+(@gerrit: this should include the corresponding literature.)
 
 
 ### Module Requirements
@@ -160,7 +175,8 @@ Data is represented as DataPoint objects, which are handled in one of two ways:
 One DataPoint contains mz, RT, intensity, scan number, the centroid error, and an optional 
 control value specifying the correct DQS. Data points are never modified during the binning process. 
 => DataPoints are Structs as defined in the c++ 21 standard.
-(@gerrit: here, a small tree would be nice for overview like: // puts too much emphasis on implementation detail, just read the code at that point
+(@gerrit: here, a small tree would be nice for overview like: 
+// puts too much emphasis on implementation detail, just read the code at that point
 DataPoint
 |
 |-- mz (mass-to-charge ratio)
@@ -293,6 +309,31 @@ cases in which a specific subsetting operation is only necessary for bins that w
 as closed by a different subsetting function. subsetBins can take an error (in ppm) as an
 optional argument. If none is supplied, the centroid error is used. 
 
+**user-made subset functions**
+For a user to specify a subset function, the only hard condition to be fulfilled
+is that the function takes the vector of open bins to write to, some criteria of
+subsetting and the subset counter as arguments. Return values can be specified, 
+but are not expected. If the function serves as a terminator, it also needs to
+take the vector of closed bins as argument.
+Within the function, isolate some property of the data and use that to define
+beginning and end position of new bins within the old. Control for a size greater
+five before continuing the function if it is recursive and do not pass subsets
+smaller than five to the bin vectors. After the bin cannot be subset by
+the chosen criteria further, beginning and end position of the sequence 
+relative to the pointsInBin vector of the originating bin must be passed
+to the bin constructor as reference.
+Within the function, always write open or closed bins using .push_back(//NEWBIN//).
+Once the function is confirmed to work correctly, it can be implemented in
+the subsetBins function. This requires a new case to be defined for the central
+switch statement. Here, first all relevant data that must be calculated outside
+of the bin is created. Then, binDeque.front().subset//SUBSETNAME//(...) is called.
+After the subset function, add binDeque.pop_froint() to delete the bin that
+was just processed.
+Lastly, add the name of the new subset method to the SubsetMethods enum
+which is defined in the first line of the BinContainer region. 
+Now, the new subset method can be specified in the measurementDimensions
+vector which is passed as argument to subsetBins().
+
 ### Diagnostic Functions
 In order to provide a fast way to assess binning quality to a greater 
 extent than just the DQS, the functions **makeBinSelection**, **summariseBin**
@@ -306,6 +347,9 @@ override other tests, such as 0b11111111 being set if a highest-priority
 condition applies, more bin properties can be stored. However, at 256 possible
 different results, it is most likely too imprecise to work with more 
 simultaneous test criteria.
+summariseBin also returns all calculated test results and summary information
+as a std::tuple. This makes them usable by other, user-written analysis
+functions.
 The limit to eight values is a design choice to encourage the user to
 focus on essential properties and limit the amount of high-overlap bins.
 The makeBinSelection function uses the test byte to return a vector
@@ -313,6 +357,7 @@ containing all bins for which at least one criterion is true.
 printBinSelection then returns all bins specified by the vector and
 writes their members to a .csv file. Optionally, the summary information
 can be written in a separate file. 
+
 
 ## Evaluation
 As already concluded in the original paper, the binning process results
@@ -457,42 +502,19 @@ Ideally, the hypothetical score is above 0.5 but lower than the real
 DQS on a per-point basis. This means that every point is, on average,
 closer to other bin members than another point would have to be
 counted as outside of the bin while being distant enough from another
-real point so as to not count it towards the bin in a vacuum. (@gerrit: here you should add if this was observed or not?)
-
-
-// passage outdated
-When using the DQS as the singular descriptor of bin quality, it is
-difficult to draw conclusions beyond some points being more similar
-to points outside the bin than other bin members. When taking the 
-mean of all DQS for example as an exclusion criteria, such information 
-is lost. Without knowledge of the data environment, borders other than
-0.5 are not readily apparent. At DQS = 0.5, MID and MOD are equal for a
-given point. It follows that a bin with a mean DQS at or below 0.5 contains
-more datapoints that are less similar to their group than the surrounding
-data. Even above 0.5, it is possible for a large percentage of the bin to
-have very low scores. When given a bin the masses of which show drift,
-meaning it is not necessarily one ion trace, large enough distances to
-other points can compensate for massive discrepancies within the bin. 
-While such an error is easily identified with a test for normality, 
-the reverse situation is more difficult to detect. Here, a bin is formed @todo image here
-by points with a very low centroid error, leading to other points which
-represent the same mass being placed in a seperate bin. These two bins 
-will have a very low MID, which makes the MOD largely irrelevant as 
-long as it is ~2 orders of magnitude greater than the MID. To identify
-such cases, there needs to be a reference value for the DQS past which 
-bins need to be reevaluated.
-As a first step towards this, it is possible to calculate a lower limit
-for the DQS on a per-bin basis. This limit follows two assumptions:
-* The bin follows a single normal distriution in mz
-* The MOD is equal for all points and equal to the critical value used for binning
-Heuristic tests with the MID function show that the mean of all MIDs for any normal
-distribution is 1.128 * sigma. Since sigma and critical value (normalised to centroid
-error) of any given bin are known, the worst DQS possible for these data points
-can be calculated. This additional criteria is especially sensitive to bins 
-like (image ...), because here the critical value will be very similar to the 
-distance between neighbours. 
-@todo relation of DQSmin to DQS
-// end outdated
+real point so as to not count it towards the bin in a vacuum. 
+The worst-case DQS is calculated for the entire bin, meaning with the
+average of all MIDs. This stems from the necessity to determine
+a per-bin criteria, where a bin could also have been flagged for one
+member fulfilling this condition. It was decided against this on grounds
+of partial matches necessitating an additional completeness check for the newly formed
+bin and further decisions in regards to how such a merge leading to even 
+worse scores for the newly included point should be handled.
+While this leads to a blind spot in the detection of bad bins,
+a complete analysis would reqire the development of a new clustering
+algorithm which functions by increasing bin size and merging
+similar bins in accordance with the detailed statistical criteria.
+(@gerrit: here you should add if this was observed or not? => moved to separate section)
 
 **3+4) Deviation of Median and Mean**
 In a perfect normal distribution, the mean and median are identical.
@@ -505,7 +527,11 @@ Test 4) checks for mz deviations, the mean centroid error times two is accepted.
 This allows both values to be at the fringe of their respective
 extension and still be counted. (@gerrit: explain what you are investigating with this test. and discuss the results from it)
 If either condition is not fulfilled, it is possible that the generated
-bin encompasses multiple bins and/or noise, leading to a skewed distribution
+bin encompasses multiple bins and/or noise, leading to a skewed distribution.
+This asymmetry is less relevant for small bins with large gaps between
+points, but it is questionable whether those represent real peaks to
+begin with. Both deviations being present at once in a large bin
+is the case in which an incomplete separation is the most likely.
 
 **5) Points Outside the 3-sigma Interval**
 This functions as a simple test for normality and too heavy scattering.
@@ -534,23 +560,7 @@ split again. A bin for which this condition is true could possibly
 benefit from slightly increasing the estimated centroid error, but
 should not be considered an undesireable grouping.
 
-<b> Issues after binning: </b>
-Images of common undesired outputs/elements that need to be cleaned up: 
-Centroid error too small, points were not binned
-	-> Negative effect on DQS
-Very small bins from noise (should get removed by peak fitting)
-
-runtimes on different processors
-performance bottlenecks
-effectiveness of binning for different datasets
-comparison between centroid error and ppm
-compare results for different alpha when calculating the critical value
-Less cases where DQS matches, identify the cause for this
-Specify error cases
-Large bins > 100 are overrepresented in error crits
-
-
-@todo runtime comparison
+The eight test slot was not used for this evaluation.
 
 ## Discussion
 
@@ -624,6 +634,9 @@ It is generally possible to reassemble these cases, potentially improving
 
 
 ### Future Improvements and Additions
+Here listed are changes to the program that would be beneficial, but
+could not be implemented as of now. 
+
 **Performance Improvements**
 The first subsetting is not multithreaded, since omp macros
 only work on for loops with no greater modification. If, before normal
@@ -659,6 +672,14 @@ or two-dimensional chromatography is employed for NTS. Accounting for this
 instrumentation during the subsetting step requires additional methods to
 be written. Here, the way the DQS is calculated also needs to be revised.
 
+The DQS currently does not discriminate between points according to their
+distance in the scan dimension. This problem could be adressed by 
+scaling the MOD during DQS calculation by some facor obtained by a gaussian
+distribution which is 1 for distances in the same scan and less for every
+further scan, until it is set to 0 for every scan past the tolerance of six.
+Such a modification has not yet been implemented due to colliding with the 
+comparison that is the basis for test condition 2). 
+
 While the use of a set maximum distance between scans of a bin is in relation
 to the chance a real signal has of being a false negative, the result of
 this reasoning is still a more or less arbitrary value a certain estimate
@@ -693,15 +714,15 @@ per control.
 While it already functions as a measure of separation, a secondary
 statistic to the DQSB would allow to control the generated values.
 This test would, depending on calculation effort, not be included
-as part of the standard DQSB function. Instead it seves as a control
-of clustering validity unrelated to the test statistic used for binning.
+as part of the standard DQSB function. Instead it serves as a control
+of clustering quality unrelated to the test statistic used for binning.
 One possible measure for this is the Quadratic Renyi’s Negentropy Separation [@martinsNewClusteringSeparation2015],
 which is interesting since it decides if two generated clusters should
 be combined. Since it does not depend on the error of a point,
 bins with suboptimal separation could be detected even if the grouping
 itself is correct.
 
-Isotope ratio priorisation during binning
+Isotope ratio priorisation during binning possible?
 
 **Usability Changes**
 The program does not feature error handling in any capacity. Additionally,
@@ -736,7 +757,7 @@ qBinning program, this is the case.
 
 It could be shown that the qBinning algorithm creates largely good results,
 and more importantly provides quality criteria that can be used to improve
-the clustering results. 
+the clustering results.  
 
 Furthermore, an error in calculating the DQS was identified in both original
 implementations. The alternative approach chosen here avoids incorrect results
@@ -749,7 +770,7 @@ are well-separated from the dataset and do not have points outside of 2 sigma
 (tests 1, 2 and 4 are negative) could be returned by this program.
 The tests also grant better insight into the weaknesses of the algorithm.
 Through them, a probable cause for incorrect splits in bins could be identified
-as an acceptable gap in a small bin which was too large while the correct bin
+as an acceptable gap in a small bin which was considered too large while the correct bin
 was still part of another, orders of magnitude greater bin.
 
 The program is now flexible and accessible for future expansions. It is now
@@ -759,19 +780,34 @@ writing to csv steps. Through other differences in implementation, a massive
 improvement in terms of execution time was achieved in comparison to the R code,
 while performing additional calculations for bin metadata and test conditions.
 
+An important restriction of the presented test for too strict separation is that it
+only detects bins where a majority of points is affected. It is a
+reasonable assumption that such cases also exist in plenty at the
+ends of larger bins, where they are not detected by the current test.
+Developing further tests for similar conditions could present a way
+to improve existing large bins by re-binning their edges with smaller,
+neighbouring bins and "free" points.
+
+For maximising result correctness, the approach of exclusive subdivision
+cannot be used alone. The development of additional steps, however,
+should not happen in isolation from the peak finding algorithm.
+An approach focused on merging existing bins with "free" points or
+other, similar bins presents a promising supplement to subset-based
+binning if the formation of very large bins containing more than one
+ion trace can be effectively prevented. Such a method would further 
+benefit the binning procedure by adressing an issue that persists
+in the subsetting-based approach.
+The search for an efficient detection and correction of non-ideal
+bins should be the main focus when improving and expanding the 
+presented program. Such improvements must always be shown to improve
+peak quality or result correcness to justify being made.
 --
-OpenMS uses a binary format for raw data, a similar approach (save intermediates of workflow in binary to 
-improve processing speeds)
-more subsetting
-implement into the proper pipeline by returning closed bins // almost implemented
-Implement a way to handle MS^2 / MS^n
-automatic tests to verify program after user modifies it
-Implement error handling, especially for cases where nonsense data can be detected - ideally implemented 
-	with qCentroids for data. Error handling for new subsetting: control that bins are valid before DQS 
-	calculation (sorted by scans) - best included in readcsv()
-Add compile-time toggle for creating list of non-binned objects using macros
-Cache optimisation
-include an example for creating a new subsetting method
+Images of common undesired outputs/elements that need to be cleaned up: 
+runtimes on different processors
+performance bottlenecks
+effectiveness of binning for different datasets
+comparison between centroid error and ppm
+compare results for different alpha when calculating the critical value
 
 ## Software and Data
 R + package versions
