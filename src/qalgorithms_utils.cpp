@@ -27,6 +27,14 @@ namespace q {
       sum += vec[i];}
     return sum;}
 
+  double exp_approx(const double x) {
+    constexpr double LOG2E = 1.44269504088896340736;
+    constexpr double OFFSET = 1022.9329329329329;
+    constexpr uint64_t EXP_OFFSET = 1LL << 52;
+    union { uint64_t i; double d; } v = { (uint64_t)((x * LOG2E + OFFSET) * EXP_OFFSET) };
+    return v.d;
+  }
+
   template <typename T>
   std::vector<bool> operator<(const std::vector<T>& vec, T scalar) {
     std::vector<bool> result(vec.size());

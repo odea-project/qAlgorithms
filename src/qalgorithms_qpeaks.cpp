@@ -520,43 +520,43 @@ namespace q
           (regression->B(1, 0) > 0)
               ? std::exp(regression->B(0, 0) - regression->B(1, 0) * regression->B(1, 0) / 4 / regression->B(3, 0))
               : std::exp(regression->B(0, 0) - regression->B(1, 0) * regression->B(1, 0) / 4 / regression->B(2, 0))));
-      // debugging
+      // // debugging
 
-      // get the coefficients matrix
-      Matrix B = regression->B;
+      // // get the coefficients matrix
+      // Matrix B = regression->B;
 
-      // get the index of the regression
-      int index = regression->index_x0;
-      // get scale
-      int scale = regression->scale;
-      // design matrix
-      Matrix Xdesign = (*(designMatrices[scale - 2])).subMatrix(regression->X_row_0, regression->X_row_1, 0, 4);
+      // // get the index of the regression
+      // int index = regression->index_x0;
+      // // get scale
+      // int scale = regression->scale;
+      // // design matrix
+      // Matrix Xdesign = (*(designMatrices[scale - 2])).subMatrix(regression->X_row_0, regression->X_row_1, 0, 4);
 
-      // calculate yfit
-      Matrix yfit_matrix = (Xdesign * B).exp();
-      std::vector<double> yfit;
-      for (int i = 0; i < yfit_matrix.numRows(); i++)
-      {
-        yfit.push_back(yfit_matrix(i, 0));
-      }
-      // extract xfit, i.e., from X vector index to index + 2*scale+1
-      std::vector<double> xfit;
-      for (int i = regression->left_limit; i < regression->right_limit + 1; i++)
-      {
-        if (i < 0 || i >= X.size())
-        {
-          continue;
-        }
-        xfit.push_back(*X[i]);
-      }
+      // // calculate yfit
+      // Matrix yfit_matrix = (Xdesign * B).exp();
+      // std::vector<double> yfit;
+      // for (int i = 0; i < yfit_matrix.numRows(); i++)
+      // {
+      //   yfit.push_back(yfit_matrix(i, 0));
+      // }
+      // // extract xfit, i.e., from X vector index to index + 2*scale+1
+      // std::vector<double> xfit;
+      // for (int i = regression->left_limit; i < regression->right_limit + 1; i++)
+      // {
+      //   if (i < 0 || i >= X.size())
+      //   {
+      //     continue;
+      //   }
+      //   xfit.push_back(*X[i]);
+      // }
 
-      peaks.back()->xFit = xfit;
-      peaks.back()->yFit = yfit;
+      // peaks.back()->xFit = xfit;
+      // peaks.back()->yFit = yfit;
 
-      // std::cout << "-----------------------------------\n";
-      // std::cout << "Apex Position: " << apex_position << std::endl;
-      // std::cout << "Height: " << peaks.back()->height << std::endl;
-      // std::cout << "DQS: " << regression->dqs << std::endl;
+      // // std::cout << "-----------------------------------\n";
+      // // std::cout << "Apex Position: " << apex_position << std::endl;
+      // // std::cout << "Height: " << peaks.back()->height << std::endl;
+      // // std::cout << "DQS: " << regression->dqs << std::endl;
     } // end for loop
 
     return peaks;
@@ -594,7 +594,7 @@ namespace q
     double sum = 0.0;
     for (size_t i = 0; i < n; ++i)
     {
-      double diff = std::exp(yhat_log.getElement(i)) - Y.getElement(i);
+      double diff = exp_approx(yhat_log.getElement(i)) - Y.getElement(i);
       sum += diff * diff;
     }
     return sum / (n - 4);
@@ -806,7 +806,7 @@ namespace q
       double sum = 0.0;
       for (size_t i = 0; i < n; ++i)
       {
-        double yhat_exp = std::exp(yhat_log.getElement(i));
+        double yhat_exp = exp_approx(yhat_log.getElement(i));
         double diff = yhat_exp - Y.getElement(i);
         sum += diff * diff / yhat_exp;
       }

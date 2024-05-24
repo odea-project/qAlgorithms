@@ -17,8 +17,16 @@ namespace q
   int sum(const std::vector<int> &vec);
   size_t sum(const std::vector<size_t> &vec);
   double sum(const std::vector<double> &vec);
-
   int sum(const bool *vec, size_t n);
+
+  /**
+   * @brief Fast exponential approximation base on Bit Manipulation.
+   * @details This function is a fast approximation of the exponential function. It is based on the bit manipulation of the double value. The function is not as accurate as the standard exponential function but is much faster. It is based on the following repository: https://github.com/edrosten/fasterexp
+   * 
+   * @param x : value between 0 and 26
+   * @return double 
+   */
+  double exp_approx(const double x);
 
   template <typename T>
   std::vector<bool> operator<(
