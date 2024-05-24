@@ -164,7 +164,7 @@ stats[stats$Var1 >= 10000,]
 
 summary_error$errorcode = as.numeric(lapply(summary_error$errorcode, bits))
 
-ggplot(summary_error[summary_error$errorcode - round(summary_error$errorcode, -5) >= 10000,])+ #[which(summary_error$errorcode == 10000),]
+ggplot(summary_error[summary_error$errorcode - round(summary_error$errorcode, -1) >= 1,])+ #[which(summary_error$errorcode == 10000),]
   geom_point(aes(x = mean_mz, y = mean_scans, colour = size))+
   scale_color_viridis_b()
 

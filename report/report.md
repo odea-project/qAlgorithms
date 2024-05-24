@@ -21,11 +21,11 @@ Report concluding the analytical practical by Daniel Höhn, supervised by Gerrit
 	- [Test Results](#test-results)
 	- [Future Improvements and Additions](#future-improvements-and-additions)
 - [Conclusion](#conclusion)
-- [peak quality or result correcness to justify being made.](#peak-quality-or-result-correcness-to-justify-being-made)
 - [Software and Data](#software-and-data)
 
 
 ## Abbreviations
+* NTS Non-Target Screening
 * (HR)MS - (High Resolution) Mass Spectrometry 
 * m/z, mz - Mass to Charge Ratio
 * RT - Retention Time
@@ -52,17 +52,30 @@ With the newly written code, it is possible to introduce the
 qBinning algorithm to existing, open-source analysis platforms
 like MZmine, PatRoon and StreamFind [@pluskalMZmineModularFramework2010; @helmusPatRoonImprovedNontarget2022; @helmusPatRoonOpenSource2021; @cunhaStreamFindFrameworkWorkflows2024]. 
 
-Idee: Implementieren des Algorithmus in einer größeren Plattform
-Fokus auch auf größerer Datensätze; Datenmenge nimmt wahrscheinlich zu
-funktionsweise
-Feature: Nur bins weitergeben, wenn in Serie gemessen
-(@gerrit: pls translate and complete this part)
+With the increasing application of NTS-based methods for toxicological
+analysis of environmental samples and the -omics disciplines, it
+has become critical to assure comparability and quality of results.
+The data processing step is a significant area of improvement here, 
+since it often depends on user-specified parameters or uses vendor
+specific, closed-source software. Both properties make it difficult
+to achieve comparability, the first if it isn't fully reported and
+the latter due to lack of insight into the concrete data transformations
+performed.
 
-// What is HRMS? 
+The results of different algorithms can vary significantly, even when
+concerning the same measurement data. [@hohrenkComparisonSoftwareTools2020]
+
+It is to be expected that, in addition to more measurements being
+performed, the size of datasets increses. Both factors combined result
+in very large amounts of data that in turn require highly performant
+data analysis software.
+
+
 Importance of NTS, Datenprozessierung und Analyse entscheidende Größe bei NTS; ergebnisse verschiedeneer
 Workflows haben keine Vergleichbarkeit; hoher Einfluss durch den Nutzer
 QA unterscheidet nicht zwischen falschen parametern und instrumentation
 Es gibt keine spezifische QA für NTS
+Fokus auch auf größerer Datensätze; Datenmenge nimmt wahrscheinlich zu
 Neuerung: qualitätsparameter für einzelne Schritte in der Prouessierung
 Steps of finding a feature, mention qCentroids / describe pipeline in general
 
@@ -74,9 +87,38 @@ was ist binning
 (@gerrit: not yet completed)
 
 ### Generation of EIC in other software
-(@gerrit: not yet completed)
+The centWave algorithm identifies regions of interest (ROI)
+by starting at the first scan and elongating present masses
+with points from the second, third etc. As tolerance, the mass accuracy
+the the mass spectrometer is used. New additions are always
+checked against the mean mz of all points already part of a region.
+ROIs must have a minimum size to be accepted [@tautenhahnHighlySensitiveFeature2008].
+Mass tolerance (in ppm) and minimum size are general parameters
+that need to be optimised by measuring reference compounds.
+If a filter by centroid intensity is used, it must also
+be optimised. While some recommendations for field-specific 
+settings exist, these are still quite vague and not
+necessarily suited to environmental NTS [@forsbergDataProcessingMultiomic2018].
 
 ### Advantages of qBinning
+The main advantage of the qBinning algorithm in comparison with other
+methods of binning is that it provides a quality parameter specific
+to the processing step. Implemented as the DQSB, it provides direct
+and simple feedback towards the degree to which a given bin could
+be distinguished from its surroundings. As will be shown, this parameter
+can also be used as an assessor for common error cases during binning.
+
+qBinning also does not depend on user input, instead utilising parameters 
+derived from statistical principles. These take into account the essential
+mathematical properties of a peak and sidestep the subjective approach
+of manual parameter selection and optimisation. The chosen approach allows
+for bins to be non-continuous in the scan dimension, which is not provided
+by other binning approaches.
+
+In comparison to other algorithms, which often require excessive amounts
+of computation time, qBinning is substantially faster. This enables its use
+in high-throughput analysis pipelines.
+
 parameter-free, quality score for feature priorisation, ideally faster (time) @todo measure
 (@gerrit: not yet completed)
 
@@ -94,17 +136,19 @@ still has to check the grouping. Bins always refers to a grouping of centroided
 MS data with the parameter mz and at least one additional dimension of separation.
 Groups are only referred to as bins if they have not yet been handed to the peak 
 fitting algorithm, meaning there are still secondary tests requiring bin metadata. (@todo link to bin object)
+The act of creating one or more new bins from an existing one while discarding all
+points which are not present in one of the new bins is called subsetting. Only 
+open bins can be subject to subsetting.
 
 The user specifies which subsetting methods should be used and, if applicable, 
 parameters of these methods. The selection must be made before compiling the program.
 The following description only concerns the grouping by mz and scan number of centroids.
+Other subsetting routines are not included in the program at the time of writing.
 It is assumed centroiding has been performed with the qCentroids algorithm [@reuschenbachDevelopmentScoringParameter2022],
 meaning all centroids have a specified mass error.
 
-Grouping is performed iteratively over all open bins. Since the algorithm requires a
-bin to start, all centroids in the dataset are collected and merged into one bin.
-Grouping always involves separating a bin into two or more smaller bins until no
-smaller bin can be created. This process is referred to as subsetting (of an open bin).
+Subsetting is performed iteratively over all open bins. Since the algorithm requires a
+bin to start, all centroids in the dataset are collected and merged into one bin intially.
 
 First, open bins are subset by mz. Grouping in mz utilises the order spaces of
 neighbouring masses, which are calculated after sorting points in the bin by mz.
@@ -468,6 +512,10 @@ moving data from the container for open bins to the container for closed bins.
 Performance is roughly equal to the Julia script, while more detailed and
 easier to access information over the entire process is provided. 
 
+During development, it was observed that using long doubles when calculating
+the DQS has an effect up to the fifth digit. Since this change did not effect
+the obtained results by any metric, it was reverted for an increase in performance.
+
 ### Test Criteria for Bin Correctness
 Not all bins conform to a set of "ideal" parameters. These parameters 
 are defined such that a bin that adheres to all of them is as close
@@ -603,12 +651,40 @@ Of these, some are two incorrectly separated bins. // ID 39242 + 39343; 16501 + 
 // both cases are close together in operation order
 
 **3) Difference Between Median and Mean in Scans**
+The bins for which this condition applied showed no other noteable behaviour.
+They also do not include duplicate scans, which are another measure
+hypothesized to indicate incomplete subsetting. While they are between
+150 to 600 points in size, they do not form a characteristic group
+through this or other parameters. It is likely the six points of allowed 
+deviance are only accurate if no gaps are assumed. If the gaps are
+distributed slightly asymmetrically, this can compound and
+reduce the selectivity of this test too heavily.
 
+**4) Difference Between Median and Mean in mz**
+
+**5) Points Outside the 3-sigma Interval**
+The vast majority of bins for this condition was fulfilled did not have
+overlap with the other tests. Bins for which only points outside the
+3-Sigma interval were detected account for 47% of all bins which were 
+selected due to a positive test and are 83% of all points in selected bins.
+The average bin lenght if this condition applies is 403. It is a reasonable
+assumption that this condition does not imply sub-ideal binning, since for
+large bins the likelihood of at least one outlier is increased.
+For the test to have proper weight, it should test for the likelihood
+of the furthest value to belong to the bin using for example a t-test.
+
+With the given test parameter, the largest overlap is with condition 4).
+This is intuitively evident, since with larger asymmetry the likelihood
+of a point being far away from the mean also increases.
 
 **6) DQSB below 0.5**
 Notable for this test is that it occurs very rarely with only ten cases
 total, six of which also fulfill test condition 2). For the other four,
-exclusively case 6) applies. Bins have an average size of 10. There is 
+exclusively case 6) applies. Bins have an average size of 10. Due to
+bins with this low a score likely not being considered in the first place,
+and the low count, no specific corrective measures for this property
+seem sensible. It is likely that the majority will be removed if condition 2)
+is addressed either way.
 
 **7) Correctly Separated Point Within Critical Distance**
 Condition 7) does not occur in connection with any other condition.
@@ -627,11 +703,26 @@ groupings which show traits that could be caused by the bin either
 including a lot of noise or multiple other bins, could be observed.
 They generally have a high member count and high deviation in the mz
 dimension, the scan dimension less so. @todo 
+However, most of these bins have been selected due to effects that
+are also explained through less rare conditions than wrong 
+binning results. Due to the inherent bias of visual selection
+when controlling these cases, a better approach based on 
+statistical methods is required to determine conclusively
+if such a problem exists due to a systematical error and if so,
+where it could be fixed.
 
-Different from these are bin which were subset at the wrong position
+Different from these are bins which were subset at the wrong position
 due to how the algorithm works. @todo finish julia test code
 It is generally possible to reassemble these cases, potentially improving
+result quality. Especially in cases where relevant points are not 
+part of any bin, reassembly is relatively easy to include as a post
+processing module. 
+@todo cases of two almost-combined bins
 
+Overall, bins at the edges of the chromatographic dimension and
+high masses are more likely to fulfill one or more of the listed deviation
+criteria. This does not apply to bins where condition 2) is fulfilled, 
+and to a lesser degree to bins with duplicates present.
 
 ### Future Improvements and Additions
 Here listed are changes to the program that would be beneficial, but
@@ -722,7 +813,13 @@ be combined. Since it does not depend on the error of a point,
 bins with suboptimal separation could be detected even if the grouping
 itself is correct.
 
-Isotope ratio priorisation during binning possible?
+The Algorithm is only insofar truly user-parameter free as there exist
+no more than two different subsetting methods, where subsetting by scans
+first will simply return the whole dataset as one bin. The moment a third
+parameter is introduced, if it first causes a subset before the data
+is subset by mz the final results might vary. The effect of such a choice 
+depends on how large the resulting bins are, since large bins lead to 
+potentially more cases where a complete bin was erroneously subset.
 
 **Usability Changes**
 The program does not feature error handling in any capacity. Additionally,
@@ -733,6 +830,10 @@ error management will be impossible for a possible end user. For the qAlgorithms
 tool to find widespread adoption, possible error sources need to be identified,
 addressed, or effectively communicated to the end user. This task requires 
 extensive testing with a broad sample group of potential users.
+
+Reading in csv files is very slow. This was not a priority for optimisation,
+since it is not the intended main function of this program. However, for
+general-purpose use a fast file reading is sensible. 
 
 Contributions to open-source software like this are more likely to occur
 if automated tests exist that can verify the validity of results quickly
@@ -747,7 +848,6 @@ and including more than one ion trace (case @todo mention in discussion)
 or one bin being split in two (@todo see above). These cases need to be
 included so that a potential improvement of the algorithm is not discarded
 for not obtaining exactly matching results.
-
 Also to reduce the effort needed for a substantial contribution, the entire
 project should compile and run correctly on a Linux distribution. For the
 qBinning program, this is the case.
@@ -801,6 +901,7 @@ The search for an efficient detection and correction of non-ideal
 bins should be the main focus when improving and expanding the 
 presented program. Such improvements must always be shown to improve
 peak quality or result correcness to justify being made.
+
 --
 Images of common undesired outputs/elements that need to be cleaned up: 
 runtimes on different processors
@@ -808,6 +909,7 @@ performance bottlenecks
 effectiveness of binning for different datasets
 comparison between centroid error and ppm
 compare results for different alpha when calculating the critical value
+
 
 ## Software and Data
 R + package versions
