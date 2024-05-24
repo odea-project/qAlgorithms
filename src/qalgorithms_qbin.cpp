@@ -21,9 +21,8 @@
 
 namespace q
 {
-    std::vector<Datapoint *> control_outOfBins;
-    int duplicatesTotal;
-    std::stringstream control_tvals;
+    std::vector<Datapoint *> outOfBins; // this vector contains all points which are not included in bins
+    int duplicatesTotal; // total times the distance 0 was measured in closed bins
 
 #define IGNORE -256 // nonsense value if no real number exists. Must be negative since it is used later when searching for the smallest distance
 #define NO_MIN_FOUND -INFINITY
@@ -72,11 +71,8 @@ namespace q
             const Datapoint F = Datapoint{row[d_mz], row[d_mzError], row[d_RT], i_scanNo, row[d_intensity],
                                           row[d_DQScentroid], row[d_control_DQSbin]};
 
-            // if (F.mz > 993.7895 && F.mz < 993.8005) // rm
-            // {
             ++lengthAllPoints;
             allDatapoints[i_scanNo].push_back(F); // every subvector in allDatapoints is one complete scan - does not require a sorted input file!
-            // }
         }
 #pragma omp parallel for
         for (size_t i = 1; i < allDatapoints.size(); i++) // make sure data conforms to expectations
@@ -124,7 +120,7 @@ namespace q
                 switch (dimensions[i])
                 {
                 case mz:
-                { // brackets needed to prevent error
+                { 
                     // bin in mz
                     subsetType = "MZ";
                     for (size_t j = 0; j < startpoint; j++) // for every element in the deque before writing new bins
@@ -280,9 +276,7 @@ namespace q
                         pos + 1, std::get<0>(result), std::get<1>(result), std::get<2>(result), std::get<3>(result),
                         std::get<4>(result), std::get<5>(result), std::get<6>(result), std::get<7>(result),
                         std::get<8>(result), std::get<9>(result), std::get<10>(result), std::get<11>(result));
-                // sprintf(buffer, "%d,%s,%u\n", pos + 1, pair.first, int(pair.second));
                 output_sum << buffer;
-                // output_sum << pos + 1 << "," + pair.first + "," << unsigned(pair.second) << "\n";
             }
             file_out_sum << output_sum.str();
             file_out_sum.close();
@@ -383,7 +377,7 @@ namespace q
             for (int i = 0; i < binsizeInOS; i++)
             {
                 Datapoint *F = *(pointsInBin.begin() + binStartInOS + i);
-                control_outOfBins.push_back(F);
+                outOfBins.push_back(F);
             }
             return;
         }
@@ -432,7 +426,7 @@ namespace q
                     for (size_t j = lastpos; j <= i; j++) // @todo make macro for compile time exclusion
                     {
                         Datapoint *F = *(pointsInBin.begin() + j);
-                        control_outOfBins.push_back(F);
+                        outOfBins.push_back(F);
                     }
                 }
                 else
@@ -471,7 +465,7 @@ namespace q
             for (size_t j = lastpos; j < pointsInBin.size(); j++) // @todo checked for correctness
             {
                 Datapoint *F = *(pointsInBin.begin() + j);
-                control_outOfBins.push_back(F);
+                outOfBins.push_back(F);
             }
         }
     }
@@ -721,12 +715,6 @@ namespace q
         {
             selector |= std::byte{0b10000000};
         }
-
-        // (binID), binsize, meanMZ, medianMZ, standard deviation mz, meanScan, medianScan, DQSB, DQSB_control, worst-case DQS (empirical), lowest DQScen, mean centroid error
-        char buffer[256];
-        sprintf(buffer, "%llu,%0.15f,%0.15f,%0.15f,%0.2f,%d,%0.15f,%0.15f,%0.15f,%0.15f,%0.15f",
-                binsize, meanMZ, medianMZ, stdev, meanScan, medianScan, meanDQS, DQS_control, DQSminWith, worstCentroid, meanCenError);
-        // return std::make_pair(buffer, selector); // @todo this should probably return the summary as numeric data for further processing
         return std::tuple(selector, binsize, meanMZ, medianMZ, stdev, meanScan, medianScan, meanDQS,
                           DQS_control, DQSminWith, worstCentroid, meanCenError);
     }
@@ -829,17 +817,16 @@ namespace q
 
     inline double calcDQS(const double MID, const double MOD) // mean inner distance, minimum outer distance
     {
-        double dqs(MOD); // switch MID to MOD here, less assignments
-        double MOD_ld(MOD);
+        double dqs(MOD); // MOD should always be less than MID, less cache misses
         if (dqs < MID)
         {
             dqs = MID;
         }
         // dqs = (MOD - MID) * (1 / (1 + MID)) / dqs; // sm(i) term
-        dqs = (MOD_ld - MID) / fmal(MID, dqs, dqs); //  ((1 + MID) * dqs);
-        dqs = fmal(dqs, 0.5, 0.5);                  // interval transform, equivalent to (dqs + 1) / 2;
-        // assert(0 <= dqs && dqs <= 1); // does not apply if a datapoint has no neighbours
-        return double(dqs); // if dqs = nan, set it to 1 during EIC construction
+        // interval transform, equivalent to (dqs + 1) / 2;
+        // dqs = fmal((MOD - MID) / fmal(MID, dqs, dqs), 0.5, 0.5); //  ((1 + MID) * dqs);
+        // if dqs = nan, set it to 1 during EIC construction @todo
+        return fmal((MOD - MID) / fmal(MID, dqs, dqs), 0.5, 0.5); 
     }
 
     inline double calcVcrit(const int binSize, const double errorStart, const double errorEnd)
@@ -854,13 +841,8 @@ namespace q
 
 int main()
 {
-    q::calcDQS(1.2, INFINITY);
-
     q::duplicatesTotal = 0;
     std::cout << "starting...\n";
-    // std::ofstream result("../../qbinning_ßßß.csv");
-    // std::streambuf *coutbuf = std::cout.rdbuf(); // save old buf
-    // std::cout.rdbuf(result.rdbuf());             // redirect std::cout to out.txt!
 
     q::RawData testdata;
     // path to data, mz, centroid error, RT, scan number, intensity, DQS centroid, control DQS Bin
@@ -884,21 +866,6 @@ int main()
     // testcontainer.printTstats();
     // testcontainer.printAllBins("../../qbinning_binlist.csv", &testdata);
     std::cout << "printed all bins\n";
-
-    // std::fstream file_out;
-    // file_out.open("../../qbins_tvals.csv", std::ios::out);
-    // if (!file_out.is_open())
-    // {
-    //     std::cout << "could not open file\n";
-    // }
-    // file_out << q::control_tvals.str();
-    // for (size_t i = 0; i < q::control_outOfBins.size(); i++) // segfault at 348348
-    // {
-    //     output << std::setprecision(15) << q::control_outOfBins[i]->mz << "," << q::control_outOfBins[i]->scanNo << ",-1,"
-    //            << "," << q::control_outOfBins[i]->control_DQSbin << "\n";
-    // }
-    // file_out << output.str();
-    // testcontainer.printBinSummary("../../qbinning_binsummary.csv");
 
     std::cout << "\n\nDone!\n\n";
     return 0;
