@@ -1,0 +1,165 @@
+\doxysection{sc\+::utils Namespace Reference}
+\hypertarget{namespacesc_1_1utils}{}\label{namespacesc_1_1utils}\index{sc::utils@{sc::utils}}
+\doxysubsubsection*{Classes}
+\begin{DoxyCompactItemize}
+\item 
+struct \mbox{\hyperlink{structsc_1_1utils_1_1_m_s___c_h_r_o_m_a_t_o_g_r_a_m_s___h_e_a_d_e_r_s}{MS\+\_\+\+CHROMATOGRAMS\+\_\+\+HEADERS}}
+\item 
+struct \mbox{\hyperlink{structsc_1_1utils_1_1_m_s___s_p_e_c_t_r_a___h_e_a_d_e_r_s}{MS\+\_\+\+SPECTRA\+\_\+\+HEADERS}}
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Enumerations}
+\begin{DoxyCompactItemize}
+\item 
+enum \mbox{\hyperlink{namespacesc_1_1utils_a3406f6191eac05d590c2d8d749fc54ef}{MS\+\_\+\+SPECTRA\+\_\+\+MODE}} \{ \mbox{\hyperlink{namespacesc_1_1utils_a3406f6191eac05d590c2d8d749fc54efa9eeb5f9ea509ef7c5a7a27a7dcb8e204}{CENTROID}}
+, \mbox{\hyperlink{namespacesc_1_1utils_a3406f6191eac05d590c2d8d749fc54efaf0465c903c4fb182aa29670ec5bcdd50}{PROFILE}}
+ \}
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+std\+::string \mbox{\hyperlink{namespacesc_1_1utils_a5e536fed72c137810906d4ea77a792ca}{encode\+\_\+little\+\_\+endian}} (\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} std\+::vector$<$ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{double}} $>$ \&\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{input}}, \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{int}} \&precision)
+\item 
+std\+::vector$<$ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{double}} $>$ \mbox{\hyperlink{namespacesc_1_1utils_ae4be30c15070eaf7e71ea710e0af3481}{decode\+\_\+little\+\_\+endian}} (\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} std\+::string \&str, \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{int}} \&precision)
+\item 
+std\+::string \mbox{\hyperlink{namespacesc_1_1utils_a7c8a7c1d7b08d8d1d1fba7d4be52693e}{encode\+\_\+big\+\_\+endian}} (\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} std\+::vector$<$ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{double}} $>$ \&\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{input}}, \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{int}} \&precision)
+\item 
+std\+::vector$<$ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{double}} $>$ \mbox{\hyperlink{namespacesc_1_1utils_acdb02c711b6ea0ac27b0754bb19486bd}{decode\+\_\+big\+\_\+endian}} (\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} std\+::string \&str, \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{int}} \&precision)
+\item 
+std\+::string \mbox{\hyperlink{namespacesc_1_1utils_a92839ccc9a95d36fa0bbc457aa658209}{compress\+\_\+zlib}} (\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} std\+::string \&str)
+\item 
+std\+::string \mbox{\hyperlink{namespacesc_1_1utils_a0b9cb46adf04f1724880d01fd0e09b49}{decompress\+\_\+zlib}} (\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} std\+::string \&\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{compressed\+\_\+string}})
+\item 
+std\+::string \mbox{\hyperlink{namespacesc_1_1utils_ad81d617ac21cc560a3a378fd177c7952}{encode\+\_\+base64}} (\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} std\+::string \&str)
+\item 
+std\+::string \mbox{\hyperlink{namespacesc_1_1utils_a3355905609938b04953148dcff512320}{decode\+\_\+base64}} (\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} std\+::string \&\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{encoded\+\_\+string}})
+\item 
+\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{void}} \mbox{\hyperlink{namespacesc_1_1utils_aef80c2c35261e9ece9ee68325892c562}{test\+\_\+encoding\+\_\+decoding\+\_\+little\+\_\+endian}} (\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} std\+::vector$<$ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{double}} $>$ \&\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{input}}, \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{int}} \&precision)
+\item 
+\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{void}} \mbox{\hyperlink{namespacesc_1_1utils_af549cf6c63090f25a481750ee9a749ab}{test\+\_\+encoding\+\_\+decoding\+\_\+big\+\_\+endian}} (\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} std\+::vector$<$ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{double}} $>$ \&\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{input}}, \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{int}} \&precision)
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Enumeration Type Documentation}
+\Hypertarget{namespacesc_1_1utils_a3406f6191eac05d590c2d8d749fc54ef}\label{namespacesc_1_1utils_a3406f6191eac05d590c2d8d749fc54ef} 
+\index{sc::utils@{sc::utils}!MS\_SPECTRA\_MODE@{MS\_SPECTRA\_MODE}}
+\index{MS\_SPECTRA\_MODE@{MS\_SPECTRA\_MODE}!sc::utils@{sc::utils}}
+\doxysubsubsection{\texorpdfstring{MS\_SPECTRA\_MODE}{MS\_SPECTRA\_MODE}}
+{\footnotesize\ttfamily \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{enum}} \mbox{\hyperlink{namespacesc_1_1utils_a3406f6191eac05d590c2d8d749fc54ef}{sc\+::utils\+::\+MS\+\_\+\+SPECTRA\+\_\+\+MODE}}}
+
+\begin{DoxyEnumFields}{Enumerator}
+\raisebox{\heightof{T}}[0pt][0pt]{\index{CENTROID@{CENTROID}!sc::utils@{sc::utils}}\index{sc::utils@{sc::utils}!CENTROID@{CENTROID}}}\Hypertarget{namespacesc_1_1utils_a3406f6191eac05d590c2d8d749fc54efa9eeb5f9ea509ef7c5a7a27a7dcb8e204}\label{namespacesc_1_1utils_a3406f6191eac05d590c2d8d749fc54efa9eeb5f9ea509ef7c5a7a27a7dcb8e204} 
+CENTROID&\\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{PROFILE@{PROFILE}!sc::utils@{sc::utils}}\index{sc::utils@{sc::utils}!PROFILE@{PROFILE}}}\Hypertarget{namespacesc_1_1utils_a3406f6191eac05d590c2d8d749fc54efaf0465c903c4fb182aa29670ec5bcdd50}\label{namespacesc_1_1utils_a3406f6191eac05d590c2d8d749fc54efaf0465c903c4fb182aa29670ec5bcdd50} 
+PROFILE&\\
+\hline
+
+\end{DoxyEnumFields}
+
+
+Definition at line \mbox{\hyperlink{_stream_craft__utils_8hpp_source_l00012}{12}} of file \mbox{\hyperlink{_stream_craft__utils_8hpp_source}{Stream\+Craft\+\_\+utils.\+hpp}}.
+
+
+
+\doxysubsection{Function Documentation}
+\Hypertarget{namespacesc_1_1utils_a92839ccc9a95d36fa0bbc457aa658209}\label{namespacesc_1_1utils_a92839ccc9a95d36fa0bbc457aa658209} 
+\index{sc::utils@{sc::utils}!compress\_zlib@{compress\_zlib}}
+\index{compress\_zlib@{compress\_zlib}!sc::utils@{sc::utils}}
+\doxysubsubsection{\texorpdfstring{compress\_zlib()}{compress\_zlib()}}
+{\footnotesize\ttfamily std\+::string sc\+::utils\+::compress\+\_\+zlib (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} std\+::string \&}]{str }\end{DoxyParamCaption})}
+
+Compresses a string using the zlib library (\href{https://zlib.net/}{\texttt{ https\+://zlib.\+net/}}). 
+
+Definition at line \mbox{\hyperlink{_stream_craft__utils_8cpp_source_l00144}{144}} of file \mbox{\hyperlink{_stream_craft__utils_8cpp_source}{Stream\+Craft\+\_\+utils.\+cpp}}.
+
+\Hypertarget{namespacesc_1_1utils_a3355905609938b04953148dcff512320}\label{namespacesc_1_1utils_a3355905609938b04953148dcff512320} 
+\index{sc::utils@{sc::utils}!decode\_base64@{decode\_base64}}
+\index{decode\_base64@{decode\_base64}!sc::utils@{sc::utils}}
+\doxysubsubsection{\texorpdfstring{decode\_base64()}{decode\_base64()}}
+{\footnotesize\ttfamily std\+::string sc\+::utils\+::decode\+\_\+base64 (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} std\+::string \&}]{encoded\+\_\+string }\end{DoxyParamCaption})}
+
+Decodes a Base64 string into a string with binary data. 
+
+Definition at line \mbox{\hyperlink{_stream_craft__utils_8cpp_source_l00265}{265}} of file \mbox{\hyperlink{_stream_craft__utils_8cpp_source}{Stream\+Craft\+\_\+utils.\+cpp}}.
+
+\Hypertarget{namespacesc_1_1utils_acdb02c711b6ea0ac27b0754bb19486bd}\label{namespacesc_1_1utils_acdb02c711b6ea0ac27b0754bb19486bd} 
+\index{sc::utils@{sc::utils}!decode\_big\_endian@{decode\_big\_endian}}
+\index{decode\_big\_endian@{decode\_big\_endian}!sc::utils@{sc::utils}}
+\doxysubsubsection{\texorpdfstring{decode\_big\_endian()}{decode\_big\_endian()}}
+{\footnotesize\ttfamily std\+::vector$<$ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{double}} $>$ sc\+::utils\+::decode\+\_\+big\+\_\+endian (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} std\+::string \&}]{str,  }\item[{\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{int}} \&}]{precision }\end{DoxyParamCaption})}
+
+Decodes from a big endian binary string to a vector of doubles according a precision integer. 
+
+Definition at line \mbox{\hyperlink{_stream_craft__utils_8cpp_source_l00103}{103}} of file \mbox{\hyperlink{_stream_craft__utils_8cpp_source}{Stream\+Craft\+\_\+utils.\+cpp}}.
+
+\Hypertarget{namespacesc_1_1utils_ae4be30c15070eaf7e71ea710e0af3481}\label{namespacesc_1_1utils_ae4be30c15070eaf7e71ea710e0af3481} 
+\index{sc::utils@{sc::utils}!decode\_little\_endian@{decode\_little\_endian}}
+\index{decode\_little\_endian@{decode\_little\_endian}!sc::utils@{sc::utils}}
+\doxysubsubsection{\texorpdfstring{decode\_little\_endian()}{decode\_little\_endian()}}
+{\footnotesize\ttfamily std\+::vector$<$ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{double}} $>$ sc\+::utils\+::decode\+\_\+little\+\_\+endian (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} std\+::string \&}]{str,  }\item[{\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{int}} \&}]{precision }\end{DoxyParamCaption})}
+
+Decodes from a little endian binary string to a vector of doubles according a precision integer. 
+
+Definition at line \mbox{\hyperlink{_stream_craft__utils_8cpp_source_l00074}{74}} of file \mbox{\hyperlink{_stream_craft__utils_8cpp_source}{Stream\+Craft\+\_\+utils.\+cpp}}.
+
+\Hypertarget{namespacesc_1_1utils_a0b9cb46adf04f1724880d01fd0e09b49}\label{namespacesc_1_1utils_a0b9cb46adf04f1724880d01fd0e09b49} 
+\index{sc::utils@{sc::utils}!decompress\_zlib@{decompress\_zlib}}
+\index{decompress\_zlib@{decompress\_zlib}!sc::utils@{sc::utils}}
+\doxysubsubsection{\texorpdfstring{decompress\_zlib()}{decompress\_zlib()}}
+{\footnotesize\ttfamily std\+::string sc\+::utils\+::decompress\+\_\+zlib (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} std\+::string \&}]{compressed\+\_\+string }\end{DoxyParamCaption})}
+
+Decompresses a string using the zlib library (\href{https://zlib.net/}{\texttt{ https\+://zlib.\+net/}}). 
+
+Definition at line \mbox{\hyperlink{_stream_craft__utils_8cpp_source_l00182}{182}} of file \mbox{\hyperlink{_stream_craft__utils_8cpp_source}{Stream\+Craft\+\_\+utils.\+cpp}}.
+
+\Hypertarget{namespacesc_1_1utils_ad81d617ac21cc560a3a378fd177c7952}\label{namespacesc_1_1utils_ad81d617ac21cc560a3a378fd177c7952} 
+\index{sc::utils@{sc::utils}!encode\_base64@{encode\_base64}}
+\index{encode\_base64@{encode\_base64}!sc::utils@{sc::utils}}
+\doxysubsubsection{\texorpdfstring{encode\_base64()}{encode\_base64()}}
+{\footnotesize\ttfamily std\+::string sc\+::utils\+::encode\+\_\+base64 (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} std\+::string \&}]{str }\end{DoxyParamCaption})}
+
+Encodes a string with binary data to a Base64 string. 
+
+Definition at line \mbox{\hyperlink{_stream_craft__utils_8cpp_source_l00222}{222}} of file \mbox{\hyperlink{_stream_craft__utils_8cpp_source}{Stream\+Craft\+\_\+utils.\+cpp}}.
+
+\Hypertarget{namespacesc_1_1utils_a7c8a7c1d7b08d8d1d1fba7d4be52693e}\label{namespacesc_1_1utils_a7c8a7c1d7b08d8d1d1fba7d4be52693e} 
+\index{sc::utils@{sc::utils}!encode\_big\_endian@{encode\_big\_endian}}
+\index{encode\_big\_endian@{encode\_big\_endian}!sc::utils@{sc::utils}}
+\doxysubsubsection{\texorpdfstring{encode\_big\_endian()}{encode\_big\_endian()}}
+{\footnotesize\ttfamily std\+::string sc\+::utils\+::encode\+\_\+big\+\_\+endian (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} std\+::vector$<$ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{double}} $>$ \&}]{input,  }\item[{\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{int}} \&}]{precision }\end{DoxyParamCaption})}
+
+
+
+Definition at line \mbox{\hyperlink{_stream_craft__utils_8cpp_source_l00035}{35}} of file \mbox{\hyperlink{_stream_craft__utils_8cpp_source}{Stream\+Craft\+\_\+utils.\+cpp}}.
+
+\Hypertarget{namespacesc_1_1utils_a5e536fed72c137810906d4ea77a792ca}\label{namespacesc_1_1utils_a5e536fed72c137810906d4ea77a792ca} 
+\index{sc::utils@{sc::utils}!encode\_little\_endian@{encode\_little\_endian}}
+\index{encode\_little\_endian@{encode\_little\_endian}!sc::utils@{sc::utils}}
+\doxysubsubsection{\texorpdfstring{encode\_little\_endian()}{encode\_little\_endian()}}
+{\footnotesize\ttfamily std\+::string sc\+::utils\+::encode\+\_\+little\+\_\+endian (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} std\+::vector$<$ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{double}} $>$ \&}]{input,  }\item[{\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{int}} \&}]{precision }\end{DoxyParamCaption})}
+
+Encodes to little endian binary a vector of doubles based on a precision integer. 
+
+Definition at line \mbox{\hyperlink{_stream_craft__utils_8cpp_source_l00012}{12}} of file \mbox{\hyperlink{_stream_craft__utils_8cpp_source}{Stream\+Craft\+\_\+utils.\+cpp}}.
+
+\Hypertarget{namespacesc_1_1utils_af549cf6c63090f25a481750ee9a749ab}\label{namespacesc_1_1utils_af549cf6c63090f25a481750ee9a749ab} 
+\index{sc::utils@{sc::utils}!test\_encoding\_decoding\_big\_endian@{test\_encoding\_decoding\_big\_endian}}
+\index{test\_encoding\_decoding\_big\_endian@{test\_encoding\_decoding\_big\_endian}!sc::utils@{sc::utils}}
+\doxysubsubsection{\texorpdfstring{test\_encoding\_decoding\_big\_endian()}{test\_encoding\_decoding\_big\_endian()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{void}} sc\+::utils\+::test\+\_\+encoding\+\_\+decoding\+\_\+big\+\_\+endian (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} std\+::vector$<$ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{double}} $>$ \&}]{input,  }\item[{\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{int}} \&}]{precision }\end{DoxyParamCaption})}
+
+Test function for encoding and decoding big endian binary data. 
+
+Definition at line \mbox{\hyperlink{_stream_craft__utils_8cpp_source_l00341}{341}} of file \mbox{\hyperlink{_stream_craft__utils_8cpp_source}{Stream\+Craft\+\_\+utils.\+cpp}}.
+
+\Hypertarget{namespacesc_1_1utils_aef80c2c35261e9ece9ee68325892c562}\label{namespacesc_1_1utils_aef80c2c35261e9ece9ee68325892c562} 
+\index{sc::utils@{sc::utils}!test\_encoding\_decoding\_little\_endian@{test\_encoding\_decoding\_little\_endian}}
+\index{test\_encoding\_decoding\_little\_endian@{test\_encoding\_decoding\_little\_endian}!sc::utils@{sc::utils}}
+\doxysubsubsection{\texorpdfstring{test\_encoding\_decoding\_little\_endian()}{test\_encoding\_decoding\_little\_endian()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{void}} sc\+::utils\+::test\+\_\+encoding\+\_\+decoding\+\_\+little\+\_\+endian (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} std\+::vector$<$ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{double}} $>$ \&}]{input,  }\item[{\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{int}} \&}]{precision }\end{DoxyParamCaption})}
+
+Test function for encoding and decoding little endian binary data. 
+
+Definition at line \mbox{\hyperlink{_stream_craft__utils_8cpp_source_l00305}{305}} of file \mbox{\hyperlink{_stream_craft__utils_8cpp_source}{Stream\+Craft\+\_\+utils.\+cpp}}.
+

@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['y_0',['y',['../structq_1_1_data_type_1_1_mass_spectrum_1_1_data_point.html#a0f5379f989aba76f61041728e2dcb5bc',1,'q::DataType::MassSpectrum::DataPoint']]]
+  ['value_0',['value',['../classpugi_1_1xml__attribute.html#ac18639df6493d250601566d1156c38d9',1,'pugi::xml_attribute::value()'],['../classpugi_1_1xml__node.html#a971a8bc43a272ff40e64746fe622a9b3',1,'pugi::xml_node::value()']]]
 ];

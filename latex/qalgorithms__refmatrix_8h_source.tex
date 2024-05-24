@@ -7,7 +7,7 @@
 \DoxyCodeLine{\Hypertarget{qalgorithms__refmatrix_8h_source_l00003}00003\ \textcolor{preprocessor}{\#define\ QALGORITHMS\_REFMATRIX\_H}}
 \DoxyCodeLine{\Hypertarget{qalgorithms__refmatrix_8h_source_l00004}00004\ \textcolor{comment}{//}}
 \DoxyCodeLine{\Hypertarget{qalgorithms__refmatrix_8h_source_l00005}00005\ \textcolor{comment}{//\ internal}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__refmatrix_8h_source_l00006}00006\ \textcolor{preprocessor}{\#include\ "{}../include/qalgorithms\_matrix.h"{}}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__refmatrix_8h_source_l00006}00006\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{qalgorithms__matrix_8h}{../include/qalgorithms\_matrix.h}}"{}}}
 \DoxyCodeLine{\Hypertarget{qalgorithms__refmatrix_8h_source_l00007}00007\ }
 \DoxyCodeLine{\Hypertarget{qalgorithms__refmatrix_8h_source_l00008}00008\ \textcolor{comment}{//\ external}}
 \DoxyCodeLine{\Hypertarget{qalgorithms__refmatrix_8h_source_l00009}00009\ \textcolor{preprocessor}{\#include\ <functional>}}
@@ -35,19 +35,23 @@
 \DoxyCodeLine{\Hypertarget{qalgorithms__refmatrix_8h_source_l00031}00031\ \ \ \ \ \textcolor{comment}{//\ access}}
 \DoxyCodeLine{\Hypertarget{qalgorithms__refmatrix_8h_source_l00032}00032\ \ \ \ \ \textcolor{keywordtype}{double}\ \&\mbox{\hyperlink{classq_1_1_ref_matrix_a56e2b12347d76110b2a54e2eb88d0ece}{operator()}}(\textcolor{keywordtype}{size\_t}\ row,\ \textcolor{keywordtype}{size\_t}\ col);}
 \DoxyCodeLine{\Hypertarget{qalgorithms__refmatrix_8h_source_l00033}00033\ \ \ \ \ \textcolor{keywordtype}{double}\ \mbox{\hyperlink{classq_1_1_ref_matrix_a56e2b12347d76110b2a54e2eb88d0ece}{operator()}}(\textcolor{keywordtype}{size\_t}\ row,\ \textcolor{keywordtype}{size\_t}\ col)\ \textcolor{keyword}{const};}
-\DoxyCodeLine{\Hypertarget{qalgorithms__refmatrix_8h_source_l00034}00034\ \ \ \ \ \textcolor{comment}{//\ assign\ new\ reference\ matrix\ using\ row\ and\ col\ and\ the\ value}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__refmatrix_8h_source_l00035}00035\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classq_1_1_ref_matrix_ac8c6b743d600620b0179551ec291caf5}{assignRef}}(\textcolor{keywordtype}{size\_t}\ row,\ \textcolor{keywordtype}{size\_t}\ col,\ \textcolor{keywordtype}{double}\&\ value);}
-\DoxyCodeLine{\Hypertarget{qalgorithms__refmatrix_8h_source_l00036}00036\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classq_1_1_ref_matrix_ab36af54ee1cc979bbdd03f3d855f6c3c}{assignVal}}(\textcolor{keywordtype}{size\_t}\ row,\ \textcolor{keywordtype}{size\_t}\ col,\ \textcolor{keywordtype}{double}\ value);}
-\DoxyCodeLine{\Hypertarget{qalgorithms__refmatrix_8h_source_l00037}00037\ }
-\DoxyCodeLine{\Hypertarget{qalgorithms__refmatrix_8h_source_l00038}00038\ \ \ \ \ \textcolor{comment}{//\ matrix\ operations}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__refmatrix_8h_source_l00039}00039\ \ \ \ \ \mbox{\hyperlink{classq_1_1_matrix}{Matrix}}\ \mbox{\hyperlink{classq_1_1_ref_matrix_a1f47d87b4144f587178f1ca228712a48}{log}}()\ \textcolor{keyword}{const};}
-\DoxyCodeLine{\Hypertarget{qalgorithms__refmatrix_8h_source_l00040}00040\ }
-\DoxyCodeLine{\Hypertarget{qalgorithms__refmatrix_8h_source_l00041}00041\ \ \ \ \ \textcolor{comment}{//\ debugging}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__refmatrix_8h_source_l00042}00042\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classq_1_1_ref_matrix_a72cb7cf2f017bae84ded94d7b2b9ed56}{print}}()\ \textcolor{keyword}{const};}
-\DoxyCodeLine{\Hypertarget{qalgorithms__refmatrix_8h_source_l00043}00043\ \ \ \};}
+\DoxyCodeLine{\Hypertarget{qalgorithms__refmatrix_8h_source_l00034}00034\ \ \ \ \ \textcolor{keywordtype}{double}\ \&\mbox{\hyperlink{classq_1_1_ref_matrix_a1dcca6df14e223526639ecc94454b317}{getElement}}(\textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{idx}})\ \textcolor{keyword}{const};}
+\DoxyCodeLine{\Hypertarget{qalgorithms__refmatrix_8h_source_l00035}00035\ \ \ \ \ \textcolor{comment}{//\ assign\ new\ reference\ matrix\ using\ row\ and\ col\ and\ the\ value}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__refmatrix_8h_source_l00036}00036\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classq_1_1_ref_matrix_ac8c6b743d600620b0179551ec291caf5}{assignRef}}(\textcolor{keywordtype}{size\_t}\ row,\ \textcolor{keywordtype}{size\_t}\ col,\ \textcolor{keywordtype}{double}\&\ value);}
+\DoxyCodeLine{\Hypertarget{qalgorithms__refmatrix_8h_source_l00037}00037\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classq_1_1_ref_matrix_ab36af54ee1cc979bbdd03f3d855f6c3c}{assignVal}}(\textcolor{keywordtype}{size\_t}\ row,\ \textcolor{keywordtype}{size\_t}\ col,\ \textcolor{keywordtype}{double}\ value);}
+\DoxyCodeLine{\Hypertarget{qalgorithms__refmatrix_8h_source_l00038}00038\ }
+\DoxyCodeLine{\Hypertarget{qalgorithms__refmatrix_8h_source_l00039}00039\ \ \ \ \ \textcolor{comment}{//\ submatrix}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__refmatrix_8h_source_l00040}00040\ \ \ \ \ \mbox{\hyperlink{classq_1_1_ref_matrix}{RefMatrix}}\ \mbox{\hyperlink{classq_1_1_ref_matrix_acf64fa77245e22e27415677aac603be3}{subMatrix}}(\textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{row\_start}},\ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{row\_end}},\ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{col\_start}},\ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{col\_end}})\ \textcolor{keyword}{const};}
+\DoxyCodeLine{\Hypertarget{qalgorithms__refmatrix_8h_source_l00041}00041\ }
+\DoxyCodeLine{\Hypertarget{qalgorithms__refmatrix_8h_source_l00042}00042\ \ \ \ \ \textcolor{comment}{//\ matrix\ operations}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__refmatrix_8h_source_l00043}00043\ \ \ \ \ \mbox{\hyperlink{classq_1_1_matrix}{Matrix}}\ \mbox{\hyperlink{classq_1_1_ref_matrix_a1f47d87b4144f587178f1ca228712a48}{log}}()\ \textcolor{keyword}{const};}
 \DoxyCodeLine{\Hypertarget{qalgorithms__refmatrix_8h_source_l00044}00044\ }
-\DoxyCodeLine{\Hypertarget{qalgorithms__refmatrix_8h_source_l00045}00045\ \}\ \textcolor{comment}{//\ namespace\ q}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__refmatrix_8h_source_l00046}00046\ }
-\DoxyCodeLine{\Hypertarget{qalgorithms__refmatrix_8h_source_l00047}00047\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//\ QALGORITHMS\_REFMATRIX\_H}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__refmatrix_8h_source_l00045}00045\ \ \ \ \ \textcolor{comment}{//\ debugging}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__refmatrix_8h_source_l00046}00046\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classq_1_1_ref_matrix_a72cb7cf2f017bae84ded94d7b2b9ed56}{print}}()\ \textcolor{keyword}{const};}
+\DoxyCodeLine{\Hypertarget{qalgorithms__refmatrix_8h_source_l00047}00047\ \ \ \};}
+\DoxyCodeLine{\Hypertarget{qalgorithms__refmatrix_8h_source_l00048}00048\ }
+\DoxyCodeLine{\Hypertarget{qalgorithms__refmatrix_8h_source_l00049}00049\ \}\ \textcolor{comment}{//\ namespace\ q}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__refmatrix_8h_source_l00050}00050\ }
+\DoxyCodeLine{\Hypertarget{qalgorithms__refmatrix_8h_source_l00051}00051\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//\ QALGORITHMS\_REFMATRIX\_H}}
 
 \end{DoxyCode}

@@ -1,6 +1,25 @@
 var searchData=
 [
-  ['metadata_0',['metaData',['../classq_1_1_data_type_1_1_mass_spectrum.html#a30c0087b21c1b807705187898199e8e4',1,'q::DataType::MassSpectrum']]],
-  ['mtx_1',['mtx',['../qalgorithms_8cpp.html#ad5e0dbd36f0d71fce9b00b7f991b2f38',1,'qalgorithms.cpp']]],
-  ['mz_2',['mz',['../structq_1_1_data_type_1_1_mass_spectrum_1_1_data_point.html#a6e4df856f26a4c69495dd219f13b6ff1',1,'q::DataType::MassSpectrum::DataPoint']]]
+  ['file_5fdir_0',['file_dir',['../classsc_1_1mzml_1_1_m_z_m_l.html#aa59acf7976321fee4a6018d5f4d7b7fa',1,'sc::mzml::MZML::file_dir'],['../classsc_1_1mzxml_1_1_m_z_x_m_l.html#a7514f3bd73de0413bc8a0ad3ade8ab69',1,'sc::mzxml::MZXML::file_dir']]],
+  ['file_5fextension_1',['file_extension',['../classsc_1_1mzml_1_1_m_z_m_l.html#a26c674226996b6fe11ceae21d9638249',1,'sc::mzml::MZML::file_extension'],['../classsc_1_1mzxml_1_1_m_z_x_m_l.html#a35acaa9c80663384bed3d5504700b109',1,'sc::mzxml::MZXML::file_extension']]],
+  ['file_5fname_2',['file_name',['../classsc_1_1mzml_1_1_m_z_m_l.html#ac0a25d7c0e0c1f7c96036e1d10c163ac',1,'sc::mzml::MZML::file_name'],['../classsc_1_1mzxml_1_1_m_z_x_m_l.html#a2eb46e3163b7e6e96cad578c289b837f',1,'sc::mzxml::MZXML::file_name']]],
+  ['file_5fpath_3',['file_path',['../classsc_1_1mzml_1_1_m_z_m_l.html#a5242cd67c94a9ed4b21565cd08092158',1,'sc::mzml::MZML::file_path'],['../classsc_1_1mzxml_1_1_m_z_x_m_l.html#a6d1a316337365b2aaef1ee6dcbbfb7b8',1,'sc::mzxml::MZXML::file_path']]],
+  ['filter_5fstring_4',['filter_string',['../structsc_1_1utils_1_1_m_s___s_p_e_c_t_r_a___h_e_a_d_e_r_s.html#a0cee7ce9a465ca212e1b32a740ec7344',1,'sc::utils::MS_SPECTRA_HEADERS']]],
+  ['first_5fattribute_5',['first_attribute',['../structpugi_1_1xml__node__struct.html#a482d2daf97ce0745661cb2c57d8f6fb3',1,'pugi::xml_node_struct']]],
+  ['first_5fchild_6',['first_child',['../structpugi_1_1xml__node__struct.html#af72c49a0f81928ef664d9d2f0260f23d',1,'pugi::xml_node_struct']]],
+  ['first_5fspectra_5fheaders_7',['first_spectra_headers',['../classsc_1_1mzml_1_1_m_z_m_l.html#af795a981dfd79a688b1ba6e1c3893c6d',1,'sc::mzml::MZML::first_spectra_headers'],['../classsc_1_1mzxml_1_1_m_z_x_m_l.html#aa59c895698f8b3a757c322a6c82717ab',1,'sc::mzxml::MZXML::first_spectra_headers']]],
+  ['format_8',['format',['../classsc_1_1mzml_1_1_m_z_m_l.html#abdcc03835fc63874268ecf9cbfda1bae',1,'sc::mzml::MZML::format'],['../classsc_1_1mzxml_1_1_m_z_x_m_l.html#a0f13d76da9f2e11f375f4323b32dca6e',1,'sc::mzxml::MZXML::format']]],
+  ['format_5fattribute_5fsingle_5fquote_9',['format_attribute_single_quote',['../namespacepugi.html#ac73695d0ae673c031c4ba1e04324f51c',1,'pugi']]],
+  ['format_5fdefault_10',['format_default',['../namespacepugi.html#a325f48a35abbaeacdfd8b7fc9ed1713c',1,'pugi']]],
+  ['format_5findent_11',['format_indent',['../namespacepugi.html#ace12e8dee65c5bae8ee42a64be7421d3',1,'pugi']]],
+  ['format_5findent_5fattributes_12',['format_indent_attributes',['../namespacepugi.html#a8aafe40e9dd0c345786d01e875b65dd4',1,'pugi']]],
+  ['format_5fno_5fdeclaration_13',['format_no_declaration',['../namespacepugi.html#a0ec33e4db09260718f7003ed091f5a1b',1,'pugi']]],
+  ['format_5fno_5fempty_5felement_5ftags_14',['format_no_empty_element_tags',['../namespacepugi.html#a0318259e65577c13b172d3a9995aab6c',1,'pugi']]],
+  ['format_5fno_5fescapes_15',['format_no_escapes',['../namespacepugi.html#ae8d833b4cabc60ba64536d57669454fd',1,'pugi']]],
+  ['format_5fraw_16',['format_raw',['../namespacepugi.html#a2dd811716b1c0a6a2431ceca43bc649e',1,'pugi']]],
+  ['format_5fsave_5ffile_5ftext_17',['format_save_file_text',['../namespacepugi.html#ab0aae01dc0b870a2673c32ca6623ae09',1,'pugi']]],
+  ['format_5fskip_5fcontrol_5fchars_18',['format_skip_control_chars',['../namespacepugi.html#a28bc6fc1b2dd2b745dfc3d7fc90c5ee6',1,'pugi']]],
+  ['format_5fwrite_5fbom_19',['format_write_bom',['../namespacepugi.html#ab863bcafd203aeaa98953df3a998243f',1,'pugi']]],
+  ['freed_5fsize_20',['freed_size',['../structxml__memory__page.html#ab4c29645546530a0e1938b53979890a8',1,'xml_memory_page']]],
+  ['full_5fsize_21',['full_size',['../structxml__memory__string__header.html#abbb48a709081e6610dffad322499e3f7',1,'xml_memory_string_header']]]
 ];

@@ -4,6 +4,8 @@
 // internal
 #include "qalgorithms_measurement_data.h"
 
+// external
+#include "../external/StreamCraft/src/StreamCraft_mzml.hpp"
 #include <vector>
 
 namespace q
@@ -34,7 +36,26 @@ namespace q
          * @param separator The separator, e.g., ',' or '\t'
          * @param variableTypes The variable types. Required variable types: DataField::SCANNUMBER, DataField::RETENTIONTIME, DataField::MZ, and DataField::INTENSITY
          */
-        void readCSV(std::string filename, int rowStart, int rowEnd, int colStart, int colEnd, char separator, std::vector<DataType::DataField> variableTypes);
+        void 
+        readCSV(
+            std::string filename, 
+            int rowStart, 
+            int rowEnd, 
+            int colStart, 
+            int colEnd, 
+            char separator, 
+            std::vector<DataType::DataField> variableTypes);
+        
+        /**
+         * @brief Read LC-MS data from a StreamCraft mzML object
+         * @details The readStreamCraftMZML method reads LC-MS data from a StreamCraft mzML object and stores it in the LCMSData object. A StreamCraft mzML object is created by using sc::MZML z("path to mzML file"). 
+         * 
+         * @param data : StreamCraft mzML object
+         */
+        void 
+        readStreamCraftMZML(
+            sc::MZML &data
+        );
 
         /**
          * @brief Write LC-MS data to a CSV file

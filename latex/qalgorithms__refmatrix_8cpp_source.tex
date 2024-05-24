@@ -5,7 +5,7 @@
 \DoxyCodeLine{\Hypertarget{qalgorithms__refmatrix_8cpp_source_l00001}00001\ \textcolor{comment}{//\ qalgorithms\_refmatrix.cpp}}
 \DoxyCodeLine{\Hypertarget{qalgorithms__refmatrix_8cpp_source_l00002}00002\ }
 \DoxyCodeLine{\Hypertarget{qalgorithms__refmatrix_8cpp_source_l00003}00003\ \textcolor{comment}{//\ internal}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__refmatrix_8cpp_source_l00004}00004\ \textcolor{preprocessor}{\#include\ "{}../include/qalgorithms\_refmatrix.h"{}}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__refmatrix_8cpp_source_l00004}00004\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{qalgorithms__refmatrix_8h}{../include/qalgorithms\_refmatrix.h}}"{}}}
 \DoxyCodeLine{\Hypertarget{qalgorithms__refmatrix_8cpp_source_l00005}00005\ }
 \DoxyCodeLine{\Hypertarget{qalgorithms__refmatrix_8cpp_source_l00006}00006\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespaceq}{q}}}
 \DoxyCodeLine{\Hypertarget{qalgorithms__refmatrix_8cpp_source_l00007}00007\ \{}
@@ -16,9 +16,9 @@
 \DoxyCodeLine{\Hypertarget{qalgorithms__refmatrix_8cpp_source_l00012}00012\ \ \ \{}
 \DoxyCodeLine{\Hypertarget{qalgorithms__refmatrix_8cpp_source_l00013}00013\ \ \ \ \ \textcolor{keywordtype}{double}*\ values\ =\ \textcolor{keyword}{new}\ \textcolor{keywordtype}{double}[rows\ *\ cols]();}
 \DoxyCodeLine{\Hypertarget{qalgorithms__refmatrix_8cpp_source_l00014}00014\ \ \ \ \ elements.reserve(rows\ *\ cols);}
-\DoxyCodeLine{\Hypertarget{qalgorithms__refmatrix_8cpp_source_l00015}00015\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{size\_t}\ i\ =\ 0;\ i\ <\ rows\ *\ cols;\ i++)}
+\DoxyCodeLine{\Hypertarget{qalgorithms__refmatrix_8cpp_source_l00015}00015\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{i}}\ =\ 0;\ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{i}}\ <\ rows\ *\ cols;\ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{i}}++)}
 \DoxyCodeLine{\Hypertarget{qalgorithms__refmatrix_8cpp_source_l00016}00016\ \ \ \ \ \{}
-\DoxyCodeLine{\Hypertarget{qalgorithms__refmatrix_8cpp_source_l00017}00017\ \ \ \ \ \ \ elements[i]\ =\ std::ref(values[i]);}
+\DoxyCodeLine{\Hypertarget{qalgorithms__refmatrix_8cpp_source_l00017}00017\ \ \ \ \ \ \ elements[\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{i}}]\ =\ std::ref(values[\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{i}}]);}
 \DoxyCodeLine{\Hypertarget{qalgorithms__refmatrix_8cpp_source_l00018}00018\ \ \ \ \ \}}
 \DoxyCodeLine{\Hypertarget{qalgorithms__refmatrix_8cpp_source_l00019}00019\ \ \ \ \ \textcolor{keyword}{delete}[]\ values;}
 \DoxyCodeLine{\Hypertarget{qalgorithms__refmatrix_8cpp_source_l00020}00020\ \ \ \}}
@@ -51,42 +51,61 @@
 \DoxyCodeLine{\Hypertarget{qalgorithms__refmatrix_8cpp_source_l00047}00047\ \ \ \ \ \textcolor{keywordflow}{return}\ elements[row\ *\ cols\ +\ col];}
 \DoxyCodeLine{\Hypertarget{qalgorithms__refmatrix_8cpp_source_l00048}00048\ \ \ \}}
 \DoxyCodeLine{\Hypertarget{qalgorithms__refmatrix_8cpp_source_l00049}00049\ }
-\DoxyCodeLine{\Hypertarget{qalgorithms__refmatrix_8cpp_source_l00050}\mbox{\hyperlink{classq_1_1_ref_matrix_ac8c6b743d600620b0179551ec291caf5}{00050}}\ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classq_1_1_ref_matrix_ac8c6b743d600620b0179551ec291caf5}{RefMatrix::assignRef}}(\textcolor{keywordtype}{size\_t}\ row,\ \textcolor{keywordtype}{size\_t}\ col,\ \textcolor{keywordtype}{double}\&\ value)}
-\DoxyCodeLine{\Hypertarget{qalgorithms__refmatrix_8cpp_source_l00051}00051\ \ \ \{}
-\DoxyCodeLine{\Hypertarget{qalgorithms__refmatrix_8cpp_source_l00052}00052\ \ \ \ \ elements[row\ *\ cols\ +\ col]\ =\ std::ref(value);}
+\DoxyCodeLine{\Hypertarget{qalgorithms__refmatrix_8cpp_source_l00050}\mbox{\hyperlink{classq_1_1_ref_matrix_a1dcca6df14e223526639ecc94454b317}{00050}}\ \ \ \textcolor{keywordtype}{double}\ \&\mbox{\hyperlink{classq_1_1_ref_matrix_a1dcca6df14e223526639ecc94454b317}{RefMatrix::getElement}}(\textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{idx}})\textcolor{keyword}{\ const}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__refmatrix_8cpp_source_l00051}00051\ \textcolor{keyword}{\ \ }\{}
+\DoxyCodeLine{\Hypertarget{qalgorithms__refmatrix_8cpp_source_l00052}00052\ \ \ \ \ \textcolor{keywordflow}{return}\ elements[\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{idx}}];}
 \DoxyCodeLine{\Hypertarget{qalgorithms__refmatrix_8cpp_source_l00053}00053\ \ \ \}}
 \DoxyCodeLine{\Hypertarget{qalgorithms__refmatrix_8cpp_source_l00054}00054\ }
-\DoxyCodeLine{\Hypertarget{qalgorithms__refmatrix_8cpp_source_l00055}\mbox{\hyperlink{classq_1_1_ref_matrix_ab36af54ee1cc979bbdd03f3d855f6c3c}{00055}}\ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classq_1_1_ref_matrix_ab36af54ee1cc979bbdd03f3d855f6c3c}{RefMatrix::assignVal}}(\textcolor{keywordtype}{size\_t}\ row,\ \textcolor{keywordtype}{size\_t}\ col,\ \textcolor{keywordtype}{double}\ value)}
+\DoxyCodeLine{\Hypertarget{qalgorithms__refmatrix_8cpp_source_l00055}\mbox{\hyperlink{classq_1_1_ref_matrix_ac8c6b743d600620b0179551ec291caf5}{00055}}\ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classq_1_1_ref_matrix_ac8c6b743d600620b0179551ec291caf5}{RefMatrix::assignRef}}(\textcolor{keywordtype}{size\_t}\ row,\ \textcolor{keywordtype}{size\_t}\ col,\ \textcolor{keywordtype}{double}\&\ value)}
 \DoxyCodeLine{\Hypertarget{qalgorithms__refmatrix_8cpp_source_l00056}00056\ \ \ \{}
 \DoxyCodeLine{\Hypertarget{qalgorithms__refmatrix_8cpp_source_l00057}00057\ \ \ \ \ elements[row\ *\ cols\ +\ col]\ =\ std::ref(value);}
 \DoxyCodeLine{\Hypertarget{qalgorithms__refmatrix_8cpp_source_l00058}00058\ \ \ \}}
 \DoxyCodeLine{\Hypertarget{qalgorithms__refmatrix_8cpp_source_l00059}00059\ }
-\DoxyCodeLine{\Hypertarget{qalgorithms__refmatrix_8cpp_source_l00060}00060\ \ \ \textcolor{comment}{//\ matrix\ operations}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__refmatrix_8cpp_source_l00061}\mbox{\hyperlink{classq_1_1_ref_matrix_a1f47d87b4144f587178f1ca228712a48}{00061}}\ \ \ \mbox{\hyperlink{classq_1_1_matrix}{Matrix}}\ \mbox{\hyperlink{classq_1_1_ref_matrix_a1f47d87b4144f587178f1ca228712a48}{RefMatrix::log}}()\textcolor{keyword}{\ const}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__refmatrix_8cpp_source_l00062}00062\ \textcolor{keyword}{\ \ }\{}
-\DoxyCodeLine{\Hypertarget{qalgorithms__refmatrix_8cpp_source_l00063}00063\ \ \ \ \ \mbox{\hyperlink{classq_1_1_matrix}{Matrix}}\ result(rows,\ cols);}
-\DoxyCodeLine{\Hypertarget{qalgorithms__refmatrix_8cpp_source_l00064}00064\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{size\_t}\ i\ =\ 0;\ i\ <\ rows;\ i++)}
-\DoxyCodeLine{\Hypertarget{qalgorithms__refmatrix_8cpp_source_l00065}00065\ \ \ \ \ \{}
-\DoxyCodeLine{\Hypertarget{qalgorithms__refmatrix_8cpp_source_l00066}00066\ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{size\_t}\ j\ =\ 0;\ j\ <\ cols;\ j++)}
-\DoxyCodeLine{\Hypertarget{qalgorithms__refmatrix_8cpp_source_l00067}00067\ \ \ \ \ \ \ \{}
-\DoxyCodeLine{\Hypertarget{qalgorithms__refmatrix_8cpp_source_l00068}00068\ \ \ \ \ \ \ \ \ result(i,\ j)\ =\ std::log(elements[i\ *\ cols\ +\ j]);}
-\DoxyCodeLine{\Hypertarget{qalgorithms__refmatrix_8cpp_source_l00069}00069\ \ \ \ \ \ \ \}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__refmatrix_8cpp_source_l00070}00070\ \ \ \ \ \}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__refmatrix_8cpp_source_l00071}00071\ \ \ \ \ \textcolor{keywordflow}{return}\ result;}
-\DoxyCodeLine{\Hypertarget{qalgorithms__refmatrix_8cpp_source_l00072}00072\ \ \ \}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__refmatrix_8cpp_source_l00073}00073\ }
-\DoxyCodeLine{\Hypertarget{qalgorithms__refmatrix_8cpp_source_l00074}00074\ \ \ \textcolor{comment}{//\ debugging}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__refmatrix_8cpp_source_l00075}\mbox{\hyperlink{classq_1_1_ref_matrix_a72cb7cf2f017bae84ded94d7b2b9ed56}{00075}}\ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classq_1_1_ref_matrix_a72cb7cf2f017bae84ded94d7b2b9ed56}{RefMatrix::print}}()\textcolor{keyword}{\ const}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__refmatrix_8cpp_source_l00076}00076\ \textcolor{keyword}{\ \ }\{}
-\DoxyCodeLine{\Hypertarget{qalgorithms__refmatrix_8cpp_source_l00077}00077\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{size\_t}\ i\ =\ 0;\ i\ <\ rows;\ i++)}
-\DoxyCodeLine{\Hypertarget{qalgorithms__refmatrix_8cpp_source_l00078}00078\ \ \ \ \ \{}
-\DoxyCodeLine{\Hypertarget{qalgorithms__refmatrix_8cpp_source_l00079}00079\ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{size\_t}\ j\ =\ 0;\ j\ <\ cols;\ j++)}
-\DoxyCodeLine{\Hypertarget{qalgorithms__refmatrix_8cpp_source_l00080}00080\ \ \ \ \ \ \ \{}
-\DoxyCodeLine{\Hypertarget{qalgorithms__refmatrix_8cpp_source_l00081}00081\ \ \ \ \ \ \ \ \ std::cout\ <<\ elements[i\ *\ cols\ +\ j]\ <<\ \textcolor{stringliteral}{"{}\ "{}};}
-\DoxyCodeLine{\Hypertarget{qalgorithms__refmatrix_8cpp_source_l00082}00082\ \ \ \ \ \ \ \}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__refmatrix_8cpp_source_l00083}00083\ \ \ \ \ \ \ std::cout\ <<\ std::endl;}
-\DoxyCodeLine{\Hypertarget{qalgorithms__refmatrix_8cpp_source_l00084}00084\ \ \ \ \ \}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__refmatrix_8cpp_source_l00085}00085\ \ \ \}}
-\DoxyCodeLine{\Hypertarget{qalgorithms__refmatrix_8cpp_source_l00086}00086\ \}\ \textcolor{comment}{//\ namespace\ q}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__refmatrix_8cpp_source_l00060}\mbox{\hyperlink{classq_1_1_ref_matrix_ab36af54ee1cc979bbdd03f3d855f6c3c}{00060}}\ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classq_1_1_ref_matrix_ab36af54ee1cc979bbdd03f3d855f6c3c}{RefMatrix::assignVal}}(\textcolor{keywordtype}{size\_t}\ row,\ \textcolor{keywordtype}{size\_t}\ col,\ \textcolor{keywordtype}{double}\ value)}
+\DoxyCodeLine{\Hypertarget{qalgorithms__refmatrix_8cpp_source_l00061}00061\ \ \ \{}
+\DoxyCodeLine{\Hypertarget{qalgorithms__refmatrix_8cpp_source_l00062}00062\ \ \ \ \ elements[row\ *\ cols\ +\ col]\ =\ std::ref(value);}
+\DoxyCodeLine{\Hypertarget{qalgorithms__refmatrix_8cpp_source_l00063}00063\ \ \ \}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__refmatrix_8cpp_source_l00064}00064\ }
+\DoxyCodeLine{\Hypertarget{qalgorithms__refmatrix_8cpp_source_l00065}00065\ \ \ \textcolor{comment}{//\ submatrix}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__refmatrix_8cpp_source_l00066}\mbox{\hyperlink{classq_1_1_ref_matrix_acf64fa77245e22e27415677aac603be3}{00066}}\ \ \ \mbox{\hyperlink{classq_1_1_ref_matrix}{RefMatrix}}\ \mbox{\hyperlink{classq_1_1_ref_matrix_acf64fa77245e22e27415677aac603be3}{RefMatrix::subMatrix}}(\textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{row\_start}},\ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{row\_end}},\ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{col\_start}},\ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{col\_end}})\textcolor{keyword}{\ const}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__refmatrix_8cpp_source_l00067}00067\ \textcolor{keyword}{\ \ }\{}
+\DoxyCodeLine{\Hypertarget{qalgorithms__refmatrix_8cpp_source_l00068}00068\ \ \ \ \ \mbox{\hyperlink{classq_1_1_ref_matrix}{RefMatrix}}\ result(\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{row\_end}}\ -\/\ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{row\_start}},\ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{col\_end}}\ -\/\ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{col\_start}});}
+\DoxyCodeLine{\Hypertarget{qalgorithms__refmatrix_8cpp_source_l00069}00069\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{i}}\ =\ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{row\_start}};\ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{i}}\ <\ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{row\_end}};\ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{i}}++)}
+\DoxyCodeLine{\Hypertarget{qalgorithms__refmatrix_8cpp_source_l00070}00070\ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{qalgorithms__refmatrix_8cpp_source_l00071}00071\ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{j}}\ =\ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{col\_start}};\ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{j}}\ <\ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{col\_end}};\ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{j}}++)}
+\DoxyCodeLine{\Hypertarget{qalgorithms__refmatrix_8cpp_source_l00072}00072\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{qalgorithms__refmatrix_8cpp_source_l00073}00073\ \ \ \ \ \ \ \ \ result.\mbox{\hyperlink{classq_1_1_ref_matrix_ac8c6b743d600620b0179551ec291caf5}{assignRef}}(\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{i}}\ -\/\ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{row\_start}},\ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{j}}\ -\/\ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{col\_start}},\ elements[\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{i}}\ *\ cols\ +\ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{j}}]);}
+\DoxyCodeLine{\Hypertarget{qalgorithms__refmatrix_8cpp_source_l00074}00074\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__refmatrix_8cpp_source_l00075}00075\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__refmatrix_8cpp_source_l00076}00076\ \ \ \ \ \textcolor{keywordflow}{return}\ result;}
+\DoxyCodeLine{\Hypertarget{qalgorithms__refmatrix_8cpp_source_l00077}00077\ \ \ \}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__refmatrix_8cpp_source_l00078}00078\ }
+\DoxyCodeLine{\Hypertarget{qalgorithms__refmatrix_8cpp_source_l00079}00079\ \ \ \textcolor{comment}{//\ matrix\ operations}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__refmatrix_8cpp_source_l00080}\mbox{\hyperlink{classq_1_1_ref_matrix_a1f47d87b4144f587178f1ca228712a48}{00080}}\ \ \ \mbox{\hyperlink{classq_1_1_matrix}{Matrix}}\ \mbox{\hyperlink{classq_1_1_ref_matrix_a1f47d87b4144f587178f1ca228712a48}{RefMatrix::log}}()\textcolor{keyword}{\ const}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__refmatrix_8cpp_source_l00081}00081\ \textcolor{keyword}{\ \ }\{}
+\DoxyCodeLine{\Hypertarget{qalgorithms__refmatrix_8cpp_source_l00082}00082\ \ \ \ \ \mbox{\hyperlink{classq_1_1_matrix}{Matrix}}\ result(rows,\ cols);}
+\DoxyCodeLine{\Hypertarget{qalgorithms__refmatrix_8cpp_source_l00083}00083\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{i}}\ =\ 0;\ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{i}}\ <\ rows;\ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{i}}++)}
+\DoxyCodeLine{\Hypertarget{qalgorithms__refmatrix_8cpp_source_l00084}00084\ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{qalgorithms__refmatrix_8cpp_source_l00085}00085\ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{j}}\ =\ 0;\ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{j}}\ <\ cols;\ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{j}}++)}
+\DoxyCodeLine{\Hypertarget{qalgorithms__refmatrix_8cpp_source_l00086}00086\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{qalgorithms__refmatrix_8cpp_source_l00087}00087\ \ \ \ \ \ \ \ \ result(\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{i}},\ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{j}})\ =\ std::log(elements[\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{i}}\ *\ cols\ +\ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{j}}]);}
+\DoxyCodeLine{\Hypertarget{qalgorithms__refmatrix_8cpp_source_l00088}00088\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__refmatrix_8cpp_source_l00089}00089\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__refmatrix_8cpp_source_l00090}00090\ \ \ \ \ \textcolor{keywordflow}{return}\ result;}
+\DoxyCodeLine{\Hypertarget{qalgorithms__refmatrix_8cpp_source_l00091}00091\ \ \ \}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__refmatrix_8cpp_source_l00092}00092\ }
+\DoxyCodeLine{\Hypertarget{qalgorithms__refmatrix_8cpp_source_l00093}00093\ \ \ \textcolor{comment}{//\ debugging}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__refmatrix_8cpp_source_l00094}\mbox{\hyperlink{classq_1_1_ref_matrix_a72cb7cf2f017bae84ded94d7b2b9ed56}{00094}}\ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classq_1_1_ref_matrix_a72cb7cf2f017bae84ded94d7b2b9ed56}{RefMatrix::print}}()\textcolor{keyword}{\ const}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__refmatrix_8cpp_source_l00095}00095\ \textcolor{keyword}{\ \ }\{}
+\DoxyCodeLine{\Hypertarget{qalgorithms__refmatrix_8cpp_source_l00096}00096\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{i}}\ =\ 0;\ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{i}}\ <\ rows;\ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{i}}++)}
+\DoxyCodeLine{\Hypertarget{qalgorithms__refmatrix_8cpp_source_l00097}00097\ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{qalgorithms__refmatrix_8cpp_source_l00098}00098\ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{j}}\ =\ 0;\ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{j}}\ <\ cols;\ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{j}}++)}
+\DoxyCodeLine{\Hypertarget{qalgorithms__refmatrix_8cpp_source_l00099}00099\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{qalgorithms__refmatrix_8cpp_source_l00100}00100\ \ \ \ \ \ \ \ \ std::cout\ <<\ elements[\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{i}}\ *\ cols\ +\ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{j}}]\ <<\ \textcolor{stringliteral}{"{}\ "{}};}
+\DoxyCodeLine{\Hypertarget{qalgorithms__refmatrix_8cpp_source_l00101}00101\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__refmatrix_8cpp_source_l00102}00102\ \ \ \ \ \ \ std::cout\ <<\ std::endl;}
+\DoxyCodeLine{\Hypertarget{qalgorithms__refmatrix_8cpp_source_l00103}00103\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__refmatrix_8cpp_source_l00104}00104\ \ \ \}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__refmatrix_8cpp_source_l00105}00105\ \}\ \textcolor{comment}{//\ namespace\ q}}
 
 \end{DoxyCode}

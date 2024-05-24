@@ -1,30 +1,5 @@
 var searchData=
 [
-  ['calcapex_5fposition_0',['calcApex_position',['../classq_1_1_peakmodel.html#a7de8c78779b84539d2106c8df6fccd82',1,'q::Peakmodel']]],
-  ['calcapexvalley_5fposition_1',['calcApexValley_position',['../classq_1_1_peakmodel.html#a542dd57336dca49ad04ec7008b927314',1,'q::Peakmodel']]],
-  ['calcjacobianmatrix_5farea_2',['calcJacobianMatrix_Area',['../classq_1_1_peakmodel.html#a16319abd9fdca96c7c2cdf752fdd9202',1,'q::Peakmodel']]],
-  ['calcjacobianmatrix_5farea_5fhalf_3',['calcJacobianMatrix_Area_half',['../classq_1_1_peakmodel.html#a4e5b741b7bf88fda644ea849cd40ffbc',1,'q::Peakmodel']]],
-  ['calcjacobianmatrix_5farea_5fhalf_5fvalley_4',['calcJacobianMatrix_Area_half_Valley',['../classq_1_1_peakmodel.html#a2c2d46444af989d434546febe4ca96ff',1,'q::Peakmodel']]],
-  ['calcjacobianmatrix_5fheight_5',['calcJacobianMatrix_Height',['../classq_1_1_peakmodel.html#a21fb1c801736efd8699cbc126d36057e',1,'q::Peakmodel']]],
-  ['calcjacobianmatrix_5fposition_6',['calcJacobianMatrix_Position',['../classq_1_1_peakmodel.html#a034d574b35eae6738bb3a44030502469',1,'q::Peakmodel']]],
-  ['calcmse_7',['calcMse',['../classq_1_1_peakmodel.html#aea0c2dd8b95298b4478386e98753beb3',1,'q::Peakmodel']]],
-  ['calcpeakarea_8',['calcPeakArea',['../classq_1_1_peakmodel.html#a52cdcafe0f47260aa101684a5670ee67',1,'q::Peakmodel']]],
-  ['calcpeakarea_5fhalf_9',['calcPeakArea_half',['../classq_1_1_peakmodel.html#a61c38d0f871f4ba3b8970c4e9995071e',1,'q::Peakmodel']]],
-  ['calcpeakarea_5fhalfvalley_10',['calcPeakArea_halfValley',['../classq_1_1_peakmodel.html#a3bbaad909f27fd0031420bd6076413b1',1,'q::Peakmodel']]],
-  ['calcpeakareanotcovered_11',['calcPeakAreaNotCovered',['../classq_1_1_peakmodel.html#aae34486dfec89dba267ea6c62a4f3895',1,'q::Peakmodel']]],
-  ['calcpeakheight_12',['calcPeakHeight',['../classq_1_1_peakmodel.html#aa6aa3d1f36fa0781b3d706eccfeb5626',1,'q::Peakmodel']]],
-  ['calculatedesignmatrix_13',['calculateDesignMatrix',['../classq_1_1_peakmodel.html#a78e1dbff931aa1d7a63396af1e791794',1,'q::Peakmodel']]],
-  ['calculatenumberofregressions_14',['calculateNumberOfRegressions',['../classq_1_1q_peaks.html#a36126b35fb916b8beb1c97ce23b36614',1,'q::qPeaks']]],
-  ['calculatepseudoinverse_15',['calculatePseudoInverse',['../classq_1_1_peakmodel.html#ade15a55d5cc786a8282617014024a87e',1,'q::Peakmodel']]],
-  ['clearpeaks_16',['clearPeaks',['../classq_1_1_data_type_1_1_peak_list.html#a65d3ba6fd8d79ca816a575878e382497',1,'q::DataType::PeakList']]],
-  ['coefficientcriterion_17',['coefficientCriterion',['../classq_1_1_peakmodel.html#ae308d29f7b6c9c548f4d2edb8fd8169c',1,'q::Peakmodel']]],
-  ['coefficientcriterioncases_18',['coefficientCriterionCases',['../classq_1_1_peakmodel.html#af75235cd26feb7b8081e6078db34bded',1,'q::Peakmodel']]],
-  ['col_19',['col',['../classq_1_1_matrix.html#ae8c80426ebd00d309a1e79eb9d38f97e',1,'q::Matrix']]],
-  ['complete_20',['complete',['../classq_1_1_progress_bar.html#a177347e1a65f6c5ae99a590804d5738c',1,'q::ProgressBar']]],
-  ['convolecombiend_21',['convoleCombiend',['../classq_1_1_matrix.html#aceb7f09f0eea5817c7e46d7cdbb7870d',1,'q::Matrix']]],
-  ['convolveantisymmetric_22',['convolveAntisymmetric',['../classq_1_1_matrix.html#a956aba54c16b1e9c65b8c131d0b9cf6d',1,'q::Matrix']]],
-  ['convolvep_23',['convolveP',['../classq_1_1_peakmodel.html#abc6a79cb45966a252ef3247d3ac95196',1,'q::Peakmodel']]],
-  ['convolverotation_24',['convolveRotation',['../classq_1_1_matrix.html#a549e37550d5df9f221ea8ab647751221',1,'q::Matrix']]],
-  ['convolvesymmetric_25',['convolveSymmetric',['../classq_1_1_matrix.html#a0d2a7bf49f60c2cb4e81f5489a175860',1,'q::Matrix']]],
-  ['cutdata_26',['cutData',['../classq_1_1_measurement_data.html#ab1f64fdddef6f6549b6f2a18b4b4bd7e',1,'q::MeasurementData::cutData()'],['../classq_1_1_l_c_m_s_data.html#a6c799dc9ef6918446df62515bc7daa8d',1,'q::LCMSData::cutData()']]]
+  ['begin_0',['begin',['../classxpath__node__set__raw.html#aa7b27af5bb0611715e24d52788a6360d',1,'xpath_node_set_raw::begin()'],['../classpugi_1_1xml__object__range.html#a10f4f757413e31861f8dec21bb4f8dec',1,'pugi::xml_object_range::begin()'],['../classpugi_1_1xml__node.html#aeff3362bf030a0df28ec2db9b84498f1',1,'pugi::xml_node::begin()'],['../classpugi_1_1xml__tree__walker.html#a4822454e1bfc72771d5b808fb65cbce0',1,'pugi::xml_tree_walker::begin()'],['../classpugi_1_1xpath__node__set.html#ab8880443945162c91b9b0813613c41a9',1,'pugi::xpath_node_set::begin()']]],
+  ['binary_5fop_5ft_1',['binary_op_t',['../structxpath__parser_1_1binary__op__t.html#a18cac63911120c27f5ee842b1e6afe35',1,'xpath_parser::binary_op_t::binary_op_t()'],['../structxpath__parser_1_1binary__op__t.html#a6b8a545436af8aa0c74c91e181a2b865',1,'xpath_parser::binary_op_t::binary_op_t(ast_type_t asttype_, xpath_value_type rettype_, int precedence_)']]]
 ];

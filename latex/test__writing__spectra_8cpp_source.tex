@@ -1,0 +1,56 @@
+\doxysection{test\+\_\+writing\+\_\+spectra.\+cpp}
+\hypertarget{test__writing__spectra_8cpp_source}{}\label{test__writing__spectra_8cpp_source}\index{test/test\_writing\_spectra.cpp@{test/test\_writing\_spectra.cpp}}
+\mbox{\hyperlink{test__writing__spectra_8cpp}{Go to the documentation of this file.}}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\Hypertarget{test__writing__spectra_8cpp_source_l00001}00001\ }
+\DoxyCodeLine{\Hypertarget{test__writing__spectra_8cpp_source_l00002}\mbox{\hyperlink{test__writing__spectra_8cpp_aba8f64e85224272a530abfda9c0ee302}{00002}}\ \textcolor{preprocessor}{\#define\ STREAMCRAT\_HEADER\_ONLY}}
+\DoxyCodeLine{\Hypertarget{test__writing__spectra_8cpp_source_l00003}00003\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{_stream_craft__mzml_8hpp}{../external/StreamCraft/src/StreamCraft\_mzml.hpp}}"{}}}
+\DoxyCodeLine{\Hypertarget{test__writing__spectra_8cpp_source_l00004}00004\ }
+\DoxyCodeLine{\Hypertarget{test__writing__spectra_8cpp_source_l00005}\mbox{\hyperlink{test__writing__spectra_8cpp_ae66f6b31b5ad750f1fe042a706a4e3d4}{00005}}\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{test__writing__spectra_8cpp_ae66f6b31b5ad750f1fe042a706a4e3d4}{main}}()\ \{}
+\DoxyCodeLine{\Hypertarget{test__writing__spectra_8cpp_source_l00006}00006\ }
+\DoxyCodeLine{\Hypertarget{test__writing__spectra_8cpp_source_l00007}00007\ \ \ std::string\ file\ =\ \textcolor{stringliteral}{"{}test/data/example\_profile.mzML"{}};}
+\DoxyCodeLine{\Hypertarget{test__writing__spectra_8cpp_source_l00008}00008\ }
+\DoxyCodeLine{\Hypertarget{test__writing__spectra_8cpp_source_l00009}00009\ \ \ \mbox{\hyperlink{classsc_1_1mzml_1_1_m_z_m_l}{sc::MZML}}\ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{z}}(file);}
+\DoxyCodeLine{\Hypertarget{test__writing__spectra_8cpp_source_l00010}00010\ }
+\DoxyCodeLine{\Hypertarget{test__writing__spectra_8cpp_source_l00011}00011\ \ \ std::vector<int>\ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{idx}}(10);}
+\DoxyCodeLine{\Hypertarget{test__writing__spectra_8cpp_source_l00012}00012\ \ \ std::iota(\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{idx}}.begin(),\ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{idx}}.end(),\ 0);}
+\DoxyCodeLine{\Hypertarget{test__writing__spectra_8cpp_source_l00013}00013\ }
+\DoxyCodeLine{\Hypertarget{test__writing__spectra_8cpp_source_l00014}00014\ \ \ std::vector<std::vector<std::vector<double>>>\ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{spectra}};}
+\DoxyCodeLine{\Hypertarget{test__writing__spectra_8cpp_source_l00015}00015\ \ \ \textcolor{comment}{//\ spectra\ list}}
+\DoxyCodeLine{\Hypertarget{test__writing__spectra_8cpp_source_l00016}00016\ \ \ \ \ \ \ \textcolor{comment}{//\ spectrum}}
+\DoxyCodeLine{\Hypertarget{test__writing__spectra_8cpp_source_l00017}00017\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ m/z,\ intensity,\ ...}}
+\DoxyCodeLine{\Hypertarget{test__writing__spectra_8cpp_source_l00018}00018\ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{\Hypertarget{test__writing__spectra_8cpp_source_l00019}00019\ \ \ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{spectra}}\ =\ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{z}}.get\_spectra();}
+\DoxyCodeLine{\Hypertarget{test__writing__spectra_8cpp_source_l00020}00020\ \ \ }
+\DoxyCodeLine{\Hypertarget{test__writing__spectra_8cpp_source_l00021}00021\ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}Number\ of\ extracted\ spectra:\ "{}}\ <<\ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{spectra}}.size()\ <<\ std::endl;}
+\DoxyCodeLine{\Hypertarget{test__writing__spectra_8cpp_source_l00022}00022\ }
+\DoxyCodeLine{\Hypertarget{test__writing__spectra_8cpp_source_l00023}00023\ \ \ \textcolor{comment}{//\ //\ Add\ two\ extra\ binnary\ arays\ to\ each\ spectrum}}
+\DoxyCodeLine{\Hypertarget{test__writing__spectra_8cpp_source_l00024}00024\ \ \ \textcolor{comment}{//\ int\ number\_traces\ =\ 0;}}
+\DoxyCodeLine{\Hypertarget{test__writing__spectra_8cpp_source_l00025}00025\ \ \ \textcolor{comment}{//\ for\ (size\_t\ i\ =\ 0;\ i\ <\ spectra.size();\ i++)\ \{}}
+\DoxyCodeLine{\Hypertarget{test__writing__spectra_8cpp_source_l00026}00026\ \ \ \textcolor{comment}{//\ \ \ for\ (size\_t\ j\ =\ 0;\ j\ <\ spectra[i].size();\ j++)\ \{}}
+\DoxyCodeLine{\Hypertarget{test__writing__spectra_8cpp_source_l00027}00027\ \ \ \textcolor{comment}{//\ \ \ \ \ spectra[i][j].resize(10);}}
+\DoxyCodeLine{\Hypertarget{test__writing__spectra_8cpp_source_l00028}00028\ \ \ \textcolor{comment}{//\ \ \ \}}}
+\DoxyCodeLine{\Hypertarget{test__writing__spectra_8cpp_source_l00029}00029\ \ \ \textcolor{comment}{//\ \ \ number\_traces\ =\ number\_traces\ +\ spectra[i][0].size();}}
+\DoxyCodeLine{\Hypertarget{test__writing__spectra_8cpp_source_l00030}00030\ \ \ \textcolor{comment}{//\ \ \ spectra[i].push\_back(spectra[i][0]);}}
+\DoxyCodeLine{\Hypertarget{test__writing__spectra_8cpp_source_l00031}00031\ \ \ \textcolor{comment}{//\ \ \ spectra[i].push\_back(spectra[i][0]);}}
+\DoxyCodeLine{\Hypertarget{test__writing__spectra_8cpp_source_l00032}00032\ \ \ \textcolor{comment}{//\ \}}}
+\DoxyCodeLine{\Hypertarget{test__writing__spectra_8cpp_source_l00033}00033\ }
+\DoxyCodeLine{\Hypertarget{test__writing__spectra_8cpp_source_l00034}00034\ \ \ \textcolor{comment}{//\ std::cout\ <<\ "{}Number\ of\ traces:\ "{}\ <<\ number\_traces\ <<\ std::endl;}}
+\DoxyCodeLine{\Hypertarget{test__writing__spectra_8cpp_source_l00035}00035\ \ \ \textcolor{comment}{//\ std::cout\ <<\ "{}Number\ of\ traces\ in\ 1st\ spectrum:\ "{}\ <<\ spectra[0][0].size()\ <<\ std::endl;}}
+\DoxyCodeLine{\Hypertarget{test__writing__spectra_8cpp_source_l00036}00036\ \ \ \textcolor{comment}{//\ std::cout\ <<\ "{}Number\ of\ binary\ entries:\ "{}\ <<\ spectra[0].size()\ <<\ std::endl;}}
+\DoxyCodeLine{\Hypertarget{test__writing__spectra_8cpp_source_l00037}00037\ \ \ }
+\DoxyCodeLine{\Hypertarget{test__writing__spectra_8cpp_source_l00038}00038\ \ \ \textcolor{comment}{//\ print\ a\ spectrum}}
+\DoxyCodeLine{\Hypertarget{test__writing__spectra_8cpp_source_l00039}00039\ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{i}}\ =\ 0;\ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{i}}\ \ <\ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{spectra}}[0][0].size();\ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{i}}++)\ \{}
+\DoxyCodeLine{\Hypertarget{test__writing__spectra_8cpp_source_l00040}00040\ \ \ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}m/z:\ "{}}\ <<\ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{spectra}}[0][0][\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{i}}]\ <<\ \textcolor{stringliteral}{"{}\ intensity:\ "{}}\ <<\ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{spectra}}[0][1][\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{i}}]\ <<\ std::endl;}
+\DoxyCodeLine{\Hypertarget{test__writing__spectra_8cpp_source_l00041}00041\ \ \ \}}
+\DoxyCodeLine{\Hypertarget{test__writing__spectra_8cpp_source_l00042}00042\ }
+\DoxyCodeLine{\Hypertarget{test__writing__spectra_8cpp_source_l00043}00043\ \ \ \textcolor{comment}{//\ std::vector<std::string>\ bin\_names\ =\ \{"{}mz"{},\ "{}intensity"{},\ "{}x1"{},\ "{}x2"{}\};}}
+\DoxyCodeLine{\Hypertarget{test__writing__spectra_8cpp_source_l00044}00044\ }
+\DoxyCodeLine{\Hypertarget{test__writing__spectra_8cpp_source_l00045}00045\ \ \ \textcolor{comment}{//\ z.write\_spectra(spectra,\ bin\_names,\ sc::MS\_SPECTRA\_MODE::CENTROID,\ true,\ true,\ "{}\_cent"{});}}
+\DoxyCodeLine{\Hypertarget{test__writing__spectra_8cpp_source_l00046}00046\ }
+\DoxyCodeLine{\Hypertarget{test__writing__spectra_8cpp_source_l00047}00047\ \ \ std::cout\ <<\ std::endl;}
+\DoxyCodeLine{\Hypertarget{test__writing__spectra_8cpp_source_l00048}00048\ }
+\DoxyCodeLine{\Hypertarget{test__writing__spectra_8cpp_source_l00049}00049\ \ \ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{\Hypertarget{test__writing__spectra_8cpp_source_l00050}00050\ \}}
+
+\end{DoxyCode}

@@ -1,0 +1,250 @@
+\doxysection{sc\+::mzxml\+::MZXML Class Reference}
+\hypertarget{classsc_1_1mzxml_1_1_m_z_x_m_l}{}\label{classsc_1_1mzxml_1_1_m_z_x_m_l}\index{sc::mzxml::MZXML@{sc::mzxml::MZXML}}
+
+
+{\ttfamily \#include $<$Stream\+Craft\+\_\+mzxml.\+hpp$>$}
+
+\doxysubsubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\hyperlink{classsc_1_1mzxml_1_1_m_z_x_m_l_a1cd171ff008359a5598ad4d62644d0cd}{MZXML}} (\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} std\+::string \&file)
+\item 
+\mbox{\hyperlink{structsc_1_1utils_1_1_m_s___s_p_e_c_t_r_a___h_e_a_d_e_r_s}{MS\+\_\+\+SPECTRA\+\_\+\+HEADERS}} \mbox{\hyperlink{classsc_1_1mzxml_1_1_m_z_x_m_l_a9e22a97730449f0ab49ba3a347f9de69}{get\+\_\+spectra\+\_\+headers}} (std\+::vector$<$ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{int}} $>$ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{indices}}=\{\})
+\item 
+std\+::vector$<$ std\+::vector$<$ std\+::vector$<$ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{double}} $>$ $>$ $>$ \mbox{\hyperlink{classsc_1_1mzxml_1_1_m_z_x_m_l_af31619cbae632d2a07309c427631306f}{get\+\_\+spectra}} (std\+::vector$<$ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{int}} $>$ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{indices}}=\{\})
+\item 
+\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{void}} \mbox{\hyperlink{classsc_1_1mzxml_1_1_m_z_x_m_l_ac78786a076adbf95eeaa72174406f731}{print}} ()
+\item 
+\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{void}} \mbox{\hyperlink{classsc_1_1mzxml_1_1_m_z_x_m_l_a57fc1b73714cc22c079a7e9d0337263b}{print\+\_\+binary\+\_\+metadata}} ()
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Public Attributes}
+\begin{DoxyCompactItemize}
+\item 
+std\+::string \mbox{\hyperlink{classsc_1_1mzxml_1_1_m_z_x_m_l_a6d1a316337365b2aaef1ee6dcbbfb7b8}{file\+\_\+path}}
+\item 
+std\+::string \mbox{\hyperlink{classsc_1_1mzxml_1_1_m_z_x_m_l_a7514f3bd73de0413bc8a0ad3ade8ab69}{file\+\_\+dir}}
+\item 
+std\+::string \mbox{\hyperlink{classsc_1_1mzxml_1_1_m_z_x_m_l_a2eb46e3163b7e6e96cad578c289b837f}{file\+\_\+name}}
+\item 
+std\+::string \mbox{\hyperlink{classsc_1_1mzxml_1_1_m_z_x_m_l_a35acaa9c80663384bed3d5504700b109}{file\+\_\+extension}}
+\item 
+\mbox{\hyperlink{classpugi_1_1xml__document}{pugi\+::xml\+\_\+document}} \mbox{\hyperlink{classsc_1_1mzxml_1_1_m_z_x_m_l_aa438a6bf698a69dc072c308b4ca71b53}{doc}}
+\item 
+\mbox{\hyperlink{structpugi_1_1xml__parse__result}{pugi\+::xml\+\_\+parse\+\_\+result}} \mbox{\hyperlink{classsc_1_1mzxml_1_1_m_z_x_m_l_abb172df0b8b49bede88c5868926d3ccc}{loading\+\_\+result}}
+\item 
+\mbox{\hyperlink{classpugi_1_1xml__node}{pugi\+::xml\+\_\+node}} \mbox{\hyperlink{classsc_1_1mzxml_1_1_m_z_x_m_l_aa19ecb02d4b3e9ec60f555f2cc3beaf4}{root}}
+\item 
+std\+::string \mbox{\hyperlink{classsc_1_1mzxml_1_1_m_z_x_m_l_a0f13d76da9f2e11f375f4323b32dca6e}{format}}
+\item 
+std\+::string \mbox{\hyperlink{classsc_1_1mzxml_1_1_m_z_x_m_l_ad1508ed5a168004f632c7727ad8b1c87}{name}}
+\item 
+\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{int}} \mbox{\hyperlink{classsc_1_1mzxml_1_1_m_z_x_m_l_afe1d7ce930dea2f7444c29861c42556e}{number\+\_\+spectra}}
+\item 
+\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{int}} \mbox{\hyperlink{classsc_1_1mzxml_1_1_m_z_x_m_l_a2426be1e36ec35234724de09b955e763}{number\+\_\+chromatograms}} = 0
+\item 
+\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{int}} \mbox{\hyperlink{classsc_1_1mzxml_1_1_m_z_x_m_l_a5f6e400eb48753c56ae3707f2ba36795}{number\+\_\+spectra\+\_\+binary\+\_\+arrays}} = 2
+\item 
+\mbox{\hyperlink{structsc_1_1utils_1_1_m_s___s_p_e_c_t_r_a___h_e_a_d_e_r_s}{MS\+\_\+\+SPECTRA\+\_\+\+HEADERS}} \mbox{\hyperlink{classsc_1_1mzxml_1_1_m_z_x_m_l_aa59c895698f8b3a757c322a6c82717ab}{first\+\_\+spectra\+\_\+headers}}
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+
+
+Definition at line \mbox{\hyperlink{_stream_craft__mzxml_8hpp_source_l00041}{41}} of file \mbox{\hyperlink{_stream_craft__mzxml_8hpp_source}{Stream\+Craft\+\_\+mzxml.\+hpp}}.
+
+
+
+\doxysubsection{Constructor \& Destructor Documentation}
+\Hypertarget{classsc_1_1mzxml_1_1_m_z_x_m_l_a1cd171ff008359a5598ad4d62644d0cd}\label{classsc_1_1mzxml_1_1_m_z_x_m_l_a1cd171ff008359a5598ad4d62644d0cd} 
+\index{sc::mzxml::MZXML@{sc::mzxml::MZXML}!MZXML@{MZXML}}
+\index{MZXML@{MZXML}!sc::mzxml::MZXML@{sc::mzxml::MZXML}}
+\doxysubsubsection{\texorpdfstring{MZXML()}{MZXML()}}
+{\footnotesize\ttfamily sc\+::mzxml\+::\+MZXML\+::\+MZXML (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} std\+::string \&}]{file }\end{DoxyParamCaption})}
+
+
+
+Definition at line \mbox{\hyperlink{_stream_craft__mzxml_8cpp_source_l00007}{7}} of file \mbox{\hyperlink{_stream_craft__mzxml_8cpp_source}{Stream\+Craft\+\_\+mzxml.\+cpp}}.
+
+
+
+\doxysubsection{Member Function Documentation}
+\Hypertarget{classsc_1_1mzxml_1_1_m_z_x_m_l_af31619cbae632d2a07309c427631306f}\label{classsc_1_1mzxml_1_1_m_z_x_m_l_af31619cbae632d2a07309c427631306f} 
+\index{sc::mzxml::MZXML@{sc::mzxml::MZXML}!get\_spectra@{get\_spectra}}
+\index{get\_spectra@{get\_spectra}!sc::mzxml::MZXML@{sc::mzxml::MZXML}}
+\doxysubsubsection{\texorpdfstring{get\_spectra()}{get\_spectra()}}
+{\footnotesize\ttfamily std\+::vector$<$ std\+::vector$<$ std\+::vector$<$ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{double}} $>$ $>$ $>$ sc\+::mzxml\+::\+MZXML\+::get\+\_\+spectra (\begin{DoxyParamCaption}\item[{std\+::vector$<$ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{int}} $>$}]{indices = {\ttfamily \{\}} }\end{DoxyParamCaption})}
+
+
+
+Definition at line \mbox{\hyperlink{_stream_craft__mzxml_8cpp_source_l00340}{340}} of file \mbox{\hyperlink{_stream_craft__mzxml_8cpp_source}{Stream\+Craft\+\_\+mzxml.\+cpp}}.
+
+\Hypertarget{classsc_1_1mzxml_1_1_m_z_x_m_l_a9e22a97730449f0ab49ba3a347f9de69}\label{classsc_1_1mzxml_1_1_m_z_x_m_l_a9e22a97730449f0ab49ba3a347f9de69} 
+\index{sc::mzxml::MZXML@{sc::mzxml::MZXML}!get\_spectra\_headers@{get\_spectra\_headers}}
+\index{get\_spectra\_headers@{get\_spectra\_headers}!sc::mzxml::MZXML@{sc::mzxml::MZXML}}
+\doxysubsubsection{\texorpdfstring{get\_spectra\_headers()}{get\_spectra\_headers()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{structsc_1_1utils_1_1_m_s___s_p_e_c_t_r_a___h_e_a_d_e_r_s}{sc\+::\+MS\+\_\+\+SPECTRA\+\_\+\+HEADERS}} sc\+::mzxml\+::\+MZXML\+::get\+\_\+spectra\+\_\+headers (\begin{DoxyParamCaption}\item[{std\+::vector$<$ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{int}} $>$}]{indices = {\ttfamily \{\}} }\end{DoxyParamCaption})}
+
+
+
+Definition at line \mbox{\hyperlink{_stream_craft__mzxml_8cpp_source_l00321}{321}} of file \mbox{\hyperlink{_stream_craft__mzxml_8cpp_source}{Stream\+Craft\+\_\+mzxml.\+cpp}}.
+
+\Hypertarget{classsc_1_1mzxml_1_1_m_z_x_m_l_ac78786a076adbf95eeaa72174406f731}\label{classsc_1_1mzxml_1_1_m_z_x_m_l_ac78786a076adbf95eeaa72174406f731} 
+\index{sc::mzxml::MZXML@{sc::mzxml::MZXML}!print@{print}}
+\index{print@{print}!sc::mzxml::MZXML@{sc::mzxml::MZXML}}
+\doxysubsubsection{\texorpdfstring{print()}{print()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{void}} sc\+::mzxml\+::\+MZXML\+::print (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})}
+
+
+
+Definition at line \mbox{\hyperlink{_stream_craft__mzxml_8cpp_source_l00088}{88}} of file \mbox{\hyperlink{_stream_craft__mzxml_8cpp_source}{Stream\+Craft\+\_\+mzxml.\+cpp}}.
+
+\Hypertarget{classsc_1_1mzxml_1_1_m_z_x_m_l_a57fc1b73714cc22c079a7e9d0337263b}\label{classsc_1_1mzxml_1_1_m_z_x_m_l_a57fc1b73714cc22c079a7e9d0337263b} 
+\index{sc::mzxml::MZXML@{sc::mzxml::MZXML}!print\_binary\_metadata@{print\_binary\_metadata}}
+\index{print\_binary\_metadata@{print\_binary\_metadata}!sc::mzxml::MZXML@{sc::mzxml::MZXML}}
+\doxysubsubsection{\texorpdfstring{print\_binary\_metadata()}{print\_binary\_metadata()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{void}} sc\+::mzxml\+::\+MZXML\+::print\+\_\+binary\+\_\+metadata (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Definition at line \mbox{\hyperlink{_stream_craft__mzxml_8hpp_source_l00109}{109}} of file \mbox{\hyperlink{_stream_craft__mzxml_8hpp_source}{Stream\+Craft\+\_\+mzxml.\+hpp}}.
+
+
+
+\doxysubsection{Member Data Documentation}
+\Hypertarget{classsc_1_1mzxml_1_1_m_z_x_m_l_aa438a6bf698a69dc072c308b4ca71b53}\label{classsc_1_1mzxml_1_1_m_z_x_m_l_aa438a6bf698a69dc072c308b4ca71b53} 
+\index{sc::mzxml::MZXML@{sc::mzxml::MZXML}!doc@{doc}}
+\index{doc@{doc}!sc::mzxml::MZXML@{sc::mzxml::MZXML}}
+\doxysubsubsection{\texorpdfstring{doc}{doc}}
+{\footnotesize\ttfamily \mbox{\hyperlink{classpugi_1_1xml__document}{pugi\+::xml\+\_\+document}} sc\+::mzxml\+::\+MZXML\+::doc}
+
+
+
+Definition at line \mbox{\hyperlink{_stream_craft__mzxml_8hpp_source_l00083}{83}} of file \mbox{\hyperlink{_stream_craft__mzxml_8hpp_source}{Stream\+Craft\+\_\+mzxml.\+hpp}}.
+
+\Hypertarget{classsc_1_1mzxml_1_1_m_z_x_m_l_a7514f3bd73de0413bc8a0ad3ade8ab69}\label{classsc_1_1mzxml_1_1_m_z_x_m_l_a7514f3bd73de0413bc8a0ad3ade8ab69} 
+\index{sc::mzxml::MZXML@{sc::mzxml::MZXML}!file\_dir@{file\_dir}}
+\index{file\_dir@{file\_dir}!sc::mzxml::MZXML@{sc::mzxml::MZXML}}
+\doxysubsubsection{\texorpdfstring{file\_dir}{file\_dir}}
+{\footnotesize\ttfamily std\+::string sc\+::mzxml\+::\+MZXML\+::file\+\_\+dir}
+
+
+
+Definition at line \mbox{\hyperlink{_stream_craft__mzxml_8hpp_source_l00077}{77}} of file \mbox{\hyperlink{_stream_craft__mzxml_8hpp_source}{Stream\+Craft\+\_\+mzxml.\+hpp}}.
+
+\Hypertarget{classsc_1_1mzxml_1_1_m_z_x_m_l_a35acaa9c80663384bed3d5504700b109}\label{classsc_1_1mzxml_1_1_m_z_x_m_l_a35acaa9c80663384bed3d5504700b109} 
+\index{sc::mzxml::MZXML@{sc::mzxml::MZXML}!file\_extension@{file\_extension}}
+\index{file\_extension@{file\_extension}!sc::mzxml::MZXML@{sc::mzxml::MZXML}}
+\doxysubsubsection{\texorpdfstring{file\_extension}{file\_extension}}
+{\footnotesize\ttfamily std\+::string sc\+::mzxml\+::\+MZXML\+::file\+\_\+extension}
+
+
+
+Definition at line \mbox{\hyperlink{_stream_craft__mzxml_8hpp_source_l00081}{81}} of file \mbox{\hyperlink{_stream_craft__mzxml_8hpp_source}{Stream\+Craft\+\_\+mzxml.\+hpp}}.
+
+\Hypertarget{classsc_1_1mzxml_1_1_m_z_x_m_l_a2eb46e3163b7e6e96cad578c289b837f}\label{classsc_1_1mzxml_1_1_m_z_x_m_l_a2eb46e3163b7e6e96cad578c289b837f} 
+\index{sc::mzxml::MZXML@{sc::mzxml::MZXML}!file\_name@{file\_name}}
+\index{file\_name@{file\_name}!sc::mzxml::MZXML@{sc::mzxml::MZXML}}
+\doxysubsubsection{\texorpdfstring{file\_name}{file\_name}}
+{\footnotesize\ttfamily std\+::string sc\+::mzxml\+::\+MZXML\+::file\+\_\+name}
+
+
+
+Definition at line \mbox{\hyperlink{_stream_craft__mzxml_8hpp_source_l00079}{79}} of file \mbox{\hyperlink{_stream_craft__mzxml_8hpp_source}{Stream\+Craft\+\_\+mzxml.\+hpp}}.
+
+\Hypertarget{classsc_1_1mzxml_1_1_m_z_x_m_l_a6d1a316337365b2aaef1ee6dcbbfb7b8}\label{classsc_1_1mzxml_1_1_m_z_x_m_l_a6d1a316337365b2aaef1ee6dcbbfb7b8} 
+\index{sc::mzxml::MZXML@{sc::mzxml::MZXML}!file\_path@{file\_path}}
+\index{file\_path@{file\_path}!sc::mzxml::MZXML@{sc::mzxml::MZXML}}
+\doxysubsubsection{\texorpdfstring{file\_path}{file\_path}}
+{\footnotesize\ttfamily std\+::string sc\+::mzxml\+::\+MZXML\+::file\+\_\+path}
+
+
+
+Definition at line \mbox{\hyperlink{_stream_craft__mzxml_8hpp_source_l00075}{75}} of file \mbox{\hyperlink{_stream_craft__mzxml_8hpp_source}{Stream\+Craft\+\_\+mzxml.\+hpp}}.
+
+\Hypertarget{classsc_1_1mzxml_1_1_m_z_x_m_l_aa59c895698f8b3a757c322a6c82717ab}\label{classsc_1_1mzxml_1_1_m_z_x_m_l_aa59c895698f8b3a757c322a6c82717ab} 
+\index{sc::mzxml::MZXML@{sc::mzxml::MZXML}!first\_spectra\_headers@{first\_spectra\_headers}}
+\index{first\_spectra\_headers@{first\_spectra\_headers}!sc::mzxml::MZXML@{sc::mzxml::MZXML}}
+\doxysubsubsection{\texorpdfstring{first\_spectra\_headers}{first\_spectra\_headers}}
+{\footnotesize\ttfamily \mbox{\hyperlink{structsc_1_1utils_1_1_m_s___s_p_e_c_t_r_a___h_e_a_d_e_r_s}{MS\+\_\+\+SPECTRA\+\_\+\+HEADERS}} sc\+::mzxml\+::\+MZXML\+::first\+\_\+spectra\+\_\+headers}
+
+
+
+Definition at line \mbox{\hyperlink{_stream_craft__mzxml_8hpp_source_l00099}{99}} of file \mbox{\hyperlink{_stream_craft__mzxml_8hpp_source}{Stream\+Craft\+\_\+mzxml.\+hpp}}.
+
+\Hypertarget{classsc_1_1mzxml_1_1_m_z_x_m_l_a0f13d76da9f2e11f375f4323b32dca6e}\label{classsc_1_1mzxml_1_1_m_z_x_m_l_a0f13d76da9f2e11f375f4323b32dca6e} 
+\index{sc::mzxml::MZXML@{sc::mzxml::MZXML}!format@{format}}
+\index{format@{format}!sc::mzxml::MZXML@{sc::mzxml::MZXML}}
+\doxysubsubsection{\texorpdfstring{format}{format}}
+{\footnotesize\ttfamily std\+::string sc\+::mzxml\+::\+MZXML\+::format}
+
+
+
+Definition at line \mbox{\hyperlink{_stream_craft__mzxml_8hpp_source_l00089}{89}} of file \mbox{\hyperlink{_stream_craft__mzxml_8hpp_source}{Stream\+Craft\+\_\+mzxml.\+hpp}}.
+
+\Hypertarget{classsc_1_1mzxml_1_1_m_z_x_m_l_abb172df0b8b49bede88c5868926d3ccc}\label{classsc_1_1mzxml_1_1_m_z_x_m_l_abb172df0b8b49bede88c5868926d3ccc} 
+\index{sc::mzxml::MZXML@{sc::mzxml::MZXML}!loading\_result@{loading\_result}}
+\index{loading\_result@{loading\_result}!sc::mzxml::MZXML@{sc::mzxml::MZXML}}
+\doxysubsubsection{\texorpdfstring{loading\_result}{loading\_result}}
+{\footnotesize\ttfamily \mbox{\hyperlink{structpugi_1_1xml__parse__result}{pugi\+::xml\+\_\+parse\+\_\+result}} sc\+::mzxml\+::\+MZXML\+::loading\+\_\+result}
+
+
+
+Definition at line \mbox{\hyperlink{_stream_craft__mzxml_8hpp_source_l00085}{85}} of file \mbox{\hyperlink{_stream_craft__mzxml_8hpp_source}{Stream\+Craft\+\_\+mzxml.\+hpp}}.
+
+\Hypertarget{classsc_1_1mzxml_1_1_m_z_x_m_l_ad1508ed5a168004f632c7727ad8b1c87}\label{classsc_1_1mzxml_1_1_m_z_x_m_l_ad1508ed5a168004f632c7727ad8b1c87} 
+\index{sc::mzxml::MZXML@{sc::mzxml::MZXML}!name@{name}}
+\index{name@{name}!sc::mzxml::MZXML@{sc::mzxml::MZXML}}
+\doxysubsubsection{\texorpdfstring{name}{name}}
+{\footnotesize\ttfamily std\+::string sc\+::mzxml\+::\+MZXML\+::name}
+
+
+
+Definition at line \mbox{\hyperlink{_stream_craft__mzxml_8hpp_source_l00091}{91}} of file \mbox{\hyperlink{_stream_craft__mzxml_8hpp_source}{Stream\+Craft\+\_\+mzxml.\+hpp}}.
+
+\Hypertarget{classsc_1_1mzxml_1_1_m_z_x_m_l_a2426be1e36ec35234724de09b955e763}\label{classsc_1_1mzxml_1_1_m_z_x_m_l_a2426be1e36ec35234724de09b955e763} 
+\index{sc::mzxml::MZXML@{sc::mzxml::MZXML}!number\_chromatograms@{number\_chromatograms}}
+\index{number\_chromatograms@{number\_chromatograms}!sc::mzxml::MZXML@{sc::mzxml::MZXML}}
+\doxysubsubsection{\texorpdfstring{number\_chromatograms}{number\_chromatograms}}
+{\footnotesize\ttfamily \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{int}} sc\+::mzxml\+::\+MZXML\+::number\+\_\+chromatograms = 0}
+
+
+
+Definition at line \mbox{\hyperlink{_stream_craft__mzxml_8hpp_source_l00095}{95}} of file \mbox{\hyperlink{_stream_craft__mzxml_8hpp_source}{Stream\+Craft\+\_\+mzxml.\+hpp}}.
+
+\Hypertarget{classsc_1_1mzxml_1_1_m_z_x_m_l_afe1d7ce930dea2f7444c29861c42556e}\label{classsc_1_1mzxml_1_1_m_z_x_m_l_afe1d7ce930dea2f7444c29861c42556e} 
+\index{sc::mzxml::MZXML@{sc::mzxml::MZXML}!number\_spectra@{number\_spectra}}
+\index{number\_spectra@{number\_spectra}!sc::mzxml::MZXML@{sc::mzxml::MZXML}}
+\doxysubsubsection{\texorpdfstring{number\_spectra}{number\_spectra}}
+{\footnotesize\ttfamily \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{int}} sc\+::mzxml\+::\+MZXML\+::number\+\_\+spectra}
+
+
+
+Definition at line \mbox{\hyperlink{_stream_craft__mzxml_8hpp_source_l00093}{93}} of file \mbox{\hyperlink{_stream_craft__mzxml_8hpp_source}{Stream\+Craft\+\_\+mzxml.\+hpp}}.
+
+\Hypertarget{classsc_1_1mzxml_1_1_m_z_x_m_l_a5f6e400eb48753c56ae3707f2ba36795}\label{classsc_1_1mzxml_1_1_m_z_x_m_l_a5f6e400eb48753c56ae3707f2ba36795} 
+\index{sc::mzxml::MZXML@{sc::mzxml::MZXML}!number\_spectra\_binary\_arrays@{number\_spectra\_binary\_arrays}}
+\index{number\_spectra\_binary\_arrays@{number\_spectra\_binary\_arrays}!sc::mzxml::MZXML@{sc::mzxml::MZXML}}
+\doxysubsubsection{\texorpdfstring{number\_spectra\_binary\_arrays}{number\_spectra\_binary\_arrays}}
+{\footnotesize\ttfamily \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{int}} sc\+::mzxml\+::\+MZXML\+::number\+\_\+spectra\+\_\+binary\+\_\+arrays = 2}
+
+
+
+Definition at line \mbox{\hyperlink{_stream_craft__mzxml_8hpp_source_l00097}{97}} of file \mbox{\hyperlink{_stream_craft__mzxml_8hpp_source}{Stream\+Craft\+\_\+mzxml.\+hpp}}.
+
+\Hypertarget{classsc_1_1mzxml_1_1_m_z_x_m_l_aa19ecb02d4b3e9ec60f555f2cc3beaf4}\label{classsc_1_1mzxml_1_1_m_z_x_m_l_aa19ecb02d4b3e9ec60f555f2cc3beaf4} 
+\index{sc::mzxml::MZXML@{sc::mzxml::MZXML}!root@{root}}
+\index{root@{root}!sc::mzxml::MZXML@{sc::mzxml::MZXML}}
+\doxysubsubsection{\texorpdfstring{root}{root}}
+{\footnotesize\ttfamily \mbox{\hyperlink{classpugi_1_1xml__node}{pugi\+::xml\+\_\+node}} sc\+::mzxml\+::\+MZXML\+::root}
+
+
+
+Definition at line \mbox{\hyperlink{_stream_craft__mzxml_8hpp_source_l00087}{87}} of file \mbox{\hyperlink{_stream_craft__mzxml_8hpp_source}{Stream\+Craft\+\_\+mzxml.\+hpp}}.
+
+
+
+The documentation for this class was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+external/\+Stream\+Craft/src/\mbox{\hyperlink{_stream_craft__mzxml_8hpp}{Stream\+Craft\+\_\+mzxml.\+hpp}}\item 
+external/\+Stream\+Craft/src/\mbox{\hyperlink{_stream_craft__mzxml_8cpp}{Stream\+Craft\+\_\+mzxml.\+cpp}}\end{DoxyCompactItemize}

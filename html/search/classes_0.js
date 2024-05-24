@@ -1,5 +1,5 @@
 var searchData=
 [
-  ['dataid_0',['dataID',['../structq_1_1data_i_d.html',1,'q']]],
-  ['datapoint_1',['DataPoint',['../structq_1_1_data_type_1_1_mass_spectrum_1_1_data_point.html',1,'q::DataType::MassSpectrum']]]
+  ['auto_5fdeleter_0',['auto_deleter',['../structauto__deleter.html',1,'']]],
+  ['axis_5fto_5ftype_1',['axis_to_type',['../structaxis__to__type.html',1,'']]]
 ];

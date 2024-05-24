@@ -142,16 +142,16 @@ namespace q
         {
             std::cerr << "The number of columns in the raw data does not match the number of variable types" << std::endl;
             return;
-        }      
+        }
 
         // transfere the raw data to the data vector
         int data_id = 0; // data id is used to identify the data set
         maxKey = 0;
         for (int i = 0; i < raw_data.size(); i++)
         {
-            // check if the scan number is already in the data vector 
+            // check if the scan number is already in the data vector
             int scanNumber = std::stoi(raw_data[i][scanNumberIndex]);
-            if (this->data.size() < scanNumber+1)
+            if (this->data.size() < scanNumber + 1)
             { // scan number is not found in the data vector; initialize a new MassSpectrum object and add meta information
                 // add the MassSpectrum object to the data vector
                 this->data.push_back(std::make_unique<MassSpectrum>());
@@ -172,6 +172,49 @@ namespace q
         }
     }
 
+    void
+    LCMSData::readStreamCraftMZML(
+        sc::MZML &data)
+    {
+        std::vector<std::vector<std::vector<double>>> spectra = data.get_spectra();
+        std::vector<double> retentionTimes = data.get_spectra_rt();
+        std::vector<int> scanNumbers = data.get_spectra_scan_number();
+        std::vector<int> ms_levels = data.get_spectra_level();
+
+        size_t number_of_spectra = spectra.size();
+        for (size_t i = 0; i < number_of_spectra; i++)
+        {
+            // checks if the MS level is ms1 @todo: add ms2, ms3, etc.
+            if (ms_levels[i] != 1)
+            {
+                continue;
+            }
+            size_t number_of_data_points = spectra[i][0].size();
+            int scanNumber = scanNumbers[i];
+            double retentionTime = retentionTimes[i];
+            if (this->data.size() < i + 1)
+            { // scan number is not found in the data vector; initialize a new MassSpectrum object and add meta information
+                // add the MassSpectrum object to the data vector
+                this->data.push_back(std::make_unique<MassSpectrum>());
+                // add the scan number to the MassSpectrum object
+                (*this->data.back()->metaData)[DataField::SCANNUMBER] = VariableType(scanNumber);
+                // add the retention time to the MassSpectrum object
+                (*this->data.back()->metaData)[DataField::RETENTIONTIME] = VariableType(retentionTime);
+                // update the maxKey
+                if (i > maxKey)
+                {
+                    maxKey = i;
+                }
+            }
+            for (size_t j = 0; j < number_of_data_points; j++)
+            {
+                double intensity = spectra[i][1][j];
+                int df = (intensity > 0) ? 1 : 0;
+                this->data.back()->dataPoints.push_back(std::make_unique<DataPoint>(intensity, spectra[i][0][j], df));
+            }
+        }
+    }
+
     void LCMSData::writeCSV(std::string filename)
     {
         // open the file
@@ -179,19 +222,19 @@ namespace q
         // write header using: ID, ScanNumber, RetentionTime, MZ, Intensity (ID is the key for the data vector)
         file << "ID,ScanNumber,RetentionTime,MZ,Intensity" << std::endl;
         // iterate over all data sets in the data vector
-        for (const auto& spectrum : this->data)
+        for (const auto &spectrum : this->data)
         {
-            for (const auto& dp : spectrum->dataPoints)
+            for (const auto &dp : spectrum->dataPoints)
             {
-                file << std::get<int>((*spectrum->metaData)[DataField::SCANNUMBER]) << "," 
-                     << std::get<int>((*spectrum->metaData)[DataField::SCANNUMBER]) << "," 
-                     << std::get<double>((*spectrum->metaData)[DataField::RETENTIONTIME]) << "," 
-                     << std::setprecision(7) << dp->mz << "," 
+                file << std::get<int>((*spectrum->metaData)[DataField::SCANNUMBER]) << ","
+                     << std::get<int>((*spectrum->metaData)[DataField::SCANNUMBER]) << ","
+                     << std::get<double>((*spectrum->metaData)[DataField::RETENTIONTIME]) << ","
+                     << std::setprecision(7) << dp->mz << ","
                      << std::setprecision(4) << dp->intensity << std::endl;
             }
-            //iterate over all data points
+            // iterate over all data points
         }
-        //close the file
+        // close the file
         file.close();
     }
 
@@ -225,26 +268,26 @@ namespace q
 
     void LCMSData::print()
     {
-        for (const auto& spectrum : this->data)
+        for (const auto &spectrum : this->data)
         {
             std::cout << "Scan Number: " << std::get<double>((*spectrum->metaData)[DataField::SCANNUMBER]) << std::endl;
             std::cout << "Retention Time: " << std::get<double>((*spectrum->metaData)[DataField::RETENTIONTIME]) << std::endl;
             std::cout << "Number of Data Points: " << spectrum->dataPoints.size() << std::endl;
             std::cout << "MZ values: ";
-            for (const auto& dp : spectrum->dataPoints)
+            for (const auto &dp : spectrum->dataPoints)
             {
                 std::cout << dp->mz << " ";
             }
             std::cout << std::endl;
 
             std::cout << "Intensity values: ";
-            for (const auto& dp : spectrum->dataPoints)
+            for (const auto &dp : spectrum->dataPoints)
             {
                 std::cout << dp->intensity << " ";
             }
             std::cout << std::endl;
             std::cout << "cuttingPoints: ";
-            for (const auto& cp : spectrum->cuttingPoints)
+            for (const auto &cp : spectrum->cuttingPoints)
             {
                 std::cout << *cp << " ";
             }

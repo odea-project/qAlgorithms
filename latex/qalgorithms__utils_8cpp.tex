@@ -1,6 +1,6 @@
 \doxysection{src/qalgorithms\+\_\+utils.cpp File Reference}
 \hypertarget{qalgorithms__utils_8cpp}{}\label{qalgorithms__utils_8cpp}\index{src/qalgorithms\_utils.cpp@{src/qalgorithms\_utils.cpp}}
-{\ttfamily \#include \"{}../include/qalgorithms\+\_\+utils.\+h\"{}}\newline
+{\ttfamily \#include "{}../include/qalgorithms\+\_\+utils.\+h"{}}\newline
 \doxysubsubsection*{Namespaces}
 \begin{DoxyCompactItemize}
 \item 
@@ -9,27 +9,29 @@ namespace \mbox{\hyperlink{namespaceq}{q}}
 \doxysubsubsection*{Functions}
 \begin{DoxyCompactItemize}
 \item 
-int \mbox{\hyperlink{namespaceq_a5ea2b3dedfaa98557b94135396085f23}{q\+::sum}} (const std\+::vector$<$ int $>$ \&vec)
+\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{int}} \mbox{\hyperlink{namespaceq_a5ea2b3dedfaa98557b94135396085f23}{q\+::sum}} (\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} std\+::vector$<$ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{int}} $>$ \&\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{vec}})
 \item 
-size\+\_\+t \mbox{\hyperlink{namespaceq_afc2558c328148651b80808845132e4c4}{q\+::sum}} (const std\+::vector$<$ size\+\_\+t $>$ \&vec)
+\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{size\+\_\+t}} \mbox{\hyperlink{namespaceq_afc2558c328148651b80808845132e4c4}{q\+::sum}} (\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} std\+::vector$<$ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{size\+\_\+t}} $>$ \&\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{vec}})
 \item 
-double \mbox{\hyperlink{namespaceq_a9b008a77f4d4422c9b7c49792541c4e5}{q\+::sum}} (const std\+::vector$<$ double $>$ \&vec)
+\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{double}} \mbox{\hyperlink{namespaceq_a9b008a77f4d4422c9b7c49792541c4e5}{q\+::sum}} (\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} std\+::vector$<$ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{double}} $>$ \&\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{vec}})
 \item 
-int \mbox{\hyperlink{namespaceq_add47edeb3d76b88ba219b38d803e0a30}{q\+::sum}} (const bool \texorpdfstring{$\ast$}{*}vec, size\+\_\+t n)
+\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{int}} \mbox{\hyperlink{namespaceq_add47edeb3d76b88ba219b38d803e0a30}{q\+::sum}} (\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{bool}} \texorpdfstring{$\ast$}{*}\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{vec}}, \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{size\+\_\+t}} n)
 \item 
-{\footnotesize template$<$typename T $>$ }\\std\+::vector$<$ bool $>$ \mbox{\hyperlink{namespaceq_a911b4e35d854c2c77c1fdd7f11117608}{q\+::operator$<$}} (const std\+::vector$<$ T $>$ \&vec, T scalar)
+\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{double}} \mbox{\hyperlink{namespaceq_a441bff029a39aaf04dfa3ab8bb84bad9}{q\+::exp\+\_\+approx}} (\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{double}} x)
+\begin{DoxyCompactList}\small\item\em Fast exponential approximation base on Bit Manipulation. \end{DoxyCompactList}\item 
+{\footnotesize template$<$\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{typename}} T $>$ }\\std\+::vector$<$ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{bool}} $>$ \mbox{\hyperlink{namespaceq_a911b4e35d854c2c77c1fdd7f11117608}{q\+::operator$<$}} (\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} std\+::vector$<$ T $>$ \&\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{vec}}, T \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{scalar}})
 \item 
-{\footnotesize template$<$typename T $>$ }\\std\+::vector$<$ bool $>$ \mbox{\hyperlink{namespaceq_a59be7d3e00fa2dc756d0ba0f10b6d6dd}{q\+::operator$>$}} (const std\+::vector$<$ T $>$ \&vec, T scalar)
+{\footnotesize template$<$\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{typename}} T $>$ }\\std\+::vector$<$ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{bool}} $>$ \mbox{\hyperlink{namespaceq_a59be7d3e00fa2dc756d0ba0f10b6d6dd}{q\+::operator$>$}} (\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} std\+::vector$<$ T $>$ \&\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{vec}}, T \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{scalar}})
 \item 
-{\footnotesize template$<$typename T $>$ }\\std\+::vector$<$ T $>$ \mbox{\hyperlink{namespaceq_afaf7260624b917f9123e4532c7ca68bf}{q\+::operator\texorpdfstring{$\ast$}{*}}} (const std\+::vector$<$ T $>$ \&A, const std\+::vector$<$ T $>$ \&B)
+{\footnotesize template$<$\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{typename}} T $>$ }\\std\+::vector$<$ T $>$ \mbox{\hyperlink{namespaceq_afaf7260624b917f9123e4532c7ca68bf}{q\+::operator\texorpdfstring{$\ast$}{*}}} (\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} std\+::vector$<$ T $>$ \&\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{A}}, \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} std\+::vector$<$ T $>$ \&B)
 \item 
-std\+::vector$<$ bool $>$ \mbox{\hyperlink{namespaceq_a41c88933564219f3744d4cd1a0bbde5b}{q\+::operator\&\&}} (const std\+::vector$<$ bool $>$ \&A, const std\+::vector$<$ bool $>$ \&B)
+std\+::vector$<$ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{bool}} $>$ \mbox{\hyperlink{namespaceq_a41c88933564219f3744d4cd1a0bbde5b}{q\+::operator\&\&}} (\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} std\+::vector$<$ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{bool}} $>$ \&\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{A}}, \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} std\+::vector$<$ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{bool}} $>$ \&B)
 \item 
-std\+::vector$<$ bool $>$ \mbox{\hyperlink{namespaceq_a14a55b4b8011f804b40f37925f4b4e8c}{q\+::operator!}} (const std\+::vector$<$ bool $>$ \&A)
+std\+::vector$<$ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{bool}} $>$ \mbox{\hyperlink{namespaceq_a14a55b4b8011f804b40f37925f4b4e8c}{q\+::operator!}} (\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} std\+::vector$<$ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{bool}} $>$ \&\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{A}})
 \item 
-void \mbox{\hyperlink{namespaceq_ae27bcd86eabebd2210e1e89c9c5a9407}{q\+::operator\texorpdfstring{$\vert$}{|}=}} (std\+::vector$<$ bool $>$ \&A, const std\+::vector$<$ bool $>$ \&B)
+\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{void}} \mbox{\hyperlink{namespaceq_ae27bcd86eabebd2210e1e89c9c5a9407}{q\+::operator\texorpdfstring{$\vert$}{|}=}} (std\+::vector$<$ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{bool}} $>$ \&\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{A}}, \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} std\+::vector$<$ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{bool}} $>$ \&B)
 \item 
-double \mbox{\hyperlink{namespaceq_af5bc719469eba45978bfaa23379f329b}{q\+::erfi}} (const double x)
+\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{double}} \mbox{\hyperlink{namespaceq_af5bc719469eba45978bfaa23379f329b}{q\+::erfi}} (\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{double}} x)
 \item 
-const \mbox{\hyperlink{classq_1_1_matrix}{Matrix}} \mbox{\hyperlink{namespaceq_ae93c50d74740a6cd3f42a1cf8f299f3a}{q\+::linreg}} (const std\+::vector$<$ double $>$ \&x\+Data, const std\+::vector$<$ double $>$ \&y\+Data, const int degree)
+\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{classq_1_1_matrix}{Matrix}} \mbox{\hyperlink{namespaceq_ae93c50d74740a6cd3f42a1cf8f299f3a}{q\+::linreg}} (\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} std\+::vector$<$ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{double}} $>$ \&\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{x\+Data}}, \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} std\+::vector$<$ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{double}} $>$ \&\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{y\+Data}}, \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{int}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{degree}})
 \end{DoxyCompactItemize}

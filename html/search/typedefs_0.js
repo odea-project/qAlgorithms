@@ -1,6 +1,5 @@
 var searchData=
 [
-  ['datafield_0',['DataField',['../namespaceq.html#a463ddd687acb437210a8e06253ebc078',1,'q']]],
-  ['datapoint_1',['DataPoint',['../namespaceq.html#ad2e5a48ff360341725405e45b33f9c9e',1,'q']]],
-  ['datapointvector_2',['DataPointVector',['../namespaceq.html#a2ce4afc69ea08399771ec175f5b546e6',1,'q']]]
+  ['allocation_5ffunction_0',['allocation_function',['../namespacepugi.html#a653730d9eecf37ce6a12f4c65ff1f262',1,'pugi']]],
+  ['attribute_5fiterator_1',['attribute_iterator',['../classpugi_1_1xml__node.html#a9084f97350ffc64af1eaf7c17c57f4ba',1,'pugi::xml_node']]]
 ];

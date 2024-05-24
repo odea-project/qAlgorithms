@@ -1,0 +1,357 @@
+\doxysection{external/pugixml-\/1.14/src/pugixml.hpp File Reference}
+\hypertarget{pugixml_8hpp}{}\label{pugixml_8hpp}\index{external/pugixml-\/1.14/src/pugixml.hpp@{external/pugixml-\/1.14/src/pugixml.hpp}}
+{\ttfamily \#include "{}pugiconfig.\+hpp"{}}\newline
+{\ttfamily \#include $<$stddef.\+h$>$}\newline
+{\ttfamily \#include $<$exception$>$}\newline
+{\ttfamily \#include $<$iterator$>$}\newline
+{\ttfamily \#include $<$iosfwd$>$}\newline
+{\ttfamily \#include $<$string$>$}\newline
+\doxysubsubsection*{Classes}
+\begin{DoxyCompactItemize}
+\item 
+class \mbox{\hyperlink{classpugi_1_1xml__object__range}{pugi\+::xml\+\_\+object\+\_\+range$<$ It $>$}}
+\item 
+class \mbox{\hyperlink{classpugi_1_1xml__writer}{pugi\+::xml\+\_\+writer}}
+\item 
+class \mbox{\hyperlink{classpugi_1_1xml__writer__file}{pugi\+::xml\+\_\+writer\+\_\+file}}
+\item 
+class \mbox{\hyperlink{classpugi_1_1xml__writer__stream}{pugi\+::xml\+\_\+writer\+\_\+stream}}
+\item 
+class \mbox{\hyperlink{classpugi_1_1xml__attribute}{pugi\+::xml\+\_\+attribute}}
+\item 
+class \mbox{\hyperlink{classpugi_1_1xml__node}{pugi\+::xml\+\_\+node}}
+\item 
+class \mbox{\hyperlink{classpugi_1_1xml__text}{pugi\+::xml\+\_\+text}}
+\item 
+class \mbox{\hyperlink{classpugi_1_1xml__node__iterator}{pugi\+::xml\+\_\+node\+\_\+iterator}}
+\item 
+class \mbox{\hyperlink{classpugi_1_1xml__attribute__iterator}{pugi\+::xml\+\_\+attribute\+\_\+iterator}}
+\item 
+class \mbox{\hyperlink{classpugi_1_1xml__named__node__iterator}{pugi\+::xml\+\_\+named\+\_\+node\+\_\+iterator}}
+\item 
+class \mbox{\hyperlink{classpugi_1_1xml__tree__walker}{pugi\+::xml\+\_\+tree\+\_\+walker}}
+\item 
+struct \mbox{\hyperlink{structpugi_1_1xml__parse__result}{pugi\+::xml\+\_\+parse\+\_\+result}}
+\item 
+class \mbox{\hyperlink{classpugi_1_1xml__document}{pugi\+::xml\+\_\+document}}
+\item 
+struct \mbox{\hyperlink{structpugi_1_1xpath__parse__result}{pugi\+::xpath\+\_\+parse\+\_\+result}}
+\item 
+class \mbox{\hyperlink{classpugi_1_1xpath__variable}{pugi\+::xpath\+\_\+variable}}
+\item 
+class \mbox{\hyperlink{classpugi_1_1xpath__variable__set}{pugi\+::xpath\+\_\+variable\+\_\+set}}
+\item 
+class \mbox{\hyperlink{classpugi_1_1xpath__query}{pugi\+::xpath\+\_\+query}}
+\item 
+class \mbox{\hyperlink{classpugi_1_1xpath__exception}{pugi\+::xpath\+\_\+exception}}
+\item 
+class \mbox{\hyperlink{classpugi_1_1xpath__node}{pugi\+::xpath\+\_\+node}}
+\item 
+class \mbox{\hyperlink{classpugi_1_1xpath__node__set}{pugi\+::xpath\+\_\+node\+\_\+set}}
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Namespaces}
+\begin{DoxyCompactItemize}
+\item 
+namespace \mbox{\hyperlink{namespacepugi}{pugi}}
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Macros}
+\begin{DoxyCompactItemize}
+\item 
+\#\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{define}} \mbox{\hyperlink{pugixml_8hpp_a8780f48a99ee220810217d06d2148363}{PUGIXML\+\_\+\+VERSION}}~1140
+\item 
+\#\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{define}} \mbox{\hyperlink{pugixml_8hpp_a2bf4c1773811a4e7fd7a7ec3c989b588}{PUGIXML\+\_\+\+DEPRECATED}}
+\item 
+\#\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{define}} \mbox{\hyperlink{pugixml_8hpp_a770abeed4977e50a439e91cf5fcd2cbf}{PUGIXML\+\_\+\+API}}
+\item 
+\#\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{define}} \mbox{\hyperlink{pugixml_8hpp_ad47efa7f45dfd6d1fe9da1d5cf9c5301}{PUGIXML\+\_\+\+CLASS}}~\mbox{\hyperlink{pugixml_8hpp_a770abeed4977e50a439e91cf5fcd2cbf}{PUGIXML\+\_\+\+API}}
+\item 
+\#\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{define}} \mbox{\hyperlink{pugixml_8hpp_a3d91f8ab11645e6dac8783d86d152b31}{PUGIXML\+\_\+\+FUNCTION}}~\mbox{\hyperlink{pugixml_8hpp_a770abeed4977e50a439e91cf5fcd2cbf}{PUGIXML\+\_\+\+API}}
+\item 
+\#\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{define}} \mbox{\hyperlink{pugixml_8hpp_abec93a3f00f44e42c024245ff2b5980e}{PUGIXML\+\_\+\+NOEXCEPT}}
+\item 
+\#\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{define}} \mbox{\hyperlink{pugixml_8hpp_a377cabdf77b82e5741e19ab75657d452}{PUGIXML\+\_\+\+NOEXCEPT\+\_\+\+IF\+\_\+\+NOT\+\_\+\+COMPACT}}~\mbox{\hyperlink{pugixml_8hpp_abec93a3f00f44e42c024245ff2b5980e}{PUGIXML\+\_\+\+NOEXCEPT}}
+\item 
+\#\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{define}} \mbox{\hyperlink{pugixml_8hpp_ac6a0f97f3bdadbd76bab1c0098880a00}{PUGIXML\+\_\+\+OVERRIDE}}
+\item 
+\#\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{define}} \mbox{\hyperlink{pugixml_8hpp_a0daaf3d8b4c7b5ffb7d6a0fa3cdeaadc}{PUGIXML\+\_\+\+NULL}}~0
+\item 
+\#\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{define}} \mbox{\hyperlink{pugixml_8hpp_ad5475bca2e336810ae5906349e644d0b}{PUGIXML\+\_\+\+TEXT}}(\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{t}})~\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{t}}
+\item 
+\#\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{define}} \mbox{\hyperlink{pugixml_8hpp_af467437c41f223eaed56106370aa82ff}{PUGIXML\+\_\+\+CHAR}}~\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{char}}
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Typedefs}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{typedef}} \mbox{\hyperlink{pugixml_8hpp_af467437c41f223eaed56106370aa82ff}{PUGIXML\+\_\+\+CHAR}} \mbox{\hyperlink{namespacepugi_aef5a7a62cba0507542220ea15afe39df}{pugi\+::char\+\_\+t}}
+\item 
+\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{typedef}} std\+::basic\+\_\+string$<$ \mbox{\hyperlink{pugixml_8hpp_af467437c41f223eaed56106370aa82ff}{PUGIXML\+\_\+\+CHAR}}, std\+::char\+\_\+traits$<$ \mbox{\hyperlink{pugixml_8hpp_af467437c41f223eaed56106370aa82ff}{PUGIXML\+\_\+\+CHAR}} $>$, std\+::allocator$<$ \mbox{\hyperlink{pugixml_8hpp_af467437c41f223eaed56106370aa82ff}{PUGIXML\+\_\+\+CHAR}} $>$ $>$ \mbox{\hyperlink{namespacepugi_a053b39a84c8bb031ff3973d1954a876c}{pugi\+::string\+\_\+t}}
+\item 
+\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{typedef}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{void}} \texorpdfstring{$\ast$}{*}(\texorpdfstring{$\ast$}{*} \mbox{\hyperlink{namespacepugi_a653730d9eecf37ce6a12f4c65ff1f262}{pugi\+::allocation\+\_\+function}}) (\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{size\+\_\+t}} size)
+\item 
+\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{typedef}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{void}}(\texorpdfstring{$\ast$}{*} \mbox{\hyperlink{namespacepugi_a3587161b9f8d7ac4ac2d6a45b82462be}{pugi\+::deallocation\+\_\+function}}) (\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{void}} \texorpdfstring{$\ast$}{*}\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{ptr}})
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Enumerations}
+\begin{DoxyCompactItemize}
+\item 
+enum \mbox{\hyperlink{namespacepugi_a137e94a038e4ab0ada6477cf7f6153a9}{pugi\+::xml\+\_\+node\+\_\+type}} \{ \newline
+\mbox{\hyperlink{namespacepugi_a137e94a038e4ab0ada6477cf7f6153a9ad58c55e810076e076318cc2268191b1f}{pugi\+::node\+\_\+null}}
+, \mbox{\hyperlink{namespacepugi_a137e94a038e4ab0ada6477cf7f6153a9aab42ba83cf941f7297325eade205bf80}{pugi\+::node\+\_\+document}}
+, \mbox{\hyperlink{namespacepugi_a137e94a038e4ab0ada6477cf7f6153a9a6d223e3a0d8ce8e4ee6f4a2697b8bcd1}{pugi\+::node\+\_\+element}}
+, \mbox{\hyperlink{namespacepugi_a137e94a038e4ab0ada6477cf7f6153a9a5c0042693a8b8b6b54c191b4403fca21}{pugi\+::node\+\_\+pcdata}}
+, \newline
+\mbox{\hyperlink{namespacepugi_a137e94a038e4ab0ada6477cf7f6153a9adf13d60a4dfd047be0700e1711aeb1ea}{pugi\+::node\+\_\+cdata}}
+, \mbox{\hyperlink{namespacepugi_a137e94a038e4ab0ada6477cf7f6153a9a445fef674a66777dfd28dbd6bab14fed}{pugi\+::node\+\_\+comment}}
+, \mbox{\hyperlink{namespacepugi_a137e94a038e4ab0ada6477cf7f6153a9acd772b12b3d5442b9771151f45134440}{pugi\+::node\+\_\+pi}}
+, \mbox{\hyperlink{namespacepugi_a137e94a038e4ab0ada6477cf7f6153a9aad8024cc4a4afbc68c871f3826a00616}{pugi\+::node\+\_\+declaration}}
+, \newline
+\mbox{\hyperlink{namespacepugi_a137e94a038e4ab0ada6477cf7f6153a9a9504586a29b181817607cc7ec231c9d4}{pugi\+::node\+\_\+doctype}}
+ \}
+\item 
+enum \mbox{\hyperlink{namespacepugi_a03f708f86abeff5fce6842ffd6a0951e}{pugi\+::xml\+\_\+encoding}} \{ \newline
+\mbox{\hyperlink{namespacepugi_a03f708f86abeff5fce6842ffd6a0951eae11b2ef666f03e77b7e764e38d22dc17}{pugi\+::encoding\+\_\+auto}}
+, \mbox{\hyperlink{namespacepugi_a03f708f86abeff5fce6842ffd6a0951ea96c73bf345f635f0fbee5f6646fb095e}{pugi\+::encoding\+\_\+utf8}}
+, \mbox{\hyperlink{namespacepugi_a03f708f86abeff5fce6842ffd6a0951ea47be6a1d4828e9b284d40894afc27e54}{pugi\+::encoding\+\_\+utf16\+\_\+le}}
+, \mbox{\hyperlink{namespacepugi_a03f708f86abeff5fce6842ffd6a0951ea8689b47b8387fc3524334e8d106fda16}{pugi\+::encoding\+\_\+utf16\+\_\+be}}
+, \newline
+\mbox{\hyperlink{namespacepugi_a03f708f86abeff5fce6842ffd6a0951eac1fbf60f9cb5db0e9e38fbfdba7afb6a}{pugi\+::encoding\+\_\+utf16}}
+, \mbox{\hyperlink{namespacepugi_a03f708f86abeff5fce6842ffd6a0951eac54c474159301358c31d931855987dc6}{pugi\+::encoding\+\_\+utf32\+\_\+le}}
+, \mbox{\hyperlink{namespacepugi_a03f708f86abeff5fce6842ffd6a0951ea55b0b036621ebcfcd5e0e43b8f69f4dc}{pugi\+::encoding\+\_\+utf32\+\_\+be}}
+, \mbox{\hyperlink{namespacepugi_a03f708f86abeff5fce6842ffd6a0951ea46a8f0d9f4c03350f7a831a370d2b032}{pugi\+::encoding\+\_\+utf32}}
+, \newline
+\mbox{\hyperlink{namespacepugi_a03f708f86abeff5fce6842ffd6a0951eae670d39438f31fe41f1a596739e5c00e}{pugi\+::encoding\+\_\+wchar}}
+, \mbox{\hyperlink{namespacepugi_a03f708f86abeff5fce6842ffd6a0951ea9f1a8dbbf996bcd297ce0922b7eec40d}{pugi\+::encoding\+\_\+latin1}}
+ \}
+\item 
+enum \mbox{\hyperlink{namespacepugi_a9054ca609e12afb8f3e5892fc6c0b555}{pugi\+::xml\+\_\+parse\+\_\+status}} \{ \newline
+\mbox{\hyperlink{namespacepugi_a9054ca609e12afb8f3e5892fc6c0b555a46ddc2abb6a54fdac07cf9086b45f10f}{pugi\+::status\+\_\+ok}} = 0
+, \mbox{\hyperlink{namespacepugi_a9054ca609e12afb8f3e5892fc6c0b555a32e05bc1b1356846e6a5fb0ec097d36b}{pugi\+::status\+\_\+file\+\_\+not\+\_\+found}}
+, \mbox{\hyperlink{namespacepugi_a9054ca609e12afb8f3e5892fc6c0b555a28bb6318a65eec5abcf1ef8174b92246}{pugi\+::status\+\_\+io\+\_\+error}}
+, \mbox{\hyperlink{namespacepugi_a9054ca609e12afb8f3e5892fc6c0b555a59e75d024e9f5c213ca6f4db8102b978}{pugi\+::status\+\_\+out\+\_\+of\+\_\+memory}}
+, \newline
+\mbox{\hyperlink{namespacepugi_a9054ca609e12afb8f3e5892fc6c0b555a37a3c224657a16f27c950ec70954c981}{pugi\+::status\+\_\+internal\+\_\+error}}
+, \mbox{\hyperlink{namespacepugi_a9054ca609e12afb8f3e5892fc6c0b555a71a555b91e80b6d8f84aeb6a93904d28}{pugi\+::status\+\_\+unrecognized\+\_\+tag}}
+, \mbox{\hyperlink{namespacepugi_a9054ca609e12afb8f3e5892fc6c0b555ad7a57e8554aabea52ed8b0d6a0891622}{pugi\+::status\+\_\+bad\+\_\+pi}}
+, \mbox{\hyperlink{namespacepugi_a9054ca609e12afb8f3e5892fc6c0b555a563327f534e9b3ce55f9f7364aa746b2}{pugi\+::status\+\_\+bad\+\_\+comment}}
+, \newline
+\mbox{\hyperlink{namespacepugi_a9054ca609e12afb8f3e5892fc6c0b555aa2ebdaf5e8bf5414bec3004270e102b8}{pugi\+::status\+\_\+bad\+\_\+cdata}}
+, \mbox{\hyperlink{namespacepugi_a9054ca609e12afb8f3e5892fc6c0b555a58d1b0d8787e97fc1b5b31ec5e4fabcf}{pugi\+::status\+\_\+bad\+\_\+doctype}}
+, \mbox{\hyperlink{namespacepugi_a9054ca609e12afb8f3e5892fc6c0b555ac5257467a3d1a971134c457066b21ee5}{pugi\+::status\+\_\+bad\+\_\+pcdata}}
+, \mbox{\hyperlink{namespacepugi_a9054ca609e12afb8f3e5892fc6c0b555a3cf4e84a5b433ce50e6f3037df5c1bdd}{pugi\+::status\+\_\+bad\+\_\+start\+\_\+element}}
+, \newline
+\mbox{\hyperlink{namespacepugi_a9054ca609e12afb8f3e5892fc6c0b555a2b34aa9968d63b28a6d51b30575ff95a}{pugi\+::status\+\_\+bad\+\_\+attribute}}
+, \mbox{\hyperlink{namespacepugi_a9054ca609e12afb8f3e5892fc6c0b555a261cbf22c7da45388bcc1e6759020790}{pugi\+::status\+\_\+bad\+\_\+end\+\_\+element}}
+, \mbox{\hyperlink{namespacepugi_a9054ca609e12afb8f3e5892fc6c0b555a07a5f6f8392474ccb2d5dc10fe2307a2}{pugi\+::status\+\_\+end\+\_\+element\+\_\+mismatch}}
+, \mbox{\hyperlink{namespacepugi_a9054ca609e12afb8f3e5892fc6c0b555a0710d81960b31559ae0e7f6c928b4b81}{pugi\+::status\+\_\+append\+\_\+invalid\+\_\+root}}
+, \newline
+\mbox{\hyperlink{namespacepugi_a9054ca609e12afb8f3e5892fc6c0b555ae31807596a283adf602d437e08d0f472}{pugi\+::status\+\_\+no\+\_\+document\+\_\+element}}
+ \}
+\item 
+enum \mbox{\hyperlink{namespacepugi_ae3820874caf240e9f311bfd2790a84d6}{pugi\+::xpath\+\_\+value\+\_\+type}} \{ \newline
+\mbox{\hyperlink{namespacepugi_ae3820874caf240e9f311bfd2790a84d6aaa768b8302ccc893f3cc9ba799360a77}{pugi\+::xpath\+\_\+type\+\_\+none}}
+, \mbox{\hyperlink{namespacepugi_ae3820874caf240e9f311bfd2790a84d6af5613748204e2e4861524e7d63a699c9}{pugi\+::xpath\+\_\+type\+\_\+node\+\_\+set}}
+, \mbox{\hyperlink{namespacepugi_ae3820874caf240e9f311bfd2790a84d6a02959f74f4fe93d71a1e109a45f23825}{pugi\+::xpath\+\_\+type\+\_\+number}}
+, \mbox{\hyperlink{namespacepugi_ae3820874caf240e9f311bfd2790a84d6ade2b17f4d9fad5bfb1617bf5012cf5ad}{pugi\+::xpath\+\_\+type\+\_\+string}}
+, \newline
+\mbox{\hyperlink{namespacepugi_ae3820874caf240e9f311bfd2790a84d6a049dd1494237a55f8aba3392d12a0164}{pugi\+::xpath\+\_\+type\+\_\+boolean}}
+ \}
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\hyperlink{pugixml_8cpp_a72f5dbb8bd03df7c7ba65966deb8c73d}{PUGI\+\_\+\+IMPL\+\_\+\+FN}} std\+::string \mbox{\hyperlink{pugixml_8hpp_a3d91f8ab11645e6dac8783d86d152b31}{PUGIXML\+\_\+\+FUNCTION}} \mbox{\hyperlink{namespacepugi_a69383a1ee3e92185f93bb2322472d3ce}{pugi\+::as\+\_\+utf8}} (\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{wchar\+\_\+t}} \texorpdfstring{$\ast$}{*}str)
+\item 
+std\+::basic\+\_\+string$<$ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{char}}, std\+::char\+\_\+traits$<$ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{char}} $>$, std\+::allocator$<$ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{char}} $>$ $>$ \mbox{\hyperlink{pugixml_8hpp_a3d91f8ab11645e6dac8783d86d152b31}{PUGIXML\+\_\+\+FUNCTION}} \mbox{\hyperlink{namespacepugi_a1aba6bbb88685b2ecd8d45479379ef5d}{pugi\+::as\+\_\+utf8}} (\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} std\+::basic\+\_\+string$<$ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{wchar\+\_\+t}}, std\+::char\+\_\+traits$<$ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{wchar\+\_\+t}} $>$, std\+::allocator$<$ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{wchar\+\_\+t}} $>$ $>$ \&str)
+\item 
+\mbox{\hyperlink{pugixml_8cpp_a72f5dbb8bd03df7c7ba65966deb8c73d}{PUGI\+\_\+\+IMPL\+\_\+\+FN}} std\+::basic\+\_\+string$<$ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{wchar\+\_\+t}} $>$ \mbox{\hyperlink{pugixml_8hpp_a3d91f8ab11645e6dac8783d86d152b31}{PUGIXML\+\_\+\+FUNCTION}} \mbox{\hyperlink{namespacepugi_ae372a27a1d2b6a23e431155820fbf166}{pugi\+::as\+\_\+wide}} (\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{char}} \texorpdfstring{$\ast$}{*}str)
+\item 
+std\+::basic\+\_\+string$<$ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{wchar\+\_\+t}}, std\+::char\+\_\+traits$<$ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{wchar\+\_\+t}} $>$, std\+::allocator$<$ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{wchar\+\_\+t}} $>$ $>$ \mbox{\hyperlink{pugixml_8hpp_a3d91f8ab11645e6dac8783d86d152b31}{PUGIXML\+\_\+\+FUNCTION}} \mbox{\hyperlink{namespacepugi_a803470011bee5ec2a61e942cf55f1221}{pugi\+::as\+\_\+wide}} (\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} std\+::basic\+\_\+string$<$ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{char}}, std\+::char\+\_\+traits$<$ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{char}} $>$, std\+::allocator$<$ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{char}} $>$ $>$ \&str)
+\item 
+\mbox{\hyperlink{pugixml_8cpp_a72f5dbb8bd03df7c7ba65966deb8c73d}{PUGI\+\_\+\+IMPL\+\_\+\+FN}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{void}} \mbox{\hyperlink{pugixml_8hpp_a3d91f8ab11645e6dac8783d86d152b31}{PUGIXML\+\_\+\+FUNCTION}} \mbox{\hyperlink{namespacepugi_abc67229fed7dbe24a410d83b9233f916}{pugi\+::set\+\_\+memory\+\_\+management\+\_\+functions}} (\mbox{\hyperlink{namespacepugi_a653730d9eecf37ce6a12f4c65ff1f262}{allocation\+\_\+function}} allocate, \mbox{\hyperlink{namespacepugi_a3587161b9f8d7ac4ac2d6a45b82462be}{deallocation\+\_\+function}} deallocate)
+\item 
+\mbox{\hyperlink{pugixml_8cpp_a72f5dbb8bd03df7c7ba65966deb8c73d}{PUGI\+\_\+\+IMPL\+\_\+\+FN}} \mbox{\hyperlink{namespacepugi_a653730d9eecf37ce6a12f4c65ff1f262}{allocation\+\_\+function}} \mbox{\hyperlink{pugixml_8hpp_a3d91f8ab11645e6dac8783d86d152b31}{PUGIXML\+\_\+\+FUNCTION}} \mbox{\hyperlink{namespacepugi_a0d3d42320b07fe1865feb5e8e7c01e38}{pugi\+::get\+\_\+memory\+\_\+allocation\+\_\+function}} ()
+\item 
+\mbox{\hyperlink{pugixml_8cpp_a72f5dbb8bd03df7c7ba65966deb8c73d}{PUGI\+\_\+\+IMPL\+\_\+\+FN}} \mbox{\hyperlink{namespacepugi_a3587161b9f8d7ac4ac2d6a45b82462be}{deallocation\+\_\+function}} \mbox{\hyperlink{pugixml_8hpp_a3d91f8ab11645e6dac8783d86d152b31}{PUGIXML\+\_\+\+FUNCTION}} \mbox{\hyperlink{namespacepugi_a0823c1cb767482d9d72d1df055be3b67}{pugi\+::get\+\_\+memory\+\_\+deallocation\+\_\+function}} ()
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Variables}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{unsigned}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{int}} \mbox{\hyperlink{namespacepugi_ae5058761cfd25d6cdb7e092659dae1fd}{pugi\+::parse\+\_\+minimal}} = 0x0000
+\item 
+\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{unsigned}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{int}} \mbox{\hyperlink{namespacepugi_a8fb7ea408d60b4f2ca79dd30b651f545}{pugi\+::parse\+\_\+pi}} = 0x0001
+\item 
+\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{unsigned}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{int}} \mbox{\hyperlink{namespacepugi_adcab316176bfaf69158339962fb4ad38}{pugi\+::parse\+\_\+comments}} = 0x0002
+\item 
+\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{unsigned}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{int}} \mbox{\hyperlink{namespacepugi_a47b679897f8bc15e4e152978fc88c208}{pugi\+::parse\+\_\+cdata}} = 0x0004
+\item 
+\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{unsigned}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{int}} \mbox{\hyperlink{namespacepugi_ae492a24302294f1ce3fbd56f2edbf131}{pugi\+::parse\+\_\+ws\+\_\+pcdata}} = 0x0008
+\item 
+\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{unsigned}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{int}} \mbox{\hyperlink{namespacepugi_ab5ef8454110599611900ff48012c8ad6}{pugi\+::parse\+\_\+escapes}} = 0x0010
+\item 
+\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{unsigned}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{int}} \mbox{\hyperlink{namespacepugi_ad4e017365d2ff3ee04e226c35129b475}{pugi\+::parse\+\_\+eol}} = 0x0020
+\item 
+\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{unsigned}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{int}} \mbox{\hyperlink{namespacepugi_a1e943812f2de36fc3ee14f7756afdbd7}{pugi\+::parse\+\_\+wconv\+\_\+attribute}} = 0x0040
+\item 
+\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{unsigned}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{int}} \mbox{\hyperlink{namespacepugi_a8617ea5ba78c676aff8b7af960cb2f4b}{pugi\+::parse\+\_\+wnorm\+\_\+attribute}} = 0x0080
+\item 
+\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{unsigned}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{int}} \mbox{\hyperlink{namespacepugi_adb5db03ce720dcd90e900b9bb7e70427}{pugi\+::parse\+\_\+declaration}} = 0x0100
+\item 
+\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{unsigned}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{int}} \mbox{\hyperlink{namespacepugi_afa993ffcd3e228d21f48071e7c097f32}{pugi\+::parse\+\_\+doctype}} = 0x0200
+\item 
+\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{unsigned}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{int}} \mbox{\hyperlink{namespacepugi_ae7c892ad8288b363daca0c3e1a8e38ee}{pugi\+::parse\+\_\+ws\+\_\+pcdata\+\_\+single}} = 0x0400
+\item 
+\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{unsigned}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{int}} \mbox{\hyperlink{namespacepugi_a1bc8f34cf3cf5fb2dd350293c0ecc5e3}{pugi\+::parse\+\_\+trim\+\_\+pcdata}} = 0x0800
+\item 
+\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{unsigned}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{int}} \mbox{\hyperlink{namespacepugi_a79d7a2d2a9899d79abe6e06fdaa2134f}{pugi\+::parse\+\_\+fragment}} = 0x1000
+\item 
+\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{unsigned}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{int}} \mbox{\hyperlink{namespacepugi_a80a72fa1dbed77775ec0498b23246d8d}{pugi\+::parse\+\_\+embed\+\_\+pcdata}} = 0x2000
+\item 
+\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{unsigned}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{int}} \mbox{\hyperlink{namespacepugi_a6e7064c304ac4351a371cf4d0f8fb386}{pugi\+::parse\+\_\+merge\+\_\+pcdata}} = 0x4000
+\item 
+\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{unsigned}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{int}} \mbox{\hyperlink{namespacepugi_ad7c927d1c1752330637c3318b0d7b366}{pugi\+::parse\+\_\+default}} = \mbox{\hyperlink{namespacepugi_a47b679897f8bc15e4e152978fc88c208}{parse\+\_\+cdata}} \texorpdfstring{$\vert$}{|} \mbox{\hyperlink{namespacepugi_ab5ef8454110599611900ff48012c8ad6}{parse\+\_\+escapes}} \texorpdfstring{$\vert$}{|} \mbox{\hyperlink{namespacepugi_a1e943812f2de36fc3ee14f7756afdbd7}{parse\+\_\+wconv\+\_\+attribute}} \texorpdfstring{$\vert$}{|} \mbox{\hyperlink{namespacepugi_ad4e017365d2ff3ee04e226c35129b475}{parse\+\_\+eol}}
+\item 
+\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{unsigned}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{int}} \mbox{\hyperlink{namespacepugi_a7d773377222d4cb6951297d61605c6a7}{pugi\+::parse\+\_\+full}} = \mbox{\hyperlink{namespacepugi_ad7c927d1c1752330637c3318b0d7b366}{parse\+\_\+default}} \texorpdfstring{$\vert$}{|} \mbox{\hyperlink{namespacepugi_a8fb7ea408d60b4f2ca79dd30b651f545}{parse\+\_\+pi}} \texorpdfstring{$\vert$}{|} \mbox{\hyperlink{namespacepugi_adcab316176bfaf69158339962fb4ad38}{parse\+\_\+comments}} \texorpdfstring{$\vert$}{|} \mbox{\hyperlink{namespacepugi_adb5db03ce720dcd90e900b9bb7e70427}{parse\+\_\+declaration}} \texorpdfstring{$\vert$}{|} \mbox{\hyperlink{namespacepugi_afa993ffcd3e228d21f48071e7c097f32}{parse\+\_\+doctype}}
+\item 
+\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{unsigned}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{int}} \mbox{\hyperlink{namespacepugi_ace12e8dee65c5bae8ee42a64be7421d3}{pugi\+::format\+\_\+indent}} = 0x01
+\item 
+\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{unsigned}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{int}} \mbox{\hyperlink{namespacepugi_ab863bcafd203aeaa98953df3a998243f}{pugi\+::format\+\_\+write\+\_\+bom}} = 0x02
+\item 
+\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{unsigned}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{int}} \mbox{\hyperlink{namespacepugi_a2dd811716b1c0a6a2431ceca43bc649e}{pugi\+::format\+\_\+raw}} = 0x04
+\item 
+\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{unsigned}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{int}} \mbox{\hyperlink{namespacepugi_a0ec33e4db09260718f7003ed091f5a1b}{pugi\+::format\+\_\+no\+\_\+declaration}} = 0x08
+\item 
+\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{unsigned}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{int}} \mbox{\hyperlink{namespacepugi_ae8d833b4cabc60ba64536d57669454fd}{pugi\+::format\+\_\+no\+\_\+escapes}} = 0x10
+\item 
+\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{unsigned}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{int}} \mbox{\hyperlink{namespacepugi_ab0aae01dc0b870a2673c32ca6623ae09}{pugi\+::format\+\_\+save\+\_\+file\+\_\+text}} = 0x20
+\item 
+\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{unsigned}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{int}} \mbox{\hyperlink{namespacepugi_a8aafe40e9dd0c345786d01e875b65dd4}{pugi\+::format\+\_\+indent\+\_\+attributes}} = 0x40
+\item 
+\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{unsigned}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{int}} \mbox{\hyperlink{namespacepugi_a0318259e65577c13b172d3a9995aab6c}{pugi\+::format\+\_\+no\+\_\+empty\+\_\+element\+\_\+tags}} = 0x80
+\item 
+\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{unsigned}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{int}} \mbox{\hyperlink{namespacepugi_a28bc6fc1b2dd2b745dfc3d7fc90c5ee6}{pugi\+::format\+\_\+skip\+\_\+control\+\_\+chars}} = 0x100
+\item 
+\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{unsigned}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{int}} \mbox{\hyperlink{namespacepugi_ac73695d0ae673c031c4ba1e04324f51c}{pugi\+::format\+\_\+attribute\+\_\+single\+\_\+quote}} = 0x200
+\item 
+\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{unsigned}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{int}} \mbox{\hyperlink{namespacepugi_a325f48a35abbaeacdfd8b7fc9ed1713c}{pugi\+::format\+\_\+default}} = \mbox{\hyperlink{namespacepugi_ace12e8dee65c5bae8ee42a64be7421d3}{format\+\_\+indent}}
+\item 
+\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{int}} \mbox{\hyperlink{namespacepugi_a4043f7449e31b8327431911674db77fe}{pugi\+::default\+\_\+double\+\_\+precision}} = 17
+\item 
+\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{int}} \mbox{\hyperlink{namespacepugi_af0761a33d0ef29be1033eaea8c7bf7e6}{pugi\+::default\+\_\+float\+\_\+precision}} = 9
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Macro Definition Documentation}
+\Hypertarget{pugixml_8hpp_a770abeed4977e50a439e91cf5fcd2cbf}\label{pugixml_8hpp_a770abeed4977e50a439e91cf5fcd2cbf} 
+\index{pugixml.hpp@{pugixml.hpp}!PUGIXML\_API@{PUGIXML\_API}}
+\index{PUGIXML\_API@{PUGIXML\_API}!pugixml.hpp@{pugixml.hpp}}
+\doxysubsubsection{\texorpdfstring{PUGIXML\_API}{PUGIXML\_API}}
+{\footnotesize\ttfamily \#\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{define}} PUGIXML\+\_\+\+API}
+
+
+
+Definition at line \mbox{\hyperlink{pugixml_8hpp_source_l00054}{54}} of file \mbox{\hyperlink{pugixml_8hpp_source}{pugixml.\+hpp}}.
+
+\Hypertarget{pugixml_8hpp_af467437c41f223eaed56106370aa82ff}\label{pugixml_8hpp_af467437c41f223eaed56106370aa82ff} 
+\index{pugixml.hpp@{pugixml.hpp}!PUGIXML\_CHAR@{PUGIXML\_CHAR}}
+\index{PUGIXML\_CHAR@{PUGIXML\_CHAR}!pugixml.hpp@{pugixml.hpp}}
+\doxysubsubsection{\texorpdfstring{PUGIXML\_CHAR}{PUGIXML\_CHAR}}
+{\footnotesize\ttfamily \#\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{define}} PUGIXML\+\_\+\+CHAR~\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{char}}}
+
+
+
+Definition at line \mbox{\hyperlink{pugixml_8hpp_source_l00131}{131}} of file \mbox{\hyperlink{pugixml_8hpp_source}{pugixml.\+hpp}}.
+
+\Hypertarget{pugixml_8hpp_ad47efa7f45dfd6d1fe9da1d5cf9c5301}\label{pugixml_8hpp_ad47efa7f45dfd6d1fe9da1d5cf9c5301} 
+\index{pugixml.hpp@{pugixml.hpp}!PUGIXML\_CLASS@{PUGIXML\_CLASS}}
+\index{PUGIXML\_CLASS@{PUGIXML\_CLASS}!pugixml.hpp@{pugixml.hpp}}
+\doxysubsubsection{\texorpdfstring{PUGIXML\_CLASS}{PUGIXML\_CLASS}}
+{\footnotesize\ttfamily \#\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{define}} PUGIXML\+\_\+\+CLASS~\mbox{\hyperlink{pugixml_8hpp_a770abeed4977e50a439e91cf5fcd2cbf}{PUGIXML\+\_\+\+API}}}
+
+
+
+Definition at line \mbox{\hyperlink{pugixml_8hpp_source_l00059}{59}} of file \mbox{\hyperlink{pugixml_8hpp_source}{pugixml.\+hpp}}.
+
+\Hypertarget{pugixml_8hpp_a2bf4c1773811a4e7fd7a7ec3c989b588}\label{pugixml_8hpp_a2bf4c1773811a4e7fd7a7ec3c989b588} 
+\index{pugixml.hpp@{pugixml.hpp}!PUGIXML\_DEPRECATED@{PUGIXML\_DEPRECATED}}
+\index{PUGIXML\_DEPRECATED@{PUGIXML\_DEPRECATED}!pugixml.hpp@{pugixml.hpp}}
+\doxysubsubsection{\texorpdfstring{PUGIXML\_DEPRECATED}{PUGIXML\_DEPRECATED}}
+{\footnotesize\ttfamily \#\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{define}} PUGIXML\+\_\+\+DEPRECATED}
+
+
+
+Definition at line \mbox{\hyperlink{pugixml_8hpp_source_l00048}{48}} of file \mbox{\hyperlink{pugixml_8hpp_source}{pugixml.\+hpp}}.
+
+\Hypertarget{pugixml_8hpp_a3d91f8ab11645e6dac8783d86d152b31}\label{pugixml_8hpp_a3d91f8ab11645e6dac8783d86d152b31} 
+\index{pugixml.hpp@{pugixml.hpp}!PUGIXML\_FUNCTION@{PUGIXML\_FUNCTION}}
+\index{PUGIXML\_FUNCTION@{PUGIXML\_FUNCTION}!pugixml.hpp@{pugixml.hpp}}
+\doxysubsubsection{\texorpdfstring{PUGIXML\_FUNCTION}{PUGIXML\_FUNCTION}}
+{\footnotesize\ttfamily \#\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{define}} PUGIXML\+\_\+\+FUNCTION~\mbox{\hyperlink{pugixml_8hpp_a770abeed4977e50a439e91cf5fcd2cbf}{PUGIXML\+\_\+\+API}}}
+
+
+
+Definition at line \mbox{\hyperlink{pugixml_8hpp_source_l00064}{64}} of file \mbox{\hyperlink{pugixml_8hpp_source}{pugixml.\+hpp}}.
+
+\Hypertarget{pugixml_8hpp_abec93a3f00f44e42c024245ff2b5980e}\label{pugixml_8hpp_abec93a3f00f44e42c024245ff2b5980e} 
+\index{pugixml.hpp@{pugixml.hpp}!PUGIXML\_NOEXCEPT@{PUGIXML\_NOEXCEPT}}
+\index{PUGIXML\_NOEXCEPT@{PUGIXML\_NOEXCEPT}!pugixml.hpp@{pugixml.hpp}}
+\doxysubsubsection{\texorpdfstring{PUGIXML\_NOEXCEPT}{PUGIXML\_NOEXCEPT}}
+{\footnotesize\ttfamily \#\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{define}} PUGIXML\+\_\+\+NOEXCEPT}
+
+
+
+Definition at line \mbox{\hyperlink{pugixml_8hpp_source_l00092}{92}} of file \mbox{\hyperlink{pugixml_8hpp_source}{pugixml.\+hpp}}.
+
+\Hypertarget{pugixml_8hpp_a377cabdf77b82e5741e19ab75657d452}\label{pugixml_8hpp_a377cabdf77b82e5741e19ab75657d452} 
+\index{pugixml.hpp@{pugixml.hpp}!PUGIXML\_NOEXCEPT\_IF\_NOT\_COMPACT@{PUGIXML\_NOEXCEPT\_IF\_NOT\_COMPACT}}
+\index{PUGIXML\_NOEXCEPT\_IF\_NOT\_COMPACT@{PUGIXML\_NOEXCEPT\_IF\_NOT\_COMPACT}!pugixml.hpp@{pugixml.hpp}}
+\doxysubsubsection{\texorpdfstring{PUGIXML\_NOEXCEPT\_IF\_NOT\_COMPACT}{PUGIXML\_NOEXCEPT\_IF\_NOT\_COMPACT}}
+{\footnotesize\ttfamily \#\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{define}} PUGIXML\+\_\+\+NOEXCEPT\+\_\+\+IF\+\_\+\+NOT\+\_\+\+COMPACT~\mbox{\hyperlink{pugixml_8hpp_abec93a3f00f44e42c024245ff2b5980e}{PUGIXML\+\_\+\+NOEXCEPT}}}
+
+
+
+Definition at line \mbox{\hyperlink{pugixml_8hpp_source_l00100}{100}} of file \mbox{\hyperlink{pugixml_8hpp_source}{pugixml.\+hpp}}.
+
+\Hypertarget{pugixml_8hpp_a0daaf3d8b4c7b5ffb7d6a0fa3cdeaadc}\label{pugixml_8hpp_a0daaf3d8b4c7b5ffb7d6a0fa3cdeaadc} 
+\index{pugixml.hpp@{pugixml.hpp}!PUGIXML\_NULL@{PUGIXML\_NULL}}
+\index{PUGIXML\_NULL@{PUGIXML\_NULL}!pugixml.hpp@{pugixml.hpp}}
+\doxysubsubsection{\texorpdfstring{PUGIXML\_NULL}{PUGIXML\_NULL}}
+{\footnotesize\ttfamily \#\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{define}} PUGIXML\+\_\+\+NULL~0}
+
+
+
+Definition at line \mbox{\hyperlink{pugixml_8hpp_source_l00121}{121}} of file \mbox{\hyperlink{pugixml_8hpp_source}{pugixml.\+hpp}}.
+
+\Hypertarget{pugixml_8hpp_ac6a0f97f3bdadbd76bab1c0098880a00}\label{pugixml_8hpp_ac6a0f97f3bdadbd76bab1c0098880a00} 
+\index{pugixml.hpp@{pugixml.hpp}!PUGIXML\_OVERRIDE@{PUGIXML\_OVERRIDE}}
+\index{PUGIXML\_OVERRIDE@{PUGIXML\_OVERRIDE}!pugixml.hpp@{pugixml.hpp}}
+\doxysubsubsection{\texorpdfstring{PUGIXML\_OVERRIDE}{PUGIXML\_OVERRIDE}}
+{\footnotesize\ttfamily \#\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{define}} PUGIXML\+\_\+\+OVERRIDE}
+
+
+
+Definition at line \mbox{\hyperlink{pugixml_8hpp_source_l00110}{110}} of file \mbox{\hyperlink{pugixml_8hpp_source}{pugixml.\+hpp}}.
+
+\Hypertarget{pugixml_8hpp_ad5475bca2e336810ae5906349e644d0b}\label{pugixml_8hpp_ad5475bca2e336810ae5906349e644d0b} 
+\index{pugixml.hpp@{pugixml.hpp}!PUGIXML\_TEXT@{PUGIXML\_TEXT}}
+\index{PUGIXML\_TEXT@{PUGIXML\_TEXT}!pugixml.hpp@{pugixml.hpp}}
+\doxysubsubsection{\texorpdfstring{PUGIXML\_TEXT}{PUGIXML\_TEXT}}
+{\footnotesize\ttfamily \#\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{define}} PUGIXML\+\_\+\+TEXT(\begin{DoxyParamCaption}\item[{}]{\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{t}} }\end{DoxyParamCaption})~\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{t}}}
+
+
+
+Definition at line \mbox{\hyperlink{pugixml_8hpp_source_l00130}{130}} of file \mbox{\hyperlink{pugixml_8hpp_source}{pugixml.\+hpp}}.
+
+\Hypertarget{pugixml_8hpp_a8780f48a99ee220810217d06d2148363}\label{pugixml_8hpp_a8780f48a99ee220810217d06d2148363} 
+\index{pugixml.hpp@{pugixml.hpp}!PUGIXML\_VERSION@{PUGIXML\_VERSION}}
+\index{PUGIXML\_VERSION@{PUGIXML\_VERSION}!pugixml.hpp@{pugixml.hpp}}
+\doxysubsubsection{\texorpdfstring{PUGIXML\_VERSION}{PUGIXML\_VERSION}}
+{\footnotesize\ttfamily \#\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{define}} PUGIXML\+\_\+\+VERSION~1140}
+
+\hypertarget{pugixml_8hpp_autotoc_md2}{}\doxysubsubsection{\texorpdfstring{pugixml parser -\/ version 1.\+14}{pugixml parser -\/ version 1.\+14}}\label{pugixml_8hpp_autotoc_md2}
+Copyright (C) 2006-\/2023, by Arseny Kapoulkine (\href{mailto:arseny.kapoulkine@gmail.com}{\texttt{ arseny.\+kapoulkine@gmail.\+com}}) Report bugs and download new versions at \href{https://pugixml.org/}{\texttt{ https\+://pugixml.\+org/}}
+
+This library is distributed under the MIT License. See notice at the end of this file.
+
+This work is based on the pugxml parser, which is\+: Copyright (C) 2003, by Kristen Wegner (\href{mailto:kristen@tima.net}{\texttt{ kristen@tima.\+net}}) 
+
+Definition at line \mbox{\hyperlink{pugixml_8hpp_source_l00017}{17}} of file \mbox{\hyperlink{pugixml_8hpp_source}{pugixml.\+hpp}}.
+

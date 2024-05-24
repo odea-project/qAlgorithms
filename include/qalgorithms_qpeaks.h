@@ -59,7 +59,7 @@ namespace q
     // define valid regression struct
     struct validRegression
     {
-      int index_x0; // index of window center (x==0) in the Y matrix 
+      int index_x0; // index of window center (x==0) in the Y matrix
       int scale;
       int df;
       double apex_position;
@@ -101,14 +101,14 @@ namespace q
 
     struct extendedMSE
     {
-      double mse;         // mean squared error
-      int index;          // index of the best regression (in B matrix)
-      int scale;          // extended scale of the regression window
-      int df;             // degree of freedom
-      int left_limit;     // left limit of the peak regression window
-      int right_limit;    // right limit of the peak regression window
-      int X_row_0;        //  start of the cutted Deisgn Matrix
-      int X_row_1;        // end of the cutted Design Matrix
+      double mse;      // mean squared error
+      int index;       // index of the best regression (in B matrix)
+      int scale;       // extended scale of the regression window
+      int df;          // degree of freedom
+      int left_limit;  // left limit of the peak regression window
+      int right_limit; // right limit of the peak regression window
+      int X_row_0;     //  start of the cutted Deisgn Matrix
+      int X_row_1;     // end of the cutted Design Matrix
       extendedMSE(
           double mse,
           int index,
@@ -131,14 +131,17 @@ namespace q
     int global_maxScale;
 
     // methods
-    int calculateNumberOfRegressions(const int n) const;
+    int
+    calculateNumberOfRegressions(const int n) const;
 
-    void runningRegression(
+    void
+    runningRegression(
         const RefMatrix &Y,
         const std::vector<int *> &df,
         std::vector<std::unique_ptr<validRegression>> &validRegressions);
 
-    void validateRegressions(
+    void
+    validateRegressions(
         const Matrix &B,
         const RefMatrix &Y,
         const Matrix &Ylog,
@@ -146,30 +149,34 @@ namespace q
         const int scale,
         std::vector<std::unique_ptr<validRegression>> &validRegressions);
 
-    void mergeRegressionsWithinScale(
+    void
+    mergeRegressionsOverScales(
         std::vector<std::unique_ptr<validRegression>> &validRegressions,
-        std::vector<std::unique_ptr<validRegression>> &validRegressionsTmp,
-        const RefMatrix &Y,
-        const int scale,
-        const std::vector<int *> &df);
-
-    void mergeRegressionsOverScales(
-        std::vector<std::unique_ptr<validRegression>> &validRegressions,
-        const Matrix &Ylog, 
+        const Matrix &Ylog,
         const RefMatrix &Y,
         const std::vector<int *> &df);
 
-    std::vector<std::unique_ptr<DataType::Peak>> createPeaks(
+    std::vector<std::unique_ptr<DataType::Peak>>
+    createPeaks(
         const std::vector<std::unique_ptr<validRegression>> &validRegressions,
         const RefMatrix &Y,
         const std::vector<double *> &X,
         const int scanNumber);
 
-    double calcMse(const Matrix &yhat, const Matrix &y) const;
+    double
+    calcMse(
+      const Matrix &yhat, 
+      const Matrix &y) const;
 
-    double calcMse(const Matrix &yhat, const RefMatrix &y) const;
+    double
+    calcMse(
+      const Matrix &yhat, 
+      const RefMatrix &y) const;
 
-    double calcMseEXP(const Matrix &yhat_log, const RefMatrix &y) const;
+    double
+    calcMseEXP(
+      const Matrix &yhat_log, 
+      const RefMatrix &y) const;
 
     /**
      * @brief Calculate the best mean squared error of the regression model with different regression windows BUT same window size.
@@ -181,14 +188,14 @@ namespace q
      * @param scale : Window size scale, e.g., 5 means the window size is 11 (2*5+1)
      * @return std::pair<double,int> : MSE and index of the best regression window
      */
-    void calcExtendedMse(
+    void
+    calcExtendedMse(
         const RefMatrix &Y,
-        // const Matrix &B,
         const std::vector<std::unique_ptr<validRegression>> &regressions,
-        // const int scale,
         const std::vector<int *> &df);
 
-    void calcExtendedMse(
+    void
+    calcExtendedMse(
         const RefMatrix &Y,
         validRegression &currentReggression,
         validRegression &refReggression,
@@ -196,16 +203,20 @@ namespace q
 
     /**
      * @brief Calculate the chi square value of the regression model with the given regression window in the exponential space.
-     * 
-     * @param yhat_log : Log transformed prediction 
+     *
+     * @param yhat_log : Log transformed prediction
      * @param y_exp : Exponential transformed measurement data
      * @return double : Chi square value
      */
-    double calcChiSquareEXP(
+    double
+    calcChiSquareEXP(
         const Matrix &yhat_log,
         const RefMatrix &y_exp) const;
 
-    std::pair<Matrix, Matrix> jacobianMatrix_PeakArea(const Matrix &B, int scale) const;
+    std::pair<Matrix, Matrix>
+    jacobianMatrix_PeakArea(
+        const Matrix &B,
+        int scale) const;
 
     /**
      * @brief Create a Design Matrix object for the given scale.
@@ -214,14 +225,16 @@ namespace q
      * @param scale
      * @return Matrix
      */
-    void createDesignMatrix(const int scale);
+    void
+    createDesignMatrix(const int scale);
 
     /**
      * @brief Create the inverse and pseudo-inverse matrices for the given design matrix.
      *
      * @param X is input design matrix
      */
-    void createInverseAndPseudoInverse(const Matrix &X);
+    void
+    createInverseAndPseudoInverse(const Matrix &X);
   };
 } // namespace q
 

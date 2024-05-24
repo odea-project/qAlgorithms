@@ -5,77 +5,142 @@
 \DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00001}00001\ \textcolor{comment}{//\ test\_qPeak\_class.cpp}}
 \DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00002}00002\ }
 \DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00003}00003\ \textcolor{comment}{//\ internal}}
-\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00004}00004\ \textcolor{preprocessor}{\#include\ "{}../include/qalgorithms\_measurement\_data\_lcms.h"{}}}
-\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00005}00005\ \textcolor{preprocessor}{\#include\ "{}../include/qalgorithms\_qpeaks.h"{}}}
-\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00006}00006\ \textcolor{preprocessor}{\#include\ "{}../include/qalgorithms\_refmatrix.h"{}}}
-\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00007}00007\ \textcolor{preprocessor}{\#include\ "{}../include/qalgorithms\_matrix.h"{}}}
-\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00008}00008\ \textcolor{preprocessor}{\#include\ "{}../include/qalgorithms\_peak.h"{}}}
+\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00004}00004\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{qalgorithms__measurement__data__lcms_8h}{../include/qalgorithms\_measurement\_data\_lcms.h}}"{}}}
+\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00005}00005\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{qalgorithms__qpeaks_8h}{../include/qalgorithms\_qpeaks.h}}"{}}}
+\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00006}00006\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{qalgorithms__refmatrix_8h}{../include/qalgorithms\_refmatrix.h}}"{}}}
+\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00007}00007\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{qalgorithms__matrix_8h}{../include/qalgorithms\_matrix.h}}"{}}}
+\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00008}00008\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{qalgorithms__datatype__peak_8h}{../include/qalgorithms\_datatype\_peak.h}}"{}}}
 \DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00009}00009\ }
 \DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00010}00010\ \textcolor{comment}{//\ external}}
-\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00011}00011\ \textcolor{preprocessor}{\#include\ <iostream>}}
-\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00012}00012\ \textcolor{preprocessor}{\#include\ <chrono>}}
-\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00013}00013\ \textcolor{preprocessor}{\#include\ <fstream>}}
-\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00014}00014\ \textcolor{preprocessor}{\#include\ <cstdlib>}}
-\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00015}00015\ }
-\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00016}\mbox{\hyperlink{test__q_peak__class_8cpp_ae66f6b31b5ad750f1fe042a706a4e3d4}{00016}}\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{test__q_peak__class_8cpp_ae66f6b31b5ad750f1fe042a706a4e3d4}{main}}()}
-\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00017}00017\ \{}
-\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00018}00018\ \ \ \textcolor{comment}{//\ define\ input\ filename}}
-\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00019}00019\ \ \ \textcolor{comment}{//\ std::string\ filename\_input\ =\ "{}test/data/test\_lcms\_data.csv"{};}}
-\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00020}00020\ \ \ std::string\ filename\_input\ =\ \textcolor{stringliteral}{"{}test/data/test\_lcms\_data2.csv"{}};}
-\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00021}00021\ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}create\ LCMSData\ object...."{}};}
-\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00022}00022\ \ \ \mbox{\hyperlink{classq_1_1_l_c_m_s_data}{q::LCMSData}}\ lcmsData;}
-\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00023}00023\ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}done\(\backslash\)n"{}};}
-\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00024}00024\ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}read\ csv...."{}};}
-\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00025}00025\ \ \ \textcolor{comment}{//\ lcmsData.readCSV(filename\_input,\ 1,\ -\/1,\ 0,\ -\/1,\ ',',\ \{q::DataType::DataField::SCANNUMBER,\ q::DataType::DataField::RETENTIONTIME,\ q::DataType::DataField::MZ,\ q::DataType::DataField::INTENSITY\});}}
-\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00026}00026\ \ \ lcmsData.\mbox{\hyperlink{classq_1_1_l_c_m_s_data_ab4632d3d3138d17fd5a7f479b70c2846}{readCSV}}(filename\_input,\ 1,\ -\/1,\ 0,\ -\/1,\ \textcolor{charliteral}{','},\ \{q::DataType::DataField::MZ,\ q::DataType::DataField::INTENSITY,\ q::DataType::DataField::SCANNUMBER,\ q::DataType::DataField::RETENTIONTIME\});}
+\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00011}00011\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{_stream_craft__mzml_8hpp}{../external/StreamCraft/src/StreamCraft\_mzml.hpp}}"{}}}
+\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00012}00012\ \textcolor{preprocessor}{\#include\ <iostream>}}
+\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00013}00013\ \textcolor{preprocessor}{\#include\ <chrono>}}
+\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00014}00014\ \textcolor{preprocessor}{\#include\ <fstream>}}
+\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00015}00015\ \textcolor{preprocessor}{\#include\ <cstdlib>}}
+\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00016}00016\ \textcolor{preprocessor}{\#include\ <iomanip>}}
+\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00017}\mbox{\hyperlink{test__q_peak__class_8cpp_ae66f6b31b5ad750f1fe042a706a4e3d4}{00017}}\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{test__q_peak__class_8cpp_ae66f6b31b5ad750f1fe042a706a4e3d4}{main}}()}
+\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00018}00018\ \{}
+\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00019}00019\ \ \ \textcolor{comment}{//\ define\ input\ filename}}
+\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00020}00020\ \ \ \textcolor{comment}{//\ std::string\ filename\_input\ =\ "{}test/data/test\_lcms\_data.csv"{};}}
+\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00021}00021\ \ \ std::string\ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{filename\_input}}\ =\ \textcolor{stringliteral}{"{}test/data/test\_lcms\_data2.csv"{}};}
+\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00022}00022\ \ \ \textcolor{comment}{//\ std::string\ filename\_input\ =\ "{}test/data/test\_ftir.csv"{};}}
+\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00023}00023\ \ \ \textcolor{comment}{//\ std::string\ filename\_input\ =\ "{}test/data/test\_chrom.csv"{};}}
+\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00024}00024\ \ \ \textcolor{comment}{//\ std::string\ filename\_input\ =\ "{}test/data/test\_orbitrap.csv"{};}}
+\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00025}00025\ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}create\ LCMSData\ object...."{}};}
+\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00026}00026\ \ \ \mbox{\hyperlink{classq_1_1_l_c_m_s_data}{q::LCMSData}}\ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{lcmsData}};}
 \DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00027}00027\ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}done\(\backslash\)n"{}};}
-\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00028}00028\ }
-\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00029}00029\ \ \ }
-\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00030}00030\ \ \ lcmsData.\mbox{\hyperlink{classq_1_1_l_c_m_s_data_ae1a62294c43bbe12e97f9293eaa49ea8}{zeroFilling}}();}
-\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00031}00031\ \ \ lcmsData.\mbox{\hyperlink{classq_1_1_l_c_m_s_data_a6c799dc9ef6918446df62515bc7daa8d}{cutData}}();}
-\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00032}00032\ \ \ lcmsData.\mbox{\hyperlink{classq_1_1_l_c_m_s_data_a5411843e0ea71a7719a7550dc3dccd71}{filterSmallDataSets}}();}
-\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00033}00033\ \ \ lcmsData.\mbox{\hyperlink{classq_1_1_l_c_m_s_data_a6bcb7c6df660ff834fbfb86dcb5a81a5}{interpolateData}}();}
-\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00034}00034\ }
-\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00035}00035\ \ \ lcmsData.\mbox{\hyperlink{classq_1_1_l_c_m_s_data_a5ca3f008825795ef7caef0aeb69285ff}{info}}();}
-\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00036}00036\ }
-\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00037}00037\ \ \ \textcolor{comment}{//\ qPEAKS}}
-\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00038}00038\ \ \ \mbox{\hyperlink{namespaceq_aab5cf99505e4325617dbe9365f547a35}{q::varDataType}}\ dataObject\ =\ \&(lcmsData.\mbox{\hyperlink{classq_1_1_l_c_m_s_data_ac08611a3fc7649d1e5b2ae257090388a}{data}});}
-\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00039}00039\ \ \ \mbox{\hyperlink{classq_1_1q_peaks}{q::qPeaks}}\ qpeaks(dataObject);}
-\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00040}00040\ \ \ \textcolor{comment}{//\ Capture\ the\ start\ time}}
-\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00041}00041\ \ \ \textcolor{keyword}{auto}\ start\ =\ std::chrono::high\_resolution\_clock::now();}
-\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00042}00042\ }
-\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00043}00043\ \ \ qpeaks.\mbox{\hyperlink{classq_1_1q_peaks_ada5be6820b1e303b23db55815875cf99}{findPeaks}}(dataObject);}
-\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00044}00044\ }
-\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00045}00045\ \ \ \textcolor{comment}{//\ Capture\ the\ end\ time}}
-\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00046}00046\ \ \ \textcolor{keyword}{auto}\ end\ =\ std::chrono::high\_resolution\_clock::now();}
-\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00047}00047\ \ \ \textcolor{comment}{//\ Calculate\ the\ duration}}
-\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00048}00048\ \ \ std::chrono::duration<double>\ duration\ =\ end\ -\/\ start;}
-\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00049}00049\ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}Duration:\ "{}}\ <<\ duration.count()\ <<\ \textcolor{stringliteral}{"{}\ seconds"{}}\ <<\ std::endl;}
-\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00050}00050\ }
-\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00051}00051\ }
-\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00052}00052\ }
-\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00053}00053\ }
+\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00028}00028\ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}read\ csv...."{}};}
+\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00029}00029\ \ \ \textcolor{comment}{//\ lcmsData.readCSV(filename\_input,\ 1,\ -\/1,\ 0,\ -\/1,\ ',',\ \{q::DataType::DataField::SCANNUMBER,\ q::DataType::DataField::RETENTIONTIME,\ q::DataType::DataField::MZ,\ q::DataType::DataField::INTENSITY\});}}
+\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00030}00030\ \ \ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{lcmsData}}.\mbox{\hyperlink{classq_1_1_l_c_m_s_data_ab4632d3d3138d17fd5a7f479b70c2846}{readCSV}}(\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{filename\_input}},\ 1,\ -\/1,\ 0,\ -\/1,\ \textcolor{charliteral}{','},\ \{q::DataType::DataField::MZ,\ q::DataType::DataField::INTENSITY,\ q::DataType::DataField::SCANNUMBER,\ q::DataType::DataField::RETENTIONTIME\});}
+\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00031}00031\ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}done\(\backslash\)n"{}};}
+\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00032}00032\ }
+\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00033}00033\ \ \ }
+\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00034}00034\ \ \ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{lcmsData}}.zeroFilling();}
+\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00035}00035\ \ \ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{lcmsData}}.cutData();}
+\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00036}00036\ \ \ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{lcmsData}}.filterSmallDataSets();}
+\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00037}00037\ \ \ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{lcmsData}}.interpolateData();}
+\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00038}00038\ }
+\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00039}00039\ \ \ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{lcmsData}}.info();}
+\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00040}00040\ }
+\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00041}00041\ \ \ \textcolor{comment}{//\ qPEAKS}}
+\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00042}00042\ \ \ \mbox{\hyperlink{namespaceq_a4dea617c66f5c5dfc66e60e2e128f5da}{q::varDataType}}\ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{dataObject}}\ =\ \&(\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{lcmsData}}.data);}
+\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00043}00043\ \ \ \mbox{\hyperlink{classq_1_1q_peaks}{q::qPeaks}}\ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{qpeaks}}(\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{dataObject}});}
+\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00044}00044\ \ \ \textcolor{comment}{//\ Capture\ the\ start\ time}}
+\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00045}00045\ \ \ \textcolor{keyword}{auto}\ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{start}}\ =\ std::chrono::high\_resolution\_clock::now();}
+\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00046}00046\ }
+\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00047}00047\ \ \ std::vector<std::vector<std::unique\_ptr<q::DataType::Peak>>>\ peaks=\ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{qpeaks}}.findPeaks(\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{dataObject}});}
+\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00048}00048\ }
+\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00049}00049\ \ \ \textcolor{comment}{//\ Capture\ the\ end\ time}}
+\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00050}00050\ \ \ \textcolor{keyword}{auto}\ end\ =\ std::chrono::high\_resolution\_clock::now();}
+\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00051}00051\ \ \ \textcolor{comment}{//\ Calculate\ the\ duration}}
+\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00052}00052\ \ \ std::chrono::duration<double>\ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{duration}}\ =\ end\ -\/\ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{start}};}
+\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00053}00053\ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}Duration:\ "{}}\ <<\ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{duration}}.count()\ <<\ \textcolor{stringliteral}{"{}\ seconds"{}}\ <<\ std::endl;}
 \DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00054}00054\ }
-\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00055}00055\ \ \ \textcolor{comment}{/*}}
-\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00056}00056\ \textcolor{comment}{\ \ //\ export\ the\ data\ to\ a\ CSV\ file}}
-\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00057}00057\ \textcolor{comment}{\ \ //\ define\ the\ filename}}
-\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00058}00058\ \textcolor{comment}{\ \ std::string\ filename\_output\ =\ "{}test/data/test\_lcms\_data\_out.csv"{};}}
-\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00059}00059\ \textcolor{comment}{\ \ //\ check\ if\ the\ file\ exists}}
-\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00060}00060\ \textcolor{comment}{\ \ if\ (std::ifstream\ file(filename\_output);\ file)}}
-\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00061}00061\ \textcolor{comment}{\ \ \{}}
-\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00062}00062\ \textcolor{comment}{\ \ \ \ //\ remove\ the\ file}}
-\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00063}00063\ \textcolor{comment}{\ \ \ \ std::remove(filename\_output.c\_str());}}
-\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00064}00064\ \textcolor{comment}{\ \ \}}}
-\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00065}00065\ \textcolor{comment}{\ \ lcmsData.writeCSV(filename\_output);}}
-\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00066}00066\ \textcolor{comment}{}}
-\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00067}00067\ \textcolor{comment}{\ \ //\ Call\ the\ Python\ script\ to\ plot\ the\ data}}
-\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00068}00068\ \textcolor{comment}{\ \ //\ std::string\ pythonPath\ =\ "{}C:\(\backslash\)\(\backslash\)Python312\(\backslash\)\(\backslash\)python.exe"{};}}
-\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00069}00069\ \textcolor{comment}{\ \ std::string\ pythonPath\ =\ "{}C:\(\backslash\)\(\backslash\)Users\(\backslash\)\(\backslash\)gerri\(\backslash\)\(\backslash\)AppData\(\backslash\)\(\backslash\)Local\(\backslash\)\(\backslash\)Programs\(\backslash\)\(\backslash\)Python\(\backslash\)\(\backslash\)Python312\(\backslash\)\(\backslash\)python.exe"{};}}
-\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00070}00070\ \textcolor{comment}{\ \ std::string\ command\ =\ pythonPath\ +\ "{}\ test/test\_qPeak\_visualize\_profiles.py"{}\ +\ "{}\ "{}\ +\ filename\_input\ +\ "{}\ "{}\ +\ filename\_output;}}
-\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00071}00071\ \textcolor{comment}{\ \ std::system(command.c\_str());}}
-\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00072}00072\ \textcolor{comment}{\ \ */}}
-\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00073}00073\ }
-\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00074}00074\ \ \ \textcolor{keywordflow}{return}\ 0;}
-\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00075}00075\ \}}
+\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00055}00055\ \ \ \textcolor{comment}{/*\ export\ peaks\ to\ csv\ using\ sampleID,\ position,\ height\ as\ columns}}
+\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00056}00056\ \textcolor{comment}{\ \ */}}
+\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00057}00057\ \ \ std::string\ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{filename\_output\_peaks}}\ =\ \textcolor{stringliteral}{"{}test/data/test\_lcms\_data\_out\_peaks.csv"{}};}
+\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00058}00058\ \ \ \textcolor{keywordflow}{if}\ (std::ifstream\ file(\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{filename\_output\_peaks}});\ file)}
+\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00059}00059\ \ \ \{}
+\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00060}00060\ \ \ \ \ std::remove(\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{filename\_output\_peaks}}.c\_str());}
+\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00061}00061\ \ \ \}}
+\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00062}00062\ \ \ std::ofstream\ file(\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{filename\_output\_peaks}});}
+\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00063}00063\ \ \ file\ <<\ \textcolor{stringliteral}{"{}sampleID,position,height\(\backslash\)n"{}};}
+\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00064}00064\ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{i}}\ =\ 0;\ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{i}}\ <\ peaks.size();\ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{i}}++)}
+\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00065}00065\ \ \ \{}
+\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00066}00066\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{j}}\ =\ 0;\ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{j}}\ <\ peaks[\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{i}}].size();\ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{j}}++)}
+\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00067}00067\ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00068}00068\ \ \ \ \ \ \ file\ <<\ peaks[\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{i}}][\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{j}}]-\/>sampleID\ <<\ \textcolor{stringliteral}{"{},"{}}\ <<\ std::fixed\ <<\ std::setprecision(5)\ <<\ peaks[\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{i}}][\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{j}}]-\/>position\ <<\ \textcolor{stringliteral}{"{},"{}}\ <<\ peaks[\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{i}}][\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{j}}]-\/>height\ <<\ \textcolor{stringliteral}{"{}\(\backslash\)n"{}};}
+\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00069}00069\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00070}00070\ \ \ \}}
+\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00071}00071\ \ \ file.close();}
+\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00072}00072\ }
+\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00073}00073\ \ \ \textcolor{comment}{/*\ export\ peaks\ xfit\ to\ csv\ using\ single\ row\ for\ each\ peak's\ xfit\ data}}
+\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00074}00074\ \textcolor{comment}{\ \ */}}
+\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00075}00075\ \ \ std::string\ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{filename\_output\_peaks\_xfit}}\ =\ \textcolor{stringliteral}{"{}test/data/test\_lcms\_data\_out\_peaks\_xfit.csv"{}};}
+\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00076}00076\ \ \ \textcolor{keywordflow}{if}\ (std::ifstream\ file(\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{filename\_output\_peaks\_xfit}});\ file)}
+\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00077}00077\ \ \ \{}
+\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00078}00078\ \ \ \ \ std::remove(\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{filename\_output\_peaks\_xfit}}.c\_str());}
+\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00079}00079\ \ \ \}}
+\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00080}00080\ \ \ std::ofstream\ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{file\_xfit}}(\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{filename\_output\_peaks\_xfit}});}
+\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00081}00081\ \ \ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{file\_xfit}}\ <<\ \textcolor{stringliteral}{"{}sampleID,xfit\(\backslash\)n"{}};}
+\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00082}00082\ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{i}}\ =\ 0;\ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{i}}\ <\ peaks.size();\ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{i}}++)}
+\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00083}00083\ \ \ \{}
+\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00084}00084\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{j}}\ =\ 0;\ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{j}}\ <\ peaks[\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{i}}].size();\ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{j}}++)}
+\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00085}00085\ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00086}00086\ \ \ \ \ \ \ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{file\_xfit}}\ <<\ peaks[\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{i}}][\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{j}}]-\/>sampleID\ <<\ \textcolor{stringliteral}{"{},"{}};}
+\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00087}00087\ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{k}}\ =\ 0;\ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{k}}\ <\ peaks[\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{i}}][\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{j}}]-\/>xFit.size();\ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{k}}++)}
+\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00088}00088\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00089}00089\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{file\_xfit}}\ <<\ peaks[\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{i}}][\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{j}}]-\/>xFit[\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{k}}]\ <<\ \textcolor{stringliteral}{"{},"{}};}
+\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00090}00090\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00091}00091\ \ \ \ \ \ \ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{file\_xfit}}\ <<\ \textcolor{stringliteral}{"{}\(\backslash\)n"{}};}
+\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00092}00092\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00093}00093\ \ \ \}}
+\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00094}00094\ \ \ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{file\_xfit}}.close();}
+\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00095}00095\ }
+\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00096}00096\ \ \ \textcolor{comment}{/*\ export\ peaks\ yfit\ to\ csv\ using\ single\ row\ for\ each\ peak's\ yfit\ data}}
+\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00097}00097\ \textcolor{comment}{\ \ */}}
+\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00098}00098\ \ \ std::string\ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{filename\_output\_peaks\_yfit}}\ =\ \textcolor{stringliteral}{"{}test/data/test\_lcms\_data\_out\_peaks\_yfit.csv"{}};}
+\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00099}00099\ \ \ \textcolor{keywordflow}{if}\ (std::ifstream\ file(\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{filename\_output\_peaks\_yfit}});\ file)}
+\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00100}00100\ \ \ \{}
+\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00101}00101\ \ \ \ \ std::remove(\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{filename\_output\_peaks\_yfit}}.c\_str());}
+\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00102}00102\ \ \ \}}
+\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00103}00103\ \ \ std::ofstream\ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{file\_yfit}}(\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{filename\_output\_peaks\_yfit}});}
+\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00104}00104\ \ \ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{file\_yfit}}\ <<\ \textcolor{stringliteral}{"{}sampleID,yfit\(\backslash\)n"{}};}
+\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00105}00105\ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{i}}\ =\ 0;\ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{i}}\ <\ peaks.size();\ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{i}}++)}
+\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00106}00106\ \ \ \{}
+\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00107}00107\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{j}}\ =\ 0;\ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{j}}\ <\ peaks[\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{i}}].size();\ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{j}}++)}
+\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00108}00108\ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00109}00109\ \ \ \ \ \ \ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{file\_yfit}}\ <<\ peaks[\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{i}}][\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{j}}]-\/>sampleID\ <<\ \textcolor{stringliteral}{"{},"{}};}
+\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00110}00110\ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{k}}\ =\ 0;\ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{k}}\ <\ peaks[\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{i}}][\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{j}}]-\/>yFit.size();\ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{k}}++)}
+\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00111}00111\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00112}00112\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{file\_yfit}}\ <<\ peaks[\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{i}}][\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{j}}]-\/>yFit[\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{k}}]\ <<\ \textcolor{stringliteral}{"{},"{}};}
+\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00113}00113\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00114}00114\ \ \ \ \ \ \ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{file\_yfit}}\ <<\ \textcolor{stringliteral}{"{}\(\backslash\)n"{}};}
+\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00115}00115\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00116}00116\ \ \ \}}
+\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00117}00117\ \ \ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{file\_yfit}}.close();}
+\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00118}00118\ }
+\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00119}00119\ \ \ }
+\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00120}00120\ \ \ }
+\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00121}00121\ \ \ \textcolor{comment}{//\ export\ the\ data\ to\ a\ CSV\ file}}
+\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00122}00122\ \ \ \textcolor{comment}{//\ define\ the\ filename}}
+\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00123}00123\ \ \ std::string\ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{filename\_output}}\ =\ \textcolor{stringliteral}{"{}test/data/test\_lcms\_data\_out.csv"{}};}
+\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00124}00124\ \ \ \textcolor{comment}{//\ check\ if\ the\ file\ exists}}
+\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00125}00125\ \ \ \textcolor{keywordflow}{if}\ (std::ifstream\ file(\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{filename\_output}});\ file)}
+\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00126}00126\ \ \ \{}
+\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00127}00127\ \ \ \ \ \textcolor{comment}{//\ remove\ the\ file}}
+\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00128}00128\ \ \ \ \ std::remove(\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{filename\_output}}.c\_str());}
+\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00129}00129\ \ \ \}}
+\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00130}00130\ \ \ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{lcmsData}}.writeCSV(\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{filename\_output}});}
+\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00131}00131\ }
+\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00132}00132\ \ \ \textcolor{comment}{//\ //\ Call\ the\ Python\ script\ to\ plot\ the\ data}}
+\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00133}00133\ \ \ std::string\ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{pythonPath}}\ =\ \textcolor{stringliteral}{"{}C:\(\backslash\)\(\backslash\)Python312\(\backslash\)\(\backslash\)python.exe"{}};}
+\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00134}00134\ \ \ \textcolor{comment}{//\ std::string\ pythonPath\ =\ "{}C:\(\backslash\)\(\backslash\)Users\(\backslash\)\(\backslash\)gerri\(\backslash\)\(\backslash\)AppData\(\backslash\)\(\backslash\)Local\(\backslash\)\(\backslash\)Programs\(\backslash\)\(\backslash\)Python\(\backslash\)\(\backslash\)Python312\(\backslash\)\(\backslash\)python.exe"{};}}
+\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00135}00135\ \ \ std::string\ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{command}}\ =\ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{pythonPath}}\ +\ \textcolor{stringliteral}{"{}\ test/test\_qPeak\_visualize\_profiles.py"{}}\ +\ \textcolor{stringliteral}{"{}\ "{}}\ +\ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{filename\_input}}\ +\ \textcolor{stringliteral}{"{}\ "{}}\ +\ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{filename\_output}}\ +\ \textcolor{stringliteral}{"{}\ "{}}\ +\ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{filename\_output\_peaks}}\ +\ \textcolor{stringliteral}{"{}\ "{}}\ +\ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{filename\_output\_peaks\_xfit}}\ +\ \textcolor{stringliteral}{"{}\ "{}}\ +\ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{filename\_output\_peaks\_yfit}};}
+\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00136}00136\ \ \ std::system(\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{command}}.c\_str());}
+\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00137}00137\ \ \ }
+\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00138}00138\ }
+\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00139}00139\ \ \ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{\Hypertarget{test__q_peak__class_8cpp_source_l00140}00140\ \}}
 
 \end{DoxyCode}

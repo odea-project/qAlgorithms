@@ -17,31 +17,33 @@ struct \mbox{\hyperlink{structq_1_1_data_type_1_1_mass_spectrum_1_1_data_point}{
 \doxysubsubsection*{Public Types}
 \begin{DoxyCompactItemize}
 \item 
-using \mbox{\hyperlink{classq_1_1_data_type_1_1_mass_spectrum_a45d5ddc2ce29c805760e326039ea93b8}{variable\+Type}} = std\+::variant$<$ int, double, \mbox{\hyperlink{namespaceq_1_1_data_type_a90aa4d66e606cf85f2424677d7bf4d34}{MSLevel}}, \mbox{\hyperlink{namespaceq_1_1_data_type_a50341ff9d741a5a416eb71a71ffc1fa6}{Ionization\+Mode}}, \mbox{\hyperlink{namespaceq_1_1_data_type_a8e76910d22415bfa3dd2086a76f0c5ea}{Measurement\+Mode}} $>$
+\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{using}} \mbox{\hyperlink{classq_1_1_data_type_1_1_mass_spectrum_a277bbd157af7a60eb393a89859647056}{variable\+Type}}
 \end{DoxyCompactItemize}
 \doxysubsubsection*{Public Member Functions}
 \begin{DoxyCompactItemize}
 \item 
 \mbox{\hyperlink{classq_1_1_data_type_1_1_mass_spectrum_ac0a31524c492db17747c333ab9807f8f}{Mass\+Spectrum}} ()
 \item 
-\mbox{\hyperlink{classq_1_1_data_type_1_1_mass_spectrum_a6c8729294ee61bd4cffe6d223ff9ad04}{Mass\+Spectrum}} (\mbox{\hyperlink{classq_1_1_data_type_1_1_mass_spectrum}{Mass\+Spectrum}} \&parent, const size\+\_\+t k)
+\mbox{\hyperlink{classq_1_1_data_type_1_1_mass_spectrum_a6c8729294ee61bd4cffe6d223ff9ad04}{Mass\+Spectrum}} (\mbox{\hyperlink{classq_1_1_data_type_1_1_mass_spectrum}{Mass\+Spectrum}} \&parent, \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{size\+\_\+t}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{k}})
 \begin{DoxyCompactList}\small\item\em Construct a new Mass Spectrum object from another Mass Spectrum object. \end{DoxyCompactList}\item 
 \mbox{\hyperlink{classq_1_1_data_type_1_1_mass_spectrum_a394e3640b0c8c69ccb9b6343e6a947f4}{\texorpdfstring{$\sim$}{\string~}\+Mass\+Spectrum}} ()
 \item 
-void \mbox{\hyperlink{classq_1_1_data_type_1_1_mass_spectrum_af93a0e8fb934e1e98a225f29981e2e68}{add\+Data\+Point}} (double intensity, double mz, int df)
+\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{void}} \mbox{\hyperlink{classq_1_1_data_type_1_1_mass_spectrum_af93a0e8fb934e1e98a225f29981e2e68}{add\+Data\+Point}} (\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{double}} intensity, \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{double}} mz, \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{int}} df)
 \begin{DoxyCompactList}\small\item\em Add a data point to the mass spectrum. \end{DoxyCompactList}\item 
-void \mbox{\hyperlink{classq_1_1_data_type_1_1_mass_spectrum_a4e6df96421a82f05158224da9e490fee}{sort\+Data\+Points}} ()
-\begin{DoxyCompactList}\small\item\em Sort the mass spectrum data points. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{void}} \mbox{\hyperlink{classq_1_1_data_type_1_1_mass_spectrum_a4e6df96421a82f05158224da9e490fee}{sort\+Data\+Points}} ()
+\begin{DoxyCompactList}\small\item\em Sort the mass spectrum data points. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{int}} \mbox{\hyperlink{classq_1_1_data_type_1_1_mass_spectrum_a29432516a882ff7e5d4f596eafc1d5ed}{get\+Scan\+Number}} () \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}}
+\end{DoxyCompactItemize}
 \doxysubsubsection*{Public Attributes}
 \begin{DoxyCompactItemize}
 \item 
-std\+::unordered\+\_\+map$<$ \mbox{\hyperlink{namespaceq_1_1_data_type_a9fcd47c7d7d77f908f041cad931962aa}{Data\+Field}}, \mbox{\hyperlink{classq_1_1_data_type_1_1_mass_spectrum_a45d5ddc2ce29c805760e326039ea93b8}{variable\+Type}} $>$ \texorpdfstring{$\ast$}{*} \mbox{\hyperlink{classq_1_1_data_type_1_1_mass_spectrum_a30c0087b21c1b807705187898199e8e4}{meta\+Data}}
+std\+::unordered\+\_\+map$<$ \mbox{\hyperlink{namespaceq_1_1_data_type_a9fcd47c7d7d77f908f041cad931962aa}{Data\+Field}}, \mbox{\hyperlink{classq_1_1_data_type_1_1_mass_spectrum_a277bbd157af7a60eb393a89859647056}{variable\+Type}} $>$ \texorpdfstring{$\ast$}{*} \mbox{\hyperlink{classq_1_1_data_type_1_1_mass_spectrum_a30c0087b21c1b807705187898199e8e4}{meta\+Data}}
 \item 
 std\+::vector$<$ std\+::unique\+\_\+ptr$<$ \mbox{\hyperlink{structq_1_1_data_type_1_1_mass_spectrum_1_1_data_point}{Data\+Point}} $>$ $>$ \mbox{\hyperlink{classq_1_1_data_type_1_1_mass_spectrum_a5ef1b447c6cb624f5535113d602e61cc}{data\+Points}}
 \item 
-std\+::pair$<$ bool, \mbox{\hyperlink{classq_1_1_data_type_1_1_mass_spectrum}{Mass\+Spectrum}} \texorpdfstring{$\ast$}{*} $>$ \mbox{\hyperlink{classq_1_1_data_type_1_1_mass_spectrum_a51f0922e8ad00a37c0e96eaa49c54393}{is\+Parent}}
+std\+::pair$<$ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{bool}}, \mbox{\hyperlink{classq_1_1_data_type_1_1_mass_spectrum}{Mass\+Spectrum}} \texorpdfstring{$\ast$}{*} $>$ \mbox{\hyperlink{classq_1_1_data_type_1_1_mass_spectrum_a51f0922e8ad00a37c0e96eaa49c54393}{is\+Parent}}
 \item 
-std\+::vector$<$ std\+::unique\+\_\+ptr$<$ size\+\_\+t $>$ $>$ \mbox{\hyperlink{classq_1_1_data_type_1_1_mass_spectrum_af4fdaf7d30d857d166c49580f6827024}{cutting\+Points}}
+std\+::vector$<$ std\+::unique\+\_\+ptr$<$ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{size\+\_\+t}} $>$ $>$ \mbox{\hyperlink{classq_1_1_data_type_1_1_mass_spectrum_af4fdaf7d30d857d166c49580f6827024}{cutting\+Points}}
 \begin{DoxyCompactList}\small\item\em This vector stores information for cutting the mass spectrum data. \end{DoxyCompactList}\end{DoxyCompactItemize}
 
 
@@ -60,12 +62,24 @@ Definition at line \mbox{\hyperlink{qalgorithms__datatype__mass__spectrum_8h_sou
 
 
 \doxysubsection{Member Typedef Documentation}
-\Hypertarget{classq_1_1_data_type_1_1_mass_spectrum_a45d5ddc2ce29c805760e326039ea93b8}\label{classq_1_1_data_type_1_1_mass_spectrum_a45d5ddc2ce29c805760e326039ea93b8} 
+\Hypertarget{classq_1_1_data_type_1_1_mass_spectrum_a277bbd157af7a60eb393a89859647056}\label{classq_1_1_data_type_1_1_mass_spectrum_a277bbd157af7a60eb393a89859647056} 
 \index{q::DataType::MassSpectrum@{q::DataType::MassSpectrum}!variableType@{variableType}}
 \index{variableType@{variableType}!q::DataType::MassSpectrum@{q::DataType::MassSpectrum}}
 \doxysubsubsection{\texorpdfstring{variableType}{variableType}}
-{\footnotesize\ttfamily using \mbox{\hyperlink{classq_1_1_data_type_1_1_mass_spectrum_a45d5ddc2ce29c805760e326039ea93b8}{q\+::\+Data\+Type\+::\+Mass\+Spectrum\+::variable\+Type}} =  std\+::variant $<$ int, double, \mbox{\hyperlink{namespaceq_1_1_data_type_a90aa4d66e606cf85f2424677d7bf4d34}{MSLevel}}, \mbox{\hyperlink{namespaceq_1_1_data_type_a50341ff9d741a5a416eb71a71ffc1fa6}{Ionization\+Mode}}, \mbox{\hyperlink{namespaceq_1_1_data_type_a8e76910d22415bfa3dd2086a76f0c5ea}{Measurement\+Mode}} $>$}
+{\footnotesize\ttfamily \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{using}} \mbox{\hyperlink{classq_1_1_data_type_1_1_mass_spectrum_a277bbd157af7a60eb393a89859647056}{q\+::\+Data\+Type\+::\+Mass\+Spectrum\+::variable\+Type}}}
 
+{\bfseries Initial value\+:}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\ std::variant\ }
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \ \ \ \ <}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{int}},\ }
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{double}},\ }
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespaceq_1_1_data_type_a90aa4d66e606cf85f2424677d7bf4d34}{MSLevel}},\ }
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespaceq_1_1_data_type_a50341ff9d741a5a416eb71a71ffc1fa6}{IonizationMode}},\ }
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespaceq_1_1_data_type_a8e76910d22415bfa3dd2086a76f0c5ea}{MeasurementMode}}\ }
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \ \ \ \ >}
+
+\end{DoxyCode}
 
 
 Definition at line \mbox{\hyperlink{qalgorithms__datatype__mass__spectrum_8h_source_l00086}{86}} of file \mbox{\hyperlink{qalgorithms__datatype__mass__spectrum_8h_source}{qalgorithms\+\_\+datatype\+\_\+mass\+\_\+spectrum.\+h}}.
@@ -87,7 +101,7 @@ Definition at line \mbox{\hyperlink{qalgorithms__datatype__mass__spectrum_8cpp_s
 \index{q::DataType::MassSpectrum@{q::DataType::MassSpectrum}!MassSpectrum@{MassSpectrum}}
 \index{MassSpectrum@{MassSpectrum}!q::DataType::MassSpectrum@{q::DataType::MassSpectrum}}
 \doxysubsubsection{\texorpdfstring{MassSpectrum()}{MassSpectrum()}\hspace{0.1cm}{\footnotesize\ttfamily [2/2]}}
-{\footnotesize\ttfamily q\+::\+Data\+Type\+::\+Mass\+Spectrum\+::\+Mass\+Spectrum (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{classq_1_1_data_type_1_1_mass_spectrum}{Mass\+Spectrum}} \&}]{parent,  }\item[{const size\+\_\+t}]{k }\end{DoxyParamCaption})}
+{\footnotesize\ttfamily q\+::\+Data\+Type\+::\+Mass\+Spectrum\+::\+Mass\+Spectrum (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{classq_1_1_data_type_1_1_mass_spectrum}{Mass\+Spectrum}} \&}]{parent,  }\item[{\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{size\+\_\+t}}}]{k }\end{DoxyParamCaption})}
 
 
 
@@ -124,7 +138,7 @@ Definition at line \mbox{\hyperlink{qalgorithms__datatype__mass__spectrum_8cpp_s
 \index{q::DataType::MassSpectrum@{q::DataType::MassSpectrum}!addDataPoint@{addDataPoint}}
 \index{addDataPoint@{addDataPoint}!q::DataType::MassSpectrum@{q::DataType::MassSpectrum}}
 \doxysubsubsection{\texorpdfstring{addDataPoint()}{addDataPoint()}}
-{\footnotesize\ttfamily void q\+::\+Data\+Type\+::\+Mass\+Spectrum\+::add\+Data\+Point (\begin{DoxyParamCaption}\item[{double}]{intensity,  }\item[{double}]{mz,  }\item[{int}]{df }\end{DoxyParamCaption})}
+{\footnotesize\ttfamily \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{void}} q\+::\+Data\+Type\+::\+Mass\+Spectrum\+::add\+Data\+Point (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{double}}}]{intensity,  }\item[{\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{double}}}]{mz,  }\item[{\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{int}}}]{df }\end{DoxyParamCaption})}
 
 
 
@@ -145,11 +159,21 @@ The add\+Data\+Point method adds a data point to the mass spectrum. The method t
 
 Definition at line \mbox{\hyperlink{qalgorithms__datatype__mass__spectrum_8cpp_source_l00040}{40}} of file \mbox{\hyperlink{qalgorithms__datatype__mass__spectrum_8cpp_source}{qalgorithms\+\_\+datatype\+\_\+mass\+\_\+spectrum.\+cpp}}.
 
+\Hypertarget{classq_1_1_data_type_1_1_mass_spectrum_a29432516a882ff7e5d4f596eafc1d5ed}\label{classq_1_1_data_type_1_1_mass_spectrum_a29432516a882ff7e5d4f596eafc1d5ed} 
+\index{q::DataType::MassSpectrum@{q::DataType::MassSpectrum}!getScanNumber@{getScanNumber}}
+\index{getScanNumber@{getScanNumber}!q::DataType::MassSpectrum@{q::DataType::MassSpectrum}}
+\doxysubsubsection{\texorpdfstring{getScanNumber()}{getScanNumber()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{int}} q\+::\+Data\+Type\+::\+Mass\+Spectrum\+::get\+Scan\+Number (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption}) const}
+
+
+
+Definition at line \mbox{\hyperlink{qalgorithms__datatype__mass__spectrum_8cpp_source_l00050}{50}} of file \mbox{\hyperlink{qalgorithms__datatype__mass__spectrum_8cpp_source}{qalgorithms\+\_\+datatype\+\_\+mass\+\_\+spectrum.\+cpp}}.
+
 \Hypertarget{classq_1_1_data_type_1_1_mass_spectrum_a4e6df96421a82f05158224da9e490fee}\label{classq_1_1_data_type_1_1_mass_spectrum_a4e6df96421a82f05158224da9e490fee} 
 \index{q::DataType::MassSpectrum@{q::DataType::MassSpectrum}!sortDataPoints@{sortDataPoints}}
 \index{sortDataPoints@{sortDataPoints}!q::DataType::MassSpectrum@{q::DataType::MassSpectrum}}
 \doxysubsubsection{\texorpdfstring{sortDataPoints()}{sortDataPoints()}}
-{\footnotesize\ttfamily void q\+::\+Data\+Type\+::\+Mass\+Spectrum\+::sort\+Data\+Points (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})}
+{\footnotesize\ttfamily \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{void}} q\+::\+Data\+Type\+::\+Mass\+Spectrum\+::sort\+Data\+Points (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})}
 
 
 
@@ -166,7 +190,7 @@ Definition at line \mbox{\hyperlink{qalgorithms__datatype__mass__spectrum_8cpp_s
 \index{q::DataType::MassSpectrum@{q::DataType::MassSpectrum}!cuttingPoints@{cuttingPoints}}
 \index{cuttingPoints@{cuttingPoints}!q::DataType::MassSpectrum@{q::DataType::MassSpectrum}}
 \doxysubsubsection{\texorpdfstring{cuttingPoints}{cuttingPoints}}
-{\footnotesize\ttfamily std\+::vector$<$std\+::unique\+\_\+ptr$<$size\+\_\+t$>$ $>$ q\+::\+Data\+Type\+::\+Mass\+Spectrum\+::cutting\+Points}
+{\footnotesize\ttfamily std\+::vector$<$std\+::unique\+\_\+ptr$<$\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{size\+\_\+t}}$>$ $>$ q\+::\+Data\+Type\+::\+Mass\+Spectrum\+::cutting\+Points}
 
 
 
@@ -190,7 +214,7 @@ Definition at line \mbox{\hyperlink{qalgorithms__datatype__mass__spectrum_8h_sou
 \index{q::DataType::MassSpectrum@{q::DataType::MassSpectrum}!isParent@{isParent}}
 \index{isParent@{isParent}!q::DataType::MassSpectrum@{q::DataType::MassSpectrum}}
 \doxysubsubsection{\texorpdfstring{isParent}{isParent}}
-{\footnotesize\ttfamily std\+::pair$<$bool, \mbox{\hyperlink{classq_1_1_data_type_1_1_mass_spectrum}{Mass\+Spectrum}}\texorpdfstring{$\ast$}{*}$>$ q\+::\+Data\+Type\+::\+Mass\+Spectrum\+::is\+Parent}
+{\footnotesize\ttfamily std\+::pair$<$\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{bool}}, \mbox{\hyperlink{classq_1_1_data_type_1_1_mass_spectrum}{Mass\+Spectrum}}\texorpdfstring{$\ast$}{*}$>$ q\+::\+Data\+Type\+::\+Mass\+Spectrum\+::is\+Parent}
 
 
 
@@ -200,7 +224,7 @@ Definition at line \mbox{\hyperlink{qalgorithms__datatype__mass__spectrum_8h_sou
 \index{q::DataType::MassSpectrum@{q::DataType::MassSpectrum}!metaData@{metaData}}
 \index{metaData@{metaData}!q::DataType::MassSpectrum@{q::DataType::MassSpectrum}}
 \doxysubsubsection{\texorpdfstring{metaData}{metaData}}
-{\footnotesize\ttfamily std\+::unordered\+\_\+map$<$\mbox{\hyperlink{namespaceq_1_1_data_type_a9fcd47c7d7d77f908f041cad931962aa}{Data\+Field}}, \mbox{\hyperlink{classq_1_1_data_type_1_1_mass_spectrum_a45d5ddc2ce29c805760e326039ea93b8}{variable\+Type}}$>$\texorpdfstring{$\ast$}{*} q\+::\+Data\+Type\+::\+Mass\+Spectrum\+::meta\+Data}
+{\footnotesize\ttfamily std\+::unordered\+\_\+map$<$\mbox{\hyperlink{namespaceq_1_1_data_type_a9fcd47c7d7d77f908f041cad931962aa}{Data\+Field}}, \mbox{\hyperlink{classq_1_1_data_type_1_1_mass_spectrum_a277bbd157af7a60eb393a89859647056}{variable\+Type}}$>$\texorpdfstring{$\ast$}{*} q\+::\+Data\+Type\+::\+Mass\+Spectrum\+::meta\+Data}
 
 
 

@@ -1,0 +1,41 @@
+\doxysection{experimental/optim\+\_\+regr\+\_\+window.py File Reference}
+\hypertarget{optim__regr__window_8py}{}\label{optim__regr__window_8py}\index{experimental/optim\_regr\_window.py@{experimental/optim\_regr\_window.py}}
+\doxysubsubsection*{Namespaces}
+\begin{DoxyCompactItemize}
+\item 
+namespace \mbox{\hyperlink{namespaceoptim__regr__window}{optim\+\_\+regr\+\_\+window}}
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\hyperlink{namespaceoptim__regr__window_ad2ceac8162180012a3008f7cb6fa645c}{optim\+\_\+regr\+\_\+window.\+regression}} (\mbox{\hyperlink{namespaceoptim__regr__window_af4a20dbdda11cbc8e0c21c7f721e744c}{scale}}, \mbox{\hyperlink{namespaceoptim__regr__window_a344ec29c4c5486272123bc51cf291982}{y}})
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Variables}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{int}} \mbox{\hyperlink{namespaceoptim__regr__window_a03fe3e76ad99bfee5d14b0817991a395}{optim\+\_\+regr\+\_\+window.\+sigma}} = 3
+\begin{DoxyCompactList}\small\item\em add the 3 sigma line \end{DoxyCompactList}\item 
+\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{int}} \mbox{\hyperlink{namespaceoptim__regr__window_aefb7b0b21fcffa131dc8846965727ba2}{optim\+\_\+regr\+\_\+window.\+mu}} = 0
+\item 
+\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{int}} \mbox{\hyperlink{namespaceoptim__regr__window_a00880253b45d37c4ef852ec47d98639c}{optim\+\_\+regr\+\_\+window.\+a}} = 1
+\item 
+\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{int}} \mbox{\hyperlink{namespaceoptim__regr__window_af4a20dbdda11cbc8e0c21c7f721e744c}{optim\+\_\+regr\+\_\+window.\+scale}} = 20
+\begin{DoxyCompactList}\small\item\em add the peak position \end{DoxyCompactList}\item 
+\mbox{\hyperlink{namespaceoptim__regr__window_a9aee448d8f1720c8cfbe0c6c7158da4f}{optim\+\_\+regr\+\_\+window.\+x}} = np.\+linspace(-\/\mbox{\hyperlink{namespaceoptim__regr__window_af4a20dbdda11cbc8e0c21c7f721e744c}{scale}}, \mbox{\hyperlink{namespaceoptim__regr__window_af4a20dbdda11cbc8e0c21c7f721e744c}{scale}}, 2\texorpdfstring{$\ast$}{*}\mbox{\hyperlink{namespaceoptim__regr__window_af4a20dbdda11cbc8e0c21c7f721e744c}{scale}} +1)
+\item 
+\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{int}} \mbox{\hyperlink{namespaceoptim__regr__window_a344ec29c4c5486272123bc51cf291982}{optim\+\_\+regr\+\_\+window.\+y}} = \mbox{\hyperlink{namespaceoptim__regr__window_a00880253b45d37c4ef852ec47d98639c}{a}} \texorpdfstring{$\ast$}{*} np.\+exp(-\/0.\+5 \texorpdfstring{$\ast$}{*} ((\mbox{\hyperlink{namespaceoptim__regr__window_a9aee448d8f1720c8cfbe0c6c7158da4f}{x}} -\/ \mbox{\hyperlink{namespaceoptim__regr__window_aefb7b0b21fcffa131dc8846965727ba2}{mu}}) / \mbox{\hyperlink{namespaceoptim__regr__window_a03fe3e76ad99bfee5d14b0817991a395}{sigma}}) \texorpdfstring{$\ast$}{*}\texorpdfstring{$\ast$}{*} 2)
+\item 
+\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{int}} \mbox{\hyperlink{namespaceoptim__regr__window_a3e69f8e66d5484e930fd729001de223c}{optim\+\_\+regr\+\_\+window.\+noise}} = .\+001
+\item 
+\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{int}} \mbox{\hyperlink{namespaceoptim__regr__window_a5c13ede332a0b9c55ae924424baaa1ab}{optim\+\_\+regr\+\_\+window.\+offset}} = 2\texorpdfstring{$\ast$}{*}\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{min}}(\mbox{\hyperlink{namespaceoptim__regr__window_a344ec29c4c5486272123bc51cf291982}{y}})
+\item 
+\mbox{\hyperlink{namespaceoptim__regr__window_a8dd69c0feab1593f1625420393da1521}{optim\+\_\+regr\+\_\+window.\+scales}} = np.\+arange(2, \mbox{\hyperlink{namespaceoptim__regr__window_af4a20dbdda11cbc8e0c21c7f721e744c}{scale}})
+\item 
+\mbox{\hyperlink{namespaceoptim__regr__window_a1ce46b36256fb862f63debe97c5bdd33}{optim\+\_\+regr\+\_\+window.\+errors}} = np.\+zeros(\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{len}}(\mbox{\hyperlink{namespaceoptim__regr__window_a8dd69c0feab1593f1625420393da1521}{scales}}))
+\item 
+\mbox{\hyperlink{namespaceoptim__regr__window_a69b89b7bee3f95fb1c186a3067d21d2b}{optim\+\_\+regr\+\_\+window.\+color}}
+\begin{DoxyCompactList}\small\item\em add the 3 sigma line \end{DoxyCompactList}\item 
+\mbox{\hyperlink{namespaceoptim__regr__window_a0fc572ddc99ded07f1bf43a4f5b1deae}{optim\+\_\+regr\+\_\+window.\+linestyle}}
+\item 
+\mbox{\hyperlink{namespaceoptim__regr__window_a6b55735a8caa69cac0cdb7d633a96248}{optim\+\_\+regr\+\_\+window.\+label}}
+\end{DoxyCompactItemize}

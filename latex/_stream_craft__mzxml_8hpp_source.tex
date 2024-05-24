@@ -1,0 +1,128 @@
+\doxysection{Stream\+Craft\+\_\+mzxml.\+hpp}
+\hypertarget{_stream_craft__mzxml_8hpp_source}{}\label{_stream_craft__mzxml_8hpp_source}\index{external/StreamCraft/src/StreamCraft\_mzxml.hpp@{external/StreamCraft/src/StreamCraft\_mzxml.hpp}}
+\mbox{\hyperlink{_stream_craft__mzxml_8hpp}{Go to the documentation of this file.}}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\Hypertarget{_stream_craft__mzxml_8hpp_source_l00001}00001\ \textcolor{preprocessor}{\#ifndef\ STREAMCRAFT\_MZXML\_HPP}}
+\DoxyCodeLine{\Hypertarget{_stream_craft__mzxml_8hpp_source_l00002}00002\ \textcolor{preprocessor}{\#define\ STREAMCRAFT\_MZXML\_HPP}}
+\DoxyCodeLine{\Hypertarget{_stream_craft__mzxml_8hpp_source_l00003}00003\ }
+\DoxyCodeLine{\Hypertarget{_stream_craft__mzxml_8hpp_source_l00004}00004\ \textcolor{preprocessor}{\#include\ <iostream>}}
+\DoxyCodeLine{\Hypertarget{_stream_craft__mzxml_8hpp_source_l00005}00005\ \textcolor{preprocessor}{\#include\ <vector>}}
+\DoxyCodeLine{\Hypertarget{_stream_craft__mzxml_8hpp_source_l00006}00006\ \textcolor{preprocessor}{\#include\ <string>}}
+\DoxyCodeLine{\Hypertarget{_stream_craft__mzxml_8hpp_source_l00007}00007\ \textcolor{preprocessor}{\#include\ <numeric>}}
+\DoxyCodeLine{\Hypertarget{_stream_craft__mzxml_8hpp_source_l00008}00008\ }
+\DoxyCodeLine{\Hypertarget{_stream_craft__mzxml_8hpp_source_l00009}\mbox{\hyperlink{_stream_craft__mzxml_8hpp_a50b0860df1126fa0e883a42c43a9c789}{00009}}\ \textcolor{preprocessor}{\#define\ PUGIXML\_HEADER\_ONLY}}
+\DoxyCodeLine{\Hypertarget{_stream_craft__mzxml_8hpp_source_l00010}00010\ }
+\DoxyCodeLine{\Hypertarget{_stream_craft__mzxml_8hpp_source_l00011}00011\ \textcolor{preprocessor}{\#ifndef\ PUGIXML\_PATH}}
+\DoxyCodeLine{\Hypertarget{_stream_craft__mzxml_8hpp_source_l00012}\mbox{\hyperlink{_stream_craft__mzxml_8hpp_a946fd8be0b9812b3a6ea001cb02c5292}{00012}}\ \textcolor{preprocessor}{\#define\ PUGIXML\_PATH\ "{}../../pugixml-\/1.14/src/pugixml.hpp"{}}}
+\DoxyCodeLine{\Hypertarget{_stream_craft__mzxml_8hpp_source_l00013}00013\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{\Hypertarget{_stream_craft__mzxml_8hpp_source_l00014}00014\ }
+\DoxyCodeLine{\Hypertarget{_stream_craft__mzxml_8hpp_source_l00015}00015\ \textcolor{preprocessor}{\#include\ PUGIXML\_PATH}}
+\DoxyCodeLine{\Hypertarget{_stream_craft__mzxml_8hpp_source_l00016}00016\ }
+\DoxyCodeLine{\Hypertarget{_stream_craft__mzxml_8hpp_source_l00017}\mbox{\hyperlink{_stream_craft__mzxml_8hpp_a599349b04b26fb850b8adbc3bb2f068d}{00017}}\ \textcolor{preprocessor}{\#define\ STREAMCRAFT\_HEADER\_ONLY}}
+\DoxyCodeLine{\Hypertarget{_stream_craft__mzxml_8hpp_source_l00018}00018\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{_stream_craft__utils_8hpp}{StreamCraft\_utils.hpp}}"{}}}
+\DoxyCodeLine{\Hypertarget{_stream_craft__mzxml_8hpp_source_l00019}00019\ }
+\DoxyCodeLine{\Hypertarget{_stream_craft__mzxml_8hpp_source_l00020}00020\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespacesc}{sc}}\ \{}
+\DoxyCodeLine{\Hypertarget{_stream_craft__mzxml_8hpp_source_l00021}00021\ }
+\DoxyCodeLine{\Hypertarget{_stream_craft__mzxml_8hpp_source_l00022}\mbox{\hyperlink{namespacesc_1_1mzxml}{00022}}\ \ \ \textcolor{keyword}{inline}\ \textcolor{keyword}{namespace\ }mzxml\ \{}
+\DoxyCodeLine{\Hypertarget{_stream_craft__mzxml_8hpp_source_l00023}00023\ }
+\DoxyCodeLine{\Hypertarget{_stream_craft__mzxml_8hpp_source_l00024}\mbox{\hyperlink{classsc_1_1mzxml_1_1_m_z_x_m_l___b_i_n_a_r_y___m_e_t_a_d_a_t_a}{00024}}\ \ \ \ \ \textcolor{keyword}{class\ }\mbox{\hyperlink{classsc_1_1mzxml_1_1_m_z_x_m_l___b_i_n_a_r_y___m_e_t_a_d_a_t_a}{MZXML\_BINARY\_METADATA}}\ \{}
+\DoxyCodeLine{\Hypertarget{_stream_craft__mzxml_8hpp_source_l00025}00025\ }
+\DoxyCodeLine{\Hypertarget{_stream_craft__mzxml_8hpp_source_l00026}00026\ \ \ \ \ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{\Hypertarget{_stream_craft__mzxml_8hpp_source_l00027}\mbox{\hyperlink{classsc_1_1mzxml_1_1_m_z_x_m_l___b_i_n_a_r_y___m_e_t_a_d_a_t_a_afce78a8a74aab748c73e4336487fb952}{00027}}\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{classsc_1_1mzxml_1_1_m_z_x_m_l___b_i_n_a_r_y___m_e_t_a_d_a_t_a_afce78a8a74aab748c73e4336487fb952}{precision}};}
+\DoxyCodeLine{\Hypertarget{_stream_craft__mzxml_8hpp_source_l00028}\mbox{\hyperlink{classsc_1_1mzxml_1_1_m_z_x_m_l___b_i_n_a_r_y___m_e_t_a_d_a_t_a_aebdcf177c1d73ec8decdbd32e4591ea5}{00028}}\ \ \ \ \ \ \ \ \ std::string\ \mbox{\hyperlink{classsc_1_1mzxml_1_1_m_z_x_m_l___b_i_n_a_r_y___m_e_t_a_d_a_t_a_aebdcf177c1d73ec8decdbd32e4591ea5}{compression}};}
+\DoxyCodeLine{\Hypertarget{_stream_craft__mzxml_8hpp_source_l00029}\mbox{\hyperlink{classsc_1_1mzxml_1_1_m_z_x_m_l___b_i_n_a_r_y___m_e_t_a_d_a_t_a_ae79172cf71140d205d0f3b12843a8c38}{00029}}\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classsc_1_1mzxml_1_1_m_z_x_m_l___b_i_n_a_r_y___m_e_t_a_d_a_t_a_ae79172cf71140d205d0f3b12843a8c38}{compressed}};}
+\DoxyCodeLine{\Hypertarget{_stream_craft__mzxml_8hpp_source_l00030}\mbox{\hyperlink{classsc_1_1mzxml_1_1_m_z_x_m_l___b_i_n_a_r_y___m_e_t_a_d_a_t_a_aaa52fddec20ddd600d7ce2d313083740}{00030}}\ \ \ \ \ \ \ \ \ std::string\ \mbox{\hyperlink{classsc_1_1mzxml_1_1_m_z_x_m_l___b_i_n_a_r_y___m_e_t_a_d_a_t_a_aaa52fddec20ddd600d7ce2d313083740}{byte\_order}};}
+\DoxyCodeLine{\Hypertarget{_stream_craft__mzxml_8hpp_source_l00031}00031\ }
+\DoxyCodeLine{\Hypertarget{_stream_craft__mzxml_8hpp_source_l00032}\mbox{\hyperlink{classsc_1_1mzxml_1_1_m_z_x_m_l___b_i_n_a_r_y___m_e_t_a_d_a_t_a_abfe0ae8bfbf26a85255da3eae392960f}{00032}}\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classsc_1_1mzxml_1_1_m_z_x_m_l___b_i_n_a_r_y___m_e_t_a_d_a_t_a_abfe0ae8bfbf26a85255da3eae392960f}{print}}()\ \{}
+\DoxyCodeLine{\Hypertarget{_stream_craft__mzxml_8hpp_source_l00033}00033\ \ \ \ \ \ \ \ \ \ \ std::cout\ <<\ std::endl;}
+\DoxyCodeLine{\Hypertarget{_stream_craft__mzxml_8hpp_source_l00034}00034\ \ \ \ \ \ \ \ \ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}Precision:\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ "{}}\ <<\ \mbox{\hyperlink{classsc_1_1mzxml_1_1_m_z_x_m_l___b_i_n_a_r_y___m_e_t_a_d_a_t_a_afce78a8a74aab748c73e4336487fb952}{precision}}\ <<\ std::endl;}
+\DoxyCodeLine{\Hypertarget{_stream_craft__mzxml_8hpp_source_l00035}00035\ \ \ \ \ \ \ \ \ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}Compression:\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ "{}}\ <<\ \mbox{\hyperlink{classsc_1_1mzxml_1_1_m_z_x_m_l___b_i_n_a_r_y___m_e_t_a_d_a_t_a_aebdcf177c1d73ec8decdbd32e4591ea5}{compression}}\ <<\ std::endl;}
+\DoxyCodeLine{\Hypertarget{_stream_craft__mzxml_8hpp_source_l00036}00036\ \ \ \ \ \ \ \ \ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}Byte\ order:\ \ \ \ \ \ \ \ \ \ \ "{}}\ <<\ \mbox{\hyperlink{classsc_1_1mzxml_1_1_m_z_x_m_l___b_i_n_a_r_y___m_e_t_a_d_a_t_a_aaa52fddec20ddd600d7ce2d313083740}{byte\_order}}\ <<\ std::endl;}
+\DoxyCodeLine{\Hypertarget{_stream_craft__mzxml_8hpp_source_l00037}00037\ \ \ \ \ \ \ \ \ \ \ std::cout\ <<\ std::endl;}
+\DoxyCodeLine{\Hypertarget{_stream_craft__mzxml_8hpp_source_l00038}00038\ \ \ \ \ \ \ \ \ \};}
+\DoxyCodeLine{\Hypertarget{_stream_craft__mzxml_8hpp_source_l00039}00039\ \ \ \ \ \};}
+\DoxyCodeLine{\Hypertarget{_stream_craft__mzxml_8hpp_source_l00040}00040\ }
+\DoxyCodeLine{\Hypertarget{_stream_craft__mzxml_8hpp_source_l00041}\mbox{\hyperlink{classsc_1_1mzxml_1_1_m_z_x_m_l}{00041}}\ \ \ \ \ \textcolor{keyword}{class\ }\mbox{\hyperlink{classsc_1_1mzxml_1_1_m_z_x_m_l}{MZXML}}\ \{}
+\DoxyCodeLine{\Hypertarget{_stream_craft__mzxml_8hpp_source_l00042}00042\ }
+\DoxyCodeLine{\Hypertarget{_stream_craft__mzxml_8hpp_source_l00043}00043\ \ \ \ \ \ \ \textcolor{keyword}{private}:}
+\DoxyCodeLine{\Hypertarget{_stream_craft__mzxml_8hpp_source_l00044}00044\ }
+\DoxyCodeLine{\Hypertarget{_stream_craft__mzxml_8hpp_source_l00045}00045\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classsc_1_1mzxml_1_1_m_z_x_m_l___b_i_n_a_r_y___m_e_t_a_d_a_t_a}{MZXML\_BINARY\_METADATA}}\ binary\_metadata;}
+\DoxyCodeLine{\Hypertarget{_stream_craft__mzxml_8hpp_source_l00046}00046\ }
+\DoxyCodeLine{\Hypertarget{_stream_craft__mzxml_8hpp_source_l00047}00047\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ extract\_binary\_metadata(\textcolor{keyword}{const}\ \mbox{\hyperlink{classpugi_1_1xml__node}{pugi::xml\_node}}\&\ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{first\_node}});}
+\DoxyCodeLine{\Hypertarget{_stream_craft__mzxml_8hpp_source_l00048}00048\ }
+\DoxyCodeLine{\Hypertarget{_stream_craft__mzxml_8hpp_source_l00049}00049\ \ \ \ \ \ \ \ \ std::vector<pugi::xml\_node>\ link\_vector\_spectra\_nodes();}
+\DoxyCodeLine{\Hypertarget{_stream_craft__mzxml_8hpp_source_l00050}00050\ }
+\DoxyCodeLine{\Hypertarget{_stream_craft__mzxml_8hpp_source_l00051}00051\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ extract\_spec\_index(\textcolor{keyword}{const}\ \mbox{\hyperlink{classpugi_1_1xml__node}{pugi::xml\_node}}\&\ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{spec}});}
+\DoxyCodeLine{\Hypertarget{_stream_craft__mzxml_8hpp_source_l00052}00052\ \ \ \ \ \ \ \ \ std::string\ extract\_spec\_id(\textcolor{keyword}{const}\ \mbox{\hyperlink{classpugi_1_1xml__node}{pugi::xml\_node}}\&\ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{spec}});}
+\DoxyCodeLine{\Hypertarget{_stream_craft__mzxml_8hpp_source_l00053}00053\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ extract\_spec\_scan(\textcolor{keyword}{const}\ \mbox{\hyperlink{classpugi_1_1xml__node}{pugi::xml\_node}}\&\ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{spec}});}
+\DoxyCodeLine{\Hypertarget{_stream_craft__mzxml_8hpp_source_l00054}00054\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ extract\_spec\_array\_length(\textcolor{keyword}{const}\ \mbox{\hyperlink{classpugi_1_1xml__node}{pugi::xml\_node}}\&\ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{spec}});}
+\DoxyCodeLine{\Hypertarget{_stream_craft__mzxml_8hpp_source_l00055}00055\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ extract\_spec\_level(\textcolor{keyword}{const}\ \mbox{\hyperlink{classpugi_1_1xml__node}{pugi::xml\_node}}\&\ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{spec}});}
+\DoxyCodeLine{\Hypertarget{_stream_craft__mzxml_8hpp_source_l00056}00056\ \ \ \ \ \ \ \ \ std::string\ extract\_spec\_mode(\textcolor{keyword}{const}\ \mbox{\hyperlink{classpugi_1_1xml__node}{pugi::xml\_node}}\&\ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{spec}});}
+\DoxyCodeLine{\Hypertarget{_stream_craft__mzxml_8hpp_source_l00057}00057\ \ \ \ \ \ \ \ \ std::string\ extract\_spec\_polarity(\textcolor{keyword}{const}\ \mbox{\hyperlink{classpugi_1_1xml__node}{pugi::xml\_node}}\&\ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{spec}});}
+\DoxyCodeLine{\Hypertarget{_stream_craft__mzxml_8hpp_source_l00058}00058\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{double}\ extract\_spec\_lowmz(\textcolor{keyword}{const}\ \mbox{\hyperlink{classpugi_1_1xml__node}{pugi::xml\_node}}\&\ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{spec}});}
+\DoxyCodeLine{\Hypertarget{_stream_craft__mzxml_8hpp_source_l00059}00059\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{double}\ extract\_spec\_highmz(\textcolor{keyword}{const}\ \mbox{\hyperlink{classpugi_1_1xml__node}{pugi::xml\_node}}\&\ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{spec}});}
+\DoxyCodeLine{\Hypertarget{_stream_craft__mzxml_8hpp_source_l00060}00060\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{double}\ extract\_spec\_bpmz(\textcolor{keyword}{const}\ \mbox{\hyperlink{classpugi_1_1xml__node}{pugi::xml\_node}}\&\ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{spec}});}
+\DoxyCodeLine{\Hypertarget{_stream_craft__mzxml_8hpp_source_l00061}00061\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{double}\ extract\_spec\_bpint(\textcolor{keyword}{const}\ \mbox{\hyperlink{classpugi_1_1xml__node}{pugi::xml\_node}}\&\ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{spec}});}
+\DoxyCodeLine{\Hypertarget{_stream_craft__mzxml_8hpp_source_l00062}00062\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{double}\ extract\_spec\_tic(\textcolor{keyword}{const}\ \mbox{\hyperlink{classpugi_1_1xml__node}{pugi::xml\_node}}\&\ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{spec}});}
+\DoxyCodeLine{\Hypertarget{_stream_craft__mzxml_8hpp_source_l00063}00063\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{double}\ extract\_scan\_rt(\textcolor{keyword}{const}\ \mbox{\hyperlink{classpugi_1_1xml__node}{pugi::xml\_node}}\&\ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{spec}});}
+\DoxyCodeLine{\Hypertarget{_stream_craft__mzxml_8hpp_source_l00064}00064\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{double}\ extract\_ion\_mz(\textcolor{keyword}{const}\ \mbox{\hyperlink{classpugi_1_1xml__node}{pugi::xml\_node}}\&\ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{spec}});}
+\DoxyCodeLine{\Hypertarget{_stream_craft__mzxml_8hpp_source_l00065}00065\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{double}\ extract\_activation\_ce(\textcolor{keyword}{const}\ \mbox{\hyperlink{classpugi_1_1xml__node}{pugi::xml\_node}}\&\ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{spec}});}
+\DoxyCodeLine{\Hypertarget{_stream_craft__mzxml_8hpp_source_l00066}00066\ }
+\DoxyCodeLine{\Hypertarget{_stream_craft__mzxml_8hpp_source_l00067}00067\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structsc_1_1utils_1_1_m_s___s_p_e_c_t_r_a___h_e_a_d_e_r_s}{MS\_SPECTRA\_HEADERS}}\ extract\_spectra\_headers(\textcolor{keyword}{const}\ std::vector<int>\&\ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{idxs}});}
+\DoxyCodeLine{\Hypertarget{_stream_craft__mzxml_8hpp_source_l00068}00068\ }
+\DoxyCodeLine{\Hypertarget{_stream_craft__mzxml_8hpp_source_l00069}00069\ \ \ \ \ \ \ \ \ std::vector<std::vector<double>>\ extract\_spectrum(\textcolor{keyword}{const}\ \mbox{\hyperlink{classpugi_1_1xml__node}{pugi::xml\_node}}\&\ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{spectrum\_node}});}
+\DoxyCodeLine{\Hypertarget{_stream_craft__mzxml_8hpp_source_l00070}00070\ }
+\DoxyCodeLine{\Hypertarget{_stream_craft__mzxml_8hpp_source_l00071}00071\ \ \ \ \ \ \ \ \ std::vector<std::vector<std::vector<double>>>\ extract\_spectra(\textcolor{keyword}{const}\ std::vector<int>\&\ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{idxs}});}
+\DoxyCodeLine{\Hypertarget{_stream_craft__mzxml_8hpp_source_l00072}00072\ }
+\DoxyCodeLine{\Hypertarget{_stream_craft__mzxml_8hpp_source_l00073}00073\ \ \ \ \ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{\Hypertarget{_stream_craft__mzxml_8hpp_source_l00074}00074\ }
+\DoxyCodeLine{\Hypertarget{_stream_craft__mzxml_8hpp_source_l00075}\mbox{\hyperlink{classsc_1_1mzxml_1_1_m_z_x_m_l_a6d1a316337365b2aaef1ee6dcbbfb7b8}{00075}}\ \ \ \ \ \ \ \ \ std::string\ \mbox{\hyperlink{classsc_1_1mzxml_1_1_m_z_x_m_l_a6d1a316337365b2aaef1ee6dcbbfb7b8}{file\_path}};}
+\DoxyCodeLine{\Hypertarget{_stream_craft__mzxml_8hpp_source_l00076}00076\ }
+\DoxyCodeLine{\Hypertarget{_stream_craft__mzxml_8hpp_source_l00077}\mbox{\hyperlink{classsc_1_1mzxml_1_1_m_z_x_m_l_a7514f3bd73de0413bc8a0ad3ade8ab69}{00077}}\ \ \ \ \ \ \ \ \ std::string\ \mbox{\hyperlink{classsc_1_1mzxml_1_1_m_z_x_m_l_a7514f3bd73de0413bc8a0ad3ade8ab69}{file\_dir}};}
+\DoxyCodeLine{\Hypertarget{_stream_craft__mzxml_8hpp_source_l00078}00078\ }
+\DoxyCodeLine{\Hypertarget{_stream_craft__mzxml_8hpp_source_l00079}\mbox{\hyperlink{classsc_1_1mzxml_1_1_m_z_x_m_l_a2eb46e3163b7e6e96cad578c289b837f}{00079}}\ \ \ \ \ \ \ \ \ std::string\ \mbox{\hyperlink{classsc_1_1mzxml_1_1_m_z_x_m_l_a2eb46e3163b7e6e96cad578c289b837f}{file\_name}};}
+\DoxyCodeLine{\Hypertarget{_stream_craft__mzxml_8hpp_source_l00080}00080\ }
+\DoxyCodeLine{\Hypertarget{_stream_craft__mzxml_8hpp_source_l00081}\mbox{\hyperlink{classsc_1_1mzxml_1_1_m_z_x_m_l_a35acaa9c80663384bed3d5504700b109}{00081}}\ \ \ \ \ \ \ \ \ std::string\ \mbox{\hyperlink{classsc_1_1mzxml_1_1_m_z_x_m_l_a35acaa9c80663384bed3d5504700b109}{file\_extension}};}
+\DoxyCodeLine{\Hypertarget{_stream_craft__mzxml_8hpp_source_l00082}00082\ }
+\DoxyCodeLine{\Hypertarget{_stream_craft__mzxml_8hpp_source_l00083}\mbox{\hyperlink{classsc_1_1mzxml_1_1_m_z_x_m_l_aa438a6bf698a69dc072c308b4ca71b53}{00083}}\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classpugi_1_1xml__document}{pugi::xml\_document}}\ \mbox{\hyperlink{classsc_1_1mzxml_1_1_m_z_x_m_l_aa438a6bf698a69dc072c308b4ca71b53}{doc}};}
+\DoxyCodeLine{\Hypertarget{_stream_craft__mzxml_8hpp_source_l00084}00084\ }
+\DoxyCodeLine{\Hypertarget{_stream_craft__mzxml_8hpp_source_l00085}\mbox{\hyperlink{classsc_1_1mzxml_1_1_m_z_x_m_l_abb172df0b8b49bede88c5868926d3ccc}{00085}}\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structpugi_1_1xml__parse__result}{pugi::xml\_parse\_result}}\ \mbox{\hyperlink{classsc_1_1mzxml_1_1_m_z_x_m_l_abb172df0b8b49bede88c5868926d3ccc}{loading\_result}};}
+\DoxyCodeLine{\Hypertarget{_stream_craft__mzxml_8hpp_source_l00086}00086\ }
+\DoxyCodeLine{\Hypertarget{_stream_craft__mzxml_8hpp_source_l00087}\mbox{\hyperlink{classsc_1_1mzxml_1_1_m_z_x_m_l_aa19ecb02d4b3e9ec60f555f2cc3beaf4}{00087}}\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classpugi_1_1xml__node}{pugi::xml\_node}}\ \mbox{\hyperlink{classsc_1_1mzxml_1_1_m_z_x_m_l_aa19ecb02d4b3e9ec60f555f2cc3beaf4}{root}};}
+\DoxyCodeLine{\Hypertarget{_stream_craft__mzxml_8hpp_source_l00088}00088\ }
+\DoxyCodeLine{\Hypertarget{_stream_craft__mzxml_8hpp_source_l00089}\mbox{\hyperlink{classsc_1_1mzxml_1_1_m_z_x_m_l_a0f13d76da9f2e11f375f4323b32dca6e}{00089}}\ \ \ \ \ \ \ \ \ std::string\ \mbox{\hyperlink{classsc_1_1mzxml_1_1_m_z_x_m_l_a0f13d76da9f2e11f375f4323b32dca6e}{format}};}
+\DoxyCodeLine{\Hypertarget{_stream_craft__mzxml_8hpp_source_l00090}00090\ }
+\DoxyCodeLine{\Hypertarget{_stream_craft__mzxml_8hpp_source_l00091}\mbox{\hyperlink{classsc_1_1mzxml_1_1_m_z_x_m_l_ad1508ed5a168004f632c7727ad8b1c87}{00091}}\ \ \ \ \ \ \ \ \ std::string\ \mbox{\hyperlink{classsc_1_1mzxml_1_1_m_z_x_m_l_ad1508ed5a168004f632c7727ad8b1c87}{name}};}
+\DoxyCodeLine{\Hypertarget{_stream_craft__mzxml_8hpp_source_l00092}00092\ }
+\DoxyCodeLine{\Hypertarget{_stream_craft__mzxml_8hpp_source_l00093}\mbox{\hyperlink{classsc_1_1mzxml_1_1_m_z_x_m_l_afe1d7ce930dea2f7444c29861c42556e}{00093}}\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{classsc_1_1mzxml_1_1_m_z_x_m_l_afe1d7ce930dea2f7444c29861c42556e}{number\_spectra}};}
+\DoxyCodeLine{\Hypertarget{_stream_craft__mzxml_8hpp_source_l00094}00094\ }
+\DoxyCodeLine{\Hypertarget{_stream_craft__mzxml_8hpp_source_l00095}\mbox{\hyperlink{classsc_1_1mzxml_1_1_m_z_x_m_l_a2426be1e36ec35234724de09b955e763}{00095}}\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{classsc_1_1mzxml_1_1_m_z_x_m_l_a2426be1e36ec35234724de09b955e763}{number\_chromatograms}}\ =\ 0;}
+\DoxyCodeLine{\Hypertarget{_stream_craft__mzxml_8hpp_source_l00096}00096\ }
+\DoxyCodeLine{\Hypertarget{_stream_craft__mzxml_8hpp_source_l00097}\mbox{\hyperlink{classsc_1_1mzxml_1_1_m_z_x_m_l_a5f6e400eb48753c56ae3707f2ba36795}{00097}}\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{classsc_1_1mzxml_1_1_m_z_x_m_l_a5f6e400eb48753c56ae3707f2ba36795}{number\_spectra\_binary\_arrays}}\ =\ 2;}
+\DoxyCodeLine{\Hypertarget{_stream_craft__mzxml_8hpp_source_l00098}00098\ }
+\DoxyCodeLine{\Hypertarget{_stream_craft__mzxml_8hpp_source_l00099}\mbox{\hyperlink{classsc_1_1mzxml_1_1_m_z_x_m_l_aa59c895698f8b3a757c322a6c82717ab}{00099}}\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structsc_1_1utils_1_1_m_s___s_p_e_c_t_r_a___h_e_a_d_e_r_s}{MS\_SPECTRA\_HEADERS}}\ \mbox{\hyperlink{classsc_1_1mzxml_1_1_m_z_x_m_l_aa59c895698f8b3a757c322a6c82717ab}{first\_spectra\_headers}};}
+\DoxyCodeLine{\Hypertarget{_stream_craft__mzxml_8hpp_source_l00100}00100\ }
+\DoxyCodeLine{\Hypertarget{_stream_craft__mzxml_8hpp_source_l00101}00101\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classsc_1_1mzxml_1_1_m_z_x_m_l_a1cd171ff008359a5598ad4d62644d0cd}{MZXML}}(\textcolor{keyword}{const}\ std::string\&\ file);}
+\DoxyCodeLine{\Hypertarget{_stream_craft__mzxml_8hpp_source_l00102}00102\ }
+\DoxyCodeLine{\Hypertarget{_stream_craft__mzxml_8hpp_source_l00103}00103\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structsc_1_1utils_1_1_m_s___s_p_e_c_t_r_a___h_e_a_d_e_r_s}{MS\_SPECTRA\_HEADERS}}\ \mbox{\hyperlink{classsc_1_1mzxml_1_1_m_z_x_m_l_a9e22a97730449f0ab49ba3a347f9de69}{get\_spectra\_headers}}(std::vector<int>\ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{indices}}\ =\ \{\});}
+\DoxyCodeLine{\Hypertarget{_stream_craft__mzxml_8hpp_source_l00104}00104\ }
+\DoxyCodeLine{\Hypertarget{_stream_craft__mzxml_8hpp_source_l00105}00105\ \ \ \ \ \ \ \ \ std::vector<std::vector<std::vector<double>>>\ \mbox{\hyperlink{classsc_1_1mzxml_1_1_m_z_x_m_l_af31619cbae632d2a07309c427631306f}{get\_spectra}}(std::vector<int>\ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{indices}}\ =\ \{\});}
+\DoxyCodeLine{\Hypertarget{_stream_craft__mzxml_8hpp_source_l00106}00106\ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{\Hypertarget{_stream_craft__mzxml_8hpp_source_l00107}00107\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classsc_1_1mzxml_1_1_m_z_x_m_l_ac78786a076adbf95eeaa72174406f731}{print}}();}
+\DoxyCodeLine{\Hypertarget{_stream_craft__mzxml_8hpp_source_l00108}00108\ }
+\DoxyCodeLine{\Hypertarget{_stream_craft__mzxml_8hpp_source_l00109}\mbox{\hyperlink{classsc_1_1mzxml_1_1_m_z_x_m_l_a57fc1b73714cc22c079a7e9d0337263b}{00109}}\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classsc_1_1mzxml_1_1_m_z_x_m_l_a57fc1b73714cc22c079a7e9d0337263b}{print\_binary\_metadata}}()\ \{\ binary\_metadata.\mbox{\hyperlink{classsc_1_1mzxml_1_1_m_z_x_m_l___b_i_n_a_r_y___m_e_t_a_d_a_t_a_abfe0ae8bfbf26a85255da3eae392960f}{print}}();\ \};}
+\DoxyCodeLine{\Hypertarget{_stream_craft__mzxml_8hpp_source_l00110}00110\ }
+\DoxyCodeLine{\Hypertarget{_stream_craft__mzxml_8hpp_source_l00111}00111\ \ \ \ \ \};\ \textcolor{comment}{//\ class\ MZXML}}
+\DoxyCodeLine{\Hypertarget{_stream_craft__mzxml_8hpp_source_l00112}00112\ }
+\DoxyCodeLine{\Hypertarget{_stream_craft__mzxml_8hpp_source_l00113}00113\ \ \ \};\ \textcolor{comment}{//\ namespace\ mzxml}}
+\DoxyCodeLine{\Hypertarget{_stream_craft__mzxml_8hpp_source_l00114}00114\ }
+\DoxyCodeLine{\Hypertarget{_stream_craft__mzxml_8hpp_source_l00115}00115\ \};\ \textcolor{comment}{//\ namespace\ sc}}
+\DoxyCodeLine{\Hypertarget{_stream_craft__mzxml_8hpp_source_l00116}00116\ }
+\DoxyCodeLine{\Hypertarget{_stream_craft__mzxml_8hpp_source_l00117}00117\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//\ STREAMCRAFT\_MZXML\_HPP}}
+\DoxyCodeLine{\Hypertarget{_stream_craft__mzxml_8hpp_source_l00118}00118\ }
+\DoxyCodeLine{\Hypertarget{_stream_craft__mzxml_8hpp_source_l00119}00119\ \textcolor{preprocessor}{\#if\ defined(STREAMCRAFT\_HEADER\_ONLY)\ \&\&\ !defined(STREAMCRAFT\_MZXML\_SOURCE)}}
+\DoxyCodeLine{\Hypertarget{_stream_craft__mzxml_8hpp_source_l00120}\mbox{\hyperlink{_stream_craft__mzxml_8hpp_ad85614ee88dca2cd80a9b561d8910d14}{00120}}\ \textcolor{preprocessor}{\#\ \ \ define\ STREAMCRAFT\_MZXML\_SOURCE\ "{}StreamCraft\_mzxml.cpp"{}}}
+\DoxyCodeLine{\Hypertarget{_stream_craft__mzxml_8hpp_source_l00121}00121\ \textcolor{preprocessor}{\#\ \ \ include\ STREAMCRAFT\_MZXML\_SOURCE}}
+\DoxyCodeLine{\Hypertarget{_stream_craft__mzxml_8hpp_source_l00122}00122\ \textcolor{preprocessor}{\#endif}}
+
+\end{DoxyCode}
