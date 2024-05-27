@@ -4,8 +4,6 @@ Report concluding the analytical practical by Daniel Höhn, supervised by Gerrit
 
 - [Abbreviations](#abbreviations)
 - [Introduction](#introduction)
-	- [Why is binning necessary?](#why-is-binning-necessary)
-	- [Generation of EIC in other software](#generation-of-eic-in-other-software)
 	- [Advantages of qBinning](#advantages-of-qbinning)
 - [Implementation](#implementation)
 	- [Algorithm](#algorithm)
@@ -52,6 +50,8 @@ With the newly written code, it is possible to introduce the
 qBinning algorithm to existing, open-source analysis platforms
 like MZmine, PatRoon and StreamFind [@pluskalMZmineModularFramework2010; @helmusPatRoonImprovedNontarget2022; @helmusPatRoonOpenSource2021; @cunhaStreamFindFrameworkWorkflows2024]. 
 
+NTS is finding increasing adoption 
+
 With the increasing application of NTS-based methods for toxicological
 analysis of environmental samples and the -omics disciplines, it
 has become critical to assure comparability and quality of results.
@@ -63,12 +63,16 @@ the latter due to lack of insight into the concrete data transformations
 performed.
 
 The results of different algorithms can vary significantly, even when
-concerning the same measurement data. [@hohrenkComparisonSoftwareTools2020]
+concerning the same measurement data [@hohrenkComparisonSoftwareTools2020].
 
 It is to be expected that, in addition to more measurements being
 performed, the size of datasets increses. Both factors combined result
 in very large amounts of data that in turn require highly performant
 data analysis software.
+
+With the emergence of central databases for (analysed) NTS data like InSpectra [@feraudInSpectraPlatformIdentifying2023],
+there is a need for ensuring result comparability through standardised
+feature detection algorithms.
 
 
 Importance of NTS, Datenprozessierung und Analyse entscheidende Größe bei NTS; ergebnisse verschiedeneer
@@ -76,17 +80,10 @@ Workflows haben keine Vergleichbarkeit; hoher Einfluss durch den Nutzer
 QA unterscheidet nicht zwischen falschen parametern und instrumentation
 Es gibt keine spezifische QA für NTS
 Fokus auch auf größerer Datensätze; Datenmenge nimmt wahrscheinlich zu
-Neuerung: qualitätsparameter für einzelne Schritte in der Prouessierung
+Neuerung: qualitätsparameter für einzelne Schritte in der Prozessierung
 Steps of finding a feature, mention qCentroids / describe pipeline in general
 
-was ist binning
 
-(@gerrit: not yet completed)
-
-### Why is binning necessary?
-(@gerrit: not yet completed)
-
-### Generation of EIC in other software
 The centWave algorithm identifies regions of interest (ROI)
 by starting at the first scan and elongating present masses
 with points from the second, third etc. As tolerance, the mass accuracy
@@ -283,7 +280,7 @@ as part of the qBinning module:
 * BinContainer: subsetBins
 
 
-<b> readcsv, readtxt: </b>
+<b> readcsv: </b>
 Both functions parse data points from a text file and construct a vector that contains the 
 individual scans. Within each scan, data points are ordered by m/z in increasing order. These functions
 primarily exist for testing purposes since the qBinning module is designed to accept centroided data 
@@ -291,7 +288,6 @@ from the previous step in the qAlgorithms pipeline.
 If used to read in data, an error has to be specified for each centroid. If the error is supposed to
 be a certain ppm of the mass, a dummy value suffices since this is handled in **makeCumError**.
 This function returns a boolean to indicate if it executed successfully. 
-```@todo one line of example in code style, same for others```
 
 <b> makeOS: </b>
 This function sorts a bin by mz and calculates adjacent elements' differences. It is 
@@ -318,7 +314,8 @@ number of data points in the bin. This is identical to normalising the order spa
 Since a bin created as a subset of another bin shares OS and
 the cumulative error with its precursor, both do not need to be calculated more than once.
 The function terminates if the bin it is called on has less than five data points.
-These points are then added to a vector which can later be used by diagnostic functions. @todo reasoning (@gerrit: what happens to these small bins?)
+These points are then added to a vector which can later be used by diagnostic functions. 
+(@gerrit: what happens to these small bins?)
 If a bin cannot be split further, it is added to the container for open bins.
 
 <b> subsetScan: </b>
@@ -366,12 +363,12 @@ smaller than five to the bin vectors. After the bin cannot be subset by
 the chosen criteria further, beginning and end position of the sequence 
 relative to the pointsInBin vector of the originating bin must be passed
 to the bin constructor as reference.
-Within the function, always write open or closed bins using .push_back(//NEWBIN//).
+Within the function, always write open or closed bins using .push_back(//NEWBIN//) to the respective container.
 Once the function is confirmed to work correctly, it can be implemented in
 the subsetBins function. This requires a new case to be defined for the central
 switch statement. Here, first all relevant data that must be calculated outside
 of the bin is created. Then, binDeque.front().subset//SUBSETNAME//(...) is called.
-After the subset function, add binDeque.pop_froint() to delete the bin that
+After the subset function, add binDeque.pop_front() to delete the bin that
 was just processed.
 Lastly, add the name of the new subset method to the SubsetMethods enum
 which is defined in the first line of the BinContainer region. 
@@ -635,6 +632,9 @@ at least one bin for the criteria 2) to 5) contains a duplicate scan.
 This translates to bins with bad separation not containing multiple "true"
 bins for test 6), so somehow decreasing the critical value in order to
 improve the results is unlikely to work.
+A bin containing duplicates also indicates that the DQS of individual
+centroids was low. When comparing the average lowest DQSC, the difference
+to bins without duplicates but otherwise matching conditions was generally 0.2 to 0.6.
 
 
 **2) Too Strict Separation** 
@@ -647,8 +647,9 @@ discarded points which could be associated with the bin in question.
 @todo control for neighbours in binned dataset
 There is very little overlap between this condition and others, with over
 97% being exclusively "too close" to another point.
-Of these, some are two incorrectly separated bins. // ID 39242 + 39343; 16501 + 16510; check if both form a valid bin
-// both cases are close together in operation order
+Of these, some are two correctly separated bins which have a point that 
+lies within the tolerated distance of both bins. This is a similar
+case as condition 7), and a refinement of this test should not include them.
 
 **3) Difference Between Median and Mean in Scans**
 The bins for which this condition applied showed no other noteable behaviour.
@@ -661,6 +662,17 @@ distributed slightly asymmetrically, this can compound and
 reduce the selectivity of this test too heavily.
 
 **4) Difference Between Median and Mean in mz**
+There is little overlap between this condition and others, excluding 5).
+Bins which exclusively fulfill this condition account for 14% of all 
+points and 20% of all bins with at least one positive test.
+The affected bins are mostly located at low masses towards the edges
+of the chromatographic dimension.
+While those results are generally expected, more rigorous testing
+as to the predictive power of this criterium is necessary.
+The tolerance of two times the mean centroid error is assuming
+a flat distribution, which is not the case for normally distributed
+bins.
+
 
 **5) Points Outside the 3-sigma Interval**
 The vast majority of bins for this condition was fulfilled did not have
@@ -676,6 +688,8 @@ of the furthest value to belong to the bin using for example a t-test.
 With the given test parameter, the largest overlap is with condition 4).
 This is intuitively evident, since with larger asymmetry the likelihood
 of a point being far away from the mean also increases.
+Both tests cover essentially the same problem, and could be combined
+into one statistical test for a normal distribution in mz.
 
 **6) DQSB below 0.5**
 Notable for this test is that it occurs very rarely with only ten cases
@@ -820,6 +834,10 @@ parameter is introduced, if it first causes a subset before the data
 is subset by mz the final results might vary. The effect of such a choice 
 depends on how large the resulting bins are, since large bins lead to 
 potentially more cases where a complete bin was erroneously subset.
+
+Since a possible correlation between bad centroid scores and non-ideal 
+binning was observed, integrating the score into the subsetting itself
+might be a viable strategy for improving overall result quality.
 
 **Usability Changes**
 The program does not feature error handling in any capacity. Additionally,

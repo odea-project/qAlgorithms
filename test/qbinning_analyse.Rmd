@@ -164,11 +164,11 @@ stats[stats$Var1 >= 10000,]
 
 summary_error$errorcode = as.numeric(lapply(summary_error$errorcode, bits))
 
-ggplot(summary_error[summary_error$errorcode - round(summary_error$errorcode, -1) >= 1,])+ #[which(summary_error$errorcode == 10000),]
-  geom_point(aes(x = mean_mz, y = mean_scans, colour = size))+
-  scale_color_viridis_b()
+ggplot(summary_error[summary_error$errorcode - round(summary_error$errorcode, -4) >= 100,])+ #[which(summary_error$errorcode == 10000),]
+  geom_point(aes(x = mean_mz, y = mean_scans, colour = as.factor(errorcode)))
+  # scale_color_viridis()
 
-summary_error %>% group_by(errorcode) %>% summarise(bin_count = n(), total_points = sum(size), ratio = sum(size)/n())
+summary_error %>% group_by(errorcode) %>% summarise(bin_count = n(), total_points = sum(size), ratio = sum(size)/n(), dqsCen = mean(min_DQSC))
 
 bins_error[bins_error$ID == 308,]
 minDists308 = c(6.2961233993519272e-05, 8.8906114996234464e-05, 9.4137318995990427e-05, 0.0001178799969920874, 8.2152471009067085e-05, 7.1812920992897489e-05)
@@ -185,5 +185,17 @@ length(bins_error$mz)/points_total
 length(bins_error$mz)/(points_total - notbinned_total)
 mean(summary_error$size)
 (points_total - notbinned_total)/(bins_total - length(summary_error$size))
+```
+```{r binviewer}
+
+ggplot(bins_error[which(bins_error$ID == 39242 | bins_error$ID == 39243),])+
+  geom_point(aes(mz, scan, color = as.factor(ID)))
+
+min(bins_error$mz[which(bins_error$ID == 39243)]) - max(bins_error$mz[which(bins_error$ID == 39242)])
+
+
+critVal(6) * summary_error$meanError[which(summary_error$ID == 39242)]
+critVal(5) * summary_error$meanError[which(summary_error$ID == 39243)]
+
 ```
 
