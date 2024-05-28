@@ -79,10 +79,9 @@ Importance of NTS, Datenprozessierung und Analyse entscheidende Größe bei NTS;
 Workflows haben keine Vergleichbarkeit; hoher Einfluss durch den Nutzer
 QA unterscheidet nicht zwischen falschen parametern und instrumentation
 Es gibt keine spezifische QA für NTS
-Fokus auch auf größerer Datensätze; Datenmenge nimmt wahrscheinlich zu
+Fokus auch auf größerer Datensätze; Datenmenge nimmt wahrscheinlich zu // Quelle?
 Neuerung: qualitätsparameter für einzelne Schritte in der Prozessierung
 Steps of finding a feature, mention qCentroids / describe pipeline in general
-
 
 The centWave algorithm identifies regions of interest (ROI)
 by starting at the first scan and elongating present masses
@@ -96,6 +95,7 @@ If a filter by centroid intensity is used, it must also
 be optimised. While some recommendations for field-specific 
 settings exist, these are still quite vague and not
 necessarily suited to environmental NTS [@forsbergDataProcessingMultiomic2018].
+CentWave also directly fits a peak to the EIC and produces a feature.
 
 These problems are directly adressed by reducing the amount of parameters
 present in the actual algorithm and minimising the steps during analysis
@@ -119,10 +119,10 @@ be distinguished from its surroundings. As will be shown, this parameter
 can also be used as an assessor for common error cases during binning.
 
 In comparison to other algorithms, which often require excessive amounts
-of computation time, qBinning is substantially faster. This enables its use
+of computation time[@todo citation], qBinning is substantially faster. This enables its use
 in high-throughput analysis pipelines.
 
-parameter-free, quality score for feature priorisation, ideally faster (time) 
+parameter-free, quality score for feature priorisation
 (@gerrit: not yet completed)
 
 ## Implementation
@@ -165,14 +165,16 @@ low coverage of the entire distribution.
 The order spaces are normaliesd to the centroid error, which serves as an
 estimate of the standard deviation of the assumed normal distribution This cannot
 be empirically determined before binning is complete.
-(@gerrit: This is due to our assumption; however, it is important to mention that the 
-centroid error is also just an estimate for the standard deviation of the assumed normal distribution.)
+The detailed derivation of the test statistic can be found in the supporting
+information provided by Reuschenbach et al. (2023)[@reuschenbachQBinningDataQualityBased2023].
 This criteria is then checked for the largest order space of every bin. When the
 critical distance is surpassed, the two resulting fragments are controlled.
 If no order space is greater than the critical distance and there are more than
 five points in a fragment, it is turned into a new open bin. The limitation of five
 points is imposed since no peak can be fitted to smaller ones.
 Once no fragment can be subset further, the resulting bins are subset by scans.
+(@gerrit: This is due to our assumption; however, it is important to mention that the 
+centroid error is also just an estimate for the standard deviation of the assumed normal distribution.)
 
 (@gerrit: here, it is not neighboring masses but the neighboring orders of the masses, 
 so it is sorted. However, sorting is not mentioned at all. Moreover, this is based on 
@@ -651,6 +653,8 @@ points. Binsize is the most strongly correlating parameter for
 a test being positive, with the detected bins averaging around 
 265 members and the remaining bins around 47.
 
+@todo add images where relevant
+
 **1) Duplicates in Scans**
 
 Notably, there exists no overlap between test 1) and tests 6) and 7), while 
@@ -672,13 +676,12 @@ be of further interest when trying to eliminate this condition.
 than average with a majority having a binsize of 5. The average binsize was larger
 when other tests were positive, but still ~10% of the normal binsize
 for these groups. This resulted in 0.1% of all points being affected.
-For @todo bins it was possible to find at least one point in the vector of
+For @todo __ bins it was possible to find at least one point in the vector of
 discarded points which could be associated with the bin in question.
-@todo control for neighbours in binned dataset
 There is very little overlap between this condition and others, with over
 97% being exclusively "too close" to another point.
 Of these, some are two correctly separated bins which have a point that 
-lies within the tolerated distance of both bins. This is a similar
+lies within the tolerated distance of both bins. (@todo image) This is a similar
 case as condition 7), and a refinement of this test should not include them.
 
 **3) Difference Between Median and Mean in Scans**
@@ -780,6 +783,7 @@ Here listed are changes to the program that would be beneficial, but
 could not be implemented as of now. 
 
 **Performance Improvements**
+
 The first subsetting is not multithreaded, since omp macros
 only work on for loops with no greater modification. If, before normal
 bin subsetting starts, the bin could be divided by some criteria,
@@ -808,6 +812,7 @@ number of sorting steps or implementing a more efficient sort would dramatically
 improve execution time, especially for very large datasets.
 
 **Feature Additions**
+
 While the algorithm works well for LC-MS data, MS^2 datasets can only be 
 binned according to the precursor ion. An additional method to subset
 closed bins further according to MS^2 or MS^n data could be implemented
@@ -881,6 +886,7 @@ binning was observed, integrating the score into the subsetting itself
 might be a viable strategy for improving overall result quality.
 
 **Usability Changes**
+
 The program does not feature error handling in any capacity. Additionally,
 only one dataset 
 has been used to confirm error-free operation on two different
@@ -975,15 +981,19 @@ peak quality or result correcness to justify being made.
 
 @todo
 Images of common undesired outputs/elements that need to be cleaned up: 
-runtimes on different processors
-performance bottlenecks
 effectiveness of binning for different datasets
 comparison between centroid error and ppm
 compare results for different alpha when calculating the critical value
 
 
 ## Software and Data
-R + package versions
-Julia + package versions
-C++ and compiler version
+All calculations in R were performed with R 4.3.1[@rcoreteamLanguageEnvironmentStatistical2023], 
+using the packages tidyverse 2.0.0[@wickhamWelcomeTidyverse2019] 
+and pracma 2.4.4[@borchersPracmaPracticalNumerical2023].
+
+The julia language 1.10.0[@bezansonJuliaFreshApproach] was used for executing the julia script.
+
+The program is written in base C++, using only standard library functions[@ISOInternationalStandard].
+It was compiled with gcc 13.2.0[@freesoftwarefoundationinc.UsingGNUCompiler1988].
+
 Describe Warburg dataset?

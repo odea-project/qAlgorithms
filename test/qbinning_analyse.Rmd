@@ -95,10 +95,13 @@ Rprof (NULL) ; print(summaryRprof(tf))
 
 ```
 
-```{r control notbinned}
-# outliers should be normally distributed throughout the dataset
-notbinned = read.csv("../../qbinning_notbinned.csv")[,1:2]
+```{r timings}
+# all times in nanoseconds
+subsetMZ = c(2532043400, 519514200, 63991800, 4207800, 318200, 44400)
+subsetScan = c(451073000, 345650500, 32338100, 2404200, 182500, 15000)
 
+sum(subsetMZ) * 10^-9
+sum(subsetScan) * 10^-9
 ```
 
 ```{r control median of mz}
