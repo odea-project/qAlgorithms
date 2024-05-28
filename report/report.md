@@ -2,9 +2,9 @@ Presenting an implemetation of the qBinning-algorithm developed by Reuschenbach 
 -----------------------------------------------------------------------------------------------
 Report concluding the analytical practical by Daniel Höhn, supervised by Gerrit Renner <!-- omit in toc -->
 
+***
 - [Abbreviations](#abbreviations)
 - [Introduction](#introduction)
-	- [Advantages of qBinning](#advantages-of-qbinning)
 - [Implementation](#implementation)
 	- [Algorithm](#algorithm)
 	- [Module Requirements](#module-requirements)
@@ -97,26 +97,32 @@ be optimised. While some recommendations for field-specific
 settings exist, these are still quite vague and not
 necessarily suited to environmental NTS [@forsbergDataProcessingMultiomic2018].
 
-### Advantages of qBinning
-The main advantage of the qBinning algorithm in comparison with other
+These problems are directly adressed by reducing the amount of parameters
+present in the actual algorithm and minimising the steps during analysis
+which involve subjective decisions when setting mass tolerances or filter
+thresholds.
+
+Accordingly, qBinning does not depend on user input, instead utilising parameters 
+derived from statistical principles. These take into account the essential
+mathematical properties of a peak and sidestep the subjective approach
+of manual parameter selection and optimisation. The chosen approach allows
+for bins to be non-continuous in the scan dimension, which is not provided
+by other binning approaches. The removal of this multitude of parameters
+also removes the time investment needed to optimise them and provides 
+a uniform base for other steps towards feature detection and annotation.
+
+A further advantage of the qBinning algorithm in comparison with other
 methods of binning is that it provides a quality parameter specific
 to the processing step. Implemented as the DQSB, it provides direct
 and simple feedback towards the degree to which a given bin could
 be distinguished from its surroundings. As will be shown, this parameter
 can also be used as an assessor for common error cases during binning.
 
-qBinning also does not depend on user input, instead utilising parameters 
-derived from statistical principles. These take into account the essential
-mathematical properties of a peak and sidestep the subjective approach
-of manual parameter selection and optimisation. The chosen approach allows
-for bins to be non-continuous in the scan dimension, which is not provided
-by other binning approaches.
-
 In comparison to other algorithms, which often require excessive amounts
 of computation time, qBinning is substantially faster. This enables its use
 in high-throughput analysis pipelines.
 
-parameter-free, quality score for feature priorisation, ideally faster (time) @todo measure
+parameter-free, quality score for feature priorisation, ideally faster (time) 
 (@gerrit: not yet completed)
 
 ## Implementation
@@ -125,14 +131,14 @@ parameter-free, quality score for feature priorisation, ideally faster (time) @t
 From a high-level perspective, the algorithm searches for groups of similar masses
 in a given dataset and ensures no group has too much space in the chromatographic
 dimension between included points. 
-\ 
+
 From this point, a group will be referred to as
 a *closed bin* if the algorithm determines that it cannot be subdivided further
-and as *open bin* if one or more of the subsetting functions (@todo link to functions)
+and as an *open bin* if one or more of the [subsetting functions](#core-functions)
 still has to check the grouping. Bins always refers to a grouping of centroided
 MS data with the parameter mz and at least one additional dimension of separation.
 Groups are only referred to as bins if they have not yet been handed to the peak 
-fitting algorithm, meaning there are still secondary tests requiring bin metadata. (@todo link to bin object)
+fitting algorithm, meaning there are still secondary tests requiring bin metadata. 
 The act of creating one or more new bins from an existing one while discarding all
 points which are not present in one of the new bins is called subsetting. Only 
 open bins can be subject to subsetting.
@@ -260,7 +266,7 @@ Bins are organized in two different data structures: Bins that were newly create
 a deque object that contains only Bins which require further subsetting (open Bins). 
 The subsetting methods are applied to all bins sequentially, with every iteration following the 
 user-specified order. If the last subsetting step does not change the bin, it is considered
-closed. For the present program, this means no significant gaps exist in the bin (refer: @todo link).
+closed. For the present program, this means no significant gaps exist in the bin.
 and removing bins that can no longer be a subset (closed Bins) from the deque. (@gerrit: it should be mentioned, that closing a bin is based on the criteria: no significant gap in the data group is left.)
 Once a Bin is closed, it is added to a vector that contains all closed Bins. Once binning is 
 complete, the DQSB is calculated for all bin members in all closed bins.
@@ -269,7 +275,6 @@ complete, the DQSB is calculated for all bin members in all closed bins.
 ### Core Functions
 The following functions, not including constructors and other utility functions, are included 
 as part of the qBinning module:
-@todo clickable function names
 * RawData: readcsv
 * RawData: readtxt
 * Bin: makeOS
@@ -306,8 +311,8 @@ It starts by taking the OS of the bin that calls it and searching for the maximu
 to the largest difference between two neighboring mz values in the sorted bin. If the maximum
 is greater than the critical value (@gerrit: based on the above-mentioned assumption), 
 the bin is split at this position, and subsetMZ is called for both resulting halves. 
-The critical value is calculated for an @todo unicode 
-alpha of 0.05 and normalized to the mean centroid error. The mean error is derived from the cumulative
+The critical value is calculated for an &alpha;
+of 0.01 and normalized to the mean centroid error. The mean error is derived from the cumulative
 error by dividing the difference between the cumulative error at the start and end of the bin by the 
 number of data points in the bin. This is identical to normalising the order space for every point.
 (@gerrit: why mean error?->please explain) 
@@ -320,7 +325,8 @@ If a bin cannot be split further, it is added to the container for open bins.
 
 <b> subsetScan: </b>
 This function takes a bin, sorts it by the scan number of its datapoints, and splits it if the
-difference in scans exceeds a given number. @todo reasoning for maxdist = 6
+difference in scans exceeds a given number. This parameter can be adjusted only when
+recompiling the program. It is set to six following the above-mentioned reasoning.
 After splitting the bin, only subsets with more than five elements are returned as bins to
 the container for open bins. If a bin is not split, it can be considered complete and is 
 closed. Closed bins are added to a separate container.
@@ -438,15 +444,19 @@ differences in distance have, three DQS total matched the verified result for bo
 (to nine decimal digits). When applied to real data, which is bound to have 
 smaller MOD distances than the test data, this effect likely leads to better
 matching with the correct results. 
-// The bug was successfully fixed following its discovery.
 
 When compared with the implementation in R, the DQS is sometimes identical.
 For the entire dataset, 79.1 % of the DQS matched when rounded to nine digits.
-This result does not change significantly (ßßß 5. Nachkommastelle) if bins that
-contain two points from the same scan are excluded (ßßß total). Even when rounded
-to three digits, only 93.2% of the DQS match. (Grafik)
+This result does not change significantly if bins that
+contain two points from the same scan are excluded (134 total). Even when rounded
+to three digits, only 93.2% of the DQS match. (@todo image)
 This behavior is independent of Bin association, which results in lower 
-agreement when only comparing DQS per bin. (Grafik)
+agreement when only comparing DQS per bin. (@todo image)
+Testing with an artificial bin showed that the results generated by R
+were not always correct for unknown reasons.
+Correctness of the calculated DQS was controlled manually for both
+heavily reduced real data and an artificial bin with three very
+different bins and two points not belonging to any bin.
 
 A significant advantage over R and Julia implementations is that a 
 single executable can be provided. This means the user is not
@@ -463,8 +473,7 @@ improvement in terms of user-friendliness was achieved.
 ### Performance Evaluation
 Performance evaluation was performed using the following CPUs: 
 * Intel(R) Core(TM) i5-7400 CPU @ 3.00GHz (referred to as i5)
-* AMD Ryzen 3 3250U (referred to as Ryzen)
-@todo SSD speeds
+* AMD Ryzen 3 3250U @2.6GHz (referred to as Ryzen)
 Writing the results to disk was not included in the profiling tests,
 since this is not the main task of the presented program and was
 as such not optimised beyond the point of sufficient efficiency.
@@ -474,7 +483,8 @@ centroids. Scaling of performance criteria with data set size was
 not investigated.
 
 For R, the Rprof function was used to profile code execution.
-A total execution time of 299 seconds on the i5 and @todo
+The program never utilised the full CPU.
+A total execution time of 299 seconds on the i5 and 762
 seconds on the Ryzen was measured. in both tests, 46% of the execution time 
 was spent in the function responsible for binning, 10% on copying
 data, and 6% on calculating the MID. The remaining time was spent 
@@ -490,24 +500,34 @@ as plain text.
 For Julia, the code was run once before timing to not measure time spent
 on compiling instead of executing code. Since no data is written to
 disk during code execution, the entire code is considered for timing.
-The total execution time on the i5 was 15 seconds. @todo more specific
-// further testing was not performed due to a fatal error persisting
-// in the code, which would likely change performance if fixed.
+The total execution time on the i5 was 15 seconds. 
+further testing was not performed due to the DQSB calculation giving
+wrong results for almost all bins. Fixing this error, where the MOD
+is only determined in relation to the scan a point is in, would
+likely result in vastly increased calculation time due to requiring
+completely different data organisation.
 
-
-For the c++ implementation, the majority of time is spent on reading the
+The verysleepy tool was used for performance profiling of the c++ implementation.
+Here, the majority of time (~60 s) is spent on reading the
 data from disk. This is, in part, due to the data structure being constructed
 and to a greater degree because the parsing is very inefficient.
 No attempt to optimize this part of the program was made since it only
 exists as a debugging tool. 
-@todo optimised timing
+Profiling showed most of the calculation time was spent on creating the 
+order spaces. Here, in turn, almost all the time fell to sorting the data.
+Similarly, sorting is one of the main timesinks when calculating the DQS
+and during subsetting.
 At optimization level 2, the highest possible optimization when compiling
-with gcc, ßßß seconds were spent on subsetting in mz, ßßß s on subsetting
-in scans, ßßß s on calculating the DQS, and ßßß s on other tasks, mainly
-moving data from the container for open bins to the container for closed bins.
+with gcc, 3.12 seconds were spent on subsetting in mz, 0.83 s on subsetting
+in scans, 1.92 s on calculating the DQS, and less than 0.1 s on other tasks, 
+mainly deleting the first element of the bin deque.
 
-Performance is roughly equal to the Julia script, while more detailed and
-easier to access information over the entire process is provided. 
+Performance is massively superior to the R script, even when including the
+inefficient csv parsing. The julia script has comparable speeds for subsetting,
+but does not provide any of the additional functions nor does the DQSB calculation
+function correctly. The goal of providing an optimised tool was met to the degree
+that work with very large datasets should be possible even on limited hardware
+within a reasonable timeframe, provided the entire dataset fits into RAM.
 
 During development, it was observed that using long doubles when calculating
 the DQS has an effect up to the fifth digit. Since this change did not effect
@@ -521,9 +541,10 @@ Since all bins exist independently, only parameters that can be
 calculated from the bin members are considered.
 Criteria are implemented using the summaiseBin function and
 as such are only evaluated in terms of being true or false.
-Results of the tests are presented here (@todo add link).
+Results of the tests are presented [here](#test-results).
 
 **1) Duplicates in Scans**
+
 The theoretical bin contains one element for every scan it extends
 over. Since a declared purpose of this algorithm is to detect bins
 even when single points are missing from a series, only a scan being
@@ -534,6 +555,7 @@ being too large. As such, duplicate scans can serve as an indicator
 for separation not being strict enough.
 
 **2) Too Strict Separation**
+
 To detect too strict separation between either two bins or one bin
 and one discarded point, the DQSB is used as a measure of distance
 and compared with a hypothetical DQSB. For this hypothetical score,
@@ -562,6 +584,7 @@ similar bins in accordance with the detailed statistical criteria.
 (@gerrit: here you should add if this was observed or not? => moved to separate section)
 
 **3+4) Deviation of Median and Mean**
+
 In a perfect normal distribution, the mean and median are identical.
 To account for deviations, error thresholds are defined based on
 the established process parameters.
@@ -579,6 +602,7 @@ begin with. Both deviations being present at once in a large bin
 is the case in which an incomplete separation is the most likely.
 
 **5) Points Outside the 3-sigma Interval**
+
 This functions as a simple test for normality and too heavy scattering.
 At 3 sigma, the likelihood of a point being part of a normally distributed
 sample is similar to the 1% error margin used to calculate the critical 
@@ -587,6 +611,7 @@ deviation of the outliers, it should only be used as a component of
 estimating high scattering in bins.
 
 **6) DQSB below 0.5**
+
 If the DQSB is less than 0.5, points in the bin are on average closer 
 to a point outside of the bin than other bin members. Since the DQSB
 is calculated using the internal deviation and distances to points 
@@ -594,6 +619,7 @@ outside of the bin, either very high internal deviation or very high
 noise levels (or both) can be the cause for a very low DQSB.
 
 **7) Correctly Separated Point Within Critical Distance**
+
 This condition depends on test condition 2). It performs the same
 operation, but calculates the critical value using the binsize instead
 of the binsize plus one. Only bins which do not fulfill condition 2)
@@ -617,7 +643,7 @@ kontext existierender literatur ; vergleichbare Ergebnisse?
 
 
 ### Test Results
-The tests presented here (@todo add link) were performed on the
+The tests presented [here](#test-criteria-for-bin-correctness) were performed on the
 Warburg-Dataset after binning. It contains 55910 total bins, 2205
 (4%) fulfilled at least one test condition. The points in these
 bins make up 28% of the entire dataset, or 41% of all binned
@@ -635,9 +661,13 @@ improve the results is unlikely to work.
 A bin containing duplicates also indicates that the DQS of individual
 centroids was low. When comparing the average lowest DQSC, the difference
 to bins without duplicates but otherwise matching conditions was generally 0.2 to 0.6.
+There were 134 bins with duplicate points and 613 duplicates found in the
+dataset. Making a distinction between the number of duplicates might
+be of further interest when trying to eliminate this condition.
 
 
 **2) Too Strict Separation** 
+
 1.3% of all bins fulfilled this criteria. Notably, they were smaller
 than average with a majority having a binsize of 5. The average binsize was larger
 when other tests were positive, but still ~10% of the normal binsize
@@ -652,6 +682,7 @@ lies within the tolerated distance of both bins. This is a similar
 case as condition 7), and a refinement of this test should not include them.
 
 **3) Difference Between Median and Mean in Scans**
+
 The bins for which this condition applied showed no other noteable behaviour.
 They also do not include duplicate scans, which are another measure
 hypothesized to indicate incomplete subsetting. While they are between
@@ -662,6 +693,7 @@ distributed slightly asymmetrically, this can compound and
 reduce the selectivity of this test too heavily.
 
 **4) Difference Between Median and Mean in mz**
+
 There is little overlap between this condition and others, excluding 5).
 Bins which exclusively fulfill this condition account for 14% of all 
 points and 20% of all bins with at least one positive test.
@@ -675,6 +707,7 @@ bins.
 
 
 **5) Points Outside the 3-sigma Interval**
+
 The vast majority of bins for this condition was fulfilled did not have
 overlap with the other tests. Bins for which only points outside the
 3-Sigma interval were detected account for 47% of all bins which were 
@@ -692,6 +725,7 @@ Both tests cover essentially the same problem, and could be combined
 into one statistical test for a normal distribution in mz.
 
 **6) DQSB below 0.5**
+
 Notable for this test is that it occurs very rarely with only ten cases
 total, six of which also fulfill test condition 2). For the other four,
 exclusively case 6) applies. Bins have an average size of 10. Due to
@@ -701,6 +735,7 @@ seem sensible. It is likely that the majority will be removed if condition 2)
 is addressed either way.
 
 **7) Correctly Separated Point Within Critical Distance**
+
 Condition 7) does not occur in connection with any other condition.
 This conforms to the idea that these bins are correctly formed.
 Bins are around 6 points large on average, making up 0.2% of all bins.
@@ -712,11 +747,13 @@ and at the beginning and end of the chromoatographic dimension (@todo picture).
 Since such points are less likely to correspond to peaks, efforts to
 change the grouping are not warranted.
 
+---
+
 Throughout all tests, the presence of "too large" bins; those being
 groupings which show traits that could be caused by the bin either 
 including a lot of noise or multiple other bins, could be observed.
 They generally have a high member count and high deviation in the mz
-dimension, the scan dimension less so. @todo 
+dimension, the scan dimension less so. 
 However, most of these bins have been selected due to effects that
 are also explained through less rare conditions than wrong 
 binning results. Due to the inherent bias of visual selection
@@ -765,6 +802,10 @@ one bin with ten members.
 The critical value, before normalisation, is calculated often and 
 repeaqtedly for the same binsize. Including it as a table would
 likely save some time during the calculations.
+
+A large portion of calculation time is spent on sorting data. Reducing the
+number of sorting steps or implementing a more efficient sort would dramatically
+improve execution time, especially for very large datasets.
 
 **Feature Additions**
 While the algorithm works well for LC-MS data, MS^2 datasets can only be 
@@ -841,13 +882,13 @@ might be a viable strategy for improving overall result quality.
 
 **Usability Changes**
 The program does not feature error handling in any capacity. Additionally,
-only one dataset @todo adjust if testing SFC/GC
-has been used to confirm error-free operation on two different @todo test on linux
+only one dataset 
+has been used to confirm error-free operation on two different
 computers, both running Windows 10. When running without an attached debugger,
-error management will be impossible for a possible end user. For the qAlgorithms
+complete error management will be impossible for a possible end user. For the qAlgorithms
 tool to find widespread adoption, possible error sources need to be identified,
-addressed, or effectively communicated to the end user. This task requires 
-extensive testing with a broad sample group of potential users.
+addressed, or effectively communicated. This task requires 
+extensive testing with a broad sample group of potential users and more varied data sets.
 
 Reading in csv files is very slow. This was not a priority for optimisation,
 since it is not the intended main function of this program. However, for
@@ -862,9 +903,12 @@ when adding a bin to the vector of closed bins and after the DQS calculation.
 The test dataset for this purpose should contain multiple bins which display 
 different behavior, that is bins with good scores, bins with correctly
 assigned bad scores and bins with bad scores due to either being too large
-and including more than one ion trace (case @todo mention in discussion)
-or one bin being split in two (@todo see above). These cases need to be
-included so that a potential improvement of the algorithm is not discarded
+and including more than one ion trace or one bin being split in two. 
+These cases are in some part covered by the existing controls, but a
+tool to judge accurately if a change lead to actually better results
+should be created. A possible implementation of this is a manual selection
+of such cases for a test dataset. With such measures in place, 
+a potential improvement of the algorithm is not discarded
 for not obtaining exactly matching results.
 Also to reduce the effort needed for a substantial contribution, the entire
 project should compile and run correctly on a Linux distribution. For the
@@ -881,7 +925,7 @@ Furthermore, an error in calculating the DQS was identified in both original
 implementations. The alternative approach chosen here avoids incorrect results
 and was verified under different edge cases.
 
-Expansion of the program gives access to many optional tests for bin quality,
+A significant expansion of the program gives access to many optional tests for bin quality,
 which enable a sophisticated pre-selection of bins before the peak fitting
 algorithm begins work. For example, only those bins which do not contain duplicate scans,
 are well-separated from the dataset and do not have points outside of 2 sigma 
@@ -890,13 +934,20 @@ The tests also grant better insight into the weaknesses of the algorithm.
 Through them, a probable cause for incorrect splits in bins could be identified
 as an acceptable gap in a small bin which was considered too large while the correct bin
 was still part of another, orders of magnitude greater bin.
+Such insights are essential for providing a standardised NTS workflow
+which allows its users to judge performance to at least a semi-quantitative level.
 
-The program is now flexible and accessible for future expansions. It is now
+The program is now flexible and accessible for future expansions. 
+This is expanded by comprehensive comments in the code It is now
 possible to pass centroided data as an object which will not be modified,
 and data can be returned in a reduced form, skipping the reading from and
 writing to csv steps. Through other differences in implementation, a massive
 improvement in terms of execution time was achieved in comparison to the R code,
 while performing additional calculations for bin metadata and test conditions.
+A full binning procedure taking just a few seconds is very important for
+analysing large datasets with hundreds of measurements. Such demands are
+met by the presented implementation, provided a connection with the 
+centroiding program is established.
 
 An important restriction of the presented test for too strict separation is that it
 only detects bins where a majority of points is affected. It is a
@@ -920,7 +971,9 @@ bins should be the main focus when improving and expanding the
 presented program. Such improvements must always be shown to improve
 peak quality or result correcness to justify being made.
 
---
+---
+
+@todo
 Images of common undesired outputs/elements that need to be cleaned up: 
 runtimes on different processors
 performance bottlenecks
