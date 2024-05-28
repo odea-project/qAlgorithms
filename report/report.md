@@ -358,7 +358,7 @@ cases in which a specific subsetting operation is only necessary for bins that w
 as closed by a different subsetting function. subsetBins can take an error (in ppm) as an
 optional argument. If none is supplied, the centroid error is used. 
 
-**user-made subset functions**
+### User-made Subser Functions
 For a user to specify a subset function, the only hard condition to be fulfilled
 is that the function takes the vector of open bins to write to, some criteria of
 subsetting and the subset counter as arguments. Return values can be specified, 
@@ -510,7 +510,7 @@ likely result in vastly increased calculation time due to requiring
 completely different data organisation.
 
 The verysleepy tool was used for performance profiling of the c++ implementation.
-Here, the majority of time (~60 s) is spent on reading the
+Here, the majority of time (~30 - 60 s) is spent on reading the
 data from disk. This is, in part, due to the data structure being constructed
 and to a greater degree because the parsing is very inefficient.
 No attempt to optimize this part of the program was made since it only
@@ -519,10 +519,14 @@ Profiling showed most of the calculation time was spent on creating the
 order spaces. Here, in turn, almost all the time fell to sorting the data.
 Similarly, sorting is one of the main timesinks when calculating the DQS
 and during subsetting.
-At optimization level 2, the highest possible optimization when compiling
-with gcc, 3.12 seconds were spent on subsetting in mz, 0.83 s on subsetting
+For the Ryzen, at optimization level 2 (the highest possible optimization when compiling
+with gcc), 3.12 seconds were spent on subsetting in mz, 0.83 s on subsetting
 in scans, 1.92 s on calculating the DQS, and less than 0.1 s on other tasks, 
 mainly deleting the first element of the bin deque.
+For the i5, The respective times are 1.29 s, 0.35 s and 0.65 s, with
+a negligible amount of time spent on other tasks.
+Both processors are years out of date in terms of power and serve as
+a reasonable benchmark for the computers used within labs. 
 
 Performance is massively superior to the R script, even when including the
 inefficient csv parsing. The julia script has comparable speeds for subsetting,
