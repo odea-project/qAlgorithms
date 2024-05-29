@@ -18,19 +18,19 @@ int main()
 {
   // define input filename
   // std::string filename_input = "test/data/test_lcms_data.csv";
-  // std::string filename_input = "test/data/test_lcms_data2.csv";
+  std::string filename_input = "test/data/test_lcms_data2.csv";
   // std::string filename_input = "test/data/test_ftir.csv";
   // std::string filename_input = "test/data/test_chrom.csv";
   // std::string filename_input = "test/data/test_orbitrap.csv";
-  std::string filename_input = "test/data/example_profile.mzML";
+  // std::string filename_input = "test/data/example_profile.mzML";
   std::cout << "create LCMSData object....";
   q::LCMSData lcmsData;
   std::cout << "done\n";
   std::cout << "read file....";
   // lcmsData.readCSV(filename_input, 1, -1, 0, -1, ',', {q::DataType::DataField::SCANNUMBER, q::DataType::DataField::RETENTIONTIME, q::DataType::DataField::MZ, q::DataType::DataField::INTENSITY});
-  // lcmsData.readCSV(filename_input, 1, -1, 0, -1, ',', {q::DataType::DataField::MZ, q::DataType::DataField::INTENSITY, q::DataType::DataField::SCANNUMBER, q::DataType::DataField::RETENTIONTIME});
-  sc::MZML data(filename_input);
-  lcmsData.readStreamCraftMZML(data);
+  lcmsData.readCSV(filename_input, 1, -1, 0, -1, ',', {q::DataType::DataField::MZ, q::DataType::DataField::INTENSITY, q::DataType::DataField::SCANNUMBER, q::DataType::DataField::RETENTIONTIME});
+  // sc::MZML data(filename_input);
+  // lcmsData.readStreamCraftMZML(data);
   std::cout << "done\n";
   lcmsData.info();
   

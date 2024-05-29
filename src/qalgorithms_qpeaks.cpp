@@ -7,7 +7,7 @@
 
 namespace q
 {
-#pragma region Constructors
+#pragma region Constructors and Destructor
   // Constructor
   qPeaks::qPeaks() {}
 
@@ -35,7 +35,7 @@ namespace q
             }
           int maxScale = (int) (maxDataPoints-1)/2;
           */
-          this->global_maxScale = 30;
+          this->global_maxScale = 10;
           // iterate over the range of the maxScale to create Matrices for each scale
           for (int scale = 2; scale <= this->global_maxScale; scale++)
           {
@@ -45,16 +45,14 @@ namespace q
         },
         dataVec);
   }
-#pragma endregion Constructors
 
-#pragma region Destructor
   // Destructor
   qPeaks::~qPeaks() {}
-#pragma endregion Destructor
+#pragma endregion Constructors and Destructor
 
-#pragma region Methods
 #pragma region findPeaks
-  std::vector<std::vector<std::unique_ptr<DataType::Peak>>> qPeaks::findPeaks(
+  std::vector<std::vector<std::unique_ptr<DataType::Peak>>>
+  qPeaks::findPeaks(
       const varDataType &dataVec)
   {
     std::vector<std::vector<std::unique_ptr<DataType::Peak>>> all_peaks;
@@ -63,8 +61,7 @@ namespace q
         {
           all_peaks.resize(arg->size());
       // iterate over the map of varDataType datatype objects
-      // use parallel for loop to iterate over the dataVec
-#pragma omp parallel for
+#pragma omp parallel for // use parallel for loop to iterate over the dataVec
           for (int i = 0; i < arg->size(); i++)
           {
             // de-reference the unique pointer of the object
@@ -73,7 +70,6 @@ namespace q
             auto &data = dataObj.dataPoints;
             int n = data.size();
             // store x and y values in RefMatrix objects
-            // RefMatrix X(n, 1);
             RefMatrix Y(n, 1);
             std::vector<double*> X(n);
             std::vector<int*> df(n);
@@ -83,7 +79,7 @@ namespace q
               df[i] = &data[i]->df;
               Y.assignRef(i, 0, data[i]->y());
             }
-            std::vector<std::unique_ptr<validRegression>> validRegressions; // index in B, scale, apex_position and MSE
+            std::vector<std::unique_ptr<validRegression>> validRegressions;
             runningRegression(Y, df, validRegressions);
             if (validRegressions.empty())
             {
@@ -103,16 +99,13 @@ namespace q
       const std::vector<int *> &df,
       std::vector<std::unique_ptr<validRegression>> &validRegressions)
   {
-    // perform log-transform on Y
     size_t n = Y.getRows();
-    Matrix Ylog = Y.log();
-
+    Matrix Ylog = Y.log(); // perform log-transform on Y
     int maxScale = std::min(this->global_maxScale, (int)(n - 1) / 2);
     validRegressions.reserve(calculateNumberOfRegressions(n));
     for (int scale = 2; scale <= maxScale; scale++)
     {
-      // coeffiencts matrix B of the running regression
-      Matrix b = Ylog.convoleCombiend(*(psuedoInverses[scale - 2]));
+      Matrix b = Ylog.convoleCombiend(*(psuedoInverses[scale - 2])); // coeffiencts matrix B of the running regression
       validateRegressions(b, Y, Ylog, df, scale, validRegressions);
     } // end for scale loop
     mergeRegressionsOverScales(validRegressions, Ylog, Y, df);
@@ -131,13 +124,10 @@ namespace q
     // declare constants
     const double index_offset = (scale - 2) * Ylog.numRows() - scale * (scale - 1) + 2;
     // declare variables
-    int df_sum = 0;
-    double valley_position;
-    double apex_position;
-    double inverseMatrix_2_2 = (*(inverseMatrices[scale - 2]))(2, 2);  // variance of the quadratic term left side of the peak
-    double inverseMatrix_3_3 = (*(inverseMatrices[scale - 2]))(3, 3);  // variance of the quadratic term right side of the peak
-    Matrix &X = *(designMatrices[scale - 2]);                          // design matrix
-    Matrix Jacobian_height(1, 4);                                      // Jacobian matrix for the height
+    double inverseMatrix_2_2 = (*(inverseMatrices[scale - 2]))(2, 2); // variance of the quadratic term left side of the peak
+    double inverseMatrix_3_3 = (*(inverseMatrices[scale - 2]))(3, 3); // variance of the quadratic term right side of the peak
+    Matrix &X = *(designMatrices[scale - 2]);                         // design matrix
+
     std::vector<std::unique_ptr<validRegression>> validRegressionsTmp; // temporary vector to store valid regressions <index, apex_position>
 
     // iterate columwise over the coefficients matrix
@@ -147,14 +137,7 @@ namespace q
         Degree of Freedom Filter:
         This block of code implements the degree of freedom filter. It calculates the degree of freedom based df vector. If the degree of freedom is less than 5, the loop continues to the next iteration. The value 5 is chosen as the minimum number of data points required to fit a quadratic regression model.
       */
-      df_sum = std::transform_reduce(
-          df.begin() + i,
-          df.begin() + 2 * scale + i,
-          0,
-          std::plus<>(),
-          [](int *p)
-          { return *p; });
-
+      int df_sum = calcDF(df, i, 2 * scale + i); // calculate the sum of the degree of freedom (df_sum)
       if (df_sum < 5)
       {
         continue; // degree of freedom less than 5; i.e., less then 5 measured data points
@@ -164,45 +147,11 @@ namespace q
         Apex and Valley Position Filter:
         This block of code implements the apex and valley position filter. It calculates the apex and valley positions based on the coefficients matrix B. If the apex is outside the data range, the loop continues to the next iteration. If the apex and valley positions are too close to each other, the loop continues to the next iteration.
       */
-      // calculate the checksum for case differentiation
-      int key = (B(1, i) < 0 ? 4 : 0) + (B(2, i) < 0 ? 2 : 0) + (B(3, i) < 0 ? 1 : 0);
-      switch (key)
+      double apex_position, valley_position;
+      if (!calculateApexAndValleyPositions(B, i, scale, apex_position, valley_position))
       {
-      case 7:                                   // Case 1a: apex left
-        apex_position = -B(1, i) / 2 / B(2, i); // is negative
-        valley_position = 0;                    // no valley point
-        if (apex_position <= -scale + 1)        // scale +1: prevent appex position to be at the edge of the data
-        {
-          continue; // invalid apex position
-        }
-        break;
-      case 3:                                   // Case 1b: apex right
-        apex_position = -B(1, i) / 2 / B(3, i); // is positive
-        valley_position = 0;                    // no valley point
-        if (apex_position >= scale - 1)         // scale -1: prevent appex position to be at the edge of the data
-        {
-          continue; // invalid apex position
-        }
-        break;
-      case 6:                                                                    // Case 2a: apex left | valley right
-        apex_position = -B(1, i) / 2 / B(2, i);                                  // is negative
-        valley_position = -B(1, i) / 2 / B(3, i);                                // is positive
-        if (apex_position <= -scale + 1 || valley_position - apex_position <= 2) // scale +1: prevent appex position to be at the edge of the data
-        {
-          continue; // invalid apex and valley positions
-        }
-        break;
-      case 1:                                                                   // Case 2b: apex right | valley left
-        apex_position = -B(1, i) / 2 / B(3, i);                                 // is positive
-        valley_position = -B(1, i) / 2 / B(2, i);                               // is negative
-        if (apex_position >= scale - 1 || apex_position - valley_position <= 2) // scale -1: prevent appex position to be at the edge of the data
-        {
-          continue; // invalid apex and valley positions
-        }
-        break;
-      default:
-        continue; // invalid case
-      } // end switch
+        continue; // invalid apex and valley positions
+      }
 
       /*
         Quadratic Term Filter:
@@ -215,10 +164,7 @@ namespace q
       // adjust mse by considering the real df
       mse *= (2 * scale - 3) / (df_sum - 4);
 
-      double tValue = std::max(                                    // t-value for the quadratic term
-          std::abs(B(2, i)) / std::sqrt(inverseMatrix_2_2 * mse),  // t-value for the quadratic term left side of the peak
-          std::abs(B(3, i)) / std::sqrt(inverseMatrix_3_3 * mse)); // t-value for the quadratic term right side of the peak
-      if (tValue < tValuesArray[df_sum - 5])                       // df is df_sum-4 but tValuesArray is zero-based
+      if (!isValidQuadraticTerm(B, i, inverseMatrix_2_2, inverseMatrix_3_3, mse, df_sum))
       {
         continue; // statistical insignificance of the quadratic term
       }
@@ -227,22 +173,8 @@ namespace q
         Height Filter:
         This block of code implements the height filter. It calculates the height of the peak based on the coefficients matrix B. Then it calculates the uncertainty of the height based on the Jacobian matrix and the variance-covariance matrix of the coefficients. If the height is statistically insignificant, the loop continues to the next iteration.
       */
-      double height = std::exp(B(0, i) + apex_position * B(1, i) * .5);
-      Jacobian_height(0, 0) = height;
-      Jacobian_height(0, 1) = apex_position * height;
-      if (apex_position < 0)
-      {
-        Jacobian_height(0, 2) = apex_position * Jacobian_height(0, 1);
-        Jacobian_height(0, 3) = 0;
-      }
-      else
-      {
-        Jacobian_height(0, 2) = 0;
-        Jacobian_height(0, 3) = apex_position * Jacobian_height(0, 1);
-      }
       Matrix C = (*inverseMatrices[scale - 2]) * mse; // variance-covariance matrix of the coefficients
-      double h_uncertainty = std::sqrt((Jacobian_height * C * Jacobian_height.T()).sumElements());
-      if (height / h_uncertainty < tValuesArray[df_sum - 5])
+      if (!isValidPeakHeight(B, C, i, apex_position, df_sum))
       {
         continue; // statistical insignificance of the height
       }
@@ -251,24 +183,9 @@ namespace q
         Area Filter:
         This block of code implements the area filter. It calculates the Jacobian matrix for the peak area based on the coefficients matrix B. Then it calculates the uncertainty of the peak area based on the Jacobian matrix. If the peak area is statistically insignificant, the loop continues to the next iteration.
       */
-      std::pair<Matrix, Matrix> Jacobian_area = jacobianMatrix_PeakArea(B.col(i), scale); // first: Jacobian matrix, second: Jacobian matrix for the covered peak area
-      double area_uncertainty = std::sqrt(                                                // uncertainty of the peak area based on the Jacobian matrix and the non-covered peak area
-          (Jacobian_area.first * C * Jacobian_area.first.T()).sumElements());
-
-      if (Jacobian_area.first(0, 0) / area_uncertainty < tValuesArray[df_sum - 5])
+      if (!isValidPeakArea(B, C, i, scale, df_sum))
       {
-        continue; // statistical insignificance of the peak area
-      }
-
-      /*
-        Covered Area Filter:
-        This block of code implements the covered area filter. It calculates the covered peak area. Then it calculates the uncertainty of the peak area based on the Jacobian matrix. If the area is statistically insignificant, the loop continues to the next iteration.
-      */
-      double area_uncertainty_covered = std::sqrt( // uncertainty of the peak area based on the Jacobian matrix and the covered peak area
-          (Jacobian_area.second * C * Jacobian_area.second.T()).sumElements());
-      if (Jacobian_area.second(0, 0) / area_uncertainty_covered < tValuesArray[df_sum - 5])
-      {
-        continue; // statistical insignificance of the peak area
+        continue; // statistical insignificance of the area
       }
 
       /*
@@ -293,21 +210,20 @@ namespace q
 
       validRegressionsTmp.push_back(
           std::make_unique<validRegression>(
-              i + scale,                                            // index of the center of the window (x==0) in the Y matrix
-              scale,                                                // scale
-              df_sum - 4,                                           // df
-              apex_position + i + scale,                            // apex position in x-axis 0:n
-              0,                                                    // initial MSE
-              B.col(i),                                             // coefficients matrix
-              true,                                                 // isValid
-              left_limit,                                           // left_limit
-              right_limit,                                          // right_limit
-              left_limit - i,                                       // X_row_0
-              right_limit - i + 1,                                  // X_row_1
-              area_uncertainty_covered / Jacobian_area.second(0, 0) // dqs
+              i + scale,                                                          // index of the center of the window (x==0) in the Y matrix
+              scale,                                                              // scale
+              df_sum - 4,                                                         // df
+              apex_position + i + scale,                                          // apex position in x-axis 0:n
+              0,                                                                  // initial MSE
+              B.col(i),                                                           // coefficients matrix
+              true,                                                               // isValid
+              left_limit,                                                         // left_limit
+              right_limit,                                                        // right_limit
+              left_limit - i,                                                     // X_row_0
+              right_limit - i + 1,                                                // X_row_1
+              0                                                                   // dqs
+              // 1 - std::erf(area_uncertainty_covered / Jacobian_area.second(0, 0)) // dqs
               ));
-      // std::erf(                  // dqs (experimental)
-      //     (1 - std::erf(area_uncertainty / Jacobian_area.first(0, 0))) / (1 - std::erf(1 / tValuesArray[df_sum - 5])) - 1)));
     } // end for loop
     // early return if no or only one valid peak
     if (validRegressionsTmp.size() < 2)
@@ -814,6 +730,132 @@ namespace q
   } // end calcChiSquareEXP
 #pragma endregion calcChiSquareEXP
 
+#pragma region calcDF
+  int qPeaks::calcDF(
+      const std::vector<int *> &df, // degrees of freedom
+      const size_t left_limit,      // left limit
+      const size_t right_limit)     // right limit
+  {
+    return std::transform_reduce(
+        df.begin() + left_limit,
+        df.begin() + right_limit + 1,
+        0,
+        std::plus<>(),
+        [](int *p)
+        { return *p; });
+  } // end calcDF
+#pragma endregion calcDF
+
+#pragma region calculateApexAndValleyPositions
+  bool
+  qPeaks::calculateApexAndValleyPositions(
+      const Matrix &B,
+      const size_t index,
+      const int scale,
+      double &apex_position,
+      double &valley_position) const
+  {
+    int key = (B(1, index) < 0 ? 4 : 0) + (B(2, index) < 0 ? 2 : 0) + (B(3, index) < 0 ? 1 : 0);
+    switch (key)
+    {
+    case 7:                                           // Case 1a: apex left
+      apex_position = -B(1, index) / 2 / B(2, index); // is negative
+      valley_position = 0;                            // no valley point
+      return apex_position > -scale + 1;              // scale +1: prevent appex position to be at the edge of the data
+
+    case 3:                                           // Case 1b: apex right
+      apex_position = -B(1, index) / 2 / B(3, index); // is positive
+      valley_position = 0;                            // no valley point
+      return apex_position < scale - 1;               // scale -1: prevent appex position to be at the edge of the data
+
+    case 6:                                                                     // Case 2a: apex left | valley right
+      apex_position = -B(1, index) / 2 / B(2, index);                           // is negative
+      valley_position = -B(1, index) / 2 / B(3, index);                         // is positive
+      return apex_position > -scale + 1 && valley_position - apex_position > 2; // scale +1: prevent appex position to be at the edge of the data
+
+    case 1:                                                                    // Case 2b: apex right | valley left
+      apex_position = -B(1, index) / 2 / B(3, index);                          // is positive
+      valley_position = -B(1, index) / 2 / B(2, index);                        // is negative
+      return apex_position < scale - 1 && apex_position - valley_position > 2; // scale -1: prevent appex position to be at the edge of the data
+
+    default:
+      return false; // invalid case
+    } // end switch
+  }
+#pragma endregion calculateApexAndValleyPositions
+
+#pragma region isValidQuadraticTerm
+  bool
+  qPeaks::isValidQuadraticTerm(
+      const Matrix &B,
+      const size_t index,
+      const double inverseMatrix_2_2,
+      const double inverseMatrix_3_3,
+      const double mse,
+      const int df_sum) const
+  {
+    double tValue = std::max(                                        // t-value for the quadratic term
+        std::abs(B(2, index)) / std::sqrt(inverseMatrix_2_2 * mse),  // t-value for the quadratic term left side of the peak
+        std::abs(B(3, index)) / std::sqrt(inverseMatrix_3_3 * mse)); // t-value for the quadratic term right side of the peak
+    return tValue > tValuesArray[df_sum - 5];                        // statistical significance of the quadratic term
+  }
+#pragma endregion isValidQuadraticTerm
+
+#pragma region isValidPeakHeight
+  bool
+  qPeaks::isValidPeakHeight(
+      const Matrix &B,
+      const Matrix &C,
+      const size_t index,
+      const double apex_position,
+      const int df_sum) const
+  {
+    Matrix Jacobian_height(1, 4); // Jacobian matrix for the height
+    double height = std::exp(B(0, index) + apex_position * B(1, index) * .5);
+    Jacobian_height(0, 0) = height;
+    Jacobian_height(0, 1) = apex_position * height;
+    if (apex_position < 0)
+    {
+      Jacobian_height(0, 2) = apex_position * Jacobian_height(0, 1);
+      Jacobian_height(0, 3) = 0;
+    }
+    else
+    {
+      Jacobian_height(0, 2) = 0;
+      Jacobian_height(0, 3) = apex_position * Jacobian_height(0, 1);
+    }
+    double h_uncertainty = std::sqrt((Jacobian_height * C * Jacobian_height.T()).sumElements());
+    return height / h_uncertainty > tValuesArray[df_sum - 5]; // statistical significance of the peak height
+  }
+#pragma endregion isValidPeakHeight
+
+#pragma region isValidPeakArea
+  bool
+  qPeaks::isValidPeakArea(
+      const Matrix &B,
+      const Matrix &C,
+      const size_t index,
+      const int scale,
+      const int df_sum) const
+  {
+    std::pair<Matrix, Matrix> Jacobian_area = jacobianMatrix_PeakArea(B.col(index), scale); // first: Jacobian matrix, second: Jacobian matrix for the covered peak area
+    double area_uncertainty = std::sqrt(                                                    // uncertainty of the peak area based on the Jacobian matrix and the non-covered peak area
+        (Jacobian_area.first * C * Jacobian_area.first.T()).sumElements());
+    if (Jacobian_area.first(0, 0) / area_uncertainty < tValuesArray[df_sum - 5])
+    {
+      return false; // statistical insignificance of the peak area
+    }
+
+    double area_uncertainty_covered = std::sqrt( // uncertainty of the peak area based on the Jacobian matrix and the covered peak area
+        (Jacobian_area.second * C * Jacobian_area.second.T()).sumElements());
+    if (Jacobian_area.second(0, 0) / area_uncertainty_covered < tValuesArray[df_sum - 5])
+    {
+      return false; // statistical insignificance of the peak area
+    }
+    return true; // statistical significance of the peak area
+  }
+#pragma endregion isValidPeakArea
+
 #pragma region jacobianMatrix_PeakArea
   std::pair<Matrix, Matrix> qPeaks::jacobianMatrix_PeakArea(const Matrix &B, int scale) const
   {
@@ -1013,5 +1055,4 @@ namespace q
     psuedoInverses[scale - 2]->print();
   }
 #pragma endregion printMatrices
-#pragma endregion Methods
 } // namespace q
