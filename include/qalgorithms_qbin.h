@@ -169,7 +169,15 @@ namespace q
 
         void printAllBins(std::string path, const RawData *rawdata); // @todo remove rawdata dependency
 
-        void printBinSummary(std::string path);
+        void printBinSummary(std::string path); // @todo create a better summary function which gives a 
+                                                // detailed report, including what the test actually does,
+                                                // the mz subset after which a bin was complete, statistics
+                                                // regarding the rest of the bins in terms of size, count etc.
+                                                // Make sure to test the report for human-readability and
+                                                // include metadata from the mzml where possible.
+                                                // Some measure of overall spectrum quality should also be given.
+                                                
+        void printBinningReport(std::string path);  // <- here
 
         const std::vector<EIC> returnBins();
 

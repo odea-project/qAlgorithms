@@ -3,6 +3,7 @@ Presenting an implemetation of the qBinning-algorithm developed by Reuschenbach 
 Report concluding the analytical practical by Daniel Höhn, supervised by Gerrit Renner <!-- omit in toc -->
 
 ***
+- [Abstract](#abstract)
 - [Abbreviations](#abbreviations)
 - [Introduction](#introduction)
 - [Implementation](#implementation)
@@ -10,6 +11,7 @@ Report concluding the analytical practical by Daniel Höhn, supervised by Gerrit
 	- [Module Requirements](#module-requirements)
 	- [Data Organisation](#data-organisation)
 	- [Core Functions](#core-functions)
+	- [User-made Subset Functions](#user-made-subset-functions)
 	- [Diagnostic Functions](#diagnostic-functions)
 - [Evaluation](#evaluation)
 	- [Result Comparison with R and Julia Implementation](#result-comparison-with-r-and-julia-implementation)
@@ -21,6 +23,27 @@ Report concluding the analytical practical by Daniel Höhn, supervised by Gerrit
 - [Conclusion](#conclusion)
 - [Software and Data](#software-and-data)
 
+## Abstract
+
+The purpose of the presented project is to provide a user-friendly and
+programmer-friendly implementation of the qBinning algorithm.
+This is realized through thoroughly commented code, included
+diagnostic functions which can be rewritten for specific use
+cases with minimal effort, flexible data input, and comparatively
+high performance. 
+With the newly written code, it is possible to introduce the
+qBinning algorithm to existing, open-source analysis platforms
+like MZmine, PatRoon and StreamFind.
+
+The qBinning algorithm uses a statistical test to create
+extracted ion chromatograms, removing the need for at least partially
+subjective user parameters. Additionally, an estimator of bin
+correctness is provided.
+
+This approach provides a greater understanding of data generated
+by non-target screening in general and in particular of the
+binning process, thus serving as a step towards its standardised,
+large-scale processing.
 
 ## Abbreviations
 * NTS Non-Target Screening
@@ -31,7 +54,7 @@ Report concluding the analytical practical by Daniel Höhn, supervised by Gerrit
 * (HP)LC - (High Performance) Liquid Chromatography
 * EIC - Extracted Ion Chromatogram
 * OS - Order Space
-* DQS(B) - Data Quality Score (of a Bin)
+* DQS(B/C) - Data Quality Score (of a Bin/Centroid)
 * MID - Mean Inner Distance: The average distance in mz of an element to all other elements in a bin
 * MOD - Minimum Outer Distance: The shortest distance in mz to an element not in the bin
 * CPU - Central Processing Unit
@@ -39,16 +62,6 @@ Report concluding the analytical practical by Daniel Höhn, supervised by Gerrit
 * gcc - GNU compiler collection (always referring to version 13.2.0)
 
 ## Introduction
-
-The purpose of the presented project is to provide a user-friendly and
-programmer-friendly implementation of the qBinning algorithm [@reuschenbachQBinningDataQualityBased2023].
-This is realized through thoroughly commented code, included
-diagnostic functions which can be rewritten for specific use
-cases with minimal effort, flexible data input, and comparatively
-high performance. 
-With the newly written code, it is possible to introduce the
-qBinning algorithm to existing, open-source analysis platforms
-like MZmine, PatRoon and StreamFind [@pluskalMZmineModularFramework2010; @helmusPatRoonImprovedNontarget2022; @helmusPatRoonOpenSource2021; @cunhaStreamFindFrameworkWorkflows2024]. 
 
 NTS is finding increasing adoption 
 
@@ -60,10 +73,8 @@ since it often depends on user-specified parameters or uses vendor
 specific, closed-source software. Both properties make it difficult
 to achieve comparability, the first if it isn't fully reported and
 the latter due to lack of insight into the concrete data transformations
-performed.
-
-The results of different algorithms can vary significantly, even when
-concerning the same measurement data [@hohrenkComparisonSoftwareTools2020].
+performed. Rigorous quality assurance practices are necessary
+to maximise the gain from NTS workflows [@vosoughNontargetScreeningWater2024].
 
 It is to be expected that, in addition to more measurements being
 performed, the size of datasets increses. Both factors combined result
@@ -72,16 +83,23 @@ data analysis software.
 
 With the emergence of central databases for (analysed) NTS data like InSpectra [@feraudInSpectraPlatformIdentifying2023],
 there is a need for ensuring result comparability through standardised
-feature detection algorithms.
+feature detection algorithms. The fact that different algorithms
+lead to very different results when employed on the same dataset
+poses a major challenge here [@hohrenkComparisonSoftwareTools2020],
+however it could be demonstrated that correlation is much
+higher when priorising high-quality data [@reuschenbachQBinningDataQualityBased2023].
 
-
-Importance of NTS, Datenprozessierung und Analyse entscheidende Größe bei NTS; ergebnisse verschiedeneer
-Workflows haben keine Vergleichbarkeit; hoher Einfluss durch den Nutzer
-QA unterscheidet nicht zwischen falschen parametern und instrumentation
-Es gibt keine spezifische QA für NTS
-Fokus auch auf größerer Datensätze; Datenmenge nimmt wahrscheinlich zu // Quelle?
-Neuerung: qualitätsparameter für einzelne Schritte in der Prozessierung
-Steps of finding a feature, mention qCentroids / describe pipeline in general
+The general steps of processing data obtained by HPLC-HRMS
+in NTS workflows are centroiding, generating EICs and identifying 
+chromatographic peaks. The peaks are then summarised as features
+and annotated, with the ultimate aim to relate all measured 
+ions to their source molecule.
+During each of these steps, quality parameters are needed
+to obtain a comprehensive overview of the final result
+reliability on a per-feature basis. For the centroiding 
+step, such a parameter was already introduced with the DQSC [@reuschenbachDevelopmentScoringParameter2022].
+Established algorithms, for example centWave [@tautenhahnHighlySensitiveFeature2008],
+do not provide such a parameter for generated EICs.
 
 The centWave algorithm identifies regions of interest (ROI)
 by starting at the first scan and elongating present masses
@@ -100,7 +118,9 @@ CentWave also directly fits a peak to the EIC and produces a feature.
 These problems are directly adressed by reducing the amount of parameters
 present in the actual algorithm and minimising the steps during analysis
 which involve subjective decisions when setting mass tolerances or filter
-thresholds.
+thresholds. To this end, Reuschenbach et al. (2023) presented the qBinning
+algorithm, which aims to resolve centroided NTS data using only information
+already present in the dataset [@reuschenbachQBinningDataQualityBased2023].
 
 Accordingly, qBinning does not depend on user input, instead utilising parameters 
 derived from statistical principles. These take into account the essential
@@ -115,16 +135,23 @@ A further advantage of the qBinning algorithm in comparison with other
 methods of binning is that it provides a quality parameter specific
 to the processing step. Implemented as the DQSB, it provides direct
 and simple feedback towards the degree to which a given bin could
-be distinguished from its surroundings. As will be shown, this parameter
+be distinguished from its surroundings. This parameter
 can also be used as an assessor for common error cases during binning.
 
-In comparison to other algorithms, which often require excessive amounts
-of computation time[@todo citation], qBinning is substantially faster. This enables its use
-in high-throughput analysis pipelines.
+In comparison to other algorithms, some of which require excessive amounts
+of computation time upwards of multiple hours [@samanipourSelfAdjustingAlgorithm2019], qBinning is substantially faster. 
+This enables its use in high-throughput analysis pipelines.
 
-parameter-free, quality score for feature priorisation
-(@gerrit: not yet completed)
-
+However, the existing versions of the qBinning algorithm require a
+correctly formated .csv file to function and cannot be run over
+multiple datasets. This results in a large amount of manual
+file organisation and prevents the easy addition to pipelines
+which have already been introduced by potential users.
+To allow for the introduction of qBinning into existing, 
+open-source analysis platforms like MZmine, PatRoon and StreamFind
+[@pluskalMZmineModularFramework2010; @helmusPatRoonImprovedNontarget2022; @helmusPatRoonOpenSource2021; @cunhaStreamFindFrameworkWorkflows2024], 
+it was necessary to write a new implementation in the C++ programing language.
+ 
 ## Implementation
 
 ### Algorithm
@@ -223,7 +250,7 @@ Data is represented as DataPoint objects, which are handled in one of two ways:
 <b> DataPoint objects: </b>
 One DataPoint contains mz, RT, intensity, scan number, the centroid error, and an optional 
 control value specifying the correct DQS. Data points are never modified during the binning process. 
-=> DataPoints are Structs as defined in the c++ 21 standard.
+DataPoints are Structs as defined in the c++ 21 standard.
 (@gerrit: here, a small tree would be nice for overview like: 
 // puts too much emphasis on implementation detail, just read the code at that point
 DataPoint
@@ -249,7 +276,7 @@ methods are called on the bin without requiring knowledge of data points outside
 The main difference between Bins and EICs is that a Bin only operates with pointers to data
 points in RawData, while the EIC can be used independently of the RawData it was generated from. 
 (@gerrit: so, what is the reason for using the structure of these bins instead of just EICs?-> this should be explained)
-=> Additionally, bins keep track of information which can later be used for filtering or weighing
+Additionally, bins keep track of information which can later be used for filtering or weighing
 purposes, such as if any scans appear more than once in the data and median values
 for scans and masses. These details are not relevant to the peak finding process and
 are consequently not passed up the pipeline to minimise memory allocations.
@@ -358,7 +385,7 @@ cases in which a specific subsetting operation is only necessary for bins that w
 as closed by a different subsetting function. subsetBins can take an error (in ppm) as an
 optional argument. If none is supplied, the centroid error is used. 
 
-### User-made Subser Functions
+### User-made Subset Functions
 For a user to specify a subset function, the only hard condition to be fulfilled
 is that the function takes the vector of open bins to write to, some criteria of
 subsetting and the subset counter as arguments. Return values can be specified, 
@@ -555,7 +582,7 @@ The theoretical bin contains one element for every scan it extends
 over. Since a declared purpose of this algorithm is to detect bins
 even when single points are missing from a series, only a scan being
 represented twice can be counted as an error. (@gerrit: what are the consequences of this observation?) 
-=> If a scan appears twice at a different mass, it is possible that two 
+If a scan appears twice at a different mass, it is possible that two 
 very similar bins were combined into one due to the centroid error
 being too large. As such, duplicate scans can serve as an indicator
 for separation not being strict enough.
@@ -680,13 +707,19 @@ be of further interest when trying to eliminate this condition.
 than average with a majority having a binsize of 5. The average binsize was larger
 when other tests were positive, but still ~10% of the normal binsize
 for these groups. This resulted in 0.1% of all points being affected.
-For @todo __ bins it was possible to find at least one point in the vector of
+For multiple bins it was possible to find at least one point in the vector of
 discarded points which could be associated with the bin in question.
 There is very little overlap between this condition and others, with over
-97% being exclusively "too close" to another point.
-Of these, some are two correctly separated bins which have a point that 
-lies within the tolerated distance of both bins. (@todo image) This is a similar
+97% of cases being exclusively "too close" to another point.
+Of these, some are two correctly separated bins where one includes a point that 
+lies within the tolerated distance of the other. This is a similar
 case as condition 7), and a refinement of this test should not include them.
+The probable cause for wrong separations is that during the subsetting in
+mz, bins start out very large. This leads to extremely small critical distances,
+and if the largest order space is within a bin this bin is first cut internally
+before the remainder is cut off. It is also possible that by this 
+mechanism, otherwise complete bins were fully eliminated if none 
+of the resulting fragments had more than five elements.
 
 **3) Difference Between Median and Mean in Scans**
 
@@ -775,7 +808,6 @@ It is generally possible to reassemble these cases, potentially improving
 result quality. Especially in cases where relevant points are not 
 part of any bin, reassembly is relatively easy to include as a post
 processing module. 
-@todo cases of two almost-combined bins
 
 Overall, bins at the edges of the chromatographic dimension and
 high masses are more likely to fulfill one or more of the listed deviation
@@ -933,12 +965,13 @@ the clustering results.
 
 Furthermore, an error in calculating the DQS was identified in both original
 implementations. The alternative approach chosen here avoids incorrect results
-and was verified under different edge cases.
+and was verified under different edge cases. As such, the comparison with
+other algorithms as described in the original publication should be redone [@reuschenbachDevelopmentScoringParameter2022].
 
 A significant expansion of the program gives access to many optional tests for bin quality,
 which enable a sophisticated pre-selection of bins before the peak fitting
 algorithm begins work. For example, only those bins which do not contain duplicate scans,
-are well-separated from the dataset and do not have points outside of 2 sigma 
+are completely separated from the dataset and do not have points outside of 3 sigma 
 (tests 1, 2 and 4 are negative) could be returned by this program.
 The tests also grant better insight into the weaknesses of the algorithm.
 Through them, a probable cause for incorrect splits in bins could be identified
@@ -958,6 +991,9 @@ A full binning procedure taking just a few seconds is very important for
 analysing large datasets with hundreds of measurements. Such demands are
 met by the presented implementation, provided a connection with the 
 centroiding program is established.
+Next steps include the complete implementation into the StreamFind platform,
+which requires some further work to connect the existing code to the
+standardised interface.
 
 An important restriction of the presented test for too strict separation is that it
 only detects bins where a majority of points is affected. It is a
@@ -1000,4 +1036,51 @@ The julia language 1.10.0[@bezansonJuliaFreshApproach] was used for executing th
 The program is written in base C++, using only standard library functions[@ISOInternationalStandard].
 It was compiled with gcc 13.2.0[@freesoftwarefoundationinc.UsingGNUCompiler1988].
 
-Describe Warburg dataset?
+Describe Warburg dataset @todo 
+(Ich habe keine Infos darüber, was hier genau gemessen wurde)
+
+The two test bins which demonstrated errors in the DQSB calculation for julia and R 
+were created using the following R code and the Warburg dataset. 
+Note: monobin_base.csv contains the first 42 entries of the full dataset
+sorted by mz. There is a correct bin including all elements from 17 to 29.
+
+``` 
+library(tidyverse)
+library(data.table)
+
+monobin = read.csv("../../rawdata/monobin_base.csv")
+monobin = monobin[which(1912 < monobin$scans & monobin$scans < 1958),]
+
+# create one entry for all points from 1913 to 1957
+for (i in 1913:1957) {
+  r = runif(1, 2, 4)
+  a = c(55*r, r*r/1000000, runif(1, 700, 2000), i, 1, -1, 0, -1)
+  monobin = rbind(monobin, a)
+}
+for (i in 1:length(monobin$mz)) {
+  t1 = c(monobin$mz[i]*runif(1, 2, 3), monobin$error[i], NA, monobin$scans[i], 1, -1, 0, -1)
+  t2 = c(monobin$mz[i]*runif(1, 2, 4), monobin$error[i], NA, monobin$scans[i], 1, -1, 0, -1)
+  monobin = rbind(monobin, t1)
+  monobin = rbind(monobin, t2)
+}
+monobin$rt = monobin$scans * 0.65
+monobin = monobin[with(monobin, order(scans, mz)), ]
+
+write.csv(monobin, "../../rawdata/monobin.csv", row.names = FALSE)
+
+# artificial data
+artmz = rep(c(200,300,400), each = 10)
+artmz = artmz + runif(30, 0.0001, 0.0009)
+arterror = artmz * 0.000005
+artscan = c(1:10, 6:15, 11:20)
+
+artbin = data.frame(mz = artmz, error = arterror, rt = NA, scans = artscan, intensity = 1, ID = c(rep(1:3, each = 10)), DQScen = 0.99, DQSbin = 0.99)
+
+out1 = c(215, 0.001, NA, 2, 1, 0, 0.1, 0.1)
+out2 = c(300.5, 0.0015, NA, 20, 1, 0, 0.1, 0.1)
+
+artbin = rbind(artbin, out1, out2)
+artbin$rt = 0.65 * artbin$scans + 1
+
+write.csv(artbin, "../../rawdata/artbin.csv", row.names = FALSE)
+```
