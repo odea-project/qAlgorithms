@@ -515,8 +515,14 @@ namespace q
       const Vector &vec)
   {
     Vector result(vec.n);
-    for (size_t i = 0; i < vec.n; i++)
-      result.elements[i] = std::log(vec.elements[i]);
+    std::transform(
+        vec.begin(),    // start of vec
+        vec.end(),      // end of vec
+        result.begin(), // start of result
+        [](double x)
+        {
+          return std::log(x); // calculate the natural logarithm of each element of vec
+        });
 
     return result;
   }
