@@ -37,17 +37,20 @@ namespace q
       // destructor
     }
     // methods
-    void MassSpectrum::addDataPoint(double intensity, double mz, int df)
+    void 
+    MassSpectrum::addDataPoint(double intensity, double mz, int df)
     {
       dataPoints.push_back(std::make_unique<DataPoint>(intensity, mz, df));
     }
 
-    void MassSpectrum::sortDataPoints()
+    void 
+    MassSpectrum::sortDataPoints()
     {
       std::sort(dataPoints.begin(), dataPoints.end(), [](const std::unique_ptr<DataPoint>& a, const std::unique_ptr<DataPoint>& b) { return a->x() < b->x(); });
     }
 
-    int MassSpectrum::getScanNumber() const
+    int 
+    MassSpectrum::getScanNumber() const
     {
       return std::get<int>(metaData->at(DataField::SCANNUMBER));
     }

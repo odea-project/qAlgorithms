@@ -45,7 +45,8 @@ namespace q
      *
      * @param dataVec
      */
-    std::vector<std::vector<std::unique_ptr<DataType::Peak>>> findPeaks(const varDataType &dataVec);
+    std::vector<std::vector<std::unique_ptr<DataType::Peak>>> 
+    findPeaks(const varDataType &dataVec);
 
     // debugging
     void info() const;
@@ -66,7 +67,7 @@ namespace q
       int df;               // degree of freedom, interpolated data points will not be considered
       double apex_position; // position of the apex of the peak
       double mse;           // mean squared error
-      Matrix B;             // regression coefficients
+      Vector B;             // regression coefficients
       bool isValid;         // flag to indicate if the regression is valid
       double left_limit;    // left limit of the peak regression window
       double right_limit;   // right limit of the peak regression window
@@ -80,7 +81,7 @@ namespace q
           int df,
           double apex_position,
           double mse,
-          Matrix B,
+          Vector B,
           bool isValid = true,
           double left_limit = 0.0,
           double right_limit = 0.0,
@@ -136,47 +137,44 @@ namespace q
 
     void
     runningRegression(
-        const RefMatrix &Y,
-        const std::vector<int *> &df,
+        const Vector &Y,
+        const BoolVector &df,
         std::vector<std::unique_ptr<validRegression>> &validRegressions);
 
     void
     validateRegressions(
-        const Matrix &B,
-        const RefMatrix &Y,
-        const Matrix &Ylog,
-        const std::vector<int *> &df,
+        const Matrix_mc &B,
+        const Vector &Y,
+        const Vector &Ylog,
+        const BoolVector &df,
         const int scale,
         std::vector<std::unique_ptr<validRegression>> &validRegressions);
 
     void
     mergeRegressionsOverScales(
         std::vector<std::unique_ptr<validRegression>> &validRegressions,
-        const Matrix &Ylog,
-        const RefMatrix &Y,
-        const std::vector<int *> &df);
+        const Vector &Ylog,
+        const Vector &Y,
+        const BoolVector &df);
 
     std::vector<std::unique_ptr<DataType::Peak>>
     createPeaks(
         const std::vector<std::unique_ptr<validRegression>> &validRegressions,
-        const RefMatrix &Y,
-        const std::vector<double *> &X,
+        const Vector &Y,
+        const Vector &X,
         const int scanNumber);
 
     double
-    calcMse(
-        const Matrix &yhat,
-        const Matrix &y) const;
+    calcSSE(
+        const Vector &yhat,
+        const Vector &y,
+        const double *y_start = nullptr) const;
 
     double
-    calcMse(
-        const Matrix &yhat,
-        const RefMatrix &y) const;
-
-    double
-    calcMseEXP(
-        const Matrix &yhat_log,
-        const RefMatrix &y) const;
+    calcSSEexp(
+        const Vector &yhat_log,
+        const Vector &y,
+        const double *y_start = nullptr) const;
 
     /**
      * @brief Calculate the best mean squared error of the regression model with different regression windows BUT same window size.
@@ -190,16 +188,9 @@ namespace q
      */
     void
     calcExtendedMse(
-        const RefMatrix &Y,
+        const Vector &Y,
         const std::vector<std::unique_ptr<validRegression>> &regressions,
-        const std::vector<int *> &df);
-
-    void
-    calcExtendedMse(
-        const RefMatrix &Y,
-        validRegression &currentReggression,
-        validRegression &refReggression,
-        const std::vector<int *> &df);
+        const BoolVector &df);
 
     /**
      * @brief Calculate the chi square value of the regression model with the given regression window in the exponential space.
@@ -210,8 +201,9 @@ namespace q
      */
     double
     calcChiSquareEXP(
-        const Matrix &yhat_log,
-        const RefMatrix &y_exp) const;
+        const Vector &yhat_log,
+        const Vector &y_exp,
+        const double *y_start = nullptr) const;
 
     /**
      * @brief Calculate the degree of freedom of the regression model with the given regression window.
@@ -224,75 +216,74 @@ namespace q
      */
     int
     calcDF(
-        const std::vector<int *> &df,
+        const BoolVector &df,
         const size_t left_limit,
         const size_t right_limit);
 
     /**
      * @brief Calculate the apex (and if possible the valley) position of the peak. And return true if the positions are calculated are valid.
-     * 
+     *
      * @param B : Matrix of regression coefficients
      * @param index : Index of the regression window
-     * @param scale : Window size scale, e.g., 5 means the window size is 11 (2*5+1) 
-     * @param apex_position : apex position 
+     * @param scale : Window size scale, e.g., 5 means the window size is 11 (2*5+1)
+     * @param apex_position : apex position
      * @param valley_position : valley position
      * @return true : if the apex and valley positions are valid
      * @return false : if the apex and valley positions are not valid (e.g., the apex position is not in the regression window)
      */
     bool
     calculateApexAndValleyPositions(
-      const Matrix &B, 
-      const size_t index, 
-      const int scale, 
-      double &apex_position, 
-      double &valley_position) const;
-    
+        const Matrix_mc &B,
+        const size_t index,
+        const int scale,
+        double &apex_position,
+        double &valley_position) const;
+
     /**
      * @brief Check if the quadratic term of the regression model is valid using t-test.
-     * 
-     * @param B : Matrix of regression coefficients 
+     *
+     * @param B : Matrix of regression coefficients
      * @param index : Index of the regression window
      * @param inverseMatrix_2_2 : quadratic term (left side) (diagonal element of the inverse matrix)
      * @param inverseMatrix_3_3 : quadratic term (right side) (diagonal element of the inverse matrix)
      * @param mse : mean squared error
      * @param df_sum : sum of the degree of freedom of the regression model
-     * @return true : if the quadratic term is valid 
-     * @return false : if the quadratic term is not valid 
+     * @return true : if the quadratic term is valid
+     * @return false : if the quadratic term is not valid
      */
     bool
     isValidQuadraticTerm(
-      const Matrix &B, 
-      const size_t index, 
-      const double inverseMatrix_2_2,
-      const double inverseMatrix_3_3,
-      const double mse,
-      const int df_sum) const;
-    
+        const Matrix_mc &B,
+        const size_t index,
+        const double inverseMatrix_2_2,
+        const double inverseMatrix_3_3,
+        const double mse,
+        const int df_sum) const;
+
     /**
-     * @brief Check if the peak height is valid using t-test. 
-     * 
-     * @param B : Matrix of regression coefficients 
+     * @brief Check if the peak height is valid using t-test.
+     *
+     * @param B : Matrix of regression coefficients
      * @param C : Variance-covariance matrix of the regression coefficients
-     * @param index : Index of the regression window 
-     * @param apex_position : apex position 
-     * @param df_sum : sum of the degree of freedom of the regression model 
-     * @return true : if the peak height is valid 
-     * @return false : if the peak height is not valid 
+     * @param index : Index of the regression window
+     * @param apex_position : apex position
+     * @param df_sum : sum of the degree of freedom of the regression model
+     * @return true : if the peak height is valid
+     * @return false : if the peak height is not valid
      */
     bool
     isValidPeakHeight(
-      const Matrix &B, 
-      const Matrix &C,
-      const size_t index, 
-      const double apex_position,
-      const int df_sum
-    ) const;
+        const Matrix_mc &B,
+        const Matrix_mc_4x4 &C,
+        const size_t index,
+        const double apex_position,
+        const int df_sum) const;
 
     /**
      * @brief Check if the peak area and the covered peak area are valid using t-test.
      * @details The function calculates the peak area and the covered peak area using the regression coefficients. The peak area is the integral of the regression model from -infinity to +infinity. The covered peak area is the integral of the regression model from the left limit of the regression window to the right limit of the regression window. Moreover, the trapzoid under the peak is considered as not covered peak area.
-     * 
-     * @param B : Matrix of regression coefficients 
+     *
+     * @param B : Matrix of regression coefficients
      * @param C : Variance-covariance matrix of the regression coefficients
      * @param index : Index of the regression window
      * @param scale : Window size scale, e.g., 5 means the window size is 11 (2*5+1)
@@ -302,16 +293,11 @@ namespace q
      */
     bool
     isValidPeakArea(
-      const Matrix &B, 
-      const Matrix &C,
-      const size_t index,
-      const int scale,
-      const int df_sum) const;
-
-    std::pair<Matrix, Matrix>
-    jacobianMatrix_PeakArea(
-        const Matrix &B,
-        int scale) const;
+        const Matrix_mc &B,
+        const Matrix_mc_4x4 &C,
+        const size_t index,
+        const int scale,
+        const int df_sum) const;
 
     /**
      * @brief Create a Design Matrix object for the given scale.

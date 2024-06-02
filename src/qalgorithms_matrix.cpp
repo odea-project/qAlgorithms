@@ -1,252 +1,49 @@
 // qalgorithms_matrix.cpp
 
 #include "../include/qalgorithms_matrix.h"
-#include <vector>
 
 namespace q
 {
-  // constructor
+  // constructor and destructor
   Matrix::Matrix() : rows(0), cols(0){};
+
   Matrix::Matrix(size_t rows, size_t cols) : rows(rows), cols(cols)
   {
     elements = new double[rows * cols]();
   }
+
   Matrix::Matrix(const Matrix &other) : rows(other.rows), cols(other.cols)
   {
     elements = new double[rows * cols];
     std::copy(other.elements, other.elements + (rows * cols), elements);
   }
 
-  void Matrix::reinitialize(size_t newRows, size_t newCols)
-  {
-    // Free the old memory
-    delete[] elements;
-
-    // Allocate memory for the new matrix
-    elements = new double[newRows * newCols];
-    rows = newRows;
-    cols = newCols;
-  }
-
-  // clear object
   Matrix::~Matrix()
   {
     delete[] elements;
   }
 
-  // get dimensions
-  size_t Matrix::numRows() const
-  {
-    return rows;
-  }
-
-  size_t Matrix::numCols() const
-  {
-    return cols;
-  }
-
-  size_t Matrix::numel() const
-  {
-    return cols * rows;
-  }
-
-  #define cast_uint32_t static_cast<uint32_t>
-  double Matrix::fasterpow2(double p) const
-  {
-    double clipp = (p < -126) ? -126.0f : p;
-    union { uint32_t i; double f; } v = { cast_uint32_t ( (1 << 23) * (clipp + 126.94269504f) ) };
-    return v.f;
-  }
-
-  double Matrix::fasterexp (double p) const
-  {
-    return fasterpow2 (1.442695040f * p);
-  }
-
   // access
-  double &Matrix::operator()(size_t row, size_t col)
+  double &
+  Matrix::operator()(size_t row, size_t col)
   {
     return elements[row * cols + col];
   }
 
-  const double &Matrix::operator()(size_t row, size_t col) const
+  const double &
+  Matrix::operator()(size_t row, size_t col) const
   {
     return elements[row * cols + col];
   }
 
-  double &Matrix::getElement(size_t idx) const
+  double &
+  Matrix::operator[](size_t idx) const
   {
     return elements[idx];
   }
 
-  // get row
-  Matrix Matrix::row(size_t rowIndex) const
-  {
-    Matrix rowMatrix(1, cols);
-    for (size_t i = 0; i < cols; ++i)
-    {
-      rowMatrix(0, i) = elements[rowIndex * cols + i];
-    }
-    return rowMatrix;
-  }
-
-  // get col
-  Matrix Matrix::col(size_t colIndex) const
-  {
-    Matrix colMatrix(rows, 1);
-    for (size_t i = 0; i < rows; ++i)
-    {
-      colMatrix(i, 0) = elements[i * cols + colIndex];
-    }
-    return colMatrix;
-  }
-
-  // get sub-Matrix 
-  /// @todo: submatrix should extract a submatrix from the matrix as Reference (RefMatrix)
-  Matrix Matrix::subMatrix(
-      size_t startRow,
-      size_t endRow,
-      size_t startCol,
-      size_t endCol) const
-  {
-    if (startRow >= rows || startCol >= cols || endRow > rows || endCol > cols || startRow > endRow || startCol > endCol)
-    {
-      std::cout << startRow << " " << endRow << " " << startCol << " " << endCol << std::endl;
-      throw std::out_of_range("Indices are out of range");
-    }
-
-    Matrix subMat(endRow - startRow, endCol - startCol);
-
-    for (size_t i = startRow; i < endRow; ++i)
-    {
-      for (size_t j = startCol; j < endCol; ++j)
-      {
-        subMat(i - startRow, j - startCol) = (*this)(i, j);
-      }
-    }
-
-    return subMat;
-  }
-
-  // Transpose function
-  Matrix Matrix::T() const
-  {
-    size_t rows = numRows();
-    size_t cols = numCols();
-    Matrix transposed(cols, rows);
-    for (size_t i = 0; i < rows; i++)
-    {
-      for (size_t j = 0; j < cols; j++)
-      {
-        transposed(j, i) = operator()(i, j);
-      }
-    }
-    return transposed;
-  }
-
-  // Matrix multiplication
-  Matrix Matrix::operator*(const Matrix &other) const
-  {
-    size_t rows1 = numRows();
-    size_t cols1 = numCols();
-    size_t rows2 = other.numRows();
-    size_t cols2 = other.numCols();
-
-    if (cols1 != rows2)
-    {
-      throw std::invalid_argument("Matrix dimensions do not allow multiplication");
-    }
-
-    Matrix result(rows1, cols2);
-    for (size_t i = 0; i < rows1; i++)
-    {
-      for (size_t j = 0; j < cols2; j++)
-      {
-        for (size_t k = 0; k < cols1; k++)
-        {
-          result(i, j) += operator()(i, k) * other(k, j);
-        }
-      }
-    }
-    return result;
-  }
-
-  Matrix Matrix::operator*(const double scalar) const
-  {
-    Matrix result(numRows(), numCols());
-    for (size_t i = 0; i < rows * cols; i++)
-    {
-      result.elements[i] = elements[i] * scalar;
-    }
-    return result;
-  }
-
-  // Matrix subtraction
-  Matrix Matrix::operator-(const Matrix &other) const
-  {
-    size_t rows1 = numRows();
-    size_t cols1 = numCols();
-    size_t rows2 = other.numRows();
-    size_t cols2 = other.numCols();
-
-    if (cols1 != cols2)
-    {
-      std::cout << cols1 << " <-//-> " << cols2 << std::endl;
-      throw std::invalid_argument("Matrix dimensions (col) do not allow subtraction");
-    }
-    if (rows1 != rows2)
-    {
-      std::cout << rows1 << " <-//-> " << rows2 << std::endl;
-      throw std::invalid_argument("Matrix dimensions (row) do not allow subtraction");
-    }
-
-    Matrix result(rows1, cols1);
-    for (size_t i = 0; i < result.numel(); i++)
-    {
-      result.elements[i] = elements[i] - other.elements[i];
-    }
-    return result;
-  }
-
-  // Matrix addition
-  Matrix Matrix::operator+(const Matrix &other) const
-  {
-    size_t rows1 = numRows();
-    size_t cols1 = numCols();
-    size_t rows2 = other.numRows();
-    size_t cols2 = other.numCols();
-
-    if (cols1 != cols2)
-    {
-      std::cout << cols1 << " <-//-> " << cols2 << std::endl;
-      throw std::invalid_argument("Matrix dimensions (col) do not allow additon");
-    }
-    if (rows1 != rows2)
-    {
-      std::cout << rows1 << " <-//-> " << rows2 << std::endl;
-      throw std::invalid_argument("Matrix dimensions (row) do not allow additon");
-    }
-
-    Matrix result(rows1, cols1);
-    for (size_t i = 0; i < result.numel(); i++)
-    {
-      result.elements[i] = elements[i] + other.elements[i];
-    }
-    return result;
-  }
-
-  // Matrix power
-  Matrix Matrix::operator^(const double power) const
-  {
-    Matrix result(numRows(), numCols());
-    for (size_t i = 0; i < rows * cols; i++)
-    {
-      result.elements[i] = std::pow(elements[i], power);
-    }
-    return result;
-  }
-
-  Matrix &Matrix::operator=(const Matrix &other)
+  Matrix &
+  Matrix::operator=(const Matrix &other)
   {
     if (this == &other)
       return *this;
@@ -261,317 +58,279 @@ namespace q
     return *this;
   }
 
-  void Matrix::assign(size_t row, size_t col, double &value)
+#pragma region "Matrix_mc"
+  Matrix_mc::Matrix_mc(const size_t rows, const size_t cols) : rows(rows), cols(cols)
   {
-    elements[row * cols + col] = value;
+    elements = new double[rows * cols]();
   }
 
-  // log of Matrix elements
-  Matrix Matrix::log() const
+  Matrix_mc::~Matrix_mc()
   {
-    Matrix result(rows, cols);
-    for (size_t i = 0; i < cols * rows; i++)
-    {
-      result.elements[i] = std::log(elements[i]);
-    }
-    return result;
-  }
-
-  Matrix Matrix::exp() const
-  {
-    Matrix result(rows,cols);
-    for (size_t i = 0; i < cols * rows; i++)
-    {
-      result.elements[i] = std::exp(elements[i]);
-      // result.elements[i] = fasterexp(elements[i]); // this function does not work properly
-    }
-    return result;
-  }
-
-  // Matrix Sum of all elements
-  double Matrix::sumElements() const
-  {
-    double sum = 0.0;
-    for (size_t i = 0; i < rows * cols; i++)
-    {
-      sum += elements[i];
-    }
-    return sum;
-  }
-
-  // Matrix inverse (symmetric case)
-  Matrix Matrix::inv() const
-  {
-    Matrix L = choleskyDecomposition();
-    Matrix L_inv = L.inverseLowerTriangle();
-    Matrix L_inv_T = L_inv.T();
-
-    Matrix inv_matrix = L_inv_T * L_inv;
-
-    return inv_matrix;
-  }
-
-  // calculate the Cholesky Decomposition Matrix L
-  Matrix Matrix::choleskyDecomposition() const
-  {
-    // get size of the matrix
-    size_t n = numRows();
-    // create cholesky Matrix
-    Matrix L(n, n);
-    // do calculation
-    for (size_t i = 0; i < n; i++)
-    {
-      for (size_t j = 0; j <= i; j++)
-      {
-        double sum = 0;
-        for (size_t k = 0; k < j; k++)
-        {
-          sum += L(i, k) * L(j, k);
-        }
-        if (i == j)
-        {
-          L(i, j) = std::sqrt(operator()(i, i) - sum);
-        }
-        else
-        {
-          L(i, j) = (operator()(i, j) - sum) / L(j, j);
-        }
-      }
-    }
-    return L;
-  }
-
-  Matrix Matrix::inverseLowerTriangle() const
-  {
-    size_t n = numRows();
-    Matrix inv_L(n, n);
-
-    for (size_t i = 0; i < n; ++i)
-    {
-      inv_L(i, i) = 1 / operator()(i, i);
-      for (size_t j = 0; j < i; ++j)
-      {
-        double s = 0.0;
-        for (size_t k = j; k < i; ++k)
-        {
-          s += operator()(i, k) * inv_L(k, j);
-        }
-        inv_L(i, j) = -s / operator()(i, i);
-      }
-    }
-
-    return inv_L;
-  }
-
-  Matrix Matrix::convolveSymmetric(const Matrix &kernel) const
-  {
-    size_t n = numRows();
-    size_t k = kernel.numel();
-    size_t n_segments = n - k + 1;
-    size_t center_point = k / 2;
-
-    Matrix conv(1, n_segments);
-    // calculation from left to center (excluding center)
-    for (size_t i = 0; i < center_point; i++)
-    {
-      double *products = new double[n - 2 * i];
-      int u = 0;
-      for (size_t j = i; j < (n - i); j++)
-      {
-        products[u] = kernel(0, i) * operator()(j, 0);
-        u++;
-      }
-      for (size_t j = 0; j < n_segments; j++)
-      {
-        conv(0, j) += products[j];
-        conv(0, j) += products[k - 1 - 2 * i + j];
-      }
-    }
-    // calculation of the center terms
-    for (size_t j = 0; j < n_segments; j++)
-    {
-      conv(0, j) += kernel(0, center_point) * operator()(center_point + j, 0);
-    }
-    return conv;
-  }
-
-  Matrix Matrix::convolveRotation(const Matrix &kernel) const
-  {
-    size_t n = numRows();
-    size_t k = kernel.numel();
-    size_t n_segments = n - k + 1;
-    size_t center_point = k / 2;
-
-    Matrix conv(1, n_segments);
-    // calculation from left to center (excluding center)
-    for (size_t i = 0; i < center_point; i++)
-    {
-      double *products = new double[n - 2 * i];
-      int u = 0;
-      for (size_t j = i; j < (n - i); j++)
-      {
-        products[u] = kernel(0, i) * operator()(j, 0);
-        u++;
-      }
-      for (size_t j = 0; j < n_segments; j++)
-      {
-        conv(0, j) += products[j];
-        conv(0, j) -= products[k - 1 - 2 * i + j];
-      }
-    }
-    return conv;
-  }
-
-  Matrix Matrix::convolveAntisymmetric(const Matrix &kernel) const
-  {
-    size_t n = numRows();
-    size_t k = kernel.numel();
-    size_t n_segments = n - k + 1;
-    size_t center_point = k / 2 + 1;
-
-    Matrix conv(2, n_segments);
-    std::vector<double> products(n);
-
-    // calculation from left to center (including center)
-    for (size_t i = 0; i < center_point; i++)
-    {
-      products.resize(n - 2 * i);
-      double kernel_val = kernel(0, i);
-      int u = 0;
-      for (size_t j = i; j < (n - i); j++)
-      {
-        products[u] = kernel_val * operator()(j, 0);
-        u++;
-      }
-      for (size_t j = 0; j < n_segments; j++)
-      {
-        conv(0, j) += products[j];
-        conv(1, j) += products[k - 1 - 2 * i + j];
-      }
-    }
-    // calculation from center + 1  to right edge
-    int u = 1;
-    for (size_t i = center_point; i < k; i++)
-    {
-      int s = k - i - 1;
-      products.resize(n - 2 * k + 2 * i + 2);
-      double kernel_val = kernel(0, i);
-      int v = 0;
-      for (size_t j = s; j < (n - s); j++)
-      {
-        products[v] = kernel_val * operator()(j, 0);
-        v++;
-      }
-      for (size_t j = 0; j < n_segments; j++)
-      {
-        conv(0, j) += products[2 * u + j];
-        conv(1, j) += products[j];
-      }
-      u++;
-    }
-
-    return conv;
-  }
-
-  Matrix Matrix::convoleCombiend(const Matrix &kernel) const
-  {
-    size_t n = numRows();
-    size_t k = kernel.numCols();
-    size_t n_segments = n - k + 1;
-    size_t center_point = k / 2;
-
-    Matrix conv(4, n_segments);
-    std::vector<std::array<double,3>> products(n);
-    // calculation from left to center (excluding center)
-    for (size_t i = 0; i < center_point; i++)
-    {
-      int u = 0;
-      for (size_t j = i; j < (n - i); j++)
-      {
-        products[u][0] = kernel(0, i) * operator()(j, 0);
-        products[u][1] = kernel(1, i) * operator()(j, 0);
-        products[u][2] = kernel(2, i) * operator()(j, 0);
-        u++;
-      }
-      for (size_t j = 0; j < n_segments; j++)
-      {
-        conv(0, j) += products[j][0];
-        conv(0, j) += products[k - 1 - 2 * i + j][0];
-        conv(1, j) += products[j][1];
-        conv(1, j) -= products[k - 1 - 2 * i + j][1];
-        conv(2, j) += products[j][2];
-        conv(3, j) += products[k - 1 - 2 * i + j][2];
-      }
-    }
-    // calculation of the center terms
-    for (size_t j = 0; j < n_segments; j++)
-    {
-      conv(0, j) += kernel(0, center_point) * operator()(center_point + j, 0);
-      conv(2, j) += kernel(2, center_point) * operator()(center_point + j, 0);
-      conv(3, j) += kernel(3, center_point) * operator()(center_point + j, 0);
-    }
-    // calculation from center + 1  to right edge
-    int u = 1;
-    for (size_t i = center_point+1; i < k; i++)
-    {
-      int s = k - i - 1;
-      int v = 0;
-      for (size_t j = s; j < (n - s); j++)
-      {
-        products[v][2] = kernel(2, i) * operator()(j, 0);
-        v++;
-      }
-      for (size_t j = 0; j < n_segments; j++)
-      {
-        conv(2, j) += products[2 * u + j][2];
-        conv(3, j) += products[j][2];
-      }
-      u++;
-    }
-    //
-    return conv;
-  }
-
-  // Sorting by first column
-  void Matrix::sort1()
-  {
-    size_t *indices = new size_t[rows];
-    for (size_t i = 0; i < rows; ++i)
-    {
-      indices[i] = i;
-    }
-
-    // Sort the indices based on the first column values
-    std::sort(indices, indices + rows, [this](size_t a, size_t b)
-              { return this->operator()(a, 0) < this->operator()(b, 0); });
-
-    // Create a new elements vector and rearrange rows based on sorted indices
-    double *new_elements = new double[rows * cols];
-    for (size_t i = 0; i < rows; ++i)
-    {
-      for (size_t j = 0; j < cols; ++j)
-      {
-        new_elements[i * cols + j] = this->operator()(indices[i], j);
-      }
-    }
-
-    // Replace the old elements vector with the new one
     delete[] elements;
-    elements = new_elements;
-    delete[] indices;
   }
 
-  // debuging
-  void Matrix::print() const
+  Matrix_mc::Matrix_mc(const Matrix_mc &other) : rows(other.rows), cols(other.cols)
   {
-    for (size_t i = 0; i < numRows(); ++i)
-    {
-      for (size_t j = 0; j < numCols(); ++j)
-      {
-        std::cout << operator()(i, j) << " ";
-      }
-      std::cout << std::endl;
-    }
+    rows = other.rows;
+    cols = other.cols;
+    elements = new double[rows * cols];
+    std::copy(other.elements, other.elements + (rows * cols), elements);
   }
+
+  double &
+  Matrix_mc::operator()(size_t row, size_t col)
+  {
+    return elements[col * rows + row];
+  }
+
+  const double &
+  Matrix_mc::operator()(size_t row, size_t col) const
+  {
+    return elements[col * rows + row];
+  }
+
+  double &
+  Matrix_mc::operator[](size_t idx)
+  {
+    return elements[idx];
+  }
+
+  const double &
+  Matrix_mc::operator[](size_t idx) const
+  {
+    return elements[idx];
+  }
+
+  Matrix_mc &
+  Matrix_mc::operator=(const Matrix_mc &other)
+  {
+    if (this == &other)
+      return *this;
+
+    delete[] elements;
+
+    rows = other.rows;
+    cols = other.cols;
+    elements = new double[rows * cols];
+    std::copy(other.elements, other.elements + (rows * cols), elements);
+
+    return *this;
+  }
+#pragma endregion "Matrix_mc"
+
+#pragma region "Matrix_mc_4x4"
+  Matrix_mc_4x4::Matrix_mc_4x4()
+  {
+    std::fill_n(elements, 16, 0.0);
+  }
+
+  Matrix_mc_4x4::~Matrix_mc_4x4()
+  {
+    // empty because elements is a stack array
+  }
+
+  Matrix_mc_4x4::Matrix_mc_4x4(const Matrix_mc_4x4 &other)
+  {
+    std::copy(other.elements, other.elements + 16, elements);
+  }
+
+  double &
+  Matrix_mc_4x4::operator()(size_t row, size_t col)
+  {
+    return elements[col * 4 + row];
+  }
+
+  const double &
+  Matrix_mc_4x4::operator()(size_t row, size_t col) const
+  {
+    return elements[col * 4 + row];
+  }
+
+  double &
+  Matrix_mc_4x4::operator[](size_t idx)
+  {
+    return elements[idx];
+  }
+
+  const double &
+  Matrix_mc_4x4::operator[](size_t idx) const
+  {
+    return elements[idx];
+  }
+
+  Matrix_mc_4x4 &
+  Matrix_mc_4x4::operator=(const Matrix_mc_4x4 &other)
+  {
+    if (this == &other)
+      return *this;
+
+    std::copy(other.elements, other.elements + 16, elements);
+
+    return *this;
+  }
+
+  double *
+  Matrix_mc_4x4::begin()
+  {
+    return elements;
+  }
+
+  const double *
+  Matrix_mc_4x4::begin() const
+  {
+    return elements;
+  }
+
+  double *
+  Matrix_mc_4x4::end()
+  {
+    return elements + 16;
+  }
+
+  const double *
+  Matrix_mc_4x4::end() const
+  {
+    return elements + 16;
+  }
+
+#pragma endregion "Matrix_mc_4x4"
+
+#pragma region "Vector"
+  Vector::Vector(const size_t n) : n(n)
+  {
+    elements = new double[n]();
+  }
+
+  Vector::~Vector()
+  {
+    delete[] elements;
+  }
+
+  Vector::Vector(const Vector &other) : n(other.n)
+  {
+    elements = new double[n];
+    std::copy(other.elements, other.elements + n, elements);
+  }
+
+  double &
+  Vector::operator[](size_t idx)
+  {
+    return elements[idx];
+  }
+
+  const double &
+  Vector::operator[](size_t idx) const
+  {
+    return elements[idx];
+  }
+
+  double *
+  Vector::begin()
+  {
+    return elements;
+  }
+
+  const double *
+  Vector::begin() const
+  {
+    return elements;
+  }
+
+  double *
+  Vector::end()
+  {
+    return elements + n;
+  }
+
+  const double *
+  Vector::end() const
+  {
+    return elements + n;
+  }
+
+  Vector &
+  Vector::operator=(const Vector &other)
+  {
+    if (this == &other)
+      return *this;
+
+    delete[] elements;
+
+    const size_t n = other.n;
+    elements = new double[n];
+    std::copy(other.elements, other.elements + n, elements);
+
+    return *this;
+  }
+#pragma endregion "Vector"
+
+#pragma region "BoolVector"
+  BoolVector::BoolVector(const size_t n) : n(n)
+  {
+    elements = new bool[n]();
+  }
+
+  BoolVector::~BoolVector()
+  {
+    delete[] elements;
+  }
+
+  BoolVector::BoolVector(const BoolVector &other) : n(other.n)
+  {
+    elements = new bool[n];
+    std::copy(other.elements, other.elements + n, elements);
+  }
+
+  bool &
+  BoolVector::operator[](size_t idx)
+  {
+    return elements[idx];
+  }
+
+  const bool &
+  BoolVector::operator[](size_t idx) const
+  {
+    return elements[idx];
+  }
+
+  BoolVector &
+  BoolVector::operator=(const BoolVector &other)
+  {
+    if (this == &other)
+      return *this;
+
+    delete[] elements;
+
+    const size_t n = other.n;
+    elements = new bool[n];
+    std::copy(other.elements, other.elements + n, elements);
+
+    return *this;
+  }
+
+  bool *
+  BoolVector::begin()
+  {
+    return elements;
+  }
+
+  const bool *
+  BoolVector::begin() const
+  {
+    return elements;
+  }
+
+  bool *
+  BoolVector::end()
+  {
+    return elements + n;
+  }
+
+  const bool *
+  BoolVector::end() const
+  {
+    return elements + n;
+  }
+#pragma endregion "BoolVector"
 
 }

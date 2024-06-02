@@ -35,6 +35,15 @@ namespace q
             }
           int maxScale = (int) (maxDataPoints-1)/2;
           */
+
+          // push two nullptr to the designMatrices, inverseMatrices, and psuedoInverses vectors to store the matrices for scale 2
+          for (int i = 0; i < 2; i++)
+          {
+            this->designMatrices.push_back(nullptr);
+            this->inverseMatrices.push_back(nullptr);
+            this->psuedoInverses.push_back(nullptr);
+          }
+
           this->global_maxScale = 10;
           // iterate over the range of the maxScale to create Matrices for each scale
           for (int scale = 2; scale <= this->global_maxScale; scale++)
@@ -65,21 +74,27 @@ namespace q
           for (int i = 0; i < arg->size(); i++)
           {
             // de-reference the unique pointer of the object
-            auto &pair =  (*arg)[i];
-            auto &dataObj = *(pair.get());
-            auto &data = dataObj.dataPoints;
+            auto &pair =  (*arg)[i];         // pair is a unique pointer to a datatype object
+            auto &dataObj = *(pair.get());   // dataObj is a datatype object
+            auto &data = dataObj.dataPoints; // data is a vector of unique pointers to data points structures
             int n = data.size();
+            if (n < 5)
+            {
+              continue; // not enough data points to fit a quadratic regression model
+            }
+
             // store x and y values in RefMatrix objects
-            RefMatrix Y(n, 1);
-            std::vector<double*> X(n);
-            std::vector<int*> df(n);
+            Vector Y(n);
+            Vector X(n);
+            BoolVector df(n);
             for (size_t i = 0; i < n; i++)
             {
-              X[i] = &data[i]->x();
-              df[i] = &data[i]->df;
-              Y.assignRef(i, 0, data[i]->y());
+              X[i] = data[i]->x();
+              df[i] = data[i]->df;
+              Y[i] = data[i]->y();
             }
             std::vector<std::unique_ptr<validRegression>> validRegressions;
+
             runningRegression(Y, df, validRegressions);
             if (validRegressions.empty())
             {
@@ -95,18 +110,19 @@ namespace q
 
 #pragma region runningRegression
   void qPeaks::runningRegression(
-      const RefMatrix &Y,
-      const std::vector<int *> &df,
+      const Vector &Y,
+      const BoolVector &df,
       std::vector<std::unique_ptr<validRegression>> &validRegressions)
   {
-    size_t n = Y.getRows();
-    Matrix Ylog = Y.log(); // perform log-transform on Y
+    size_t n = Y.n;
+    Vector Ylog = logn(Y); // perform log-transform on Y
     int maxScale = std::min(this->global_maxScale, (int)(n - 1) / 2);
     validRegressions.reserve(calculateNumberOfRegressions(n));
+
     for (int scale = 2; scale <= maxScale; scale++)
     {
-      Matrix b = Ylog.convoleCombiend(*(psuedoInverses[scale - 2])); // coeffiencts matrix B of the running regression
-      validateRegressions(b, Y, Ylog, df, scale, validRegressions);
+      Matrix_mc B = convolve(Ylog, n, *(psuedoInverses[scale]));
+      validateRegressions(B, Y, Ylog, df, scale, validRegressions);
     } // end for scale loop
     mergeRegressionsOverScales(validRegressions, Ylog, Y, df);
   } // end runningRegression
@@ -114,24 +130,23 @@ namespace q
 
 #pragma region validateRegressions
   void qPeaks::validateRegressions(
-      const Matrix &B,
-      const RefMatrix &Y,
-      const Matrix &Ylog,
-      const std::vector<int *> &df,
+      const Matrix_mc &B,
+      const Vector &Y,
+      const Vector &Ylog,
+      const BoolVector &df,
       const int scale,
       std::vector<std::unique_ptr<validRegression>> &validRegressions)
   {
     // declare constants
-    const double index_offset = (scale - 2) * Ylog.numRows() - scale * (scale - 1) + 2;
-    // declare variables
-    double inverseMatrix_2_2 = (*(inverseMatrices[scale - 2]))(2, 2); // variance of the quadratic term left side of the peak
-    double inverseMatrix_3_3 = (*(inverseMatrices[scale - 2]))(3, 3); // variance of the quadratic term right side of the peak
-    Matrix &X = *(designMatrices[scale - 2]);                         // design matrix
+    const double inverseMatrix_2_2 = (*(inverseMatrices[scale]))(2, 2); // variance of the quadratic term left side of the peak
+    const double inverseMatrix_3_3 = (*(inverseMatrices[scale]))(3, 3); // variance of the quadratic term right side of the peak
+    const Matrix &X = *(designMatrices[scale]);                         // design matrix
 
+    // declare variables
     std::vector<std::unique_ptr<validRegression>> validRegressionsTmp; // temporary vector to store valid regressions <index, apex_position>
 
     // iterate columwise over the coefficients matrix
-    for (size_t i = 0; i < B.numCols(); i++)
+    for (size_t i = 0; i < B.cols; i++)
     {
       /*
         Degree of Freedom Filter:
@@ -157,13 +172,9 @@ namespace q
         Quadratic Term Filter:
         This block of code implements the quadratic term filter. It calculates the mean squared error (MSE) between the predicted and actual values. Then it calculates the t-value for the quadratic term. If the t-value is less than the corresponding value in the tValuesArray, the quadratic term is considered statistically insignificant, and the loop continues to the next iteration.
       */
-      const Matrix yhat = X * B.col(i); // predicted values
-      double mse = calcMse(             // mean squared error
-          yhat,
-          (Ylog.subMatrix(i, i + 2 * scale + 1, 0, 1)));
-      // adjust mse by considering the real df
-      mse *= (2 * scale - 3) / (df_sum - 4);
-
+      const Vector b = extractCol(B, i);                                 // coefficients vector
+      const Vector yhat = X * b;                                         // predicted values
+      const double mse = calcSSE(yhat, Ylog, Ylog.begin() + i) / df_sum; // mean squared error
       if (!isValidQuadraticTerm(B, i, inverseMatrix_2_2, inverseMatrix_3_3, mse, df_sum))
       {
         continue; // statistical insignificance of the quadratic term
@@ -173,7 +184,8 @@ namespace q
         Height Filter:
         This block of code implements the height filter. It calculates the height of the peak based on the coefficients matrix B. Then it calculates the uncertainty of the height based on the Jacobian matrix and the variance-covariance matrix of the coefficients. If the height is statistically insignificant, the loop continues to the next iteration.
       */
-      Matrix C = (*inverseMatrices[scale - 2]) * mse; // variance-covariance matrix of the coefficients
+      // Matrix C = (*inverseMatrices[scale]) * mse; // variance-covariance matrix of the coefficients
+      Matrix_mc_4x4 C = multiplyScalarTo4x4Matrix(mse, *inverseMatrices[scale]); // variance-covariance matrix of the coefficients
       if (!isValidPeakHeight(B, C, i, apex_position, df_sum))
       {
         continue; // statistical insignificance of the height
@@ -192,9 +204,7 @@ namespace q
         Chi-Square Filter:
         This block of code implements the chi-square filter. It calculates the chi-square value based on the weighted chi squared sum of expected and measured y values in the exponential domain. If the chi-square value is less than the corresponding value in the chiSquareArray, the loop continues to the next iteration.
       */
-      double chiSquare = calcChiSquareEXP(
-          yhat,
-          Y.subMatrix(i, i + 2 * scale + 1, 0, 1));
+      double chiSquare = calcChiSquareEXP(yhat, Y, Y.begin() + i);
       if (chiSquare < chiSquareArray[df_sum - 5])
       {
         continue; // statistical insignificance of the chi-square value
@@ -208,21 +218,26 @@ namespace q
       double left_limit = (valley_position < 0) ? std::max((double)i, valley_position + i + scale) : i;
       double right_limit = (valley_position > 0) ? std::min((double)i + 2 * scale, valley_position + i + scale) : i + 2 * scale;
 
+      df_sum = calcDF(df, left_limit, right_limit); // update the degree of freedom considering the left and right limits
+      if (df_sum < 5)
+      {
+        continue; // degree of freedom less than 5; i.e., less then 5 measured data points
+      }
+
       validRegressionsTmp.push_back(
           std::make_unique<validRegression>(
-              i + scale,                                                          // index of the center of the window (x==0) in the Y matrix
-              scale,                                                              // scale
-              df_sum - 4,                                                         // df
-              apex_position + i + scale,                                          // apex position in x-axis 0:n
-              0,                                                                  // initial MSE
-              B.col(i),                                                           // coefficients matrix
-              true,                                                               // isValid
-              left_limit,                                                         // left_limit
-              right_limit,                                                        // right_limit
-              left_limit - i,                                                     // X_row_0
-              right_limit - i + 1,                                                // X_row_1
-              0                                                                   // dqs
-              // 1 - std::erf(area_uncertainty_covered / Jacobian_area.second(0, 0)) // dqs
+              i + scale,                 // index of the center of the window (x==0) in the Y matrix
+              scale,                     // scale
+              df_sum - 4,                // df
+              apex_position + i + scale, // apex position in x-axis 0:n
+              0,                         // initial MSE
+              b,                         // coefficients matrix
+              true,                      // isValid
+              left_limit,                // left_limit
+              right_limit,               // right_limit
+              left_limit - i,            // X_row_0
+              right_limit - i + 1,       // X_row_1
+              0                          // dqs
               ));
     } // end for loop
     // early return if no or only one valid peak
@@ -255,8 +270,7 @@ namespace q
           (*it_peak)->apex_position < (*it_peak_next)->left_limit &&                  // Left peak is not within the window of the right peak
           (*it_peak_next)->apex_position > (*it_peak)->right_limit                    // Right peak is not within the window of the left peak
       )
-      { // the two regressions differ, i.e. create a new group and move all regressions from start to it_peak to this group
-
+      {                                                                                                    // the two regressions differ, i.e. create a new group and move all regressions from start to it_peak to this group
         regressionGroups.push_back(std::vector<std::unique_ptr<q::qPeaks::validRegression>>());            // create a new group
         std::move(validRegressionsTmp.begin(), it_peak_next, std::back_inserter(regressionGroups.back())); // move all regressions from start to it_peak to this group
         it_peak_next = validRegressionsTmp.erase(validRegressionsTmp.begin(), it_peak_next);               // erase the moved regressions from the temporary vector of valid regressions
@@ -296,11 +310,12 @@ namespace q
 #pragma endregion validateRegressions
 
 #pragma region mergeRegressionsOverScales
-  void qPeaks::mergeRegressionsOverScales(
+  void
+  qPeaks::mergeRegressionsOverScales(
       std::vector<std::unique_ptr<validRegression>> &validRegressions,
-      const Matrix &Ylog,
-      const RefMatrix &Y,
-      const std::vector<int *> &df)
+      const Vector &Ylog,
+      const Vector &Y,
+      const BoolVector &df)
   {
     if (validRegressions.empty())
     {
@@ -321,8 +336,8 @@ namespace q
     // iterate over the validRegressions vector
     for (auto it_new_peak = validRegressions.begin(); it_new_peak != validRegressions.end(); ++it_new_peak)
     {
-      double left_limit = (*it_new_peak)->left_limit;             // left limit of the current peak regression window in the Y matrix
-      double right_limit = (*it_new_peak)->right_limit;           // right limit of the current peak regression window in the Y matrix
+      const double left_limit = (*it_new_peak)->left_limit;       // left limit of the current peak regression window in the Y matrix
+      const double right_limit = (*it_new_peak)->right_limit;     // right limit of the current peak regression window in the Y matrix
       double grpMSE = 0;                                          // group mean squared error
       int grpDF = 0;                                              // group degree of freedom
       int numPeaksInGroup = 0;                                    // number of peaks in the group
@@ -346,14 +361,12 @@ namespace q
         {
           if ((*it_ref_peak)->mse == 0.0)
           { // calculate the mse of the ref peak
-            (*it_ref_peak)->mse = calcMseEXP(
-                ((*designMatrices[(*it_ref_peak)->scale - 2]).subMatrix((*it_ref_peak)->X_row_0, (*it_ref_peak)->X_row_1, 0, 4) * (*it_ref_peak)->B),
-                (Y.subMatrix(
-                    (*it_ref_peak)->left_limit,      // start row index
-                    (*it_ref_peak)->right_limit + 1, // end row index
-                    0,                               // start column index
-                    1))                              // end column index
-            );
+            const Vector yhat = calcYhatExtended(
+                (*designMatrices[(*it_ref_peak)->scale]),                                                                // design matrix
+                (*it_ref_peak)->B,                                                                                       // coefficients vector
+                (*it_ref_peak)->X_row_0,                                                                                 // starting row for the design matrix
+                (*it_ref_peak)->X_row_1);                                                                                // ending row for the design matrix
+            (*it_ref_peak)->mse = calcSSEexp(yhat, Y, Y.begin() + (int)(*it_ref_peak)->left_limit) / (*it_ref_peak)->df; // calculate the mean squared error (MSE) between the predicted and actual values
           }
           grpDF += (*it_ref_peak)->df;                        // add the degree of freedom
           grpMSE += (*it_ref_peak)->mse * (*it_ref_peak)->df; // add the sum of squared errors
@@ -374,23 +387,27 @@ namespace q
 
       if ((*it_new_peak)->mse == 0.0)
       { // calculate the mse of the current peak
-        (*it_new_peak)->mse = calcMseEXP(
-            ((*designMatrices[(*it_new_peak)->scale - 2]).subMatrix((*it_new_peak)->X_row_0, (*it_new_peak)->X_row_1, 0, 4) * (*it_new_peak)->B),
-            (Y.subMatrix(
-                (*it_new_peak)->left_limit,      // start row index
-                (*it_new_peak)->right_limit + 1, // end row index
-                0,                               // start column index
-                1))                              // end column index
-        );
+        const Vector yhat = calcYhatExtended(
+            (*designMatrices[(*it_new_peak)->scale]),                                                                // design matrix
+            (*it_new_peak)->B,                                                                                       // coefficients vector
+            (*it_new_peak)->X_row_0,                                                                                 // starting row for the design matrix
+            (*it_new_peak)->X_row_1);                                                                                // ending row for the design matrix
+        (*it_new_peak)->mse = calcSSEexp(yhat, Y, Y.begin() + (int)(*it_new_peak)->left_limit) / (*it_new_peak)->df; // calculate the mean squared error (MSE) between the predicted and actual values
       }
 
       if (numPeaksInGroup == 1)
       {
         // calculate the extended MSE using the current peak and the ref peak and set the worse one to invalid
-        calcExtendedMse(Y, *(*it_new_peak), (*validRegressionsInGroup[0][0]), df);
+        // create a temporary std::vector<std::unique_ptr<validRegression>> with the new peak and the ref peak
+        std::vector<std::unique_ptr<validRegression>> tmpRegressions;
+        tmpRegressions.push_back(std::move(*it_new_peak));
+        tmpRegressions.push_back(std::move(validRegressionsInGroup[0][0]));
+        calcExtendedMse(Y, tmpRegressions, df); // @todo is not working that way.
+        // Move the unique_ptrs back to validRegressionsInGroup
+        validRegressionsInGroup[0][0] = std::move(tmpRegressions[1]);
+        *it_new_peak = std::move(tmpRegressions[0]);
         continue;
       }
-
       if ((*it_new_peak)->mse < grpMSE)
       {
         // Set isValid to false for the candidates from the group
@@ -417,8 +434,8 @@ namespace q
   std::vector<std::unique_ptr<DataType::Peak>>
   qPeaks::createPeaks(
       const std::vector<std::unique_ptr<validRegression>> &validRegressions,
-      const RefMatrix &Y,
-      const std::vector<double *> &X,
+      const Vector &Y,
+      const Vector &X,
       const int scanNumber)
   {
     std::vector<std::unique_ptr<DataType::Peak>> peaks; // peak list
@@ -426,102 +443,99 @@ namespace q
     for (auto &regression : validRegressions)
     {
       // re-scale the apex position to x-axis
-      double x0 = *X[(int)std::floor(regression->apex_position)];
-      double dx = *X[(int)std::ceil(regression->apex_position)] - x0;
+      double x0 = X[(int)std::floor(regression->apex_position)];
+      double dx = X[(int)std::ceil(regression->apex_position)] - x0;
       double apex_position = x0 + dx * (regression->apex_position - std::floor(regression->apex_position));
       // create a new peak object and push it to the peaks vector; the peak object is created using the scan number, the apex position and the peak height
       peaks.push_back(std::make_unique<DataType::Peak>(
           scanNumber,
           apex_position,
-          (regression->B(1, 0) > 0)
-              ? std::exp(regression->B(0, 0) - regression->B(1, 0) * regression->B(1, 0) / 4 / regression->B(3, 0))
-              : std::exp(regression->B(0, 0) - regression->B(1, 0) * regression->B(1, 0) / 4 / regression->B(2, 0))));
-      // debugging
+          (regression->B[1] > 0)
+              ? std::exp(regression->B[0] - regression->B[1] * regression->B[1] / 4 / regression->B[3])
+              : std::exp(regression->B[0] - regression->B[1] * regression->B[1] / 4 / regression->B[2])));
+      // // debugging
 
-      // get the coefficients matrix
-      Matrix B = regression->B;
+      // // get the index of the regression
+      // int index = regression->index_x0;
+      // // get scale
+      // int scale = regression->scale;
+      // Vector yhat = calcYhatExtended(*(designMatrices[scale - 2]), regression->B, regression->X_row_0, regression->X_row_1);
 
-      // get the index of the regression
-      int index = regression->index_x0;
-      // get scale
-      int scale = regression->scale;
-      // design matrix
-      Matrix Xdesign = (*(designMatrices[scale - 2])).subMatrix(regression->X_row_0, regression->X_row_1, 0, 4);
+      // // extract xfit, i.e., from X vector index to index + 2*scale+1
+      // Vector xfit(yhat.n);
+      // int u = 0;
+      // for (int i = regression->left_limit; i < regression->right_limit + 1; i++)
+      // {
+      //   if (i < 0 || i >= X.n)
+      //   {
+      //     continue;
+      //   }
+      //   xfit[u] = X[i];
+      //   u++;
+      // }
 
-      // calculate yfit
-      Matrix yfit_matrix = (Xdesign * B).exp();
-      std::vector<double> yfit;
-      for (int i = 0; i < yfit_matrix.numRows(); i++)
-      {
-        yfit.push_back(yfit_matrix(i, 0));
-      }
-      // extract xfit, i.e., from X vector index to index + 2*scale+1
-      std::vector<double> xfit;
-      for (int i = regression->left_limit; i < regression->right_limit + 1; i++)
-      {
-        if (i < 0 || i >= X.size())
-        {
-          continue;
-        }
-        xfit.push_back(*X[i]);
-      }
-
-      peaks.back()->xFit = xfit;
-      peaks.back()->yFit = yfit;
-
-      // std::cout << "-----------------------------------\n";
-      // std::cout << "Apex Position: " << apex_position << std::endl;
-      // std::cout << "Height: " << peaks.back()->height << std::endl;
-      // std::cout << "DQS: " << regression->dqs << std::endl;
+      // peaks.back()->xFit = xfit;
+      // peaks.back()->yFit = yhat;
     } // end for loop
 
     return peaks;
   } // end createPeaks
 #pragma endregion createPeaks
 
-#pragma region calcMse
-  double qPeaks::calcMse(const Matrix &yhat, const Matrix &y) const
+#pragma region calcSSE
+  double
+  qPeaks::calcSSE(
+      const Vector &yhat,
+      const Vector &y,
+      const double *y_start) const
   {
-    size_t n = yhat.numel();
-    double sum = 0.0;
-    for (size_t i = 0; i < n; ++i)
+    if (y_start == nullptr)
     {
-      double diff = yhat.getElement(i) - y.getElement(i);
-      sum += diff * diff;
+      y_start = y.begin();
     }
-    return sum / (n - 4);
-  } // end calcMse
+    return std::inner_product(
+        yhat.begin(),  // start of yhat
+        yhat.end(),    // end of yhat
+        y_start,       // start of y
+        0.0,           // initial value
+        std::plus<>(), // binary operation
+        [](double a, double b)
+        {
+          double diff = a - b; // calculate the difference between a and b
+          return diff * diff;  // return the square of the difference
+        });
+  } // end calcSSE
 
-  double qPeaks::calcMse(const Matrix &yhat, const RefMatrix &Y) const
+  double
+  qPeaks::calcSSEexp(
+      const Vector &yhat_log,
+      const Vector &Y,
+      const double *y_start) const
   {
-    size_t n = yhat.numel();
-    double sum = 0.0;
-    for (size_t i = 0; i < n; ++i)
+    if (y_start == nullptr)
     {
-      double diff = yhat.getElement(i) - Y.getElement(i);
-      sum += diff * diff;
+      y_start = Y.begin();
     }
-    return sum / (n - 4);
-  } // end calcMse
-
-  double qPeaks::calcMseEXP(const Matrix &yhat_log, const RefMatrix &Y) const
-  {
-    size_t n = yhat_log.numel();
-    double sum = 0.0;
-    for (size_t i = 0; i < n; ++i)
-    {
-      double diff = exp_approx(yhat_log.getElement(i)) - Y.getElement(i);
-      sum += diff * diff;
-    }
-    return sum / (n - 4);
-  } // end calcMse
-#pragma endregion calcMse
+    return std::inner_product(
+        yhat_log.begin(), // start of yhat_log
+        yhat_log.end(),   // end of yhat_log
+        y_start,          // start of y
+        0.0,              // initial value
+        std::plus<>(),    // binary operation
+        [this](double a, double b)
+        {
+          double diff = exp_approx(a) - b; // calculate the difference between exp(a) and b
+          return diff * diff;              // return the square of the difference
+        });
+  } // end calcSSEexp
+#pragma endregion calcSSE
 
 #pragma region calcExtendedMse
-  void qPeaks::calcExtendedMse(
-      const RefMatrix &Y,                                               // measured data (not log-transformed data)
+  void
+  qPeaks::calcExtendedMse(
+      const Vector &Y,                                                  // measured data (not log-transformed data)
       const std::vector<std::unique_ptr<validRegression>> &regressions, // regressions to compare
-      const std::vector<int *> &df)                                     // degrees of freedom
+      const BoolVector &df)                                             // degrees of freedom
   {
     /*
       The function consists of the following steps:
@@ -535,8 +549,19 @@ namespace q
     auto best_regression = regressions.begin();
 
     // step 1: identify left and right limit of the grouped regression windows
-    int left_limit = regressions.front()->left_limit;
-    int right_limit = regressions.back()->right_limit;
+    const int left_limit = regressions.front()->left_limit;
+    const int right_limit = regressions.back()->right_limit;
+
+    const int df_sum = calcDF(df, left_limit, right_limit);
+    if (df_sum <= 4)
+    {
+      // set isValid to false for all regressions
+      for (auto regression = regressions.begin(); regression != regressions.end(); ++regression)
+      {
+        (*regression)->isValid = false;
+      }
+      return; // not enough degrees of freedom
+    }
 
     for (auto regression = regressions.begin(); regression != regressions.end(); ++regression)
     {
@@ -547,12 +572,12 @@ namespace q
       );
 
       // check if it is necessary to create new design matrices based on the extended scale
-      if (designMatrices.size() < (extendedScale - 1)) // -1 because the design matrices are zero-based and start with scale 2
+      if (designMatrices.size() < (extendedScale + 1))
       {
 #pragma omp critical
         {
           // scale is not available; create new design matrices from last available scale to the extended scale in steps of 1
-          for (int new_scale = designMatrices.size() + 2; new_scale < extendedScale + 1; new_scale++)
+          for (int new_scale = designMatrices.size(); new_scale < extendedScale + 1; new_scale++)
           {
             createDesignMatrix(new_scale);
             createInverseAndPseudoInverse(*(designMatrices.back()));
@@ -562,26 +587,17 @@ namespace q
 
       // step 2: calculate yhat based on the coefficients matrix B and the extended design matrix X
       // extract and cut the design matrix based on the extended scale
-      int row_0 = extendedScale - (*regression)->index_x0 + left_limit;      // start row index for cutting Design Matrix
-      int row_1 = extendedScale - (*regression)->index_x0 + right_limit + 1; // end row index for cutting Design Matrix
+      const int row_0 = extendedScale - (*regression)->index_x0 + left_limit;      // start row index for cutting Design Matrix
+      const int row_1 = extendedScale - (*regression)->index_x0 + right_limit + 1; // end row index for cutting Design Matrix
 
-      Matrix X = (*designMatrices[extendedScale - 2]).subMatrix(row_0, row_1, 0, 4);
       // calculate yhat based on the coefficients matrix B and the extended design matrix X
-      Matrix yhat = X * (*regression)->B;
-
+      const Vector yhat = calcYhatExtended(
+          (*designMatrices[extendedScale]),
+          (*regression)->B,
+          row_0,
+          row_1);
       // step 3: calculate the mean squared error (MSE) between the predicted and actual values
-      double mse = calcMseEXP(yhat, Y.subMatrix(left_limit, right_limit + 1, 0, 1));
-      // correct the df for the mse calculation
-      int df_sum = 0;
-      for (int i = left_limit; i < right_limit + 1; i++)
-      {
-        df_sum += *df[i];
-      }
-      if (df_sum <= 4)
-      {
-        continue; // not enough degrees of freedom
-      }
-      mse *= (yhat.numRows() - 4) / (df_sum - 4);
+      const double mse = calcSSEexp(yhat, Y, Y.begin() + left_limit) / (df_sum - 4);
 
       // step 4: identify the best regression based on the MSE and return the MSE and the index of the best regression
       if (mse < best_mse)
@@ -600,131 +616,31 @@ namespace q
       }
     }
   } // end qPeaks::calcExtendedMse
-
-  void qPeaks::calcExtendedMse(
-      const RefMatrix &Y,                 // measured data (not log-transformed data)
-      validRegression &currentRegression, // current regression
-      validRegression &refRegression,     // reference regression
-      const std::vector<int *> &df        // degrees of freedom
-  )
-  {
-    /*
-      The function consists of the following steps:
-      1. Identify left and right limit of the grouped regression windows.
-      2. Calculate yhat based on the coefficients matrix B and the extended design matrix X.
-      3. Calculate the mean squared error (MSE) between the predicted and actual values.
-      4. Identify the best regression based on the MSE and return the MSE and the index of the best regression.
-    */
-    // declare variables
-    double best_mse = std::numeric_limits<double>::infinity();
-    int best_idx = -1;
-    int best_extendedScale = -1;
-    int best_df = 0;
-    int best_left_limit = -1;
-    int best_right_limit = -1;
-    int best_X_row_0 = -1;
-    int best_X_row_1 = -1;
-    // step 1: identify left and right limit of the grouped regression windows
-    int left_limit = std::min(currentRegression.left_limit, refRegression.left_limit);
-    int right_limit = std::max(currentRegression.right_limit, refRegression.right_limit);
-    int flag = 0;
-    int stepInLoop = 0;
-    for (auto regression : {&currentRegression, &refRegression})
-    {
-      // get the extended scale
-      int extendedScale = std::max(
-          regression->index_x0 - left_limit, // left limit
-          right_limit - regression->index_x0 // right limit
-      );
-
-      // check if it is necessary to create new design matrices based on the extended scale
-      if (designMatrices.size() < (extendedScale - 1)) // -1 because the design matrices are zero-based and start with scale 2
-      {
-#pragma omp critical
-        {
-          // scale is not available; create new design matrices from last available scale to the extended scale in steps of 1
-          for (int new_scale = designMatrices.size() + 2; new_scale < extendedScale + 1; new_scale++)
-          {
-            createDesignMatrix(new_scale);
-            createInverseAndPseudoInverse(*(designMatrices.back()));
-          }
-        }
-      }
-      // step 2: calculate yhat based on the coefficients matrix B and the extended design matrix X
-      // extract and cut the design matrix based on the extended scale
-      int row_0 = left_limit - regression->index_x0 + extendedScale;      // start row index for cutting Design Matrix
-      int row_1 = right_limit - regression->index_x0 + extendedScale + 1; // end row index for cutting Design Matrix
-      // add an adjustment if there is a valleypoint between row_0 and row_1
-      int left_valley_adjust = (regression->B(2, 0) < 0)
-                                   ? // no valley point
-                                   0
-                                   : // has a valley point
-                                   std::max(
-                                       0,                                                                                          // valley point is outside the window
-                                       (int)(-regression->B(1, 0) / 2 / regression->B(2, 0) + regression->index_x0 - left_limit)); // valley point is inside the window
-      int right_valley_adjust = (regression->B(3, 0) < 0)
-                                    ? // no valley point
-                                    0
-                                    : // has a valley point
-                                    std::max(
-                                        0,                                                                                          // valley point is outside the window
-                                        (int)(right_limit + regression->B(1, 0) / 2 / regression->B(3, 0) - regression->index_x0)); // valley point is inside the window
-      Matrix X = (*designMatrices[extendedScale - 2]).subMatrix(row_0 + left_valley_adjust, row_1 - right_valley_adjust, 0, 4);
-      // calculate yhat based on the coefficients matrix B and the extended design matrix X
-      Matrix yhat = X * regression->B;
-
-      // step 3: calculate the mean squared error (MSE) between the predicted and actual values
-      double mse = calcMseEXP(yhat, Y.subMatrix(left_limit + left_valley_adjust, right_limit + 1 - right_valley_adjust, 0, 1));
-      // correct the df for the mse calculation
-      int df_sum = 0;
-      for (int i = left_limit + left_valley_adjust; i < right_limit + 1 - right_valley_adjust; i++)
-      {
-        df_sum += *df[i];
-      }
-
-      if (df_sum <= 4)
-      {
-        regression->isValid = false;
-        stepInLoop++;
-        continue; // not enough degrees of freedom
-      }
-
-      mse *= (yhat.numRows() - 4) / (df_sum - 4);
-      // step 4: identify the best regression based on the MSE and return the MSE and the index of the best regression
-      if (mse < best_mse)
-      {
-        best_mse = mse;
-        flag = stepInLoop;
-        stepInLoop++;
-      }
-      else
-      {
-        regression->isValid = false;
-        stepInLoop++;
-      }
-    } // end for loop
-    // set worse regression to invalid
-    if (flag == 0)
-    { // current regression is better than ref regression
-      refRegression.isValid = false;
-    }
-    else
-    { // ref regression is better than current regression
-      currentRegression.isValid = false;
-    }
-  }
 #pragma endregion calcExtendedMse
 
 #pragma region calcChiSquareEXP
-  double qPeaks::calcChiSquareEXP(const Matrix &yhat_log, const RefMatrix &Y) const
+  double
+  qPeaks::calcChiSquareEXP(
+      const Vector &yhat_log,
+      const Vector &Y,
+      const double *y_start) const
   {
-    size_t n = yhat_log.numel();
+    if (y_start == nullptr)
+    {
+      y_start = Y.begin();
+    }
+
+    size_t n = yhat_log.n;
     double sum = 0.0;
+
+    Vector yhat_exp(n);
+    std::transform(yhat_log.begin(), yhat_log.end(), yhat_exp.begin(), exp_approx);
+
     for (size_t i = 0; i < n; ++i)
     {
-      double yhat_exp = exp_approx(yhat_log.getElement(i));
-      double diff = yhat_exp - Y.getElement(i);
-      sum += diff * diff / yhat_exp;
+      double diff = yhat_exp[i] - *y_start;
+      sum += diff * diff / yhat_exp[i];
+      ++y_start;
     }
     return sum;
   } // end calcChiSquareEXP
@@ -732,50 +648,53 @@ namespace q
 
 #pragma region calcDF
   int qPeaks::calcDF(
-      const std::vector<int *> &df, // degrees of freedom
-      const size_t left_limit,      // left limit
-      const size_t right_limit)     // right limit
+      const BoolVector &df,     // degrees of freedom
+      const size_t left_limit,  // left limit
+      const size_t right_limit) // right limit
   {
-    return std::transform_reduce(
+    return std::accumulate(
         df.begin() + left_limit,
         df.begin() + right_limit + 1,
         0,
-        std::plus<>(),
-        [](int *p)
-        { return *p; });
+        [](int sum, bool p)
+        { return sum + p; });
   } // end calcDF
 #pragma endregion calcDF
 
 #pragma region calculateApexAndValleyPositions
   bool
   qPeaks::calculateApexAndValleyPositions(
-      const Matrix &B,
+      const Matrix_mc &B,
       const size_t index,
       const int scale,
       double &apex_position,
       double &valley_position) const
   {
-    int key = (B(1, index) < 0 ? 4 : 0) + (B(2, index) < 0 ? 2 : 0) + (B(3, index) < 0 ? 1 : 0);
+    // extract the coefficients
+    const double B1 = B(1, index);
+    const double B2 = B(2, index);
+    const double B3 = B(3, index);
+    int key = (B1 < 0 ? 4 : 0) + (B2 < 0 ? 2 : 0) + (B3 < 0 ? 1 : 0);
     switch (key)
     {
-    case 7:                                           // Case 1a: apex left
-      apex_position = -B(1, index) / 2 / B(2, index); // is negative
-      valley_position = 0;                            // no valley point
-      return apex_position > -scale + 1;              // scale +1: prevent appex position to be at the edge of the data
+    case 7:                              // Case 1a: apex left
+      apex_position = -B1 / 2 / B2;      // is negative
+      valley_position = 0;               // no valley point
+      return apex_position > -scale + 1; // scale +1: prevent appex position to be at the edge of the data
 
-    case 3:                                           // Case 1b: apex right
-      apex_position = -B(1, index) / 2 / B(3, index); // is positive
-      valley_position = 0;                            // no valley point
-      return apex_position < scale - 1;               // scale -1: prevent appex position to be at the edge of the data
+    case 3:                             // Case 1b: apex right
+      apex_position = -B1 / 2 / B3;     // is positive
+      valley_position = 0;              // no valley point
+      return apex_position < scale - 1; // scale -1: prevent appex position to be at the edge of the data
 
     case 6:                                                                     // Case 2a: apex left | valley right
-      apex_position = -B(1, index) / 2 / B(2, index);                           // is negative
-      valley_position = -B(1, index) / 2 / B(3, index);                         // is positive
+      apex_position = -B1 / 2 / B2;                                             // is negative
+      valley_position = -B1 / 2 / B3;                                           // is positive
       return apex_position > -scale + 1 && valley_position - apex_position > 2; // scale +1: prevent appex position to be at the edge of the data
 
     case 1:                                                                    // Case 2b: apex right | valley left
-      apex_position = -B(1, index) / 2 / B(3, index);                          // is positive
-      valley_position = -B(1, index) / 2 / B(2, index);                        // is negative
+      apex_position = -B1 / 2 / B3;                                            // is positive
+      valley_position = -B1 / 2 / B2;                                          // is negative
       return apex_position < scale - 1 && apex_position - valley_position > 2; // scale -1: prevent appex position to be at the edge of the data
 
     default:
@@ -787,7 +706,7 @@ namespace q
 #pragma region isValidQuadraticTerm
   bool
   qPeaks::isValidQuadraticTerm(
-      const Matrix &B,
+      const Matrix_mc &B,
       const size_t index,
       const double inverseMatrix_2_2,
       const double inverseMatrix_3_3,
@@ -804,27 +723,28 @@ namespace q
 #pragma region isValidPeakHeight
   bool
   qPeaks::isValidPeakHeight(
-      const Matrix &B,
-      const Matrix &C,
+      const Matrix_mc &B,
+      const Matrix_mc_4x4 &C,
       const size_t index,
       const double apex_position,
       const int df_sum) const
   {
-    Matrix Jacobian_height(1, 4); // Jacobian matrix for the height
-    double height = std::exp(B(0, index) + apex_position * B(1, index) * .5);
-    Jacobian_height(0, 0) = height;
-    Jacobian_height(0, 1) = apex_position * height;
+    double Jacobian_height[4]; // Jacobian matrix for the height
+    const double height = std::exp(B(0, index) + apex_position * B(1, index) * .5);
+    Jacobian_height[0] = height;
+    Jacobian_height[1] = apex_position * height;
     if (apex_position < 0)
     {
-      Jacobian_height(0, 2) = apex_position * Jacobian_height(0, 1);
-      Jacobian_height(0, 3) = 0;
+      Jacobian_height[2] = apex_position * Jacobian_height[1];
+      Jacobian_height[3] = 0;
     }
     else
     {
-      Jacobian_height(0, 2) = 0;
-      Jacobian_height(0, 3) = apex_position * Jacobian_height(0, 1);
+      Jacobian_height[2] = 0;
+      Jacobian_height[3] = apex_position * Jacobian_height[1];
     }
-    double h_uncertainty = std::sqrt((Jacobian_height * C * Jacobian_height.T()).sumElements());
+    const double h_uncertainty = std::sqrt(multiplyVecMatrixVecTranspose(Jacobian_height, C));
+
     return height / h_uncertainty > tValuesArray[df_sum - 5]; // statistical significance of the peak height
   }
 #pragma endregion isValidPeakHeight
@@ -832,38 +752,17 @@ namespace q
 #pragma region isValidPeakArea
   bool
   qPeaks::isValidPeakArea(
-      const Matrix &B,
-      const Matrix &C,
+      const Matrix_mc &B,
+      const Matrix_mc_4x4 &C,
       const size_t index,
       const int scale,
       const int df_sum) const
   {
-    std::pair<Matrix, Matrix> Jacobian_area = jacobianMatrix_PeakArea(B.col(index), scale); // first: Jacobian matrix, second: Jacobian matrix for the covered peak area
-    double area_uncertainty = std::sqrt(                                                    // uncertainty of the peak area based on the Jacobian matrix and the non-covered peak area
-        (Jacobian_area.first * C * Jacobian_area.first.T()).sumElements());
-    if (Jacobian_area.first(0, 0) / area_uncertainty < tValuesArray[df_sum - 5])
-    {
-      return false; // statistical insignificance of the peak area
-    }
-
-    double area_uncertainty_covered = std::sqrt( // uncertainty of the peak area based on the Jacobian matrix and the covered peak area
-        (Jacobian_area.second * C * Jacobian_area.second.T()).sumElements());
-    if (Jacobian_area.second(0, 0) / area_uncertainty_covered < tValuesArray[df_sum - 5])
-    {
-      return false; // statistical insignificance of the peak area
-    }
-    return true; // statistical significance of the peak area
-  }
-#pragma endregion isValidPeakArea
-
-#pragma region jacobianMatrix_PeakArea
-  std::pair<Matrix, Matrix> qPeaks::jacobianMatrix_PeakArea(const Matrix &B, int scale) const
-  {
     // predefine expressions
-    const double b0 = B(0, 0);
-    const double b1 = B(1, 0);
-    const double b2 = B(2, 0);
-    const double b3 = B(3, 0);
+    const double b0 = B(0, index);
+    const double b1 = B(1, index);
+    const double b2 = B(2, index);
+    const double b3 = B(3, index);
     const double SQRTB2 = std::sqrt(std::abs(-b2));
     const double SQRTB3 = std::sqrt(std::abs(-b3));
     const double EXP_B0 = std::exp(b0);
@@ -873,8 +772,10 @@ namespace q
     const double EXP_B13 = std::exp(-b1 * B1_2_B3 / 2);
 
     // initialize variables
-    Matrix J(1, 4);         // Jacobian matrix
-    Matrix J_covered(1, 4); // Jacobian matrix for the covered peak area
+    // Matrix J(1, 4);         // Jacobian matrix
+    // Matrix J_covered(1, 4); // Jacobian matrix for the covered peak area
+    double J[4];            // Jacobian matrix
+    double J_covered[4];    // Jacobian matrix for the covered peak area
     double x_left = -scale; // left limit due to the window
     double x_right = scale; // right limit due to the window
     double y_left = 0;      // y value at the left limit
@@ -951,59 +852,44 @@ namespace q
     const double J_2_R = -J_2_common_R - J_1_R * B1_2_B3;
     const double J_2_R_covered = -J_2_common_R - J_1_R_covered * B1_2_B3;
 
-    J(0, 0) = J_1_R + J_1_L;
-    J(0, 1) = J_2_R + J_2_L;
-    J(0, 2) = -B1_2_B2 * (J_2_L + J_1_L / b1);
-    J(0, 3) = -B1_2_B3 * (J_2_R + J_1_R / b1);
+    J[0] = J_1_R + J_1_L;
+    J[1] = J_2_R + J_2_L;
+    J[2] = -B1_2_B2 * (J_2_L + J_1_L / b1);
+    J[4] = -B1_2_B3 * (J_2_R + J_1_R / b1);
 
-    J_covered(0, 0) = J_1_R_covered + J_1_L_covered - trpzd_b0;
-    J_covered(0, 1) = J_2_R_covered + J_2_L_covered - trpzd_b1;
-    J_covered(0, 2) = -B1_2_B2 * (J_2_L_covered + J_1_L_covered / b1) - trpzd_b2;
-    J_covered(0, 3) = -B1_2_B3 * (J_2_R_covered + J_1_R_covered / b1) - trpzd_b3;
+    J_covered[0] = J_1_R_covered + J_1_L_covered - trpzd_b0;
+    J_covered[1] = J_2_R_covered + J_2_L_covered - trpzd_b1;
+    J_covered[2] = -B1_2_B2 * (J_2_L_covered + J_1_L_covered / b1) - trpzd_b2;
+    J_covered[3] = -B1_2_B3 * (J_2_R_covered + J_1_R_covered / b1) - trpzd_b3;
+    const double area_uncertainty = std::sqrt(multiplyVecMatrixVecTranspose(J, C));
+    const double area_uncertainty_covered = std::sqrt(multiplyVecMatrixVecTranspose(J_covered, C));
 
-    return std::pair<Matrix, Matrix>(J, J_covered);
-  } // end jacobianMatrix_PeakArea
-#pragma endregion jacobianMatrix_PeakArea
+    return J[0] / area_uncertainty > tValuesArray[df_sum - 5] && J_covered[0] / area_uncertainty_covered > tValuesArray[df_sum - 5];
+  }
+#pragma endregion isValidPeakArea
 
 #pragma region createDesignMatrix
   void qPeaks::createDesignMatrix(const int scale)
   {
     // construct matrix
-    size_t m = 4;
-    size_t n = 2 * scale + 1;
+    int m = 4;
+    int n = 2 * scale + 1;
     Matrix X(n, m);
 
-    // x vector
-    std::vector<int> x(n);
-    for (size_t i = 0; i < n; i++)
+    for (int i = 0; i < n; i++)
     {
-      x[i] = i - scale;
-    }
-
-    // order vector
-    std::vector<int> p = {0, 1, 2, 2};
-
-    for (size_t i = 0; i < n; i++)
-    {
-      for (size_t j = 0; j < m; j++)
+      double x = static_cast<double>(i - scale);
+      X(i, 0) = 1.0; // first column is always 1
+      X(i, 1) = x;   // x vector (centered) from -scale to scale
+      if (x < 0)
       {
-        X(i, j) = std::pow(x[i], p[j]);
-      }
-    }
-
-    // modification of X due to p(2) and p(3)
-    for (size_t i = 0; i < n; i++)
-    {
-      if (x[i] < 0)
-      {
-        X(i, 3) = 0;
+        X(i, 2) = x * x; // x^2 vector
       }
       else
       {
-        X(i, 2) = 0;
+        X(i, 3) = x * x; // x^2 vector
       }
     }
-
     // add the matrix to the designMatrices vector
     designMatrices.push_back(std::make_unique<Matrix>(X));
   }
@@ -1012,9 +898,9 @@ namespace q
 #pragma region createInverseAndPseudoInverse
   void qPeaks::createInverseAndPseudoInverse(const Matrix &X)
   {
-    Matrix Xt = X.T();
+    Matrix Xt = transpose(X);
     Matrix XtX = Xt * X;
-    inverseMatrices.push_back(std::make_unique<Matrix>(XtX.inv()));
+    inverseMatrices.push_back(std::make_unique<Matrix>(inv(XtX)));
     psuedoInverses.push_back(std::make_unique<Matrix>(*(inverseMatrices.back()) * Xt));
   }
 
@@ -1047,12 +933,12 @@ namespace q
 #pragma region printMatrices
   void qPeaks::printMatrices(int scale) const
   {
-    std::cout << "Design Matrix\n";
-    designMatrices[scale - 2]->print();
-    std::cout << "Inverse Matrix\n";
-    inverseMatrices[scale - 2]->print();
-    std::cout << "Pseudo-Inverse Matrix\n";
-    psuedoInverses[scale - 2]->print();
+    // std::cout << "Design Matrix\n";
+    // designMatrices[scale - 2]->print();
+    // std::cout << "Inverse Matrix\n";
+    // inverseMatrices[scale - 2]->print();
+    // std::cout << "Pseudo-Inverse Matrix\n";
+    // psuedoInverses[scale - 2]->print();
   }
 #pragma endregion printMatrices
 } // namespace q
