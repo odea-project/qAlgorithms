@@ -1,7 +1,6 @@
 // rcpp_ms_centroid_spectra_qCentroid.cpp
 
 #include "../include/qalgorithms.h"
-#include "../include/qalgorithms_utils.h"
 #include <vector>
 #include <cmath>
 #include <chrono>

@@ -74,7 +74,7 @@ artbin$rt = 0.65 * artbin$scans + 1
 
 
 ```{r bin results}
-Rprof(tf <- "log.log", memory.profiling = TRUE)
+# Rprof(tf <- "log.log", memory.profiling = TRUE)
 # the code you want to profile must be in between
 
 qbins <- read.csv("../../qbinning_binlist.csv")
@@ -91,7 +91,7 @@ qbins$DQSacc = qbins$DQS - qbins$control_DQSB
 
 plot(round(qbins$control_DQSB, digits = 3), round(qbins$DQS, digits = 3))
 
-Rprof (NULL) ; print(summaryRprof(tf))
+# Rprof (NULL) ; print(summaryRprof(tf))
 
 ```
 

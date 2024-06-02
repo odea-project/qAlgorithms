@@ -69,7 +69,8 @@ namespace q
         int scanmax;
         std::vector<Datapoint *> pointsInBin; // @todo does not change after bin creation, check for performance improvement when using cast const
         std::vector<double> activeOS;         // Order Space
-        std::vector<double> DQSB;             // @todo change this to a vector of MODs, add separate scaling vector?
+        std::vector<double> DQSB_base;        // DQSB when all distances are considered equal
+        std::vector<double> DQSB_scaled;      // DQSB if a gaussian falloff is assumed
 
         /// @brief generate a bin that is a subset of an existing bin using two iterators in one existing bin
         /// @param startBin left border of the new bin
@@ -125,12 +126,12 @@ namespace q
         void makeDQSB(const RawData *rawdata, const unsigned int maxdist);
 
         /// @brief summarise the bin to one line, with the parameters size, mean_mz, median_mz, stdev_mz, mean_scans, median_scans,
-        /// DQSB, DQSB_control, DQSB_worst, min_DQSC, meanError. DQSB_worst is calculated by assuming the MOD of all points in the
+        /// DQSB_base, DQSB_control, DQSB_worst, min_DQSC, meanError. DQSB_worst is calculated by assuming the MOD of all points in the
         /// bin to be equal to the critical value. Additionally, the function computes a 1-byte code for up to 8 states of interest.
         /// The respective bit is set to 1 if the defined state is present. Possible states of interest are too large a discrepancy
         /// between mean and median or the presence of duplicate values.
         /// @return A tuple containing the summary information. The first entry is the error code.
-        std::tuple<std::byte, size_t, double, double, double, double, unsigned int, double, double, double, double, double> summariseBin();
+        std::tuple<std::byte, size_t, double, double, double, double, unsigned int, double, double, double, double, double, double> summariseBin();
 
         const EIC createEIC();
 
@@ -145,7 +146,7 @@ namespace q
     private:
         // void readcsv(std::string user_file, std::vector<Datapoint> output, int d_mz, int d_mzError, int d_RT, int d_scanNo); // implemented for featurelist
         std::deque<Bin> binDeque;      // TODO add case for no viable bins
-        std::vector<Bin> finishedBins; // only includes bins which cannot be further subdivided, added DQSB
+        std::vector<Bin> finishedBins; // only includes bins which cannot be further subdivided, added DQSB_base
         unsigned int subsetCount;
 
     public:
@@ -162,22 +163,22 @@ namespace q
         /// @param maxdist the largest gap in scans which a bin can have while still being considered valid
         void subsetBins(const std::vector<int> dimensions, const unsigned int maxdist, const double massError);
 
-        /// @brief apply DQSB function to all completed bins
+        /// @brief apply DQSB_base function to all completed bins
         /// @param rawdata the RawData object from which all bins in finishedBins were generated
         /// @param maxdist the largest gap in scans which a bin can have while still being considered valid
         void assignDQSB(const RawData *rawdata, const unsigned int maxdist);
 
         void printAllBins(std::string path, const RawData *rawdata); // @todo remove rawdata dependency
 
-        void printBinSummary(std::string path); // @todo create a better summary function which gives a 
+        void printBinSummary(std::string path); // @todo create a better summary function which gives a
                                                 // detailed report, including what the test actually does,
                                                 // the mz subset after which a bin was complete, statistics
                                                 // regarding the rest of the bins in terms of size, count etc.
                                                 // Make sure to test the report for human-readability and
                                                 // include metadata from the mzml where possible.
                                                 // Some measure of overall spectrum quality should also be given.
-                                                
-        void printBinningReport(std::string path);  // <- here
+
+        void printBinningReport(std::string path); // <- here
 
         const std::vector<EIC> returnBins();
 
@@ -213,6 +214,8 @@ namespace q
     double calcDQS(const double MID, const double MOD); // Mean Inner Distance, Minimum Outer Distance
 
     void check_MOD_outOfBins(const Bin *target, const std::vector<q::Datapoint *> notBinned, const int maxdist);
+
+    void scaleDistancesForDQS_gauss(int maxdist); // @experimental
 
 }
 

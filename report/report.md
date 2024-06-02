@@ -122,11 +122,13 @@ thresholds. To this end, Reuschenbach et al. (2023) presented the qBinning
 algorithm, which aims to resolve centroided NTS data using only information
 already present in the dataset [@reuschenbachQBinningDataQualityBased2023].
 
-Accordingly, qBinning does not depend on user input but instead utilizes statistical principles' parameters. These consider the essential
+Accordingly, qBinning does not depend on user input but instead utilizes 
+statistical principles' parameters. These consider the essential
 mathematical properties of a peak and sidestep the subjective approach
 of manual parameter selection and optimization. The chosen approach allows
 bins to be non-continuous in the scan dimension, which is not provided
-by other binning approaches [@gerrit: This is not true, e.g., ADAP also works with gaps; however, it also requires input parameters from users]. The removal of this multitude of parameters
+by other binning approaches [@gerrit: This is not true, e.g., ADAP also works with gaps; however, it also requires input parameters from users]. 
+The removal of this multitude of parameters
 also removes the time investment needed to optimize them and provides 
 a uniform base for other steps toward feature detection and annotation.
 
@@ -156,7 +158,9 @@ it was necessary to write a new implementation in the C++ programming language.
 ### Algorithm
 From a high-level perspective, the algorithm searches for groups of similar masses
 in a given dataset and ensures no group has too much space in the chromatographic
-dimension between included points [@gerrit: here, you can introduce the subsequent top-down approach in a short sentence]. 
+dimension between included points. Where the grouping criteria do not match,
+groups are split until a good grouping is achieved.
+[@gerrit: here, you can introduce the subsequent top-down approach in a short sentence]. 
 
 From this point, a group will be referred to as
 a *closed bin* if the algorithm determines that it cannot be subdivided further
@@ -164,7 +168,9 @@ and as an *open bin* if one or more of the [subsetting functions](#core-function
 still has to check the grouping. Bins always refers to a grouping of centroided
 MS data with the parameter mz and at least one additional dimension of separation.
 Groups are only referred to as bins if they have not yet been handed to the peak 
-fitting algorithm, meaning secondary tests still require bin metadata [@gerrit: not clear what you mean with metadata]. 
+fitting algorithm, meaning they still contain additional information like their cumulative 
+error and a check if two binned points have the same scan number.
+[@gerrit: not clear what you mean with metadata]. 
 Creating one or more new bins from an existing one while discarding all
 points not present in one of the new bins is called subsetting. Only 
 open bins can be subject to subsetting.
@@ -433,10 +439,11 @@ can be written in a separate file.
 ## Evaluation
 As already concluded in the original paper, the binning process results
 in a dataset of EICs, the vast majority of which possess very good
-separation from their environment. While some errors persist [@gerrit: which one?],
+separation from their environment. While there are still cases where a 
+bin does not include all points that should be a part of it [@gerrit: which one?],
 it is also important to note that this binning step is only part of
 a larger analysis process. As such, even if the intermediate results 
-contain false positives, the peak detection step will likely
+contain false positives or negatives, the peak detection step will likely
 heavily reduce their impact through filtering for false positive EICs
 and through the fitted regression compensating for single centroids 
 being assigned to the wrong bin.
@@ -445,7 +452,15 @@ being assigned to the wrong bin.
 All three implementations result in identical bins after completed subsetting.
 Bin identity was controlled by matching the result frames by m/z. No false positives or negatives exist since
 all points could be matched this way.
-For a small test dataset, subsetting results were confirmed by hand. [@gerrit: how?]
+For a small test dataset, subsetting results were confirmed by hand. 
+The test data generation is detailed [here](#software-and-data). Both
+"monobin" and "artbin" were contolled by sorting all contained points
+by mz, identifying the bin created by the program and checking if
+the normalised order spaces between points were less than the critical value.
+Both points at the edges of the bin had a normalised order space greater than the
+critical value. After sorting the bin by scans, no distances greater than
+six scans existed between neighbouring points.
+[@gerrit: how?]
 
 The DQS calculation was not identical between any of the approaches. 
 To determine a correct result for the DQS, it was calculated
@@ -663,11 +678,9 @@ The eighth test slot was not used for this evaluation.
 ## Discussion
 
 Centroid error is underestimated, leading to more strict binning than ideal [@gerrit: we will discuss]
-Differences to the Original Implementation in R [@gerrit: not of focus]
-Konkrete Beobachtungen / wertende zusammenfassung + addressat, 
 kontext existierender literatur ; vergleichbare Ergebnisse? [@gerrit: mostly not applicable, but we can compare with adap or roi]
-
-
+(@daniel: both points redundant, binning strictness is too much work to characterise
+the problem properly and result comparability requires more than one dataset => significantly more time.)
 
 ### Test Results
 The tests presented [here](#test-criteria-for-bin-correctness) were performed on the
@@ -857,10 +870,14 @@ be written. Here, the way the DQS is calculated also needs to be revised.
 The DQS currently does not discriminate between points according to their
 distance in the scan dimension. This problem could be addressed by 
 scaling the MOD during DQS calculation by some factor obtained by a Gaussian
-distribution which is 1 for distances in the same scan and less for every
-further scan until it is set to 0 for every scan past the tolerance of six.
-Such a modification has not yet been implemented due to colliding with the 
+distribution which is 1 for distances in the same scan and greater for every
+further scan until it is set to infinity for every scan past the tolerance of six.
+Such a modification has not been generalised due to colliding with the 
 comparison that is the basis for test condition 2). 
+A solution for calculating the scaled DQSB is implemented. It has not
+yet been tested, but can be returned with the non-scaled DQSB.
+For implementation details, refer to the function **scaleDistancesForDQS_gauss**.
+The function compiles and executes without errors or exceptions.
 
 While the use of a set maximum distance between scans of a bin is in relation
 to the chance a real signal has of being a false negative, the result of
