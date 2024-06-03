@@ -87,6 +87,7 @@ namespace q
             // properties
             using variableType = std::variant< // allowed variable types for mass spectrum data
                 int,                           // e.g. scan number
+                size_t,                        // e.g. scan number, number of data points
                 double,                        // e.g. retention time
                 MSLevel,                       // e.g. MS1 or MS2
                 IonizationMode,                // e.g. positive or negative

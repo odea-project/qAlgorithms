@@ -20,17 +20,18 @@ int main()
   // std::string filename_input = "test/data/test_lcms_data.csv";
   // std::string filename_input = "test/data/test_lcms_data2.csv";
   // std::string filename_input = "test/data/test_ftir.csv";
-  // std::string filename_input = "test/data/test_chrom.csv";
+  std::string filename_input = "test/data/test_chrom.csv";
   // std::string filename_input = "test/data/test_orbitrap.csv";
-  std::string filename_input = "test/data/example_profile.mzML";
+  // std::string filename_input = "test/data/example_profile.mzML";
+  
   std::cout << "create LCMSData object....";
   q::LCMSData lcmsData;
   std::cout << "done\n";
   std::cout << "read file....";
-  // lcmsData.readCSV(filename_input, 1, -1, 0, -1, ',', {q::DataType::DataField::SCANNUMBER, q::DataType::DataField::RETENTIONTIME, q::DataType::DataField::MZ, q::DataType::DataField::INTENSITY});
-  // lcmsData.readCSV(filename_input, 1, -1, 0, -1, ',', {q::DataType::DataField::MZ, q::DataType::DataField::INTENSITY, q::DataType::DataField::SCANNUMBER, q::DataType::DataField::RETENTIONTIME});
-  sc::MZML data(filename_input);
-  lcmsData.readStreamCraftMZML(data);
+
+  lcmsData.readCSV(filename_input, 1, -1, 0, -1, ',', {q::DataType::DataField::MZ, q::DataType::DataField::INTENSITY, q::DataType::DataField::SCANNUMBER, q::DataType::DataField::RETENTIONTIME});
+  // sc::MZML data(filename_input);
+  // lcmsData.readStreamCraftMZML(data);
   std::cout << "done\n";
   lcmsData.info();
 
@@ -66,8 +67,8 @@ int main()
   // Calculate the duration
   std::chrono::duration<double> duration = end - start;
   std::cout << "Peaks found: ";
-  int count = 0;
-  for (int i = 0; i < peaks.size(); i++)
+  size_t count = 0;
+  for (size_t i = 0; i < peaks.size(); i++)
   {
     count += peaks[i].size();
   }
@@ -76,7 +77,7 @@ int main()
   // {
   //   for (int j = 0; j < peaks[i].size(); j++)
   //   {
-  //     std::cout << "SampleID: " << peaks[i][j]->sampleID << " Position: " << peaks[i][j]->position << " Height: " << peaks[i][j]->height << std::endl;
+  //     std::cout << "SampleID: " << peaks[i][j]->sampleID << " Position: " << peaks[i][j]->position << " Height: " << peaks[i][j]->height << " DQS: " << peaks[i][j]->dqsPeak << " x0: " << peaks[i][j]->x0 << std::endl;
   //   }
   // }
   std::cout << "Duration: " << duration.count() << " seconds" << std::endl;

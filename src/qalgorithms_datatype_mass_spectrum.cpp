@@ -52,7 +52,7 @@ namespace q
     int 
     MassSpectrum::getScanNumber() const
     {
-      return std::get<int>(metaData->at(DataField::SCANNUMBER));
+      return std::get<size_t>(metaData->at(DataField::SCANNUMBER));
     }
   }
 }

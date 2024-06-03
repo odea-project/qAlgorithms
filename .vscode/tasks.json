@@ -74,6 +74,8 @@
             "type": "shell",
             "command": "C:\\msys64\\mingw64\\bin\\g++.exe",
             "args": [
+                "-Wall",
+                "-Wno-unknown-pragmas",
                 "-fdiagnostics-color=always",
                 "-g",
                 "-fopenmp",

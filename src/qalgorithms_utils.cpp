@@ -159,7 +159,7 @@ namespace q
   const Matrix linreg(
       const std::vector<double> &xData,
       const std::vector<double> &yData,
-      const int degree)
+      const size_t degree)
   {
     // Create the matrix X
     Matrix X(xData.size(), degree + 1);
@@ -349,12 +349,12 @@ namespace q
     size_t n = A.rows;
     Matrix L(n, n);
 
-    for (int i = 0; i < n; i++)
+    for (size_t i = 0; i < n; i++)
     {
-      for (int j = 0; j <= i; j++)
+      for (size_t j = 0; j <= i; j++)
       {
         double sum = 0.0;
-        for (int k = 0; k < j; k++)
+        for (size_t k = 0; k < j; k++)
           sum += L(i, k) * L(j, k);
 
         if (i == j)
@@ -377,13 +377,13 @@ namespace q
     size_t n = A.rows;
     Matrix result(n, n);
 
-    for (int i = 0; i < n; i++)
+    for (size_t i = 0; i < n; i++)
     {
       result(i, i) = 1.0 / A(i, i);
-      for (int j = 0; j < i; j++)
+      for (size_t j = 0; j < i; j++)
       {
         double sum = 0.0;
-        for (int k = j; k < i; k++)
+        for (size_t k = j; k < i; k++)
           sum += A(i, k) * result(k, j);
         result(i, j) = -sum / A(i, i);
       }

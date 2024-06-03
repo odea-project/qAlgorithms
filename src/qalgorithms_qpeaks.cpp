@@ -71,13 +71,13 @@ namespace q
           all_peaks.resize(arg->size());
       // iterate over the map of varDataType datatype objects
 #pragma omp parallel for // use parallel for loop to iterate over the dataVec
-          for (int i = 0; i < arg->size(); i++)
+          for (size_t i = 0; i < arg->size(); i++)
           {
             // de-reference the unique pointer of the object
             auto &pair =  (*arg)[i];         // pair is a unique pointer to a datatype object
             auto &dataObj = *(pair.get());   // dataObj is a datatype object
             auto &data = dataObj.dataPoints; // data is a vector of unique pointers to data points structures
-            int n = data.size();
+            size_t n = data.size();
             if (n < 5)
             {
               continue; // not enough data points to fit a quadratic regression model
@@ -186,7 +186,9 @@ namespace q
       */
       // Matrix C = (*inverseMatrices[scale]) * mse; // variance-covariance matrix of the coefficients
       Matrix_mc_4x4 C = multiplyScalarTo4x4Matrix(mse, *inverseMatrices[scale]); // variance-covariance matrix of the coefficients
-      if (!isValidPeakHeight(B, C, i, apex_position, df_sum))
+      double height = 0.0;
+      double uncertainty_height = 0.0;
+      if (!isValidPeakHeight(B, C, i, apex_position, df_sum, height, uncertainty_height))
       {
         continue; // statistical insignificance of the height
       }
@@ -195,7 +197,9 @@ namespace q
         Area Filter:
         This block of code implements the area filter. It calculates the Jacobian matrix for the peak area based on the coefficients matrix B. Then it calculates the uncertainty of the peak area based on the Jacobian matrix. If the peak area is statistically insignificant, the loop continues to the next iteration.
       */
-      if (!isValidPeakArea(B, C, i, scale, df_sum))
+      double area = 0.0;
+      double uncertainty_area = 0.0;
+      if (!isValidPeakArea(B, C, i, scale, df_sum, area, uncertainty_area))
       {
         continue; // statistical insignificance of the area
       }
@@ -223,7 +227,7 @@ namespace q
       {
         continue; // degree of freedom less than 5; i.e., less then 5 measured data points
       }
-
+      double dqs = 1 - std::erf(uncertainty_area / area);
       validRegressionsTmp.push_back(
           std::make_unique<validRegression>(
               i + scale,                 // index of the center of the window (x==0) in the Y matrix
@@ -237,7 +241,11 @@ namespace q
               right_limit,               // right_limit
               left_limit - i,            // X_row_0
               right_limit - i + 1,       // X_row_1
-              0                          // dqs
+              dqs,                       // dqs
+              height,                    // peak height
+              area,                      // peak area
+              uncertainty_height,        // uncertainty of the peak height
+              uncertainty_area           // uncertainty of the peak area
               ));
     } // end for loop
     // early return if no or only one valid peak
@@ -345,7 +353,7 @@ namespace q
       std::vector<decltype(it_ref_peak)> validRegressionsInGroup; // vector of iterators
 
       // iterate over the validRegressions vector till the new peak
-      for (it_ref_peak; it_ref_peak < it_new_peak; ++it_ref_peak)
+      for ( ; it_ref_peak < it_new_peak; ++it_ref_peak)
       {
         if (!(*it_ref_peak)->isValid)
         {
@@ -443,18 +451,28 @@ namespace q
     for (auto &regression : validRegressions)
     {
       // re-scale the apex position to x-axis
-      double x0 = X[(int)std::floor(regression->apex_position)];
-      double dx = X[(int)std::ceil(regression->apex_position)] - x0;
-      double apex_position = x0 + dx * (regression->apex_position - std::floor(regression->apex_position));
+      const double x0 = X[(int)std::floor(regression->apex_position)];
+      const double dx = X[(int)std::ceil(regression->apex_position)] - x0;
+      const double apex_position = x0 + dx * (regression->apex_position - std::floor(regression->apex_position));
+
       // create a new peak object and push it to the peaks vector; the peak object is created using the scan number, the apex position and the peak height
       peaks.push_back(std::make_unique<DataType::Peak>(
           scanNumber,
           apex_position,
-          (regression->B[1] > 0)
-              ? std::exp(regression->B[0] - regression->B[1] * regression->B[1] / 4 / regression->B[3])
-              : std::exp(regression->B[0] - regression->B[1] * regression->B[1] / 4 / regression->B[2])));
-      // // debugging
+          regression->height));
+      
+      // add additional information to the peak object
+      peaks.back()->area = regression->area;
+      peaks.back()->areaUncertainty = regression->uncertainty_area;
+      peaks.back()->heightUncertainty = regression->uncertainty_height;
+      peaks.back()->dqsPeak = regression->dqs;
+      peaks.back()->beta0 = regression->B[0];
+      peaks.back()->beta1 = regression->B[1];
+      peaks.back()->beta2 = regression->B[2];
+      peaks.back()->beta3 = regression->B[3];
+      peaks.back()->x0 = X[regression->index_x0];
 
+      // // debugging
       // // get the index of the regression
       // int index = regression->index_x0;
       // // get scale
@@ -566,7 +584,7 @@ namespace q
     for (auto regression = regressions.begin(); regression != regressions.end(); ++regression)
     {
       // get the extended scale
-      int extendedScale = std::max(
+      size_t extendedScale = std::max(
           (*regression)->index_x0 - left_limit, // left limit
           right_limit - (*regression)->index_x0 // right limit
       );
@@ -577,7 +595,7 @@ namespace q
 #pragma omp critical
         {
           // scale is not available; create new design matrices from last available scale to the extended scale in steps of 1
-          for (int new_scale = designMatrices.size(); new_scale < extendedScale + 1; new_scale++)
+          for (size_t new_scale = designMatrices.size(); new_scale < extendedScale + 1; new_scale++)
           {
             createDesignMatrix(new_scale);
             createInverseAndPseudoInverse(*(designMatrices.back()));
@@ -727,10 +745,12 @@ namespace q
       const Matrix_mc_4x4 &C,
       const size_t index,
       const double apex_position,
-      const int df_sum) const
+      const int df_sum,
+      double &height,
+      double &uncertainty_height) const
   {
     double Jacobian_height[4]; // Jacobian matrix for the height
-    const double height = std::exp(B(0, index) + apex_position * B(1, index) * .5);
+    height = std::exp(B(0, index) + apex_position * B(1, index) * .5);
     Jacobian_height[0] = height;
     Jacobian_height[1] = apex_position * height;
     if (apex_position < 0)
@@ -743,9 +763,9 @@ namespace q
       Jacobian_height[2] = 0;
       Jacobian_height[3] = apex_position * Jacobian_height[1];
     }
-    const double h_uncertainty = std::sqrt(multiplyVecMatrixVecTranspose(Jacobian_height, C));
+    uncertainty_height = std::sqrt(multiplyVecMatrixVecTranspose(Jacobian_height, C));
 
-    return height / h_uncertainty > tValuesArray[df_sum - 5]; // statistical significance of the peak height
+    return height / uncertainty_height > tValuesArray[df_sum - 5]; // statistical significance of the peak height
   }
 #pragma endregion isValidPeakHeight
 
@@ -756,7 +776,9 @@ namespace q
       const Matrix_mc_4x4 &C,
       const size_t index,
       const int scale,
-      const int df_sum) const
+      const int df_sum,
+      double &area,
+      double &uncertainty_area) const
   {
     // predefine expressions
     const double b0 = B(0, index);
@@ -791,6 +813,29 @@ namespace q
         (b3 < 0)
             ? 1 + std::erf(b1 / 2 / SQRTB3) // ordinary peak
             : -erfi(b1 / 2 / SQRTB3);       // peak with valley point ;
+
+    // calculate the Jacobian matrix terms
+    const double J_1_common_L = SQRTPI_2 * EXP_B0 * EXP_B12 / SQRTB2;
+    const double J_1_common_R = SQRTPI_2 * EXP_B0 * EXP_B13 / SQRTB3;
+    const double J_2_common_L = B1_2_B2 * EXP_B0 / b1;
+    const double J_2_common_R = B1_2_B3 * EXP_B0 / b1;
+    const double J_1_L = J_1_common_L * err_L;
+    const double J_1_R = J_1_common_R * err_R;
+    const double J_2_L = J_2_common_L - J_1_L * B1_2_B2;
+    const double J_2_R = -J_2_common_R - J_1_R * B1_2_B3;
+
+    J[0] = J_1_R + J_1_L;
+    J[1] = J_2_R + J_2_L;
+    J[2] = -B1_2_B2 * (J_2_L + J_1_L / b1);
+    J[3] = -B1_2_B3 * (J_2_R + J_1_R / b1);
+
+    area = J[0];
+    uncertainty_area = std::sqrt(multiplyVecMatrixVecTranspose(J, C));
+
+    if (area / uncertainty_area <= tValuesArray[df_sum - 5])
+    {
+      return false;
+    }
 
     const double err_L_covered = ///@todo : need to be revised
         (b2 < 0)
@@ -836,35 +881,19 @@ namespace q
     const double trpzd_b2 = (x_left * x_left * y_left) * dX / 2;
     const double trpzd_b3 = (x_right * x_right * y_right) * dX / 2;
 
-    // calculate the Jacobian matrix terms
-    const double J_1_common_L = SQRTPI_2 * EXP_B0 * EXP_B12 / SQRTB2;
-    const double J_1_common_R = SQRTPI_2 * EXP_B0 * EXP_B13 / SQRTB3;
-    const double J_2_common_L = B1_2_B2 * EXP_B0 / b1;
-    const double J_2_common_R = B1_2_B3 * EXP_B0 / b1;
-
-    const double J_1_L = J_1_common_L * err_L;
     const double J_1_L_covered = J_1_common_L * err_L_covered;
-    const double J_1_R = J_1_common_R * err_R;
     const double J_1_R_covered = J_1_common_R * err_R_covered;
-
-    const double J_2_L = J_2_common_L - J_1_L * B1_2_B2;
     const double J_2_L_covered = J_2_common_L - J_1_L_covered * B1_2_B2;
-    const double J_2_R = -J_2_common_R - J_1_R * B1_2_B3;
     const double J_2_R_covered = -J_2_common_R - J_1_R_covered * B1_2_B3;
-
-    J[0] = J_1_R + J_1_L;
-    J[1] = J_2_R + J_2_L;
-    J[2] = -B1_2_B2 * (J_2_L + J_1_L / b1);
-    J[4] = -B1_2_B3 * (J_2_R + J_1_R / b1);
 
     J_covered[0] = J_1_R_covered + J_1_L_covered - trpzd_b0;
     J_covered[1] = J_2_R_covered + J_2_L_covered - trpzd_b1;
     J_covered[2] = -B1_2_B2 * (J_2_L_covered + J_1_L_covered / b1) - trpzd_b2;
     J_covered[3] = -B1_2_B3 * (J_2_R_covered + J_1_R_covered / b1) - trpzd_b3;
-    const double area_uncertainty = std::sqrt(multiplyVecMatrixVecTranspose(J, C));
+    
     const double area_uncertainty_covered = std::sqrt(multiplyVecMatrixVecTranspose(J_covered, C));
 
-    return J[0] / area_uncertainty > tValuesArray[df_sum - 5] && J_covered[0] / area_uncertainty_covered > tValuesArray[df_sum - 5];
+    return J_covered[0] / area_uncertainty_covered > tValuesArray[df_sum - 5];
   }
 #pragma endregion isValidPeakArea
 

@@ -35,6 +35,7 @@ namespace q
      * @param valleyPosition The valley position of the peak
      * @param df The degrees of freedom
      * @param xIndex The index of the regression window position
+     * @param x0 The center point (x value) of the regression window in the original data set
      */
     class Peak
     {
@@ -67,10 +68,8 @@ namespace q
       double valleyPosition;
       int df;
       int xIndex;
-
-      // debugging
-      std::vector<double> xFit;
-      std::vector<double> yFit;
+      double x0;
+      // methods
       void print();
     };
 

@@ -44,21 +44,21 @@ namespace q
          * @param dataVec A variant data type
          * @param maxKey The maximum key value in the current data vector. This value is used to create a new key for the new data subset.
          */
-        void cutData(varDataType& dataVec, int& maxKey);
+        void cutData(varDataType& dataVec, size_t &maxKey);
 
         /**
          * @brief Filter small data sets
          * @details The filterSmallDataSets method filters small data sets. The method removes data sets with less than 5 data points. This is due to the regression analysis that includes 4 coefficients and therefore requires at least 5 data points.
          * @param dataVec A variant data type
          */
-        void filterSmallDataSets(varDataType& dataVec);
+        void filterSmallDataSets(varDataType &dataVec);
 
         /**
          * @brief Interpolate y-axis values
          * @details The interpolateData method interpolates the y-axis values. The method uses quadratic interpolation to interpolate the y-axis values in the log space.
          * @param dataVec A variant data type
          */
-        void interpolateData(varDataType& dataVec);
+        void interpolateData(varDataType &dataVec);
 
         // debugging
         // virtual void print() = 0;

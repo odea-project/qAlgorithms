@@ -22,7 +22,7 @@ namespace q
                    auto &data = dataObj.dataPoints;
 
                    double previousX = data[0]->x();
-                   for (int i = 1; i < data.size(); i++)
+                   for (size_t i = 1; i < data.size(); i++)
                    {
                      double difference = data[i]->x() - previousX;
                      differences.push_back(difference);
@@ -105,14 +105,14 @@ namespace q
                    // flip separators vector
                    std::reverse(separators.begin(), separators.end());
                    // cumulative difference for separators // HERE IS SOME ERROR
-                   for (int i = 0; i < separators.size() - 1; i++)
+                   for (size_t i = 0; i < separators.size() - 1; i++)
                    {
                      separators[i] = separators[i] - separators[i + 1];
                    }
                    // delete the last element of the separators vector
                    separators.pop_back();
                    // add the separators to the Object's cuttingPoints vector, which is a vector of unique pointers to size_t objects
-                   for (int i = 0; i < separators.size(); i++)
+                   for (size_t i = 0; i < separators.size(); i++)
                    {
                      dataObj.cuttingPoints.push_back(std::make_unique<size_t>(separators[i]));
                    }
@@ -123,18 +123,18 @@ namespace q
                dataVec); // end of visit
   }                      // end of zeroFilling
 
-  void MeasurementData::cutData(varDataType &dataVec, int &maxKey)
+  void MeasurementData::cutData(varDataType &dataVec, size_t &maxKey)
   {
     std::visit([&maxKey](auto &&arg)
                {
-                 std::vector<int> keys;
-                 for (int i = 0; i <= maxKey; i++)
+                 std::vector<size_t> keys;
+                 for (size_t i = 0; i <= maxKey; i++)
                  {
                    keys.push_back(i);
                  }
 
                  // iterate over the vector of varDataType objects
-                 for (const auto &key : keys)
+                 for (const size_t &key : keys)
                  {
                    // de-reference the unique pointer of the datatype object
                    auto &dataObj = *((*arg)[key].get());
@@ -168,7 +168,7 @@ namespace q
                       auto &dataObj = *(pair.get());
                       auto &dataPoints = dataObj.dataPoints;
                       double sum = 0.0;
-                      for (int i = 0; i < dataPoints.size(); i++)
+                      for (size_t i = 0; i < dataPoints.size(); i++)
                       {
                         sum += dataPoints[i]->df;
                       }
@@ -181,7 +181,7 @@ namespace q
                      auto &dataObj = *(pair.get());
                      auto &dataPoints = dataObj.dataPoints;
                      double sum = 0.0;
-                     for (int i = 0; i < dataPoints.size(); i++)
+                     for (size_t i = 0; i < dataPoints.size(); i++)
                      {
                        sum += dataPoints[i]->df;
                      }
@@ -216,7 +216,7 @@ namespace q
                        // ALL THE DATA SETS CONSIDERED HAVE AT LEAST 4 DATA POINTS WITH INTENSITY > 0 (due to filterSmallDataSets)
                        // extract the largest y value, which is used for thershoulding the extrapolations, i.e. MAX < 3 * max(y)
                        double MAX = 0.0;
-                       for (int i = 0; i < dataPoints.size(); i++)
+                       for (size_t i = 0; i < dataPoints.size(); i++)
                        {
                          if (dataPoints[i]->y() > MAX)
                          {
@@ -228,10 +228,10 @@ namespace q
                        // find the first and last data points in dataPoints->y() that are not zero and store them in xDataTemp and yDataTemp
                        std::vector<double> xDataTemp;
                        std::vector<double> yDataTemp;
-                       int I = 0;
-                       int J = 0;
+                       size_t I = 0;
+                       size_t J = 0;
                        // iterate over the data points to find the first data point that is not zero
-                       for (int i = 0; i < dataPoints.size(); i++)
+                       for (size_t i = 0; i < dataPoints.size(); i++)
                        {
                          if (dataPoints[i]->y() > 0.0)
                          {
@@ -242,7 +242,7 @@ namespace q
                          }
                        }
                        // iterate over the data points to find the last data point that is not zero
-                       for (int j = dataPoints.size() - 1; j >= 0; j--)
+                       for (size_t j = dataPoints.size() - 1; j >= 0; j--)
                        {
                          if (dataPoints[j]->y() > 0.0)
                          {
@@ -254,8 +254,8 @@ namespace q
                        }
                        // find the maximum data point
                        double max = 0.0;
-                       int maxIndex = 0;
-                       for (int k = I; k < J; k++)
+                       size_t maxIndex = 0;
+                       for (size_t k = I; k < J; k++)
                        {
                          if (dataPoints[k]->y() > max)
                          {
@@ -287,7 +287,7 @@ namespace q
                        // calculate the coefficients b0, b1, and b2 for the quadratic extrapolation
                        Matrix B = linreg(xDataTemp, yDataTemp, 2);
                        // extrapolate the y-axis values for i=0 to I-1 and j=J+1 to dataPoints.size()-1
-                       for (int i = 0; i < I; i++)
+                       for (size_t i = 0; i < I; i++)
                        {
                          dataPoints[i]->setY(exp(B(0, 0) + B(1, 0) * (dataPoints[i]->x() - dataPoints[0]->x()) + B(2, 0) * (dataPoints[i]->x() - dataPoints[0]->x()) * (dataPoints[i]->x() - dataPoints[0]->x())));
                          dataPoints[i]->df = 0;
@@ -297,7 +297,7 @@ namespace q
                            dataPoints[i]->setY(3 * MAX);
                          }
                        }
-                       for (int j = J + 1; j < dataPoints.size(); j++)
+                       for (size_t j = J + 1; j < dataPoints.size(); j++)
                        {
                          dataPoints[j]->setY(exp(B(0, 0) + B(1, 0) * (dataPoints[j]->x() - dataPoints[0]->x()) + B(2, 0) * (dataPoints[j]->x() - dataPoints[0]->x()) * (dataPoints[j]->x() - dataPoints[0]->x())));
                          dataPoints[j]->df = 0;
@@ -310,12 +310,12 @@ namespace q
 
                        /* Handle the middle of the data. Hereby, we use a quadratic interpolation to fill the gaps between the data points. */
                        // iterate over the data points from I to J
-                       for (int i = I; i <= J; i++)
+                       for (size_t i = I; i <= J; i++)
                        {
                          if (dataPoints[i]->y() == 0.0)
                          {
                            // now, we asume the last value before the zero appears at index "i-1" and we need to find the next data point "j" that is not zero to define the range for the interpolation
-                           int j = i + 1;
+                           size_t j = i + 1;
                            while (dataPoints[j]->y() == 0.0)
                            {
                              if (j >= J)
@@ -327,8 +327,8 @@ namespace q
                            // now we have the range from "i" to "j-1" for the interpolation and we need to find the next two data points that are not zero on each side of the range to use them for the interpolation as reference points
                            xDataTemp.clear();
                            yDataTemp.clear();
-                           int k = i - 1; // first reference point to the left
-                           int l = j;     // first reference point to the right
+                           size_t k = i - 1; // first reference point to the left
+                           size_t l = j;     // first reference point to the right
 
                            // side: left
                            // find the next two data points that are not zero
@@ -367,7 +367,7 @@ namespace q
                            // calculate the coefficients b0, b1, and b2 for the quadratic interpolation
                            B = linreg(xDataTemp, yDataTemp, 2);
                            // calculate the interpolated y-axis values
-                           for (int n = i; n < j; n++)
+                           for (size_t n = i; n < j; n++)
                            {
                              dataPoints[n]->setY(exp(B(0, 0) + B(1, 0) * (dataPoints[n]->x() - dataPoints[0]->x()) + B(2, 0) * (dataPoints[n]->x() - dataPoints[0]->x()) * (dataPoints[n]->x() - dataPoints[0]->x())));
                              dataPoints[n]->df = 0;

@@ -60,7 +60,7 @@ namespace q
     const Matrix linreg(
         const std::vector<double> &xData,
         const std::vector<double> &yData,
-        const int degree);
+        const size_t degree);
 
     extern const double tValuesArray[500];
     extern const double chiSquareArray[500];

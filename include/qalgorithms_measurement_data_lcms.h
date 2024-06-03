@@ -104,7 +104,7 @@ namespace q
         std::vector<std::unique_ptr<DataType::MassSpectrum>> data;
     private:
         
-        int maxKey;
+        size_t maxKey;
     };
 }
 #endif // QALGORITHMS_MEASUREMENT_DATA_LCMS_H

@@ -45,68 +45,76 @@ namespace q
         }
 
         // find the DataFiled::SCANNUMBER as this is the key for the LCMSData vector
-        int scanNumberIndex = -1;
-        for (int i = 0; i < variableTypes.size(); i++)
+        bool flag = false;
+        size_t scanNumberIndex = 0;
+        for (size_t i = 0; i < variableTypes.size(); i++)
         {
             if (variableTypes[i] == DataField::SCANNUMBER)
             {
                 scanNumberIndex = i;
+                flag = true;
                 break;
             }
         }
         // check if scanNumberIndex is found
-        if (scanNumberIndex == -1)
+        if (!flag)
         {
             std::cerr << "The scan number is not found in the variable types" << std::endl;
             return;
         }
 
         // find the DataFiled::RETENTIONTIME
-        int retentionTimeIndex = -1;
-        for (int i = 0; i < variableTypes.size(); i++)
+        flag = false;
+        size_t retentionTimeIndex = 0;
+        for (size_t i = 0; i < variableTypes.size(); i++)
         {
             if (variableTypes[i] == DataField::RETENTIONTIME)
             {
                 retentionTimeIndex = i;
+                flag = true;
                 break;
             }
         }
         // check if retentionTimeIndex is found
-        if (retentionTimeIndex == -1)
+        if (!flag)
         {
             std::cerr << "The retention time is not found in the variable types" << std::endl;
             return;
         }
 
         // find the DataFiled::MZ
-        int mzIndex = -1;
-        for (int i = 0; i < variableTypes.size(); i++)
+        flag = false;
+        size_t mzIndex = 0;
+        for (size_t i = 0; i < variableTypes.size(); i++)
         {
             if (variableTypes[i] == DataField::MZ)
             {
                 mzIndex = i;
+                flag = true;
                 break;
             }
         }
         // check if mzIndex is found
-        if (mzIndex == -1)
+        if (!flag)
         {
             std::cerr << "The mz is not found in the variable types" << std::endl;
             return;
         }
 
         // find the DataFiled::INTENSITY
-        int intensityIndex = -1;
-        for (int i = 0; i < variableTypes.size(); i++)
+        flag = false;
+        size_t intensityIndex = 0;
+        for (size_t i = 0; i < variableTypes.size(); i++)
         {
             if (variableTypes[i] == DataField::INTENSITY)
             {
                 intensityIndex = i;
+                flag = true;
                 break;
             }
         }
         // check if intensityIndex is found
-        if (intensityIndex == -1)
+        if (!flag)
         {
             std::cerr << "The intensity is not found in the variable types" << std::endl;
             return;
@@ -145,12 +153,13 @@ namespace q
         }
 
         // transfere the raw data to the data vector
-        int data_id = 0; // data id is used to identify the data set
+        // int data_id = 0; // data id is used to identify the data set // @todo: delete this line
         maxKey = 0;
-        for (int i = 0; i < raw_data.size(); i++)
+
+        for (size_t i = 0; i < raw_data.size(); i++)
         {
             // check if the scan number is already in the data vector
-            int scanNumber = std::stoi(raw_data[i][scanNumberIndex]);
+            size_t scanNumber = std::stoi(raw_data[i][scanNumberIndex]);
             if (this->data.size() < scanNumber + 1)
             { // scan number is not found in the data vector; initialize a new MassSpectrum object and add meta information
                 // add the MassSpectrum object to the data vector
@@ -190,7 +199,7 @@ namespace q
                 continue;
             }
             size_t number_of_data_points = spectra[i][0].size();
-            int scanNumber = scanNumbers[i];
+            size_t scanNumber = scanNumbers[i];
             double retentionTime = retentionTimes[i];
             if (this->data.size() < i + 1)
             { // scan number is not found in the data vector; initialize a new MassSpectrum object and add meta information
