@@ -223,7 +223,7 @@ hist(summary_error$mean_scans - summary_error$median_scans, breaks = 100)
 hist(summary_error$mean_scans[which(summary_error$errorcode != 1000)] - summary_error$median_scans[which(summary_error$errorcode != 1000)], breaks = 100)
 hist(summary_error$mean_scans[which(summary_error$errorcode == 1000)] - summary_error$median_scans[which(summary_error$errorcode == 1000)], breaks = 100)
 
-ggplot(bins_error[which(bins_error$ID == 8535),])+
+ggplot(bins_error[which(bins_error$ID == 39013),])+
   geom_point(aes(mz, scan), color = "red")+ # , color = as.factor(ID)
   xlab("m/z")+
   ylab("Scan Number")+

@@ -205,17 +205,17 @@ namespace q
     /// @brief calculate the mean distance in mz to all other elements of a sorted vector for one element
     /// @param pointsInBin vector of data points sorted by mz
     /// @return vector of the mean inner distances for all elements in the same order as pointsInBin
-    std::vector<double> meanDistance(const std::vector<Datapoint *> pointsInBin);
+    static std::vector<double> meanDistance(const std::vector<Datapoint *> pointsInBin);
 
     /// @brief calculate the data quality score as described by Reuschenbach et al. for one datapoint in a bin
     /// @param MID mean inner distance in mz to all other elements in the bin
     /// @param MOD minimum outer distance - the shortest distance in mz to a data point that is within maxdist and not in the bin
     /// @return the data quality score for the specified element
-    double calcDQS(const double MID, const double MOD); // Mean Inner Distance, Minimum Outer Distance
+    static double calcDQS(const double MID, const double MOD); // Mean Inner Distance, Minimum Outer Distance
 
     void check_MOD_outOfBins(const Bin *target, const std::vector<q::Datapoint *> notBinned, const int maxdist);
 
-    void scaleDistancesForDQS_gauss(int maxdist); // @experimental
+    static void scaleDistancesForDQS_gauss(int maxdist); // @experimental
 
 }
 

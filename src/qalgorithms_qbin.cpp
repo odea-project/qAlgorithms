@@ -784,7 +784,7 @@ namespace q
 
 #pragma region "Functions"
 
-    std::vector<double> meanDistance(const std::vector<Datapoint *> pointsInBin)
+    static std::vector<double> meanDistance(const std::vector<Datapoint *> pointsInBin)
     {
         // assumes bin is sorted by mz
         const size_t binsize = pointsInBin.size();
@@ -807,7 +807,7 @@ namespace q
         return output;
     }
 
-    inline double calcDQS(const double MID, const double MOD) // mean inner distance, minimum outer distance
+    static inline double calcDQS(const double MID, const double MOD) // mean inner distance, minimum outer distance
     {
         double dqs(MOD); // MOD should always be less than MID, less cache misses
         if (dqs < MID)
@@ -821,13 +821,13 @@ namespace q
         return fmal((MOD - MID) / fmal(MID, dqs, dqs), 0.5, 0.5);
     }
 
-    inline double calcVcrit(const int binSize, const double errorStart, const double errorEnd)
+    static inline double calcVcrit(const int binSize, const double errorStart, const double errorEnd)
     {
         const double vcrit = 3.05037165842070 * pow(log(binSize), (-0.4771864667153)) * (errorEnd - errorStart) / binSize;
         return vcrit;
     }
 
-    void scaleDistancesForDQS_gauss(int maxdist) // @experimental
+    static void scaleDistancesForDQS_gauss(int maxdist) // @experimental
     {
         // calculate the gauss function transformed so that f(x = 0) == 1
         static const double scaleHeight = 2.506628274631;    // scale the curve height
