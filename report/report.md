@@ -63,8 +63,6 @@ large-scale processing.
 
 ## Introduction
 
-NTS is finding increasing adoption 
-
 With the increasing application of NTS-based methods for toxicological
 analysis of environmental samples and the -omics disciplines, it
 has become critical to assure comparability and quality of results.
@@ -126,8 +124,9 @@ Accordingly, qBinning does not depend on user input but instead utilizes
 statistical principles' parameters. These consider the essential
 mathematical properties of a peak and sidestep the subjective approach
 of manual parameter selection and optimization. The chosen approach allows
-bins to be non-continuous in the scan dimension, which is not provided
-by other binning approaches [@gerrit: This is not true, e.g., ADAP also works with gaps; however, it also requires input parameters from users]. 
+bins to be non-continuous in the scan dimension, which is not possible in all
+other popular binning approaches, for example 
+[@gerrit: This is not true, e.g., ADAP also works with gaps; however, it also requires input parameters from users]. 
 The removal of this multitude of parameters
 also removes the time investment needed to optimize them and provides 
 a uniform base for other steps toward feature detection and annotation.
@@ -160,7 +159,10 @@ From a high-level perspective, the algorithm searches for groups of similar mass
 in a given dataset and ensures no group has too much space in the chromatographic
 dimension between included points. Where the grouping criteria do not match,
 groups are split until a good grouping is achieved.
-[@gerrit: here, you can introduce the subsequent top-down approach in a short sentence]. 
+This results in many small groups with high internal similarity being created
+out of one group containing the entire dataset and as such a very high level
+of internal dissimilarity.
+[@gerrit: here, you can introduce the subsequent top-down approach in a short sentence // adressed?]. 
 
 From this point, a group will be referred to as
 a *closed bin* if the algorithm determines that it cannot be subdivided further
@@ -170,7 +172,7 @@ MS data with the parameter mz and at least one additional dimension of separatio
 Groups are only referred to as bins if they have not yet been handed to the peak 
 fitting algorithm, meaning they still contain additional information like their cumulative 
 error and a check if two binned points have the same scan number.
-[@gerrit: not clear what you mean with metadata]. 
+[@gerrit: not clear what you mean with metadata // adressed]. 
 Creating one or more new bins from an existing one while discarding all
 points not present in one of the new bins is called subsetting. Only 
 open bins can be subject to subsetting.
@@ -186,7 +188,7 @@ Subsetting is performed iteratively over all open bins. Since the algorithm requ
 bin to start, all centroids in the dataset are collected and merged into one bin initially.
 
 First, open bins are subset by mz. Grouping in mz utilizes the order spaces of
-neighboring masses [@gerrit: order spaces are the differences of sorted neighboring data points, i.e., order spaces of neighboring masses is overestimated], which are calculated after sorting points in the bin by mz.
+neighboring data points [@gerrit: order spaces are the differences of sorted neighboring data points, i.e., order spaces of neighboring masses is overestimated // changed to data points, why overestimation of OS of masses?], which are calculated after sorting points in the bin by mz.
 Assuming that members of an ideal bin are normally distributed in mz, a test statistic
 can be calculated given alpha and bin size. This statistic describes the largest
 difference between two order spaces still within bounds for points belonging to
@@ -204,7 +206,7 @@ If no order space is greater than the critical distance and there are more than
 five points in a fragment, it is turned into a new open bin. Five points are limited since no peak can be fitted to smaller ones, considering a peak model that uses four coefficients, e.g., the qPeaks model by Reuschenbach et al., 2024.
 Once no fragment can be subset further, the resulting bins are subset by scans.
 (@gerrit: This is due to our assumption; however, it is important to mention that the 
-centroid error is also just an estimate for the standard deviation of the assumed normal distribution.)
+centroid error is also just an estimate for the standard deviation of the assumed normal distribution. // adressed)
 
 (@gerrit: here, it is not neighboring masses but the neighboring orders of the masses, 
 so it is sorted. However, sorting is not mentioned at all. Moreover, this is based on 
@@ -212,7 +214,7 @@ the assumption that a normally distributed variable provides a characteristic or
 space between first and second or last and last-1 masses. This order space is distributed 
 similarly to an exponential distribution with a decreasing probability for increasing 
 distances. Here, we assume that a cumulative probability of 99 % can be used to 
-estimate a threshold for an acceptable distance.)
+estimate a threshold for an acceptable distance. // adressed)
 
 For subsetting a bin by scans, it is sorted by scans and then subset at every 
 position where the difference between two neighbouring points is greater than six.
@@ -233,7 +235,7 @@ more than six scans away from the centroid. For the calculation, refer
 to calcDQS in the Functions region of qalgorithms_qbin.cpp.
 The DQS is scaled to the interval [0,1] to allow for weighing in later steps. The DQSB
 is the mean DQS of all bin members.
-(@gerrit: this should include the corresponding literature.)
+(@gerrit: this should include the corresponding literature. // adressed)
 
 
 ### Module Requirements
@@ -250,8 +252,8 @@ Data is represented as DataPoint objects, which are handled in one of two ways:
 * multiple Bin objects in one BinContainer object  
 
 <b> DataPoint objects: </b>
-One DataPoint contains mz, RT, intensity, scan number, the centroid error, and an optional 
-control value specifying the correct DQS. Data points are never modified during the binning process. 
+One DataPoint contains mz, RT, intensity, scan number, and the centroid error.
+Data points are never modified during the binning process. 
 DataPoints are Structs as defined in the c++ 21 standard.
 (@gerrit: here, a small tree would be nice for an overview like: 
 // puts too much emphasis on implementation detail. Just read the code at that point
@@ -265,19 +267,19 @@ DataPoint
 |-- control value (optional)
     |
     |-- bin assignment
-)
+) // adressed
 
 <b> The RawData object: </b>
 Centroided data is stored as individual scans, with one vector per scan. Within the scans, 
 data points are sorted by mz. Scans are accessed through a vector containing all scans. 
-It is possible to account for empty scans. (@gerrit: a tree would be nice.) // see above
+It is possible to account for empty scans. (@gerrit: a tree would be nice. // adressed) // see above
 
 <b> Bin objects: </b>
 Every Bin stores all data points determined to belong to the same EIC. All subsetting 
 methods are called on the bin without requiring knowledge of data points outside of the bin.
 The main difference between Bins and EICs is that a Bin only operates with pointers to data
 points in RawData, while the EIC can be used independently of the RawData it was generated from. 
-(@gerrit: so, what is the reason for using the structure of these bins instead of just EICs?-> this should be explained)
+(@gerrit: so, what is the reason for using the structure of these bins instead of just EICs?-> this should be explained // adressed)
 Additionally, bins keep track of information that can later be used for filtering or weighing
 purposes, such as if any scans appear more than once in the data and median values
 for scans and masses. These details are irrelevant to the peak finding process and
@@ -298,7 +300,7 @@ a deque object containing only Bins requires further subsetting (open Bins).
 The subsetting methods are applied to all bins sequentially, with every iteration following the 
 user-specified order. If the last subsetting step does not change the bin, it is considered
 closed. For the present program, this means no significant gaps exist in the bin.
-and removing bins that can no longer be a subset (closed Bins) from the deque. (@gerrit: it should be mentioned, that closing a bin is based on the criteria: no significant gap in the data group is left.)
+and removing bins that can no longer be a subset (closed Bins) from the deque. (@gerrit: it should be mentioned, that closing a bin is based on the criteria: no significant gap in the data group is left. // addressed)
 Once a Bin is closed, it is added to a vector that contains all closed Bins. Once binning is 
 complete, the DQSB is calculated for all bin members in all closed bins.
 
@@ -307,7 +309,6 @@ complete, the DQSB is calculated for all bin members in all closed bins.
 The following functions, not including constructors and other utility functions, are included 
 as part of the qBinning module:
 * RawData: readcsv
-* RawData: readtxt
 * Bin: makeOS
 * Bin: makeCumError
 * Bin: subsetMZ
@@ -317,7 +318,7 @@ as part of the qBinning module:
 
 
 <b> readcsv: </b>
-Both functions parse data points from a text file and construct a vector containing 
+This function parses data points from a text file (.csv) and constructs a vector containing 
 individual scans. Within each scan, data points are ordered by m/z in increasing order. These functions
 primarily exist for testing since the qBinning module is designed to accept centroided data 
 from the previous step in the qAlgorithms pipeline. 
@@ -340,7 +341,7 @@ This function takes a bin after it was sorted by mz and splits it according to t
 described in [@reuschenbachQBinningDataQualityBased2023].
 It starts by taking the OS of the bin that calls it and searching for the maximum, corresponding
 to the largest difference between two neighboring mz values in the sorted bin. If the maximum
-is greater than the critical value (@gerrit: based on the above-mentioned assumption), 
+is greater than the critical value (as explained in the [introduction](#algorithm)), 
 the bin is split at this position, and subsetMZ is called for both resulting halves. 
 The critical value is calculated for an &alpha;
 of 0.01 and normalized to the mean centroid error. The mean error is derived from the cumulative
@@ -585,16 +586,43 @@ Criteria are implemented using the summaiseBin function and
 as such are only evaluated in terms of being true or false.
 Results of the tests are presented [here](#test-results).
 
-**1) Duplicates in Scans**
+The two main ways a bin can deviate from the expected ideal
+is by containing data points that should not be in the bin
+and it not containing points that belong to the bin.
+In the first case, separation was insufficient and the bin 
+can be improved by further subsetting it with stricter 
+tolerances in its dimensions or further restrictions.
+An example for such a bin is one which contains two "true" bins
+and some noise data.
+In the second case, a bin contained a gap that was greater than
+the critical distance at the moment of separation, but after this
+bin was split further the previously discarded point (or points)
+are within the critical distance. This case also includes situations
+in which the discarded points form their own bin.
 
-The theoretical bin contains one element for every scan it extends
-over. Since, a declared purpose of this algorithm is to detect bins
-even when single points are missing from a series, only a scan being
-represented twice can be counted as an error. (@gerrit: what are the consequences of this observation?) 
-If a scan appears twice at a different mass, it is possible that two 
-very similar bins were combined into one due to the centroid error
-being too large. As such, duplicate scans can serve as an indicator
-for the separation not being strict enough.
+Both cases are important to detect and, where possible, to prevent
+so that the generated features reflect reality as accurately
+as possible. Inversely, feature detection could be set to
+only consider bins which fulfill strict quality parameters.
+
+To control both cases from both angles, seven different quality tests
+were developed. They utilise only data which can be obtained
+either directly from the bin, previous binning steps or
+with minimal calculation effort. This has the advantage of
+being fast and not introducing additional parameters into the algorithm.
+
+The following tests are numbered according to the bit position
+that encodes them, as in 0x8)7)6)5)4)3)2)1).
+
+They can be grouped by the above criteria and how the problem is
+approached. Either a specific point is identified as cause or the
+general behaviour of the bin is observed (Table 1). Test 6) is 
+listed twice since it can apply in both cases.
+
+| Approach    	  | Bin contains wrong point | Bin does not contain right point |
+| ----------:     | :----------------------: | :------------------------------: |
+| **Find point**  | 1)						 | 2), 7)							|
+| **Observe Bin** | 6), 3), 5)				 | 6)								|
 
 **2) Too Strict Separation**
 
@@ -623,25 +651,50 @@ While this leads to a blind spot in the detection of bad bins,
 a complete analysis would require the development of a new clustering
 algorithm which functions by increasing bin size and merging
 similar bins in accordance with the detailed statistical criteria.
-(@gerrit: here you should add if this was observed or not? => moved to separate section)
 
-**3+4) Deviation of Median and Mean**
+This test reliably detects some, but probably not all, bins
+which do not contain all points that they should. To gain
+a comparison value, in a follow-up test all bins which
+have a point within the critical distance for the bin
+size that would be removed from the bin if it was added
+to it were marked.
+
+(@gerrit: here you should add if this was observed or not? => moved to separate section // adressed)
+
+---
+
+All following tests serve to detect bins where the separation was not strict enough.
+
+**1) Duplicates in Scans**
+
+The theoretical bin contains one element for every scan it extends
+over. Since a declared purpose of this algorithm is to detect bins
+even when single points are missing from a series, only a scan being
+represented twice can be counted as an error (as opposed to the 
+absence of an expected scan). (@gerrit: what are the consequences of this observation? // adressed) 
+If a scan appears twice at a different mass, it is possible that two 
+very similar bins were combined into one due to the centroid error
+being too large. As such, duplicate scans can serve as an indicator
+for the separation not being strict enough.
+
+**3) Deviation of Median and Mean**
 
 In a perfect normal distribution, the mean and median are identical.
 To account for deviations, error thresholds are defined based on
 the established process parameters.
-Test 3) checks for deviations in the scan dimension, a discrepancy of up to six
-is deemed acceptable. This is equal to the largest tolerated gap
-during the binning step.[@gerrit: this is unclear, we need to discuss this] 
-Test 4) checks for mz deviations, the mean centroid error times two is accepted.
-This allows both values to be at the fringe of their respective
-extension and still be counted. (@gerrit: explain what you are investigating with this test. and discuss the results from it)
-If either condition is not fulfilled, it is possible that the generated
+Test 3) controls this in the mz dimension, with a tolerance of 
+the mean centroid error times two. It was chosen since 
+the (hypothetical) centroids at position of median and mean
+can be counted as identical if they overlap, and both are assumed
+to have the same error. For consistency, especially between large bins,
+the actual centroid error of the median is not considered.
+(@gerrit: explain what you are investigating with this test. and discuss the results from it // adressed)
+If this condition is not fulfilled, it is possible that the generated
 bin encompasses multiple bins and/or noise, leading to a skewed distribution.
 This asymmetry is less relevant for small bins with large gaps between
 points, but it is questionable whether those represent real peaks to
-begin with. Both deviations being present at once in a large bin
-is the case in which an incomplete separation is the most likely.
+begin with. This test is less relevant for very small bins,
+since mean and median deviate more stongly. 
 
 **5) Points Outside the 3-sigma Interval**
 
@@ -650,7 +703,7 @@ At 3 sigma, the likelihood of a point being part of a normally distributed
 sample is similar to the 1% error margin used to calculate the critical 
 value during binning. Since this estimate does not consider the absolute
 deviation of the outliers, it should only be used as a component of 
-estimating high scattering in bins.
+estimating the correctness of bins which show heavy scattering.
 
 **6) DQSB below 0.5**
 
@@ -673,23 +726,29 @@ split again. A bin for which this condition is true could possibly
 benefit from slightly increasing the estimated centroid error, but
 should not be considered an undesirable grouping.
 
-The eighth test slot was not used for this evaluation.
+The slots four and eight were not used for this evaluation.
 
 ## Discussion
 
 Centroid error is underestimated, leading to more strict binning than ideal [@gerrit: we will discuss]
 kontext existierender literatur ; vergleichbare Ergebnisse? [@gerrit: mostly not applicable, but we can compare with adap or roi]
 (@daniel: both points redundant, binning strictness is too much work to characterise
-the problem properly and result comparability requires more than one dataset => significantly more time.)
+the problem properly and result comparability requires more than one dataset => significantly more time. // adressed)
 
 ### Test Results
+During testing, median and mean of the scan numbers were
+also compared. This test did not select bins with a notably
+worse distribution, and was removed. A replacement has 
+not been introduced, but the peak fitting step will likely
+remove all cases that could have been discovered in this stage.
+
 The tests presented [here](#test-criteria-for-bin-correctness) were performed on the
-Warburg-Dataset after binning. It contains 55910 total bins, 2205
+Warburg-Dataset after binning. It contains 55910 total bins, 2205 of which
 (4%) fulfilled at least one test condition. The points in these
-bins make up 28% of the entire dataset, or 41% of all binned
+bins make up 24% of the entire dataset, or 35% of all binned
 points. Binsize is the most strongly correlating parameter for
 a test being positive, with the detected bins averaging around 
-265 members and the remaining bins around 47.[@gerrit: so what is the reason for this; this is something we should discuss]
+284 members and the remaining bins around 47.[@gerrit: so what is the reason for this; this is something we should discuss]
 
 @todo add images where relevant
 (@gerrit: you should think of some scatter table to overview all theses tests and overlaps and numbers)
@@ -781,6 +840,13 @@ bins with this low a score likely not being considered in the first place,
 and the low count, no specific corrective measures for this property
 seem sensible. It is likely that the majority will be removed if condition 2)
 is addressed either way.
+
+A manual control of the affected bins showed that most of them 
+had the majority of their points at the edges of the bin. One
+bin showed a very even distribution of points in mz.
+While there is a subjective bias to such a judgement,
+all bins with a DQS less than 0.5 do not show the behaviour
+that would be expected of good bins. 
 
 **7) Correctly Separated Point Within Critical Distance**
 
@@ -1030,12 +1096,6 @@ presented program. Such improvements must always be shown to improve
 peak quality or result correcness to justify being made.
 
 ---
-
-@todo
-Images of common undesired outputs/elements that need to be cleaned up: 
-effectiveness of binning for different datasets
-comparison between centroid error and ppm
-compare results for different alpha when calculating the critical value
 
 
 ## Software and Data

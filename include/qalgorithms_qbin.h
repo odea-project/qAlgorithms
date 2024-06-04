@@ -18,7 +18,7 @@ namespace q
         unsigned int scanNo;
         double intensity;
         double DQScentroid;
-        double control_DQSbin;
+        // double control_DQSbin; // removed due to DQS calculation being confirmed to work
     };
 
     class RawData //@todo rename to centroided data?
@@ -29,7 +29,7 @@ namespace q
         int lengthAllPoints;
         std::vector<std::vector<Datapoint>> allDatapoints;
         // "mz" "mzError" "RT" "scanNo" "intensity" "controlID" "controlCentroidDQS" "controlBinDQS"
-        bool readcsv(std::string user_file, int d_mz, int d_mzError, int d_RT, int d_scanNo, int d_intensity, int d_DQScentroid, int d_control_DQSbin);
+        bool readcsv(std::string user_file, int d_mz, int d_mzError, int d_RT, int d_scanNo, int d_intensity, int d_DQScentroid);
     };
 
     // return object of qbinning
@@ -131,7 +131,7 @@ namespace q
         /// The respective bit is set to 1 if the defined state is present. Possible states of interest are too large a discrepancy
         /// between mean and median or the presence of duplicate values.
         /// @return A tuple containing the summary information. The first entry is the error code.
-        std::tuple<std::byte, size_t, double, double, double, double, unsigned int, double, double, double, double, double, double> summariseBin();
+        std::tuple<std::byte, size_t, double, double, double, double, unsigned int, double, double, double, double, double> summariseBin();
 
         const EIC createEIC();
 
