@@ -32,7 +32,7 @@ namespace q
 #pragma region "Rawdata"
     RawData::RawData() {}
     q::RawData::~RawData() {} // potential memory leak
-    bool RawData::readcsv(std::string user_file, int d_mz, int d_mzError, int d_RT, int d_scanNo, int d_intensity, int d_DQScentroid, int d_control_DQSbin)
+    bool RawData::readcsv(std::string user_file, int d_mz, int d_mzError, int d_RT, int d_scanNo, int d_intensity, int d_DQScentroid)
     { // @todo stop segfaults when reading empty lines; use buffers for speedup
         int now = time(0);
         lengthAllPoints = 0;
@@ -70,7 +70,7 @@ namespace q
                 }
             }
             const Datapoint F = Datapoint{row[d_mz], row[d_mzError], row[d_RT], i_scanNo, row[d_intensity],
-                                          row[d_DQScentroid], row[d_control_DQSbin]};
+                                          row[d_DQScentroid]};
 
             ++lengthAllPoints;
             allDatapoints[i_scanNo].push_back(F); // every subvector in allDatapoints is one complete scan - does not require a sorted input file!
@@ -188,7 +188,7 @@ namespace q
         // possible symbols
         // char shapes[] = "acGuxnoQzRsTvjIEf"; // random shape when displaying with makie @todo does not work
 
-        output << "mz,scan,ID,DQSC,DQSB_base,control_DQSB\n";
+        output << "mz,scan,ID,DQSC,DQSB_base\n";
 
         for (size_t i = 0; i < finishedBins.size(); i++) // @todo make faster
         {
@@ -199,8 +199,8 @@ namespace q
             for (size_t j = 0; j < binnedPoints.size(); j++)
             {
                 char buffer[128];
-                sprintf(buffer, "%0.15f,%d,%zu,%0.15f,%0.15f,%0.15f\n", binnedPoints[j]->mz, binnedPoints[j]->scanNo, i + 1,
-                        binnedPoints[i]->DQScentroid, finishedBins[i].DQSB_base[j], binnedPoints[j]->control_DQSbin);
+                sprintf(buffer, "%0.15f,%d,%zu,%0.15f,%0.15f\n", binnedPoints[j]->mz, binnedPoints[j]->scanNo, i + 1,
+                        binnedPoints[i]->DQScentroid, finishedBins[i].DQSB_base[j]);
                 output << buffer;
             }
         }
@@ -267,16 +267,16 @@ namespace q
         {
             file_out_sum.open(binsSummary, std::ios::out);
             assert(file_out_sum.is_open());
-            output_sum << "ID,errorcode,size,mean_mz,median_mz,stdev_mz,mean_scans,median_scans,DQSB_base,DQSB_scaled,DQSB_control,DQSB_worst,min_DQSC,meanError\n";
+            output_sum << "ID,errorcode,size,mean_mz,median_mz,stdev_mz,mean_scans,median_scans,DQSB_base,DQSB_scaled,DQSB_worst,min_DQSC,meanError\n";
             for (size_t i = 0; i < indices.size(); i++)
             {
                 const int pos = indices[i];
                 const auto result = finishedBins[pos].summariseBin();
                 char buffer[256];
-                sprintf(buffer, "%d,%d,%llu,%0.15f,%0.15f,%0.15f,%0.2f,%d,%0.15f,%0.15f,%0.15f,%0.15f,%0.15f,%0.15f\n",
+                sprintf(buffer, "%d,%d,%llu,%0.15f,%0.15f,%0.15f,%0.2f,%d,%0.15f,%0.15f,%0.15f,%0.15f,%0.15f\n",
                         pos + 1, std::get<0>(result), std::get<1>(result), std::get<2>(result), std::get<3>(result),
                         std::get<4>(result), std::get<5>(result), std::get<6>(result), std::get<7>(result),
-                        std::get<8>(result), std::get<9>(result), std::get<10>(result), std::get<11>(result), std::get<12>(result));
+                        std::get<8>(result), std::get<9>(result), std::get<10>(result), std::get<11>(result), std::get<11>(result));
                 output_sum << buffer;
             }
             file_out_sum << output_sum.str();
@@ -288,7 +288,7 @@ namespace q
         std::stringstream output_all;
         file_out_all.open(binsFull, std::ios::out);
         assert(file_out_all.is_open());
-        output_all << "mz,scan,ID,mzError,DQSC,DQSB_base,DQSB_scaled,control_DQSB\n";
+        output_all << "mz,scan,ID,mzError,DQSC,DQSB_base,DQSB_scaled\n";
         for (size_t i = 0; i < indices.size(); i++)
         {
             const unsigned int pos = indices[i];
@@ -299,7 +299,7 @@ namespace q
                 char buffer[128];
                 sprintf(buffer, "%0.15f,%d,%d,%0.15f,%0.15f,%0.15f,%0.15f,%0.15f\n", binnedPoints[j]->mz,
                         binnedPoints[j]->scanNo, pos + 1, binnedPoints[j]->mzError, binnedPoints[j]->DQScentroid,
-                        finishedBins[pos].DQSB_base[j], finishedBins[pos].DQSB_scaled[j], binnedPoints[j]->control_DQSbin);
+                        finishedBins[pos].DQSB_base[j], finishedBins[pos].DQSB_scaled[j]);
                 output_all << buffer;
             }
         }
@@ -646,7 +646,7 @@ namespace q
         return;
     }
 
-    std::tuple<std::byte, size_t, double, double, double, double, unsigned int, double, double, double, double, double, double> Bin::summariseBin()
+    std::tuple<std::byte, size_t, double, double, double, double, unsigned int, double, double, double, double, double> Bin::summariseBin()
     {
         size_t binsize = pointsInBin.size();
         double meanMZ = 0;
@@ -660,7 +660,7 @@ namespace q
         {
             meanMZ += pointsInBin[i]->mz;
             meanScan += pointsInBin[i]->scanNo;
-            DQS_control += pointsInBin[i]->control_DQSbin;
+            // DQS_control += pointsInBin[i]->control_DQSbin;
             meanCenError += pointsInBin[i]->mzError;
             if (pointsInBin[i]->DQScentroid < worstCentroid)
             {
@@ -705,11 +705,11 @@ namespace q
         {
             selector |= std::byte{0b00000100};
         }
-        if (abs(meanScan - medianScan) > 6) // greater than maxdist
+        if (false) // greater than maxdist @todo add maxdist as a macro or something // removed due to no obesrvable test value abs(meanScan - medianScan) > 6
         {
             selector |= std::byte{0b00001000};
         }
-        if ((meanMZ + 3 * stdev < mzmax) | (meanMZ - 3 * stdev > mzmin)) // if a value in the bin is outside of 4 sigma
+        if ((meanMZ + 3 * stdev < mzmax) | (meanMZ - 3 * stdev > mzmin)) // if a value in the bin is outside of 3 sigma
         {
             selector |= std::byte{0b00010000};
         }
@@ -721,12 +721,12 @@ namespace q
         {
             selector |= std::byte{0b01000000};
         }
-        if (false)
+        if (false) // @todo replicate test 3 but use the critical distance?
         {
             selector |= std::byte{0b10000000};
         }
         return std::tuple(selector, binsize, meanMZ, medianMZ, stdev, meanScan, medianScan, meanDQS_base,
-                          meanDQS_scaled, DQS_control, DQSminWith, worstCentroid, meanCenError);
+                          meanDQS_scaled, DQSminWith, worstCentroid, meanCenError);
     }
 
     const EIC Bin::createEIC()
@@ -865,7 +865,7 @@ int main()
 
     q::RawData testdata;
     // path to data, mz, centroid error, RT, scan number, intensity, DQS centroid, control DQS Bin
-    if (!testdata.readcsv("../../rawdata/monobin.csv", 0, 1, 2, 3, 4, 6, 7)) // ../../rawdata/control_bins.csv reduced_DQSdiff
+    if (!testdata.readcsv("../../rawdata/control_bins.csv", 0, 1, 2, 3, 4, 6)) // ../../rawdata/control_bins.csv reduced_DQSdiff
     {
         exit(101); // error codes: 1.. = reading / writing failed, 2.. = improper input,
     }
@@ -881,7 +881,7 @@ int main()
     testcontainer.assignDQSB(&testdata, inputMaxdist); // int = max dist in scans
 
     // print bin selection
-    // testcontainer.printSelectBins(testcontainer.makeBinSelection(std::byte{0b11111111}), true, "../.."); // one bit per test
+    testcontainer.printSelectBins(testcontainer.makeBinSelection(std::byte{0b11111111}), true, "../.."); // one bit per test
 
     // testcontainer.printBinSummary("../../summary_bins.csv");
     // testcontainer.printworstDQS();
