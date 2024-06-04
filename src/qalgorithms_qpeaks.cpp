@@ -44,7 +44,7 @@ namespace q
             this->psuedoInverses.push_back(nullptr);
           }
 
-          this->global_maxScale = 10;
+          this->global_maxScale = 20;
           // iterate over the range of the maxScale to create Matrices for each scale
           for (int scale = 2; scale <= this->global_maxScale; scale++)
           {
@@ -58,6 +58,65 @@ namespace q
   // Destructor
   qPeaks::~qPeaks() {}
 #pragma endregion Constructors and Destructor
+
+#pragma region "peakListToCSV"
+  void
+  qPeaks::peakListToCSV(
+      const std::vector<std::vector<std::unique_ptr<DataType::Peak>>> &allPeaks,
+      const std::string &filename) const
+  {
+    // check if the file already exists
+    if (std::ifstream file(filename); file)
+    {
+      // if the file exists, remove the file
+      std::remove(filename.c_str());
+    }
+    // open the output file
+    std::ofstream file(filename);
+    // write the header
+    file << "SampleID,Position,Height,Area,PositionUncertainty,HeightUncertainty,AreaUncertainty,DQS,Beta0,Beta1,Beta2,Beta3,DF,X0,dx\n";
+    // iterate over the allPeaks vector
+    for (const auto &peaks : allPeaks)
+    {
+      // iterate over the peaks vector
+      for (const auto &peak : peaks)
+      {
+        // write the peak information to the file
+        file << peak->sampleID << ","
+             << peak->position << ","
+             << peak->height << ","
+             << peak->area << ","
+             << peak->positionUncertainty << ","
+             << peak->heightUncertainty << ","
+             << peak->areaUncertainty << ","
+             << peak->dqsPeak << ","
+             << peak->beta0 << ","
+             << peak->beta1 << ","
+             << peak->beta2 << ","
+             << peak->beta3 << ","
+             << peak->df << ","
+             << peak->x0 << ","
+             << peak->dx << "\n";
+      }
+    }
+    // close the output file
+    file.close();
+  }
+#pragma endregion "peakListToCSV"
+
+#pragma region "plotPeaksToPython"
+  void
+  qPeaks::plotPeaksToPython(
+      const std::string &filename_input,
+      const std::string &filename_output,
+      const bool includeFits,
+      const bool featureMap) const
+  {
+    std::string command = "python python/plotPeaksToPython.py " + filename_input + " " + filename_output + " " + std::to_string(includeFits) + " " + std::to_string(featureMap);
+    std::string result = exec(command.c_str());
+    std::cout << result;
+  }
+#pragma endregion "plotPeaksToPython"
 
 #pragma region findPeaks
   std::vector<std::vector<std::unique_ptr<DataType::Peak>>>
@@ -104,7 +163,8 @@ namespace q
           } // end parallel for loop
         ; },
         dataVec); // end visit
-    return all_peaks;
+    // create the sorted peak list
+    return createPeakList(all_peaks);
   } // end findPeaks
 #pragma endregion findPeaks
 
@@ -188,7 +248,8 @@ namespace q
       Matrix_mc_4x4 C = multiplyScalarTo4x4Matrix(mse, *inverseMatrices[scale]); // variance-covariance matrix of the coefficients
       double height = 0.0;
       double uncertainty_height = 0.0;
-      if (!isValidPeakHeight(B, C, i, apex_position, df_sum, height, uncertainty_height))
+      double uncertainty_position = 0.0;
+      if (!isValidPeakHeight(B, C, i, scale, apex_position, df_sum, height, uncertainty_height, uncertainty_position))
       {
         continue; // statistical insignificance of the height
       }
@@ -245,7 +306,8 @@ namespace q
               height,                    // peak height
               area,                      // peak area
               uncertainty_height,        // uncertainty of the peak height
-              uncertainty_area           // uncertainty of the peak area
+              uncertainty_area,          // uncertainty of the peak area
+              uncertainty_position       // uncertainty of the peak position
               ));
     } // end for loop
     // early return if no or only one valid peak
@@ -353,7 +415,7 @@ namespace q
       std::vector<decltype(it_ref_peak)> validRegressionsInGroup; // vector of iterators
 
       // iterate over the validRegressions vector till the new peak
-      for ( ; it_ref_peak < it_new_peak; ++it_ref_peak)
+      for (; it_ref_peak < it_new_peak; ++it_ref_peak)
       {
         if (!(*it_ref_peak)->isValid)
         {
@@ -460,45 +522,80 @@ namespace q
           scanNumber,
           apex_position,
           regression->height));
-      
+
       // add additional information to the peak object
       peaks.back()->area = regression->area;
       peaks.back()->areaUncertainty = regression->uncertainty_area;
       peaks.back()->heightUncertainty = regression->uncertainty_height;
+      peaks.back()->positionUncertainty = regression->uncertainty_position * dx;
       peaks.back()->dqsPeak = regression->dqs;
       peaks.back()->beta0 = regression->B[0];
       peaks.back()->beta1 = regression->B[1];
       peaks.back()->beta2 = regression->B[2];
       peaks.back()->beta3 = regression->B[3];
       peaks.back()->x0 = X[regression->index_x0];
-
-      // // debugging
-      // // get the index of the regression
-      // int index = regression->index_x0;
-      // // get scale
-      // int scale = regression->scale;
-      // Vector yhat = calcYhatExtended(*(designMatrices[scale - 2]), regression->B, regression->X_row_0, regression->X_row_1);
-
-      // // extract xfit, i.e., from X vector index to index + 2*scale+1
-      // Vector xfit(yhat.n);
-      // int u = 0;
-      // for (int i = regression->left_limit; i < regression->right_limit + 1; i++)
-      // {
-      //   if (i < 0 || i >= X.n)
-      //   {
-      //     continue;
-      //   }
-      //   xfit[u] = X[i];
-      //   u++;
-      // }
-
-      // peaks.back()->xFit = xfit;
-      // peaks.back()->yFit = yhat;
+      peaks.back()->dx = dx;
     } // end for loop
 
     return peaks;
   } // end createPeaks
 #pragma endregion createPeaks
+
+#pragma region "createPeakList"
+  std::vector<std::vector<std::unique_ptr<DataType::Peak>>>
+  qPeaks::createPeakList(std::vector<std::vector<std::unique_ptr<DataType::Peak>>> &allPeaks)
+  {
+    // create a temporary unordered map of peaks based on sampleID
+    std::unordered_map<int, std::vector<std::unique_ptr<DataType::Peak>>> peakMap;
+    // iterate over the peaks vector
+    for (size_t i = 0; i < allPeaks.size(); ++i)
+    {
+      auto &peaks = allPeaks[i];
+      // iterate over the peaks vector
+      for (size_t j = 0; j < peaks.size(); ++j)
+      {
+        auto &peak = peaks[j];
+        if (peakMap.find(peak->sampleID) == peakMap.end())
+        {
+          peakMap[peak->sampleID] = std::vector<std::unique_ptr<DataType::Peak>>();
+        }
+        peakMap[peak->sampleID].push_back(std::move(peak));
+      }
+    }
+
+    // Store the keys in a separate vector
+    std::vector<int> keys;
+    for (const auto &pair : peakMap)
+    {
+      keys.push_back(pair.first);
+    }
+
+    // Now iterate over the keys to move the values
+    std::vector<std::vector<std::unique_ptr<DataType::Peak>>> peakList(keys.size());
+    int i = 0;
+    for (const auto &key : keys)
+    {
+      // sort peaks based on the position
+      std::sort(
+          peakMap[key].begin(),
+          peakMap[key].end(),
+          [](const std::unique_ptr<DataType::Peak> &a, const std::unique_ptr<DataType::Peak> &b)
+          { return a->position < b->position; });
+      // add the vector of peaks to the peakList
+      peakList[i] = std::move(peakMap[key]);
+      i++;
+    }
+
+    // sort peakList based on the sampleID
+    std::sort(
+        peakList.begin(),
+        peakList.end(),
+        [](const std::vector<std::unique_ptr<DataType::Peak>> &a, const std::vector<std::unique_ptr<DataType::Peak>> &b)
+        { return a.front()->sampleID < b.front()->sampleID; });
+
+    return peakList;
+  }
+#pragma endregion "createPeakList"
 
 #pragma region calcSSE
   double
@@ -744,28 +841,64 @@ namespace q
       const Matrix_mc &B,
       const Matrix_mc_4x4 &C,
       const size_t index,
+      const int scale,
       const double apex_position,
       const int df_sum,
       double &height,
-      double &uncertainty_height) const
+      double &uncertainty_height,
+      double &uncertainty_position) const
   {
+    const double b0 = B(0, index);
+    const double b1 = B(1, index);
+    const double b2 = B(2, index);
+    const double b3 = B(3, index);
     double Jacobian_height[4]; // Jacobian matrix for the height
-    height = std::exp(B(0, index) + apex_position * B(1, index) * .5);
+    height = std::exp(b0 + apex_position * b1 * .5);
     Jacobian_height[0] = height;
     Jacobian_height[1] = apex_position * height;
+    double Jacobian_position[4]; // Jacobian matrix for the position
+    Jacobian_position[0] = 0;
+    Jacobian_position[1] = apex_position / b1;
     if (apex_position < 0)
     {
       Jacobian_height[2] = apex_position * Jacobian_height[1];
       Jacobian_height[3] = 0;
+      Jacobian_position[2] = -apex_position / b2;
+      Jacobian_position[3] = 0;
     }
     else
     {
       Jacobian_height[2] = 0;
       Jacobian_height[3] = apex_position * Jacobian_height[1];
+      Jacobian_position[2] = 0;
+      Jacobian_position[3] = -apex_position / b3;
     }
     uncertainty_height = std::sqrt(multiplyVecMatrixVecTranspose(Jacobian_height, C));
+    uncertainty_position = std::sqrt(multiplyVecMatrixVecTranspose(Jacobian_position, C));
 
-    return height / uncertainty_height > tValuesArray[df_sum - 5]; // statistical significance of the peak height
+    if (height / uncertainty_height <= tValuesArray[df_sum - 5]) // statistical significance of the peak height
+    {
+      return false;
+    }
+
+    // check if the peak height is significantly greater than base signal
+    const double B1_2_B2 = b1 / 2 / b2;
+    const double B1_2_B3 = b1 / 2 / b3;
+    double x_left = -scale;
+    double x_right = scale;
+
+    // adjust x limits
+    if (b2 > 0 && -B1_2_B2 > -scale)
+    { // valley point is inside the window, use valley point as limit
+      x_left = -B1_2_B2;
+    }
+    if (b3 > 0 && -B1_2_B3 < scale)
+    { // valley point is inside the window, use valley point as limit
+      x_right = -B1_2_B3;
+    }
+    double base_signal = (std::exp(b0 + b1 * x_left + b2 * x_left * x_left) + std::exp(b0 + b1 * x_right + b3 * x_right * x_right)) * .5;
+    // std::cout << "base_signal: " << base_signal << " height: " << height << " uncertainty_height: " << uncertainty_height << " tValue: " << (height - 2* base_signal) / uncertainty_height << std::endl;
+    return (height - 2 * base_signal) / uncertainty_height > tValuesArray[df_sum - 5];
   }
 #pragma endregion isValidPeakHeight
 
@@ -890,10 +1023,10 @@ namespace q
     J_covered[1] = J_2_R_covered + J_2_L_covered - trpzd_b1;
     J_covered[2] = -B1_2_B2 * (J_2_L_covered + J_1_L_covered / b1) - trpzd_b2;
     J_covered[3] = -B1_2_B3 * (J_2_R_covered + J_1_R_covered / b1) - trpzd_b3;
-    
+
     const double area_uncertainty_covered = std::sqrt(multiplyVecMatrixVecTranspose(J_covered, C));
 
-    return J_covered[0] / area_uncertainty_covered > tValuesArray[df_sum - 5];
+    return J_covered[0] / area_uncertainty_covered > tValuesArray[df_sum - 5]; // statistical significance of the peak area
   }
 #pragma endregion isValidPeakArea
 
@@ -962,12 +1095,12 @@ namespace q
 #pragma region printMatrices
   void qPeaks::printMatrices(int scale) const
   {
-    // std::cout << "Design Matrix\n";
-    // designMatrices[scale - 2]->print();
-    // std::cout << "Inverse Matrix\n";
-    // inverseMatrices[scale - 2]->print();
-    // std::cout << "Pseudo-Inverse Matrix\n";
-    // psuedoInverses[scale - 2]->print();
+    std::cout << "Design Matrix\n";
+    print(*(designMatrices[scale]));
+    std::cout << "\nInverse Matrix\n";
+    print(*(inverseMatrices[scale]));
+    std::cout << "\nPseudo-Inverse Matrix\n";
+    print(*(psuedoInverses[scale]));
   }
 #pragma endregion printMatrices
 } // namespace q

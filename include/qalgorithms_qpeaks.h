@@ -16,6 +16,8 @@
 #include <omp.h>
 #include <limits>
 #include <numeric>
+#include <fstream>
+#include <cstdlib>
 
 /* This file includes the q::qPeaks class*/
 namespace q
@@ -48,9 +50,23 @@ namespace q
         std::vector<std::vector<std::unique_ptr<DataType::Peak>>>
         findPeaks(const varDataType &dataVec);
 
+        // export
+        void
+        peakListToCSV(
+            const std::vector<std::vector<std::unique_ptr<DataType::Peak>>> &allPeaks,
+            const std::string &filename) const;
+
+        void
+        plotPeaksToPython(
+            const std::string &filename_input,
+            const std::string &filename_output,
+            const bool includeFits = true,
+            const bool featureMap = false) const;
+
         // debugging
         void info() const;
         void printMatrices(int scale) const;
+
 
     private:
         std::vector<std::unique_ptr<Matrix>> designMatrices;
@@ -118,35 +134,6 @@ namespace q
                   uncertainty_position(uncertainty_position) {}
         };
 
-        // struct extendedMSE
-        // {
-        //     double mse;      // mean squared error
-        //     int index;       // index of the best regression (in B matrix)
-        //     int scale;       // extended scale of the regression window
-        //     int df;          // degree of freedom
-        //     int left_limit;  // left limit of the peak regression window
-        //     int right_limit; // right limit of the peak regression window
-        //     int X_row_0;     //  start of the cutted Deisgn Matrix
-        //     int X_row_1;     // end of the cutted Design Matrix
-        //     extendedMSE(
-        //         double mse,
-        //         int index,
-        //         int scale,
-        //         int df,
-        //         int left_limit,
-        //         int right_limit,
-        //         int X_row_0,
-        //         int X_row_1)
-        //         : mse(mse),
-        //           index(index),
-        //           scale(scale),
-        //           df(df),
-        //           left_limit(left_limit),
-        //           right_limit(right_limit),
-        //           X_row_0(X_row_0),
-        //           X_row_1(X_row_1) {}
-        // };
-
         // methods
         int
         calculateNumberOfRegressions(const int n) const;
@@ -179,6 +166,9 @@ namespace q
             const Vector &Y,
             const Vector &X,
             const int scanNumber);
+
+        std::vector<std::vector<std::unique_ptr<DataType::Peak>>>
+        createPeakList(std::vector<std::vector<std::unique_ptr<DataType::Peak>>> &allPeaks);
 
         double
         calcSSE(
@@ -292,10 +282,12 @@ namespace q
             const Matrix_mc &B,
             const Matrix_mc_4x4 &C,
             const size_t index,
+            const int scale,
             const double apex_position,
             const int df_sum,
             double &height,
-            double &uncertainty_height) const;
+            double &uncertainty_height,
+            double &uncertainty_position) const;
 
         /**
          * @brief Check if the peak area and the covered peak area are valid using t-test.

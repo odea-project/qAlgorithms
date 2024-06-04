@@ -12,6 +12,10 @@
 #include <map>
 #include <cstdint>
 #include <numeric>
+#include <cstdio>
+#include <memory>
+#include <string>
+#include <stdexcept>
 
 namespace q
 {
@@ -135,8 +139,8 @@ namespace q
     multiplyScalarTo4x4Matrix(
         const double scalar,
         const Matrix &A);
-    
-    double 
+
+    double
     multiplyVecMatrixVecTranspose(
         const double vec[4],
         const Matrix_mc_4x4 &A);
@@ -279,5 +283,11 @@ namespace q
     void
     print(
         const Vector &A);
+#pragma endregion "print functions"
+
+#pragma region "execute commands"
+    std::string
+    exec(const char *cmd);
+#pragma endregion "execute commands"
 } // namespace q
 #endif // QALGORITHMS_UTILS_H

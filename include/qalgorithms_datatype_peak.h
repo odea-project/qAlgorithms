@@ -36,6 +36,7 @@ namespace q
      * @param df The degrees of freedom
      * @param xIndex The index of the regression window position
      * @param x0 The center point (x value) of the regression window in the original data set
+     * @param dx The difference in x near the peak position
      */
     class Peak
     {
@@ -69,6 +70,7 @@ namespace q
       int df;
       int xIndex;
       double x0;
+      double dx;
       // methods
       void print();
     };
