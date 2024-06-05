@@ -57,7 +57,7 @@ namespace q
     {
     private:
         std::vector<double> cumError; // cumulative error in mz
-        double pt_MakeDQSB;
+        double pt_MakeDQSB; // rm?
         bool duplicateScan = false; // are two points with the same scan number in this bin?
         unsigned int medianScan;
         double medianMZ;
