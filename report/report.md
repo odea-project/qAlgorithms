@@ -575,7 +575,9 @@ with minimal calculation effort. This has the advantage of
 being fast and not introducing additional parameters into the algorithm.
 
 The following tests are numbered according to the bit position
-that encodes them, as in 0x8)7)6)5)4)3)2)1). // 4) and 8) unused; order is arbitrary
+that encodes them, as in 0x8)7)6)5)4)3)2)1). The positioning
+of a test is arbitrary. Due to the development process, tests 4) and 8) are not used.
+Unused tests are always set to false.
 
 They can be grouped by the above criteria and how the problem is
 approached. Either a specific point is identified as the cause or the
