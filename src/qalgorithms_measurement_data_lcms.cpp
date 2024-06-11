@@ -19,6 +19,7 @@ namespace q
 
     LCMSData::LCMSData()
     {
+        maxKey = 0;
     }
 
     LCMSData::~LCMSData()
@@ -306,7 +307,12 @@ namespace q
 
     void LCMSData::info()
     {
-        std::cout << "Number of data sets: " << this->data.size() << std::endl;
+        std::cout << "Number of data sets:              " << this->data.size() << std::endl;
+    }
+
+    void LCMSData::getMaxKey()
+    {
+        std::cout << "Max Key:                          " << maxKey << std::endl;
     }
 
 } // namespace q

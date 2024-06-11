@@ -101,9 +101,10 @@ namespace q
          */
         void info();
 
+        void getMaxKey();
+
         std::vector<std::unique_ptr<DataType::MassSpectrum>> data;
     private:
-        
         size_t maxKey;
     };
 }

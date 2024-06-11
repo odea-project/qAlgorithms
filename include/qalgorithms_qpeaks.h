@@ -63,15 +63,42 @@ namespace q
             const bool includeFits = true,
             const bool featureMap = false) const;
 
+        static void initialize();
+
+        Vector
+        calcYhat(
+            const int left_limit,
+            const int right_limit,
+            const Matrix_mc &beta,
+            const size_t idx);
+
+        Vector
+        calcYhat(
+            const int left_limit,
+            const int right_limit,
+            const Vector &beta);
+
         // debugging
         void info() const;
         void printMatrices(int scale) const;
 
-
     private:
-        std::vector<std::unique_ptr<Matrix>> designMatrices;
-        std::vector<std::unique_ptr<Matrix>> inverseMatrices;
-        std::vector<std::unique_ptr<Matrix>> psuedoInverses;
+        std::vector<std::unique_ptr<Matrix>> designMatrices;  // will be deleted in future
+        std::vector<std::unique_ptr<Matrix>> inverseMatrices; // will be deleted in future
+        std::vector<std::unique_ptr<Matrix>> psuedoInverses;  // will be deleted in future
+
+        /**
+         * @brief Array of the unique entries from the inverse matrix: ( X.T * X ) ^-1
+         * @details the matrix has the following structure:
+         * A  0  B  B
+         * 0  C  D -D
+         * B  D  E  F
+         * B -D  F  E
+         * The structure of the array is as follows:
+         * invArray[scale][{A,B,C,D,E,F}]
+         */
+        static double invArray[50][6];
+        static double x_square[100]; // contains the squares from 0 to 99^2
 
         int global_maxScale;
 
@@ -328,6 +355,12 @@ namespace q
          */
         void
         createInverseAndPseudoInverse(const Matrix &X);
+
+        Matrix_mc
+        convolve_fast(
+            const int scale,
+            const double (&vec)[500],
+            const size_t n);
     };
 } // namespace q
 

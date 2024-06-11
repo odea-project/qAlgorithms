@@ -186,6 +186,23 @@ namespace q
   }
 
 #pragma region "Matrix Operations"
+  bool
+  operator==(
+      const Matrix_mc &A,
+      const Matrix_mc &B)
+  {
+    if (A.rows != B.rows || A.cols != B.cols)
+      return false;
+
+    for (size_t i = 0; i < A.rows * A.cols; i++)
+    {
+      if (A.elements[i] != B.elements[i])
+        return false;
+    }
+
+    return true;
+  }
+
   Matrix
   operator+(
       const Matrix &A,

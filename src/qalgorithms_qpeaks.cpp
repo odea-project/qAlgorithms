@@ -44,7 +44,7 @@ namespace q
             this->psuedoInverses.push_back(nullptr);
           }
 
-          this->global_maxScale = 20;
+          this->global_maxScale = 15;
           // iterate over the range of the maxScale to create Matrices for each scale
           for (int scale = 2; scale <= this->global_maxScale; scale++)
           {
@@ -112,11 +112,79 @@ namespace q
       const bool includeFits,
       const bool featureMap) const
   {
+    // check if python is installed
+    if (system("python --version"))
+    {
+      std::cerr << "Python is not installed on this system. Please install Python to use this function.\n";
+      return;
+    }
+    // check if python in the path
+    if (system("python -c \"import sys\""))
+    {
+      std::cerr << "Python is not in the path. Please add Python to the path to use this function.\n";
+      return;
+    }
     std::string command = "python python/plotPeaksToPython.py " + filename_input + " " + filename_output + " " + std::to_string(includeFits) + " " + std::to_string(featureMap);
     std::string result = exec(command.c_str());
     std::cout << result;
   }
 #pragma endregion "plotPeaksToPython"
+
+#pragma region "initialize"
+  double q::qPeaks::x_square[100];   // array to store the square of the x values
+  double q::qPeaks::invArray[50][6]; // array to store the 6 unique values of the inverse matrix for each scale
+  void qPeaks::initialize()
+  {
+    // init x_square
+    for (int i = 0; i < 100; ++i)
+    {
+      x_square[i] = i * i;
+    }
+    // init invArray
+    double XtX_00 = 1;
+    double XtX_02 = 0;
+    double XtX_11 = 0;
+    double XtX_12 = 0;
+    double XtX_13 = 0;
+    double XtX_22 = 0;
+    for (int i = 1; i < 50; ++i)
+    {
+      XtX_00 += 2;
+      XtX_02 += x_square[i];
+      XtX_11 = XtX_02 * 2;
+      XtX_13 += x_square[i] * i;
+      XtX_12 = -XtX_13;
+      XtX_22 += x_square[i] * x_square[i];
+
+      double L_00 = std::sqrt(XtX_00);
+      double L_11 = std::sqrt(XtX_11);
+      double L_20 = XtX_02 / L_00;
+      double L_21 = XtX_12 / L_11;
+      double L_20sq = L_20 * L_20;
+      double L_21sq = L_21 * L_21;
+      double L_22 = std::sqrt(XtX_22 - L_20sq - L_21sq);
+      double L_32 = 1 / L_22 * (-L_20sq + L_21sq);
+      double L_33 = std::sqrt(XtX_22 - L_20sq - L_21sq - L_32 * L_32);
+
+      double inv_00 = 1 / L_00;
+      double inv_11 = 1 / L_11;
+      double inv_22 = 1 / L_22;
+      double inv_33 = 1 / L_33;
+      double inv_20 = -L_20 * inv_00 / L_22;
+      double inv_30 = -(L_20 * inv_00 + L_32 * inv_20) / L_33;
+      double inv_21 = -L_21 * inv_11 / L_22;
+      double inv_31 = -(-L_21 * inv_11 + L_32 * inv_21) / L_33;
+      double inv_32 = -L_32 * inv_22 / L_33;
+
+      invArray[i][0] = inv_00 * inv_00 + inv_20 * inv_20 + inv_30 * inv_30; // cell: 0,0
+      invArray[i][1] = inv_22 * inv_20 + inv_32 * inv_30;                   // cell: 0,2
+      invArray[i][2] = inv_11 * inv_11 + inv_21 * inv_21 + inv_31 * inv_31; // cell: 1,1
+      invArray[i][3] = -inv_31 * inv_33;                                    // cell: 1,2
+      invArray[i][4] = inv_33 * inv_33;                                     // cell: 2,2
+      invArray[i][5] = inv_32 * inv_33;                                     // cell: 2,3
+    }
+  }
+#pragma endregion "initialize"
 
 #pragma region findPeaks
   std::vector<std::vector<std::unique_ptr<DataType::Peak>>>
@@ -153,7 +221,6 @@ namespace q
               Y[i] = data[i]->y();
             }
             std::vector<std::unique_ptr<validRegression>> validRegressions;
-
             runningRegression(Y, df, validRegressions);
             if (validRegressions.empty())
             {
@@ -165,6 +232,7 @@ namespace q
         dataVec); // end visit
     // create the sorted peak list
     return createPeakList(all_peaks);
+    return all_peaks;
   } // end findPeaks
 #pragma endregion findPeaks
 
@@ -178,10 +246,17 @@ namespace q
     Vector Ylog = logn(Y); // perform log-transform on Y
     int maxScale = std::min(this->global_maxScale, (int)(n - 1) / 2);
     validRegressions.reserve(calculateNumberOfRegressions(n));
-
+    double ylog_array[500];
+    if (n <= 500)
+    {
+      for (size_t i = 0; i < Y.n; i++)
+      {
+        ylog_array[i] = Ylog[i];
+      }
+    }
     for (int scale = 2; scale <= maxScale; scale++)
     {
-      Matrix_mc B = convolve(Ylog, n, *(psuedoInverses[scale]));
+      Matrix_mc B = (n <= 500) ? convolve_fast(scale, ylog_array, n) : convolve(Ylog, n, *(psuedoInverses[scale]));
       validateRegressions(B, Y, Ylog, df, scale, validRegressions);
     } // end for scale loop
     mergeRegressionsOverScales(validRegressions, Ylog, Y, df);
@@ -198,9 +273,10 @@ namespace q
       std::vector<std::unique_ptr<validRegression>> &validRegressions)
   {
     // declare constants
-    const double inverseMatrix_2_2 = (*(inverseMatrices[scale]))(2, 2); // variance of the quadratic term left side of the peak
-    const double inverseMatrix_3_3 = (*(inverseMatrices[scale]))(3, 3); // variance of the quadratic term right side of the peak
-    const Matrix &X = *(designMatrices[scale]);                         // design matrix
+    // const double inverseMatrix_2_2 = (*(inverseMatrices[scale]))(2, 2); // variance of the quadratic term left side of the peak
+    // const double inverseMatrix_3_3 = (*(inverseMatrices[scale]))(3, 3); // variance of the quadratic term right side of the peak
+    const double inverseMatrix_2_2 = invArray[scale][4]; // variance of the quadratic term left side of the peak
+    // const Matrix &X = *(designMatrices[scale]);                         // design matrix
 
     // declare variables
     std::vector<std::unique_ptr<validRegression>> validRegressionsTmp; // temporary vector to store valid regressions <index, apex_position>
@@ -233,9 +309,9 @@ namespace q
         This block of code implements the quadratic term filter. It calculates the mean squared error (MSE) between the predicted and actual values. Then it calculates the t-value for the quadratic term. If the t-value is less than the corresponding value in the tValuesArray, the quadratic term is considered statistically insignificant, and the loop continues to the next iteration.
       */
       const Vector b = extractCol(B, i);                                 // coefficients vector
-      const Vector yhat = X * b;                                         // predicted values
+      const Vector yhat = calcYhat(-scale, scale, B, i);                 // predicted values
       const double mse = calcSSE(yhat, Ylog, Ylog.begin() + i) / df_sum; // mean squared error
-      if (!isValidQuadraticTerm(B, i, inverseMatrix_2_2, inverseMatrix_3_3, mse, df_sum))
+      if (!isValidQuadraticTerm(B, i, inverseMatrix_2_2, inverseMatrix_2_2, mse, df_sum))
       {
         continue; // statistical insignificance of the quadratic term
       }
@@ -680,37 +756,11 @@ namespace q
 
     for (auto regression = regressions.begin(); regression != regressions.end(); ++regression)
     {
-      // get the extended scale
-      size_t extendedScale = std::max(
-          (*regression)->index_x0 - left_limit, // left limit
-          right_limit - (*regression)->index_x0 // right limit
-      );
-
-      // check if it is necessary to create new design matrices based on the extended scale
-      if (designMatrices.size() < (extendedScale + 1))
-      {
-#pragma omp critical
-        {
-          // scale is not available; create new design matrices from last available scale to the extended scale in steps of 1
-          for (size_t new_scale = designMatrices.size(); new_scale < extendedScale + 1; new_scale++)
-          {
-            createDesignMatrix(new_scale);
-            createInverseAndPseudoInverse(*(designMatrices.back()));
-          }
-        }
-      }
-
       // step 2: calculate yhat based on the coefficients matrix B and the extended design matrix X
-      // extract and cut the design matrix based on the extended scale
-      const int row_0 = extendedScale - (*regression)->index_x0 + left_limit;      // start row index for cutting Design Matrix
-      const int row_1 = extendedScale - (*regression)->index_x0 + right_limit + 1; // end row index for cutting Design Matrix
-
-      // calculate yhat based on the coefficients matrix B and the extended design matrix X
-      const Vector yhat = calcYhatExtended(
-          (*designMatrices[extendedScale]),
-          (*regression)->B,
-          row_0,
-          row_1);
+      const Vector yhat = calcYhat(
+          left_limit - (*regression)->index_x0,
+          right_limit - (*regression)->index_x0,
+          (*regression)->B);
       // step 3: calculate the mean squared error (MSE) between the predicted and actual values
       const double mse = calcSSEexp(yhat, Y, Y.begin() + left_limit) / (df_sum - 4);
 
@@ -927,8 +977,6 @@ namespace q
     const double EXP_B13 = std::exp(-b1 * B1_2_B3 / 2);
 
     // initialize variables
-    // Matrix J(1, 4);         // Jacobian matrix
-    // Matrix J_covered(1, 4); // Jacobian matrix for the covered peak area
     double J[4];            // Jacobian matrix
     double J_covered[4];    // Jacobian matrix for the covered peak area
     double x_left = -scale; // left limit due to the window
@@ -1082,6 +1130,49 @@ namespace q
   }
 #pragma endregion createInverseAndPseudoInverse
 
+#pragma region "yhat"
+  Vector
+  qPeaks::calcYhat(
+      const int left_limit,
+      const int right_limit,
+      const Matrix_mc &beta,
+      const size_t idx)
+  {
+    size_t n = right_limit - left_limit + 1;
+    size_t j = 0;
+    Vector yhat(n);
+    for (int i = left_limit; i <= right_limit; i++)
+    {
+      if (i < 0)
+        yhat[j] = beta(0, idx) + beta(1, idx) * i + beta(2, idx) * x_square[std::abs(i)];
+      else
+        yhat[j] = beta(0, idx) + beta(1, idx) * i + beta(3, idx) * x_square[i];
+      j++;
+    }
+    return yhat;
+  }
+
+  Vector
+  qPeaks::calcYhat(
+      const int left_limit,
+      const int right_limit,
+      const Vector &beta)
+  {
+    size_t n = right_limit - left_limit + 1;
+    size_t j = 0;
+    Vector yhat(n);
+    for (int i = left_limit; i <= right_limit; i++)
+    {
+      if (i < 0)
+        yhat[j] = beta[0] + beta[1] * i + beta[2] * x_square[std::abs(i)];
+      else
+        yhat[j] = beta[0] + beta[1] * i + beta[3] * x_square[i];
+      j++;
+    }
+    return yhat;
+  }
+#pragma endregion "yhat"
+
 #pragma region info
   void qPeaks::info() const
   {
@@ -1091,6 +1182,101 @@ namespace q
     std::cout << "psuedoInverses size: " << psuedoInverses.size() << "\n";
   }
 #pragma endregion info
+
+#pragma region "convolve regression"
+  Matrix_mc
+  qPeaks::convolve_fast(
+      const int scale,
+      const double (&vec)[500],
+      const size_t n)
+  {
+    if (n < 2 * scale + 1)
+    {
+      throw std::invalid_argument("n must be greater or equal to 2 * scale + 1");
+    }
+
+    size_t k = 2 * scale + 1;
+    size_t n_segments = n - k + 1;
+    size_t centerpoint = k / 2;
+
+    // double result[4][n_segments];
+    // Matrix_mc result(4, n_segments);
+    double result[n_segments][4] = {0};
+    double products[500][4];
+    // define the kernel offsets
+    double kernel_r0 = invArray[scale][0];
+    double kernel_r1 = 0;
+    double kernel_r2 = invArray[scale][1];
+    double kernel_r3 = invArray[scale][1];
+
+    // define the kernel increments
+    double kernel_r0_incr = -invArray[scale][1];
+    double kernel_r1_incr = -invArray[scale][2] - invArray[scale][3];
+    double kernel_r2_incr = -invArray[scale][3] - invArray[scale][4];
+    double kernel_r3_incr = invArray[scale][3] - invArray[scale][5];
+
+    // define increment updates
+    double kernel_r0_incr_update = 2 * invArray[scale][1];
+    double kernel_r1_incr_update = 2 * invArray[scale][3];
+    double kernel_r2_incr_update = 2 * invArray[scale][4];
+    double kernel_r3_incr_update = 2 * invArray[scale][5];
+    // calculation of the center terms
+    for (size_t i = 0; i < n_segments; i++)
+    {
+      result[i][0] += vec[i + centerpoint] * kernel_r0;
+      result[i][2] += vec[i + centerpoint] * kernel_r2;
+      result[i][3] = result[i][2];
+    }
+    // calculation from center to right (excluding center)
+    for (size_t i = 1; i < scale + 1; i++)
+    {
+      int u = 0;
+      // update kernel increments
+      kernel_r0_incr += kernel_r0_incr_update;
+      kernel_r1_incr += kernel_r1_incr_update;
+      kernel_r2_incr += kernel_r2_incr_update;
+      kernel_r3_incr += kernel_r3_incr_update;
+
+      // update kernel values
+      kernel_r0 += kernel_r0_incr;
+      kernel_r1 += kernel_r1_incr;
+      kernel_r2 += kernel_r2_incr;
+      kernel_r3 += kernel_r3_incr;
+
+      for (size_t j = scale - i; j < (n - scale + i); j++)
+      {
+        products[u][0] = vec[j] * kernel_r0;
+        products[u][1] = vec[j] * kernel_r1;
+        products[u][2] = vec[j] * kernel_r2;
+        products[u][3] = vec[j] * kernel_r3;
+        u++;
+      }
+
+      for (size_t j = 0; j < n_segments; j++)
+      {
+        if (2 * i + j >= 500)
+        {
+          throw std::out_of_range("Index out of range for products array: n=" + std::to_string(n) + " i=" + std::to_string(i) + " j=" + std::to_string(j));
+        }
+        result[j][0] += products[j][0] + products[2 * i + j][0];
+        result[j][1] -= products[j][1] - products[2 * i + j][1];
+        result[j][2] += products[j][3] + products[2 * i + j][2];
+        result[j][3] += products[j][2] + products[2 * i + j][3];
+      }
+    }
+    // create Matrix_mc object
+    Matrix_mc resultMatrix(4, n_segments);
+    for (size_t i = 0; i < n_segments; i++)
+    {
+      resultMatrix(0, i) = result[i][0];
+      resultMatrix(1, i) = -result[i][1];
+      resultMatrix(2, i) = result[i][3];
+      resultMatrix(3, i) = result[i][2];
+    }
+
+    return resultMatrix;
+  }
+#pragma endregion "convolve regression"
 
 #pragma region printMatrices
   void qPeaks::printMatrices(int scale) const

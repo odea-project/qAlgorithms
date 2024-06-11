@@ -71,6 +71,19 @@ namespace q
     extern const double SQRTPI_2;
 
 #pragma region "Matrix Operations"
+
+    /**
+     * @brief Overloaded operator for matrix equality
+     * 
+     * @param A : Matrix 
+     * @param B : Matrix
+     * @return true 
+     * @return false 
+     */
+    bool
+    operator==(
+        const Matrix_mc &A,
+        const Matrix_mc &B);
     /**
      * @brief Overloaded operator for matrix addition
      * @details This function overloads the + operator to allow for matrix addition. The function takes two matrices as input and returns a new matrix that is the element-wise sum of the two input matrices.
