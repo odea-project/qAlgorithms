@@ -1,0 +1,432 @@
+\doxysection{q\+::Matrix Class Reference}
+\hypertarget{classq_1_1_matrix}{}\label{classq_1_1_matrix}\index{q::Matrix@{q::Matrix}}
+
+
+A class to store a matrix.  
+
+
+
+
+{\ttfamily \#include $<$qalgorithms\+\_\+matrix.\+h$>$}
+
+\doxysubsubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\hyperlink{classq_1_1_matrix_ab30126da6a2e6c63c1343cc128e35a8b}{Matrix}} ()
+\item 
+\mbox{\hyperlink{classq_1_1_matrix_a447d9e154320c8d275769f4269864ef0}{Matrix}} (\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{size\+\_\+t}} rows, \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{size\+\_\+t}} cols)
+\item 
+\mbox{\hyperlink{classq_1_1_matrix_ac535c9ec9436893a61befeea232b37c4}{Matrix}} (\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{classq_1_1_matrix}{Matrix}} \&\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{other}})
+\item 
+\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{void}} \mbox{\hyperlink{classq_1_1_matrix_ac12e9523879dd04637f844250e0efbdd}{reinitialize}} (\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{size\+\_\+t}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{new\+Rows}}, \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{size\+\_\+t}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{new\+Cols}})
+\item 
+\mbox{\hyperlink{classq_1_1_matrix_a1313e75663d3119dc6395d0f9ce8a74e}{\texorpdfstring{$\sim$}{\string~}\+Matrix}} ()
+\item 
+\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{size\+\_\+t}} \mbox{\hyperlink{classq_1_1_matrix_a960d477bd9b1ff50e43856bdb778ec1c}{num\+Rows}} () \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}}
+\item 
+\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{size\+\_\+t}} \mbox{\hyperlink{classq_1_1_matrix_add6e3df948019df92282a9dec666b38f}{num\+Cols}} () \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}}
+\item 
+\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{size\+\_\+t}} \mbox{\hyperlink{classq_1_1_matrix_a3fed230885b4ee378d389c5660bd488e}{numel}} () \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}}
+\item 
+\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{double}} \& \mbox{\hyperlink{classq_1_1_matrix_a4aeec135a3428209692076e0a0ee8916}{operator()}} (\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{size\+\_\+t}} \mbox{\hyperlink{classq_1_1_matrix_a5e49d77fb787a2ac14f4d764434d2407}{row}}, \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{size\+\_\+t}} \mbox{\hyperlink{classq_1_1_matrix_ae8c80426ebd00d309a1e79eb9d38f97e}{col}})
+\item 
+\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{double}} \& \mbox{\hyperlink{classq_1_1_matrix_ac738b454c903787bf5cbccc01d4fd38a}{operator()}} (\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{size\+\_\+t}} \mbox{\hyperlink{classq_1_1_matrix_a5e49d77fb787a2ac14f4d764434d2407}{row}}, \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{size\+\_\+t}} \mbox{\hyperlink{classq_1_1_matrix_ae8c80426ebd00d309a1e79eb9d38f97e}{col}}) \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}}
+\item 
+\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{double}} \& \mbox{\hyperlink{classq_1_1_matrix_a4a4963603504ed65e1072090a4659ee5}{get\+Element}} (\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{size\+\_\+t}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{idx}}) \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}}
+\item 
+\mbox{\hyperlink{classq_1_1_matrix}{Matrix}} \mbox{\hyperlink{classq_1_1_matrix_a5e49d77fb787a2ac14f4d764434d2407}{row}} (\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{size\+\_\+t}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{row\+Index}}) \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}}
+\item 
+\mbox{\hyperlink{classq_1_1_matrix}{Matrix}} \mbox{\hyperlink{classq_1_1_matrix_ae8c80426ebd00d309a1e79eb9d38f97e}{col}} (\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{size\+\_\+t}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{col\+Index}}) \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}}
+\item 
+\mbox{\hyperlink{classq_1_1_matrix}{Matrix}} \mbox{\hyperlink{classq_1_1_matrix_a07c0774f01bfbaa556f923e9523f71b8}{sub\+Matrix}} (\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{size\+\_\+t}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{start\+Row}}, \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{size\+\_\+t}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{end\+Row}}, \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{size\+\_\+t}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{start\+Col}}, \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{size\+\_\+t}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{end\+Col}}) \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}}
+\item 
+\mbox{\hyperlink{classq_1_1_matrix}{Matrix}} \mbox{\hyperlink{classq_1_1_matrix_a46ee64f57387c7f5cb71d3174f234d88}{T}} () \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}}
+\item 
+\mbox{\hyperlink{classq_1_1_matrix}{Matrix}} \mbox{\hyperlink{classq_1_1_matrix_a7f16a20457843380bafaf8f585f35ed4}{operator\texorpdfstring{$\ast$}{*}}} (\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{classq_1_1_matrix}{Matrix}} \&\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{other}}) \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}}
+\item 
+\mbox{\hyperlink{classq_1_1_matrix}{Matrix}} \mbox{\hyperlink{classq_1_1_matrix_ad33372efca9e45a8f663c8e7b3c56bb3}{operator\texorpdfstring{$\ast$}{*}}} (\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{double}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{scalar}}) \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}}
+\item 
+\mbox{\hyperlink{classq_1_1_matrix}{Matrix}} \mbox{\hyperlink{classq_1_1_matrix_af823e1afa35534a75c51e5ce16895f0b}{operator-\/}} (\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{classq_1_1_matrix}{Matrix}} \&\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{other}}) \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}}
+\item 
+\mbox{\hyperlink{classq_1_1_matrix}{Matrix}} \mbox{\hyperlink{classq_1_1_matrix_ae7f2ec1f8496524773607e0994813002}{operator+}} (\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{classq_1_1_matrix}{Matrix}} \&\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{other}}) \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}}
+\item 
+\mbox{\hyperlink{classq_1_1_matrix}{Matrix}} \mbox{\hyperlink{classq_1_1_matrix_aad7c69850887dc228579ae975a2f5587}{operator\texorpdfstring{$^\wedge$}{\string^}}} (\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{double}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{power}}) \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}}
+\item 
+\mbox{\hyperlink{classq_1_1_matrix}{Matrix}} \& \mbox{\hyperlink{classq_1_1_matrix_a9652371f4e2ef6c30e02d4e9a1e9add7}{operator=}} (\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{classq_1_1_matrix}{Matrix}} \&\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{other}})
+\item 
+\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{void}} \mbox{\hyperlink{classq_1_1_matrix_a93143de3b9feb83e5a324044b9ef3516}{assign}} (\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{size\+\_\+t}} \mbox{\hyperlink{classq_1_1_matrix_a5e49d77fb787a2ac14f4d764434d2407}{row}}, \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{size\+\_\+t}} \mbox{\hyperlink{classq_1_1_matrix_ae8c80426ebd00d309a1e79eb9d38f97e}{col}}, \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{double}} \&value)
+\item 
+\mbox{\hyperlink{classq_1_1_matrix}{Matrix}} \mbox{\hyperlink{classq_1_1_matrix_a34a6a5e87cf0b5a9eb832caaec1b9ab4}{log}} () \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}}
+\item 
+\mbox{\hyperlink{classq_1_1_matrix}{Matrix}} \mbox{\hyperlink{classq_1_1_matrix_ae8be0feb0bca4a36a36541a86191da13}{exp}} () \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}}
+\item 
+\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{double}} \mbox{\hyperlink{classq_1_1_matrix_aee288bc348a3b8c71d3a2ff637269424}{sum\+Elements}} () \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}}
+\item 
+\mbox{\hyperlink{classq_1_1_matrix}{Matrix}} \mbox{\hyperlink{classq_1_1_matrix_a13a3b5de2eb14cebc6c2e00f37647d51}{inv}} () \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}}
+\item 
+\mbox{\hyperlink{classq_1_1_matrix}{Matrix}} \mbox{\hyperlink{classq_1_1_matrix_a0d2a7bf49f60c2cb4e81f5489a175860}{convolve\+Symmetric}} (\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{classq_1_1_matrix}{Matrix}} \&\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{kernel}}) \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}}
+\item 
+\mbox{\hyperlink{classq_1_1_matrix}{Matrix}} \mbox{\hyperlink{classq_1_1_matrix_a549e37550d5df9f221ea8ab647751221}{convolve\+Rotation}} (\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{classq_1_1_matrix}{Matrix}} \&\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{kernel}}) \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}}
+\item 
+\mbox{\hyperlink{classq_1_1_matrix}{Matrix}} \mbox{\hyperlink{classq_1_1_matrix_a956aba54c16b1e9c65b8c131d0b9cf6d}{convolve\+Antisymmetric}} (\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{classq_1_1_matrix}{Matrix}} \&\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{kernel}}) \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}}
+\item 
+\mbox{\hyperlink{classq_1_1_matrix}{Matrix}} \mbox{\hyperlink{classq_1_1_matrix_aceb7f09f0eea5817c7e46d7cdbb7870d}{convole\+Combiend}} (\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{classq_1_1_matrix}{Matrix}} \&\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{kernel}}) \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}}
+\item 
+\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{void}} \mbox{\hyperlink{classq_1_1_matrix_a4ffb497b5997865e4a0ce103a193e2c0}{sort1}} ()
+\item 
+\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{void}} \mbox{\hyperlink{classq_1_1_matrix_abbf7241e8b245ff44b42750ce5c67a46}{print}} () \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}}
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+A class to store a matrix. 
+
+The \doxylink{classq_1_1_matrix}{Matrix} class is used to store a matrix of doubles. The class includes methods for matrix operations such as addition, subtraction, multiplication, and inversion.
+
+
+\begin{DoxyParams}{Parameters}
+{\em elements} & A pointer to the elements of the matrix \\
+\hline
+{\em rows} & The number of rows \\
+\hline
+{\em cols} & The number of columns \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line \mbox{\hyperlink{qalgorithms__matrix_8h_source_l00025}{25}} of file \mbox{\hyperlink{qalgorithms__matrix_8h_source}{qalgorithms\+\_\+matrix.\+h}}.
+
+
+
+\doxysubsection{Constructor \& Destructor Documentation}
+\Hypertarget{classq_1_1_matrix_ab30126da6a2e6c63c1343cc128e35a8b}\label{classq_1_1_matrix_ab30126da6a2e6c63c1343cc128e35a8b} 
+\index{q::Matrix@{q::Matrix}!Matrix@{Matrix}}
+\index{Matrix@{Matrix}!q::Matrix@{q::Matrix}}
+\doxysubsubsection{\texorpdfstring{Matrix()}{Matrix()}\hspace{0.1cm}{\footnotesize\ttfamily [1/3]}}
+{\footnotesize\ttfamily q\+::\+Matrix\+::\+Matrix (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})}
+
+
+
+Definition at line \mbox{\hyperlink{qalgorithms__matrix_8cpp_source_l00009}{9}} of file \mbox{\hyperlink{qalgorithms__matrix_8cpp_source}{qalgorithms\+\_\+matrix.\+cpp}}.
+
+\Hypertarget{classq_1_1_matrix_a447d9e154320c8d275769f4269864ef0}\label{classq_1_1_matrix_a447d9e154320c8d275769f4269864ef0} 
+\index{q::Matrix@{q::Matrix}!Matrix@{Matrix}}
+\index{Matrix@{Matrix}!q::Matrix@{q::Matrix}}
+\doxysubsubsection{\texorpdfstring{Matrix()}{Matrix()}\hspace{0.1cm}{\footnotesize\ttfamily [2/3]}}
+{\footnotesize\ttfamily q\+::\+Matrix\+::\+Matrix (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{size\+\_\+t}}}]{rows,  }\item[{\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{size\+\_\+t}}}]{cols }\end{DoxyParamCaption})}
+
+
+
+Definition at line \mbox{\hyperlink{qalgorithms__matrix_8cpp_source_l00010}{10}} of file \mbox{\hyperlink{qalgorithms__matrix_8cpp_source}{qalgorithms\+\_\+matrix.\+cpp}}.
+
+\Hypertarget{classq_1_1_matrix_ac535c9ec9436893a61befeea232b37c4}\label{classq_1_1_matrix_ac535c9ec9436893a61befeea232b37c4} 
+\index{q::Matrix@{q::Matrix}!Matrix@{Matrix}}
+\index{Matrix@{Matrix}!q::Matrix@{q::Matrix}}
+\doxysubsubsection{\texorpdfstring{Matrix()}{Matrix()}\hspace{0.1cm}{\footnotesize\ttfamily [3/3]}}
+{\footnotesize\ttfamily q\+::\+Matrix\+::\+Matrix (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{classq_1_1_matrix}{Matrix}} \&}]{other }\end{DoxyParamCaption})}
+
+
+
+Definition at line \mbox{\hyperlink{qalgorithms__matrix_8cpp_source_l00014}{14}} of file \mbox{\hyperlink{qalgorithms__matrix_8cpp_source}{qalgorithms\+\_\+matrix.\+cpp}}.
+
+\Hypertarget{classq_1_1_matrix_a1313e75663d3119dc6395d0f9ce8a74e}\label{classq_1_1_matrix_a1313e75663d3119dc6395d0f9ce8a74e} 
+\index{q::Matrix@{q::Matrix}!````~Matrix@{\texorpdfstring{$\sim$}{\string~}Matrix}}
+\index{````~Matrix@{\texorpdfstring{$\sim$}{\string~}Matrix}!q::Matrix@{q::Matrix}}
+\doxysubsubsection{\texorpdfstring{\texorpdfstring{$\sim$}{\string~}Matrix()}{\string~Matrix()}}
+{\footnotesize\ttfamily q\+::\+Matrix\+::\texorpdfstring{$\sim$}{\string~}\+Matrix (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})}
+
+
+
+Definition at line \mbox{\hyperlink{qalgorithms__matrix_8cpp_source_l00032}{32}} of file \mbox{\hyperlink{qalgorithms__matrix_8cpp_source}{qalgorithms\+\_\+matrix.\+cpp}}.
+
+
+
+\doxysubsection{Member Function Documentation}
+\Hypertarget{classq_1_1_matrix_a93143de3b9feb83e5a324044b9ef3516}\label{classq_1_1_matrix_a93143de3b9feb83e5a324044b9ef3516} 
+\index{q::Matrix@{q::Matrix}!assign@{assign}}
+\index{assign@{assign}!q::Matrix@{q::Matrix}}
+\doxysubsubsection{\texorpdfstring{assign()}{assign()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{void}} q\+::\+Matrix\+::assign (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{size\+\_\+t}}}]{row,  }\item[{\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{size\+\_\+t}}}]{col,  }\item[{\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{double}} \&}]{value }\end{DoxyParamCaption})}
+
+
+
+Definition at line \mbox{\hyperlink{qalgorithms__matrix_8cpp_source_l00264}{264}} of file \mbox{\hyperlink{qalgorithms__matrix_8cpp_source}{qalgorithms\+\_\+matrix.\+cpp}}.
+
+\Hypertarget{classq_1_1_matrix_ae8c80426ebd00d309a1e79eb9d38f97e}\label{classq_1_1_matrix_ae8c80426ebd00d309a1e79eb9d38f97e} 
+\index{q::Matrix@{q::Matrix}!col@{col}}
+\index{col@{col}!q::Matrix@{q::Matrix}}
+\doxysubsubsection{\texorpdfstring{col()}{col()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{classq_1_1_matrix}{Matrix}} q\+::\+Matrix\+::col (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{size\+\_\+t}}}]{col\+Index }\end{DoxyParamCaption}) const}
+
+
+
+Definition at line \mbox{\hyperlink{qalgorithms__matrix_8cpp_source_l00094}{94}} of file \mbox{\hyperlink{qalgorithms__matrix_8cpp_source}{qalgorithms\+\_\+matrix.\+cpp}}.
+
+\Hypertarget{classq_1_1_matrix_aceb7f09f0eea5817c7e46d7cdbb7870d}\label{classq_1_1_matrix_aceb7f09f0eea5817c7e46d7cdbb7870d} 
+\index{q::Matrix@{q::Matrix}!convoleCombiend@{convoleCombiend}}
+\index{convoleCombiend@{convoleCombiend}!q::Matrix@{q::Matrix}}
+\doxysubsubsection{\texorpdfstring{convoleCombiend()}{convoleCombiend()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{classq_1_1_matrix}{Matrix}} q\+::\+Matrix\+::convole\+Combiend (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{classq_1_1_matrix}{Matrix}} \&}]{kernel }\end{DoxyParamCaption}) const}
+
+
+
+Definition at line \mbox{\hyperlink{qalgorithms__matrix_8cpp_source_l00476}{476}} of file \mbox{\hyperlink{qalgorithms__matrix_8cpp_source}{qalgorithms\+\_\+matrix.\+cpp}}.
+
+\Hypertarget{classq_1_1_matrix_a956aba54c16b1e9c65b8c131d0b9cf6d}\label{classq_1_1_matrix_a956aba54c16b1e9c65b8c131d0b9cf6d} 
+\index{q::Matrix@{q::Matrix}!convolveAntisymmetric@{convolveAntisymmetric}}
+\index{convolveAntisymmetric@{convolveAntisymmetric}!q::Matrix@{q::Matrix}}
+\doxysubsubsection{\texorpdfstring{convolveAntisymmetric()}{convolveAntisymmetric()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{classq_1_1_matrix}{Matrix}} q\+::\+Matrix\+::convolve\+Antisymmetric (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{classq_1_1_matrix}{Matrix}} \&}]{kernel }\end{DoxyParamCaption}) const}
+
+
+
+Definition at line \mbox{\hyperlink{qalgorithms__matrix_8cpp_source_l00425}{425}} of file \mbox{\hyperlink{qalgorithms__matrix_8cpp_source}{qalgorithms\+\_\+matrix.\+cpp}}.
+
+\Hypertarget{classq_1_1_matrix_a549e37550d5df9f221ea8ab647751221}\label{classq_1_1_matrix_a549e37550d5df9f221ea8ab647751221} 
+\index{q::Matrix@{q::Matrix}!convolveRotation@{convolveRotation}}
+\index{convolveRotation@{convolveRotation}!q::Matrix@{q::Matrix}}
+\doxysubsubsection{\texorpdfstring{convolveRotation()}{convolveRotation()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{classq_1_1_matrix}{Matrix}} q\+::\+Matrix\+::convolve\+Rotation (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{classq_1_1_matrix}{Matrix}} \&}]{kernel }\end{DoxyParamCaption}) const}
+
+
+
+Definition at line \mbox{\hyperlink{qalgorithms__matrix_8cpp_source_l00398}{398}} of file \mbox{\hyperlink{qalgorithms__matrix_8cpp_source}{qalgorithms\+\_\+matrix.\+cpp}}.
+
+\Hypertarget{classq_1_1_matrix_a0d2a7bf49f60c2cb4e81f5489a175860}\label{classq_1_1_matrix_a0d2a7bf49f60c2cb4e81f5489a175860} 
+\index{q::Matrix@{q::Matrix}!convolveSymmetric@{convolveSymmetric}}
+\index{convolveSymmetric@{convolveSymmetric}!q::Matrix@{q::Matrix}}
+\doxysubsubsection{\texorpdfstring{convolveSymmetric()}{convolveSymmetric()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{classq_1_1_matrix}{Matrix}} q\+::\+Matrix\+::convolve\+Symmetric (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{classq_1_1_matrix}{Matrix}} \&}]{kernel }\end{DoxyParamCaption}) const}
+
+
+
+Definition at line \mbox{\hyperlink{qalgorithms__matrix_8cpp_source_l00366}{366}} of file \mbox{\hyperlink{qalgorithms__matrix_8cpp_source}{qalgorithms\+\_\+matrix.\+cpp}}.
+
+\Hypertarget{classq_1_1_matrix_ae8be0feb0bca4a36a36541a86191da13}\label{classq_1_1_matrix_ae8be0feb0bca4a36a36541a86191da13} 
+\index{q::Matrix@{q::Matrix}!exp@{exp}}
+\index{exp@{exp}!q::Matrix@{q::Matrix}}
+\doxysubsubsection{\texorpdfstring{exp()}{exp()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{classq_1_1_matrix}{Matrix}} q\+::\+Matrix\+::exp (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption}) const}
+
+
+
+Definition at line \mbox{\hyperlink{qalgorithms__matrix_8cpp_source_l00280}{280}} of file \mbox{\hyperlink{qalgorithms__matrix_8cpp_source}{qalgorithms\+\_\+matrix.\+cpp}}.
+
+\Hypertarget{classq_1_1_matrix_a4a4963603504ed65e1072090a4659ee5}\label{classq_1_1_matrix_a4a4963603504ed65e1072090a4659ee5} 
+\index{q::Matrix@{q::Matrix}!getElement@{getElement}}
+\index{getElement@{getElement}!q::Matrix@{q::Matrix}}
+\doxysubsubsection{\texorpdfstring{getElement()}{getElement()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{double}} \& q\+::\+Matrix\+::get\+Element (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{size\+\_\+t}}}]{idx }\end{DoxyParamCaption}) const}
+
+
+
+Definition at line \mbox{\hyperlink{qalgorithms__matrix_8cpp_source_l00077}{77}} of file \mbox{\hyperlink{qalgorithms__matrix_8cpp_source}{qalgorithms\+\_\+matrix.\+cpp}}.
+
+\Hypertarget{classq_1_1_matrix_a13a3b5de2eb14cebc6c2e00f37647d51}\label{classq_1_1_matrix_a13a3b5de2eb14cebc6c2e00f37647d51} 
+\index{q::Matrix@{q::Matrix}!inv@{inv}}
+\index{inv@{inv}!q::Matrix@{q::Matrix}}
+\doxysubsubsection{\texorpdfstring{inv()}{inv()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{classq_1_1_matrix}{Matrix}} q\+::\+Matrix\+::inv (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption}) const}
+
+
+
+Definition at line \mbox{\hyperlink{qalgorithms__matrix_8cpp_source_l00303}{303}} of file \mbox{\hyperlink{qalgorithms__matrix_8cpp_source}{qalgorithms\+\_\+matrix.\+cpp}}.
+
+\Hypertarget{classq_1_1_matrix_a34a6a5e87cf0b5a9eb832caaec1b9ab4}\label{classq_1_1_matrix_a34a6a5e87cf0b5a9eb832caaec1b9ab4} 
+\index{q::Matrix@{q::Matrix}!log@{log}}
+\index{log@{log}!q::Matrix@{q::Matrix}}
+\doxysubsubsection{\texorpdfstring{log()}{log()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{classq_1_1_matrix}{Matrix}} q\+::\+Matrix\+::log (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption}) const}
+
+
+
+Definition at line \mbox{\hyperlink{qalgorithms__matrix_8cpp_source_l00270}{270}} of file \mbox{\hyperlink{qalgorithms__matrix_8cpp_source}{qalgorithms\+\_\+matrix.\+cpp}}.
+
+\Hypertarget{classq_1_1_matrix_add6e3df948019df92282a9dec666b38f}\label{classq_1_1_matrix_add6e3df948019df92282a9dec666b38f} 
+\index{q::Matrix@{q::Matrix}!numCols@{numCols}}
+\index{numCols@{numCols}!q::Matrix@{q::Matrix}}
+\doxysubsubsection{\texorpdfstring{numCols()}{numCols()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{size\+\_\+t}} q\+::\+Matrix\+::num\+Cols (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption}) const}
+
+
+
+Definition at line \mbox{\hyperlink{qalgorithms__matrix_8cpp_source_l00043}{43}} of file \mbox{\hyperlink{qalgorithms__matrix_8cpp_source}{qalgorithms\+\_\+matrix.\+cpp}}.
+
+\Hypertarget{classq_1_1_matrix_a3fed230885b4ee378d389c5660bd488e}\label{classq_1_1_matrix_a3fed230885b4ee378d389c5660bd488e} 
+\index{q::Matrix@{q::Matrix}!numel@{numel}}
+\index{numel@{numel}!q::Matrix@{q::Matrix}}
+\doxysubsubsection{\texorpdfstring{numel()}{numel()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{size\+\_\+t}} q\+::\+Matrix\+::numel (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption}) const}
+
+
+
+Definition at line \mbox{\hyperlink{qalgorithms__matrix_8cpp_source_l00048}{48}} of file \mbox{\hyperlink{qalgorithms__matrix_8cpp_source}{qalgorithms\+\_\+matrix.\+cpp}}.
+
+\Hypertarget{classq_1_1_matrix_a960d477bd9b1ff50e43856bdb778ec1c}\label{classq_1_1_matrix_a960d477bd9b1ff50e43856bdb778ec1c} 
+\index{q::Matrix@{q::Matrix}!numRows@{numRows}}
+\index{numRows@{numRows}!q::Matrix@{q::Matrix}}
+\doxysubsubsection{\texorpdfstring{numRows()}{numRows()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{size\+\_\+t}} q\+::\+Matrix\+::num\+Rows (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption}) const}
+
+
+
+Definition at line \mbox{\hyperlink{qalgorithms__matrix_8cpp_source_l00038}{38}} of file \mbox{\hyperlink{qalgorithms__matrix_8cpp_source}{qalgorithms\+\_\+matrix.\+cpp}}.
+
+\Hypertarget{classq_1_1_matrix_a4aeec135a3428209692076e0a0ee8916}\label{classq_1_1_matrix_a4aeec135a3428209692076e0a0ee8916} 
+\index{q::Matrix@{q::Matrix}!operator()@{operator()}}
+\index{operator()@{operator()}!q::Matrix@{q::Matrix}}
+\doxysubsubsection{\texorpdfstring{operator()()}{operator()()}\hspace{0.1cm}{\footnotesize\ttfamily [1/2]}}
+{\footnotesize\ttfamily \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{double}} \& q\+::\+Matrix\+::operator() (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{size\+\_\+t}}}]{row,  }\item[{\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{size\+\_\+t}}}]{col }\end{DoxyParamCaption})}
+
+
+
+Definition at line \mbox{\hyperlink{qalgorithms__matrix_8cpp_source_l00067}{67}} of file \mbox{\hyperlink{qalgorithms__matrix_8cpp_source}{qalgorithms\+\_\+matrix.\+cpp}}.
+
+\Hypertarget{classq_1_1_matrix_ac738b454c903787bf5cbccc01d4fd38a}\label{classq_1_1_matrix_ac738b454c903787bf5cbccc01d4fd38a} 
+\index{q::Matrix@{q::Matrix}!operator()@{operator()}}
+\index{operator()@{operator()}!q::Matrix@{q::Matrix}}
+\doxysubsubsection{\texorpdfstring{operator()()}{operator()()}\hspace{0.1cm}{\footnotesize\ttfamily [2/2]}}
+{\footnotesize\ttfamily \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{double}} \& q\+::\+Matrix\+::operator() (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{size\+\_\+t}}}]{row,  }\item[{\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{size\+\_\+t}}}]{col }\end{DoxyParamCaption}) const}
+
+
+
+Definition at line \mbox{\hyperlink{qalgorithms__matrix_8cpp_source_l00072}{72}} of file \mbox{\hyperlink{qalgorithms__matrix_8cpp_source}{qalgorithms\+\_\+matrix.\+cpp}}.
+
+\Hypertarget{classq_1_1_matrix_ad33372efca9e45a8f663c8e7b3c56bb3}\label{classq_1_1_matrix_ad33372efca9e45a8f663c8e7b3c56bb3} 
+\index{q::Matrix@{q::Matrix}!operator\texorpdfstring{$\ast$}{*}@{operator\texorpdfstring{$\ast$}{*}}}
+\index{operator\texorpdfstring{$\ast$}{*}@{operator\texorpdfstring{$\ast$}{*}}!q::Matrix@{q::Matrix}}
+\doxysubsubsection{\texorpdfstring{operator\texorpdfstring{$\ast$}{*}()}{operator*()}\hspace{0.1cm}{\footnotesize\ttfamily [1/2]}}
+{\footnotesize\ttfamily \mbox{\hyperlink{classq_1_1_matrix}{Matrix}} q\+::\+Matrix\+::operator\texorpdfstring{$\ast$}{*} (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{double}}}]{scalar }\end{DoxyParamCaption}) const}
+
+
+
+Definition at line \mbox{\hyperlink{qalgorithms__matrix_8cpp_source_l00174}{174}} of file \mbox{\hyperlink{qalgorithms__matrix_8cpp_source}{qalgorithms\+\_\+matrix.\+cpp}}.
+
+\Hypertarget{classq_1_1_matrix_a7f16a20457843380bafaf8f585f35ed4}\label{classq_1_1_matrix_a7f16a20457843380bafaf8f585f35ed4} 
+\index{q::Matrix@{q::Matrix}!operator\texorpdfstring{$\ast$}{*}@{operator\texorpdfstring{$\ast$}{*}}}
+\index{operator\texorpdfstring{$\ast$}{*}@{operator\texorpdfstring{$\ast$}{*}}!q::Matrix@{q::Matrix}}
+\doxysubsubsection{\texorpdfstring{operator\texorpdfstring{$\ast$}{*}()}{operator*()}\hspace{0.1cm}{\footnotesize\ttfamily [2/2]}}
+{\footnotesize\ttfamily \mbox{\hyperlink{classq_1_1_matrix}{Matrix}} q\+::\+Matrix\+::operator\texorpdfstring{$\ast$}{*} (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{classq_1_1_matrix}{Matrix}} \&}]{other }\end{DoxyParamCaption}) const}
+
+
+
+Definition at line \mbox{\hyperlink{qalgorithms__matrix_8cpp_source_l00148}{148}} of file \mbox{\hyperlink{qalgorithms__matrix_8cpp_source}{qalgorithms\+\_\+matrix.\+cpp}}.
+
+\Hypertarget{classq_1_1_matrix_ae7f2ec1f8496524773607e0994813002}\label{classq_1_1_matrix_ae7f2ec1f8496524773607e0994813002} 
+\index{q::Matrix@{q::Matrix}!operator+@{operator+}}
+\index{operator+@{operator+}!q::Matrix@{q::Matrix}}
+\doxysubsubsection{\texorpdfstring{operator+()}{operator+()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{classq_1_1_matrix}{Matrix}} q\+::\+Matrix\+::operator+ (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{classq_1_1_matrix}{Matrix}} \&}]{other }\end{DoxyParamCaption}) const}
+
+
+
+Definition at line \mbox{\hyperlink{qalgorithms__matrix_8cpp_source_l00212}{212}} of file \mbox{\hyperlink{qalgorithms__matrix_8cpp_source}{qalgorithms\+\_\+matrix.\+cpp}}.
+
+\Hypertarget{classq_1_1_matrix_af823e1afa35534a75c51e5ce16895f0b}\label{classq_1_1_matrix_af823e1afa35534a75c51e5ce16895f0b} 
+\index{q::Matrix@{q::Matrix}!operator-\/@{operator-\/}}
+\index{operator-\/@{operator-\/}!q::Matrix@{q::Matrix}}
+\doxysubsubsection{\texorpdfstring{operator-\/()}{operator-()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{classq_1_1_matrix}{Matrix}} q\+::\+Matrix\+::operator-\/ (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{classq_1_1_matrix}{Matrix}} \&}]{other }\end{DoxyParamCaption}) const}
+
+
+
+Definition at line \mbox{\hyperlink{qalgorithms__matrix_8cpp_source_l00185}{185}} of file \mbox{\hyperlink{qalgorithms__matrix_8cpp_source}{qalgorithms\+\_\+matrix.\+cpp}}.
+
+\Hypertarget{classq_1_1_matrix_a9652371f4e2ef6c30e02d4e9a1e9add7}\label{classq_1_1_matrix_a9652371f4e2ef6c30e02d4e9a1e9add7} 
+\index{q::Matrix@{q::Matrix}!operator=@{operator=}}
+\index{operator=@{operator=}!q::Matrix@{q::Matrix}}
+\doxysubsubsection{\texorpdfstring{operator=()}{operator=()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{classq_1_1_matrix}{Matrix}} \& q\+::\+Matrix\+::operator= (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{classq_1_1_matrix}{Matrix}} \&}]{other }\end{DoxyParamCaption})}
+
+
+
+Definition at line \mbox{\hyperlink{qalgorithms__matrix_8cpp_source_l00249}{249}} of file \mbox{\hyperlink{qalgorithms__matrix_8cpp_source}{qalgorithms\+\_\+matrix.\+cpp}}.
+
+\Hypertarget{classq_1_1_matrix_aad7c69850887dc228579ae975a2f5587}\label{classq_1_1_matrix_aad7c69850887dc228579ae975a2f5587} 
+\index{q::Matrix@{q::Matrix}!operator\texorpdfstring{$^\wedge$}{\string^}@{operator\texorpdfstring{$^\wedge$}{\string^}}}
+\index{operator\texorpdfstring{$^\wedge$}{\string^}@{operator\texorpdfstring{$^\wedge$}{\string^}}!q::Matrix@{q::Matrix}}
+\doxysubsubsection{\texorpdfstring{operator\texorpdfstring{$^\wedge$}{\string^}()}{operator\string^()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{classq_1_1_matrix}{Matrix}} q\+::\+Matrix\+::operator\texorpdfstring{$^\wedge$}{\string^} (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{double}}}]{power }\end{DoxyParamCaption}) const}
+
+
+
+Definition at line \mbox{\hyperlink{qalgorithms__matrix_8cpp_source_l00239}{239}} of file \mbox{\hyperlink{qalgorithms__matrix_8cpp_source}{qalgorithms\+\_\+matrix.\+cpp}}.
+
+\Hypertarget{classq_1_1_matrix_abbf7241e8b245ff44b42750ce5c67a46}\label{classq_1_1_matrix_abbf7241e8b245ff44b42750ce5c67a46} 
+\index{q::Matrix@{q::Matrix}!print@{print}}
+\index{print@{print}!q::Matrix@{q::Matrix}}
+\doxysubsubsection{\texorpdfstring{print()}{print()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{void}} q\+::\+Matrix\+::print (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption}) const}
+
+
+
+Definition at line \mbox{\hyperlink{qalgorithms__matrix_8cpp_source_l00565}{565}} of file \mbox{\hyperlink{qalgorithms__matrix_8cpp_source}{qalgorithms\+\_\+matrix.\+cpp}}.
+
+\Hypertarget{classq_1_1_matrix_ac12e9523879dd04637f844250e0efbdd}\label{classq_1_1_matrix_ac12e9523879dd04637f844250e0efbdd} 
+\index{q::Matrix@{q::Matrix}!reinitialize@{reinitialize}}
+\index{reinitialize@{reinitialize}!q::Matrix@{q::Matrix}}
+\doxysubsubsection{\texorpdfstring{reinitialize()}{reinitialize()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{void}} q\+::\+Matrix\+::reinitialize (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{size\+\_\+t}}}]{new\+Rows,  }\item[{\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{size\+\_\+t}}}]{new\+Cols }\end{DoxyParamCaption})}
+
+
+
+Definition at line \mbox{\hyperlink{qalgorithms__matrix_8cpp_source_l00020}{20}} of file \mbox{\hyperlink{qalgorithms__matrix_8cpp_source}{qalgorithms\+\_\+matrix.\+cpp}}.
+
+\Hypertarget{classq_1_1_matrix_a5e49d77fb787a2ac14f4d764434d2407}\label{classq_1_1_matrix_a5e49d77fb787a2ac14f4d764434d2407} 
+\index{q::Matrix@{q::Matrix}!row@{row}}
+\index{row@{row}!q::Matrix@{q::Matrix}}
+\doxysubsubsection{\texorpdfstring{row()}{row()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{classq_1_1_matrix}{Matrix}} q\+::\+Matrix\+::row (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{size\+\_\+t}}}]{row\+Index }\end{DoxyParamCaption}) const}
+
+
+
+Definition at line \mbox{\hyperlink{qalgorithms__matrix_8cpp_source_l00083}{83}} of file \mbox{\hyperlink{qalgorithms__matrix_8cpp_source}{qalgorithms\+\_\+matrix.\+cpp}}.
+
+\Hypertarget{classq_1_1_matrix_a4ffb497b5997865e4a0ce103a193e2c0}\label{classq_1_1_matrix_a4ffb497b5997865e4a0ce103a193e2c0} 
+\index{q::Matrix@{q::Matrix}!sort1@{sort1}}
+\index{sort1@{sort1}!q::Matrix@{q::Matrix}}
+\doxysubsubsection{\texorpdfstring{sort1()}{sort1()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{void}} q\+::\+Matrix\+::sort1 (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})}
+
+
+
+Definition at line \mbox{\hyperlink{qalgorithms__matrix_8cpp_source_l00536}{536}} of file \mbox{\hyperlink{qalgorithms__matrix_8cpp_source}{qalgorithms\+\_\+matrix.\+cpp}}.
+
+\Hypertarget{classq_1_1_matrix_a07c0774f01bfbaa556f923e9523f71b8}\label{classq_1_1_matrix_a07c0774f01bfbaa556f923e9523f71b8} 
+\index{q::Matrix@{q::Matrix}!subMatrix@{subMatrix}}
+\index{subMatrix@{subMatrix}!q::Matrix@{q::Matrix}}
+\doxysubsubsection{\texorpdfstring{subMatrix()}{subMatrix()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{classq_1_1_matrix}{Matrix}} q\+::\+Matrix\+::sub\+Matrix (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{size\+\_\+t}}}]{start\+Row,  }\item[{\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{size\+\_\+t}}}]{end\+Row,  }\item[{\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{size\+\_\+t}}}]{start\+Col,  }\item[{\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{size\+\_\+t}}}]{end\+Col }\end{DoxyParamCaption}) const}
+
+\begin{DoxyRefDesc}{Todo}
+\item[\mbox{\hyperlink{todo__todo000001}{Todo}}]\+: submatrix should extract a submatrix from the matrix as Reference (\doxylink{classq_1_1_ref_matrix}{Ref\+Matrix}) \end{DoxyRefDesc}
+
+
+Definition at line \mbox{\hyperlink{qalgorithms__matrix_8cpp_source_l00106}{106}} of file \mbox{\hyperlink{qalgorithms__matrix_8cpp_source}{qalgorithms\+\_\+matrix.\+cpp}}.
+
+\Hypertarget{classq_1_1_matrix_aee288bc348a3b8c71d3a2ff637269424}\label{classq_1_1_matrix_aee288bc348a3b8c71d3a2ff637269424} 
+\index{q::Matrix@{q::Matrix}!sumElements@{sumElements}}
+\index{sumElements@{sumElements}!q::Matrix@{q::Matrix}}
+\doxysubsubsection{\texorpdfstring{sumElements()}{sumElements()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{double}} q\+::\+Matrix\+::sum\+Elements (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption}) const}
+
+
+
+Definition at line \mbox{\hyperlink{qalgorithms__matrix_8cpp_source_l00292}{292}} of file \mbox{\hyperlink{qalgorithms__matrix_8cpp_source}{qalgorithms\+\_\+matrix.\+cpp}}.
+
+\Hypertarget{classq_1_1_matrix_a46ee64f57387c7f5cb71d3174f234d88}\label{classq_1_1_matrix_a46ee64f57387c7f5cb71d3174f234d88} 
+\index{q::Matrix@{q::Matrix}!T@{T}}
+\index{T@{T}!q::Matrix@{q::Matrix}}
+\doxysubsubsection{\texorpdfstring{T()}{T()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{classq_1_1_matrix}{Matrix}} q\+::\+Matrix\+::T (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption}) const}
+
+
+
+Definition at line \mbox{\hyperlink{qalgorithms__matrix_8cpp_source_l00132}{132}} of file \mbox{\hyperlink{qalgorithms__matrix_8cpp_source}{qalgorithms\+\_\+matrix.\+cpp}}.
+
+
+
+The documentation for this class was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+include/\mbox{\hyperlink{qalgorithms__matrix_8h}{qalgorithms\+\_\+matrix.\+h}}\item 
+src/\mbox{\hyperlink{qalgorithms__matrix_8cpp}{qalgorithms\+\_\+matrix.\+cpp}}\end{DoxyCompactItemize}

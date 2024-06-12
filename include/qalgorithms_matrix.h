@@ -2,65 +2,188 @@
 #ifndef QALGORITHMS_MATRIX_H // Include guarde to prevent double inclusion
 #define QALGORITHMS_MATRIX_H
 
+// internal
+// #include "qalgorithms_utils.h"
+
+// external
 #include <iostream>
 #include <cmath>
 #include <algorithm>
+#include <array>
+#include <cstdint>
 
 /* This file includes the q::matrix class*/
-namespace q {
-  class Matrix {
-  private:
+namespace q
+{
+  /**
+   * @brief A class to store a matrix
+   * @details The Matrix class is used to store a matrix of doubles. The class includes methods for matrix operations such as addition, subtraction, multiplication, and inversion.
+   *
+   * @param elements A pointer to the elements of the matrix
+   * @param rows The number of rows
+   * @param cols The number of columns
+   */
+  class Matrix
+  {
+  public:
+    double *elements;
+    size_t rows, cols;
+    // Constructors and Destructor
+    Matrix();
+    Matrix(size_t rows, size_t cols);
+    Matrix(const Matrix &other);
+    ~Matrix();
+
+    double &
+    operator()(size_t row, size_t col);
+
+    const double &
+    operator()(size_t row, size_t col) const;
+
+    double &
+    operator[](size_t idx) const;
+
+    Matrix &
+    operator=(const Matrix &other);
+  };
+
+  /**
+   * @brief A clase to store a matrix with major column order storage
+   * @details The Matrix_mc class is used to store a matrix of doubles with major column order storage. The class includes methods for matrix operations such as addition, subtraction, multiplication, and inversion.
+   * 
+   * @param elements A pointer to the elements of the matrix
+   * @param rows The number of rows
+   * @param cols The number of columns
+   */
+  class Matrix_mc
+  {
+  public:
     double *elements;
     size_t rows, cols;
 
-    // Methods for inv()
-    Matrix choleskyDecomposition() const;
-    Matrix inverseLowerTriangle() const;
+    Matrix_mc(const size_t rows, const size_t cols);
+    ~Matrix_mc();
 
+    Matrix_mc(const Matrix_mc &other);
+
+    double &
+    operator()(size_t row, size_t col);
+
+    const double &
+    operator()(size_t row, size_t col) const;
+
+    double &
+    operator[](size_t idx);
+
+    const double &
+    operator[](size_t idx) const;
+
+    Matrix_mc &
+    operator=(const Matrix_mc &other);
+  };
+
+  class Matrix_mc_4x4
+  {
+    public:
+    double elements[16];
+
+    Matrix_mc_4x4();
+    ~Matrix_mc_4x4();
+
+    Matrix_mc_4x4(const Matrix_mc_4x4 &other);
+
+    double &
+    operator()(size_t row, size_t col);
+
+    const double &
+    operator()(size_t row, size_t col) const;
+
+    double &
+    operator[](size_t idx);
+
+    const double &
+    operator[](size_t idx) const;
+
+    Matrix_mc_4x4 &
+    operator=(const Matrix_mc_4x4 &other);
+
+    double*
+    begin();
+
+    const double*
+    begin() const;
+
+    double*
+    end();
+
+    const double*
+    end() const;  
+  };
+
+  class Vector
+  {
   public:
-    // Constructors and member functions
-    Matrix();
-    Matrix(size_t rows, size_t cols);
-    Matrix(const Matrix& other);
-    void reinitialize(size_t newRows, size_t newCols);
-    // Clear Object
-    ~Matrix();
-    // get dimensions
-    size_t numRows() const;
-    size_t numCols() const;
-    size_t numel() const;
-    // access
-    double& operator()(size_t row, size_t col);
-    const double& operator()(size_t row, size_t col) const;
-    double& getElement(size_t idx) const;
+    double *elements;
+    size_t n;
 
-    Matrix row(size_t rowIndex) const;
-    Matrix col(size_t colIndex) const;
-    
-    Matrix subMatrix(
-      size_t startRow, 
-      size_t endRow, 
-      size_t startCol, 
-      size_t endCol) const;
+    Vector(const size_t n);
+    ~Vector();
 
-    // functions
-    Matrix T() const;
-    Matrix operator*(const Matrix& other) const;
-    Matrix operator*(const double scalar) const;
-    Matrix operator-(const Matrix& other) const;
-    Matrix operator+(const Matrix& other) const;
-    Matrix operator^(const double power) const;
-    Matrix& operator=(const Matrix& other);
-    Matrix log() const;
-    
-    double sumElements() const;
-    Matrix inv() const;
-    
-    Matrix convolveSymmetric(const Matrix& kernel) const;
-    Matrix convolveRotation(const Matrix& kernel) const;
-    Matrix convolveAntisymmetric(const Matrix& kernel) const;
-    void sort1(); // sorting by the first column
-    void print() const;
+    Vector(const Vector& other);
+
+    double &
+    operator[](size_t idx);
+
+    const double &
+    operator[](size_t idx) const;
+
+    double*
+    begin();
+
+    const double*
+    begin() const;
+
+    double*
+    end();
+
+    const double*
+    end() const;
+
+    Vector&
+    operator=(const Vector &other);
+  };
+
+  class BoolVector
+  {
+  public:
+    bool *elements;
+    size_t n;
+
+    BoolVector(const size_t n);
+    ~BoolVector();
+
+    BoolVector(const BoolVector& other);
+
+    bool &
+    operator[](size_t idx);
+
+    const bool &
+    operator[](size_t idx) const;
+
+    BoolVector&
+    operator=(const BoolVector &other);
+
+    bool*
+    begin();
+
+    const bool*
+    begin() const;
+
+    bool*
+    end();
+
+    const bool*
+    end() const;
   };
 }
 #endif // QALGORITHMS_MATRIX_H

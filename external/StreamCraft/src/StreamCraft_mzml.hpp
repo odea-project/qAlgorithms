@@ -193,7 +193,7 @@ namespace sc {
 
 #endif // STREAMCRAFT_MZML_HPP
 
-#if defined(STREAMCRAFT_HEADER_ONLY) && !defined(STREAMCRAFT_MZML_SOURCE)
-#	define STREAMCRAFT_MZML_SOURCE "StreamCraft_mzml.cpp"
-#	include STREAMCRAFT_MZML_SOURCE
-#endif
+// #if defined(STREAMCRAFT_HEADER_ONLY) && !defined(STREAMCRAFT_MZML_SOURCE)
+// #	define STREAMCRAFT_MZML_SOURCE "StreamCraft_mzml.cpp"
+// #	include STREAMCRAFT_MZML_SOURCE
+// #endif

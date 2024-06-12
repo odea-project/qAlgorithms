@@ -1,0 +1,125 @@
+\doxysection{xpath\+\_\+allocator Struct Reference}
+\hypertarget{structxpath__allocator}{}\label{structxpath__allocator}\index{xpath\_allocator@{xpath\_allocator}}
+\doxysubsubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\hyperlink{structxpath__allocator_af2c04c365636405fcade786bc535b9c4}{xpath\+\_\+allocator}} (\mbox{\hyperlink{structxpath__memory__block}{xpath\+\_\+memory\+\_\+block}} \texorpdfstring{$\ast$}{*}root, \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{bool}} \texorpdfstring{$\ast$}{*}error=0)
+\item 
+\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{void}} \texorpdfstring{$\ast$}{*} \mbox{\hyperlink{structxpath__allocator_a6c13fefbd7038d78b336987f396c8415}{allocate}} (\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{size\+\_\+t}} size)
+\item 
+\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{void}} \texorpdfstring{$\ast$}{*} \mbox{\hyperlink{structxpath__allocator_a5d3ba1b01ba87b2002b348674e9d50b6}{reallocate}} (\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{void}} \texorpdfstring{$\ast$}{*}\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{ptr}}, \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{size\+\_\+t}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{old\+\_\+size}}, \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{size\+\_\+t}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{new\+\_\+size}})
+\item 
+\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{void}} \mbox{\hyperlink{structxpath__allocator_af1c3ec117935d4488bbd16adf807fbc1}{revert}} (\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{structxpath__allocator}{xpath\+\_\+allocator}} \&state)
+\item 
+\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{void}} \mbox{\hyperlink{structxpath__allocator_a9436b8bdef3e0e0ff0df28c2af6a430d}{release}} ()
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Public Attributes}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\hyperlink{structxpath__memory__block}{xpath\+\_\+memory\+\_\+block}} \texorpdfstring{$\ast$}{*} \mbox{\hyperlink{structxpath__allocator_ace647e1e57dd658b4bbcd3b18fb567f1}{\+\_\+root}}
+\item 
+\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{size\+\_\+t}} \mbox{\hyperlink{structxpath__allocator_adc703a6c3f3a0435f8b5f2e6c770b3fe}{\+\_\+root\+\_\+size}}
+\item 
+\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{bool}} \texorpdfstring{$\ast$}{*} \mbox{\hyperlink{structxpath__allocator_a02bbb00b33ec7254cbf85dc553ad0e09}{\+\_\+error}}
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+
+
+Definition at line \mbox{\hyperlink{pugixml_8cpp_source_l07835}{7835}} of file \mbox{\hyperlink{pugixml_8cpp_source}{pugixml.\+cpp}}.
+
+
+
+\doxysubsection{Constructor \& Destructor Documentation}
+\Hypertarget{structxpath__allocator_af2c04c365636405fcade786bc535b9c4}\label{structxpath__allocator_af2c04c365636405fcade786bc535b9c4} 
+\index{xpath\_allocator@{xpath\_allocator}!xpath\_allocator@{xpath\_allocator}}
+\index{xpath\_allocator@{xpath\_allocator}!xpath\_allocator@{xpath\_allocator}}
+\doxysubsubsection{\texorpdfstring{xpath\_allocator()}{xpath\_allocator()}}
+{\footnotesize\ttfamily xpath\+\_\+allocator\+::xpath\+\_\+allocator (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{structxpath__memory__block}{xpath\+\_\+memory\+\_\+block}} \texorpdfstring{$\ast$}{*}}]{root,  }\item[{\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{bool}} \texorpdfstring{$\ast$}{*}}]{error = {\ttfamily 0} }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Definition at line \mbox{\hyperlink{pugixml_8cpp_source_l07841}{7841}} of file \mbox{\hyperlink{pugixml_8cpp_source}{pugixml.\+cpp}}.
+
+
+
+\doxysubsection{Member Function Documentation}
+\Hypertarget{structxpath__allocator_a6c13fefbd7038d78b336987f396c8415}\label{structxpath__allocator_a6c13fefbd7038d78b336987f396c8415} 
+\index{xpath\_allocator@{xpath\_allocator}!allocate@{allocate}}
+\index{allocate@{allocate}!xpath\_allocator@{xpath\_allocator}}
+\doxysubsubsection{\texorpdfstring{allocate()}{allocate()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{void}} \texorpdfstring{$\ast$}{*} xpath\+\_\+allocator\+::allocate (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{size\+\_\+t}}}]{size }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Definition at line \mbox{\hyperlink{pugixml_8cpp_source_l07845}{7845}} of file \mbox{\hyperlink{pugixml_8cpp_source}{pugixml.\+cpp}}.
+
+\Hypertarget{structxpath__allocator_a5d3ba1b01ba87b2002b348674e9d50b6}\label{structxpath__allocator_a5d3ba1b01ba87b2002b348674e9d50b6} 
+\index{xpath\_allocator@{xpath\_allocator}!reallocate@{reallocate}}
+\index{reallocate@{reallocate}!xpath\_allocator@{xpath\_allocator}}
+\doxysubsubsection{\texorpdfstring{reallocate()}{reallocate()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{void}} \texorpdfstring{$\ast$}{*} xpath\+\_\+allocator\+::reallocate (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{void}} \texorpdfstring{$\ast$}{*}}]{ptr,  }\item[{\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{size\+\_\+t}}}]{old\+\_\+size,  }\item[{\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{size\+\_\+t}}}]{new\+\_\+size }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Definition at line \mbox{\hyperlink{pugixml_8cpp_source_l07882}{7882}} of file \mbox{\hyperlink{pugixml_8cpp_source}{pugixml.\+cpp}}.
+
+\Hypertarget{structxpath__allocator_a9436b8bdef3e0e0ff0df28c2af6a430d}\label{structxpath__allocator_a9436b8bdef3e0e0ff0df28c2af6a430d} 
+\index{xpath\_allocator@{xpath\_allocator}!release@{release}}
+\index{release@{release}!xpath\_allocator@{xpath\_allocator}}
+\doxysubsubsection{\texorpdfstring{release()}{release()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{void}} xpath\+\_\+allocator\+::release (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Definition at line \mbox{\hyperlink{pugixml_8cpp_source_l07948}{7948}} of file \mbox{\hyperlink{pugixml_8cpp_source}{pugixml.\+cpp}}.
+
+\Hypertarget{structxpath__allocator_af1c3ec117935d4488bbd16adf807fbc1}\label{structxpath__allocator_af1c3ec117935d4488bbd16adf807fbc1} 
+\index{xpath\_allocator@{xpath\_allocator}!revert@{revert}}
+\index{revert@{revert}!xpath\_allocator@{xpath\_allocator}}
+\doxysubsubsection{\texorpdfstring{revert()}{revert()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{void}} xpath\+\_\+allocator\+::revert (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{structxpath__allocator}{xpath\+\_\+allocator}} \&}]{state }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Definition at line \mbox{\hyperlink{pugixml_8cpp_source_l07929}{7929}} of file \mbox{\hyperlink{pugixml_8cpp_source}{pugixml.\+cpp}}.
+
+
+
+\doxysubsection{Member Data Documentation}
+\Hypertarget{structxpath__allocator_a02bbb00b33ec7254cbf85dc553ad0e09}\label{structxpath__allocator_a02bbb00b33ec7254cbf85dc553ad0e09} 
+\index{xpath\_allocator@{xpath\_allocator}!\_error@{\_error}}
+\index{\_error@{\_error}!xpath\_allocator@{xpath\_allocator}}
+\doxysubsubsection{\texorpdfstring{\_error}{\_error}}
+{\footnotesize\ttfamily \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{bool}}\texorpdfstring{$\ast$}{*} xpath\+\_\+allocator\+::\+\_\+error}
+
+
+
+Definition at line \mbox{\hyperlink{pugixml_8cpp_source_l07839}{7839}} of file \mbox{\hyperlink{pugixml_8cpp_source}{pugixml.\+cpp}}.
+
+\Hypertarget{structxpath__allocator_ace647e1e57dd658b4bbcd3b18fb567f1}\label{structxpath__allocator_ace647e1e57dd658b4bbcd3b18fb567f1} 
+\index{xpath\_allocator@{xpath\_allocator}!\_root@{\_root}}
+\index{\_root@{\_root}!xpath\_allocator@{xpath\_allocator}}
+\doxysubsubsection{\texorpdfstring{\_root}{\_root}}
+{\footnotesize\ttfamily \mbox{\hyperlink{structxpath__memory__block}{xpath\+\_\+memory\+\_\+block}}\texorpdfstring{$\ast$}{*} xpath\+\_\+allocator\+::\+\_\+root}
+
+
+
+Definition at line \mbox{\hyperlink{pugixml_8cpp_source_l07837}{7837}} of file \mbox{\hyperlink{pugixml_8cpp_source}{pugixml.\+cpp}}.
+
+\Hypertarget{structxpath__allocator_adc703a6c3f3a0435f8b5f2e6c770b3fe}\label{structxpath__allocator_adc703a6c3f3a0435f8b5f2e6c770b3fe} 
+\index{xpath\_allocator@{xpath\_allocator}!\_root\_size@{\_root\_size}}
+\index{\_root\_size@{\_root\_size}!xpath\_allocator@{xpath\_allocator}}
+\doxysubsubsection{\texorpdfstring{\_root\_size}{\_root\_size}}
+{\footnotesize\ttfamily \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{size\+\_\+t}} xpath\+\_\+allocator\+::\+\_\+root\+\_\+size}
+
+
+
+Definition at line \mbox{\hyperlink{pugixml_8cpp_source_l07838}{7838}} of file \mbox{\hyperlink{pugixml_8cpp_source}{pugixml.\+cpp}}.
+
+
+
+The documentation for this struct was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+external/pugixml-\/1.\+14/src/\mbox{\hyperlink{pugixml_8cpp}{pugixml.\+cpp}}\end{DoxyCompactItemize}

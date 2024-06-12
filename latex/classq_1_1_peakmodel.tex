@@ -1,0 +1,580 @@
+\doxysection{q\+::Peakmodel Class Reference}
+\hypertarget{classq_1_1_peakmodel}{}\label{classq_1_1_peakmodel}\index{q::Peakmodel@{q::Peakmodel}}
+
+
+{\ttfamily \#include $<$qalgorithms.\+h$>$}
+
+\doxysubsubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\hyperlink{classq_1_1_peakmodel_ae10cca96d10fb2a56e097f80882b20a7}{Peakmodel}} ()
+\item 
+\mbox{\hyperlink{classq_1_1_peakmodel_a51e7f2d91068b75461b20db6deefe868}{Peakmodel}} (\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{int}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{a\+\_\+max}})
+\item 
+\mbox{\hyperlink{classq_1_1_peakmodel_a26d91db421e3d56239c7de66558d7020}{Peakmodel}} (\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{int}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{a\+\_\+min}}, \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{int}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{a\+\_\+max}})
+\item 
+\mbox{\hyperlink{classq_1_1_peakmodel_a0f142c2f9f84bb389d731d5a36a51fd4}{Peakmodel}} (std\+::vector$<$ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{int}} $>$ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{A}})
+\item 
+\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{void}} \mbox{\hyperlink{classq_1_1_peakmodel_aa5da9ff95ae33df05bd8440e0fcc7dfb}{load\+TValues}} (\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{classq_1_1t_values}{t\+Values}} \&\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{t\+Data}})
+\item 
+\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{void}} \mbox{\hyperlink{classq_1_1_peakmodel_a78e1dbff931aa1d7a63396af1e791794}{calculate\+Design\+Matrix}} (\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{int}} a)
+\item 
+\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{void}} \mbox{\hyperlink{classq_1_1_peakmodel_ade15a55d5cc786a8282617014024a87e}{calculate\+Pseudo\+Inverse}} (\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{int}} a)
+\item 
+\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{void}} \mbox{\hyperlink{classq_1_1_peakmodel_a86b60463b2a75e0eeb5cbad963733939}{add\+Single\+Measurement}} (\mbox{\hyperlink{classq_1_1_matrix}{Matrix}} \&\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{xy\+Data}}, \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{bool}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{zero\+\_\+interpolation}}=\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{true}})
+\item 
+\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{void}} \mbox{\hyperlink{classq_1_1_peakmodel_a825ed3843d120bb7755c716cbceac8c3}{add\+Multiple\+Measurements}} (\mbox{\hyperlink{classq_1_1_matrix}{Matrix}} \&\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{xy\+Data}}, \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{bool}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{zero\+\_\+interpolation}}=\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{true}})
+\item 
+\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{void}} \mbox{\hyperlink{classq_1_1_peakmodel_a0b7f6694ead9ff0c4480d05037d5a8ef}{gap\+Filling}} (\mbox{\hyperlink{classq_1_1_matrix}{Matrix}} \&\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{xy\+Data}})
+\item 
+\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{void}} \mbox{\hyperlink{classq_1_1_peakmodel_ab9249627f4cdb608fedcaca30432f647}{zero\+Interpolation}} (\mbox{\hyperlink{classq_1_1_matrix}{Matrix}} \&\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{xy\+Data}})
+\item 
+\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{void}} \mbox{\hyperlink{classq_1_1_peakmodel_a12c61672c6ce1588b1173061715d19c3}{zero\+Interpolation\+\_\+one\+Direction}} (\mbox{\hyperlink{classq_1_1_matrix}{Matrix}} \&\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{xy\+Data}})
+\item 
+\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{void}} \mbox{\hyperlink{classq_1_1_peakmodel_a695e815681f449e9c92e9b800be3f390}{data\+Splitting}} (\mbox{\hyperlink{structq_1_1data_i_d}{data\+ID}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{key}}, \mbox{\hyperlink{classq_1_1_matrix}{Matrix}} \&\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{xy\+Data}}, std\+::map$<$ \mbox{\hyperlink{structq_1_1data_i_d}{data\+ID}}, \mbox{\hyperlink{classq_1_1_matrix}{Matrix}} $>$ \&\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{Data\+Set}})
+\item 
+std\+::vector$<$ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{int}} $>$ \mbox{\hyperlink{classq_1_1_peakmodel_a57883c68b4cb034839e0f140e2b35a55}{get\+Scales}} () \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}}
+\item 
+std\+::vector$<$ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{int}} $>$ \mbox{\hyperlink{classq_1_1_peakmodel_ab6fe7aaef691b3c04febb9a8785152fa}{get\+Scale\+Vec}} (\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} std\+::vector$<$ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{int}} $>$ \&scales, \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{int}} n, \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{int}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{N}}) \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}}
+\item 
+\mbox{\hyperlink{classq_1_1_matrix}{Matrix}} \mbox{\hyperlink{classq_1_1_peakmodel_a808a2c43a27e9e261e0fcc4d5614ee26}{get\+Design\+Matrix}} (\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{int}} a) \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}}
+\item 
+\mbox{\hyperlink{classq_1_1_matrix}{Matrix}} \mbox{\hyperlink{classq_1_1_peakmodel_ae9714de226b6e51f3af1cbe49e1d3ce8}{get\+Pseudo\+Inverse}} (\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{int}} a) \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}}
+\item 
+\mbox{\hyperlink{classq_1_1_matrix}{Matrix}} \mbox{\hyperlink{classq_1_1_peakmodel_ac394aca3ab860c293d8c51dae84d279c}{get\+Data}} (\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{int}} sample\+ID, \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{int}} sub\+Sample\+ID) \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}}
+\item 
+\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{void}} \mbox{\hyperlink{classq_1_1_peakmodel_a4ccfce887fdb47747d54aeb333d12f37}{find\+Peaks}} ()
+\item 
+\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{void}} \mbox{\hyperlink{classq_1_1_peakmodel_afd9f37e568c161c16bdea2e442631bac}{run\+Regression}} (\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} std\+::pair$<$ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{structq_1_1data_i_d}{data\+ID}}, \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{classq_1_1_matrix}{Matrix}} $>$ \&\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{pair}}, \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} std\+::vector$<$ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{int}} $>$ \&scales, \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{size\+\_\+t}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{k}}, \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{int}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{s}})
+\item 
+\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{void}} \mbox{\hyperlink{classq_1_1_peakmodel_abc6a79cb45966a252ef3247d3ac95196}{convolveP}} (\mbox{\hyperlink{classq_1_1_matrix}{Matrix}} \&\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{beta}}, std\+::vector$<$ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{int}} $>$ \&\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{x\+Indices}}, \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{classq_1_1_matrix}{Matrix}} \&\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{P}}, \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{classq_1_1_matrix}{Matrix}} \&\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{ylog}}, \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{int}} \&\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{current\+Index}})
+\item 
+\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{double}} \mbox{\hyperlink{classq_1_1_peakmodel_aea0c2dd8b95298b4478386e98753beb3}{calc\+Mse}} (\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{classq_1_1_matrix}{Matrix}} \&\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{yhat}}, \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{classq_1_1_matrix}{Matrix}} \&y) \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}}
+\item 
+\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{void}} \mbox{\hyperlink{classq_1_1_peakmodel_ae308d29f7b6c9c548f4d2edb8fd8169c}{coefficient\+Criterion}} (\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{int}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{N}}, \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{bool}} \texorpdfstring{$\ast$}{*}\&\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{fltr\+Vec}}, \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} std\+::vector$<$ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{int}} $>$ \&\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{scale\+Vec}}, std\+::vector$<$ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{double}} $>$ \&\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{apex\+\_\+positions}}, std\+::vector$<$ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{double}} $>$ \&\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{valley\+\_\+positions}}, \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} std\+::vector$<$ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{int}} $>$ \&\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{x\+Indices}}, \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{classq_1_1_matrix}{Matrix}} \&\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{beta}}, std\+::vector$<$ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{int}} $>$ \&\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{idx}})
+\item 
+\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{void}} \mbox{\hyperlink{classq_1_1_peakmodel_af75235cd26feb7b8081e6078db34bded}{coefficient\+Criterion\+Cases}} (\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{int}} scale, \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{double}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{b1}}, \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{double}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{b2}}, \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{double}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{b3}}, \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{int}} x\+Index, \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{double}} \&apex\+\_\+position, \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{double}} \&\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{valley\+\_\+position}}, \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{bool}} \&\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{fltr\+Val}}, std\+::vector$<$ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{int}} $>$ \&\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{idx}}, \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{size\+\_\+t}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{IDX}})
+\item 
+\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{void}} \mbox{\hyperlink{classq_1_1_peakmodel_a17528cf3ee26c76315d2564426fe68ab}{quadratic\+Term\+Criterion}} (\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{int}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{N}}, \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{bool}} \texorpdfstring{$\ast$}{*}\&\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{fltr\+Vec}}, \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} std\+::vector$<$ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{int}} $>$ \&\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{scale\+Vec}}, \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} std\+::vector$<$ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{int}} $>$ \&\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{x\+Indices}}, \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{classq_1_1_matrix}{Matrix}} \&\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{beta}}, \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{classq_1_1_matrix}{Matrix}} \&\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{ylog}}, std\+::vector$<$ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{double}} $>$ \&mse, \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} std\+::vector$<$ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{int}} $>$ \&\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{idx1}}, std\+::vector$<$ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{int}} $>$ \&\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{idx2}})
+\item 
+\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{void}} \mbox{\hyperlink{classq_1_1_peakmodel_a97ca3641cd67ee4733575b061157f643}{parameter\+Criterion}} (\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{int}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{N}}, \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{bool}} \texorpdfstring{$\ast$}{*}\&\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{fltr\+Vec}}, std\+::vector$<$ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{double}} $>$ \&\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{peak\+Height}}, std\+::vector$<$ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{double}} $>$ \&\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{peak\+Height\+\_\+uncertainty}}, std\+::vector$<$ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{double}} $>$ \&\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{peak\+Area}}, std\+::vector$<$ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{double}} $>$ \&\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{peak\+Area\+\_\+uncertainty}}, \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} std\+::vector$<$ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{int}} $>$ \&\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{scale\+Vec}}, \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{classq_1_1_matrix}{Matrix}} \&\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{beta}}, \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} std\+::vector$<$ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{double}} $>$ \&mse, \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} std\+::vector$<$ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{int}} $>$ \&\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{idx1}}, std\+::vector$<$ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{int}} $>$ \&\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{idx2}})
+\item 
+\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{void}} \mbox{\hyperlink{classq_1_1_peakmodel_ac390add65e3cb5a63e0c741ccdc6d254}{peak\+Coverage\+Criterion}} (\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{int}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{N}}, \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{bool}} \texorpdfstring{$\ast$}{*}\&\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{fltr\+Vec}}, std\+::vector$<$ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{double}} $>$ \&\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{peak\+Area}}, \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} std\+::vector$<$ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{int}} $>$ \&\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{scale\+Vec}}, \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} std\+::vector$<$ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{int}} $>$ \&\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{x\+Indices}}, \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} std\+::vector$<$ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{double}} $>$ \&\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{apex\+\_\+positions}}, \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} std\+::vector$<$ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{double}} $>$ \&\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{valley\+\_\+positions}}, \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{classq_1_1_matrix}{Matrix}} \&\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{beta}}, \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} std\+::vector$<$ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{int}} $>$ \&\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{idx1}}, std\+::vector$<$ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{int}} $>$ \&\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{idx2}})
+\item 
+\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{void}} \mbox{\hyperlink{classq_1_1_peakmodel_a7de8c78779b84539d2106c8df6fccd82}{calc\+Apex\+\_\+position}} (\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{int}} scale, \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{double}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{b1}}, \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{double}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{b2}}, \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{int}} x\+Index, \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{double}} \&apex\+\_\+position, \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{bool}} \&\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{fltr\+Val}})
+\item 
+\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{void}} \mbox{\hyperlink{classq_1_1_peakmodel_a542dd57336dca49ad04ec7008b927314}{calc\+Apex\+Valley\+\_\+position}} (\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{int}} scale, \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{double}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{b1}}, \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{double}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{b2}}, \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{double}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{b3}}, \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{int}} x\+Index, \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{double}} \&apex\+\_\+position, \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{double}} \&\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{valley\+\_\+position}}, \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{bool}} \&\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{fltr\+Val}})
+\item 
+std\+::pair$<$ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{double}}, \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{double}} $>$ \mbox{\hyperlink{classq_1_1_peakmodel_aa6aa3d1f36fa0781b3d706eccfeb5626}{calc\+Peak\+Height}} (\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{double}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{b0}}, \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{double}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{b1}}, \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{double}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{b2}}, \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{double}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{b3}}) \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}}
+\item 
+\mbox{\hyperlink{classq_1_1_matrix}{Matrix}} \mbox{\hyperlink{classq_1_1_peakmodel_a21fb1c801736efd8699cbc126d36057e}{calc\+Jacobian\+Matrix\+\_\+\+Height}} (\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{double}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{x\+\_\+apex}}, \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{double}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{y\+\_\+apex}}) \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}}
+\item 
+std\+::vector$<$ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{double}} $>$ \mbox{\hyperlink{classq_1_1_peakmodel_a52cdcafe0f47260aa101684a5670ee67}{calc\+Peak\+Area}} (\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{double}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{b0}}, \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{double}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{b1}}, \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{double}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{b2}}, \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{double}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{b3}}, \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{double}} scale) \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}}
+\item 
+\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{double}} \mbox{\hyperlink{classq_1_1_peakmodel_a61c38d0f871f4ba3b8970c4e9995071e}{calc\+Peak\+Area\+\_\+half}} (\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{double}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{b0}}, \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{double}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{b1}}, \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{double}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{b2}}, \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{double}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{edge}}, \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{bool}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{isleft}}, \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{bool}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{hasvalley}}) \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}}
+\item 
+\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{double}} \mbox{\hyperlink{classq_1_1_peakmodel_a3bbaad909f27fd0031420bd6076413b1}{calc\+Peak\+Area\+\_\+half\+Valley}} () \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}}
+\item 
+\mbox{\hyperlink{classq_1_1_matrix}{Matrix}} \mbox{\hyperlink{classq_1_1_peakmodel_a034d574b35eae6738bb3a44030502469}{calc\+Jacobian\+Matrix\+\_\+\+Position}} (\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{double}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{b1}}, \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{double}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{b2}}, \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{double}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{b3}}) \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}}
+\item 
+\mbox{\hyperlink{classq_1_1_matrix}{Matrix}} \mbox{\hyperlink{classq_1_1_peakmodel_a16319abd9fdca96c7c2cdf752fdd9202}{calc\+Jacobian\+Matrix\+\_\+\+Area}} (\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{double}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{b0}}, \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{double}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{b1}}, \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{double}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{b2}}, \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{double}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{b3}}) \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}}
+\item 
+\mbox{\hyperlink{classq_1_1_matrix}{Matrix}} \mbox{\hyperlink{classq_1_1_peakmodel_a4e5b741b7bf88fda644ea849cd40ffbc}{calc\+Jacobian\+Matrix\+\_\+\+Area\+\_\+half}} (\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{double}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{b0}}, \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{double}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{b1}}, \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{double}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{b2}}, \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{bool}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{is\+Left}}) \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}}
+\item 
+\mbox{\hyperlink{classq_1_1_matrix}{Matrix}} \mbox{\hyperlink{classq_1_1_peakmodel_a2c2d46444af989d434546febe4ca96ff}{calc\+Jacobian\+Matrix\+\_\+\+Area\+\_\+half\+\_\+\+Valley}} (\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{double}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{b0}}, \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{double}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{b1}}, \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{double}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{b2}}, \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{bool}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{is\+Left}}) \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}}
+\item 
+\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{double}} \mbox{\hyperlink{classq_1_1_peakmodel_aae34486dfec89dba267ea6c62a4f3895}{calc\+Peak\+Area\+Not\+Covered}} (\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{double}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{b0}}, \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{double}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{b1}}, \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{double}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{b2}}, \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{double}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{b3}}, \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{double}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{left\+\_\+edge}}, \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{double}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{right\+\_\+edge}}) \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}}
+\item 
+\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{void}} \mbox{\hyperlink{classq_1_1_peakmodel_a3d77feae871fa79dd7daf2d6bdda9ca0}{merge\+Regressions}} (\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{int}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{N}}, \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{bool}} \texorpdfstring{$\ast$}{*}\&\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{fltr\+Vec}}, \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{classq_1_1_matrix}{Matrix}} \&\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{beta}}, \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} std\+::vector$<$ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{int}} $>$ \&\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{scale\+Vec}}, \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} std\+::vector$<$ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{int}} $>$ \&\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{x\+Indices}}, \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} std\+::vector$<$ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{double}} $>$ \&apex\+\_\+position, std\+::vector$<$ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{double}} $>$ \&\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{apex\+\_\+position\+\_\+uncertainty}}, \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} std\+::vector$<$ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{double}} $>$ \&\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{valley\+\_\+position}}, \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{classq_1_1_matrix}{Matrix}} \&\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{Y}}, \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} std\+::vector$<$ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{double}} $>$ mse, \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} std\+::vector$<$ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{int}} $>$ \&\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{idx1}}, std\+::vector$<$ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{int}} $>$ \&\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{idx2}})
+\item 
+\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{void}} \mbox{\hyperlink{classq_1_1_peakmodel_aae82e4b397c7f3bd9868bd8feaf77bdf}{rescale\+Position}} (\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{int}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{N}}, \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{bool}} \texorpdfstring{$\ast$}{*}\&\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{fltr\+Vec}}, \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{classq_1_1_matrix}{Matrix}} \&\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{x\+\_\+data}}, std\+::vector$<$ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{double}} $>$ \&apex\+\_\+position, std\+::vector$<$ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{double}} $>$ \&\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{apex\+\_\+positions\+\_\+uncertainty}}, \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} std\+::vector$<$ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{int}} $>$ \&\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{idx1}})
+\item 
+\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{void}} \mbox{\hyperlink{classq_1_1_peakmodel_a54bf82b4f9264828c7683f46e9822614}{export\+Results}} (\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{classq_1_1_matrix}{Matrix}} \&\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{beta}}, \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{bool}} \texorpdfstring{$\ast$}{*}\&\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{fltr\+Vec}}, \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} std\+::vector$<$ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{int}} $>$ \&\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{x\+Indices}}, \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{int}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{N}}, \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{int}} smpl\+ID, \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} std\+::vector$<$ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{double}} $>$ \&apex\+\_\+position, \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} std\+::vector$<$ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{double}} $>$ \&\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{apex\+\_\+position\+\_\+uncertainty}}, \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} std\+::vector$<$ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{double}} $>$ \&\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{peak\+Height}}, \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} std\+::vector$<$ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{double}} $>$ \&\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{peak\+Height\+\_\+uncertainty}}, \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} std\+::vector$<$ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{double}} $>$ \&\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{peak\+Area}}, \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} std\+::vector$<$ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{double}} $>$ \&\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{peak\+Area\+\_\+uncertainty}}, \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} std\+::vector$<$ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{int}} $>$ \&\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{idx1}}, \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{int}} \&peak\+ID)
+\item 
+std\+::vector$<$ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{double}} $>$ \mbox{\hyperlink{classq_1_1_peakmodel_a048c15d985adbc1f46439433426898fb}{get\+Peak\+Properties}} (\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{classq_1_1_peakproperties_a8e14bc689d53ecc5877b06e0851608bc}{Peakproperties\+::\+Properties\+Names}} \&\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{var\+Name}}) \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}}
+\item 
+\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{classq_1_1_peakproperties}{Peakproperties}} \& \mbox{\hyperlink{classq_1_1_peakmodel_a873854cc1047ca283b038ce477e8b1b6}{operator\mbox{[}$\,$\mbox{]}}} (\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{int}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{ID}}) \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}}
+\item 
+\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{void}} \mbox{\hyperlink{classq_1_1_peakmodel_a31faa8bc06e389542fa492687a1d4711}{print\+TValues}} ()
+\item 
+\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{void}} \mbox{\hyperlink{classq_1_1_peakmodel_afb81f8accb4deb005df96a86cab0ca06}{set\+Mode}} (\mbox{\hyperlink{namespaceq_a1ef5b9eb7b9bdd1afc71e98f9b43a174}{Mode}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{m}})
+\item 
+\mbox{\hyperlink{namespaceq_a1ef5b9eb7b9bdd1afc71e98f9b43a174}{Mode}} \mbox{\hyperlink{classq_1_1_peakmodel_a24bdbfc2edcc596618323d9a404f4707}{get\+Mode}} () \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}}
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+
+
+Definition at line \mbox{\hyperlink{qalgorithms_8h_source_l00101}{101}} of file \mbox{\hyperlink{qalgorithms_8h_source}{qalgorithms.\+h}}.
+
+
+
+\doxysubsection{Constructor \& Destructor Documentation}
+\Hypertarget{classq_1_1_peakmodel_ae10cca96d10fb2a56e097f80882b20a7}\label{classq_1_1_peakmodel_ae10cca96d10fb2a56e097f80882b20a7} 
+\index{q::Peakmodel@{q::Peakmodel}!Peakmodel@{Peakmodel}}
+\index{Peakmodel@{Peakmodel}!q::Peakmodel@{q::Peakmodel}}
+\doxysubsubsection{\texorpdfstring{Peakmodel()}{Peakmodel()}\hspace{0.1cm}{\footnotesize\ttfamily [1/4]}}
+{\footnotesize\ttfamily q\+::\+Peakmodel\+::\+Peakmodel (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})}
+
+
+
+Definition at line \mbox{\hyperlink{qalgorithms_8cpp_source_l00089}{89}} of file \mbox{\hyperlink{qalgorithms_8cpp_source}{qalgorithms.\+cpp}}.
+
+\Hypertarget{classq_1_1_peakmodel_a51e7f2d91068b75461b20db6deefe868}\label{classq_1_1_peakmodel_a51e7f2d91068b75461b20db6deefe868} 
+\index{q::Peakmodel@{q::Peakmodel}!Peakmodel@{Peakmodel}}
+\index{Peakmodel@{Peakmodel}!q::Peakmodel@{q::Peakmodel}}
+\doxysubsubsection{\texorpdfstring{Peakmodel()}{Peakmodel()}\hspace{0.1cm}{\footnotesize\ttfamily [2/4]}}
+{\footnotesize\ttfamily q\+::\+Peakmodel\+::\+Peakmodel (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{int}}}]{a\+\_\+max }\end{DoxyParamCaption})}
+
+
+
+Definition at line \mbox{\hyperlink{qalgorithms_8cpp_source_l00092}{92}} of file \mbox{\hyperlink{qalgorithms_8cpp_source}{qalgorithms.\+cpp}}.
+
+\Hypertarget{classq_1_1_peakmodel_a26d91db421e3d56239c7de66558d7020}\label{classq_1_1_peakmodel_a26d91db421e3d56239c7de66558d7020} 
+\index{q::Peakmodel@{q::Peakmodel}!Peakmodel@{Peakmodel}}
+\index{Peakmodel@{Peakmodel}!q::Peakmodel@{q::Peakmodel}}
+\doxysubsubsection{\texorpdfstring{Peakmodel()}{Peakmodel()}\hspace{0.1cm}{\footnotesize\ttfamily [3/4]}}
+{\footnotesize\ttfamily q\+::\+Peakmodel\+::\+Peakmodel (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{int}}}]{a\+\_\+min,  }\item[{\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{int}}}]{a\+\_\+max }\end{DoxyParamCaption})}
+
+
+
+Definition at line \mbox{\hyperlink{qalgorithms_8cpp_source_l00103}{103}} of file \mbox{\hyperlink{qalgorithms_8cpp_source}{qalgorithms.\+cpp}}.
+
+\Hypertarget{classq_1_1_peakmodel_a0f142c2f9f84bb389d731d5a36a51fd4}\label{classq_1_1_peakmodel_a0f142c2f9f84bb389d731d5a36a51fd4} 
+\index{q::Peakmodel@{q::Peakmodel}!Peakmodel@{Peakmodel}}
+\index{Peakmodel@{Peakmodel}!q::Peakmodel@{q::Peakmodel}}
+\doxysubsubsection{\texorpdfstring{Peakmodel()}{Peakmodel()}\hspace{0.1cm}{\footnotesize\ttfamily [4/4]}}
+{\footnotesize\ttfamily q\+::\+Peakmodel\+::\+Peakmodel (\begin{DoxyParamCaption}\item[{std\+::vector$<$ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{int}} $>$}]{A }\end{DoxyParamCaption})}
+
+
+
+Definition at line \mbox{\hyperlink{qalgorithms_8cpp_source_l00114}{114}} of file \mbox{\hyperlink{qalgorithms_8cpp_source}{qalgorithms.\+cpp}}.
+
+
+
+\doxysubsection{Member Function Documentation}
+\Hypertarget{classq_1_1_peakmodel_a825ed3843d120bb7755c716cbceac8c3}\label{classq_1_1_peakmodel_a825ed3843d120bb7755c716cbceac8c3} 
+\index{q::Peakmodel@{q::Peakmodel}!addMultipleMeasurements@{addMultipleMeasurements}}
+\index{addMultipleMeasurements@{addMultipleMeasurements}!q::Peakmodel@{q::Peakmodel}}
+\doxysubsubsection{\texorpdfstring{addMultipleMeasurements()}{addMultipleMeasurements()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{void}} q\+::\+Peakmodel\+::add\+Multiple\+Measurements (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{classq_1_1_matrix}{Matrix}} \&}]{xy\+Data,  }\item[{\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{bool}}}]{zero\+\_\+interpolation = {\ttfamily \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{true}}} }\end{DoxyParamCaption})}
+
+
+
+Definition at line \mbox{\hyperlink{qalgorithms_8cpp_source_l00233}{233}} of file \mbox{\hyperlink{qalgorithms_8cpp_source}{qalgorithms.\+cpp}}.
+
+\Hypertarget{classq_1_1_peakmodel_a86b60463b2a75e0eeb5cbad963733939}\label{classq_1_1_peakmodel_a86b60463b2a75e0eeb5cbad963733939} 
+\index{q::Peakmodel@{q::Peakmodel}!addSingleMeasurement@{addSingleMeasurement}}
+\index{addSingleMeasurement@{addSingleMeasurement}!q::Peakmodel@{q::Peakmodel}}
+\doxysubsubsection{\texorpdfstring{addSingleMeasurement()}{addSingleMeasurement()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{void}} q\+::\+Peakmodel\+::add\+Single\+Measurement (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{classq_1_1_matrix}{Matrix}} \&}]{xy\+Data,  }\item[{\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{bool}}}]{zero\+\_\+interpolation = {\ttfamily \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{true}}} }\end{DoxyParamCaption})}
+
+\Hypertarget{classq_1_1_peakmodel_a7de8c78779b84539d2106c8df6fccd82}\label{classq_1_1_peakmodel_a7de8c78779b84539d2106c8df6fccd82} 
+\index{q::Peakmodel@{q::Peakmodel}!calcApex\_position@{calcApex\_position}}
+\index{calcApex\_position@{calcApex\_position}!q::Peakmodel@{q::Peakmodel}}
+\doxysubsubsection{\texorpdfstring{calcApex\_position()}{calcApex\_position()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{void}} q\+::\+Peakmodel\+::calc\+Apex\+\_\+position (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{int}}}]{scale,  }\item[{\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{double}}}]{b1,  }\item[{\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{double}}}]{b2,  }\item[{\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{int}}}]{x\+Index,  }\item[{\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{double}} \&}]{apex\+\_\+position,  }\item[{\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{bool}} \&}]{fltr\+Val }\end{DoxyParamCaption})}
+
+
+
+Definition at line \mbox{\hyperlink{qalgorithms_8cpp_source_l00697}{697}} of file \mbox{\hyperlink{qalgorithms_8cpp_source}{qalgorithms.\+cpp}}.
+
+\Hypertarget{classq_1_1_peakmodel_a542dd57336dca49ad04ec7008b927314}\label{classq_1_1_peakmodel_a542dd57336dca49ad04ec7008b927314} 
+\index{q::Peakmodel@{q::Peakmodel}!calcApexValley\_position@{calcApexValley\_position}}
+\index{calcApexValley\_position@{calcApexValley\_position}!q::Peakmodel@{q::Peakmodel}}
+\doxysubsubsection{\texorpdfstring{calcApexValley\_position()}{calcApexValley\_position()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{void}} q\+::\+Peakmodel\+::calc\+Apex\+Valley\+\_\+position (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{int}}}]{scale,  }\item[{\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{double}}}]{b1,  }\item[{\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{double}}}]{b2,  }\item[{\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{double}}}]{b3,  }\item[{\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{int}}}]{x\+Index,  }\item[{\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{double}} \&}]{apex\+\_\+position,  }\item[{\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{double}} \&}]{valley\+\_\+position,  }\item[{\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{bool}} \&}]{fltr\+Val }\end{DoxyParamCaption})}
+
+
+
+Definition at line \mbox{\hyperlink{qalgorithms_8cpp_source_l00715}{715}} of file \mbox{\hyperlink{qalgorithms_8cpp_source}{qalgorithms.\+cpp}}.
+
+\Hypertarget{classq_1_1_peakmodel_a16319abd9fdca96c7c2cdf752fdd9202}\label{classq_1_1_peakmodel_a16319abd9fdca96c7c2cdf752fdd9202} 
+\index{q::Peakmodel@{q::Peakmodel}!calcJacobianMatrix\_Area@{calcJacobianMatrix\_Area}}
+\index{calcJacobianMatrix\_Area@{calcJacobianMatrix\_Area}!q::Peakmodel@{q::Peakmodel}}
+\doxysubsubsection{\texorpdfstring{calcJacobianMatrix\_Area()}{calcJacobianMatrix\_Area()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{classq_1_1_matrix}{Matrix}} q\+::\+Peakmodel\+::calc\+Jacobian\+Matrix\+\_\+\+Area (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{double}}}]{b0,  }\item[{\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{double}}}]{b1,  }\item[{\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{double}}}]{b2,  }\item[{\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{double}}}]{b3 }\end{DoxyParamCaption}) const}
+
+
+
+Definition at line \mbox{\hyperlink{qalgorithms_8cpp_source_l00984}{984}} of file \mbox{\hyperlink{qalgorithms_8cpp_source}{qalgorithms.\+cpp}}.
+
+\Hypertarget{classq_1_1_peakmodel_a4e5b741b7bf88fda644ea849cd40ffbc}\label{classq_1_1_peakmodel_a4e5b741b7bf88fda644ea849cd40ffbc} 
+\index{q::Peakmodel@{q::Peakmodel}!calcJacobianMatrix\_Area\_half@{calcJacobianMatrix\_Area\_half}}
+\index{calcJacobianMatrix\_Area\_half@{calcJacobianMatrix\_Area\_half}!q::Peakmodel@{q::Peakmodel}}
+\doxysubsubsection{\texorpdfstring{calcJacobianMatrix\_Area\_half()}{calcJacobianMatrix\_Area\_half()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{classq_1_1_matrix}{Matrix}} q\+::\+Peakmodel\+::calc\+Jacobian\+Matrix\+\_\+\+Area\+\_\+half (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{double}}}]{b0,  }\item[{\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{double}}}]{b1,  }\item[{\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{double}}}]{b2,  }\item[{\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{bool}}}]{is\+Left }\end{DoxyParamCaption}) const}
+
+
+
+Definition at line \mbox{\hyperlink{qalgorithms_8cpp_source_l01018}{1018}} of file \mbox{\hyperlink{qalgorithms_8cpp_source}{qalgorithms.\+cpp}}.
+
+\Hypertarget{classq_1_1_peakmodel_a2c2d46444af989d434546febe4ca96ff}\label{classq_1_1_peakmodel_a2c2d46444af989d434546febe4ca96ff} 
+\index{q::Peakmodel@{q::Peakmodel}!calcJacobianMatrix\_Area\_half\_Valley@{calcJacobianMatrix\_Area\_half\_Valley}}
+\index{calcJacobianMatrix\_Area\_half\_Valley@{calcJacobianMatrix\_Area\_half\_Valley}!q::Peakmodel@{q::Peakmodel}}
+\doxysubsubsection{\texorpdfstring{calcJacobianMatrix\_Area\_half\_Valley()}{calcJacobianMatrix\_Area\_half\_Valley()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{classq_1_1_matrix}{Matrix}} q\+::\+Peakmodel\+::calc\+Jacobian\+Matrix\+\_\+\+Area\+\_\+half\+\_\+\+Valley (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{double}}}]{b0,  }\item[{\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{double}}}]{b1,  }\item[{\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{double}}}]{b2,  }\item[{\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{bool}}}]{is\+Left }\end{DoxyParamCaption}) const}
+
+
+
+Definition at line \mbox{\hyperlink{qalgorithms_8cpp_source_l01051}{1051}} of file \mbox{\hyperlink{qalgorithms_8cpp_source}{qalgorithms.\+cpp}}.
+
+\Hypertarget{classq_1_1_peakmodel_a21fb1c801736efd8699cbc126d36057e}\label{classq_1_1_peakmodel_a21fb1c801736efd8699cbc126d36057e} 
+\index{q::Peakmodel@{q::Peakmodel}!calcJacobianMatrix\_Height@{calcJacobianMatrix\_Height}}
+\index{calcJacobianMatrix\_Height@{calcJacobianMatrix\_Height}!q::Peakmodel@{q::Peakmodel}}
+\doxysubsubsection{\texorpdfstring{calcJacobianMatrix\_Height()}{calcJacobianMatrix\_Height()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{classq_1_1_matrix}{Matrix}} q\+::\+Peakmodel\+::calc\+Jacobian\+Matrix\+\_\+\+Height (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{double}}}]{x\+\_\+apex,  }\item[{\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{double}}}]{y\+\_\+apex }\end{DoxyParamCaption}) const}
+
+
+
+Definition at line \mbox{\hyperlink{qalgorithms_8cpp_source_l00957}{957}} of file \mbox{\hyperlink{qalgorithms_8cpp_source}{qalgorithms.\+cpp}}.
+
+\Hypertarget{classq_1_1_peakmodel_a034d574b35eae6738bb3a44030502469}\label{classq_1_1_peakmodel_a034d574b35eae6738bb3a44030502469} 
+\index{q::Peakmodel@{q::Peakmodel}!calcJacobianMatrix\_Position@{calcJacobianMatrix\_Position}}
+\index{calcJacobianMatrix\_Position@{calcJacobianMatrix\_Position}!q::Peakmodel@{q::Peakmodel}}
+\doxysubsubsection{\texorpdfstring{calcJacobianMatrix\_Position()}{calcJacobianMatrix\_Position()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{classq_1_1_matrix}{Matrix}} q\+::\+Peakmodel\+::calc\+Jacobian\+Matrix\+\_\+\+Position (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{double}}}]{b1,  }\item[{\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{double}}}]{b2,  }\item[{\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{double}}}]{b3 }\end{DoxyParamCaption}) const}
+
+
+
+Definition at line \mbox{\hyperlink{qalgorithms_8cpp_source_l00968}{968}} of file \mbox{\hyperlink{qalgorithms_8cpp_source}{qalgorithms.\+cpp}}.
+
+\Hypertarget{classq_1_1_peakmodel_aea0c2dd8b95298b4478386e98753beb3}\label{classq_1_1_peakmodel_aea0c2dd8b95298b4478386e98753beb3} 
+\index{q::Peakmodel@{q::Peakmodel}!calcMse@{calcMse}}
+\index{calcMse@{calcMse}!q::Peakmodel@{q::Peakmodel}}
+\doxysubsubsection{\texorpdfstring{calcMse()}{calcMse()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{double}} q\+::\+Peakmodel\+::calc\+Mse (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{classq_1_1_matrix}{Matrix}} \&}]{yhat,  }\item[{\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{classq_1_1_matrix}{Matrix}} \&}]{y }\end{DoxyParamCaption}) const}
+
+
+
+Definition at line \mbox{\hyperlink{qalgorithms_8cpp_source_l00629}{629}} of file \mbox{\hyperlink{qalgorithms_8cpp_source}{qalgorithms.\+cpp}}.
+
+\Hypertarget{classq_1_1_peakmodel_a52cdcafe0f47260aa101684a5670ee67}\label{classq_1_1_peakmodel_a52cdcafe0f47260aa101684a5670ee67} 
+\index{q::Peakmodel@{q::Peakmodel}!calcPeakArea@{calcPeakArea}}
+\index{calcPeakArea@{calcPeakArea}!q::Peakmodel@{q::Peakmodel}}
+\doxysubsubsection{\texorpdfstring{calcPeakArea()}{calcPeakArea()}}
+{\footnotesize\ttfamily std\+::vector$<$ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{double}} $>$ q\+::\+Peakmodel\+::calc\+Peak\+Area (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{double}}}]{b0,  }\item[{\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{double}}}]{b1,  }\item[{\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{double}}}]{b2,  }\item[{\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{double}}}]{b3,  }\item[{\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{double}}}]{scale }\end{DoxyParamCaption}) const}
+
+
+
+Definition at line \mbox{\hyperlink{qalgorithms_8cpp_source_l00842}{842}} of file \mbox{\hyperlink{qalgorithms_8cpp_source}{qalgorithms.\+cpp}}.
+
+\Hypertarget{classq_1_1_peakmodel_a61c38d0f871f4ba3b8970c4e9995071e}\label{classq_1_1_peakmodel_a61c38d0f871f4ba3b8970c4e9995071e} 
+\index{q::Peakmodel@{q::Peakmodel}!calcPeakArea\_half@{calcPeakArea\_half}}
+\index{calcPeakArea\_half@{calcPeakArea\_half}!q::Peakmodel@{q::Peakmodel}}
+\doxysubsubsection{\texorpdfstring{calcPeakArea\_half()}{calcPeakArea\_half()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{double}} q\+::\+Peakmodel\+::calc\+Peak\+Area\+\_\+half (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{double}}}]{b0,  }\item[{\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{double}}}]{b1,  }\item[{\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{double}}}]{b2,  }\item[{\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{double}}}]{edge,  }\item[{\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{bool}}}]{isleft,  }\item[{\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{bool}}}]{hasvalley }\end{DoxyParamCaption}) const}
+
+
+
+Definition at line \mbox{\hyperlink{qalgorithms_8cpp_source_l00901}{901}} of file \mbox{\hyperlink{qalgorithms_8cpp_source}{qalgorithms.\+cpp}}.
+
+\Hypertarget{classq_1_1_peakmodel_a3bbaad909f27fd0031420bd6076413b1}\label{classq_1_1_peakmodel_a3bbaad909f27fd0031420bd6076413b1} 
+\index{q::Peakmodel@{q::Peakmodel}!calcPeakArea\_halfValley@{calcPeakArea\_halfValley}}
+\index{calcPeakArea\_halfValley@{calcPeakArea\_halfValley}!q::Peakmodel@{q::Peakmodel}}
+\doxysubsubsection{\texorpdfstring{calcPeakArea\_halfValley()}{calcPeakArea\_halfValley()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{double}} q\+::\+Peakmodel\+::calc\+Peak\+Area\+\_\+half\+Valley (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption}) const}
+
+\Hypertarget{classq_1_1_peakmodel_aae34486dfec89dba267ea6c62a4f3895}\label{classq_1_1_peakmodel_aae34486dfec89dba267ea6c62a4f3895} 
+\index{q::Peakmodel@{q::Peakmodel}!calcPeakAreaNotCovered@{calcPeakAreaNotCovered}}
+\index{calcPeakAreaNotCovered@{calcPeakAreaNotCovered}!q::Peakmodel@{q::Peakmodel}}
+\doxysubsubsection{\texorpdfstring{calcPeakAreaNotCovered()}{calcPeakAreaNotCovered()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{double}} q\+::\+Peakmodel\+::calc\+Peak\+Area\+Not\+Covered (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{double}}}]{b0,  }\item[{\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{double}}}]{b1,  }\item[{\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{double}}}]{b2,  }\item[{\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{double}}}]{b3,  }\item[{\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{double}}}]{left\+\_\+edge,  }\item[{\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{double}}}]{right\+\_\+edge }\end{DoxyParamCaption}) const}
+
+
+
+Definition at line \mbox{\hyperlink{qalgorithms_8cpp_source_l01081}{1081}} of file \mbox{\hyperlink{qalgorithms_8cpp_source}{qalgorithms.\+cpp}}.
+
+\Hypertarget{classq_1_1_peakmodel_aa6aa3d1f36fa0781b3d706eccfeb5626}\label{classq_1_1_peakmodel_aa6aa3d1f36fa0781b3d706eccfeb5626} 
+\index{q::Peakmodel@{q::Peakmodel}!calcPeakHeight@{calcPeakHeight}}
+\index{calcPeakHeight@{calcPeakHeight}!q::Peakmodel@{q::Peakmodel}}
+\doxysubsubsection{\texorpdfstring{calcPeakHeight()}{calcPeakHeight()}}
+{\footnotesize\ttfamily std\+::pair$<$ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{double}}, \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{double}} $>$ q\+::\+Peakmodel\+::calc\+Peak\+Height (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{double}}}]{b0,  }\item[{\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{double}}}]{b1,  }\item[{\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{double}}}]{b2,  }\item[{\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{double}}}]{b3 }\end{DoxyParamCaption}) const}
+
+
+
+Definition at line \mbox{\hyperlink{qalgorithms_8cpp_source_l00938}{938}} of file \mbox{\hyperlink{qalgorithms_8cpp_source}{qalgorithms.\+cpp}}.
+
+\Hypertarget{classq_1_1_peakmodel_a78e1dbff931aa1d7a63396af1e791794}\label{classq_1_1_peakmodel_a78e1dbff931aa1d7a63396af1e791794} 
+\index{q::Peakmodel@{q::Peakmodel}!calculateDesignMatrix@{calculateDesignMatrix}}
+\index{calculateDesignMatrix@{calculateDesignMatrix}!q::Peakmodel@{q::Peakmodel}}
+\doxysubsubsection{\texorpdfstring{calculateDesignMatrix()}{calculateDesignMatrix()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{void}} q\+::\+Peakmodel\+::calculate\+Design\+Matrix (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{int}}}]{a }\end{DoxyParamCaption})}
+
+
+
+Definition at line \mbox{\hyperlink{qalgorithms_8cpp_source_l00132}{132}} of file \mbox{\hyperlink{qalgorithms_8cpp_source}{qalgorithms.\+cpp}}.
+
+\Hypertarget{classq_1_1_peakmodel_ade15a55d5cc786a8282617014024a87e}\label{classq_1_1_peakmodel_ade15a55d5cc786a8282617014024a87e} 
+\index{q::Peakmodel@{q::Peakmodel}!calculatePseudoInverse@{calculatePseudoInverse}}
+\index{calculatePseudoInverse@{calculatePseudoInverse}!q::Peakmodel@{q::Peakmodel}}
+\doxysubsubsection{\texorpdfstring{calculatePseudoInverse()}{calculatePseudoInverse()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{void}} q\+::\+Peakmodel\+::calculate\+Pseudo\+Inverse (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{int}}}]{a }\end{DoxyParamCaption})}
+
+
+
+Definition at line \mbox{\hyperlink{qalgorithms_8cpp_source_l00166}{166}} of file \mbox{\hyperlink{qalgorithms_8cpp_source}{qalgorithms.\+cpp}}.
+
+\Hypertarget{classq_1_1_peakmodel_ae308d29f7b6c9c548f4d2edb8fd8169c}\label{classq_1_1_peakmodel_ae308d29f7b6c9c548f4d2edb8fd8169c} 
+\index{q::Peakmodel@{q::Peakmodel}!coefficientCriterion@{coefficientCriterion}}
+\index{coefficientCriterion@{coefficientCriterion}!q::Peakmodel@{q::Peakmodel}}
+\doxysubsubsection{\texorpdfstring{coefficientCriterion()}{coefficientCriterion()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{void}} q\+::\+Peakmodel\+::coefficient\+Criterion (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{int}}}]{N,  }\item[{\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{bool}} \texorpdfstring{$\ast$}{*}\&}]{fltr\+Vec,  }\item[{\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} std\+::vector$<$ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{int}} $>$ \&}]{scale\+Vec,  }\item[{std\+::vector$<$ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{double}} $>$ \&}]{apex\+\_\+positions,  }\item[{std\+::vector$<$ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{double}} $>$ \&}]{valley\+\_\+positions,  }\item[{\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} std\+::vector$<$ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{int}} $>$ \&}]{x\+Indices,  }\item[{\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{classq_1_1_matrix}{Matrix}} \&}]{beta,  }\item[{std\+::vector$<$ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{int}} $>$ \&}]{idx }\end{DoxyParamCaption})}
+
+
+
+Definition at line \mbox{\hyperlink{qalgorithms_8cpp_source_l00640}{640}} of file \mbox{\hyperlink{qalgorithms_8cpp_source}{qalgorithms.\+cpp}}.
+
+\Hypertarget{classq_1_1_peakmodel_af75235cd26feb7b8081e6078db34bded}\label{classq_1_1_peakmodel_af75235cd26feb7b8081e6078db34bded} 
+\index{q::Peakmodel@{q::Peakmodel}!coefficientCriterionCases@{coefficientCriterionCases}}
+\index{coefficientCriterionCases@{coefficientCriterionCases}!q::Peakmodel@{q::Peakmodel}}
+\doxysubsubsection{\texorpdfstring{coefficientCriterionCases()}{coefficientCriterionCases()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{void}} q\+::\+Peakmodel\+::coefficient\+Criterion\+Cases (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{int}}}]{scale,  }\item[{\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{double}}}]{b1,  }\item[{\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{double}}}]{b2,  }\item[{\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{double}}}]{b3,  }\item[{\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{int}}}]{x\+Index,  }\item[{\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{double}} \&}]{apex\+\_\+position,  }\item[{\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{double}} \&}]{valley\+\_\+position,  }\item[{\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{bool}} \&}]{fltr\+Val,  }\item[{std\+::vector$<$ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{int}} $>$ \&}]{idx,  }\item[{\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{size\+\_\+t}}}]{IDX }\end{DoxyParamCaption})}
+
+
+
+Definition at line \mbox{\hyperlink{qalgorithms_8cpp_source_l00657}{657}} of file \mbox{\hyperlink{qalgorithms_8cpp_source}{qalgorithms.\+cpp}}.
+
+\Hypertarget{classq_1_1_peakmodel_abc6a79cb45966a252ef3247d3ac95196}\label{classq_1_1_peakmodel_abc6a79cb45966a252ef3247d3ac95196} 
+\index{q::Peakmodel@{q::Peakmodel}!convolveP@{convolveP}}
+\index{convolveP@{convolveP}!q::Peakmodel@{q::Peakmodel}}
+\doxysubsubsection{\texorpdfstring{convolveP()}{convolveP()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{void}} q\+::\+Peakmodel\+::convolveP (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{classq_1_1_matrix}{Matrix}} \&}]{beta,  }\item[{std\+::vector$<$ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{int}} $>$ \&}]{x\+Indices,  }\item[{\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{classq_1_1_matrix}{Matrix}} \&}]{P,  }\item[{\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{classq_1_1_matrix}{Matrix}} \&}]{ylog,  }\item[{\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{int}} \&}]{current\+Index }\end{DoxyParamCaption})}
+
+
+
+Definition at line \mbox{\hyperlink{qalgorithms_8cpp_source_l00603}{603}} of file \mbox{\hyperlink{qalgorithms_8cpp_source}{qalgorithms.\+cpp}}.
+
+\Hypertarget{classq_1_1_peakmodel_a695e815681f449e9c92e9b800be3f390}\label{classq_1_1_peakmodel_a695e815681f449e9c92e9b800be3f390} 
+\index{q::Peakmodel@{q::Peakmodel}!dataSplitting@{dataSplitting}}
+\index{dataSplitting@{dataSplitting}!q::Peakmodel@{q::Peakmodel}}
+\doxysubsubsection{\texorpdfstring{dataSplitting()}{dataSplitting()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{void}} q\+::\+Peakmodel\+::data\+Splitting (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{structq_1_1data_i_d}{data\+ID}}}]{key,  }\item[{\mbox{\hyperlink{classq_1_1_matrix}{Matrix}} \&}]{xy\+Data,  }\item[{std\+::map$<$ \mbox{\hyperlink{structq_1_1data_i_d}{data\+ID}}, \mbox{\hyperlink{classq_1_1_matrix}{Matrix}} $>$ \&}]{Data\+Set }\end{DoxyParamCaption})}
+
+
+
+Definition at line \mbox{\hyperlink{qalgorithms_8cpp_source_l00457}{457}} of file \mbox{\hyperlink{qalgorithms_8cpp_source}{qalgorithms.\+cpp}}.
+
+\Hypertarget{classq_1_1_peakmodel_a54bf82b4f9264828c7683f46e9822614}\label{classq_1_1_peakmodel_a54bf82b4f9264828c7683f46e9822614} 
+\index{q::Peakmodel@{q::Peakmodel}!exportResults@{exportResults}}
+\index{exportResults@{exportResults}!q::Peakmodel@{q::Peakmodel}}
+\doxysubsubsection{\texorpdfstring{exportResults()}{exportResults()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{void}} q\+::\+Peakmodel\+::export\+Results (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{classq_1_1_matrix}{Matrix}} \&}]{beta,  }\item[{\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{bool}} \texorpdfstring{$\ast$}{*}\&}]{fltr\+Vec,  }\item[{\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} std\+::vector$<$ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{int}} $>$ \&}]{x\+Indices,  }\item[{\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{int}}}]{N,  }\item[{\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{int}}}]{smpl\+ID,  }\item[{\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} std\+::vector$<$ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{double}} $>$ \&}]{apex\+\_\+position,  }\item[{\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} std\+::vector$<$ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{double}} $>$ \&}]{apex\+\_\+position\+\_\+uncertainty,  }\item[{\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} std\+::vector$<$ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{double}} $>$ \&}]{peak\+Height,  }\item[{\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} std\+::vector$<$ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{double}} $>$ \&}]{peak\+Height\+\_\+uncertainty,  }\item[{\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} std\+::vector$<$ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{double}} $>$ \&}]{peak\+Area,  }\item[{\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} std\+::vector$<$ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{double}} $>$ \&}]{peak\+Area\+\_\+uncertainty,  }\item[{\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} std\+::vector$<$ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{int}} $>$ \&}]{idx1,  }\item[{\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{int}} \&}]{peak\+ID }\end{DoxyParamCaption})}
+
+
+
+Definition at line \mbox{\hyperlink{qalgorithms_8cpp_source_l01280}{1280}} of file \mbox{\hyperlink{qalgorithms_8cpp_source}{qalgorithms.\+cpp}}.
+
+\Hypertarget{classq_1_1_peakmodel_a4ccfce887fdb47747d54aeb333d12f37}\label{classq_1_1_peakmodel_a4ccfce887fdb47747d54aeb333d12f37} 
+\index{q::Peakmodel@{q::Peakmodel}!findPeaks@{findPeaks}}
+\index{findPeaks@{findPeaks}!q::Peakmodel@{q::Peakmodel}}
+\doxysubsubsection{\texorpdfstring{findPeaks()}{findPeaks()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{void}} q\+::\+Peakmodel\+::find\+Peaks (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})}
+
+
+
+Definition at line \mbox{\hyperlink{qalgorithms_8cpp_source_l00494}{494}} of file \mbox{\hyperlink{qalgorithms_8cpp_source}{qalgorithms.\+cpp}}.
+
+\Hypertarget{classq_1_1_peakmodel_a0b7f6694ead9ff0c4480d05037d5a8ef}\label{classq_1_1_peakmodel_a0b7f6694ead9ff0c4480d05037d5a8ef} 
+\index{q::Peakmodel@{q::Peakmodel}!gapFilling@{gapFilling}}
+\index{gapFilling@{gapFilling}!q::Peakmodel@{q::Peakmodel}}
+\doxysubsubsection{\texorpdfstring{gapFilling()}{gapFilling()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{void}} q\+::\+Peakmodel\+::gap\+Filling (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{classq_1_1_matrix}{Matrix}} \&}]{xy\+Data }\end{DoxyParamCaption})}
+
+
+
+Definition at line \mbox{\hyperlink{qalgorithms_8cpp_source_l00331}{331}} of file \mbox{\hyperlink{qalgorithms_8cpp_source}{qalgorithms.\+cpp}}.
+
+\Hypertarget{classq_1_1_peakmodel_ac394aca3ab860c293d8c51dae84d279c}\label{classq_1_1_peakmodel_ac394aca3ab860c293d8c51dae84d279c} 
+\index{q::Peakmodel@{q::Peakmodel}!getData@{getData}}
+\index{getData@{getData}!q::Peakmodel@{q::Peakmodel}}
+\doxysubsubsection{\texorpdfstring{getData()}{getData()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{classq_1_1_matrix}{Matrix}} q\+::\+Peakmodel\+::get\+Data (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{int}}}]{sample\+ID,  }\item[{\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{int}}}]{sub\+Sample\+ID }\end{DoxyParamCaption}) const}
+
+
+
+Definition at line \mbox{\hyperlink{qalgorithms_8cpp_source_l00481}{481}} of file \mbox{\hyperlink{qalgorithms_8cpp_source}{qalgorithms.\+cpp}}.
+
+\Hypertarget{classq_1_1_peakmodel_a808a2c43a27e9e261e0fcc4d5614ee26}\label{classq_1_1_peakmodel_a808a2c43a27e9e261e0fcc4d5614ee26} 
+\index{q::Peakmodel@{q::Peakmodel}!getDesignMatrix@{getDesignMatrix}}
+\index{getDesignMatrix@{getDesignMatrix}!q::Peakmodel@{q::Peakmodel}}
+\doxysubsubsection{\texorpdfstring{getDesignMatrix()}{getDesignMatrix()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{classq_1_1_matrix}{Matrix}} q\+::\+Peakmodel\+::get\+Design\+Matrix (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{int}}}]{a }\end{DoxyParamCaption}) const}
+
+
+
+Definition at line \mbox{\hyperlink{qalgorithms_8cpp_source_l00200}{200}} of file \mbox{\hyperlink{qalgorithms_8cpp_source}{qalgorithms.\+cpp}}.
+
+\Hypertarget{classq_1_1_peakmodel_a24bdbfc2edcc596618323d9a404f4707}\label{classq_1_1_peakmodel_a24bdbfc2edcc596618323d9a404f4707} 
+\index{q::Peakmodel@{q::Peakmodel}!getMode@{getMode}}
+\index{getMode@{getMode}!q::Peakmodel@{q::Peakmodel}}
+\doxysubsubsection{\texorpdfstring{getMode()}{getMode()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{namespaceq_a1ef5b9eb7b9bdd1afc71e98f9b43a174}{Mode}} q\+::\+Peakmodel\+::get\+Mode (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption}) const\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Definition at line \mbox{\hyperlink{qalgorithms_8h_source_l00331}{331}} of file \mbox{\hyperlink{qalgorithms_8h_source}{qalgorithms.\+h}}.
+
+\Hypertarget{classq_1_1_peakmodel_a048c15d985adbc1f46439433426898fb}\label{classq_1_1_peakmodel_a048c15d985adbc1f46439433426898fb} 
+\index{q::Peakmodel@{q::Peakmodel}!getPeakProperties@{getPeakProperties}}
+\index{getPeakProperties@{getPeakProperties}!q::Peakmodel@{q::Peakmodel}}
+\doxysubsubsection{\texorpdfstring{getPeakProperties()}{getPeakProperties()}}
+{\footnotesize\ttfamily std\+::vector$<$ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{double}} $>$ q\+::\+Peakmodel\+::get\+Peak\+Properties (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{classq_1_1_peakproperties_a8e14bc689d53ecc5877b06e0851608bc}{Peakproperties\+::\+Properties\+Names}} \&}]{var\+Name }\end{DoxyParamCaption}) const}
+
+
+
+Definition at line \mbox{\hyperlink{qalgorithms_8cpp_source_l01320}{1320}} of file \mbox{\hyperlink{qalgorithms_8cpp_source}{qalgorithms.\+cpp}}.
+
+\Hypertarget{classq_1_1_peakmodel_ae9714de226b6e51f3af1cbe49e1d3ce8}\label{classq_1_1_peakmodel_ae9714de226b6e51f3af1cbe49e1d3ce8} 
+\index{q::Peakmodel@{q::Peakmodel}!getPseudoInverse@{getPseudoInverse}}
+\index{getPseudoInverse@{getPseudoInverse}!q::Peakmodel@{q::Peakmodel}}
+\doxysubsubsection{\texorpdfstring{getPseudoInverse()}{getPseudoInverse()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{classq_1_1_matrix}{Matrix}} q\+::\+Peakmodel\+::get\+Pseudo\+Inverse (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{int}}}]{a }\end{DoxyParamCaption}) const}
+
+
+
+Definition at line \mbox{\hyperlink{qalgorithms_8cpp_source_l00210}{210}} of file \mbox{\hyperlink{qalgorithms_8cpp_source}{qalgorithms.\+cpp}}.
+
+\Hypertarget{classq_1_1_peakmodel_a57883c68b4cb034839e0f140e2b35a55}\label{classq_1_1_peakmodel_a57883c68b4cb034839e0f140e2b35a55} 
+\index{q::Peakmodel@{q::Peakmodel}!getScales@{getScales}}
+\index{getScales@{getScales}!q::Peakmodel@{q::Peakmodel}}
+\doxysubsubsection{\texorpdfstring{getScales()}{getScales()}}
+{\footnotesize\ttfamily std\+::vector$<$ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{int}} $>$ q\+::\+Peakmodel\+::get\+Scales (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption}) const}
+
+
+
+Definition at line \mbox{\hyperlink{qalgorithms_8cpp_source_l00175}{175}} of file \mbox{\hyperlink{qalgorithms_8cpp_source}{qalgorithms.\+cpp}}.
+
+\Hypertarget{classq_1_1_peakmodel_ab6fe7aaef691b3c04febb9a8785152fa}\label{classq_1_1_peakmodel_ab6fe7aaef691b3c04febb9a8785152fa} 
+\index{q::Peakmodel@{q::Peakmodel}!getScaleVec@{getScaleVec}}
+\index{getScaleVec@{getScaleVec}!q::Peakmodel@{q::Peakmodel}}
+\doxysubsubsection{\texorpdfstring{getScaleVec()}{getScaleVec()}}
+{\footnotesize\ttfamily std\+::vector$<$ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{int}} $>$ q\+::\+Peakmodel\+::get\+Scale\+Vec (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} std\+::vector$<$ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{int}} $>$ \&}]{scales,  }\item[{\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{int}}}]{n,  }\item[{\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{int}}}]{N }\end{DoxyParamCaption}) const}
+
+
+
+Definition at line \mbox{\hyperlink{qalgorithms_8cpp_source_l00183}{183}} of file \mbox{\hyperlink{qalgorithms_8cpp_source}{qalgorithms.\+cpp}}.
+
+\Hypertarget{classq_1_1_peakmodel_aa5da9ff95ae33df05bd8440e0fcc7dfb}\label{classq_1_1_peakmodel_aa5da9ff95ae33df05bd8440e0fcc7dfb} 
+\index{q::Peakmodel@{q::Peakmodel}!loadTValues@{loadTValues}}
+\index{loadTValues@{loadTValues}!q::Peakmodel@{q::Peakmodel}}
+\doxysubsubsection{\texorpdfstring{loadTValues()}{loadTValues()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{void}} q\+::\+Peakmodel\+::load\+TValues (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{classq_1_1t_values}{t\+Values}} \&}]{t\+Data }\end{DoxyParamCaption})}
+
+
+
+Definition at line \mbox{\hyperlink{qalgorithms_8cpp_source_l00125}{125}} of file \mbox{\hyperlink{qalgorithms_8cpp_source}{qalgorithms.\+cpp}}.
+
+\Hypertarget{classq_1_1_peakmodel_a3d77feae871fa79dd7daf2d6bdda9ca0}\label{classq_1_1_peakmodel_a3d77feae871fa79dd7daf2d6bdda9ca0} 
+\index{q::Peakmodel@{q::Peakmodel}!mergeRegressions@{mergeRegressions}}
+\index{mergeRegressions@{mergeRegressions}!q::Peakmodel@{q::Peakmodel}}
+\doxysubsubsection{\texorpdfstring{mergeRegressions()}{mergeRegressions()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{void}} q\+::\+Peakmodel\+::merge\+Regressions (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{int}}}]{N,  }\item[{\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{bool}} \texorpdfstring{$\ast$}{*}\&}]{fltr\+Vec,  }\item[{\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{classq_1_1_matrix}{Matrix}} \&}]{beta,  }\item[{\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} std\+::vector$<$ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{int}} $>$ \&}]{scale\+Vec,  }\item[{\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} std\+::vector$<$ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{int}} $>$ \&}]{x\+Indices,  }\item[{\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} std\+::vector$<$ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{double}} $>$ \&}]{apex\+\_\+position,  }\item[{std\+::vector$<$ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{double}} $>$ \&}]{apex\+\_\+position\+\_\+uncertainty,  }\item[{\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} std\+::vector$<$ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{double}} $>$ \&}]{valley\+\_\+position,  }\item[{\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{classq_1_1_matrix}{Matrix}} \&}]{Y,  }\item[{\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} std\+::vector$<$ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{double}} $>$}]{mse,  }\item[{\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} std\+::vector$<$ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{int}} $>$ \&}]{idx1,  }\item[{std\+::vector$<$ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{int}} $>$ \&}]{idx2 }\end{DoxyParamCaption})}
+
+
+
+Definition at line \mbox{\hyperlink{qalgorithms_8cpp_source_l01136}{1136}} of file \mbox{\hyperlink{qalgorithms_8cpp_source}{qalgorithms.\+cpp}}.
+
+\Hypertarget{classq_1_1_peakmodel_a873854cc1047ca283b038ce477e8b1b6}\label{classq_1_1_peakmodel_a873854cc1047ca283b038ce477e8b1b6} 
+\index{q::Peakmodel@{q::Peakmodel}!operator\mbox{[}\mbox{]}@{operator[]}}
+\index{operator\mbox{[}\mbox{]}@{operator[]}!q::Peakmodel@{q::Peakmodel}}
+\doxysubsubsection{\texorpdfstring{operator[]()}{operator[]()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{classq_1_1_peakproperties}{Peakproperties}} \& q\+::\+Peakmodel\+::operator\mbox{[}$\,$\mbox{]} (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{int}}}]{ID }\end{DoxyParamCaption}) const}
+
+
+
+Definition at line \mbox{\hyperlink{qalgorithms_8cpp_source_l01331}{1331}} of file \mbox{\hyperlink{qalgorithms_8cpp_source}{qalgorithms.\+cpp}}.
+
+\Hypertarget{classq_1_1_peakmodel_a97ca3641cd67ee4733575b061157f643}\label{classq_1_1_peakmodel_a97ca3641cd67ee4733575b061157f643} 
+\index{q::Peakmodel@{q::Peakmodel}!parameterCriterion@{parameterCriterion}}
+\index{parameterCriterion@{parameterCriterion}!q::Peakmodel@{q::Peakmodel}}
+\doxysubsubsection{\texorpdfstring{parameterCriterion()}{parameterCriterion()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{void}} q\+::\+Peakmodel\+::parameter\+Criterion (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{int}}}]{N,  }\item[{\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{bool}} \texorpdfstring{$\ast$}{*}\&}]{fltr\+Vec,  }\item[{std\+::vector$<$ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{double}} $>$ \&}]{peak\+Height,  }\item[{std\+::vector$<$ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{double}} $>$ \&}]{peak\+Height\+\_\+uncertainty,  }\item[{std\+::vector$<$ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{double}} $>$ \&}]{peak\+Area,  }\item[{std\+::vector$<$ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{double}} $>$ \&}]{peak\+Area\+\_\+uncertainty,  }\item[{\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} std\+::vector$<$ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{int}} $>$ \&}]{scale\+Vec,  }\item[{\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{classq_1_1_matrix}{Matrix}} \&}]{beta,  }\item[{\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} std\+::vector$<$ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{double}} $>$ \&}]{mse,  }\item[{\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} std\+::vector$<$ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{int}} $>$ \&}]{idx1,  }\item[{std\+::vector$<$ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{int}} $>$ \&}]{idx2 }\end{DoxyParamCaption})}
+
+
+
+Definition at line \mbox{\hyperlink{qalgorithms_8cpp_source_l00773}{773}} of file \mbox{\hyperlink{qalgorithms_8cpp_source}{qalgorithms.\+cpp}}.
+
+\Hypertarget{classq_1_1_peakmodel_ac390add65e3cb5a63e0c741ccdc6d254}\label{classq_1_1_peakmodel_ac390add65e3cb5a63e0c741ccdc6d254} 
+\index{q::Peakmodel@{q::Peakmodel}!peakCoverageCriterion@{peakCoverageCriterion}}
+\index{peakCoverageCriterion@{peakCoverageCriterion}!q::Peakmodel@{q::Peakmodel}}
+\doxysubsubsection{\texorpdfstring{peakCoverageCriterion()}{peakCoverageCriterion()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{void}} q\+::\+Peakmodel\+::peak\+Coverage\+Criterion (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{int}}}]{N,  }\item[{\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{bool}} \texorpdfstring{$\ast$}{*}\&}]{fltr\+Vec,  }\item[{std\+::vector$<$ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{double}} $>$ \&}]{peak\+Area,  }\item[{\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} std\+::vector$<$ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{int}} $>$ \&}]{scale\+Vec,  }\item[{\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} std\+::vector$<$ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{int}} $>$ \&}]{x\+Indices,  }\item[{\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} std\+::vector$<$ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{double}} $>$ \&}]{apex\+\_\+positions,  }\item[{\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} std\+::vector$<$ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{double}} $>$ \&}]{valley\+\_\+positions,  }\item[{\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{classq_1_1_matrix}{Matrix}} \&}]{beta,  }\item[{\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} std\+::vector$<$ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{int}} $>$ \&}]{idx1,  }\item[{std\+::vector$<$ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{int}} $>$ \&}]{idx2 }\end{DoxyParamCaption})}
+
+\Hypertarget{classq_1_1_peakmodel_a31faa8bc06e389542fa492687a1d4711}\label{classq_1_1_peakmodel_a31faa8bc06e389542fa492687a1d4711} 
+\index{q::Peakmodel@{q::Peakmodel}!printTValues@{printTValues}}
+\index{printTValues@{printTValues}!q::Peakmodel@{q::Peakmodel}}
+\doxysubsubsection{\texorpdfstring{printTValues()}{printTValues()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{void}} q\+::\+Peakmodel\+::print\+TValues (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})}
+
+
+
+Definition at line \mbox{\hyperlink{qalgorithms_8cpp_source_l01339}{1339}} of file \mbox{\hyperlink{qalgorithms_8cpp_source}{qalgorithms.\+cpp}}.
+
+\Hypertarget{classq_1_1_peakmodel_a17528cf3ee26c76315d2564426fe68ab}\label{classq_1_1_peakmodel_a17528cf3ee26c76315d2564426fe68ab} 
+\index{q::Peakmodel@{q::Peakmodel}!quadraticTermCriterion@{quadraticTermCriterion}}
+\index{quadraticTermCriterion@{quadraticTermCriterion}!q::Peakmodel@{q::Peakmodel}}
+\doxysubsubsection{\texorpdfstring{quadraticTermCriterion()}{quadraticTermCriterion()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{void}} q\+::\+Peakmodel\+::quadratic\+Term\+Criterion (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{int}}}]{N,  }\item[{\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{bool}} \texorpdfstring{$\ast$}{*}\&}]{fltr\+Vec,  }\item[{\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} std\+::vector$<$ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{int}} $>$ \&}]{scale\+Vec,  }\item[{\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} std\+::vector$<$ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{int}} $>$ \&}]{x\+Indices,  }\item[{\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{classq_1_1_matrix}{Matrix}} \&}]{beta,  }\item[{\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{classq_1_1_matrix}{Matrix}} \&}]{ylog,  }\item[{std\+::vector$<$ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{double}} $>$ \&}]{mse,  }\item[{\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} std\+::vector$<$ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{int}} $>$ \&}]{idx1,  }\item[{std\+::vector$<$ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{int}} $>$ \&}]{idx2 }\end{DoxyParamCaption})}
+
+
+
+Definition at line \mbox{\hyperlink{qalgorithms_8cpp_source_l00738}{738}} of file \mbox{\hyperlink{qalgorithms_8cpp_source}{qalgorithms.\+cpp}}.
+
+\Hypertarget{classq_1_1_peakmodel_aae82e4b397c7f3bd9868bd8feaf77bdf}\label{classq_1_1_peakmodel_aae82e4b397c7f3bd9868bd8feaf77bdf} 
+\index{q::Peakmodel@{q::Peakmodel}!rescalePosition@{rescalePosition}}
+\index{rescalePosition@{rescalePosition}!q::Peakmodel@{q::Peakmodel}}
+\doxysubsubsection{\texorpdfstring{rescalePosition()}{rescalePosition()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{void}} q\+::\+Peakmodel\+::rescale\+Position (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{int}}}]{N,  }\item[{\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{bool}} \texorpdfstring{$\ast$}{*}\&}]{fltr\+Vec,  }\item[{\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{classq_1_1_matrix}{Matrix}} \&}]{x\+\_\+data,  }\item[{std\+::vector$<$ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{double}} $>$ \&}]{apex\+\_\+position,  }\item[{std\+::vector$<$ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{double}} $>$ \&}]{apex\+\_\+positions\+\_\+uncertainty,  }\item[{\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} std\+::vector$<$ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{int}} $>$ \&}]{idx1 }\end{DoxyParamCaption})}
+
+
+
+Definition at line \mbox{\hyperlink{qalgorithms_8cpp_source_l01262}{1262}} of file \mbox{\hyperlink{qalgorithms_8cpp_source}{qalgorithms.\+cpp}}.
+
+\Hypertarget{classq_1_1_peakmodel_afd9f37e568c161c16bdea2e442631bac}\label{classq_1_1_peakmodel_afd9f37e568c161c16bdea2e442631bac} 
+\index{q::Peakmodel@{q::Peakmodel}!runRegression@{runRegression}}
+\index{runRegression@{runRegression}!q::Peakmodel@{q::Peakmodel}}
+\doxysubsubsection{\texorpdfstring{runRegression()}{runRegression()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{void}} q\+::\+Peakmodel\+::run\+Regression (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} std\+::pair$<$ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{structq_1_1data_i_d}{data\+ID}}, \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{classq_1_1_matrix}{Matrix}} $>$ \&}]{pair,  }\item[{\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} std\+::vector$<$ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{int}} $>$ \&}]{scales,  }\item[{\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{size\+\_\+t}}}]{k,  }\item[{\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{const}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{int}}}]{s }\end{DoxyParamCaption})}
+
+
+
+Definition at line \mbox{\hyperlink{qalgorithms_8cpp_source_l00526}{526}} of file \mbox{\hyperlink{qalgorithms_8cpp_source}{qalgorithms.\+cpp}}.
+
+\Hypertarget{classq_1_1_peakmodel_afb81f8accb4deb005df96a86cab0ca06}\label{classq_1_1_peakmodel_afb81f8accb4deb005df96a86cab0ca06} 
+\index{q::Peakmodel@{q::Peakmodel}!setMode@{setMode}}
+\index{setMode@{setMode}!q::Peakmodel@{q::Peakmodel}}
+\doxysubsubsection{\texorpdfstring{setMode()}{setMode()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{void}} q\+::\+Peakmodel\+::set\+Mode (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{namespaceq_a1ef5b9eb7b9bdd1afc71e98f9b43a174}{Mode}}}]{m }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Definition at line \mbox{\hyperlink{qalgorithms_8h_source_l00330}{330}} of file \mbox{\hyperlink{qalgorithms_8h_source}{qalgorithms.\+h}}.
+
+\Hypertarget{classq_1_1_peakmodel_ab9249627f4cdb608fedcaca30432f647}\label{classq_1_1_peakmodel_ab9249627f4cdb608fedcaca30432f647} 
+\index{q::Peakmodel@{q::Peakmodel}!zeroInterpolation@{zeroInterpolation}}
+\index{zeroInterpolation@{zeroInterpolation}!q::Peakmodel@{q::Peakmodel}}
+\doxysubsubsection{\texorpdfstring{zeroInterpolation()}{zeroInterpolation()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{void}} q\+::\+Peakmodel\+::zero\+Interpolation (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{classq_1_1_matrix}{Matrix}} \&}]{xy\+Data }\end{DoxyParamCaption})}
+
+
+
+Definition at line \mbox{\hyperlink{qalgorithms_8cpp_source_l00400}{400}} of file \mbox{\hyperlink{qalgorithms_8cpp_source}{qalgorithms.\+cpp}}.
+
+\Hypertarget{classq_1_1_peakmodel_a12c61672c6ce1588b1173061715d19c3}\label{classq_1_1_peakmodel_a12c61672c6ce1588b1173061715d19c3} 
+\index{q::Peakmodel@{q::Peakmodel}!zeroInterpolation\_oneDirection@{zeroInterpolation\_oneDirection}}
+\index{zeroInterpolation\_oneDirection@{zeroInterpolation\_oneDirection}!q::Peakmodel@{q::Peakmodel}}
+\doxysubsubsection{\texorpdfstring{zeroInterpolation\_oneDirection()}{zeroInterpolation\_oneDirection()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{void}} q\+::\+Peakmodel\+::zero\+Interpolation\+\_\+one\+Direction (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{classq_1_1_matrix}{Matrix}} \&}]{xy\+Data }\end{DoxyParamCaption})}
+
+
+
+Definition at line \mbox{\hyperlink{qalgorithms_8cpp_source_l00425}{425}} of file \mbox{\hyperlink{qalgorithms_8cpp_source}{qalgorithms.\+cpp}}.
+
+
+
+The documentation for this class was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+include/\mbox{\hyperlink{qalgorithms_8h}{qalgorithms.\+h}}\item 
+src/\mbox{\hyperlink{qalgorithms_8cpp}{qalgorithms.\+cpp}}\end{DoxyCompactItemize}

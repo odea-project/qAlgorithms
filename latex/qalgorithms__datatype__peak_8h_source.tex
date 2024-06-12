@@ -1,0 +1,86 @@
+\doxysection{qalgorithms\+\_\+datatype\+\_\+peak.\+h}
+\hypertarget{qalgorithms__datatype__peak_8h_source}{}\label{qalgorithms__datatype__peak_8h_source}\index{include/qalgorithms\_datatype\_peak.h@{include/qalgorithms\_datatype\_peak.h}}
+\mbox{\hyperlink{qalgorithms__datatype__peak_8h}{Go to the documentation of this file.}}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__peak_8h_source_l00001}00001\ \textcolor{comment}{//\ qalgorithms\_datatype\_peak.h}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__peak_8h_source_l00002}00002\ \textcolor{preprocessor}{\#ifndef\ QALGORITHMS\_DATATYPE\_PEAK\_H}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__peak_8h_source_l00003}00003\ \textcolor{preprocessor}{\#define\ QALGORITHMS\_DATATYPE\_PEAK\_H}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__peak_8h_source_l00004}00004\ }
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__peak_8h_source_l00005}00005\ \textcolor{comment}{//\ internal}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__peak_8h_source_l00006}00006\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{qalgorithms__datatype_8h}{qalgorithms\_datatype.h}}"{}}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__peak_8h_source_l00007}00007\ }
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__peak_8h_source_l00008}00008\ \textcolor{comment}{//\ external}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__peak_8h_source_l00009}00009\ \textcolor{preprocessor}{\#include\ <unordered\_map>}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__peak_8h_source_l00010}00010\ \textcolor{preprocessor}{\#include\ <iostream>}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__peak_8h_source_l00011}00011\ \textcolor{preprocessor}{\#include\ <vector>}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__peak_8h_source_l00012}00012\ }
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__peak_8h_source_l00013}00013\ \textcolor{comment}{/*\ This\ file\ includes\ the\ q::DataType::Peak\ and\ q::DataType::PeakList\ classes*/}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__peak_8h_source_l00014}00014\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespaceq}{q}}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__peak_8h_source_l00015}00015\ \{}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__peak_8h_source_l00016}00016\ \ \ \textcolor{keyword}{namespace\ }DataType}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__peak_8h_source_l00017}00017\ \ \ \{}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__peak_8h_source_l00039}\mbox{\hyperlink{classq_1_1_data_type_1_1_peak}{00039}}\ \ \ \ \ \textcolor{keyword}{class\ }\mbox{\hyperlink{classq_1_1_data_type_1_1_peak}{Peak}}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__peak_8h_source_l00040}00040\ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__peak_8h_source_l00041}00041\ \ \ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__peak_8h_source_l00042}00042\ \ \ \ \ \ \ \textcolor{comment}{//\ constructors}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__peak_8h_source_l00043}00043\ \ \ \ \ \ \ \mbox{\hyperlink{classq_1_1_data_type_1_1_peak_a66b90b39f3f80cf2757996a693bfde65}{Peak}}();}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__peak_8h_source_l00044}00044\ \ \ \ \ \ \ \mbox{\hyperlink{classq_1_1_data_type_1_1_peak_a66b90b39f3f80cf2757996a693bfde65}{Peak}}(\textcolor{keywordtype}{int}\ \mbox{\hyperlink{classq_1_1_data_type_1_1_peak_a778ef3fc19276fc1302511c6b9da055c}{sampleID}},\ \textcolor{keywordtype}{double}\ \mbox{\hyperlink{classq_1_1_data_type_1_1_peak_a4cd350a1fb3a0bcd4e1774b50c7b7221}{position}},\ \textcolor{keywordtype}{double}\ \mbox{\hyperlink{classq_1_1_data_type_1_1_peak_ab9e7ba362983b3664e4d8081a4e25d45}{height}});}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__peak_8h_source_l00045}00045\ }
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__peak_8h_source_l00046}00046\ \ \ \ \ \ \ \textcolor{comment}{//\ destructor}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__peak_8h_source_l00047}00047\ \ \ \ \ \ \ \mbox{\hyperlink{classq_1_1_data_type_1_1_peak_a57e59cdb00c58dc643b829001df9d1ad}{\string~Peak}}();}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__peak_8h_source_l00048}00048\ }
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__peak_8h_source_l00049}00049\ \ \ \ \ \ \ \textcolor{comment}{//\ properties}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__peak_8h_source_l00050}00050\ \ \ \ \ \ \ \textcolor{comment}{//\ required}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__peak_8h_source_l00051}\mbox{\hyperlink{classq_1_1_data_type_1_1_peak_a778ef3fc19276fc1302511c6b9da055c}{00051}}\ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{classq_1_1_data_type_1_1_peak_a778ef3fc19276fc1302511c6b9da055c}{sampleID}};}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__peak_8h_source_l00052}\mbox{\hyperlink{classq_1_1_data_type_1_1_peak_a4cd350a1fb3a0bcd4e1774b50c7b7221}{00052}}\ \ \ \ \ \ \ \textcolor{keywordtype}{double}\ \mbox{\hyperlink{classq_1_1_data_type_1_1_peak_a4cd350a1fb3a0bcd4e1774b50c7b7221}{position}};}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__peak_8h_source_l00053}\mbox{\hyperlink{classq_1_1_data_type_1_1_peak_ab9e7ba362983b3664e4d8081a4e25d45}{00053}}\ \ \ \ \ \ \ \textcolor{keywordtype}{double}\ \mbox{\hyperlink{classq_1_1_data_type_1_1_peak_ab9e7ba362983b3664e4d8081a4e25d45}{height}};}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__peak_8h_source_l00054}00054\ }
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__peak_8h_source_l00055}00055\ \ \ \ \ \ \ \textcolor{comment}{//\ optional}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__peak_8h_source_l00056}\mbox{\hyperlink{classq_1_1_data_type_1_1_peak_a71bc44dffcedd3ca701d9d7c45d2d5fd}{00056}}\ \ \ \ \ \ \ \textcolor{keywordtype}{double}\ \mbox{\hyperlink{classq_1_1_data_type_1_1_peak_a71bc44dffcedd3ca701d9d7c45d2d5fd}{area}};}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__peak_8h_source_l00057}\mbox{\hyperlink{classq_1_1_data_type_1_1_peak_a23b967b351f9a24ea0c1cd10a3cb84a0}{00057}}\ \ \ \ \ \ \ \textcolor{keywordtype}{double}\ \mbox{\hyperlink{classq_1_1_data_type_1_1_peak_a23b967b351f9a24ea0c1cd10a3cb84a0}{width}};}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__peak_8h_source_l00058}\mbox{\hyperlink{classq_1_1_data_type_1_1_peak_ac3910b197468263ca5618ec36fb53ab5}{00058}}\ \ \ \ \ \ \ \textcolor{keywordtype}{double}\ \mbox{\hyperlink{classq_1_1_data_type_1_1_peak_ac3910b197468263ca5618ec36fb53ab5}{positionUncertainty}};}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__peak_8h_source_l00059}\mbox{\hyperlink{classq_1_1_data_type_1_1_peak_a5b1c4f68af46d9410f9d2d95dba4f761}{00059}}\ \ \ \ \ \ \ \textcolor{keywordtype}{double}\ \mbox{\hyperlink{classq_1_1_data_type_1_1_peak_a5b1c4f68af46d9410f9d2d95dba4f761}{heightUncertainty}};}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__peak_8h_source_l00060}\mbox{\hyperlink{classq_1_1_data_type_1_1_peak_abaae72d04cbbd6c2af12d0c9dc5344b0}{00060}}\ \ \ \ \ \ \ \textcolor{keywordtype}{double}\ \mbox{\hyperlink{classq_1_1_data_type_1_1_peak_abaae72d04cbbd6c2af12d0c9dc5344b0}{widthUncertainty}};}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__peak_8h_source_l00061}\mbox{\hyperlink{classq_1_1_data_type_1_1_peak_a973adc0388c70068711aa9cfea4eed5a}{00061}}\ \ \ \ \ \ \ \textcolor{keywordtype}{double}\ \mbox{\hyperlink{classq_1_1_data_type_1_1_peak_a973adc0388c70068711aa9cfea4eed5a}{areaUncertainty}};}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__peak_8h_source_l00062}\mbox{\hyperlink{classq_1_1_data_type_1_1_peak_a3b971d7e52d2466ec0fffed263d4f067}{00062}}\ \ \ \ \ \ \ \textcolor{keywordtype}{double}\ \mbox{\hyperlink{classq_1_1_data_type_1_1_peak_a3b971d7e52d2466ec0fffed263d4f067}{dqsPeak}};}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__peak_8h_source_l00063}\mbox{\hyperlink{classq_1_1_data_type_1_1_peak_a0039d2945747be1e591add2f578ab61b}{00063}}\ \ \ \ \ \ \ \textcolor{keywordtype}{double}\ \mbox{\hyperlink{classq_1_1_data_type_1_1_peak_a0039d2945747be1e591add2f578ab61b}{beta0}};}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__peak_8h_source_l00064}\mbox{\hyperlink{classq_1_1_data_type_1_1_peak_aa76c692650f5b792a589048d5a7e889b}{00064}}\ \ \ \ \ \ \ \textcolor{keywordtype}{double}\ \mbox{\hyperlink{classq_1_1_data_type_1_1_peak_aa76c692650f5b792a589048d5a7e889b}{beta1}};}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__peak_8h_source_l00065}\mbox{\hyperlink{classq_1_1_data_type_1_1_peak_a0951700a2be1a12e77888e1d58700390}{00065}}\ \ \ \ \ \ \ \textcolor{keywordtype}{double}\ \mbox{\hyperlink{classq_1_1_data_type_1_1_peak_a0951700a2be1a12e77888e1d58700390}{beta2}};}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__peak_8h_source_l00066}\mbox{\hyperlink{classq_1_1_data_type_1_1_peak_aba916385b9084434937c327d8640fa1e}{00066}}\ \ \ \ \ \ \ \textcolor{keywordtype}{double}\ \mbox{\hyperlink{classq_1_1_data_type_1_1_peak_aba916385b9084434937c327d8640fa1e}{beta3}};}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__peak_8h_source_l00067}\mbox{\hyperlink{classq_1_1_data_type_1_1_peak_a8361dfc041b23fc61ea3db29aaeea266}{00067}}\ \ \ \ \ \ \ \textcolor{keywordtype}{double}\ \mbox{\hyperlink{classq_1_1_data_type_1_1_peak_a8361dfc041b23fc61ea3db29aaeea266}{valleyPosition}};}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__peak_8h_source_l00068}\mbox{\hyperlink{classq_1_1_data_type_1_1_peak_a07f16f95997fecb90f447be72d772ff5}{00068}}\ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{classq_1_1_data_type_1_1_peak_a07f16f95997fecb90f447be72d772ff5}{df}};}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__peak_8h_source_l00069}\mbox{\hyperlink{classq_1_1_data_type_1_1_peak_acb47f1cdae4ca2fa0f72d18d79bf8fe3}{00069}}\ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{classq_1_1_data_type_1_1_peak_acb47f1cdae4ca2fa0f72d18d79bf8fe3}{xIndex}};}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__peak_8h_source_l00070}00070\ }
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__peak_8h_source_l00071}00071\ \ \ \ \ \ \ \textcolor{comment}{//\ debugging}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__peak_8h_source_l00072}\mbox{\hyperlink{classq_1_1_data_type_1_1_peak_acb4043893258b0987953a13e02f1d4d1}{00072}}\ \ \ \ \ \ \ std::vector<double>\ \mbox{\hyperlink{classq_1_1_data_type_1_1_peak_acb4043893258b0987953a13e02f1d4d1}{xFit}};}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__peak_8h_source_l00073}\mbox{\hyperlink{classq_1_1_data_type_1_1_peak_a3f3a7d693970962db1c4d10829ef9fd1}{00073}}\ \ \ \ \ \ \ std::vector<double>\ \mbox{\hyperlink{classq_1_1_data_type_1_1_peak_a3f3a7d693970962db1c4d10829ef9fd1}{yFit}};}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__peak_8h_source_l00074}00074\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classq_1_1_data_type_1_1_peak_a0d1c52f27fc686593ba42c685bc8a5f1}{print}}();}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__peak_8h_source_l00075}00075\ \ \ \ \ \};}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__peak_8h_source_l00076}00076\ }
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__peak_8h_source_l00082}\mbox{\hyperlink{classq_1_1_data_type_1_1_peak_list}{00082}}\ \ \ \ \ \textcolor{keyword}{class\ }\mbox{\hyperlink{classq_1_1_data_type_1_1_peak_list}{PeakList}}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__peak_8h_source_l00083}00083\ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__peak_8h_source_l00084}00084\ \ \ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__peak_8h_source_l00085}00085\ \ \ \ \ \ \ \textcolor{comment}{//\ constructors}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__peak_8h_source_l00086}\mbox{\hyperlink{classq_1_1_data_type_1_1_peak_list_a54b87fa28862773ed066f9dcc762e2b6}{00086}}\ \ \ \ \ \ \ \mbox{\hyperlink{classq_1_1_data_type_1_1_peak_list_a54b87fa28862773ed066f9dcc762e2b6}{PeakList}}();}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__peak_8h_source_l00087}\mbox{\hyperlink{classq_1_1_data_type_1_1_peak_list_a4e4f63cb26a2482a335791f770920a56}{00087}}\ \ \ \ \ \ \ \mbox{\hyperlink{classq_1_1_data_type_1_1_peak_list_a4e4f63cb26a2482a335791f770920a56}{PeakList}}(std::unordered\_map<int,\ Peak>\ \mbox{\hyperlink{classq_1_1_data_type_1_1_peak_list_ac7434031fab6297822daede83de65d89}{peaks}});}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__peak_8h_source_l00088}00088\ }
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__peak_8h_source_l00089}00089\ \ \ \ \ \ \ \textcolor{comment}{//\ destructor}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__peak_8h_source_l00090}\mbox{\hyperlink{classq_1_1_data_type_1_1_peak_list_a5d424c13c6a565a0ad8ea717ebd5997c}{00090}}\ \ \ \ \ \ \ \mbox{\hyperlink{classq_1_1_data_type_1_1_peak_list_a5d424c13c6a565a0ad8ea717ebd5997c}{\string~PeakList}}();}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__peak_8h_source_l00091}00091\ }
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__peak_8h_source_l00092}00092\ \ \ \ \ \ \ \textcolor{comment}{//\ properties}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__peak_8h_source_l00093}\mbox{\hyperlink{classq_1_1_data_type_1_1_peak_list_ac7434031fab6297822daede83de65d89}{00093}}\ \ \ \ \ \ \ std::unordered\_map<int,\ Peak>\ \mbox{\hyperlink{classq_1_1_data_type_1_1_peak_list_ac7434031fab6297822daede83de65d89}{peaks}};}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__peak_8h_source_l00094}00094\ }
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__peak_8h_source_l00095}00095\ \ \ \ \ \ \ \textcolor{comment}{//\ methods}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__peak_8h_source_l00096}\mbox{\hyperlink{classq_1_1_data_type_1_1_peak_list_a75ca0355efe6da2ba754d49527055ac0}{00096}}\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classq_1_1_data_type_1_1_peak_list_a75ca0355efe6da2ba754d49527055ac0}{addPeak}}(\mbox{\hyperlink{classq_1_1_data_type_1_1_peak}{Peak}}\ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{peak}});}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__peak_8h_source_l00097}\mbox{\hyperlink{classq_1_1_data_type_1_1_peak_list_a59f439f18de536b175e17791229c8d4c}{00097}}\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classq_1_1_data_type_1_1_peak_list_a59f439f18de536b175e17791229c8d4c}{removePeak}}(\textcolor{keywordtype}{int}\ peakID);}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__peak_8h_source_l00098}\mbox{\hyperlink{classq_1_1_data_type_1_1_peak_list_a65d3ba6fd8d79ca816a575878e382497}{00098}}\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classq_1_1_data_type_1_1_peak_list_a65d3ba6fd8d79ca816a575878e382497}{clearPeaks}}();}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__peak_8h_source_l00099}00099\ }
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__peak_8h_source_l00100}00100\ \ \ \ \ \ \ \textcolor{comment}{//\ debugging}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__peak_8h_source_l00101}\mbox{\hyperlink{classq_1_1_data_type_1_1_peak_list_a0e9dbf7927251d827631693fe216911a}{00101}}\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classq_1_1_data_type_1_1_peak_list_a0e9dbf7927251d827631693fe216911a}{print}}();}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__peak_8h_source_l00102}00102\ \ \ \ \ \};}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__peak_8h_source_l00103}00103\ \ \ \}\ \textcolor{comment}{//\ namespace\ DataType}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__peak_8h_source_l00104}00104\ \}\ \textcolor{comment}{//\ namespace\ q}}
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__peak_8h_source_l00105}00105\ }
+\DoxyCodeLine{\Hypertarget{qalgorithms__datatype__peak_8h_source_l00106}00106\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//\ QALGORITHMS\_DATATYPE\_PEAK\_H}}
+
+\end{DoxyCode}

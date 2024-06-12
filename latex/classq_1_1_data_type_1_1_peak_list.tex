@@ -1,0 +1,113 @@
+\doxysection{q\+::Data\+Type\+::Peak\+List Class Reference}
+\hypertarget{classq_1_1_data_type_1_1_peak_list}{}\label{classq_1_1_data_type_1_1_peak_list}\index{q::DataType::PeakList@{q::DataType::PeakList}}
+
+
+A class to store a list of peaks.  
+
+
+
+
+{\ttfamily \#include $<$qalgorithms\+\_\+datatype\+\_\+peak.\+h$>$}
+
+\doxysubsubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\hyperlink{classq_1_1_data_type_1_1_peak_list_a54b87fa28862773ed066f9dcc762e2b6}{Peak\+List}} ()
+\item 
+\mbox{\hyperlink{classq_1_1_data_type_1_1_peak_list_a4e4f63cb26a2482a335791f770920a56}{Peak\+List}} (std\+::unordered\+\_\+map$<$ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{int}}, \mbox{\hyperlink{classq_1_1_data_type_1_1_peak}{Peak}} $>$ \mbox{\hyperlink{classq_1_1_data_type_1_1_peak_list_ac7434031fab6297822daede83de65d89}{peaks}})
+\item 
+\mbox{\hyperlink{classq_1_1_data_type_1_1_peak_list_a5d424c13c6a565a0ad8ea717ebd5997c}{\texorpdfstring{$\sim$}{\string~}\+Peak\+List}} ()
+\item 
+\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{void}} \mbox{\hyperlink{classq_1_1_data_type_1_1_peak_list_a75ca0355efe6da2ba754d49527055ac0}{add\+Peak}} (\mbox{\hyperlink{classq_1_1_data_type_1_1_peak}{Peak}} \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{peak}})
+\item 
+\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{void}} \mbox{\hyperlink{classq_1_1_data_type_1_1_peak_list_a59f439f18de536b175e17791229c8d4c}{remove\+Peak}} (\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{int}} peak\+ID)
+\item 
+\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{void}} \mbox{\hyperlink{classq_1_1_data_type_1_1_peak_list_a65d3ba6fd8d79ca816a575878e382497}{clear\+Peaks}} ()
+\item 
+\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{void}} \mbox{\hyperlink{classq_1_1_data_type_1_1_peak_list_a0e9dbf7927251d827631693fe216911a}{print}} ()
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Public Attributes}
+\begin{DoxyCompactItemize}
+\item 
+std\+::unordered\+\_\+map$<$ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{int}}, \mbox{\hyperlink{classq_1_1_data_type_1_1_peak}{Peak}} $>$ \mbox{\hyperlink{classq_1_1_data_type_1_1_peak_list_ac7434031fab6297822daede83de65d89}{peaks}}
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+A class to store a list of peaks. 
+
+The \doxylink{classq_1_1_data_type_1_1_peak_list}{Peak\+List} class is used to store a list of peaks. It contains a map of peaks, where the key is the peak ID and the value is the peak. 
+\begin{DoxyParams}{Parameters}
+{\em peaks} & A map of peaks \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line \mbox{\hyperlink{qalgorithms__datatype__peak_8h_source_l00082}{82}} of file \mbox{\hyperlink{qalgorithms__datatype__peak_8h_source}{qalgorithms\+\_\+datatype\+\_\+peak.\+h}}.
+
+
+
+\doxysubsection{Constructor \& Destructor Documentation}
+\Hypertarget{classq_1_1_data_type_1_1_peak_list_a54b87fa28862773ed066f9dcc762e2b6}\label{classq_1_1_data_type_1_1_peak_list_a54b87fa28862773ed066f9dcc762e2b6} 
+\index{q::DataType::PeakList@{q::DataType::PeakList}!PeakList@{PeakList}}
+\index{PeakList@{PeakList}!q::DataType::PeakList@{q::DataType::PeakList}}
+\doxysubsubsection{\texorpdfstring{PeakList()}{PeakList()}\hspace{0.1cm}{\footnotesize\ttfamily [1/2]}}
+{\footnotesize\ttfamily q\+::\+Data\+Type\+::\+Peak\+List\+::\+Peak\+List (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})}
+
+\Hypertarget{classq_1_1_data_type_1_1_peak_list_a4e4f63cb26a2482a335791f770920a56}\label{classq_1_1_data_type_1_1_peak_list_a4e4f63cb26a2482a335791f770920a56} 
+\index{q::DataType::PeakList@{q::DataType::PeakList}!PeakList@{PeakList}}
+\index{PeakList@{PeakList}!q::DataType::PeakList@{q::DataType::PeakList}}
+\doxysubsubsection{\texorpdfstring{PeakList()}{PeakList()}\hspace{0.1cm}{\footnotesize\ttfamily [2/2]}}
+{\footnotesize\ttfamily q\+::\+Data\+Type\+::\+Peak\+List\+::\+Peak\+List (\begin{DoxyParamCaption}\item[{std\+::unordered\+\_\+map$<$ \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{int}}, \mbox{\hyperlink{classq_1_1_data_type_1_1_peak}{Peak}} $>$}]{peaks }\end{DoxyParamCaption})}
+
+\Hypertarget{classq_1_1_data_type_1_1_peak_list_a5d424c13c6a565a0ad8ea717ebd5997c}\label{classq_1_1_data_type_1_1_peak_list_a5d424c13c6a565a0ad8ea717ebd5997c} 
+\index{q::DataType::PeakList@{q::DataType::PeakList}!````~PeakList@{\texorpdfstring{$\sim$}{\string~}PeakList}}
+\index{````~PeakList@{\texorpdfstring{$\sim$}{\string~}PeakList}!q::DataType::PeakList@{q::DataType::PeakList}}
+\doxysubsubsection{\texorpdfstring{\texorpdfstring{$\sim$}{\string~}PeakList()}{\string~PeakList()}}
+{\footnotesize\ttfamily q\+::\+Data\+Type\+::\+Peak\+List\+::\texorpdfstring{$\sim$}{\string~}\+Peak\+List (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})}
+
+
+
+\doxysubsection{Member Function Documentation}
+\Hypertarget{classq_1_1_data_type_1_1_peak_list_a75ca0355efe6da2ba754d49527055ac0}\label{classq_1_1_data_type_1_1_peak_list_a75ca0355efe6da2ba754d49527055ac0} 
+\index{q::DataType::PeakList@{q::DataType::PeakList}!addPeak@{addPeak}}
+\index{addPeak@{addPeak}!q::DataType::PeakList@{q::DataType::PeakList}}
+\doxysubsubsection{\texorpdfstring{addPeak()}{addPeak()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{void}} q\+::\+Data\+Type\+::\+Peak\+List\+::add\+Peak (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{classq_1_1_data_type_1_1_peak}{Peak}}}]{peak }\end{DoxyParamCaption})}
+
+\Hypertarget{classq_1_1_data_type_1_1_peak_list_a65d3ba6fd8d79ca816a575878e382497}\label{classq_1_1_data_type_1_1_peak_list_a65d3ba6fd8d79ca816a575878e382497} 
+\index{q::DataType::PeakList@{q::DataType::PeakList}!clearPeaks@{clearPeaks}}
+\index{clearPeaks@{clearPeaks}!q::DataType::PeakList@{q::DataType::PeakList}}
+\doxysubsubsection{\texorpdfstring{clearPeaks()}{clearPeaks()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{void}} q\+::\+Data\+Type\+::\+Peak\+List\+::clear\+Peaks (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})}
+
+\Hypertarget{classq_1_1_data_type_1_1_peak_list_a0e9dbf7927251d827631693fe216911a}\label{classq_1_1_data_type_1_1_peak_list_a0e9dbf7927251d827631693fe216911a} 
+\index{q::DataType::PeakList@{q::DataType::PeakList}!print@{print}}
+\index{print@{print}!q::DataType::PeakList@{q::DataType::PeakList}}
+\doxysubsubsection{\texorpdfstring{print()}{print()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{void}} q\+::\+Data\+Type\+::\+Peak\+List\+::print (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})}
+
+\Hypertarget{classq_1_1_data_type_1_1_peak_list_a59f439f18de536b175e17791229c8d4c}\label{classq_1_1_data_type_1_1_peak_list_a59f439f18de536b175e17791229c8d4c} 
+\index{q::DataType::PeakList@{q::DataType::PeakList}!removePeak@{removePeak}}
+\index{removePeak@{removePeak}!q::DataType::PeakList@{q::DataType::PeakList}}
+\doxysubsubsection{\texorpdfstring{removePeak()}{removePeak()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{void}} q\+::\+Data\+Type\+::\+Peak\+List\+::remove\+Peak (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{int}}}]{peak\+ID }\end{DoxyParamCaption})}
+
+
+
+\doxysubsection{Member Data Documentation}
+\Hypertarget{classq_1_1_data_type_1_1_peak_list_ac7434031fab6297822daede83de65d89}\label{classq_1_1_data_type_1_1_peak_list_ac7434031fab6297822daede83de65d89} 
+\index{q::DataType::PeakList@{q::DataType::PeakList}!peaks@{peaks}}
+\index{peaks@{peaks}!q::DataType::PeakList@{q::DataType::PeakList}}
+\doxysubsubsection{\texorpdfstring{peaks}{peaks}}
+{\footnotesize\ttfamily std\+::unordered\+\_\+map$<$\mbox{\hyperlink{pugixml_8cpp_a26cc6d62586f67dca2d7b25184156168}{int}}, \mbox{\hyperlink{classq_1_1_data_type_1_1_peak}{Peak}}$>$ q\+::\+Data\+Type\+::\+Peak\+List\+::peaks}
+
+
+
+Definition at line \mbox{\hyperlink{qalgorithms__datatype__peak_8h_source_l00093}{93}} of file \mbox{\hyperlink{qalgorithms__datatype__peak_8h_source}{qalgorithms\+\_\+datatype\+\_\+peak.\+h}}.
+
+
+
+The documentation for this class was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+include/\mbox{\hyperlink{qalgorithms__datatype__peak_8h}{qalgorithms\+\_\+datatype\+\_\+peak.\+h}}\end{DoxyCompactItemize}
