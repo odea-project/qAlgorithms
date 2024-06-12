@@ -89,6 +89,7 @@
                 "src/qalgorithms_refmatrix.cpp",
                 "src/qalgorithms_qpeaks.cpp",
                 "src/qalgorithms_peak.cpp",
+                "src/qalgorithms_ascii_logo.cpp",
                 "external/StreamCraft/src/StreamCraft_mzml.cpp",
                 "external/StreamCraft/src/StreamCraft_utils.cpp",
                 "test/test_qPeak_class.cpp",
