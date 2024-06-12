@@ -121,7 +121,7 @@ namespace sc {
 
 #endif // STREAMCRAFT_UTILS_HPP
 
-#if defined(STREAMCRAFT_HEADER_ONLY) && !defined(STREAMCRAFT_UTILS_SOURCE)
-#	define STREAMCRAFT_UTILS_SOURCE "StreamCraft_utils.cpp"
-#	include STREAMCRAFT_UTILS_SOURCE
-#endif
+// #if defined(STREAMCRAFT_HEADER_ONLY) && !defined(STREAMCRAFT_UTILS_SOURCE)
+// #	define STREAMCRAFT_UTILS_SOURCE "StreamCraft_utils.cpp"
+// #	include STREAMCRAFT_UTILS_SOURCE
+// #endif

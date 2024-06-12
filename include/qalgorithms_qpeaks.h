@@ -4,9 +4,7 @@
 
 // internal
 #include "qalgorithms_matrix.h"
-#include "qalgorithms_refmatrix.h"
 #include "qalgorithms_measurement_data.h"
-#include "qalgorithms_peak.h"
 #include "qalgorithms_utils.h"
 #include "qalgorithms_datatype_peak.h"
 
