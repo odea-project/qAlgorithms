@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['lcmsdata_0',['LCMSData',['../classq_1_1_measurement_data_1_1_l_c_m_s_data.html',1,'q::MeasurementData']]]
+  ['datapoint_0',['DataPoint',['../structq_1_1_data_type_1_1_chromatogram_1_1_data_point.html',1,'q::DataType::Chromatogram::DataPoint'],['../structq_1_1_data_type_1_1_mass_spectrum_1_1_data_point.html',1,'q::DataType::MassSpectrum::DataPoint']]]
 ];

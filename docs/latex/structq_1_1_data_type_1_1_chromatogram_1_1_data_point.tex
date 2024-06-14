@@ -1,0 +1,59 @@
+\doxysection{q\+::Data\+Type\+::Chromatogram\+::Data\+Point Struct Reference}
+\hypertarget{structq_1_1_data_type_1_1_chromatogram_1_1_data_point}{}\label{structq_1_1_data_type_1_1_chromatogram_1_1_data_point}\index{q::DataType::Chromatogram::DataPoint@{q::DataType::Chromatogram::DataPoint}}
+
+
+Struct to store chromatogram data points.  
+
+
+
+
+{\ttfamily \#include $<$qalgorithms\+\_\+datatype\+\_\+chromatogram.\+h$>$}
+
+\doxysubsubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{structq_1_1_data_type_1_1_chromatogram_1_1_data_point_a21c5ccc909b703a30f00cecf02b6d892}\label{structq_1_1_data_type_1_1_chromatogram_1_1_data_point_a21c5ccc909b703a30f00cecf02b6d892} 
+{\bfseries Data\+Point} (double intensity, double retention\+\_\+time, int df)
+\item 
+\Hypertarget{structq_1_1_data_type_1_1_chromatogram_1_1_data_point_a679e3a3fea72ef63ef9179eb2826188c}\label{structq_1_1_data_type_1_1_chromatogram_1_1_data_point_a679e3a3fea72ef63ef9179eb2826188c} 
+double \& {\bfseries x} ()
+\item 
+\Hypertarget{structq_1_1_data_type_1_1_chromatogram_1_1_data_point_af4d86f96990e9c0e6243b3c6c670f8cc}\label{structq_1_1_data_type_1_1_chromatogram_1_1_data_point_af4d86f96990e9c0e6243b3c6c670f8cc} 
+double \& {\bfseries y} ()
+\item 
+\Hypertarget{structq_1_1_data_type_1_1_chromatogram_1_1_data_point_aeda87db457611b324112e57806b0ac80}\label{structq_1_1_data_type_1_1_chromatogram_1_1_data_point_aeda87db457611b324112e57806b0ac80} 
+void {\bfseries setY} (double y)
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Public Attributes}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{structq_1_1_data_type_1_1_chromatogram_1_1_data_point_a8ce4d3236391fc0950d9b00fb62dd73a}\label{structq_1_1_data_type_1_1_chromatogram_1_1_data_point_a8ce4d3236391fc0950d9b00fb62dd73a} 
+double {\bfseries intensity}
+\item 
+\Hypertarget{structq_1_1_data_type_1_1_chromatogram_1_1_data_point_a70c04353bd605db149ca981e3c8f3cc6}\label{structq_1_1_data_type_1_1_chromatogram_1_1_data_point_a70c04353bd605db149ca981e3c8f3cc6} 
+double {\bfseries retention\+\_\+time}
+\item 
+\Hypertarget{structq_1_1_data_type_1_1_chromatogram_1_1_data_point_a7998408b7c73f19dd0bc3daaedfb9a80}\label{structq_1_1_data_type_1_1_chromatogram_1_1_data_point_a7998408b7c73f19dd0bc3daaedfb9a80} 
+int {\bfseries df}
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+Struct to store chromatogram data points. 
+
+The \doxylink{structq_1_1_data_type_1_1_chromatogram_1_1_data_point}{Data\+Point} struct is used to store chromatogram data points. It contains the intensity, retention time, and degrees of freedom (important for the uncertainty estimation when interpolating the data is considered).
+
+
+\begin{DoxyParams}{Parameters}
+{\em intensity} & The intensity of the chromatogram data point \\
+\hline
+{\em retention\+\_\+time} & The retention time of the chromatogram data point \\
+\hline
+{\em df} & The degrees of freedom of the chromatogram data point \\
+\hline
+\end{DoxyParams}
+
+
+The documentation for this struct was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+include/qalgorithms\+\_\+datatype\+\_\+chromatogram.\+h\end{DoxyCompactItemize}

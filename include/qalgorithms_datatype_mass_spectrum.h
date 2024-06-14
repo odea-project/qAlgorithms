@@ -32,10 +32,6 @@ namespace q
              * @param intensity The intensity of the mass spectrum data point
              * @param mz The mass-to-charge ratio of the mass spectrum data point
              * @param df The degrees of freedom of the mass spectrum data point
-             * @param DataPoint() Constructor for the DataPoint struct
-             * @param x() Getter for the x-axis value
-             * @param y() Getter for the y-axis value
-             * @param setY() Setter for the y-axis value
              */
             struct DataPoint
             {
@@ -57,7 +53,7 @@ namespace q
              * @brief Construct a new Mass Spectrum object from another Mass Spectrum object
              * @details The MassSpectrum constructor constructs a new Mass Spectrum object from another Mass Spectrum object. The constructor takes a reference to another Mass Spectrum object. All MetaData will be referenced, and the the last k data points will be moved to the new object.
              *
-             * @param reference mass spectrum object
+             * @param parent mass spectrum object
              * @param k number of data points to be moved to the new object, starting from the end of the reference object
              */
             MassSpectrum(MassSpectrum &parent, const size_t k);
@@ -84,7 +80,7 @@ namespace q
             void
             sortDataPoints();
 
-            // properties
+            // properties, i.e. metadata
             using variableType = std::variant< // allowed variable types for mass spectrum data
                 int,                           // e.g. scan number
                 size_t,                        // e.g. scan number, number of data points

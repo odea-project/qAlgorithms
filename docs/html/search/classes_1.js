@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['datapoint_0',['DataPoint',['../structq_1_1_data_type_1_1_mass_spectrum_1_1_data_point.html',1,'q::DataType::MassSpectrum']]]
+  ['chromatogram_0',['Chromatogram',['../classq_1_1_data_type_1_1_chromatogram.html',1,'q::DataType']]]
 ];

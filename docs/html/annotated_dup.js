@@ -5,6 +5,7 @@ var annotated_dup =
         [ "qPeaks", "classq_1_1_algorithms_1_1q_peaks.html", "classq_1_1_algorithms_1_1q_peaks" ]
       ] ],
       [ "DataType", null, [
+        [ "Chromatogram", "classq_1_1_data_type_1_1_chromatogram.html", "classq_1_1_data_type_1_1_chromatogram" ],
         [ "MassSpectrum", "classq_1_1_data_type_1_1_mass_spectrum.html", "classq_1_1_data_type_1_1_mass_spectrum" ],
         [ "Peak", "classq_1_1_data_type_1_1_peak.html", null ]
       ] ],

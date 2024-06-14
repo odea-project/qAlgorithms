@@ -1,0 +1,145 @@
+\doxysection{q\+::Data\+Type\+::Chromatogram Class Reference}
+\hypertarget{classq_1_1_data_type_1_1_chromatogram}{}\label{classq_1_1_data_type_1_1_chromatogram}\index{q::DataType::Chromatogram@{q::DataType::Chromatogram}}
+
+
+A class to store chromatogram data.  
+
+
+
+
+{\ttfamily \#include $<$qalgorithms\+\_\+datatype\+\_\+chromatogram.\+h$>$}
+
+\doxysubsubsection*{Classes}
+\begin{DoxyCompactItemize}
+\item 
+struct \mbox{\hyperlink{structq_1_1_data_type_1_1_chromatogram_1_1_data_point}{Data\+Point}}
+\begin{DoxyCompactList}\small\item\em Struct to store chromatogram data points. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsection*{Public Types}
+\begin{DoxyCompactItemize}
+\item 
+using \mbox{\hyperlink{classq_1_1_data_type_1_1_chromatogram_a1f5a632b897a236b555912945e596e51}{variable\+Type}}
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\hyperlink{classq_1_1_data_type_1_1_chromatogram_a70151673eaad80463ce0f66d68e2c07d}{Chromatogram}} (\mbox{\hyperlink{classq_1_1_data_type_1_1_chromatogram}{Chromatogram}} \&parent, size\+\_\+t k)
+\begin{DoxyCompactList}\small\item\em Construct a new \doxylink{classq_1_1_data_type_1_1_chromatogram}{Chromatogram} object from another \doxylink{classq_1_1_data_type_1_1_chromatogram}{Chromatogram} object. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{classq_1_1_data_type_1_1_chromatogram_a03542904896d83b78fe5d6d71fca71d8}{add\+Data\+Point}} (double intensity, double retention\+\_\+time, int df)
+\begin{DoxyCompactList}\small\item\em Add a data point to the chromatogram. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{classq_1_1_data_type_1_1_chromatogram_a7f1240f35d59540dcebc74fbc338fc08}{sort\+Data\+Points}} ()
+\begin{DoxyCompactList}\small\item\em Sort the mass spectrum data points. \end{DoxyCompactList}\item 
+\Hypertarget{classq_1_1_data_type_1_1_chromatogram_acd7f41b5600100956c9aa6aca7465050}\label{classq_1_1_data_type_1_1_chromatogram_acd7f41b5600100956c9aa6aca7465050} 
+int {\bfseries get\+Scan\+Number} () const
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Public Attributes}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classq_1_1_data_type_1_1_chromatogram_a8c5878914f8d4f0b88e79c6f0356c593}\label{classq_1_1_data_type_1_1_chromatogram_a8c5878914f8d4f0b88e79c6f0356c593} 
+std\+::unordered\+\_\+map$<$ Data\+Field, variable\+Type $>$ \texorpdfstring{$\ast$}{*} {\bfseries meta\+Data}
+\item 
+\Hypertarget{classq_1_1_data_type_1_1_chromatogram_abee22d9c8ff02bd3bc78808e847fd499}\label{classq_1_1_data_type_1_1_chromatogram_abee22d9c8ff02bd3bc78808e847fd499} 
+std\+::vector$<$ std\+::unique\+\_\+ptr$<$ \mbox{\hyperlink{structq_1_1_data_type_1_1_chromatogram_1_1_data_point}{Data\+Point}} $>$ $>$ {\bfseries data\+Points}
+\item 
+\Hypertarget{classq_1_1_data_type_1_1_chromatogram_a52da19656ab6b297dccf73b8a6b4dcbf}\label{classq_1_1_data_type_1_1_chromatogram_a52da19656ab6b297dccf73b8a6b4dcbf} 
+std\+::pair$<$ bool, \mbox{\hyperlink{classq_1_1_data_type_1_1_chromatogram}{Chromatogram}} \texorpdfstring{$\ast$}{*} $>$ {\bfseries is\+Parent}
+\item 
+std\+::vector$<$ std\+::unique\+\_\+ptr$<$ size\+\_\+t $>$ $>$ \mbox{\hyperlink{classq_1_1_data_type_1_1_chromatogram_a7c68862c7ba52cbee6d505d6d7332f9e}{cutting\+Points}}
+\begin{DoxyCompactList}\small\item\em This vector stores information for cutting the chromatogram data. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+A class to store chromatogram data. 
+
+The \doxylink{classq_1_1_data_type_1_1_chromatogram}{Chromatogram} class is used to store chromatogram data. 
+
+\doxysubsection{Member Typedef Documentation}
+\Hypertarget{classq_1_1_data_type_1_1_chromatogram_a1f5a632b897a236b555912945e596e51}\label{classq_1_1_data_type_1_1_chromatogram_a1f5a632b897a236b555912945e596e51} 
+\index{q::DataType::Chromatogram@{q::DataType::Chromatogram}!variableType@{variableType}}
+\index{variableType@{variableType}!q::DataType::Chromatogram@{q::DataType::Chromatogram}}
+\doxysubsubsection{\texorpdfstring{variableType}{variableType}}
+{\footnotesize\ttfamily using q\+::\+Data\+Type\+::\+Chromatogram\+::variable\+Type}
+
+{\bfseries Initial value\+:}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\ std::variant<\ }
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \ \ int,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \ \ size\_t,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \ \ double,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \ \ >}
+
+\end{DoxyCode}
+
+
+\doxysubsection{Constructor \& Destructor Documentation}
+\Hypertarget{classq_1_1_data_type_1_1_chromatogram_a70151673eaad80463ce0f66d68e2c07d}\label{classq_1_1_data_type_1_1_chromatogram_a70151673eaad80463ce0f66d68e2c07d} 
+\index{q::DataType::Chromatogram@{q::DataType::Chromatogram}!Chromatogram@{Chromatogram}}
+\index{Chromatogram@{Chromatogram}!q::DataType::Chromatogram@{q::DataType::Chromatogram}}
+\doxysubsubsection{\texorpdfstring{Chromatogram()}{Chromatogram()}}
+{\footnotesize\ttfamily q\+::\+Data\+Type\+::\+Chromatogram\+::\+Chromatogram (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{classq_1_1_data_type_1_1_chromatogram}{Chromatogram}} \&}]{parent,  }\item[{size\+\_\+t}]{k }\end{DoxyParamCaption})}
+
+
+
+Construct a new \doxylink{classq_1_1_data_type_1_1_chromatogram}{Chromatogram} object from another \doxylink{classq_1_1_data_type_1_1_chromatogram}{Chromatogram} object. 
+
+The \doxylink{classq_1_1_data_type_1_1_chromatogram}{Chromatogram} constructor constructs a new \doxylink{classq_1_1_data_type_1_1_chromatogram}{Chromatogram} object from another \doxylink{classq_1_1_data_type_1_1_chromatogram}{Chromatogram} object. The constructor takes a reference to another \doxylink{classq_1_1_data_type_1_1_chromatogram}{Chromatogram} object. All Meta\+Data will be referenced, and the the last k data points will be moved to the new object.
+
+
+\begin{DoxyParams}{Parameters}
+{\em reference} & chromatogram object \\
+\hline
+{\em k} & number of data points to be moved to the new object, starting from the end of the reference object \\
+\hline
+\end{DoxyParams}
+
+
+\doxysubsection{Member Function Documentation}
+\Hypertarget{classq_1_1_data_type_1_1_chromatogram_a03542904896d83b78fe5d6d71fca71d8}\label{classq_1_1_data_type_1_1_chromatogram_a03542904896d83b78fe5d6d71fca71d8} 
+\index{q::DataType::Chromatogram@{q::DataType::Chromatogram}!addDataPoint@{addDataPoint}}
+\index{addDataPoint@{addDataPoint}!q::DataType::Chromatogram@{q::DataType::Chromatogram}}
+\doxysubsubsection{\texorpdfstring{addDataPoint()}{addDataPoint()}}
+{\footnotesize\ttfamily void q\+::\+Data\+Type\+::\+Chromatogram\+::add\+Data\+Point (\begin{DoxyParamCaption}\item[{double}]{intensity,  }\item[{double}]{retention\+\_\+time,  }\item[{int}]{df }\end{DoxyParamCaption})}
+
+
+
+Add a data point to the chromatogram. 
+
+The add\+Data\+Point method adds a data point to the chromatogram. The method takes the intensity, retention time, and degrees of freedom of the data point.
+
+
+\begin{DoxyParams}{Parameters}
+{\em intensity} & The intensity of the chromatogram data point \\
+\hline
+{\em retention\+\_\+time} & The retention time of the chromatogram data point \\
+\hline
+{\em df} & The degrees of freedom of the chromatogram data point \\
+\hline
+\end{DoxyParams}
+\Hypertarget{classq_1_1_data_type_1_1_chromatogram_a7f1240f35d59540dcebc74fbc338fc08}\label{classq_1_1_data_type_1_1_chromatogram_a7f1240f35d59540dcebc74fbc338fc08} 
+\index{q::DataType::Chromatogram@{q::DataType::Chromatogram}!sortDataPoints@{sortDataPoints}}
+\index{sortDataPoints@{sortDataPoints}!q::DataType::Chromatogram@{q::DataType::Chromatogram}}
+\doxysubsubsection{\texorpdfstring{sortDataPoints()}{sortDataPoints()}}
+{\footnotesize\ttfamily void q\+::\+Data\+Type\+::\+Chromatogram\+::sort\+Data\+Points (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})}
+
+
+
+Sort the mass spectrum data points. 
+
+The sort\+Data\+Points method sorts the mass spectrum data points based on the x-\/axis values. 
+
+\doxysubsection{Member Data Documentation}
+\Hypertarget{classq_1_1_data_type_1_1_chromatogram_a7c68862c7ba52cbee6d505d6d7332f9e}\label{classq_1_1_data_type_1_1_chromatogram_a7c68862c7ba52cbee6d505d6d7332f9e} 
+\index{q::DataType::Chromatogram@{q::DataType::Chromatogram}!cuttingPoints@{cuttingPoints}}
+\index{cuttingPoints@{cuttingPoints}!q::DataType::Chromatogram@{q::DataType::Chromatogram}}
+\doxysubsubsection{\texorpdfstring{cuttingPoints}{cuttingPoints}}
+{\footnotesize\ttfamily std\+::vector$<$std\+::unique\+\_\+ptr$<$size\+\_\+t$>$ $>$ q\+::\+Data\+Type\+::\+Chromatogram\+::cutting\+Points}
+
+
+
+This vector stores information for cutting the chromatogram data. 
+
+The cutting\+Points vector can be seen as a job list for cutting the chromatogram data. Each element in the vector shows the number of data points counted from the end of the data\+Points vector that should be moved to the new object. The number of elements within the cutting\+Points vector determines the number of new objects that will be created. E.\+g. cutting\+Points = \{10, 5\} will create two new objects. The first object will contain the last 10 data points of the original object while these datapoints are removed from the original object. The second object will contain the next last 5 data points of the original object, while these datapoints are also removed from the original object. The original object will contain all data points except the ones that were moved to the new objects. 
+
+The documentation for this class was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+include/qalgorithms\+\_\+datatype\+\_\+chromatogram.\+h\item 
+src/qalgorithms\+\_\+datatype\+\_\+chromatogram.\+cpp\end{DoxyCompactItemize}

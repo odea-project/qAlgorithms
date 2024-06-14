@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['qpeaks_0',['qPeaks',['../classq_1_1_algorithms_1_1q_peaks.html',1,'q::Algorithms']]]
+  ['peak_0',['Peak',['../classq_1_1_data_type_1_1_peak.html',1,'q::DataType']]]
 ];

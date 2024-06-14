@@ -1,0 +1,75 @@
+\doxysection{qalgorithms\+\_\+datatype\+\_\+chromatogram.\+h}
+\hypertarget{qalgorithms__datatype__chromatogram_8h_source}{}\label{qalgorithms__datatype__chromatogram_8h_source}\index{include/qalgorithms\_datatype\_chromatogram.h@{include/qalgorithms\_datatype\_chromatogram.h}}
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#ifndef\ QALGORITHMS\_DATATYPE\_CHROMATOGRAM\_H}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#define\ QALGORITHMS\_DATATYPE\_CHROMATOGRAM\_H}}
+\DoxyCodeLine{00003\ }
+\DoxyCodeLine{00004\ \textcolor{comment}{//\ internal}}
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#include\ "{}qalgorithms\_datatype.h"{}}}
+\DoxyCodeLine{00006\ }
+\DoxyCodeLine{00007\ \textcolor{comment}{//\ external}}
+\DoxyCodeLine{00008\ \textcolor{preprocessor}{\#include\ <variant>}}
+\DoxyCodeLine{00009\ \textcolor{preprocessor}{\#include\ <vector>}}
+\DoxyCodeLine{00010\ \textcolor{preprocessor}{\#include\ <unordered\_map>}}
+\DoxyCodeLine{00011\ \textcolor{preprocessor}{\#include\ <memory>}}
+\DoxyCodeLine{00012\ \textcolor{preprocessor}{\#include\ <algorithm>}}
+\DoxyCodeLine{00013\ }
+\DoxyCodeLine{00014\ \textcolor{keyword}{namespace\ }q}
+\DoxyCodeLine{00015\ \{}
+\DoxyCodeLine{00016\ \ \ \textcolor{keyword}{namespace\ }DataType}
+\DoxyCodeLine{00017\ \ \ \{}
+\DoxyCodeLine{00023\ \ \ \ \ \textcolor{keyword}{class\ }\mbox{\hyperlink{classq_1_1_data_type_1_1_chromatogram}{Chromatogram}}}
+\DoxyCodeLine{00024\ \ \ \ \ \{}
+\DoxyCodeLine{00025\ \ \ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00034\ \ \ \ \ \ \ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structq_1_1_data_type_1_1_chromatogram_1_1_data_point}{DataPoint}}}
+\DoxyCodeLine{00035\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00036\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{double}\ intensity;}
+\DoxyCodeLine{00037\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{double}\ retention\_time;}
+\DoxyCodeLine{00038\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ df;}
+\DoxyCodeLine{00039\ }
+\DoxyCodeLine{00040\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structq_1_1_data_type_1_1_chromatogram_1_1_data_point}{DataPoint}}(\textcolor{keywordtype}{double}\ intensity,\ \textcolor{keywordtype}{double}\ retention\_time,\ \textcolor{keywordtype}{int}\ df)\ :\ intensity(intensity),\ retention\_time(retention\_time),\ df(df)\ \{\}}
+\DoxyCodeLine{00041\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ getters\ for\ x\ and\ y}}
+\DoxyCodeLine{00042\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{double}\ \&x()\ \{\ \textcolor{keywordflow}{return}\ retention\_time;\ \}}
+\DoxyCodeLine{00043\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{double}\ \&y()\ \{\ \textcolor{keywordflow}{return}\ intensity;\ \}}
+\DoxyCodeLine{00044\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ setY(\textcolor{keywordtype}{double}\ y)\ \{\ intensity\ =\ y;\ \}}
+\DoxyCodeLine{00045\ \ \ \ \ \ \ \};}
+\DoxyCodeLine{00046\ }
+\DoxyCodeLine{00047\ \ \ \ \ \ \ \textcolor{comment}{//\ constructors}}
+\DoxyCodeLine{00048\ \ \ \ \ \ \ \mbox{\hyperlink{classq_1_1_data_type_1_1_chromatogram}{Chromatogram}}();}
+\DoxyCodeLine{00049\ }
+\DoxyCodeLine{00057\ \ \ \ \ \ \ \mbox{\hyperlink{classq_1_1_data_type_1_1_chromatogram}{Chromatogram}}(\mbox{\hyperlink{classq_1_1_data_type_1_1_chromatogram}{Chromatogram}}\ \&parent,\ \textcolor{keywordtype}{size\_t}\ k);}
+\DoxyCodeLine{00058\ }
+\DoxyCodeLine{00059\ \ \ \ \ \ \ \textcolor{comment}{//\ destructor}}
+\DoxyCodeLine{00060\ \ \ \ \ \ \ \mbox{\hyperlink{classq_1_1_data_type_1_1_chromatogram}{\string~Chromatogram}}();}
+\DoxyCodeLine{00061\ }
+\DoxyCodeLine{00062\ \ \ \ \ \ \ \textcolor{comment}{//\ methods}}
+\DoxyCodeLine{00071\ \ \ \ \ \ \ \textcolor{keywordtype}{void}}
+\DoxyCodeLine{00072\ \ \ \ \ \ \ \mbox{\hyperlink{classq_1_1_data_type_1_1_chromatogram_a03542904896d83b78fe5d6d71fca71d8}{addDataPoint}}(\textcolor{keywordtype}{double}\ intensity,\ \textcolor{keywordtype}{double}\ retention\_time,\ \textcolor{keywordtype}{int}\ df);}
+\DoxyCodeLine{00073\ }
+\DoxyCodeLine{00078\ \ \ \ \ \ \ \textcolor{keywordtype}{void}}
+\DoxyCodeLine{00079\ \ \ \ \ \ \ \mbox{\hyperlink{classq_1_1_data_type_1_1_chromatogram_a7f1240f35d59540dcebc74fbc338fc08}{sortDataPoints}}();}
+\DoxyCodeLine{00080\ }
+\DoxyCodeLine{00081\ \ \ \ \ \ \ \textcolor{comment}{//\ properties,\ i.e.\ metadata}}
+\DoxyCodeLine{00082\ \ \ \ \ \ \ \textcolor{keyword}{using\ }variableType\ =\ std::variant<\ \textcolor{comment}{//\ allowed\ variable\ types\ for\ chromatogram\ data}}
+\DoxyCodeLine{00083\ \ \ \ \ \ \ \ \ \ \ int,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ e.g.\ scan\ number}}
+\DoxyCodeLine{00084\ \ \ \ \ \ \ \ \ \ \ size\_t,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ e.g.\ scan\ number,\ number\ of\ data\ points}}
+\DoxyCodeLine{00085\ \ \ \ \ \ \ \ \ \ \ double,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ e.g.\ wavelength\ or\ mass-\/to-\/charge\ ratio}}
+\DoxyCodeLine{00086\ \ \ \ \ \ \ \ \ \ \ >;}
+\DoxyCodeLine{00087\ }
+\DoxyCodeLine{00088\ \ \ \ \ \ \ std::unordered\_map<DataField,\ variableType>\ *metaData;}
+\DoxyCodeLine{00089\ \ \ \ \ \ \ std::vector<std::unique\_ptr<DataPoint>>\ dataPoints;}
+\DoxyCodeLine{00090\ \ \ \ \ \ \ std::pair<bool,\ Chromatogram\ *>\ isParent;}
+\DoxyCodeLine{00091\ }
+\DoxyCodeLine{00096\ \ \ \ \ \ \ std::vector<std::unique\_ptr<size\_t>>\ \mbox{\hyperlink{classq_1_1_data_type_1_1_chromatogram_a7c68862c7ba52cbee6d505d6d7332f9e}{cuttingPoints}};}
+\DoxyCodeLine{00097\ }
+\DoxyCodeLine{00098\ \ \ \ \ \ \ \textcolor{comment}{//\ getter}}
+\DoxyCodeLine{00099\ \ \ \ \ \ \ \textcolor{keywordtype}{int}}
+\DoxyCodeLine{00100\ \ \ \ \ \ \ getScanNumber()\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00101\ \ \ \ \ \};}
+\DoxyCodeLine{00102\ \ \ \}}
+\DoxyCodeLine{00103\ \}}
+\DoxyCodeLine{00104\ }
+\DoxyCodeLine{00105\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//\ QALGORITHMS\_DATATYPE\_CHROMATOGRAM\_H}}
+
+\end{DoxyCode}

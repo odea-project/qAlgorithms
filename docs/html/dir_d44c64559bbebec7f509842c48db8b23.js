@@ -2,6 +2,7 @@ var dir_d44c64559bbebec7f509842c48db8b23 =
 [
     [ "qalgorithms_ascii_logo.h", "qalgorithms__ascii__logo_8h_source.html", null ],
     [ "qalgorithms_datatype.h", "qalgorithms__datatype_8h_source.html", null ],
+    [ "qalgorithms_datatype_chromatogram.h", "qalgorithms__datatype__chromatogram_8h_source.html", null ],
     [ "qalgorithms_datatype_mass_spectrum.h", "qalgorithms__datatype__mass__spectrum_8h_source.html", null ],
     [ "qalgorithms_datatype_peak.h", "qalgorithms__datatype__peak_8h_source.html", null ],
     [ "qalgorithms_matrix.h", "qalgorithms__matrix_8h_source.html", null ],

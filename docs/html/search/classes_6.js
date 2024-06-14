@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['vector_0',['Vector',['../classq_1_1_matrices_1_1_vector.html',1,'q::Matrices']]]
+  ['qpeaks_0',['qPeaks',['../classq_1_1_algorithms_1_1q_peaks.html',1,'q::Algorithms']]]
 ];
