@@ -61,7 +61,7 @@ namespace q
 
     double erfi(const double x);
 
-    const Matrix linreg(
+    const q::Matrices::Matrix linreg(
         const std::vector<double> &xData,
         const std::vector<double> &yData,
         const size_t degree);
@@ -74,16 +74,16 @@ namespace q
 
     /**
      * @brief Overloaded operator for matrix equality
-     * 
-     * @param A : Matrix 
+     *
+     * @param A : Matrix
      * @param B : Matrix
-     * @return true 
-     * @return false 
+     * @return true
+     * @return false
      */
     bool
     operator==(
-        const Matrix_mc &A,
-        const Matrix_mc &B);
+        const q::Matrices::Matrix_mc &A,
+        const q::Matrices::Matrix_mc &B);
     /**
      * @brief Overloaded operator for matrix addition
      * @details This function overloads the + operator to allow for matrix addition. The function takes two matrices as input and returns a new matrix that is the element-wise sum of the two input matrices.
@@ -92,10 +92,10 @@ namespace q
      * @param B : Matrix
      * @return Matrix
      */
-    Matrix
+    q::Matrices::Matrix
     operator+(
-        const Matrix &A,
-        const Matrix &B);
+        const q::Matrices::Matrix &A,
+        const q::Matrices::Matrix &B);
 
     /**
      * @brief Overloaded operator for matrix multiplication
@@ -105,10 +105,10 @@ namespace q
      * @param B : Matrix
      * @return Matrix
      */
-    Matrix
+    q::Matrices::Matrix
     operator*(
-        const Matrix &A,
-        const Matrix &B);
+        const q::Matrices::Matrix &A,
+        const q::Matrices::Matrix &B);
 
     /**
      * @brief Overloaded operator for matrix multiplication by a vector
@@ -117,10 +117,10 @@ namespace q
      * @param B : Vector
      * @return Vector
      */
-    Vector
+    q::Matrices::Vector
     operator*(
-        const Matrix &A,
-        const Vector &B);
+        const q::Matrices::Matrix &A,
+        const q::Matrices::Vector &B);
 
     /**
      * @brief Overloaded operator for matrix multiplication by a scalar
@@ -130,9 +130,9 @@ namespace q
      * @param scalar : double
      * @return Matrix
      */
-    Matrix
+    q::Matrices::Matrix
     operator*(
-        const Matrix &A,
+        const q::Matrices::Matrix &A,
         const double scalar);
 
     /**
@@ -143,20 +143,20 @@ namespace q
      * @param A : Matrix
      * @return Matrix
      */
-    Matrix
+    q::Matrices::Matrix
     operator*(
         const double scalar,
-        const Matrix &A);
+        const q::Matrices::Matrix &A);
 
-    Matrix_mc_4x4
+    q::Matrices::Matrix_mc_4x4
     multiplyScalarTo4x4Matrix(
         const double scalar,
-        const Matrix &A);
+        const q::Matrices::Matrix &A);
 
     double
     multiplyVecMatrixVecTranspose(
         const double vec[4],
-        const Matrix_mc_4x4 &A);
+        const q::Matrices::Matrix_mc_4x4 &A);
 
     /**
      * @brief Overloaded operator for matrix division by a scalar
@@ -165,9 +165,9 @@ namespace q
      * @param A : Matrix
      * @param scalar : double
      */
-    Matrix
+    q::Matrices::Matrix
     operator/(
-        const Matrix &A,
+        const q::Matrices::Matrix &A,
         const double scalar);
 
     /**
@@ -177,9 +177,9 @@ namespace q
      * @param A : Matrix
      * @return Matrix
      */
-    Matrix
+    q::Matrices::Matrix
     transpose(
-        const Matrix &A);
+        const q::Matrices::Matrix &A);
 
     /**
      * @brief inverse of a matrix
@@ -188,9 +188,9 @@ namespace q
      * @param A : Matrix
      * @return Matrix
      */
-    Matrix
+    q::Matrices::Matrix
     inv(
-        const Matrix &A);
+        const q::Matrices::Matrix &A);
 
     /**
      * @brief Cholesky decomposition of a matrix
@@ -199,9 +199,9 @@ namespace q
      * @param A : Matrix
      * @return Matrix
      */
-    Matrix
+    q::Matrices::Matrix
     choleskyDecomposition(
-        const Matrix &A);
+        const q::Matrices::Matrix &A);
 
     /**
      * @brief Inverse of a lower triangular matrix
@@ -210,9 +210,9 @@ namespace q
      * @param A : Matrix
      * @return Matrix
      */
-    Matrix
+    q::Matrices::Matrix
     inverseLowerTriangle(
-        const Matrix &A);
+        const q::Matrices::Matrix &A);
 
     /**
      * @brief Convolution of a vector with a kernel matrix
@@ -223,11 +223,11 @@ namespace q
      * @param kernel : Matrix
      * @return Matrix
      */
-    Matrix_mc
+    q::Matrices::Matrix_mc
     convolve(
-        const Vector &vec,
+        const q::Matrices::Vector &vec,
         const size_t n,
-        const Matrix &kernel);
+        const q::Matrices::Matrix &kernel);
 
     /**
      * @brief Calculate the dot product of the design matrix and the beta vector, i.e., X * beta(:, idx)
@@ -237,16 +237,16 @@ namespace q
      * @param idx : index of the column of beta to use
      * @return Vector
      */
-    Vector
+    q::Matrices::Vector
     calcYhat(
-        const Matrix &X,
-        const Matrix_mc &beta,
+        const q::Matrices::Matrix &X,
+        const q::Matrices::Matrix_mc &beta,
         const size_t idx);
 
-    Vector
+    q::Matrices::Vector
     calcYhatExtended(
-        const Matrix &X,
-        const Vector &beta,
+        const q::Matrices::Matrix &X,
+        const q::Matrices::Vector &beta,
         const size_t x_row_start = 0,
         const size_t x_row_end = 0);
 
@@ -257,9 +257,9 @@ namespace q
      * @param col : column index
      * @return Vector
      */
-    Vector
+    q::Matrices::Vector
     extractCol(
-        const Matrix_mc &A,
+        const q::Matrices::Matrix_mc &A,
         const size_t col);
 
 #pragma endregion "Matrix Operations"
@@ -272,9 +272,9 @@ namespace q
      * @param vec : vector of doubles
      * @return Vector
      */
-    Vector
+    q::Matrices::Vector
     logn(
-        const Vector &vec);
+        const q::Matrices::Vector &vec);
 
 #pragma endregion "Vector Operations"
 
@@ -287,15 +287,15 @@ namespace q
      */
     void
     print(
-        const Matrix &A);
+        const q::Matrices::Matrix &A);
 
     void
     print(
-        const Matrix_mc &A);
+        const q::Matrices::Matrix_mc &A);
 
     void
     print(
-        const Vector &A);
+        const q::Matrices::Vector &A);
 #pragma endregion "print functions"
 
 #pragma region "execute commands"

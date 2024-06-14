@@ -1,5 +1,3 @@
-// test_qPeak_class.cpp
-
 // internal
 #include "../include/qalgorithms_measurement_data_lcms.h"
 #include "../include/qalgorithms_qpeaks.h"
@@ -19,7 +17,7 @@ int main()
   HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
   q::logo::print_qpeaks();
   // initialize qPeaks static variables
-  q::qPeaks::initialize();
+  q::Algorithms::qPeaks::initialize();
   bool isCSV = false;
 
   // userinput for filename
@@ -34,13 +32,8 @@ int main()
     std::cin >> filename_input;
   }
 
-  // std::string filename_input = "test/data/test_lcms_data.csv";    // CSV file with LC-MS data
-  // std::string filename_input = "test/data/test_ftir.csv";         // CSV file with FT-IR data
-  // std::string filename_input = "test/data/test_chrom.csv";        // CSV file with chromatogram data
-  // std::string filename_input = "test/data/test_orbitrap.csv";     // CSV file with Orbitrap data
-  // std::string filename_input = "test/data/example_profile.mzML";  // mzML file with LC-MS data
   std::cout << "create LCMSData object............";
-  q::LCMSData lcmsData;
+  q::MeasurementData::LCMSData lcmsData;
   SetConsoleTextAttribute(hConsole, 10);
   std::cout << "done\n";
   SetConsoleTextAttribute(hConsole, 15);
@@ -76,29 +69,32 @@ int main()
   lcmsData.zeroFilling();
   SetConsoleTextAttribute(hConsole, 10);
   std::cout << "done\n";
+
   SetConsoleTextAttribute(hConsole, 15);
   std::cout << "cut data..........................";
   lcmsData.cutData();
   SetConsoleTextAttribute(hConsole, 10);
   std::cout << "done\n";
+
   SetConsoleTextAttribute(hConsole, 15);
   std::cout << "filter small data sets............";
   lcmsData.filterSmallDataSets();
   SetConsoleTextAttribute(hConsole, 10);
   std::cout << "done\n";
+
   SetConsoleTextAttribute(hConsole, 15);
   std::cout << "interpolate data..................";
   lcmsData.interpolateData();
   SetConsoleTextAttribute(hConsole, 10);
   std::cout << "done\n";
-  SetConsoleTextAttribute(hConsole, 15);
 
+  SetConsoleTextAttribute(hConsole, 15);
   lcmsData.info();
 
   // qPEAKS
   std::cout << "create qPeaks object..............";
-  q::varDataType dataObject = &(lcmsData.data);
-  q::qPeaks qpeaks(dataObject);
+  q::MeasurementData::varDataType dataObject = &(lcmsData.data);
+  q::Algorithms::qPeaks qpeaks(dataObject);
   SetConsoleTextAttribute(hConsole, 10);
   std::cout << "done\n";
   SetConsoleTextAttribute(hConsole, 15);

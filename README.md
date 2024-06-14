@@ -1,4 +1,4 @@
-# qAlgorithms - Beta Branch
+# Introduction
 
 Welcome to `qAlgorithms`, a comprehensive collection of C++ libraries designed specifically for processing analytical data. Our focus is on the non-target screening data domain, ensuring precise and reliable data processing for this complex field.
 

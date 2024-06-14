@@ -1,0 +1,55 @@
+\doxysection{xml\+\_\+parser Struct Reference}
+\hypertarget{structxml__parser}{}\label{structxml__parser}\index{xml\_parser@{xml\_parser}}
+\doxysubsubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{structxml__parser_a062d6951738847e674b538a677c8c5f0}\label{structxml__parser_a062d6951738847e674b538a677c8c5f0} 
+{\bfseries xml\+\_\+parser} (\mbox{\hyperlink{structxml__allocator}{xml\+\_\+allocator}} \texorpdfstring{$\ast$}{*}alloc\+\_\+)
+\item 
+\Hypertarget{structxml__parser_a09210dea8745d4d4c45ebb1e1a9211d0}\label{structxml__parser_a09210dea8745d4d4c45ebb1e1a9211d0} 
+char\+\_\+t \texorpdfstring{$\ast$}{*} {\bfseries parse\+\_\+doctype\+\_\+primitive} (char\+\_\+t \texorpdfstring{$\ast$}{*}s)
+\item 
+\Hypertarget{structxml__parser_a93f0e9c20ffd16c42a287e687a359a0c}\label{structxml__parser_a93f0e9c20ffd16c42a287e687a359a0c} 
+char\+\_\+t \texorpdfstring{$\ast$}{*} {\bfseries parse\+\_\+doctype\+\_\+ignore} (char\+\_\+t \texorpdfstring{$\ast$}{*}s)
+\item 
+\Hypertarget{structxml__parser_a85625c095f072a9938d0e47cf468de6b}\label{structxml__parser_a85625c095f072a9938d0e47cf468de6b} 
+char\+\_\+t \texorpdfstring{$\ast$}{*} {\bfseries parse\+\_\+doctype\+\_\+group} (char\+\_\+t \texorpdfstring{$\ast$}{*}s, char\+\_\+t endch)
+\item 
+\Hypertarget{structxml__parser_afc651baa774c379ad03244cac2e96015}\label{structxml__parser_afc651baa774c379ad03244cac2e96015} 
+char\+\_\+t \texorpdfstring{$\ast$}{*} {\bfseries parse\+\_\+exclamation} (char\+\_\+t \texorpdfstring{$\ast$}{*}s, xml\+\_\+node\+\_\+struct \texorpdfstring{$\ast$}{*}cursor, unsigned int optmsk, char\+\_\+t endch)
+\item 
+\Hypertarget{structxml__parser_a8587d716d71121b4dfffdd1cc8e2145f}\label{structxml__parser_a8587d716d71121b4dfffdd1cc8e2145f} 
+char\+\_\+t \texorpdfstring{$\ast$}{*} {\bfseries parse\+\_\+question} (char\+\_\+t \texorpdfstring{$\ast$}{*}s, xml\+\_\+node\+\_\+struct \texorpdfstring{$\ast$}{*}\&ref\+\_\+cursor, unsigned int optmsk, char\+\_\+t endch)
+\item 
+\Hypertarget{structxml__parser_a35bac90f1975aa1a9d5de4b60b761f16}\label{structxml__parser_a35bac90f1975aa1a9d5de4b60b761f16} 
+char\+\_\+t \texorpdfstring{$\ast$}{*} {\bfseries parse\+\_\+tree} (char\+\_\+t \texorpdfstring{$\ast$}{*}s, xml\+\_\+node\+\_\+struct \texorpdfstring{$\ast$}{*}root, unsigned int optmsk, char\+\_\+t endch)
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Static Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{structxml__parser_a00681ed5cdd50dc86bfaef01efd86075}\label{structxml__parser_a00681ed5cdd50dc86bfaef01efd86075} 
+static char\+\_\+t \texorpdfstring{$\ast$}{*} {\bfseries parse\+\_\+skip\+\_\+bom} (char\+\_\+t \texorpdfstring{$\ast$}{*}s)
+\item 
+\Hypertarget{structxml__parser_a6be4da5b3206913d0e3bd8320394df41}\label{structxml__parser_a6be4da5b3206913d0e3bd8320394df41} 
+static bool {\bfseries has\+\_\+element\+\_\+node\+\_\+siblings} (xml\+\_\+node\+\_\+struct \texorpdfstring{$\ast$}{*}node)
+\item 
+\Hypertarget{structxml__parser_a4bf0acd166edf3fc6cc9543002ff6f5d}\label{structxml__parser_a4bf0acd166edf3fc6cc9543002ff6f5d} 
+static xml\+\_\+parse\+\_\+result {\bfseries parse} (char\+\_\+t \texorpdfstring{$\ast$}{*}buffer, size\+\_\+t length, \mbox{\hyperlink{structxml__document__struct}{xml\+\_\+document\+\_\+struct}} \texorpdfstring{$\ast$}{*}xmldoc, xml\+\_\+node\+\_\+struct \texorpdfstring{$\ast$}{*}root, unsigned int optmsk)
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Public Attributes}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{structxml__parser_a48f48b81a9a222b8bcb79f95024faad8}\label{structxml__parser_a48f48b81a9a222b8bcb79f95024faad8} 
+\mbox{\hyperlink{structxml__allocator}{xml\+\_\+allocator}} \texorpdfstring{$\ast$}{*} {\bfseries alloc}
+\item 
+\Hypertarget{structxml__parser_a2476a71cd7e67b3f4bdbcd1323524503}\label{structxml__parser_a2476a71cd7e67b3f4bdbcd1323524503} 
+char\+\_\+t \texorpdfstring{$\ast$}{*} {\bfseries error\+\_\+offset}
+\item 
+\Hypertarget{structxml__parser_a0555859911674e5a7a349447d6533383}\label{structxml__parser_a0555859911674e5a7a349447d6533383} 
+xml\+\_\+parse\+\_\+status {\bfseries error\+\_\+status}
+\end{DoxyCompactItemize}
+
+
+The documentation for this struct was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+external/pugixml-\/1.\+14/src/pugixml.\+cpp\end{DoxyCompactItemize}

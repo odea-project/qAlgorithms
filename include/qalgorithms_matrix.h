@@ -2,9 +2,6 @@
 #ifndef QALGORITHMS_MATRIX_H // Include guarde to prevent double inclusion
 #define QALGORITHMS_MATRIX_H
 
-// internal
-// #include "qalgorithms_utils.h"
-
 // external
 #include <iostream>
 #include <cmath>
@@ -15,9 +12,11 @@
 /* This file includes the q::matrix class*/
 namespace q
 {
+  namespace Matrices
+  {
   /**
    * @brief A class to store a matrix
-   * @details The Matrix class is used to store a matrix of doubles. The class includes methods for matrix operations such as addition, subtraction, multiplication, and inversion.
+   * @details The Matrix class is used to store a matrix of doubles. 
    *
    * @param elements A pointer to the elements of the matrix
    * @param rows The number of rows
@@ -49,7 +48,7 @@ namespace q
 
   /**
    * @brief A clase to store a matrix with major column order storage
-   * @details The Matrix_mc class is used to store a matrix of doubles with major column order storage. The class includes methods for matrix operations such as addition, subtraction, multiplication, and inversion.
+   * @details The Matrix_mc class is used to store a matrix of doubles with major column order storage.
    * 
    * @param elements A pointer to the elements of the matrix
    * @param rows The number of rows
@@ -82,6 +81,13 @@ namespace q
     operator=(const Matrix_mc &other);
   };
 
+
+  /**
+   * @brief A class to store a 4x4 matrix
+   * @details The Matrix_mc_4x4 class is used to store a 4x4 matrix of doubles with major column order storage.
+   * 
+   * @param elements A pointer to the elements of the matrix
+   */
   class Matrix_mc_4x4
   {
     public:
@@ -120,6 +126,14 @@ namespace q
     end() const;  
   };
 
+
+  /**
+   * @brief A class to store a Vector
+   * @details The Vector class is used to store a vector of doubles.
+   * 
+   * @param elements A pointer to the elements of the vector
+   * @param n The number of elements in the vector
+   */
   class Vector
   {
   public:
@@ -153,6 +167,13 @@ namespace q
     operator=(const Vector &other);
   };
 
+  /**
+   * @brief A class to store a vector of booleans
+   * @details The BoolVector class is used to store a vector of booleans.
+   * 
+   * @param elements A pointer to the elements of the vector
+   * @param n The number of elements in the vector
+   */
   class BoolVector
   {
   public:
@@ -185,5 +206,6 @@ namespace q
     const bool*
     end() const;
   };
+  } // namespace Matrices
 }
 #endif // QALGORITHMS_MATRIX_H

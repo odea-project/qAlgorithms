@@ -20,6 +20,8 @@
 /* This file includes the q::qPeaks class*/
 namespace q
 {
+    namespace Algorithms
+    {
     /**
      * @brief A class to store and apply a peak evaluation model.
      */
@@ -31,10 +33,9 @@ namespace q
 
         /**
          * @brief Construct a new q Peaks object using varDataType object to initialize the object Matrices.
-         *
          * @param dataVec
          */
-        qPeaks(const varDataType &dataVec);
+        qPeaks(const q::MeasurementData::varDataType &dataVec);
 
         // Destructor
         ~qPeaks();
@@ -42,11 +43,10 @@ namespace q
         // methods
         /**
          * @brief Find the peaks in the data. Container function to call the findPeaks method.
-         *
          * @param dataVec
          */
         std::vector<std::vector<std::unique_ptr<DataType::Peak>>>
-        findPeaks(const varDataType &dataVec);
+        findPeaks(const q::MeasurementData::varDataType &dataVec);
 
         // export
         void
@@ -63,27 +63,27 @@ namespace q
 
         static void initialize();
 
-        Vector
+        q::Matrices::Vector
         calcYhat(
             const int left_limit,
             const int right_limit,
-            const Matrix_mc &beta,
+            const q::Matrices::Matrix_mc &beta,
             const size_t idx);
 
-        Vector
+        q::Matrices::Vector
         calcYhat(
             const int left_limit,
             const int right_limit,
-            const Vector &beta);
+            const q::Matrices::Vector &beta);
 
         // debugging
         void info() const;
         void printMatrices(int scale) const;
 
     private:
-        std::vector<std::unique_ptr<Matrix>> designMatrices;  // will be deleted in future
-        std::vector<std::unique_ptr<Matrix>> inverseMatrices; // will be deleted in future
-        std::vector<std::unique_ptr<Matrix>> psuedoInverses;  // will be deleted in future
+        std::vector<std::unique_ptr<q::Matrices::Matrix>> designMatrices;  // will be deleted in future
+        std::vector<std::unique_ptr<q::Matrices::Matrix>> inverseMatrices; // will be deleted in future
+        std::vector<std::unique_ptr<q::Matrices::Matrix>> psuedoInverses;  // will be deleted in future
 
         /**
          * @brief Array of the unique entries from the inverse matrix: ( X.T * X ) ^-1
@@ -108,7 +108,7 @@ namespace q
             int df;               // degree of freedom, interpolated data points will not be considered
             double apex_position; // position of the apex of the peak
             double mse;           // mean squared error
-            Vector B;             // regression coefficients
+            q::Matrices::Vector B;             // regression coefficients
             bool isValid;         // flag to indicate if the regression is valid
             double left_limit;    // left limit of the peak regression window
             double right_limit;   // right limit of the peak regression window
@@ -128,7 +128,7 @@ namespace q
                 int df,
                 double apex_position,
                 double mse,
-                Vector B,
+                q::Matrices::Vector B,
                 bool isValid = true,
                 double left_limit = 0.0,
                 double right_limit = 0.0,
@@ -165,31 +165,31 @@ namespace q
 
         void
         runningRegression(
-            const Vector &Y,
-            const BoolVector &df,
+            const q::Matrices::Vector &Y,
+            const q::Matrices::BoolVector &df,
             std::vector<std::unique_ptr<validRegression>> &validRegressions);
 
         void
         validateRegressions(
-            const Matrix_mc &B,
-            const Vector &Y,
-            const Vector &Ylog,
-            const BoolVector &df,
+            const q::Matrices::Matrix_mc &B,
+            const q::Matrices::Vector &Y,
+            const q::Matrices::Vector &Ylog,
+            const q::Matrices::BoolVector &df,
             const int scale,
             std::vector<std::unique_ptr<validRegression>> &validRegressions);
 
         void
         mergeRegressionsOverScales(
             std::vector<std::unique_ptr<validRegression>> &validRegressions,
-            const Vector &Ylog,
-            const Vector &Y,
-            const BoolVector &df);
+            const q::Matrices::Vector &Ylog,
+            const q::Matrices::Vector &Y,
+            const q::Matrices::BoolVector &df);
 
         std::vector<std::unique_ptr<DataType::Peak>>
         createPeaks(
             const std::vector<std::unique_ptr<validRegression>> &validRegressions,
-            const Vector &Y,
-            const Vector &X,
+            const q::Matrices::Vector &Y,
+            const q::Matrices::Vector &X,
             const int scanNumber);
 
         std::vector<std::vector<std::unique_ptr<DataType::Peak>>>
@@ -197,14 +197,14 @@ namespace q
 
         double
         calcSSE(
-            const Vector &yhat,
-            const Vector &y,
+            const q::Matrices::Vector &yhat,
+            const q::Matrices::Vector &y,
             const double *y_start = nullptr) const;
 
         double
         calcSSEexp(
-            const Vector &yhat_log,
-            const Vector &y,
+            const q::Matrices::Vector &yhat_log,
+            const q::Matrices::Vector &y,
             const double *y_start = nullptr) const;
 
         /**
@@ -219,41 +219,39 @@ namespace q
          */
         void
         calcExtendedMse(
-            const Vector &Y,
+            const q::Matrices::Vector &Y,
             const std::vector<std::unique_ptr<validRegression>> &regressions,
-            const BoolVector &df);
+            const q::Matrices::BoolVector &df);
 
         /**
          * @brief Calculate the chi square value of the regression model with the given regression window in the exponential space.
-         *
          * @param yhat_log : Log transformed prediction
          * @param y_exp : Exponential transformed measurement data
          * @return double : Chi square value
          */
         double
         calcChiSquareEXP(
-            const Vector &yhat_log,
-            const Vector &y_exp,
+            const q::Matrices::Vector &yhat_log,
+            const q::Matrices::Vector &y_exp,
             const double *y_start = nullptr) const;
 
         /**
          * @brief Calculate the degree of freedom of the regression model with the given regression window.
          * @details The degree of freedom is the number of data points minus the number of regression coefficients. Moreover, the degree of freedom is reduced by the number of interpolated data points. For calculating the degree of freedom, the function uses the df vector that contains a value of 1 if the data point is not interpolated and 0 if the data point is interpolated.
          *
-         * @param df : Vector of integers that indicates if the data point is interpolated or not
+         * @param df : q::Matrices::Vector of integers that indicates if the data point is interpolated or not
          * @param left_limit : Start index of the regression window
          * @param right_limit : End index of the regression window
          * @return int : Degree of freedom
          */
         int
         calcDF(
-            const BoolVector &df,
+            const q::Matrices::BoolVector &df,
             const size_t left_limit,
             const size_t right_limit);
 
         /**
          * @brief Calculate the apex (and if possible the valley) position of the peak. And return true if the positions are calculated are valid.
-         *
          * @param B : Matrix of regression coefficients
          * @param index : Index of the regression window
          * @param scale : Window size scale, e.g., 5 means the window size is 11 (2*5+1)
@@ -264,7 +262,7 @@ namespace q
          */
         bool
         calculateApexAndValleyPositions(
-            const Matrix_mc &B,
+            const q::Matrices::Matrix_mc &B,
             const size_t index,
             const int scale,
             double &apex_position,
@@ -272,7 +270,6 @@ namespace q
 
         /**
          * @brief Check if the quadratic term of the regression model is valid using t-test.
-         *
          * @param B : Matrix of regression coefficients
          * @param index : Index of the regression window
          * @param inverseMatrix_2_2 : quadratic term (left side) (diagonal element of the inverse matrix)
@@ -284,7 +281,7 @@ namespace q
          */
         bool
         isValidQuadraticTerm(
-            const Matrix_mc &B,
+            const q::Matrices::Matrix_mc &B,
             const size_t index,
             const double inverseMatrix_2_2,
             const double inverseMatrix_3_3,
@@ -293,7 +290,6 @@ namespace q
 
         /**
          * @brief Check if the peak height is valid using t-test.
-         *
          * @param B : Matrix of regression coefficients
          * @param C : Variance-covariance matrix of the regression coefficients
          * @param index : Index of the regression window
@@ -304,8 +300,8 @@ namespace q
          */
         bool
         isValidPeakHeight(
-            const Matrix_mc &B,
-            const Matrix_mc_4x4 &C,
+            const q::Matrices::Matrix_mc &B,
+            const q::Matrices::Matrix_mc_4x4 &C,
             const size_t index,
             const int scale,
             const double apex_position,
@@ -328,8 +324,8 @@ namespace q
          */
         bool
         isValidPeakArea(
-            const Matrix_mc &B,
-            const Matrix_mc_4x4 &C,
+            const q::Matrices::Matrix_mc &B,
+            const q::Matrices::Matrix_mc_4x4 &C,
             const size_t index,
             const int scale,
             const int df_sum,
@@ -352,14 +348,15 @@ namespace q
          * @param X is input design matrix
          */
         void
-        createInverseAndPseudoInverse(const Matrix &X);
+        createInverseAndPseudoInverse(const q::Matrices::Matrix &X);
 
-        Matrix_mc
+        q::Matrices::Matrix_mc
         convolve_fast(
-            const int scale,
+            const size_t scale,
             const double (&vec)[500],
             const size_t n);
     };
+    } // namespace Algorithms
 } // namespace q
 
 #endif // QALGORITHMS_QPEAKS_H

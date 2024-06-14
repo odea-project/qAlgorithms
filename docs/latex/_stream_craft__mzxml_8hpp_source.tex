@@ -1,0 +1,128 @@
+\doxysection{Stream\+Craft\+\_\+mzxml.\+hpp}
+\hypertarget{_stream_craft__mzxml_8hpp_source}{}\label{_stream_craft__mzxml_8hpp_source}\index{external/StreamCraft/src/StreamCraft\_mzxml.hpp@{external/StreamCraft/src/StreamCraft\_mzxml.hpp}}
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#ifndef\ STREAMCRAFT\_MZXML\_HPP}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#define\ STREAMCRAFT\_MZXML\_HPP}}
+\DoxyCodeLine{00003\ }
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ <iostream>}}
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#include\ <vector>}}
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#include\ <string>}}
+\DoxyCodeLine{00007\ \textcolor{preprocessor}{\#include\ <numeric>}}
+\DoxyCodeLine{00008\ }
+\DoxyCodeLine{00009\ \textcolor{preprocessor}{\#define\ PUGIXML\_HEADER\_ONLY}}
+\DoxyCodeLine{00010\ }
+\DoxyCodeLine{00011\ \textcolor{preprocessor}{\#ifndef\ PUGIXML\_PATH}}
+\DoxyCodeLine{00012\ \textcolor{preprocessor}{\#define\ PUGIXML\_PATH\ "{}../../pugixml-\/1.14/src/pugixml.hpp"{}}}
+\DoxyCodeLine{00013\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00014\ }
+\DoxyCodeLine{00015\ \textcolor{preprocessor}{\#include\ PUGIXML\_PATH}}
+\DoxyCodeLine{00016\ }
+\DoxyCodeLine{00017\ \textcolor{preprocessor}{\#define\ STREAMCRAFT\_HEADER\_ONLY}}
+\DoxyCodeLine{00018\ \textcolor{preprocessor}{\#include\ "{}StreamCraft\_utils.hpp"{}}}
+\DoxyCodeLine{00019\ }
+\DoxyCodeLine{00020\ \textcolor{keyword}{namespace\ }sc\ \{}
+\DoxyCodeLine{00021\ }
+\DoxyCodeLine{00022\ \ \ \textcolor{keyword}{inline}\ \textcolor{keyword}{namespace\ }mzxml\ \{}
+\DoxyCodeLine{00023\ }
+\DoxyCodeLine{00024\ \ \ \ \ \textcolor{keyword}{class\ }\mbox{\hyperlink{classsc_1_1mzxml_1_1_m_z_x_m_l___b_i_n_a_r_y___m_e_t_a_d_a_t_a}{MZXML\_BINARY\_METADATA}}\ \{}
+\DoxyCodeLine{00025\ }
+\DoxyCodeLine{00026\ \ \ \ \ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00027\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ precision;}
+\DoxyCodeLine{00028\ \ \ \ \ \ \ \ \ std::string\ compression;}
+\DoxyCodeLine{00029\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ compressed;}
+\DoxyCodeLine{00030\ \ \ \ \ \ \ \ \ std::string\ byte\_order;}
+\DoxyCodeLine{00031\ }
+\DoxyCodeLine{00032\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ print()\ \{}
+\DoxyCodeLine{00033\ \ \ \ \ \ \ \ \ \ \ std::cout\ <<\ std::endl;}
+\DoxyCodeLine{00034\ \ \ \ \ \ \ \ \ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}Precision:\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ "{}}\ <<\ precision\ <<\ std::endl;}
+\DoxyCodeLine{00035\ \ \ \ \ \ \ \ \ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}Compression:\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ "{}}\ <<\ compression\ <<\ std::endl;}
+\DoxyCodeLine{00036\ \ \ \ \ \ \ \ \ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}Byte\ order:\ \ \ \ \ \ \ \ \ \ \ "{}}\ <<\ byte\_order\ <<\ std::endl;}
+\DoxyCodeLine{00037\ \ \ \ \ \ \ \ \ \ \ std::cout\ <<\ std::endl;}
+\DoxyCodeLine{00038\ \ \ \ \ \ \ \ \ \};}
+\DoxyCodeLine{00039\ \ \ \ \ \};}
+\DoxyCodeLine{00040\ }
+\DoxyCodeLine{00041\ \ \ \ \ \textcolor{keyword}{class\ }\mbox{\hyperlink{classsc_1_1mzxml_1_1_m_z_x_m_l}{MZXML}}\ \{}
+\DoxyCodeLine{00042\ }
+\DoxyCodeLine{00043\ \ \ \ \ \ \ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00044\ }
+\DoxyCodeLine{00045\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classsc_1_1mzxml_1_1_m_z_x_m_l___b_i_n_a_r_y___m_e_t_a_d_a_t_a}{MZXML\_BINARY\_METADATA}}\ binary\_metadata;}
+\DoxyCodeLine{00046\ }
+\DoxyCodeLine{00047\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ extract\_binary\_metadata(\textcolor{keyword}{const}\ \mbox{\hyperlink{classpugi_1_1xml__node}{pugi::xml\_node}}\&\ first\_node);}
+\DoxyCodeLine{00048\ }
+\DoxyCodeLine{00049\ \ \ \ \ \ \ \ \ std::vector<pugi::xml\_node>\ link\_vector\_spectra\_nodes();}
+\DoxyCodeLine{00050\ }
+\DoxyCodeLine{00051\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ extract\_spec\_index(\textcolor{keyword}{const}\ \mbox{\hyperlink{classpugi_1_1xml__node}{pugi::xml\_node}}\&\ spec);}
+\DoxyCodeLine{00052\ \ \ \ \ \ \ \ \ std::string\ extract\_spec\_id(\textcolor{keyword}{const}\ \mbox{\hyperlink{classpugi_1_1xml__node}{pugi::xml\_node}}\&\ spec);}
+\DoxyCodeLine{00053\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ extract\_spec\_scan(\textcolor{keyword}{const}\ \mbox{\hyperlink{classpugi_1_1xml__node}{pugi::xml\_node}}\&\ spec);}
+\DoxyCodeLine{00054\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ extract\_spec\_array\_length(\textcolor{keyword}{const}\ \mbox{\hyperlink{classpugi_1_1xml__node}{pugi::xml\_node}}\&\ spec);}
+\DoxyCodeLine{00055\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ extract\_spec\_level(\textcolor{keyword}{const}\ \mbox{\hyperlink{classpugi_1_1xml__node}{pugi::xml\_node}}\&\ spec);}
+\DoxyCodeLine{00056\ \ \ \ \ \ \ \ \ std::string\ extract\_spec\_mode(\textcolor{keyword}{const}\ \mbox{\hyperlink{classpugi_1_1xml__node}{pugi::xml\_node}}\&\ spec);}
+\DoxyCodeLine{00057\ \ \ \ \ \ \ \ \ std::string\ extract\_spec\_polarity(\textcolor{keyword}{const}\ \mbox{\hyperlink{classpugi_1_1xml__node}{pugi::xml\_node}}\&\ spec);}
+\DoxyCodeLine{00058\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{double}\ extract\_spec\_lowmz(\textcolor{keyword}{const}\ \mbox{\hyperlink{classpugi_1_1xml__node}{pugi::xml\_node}}\&\ spec);}
+\DoxyCodeLine{00059\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{double}\ extract\_spec\_highmz(\textcolor{keyword}{const}\ \mbox{\hyperlink{classpugi_1_1xml__node}{pugi::xml\_node}}\&\ spec);}
+\DoxyCodeLine{00060\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{double}\ extract\_spec\_bpmz(\textcolor{keyword}{const}\ \mbox{\hyperlink{classpugi_1_1xml__node}{pugi::xml\_node}}\&\ spec);}
+\DoxyCodeLine{00061\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{double}\ extract\_spec\_bpint(\textcolor{keyword}{const}\ \mbox{\hyperlink{classpugi_1_1xml__node}{pugi::xml\_node}}\&\ spec);}
+\DoxyCodeLine{00062\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{double}\ extract\_spec\_tic(\textcolor{keyword}{const}\ \mbox{\hyperlink{classpugi_1_1xml__node}{pugi::xml\_node}}\&\ spec);}
+\DoxyCodeLine{00063\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{double}\ extract\_scan\_rt(\textcolor{keyword}{const}\ \mbox{\hyperlink{classpugi_1_1xml__node}{pugi::xml\_node}}\&\ spec);}
+\DoxyCodeLine{00064\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{double}\ extract\_ion\_mz(\textcolor{keyword}{const}\ \mbox{\hyperlink{classpugi_1_1xml__node}{pugi::xml\_node}}\&\ spec);}
+\DoxyCodeLine{00065\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{double}\ extract\_activation\_ce(\textcolor{keyword}{const}\ \mbox{\hyperlink{classpugi_1_1xml__node}{pugi::xml\_node}}\&\ spec);}
+\DoxyCodeLine{00066\ }
+\DoxyCodeLine{00067\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structsc_1_1utils_1_1_m_s___s_p_e_c_t_r_a___h_e_a_d_e_r_s}{MS\_SPECTRA\_HEADERS}}\ extract\_spectra\_headers(\textcolor{keyword}{const}\ std::vector<int>\&\ idxs);}
+\DoxyCodeLine{00068\ }
+\DoxyCodeLine{00069\ \ \ \ \ \ \ \ \ std::vector<std::vector<double>>\ extract\_spectrum(\textcolor{keyword}{const}\ \mbox{\hyperlink{classpugi_1_1xml__node}{pugi::xml\_node}}\&\ spectrum\_node);}
+\DoxyCodeLine{00070\ }
+\DoxyCodeLine{00071\ \ \ \ \ \ \ \ \ std::vector<std::vector<std::vector<double>>>\ extract\_spectra(\textcolor{keyword}{const}\ std::vector<int>\&\ idxs);}
+\DoxyCodeLine{00072\ }
+\DoxyCodeLine{00073\ \ \ \ \ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00074\ }
+\DoxyCodeLine{00075\ \ \ \ \ \ \ \ \ std::string\ file\_path;}
+\DoxyCodeLine{00076\ }
+\DoxyCodeLine{00077\ \ \ \ \ \ \ \ \ std::string\ file\_dir;}
+\DoxyCodeLine{00078\ }
+\DoxyCodeLine{00079\ \ \ \ \ \ \ \ \ std::string\ file\_name;}
+\DoxyCodeLine{00080\ }
+\DoxyCodeLine{00081\ \ \ \ \ \ \ \ \ std::string\ file\_extension;}
+\DoxyCodeLine{00082\ }
+\DoxyCodeLine{00083\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classpugi_1_1xml__document}{pugi::xml\_document}}\ doc;}
+\DoxyCodeLine{00084\ }
+\DoxyCodeLine{00085\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structpugi_1_1xml__parse__result}{pugi::xml\_parse\_result}}\ loading\_result;}
+\DoxyCodeLine{00086\ }
+\DoxyCodeLine{00087\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classpugi_1_1xml__node}{pugi::xml\_node}}\ root;}
+\DoxyCodeLine{00088\ }
+\DoxyCodeLine{00089\ \ \ \ \ \ \ \ \ std::string\ format;}
+\DoxyCodeLine{00090\ }
+\DoxyCodeLine{00091\ \ \ \ \ \ \ \ \ std::string\ name;}
+\DoxyCodeLine{00092\ }
+\DoxyCodeLine{00093\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ number\_spectra;}
+\DoxyCodeLine{00094\ }
+\DoxyCodeLine{00095\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ number\_chromatograms\ =\ 0;}
+\DoxyCodeLine{00096\ }
+\DoxyCodeLine{00097\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ number\_spectra\_binary\_arrays\ =\ 2;}
+\DoxyCodeLine{00098\ }
+\DoxyCodeLine{00099\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structsc_1_1utils_1_1_m_s___s_p_e_c_t_r_a___h_e_a_d_e_r_s}{MS\_SPECTRA\_HEADERS}}\ first\_spectra\_headers;}
+\DoxyCodeLine{00100\ }
+\DoxyCodeLine{00101\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classsc_1_1mzxml_1_1_m_z_x_m_l}{MZXML}}(\textcolor{keyword}{const}\ std::string\&\ file);}
+\DoxyCodeLine{00102\ }
+\DoxyCodeLine{00103\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structsc_1_1utils_1_1_m_s___s_p_e_c_t_r_a___h_e_a_d_e_r_s}{MS\_SPECTRA\_HEADERS}}\ get\_spectra\_headers(std::vector<int>\ indices\ =\ \{\});}
+\DoxyCodeLine{00104\ }
+\DoxyCodeLine{00105\ \ \ \ \ \ \ \ \ std::vector<std::vector<std::vector<double>>>\ get\_spectra(std::vector<int>\ indices\ =\ \{\});}
+\DoxyCodeLine{00106\ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00107\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ print();}
+\DoxyCodeLine{00108\ }
+\DoxyCodeLine{00109\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ print\_binary\_metadata()\ \{\ binary\_metadata.print();\ \};}
+\DoxyCodeLine{00110\ }
+\DoxyCodeLine{00111\ \ \ \ \ \};\ \textcolor{comment}{//\ class\ MZXML}}
+\DoxyCodeLine{00112\ }
+\DoxyCodeLine{00113\ \ \ \};\ \textcolor{comment}{//\ namespace\ mzxml}}
+\DoxyCodeLine{00114\ }
+\DoxyCodeLine{00115\ \};\ \textcolor{comment}{//\ namespace\ sc}}
+\DoxyCodeLine{00116\ }
+\DoxyCodeLine{00117\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//\ STREAMCRAFT\_MZXML\_HPP}}
+\DoxyCodeLine{00118\ }
+\DoxyCodeLine{00119\ \textcolor{comment}{//\ \#if\ defined(STREAMCRAFT\_HEADER\_ONLY)\ \&\&\ !defined(STREAMCRAFT\_MZXML\_SOURCE)}}
+\DoxyCodeLine{00120\ \textcolor{comment}{//\ \#\ \ \ \ define\ STREAMCRAFT\_MZXML\_SOURCE\ "{}StreamCraft\_mzxml.cpp"{}}}
+\DoxyCodeLine{00121\ \textcolor{comment}{//\ \#\ \ \ \ include\ STREAMCRAFT\_MZXML\_SOURCE}}
+\DoxyCodeLine{00122\ \textcolor{comment}{//\ \#endif}}
+
+\end{DoxyCode}

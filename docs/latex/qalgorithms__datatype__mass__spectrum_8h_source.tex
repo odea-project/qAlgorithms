@@ -1,0 +1,78 @@
+\doxysection{qalgorithms\+\_\+datatype\+\_\+mass\+\_\+spectrum.\+h}
+\hypertarget{qalgorithms__datatype__mass__spectrum_8h_source}{}\label{qalgorithms__datatype__mass__spectrum_8h_source}\index{include/qalgorithms\_datatype\_mass\_spectrum.h@{include/qalgorithms\_datatype\_mass\_spectrum.h}}
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#ifndef\ QALGORITHMS\_DATATYPE\_MASS\_SPECTRUM\_H}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#define\ QALGORITHMS\_DATATYPE\_MASS\_SPECTRUM\_H}}
+\DoxyCodeLine{00003\ }
+\DoxyCodeLine{00004\ \textcolor{comment}{//\ internal}}
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#include\ "{}qalgorithms\_datatype.h"{}}}
+\DoxyCodeLine{00006\ }
+\DoxyCodeLine{00007\ \textcolor{comment}{//\ external}}
+\DoxyCodeLine{00008\ \textcolor{preprocessor}{\#include\ <vector>}}
+\DoxyCodeLine{00009\ \textcolor{preprocessor}{\#include\ <unordered\_map>}}
+\DoxyCodeLine{00010\ \textcolor{preprocessor}{\#include\ <memory>}}
+\DoxyCodeLine{00011\ \textcolor{preprocessor}{\#include\ <variant>}}
+\DoxyCodeLine{00012\ \textcolor{preprocessor}{\#include\ <algorithm>}}
+\DoxyCodeLine{00013\ }
+\DoxyCodeLine{00014\ \textcolor{keyword}{namespace\ }q}
+\DoxyCodeLine{00015\ \{}
+\DoxyCodeLine{00016\ }
+\DoxyCodeLine{00017\ \ \ \ \ \textcolor{keyword}{namespace\ }DataType}
+\DoxyCodeLine{00018\ \ \ \ \ \{}
+\DoxyCodeLine{00026\ \ \ \ \ \ \ \ \ \textcolor{keyword}{class\ }\mbox{\hyperlink{classq_1_1_data_type_1_1_mass_spectrum}{MassSpectrum}}}
+\DoxyCodeLine{00027\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00028\ \ \ \ \ \ \ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00040\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structq_1_1_data_type_1_1_mass_spectrum_1_1_data_point}{DataPoint}}}
+\DoxyCodeLine{00041\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00042\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{double}\ intensity;}
+\DoxyCodeLine{00043\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{double}\ mz;}
+\DoxyCodeLine{00044\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ df;}
+\DoxyCodeLine{00045\ }
+\DoxyCodeLine{00046\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structq_1_1_data_type_1_1_mass_spectrum_1_1_data_point}{DataPoint}}(\textcolor{keywordtype}{double}\ intensity,\ \textcolor{keywordtype}{double}\ mz,\ \textcolor{keywordtype}{int}\ df)\ :\ intensity(intensity),\ mz(mz),\ df(df)\ \{\}}
+\DoxyCodeLine{00047\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ getters\ for\ x\ and\ y}}
+\DoxyCodeLine{00048\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{double}\ \&x()\ \{\ \textcolor{keywordflow}{return}\ mz;\ \}}
+\DoxyCodeLine{00049\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{double}\ \&y()\ \{\ \textcolor{keywordflow}{return}\ intensity;\ \}}
+\DoxyCodeLine{00050\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ setY(\textcolor{keywordtype}{double}\ y)\ \{\ intensity\ =\ y;\ \}}
+\DoxyCodeLine{00051\ \ \ \ \ \ \ \ \ \ \ \ \ \};}
+\DoxyCodeLine{00052\ }
+\DoxyCodeLine{00053\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ constructors}}
+\DoxyCodeLine{00054\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classq_1_1_data_type_1_1_mass_spectrum}{MassSpectrum}}();}
+\DoxyCodeLine{00055\ }
+\DoxyCodeLine{00063\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classq_1_1_data_type_1_1_mass_spectrum}{MassSpectrum}}(\mbox{\hyperlink{classq_1_1_data_type_1_1_mass_spectrum}{MassSpectrum}}\ \&parent,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{size\_t}\ k);}
+\DoxyCodeLine{00064\ }
+\DoxyCodeLine{00065\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ destructor}}
+\DoxyCodeLine{00066\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classq_1_1_data_type_1_1_mass_spectrum}{\string~MassSpectrum}}();}
+\DoxyCodeLine{00067\ }
+\DoxyCodeLine{00068\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ methods}}
+\DoxyCodeLine{00077\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}}
+\DoxyCodeLine{00078\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classq_1_1_data_type_1_1_mass_spectrum_af93a0e8fb934e1e98a225f29981e2e68}{addDataPoint}}(\textcolor{keywordtype}{double}\ intensity,\ \textcolor{keywordtype}{double}\ mz,\ \textcolor{keywordtype}{int}\ df);}
+\DoxyCodeLine{00079\ }
+\DoxyCodeLine{00084\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}}
+\DoxyCodeLine{00085\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classq_1_1_data_type_1_1_mass_spectrum_a4e6df96421a82f05158224da9e490fee}{sortDataPoints}}();}
+\DoxyCodeLine{00086\ }
+\DoxyCodeLine{00087\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ properties}}
+\DoxyCodeLine{00088\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{using\ }variableType\ =\ std::variant<\ \textcolor{comment}{//\ allowed\ variable\ types\ for\ mass\ spectrum\ data}}
+\DoxyCodeLine{00089\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ int,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ e.g.\ scan\ number}}
+\DoxyCodeLine{00090\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ size\_t,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ e.g.\ scan\ number,\ number\ of\ data\ points}}
+\DoxyCodeLine{00091\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ double,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ e.g.\ retention\ time}}
+\DoxyCodeLine{00092\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ MSLevel,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ e.g.\ MS1\ or\ MS2}}
+\DoxyCodeLine{00093\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ IonizationMode,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ e.g.\ positive\ or\ negative}}
+\DoxyCodeLine{00094\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ MeasurementMode>;\ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ e.g.\ profile\ or\ centroid}}
+\DoxyCodeLine{00095\ }
+\DoxyCodeLine{00096\ \ \ \ \ \ \ \ \ \ \ \ \ std::unordered\_map<DataField,\ variableType>\ *metaData;}
+\DoxyCodeLine{00097\ \ \ \ \ \ \ \ \ \ \ \ \ std::vector<std::unique\_ptr<DataPoint>>\ dataPoints;}
+\DoxyCodeLine{00098\ \ \ \ \ \ \ \ \ \ \ \ \ std::pair<bool,\ MassSpectrum\ *>\ isParent;}
+\DoxyCodeLine{00099\ }
+\DoxyCodeLine{00104\ \ \ \ \ \ \ \ \ \ \ \ \ std::vector<std::unique\_ptr<size\_t>>\ \mbox{\hyperlink{classq_1_1_data_type_1_1_mass_spectrum_af4fdaf7d30d857d166c49580f6827024}{cuttingPoints}};}
+\DoxyCodeLine{00105\ }
+\DoxyCodeLine{00106\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ getter}}
+\DoxyCodeLine{00107\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}}
+\DoxyCodeLine{00108\ \ \ \ \ \ \ \ \ \ \ \ \ getScanNumber()\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00109\ \ \ \ \ \ \ \ \ \};}
+\DoxyCodeLine{00110\ \ \ \ \ \};\ \textcolor{comment}{//\ namespace\ datatype}}
+\DoxyCodeLine{00111\ \}\ \textcolor{comment}{//\ namespace\ q}}
+\DoxyCodeLine{00112\ }
+\DoxyCodeLine{00113\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//\ QALGORITHMS\_DATATYPE\_MASS\_SPECTRUM\_H}}
+
+\end{DoxyCode}

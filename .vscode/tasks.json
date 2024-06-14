@@ -2,29 +2,6 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "label": "build qCentroids",
-            "type": "shell",
-            "command": "C:\\msys64\\mingw64\\bin\\g++.exe",
-            "args": [
-                "-fdiagnostics-color=always",
-                "-g",
-                "-O3",
-                "src/qalgorithms_utils.cpp",
-                "src/qalgorithms_matrix.cpp",
-                "src/qalgorithms.cpp",
-                "test/test_qCentroid.cpp",
-                "-o",
-                "test/qCentroids.exe"
-            ],
-            "options": {
-                "cwd": "${workspaceFolder}"
-            },
-            "problemMatcher": [
-                "$gcc"
-            ],
-            "group": "build"
-        },
-        {
             "type": "cppbuild",
             "label": "C/C++: g++.exe build active file",
             "command": "C:\\msys64\\mingw64\\bin\\g++.exe",
@@ -70,7 +47,7 @@
             "group": "build",
         },
         {
-            "label": "build qPeak_class_test",
+            "label": "build qAlgorithms",
             "type": "shell",
             "command": "C:\\msys64\\mingw64\\bin\\g++.exe",
             "args": [

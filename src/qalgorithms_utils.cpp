@@ -156,13 +156,13 @@ namespace q
 
   const double SQRTPI_2 = std::sqrt(M_PI) / 2;
 
-  const Matrix linreg(
+  const q::Matrices::Matrix linreg(
       const std::vector<double> &xData,
       const std::vector<double> &yData,
       const size_t degree)
   {
     // Create the matrix X
-    Matrix X(xData.size(), degree + 1);
+    q::Matrices::Matrix X(xData.size(), degree + 1);
     for (size_t i = 0; i < xData.size(); i++)
     {
       for (size_t j = 0; j < degree + 1; j++)
@@ -171,25 +171,25 @@ namespace q
       }
     }
     // Create the matrix Y
-    Matrix Y(yData.size(), 1);
+    q::Matrices::Matrix Y(yData.size(), 1);
     for (size_t i = 0; i < yData.size(); i++)
     {
       Y(i, 0) = yData[i];
     }
     // Calculate the coefficients
-    Matrix X_T = transpose(X);
-    Matrix X_T_X = X_T * X;
-    Matrix X_T_X_inv = inv(X_T_X);
-    Matrix X_T_Y = X_T * Y;
-    Matrix coefficients = X_T_X_inv * X_T_Y;
+    q::Matrices::Matrix X_T = transpose(X);
+    q::Matrices::Matrix X_T_X = X_T * X;
+    q::Matrices::Matrix X_T_X_inv = inv(X_T_X);
+    q::Matrices::Matrix X_T_Y = X_T * Y;
+    q::Matrices::Matrix coefficients = X_T_X_inv * X_T_Y;
     return coefficients;
   }
 
 #pragma region "Matrix Operations"
   bool
   operator==(
-      const Matrix_mc &A,
-      const Matrix_mc &B)
+      const q::Matrices::Matrix_mc &A,
+      const q::Matrices::Matrix_mc &B)
   {
     if (A.rows != B.rows || A.cols != B.cols)
       return false;
@@ -203,30 +203,30 @@ namespace q
     return true;
   }
 
-  Matrix
+  q::Matrices::Matrix
   operator+(
-      const Matrix &A,
-      const Matrix &B)
+      const q::Matrices::Matrix &A,
+      const q::Matrices::Matrix &B)
   {
     if (A.rows != B.rows || A.cols != B.cols)
       throw std::invalid_argument("Matrix dimensions must match.");
 
-    Matrix result(A.rows, A.cols);
+    q::Matrices::Matrix result(A.rows, A.cols);
     for (size_t i = 0; i < A.rows * A.cols; i++)
       result.elements[i] = A.elements[i] + B.elements[i];
 
     return result;
   }
 
-  Matrix
+  q::Matrices::Matrix
   operator*(
-      const Matrix &A,
-      const Matrix &B)
+      const q::Matrices::Matrix &A,
+      const q::Matrices::Matrix &B)
   {
     if (A.cols != B.rows)
       throw std::invalid_argument("Matrix dimensions must match.");
 
-    Matrix result(A.rows, B.cols);
+    q::Matrices::Matrix result(A.rows, B.cols);
     for (size_t i = 0; i < A.rows; i++)
     {
       for (size_t j = 0; j < B.cols; j++)
@@ -241,15 +241,15 @@ namespace q
     return result;
   }
 
-  Vector
+  q::Matrices::Vector
   operator*(
-      const Matrix &A,
-      const Vector &B)
+      const q::Matrices::Matrix &A,
+      const q::Matrices::Vector &B)
   {
     if (A.cols != B.n)
       throw std::invalid_argument("Matrix dimensions must match.");
 
-    Vector result(A.rows);
+    q::Matrices::Vector result(A.rows);
     for (size_t i = 0; i < A.rows; i++)
     {
       result[i] = std::inner_product(
@@ -261,12 +261,12 @@ namespace q
     return result;
   }
 
-  Matrix
+  q::Matrices::Matrix
   operator*(
-      const Matrix &A,
+      const q::Matrices::Matrix &A,
       const double scalar)
   {
-    Matrix result(A.rows, A.cols);
+    q::Matrices::Matrix result(A.rows, A.cols);
     std::transform(
         A.elements,                   // start of A
         A.elements + A.rows * A.cols, // end of A
@@ -279,20 +279,20 @@ namespace q
     return result;
   }
 
-  Matrix
+  q::Matrices::Matrix
   operator*(
       const double scalar,
-      const Matrix &A)
+      const q::Matrices::Matrix &A)
   {
     return A * scalar;
   }
 
-  Matrix_mc_4x4
+  q::Matrices::Matrix_mc_4x4
   multiplyScalarTo4x4Matrix(
       const double scalar,
-      const Matrix &A)
+      const q::Matrices::Matrix &A)
   {
-    Matrix_mc_4x4 result;
+    q::Matrices::Matrix_mc_4x4 result;
     std::transform(
         A.elements,      // start of A
         A.elements + 16, // end of A
@@ -308,7 +308,7 @@ namespace q
   double
   multiplyVecMatrixVecTranspose(
       const double vec[4],
-      const Matrix_mc_4x4 &A)
+      const q::Matrices::Matrix_mc_4x4 &A)
   {
     double result = 0.0;
     for (size_t i = 0; i < 4; i++)
@@ -321,19 +321,19 @@ namespace q
     return result;
   }
 
-  Matrix
+  q::Matrices::Matrix
   operator/(
-      const Matrix &A,
+      const q::Matrices::Matrix &A,
       const double scalar)
   {
     return A * (1.0 / scalar);
   }
 
-  Matrix
+  q::Matrices::Matrix
   transpose(
-      const Matrix &A)
+      const q::Matrices::Matrix &A)
   {
-    Matrix result(A.cols, A.rows);
+    q::Matrices::Matrix result(A.cols, A.rows);
     for (size_t i = 0; i < A.rows; i++)
     {
       for (size_t j = 0; j < A.cols; j++)
@@ -343,28 +343,28 @@ namespace q
     return result;
   }
 
-  Matrix
+  q::Matrices::Matrix
   inv(
-      const Matrix &A)
+      const q::Matrices::Matrix &A)
   {
     if (A.rows != A.cols)
       throw std::invalid_argument("Matrix must be square.");
 
-    Matrix L = choleskyDecomposition(A);
-    Matrix L_inv = inverseLowerTriangle(L); // @todo: combine transpose(L_inv) * L_inv into one function (inverseLowerTriangleTranspose)
+    q::Matrices::Matrix L = choleskyDecomposition(A);
+    q::Matrices::Matrix L_inv = inverseLowerTriangle(L); // @todo: combine transpose(L_inv) * L_inv into one function (inverseLowerTriangleTranspose)
 
     return transpose(L_inv) * L_inv;
   }
 
-  Matrix
+  q::Matrices::Matrix
   choleskyDecomposition(
-      const Matrix &A)
+      const q::Matrices::Matrix &A)
   {
     if (A.rows != A.cols)
       throw std::invalid_argument("Matrix must be square.");
 
     size_t n = A.rows;
-    Matrix L(n, n);
+    q::Matrices::Matrix L(n, n);
 
     for (size_t i = 0; i < n; i++)
     {
@@ -384,15 +384,15 @@ namespace q
     return L;
   }
 
-  Matrix
+  q::Matrices::Matrix
   inverseLowerTriangle(
-      const Matrix &A)
+      const q::Matrices::Matrix &A)
   {
     if (A.rows != A.cols)
       throw std::invalid_argument("Matrix must be square.");
 
     size_t n = A.rows;
-    Matrix result(n, n);
+    q::Matrices::Matrix result(n, n);
 
     for (size_t i = 0; i < n; i++)
     {
@@ -409,17 +409,17 @@ namespace q
     return result;
   }
 
-  Matrix_mc
+  q::Matrices::Matrix_mc
   convolve(
-      const Vector &vec,
+      const q::Matrices::Vector &vec,
       const size_t n,
-      const Matrix &kernel)
+      const q::Matrices::Matrix &kernel)
   {
     size_t k = kernel.cols;
     size_t n_segments = n - k + 1;
     size_t centerpoint = k / 2;
 
-    Matrix_mc result(4, n_segments);
+    q::Matrices::Matrix_mc result(4, n_segments);
     std::vector<std::array<double, 3>> products(n);
 
     // calculation from left to center (excluding center)
@@ -472,14 +472,14 @@ namespace q
     return result;
   }
 
-  Vector
+  q::Matrices::Vector
   calcYhat(
-      const Matrix &X,
-      const Matrix_mc &beta,
+      const q::Matrices::Matrix &X,
+      const q::Matrices::Matrix_mc &beta,
       const size_t idx)
   {
     size_t n = X.rows;
-    Vector yhat(n);
+    q::Matrices::Vector yhat(n);
 
     for (size_t i = 0; i < n; i++)
     {
@@ -492,15 +492,15 @@ namespace q
     return yhat;
   }
 
-  Vector
+  q::Matrices::Vector
   calcYhatExtended(
-      const Matrix &X,
-      const Vector &beta,
+      const q::Matrices::Matrix &X,
+      const q::Matrices::Vector &beta,
       const size_t x_row_start,
       const size_t x_row_end)
   {
     size_t n = x_row_end == 0 ? X.rows : x_row_end - x_row_start;
-    Vector yhat(n);
+    q::Matrices::Vector yhat(n);
 
     for (size_t i = 0; i < n; i++)
     {
@@ -513,12 +513,12 @@ namespace q
     return yhat;
   }
 
-  Vector
+  q::Matrices::Vector
   extractCol(
-      const Matrix_mc &A,
+      const q::Matrices::Matrix_mc &A,
       const size_t col)
   {
-    Vector result(A.rows);
+    q::Matrices::Vector result(A.rows);
     std::copy(A.elements + col * A.rows, A.elements + (col + 1) * A.rows, result.begin());
     return result;
   }
@@ -527,11 +527,11 @@ namespace q
 
 #pragma region "Vector Operations"
 
-  Vector
+  q::Matrices::Vector
   logn(
-      const Vector &vec)
+      const q::Matrices::Vector &vec)
   {
-    Vector result(vec.n);
+    q::Matrices::Vector result(vec.n);
     std::transform(
         vec.begin(),    // start of vec
         vec.end(),      // end of vec
@@ -549,7 +549,7 @@ namespace q
 #pragma region "print functions"
   void
   print(
-      const Matrix &A)
+      const q::Matrices::Matrix &A)
   {
     for (size_t i = 0; i < A.rows; i++)
     {
@@ -561,7 +561,7 @@ namespace q
 
   void
   print(
-      const Matrix_mc &A)
+      const q::Matrices::Matrix_mc &A)
   {
     for (size_t i = 0; i < A.rows; i++)
     {
@@ -573,7 +573,7 @@ namespace q
 
   void
   print(
-      const Vector &vec)
+      const q::Matrices::Vector &vec)
   {
     for (size_t i = 0; i < vec.n; i++)
       std::cout << vec[i] << " ";

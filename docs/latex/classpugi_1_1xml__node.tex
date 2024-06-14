@@ -1,0 +1,323 @@
+\doxysection{pugi\+::xml\+\_\+node Class Reference}
+\hypertarget{classpugi_1_1xml__node}{}\label{classpugi_1_1xml__node}\index{pugi::xml\_node@{pugi::xml\_node}}
+Inheritance diagram for pugi\+::xml\+\_\+node\+:\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[height=2.000000cm]{classpugi_1_1xml__node}
+\end{center}
+\end{figure}
+\doxysubsubsection*{Public Types}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classpugi_1_1xml__node_ae053ea39add5a64de584f7a81212e388}\label{classpugi_1_1xml__node_ae053ea39add5a64de584f7a81212e388} 
+typedef \mbox{\hyperlink{classpugi_1_1xml__node__iterator}{xml\+\_\+node\+\_\+iterator}} {\bfseries iterator}
+\item 
+\Hypertarget{classpugi_1_1xml__node_a9084f97350ffc64af1eaf7c17c57f4ba}\label{classpugi_1_1xml__node_a9084f97350ffc64af1eaf7c17c57f4ba} 
+typedef \mbox{\hyperlink{classpugi_1_1xml__attribute__iterator}{xml\+\_\+attribute\+\_\+iterator}} {\bfseries attribute\+\_\+iterator}
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classpugi_1_1xml__node_a3eb8c59953fec9de82acef3b03cf0647}\label{classpugi_1_1xml__node_a3eb8c59953fec9de82acef3b03cf0647} 
+{\bfseries xml\+\_\+node} (\mbox{\hyperlink{structpugi_1_1xml__node__struct}{xml\+\_\+node\+\_\+struct}} \texorpdfstring{$\ast$}{*}p)
+\item 
+\Hypertarget{classpugi_1_1xml__node_a372ae87dd5a61442f090e200784c4239}\label{classpugi_1_1xml__node_a372ae87dd5a61442f090e200784c4239} 
+{\bfseries operator unspecified\+\_\+bool\+\_\+type} () const
+\item 
+\Hypertarget{classpugi_1_1xml__node_a111f8c9b0c0d0f65b444d70eadd60edb}\label{classpugi_1_1xml__node_a111f8c9b0c0d0f65b444d70eadd60edb} 
+bool {\bfseries operator!} () const
+\item 
+\Hypertarget{classpugi_1_1xml__node_ad4609833c585e801c35b8b7ed5927f9f}\label{classpugi_1_1xml__node_ad4609833c585e801c35b8b7ed5927f9f} 
+bool {\bfseries operator==} (const \mbox{\hyperlink{classpugi_1_1xml__node}{xml\+\_\+node}} \&r) const
+\item 
+\Hypertarget{classpugi_1_1xml__node_a29b474c0fed40d410d1d0187c78cbf43}\label{classpugi_1_1xml__node_a29b474c0fed40d410d1d0187c78cbf43} 
+bool {\bfseries operator!=} (const \mbox{\hyperlink{classpugi_1_1xml__node}{xml\+\_\+node}} \&r) const
+\item 
+\Hypertarget{classpugi_1_1xml__node_af0b065f7e790b8691fc74f406541d6ec}\label{classpugi_1_1xml__node_af0b065f7e790b8691fc74f406541d6ec} 
+bool {\bfseries operator$<$} (const \mbox{\hyperlink{classpugi_1_1xml__node}{xml\+\_\+node}} \&r) const
+\item 
+\Hypertarget{classpugi_1_1xml__node_acda31b85c8b44b3e43625c1f0cc3d820}\label{classpugi_1_1xml__node_acda31b85c8b44b3e43625c1f0cc3d820} 
+bool {\bfseries operator$>$} (const \mbox{\hyperlink{classpugi_1_1xml__node}{xml\+\_\+node}} \&r) const
+\item 
+\Hypertarget{classpugi_1_1xml__node_ada4630cbd0813fa650b39d8968620f5a}\label{classpugi_1_1xml__node_ada4630cbd0813fa650b39d8968620f5a} 
+bool {\bfseries operator$<$=} (const \mbox{\hyperlink{classpugi_1_1xml__node}{xml\+\_\+node}} \&r) const
+\item 
+\Hypertarget{classpugi_1_1xml__node_a29a04e90cd3050689b6ab6e980b2803b}\label{classpugi_1_1xml__node_a29a04e90cd3050689b6ab6e980b2803b} 
+bool {\bfseries operator$>$=} (const \mbox{\hyperlink{classpugi_1_1xml__node}{xml\+\_\+node}} \&r) const
+\item 
+\Hypertarget{classpugi_1_1xml__node_a277d3d115dc7b30bb35902cbcf2eb7b4}\label{classpugi_1_1xml__node_a277d3d115dc7b30bb35902cbcf2eb7b4} 
+bool {\bfseries empty} () const
+\item 
+\Hypertarget{classpugi_1_1xml__node_aa018a135915ec8b2e3388feab2a78cfe}\label{classpugi_1_1xml__node_aa018a135915ec8b2e3388feab2a78cfe} 
+xml\+\_\+node\+\_\+type {\bfseries type} () const
+\item 
+\Hypertarget{classpugi_1_1xml__node_ab3b6bd64f7b6077b2d5d333344ebd87a}\label{classpugi_1_1xml__node_ab3b6bd64f7b6077b2d5d333344ebd87a} 
+const char\+\_\+t \texorpdfstring{$\ast$}{*} {\bfseries name} () const
+\item 
+\Hypertarget{classpugi_1_1xml__node_a971a8bc43a272ff40e64746fe622a9b3}\label{classpugi_1_1xml__node_a971a8bc43a272ff40e64746fe622a9b3} 
+const char\+\_\+t \texorpdfstring{$\ast$}{*} {\bfseries value} () const
+\item 
+\Hypertarget{classpugi_1_1xml__node_a389ed58d9626fa7d19bf117e3dc51c98}\label{classpugi_1_1xml__node_a389ed58d9626fa7d19bf117e3dc51c98} 
+\mbox{\hyperlink{classpugi_1_1xml__attribute}{xml\+\_\+attribute}} {\bfseries first\+\_\+attribute} () const
+\item 
+\Hypertarget{classpugi_1_1xml__node_ad2ef74d55e63536eb505201f8390977b}\label{classpugi_1_1xml__node_ad2ef74d55e63536eb505201f8390977b} 
+\mbox{\hyperlink{classpugi_1_1xml__attribute}{xml\+\_\+attribute}} {\bfseries last\+\_\+attribute} () const
+\item 
+\Hypertarget{classpugi_1_1xml__node_ac83ede17542137999d86f4e5dcc2c356}\label{classpugi_1_1xml__node_ac83ede17542137999d86f4e5dcc2c356} 
+\mbox{\hyperlink{classpugi_1_1xml__node}{xml\+\_\+node}} {\bfseries first\+\_\+child} () const
+\item 
+\Hypertarget{classpugi_1_1xml__node_a3b79b15ca4f519cd2f6543ab4cfb131f}\label{classpugi_1_1xml__node_a3b79b15ca4f519cd2f6543ab4cfb131f} 
+\mbox{\hyperlink{classpugi_1_1xml__node}{xml\+\_\+node}} {\bfseries last\+\_\+child} () const
+\item 
+\Hypertarget{classpugi_1_1xml__node_ae157b9c76f71e7c417a2dda8da489bab}\label{classpugi_1_1xml__node_ae157b9c76f71e7c417a2dda8da489bab} 
+\mbox{\hyperlink{classpugi_1_1xml__node}{xml\+\_\+node}} {\bfseries next\+\_\+sibling} () const
+\item 
+\Hypertarget{classpugi_1_1xml__node_a11b527188d037ee0653b8d817e61d1aa}\label{classpugi_1_1xml__node_a11b527188d037ee0653b8d817e61d1aa} 
+\mbox{\hyperlink{classpugi_1_1xml__node}{xml\+\_\+node}} {\bfseries previous\+\_\+sibling} () const
+\item 
+\Hypertarget{classpugi_1_1xml__node_a09d3ce003534139d4cf3d125dcfdac89}\label{classpugi_1_1xml__node_a09d3ce003534139d4cf3d125dcfdac89} 
+\mbox{\hyperlink{classpugi_1_1xml__node}{xml\+\_\+node}} {\bfseries parent} () const
+\item 
+\Hypertarget{classpugi_1_1xml__node_a0f227aa552d3c111983cea84b69f02e7}\label{classpugi_1_1xml__node_a0f227aa552d3c111983cea84b69f02e7} 
+\mbox{\hyperlink{classpugi_1_1xml__node}{xml\+\_\+node}} {\bfseries root} () const
+\item 
+\Hypertarget{classpugi_1_1xml__node_a6a2182065bf0e688eda3bc55b911888a}\label{classpugi_1_1xml__node_a6a2182065bf0e688eda3bc55b911888a} 
+\mbox{\hyperlink{classpugi_1_1xml__text}{xml\+\_\+text}} {\bfseries text} () const
+\item 
+\Hypertarget{classpugi_1_1xml__node_a4154ffb6451d4203b74bb56d3f3ecf50}\label{classpugi_1_1xml__node_a4154ffb6451d4203b74bb56d3f3ecf50} 
+\mbox{\hyperlink{classpugi_1_1xml__node}{xml\+\_\+node}} {\bfseries child} (const char\+\_\+t \texorpdfstring{$\ast$}{*}name) const
+\item 
+\Hypertarget{classpugi_1_1xml__node_a2d27d392a789976eb1aef9d49f72393e}\label{classpugi_1_1xml__node_a2d27d392a789976eb1aef9d49f72393e} 
+\mbox{\hyperlink{classpugi_1_1xml__attribute}{xml\+\_\+attribute}} {\bfseries attribute} (const char\+\_\+t \texorpdfstring{$\ast$}{*}name) const
+\item 
+\Hypertarget{classpugi_1_1xml__node_a74a644ebfaf5e0fa520d7ae4197b0346}\label{classpugi_1_1xml__node_a74a644ebfaf5e0fa520d7ae4197b0346} 
+\mbox{\hyperlink{classpugi_1_1xml__node}{xml\+\_\+node}} {\bfseries next\+\_\+sibling} (const char\+\_\+t \texorpdfstring{$\ast$}{*}name) const
+\item 
+\Hypertarget{classpugi_1_1xml__node_ab2c29845adb4fefcc701fc5dc868c3af}\label{classpugi_1_1xml__node_ab2c29845adb4fefcc701fc5dc868c3af} 
+\mbox{\hyperlink{classpugi_1_1xml__node}{xml\+\_\+node}} {\bfseries previous\+\_\+sibling} (const char\+\_\+t \texorpdfstring{$\ast$}{*}name) const
+\item 
+\Hypertarget{classpugi_1_1xml__node_a3f8a9e92b2d9f80c8f4969968cd7c2af}\label{classpugi_1_1xml__node_a3f8a9e92b2d9f80c8f4969968cd7c2af} 
+\mbox{\hyperlink{classpugi_1_1xml__attribute}{xml\+\_\+attribute}} {\bfseries attribute} (const char\+\_\+t \texorpdfstring{$\ast$}{*}name, \mbox{\hyperlink{classpugi_1_1xml__attribute}{xml\+\_\+attribute}} \&hint) const
+\item 
+\Hypertarget{classpugi_1_1xml__node_a50c7951752e76265f497e51d22ad4e29}\label{classpugi_1_1xml__node_a50c7951752e76265f497e51d22ad4e29} 
+const char\+\_\+t \texorpdfstring{$\ast$}{*} {\bfseries child\+\_\+value} () const
+\item 
+\Hypertarget{classpugi_1_1xml__node_a3e92c57bca8669864b5ab7b54bd5cbca}\label{classpugi_1_1xml__node_a3e92c57bca8669864b5ab7b54bd5cbca} 
+const char\+\_\+t \texorpdfstring{$\ast$}{*} {\bfseries child\+\_\+value} (const char\+\_\+t \texorpdfstring{$\ast$}{*}name) const
+\item 
+\Hypertarget{classpugi_1_1xml__node_a461ee70affaf5ad3d4bdd089889f6a1a}\label{classpugi_1_1xml__node_a461ee70affaf5ad3d4bdd089889f6a1a} 
+bool {\bfseries set\+\_\+name} (const char\+\_\+t \texorpdfstring{$\ast$}{*}rhs)
+\item 
+\Hypertarget{classpugi_1_1xml__node_a9a2af13aa8b5d6b6e067eb4915c82385}\label{classpugi_1_1xml__node_a9a2af13aa8b5d6b6e067eb4915c82385} 
+bool {\bfseries set\+\_\+name} (const char\+\_\+t \texorpdfstring{$\ast$}{*}rhs, size\+\_\+t size)
+\item 
+\Hypertarget{classpugi_1_1xml__node_a5cad11b68c96687c1be810170cf363e1}\label{classpugi_1_1xml__node_a5cad11b68c96687c1be810170cf363e1} 
+bool {\bfseries set\+\_\+value} (const char\+\_\+t \texorpdfstring{$\ast$}{*}rhs)
+\item 
+\Hypertarget{classpugi_1_1xml__node_a9bfc9ab90e7bf6e65fecc59728fe1915}\label{classpugi_1_1xml__node_a9bfc9ab90e7bf6e65fecc59728fe1915} 
+bool {\bfseries set\+\_\+value} (const char\+\_\+t \texorpdfstring{$\ast$}{*}rhs, size\+\_\+t size)
+\item 
+\Hypertarget{classpugi_1_1xml__node_ac80fc8de66fcdff37529c1e8e5f239e4}\label{classpugi_1_1xml__node_ac80fc8de66fcdff37529c1e8e5f239e4} 
+\mbox{\hyperlink{classpugi_1_1xml__attribute}{xml\+\_\+attribute}} {\bfseries append\+\_\+attribute} (const char\+\_\+t \texorpdfstring{$\ast$}{*}name)
+\item 
+\Hypertarget{classpugi_1_1xml__node_a6750b5da07e4b4e828af807b7d751099}\label{classpugi_1_1xml__node_a6750b5da07e4b4e828af807b7d751099} 
+\mbox{\hyperlink{classpugi_1_1xml__attribute}{xml\+\_\+attribute}} {\bfseries prepend\+\_\+attribute} (const char\+\_\+t \texorpdfstring{$\ast$}{*}name)
+\item 
+\Hypertarget{classpugi_1_1xml__node_a873edeb1bec559ce5a5ded06bb3fb16a}\label{classpugi_1_1xml__node_a873edeb1bec559ce5a5ded06bb3fb16a} 
+\mbox{\hyperlink{classpugi_1_1xml__attribute}{xml\+\_\+attribute}} {\bfseries insert\+\_\+attribute\+\_\+after} (const char\+\_\+t \texorpdfstring{$\ast$}{*}name, const \mbox{\hyperlink{classpugi_1_1xml__attribute}{xml\+\_\+attribute}} \&attr)
+\item 
+\Hypertarget{classpugi_1_1xml__node_a3a14ac695d1e5350c8095b9a83548ee0}\label{classpugi_1_1xml__node_a3a14ac695d1e5350c8095b9a83548ee0} 
+\mbox{\hyperlink{classpugi_1_1xml__attribute}{xml\+\_\+attribute}} {\bfseries insert\+\_\+attribute\+\_\+before} (const char\+\_\+t \texorpdfstring{$\ast$}{*}name, const \mbox{\hyperlink{classpugi_1_1xml__attribute}{xml\+\_\+attribute}} \&attr)
+\item 
+\Hypertarget{classpugi_1_1xml__node_abd1b41bb34da6dc51af6d880ba3cfa14}\label{classpugi_1_1xml__node_abd1b41bb34da6dc51af6d880ba3cfa14} 
+\mbox{\hyperlink{classpugi_1_1xml__attribute}{xml\+\_\+attribute}} {\bfseries append\+\_\+copy} (const \mbox{\hyperlink{classpugi_1_1xml__attribute}{xml\+\_\+attribute}} \&proto)
+\item 
+\Hypertarget{classpugi_1_1xml__node_a1573a218a29ecf1a476bcb794be3800c}\label{classpugi_1_1xml__node_a1573a218a29ecf1a476bcb794be3800c} 
+\mbox{\hyperlink{classpugi_1_1xml__attribute}{xml\+\_\+attribute}} {\bfseries prepend\+\_\+copy} (const \mbox{\hyperlink{classpugi_1_1xml__attribute}{xml\+\_\+attribute}} \&proto)
+\item 
+\Hypertarget{classpugi_1_1xml__node_a414eb68f8f6e719e6ce8599ba623a105}\label{classpugi_1_1xml__node_a414eb68f8f6e719e6ce8599ba623a105} 
+\mbox{\hyperlink{classpugi_1_1xml__attribute}{xml\+\_\+attribute}} {\bfseries insert\+\_\+copy\+\_\+after} (const \mbox{\hyperlink{classpugi_1_1xml__attribute}{xml\+\_\+attribute}} \&proto, const \mbox{\hyperlink{classpugi_1_1xml__attribute}{xml\+\_\+attribute}} \&attr)
+\item 
+\Hypertarget{classpugi_1_1xml__node_a78fc542de78457b1311890f1a2d30b2e}\label{classpugi_1_1xml__node_a78fc542de78457b1311890f1a2d30b2e} 
+\mbox{\hyperlink{classpugi_1_1xml__attribute}{xml\+\_\+attribute}} {\bfseries insert\+\_\+copy\+\_\+before} (const \mbox{\hyperlink{classpugi_1_1xml__attribute}{xml\+\_\+attribute}} \&proto, const \mbox{\hyperlink{classpugi_1_1xml__attribute}{xml\+\_\+attribute}} \&attr)
+\item 
+\Hypertarget{classpugi_1_1xml__node_afe1332e147508ef480aa395f9cc42e53}\label{classpugi_1_1xml__node_afe1332e147508ef480aa395f9cc42e53} 
+\mbox{\hyperlink{classpugi_1_1xml__node}{xml\+\_\+node}} {\bfseries append\+\_\+child} (xml\+\_\+node\+\_\+type type=node\+\_\+element)
+\item 
+\Hypertarget{classpugi_1_1xml__node_aed2c393e34bbebe1fd1c596ec57fb398}\label{classpugi_1_1xml__node_aed2c393e34bbebe1fd1c596ec57fb398} 
+\mbox{\hyperlink{classpugi_1_1xml__node}{xml\+\_\+node}} {\bfseries prepend\+\_\+child} (xml\+\_\+node\+\_\+type type=node\+\_\+element)
+\item 
+\Hypertarget{classpugi_1_1xml__node_adad79bafed5383c1151e834ec366ab28}\label{classpugi_1_1xml__node_adad79bafed5383c1151e834ec366ab28} 
+\mbox{\hyperlink{classpugi_1_1xml__node}{xml\+\_\+node}} {\bfseries insert\+\_\+child\+\_\+after} (xml\+\_\+node\+\_\+type type, const \mbox{\hyperlink{classpugi_1_1xml__node}{xml\+\_\+node}} \&node)
+\item 
+\Hypertarget{classpugi_1_1xml__node_a02f7be0c8b160292189f4ce4cb4d898a}\label{classpugi_1_1xml__node_a02f7be0c8b160292189f4ce4cb4d898a} 
+\mbox{\hyperlink{classpugi_1_1xml__node}{xml\+\_\+node}} {\bfseries insert\+\_\+child\+\_\+before} (xml\+\_\+node\+\_\+type type, const \mbox{\hyperlink{classpugi_1_1xml__node}{xml\+\_\+node}} \&node)
+\item 
+\Hypertarget{classpugi_1_1xml__node_a292218f0d6cec6327f8a6b15f1478acc}\label{classpugi_1_1xml__node_a292218f0d6cec6327f8a6b15f1478acc} 
+\mbox{\hyperlink{classpugi_1_1xml__node}{xml\+\_\+node}} {\bfseries append\+\_\+child} (const char\+\_\+t \texorpdfstring{$\ast$}{*}name)
+\item 
+\Hypertarget{classpugi_1_1xml__node_a434e6f74ccad87da1c2e01a73cbbefda}\label{classpugi_1_1xml__node_a434e6f74ccad87da1c2e01a73cbbefda} 
+\mbox{\hyperlink{classpugi_1_1xml__node}{xml\+\_\+node}} {\bfseries prepend\+\_\+child} (const char\+\_\+t \texorpdfstring{$\ast$}{*}name)
+\item 
+\Hypertarget{classpugi_1_1xml__node_a87affe713b17757e8876858264c2c47e}\label{classpugi_1_1xml__node_a87affe713b17757e8876858264c2c47e} 
+\mbox{\hyperlink{classpugi_1_1xml__node}{xml\+\_\+node}} {\bfseries insert\+\_\+child\+\_\+after} (const char\+\_\+t \texorpdfstring{$\ast$}{*}name, const \mbox{\hyperlink{classpugi_1_1xml__node}{xml\+\_\+node}} \&node)
+\item 
+\Hypertarget{classpugi_1_1xml__node_aa73a08008f946784451710ae7aed9526}\label{classpugi_1_1xml__node_aa73a08008f946784451710ae7aed9526} 
+\mbox{\hyperlink{classpugi_1_1xml__node}{xml\+\_\+node}} {\bfseries insert\+\_\+child\+\_\+before} (const char\+\_\+t \texorpdfstring{$\ast$}{*}name, const \mbox{\hyperlink{classpugi_1_1xml__node}{xml\+\_\+node}} \&node)
+\item 
+\Hypertarget{classpugi_1_1xml__node_a5820a846f22f81f27f62419cb8f8c7fd}\label{classpugi_1_1xml__node_a5820a846f22f81f27f62419cb8f8c7fd} 
+\mbox{\hyperlink{classpugi_1_1xml__node}{xml\+\_\+node}} {\bfseries append\+\_\+copy} (const \mbox{\hyperlink{classpugi_1_1xml__node}{xml\+\_\+node}} \&proto)
+\item 
+\Hypertarget{classpugi_1_1xml__node_a55f7a4015048cb2c53e761fddf43a6d9}\label{classpugi_1_1xml__node_a55f7a4015048cb2c53e761fddf43a6d9} 
+\mbox{\hyperlink{classpugi_1_1xml__node}{xml\+\_\+node}} {\bfseries prepend\+\_\+copy} (const \mbox{\hyperlink{classpugi_1_1xml__node}{xml\+\_\+node}} \&proto)
+\item 
+\Hypertarget{classpugi_1_1xml__node_a344b2b023530cb809edf172f1a6f8c1b}\label{classpugi_1_1xml__node_a344b2b023530cb809edf172f1a6f8c1b} 
+\mbox{\hyperlink{classpugi_1_1xml__node}{xml\+\_\+node}} {\bfseries insert\+\_\+copy\+\_\+after} (const \mbox{\hyperlink{classpugi_1_1xml__node}{xml\+\_\+node}} \&proto, const \mbox{\hyperlink{classpugi_1_1xml__node}{xml\+\_\+node}} \&node)
+\item 
+\Hypertarget{classpugi_1_1xml__node_a29caa61e18518726790aadf12a9c4358}\label{classpugi_1_1xml__node_a29caa61e18518726790aadf12a9c4358} 
+\mbox{\hyperlink{classpugi_1_1xml__node}{xml\+\_\+node}} {\bfseries insert\+\_\+copy\+\_\+before} (const \mbox{\hyperlink{classpugi_1_1xml__node}{xml\+\_\+node}} \&proto, const \mbox{\hyperlink{classpugi_1_1xml__node}{xml\+\_\+node}} \&node)
+\item 
+\Hypertarget{classpugi_1_1xml__node_aa9ff3dbda5f701014acafaa0ee67d56a}\label{classpugi_1_1xml__node_aa9ff3dbda5f701014acafaa0ee67d56a} 
+\mbox{\hyperlink{classpugi_1_1xml__node}{xml\+\_\+node}} {\bfseries append\+\_\+move} (const \mbox{\hyperlink{classpugi_1_1xml__node}{xml\+\_\+node}} \&moved)
+\item 
+\Hypertarget{classpugi_1_1xml__node_a16c276afd863637c4e051079a73f4fd5}\label{classpugi_1_1xml__node_a16c276afd863637c4e051079a73f4fd5} 
+\mbox{\hyperlink{classpugi_1_1xml__node}{xml\+\_\+node}} {\bfseries prepend\+\_\+move} (const \mbox{\hyperlink{classpugi_1_1xml__node}{xml\+\_\+node}} \&moved)
+\item 
+\Hypertarget{classpugi_1_1xml__node_ab9212af658f2cfa08f1065264956b017}\label{classpugi_1_1xml__node_ab9212af658f2cfa08f1065264956b017} 
+\mbox{\hyperlink{classpugi_1_1xml__node}{xml\+\_\+node}} {\bfseries insert\+\_\+move\+\_\+after} (const \mbox{\hyperlink{classpugi_1_1xml__node}{xml\+\_\+node}} \&moved, const \mbox{\hyperlink{classpugi_1_1xml__node}{xml\+\_\+node}} \&node)
+\item 
+\Hypertarget{classpugi_1_1xml__node_ae3141346efb3301d2b1c1811f6dafdfd}\label{classpugi_1_1xml__node_ae3141346efb3301d2b1c1811f6dafdfd} 
+\mbox{\hyperlink{classpugi_1_1xml__node}{xml\+\_\+node}} {\bfseries insert\+\_\+move\+\_\+before} (const \mbox{\hyperlink{classpugi_1_1xml__node}{xml\+\_\+node}} \&moved, const \mbox{\hyperlink{classpugi_1_1xml__node}{xml\+\_\+node}} \&node)
+\item 
+\Hypertarget{classpugi_1_1xml__node_abe97f4b6d784560048c153d977609335}\label{classpugi_1_1xml__node_abe97f4b6d784560048c153d977609335} 
+bool {\bfseries remove\+\_\+attribute} (const \mbox{\hyperlink{classpugi_1_1xml__attribute}{xml\+\_\+attribute}} \&a)
+\item 
+\Hypertarget{classpugi_1_1xml__node_af8ca9132093404a89d25a81060c64293}\label{classpugi_1_1xml__node_af8ca9132093404a89d25a81060c64293} 
+bool {\bfseries remove\+\_\+attribute} (const char\+\_\+t \texorpdfstring{$\ast$}{*}name)
+\item 
+\Hypertarget{classpugi_1_1xml__node_a7055d999f1a84e4ee2baf149e7db8321}\label{classpugi_1_1xml__node_a7055d999f1a84e4ee2baf149e7db8321} 
+bool {\bfseries remove\+\_\+attributes} ()
+\item 
+\Hypertarget{classpugi_1_1xml__node_abe07faa639fd2d828a340f6283404203}\label{classpugi_1_1xml__node_abe07faa639fd2d828a340f6283404203} 
+bool {\bfseries remove\+\_\+child} (const \mbox{\hyperlink{classpugi_1_1xml__node}{xml\+\_\+node}} \&n)
+\item 
+\Hypertarget{classpugi_1_1xml__node_ae169719bf580569191d0274bf6514bbc}\label{classpugi_1_1xml__node_ae169719bf580569191d0274bf6514bbc} 
+bool {\bfseries remove\+\_\+child} (const char\+\_\+t \texorpdfstring{$\ast$}{*}name)
+\item 
+\Hypertarget{classpugi_1_1xml__node_a529f9679cd99f38a7cbeb0ef291cb146}\label{classpugi_1_1xml__node_a529f9679cd99f38a7cbeb0ef291cb146} 
+bool {\bfseries remove\+\_\+children} ()
+\item 
+\Hypertarget{classpugi_1_1xml__node_aa624d14153d5fef804aa55905fade059}\label{classpugi_1_1xml__node_aa624d14153d5fef804aa55905fade059} 
+\mbox{\hyperlink{structpugi_1_1xml__parse__result}{xml\+\_\+parse\+\_\+result}} {\bfseries append\+\_\+buffer} (const void \texorpdfstring{$\ast$}{*}contents, size\+\_\+t size, unsigned int options=parse\+\_\+default, xml\+\_\+encoding encoding=encoding\+\_\+auto)
+\item 
+\Hypertarget{classpugi_1_1xml__node_a4494f8397e3bdf586b1dec6da19f5649}\label{classpugi_1_1xml__node_a4494f8397e3bdf586b1dec6da19f5649} 
+{\footnotesize template$<$typename Predicate $>$ }\\\mbox{\hyperlink{classpugi_1_1xml__attribute}{xml\+\_\+attribute}} {\bfseries find\+\_\+attribute} (Predicate pred) const
+\item 
+\Hypertarget{classpugi_1_1xml__node_ad00b88f63f6015ee34d4e38dc8ed4e80}\label{classpugi_1_1xml__node_ad00b88f63f6015ee34d4e38dc8ed4e80} 
+{\footnotesize template$<$typename Predicate $>$ }\\\mbox{\hyperlink{classpugi_1_1xml__node}{xml\+\_\+node}} {\bfseries find\+\_\+child} (Predicate pred) const
+\item 
+\Hypertarget{classpugi_1_1xml__node_a8c360e4966b4015c50b927009c3d1ee3}\label{classpugi_1_1xml__node_a8c360e4966b4015c50b927009c3d1ee3} 
+{\footnotesize template$<$typename Predicate $>$ }\\\mbox{\hyperlink{classpugi_1_1xml__node}{xml\+\_\+node}} {\bfseries find\+\_\+node} (Predicate pred) const
+\item 
+\Hypertarget{classpugi_1_1xml__node_a2509cf39933589702a3521340d8f1390}\label{classpugi_1_1xml__node_a2509cf39933589702a3521340d8f1390} 
+\mbox{\hyperlink{classpugi_1_1xml__node}{xml\+\_\+node}} {\bfseries find\+\_\+child\+\_\+by\+\_\+attribute} (const char\+\_\+t \texorpdfstring{$\ast$}{*}name, const char\+\_\+t \texorpdfstring{$\ast$}{*}attr\+\_\+name, const char\+\_\+t \texorpdfstring{$\ast$}{*}attr\+\_\+value) const
+\item 
+\Hypertarget{classpugi_1_1xml__node_a766520262c76a1820f1b463cfbc30304}\label{classpugi_1_1xml__node_a766520262c76a1820f1b463cfbc30304} 
+\mbox{\hyperlink{classpugi_1_1xml__node}{xml\+\_\+node}} {\bfseries find\+\_\+child\+\_\+by\+\_\+attribute} (const char\+\_\+t \texorpdfstring{$\ast$}{*}attr\+\_\+name, const char\+\_\+t \texorpdfstring{$\ast$}{*}attr\+\_\+value) const
+\item 
+\Hypertarget{classpugi_1_1xml__node_a9f8a701b610781faf758a65d24f69343}\label{classpugi_1_1xml__node_a9f8a701b610781faf758a65d24f69343} 
+string\+\_\+t {\bfseries path} (char\+\_\+t delimiter=\textquotesingle{}/\textquotesingle{}) const
+\item 
+\Hypertarget{classpugi_1_1xml__node_a83fe1c45b001aa5caf36455318b66920}\label{classpugi_1_1xml__node_a83fe1c45b001aa5caf36455318b66920} 
+\mbox{\hyperlink{classpugi_1_1xml__node}{xml\+\_\+node}} {\bfseries first\+\_\+element\+\_\+by\+\_\+path} (const char\+\_\+t \texorpdfstring{$\ast$}{*}path, char\+\_\+t delimiter=\textquotesingle{}/\textquotesingle{}) const
+\item 
+\Hypertarget{classpugi_1_1xml__node_a651059099765f6c35833b4e237a895de}\label{classpugi_1_1xml__node_a651059099765f6c35833b4e237a895de} 
+bool {\bfseries traverse} (\mbox{\hyperlink{classpugi_1_1xml__tree__walker}{xml\+\_\+tree\+\_\+walker}} \&walker)
+\item 
+\Hypertarget{classpugi_1_1xml__node_a0b3875a1af87b2e2b054e7adbf1f0b09}\label{classpugi_1_1xml__node_a0b3875a1af87b2e2b054e7adbf1f0b09} 
+\mbox{\hyperlink{classpugi_1_1xpath__node}{xpath\+\_\+node}} {\bfseries select\+\_\+node} (const char\+\_\+t \texorpdfstring{$\ast$}{*}query, \mbox{\hyperlink{classpugi_1_1xpath__variable__set}{xpath\+\_\+variable\+\_\+set}} \texorpdfstring{$\ast$}{*}variables=PUGIXML\+\_\+\+NULL) const
+\item 
+\Hypertarget{classpugi_1_1xml__node_af285f13929d97340322a42d82d7570e1}\label{classpugi_1_1xml__node_af285f13929d97340322a42d82d7570e1} 
+\mbox{\hyperlink{classpugi_1_1xpath__node}{xpath\+\_\+node}} {\bfseries select\+\_\+node} (const \mbox{\hyperlink{classpugi_1_1xpath__query}{xpath\+\_\+query}} \&query) const
+\item 
+\Hypertarget{classpugi_1_1xml__node_a52c45598bf8fd13e90aec434af35f1fb}\label{classpugi_1_1xml__node_a52c45598bf8fd13e90aec434af35f1fb} 
+\mbox{\hyperlink{classpugi_1_1xpath__node__set}{xpath\+\_\+node\+\_\+set}} {\bfseries select\+\_\+nodes} (const char\+\_\+t \texorpdfstring{$\ast$}{*}query, \mbox{\hyperlink{classpugi_1_1xpath__variable__set}{xpath\+\_\+variable\+\_\+set}} \texorpdfstring{$\ast$}{*}variables=PUGIXML\+\_\+\+NULL) const
+\item 
+\Hypertarget{classpugi_1_1xml__node_aa69014e0abdd9fe604d7263641df4995}\label{classpugi_1_1xml__node_aa69014e0abdd9fe604d7263641df4995} 
+\mbox{\hyperlink{classpugi_1_1xpath__node__set}{xpath\+\_\+node\+\_\+set}} {\bfseries select\+\_\+nodes} (const \mbox{\hyperlink{classpugi_1_1xpath__query}{xpath\+\_\+query}} \&query) const
+\item 
+\Hypertarget{classpugi_1_1xml__node_a8cf6f75358b8595b1ae7568bf38f30ee}\label{classpugi_1_1xml__node_a8cf6f75358b8595b1ae7568bf38f30ee} 
+PUGIXML\+\_\+\+DEPRECATED \mbox{\hyperlink{classpugi_1_1xpath__node}{xpath\+\_\+node}} {\bfseries select\+\_\+single\+\_\+node} (const char\+\_\+t \texorpdfstring{$\ast$}{*}query, \mbox{\hyperlink{classpugi_1_1xpath__variable__set}{xpath\+\_\+variable\+\_\+set}} \texorpdfstring{$\ast$}{*}variables=PUGIXML\+\_\+\+NULL) const
+\item 
+\Hypertarget{classpugi_1_1xml__node_af584de2fe91335b7c2130e4d99134834}\label{classpugi_1_1xml__node_af584de2fe91335b7c2130e4d99134834} 
+PUGIXML\+\_\+\+DEPRECATED \mbox{\hyperlink{classpugi_1_1xpath__node}{xpath\+\_\+node}} {\bfseries select\+\_\+single\+\_\+node} (const \mbox{\hyperlink{classpugi_1_1xpath__query}{xpath\+\_\+query}} \&query) const
+\item 
+\Hypertarget{classpugi_1_1xml__node_a49524532b02e34c2de9a6944745a8760}\label{classpugi_1_1xml__node_a49524532b02e34c2de9a6944745a8760} 
+void {\bfseries print} (\mbox{\hyperlink{classpugi_1_1xml__writer}{xml\+\_\+writer}} \&writer, const char\+\_\+t \texorpdfstring{$\ast$}{*}indent=PUGIXML\+\_\+\+TEXT("{}\textbackslash{}t"{}), unsigned int flags=format\+\_\+default, xml\+\_\+encoding encoding=encoding\+\_\+auto, unsigned int depth=0) const
+\item 
+\Hypertarget{classpugi_1_1xml__node_af5b066968d8862e54260bdf958f8fab5}\label{classpugi_1_1xml__node_af5b066968d8862e54260bdf958f8fab5} 
+void {\bfseries print} (std\+::basic\+\_\+ostream$<$ char, std\+::char\+\_\+traits$<$ char $>$ $>$ \&os, const char\+\_\+t \texorpdfstring{$\ast$}{*}indent=PUGIXML\+\_\+\+TEXT("{}\textbackslash{}t"{}), unsigned int flags=format\+\_\+default, xml\+\_\+encoding encoding=encoding\+\_\+auto, unsigned int depth=0) const
+\item 
+\Hypertarget{classpugi_1_1xml__node_a555d446a551d494492349e4e464efc48}\label{classpugi_1_1xml__node_a555d446a551d494492349e4e464efc48} 
+void {\bfseries print} (std\+::basic\+\_\+ostream$<$ wchar\+\_\+t, std\+::char\+\_\+traits$<$ wchar\+\_\+t $>$ $>$ \&os, const char\+\_\+t \texorpdfstring{$\ast$}{*}indent=PUGIXML\+\_\+\+TEXT("{}\textbackslash{}t"{}), unsigned int flags=format\+\_\+default, unsigned int depth=0) const
+\item 
+\Hypertarget{classpugi_1_1xml__node_aeff3362bf030a0df28ec2db9b84498f1}\label{classpugi_1_1xml__node_aeff3362bf030a0df28ec2db9b84498f1} 
+\mbox{\hyperlink{classpugi_1_1xml__node__iterator}{iterator}} {\bfseries begin} () const
+\item 
+\Hypertarget{classpugi_1_1xml__node_aafa1deeb5fe928d07cd7caebbf975527}\label{classpugi_1_1xml__node_aafa1deeb5fe928d07cd7caebbf975527} 
+\mbox{\hyperlink{classpugi_1_1xml__node__iterator}{iterator}} {\bfseries end} () const
+\item 
+\Hypertarget{classpugi_1_1xml__node_a4655d928f5275f060f4261767580affc}\label{classpugi_1_1xml__node_a4655d928f5275f060f4261767580affc} 
+\mbox{\hyperlink{classpugi_1_1xml__attribute__iterator}{attribute\+\_\+iterator}} {\bfseries attributes\+\_\+begin} () const
+\item 
+\Hypertarget{classpugi_1_1xml__node_ade5e6e6f24a59680f6af08cb6fc18df8}\label{classpugi_1_1xml__node_ade5e6e6f24a59680f6af08cb6fc18df8} 
+\mbox{\hyperlink{classpugi_1_1xml__attribute__iterator}{attribute\+\_\+iterator}} {\bfseries attributes\+\_\+end} () const
+\item 
+\Hypertarget{classpugi_1_1xml__node_a4f72c001fed61753fa76fd32d4e978af}\label{classpugi_1_1xml__node_a4f72c001fed61753fa76fd32d4e978af} 
+\mbox{\hyperlink{classpugi_1_1xml__object__range}{xml\+\_\+object\+\_\+range}}$<$ \mbox{\hyperlink{classpugi_1_1xml__node__iterator}{xml\+\_\+node\+\_\+iterator}} $>$ {\bfseries children} () const
+\item 
+\Hypertarget{classpugi_1_1xml__node_aace5d7bc1e8f214d6708fe946f48c3cf}\label{classpugi_1_1xml__node_aace5d7bc1e8f214d6708fe946f48c3cf} 
+\mbox{\hyperlink{classpugi_1_1xml__object__range}{xml\+\_\+object\+\_\+range}}$<$ \mbox{\hyperlink{classpugi_1_1xml__attribute__iterator}{xml\+\_\+attribute\+\_\+iterator}} $>$ {\bfseries attributes} () const
+\item 
+\Hypertarget{classpugi_1_1xml__node_aa4f96758e38e9dfd2c085dc5b5869139}\label{classpugi_1_1xml__node_aa4f96758e38e9dfd2c085dc5b5869139} 
+\mbox{\hyperlink{classpugi_1_1xml__object__range}{xml\+\_\+object\+\_\+range}}$<$ \mbox{\hyperlink{classpugi_1_1xml__named__node__iterator}{xml\+\_\+named\+\_\+node\+\_\+iterator}} $>$ {\bfseries children} (const char\+\_\+t \texorpdfstring{$\ast$}{*}name) const
+\item 
+\Hypertarget{classpugi_1_1xml__node_a3ea448a2641ee222bde36fca5a3e2f0f}\label{classpugi_1_1xml__node_a3ea448a2641ee222bde36fca5a3e2f0f} 
+ptrdiff\+\_\+t {\bfseries offset\+\_\+debug} () const
+\item 
+\Hypertarget{classpugi_1_1xml__node_a020f74bd30504f3c31c44e0c66cd61c6}\label{classpugi_1_1xml__node_a020f74bd30504f3c31c44e0c66cd61c6} 
+size\+\_\+t {\bfseries hash\+\_\+value} () const
+\item 
+\Hypertarget{classpugi_1_1xml__node_af4925a9ad2e813067cce7ca3fb83e6d8}\label{classpugi_1_1xml__node_af4925a9ad2e813067cce7ca3fb83e6d8} 
+\mbox{\hyperlink{structpugi_1_1xml__node__struct}{xml\+\_\+node\+\_\+struct}} \texorpdfstring{$\ast$}{*} {\bfseries internal\+\_\+object} () const
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Protected Types}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classpugi_1_1xml__node_a83fe32b933530b244865ee401b08b037}\label{classpugi_1_1xml__node_a83fe32b933530b244865ee401b08b037} 
+typedef void(\texorpdfstring{$\ast$}{*} {\bfseries unspecified\+\_\+bool\+\_\+type}) (\mbox{\hyperlink{classpugi_1_1xml__node}{xml\+\_\+node}} \texorpdfstring{$\ast$}{*}\texorpdfstring{$\ast$}{*}\texorpdfstring{$\ast$}{*})
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Protected Attributes}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classpugi_1_1xml__node_a45a5b342de1e37a60565f7693f03cc08}\label{classpugi_1_1xml__node_a45a5b342de1e37a60565f7693f03cc08} 
+\mbox{\hyperlink{structpugi_1_1xml__node__struct}{xml\+\_\+node\+\_\+struct}} \texorpdfstring{$\ast$}{*} {\bfseries \+\_\+root}
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Friends}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classpugi_1_1xml__node_aeff34dec57ee910e3344631528969539}\label{classpugi_1_1xml__node_aeff34dec57ee910e3344631528969539} 
+class {\bfseries xml\+\_\+attribute\+\_\+iterator}
+\item 
+\Hypertarget{classpugi_1_1xml__node_aa25e28e29a8cec4daa60cdd2d5934757}\label{classpugi_1_1xml__node_aa25e28e29a8cec4daa60cdd2d5934757} 
+class {\bfseries xml\+\_\+node\+\_\+iterator}
+\item 
+\Hypertarget{classpugi_1_1xml__node_a1e60ab2fa6d6adb56f4b833761fc0b66}\label{classpugi_1_1xml__node_a1e60ab2fa6d6adb56f4b833761fc0b66} 
+class {\bfseries xml\+\_\+named\+\_\+node\+\_\+iterator}
+\end{DoxyCompactItemize}
+
+
+The documentation for this class was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+external/pugixml-\/1.\+14/src/pugixml.\+hpp\item 
+external/pugixml-\/1.\+14/src/pugixml.\+cpp\end{DoxyCompactItemize}

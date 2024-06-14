@@ -1,0 +1,186 @@
+\doxysection{qalgorithms\+\_\+utils.\+h}
+\hypertarget{qalgorithms__utils_8h_source}{}\label{qalgorithms__utils_8h_source}\index{include/qalgorithms\_utils.h@{include/qalgorithms\_utils.h}}
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{//\ qalgorithms\_utils.h}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#ifndef\ QALGORITHMS\_UTILS\_H\ }\textcolor{comment}{//\ Include\ guarde\ to\ prevent\ double\ inclusion}}
+\DoxyCodeLine{00003\ \textcolor{preprocessor}{\#define\ QALGORITHMS\_UTILS\_H}}
+\DoxyCodeLine{00004\ }
+\DoxyCodeLine{00005\ \textcolor{comment}{//\ internal}}
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#include\ "{}qalgorithms\_matrix.h"{}}}
+\DoxyCodeLine{00007\ }
+\DoxyCodeLine{00008\ \textcolor{comment}{//\ external}}
+\DoxyCodeLine{00009\ \textcolor{preprocessor}{\#include\ <vector>}}
+\DoxyCodeLine{00010\ \textcolor{preprocessor}{\#include\ <iostream>}}
+\DoxyCodeLine{00011\ \textcolor{preprocessor}{\#include\ <cmath>}}
+\DoxyCodeLine{00012\ \textcolor{preprocessor}{\#include\ <map>}}
+\DoxyCodeLine{00013\ \textcolor{preprocessor}{\#include\ <cstdint>}}
+\DoxyCodeLine{00014\ \textcolor{preprocessor}{\#include\ <numeric>}}
+\DoxyCodeLine{00015\ \textcolor{preprocessor}{\#include\ <cstdio>}}
+\DoxyCodeLine{00016\ \textcolor{preprocessor}{\#include\ <memory>}}
+\DoxyCodeLine{00017\ \textcolor{preprocessor}{\#include\ <string>}}
+\DoxyCodeLine{00018\ \textcolor{preprocessor}{\#include\ <stdexcept>}}
+\DoxyCodeLine{00019\ }
+\DoxyCodeLine{00020\ \textcolor{keyword}{namespace\ }q}
+\DoxyCodeLine{00021\ \{}
+\DoxyCodeLine{00022\ }
+\DoxyCodeLine{00023\ \ \ \ \ \textcolor{keywordtype}{int}\ sum(\textcolor{keyword}{const}\ std::vector<int>\ \&vec);}
+\DoxyCodeLine{00024\ \ \ \ \ \textcolor{keywordtype}{size\_t}\ sum(\textcolor{keyword}{const}\ std::vector<size\_t>\ \&vec);}
+\DoxyCodeLine{00025\ \ \ \ \ \textcolor{keywordtype}{double}\ sum(\textcolor{keyword}{const}\ std::vector<double>\ \&vec);}
+\DoxyCodeLine{00026\ \ \ \ \ \textcolor{keywordtype}{int}\ sum(\textcolor{keyword}{const}\ \textcolor{keywordtype}{bool}\ *vec,\ \textcolor{keywordtype}{size\_t}\ n);}
+\DoxyCodeLine{00027\ }
+\DoxyCodeLine{00035\ \ \ \ \ \textcolor{keywordtype}{double}\ exp\_approx(\textcolor{keyword}{const}\ \textcolor{keywordtype}{double}\ x);}
+\DoxyCodeLine{00036\ }
+\DoxyCodeLine{00037\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ T>}
+\DoxyCodeLine{00038\ \ \ \ \ std::vector<bool>\ operator<(}
+\DoxyCodeLine{00039\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ std::vector<T>\ \&vec,}
+\DoxyCodeLine{00040\ \ \ \ \ \ \ \ \ T\ scalar);}
+\DoxyCodeLine{00041\ }
+\DoxyCodeLine{00042\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ T>}
+\DoxyCodeLine{00043\ \ \ \ \ std::vector<bool>\ operator>(}
+\DoxyCodeLine{00044\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ std::vector<T>\ \&vec,}
+\DoxyCodeLine{00045\ \ \ \ \ \ \ \ \ T\ scalar);}
+\DoxyCodeLine{00046\ }
+\DoxyCodeLine{00047\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ T>}
+\DoxyCodeLine{00048\ \ \ \ \ std::vector<T>\ operator*(}
+\DoxyCodeLine{00049\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ std::vector<T>\ \&A,}
+\DoxyCodeLine{00050\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ std::vector<T>\ \&B);}
+\DoxyCodeLine{00051\ }
+\DoxyCodeLine{00052\ \ \ \ \ std::vector<bool>\ operator\&\&(}
+\DoxyCodeLine{00053\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ std::vector<bool>\ \&A,}
+\DoxyCodeLine{00054\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ std::vector<bool>\ \&B);}
+\DoxyCodeLine{00055\ }
+\DoxyCodeLine{00056\ \ \ \ \ std::vector<bool>\ operator!(\textcolor{keyword}{const}\ std::vector<bool>\ \&A);}
+\DoxyCodeLine{00057\ }
+\DoxyCodeLine{00058\ \ \ \ \ \textcolor{keywordtype}{void}\ operator|=(}
+\DoxyCodeLine{00059\ \ \ \ \ \ \ \ \ std::vector<bool>\ \&A,}
+\DoxyCodeLine{00060\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ std::vector<bool>\ \&B);}
+\DoxyCodeLine{00061\ }
+\DoxyCodeLine{00062\ \ \ \ \ \textcolor{keywordtype}{double}\ erfi(\textcolor{keyword}{const}\ \textcolor{keywordtype}{double}\ x);}
+\DoxyCodeLine{00063\ }
+\DoxyCodeLine{00064\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{classq_1_1_matrices_1_1_matrix}{q::Matrices::Matrix}}\ linreg(}
+\DoxyCodeLine{00065\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ std::vector<double>\ \&xData,}
+\DoxyCodeLine{00066\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ std::vector<double>\ \&yData,}
+\DoxyCodeLine{00067\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{size\_t}\ degree);}
+\DoxyCodeLine{00068\ }
+\DoxyCodeLine{00069\ \ \ \ \ \textcolor{keyword}{extern}\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{double}\ tValuesArray[500];}
+\DoxyCodeLine{00070\ \ \ \ \ \textcolor{keyword}{extern}\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{double}\ chiSquareArray[500];}
+\DoxyCodeLine{00071\ \ \ \ \ \textcolor{keyword}{extern}\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{double}\ SQRTPI\_2;}
+\DoxyCodeLine{00072\ }
+\DoxyCodeLine{00073\ \textcolor{preprocessor}{\#pragma\ region\ "{}Matrix\ Operations"{}}}
+\DoxyCodeLine{00074\ }
+\DoxyCodeLine{00083\ \ \ \ \ \textcolor{keywordtype}{bool}}
+\DoxyCodeLine{00084\ \ \ \ \ operator==(}
+\DoxyCodeLine{00085\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{classq_1_1_matrices_1_1_matrix__mc}{q::Matrices::Matrix\_mc}}\ \&A,}
+\DoxyCodeLine{00086\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{classq_1_1_matrices_1_1_matrix__mc}{q::Matrices::Matrix\_mc}}\ \&B);}
+\DoxyCodeLine{00095\ \ \ \ \ \mbox{\hyperlink{classq_1_1_matrices_1_1_matrix}{q::Matrices::Matrix}}}
+\DoxyCodeLine{00096\ \ \ \ \ operator+(}
+\DoxyCodeLine{00097\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{classq_1_1_matrices_1_1_matrix}{q::Matrices::Matrix}}\ \&A,}
+\DoxyCodeLine{00098\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{classq_1_1_matrices_1_1_matrix}{q::Matrices::Matrix}}\ \&B);}
+\DoxyCodeLine{00099\ }
+\DoxyCodeLine{00108\ \ \ \ \ \mbox{\hyperlink{classq_1_1_matrices_1_1_matrix}{q::Matrices::Matrix}}}
+\DoxyCodeLine{00109\ \ \ \ \ operator*(}
+\DoxyCodeLine{00110\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{classq_1_1_matrices_1_1_matrix}{q::Matrices::Matrix}}\ \&A,}
+\DoxyCodeLine{00111\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{classq_1_1_matrices_1_1_matrix}{q::Matrices::Matrix}}\ \&B);}
+\DoxyCodeLine{00112\ }
+\DoxyCodeLine{00120\ \ \ \ \ \mbox{\hyperlink{classq_1_1_matrices_1_1_vector}{q::Matrices::Vector}}}
+\DoxyCodeLine{00121\ \ \ \ \ operator*(}
+\DoxyCodeLine{00122\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{classq_1_1_matrices_1_1_matrix}{q::Matrices::Matrix}}\ \&A,}
+\DoxyCodeLine{00123\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{classq_1_1_matrices_1_1_vector}{q::Matrices::Vector}}\ \&B);}
+\DoxyCodeLine{00124\ }
+\DoxyCodeLine{00133\ \ \ \ \ \mbox{\hyperlink{classq_1_1_matrices_1_1_matrix}{q::Matrices::Matrix}}}
+\DoxyCodeLine{00134\ \ \ \ \ operator*(}
+\DoxyCodeLine{00135\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{classq_1_1_matrices_1_1_matrix}{q::Matrices::Matrix}}\ \&A,}
+\DoxyCodeLine{00136\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{double}\ scalar);}
+\DoxyCodeLine{00137\ }
+\DoxyCodeLine{00146\ \ \ \ \ \mbox{\hyperlink{classq_1_1_matrices_1_1_matrix}{q::Matrices::Matrix}}}
+\DoxyCodeLine{00147\ \ \ \ \ operator*(}
+\DoxyCodeLine{00148\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{double}\ scalar,}
+\DoxyCodeLine{00149\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{classq_1_1_matrices_1_1_matrix}{q::Matrices::Matrix}}\ \&A);}
+\DoxyCodeLine{00150\ }
+\DoxyCodeLine{00151\ \ \ \ \ \mbox{\hyperlink{classq_1_1_matrices_1_1_matrix__mc__4x4}{q::Matrices::Matrix\_mc\_4x4}}}
+\DoxyCodeLine{00152\ \ \ \ \ multiplyScalarTo4x4Matrix(}
+\DoxyCodeLine{00153\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{double}\ scalar,}
+\DoxyCodeLine{00154\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{classq_1_1_matrices_1_1_matrix}{q::Matrices::Matrix}}\ \&A);}
+\DoxyCodeLine{00155\ }
+\DoxyCodeLine{00156\ \ \ \ \ \textcolor{keywordtype}{double}}
+\DoxyCodeLine{00157\ \ \ \ \ multiplyVecMatrixVecTranspose(}
+\DoxyCodeLine{00158\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{double}\ vec[4],}
+\DoxyCodeLine{00159\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{classq_1_1_matrices_1_1_matrix__mc__4x4}{q::Matrices::Matrix\_mc\_4x4}}\ \&A);}
+\DoxyCodeLine{00160\ }
+\DoxyCodeLine{00168\ \ \ \ \ \mbox{\hyperlink{classq_1_1_matrices_1_1_matrix}{q::Matrices::Matrix}}}
+\DoxyCodeLine{00169\ \ \ \ \ operator/(}
+\DoxyCodeLine{00170\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{classq_1_1_matrices_1_1_matrix}{q::Matrices::Matrix}}\ \&A,}
+\DoxyCodeLine{00171\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{double}\ scalar);}
+\DoxyCodeLine{00172\ }
+\DoxyCodeLine{00180\ \ \ \ \ \mbox{\hyperlink{classq_1_1_matrices_1_1_matrix}{q::Matrices::Matrix}}}
+\DoxyCodeLine{00181\ \ \ \ \ transpose(}
+\DoxyCodeLine{00182\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{classq_1_1_matrices_1_1_matrix}{q::Matrices::Matrix}}\ \&A);}
+\DoxyCodeLine{00183\ }
+\DoxyCodeLine{00191\ \ \ \ \ \mbox{\hyperlink{classq_1_1_matrices_1_1_matrix}{q::Matrices::Matrix}}}
+\DoxyCodeLine{00192\ \ \ \ \ inv(}
+\DoxyCodeLine{00193\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{classq_1_1_matrices_1_1_matrix}{q::Matrices::Matrix}}\ \&A);}
+\DoxyCodeLine{00194\ }
+\DoxyCodeLine{00202\ \ \ \ \ \mbox{\hyperlink{classq_1_1_matrices_1_1_matrix}{q::Matrices::Matrix}}}
+\DoxyCodeLine{00203\ \ \ \ \ choleskyDecomposition(}
+\DoxyCodeLine{00204\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{classq_1_1_matrices_1_1_matrix}{q::Matrices::Matrix}}\ \&A);}
+\DoxyCodeLine{00205\ }
+\DoxyCodeLine{00213\ \ \ \ \ \mbox{\hyperlink{classq_1_1_matrices_1_1_matrix}{q::Matrices::Matrix}}}
+\DoxyCodeLine{00214\ \ \ \ \ inverseLowerTriangle(}
+\DoxyCodeLine{00215\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{classq_1_1_matrices_1_1_matrix}{q::Matrices::Matrix}}\ \&A);}
+\DoxyCodeLine{00216\ }
+\DoxyCodeLine{00226\ \ \ \ \ \mbox{\hyperlink{classq_1_1_matrices_1_1_matrix__mc}{q::Matrices::Matrix\_mc}}}
+\DoxyCodeLine{00227\ \ \ \ \ convolve(}
+\DoxyCodeLine{00228\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{classq_1_1_matrices_1_1_vector}{q::Matrices::Vector}}\ \&vec,}
+\DoxyCodeLine{00229\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{size\_t}\ n,}
+\DoxyCodeLine{00230\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{classq_1_1_matrices_1_1_matrix}{q::Matrices::Matrix}}\ \&kernel);}
+\DoxyCodeLine{00231\ }
+\DoxyCodeLine{00240\ \ \ \ \ \mbox{\hyperlink{classq_1_1_matrices_1_1_vector}{q::Matrices::Vector}}}
+\DoxyCodeLine{00241\ \ \ \ \ calcYhat(}
+\DoxyCodeLine{00242\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{classq_1_1_matrices_1_1_matrix}{q::Matrices::Matrix}}\ \&X,}
+\DoxyCodeLine{00243\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{classq_1_1_matrices_1_1_matrix__mc}{q::Matrices::Matrix\_mc}}\ \&beta,}
+\DoxyCodeLine{00244\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{size\_t}\ idx);}
+\DoxyCodeLine{00245\ }
+\DoxyCodeLine{00246\ \ \ \ \ \mbox{\hyperlink{classq_1_1_matrices_1_1_vector}{q::Matrices::Vector}}}
+\DoxyCodeLine{00247\ \ \ \ \ calcYhatExtended(}
+\DoxyCodeLine{00248\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{classq_1_1_matrices_1_1_matrix}{q::Matrices::Matrix}}\ \&X,}
+\DoxyCodeLine{00249\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{classq_1_1_matrices_1_1_vector}{q::Matrices::Vector}}\ \&beta,}
+\DoxyCodeLine{00250\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{size\_t}\ x\_row\_start\ =\ 0,}
+\DoxyCodeLine{00251\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{size\_t}\ x\_row\_end\ =\ 0);}
+\DoxyCodeLine{00252\ }
+\DoxyCodeLine{00260\ \ \ \ \ \mbox{\hyperlink{classq_1_1_matrices_1_1_vector}{q::Matrices::Vector}}}
+\DoxyCodeLine{00261\ \ \ \ \ extractCol(}
+\DoxyCodeLine{00262\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{classq_1_1_matrices_1_1_matrix__mc}{q::Matrices::Matrix\_mc}}\ \&A,}
+\DoxyCodeLine{00263\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{size\_t}\ col);}
+\DoxyCodeLine{00264\ }
+\DoxyCodeLine{00265\ \textcolor{preprocessor}{\#pragma\ endregion\ "{}Matrix\ Operations"{}}}
+\DoxyCodeLine{00266\ }
+\DoxyCodeLine{00267\ \textcolor{preprocessor}{\#pragma\ region\ "{}Vector\ Operations"{}}}
+\DoxyCodeLine{00275\ \ \ \ \ \mbox{\hyperlink{classq_1_1_matrices_1_1_vector}{q::Matrices::Vector}}}
+\DoxyCodeLine{00276\ \ \ \ \ logn(}
+\DoxyCodeLine{00277\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{classq_1_1_matrices_1_1_vector}{q::Matrices::Vector}}\ \&vec);}
+\DoxyCodeLine{00278\ }
+\DoxyCodeLine{00279\ \textcolor{preprocessor}{\#pragma\ endregion\ "{}Vector\ Operations"{}}}
+\DoxyCodeLine{00280\ }
+\DoxyCodeLine{00281\ \textcolor{preprocessor}{\#pragma\ region\ "{}print\ functions"{}}}
+\DoxyCodeLine{00288\ \ \ \ \ \textcolor{keywordtype}{void}}
+\DoxyCodeLine{00289\ \ \ \ \ print(}
+\DoxyCodeLine{00290\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{classq_1_1_matrices_1_1_matrix}{q::Matrices::Matrix}}\ \&A);}
+\DoxyCodeLine{00291\ }
+\DoxyCodeLine{00292\ \ \ \ \ \textcolor{keywordtype}{void}}
+\DoxyCodeLine{00293\ \ \ \ \ print(}
+\DoxyCodeLine{00294\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{classq_1_1_matrices_1_1_matrix__mc}{q::Matrices::Matrix\_mc}}\ \&A);}
+\DoxyCodeLine{00295\ }
+\DoxyCodeLine{00296\ \ \ \ \ \textcolor{keywordtype}{void}}
+\DoxyCodeLine{00297\ \ \ \ \ print(}
+\DoxyCodeLine{00298\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{classq_1_1_matrices_1_1_vector}{q::Matrices::Vector}}\ \&A);}
+\DoxyCodeLine{00299\ \textcolor{preprocessor}{\#pragma\ endregion\ "{}print\ functions"{}}}
+\DoxyCodeLine{00300\ }
+\DoxyCodeLine{00301\ \textcolor{preprocessor}{\#pragma\ region\ "{}execute\ commands"{}}}
+\DoxyCodeLine{00302\ \ \ \ \ std::string}
+\DoxyCodeLine{00303\ \ \ \ \ exec(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *cmd);}
+\DoxyCodeLine{00304\ \textcolor{preprocessor}{\#pragma\ endregion\ "{}execute\ commands"{}}}
+\DoxyCodeLine{00305\ \}\ \textcolor{comment}{//\ namespace\ q}}
+\DoxyCodeLine{00306\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//\ QALGORITHMS\_UTILS\_H}}
+
+\end{DoxyCode}

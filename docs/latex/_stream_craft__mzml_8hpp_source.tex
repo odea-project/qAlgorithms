@@ -1,0 +1,205 @@
+\doxysection{Stream\+Craft\+\_\+mzml.\+hpp}
+\hypertarget{_stream_craft__mzml_8hpp_source}{}\label{_stream_craft__mzml_8hpp_source}\index{external/StreamCraft/src/StreamCraft\_mzml.hpp@{external/StreamCraft/src/StreamCraft\_mzml.hpp}}
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#ifndef\ STREAMCRAFT\_MZML\_HPP}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#define\ STREAMCRAFT\_MZML\_HPP}}
+\DoxyCodeLine{00003\ }
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ <iostream>}}
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#include\ <vector>}}
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#include\ <string>}}
+\DoxyCodeLine{00007\ \textcolor{preprocessor}{\#include\ <numeric>}}
+\DoxyCodeLine{00008\ }
+\DoxyCodeLine{00009\ \textcolor{preprocessor}{\#define\ PUGIXML\_HEADER\_ONLY}}
+\DoxyCodeLine{00010\ }
+\DoxyCodeLine{00011\ \textcolor{preprocessor}{\#ifndef\ PUGIXML\_PATH}}
+\DoxyCodeLine{00012\ \textcolor{preprocessor}{\#define\ PUGIXML\_PATH\ "{}../../pugixml-\/1.14/src/pugixml.hpp"{}}}
+\DoxyCodeLine{00013\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00014\ }
+\DoxyCodeLine{00015\ \textcolor{preprocessor}{\#include\ PUGIXML\_PATH}}
+\DoxyCodeLine{00016\ }
+\DoxyCodeLine{00017\ \textcolor{preprocessor}{\#include\ "{}StreamCraft\_utils.hpp"{}}}
+\DoxyCodeLine{00018\ }
+\DoxyCodeLine{00019\ \textcolor{keyword}{namespace\ }sc\ \{}
+\DoxyCodeLine{00020\ }
+\DoxyCodeLine{00021\ \ \ \textcolor{keyword}{inline}\ \textcolor{keyword}{namespace\ }mzml\ \{}
+\DoxyCodeLine{00022\ }
+\DoxyCodeLine{00023\ \ \ \ \ \textcolor{keyword}{class\ }\mbox{\hyperlink{classsc_1_1mzml_1_1_m_z_m_l___b_i_n_a_r_y___m_e_t_a_d_a_t_a}{MZML\_BINARY\_METADATA}}\ \{}
+\DoxyCodeLine{00024\ }
+\DoxyCodeLine{00025\ \ \ \ \ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00026\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ index;}
+\DoxyCodeLine{00027\ \ \ \ \ \ \ \ \ std::string\ precision\_name;}
+\DoxyCodeLine{00028\ \ \ \ \ \ \ \ \ std::string\ precision\_accession;}
+\DoxyCodeLine{00029\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ precision\_int;}
+\DoxyCodeLine{00030\ \ \ \ \ \ \ \ \ std::string\ precision\_type;}
+\DoxyCodeLine{00031\ \ \ \ \ \ \ \ \ std::string\ compression;}
+\DoxyCodeLine{00032\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ compressed;}
+\DoxyCodeLine{00033\ \ \ \ \ \ \ \ \ std::string\ data\_name;}
+\DoxyCodeLine{00034\ \ \ \ \ \ \ \ \ std::string\ data\_accession;}
+\DoxyCodeLine{00035\ \ \ \ \ \ \ \ \ std::string\ data\_value;}
+\DoxyCodeLine{00036\ \ \ \ \ \ \ \ \ std::string\ data\_unit;}
+\DoxyCodeLine{00037\ \ \ \ \ \ \ \ \ std::string\ data\_name\_short;}
+\DoxyCodeLine{00038\ }
+\DoxyCodeLine{00039\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ print()\ \{}
+\DoxyCodeLine{00040\ \ \ \ \ \ \ \ \ \ \ std::cout\ <<\ std::endl;}
+\DoxyCodeLine{00041\ \ \ \ \ \ \ \ \ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}Index:\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ "{}}\ <<\ index\ <<\ std::endl;}
+\DoxyCodeLine{00042\ \ \ \ \ \ \ \ \ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}Precision\ original\ string:\ "{}}\ <<\ precision\_name\ <<\ std::endl;}
+\DoxyCodeLine{00043\ \ \ \ \ \ \ \ \ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}Precision\ accession:\ \ \ \ \ \ \ "{}}\ <<\ precision\_accession\ <<\ std::endl;}
+\DoxyCodeLine{00044\ \ \ \ \ \ \ \ \ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}Precision:\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ "{}}\ <<\ precision\_int\ <<\ std::endl;}
+\DoxyCodeLine{00045\ \ \ \ \ \ \ \ \ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}Precision\ type:\ \ \ \ \ \ \ \ \ \ \ \ "{}}\ <<\ precision\_type\ <<\ std::endl;}
+\DoxyCodeLine{00046\ \ \ \ \ \ \ \ \ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}Compression:\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ "{}}\ <<\ compression\ <<\ std::endl;}
+\DoxyCodeLine{00047\ \ \ \ \ \ \ \ \ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}Data\ name:\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ "{}}\ <<\ data\_name\ <<\ std::endl;}
+\DoxyCodeLine{00048\ \ \ \ \ \ \ \ \ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}Data\ accession:\ \ \ \ \ \ \ \ \ \ \ \ "{}}\ <<\ data\_accession\ <<\ std::endl;}
+\DoxyCodeLine{00049\ \ \ \ \ \ \ \ \ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}Data\ value:\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ "{}}\ <<\ data\_value\ <<\ std::endl;}
+\DoxyCodeLine{00050\ \ \ \ \ \ \ \ \ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}Data\ unit:\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ "{}}\ <<\ data\_unit\ <<\ std::endl;}
+\DoxyCodeLine{00051\ \ \ \ \ \ \ \ \ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}Data\ short\ name:\ \ \ \ \ \ \ \ \ \ \ "{}}\ <<\ data\_name\_short\ <<\ std::endl;}
+\DoxyCodeLine{00052\ \ \ \ \ \ \ \ \ \ \ std::cout\ <<\ std::endl;}
+\DoxyCodeLine{00053\ \ \ \ \ \ \ \ \ \};}
+\DoxyCodeLine{00054\ \ \ \ \ \};}
+\DoxyCodeLine{00055\ }
+\DoxyCodeLine{00056\ \ \ \ \ \textcolor{keyword}{class\ }\mbox{\hyperlink{classsc_1_1mzml_1_1_m_z_m_l}{MZML}}\ \{}
+\DoxyCodeLine{00057\ }
+\DoxyCodeLine{00058\ \ \ \ \ \ \ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00059\ }
+\DoxyCodeLine{00060\ \ \ \ \ \ \ \ \ std::vector<MZML\_BINARY\_METADATA>\ spectra\_binary\_metadata;}
+\DoxyCodeLine{00061\ }
+\DoxyCodeLine{00062\ \ \ \ \ \ \ \ \ std::vector<std::string>\ possible\_accessions\_binary\_data\ =\ \{}
+\DoxyCodeLine{00063\ \ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}MS:1000514"{}},\ \textcolor{stringliteral}{"{}MS:1000515"{}},\ \textcolor{stringliteral}{"{}MS:1000516"{}},\ \textcolor{stringliteral}{"{}MS:1000517"{}},}
+\DoxyCodeLine{00064\ \ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}MS:1000595"{}},\ \textcolor{stringliteral}{"{}MS:1000617"{}},\ \textcolor{stringliteral}{"{}MS:1000786"{}},\ \textcolor{stringliteral}{"{}MS:1000820"{}},}
+\DoxyCodeLine{00065\ \ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}MS:1000821"{}},\ \textcolor{stringliteral}{"{}MS:1000822"{}},\ \textcolor{stringliteral}{"{}MS:1002478"{}},\ \textcolor{stringliteral}{"{}MS:1002529"{}},}
+\DoxyCodeLine{00066\ \ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}MS:1002530"{}},\ \textcolor{stringliteral}{"{}MS:1002742"{}},\ \textcolor{stringliteral}{"{}MS:1002743"{}},\ \textcolor{stringliteral}{"{}MS:1002744"{}},}
+\DoxyCodeLine{00067\ \ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}MS:1002745"{}},\ \textcolor{stringliteral}{"{}MS:1002893"{}},\ \textcolor{stringliteral}{"{}MS:1003143"{}},\ \textcolor{stringliteral}{"{}MS:1003157"{}},}
+\DoxyCodeLine{00068\ \ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}MS:1003158"{}}}
+\DoxyCodeLine{00069\ \ \ \ \ \ \ \ \ \};}
+\DoxyCodeLine{00070\ }
+\DoxyCodeLine{00071\ \ \ \ \ \ \ \ \ std::vector<std::string>\ possible\_short\_name\_binary\_data\ =\ \{}
+\DoxyCodeLine{00072\ \ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}mz"{}},\ \textcolor{stringliteral}{"{}intensity"{}},\ \textcolor{stringliteral}{"{}charge"{}},\ \textcolor{stringliteral}{"{}sn"{}},}
+\DoxyCodeLine{00073\ \ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}time"{}},\ \textcolor{stringliteral}{"{}wavelength"{}},\ \textcolor{stringliteral}{"{}other"{}},\ \textcolor{stringliteral}{"{}flowrate"{}},}
+\DoxyCodeLine{00074\ \ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}pressure"{}},\ \textcolor{stringliteral}{"{}temperature"{}},\ \textcolor{stringliteral}{"{}mean\_charge"{}},\ \textcolor{stringliteral}{"{}resolution"{}},}
+\DoxyCodeLine{00075\ \ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}baseline"{}},\ \textcolor{stringliteral}{"{}noise"{}},\ \textcolor{stringliteral}{"{}sampled\_noise\_mz"{}},\ \textcolor{stringliteral}{"{}sampled\_noise\_intensity"{}},}
+\DoxyCodeLine{00076\ \ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}sampled\_noise\_baseline"{}},\ \textcolor{stringliteral}{"{}ion\_mobility"{}},\ \textcolor{stringliteral}{"{}mass"{}},\ \textcolor{stringliteral}{"{}quadrupole\_position\_lower\_bound\_mz"{}},}
+\DoxyCodeLine{00077\ \ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}quadrupole\_position\_upper\_bound\_mz"{}}}
+\DoxyCodeLine{00078\ \ \ \ \ \ \ \ \ \};}
+\DoxyCodeLine{00079\ }
+\DoxyCodeLine{00080\ \ \ \ \ \ \ \ \ std::vector<pugi::xml\_node>\ link\_vector\_spectra\_nodes();}
+\DoxyCodeLine{00081\ \ \ \ \ \ \ \ \ std::vector<pugi::xml\_node>\ link\_vector\_chrom\_nodes();}
+\DoxyCodeLine{00082\ }
+\DoxyCodeLine{00083\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ extract\_spectra\_binary\_metadata(\textcolor{keyword}{const}\ \mbox{\hyperlink{classpugi_1_1xml__node}{pugi::xml\_node}}\&\ first\_node);}
+\DoxyCodeLine{00084\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classsc_1_1mzml_1_1_m_z_m_l___b_i_n_a_r_y___m_e_t_a_d_a_t_a}{MZML\_BINARY\_METADATA}}\ extract\_binary\_metadata(\textcolor{keyword}{const}\ \mbox{\hyperlink{classpugi_1_1xml__node}{pugi::xml\_node}}\&\ bin);}
+\DoxyCodeLine{00085\ }
+\DoxyCodeLine{00086\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structsc_1_1utils_1_1_m_s___s_p_e_c_t_r_a___h_e_a_d_e_r_s}{utils::MS\_SPECTRA\_HEADERS}}\ extract\_spectra\_headers(\textcolor{keyword}{const}\ std::vector<int>\&\ idxs);}
+\DoxyCodeLine{00087\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structsc_1_1utils_1_1_m_s___c_h_r_o_m_a_t_o_g_r_a_m_s___h_e_a_d_e_r_s}{utils::MS\_CHROMATOGRAMS\_HEADERS}}\ extract\_chrom\_headers(\textcolor{keyword}{const}\ std::vector<int>\&\ idxs);}
+\DoxyCodeLine{00088\ }
+\DoxyCodeLine{00089\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ extract\_spec\_index(\textcolor{keyword}{const}\ \mbox{\hyperlink{classpugi_1_1xml__node}{pugi::xml\_node}}\&\ spec);}
+\DoxyCodeLine{00090\ \ \ \ \ \ \ \ \ std::string\ extract\_spec\_id(\textcolor{keyword}{const}\ \mbox{\hyperlink{classpugi_1_1xml__node}{pugi::xml\_node}}\&\ spec);}
+\DoxyCodeLine{00091\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ extract\_spec\_scan(\textcolor{keyword}{const}\ \mbox{\hyperlink{classpugi_1_1xml__node}{pugi::xml\_node}}\&\ spec);}
+\DoxyCodeLine{00092\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ extract\_spec\_array\_length(\textcolor{keyword}{const}\ \mbox{\hyperlink{classpugi_1_1xml__node}{pugi::xml\_node}}\&\ spec);}
+\DoxyCodeLine{00093\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ extract\_spec\_level(\textcolor{keyword}{const}\ \mbox{\hyperlink{classpugi_1_1xml__node}{pugi::xml\_node}}\&\ spec);}
+\DoxyCodeLine{00094\ \ \ \ \ \ \ \ \ std::string\ extract\_spec\_mode(\textcolor{keyword}{const}\ \mbox{\hyperlink{classpugi_1_1xml__node}{pugi::xml\_node}}\&\ spec);}
+\DoxyCodeLine{00095\ \ \ \ \ \ \ \ \ std::string\ extract\_spec\_polarity(\textcolor{keyword}{const}\ \mbox{\hyperlink{classpugi_1_1xml__node}{pugi::xml\_node}}\&\ spec);}
+\DoxyCodeLine{00096\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{double}\ extract\_spec\_lowmz(\textcolor{keyword}{const}\ \mbox{\hyperlink{classpugi_1_1xml__node}{pugi::xml\_node}}\&\ spec);}
+\DoxyCodeLine{00097\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{double}\ extract\_spec\_highmz(\textcolor{keyword}{const}\ \mbox{\hyperlink{classpugi_1_1xml__node}{pugi::xml\_node}}\&\ spec);}
+\DoxyCodeLine{00098\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{double}\ extract\_spec\_bpmz(\textcolor{keyword}{const}\ \mbox{\hyperlink{classpugi_1_1xml__node}{pugi::xml\_node}}\&\ spec);}
+\DoxyCodeLine{00099\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{double}\ extract\_spec\_bpint(\textcolor{keyword}{const}\ \mbox{\hyperlink{classpugi_1_1xml__node}{pugi::xml\_node}}\&\ spec);}
+\DoxyCodeLine{00100\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{double}\ extract\_spec\_tic(\textcolor{keyword}{const}\ \mbox{\hyperlink{classpugi_1_1xml__node}{pugi::xml\_node}}\&\ spec);}
+\DoxyCodeLine{00101\ \ \ \ \ \ \ \ \ std::string\ extract\_spec\_title(\textcolor{keyword}{const}\ \mbox{\hyperlink{classpugi_1_1xml__node}{pugi::xml\_node}}\&\ spec);}
+\DoxyCodeLine{00102\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{double}\ extract\_scan\_rt(\textcolor{keyword}{const}\ \mbox{\hyperlink{classpugi_1_1xml__node}{pugi::xml\_node}}\&\ spec);}
+\DoxyCodeLine{00103\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{double}\ extract\_scan\_drift(\textcolor{keyword}{const}\ \mbox{\hyperlink{classpugi_1_1xml__node}{pugi::xml\_node}}\&\ spec);}
+\DoxyCodeLine{00104\ \ \ \ \ \ \ \ \ std::string\ extract\_scan\_filter\_string(\textcolor{keyword}{const}\ \mbox{\hyperlink{classpugi_1_1xml__node}{pugi::xml\_node}}\&\ spec);}
+\DoxyCodeLine{00105\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ extract\_scan\_config(\textcolor{keyword}{const}\ \mbox{\hyperlink{classpugi_1_1xml__node}{pugi::xml\_node}}\&\ spec);}
+\DoxyCodeLine{00106\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{double}\ extract\_scan\_injection\_ion\_time(\textcolor{keyword}{const}\ \mbox{\hyperlink{classpugi_1_1xml__node}{pugi::xml\_node}}\&\ spec);}
+\DoxyCodeLine{00107\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ extract\_precursor\_scan(\textcolor{keyword}{const}\ \mbox{\hyperlink{classpugi_1_1xml__node}{pugi::xml\_node}}\&\ spec);}
+\DoxyCodeLine{00108\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{double}\ extract\_window\_mz(\textcolor{keyword}{const}\ \mbox{\hyperlink{classpugi_1_1xml__node}{pugi::xml\_node}}\&\ spec);}
+\DoxyCodeLine{00109\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{double}\ extract\_window\_mzlow(\textcolor{keyword}{const}\ \mbox{\hyperlink{classpugi_1_1xml__node}{pugi::xml\_node}}\&\ spec);}
+\DoxyCodeLine{00110\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{double}\ extract\_window\_mzhigh(\textcolor{keyword}{const}\ \mbox{\hyperlink{classpugi_1_1xml__node}{pugi::xml\_node}}\&\ spec);}
+\DoxyCodeLine{00111\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{double}\ extract\_ion\_mz(\textcolor{keyword}{const}\ \mbox{\hyperlink{classpugi_1_1xml__node}{pugi::xml\_node}}\&\ spec);}
+\DoxyCodeLine{00112\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{double}\ extract\_ion\_intensity(\textcolor{keyword}{const}\ \mbox{\hyperlink{classpugi_1_1xml__node}{pugi::xml\_node}}\&\ spec);}
+\DoxyCodeLine{00113\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ extract\_ion\_charge(\textcolor{keyword}{const}\ \mbox{\hyperlink{classpugi_1_1xml__node}{pugi::xml\_node}}\&\ spec);}
+\DoxyCodeLine{00114\ \ \ \ \ \ \ \ \ std::string\ extract\_activation\_type(\textcolor{keyword}{const}\ \mbox{\hyperlink{classpugi_1_1xml__node}{pugi::xml\_node}}\&\ spec);}
+\DoxyCodeLine{00115\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{double}\ extract\_activation\_ce(\textcolor{keyword}{const}\ \mbox{\hyperlink{classpugi_1_1xml__node}{pugi::xml\_node}}\&\ spec);}
+\DoxyCodeLine{00116\ }
+\DoxyCodeLine{00117\ \ \ \ \ \ \ \ \ std::vector<std::vector<double>>\ extract\_spectrum(\textcolor{keyword}{const}\ \mbox{\hyperlink{classpugi_1_1xml__node}{pugi::xml\_node}}\&\ spectrum\_node);}
+\DoxyCodeLine{00118\ \ \ \ \ \ \ \ \ std::vector<std::vector<std::vector<double>>>\ extract\_spectra(\textcolor{keyword}{const}\ std::vector<int>\&\ idxs);}
+\DoxyCodeLine{00119\ }
+\DoxyCodeLine{00120\ \ \ \ \ \ \ \ \ std::vector<std::vector<double>>\ extract\_chromatogram(\textcolor{keyword}{const}\ \mbox{\hyperlink{classpugi_1_1xml__node}{pugi::xml\_node}}\&\ chrom\_node);}
+\DoxyCodeLine{00121\ \ \ \ \ \ \ \ \ std::vector<std::vector<std::vector<double>>>\ extract\_chromatograms(\textcolor{keyword}{const}\ std::vector<int>\&\ idxs);}
+\DoxyCodeLine{00122\ }
+\DoxyCodeLine{00123\ \ \ \ \ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00124\ }
+\DoxyCodeLine{00125\ \ \ \ \ \ \ \ \ std::string\ file\_path;}
+\DoxyCodeLine{00126\ }
+\DoxyCodeLine{00127\ \ \ \ \ \ \ \ \ std::string\ file\_dir;}
+\DoxyCodeLine{00128\ }
+\DoxyCodeLine{00129\ \ \ \ \ \ \ \ \ std::string\ file\_name;}
+\DoxyCodeLine{00130\ }
+\DoxyCodeLine{00131\ \ \ \ \ \ \ \ \ std::string\ file\_extension;}
+\DoxyCodeLine{00132\ }
+\DoxyCodeLine{00133\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classpugi_1_1xml__document}{pugi::xml\_document}}\ doc;}
+\DoxyCodeLine{00134\ }
+\DoxyCodeLine{00135\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structpugi_1_1xml__parse__result}{pugi::xml\_parse\_result}}\ loading\_result;}
+\DoxyCodeLine{00136\ }
+\DoxyCodeLine{00137\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classpugi_1_1xml__node}{pugi::xml\_node}}\ root;}
+\DoxyCodeLine{00138\ }
+\DoxyCodeLine{00139\ \ \ \ \ \ \ \ \ std::string\ format;}
+\DoxyCodeLine{00140\ }
+\DoxyCodeLine{00141\ \ \ \ \ \ \ \ \ std::string\ name;}
+\DoxyCodeLine{00142\ }
+\DoxyCodeLine{00143\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ number\_spectra;}
+\DoxyCodeLine{00144\ }
+\DoxyCodeLine{00145\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ number\_chromatograms;}
+\DoxyCodeLine{00146\ }
+\DoxyCodeLine{00147\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ number\_spectra\_binary\_arrays;}
+\DoxyCodeLine{00148\ }
+\DoxyCodeLine{00149\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structsc_1_1utils_1_1_m_s___s_p_e_c_t_r_a___h_e_a_d_e_r_s}{utils::MS\_SPECTRA\_HEADERS}}\ first\_spectra\_headers;}
+\DoxyCodeLine{00150\ }
+\DoxyCodeLine{00151\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classsc_1_1mzml_1_1_m_z_m_l}{MZML}}(\textcolor{keyword}{const}\ std::string\&\ file);}
+\DoxyCodeLine{00152\ }
+\DoxyCodeLine{00153\ \ \ \ \ \ \ \ \ std::vector<std::string>\ get\_spectra\_binary\_short\_names();}
+\DoxyCodeLine{00154\ }
+\DoxyCodeLine{00155\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structsc_1_1utils_1_1_m_s___s_p_e_c_t_r_a___h_e_a_d_e_r_s}{utils::MS\_SPECTRA\_HEADERS}}\ get\_spectra\_headers(std::vector<int>\ indices\ =\ \{\});}
+\DoxyCodeLine{00156\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structsc_1_1utils_1_1_m_s___c_h_r_o_m_a_t_o_g_r_a_m_s___h_e_a_d_e_r_s}{utils::MS\_CHROMATOGRAMS\_HEADERS}}\ get\_chromatograms\_headers(std::vector<int>\ indices\ =\ \{\});}
+\DoxyCodeLine{00157\ \ \ \ \ \ \ \ \ std::vector<std::vector<std::vector<double>>>\ get\_spectra(std::vector<int>\ indices\ =\ \{\});}
+\DoxyCodeLine{00158\ \ \ \ \ \ \ \ \ std::vector<std::vector<std::vector<double>>>\ get\_chromatograms(std::vector<int>\ indices\ =\ \{\});}
+\DoxyCodeLine{00159\ }
+\DoxyCodeLine{00160\ \ \ \ \ \ \ \ \ std::vector<int>\ get\_spectra\_index(std::vector<int>\ indices\ =\ \{\});}
+\DoxyCodeLine{00161\ \ \ \ \ \ \ \ \ std::vector<int>\ get\_spectra\_scan\_number(std::vector<int>\ indices\ =\ \{\});}
+\DoxyCodeLine{00162\ \ \ \ \ \ \ \ \ std::vector<int>\ get\_spectra\_array\_length(std::vector<int>\ indices\ =\ \{\});}
+\DoxyCodeLine{00163\ \ \ \ \ \ \ \ \ std::vector<int>\ get\_spectra\_level(std::vector<int>\ indices\ =\ \{\});}
+\DoxyCodeLine{00164\ \ \ \ \ \ \ \ \ std::vector<std::string>\ get\_spectra\_mode(std::vector<int>\ indices\ =\ \{\});}
+\DoxyCodeLine{00165\ \ \ \ \ \ \ \ \ std::vector<std::string>\ get\_spectra\_polarity(std::vector<int>\ indices\ =\ \{\});}
+\DoxyCodeLine{00166\ \ \ \ \ \ \ \ \ std::vector<double>\ get\_spectra\_lowmz(std::vector<int>\ indices\ =\ \{\});}
+\DoxyCodeLine{00167\ \ \ \ \ \ \ \ \ std::vector<double>\ get\_spectra\_highmz(std::vector<int>\ indices\ =\ \{\});}
+\DoxyCodeLine{00168\ \ \ \ \ \ \ \ \ std::vector<double>\ get\_spectra\_bpmz(std::vector<int>\ indices\ =\ \{\});}
+\DoxyCodeLine{00169\ \ \ \ \ \ \ \ \ std::vector<double>\ get\_spectra\_bpint(std::vector<int>\ indices\ =\ \{\});}
+\DoxyCodeLine{00170\ \ \ \ \ \ \ \ \ std::vector<double>\ get\_spectra\_tic(std::vector<int>\ indices\ =\ \{\});}
+\DoxyCodeLine{00171\ \ \ \ \ \ \ \ \ std::vector<double>\ get\_spectra\_rt(std::vector<int>\ indices\ =\ \{\});}
+\DoxyCodeLine{00172\ \ \ \ \ \ \ \ \ std::vector<double>\ get\_spectra\_drift(std::vector<int>\ indices\ =\ \{\});}
+\DoxyCodeLine{00173\ \ \ \ \ \ \ \ \ std::vector<int>\ get\_spectra\_precursor\_scan(std::vector<int>\ indices\ =\ \{\});}
+\DoxyCodeLine{00174\ \ \ \ \ \ \ \ \ std::vector<double>\ get\_spectra\_precursor\_mz(std::vector<int>\ indices\ =\ \{\});}
+\DoxyCodeLine{00175\ \ \ \ \ \ \ \ \ std::vector<double>\ get\_spectra\_precursor\_window\_mz(std::vector<int>\ indices\ =\ \{\});}
+\DoxyCodeLine{00176\ \ \ \ \ \ \ \ \ std::vector<double>\ get\_spectra\_precursor\_window\_mzlow(std::vector<int>\ indices\ =\ \{\});}
+\DoxyCodeLine{00177\ \ \ \ \ \ \ \ \ std::vector<double>\ get\_spectra\_precursor\_window\_mzhigh(std::vector<int>\ indices\ =\ \{\});}
+\DoxyCodeLine{00178\ \ \ \ \ \ \ \ \ std::vector<double>\ get\_spectra\_collision\_energy(std::vector<int>\ indices\ =\ \{\});}
+\DoxyCodeLine{00179\ }
+\DoxyCodeLine{00180\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ print();}
+\DoxyCodeLine{00181\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ print\_spectra\_binary\_metadata();}
+\DoxyCodeLine{00182\ }
+\DoxyCodeLine{00183\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ write\_spectra(\textcolor{keyword}{const}\ std::vector<std::vector<std::vector<double>>>\&\ spectra,}
+\DoxyCodeLine{00184\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ std::vector<std::string>\&\ names,\ MS\_SPECTRA\_MODE\ mode,\ \textcolor{keywordtype}{bool}\ compress,\ \textcolor{keywordtype}{bool}\ save,\ std::string\ save\_suffix);}
+\DoxyCodeLine{00185\ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00186\ \ \ \ \ \};\ \textcolor{comment}{//\ class\ MZML}}
+\DoxyCodeLine{00187\ }
+\DoxyCodeLine{00188\ \ \ \ \ \textcolor{keywordtype}{void}\ test\_extract\_spectra\_mzml(\textcolor{keyword}{const}\ std::string\&\ file);}
+\DoxyCodeLine{00189\ \ \ \ \ \textcolor{keywordtype}{void}\ test\_extract\_chromatograms\_mzml(\textcolor{keyword}{const}\ std::string\&\ file);}
+\DoxyCodeLine{00190\ }
+\DoxyCodeLine{00191\ \ \ \};\ \textcolor{comment}{//\ namespace\ mzml}}
+\DoxyCodeLine{00192\ \};\ \textcolor{comment}{//\ namespace\ sc}}
+\DoxyCodeLine{00193\ }
+\DoxyCodeLine{00194\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//\ STREAMCRAFT\_MZML\_HPP}}
+\DoxyCodeLine{00195\ }
+\DoxyCodeLine{00196\ \textcolor{comment}{//\ \#if\ defined(STREAMCRAFT\_HEADER\_ONLY)\ \&\&\ !defined(STREAMCRAFT\_MZML\_SOURCE)}}
+\DoxyCodeLine{00197\ \textcolor{comment}{//\ \#\ \ \ \ define\ STREAMCRAFT\_MZML\_SOURCE\ "{}StreamCraft\_mzml.cpp"{}}}
+\DoxyCodeLine{00198\ \textcolor{comment}{//\ \#\ \ \ \ include\ STREAMCRAFT\_MZML\_SOURCE}}
+\DoxyCodeLine{00199\ \textcolor{comment}{//\ \#endif}}
+
+\end{DoxyCode}

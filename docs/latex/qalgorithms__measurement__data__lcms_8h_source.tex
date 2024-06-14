@@ -1,0 +1,68 @@
+\doxysection{qalgorithms\+\_\+measurement\+\_\+data\+\_\+lcms.\+h}
+\hypertarget{qalgorithms__measurement__data__lcms_8h_source}{}\label{qalgorithms__measurement__data__lcms_8h_source}\index{include/qalgorithms\_measurement\_data\_lcms.h@{include/qalgorithms\_measurement\_data\_lcms.h}}
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#ifndef\ QALGORITHMS\_MEASUREMENT\_DATA\_LCMS\_H}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#define\ QALGORITHMS\_MEASUREMENT\_DATA\_LCMS\_H}}
+\DoxyCodeLine{00003\ }
+\DoxyCodeLine{00004\ \textcolor{comment}{//\ internal}}
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#include\ "{}qalgorithms\_measurement\_data.h"{}}}
+\DoxyCodeLine{00006\ }
+\DoxyCodeLine{00007\ \textcolor{comment}{//\ external}}
+\DoxyCodeLine{00008\ \textcolor{preprocessor}{\#include\ "{}../external/StreamCraft/src/StreamCraft\_mzml.hpp"{}}}
+\DoxyCodeLine{00009\ \textcolor{preprocessor}{\#include\ <vector>}}
+\DoxyCodeLine{00010\ }
+\DoxyCodeLine{00011\ \textcolor{keyword}{namespace\ }q}
+\DoxyCodeLine{00012\ \{}
+\DoxyCodeLine{00013\ \ \ \ \ \textcolor{keyword}{namespace\ }MeasurementData}
+\DoxyCodeLine{00014\ \ \ \ \ \{}
+\DoxyCodeLine{00020\ \ \ \ \ \textcolor{keyword}{class\ }\mbox{\hyperlink{classq_1_1_measurement_data_1_1_l_c_m_s_data}{LCMSData}}\ :\ \textcolor{keyword}{public}\ \mbox{\hyperlink{classq_1_1_measurement_data_1_1_measurement_data}{MeasurementData}}}
+\DoxyCodeLine{00021\ \ \ \ \ \{}
+\DoxyCodeLine{00022\ \ \ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00023\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ constructors}}
+\DoxyCodeLine{00024\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classq_1_1_measurement_data_1_1_l_c_m_s_data}{LCMSData}}();}
+\DoxyCodeLine{00025\ }
+\DoxyCodeLine{00026\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ destructor}}
+\DoxyCodeLine{00027\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classq_1_1_measurement_data_1_1_l_c_m_s_data}{\string~LCMSData}}();}
+\DoxyCodeLine{00028\ }
+\DoxyCodeLine{00029\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ methods}}
+\DoxyCodeLine{00041\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ }
+\DoxyCodeLine{00042\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classq_1_1_measurement_data_1_1_l_c_m_s_data_ac8b1f1de33f106e3029c93dba646d3ab}{readCSV}}(}
+\DoxyCodeLine{00043\ \ \ \ \ \ \ \ \ \ \ \ \ std::string\ filename,\ }
+\DoxyCodeLine{00044\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ rowStart,\ }
+\DoxyCodeLine{00045\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ rowEnd,\ }
+\DoxyCodeLine{00046\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ colStart,\ }
+\DoxyCodeLine{00047\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ colEnd,\ }
+\DoxyCodeLine{00048\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{char}\ separator,\ }
+\DoxyCodeLine{00049\ \ \ \ \ \ \ \ \ \ \ \ \ std::vector<DataType::DataField>\ variableTypes);}
+\DoxyCodeLine{00050\ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00057\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ }
+\DoxyCodeLine{00058\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classq_1_1_measurement_data_1_1_l_c_m_s_data_a07fa12c50631a36096869d217f3b7cb3}{readStreamCraftMZML}}(}
+\DoxyCodeLine{00059\ \ \ \ \ \ \ \ \ \ \ \ \ sc::MZML\ \&data}
+\DoxyCodeLine{00060\ \ \ \ \ \ \ \ \ );}
+\DoxyCodeLine{00061\ }
+\DoxyCodeLine{00067\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classq_1_1_measurement_data_1_1_l_c_m_s_data_afc48e6a3cd1a7a0be5c829dd2ed260bf}{writeCSV}}(std::string\ filename);}
+\DoxyCodeLine{00068\ }
+\DoxyCodeLine{00074\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classq_1_1_measurement_data_1_1_l_c_m_s_data_a7f4d2c61ac170561366eb3679152ccc1}{zeroFilling}}();}
+\DoxyCodeLine{00075\ }
+\DoxyCodeLine{00080\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classq_1_1_measurement_data_1_1_l_c_m_s_data_aaa6311fc1e7bfe91dd45e1e4e9bb06b0}{cutData}}();}
+\DoxyCodeLine{00081\ }
+\DoxyCodeLine{00086\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classq_1_1_measurement_data_1_1_l_c_m_s_data_aa97b81ddd0eba5f375cbc111c22480fb}{filterSmallDataSets}}();}
+\DoxyCodeLine{00087\ }
+\DoxyCodeLine{00092\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classq_1_1_measurement_data_1_1_l_c_m_s_data_a3b8149bef66ae5e0ec37b8f9bebf09c3}{interpolateData}}();}
+\DoxyCodeLine{00093\ }
+\DoxyCodeLine{00094\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ debugging}}
+\DoxyCodeLine{00099\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classq_1_1_measurement_data_1_1_l_c_m_s_data_a23b96de52da532877df29dab5539463a}{print}}();}
+\DoxyCodeLine{00104\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classq_1_1_measurement_data_1_1_l_c_m_s_data_a37b78a76a3db04e99d4836ebb3062c46}{info}}();}
+\DoxyCodeLine{00105\ }
+\DoxyCodeLine{00106\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ getMaxKey();}
+\DoxyCodeLine{00107\ }
+\DoxyCodeLine{00108\ \ \ \ \ \ \ \ \ std::vector<std::unique\_ptr<DataType::MassSpectrum>>\ data;}
+\DoxyCodeLine{00109\ \ \ \ \ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00110\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{size\_t}\ maxKey;}
+\DoxyCodeLine{00111\ \ \ \ \ \};}
+\DoxyCodeLine{00112\ \ \ \ \ \}\ \textcolor{comment}{//\ namespace\ MeasurmentData}}
+\DoxyCodeLine{00113\ \}\ \textcolor{comment}{//\ namespace\ q}}
+\DoxyCodeLine{00114\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//\ QALGORITHMS\_MEASUREMENT\_DATA\_LCMS\_H}}
+
+\end{DoxyCode}

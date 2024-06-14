@@ -1,0 +1,181 @@
+\doxysection{qalgorithms\+\_\+matrix.\+h}
+\hypertarget{qalgorithms__matrix_8h_source}{}\label{qalgorithms__matrix_8h_source}\index{include/qalgorithms\_matrix.h@{include/qalgorithms\_matrix.h}}
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{//\ qalgorithms\_matrix.h}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#ifndef\ QALGORITHMS\_MATRIX\_H\ }\textcolor{comment}{//\ Include\ guarde\ to\ prevent\ double\ inclusion}}
+\DoxyCodeLine{00003\ \textcolor{preprocessor}{\#define\ QALGORITHMS\_MATRIX\_H}}
+\DoxyCodeLine{00004\ }
+\DoxyCodeLine{00005\ \textcolor{comment}{//\ external}}
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#include\ <iostream>}}
+\DoxyCodeLine{00007\ \textcolor{preprocessor}{\#include\ <cmath>}}
+\DoxyCodeLine{00008\ \textcolor{preprocessor}{\#include\ <algorithm>}}
+\DoxyCodeLine{00009\ \textcolor{preprocessor}{\#include\ <array>}}
+\DoxyCodeLine{00010\ \textcolor{preprocessor}{\#include\ <cstdint>}}
+\DoxyCodeLine{00011\ }
+\DoxyCodeLine{00012\ \textcolor{comment}{/*\ This\ file\ includes\ the\ q::matrix\ class*/}}
+\DoxyCodeLine{00013\ \textcolor{keyword}{namespace\ }q}
+\DoxyCodeLine{00014\ \{}
+\DoxyCodeLine{00015\ \ \ \textcolor{keyword}{namespace\ }Matrices}
+\DoxyCodeLine{00016\ \ \ \{}
+\DoxyCodeLine{00025\ \ \ \textcolor{keyword}{class\ }\mbox{\hyperlink{classq_1_1_matrices_1_1_matrix}{Matrix}}}
+\DoxyCodeLine{00026\ \ \ \{}
+\DoxyCodeLine{00027\ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00028\ \ \ \ \ \textcolor{keywordtype}{double}\ *elements;}
+\DoxyCodeLine{00029\ \ \ \ \ \textcolor{keywordtype}{size\_t}\ rows,\ cols;}
+\DoxyCodeLine{00030\ \ \ \ \ \textcolor{comment}{//\ Constructors\ and\ Destructor}}
+\DoxyCodeLine{00031\ \ \ \ \ \mbox{\hyperlink{classq_1_1_matrices_1_1_matrix}{Matrix}}();}
+\DoxyCodeLine{00032\ \ \ \ \ \mbox{\hyperlink{classq_1_1_matrices_1_1_matrix}{Matrix}}(\textcolor{keywordtype}{size\_t}\ rows,\ \textcolor{keywordtype}{size\_t}\ cols);}
+\DoxyCodeLine{00033\ \ \ \ \ \mbox{\hyperlink{classq_1_1_matrices_1_1_matrix}{Matrix}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classq_1_1_matrices_1_1_matrix}{Matrix}}\ \&other);}
+\DoxyCodeLine{00034\ \ \ \ \ \mbox{\hyperlink{classq_1_1_matrices_1_1_matrix}{\string~Matrix}}();}
+\DoxyCodeLine{00035\ }
+\DoxyCodeLine{00036\ \ \ \ \ \textcolor{keywordtype}{double}\ \&}
+\DoxyCodeLine{00037\ \ \ \ \ operator()(\textcolor{keywordtype}{size\_t}\ row,\ \textcolor{keywordtype}{size\_t}\ col);}
+\DoxyCodeLine{00038\ }
+\DoxyCodeLine{00039\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{double}\ \&}
+\DoxyCodeLine{00040\ \ \ \ \ operator()(\textcolor{keywordtype}{size\_t}\ row,\ \textcolor{keywordtype}{size\_t}\ col)\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00041\ }
+\DoxyCodeLine{00042\ \ \ \ \ \textcolor{keywordtype}{double}\ \&}
+\DoxyCodeLine{00043\ \ \ \ \ operator[](\textcolor{keywordtype}{size\_t}\ idx)\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00044\ }
+\DoxyCodeLine{00045\ \ \ \ \ \mbox{\hyperlink{classq_1_1_matrices_1_1_matrix}{Matrix}}\ \&}
+\DoxyCodeLine{00046\ \ \ \ \ operator=(\textcolor{keyword}{const}\ \mbox{\hyperlink{classq_1_1_matrices_1_1_matrix}{Matrix}}\ \&other);}
+\DoxyCodeLine{00047\ \ \ \};}
+\DoxyCodeLine{00048\ }
+\DoxyCodeLine{00057\ \ \ \textcolor{keyword}{class\ }\mbox{\hyperlink{classq_1_1_matrices_1_1_matrix__mc}{Matrix\_mc}}}
+\DoxyCodeLine{00058\ \ \ \{}
+\DoxyCodeLine{00059\ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00060\ \ \ \ \ \textcolor{keywordtype}{double}\ *elements;}
+\DoxyCodeLine{00061\ \ \ \ \ \textcolor{keywordtype}{size\_t}\ rows,\ cols;}
+\DoxyCodeLine{00062\ }
+\DoxyCodeLine{00063\ \ \ \ \ \mbox{\hyperlink{classq_1_1_matrices_1_1_matrix__mc}{Matrix\_mc}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{size\_t}\ rows,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{size\_t}\ cols);}
+\DoxyCodeLine{00064\ \ \ \ \ \mbox{\hyperlink{classq_1_1_matrices_1_1_matrix__mc}{\string~Matrix\_mc}}();}
+\DoxyCodeLine{00065\ }
+\DoxyCodeLine{00066\ \ \ \ \ \mbox{\hyperlink{classq_1_1_matrices_1_1_matrix__mc}{Matrix\_mc}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classq_1_1_matrices_1_1_matrix__mc}{Matrix\_mc}}\ \&other);}
+\DoxyCodeLine{00067\ }
+\DoxyCodeLine{00068\ \ \ \ \ \textcolor{keywordtype}{double}\ \&}
+\DoxyCodeLine{00069\ \ \ \ \ operator()(\textcolor{keywordtype}{size\_t}\ row,\ \textcolor{keywordtype}{size\_t}\ col);}
+\DoxyCodeLine{00070\ }
+\DoxyCodeLine{00071\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{double}\ \&}
+\DoxyCodeLine{00072\ \ \ \ \ operator()(\textcolor{keywordtype}{size\_t}\ row,\ \textcolor{keywordtype}{size\_t}\ col)\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00073\ }
+\DoxyCodeLine{00074\ \ \ \ \ \textcolor{keywordtype}{double}\ \&}
+\DoxyCodeLine{00075\ \ \ \ \ operator[](\textcolor{keywordtype}{size\_t}\ idx);}
+\DoxyCodeLine{00076\ }
+\DoxyCodeLine{00077\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{double}\ \&}
+\DoxyCodeLine{00078\ \ \ \ \ operator[](\textcolor{keywordtype}{size\_t}\ idx)\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00079\ }
+\DoxyCodeLine{00080\ \ \ \ \ \mbox{\hyperlink{classq_1_1_matrices_1_1_matrix__mc}{Matrix\_mc}}\ \&}
+\DoxyCodeLine{00081\ \ \ \ \ operator=(\textcolor{keyword}{const}\ \mbox{\hyperlink{classq_1_1_matrices_1_1_matrix__mc}{Matrix\_mc}}\ \&other);}
+\DoxyCodeLine{00082\ \ \ \};}
+\DoxyCodeLine{00083\ }
+\DoxyCodeLine{00084\ }
+\DoxyCodeLine{00091\ \ \ \textcolor{keyword}{class\ }\mbox{\hyperlink{classq_1_1_matrices_1_1_matrix__mc__4x4}{Matrix\_mc\_4x4}}}
+\DoxyCodeLine{00092\ \ \ \{}
+\DoxyCodeLine{00093\ \ \ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00094\ \ \ \ \ \textcolor{keywordtype}{double}\ elements[16];}
+\DoxyCodeLine{00095\ }
+\DoxyCodeLine{00096\ \ \ \ \ \mbox{\hyperlink{classq_1_1_matrices_1_1_matrix__mc__4x4}{Matrix\_mc\_4x4}}();}
+\DoxyCodeLine{00097\ \ \ \ \ \mbox{\hyperlink{classq_1_1_matrices_1_1_matrix__mc__4x4}{\string~Matrix\_mc\_4x4}}();}
+\DoxyCodeLine{00098\ }
+\DoxyCodeLine{00099\ \ \ \ \ \mbox{\hyperlink{classq_1_1_matrices_1_1_matrix__mc__4x4}{Matrix\_mc\_4x4}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classq_1_1_matrices_1_1_matrix__mc__4x4}{Matrix\_mc\_4x4}}\ \&other);}
+\DoxyCodeLine{00100\ }
+\DoxyCodeLine{00101\ \ \ \ \ \textcolor{keywordtype}{double}\ \&}
+\DoxyCodeLine{00102\ \ \ \ \ operator()(\textcolor{keywordtype}{size\_t}\ row,\ \textcolor{keywordtype}{size\_t}\ col);}
+\DoxyCodeLine{00103\ }
+\DoxyCodeLine{00104\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{double}\ \&}
+\DoxyCodeLine{00105\ \ \ \ \ operator()(\textcolor{keywordtype}{size\_t}\ row,\ \textcolor{keywordtype}{size\_t}\ col)\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00106\ }
+\DoxyCodeLine{00107\ \ \ \ \ \textcolor{keywordtype}{double}\ \&}
+\DoxyCodeLine{00108\ \ \ \ \ operator[](\textcolor{keywordtype}{size\_t}\ idx);}
+\DoxyCodeLine{00109\ }
+\DoxyCodeLine{00110\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{double}\ \&}
+\DoxyCodeLine{00111\ \ \ \ \ operator[](\textcolor{keywordtype}{size\_t}\ idx)\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00112\ }
+\DoxyCodeLine{00113\ \ \ \ \ \mbox{\hyperlink{classq_1_1_matrices_1_1_matrix__mc__4x4}{Matrix\_mc\_4x4}}\ \&}
+\DoxyCodeLine{00114\ \ \ \ \ operator=(\textcolor{keyword}{const}\ \mbox{\hyperlink{classq_1_1_matrices_1_1_matrix__mc__4x4}{Matrix\_mc\_4x4}}\ \&other);}
+\DoxyCodeLine{00115\ }
+\DoxyCodeLine{00116\ \ \ \ \ \textcolor{keywordtype}{double}*}
+\DoxyCodeLine{00117\ \ \ \ \ begin();}
+\DoxyCodeLine{00118\ }
+\DoxyCodeLine{00119\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{double}*}
+\DoxyCodeLine{00120\ \ \ \ \ begin()\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00121\ }
+\DoxyCodeLine{00122\ \ \ \ \ \textcolor{keywordtype}{double}*}
+\DoxyCodeLine{00123\ \ \ \ \ end();}
+\DoxyCodeLine{00124\ }
+\DoxyCodeLine{00125\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{double}*}
+\DoxyCodeLine{00126\ \ \ \ \ end()\ \textcolor{keyword}{const};\ \ }
+\DoxyCodeLine{00127\ \ \ \};}
+\DoxyCodeLine{00128\ }
+\DoxyCodeLine{00129\ }
+\DoxyCodeLine{00137\ \ \ \textcolor{keyword}{class\ }\mbox{\hyperlink{classq_1_1_matrices_1_1_vector}{Vector}}}
+\DoxyCodeLine{00138\ \ \ \{}
+\DoxyCodeLine{00139\ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00140\ \ \ \ \ \textcolor{keywordtype}{double}\ *elements;}
+\DoxyCodeLine{00141\ \ \ \ \ \textcolor{keywordtype}{size\_t}\ n;}
+\DoxyCodeLine{00142\ }
+\DoxyCodeLine{00143\ \ \ \ \ \mbox{\hyperlink{classq_1_1_matrices_1_1_vector}{Vector}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{size\_t}\ n);}
+\DoxyCodeLine{00144\ \ \ \ \ \mbox{\hyperlink{classq_1_1_matrices_1_1_vector}{\string~Vector}}();}
+\DoxyCodeLine{00145\ }
+\DoxyCodeLine{00146\ \ \ \ \ \mbox{\hyperlink{classq_1_1_matrices_1_1_vector}{Vector}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classq_1_1_matrices_1_1_vector}{Vector}}\&\ other);}
+\DoxyCodeLine{00147\ }
+\DoxyCodeLine{00148\ \ \ \ \ \textcolor{keywordtype}{double}\ \&}
+\DoxyCodeLine{00149\ \ \ \ \ operator[](\textcolor{keywordtype}{size\_t}\ idx);}
+\DoxyCodeLine{00150\ }
+\DoxyCodeLine{00151\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{double}\ \&}
+\DoxyCodeLine{00152\ \ \ \ \ operator[](\textcolor{keywordtype}{size\_t}\ idx)\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00153\ }
+\DoxyCodeLine{00154\ \ \ \ \ \textcolor{keywordtype}{double}*}
+\DoxyCodeLine{00155\ \ \ \ \ begin();}
+\DoxyCodeLine{00156\ }
+\DoxyCodeLine{00157\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{double}*}
+\DoxyCodeLine{00158\ \ \ \ \ begin()\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00159\ }
+\DoxyCodeLine{00160\ \ \ \ \ \textcolor{keywordtype}{double}*}
+\DoxyCodeLine{00161\ \ \ \ \ end();}
+\DoxyCodeLine{00162\ }
+\DoxyCodeLine{00163\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{double}*}
+\DoxyCodeLine{00164\ \ \ \ \ end()\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00165\ }
+\DoxyCodeLine{00166\ \ \ \ \ \mbox{\hyperlink{classq_1_1_matrices_1_1_vector}{Vector}}\&}
+\DoxyCodeLine{00167\ \ \ \ \ operator=(\textcolor{keyword}{const}\ \mbox{\hyperlink{classq_1_1_matrices_1_1_vector}{Vector}}\ \&other);}
+\DoxyCodeLine{00168\ \ \ \};}
+\DoxyCodeLine{00169\ }
+\DoxyCodeLine{00177\ \ \ \textcolor{keyword}{class\ }\mbox{\hyperlink{classq_1_1_matrices_1_1_bool_vector}{BoolVector}}}
+\DoxyCodeLine{00178\ \ \ \{}
+\DoxyCodeLine{00179\ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00180\ \ \ \ \ \textcolor{keywordtype}{bool}\ *elements;}
+\DoxyCodeLine{00181\ \ \ \ \ \textcolor{keywordtype}{size\_t}\ n;}
+\DoxyCodeLine{00182\ }
+\DoxyCodeLine{00183\ \ \ \ \ \mbox{\hyperlink{classq_1_1_matrices_1_1_bool_vector}{BoolVector}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{size\_t}\ n);}
+\DoxyCodeLine{00184\ \ \ \ \ \mbox{\hyperlink{classq_1_1_matrices_1_1_bool_vector}{\string~BoolVector}}();}
+\DoxyCodeLine{00185\ }
+\DoxyCodeLine{00186\ \ \ \ \ \mbox{\hyperlink{classq_1_1_matrices_1_1_bool_vector}{BoolVector}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classq_1_1_matrices_1_1_bool_vector}{BoolVector}}\&\ other);}
+\DoxyCodeLine{00187\ }
+\DoxyCodeLine{00188\ \ \ \ \ \textcolor{keywordtype}{bool}\ \&}
+\DoxyCodeLine{00189\ \ \ \ \ operator[](\textcolor{keywordtype}{size\_t}\ idx);}
+\DoxyCodeLine{00190\ }
+\DoxyCodeLine{00191\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{bool}\ \&}
+\DoxyCodeLine{00192\ \ \ \ \ operator[](\textcolor{keywordtype}{size\_t}\ idx)\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00193\ }
+\DoxyCodeLine{00194\ \ \ \ \ \mbox{\hyperlink{classq_1_1_matrices_1_1_bool_vector}{BoolVector}}\&}
+\DoxyCodeLine{00195\ \ \ \ \ operator=(\textcolor{keyword}{const}\ \mbox{\hyperlink{classq_1_1_matrices_1_1_bool_vector}{BoolVector}}\ \&other);}
+\DoxyCodeLine{00196\ }
+\DoxyCodeLine{00197\ \ \ \ \ \textcolor{keywordtype}{bool}*}
+\DoxyCodeLine{00198\ \ \ \ \ begin();}
+\DoxyCodeLine{00199\ }
+\DoxyCodeLine{00200\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{bool}*}
+\DoxyCodeLine{00201\ \ \ \ \ begin()\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00202\ }
+\DoxyCodeLine{00203\ \ \ \ \ \textcolor{keywordtype}{bool}*}
+\DoxyCodeLine{00204\ \ \ \ \ end();}
+\DoxyCodeLine{00205\ }
+\DoxyCodeLine{00206\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{bool}*}
+\DoxyCodeLine{00207\ \ \ \ \ end()\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00208\ \ \ \};}
+\DoxyCodeLine{00209\ \ \ \}\ \textcolor{comment}{//\ namespace\ Matrices}}
+\DoxyCodeLine{00210\ \}}
+\DoxyCodeLine{00211\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//\ QALGORITHMS\_MATRIX\_H}}
+
+\end{DoxyCode}

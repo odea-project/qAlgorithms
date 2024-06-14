@@ -10,6 +10,8 @@
 
 namespace q
 {
+    namespace MeasurementData
+    {
     /**
      * @brief A class to store LC-MS measurement data
      * @details The LCMSData class is a subclass of the MeasurementData class used to store LC-MS measurement data.
@@ -107,5 +109,6 @@ namespace q
     private:
         size_t maxKey;
     };
-}
+    } // namespace MeasurmentData
+} // namespace q
 #endif // QALGORITHMS_MEASUREMENT_DATA_LCMS_H

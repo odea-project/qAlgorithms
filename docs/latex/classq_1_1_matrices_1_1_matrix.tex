@@ -1,0 +1,66 @@
+\doxysection{q\+::Matrices\+::Matrix Class Reference}
+\hypertarget{classq_1_1_matrices_1_1_matrix}{}\label{classq_1_1_matrices_1_1_matrix}\index{q::Matrices::Matrix@{q::Matrices::Matrix}}
+
+
+A class to store a matrix.  
+
+
+
+
+{\ttfamily \#include $<$qalgorithms\+\_\+matrix.\+h$>$}
+
+\doxysubsubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classq_1_1_matrices_1_1_matrix_a9810164c5286c14c4ae55f78cd9261f1}\label{classq_1_1_matrices_1_1_matrix_a9810164c5286c14c4ae55f78cd9261f1} 
+{\bfseries Matrix} (size\+\_\+t rows, size\+\_\+t cols)
+\item 
+\Hypertarget{classq_1_1_matrices_1_1_matrix_a81c6e014a50cb813e3f9796bf2fce881}\label{classq_1_1_matrices_1_1_matrix_a81c6e014a50cb813e3f9796bf2fce881} 
+{\bfseries Matrix} (const \mbox{\hyperlink{classq_1_1_matrices_1_1_matrix}{Matrix}} \&other)
+\item 
+\Hypertarget{classq_1_1_matrices_1_1_matrix_a2cea1e3845bc4c3d86723c207712d002}\label{classq_1_1_matrices_1_1_matrix_a2cea1e3845bc4c3d86723c207712d002} 
+double \& {\bfseries operator()} (size\+\_\+t row, size\+\_\+t col)
+\item 
+\Hypertarget{classq_1_1_matrices_1_1_matrix_a2da01e72c379d2db9624a11ec946c6f9}\label{classq_1_1_matrices_1_1_matrix_a2da01e72c379d2db9624a11ec946c6f9} 
+const double \& {\bfseries operator()} (size\+\_\+t row, size\+\_\+t col) const
+\item 
+\Hypertarget{classq_1_1_matrices_1_1_matrix_a7d9e9ee4db0393936f42b96d144d32bb}\label{classq_1_1_matrices_1_1_matrix_a7d9e9ee4db0393936f42b96d144d32bb} 
+double \& {\bfseries operator\mbox{[}$\,$\mbox{]}} (size\+\_\+t idx) const
+\item 
+\Hypertarget{classq_1_1_matrices_1_1_matrix_ae7e7416e5d5bcf3afb7dc981b43221ae}\label{classq_1_1_matrices_1_1_matrix_ae7e7416e5d5bcf3afb7dc981b43221ae} 
+\mbox{\hyperlink{classq_1_1_matrices_1_1_matrix}{Matrix}} \& {\bfseries operator=} (const \mbox{\hyperlink{classq_1_1_matrices_1_1_matrix}{Matrix}} \&other)
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Public Attributes}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classq_1_1_matrices_1_1_matrix_af1bfc8e7f702fe27230d211686b4b924}\label{classq_1_1_matrices_1_1_matrix_af1bfc8e7f702fe27230d211686b4b924} 
+double \texorpdfstring{$\ast$}{*} {\bfseries elements}
+\item 
+\Hypertarget{classq_1_1_matrices_1_1_matrix_a0b1e95959e2a83d8026fe4f80327b94d}\label{classq_1_1_matrices_1_1_matrix_a0b1e95959e2a83d8026fe4f80327b94d} 
+size\+\_\+t {\bfseries rows}
+\item 
+\Hypertarget{classq_1_1_matrices_1_1_matrix_a34a1868acad36449b51d7969b677beb5}\label{classq_1_1_matrices_1_1_matrix_a34a1868acad36449b51d7969b677beb5} 
+size\+\_\+t {\bfseries cols}
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+A class to store a matrix. 
+
+The \doxylink{classq_1_1_matrices_1_1_matrix}{Matrix} class is used to store a matrix of doubles.
+
+
+\begin{DoxyParams}{Parameters}
+{\em elements} & A pointer to the elements of the matrix \\
+\hline
+{\em rows} & The number of rows \\
+\hline
+{\em cols} & The number of columns \\
+\hline
+\end{DoxyParams}
+
+
+The documentation for this class was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+include/qalgorithms\+\_\+matrix.\+h\item 
+src/qalgorithms\+\_\+matrix.\+cpp\end{DoxyCompactItemize}

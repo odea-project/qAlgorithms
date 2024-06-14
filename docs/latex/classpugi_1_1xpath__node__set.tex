@@ -1,0 +1,59 @@
+\doxysection{pugi\+::xpath\+\_\+node\+\_\+set Class Reference}
+\hypertarget{classpugi_1_1xpath__node__set}{}\label{classpugi_1_1xpath__node__set}\index{pugi::xpath\_node\_set@{pugi::xpath\_node\_set}}
+\doxysubsubsection*{Public Types}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classpugi_1_1xpath__node__set_a6c6899c8ecfbce9e42ec85540907080e}\label{classpugi_1_1xpath__node__set_a6c6899c8ecfbce9e42ec85540907080e} 
+enum {\bfseries type\+\_\+t} \{ {\bfseries type\+\_\+unsorted}
+, {\bfseries type\+\_\+sorted}
+, {\bfseries type\+\_\+sorted\+\_\+reverse}
+ \}
+\item 
+\Hypertarget{classpugi_1_1xpath__node__set_a6987510e88cea4a396d186285c174de6}\label{classpugi_1_1xpath__node__set_a6987510e88cea4a396d186285c174de6} 
+typedef const \mbox{\hyperlink{classpugi_1_1xpath__node}{xpath\+\_\+node}} \texorpdfstring{$\ast$}{*} {\bfseries const\+\_\+iterator}
+\item 
+\Hypertarget{classpugi_1_1xpath__node__set_aa3a2497c2ad7d557672fdc92954ba210}\label{classpugi_1_1xpath__node__set_aa3a2497c2ad7d557672fdc92954ba210} 
+typedef const \mbox{\hyperlink{classpugi_1_1xpath__node}{xpath\+\_\+node}} \texorpdfstring{$\ast$}{*} {\bfseries iterator}
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classpugi_1_1xpath__node__set_a1bbadaabcd84fe6aafcf6d2fe76cf884}\label{classpugi_1_1xpath__node__set_a1bbadaabcd84fe6aafcf6d2fe76cf884} 
+{\bfseries xpath\+\_\+node\+\_\+set} (\mbox{\hyperlink{classpugi_1_1xpath__node}{const\+\_\+iterator}} begin, \mbox{\hyperlink{classpugi_1_1xpath__node}{const\+\_\+iterator}} end, type\+\_\+t type=type\+\_\+unsorted)
+\item 
+\Hypertarget{classpugi_1_1xpath__node__set_a42018f66cce39eb5b3d32cc6d5d95f47}\label{classpugi_1_1xpath__node__set_a42018f66cce39eb5b3d32cc6d5d95f47} 
+{\bfseries xpath\+\_\+node\+\_\+set} (const \mbox{\hyperlink{classpugi_1_1xpath__node__set}{xpath\+\_\+node\+\_\+set}} \&ns)
+\item 
+\Hypertarget{classpugi_1_1xpath__node__set_a0a2dc179d4c8008fe830ce19554a8113}\label{classpugi_1_1xpath__node__set_a0a2dc179d4c8008fe830ce19554a8113} 
+\mbox{\hyperlink{classpugi_1_1xpath__node__set}{xpath\+\_\+node\+\_\+set}} \& {\bfseries operator=} (const \mbox{\hyperlink{classpugi_1_1xpath__node__set}{xpath\+\_\+node\+\_\+set}} \&ns)
+\item 
+\Hypertarget{classpugi_1_1xpath__node__set_af3d9f89adcfd56e09b4b56bdf04a59d5}\label{classpugi_1_1xpath__node__set_af3d9f89adcfd56e09b4b56bdf04a59d5} 
+type\+\_\+t {\bfseries type} () const
+\item 
+\Hypertarget{classpugi_1_1xpath__node__set_a14af6b8d3e7bac3c415b48d56b3a3b4c}\label{classpugi_1_1xpath__node__set_a14af6b8d3e7bac3c415b48d56b3a3b4c} 
+size\+\_\+t {\bfseries size} () const
+\item 
+\Hypertarget{classpugi_1_1xpath__node__set_a3d1ccc6c2f0ffee0bf5010efd7c34ffd}\label{classpugi_1_1xpath__node__set_a3d1ccc6c2f0ffee0bf5010efd7c34ffd} 
+const \mbox{\hyperlink{classpugi_1_1xpath__node}{xpath\+\_\+node}} \& {\bfseries operator\mbox{[}$\,$\mbox{]}} (size\+\_\+t index) const
+\item 
+\Hypertarget{classpugi_1_1xpath__node__set_ab8880443945162c91b9b0813613c41a9}\label{classpugi_1_1xpath__node__set_ab8880443945162c91b9b0813613c41a9} 
+\mbox{\hyperlink{classpugi_1_1xpath__node}{const\+\_\+iterator}} {\bfseries begin} () const
+\item 
+\Hypertarget{classpugi_1_1xpath__node__set_a419c1c6546d28f4fff0fa010480d0fa6}\label{classpugi_1_1xpath__node__set_a419c1c6546d28f4fff0fa010480d0fa6} 
+\mbox{\hyperlink{classpugi_1_1xpath__node}{const\+\_\+iterator}} {\bfseries end} () const
+\item 
+\Hypertarget{classpugi_1_1xpath__node__set_a05b727c41d8671bc7f64e7ca7ef21ac8}\label{classpugi_1_1xpath__node__set_a05b727c41d8671bc7f64e7ca7ef21ac8} 
+void {\bfseries sort} (bool reverse=false)
+\item 
+\Hypertarget{classpugi_1_1xpath__node__set_a2b919063be2599b8fcb8ee8895394d73}\label{classpugi_1_1xpath__node__set_a2b919063be2599b8fcb8ee8895394d73} 
+\mbox{\hyperlink{classpugi_1_1xpath__node}{xpath\+\_\+node}} {\bfseries first} () const
+\item 
+\Hypertarget{classpugi_1_1xpath__node__set_ace9fdd96911230e401a492bbcf4663cb}\label{classpugi_1_1xpath__node__set_ace9fdd96911230e401a492bbcf4663cb} 
+bool {\bfseries empty} () const
+\end{DoxyCompactItemize}
+
+
+The documentation for this class was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+external/pugixml-\/1.\+14/src/pugixml.\+hpp\item 
+external/pugixml-\/1.\+14/src/pugixml.\+cpp\end{DoxyCompactItemize}

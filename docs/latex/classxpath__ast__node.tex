@@ -1,0 +1,64 @@
+\doxysection{xpath\+\_\+ast\+\_\+node Class Reference}
+\hypertarget{classxpath__ast__node}{}\label{classxpath__ast__node}\index{xpath\_ast\_node@{xpath\_ast\_node}}
+\doxysubsubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classxpath__ast__node_af155d17a4477a693d37f4e34957dcc21}\label{classxpath__ast__node_af155d17a4477a693d37f4e34957dcc21} 
+{\bfseries xpath\+\_\+ast\+\_\+node} (ast\+\_\+type\+\_\+t type, xpath\+\_\+value\+\_\+type rettype\+\_\+, const char\+\_\+t \texorpdfstring{$\ast$}{*}value)
+\item 
+\Hypertarget{classxpath__ast__node_ada97458f3fc7d6c87cf70d8084117b0d}\label{classxpath__ast__node_ada97458f3fc7d6c87cf70d8084117b0d} 
+{\bfseries xpath\+\_\+ast\+\_\+node} (ast\+\_\+type\+\_\+t type, xpath\+\_\+value\+\_\+type rettype\+\_\+, double value)
+\item 
+\Hypertarget{classxpath__ast__node_a8de4244f7b9fc7626049197ddc0afab7}\label{classxpath__ast__node_a8de4244f7b9fc7626049197ddc0afab7} 
+{\bfseries xpath\+\_\+ast\+\_\+node} (ast\+\_\+type\+\_\+t type, xpath\+\_\+value\+\_\+type rettype\+\_\+, xpath\+\_\+variable \texorpdfstring{$\ast$}{*}value)
+\item 
+\Hypertarget{classxpath__ast__node_af6f4ffea3f3c7fdb6ef1e759d4b070f4}\label{classxpath__ast__node_af6f4ffea3f3c7fdb6ef1e759d4b070f4} 
+{\bfseries xpath\+\_\+ast\+\_\+node} (ast\+\_\+type\+\_\+t type, xpath\+\_\+value\+\_\+type rettype\+\_\+, \mbox{\hyperlink{classxpath__ast__node}{xpath\+\_\+ast\+\_\+node}} \texorpdfstring{$\ast$}{*}left=0, \mbox{\hyperlink{classxpath__ast__node}{xpath\+\_\+ast\+\_\+node}} \texorpdfstring{$\ast$}{*}right=0)
+\item 
+\Hypertarget{classxpath__ast__node_a7cf74b277deba86a6575796c727fe458}\label{classxpath__ast__node_a7cf74b277deba86a6575796c727fe458} 
+{\bfseries xpath\+\_\+ast\+\_\+node} (ast\+\_\+type\+\_\+t type, \mbox{\hyperlink{classxpath__ast__node}{xpath\+\_\+ast\+\_\+node}} \texorpdfstring{$\ast$}{*}left, axis\+\_\+t axis, nodetest\+\_\+t test, const char\+\_\+t \texorpdfstring{$\ast$}{*}contents)
+\item 
+\Hypertarget{classxpath__ast__node_aef76c6d41da27404909e62437fc9f02c}\label{classxpath__ast__node_aef76c6d41da27404909e62437fc9f02c} 
+{\bfseries xpath\+\_\+ast\+\_\+node} (ast\+\_\+type\+\_\+t type, \mbox{\hyperlink{classxpath__ast__node}{xpath\+\_\+ast\+\_\+node}} \texorpdfstring{$\ast$}{*}left, \mbox{\hyperlink{classxpath__ast__node}{xpath\+\_\+ast\+\_\+node}} \texorpdfstring{$\ast$}{*}right, predicate\+\_\+t test)
+\item 
+\Hypertarget{classxpath__ast__node_a2764184d076834284eb3ff3182b845cc}\label{classxpath__ast__node_a2764184d076834284eb3ff3182b845cc} 
+void {\bfseries set\+\_\+next} (\mbox{\hyperlink{classxpath__ast__node}{xpath\+\_\+ast\+\_\+node}} \texorpdfstring{$\ast$}{*}value)
+\item 
+\Hypertarget{classxpath__ast__node_afe044146db852b7d4dbf188fd2ff6c75}\label{classxpath__ast__node_afe044146db852b7d4dbf188fd2ff6c75} 
+void {\bfseries set\+\_\+right} (\mbox{\hyperlink{classxpath__ast__node}{xpath\+\_\+ast\+\_\+node}} \texorpdfstring{$\ast$}{*}value)
+\item 
+\Hypertarget{classxpath__ast__node_ab7f965a92023bc2704b8e6fd9f3d7c14}\label{classxpath__ast__node_ab7f965a92023bc2704b8e6fd9f3d7c14} 
+bool {\bfseries eval\+\_\+boolean} (const \mbox{\hyperlink{structxpath__context}{xpath\+\_\+context}} \&c, const \mbox{\hyperlink{structxpath__stack}{xpath\+\_\+stack}} \&stack)
+\item 
+\Hypertarget{classxpath__ast__node_a92dd7048e28d486bc7f382d1fc6f1de6}\label{classxpath__ast__node_a92dd7048e28d486bc7f382d1fc6f1de6} 
+double {\bfseries eval\+\_\+number} (const \mbox{\hyperlink{structxpath__context}{xpath\+\_\+context}} \&c, const \mbox{\hyperlink{structxpath__stack}{xpath\+\_\+stack}} \&stack)
+\item 
+\Hypertarget{classxpath__ast__node_aaf931a091af0fb91c25e90b205363b4e}\label{classxpath__ast__node_aaf931a091af0fb91c25e90b205363b4e} 
+\mbox{\hyperlink{classxpath__string}{xpath\+\_\+string}} {\bfseries eval\+\_\+string\+\_\+concat} (const \mbox{\hyperlink{structxpath__context}{xpath\+\_\+context}} \&c, const \mbox{\hyperlink{structxpath__stack}{xpath\+\_\+stack}} \&stack)
+\item 
+\Hypertarget{classxpath__ast__node_a6b675237a590548b68d0e0b97518b6df}\label{classxpath__ast__node_a6b675237a590548b68d0e0b97518b6df} 
+\mbox{\hyperlink{classxpath__string}{xpath\+\_\+string}} {\bfseries eval\+\_\+string} (const \mbox{\hyperlink{structxpath__context}{xpath\+\_\+context}} \&c, const \mbox{\hyperlink{structxpath__stack}{xpath\+\_\+stack}} \&stack)
+\item 
+\Hypertarget{classxpath__ast__node_a68cace396dd4eeae67ecfcd34a3a8285}\label{classxpath__ast__node_a68cace396dd4eeae67ecfcd34a3a8285} 
+\mbox{\hyperlink{classxpath__node__set__raw}{xpath\+\_\+node\+\_\+set\+\_\+raw}} {\bfseries eval\+\_\+node\+\_\+set} (const \mbox{\hyperlink{structxpath__context}{xpath\+\_\+context}} \&c, const \mbox{\hyperlink{structxpath__stack}{xpath\+\_\+stack}} \&stack, nodeset\+\_\+eval\+\_\+t eval)
+\item 
+\Hypertarget{classxpath__ast__node_a950534fc7de08fe40d897ebea84c1d6d}\label{classxpath__ast__node_a950534fc7de08fe40d897ebea84c1d6d} 
+void {\bfseries optimize} (\mbox{\hyperlink{structxpath__allocator}{xpath\+\_\+allocator}} \texorpdfstring{$\ast$}{*}alloc)
+\item 
+\Hypertarget{classxpath__ast__node_a3eb089927cabd867a3a9d1b723aece0d}\label{classxpath__ast__node_a3eb089927cabd867a3a9d1b723aece0d} 
+void {\bfseries optimize\+\_\+self} (\mbox{\hyperlink{structxpath__allocator}{xpath\+\_\+allocator}} \texorpdfstring{$\ast$}{*}alloc)
+\item 
+\Hypertarget{classxpath__ast__node_a4a5fe9e58381f9a303db4baedda59b67}\label{classxpath__ast__node_a4a5fe9e58381f9a303db4baedda59b67} 
+bool {\bfseries is\+\_\+posinv\+\_\+expr} () const
+\item 
+\Hypertarget{classxpath__ast__node_aac1162512c42ef38e35a9ba7ce994b91}\label{classxpath__ast__node_aac1162512c42ef38e35a9ba7ce994b91} 
+bool {\bfseries is\+\_\+posinv\+\_\+step} () const
+\item 
+\Hypertarget{classxpath__ast__node_a2c12e34a46db2a3d0052f9f38bcf1bb6}\label{classxpath__ast__node_a2c12e34a46db2a3d0052f9f38bcf1bb6} 
+xpath\+\_\+value\+\_\+type {\bfseries rettype} () const
+\end{DoxyCompactItemize}
+
+
+The documentation for this class was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+external/pugixml-\/1.\+14/src/pugixml.\+cpp\end{DoxyCompactItemize}

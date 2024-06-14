@@ -1,0 +1,133 @@
+\doxysection{Stream\+Craft\+\_\+utils.\+hpp}
+\hypertarget{_stream_craft__utils_8hpp_source}{}\label{_stream_craft__utils_8hpp_source}\index{external/StreamCraft/src/StreamCraft\_utils.hpp@{external/StreamCraft/src/StreamCraft\_utils.hpp}}
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#ifndef\ STREAMCRAFT\_UTILS\_HPP}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#define\ STREAMCRAFT\_UTILS\_HPP}}
+\DoxyCodeLine{00003\ }
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ <iostream>}}
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#include\ <string>}}
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#include\ <vector>}}
+\DoxyCodeLine{00007\ }
+\DoxyCodeLine{00008\ \textcolor{keyword}{namespace\ }sc\ \{}
+\DoxyCodeLine{00009\ }
+\DoxyCodeLine{00010\ \ \ \textcolor{keyword}{inline}\ \textcolor{keyword}{namespace\ }utils\ \{}
+\DoxyCodeLine{00011\ }
+\DoxyCodeLine{00012\ \ \ \ \ \textcolor{keyword}{enum}\ MS\_SPECTRA\_MODE\ \{}
+\DoxyCodeLine{00013\ \ \ \ \ \ \ CENTROID,}
+\DoxyCodeLine{00014\ \ \ \ \ \ \ PROFILE}
+\DoxyCodeLine{00015\ \ \ \ \ \};}
+\DoxyCodeLine{00016\ }
+\DoxyCodeLine{00017\ \ \ \ \ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structsc_1_1utils_1_1_m_s___s_p_e_c_t_r_a___h_e_a_d_e_r_s}{MS\_SPECTRA\_HEADERS}}\ \{}
+\DoxyCodeLine{00018\ \ \ \ \ \ \ std::vector<int>\ index;}
+\DoxyCodeLine{00019\ \ \ \ \ \ \ std::vector<std::string>\ id;}
+\DoxyCodeLine{00020\ \ \ \ \ \ \ std::vector<int>\ scan;}
+\DoxyCodeLine{00021\ \ \ \ \ \ \ std::vector<int>\ array\_length;}
+\DoxyCodeLine{00022\ \ \ \ \ \ \ std::vector<int>\ level;}
+\DoxyCodeLine{00023\ \ \ \ \ \ \ std::vector<std::string>\ mode;}
+\DoxyCodeLine{00024\ \ \ \ \ \ \ std::vector<std::string>\ polarity;}
+\DoxyCodeLine{00025\ \ \ \ \ \ \ std::vector<double>\ lowmz;}
+\DoxyCodeLine{00026\ \ \ \ \ \ \ std::vector<double>\ highmz;}
+\DoxyCodeLine{00027\ \ \ \ \ \ \ std::vector<double>\ bpmz;}
+\DoxyCodeLine{00028\ \ \ \ \ \ \ std::vector<double>\ bpint;}
+\DoxyCodeLine{00029\ \ \ \ \ \ \ std::vector<double>\ tic;}
+\DoxyCodeLine{00030\ \ \ \ \ \ \ std::vector<std::string>\ title;}
+\DoxyCodeLine{00031\ \ \ \ \ \ \ std::vector<double>\ rt;}
+\DoxyCodeLine{00032\ \ \ \ \ \ \ std::vector<double>\ drift;}
+\DoxyCodeLine{00033\ \ \ \ \ \ \ std::vector<std::string>\ filter\_string;}
+\DoxyCodeLine{00034\ \ \ \ \ \ \ std::vector<int>\ config;}
+\DoxyCodeLine{00035\ \ \ \ \ \ \ std::vector<double>\ injection\_ion\_time;}
+\DoxyCodeLine{00036\ \ \ \ \ \ \ std::vector<int>\ precursor\_scan;}
+\DoxyCodeLine{00037\ \ \ \ \ \ \ std::vector<double>\ window\_mz;}
+\DoxyCodeLine{00038\ \ \ \ \ \ \ std::vector<double>\ window\_mzlow;}
+\DoxyCodeLine{00039\ \ \ \ \ \ \ std::vector<double>\ window\_mzhigh;}
+\DoxyCodeLine{00040\ \ \ \ \ \ \ std::vector<double>\ precursor\_mz;}
+\DoxyCodeLine{00041\ \ \ \ \ \ \ std::vector<double>\ precursor\_intensity;}
+\DoxyCodeLine{00042\ \ \ \ \ \ \ std::vector<int>\ precursor\_charge;}
+\DoxyCodeLine{00043\ \ \ \ \ \ \ std::vector<std::string>\ activation\_type;}
+\DoxyCodeLine{00044\ \ \ \ \ \ \ std::vector<double>\ activation\_ce;}
+\DoxyCodeLine{00045\ }
+\DoxyCodeLine{00046\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ resize\_all(\textcolor{keywordtype}{int}\ n)\ \{}
+\DoxyCodeLine{00047\ \ \ \ \ \ \ \ \ index.resize(n);}
+\DoxyCodeLine{00048\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{id}.resize(n);}
+\DoxyCodeLine{00049\ \ \ \ \ \ \ \ \ scan.resize(n);}
+\DoxyCodeLine{00050\ \ \ \ \ \ \ \ \ array\_length.resize(n);}
+\DoxyCodeLine{00051\ \ \ \ \ \ \ \ \ level.resize(n);}
+\DoxyCodeLine{00052\ \ \ \ \ \ \ \ \ mode.resize(n);}
+\DoxyCodeLine{00053\ \ \ \ \ \ \ \ \ polarity.resize(n);}
+\DoxyCodeLine{00054\ \ \ \ \ \ \ \ \ lowmz.resize(n);}
+\DoxyCodeLine{00055\ \ \ \ \ \ \ \ \ highmz.resize(n);}
+\DoxyCodeLine{00056\ \ \ \ \ \ \ \ \ bpmz.resize(n);}
+\DoxyCodeLine{00057\ \ \ \ \ \ \ \ \ bpint.resize(n);}
+\DoxyCodeLine{00058\ \ \ \ \ \ \ \ \ tic.resize(n);}
+\DoxyCodeLine{00059\ \ \ \ \ \ \ \ \ title.resize(n);}
+\DoxyCodeLine{00060\ \ \ \ \ \ \ \ \ rt.resize(n);}
+\DoxyCodeLine{00061\ \ \ \ \ \ \ \ \ drift.resize(n);}
+\DoxyCodeLine{00062\ \ \ \ \ \ \ \ \ filter\_string.resize(n);}
+\DoxyCodeLine{00063\ \ \ \ \ \ \ \ \ config.resize(n);}
+\DoxyCodeLine{00064\ \ \ \ \ \ \ \ \ injection\_ion\_time.resize(n);}
+\DoxyCodeLine{00065\ \ \ \ \ \ \ \ \ precursor\_scan.resize(n);}
+\DoxyCodeLine{00066\ \ \ \ \ \ \ \ \ window\_mz.resize(n);}
+\DoxyCodeLine{00067\ \ \ \ \ \ \ \ \ window\_mzlow.resize(n);}
+\DoxyCodeLine{00068\ \ \ \ \ \ \ \ \ window\_mzhigh.resize(n);}
+\DoxyCodeLine{00069\ \ \ \ \ \ \ \ \ precursor\_mz.resize(n);}
+\DoxyCodeLine{00070\ \ \ \ \ \ \ \ \ precursor\_intensity.resize(n);}
+\DoxyCodeLine{00071\ \ \ \ \ \ \ \ \ precursor\_charge.resize(n);}
+\DoxyCodeLine{00072\ \ \ \ \ \ \ \ \ activation\_type.resize(n);\ \ }
+\DoxyCodeLine{00073\ \ \ \ \ \ \ \ \ activation\_ce.resize(n);}
+\DoxyCodeLine{00074\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00075\ \ \ \ \ \};}
+\DoxyCodeLine{00076\ }
+\DoxyCodeLine{00077\ \ \ \ \ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structsc_1_1utils_1_1_m_s___c_h_r_o_m_a_t_o_g_r_a_m_s___h_e_a_d_e_r_s}{MS\_CHROMATOGRAMS\_HEADERS}}\ \{}
+\DoxyCodeLine{00078\ \ \ \ \ \ \ std::vector<int>\ index;}
+\DoxyCodeLine{00079\ \ \ \ \ \ \ std::vector<std::string>\ id;}
+\DoxyCodeLine{00080\ \ \ \ \ \ \ std::vector<int>\ array\_length;}
+\DoxyCodeLine{00081\ \ \ \ \ \ \ std::vector<std::string>\ polarity;}
+\DoxyCodeLine{00082\ \ \ \ \ \ \ std::vector<double>\ precursor\_mz;}
+\DoxyCodeLine{00083\ \ \ \ \ \ \ std::vector<std::string>\ activation\_type;}
+\DoxyCodeLine{00084\ \ \ \ \ \ \ std::vector<double>\ activation\_ce;}
+\DoxyCodeLine{00085\ \ \ \ \ \ \ std::vector<double>\ product\_mz;}
+\DoxyCodeLine{00086\ }
+\DoxyCodeLine{00087\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ resize\_all(\textcolor{keywordtype}{int}\ n)\ \{}
+\DoxyCodeLine{00088\ \ \ \ \ \ \ \ \ index.resize(n);}
+\DoxyCodeLine{00089\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{id}.resize(n);}
+\DoxyCodeLine{00090\ \ \ \ \ \ \ \ \ array\_length.resize(n);}
+\DoxyCodeLine{00091\ \ \ \ \ \ \ \ \ polarity.resize(n);}
+\DoxyCodeLine{00092\ \ \ \ \ \ \ \ \ precursor\_mz.resize(n);}
+\DoxyCodeLine{00093\ \ \ \ \ \ \ \ \ activation\_type.resize(n);}
+\DoxyCodeLine{00094\ \ \ \ \ \ \ \ \ activation\_ce.resize(n);}
+\DoxyCodeLine{00095\ \ \ \ \ \ \ \ \ product\_mz.resize(n);}
+\DoxyCodeLine{00096\ \ \ \ \ \ \ \};}
+\DoxyCodeLine{00097\ \ \ \ \ \};}
+\DoxyCodeLine{00098\ }
+\DoxyCodeLine{00099\ \ \ \ \ std::string\ encode\_little\_endian(\textcolor{keyword}{const}\ std::vector<double>\&\ input,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\&\ precision);}
+\DoxyCodeLine{00100\ }
+\DoxyCodeLine{00101\ \ \ \ \ std::vector<double>\ decode\_little\_endian(\textcolor{keyword}{const}\ std::string\&\ str,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\&\ precision);}
+\DoxyCodeLine{00102\ }
+\DoxyCodeLine{00103\ \ \ \ \ std::string\ encode\_big\_endian(\textcolor{keyword}{const}\ std::vector<double>\&\ input,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\&\ precision);}
+\DoxyCodeLine{00104\ }
+\DoxyCodeLine{00105\ \ \ \ \ std::vector<double>\ decode\_big\_endian(\textcolor{keyword}{const}\ std::string\&\ str,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\&\ precision);}
+\DoxyCodeLine{00106\ }
+\DoxyCodeLine{00107\ \ \ \ \ std::string\ compress\_zlib(\textcolor{keyword}{const}\ std::string\&\ str);}
+\DoxyCodeLine{00108\ }
+\DoxyCodeLine{00109\ \ \ \ \ std::string\ decompress\_zlib(\textcolor{keyword}{const}\ std::string\&\ compressed\_string);}
+\DoxyCodeLine{00110\ }
+\DoxyCodeLine{00111\ \ \ \ \ std::string\ encode\_base64(\textcolor{keyword}{const}\ std::string\&\ str);}
+\DoxyCodeLine{00112\ }
+\DoxyCodeLine{00113\ \ \ \ \ std::string\ decode\_base64(\textcolor{keyword}{const}\ std::string\&\ encoded\_string);}
+\DoxyCodeLine{00114\ }
+\DoxyCodeLine{00115\ \ \ \ \ \textcolor{keywordtype}{void}\ test\_encoding\_decoding\_little\_endian(\textcolor{keyword}{const}\ std::vector<double>\&\ input,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\&\ precision);}
+\DoxyCodeLine{00116\ }
+\DoxyCodeLine{00117\ \ \ \ \ \textcolor{keywordtype}{void}\ test\_encoding\_decoding\_big\_endian(\textcolor{keyword}{const}\ std::vector<double>\&\ input,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\&\ precision);}
+\DoxyCodeLine{00118\ }
+\DoxyCodeLine{00119\ \ \ \};\ \textcolor{comment}{//\ namespace\ utils}}
+\DoxyCodeLine{00120\ \};}
+\DoxyCodeLine{00121\ }
+\DoxyCodeLine{00122\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//\ STREAMCRAFT\_UTILS\_HPP}}
+\DoxyCodeLine{00123\ }
+\DoxyCodeLine{00124\ \textcolor{comment}{//\ \#if\ defined(STREAMCRAFT\_HEADER\_ONLY)\ \&\&\ !defined(STREAMCRAFT\_UTILS\_SOURCE)}}
+\DoxyCodeLine{00125\ \textcolor{comment}{//\ \#\ \ \ \ define\ STREAMCRAFT\_UTILS\_SOURCE\ "{}StreamCraft\_utils.cpp"{}}}
+\DoxyCodeLine{00126\ \textcolor{comment}{//\ \#\ \ \ \ include\ STREAMCRAFT\_UTILS\_SOURCE}}
+\DoxyCodeLine{00127\ \textcolor{comment}{//\ \#endif}}
+
+\end{DoxyCode}

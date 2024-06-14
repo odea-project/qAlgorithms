@@ -1,0 +1,63 @@
+\doxysection{qalgorithms\+\_\+datatype\+\_\+peak.\+h}
+\hypertarget{qalgorithms__datatype__peak_8h_source}{}\label{qalgorithms__datatype__peak_8h_source}\index{include/qalgorithms\_datatype\_peak.h@{include/qalgorithms\_datatype\_peak.h}}
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{//\ qalgorithms\_datatype\_peak.h}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#ifndef\ QALGORITHMS\_DATATYPE\_PEAK\_H}}
+\DoxyCodeLine{00003\ \textcolor{preprocessor}{\#define\ QALGORITHMS\_DATATYPE\_PEAK\_H}}
+\DoxyCodeLine{00004\ }
+\DoxyCodeLine{00005\ \textcolor{comment}{//\ internal}}
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#include\ "{}qalgorithms\_datatype.h"{}}}
+\DoxyCodeLine{00007\ }
+\DoxyCodeLine{00008\ \textcolor{comment}{//\ external}}
+\DoxyCodeLine{00009\ \textcolor{preprocessor}{\#include\ <unordered\_map>}}
+\DoxyCodeLine{00010\ \textcolor{preprocessor}{\#include\ <iostream>}}
+\DoxyCodeLine{00011\ \textcolor{preprocessor}{\#include\ <vector>}}
+\DoxyCodeLine{00012\ }
+\DoxyCodeLine{00013\ \textcolor{comment}{/*\ This\ file\ includes\ the\ q::DataType::Peak\ and\ q::DataType::PeakList\ classes*/}}
+\DoxyCodeLine{00014\ \textcolor{keyword}{namespace\ }q}
+\DoxyCodeLine{00015\ \{}
+\DoxyCodeLine{00016\ \ \ \textcolor{keyword}{namespace\ }DataType}
+\DoxyCodeLine{00017\ \ \ \{}
+\DoxyCodeLine{00041\ \ \ \ \ \textcolor{keyword}{class\ }\mbox{\hyperlink{classq_1_1_data_type_1_1_peak}{Peak}}}
+\DoxyCodeLine{00042\ \ \ \ \ \{}
+\DoxyCodeLine{00043\ \ \ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00044\ \ \ \ \ \ \ \textcolor{comment}{//\ constructors}}
+\DoxyCodeLine{00045\ \ \ \ \ \ \ \mbox{\hyperlink{classq_1_1_data_type_1_1_peak}{Peak}}();}
+\DoxyCodeLine{00046\ \ \ \ \ \ \ \mbox{\hyperlink{classq_1_1_data_type_1_1_peak}{Peak}}(\textcolor{keywordtype}{int}\ sampleID,\ \textcolor{keywordtype}{double}\ position,\ \textcolor{keywordtype}{double}\ height);}
+\DoxyCodeLine{00047\ }
+\DoxyCodeLine{00048\ \ \ \ \ \ \ \textcolor{comment}{//\ destructor}}
+\DoxyCodeLine{00049\ \ \ \ \ \ \ \mbox{\hyperlink{classq_1_1_data_type_1_1_peak}{\string~Peak}}();}
+\DoxyCodeLine{00050\ }
+\DoxyCodeLine{00051\ \ \ \ \ \ \ \textcolor{comment}{//\ properties}}
+\DoxyCodeLine{00052\ \ \ \ \ \ \ \textcolor{comment}{//\ required}}
+\DoxyCodeLine{00053\ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ sampleID;}
+\DoxyCodeLine{00054\ \ \ \ \ \ \ \textcolor{keywordtype}{double}\ position;}
+\DoxyCodeLine{00055\ \ \ \ \ \ \ \textcolor{keywordtype}{double}\ height;}
+\DoxyCodeLine{00056\ }
+\DoxyCodeLine{00057\ \ \ \ \ \ \ \textcolor{comment}{//\ optional}}
+\DoxyCodeLine{00058\ \ \ \ \ \ \ \textcolor{keywordtype}{double}\ area;}
+\DoxyCodeLine{00059\ \ \ \ \ \ \ \textcolor{keywordtype}{double}\ width;}
+\DoxyCodeLine{00060\ \ \ \ \ \ \ \textcolor{keywordtype}{double}\ positionUncertainty;}
+\DoxyCodeLine{00061\ \ \ \ \ \ \ \textcolor{keywordtype}{double}\ heightUncertainty;}
+\DoxyCodeLine{00062\ \ \ \ \ \ \ \textcolor{keywordtype}{double}\ widthUncertainty;}
+\DoxyCodeLine{00063\ \ \ \ \ \ \ \textcolor{keywordtype}{double}\ areaUncertainty;}
+\DoxyCodeLine{00064\ \ \ \ \ \ \ \textcolor{keywordtype}{double}\ dqsPeak;}
+\DoxyCodeLine{00065\ \ \ \ \ \ \ \textcolor{keywordtype}{double}\ beta0;}
+\DoxyCodeLine{00066\ \ \ \ \ \ \ \textcolor{keywordtype}{double}\ beta1;}
+\DoxyCodeLine{00067\ \ \ \ \ \ \ \textcolor{keywordtype}{double}\ beta2;}
+\DoxyCodeLine{00068\ \ \ \ \ \ \ \textcolor{keywordtype}{double}\ beta3;}
+\DoxyCodeLine{00069\ \ \ \ \ \ \ \textcolor{keywordtype}{double}\ valleyPosition;}
+\DoxyCodeLine{00070\ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ df;}
+\DoxyCodeLine{00071\ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ xIndex;}
+\DoxyCodeLine{00072\ \ \ \ \ \ \ \textcolor{keywordtype}{double}\ x0;}
+\DoxyCodeLine{00073\ \ \ \ \ \ \ \textcolor{keywordtype}{double}\ dx;}
+\DoxyCodeLine{00074\ \ \ \ \ \ \ \textcolor{comment}{//\ methods}}
+\DoxyCodeLine{00075\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ print();}
+\DoxyCodeLine{00076\ \ \ \ \ \};}
+\DoxyCodeLine{00077\ \ \ \}\ \textcolor{comment}{//\ namespace\ DataType}}
+\DoxyCodeLine{00078\ \}\ \textcolor{comment}{//\ namespace\ q}}
+\DoxyCodeLine{00079\ }
+\DoxyCodeLine{00080\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//\ QALGORITHMS\_DATATYPE\_PEAK\_H}}
+
+\end{DoxyCode}

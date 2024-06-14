@@ -14,6 +14,8 @@
 
 namespace q
 {
+    namespace MeasurementData
+    {
     using MS = std::vector<std::unique_ptr<DataType::MassSpectrum>>*; // pointer to a vector of mass spectra
     using varDataType = std::variant<MS>; // add more data types if needed
     /**
@@ -63,5 +65,6 @@ namespace q
         // debugging
         // virtual void print() = 0;
     };
+    } // namespace MeasurmentData
 }
 #endif // QALGORITHMS_MEASUREMENT_DATA_H

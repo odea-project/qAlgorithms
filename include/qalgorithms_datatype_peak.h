@@ -74,33 +74,6 @@ namespace q
       // methods
       void print();
     };
-
-    /**
-     * @brief A class to store a list of peaks
-     * @details The PeakList class is used to store a list of peaks. It contains a map of peaks, where the key is the peak ID and the value is the peak.
-     * @param peaks A map of peaks
-     */
-    class PeakList
-    {
-    public:
-      // constructors
-      PeakList();
-      PeakList(std::unordered_map<int, Peak> peaks);
-
-      // destructor
-      ~PeakList();
-
-      // properties
-      std::unordered_map<int, Peak> peaks;
-
-      // methods
-      void addPeak(Peak peak);
-      void removePeak(int peakID);
-      void clearPeaks();
-
-      // debugging
-      void print();
-    };
   } // namespace DataType
 } // namespace q
 

@@ -4,6 +4,8 @@
 
 namespace q
 {
+  namespace Matrices
+  {
   // constructor and destructor
   Matrix::Matrix() : rows(0), cols(0){};
 
@@ -332,5 +334,5 @@ namespace q
     return elements + n;
   }
 #pragma endregion "BoolVector"
-
-}
+  } // namespace Matrices
+} // namespace q

@@ -1,0 +1,69 @@
+\doxysection{q\+::Matrices\+::Matrix\+\_\+mc Class Reference}
+\hypertarget{classq_1_1_matrices_1_1_matrix__mc}{}\label{classq_1_1_matrices_1_1_matrix__mc}\index{q::Matrices::Matrix\_mc@{q::Matrices::Matrix\_mc}}
+
+
+A clase to store a matrix with major column order storage.  
+
+
+
+
+{\ttfamily \#include $<$qalgorithms\+\_\+matrix.\+h$>$}
+
+\doxysubsubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classq_1_1_matrices_1_1_matrix__mc_ab7ca94de3116692ab931ab84a5d0ac9d}\label{classq_1_1_matrices_1_1_matrix__mc_ab7ca94de3116692ab931ab84a5d0ac9d} 
+{\bfseries Matrix\+\_\+mc} (const size\+\_\+t rows, const size\+\_\+t cols)
+\item 
+\Hypertarget{classq_1_1_matrices_1_1_matrix__mc_aadee95658b73d4c92c493080b6919d54}\label{classq_1_1_matrices_1_1_matrix__mc_aadee95658b73d4c92c493080b6919d54} 
+{\bfseries Matrix\+\_\+mc} (const \mbox{\hyperlink{classq_1_1_matrices_1_1_matrix__mc}{Matrix\+\_\+mc}} \&other)
+\item 
+\Hypertarget{classq_1_1_matrices_1_1_matrix__mc_a75292017217aa42bce437d35a0481949}\label{classq_1_1_matrices_1_1_matrix__mc_a75292017217aa42bce437d35a0481949} 
+double \& {\bfseries operator()} (size\+\_\+t row, size\+\_\+t col)
+\item 
+\Hypertarget{classq_1_1_matrices_1_1_matrix__mc_a76a44d1456df40c676e2789ebca83a80}\label{classq_1_1_matrices_1_1_matrix__mc_a76a44d1456df40c676e2789ebca83a80} 
+const double \& {\bfseries operator()} (size\+\_\+t row, size\+\_\+t col) const
+\item 
+\Hypertarget{classq_1_1_matrices_1_1_matrix__mc_a5c221a8b4db4e7d624ec2d0296a6bed3}\label{classq_1_1_matrices_1_1_matrix__mc_a5c221a8b4db4e7d624ec2d0296a6bed3} 
+double \& {\bfseries operator\mbox{[}$\,$\mbox{]}} (size\+\_\+t idx)
+\item 
+\Hypertarget{classq_1_1_matrices_1_1_matrix__mc_a4713a45765f786d7090925bba1e3fa54}\label{classq_1_1_matrices_1_1_matrix__mc_a4713a45765f786d7090925bba1e3fa54} 
+const double \& {\bfseries operator\mbox{[}$\,$\mbox{]}} (size\+\_\+t idx) const
+\item 
+\Hypertarget{classq_1_1_matrices_1_1_matrix__mc_ac0de5dec1516964fe86344049520bc27}\label{classq_1_1_matrices_1_1_matrix__mc_ac0de5dec1516964fe86344049520bc27} 
+\mbox{\hyperlink{classq_1_1_matrices_1_1_matrix__mc}{Matrix\+\_\+mc}} \& {\bfseries operator=} (const \mbox{\hyperlink{classq_1_1_matrices_1_1_matrix__mc}{Matrix\+\_\+mc}} \&other)
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Public Attributes}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classq_1_1_matrices_1_1_matrix__mc_a0a5dff2e75435ce8258f72c36e75c4f9}\label{classq_1_1_matrices_1_1_matrix__mc_a0a5dff2e75435ce8258f72c36e75c4f9} 
+double \texorpdfstring{$\ast$}{*} {\bfseries elements}
+\item 
+\Hypertarget{classq_1_1_matrices_1_1_matrix__mc_ad77ee7119abeed0dc00dd0586232a495}\label{classq_1_1_matrices_1_1_matrix__mc_ad77ee7119abeed0dc00dd0586232a495} 
+size\+\_\+t {\bfseries rows}
+\item 
+\Hypertarget{classq_1_1_matrices_1_1_matrix__mc_ac80613fcbe6d0809a9724e2e0302fae2}\label{classq_1_1_matrices_1_1_matrix__mc_ac80613fcbe6d0809a9724e2e0302fae2} 
+size\+\_\+t {\bfseries cols}
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+A clase to store a matrix with major column order storage. 
+
+The \doxylink{classq_1_1_matrices_1_1_matrix__mc}{Matrix\+\_\+mc} class is used to store a matrix of doubles with major column order storage.
+
+
+\begin{DoxyParams}{Parameters}
+{\em elements} & A pointer to the elements of the matrix \\
+\hline
+{\em rows} & The number of rows \\
+\hline
+{\em cols} & The number of columns \\
+\hline
+\end{DoxyParams}
+
+
+The documentation for this class was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+include/qalgorithms\+\_\+matrix.\+h\item 
+src/qalgorithms\+\_\+matrix.\+cpp\end{DoxyCompactItemize}

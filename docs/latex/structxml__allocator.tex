@@ -1,0 +1,58 @@
+\doxysection{xml\+\_\+allocator Struct Reference}
+\hypertarget{structxml__allocator}{}\label{structxml__allocator}\index{xml\_allocator@{xml\_allocator}}
+Inheritance diagram for xml\+\_\+allocator\+:\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[height=2.000000cm]{structxml__allocator}
+\end{center}
+\end{figure}
+\doxysubsubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{structxml__allocator_ad41b1a18595953aa71a470b45921c0fd}\label{structxml__allocator_ad41b1a18595953aa71a470b45921c0fd} 
+{\bfseries xml\+\_\+allocator} (\mbox{\hyperlink{structxml__memory__page}{xml\+\_\+memory\+\_\+page}} \texorpdfstring{$\ast$}{*}root)
+\item 
+\Hypertarget{structxml__allocator_ad07a6aa6876c8c5a5536d409c01d88e5}\label{structxml__allocator_ad07a6aa6876c8c5a5536d409c01d88e5} 
+\mbox{\hyperlink{structxml__memory__page}{xml\+\_\+memory\+\_\+page}} \texorpdfstring{$\ast$}{*} {\bfseries allocate\+\_\+page} (size\+\_\+t data\+\_\+size)
+\item 
+\Hypertarget{structxml__allocator_ae010e1cb3ad4e8f1235ad94ea4c542ee}\label{structxml__allocator_ae010e1cb3ad4e8f1235ad94ea4c542ee} 
+void \texorpdfstring{$\ast$}{*} {\bfseries allocate\+\_\+memory\+\_\+oob} (size\+\_\+t size, \mbox{\hyperlink{structxml__memory__page}{xml\+\_\+memory\+\_\+page}} \texorpdfstring{$\ast$}{*}\&out\+\_\+page)
+\item 
+\Hypertarget{structxml__allocator_a02a8725611785568ceae7a0eea3eca76}\label{structxml__allocator_a02a8725611785568ceae7a0eea3eca76} 
+void \texorpdfstring{$\ast$}{*} {\bfseries allocate\+\_\+memory} (size\+\_\+t size, \mbox{\hyperlink{structxml__memory__page}{xml\+\_\+memory\+\_\+page}} \texorpdfstring{$\ast$}{*}\&out\+\_\+page)
+\item 
+\Hypertarget{structxml__allocator_a103dfdec5c72cb955e2a97a61fdc9af1}\label{structxml__allocator_a103dfdec5c72cb955e2a97a61fdc9af1} 
+void \texorpdfstring{$\ast$}{*} {\bfseries allocate\+\_\+object} (size\+\_\+t size, \mbox{\hyperlink{structxml__memory__page}{xml\+\_\+memory\+\_\+page}} \texorpdfstring{$\ast$}{*}\&out\+\_\+page)
+\item 
+\Hypertarget{structxml__allocator_a5df417155487cce4e0460b123ac33dc6}\label{structxml__allocator_a5df417155487cce4e0460b123ac33dc6} 
+void {\bfseries deallocate\+\_\+memory} (void \texorpdfstring{$\ast$}{*}ptr, size\+\_\+t size, \mbox{\hyperlink{structxml__memory__page}{xml\+\_\+memory\+\_\+page}} \texorpdfstring{$\ast$}{*}page)
+\item 
+\Hypertarget{structxml__allocator_a19732d75c0ba4b799d32a285fcb58027}\label{structxml__allocator_a19732d75c0ba4b799d32a285fcb58027} 
+char\+\_\+t \texorpdfstring{$\ast$}{*} {\bfseries allocate\+\_\+string} (size\+\_\+t length)
+\item 
+\Hypertarget{structxml__allocator_af32c538db4d562c2d0bfe15f7c0aa879}\label{structxml__allocator_af32c538db4d562c2d0bfe15f7c0aa879} 
+void {\bfseries deallocate\+\_\+string} (char\+\_\+t \texorpdfstring{$\ast$}{*}string)
+\item 
+\Hypertarget{structxml__allocator_ac831a283ec3bcbe22fd3ce3be98ec347}\label{structxml__allocator_ac831a283ec3bcbe22fd3ce3be98ec347} 
+bool {\bfseries reserve} ()
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Static Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{structxml__allocator_a1c6bfe15a257a094f55659f8d71c209e}\label{structxml__allocator_a1c6bfe15a257a094f55659f8d71c209e} 
+static void {\bfseries deallocate\+\_\+page} (\mbox{\hyperlink{structxml__memory__page}{xml\+\_\+memory\+\_\+page}} \texorpdfstring{$\ast$}{*}page)
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Public Attributes}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{structxml__allocator_a38082e85b23743620a257f997a00bb69}\label{structxml__allocator_a38082e85b23743620a257f997a00bb69} 
+\mbox{\hyperlink{structxml__memory__page}{xml\+\_\+memory\+\_\+page}} \texorpdfstring{$\ast$}{*} {\bfseries \+\_\+root}
+\item 
+\Hypertarget{structxml__allocator_a4908b4aaa8cbbc3bf936ab8a938053c0}\label{structxml__allocator_a4908b4aaa8cbbc3bf936ab8a938053c0} 
+size\+\_\+t {\bfseries \+\_\+busy\+\_\+size}
+\end{DoxyCompactItemize}
+
+
+The documentation for this struct was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+external/pugixml-\/1.\+14/src/pugixml.\+cpp\end{DoxyCompactItemize}

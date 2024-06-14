@@ -5,6 +5,8 @@
 
 namespace q
 {
+  namespace MeasurementData
+  {
   void MeasurementData::zeroFilling(varDataType &dataVec, int k)
   {
     std::visit([k](auto &&arg)
@@ -285,7 +287,7 @@ namespace q
                        }
 
                        // calculate the coefficients b0, b1, and b2 for the quadratic extrapolation
-                       Matrix B = linreg(xDataTemp, yDataTemp, 2);
+                       q::Matrices::Matrix B = linreg(xDataTemp, yDataTemp, 2);
                        // extrapolate the y-axis values for i=0 to I-1 and j=J+1 to dataPoints.size()-1
                        for (size_t i = 0; i < I; i++)
                        {
@@ -389,5 +391,5 @@ namespace q
                       }), arg->end()); },
                dataVec); // end of visit
   }                      // end of interpolateData
-
+  } // namespace MeasurementData
 } // namespace q

@@ -1,0 +1,80 @@
+\doxysection{xml\+\_\+buffered\+\_\+writer Class Reference}
+\hypertarget{classxml__buffered__writer}{}\label{classxml__buffered__writer}\index{xml\_buffered\_writer@{xml\_buffered\_writer}}
+\doxysubsubsection*{Public Types}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classxml__buffered__writer_a684aec07739ea6e60d47440eee97b4f6}\label{classxml__buffered__writer_a684aec07739ea6e60d47440eee97b4f6} 
+enum \{ {\bfseries bufcapacitybytes}
+, {\bfseries bufcapacity} = bufcapacitybytes / (sizeof(char\+\_\+t) + 4)
+ \}
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classxml__buffered__writer_a3c22ad246e2aebb6597935baf4a223a7}\label{classxml__buffered__writer_a3c22ad246e2aebb6597935baf4a223a7} 
+{\bfseries xml\+\_\+buffered\+\_\+writer} (xml\+\_\+writer \&writer\+\_\+, xml\+\_\+encoding user\+\_\+encoding)
+\item 
+\Hypertarget{classxml__buffered__writer_a4789b8661f9ff4e5e4bb4226f7d45997}\label{classxml__buffered__writer_a4789b8661f9ff4e5e4bb4226f7d45997} 
+size\+\_\+t {\bfseries flush} ()
+\item 
+\Hypertarget{classxml__buffered__writer_aa733cb2cd0d5fcacec92c67a7f26c553}\label{classxml__buffered__writer_aa733cb2cd0d5fcacec92c67a7f26c553} 
+void {\bfseries flush} (const char\+\_\+t \texorpdfstring{$\ast$}{*}data, size\+\_\+t size)
+\item 
+\Hypertarget{classxml__buffered__writer_a119f9db2f60e578e69ac81177e932fb3}\label{classxml__buffered__writer_a119f9db2f60e578e69ac81177e932fb3} 
+void {\bfseries write\+\_\+direct} (const char\+\_\+t \texorpdfstring{$\ast$}{*}data, size\+\_\+t length)
+\item 
+\Hypertarget{classxml__buffered__writer_ae62b84beff660555acb76e277f967c0d}\label{classxml__buffered__writer_ae62b84beff660555acb76e277f967c0d} 
+void {\bfseries write\+\_\+buffer} (const char\+\_\+t \texorpdfstring{$\ast$}{*}data, size\+\_\+t length)
+\item 
+\Hypertarget{classxml__buffered__writer_a1699556c38e942f7c1db1b98ddf15642}\label{classxml__buffered__writer_a1699556c38e942f7c1db1b98ddf15642} 
+void {\bfseries write\+\_\+string} (const char\+\_\+t \texorpdfstring{$\ast$}{*}data)
+\item 
+\Hypertarget{classxml__buffered__writer_a1aa829bd551a69dd9005d2d46063308f}\label{classxml__buffered__writer_a1aa829bd551a69dd9005d2d46063308f} 
+void {\bfseries write} (char\+\_\+t d0)
+\item 
+\Hypertarget{classxml__buffered__writer_a4cd6e908908e17c9b07eba34f7317791}\label{classxml__buffered__writer_a4cd6e908908e17c9b07eba34f7317791} 
+void {\bfseries write} (char\+\_\+t d0, char\+\_\+t d1)
+\item 
+\Hypertarget{classxml__buffered__writer_af82b277c1ef5c75d1901bb5a8eb4507f}\label{classxml__buffered__writer_af82b277c1ef5c75d1901bb5a8eb4507f} 
+void {\bfseries write} (char\+\_\+t d0, char\+\_\+t d1, char\+\_\+t d2)
+\item 
+\Hypertarget{classxml__buffered__writer_af679f459dfa0af257c190b8db57e7dcb}\label{classxml__buffered__writer_af679f459dfa0af257c190b8db57e7dcb} 
+void {\bfseries write} (char\+\_\+t d0, char\+\_\+t d1, char\+\_\+t d2, char\+\_\+t d3)
+\item 
+\Hypertarget{classxml__buffered__writer_aad4a4f18223ec3cb1ff607425119b85f}\label{classxml__buffered__writer_aad4a4f18223ec3cb1ff607425119b85f} 
+void {\bfseries write} (char\+\_\+t d0, char\+\_\+t d1, char\+\_\+t d2, char\+\_\+t d3, char\+\_\+t d4)
+\item 
+\Hypertarget{classxml__buffered__writer_ae6af5067d768c24b9c20422f76737f29}\label{classxml__buffered__writer_ae6af5067d768c24b9c20422f76737f29} 
+void {\bfseries write} (char\+\_\+t d0, char\+\_\+t d1, char\+\_\+t d2, char\+\_\+t d3, char\+\_\+t d4, char\+\_\+t d5)
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Public Attributes}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classxml__buffered__writer_a84c87765fbdf444d981ffb0f67899dd4}\label{classxml__buffered__writer_a84c87765fbdf444d981ffb0f67899dd4} 
+char\+\_\+t {\bfseries buffer} \mbox{[}bufcapacity\mbox{]}
+\item 
+\Hypertarget{classxml__buffered__writer_a92c8d076027642039d1a1df5f77c7fe5}\label{classxml__buffered__writer_a92c8d076027642039d1a1df5f77c7fe5} 
+\begin{tabbing}
+xx\=xx\=xx\=xx\=xx\=xx\=xx\=xx\=xx\=\kill
+union \{\\
+\>uint8\_t {\bfseries data\_u8} \mbox{[}4 \texorpdfstring{$\ast$}{*}bufcapacity\mbox{]}\\
+\>uint16\_t {\bfseries data\_u16} \mbox{[}2 \texorpdfstring{$\ast$}{*}bufcapacity\mbox{]}\\
+\>uint32\_t {\bfseries data\_u32} \mbox{[}bufcapacity\mbox{]}\\
+\>char\_t {\bfseries data\_char} \mbox{[}bufcapacity\mbox{]}\\
+\} {\bfseries scratch}\\
+
+\end{tabbing}\item 
+\Hypertarget{classxml__buffered__writer_a37cdd45f867937e1978565f5a0fa318b}\label{classxml__buffered__writer_a37cdd45f867937e1978565f5a0fa318b} 
+xml\+\_\+writer \& {\bfseries writer}
+\item 
+\Hypertarget{classxml__buffered__writer_a6bad6a93035d796939d84bee30e74ce7}\label{classxml__buffered__writer_a6bad6a93035d796939d84bee30e74ce7} 
+size\+\_\+t {\bfseries bufsize}
+\item 
+\Hypertarget{classxml__buffered__writer_ab810a7286598172e1549561b285f08fb}\label{classxml__buffered__writer_ab810a7286598172e1549561b285f08fb} 
+xml\+\_\+encoding {\bfseries encoding}
+\end{DoxyCompactItemize}
+
+
+The documentation for this class was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+external/pugixml-\/1.\+14/src/pugixml.\+cpp\end{DoxyCompactItemize}

@@ -1,0 +1,87 @@
+\doxysection{q\+::q\+Peaks Class Reference}
+\hypertarget{classq_1_1q_peaks}{}\label{classq_1_1q_peaks}\index{q::qPeaks@{q::qPeaks}}
+
+
+A class to store and apply a peak evaluation model.  
+
+
+
+
+{\ttfamily \#include $<$qalgorithms\+\_\+qpeaks.\+h$>$}
+
+\doxysubsubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\hyperlink{classq_1_1q_peaks_a2d61ca92c700c43e8bfcb573326748dc}{q\+Peaks}} (const var\+Data\+Type \&data\+Vec)
+\begin{DoxyCompactList}\small\item\em Construct a new q Peaks object using var\+Data\+Type object to initialize the object Matrices. \end{DoxyCompactList}\item 
+std\+::vector$<$ std\+::vector$<$ std\+::unique\+\_\+ptr$<$ \mbox{\hyperlink{classq_1_1_data_type_1_1_peak}{Data\+Type\+::\+Peak}} $>$ $>$ $>$ \mbox{\hyperlink{classq_1_1q_peaks_a84e1e2fe8b7b0434b682b28803297477}{find\+Peaks}} (const var\+Data\+Type \&data\+Vec)
+\begin{DoxyCompactList}\small\item\em Find the peaks in the data. Container function to call the find\+Peaks method. \end{DoxyCompactList}\item 
+\Hypertarget{classq_1_1q_peaks_a29d64cf6f5bd45e398cd2f0dca5f0cfc}\label{classq_1_1q_peaks_a29d64cf6f5bd45e398cd2f0dca5f0cfc} 
+void {\bfseries peak\+List\+To\+CSV} (const std\+::vector$<$ std\+::vector$<$ std\+::unique\+\_\+ptr$<$ \mbox{\hyperlink{classq_1_1_data_type_1_1_peak}{Data\+Type\+::\+Peak}} $>$ $>$ $>$ \&all\+Peaks, const std\+::string \&filename) const
+\item 
+\Hypertarget{classq_1_1q_peaks_adfb847c9e426c08213bef391fa6023cc}\label{classq_1_1q_peaks_adfb847c9e426c08213bef391fa6023cc} 
+void {\bfseries plot\+Peaks\+To\+Python} (const std\+::string \&filename\+\_\+input, const std\+::string \&filename\+\_\+output, const bool include\+Fits=true, const bool feature\+Map=false) const
+\item 
+\Hypertarget{classq_1_1q_peaks_af7a0993ab077fa9cbb719c3843dfc7f3}\label{classq_1_1q_peaks_af7a0993ab077fa9cbb719c3843dfc7f3} 
+Vector {\bfseries calc\+Yhat} (const int left\+\_\+limit, const int right\+\_\+limit, const Matrix\+\_\+mc \&beta, const size\+\_\+t idx)
+\item 
+\Hypertarget{classq_1_1q_peaks_a881ef3487ac1e678335a6483e0ad9af4}\label{classq_1_1q_peaks_a881ef3487ac1e678335a6483e0ad9af4} 
+Vector {\bfseries calc\+Yhat} (const int left\+\_\+limit, const int right\+\_\+limit, const Vector \&beta)
+\item 
+\Hypertarget{classq_1_1q_peaks_afa5891d8281a1d12003c307a08c6a2c0}\label{classq_1_1q_peaks_afa5891d8281a1d12003c307a08c6a2c0} 
+void {\bfseries info} () const
+\item 
+\Hypertarget{classq_1_1q_peaks_a6ea06a52051f8ab0776f9949fd811179}\label{classq_1_1q_peaks_a6ea06a52051f8ab0776f9949fd811179} 
+void {\bfseries print\+Matrices} (int scale) const
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Static Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classq_1_1q_peaks_ad0a3a126e24daacb5ad2ab952744a33b}\label{classq_1_1q_peaks_ad0a3a126e24daacb5ad2ab952744a33b} 
+static void {\bfseries initialize} ()
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+A class to store and apply a peak evaluation model. 
+
+\doxysubsection{Constructor \& Destructor Documentation}
+\Hypertarget{classq_1_1q_peaks_a2d61ca92c700c43e8bfcb573326748dc}\label{classq_1_1q_peaks_a2d61ca92c700c43e8bfcb573326748dc} 
+\index{q::qPeaks@{q::qPeaks}!qPeaks@{qPeaks}}
+\index{qPeaks@{qPeaks}!q::qPeaks@{q::qPeaks}}
+\doxysubsubsection{\texorpdfstring{qPeaks()}{qPeaks()}}
+{\footnotesize\ttfamily q\+::q\+Peaks\+::q\+Peaks (\begin{DoxyParamCaption}\item[{const var\+Data\+Type \&}]{data\+Vec }\end{DoxyParamCaption})}
+
+
+
+Construct a new q Peaks object using var\+Data\+Type object to initialize the object Matrices. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em data\+Vec} & \\
+\hline
+\end{DoxyParams}
+
+
+\doxysubsection{Member Function Documentation}
+\Hypertarget{classq_1_1q_peaks_a84e1e2fe8b7b0434b682b28803297477}\label{classq_1_1q_peaks_a84e1e2fe8b7b0434b682b28803297477} 
+\index{q::qPeaks@{q::qPeaks}!findPeaks@{findPeaks}}
+\index{findPeaks@{findPeaks}!q::qPeaks@{q::qPeaks}}
+\doxysubsubsection{\texorpdfstring{findPeaks()}{findPeaks()}}
+{\footnotesize\ttfamily std\+::vector$<$ std\+::vector$<$ std\+::unique\+\_\+ptr$<$ \mbox{\hyperlink{classq_1_1_data_type_1_1_peak}{Data\+Type\+::\+Peak}} $>$ $>$ $>$ q\+::q\+Peaks\+::find\+Peaks (\begin{DoxyParamCaption}\item[{const var\+Data\+Type \&}]{data\+Vec }\end{DoxyParamCaption})}
+
+
+
+Find the peaks in the data. Container function to call the find\+Peaks method. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em data\+Vec} & \\
+\hline
+\end{DoxyParams}
+
+
+The documentation for this class was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+include/qalgorithms\+\_\+qpeaks.\+h\item 
+src/qalgorithms\+\_\+qpeaks.\+cpp\end{DoxyCompactItemize}

@@ -1,0 +1,65 @@
+\doxysection{q\+::Data\+Type\+::Mass\+Spectrum\+::Data\+Point Struct Reference}
+\hypertarget{structq_1_1_data_type_1_1_mass_spectrum_1_1_data_point}{}\label{structq_1_1_data_type_1_1_mass_spectrum_1_1_data_point}\index{q::DataType::MassSpectrum::DataPoint@{q::DataType::MassSpectrum::DataPoint}}
+
+
+Struct to store mass spectrum data points.  
+
+
+
+
+{\ttfamily \#include $<$qalgorithms\+\_\+datatype\+\_\+mass\+\_\+spectrum.\+h$>$}
+
+\doxysubsubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{structq_1_1_data_type_1_1_mass_spectrum_1_1_data_point_ad3ecb2e5918e7f1fd5bc06e39312ede9}\label{structq_1_1_data_type_1_1_mass_spectrum_1_1_data_point_ad3ecb2e5918e7f1fd5bc06e39312ede9} 
+{\bfseries Data\+Point} (double intensity, double mz, int df)
+\item 
+\Hypertarget{structq_1_1_data_type_1_1_mass_spectrum_1_1_data_point_a6819785cf78dcfd79254e34c3ddd3ec1}\label{structq_1_1_data_type_1_1_mass_spectrum_1_1_data_point_a6819785cf78dcfd79254e34c3ddd3ec1} 
+double \& {\bfseries x} ()
+\item 
+\Hypertarget{structq_1_1_data_type_1_1_mass_spectrum_1_1_data_point_a0f5379f989aba76f61041728e2dcb5bc}\label{structq_1_1_data_type_1_1_mass_spectrum_1_1_data_point_a0f5379f989aba76f61041728e2dcb5bc} 
+double \& {\bfseries y} ()
+\item 
+\Hypertarget{structq_1_1_data_type_1_1_mass_spectrum_1_1_data_point_a99e352d10d7854381d536e9d97570051}\label{structq_1_1_data_type_1_1_mass_spectrum_1_1_data_point_a99e352d10d7854381d536e9d97570051} 
+void {\bfseries setY} (double y)
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Public Attributes}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{structq_1_1_data_type_1_1_mass_spectrum_1_1_data_point_a003e752cb2649f47066414cb7ca77d68}\label{structq_1_1_data_type_1_1_mass_spectrum_1_1_data_point_a003e752cb2649f47066414cb7ca77d68} 
+double {\bfseries intensity}
+\item 
+\Hypertarget{structq_1_1_data_type_1_1_mass_spectrum_1_1_data_point_a6e4df856f26a4c69495dd219f13b6ff1}\label{structq_1_1_data_type_1_1_mass_spectrum_1_1_data_point_a6e4df856f26a4c69495dd219f13b6ff1} 
+double {\bfseries mz}
+\item 
+\Hypertarget{structq_1_1_data_type_1_1_mass_spectrum_1_1_data_point_ab9809a3ba5b057800975069c77180748}\label{structq_1_1_data_type_1_1_mass_spectrum_1_1_data_point_ab9809a3ba5b057800975069c77180748} 
+int {\bfseries df}
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+Struct to store mass spectrum data points. 
+
+The \doxylink{structq_1_1_data_type_1_1_mass_spectrum_1_1_data_point}{Data\+Point} struct is used to store mass spectrum data points. It contains the intensity, mz, and degrees of freedom (important for the uncertainty estimation when interpolating the data is considered). 
+\begin{DoxyParams}{Parameters}
+{\em intensity} & The intensity of the mass spectrum data point \\
+\hline
+{\em mz} & The mass-\/to-\/charge ratio of the mass spectrum data point \\
+\hline
+{\em df} & The degrees of freedom of the mass spectrum data point \\
+\hline
+{\em Data\+Point()} & Constructor for the \doxylink{structq_1_1_data_type_1_1_mass_spectrum_1_1_data_point}{Data\+Point} struct \\
+\hline
+{\em x()} & Getter for the x-\/axis value \\
+\hline
+{\em y()} & Getter for the y-\/axis value \\
+\hline
+{\em set\+Y()} & Setter for the y-\/axis value \\
+\hline
+\end{DoxyParams}
+
+
+The documentation for this struct was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+include/qalgorithms\+\_\+datatype\+\_\+mass\+\_\+spectrum.\+h\end{DoxyCompactItemize}

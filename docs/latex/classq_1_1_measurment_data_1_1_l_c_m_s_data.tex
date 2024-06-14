@@ -1,0 +1,200 @@
+\doxysection{q\+::Measurment\+Data\+::LCMSData Class Reference}
+\hypertarget{classq_1_1_measurment_data_1_1_l_c_m_s_data}{}\label{classq_1_1_measurment_data_1_1_l_c_m_s_data}\index{q::MeasurmentData::LCMSData@{q::MeasurmentData::LCMSData}}
+
+
+A class to store LC-\/\+MS measurement data.  
+
+
+
+
+{\ttfamily \#include $<$qalgorithms\+\_\+measurement\+\_\+data\+\_\+lcms.\+h$>$}
+
+Inheritance diagram for q\+::Measurment\+Data\+::LCMSData\+:\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[height=2.000000cm]{classq_1_1_measurment_data_1_1_l_c_m_s_data}
+\end{center}
+\end{figure}
+\doxysubsubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+void \mbox{\hyperlink{classq_1_1_measurment_data_1_1_l_c_m_s_data_ab4632d3d3138d17fd5a7f479b70c2846}{read\+CSV}} (std\+::string filename, int row\+Start, int row\+End, int col\+Start, int col\+End, char separator, std\+::vector$<$ Data\+Type\+::\+Data\+Field $>$ variable\+Types)
+\begin{DoxyCompactList}\small\item\em Read LC-\/\+MS data from a CSV file. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{classq_1_1_measurment_data_1_1_l_c_m_s_data_a33a428f33dc3656f3042fab6c51a09f2}{read\+Stream\+Craft\+MZML}} (sc\+::\+MZML \&data)
+\begin{DoxyCompactList}\small\item\em Read LC-\/\+MS data from a Stream\+Craft mz\+ML object. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{classq_1_1_measurment_data_1_1_l_c_m_s_data_a5d7411d87663980b683c51a2f969b4c0}{write\+CSV}} (std\+::string filename)
+\begin{DoxyCompactList}\small\item\em Write LC-\/\+MS data to a CSV file. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{classq_1_1_measurment_data_1_1_l_c_m_s_data_ae1a62294c43bbe12e97f9293eaa49ea8}{zero\+Filling}} ()
+\begin{DoxyCompactList}\small\item\em Identify and fill gaps in the LC-\/\+MS data. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{classq_1_1_measurment_data_1_1_l_c_m_s_data_a6c799dc9ef6918446df62515bc7daa8d}{cut\+Data}} ()
+\begin{DoxyCompactList}\small\item\em Cut the data into smaller data sets. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{classq_1_1_measurment_data_1_1_l_c_m_s_data_a5411843e0ea71a7719a7550dc3dccd71}{filter\+Small\+Data\+Sets}} ()
+\begin{DoxyCompactList}\small\item\em Filter small data sets. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{classq_1_1_measurment_data_1_1_l_c_m_s_data_a6bcb7c6df660ff834fbfb86dcb5a81a5}{interpolate\+Data}} ()
+\begin{DoxyCompactList}\small\item\em Interpolate y-\/axis values. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{classq_1_1_measurment_data_1_1_l_c_m_s_data_aa808ac2ee343120a4a89f8ee8e9278f6}{print}} ()
+\begin{DoxyCompactList}\small\item\em Print the LC-\/\+MS datapoints and metadata. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{classq_1_1_measurment_data_1_1_l_c_m_s_data_a5ca3f008825795ef7caef0aeb69285ff}{info}} ()
+\begin{DoxyCompactList}\small\item\em Print the LC-\/\+MS number of data sets. \end{DoxyCompactList}\item 
+\Hypertarget{classq_1_1_measurment_data_1_1_l_c_m_s_data_a645ba68b9143cf46c2a5ef53ff250a1f}\label{classq_1_1_measurment_data_1_1_l_c_m_s_data_a645ba68b9143cf46c2a5ef53ff250a1f} 
+void {\bfseries get\+Max\+Key} ()
+\end{DoxyCompactItemize}
+\doxysubsection*{Public Member Functions inherited from \mbox{\hyperlink{classq_1_1_measurment_data_1_1_measurement_data}{q\+::\+Measurment\+Data\+::\+Measurement\+Data}}}
+\begin{DoxyCompactItemize}
+\item 
+void \mbox{\hyperlink{classq_1_1_measurment_data_1_1_measurement_data_a745fd8731072a4f0d058f889bbca158e}{zero\+Filling}} (var\+Data\+Type \&data\+Vec, int k)
+\begin{DoxyCompactList}\small\item\em Identify and fill gaps in the data. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{classq_1_1_measurment_data_1_1_measurement_data_a9970c47dae0634c77e0302be61a18419}{cut\+Data}} (var\+Data\+Type \&data\+Vec, size\+\_\+t \&max\+Key)
+\begin{DoxyCompactList}\small\item\em Cut the data into smaller data sets. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{classq_1_1_measurment_data_1_1_measurement_data_ad2a87250fbe7e4e9003fe09d84dd5dec}{filter\+Small\+Data\+Sets}} (var\+Data\+Type \&data\+Vec)
+\begin{DoxyCompactList}\small\item\em Filter small data sets. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{classq_1_1_measurment_data_1_1_measurement_data_a0427a744f86c44ae9039e9b4a8a59188}{interpolate\+Data}} (var\+Data\+Type \&data\+Vec)
+\begin{DoxyCompactList}\small\item\em Interpolate y-\/axis values. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsection*{Public Attributes}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classq_1_1_measurment_data_1_1_l_c_m_s_data_abb09b0bd8c2cd4caabf30d6047504bb8}\label{classq_1_1_measurment_data_1_1_l_c_m_s_data_abb09b0bd8c2cd4caabf30d6047504bb8} 
+std\+::vector$<$ std\+::unique\+\_\+ptr$<$ \mbox{\hyperlink{classq_1_1_data_type_1_1_mass_spectrum}{Data\+Type\+::\+Mass\+Spectrum}} $>$ $>$ {\bfseries data}
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+A class to store LC-\/\+MS measurement data. 
+
+The \doxylink{classq_1_1_measurment_data_1_1_l_c_m_s_data}{LCMSData} class is a subclass of the \doxylink{classq_1_1_measurment_data_1_1_measurement_data}{Measurement\+Data} class used to store LC-\/\+MS measurement data. 
+\begin{DoxyParams}{Parameters}
+{\em data} & A map of LC-\/\+MS data /ref Data\+Type\+::\+LC\+\_\+\+MS \\
+\hline
+\end{DoxyParams}
+
+
+\doxysubsection{Member Function Documentation}
+\Hypertarget{classq_1_1_measurment_data_1_1_l_c_m_s_data_a6c799dc9ef6918446df62515bc7daa8d}\label{classq_1_1_measurment_data_1_1_l_c_m_s_data_a6c799dc9ef6918446df62515bc7daa8d} 
+\index{q::MeasurmentData::LCMSData@{q::MeasurmentData::LCMSData}!cutData@{cutData}}
+\index{cutData@{cutData}!q::MeasurmentData::LCMSData@{q::MeasurmentData::LCMSData}}
+\doxysubsubsection{\texorpdfstring{cutData()}{cutData()}}
+{\footnotesize\ttfamily void q\+::\+LCMSData\+::cut\+Data (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})}
+
+
+
+Cut the data into smaller data sets. 
+
+The cut\+Data method cuts the data into smaller data sets. The method uses the separator value to split the data into smaller data sets. The separator value is set to -\/1.\+0 for the x-\/axis and -\/1.\+0 for the y-\/axis. For each cut, the method creates a new data subset and stores it in the data map using a sub-\/dataset ID as the secondary key. \Hypertarget{classq_1_1_measurment_data_1_1_l_c_m_s_data_a5411843e0ea71a7719a7550dc3dccd71}\label{classq_1_1_measurment_data_1_1_l_c_m_s_data_a5411843e0ea71a7719a7550dc3dccd71} 
+\index{q::MeasurmentData::LCMSData@{q::MeasurmentData::LCMSData}!filterSmallDataSets@{filterSmallDataSets}}
+\index{filterSmallDataSets@{filterSmallDataSets}!q::MeasurmentData::LCMSData@{q::MeasurmentData::LCMSData}}
+\doxysubsubsection{\texorpdfstring{filterSmallDataSets()}{filterSmallDataSets()}}
+{\footnotesize\ttfamily void q\+::\+LCMSData\+::filter\+Small\+Data\+Sets (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})}
+
+
+
+Filter small data sets. 
+
+The filter\+Small\+Data\+Sets method filters small data sets. The method removes data sets with less than 5 data points. This is due to the regression analysis that includes 4 coefficients and therefore requires at least 5 data points. \Hypertarget{classq_1_1_measurment_data_1_1_l_c_m_s_data_a5ca3f008825795ef7caef0aeb69285ff}\label{classq_1_1_measurment_data_1_1_l_c_m_s_data_a5ca3f008825795ef7caef0aeb69285ff} 
+\index{q::MeasurmentData::LCMSData@{q::MeasurmentData::LCMSData}!info@{info}}
+\index{info@{info}!q::MeasurmentData::LCMSData@{q::MeasurmentData::LCMSData}}
+\doxysubsubsection{\texorpdfstring{info()}{info()}}
+{\footnotesize\ttfamily void q\+::\+LCMSData\+::info (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})}
+
+
+
+Print the LC-\/\+MS number of data sets. 
+
+The print method prints the LC-\/\+MS data to the console. \Hypertarget{classq_1_1_measurment_data_1_1_l_c_m_s_data_a6bcb7c6df660ff834fbfb86dcb5a81a5}\label{classq_1_1_measurment_data_1_1_l_c_m_s_data_a6bcb7c6df660ff834fbfb86dcb5a81a5} 
+\index{q::MeasurmentData::LCMSData@{q::MeasurmentData::LCMSData}!interpolateData@{interpolateData}}
+\index{interpolateData@{interpolateData}!q::MeasurmentData::LCMSData@{q::MeasurmentData::LCMSData}}
+\doxysubsubsection{\texorpdfstring{interpolateData()}{interpolateData()}}
+{\footnotesize\ttfamily void q\+::\+LCMSData\+::interpolate\+Data (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})}
+
+
+
+Interpolate y-\/axis values. 
+
+The interpolate\+Data method interpolates the y-\/axis values. The method uses quadratic interpolation to interpolate the y-\/axis values in the log space. \Hypertarget{classq_1_1_measurment_data_1_1_l_c_m_s_data_aa808ac2ee343120a4a89f8ee8e9278f6}\label{classq_1_1_measurment_data_1_1_l_c_m_s_data_aa808ac2ee343120a4a89f8ee8e9278f6} 
+\index{q::MeasurmentData::LCMSData@{q::MeasurmentData::LCMSData}!print@{print}}
+\index{print@{print}!q::MeasurmentData::LCMSData@{q::MeasurmentData::LCMSData}}
+\doxysubsubsection{\texorpdfstring{print()}{print()}}
+{\footnotesize\ttfamily void q\+::\+LCMSData\+::print (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})}
+
+
+
+Print the LC-\/\+MS datapoints and metadata. 
+
+The print method prints the LC-\/\+MS data to the console. \Hypertarget{classq_1_1_measurment_data_1_1_l_c_m_s_data_ab4632d3d3138d17fd5a7f479b70c2846}\label{classq_1_1_measurment_data_1_1_l_c_m_s_data_ab4632d3d3138d17fd5a7f479b70c2846} 
+\index{q::MeasurmentData::LCMSData@{q::MeasurmentData::LCMSData}!readCSV@{readCSV}}
+\index{readCSV@{readCSV}!q::MeasurmentData::LCMSData@{q::MeasurmentData::LCMSData}}
+\doxysubsubsection{\texorpdfstring{readCSV()}{readCSV()}}
+{\footnotesize\ttfamily void q\+::\+LCMSData\+::read\+CSV (\begin{DoxyParamCaption}\item[{std\+::string}]{filename,  }\item[{int}]{row\+Start,  }\item[{int}]{row\+End,  }\item[{int}]{col\+Start,  }\item[{int}]{col\+End,  }\item[{char}]{separator,  }\item[{std\+::vector$<$ Data\+Type\+::\+Data\+Field $>$}]{variable\+Types }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [virtual]}}
+
+
+
+Read LC-\/\+MS data from a CSV file. 
+
+The read\+CSV method reads LC-\/\+MS data from a CSV file and stores it in the \doxylink{classq_1_1_measurment_data_1_1_l_c_m_s_data}{LCMSData} object. The method takes the filename of the CSV file, the start and end rows and columns, the separator, and the variable types. The variable types are used to determine the type of data in each column. The method requires the variable types\+: {\bfseries{scan\+Number}}, {\bfseries{retention\+Time}}, {\bfseries{mz}}, and {\bfseries{intensity}}. Other variable types can be added to the list of variable types.Data\+Type\+::\+Data\+Field 
+\begin{DoxyParams}{Parameters}
+{\em filename} & The filename of the CSV file \\
+\hline
+{\em row\+Start} & The start row (0-\/based index) \\
+\hline
+{\em row\+End} & The end row (if -\/1, then set to the maximum number of rows) \\
+\hline
+{\em col\+Start} & The start column (0-\/based index) \\
+\hline
+{\em col\+End} & The end column (if -\/1, then set to the maximum number of columns) \\
+\hline
+{\em separator} & The separator, e.\+g., \textquotesingle{},\textquotesingle{} or \textquotesingle{}\textbackslash{}t\textquotesingle{} \\
+\hline
+{\em variable\+Types} & The variable types. Required variable types\+: Data\+Field\+::\+SCANNUMBER, Data\+Field\+::\+RETENTIONTIME, Data\+Field\+::\+MZ, and Data\+Field\+::\+INTENSITY \\
+\hline
+\end{DoxyParams}
+
+
+Implements \mbox{\hyperlink{classq_1_1_measurment_data_1_1_measurement_data}{q\+::\+Measurment\+Data\+::\+Measurement\+Data}}.
+
+\Hypertarget{classq_1_1_measurment_data_1_1_l_c_m_s_data_a33a428f33dc3656f3042fab6c51a09f2}\label{classq_1_1_measurment_data_1_1_l_c_m_s_data_a33a428f33dc3656f3042fab6c51a09f2} 
+\index{q::MeasurmentData::LCMSData@{q::MeasurmentData::LCMSData}!readStreamCraftMZML@{readStreamCraftMZML}}
+\index{readStreamCraftMZML@{readStreamCraftMZML}!q::MeasurmentData::LCMSData@{q::MeasurmentData::LCMSData}}
+\doxysubsubsection{\texorpdfstring{readStreamCraftMZML()}{readStreamCraftMZML()}}
+{\footnotesize\ttfamily void q\+::\+LCMSData\+::read\+Stream\+Craft\+MZML (\begin{DoxyParamCaption}\item[{sc\+::\+MZML \&}]{data }\end{DoxyParamCaption})}
+
+
+
+Read LC-\/\+MS data from a Stream\+Craft mz\+ML object. 
+
+The read\+Stream\+Craft\+MZML method reads LC-\/\+MS data from a Stream\+Craft mz\+ML object and stores it in the \doxylink{classq_1_1_measurment_data_1_1_l_c_m_s_data}{LCMSData} object. A Stream\+Craft mz\+ML object is created by using sc\+::\+MZML z("{}path to mz\+ML file"{}).
+
+
+\begin{DoxyParams}{Parameters}
+{\em data} & \+: Stream\+Craft mz\+ML object \\
+\hline
+\end{DoxyParams}
+\Hypertarget{classq_1_1_measurment_data_1_1_l_c_m_s_data_a5d7411d87663980b683c51a2f969b4c0}\label{classq_1_1_measurment_data_1_1_l_c_m_s_data_a5d7411d87663980b683c51a2f969b4c0} 
+\index{q::MeasurmentData::LCMSData@{q::MeasurmentData::LCMSData}!writeCSV@{writeCSV}}
+\index{writeCSV@{writeCSV}!q::MeasurmentData::LCMSData@{q::MeasurmentData::LCMSData}}
+\doxysubsubsection{\texorpdfstring{writeCSV()}{writeCSV()}}
+{\footnotesize\ttfamily void q\+::\+LCMSData\+::write\+CSV (\begin{DoxyParamCaption}\item[{std\+::string}]{filename }\end{DoxyParamCaption})}
+
+
+
+Write LC-\/\+MS data to a CSV file. 
+
+The write\+CSV method writes LC-\/\+MS data to a CSV file. The method takes the filename of the CSV file and writes the LC-\/\+MS data to the file. 
+\begin{DoxyParams}{Parameters}
+{\em filename} & The filename of the CSV file \\
+\hline
+\end{DoxyParams}
+\Hypertarget{classq_1_1_measurment_data_1_1_l_c_m_s_data_ae1a62294c43bbe12e97f9293eaa49ea8}\label{classq_1_1_measurment_data_1_1_l_c_m_s_data_ae1a62294c43bbe12e97f9293eaa49ea8} 
+\index{q::MeasurmentData::LCMSData@{q::MeasurmentData::LCMSData}!zeroFilling@{zeroFilling}}
+\index{zeroFilling@{zeroFilling}!q::MeasurmentData::LCMSData@{q::MeasurmentData::LCMSData}}
+\doxysubsubsection{\texorpdfstring{zeroFilling()}{zeroFilling()}}
+{\footnotesize\ttfamily void q\+::\+LCMSData\+::zero\+Filling (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})}
+
+
+
+Identify and fill gaps in the LC-\/\+MS data. 
+
+The zero\+Filling method identifies and fills gaps in the LC-\/\+MS data. The method uses difference between two neighboring data points to identify gaps. If the difference is 1.\+75 times greater than expected, then the method fills the gap with zero values for intensity and inter/extrapolated values for x-\/axis values. For the expected difference, the method the difference of the last two data points that not show a gap. However, the first expected difference is set to the median of the differences of the total data points. However, the maximum gap size is set to 4 per side, i.\+e., 8 in total, where there is a gap leftover between the fourth and fifth data points. 
+
+The documentation for this class was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+include/qalgorithms\+\_\+measurement\+\_\+data\+\_\+lcms.\+h\item 
+src/qalgorithms\+\_\+measurement\+\_\+data\+\_\+lcms.\+cpp\end{DoxyCompactItemize}

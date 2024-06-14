@@ -1,0 +1,102 @@
+\doxysection{q\+::Measurment\+Data\+::Measurement\+Data Class Reference}
+\hypertarget{classq_1_1_measurment_data_1_1_measurement_data}{}\label{classq_1_1_measurment_data_1_1_measurement_data}\index{q::MeasurmentData::MeasurementData@{q::MeasurmentData::MeasurementData}}
+
+
+A class to store measurement data.  
+
+
+
+
+{\ttfamily \#include $<$qalgorithms\+\_\+measurement\+\_\+data.\+h$>$}
+
+\doxysubsubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classq_1_1_measurment_data_1_1_measurement_data_af8775fca8dd7feeaa1b8f594ceca2620}\label{classq_1_1_measurment_data_1_1_measurement_data_af8775fca8dd7feeaa1b8f594ceca2620} 
+virtual void {\bfseries read\+CSV} (std\+::string filename, int row\+Start, int row\+End, int col\+Start, int col\+End, char separator, std\+::vector$<$ Data\+Type\+::\+Data\+Field $>$ variable\+Types)=0
+\item 
+void \mbox{\hyperlink{classq_1_1_measurment_data_1_1_measurement_data_af829f8714ba32862fcd930ce2d3ed54f}{zero\+Filling}} (var\+Data\+Type \&data\+Vec, int k)
+\begin{DoxyCompactList}\small\item\em Identify and fill gaps in the data. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{classq_1_1_measurment_data_1_1_measurement_data_a027375f5e69955086f3b1fc0738f057f}{cut\+Data}} (var\+Data\+Type \&data\+Vec, size\+\_\+t \&max\+Key)
+\begin{DoxyCompactList}\small\item\em Cut the data into smaller data sets. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{classq_1_1_measurment_data_1_1_measurement_data_a7ffdd3b7989ef39d4924b07f22ede000}{filter\+Small\+Data\+Sets}} (var\+Data\+Type \&data\+Vec)
+\begin{DoxyCompactList}\small\item\em Filter small data sets. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{classq_1_1_measurment_data_1_1_measurement_data_aad4b6410e9045f89397483ec75dfbe76}{interpolate\+Data}} (var\+Data\+Type \&data\+Vec)
+\begin{DoxyCompactList}\small\item\em Interpolate y-\/axis values. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+A class to store measurement data. 
+
+The \doxylink{classq_1_1_measurment_data_1_1_measurement_data}{Measurement\+Data} class is a virtual class used to store measurement data. Based on the type of measurement data, the \doxylink{classq_1_1_measurment_data_1_1_measurement_data}{Measurement\+Data} class can be subclassed to store different types of measurement data. 
+
+\doxysubsection{Member Function Documentation}
+\Hypertarget{classq_1_1_measurment_data_1_1_measurement_data_a027375f5e69955086f3b1fc0738f057f}\label{classq_1_1_measurment_data_1_1_measurement_data_a027375f5e69955086f3b1fc0738f057f} 
+\index{q::MeasurmentData::MeasurementData@{q::MeasurmentData::MeasurementData}!cutData@{cutData}}
+\index{cutData@{cutData}!q::MeasurmentData::MeasurementData@{q::MeasurmentData::MeasurementData}}
+\doxysubsubsection{\texorpdfstring{cutData()}{cutData()}}
+{\footnotesize\ttfamily void q\+::\+Measurment\+Data\+::\+Measurement\+Data\+::cut\+Data (\begin{DoxyParamCaption}\item[{var\+Data\+Type \&}]{data\+Vec,  }\item[{size\+\_\+t \&}]{max\+Key }\end{DoxyParamCaption})}
+
+
+
+Cut the data into smaller data sets. 
+
+The cut\+Data method cuts the data into smaller data sets. The method uses the separator value to split the data into smaller data sets. The separator value is set to -\/1.\+0 for the x-\/axis and -\/1.\+0 for the y-\/axis. For each cut, the method creates a new data subset and stores it in the data vector using a sub-\/dataset ID as the secondary key. 
+\begin{DoxyParams}{Parameters}
+{\em data\+Vec} & A variant data type \\
+\hline
+{\em max\+Key} & The maximum key value in the current data vector. This value is used to create a new key for the new data subset. \\
+\hline
+\end{DoxyParams}
+\Hypertarget{classq_1_1_measurment_data_1_1_measurement_data_a7ffdd3b7989ef39d4924b07f22ede000}\label{classq_1_1_measurment_data_1_1_measurement_data_a7ffdd3b7989ef39d4924b07f22ede000} 
+\index{q::MeasurmentData::MeasurementData@{q::MeasurmentData::MeasurementData}!filterSmallDataSets@{filterSmallDataSets}}
+\index{filterSmallDataSets@{filterSmallDataSets}!q::MeasurmentData::MeasurementData@{q::MeasurmentData::MeasurementData}}
+\doxysubsubsection{\texorpdfstring{filterSmallDataSets()}{filterSmallDataSets()}}
+{\footnotesize\ttfamily void q\+::\+Measurment\+Data\+::\+Measurement\+Data\+::filter\+Small\+Data\+Sets (\begin{DoxyParamCaption}\item[{var\+Data\+Type \&}]{data\+Vec }\end{DoxyParamCaption})}
+
+
+
+Filter small data sets. 
+
+The filter\+Small\+Data\+Sets method filters small data sets. The method removes data sets with less than 5 data points. This is due to the regression analysis that includes 4 coefficients and therefore requires at least 5 data points. 
+\begin{DoxyParams}{Parameters}
+{\em data\+Vec} & A variant data type \\
+\hline
+\end{DoxyParams}
+\Hypertarget{classq_1_1_measurment_data_1_1_measurement_data_aad4b6410e9045f89397483ec75dfbe76}\label{classq_1_1_measurment_data_1_1_measurement_data_aad4b6410e9045f89397483ec75dfbe76} 
+\index{q::MeasurmentData::MeasurementData@{q::MeasurmentData::MeasurementData}!interpolateData@{interpolateData}}
+\index{interpolateData@{interpolateData}!q::MeasurmentData::MeasurementData@{q::MeasurmentData::MeasurementData}}
+\doxysubsubsection{\texorpdfstring{interpolateData()}{interpolateData()}}
+{\footnotesize\ttfamily void q\+::\+Measurment\+Data\+::\+Measurement\+Data\+::interpolate\+Data (\begin{DoxyParamCaption}\item[{var\+Data\+Type \&}]{data\+Vec }\end{DoxyParamCaption})}
+
+
+
+Interpolate y-\/axis values. 
+
+The interpolate\+Data method interpolates the y-\/axis values. The method uses quadratic interpolation to interpolate the y-\/axis values in the log space. 
+\begin{DoxyParams}{Parameters}
+{\em data\+Vec} & A variant data type \\
+\hline
+\end{DoxyParams}
+\Hypertarget{classq_1_1_measurment_data_1_1_measurement_data_af829f8714ba32862fcd930ce2d3ed54f}\label{classq_1_1_measurment_data_1_1_measurement_data_af829f8714ba32862fcd930ce2d3ed54f} 
+\index{q::MeasurmentData::MeasurementData@{q::MeasurmentData::MeasurementData}!zeroFilling@{zeroFilling}}
+\index{zeroFilling@{zeroFilling}!q::MeasurmentData::MeasurementData@{q::MeasurmentData::MeasurementData}}
+\doxysubsubsection{\texorpdfstring{zeroFilling()}{zeroFilling()}}
+{\footnotesize\ttfamily void q\+::\+Measurment\+Data\+::\+Measurement\+Data\+::zero\+Filling (\begin{DoxyParamCaption}\item[{var\+Data\+Type \&}]{data\+Vec,  }\item[{int}]{k }\end{DoxyParamCaption})}
+
+
+
+Identify and fill gaps in the data. 
+
+The zero\+Filling method identifies and fills gaps in the data. The method uses difference between two neighboring data points to identify gaps. If the difference is 1.\+75 times greater than expected, then the method fills the gap with zero values for y-\/axis and inter/extrapolated values for x-\/axis values. For the expected difference, the method the difference of the last two data points that not show a gap. However, the first expected difference is set to the median of the differences of the total data points. However, the maximum gap size is set to "{}k/2"{} per side, i.\+e., "{}k"{} in total, where there is a gap leftover between the fourth and fifth data points. 
+\begin{DoxyParams}{Parameters}
+{\em data\+Vec} & A vector of variant data types \\
+\hline
+{\em k} & The maximum gap size \\
+\hline
+\end{DoxyParams}
+
+
+The documentation for this class was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+include/qalgorithms\+\_\+measurement\+\_\+data.\+h\end{DoxyCompactItemize}

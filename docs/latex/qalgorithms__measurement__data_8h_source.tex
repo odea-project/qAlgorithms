@@ -1,0 +1,50 @@
+\doxysection{qalgorithms\+\_\+measurement\+\_\+data.\+h}
+\hypertarget{qalgorithms__measurement__data_8h_source}{}\label{qalgorithms__measurement__data_8h_source}\index{include/qalgorithms\_measurement\_data.h@{include/qalgorithms\_measurement\_data.h}}
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#ifndef\ QALGORITHMS\_MEASUREMENT\_DATA\_H}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#define\ QALGORITHMS\_MEASUREMENT\_DATA\_H}}
+\DoxyCodeLine{00003\ }
+\DoxyCodeLine{00004\ \textcolor{comment}{//\ internal}}
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#include\ "{}qalgorithms\_datatype\_mass\_spectrum.h"{}}}
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#include\ "{}qalgorithms\_matrix.h"{}}}
+\DoxyCodeLine{00007\ \textcolor{preprocessor}{\#include\ "{}qalgorithms\_utils.h"{}}}
+\DoxyCodeLine{00008\ }
+\DoxyCodeLine{00009\ \textcolor{comment}{//\ external}}
+\DoxyCodeLine{00010\ \textcolor{preprocessor}{\#include\ <string>}}
+\DoxyCodeLine{00011\ \textcolor{preprocessor}{\#include\ <iostream>}}
+\DoxyCodeLine{00012\ \textcolor{preprocessor}{\#include\ <algorithm>}}
+\DoxyCodeLine{00013\ \textcolor{preprocessor}{\#include\ <cmath>}}
+\DoxyCodeLine{00014\ }
+\DoxyCodeLine{00015\ \textcolor{keyword}{namespace\ }q}
+\DoxyCodeLine{00016\ \{}
+\DoxyCodeLine{00017\ \ \ \ \ \textcolor{keyword}{namespace\ }MeasurementData}
+\DoxyCodeLine{00018\ \ \ \ \ \{}
+\DoxyCodeLine{00019\ \ \ \ \ \textcolor{keyword}{using\ }MS\ =\ std::vector<std::unique\_ptr<DataType::MassSpectrum>>*;\ \textcolor{comment}{//\ pointer\ to\ a\ vector\ of\ mass\ spectra}}
+\DoxyCodeLine{00020\ \ \ \ \ \textcolor{keyword}{using\ }varDataType\ =\ std::variant<MS>;\ \textcolor{comment}{//\ add\ more\ data\ types\ if\ needed}}
+\DoxyCodeLine{00025\ \ \ \ \ \textcolor{keyword}{class\ }\mbox{\hyperlink{classq_1_1_measurement_data_1_1_measurement_data}{MeasurementData}}}
+\DoxyCodeLine{00026\ \ \ \ \ \{}
+\DoxyCodeLine{00027\ \ \ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00028\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ destructor}}
+\DoxyCodeLine{00029\ \ \ \ \ \ \ \ \ \textcolor{keyword}{virtual}\ \mbox{\hyperlink{classq_1_1_measurement_data_1_1_measurement_data}{\string~MeasurementData}}()\{\};}
+\DoxyCodeLine{00030\ }
+\DoxyCodeLine{00031\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ methods}}
+\DoxyCodeLine{00032\ \ \ \ \ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{void}\ readCSV(std::string\ filename,\ \textcolor{keywordtype}{int}\ rowStart,\ \textcolor{keywordtype}{int}\ rowEnd,\ \textcolor{keywordtype}{int}\ colStart,\ \textcolor{keywordtype}{int}\ colEnd,\ \textcolor{keywordtype}{char}\ separator,\ std::vector<DataType::DataField>\ variableTypes)\ =\ 0;}
+\DoxyCodeLine{00033\ }
+\DoxyCodeLine{00034\ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00041\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classq_1_1_measurement_data_1_1_measurement_data_adcbc1ee253cc53ab7caa71e99ace1b5c}{zeroFilling}}(varDataType\&\ dataVec,\ \textcolor{keywordtype}{int}\ k);}
+\DoxyCodeLine{00042\ }
+\DoxyCodeLine{00049\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classq_1_1_measurement_data_1_1_measurement_data_ac977d5ef862d20e41a5e394e90c3ba1a}{cutData}}(varDataType\&\ dataVec,\ \textcolor{keywordtype}{size\_t}\ \&maxKey);}
+\DoxyCodeLine{00050\ }
+\DoxyCodeLine{00056\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classq_1_1_measurement_data_1_1_measurement_data_ad543f18a87d3340d5ceb570ebf553875}{filterSmallDataSets}}(varDataType\ \&dataVec);}
+\DoxyCodeLine{00057\ }
+\DoxyCodeLine{00063\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classq_1_1_measurement_data_1_1_measurement_data_ab9434ef594fb08f59c4867d56f3ce15c}{interpolateData}}(varDataType\ \&dataVec);}
+\DoxyCodeLine{00064\ }
+\DoxyCodeLine{00065\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ debugging}}
+\DoxyCodeLine{00066\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ virtual\ void\ print()\ =\ 0;}}
+\DoxyCodeLine{00067\ \ \ \ \ \};}
+\DoxyCodeLine{00068\ \ \ \ \ \}\ \textcolor{comment}{//\ namespace\ MeasurmentData}}
+\DoxyCodeLine{00069\ \}}
+\DoxyCodeLine{00070\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//\ QALGORITHMS\_MEASUREMENT\_DATA\_H}}
+
+\end{DoxyCode}

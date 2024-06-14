@@ -7,11 +7,13 @@
 
 namespace q
 {
+  namespace Algorithms 
+  {
 #pragma region Constructors and Destructor
   // Constructor
   qPeaks::qPeaks() {}
 
-  qPeaks::qPeaks(const varDataType &dataVec)
+  qPeaks::qPeaks(const q::MeasurementData::varDataType &dataVec)
   {
     std::visit(
         [this](auto &&arg)
@@ -131,8 +133,8 @@ namespace q
 #pragma endregion "plotPeaksToPython"
 
 #pragma region "initialize"
-  double q::qPeaks::x_square[100];   // array to store the square of the x values
-  double q::qPeaks::invArray[50][6]; // array to store the 6 unique values of the inverse matrix for each scale
+  double q::Algorithms::qPeaks::x_square[100];   // array to store the square of the x values
+  double q::Algorithms::qPeaks::invArray[50][6]; // array to store the 6 unique values of the inverse matrix for each scale
   void qPeaks::initialize()
   {
     // init x_square
@@ -189,7 +191,7 @@ namespace q
 #pragma region findPeaks
   std::vector<std::vector<std::unique_ptr<DataType::Peak>>>
   qPeaks::findPeaks(
-      const varDataType &dataVec)
+      const q::MeasurementData::varDataType &dataVec)
   {
     std::vector<std::vector<std::unique_ptr<DataType::Peak>>> all_peaks;
     std::visit(
@@ -211,9 +213,9 @@ namespace q
             }
 
             // store x and y values in RefMatrix objects
-            Vector Y(n);
-            Vector X(n);
-            BoolVector df(n);
+            q::Matrices::Vector Y(n);
+            q::Matrices::Vector X(n);
+            q::Matrices::BoolVector df(n);
             for (size_t i = 0; i < n; i++)
             {
               X[i] = data[i]->x();
@@ -238,12 +240,12 @@ namespace q
 
 #pragma region runningRegression
   void qPeaks::runningRegression(
-      const Vector &Y,
-      const BoolVector &df,
+      const q::Matrices::Vector &Y,
+      const q::Matrices::BoolVector &df,
       std::vector<std::unique_ptr<validRegression>> &validRegressions)
   {
     size_t n = Y.n;
-    Vector Ylog = logn(Y); // perform log-transform on Y
+    q::Matrices::Vector Ylog = logn(Y); // perform log-transform on Y
     int maxScale = std::min(this->global_maxScale, (int)(n - 1) / 2);
     validRegressions.reserve(calculateNumberOfRegressions(n));
     double ylog_array[500];
@@ -256,7 +258,7 @@ namespace q
     }
     for (int scale = 2; scale <= maxScale; scale++)
     {
-      Matrix_mc B = (n <= 500) ? convolve_fast(scale, ylog_array, n) : convolve(Ylog, n, *(psuedoInverses[scale]));
+      q::Matrices::Matrix_mc B = (n <= 500) ? convolve_fast(scale, ylog_array, n) : convolve(Ylog, n, *(psuedoInverses[scale]));
       validateRegressions(B, Y, Ylog, df, scale, validRegressions);
     } // end for scale loop
     mergeRegressionsOverScales(validRegressions, Ylog, Y, df);
@@ -265,10 +267,10 @@ namespace q
 
 #pragma region validateRegressions
   void qPeaks::validateRegressions(
-      const Matrix_mc &B,
-      const Vector &Y,
-      const Vector &Ylog,
-      const BoolVector &df,
+      const q::Matrices::Matrix_mc &B,
+      const q::Matrices::Vector &Y,
+      const q::Matrices::Vector &Ylog,
+      const q::Matrices::BoolVector &df,
       const int scale,
       std::vector<std::unique_ptr<validRegression>> &validRegressions)
   {
@@ -308,8 +310,8 @@ namespace q
         Quadratic Term Filter:
         This block of code implements the quadratic term filter. It calculates the mean squared error (MSE) between the predicted and actual values. Then it calculates the t-value for the quadratic term. If the t-value is less than the corresponding value in the tValuesArray, the quadratic term is considered statistically insignificant, and the loop continues to the next iteration.
       */
-      const Vector b = extractCol(B, i);                                 // coefficients vector
-      const Vector yhat = calcYhat(-scale, scale, B, i);                 // predicted values
+      const q::Matrices::Vector b = extractCol(B, i);                                 // coefficients vector
+      const q::Matrices::Vector yhat = calcYhat(-scale, scale, B, i);                 // predicted values
       const double mse = calcSSE(yhat, Ylog, Ylog.begin() + i) / df_sum; // mean squared error
       if (!isValidQuadraticTerm(B, i, inverseMatrix_2_2, inverseMatrix_2_2, mse, df_sum))
       {
@@ -321,7 +323,7 @@ namespace q
         This block of code implements the height filter. It calculates the height of the peak based on the coefficients matrix B. Then it calculates the uncertainty of the height based on the Jacobian matrix and the variance-covariance matrix of the coefficients. If the height is statistically insignificant, the loop continues to the next iteration.
       */
       // Matrix C = (*inverseMatrices[scale]) * mse; // variance-covariance matrix of the coefficients
-      Matrix_mc_4x4 C = multiplyScalarTo4x4Matrix(mse, *inverseMatrices[scale]); // variance-covariance matrix of the coefficients
+      q::Matrices::Matrix_mc_4x4 C = multiplyScalarTo4x4Matrix(mse, *inverseMatrices[scale]); // variance-covariance matrix of the coefficients
       double height = 0.0;
       double uncertainty_height = 0.0;
       double uncertainty_position = 0.0;
@@ -417,7 +419,7 @@ namespace q
           (*it_peak_next)->apex_position > (*it_peak)->right_limit                    // Right peak is not within the window of the left peak
       )
       {                                                                                                    // the two regressions differ, i.e. create a new group and move all regressions from start to it_peak to this group
-        regressionGroups.push_back(std::vector<std::unique_ptr<q::qPeaks::validRegression>>());            // create a new group
+        regressionGroups.push_back(std::vector<std::unique_ptr<q::Algorithms::qPeaks::validRegression>>());            // create a new group
         std::move(validRegressionsTmp.begin(), it_peak_next, std::back_inserter(regressionGroups.back())); // move all regressions from start to it_peak to this group
         it_peak_next = validRegressionsTmp.erase(validRegressionsTmp.begin(), it_peak_next);               // erase the moved regressions from the temporary vector of valid regressions
       }
@@ -425,7 +427,7 @@ namespace q
       ++it_peak_next;
       if (it_peak_next == validRegressionsTmp.end())
       {                                                                                                    // the last peak is reached
-        regressionGroups.push_back(std::vector<std::unique_ptr<q::qPeaks::validRegression>>());            // create a new group
+        regressionGroups.push_back(std::vector<std::unique_ptr<q::Algorithms::qPeaks::validRegression>>());            // create a new group
         std::move(validRegressionsTmp.begin(), it_peak_next, std::back_inserter(regressionGroups.back())); // move all regressions from start to it_peak to this group
       }
     } // end while loop
@@ -459,9 +461,9 @@ namespace q
   void
   qPeaks::mergeRegressionsOverScales(
       std::vector<std::unique_ptr<validRegression>> &validRegressions,
-      const Vector &Ylog,
-      const Vector &Y,
-      const BoolVector &df)
+      const q::Matrices::Vector &Ylog,
+      const q::Matrices::Vector &Y,
+      const q::Matrices::BoolVector &df)
   {
     if (validRegressions.empty())
     {
@@ -507,7 +509,7 @@ namespace q
         {
           if ((*it_ref_peak)->mse == 0.0)
           { // calculate the mse of the ref peak
-            const Vector yhat = calcYhatExtended(
+            const q::Matrices::Vector yhat = calcYhatExtended(
                 (*designMatrices[(*it_ref_peak)->scale]),                                                                // design matrix
                 (*it_ref_peak)->B,                                                                                       // coefficients vector
                 (*it_ref_peak)->X_row_0,                                                                                 // starting row for the design matrix
@@ -533,7 +535,7 @@ namespace q
 
       if ((*it_new_peak)->mse == 0.0)
       { // calculate the mse of the current peak
-        const Vector yhat = calcYhatExtended(
+        const q::Matrices::Vector yhat = calcYhatExtended(
             (*designMatrices[(*it_new_peak)->scale]),                                                                // design matrix
             (*it_new_peak)->B,                                                                                       // coefficients vector
             (*it_new_peak)->X_row_0,                                                                                 // starting row for the design matrix
@@ -580,8 +582,8 @@ namespace q
   std::vector<std::unique_ptr<DataType::Peak>>
   qPeaks::createPeaks(
       const std::vector<std::unique_ptr<validRegression>> &validRegressions,
-      const Vector &Y,
-      const Vector &X,
+      const q::Matrices::Vector &Y,
+      const q::Matrices::Vector &X,
       const int scanNumber)
   {
     std::vector<std::unique_ptr<DataType::Peak>> peaks; // peak list
@@ -676,8 +678,8 @@ namespace q
 #pragma region calcSSE
   double
   qPeaks::calcSSE(
-      const Vector &yhat,
-      const Vector &y,
+      const q::Matrices::Vector &yhat,
+      const q::Matrices::Vector &y,
       const double *y_start) const
   {
     if (y_start == nullptr)
@@ -699,8 +701,8 @@ namespace q
 
   double
   qPeaks::calcSSEexp(
-      const Vector &yhat_log,
-      const Vector &Y,
+      const q::Matrices::Vector &yhat_log,
+      const q::Matrices::Vector &Y,
       const double *y_start) const
   {
     if (y_start == nullptr)
@@ -724,9 +726,9 @@ namespace q
 #pragma region calcExtendedMse
   void
   qPeaks::calcExtendedMse(
-      const Vector &Y,                                                  // measured data (not log-transformed data)
+      const q::Matrices::Vector &Y,                                                  // measured data (not log-transformed data)
       const std::vector<std::unique_ptr<validRegression>> &regressions, // regressions to compare
-      const BoolVector &df)                                             // degrees of freedom
+      const q::Matrices::BoolVector &df)                                             // degrees of freedom
   {
     /*
       The function consists of the following steps:
@@ -757,7 +759,7 @@ namespace q
     for (auto regression = regressions.begin(); regression != regressions.end(); ++regression)
     {
       // step 2: calculate yhat based on the coefficients matrix B and the extended design matrix X
-      const Vector yhat = calcYhat(
+      const q::Matrices::Vector yhat = calcYhat(
           left_limit - (*regression)->index_x0,
           right_limit - (*regression)->index_x0,
           (*regression)->B);
@@ -786,8 +788,8 @@ namespace q
 #pragma region calcChiSquareEXP
   double
   qPeaks::calcChiSquareEXP(
-      const Vector &yhat_log,
-      const Vector &Y,
+      const q::Matrices::Vector &yhat_log,
+      const q::Matrices::Vector &Y,
       const double *y_start) const
   {
     if (y_start == nullptr)
@@ -798,7 +800,7 @@ namespace q
     size_t n = yhat_log.n;
     double sum = 0.0;
 
-    Vector yhat_exp(n);
+    q::Matrices::Vector yhat_exp(n);
     std::transform(yhat_log.begin(), yhat_log.end(), yhat_exp.begin(), exp_approx);
 
     for (size_t i = 0; i < n; ++i)
@@ -813,7 +815,7 @@ namespace q
 
 #pragma region calcDF
   int qPeaks::calcDF(
-      const BoolVector &df,     // degrees of freedom
+      const q::Matrices::BoolVector &df,     // degrees of freedom
       const size_t left_limit,  // left limit
       const size_t right_limit) // right limit
   {
@@ -829,7 +831,7 @@ namespace q
 #pragma region calculateApexAndValleyPositions
   bool
   qPeaks::calculateApexAndValleyPositions(
-      const Matrix_mc &B,
+      const q::Matrices::Matrix_mc &B,
       const size_t index,
       const int scale,
       double &apex_position,
@@ -871,7 +873,7 @@ namespace q
 #pragma region isValidQuadraticTerm
   bool
   qPeaks::isValidQuadraticTerm(
-      const Matrix_mc &B,
+      const q::Matrices::Matrix_mc &B,
       const size_t index,
       const double inverseMatrix_2_2,
       const double inverseMatrix_3_3,
@@ -888,8 +890,8 @@ namespace q
 #pragma region isValidPeakHeight
   bool
   qPeaks::isValidPeakHeight(
-      const Matrix_mc &B,
-      const Matrix_mc_4x4 &C,
+      const q::Matrices::Matrix_mc &B,
+      const q::Matrices::Matrix_mc_4x4 &C,
       const size_t index,
       const int scale,
       const double apex_position,
@@ -955,8 +957,8 @@ namespace q
 #pragma region isValidPeakArea
   bool
   qPeaks::isValidPeakArea(
-      const Matrix_mc &B,
-      const Matrix_mc_4x4 &C,
+      const q::Matrices::Matrix_mc &B,
+      const q::Matrices::Matrix_mc_4x4 &C,
       const size_t index,
       const int scale,
       const int df_sum,
@@ -1084,7 +1086,7 @@ namespace q
     // construct matrix
     int m = 4;
     int n = 2 * scale + 1;
-    Matrix X(n, m);
+    q::Matrices::Matrix X(n, m);
 
     for (int i = 0; i < n; i++)
     {
@@ -1101,17 +1103,17 @@ namespace q
       }
     }
     // add the matrix to the designMatrices vector
-    designMatrices.push_back(std::make_unique<Matrix>(X));
+    designMatrices.push_back(std::make_unique<q::Matrices::Matrix>(X));
   }
 #pragma endregion createDesignMatrix
 
 #pragma region createInverseAndPseudoInverse
-  void qPeaks::createInverseAndPseudoInverse(const Matrix &X)
+  void qPeaks::createInverseAndPseudoInverse(const q::Matrices::Matrix &X)
   {
-    Matrix Xt = transpose(X);
-    Matrix XtX = Xt * X;
-    inverseMatrices.push_back(std::make_unique<Matrix>(inv(XtX)));
-    psuedoInverses.push_back(std::make_unique<Matrix>(*(inverseMatrices.back()) * Xt));
+    q::Matrices::Matrix Xt = transpose(X);
+    q::Matrices::Matrix XtX = Xt * X;
+    inverseMatrices.push_back(std::make_unique<q::Matrices::Matrix>(inv(XtX)));
+    psuedoInverses.push_back(std::make_unique<q::Matrices::Matrix>(*(inverseMatrices.back()) * Xt));
   }
 
   int qPeaks::calculateNumberOfRegressions(const int n) const
@@ -1131,16 +1133,16 @@ namespace q
 #pragma endregion createInverseAndPseudoInverse
 
 #pragma region "yhat"
-  Vector
+  q::Matrices::Vector
   qPeaks::calcYhat(
       const int left_limit,
       const int right_limit,
-      const Matrix_mc &beta,
+      const q::Matrices::Matrix_mc &beta,
       const size_t idx)
   {
     size_t n = right_limit - left_limit + 1;
     size_t j = 0;
-    Vector yhat(n);
+    q::Matrices::Vector yhat(n);
     for (int i = left_limit; i <= right_limit; i++)
     {
       if (i < 0)
@@ -1152,15 +1154,15 @@ namespace q
     return yhat;
   }
 
-  Vector
+  q::Matrices::Vector
   qPeaks::calcYhat(
       const int left_limit,
       const int right_limit,
-      const Vector &beta)
+      const q::Matrices::Vector &beta)
   {
     size_t n = right_limit - left_limit + 1;
     size_t j = 0;
-    Vector yhat(n);
+    q::Matrices::Vector yhat(n);
     for (int i = left_limit; i <= right_limit; i++)
     {
       if (i < 0)
@@ -1184,9 +1186,9 @@ namespace q
 #pragma endregion info
 
 #pragma region "convolve regression"
-  Matrix_mc
+  q::Matrices::Matrix_mc
   qPeaks::convolve_fast(
-      const int scale,
+      const size_t scale,
       const double (&vec)[500],
       const size_t n)
   {
@@ -1265,7 +1267,7 @@ namespace q
       }
     }
     // create Matrix_mc object
-    Matrix_mc resultMatrix(4, n_segments);
+    q::Matrices::Matrix_mc resultMatrix(4, n_segments);
     for (size_t i = 0; i < n_segments; i++)
     {
       resultMatrix(0, i) = result[i][0];
@@ -1289,4 +1291,5 @@ namespace q
     print(*(psuedoInverses[scale]));
   }
 #pragma endregion printMatrices
+  } // namespace Algorithms
 } // namespace q

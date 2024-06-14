@@ -1,0 +1,74 @@
+\doxysection{qalgorithms\+\_\+datatype.\+h}
+\hypertarget{qalgorithms__datatype_8h_source}{}\label{qalgorithms__datatype_8h_source}\index{include/qalgorithms\_datatype.h@{include/qalgorithms\_datatype.h}}
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#ifndef\ QALGORITHMS\_DATATYPE\_H}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#define\ QALGORITHMS\_DATATYPE\_H}}
+\DoxyCodeLine{00003\ }
+\DoxyCodeLine{00004\ \textcolor{keyword}{namespace\ }q}
+\DoxyCodeLine{00005\ \{}
+\DoxyCodeLine{00006\ }
+\DoxyCodeLine{00007\ \ \ \ \ \textcolor{keyword}{namespace\ }DataType}
+\DoxyCodeLine{00008\ \ \ \ \ \{}
+\DoxyCodeLine{00041\ \ \ \ \ \ \ \ \ \textcolor{keyword}{enum\ class}\ DataField}
+\DoxyCodeLine{00042\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00043\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ general\ fields}}
+\DoxyCodeLine{00044\ \ \ \ \ \ \ \ \ \ \ \ \ INTENSITY,\ \textcolor{comment}{//\ signal\ intensity}}
+\DoxyCodeLine{00045\ \ \ \ \ \ \ \ \ \ \ \ \ SUB\_ID,\ \ \ \ \ \textcolor{comment}{//\ sub-\/dataset\ ID}}
+\DoxyCodeLine{00046\ \ \ \ \ \ \ \ \ \ \ \ \ DATA\_ID,\ \ \ \textcolor{comment}{//\ data\ ID}}
+\DoxyCodeLine{00047\ \ \ \ \ \ \ \ \ \ \ \ \ DATAPOINT,\ \textcolor{comment}{//\ data\ point}}
+\DoxyCodeLine{00048\ }
+\DoxyCodeLine{00049\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ MS\ fields}}
+\DoxyCodeLine{00050\ \ \ \ \ \ \ \ \ \ \ \ \ IONIZATIONMODE,\ \ \textcolor{comment}{//\ positive\ or\ negative}}
+\DoxyCodeLine{00051\ \ \ \ \ \ \ \ \ \ \ \ \ MEASUREMENTMODE,\ \textcolor{comment}{//\ profile\ or\ centroid}}
+\DoxyCodeLine{00052\ \ \ \ \ \ \ \ \ \ \ \ \ MSLEVEL,\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ MS1\ or\ MS2}}
+\DoxyCodeLine{00053\ \ \ \ \ \ \ \ \ \ \ \ \ MZ,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ mass-\/to-\/charge\ ratio}}
+\DoxyCodeLine{00054\ }
+\DoxyCodeLine{00055\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Chromatography\ fields}}
+\DoxyCodeLine{00056\ \ \ \ \ \ \ \ \ \ \ \ \ RETENTIONTIME,\ \textcolor{comment}{//\ retention\ time}}
+\DoxyCodeLine{00057\ \ \ \ \ \ \ \ \ \ \ \ \ SCANNUMBER,\ \ \ \ \textcolor{comment}{//\ scan\ number}}
+\DoxyCodeLine{00058\ }
+\DoxyCodeLine{00059\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Peak-\/related\ fields}}
+\DoxyCodeLine{00060\ \ \ \ \ \ \ \ \ \ \ \ \ PEAK\_ID,}
+\DoxyCodeLine{00061\ \ \ \ \ \ \ \ \ \ \ \ \ PEAK\_AREA,}
+\DoxyCodeLine{00062\ \ \ \ \ \ \ \ \ \ \ \ \ PEAK\_HEIGHT,}
+\DoxyCodeLine{00063\ \ \ \ \ \ \ \ \ \ \ \ \ PEAK\_WIDTH,}
+\DoxyCodeLine{00064\ \ \ \ \ \ \ \ \ \ \ \ \ PEAK\_POSITION,}
+\DoxyCodeLine{00065\ \ \ \ \ \ \ \ \ \ \ \ \ DQS\_PEAK,\ \textcolor{comment}{//\ DQS:\ Data\ Quality\ Score\ \(\backslash\)cite\{reuschenbach2022development\}}}
+\DoxyCodeLine{00066\ \ \ \ \ \ \ \ \ \ \ \ \ PEAK\_AREA\_UNCERTAINTY,}
+\DoxyCodeLine{00067\ \ \ \ \ \ \ \ \ \ \ \ \ PEAK\_HEIGHT\_UNCERTAINTY,}
+\DoxyCodeLine{00068\ \ \ \ \ \ \ \ \ \ \ \ \ PEAK\_WIDTH\_UNCERTAINTY,}
+\DoxyCodeLine{00069\ \ \ \ \ \ \ \ \ \ \ \ \ PEAK\_POSITION\_UNCERTAINTY,}
+\DoxyCodeLine{00070\ \ \ \ \ \ \ \ \ \ \ \ \ BETA\_0,\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ regression\ coefficients}}
+\DoxyCodeLine{00071\ \ \ \ \ \ \ \ \ \ \ \ \ BETA\_1,\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ regression\ coefficients}}
+\DoxyCodeLine{00072\ \ \ \ \ \ \ \ \ \ \ \ \ BETA\_2,\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ regression\ coefficients}}
+\DoxyCodeLine{00073\ \ \ \ \ \ \ \ \ \ \ \ \ BETA\_3,\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ regression\ coefficients}}
+\DoxyCodeLine{00074\ \ \ \ \ \ \ \ \ \ \ \ \ VALLEY\_POSITION,\ \textcolor{comment}{//\ optional:\ some\ peaks\ have\ a\ valley\ position}}
+\DoxyCodeLine{00075\ \ \ \ \ \ \ \ \ \ \ \ \ DF,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ degrees\ of\ freedom}}
+\DoxyCodeLine{00076\ \ \ \ \ \ \ \ \ \ \ \ \ X\_INDEX,\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ index\ of\ the\ regression\ window\ position}}
+\DoxyCodeLine{00077\ }
+\DoxyCodeLine{00078\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Add\ new\ data\ fields\ here}}
+\DoxyCodeLine{00079\ \ \ \ \ \ \ \ \ \};}
+\DoxyCodeLine{00080\ }
+\DoxyCodeLine{00081\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ additional\ categorical\ data\ sub\ types}}
+\DoxyCodeLine{00082\ \ \ \ \ \ \ \ \ \textcolor{keyword}{enum\ class}\ IonizationMode}
+\DoxyCodeLine{00083\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00084\ \ \ \ \ \ \ \ \ \ \ \ \ Positive,}
+\DoxyCodeLine{00085\ \ \ \ \ \ \ \ \ \ \ \ \ Negative}
+\DoxyCodeLine{00086\ \ \ \ \ \ \ \ \ \};}
+\DoxyCodeLine{00087\ \ \ \ \ \ \ \ \ \textcolor{keyword}{enum\ class}\ MeasurementMode}
+\DoxyCodeLine{00088\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00089\ \ \ \ \ \ \ \ \ \ \ \ \ Profile,}
+\DoxyCodeLine{00090\ \ \ \ \ \ \ \ \ \ \ \ \ Centroid}
+\DoxyCodeLine{00091\ \ \ \ \ \ \ \ \ \};}
+\DoxyCodeLine{00092\ \ \ \ \ \ \ \ \ \textcolor{keyword}{enum\ class}\ MSLevel}
+\DoxyCodeLine{00093\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00094\ \ \ \ \ \ \ \ \ \ \ \ \ MS1,}
+\DoxyCodeLine{00095\ \ \ \ \ \ \ \ \ \ \ \ \ MS2}
+\DoxyCodeLine{00096\ \ \ \ \ \ \ \ \ \};}
+\DoxyCodeLine{00097\ \ \ \ \ \};\ \textcolor{comment}{//\ namespace\ datatype}}
+\DoxyCodeLine{00098\ \}\ \textcolor{comment}{//\ namespace\ q}}
+\DoxyCodeLine{00099\ }
+\DoxyCodeLine{00100\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//\ QALGORITHMS\_DATATYPE\_H}}
+
+\end{DoxyCode}
