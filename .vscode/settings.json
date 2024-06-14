@@ -89,7 +89,11 @@
     "xtree": "cpp",
     "xutility": "cpp",
     "codecvt": "cpp",
-    "filesystem": "cpp"
+    "filesystem": "cpp",
+    "bitset": "cpp",
+    "regex": "cpp",
+    "ranges": "cpp",
+    "span": "cpp"
   },
   "cmake.configureOnOpen": false
 }

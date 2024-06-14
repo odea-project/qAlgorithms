@@ -112,6 +112,31 @@
                 "$gcc"
             ],
             "group": "build",
-        }
+        },
+        {
+            "label": "build qBin",
+            "type": "shell",
+            "command": "C:\\msys64\\mingw64\\bin\\g++.exe",
+            "args": [
+                "-Wall",
+                "-Wno-unknown-pragmas",
+                "-fdiagnostics-color=always",
+                "-g",
+                "-std=c++20",
+                "-fopenmp",
+                "-O3",
+                "src/qalgorithms_qbin.cpp",
+                "-o",
+                "test/qalgorithms_bin.exe",
+                "-lz"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "problemMatcher": [
+                "$gcc"
+            ],
+            "group": "build",
+        },
     ]
 }
