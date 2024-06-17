@@ -21,16 +21,14 @@ namespace q
         // double control_DQSbin; // removed due to DQS calculation being confirmed to work
     };
 
-    class RawData //@todo rename to centroided data?
+    struct RawData //@todo rename to centroided data?
     {
-    public:
-        RawData(); // @todo add handling for reading in data without centroid error
-        ~RawData();
         int lengthAllPoints;
         std::vector<std::vector<Datapoint>> allDatapoints;
-        // "mz" "mzError" "RT" "scanNo" "intensity" "controlID" "controlCentroidDQS" "controlBinDQS"
-        bool readcsv(std::string user_file, int d_mz, int d_mzError, int d_RT, int d_scanNo, int d_intensity, int d_DQScentroid);
     };
+
+    // "mz" "mzError" "RT" "scanNo" "intensity" "controlID" "controlCentroidDQS" "controlBinDQS"
+    bool readcsv(RawData *rawData, std::string user_file, int d_mz, int d_mzError, int d_RT, int d_scanNo, int d_intensity, int d_DQScentroid);
 
     // return object of qbinning
 
@@ -52,13 +50,29 @@ namespace q
         double maxInt;
     };
 
+    struct SummaryOutput
+    {
+        std::byte errorcode;
+        size_t binsize;
+        double mean_mz;
+        double median_mz;
+        double stddev_mz;
+        double mean_scans;
+        unsigned int median_scans;
+        double DQSB_base;
+        double DQSB_scaled;
+        double DQSB_worst; // @todo this might not be a useful parameter to include in summary
+        double DQSC_min;
+        double mean_error;
+    };
+
     // Bin Class
     class Bin
     {
     private:
         std::vector<double> cumError; // cumulative error in mz
-        double pt_MakeDQSB; // rm?
-        bool duplicateScan = false; // are two points with the same scan number in this bin?
+        double pt_MakeDQSB;           // rm?
+        bool duplicateScan = false;   // are two points with the same scan number in this bin?
         unsigned int medianScan;
         double medianMZ;
 
@@ -130,8 +144,8 @@ namespace q
         /// bin to be equal to the critical value. Additionally, the function computes a 1-byte code for up to 8 states of interest.
         /// The respective bit is set to 1 if the defined state is present. Possible states of interest are too large a discrepancy
         /// between mean and median or the presence of duplicate values.
-        /// @return A tuple containing the summary information. The first entry is the error code.
-        std::tuple<std::byte, size_t, double, double, double, double, unsigned int, double, double, double, double, double> summariseBin();
+        /// @return A struct containing the summary information. The first entry is the error code.
+        SummaryOutput summariseBin();
 
         const EIC createEIC();
 
@@ -147,6 +161,7 @@ namespace q
         // void readcsv(std::string user_file, std::vector<Datapoint> output, int d_mz, int d_mzError, int d_RT, int d_scanNo); // implemented for featurelist
         std::deque<Bin> binDeque;      // TODO add case for no viable bins
         std::vector<Bin> finishedBins; // only includes bins which cannot be further subdivided, added DQSB_base
+        std::vector<Bin> redoneBins;   // store bins after reassembly/cutting here
         unsigned int subsetCount;
 
     public:
@@ -156,6 +171,11 @@ namespace q
         /// @brief create a bin out of rawdata and add it to the binDeque. This function exists since all subsetting functions require a bin to start
         /// @param rawdata a set of raw data on which binning is to be performed
         void makeFirstBin(RawData *rawdata); // @todo find way for rawdata to be const
+
+        /// @brief create a new bin that contains all unused datapoints and the bins which were not fully completed
+        /// @param selectedBins indices of bins which are to be rebinned
+        /// @param outOfBins points which could not be assigned to a bin on the first passthrough
+        void makeReassemblyBin(std::vector<size_t> selectedBins, std::vector<Datapoint *> outOfBins); // @todo integrate this function
 
         /// @brief perform the specified subsetting operations on the binDeque. Elements are added to the back and deleted from the front
         /// @param dimensions which dimensions should be used for subsetting in what order. 1 = subsetting by mz, 2 = subsetting by scans.
@@ -191,13 +211,15 @@ namespace q
         /// selection. For example, for returning only bins in which the first test condition applies,
         /// the input would have to be std::byte{0b00000001}
         /// @return A vector of all closed bins which have at least one state of interest
-        const std::vector<int> makeBinSelection(std::byte mask);
+        // const std::vector<int> makeBinSelection(std::byte mask);
 
         /// @brief Print the individual bin members and optionally the bin summary in a separate .csv
-        /// @param indices A vector of the selected bins, probably makeBinSelection()
-        /// @param summary Should a summary table be printed
+        /// @param mask every bit of this byte controls if the corresponding test is considered for returning the
+        /// selection. For example, for returning only bins in which the first test condition applies,
+        /// the input would have to be std::byte{0b00000001}
+        /// @param fullBins Should all bins which are included in the summary be printed in full?
         /// @param location path to the folder in which both files should be created
-        void printSelectBins(const std::vector<int> indices, bool summary, const std::string location);
+        void printSelectBins(std::byte mask, bool fullBins, const std::string location);
     };
 
     // utility functions
