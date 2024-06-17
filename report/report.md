@@ -278,7 +278,7 @@ complete, the DQSB is calculated for all bin members in all closed bins.
 ### Core Functions
 The following functions, not including constructors and other utility functions, are included 
 as part of the qBinning module:
-* RawData: readcsv
+* readcsv
 * Bin: makeOS
 * Bin: makeCumError
 * Bin: subsetMZ
@@ -289,8 +289,9 @@ as part of the qBinning module:
 
 <b> readcsv: </b>
 This function parses data points from a text file (.csv) and constructs a vector containing 
-individual scans. Within each scan, data points are ordered by m/z in increasing order. These functions
-primarily exist for testing since the qBinning module is designed to accept centroided data 
+individual scans. Within each scan, data points are ordered by m/z in increasing order. 
+Reading data in this way requires a RawData object to be created first, since it is passed by reference.
+These functions primarily exist for testing since the qBinning module is designed to accept centroided data 
 from the previous step in the qAlgorithms pipeline. 
 If used to read data, an error has to be specified for each centroid. If the error is supposed to
 be a certain ppm of the mass, a dummy value suffices since this is handled in **makeCumError**.

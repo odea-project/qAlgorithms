@@ -68,3 +68,9 @@ function. This is efficient, but risky. The returned pointer or reference is val
 until the next time the function is called and the local object is overwritten, possibly in
 a different thread. If you forget to make the local object static then it becomes invalid
 as soon as the function returns.
+
+Bin Reassembly: Kopiere alle relevanten Bins zu den Werten nicht genutzter Punkte und lass 
+das Binning erneut durchlaufen
+    Sollte insbesondere nach Aufreinigung der zu großen Bins passieren
+
+Bin Recutting: Suche nach ungewöhnlichen Mustern, Quantifizierung über summary-Params

@@ -156,9 +156,10 @@ points_total = 3568033
 bins_total = 55910
 notbinned_total = 1102746
 
-summary_error <- read.csv("../../selectbins_summary.csv")
-bins_error <- read.csv("../../selectbins_full.csv")
+summary <- read.csv("../../selectbins_summary.csv")
+bins <- read.csv("../../selectbins_full.csv")
 # notbinned = read.csv("../../qbinning_notbinned.csv")
+summary$errorcode = as.numeric(lapply(summary$errorcode, bits))
 
 summary_error = summary_error[order(summary_error$mean_mz),]
 
@@ -187,7 +188,7 @@ ggplot(summary_error[summary_error$errorcode - round(summary_error$errorcode, -3
   geom_point(data = notbinned[subsample_notbinned,], aes(x = mz, y = scan)) +
   geom_point(aes(x = mean_mz, y = mean_scans, colour = as.factor(errorcode)))
 
-summary_error %>% group_by(errorcode) %>% summarise(bin_count = n(), total_points = sum(size), ratio = sum(size)/n(), dqsCen = mean(min_DQSC))
+summary_error %>% group_by(errorcode) %>% summarise(bin_count = n(), total_points = sum(size), ratio = sum(size)/n(), dqsCen = mean(DQSC_min))
 
 bins_error[bins_error$ID == 308,]
 minDists308 = c(6.2961233993519272e-05, 8.8906114996234464e-05, 9.4137318995990427e-05, 0.0001178799969920874, 8.2152471009067085e-05, 7.1812920992897489e-05)
@@ -205,7 +206,54 @@ length(bins_error$mz)/(points_total - notbinned_total)
 mean(summary_error$size)
 (points_total - notbinned_total)/(bins_total - length(summary_error$size))
 ```
-```{r binviewer}
+
+```{r binviewer and rater}
+
+last_viewed_bin = 2083
+
+binRater(summary,bins,last_viewed_bin)
+
+summary$manual[83]
+binRater = function(summary, fullbins, startNo){
+  cat("Rate bins using numbers:
+        0: The bin is good as-is (one region of high intensity)
+        1: The bin is good, but was assigned an error
+        2: There is a possible peak and noise data present
+        3: One or more possible peaks are connected by noise data
+        4: There is no peak visible here - error found
+        5: The wrong error was assigned
+        6: No peak visible - no error
+        7: mass drift with intensity / peak shape
+        8: few outliers seem possible
+      Enter # to stop rating bins. The bin index you stopped at will be printed to the console. Your selections are saved to the dataframe \"summary\".\n")
+  readline("Press Enter to start the bin rating process.")
+  i = startNo
+  rateNext = T
+  while (rateNext) {
+    binID = summary$ID[i]
+    print(ggplot(fullbins[which(fullbins$ID == binID),])+
+      geom_point(aes(mz, scan, color = intensity))+ # , color = as.factor(ID)
+      xlab("m/z")+
+      ylab("Scan Number")+
+      theme(panel.background = element_rect(fill = "lightblue1",
+            colour = "lightblue1", linewidth = 0.5, linetype = "solid"))+
+      scale_color_viridis_c(option = "plasma", direction = -1)+
+      labs(caption = sprintf("BinID: %d | Errorcode: %d", binID, summary$errorcode[1]))
+    )
+    rating = readline("Rating:   ")
+    if(rating == "#"){
+      rateNext = F
+    }else{
+      summary$manual[i] = rating
+      i = i+1
+    }
+    
+  }
+  
+  assign("summary", summary, envir = .GlobalEnv)
+  sprintf("Set startNo to %d to continue rating.", i)
+}
+
 
 
 # ggplot(bins_error[which(bins_error$ID == 39242 | bins_error$ID == 39243),])+
@@ -218,16 +266,17 @@ min(bins_error$mz[which(bins_error$ID == 39243)]) - max(bins_error$mz[which(bins
 critVal(6) * summary_error$meanError[which(summary_error$ID == 39242)]
 critVal(5) * summary_error$meanError[which(summary_error$ID == 39243)]
 
-# Atypisches verhalten bei +- 6 wegen test
-hist(summary_error$mean_scans - summary_error$median_scans, breaks = 100)
-hist(summary_error$mean_scans[which(summary_error$errorcode != 1000)] - summary_error$median_scans[which(summary_error$errorcode != 1000)], breaks = 100)
-hist(summary_error$mean_scans[which(summary_error$errorcode == 1000)] - summary_error$median_scans[which(summary_error$errorcode == 1000)], breaks = 100)
 
-ggplot(bins_error[which(bins_error$ID == 39013),])+
-  geom_point(aes(mz, scan), color = "red")+ # , color = as.factor(ID)
+ggplot(bins_error[which(bins_error$ID == 4210),])+
+  geom_point(aes(mz, scan, color = intensity))+ # , color = as.factor(ID)
   xlab("m/z")+
   ylab("Scan Number")+
-  theme_bw()
+  theme(panel.background = element_rect(fill = "lightblue1",
+                                colour = "lightblue1",
+                                size = 0.5, linetype = "solid"))+
+  scale_color_viridis_c(option = "plasma", direction = -1)+
+  labs(caption = sprintf("Errorcode: %d", summary_error$errorcode[1]))
+  
   
 ```
 

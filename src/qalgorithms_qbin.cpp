@@ -30,13 +30,11 @@ namespace q
 #define NO_MAX_FOUND -INFINITY
 
 #pragma region "Rawdata"
-    RawData::RawData() {}
-    q::RawData::~RawData() {} // potential memory leak
-    bool RawData::readcsv(std::string user_file, int d_mz, int d_mzError, int d_RT, int d_scanNo, int d_intensity, int d_DQScentroid)
+    bool readcsv(RawData *rawData, std::string user_file, int d_mz, int d_mzError, int d_RT, int d_scanNo, int d_intensity, int d_DQScentroid)
     { // @todo stop segfaults when reading empty lines; use buffers for speedup
         int now = time(0);
-        lengthAllPoints = 0;
-        allDatapoints.push_back(std::vector<Datapoint>(0)); // first element empty since scans are 1-indexed
+        int lengthAllPoints = 0;
+        rawData->allDatapoints.push_back(std::vector<Datapoint>(0)); // first element empty since scans are 1-indexed
         std::ifstream file(user_file);
         if (!file.is_open())
         {
@@ -62,26 +60,26 @@ namespace q
                 row.push_back(std::stod(cell));
             }
             const unsigned int i_scanNo = (unsigned int)row[d_scanNo];
-            if (i_scanNo > allDatapoints.size() - 1)
+            if (i_scanNo > rawData->allDatapoints.size() - 1)
             {
-                for (size_t i = allDatapoints.size() - 1; i < i_scanNo; i++)
+                for (size_t i = rawData->allDatapoints.size() - 1; i < i_scanNo; i++)
                 {
-                    allDatapoints.push_back(std::vector<Datapoint>(0));
+                    rawData->allDatapoints.push_back(std::vector<Datapoint>(0));
                 }
             }
             const Datapoint F = Datapoint{row[d_mz], row[d_mzError], row[d_RT], i_scanNo, row[d_intensity],
                                           row[d_DQScentroid]};
 
             ++lengthAllPoints;
-            allDatapoints[i_scanNo].push_back(F); // every subvector in allDatapoints is one complete scan - does not require a sorted input file!
+            rawData->allDatapoints[i_scanNo].push_back(F); // every subvector in allDatapoints is one complete scan - does not require a sorted input file!
         }
 #pragma omp parallel for
-        for (size_t i = 1; i < allDatapoints.size(); i++) // make sure data conforms to expectations
+        for (size_t i = 1; i < rawData->allDatapoints.size(); i++) // make sure data conforms to expectations
         {
-            std::sort(allDatapoints[i].begin(), allDatapoints[i].end(), [](const Datapoint lhs, const Datapoint rhs)
+            std::sort(rawData->allDatapoints[i].begin(), rawData->allDatapoints[i].end(), [](const Datapoint lhs, const Datapoint rhs)
                       { return lhs.mz < rhs.mz; });
         }
-        std::cout << "Finished reading file in " << time(0) - now << " seconds\nRead " << lengthAllPoints << " datapoints in " << allDatapoints.size() << " scans\n";
+        std::cout << "Finished reading file in " << time(0) - now << " seconds\nRead " << lengthAllPoints << " datapoints in " << rawData->allDatapoints.size() << " scans\n";
         return true;
         // RawData is always a vector of vectors where the first index is the scan number (starting at 1) and every scsn is sorted by mz
     }
@@ -221,10 +219,15 @@ namespace q
     //     file_out << output.str();
     // }
 
-    // const std::vector<EIC> BinContainer::returnBins()
-    // {
-    //     // @todo
-    // };
+    const std::vector<EIC> BinContainer::returnBins()
+    {
+        std::vector<EIC> finalBins(finishedBins.size());
+        for (size_t i = 0; i < finishedBins.size(); i++)
+        {
+            finalBins.push_back(finishedBins[i].createEIC());
+        }
+        return finalBins;
+    };
 
     // void BinContainer::printTstats()
     // {
@@ -242,69 +245,73 @@ namespace q
     //     // file_out << q::control_tvals.str();
     // };
 
-    const std::vector<int> BinContainer::makeBinSelection(std::byte mask)
-    {
-        std::vector<int> indices;
-        for (int i = 0; i < int(finishedBins.size()); i++)
-        {
-            std::byte code = std::get<0>(finishedBins[i].summariseBin());
-            if (bool(code & mask)) // any test which is set to 0 will not be included; condition is true if any selected test bit is set
-            {
-                indices.push_back(i);
-            }
-        }
-        std::cout << "Selected " << indices.size() << " Bins\n";
-        return indices;
-    };
+    // const std::vector<int> BinContainer::makeBinSelection(std::byte mask) @todo find a better solution here
+    // {
+    //     std::vector<int> indices;
+    //     for (int i = 0; i < int(finishedBins.size()); i++)
+    //     {
+    //         std::byte code = (finishedBins[i].summariseBin()).errorcode;
+    //         if (bool(code & mask)) // any test which is set to 0 will not be included; condition is true if any selected test bit is set
+    //         {
+    //             indices.push_back(i);
+    //         }
+    //     }
+    //     std::cout << "Selected " << indices.size() << " Bins\n";
+    //     return indices;
+    // };
 
-    void BinContainer::printSelectBins(const std::vector<int> indices, bool summary, const std::string location) // @todo combine with makeBinSelection
+    void BinContainer::printSelectBins(std::byte mask, bool fullBins, const std::string location) // @todo combine with makeBinSelection
     {
         // print optional summary file
         const std::string binsSummary = location + "/selectBins_summary.csv";
+        std::vector<size_t> indices;
         std::fstream file_out_sum;
         std::stringstream output_sum;
-        if (summary)
+        file_out_sum.open(binsSummary, std::ios::out);
+        assert(file_out_sum.is_open());
+        output_sum << "ID,errorcode,size,mean_mz,median_mz,stdev_mz,mean_scans,DQSB_base,DQSB_scaled,DQSB_worst,DQSC_min,mean_error\n";
+        for (size_t i = 0; i < finishedBins.size(); i++)
         {
-            file_out_sum.open(binsSummary, std::ios::out);
-            assert(file_out_sum.is_open());
-            output_sum << "ID,errorcode,size,mean_mz,median_mz,stdev_mz,mean_scans,median_scans,DQSB_base,DQSB_scaled,DQSB_worst,min_DQSC,meanError\n";
-            for (size_t i = 0; i < indices.size(); i++)
+            const q::SummaryOutput res = finishedBins[i].summariseBin();
+            if (bool(mask & res.errorcode))
             {
-                const int pos = indices[i];
-                const auto result = finishedBins[pos].summariseBin();
+                indices.push_back(i); // save these bins for printing
                 char buffer[256];
-                sprintf(buffer, "%d,%d,%llu,%0.15f,%0.15f,%0.15f,%0.2f,%d,%0.15f,%0.15f,%0.15f,%0.15f,%0.15f\n",
-                        pos + 1, std::get<0>(result), std::get<1>(result), std::get<2>(result), std::get<3>(result),
-                        std::get<4>(result), std::get<5>(result), std::get<6>(result), std::get<7>(result),
-                        std::get<8>(result), std::get<9>(result), std::get<10>(result), std::get<11>(result), std::get<11>(result));
+                sprintf(buffer, "%llu,%d,%llu,%0.15f,%0.15f,%0.15f,%0.2f,%0.9f,%0.9f,%0.9f,%0.9f,%0.15f\n",
+                        i + 1, int(res.errorcode), res.binsize, res.mean_mz, res.median_mz, res.stddev_mz, res.mean_scans,
+                        res.DQSB_base, res.DQSB_scaled, res.DQSB_worst, res.DQSC_min, res.mean_error);
                 output_sum << buffer;
             }
-            file_out_sum << output_sum.str();
-            file_out_sum.close();
         }
+        file_out_sum << output_sum.str();
+        file_out_sum.close();
         // print all bins
-        const std::string binsFull = location + "/selectBins_full.csv";
-        std::fstream file_out_all;
-        std::stringstream output_all;
-        file_out_all.open(binsFull, std::ios::out);
-        assert(file_out_all.is_open());
-        output_all << "mz,scan,ID,mzError,DQSC,DQSB_base,DQSB_scaled\n";
-        for (size_t i = 0; i < indices.size(); i++)
+        if (fullBins)
         {
-            const unsigned int pos = indices[i];
-            const std::vector<Datapoint *> binnedPoints = finishedBins[pos].pointsInBin;
-
-            for (size_t j = 0; j < binnedPoints.size(); j++)
+            const std::string binsFull = location + "/selectBins_full.csv";
+            std::fstream file_out_all;
+            std::stringstream output_all;
+            file_out_all.open(binsFull, std::ios::out);
+            assert(file_out_all.is_open());
+            output_all << "ID,mz,scan,intensity,mzError,DQSC,DQSB_base,DQSB_scaled\n";
+            for (size_t i = 0; i < indices.size(); i++)
             {
-                char buffer[128];
-                sprintf(buffer, "%0.15f,%d,%d,%0.15f,%0.15f,%0.15f,%0.15f,%0.15f\n", binnedPoints[j]->mz,
-                        binnedPoints[j]->scanNo, pos + 1, binnedPoints[j]->mzError, binnedPoints[j]->DQScentroid,
-                        finishedBins[pos].DQSB_base[j], finishedBins[pos].DQSB_scaled[j]);
-                output_all << buffer;
+                const unsigned int pos = indices[i];
+                const std::vector<Datapoint *> binnedPoints = finishedBins[pos].pointsInBin;
+
+                for (size_t j = 0; j < binnedPoints.size(); j++)
+                {
+                    char buffer[128];
+                    sprintf(buffer, "%d,%0.15f,%d,%0.2f,%0.15f,%0.9f,%0.9f,%0.9f\n",
+                            pos + 1, binnedPoints[j]->mz, binnedPoints[j]->scanNo,
+                            binnedPoints[j]->intensity, binnedPoints[j]->mzError, binnedPoints[j]->DQScentroid,
+                            finishedBins[pos].DQSB_base[j], finishedBins[pos].DQSB_scaled[j]);
+                    output_all << buffer;
+                }
             }
+            file_out_all << output_all.str();
+            file_out_all.close();
         }
-        file_out_all << output_all.str();
-        file_out_all.close();
     };
 
     // void BinContainer::printworstDQS()
@@ -616,14 +623,17 @@ namespace q
             }
         }
 
-        double nearestToVcrit = INFINITY; // always set to the smallest difference between mindist and vcrit in a bin @todo implement this
+        // double nearestToVcrit = INFINITY; // always set to the smallest difference between mindist and vcrit in a bin @todo implement this
         // find min distance in minMaxOutPerScan, then calculate DQS for that point
         for (size_t i = 0; i < binsize; i++)
         {
             double minDist_base = INFINITY;
             double minDist_scaled = INFINITY;
             const double currentMZ = pointsInBin[i]->mz;
-            const unsigned int currentRangeStart = (pointsInBin[i]->scanNo - minScanInner) * 2; // gives position of the first value in minMaxOutPerScan that must be considered, assuming the first value in minMaxOutPerScan (index 0) is only relevant to the Datapoint in the lowest scan. For every increase in scans, that range starts two elements later
+            // currentRangeStart gives position of the first value in minMaxOutPerScan that must be considered,
+            // assuming the first value in minMaxOutPerScan (index 0) is only relevant to the
+            // Datapoint in the lowest scan. For every increase in scans, that range starts two elements later
+            const unsigned int currentRangeStart = (pointsInBin[i]->scanNo - minScanInner) * 2;
             const unsigned int currentRangeEnd = currentRangeStart + maxdist * 4 + 1;
             for (unsigned int j = currentRangeStart; j <= currentRangeEnd; j++) // from lowest scan to highest scan relevant to this
             // point, +1 since scan no of point has to be included.
@@ -646,7 +656,7 @@ namespace q
         return;
     }
 
-    std::tuple<std::byte, size_t, double, double, double, double, unsigned int, double, double, double, double, double> Bin::summariseBin()
+    SummaryOutput Bin::summariseBin()
     {
         size_t binsize = pointsInBin.size();
         double meanMZ = 0;
@@ -690,7 +700,7 @@ namespace q
         double DQSminWith = calcDQS(MID / binsize, worstCaseMOD);
         double DQSminWithout = calcDQS(MID / binsize, MODlessVcrit);
 
-        const double stdev = sqrt(sumOfDist / (binsize - 1));
+        double stdev = sqrt(sumOfDist / (binsize - 1));
         // @todo use enums here
         std::byte selector{0b00000000}; // selector returns true or false, depending on criteria checked
         if (duplicateScan)
@@ -721,12 +731,13 @@ namespace q
         {
             selector |= std::byte{0b01000000};
         }
-        if (false) // @todo replicate test 3 but use the critical distance?
+        if (true) // @todo replicate test 3 but use the critical distance?
         {
             selector |= std::byte{0b10000000};
         }
-        return std::tuple(selector, binsize, meanMZ, medianMZ, stdev, meanScan, medianScan, meanDQS_base,
-                          meanDQS_scaled, DQSminWith, worstCentroid, meanCenError);
+
+        return SummaryOutput{selector, binsize, meanMZ, medianMZ, stdev, meanScan, medianScan, meanDQS_base,
+                             meanDQS_scaled, DQSminWith, worstCentroid, meanCenError};
     }
 
     const EIC Bin::createEIC()
@@ -756,6 +767,7 @@ namespace q
             tmp_meanMZ / binsize,
             medianScan,
             tmp_maxInt};
+
         return returnEIC;
     }
 
@@ -865,7 +877,7 @@ int main()
 
     q::RawData testdata;
     // path to data, mz, centroid error, RT, scan number, intensity, DQS centroid, control DQS Bin
-    if (!testdata.readcsv("../../rawdata/control_bins.csv", 0, 1, 2, 3, 4, 6)) // ../../rawdata/control_bins.csv reduced_DQSdiff
+    if (!q::readcsv(&testdata, "../../rawdata/control_bins.csv", 0, 1, 2, 3, 4, 6)) // ../../rawdata/control_bins.csv reduced_DQSdiff
     {
         exit(101); // error codes: 1.. = reading / writing failed, 2.. = improper input,
     }
@@ -881,7 +893,7 @@ int main()
     testcontainer.assignDQSB(&testdata, inputMaxdist); // int = max dist in scans
 
     // print bin selection
-    testcontainer.printSelectBins(testcontainer.makeBinSelection(std::byte{0b11111111}), true, "../.."); // one bit per test
+    testcontainer.printSelectBins(std::byte{0b11111111}, true, "../.."); // one bit per test
 
     // testcontainer.printBinSummary("../../summary_bins.csv");
     // testcontainer.printworstDQS();
