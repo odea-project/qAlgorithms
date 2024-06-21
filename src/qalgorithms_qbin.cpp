@@ -7,16 +7,16 @@
 #include <fstream>
 #include <sstream>
 #include <algorithm>
-#include <functional>
+// #include <functional>
 #include <iterator>
-#include <thread> // unused as of now
-#include <ranges>
+// #include <thread> // unused as of now
+// #include <ranges>
 #include <deque> // main bin container is a deque
 #include <string>
-#include <iomanip> // for printing with full precision
-#include <chrono>  // time code execution
+// #include <iomanip> // for printing with full precision
+#include <chrono> // time code execution
 #include <ctime>
-#include <regex>
+// #include <regex>
 #include <omp.h>
 
 namespace q
