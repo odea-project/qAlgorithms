@@ -76,6 +76,9 @@ namespace q
         unsigned int medianScan;
         double medianMZ;
 
+        bool l_maxdist_tooclose = false;
+        bool r_maxdist_tooclose = false; // Check if there is a point within maxdist
+
     public:
         double mzmin;
         double mzmax;

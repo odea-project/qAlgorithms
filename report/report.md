@@ -638,6 +638,12 @@ split again. A bin for which this condition is true could possibly
 benefit from slightly increasing the estimated centroid error but
 should not be considered an undesirable grouping.
 
+*Updated test on 21.06.2024*
+The blind spot mentioned has been removed by testing for relevant
+points during the DQSB calculation. Now, one test checks if there
+is a point within the critical distance on the left end and a second
+test for the right end.
+
 ---
 
 All following tests detect bins where the separation was not strict enough.

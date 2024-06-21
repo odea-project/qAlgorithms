@@ -157,6 +157,7 @@ bins_total = 55910
 notbinned_total = 1102746
 
 summary <- read.csv("../../selectbins_summary.csv")
+summary$errorcode[which(summary$errorcode == 128)] = 0
 bins <- read.csv("../../selectbins_full.csv")
 # notbinned = read.csv("../../qbinning_notbinned.csv")
 summary$errorcode = as.numeric(lapply(summary$errorcode, bits))
@@ -188,7 +189,7 @@ ggplot(summary_error[summary_error$errorcode - round(summary_error$errorcode, -3
   geom_point(data = notbinned[subsample_notbinned,], aes(x = mz, y = scan)) +
   geom_point(aes(x = mean_mz, y = mean_scans, colour = as.factor(errorcode)))
 
-summary_error %>% group_by(errorcode) %>% summarise(bin_count = n(), total_points = sum(size), ratio = sum(size)/n(), dqsCen = mean(DQSC_min))
+summary %>% group_by(errorcode) %>% summarise(bin_count = n(), total_points = sum(size), ratio = sum(size)/n(), dqsCen = mean(DQSC_min)) 
 
 bins_error[bins_error$ID == 308,]
 minDists308 = c(6.2961233993519272e-05, 8.8906114996234464e-05, 9.4137318995990427e-05, 0.0001178799969920874, 8.2152471009067085e-05, 7.1812920992897489e-05)
@@ -267,15 +268,15 @@ critVal(6) * summary_error$meanError[which(summary_error$ID == 39242)]
 critVal(5) * summary_error$meanError[which(summary_error$ID == 39243)]
 
 
-ggplot(bins_error[which(bins_error$ID == 4210),])+
+ggplot(bins[which(bins$ID == 22),])+
   geom_point(aes(mz, scan, color = intensity))+ # , color = as.factor(ID)
   xlab("m/z")+
   ylab("Scan Number")+
   theme(panel.background = element_rect(fill = "lightblue1",
                                 colour = "lightblue1",
-                                size = 0.5, linetype = "solid"))+
+                                linewidth = 0.5, linetype = "solid"))+
   scale_color_viridis_c(option = "plasma", direction = -1)+
-  labs(caption = sprintf("Errorcode: %d", summary_error$errorcode[1]))
+  labs(caption = sprintf("Errorcode: %d", summary$errorcode[22]))
   
   
 ```
