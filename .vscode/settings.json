@@ -65,7 +65,9 @@
         "shared_mutex": "cpp",
         "ranges": "cpp",
         "bitset": "cpp",
-        "regex": "cpp"
+        "regex": "cpp",
+        "cstdarg": "cpp",
+        "cstring": "cpp"
     },
     "spellright.language": [
         "de"

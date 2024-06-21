@@ -16,6 +16,8 @@
 #include <numeric>
 #include <fstream>
 #include <cstdlib>
+#include <sstream>
+#include <cassert>
 
 /* This file includes the q::qPeaks class*/
 namespace q
