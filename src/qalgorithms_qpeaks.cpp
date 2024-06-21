@@ -66,10 +66,10 @@ namespace q
             // check if the file already exists
             std::fstream file_out;
             std::stringstream output;
-            file_out.open(path, std::ios::out);
+            file_out.open(filename, std::ios::out);
             assert(file_out.is_open());
             // write the header
-            file << "SampleID,Position,Height,Area,PositionUncertainty,HeightUncertainty,AreaUncertainty,DQS,Beta0,Beta1,Beta2,Beta3,DF,X0,dx\n";
+            file_out << "SampleID,Position,Height,Area,PositionUncertainty,HeightUncertainty,AreaUncertainty,DQS,Beta0,Beta1,Beta2,Beta3,DF,X0,dx\n";
             // iterate over the allPeaks vector
             for (const auto &peaks : allPeaks)
             {
