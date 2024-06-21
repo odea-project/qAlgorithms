@@ -623,7 +623,13 @@ namespace q
             }
         }
 
-        // double nearestToVcrit = INFINITY; // always set to the smallest difference between mindist and vcrit in a bin @todo implement this
+        // calculate critical DQS for finding points that are within the critical distance in mz and maxdist scans
+        const double meanerror = std::accumulate(pointsInBin.begin(), pointsInBin.end(), 0.0, [](double error, const Datapoint *point)
+                                          { return error + point->mzError; }) / binsize;
+        const double vcrit = 3.05037165842070 * pow(log(binsize + 1), (-0.4771864667153)) * meanerror; 
+        // binsize + 1 to not include points which would be removed after adding them
+        
+
         // find min distance in minMaxOutPerScan, then calculate DQS for that point
         for (size_t i = 0; i < binsize; i++)
         {
@@ -649,9 +655,30 @@ namespace q
                     minDist_scaled = dist * scalarForMOD[j - currentRangeStart];
                 }
             }
+
             DQSB_base.push_back(calcDQS(meanInnerDistances[i], minDist_base));
             DQSB_scaled.push_back(calcDQS(meanInnerDistances[i], minDist_scaled));
-            // @todo inline, compare all minDist_base with critval and save smallest difference in bin; add omp
+
+            // section to check hot ends
+            if (i == 0) // first element of the bin when sorted by mz
+            {
+                // if the DQS at either end is less than critDQS, a point exists that could be included in the bin
+                const double critDQS = calcDQS(meanInnerDistances[i], vcrit);
+                if (critDQS > DQSB_base[i])
+                {
+                    l_maxdist_tooclose = true;
+                }
+                
+            }
+            if (i == binsize - 1) // last element of the bin when sorted by mz
+            {
+                const double critDQS = calcDQS(meanInnerDistances[i], vcrit);
+                if (critDQS > DQSB_base[i])
+                {
+                    r_maxdist_tooclose = true;
+                }
+            }
+            
         }
         return;
     }
@@ -692,13 +719,13 @@ namespace q
         double sumOfDist = 0;
         std::for_each(pointsInBin.begin(), pointsInBin.end(), [&](const Datapoint *point)
                       { sumOfDist += (point->mz - meanMZ) * (point->mz - meanMZ); }); // squared
-        const double worstCaseMOD = 3.05037165842070 * pow(log(binsize + 1), (-0.4771864667153)) * meanCenError;
-        // binsize + 1 to not include cases where adding in the next point would make the distance greater than vcrit again
-        const double MODlessVcrit = 3.05037165842070 * pow(log(binsize), (-0.4771864667153)) * meanCenError;
-        std::vector<double> MIDs = meanDistance(pointsInBin);
-        double MID = std::accumulate(MIDs.begin(), MIDs.end(), 0.0);
-        double DQSminWith = calcDQS(MID / binsize, worstCaseMOD);
-        double DQSminWithout = calcDQS(MID / binsize, MODlessVcrit);
+        // const double worstCaseMOD = 3.05037165842070 * pow(log(binsize + 1), (-0.4771864667153)) * meanCenError;
+        // // binsize + 1 to not include cases where adding in the next point would make the distance greater than vcrit again
+        // const double MODlessVcrit = 3.05037165842070 * pow(log(binsize), (-0.4771864667153)) * meanCenError;
+        // std::vector<double> MIDs = meanDistance(pointsInBin);
+        // double MID = std::accumulate(MIDs.begin(), MIDs.end(), 0.0);
+        // double DQSminWith = calcDQS(MID / binsize, worstCaseMOD);
+        // double DQSminWithout = calcDQS(MID / binsize, MODlessVcrit);
 
         double stdev = sqrt(sumOfDist / (binsize - 1));
         // @todo use enums here
@@ -707,15 +734,15 @@ namespace q
         {
             selector |= std::byte{0b00000001}; // checks if most points in a bin were assigned wrongly @todo point-wise
         }
-        if (DQSminWith > meanDQS_base)
+        if (l_maxdist_tooclose)
         {
             selector |= std::byte{0b00000010};
         }
-        if (abs(meanMZ - medianMZ) > 2 * meanCenError)
+        if (r_maxdist_tooclose)
         {
             selector |= std::byte{0b00000100};
         }
-        if (false) // greater than maxdist @todo add maxdist as a macro or something // removed due to no obesrvable test value abs(meanScan - medianScan) > 6
+        if (abs(meanMZ - medianMZ) > 2 * meanCenError) // greater than maxdist @todo add maxdist as a macro or something // removed due to no obesrvable test value abs(meanScan - medianScan) > 6
         {
             selector |= std::byte{0b00001000};
         }
@@ -727,17 +754,17 @@ namespace q
         {
             selector |= std::byte{0b00100000};
         }
-        if ((DQSminWithout > meanDQS_base) && !bool(selector & std::byte{0b00000010})) // there is a point within maxdist that is excluded when the bin gets 1 larger
+        if (false) // there is a point within maxdist that is excluded when the bin gets 1 larger
         {
             selector |= std::byte{0b01000000};
         }
-        if (true) // @todo replicate test 3 but use the critical distance?
+        if (false) // @todo replicate test 3 but use the critical distance?
         {
             selector |= std::byte{0b10000000};
         }
 
         return SummaryOutput{selector, binsize, meanMZ, medianMZ, stdev, meanScan, medianScan, meanDQS_base,
-                             meanDQS_scaled, DQSminWith, worstCentroid, meanCenError};
+                             meanDQS_scaled, 0, worstCentroid, meanCenError}; // @todo remove worst dqs from output
     }
 
     const EIC Bin::createEIC()
