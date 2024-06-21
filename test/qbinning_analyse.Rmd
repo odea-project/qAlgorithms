@@ -157,17 +157,15 @@ bins_total = 55910
 notbinned_total = 1102746
 
 summary <- read.csv("../../selectbins_summary.csv")
-summary$errorcode[which(summary$errorcode == 128)] = 0
+# summary$errorcode[which(summary$errorcode == 128)] = 0
 bins <- read.csv("../../selectbins_full.csv")
 # notbinned = read.csv("../../qbinning_notbinned.csv")
 summary$errorcode = as.numeric(lapply(summary$errorcode, bits))
 
-summary_error = summary_error[order(summary_error$mean_mz),]
+summary = summary[order(summary$size, decreasing = TRUE),]
 
-stats = as.data.frame(table(summary_error$errorcode)) # alle ungeraden Zahlen haben duplikate
+stats = as.data.frame(table(summary$errorcode)) # alle ungeraden Zahlen haben duplikate
 stats$Var1 = as.numeric(levels(stats$Var1))
-stats$Var1 = as.numeric(lapply(stats$Var1, bits))
-stats$Freq = as.numeric(stats$Freq)
 
 stats[stats$Var1 %% 2 != 0,]
  
@@ -176,16 +174,15 @@ stats[stats$Var1 - round(stats$Var1, -2) >= 10,] # Seltsame DQS korrelierern nic
 # MZ außerhalb 3 sigma korreliert mit 
 stats[stats$Var1 >= 10000,]
 
-summary_error$errorcode = as.numeric(lapply(summary_error$errorcode, bits))
 
 subsample_notbinned = round(runif(5000, 1, notbinned_total))
 
-ggplot(summary_error[summary_error$errorcode - round(summary_error$errorcode, -5) >= 1000,])+
+ggplot(summary[summary$errorcode - round(summary$errorcode, -5) >= 1000,])+
   geom_point(data = notbinned[subsample_notbinned,], aes(x = mz, y = scan)) +
   geom_point(aes(x = mean_mz, y = mean_scans, colour = as.factor(errorcode)))
   # scale_color_viridis()
 
-ggplot(summary_error[summary_error$errorcode - round(summary_error$errorcode, -3) >= 100,])+
+ggplot(summary[summary$errorcode - round(summary$errorcode, -3) >= 100,])+
   geom_point(data = notbinned[subsample_notbinned,], aes(x = mz, y = scan)) +
   geom_point(aes(x = mean_mz, y = mean_scans, colour = as.factor(errorcode)))
 
@@ -204,28 +201,38 @@ for (i in 1:6) {
 
 length(bins_error$mz)/points_total
 length(bins_error$mz)/(points_total - notbinned_total)
-mean(summary_error$size)
-(points_total - notbinned_total)/(bins_total - length(summary_error$size))
+mean(summary$size)
+(points_total - notbinned_total)/(bins_total - length(summary$size))
+
+subset_step = c(0, 4205, 46173, 54939, 55836, 55904, 55910)
+error_perc = data.frame(step = 0:6, perc_sum = 0, perc_all = 0)
+for (i in 2:7) {
+  sum_match = sum((subset_step[i-1] < summary$ID) & summary$ID < subset_step[i])
+  error_perc$perc_sum[i] = sum_match/7508
+  error_perc$perc_all[i] = (subset_step[i] - subset_step[i-1])/bins_total
+}
+# markierte bins sind nicht in einem der Schritte deutlich wahrscheinlicher als alle anderen
 ```
 
 ```{r binviewer and rater}
 
-last_viewed_bin = 2083
+last_viewed_bin = 646
 
 binRater(summary,bins,last_viewed_bin)
 
 summary$manual[83]
 binRater = function(summary, fullbins, startNo){
   cat("Rate bins using numbers:
-        0: The bin is good as-is (one region of high intensity)
-        1: The bin is good, but was assigned an error
-        2: There is a possible peak and noise data present
-        3: One or more possible peaks are connected by noise data
-        4: There is no peak visible here - error found
-        5: The wrong error was assigned
-        6: No peak visible - no error
-        7: mass drift with intensity / peak shape
-        8: few outliers seem possible
+        0: The bin is good as-is (Peak extraction might be good)
+        1: Some noise reduction is needed / slanted peak profile
+        2: few extreme intensities
+        3: Two or more possible peaks are connected by noise data
+        4: There is no obvious peak visible here
+        5: Strong asymmetry in mz/scans
+        6: 
+        7: 
+        8: 
+        9: 
       Enter # to stop rating bins. The bin index you stopped at will be printed to the console. Your selections are saved to the dataframe \"summary\".\n")
   readline("Press Enter to start the bin rating process.")
   i = startNo
@@ -264,8 +271,8 @@ ggplot(bins_error[which(bins_error$ID == 12885),])+
 min(bins_error$mz[which(bins_error$ID == 39243)]) - max(bins_error$mz[which(bins_error$ID == 39242)])
 
 
-critVal(6) * summary_error$meanError[which(summary_error$ID == 39242)]
-critVal(5) * summary_error$meanError[which(summary_error$ID == 39243)]
+critVal(6) * summary$meanError[which(summary$ID == 39242)]
+critVal(5) * summary$meanError[which(summary$ID == 39243)]
 
 
 ggplot(bins[which(bins$ID == 22),])+
