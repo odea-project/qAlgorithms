@@ -15,7 +15,7 @@ namespace q
 
         qPeaks::qPeaks(const q::MeasurementData::varDataType &dataVec)
         {
-            std::visit(
+            std::visit( // @todo make this a for each loop
                 [this](auto &&arg)
                 {
                     /*
@@ -57,73 +57,12 @@ namespace q
                 dataVec);
         }
 
-        qPeaks::~qPeaks() {}
 #pragma endregion Constructors and Destructor
 
-#pragma region "Print Functions"
-        void qPeaks::printAllPeaks(const std::vector<std::vector<std::unique_ptr<DataType::Peak>>> &allPeaks, const std::string &filename) const
-        {
-            // check if the file already exists
-            std::fstream file_out;
-            std::stringstream output;
-            file_out.open(filename, std::ios::out);
-            assert(file_out.is_open());
-            // write the header
-            file_out << "SampleID,Position,Height,Area,PositionUncertainty,HeightUncertainty,AreaUncertainty,DQS,Beta0,Beta1,Beta2,Beta3,DF,X0,dx\n";
-            // iterate over the allPeaks vector
-            for (const auto &peaks : allPeaks)
-            {
-                // iterate over the peaks vector
-                for (const auto &peak : peaks)
-                {
-                    // @todo decide on precision
-                    char buffer[128];
-                    sprintf(buffer, "%d,%0.15f,%0.15f,%0.15f,%0.15f,%0.15f,%0.15f,%0.15f,%0.15f,%0.15f,%0.15f,%0.15f,%d,%0.15f,%0.15f\n",
-                            peak->sampleID, peak->position, peak->height, peak->area, peak->positionUncertainty,
-                            peak->heightUncertainty, peak->areaUncertainty, peak->dqsPeak, peak->beta0,
-                            peak->beta1, peak->beta2, peak->beta3, peak->df, peak->x0, peak->dx);
-                    output << buffer;
-                }
-            }
-            file_out << output.str();
-            file_out.close();
-        }
-
-        void qPeaks::printMatrices(int scale) const
-        {
-            std::cout << "Design Matrix\n";
-            print(*(designMatrices[scale]));
-            std::cout << "\nInverse Matrix\n";
-            print(*(inverseMatrices[scale]));
-            std::cout << "\nPseudo-Inverse Matrix\n";
-            print(*(psuedoInverses[scale]));
-        }
-
-        void qPeaks::plotPeaksToPython(
-            const std::string &filename_input, const std::string &filename_output,
-            const bool includeFits, const bool featureMap) const
-        {
-            if (system("python --version"))
-            {
-                std::cerr << "Python is not installed on this system. Please install Python to use this function.\n";
-                return;
-            }
-            if (system("python -c \"import sys\""))
-            {
-                std::cerr << "Python is not in the path. Please add Python to the path to use this function.\n";
-                return;
-            }
-            std::string command = "python python/plotPeaksToPython.py " + filename_input + " " + filename_output + " " + std::to_string(includeFits) + " " + std::to_string(featureMap);
-            std::string result = exec(command.c_str());
-            std::cout << result;
-        }
-
-#pragma endregion "Print Functions"
-
 #pragma region "initialize"
-        double q::Algorithms::qPeaks::x_square[100];   // array to store the square of the x values
-        double q::Algorithms::qPeaks::invArray[50][6]; // array to store the 6 unique values of the inverse matrix for each scale
-        void qPeaks::initialize()
+        double q::Algorithms::qPeaks::x_square[100];   // array to store the square of the x values @todo constexpr, make global
+        double q::Algorithms::qPeaks::invArray[50][6]; // array to store the 6 unique values of the inverse matrix for each scale @todo constexpr; are there only 50 scales?
+        void qPeaks::initialize()                      // @todo this function should return a static invArray? If so, constexpr!
         {
             // init x_square
             for (int i = 0; i < 100; ++i)
@@ -131,7 +70,7 @@ namespace q
                 x_square[i] = i * i;
             }
             // init invArray
-            double XtX_00 = 1;
+            double XtX_00 = 1; // @todo what is XtX?
             double XtX_02 = 0;
             double XtX_11 = 0;
             double XtX_12 = 0;
@@ -144,7 +83,7 @@ namespace q
                 XtX_11 = XtX_02 * 2;
                 XtX_13 += x_square[i] * i;
                 XtX_12 = -XtX_13;
-                XtX_22 += x_square[i] * x_square[i];
+                XtX_22 += x_square[i] * x_square[i]; 
 
                 double L_00 = std::sqrt(XtX_00);
                 double L_11 = std::sqrt(XtX_11);
@@ -182,13 +121,13 @@ namespace q
             const q::MeasurementData::varDataType &dataVec)
         {
             std::vector<std::vector<std::unique_ptr<DataType::Peak>>> all_peaks;
-            std::visit(
+            std::visit( // @todo make this a for each loop
                 [&all_peaks, this](auto &&arg)
                 {
-          all_peaks.resize(arg->size());
+                all_peaks.resize(arg->size());
                 // iterate over the map of varDataType datatype objects
-#pragma omp parallel for // use parallel for loop to iterate over the dataVec
-          for (size_t i = 0; i < arg->size(); i++)
+// #pragma omp parallel for // use parallel for loop to iterate over the dataVec
+                for (size_t i = 0; i < arg->size(); i++)
           {
             // de-reference the unique pointer of the object
             auto &pair =  (*arg)[i];         // pair is a unique pointer to a datatype object
@@ -222,7 +161,7 @@ namespace q
                 dataVec); // end visit
             // create the sorted peak list
             return createPeakList(all_peaks);
-            return all_peaks;
+            return all_peaks; // @todo why is the second return here?
         } // end findPeaks
 #pragma endregion findPeaks
 
@@ -276,7 +215,9 @@ namespace q
             {
                 /*
                   Degree of Freedom Filter:
-                  This block of code implements the degree of freedom filter. It calculates the degree of freedom based df vector. If the degree of freedom is less than 5, the loop continues to the next iteration. The value 5 is chosen as the minimum number of data points required to fit a quadratic regression model.
+                  This block of code implements the degree of freedom filter. It calculates the degree of freedom
+                  based df vector. If the degree of freedom is less than 5, the loop continues to the next iteration.
+                  The value 5 is chosen as the minimum number of data points required to fit a quadratic regression model.
                 */
                 int df_sum = calcDF(df, i, 2 * scale + i); // calculate the sum of the degree of freedom (df_sum)
                 if (df_sum < 5)
@@ -286,7 +227,10 @@ namespace q
 
                 /*
                   Apex and Valley Position Filter:
-                  This block of code implements the apex and valley position filter. It calculates the apex and valley positions based on the coefficients matrix B. If the apex is outside the data range, the loop continues to the next iteration. If the apex and valley positions are too close to each other, the loop continues to the next iteration.
+                  This block of code implements the apex and valley position filter. It calculates the
+                  apex and valley positions based on the coefficients matrix B. If the apex is outside
+                  the data range, the loop continues to the next iteration. If the apex and valley positions
+                  are too close to each other, the loop continues to the next iteration.
                 */
                 double apex_position, valley_position;
                 if (!calculateApexAndValleyPositions(B, i, scale, apex_position, valley_position))
@@ -296,9 +240,12 @@ namespace q
 
                 /*
                   Quadratic Term Filter:
-                  This block of code implements the quadratic term filter. It calculates the mean squared error (MSE) between the predicted and actual values. Then it calculates the t-value for the quadratic term. If the t-value is less than the corresponding value in the tValuesArray, the quadratic term is considered statistically insignificant, and the loop continues to the next iteration.
+                  This block of code implements the quadratic term filter. It calculates the mean squared error (MSE)
+                  between the predicted and actual values. Then it calculates the t-value for the quadratic term.
+                  If the t-value is less than the corresponding value in the tValuesArray, the quadratic term is
+                  considered statistically insignificant, and the loop continues to the next iteration.
                 */
-                const q::Matrices::Vector b = extractCol(B, i);                    // coefficients vector
+                const q::Matrices::Vector b = extractCol(B, i);                    // coefficients vector @todo called matrix in function call downstream
                 const q::Matrices::Vector yhat = calcYhat(-scale, scale, B, i);    // predicted values
                 const double mse = calcSSE(yhat, Ylog, Ylog.begin() + i) / df_sum; // mean squared error
                 if (!isValidQuadraticTerm(B, i, inverseMatrix_2_2, inverseMatrix_2_2, mse, df_sum))
@@ -308,11 +255,14 @@ namespace q
 
                 /*
                   Height Filter:
-                  This block of code implements the height filter. It calculates the height of the peak based on the coefficients matrix B. Then it calculates the uncertainty of the height based on the Jacobian matrix and the variance-covariance matrix of the coefficients. If the height is statistically insignificant, the loop continues to the next iteration.
+                  This block of code implements the height filter. It calculates the height of the peak
+                  based on the coefficients matrix B. Then it calculates the uncertainty of the height
+                  based on the Jacobian matrix and the variance-covariance matrix of the coefficients.
+                  If the height is statistically insignificant, the loop continues to the next iteration.
                 */
-                // Matrix C = (*inverseMatrices[scale]) * mse; // variance-covariance matrix of the coefficients
-                q::Matrices::Matrix_mc_4x4 C = multiplyScalarTo4x4Matrix(mse, *inverseMatrices[scale]); // variance-covariance matrix of the coefficients
-                double height = 0.0;
+                // variance-covariance matrix of the coefficients
+                q::Matrices::Matrix_mc_4x4 C = multiplyScalarTo4x4Matrix(mse, *inverseMatrices[scale]);
+                double height = 0.0; // @todo instead of passing by reference, return a struct / union
                 double uncertainty_height = 0.0;
                 double uncertainty_position = 0.0;
                 if (!isValidPeakHeight(B, C, i, scale, apex_position, df_sum, height, uncertainty_height, uncertainty_position))
@@ -322,7 +272,10 @@ namespace q
 
                 /*
                   Area Filter:
-                  This block of code implements the area filter. It calculates the Jacobian matrix for the peak area based on the coefficients matrix B. Then it calculates the uncertainty of the peak area based on the Jacobian matrix. If the peak area is statistically insignificant, the loop continues to the next iteration.
+                  This block of code implements the area filter. It calculates the Jacobian matrix for
+                  the peak area based on the coefficients matrix B. Then it calculates the uncertainty
+                  of the peak area based on the Jacobian matrix. If the peak area is statistically
+                  insignificant, the loop continues to the next iteration.
                 */
                 double area = 0.0;
                 double uncertainty_area = 0.0;
@@ -333,7 +286,10 @@ namespace q
 
                 /*
                   Chi-Square Filter:
-                  This block of code implements the chi-square filter. It calculates the chi-square value based on the weighted chi squared sum of expected and measured y values in the exponential domain. If the chi-square value is less than the corresponding value in the chiSquareArray, the loop continues to the next iteration.
+                  This block of code implements the chi-square filter. It calculates the chi-square
+                  value based on the weighted chi squared sum of expected and measured y values in
+                  the exponential domain. If the chi-square value is less than the corresponding value
+                  in the chiSquareArray, the loop continues to the next iteration.
                 */
                 double chiSquare = calcChiSquareEXP(yhat, Y, Y.begin() + i);
                 if (chiSquare < chiSquareArray[df_sum - 5])
@@ -343,13 +299,15 @@ namespace q
 
                 /*
                   Add to a temporary vector of valid regressions:
-                  This block of code adds the valid peak to a temporary vector of valid regressions. It calculates the left and right limits of the peak based on the valley position. Then it stores the index of the valid regression in the temporary vector of valid regressions.
+                  This block of code adds the valid peak to a temporary vector of valid regressions.
+                  It calculates the left and right limits of the peak based on the valley position.
+                  Then it stores the index of the valid regression in the temporary vector of valid regressions.
                 */
                 // at this point, the peak is validated
                 double left_limit = (valley_position < 0) ? std::max((double)i, valley_position + i + scale) : i;
                 double right_limit = (valley_position > 0) ? std::min((double)i + 2 * scale, valley_position + i + scale) : i + 2 * scale;
 
-                df_sum = calcDF(df, left_limit, right_limit); // update the degree of freedom considering the left and right limits
+                df_sum = calcDF(df, left_limit, right_limit); // update the degrees of freedom considering the left and right limits
                 if (df_sum < 5)
                 {
                     continue; // degree of freedom less than 5; i.e., less then 5 measured data points
@@ -388,7 +346,9 @@ namespace q
             }
             /*
               Grouping:
-              This block of code implements the grouping. It groups the valid peaks based on the apex positions. Peaks are defined as similar, i.e., members of the same group, if they fullfill at least one of the following conditions:
+              This block of code implements the grouping. It groups the valid peaks based on the
+              apex positions. Peaks are defined as similar, i.e., members of the same group,
+              if they fullfill at least one of the following conditions:
               - The difference between two peak apexes is less than 4. (Nyquist Shannon Sampling Theorem, separation of two maxima)
               - At least one apex of a pair of peaks is within the window of the other peak. (Overlap of two maxima)
             */
@@ -802,10 +762,10 @@ namespace q
 #pragma endregion calcChiSquareEXP
 
 #pragma region calcDF
-        int qPeaks::calcDF(
+        int qPeaks::calcDF(                    // @todo this is just the std::accumulate, why have a wrapper?
             const q::Matrices::BoolVector &df, // degrees of freedom
-            const size_t left_limit,           
-            const size_t right_limit)     
+            const size_t left_limit,
+            const size_t right_limit)
         {
             return std::accumulate(
                 df.begin() + left_limit,
@@ -1163,16 +1123,6 @@ namespace q
         }
 #pragma endregion "yhat"
 
-#pragma region info
-        void qPeaks::info() const
-        {
-            std::cout << "qPeaks object\n";
-            std::cout << "designMatrices size: " << designMatrices.size() << "\n";
-            std::cout << "inverseMatrices size: " << inverseMatrices.size() << "\n";
-            std::cout << "psuedoInverses size: " << psuedoInverses.size() << "\n";
-        }
-#pragma endregion info
-
 #pragma region "convolve regression"
         q::Matrices::Matrix_mc
         qPeaks::convolve_fast(
@@ -1267,6 +1217,74 @@ namespace q
             return resultMatrix;
         }
 #pragma endregion "convolve regression"
+
+#pragma region "Print Functions"
+        void qPeaks::printAllPeaks(const std::vector<std::vector<std::unique_ptr<DataType::Peak>>> &allPeaks, const std::string &filename) const
+        {
+            // check if the file already exists
+            std::fstream file_out;
+            std::stringstream output;
+            file_out.open(filename, std::ios::out);
+            assert(file_out.is_open());
+            // write the header
+            file_out << "SampleID,Position,Height,Area,PositionUncertainty,HeightUncertainty,AreaUncertainty,DQS,Beta0,Beta1,Beta2,Beta3,DF,X0,dx\n";
+            // iterate over the allPeaks vector
+            for (const auto &peaks : allPeaks)
+            {
+                // iterate over the peaks vector
+                for (const auto &peak : peaks)
+                {
+                    // @todo decide on precision
+                    char buffer[512];
+                    sprintf(buffer, "%d,%0.15f,%0.15f,%0.15f,%0.15f,%0.15f,%0.15f,%0.15f,%0.15f,%0.15f,%0.15f,%0.15f,%d,%0.15f,%0.15f\n",
+                            peak->sampleID, peak->position, peak->height, peak->area, peak->positionUncertainty,
+                            peak->heightUncertainty, peak->areaUncertainty, peak->dqsPeak, peak->beta0,
+                            peak->beta1, peak->beta2, peak->beta3, peak->df, peak->x0, peak->dx);
+                    output << buffer;
+                }
+            }
+            file_out << output.str();
+            file_out.close();
+        }
+
+        void qPeaks::printMatrices(int scale) const
+        {
+            std::cout << "Design Matrix\n";
+            print(*(designMatrices[scale]));
+            std::cout << "\nInverse Matrix\n";
+            print(*(inverseMatrices[scale]));
+            std::cout << "\nPseudo-Inverse Matrix\n";
+            print(*(psuedoInverses[scale]));
+        }
+
+        void qPeaks::plotPeaksToPython(
+            const std::string &filename_input, const std::string &filename_output,
+            const bool includeFits, const bool featureMap) const
+        {
+            if (system("python --version"))
+            {
+                std::cerr << "Python is not installed on this system. Please install Python to use this function.\n";
+                return;
+            }
+            if (system("python -c \"import sys\""))
+            {
+                std::cerr << "Python is not in the path. Please add Python to the path to use this function.\n";
+                return;
+            }
+            std::string command = "python python/plotPeaksToPython.py " + filename_input + " " + filename_output + " " + std::to_string(includeFits) + " " + std::to_string(featureMap);
+            std::string result = exec(command.c_str());
+            std::cout << result;
+        }
+
+        void qPeaks::info() const
+        {
+            std::cout << "qPeaks object\n";
+            std::cout << "designMatrices size: " << designMatrices.size() << "\n";
+            std::cout << "inverseMatrices size: " << inverseMatrices.size() << "\n";
+            std::cout << "psuedoInverses size: " << psuedoInverses.size() << "\n";
+        }
+
+#pragma endregion "Print Functions"
 
     } // namespace Algorithms
 } // namespace q

@@ -80,13 +80,13 @@ namespace q
             void
             sortDataPoints();
 
-            // properties, i.e. metadata
-            using variableType = std::variant< // allowed variable types for mass spectrum data
-                int,                           // e.g. scan number
+            // properties, i.e. metadata @todo why std::variant instead of struct, why are MSLevel, IonisationMode, MeasurementMode not global vars?
+            using variableType = std::variant< // allowed variable types for mass spectrum data @delete
+                int,                           // e.g. scan number @todo why not unsigned int?
                 size_t,                        // e.g. scan number, number of data points
                 double,                        // e.g. retention time
                 MSLevel,                       // e.g. MS1 or MS2
-                IonizationMode,                // e.g. positive or negative
+                IonizationMode,                // e.g. positive or negative @todo unused
                 MeasurementMode>;              // e.g. profile or centroid
 
             std::unordered_map<DataField, variableType> *metaData;

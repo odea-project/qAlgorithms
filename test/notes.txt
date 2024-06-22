@@ -1,5 +1,4 @@
-Erste Zeile der csv-Datei wird ignoriert. csv muss mit den Spaltennamen o.Ä. anfangen
-Parallelisieren: Ein thread je subset-Operation; wahrscheinlich nicht signifikant schneller
+valgrind für Speicherdeallokierung, address sanitiser zum Laufen bringen
 
 Gibt es einen Zusammenhang zwischen Zentroidfehler und der Eigenschaft, nicht in einem Bin zu landen / Anfang Bzw. Ende eines Bins zu sein?
 Config-Datei
@@ -8,31 +7,11 @@ https://www.agner.org/optimize/optimizing_cpp.pdf
 
 prüfen, wie das Programm skaliert -> subdatensätze
 
-ctime:
-int now = time(0)
-
-time(o) - now
-
 gcc -Wall -Werror .\src\qalgorithms_qbin.cpp  
-
-Methode: I/O, minimalbeispiel (Reihenfolge, ~10E array), paper verlinken (Seitenzahl),
-
-Gerrit soll code aufräumen -> Namen, Funktionen trennen, Kommentare selber schreiben, redundanten Müll entfernen, echte pointer statt &, eckige Klammern für operator overload (matrixcode durch besse Bibliothek ersetzen, da jede Operation die gesamte Matrix kopiert @todo kontrollieren), wenn es getter und setter gibt sollte die variable public sein
 
 https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0125108
 
-Kein Zshg zwischen DQS-differenz und mz, scans
-
-Entwicklung des DQS mit maxdist
-
 https://link.springer.com/article/10.1007/s41060-021-00275-z#Sec2
-
-Gradheit eines bins als Qualitätskriterium?
-
-Schlechtmöglichste MID, schlechteste MOD => Schlechtmöglichster DQS in Abhängigkeit von n
-
-Bestimme durchschnittliche MID für die Verteilung mit n Mitliedern, die grade eben noch
-normalverteilt ist 
 
 Der schlechteste mögliche DQS sinkt mit n, Beweis?
 

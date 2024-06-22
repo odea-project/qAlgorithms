@@ -74,25 +74,10 @@ artbin$rt = 0.65 * artbin$scans + 1
 
 
 ```{r bin results}
-# Rprof(tf <- "log.log", memory.profiling = TRUE)
-# the code you want to profile must be in between
+sum1 = read.csv("../../selectBins_summary+1.csv")
+sum0 = read.csv("../../selectBins_summary.csv")
 
-qbins <- read.csv("../../qbinning_binlist.csv")
-accurate = c(1:16)
-
-for (i in 0:15) {
-  accurate[i+1] = sum((round(qbins$DQS - qbins$control_DQSB, digits = i) == 0))
-}
-
-plot(c(0:15), accurate/length(qbins$mz))
-plot(c(0:15), cumsum(accurate))
-
-qbins$DQSacc = qbins$DQS - qbins$control_DQSB
-
-plot(round(qbins$control_DQSB, digits = 3), round(qbins$DQS, digits = 3))
-
-# Rprof (NULL) ; print(summaryRprof(tf))
-
+sum(sum1$DQSB_base != sum0$DQSB_base)
 ```
 
 ```{r timings}

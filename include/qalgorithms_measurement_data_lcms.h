@@ -46,7 +46,7 @@ namespace q
 
             /**
              * @brief Read LC-MS data from a StreamCraft mzML object
-             * @details The readStreamCraftMZML method reads LC-MS data from a StreamCraft mzML object and stores 
+             * @details The readStreamCraftMZML method reads LC-MS data from a StreamCraft mzML object and stores
              * it in the LCMSData object. A StreamCraft mzML object is created by using sc::MZML z("path to mzML file").
              * @param data : StreamCraft mzML object
              */
@@ -60,29 +60,29 @@ namespace q
 
             /**
              * @brief Identify and fill gaps in the LC-MS data
-             * @details The method uses difference between two neighboring data points to identify gaps. 
-             * If the difference is 1.75 times greater than expected, then the method fills the gap with 
-             * zero values for intensity and inter/extrapolated values for x-axis values. For the expected 
+             * @details The method uses difference between two neighboring data points to identify gaps.
+             * If the difference is 1.75 times greater than expected, then the method fills the gap with
+             * zero values for intensity and inter/extrapolated values for x-axis values. For the expected
              * difference, the method the difference of the last two data points that not show a gap. @todo what?
-             * However, the first expected difference is set to the median of the differences of the total 
-             * data points. However, the maximum gap size is set to 4 per side, i.e., 8 in total, where there 
+             * However, the first expected difference is set to the median of the differences of the total
+             * data points. However, the maximum gap size is set to 4 per side, i.e., 8 in total, where there
              * is a gap leftover between the fourth and fifth data points. @todo full rewrite necessary
              */
-            void zeroFilling(); 
+            void zeroFilling();
 
             /**
              * @brief Cut the data into smaller data sets
-             * @details The method uses the separator value to split the data into smaller data sets. 
-             * The separator value is set to -1.0 for the x-axis and -1.0 for the y-axis. For each cut, 
-             * the method creates a new data subset and stores it in the data map using a sub-dataset 
+             * @details The method uses the separator value to split the data into smaller data sets.
+             * The separator value is set to -1.0 for the x-axis and -1.0 for the y-axis. For each cut,
+             * the method creates a new data subset and stores it in the data map using a sub-dataset
              * ID as the secondary key.
              */
             void cutData();
 
             /**
              * @brief Filter small data sets
-             * @details The method removes data sets with less than 5 data points. 
-             * This is due to the regression analysis that includes 4 coefficients 
+             * @details The method removes data sets with less than 5 data points.
+             * This is due to the regression analysis that includes 4 coefficients
              * and therefore requires at least 5 data points.
              */
             void filterSmallDataSets(); // @todo why is this a separate method? Include the termination criteria in the function
@@ -98,10 +98,11 @@ namespace q
              * @brief Print the LC-MS datapoints and metadata to the console
              */
             void print();
+
             /**
-             * @brief Print the LC-MS number of data sets to the console
+             * @brief returns the number of datasets in the read in data
              */
-            void info();
+            size_t numDatasets();
 
             void getMaxKey(); // @todo remove, make maxKey public
 

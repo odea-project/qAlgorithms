@@ -169,7 +169,6 @@ namespace q
 
     public:
         BinContainer();
-        ~BinContainer();
 
         /// @brief create a bin out of rawdata and add it to the binDeque. This function exists since all subsetting functions require a bin to start
         /// @param rawdata a set of raw data on which binning is to be performed

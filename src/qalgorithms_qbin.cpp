@@ -95,9 +95,8 @@ namespace q
     };
 
     BinContainer::BinContainer() {}
-    BinContainer::~BinContainer() {}
 
-    void BinContainer::makeFirstBin(RawData *rawdata)
+    void BinContainer::makeFirstBin(RawData *rawdata) // @todo inline
     {
         const Bin firstBin(rawdata);
         binDeque.push_back(firstBin);
@@ -503,7 +502,7 @@ namespace q
 
         int maxScansReduced = 0;              // add this many dummy values to prevent segfault when bin is in one of the last scans
         std::vector<double> minMaxOutPerScan; // contains both mz values (per scan) next or closest to all m/z in the bin
-        minMaxOutPerScan.reserve((scanRangeEnd - scanRangeStart) * 2);
+        minMaxOutPerScan.reserve((scanRangeEnd - scanRangeStart + 1) * 2);
         if (scanRangeStart < 1)
         {
             for (int i = 0; i < (1 - scanRangeStart) * 2; i++) // fill with dummy values to prevent segfault when distance checker expects negative scan number
@@ -625,10 +624,10 @@ namespace q
 
         // calculate critical DQS for finding points that are within the critical distance in mz and maxdist scans
         const double meanerror = std::accumulate(pointsInBin.begin(), pointsInBin.end(), 0.0, [](double error, const Datapoint *point)
-                                          { return error + point->mzError; }) / binsize;
-        const double vcrit = 3.05037165842070 * pow(log(binsize + 1), (-0.4771864667153)) * meanerror; 
+                                                 { return error + point->mzError; }) /
+                                 binsize;
+        const double vcrit = 3.05037165842070 * pow(log(binsize + 1), (-0.4771864667153)) * meanerror;
         // binsize + 1 to not include points which would be removed after adding them
-        
 
         // find min distance in minMaxOutPerScan, then calculate DQS for that point
         for (size_t i = 0; i < binsize; i++)
@@ -668,7 +667,6 @@ namespace q
                 {
                     l_maxdist_tooclose = true;
                 }
-                
             }
             if (i == binsize - 1) // last element of the bin when sorted by mz
             {
@@ -678,7 +676,6 @@ namespace q
                     r_maxdist_tooclose = true;
                 }
             }
-            
         }
         return;
     }

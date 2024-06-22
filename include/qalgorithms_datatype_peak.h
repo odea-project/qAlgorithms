@@ -28,7 +28,7 @@ namespace q
      * @param widthUncertainty The uncertainty of the peak width
      * @param areaUncertainty The uncertainty of the peak area
      * @param dqsPeak The data quality score of the peak \cite{reuschenbach2022development}
-     * @param beta0 The regression coefficient
+     * @param beta0 The regression coefficient @todo uniform naming, either beta_0 or beta0
      * @param beta1 The regression coefficient
      * @param beta2 The regression coefficient
      * @param beta3 The regression coefficient
