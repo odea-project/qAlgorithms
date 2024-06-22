@@ -2,10 +2,9 @@
 #include "../include/qalgorithms_measurement_data_lcms.h"
 #include "../include/qalgorithms_qpeaks.h"
 #include "../include/qalgorithms_qbin.h"
-// #include "../include/qalgorithms_ascii_logo.h" // not necessary
 
 // external
-#include "../external/StreamCraft/src/StreamCraft_mzml.hpp"
+// #include "../external/StreamCraft/src/StreamCraft_mzml.hpp" @todo check if this is actually used here
 #include <iostream>
 #include <chrono>
 #include <fstream>
@@ -14,33 +13,21 @@
 
 int main()
 {
-    // print logo - @todo don't use args which are incompatible with linux
+    std::cout << "starting...";
+    auto timeStart = std::chrono::high_resolution_clock::now();
+    // print logo - @todo don't use functions which are incompatible with linux
     //   HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
     //   q::logo::print_qpeaks();
 
+    // ### removed user input (make this an argument of main) and overzealous status updates
+
     // initialize qPeaks static variables
-    q::Algorithms::qPeaks::initialize();
+    q::Algorithms::qPeaks::initialize(); // @todo constexpr
     bool isCSV = false;
 
-    // userinput for filename
-    std::string filename_input;
-    std::cout << "Enter the filename: ";
-    std::cin >> filename_input;
+    std::string filename_input = "../test/test_orbitrap.csv"; // @todo make this a command line argument
 
-    // check if file exists; if not, repeat the input until a valid file is entered
-    while (!std::ifstream(filename_input))
-    {
-        std::cout << "Error: file not found" << std::endl;
-        std::cout << "Enter the filename: ";
-        std::cin >> filename_input;
-    }
-
-    std::cout << "create LCMSData object............";
     q::MeasurementData::LCMSData lcmsData;
-    //   SetConsoleTextAttribute(hConsole, 10);
-    std::cout << "done\n";
-    //   SetConsoleTextAttribute(hConsole, 15);
-    std::cout << "read file.........................";
 
     // check if the input file is a CSV file or a mzML file
     if (filename_input.find(".mzML") != std::string::npos) // @todo make sure this is the end of the filename, switch to regex
@@ -54,7 +41,7 @@ int main()
                          {q::DataType::DataField::MZ,
                           q::DataType::DataField::INTENSITY,
                           q::DataType::DataField::SCANNUMBER,
-                          q::DataType::DataField::RETENTIONTIME});
+                          q::DataType::DataField::RETENTIONTIME}); // @todo make the cols user defined and offer these as default values
         isCSV = true;
     }
     else
@@ -62,82 +49,53 @@ int main()
         std::cout << "Error: only .mzML and .csv files are supported" << std::endl;
     }
 
-    //   SetConsoleTextAttribute(hConsole, 10);
-    std::cout << "done\n";
-    //   SetConsoleTextAttribute(hConsole, 15);
-    lcmsData.info();
+    auto timeEnd = std::chrono::high_resolution_clock::now();
+
+    std::cout << "finished reading " << lcmsData.numDatasets() << " datasets in " << (timeEnd - timeStart).count() << " ns\n\n";
 
     // @todo add timings here, include option to skip output or create .log for more elaborate diagnostics
+    timeStart = std::chrono::high_resolution_clock::now();
 
-    std::cout << "zero filling......................";
     lcmsData.zeroFilling();
-    //   SetConsoleTextAttribute(hConsole, 10);
-    std::cout << "done\n";
 
-    //   SetConsoleTextAttribute(hConsole, 15);
-    std::cout << "cut data..........................";
     lcmsData.cutData();
-    //   SetConsoleTextAttribute(hConsole, 10);
-    std::cout << "done\n";
 
-    //   SetConsoleTextAttribute(hConsole, 15);
-    std::cout << "filter small data sets............";
     lcmsData.filterSmallDataSets();
-    //   SetConsoleTextAttribute(hConsole, 10);
-    std::cout << "done\n";
 
-    //   SetConsoleTextAttribute(hConsole, 15);
-    std::cout << "interpolate data..................";
     lcmsData.interpolateData();
-    //   SetConsoleTextAttribute(hConsole, 10);
-    std::cout << "done\n";
 
-    //   SetConsoleTextAttribute(hConsole, 15);
-    lcmsData.info();
+    timeEnd = std::chrono::high_resolution_clock::now();
+    std::cout << "reduced data to " << lcmsData.numDatasets() << " datasets in " << (timeEnd - timeStart).count() << " ns\n\n";
 
     // qPEAKS
-    std::cout << "create qPeaks object..............";
+    timeStart = std::chrono::high_resolution_clock::now();
+    std::cout << "finding peaks...\n";
+
     q::MeasurementData::varDataType dataObject = &(lcmsData.data);
     q::Algorithms::qPeaks qpeaks(dataObject);
-    //   SetConsoleTextAttribute(hConsole, 10);
-    std::cout << "done\n";
-    //   SetConsoleTextAttribute(hConsole, 15);
-    std::cout << "find peaks........................";
-
-    // Capture the start time
-    auto start = std::chrono::high_resolution_clock::now();
 
     std::vector<std::vector<std::unique_ptr<q::DataType::Peak>>> peaks = qpeaks.findPeaks(dataObject); // @todo check for better data structures
 
-    // Capture the end time
-    auto end = std::chrono::high_resolution_clock::now();
-    //   SetConsoleTextAttribute(hConsole, 10);
-    std::cout << "done";
-    //   SetConsoleTextAttribute(hConsole, 15);
-    std::cout << " in : ";
-    // Calculate the duration
-    std::chrono::duration<double> duration = end - start;
-    std::cout << duration.count() << " seconds" << std::endl;
-    std::cout << "Peaks found:                      ";
     size_t count = 0;
     for (size_t i = 0; i < peaks.size(); i++)
     {
         count += peaks[i].size();
     }
-    std::cout << count << std::endl;
+    timeEnd = std::chrono::high_resolution_clock::now();
+    std::cout << "found " << count << " peaks in " << (timeEnd - timeStart).count() << " ns\n\n";
 
-    // write peaks to file
-    std::cout << "write peaks to file...............";
-    std::string filename_output = filename_input;
-    // remove the file extension
-    filename_output = filename_output.substr(0, filename_output.find_last_of("."));
-    filename_output += "_peaks.csv";
+    // write peaks to file @todo output location should always be determined by the user!
+    std::cout << "writing peaks to file...\n";
+    // std::string filename_output = filename_input;
+    // // remove the file extension
+    // filename_output = filename_output.substr(0, filename_output.find_last_of("."));
+    // filename_output += "_peaks.csv";
+    std::string filename_output = "../../peaktable.csv";
     qpeaks.printAllPeaks(peaks, filename_output);
-    //   SetConsoleTextAttribute(hConsole, 10);
-    std::cout << "done\n\n\n";
-    //   SetConsoleTextAttribute(hConsole, 15);
 
-    // Create object to hand into qbins here
+    std::cout << "done\n\n\n";
+
+    // ### Create object to hand into qbins here ### @todo
 
     // plot peaks @todo make this a function argument or move it to a separate data analysis thing
     //   if (isCSV)

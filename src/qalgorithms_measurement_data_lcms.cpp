@@ -307,9 +307,9 @@ namespace q
             }
         }
 
-        void LCMSData::info()
+        size_t LCMSData::numDatasets()
         {
-            std::cout << "Number of data sets:              " << this->data.size() << std::endl;
+            return this->data.size();
         }
 
         void LCMSData::getMaxKey()
