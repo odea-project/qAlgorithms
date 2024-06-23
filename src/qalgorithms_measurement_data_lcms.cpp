@@ -184,9 +184,7 @@ namespace q
             }
         }
 
-        void
-        LCMSData::readStreamCraftMZML(
-            sc::MZML &data)
+        void LCMSData::readStreamCraftMZML(sc::MZML &data)
         {
             std::vector<std::vector<std::vector<double>>> spectra = data.get_spectra();
             std::vector<double> retentionTimes = data.get_spectra_rt();
@@ -312,7 +310,7 @@ namespace q
             return this->data.size();
         }
 
-        void LCMSData::getMaxKey()
+        void LCMSData::getMaxKey() // @todo remove
         {
             std::cout << "Max Key:                          " << maxKey << std::endl;
         }

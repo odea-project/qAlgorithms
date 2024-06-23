@@ -10,7 +10,7 @@
 namespace q
 {
     // Datapoint Struct (contains all user-specified variables found in source file); Output of qCentroiding @todo move to utils / shared data file
-    struct Datapoint
+    struct Datapoint // @todo rename, DataPoint is used in q::DataType::MassSpectrum::DataPoint
     {
         double mz;
         double mzError = -1;

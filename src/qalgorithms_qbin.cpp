@@ -924,7 +924,7 @@ namespace q
 
 }
 
-int main()
+int notmain()
 {
     std::cout << "starting...\n";
 
