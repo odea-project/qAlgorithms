@@ -20,6 +20,8 @@ namespace q
         class LCMSData : public MeasurementData
         {
         public:
+            std::vector<std::unique_ptr<DataType::MassSpectrum>> data; // this vector contains all mass spectra of the read-in dataset @todo better name
+
             LCMSData(); // @todo control the inheritance is useful here, use virtual functions for all in measurement_data.h?
 
             // @todo explain which data is read into the lcms object
@@ -106,10 +108,8 @@ namespace q
 
             void getMaxKey(); // @todo remove, make maxKey public
 
-            std::vector<std::unique_ptr<DataType::MassSpectrum>> data;
-
         private:
-            size_t maxKey;
+            size_t maxKey; // @todo what is maxKey - just the number of scans?
         };
     } // namespace MeasurmentData
 } // namespace q

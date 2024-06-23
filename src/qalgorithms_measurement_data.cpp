@@ -8,8 +8,8 @@ namespace q
   namespace MeasurementData
   {
     void MeasurementData::zeroFilling(varDataType &dataVec, int k)
-    {
-      std::visit([k](auto &&arg) // @todo make this a for each loop
+    { // @todo make this a for each loop
+      std::visit([k](auto &&arg)
                  {
                    // iterate over the vector of varDataType datatype objects
                    for (auto &pair : *arg)
@@ -126,8 +126,8 @@ namespace q
     } // end of zeroFilling
 
     void MeasurementData::cutData(varDataType &dataVec, size_t &maxKey)
-    {
-      std::visit([&maxKey](auto &&arg) // @todo make this a for each loop
+    { // @todo make this a for each loop
+      std::visit([&maxKey](auto &&arg)
                  {
                    std::vector<size_t> keys;
                    for (size_t i = 0; i <= maxKey; i++)
@@ -135,7 +135,7 @@ namespace q
                      keys.push_back(i);
                    }
 
-                   // iterate over the vector of varDataType objects
+                   // iterate over the vector of varDataType objects @todo why is keys created separately? This loop should just be the previous one, with i replacing key
                    for (const size_t &key : keys)
                    {
                      // de-reference the unique pointer of the datatype object
@@ -147,9 +147,10 @@ namespace q
                        auto &k = *(uniquePtr.get());
                        // create a new object from the parent object
                        // get the Object Type from T
-                       using ObjectType = std::decay_t<decltype(dataObj)>;
-                       // create a new object from the parent object and add it to the arg vector as pointer considering maximum key value + 1
-                       // update the maxKey
+                       using ObjectType = std::decay_t<decltype(dataObj)>; // @todo this is probably better solved by having one data
+                       // containing object and writing to it with case-spectific read methods
+                       //  create a new object from the parent object and add it to the arg vector as pointer considering maximum key value + 1
+                       //  update the maxKey
                        maxKey++;
                        arg->push_back(std::make_unique<ObjectType>(dataObj, k));
                      }
@@ -161,8 +162,8 @@ namespace q
     } // end of cutData
 
     void MeasurementData::filterSmallDataSets(varDataType &dataVec)
-    {
-      std::visit([](auto &&arg) // @todo make this a for each loop
+    { // @todo make this a for each loop
+      std::visit([](auto &&arg)
                  {
                   // delete all children < 5
                   arg->erase(std::remove_if(arg->begin(), arg->end(),
