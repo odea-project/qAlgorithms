@@ -889,6 +889,39 @@ namespace q
 
 #pragma endregion "Functions"
 
+    const std::vector<EIC> performQbinning(RawData centroidedData, int inputMaxdist = 6, bool silent = false)
+    {
+        std::streambuf *old = std::cout.rdbuf(); // save standard out config
+        std::stringstream ss;
+
+        if (silent) // redirect standard out to ss
+        {
+            std::cout.rdbuf(ss.rdbuf());
+        }
+
+        std::cout << "starting binning process...\n";
+
+        q::duplicatesTotal = 0;
+        q::BinContainer activeBins;
+        activeBins.makeFirstBin(&centroidedData);
+        std::vector<int> measurementDimensions = {q::SubsetMethods::mz, q::SubsetMethods::scans}; // at least one element must be terminator
+        activeBins.subsetBins(measurementDimensions, inputMaxdist);
+
+        std::cout << "Total duplicates: " << q::duplicatesTotal << "\n--\ncalculating DQSBs...\n";
+
+        // calculate data quality scores
+        q::scaleDistancesForDQS_gauss(inputMaxdist); // this sets q::scalarForMOD to the correct scaling so that at the distance in scans == maxdist the curve encloses 99% of its area
+        activeBins.assignDQSB(&centroidedData, inputMaxdist);
+
+        // @todo add a way for selection / bin summary to be given upstream
+
+        // @todo add bin reassembly code here
+
+        std::cout.rdbuf(old); // restore previous standard out
+
+        return activeBins.returnBins();
+    }
+
 }
 
 int main()

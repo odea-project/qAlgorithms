@@ -13,7 +13,17 @@
 
 int main()
 {
+    bool silent = false;
+
+    std::streambuf *old = std::cout.rdbuf(); // save standard out config
+    std::stringstream ss;
+
+    if (silent) // redirect standard out to ss
+    {
+        std::cout.rdbuf(ss.rdbuf());
+    }
     std::cout << "starting...";
+
     auto timeStart = std::chrono::high_resolution_clock::now();
     // print logo - @todo don't use functions which are incompatible with linux
     //   HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
@@ -94,6 +104,8 @@ int main()
     qpeaks.printAllPeaks(peaks, filename_output);
 
     std::cout << "done\n\n\n";
+
+    std::cout.rdbuf(old); // restore previous standard out
 
     // ### Create object to hand into qbins here ### @todo
 
