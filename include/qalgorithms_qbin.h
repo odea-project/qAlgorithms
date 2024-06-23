@@ -9,7 +9,7 @@
 
 namespace q
 {
-    // Datapoint Struct (contains all user-specified variables found in source file); Output of qCentroiding
+    // Datapoint Struct (contains all user-specified variables found in source file); Output of qCentroiding @todo move to utils / shared data file
     struct Datapoint
     {
         double mz;
@@ -18,7 +18,6 @@ namespace q
         unsigned int scanNo;
         double intensity;
         double DQScentroid;
-        // double control_DQSbin; // removed due to DQS calculation being confirmed to work
     };
 
     struct RawData //@todo rename to centroided data?
@@ -240,6 +239,9 @@ namespace q
     void check_MOD_outOfBins(const Bin *target, const std::vector<q::Datapoint *> notBinned, const int maxdist);
 
     static void scaleDistancesForDQS_gauss(int maxdist); // @experimental
+
+    // ### wrapper function to execute qbinning on a RawData struct ### @todo rename raw data
+    const std::vector<EIC> performQbinning(const RawData centroidedData, int maxdist, bool silent);
 
 }
 
