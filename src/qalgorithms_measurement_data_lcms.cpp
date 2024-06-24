@@ -1,7 +1,7 @@
 // qalgorithms_measurement_data_lcms.cpp
 
 // internal
-#include "../include/qalgorithms_measurement_data_lcms.h"
+#include <qalgorithms_measurement_data_lcms>
 
 // external
 #include <fstream>
