@@ -1,9 +1,9 @@
 // qalgorithms_qpeaks.cpp
 //
 // internal
-#include "../include/qalgorithms_qpeaks.h"
-#include "../include/qalgorithms_matrix.h"
-#include "../include/qalgorithms_utils.h"
+#include "qalgorithms_qpeaks.h"
+#include "qalgorithms_matrix.h"
+#include "qalgorithms_utils.h"
 
 #include <algorithm>
 #include <variant> // std::visit
