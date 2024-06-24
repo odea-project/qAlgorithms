@@ -5,7 +5,7 @@
 #include "qalgorithms_measurement_data.h"
 
 // external
-#include "../external/StreamCraft/src/StreamCraft_mzml.hpp"
+#include "StreamCraft_mzml.h"
 #include <vector>
 
 namespace q

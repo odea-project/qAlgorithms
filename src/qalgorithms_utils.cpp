@@ -1,6 +1,6 @@
 // qalgorithms_utils.cpp
-#include "../include/qalgorithms_utils.h"
-#include "../include/qalgorithms_matrix.h"
+#include "qalgorithms_utils.h"
+#include "qalgorithms_matrix.h"
 
 #include<algorithm> // std::transform
 #include<cstdint> // uint64_t
