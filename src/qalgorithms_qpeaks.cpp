@@ -2,8 +2,19 @@
 //
 // internal
 #include "../include/qalgorithms_qpeaks.h"
+#include "../include/qalgorithms_matrix.h"
+#include "../include/qalgorithms_utils.h"
 
-// external
+#include <algorithm>
+#include <variant> // std::visit
+#include <cmath>
+#include <iostream>
+#include <numeric>
+#include <string>
+#include <sstream>
+#include <fstream>
+#include <cassert>
+#include <omp.h>
 
 namespace q
 {
@@ -83,7 +94,7 @@ namespace q
                 XtX_11 = XtX_02 * 2;
                 XtX_13 += x_square[i] * i;
                 XtX_12 = -XtX_13;
-                XtX_22 += x_square[i] * x_square[i]; 
+                XtX_22 += x_square[i] * x_square[i];
 
                 double L_00 = std::sqrt(XtX_00);
                 double L_11 = std::sqrt(XtX_11);
@@ -1135,9 +1146,9 @@ namespace q
                 throw std::invalid_argument("n must be greater or equal to 2 * scale + 1");
             }
 
-            size_t k = 2 * scale + 1;
-            size_t n_segments = n - k + 1;
-            size_t centerpoint = k / 2;
+            const size_t k = 2 * scale + 1;
+            const size_t n_segments = n - k + 1;
+            const size_t centerpoint = k / 2;
 
             // double result[4][n_segments];
             // Matrix_mc result(4, n_segments);

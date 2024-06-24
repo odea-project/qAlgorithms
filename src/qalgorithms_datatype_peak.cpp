@@ -1,6 +1,10 @@
 // qalgorithms_datatype_peak.cpp
 
+// @todo merge as struct with datatype
+
 #include "../include/qalgorithms_datatype_peak.h"
+
+#include <iostream>
 
 namespace q
 {

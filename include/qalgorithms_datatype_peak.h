@@ -6,9 +6,9 @@
 #include "qalgorithms_datatype.h"
 
 // external
-#include <unordered_map>
-#include <iostream>
-#include <vector>
+// #include <unordered_map>
+// #include <iostream>
+// #include <vector>
 
 /* This file includes the q::DataType::Peak and q::DataType::PeakList classes*/
 namespace q

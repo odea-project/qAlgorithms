@@ -2,6 +2,8 @@
 
 #include "../include/qalgorithms_matrix.h"
 
+#include <cmath>
+
 namespace q
 {
   namespace Matrices //@todo check if the less extensive solution also works

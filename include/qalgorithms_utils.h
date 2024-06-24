@@ -7,23 +7,23 @@
 
 // external
 #include <vector>
-#include <iostream>
-#include <cmath>
-#include <map>
-#include <cstdint>
-#include <numeric>
-#include <cstdio>
-#include <memory>
+// #include <iostream>
+// #include <cmath>
+// #include <map>
+// #include <cstdint>
+// #include <numeric>
+// #include <cstdio>
+// #include <memory>
 #include <string>
-#include <stdexcept>
+// #include <stdexcept>
 
 namespace q
 {
-
-    int sum(const std::vector<int> &vec);
-    size_t sum(const std::vector<size_t> &vec);
-    double sum(const std::vector<double> &vec);
-    int sum(const bool *vec, size_t n);
+    // @remove these are unused
+    // int sum(const std::vector<int> &vec);
+    // size_t sum(const std::vector<size_t> &vec);
+    // double sum(const std::vector<double> &vec);
+    // int sum(const bool *vec, size_t n);
 
     /**
      * @brief Fast exponential approximation base on Bit Manipulation.
