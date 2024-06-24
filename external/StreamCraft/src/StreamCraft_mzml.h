@@ -9,57 +9,61 @@
 #define PUGIXML_HEADER_ONLY
 
 #ifndef PUGIXML_PATH
-#define PUGIXML_PATH "../../pugixml-1.14/src/pugixml.hpp"
+#define PUGIXML_PATH "../../pugixml-1.14/src/pugixml.h"
 #endif
 
 #include PUGIXML_PATH
 
-#include "StreamCraft_utils.hpp"
+#include "StreamCraft_utils.h"
 
-namespace sc {
+namespace sc
+{
 
-  inline namespace mzml {
+  inline namespace mzml
+  {
 
-    class MZML_BINARY_METADATA {
+    class MZML_BINARY_METADATA
+    {
 
-      public:
-        int index;
-        std::string precision_name;
-        std::string precision_accession;
-        int precision_int;
-        std::string precision_type;
-        std::string compression;
-        bool compressed;
-        std::string data_name;
-        std::string data_accession;
-        std::string data_value;
-        std::string data_unit;
-        std::string data_name_short;
+    public:
+      int index;
+      std::string precision_name;
+      std::string precision_accession;
+      int precision_int;
+      std::string precision_type;
+      std::string compression;
+      bool compressed;
+      std::string data_name;
+      std::string data_accession;
+      std::string data_value;
+      std::string data_unit;
+      std::string data_name_short;
 
-        void print() {
-          std::cout << std::endl;
-          std::cout << "Index:                     " << index << std::endl;
-          std::cout << "Precision original string: " << precision_name << std::endl;
-          std::cout << "Precision accession:       " << precision_accession << std::endl;
-          std::cout << "Precision:                 " << precision_int << std::endl;
-          std::cout << "Precision type:            " << precision_type << std::endl;
-          std::cout << "Compression:               " << compression << std::endl;
-          std::cout << "Data name:                 " << data_name << std::endl;
-          std::cout << "Data accession:            " << data_accession << std::endl;
-          std::cout << "Data value:                " << data_value << std::endl;
-          std::cout << "Data unit:                 " << data_unit << std::endl;
-          std::cout << "Data short name:           " << data_name_short << std::endl;
-          std::cout << std::endl;
-        };
+      void print()
+      {
+        std::cout << std::endl;
+        std::cout << "Index:                     " << index << std::endl;
+        std::cout << "Precision original string: " << precision_name << std::endl;
+        std::cout << "Precision accession:       " << precision_accession << std::endl;
+        std::cout << "Precision:                 " << precision_int << std::endl;
+        std::cout << "Precision type:            " << precision_type << std::endl;
+        std::cout << "Compression:               " << compression << std::endl;
+        std::cout << "Data name:                 " << data_name << std::endl;
+        std::cout << "Data accession:            " << data_accession << std::endl;
+        std::cout << "Data value:                " << data_value << std::endl;
+        std::cout << "Data unit:                 " << data_unit << std::endl;
+        std::cout << "Data short name:           " << data_name_short << std::endl;
+        std::cout << std::endl;
+      };
     };
 
-    class MZML {
+    class MZML
+    {
 
-      private:
+    private:
+      std::vector<MZML_BINARY_METADATA> spectra_binary_metadata;
 
-        std::vector<MZML_BINARY_METADATA> spectra_binary_metadata;
-
-        std::vector<std::string> possible_accessions_binary_data = {
+      std::vector<std::string> possible_accessions_binary_data = {
           "MS:1000514", "MS:1000515", "MS:1000516", "MS:1000517",
           "MS:1000595", "MS:1000617", "MS:1000786", "MS:1000820",
           "MS:1000821", "MS:1000822", "MS:1002478", "MS:1002529",
