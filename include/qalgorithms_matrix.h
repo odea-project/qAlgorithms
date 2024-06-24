@@ -3,12 +3,13 @@
 #ifndef QALGORITHMS_MATRIX_H // Include guarde to prevent double inclusion
 #define QALGORITHMS_MATRIX_H
 
-// external
-#include <iostream>
-#include <cmath>
-#include <algorithm>
-#include <array>
-#include <cstdint>
+// external @todo most of these are not needed for matrix implementation
+#include<stddef.h> // size_t
+// #include <iostream>
+// #include <cmath>
+// #include <algorithm>
+// #include <array>
+// #include <cstdint>
 
 /* This file includes the q::matrix class*/
 namespace q

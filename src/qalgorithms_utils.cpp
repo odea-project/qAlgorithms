@@ -1,54 +1,70 @@
 // qalgorithms_utils.cpp
 #include "../include/qalgorithms_utils.h"
+#include "../include/qalgorithms_matrix.h"
+
+#include<algorithm> // std::transform
+#include<cstdint> // uint64_t
+#include<cmath>
+#include<stdexcept> // std::invalid_argument
+#include<iostream>
+#include<numeric> // std::inner_product
+#include<array>
+
+#include <vector>
+// #include <map>
+// #include <cstdio>
+#include <memory> // std::unique_ptr
+#include <string>
 
 namespace q
 {
 
-  int sum(const std::vector<int> &vec)
-  {
-    double sum = 0.0;
-    for (const auto &elem : vec)
-    {
-      sum += elem;
-    }
-    return sum;
-  }
+  // @remove these are not used in the program
+  // int sum(const std::vector<int> &vec)
+  // {
+  //   double sum = 0.0;
+  //   for (const auto &elem : vec)
+  //   {
+  //     sum += elem;
+  //   }
+  //   return sum;
+  // }
 
-  size_t sum(const std::vector<size_t> &vec)
-  {
-    double sum = 0.0;
-    for (const auto &elem : vec)
-    {
-      sum += elem;
-    }
-    return sum;
-  }
+  // size_t sum(const std::vector<size_t> &vec)
+  // {
+  //   double sum = 0.0;
+  //   for (const auto &elem : vec)
+  //   {
+  //     sum += elem;
+  //   }
+  //   return sum;
+  // }
 
-  double sum(const std::vector<double> &vec)
-  {
-    double sum = 0.0;
-    for (const auto &elem : vec)
-    {
-      sum += elem;
-    }
-    return sum;
-  }
+  // double sum(const std::vector<double> &vec)
+  // {
+  //   double sum = 0.0;
+  //   for (const auto &elem : vec)
+  //   {
+  //     sum += elem;
+  //   }
+  //   return sum;
+  // }
 
-  int sum(const bool *vec, size_t n)
-  {
-    int sum = 0;
-    for (size_t i = 0; i < n; i++)
-    {
-      sum += vec[i];
-    }
-    return sum;
-  }
+  // int sum(const bool *vec, size_t n)
+  // {
+  //   int sum = 0;
+  //   for (size_t i = 0; i < n; i++)
+  //   {
+  //     sum += vec[i];
+  //   }
+  //   return sum;
+  // }
 
   double exp_approx(const double x)
   {
     constexpr double LOG2E = 1.44269504088896340736;
     constexpr double OFFSET = 1022.9329329329329;
-    constexpr uint64_t EXP_OFFSET = 1LL << 52;
+    constexpr uint64_t EXP_OFFSET = 1LL << 52; // @todo why does this need 8 byte specifically?
     union
     {
       uint64_t i;
@@ -185,7 +201,7 @@ namespace q
     return coefficients;
   }
 
-#pragma region "Matrix Operations"
+#pragma region "Matrix Operations" // why are matrix operations not defined in matrix.h?
   bool
   operator==(
       const q::Matrices::Matrix_mc &A,
@@ -419,8 +435,8 @@ namespace q
     size_t n_segments = n - k + 1;
     size_t centerpoint = k / 2;
 
-    q::Matrices::Matrix_mc result(4, n_segments);
-    std::vector<std::array<double, 3>> products(n);
+    q::Matrices::Matrix_mc result(4, n_segments); // @changed std::vector<std::array<double, 3>> products(n); rewrite to n*3 vector
+    std::vector<double> products(n*3);
 
     // calculation from left to center (excluding center)
     for (size_t i = 0; i < centerpoint; i++)
@@ -428,17 +444,17 @@ namespace q
       int u = 0;
       for (size_t j = i; j < (n - i); j++)
       {
-        products[u][0] = vec[j] * kernel(0, i);
-        products[u][1] = vec[j] * kernel(1, i);
-        products[u][2] = vec[j] * kernel(2, i);
+        products[u*1] = vec[j] * kernel(0, i);
+        products[u*2] = vec[j] * kernel(1, i);
+        products[u*3] = vec[j] * kernel(2, i);
         u++;
       }
       for (size_t j = 0; j < n_segments; j++)
       {
-        result(0, j) += products[j][0] + products[k - 1 - 2 * i + j][0];
-        result(1, j) += products[j][1] - products[k - 1 - 2 * i + j][1];
-        result(2, j) += products[j][2];
-        result(3, j) += products[k - 1 - 2 * i + j][2];
+        result(0, j) += products[j*1] + products[(k - 1 - 2 * i + j)*1];
+        result(1, j) += products[j*2] - products[(k - 1 - 2 * i + j)*2];
+        result(2, j) += products[j*3];
+        result(3, j) += products[(k - 1 - 2 * i + j)*3];
       }
     }
 
@@ -458,13 +474,13 @@ namespace q
       int v = 0;
       for (size_t j = s; j < (n - s); j++)
       {
-        products[v][2] = vec[j] * kernel(2, i);
+        products[v*3] = vec[j] * kernel(2, i);
         v++;
       }
       for (size_t j = 0; j < n_segments; j++)
       {
-        result(2, j) += products[2 * u + j][2];
-        result(3, j) += products[j][2];
+        result(2, j) += products[(2 * u + j)*3];
+        result(3, j) += products[j*3];
       }
       u++;
     }

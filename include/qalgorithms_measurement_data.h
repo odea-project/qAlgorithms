@@ -3,14 +3,16 @@
 
 // internal
 #include "qalgorithms_datatype_mass_spectrum.h"
-#include "qalgorithms_matrix.h"
-#include "qalgorithms_utils.h"
+// #include "qalgorithms_matrix.h"
+// #include "qalgorithms_utils.h"
 
 // external
 #include <string>
-#include <iostream>
-#include <algorithm>
-#include <cmath>
+#include <vector>
+#include<memory>
+// #include <iostream>
+// #include <algorithm>
+// #include <cmath>
 
 namespace q
 {

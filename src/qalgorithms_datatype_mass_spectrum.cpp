@@ -1,9 +1,7 @@
 // qalgorhithms_datatype_mass_spectrum.cpp
 
-// internal
 #include "../include/qalgorithms_datatype_mass_spectrum.h"
-
-// external
+#include<algorithm> // std::reverse, std::sort
 
 namespace q
 {
