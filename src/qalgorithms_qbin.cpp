@@ -21,7 +21,8 @@
 
 namespace q
 {
-    std::vector<Datapoint *> outOfBins; // this vector contains all points which are not included in bins
+    int maxdist;
+    std::vector<qCentroid *> outOfBins; // this vector contains all points which are not included in bins
     int duplicatesTotal;                // total times the distance 0 was measured in closed bins
     std::vector<double> scalarForMOD;
 
@@ -30,11 +31,11 @@ namespace q
 #define NO_MAX_FOUND -INFINITY
 
 #pragma region "Rawdata"
-    bool readcsv(RawData *rawData, std::string user_file, int d_mz, int d_mzError, int d_RT, int d_scanNo, int d_intensity, int d_DQScentroid)
+    bool readcsv(CentroidedData *rawData, std::string user_file, int d_mz, int d_mzError, int d_RT, int d_scanNo, int d_intensity, int d_DQScentroid)
     { // @todo stop segfaults when reading empty lines; use buffers for speedup
         int now = time(0);
         int lengthAllPoints = 0;
-        rawData->allDatapoints.push_back(std::vector<Datapoint>(0)); // first element empty since scans are 1-indexed
+        rawData->allDatapoints.push_back(std::vector<qCentroid>(0)); // first element empty since scans are 1-indexed
         std::ifstream file(user_file);
         if (!file.is_open())
         {
@@ -64,10 +65,10 @@ namespace q
             {
                 for (size_t i = rawData->allDatapoints.size() - 1; i < i_scanNo; i++)
                 {
-                    rawData->allDatapoints.push_back(std::vector<Datapoint>(0));
+                    rawData->allDatapoints.push_back(std::vector<qCentroid>(0));
                 }
             }
-            const Datapoint F = Datapoint{row[d_mz], row[d_mzError], row[d_RT], i_scanNo, row[d_intensity],
+            const qCentroid F = qCentroid{row[d_mz], row[d_mzError], row[d_RT], i_scanNo, row[d_intensity],
                                           row[d_DQScentroid]};
 
             ++lengthAllPoints;
@@ -76,12 +77,12 @@ namespace q
 #pragma omp parallel for
         for (size_t i = 1; i < rawData->allDatapoints.size(); i++) // make sure data conforms to expectations
         {
-            std::sort(rawData->allDatapoints[i].begin(), rawData->allDatapoints[i].end(), [](const Datapoint lhs, const Datapoint rhs)
+            std::sort(rawData->allDatapoints[i].begin(), rawData->allDatapoints[i].end(), [](const qCentroid lhs, const qCentroid rhs)
                       { return lhs.mz < rhs.mz; });
         }
         std::cout << "Finished reading file in " << time(0) - now << " seconds\nRead " << lengthAllPoints << " datapoints in " << rawData->allDatapoints.size() << " scans\n";
         return true;
-        // RawData is always a vector of vectors where the first index is the scan number (starting at 1) and every scsn is sorted by mz
+        // CentroidedData is always a vector of vectors where the first index is the scan number (starting at 1) and every scsn is sorted by mz
     }
 
 #pragma endregion "Rawdata"
@@ -96,13 +97,13 @@ namespace q
 
     BinContainer::BinContainer() {}
 
-    void BinContainer::makeFirstBin(RawData *rawdata) // @todo inline
+    void BinContainer::makeFirstBin(CentroidedData *rawdata) // @todo inline
     {
         const Bin firstBin(rawdata);
         binDeque.push_back(firstBin);
     }
 
-    void BinContainer::subsetBins(const std::vector<int> dimensions, const unsigned int maxdist, const double massError = -1)
+    void BinContainer::subsetBins(const std::vector<int> dimensions, const unsigned int maxdist, std::vector<Bin> deposit, const double massError = -1)
     {
         auto timeStart = std::chrono::high_resolution_clock::now();
         auto timeEnd = std::chrono::high_resolution_clock::now();
@@ -145,7 +146,7 @@ namespace q
                     subsetType = "Scans";
                     for (size_t j = 0; j < startpoint; j++)
                     {
-                        binDeque.front().subsetScan(&binDeque, &finishedBins, maxdist, subsetCount);
+                        binDeque.front().subsetScan(&binDeque, &deposit, maxdist, subsetCount);
                         binDeque.pop_front();
                     }
                     break;
@@ -164,7 +165,7 @@ namespace q
         std::cout << "completed subsetting\n";
     }
 
-    void BinContainer::assignDQSB(const RawData *rawdata, const unsigned int maxdist)
+    void BinContainer::assignDQSB(const CentroidedData *rawdata, const unsigned int maxdist)
     {
         auto timeStart = std::chrono::high_resolution_clock::now();
 #pragma omp parallel for
@@ -176,7 +177,65 @@ namespace q
         std::cout << "Finished Calculating DQSBs in " << (timeEnd - timeStart).count() << " ns\n";
     }
 
-    void BinContainer::printAllBins(std::string path, const RawData *rawdata)
+    void BinContainer::redoBinningIfTooclose(const std::vector<int> dimensions, const CentroidedData *rawdata, std::vector<qCentroid *> notbinned, const unsigned int maxdist){
+        // assemble new bin by copying bins with hot ends into outOfBins
+        std::vector<size_t> binsWithHotEnds(finishedBins.size()/10); // 
+        for (size_t i = 0; i < finishedBins.size(); i++)
+        {
+            if (finishedBins[i].l_maxdist_tooclose | finishedBins[i].r_maxdist_tooclose)
+            {
+                binsWithHotEnds.push_back(i);
+            }
+        }
+        // Assemble new starting bin
+        Bin rebinner;
+        rebinner.pointsInBin.reserve(q::outOfBins.size() + binsWithHotEnds.size()*16); // @todo test the average size for non-warburg data
+        rebinner.pointsInBin.insert(rebinner.pointsInBin.end(), q::outOfBins.begin(), q::outOfBins.end()); // copy outofbins into new bin
+        q::outOfBins.resize(0); // @todo test if this actually deletes
+        // copy old pointsInBin for each selected bin
+        for (size_t i : binsWithHotEnds)
+        {
+            rebinner.pointsInBin.insert(rebinner.pointsInBin.end(), finishedBins[i].pointsInBin.begin(), finishedBins[i].pointsInBin.end());
+        }
+        binDeque.push_back(rebinner);
+        // call binning wrapper with a vector other than finishedbins as write target
+        this->subsetBins(dimensions, q::maxdist, redoneBins);
+
+        // calculate DQS on new bins
+        this->assignDQSB(rawdata, q::maxdist);
+        // re-add the newly constructed bins to finishedBins
+        if (redoneBins.size() < binsWithHotEnds.size()) // there will be gaps left in finsihedBins that must be closed
+        {
+            size_t i = 0;
+            for (Bin newBin : redoneBins) // fill gaps with new bins
+            {
+                finishedBins[binsWithHotEnds[i]] = newBin;
+                ++i;
+            }
+            while (i < binsWithHotEnds.size()) // transfer elements from finishedBins 
+            {
+                finishedBins[binsWithHotEnds[i]] = finishedBins.back();
+                finishedBins.pop_back();
+                ++i;
+            }
+            return;
+        } else {
+            size_t i = 0;
+            for (size_t j : binsWithHotEnds)
+            {
+                finishedBins[j] = redoneBins[i];
+                ++i;
+            }
+            while (i < redoneBins.size())
+            {
+                finishedBins.push_back(redoneBins[i]);
+                ++i;
+            }
+            return;
+        }    
+    }
+
+    void BinContainer::printAllBins(std::string path, const CentroidedData *rawdata)
     {
         std::fstream file_out;
         std::stringstream output;
@@ -191,7 +250,7 @@ namespace q
         {
             // char x = shapes[rand() % 17];
             // int colour = i % 9; // 10 colours total @todo printf
-            const std::vector<Datapoint *> binnedPoints = finishedBins[i].pointsInBin;
+            const std::vector<qCentroid *> binnedPoints = finishedBins[i].pointsInBin;
 
             for (size_t j = 0; j < binnedPoints.size(); j++)
             {
@@ -204,20 +263,6 @@ namespace q
         file_out << output.str();
     }
 
-    // void BinContainer::printBinSummary(std::string path) @todo redo
-    // {
-    //     std::fstream file_out;
-    //     std::stringstream output;
-    //     file_out.open(path, std::ios::out);
-    //     assert(file_out.is_open());
-    //     output << "ID,size,mean_mz,median_mz,stdev_mz,mean_scans,median_scans,DQSB_base,DQSB_control,DQSB_worst,min_DQSC,meanError\n";
-    //     for (size_t i = 0; i < finishedBins.size(); i++)
-    //     {
-    //         output << i + 1 << "," << std::get<0>(finishedBins[i].summariseBin()) << "\n";
-    //     }
-    //     file_out << output.str();
-    // }
-
     const std::vector<EIC> BinContainer::returnBins()
     {
         std::vector<EIC> finalBins(finishedBins.size());
@@ -227,37 +272,6 @@ namespace q
         }
         return finalBins;
     };
-
-    // void BinContainer::printTstats()
-    // {
-    //     std::fstream file_out;
-    //     file_out.open("../../qbins_tvals.csv", std::ios::out);
-    //     if (!file_out.is_open())
-    //     {
-    //         std::cout << "could not open file\n";
-    //     }
-    //     q::control_tvals << "n,tval,dqs\n";
-    //     for (size_t i = 0; i < finishedBins.size(); i++)
-    //     {
-    //         finishedBins[i].controlMedianMZ();
-    //     }
-    //     // file_out << q::control_tvals.str();
-    // };
-
-    // const std::vector<int> BinContainer::makeBinSelection(std::byte mask) @todo find a better solution here
-    // {
-    //     std::vector<int> indices;
-    //     for (int i = 0; i < int(finishedBins.size()); i++)
-    //     {
-    //         std::byte code = (finishedBins[i].summariseBin()).errorcode;
-    //         if (bool(code & mask)) // any test which is set to 0 will not be included; condition is true if any selected test bit is set
-    //         {
-    //             indices.push_back(i);
-    //         }
-    //     }
-    //     std::cout << "Selected " << indices.size() << " Bins\n";
-    //     return indices;
-    // };
 
     void BinContainer::printSelectBins(std::byte mask, bool fullBins, const std::string location) // @todo combine with makeBinSelection
     {
@@ -296,7 +310,7 @@ namespace q
             for (size_t i = 0; i < indices.size(); i++)
             {
                 const unsigned int pos = indices[i];
-                const std::vector<Datapoint *> binnedPoints = finishedBins[pos].pointsInBin;
+                const std::vector<qCentroid *> binnedPoints = finishedBins[pos].pointsInBin;
 
                 for (size_t j = 0; j < binnedPoints.size(); j++)
                 {
@@ -327,12 +341,15 @@ namespace q
 
 #pragma region "Bin"
 
-    Bin::Bin(const std::vector<Datapoint *>::iterator &binStartInOS, const std::vector<Datapoint *>::iterator &binEndInOS) // const std::vector<Datapoint> &sourceList,
+    Bin::Bin() {};
+
+    Bin::Bin(const std::vector<qCentroid *>::iterator &binStartInOS, const std::vector<qCentroid *>::iterator &binEndInOS) // const std::vector<qCentroid> &sourceList,
     {
-        pointsInBin = std::vector<Datapoint *>(binStartInOS, binEndInOS);
+        pointsInBin = std::vector<qCentroid *>(binStartInOS, binEndInOS);
     }
-    Bin::Bin(RawData *rawdata) // @todo relatively time intensive, better solution?; why does rawdata need to be mutable?
+    Bin::Bin(CentroidedData *rawdata) // @todo relatively time intensive, better solution?; why does rawdata need to be mutable?
     {
+        // collect indices for 
         pointsInBin.reserve(rawdata->lengthAllPoints);
         for (size_t i = 1; i < rawdata->allDatapoints.size(); i++)
         {
@@ -346,7 +363,7 @@ namespace q
 
     void Bin::makeOS()
     {
-        std::sort(pointsInBin.begin(), pointsInBin.end(), [](const Datapoint *lhs, const Datapoint *rhs)
+        std::sort(pointsInBin.begin(), pointsInBin.end(), [](const qCentroid *lhs, const qCentroid *rhs)
                   { return lhs->mz < rhs->mz; });
 
         activeOS.reserve(pointsInBin.size());               // OS = Order Space
@@ -361,7 +378,7 @@ namespace q
     {
         cumError.reserve(pointsInBin.size());
         cumError.push_back(0); // the first element has a precursor error of 0
-        std::transform(pointsInBin.begin(), pointsInBin.end(), back_inserter(cumError), [](Datapoint *F)
+        std::transform(pointsInBin.begin(), pointsInBin.end(), back_inserter(cumError), [](qCentroid *F)
                        { return F->mzError * 1000000; });                     // *1000000 for compatibility with ppm
         std::partial_sum(cumError.begin(), cumError.end(), cumError.begin()); // cumulative sum
     }
@@ -369,7 +386,7 @@ namespace q
     void Bin::makeCumError(const double ppm)
     {
         cumError.reserve(pointsInBin.size());
-        std::transform(pointsInBin.begin(), pointsInBin.end(), back_inserter(cumError), [ppm](Datapoint *F)
+        std::transform(pointsInBin.begin(), pointsInBin.end(), back_inserter(cumError), [ppm](qCentroid *F)
                        { return F->mz * ppm; });
         std::partial_sum(cumError.begin(), cumError.end(), cumError.begin());
     }
@@ -384,7 +401,7 @@ namespace q
         {
             for (int i = 0; i < binsizeInOS; i++)
             {
-                Datapoint *F = *(pointsInBin.begin() + binStartInOS + i);
+                qCentroid *F = *(pointsInBin.begin() + binStartInOS + i);
                 outOfBins.push_back(F);
             }
             return;
@@ -418,9 +435,9 @@ namespace q
         const size_t binSize = pointsInBin.size();
         double tmp_pt_mzmin = pointsInBin.front()->mz;
         double tmp_pt_mzmax = pointsInBin.back()->mz;
-        std::sort(pointsInBin.begin(), pointsInBin.end(), [](const Datapoint *lhs, const Datapoint *rhs)
+        std::sort(pointsInBin.begin(), pointsInBin.end(), [](const qCentroid *lhs, const qCentroid *rhs)
                   { return lhs->scanNo < rhs->scanNo; });
-        std::vector<Datapoint *>::iterator newstart = pointsInBin.begin();
+        std::vector<qCentroid *>::iterator newstart = pointsInBin.begin();
         int lastpos = 0;
         for (size_t i = 0; i < binSize - 1; i++) // -1 since difference to next data point is checked @todo rework to start at i = 0
         {
@@ -433,7 +450,7 @@ namespace q
                 {
                     for (size_t j = lastpos; j <= i; j++) // @todo make macro for compile time exclusion
                     {
-                        Datapoint *F = *(pointsInBin.begin() + j);
+                        qCentroid *F = *(pointsInBin.begin() + j);
                         outOfBins.push_back(F);
                     }
                 }
@@ -472,13 +489,13 @@ namespace q
         {
             for (size_t j = lastpos; j < pointsInBin.size(); j++) // @todo checked for correctness
             {
-                Datapoint *F = *(pointsInBin.begin() + j);
+                qCentroid *F = *(pointsInBin.begin() + j);
                 outOfBins.push_back(F);
             }
         }
     }
 
-    void Bin::makeDQSB(const RawData *rawdata, const unsigned int maxdist)
+    void Bin::makeDQSB(const CentroidedData *rawdata, const unsigned int maxdist)
     {
         // assumes bin is saved sorted by scans, since the result from scan gap checks is the final control
         const size_t binsize = pointsInBin.size();
@@ -518,7 +535,7 @@ namespace q
         }
 
         // determine min and max in mz - sort, since then calculation of inner distances is significantly faster
-        std::sort(pointsInBin.begin(), pointsInBin.end(), [](const Datapoint *lhs, const Datapoint *rhs)
+        std::sort(pointsInBin.begin(), pointsInBin.end(), [](const qCentroid *lhs, const qCentroid *rhs)
                   { return lhs->mz < rhs->mz; });
         const double minInnerMZ = pointsInBin.front()->mz;
         const double maxInnerMZ = pointsInBin.back()->mz;
@@ -623,7 +640,7 @@ namespace q
         }
 
         // calculate critical DQS for finding points that are within the critical distance in mz and maxdist scans
-        const double meanerror = std::accumulate(pointsInBin.begin(), pointsInBin.end(), 0.0, [](double error, const Datapoint *point)
+        const double meanerror = std::accumulate(pointsInBin.begin(), pointsInBin.end(), 0.0, [](double error, const qCentroid *point)
                                                  { return error + point->mzError; }) /
                                  binsize;
         const double vcrit = 3.05037165842070 * pow(log(binsize + 1), (-0.4771864667153)) * meanerror;
@@ -637,7 +654,7 @@ namespace q
             const double currentMZ = pointsInBin[i]->mz;
             // currentRangeStart gives position of the first value in minMaxOutPerScan that must be considered,
             // assuming the first value in minMaxOutPerScan (index 0) is only relevant to the
-            // Datapoint in the lowest scan. For every increase in scans, that range starts two elements later
+            // qCentroid in the lowest scan. For every increase in scans, that range starts two elements later
             const unsigned int currentRangeStart = (pointsInBin[i]->scanNo - minScanInner) * 2;
             const unsigned int currentRangeEnd = currentRangeStart + maxdist * 4 + 1;
             for (unsigned int j = currentRangeStart; j <= currentRangeEnd; j++) // from lowest scan to highest scan relevant to this
@@ -714,7 +731,7 @@ namespace q
 
         // calc DQS when assuming the MOD to be critval
         double sumOfDist = 0;
-        std::for_each(pointsInBin.begin(), pointsInBin.end(), [&](const Datapoint *point)
+        std::for_each(pointsInBin.begin(), pointsInBin.end(), [&](const qCentroid *point)
                       { sumOfDist += (point->mz - meanMZ) * (point->mz - meanMZ); }); // squared
         // const double worstCaseMOD = 3.05037165842070 * pow(log(binsize + 1), (-0.4771864667153)) * meanCenError;
         // // binsize + 1 to not include cases where adding in the next point would make the distance greater than vcrit again
@@ -795,38 +812,17 @@ namespace q
         return returnEIC;
     }
 
-    // void Bin::controlMedianMZ()
-    // {
-    //     // t-test if the bin mean is equal to the median
-    //     const size_t n = pointsInBin.size();
-    //     double meanMZ = std::accumulate(pointsInBin.begin(), pointsInBin.end(), 0.0, [](double acc, const Datapoint *point)
-    //                                     { return acc + point->mz; });
-    //     meanMZ = meanMZ / n;
-    //     double sumOfDist = 0;
-    //     std::for_each(pointsInBin.begin(), pointsInBin.end(), [&](const Datapoint *point)
-    //                   { sumOfDist += (point->mz - meanMZ) * (point->mz - meanMZ); }); // squared
-    //     const double stdev = sqrt(sumOfDist / (n - 1));
-    //     // t value for mean == median
-    //     double bin_tval = abs((meanMZ - medianMZ) * sqrt(n) / (stdev));
-    //     double meanDQS_base = std::accumulate(DQSB_base.begin(), DQSB_base.end(), 0.0) / n;
-    //     double lowerBound = meanMZ - 3 * stdev;
-    //     double upperBound = meanMZ + 3 * stdev;
-    //     std::cout << pointsInBin.front()->mz - lowerBound << " | " << upperBound - pointsInBin.back()->mz << "\n";
-
-    //     control_tvals << n << "," << bin_tval << "," << meanDQS_base << "\n";
-    // }
-
 #pragma endregion "Bin"
 
 #pragma region "Functions"
 
-    static std::vector<double> meanDistance(const std::vector<Datapoint *> pointsInBin)
+    static std::vector<double> meanDistance(const std::vector<qCentroid *> pointsInBin)
     {
         // assumes bin is sorted by mz
         const size_t binsize = pointsInBin.size();
         const double ld_binsize(binsize);
         std::vector<double> output(binsize);
-        double totalSum = std::accumulate(pointsInBin.begin(), pointsInBin.end(), 0.0, [](double acc, const Datapoint *point)
+        double totalSum = std::accumulate(pointsInBin.begin(), pointsInBin.end(), 0.0, [](double acc, const qCentroid *point)
                                           { return acc + point->mz; }); // totalSum is the sum of all mz ahead of the current element
         double beforeSum = 0;                                           // beforeSum is the sum of all mz which had their distance calculated already
         for (size_t i = 0; i < binsize; i++)
@@ -889,7 +885,7 @@ namespace q
 
 #pragma endregion "Functions"
 
-    const std::vector<EIC> performQbinning(RawData centroidedData, int inputMaxdist = 6, bool silent = false)
+    const std::vector<EIC> performQbinning(CentroidedData centroidedData, int inputMaxdist = 6, bool silent = false)
     {
         std::streambuf *old = std::cout.rdbuf(); // save standard out config
         std::stringstream ss;
@@ -901,21 +897,24 @@ namespace q
 
         std::cout << "starting binning process...\n";
 
+        q::maxdist = inputMaxdist;
         q::duplicatesTotal = 0;
         q::BinContainer activeBins;
         activeBins.makeFirstBin(&centroidedData);
         std::vector<int> measurementDimensions = {q::SubsetMethods::mz, q::SubsetMethods::scans}; // at least one element must be terminator
-        activeBins.subsetBins(measurementDimensions, inputMaxdist);
+        activeBins.subsetBins(measurementDimensions, q::maxdist, activeBins.finishedBins);
 
         std::cout << "Total duplicates: " << q::duplicatesTotal << "\n--\ncalculating DQSBs...\n";
 
         // calculate data quality scores
         q::scaleDistancesForDQS_gauss(inputMaxdist); // this sets q::scalarForMOD to the correct scaling so that at the distance in scans == maxdist the curve encloses 99% of its area
-        activeBins.assignDQSB(&centroidedData, inputMaxdist);
+        activeBins.assignDQSB(&centroidedData, q::maxdist);
 
         // @todo add a way for selection / bin summary to be given upstream
 
         // @todo add bin reassembly code here
+
+        std::cout << "\n\nDone!\n\n";
 
         std::cout.rdbuf(old); // restore previous standard out
 
@@ -932,7 +931,7 @@ int main()
 
     int inputMaxdist = 6;
 
-    q::RawData testdata;
+    q::CentroidedData testdata;
     // path to data, mz, centroid error, RT, scan number, intensity, DQS centroid, control DQS Bin
     if (!q::readcsv(&testdata, "../../rawdata/control_bins.csv", 0, 1, 2, 3, 4, 6)) // ../../rawdata/control_bins.csv reduced_DQSdiff
     {
@@ -942,7 +941,7 @@ int main()
     q::BinContainer testcontainer;
     testcontainer.makeFirstBin(&testdata);
     std::vector<int> measurementDimensions = {q::SubsetMethods::mz, q::SubsetMethods::scans}; // at least one element must be terminator
-    testcontainer.subsetBins(measurementDimensions, inputMaxdist);                            // add value after maxdist for error in ppm instead of centroid error
+    testcontainer.subsetBins(measurementDimensions, inputMaxdist, testcontainer.finishedBins);                            // add value after maxdist for error in ppm instead of centroid error
     std::cout << "Total duplicates: " << q::duplicatesTotal << "\n--\ncalculating DQSBs...\n";
 
     // calculate data quality scores
