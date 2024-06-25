@@ -9,8 +9,9 @@
 
 namespace q
 {
-    // Datapoint Struct (contains all user-specified variables found in source file); Output of qCentroiding @todo move to utils / shared data file
-    struct Datapoint // @todo rename, DataPoint is used in q::DataType::MassSpectrum::DataPoint
+    // qCentroid Struct (contains all user-specified variables found in source file)
+    // Output of qCentroiding @todo move to utils / shared data file
+    struct qCentroid 
     {
         double mz;
         double mzError = -1;
@@ -20,14 +21,14 @@ namespace q
         double DQScentroid;
     };
 
-    struct RawData //@todo rename to centroided data?
+    struct CentroidedData 
     {
         int lengthAllPoints;
-        std::vector<std::vector<Datapoint>> allDatapoints;
+        std::vector<std::vector<qCentroid>> allDatapoints;
     };
 
     // "mz" "mzError" "RT" "scanNo" "intensity" "controlID" "controlCentroidDQS" "controlBinDQS"
-    bool readcsv(RawData *rawData, std::string user_file, int d_mz, int d_mzError, int d_RT, int d_scanNo, int d_intensity, int d_DQScentroid);
+    bool readcsv(CentroidedData *rawData, std::string user_file, int d_mz, int d_mzError, int d_RT, int d_scanNo, int d_intensity, int d_DQScentroid);
 
     // return object of qbinning
 
@@ -75,15 +76,16 @@ namespace q
         unsigned int medianScan;
         double medianMZ;
 
-        bool l_maxdist_tooclose = false;
-        bool r_maxdist_tooclose = false; // Check if there is a point within maxdist
+        
 
     public:
+        bool l_maxdist_tooclose = false;
+        bool r_maxdist_tooclose = false; // Check if there is a point within maxdist
         double mzmin;
         double mzmax;
         int scanmin;
         int scanmax;
-        std::vector<Datapoint *> pointsInBin; // @todo does not change after bin creation, check for performance improvement when using cast const
+        std::vector<qCentroid *> pointsInBin; // @todo does not change after bin creation, check for performance improvement when using cast const
         std::vector<double> activeOS;         // Order Space
         std::vector<double> DQSB_base;        // DQSB when all distances are considered equal
         std::vector<double> DQSB_scaled;      // DQSB if a gaussian falloff is assumed
@@ -91,11 +93,12 @@ namespace q
         /// @brief generate a bin that is a subset of an existing bin using two iterators in one existing bin
         /// @param startBin left border of the new bin
         /// @param endBin right border of the new bin
-        Bin(const std::vector<Datapoint *>::iterator &startBin, const std::vector<Datapoint *>::iterator &endBin); // @todo pass by reference correct?
+        Bin(const std::vector<qCentroid *>::iterator &startBin, const std::vector<qCentroid *>::iterator &endBin); // @todo pass by reference correct?
 
         /// @brief generate a bin by adding pointers to all points in rawdata to pointsInBin
         /// @param rawdata a set of raw data on which binning is to be performed
-        Bin(RawData *rawdata);
+        Bin(CentroidedData *rawdata);
+        Bin();
         ~Bin();
 
         /// @brief generate the activeOS vector containing the difference to the next greatest mz for every point
@@ -137,9 +140,9 @@ namespace q
         /// @details for every point in the bin the mean distance in mz to other elements of the bin and the shortest distance to an
         /// element not in the bin is calculated. The outer distance may not be to a point more than maxdist scans away from the
         /// binned datapoint. It is assumed that the bin is sorted by scans when makeDQSB is called @todo change to more generic solution?
-        /// @param rawdata the RawData object from which the bin was generated
+        /// @param rawdata the CentroidedData object from which the bin was generated
         /// @param maxdist the largest gap in scans which a bin can have while still being considered valid
-        void makeDQSB(const RawData *rawdata, const unsigned int maxdist);
+        void makeDQSB(const CentroidedData *rawdata, const unsigned int maxdist);
 
         /// @brief summarise the bin to one line, with the parameters size, mean_mz, median_mz, stdev_mz, mean_scans, median_scans,
         /// DQSB_base, DQSB_control, DQSB_worst, min_DQSC, meanError. DQSB_worst is calculated by assuming the MOD of all points in the
@@ -160,36 +163,35 @@ namespace q
     class BinContainer
     {
     private:
-        // void readcsv(std::string user_file, std::vector<Datapoint> output, int d_mz, int d_mzError, int d_RT, int d_scanNo); // implemented for featurelist
-        std::deque<Bin> binDeque;      // TODO add case for no viable bins
-        std::vector<Bin> finishedBins; // only includes bins which cannot be further subdivided, added DQSB_base
+        // void readcsv(std::string user_file, std::vector<qCentroid> output, int d_mz, int d_mzError, int d_RT, int d_scanNo); // implemented for featurelist
+        std::deque<Bin> binDeque;      // @todo add case for no viable bins
         std::vector<Bin> redoneBins;   // store bins after reassembly/cutting here
         unsigned int subsetCount;
 
     public:
+        std::vector<Bin> finishedBins; // only includes bins which cannot be further subdivided
+
         BinContainer();
 
         /// @brief create a bin out of rawdata and add it to the binDeque. This function exists since all subsetting functions require a bin to start
         /// @param rawdata a set of raw data on which binning is to be performed
-        void makeFirstBin(RawData *rawdata); // @todo find way for rawdata to be const
+        void makeFirstBin(CentroidedData *rawdata); // @todo find way for rawdata to be const
 
         /// @brief create a new bin that contains all unused datapoints and the bins which were not fully completed
         /// @param selectedBins indices of bins which are to be rebinned
         /// @param outOfBins points which could not be assigned to a bin on the first passthrough
-        void makeReassemblyBin(std::vector<size_t> selectedBins, std::vector<Datapoint *> outOfBins); // @todo integrate this function
+        void makeReassemblyBin(std::vector<size_t> selectedBins, std::vector<qCentroid *> outOfBins); // @todo integrate this function
 
         /// @brief perform the specified subsetting operations on the binDeque. Elements are added to the back and deleted from the front
         /// @param dimensions which dimensions should be used for subsetting in what order. 1 = subsetting by mz, 2 = subsetting by scans.
         /// Important: The last element of dimensions must determine bins to be finished, and no other subsetter may add to finsihedBins.
         /// @param maxdist the largest gap in scans which a bin can have while still being considered valid
-        void subsetBins(const std::vector<int> dimensions, const unsigned int maxdist, const double massError);
+        void subsetBins(const std::vector<int> dimensions, const unsigned int maxdist, std::vector<Bin> deposit, const double massError);
 
         /// @brief apply DQSB_base function to all completed bins
-        /// @param rawdata the RawData object from which all bins in finishedBins were generated
+        /// @param rawdata the CentroidedData object from which all bins in finishedBins were generated
         /// @param maxdist the largest gap in scans which a bin can have while still being considered valid
-        void assignDQSB(const RawData *rawdata, const unsigned int maxdist);
-
-        void printAllBins(std::string path, const RawData *rawdata); // @todo remove rawdata dependency
+        void assignDQSB(const CentroidedData *rawdata, const unsigned int maxdist);
 
         void printBinSummary(std::string path); // @todo create a better summary function which gives a
                                                 // detailed report, including what the test actually does,
@@ -198,6 +200,11 @@ namespace q
                                                 // Make sure to test the report for human-readability and
                                                 // include metadata from the mzml where possible.
                                                 // Some measure of overall spectrum quality should also be given.
+        
+        /// @brief Add all bins identified as having hot ends to outofbins and redo the binning
+        void redoBinningIfTooclose(const std::vector<int> dimensions, const CentroidedData *rawdata, std::vector<qCentroid *> notbinned, const unsigned int maxdist);
+
+        void printAllBins(std::string path, const CentroidedData *rawdata); // @todo remove rawdata dependency
 
         void printBinningReport(std::string path); // <- here
 
@@ -228,7 +235,7 @@ namespace q
     /// @brief calculate the mean distance in mz to all other elements of a sorted vector for one element
     /// @param pointsInBin vector of data points sorted by mz
     /// @return vector of the mean inner distances for all elements in the same order as pointsInBin
-    static std::vector<double> meanDistance(const std::vector<Datapoint *> pointsInBin);
+    static std::vector<double> meanDistance(const std::vector<qCentroid *> pointsInBin);
 
     /// @brief calculate the data quality score as described by Reuschenbach et al. for one datapoint in a bin
     /// @param MID mean inner distance in mz to all other elements in the bin
@@ -236,12 +243,12 @@ namespace q
     /// @return the data quality score for the specified element
     static double calcDQS(const double MID, const double MOD); // Mean Inner Distance, Minimum Outer Distance
 
-    void check_MOD_outOfBins(const Bin *target, const std::vector<q::Datapoint *> notBinned, const int maxdist);
+    void check_MOD_outOfBins(const Bin *target, const std::vector<q::qCentroid *> notBinned, const int maxdist);
 
     static void scaleDistancesForDQS_gauss(int maxdist); // @experimental
 
-    // ### wrapper function to execute qbinning on a RawData struct ### @todo rename raw data
-    const std::vector<EIC> performQbinning(const RawData centroidedData, int maxdist, bool silent);
+    // ### wrapper function to execute qbinning on a CentroidedData struct ### @todo rename raw data
+    const std::vector<EIC> performQbinning(const CentroidedData centroidedData, int maxdist, bool silent);
 
 }
 
