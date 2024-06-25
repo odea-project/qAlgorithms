@@ -1,15 +1,14 @@
 // internal
-#include "../include/qalgorithms_measurement_data_lcms.h"
-#include "../include/qalgorithms_qpeaks.h"
-#include "../include/qalgorithms_qbin.h"
+#include "qalgorithms_measurement_data_lcms.h"
+#include "qalgorithms_qpeaks.h"
 
 // external
-// #include "../external/StreamCraft/src/StreamCraft_mzml.hpp" @todo check if this is actually used here
+#include "StreamCraft_mzml.h" //@todo check if this is actually used here
 #include <iostream>
 #include <chrono>
-#include <fstream>
 #include <cstdlib>
-#include <iomanip>
+#include <string>
+#include <sstream>
 
 int main()
 {

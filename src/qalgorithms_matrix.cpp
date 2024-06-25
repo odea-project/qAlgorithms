@@ -1,6 +1,6 @@
 // qalgorithms_matrix.cpp
 
-#include "../include/qalgorithms_matrix.h"
+#include "qalgorithms_matrix.h"
 
 #include <cmath>
 
