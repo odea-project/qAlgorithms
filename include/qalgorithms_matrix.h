@@ -129,7 +129,7 @@ namespace q
 
   /**
    * @brief A class to store a Vector
-   * @details The Vector class is used to store a vector of doubles.
+   * @details The Vector class is used to store a vector of floats.
    * 
    * @param elements A pointer to the elements of the vector
    * @param n The number of elements in the vector
@@ -137,7 +137,7 @@ namespace q
   class Vector
   {
   public:
-    double *elements;
+    float *elements;
     size_t n;
 
     Vector(const size_t n);
@@ -145,22 +145,22 @@ namespace q
 
     Vector(const Vector& other);
 
-    double &
+    float &
     operator[](size_t idx);
 
-    const double &
+    const float &
     operator[](size_t idx) const;
 
-    double*
+    float*
     begin();
 
-    const double*
+    const float*
     begin() const;
 
-    double*
+    float*
     end();
 
-    const double*
+    const float*
     end() const;
 
     Vector&

@@ -305,22 +305,6 @@ namespace q
     return result;
   }
 
-  double
-  multiplyVecMatrixVecTranspose(
-      const double vec[4],
-      const q::Matrices::Matrix_mc_4x4 &A)
-  {
-    double result = 0.0;
-    for (size_t i = 0; i < 4; i++)
-    {
-      for (size_t j = 0; j < 4; j++)
-      {
-        result += vec[i] * A(i, j) * vec[j];
-      }
-    }
-    return result;
-  }
-
   q::Matrices::Matrix
   operator/(
       const q::Matrices::Matrix &A,
@@ -599,4 +583,5 @@ namespace q
     return result;
   }
 #pragma endregion "execute commands"
-}
+
+} // namespace q

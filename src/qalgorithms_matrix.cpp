@@ -200,7 +200,7 @@ namespace q
 #pragma region "Vector"
   Vector::Vector(const size_t n) : n(n)
   {
-    elements = new double[n]();
+    elements = new float[n]();
   }
 
   Vector::~Vector()
@@ -210,41 +210,41 @@ namespace q
 
   Vector::Vector(const Vector &other) : n(other.n)
   {
-    elements = new double[n];
+    elements = new float[n];
     std::copy(other.elements, other.elements + n, elements);
   }
 
-  double &
+  float &
   Vector::operator[](size_t idx)
   {
     return elements[idx];
   }
 
-  const double &
+  const float &
   Vector::operator[](size_t idx) const
   {
     return elements[idx];
   }
 
-  double *
+  float *
   Vector::begin()
   {
     return elements;
   }
 
-  const double *
+  const float *
   Vector::begin() const
   {
     return elements;
   }
 
-  double *
+  float *
   Vector::end()
   {
     return elements + n;
   }
 
-  const double *
+  const float *
   Vector::end() const
   {
     return elements + n;
@@ -259,7 +259,7 @@ namespace q
     delete[] elements;
 
     const size_t n = other.n;
-    elements = new double[n];
+    elements = new float[n];
     std::copy(other.elements, other.elements + n, elements);
 
     return *this;

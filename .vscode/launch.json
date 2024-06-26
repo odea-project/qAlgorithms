@@ -5,7 +5,7 @@
             "name": "(gdb) Launch",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/test/qPeak_class_test.exe",
+            "program": "${workspaceFolder}/test/qalgorithms_main.exe",
             "args": [],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
@@ -20,7 +20,7 @@
                     "ignoreFailures": true
                 }
             ],
-            "preLaunchTask": "build qPeak_class_test" // Name des Build-Tasks
+            "preLaunchTask": "build qAlgorithms" // Name des Build-Tasks
         },
         {
             "name": "C/C++: g++.exe build and debug active file",

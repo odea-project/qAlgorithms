@@ -153,11 +153,6 @@ namespace q
         const double scalar,
         const q::Matrices::Matrix &A);
 
-    double
-    multiplyVecMatrixVecTranspose(
-        const double vec[4],
-        const q::Matrices::Matrix_mc_4x4 &A);
-
     /**
      * @brief Overloaded operator for matrix division by a scalar
      * @details This function overloads the / operator to allow for matrix division by a scalar. The function takes a matrix and a scalar as input and returns a new matrix that is the result of dividing the input matrix by the scalar. The function divides each element of the matrix by the scalar.
