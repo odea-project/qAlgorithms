@@ -1,10 +1,15 @@
+
 VPATH=./src:./include/:./external/StreamCraft/src/:./external/pugixml-1.14/src/
+
 OBJECTS=qalgorithms_utils.o qalgorithms_matrix.o qalgorithms_qbin.o qalgorithms_main.o \
 		qalgorithms_qpeaks.o qalgorithms_datatype_peak.o qalgorithms_measurement_data.o \
 		qalgorithms_datatype_mass_spectrum.o qalgorithms_measurement_data_lcms.o \
 		StreamCraft_mzml.o StreamCraft_utils.o pugixml.o
+
 INCLUDES = -I ./include -I ./external/StreamCraft/src/ -I ./external/pugixml-1.14/src/
+
 CPPFLAGS=-Wall ${INCLUDES}
+
 CC=g++
 
 all: qbin

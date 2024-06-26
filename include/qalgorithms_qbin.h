@@ -11,7 +11,7 @@ namespace q
 {
     // qCentroid Struct (contains all user-specified variables found in source file)
     // Output of qCentroiding @todo move to utils / shared data file
-    struct qCentroid 
+    struct qCentroid
     {
         double mz;
         double mzError = -1;
@@ -21,7 +21,7 @@ namespace q
         double DQScentroid;
     };
 
-    struct CentroidedData 
+    struct CentroidedData
     {
         int lengthAllPoints;
         std::vector<std::vector<qCentroid>> allDatapoints;
@@ -75,8 +75,6 @@ namespace q
         bool duplicateScan = false;   // are two points with the same scan number in this bin?
         unsigned int medianScan;
         double medianMZ;
-
-        
 
     public:
         bool l_maxdist_tooclose = false;
@@ -164,8 +162,8 @@ namespace q
     {
     private:
         // void readcsv(std::string user_file, std::vector<qCentroid> output, int d_mz, int d_mzError, int d_RT, int d_scanNo); // implemented for featurelist
-        std::deque<Bin> binDeque;      // @todo add case for no viable bins
-        std::vector<Bin> redoneBins;   // store bins after reassembly/cutting here
+        std::deque<Bin> binDeque;    // @todo add case for no viable bins
+        std::vector<Bin> redoneBins; // store bins after reassembly/cutting here
         unsigned int subsetCount;
 
     public:
@@ -186,12 +184,12 @@ namespace q
         /// @param dimensions which dimensions should be used for subsetting in what order. 1 = subsetting by mz, 2 = subsetting by scans.
         /// Important: The last element of dimensions must determine bins to be finished, and no other subsetter may add to finsihedBins.
         /// @param maxdist the largest gap in scans which a bin can have while still being considered valid
-        void subsetBins(const std::vector<int> dimensions, const unsigned int maxdist, std::vector<Bin> deposit, const double massError);
+        void subsetBins(const std::vector<int> dimensions, const unsigned int maxdist, bool rebin, const double massError);
 
         /// @brief apply DQSB_base function to all completed bins
         /// @param rawdata the CentroidedData object from which all bins in finishedBins were generated
         /// @param maxdist the largest gap in scans which a bin can have while still being considered valid
-        void assignDQSB(const CentroidedData *rawdata, const unsigned int maxdist);
+        void assignDQSB(const CentroidedData *rawdata, const unsigned int maxdist, bool rebin);
 
         void printBinSummary(std::string path); // @todo create a better summary function which gives a
                                                 // detailed report, including what the test actually does,
@@ -200,7 +198,7 @@ namespace q
                                                 // Make sure to test the report for human-readability and
                                                 // include metadata from the mzml where possible.
                                                 // Some measure of overall spectrum quality should also be given.
-        
+
         /// @brief Add all bins identified as having hot ends to outofbins and redo the binning
         void redoBinningIfTooclose(const std::vector<int> dimensions, const CentroidedData *rawdata, std::vector<qCentroid *> notbinned, const unsigned int maxdist);
 
