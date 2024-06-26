@@ -61,7 +61,6 @@ namespace q
         unsigned int median_scans;
         double DQSB_base;
         double DQSB_scaled;
-        double DQSB_worst; // @todo this might not be a useful parameter to include in summary
         double DQSC_min;
         double mean_error;
     };
@@ -79,10 +78,9 @@ namespace q
     public:
         bool l_maxdist_tooclose = false;
         bool r_maxdist_tooclose = false; // Check if there is a point within maxdist
-        double mzmin;
-        double mzmax;
-        int scanmin;
-        int scanmax;
+        double l_maxdist_abs;            // the smallest mz that could be a member of this bin
+        double r_maxdist_abs;            // the largest mz that could be a member of this bin
+
         std::vector<qCentroid *> pointsInBin; // @todo does not change after bin creation, check for performance improvement when using cast const
         std::vector<double> activeOS;         // Order Space
         std::vector<double> DQSB_base;        // DQSB when all distances are considered equal

@@ -71,15 +71,6 @@ artbin$rt = 0.65 * artbin$scans + 1
 # write.csv(artbin, "../../rawdata/artbin.csv", row.names = FALSE)
 ```
 
-
-
-```{r bin results}
-sum1 = read.csv("../../selectBins_summary+1.csv")
-sum0 = read.csv("../../selectBins_summary.csv")
-
-sum(sum1$DQSB_base != sum0$DQSB_base)
-```
-
 ```{r timings}
 # all times in nanoseconds
 
@@ -97,14 +88,6 @@ sum(subsetMZ_i) * 10^-9
 sum(subsetScan_i) * 10^-9
 ```
 
-```{r control median of mz}
-medianMZ = read.csv("../../qbins_tvals.csv")
-medianMZ$critTval = qt(0.05, medianMZ$n, lower.tail = FALSE)
-medianMZ$check = medianMZ$critTval - medianMZ$tval
-sum(medianMZ$check < 0)
-hist(log10(medianMZ$n[which(medianMZ$check < 0)])) # no strict correlation between binsize, dqs and the median being a bad estimate of the distribution mean
-```
-
 ```{r merge}
 prebinned <- read.csv("../../rawdata/control_bins_base.csv")
 rawdata <- read.csv("../../rawdata/qCentroid_Warburg_pos_171123_01_Zu_01.csv")
@@ -117,22 +100,16 @@ getwd()
 ```
 
 ```{r check bin summary}
-summary <- read.csv("../../summary_bins.csv")
-accurate = c(1:16)
+summary_norm <- read.csv("../../selectBins_summary_norm.csv")
+summary_redo <- read.csv("../../selectBins_summary_redo.csv")
+redoneBins <- read.csv("../../redoneBins_summary.csv")
+# re-binning reduced bad binning by 355 bins 
+sum(summary_redo$mean_mz %in% summary_norm$mean_mz) # 4048
+sum(summary_redo$DQSC_min %in% summary_norm$DQSC_min) # 4332
+# 4048 bins remain unchanged, while 284 were expanded but still have bad neighbours
+selector = !(redoneBins$mean_mz %in% summary_redo$mean_mz)
+newGoodBins = redoneBins[selector,] # 1458 new error(only 2 and 3)-free bins with mean DQSB of 0.82; generally even distribution in mz/scans, average size of 14
 
-for (i in 0:15) {
-  accurate[i+1] = sum((round(summary$DQSB - summary$DQSB_control, digits = i) == 0))
-}
-
-plot(c(0:15), accurate/length(summary$ID))
-plot(summary$DQSB, summary$DQSB_worst) 
-sum((summary$DQSB - summary$DQSB_worst) < 0)
-
-summary[which((summary$DQSB - summary$DQSB_worst) < 0),] # for some points, the worst DQS is better than the actual one - why?
-hist(summary$stdev_mz[which((summary$DQSB - summary$DQSB_worst) < 0)])
-
-hist(abs(summary$mean_scans - summary$median_scans))
-sum((abs(summary$mean_scans - summary$median_scans)) > 6) # 1005
 
 ```
 
@@ -148,6 +125,8 @@ bins <- read.csv("../../selectbins_full.csv")
 summary$errorcode = as.numeric(lapply(summary$errorcode, bits))
 
 summary = summary[order(summary$size, decreasing = TRUE),]
+
+summary %>% group_by(errorcode) %>% summarise(bin_count = n(), total_points = sum(size), ratio = sum(size)/n(), dqsCen = mean(DQSC_min)) 
 
 stats = as.data.frame(table(summary$errorcode)) # alle ungeraden Zahlen haben duplikate
 stats$Var1 = as.numeric(levels(stats$Var1))
@@ -171,7 +150,7 @@ ggplot(summary[summary$errorcode - round(summary$errorcode, -3) >= 100,])+
   geom_point(data = notbinned[subsample_notbinned,], aes(x = mz, y = scan)) +
   geom_point(aes(x = mean_mz, y = mean_scans, colour = as.factor(errorcode)))
 
-summary %>% group_by(errorcode) %>% summarise(bin_count = n(), total_points = sum(size), ratio = sum(size)/n(), dqsCen = mean(DQSC_min)) 
+
 
 bins_error[bins_error$ID == 308,]
 minDists308 = c(6.2961233993519272e-05, 8.8906114996234464e-05, 9.4137318995990427e-05, 0.0001178799969920874, 8.2152471009067085e-05, 7.1812920992897489e-05)
