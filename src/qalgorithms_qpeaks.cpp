@@ -304,8 +304,8 @@ namespace q
         */
         // Matrix C = (*inverseMatrices[scale]) * mse; // variance-covariance matrix of the coefficients
         q::Matrices::Matrix_mc_4x4 C = multiplyScalarTo4x4Matrix(mse, *inverseMatrices[scale]); // variance-covariance matrix of the coefficients
-        double height = 0.0;
-        double uncertainty_height = 0.0;
+        double height = 0.0; //@todo: height is not used yet and can be removed
+        double uncertainty_height = 0.0; // at this point without height, i.e., to get the real uncertainty multiply with height later. This is done to avoid exp function at this point
         double uncertainty_position = 0.0;
         if (!isValidPeakHeight(B, mse, i, scale, apex_position, df_sum, height, uncertainty_height, uncertainty_position))
         {
@@ -931,15 +931,15 @@ namespace q
       const float b2 = B(2, index);
       const float b3 = B(3, index);
       float Jacobian_height[4]; // Jacobian matrix for the height
-      height = std::exp(b0 + apex_position * b1 * .5);
-      Jacobian_height[0] = height;
-      Jacobian_height[1] = apex_position * height;
+      // height = std::exp(b0 + apex_position * b1 * .5);
+      Jacobian_height[0] = 1.f; //height;
+      Jacobian_height[1] = apex_position;//apex_position * height;
       float Jacobian_position[4]; // Jacobian matrix for the position
       Jacobian_position[0] = 0;
       Jacobian_position[1] = apex_position / b1;
       if (apex_position < 0)
       {
-        Jacobian_height[2] = apex_position * Jacobian_height[1];
+        Jacobian_height[2] = apex_position * apex_position;//apex_position * Jacobian_height[1];
         Jacobian_height[3] = 0;
         Jacobian_position[2] = -apex_position / b2;
         Jacobian_position[3] = 0;
@@ -947,16 +947,14 @@ namespace q
       else
       {
         Jacobian_height[2] = 0;
-        Jacobian_height[3] = apex_position * Jacobian_height[1];
+        Jacobian_height[3] = apex_position * apex_position;//apex_position * Jacobian_height[1];
         Jacobian_position[2] = 0;
         Jacobian_position[3] = -apex_position / b3;
       }
-      // uncertainty_height = std::sqrt(multiplyVecMatrixVecTranspose(Jacobian_height, C));
-      // uncertainty_position = std::sqrt(multiplyVecMatrixVecTranspose(Jacobian_position, C));
-      uncertainty_height = std::sqrt(mse * multiplyVecMatrixVecTranspose(Jacobian_height, scale));
+      uncertainty_height = std::sqrt(mse * multiplyVecMatrixVecTranspose(Jacobian_height, scale)); // at this point without height, i.e., to get the real uncertainty multiply with height later. This is done to avoid exp function at this point
       uncertainty_position = std::sqrt(mse * multiplyVecMatrixVecTranspose(Jacobian_position, scale));
 
-      if (height / uncertainty_height <= tValuesArray[df_sum - 5]) // statistical significance of the peak height
+      if (1 / uncertainty_height <= tValuesArray[df_sum - 5]) // statistical significance of the peak height
       {
         return false;
       }
@@ -977,7 +975,7 @@ namespace q
         x_right = -B1_2_B3;
       }
       float base_signal = (std::exp(b0 + b1 * x_left + b2 * x_left * x_left) + std::exp(b0 + b1 * x_right + b3 * x_right * x_right)) * .5;
-      // std::cout << "base_signal: " << base_signal << " height: " << height << " uncertainty_height: " << uncertainty_height << " tValue: " << (height - 2* base_signal) / uncertainty_height << std::endl;
+
       return (height - 2 * base_signal) / uncertainty_height > tValuesArray[df_sum - 5];
     }
 #pragma endregion isValidPeakHeight
@@ -1373,8 +1371,8 @@ namespace q
           2.f * invArray[scale][1]); // kernel_row 0
 
 // calculation of the center terms
-#pragma GCC ivdep
-#pragma GCC unroll 8
+#pragma GCC ivdep // ignore dependencies between iterations of the loop
+#pragma GCC unroll 8 // unroll the loop 8 times
       for (size_t i = 0; i < n_segments; i++)
       {
         __m128 vec_values = _mm_set1_ps(vec[i+centerpoint]); // load a value from vec into a SIMD register using all 4 lanes
@@ -1391,8 +1389,8 @@ namespace q
         // update kernel values
         kernel[0] = _mm_add_ps(kernel[0], kernel[1]);
 
-#pragma GCC ivdep
-#pragma GCC unroll 8
+#pragma GCC ivdep // ignore dependencies between iterations of the loop
+#pragma GCC unroll 8 // unroll the loop 8 times
         for (size_t j = scale - i; j < (n - scale + i); j++)
         {
           __m128 vec_values = _mm_set1_ps(vec[j]); // load a value from vec into a SIMD register using all 4 lanes
@@ -1400,8 +1398,8 @@ namespace q
           u++;
         }
 
-#pragma GCC ivdep
-#pragma GCC unroll 8
+#pragma GCC ivdep // ignore dependencies between iterations of the loop
+#pragma GCC unroll 8 // unroll the loop 8 times
         for (size_t j = 0; j < n_segments; j++)
         {
           if (2 * i + j >= 512)
