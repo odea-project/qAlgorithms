@@ -23,14 +23,13 @@ namespace q
 {
     int maxdist;
     std::vector<qCentroid *> outOfBins; // this vector contains all points which are not included in bins
-    int duplicatesTotal;                // total times the distance 0 was measured in closed bins
-    std::vector<double> scalarForMOD;
+    int duplicatesTotal;                // total times the distance 0 (in scans) was measured in closed bins
+    std::vector<double> scalarForMOD;   // This vector contains factors for an inverse gaussian scaling of distances during DQS calculation
 
 #define IGNORE -256 // nonsense value if no real number exists. Must be negative since it is used later when searching for the smallest distance
 #define NO_MIN_FOUND -INFINITY
 #define NO_MAX_FOUND -INFINITY
 
-#pragma region "Rawdata"
     bool readcsv(CentroidedData *rawData, std::string user_file, int d_mz, int d_mzError, int d_RT, int d_scanNo, int d_intensity, int d_DQScentroid)
     { // @todo stop segfaults when reading empty lines; use buffers for speedup
         int now = time(0);
@@ -84,8 +83,6 @@ namespace q
         return true;
         // CentroidedData is always a vector of vectors where the first index is the scan number (starting at 1) and every scsn is sorted by mz
     }
-
-#pragma endregion "Rawdata"
 
 #pragma region "BinContainer"
 
@@ -248,6 +245,28 @@ namespace q
                 ++i;
             }
         }
+        // temporary: print all bins created this way @todo remove when done
+        const std::string binsSummary = "../../redoneBins.csv";
+        std::vector<size_t> indices;
+        std::fstream file_out_sum;
+        std::stringstream output_sum;
+        file_out_sum.open(binsSummary, std::ios::out);
+        assert(file_out_sum.is_open());
+        output_sum << "ID,errorcode,size,mean_mz,median_mz,stdev_mz,mean_scans,DQSB_base,DQSB_scaled,DQSB_worst,DQSC_min,mean_error\n";
+        for (size_t i = 0; i < redoneBins.size(); i++)
+        {
+            const q::SummaryOutput res = redoneBins[i].summariseBin();
+
+            indices.push_back(i); // save these bins for printing
+            char buffer[256];
+            sprintf(buffer, "%llu,%d,%llu,%0.15f,%0.15f,%0.15f,%0.2f,%0.9f,%0.9f,%0.9f,%0.15f\n",
+                    i + 1, int(res.errorcode), res.binsize, res.mean_mz, res.median_mz, res.stddev_mz,
+                    res.mean_scans, res.DQSB_base, res.DQSB_scaled, res.DQSC_min, res.mean_error);
+            output_sum << buffer;
+        }
+        file_out_sum << output_sum.str();
+        file_out_sum.close();
+
         std::cout << "re-binning completed\nremoved " << binsWithHotEnds.size() << " incomplete bins, added "
                   << redoneBins.size() << " corrected bins\n";
 
@@ -310,9 +329,9 @@ namespace q
             {
                 indices.push_back(i); // save these bins for printing
                 char buffer[256];
-                sprintf(buffer, "%llu,%d,%llu,%0.15f,%0.15f,%0.15f,%0.2f,%0.9f,%0.9f,%0.9f,%0.9f,%0.15f\n",
-                        i + 1, int(res.errorcode), res.binsize, res.mean_mz, res.median_mz, res.stddev_mz, res.mean_scans,
-                        res.DQSB_base, res.DQSB_scaled, res.DQSB_worst, res.DQSC_min, res.mean_error);
+                sprintf(buffer, "%llu,%d,%llu,%0.15f,%0.15f,%0.15f,%0.2f,%0.9f,%0.9f,%0.9f,%0.15f\n",
+                        i + 1, int(res.errorcode), res.binsize, res.mean_mz, res.median_mz, res.stddev_mz,
+                        res.mean_scans, res.DQSB_base, res.DQSB_scaled, res.DQSC_min, res.mean_error);
                 output_sum << buffer;
             }
         }
@@ -443,8 +462,6 @@ namespace q
         // function is called on a bin sorted by mz
         int control_duplicatesIn = 0;
         const size_t binSize = pointsInBin.size();
-        double tmp_pt_mzmin = pointsInBin.front()->mz;
-        double tmp_pt_mzmax = pointsInBin.back()->mz;
         std::sort(pointsInBin.begin(), pointsInBin.end(), [](const qCentroid *lhs, const qCentroid *rhs)
                   { return lhs->scanNo < rhs->scanNo; });
         std::vector<qCentroid *>::iterator newstart = pointsInBin.begin();
@@ -482,8 +499,6 @@ namespace q
         // check for open bin at the end
         if (lastpos == 0) // no cut has occurred
         {
-            bincontainer->front().mzmin = tmp_pt_mzmin;
-            bincontainer->front().mzmax = tmp_pt_mzmax;
             finishedBins->push_back(bincontainer->front());
             duplicatesTotal += control_duplicatesIn;
         }
@@ -644,6 +659,7 @@ namespace q
                                  binsize;
         const double vcrit = 3.05037165842070 * pow(log(binsize + 1), (-0.4771864667153)) * meanerror;
         // binsize + 1 to not include points which would be removed after adding them
+        // vcrit has the same scaling as mz of bin centroids
 
         // find min distance in minMaxOutPerScan, then calculate DQS for that point
         for (size_t i = 0; i < binsize; i++)
@@ -651,6 +667,7 @@ namespace q
             double minDist_base = INFINITY;
             double minDist_scaled = INFINITY;
             const double currentMZ = pointsInBin[i]->mz;
+
             // currentRangeStart gives position of the first value in minMaxOutPerScan that must be considered,
             // assuming the first value in minMaxOutPerScan (index 0) is only relevant to the
             // qCentroid in the lowest scan. For every increase in scans, that range starts two elements later
@@ -674,7 +691,8 @@ namespace q
             DQSB_base.push_back(calcDQS(meanInnerDistances[i], minDist_base));
             DQSB_scaled.push_back(calcDQS(meanInnerDistances[i], minDist_scaled));
 
-            // section to check hot ends
+            /// section to check hot ends ///
+
             if (i == 0) // first element of the bin when sorted by mz
             {
                 // if the DQS at either end is less than critDQS, a point exists that could be included in the bin
@@ -693,6 +711,11 @@ namespace q
                 }
             }
         }
+        // since rebinning does not fully eliminate bins with too strict separation,
+        // it is important to keep track of bins with one-sided overlap. The maxdist_abs
+        // parameters are set here since vcrit is already calculated and the bin sorted.
+        l_maxdist_abs = pointsInBin.front()->mz - vcrit;
+        r_maxdist_abs = pointsInBin.back()->mz + vcrit;
         return;
     }
 
@@ -731,21 +754,14 @@ namespace q
         // calc DQS when assuming the MOD to be critval
         double sumOfDist = 0;
         std::for_each(pointsInBin.begin(), pointsInBin.end(), [&](const qCentroid *point)
-                      { sumOfDist += (point->mz - meanMZ) * (point->mz - meanMZ); }); // squared
-        // const double worstCaseMOD = 3.05037165842070 * pow(log(binsize + 1), (-0.4771864667153)) * meanCenError;
-        // // binsize + 1 to not include cases where adding in the next point would make the distance greater than vcrit again
-        // const double MODlessVcrit = 3.05037165842070 * pow(log(binsize), (-0.4771864667153)) * meanCenError;
-        // std::vector<double> MIDs = meanDistance(pointsInBin);
-        // double MID = std::accumulate(MIDs.begin(), MIDs.end(), 0.0);
-        // double DQSminWith = calcDQS(MID / binsize, worstCaseMOD);
-        // double DQSminWithout = calcDQS(MID / binsize, MODlessVcrit);
+                      { sumOfDist += (point->mz - meanMZ) * (point->mz - meanMZ); }); // squared distance to mean
 
         double stdev = sqrt(sumOfDist / (binsize - 1));
         // @todo use enums here
-        std::byte selector{0b00000000}; // selector returns true or false, depending on criteria checked
+        std::byte selector{0b00000000}; // used as bitmask during printSelectBins()
         if (duplicateScan)
         {
-            selector |= std::byte{0b00000001}; // checks if most points in a bin were assigned wrongly @todo point-wise
+            selector |= std::byte{0b00000001};
         }
         if (l_maxdist_tooclose)
         {
@@ -755,29 +771,29 @@ namespace q
         {
             selector |= std::byte{0b00000100};
         }
-        if (abs(meanMZ - medianMZ) > 2 * meanCenError) // greater than maxdist @todo add maxdist as a macro or something // removed due to no obesrvable test value abs(meanScan - medianScan) > 6
+        if (abs(meanMZ - medianMZ) > 2 * meanCenError)
         {
             selector |= std::byte{0b00001000};
         }
-        if ((meanMZ + 3 * stdev < mzmax) | (meanMZ - 3 * stdev > mzmin)) // if a value in the bin is outside of 3 sigma
+        if ((meanMZ + 3 * stdev < r_maxdist_abs) | (meanMZ - 3 * stdev > l_maxdist_abs)) // if a value in the bin is outside of 3 sigma
         {
             selector |= std::byte{0b00010000};
         }
-        if (meanDQS_base < 0.5)
+        if (meanDQS_base < 0.5) // @todo these should just be removed by default
         {
             selector |= std::byte{0b00100000};
         }
-        if (false) // there is a point within maxdist that is excluded when the bin gets 1 larger
+        if (false)
         {
             selector |= std::byte{0b01000000};
         }
-        if (false) // @todo replicate test 3 but use the critical distance?
+        if (false)
         {
             selector |= std::byte{0b10000000};
         }
 
         return SummaryOutput{selector, binsize, meanMZ, medianMZ, stdev, meanScan, medianScan, meanDQS_base,
-                             meanDQS_scaled, 0, worstCentroid, meanCenError}; // @todo remove worst dqs from output
+                             meanDQS_scaled, worstCentroid, meanCenError}; // @todo remove worst dqs from output
     }
 
     const EIC Bin::createEIC()
@@ -847,7 +863,6 @@ namespace q
         }
         // dqs = (MOD - MID) * (1 / (1 + MID)) / dqs; // sm(i) term
         // interval transform, equivalent to (dqs + 1) / 2;
-        // dqs = fmal((MOD - MID) / fmal(MID, dqs, dqs), 0.5, 0.5); //  ((1 + MID) * dqs);
         // if dqs = nan, set it to 1 during EIC construction @todo
         return fmal((MOD - MID) / fmal(MID, dqs, dqs), 0.5, 0.5);
     }
@@ -951,7 +966,7 @@ int main()
     testcontainer.redoBinningIfTooclose(measurementDimensions, &testdata, q::outOfBins, q::maxdist);
 
     // print bin selection
-    testcontainer.printSelectBins(std::byte{0b11111111}, false, "../.."); // one bit per test
+    // testcontainer.printSelectBins(std::byte{0b00000110}, true, "../.."); // one bit per test
 
     // testcontainer.printBinSummary("../../summary_bins.csv");
     // testcontainer.printworstDQS();
