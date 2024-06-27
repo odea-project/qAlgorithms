@@ -126,6 +126,15 @@ namespace q
             // read the file
             int rowCounter = 0;
             int colCounter = 0;
+            if (!file.is_open())
+            {
+                std::cout << "the file could not be opened\n";
+            }
+
+            if (!file.good())
+            {
+                std::cout << "something is wrong with the input file\n";
+            }
             while (std::getline(file, line) && rowCounter < rowEnd)
             {
                 if (rowCounter >= rowStart)
@@ -155,7 +164,7 @@ namespace q
                 return;
             }
 
-            // transfere the raw data to the data vector
+            // transfer the raw data to the data vector
             // int data_id = 0; // data id is used to identify the data set // @todo: delete this line
             maxKey = 0;
 

@@ -9,6 +9,7 @@
 #include <cstdlib>
 #include <string>
 #include <sstream>
+#include <filesystem> // printing absolute path in case read fails
 
 int main()
 {
@@ -21,7 +22,7 @@ int main()
     {
         std::cout.rdbuf(ss.rdbuf());
     }
-    std::cout << "starting...";
+    std::cout << "starting...\n";
 
     auto timeStart = std::chrono::high_resolution_clock::now();
     // print logo - @todo don't use functions which are incompatible with linux
@@ -34,7 +35,17 @@ int main()
     q::Algorithms::qPeaks::initialize(); // @todo constexpr
     bool isCSV = false;
 
-    std::string filename_input = "../test/test_orbitrap.csv"; // @todo make this a command line argument
+    std::string filename_input = "../qAlgorithms/test/test_orbitrap.csv"; // @todo make this a command line argument
+
+    const std::filesystem::path p = filename_input;
+    if (!std::filesystem::exists(p))
+    {
+        std::cout << "Error: The selected file does not exist.\nSupplied path: " << std::filesystem::absolute(p)
+                  << "\nCurrent directory: " << std::filesystem::current_path() << "\n\nTerminated Program.\n\n";
+        exit(101);
+    }
+
+    std::cout << "Executing qAlgorithms on " << std::filesystem::canonical(p) << '\n';
 
     q::MeasurementData::LCMSData lcmsData;
 

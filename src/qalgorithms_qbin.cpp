@@ -18,7 +18,7 @@
 #include <ctime>
 // #include <regex>
 #include <omp.h>
-
+#include <filesystem> // printing absolute path in case read fails
 namespace q
 {
     int maxdist;
@@ -39,6 +39,7 @@ namespace q
         if (!file.is_open())
         {
             std::cout << "the file could not be opened\n";
+
             return false;
         }
 
@@ -904,7 +905,7 @@ namespace q
         std::streambuf *old = std::cout.rdbuf(); // save standard out config
         std::stringstream ss;
 
-        if (silent) // redirect standard out to ss
+        if (silent) // @todo change this to a global variable
         {
             std::cout.rdbuf(ss.rdbuf());
         }
@@ -937,7 +938,7 @@ namespace q
 
 }
 
-int main()
+int notmain()
 {
     std::cout << "starting...\n";
 
@@ -946,9 +947,19 @@ int main()
     int inputMaxdist = 6;
     q::maxdist = inputMaxdist;
 
+    std::string filename_input = "../../rawdata/control_bins.csv";
+
+    const std::filesystem::path p = filename_input;
+    if (!std::filesystem::exists(p))
+    {
+        std::cout << "Error: The selected file does not exist.\nSupplied path: " << std::filesystem::absolute(p)
+                  << "\nCurrent directory: " << std::filesystem::current_path() << "\n\nTerminated Program.\n\n";
+        exit(101);
+    }
+
     q::CentroidedData testdata;
     // path to data, mz, centroid error, RT, scan number, intensity, DQS centroid, control DQS Bin
-    if (!q::readcsv(&testdata, "../../rawdata/control_bins.csv", 0, 1, 2, 3, 4, 6)) // ../../rawdata/control_bins.csv reduced_DQSdiff
+    if (!q::readcsv(&testdata, filename_input, 0, 1, 2, 3, 4, 6)) // ../../rawdata/control_bins.csv reduced_DQSdiff
     {
         exit(101); // error codes: 1.. = reading / writing failed, 2.. = improper input,
     }
