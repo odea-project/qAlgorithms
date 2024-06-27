@@ -30,12 +30,13 @@ namespace q
 
         void LCMSData::readCSV(std::string filename, int rowStart, int rowEnd, int colStart, int colEnd, char separator, std::vector<DataField> variableTypes)
         {
+            // @todo currenty only
             // open the file
             std::ifstream file(filename);
             std::string line;
             std::vector<std::vector<std::string>> raw_data;
 
-            // if rowEnd is -1, then set it to the maximum number of rows
+            // if rowEnd is -1, then set it to the maximum number of rows @todo cast to unsigned int, -1 = max size
             if (rowEnd == -1)
             {
                 rowEnd = 1000000;
@@ -129,43 +130,44 @@ namespace q
             if (!file.is_open())
             {
                 std::cout << "the file could not be opened\n";
+                return;
             }
 
             if (!file.good())
             {
                 std::cout << "something is wrong with the input file\n";
+                return;
+            }
+            for (size_t i = 0; i < rowStart; i++)
+            {
+                std::getline(file, line); // only start parsing after rowStart lines
             }
             while (std::getline(file, line) && rowCounter < rowEnd)
             {
-                if (rowCounter >= rowStart)
+                std::vector<std::string> row;
+                std::stringstream lineStream(line);
+                std::string cell;
+                colCounter = 0;
+                while (std::getline(lineStream, cell, separator))
                 {
-                    std::vector<std::string> row;
-                    std::stringstream lineStream(line);
-                    std::string cell;
-                    colCounter = 0;
-                    while (std::getline(lineStream, cell, separator))
+                    if (colCounter >= colStart && colCounter < colEnd)
                     {
-                        if (colCounter >= colStart && colCounter < colEnd)
-                        {
-                            row.push_back(cell);
-                        }
-                        colCounter++;
+                        row.push_back(cell);
                     }
-                    raw_data.push_back(row);
+                    colCounter++;
                 }
+                raw_data.push_back(row);
                 rowCounter++;
             }
             file.close();
 
-            // check if the raw data has same number of columns as the variableTypes
             if (raw_data[0].size() != variableTypes.size())
             {
                 std::cerr << "The number of columns in the raw data does not match the number of variable types" << std::endl;
-                return;
+                exit(102);
             }
 
             // transfer the raw data to the data vector
-            // int data_id = 0; // data id is used to identify the data set // @todo: delete this line
             maxKey = 0;
 
             for (size_t i = 0; i < raw_data.size(); i++)
