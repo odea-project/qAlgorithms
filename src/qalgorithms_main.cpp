@@ -35,7 +35,7 @@ int main()
     q::Algorithms::qPeaks::initialize(); // @todo constexpr
     bool isCSV = false;
 
-    std::string filename_input = "../qAlgorithms/test/test_orbitrap.csv"; // @todo make this a command line argument
+    std::string filename_input = "../test/test_orbitrap.csv"; // @todo make this a command line argument
 
     const std::filesystem::path p = filename_input;
     if (!std::filesystem::exists(p))
