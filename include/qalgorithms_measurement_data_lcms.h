@@ -42,7 +42,7 @@ namespace q
              * @param variableTypes The variable types. Required variable types: DataField::SCANNUMBER,
              *                      DataField::RETENTIONTIME, DataField::MZ, and DataField::INTENSITY
              */
-            void readCSV(std::string filename, int rowStart, int rowEnd,
+            bool readCSV(std::string filename, int rowStart, int rowEnd,
                          int colStart, int colEnd, char separator,
                          std::vector<DataType::DataField> variableTypes);
 
@@ -52,7 +52,7 @@ namespace q
              * it in the LCMSData object. A StreamCraft mzML object is created by using sc::MZML z("path to mzML file").
              * @param data : StreamCraft mzML object
              */
-            void readStreamCraftMZML(sc::MZML &data);
+            bool readStreamCraftMZML(sc::MZML &data);
 
             /**
              * @brief Write LC-MS data to a CSV file

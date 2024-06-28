@@ -35,7 +35,7 @@ int main()
     q::Algorithms::qPeaks::initialize(); // @todo constexpr
     bool isCSV = false;
 
-    std::string filename_input = "../test/test_orbitrap.csv"; // @todo make this a command line argument
+    std::string filename_input = "../../rawdata/example_profile.mzML"; // @todo make this a command line argument "../test/test_orbitrap.csv"
 
     const std::filesystem::path p = filename_input;
     if (!std::filesystem::exists(p))
@@ -49,15 +49,18 @@ int main()
 
     q::MeasurementData::LCMSData lcmsData;
 
+    bool fileOK = false;
+
     // check if the input file is a CSV file or a mzML file
     if (filename_input.find(".mzML") != std::string::npos) // @todo make sure this is the end of the filename, switch to regex
     {
         sc::MZML data(filename_input);
-        lcmsData.readStreamCraftMZML(data);
+        fileOK = lcmsData.readStreamCraftMZML(data);
+        std::cout << "\nread in file\n";
     }
     else if (filename_input.find(".csv") != std::string::npos) // @todo make sure this is the end of the filename, switch to regex
     {
-        lcmsData.readCSV(filename_input, 1, -1, 0, -1, ',',
+        fileOK = lcmsData.readCSV(filename_input, 1, -1, 0, -1, ',',
                          {q::DataType::DataField::MZ,
                           q::DataType::DataField::INTENSITY,
                           q::DataType::DataField::SCANNUMBER,
@@ -69,9 +72,13 @@ int main()
         std::cout << "Error: only .mzML and .csv files are supported" << std::endl;
     }
 
+    if(!fileOK){ // terminate program if readCSV failed
+        exit(101);
+    }
+
     auto timeEnd = std::chrono::high_resolution_clock::now();
 
-    std::cout << "finished reading " << lcmsData.numDatasets() << " datasets in " << (timeEnd - timeStart).count() << " ns\n\n";
+    std::cout << "finished reading " << lcmsData.numDatasets() << " mass spectra in " << (timeEnd - timeStart).count() << " ns\n\n";
 
     // @todo add timings here, include option to skip output or create .log for more elaborate diagnostics
     timeStart = std::chrono::high_resolution_clock::now();
@@ -94,7 +101,11 @@ int main()
     q::MeasurementData::varDataType dataObject = &(lcmsData.data);
     q::Algorithms::qPeaks qpeaks(dataObject);
 
-    std::vector<std::vector<std::unique_ptr<q::DataType::Peak>>> peaks = qpeaks.findPeaks(dataObject); // @todo check for better data structures
+    std::vector<std::vector<std::unique_ptr<q::DataType::Peak>>> temp_peaks = qpeaks.findPeaks(dataObject);
+
+    std::vector<std::vector<std::unique_ptr<q::DataType::Peak>>> peaks = qpeaks.createPeakList(temp_peaks); // @todo check for better data structures
+
+    
 
     size_t count = 0;
     for (size_t i = 0; i < peaks.size(); i++)

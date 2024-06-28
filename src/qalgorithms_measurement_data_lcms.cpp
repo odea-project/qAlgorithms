@@ -28,13 +28,25 @@ namespace q
         // {
         // }
 
-        void LCMSData::readCSV(std::string filename, int rowStart, int rowEnd, int colStart, int colEnd, char separator, std::vector<DataField> variableTypes)
+        bool LCMSData::readCSV(std::string filename, int rowStart, int rowEnd, int colStart, int colEnd, char separator, std::vector<DataField> variableTypes)
         {
             // @todo currenty only
             // open the file
             std::ifstream file(filename);
             std::string line;
             std::vector<std::vector<std::string>> raw_data;
+
+            if (!file.is_open())
+            {
+                std::cout << "the file could not be opened\n";
+                return false;
+            }
+
+            if (!file.good())
+            {
+                std::cout << "something is wrong with the input file\n";
+                return false;
+            }
 
             // if rowEnd is -1, then set it to the maximum number of rows @todo cast to unsigned int, -1 = max size
             if (rowEnd == -1)
@@ -64,7 +76,7 @@ namespace q
             if (!flag)
             {
                 std::cerr << "The scan number is not found in the variable types" << std::endl;
-                return;
+                return false;
             }
 
             // find the DataFiled::RETENTIONTIME
@@ -83,7 +95,7 @@ namespace q
             if (!flag)
             {
                 std::cerr << "The retention time is not found in the variable types" << std::endl;
-                return;
+                return false;
             }
 
             // find the DataFiled::MZ
@@ -102,7 +114,7 @@ namespace q
             if (!flag)
             {
                 std::cerr << "The mz is not found in the variable types" << std::endl;
-                return;
+                return false;
             }
 
             // find the DataFiled::INTENSITY
@@ -121,23 +133,13 @@ namespace q
             if (!flag)
             {
                 std::cerr << "The intensity is not found in the variable types" << std::endl;
-                return;
+                return false;
             }
 
             // read the file
             int rowCounter = 0;
             int colCounter = 0;
-            if (!file.is_open())
-            {
-                std::cout << "the file could not be opened\n";
-                return;
-            }
-
-            if (!file.good())
-            {
-                std::cout << "something is wrong with the input file\n";
-                return;
-            }
+            
             for (size_t i = 0; i < rowStart; i++)
             {
                 std::getline(file, line); // only start parsing after rowStart lines
@@ -164,12 +166,14 @@ namespace q
             if (raw_data[0].size() != variableTypes.size())
             {
                 std::cerr << "The number of columns in the raw data does not match the number of variable types" << std::endl;
-                exit(102);
+                return false;
+                // exit(102);
             }
 
             // transfer the raw data to the data vector
             maxKey = 0;
 
+            this->data.reserve(raw_data.size());
             for (size_t i = 0; i < raw_data.size(); i++)
             {
                 // check if the scan number is already in the data vector
@@ -190,17 +194,23 @@ namespace q
                 }
                 // create a new DataPoint object and add it to the DataPoint Vector
                 double intensity = std::stod(raw_data[i][intensityIndex]);
-                int df = (intensity > 0) ? 1 : 0;
+                int df = (intensity > 0) ? 1 : 0; 
                 this->data[scanNumber]->dataPoints.push_back(std::make_unique<DataPoint>(intensity, std::stod(raw_data[i][mzIndex]), df));
             }
+            return true;
         }
 
-        void LCMSData::readStreamCraftMZML(sc::MZML &data)
+        bool LCMSData::readStreamCraftMZML(sc::MZML &data)
         {
             std::vector<std::vector<std::vector<double>>> spectra = data.get_spectra();
             std::vector<double> retentionTimes = data.get_spectra_rt();
             std::vector<int> scanNumbers = data.get_spectra_scan_number();
             std::vector<int> ms_levels = data.get_spectra_level();
+            if (spectra.empty())
+            {
+                return false;
+            }
+            
 
             size_t number_of_spectra = spectra.size();
             for (size_t i = 0; i < number_of_spectra; i++)
@@ -234,6 +244,7 @@ namespace q
                     this->data.back()->dataPoints.push_back(std::make_unique<DataPoint>(intensity, spectra[i][0][j], df));
                 }
             }
+            return true;
         }
 
         void LCMSData::writeCSV(std::string filename)

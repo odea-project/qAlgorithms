@@ -1,3 +1,5 @@
+warum ist 
+
 C:\PROGRA~2\GnuWin32\bin\make.exe
 
 valgrind für Speicherdeallokierung, address sanitiser zum Laufen bringen

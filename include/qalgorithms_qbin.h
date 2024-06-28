@@ -6,8 +6,9 @@
 #include <string>
 
 // Goal: all functions modify individual features, which are combined to a bin. The bin contains all features and the functions necessary to summarise which features are present
-
 namespace q
+{
+namespace qBinning
 {
     // qCentroid Struct (contains all user-specified variables found in source file)
     // Output of qCentroiding @todo move to utils / shared data file
@@ -29,6 +30,8 @@ namespace q
 
     // "mz" "mzError" "RT" "scanNo" "intensity" "controlID" "controlCentroidDQS" "controlBinDQS"
     bool readcsv(CentroidedData *rawData, std::string user_file, int d_mz, int d_mzError, int d_RT, int d_scanNo, int d_intensity, int d_DQScentroid);
+
+    // bool readPeaktable(CentroidedData *peakData); // not sensible to include this here
 
     // return object of qbinning
 
@@ -148,11 +151,7 @@ namespace q
         /// @return A struct containing the summary information. The first entry is the error code.
         SummaryOutput summariseBin();
 
-        const EIC createEIC();
-
-        // void controlMedianMZ();
-
-        const double calcDQSmin();
+        EIC createEIC();
     };
 
     // BinContainer
@@ -204,7 +203,7 @@ namespace q
 
         void printBinningReport(std::string path); // <- here
 
-        const std::vector<EIC> returnBins();
+        std::vector<EIC> returnBins();
 
         // void printTstats();
 
@@ -237,15 +236,15 @@ namespace q
     /// @param MID mean inner distance in mz to all other elements in the bin
     /// @param MOD minimum outer distance - the shortest distance in mz to a data point that is within maxdist and not in the bin
     /// @return the data quality score for the specified element
-    static double calcDQS(const double MID, const double MOD); // Mean Inner Distance, Minimum Outer Distance
+    static inline double calcDQS(const double MID, const double MOD); // Mean Inner Distance, Minimum Outer Distance
 
-    void check_MOD_outOfBins(const Bin *target, const std::vector<q::qCentroid *> notBinned, const int maxdist);
+    void check_MOD_outOfBins(const Bin *target, const std::vector<qCentroid *> notBinned, const int maxdist);
 
     static void scaleDistancesForDQS_gauss(int maxdist); // @experimental
 
-    // ### wrapper function to execute qbinning on a CentroidedData struct ### @todo rename raw data
-    const std::vector<EIC> performQbinning(const CentroidedData centroidedData, int maxdist, bool silent);
+    // ### wrapper function to execute qbinning on a CentroidedData struct ### 
+    std::vector<EIC> performQbinning(const CentroidedData centroidedData, int maxdist, bool silent);
 
 }
-
+}
 #endif
