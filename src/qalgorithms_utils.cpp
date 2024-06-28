@@ -393,68 +393,68 @@ namespace q
     return result;
   }
 
-  q::Matrices::Matrix_mc
-  convolve(
-      const q::Matrices::Vector &vec,
-      const size_t n,
-      const q::Matrices::Matrix &kernel)
-  {
-    size_t k = kernel.cols;
-    size_t n_segments = n - k + 1;
-    size_t centerpoint = k / 2;
+  // q::Matrices::Matrix_mc
+  // convolve(
+  //     const q::Matrices::Vector &vec,
+  //     const size_t n,
+  //     const q::Matrices::Matrix &kernel)
+  // {
+  //   size_t k = kernel.cols;
+  //   size_t n_segments = n - k + 1;
+  //   size_t centerpoint = k / 2;
 
-    q::Matrices::Matrix_mc result(4, n_segments);
-    std::vector<std::array<double, 3>> products(n);
+  //   q::Matrices::Matrix_mc result(4, n_segments);
+  //   std::vector<std::array<double, 3>> products(n);
 
-    // calculation from left to center (excluding center)
-    for (size_t i = 0; i < centerpoint; i++)
-    {
-      int u = 0;
-      for (size_t j = i; j < (n - i); j++)
-      {
-        products[u][0] = vec[j] * kernel(0, i);
-        products[u][1] = vec[j] * kernel(1, i);
-        products[u][2] = vec[j] * kernel(2, i);
-        u++;
-      }
-      for (size_t j = 0; j < n_segments; j++)
-      {
-        result(0, j) += products[j][0] + products[k - 1 - 2 * i + j][0];
-        result(1, j) += products[j][1] - products[k - 1 - 2 * i + j][1];
-        result(2, j) += products[j][2];
-        result(3, j) += products[k - 1 - 2 * i + j][2];
-      }
-    }
+  //   // calculation from left to center (excluding center)
+  //   for (size_t i = 0; i < centerpoint; i++)
+  //   {
+  //     int u = 0;
+  //     for (size_t j = i; j < (n - i); j++)
+  //     {
+  //       products[u][0] = vec[j] * kernel(0, i);
+  //       products[u][1] = vec[j] * kernel(1, i);
+  //       products[u][2] = vec[j] * kernel(2, i);
+  //       u++;
+  //     }
+  //     for (size_t j = 0; j < n_segments; j++)
+  //     {
+  //       result(0, j) += products[j][0] + products[k - 1 - 2 * i + j][0];
+  //       result(1, j) += products[j][1] - products[k - 1 - 2 * i + j][1];
+  //       result(2, j) += products[j][2];
+  //       result(3, j) += products[k - 1 - 2 * i + j][2];
+  //     }
+  //   }
 
-    // calculation of the center terms
-    for (size_t i = 0; i < n_segments; i++)
-    {
-      result(0, i) += vec[i + centerpoint] * kernel(0, centerpoint);
-      result(2, i) += vec[i + centerpoint] * kernel(2, centerpoint);
-      result(3, i) += vec[i + centerpoint] * kernel(3, centerpoint);
-    }
+  //   // calculation of the center terms
+  //   for (size_t i = 0; i < n_segments; i++)
+  //   {
+  //     result(0, i) += vec[i + centerpoint] * kernel(0, centerpoint);
+  //     result(2, i) += vec[i + centerpoint] * kernel(2, centerpoint);
+  //     result(3, i) += vec[i + centerpoint] * kernel(3, centerpoint);
+  //   }
 
-    // calculation from center to right (excluding center)
-    int u = 1;
-    for (size_t i = centerpoint + 1; i < k; i++)
-    {
-      int s = k - i - 1;
-      int v = 0;
-      for (size_t j = s; j < (n - s); j++)
-      {
-        products[v][2] = vec[j] * kernel(2, i);
-        v++;
-      }
-      for (size_t j = 0; j < n_segments; j++)
-      {
-        result(2, j) += products[2 * u + j][2];
-        result(3, j) += products[j][2];
-      }
-      u++;
-    }
+  //   // calculation from center to right (excluding center)
+  //   int u = 1;
+  //   for (size_t i = centerpoint + 1; i < k; i++)
+  //   {
+  //     int s = k - i - 1;
+  //     int v = 0;
+  //     for (size_t j = s; j < (n - s); j++)
+  //     {
+  //       products[v][2] = vec[j] * kernel(2, i);
+  //       v++;
+  //     }
+  //     for (size_t j = 0; j < n_segments; j++)
+  //     {
+  //       result(2, j) += products[2 * u + j][2];
+  //       result(3, j) += products[j][2];
+  //     }
+  //     u++;
+  //   }
 
-    return result;
-  }
+  //   return result;
+  // }
 
   q::Matrices::Vector
   calcYhat(

@@ -238,7 +238,8 @@ namespace q
       }
       for (int scale = 2; scale <= maxScale; scale++)
       {
-        q::Matrices::Matrix_mc B = (n <= 512) ? convolve_fast(scale, ylog_array, n) : convolve(Ylog, n, *(psuedoInverses[scale]));
+        // q::Matrices::Matrix_mc B = (n <= 512) ? convolve_fast(scale, ylog_array, n) : convolve(Ylog, n, *(psuedoInverses[scale]));
+        q::Matrices::Matrix_mc B = (n <= 512) ? convolve_static(scale, ylog_array, n) : convolve_dynamic(scale, Ylog.elements, n);
         validateRegressions(B, Y, Ylog, df, scale, validRegressions);
       } // end for scale loop
       mergeRegressionsOverScales(validRegressions, Ylog, Y, df);
@@ -364,7 +365,7 @@ namespace q
                 right_limit - i + 1,       // X_row_1
                 area,                      // peak area
                 uncertainty_height,        // uncertainty of the peak height
-                uncertainty_area          // uncertainty of the peak area
+                uncertainty_area           // uncertainty of the peak area
                 ));
       } // end for loop
       // early return if no or only one valid peak
@@ -944,7 +945,7 @@ namespace q
         const float apexToEdge,
         double &uncertainty_height) const
     {
-      float Jacobian_height[4]; // Jacobian matrix for the height
+      float Jacobian_height[4];           // Jacobian matrix for the height
       Jacobian_height[0] = 1.f;           // height;
       Jacobian_height[1] = apex_position; // apex_position * height;
       if (apex_position < 0)
@@ -965,12 +966,12 @@ namespace q
       }
 
       // check if the peak height is significantly greater than edge signal
-      
+
       float edge_position = (apex_position < 0) // position of the egde not on the same side like the peak apex
-      ? // apex on the left
-       (valley_position != 0) ? valley_position : static_cast<float>(-scale)
-      : // apex on the right
-        (valley_position != 0) ? valley_position : static_cast<float>(scale);
+                                ?               // apex on the left
+                                (valley_position != 0) ? valley_position : static_cast<float>(-scale)
+                                : // apex on the right
+                                (valley_position != 0) ? valley_position : static_cast<float>(scale);
 
       Jacobian_height[0] = 0.f;            // adjust for uncertainty calculation of apex to edge ratio
       Jacobian_height[1] -= edge_position; // adjust for uncertainty calculation of apex to edge ratio
@@ -1333,6 +1334,134 @@ namespace q
 #pragma endregion info
 
 #pragma region "convolve regression"
+
+    q::Matrices::Matrix_mc
+    qPeaks::convolve_static(
+        const size_t scale,
+        const float (&vec)[512],
+        const size_t n)
+    {
+      if (n < 2 * scale + 1)
+      {
+        throw std::invalid_argument("n must be greater or equal to 2 * scale + 1");
+      }
+
+      alignas(16) __m128 result[512];
+      alignas(16) __m128 products[512];
+      convolve_SIMD(scale, vec, n, result, products, 512);
+
+      q::Matrices::Matrix_mc resultMatrix(4, n - 2 * scale);
+      for (size_t i = 0; i < n - 2 * scale; i++)
+      {
+        alignas(16) float temp[4];
+        _mm_store_ps(temp, result[i]);
+        resultMatrix(0, i) = temp[0];
+        resultMatrix(1, i) = -temp[1];
+        resultMatrix(2, i) = temp[3];
+        resultMatrix(3, i) = temp[2];
+      }
+
+      return resultMatrix;
+    }
+
+    q::Matrices::Matrix_mc
+    qPeaks::convolve_dynamic(
+        const size_t scale,
+        const float *vec,
+        const size_t n)
+    {
+      if (n < 2 * scale + 1)
+      {
+        throw std::invalid_argument("n must be greater or equal to 2 * scale + 1");
+      }
+
+      std::vector<__m128> result(n - 2 * scale);
+      std::vector<__m128> products(n);
+      convolve_SIMD(scale, vec, n, result.data(), products.data(), n);
+
+      q::Matrices::Matrix_mc resultMatrix(4, n - 2 * scale);
+      for (size_t i = 0; i < n - 2 * scale; i++)
+      {
+        alignas(16) float temp[4];
+        _mm_store_ps(temp, result[i]);
+        resultMatrix(0, i) = temp[0];
+        resultMatrix(1, i) = -temp[1];
+        resultMatrix(2, i) = temp[3];
+        resultMatrix(3, i) = temp[2];
+      }
+
+      return resultMatrix;
+    }
+
+    void
+    qPeaks::convolve_SIMD(
+        const size_t scale,
+        const float *vec,
+        const size_t n,
+        __m128 *result,
+        __m128 *products,
+        const size_t buffer_size)
+    {
+      size_t k = 2 * scale + 1;
+      size_t n_segments = n - k + 1;
+      size_t centerpoint = k / 2;
+
+      for (size_t i = 0; i < n_segments; ++i)
+      {
+        result[i] = _mm_setzero_ps();
+      }
+
+      for (size_t i = 0; i < n; ++i)
+      {
+        products[i] = _mm_setzero_ps();
+      }
+
+      alignas(16) __m128 kernel[3];
+      kernel[0] = _mm_set_ps(invArray[scale][1], invArray[scale][1], 0.0f, invArray[scale][0]);
+      kernel[1] = _mm_set_ps(invArray[scale][3] - invArray[scale][5], -invArray[scale][3] - invArray[scale][4], -invArray[scale][2] - invArray[scale][3], -invArray[scale][1]);
+      kernel[2] = _mm_set_ps(2.f * invArray[scale][5], 2.f * invArray[scale][4], 2.f * invArray[scale][3], 2.f * invArray[scale][1]);
+
+#pragma GCC ivdep
+#pragma GCC unroll 8
+      for (size_t i = 0; i < n_segments; i++)
+      {
+        __m128 vec_values = _mm_set1_ps(vec[i + centerpoint]);
+        __m128 result_values = _mm_mul_ps(vec_values, kernel[0]);
+        result[i] = _mm_add_ps(result[i], result_values);
+      }
+
+      for (size_t i = 1; i < scale + 1; i++)
+      {
+        int u = 0;
+        kernel[1] = _mm_add_ps(kernel[1], kernel[2]);
+        kernel[0] = _mm_add_ps(kernel[0], kernel[1]);
+
+#pragma GCC ivdep
+#pragma GCC unroll 8
+        for (size_t j = scale - i; j < (n - scale + i); j++)
+        {
+          __m128 vec_values = _mm_set1_ps(vec[j]);
+          products[u] = _mm_mul_ps(vec_values, kernel[0]);
+          u++;
+        }
+
+#pragma GCC ivdep
+#pragma GCC unroll 8
+        for (size_t j = 0; j < n_segments; j++)
+        {
+          if (2 * i + j >= buffer_size)
+          {
+            throw std::out_of_range("Index out of range for products array: n=" + std::to_string(n) + " i=" + std::to_string(i) + " j=" + std::to_string(j));
+          }
+          __m128 products_temp = _mm_permute_ps(products[j], 0b10110100);
+          __m128 sign_flip = _mm_set_ps(1.0f, 1.0f, -1.0f, 1.0f);
+          products_temp = _mm_mul_ps(products_temp, sign_flip);
+          products_temp = _mm_add_ps(products_temp, products[2 * i + j]);
+          result[j] = _mm_add_ps(result[j], products_temp);
+        }
+      }
+    }
+
     q::Matrices::Matrix_mc
     qPeaks::convolve_fast(
         const size_t scale,
@@ -1348,8 +1477,8 @@ namespace q
       size_t n_segments = n - k + 1;
       size_t centerpoint = k / 2;
 
-      alignas(16) __m128 result[n_segments]; // a register that stores n_segments x 4 regression coefficients (b0, b1, b2, b3)
-      alignas(16) __m128 products[512];      // a register that stores 512 x 4 products
+      alignas(16) __m128 result[512];   // a register that stores n_segments x 4 regression coefficients (b0, b1, b2, b3)
+      alignas(16) __m128 products[512]; // a register that stores 512 x 4 products
       for (size_t i = 0; i < n_segments; ++i)
       { // initialize result to zero
         result[i] = _mm_setzero_ps();

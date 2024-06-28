@@ -375,6 +375,27 @@ namespace q
             createInverseAndPseudoInverse(const q::Matrices::Matrix &X);
 
             q::Matrices::Matrix_mc
+            convolve_static(
+                const size_t scale, 
+                const float (&vec)[512], 
+                const size_t n);
+
+            q::Matrices::Matrix_mc
+            convolve_dynamic(
+                const size_t scale, 
+                const float* vec, 
+                const size_t n);
+
+            void 
+            convolve_SIMD(
+                const size_t scale, 
+                const float* vec, 
+                const size_t n, 
+                __m128* result, 
+                __m128* products, 
+                const size_t buffer_size);
+
+            q::Matrices::Matrix_mc
             convolve_fast(
                 const size_t scale,
                 const float (&vec)[512],

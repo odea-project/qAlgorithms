@@ -209,20 +209,20 @@ namespace q
     inverseLowerTriangle(
         const q::Matrices::Matrix &A);
 
-    /**
-     * @brief Convolution of a vector with a kernel matrix
-     * @details This function takes a vector and a kernel matrix as input and returns a new matrix that is the result of convolving the input vector with the kernel matrix.
-     *
-     * @param vec : array of doubles* stored in the vector class
-     * @param n : size of the array
-     * @param kernel : Matrix
-     * @return Matrix
-     */
-    q::Matrices::Matrix_mc
-    convolve(
-        const q::Matrices::Vector &vec,
-        const size_t n,
-        const q::Matrices::Matrix &kernel);
+    // /**
+    //  * @brief Convolution of a vector with a kernel matrix
+    //  * @details This function takes a vector and a kernel matrix as input and returns a new matrix that is the result of convolving the input vector with the kernel matrix.
+    //  *
+    //  * @param vec : array of doubles* stored in the vector class
+    //  * @param n : size of the array
+    //  * @param kernel : Matrix
+    //  * @return Matrix
+    //  */
+    // q::Matrices::Matrix_mc
+    // convolve(
+    //     const q::Matrices::Vector &vec,
+    //     const size_t n,
+    //     const q::Matrices::Matrix &kernel);
 
     /**
      * @brief Calculate the dot product of the design matrix and the beta vector, i.e., X * beta(:, idx)
