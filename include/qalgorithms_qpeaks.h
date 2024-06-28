@@ -284,6 +284,27 @@ namespace q
                 const int scale) const;
 
             /**
+             * @brief Checks if peak maximum is twice as high as the signal at the edge of the regression window.
+             * @details The test is used as a fast pre-test for signal-to-noise ratio which will be calculated later. However, s/n siginificance is time consuming due to MSE calculation. The reference value of two is used due to t = (apex/edge - 2) / (apex/edge * sqrt()). If apex is equal or less than two times the edge, the t value is less than zero, which means that SNR cannot be significant.
+             * 
+             * @param apex_position 
+             * @param scale 
+             * @param index_loop
+             * @param Y
+             * @param apexToEdge : The ratio of the peak maximum to the signal at the edge of the regression window. This value is calculated by the function.
+             * @return true 
+             * @return false 
+             */
+            bool
+            isValidApexToEdge(
+                const double apex_position,
+                const int scale,
+                const int index_loop, 
+                const q::Matrices::Vector &Y,
+                float &apexToEdge
+            ) const;
+
+            /**
              * @brief Check if the quadratic term of the regression model is valid using t-test.
              * @param B : Matrix of regression coefficients
              * @param index : Index of the regression window
@@ -320,8 +341,9 @@ namespace q
                 const size_t index,
                 const int scale,
                 const double apex_position,
+                const double valley_position,
                 const int df_sum,
-                double &height,
+                const float apexToEdge,
                 double &uncertainty_height,
                 double &uncertainty_position) const;
 

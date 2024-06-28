@@ -287,6 +287,16 @@ namespace q
         }
 
         /*
+          Apex to Edge Filter:
+          This block of code implements the apex to edge filter. It calculates the ratio of the apex signal to the edge signal and ensures that the ratio is greater than 2. This is a pre-filter for later signal-to-noise ratio checkups.
+        */
+        float apexToEdge = 0.f;
+        if (!isValidApexToEdge(apex_position, scale, static_cast<int>(i), Y, apexToEdge))
+        {
+          continue; // invalid apex to edge ratio
+        }
+
+        /*
           Quadratic Term Filter:
           This block of code implements the quadratic term filter. It calculates the mean squared error (MSE) between the predicted and actual values. Then it calculates the t-value for the quadratic term. If the t-value is less than the corresponding value in the tValuesArray, the quadratic term is considered statistically insignificant, and the loop continues to the next iteration.
         */
@@ -304,10 +314,10 @@ namespace q
         */
         // Matrix C = (*inverseMatrices[scale]) * mse; // variance-covariance matrix of the coefficients
         q::Matrices::Matrix_mc_4x4 C = multiplyScalarTo4x4Matrix(mse, *inverseMatrices[scale]); // variance-covariance matrix of the coefficients
-        double height = 0.0; //@todo: height is not used yet and can be removed
-        double uncertainty_height = 0.0; // at this point without height, i.e., to get the real uncertainty multiply with height later. This is done to avoid exp function at this point
+        double height = 0.0;                                                                    //@todo: height is not used yet and can be removed
+        double uncertainty_height = 0.0;                                                        // at this point without height, i.e., to get the real uncertainty multiply with height later. This is done to avoid exp function at this point
         double uncertainty_position = 0.0;
-        if (!isValidPeakHeight(B, mse, i, scale, apex_position, df_sum, height, uncertainty_height, uncertainty_position))
+        if (!isValidPeakHeight(B, mse, i, scale, apex_position, df_sum, apexToEdge, height, uncertainty_height, uncertainty_position))
         {
           continue; // statistical insignificance of the height
         }
@@ -827,22 +837,22 @@ namespace q
       case 7:                              // Case 1a: apex left
         apex_position = -B1 / 2 / B2;      // is negative
         valley_position = 0;               // no valley point
-        return apex_position > -scale + 1; // scale +1: prevent appex position to be at the edge of the data
+        return apex_position > -scale + 1; // scale +1: prevent apex position to be at the edge of the data
 
       case 3:                             // Case 1b: apex right
         apex_position = -B1 / 2 / B3;     // is positive
         valley_position = 0;              // no valley point
-        return apex_position < scale - 1; // scale -1: prevent appex position to be at the edge of the data
+        return apex_position < scale - 1; // scale -1: prevent apex position to be at the edge of the data
 
       case 6:                                                                     // Case 2a: apex left | valley right
         apex_position = -B1 / 2 / B2;                                             // is negative
         valley_position = -B1 / 2 / B3;                                           // is positive
-        return apex_position > -scale + 1 && valley_position - apex_position > 2; // scale +1: prevent appex position to be at the edge of the data
+        return apex_position > -scale + 1 && valley_position - apex_position > 2; // scale +1: prevent apex position to be at the edge of the data
 
       case 1:                                                                    // Case 2b: apex right | valley left
         apex_position = -B1 / 2 / B3;                                            // is positive
         valley_position = -B1 / 2 / B2;                                          // is negative
-        return apex_position < scale - 1 && apex_position - valley_position > 2; // scale -1: prevent appex position to be at the edge of the data
+        return apex_position < scale - 1 && apex_position - valley_position > 2; // scale -1: prevent apex position to be at the edge of the data
 
       default:
         return false; // invalid case
@@ -896,9 +906,29 @@ namespace q
     }
 #pragma endregion "multiplyVecMatrixVecTranspose"
 
-#pragma region isValidQuadraticTerm
+#pragma region "isValidApexToEdge"
     bool
-    qPeaks::isValidQuadraticTerm(
+    qPeaks::isValidApexToEdge(
+        const double apex_position,
+        const int scale,
+        const int index_loop,
+        const q::Matrices::Vector &Y,
+        float &apexToEdge) const
+    {
+      int idx_apex = (int)std::round(apex_position) + scale + index_loop; // index of the apex
+      int idx_left = index_loop;                                          // index of the left edge
+      int idx_right = 2 * scale + index_loop;                             // index of the right edge
+      float apex = Y[idx_apex];                                           // apex value
+      float left = Y[idx_left];                                           // left edge value
+      float right = Y[idx_right];                                         // right edge value
+      apexToEdge = (left < right) ? (apex / left) : (apex / right);       // difference between the apex and the edge
+      return apexToEdge > 2;                                              // return true if the ratio is greater than 2
+    }
+
+#pragma endregion "isValidApexToEdge"
+
+#pragma region isValidQuadraticTerm
+    bool qPeaks::isValidQuadraticTerm(
         const q::Matrices::Matrix_mc &B,
         const size_t index,
         const double inverseMatrix_2_2,
@@ -921,25 +951,25 @@ namespace q
         const size_t index,
         const int scale,
         const double apex_position,
+        const double valley_position,
         const int df_sum,
-        double &height,
+        const float apexToEdge,
         double &uncertainty_height,
         double &uncertainty_position) const
     {
-      const float b0 = B(0, index);
       const float b1 = B(1, index);
       const float b2 = B(2, index);
       const float b3 = B(3, index);
       float Jacobian_height[4]; // Jacobian matrix for the height
       // height = std::exp(b0 + apex_position * b1 * .5);
-      Jacobian_height[0] = 1.f; //height;
-      Jacobian_height[1] = apex_position;//apex_position * height;
-      float Jacobian_position[4]; // Jacobian matrix for the position
+      Jacobian_height[0] = 1.f;           // height;
+      Jacobian_height[1] = apex_position; // apex_position * height;
+      float Jacobian_position[4];         // Jacobian matrix for the position
       Jacobian_position[0] = 0;
       Jacobian_position[1] = apex_position / b1;
       if (apex_position < 0)
       {
-        Jacobian_height[2] = apex_position * apex_position;//apex_position * Jacobian_height[1];
+        Jacobian_height[2] = apex_position * apex_position; // apex_position * Jacobian_height[1];
         Jacobian_height[3] = 0;
         Jacobian_position[2] = -apex_position / b2;
         Jacobian_position[3] = 0;
@@ -947,7 +977,7 @@ namespace q
       else
       {
         Jacobian_height[2] = 0;
-        Jacobian_height[3] = apex_position * apex_position;//apex_position * Jacobian_height[1];
+        Jacobian_height[3] = apex_position * apex_position; // apex_position * Jacobian_height[1];
         Jacobian_position[2] = 0;
         Jacobian_position[3] = -apex_position / b3;
       }
@@ -959,12 +989,11 @@ namespace q
         return false;
       }
 
-      // check if the peak height is significantly greater than base signal
-      const float B1_2_B2 = b1 / 2 / b2;
-      const float B1_2_B3 = b1 / 2 / b3;
-      float x_left = -scale;
-      float x_right = scale;
-
+      // check if the peak height is significantly greater than edge signal
+      const float B1_2_B2 = b1 / 2 / b2; // left extreme point (valley point or maximum point)
+      const float B1_2_B3 = b1 / 2 / b3; // right extreme point (valley point or maximum point)
+      float x_left = -scale;             // left limit due to the window
+      float x_right = scale;             // right limit due to the window
       // adjust x limits
       if (b2 > 0 && -B1_2_B2 > -scale)
       { // valley point is inside the window, use valley point as limit
@@ -974,9 +1003,28 @@ namespace q
       { // valley point is inside the window, use valley point as limit
         x_right = -B1_2_B3;
       }
-      float base_signal = (std::exp(b0 + b1 * x_left + b2 * x_left * x_left) + std::exp(b0 + b1 * x_right + b3 * x_right * x_right)) * .5;
+      float edge_position = (apex_position < 0) // position of the egde not on the same side like the peak apex
+      ? // apex on the left
+       (valley_position != 0) ? valley_position : x_right
+      : // apex on the right
+        (valley_position != 0) ? valley_position : x_left;
 
-      return (height - 2 * base_signal) / uncertainty_height > tValuesArray[df_sum - 5];
+      Jacobian_height[0] = 0.f;            // adjust for uncertainty calculation of apex to edge ratio
+      Jacobian_height[1] -= edge_position; // adjust for uncertainty calculation of apex to edge ratio
+      if (apex_position < 0)
+      {
+        Jacobian_height[2] -= edge_position * edge_position; // adjust for uncertainty calculation of apex to edge ratio
+      }
+      else
+      {
+        Jacobian_height[3] -= edge_position * edge_position; // adjust for uncertainty calculation of apex to edge ratio
+      }
+      double uncertainty_apexToEdge = std::sqrt(mse * multiplyVecMatrixVecTranspose(Jacobian_height, scale));
+      return (apexToEdge - 2) / (apexToEdge * uncertainty_apexToEdge) > tValuesArray[df_sum - 5];
+
+      // float base_signal = (std::exp(b0 + b1 * x_left + b2 * x_left * x_left) + std::exp(b0 + b1 * x_right + b3 * x_right * x_right)) * .5;
+
+      // return (height - 2 * base_signal) / uncertainty_height > tValuesArray[df_sum - 5];
     }
 #pragma endregion isValidPeakHeight
 
@@ -1342,12 +1390,14 @@ namespace q
       size_t centerpoint = k / 2;
 
       alignas(16) __m128 result[n_segments]; // a register that stores n_segments x 4 regression coefficients (b0, b1, b2, b3)
-      alignas(16) __m128 products[512]; // a register that stores 512 x 4 products
-      for (size_t i = 0; i < n_segments; ++i) { // initialize result to zero
+      alignas(16) __m128 products[512];      // a register that stores 512 x 4 products
+      for (size_t i = 0; i < n_segments; ++i)
+      { // initialize result to zero
         result[i] = _mm_setzero_ps();
       }
 
-      for (size_t i = 0; i < n; ++i) { // initialize products to zero
+      for (size_t i = 0; i < n; ++i)
+      { // initialize products to zero
         products[i] = _mm_setzero_ps();
       }
       // create an Array of three SIMD registers for the kernel values
@@ -1355,14 +1405,14 @@ namespace q
       kernel[0] = _mm_set_ps(
           invArray[scale][1],  // kernel_row 3
           invArray[scale][1],  // kernel_row 2
-          0.0f,                 // kernel_row 1
+          0.0f,                // kernel_row 1
           invArray[scale][0]); // kernel_row 0
 
       kernel[1] = _mm_set_ps(
-          invArray[scale][3] - invArray[scale][5], // kernel_row 3
+          invArray[scale][3] - invArray[scale][5],  // kernel_row 3
           -invArray[scale][3] - invArray[scale][4], // kernel_row 2
           -invArray[scale][2] - invArray[scale][3], // kernel_row 1
-          -invArray[scale][1]); // kernel_row 0
+          -invArray[scale][1]);                     // kernel_row 0
 
       kernel[2] = _mm_set_ps(
           2.f * invArray[scale][5],  // kernel_row 3
@@ -1371,14 +1421,13 @@ namespace q
           2.f * invArray[scale][1]); // kernel_row 0
 
 // calculation of the center terms
-#pragma GCC ivdep // ignore dependencies between iterations of the loop
+#pragma GCC ivdep    // ignore dependencies between iterations of the loop
 #pragma GCC unroll 8 // unroll the loop 8 times
       for (size_t i = 0; i < n_segments; i++)
       {
-        __m128 vec_values = _mm_set1_ps(vec[i+centerpoint]); // load a value from vec into a SIMD register using all 4 lanes
+        __m128 vec_values = _mm_set1_ps(vec[i + centerpoint]);    // load a value from vec into a SIMD register using all 4 lanes
         __m128 result_values = _mm_mul_ps(vec_values, kernel[0]); // multiply the vec value with the kernel
-        result[i] = _mm_add_ps(result[i], result_values); // add the result to the result register
-
+        result[i] = _mm_add_ps(result[i], result_values);         // add the result to the result register
       }
       // calculation from center to right (excluding center)
       for (size_t i = 1; i < scale + 1; i++)
@@ -1389,16 +1438,16 @@ namespace q
         // update kernel values
         kernel[0] = _mm_add_ps(kernel[0], kernel[1]);
 
-#pragma GCC ivdep // ignore dependencies between iterations of the loop
+#pragma GCC ivdep    // ignore dependencies between iterations of the loop
 #pragma GCC unroll 8 // unroll the loop 8 times
         for (size_t j = scale - i; j < (n - scale + i); j++)
         {
-          __m128 vec_values = _mm_set1_ps(vec[j]); // load a value from vec into a SIMD register using all 4 lanes
+          __m128 vec_values = _mm_set1_ps(vec[j]);         // load a value from vec into a SIMD register using all 4 lanes
           products[u] = _mm_mul_ps(vec_values, kernel[0]); // multiply the vec value with the kernel and store in products
           u++;
         }
 
-#pragma GCC ivdep // ignore dependencies between iterations of the loop
+#pragma GCC ivdep    // ignore dependencies between iterations of the loop
 #pragma GCC unroll 8 // unroll the loop 8 times
         for (size_t j = 0; j < n_segments; j++)
         {
