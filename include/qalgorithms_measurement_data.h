@@ -31,7 +31,7 @@ namespace q
             virtual ~MeasurementData(){};
 
             // methods
-            virtual void readCSV(std::string filename, int rowStart, int rowEnd,
+            virtual bool readCSV(std::string filename, int rowStart, int rowEnd,
                                  int colStart, int colEnd, char separator,
                                  std::vector<DataType::DataField> variableTypes) = 0;
 

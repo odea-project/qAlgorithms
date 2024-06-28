@@ -19,7 +19,11 @@
 // #include <regex>
 #include <omp.h>
 #include <filesystem> // printing absolute path in case read fails
+
+
 namespace q
+{
+namespace qBinning
 {
     int maxdist;
     std::vector<qCentroid *> outOfBins; // this vector contains all points which are not included in bins
@@ -202,9 +206,9 @@ namespace q
 
         // Assemble new starting bin
         Bin startingRebin;
-        startingRebin.pointsInBin.reserve(q::outOfBins.size() + binsWithHotEnds.size() * 16);                        // @todo test the average size for non-warburg data
-        startingRebin.pointsInBin.insert(startingRebin.pointsInBin.end(), q::outOfBins.begin(), q::outOfBins.end()); // copy outofbins into new bin
-        q::outOfBins.resize(0);                                                                                      // @todo is it sensible to leave as much space free?
+        startingRebin.pointsInBin.reserve(outOfBins.size() + binsWithHotEnds.size() * 16);                        // @todo test the average size for non-warburg data
+        startingRebin.pointsInBin.insert(startingRebin.pointsInBin.end(), outOfBins.begin(), outOfBins.end()); // copy outofbins into new bin
+        outOfBins.resize(0);                                                                                      // @todo is it sensible to leave as much space free?
         // copy old pointsInBin for each selected bin
         for (size_t i : binsWithHotEnds)
         {
@@ -212,10 +216,10 @@ namespace q
         }
         binDeque.push_back(startingRebin);
         // call binning wrapper with a vector other than finishedbins as write target
-        this->subsetBins(dimensions, q::maxdist, true);
+        this->subsetBins(dimensions, maxdist, true);
 
         // calculate DQS on new bins
-        this->assignDQSB(rawdata, q::maxdist, true);
+        this->assignDQSB(rawdata, maxdist, true);
         // re-add the newly constructed bins to finishedBins
         if (redoneBins.size() < binsWithHotEnds.size()) // there will be gaps left in finsihedBins that must be closed
         {
@@ -256,7 +260,7 @@ namespace q
         output_sum << "ID,errorcode,size,mean_mz,median_mz,stdev_mz,mean_scans,DQSB_base,DQSB_scaled,DQSB_worst,DQSC_min,mean_error\n";
         for (size_t i = 0; i < redoneBins.size(); i++)
         {
-            const q::SummaryOutput res = redoneBins[i].summariseBin();
+            const SummaryOutput res = redoneBins[i].summariseBin();
 
             indices.push_back(i); // save these bins for printing
             char buffer[256];
@@ -303,7 +307,7 @@ namespace q
         file_out << output.str();
     }
 
-    const std::vector<EIC> BinContainer::returnBins()
+    std::vector<EIC> BinContainer::returnBins()
     {
         std::vector<EIC> finalBins(finishedBins.size());
         for (size_t i = 0; i < finishedBins.size(); i++)
@@ -325,7 +329,7 @@ namespace q
         output_sum << "ID,errorcode,size,mean_mz,median_mz,stdev_mz,mean_scans,DQSB_base,DQSB_scaled,DQSB_worst,DQSC_min,mean_error\n";
         for (size_t i = 0; i < finishedBins.size(); i++)
         {
-            const q::SummaryOutput res = finishedBins[i].summariseBin();
+            const SummaryOutput res = finishedBins[i].summariseBin();
             if (bool(mask & res.errorcode))
             {
                 indices.push_back(i); // save these bins for printing
@@ -797,7 +801,7 @@ namespace q
                              meanDQS_scaled, worstCentroid, meanCenError}; // @todo remove worst dqs from output
     }
 
-    const EIC Bin::createEIC()
+    EIC Bin::createEIC()
     {
         const size_t binsize = pointsInBin.size();
         std::vector<DatapointEIC> tmp_pointsInEIC;
@@ -818,7 +822,7 @@ namespace q
             tmp_pointsInEIC.push_back(F);
         }
         // medianScan is determined with the DQSB_base
-        const EIC returnEIC = {
+        EIC returnEIC = {
             tmp_pointsInEIC,
             tmp_meanDQS / binsize,
             tmp_meanMZ / binsize,
@@ -900,7 +904,7 @@ namespace q
 
 #pragma endregion "Functions"
 
-    const std::vector<EIC> performQbinning(CentroidedData centroidedData, int inputMaxdist = 6, bool silent = false)
+    std::vector<EIC> performQbinning(CentroidedData centroidedData, int inputMaxdist = 6, bool silent = false)
     {
         std::streambuf *old = std::cout.rdbuf(); // save standard out config
         std::stringstream ss;
@@ -912,18 +916,18 @@ namespace q
 
         std::cout << "starting binning process...\n";
 
-        q::maxdist = inputMaxdist;
-        q::duplicatesTotal = 0;
-        q::BinContainer activeBins;
+        maxdist = inputMaxdist;
+        duplicatesTotal = 0;
+        BinContainer activeBins;
         activeBins.makeFirstBin(&centroidedData);
-        std::vector<int> measurementDimensions = {q::SubsetMethods::mz, q::SubsetMethods::scans}; // at least one element must be terminator
-        activeBins.subsetBins(measurementDimensions, q::maxdist, false);
+        std::vector<int> measurementDimensions = {SubsetMethods::mz, SubsetMethods::scans}; // at least one element must be terminator
+        activeBins.subsetBins(measurementDimensions, maxdist, false);
 
-        std::cout << "Total duplicates: " << q::duplicatesTotal << "\n--\ncalculating DQSBs...\n";
+        std::cout << "Total duplicates: " << duplicatesTotal << "\n--\ncalculating DQSBs...\n";
 
         // calculate data quality scores
-        q::scaleDistancesForDQS_gauss(inputMaxdist); // this sets q::scalarForMOD to the correct scaling so that at the distance in scans == maxdist the curve encloses 99% of its area
-        activeBins.assignDQSB(&centroidedData, q::maxdist, false);
+        scaleDistancesForDQS_gauss(inputMaxdist); // this sets q::scalarForMOD to the correct scaling so that at the distance in scans == maxdist the curve encloses 99% of its area
+        activeBins.assignDQSB(&centroidedData, maxdist, false);
 
         // @todo add a way for selection / bin summary to be given upstream
 
@@ -937,15 +941,15 @@ namespace q
     }
 
 }
-
+}
 int notmain()
 {
     std::cout << "starting...\n";
 
-    q::duplicatesTotal = 0;
+    q::qBinning::duplicatesTotal = 0;
 
     int inputMaxdist = 6;
-    q::maxdist = inputMaxdist;
+    q::qBinning::maxdist = inputMaxdist;
 
     std::string filename_input = "../../rawdata/control_bins.csv";
 
@@ -957,24 +961,24 @@ int notmain()
         exit(101);
     }
 
-    q::CentroidedData testdata;
+    q::qBinning::CentroidedData testdata;
     // path to data, mz, centroid error, RT, scan number, intensity, DQS centroid, control DQS Bin
-    if (!q::readcsv(&testdata, filename_input, 0, 1, 2, 3, 4, 6)) // ../../rawdata/control_bins.csv reduced_DQSdiff
+    if (!q::qBinning::readcsv(&testdata, filename_input, 0, 1, 2, 3, 4, 6)) // ../../rawdata/control_bins.csv reduced_DQSdiff
     {
         exit(101); // error codes: 1.. = reading / writing failed, 2.. = improper input,
     }
 
-    q::BinContainer testcontainer;
+    q::qBinning::BinContainer testcontainer;
     testcontainer.makeFirstBin(&testdata);
-    std::vector<int> measurementDimensions = {q::SubsetMethods::mz, q::SubsetMethods::scans}; // at least one element must be terminator
+    std::vector<int> measurementDimensions = {q::qBinning::SubsetMethods::mz, q::qBinning::SubsetMethods::scans}; // at least one element must be terminator
     testcontainer.subsetBins(measurementDimensions, inputMaxdist, false);                     // add value after maxdist for error in ppm instead of centroid error
-    std::cout << "Total duplicates: " << q::duplicatesTotal << "\n--\ncalculating DQSBs...\n";
+    std::cout << "Total duplicates: " << q::qBinning::duplicatesTotal << "\n--\ncalculating DQSBs...\n";
 
     // calculate data quality scores
-    q::scaleDistancesForDQS_gauss(inputMaxdist);              // this sets q::scalarForMOD to the correct scaling so that at the distance in scans == maxdist the curve encloses 99% of its area
+    q::qBinning::scaleDistancesForDQS_gauss(inputMaxdist);              // this sets q::scalarForMOD to the correct scaling so that at the distance in scans == maxdist the curve encloses 99% of its area
     testcontainer.assignDQSB(&testdata, inputMaxdist, false); // int = max dist in scans
 
-    testcontainer.redoBinningIfTooclose(measurementDimensions, &testdata, q::outOfBins, q::maxdist);
+    testcontainer.redoBinningIfTooclose(measurementDimensions, &testdata, q::qBinning::outOfBins, q::qBinning::maxdist);
 
     // print bin selection
     // testcontainer.printSelectBins(std::byte{0b00000110}, true, "../.."); // one bit per test

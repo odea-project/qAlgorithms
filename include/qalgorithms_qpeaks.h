@@ -46,7 +46,12 @@ namespace q
              * @param dataVec
              * @return @todo this is unclear
              */
-            std::vector<std::vector<std::unique_ptr<DataType::Peak>>> findPeaks(const q::MeasurementData::varDataType &dataVec);
+            std::vector<std::vector<std::unique_ptr<q::DataType::Peak>>> findPeaks(const q::MeasurementData::varDataType &dataVec);
+
+            std::vector<std::vector<std::unique_ptr<DataType::Peak>>> createPeakList(
+                std::vector<std::vector<std::unique_ptr<DataType::Peak>>> &allPeaks);
+
+            // q::qBinning::CentroidedData passToBinning(const std::vector<std::vector<std::unique_ptr<q::DataType::Peak>>> &all_peaks);
 
             // export
             void printAllPeaks(
@@ -182,9 +187,6 @@ namespace q
                 const q::Matrices::Vector &Y,
                 const q::Matrices::Vector &X,
                 const int scanNumber);
-
-            std::vector<std::vector<std::unique_ptr<DataType::Peak>>> createPeakList(
-                std::vector<std::vector<std::unique_ptr<DataType::Peak>>> &allPeaks);
 
             double calcSSE(const q::Matrices::Vector &yhat, const q::Matrices::Vector &y, const double *y_start = nullptr) const;
 

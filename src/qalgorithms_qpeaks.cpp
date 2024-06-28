@@ -4,6 +4,7 @@
 #include "qalgorithms_qpeaks.h"
 #include "qalgorithms_matrix.h"
 #include "qalgorithms_utils.h"
+#include "qAlgorithms_qbin.h"
 
 #include <algorithm>
 #include <variant> // std::visit
@@ -127,7 +128,7 @@ namespace q
 #pragma endregion "initialize"
 
 #pragma region findPeaks
-        std::vector<std::vector<std::unique_ptr<DataType::Peak>>>
+        std::vector<std::vector<std::unique_ptr<q::DataType::Peak>>>
         qPeaks::findPeaks(
             const q::MeasurementData::varDataType &dataVec)
         {
@@ -137,7 +138,7 @@ namespace q
                 {
                 all_peaks.resize(arg->size());
                 // iterate over the map of varDataType datatype objects
-// #pragma omp parallel for // use parallel for loop to iterate over the dataVec
+#pragma omp parallel for // use parallel for loop to iterate over the dataVec
                 for (size_t i = 0; i < arg->size(); i++)
           {
             // de-reference the unique pointer of the object
@@ -171,9 +172,16 @@ namespace q
         ; },
                 dataVec); // end visit
             // create the sorted peak list
-            return createPeakList(all_peaks);
-            return all_peaks; // @todo why is the second return here?
-        } // end findPeaks
+
+            return all_peaks;
+        }
+
+        // function to pass peak table into qbinning as a centroidedData object 
+        // q::qBinning::CentroidedData qPeaks::passToBinning(const std::vector<std::vector<std::unique_ptr<q::DataType::Peak>>> &all_peaks){
+
+        // }
+
+
 #pragma endregion findPeaks
 
 #pragma region runningRegression
