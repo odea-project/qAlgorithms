@@ -116,14 +116,9 @@ namespace q
                 double right_limit;    // right limit of the peak regression window
                 int X_row_0;           // start of the cutted Deisgn Matrix
                 int X_row_1;           // end of the cutted Design Matrix
-                // peak properties
-                double dqs;                  // data quality score
-                double height;               // height of the peak
                 double area;                 // area of the peak
                 double uncertainty_area;     // uncertainty of the area
                 double uncertainty_height;   // uncertainty of the height
-                double uncertainty_position; // uncertainty of the position
-
                 validRegression(
                     int index_x0,
                     int scale,
@@ -136,12 +131,9 @@ namespace q
                     double right_limit = 0.0,
                     int X_row_0 = 0,
                     int X_row_1 = 0,
-                    double dqs = 0.0,
-                    double height = 0.0,
                     double area = 0.0,
                     double uncertainty_area = 0.0,
-                    double uncertainty_height = 0.0,
-                    double uncertainty_position = 0.0)
+                    double uncertainty_height = 0.0)
                     : index_x0(index_x0),
                       scale(scale),
                       df(df),
@@ -153,12 +145,9 @@ namespace q
                       right_limit(right_limit),
                       X_row_0(X_row_0),
                       X_row_1(X_row_1),
-                      dqs(dqs),
-                      height(height),
                       area(area),
                       uncertainty_area(uncertainty_area),
-                      uncertainty_height(uncertainty_height),
-                      uncertainty_position(uncertainty_position) {}
+                      uncertainty_height(uncertainty_height) {}
             };
 
             // methods
@@ -336,7 +325,6 @@ namespace q
              */
             bool
             isValidPeakHeight(
-                const q::Matrices::Matrix_mc &B,
                 const double mse,
                 const size_t index,
                 const int scale,
@@ -344,8 +332,7 @@ namespace q
                 const double valley_position,
                 const int df_sum,
                 const float apexToEdge,
-                double &uncertainty_height,
-                double &uncertainty_position) const;
+                double &uncertainty_height) const;
 
             /**
              * @brief Check if the peak area and the covered peak area are valid using t-test.

@@ -255,10 +255,7 @@ namespace q
         std::vector<std::unique_ptr<validRegression>> &validRegressions)
     {
       // declare constants
-      // const double inverseMatrix_2_2 = (*(inverseMatrices[scale]))(2, 2); // variance of the quadratic term left side of the peak
-      // const double inverseMatrix_3_3 = (*(inverseMatrices[scale]))(3, 3); // variance of the quadratic term right side of the peak
       const double inverseMatrix_2_2 = invArray[scale][4]; // variance of the quadratic term left side of the peak
-      // const Matrix &X = *(designMatrices[scale]);                         // design matrix
 
       // declare variables
       std::vector<std::unique_ptr<validRegression>> validRegressionsTmp; // temporary vector to store valid regressions <index, apex_position>
@@ -307,17 +304,13 @@ namespace q
         {
           continue; // statistical insignificance of the quadratic term
         }
-
         /*
           Height Filter:
           This block of code implements the height filter. It calculates the height of the peak based on the coefficients matrix B. Then it calculates the uncertainty of the height based on the Jacobian matrix and the variance-covariance matrix of the coefficients. If the height is statistically insignificant, the loop continues to the next iteration.
         */
-        // Matrix C = (*inverseMatrices[scale]) * mse; // variance-covariance matrix of the coefficients
         q::Matrices::Matrix_mc_4x4 C = multiplyScalarTo4x4Matrix(mse, *inverseMatrices[scale]); // variance-covariance matrix of the coefficients
-        double height = 0.0;                                                                    //@todo: height is not used yet and can be removed
         double uncertainty_height = 0.0;                                                        // at this point without height, i.e., to get the real uncertainty multiply with height later. This is done to avoid exp function at this point
-        double uncertainty_position = 0.0;
-        if (!isValidPeakHeight(B, mse, i, scale, apex_position, df_sum, apexToEdge, height, uncertainty_height, uncertainty_position))
+        if (!isValidPeakHeight(mse, i, scale, apex_position, valley_position, df_sum, apexToEdge, uncertainty_height))
         {
           continue; // statistical insignificance of the height
         }
@@ -356,7 +349,6 @@ namespace q
         {
           continue; // degree of freedom less than 5; i.e., less then 5 measured data points
         }
-        double dqs = 1 - std::erf(uncertainty_area / area);
         validRegressionsTmp.push_back(
             std::make_unique<validRegression>(
                 i + scale,                 // index of the center of the window (x==0) in the Y matrix
@@ -370,12 +362,9 @@ namespace q
                 right_limit,               // right_limit
                 left_limit - i,            // X_row_0
                 right_limit - i + 1,       // X_row_1
-                dqs,                       // dqs
-                height,                    // peak height
                 area,                      // peak area
                 uncertainty_height,        // uncertainty of the peak height
-                uncertainty_area,          // uncertainty of the peak area
-                uncertainty_position       // uncertainty of the peak position
+                uncertainty_area          // uncertainty of the peak area
                 ));
       } // end for loop
       // early return if no or only one valid peak
@@ -589,14 +578,14 @@ namespace q
         peaks.push_back(std::make_unique<DataType::Peak>(
             scanNumber,
             apex_position,
-            regression->height));
+            0.)); // height need to be calculated and added here
 
         // add additional information to the peak object
         peaks.back()->area = regression->area;
         peaks.back()->areaUncertainty = regression->uncertainty_area;
         peaks.back()->heightUncertainty = regression->uncertainty_height;
-        peaks.back()->positionUncertainty = regression->uncertainty_position * dx;
-        peaks.back()->dqsPeak = regression->dqs;
+        // peaks.back()->positionUncertainty = regression->uncertainty_position * dx;
+        // peaks.back()->dqsPeak = regression->dqs;
         peaks.back()->beta0 = regression->B[0];
         peaks.back()->beta1 = regression->B[1];
         peaks.back()->beta2 = regression->B[2];
@@ -946,7 +935,6 @@ namespace q
 #pragma region isValidPeakHeight
     bool
     qPeaks::isValidPeakHeight(
-        const q::Matrices::Matrix_mc &B,
         const double mse,
         const size_t index,
         const int scale,
@@ -954,35 +942,22 @@ namespace q
         const double valley_position,
         const int df_sum,
         const float apexToEdge,
-        double &uncertainty_height,
-        double &uncertainty_position) const
+        double &uncertainty_height) const
     {
-      const float b1 = B(1, index);
-      const float b2 = B(2, index);
-      const float b3 = B(3, index);
       float Jacobian_height[4]; // Jacobian matrix for the height
-      // height = std::exp(b0 + apex_position * b1 * .5);
       Jacobian_height[0] = 1.f;           // height;
       Jacobian_height[1] = apex_position; // apex_position * height;
-      float Jacobian_position[4];         // Jacobian matrix for the position
-      Jacobian_position[0] = 0;
-      Jacobian_position[1] = apex_position / b1;
       if (apex_position < 0)
       {
         Jacobian_height[2] = apex_position * apex_position; // apex_position * Jacobian_height[1];
         Jacobian_height[3] = 0;
-        Jacobian_position[2] = -apex_position / b2;
-        Jacobian_position[3] = 0;
       }
       else
       {
         Jacobian_height[2] = 0;
         Jacobian_height[3] = apex_position * apex_position; // apex_position * Jacobian_height[1];
-        Jacobian_position[2] = 0;
-        Jacobian_position[3] = -apex_position / b3;
       }
       uncertainty_height = std::sqrt(mse * multiplyVecMatrixVecTranspose(Jacobian_height, scale)); // at this point without height, i.e., to get the real uncertainty multiply with height later. This is done to avoid exp function at this point
-      uncertainty_position = std::sqrt(mse * multiplyVecMatrixVecTranspose(Jacobian_position, scale));
 
       if (1 / uncertainty_height <= tValuesArray[df_sum - 5]) // statistical significance of the peak height
       {
@@ -990,24 +965,12 @@ namespace q
       }
 
       // check if the peak height is significantly greater than edge signal
-      const float B1_2_B2 = b1 / 2 / b2; // left extreme point (valley point or maximum point)
-      const float B1_2_B3 = b1 / 2 / b3; // right extreme point (valley point or maximum point)
-      float x_left = -scale;             // left limit due to the window
-      float x_right = scale;             // right limit due to the window
-      // adjust x limits
-      if (b2 > 0 && -B1_2_B2 > -scale)
-      { // valley point is inside the window, use valley point as limit
-        x_left = -B1_2_B2;
-      }
-      if (b3 > 0 && -B1_2_B3 < scale)
-      { // valley point is inside the window, use valley point as limit
-        x_right = -B1_2_B3;
-      }
+      
       float edge_position = (apex_position < 0) // position of the egde not on the same side like the peak apex
       ? // apex on the left
-       (valley_position != 0) ? valley_position : x_right
+       (valley_position != 0) ? valley_position : static_cast<float>(-scale)
       : // apex on the right
-        (valley_position != 0) ? valley_position : x_left;
+        (valley_position != 0) ? valley_position : static_cast<float>(scale);
 
       Jacobian_height[0] = 0.f;            // adjust for uncertainty calculation of apex to edge ratio
       Jacobian_height[1] -= edge_position; // adjust for uncertainty calculation of apex to edge ratio
@@ -1021,10 +984,6 @@ namespace q
       }
       double uncertainty_apexToEdge = std::sqrt(mse * multiplyVecMatrixVecTranspose(Jacobian_height, scale));
       return (apexToEdge - 2) / (apexToEdge * uncertainty_apexToEdge) > tValuesArray[df_sum - 5];
-
-      // float base_signal = (std::exp(b0 + b1 * x_left + b2 * x_left * x_left) + std::exp(b0 + b1 * x_right + b3 * x_right * x_right)) * .5;
-
-      // return (height - 2 * base_signal) / uncertainty_height > tValuesArray[df_sum - 5];
     }
 #pragma endregion isValidPeakHeight
 
