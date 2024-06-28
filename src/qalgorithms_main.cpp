@@ -35,7 +35,9 @@ int main()
     q::Algorithms::qPeaks::initialize(); // @todo constexpr
     bool isCSV = false;
 
-    std::string filename_input = "../../rawdata/example_profile.mzML"; // @todo make this a command line argument "../test/test_orbitrap.csv"
+    std::string filename_input = "../../rawdata/example_profile.mzML"; // @todo make this a command line argument
+    // "../../rawdata/example_profile.mzML"
+    // "../test/test_orbitrap.csv"
 
     const std::filesystem::path p = filename_input;
     if (!std::filesystem::exists(p))
@@ -56,15 +58,14 @@ int main()
     {
         sc::MZML data(filename_input);
         fileOK = lcmsData.readStreamCraftMZML(data);
-        std::cout << "\nread in file\n";
     }
     else if (filename_input.find(".csv") != std::string::npos) // @todo make sure this is the end of the filename, switch to regex
     {
         fileOK = lcmsData.readCSV(filename_input, 1, -1, 0, -1, ',',
-                         {q::DataType::DataField::MZ,
-                          q::DataType::DataField::INTENSITY,
-                          q::DataType::DataField::SCANNUMBER,
-                          q::DataType::DataField::RETENTIONTIME}); // @todo make the cols user defined and offer these as default values
+                                  {q::DataType::DataField::MZ,
+                                   q::DataType::DataField::INTENSITY,
+                                   q::DataType::DataField::SCANNUMBER,
+                                   q::DataType::DataField::RETENTIONTIME}); // @todo make the cols user defined and offer these as default values
         isCSV = true;
     }
     else
@@ -72,13 +73,16 @@ int main()
         std::cout << "Error: only .mzML and .csv files are supported" << std::endl;
     }
 
-    if(!fileOK){ // terminate program if readCSV failed
+    if (!fileOK)
+    { // terminate program if readCSV failed
         exit(101);
     }
 
     auto timeEnd = std::chrono::high_resolution_clock::now();
 
-    std::cout << "finished reading " << lcmsData.numDatasets() << " mass spectra in " << (timeEnd - timeStart).count() << " ns\n\n";
+    size_t totalScans = lcmsData.numDatasets(); // needed to construct binning object
+
+    std::cout << "finished reading " << totalScans << " mass spectra in " << (timeEnd - timeStart).count() << " ns\n\n";
 
     // @todo add timings here, include option to skip output or create .log for more elaborate diagnostics
     timeStart = std::chrono::high_resolution_clock::now();
@@ -103,63 +107,32 @@ int main()
 
     std::vector<std::vector<std::unique_ptr<q::DataType::Peak>>> temp_peaks = qpeaks.findPeaks(dataObject);
 
-    std::vector<std::vector<std::unique_ptr<q::DataType::Peak>>> peaks = qpeaks.createPeakList(temp_peaks); // @todo check for better data structures
+    q::qBinning::CentroidedData testdata = qpeaks.passToBinning(temp_peaks, totalScans);
 
-    
+    // std::vector<std::vector<std::unique_ptr<q::DataType::Peak>>> peaks = qpeaks.createPeakList(temp_peaks); // @todo check for better data structures
 
-    size_t count = 0;
-    for (size_t i = 0; i < peaks.size(); i++)
-    {
-        count += peaks[i].size();
-    }
+    // size_t count = 0;
+    // for (size_t i = 0; i < peaks.size(); i++)
+    // {
+    //     count += peaks[i].size();
+    // }
     timeEnd = std::chrono::high_resolution_clock::now();
-    std::cout << "found " << count << " peaks in " << (timeEnd - timeStart).count() << " ns\n\n";
+    std::cout << "found " << testdata.lengthAllPoints << " peaks in " << (timeEnd - timeStart).count()
+              << " ns\n\nstarting qbinning submodule...\n\n";
+
+    std::vector<q::qBinning::EIC> binnedData = q::qBinning::performQbinning(testdata, 6, false);
 
     // write peaks to file @todo output location should always be determined by the user!
-    std::cout << "writing peaks to file...\n";
     // std::string filename_output = filename_input;
     // // remove the file extension
     // filename_output = filename_output.substr(0, filename_output.find_last_of("."));
     // filename_output += "_peaks.csv";
     std::string filename_output = "../../peaktable.csv";
-    qpeaks.printAllPeaks(peaks, filename_output);
+    // qpeaks.printAllPeaks(peaks, filename_output);
 
-    std::cout << "done\n\n\n";
+    std::cout << "done\n";
 
     std::cout.rdbuf(old); // restore previous standard out
-
-    // ### Create object to hand into qbins here ### @todo
-
-    // plot peaks @todo make this a function argument or move it to a separate data analysis thing
-    //   if (isCSV)
-    //   {
-    //     // ask if the user wants to plot the peaks of the first dataset
-    //     std::string plot;
-    //     std::cout << "Do you want to plot the peaks? (y/n): ";
-    //     std::cin >> plot;
-    //     // check if the answer is valid
-    //     while (plot != "y" && plot != "n")
-    //     {
-    //       std::cout << "Error: invalid input" << std::endl;
-    //       std::cout << "Do you want to plot the peaks? (y/n): ";
-    //       std::cin >> plot;
-    //     }
-    //     if (plot == "y")
-    //     {
-    //       std::cout << "plot peaks........................";
-    //       qpeaks.plotPeaksToPython(
-    //           filename_input,  // path to the original data
-    //           filename_output, // path to the peak list
-    //           true,            // plot fits as well; if set to false, only original peaks and vertical lines for peak positions are plotted
-    //           false);          // plot the peaks as a scatter plot; if set to true, sampleID vs. position is plotted
-    //       SetConsoleTextAttribute(hConsole, 10);
-    //       std::cout << "done\n";
-    //       SetConsoleTextAttribute(hConsole, 15);
-    //     }
-    //   }
-    //   std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-    //   std::cout << "Press any key to exit" << std::endl;
-    //   std::cin.get();
 
     return 0;
 }

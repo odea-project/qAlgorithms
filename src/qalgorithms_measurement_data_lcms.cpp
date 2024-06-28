@@ -329,12 +329,7 @@ namespace q
 
         size_t LCMSData::numDatasets()
         {
-            return this->data.size();
-        }
-
-        void LCMSData::getMaxKey() // @todo remove
-        {
-            std::cout << "Max Key:                          " << maxKey << std::endl;
+            return this->data.size(); // @todo note that some mass spectra are empty - fix?
         }
 
     } // namespace MeasurementData

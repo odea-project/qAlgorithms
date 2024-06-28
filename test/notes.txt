@@ -1,4 +1,4 @@
-warum ist 
+Skalieren über Intensität für Kurvenanpassung nicht sonderlich vielversprechend
 
 C:\PROGRA~2\GnuWin32\bin\make.exe
 

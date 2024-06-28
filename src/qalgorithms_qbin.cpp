@@ -72,7 +72,7 @@ namespace qBinning
                     rawData->allDatapoints.push_back(std::vector<qCentroid>(0));
                 }
             }
-            const qCentroid F = qCentroid{row[d_mz], row[d_mzError], row[d_RT], i_scanNo, row[d_intensity],
+            qCentroid F = qCentroid{row[d_mz], row[d_mzError], row[d_RT], i_scanNo, row[d_intensity],
                                           row[d_DQScentroid]};
 
             ++lengthAllPoints;
@@ -309,7 +309,8 @@ namespace qBinning
 
     std::vector<EIC> BinContainer::returnBins()
     {
-        std::vector<EIC> finalBins(finishedBins.size());
+        std::vector<EIC> finalBins;
+        finalBins.reserve(finishedBins.size());
         for (size_t i = 0; i < finishedBins.size(); i++)
         {
             finalBins.push_back(finishedBins[i].createEIC());
@@ -792,7 +793,7 @@ namespace qBinning
         {
             selector |= std::byte{0b01000000};
         }
-        if (false)
+        if (true)
         {
             selector |= std::byte{0b10000000};
         }
@@ -928,6 +929,8 @@ namespace qBinning
         // calculate data quality scores
         scaleDistancesForDQS_gauss(inputMaxdist); // this sets q::scalarForMOD to the correct scaling so that at the distance in scans == maxdist the curve encloses 99% of its area
         activeBins.assignDQSB(&centroidedData, maxdist, false);
+
+        activeBins.printSelectBins(std::byte{0b10000110}, true, "../.."); //@todo make this a function parameter
 
         // @todo add a way for selection / bin summary to be given upstream
 

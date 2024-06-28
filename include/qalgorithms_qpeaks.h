@@ -5,8 +5,8 @@
 // internal
 #include "qalgorithms_matrix.h"
 #include "qalgorithms_measurement_data.h"
-// #include "qalgorithms_utils.h"
 #include "qalgorithms_datatype_peak.h"
+#include "qAlgorithms_qbin.h"
 
 // external
 #include <vector>
@@ -51,7 +51,7 @@ namespace q
             std::vector<std::vector<std::unique_ptr<DataType::Peak>>> createPeakList(
                 std::vector<std::vector<std::unique_ptr<DataType::Peak>>> &allPeaks);
 
-            // q::qBinning::CentroidedData passToBinning(const std::vector<std::vector<std::unique_ptr<q::DataType::Peak>>> &all_peaks);
+            qBinning::CentroidedData passToBinning(std::vector<std::vector<std::unique_ptr<q::DataType::Peak>>> &allPeaks, size_t numberOfScans);
 
             // export
             void printAllPeaks(
