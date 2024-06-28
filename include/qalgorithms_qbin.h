@@ -24,7 +24,7 @@ namespace qBinning
 
     struct CentroidedData
     {
-        int lengthAllPoints;
+        int lengthAllPoints; // number of centroids in all scans
         std::vector<std::vector<qCentroid>> allDatapoints;
     };
 

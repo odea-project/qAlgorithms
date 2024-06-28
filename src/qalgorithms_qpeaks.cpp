@@ -129,8 +129,7 @@ namespace q
 
 #pragma region findPeaks
         std::vector<std::vector<std::unique_ptr<q::DataType::Peak>>>
-        qPeaks::findPeaks(
-            const q::MeasurementData::varDataType &dataVec)
+        qPeaks::findPeaks(const q::MeasurementData::varDataType &dataVec)
         {
             std::vector<std::vector<std::unique_ptr<DataType::Peak>>> all_peaks;
             std::visit( // @todo make this a for each loop
@@ -167,7 +166,7 @@ namespace q
             {
               continue; // no valid peaks
             }
-            all_peaks[i] = createPeaks(validRegressions, Y, X, dataObj.getScanNumber());
+            all_peaks[i] = createPeaks(validRegressions, Y, X, dataObj.getScanNumber());            
           } // end parallel for loop
         ; },
                 dataVec); // end visit
@@ -175,12 +174,6 @@ namespace q
 
             return all_peaks;
         }
-
-        // function to pass peak table into qbinning as a centroidedData object 
-        // q::qBinning::CentroidedData qPeaks::passToBinning(const std::vector<std::vector<std::unique_ptr<q::DataType::Peak>>> &all_peaks){
-
-        // }
-
 
 #pragma endregion findPeaks
 
@@ -586,11 +579,12 @@ namespace q
         } // end createPeaks
 #pragma endregion createPeaks
 
-#pragma region "createPeakList"
+#pragma region "convert peak data"
         std::vector<std::vector<std::unique_ptr<DataType::Peak>>>
         qPeaks::createPeakList(std::vector<std::vector<std::unique_ptr<DataType::Peak>>> &allPeaks)
         {
             // create a temporary unordered map of peaks based on sampleID
+            // sample ID = position of mass spectrum in order
             std::unordered_map<int, std::vector<std::unique_ptr<DataType::Peak>>> peakMap;
             // iterate over the peaks vector
             for (size_t i = 0; i < allPeaks.size(); ++i)
@@ -600,7 +594,7 @@ namespace q
                 for (size_t j = 0; j < peaks.size(); ++j)
                 {
                     auto &peak = peaks[j];
-                    if (peakMap.find(peak->sampleID) == peakMap.end())
+                    if (peakMap.find(peak->sampleID) == peakMap.end()) // @todo why does this work?
                     {
                         peakMap[peak->sampleID] = std::vector<std::unique_ptr<DataType::Peak>>();
                     }
@@ -612,7 +606,7 @@ namespace q
             std::vector<int> keys;
             for (const auto &pair : peakMap)
             {
-                keys.push_back(pair.first);
+                keys.push_back(pair.first); // is keys always the flipped index
             }
 
             // Now iterate over the keys to move the values
@@ -640,7 +634,43 @@ namespace q
 
             return peakList;
         }
-#pragma endregion "createPeakList"
+
+        // function to pass peak table into qbinning as a centroidedData object
+        qBinning::CentroidedData qPeaks::passToBinning(std::vector<std::vector<std::unique_ptr<q::DataType::Peak>>> &allPeaks, size_t numberOfScans)
+        {
+            // initialise empty vector with enough room for all scans - centroids[0] must remain empty
+            std::vector<std::vector<q::qBinning::qCentroid>> centroids(numberOfScans + 2, std::vector<qBinning::qCentroid>(0));
+            int totalCentroids = 0;
+            int scanRelative = 0;
+            // @todo add global reference to which relative scan is which absolute scan
+            for (size_t i = 0; i < allPeaks.size(); ++i)
+            {
+                // it is assumed the first filled subvector is also the smallest scan etc.
+                auto &peaks = allPeaks[i];
+                if (!peaks.empty())
+                {
+                    ++scanRelative;
+                    if (centroids.size()-1 < scanRelative)
+                    {
+                        centroids.push_back(std::vector<qBinning::qCentroid>(0));
+                    }
+                    
+                // iterate over the peaks vector
+                for (size_t j = 0; j < peaks.size(); ++j)
+                {
+                    auto &peak = peaks[j];
+                    qBinning::qCentroid F = qBinning::qCentroid{peak->position, peak->positionUncertainty, 0, // @todo remove RT from centroids, global metadata object
+                                                      scanRelative, peak->area, peak->dqsPeak};
+                    centroids[scanRelative].push_back(F);
+                    ++totalCentroids;
+                }
+                }
+            }
+            assert(centroids[0].empty());
+            return qBinning::CentroidedData{totalCentroids, centroids};
+        }
+
+#pragma endregion "convert peak data"
 
 #pragma region calcSSE
         double

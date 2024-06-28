@@ -106,10 +106,7 @@ namespace q
              */
             size_t numDatasets();
 
-            void getMaxKey(); // @todo remove, make maxKey public
-
-        private:
-            size_t maxKey; // @todo what is maxKey - just the number of scans?
+            size_t maxKey; // largest scan in dataset
         };
     } // namespace MeasurmentData
 } // namespace q
