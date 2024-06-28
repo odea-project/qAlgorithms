@@ -208,8 +208,8 @@ namespace q
     } // end of filterSmallDataSets
 
     void MeasurementData::interpolateData(varDataType &dataVec)
-    {
-      std::visit([](auto &&arg) // @todo make this a for each loop
+    { // @todo make this a for each loop, add data-agnostic variant
+      std::visit([](auto &&arg)
                  {
                    std::vector<int> keysToDelete;
                    // iterate over the vector of varDataType objects
@@ -221,7 +221,7 @@ namespace q
                      // check if dataPoints is empty
                      if (dataPoints.size() > 0)
                      {
-                       // ALL THE DATA SETS CONSIDERED HAVE AT LEAST 4 DATA POINTS WITH INTENSITY > 0 (due to filterSmallDataSets)
+                       // ALL THE DATA SETS CONSIDERED HAVE AT LEAST 5 DATA POINTS WITH INTENSITY > 0 (due to filterSmallDataSets)
                        // extract the largest y value, which is used for thershoulding the extrapolations, i.e. MAX < 3 * max(y)
                        double MAX = 0.0;
                        for (size_t i = 0; i < dataPoints.size(); i++)
@@ -232,7 +232,11 @@ namespace q
                          }
                        }
 
-                       /* Data points at the edges will be extrapolated. Therefore, first and last non-zero data points and maximum data point are log-transformed and considered for parabola definition. Edge data points are then replaced by the extrapolated values from parabola and back transformed into linear space using exp function.*/
+                       /* Data points at the edges will be extrapolated. Therefore, 
+                       first and last non-zero data points and maximum data point are 
+                       log-transformed and considered for parabola definition. Edge data 
+                       points are then replaced by the extrapolated values from parabola 
+                       and back transformed into linear space using exp function.*/
                        // find the first and last data points in dataPoints->y() that are not zero and store them in xDataTemp and yDataTemp
                        std::vector<double> xDataTemp;
                        std::vector<double> yDataTemp;
@@ -274,7 +278,8 @@ namespace q
                        xDataTemp.push_back(dataPoints[maxIndex]->x() - dataPoints[0]->x());
                        yDataTemp.push_back(log(dataPoints[maxIndex]->y())); // we use log space for extrapolation
 
-                       /* For later peak detection, it has to be ensured that the maximum of y values is not the first or last non-zero data point.*/
+                       /* For later peak detection, it has to be ensured that the maximum of y values 
+                       is not the first or last non-zero data point.*/
                        if (maxIndex == I || maxIndex == J)
                        {
                          // delete /clear the arg vector entry
@@ -292,7 +297,7 @@ namespace q
                          continue;
                        }
 
-                       // calculate the coefficients b0, b1, and b2 for the quadratic extrapolation
+                       // calculate the coefficients b0, b1, and b2 for the quadratic extrapolation @todo how does this matrix look?
                        q::Matrices::Matrix B = linreg(xDataTemp, yDataTemp, 2);
                        // extrapolate the y-axis values for i=0 to I-1 and j=J+1 to dataPoints.size()-1
                        for (size_t i = 0; i < I; i++)
@@ -316,13 +321,16 @@ namespace q
                          }
                        }
 
-                       /* Handle the middle of the data. Hereby, we use a quadratic interpolation to fill the gaps between the data points. */
+                       /* Handle the middle of the data. Hereby, we use a quadratic 
+                       interpolation to fill the gaps between the data points. */
                        // iterate over the data points from I to J
                        for (size_t i = I; i <= J; i++)
                        {
                          if (dataPoints[i]->y() == 0.0)
                          {
-                           // now, we asume the last value before the zero appears at index "i-1" and we need to find the next data point "j" that is not zero to define the range for the interpolation
+                           // now, we asume the last value before the zero appears at 
+                          //  index "i-1" and we need to find the next data point "j" that 
+                          //  is not zero to define the range for the interpolation
                            size_t j = i + 1;
                            while (dataPoints[j]->y() == 0.0)
                            {
@@ -332,7 +340,9 @@ namespace q
                              }
                              j++;
                            }
-                           // now we have the range from "i" to "j-1" for the interpolation and we need to find the next two data points that are not zero on each side of the range to use them for the interpolation as reference points
+                           // now we have the range from "i" to "j-1" for the interpolation and 
+                          //  we need to find the next two data points that are not zero on 
+                          // each side of the range to use them for the interpolation as reference points
                            xDataTemp.clear();
                            yDataTemp.clear();
                            size_t k = i - 1; // first reference point to the left
