@@ -1375,9 +1375,9 @@ namespace q
         throw std::invalid_argument("n must be greater or equal to 2 * scale + 1");
       }
 
-      std::vector<__m128> result(n - 2 * scale);
-      std::vector<__m128> products(n);
-      convolve_SIMD(scale, vec, n, result.data(), products.data(), n);
+      alignas(16) __m128 result[n - 2 * scale];
+      alignas(16) __m128 products[n];
+      convolve_SIMD(scale, vec, n, result, products, n);
 
       q::Matrices::Matrix_mc resultMatrix(4, n - 2 * scale);
       for (size_t i = 0; i < n - 2 * scale; i++)
@@ -1462,113 +1462,113 @@ namespace q
       }
     }
 
-    q::Matrices::Matrix_mc
-    qPeaks::convolve_fast(
-        const size_t scale,
-        const float (&vec)[512],
-        const size_t n)
-    {
-      if (n < 2 * scale + 1)
-      {
-        throw std::invalid_argument("n must be greater or equal to 2 * scale + 1");
-      }
+//     q::Matrices::Matrix_mc
+//     qPeaks::convolve_fast(
+//         const size_t scale,
+//         const float (&vec)[512],
+//         const size_t n)
+//     {
+//       if (n < 2 * scale + 1)
+//       {
+//         throw std::invalid_argument("n must be greater or equal to 2 * scale + 1");
+//       }
 
-      size_t k = 2 * scale + 1;
-      size_t n_segments = n - k + 1;
-      size_t centerpoint = k / 2;
+//       size_t k = 2 * scale + 1;
+//       size_t n_segments = n - k + 1;
+//       size_t centerpoint = k / 2;
 
-      alignas(16) __m128 result[512];   // a register that stores n_segments x 4 regression coefficients (b0, b1, b2, b3)
-      alignas(16) __m128 products[512]; // a register that stores 512 x 4 products
-      for (size_t i = 0; i < n_segments; ++i)
-      { // initialize result to zero
-        result[i] = _mm_setzero_ps();
-      }
+//       alignas(16) __m128 result[512];   // a register that stores n_segments x 4 regression coefficients (b0, b1, b2, b3)
+//       alignas(16) __m128 products[512]; // a register that stores 512 x 4 products
+//       for (size_t i = 0; i < n_segments; ++i)
+//       { // initialize result to zero
+//         result[i] = _mm_setzero_ps();
+//       }
 
-      for (size_t i = 0; i < n; ++i)
-      { // initialize products to zero
-        products[i] = _mm_setzero_ps();
-      }
-      // create an Array of three SIMD registers for the kernel values
-      alignas(16) __m128 kernel[3]; // a register that stores [0 = kernel, 1 = kernel_incr, 2 = kernel_incr_update]
-      kernel[0] = _mm_set_ps(
-          invArray[scale][1],  // kernel_row 3
-          invArray[scale][1],  // kernel_row 2
-          0.0f,                // kernel_row 1
-          invArray[scale][0]); // kernel_row 0
+//       for (size_t i = 0; i < n; ++i)
+//       { // initialize products to zero
+//         products[i] = _mm_setzero_ps();
+//       }
+//       // create an Array of three SIMD registers for the kernel values
+//       alignas(16) __m128 kernel[3]; // a register that stores [0 = kernel, 1 = kernel_incr, 2 = kernel_incr_update]
+//       kernel[0] = _mm_set_ps(
+//           invArray[scale][1],  // kernel_row 3
+//           invArray[scale][1],  // kernel_row 2
+//           0.0f,                // kernel_row 1
+//           invArray[scale][0]); // kernel_row 0
 
-      kernel[1] = _mm_set_ps(
-          invArray[scale][3] - invArray[scale][5],  // kernel_row 3
-          -invArray[scale][3] - invArray[scale][4], // kernel_row 2
-          -invArray[scale][2] - invArray[scale][3], // kernel_row 1
-          -invArray[scale][1]);                     // kernel_row 0
+//       kernel[1] = _mm_set_ps(
+//           invArray[scale][3] - invArray[scale][5],  // kernel_row 3
+//           -invArray[scale][3] - invArray[scale][4], // kernel_row 2
+//           -invArray[scale][2] - invArray[scale][3], // kernel_row 1
+//           -invArray[scale][1]);                     // kernel_row 0
 
-      kernel[2] = _mm_set_ps(
-          2.f * invArray[scale][5],  // kernel_row 3
-          2.f * invArray[scale][4],  // kernel_row 2
-          2.f * invArray[scale][3],  // kernel_row 1
-          2.f * invArray[scale][1]); // kernel_row 0
+//       kernel[2] = _mm_set_ps(
+//           2.f * invArray[scale][5],  // kernel_row 3
+//           2.f * invArray[scale][4],  // kernel_row 2
+//           2.f * invArray[scale][3],  // kernel_row 1
+//           2.f * invArray[scale][1]); // kernel_row 0
 
-// calculation of the center terms
-#pragma GCC ivdep    // ignore dependencies between iterations of the loop
-#pragma GCC unroll 8 // unroll the loop 8 times
-      for (size_t i = 0; i < n_segments; i++)
-      {
-        __m128 vec_values = _mm_set1_ps(vec[i + centerpoint]);    // load a value from vec into a SIMD register using all 4 lanes
-        __m128 result_values = _mm_mul_ps(vec_values, kernel[0]); // multiply the vec value with the kernel
-        result[i] = _mm_add_ps(result[i], result_values);         // add the result to the result register
-      }
-      // calculation from center to right (excluding center)
-      for (size_t i = 1; i < scale + 1; i++)
-      {
-        int u = 0;
-        // update kernel increments
-        kernel[1] = _mm_add_ps(kernel[1], kernel[2]);
-        // update kernel values
-        kernel[0] = _mm_add_ps(kernel[0], kernel[1]);
+// // calculation of the center terms
+// #pragma GCC ivdep    // ignore dependencies between iterations of the loop
+// #pragma GCC unroll 8 // unroll the loop 8 times
+//       for (size_t i = 0; i < n_segments; i++)
+//       {
+//         __m128 vec_values = _mm_set1_ps(vec[i + centerpoint]);    // load a value from vec into a SIMD register using all 4 lanes
+//         __m128 result_values = _mm_mul_ps(vec_values, kernel[0]); // multiply the vec value with the kernel
+//         result[i] = _mm_add_ps(result[i], result_values);         // add the result to the result register
+//       }
+//       // calculation from center to right (excluding center)
+//       for (size_t i = 1; i < scale + 1; i++)
+//       {
+//         int u = 0;
+//         // update kernel increments
+//         kernel[1] = _mm_add_ps(kernel[1], kernel[2]);
+//         // update kernel values
+//         kernel[0] = _mm_add_ps(kernel[0], kernel[1]);
 
-#pragma GCC ivdep    // ignore dependencies between iterations of the loop
-#pragma GCC unroll 8 // unroll the loop 8 times
-        for (size_t j = scale - i; j < (n - scale + i); j++)
-        {
-          __m128 vec_values = _mm_set1_ps(vec[j]);         // load a value from vec into a SIMD register using all 4 lanes
-          products[u] = _mm_mul_ps(vec_values, kernel[0]); // multiply the vec value with the kernel and store in products
-          u++;
-        }
+// #pragma GCC ivdep    // ignore dependencies between iterations of the loop
+// #pragma GCC unroll 8 // unroll the loop 8 times
+//         for (size_t j = scale - i; j < (n - scale + i); j++)
+//         {
+//           __m128 vec_values = _mm_set1_ps(vec[j]);         // load a value from vec into a SIMD register using all 4 lanes
+//           products[u] = _mm_mul_ps(vec_values, kernel[0]); // multiply the vec value with the kernel and store in products
+//           u++;
+//         }
 
-#pragma GCC ivdep    // ignore dependencies between iterations of the loop
-#pragma GCC unroll 8 // unroll the loop 8 times
-        for (size_t j = 0; j < n_segments; j++)
-        {
-          if (2 * i + j >= 512)
-          {
-            throw std::out_of_range("Index out of range for products array: n=" + std::to_string(n) + " i=" + std::to_string(i) + " j=" + std::to_string(j));
-          }
-          // permute the products register from [0, 1, 2, 3] to [1, 0 , 2, 3]
-          __m128 products_temp = _mm_permute_ps(products[j], 0b10110100);
-          // flip the sign of the products register from [1, 0, 2, 3] to [1, 0, -2, 3]
-          __m128 sign_flip = _mm_set_ps(1.0f, 1.0f, -1.0f, 1.0f);
-          products_temp = _mm_mul_ps(products_temp, sign_flip); // [1, 0, -2, 3]
-          // add the the products from index 2*i+j to the products_temp register
-          products_temp = _mm_add_ps(products_temp, products[2 * i + j]); // [1, 0, -2, 3] + [0, 1, 2, 3]
-          // add the products_temp to the result register
-          result[j] = _mm_add_ps(result[j], products_temp); // result[j] += products[j] + products[2 * i + j];
-        }
-      }
-      // create Matrix_mc object
-      q::Matrices::Matrix_mc resultMatrix(4, n_segments);
-      for (size_t i = 0; i < n_segments; i++)
-      {
-        // load the result[i] register into a double array
-        alignas(16) float temp[4];
-        _mm_store_ps(temp, result[i]);
-        resultMatrix(0, i) = temp[0];
-        resultMatrix(1, i) = -temp[1];
-        resultMatrix(2, i) = temp[3];
-        resultMatrix(3, i) = temp[2];
-      }
+// #pragma GCC ivdep    // ignore dependencies between iterations of the loop
+// #pragma GCC unroll 8 // unroll the loop 8 times
+//         for (size_t j = 0; j < n_segments; j++)
+//         {
+//           if (2 * i + j >= 512)
+//           {
+//             throw std::out_of_range("Index out of range for products array: n=" + std::to_string(n) + " i=" + std::to_string(i) + " j=" + std::to_string(j));
+//           }
+//           // permute the products register from [0, 1, 2, 3] to [1, 0 , 2, 3]
+//           __m128 products_temp = _mm_permute_ps(products[j], 0b10110100);
+//           // flip the sign of the products register from [1, 0, 2, 3] to [1, 0, -2, 3]
+//           __m128 sign_flip = _mm_set_ps(1.0f, 1.0f, -1.0f, 1.0f);
+//           products_temp = _mm_mul_ps(products_temp, sign_flip); // [1, 0, -2, 3]
+//           // add the the products from index 2*i+j to the products_temp register
+//           products_temp = _mm_add_ps(products_temp, products[2 * i + j]); // [1, 0, -2, 3] + [0, 1, 2, 3]
+//           // add the products_temp to the result register
+//           result[j] = _mm_add_ps(result[j], products_temp); // result[j] += products[j] + products[2 * i + j];
+//         }
+//       }
+//       // create Matrix_mc object
+//       q::Matrices::Matrix_mc resultMatrix(4, n_segments);
+//       for (size_t i = 0; i < n_segments; i++)
+//       {
+//         // load the result[i] register into a double array
+//         alignas(16) float temp[4];
+//         _mm_store_ps(temp, result[i]);
+//         resultMatrix(0, i) = temp[0];
+//         resultMatrix(1, i) = -temp[1];
+//         resultMatrix(2, i) = temp[3];
+//         resultMatrix(3, i) = temp[2];
+//       }
 
-      return resultMatrix;
-    }
+//       return resultMatrix;
+//     }
 #pragma endregion "convolve regression"
 
 #pragma region printMatrices

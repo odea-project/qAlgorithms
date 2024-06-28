@@ -395,11 +395,11 @@ namespace q
                 __m128* products, 
                 const size_t buffer_size);
 
-            q::Matrices::Matrix_mc
-            convolve_fast(
-                const size_t scale,
-                const float (&vec)[512],
-                const size_t n);
+            // q::Matrices::Matrix_mc
+            // convolve_fast(
+            //     const size_t scale,
+            //     const float (&vec)[512],
+            //     const size_t n);
         };
     } // namespace Algorithms
 } // namespace q
