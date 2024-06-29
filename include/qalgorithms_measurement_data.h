@@ -9,7 +9,7 @@
 // external
 #include <string>
 #include <vector>
-#include<memory>
+#include <memory>
 // #include <iostream>
 // #include <algorithm>
 // #include <cmath>
@@ -31,7 +31,7 @@ namespace q
             virtual ~MeasurementData(){};
 
             // methods
-            virtual bool readCSV(std::string filename, int rowStart, int rowEnd,
+            virtual bool readCSV(std::string filename, size_t rowStart, int rowEnd,
                                  int colStart, int colEnd, char separator,
                                  std::vector<DataType::DataField> variableTypes) = 0;
 

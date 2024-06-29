@@ -39,7 +39,7 @@ int main()
     // "../../rawdata/example_profile.mzML"
     // "../test/test_orbitrap.csv"
 
-    const std::filesystem::path p = filename_input;
+    std::filesystem::path p = filename_input;
     if (!std::filesystem::exists(p))
     {
         std::cout << "Error: The selected file does not exist.\nSupplied path: " << std::filesystem::absolute(p)
