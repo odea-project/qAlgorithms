@@ -28,7 +28,7 @@ namespace q
         // {
         // }
 
-        bool LCMSData::readCSV(std::string filename, int rowStart, int rowEnd, int colStart, int colEnd, char separator, std::vector<DataField> variableTypes)
+        bool LCMSData::readCSV(std::string filename, size_t rowStart, int rowEnd, int colStart, int colEnd, char separator, std::vector<DataField> variableTypes)
         {
             // @todo currenty only
             // open the file
@@ -139,7 +139,7 @@ namespace q
             // read the file
             int rowCounter = 0;
             int colCounter = 0;
-            
+
             for (size_t i = 0; i < rowStart; i++)
             {
                 std::getline(file, line); // only start parsing after rowStart lines
@@ -194,7 +194,7 @@ namespace q
                 }
                 // create a new DataPoint object and add it to the DataPoint Vector
                 double intensity = std::stod(raw_data[i][intensityIndex]);
-                int df = (intensity > 0) ? 1 : 0; 
+                int df = (intensity > 0) ? 1 : 0;
                 this->data[scanNumber]->dataPoints.push_back(std::make_unique<DataPoint>(intensity, std::stod(raw_data[i][mzIndex]), df));
             }
             return true;
@@ -210,7 +210,6 @@ namespace q
             {
                 return false;
             }
-            
 
             size_t number_of_spectra = spectra.size();
             for (size_t i = 0; i < number_of_spectra; i++)

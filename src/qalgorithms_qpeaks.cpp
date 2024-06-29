@@ -641,7 +641,7 @@ namespace q
             // initialise empty vector with enough room for all scans - centroids[0] must remain empty
             std::vector<std::vector<q::qBinning::qCentroid>> centroids(numberOfScans + 2, std::vector<qBinning::qCentroid>(0));
             int totalCentroids = 0;
-            int scanRelative = 0;
+            unsigned int scanRelative = 0;
             // @todo add global reference to which relative scan is which absolute scan
             for (size_t i = 0; i < allPeaks.size(); ++i)
             {
@@ -650,20 +650,20 @@ namespace q
                 if (!peaks.empty())
                 {
                     ++scanRelative;
-                    if (centroids.size()-1 < scanRelative)
+                    if (centroids.size() - 1 < size_t(scanRelative))
                     {
                         centroids.push_back(std::vector<qBinning::qCentroid>(0));
                     }
-                    
-                // iterate over the peaks vector
-                for (size_t j = 0; j < peaks.size(); ++j)
-                {
-                    auto &peak = peaks[j];
-                    qBinning::qCentroid F = qBinning::qCentroid{peak->position, peak->positionUncertainty, 0, // @todo remove RT from centroids, global metadata object
-                                                      scanRelative, peak->area, peak->dqsPeak};
-                    centroids[scanRelative].push_back(F);
-                    ++totalCentroids;
-                }
+
+                    // iterate over the peaks vector
+                    for (size_t j = 0; j < peaks.size(); ++j)
+                    {
+                        auto &peak = peaks[j];
+                        qBinning::qCentroid F = qBinning::qCentroid{peak->position, peak->positionUncertainty,
+                                                                    scanRelative, peak->area, peak->dqsPeak};
+                        centroids[scanRelative].push_back(F);
+                        ++totalCentroids;
+                    }
                 }
             }
             assert(centroids[0].empty());
