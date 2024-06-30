@@ -2,13 +2,13 @@
 #include "qalgorithms_utils.h"
 #include "qalgorithms_matrix.h"
 
-#include<algorithm> // std::transform
-#include<cstdint> // uint64_t
-#include<cmath>
-#include<stdexcept> // std::invalid_argument
-#include<iostream>
-#include<numeric> // std::inner_product
-#include<array>
+#include <algorithm> // std::transform
+#include <cstdint>   // uint64_t
+#include <cmath>
+#include <stdexcept> // std::invalid_argument
+#include <iostream>
+#include <numeric> // std::inner_product
+#include <array>
 
 #include <vector>
 // #include <map>
@@ -19,46 +19,17 @@
 namespace q
 {
 
-  // @remove these are not used in the program
-  // int sum(const std::vector<int> &vec)
-  // {
-  //   double sum = 0.0;
-  //   for (const auto &elem : vec)
-  //   {
-  //     sum += elem;
-  //   }
-  //   return sum;
-  // }
-
-  // size_t sum(const std::vector<size_t> &vec)
-  // {
-  //   double sum = 0.0;
-  //   for (const auto &elem : vec)
-  //   {
-  //     sum += elem;
-  //   }
-  //   return sum;
-  // }
-
-  // double sum(const std::vector<double> &vec)
-  // {
-  //   double sum = 0.0;
-  //   for (const auto &elem : vec)
-  //   {
-  //     sum += elem;
-  //   }
-  //   return sum;
-  // }
-
-  // int sum(const bool *vec, size_t n)
-  // {
-  //   int sum = 0;
-  //   for (size_t i = 0; i < n; i++)
-  //   {
-  //     sum += vec[i];
-  //   }
-  //   return sum;
-  // }
+  std::array<double, 3> calcQuadraticCoefficients(double x1, double x2, double x3, double y1, double y2, double y3)
+  {
+    // calculate regression coefficients for y a * x^2 + b * x + c
+    // pulling the division in a variable saves one instruction
+    double divisor_bc = 1 / ((x1 - x2) * (x1 - x3) * (x2 - x3));
+    double a = (x1 * (y2 - y3) + x2 * (y3 - y1) + x3 * (y1 - y2)) / ((x1 - x2) * (x1 - x3) * (x3 - x2));
+    double b = (x1 * x1 * (y2 - y3) + x2 * x2 * (y3 - y1) + x3 * x3 * (y1 - y2)) * divisor_bc;
+    double c = (x1 * x1 * (x2 * y3 - x3 * y2) + x1 * (x3 * x3 * y2 - x2 * x2 * y3) + x2 * x3 * y1 * (x2 - x3)) * divisor_bc;
+    // returns the regression coefficients
+    return {a, b, c};
+  }
 
   double exp_approx(const double x)
   {
@@ -198,6 +169,14 @@ namespace q
     q::Matrices::Matrix X_T_X_inv = inv(X_T_X);
     q::Matrices::Matrix X_T_Y = X_T * Y;
     q::Matrices::Matrix coefficients = X_T_X_inv * X_T_Y;
+
+    std::array<double, 3> test = calcQuadraticCoefficients(xData[0], xData[2], xData[1], yData[0], yData[2], yData[1]);
+    double a = std::abs(coefficients.elements[1] - test[1]);
+    if ((a > 0.0001) & (xData.size() == 3))
+    {
+      std::cout << a << "\n";
+    }
+
     return coefficients;
   }
 
@@ -436,7 +415,7 @@ namespace q
     size_t centerpoint = k / 2;
 
     q::Matrices::Matrix_mc result(4, n_segments); // @changed std::vector<std::array<double, 3>> products(n); rewrite to n*3 vector
-    std::vector<double> products(n*3);
+    std::vector<double> products(n * 3);
 
     // calculation from left to center (excluding center)
     for (size_t i = 0; i < centerpoint; i++)
@@ -444,17 +423,17 @@ namespace q
       int u = 0;
       for (size_t j = i; j < (n - i); j++)
       {
-        products[u*1] = vec[j] * kernel(0, i);
-        products[u*2] = vec[j] * kernel(1, i);
-        products[u*3] = vec[j] * kernel(2, i);
+        products[u * 1] = vec[j] * kernel(0, i);
+        products[u * 2] = vec[j] * kernel(1, i);
+        products[u * 3] = vec[j] * kernel(2, i);
         u++;
       }
       for (size_t j = 0; j < n_segments; j++)
       {
-        result(0, j) += products[j*1] + products[(k - 1 - 2 * i + j)*1];
-        result(1, j) += products[j*2] - products[(k - 1 - 2 * i + j)*2];
-        result(2, j) += products[j*3];
-        result(3, j) += products[(k - 1 - 2 * i + j)*3];
+        result(0, j) += products[j * 1] + products[(k - 1 - 2 * i + j) * 1];
+        result(1, j) += products[j * 2] - products[(k - 1 - 2 * i + j) * 2];
+        result(2, j) += products[j * 3];
+        result(3, j) += products[(k - 1 - 2 * i + j) * 3];
       }
     }
 
@@ -474,13 +453,13 @@ namespace q
       int v = 0;
       for (size_t j = s; j < (n - s); j++)
       {
-        products[v*3] = vec[j] * kernel(2, i);
+        products[v * 3] = vec[j] * kernel(2, i);
         v++;
       }
       for (size_t j = 0; j < n_segments; j++)
       {
-        result(2, j) += products[(2 * u + j)*3];
-        result(3, j) += products[j*3];
+        result(2, j) += products[(2 * u + j) * 3];
+        result(3, j) += products[j * 3];
       }
       u++;
     }

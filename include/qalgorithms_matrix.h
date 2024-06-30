@@ -4,7 +4,7 @@
 #define QALGORITHMS_MATRIX_H
 
 // external @todo most of these are not needed for matrix implementation
-#include<stddef.h> // size_t
+#include <stddef.h> // size_t
 // #include <iostream>
 // #include <cmath>
 // #include <algorithm>
@@ -14,200 +14,200 @@
 /* This file includes the q::matrix class*/
 namespace q
 {
+  extern size_t vectorDestructions, matrixDestructions;
+
   namespace Matrices
   {
-  /**
-   * @brief A class to store a matrix
-   * @details The Matrix class is used to store a matrix of doubles. 
-   *
-   * @param elements A pointer to the elements of the matrix
-   * @param rows The number of rows
-   * @param cols The number of columns
-   */
-  class Matrix
-  {
-  public:
-    double *elements;
-    size_t rows, cols;
-    // Constructors and Destructor
-    Matrix();
-    Matrix(size_t rows, size_t cols);
-    Matrix(const Matrix &other);
-    ~Matrix();
-
-    double &
-    operator()(size_t row, size_t col);
-
-    const double &
-    operator()(size_t row, size_t col) const;
-
-    double &
-    operator[](size_t idx) const;
-
-    Matrix &
-    operator=(const Matrix &other);
-  };
-
-  /**
-   * @brief A clase to store a matrix with major column order storage
-   * @details The Matrix_mc class is used to store a matrix of doubles with major column order storage.
-   * 
-   * @param elements A pointer to the elements of the matrix
-   * @param rows The number of rows
-   * @param cols The number of columns
-   */
-  class Matrix_mc
-  {
-  public:
-    double *elements;
-    size_t rows, cols;
-
-    Matrix_mc(const size_t rows, const size_t cols);
-    ~Matrix_mc();
-
-    Matrix_mc(const Matrix_mc &other);
-
-    double &
-    operator()(size_t row, size_t col);
-
-    const double &
-    operator()(size_t row, size_t col) const;
-
-    double &
-    operator[](size_t idx);
-
-    const double &
-    operator[](size_t idx) const;
-
-    Matrix_mc &
-    operator=(const Matrix_mc &other);
-  };
-
-
-  /**
-   * @brief A class to store a 4x4 matrix
-   * @details The Matrix_mc_4x4 class is used to store a 4x4 matrix of doubles with major column order storage.
-   * 
-   * @param elements A pointer to the elements of the matrix
-   */
-  class Matrix_mc_4x4
-  {
+    /**
+     * @brief A class to store a matrix
+     * @details The Matrix class is used to store a matrix of doubles.
+     *
+     * @param elements A pointer to the elements of the matrix
+     * @param rows The number of rows
+     * @param cols The number of columns
+     */
+    class Matrix
+    {
     public:
-    double elements[16];
+      double *elements;
+      size_t rows, cols;
+      // Constructors and Destructor
+      Matrix();
+      Matrix(size_t rows, size_t cols);
+      Matrix(const Matrix &other);
+      ~Matrix();
 
-    Matrix_mc_4x4();
-    ~Matrix_mc_4x4();
+      double &
+      operator()(size_t row, size_t col);
 
-    Matrix_mc_4x4(const Matrix_mc_4x4 &other);
+      const double &
+      operator()(size_t row, size_t col) const;
 
-    double &
-    operator()(size_t row, size_t col);
+      double &
+      operator[](size_t idx) const;
 
-    const double &
-    operator()(size_t row, size_t col) const;
+      Matrix &
+      operator=(const Matrix &other);
+    };
 
-    double &
-    operator[](size_t idx);
+    /**
+     * @brief A clase to store a matrix with major column order storage
+     * @details The Matrix_mc class is used to store a matrix of doubles with major column order storage.
+     *
+     * @param elements A pointer to the elements of the matrix
+     * @param rows The number of rows
+     * @param cols The number of columns
+     */
+    class Matrix_mc
+    {
+    public:
+      double *elements;
+      size_t rows, cols;
 
-    const double &
-    operator[](size_t idx) const;
+      Matrix_mc(const size_t rows, const size_t cols);
+      ~Matrix_mc();
 
-    Matrix_mc_4x4 &
-    operator=(const Matrix_mc_4x4 &other);
+      Matrix_mc(const Matrix_mc &other);
 
-    double*
-    begin();
+      double &
+      operator()(size_t row, size_t col);
 
-    const double*
-    begin() const;
+      const double &
+      operator()(size_t row, size_t col) const;
 
-    double*
-    end();
+      double &
+      operator[](size_t idx);
 
-    const double*
-    end() const;  
-  };
+      const double &
+      operator[](size_t idx) const;
 
+      Matrix_mc &
+      operator=(const Matrix_mc &other);
+    };
 
-  /**
-   * @brief A class to store a Vector
-   * @details The Vector class is used to store a vector of doubles.
-   * 
-   * @param elements A pointer to the elements of the vector
-   * @param n The number of elements in the vector
-   */
-  class Vector
-  {
-  public:
-    double *elements;
-    size_t n;
+    /**
+     * @brief A class to store a 4x4 matrix
+     * @details The Matrix_mc_4x4 class is used to store a 4x4 matrix of doubles with major column order storage.
+     *
+     * @param elements A pointer to the elements of the matrix
+     */
+    class Matrix_mc_4x4
+    {
+    public:
+      double elements[16];
 
-    Vector(const size_t n);
-    ~Vector();
+      Matrix_mc_4x4();
+      ~Matrix_mc_4x4();
 
-    Vector(const Vector& other);
+      Matrix_mc_4x4(const Matrix_mc_4x4 &other);
 
-    double &
-    operator[](size_t idx);
+      double &
+      operator()(size_t row, size_t col);
 
-    const double &
-    operator[](size_t idx) const;
+      const double &
+      operator()(size_t row, size_t col) const;
 
-    double*
-    begin();
+      double &
+      operator[](size_t idx);
 
-    const double*
-    begin() const;
+      const double &
+      operator[](size_t idx) const;
 
-    double*
-    end();
+      Matrix_mc_4x4 &
+      operator=(const Matrix_mc_4x4 &other);
 
-    const double*
-    end() const;
+      double *
+      begin();
 
-    Vector&
-    operator=(const Vector &other);
-  };
+      const double *
+      begin() const;
 
-  /**
-   * @brief A class to store a vector of booleans
-   * @details The BoolVector class is used to store a vector of booleans.
-   * 
-   * @param elements A pointer to the elements of the vector
-   * @param n The number of elements in the vector
-   */
-  class BoolVector
-  {
-  public:
-    bool *elements;
-    size_t n;
+      double *
+      end();
 
-    BoolVector(const size_t n);
-    ~BoolVector();
+      const double *
+      end() const;
+    };
 
-    BoolVector(const BoolVector& other);
+    /**
+     * @brief A class to store a Vector
+     * @details The Vector class is used to store a vector of doubles.
+     *
+     * @param elements A pointer to the elements of the vector
+     * @param n The number of elements in the vector
+     */
+    class Vector
+    {
+    public:
+      double *elements;
+      size_t n;
 
-    bool &
-    operator[](size_t idx);
+      Vector(const size_t n);
+      ~Vector();
 
-    const bool &
-    operator[](size_t idx) const;
+      Vector(const Vector &other);
 
-    BoolVector&
-    operator=(const BoolVector &other);
+      double &
+      operator[](size_t idx);
 
-    bool*
-    begin();
+      const double &
+      operator[](size_t idx) const;
 
-    const bool*
-    begin() const;
+      double *
+      begin();
 
-    bool*
-    end();
+      const double *
+      begin() const;
 
-    const bool*
-    end() const;
-  };
+      double *
+      end();
+
+      const double *
+      end() const;
+
+      Vector &
+      operator=(const Vector &other);
+    };
+
+    /**
+     * @brief A class to store a vector of booleans
+     * @details The BoolVector class is used to store a vector of booleans.
+     *
+     * @param elements A pointer to the elements of the vector
+     * @param n The number of elements in the vector
+     */
+    class BoolVector
+    {
+    public:
+      bool *elements;
+      size_t n;
+
+      BoolVector(const size_t n);
+      ~BoolVector();
+
+      BoolVector(const BoolVector &other);
+
+      bool &
+      operator[](size_t idx);
+
+      const bool &
+      operator[](size_t idx) const;
+
+      BoolVector &
+      operator=(const BoolVector &other);
+
+      bool *
+      begin();
+
+      const bool *
+      begin() const;
+
+      bool *
+      end();
+
+      const bool *
+      end() const;
+    };
   } // namespace Matrices
 }
 #endif // QALGORITHMS_MATRIX_H
