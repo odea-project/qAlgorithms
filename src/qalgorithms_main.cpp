@@ -1,6 +1,7 @@
 // internal
 #include "qalgorithms_measurement_data_lcms.h"
 #include "qalgorithms_qpeaks.h"
+#include "qalgorithms_matrix.h"
 
 // external
 #include "StreamCraft_mzml.h" //@todo check if this is actually used here
@@ -14,6 +15,9 @@
 int main()
 {
     bool silent = false;
+
+    q::vectorDestructions = 0;
+    q::matrixDestructions = 0;
 
     std::streambuf *old = std::cout.rdbuf(); // save standard out config
     std::stringstream ss;
@@ -35,9 +39,11 @@ int main()
     q::Algorithms::qPeaks::initialize(); // @todo constexpr
     bool isCSV = false;
 
-    std::string filename_input = "../../rawdata/example_profile.mzML"; // @todo make this a command line argument
+    std::string filename_input = "../qAlgorithms/test/test_orbitrap.csv"; // @todo make this a command line argument
     // "../../rawdata/example_profile.mzML"
+    // "../rawdata/example_profile.mzML"
     // "../test/test_orbitrap.csv"
+    // "..qAlgorithms/test/test_orbitrap.csv"
 
     std::filesystem::path p = filename_input;
     if (!std::filesystem::exists(p))
@@ -120,7 +126,9 @@ int main()
     std::cout << "found " << testdata.lengthAllPoints << " peaks in " << (timeEnd - timeStart).count()
               << " ns\n\nstarting qbinning submodule...\n\n";
 
-    std::vector<q::qBinning::EIC> binnedData = q::qBinning::performQbinning(testdata, 6, false);
+    std::cout << q::vectorDestructions << " , " << q::matrixDestructions << "\n";
+
+    // std::vector<q::qBinning::EIC> binnedData = q::qBinning::performQbinning(testdata, 6, false);
 
     // write peaks to file @todo output location should always be determined by the user!
     // std::string filename_output = filename_input;

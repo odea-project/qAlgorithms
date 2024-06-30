@@ -1,3 +1,13 @@
+https://www.desmos.com/calculator/bvc5r0epxz
+
+https://www.desmos.com/calculator/enj0s6h2la // besser
+
+https://www.desmos.com/calculator/eetmv0obav // mit Orbitrap Beispiel
+
+https://www.desmos.com/calculator/5vbn1h8eim // kombi-version
+
+https://github.com/sgorsten/linalg
+
 Skalieren über Intensität für Kurvenanpassung nicht sonderlich vielversprechend
 
 C:\PROGRA~2\GnuWin32\bin\make.exe

@@ -6,6 +6,7 @@
 
 namespace q
 {
+
   namespace Matrices //@todo check if the less extensive solution also works
   {
     // constructor and destructor
@@ -25,6 +26,7 @@ namespace q
     Matrix::~Matrix()
     {
       delete[] elements;
+      ++matrixDestructions;
     }
 
     // access
@@ -71,6 +73,7 @@ namespace q
     Matrix_mc::~Matrix_mc()
     {
       delete[] elements;
+      ++matrixDestructions;
     }
 
     Matrix_mc::Matrix_mc(const Matrix_mc &other) : rows(other.rows), cols(other.cols)
@@ -208,6 +211,7 @@ namespace q
     Vector::~Vector()
     {
       delete[] elements;
+      ++vectorDestructions;
     }
 
     Vector::Vector(const Vector &other) : n(other.n)
@@ -277,6 +281,7 @@ namespace q
     BoolVector::~BoolVector()
     {
       delete[] elements;
+      ++vectorDestructions;
     }
 
     BoolVector::BoolVector(const BoolVector &other) : n(other.n)

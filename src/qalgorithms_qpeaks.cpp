@@ -19,6 +19,9 @@
 
 namespace q
 {
+    size_t vectorDestructions = 0;
+    size_t matrixDestructions = 0;
+
     namespace Algorithms
     {
 #pragma region Constructors and Destructor
@@ -594,7 +597,7 @@ namespace q
                 for (size_t j = 0; j < peaks.size(); ++j)
                 {
                     auto &peak = peaks[j];
-                    if (peakMap.find(peak->sampleID) == peakMap.end()) // @todo why does this work?
+                    if (peakMap.find(peak->sampleID) == peakMap.end()) // if the sample ID is not in the map, create a new entry?
                     {
                         peakMap[peak->sampleID] = std::vector<std::unique_ptr<DataType::Peak>>();
                     }
@@ -642,6 +645,7 @@ namespace q
             std::vector<std::vector<q::qBinning::qCentroid>> centroids(numberOfScans + 2, std::vector<qBinning::qCentroid>(0));
             int totalCentroids = 0;
             unsigned int scanRelative = 0;
+            int currentScanAbsolute = 0;
             // @todo add global reference to which relative scan is which absolute scan
             for (size_t i = 0; i < allPeaks.size(); ++i)
             {
@@ -649,8 +653,12 @@ namespace q
                 auto &peaks = allPeaks[i];
                 if (!peaks.empty())
                 {
-                    ++scanRelative;
-                    if (centroids.size() - 1 < size_t(scanRelative))
+                    if (peaks[0]->sampleID != currentScanAbsolute)
+                    {
+                        ++scanRelative;
+                    }
+
+                    if (centroids.size() - 1 < scanRelative)
                     {
                         centroids.push_back(std::vector<qBinning::qCentroid>(0));
                     }
@@ -667,6 +675,13 @@ namespace q
                 }
             }
             assert(centroids[0].empty());
+            // assure scan subvvectors are sorted
+            for (size_t i = 1; i < centroids.size(); i++)
+            {
+                std::sort(centroids[i].begin(), centroids[i].end(), [](qBinning::qCentroid lhs, qBinning::qCentroid rhs)
+                          { return lhs.mz < rhs.mz; });
+            }
+
             return qBinning::CentroidedData{totalCentroids, centroids};
         }
 
