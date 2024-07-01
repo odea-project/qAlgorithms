@@ -39,11 +39,11 @@ int main()
     q::Algorithms::qPeaks::initialize(); // @todo constexpr
     bool isCSV = false;
 
-    std::string filename_input = "../qAlgorithms/test/test_orbitrap.csv"; // @todo make this a command line argument
+    std::string filename_input = "../../rawdata/example_profile.mzML"; // @todo make this a command line argument
     // "../../rawdata/example_profile.mzML"
     // "../rawdata/example_profile.mzML"
     // "../test/test_orbitrap.csv"
-    // "..qAlgorithms/test/test_orbitrap.csv"
+    // "../qAlgorithms/test/test_orbitrap.csv"
 
     std::filesystem::path p = filename_input;
     if (!std::filesystem::exists(p))
@@ -128,7 +128,7 @@ int main()
 
     std::cout << q::vectorDestructions << " , " << q::matrixDestructions << "\n";
 
-    // std::vector<q::qBinning::EIC> binnedData = q::qBinning::performQbinning(testdata, 6, false);
+    std::vector<q::qBinning::EIC> binnedData = q::qBinning::performQbinning(testdata, 6, false);
 
     // write peaks to file @todo output location should always be determined by the user!
     // std::string filename_output = filename_input;

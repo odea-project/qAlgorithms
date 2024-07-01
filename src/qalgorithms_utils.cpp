@@ -174,7 +174,7 @@ namespace q
     double a = std::abs(coefficients.elements[1] - test[1]);
     if ((a > 0.0001) & (xData.size() == 3))
     {
-      std::cout << a << "\n";
+      // std::cout << a << "\n"; // @todo rm
     }
 
     return coefficients;

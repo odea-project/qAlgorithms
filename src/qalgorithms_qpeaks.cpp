@@ -611,6 +611,7 @@ namespace q
             {
                 keys.push_back(pair.first); // is keys always the flipped index
             }
+            std::cout << keys.size() << "\n";
 
             // Now iterate over the keys to move the values
             std::vector<std::vector<std::unique_ptr<DataType::Peak>>> peakList(keys.size());
@@ -642,46 +643,57 @@ namespace q
         qBinning::CentroidedData qPeaks::passToBinning(std::vector<std::vector<std::unique_ptr<q::DataType::Peak>>> &allPeaks, size_t numberOfScans)
         {
             // initialise empty vector with enough room for all scans - centroids[0] must remain empty
-            std::vector<std::vector<q::qBinning::qCentroid>> centroids(numberOfScans + 2, std::vector<qBinning::qCentroid>(0));
+            std::vector<std::vector<q::qBinning::qCentroid>> centroids(numberOfScans + 1, std::vector<qBinning::qCentroid>(0));
             int totalCentroids = 0;
-            unsigned int scanRelative = 0;
-            int currentScanAbsolute = 0;
-            // @todo add global reference to which relative scan is which absolute scan
+            // create a temporary unordered map of peaks based on sampleID
+            // sample ID = position of mass spectrum in order
+            std::unordered_map<int, std::vector<std::unique_ptr<DataType::Peak>>> peakMap;
+            // iterate over the peaks vector
             for (size_t i = 0; i < allPeaks.size(); ++i)
             {
-                // it is assumed the first filled subvector is also the smallest scan etc.
-                auto &peaks = allPeaks[i];
-                if (!peaks.empty())
+                if (!allPeaks[i].empty())
                 {
-                    if (peaks[0]->sampleID != currentScanAbsolute)
-                    {
-                        ++scanRelative;
-                    }
-
-                    if (centroids.size() - 1 < scanRelative)
-                    {
-                        centroids.push_back(std::vector<qBinning::qCentroid>(0));
-                    }
-
+                    auto &peaks = allPeaks[i];
                     // iterate over the peaks vector
                     for (size_t j = 0; j < peaks.size(); ++j)
                     {
                         auto &peak = peaks[j];
-                        qBinning::qCentroid F = qBinning::qCentroid{peak->position, peak->positionUncertainty,
-                                                                    scanRelative, peak->area, peak->dqsPeak};
-                        centroids[scanRelative].push_back(F);
-                        ++totalCentroids;
+                        if (peakMap.find(peak->sampleID) == peakMap.end()) // if the sample ID is not in the map, create a new entry?
+                        {
+                            peakMap[peak->sampleID] = std::vector<std::unique_ptr<DataType::Peak>>();
+                        }
+                        peakMap[peak->sampleID].push_back(std::move(peak));
                     }
                 }
             }
-            assert(centroids[0].empty());
-            // assure scan subvvectors are sorted
-            for (size_t i = 1; i < centroids.size(); i++)
-            {
-                std::sort(centroids[i].begin(), centroids[i].end(), [](qBinning::qCentroid lhs, qBinning::qCentroid rhs)
-                          { return lhs.mz < rhs.mz; });
-            }
 
+            unsigned int scanRelative = 0;
+            for (auto &pair : peakMap)
+            {
+                std::vector<std::unique_ptr<DataType::Peak>> &peaks = pair.second;
+                ++scanRelative; // scans start at 1
+                // since the scans arrive in reverse order,
+                for (size_t j = peaks.size(); j-- > 0;)
+                {
+                    auto &peak = peaks[j];
+                    qBinning::qCentroid F = qBinning::qCentroid{peak->position, peak->positionUncertainty,
+                                                                scanRelative, peak->area, peak->dqsPeak};
+                    centroids[scanRelative].push_back(F);
+                    ++totalCentroids;
+                }
+            }
+            // the first scan must be empty for compatibility with qBinning
+            assert(centroids[0].empty());
+            // assure scan subvectors are sorted
+            if (!std::is_sorted(centroids[1].begin(), centroids[1].begin(), [](qBinning::qCentroid lhs, qBinning::qCentroid rhs)
+                                { return lhs.mz < rhs.mz; }))
+            {
+                for (size_t i = 1; i < centroids.size(); i++)
+                {
+                    std::sort(centroids[i].begin(), centroids[i].end(), [](qBinning::qCentroid lhs, qBinning::qCentroid rhs)
+                              { return lhs.mz < rhs.mz; });
+                }
+            }
             return qBinning::CentroidedData{totalCentroids, centroids};
         }
 
