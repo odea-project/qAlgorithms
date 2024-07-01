@@ -1,3 +1,6 @@
+Mehrere Datensätze (Replikate), mit einer von Standards eingegrenzten Region
+-> Prüfe Verteilung von Rauschen und prüfe, inwiefern Binparameter bei der Zuordnung helfen
+
 https://www.desmos.com/calculator/bvc5r0epxz
 
 https://www.desmos.com/calculator/enj0s6h2la // besser

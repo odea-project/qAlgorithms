@@ -233,7 +233,7 @@ per-centroid error when reading in a .csv or assuming a static error of x ppm.
 
 ### Data Organisation
 Data is represented as DataPoint objects, which are handled in one of two ways:
-* one RawData object
+* one qCentroids object
 * multiple Bin objects in one BinContainer object  
 
 <b> DataPoint objects: </b>
@@ -241,7 +241,7 @@ One DataPoint contains mz, RT, intensity, scan number, and the centroid error.
 Data points are never modified during the binning process. 
 DataPoints are Structs as defined in the c++ 21 standard.
 
-<b> The RawData object: </b>
+<b> The qCentroids object: </b>
 Centroided data is stored as individual scans, i.e., mass spectra, with one vector per scan. Within the scans, 
 data points are sorted by mz. Scans are accessed through a vector containing all scans. 
 It is possible to account for empty scans.
@@ -250,13 +250,13 @@ It is possible to account for empty scans.
 Every Bin stores all data points determined to belong to the same EIC. All subsetting 
 methods are called on the bin without requiring knowledge of data points outside of the bin.
 The main difference between Bins and EICs is that a Bin only operates with pointers to data
-points in RawData, while the EIC can be used independently of the RawData it was generated from.
+points in qCentroids, while the EIC can be used independently of the qCentroids it was generated from.
 This minimises the memory needed for further operations by not passing along methods and utility variables.
 Additionally, bins keep track of information that can later be used for filtering or weighing
 purposes, such as if any scans appear more than once in the data and median values
 for scans and masses. These details are irrelevant to the peak finding process and
 are not passed up the pipeline to minimize memory allocations.
-Since Bins contain superfluous methods and variables while additionally depending on the RawData
+Since Bins contain superfluous methods and variables while additionally depending on the qCentroids
 object for their content, they are not suited for passing forward to the peak fitting
 algorithm. Instead, all necessary data is copied, and the binning infrastructure is freed.
 A new bin is created by specifying its start and end within an existing bin. As such, the
@@ -290,7 +290,7 @@ as part of the qBinning module:
 <b> readcsv: </b>
 This function parses data points from a text file (.csv) and constructs a vector containing 
 individual scans. Within each scan, data points are ordered by m/z in increasing order. 
-Reading data in this way requires a RawData object to be created first, since it is passed by reference.
+Reading data in this way requires a qCentroids object to be created first, since it is passed by reference.
 These functions primarily exist for testing since the qBinning module is designed to accept centroided data 
 from the previous step in the qAlgorithms pipeline. 
 If used to read data, an error has to be specified for each centroid. If the error is supposed to
@@ -930,20 +930,6 @@ obfuscated property, and secondly - assuming any such links can
 be established - increase the comparability of results for similar
 samples between labs employing different separations.
 
-It could be demonstrated that during specific steps of the algorithm,
-members of a group are erroneously split off. By identifying these
-bins and revising their members, ca. 2% of all bins found in the
-test dataset could be improved. One possible approach for this is to
-re-add all "bad" bins to the dataset of discarded points and redo
-the entire binning. This results in an operation that iterates over about
-1/3 of the entire dataset again, and does not guarantee that this error
-will not occur once more.
-An alternative approach is binning a mass window. Given a more 
-the elaborate structure of discarded points, for example, organizing them
-in steps of 0.5 mz, the area needed for binning always spans 1 mz. 
-This massively reduces the amount of subsets that need to be performed
-per control.
-
 While it already functions as a measure of separation, a secondary
 statistic to the DQSB would allow to control of the generated values.
 This test would, depending on calculation effort, not be included
@@ -970,8 +956,7 @@ might be a viable strategy for improving overall result quality.
 **Usability Changes**
 
 The program does not feature error handling in any capacity. Additionally,
-only one dataset 
-has been used to confirm error-free operation on two different
+only one dataset has been used to confirm error-free operation on two different
 computers, both running Windows 10. When running without an attached debugger,
 complete error management will be impossible for a possible end user. For the qAlgorithms
 tool to find widespread adoption, possible error sources need to be identified,
@@ -1041,6 +1026,10 @@ The next steps include the complete implementation of the StreamFind platform,
 which requires some further work to connect the existing code to the
 standardized interface.
 
+As of 01.07.2024, an interface exists from the qCentroids algorithm to
+qBinning. Binning now exists as a single function taking a qCentroids 
+object as a parameter.
+
 An important restriction of the presented test for too strict separation is that it
 only detects bins where a majority of points are affected. It is a
 reasonable assumption that such cases also exist in plenty at the
@@ -1060,7 +1049,7 @@ benefit the binning procedure by addressing an issue that persists
 in the subsetting-based approach.
 The search for efficient detection and correction of non-ideal
 bins should be the main focus when improving and expanding the 
-presented program. Such improvements must always be shown to improve
+presented program. Such changes must always be shown to improve
 peak quality or result correctness to justify being made.
 
 ---

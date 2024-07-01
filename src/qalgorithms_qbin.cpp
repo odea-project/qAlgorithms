@@ -339,6 +339,21 @@ namespace q
         {
             // print optional summary file
             std::string binsSummary = location + "/selectBins_summary.csv";
+            std::filesystem::path p = location;
+
+            if (!std::filesystem::exists(p))
+            {
+                std::cout << "Error during summary printing: The selected directory does not exist.\nSupplied path: " << std::filesystem::absolute(p)
+                          << "\nCurrent directory: " << std::filesystem::current_path() << "\ncontinuing...\n";
+            }
+
+            if (fullBins)
+            {
+                std::cout << "writing bin summary and complete centroids to " << std::filesystem::canonical(p) << '\n';
+            }else{
+                std::cout << "writing bin summary to " << std::filesystem::canonical(p) << '\n';
+            }
+
             std::vector<size_t> indices;
             std::fstream file_out_sum;
             std::stringstream output_sum;
@@ -393,7 +408,7 @@ namespace q
 
 #pragma region "Bin"
 
-        Bin::Bin(){};
+        Bin::Bin() {};
 
         Bin::Bin(const std::vector<qCentroid *>::iterator &binStartInOS, const std::vector<qCentroid *>::iterator &binEndInOS) // const std::vector<qCentroid> &sourceList,
         {
@@ -548,27 +563,10 @@ namespace q
             DQSB_base.reserve(binsize);
             DQSB_scaled.reserve(binsize);
             // determine start and end of relevant scan section, used as repeats for the for loop; -1 since accessed vector is zero-indexed
-            // @todo makeit so this is not dependent on getting a scan-sorted bin
+            // @todo make it so this is not dependent on getting a scan-sorted bin
             const unsigned int minScanInner = pointsInBin.front()->scanNo;
             int scanRangeStart = pointsInBin.front()->scanNo - maxdist;
             int scanRangeEnd = pointsInBin.back()->scanNo + maxdist;
-
-            int maxScansReduced = 0;              // add this many dummy values to prevent segfault when bin is in one of the last scans
-            std::vector<double> minMaxOutPerScan; // contains both mz values (per scan) next or closest to all m/z in the bin
-            minMaxOutPerScan.reserve((scanRangeEnd - scanRangeStart + 1) * 2);
-            if (scanRangeStart < 1)
-            {
-                for (int i = 0; i < (1 - scanRangeStart) * 2; i++) // fill with dummy values to prevent segfault when distance checker expects negative scan number
-                {
-                    minMaxOutPerScan.push_back(IGNORE);
-                }
-                scanRangeStart = 1;
-            }
-            else if (scanRangeEnd > int(rawdata->allDatapoints.size()))
-            {
-                maxScansReduced = scanRangeEnd - rawdata->allDatapoints.size(); // dummy values have to be added later
-                scanRangeEnd = rawdata->allDatapoints.size();
-            }
 
             // determine min and max in mz - sort, since then calculation of inner distances is significantly faster
             std::sort(pointsInBin.begin(), pointsInBin.end(), [](qCentroid *lhs, qCentroid *rhs)
@@ -586,6 +584,25 @@ namespace q
             {
                 medianMZ = (pointsInBin[posMedian]->mz + pointsInBin[posMedian + 1]->mz) / 2; // +1 to round to nearest, since integers are truncated
             }
+
+            int maxScansReduced = 0;              // add this many dummy values to prevent segfault when bin is in one of the last scans
+            std::vector<double> minMaxOutPerScan; // contains both mz values (per scan) next or closest to all m/z in the bin
+            minMaxOutPerScan.reserve((scanRangeEnd - scanRangeStart + 1) * 2);
+
+            if (scanRangeStart < 1)
+            {
+                for (int i = 0; i < (1 - scanRangeStart) * 2; i++) // fill with dummy values to prevent segfault when distance checker expects negative scan number
+                {
+                    minMaxOutPerScan.push_back(IGNORE);
+                }
+                scanRangeStart = 1;
+            }
+            if (scanRangeEnd > (rawdata->allDatapoints.size() - 1))
+            {
+                maxScansReduced = scanRangeEnd - rawdata->allDatapoints.size() - 1; // dummy values have to be added later
+                scanRangeEnd = rawdata->allDatapoints.size() - 1; 
+            }
+            assert(scanRangeEnd < rawdata->allDatapoints.size());
 
             // for all scans relevant to the bin
             int needle = 0; // position in scan where a value was found - starts at 0 for first scan
@@ -946,7 +963,7 @@ namespace q
             scaleDistancesForDQS_gauss(inputMaxdist); // this sets q::scalarForMOD to the correct scaling so that at the distance in scans == maxdist the curve encloses 99% of its area
             activeBins.assignDQSB(&centroidedData, maxdist, false);
 
-            activeBins.printSelectBins(std::byte{0b10000110}, true, "../.."); //@todo make this a function parameter
+            activeBins.printSelectBins(std::byte{0b11111111}, true, "../.."); //@todo make this a function parameter
 
             // @todo add a way for selection / bin summary to be given upstream
 
