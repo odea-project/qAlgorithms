@@ -7,6 +7,7 @@
 #include <fstream>
 #include <sstream>
 #include <iomanip>
+#include <algorithm>
 
 namespace q
 {
@@ -200,12 +201,53 @@ namespace q
             return true;
         }
 
-        bool LCMSData::readStreamCraftMZML(sc::MZML &data)
+        bool LCMSData::readStreamCraftMZML(sc::MZML &data, std::array<double, 2> rt_window)
         {
             std::vector<std::vector<std::vector<double>>> spectra = data.get_spectra();
             std::vector<double> retentionTimes = data.get_spectra_rt();
             std::vector<int> scanNumbers = data.get_spectra_scan_number();
             std::vector<int> ms_levels = data.get_spectra_level();
+
+            // filter data to fit the specified windows in mz and rt.
+            // a value of -1 means the entire range is taken.
+            // filter in rt first:
+            if (rt_window[0] != -1)
+            {
+                auto it = std::find_if(retentionTimes.begin(), retentionTimes.end(), [rt_window](double rt)
+                                       { return rt > rt_window[0]; });
+                
+                if (it != retentionTimes.begin()) // copy elements of old vectors excluding the discarded scans
+                {
+                    size_t rt_start = std::distance(retentionTimes.begin(), it);
+                    std::vector<decltype(spectra)::value_type>(spectra.begin()+rt_start, spectra.end()).swap(spectra);
+                    std::vector<decltype(retentionTimes)::value_type>(retentionTimes.begin()+rt_start, retentionTimes.end()).swap(retentionTimes);
+                    std::vector<decltype(scanNumbers)::value_type>(scanNumbers.begin()+rt_start, scanNumbers.end()).swap(scanNumbers);
+                    std::vector<decltype(ms_levels)::value_type>(ms_levels.begin()+rt_start, ms_levels.end()).swap(ms_levels);
+                } else {
+                    std::cout << "The selected lower bound in rt is already the first spectrum in the dataset.\n";
+                }
+                
+            }
+
+            if (rt_window[1] != -1)
+            {
+                auto it = std::find_if(retentionTimes.begin(), retentionTimes.end(), [rt_window](double rt)
+                                       { return rt > rt_window[1]; });
+                
+                if (it != retentionTimes.end()) // copy elements of old vectors excluding the discarded scans
+                {
+                    size_t newLength = std::distance(retentionTimes.begin(), it) - 2; 
+                    // -2 since first element past the limit is found and the size is one larger than the index
+                    spectra.resize(newLength);
+                    retentionTimes.resize(newLength);
+                    scanNumbers.resize(newLength);
+                    ms_levels.resize(newLength);
+                } else {
+                    std::cout << "The selected upper bound in rt is already the last spectrum in the dataset.\n";
+                }
+                
+            }
+
             if (spectra.empty())
             {
                 return false;
@@ -215,6 +257,7 @@ namespace q
             for (size_t i = 0; i < number_of_spectra; i++)
             {
                 // checks if the MS level is ms1 @todo: add ms2, ms3, etc.
+                // @todo implement this as std::filter for less wasted cycles
                 if (ms_levels[i] != 1)
                 {
                     continue;
