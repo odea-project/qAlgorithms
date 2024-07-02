@@ -338,15 +338,15 @@ namespace q
         void BinContainer::printSelectBins(std::byte mask, bool fullBins, std::string location) // @todo combine with makeBinSelection
         {
             // print optional summary file
-            std::string binsSummary = location + "/selectBins_summary.csv";
-            std::filesystem::path p = location;
+            // filename to directory
+            size_t found = location.find_last_of("/\\");
+            std::filesystem::path p = location.substr(0,found); 
 
             if (!std::filesystem::exists(p))
             {
                 std::cout << "Error during summary printing: The selected directory does not exist.\nSupplied path: " << std::filesystem::absolute(p)
                           << "\nCurrent directory: " << std::filesystem::current_path() << "\ncontinuing...\n";
             }
-
             if (fullBins)
             {
                 std::cout << "writing bin summary and complete centroids to " << std::filesystem::canonical(p) << '\n';
@@ -354,6 +354,7 @@ namespace q
                 std::cout << "writing bin summary to " << std::filesystem::canonical(p) << '\n';
             }
 
+            std::string binsSummary = location + "_summary.csv";
             std::vector<size_t> indices;
             std::fstream file_out_sum;
             std::stringstream output_sum;
@@ -378,7 +379,7 @@ namespace q
             // print all bins
             if (fullBins)
             {
-                std::string binsFull = location + "/selectBins_full.csv";
+                std::string binsFull = location + "_selectBins_full.csv";
                 std::fstream file_out_all;
                 std::stringstream output_all;
                 file_out_all.open(binsFull, std::ios::out);
@@ -938,7 +939,7 @@ namespace q
 
 #pragma endregion "Functions"
 
-        std::vector<EIC> performQbinning(CentroidedData centroidedData, int inputMaxdist = 6, bool silent = false)
+        std::vector<EIC> performQbinning(CentroidedData centroidedData, std::string outpath, int inputMaxdist = 6, bool silent = false)
         {
             std::streambuf *old = std::cout.rdbuf(); // save standard out config
             std::stringstream ss;
@@ -963,11 +964,12 @@ namespace q
             scaleDistancesForDQS_gauss(inputMaxdist); // this sets q::scalarForMOD to the correct scaling so that at the distance in scans == maxdist the curve encloses 99% of its area
             activeBins.assignDQSB(&centroidedData, maxdist, false);
 
-            activeBins.printSelectBins(std::byte{0b11111111}, true, "../.."); //@todo make this a function parameter
+            activeBins.printSelectBins(std::byte{0b11111111}, true, outpath); //@todo make this a function parameter
 
             // @todo add a way for selection / bin summary to be given upstream
 
             // @todo add bin reassembly code here
+            activeBins.redoBinningIfTooclose(measurementDimensions, &centroidedData, q::qBinning::outOfBins, q::qBinning::maxdist);
 
             std::cout << "\n\nDone!\n\n";
 
