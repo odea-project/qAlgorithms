@@ -208,6 +208,12 @@ namespace q
             std::cout << "starting re-binning procedure...\n\n";
             // assemble new bin by copying bins with hot ends into outOfBins
             std::vector<size_t> binsWithHotEnds;
+            if (binsWithHotEnds.empty())
+            {
+                std::cout << "nothing to re-bin, continuing...\n";
+                return;
+            }
+            
             binsWithHotEnds.reserve(finishedBins.size() / 10);
             for (size_t i = 0; i < finishedBins.size(); i++)
             {
@@ -267,27 +273,6 @@ namespace q
                     ++i;
                 }
             }
-            // temporary: print all bins created this way @todo remove when done
-            std::string binsSummary = "../../redoneBins.csv";
-            std::vector<size_t> indices;
-            std::fstream file_out_sum;
-            std::stringstream output_sum;
-            file_out_sum.open(binsSummary, std::ios::out);
-            assert(file_out_sum.is_open());
-            output_sum << "ID,errorcode,size,mean_mz,median_mz,stdev_mz,mean_scans,DQSB_base,DQSB_scaled,DQSB_worst,DQSC_min,mean_error\n";
-            for (size_t i = 0; i < redoneBins.size(); i++)
-            {
-                SummaryOutput res = redoneBins[i].summariseBin();
-
-                indices.push_back(i); // save these bins for printing
-                char buffer[256];
-                sprintf(buffer, "%llu,%d,%llu,%0.15f,%0.15f,%0.15f,%0.2f,%0.9f,%0.9f,%0.9f,%0.15f\n",
-                        i + 1, int(res.errorcode), res.binsize, res.mean_mz, res.median_mz, res.stddev_mz,
-                        res.mean_scans, res.DQSB_base, res.DQSB_scaled, res.DQSC_min, res.mean_error);
-                output_sum << buffer;
-            }
-            file_out_sum << output_sum.str();
-            file_out_sum.close();
 
             std::cout << "re-binning completed\nremoved " << binsWithHotEnds.size() << " incomplete bins, added "
                       << redoneBins.size() << " corrected bins\n";
@@ -964,12 +949,12 @@ namespace q
             scaleDistancesForDQS_gauss(inputMaxdist); // this sets q::scalarForMOD to the correct scaling so that at the distance in scans == maxdist the curve encloses 99% of its area
             activeBins.assignDQSB(&centroidedData, maxdist, false);
 
-            activeBins.printSelectBins(std::byte{0b11111111}, true, outpath); //@todo make this a function parameter
-
             // @todo add a way for selection / bin summary to be given upstream
 
             // @todo add bin reassembly code here
             activeBins.redoBinningIfTooclose(measurementDimensions, &centroidedData, q::qBinning::outOfBins, q::qBinning::maxdist);
+
+            activeBins.printSelectBins(std::byte{0b11111111}, true, outpath); //@todo make this a function parameter
 
             std::cout << "\n\nDone!\n\n";
 
