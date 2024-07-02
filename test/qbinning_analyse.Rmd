@@ -118,9 +118,10 @@ points_total = 3568033
 bins_total = 55910
 notbinned_total = 1102746
 
-summary <- read.csv("../../selectbins_summary.csv")
-# summary$errorcode[which(summary$errorcode == 128)] = 0
-bins <- read.csv("../../selectbins_full.csv")
+summary <- read.csv("C:/Users/unisys/Documents/Studium/Messdaten/mzml/AquaFlow_MS1/210229_C1_S1_W_MI_3_pos_summary.csv")
+
+# "../../selectbins_summary.csv"
+# bins <- read.csv("../../selectbins_full.csv")
 # notbinned = read.csv("../../qbinning_notbinned.csv")
 summary$errorcode = as.numeric(lapply(summary$errorcode, bits))
 
@@ -131,51 +132,8 @@ summary %>% group_by(errorcode) %>% summarise(bin_count = n(), total_points = su
 stats = as.data.frame(table(summary$errorcode)) # alle ungeraden Zahlen haben duplikate
 stats$Var1 = as.numeric(levels(stats$Var1))
 
-stats[stats$Var1 %% 2 != 0,]
- 
-stats[stats$Var1 - round(stats$Var1, -2) >= 10,] # Seltsame DQS korrelierern nicht mit anderen Fehlern
-
-# MZ außerhalb 3 sigma korreliert mit 
-stats[stats$Var1 >= 10000,]
 
 
-subsample_notbinned = round(runif(5000, 1, notbinned_total))
-
-ggplot(summary[summary$errorcode - round(summary$errorcode, -5) >= 1000,])+
-  geom_point(data = notbinned[subsample_notbinned,], aes(x = mz, y = scan)) +
-  geom_point(aes(x = mean_mz, y = mean_scans, colour = as.factor(errorcode)))
-  # scale_color_viridis()
-
-ggplot(summary[summary$errorcode - round(summary$errorcode, -3) >= 100,])+
-  geom_point(data = notbinned[subsample_notbinned,], aes(x = mz, y = scan)) +
-  geom_point(aes(x = mean_mz, y = mean_scans, colour = as.factor(errorcode)))
-
-
-
-bins_error[bins_error$ID == 308,]
-minDists308 = c(6.2961233993519272e-05, 8.8906114996234464e-05, 9.4137318995990427e-05, 0.0001178799969920874, 8.2152471009067085e-05, 7.1812920992897489e-05)
-errors308 = c(2.62158179102052e-05, 0.000221785977937405, 1.7943534787886702e-05, 3.6100375305253397e-05, 1.8813454471750598e-05, 7.20372773346827e-05)
-MIDs308 = fast_mean_distance(bins_error[bins_error$ID == 308,1])
-maxdist308 = critVal(6) * mean(errors308)
-maxdist308_7 = critVal(7) * mean(errors308)
-
-for (i in 1:6) {
-  print(sprintf("%0.10f /// %0.10f", makeDQS(MIDs308[i], minDists308[i]), makeDQS(MIDs308[i], maxdist308)))
-}
-
-length(bins_error$mz)/points_total
-length(bins_error$mz)/(points_total - notbinned_total)
-mean(summary$size)
-(points_total - notbinned_total)/(bins_total - length(summary$size))
-
-subset_step = c(0, 4205, 46173, 54939, 55836, 55904, 55910)
-error_perc = data.frame(step = 0:6, perc_sum = 0, perc_all = 0)
-for (i in 2:7) {
-  sum_match = sum((subset_step[i-1] < summary$ID) & summary$ID < subset_step[i])
-  error_perc$perc_sum[i] = sum_match/7508
-  error_perc$perc_all[i] = (subset_step[i] - subset_step[i-1])/bins_total
-}
-# markierte bins sind nicht in einem der Schritte deutlich wahrscheinlicher als alle anderen
 ```
 
 ```{r binviewer and rater}

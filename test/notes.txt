@@ -2,6 +2,8 @@ C1_S1_W_MI_1/2/3 sind Standards zum reinen Flusswasser hinzugespiked.
 Blanks1/2/3 sind Systemblanks: Reinstwasser
 Die anderen Blanks sind mit Standards gespiked.
 
+Subsetting-Schritt, in dem ein Bin erstellt wurde, wirkt sich nicht merklich auf seine Qualität aus
+
 Nur positiv-modus
 
 Standards (u.a.):
