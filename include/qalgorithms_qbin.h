@@ -232,7 +232,7 @@ namespace q
         void check_MOD_outOfBins(const Bin *target, const std::vector<qCentroid *> notBinned, const int maxdist);
 
         // ### wrapper function to execute qbinning on a CentroidedData struct ###
-        std::vector<EIC> performQbinning(const CentroidedData centroidedData, int maxdist, bool silent);
+        std::vector<EIC> performQbinning(const CentroidedData centroidedData, std::string outpath, int maxdist, bool silent);
 
     }
 }

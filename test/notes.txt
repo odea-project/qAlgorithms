@@ -1,3 +1,16 @@
+C1_S1_W_MI_1/2/3 sind Standards zum reinen Flusswasser hinzugespiked.
+Blanks1/2/3 sind Systemblanks: Reinstwasser
+Die anderen Blanks sind mit Standards gespiked.
+
+Nur positiv-modus
+
+Standards (u.a.):
+Name		Masse		RT(min)	RT(s)	Addukt
+Diclofenac	324.0260	14.4	864	M + H+
+Sulfamethoxazol	258.0845	7.53	451.8	M + H+
+Metoprolol	275.2352	7.50	450	M + 2H+
+Carbamazepin	245.1525	10.13	607.8	M + H+
+
 Mehrere Datensätze (Replikate), mit einer von Standards eingegrenzten Region
 -> Prüfe Verteilung von Rauschen und prüfe, inwiefern Binparameter bei der Zuordnung helfen
 
@@ -17,57 +30,28 @@ C:\PROGRA~2\GnuWin32\bin\make.exe
 
 valgrind für Speicherdeallokierung, address sanitiser zum Laufen bringen
 
-Gibt es einen Zusammenhang zwischen Zentroidfehler und der Eigenschaft, nicht in einem Bin zu landen / Anfang Bzw. Ende eines Bins zu sein?
+Gibt es einen Zusammenhang zwischen Zentroidfehler und der Eigenschaft, 
+nicht in einem Bin zu landen / Anfang Bzw. Ende eines Bins zu sein?
+
 Config-Datei
 
 https://www.agner.org/optimize/optimizing_cpp.pdf
 
 prüfen, wie das Programm skaliert -> subdatensätze
 
-gcc -Wall -Werror .\src\qalgorithms_qbin.cpp  
-
 https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0125108
 
 https://link.springer.com/article/10.1007/s41060-021-00275-z#Sec2
 
-Der schlechteste mögliche DQS sinkt mit n, Beweis?
-
-Wichtig: Binning ist nur ein Schritt, und sollte entsprechend auf gute Endergebnisse
-hin optimiert werden
-
-Mögliche Optimierung: Reduziere Datapoint auf mz, rt, pointer für bessere Cachenutzung
-
-Vorgehen DQS: Arbeite mit empirischer Stabw * 1.128 für MID, MOD = maxdist(n) => genauere Bestimmung des Faktors, test auf Abhängigkeit von n
-
-quantile function ist inverse der normalverteilung
-
-gibt es ein MID > vcrit im Datensatz?
-
-großen Multistandard-Datensatz anfragen
-
-long doubles wieder entfernen
+großen Multistandard-Datensatz anfragen (bfg - Datenbank)
 
 Korrelationen mit Anzahl fehlender scans?
 
 Falsche DQS: Bin wurde von einem viel größeren abgetrennt, der critVal entsprechend reduziert hat.
     zeigen kein besonders auffälliges Verhalten Bzgl. subsetting-Schritt
 
-pracma omp wird nicht standardmäßig vom compiler akzeptiert
-
-Instead of returning a composite object, you may consider the following alternatives:
-• Make the function a constructor for the object.
-• Make the function modify an existing object rather than making a new one. The
-existing object can be made available to the function through a pointer or reference,
-or the function could be a member of the object's class.
-• Make the function return a pointer or reference to a static object defined inside the
-function. This is efficient, but risky. The returned pointer or reference is valid only
-until the next time the function is called and the local object is overwritten, possibly in
-a different thread. If you forget to make the local object static then it becomes invalid
-as soon as the function returns.
-
-Bin Reassembly: Kopiere alle relevanten Bins zu den Werten nicht genutzter Punkte und lass 
-das Binning erneut durchlaufen
-    Sollte insbesondere nach Aufreinigung der zu großen Bins passieren
+Bin Reassembly sollte erst nach Aufreinigung der zu großen Bins passieren, diese müssen aber 
+    von der Rekonstruktion ausgeschlossen werden
 
 Bin Recutting: Suche nach ungewöhnlichen Mustern, Quantifizierung über summary-Params
 

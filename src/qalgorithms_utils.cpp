@@ -170,12 +170,13 @@ namespace q
     q::Matrices::Matrix X_T_Y = X_T * Y;
     q::Matrices::Matrix coefficients = X_T_X_inv * X_T_Y;
 
-    std::array<double, 3> test = calcQuadraticCoefficients(xData[0], xData[2], xData[1], yData[0], yData[2], yData[1]);
-    double a = std::abs(coefficients.elements[1] - test[1]);
-    if ((a > 0.0001) & (xData.size() == 3))
-    {
-      // std::cout << a << "\n"; // @todo rm
-    }
+    // @todo check if this can be removed
+    // std::array<double, 3> test = calcQuadraticCoefficients(xData[0], xData[2], xData[1], yData[0], yData[2], yData[1]);
+    // double a = std::abs(coefficients.elements[1] - test[1]);
+    // if ((a > 0.0001) & (xData.size() == 3))
+    // {
+    //   // std::cout << a << "\n"; // @todo rm
+    // }
 
     return coefficients;
   }

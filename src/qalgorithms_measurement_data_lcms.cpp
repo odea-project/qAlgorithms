@@ -234,10 +234,9 @@ namespace q
                 auto it = std::find_if(retentionTimes.begin(), retentionTimes.end(), [rt_window](double rt)
                                        { return rt > rt_window[1]; });
                 
-                if (it != retentionTimes.end()) // copy elements of old vectors excluding the discarded scans
+                if (it != retentionTimes.end()) 
                 {
-                    size_t newLength = std::distance(retentionTimes.begin(), it) - 2; 
-                    // -2 since first element past the limit is found and the size is one larger than the index
+                    size_t newLength = std::distance(retentionTimes.begin(), it); 
                     spectra.resize(newLength);
                     retentionTimes.resize(newLength);
                     scanNumbers.resize(newLength);
@@ -257,7 +256,7 @@ namespace q
             for (size_t i = 0; i < number_of_spectra; i++)
             {
                 // checks if the MS level is ms1 @todo: add ms2, ms3, etc.
-                // @todo implement this as std::filter for less wasted cycles
+                // @todo implement this as std::filter for less wasted cycles?
                 if (ms_levels[i] != 1)
                 {
                     continue;
