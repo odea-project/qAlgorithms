@@ -4,9 +4,9 @@
 #include "../include/qalgorithms_measurement_data.h"
 #include "../include/qalgorithms_utils.h"
 
-#include<variant>
-#include<algorithm>
-#include<cmath>
+#include <variant>
+#include <algorithm>
+#include <cmath>
 
 namespace q
 {
