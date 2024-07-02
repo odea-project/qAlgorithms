@@ -41,7 +41,7 @@ int main()
         // "C:/Users/unisys/Documents/Studium/Analytik-Praktikum/rawdata/Exchange_SFC-data/230222_SFC_Modelling_MixF_02_21.mzML",
         // "C:/Users/unisys/Documents/Studium/Analytik-Praktikum/rawdata/Exchange_SFC-data/230222_SFC_Modelling_MixF_03_22.mzML",
         // "C:/Users/unisys/Documents/Studium/Analytik-Praktikum/rawdata/Exchange_SFC-data/230222_SFC_Modelling_MixF_01_20.mzML",
-        };
+    };
 
     for (std::string currentFile : target_files_full)
     {
@@ -80,7 +80,7 @@ int main()
         if (filename_input.find(".mzML") != std::string::npos) // @todo make sure this is the end of the filename, switch to regex
         {
             sc::MZML data(filename_input);
-            fileOK = lcmsData.readStreamCraftMZML(data, {400,900});
+            fileOK = lcmsData.readStreamCraftMZML(data, {400, 900});
         }
         else if (filename_input.find(".csv") != std::string::npos) // @todo make sure this is the end of the filename, switch to regex
         {
@@ -138,7 +138,6 @@ int main()
 
         // std::vector<std::vector<std::unique_ptr<q::DataType::Peak>>> peaks = qpeaks.createPeakList(temp_peaks); // @todo check for better data structures
 
-    
         timeEnd = std::chrono::high_resolution_clock::now();
         std::cout << "found " << testdata.lengthAllPoints << " peaks in " << (timeEnd - timeStart).count()
                   << " ns\n\nstarting qbinning submodule...\n\n";
@@ -157,8 +156,6 @@ int main()
         std::string summary_output_location = filename_input.substr(0, found);
 
         std::vector<q::qBinning::EIC> binnedData = q::qBinning::performQbinning(testdata, summary_output_location, 6, false);
-
-
 
         std::cout << "done\n";
 

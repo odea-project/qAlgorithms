@@ -213,7 +213,7 @@ namespace q
                 std::cout << "nothing to re-bin, continuing...\n";
                 return;
             }
-            
+
             binsWithHotEnds.reserve(finishedBins.size() / 10);
             for (size_t i = 0; i < finishedBins.size(); i++)
             {
@@ -325,7 +325,7 @@ namespace q
             // print optional summary file
             // filename to directory
             size_t found = location.find_last_of("/\\");
-            std::filesystem::path p = location.substr(0,found); 
+            std::filesystem::path p = location.substr(0, found);
 
             if (!std::filesystem::exists(p))
             {
@@ -335,7 +335,9 @@ namespace q
             if (fullBins)
             {
                 std::cout << "writing bin summary and complete centroids to " << std::filesystem::canonical(p) << '\n';
-            }else{
+            }
+            else
+            {
                 std::cout << "writing bin summary to " << std::filesystem::canonical(p) << '\n';
             }
 
@@ -345,7 +347,7 @@ namespace q
             std::stringstream output_sum;
             file_out_sum.open(binsSummary, std::ios::out);
             assert(file_out_sum.is_open());
-            output_sum << "ID,errorcode,size,mean_mz,median_mz,stdev_mz,mean_scans,DQSB_base,DQSB_scaled,DQSB_worst,DQSC_min,mean_error\n";
+            output_sum << "ID,errorcode,size,mean_mz,median_mz,stdev_mz,mean_scans,DQSB_base,DQSB_scaled,DQSC_min,mean_error\n";
             for (size_t i = 0; i < finishedBins.size(); i++)
             {
                 SummaryOutput res = finishedBins[i].summariseBin();
@@ -394,7 +396,7 @@ namespace q
 
 #pragma region "Bin"
 
-        Bin::Bin() {};
+        Bin::Bin(){};
 
         Bin::Bin(const std::vector<qCentroid *>::iterator &binStartInOS, const std::vector<qCentroid *>::iterator &binEndInOS) // const std::vector<qCentroid> &sourceList,
         {
@@ -586,7 +588,7 @@ namespace q
             if (scanRangeEnd > (rawdata->allDatapoints.size() - 1))
             {
                 maxScansReduced = scanRangeEnd - rawdata->allDatapoints.size() - 1; // dummy values have to be added later
-                scanRangeEnd = rawdata->allDatapoints.size() - 1; 
+                scanRangeEnd = rawdata->allDatapoints.size() - 1;
             }
             assert(scanRangeEnd < rawdata->allDatapoints.size());
 
