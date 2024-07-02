@@ -7,6 +7,7 @@
 // external
 #include "StreamCraft_mzml.h"
 #include <vector>
+#include <array>
 
 namespace q
 {
@@ -52,7 +53,7 @@ namespace q
              * it in the LCMSData object. A StreamCraft mzML object is created by using sc::MZML z("path to mzML file").
              * @param data : StreamCraft mzML object
              */
-            bool readStreamCraftMZML(sc::MZML &data);
+            bool readStreamCraftMZML(sc::MZML &data, std::array<double, 2> rt_window = {-1,-1});
 
             /**
              * @brief Write LC-MS data to a CSV file
