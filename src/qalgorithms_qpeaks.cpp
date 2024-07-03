@@ -684,7 +684,7 @@ namespace q
             }
             // the first scan must be empty for compatibility with qBinning
             assert(centroids[0].empty());
-            // assure scan subvectors are sorted
+            // assure scan subvectors are sorted @todo always sort here, add check for result consistency
             if (!std::is_sorted(centroids[1].begin(), centroids[1].begin(), [](qBinning::qCentroid lhs, qBinning::qCentroid rhs)
                                 { return lhs.mz < rhs.mz; }))
             {

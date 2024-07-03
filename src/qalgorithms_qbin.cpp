@@ -128,7 +128,7 @@ namespace q
             auto timeStart = std::chrono::high_resolution_clock::now();
             auto timeEnd = std::chrono::high_resolution_clock::now();
             std::string subsetType;
-            std::cout << "\nOpen Bins: 1 - ";
+            std::cout << "\nOpen Bins: " << binDeque.size() << " - ";
 
             while (!binDeque.empty()) // while elements are in the bin deque -> if any bin is not fully subset
             {
@@ -208,11 +208,6 @@ namespace q
             std::cout << "starting re-binning procedure...\n\n";
             // assemble new bin by copying bins with hot ends into outOfBins
             std::vector<size_t> binsWithHotEnds;
-            if (binsWithHotEnds.empty())
-            {
-                std::cout << "nothing to re-bin, continuing...\n";
-                return;
-            }
 
             binsWithHotEnds.reserve(finishedBins.size() / 10);
             for (size_t i = 0; i < finishedBins.size(); i++)
@@ -222,9 +217,10 @@ namespace q
                     binsWithHotEnds.push_back(i);
                 }
             }
-            if (binsWithHotEnds.size() == 0)
+            if (binsWithHotEnds.empty())
             {
-                std::cout << "no incomplete bins exist\n\n";
+                std::cout << "nothing to re-bin, continuing...\n";
+                return;
             }
 
             // Assemble new starting bin
@@ -448,8 +444,9 @@ namespace q
 
         void Bin::subsetMZ(std::deque<Bin> *bincontainer, std::vector<double> &OS, const int binStartInOS, const int binEndInOS, unsigned int &counter) // bincontainer is binDeque of BinContainer // OS cannot be solved with pointers since index has to be transferred to frature list
         {
+            // @todo bad data input still causes an early termination here
             assert(binStartInOS >= 0);
-            assert(binEndInOS >= 0);
+            assert(binEndInOS > 0);
             const int binsizeInOS = binEndInOS - binStartInOS + 1; // +1 to avoid length zero
 
             if (binsizeInOS < 5)
@@ -544,7 +541,7 @@ namespace q
             }
         }
 
-        void Bin::makeDQSB(const CentroidedData *rawdata, const unsigned int maxdist)
+        void Bin::makeDQSB(const CentroidedData *rawdata, const unsigned int maxdist) // @todo split this function
         {
             // assumes bin is saved sorted by scans, since the result from scan gap checks is the final control
             const size_t binsize = pointsInBin.size();
@@ -704,11 +701,15 @@ namespace q
                 for (unsigned int j = currentRangeStart; j <= currentRangeEnd; j++) // from lowest scan to highest scan relevant to this
                 // point, +1 since scan no of point has to be included.
                 {
+                    if(currentMZ == minMaxOutPerScan[j]){
+                        std::cout << " equal mz: " << currentMZ << " rangeStart: " << currentRangeStart <<
+                        " current: " << j << " rangeEnd: " << currentRangeEnd << "\n";
+                    }
                     double dist = std::abs(currentMZ - minMaxOutPerScan[j]);
                     if (dist < minDist_base)
                     {
                         minDist_base = dist;
-                        assert(minDist_base > 0);
+                        assert(minDist_base > 0); // error if one mass appears twice in the data
                     }
                     if (dist * scalarForMOD[j - currentRangeStart] < minDist_scaled) // scaling is calculated by a separate function
                     {
@@ -785,6 +786,49 @@ namespace q
                           { sumOfDist += (point->mz - meanMZ) * (point->mz - meanMZ); }); // squared distance to mean
 
             double stdev = sqrt(sumOfDist / (binsize - 1));
+
+            std::sort(pointsInBin.begin(), pointsInBin.end(), [](qCentroid *lhs, qCentroid *rhs)
+                      { return lhs->scanNo < rhs->scanNo; });
+
+            // test for one-sided intensity profile
+            bool halfPeakL = true;
+            double prevInt = 0;
+            int wrongCount = 0;
+            for (qCentroid *cen : pointsInBin)
+            {
+                if (cen->intensity > prevInt)
+                {
+                    prevInt = cen->intensity;
+                    wrongCount = 0;
+                } else {
+                    ++wrongCount;
+                }
+                if (wrongCount > 2)
+                {
+                    halfPeakL = false;
+                    break;
+                }
+            }
+
+            bool halfPeakR = true;
+            prevInt = INFINITY;
+            wrongCount = 0;
+            for (qCentroid *cen : pointsInBin)
+            {
+                if (cen->intensity < prevInt)
+                {
+                    prevInt = cen->intensity;
+                    wrongCount = 0;
+                } else {
+                    ++wrongCount;
+                }
+                if (wrongCount > 2)
+                {
+                    halfPeakR = false;
+                    break;
+                }
+            }
+
             // @todo use enums here
             std::byte selector{0b00000000}; // used as bitmask during printSelectBins()
             if (duplicateScan)
@@ -811,7 +855,7 @@ namespace q
             {
                 selector |= std::byte{0b00100000};
             }
-            if (false)
+            if (halfPeakL | halfPeakR) // mostly uniform increase in intensity over bin
             {
                 selector |= std::byte{0b01000000};
             }
@@ -962,6 +1006,8 @@ namespace q
 
             std::cout.rdbuf(old); // restore previous standard out
 
+            // @todo bins must be sorted by scans before being passed to centroiding
+
             return activeBins.returnBins();
         }
 
@@ -1006,7 +1052,7 @@ int notmain()
     testcontainer.redoBinningIfTooclose(measurementDimensions, &testdata, q::qBinning::outOfBins, q::qBinning::maxdist);
 
     // print bin selection
-    // testcontainer.printSelectBins(std::byte{0b00000110}, true, "../.."); // one bit per test
+    testcontainer.printSelectBins(std::byte{0b11111111}, true, "../.."); // one bit per test
 
     // testcontainer.printBinSummary("../../summary_bins.csv");
     // testcontainer.printworstDQS();

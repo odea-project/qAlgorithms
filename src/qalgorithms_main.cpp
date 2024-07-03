@@ -28,9 +28,10 @@ int main()
     }
     std::cout << "starting...\n";
 
-    std::vector<std::string> target_files_full{
+    // @todo add option to take in a text file containing execution parameters and a list of target files
+    std::vector<std::string> target_files_full{ 
+        "C:/Users/unisys/Documents/Studium/Messdaten/mzml/AquaFlow_MS1/210229_C1_S1_W_MI_2_pos.mzML", // some error during binning here?
         "C:/Users/unisys/Documents/Studium/Messdaten/mzml/AquaFlow_MS1/210229_C1_S1_W_MI_1_pos.mzML",
-        "C:/Users/unisys/Documents/Studium/Messdaten/mzml/AquaFlow_MS1/210229_C1_S1_W_MI_2_pos.mzML",
         "C:/Users/unisys/Documents/Studium/Messdaten/mzml/AquaFlow_MS1/210229_C1_S1_W_MI_3_pos.mzML",
         "C:/Users/unisys/Documents/Studium/Messdaten/mzml/AquaFlow_MS1/210229_Blank_SW_MI_I_1_pos.mzML",
         "C:/Users/unisys/Documents/Studium/Messdaten/mzml/AquaFlow_MS1/210229_Blank_SW_MI_I_2_pos.mzML",
@@ -38,17 +39,14 @@ int main()
         "C:/Users/unisys/Documents/Studium/Messdaten/mzml/AquaFlow_MS1/210229_Blank1.mzML",
         "C:/Users/unisys/Documents/Studium/Messdaten/mzml/AquaFlow_MS1/210229_Blank2.mzML",
         "C:/Users/unisys/Documents/Studium/Messdaten/mzml/AquaFlow_MS1/210229_Blank3.mzML",
-        // "C:/Users/unisys/Documents/Studium/Analytik-Praktikum/rawdata/Exchange_SFC-data/230222_SFC_Modelling_MixF_02_21.mzML",
-        // "C:/Users/unisys/Documents/Studium/Analytik-Praktikum/rawdata/Exchange_SFC-data/230222_SFC_Modelling_MixF_03_22.mzML",
-        // "C:/Users/unisys/Documents/Studium/Analytik-Praktikum/rawdata/Exchange_SFC-data/230222_SFC_Modelling_MixF_01_20.mzML",
+        "C:/Users/unisys/Documents/Studium/Analytik-Praktikum/rawdata/Exchange_SFC-data/230222_SFC_Modelling_MixF_02_21.mzML",
+        "C:/Users/unisys/Documents/Studium/Analytik-Praktikum/rawdata/Exchange_SFC-data/230222_SFC_Modelling_MixF_03_22.mzML",
+        "C:/Users/unisys/Documents/Studium/Analytik-Praktikum/rawdata/Exchange_SFC-data/230222_SFC_Modelling_MixF_01_20.mzML",
     };
 
     for (std::string currentFile : target_files_full)
     {
         auto timeStart = std::chrono::high_resolution_clock::now();
-        // print logo - @todo don't use functions which are incompatible with linux
-        //   HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
-        //   q::logo::print_qpeaks();
 
         // ### removed user input (make this an argument of main) and overzealous status updates
 
@@ -77,10 +75,14 @@ int main()
         bool fileOK = false;
 
         // check if the input file is a CSV file or a mzML file
+        // @todo solve this by first extracting all characters from the last dot to the
+        // end of the string and then implement method selection using a switch statement
+        // char filetype[16] = p.extension();
+
         if (filename_input.find(".mzML") != std::string::npos) // @todo make sure this is the end of the filename, switch to regex
         {
             sc::MZML data(filename_input);
-            fileOK = lcmsData.readStreamCraftMZML(data, {400, 900});
+            fileOK = lcmsData.readStreamCraftMZML(data);
         }
         else if (filename_input.find(".csv") != std::string::npos) // @todo make sure this is the end of the filename, switch to regex
         {
