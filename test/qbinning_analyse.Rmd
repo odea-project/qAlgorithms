@@ -118,12 +118,13 @@ points_total = 3568033
 bins_total = 55910
 notbinned_total = 1102746
 
-summary <- read.csv("C:/Users/unisys/Documents/Studium/Messdaten/mzml/AquaFlow_MS1/210229_C1_S1_W_MI_3_pos_summary.csv")
+summary <- read.csv("C:/Users/unisys/Documents/Studium/Analytik-Praktikum/qAlgorithms/selectBins_summary.csv")
 
 # "../../selectbins_summary.csv"
 # bins <- read.csv("../../selectbins_full.csv")
 # notbinned = read.csv("../../qbinning_notbinned.csv")
 summary$errorcode = as.numeric(lapply(summary$errorcode, bits))
+summary$errorcode = summary$errorcode - 10000000
 
 summary = summary[order(summary$size, decreasing = TRUE),]
 
@@ -142,26 +143,17 @@ last_viewed_bin = 646
 binRater(summary,bins,last_viewed_bin)
 
 summary$manual[83]
-binRater = function(summary, fullbins, startNo){
-  cat("Rate bins using numbers:
-        0: The bin is good as-is (Peak extraction might be good)
-        1: Some noise reduction is needed / slanted peak profile
-        2: few extreme intensities
-        3: Two or more possible peaks are connected by noise data
-        4: There is no obvious peak visible here
-        5: Strong asymmetry in mz/scans
-        6: 
-        7: 
-        8: 
-        9: 
-      Enter # to stop rating bins. The bin index you stopped at will be printed to the console. Your selections are saved to the dataframe \"summary\".\n")
-  readline("Press Enter to start the bin rating process.")
-  i = startNo
+
+binViewer = function(summary, fullbins, binID){
+ 
+  readline("Press Enter to continue.")
   rateNext = T
   while (rateNext) {
-    binID = summary$ID[i]
+    ppm5 = summary$mean_mz[which(summary$ID == binID)] * 5 * 10^-6
     print(ggplot(fullbins[which(fullbins$ID == binID),])+
-      geom_point(aes(mz, scan, color = intensity))+ # , color = as.factor(ID)
+      geom_point(aes(mz, scan, color = intensity))+ 
+      geom_vline(xintercept = summary$mean_mz[which(summary$ID == binID)] - ppm5, linewidth = 0.2, linetype = "dashed")+
+      geom_vline(xintercept = summary$mean_mz[which(summary$ID == binID)] + ppm5, linewidth = 0.2, linetype = "dashed")+
       xlab("m/z")+
       ylab("Scan Number")+
       theme(panel.background = element_rect(fill = "lightblue1",
@@ -169,21 +161,19 @@ binRater = function(summary, fullbins, startNo){
       scale_color_viridis_c(option = "plasma", direction = -1)+
       labs(caption = sprintf("BinID: %d | Errorcode: %d", binID, summary$errorcode[1]))
     )
-    rating = readline("Rating:   ")
-    if(rating == "#"){
+    input = readline()
+    if(input == "#"){
       rateNext = F
-    }else{
-      summary$manual[i] = rating
-      i = i+1
+    } else if(input == ""){
+      binID = binID + 1
+    } else if(input == "<") {
+      binID = binID - 1
+    } else {
+      binID = as.numeric(input)
     }
-    
   }
-  
-  assign("summary", summary, envir = .GlobalEnv)
-  sprintf("Set startNo to %d to continue rating.", i)
 }
 ```
-
 
 ```{r plotting}
 targetBin = bins[which(bins$ID == 7),]

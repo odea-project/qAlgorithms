@@ -39,7 +39,29 @@ bins_full_3 = read.csv("G:/_Studium/Analytik-Praktikum/bin/Daten_AquaFlow/210229
 ```
 
 ```{r read data L}
+s_blank_pure_1 = read.csv("C:/Users/unisys/Documents/Studium/Messdaten/qbins + summary/210229_Blank1_summary.csv")
+s_blank_pure_2 = read.csv("C:/Users/unisys/Documents/Studium/Messdaten/qbins + summary/210229_Blank2_summary.csv")
+s_blank_pure_3 = read.csv("C:/Users/unisys/Documents/Studium/Messdaten/qbins + summary/210229_Blank3_summary.csv")
 
+s_blank_standard_1 = read.csv("C:/Users/unisys/Documents/Studium/Messdaten/qbins + summary/210229_Blank_SW_MI_I_1_pos_summary.csv")
+s_blank_standard_2 = read.csv("C:/Users/unisys/Documents/Studium/Messdaten/qbins + summary/210229_Blank_SW_MI_I_2_pos_summary.csv")
+s_blank_standard_3 = read.csv("C:/Users/unisys/Documents/Studium/Messdaten/qbins + summary/210229_Blank_SW_MI_I_3_pos_summary.csv")
+
+s_full_1 = read.csv("C:/Users/unisys/Documents/Studium/Messdaten/qbins + summary/210229_C1_S1_W_MI_1_pos_summary.csv")
+s_full_2 = read.csv("C:/Users/unisys/Documents/Studium/Messdaten/qbins + summary/210229_C1_S1_W_MI_2_pos_summary.csv")
+s_full_3 = read.csv("C:/Users/unisys/Documents/Studium/Messdaten/qbins + summary/210229_C1_S1_W_MI_3_pos_summary.csv")
+
+bins_blank_pure_1 = read.csv("C:/Users/unisys/Documents/Studium/Messdaten/qbins + summary/210229_Blank1_selectBins_full.csv")
+bins_blank_pure_2 = read.csv("C:/Users/unisys/Documents/Studium/Messdaten/qbins + summary/210229_Blank2_selectBins_full.csv")
+bins_blank_pure_3 = read.csv("C:/Users/unisys/Documents/Studium/Messdaten/qbins + summary/210229_Blank3_selectBins_full.csv")
+
+bins_blank_standard_1 = read.csv("C:/Users/unisys/Documents/Studium/Messdaten/qbins + summary/210229_Blank_SW_MI_I_1_pos_selectBins_full.csv")
+bins_blank_standard_2 = read.csv("C:/Users/unisys/Documents/Studium/Messdaten/qbins + summary/210229_Blank_SW_MI_I_2_pos_selectBins_full.csv")
+bins_blank_standard_3 = read.csv("C:/Users/unisys/Documents/Studium/Messdaten/qbins + summary/210229_Blank_SW_MI_I_3_pos_selectBins_full.csv")
+
+bins_full_1 = read.csv("C:/Users/unisys/Documents/Studium/Messdaten/qbins + summary/210229_C1_S1_W_MI_1_pos_selectBins_full.csv")
+bins_full_2 = read.csv("C:/Users/unisys/Documents/Studium/Messdaten/qbins + summary/210229_C1_S1_W_MI_2_pos_selectBins_full.csv")
+bins_full_3 = read.csv("C:/Users/unisys/Documents/Studium/Messdaten/qbins + summary/210229_C1_S1_W_MI_3_pos_selectBins_full.csv")
 ```
 
 ```{r unified summary frame}
@@ -47,7 +69,7 @@ summaries = c("s_blank_pure_1", "s_blank_pure_2", "s_blank_pure_3",
               "s_blank_standard_1", "s_blank_standard_2", "s_blank_standard_3",
               "s_full_1", "s_full_2", "s_full_3")
 
-sum_all = data.frame(errorcode = 0, sample = "none", bin_count = 0, total_points = 0, average_size = 0, mean_DQS = 0, mean_stdev = 0, perc_goodbins = 0)
+sum_all = data.frame(errorcode = 0, sample = "none", bin_count = 0, total_points = 0, average_size = 0, mean_DQS = 0, mean_stdev = 0)
 
 for (name in summaries) {
   measurement = get(name) %>% group_by(errorcode) %>% summarise(sample = name, bin_count = n(), total_points = sum(size), average_size = sum(size)/n(), mean_DQS = mean(DQSB_base), mean_stdev = mean(stdev_mz))
@@ -79,6 +101,52 @@ ggplot(sum_all)+
 ggplot(sum_all %>% group_by(sample) %>% summarise(perc_good = sum(errorcode == 0)/n()))+
   geom_col(aes(as.factor(sample), perc_good))+
   scale_x_discrete(guide = guide_axis(n.dodge=3))
+
+ggplot(s_full_1)+
+  geom_point(aes(mean_mz,mean_scans))
+
+ggplot(s_full_2)+
+  geom_point(aes(mean_mz,mean_scans))
+
+ggplot(s_full_3)+
+  geom_point(aes(mean_mz,mean_scans))
+
+ggplot()+
+  geom_point(aes(s_full_2$mean_mz, s_full_2$mean_scans), shape = "+")+
+  geom_point(aes(s_full_3$mean_mz, s_full_3$mean_scans), shape = "O")
+
+```
+Bins 2013 und 2656 in full_2 sind merkwürdig
+
+
+```{r}
+# real3 ist datensatz 1
+plot_this = real3[which(real3$SampleID %in% 3980:4015),]
+
+ggplot(plot_this[which(plot_this$Position > 310 & plot_this$Position < 340),] %>% group_by(SampleID))+
+  geom_line(aes(Position, Area, colour = as.factor(SampleID)))+
+      geom_vline(xintercept = 324.026, linewidth = 0.2, linetype = "dashed")
+```
+
+```{r find standards}
+selections = data.frame(sample = "none", compound = "none", ID = 0)
+standards = c("Diclofenac", "Sulfamethoxazol", "Metoprolol", "Carbamazepin")
+
+for (name in summaries) {
+  print(name)
+  tmp = get(name)
+  print("Diclofenac")
+  print(tmp[which(tmp$mean_mz > 324.025 & tmp$mean_mz < 324.027),1])
+  print("Sulfamethoxazol")
+  print(tmp[which(tmp$mean_mz > 258.0835 & tmp$mean_mz < 258.0855),1])
+  print("Metoprolol")
+  print(tmp[which(tmp$mean_mz > 275.2342 & tmp$mean_mz < 275.2362),1])
+  print("Carbamazepin")
+  print(tmp[which(tmp$mean_mz > 245.1515 & tmp$mean_mz < 245.1535),1])
+  
+}
+
+s_full_1$ID[which(s_full_1$mean_mz > 324.025 & s_full_1$mean_mz < 324.027)]
 
 ```
 

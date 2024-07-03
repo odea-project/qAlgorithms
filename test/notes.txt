@@ -1,3 +1,6 @@
+Finde objektiven Parameter, um die Mittleren Abstände an die Bingröße
+anzupassen (/binsize?)
+
 C1_S1_W_MI_1/2/3 sind Standards zum reinen Flusswasser hinzugespiked.
 Blanks1/2/3 sind Systemblanks: Reinstwasser
 Die anderen Blanks sind mit Standards gespiked.
@@ -12,6 +15,13 @@ Diclofenac	324.0260	14.4	864	M + H+
 Sulfamethoxazol	258.0845	7.53	451.8	M + H+
 Metoprolol	275.2352	7.50	450	M + 2H+
 Carbamazepin	245.1525	10.13	607.8	M + H+
+
+Je nach Datensatz kann es sinnvoll sein, auch "halbe" Peaks, bei denen 
+das Intensitätsprofil nach dem höchsten Wert abbricht, mit einzubeziehen
+
+prüfe auf nicht-deterministische Ergebnisse des Zentroidierens
+
+Prozessausgabe in logfile schreiben
 
 Mehrere Datensätze (Replikate), mit einer von Standards eingegrenzten Region
 -> Prüfe Verteilung von Rauschen und prüfe, inwiefern Binparameter bei der Zuordnung helfen
