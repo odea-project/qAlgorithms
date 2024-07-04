@@ -31,8 +31,10 @@ int main()
     // @todo add option to take in a text file containing execution parameters and a list of target files
     std::vector<std::string> target_files_full{ 
         "C:/Users/unisys/Documents/Studium/Messdaten/mzml/AquaFlow_MS1/210229_C1_S1_W_MI_2_pos.mzML", // some error during binning here?
+        "nonsense",
         "C:/Users/unisys/Documents/Studium/Messdaten/mzml/AquaFlow_MS1/210229_C1_S1_W_MI_1_pos.mzML",
         "C:/Users/unisys/Documents/Studium/Messdaten/mzml/AquaFlow_MS1/210229_C1_S1_W_MI_3_pos.mzML",
+        "nonsense", // @todo add bypass if one of the files is bad
         "C:/Users/unisys/Documents/Studium/Messdaten/mzml/AquaFlow_MS1/210229_Blank_SW_MI_I_1_pos.mzML",
         "C:/Users/unisys/Documents/Studium/Messdaten/mzml/AquaFlow_MS1/210229_Blank_SW_MI_I_2_pos.mzML",
         "C:/Users/unisys/Documents/Studium/Messdaten/mzml/AquaFlow_MS1/210229_Blank_SW_MI_I_3_pos.mzML",
@@ -136,28 +138,28 @@ int main()
 
         std::vector<std::vector<std::unique_ptr<q::DataType::Peak>>> temp_peaks = qpeaks.findPeaks(dataObject);
 
-        q::qBinning::CentroidedData testdata = qpeaks.passToBinning(temp_peaks, totalScans);
+        // q::qBinning::CentroidedData testdata = qpeaks.passToBinning(temp_peaks, totalScans);
 
-        // std::vector<std::vector<std::unique_ptr<q::DataType::Peak>>> peaks = qpeaks.createPeakList(temp_peaks); // @todo check for better data structures
+        std::vector<std::vector<std::unique_ptr<q::DataType::Peak>>> peaks = qpeaks.createPeakList(temp_peaks); // @todo check for better data structures
 
         timeEnd = std::chrono::high_resolution_clock::now();
-        std::cout << "found " << testdata.lengthAllPoints << " peaks in " << (timeEnd - timeStart).count()
-                  << " ns\n\nstarting qbinning submodule...\n\n";
+        // std::cout << "found " << testdata.lengthAllPoints << " peaks in " << (timeEnd - timeStart).count()
+        //           << " ns\n\nstarting qbinning submodule...\n\n";
 
         // write peaks to file @todo output location should always be determined by the user!
-        std::string filename_output = filename_input;
+        // std::string filename_output = filename_input;
         // // remove the file extension
         // filename_output = filename_output.substr(0, filename_output.find_last_of("."));
         // filename_output += "_peaks.csv";
-        // // std::string filename_output = "../../peaktable.csv";
-        // qpeaks.printAllPeaks(peaks, filename_output);
+        std::string filename_output = "../../peaktable_full2_4.csv";
+        qpeaks.printAllPeaks(peaks, filename_output);
 
         // std::cout << q::vectorDestructions << " , " << q::matrixDestructions << "\n";
 
         size_t found = filename_input.find_last_of(".");
         std::string summary_output_location = filename_input.substr(0, found);
 
-        std::vector<q::qBinning::EIC> binnedData = q::qBinning::performQbinning(testdata, summary_output_location, 6, false);
+        // std::vector<q::qBinning::EIC> binnedData = q::qBinning::performQbinning(testdata, summary_output_location, 6, false);
 
         std::cout << "done\n";
 

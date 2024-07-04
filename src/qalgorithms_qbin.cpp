@@ -95,7 +95,7 @@ namespace q
                 ++lengthAllPoints;
                 rawData->allDatapoints[i_scanNo].push_back(F); // every subvector in allDatapoints is one complete scan - does not require a sorted input file!
             }
-#pragma omp parallel for
+// #pragma omp parallel for
             for (size_t i = 1; i < rawData->allDatapoints.size(); i++) // make sure data conforms to expectations
             {
                 std::sort(rawData->allDatapoints[i].begin(), rawData->allDatapoints[i].end(), [](const qCentroid lhs, const qCentroid rhs)
@@ -194,7 +194,6 @@ namespace q
             std::vector<Bin> &target = rebin ? redoneBins : finishedBins;
             assert(target[0].DQSB_base.size() == 0); // bins are sorted after DQSB calculation, meaning scanMin and ScanMax parameters are wrong
 
-#pragma omp parallel for
             for (size_t i = 0; i < target.size(); i++)
             {
                 target[i].makeDQSB(rawdata, maxdist);
@@ -205,7 +204,7 @@ namespace q
 
         void BinContainer::redoBinningIfTooclose(const std::vector<int> dimensions, const CentroidedData *rawdata, std::vector<qCentroid *> notbinned, const unsigned int maxdist)
         {
-            std::cout << "starting re-binning procedure...\n\n";
+            std::cout << "starting re-binning procedure...\n";
             // assemble new bin by copying bins with hot ends into outOfBins
             std::vector<size_t> binsWithHotEnds;
 
@@ -321,12 +320,14 @@ namespace q
             // print optional summary file
             // filename to directory
             size_t found = location.find_last_of("/\\");
+            std::cout << location.substr(0, found) << "\n";
             std::filesystem::path p = location.substr(0, found);
 
             if (!std::filesystem::exists(p))
             {
                 std::cout << "Error during summary printing: The selected directory does not exist.\nSupplied path: " << std::filesystem::absolute(p)
                           << "\nCurrent directory: " << std::filesystem::current_path() << "\ncontinuing...\n";
+                          return;
             }
             if (fullBins)
             {
@@ -392,7 +393,7 @@ namespace q
 
 #pragma region "Bin"
 
-        Bin::Bin(){};
+        Bin::Bin() {};
 
         Bin::Bin(const std::vector<qCentroid *>::iterator &binStartInOS, const std::vector<qCentroid *>::iterator &binEndInOS) // const std::vector<qCentroid> &sourceList,
         {
@@ -446,7 +447,7 @@ namespace q
         {
             // @todo bad data input still causes an early termination here
             assert(binStartInOS >= 0);
-            assert(binEndInOS > 0);
+            assert(binEndInOS >= binStartInOS);
             const int binsizeInOS = binEndInOS - binStartInOS + 1; // +1 to avoid length zero
 
             if (binsizeInOS < 5)
@@ -572,7 +573,8 @@ namespace q
 
             int maxScansReduced = 0;              // add this many dummy values to prevent segfault when bin is in one of the last scans
             std::vector<double> minMaxOutPerScan; // contains both mz values (per scan) next or closest to all m/z in the bin
-            minMaxOutPerScan.reserve((scanRangeEnd - scanRangeStart + 1) * 2);
+            
+            int edgecase = 0;
 
             if (scanRangeStart < 1)
             {
@@ -581,18 +583,22 @@ namespace q
                     minMaxOutPerScan.push_back(IGNORE);
                 }
                 scanRangeStart = 1;
+                edgecase++;
             }
             if (scanRangeEnd > (rawdata->allDatapoints.size() - 1))
             {
                 maxScansReduced = scanRangeEnd - rawdata->allDatapoints.size() - 1; // dummy values have to be added later
                 scanRangeEnd = rawdata->allDatapoints.size() - 1;
+                edgecase += 2;
             }
             assert(scanRangeEnd < rawdata->allDatapoints.size());
+
+            minMaxOutPerScan.reserve((scanRangeEnd - scanRangeStart + 1) * 2);
 
             // for all scans relevant to the bin
             int needle = 0; // position in scan where a value was found - starts at 0 for first scan
 
-            for (int i = scanRangeStart; i < scanRangeEnd; i++)
+            for (int i = scanRangeStart; i <= scanRangeEnd; i++)
             {
                 bool minFound = false; // only execute search if min or max is present in the scan
                 bool maxFound = false;
@@ -607,7 +613,7 @@ namespace q
                 {
                     needle = scansize; // prevent searching outside of the valid scan region
                 }
-
+                // check if the bin is outside the region this scan covers
                 if (rawdata->allDatapoints[i][0].mz >= minInnerMZ)
                 {
                     minMaxOutPerScan.push_back(NO_MIN_FOUND);
@@ -615,6 +621,7 @@ namespace q
                     if (rawdata->allDatapoints[i][0].mz > maxInnerMZ)
                     {
                         minMaxOutPerScan.push_back(rawdata->allDatapoints[i][0].mz);
+                        assert((minMaxOutPerScan.back() < minInnerMZ) xor (minMaxOutPerScan.back() > maxInnerMZ));
                         maxFound = true;
                         continue;
                     }
@@ -632,6 +639,7 @@ namespace q
                     if (rawdata->allDatapoints[i][scansize].mz < minInnerMZ)
                     {
                         minMaxOutPerScan.push_back(rawdata->allDatapoints[i][scansize].mz);
+                        assert((minMaxOutPerScan.back() < minInnerMZ) xor (minMaxOutPerScan.back() > maxInnerMZ));
                         minFound = true;
                         continue; // @todo work with goto here
                     }
@@ -653,6 +661,7 @@ namespace q
                         --needle; // steps through the dataset and decrements until needle is the desired mz value
                     }
                     minMaxOutPerScan.push_back(rawdata->allDatapoints[i][needle].mz);
+                    assert((minMaxOutPerScan.back() < minInnerMZ) xor (minMaxOutPerScan.back() > maxInnerMZ));
                 }
 
                 if (!maxFound)
@@ -665,8 +674,8 @@ namespace q
                     {
                         ++needle;
                     }
-
                     minMaxOutPerScan.push_back(rawdata->allDatapoints[i][needle].mz);
+                    assert((minMaxOutPerScan.back() < minInnerMZ) xor (minMaxOutPerScan.back() > maxInnerMZ));
                 }
             }
             // minMaxOutPerScan contains the relevant distances in order of scans, with both min and max per scan being stored for comparison
@@ -698,12 +707,15 @@ namespace q
                 // qCentroid in the lowest scan. For every increase in scans, that range starts two elements later
                 const unsigned int currentRangeStart = (pointsInBin[i]->scanNo - minScanInner) * 2;
                 const unsigned int currentRangeEnd = currentRangeStart + maxdist * 4 + 1;
-                for (unsigned int j = currentRangeStart; j <= currentRangeEnd; j++) // from lowest scan to highest scan relevant to this
+                for (unsigned int j = currentRangeStart; j < currentRangeEnd; j++) // from lowest scan to highest scan relevant to this
                 // point, +1 since scan no of point has to be included.
                 {
-                    if(currentMZ == minMaxOutPerScan[j]){
-                        std::cout << " equal mz: " << currentMZ << " rangeStart: " << currentRangeStart <<
-                        " current: " << j << " rangeEnd: " << currentRangeEnd << "\n";
+                    if (currentMZ == minMaxOutPerScan[j])
+                    {
+                        std::cout << std::setprecision(15) << "length: " << binsize << " position: " << i << " equal mz: "
+                                  << currentMZ << " rangeStart: " << currentRangeStart << " current: " << j
+                                  << " rangeEnd: " << currentRangeEnd << " mzMax: " << maxInnerMZ << " mzMin: "
+                                  << minInnerMZ << " edge: " << edgecase << "\n";
                     }
                     double dist = std::abs(currentMZ - minMaxOutPerScan[j]);
                     if (dist < minDist_base)
@@ -721,10 +733,9 @@ namespace q
                 DQSB_scaled.push_back(calcDQS(meanInnerDistances[i], minDist_scaled));
 
                 /// section to check hot ends ///
-
+                // if the DQS at either end is less than critDQS, a point exists that could be included in the bin
                 if (i == 0) // first element of the bin when sorted by mz
                 {
-                    // if the DQS at either end is less than critDQS, a point exists that could be included in the bin
                     double critDQS = calcDQS(meanInnerDistances[i], vcrit);
                     if (critDQS > DQSB_base[i])
                     {
@@ -800,7 +811,9 @@ namespace q
                 {
                     prevInt = cen->intensity;
                     wrongCount = 0;
-                } else {
+                }
+                else
+                {
                     ++wrongCount;
                 }
                 if (wrongCount > 2)
@@ -819,7 +832,9 @@ namespace q
                 {
                     prevInt = cen->intensity;
                     wrongCount = 0;
-                } else {
+                }
+                else
+                {
                     ++wrongCount;
                 }
                 if (wrongCount > 2)

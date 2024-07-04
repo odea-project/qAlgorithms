@@ -140,7 +140,7 @@ namespace q
                 {
                 all_peaks.resize(arg->size());
                 // iterate over the map of varDataType datatype objects
-#pragma omp parallel for // use parallel for loop to iterate over the dataVec
+// #pragma omp parallel for // use parallel for loop to iterate over the dataVec
                 for (size_t i = 0; i < arg->size(); i++)
           {
             // de-reference the unique pointer of the object
@@ -684,16 +684,13 @@ namespace q
             }
             // the first scan must be empty for compatibility with qBinning
             assert(centroids[0].empty());
-            // assure scan subvectors are sorted @todo always sort here, add check for result consistency
-            if (!std::is_sorted(centroids[1].begin(), centroids[1].begin(), [](qBinning::qCentroid lhs, qBinning::qCentroid rhs)
-                                { return lhs.mz < rhs.mz; }))
+
+            for (size_t i = 1; i < centroids.size(); i++)
             {
-                for (size_t i = 1; i < centroids.size(); i++)
-                {
-                    std::sort(centroids[i].begin(), centroids[i].end(), [](qBinning::qCentroid lhs, qBinning::qCentroid rhs)
-                              { return lhs.mz < rhs.mz; });
-                }
+                std::sort(centroids[i].begin(), centroids[i].end(), [](qBinning::qCentroid lhs, qBinning::qCentroid rhs)
+                          { return lhs.mz < rhs.mz; });
             }
+
             return qBinning::CentroidedData{totalCentroids, centroids};
         }
 
