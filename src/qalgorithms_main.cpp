@@ -11,6 +11,7 @@
 #include <string>
 #include <sstream>
 #include <filesystem> // printing absolute path in case read fails
+#include <fstream>
 
 int main()
 {
@@ -29,10 +30,11 @@ int main()
     std::cout << "starting...\n";
 
     // @todo add option to take in a text file containing execution parameters and a list of target files
-    std::vector<std::string> target_files_full{ 
+    std::vector<std::string> target_files_full{
+        "C:/Users/unisys/Documents/Studium/Messdaten/mzml/AquaFlow_MS1/210229_C1_S1_W_MI_1_pos.mzML",
         "C:/Users/unisys/Documents/Studium/Messdaten/mzml/AquaFlow_MS1/210229_C1_S1_W_MI_2_pos.mzML", // some error during binning here?
         "nonsense",
-        "C:/Users/unisys/Documents/Studium/Messdaten/mzml/AquaFlow_MS1/210229_C1_S1_W_MI_1_pos.mzML",
+
         "C:/Users/unisys/Documents/Studium/Messdaten/mzml/AquaFlow_MS1/210229_C1_S1_W_MI_3_pos.mzML",
         "nonsense", // @todo add bypass if one of the files is bad
         "C:/Users/unisys/Documents/Studium/Messdaten/mzml/AquaFlow_MS1/210229_Blank_SW_MI_I_1_pos.mzML",
@@ -138,26 +140,51 @@ int main()
 
         std::vector<std::vector<std::unique_ptr<q::DataType::Peak>>> temp_peaks = qpeaks.findPeaks(dataObject);
 
-        // q::qBinning::CentroidedData testdata = qpeaks.passToBinning(temp_peaks, totalScans);
+        q::qBinning::CentroidedData testdata = qpeaks.passToBinning(temp_peaks, totalScans);
 
-        std::vector<std::vector<std::unique_ptr<q::DataType::Peak>>> peaks = qpeaks.createPeakList(temp_peaks); // @todo check for better data structures
+        // std::vector<std::vector<std::unique_ptr<q::DataType::Peak>>> peaks = qpeaks.createPeakList(temp_peaks); // @todo check for better data structures
 
         timeEnd = std::chrono::high_resolution_clock::now();
-        // std::cout << "found " << testdata.lengthAllPoints << " peaks in " << (timeEnd - timeStart).count()
-        //           << " ns\n\nstarting qbinning submodule...\n\n";
+        std::cout << "found " << testdata.lengthAllPoints << " peaks in " << (timeEnd - timeStart).count()
+                  << " ns\n\nstarting qbinning submodule...\n\n";
 
         // write peaks to file @todo output location should always be determined by the user!
         // std::string filename_output = filename_input;
         // // remove the file extension
         // filename_output = filename_output.substr(0, filename_output.find_last_of("."));
         // filename_output += "_peaks.csv";
-        std::string filename_output = "../../peaktable_full2_4.csv";
-        qpeaks.printAllPeaks(peaks, filename_output);
+        // std::string filename_output = "../../peaktable_full2_5.csv";
+        // qpeaks.printAllPeaks(peaks, filename_output);
 
         // std::cout << q::vectorDestructions << " , " << q::matrixDestructions << "\n";
 
         size_t found = filename_input.find_last_of(".");
         std::string summary_output_location = filename_input.substr(0, found);
+
+        // print faulty dataset
+        std::string binsFull = summary_output_location + "_centroids.csv";
+        std::fstream file_out_all;
+        std::stringstream output_all;
+        file_out_all.open(binsFull, std::ios::out);
+        assert(file_out_all.is_open());
+        output_all << "ID,mz,scan,intensity,mzError,DQSC,DQSB_base,DQSB_scaled\n";
+        for (size_t i = 0; i < testdata.allDatapoints.size(); i++)
+        {
+
+            std::vector<q::qBinning::qCentroid> binnedPoints = testdata.allDatapoints[i];
+
+            for (size_t j = 0; j < binnedPoints.size(); j++)
+            {
+                char buffer[128];
+                // scan position, mz, centroid error, scan number, intensity, DQS centroid
+                sprintf(buffer, "%u,%0.15f,%0.15f,%d,%0.15f,%0.15f\n",
+                        i, binnedPoints[j].mz, binnedPoints[j].mzError,
+                        binnedPoints[j].scanNo, binnedPoints[j].intensity, binnedPoints[j].DQScentroid);
+                output_all << buffer;
+            }
+        }
+        file_out_all << output_all.str();
+        file_out_all.close();
 
         // std::vector<q::qBinning::EIC> binnedData = q::qBinning::performQbinning(testdata, summary_output_location, 6, false);
 

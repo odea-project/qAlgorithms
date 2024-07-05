@@ -95,12 +95,12 @@ namespace q
                 ++lengthAllPoints;
                 rawData->allDatapoints[i_scanNo].push_back(F); // every subvector in allDatapoints is one complete scan - does not require a sorted input file!
             }
-// #pragma omp parallel for
-            for (size_t i = 1; i < rawData->allDatapoints.size(); i++) // make sure data conforms to expectations
-            {
-                std::sort(rawData->allDatapoints[i].begin(), rawData->allDatapoints[i].end(), [](const qCentroid lhs, const qCentroid rhs)
-                          { return lhs.mz < rhs.mz; });
-            }
+            // #pragma omp parallel for
+            // for (size_t i = 1; i < rawData->allDatapoints.size(); i++) // make sure data conforms to expectations
+            // {
+            //     std::sort(rawData->allDatapoints[i].begin(), rawData->allDatapoints[i].end(), [](const qCentroid lhs, const qCentroid rhs)
+            //               { return lhs.mz < rhs.mz; });
+            // }
             std::cout << "Finished reading file in " << time(0) - now << " seconds\nRead " << lengthAllPoints << " datapoints in " << rawData->allDatapoints.size() << " scans\n";
             return true;
             // CentroidedData is always a vector of vectors where the first index is the scan number (starting at 1) and every scsn is sorted by mz
@@ -327,7 +327,7 @@ namespace q
             {
                 std::cout << "Error during summary printing: The selected directory does not exist.\nSupplied path: " << std::filesystem::absolute(p)
                           << "\nCurrent directory: " << std::filesystem::current_path() << "\ncontinuing...\n";
-                          return;
+                return;
             }
             if (fullBins)
             {
@@ -559,6 +559,16 @@ namespace q
                       { return lhs->mz < rhs->mz; });
             const double minInnerMZ = pointsInBin.front()->mz;
             const double maxInnerMZ = pointsInBin.back()->mz;
+
+            auto mzMax = *std::max_element(pointsInBin.begin(), pointsInBin.end(), [](qCentroid *lhs, qCentroid *rhs)
+                                           { return lhs->mz < rhs->mz; });
+
+            auto mzMin = *std::min_element(pointsInBin.begin(), pointsInBin.end(), [](qCentroid *lhs, qCentroid *rhs)
+                                           { return lhs->mz < rhs->mz; });
+
+            assert(mzMax->mz == maxInnerMZ);
+            assert(mzMin->mz == minInnerMZ);
+
             std::vector<double> meanInnerDistances = meanDistance(pointsInBin);
             // find median in mz
             const int posMedian = binsize / 2;
@@ -573,7 +583,7 @@ namespace q
 
             int maxScansReduced = 0;              // add this many dummy values to prevent segfault when bin is in one of the last scans
             std::vector<double> minMaxOutPerScan; // contains both mz values (per scan) next or closest to all m/z in the bin
-            
+
             int edgecase = 0;
 
             if (scanRangeStart < 1)
@@ -621,7 +631,7 @@ namespace q
                     if (rawdata->allDatapoints[i][0].mz > maxInnerMZ)
                     {
                         minMaxOutPerScan.push_back(rawdata->allDatapoints[i][0].mz);
-                        assert((minMaxOutPerScan.back() < minInnerMZ) xor (minMaxOutPerScan.back() > maxInnerMZ));
+                        assert(minMaxOutPerScan.back() > maxInnerMZ);
                         maxFound = true;
                         continue;
                     }
@@ -639,7 +649,7 @@ namespace q
                     if (rawdata->allDatapoints[i][scansize].mz < minInnerMZ)
                     {
                         minMaxOutPerScan.push_back(rawdata->allDatapoints[i][scansize].mz);
-                        assert((minMaxOutPerScan.back() < minInnerMZ) xor (minMaxOutPerScan.back() > maxInnerMZ));
+                        assert(minMaxOutPerScan.back() < minInnerMZ);
                         minFound = true;
                         continue; // @todo work with goto here
                     }
@@ -661,7 +671,7 @@ namespace q
                         --needle; // steps through the dataset and decrements until needle is the desired mz value
                     }
                     minMaxOutPerScan.push_back(rawdata->allDatapoints[i][needle].mz);
-                    assert((minMaxOutPerScan.back() < minInnerMZ) xor (minMaxOutPerScan.back() > maxInnerMZ));
+                    assert(minMaxOutPerScan.back() < minInnerMZ);
                 }
 
                 if (!maxFound)
@@ -675,7 +685,7 @@ namespace q
                         ++needle;
                     }
                     minMaxOutPerScan.push_back(rawdata->allDatapoints[i][needle].mz);
-                    assert((minMaxOutPerScan.back() < minInnerMZ) xor (minMaxOutPerScan.back() > maxInnerMZ));
+                    assert(minMaxOutPerScan.back() > maxInnerMZ);
                 }
             }
             // minMaxOutPerScan contains the relevant distances in order of scans, with both min and max per scan being stored for comparison
@@ -1028,7 +1038,7 @@ namespace q
 
     }
 }
-int notmain()
+int main()
 {
     std::cout << "starting...\n";
 
@@ -1037,7 +1047,7 @@ int notmain()
     int inputMaxdist = 6;
     q::qBinning::maxdist = inputMaxdist;
 
-    std::string filename_input = "../../rawdata/control_bins.csv";
+    std::string filename_input = "../../rawdata/210229_C1_S1_W_MI_1_pos_centroids_a.csv"; // no variability after qCentroiding
 
     const std::filesystem::path p = filename_input;
     if (!std::filesystem::exists(p))
@@ -1048,8 +1058,10 @@ int notmain()
     }
 
     q::qBinning::CentroidedData testdata;
-    // path to data, mz, centroid error, RT, scan number, intensity, DQS centroid, control DQS Bin
-    if (!q::qBinning::readcsv(&testdata, filename_input, 0, 1, 3, 4, 6)) // ../../rawdata/control_bins.csv reduced_DQSdiff
+    // path to data, mz, centroid error, scan number, intensity, DQS centroid
+    //  path to data, scan position, mz, centroid error, scan number, intensity, DQS centroid
+    // if (!q::qBinning::readcsv(&testdata, filename_input, 0, 1, 3, 4, 6)) // ../../rawdata/control_bins.csv reduced_DQSdiff
+    if (!q::qBinning::readcsv(&testdata, filename_input, 1, 2, 3, 4, 5))
     {
         exit(101); // error codes: 1.. = reading / writing failed, 2.. = improper input,
     }
