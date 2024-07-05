@@ -238,8 +238,11 @@ namespace q
       }
       for (int scale = 2; scale <= maxScale; scale++)
       {
-        // q::Matrices::Matrix_mc B = (n <= 512) ? convolve_fast(scale, ylog_array, n) : convolve(Ylog, n, *(psuedoInverses[scale]));
-        q::Matrices::Matrix_mc B = (n <= 512) ? convolve_static(scale, ylog_array, n) : convolve_dynamic(scale, Ylog.elements, n);
+        size_t k = 2 * scale + 1; //@todo delete k
+        size_t n_segments = n - k + 1; //@todo delete n_segments
+        alignas(16) __m128 beta[n_segments]; // coefficients matrix
+
+        q::Matrices::Matrix_mc B = (n <= 512) ? convolve_static(scale, ylog_array, n, beta) : convolve_dynamic(scale, Ylog.elements, n, beta);
         validateRegressions(B, Y, Ylog, df, scale, validRegressions);
       } // end for scale loop
       mergeRegressionsOverScales(validRegressions, Ylog, Y, df);
@@ -285,6 +288,15 @@ namespace q
         }
 
         /*
+          Area Pre-Filter:
+          This test is used to check if the later-used arguments for exp and erf functions are within the valid range, i.e., |x^2| < 25. If the test fails, the loop continues to the next iteration. x is in this case -apex_position * b1 / 2 and -valley_position * b1 / 2.
+        */
+        if (apex_position * B(1, i) > 50 || valley_position * B(1, i) < -50)
+        {
+          continue; // invalid area pre-filter
+        }
+
+        /*
           Apex to Edge Filter:
           This block of code implements the apex to edge filter. It calculates the ratio of the apex signal to the edge signal and ensures that the ratio is greater than 2. This is a pre-filter for later signal-to-noise ratio checkups.
         */
@@ -319,10 +331,12 @@ namespace q
         /*
           Area Filter:
           This block of code implements the area filter. It calculates the Jacobian matrix for the peak area based on the coefficients matrix B. Then it calculates the uncertainty of the peak area based on the Jacobian matrix. If the peak area is statistically insignificant, the loop continues to the next iteration.
+          NOTE: this function does not consider b0: i.e. to get the real uncertainty and area multiply both with b0 later. This is done to avoid exp function at this point 
         */
         double area = 0.0;
         double uncertainty_area = 0.0;
-        if (!isValidPeakArea(B, mse, i, scale, df_sum, area, uncertainty_area))
+        q::Matrices::Vector yhat_exp(2*scale+1);
+        if (!isValidPeakArea(B, mse, i, scale, df_sum, area, uncertainty_area, yhat_exp, yhat))
         {
           continue; // statistical insignificance of the area
         }
@@ -997,16 +1011,18 @@ namespace q
         const int scale,
         const int df_sum,
         double &area,
-        double &uncertainty_area) const
+        double &uncertainty_area,
+        q::Matrices::Vector &yhat_exp,
+        const q::Matrices::Vector &yhat_log) const
     {
       // predefine expressions
-      const float b0 = B(0, index);
       const float b1 = B(1, index);
       const float b2 = B(2, index);
       const float b3 = B(3, index);
       const float SQRTB2 = std::sqrt(std::abs(-b2));
       const float SQRTB3 = std::sqrt(std::abs(-b3));
-      const float EXP_B0 = std::exp(b0);
+      const float B1_2_SQRTB2 = b1 / 2 / SQRTB2;
+      const float B1_2_SQRTB3 = b1 / 2 / SQRTB3;
       const float B1_2_B2 = b1 / 2 / b2;
       const float EXP_B12 = std::exp(-b1 * B1_2_B2 / 2);
       const float B1_2_B3 = b1 / 2 / b3;
@@ -1023,19 +1039,19 @@ namespace q
       // here we have to check if there is a valley point or not
       const float err_L =
           (b2 < 0)
-              ? 1 - std::erf(b1 / 2 / SQRTB2) // ordinary peak
-              : erfi(b1 / 2 / SQRTB2);        // peak with valley point;
+              ? experfc(B1_2_SQRTB2, -1.0) // 1 - std::erf(b1 / 2 / SQRTB2) // ordinary peak
+              : dawson5(B1_2_SQRTB2); // erfi(b1 / 2 / SQRTB2);        // peak with valley point;
 
       const float err_R =
           (b3 < 0)
-              ? 1 + std::erf(b1 / 2 / SQRTB3) // ordinary peak
-              : -erfi(b1 / 2 / SQRTB3);       // peak with valley point ;
+              ? experfc(B1_2_SQRTB3, 1.0) // 1 + std::erf(b1 / 2 / SQRTB3) // ordinary peak
+              : dawson5(-B1_2_SQRTB3); // -erfi(b1 / 2 / SQRTB3);       // peak with valley point ;
 
       // calculate the Jacobian matrix terms
-      const float J_1_common_L = SQRTPI_2 * EXP_B0 * EXP_B12 / SQRTB2;
-      const float J_1_common_R = SQRTPI_2 * EXP_B0 * EXP_B13 / SQRTB3;
-      const float J_2_common_L = B1_2_B2 * EXP_B0 / b1;
-      const float J_2_common_R = B1_2_B3 * EXP_B0 / b1;
+      const float J_1_common_L = 1 / SQRTB2; // SQRTPI_2 * EXP_B12 / SQRTB2;
+      const float J_1_common_R = 1 / SQRTB3;// SQRTPI_2 * EXP_B13 / SQRTB3;
+      const float J_2_common_L = B1_2_B2 / b1;
+      const float J_2_common_R = B1_2_B3  / b1;
       const float J_1_L = J_1_common_L * err_L;
       const float J_1_R = J_1_common_R * err_R;
       const float J_2_L = J_2_common_L - J_1_L * B1_2_B2;
@@ -1046,7 +1062,7 @@ namespace q
       J[2] = -B1_2_B2 * (J_2_L + J_1_L / b1);
       J[3] = -B1_2_B3 * (J_2_R + J_1_R / b1);
 
-      area = J[0];
+      area = J[0]; // at this point the area is without exp(b0), i.e., to get the real area multiply with exp(b0) later. This is done to avoid exp function at this point
       uncertainty_area = std::sqrt(mse * multiplyVecMatrixVecTranspose(J, scale));
 
       if (area / uncertainty_area <= tValuesArray[df_sum - 5])
@@ -1054,25 +1070,30 @@ namespace q
         return false;
       }
 
+
+      // std::transform(yhat_log.begin(), yhat_log.end(), yhat_exp.begin(), exp_approx); // calculate the exp of the yhat_log values
+
+
+
       const float err_L_covered = ///@todo : need to be revised
           (b2 < 0)
               ? // ordinary peak half, take always scale as integration limit; we use erf instead of erfi due to the sqrt of absoulte value
-              std::erf((b1 - 2 * b2 * scale) / 2 / SQRTB2) + err_L - 1
+              std::erf((b1 - 2 * b2 * scale) / 2 / SQRTB2) * EXP_B12 * SQRTPI_2 + err_L - SQRTPI_2* EXP_B12  // std::erf((b1 - 2 * b2 * scale) / 2 / SQRTB2) + err_L - 1
               : // valley point, i.e., check position
               (-B1_2_B2 < -scale)
                   ? // valley point is outside the window, use scale as limit
-                  err_L - erfi((b1 - 2 * b2 * scale) / 2 / SQRTB2)
+                  err_L - erfi((b1 - 2 * b2 * scale) / 2 / SQRTB2) * EXP_B12
                   : // valley point is inside the window, use valley point as limit
                   err_L;
 
       const float err_R_covered = ///@todo : need to be revised
           (b3 < 0)
               ? // ordinary peak half, take always scale as integration limit; we use erf instead of erfi due to the sqrt of absoulte value
-              err_R - 1 - std::erf((b1 + 2 * b3 * scale) / 2 / SQRTB3)
+              err_R - SQRTPI_2*EXP_B13 - std::erf((b1 + 2 * b3 * scale) / 2 / SQRTB3) * SQRTPI_2 * EXP_B13// err_R - 1 - std::erf((b1 + 2 * b3 * scale) / 2 / SQRTB3)
               : // valley point, i.e., check position
               (-B1_2_B3 > scale)
                   ? // valley point is outside the window, use scale as limit
-                  erfi((b1 + 2 * b3 * scale) / 2 / SQRTB3) + err_R
+                  erfi((b1 + 2 * b3 * scale) / 2 / SQRTB3) * EXP_B13 + err_R
                   : // valley point is inside the window, use valley point as limit
                   err_R;
 
@@ -1088,8 +1109,8 @@ namespace q
       }
 
       // calculate the y values at the left and right limits
-      y_left = std::exp(b0 + b1 * x_left + b2 * x_left * x_left);
-      y_right = std::exp(b0 + b1 * x_right + b3 * x_right * x_right);
+      y_left = std::exp(b1 * x_left + b2 * x_left * x_left);
+      y_right = std::exp(b1 * x_right + b3 * x_right * x_right);
       const float dX = x_right - x_left;
 
       // calculate the trapzoid correction terms for the jacobian matrix
@@ -1339,7 +1360,8 @@ namespace q
     qPeaks::convolve_static(
         const size_t scale,
         const float (&vec)[512],
-        const size_t n)
+        const size_t n,
+        __m128 *beta)
     {
       if (n < 2 * scale + 1)
       {
@@ -1359,6 +1381,7 @@ namespace q
         resultMatrix(1, i) = -temp[1];
         resultMatrix(2, i) = temp[3];
         resultMatrix(3, i) = temp[2];
+        beta[i] =  result[i];
       }
 
       return resultMatrix;
@@ -1368,7 +1391,8 @@ namespace q
     qPeaks::convolve_dynamic(
         const size_t scale,
         const float *vec,
-        const size_t n)
+        const size_t n,
+        __m128 *beta)
     {
       if (n < 2 * scale + 1)
       {
@@ -1388,6 +1412,7 @@ namespace q
         resultMatrix(1, i) = -temp[1];
         resultMatrix(2, i) = temp[3];
         resultMatrix(3, i) = temp[2];
+        beta[i] =  result[i];
       }
 
       return resultMatrix;

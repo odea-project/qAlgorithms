@@ -354,7 +354,9 @@ namespace q
                 const int scale,
                 const int df_sum,
                 double &area,
-                double &uncertainty_area) const;
+                double &uncertainty_area,
+                q::Matrices::Vector &yhat_exp,
+                const q::Matrices::Vector &yhat_log) const;
 
             /**
              * @brief Create a Design Matrix object for the given scale.
@@ -378,13 +380,15 @@ namespace q
             convolve_static(
                 const size_t scale, 
                 const float (&vec)[512], 
-                const size_t n);
+                const size_t n,
+                __m128 *beta);
 
             q::Matrices::Matrix_mc
             convolve_dynamic(
                 const size_t scale, 
                 const float* vec, 
-                const size_t n);
+                const size_t n,
+                __m128 *beta);
 
             void 
             convolve_SIMD(

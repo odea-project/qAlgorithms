@@ -132,7 +132,7 @@ int main()
   SetConsoleTextAttribute(hConsole, 10);
   std::cout << "done\n\n\n";
   SetConsoleTextAttribute(hConsole, 15);
-
+  std::cout << peaks[0][0]->position << std::endl;
   // plot peaks
   if (isCSV)
   {
