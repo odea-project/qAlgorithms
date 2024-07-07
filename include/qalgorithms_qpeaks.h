@@ -97,8 +97,8 @@ namespace q
              * The structure of the array is as follows:
              * invArray[scale][{A,B,C,D,E,F}]
              */
-            static float invArray[64][6]; // contains the unique entries from the inverse matrix
-            static float x_square[128];   // contains the squares from 0 to 127^2
+            alignas(16) static float invArray[64][6]; // contains the unique entries from the inverse matrix
+            alignas(16) static float x_square[128];   // contains the squares from 0 to 127^2
             static __m128 ZERO_128;       // 128 bit register with all zeros
             static __m128 KEY_128;        // 128 bit register with 0, 4, 2, 1
 
@@ -257,9 +257,7 @@ namespace q
              */
             bool
             calculateApexAndValleyPositions(
-                const q::Matrices::Matrix_mc &B,
                 const __m128 &coeff,
-                const size_t index,
                 const int scale,
                 double &apex_position,
                 double &valley_position) const;

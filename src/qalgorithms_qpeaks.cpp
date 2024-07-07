@@ -122,7 +122,7 @@ namespace q
       // init __m128 ZERO_128
       ZERO_128 = _mm_setzero_ps();
 
-      // init __m128 KEY_128 with {0., 4., 2., 1.}
+      // init __m128 KEY_128 with {0., 4., 2., 1.} must be in reverse order due to register layout
       KEY_128 = _mm_set_ps(1.f, 2.f, 4.f, 0.f);
 
       // init x_square
@@ -246,12 +246,13 @@ namespace q
       }
       for (int scale = 2; scale <= maxScale; scale++)
       {
-        size_t k = 2 * scale + 1;            //@todo delete k
-        size_t n_segments = n - k + 1;       //@todo delete n_segments
-        alignas(16) __m128 beta[n_segments]; // coefficients matrix
+        const size_t k = 2 * scale + 1;                    //@todo delete k
+        const size_t n_segments = n - k + 1;               //@todo delete n_segments
+        alignas(16) __m128 *beta = new __m128[n_segments]; // coefficients matrix
 
         q::Matrices::Matrix_mc B = (n <= 512) ? convolve_static(scale, ylog_array, n, beta) : convolve_dynamic(scale, Ylog.elements, n, beta);
         validateRegressions(B, beta, n_segments, Y, Ylog, df, scale, validRegressions);
+        delete[] beta;
       } // end for scale loop
       mergeRegressionsOverScales(validRegressions, Ylog, Y, df);
     } // end runningRegression
@@ -274,11 +275,11 @@ namespace q
       // declare variables
       std::vector<std::unique_ptr<validRegression>> validRegressionsTmp; // temporary vector to store valid regressions <index, apex_position>
 
-      // iterate columwise over the coefficients matrix beta 
+      // iterate columwise over the coefficients matrix beta
       for (size_t i = 0; i < n_segments; i++)
       {
         const __m128 &coeff = beta[i]; // coefficient register from beta @ i
-        
+
         /*
           Degree of Freedom Filter:
           This block of code implements the degree of freedom filter. It calculates the degree of freedom based df vector. If the degree of freedom is less than 5, the loop continues to the next iteration. The value 5 is chosen as the minimum number of data points required to fit a quadratic regression model.
@@ -294,7 +295,7 @@ namespace q
           This block of code implements the apex and valley position filter. It calculates the apex and valley positions based on the coefficients matrix B. If the apex is outside the data range, the loop continues to the next iteration. If the apex and valley positions are too close to each other, the loop continues to the next iteration.
         */
         double apex_position, valley_position;
-        if (!calculateApexAndValleyPositions(B, coeff, i, scale, apex_position, valley_position))
+        if (!calculateApexAndValleyPositions(coeff, scale, apex_position, valley_position))
         {
           continue; // invalid apex and valley positions
         }
@@ -303,7 +304,7 @@ namespace q
           Area Pre-Filter:
           This test is used to check if the later-used arguments for exp and erf functions are within the valid range, i.e., |x^2| < 25. If the test fails, the loop continues to the next iteration. x is in this case -apex_position * b1 / 2 and -valley_position * b1 / 2.
         */
-        if (apex_position * B(1, i) > 50 || valley_position * B(1, i) < -50)
+        if (apex_position * ((float *)&coeff)[1] > 50 || valley_position * ((float *)&coeff)[1] < -50)
         {
           continue; // invalid area pre-filter
         }
@@ -837,54 +838,47 @@ namespace q
 #pragma region calculateApexAndValleyPositions
     bool
     qPeaks::calculateApexAndValleyPositions(
-        const q::Matrices::Matrix_mc &B,
         const __m128 &coeff,
-        const size_t index,
         const int scale,
         double &apex_position,
         double &valley_position) const
     {
       // calculate key by checking the signs of coeff
+      __m128 res = _mm_set1_ps(-.5f);               // res = -0.5
       __m128 signs = _mm_cmplt_ps(coeff, ZERO_128); // compare the coefficients with zero, results will have the following values: 0xFFFFFFFF if the value is negative, 0x00000000 if the value is positive
-      signs = _mm_mul_ps(signs, KEY_128);
-      
-      // signs = _mm_hadd_ps(signs, signs);
-      // signs = _mm_hadd_ps(signs, signs);
-            // extract signs first value to KEY
-      // float KEY = _mm_cvtss_f32(signs);
+      signs = _mm_and_ps(signs, KEY_128);           // multiply a key value if the value of the coefficient is negative, i.e., b0 * 0, b1 * 4, b2 * 2, b3 * 1
+      signs = _mm_hadd_ps(signs, signs);            // horizontal add of the signs
+      signs = _mm_hadd_ps(signs, signs);            // horizontal add of the signs, now all values are the same, i.e. the sum
+      int key = _mm_cvtss_si32(signs);
 
-      // extract the coefficients
-      const double B1 = B(1, index);
-      const double B2 = B(2, index);
-      const double B3 = B(3, index);
-      int key = (B1 < 0 ? 4 : 0) + (B2 < 0 ? 2 : 0) + (B3 < 0 ? 1 : 0);
-
-      // debugging
-      std::cout << std::endl;
-      // print(B);
-      std::cout << "key: " << key << std::endl;
-      // std::cout << "KEY: " << KEY << std::endl;
-      exit(0);
       switch (key)
       {
-      case 7:                              // Case 1a: apex left
-        apex_position = -B1 / 2 / B2;      // is negative
-        valley_position = 0;               // no valley point
-        return apex_position > -scale + 1; // scale +1: prevent apex position to be at the edge of the data
+      case 7:                                                            // Case 1a: apex left
+        res = _mm_mul_ps(res, _mm_shuffle_ps(coeff, coeff, 0b01010101)); // res = -0.5 * b1
+        res = _mm_div_ps(res, coeff);                                    // res = -0.5 * b1 / b2
+        apex_position = ((float *)&res)[2];                              //-B1 / 2 / B2;  // is negative
+        valley_position = 0;                                             // no valley point
+        return apex_position > -scale + 1;                               // scale +1: prevent apex position to be at the edge of the data
 
-      case 3:                             // Case 1b: apex right
-        apex_position = -B1 / 2 / B3;     // is positive
-        valley_position = 0;              // no valley point
-        return apex_position < scale - 1; // scale -1: prevent apex position to be at the edge of the data
+      case 3:                                                            // Case 1b: apex right
+        res = _mm_mul_ps(res, _mm_shuffle_ps(coeff, coeff, 0b01010101)); // res = -0.5 * b1
+        res = _mm_div_ps(res, coeff);                                    // res = -0.5 * b1 / b2
+        apex_position = ((float *)&res)[3];                              //-B1 / 2 / B3;     // is positive
+        valley_position = 0;                                             // no valley point
+        return apex_position < scale - 1;                                // scale -1: prevent apex position to be at the edge of the data
 
       case 6:                                                                     // Case 2a: apex left | valley right
-        apex_position = -B1 / 2 / B2;                                             // is negative
-        valley_position = -B1 / 2 / B3;                                           // is positive
+        res = _mm_mul_ps(res, _mm_shuffle_ps(coeff, coeff, 0b01010101));          // res = -0.5 * b1
+        res = _mm_div_ps(res, coeff);                                             // res = -0.5 * b1 / b2
+        apex_position = ((float *)&res)[2];                                       //-B1 / 2 / B2;                                             // is negative
+        valley_position = ((float *)&res)[3];                                     //-B1 / 2 / B3;                                           // is positive
         return apex_position > -scale + 1 && valley_position - apex_position > 2; // scale +1: prevent apex position to be at the edge of the data
 
       case 1:                                                                    // Case 2b: apex right | valley left
-        apex_position = -B1 / 2 / B3;                                            // is positive
-        valley_position = -B1 / 2 / B2;                                          // is negative
+        res = _mm_mul_ps(res, _mm_shuffle_ps(coeff, coeff, 0b01010101));         // res = -0.5 * b1
+        res = _mm_div_ps(res, coeff);                                            // res = -0.5 * b1 / b2
+        apex_position = ((float *)&res)[3];                                      //-B1 / 2 / B3;                                            // is positive
+        valley_position = ((float *)&res)[2];                                    //-B1 / 2 / B2;                                          // is negative
         return apex_position < scale - 1 && apex_position - valley_position > 2; // scale -1: prevent apex position to be at the edge of the data
 
       default:
@@ -1396,6 +1390,7 @@ namespace q
 
       alignas(16) __m128 result[512];
       alignas(16) __m128 products[512];
+      const __m128 flipSign = _mm_set_ps(1.0f, 1.0f, -1.0f, 1.0f);
       convolve_SIMD(scale, vec, n, result, products, 512);
 
       q::Matrices::Matrix_mc resultMatrix(4, n - 2 * scale);
@@ -1407,7 +1402,7 @@ namespace q
         resultMatrix(1, i) = -temp[1];
         resultMatrix(2, i) = temp[3];
         resultMatrix(3, i) = temp[2];
-        beta[i] = result[i];
+        beta[i] = _mm_mul_ps(_mm_shuffle_ps(result[i], result[i], 0b10110100), flipSign); // swap beta2 and beta3 and flip the sign of beta1 // @todo: this is a temporary solution
       }
 
       return resultMatrix;
@@ -1425,8 +1420,8 @@ namespace q
         throw std::invalid_argument("n must be greater or equal to 2 * scale + 1");
       }
 
-      alignas(16) __m128 result[n - 2 * scale];
-      alignas(16) __m128 products[n];
+      alignas(16) __m128 *result = new __m128[n - 2 * scale];
+      alignas(16) __m128 *products = new __m128[n];
       convolve_SIMD(scale, vec, n, result, products, n);
 
       q::Matrices::Matrix_mc resultMatrix(4, n - 2 * scale);
