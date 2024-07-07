@@ -99,6 +99,8 @@ namespace q
              */
             static float invArray[64][6]; // contains the unique entries from the inverse matrix
             static float x_square[128];   // contains the squares from 0 to 127^2
+            static __m128 ZERO_128;       // 128 bit register with all zeros
+            static __m128 KEY_128;        // 128 bit register with 0, 4, 2, 1
 
             int global_maxScale;
 
@@ -163,6 +165,8 @@ namespace q
             void
             validateRegressions(
                 const q::Matrices::Matrix_mc &B,
+                const __m128 *beta,
+                const size_t n_segments,
                 const q::Matrices::Vector &Y,
                 const q::Matrices::Vector &Ylog,
                 const q::Matrices::BoolVector &df,
@@ -254,6 +258,7 @@ namespace q
             bool
             calculateApexAndValleyPositions(
                 const q::Matrices::Matrix_mc &B,
+                const __m128 &coeff,
                 const size_t index,
                 const int scale,
                 double &apex_position,

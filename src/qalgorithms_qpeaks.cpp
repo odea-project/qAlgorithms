@@ -115,8 +115,16 @@ namespace q
 #pragma region "initialize"
     alignas(16) float q::Algorithms::qPeaks::x_square[128];   // array to store the square of the x values
     alignas(16) float q::Algorithms::qPeaks::invArray[64][6]; // array to store the 6 unique values of the inverse matrix for each scale
+    __m128 q::Algorithms::qPeaks::ZERO_128;
+    __m128 q::Algorithms::qPeaks::KEY_128;
     void qPeaks::initialize()
     {
+      // init __m128 ZERO_128
+      ZERO_128 = _mm_setzero_ps();
+
+      // init __m128 KEY_128 with {0., 4., 2., 1.}
+      KEY_128 = _mm_set_ps(1.f, 2.f, 4.f, 0.f);
+
       // init x_square
       for (int i = 0; i < 128; ++i)
       {
@@ -238,12 +246,12 @@ namespace q
       }
       for (int scale = 2; scale <= maxScale; scale++)
       {
-        size_t k = 2 * scale + 1; //@todo delete k
-        size_t n_segments = n - k + 1; //@todo delete n_segments
+        size_t k = 2 * scale + 1;            //@todo delete k
+        size_t n_segments = n - k + 1;       //@todo delete n_segments
         alignas(16) __m128 beta[n_segments]; // coefficients matrix
 
         q::Matrices::Matrix_mc B = (n <= 512) ? convolve_static(scale, ylog_array, n, beta) : convolve_dynamic(scale, Ylog.elements, n, beta);
-        validateRegressions(B, Y, Ylog, df, scale, validRegressions);
+        validateRegressions(B, beta, n_segments, Y, Ylog, df, scale, validRegressions);
       } // end for scale loop
       mergeRegressionsOverScales(validRegressions, Ylog, Y, df);
     } // end runningRegression
@@ -251,11 +259,13 @@ namespace q
 
 #pragma region validateRegressions
     void qPeaks::validateRegressions(
-        const q::Matrices::Matrix_mc &B,
-        const q::Matrices::Vector &Y,
-        const q::Matrices::Vector &Ylog,
-        const q::Matrices::BoolVector &df,
-        const int scale,
+        const q::Matrices::Matrix_mc &B,   // coefficients matrix @todo: WILL BE DELETED IN THE FUTURE
+        const __m128 *beta,                // coefficients matrix
+        const size_t n_segments,           // number of segments, i.e. regressions
+        const q::Matrices::Vector &Y,      // measured values
+        const q::Matrices::Vector &Ylog,   // log-transformed measured values
+        const q::Matrices::BoolVector &df, // degree of freedom vector, 0: interpolated, 1: measured
+        const int scale,                   // scale, i.e., the number of data points in a half window excluding the center point
         std::vector<std::unique_ptr<validRegression>> &validRegressions)
     {
       // declare constants
@@ -264,9 +274,11 @@ namespace q
       // declare variables
       std::vector<std::unique_ptr<validRegression>> validRegressionsTmp; // temporary vector to store valid regressions <index, apex_position>
 
-      // iterate columwise over the coefficients matrix
-      for (size_t i = 0; i < B.cols; i++)
+      // iterate columwise over the coefficients matrix beta 
+      for (size_t i = 0; i < n_segments; i++)
       {
+        const __m128 &coeff = beta[i]; // coefficient register from beta @ i
+        
         /*
           Degree of Freedom Filter:
           This block of code implements the degree of freedom filter. It calculates the degree of freedom based df vector. If the degree of freedom is less than 5, the loop continues to the next iteration. The value 5 is chosen as the minimum number of data points required to fit a quadratic regression model.
@@ -282,7 +294,7 @@ namespace q
           This block of code implements the apex and valley position filter. It calculates the apex and valley positions based on the coefficients matrix B. If the apex is outside the data range, the loop continues to the next iteration. If the apex and valley positions are too close to each other, the loop continues to the next iteration.
         */
         double apex_position, valley_position;
-        if (!calculateApexAndValleyPositions(B, i, scale, apex_position, valley_position))
+        if (!calculateApexAndValleyPositions(B, coeff, i, scale, apex_position, valley_position))
         {
           continue; // invalid apex and valley positions
         }
@@ -331,11 +343,11 @@ namespace q
         /*
           Area Filter:
           This block of code implements the area filter. It calculates the Jacobian matrix for the peak area based on the coefficients matrix B. Then it calculates the uncertainty of the peak area based on the Jacobian matrix. If the peak area is statistically insignificant, the loop continues to the next iteration.
-          NOTE: this function does not consider b0: i.e. to get the real uncertainty and area multiply both with b0 later. This is done to avoid exp function at this point 
+          NOTE: this function does not consider b0: i.e. to get the real uncertainty and area multiply both with b0 later. This is done to avoid exp function at this point
         */
         double area = 0.0;
         double uncertainty_area = 0.0;
-        q::Matrices::Vector yhat_exp(2*scale+1);
+        q::Matrices::Vector yhat_exp(2 * scale + 1);
         if (!isValidPeakArea(B, mse, i, scale, df_sum, area, uncertainty_area, yhat_exp, yhat))
         {
           continue; // statistical insignificance of the area
@@ -826,16 +838,33 @@ namespace q
     bool
     qPeaks::calculateApexAndValleyPositions(
         const q::Matrices::Matrix_mc &B,
+        const __m128 &coeff,
         const size_t index,
         const int scale,
         double &apex_position,
         double &valley_position) const
     {
+      // calculate key by checking the signs of coeff
+      __m128 signs = _mm_cmplt_ps(coeff, ZERO_128); // compare the coefficients with zero, results will have the following values: 0xFFFFFFFF if the value is negative, 0x00000000 if the value is positive
+      signs = _mm_mul_ps(signs, KEY_128);
+      
+      // signs = _mm_hadd_ps(signs, signs);
+      // signs = _mm_hadd_ps(signs, signs);
+            // extract signs first value to KEY
+      // float KEY = _mm_cvtss_f32(signs);
+
       // extract the coefficients
       const double B1 = B(1, index);
       const double B2 = B(2, index);
       const double B3 = B(3, index);
       int key = (B1 < 0 ? 4 : 0) + (B2 < 0 ? 2 : 0) + (B3 < 0 ? 1 : 0);
+
+      // debugging
+      std::cout << std::endl;
+      // print(B);
+      std::cout << "key: " << key << std::endl;
+      // std::cout << "KEY: " << KEY << std::endl;
+      exit(0);
       switch (key)
       {
       case 7:                              // Case 1a: apex left
@@ -1040,18 +1069,18 @@ namespace q
       const float err_L =
           (b2 < 0)
               ? experfc(B1_2_SQRTB2, -1.0) // 1 - std::erf(b1 / 2 / SQRTB2) // ordinary peak
-              : dawson5(B1_2_SQRTB2); // erfi(b1 / 2 / SQRTB2);        // peak with valley point;
+              : dawson5(B1_2_SQRTB2);      // erfi(b1 / 2 / SQRTB2);        // peak with valley point;
 
       const float err_R =
           (b3 < 0)
               ? experfc(B1_2_SQRTB3, 1.0) // 1 + std::erf(b1 / 2 / SQRTB3) // ordinary peak
-              : dawson5(-B1_2_SQRTB3); // -erfi(b1 / 2 / SQRTB3);       // peak with valley point ;
+              : dawson5(-B1_2_SQRTB3);    // -erfi(b1 / 2 / SQRTB3);       // peak with valley point ;
 
       // calculate the Jacobian matrix terms
       const float J_1_common_L = 1 / SQRTB2; // SQRTPI_2 * EXP_B12 / SQRTB2;
-      const float J_1_common_R = 1 / SQRTB3;// SQRTPI_2 * EXP_B13 / SQRTB3;
+      const float J_1_common_R = 1 / SQRTB3; // SQRTPI_2 * EXP_B13 / SQRTB3;
       const float J_2_common_L = B1_2_B2 / b1;
-      const float J_2_common_R = B1_2_B3  / b1;
+      const float J_2_common_R = B1_2_B3 / b1;
       const float J_1_L = J_1_common_L * err_L;
       const float J_1_R = J_1_common_R * err_R;
       const float J_2_L = J_2_common_L - J_1_L * B1_2_B2;
@@ -1070,16 +1099,13 @@ namespace q
         return false;
       }
 
-
       // std::transform(yhat_log.begin(), yhat_log.end(), yhat_exp.begin(), exp_approx); // calculate the exp of the yhat_log values
-
-
 
       const float err_L_covered = ///@todo : need to be revised
           (b2 < 0)
-              ? // ordinary peak half, take always scale as integration limit; we use erf instead of erfi due to the sqrt of absoulte value
-              std::erf((b1 - 2 * b2 * scale) / 2 / SQRTB2) * EXP_B12 * SQRTPI_2 + err_L - SQRTPI_2* EXP_B12  // std::erf((b1 - 2 * b2 * scale) / 2 / SQRTB2) + err_L - 1
-              : // valley point, i.e., check position
+              ?                                                                                              // ordinary peak half, take always scale as integration limit; we use erf instead of erfi due to the sqrt of absoulte value
+              std::erf((b1 - 2 * b2 * scale) / 2 / SQRTB2) * EXP_B12 * SQRTPI_2 + err_L - SQRTPI_2 * EXP_B12 // std::erf((b1 - 2 * b2 * scale) / 2 / SQRTB2) + err_L - 1
+              :                                                                                              // valley point, i.e., check position
               (-B1_2_B2 < -scale)
                   ? // valley point is outside the window, use scale as limit
                   err_L - erfi((b1 - 2 * b2 * scale) / 2 / SQRTB2) * EXP_B12
@@ -1088,9 +1114,9 @@ namespace q
 
       const float err_R_covered = ///@todo : need to be revised
           (b3 < 0)
-              ? // ordinary peak half, take always scale as integration limit; we use erf instead of erfi due to the sqrt of absoulte value
-              err_R - SQRTPI_2*EXP_B13 - std::erf((b1 + 2 * b3 * scale) / 2 / SQRTB3) * SQRTPI_2 * EXP_B13// err_R - 1 - std::erf((b1 + 2 * b3 * scale) / 2 / SQRTB3)
-              : // valley point, i.e., check position
+              ?                                                                                              // ordinary peak half, take always scale as integration limit; we use erf instead of erfi due to the sqrt of absoulte value
+              err_R - SQRTPI_2 * EXP_B13 - std::erf((b1 + 2 * b3 * scale) / 2 / SQRTB3) * SQRTPI_2 * EXP_B13 // err_R - 1 - std::erf((b1 + 2 * b3 * scale) / 2 / SQRTB3)
+              :                                                                                              // valley point, i.e., check position
               (-B1_2_B3 > scale)
                   ? // valley point is outside the window, use scale as limit
                   erfi((b1 + 2 * b3 * scale) / 2 / SQRTB3) * EXP_B13 + err_R
@@ -1381,7 +1407,7 @@ namespace q
         resultMatrix(1, i) = -temp[1];
         resultMatrix(2, i) = temp[3];
         resultMatrix(3, i) = temp[2];
-        beta[i] =  result[i];
+        beta[i] = result[i];
       }
 
       return resultMatrix;
@@ -1412,7 +1438,7 @@ namespace q
         resultMatrix(1, i) = -temp[1];
         resultMatrix(2, i) = temp[3];
         resultMatrix(3, i) = temp[2];
-        beta[i] =  result[i];
+        beta[i] = result[i];
       }
 
       return resultMatrix;
