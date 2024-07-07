@@ -31,6 +31,7 @@ int main()
 
     // @todo add option to take in a text file containing execution parameters and a list of target files
     std::vector<std::string> target_files_full{
+        // "G:/_Studium/Analytik-Praktikum/qbinning/rawdata/210229_C1_S1_W_MI_1_pos.mzML",
         "C:/Users/unisys/Documents/Studium/Messdaten/mzml/AquaFlow_MS1/210229_C1_S1_W_MI_1_pos.mzML",
         "C:/Users/unisys/Documents/Studium/Messdaten/mzml/AquaFlow_MS1/210229_C1_S1_W_MI_2_pos.mzML", // some error during binning here?
         "nonsense",
@@ -162,31 +163,31 @@ int main()
         std::string summary_output_location = filename_input.substr(0, found);
 
         // print faulty dataset
-        std::string binsFull = summary_output_location + "_centroids.csv";
-        std::fstream file_out_all;
-        std::stringstream output_all;
-        file_out_all.open(binsFull, std::ios::out);
-        assert(file_out_all.is_open());
-        output_all << "ID,mz,scan,intensity,mzError,DQSC,DQSB_base,DQSB_scaled\n";
-        for (size_t i = 0; i < testdata.allDatapoints.size(); i++)
-        {
+        // std::string binsFull = summary_output_location + "_centroids.csv";
+        // std::fstream file_out_all;
+        // std::stringstream output_all;
+        // file_out_all.open(binsFull, std::ios::out);
+        // assert(file_out_all.is_open());
+        // output_all << "ID,mz,scan,intensity,mzError,DQSC,DQSB_base,DQSB_scaled\n";
+        // for (size_t i = 0; i < testdata.allDatapoints.size(); i++)
+        // {
 
-            std::vector<q::qBinning::qCentroid> binnedPoints = testdata.allDatapoints[i];
+        //     std::vector<q::qBinning::qCentroid> binnedPoints = testdata.allDatapoints[i];
 
-            for (size_t j = 0; j < binnedPoints.size(); j++)
-            {
-                char buffer[128];
-                // scan position, mz, centroid error, scan number, intensity, DQS centroid
-                sprintf(buffer, "%u,%0.15f,%0.15f,%d,%0.15f,%0.15f\n",
-                        i, binnedPoints[j].mz, binnedPoints[j].mzError,
-                        binnedPoints[j].scanNo, binnedPoints[j].intensity, binnedPoints[j].DQScentroid);
-                output_all << buffer;
-            }
-        }
-        file_out_all << output_all.str();
-        file_out_all.close();
+        //     for (size_t j = 0; j < binnedPoints.size(); j++)
+        //     {
+        //         char buffer[128];
+        //         // scan position, mz, centroid error, scan number, intensity, DQS centroid
+        //         sprintf(buffer, "%u,%0.15f,%0.15f,%d,%0.15f,%0.15f\n",
+        //                 i, binnedPoints[j].mz, binnedPoints[j].mzError,
+        //                 binnedPoints[j].scanNo, binnedPoints[j].intensity, binnedPoints[j].DQScentroid);
+        //         output_all << buffer;
+        //     }
+        // }
+        // file_out_all << output_all.str();
+        // file_out_all.close();
 
-        // std::vector<q::qBinning::EIC> binnedData = q::qBinning::performQbinning(testdata, summary_output_location, 6, false);
+        std::vector<q::qBinning::EIC> binnedData = q::qBinning::performQbinning(testdata, summary_output_location, 6, false);
 
         std::cout << "done\n";
 

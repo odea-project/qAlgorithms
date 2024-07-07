@@ -4,7 +4,7 @@
 #include "qalgorithms_qpeaks.h"
 #include "qalgorithms_matrix.h"
 #include "qalgorithms_utils.h"
-#include "qAlgorithms_qbin.h"
+#include "qalgorithms_qbin.h"
 
 #include <algorithm>
 #include <variant> // std::visit

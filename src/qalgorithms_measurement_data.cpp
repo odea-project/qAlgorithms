@@ -52,7 +52,8 @@ namespace q
                      // delete the copy of the differences vector
                      std::vector<double>().swap(differences_copy);
 
-                     /* analyze the data for gaps, i.e., differences > 1.75 * expectedDifference, and fill the gaps by adding new data points at the end of the vector
+                     /* analyze the data for gaps, i.e., differences > 1.75 * expectedDifference, and fill
+                     the gaps by adding new data points at the end of the vector @todo why 1.75?
                       */
                      n++;                    // adjust n to fit with the size of the data vector
                      size_t counter = k / 2; // counter for the number of added data points to store separator positions. it is initialized with k/2 to address that later k/2 data points will be added at the front of the vector
