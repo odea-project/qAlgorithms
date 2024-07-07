@@ -393,7 +393,7 @@ namespace q
 
 #pragma region "Bin"
 
-        Bin::Bin() {};
+        Bin::Bin(){};
 
         Bin::Bin(const std::vector<qCentroid *>::iterator &binStartInOS, const std::vector<qCentroid *>::iterator &binEndInOS) // const std::vector<qCentroid> &sourceList,
         {
@@ -419,10 +419,13 @@ namespace q
                       { return lhs->mz < rhs->mz; });
 
             activeOS.reserve(pointsInBin.size());               // OS = Order Space
-            for (size_t i = 0; i < pointsInBin.size() - 1; i++) // -1 to prevent accessing outside of vector
+            for (size_t i = 0; i < pointsInBin.size() - 1; i++) // -1 to prevent accessing outside of vector @todo adjacent_element
             {
                 activeOS.push_back((pointsInBin[i + 1]->mz - pointsInBin[i]->mz) * 1000000);
             }
+            // std::adjacent_difference(pointsInBin.begin(), pointsInBin.end(), activeOS.begin(), [](const qCentroid *cen)
+            //                          { return cen->mz * 1000000; });
+
             activeOS.push_back(NAN); // last element of OS is never checked, dummy value due to recursive function
         }
 
@@ -568,6 +571,11 @@ namespace q
 
             assert(mzMax->mz == maxInnerMZ);
             assert(mzMin->mz == minInnerMZ);
+
+            if (maxInnerMZ == 153.057976030918)
+            {
+                /* code */
+            }
 
             std::vector<double> meanInnerDistances = meanDistance(pointsInBin);
             // find median in mz
