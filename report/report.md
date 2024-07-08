@@ -468,7 +468,12 @@ As of 08.07.2024, a critical flaw within DQS calculation was
 identified and fixed. During the step which finds the MOD,
 if the greatest searched scan was greater than the last scan
 in the dataset, uninitialised memory was accessed twice. This
-lead to distances occasionally being zero.
+lead to distances occasionally being zero. As a consequence,
+the differences in DQSB when compared to the r script are
+likely no longer accurate. No further testing towards this
+has been performed. Since a distance-scaled DQSB is being considered
+as a viable evolution of the concept, result parity is no longer
+of interest in this regard.
 
 A significant advantage over R and Julia implementations is that a 
 single executable can be provided. This means the user is not

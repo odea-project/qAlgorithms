@@ -2,6 +2,7 @@
 #include "qalgorithms_measurement_data_lcms.h"
 #include "qalgorithms_qpeaks.h"
 #include "qalgorithms_matrix.h"
+#include "qalgorithms_qbin.h"
 
 // external
 #include "StreamCraft_mzml.h" //@todo check if this is actually used here
@@ -12,6 +13,15 @@
 #include <sstream>
 #include <filesystem> // printing absolute path in case read fails
 #include <fstream>
+
+namespace q
+{
+    struct positionDataMassSpectra
+    {
+        std::vector<double> retentionTimes;
+        std::vector<int> absoluteScans;
+    };
+}
 
 int main()
 {
@@ -75,6 +85,8 @@ int main()
 
         std::cout << "Executing qAlgorithms on " << std::filesystem::canonical(p) << '\n';
 
+        q::positionDataMassSpectra indexDict;
+
         q::MeasurementData::LCMSData lcmsData;
 
         bool fileOK = false;
@@ -87,7 +99,7 @@ int main()
         if (filename_input.find(".mzML") != std::string::npos) // @todo make sure this is the end of the filename, switch to regex
         {
             sc::MZML data(filename_input);
-            fileOK = lcmsData.readStreamCraftMZML(data);
+            fileOK = lcmsData.readStreamCraftMZML(data, indexDict.retentionTimes, indexDict.absoluteScans);
         }
         else if (filename_input.find(".csv") != std::string::npos) // @todo make sure this is the end of the filename, switch to regex
         {

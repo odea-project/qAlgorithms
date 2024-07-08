@@ -9,6 +9,9 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
 library(pracma)
+library(mzrtsim)
+install.packages("remotes")
+remotes::install_github("yufree/mzrtsim")
 ```
 
 ```{r read data H}

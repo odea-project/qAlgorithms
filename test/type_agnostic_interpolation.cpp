@@ -23,6 +23,7 @@ space using exp function.*/
 #include <cmath>
 #include <algorithm>
 #include <array>
+#include <assert.h>
 
 inline static size_t max_position(std::vector<double> vec)
 { // replace with std::ranges
@@ -51,19 +52,49 @@ std::array<double, 3> calcQuadraticCoefficients(double x_1, double x_2, double x
     return {a, b, c};
 }
 
+bool interpolateZeroGaps(std::vector<int> x, std::vector<double> &y)
+{
+    // expected format: one or more zeroes are added to the ends of an intensity vector
+    // zeroes are always equal on both ends. There are at least five real points
+    // (intensity greater 0) in the vector
+
+    assert(x.size() == y.size());
+    assert(y.front() == 0 & y.back() == 0);
+
+    size_t maxIndex = x.size() - 1;
+    int numZeroes = 0;
+    while (y[numZeroes] != 0)
+    {
+        ++numZeroes;
+    }
+    // interpolate zero ends
+    size_t maxpos = max_position(y);
+    // use log transform since gaussian fit is assumed
+    std::array<double, 3> endCoeffs = calcQuadraticCoefficients(
+        x[numZeroes], x[maxpos], x[maxIndex - numZeroes],
+        log(y[numZeroes]), log(y[maxpos]), log(y[maxIndex - numZeroes]));
+    for (int i = 0; i < numZeroes; i++)
+    {
+        y[i] = std::exp(endCoeffs[0] * x[i] * x[i] + endCoeffs[1] * x[i] + endCoeffs[2]);
+        int b = maxIndex - i;
+        y[b] = std::exp(endCoeffs[0] * x[b] * x[b] + endCoeffs[1] * x[b] + endCoeffs[2]);
+    }
+    // interpolate all missing points from the closest four real points
+    for (size_t i = 0; i < x.size(); i++)
+    {
+        // iterate until an intensity == 0 is found
+        // count until intensity != 0
+        // add next two points for interpolation
+        // interpolate x times
+        }
+}
+
 // for four points, estimate x by merging all possible four functions f(x1,x2,x2), f(x2,x3,x4) etc.
 
 int main()
 {
-    // data will have to be sorted by scans, again
-    std::vector<int> a{8, 9, 10, 11, 12, 14, 15, 16, 20, 21, 22};
-    std::vector<double> b{1.079409, 1.272361, 2.155299, 2.703853, 2.996987, 3.153226, 3.006734, 2.751035, 2.423615, 1.446203, 1.247027};
-    std::vector<int> x;
-    std::vector<double> y;
-    // extrapolate outer values
-    size_t newLength = a.back() - a.front() + 14; // +14 since seven points are added to each side
-    x.reserve(newLength);
-    y.reserve(newLength);
+    std::vector<int> x{5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25};
+    std::vector<double> y{0, 0, 0, 1.079409, 1.272361, 2.155299, 2.703853, 2.996987, 0, 3.153226, 3.006734, 2.751035, 0, 0, 0, 2.423615, 1.446203, 1.247027, 0, 0, 0};
 
     /* extrapolated value at position x, after log transform:
     exp(
