@@ -201,7 +201,7 @@ namespace q
             return true;
         }
 
-        bool LCMSData::readStreamCraftMZML(sc::MZML &data, std::array<double, 2> rt_window)
+        bool LCMSData::readStreamCraftMZML(sc::MZML &data, std::vector<double> &rt, std::vector<int> &scans, std::array<double, 2> rt_window)
         {
             std::vector<std::vector<std::vector<double>>> spectra = data.get_spectra();
             std::vector<double> retentionTimes = data.get_spectra_rt();
@@ -215,42 +215,47 @@ namespace q
             {
                 auto it = std::find_if(retentionTimes.begin(), retentionTimes.end(), [rt_window](double rt)
                                        { return rt > rt_window[0]; });
-                
+
                 if (it != retentionTimes.begin()) // copy elements of old vectors excluding the discarded scans
                 {
                     size_t rt_start = std::distance(retentionTimes.begin(), it);
-                    std::vector<decltype(spectra)::value_type>(spectra.begin()+rt_start, spectra.end()).swap(spectra);
-                    std::vector<decltype(retentionTimes)::value_type>(retentionTimes.begin()+rt_start, retentionTimes.end()).swap(retentionTimes);
-                    std::vector<decltype(scanNumbers)::value_type>(scanNumbers.begin()+rt_start, scanNumbers.end()).swap(scanNumbers);
-                    std::vector<decltype(ms_levels)::value_type>(ms_levels.begin()+rt_start, ms_levels.end()).swap(ms_levels);
-                } else {
+                    std::vector<decltype(spectra)::value_type>(spectra.begin() + rt_start, spectra.end()).swap(spectra);
+                    std::vector<decltype(retentionTimes)::value_type>(retentionTimes.begin() + rt_start, retentionTimes.end()).swap(retentionTimes);
+                    std::vector<decltype(scanNumbers)::value_type>(scanNumbers.begin() + rt_start, scanNumbers.end()).swap(scanNumbers);
+                    std::vector<decltype(ms_levels)::value_type>(ms_levels.begin() + rt_start, ms_levels.end()).swap(ms_levels);
+                }
+                else
+                {
                     std::cout << "The selected lower bound in rt is already the first spectrum in the dataset.\n";
                 }
-                
             }
 
             if (rt_window[1] != -1)
             {
                 auto it = std::find_if(retentionTimes.begin(), retentionTimes.end(), [rt_window](double rt)
                                        { return rt > rt_window[1]; });
-                
-                if (it != retentionTimes.end()) 
+
+                if (it != retentionTimes.end())
                 {
-                    size_t newLength = std::distance(retentionTimes.begin(), it); 
+                    size_t newLength = std::distance(retentionTimes.begin(), it);
                     spectra.resize(newLength);
                     retentionTimes.resize(newLength);
                     scanNumbers.resize(newLength);
                     ms_levels.resize(newLength);
-                } else {
+                }
+                else
+                {
                     std::cout << "The selected upper bound in rt is already the last spectrum in the dataset.\n";
                 }
-                
             }
 
             if (spectra.empty())
             {
                 return false;
             }
+
+            rt = retentionTimes;
+            scans = scanNumbers;
 
             size_t number_of_spectra = spectra.size();
             for (size_t i = 0; i < number_of_spectra; i++)

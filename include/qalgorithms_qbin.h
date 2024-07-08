@@ -44,13 +44,26 @@ namespace q
             double DQS;
         };
 
-        struct EIC // Extracted Ion Chromatogram
+        struct EIC_old // Extracted Ion Chromatogram
         {
             std::vector<DatapointEIC> pointsInEIC;
             double meanDQS;
             double meanMZ;
-            unsigned int medianScans;
             double maxInt;
+        };
+
+        struct EIC // Extracted Ion Chromatogram
+        {
+            std::vector<unsigned int> scanNumbers;
+            std::vector<double> mz;
+            std::vector<double> intensities;
+            std::vector<double> DQSB;
+            std::vector<double> DQSC;
+
+            // only include basic summary params if useful
+            // double meanDQS;
+            // double meanMZ;
+            // double maxInt;
         };
 
         struct SummaryOutput
@@ -61,7 +74,6 @@ namespace q
             double median_mz;
             double stddev_mz;
             double mean_scans;
-            unsigned int median_scans;
             double DQSB_base;
             double DQSB_scaled;
             double DQSC_min;
@@ -75,7 +87,6 @@ namespace q
             std::vector<double> cumError; // cumulative error in mz
             double pt_MakeDQSB;           // rm?
             bool duplicateScan = false;   // are two points with the same scan number in this bin?
-            unsigned int medianScan;
             double medianMZ;
 
         public:
@@ -152,6 +163,8 @@ namespace q
             /// between mean and median or the presence of duplicate values.
             /// @return A struct containing the summary information. The first entry is the error code.
             SummaryOutput summariseBin();
+
+            EIC_old createEIC_old();
 
             EIC createEIC();
         };
