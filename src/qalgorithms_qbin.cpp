@@ -563,20 +563,6 @@ namespace q
             const double minInnerMZ = pointsInBin.front()->mz;
             const double maxInnerMZ = pointsInBin.back()->mz;
 
-            auto mzMax = *std::max_element(pointsInBin.begin(), pointsInBin.end(), [](qCentroid *lhs, qCentroid *rhs)
-                                           { return lhs->mz < rhs->mz; });
-
-            auto mzMin = *std::min_element(pointsInBin.begin(), pointsInBin.end(), [](qCentroid *lhs, qCentroid *rhs)
-                                           { return lhs->mz < rhs->mz; });
-
-            assert(mzMax->mz == maxInnerMZ);
-            assert(mzMin->mz == minInnerMZ);
-
-            if (maxInnerMZ == 153.057976030918)
-            {
-                /* code */
-            }
-
             std::vector<double> meanInnerDistances = meanDistance(pointsInBin);
             // find median in mz
             const int posMedian = binsize / 2;
@@ -589,29 +575,31 @@ namespace q
                 medianMZ = (pointsInBin[posMedian]->mz + pointsInBin[posMedian + 1]->mz) / 2; // +1 to round to nearest, since integers are truncated
             }
 
-            int maxScansReduced = 0;              // add this many dummy values to prevent segfault when bin is in one of the last scans
+            bool maxScansReduced = false;         // add this many dummy values to prevent segfault when bin is in one of the last scans
             std::vector<double> minMaxOutPerScan; // contains both mz values (per scan) next or closest to all m/z in the bin
 
             int edgecase = 0;
 
+            minMaxOutPerScan.reserve((scanRangeEnd - scanRangeStart + 1) * 2);
+
             if (scanRangeStart < 1)
             {
-                for (int i = 0; i < (1 - scanRangeStart) * 2; i++) // fill with dummy values to prevent segfault when distance checker expects negative scan number
+                while (scanRangeStart < 1)
                 {
+                    // fill with dummy values to prevent segfault when distance checker expects negative scan number
                     minMaxOutPerScan.push_back(IGNORE);
+                    minMaxOutPerScan.push_back(IGNORE);
+                    ++scanRangeStart;
                 }
-                scanRangeStart = 1;
-                edgecase++;
+                ++edgecase; // @todo remove
             }
             if (scanRangeEnd > (rawdata->allDatapoints.size() - 1))
             {
-                maxScansReduced = scanRangeEnd - rawdata->allDatapoints.size() - 1; // dummy values have to be added later
+                maxScansReduced = true; // dummy values have to be added later
                 scanRangeEnd = rawdata->allDatapoints.size() - 1;
                 edgecase += 2;
             }
             assert(scanRangeEnd < rawdata->allDatapoints.size());
-
-            minMaxOutPerScan.reserve((scanRangeEnd - scanRangeStart + 1) * 2);
 
             // for all scans relevant to the bin
             int needle = 0; // position in scan where a value was found - starts at 0 for first scan
@@ -697,9 +685,9 @@ namespace q
                 }
             }
             // minMaxOutPerScan contains the relevant distances in order of scans, with both min and max per scan being stored for comparison
-            if (maxScansReduced != 0) // add dummy values after last scan
+            if (maxScansReduced) // add dummy values after last scan
             {
-                for (int i = 0; i < 2 * maxScansReduced; i++)
+                while (minMaxOutPerScan.capacity() != minMaxOutPerScan.size())
                 {
                     minMaxOutPerScan.push_back(IGNORE);
                 }
@@ -725,15 +713,26 @@ namespace q
                 // qCentroid in the lowest scan. For every increase in scans, that range starts two elements later
                 const unsigned int currentRangeStart = (pointsInBin[i]->scanNo - minScanInner) * 2;
                 const unsigned int currentRangeEnd = currentRangeStart + maxdist * 4 + 1;
+
+                assert(currentRangeEnd < minMaxOutPerScan.size());
+
                 for (unsigned int j = currentRangeStart; j < currentRangeEnd; j++) // from lowest scan to highest scan relevant to this
                 // point, +1 since scan no of point has to be included.
                 {
                     if (currentMZ == minMaxOutPerScan[j])
                     {
-                        std::cout << std::setprecision(15) << "length: " << binsize << " position: " << i << " equal mz: "
-                                  << currentMZ << " rangeStart: " << currentRangeStart << " current: " << j
-                                  << " rangeEnd: " << currentRangeEnd << " mzMax: " << maxInnerMZ << " mzMin: "
-                                  << minInnerMZ << " edge: " << edgecase << "\n";
+                        for (size_t i = 0; i < minMaxOutPerScan.size(); i++)
+                        {
+                            if ((minMaxOutPerScan[i] > minInnerMZ) & (minMaxOutPerScan[i] < maxInnerMZ))
+                            {
+                                std::cout << "\nBad point: " << i << ", " << minMaxOutPerScan[i] << "\n";
+                            }
+                        }
+
+                        std::cout << std::setprecision(15) << "length: " << binsize << ", position: " << i << ", equal mz: "
+                                  << currentMZ << ", minmax_length: " << minMaxOutPerScan.size() << ", rangeStart: " << currentRangeStart << ", current: " << j
+                                  << ", rangeEnd: " << currentRangeEnd << ", mzMax: " << maxInnerMZ << ", mzMin: "
+                                  << minInnerMZ << ", edge: " << edgecase << "\n";
                     }
                     double dist = std::abs(currentMZ - minMaxOutPerScan[j]);
                     if (dist < minDist_base)
@@ -1055,7 +1054,7 @@ int main()
     int inputMaxdist = 6;
     q::qBinning::maxdist = inputMaxdist;
 
-    std::string filename_input = "../../rawdata/210229_C1_S1_W_MI_1_pos_centroids_a.csv"; // no variability after qCentroiding
+    std::string filename_input = "../../rawdata/210229_C1_S1_W_MI_1_pos_centroids.csv"; // no variability after qCentroiding
 
     const std::filesystem::path p = filename_input;
     if (!std::filesystem::exists(p))

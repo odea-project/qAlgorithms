@@ -31,7 +31,7 @@ int main()
 
     // @todo add option to take in a text file containing execution parameters and a list of target files
     std::vector<std::string> target_files_full{
-        // "G:/_Studium/Analytik-Praktikum/qbinning/rawdata/210229_C1_S1_W_MI_1_pos.mzML",
+        "G:/_Studium/Analytik-Praktikum/qbinning/rawdata/210229_C1_S1_W_MI_1_pos.mzML",
         "C:/Users/unisys/Documents/Studium/Messdaten/mzml/AquaFlow_MS1/210229_C1_S1_W_MI_1_pos.mzML",
         "C:/Users/unisys/Documents/Studium/Messdaten/mzml/AquaFlow_MS1/210229_C1_S1_W_MI_2_pos.mzML", // some error during binning here?
         "nonsense",
@@ -137,6 +137,7 @@ int main()
         std::cout << "finding peaks...\n";
 
         q::MeasurementData::varDataType dataObject = &(lcmsData.data);
+
         q::Algorithms::qPeaks qpeaks(dataObject);
 
         std::vector<std::vector<std::unique_ptr<q::DataType::Peak>>> temp_peaks = qpeaks.findPeaks(dataObject);
