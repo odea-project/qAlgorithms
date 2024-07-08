@@ -85,8 +85,8 @@ namespace q
         const std::vector<double> &yData,
         const size_t degree);
 
-    extern const double tValuesArray[500];
-    extern const double chiSquareArray[500];
+    extern const float tValuesArray[256];
+    extern const float chiSquareArray[256];
     extern const double SQRTPI_2;
 
 #pragma region "Matrix Operations"

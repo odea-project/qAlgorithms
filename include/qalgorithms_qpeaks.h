@@ -78,6 +78,18 @@ namespace q
                 const int right_limit,
                 const q::Matrices::Vector &beta);
 
+            /**
+             * @brief Calculate the yhat vector for the given scale and coefficients.
+             *
+             * @param scale : Window size scale, e.g., 5 means the window size is 11 (2*5+1)
+             * @param coeff : Coefficients of the regression model
+             * @return q::Matrices::Vector : yhat vector
+             */
+            q::Matrices::Vector
+            calcYhat(
+                const int scale,
+                const __m128 &coeff);
+
             // debugging
             void info() const;
             void printMatrices(int scale) const;
@@ -97,30 +109,34 @@ namespace q
              * The structure of the array is as follows:
              * invArray[scale][{A,B,C,D,E,F}]
              */
-            static float invArray[64][6]; // contains the unique entries from the inverse matrix
-            static float x_square[128];   // contains the squares from 0 to 127^2
-            static __m128 ZERO_128;       // 128 bit register with all zeros
-            static __m128 KEY_128;        // 128 bit register with 0, 4, 2, 1
+            alignas(16) static float invArray[64][6]; // contains the unique entries from the inverse matrix
+            alignas(16) static float x_square[128];   // contains the squares from 0 to 127^2
+            static __m128 ZERO_128;                   // 128 bit register with all zeros
+            static __m256 ZERO_256;                   // 256 bit register with all zeros
+            static __m128 KEY_128;                    // 128 bit register with 0, 4, 2, 1
+            static __m256 LINSPACE_UP_256;            // 256 bit register with 0, 1, 2, 3, 4, 5, 6, 7
+            static __m256 LINSPACE_DOWN_256;          // 256 bit register with -7, -6, -5, -4, -3, -2, -1, 0
+            static __m256 MINUS_ONE_256;              // 256 bit register with -1
 
             int global_maxScale;
 
             // define valid regression struct
             struct validRegression
             {
-                int index_x0;          // index of window center (x==0) in the Y matrix
-                int scale;             // scale of the regression window, i.e., 2*scale+1 = window size
-                int df;                // degree of freedom, interpolated data points will not be considered
-                double apex_position;  // position of the apex of the peak
-                double mse;            // mean squared error
-                q::Matrices::Vector B; // regression coefficients
-                bool isValid;          // flag to indicate if the regression is valid
-                double left_limit;     // left limit of the peak regression window
-                double right_limit;    // right limit of the peak regression window
-                int X_row_0;           // start of the cutted Deisgn Matrix
-                int X_row_1;           // end of the cutted Design Matrix
-                double area;                 // area of the peak
-                double uncertainty_area;     // uncertainty of the area
-                double uncertainty_height;   // uncertainty of the height
+                int index_x0;              // index of window center (x==0) in the Y matrix
+                int scale;                 // scale of the regression window, i.e., 2*scale+1 = window size
+                int df;                    // degree of freedom, interpolated data points will not be considered
+                double apex_position;      // position of the apex of the peak
+                double mse;                // mean squared error
+                q::Matrices::Vector B;     // regression coefficients
+                bool isValid;              // flag to indicate if the regression is valid
+                double left_limit;         // left limit of the peak regression window
+                double right_limit;        // right limit of the peak regression window
+                int X_row_0;               // start of the cutted Deisgn Matrix
+                int X_row_1;               // end of the cutted Design Matrix
+                double area;               // area of the peak
+                double uncertainty_area;   // uncertainty of the area
+                double uncertainty_height; // uncertainty of the height
                 validRegression(
                     int index_x0,
                     int scale,
@@ -257,9 +273,7 @@ namespace q
              */
             bool
             calculateApexAndValleyPositions(
-                const q::Matrices::Matrix_mc &B,
                 const __m128 &coeff,
-                const size_t index,
                 const int scale,
                 double &apex_position,
                 double &valley_position) const;
@@ -280,23 +294,22 @@ namespace q
             /**
              * @brief Checks if peak maximum is twice as high as the signal at the edge of the regression window.
              * @details The test is used as a fast pre-test for signal-to-noise ratio which will be calculated later. However, s/n siginificance is time consuming due to MSE calculation. The reference value of two is used due to t = (apex/edge - 2) / (apex/edge * sqrt()). If apex is equal or less than two times the edge, the t value is less than zero, which means that SNR cannot be significant.
-             * 
-             * @param apex_position 
-             * @param scale 
+             *
+             * @param apex_position
+             * @param scale
              * @param index_loop
              * @param Y
              * @param apexToEdge : The ratio of the peak maximum to the signal at the edge of the regression window. This value is calculated by the function.
-             * @return true 
-             * @return false 
+             * @return true
+             * @return false
              */
             bool
             isValidApexToEdge(
                 const double apex_position,
                 const int scale,
-                const int index_loop, 
+                const int index_loop,
                 const q::Matrices::Vector &Y,
-                float &apexToEdge
-            ) const;
+                float &apexToEdge) const;
 
             /**
              * @brief Check if the quadratic term of the regression model is valid using t-test.
@@ -311,8 +324,7 @@ namespace q
              */
             bool
             isValidQuadraticTerm(
-                const q::Matrices::Matrix_mc &B,
-                const size_t index,
+                const __m128 &coeff,
                 const double inverseMatrix_2_2,
                 const double inverseMatrix_3_3,
                 const double mse,
@@ -353,9 +365,8 @@ namespace q
              */
             bool
             isValidPeakArea(
-                const q::Matrices::Matrix_mc &B,
+                const __m128 &coeff,
                 const double mse,
-                const size_t index,
                 const int scale,
                 const int df_sum,
                 double &area,
@@ -383,25 +394,25 @@ namespace q
 
             q::Matrices::Matrix_mc
             convolve_static(
-                const size_t scale, 
-                const float (&vec)[512], 
+                const size_t scale,
+                const float (&vec)[512],
                 const size_t n,
                 __m128 *beta);
 
             q::Matrices::Matrix_mc
             convolve_dynamic(
-                const size_t scale, 
-                const float* vec, 
+                const size_t scale,
+                const float *vec,
                 const size_t n,
                 __m128 *beta);
 
-            void 
+            void
             convolve_SIMD(
-                const size_t scale, 
-                const float* vec, 
-                const size_t n, 
-                __m128* result, 
-                __m128* products, 
+                const size_t scale,
+                const float *vec,
+                const size_t n,
+                __m128 *result,
+                __m128 *products,
                 const size_t buffer_size);
 
             // q::Matrices::Matrix_mc

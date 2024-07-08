@@ -116,16 +116,20 @@ namespace q
     alignas(16) float q::Algorithms::qPeaks::x_square[128];   // array to store the square of the x values
     alignas(16) float q::Algorithms::qPeaks::invArray[64][6]; // array to store the 6 unique values of the inverse matrix for each scale
     __m128 q::Algorithms::qPeaks::ZERO_128;
+    __m256 q::Algorithms::qPeaks::ZERO_256;
     __m128 q::Algorithms::qPeaks::KEY_128;
+    __m256 q::Algorithms::qPeaks::LINSPACE_UP_256;
+    __m256 q::Algorithms::qPeaks::LINSPACE_DOWN_256;
+    __m256 q::Algorithms::qPeaks::MINUS_ONE_256;
     void qPeaks::initialize()
     {
-      // init __m128 ZERO_128
-      ZERO_128 = _mm_setzero_ps();
 
-      // init __m128 KEY_128 with {0., 4., 2., 1.}
-      KEY_128 = _mm_set_ps(1.f, 2.f, 4.f, 0.f);
-
-      // init x_square
+      ZERO_128 = _mm_setzero_ps();                                                      // init __m128 ZERO_128 with {0., 0., 0., 0.}
+      ZERO_256 = _mm256_setzero_ps();                                                   // init __m256 ZERO_256 with {0., 0., 0., 0., 0., 0., 0., 0.}
+      KEY_128 = _mm_set_ps(1.f, 2.f, 4.f, 0.f);                                         // init __m128 KEY_128 with {0., 4., 2., 1.}
+      LINSPACE_UP_256 = _mm256_set_ps(7.f, 6.f, 5.f, 4.f, 3.f, 2.f, 1.f, 0.f);          // init __m256 LINSPACE_256 with {0., 1., 2., 3., 4., 5., 6., 7.}
+      LINSPACE_DOWN_256 = _mm256_set_ps(0.f, -1.f, -2.f, -3.f, -4.f, -5.f, -6.f, -7.f); // init __m256 LINSPACE_256 with {0., -1., -2., -3., -4., -5., -6., -7.}
+      MINUS_ONE_256 = _mm256_set1_ps(-1.f);                                             // init __m256 MINUS_ONE_256 with {-1., -1., -1., -1., -1., -1., -1., -1.}
       for (int i = 0; i < 128; ++i)
       {
         x_square[i] = i * i;
@@ -246,12 +250,13 @@ namespace q
       }
       for (int scale = 2; scale <= maxScale; scale++)
       {
-        size_t k = 2 * scale + 1;            //@todo delete k
-        size_t n_segments = n - k + 1;       //@todo delete n_segments
-        alignas(16) __m128 beta[n_segments]; // coefficients matrix
+        const size_t k = 2 * scale + 1;                    //@todo delete k
+        const size_t n_segments = n - k + 1;               //@todo delete n_segments
+        alignas(16) __m128 *beta = new __m128[n_segments]; // coefficients matrix
 
         q::Matrices::Matrix_mc B = (n <= 512) ? convolve_static(scale, ylog_array, n, beta) : convolve_dynamic(scale, Ylog.elements, n, beta);
         validateRegressions(B, beta, n_segments, Y, Ylog, df, scale, validRegressions);
+        delete[] beta;
       } // end for scale loop
       mergeRegressionsOverScales(validRegressions, Ylog, Y, df);
     } // end runningRegression
@@ -274,11 +279,11 @@ namespace q
       // declare variables
       std::vector<std::unique_ptr<validRegression>> validRegressionsTmp; // temporary vector to store valid regressions <index, apex_position>
 
-      // iterate columwise over the coefficients matrix beta 
+      // iterate columwise over the coefficients matrix beta
       for (size_t i = 0; i < n_segments; i++)
       {
         const __m128 &coeff = beta[i]; // coefficient register from beta @ i
-        
+
         /*
           Degree of Freedom Filter:
           This block of code implements the degree of freedom filter. It calculates the degree of freedom based df vector. If the degree of freedom is less than 5, the loop continues to the next iteration. The value 5 is chosen as the minimum number of data points required to fit a quadratic regression model.
@@ -294,7 +299,7 @@ namespace q
           This block of code implements the apex and valley position filter. It calculates the apex and valley positions based on the coefficients matrix B. If the apex is outside the data range, the loop continues to the next iteration. If the apex and valley positions are too close to each other, the loop continues to the next iteration.
         */
         double apex_position, valley_position;
-        if (!calculateApexAndValleyPositions(B, coeff, i, scale, apex_position, valley_position))
+        if (!calculateApexAndValleyPositions(coeff, scale, apex_position, valley_position))
         {
           continue; // invalid apex and valley positions
         }
@@ -303,7 +308,7 @@ namespace q
           Area Pre-Filter:
           This test is used to check if the later-used arguments for exp and erf functions are within the valid range, i.e., |x^2| < 25. If the test fails, the loop continues to the next iteration. x is in this case -apex_position * b1 / 2 and -valley_position * b1 / 2.
         */
-        if (apex_position * B(1, i) > 50 || valley_position * B(1, i) < -50)
+        if (apex_position * ((float *)&coeff)[1] > 50 || valley_position * ((float *)&coeff)[1] < -50)
         {
           continue; // invalid area pre-filter
         }
@@ -323,9 +328,10 @@ namespace q
           This block of code implements the quadratic term filter. It calculates the mean squared error (MSE) between the predicted and actual values. Then it calculates the t-value for the quadratic term. If the t-value is less than the corresponding value in the tValuesArray, the quadratic term is considered statistically insignificant, and the loop continues to the next iteration.
         */
         const q::Matrices::Vector b = extractCol(B, i);                    // coefficients vector
-        const q::Matrices::Vector yhat = calcYhat(-scale, scale, B, i);    // predicted values
+        const q::Matrices::Vector yhat = calcYhat(scale, coeff);           // predicted values
         const double mse = calcSSE(yhat, Ylog, Ylog.begin() + i) / df_sum; // mean squared error
-        if (!isValidQuadraticTerm(B, i, inverseMatrix_2_2, inverseMatrix_2_2, mse, df_sum))
+
+        if (!isValidQuadraticTerm(coeff, inverseMatrix_2_2, inverseMatrix_2_2, mse, df_sum))
         {
           continue; // statistical insignificance of the quadratic term
         }
@@ -347,8 +353,8 @@ namespace q
         */
         double area = 0.0;
         double uncertainty_area = 0.0;
-        q::Matrices::Vector yhat_exp(2 * scale + 1);
-        if (!isValidPeakArea(B, mse, i, scale, df_sum, area, uncertainty_area, yhat_exp, yhat))
+        alignas(32) q::Matrices::Vector yhat_exp(2 * scale + 1);
+        if (!isValidPeakArea(coeff, mse, scale, df_sum, area, uncertainty_area, yhat_exp, yhat))
         {
           continue; // statistical insignificance of the area
         }
@@ -837,54 +843,47 @@ namespace q
 #pragma region calculateApexAndValleyPositions
     bool
     qPeaks::calculateApexAndValleyPositions(
-        const q::Matrices::Matrix_mc &B,
         const __m128 &coeff,
-        const size_t index,
         const int scale,
         double &apex_position,
         double &valley_position) const
     {
       // calculate key by checking the signs of coeff
+      __m128 res = _mm_set1_ps(-.5f);               // res = -0.5
       __m128 signs = _mm_cmplt_ps(coeff, ZERO_128); // compare the coefficients with zero, results will have the following values: 0xFFFFFFFF if the value is negative, 0x00000000 if the value is positive
-      signs = _mm_mul_ps(signs, KEY_128);
-      
-      // signs = _mm_hadd_ps(signs, signs);
-      // signs = _mm_hadd_ps(signs, signs);
-            // extract signs first value to KEY
-      // float KEY = _mm_cvtss_f32(signs);
+      signs = _mm_and_ps(signs, KEY_128);           // multiply a key value if the value of the coefficient is negative, i.e., b0 * 0, b1 * 4, b2 * 2, b3 * 1
+      signs = _mm_hadd_ps(signs, signs);            // horizontal add of the signs
+      signs = _mm_hadd_ps(signs, signs);            // horizontal add of the signs, now all values are the same, i.e. the sum
+      int key = _mm_cvtss_si32(signs);
 
-      // extract the coefficients
-      const double B1 = B(1, index);
-      const double B2 = B(2, index);
-      const double B3 = B(3, index);
-      int key = (B1 < 0 ? 4 : 0) + (B2 < 0 ? 2 : 0) + (B3 < 0 ? 1 : 0);
-
-      // debugging
-      std::cout << std::endl;
-      // print(B);
-      std::cout << "key: " << key << std::endl;
-      // std::cout << "KEY: " << KEY << std::endl;
-      exit(0);
       switch (key)
       {
-      case 7:                              // Case 1a: apex left
-        apex_position = -B1 / 2 / B2;      // is negative
-        valley_position = 0;               // no valley point
-        return apex_position > -scale + 1; // scale +1: prevent apex position to be at the edge of the data
+      case 7:                                                            // Case 1a: apex left
+        res = _mm_mul_ps(res, _mm_shuffle_ps(coeff, coeff, 0b01010101)); // res = -0.5 * b1
+        res = _mm_div_ps(res, coeff);                                    // res = -0.5 * b1 / b2
+        apex_position = ((float *)&res)[2];                              //-B1 / 2 / B2;  // is negative
+        valley_position = 0;                                             // no valley point
+        return apex_position > -scale + 1;                               // scale +1: prevent apex position to be at the edge of the data
 
-      case 3:                             // Case 1b: apex right
-        apex_position = -B1 / 2 / B3;     // is positive
-        valley_position = 0;              // no valley point
-        return apex_position < scale - 1; // scale -1: prevent apex position to be at the edge of the data
+      case 3:                                                            // Case 1b: apex right
+        res = _mm_mul_ps(res, _mm_shuffle_ps(coeff, coeff, 0b01010101)); // res = -0.5 * b1
+        res = _mm_div_ps(res, coeff);                                    // res = -0.5 * b1 / b2
+        apex_position = ((float *)&res)[3];                              //-B1 / 2 / B3;     // is positive
+        valley_position = 0;                                             // no valley point
+        return apex_position < scale - 1;                                // scale -1: prevent apex position to be at the edge of the data
 
       case 6:                                                                     // Case 2a: apex left | valley right
-        apex_position = -B1 / 2 / B2;                                             // is negative
-        valley_position = -B1 / 2 / B3;                                           // is positive
+        res = _mm_mul_ps(res, _mm_shuffle_ps(coeff, coeff, 0b01010101));          // res = -0.5 * b1
+        res = _mm_div_ps(res, coeff);                                             // res = -0.5 * b1 / b2
+        apex_position = ((float *)&res)[2];                                       //-B1 / 2 / B2;                                             // is negative
+        valley_position = ((float *)&res)[3];                                     //-B1 / 2 / B3;                                           // is positive
         return apex_position > -scale + 1 && valley_position - apex_position > 2; // scale +1: prevent apex position to be at the edge of the data
 
       case 1:                                                                    // Case 2b: apex right | valley left
-        apex_position = -B1 / 2 / B3;                                            // is positive
-        valley_position = -B1 / 2 / B2;                                          // is negative
+        res = _mm_mul_ps(res, _mm_shuffle_ps(coeff, coeff, 0b01010101));         // res = -0.5 * b1
+        res = _mm_div_ps(res, coeff);                                            // res = -0.5 * b1 / b2
+        apex_position = ((float *)&res)[3];                                      //-B1 / 2 / B3;                                            // is positive
+        valley_position = ((float *)&res)[2];                                    //-B1 / 2 / B2;                                          // is negative
         return apex_position < scale - 1 && apex_position - valley_position > 2; // scale -1: prevent apex position to be at the edge of the data
 
       default:
@@ -962,17 +961,16 @@ namespace q
 
 #pragma region isValidQuadraticTerm
     bool qPeaks::isValidQuadraticTerm(
-        const q::Matrices::Matrix_mc &B,
-        const size_t index,
+        const __m128 &coeff,
         const double inverseMatrix_2_2,
         const double inverseMatrix_3_3,
         const double mse,
         const int df_sum) const
     {
-      double tValue = std::max(                                        // t-value for the quadratic term
-          std::abs(B(2, index)) / std::sqrt(inverseMatrix_2_2 * mse),  // t-value for the quadratic term left side of the peak
-          std::abs(B(3, index)) / std::sqrt(inverseMatrix_3_3 * mse)); // t-value for the quadratic term right side of the peak
-      return tValue > tValuesArray[df_sum - 5];                        // statistical significance of the quadratic term
+      double tValue = std::max(                                                 // t-value for the quadratic term
+          std::abs(((float *)&coeff)[2]) / std::sqrt(inverseMatrix_2_2 * mse),  // t-value for the quadratic term left side of the peak
+          std::abs(((float *)&coeff)[3]) / std::sqrt(inverseMatrix_3_3 * mse)); // t-value for the quadratic term right side of the peak
+      return tValue > tValuesArray[df_sum - 5];                                 // statistical significance of the quadratic term
     }
 #pragma endregion isValidQuadraticTerm
 
@@ -1034,9 +1032,8 @@ namespace q
 #pragma region isValidPeakArea
     bool
     qPeaks::isValidPeakArea(
-        const q::Matrices::Matrix_mc &B,
+        const __m128 &coeff,
         const double mse,
-        const size_t index,
         const int scale,
         const int df_sum,
         double &area,
@@ -1045,25 +1042,20 @@ namespace q
         const q::Matrices::Vector &yhat_log) const
     {
       // predefine expressions
-      const float b1 = B(1, index);
-      const float b2 = B(2, index);
-      const float b3 = B(3, index);
-      const float SQRTB2 = std::sqrt(std::abs(-b2));
-      const float SQRTB3 = std::sqrt(std::abs(-b3));
-      const float B1_2_SQRTB2 = b1 / 2 / SQRTB2;
-      const float B1_2_SQRTB3 = b1 / 2 / SQRTB3;
+      const float b1 = ((float *)&coeff)[1];
+      const float b2 = ((float *)&coeff)[2];
+      const float b3 = ((float *)&coeff)[3];
+      const float _SQRTB2 = 1 / std::sqrt(std::abs(-b2));
+      const float _SQRTB3 = 1 / std::sqrt(std::abs(-b3));
+      const float B1_2_SQRTB2 = b1 / 2 * _SQRTB2;
+      const float B1_2_SQRTB3 = b1 / 2 * _SQRTB3;
       const float B1_2_B2 = b1 / 2 / b2;
-      const float EXP_B12 = std::exp(-b1 * B1_2_B2 / 2);
+      const float EXP_B12 = exp_approx(-b1 * B1_2_B2 / 2);
       const float B1_2_B3 = b1 / 2 / b3;
-      const float EXP_B13 = std::exp(-b1 * B1_2_B3 / 2);
+      const float EXP_B13 = exp_approx(-b1 * B1_2_B3 / 2);
 
       // initialize variables
       float J[4];            // Jacobian matrix
-      float J_covered[4];    // Jacobian matrix for the covered peak area
-      float x_left = -scale; // left limit due to the window
-      float x_right = scale; // right limit due to the window
-      float y_left = 0;      // y value at the left limit
-      float y_right = 0;     // y value at the right limit
 
       // here we have to check if there is a valley point or not
       const float err_L =
@@ -1077,8 +1069,8 @@ namespace q
               : dawson5(-B1_2_SQRTB3);    // -erfi(b1 / 2 / SQRTB3);       // peak with valley point ;
 
       // calculate the Jacobian matrix terms
-      const float J_1_common_L = 1 / SQRTB2; // SQRTPI_2 * EXP_B12 / SQRTB2;
-      const float J_1_common_R = 1 / SQRTB3; // SQRTPI_2 * EXP_B13 / SQRTB3;
+      const float J_1_common_L = _SQRTB2; // SQRTPI_2 * EXP_B12 / SQRTB2;
+      const float J_1_common_R = _SQRTB3; // SQRTPI_2 * EXP_B13 / SQRTB3;
       const float J_2_common_L = B1_2_B2 / b1;
       const float J_2_common_R = B1_2_B3 / b1;
       const float J_1_L = J_1_common_L * err_L;
@@ -1099,27 +1091,33 @@ namespace q
         return false;
       }
 
+      float J_covered[4];    // Jacobian matrix for the covered peak area
+      float x_left = -scale; // left limit due to the window
+      float x_right = scale; // right limit due to the window
+      float y_left = 0;      // y value at the left limit
+      float y_right = 0;     // y value at the right limit
+
       // std::transform(yhat_log.begin(), yhat_log.end(), yhat_exp.begin(), exp_approx); // calculate the exp of the yhat_log values
 
       const float err_L_covered = ///@todo : need to be revised
           (b2 < 0)
               ?                                                                                              // ordinary peak half, take always scale as integration limit; we use erf instead of erfi due to the sqrt of absoulte value
-              std::erf((b1 - 2 * b2 * scale) / 2 / SQRTB2) * EXP_B12 * SQRTPI_2 + err_L - SQRTPI_2 * EXP_B12 // std::erf((b1 - 2 * b2 * scale) / 2 / SQRTB2) + err_L - 1
+              std::erf((b1 - 2 * b2 * scale) / 2 * _SQRTB2) * EXP_B12 * SQRTPI_2 + err_L - SQRTPI_2 * EXP_B12 // std::erf((b1 - 2 * b2 * scale) / 2 / SQRTB2) + err_L - 1
               :                                                                                              // valley point, i.e., check position
               (-B1_2_B2 < -scale)
                   ? // valley point is outside the window, use scale as limit
-                  err_L - erfi((b1 - 2 * b2 * scale) / 2 / SQRTB2) * EXP_B12
+                  err_L - erfi((b1 - 2 * b2 * scale) / 2 * _SQRTB2) * EXP_B12
                   : // valley point is inside the window, use valley point as limit
                   err_L;
 
       const float err_R_covered = ///@todo : need to be revised
           (b3 < 0)
               ?                                                                                              // ordinary peak half, take always scale as integration limit; we use erf instead of erfi due to the sqrt of absoulte value
-              err_R - SQRTPI_2 * EXP_B13 - std::erf((b1 + 2 * b3 * scale) / 2 / SQRTB3) * SQRTPI_2 * EXP_B13 // err_R - 1 - std::erf((b1 + 2 * b3 * scale) / 2 / SQRTB3)
+              err_R - SQRTPI_2 * EXP_B13 - std::erf((b1 + 2 * b3 * scale) / 2 * _SQRTB3) * SQRTPI_2 * EXP_B13 // err_R - 1 - std::erf((b1 + 2 * b3 * scale) / 2 / SQRTB3)
               :                                                                                              // valley point, i.e., check position
               (-B1_2_B3 > scale)
                   ? // valley point is outside the window, use scale as limit
-                  erfi((b1 + 2 * b3 * scale) / 2 / SQRTB3) * EXP_B13 + err_R
+                  erfi((b1 + 2 * b3 * scale) / 2 * _SQRTB3) * EXP_B13 + err_R
                   : // valley point is inside the window, use valley point as limit
                   err_R;
 
@@ -1135,8 +1133,8 @@ namespace q
       }
 
       // calculate the y values at the left and right limits
-      y_left = std::exp(b1 * x_left + b2 * x_left * x_left);
-      y_right = std::exp(b1 * x_right + b3 * x_right * x_right);
+      y_left = exp_approx(b1 * x_left + b2 * x_left * x_left);
+      y_right = exp_approx(b1 * x_right + b3 * x_right * x_right);
       const float dX = x_right - x_left;
 
       // calculate the trapzoid correction terms for the jacobian matrix
@@ -1288,7 +1286,6 @@ namespace q
           yhat[j + k] = result_array[k];
         }
       }
-
       return yhat;
     }
 
@@ -1368,6 +1365,61 @@ namespace q
 
       return yhat;
     }
+
+    q::Matrices::Vector
+    qPeaks::calcYhat(
+        const int scale,
+        const __m128 &coeff)
+    {
+      const size_t n = 2 * scale + 1;          // length of the result vector
+      const size_t nFullSegments = scale / 8;  // calculate the number of full segments of 8 elements per side
+      const size_t nRemaining = scale % 8;     // calculate the number of remaining elements
+      alignas(32) q::Matrices::Vector yhat(n); // result vector
+
+      // Load the coefficients
+      const __m256 b0 = _mm256_set1_ps(coeff[0]);
+      const __m256 b1 = _mm256_set1_ps(coeff[1]);
+      const __m256 b2 = _mm256_set1_ps(coeff[2]);
+      const __m256 b3 = _mm256_set1_ps(coeff[3]);
+
+      // Calculate the yhat values for the full segments
+      size_t j = 0;
+      size_t k = n - 8;
+      float i = static_cast<float>(-scale);
+      for (size_t iSegment = 0; iSegment < nFullSegments; ++iSegment, i += 8.0f, j += 8, k -= 8)
+      {
+        // Load 8 values of i directly as float
+        __m256 x_left = _mm256_add_ps(_mm256_set1_ps(i), LINSPACE_UP_256);     // x vector : -k to -k+7
+        __m256 x_right = _mm256_add_ps(_mm256_set1_ps(-i), LINSPACE_DOWN_256); // x vector : k-7 to k
+
+        // Calculate the yhat values
+        __m256 yhat_left = _mm256_fmadd_ps(_mm256_fmadd_ps(b2, x_left, b1), x_left, b0);    // b0 + b1 * x + b2 * x^2
+        __m256 yhat_right = _mm256_fmadd_ps(_mm256_fmadd_ps(b3, x_right, b1), x_right, b0); // b0 + b1 * x + b3 * x^2
+
+        // Store the result into yhat
+        _mm256_store_ps(&yhat[j], yhat_left);
+        _mm256_store_ps(&yhat[k], yhat_right);
+      }
+
+      // Calculate the yhat values for the remaining elements
+      if (nRemaining > 0)
+      {
+        __m256 yhat_left = _mm256_fmadd_ps(_mm256_fmadd_ps(b2, LINSPACE_DOWN_256, b1), LINSPACE_DOWN_256, b0); // b0 + b1 * x + b2 * x^2
+        __m256 yhat_right = _mm256_fmadd_ps(_mm256_fmadd_ps(b3, LINSPACE_UP_256, b1), LINSPACE_UP_256, b0);    // b0 + b1 * x + b3 * x^2
+
+        // Store the remaining result into yhat from yhat_left[0] to yhat_left[nRemaining-1] and yhat_right[0] to yhat_right[nRemaining-1]
+        // std::cout << "yhat_left: " << yhat_left[0] << " " << yhat_left[1] << " " << yhat_left[2] << " " << yhat_left[3] << " " << yhat_left[4] << " " << yhat_left[5] << " " << yhat_left[6] << " " << yhat_left[7] << "\n";
+        for (size_t i = 1; i <= nRemaining; ++i)
+        {
+          yhat[scale - i] = yhat_left[7 - i];
+          yhat[scale + i] = yhat_right[i];
+        }
+      }
+
+      // fill the yhat values for the center x = 0, i.e., yhat[center] = b0
+      yhat[scale] = coeff[0];
+      return yhat;
+    }
 #pragma endregion "yhat"
 
 #pragma region info
@@ -1396,6 +1448,7 @@ namespace q
 
       alignas(16) __m128 result[512];
       alignas(16) __m128 products[512];
+      const __m128 flipSign = _mm_set_ps(1.0f, 1.0f, -1.0f, 1.0f);
       convolve_SIMD(scale, vec, n, result, products, 512);
 
       q::Matrices::Matrix_mc resultMatrix(4, n - 2 * scale);
@@ -1407,7 +1460,7 @@ namespace q
         resultMatrix(1, i) = -temp[1];
         resultMatrix(2, i) = temp[3];
         resultMatrix(3, i) = temp[2];
-        beta[i] = result[i];
+        beta[i] = _mm_mul_ps(_mm_shuffle_ps(result[i], result[i], 0b10110100), flipSign); // swap beta2 and beta3 and flip the sign of beta1 // @todo: this is a temporary solution
       }
 
       return resultMatrix;
@@ -1425,8 +1478,8 @@ namespace q
         throw std::invalid_argument("n must be greater or equal to 2 * scale + 1");
       }
 
-      alignas(16) __m128 result[n - 2 * scale];
-      alignas(16) __m128 products[n];
+      alignas(16) __m128 *result = new __m128[n - 2 * scale];
+      alignas(16) __m128 *products = new __m128[n];
       convolve_SIMD(scale, vec, n, result, products, n);
 
       q::Matrices::Matrix_mc resultMatrix(4, n - 2 * scale);
