@@ -464,13 +464,20 @@ Correctness of the calculated DQS was controlled manually for both
 heavily reduced real data and an artificial bin with three very
 different bins and two points that do not belong to any bin.
 
+As of 08.07.2024, a critical flaw within DQS calculation was
+identified and fixed. During the step which finds the MOD,
+if the greatest searched scan was greater than the last scan
+in the dataset, uninitialised memory was accessed twice. This
+lead to distances occasionally being zero.
+
 A significant advantage over R and Julia implementations is that a 
 single executable can be provided. This means the user is not
 required to install a complete programming language and scripting
 environment on his device or troubleshoot problems caused by
-future package changes. This is untrue, but automated package installation
-and version control could be implemented for both R and Julia. As such, a significant 
+future package changes. As such, a significant 
 improvement in terms of user-friendliness was achieved.
+This only applies while automated package installation
+and version control are not implemented for both R and Julia. 
 
 
 ### Performance Evaluation
@@ -869,10 +876,6 @@ there is some additional time that could be saved. An improvement
 in this direction would also enable datasets to be binned if they are
 too large to fit into RAM. 
 
-The transferred data always contains a control DQS and centroid error,
-even if those are not needed. By implementing them as optional parameters,
-the total memory allocation that needs to be performed is reduced.
-
 When performing the splitting in the m/z dimension, for small bins the 
 greatest order space is often at the border. This leads to many redundant
 calculations, especially toward the end of a subsetting step. If it is
@@ -915,11 +918,11 @@ The function compiles and executes without errors or exceptions.
 
 While the use of a set maximum distance between scans of a bin is in relation
 to the chance a real signal has of being a false negative, the result of
-this reasoning is still a more or less arbitrary value a certain estimate
+this reasoning is still a more or less arbitrary value that a certain estimate
 of the false negative rate can be attached to. Ideally, this distance
 could be derived from the dataset itself or the instrumentation used.
 Since it is required to be an integer number, this parameter is limited
-in the degree, it can be optimized.
+in the degree to which it can be optimized.
 
 Similarly, the critical value is always calculated for an alpha of 0.01.
 There is no analytical solution to the parameters of this value, but
@@ -965,7 +968,7 @@ extensive testing with a broad sample group of potential users and more varied d
 
 Reading in csv files is very slow. This was not a priority for optimization,
 since it is not the intended main function of this program. However, for
-general-purpose use a fast file reading is sensible. 
+general-purpose use a fast file reading is sensible.
 
 Contributions to open-source software like this are more likely to occur
 if automated tests exist that can verify the validity of results quickly
