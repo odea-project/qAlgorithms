@@ -94,6 +94,7 @@
                 "-fopenmp",
                 "-O3",
                 "-mavx2",
+                "-mfma",
                 "src/qalgorithms_datatype_mass_spectrum.cpp",
                 "src/qalgorithms_datatype_peak.cpp",
                 "src/qalgorithms_measurement_data_lcms.cpp",

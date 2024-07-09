@@ -338,11 +338,6 @@ namespace q
           Quadratic Term Filter:
           This block of code implements the quadratic term filter. It calculates the mean squared error (MSE) between the predicted and actual values. Then it calculates the t-value for the quadratic term. If the t-value is less than the corresponding value in the tValuesArray, the quadratic term is considered statistically insignificant, and the loop continues to the next iteration.
         */
-        // q::Matrices::Vector b(4);    // @todo: delete in the future
-        // b[0] = ((float *)&coeff)[0]; // @todo: delete in the future
-        // b[1] = ((float *)&coeff)[1]; // @todo: delete in the future
-        // b[2] = ((float *)&coeff)[2]; // @todo: delete in the future
-        // b[3] = ((float *)&coeff)[3]; // @todo: delete in the future
         const q::Matrices::Vector yhat = calcYhat(-scale, scale, coeff);
         const double mse = calcSSE(yhat, Ylog, Ylog.begin() + i) / df_sum; // mean squared error
 
@@ -363,7 +358,7 @@ namespace q
         /*
           Area Filter:
           This block of code implements the area filter. It calculates the Jacobian matrix for the peak area based on the coefficients matrix B. Then it calculates the uncertainty of the peak area based on the Jacobian matrix. If the peak area is statistically insignificant, the loop continues to the next iteration.
-          NOTE: this function does not consider b0: i.e. to get the real uncertainty and area multiply both with b0 later. This is done to avoid exp function at this point
+          NOTE: this function does not consider b0: i.e. to get the real uncertainty and area multiply both with Exp(b0) later. This is done to avoid exp function at this point
         */
         double area = 0.0;
         double uncertainty_area = 0.0;
@@ -394,16 +389,13 @@ namespace q
                 df_sum - 4,                // df
                 apex_position + i + scale, // apex position in x-axis 0:n
                 0,                         // initial MSE
-                // b,                         // coefficients matrix
-                coeff,                     // coefficients register
-                true,                      // isValid
-                left_limit,                // left_limit
-                right_limit,               // right_limit
-                left_limit - i,            // X_row_0
-                right_limit - i + 1,       // X_row_1
-                area,                      // peak area
-                uncertainty_height,        // uncertainty of the peak height
-                uncertainty_area           // uncertainty of the peak area
+                coeff,               // coefficients register
+                true,                // isValid
+                left_limit,          // left_limit
+                right_limit,         // right_limit
+                area,                // peak area
+                uncertainty_height,  // uncertainty of the peak height
+                uncertainty_area     // uncertainty of the peak area
                 ));
       } // end for loop
       // early return if no or only one valid peak
@@ -613,19 +605,21 @@ namespace q
         const double dx = X[(int)std::ceil(regression->apex_position)] - x0;
         const double apex_position = x0 + dx * (regression->apex_position - std::floor(regression->apex_position));
 
+        const __m128 coeff = regression->coeff;
+        const float exp_b0 = exp_approx_d(((float *)&coeff)[0]); // exp(b0)
         // create a new peak object and push it to the peaks vector; the peak object is created using the scan number, the apex position and the peak height
         peaks.push_back(std::make_unique<DataType::Peak>(
             scanNumber,
             apex_position,
-            0.)); // height need to be calculated and added here
+            exp_approx_d(((float *)&coeff)[0] + (regression->apex_position - regression->index_x0) * ((float *)&coeff)[1] * .5)));  // peak height (exp(b0 - b1^2/4/b2)) with position being -b1/2/b2
 
         // add additional information to the peak object
-        peaks.back()->area = regression->area;
-        peaks.back()->areaUncertainty = regression->uncertainty_area;
+        peaks.back()->area = regression->area * exp_b0;
+        peaks.back()->areaUncertainty = regression->uncertainty_area * exp_b0;
         peaks.back()->heightUncertainty = regression->uncertainty_height;
         // peaks.back()->positionUncertainty = regression->uncertainty_position * dx;
         // peaks.back()->dqsPeak = regression->dqs;
-        __m128 coeff = regression->coeff;
+        
         peaks.back()->beta0 = ((float *)&coeff)[0];
         peaks.back()->beta1 = ((float *)&coeff)[1];
         peaks.back()->beta2 = ((float *)&coeff)[2];
@@ -717,29 +711,6 @@ namespace q
             return diff * diff;  // return the square of the difference
           });
     } // end calcSSE
-
-    double
-    qPeaks::calcSSEexp(
-        const q::Matrices::Vector &yhat_log,
-        const q::Matrices::Vector &Y,
-        const float *y_start) const
-    {
-      if (y_start == nullptr)
-      {
-        y_start = Y.begin();
-      }
-      return std::inner_product(
-          yhat_log.begin(), // start of yhat_log
-          yhat_log.end(),   // end of yhat_log
-          y_start,          // start of y
-          0.0,              // initial value
-          std::plus<>(),    // binary operation
-          [this](double a, double b)
-          {
-            double diff = exp_approx_d(a) - b; // calculate the difference between exp(a) and b
-            return diff * diff;                // return the square of the difference
-          });
-    } // end calcSSEexp
 #pragma endregion calcSSE
 
 #pragma region calcExtendedMse
@@ -1223,214 +1194,6 @@ namespace q
 #pragma endregion createInverseAndPseudoInverse
 
 #pragma region "yhat"
-    // q::Matrices::Vector
-    // qPeaks::calcYhat(
-    //     const int left_limit,
-    //     const int right_limit,
-    //     const q::Matrices::Matrix_mc &beta,
-    //     const size_t idx)
-    // {
-    //   size_t n = right_limit - left_limit + 1;
-    //   q::Matrices::Vector yhat(n);
-
-    //   // Extract beta values
-    //   float beta_0 = beta(0, idx);
-    //   float beta_1 = beta(1, idx);
-    //   float beta_2 = beta(2, idx);
-    //   float beta_3 = beta(3, idx);
-
-    //   // Load SIMD registers
-    //   __m256 beta_0_v = _mm256_set1_ps(beta_0);
-    //   __m256 beta_1_v = _mm256_set1_ps(beta_1);
-    //   __m256 beta_2_v = _mm256_set1_ps(beta_2);
-    //   __m256 beta_3_v = _mm256_set1_ps(beta_3);
-
-    //   size_t j = 0;
-    //   float i = static_cast<float>(left_limit);
-    //   size_t num_full_loops = n / 8;
-    //   size_t remaining = n % 8;
-    //   // Main loop
-    //   for (size_t loop = 0; loop < num_full_loops; ++loop, i += 8.0f, j += 8)
-    //   {
-    //     // Load 8 values of i directly as float
-    //     __m256 i_vf = _mm256_set_ps(i + 7.0f, i + 6.0f, i + 5.0f, i + 4.0f, i + 3.0f, i + 2.0f, i + 1.0f, i);
-
-    //     // Calculate the intermediate term beta_x * i
-    //     __m256 beta_2_i = _mm256_mul_ps(beta_2_v, i_vf);
-    //     __m256 beta_3_i = _mm256_mul_ps(beta_3_v, i_vf);
-    //     __m256 beta_x_i = _mm256_blendv_ps(beta_3_i, beta_2_i, _mm256_cmp_ps(i_vf, _mm256_setzero_ps(), _CMP_LT_OS));
-
-    //     // Final result: beta_0 + i * (beta_1 + beta_x_i)
-    //     __m256 beta_1_plus_x_i = _mm256_add_ps(beta_1_v, beta_x_i);            // beta_1 + beta_x_i
-    //     __m256 i_times_beta_1_plus_x_i = _mm256_mul_ps(i_vf, beta_1_plus_x_i); // i * (beta_1 + beta_x_i)
-    //     __m256 result_v = _mm256_add_ps(beta_0_v, i_times_beta_1_plus_x_i);    // result = beta_0 + i * (beta_1 + beta_x_i)
-
-    //     // Store the result
-    //     _mm256_storeu_ps(&yhat[j], result_v);
-    //   }
-
-    //   // Process remaining elements by filling the register with remaining elements and zeros
-    //   if (remaining > 0)
-    //   {
-    //     float remaining_i[8] = {0};
-    //     for (size_t k = 0; k < remaining; ++k)
-    //     {
-    //       remaining_i[k] = static_cast<float>(left_limit + num_full_loops * 8 + k);
-    //     }
-    //     __m256 i_vf = _mm256_loadu_ps(remaining_i);
-
-    //     // Calculate the intermediate term beta_x * i
-    //     __m256 beta_2_i = _mm256_mul_ps(beta_2_v, i_vf);
-    //     __m256 beta_3_i = _mm256_mul_ps(beta_3_v, i_vf);
-    //     __m256 beta_x_i = _mm256_blendv_ps(beta_3_i, beta_2_i, _mm256_cmp_ps(i_vf, _mm256_setzero_ps(), _CMP_LT_OS));
-
-    //     // Final result: beta_0 + i * (beta_1 + beta_x_i)
-    //     __m256 beta_1_plus_x_i = _mm256_add_ps(beta_1_v, beta_x_i);            // beta_1 + beta_x_i
-    //     __m256 i_times_beta_1_plus_x_i = _mm256_mul_ps(i_vf, beta_1_plus_x_i); // i * (beta_1 + beta_x_i)
-    //     __m256 result_v = _mm256_add_ps(beta_0_v, i_times_beta_1_plus_x_i);    // result = beta_0 + i * (beta_1 + beta_x_i)
-
-    //     // Store the remaining result
-    //     float result_array[8];
-    //     _mm256_storeu_ps(result_array, result_v);
-    //     for (size_t k = 0; k < remaining; ++k)
-    //     {
-    //       yhat[j + k] = result_array[k];
-    //     }
-    //   }
-    //   return yhat;
-    // }
-
-    // q::Matrices::Vector
-    // qPeaks::calcYhat(
-    //     const int left_limit,
-    //     const int right_limit,
-    //     const q::Matrices::Vector &beta)
-    // {
-    //   size_t n = right_limit - left_limit + 1;
-    //   q::Matrices::Vector yhat(n);
-
-    //   // Extract beta values
-    //   float beta_0 = beta[0];
-    //   float beta_1 = beta[1];
-    //   float beta_2 = beta[2];
-    //   float beta_3 = beta[3];
-
-    //   // Load SIMD registers
-    //   __m256 beta_0_v = _mm256_set1_ps(beta_0);
-    //   __m256 beta_1_v = _mm256_set1_ps(beta_1);
-    //   __m256 beta_2_v = _mm256_set1_ps(beta_2);
-    //   __m256 beta_3_v = _mm256_set1_ps(beta_3);
-
-    //   size_t j = 0;
-    //   float i = static_cast<float>(left_limit);
-    //   size_t num_full_loops = n / 8;
-    //   size_t remaining = n % 8;
-    //   // Main loop
-    //   for (size_t loop = 0; loop < num_full_loops; ++loop, i += 8.0f, j += 8)
-    //   {
-    //     // Load 8 values of i directly as float
-    //     __m256 i_vf = _mm256_set_ps(i + 7.0f, i + 6.0f, i + 5.0f, i + 4.0f, i + 3.0f, i + 2.0f, i + 1.0f, i);
-
-    //     // Calculate the intermediate term beta_x * i
-    //     __m256 beta_2_i = _mm256_mul_ps(beta_2_v, i_vf);
-    //     __m256 beta_3_i = _mm256_mul_ps(beta_3_v, i_vf);
-    //     __m256 beta_x_i = _mm256_blendv_ps(beta_3_i, beta_2_i, _mm256_cmp_ps(i_vf, _mm256_setzero_ps(), _CMP_LT_OS));
-
-    //     // Final result: beta_0 + i * (beta_1 + beta_x_i)
-    //     __m256 beta_1_plus_x_i = _mm256_add_ps(beta_1_v, beta_x_i);            // beta_1 + beta_x_i
-    //     __m256 i_times_beta_1_plus_x_i = _mm256_mul_ps(i_vf, beta_1_plus_x_i); // i * (beta_1 + beta_x_i)
-    //     __m256 result_v = _mm256_add_ps(beta_0_v, i_times_beta_1_plus_x_i);    // result = beta_0 + i * (beta_1 + beta_x_i)
-
-    //     // Store the result
-    //     _mm256_storeu_ps(&yhat[j], result_v);
-    //   }
-
-    //   // Process remaining elements by filling the register with remaining elements and zeros
-    //   if (remaining > 0)
-    //   {
-    //     float remaining_i[8] = {0};
-    //     for (size_t k = 0; k < remaining; ++k)
-    //     {
-    //       remaining_i[k] = static_cast<float>(left_limit + num_full_loops * 8 + k);
-    //     }
-    //     __m256 i_vf = _mm256_loadu_ps(remaining_i);
-
-    //     // Calculate the intermediate term beta_x * i
-    //     __m256 beta_2_i = _mm256_mul_ps(beta_2_v, i_vf);
-    //     __m256 beta_3_i = _mm256_mul_ps(beta_3_v, i_vf);
-    //     __m256 beta_x_i = _mm256_blendv_ps(beta_3_i, beta_2_i, _mm256_cmp_ps(i_vf, _mm256_setzero_ps(), _CMP_LT_OS));
-
-    //     // Final result: beta_0 + i * (beta_1 + beta_x_i)
-    //     __m256 beta_1_plus_x_i = _mm256_add_ps(beta_1_v, beta_x_i);            // beta_1 + beta_x_i
-    //     __m256 i_times_beta_1_plus_x_i = _mm256_mul_ps(i_vf, beta_1_plus_x_i); // i * (beta_1 + beta_x_i)
-    //     __m256 result_v = _mm256_add_ps(beta_0_v, i_times_beta_1_plus_x_i);    // result = beta_0 + i * (beta_1 + beta_x_i)
-
-    //     // Store the remaining result
-    //     float result_array[8];
-    //     _mm256_storeu_ps(result_array, result_v);
-    //     for (size_t k = 0; k < remaining; ++k)
-    //     {
-    //       yhat[j + k] = result_array[k];
-    //     }
-    //   }
-
-    //   return yhat;
-    // }
-
-    // q::Matrices::Vector // TO BE REMOVED
-    // qPeaks::calcYhat(
-    //     const int scale,
-    //     const __m128 &coeff)
-    // {
-    //   const size_t n = 2 * scale + 1;          // length of the result vector
-    //   const size_t nFullSegments = scale / 8;  // calculate the number of full segments of 8 elements per side
-    //   const size_t nRemaining = scale % 8;     // calculate the number of remaining elements
-    //   alignas(32) q::Matrices::Vector yhat(n); // result vector
-
-    //   // Load the coefficients
-    //   const __m256 b0 = _mm256_set1_ps(((float *)&coeff)[0]);
-    //   const __m256 b1 = _mm256_set1_ps(((float *)&coeff)[1]);
-    //   const __m256 b2 = _mm256_set1_ps(((float *)&coeff)[2]);
-    //   const __m256 b3 = _mm256_set1_ps(((float *)&coeff)[3]);
-
-    //   // Calculate the yhat values for the full segments
-    //   size_t j = 0;
-    //   size_t k = n - 8;
-    //   float i = static_cast<float>(-scale);
-    //   for (size_t iSegment = 0; iSegment < nFullSegments; ++iSegment, i += 8.0f, j += 8, k -= 8)
-    //   {
-    //     // Load 8 values of i directly as float
-    //     __m256 x_left = _mm256_add_ps(_mm256_set1_ps(i), LINSPACE_UP_POS_256);     // x vector : -k to -k+7
-    //     __m256 x_right = _mm256_add_ps(_mm256_set1_ps(-i), LINSPACE_DOWN_NEG_256); // x vector : k-7 to k
-
-    //     // Calculate the yhat values
-    //     __m256 yhat_left = _mm256_fmadd_ps(_mm256_fmadd_ps(b2, x_left, b1), x_left, b0);    // b0 + b1 * x + b2 * x^2
-    //     __m256 yhat_right = _mm256_fmadd_ps(_mm256_fmadd_ps(b3, x_right, b1), x_right, b0); // b0 + b1 * x + b3 * x^2
-
-    //     // Store the result into yhat
-    //     _mm256_store_ps(&yhat[j], yhat_left);
-    //     _mm256_store_ps(&yhat[k], yhat_right);
-    //   }
-
-    //   // Calculate the yhat values for the remaining elements
-    //   if (nRemaining > 0)
-    //   {
-    //     __m256 yhat_left = _mm256_fmadd_ps(_mm256_fmadd_ps(b2, LINSPACE_UP_NEG_256, b1), LINSPACE_UP_NEG_256, b0);  // b0 + b1 * x + b2 * x^2
-    //     __m256 yhat_right = _mm256_fmadd_ps(_mm256_fmadd_ps(b3, LINSPACE_UP_POS_256, b1), LINSPACE_UP_POS_256, b0); // b0 + b1 * x + b3 * x^2
-
-    //     // Store the remaining result into yhat from yhat_left[0] to yhat_left[nRemaining-1] and yhat_right[0] to yhat_right[nRemaining-1]
-    //     for (size_t i = 1; i <= nRemaining; ++i)
-    //     {
-    //       yhat[scale - i] = ((float *)&yhat_left)[i];
-    //       yhat[scale + i] = ((float *)&yhat_right)[i];
-    //     }
-    //   }
-
-    //   // fill the yhat values for the center x = 0, i.e., yhat[center] = b0
-    //   yhat[scale] = ((float *)&coeff)[0];
-    //   return yhat;
-    // }
-
     q::Matrices::Vector
     qPeaks::calcYhat(
         const int left_limit,  // a negative value, e.g., -scale
@@ -1627,8 +1390,7 @@ namespace q
       for (size_t i = 0; i < n_segments; i++)
       {
         __m128 vec_values = _mm_set1_ps(vec[i + centerpoint]);
-        __m128 result_values = _mm_mul_ps(vec_values, kernel[0]);
-        result[i] = _mm_add_ps(result[i], result_values);
+        result[i] = _mm_fmadd_ps(vec_values, kernel[0], result[i]);
       }
 
       for (size_t i = 1; i < scale + 1; i++)
@@ -1656,120 +1418,11 @@ namespace q
           }
           __m128 products_temp = _mm_permute_ps(products[j], 0b10110100);
           __m128 sign_flip = _mm_set_ps(1.0f, 1.0f, -1.0f, 1.0f);
-          products_temp = _mm_mul_ps(products_temp, sign_flip);
-          products_temp = _mm_add_ps(products_temp, products[2 * i + j]);
+          products_temp = _mm_fmadd_ps(products_temp, sign_flip, products[2 * i + j]);
           result[j] = _mm_add_ps(result[j], products_temp);
         }
       }
     }
-
-//     q::Matrices::Matrix_mc
-//     qPeaks::convolve_fast(
-//         const size_t scale,
-//         const float (&vec)[512],
-//         const size_t n)
-//     {
-//       if (n < 2 * scale + 1)
-//       {
-//         throw std::invalid_argument("n must be greater or equal to 2 * scale + 1");
-//       }
-
-//       size_t k = 2 * scale + 1;
-//       size_t n_segments = n - k + 1;
-//       size_t centerpoint = k / 2;
-
-//       alignas(16) __m128 result[512];   // a register that stores n_segments x 4 regression coefficients (b0, b1, b2, b3)
-//       alignas(16) __m128 products[512]; // a register that stores 512 x 4 products
-//       for (size_t i = 0; i < n_segments; ++i)
-//       { // initialize result to zero
-//         result[i] = _mm_setzero_ps();
-//       }
-
-//       for (size_t i = 0; i < n; ++i)
-//       { // initialize products to zero
-//         products[i] = _mm_setzero_ps();
-//       }
-//       // create an Array of three SIMD registers for the kernel values
-//       alignas(16) __m128 kernel[3]; // a register that stores [0 = kernel, 1 = kernel_incr, 2 = kernel_incr_update]
-//       kernel[0] = _mm_set_ps(
-//           invArray[scale][1],  // kernel_row 3
-//           invArray[scale][1],  // kernel_row 2
-//           0.0f,                // kernel_row 1
-//           invArray[scale][0]); // kernel_row 0
-
-//       kernel[1] = _mm_set_ps(
-//           invArray[scale][3] - invArray[scale][5],  // kernel_row 3
-//           -invArray[scale][3] - invArray[scale][4], // kernel_row 2
-//           -invArray[scale][2] - invArray[scale][3], // kernel_row 1
-//           -invArray[scale][1]);                     // kernel_row 0
-
-//       kernel[2] = _mm_set_ps(
-//           2.f * invArray[scale][5],  // kernel_row 3
-//           2.f * invArray[scale][4],  // kernel_row 2
-//           2.f * invArray[scale][3],  // kernel_row 1
-//           2.f * invArray[scale][1]); // kernel_row 0
-
-// // calculation of the center terms
-// #pragma GCC ivdep    // ignore dependencies between iterations of the loop
-// #pragma GCC unroll 8 // unroll the loop 8 times
-//       for (size_t i = 0; i < n_segments; i++)
-//       {
-//         __m128 vec_values = _mm_set1_ps(vec[i + centerpoint]);    // load a value from vec into a SIMD register using all 4 lanes
-//         __m128 result_values = _mm_mul_ps(vec_values, kernel[0]); // multiply the vec value with the kernel
-//         result[i] = _mm_add_ps(result[i], result_values);         // add the result to the result register
-//       }
-//       // calculation from center to right (excluding center)
-//       for (size_t i = 1; i < scale + 1; i++)
-//       {
-//         int u = 0;
-//         // update kernel increments
-//         kernel[1] = _mm_add_ps(kernel[1], kernel[2]);
-//         // update kernel values
-//         kernel[0] = _mm_add_ps(kernel[0], kernel[1]);
-
-// #pragma GCC ivdep    // ignore dependencies between iterations of the loop
-// #pragma GCC unroll 8 // unroll the loop 8 times
-//         for (size_t j = scale - i; j < (n - scale + i); j++)
-//         {
-//           __m128 vec_values = _mm_set1_ps(vec[j]);         // load a value from vec into a SIMD register using all 4 lanes
-//           products[u] = _mm_mul_ps(vec_values, kernel[0]); // multiply the vec value with the kernel and store in products
-//           u++;
-//         }
-
-// #pragma GCC ivdep    // ignore dependencies between iterations of the loop
-// #pragma GCC unroll 8 // unroll the loop 8 times
-//         for (size_t j = 0; j < n_segments; j++)
-//         {
-//           if (2 * i + j >= 512)
-//           {
-//             throw std::out_of_range("Index out of range for products array: n=" + std::to_string(n) + " i=" + std::to_string(i) + " j=" + std::to_string(j));
-//           }
-//           // permute the products register from [0, 1, 2, 3] to [1, 0 , 2, 3]
-//           __m128 products_temp = _mm_permute_ps(products[j], 0b10110100);
-//           // flip the sign of the products register from [1, 0, 2, 3] to [1, 0, -2, 3]
-//           __m128 sign_flip = _mm_set_ps(1.0f, 1.0f, -1.0f, 1.0f);
-//           products_temp = _mm_mul_ps(products_temp, sign_flip); // [1, 0, -2, 3]
-//           // add the the products from index 2*i+j to the products_temp register
-//           products_temp = _mm_add_ps(products_temp, products[2 * i + j]); // [1, 0, -2, 3] + [0, 1, 2, 3]
-//           // add the products_temp to the result register
-//           result[j] = _mm_add_ps(result[j], products_temp); // result[j] += products[j] + products[2 * i + j];
-//         }
-//       }
-//       // create Matrix_mc object
-//       q::Matrices::Matrix_mc resultMatrix(4, n_segments);
-//       for (size_t i = 0; i < n_segments; i++)
-//       {
-//         // load the result[i] register into a double array
-//         alignas(16) float temp[4];
-//         _mm_store_ps(temp, result[i]);
-//         resultMatrix(0, i) = temp[0];
-//         resultMatrix(1, i) = -temp[1];
-//         resultMatrix(2, i) = temp[3];
-//         resultMatrix(3, i) = temp[2];
-//       }
-
-//       return resultMatrix;
-//     }
 #pragma endregion "convolve regression"
 
 #pragma region printMatrices

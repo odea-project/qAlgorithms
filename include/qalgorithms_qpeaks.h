@@ -132,13 +132,10 @@ namespace q
                 int df;                    // degree of freedom, interpolated data points will not be considered
                 double apex_position;      // position of the apex of the peak
                 double mse;                // mean squared error
-                // q::Matrices::Vector B;     // regression coefficients
                 __m128 coeff;              // regression coefficients
                 bool isValid;              // flag to indicate if the regression is valid
                 double left_limit;         // left limit of the peak regression window
                 double right_limit;        // right limit of the peak regression window
-                int X_row_0;               // start of the cutted Deisgn Matrix
-                int X_row_1;               // end of the cutted Design Matrix
                 double area;               // area of the peak
                 double uncertainty_area;   // uncertainty of the area
                 double uncertainty_height; // uncertainty of the height
@@ -148,13 +145,10 @@ namespace q
                     int df,
                     double apex_position,
                     double mse,
-                    // q::Matrices::Vector B,
                     __m128 coeff,
                     bool isValid = true,
                     double left_limit = 0.0,
                     double right_limit = 0.0,
-                    int X_row_0 = 0,
-                    int X_row_1 = 0,
                     double area = 0.0,
                     double uncertainty_area = 0.0,
                     double uncertainty_height = 0.0)
@@ -163,13 +157,10 @@ namespace q
                       df(df),
                       apex_position(apex_position),
                       mse(mse),
-                    //   B(B),
                       coeff(coeff),
                       isValid(isValid),
                       left_limit(left_limit),
                       right_limit(right_limit),
-                      X_row_0(X_row_0),
-                      X_row_1(X_row_1),
                       area(area),
                       uncertainty_area(uncertainty_area),
                       uncertainty_height(uncertainty_height) {}
