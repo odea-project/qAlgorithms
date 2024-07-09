@@ -19,9 +19,6 @@
 
 namespace q
 {
-    size_t vectorDestructions = 0;
-    size_t matrixDestructions = 0;
-
     namespace Algorithms
     {
 #pragma region Constructors and Destructor
