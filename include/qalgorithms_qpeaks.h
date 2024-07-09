@@ -81,14 +81,17 @@ namespace q
             /**
              * @brief Calculate the yhat vector for the given scale and coefficients.
              *
-             * @param scale : Window size scale, e.g., 5 means the window size is 11 (2*5+1)
+             * @param left_limit : Left limit of the regression window
+             * @param right_limit : Right limit of the regression window
              * @param coeff : Coefficients of the regression model
              * @return q::Matrices::Vector : yhat vector
              */
             q::Matrices::Vector
             calcYhat(
-                const int scale,
-                const __m128 &coeff);
+                const int left_limit,
+                const int right_limit,
+                const __m128 &coeff,
+                const bool calc_EXP = false);
 
             // debugging
             void info() const;
@@ -114,8 +117,9 @@ namespace q
             static __m128 ZERO_128;                   // 128 bit register with all zeros
             static __m256 ZERO_256;                   // 256 bit register with all zeros
             static __m128 KEY_128;                    // 128 bit register with 0, 4, 2, 1
-            static __m256 LINSPACE_UP_256;            // 256 bit register with 0, 1, 2, 3, 4, 5, 6, 7
-            static __m256 LINSPACE_DOWN_256;          // 256 bit register with -7, -6, -5, -4, -3, -2, -1, 0
+            static __m256 LINSPACE_UP_POS_256;        // 256 bit register with 0, 1, 2, 3, 4, 5, 6, 7
+            static __m256 LINSPACE_UP_NEG_256;        // 256 bit register with 0, -1, -2, -3, -4, -5, -6, -7
+            static __m256 LINSPACE_DOWN_NEG_256;      // 256 bit register with -7, -6, -5, -4, -3, -2, -1, 0
             static __m256 MINUS_ONE_256;              // 256 bit register with -1
 
             int global_maxScale;
@@ -128,7 +132,8 @@ namespace q
                 int df;                    // degree of freedom, interpolated data points will not be considered
                 double apex_position;      // position of the apex of the peak
                 double mse;                // mean squared error
-                q::Matrices::Vector B;     // regression coefficients
+                // q::Matrices::Vector B;     // regression coefficients
+                __m128 coeff;              // regression coefficients
                 bool isValid;              // flag to indicate if the regression is valid
                 double left_limit;         // left limit of the peak regression window
                 double right_limit;        // right limit of the peak regression window
@@ -143,7 +148,8 @@ namespace q
                     int df,
                     double apex_position,
                     double mse,
-                    q::Matrices::Vector B,
+                    // q::Matrices::Vector B,
+                    __m128 coeff,
                     bool isValid = true,
                     double left_limit = 0.0,
                     double right_limit = 0.0,
@@ -157,7 +163,8 @@ namespace q
                       df(df),
                       apex_position(apex_position),
                       mse(mse),
-                      B(B),
+                    //   B(B),
+                      coeff(coeff),
                       isValid(isValid),
                       left_limit(left_limit),
                       right_limit(right_limit),
@@ -180,7 +187,6 @@ namespace q
 
             void
             validateRegressions(
-                const q::Matrices::Matrix_mc &B,
                 const __m128 *beta,
                 const size_t n_segments,
                 const q::Matrices::Vector &Y,
@@ -370,9 +376,7 @@ namespace q
                 const int scale,
                 const int df_sum,
                 double &area,
-                double &uncertainty_area,
-                q::Matrices::Vector &yhat_exp,
-                const q::Matrices::Vector &yhat_log) const;
+                double &uncertainty_area) const;
 
             /**
              * @brief Create a Design Matrix object for the given scale.
@@ -392,14 +396,14 @@ namespace q
             void
             createInverseAndPseudoInverse(const q::Matrices::Matrix &X);
 
-            q::Matrices::Matrix_mc
+            void
             convolve_static(
                 const size_t scale,
                 const float (&vec)[512],
                 const size_t n,
                 __m128 *beta);
 
-            q::Matrices::Matrix_mc
+            void
             convolve_dynamic(
                 const size_t scale,
                 const float *vec,

@@ -16,6 +16,7 @@
 #include <memory>
 #include <string>
 #include <stdexcept>
+#include <immintrin.h>
 
 namespace q
 {
@@ -32,7 +33,16 @@ namespace q
      * @param x : value between 0 and 26
      * @return double
      */
-    double exp_approx(const double x);
+    double exp_approx_d(const double x);
+    __m256 exp_approx_vf(const __m256 x);
+
+    /**
+     * @brief Fast approximation of the error function erf(x) using Abramowitz and Stegun approach.
+     * 
+     * @param x
+     * @return float 
+     */
+    float erf_approx_f(const float x);
 
     /**
      * @brief Fast calculation of the Dawson integral by courtesy of Extra Byte, www.ebyte.it.

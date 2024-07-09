@@ -118,18 +118,20 @@ namespace q
     __m128 q::Algorithms::qPeaks::ZERO_128;
     __m256 q::Algorithms::qPeaks::ZERO_256;
     __m128 q::Algorithms::qPeaks::KEY_128;
-    __m256 q::Algorithms::qPeaks::LINSPACE_UP_256;
-    __m256 q::Algorithms::qPeaks::LINSPACE_DOWN_256;
+    __m256 q::Algorithms::qPeaks::LINSPACE_UP_POS_256;
+    __m256 q::Algorithms::qPeaks::LINSPACE_UP_NEG_256;
+    __m256 q::Algorithms::qPeaks::LINSPACE_DOWN_NEG_256;
     __m256 q::Algorithms::qPeaks::MINUS_ONE_256;
     void qPeaks::initialize()
     {
 
-      ZERO_128 = _mm_setzero_ps();                                                      // init __m128 ZERO_128 with {0., 0., 0., 0.}
-      ZERO_256 = _mm256_setzero_ps();                                                   // init __m256 ZERO_256 with {0., 0., 0., 0., 0., 0., 0., 0.}
-      KEY_128 = _mm_set_ps(1.f, 2.f, 4.f, 0.f);                                         // init __m128 KEY_128 with {0., 4., 2., 1.}
-      LINSPACE_UP_256 = _mm256_set_ps(7.f, 6.f, 5.f, 4.f, 3.f, 2.f, 1.f, 0.f);          // init __m256 LINSPACE_256 with {0., 1., 2., 3., 4., 5., 6., 7.}
-      LINSPACE_DOWN_256 = _mm256_set_ps(0.f, -1.f, -2.f, -3.f, -4.f, -5.f, -6.f, -7.f); // init __m256 LINSPACE_256 with {0., -1., -2., -3., -4., -5., -6., -7.}
-      MINUS_ONE_256 = _mm256_set1_ps(-1.f);                                             // init __m256 MINUS_ONE_256 with {-1., -1., -1., -1., -1., -1., -1., -1.}
+      ZERO_128 = _mm_setzero_ps();                                                          // init __m128 ZERO_128 with {0., 0., 0., 0.}
+      ZERO_256 = _mm256_setzero_ps();                                                       // init __m256 ZERO_256 with {0., 0., 0., 0., 0., 0., 0., 0.}
+      KEY_128 = _mm_set_ps(1.f, 2.f, 4.f, 0.f);                                             // init __m128 KEY_128 with {0., 4., 2., 1.}
+      LINSPACE_UP_POS_256 = _mm256_set_ps(7.f, 6.f, 5.f, 4.f, 3.f, 2.f, 1.f, 0.f);          // init __m256 LINSPACE_256 with {0., 1., 2., 3., 4., 5., 6., 7.}
+      LINSPACE_UP_NEG_256 = _mm256_set_ps(-7.f, -6.f, -5.f, -4.f, -3.f, -2.f, -1.f, 0.f);   // init __m256 LINSPACE_256 with {0., -1., -2., -3., -4., -5., -6., -7.}
+      LINSPACE_DOWN_NEG_256 = _mm256_set_ps(0.f, -1.f, -2.f, -3.f, -4.f, -5.f, -6.f, -7.f); // init __m256 LINSPACE_256 with {0., -1., -2., -3., -4., -5., -6., -7.}
+      MINUS_ONE_256 = _mm256_set1_ps(-1.f);                                                 // init __m256 MINUS_ONE_256 with {-1., -1., -1., -1., -1., -1., -1., -1.}
       for (int i = 0; i < 128; ++i)
       {
         x_square[i] = i * i;
@@ -254,8 +256,8 @@ namespace q
         const size_t n_segments = n - k + 1;               //@todo delete n_segments
         alignas(16) __m128 *beta = new __m128[n_segments]; // coefficients matrix
 
-        q::Matrices::Matrix_mc B = (n <= 512) ? convolve_static(scale, ylog_array, n, beta) : convolve_dynamic(scale, Ylog.elements, n, beta);
-        validateRegressions(B, beta, n_segments, Y, Ylog, df, scale, validRegressions);
+        (n <= 512) ? convolve_static(scale, ylog_array, n, beta) : convolve_dynamic(scale, Ylog.elements, n, beta);
+        validateRegressions(beta, n_segments, Y, Ylog, df, scale, validRegressions);
         delete[] beta;
       } // end for scale loop
       mergeRegressionsOverScales(validRegressions, Ylog, Y, df);
@@ -264,7 +266,6 @@ namespace q
 
 #pragma region validateRegressions
     void qPeaks::validateRegressions(
-        const q::Matrices::Matrix_mc &B,   // coefficients matrix @todo: WILL BE DELETED IN THE FUTURE
         const __m128 *beta,                // coefficients matrix
         const size_t n_segments,           // number of segments, i.e. regressions
         const q::Matrices::Vector &Y,      // measured values
@@ -275,10 +276,8 @@ namespace q
     {
       // declare constants
       const double inverseMatrix_2_2 = invArray[scale][4]; // variance of the quadratic term left side of the peak
-
       // declare variables
       std::vector<std::unique_ptr<validRegression>> validRegressionsTmp; // temporary vector to store valid regressions <index, apex_position>
-
       // iterate columwise over the coefficients matrix beta
       for (size_t i = 0; i < n_segments; i++)
       {
@@ -305,6 +304,18 @@ namespace q
         }
 
         /*
+          Degree of Freedom Filter:
+          This block of code implements the degree of freedom filter. It calculates the degree of freedom based df vector. If the degree of freedom is less than 5, the loop continues to the next iteration. The value 5 is chosen as the minimum number of data points required to fit a quadratic regression model.
+        */
+        double left_limit = (valley_position < 0) ? std::max((double)i, valley_position + i + scale) : i;
+        double right_limit = (valley_position > 0) ? std::min((double)i + 2 * scale, valley_position + i + scale) : i + 2 * scale;
+        df_sum = calcDF(df, left_limit, right_limit); // update the degree of freedom considering the left and right limits
+        if (df_sum < 5)
+        {
+          continue; // degree of freedom less than 5; i.e., less then 5 measured data points
+        }
+
+        /*
           Area Pre-Filter:
           This test is used to check if the later-used arguments for exp and erf functions are within the valid range, i.e., |x^2| < 25. If the test fails, the loop continues to the next iteration. x is in this case -apex_position * b1 / 2 and -valley_position * b1 / 2.
         */
@@ -327,8 +338,12 @@ namespace q
           Quadratic Term Filter:
           This block of code implements the quadratic term filter. It calculates the mean squared error (MSE) between the predicted and actual values. Then it calculates the t-value for the quadratic term. If the t-value is less than the corresponding value in the tValuesArray, the quadratic term is considered statistically insignificant, and the loop continues to the next iteration.
         */
-        const q::Matrices::Vector b = extractCol(B, i);                    // coefficients vector
-        const q::Matrices::Vector yhat = calcYhat(scale, coeff);           // predicted values
+        // q::Matrices::Vector b(4);    // @todo: delete in the future
+        // b[0] = ((float *)&coeff)[0]; // @todo: delete in the future
+        // b[1] = ((float *)&coeff)[1]; // @todo: delete in the future
+        // b[2] = ((float *)&coeff)[2]; // @todo: delete in the future
+        // b[3] = ((float *)&coeff)[3]; // @todo: delete in the future
+        const q::Matrices::Vector yhat = calcYhat(-scale, scale, coeff);
         const double mse = calcSSE(yhat, Ylog, Ylog.begin() + i) / df_sum; // mean squared error
 
         if (!isValidQuadraticTerm(coeff, inverseMatrix_2_2, inverseMatrix_2_2, mse, df_sum))
@@ -339,8 +354,7 @@ namespace q
           Height Filter:
           This block of code implements the height filter. It calculates the height of the peak based on the coefficients matrix B. Then it calculates the uncertainty of the height based on the Jacobian matrix and the variance-covariance matrix of the coefficients. If the height is statistically insignificant, the loop continues to the next iteration.
         */
-        q::Matrices::Matrix_mc_4x4 C = multiplyScalarTo4x4Matrix(mse, *inverseMatrices[scale]); // variance-covariance matrix of the coefficients
-        double uncertainty_height = 0.0;                                                        // at this point without height, i.e., to get the real uncertainty multiply with height later. This is done to avoid exp function at this point
+        double uncertainty_height = 0.0; // at this point without height, i.e., to get the real uncertainty multiply with height later. This is done to avoid exp function at this point
         if (!isValidPeakHeight(mse, i, scale, apex_position, valley_position, df_sum, apexToEdge, uncertainty_height))
         {
           continue; // statistical insignificance of the height
@@ -353,8 +367,7 @@ namespace q
         */
         double area = 0.0;
         double uncertainty_area = 0.0;
-        alignas(32) q::Matrices::Vector yhat_exp(2 * scale + 1);
-        if (!isValidPeakArea(coeff, mse, scale, df_sum, area, uncertainty_area, yhat_exp, yhat))
+        if (!isValidPeakArea(coeff, mse, scale, df_sum, area, uncertainty_area))
         {
           continue; // statistical insignificance of the area
         }
@@ -369,19 +382,11 @@ namespace q
           continue; // statistical insignificance of the chi-square value
         }
 
+        // at this point, the peak is validated
         /*
           Add to a temporary vector of valid regressions:
           This block of code adds the valid peak to a temporary vector of valid regressions. It calculates the left and right limits of the peak based on the valley position. Then it stores the index of the valid regression in the temporary vector of valid regressions.
         */
-        // at this point, the peak is validated
-        double left_limit = (valley_position < 0) ? std::max((double)i, valley_position + i + scale) : i;
-        double right_limit = (valley_position > 0) ? std::min((double)i + 2 * scale, valley_position + i + scale) : i + 2 * scale;
-
-        df_sum = calcDF(df, left_limit, right_limit); // update the degree of freedom considering the left and right limits
-        if (df_sum < 5)
-        {
-          continue; // degree of freedom less than 5; i.e., less then 5 measured data points
-        }
         validRegressionsTmp.push_back(
             std::make_unique<validRegression>(
                 i + scale,                 // index of the center of the window (x==0) in the Y matrix
@@ -389,7 +394,8 @@ namespace q
                 df_sum - 4,                // df
                 apex_position + i + scale, // apex position in x-axis 0:n
                 0,                         // initial MSE
-                b,                         // coefficients matrix
+                // b,                         // coefficients matrix
+                coeff,                     // coefficients register
                 true,                      // isValid
                 left_limit,                // left_limit
                 right_limit,               // right_limit
@@ -521,12 +527,12 @@ namespace q
           {
             if ((*it_ref_peak)->mse == 0.0)
             { // calculate the mse of the ref peak
-              const q::Matrices::Vector yhat = calcYhatExtended(
-                  (*designMatrices[(*it_ref_peak)->scale]),                                                                // design matrix
-                  (*it_ref_peak)->B,                                                                                       // coefficients vector
-                  (*it_ref_peak)->X_row_0,                                                                                 // starting row for the design matrix
-                  (*it_ref_peak)->X_row_1);                                                                                // ending row for the design matrix
-              (*it_ref_peak)->mse = calcSSEexp(yhat, Y, Y.begin() + (int)(*it_ref_peak)->left_limit) / (*it_ref_peak)->df; // calculate the mean squared error (MSE) between the predicted and actual values
+              const q::Matrices::Vector yhat_exp = calcYhat(
+                  ((*it_ref_peak)->left_limit) - (*it_ref_peak)->index_x0,  // left limit of the ref peak
+                  ((*it_ref_peak)->right_limit) - (*it_ref_peak)->index_x0, // right limit of the ref peak
+                  (*it_ref_peak)->coeff,                                    // regression coefficients
+                  true);
+              (*it_ref_peak)->mse = calcSSE(yhat_exp, Y, Y.begin() + (int)(*it_ref_peak)->left_limit) / (*it_ref_peak)->df; // calculate the mean squared error (MSE) between the predicted and actual values
             }
             grpDF += (*it_ref_peak)->df;                        // add the degree of freedom
             grpMSE += (*it_ref_peak)->mse * (*it_ref_peak)->df; // add the sum of squared errors
@@ -547,12 +553,12 @@ namespace q
 
         if ((*it_new_peak)->mse == 0.0)
         { // calculate the mse of the current peak
-          const q::Matrices::Vector yhat = calcYhatExtended(
-              (*designMatrices[(*it_new_peak)->scale]),                                                                // design matrix
-              (*it_new_peak)->B,                                                                                       // coefficients vector
-              (*it_new_peak)->X_row_0,                                                                                 // starting row for the design matrix
-              (*it_new_peak)->X_row_1);                                                                                // ending row for the design matrix
-          (*it_new_peak)->mse = calcSSEexp(yhat, Y, Y.begin() + (int)(*it_new_peak)->left_limit) / (*it_new_peak)->df; // calculate the mean squared error (MSE) between the predicted and actual values
+          const q::Matrices::Vector yhat_exp = calcYhat(
+              ((*it_new_peak)->left_limit) - (*it_new_peak)->index_x0,  // left limit of the new peak
+              ((*it_new_peak)->right_limit) - (*it_new_peak)->index_x0, // right limit of the new peak
+              (*it_new_peak)->coeff,                                    // regression coefficients
+              true);
+          (*it_new_peak)->mse = calcSSE(yhat_exp, Y, Y.begin() + (int)(*it_new_peak)->left_limit) / (*it_new_peak)->df; // calculate the mean squared error (MSE) between the predicted and actual values
         }
 
         if (numPeaksInGroup == 1)
@@ -562,7 +568,7 @@ namespace q
           std::vector<std::unique_ptr<validRegression>> tmpRegressions;
           tmpRegressions.push_back(std::move(*it_new_peak));
           tmpRegressions.push_back(std::move(validRegressionsInGroup[0][0]));
-          calcExtendedMse(Y, tmpRegressions, df); // @todo is not working that way.
+          calcExtendedMse(Y, tmpRegressions, df);
           // Move the unique_ptrs back to validRegressionsInGroup
           validRegressionsInGroup[0][0] = std::move(tmpRegressions[1]);
           *it_new_peak = std::move(tmpRegressions[0]);
@@ -619,10 +625,11 @@ namespace q
         peaks.back()->heightUncertainty = regression->uncertainty_height;
         // peaks.back()->positionUncertainty = regression->uncertainty_position * dx;
         // peaks.back()->dqsPeak = regression->dqs;
-        peaks.back()->beta0 = regression->B[0];
-        peaks.back()->beta1 = regression->B[1];
-        peaks.back()->beta2 = regression->B[2];
-        peaks.back()->beta3 = regression->B[3];
+        __m128 coeff = regression->coeff;
+        peaks.back()->beta0 = ((float *)&coeff)[0];
+        peaks.back()->beta1 = ((float *)&coeff)[1];
+        peaks.back()->beta2 = ((float *)&coeff)[2];
+        peaks.back()->beta3 = ((float *)&coeff)[3];
         peaks.back()->x0 = X[regression->index_x0];
         peaks.back()->dx = dx;
       } // end for loop
@@ -729,8 +736,8 @@ namespace q
           std::plus<>(),    // binary operation
           [this](double a, double b)
           {
-            double diff = exp_approx(a) - b; // calculate the difference between exp(a) and b
-            return diff * diff;              // return the square of the difference
+            double diff = exp_approx_d(a) - b; // calculate the difference between exp(a) and b
+            return diff * diff;                // return the square of the difference
           });
     } // end calcSSEexp
 #pragma endregion calcSSE
@@ -753,9 +760,14 @@ namespace q
       double best_mse = std::numeric_limits<double>::infinity();
       auto best_regression = regressions.begin();
 
-      // step 1: identify left and right limit of the grouped regression windows
-      const int left_limit = regressions.front()->left_limit;
-      const int right_limit = regressions.back()->right_limit;
+      // step 1: identify left (smallest) and right (largest) limit of the grouped regression windows
+      int left_limit = static_cast<int>(regressions.front()->left_limit);
+      int right_limit = static_cast<int>(regressions.front()->right_limit);
+      for (auto regression = regressions.begin(); regression != regressions.end(); ++regression)
+      {
+        left_limit = std::min(left_limit, static_cast<int>((*regression)->left_limit));
+        right_limit = std::max(right_limit, static_cast<int>((*regression)->right_limit));
+      }
 
       const int df_sum = calcDF(df, left_limit, right_limit);
       if (df_sum <= 4)
@@ -771,12 +783,13 @@ namespace q
       for (auto regression = regressions.begin(); regression != regressions.end(); ++regression)
       {
         // step 2: calculate yhat based on the coefficients matrix B and the extended design matrix X
-        const q::Matrices::Vector yhat = calcYhat(
+        const q::Matrices::Vector yhat_exp = calcYhat(
             left_limit - (*regression)->index_x0,
             right_limit - (*regression)->index_x0,
-            (*regression)->B);
+            (*regression)->coeff,
+            true);
         // step 3: calculate the mean squared error (MSE) between the predicted and actual values
-        const double mse = calcSSEexp(yhat, Y, Y.begin() + left_limit) / (df_sum - 4);
+        const double mse = calcSSE(yhat_exp, Y, Y.begin() + left_limit) / (df_sum - 4);
 
         // step 4: identify the best regression based on the MSE and return the MSE and the index of the best regression
         if (mse < best_mse)
@@ -813,7 +826,7 @@ namespace q
       double sum = 0.0;
 
       q::Matrices::Vector yhat_exp(n);
-      std::transform(yhat_log.begin(), yhat_log.end(), yhat_exp.begin(), exp_approx);
+      std::transform(yhat_log.begin(), yhat_log.end(), yhat_exp.begin(), exp_approx_d);
 
       for (size_t i = 0; i < n; ++i)
       {
@@ -1037,9 +1050,7 @@ namespace q
         const int scale,
         const int df_sum,
         double &area,
-        double &uncertainty_area,
-        q::Matrices::Vector &yhat_exp,
-        const q::Matrices::Vector &yhat_log) const
+        double &uncertainty_area) const
     {
       // predefine expressions
       const float b1 = ((float *)&coeff)[1];
@@ -1050,12 +1061,12 @@ namespace q
       const float B1_2_SQRTB2 = b1 / 2 * _SQRTB2;
       const float B1_2_SQRTB3 = b1 / 2 * _SQRTB3;
       const float B1_2_B2 = b1 / 2 / b2;
-      const float EXP_B12 = exp_approx(-b1 * B1_2_B2 / 2);
+      const float EXP_B12 = exp_approx_d(-b1 * B1_2_B2 / 2);
       const float B1_2_B3 = b1 / 2 / b3;
-      const float EXP_B13 = exp_approx(-b1 * B1_2_B3 / 2);
+      const float EXP_B13 = exp_approx_d(-b1 * B1_2_B3 / 2);
 
       // initialize variables
-      float J[4];            // Jacobian matrix
+      float J[4]; // Jacobian matrix
 
       // here we have to check if there is a valley point or not
       const float err_L =
@@ -1101,9 +1112,9 @@ namespace q
 
       const float err_L_covered = ///@todo : need to be revised
           (b2 < 0)
-              ?                                                                                              // ordinary peak half, take always scale as integration limit; we use erf instead of erfi due to the sqrt of absoulte value
-              std::erf((b1 - 2 * b2 * scale) / 2 * _SQRTB2) * EXP_B12 * SQRTPI_2 + err_L - SQRTPI_2 * EXP_B12 // std::erf((b1 - 2 * b2 * scale) / 2 / SQRTB2) + err_L - 1
-              :                                                                                              // valley point, i.e., check position
+              ?                                                                                                   // ordinary peak half, take always scale as integration limit; we use erf instead of erfi due to the sqrt of absoulte value
+              erf_approx_f((b1 - 2 * b2 * scale) / 2 * _SQRTB2) * EXP_B12 * SQRTPI_2 + err_L - SQRTPI_2 * EXP_B12 // std::erf((b1 - 2 * b2 * scale) / 2 / SQRTB2) + err_L - 1
+              :                                                                                                   // valley point, i.e., check position
               (-B1_2_B2 < -scale)
                   ? // valley point is outside the window, use scale as limit
                   err_L - erfi((b1 - 2 * b2 * scale) / 2 * _SQRTB2) * EXP_B12
@@ -1112,9 +1123,9 @@ namespace q
 
       const float err_R_covered = ///@todo : need to be revised
           (b3 < 0)
-              ?                                                                                              // ordinary peak half, take always scale as integration limit; we use erf instead of erfi due to the sqrt of absoulte value
-              err_R - SQRTPI_2 * EXP_B13 - std::erf((b1 + 2 * b3 * scale) / 2 * _SQRTB3) * SQRTPI_2 * EXP_B13 // err_R - 1 - std::erf((b1 + 2 * b3 * scale) / 2 / SQRTB3)
-              :                                                                                              // valley point, i.e., check position
+              ?                                                                                                   // ordinary peak half, take always scale as integration limit; we use erf instead of erfi due to the sqrt of absoulte value
+              err_R - SQRTPI_2 * EXP_B13 - erf_approx_f((b1 + 2 * b3 * scale) / 2 * _SQRTB3) * SQRTPI_2 * EXP_B13 // err_R - 1 - std::erf((b1 + 2 * b3 * scale) / 2 / SQRTB3)
+              :                                                                                                   // valley point, i.e., check position
               (-B1_2_B3 > scale)
                   ? // valley point is outside the window, use scale as limit
                   erfi((b1 + 2 * b3 * scale) / 2 * _SQRTB3) * EXP_B13 + err_R
@@ -1133,8 +1144,8 @@ namespace q
       }
 
       // calculate the y values at the left and right limits
-      y_left = exp_approx(b1 * x_left + b2 * x_left * x_left);
-      y_right = exp_approx(b1 * x_right + b3 * x_right * x_right);
+      y_left = exp_approx_d(b1 * x_left + b2 * x_left * x_left);
+      y_right = exp_approx_d(b1 * x_right + b3 * x_right * x_right);
       const float dX = x_right - x_left;
 
       // calculate the trapzoid correction terms for the jacobian matrix
@@ -1212,212 +1223,316 @@ namespace q
 #pragma endregion createInverseAndPseudoInverse
 
 #pragma region "yhat"
+    // q::Matrices::Vector
+    // qPeaks::calcYhat(
+    //     const int left_limit,
+    //     const int right_limit,
+    //     const q::Matrices::Matrix_mc &beta,
+    //     const size_t idx)
+    // {
+    //   size_t n = right_limit - left_limit + 1;
+    //   q::Matrices::Vector yhat(n);
+
+    //   // Extract beta values
+    //   float beta_0 = beta(0, idx);
+    //   float beta_1 = beta(1, idx);
+    //   float beta_2 = beta(2, idx);
+    //   float beta_3 = beta(3, idx);
+
+    //   // Load SIMD registers
+    //   __m256 beta_0_v = _mm256_set1_ps(beta_0);
+    //   __m256 beta_1_v = _mm256_set1_ps(beta_1);
+    //   __m256 beta_2_v = _mm256_set1_ps(beta_2);
+    //   __m256 beta_3_v = _mm256_set1_ps(beta_3);
+
+    //   size_t j = 0;
+    //   float i = static_cast<float>(left_limit);
+    //   size_t num_full_loops = n / 8;
+    //   size_t remaining = n % 8;
+    //   // Main loop
+    //   for (size_t loop = 0; loop < num_full_loops; ++loop, i += 8.0f, j += 8)
+    //   {
+    //     // Load 8 values of i directly as float
+    //     __m256 i_vf = _mm256_set_ps(i + 7.0f, i + 6.0f, i + 5.0f, i + 4.0f, i + 3.0f, i + 2.0f, i + 1.0f, i);
+
+    //     // Calculate the intermediate term beta_x * i
+    //     __m256 beta_2_i = _mm256_mul_ps(beta_2_v, i_vf);
+    //     __m256 beta_3_i = _mm256_mul_ps(beta_3_v, i_vf);
+    //     __m256 beta_x_i = _mm256_blendv_ps(beta_3_i, beta_2_i, _mm256_cmp_ps(i_vf, _mm256_setzero_ps(), _CMP_LT_OS));
+
+    //     // Final result: beta_0 + i * (beta_1 + beta_x_i)
+    //     __m256 beta_1_plus_x_i = _mm256_add_ps(beta_1_v, beta_x_i);            // beta_1 + beta_x_i
+    //     __m256 i_times_beta_1_plus_x_i = _mm256_mul_ps(i_vf, beta_1_plus_x_i); // i * (beta_1 + beta_x_i)
+    //     __m256 result_v = _mm256_add_ps(beta_0_v, i_times_beta_1_plus_x_i);    // result = beta_0 + i * (beta_1 + beta_x_i)
+
+    //     // Store the result
+    //     _mm256_storeu_ps(&yhat[j], result_v);
+    //   }
+
+    //   // Process remaining elements by filling the register with remaining elements and zeros
+    //   if (remaining > 0)
+    //   {
+    //     float remaining_i[8] = {0};
+    //     for (size_t k = 0; k < remaining; ++k)
+    //     {
+    //       remaining_i[k] = static_cast<float>(left_limit + num_full_loops * 8 + k);
+    //     }
+    //     __m256 i_vf = _mm256_loadu_ps(remaining_i);
+
+    //     // Calculate the intermediate term beta_x * i
+    //     __m256 beta_2_i = _mm256_mul_ps(beta_2_v, i_vf);
+    //     __m256 beta_3_i = _mm256_mul_ps(beta_3_v, i_vf);
+    //     __m256 beta_x_i = _mm256_blendv_ps(beta_3_i, beta_2_i, _mm256_cmp_ps(i_vf, _mm256_setzero_ps(), _CMP_LT_OS));
+
+    //     // Final result: beta_0 + i * (beta_1 + beta_x_i)
+    //     __m256 beta_1_plus_x_i = _mm256_add_ps(beta_1_v, beta_x_i);            // beta_1 + beta_x_i
+    //     __m256 i_times_beta_1_plus_x_i = _mm256_mul_ps(i_vf, beta_1_plus_x_i); // i * (beta_1 + beta_x_i)
+    //     __m256 result_v = _mm256_add_ps(beta_0_v, i_times_beta_1_plus_x_i);    // result = beta_0 + i * (beta_1 + beta_x_i)
+
+    //     // Store the remaining result
+    //     float result_array[8];
+    //     _mm256_storeu_ps(result_array, result_v);
+    //     for (size_t k = 0; k < remaining; ++k)
+    //     {
+    //       yhat[j + k] = result_array[k];
+    //     }
+    //   }
+    //   return yhat;
+    // }
+
+    // q::Matrices::Vector
+    // qPeaks::calcYhat(
+    //     const int left_limit,
+    //     const int right_limit,
+    //     const q::Matrices::Vector &beta)
+    // {
+    //   size_t n = right_limit - left_limit + 1;
+    //   q::Matrices::Vector yhat(n);
+
+    //   // Extract beta values
+    //   float beta_0 = beta[0];
+    //   float beta_1 = beta[1];
+    //   float beta_2 = beta[2];
+    //   float beta_3 = beta[3];
+
+    //   // Load SIMD registers
+    //   __m256 beta_0_v = _mm256_set1_ps(beta_0);
+    //   __m256 beta_1_v = _mm256_set1_ps(beta_1);
+    //   __m256 beta_2_v = _mm256_set1_ps(beta_2);
+    //   __m256 beta_3_v = _mm256_set1_ps(beta_3);
+
+    //   size_t j = 0;
+    //   float i = static_cast<float>(left_limit);
+    //   size_t num_full_loops = n / 8;
+    //   size_t remaining = n % 8;
+    //   // Main loop
+    //   for (size_t loop = 0; loop < num_full_loops; ++loop, i += 8.0f, j += 8)
+    //   {
+    //     // Load 8 values of i directly as float
+    //     __m256 i_vf = _mm256_set_ps(i + 7.0f, i + 6.0f, i + 5.0f, i + 4.0f, i + 3.0f, i + 2.0f, i + 1.0f, i);
+
+    //     // Calculate the intermediate term beta_x * i
+    //     __m256 beta_2_i = _mm256_mul_ps(beta_2_v, i_vf);
+    //     __m256 beta_3_i = _mm256_mul_ps(beta_3_v, i_vf);
+    //     __m256 beta_x_i = _mm256_blendv_ps(beta_3_i, beta_2_i, _mm256_cmp_ps(i_vf, _mm256_setzero_ps(), _CMP_LT_OS));
+
+    //     // Final result: beta_0 + i * (beta_1 + beta_x_i)
+    //     __m256 beta_1_plus_x_i = _mm256_add_ps(beta_1_v, beta_x_i);            // beta_1 + beta_x_i
+    //     __m256 i_times_beta_1_plus_x_i = _mm256_mul_ps(i_vf, beta_1_plus_x_i); // i * (beta_1 + beta_x_i)
+    //     __m256 result_v = _mm256_add_ps(beta_0_v, i_times_beta_1_plus_x_i);    // result = beta_0 + i * (beta_1 + beta_x_i)
+
+    //     // Store the result
+    //     _mm256_storeu_ps(&yhat[j], result_v);
+    //   }
+
+    //   // Process remaining elements by filling the register with remaining elements and zeros
+    //   if (remaining > 0)
+    //   {
+    //     float remaining_i[8] = {0};
+    //     for (size_t k = 0; k < remaining; ++k)
+    //     {
+    //       remaining_i[k] = static_cast<float>(left_limit + num_full_loops * 8 + k);
+    //     }
+    //     __m256 i_vf = _mm256_loadu_ps(remaining_i);
+
+    //     // Calculate the intermediate term beta_x * i
+    //     __m256 beta_2_i = _mm256_mul_ps(beta_2_v, i_vf);
+    //     __m256 beta_3_i = _mm256_mul_ps(beta_3_v, i_vf);
+    //     __m256 beta_x_i = _mm256_blendv_ps(beta_3_i, beta_2_i, _mm256_cmp_ps(i_vf, _mm256_setzero_ps(), _CMP_LT_OS));
+
+    //     // Final result: beta_0 + i * (beta_1 + beta_x_i)
+    //     __m256 beta_1_plus_x_i = _mm256_add_ps(beta_1_v, beta_x_i);            // beta_1 + beta_x_i
+    //     __m256 i_times_beta_1_plus_x_i = _mm256_mul_ps(i_vf, beta_1_plus_x_i); // i * (beta_1 + beta_x_i)
+    //     __m256 result_v = _mm256_add_ps(beta_0_v, i_times_beta_1_plus_x_i);    // result = beta_0 + i * (beta_1 + beta_x_i)
+
+    //     // Store the remaining result
+    //     float result_array[8];
+    //     _mm256_storeu_ps(result_array, result_v);
+    //     for (size_t k = 0; k < remaining; ++k)
+    //     {
+    //       yhat[j + k] = result_array[k];
+    //     }
+    //   }
+
+    //   return yhat;
+    // }
+
+    // q::Matrices::Vector // TO BE REMOVED
+    // qPeaks::calcYhat(
+    //     const int scale,
+    //     const __m128 &coeff)
+    // {
+    //   const size_t n = 2 * scale + 1;          // length of the result vector
+    //   const size_t nFullSegments = scale / 8;  // calculate the number of full segments of 8 elements per side
+    //   const size_t nRemaining = scale % 8;     // calculate the number of remaining elements
+    //   alignas(32) q::Matrices::Vector yhat(n); // result vector
+
+    //   // Load the coefficients
+    //   const __m256 b0 = _mm256_set1_ps(((float *)&coeff)[0]);
+    //   const __m256 b1 = _mm256_set1_ps(((float *)&coeff)[1]);
+    //   const __m256 b2 = _mm256_set1_ps(((float *)&coeff)[2]);
+    //   const __m256 b3 = _mm256_set1_ps(((float *)&coeff)[3]);
+
+    //   // Calculate the yhat values for the full segments
+    //   size_t j = 0;
+    //   size_t k = n - 8;
+    //   float i = static_cast<float>(-scale);
+    //   for (size_t iSegment = 0; iSegment < nFullSegments; ++iSegment, i += 8.0f, j += 8, k -= 8)
+    //   {
+    //     // Load 8 values of i directly as float
+    //     __m256 x_left = _mm256_add_ps(_mm256_set1_ps(i), LINSPACE_UP_POS_256);     // x vector : -k to -k+7
+    //     __m256 x_right = _mm256_add_ps(_mm256_set1_ps(-i), LINSPACE_DOWN_NEG_256); // x vector : k-7 to k
+
+    //     // Calculate the yhat values
+    //     __m256 yhat_left = _mm256_fmadd_ps(_mm256_fmadd_ps(b2, x_left, b1), x_left, b0);    // b0 + b1 * x + b2 * x^2
+    //     __m256 yhat_right = _mm256_fmadd_ps(_mm256_fmadd_ps(b3, x_right, b1), x_right, b0); // b0 + b1 * x + b3 * x^2
+
+    //     // Store the result into yhat
+    //     _mm256_store_ps(&yhat[j], yhat_left);
+    //     _mm256_store_ps(&yhat[k], yhat_right);
+    //   }
+
+    //   // Calculate the yhat values for the remaining elements
+    //   if (nRemaining > 0)
+    //   {
+    //     __m256 yhat_left = _mm256_fmadd_ps(_mm256_fmadd_ps(b2, LINSPACE_UP_NEG_256, b1), LINSPACE_UP_NEG_256, b0);  // b0 + b1 * x + b2 * x^2
+    //     __m256 yhat_right = _mm256_fmadd_ps(_mm256_fmadd_ps(b3, LINSPACE_UP_POS_256, b1), LINSPACE_UP_POS_256, b0); // b0 + b1 * x + b3 * x^2
+
+    //     // Store the remaining result into yhat from yhat_left[0] to yhat_left[nRemaining-1] and yhat_right[0] to yhat_right[nRemaining-1]
+    //     for (size_t i = 1; i <= nRemaining; ++i)
+    //     {
+    //       yhat[scale - i] = ((float *)&yhat_left)[i];
+    //       yhat[scale + i] = ((float *)&yhat_right)[i];
+    //     }
+    //   }
+
+    //   // fill the yhat values for the center x = 0, i.e., yhat[center] = b0
+    //   yhat[scale] = ((float *)&coeff)[0];
+    //   return yhat;
+    // }
+
     q::Matrices::Vector
     qPeaks::calcYhat(
-        const int left_limit,
-        const int right_limit,
-        const q::Matrices::Matrix_mc &beta,
-        const size_t idx)
+        const int left_limit,  // a negative value, e.g., -scale
+        const int right_limit, // a positive value, e.g., scale
+        const __m128 &coeff,
+        const bool calc_EXP)
     {
-      size_t n = right_limit - left_limit + 1;
-      q::Matrices::Vector yhat(n);
-
-      // Extract beta values
-      float beta_0 = beta(0, idx);
-      float beta_1 = beta(1, idx);
-      float beta_2 = beta(2, idx);
-      float beta_3 = beta(3, idx);
-
-      // Load SIMD registers
-      __m256 beta_0_v = _mm256_set1_ps(beta_0);
-      __m256 beta_1_v = _mm256_set1_ps(beta_1);
-      __m256 beta_2_v = _mm256_set1_ps(beta_2);
-      __m256 beta_3_v = _mm256_set1_ps(beta_3);
-
-      size_t j = 0;
-      float i = static_cast<float>(left_limit);
-      size_t num_full_loops = n / 8;
-      size_t remaining = n % 8;
-      // Main loop
-      for (size_t loop = 0; loop < num_full_loops; ++loop, i += 8.0f, j += 8)
+      // exception handling if the right limits is negative or the left limit is positive
+      if (right_limit < 0 || left_limit > 0)
       {
-        // Load 8 values of i directly as float
-        __m256 i_vf = _mm256_set_ps(i + 7.0f, i + 6.0f, i + 5.0f, i + 4.0f, i + 3.0f, i + 2.0f, i + 1.0f, i);
-
-        // Calculate the intermediate term beta_x * i
-        __m256 beta_2_i = _mm256_mul_ps(beta_2_v, i_vf);
-        __m256 beta_3_i = _mm256_mul_ps(beta_3_v, i_vf);
-        __m256 beta_x_i = _mm256_blendv_ps(beta_3_i, beta_2_i, _mm256_cmp_ps(i_vf, _mm256_setzero_ps(), _CMP_LT_OS));
-
-        // Final result: beta_0 + i * (beta_1 + beta_x_i)
-        __m256 beta_1_plus_x_i = _mm256_add_ps(beta_1_v, beta_x_i);            // beta_1 + beta_x_i
-        __m256 i_times_beta_1_plus_x_i = _mm256_mul_ps(i_vf, beta_1_plus_x_i); // i * (beta_1 + beta_x_i)
-        __m256 result_v = _mm256_add_ps(beta_0_v, i_times_beta_1_plus_x_i);    // result = beta_0 + i * (beta_1 + beta_x_i)
-
-        // Store the result
-        _mm256_storeu_ps(&yhat[j], result_v);
+        throw std::invalid_argument("right_limit must be positive and left_limit must be negative");
       }
 
-      // Process remaining elements by filling the register with remaining elements and zeros
-      if (remaining > 0)
-      {
-        float remaining_i[8] = {0};
-        for (size_t k = 0; k < remaining; ++k)
-        {
-          remaining_i[k] = static_cast<float>(left_limit + num_full_loops * 8 + k);
-        }
-        __m256 i_vf = _mm256_loadu_ps(remaining_i);
-
-        // Calculate the intermediate term beta_x * i
-        __m256 beta_2_i = _mm256_mul_ps(beta_2_v, i_vf);
-        __m256 beta_3_i = _mm256_mul_ps(beta_3_v, i_vf);
-        __m256 beta_x_i = _mm256_blendv_ps(beta_3_i, beta_2_i, _mm256_cmp_ps(i_vf, _mm256_setzero_ps(), _CMP_LT_OS));
-
-        // Final result: beta_0 + i * (beta_1 + beta_x_i)
-        __m256 beta_1_plus_x_i = _mm256_add_ps(beta_1_v, beta_x_i);            // beta_1 + beta_x_i
-        __m256 i_times_beta_1_plus_x_i = _mm256_mul_ps(i_vf, beta_1_plus_x_i); // i * (beta_1 + beta_x_i)
-        __m256 result_v = _mm256_add_ps(beta_0_v, i_times_beta_1_plus_x_i);    // result = beta_0 + i * (beta_1 + beta_x_i)
-
-        // Store the remaining result
-        float result_array[8];
-        _mm256_storeu_ps(result_array, result_v);
-        for (size_t k = 0; k < remaining; ++k)
-        {
-          yhat[j + k] = result_array[k];
-        }
-      }
-      return yhat;
-    }
-
-    q::Matrices::Vector
-    qPeaks::calcYhat(
-        const int left_limit,
-        const int right_limit,
-        const q::Matrices::Vector &beta)
-    {
-      size_t n = right_limit - left_limit + 1;
-      q::Matrices::Vector yhat(n);
-
-      // Extract beta values
-      float beta_0 = beta[0];
-      float beta_1 = beta[1];
-      float beta_2 = beta[2];
-      float beta_3 = beta[3];
-
-      // Load SIMD registers
-      __m256 beta_0_v = _mm256_set1_ps(beta_0);
-      __m256 beta_1_v = _mm256_set1_ps(beta_1);
-      __m256 beta_2_v = _mm256_set1_ps(beta_2);
-      __m256 beta_3_v = _mm256_set1_ps(beta_3);
-
-      size_t j = 0;
-      float i = static_cast<float>(left_limit);
-      size_t num_full_loops = n / 8;
-      size_t remaining = n % 8;
-      // Main loop
-      for (size_t loop = 0; loop < num_full_loops; ++loop, i += 8.0f, j += 8)
-      {
-        // Load 8 values of i directly as float
-        __m256 i_vf = _mm256_set_ps(i + 7.0f, i + 6.0f, i + 5.0f, i + 4.0f, i + 3.0f, i + 2.0f, i + 1.0f, i);
-
-        // Calculate the intermediate term beta_x * i
-        __m256 beta_2_i = _mm256_mul_ps(beta_2_v, i_vf);
-        __m256 beta_3_i = _mm256_mul_ps(beta_3_v, i_vf);
-        __m256 beta_x_i = _mm256_blendv_ps(beta_3_i, beta_2_i, _mm256_cmp_ps(i_vf, _mm256_setzero_ps(), _CMP_LT_OS));
-
-        // Final result: beta_0 + i * (beta_1 + beta_x_i)
-        __m256 beta_1_plus_x_i = _mm256_add_ps(beta_1_v, beta_x_i);            // beta_1 + beta_x_i
-        __m256 i_times_beta_1_plus_x_i = _mm256_mul_ps(i_vf, beta_1_plus_x_i); // i * (beta_1 + beta_x_i)
-        __m256 result_v = _mm256_add_ps(beta_0_v, i_times_beta_1_plus_x_i);    // result = beta_0 + i * (beta_1 + beta_x_i)
-
-        // Store the result
-        _mm256_storeu_ps(&yhat[j], result_v);
-      }
-
-      // Process remaining elements by filling the register with remaining elements and zeros
-      if (remaining > 0)
-      {
-        float remaining_i[8] = {0};
-        for (size_t k = 0; k < remaining; ++k)
-        {
-          remaining_i[k] = static_cast<float>(left_limit + num_full_loops * 8 + k);
-        }
-        __m256 i_vf = _mm256_loadu_ps(remaining_i);
-
-        // Calculate the intermediate term beta_x * i
-        __m256 beta_2_i = _mm256_mul_ps(beta_2_v, i_vf);
-        __m256 beta_3_i = _mm256_mul_ps(beta_3_v, i_vf);
-        __m256 beta_x_i = _mm256_blendv_ps(beta_3_i, beta_2_i, _mm256_cmp_ps(i_vf, _mm256_setzero_ps(), _CMP_LT_OS));
-
-        // Final result: beta_0 + i * (beta_1 + beta_x_i)
-        __m256 beta_1_plus_x_i = _mm256_add_ps(beta_1_v, beta_x_i);            // beta_1 + beta_x_i
-        __m256 i_times_beta_1_plus_x_i = _mm256_mul_ps(i_vf, beta_1_plus_x_i); // i * (beta_1 + beta_x_i)
-        __m256 result_v = _mm256_add_ps(beta_0_v, i_times_beta_1_plus_x_i);    // result = beta_0 + i * (beta_1 + beta_x_i)
-
-        // Store the remaining result
-        float result_array[8];
-        _mm256_storeu_ps(result_array, result_v);
-        for (size_t k = 0; k < remaining; ++k)
-        {
-          yhat[j + k] = result_array[k];
-        }
-      }
-
-      return yhat;
-    }
-
-    q::Matrices::Vector
-    qPeaks::calcYhat(
-        const int scale,
-        const __m128 &coeff)
-    {
-      const size_t n = 2 * scale + 1;          // length of the result vector
-      const size_t nFullSegments = scale / 8;  // calculate the number of full segments of 8 elements per side
-      const size_t nRemaining = scale % 8;     // calculate the number of remaining elements
-      alignas(32) q::Matrices::Vector yhat(n); // result vector
+      const size_t n = right_limit - left_limit + 1;      // length of the result vector
+      const size_t nFullSegments_left = -left_limit / 8;  // calculate the number of full segments of 8 elements per side
+      const size_t nFullSegments_right = right_limit / 8; // calculate the number of full segments of 8 elements per side
+      const size_t nRemaining_left = -left_limit % 8;     // calculate the number of remaining elements
+      const size_t nRemaining_right = right_limit % 8;    // calculate the number of remaining elements
+      alignas(32) q::Matrices::Vector yhat(n);            // result vector
 
       // Load the coefficients
-      const __m256 b0 = _mm256_set1_ps(coeff[0]);
-      const __m256 b1 = _mm256_set1_ps(coeff[1]);
-      const __m256 b2 = _mm256_set1_ps(coeff[2]);
-      const __m256 b3 = _mm256_set1_ps(coeff[3]);
+      const __m256 b0 = _mm256_set1_ps(((float *)&coeff)[0]);
+      const __m256 b1 = _mm256_set1_ps(((float *)&coeff)[1]);
+      const __m256 b2 = _mm256_set1_ps(((float *)&coeff)[2]);
+      const __m256 b3 = _mm256_set1_ps(((float *)&coeff)[3]);
 
+      // LEFT SIDE
       // Calculate the yhat values for the full segments
       size_t j = 0;
-      size_t k = n - 8;
-      float i = static_cast<float>(-scale);
-      for (size_t iSegment = 0; iSegment < nFullSegments; ++iSegment, i += 8.0f, j += 8, k -= 8)
+      float i = static_cast<float>(left_limit);
+      for (size_t iSegment = 0; iSegment < nFullSegments_left; ++iSegment, i += 8.0f, j += 8)
       {
         // Load 8 values of i directly as float
-        __m256 x_left = _mm256_add_ps(_mm256_set1_ps(i), LINSPACE_UP_256);     // x vector : -k to -k+7
-        __m256 x_right = _mm256_add_ps(_mm256_set1_ps(-i), LINSPACE_DOWN_256); // x vector : k-7 to k
-
+        __m256 x_left = _mm256_add_ps(_mm256_set1_ps(i), LINSPACE_UP_POS_256); // x vector : -k to -k+7
         // Calculate the yhat values
-        __m256 yhat_left = _mm256_fmadd_ps(_mm256_fmadd_ps(b2, x_left, b1), x_left, b0);    // b0 + b1 * x + b2 * x^2
-        __m256 yhat_right = _mm256_fmadd_ps(_mm256_fmadd_ps(b3, x_right, b1), x_right, b0); // b0 + b1 * x + b3 * x^2
-
+        __m256 yhat_left = _mm256_fmadd_ps(_mm256_fmadd_ps(b2, x_left, b1), x_left, b0); // b0 + b1 * x + b2 * x^2
+        if (calc_EXP)
+        {
+          yhat_left = exp_approx_vf(yhat_left); // calculate the exp of the yhat values (if needed)
+        }
         // Store the result into yhat
         _mm256_store_ps(&yhat[j], yhat_left);
+      }
+
+      // Calculate the yhat values for the remaining elements
+      if (nRemaining_left > 0)
+      {
+        __m256 yhat_left = _mm256_fmadd_ps(_mm256_fmadd_ps(b2, LINSPACE_UP_NEG_256, b1), LINSPACE_UP_NEG_256, b0); // b0 + b1 * x + b2 * x^2
+        if (calc_EXP)
+        {
+          yhat_left = exp_approx_vf(yhat_left); // calculate the exp of the yhat values (if needed)
+        }
+        // Store the remaining result into yhat from yhat_left[0] to yhat_left[nRemaining-1] and yhat_right[0] to yhat_right[nRemaining-1]
+        for (size_t i = 1; i <= nRemaining_left; ++i)
+        {
+          yhat[-left_limit - i] = ((float *)&yhat_left)[i];
+        }
+      }
+
+      // RIGHT SIDE
+      // Calculate the yhat values for the full segments
+      size_t k = n - 8;
+      i = static_cast<float>(-right_limit);
+      for (size_t iSegment = 0; iSegment < nFullSegments_right; ++iSegment, i += 8.0f, k -= 8)
+      {
+        // Load 8 values of i directly as float
+        __m256 x_right = _mm256_add_ps(_mm256_set1_ps(-i), LINSPACE_DOWN_NEG_256); // x vector : k-7 to k
+        // Calculate the yhat values
+        __m256 yhat_right = _mm256_fmadd_ps(_mm256_fmadd_ps(b3, x_right, b1), x_right, b0); // b0 + b1 * x + b3 * x^2
+        if (calc_EXP)
+        {
+          yhat_right = exp_approx_vf(yhat_right); // calculate the exp of the yhat values (if needed)
+        }
+
+        // Store the result into yhat
         _mm256_store_ps(&yhat[k], yhat_right);
       }
 
       // Calculate the yhat values for the remaining elements
-      if (nRemaining > 0)
+      if (nRemaining_right > 0)
       {
-        __m256 yhat_left = _mm256_fmadd_ps(_mm256_fmadd_ps(b2, LINSPACE_DOWN_256, b1), LINSPACE_DOWN_256, b0); // b0 + b1 * x + b2 * x^2
-        __m256 yhat_right = _mm256_fmadd_ps(_mm256_fmadd_ps(b3, LINSPACE_UP_256, b1), LINSPACE_UP_256, b0);    // b0 + b1 * x + b3 * x^2
-
-        // Store the remaining result into yhat from yhat_left[0] to yhat_left[nRemaining-1] and yhat_right[0] to yhat_right[nRemaining-1]
-        // std::cout << "yhat_left: " << yhat_left[0] << " " << yhat_left[1] << " " << yhat_left[2] << " " << yhat_left[3] << " " << yhat_left[4] << " " << yhat_left[5] << " " << yhat_left[6] << " " << yhat_left[7] << "\n";
-        for (size_t i = 1; i <= nRemaining; ++i)
+        __m256 yhat_right = _mm256_fmadd_ps(_mm256_fmadd_ps(b3, LINSPACE_UP_POS_256, b1), LINSPACE_UP_POS_256, b0); // b0 + b1 * x + b3 * x^2
+        if (calc_EXP)
         {
-          yhat[scale - i] = yhat_left[7 - i];
-          yhat[scale + i] = yhat_right[i];
+          yhat_right = exp_approx_vf(yhat_right); // calculate the exp of the yhat values (if needed)
+        }
+        // Store the remaining result into yhat from yhat_left[0] to yhat_left[nRemaining-1] and yhat_right[0] to yhat_right[nRemaining-1]
+        for (size_t i = 1; i <= nRemaining_right; ++i)
+        {
+          yhat[-left_limit + i] = ((float *)&yhat_right)[i];
         }
       }
 
       // fill the yhat values for the center x = 0, i.e., yhat[center] = b0
-      yhat[scale] = coeff[0];
+      if (calc_EXP)
+      {
+        yhat[-left_limit] = exp_approx_d(((float *)&coeff)[0]);
+      }
+      else
+      {
+        yhat[-left_limit] = ((float *)&coeff)[0];
+      }
       return yhat;
     }
 #pragma endregion "yhat"
@@ -1434,7 +1549,7 @@ namespace q
 
 #pragma region "convolve regression"
 
-    q::Matrices::Matrix_mc
+    void
     qPeaks::convolve_static(
         const size_t scale,
         const float (&vec)[512],
@@ -1451,22 +1566,13 @@ namespace q
       const __m128 flipSign = _mm_set_ps(1.0f, 1.0f, -1.0f, 1.0f);
       convolve_SIMD(scale, vec, n, result, products, 512);
 
-      q::Matrices::Matrix_mc resultMatrix(4, n - 2 * scale);
       for (size_t i = 0; i < n - 2 * scale; i++)
       {
-        alignas(16) float temp[4];
-        _mm_store_ps(temp, result[i]);
-        resultMatrix(0, i) = temp[0];
-        resultMatrix(1, i) = -temp[1];
-        resultMatrix(2, i) = temp[3];
-        resultMatrix(3, i) = temp[2];
         beta[i] = _mm_mul_ps(_mm_shuffle_ps(result[i], result[i], 0b10110100), flipSign); // swap beta2 and beta3 and flip the sign of beta1 // @todo: this is a temporary solution
       }
-
-      return resultMatrix;
     }
 
-    q::Matrices::Matrix_mc
+    void
     qPeaks::convolve_dynamic(
         const size_t scale,
         const float *vec,
@@ -1482,19 +1588,10 @@ namespace q
       alignas(16) __m128 *products = new __m128[n];
       convolve_SIMD(scale, vec, n, result, products, n);
 
-      q::Matrices::Matrix_mc resultMatrix(4, n - 2 * scale);
       for (size_t i = 0; i < n - 2 * scale; i++)
       {
-        alignas(16) float temp[4];
-        _mm_store_ps(temp, result[i]);
-        resultMatrix(0, i) = temp[0];
-        resultMatrix(1, i) = -temp[1];
-        resultMatrix(2, i) = temp[3];
-        resultMatrix(3, i) = temp[2];
         beta[i] = result[i];
       }
-
-      return resultMatrix;
     }
 
     void
