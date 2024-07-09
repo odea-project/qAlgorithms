@@ -27,9 +27,6 @@ int main()
 {
     bool silent = false;
 
-    q::vectorDestructions = 0;
-    q::matrixDestructions = 0;
-
     std::streambuf *old = std::cout.rdbuf(); // save standard out config
     std::stringstream ss;
 
@@ -41,13 +38,13 @@ int main()
 
     // @todo add option to take in a text file containing execution parameters and a list of target files
     std::vector<std::string> target_files_full{
-        "G:/_Studium/Analytik-Praktikum/qbinning/rawdata/210229_C1_S1_W_MI_1_pos.mzML",
-        "C:/Users/unisys/Documents/Studium/Messdaten/mzml/AquaFlow_MS1/210229_C1_S1_W_MI_1_pos.mzML",
+        // "G:/_Studium/Analytik-Praktikum/qbinning/rawdata/210229_C1_S1_W_MI_1_pos.mzML",
+        // "C:/Users/unisys/Documents/Studium/Messdaten/mzml/AquaFlow_MS1/210229_C1_S1_W_MI_1_pos.mzML",
         "C:/Users/unisys/Documents/Studium/Messdaten/mzml/AquaFlow_MS1/210229_C1_S1_W_MI_2_pos.mzML", // some error during binning here?
-        "nonsense",
+        // "nonsense",
 
         "C:/Users/unisys/Documents/Studium/Messdaten/mzml/AquaFlow_MS1/210229_C1_S1_W_MI_3_pos.mzML",
-        "nonsense", // @todo add bypass if one of the files is bad
+        // "nonsense", // @todo add bypass if one of the files is bad
         "C:/Users/unisys/Documents/Studium/Messdaten/mzml/AquaFlow_MS1/210229_Blank_SW_MI_I_1_pos.mzML",
         "C:/Users/unisys/Documents/Studium/Messdaten/mzml/AquaFlow_MS1/210229_Blank_SW_MI_I_2_pos.mzML",
         "C:/Users/unisys/Documents/Studium/Messdaten/mzml/AquaFlow_MS1/210229_Blank_SW_MI_I_3_pos.mzML",

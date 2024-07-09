@@ -9,9 +9,9 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
 library(pracma)
-library(mzrtsim)
-install.packages("remotes")
-remotes::install_github("yufree/mzrtsim")
+# library(mzrtsim)
+# install.packages("remotes")
+# remotes::install_github("yufree/mzrtsim")
 ```
 
 ```{r read data H}
@@ -42,29 +42,11 @@ bins_full_3 = read.csv("G:/_Studium/Analytik-Praktikum/bin/Daten_AquaFlow/210229
 ```
 
 ```{r read data L}
-s_blank_pure_1 = read.csv("C:/Users/unisys/Documents/Studium/Messdaten/qbins + summary/210229_Blank1_summary.csv")
-s_blank_pure_2 = read.csv("C:/Users/unisys/Documents/Studium/Messdaten/qbins + summary/210229_Blank2_summary.csv")
-s_blank_pure_3 = read.csv("C:/Users/unisys/Documents/Studium/Messdaten/qbins + summary/210229_Blank3_summary.csv")
+s_full_2 = read.csv("C:/Users/unisys/Documents/Studium/Messdaten/mzml/AquaFlow_MS1/210229_C1_S1_W_MI_2_pos_summary.csv")
+s_full_2$errorcode = as.numeric(lapply(s_full_2$errorcode, bits)) - 10000000
+s_full_2 = s_full_2[order(s_full_2$size, decreasing = TRUE),]
 
-s_blank_standard_1 = read.csv("C:/Users/unisys/Documents/Studium/Messdaten/qbins + summary/210229_Blank_SW_MI_I_1_pos_summary.csv")
-s_blank_standard_2 = read.csv("C:/Users/unisys/Documents/Studium/Messdaten/qbins + summary/210229_Blank_SW_MI_I_2_pos_summary.csv")
-s_blank_standard_3 = read.csv("C:/Users/unisys/Documents/Studium/Messdaten/qbins + summary/210229_Blank_SW_MI_I_3_pos_summary.csv")
-
-s_full_1 = read.csv("C:/Users/unisys/Documents/Studium/Messdaten/qbins + summary/210229_C1_S1_W_MI_1_pos_summary.csv")
-s_full_2 = read.csv("C:/Users/unisys/Documents/Studium/Messdaten/qbins + summary/210229_C1_S1_W_MI_2_pos_summary.csv")
-s_full_3 = read.csv("C:/Users/unisys/Documents/Studium/Messdaten/qbins + summary/210229_C1_S1_W_MI_3_pos_summary.csv")
-
-bins_blank_pure_1 = read.csv("C:/Users/unisys/Documents/Studium/Messdaten/qbins + summary/210229_Blank1_selectBins_full.csv")
-bins_blank_pure_2 = read.csv("C:/Users/unisys/Documents/Studium/Messdaten/qbins + summary/210229_Blank2_selectBins_full.csv")
-bins_blank_pure_3 = read.csv("C:/Users/unisys/Documents/Studium/Messdaten/qbins + summary/210229_Blank3_selectBins_full.csv")
-
-bins_blank_standard_1 = read.csv("C:/Users/unisys/Documents/Studium/Messdaten/qbins + summary/210229_Blank_SW_MI_I_1_pos_selectBins_full.csv")
-bins_blank_standard_2 = read.csv("C:/Users/unisys/Documents/Studium/Messdaten/qbins + summary/210229_Blank_SW_MI_I_2_pos_selectBins_full.csv")
-bins_blank_standard_3 = read.csv("C:/Users/unisys/Documents/Studium/Messdaten/qbins + summary/210229_Blank_SW_MI_I_3_pos_selectBins_full.csv")
-
-bins_full_1 = read.csv("C:/Users/unisys/Documents/Studium/Messdaten/qbins + summary/210229_C1_S1_W_MI_1_pos_selectBins_full.csv")
-bins_full_2 = read.csv("C:/Users/unisys/Documents/Studium/Messdaten/qbins + summary/210229_C1_S1_W_MI_2_pos_selectBins_full.csv")
-bins_full_3 = read.csv("C:/Users/unisys/Documents/Studium/Messdaten/qbins + summary/210229_C1_S1_W_MI_3_pos_selectBins_full.csv")
+bins_full_2 = read.csv("C:/Users/unisys/Documents/Studium/Messdaten/mzml/AquaFlow_MS1/210229_C1_S1_W_MI_2_pos_selectBins_full.csv")
 ```
 
 ```{r unified summary frame}
@@ -90,7 +72,9 @@ Error codes:
    100 - a point exists within maxdist of n+1 (left)
   1000 - mean and median in mz are more than two times the average centroid error (mz) apart
  10000 - a point exists outside the 3-sigma interval
-100000 - the average DQS is < 0.5
+100000 - the average DQS is < 0
+
+770, 771, 
 
 ```{r trends by sample}
 ggplot(sum_all)+

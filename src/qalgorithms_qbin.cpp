@@ -215,39 +215,46 @@ namespace q
                 {
                     incompleteBins.push_back(i);
                 }
-                else
-                {
-                    double meanDQS = 0;
-                    std::accumulate(finishedBins[i].DQSB_base.begin(), finishedBins[i].DQSB_base.begin(), meanDQS);
-                    meanDQS = meanDQS / finishedBins[i].DQSB_base.size();
-                    if (meanDQS <= 0)
-                    {
-                        incompleteBins.push_back(i);
-                    }
-                }
+                // else // @todo check for better way
+                // {
+                //     double meanDQS = 0;
+                //     std::accumulate(finishedBins[i].DQSB_base.begin(), finishedBins[i].DQSB_base.begin(), meanDQS);
+                //     meanDQS = meanDQS / finishedBins[i].DQSB_base.size();
+                //     if (meanDQS <= 0)
+                //     {
+                //         incompleteBins.push_back(i);
+                //     }
+                // }
             }
             if (incompleteBins.empty())
             {
                 std::cout << "nothing to re-bin, continuing...\n";
                 return;
             }
-
+            std::cout << "..";
             // Assemble new starting bin
             Bin startingRebin;
+            std::cout << "..";
             startingRebin.pointsInBin.reserve(outOfBins.size() + incompleteBins.size() * 16);                      // @todo test the average size for non-warburg data
+            std::cout << "..";
             startingRebin.pointsInBin.insert(startingRebin.pointsInBin.end(), outOfBins.begin(), outOfBins.end()); // copy outofbins into new bin
+            std::cout << "..";
             outOfBins.resize(0);                                                                                   // @todo is it sensible to leave as much space free?
+            std::cout << "..";
             // copy old pointsInBin for each selected bin
             for (size_t i : incompleteBins)
             {
                 startingRebin.pointsInBin.insert(startingRebin.pointsInBin.end(), finishedBins[i].pointsInBin.begin(), finishedBins[i].pointsInBin.end());
             }
+            std::cout << "..";
             binDeque.push_back(startingRebin);
+            std::cout << "..";
             // call binning wrapper with a vector other than finishedbins as write target
             this->subsetBins(dimensions, maxdist, true);
-
+            std::cout << "..";
             // calculate DQS on new bins
             this->assignDQSB(rawdata, maxdist, true);
+            std::cout << "..";
             // re-add the newly constructed bins to finishedBins
             if (redoneBins.size() < incompleteBins.size()) // there will be gaps left in finsihedBins that must be closed
             {
@@ -358,15 +365,15 @@ namespace q
             for (size_t i = 0; i < finishedBins.size(); i++)
             {
                 SummaryOutput res = finishedBins[i].summariseBin();
-                if (bool(mask & res.errorcode))
-                {
+                // if (bool(mask & res.errorcode))
+                // {
                     indices.push_back(i); // save these bins for printing
                     char buffer[256];
                     sprintf(buffer, "%llu,%d,%llu,%0.15f,%0.15f,%0.15f,%0.2f,%0.9f,%0.9f,%0.9f,%0.15f\n",
                             i + 1, int(res.errorcode), res.binsize, res.mean_mz, res.median_mz, res.stddev_mz,
                             res.mean_scans, res.DQSB_base, res.DQSB_scaled, res.DQSC_min, res.mean_error);
                     output_sum << buffer;
-                }
+                // }
             }
             file_out_sum << output_sum.str();
             file_out_sum.close();
@@ -851,40 +858,63 @@ namespace q
                 }
             }
 
+            int countNone = 0;
+            int count1 = 0;
+            int count2 = 0;
+            int count3 = 0;
+            int count4 = 0;
+            int count5 = 0;
+            int count6 = 0;
+            int count7 = 0;
+            int count8 = 0;
+
             // @todo use enums here
             std::byte selector{0b00000000}; // used as bitmask during printSelectBins()
             if (duplicateScan)
             {
                 selector |= std::byte{0b00000001};
+                ++count1;
             }
             if (l_maxdist_tooclose)
             {
                 selector |= std::byte{0b00000010};
+                ++count2;
             }
             if (r_maxdist_tooclose)
             {
                 selector |= std::byte{0b00000100};
+                ++count3;
             }
             if (abs(meanMZ - medianMZ) > 2 * meanCenError)
             {
                 selector |= std::byte{0b00001000};
+                ++count4;
             }
             if ((meanMZ + 3 * stdev < r_maxdist_abs) | (meanMZ - 3 * stdev > l_maxdist_abs)) // if a value in the bin is outside of 3 sigma
             {
                 selector |= std::byte{0b00010000};
+                ++count5;
             }
             if (meanDQS_base < 0.5) // @todo these should just be removed by default
             {
                 selector |= std::byte{0b00100000};
+                ++count6;
             }
             if (halfPeakL | halfPeakR) // mostly uniform increase in intensity over bin
             {
                 selector |= std::byte{0b01000000};
+                ++count7;
             }
-            if (true)
+            if (false)
             {
                 selector |= std::byte{0b10000000};
+                ++count8;
             }
+            if (!bool(selector))
+            {
+                ++countNone;
+            }
+            // std::cout << countNone << "," << count1 << "," << count2 << "," << count3 << "," << count4 << "," << count5 << "," << count6 << "," << count7 << "," << count8 << "\n";
 
             return SummaryOutput{selector, binsize, meanMZ, medianMZ, stdev, meanScan, meanDQS_base,
                                  meanDQS_scaled, worstCentroid, meanCenError};
@@ -949,7 +979,7 @@ namespace q
                     tmp_DQSC.push_back(-1);
                     ++prevScan;
                 }
-                assert(tmp_intensities[i] == point->intensity);
+                // assert(tmp_intensities[i+1] == point->intensity);
 
                 tmp_scanNumbers.push_back(point->scanNo);
                 prevScan = point->scanNo;
@@ -965,7 +995,17 @@ namespace q
                 tmp_DQSB.push_back(-1);
                 tmp_DQSC.push_back(-1);
             }
-            assert(tmp_mz.size() == tmp_scanNumbers.size());
+            // assert(tmp_mz.size() == tmp_scanNumbers.size());
+
+             EIC returnVal = {
+                tmp_scanNumbers,
+                tmp_mz,
+                tmp_intensities,
+                tmp_DQSB,
+                tmp_DQSC
+            };
+
+            return returnVal;
         }
 
 #pragma endregion "Bin"
@@ -1078,7 +1118,9 @@ namespace q
 
             // @todo bins must be sorted by scans before being passed to centroiding
 
-            return activeBins.returnBins();
+            std::vector<q::qBinning::EIC> nothing;
+
+            return nothing; //activeBins.returnBins();
         }
 
     }

@@ -1,3 +1,9 @@
+Anzahl Tests je Durchlauf
+210229_C1_S1_W_MI_1_pos.mzML
+
+
+
+
 Finde objektiven Parameter, um die Mittleren Abstände an die Bingröße
 anzupassen (/binsize?)
 
