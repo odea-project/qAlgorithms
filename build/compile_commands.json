@@ -1,73 +1,73 @@
 [
 {
   "directory": "C:/Users/unisys/Documents/Studium/Analytik-Praktikum/qAlgorithms/build",
-  "command": "C:\\msys64\\ucrt64\\bin\\c++.exe -IC:/Users/unisys/Documents/Studium/Analytik-Praktikum/qAlgorithms/include -IC:/Users/unisys/Documents/Studium/Analytik-Praktikum/qAlgorithms/external/StreamCraft/src -g -std=gnu++20 -Wall -Wno-unknown-pragmas -fdiagnostics-color=always -O3 -g -fopenmp -o CMakeFiles\\qAlgorithms.dir\\external\\StreamCraft\\src\\StreamCraft_mzml.cpp.obj -c C:\\Users\\unisys\\Documents\\Studium\\Analytik-Praktikum\\qAlgorithms\\external\\StreamCraft\\src\\StreamCraft_mzml.cpp",
+  "command": "C:\\msys64\\ucrt64\\bin\\c++.exe -IC:/Users/unisys/Documents/Studium/Analytik-Praktikum/qAlgorithms/include -IC:/Users/unisys/Documents/Studium/Analytik-Praktikum/qAlgorithms/external/StreamCraft/src -g -std=gnu++20 -Wall -Wuninitialized -Wno-unknown-pragmas -fdiagnostics-color=always -O3 -g -fopenmp -o CMakeFiles\\qAlgorithms.dir\\external\\StreamCraft\\src\\StreamCraft_mzml.cpp.obj -c C:\\Users\\unisys\\Documents\\Studium\\Analytik-Praktikum\\qAlgorithms\\external\\StreamCraft\\src\\StreamCraft_mzml.cpp",
   "file": "C:\\Users\\unisys\\Documents\\Studium\\Analytik-Praktikum\\qAlgorithms\\external\\StreamCraft\\src\\StreamCraft_mzml.cpp",
   "output": "CMakeFiles\\qAlgorithms.dir\\external\\StreamCraft\\src\\StreamCraft_mzml.cpp.obj"
 },
 {
   "directory": "C:/Users/unisys/Documents/Studium/Analytik-Praktikum/qAlgorithms/build",
-  "command": "C:\\msys64\\ucrt64\\bin\\c++.exe -IC:/Users/unisys/Documents/Studium/Analytik-Praktikum/qAlgorithms/include -IC:/Users/unisys/Documents/Studium/Analytik-Praktikum/qAlgorithms/external/StreamCraft/src -g -std=gnu++20 -Wall -Wno-unknown-pragmas -fdiagnostics-color=always -O3 -g -fopenmp -o CMakeFiles\\qAlgorithms.dir\\external\\StreamCraft\\src\\StreamCraft_mzxml.cpp.obj -c C:\\Users\\unisys\\Documents\\Studium\\Analytik-Praktikum\\qAlgorithms\\external\\StreamCraft\\src\\StreamCraft_mzxml.cpp",
+  "command": "C:\\msys64\\ucrt64\\bin\\c++.exe -IC:/Users/unisys/Documents/Studium/Analytik-Praktikum/qAlgorithms/include -IC:/Users/unisys/Documents/Studium/Analytik-Praktikum/qAlgorithms/external/StreamCraft/src -g -std=gnu++20 -Wall -Wuninitialized -Wno-unknown-pragmas -fdiagnostics-color=always -O3 -g -fopenmp -o CMakeFiles\\qAlgorithms.dir\\external\\StreamCraft\\src\\StreamCraft_mzxml.cpp.obj -c C:\\Users\\unisys\\Documents\\Studium\\Analytik-Praktikum\\qAlgorithms\\external\\StreamCraft\\src\\StreamCraft_mzxml.cpp",
   "file": "C:\\Users\\unisys\\Documents\\Studium\\Analytik-Praktikum\\qAlgorithms\\external\\StreamCraft\\src\\StreamCraft_mzxml.cpp",
   "output": "CMakeFiles\\qAlgorithms.dir\\external\\StreamCraft\\src\\StreamCraft_mzxml.cpp.obj"
 },
 {
   "directory": "C:/Users/unisys/Documents/Studium/Analytik-Praktikum/qAlgorithms/build",
-  "command": "C:\\msys64\\ucrt64\\bin\\c++.exe -IC:/Users/unisys/Documents/Studium/Analytik-Praktikum/qAlgorithms/include -IC:/Users/unisys/Documents/Studium/Analytik-Praktikum/qAlgorithms/external/StreamCraft/src -g -std=gnu++20 -Wall -Wno-unknown-pragmas -fdiagnostics-color=always -O3 -g -fopenmp -o CMakeFiles\\qAlgorithms.dir\\external\\StreamCraft\\src\\StreamCraft_utils.cpp.obj -c C:\\Users\\unisys\\Documents\\Studium\\Analytik-Praktikum\\qAlgorithms\\external\\StreamCraft\\src\\StreamCraft_utils.cpp",
+  "command": "C:\\msys64\\ucrt64\\bin\\c++.exe -IC:/Users/unisys/Documents/Studium/Analytik-Praktikum/qAlgorithms/include -IC:/Users/unisys/Documents/Studium/Analytik-Praktikum/qAlgorithms/external/StreamCraft/src -g -std=gnu++20 -Wall -Wuninitialized -Wno-unknown-pragmas -fdiagnostics-color=always -O3 -g -fopenmp -o CMakeFiles\\qAlgorithms.dir\\external\\StreamCraft\\src\\StreamCraft_utils.cpp.obj -c C:\\Users\\unisys\\Documents\\Studium\\Analytik-Praktikum\\qAlgorithms\\external\\StreamCraft\\src\\StreamCraft_utils.cpp",
   "file": "C:\\Users\\unisys\\Documents\\Studium\\Analytik-Praktikum\\qAlgorithms\\external\\StreamCraft\\src\\StreamCraft_utils.cpp",
   "output": "CMakeFiles\\qAlgorithms.dir\\external\\StreamCraft\\src\\StreamCraft_utils.cpp.obj"
 },
 {
   "directory": "C:/Users/unisys/Documents/Studium/Analytik-Praktikum/qAlgorithms/build",
-  "command": "C:\\msys64\\ucrt64\\bin\\c++.exe -IC:/Users/unisys/Documents/Studium/Analytik-Praktikum/qAlgorithms/include -IC:/Users/unisys/Documents/Studium/Analytik-Praktikum/qAlgorithms/external/StreamCraft/src -g -std=gnu++20 -Wall -Wno-unknown-pragmas -fdiagnostics-color=always -O3 -g -fopenmp -o CMakeFiles\\qAlgorithms.dir\\src\\qalgorithms_datatype_mass_spectrum.cpp.obj -c C:\\Users\\unisys\\Documents\\Studium\\Analytik-Praktikum\\qAlgorithms\\src\\qalgorithms_datatype_mass_spectrum.cpp",
+  "command": "C:\\msys64\\ucrt64\\bin\\c++.exe -IC:/Users/unisys/Documents/Studium/Analytik-Praktikum/qAlgorithms/include -IC:/Users/unisys/Documents/Studium/Analytik-Praktikum/qAlgorithms/external/StreamCraft/src -g -std=gnu++20 -Wall -Wuninitialized -Wno-unknown-pragmas -fdiagnostics-color=always -O3 -g -fopenmp -o CMakeFiles\\qAlgorithms.dir\\src\\qalgorithms_datatype_mass_spectrum.cpp.obj -c C:\\Users\\unisys\\Documents\\Studium\\Analytik-Praktikum\\qAlgorithms\\src\\qalgorithms_datatype_mass_spectrum.cpp",
   "file": "C:\\Users\\unisys\\Documents\\Studium\\Analytik-Praktikum\\qAlgorithms\\src\\qalgorithms_datatype_mass_spectrum.cpp",
   "output": "CMakeFiles\\qAlgorithms.dir\\src\\qalgorithms_datatype_mass_spectrum.cpp.obj"
 },
 {
   "directory": "C:/Users/unisys/Documents/Studium/Analytik-Praktikum/qAlgorithms/build",
-  "command": "C:\\msys64\\ucrt64\\bin\\c++.exe -IC:/Users/unisys/Documents/Studium/Analytik-Praktikum/qAlgorithms/include -IC:/Users/unisys/Documents/Studium/Analytik-Praktikum/qAlgorithms/external/StreamCraft/src -g -std=gnu++20 -Wall -Wno-unknown-pragmas -fdiagnostics-color=always -O3 -g -fopenmp -o CMakeFiles\\qAlgorithms.dir\\src\\qalgorithms_datatype_peak.cpp.obj -c C:\\Users\\unisys\\Documents\\Studium\\Analytik-Praktikum\\qAlgorithms\\src\\qalgorithms_datatype_peak.cpp",
+  "command": "C:\\msys64\\ucrt64\\bin\\c++.exe -IC:/Users/unisys/Documents/Studium/Analytik-Praktikum/qAlgorithms/include -IC:/Users/unisys/Documents/Studium/Analytik-Praktikum/qAlgorithms/external/StreamCraft/src -g -std=gnu++20 -Wall -Wuninitialized -Wno-unknown-pragmas -fdiagnostics-color=always -O3 -g -fopenmp -o CMakeFiles\\qAlgorithms.dir\\src\\qalgorithms_datatype_peak.cpp.obj -c C:\\Users\\unisys\\Documents\\Studium\\Analytik-Praktikum\\qAlgorithms\\src\\qalgorithms_datatype_peak.cpp",
   "file": "C:\\Users\\unisys\\Documents\\Studium\\Analytik-Praktikum\\qAlgorithms\\src\\qalgorithms_datatype_peak.cpp",
   "output": "CMakeFiles\\qAlgorithms.dir\\src\\qalgorithms_datatype_peak.cpp.obj"
 },
 {
   "directory": "C:/Users/unisys/Documents/Studium/Analytik-Praktikum/qAlgorithms/build",
-  "command": "C:\\msys64\\ucrt64\\bin\\c++.exe -IC:/Users/unisys/Documents/Studium/Analytik-Praktikum/qAlgorithms/include -IC:/Users/unisys/Documents/Studium/Analytik-Praktikum/qAlgorithms/external/StreamCraft/src -g -std=gnu++20 -Wall -Wno-unknown-pragmas -fdiagnostics-color=always -O3 -g -fopenmp -o CMakeFiles\\qAlgorithms.dir\\src\\qalgorithms_main.cpp.obj -c C:\\Users\\unisys\\Documents\\Studium\\Analytik-Praktikum\\qAlgorithms\\src\\qalgorithms_main.cpp",
+  "command": "C:\\msys64\\ucrt64\\bin\\c++.exe -IC:/Users/unisys/Documents/Studium/Analytik-Praktikum/qAlgorithms/include -IC:/Users/unisys/Documents/Studium/Analytik-Praktikum/qAlgorithms/external/StreamCraft/src -g -std=gnu++20 -Wall -Wuninitialized -Wno-unknown-pragmas -fdiagnostics-color=always -O3 -g -fopenmp -o CMakeFiles\\qAlgorithms.dir\\src\\qalgorithms_main.cpp.obj -c C:\\Users\\unisys\\Documents\\Studium\\Analytik-Praktikum\\qAlgorithms\\src\\qalgorithms_main.cpp",
   "file": "C:\\Users\\unisys\\Documents\\Studium\\Analytik-Praktikum\\qAlgorithms\\src\\qalgorithms_main.cpp",
   "output": "CMakeFiles\\qAlgorithms.dir\\src\\qalgorithms_main.cpp.obj"
 },
 {
   "directory": "C:/Users/unisys/Documents/Studium/Analytik-Praktikum/qAlgorithms/build",
-  "command": "C:\\msys64\\ucrt64\\bin\\c++.exe -IC:/Users/unisys/Documents/Studium/Analytik-Praktikum/qAlgorithms/include -IC:/Users/unisys/Documents/Studium/Analytik-Praktikum/qAlgorithms/external/StreamCraft/src -g -std=gnu++20 -Wall -Wno-unknown-pragmas -fdiagnostics-color=always -O3 -g -fopenmp -o CMakeFiles\\qAlgorithms.dir\\src\\qalgorithms_matrix.cpp.obj -c C:\\Users\\unisys\\Documents\\Studium\\Analytik-Praktikum\\qAlgorithms\\src\\qalgorithms_matrix.cpp",
+  "command": "C:\\msys64\\ucrt64\\bin\\c++.exe -IC:/Users/unisys/Documents/Studium/Analytik-Praktikum/qAlgorithms/include -IC:/Users/unisys/Documents/Studium/Analytik-Praktikum/qAlgorithms/external/StreamCraft/src -g -std=gnu++20 -Wall -Wuninitialized -Wno-unknown-pragmas -fdiagnostics-color=always -O3 -g -fopenmp -o CMakeFiles\\qAlgorithms.dir\\src\\qalgorithms_matrix.cpp.obj -c C:\\Users\\unisys\\Documents\\Studium\\Analytik-Praktikum\\qAlgorithms\\src\\qalgorithms_matrix.cpp",
   "file": "C:\\Users\\unisys\\Documents\\Studium\\Analytik-Praktikum\\qAlgorithms\\src\\qalgorithms_matrix.cpp",
   "output": "CMakeFiles\\qAlgorithms.dir\\src\\qalgorithms_matrix.cpp.obj"
 },
 {
   "directory": "C:/Users/unisys/Documents/Studium/Analytik-Praktikum/qAlgorithms/build",
-  "command": "C:\\msys64\\ucrt64\\bin\\c++.exe -IC:/Users/unisys/Documents/Studium/Analytik-Praktikum/qAlgorithms/include -IC:/Users/unisys/Documents/Studium/Analytik-Praktikum/qAlgorithms/external/StreamCraft/src -g -std=gnu++20 -Wall -Wno-unknown-pragmas -fdiagnostics-color=always -O3 -g -fopenmp -o CMakeFiles\\qAlgorithms.dir\\src\\qalgorithms_measurement_data.cpp.obj -c C:\\Users\\unisys\\Documents\\Studium\\Analytik-Praktikum\\qAlgorithms\\src\\qalgorithms_measurement_data.cpp",
+  "command": "C:\\msys64\\ucrt64\\bin\\c++.exe -IC:/Users/unisys/Documents/Studium/Analytik-Praktikum/qAlgorithms/include -IC:/Users/unisys/Documents/Studium/Analytik-Praktikum/qAlgorithms/external/StreamCraft/src -g -std=gnu++20 -Wall -Wuninitialized -Wno-unknown-pragmas -fdiagnostics-color=always -O3 -g -fopenmp -o CMakeFiles\\qAlgorithms.dir\\src\\qalgorithms_measurement_data.cpp.obj -c C:\\Users\\unisys\\Documents\\Studium\\Analytik-Praktikum\\qAlgorithms\\src\\qalgorithms_measurement_data.cpp",
   "file": "C:\\Users\\unisys\\Documents\\Studium\\Analytik-Praktikum\\qAlgorithms\\src\\qalgorithms_measurement_data.cpp",
   "output": "CMakeFiles\\qAlgorithms.dir\\src\\qalgorithms_measurement_data.cpp.obj"
 },
 {
   "directory": "C:/Users/unisys/Documents/Studium/Analytik-Praktikum/qAlgorithms/build",
-  "command": "C:\\msys64\\ucrt64\\bin\\c++.exe -IC:/Users/unisys/Documents/Studium/Analytik-Praktikum/qAlgorithms/include -IC:/Users/unisys/Documents/Studium/Analytik-Praktikum/qAlgorithms/external/StreamCraft/src -g -std=gnu++20 -Wall -Wno-unknown-pragmas -fdiagnostics-color=always -O3 -g -fopenmp -o CMakeFiles\\qAlgorithms.dir\\src\\qalgorithms_measurement_data_lcms.cpp.obj -c C:\\Users\\unisys\\Documents\\Studium\\Analytik-Praktikum\\qAlgorithms\\src\\qalgorithms_measurement_data_lcms.cpp",
+  "command": "C:\\msys64\\ucrt64\\bin\\c++.exe -IC:/Users/unisys/Documents/Studium/Analytik-Praktikum/qAlgorithms/include -IC:/Users/unisys/Documents/Studium/Analytik-Praktikum/qAlgorithms/external/StreamCraft/src -g -std=gnu++20 -Wall -Wuninitialized -Wno-unknown-pragmas -fdiagnostics-color=always -O3 -g -fopenmp -o CMakeFiles\\qAlgorithms.dir\\src\\qalgorithms_measurement_data_lcms.cpp.obj -c C:\\Users\\unisys\\Documents\\Studium\\Analytik-Praktikum\\qAlgorithms\\src\\qalgorithms_measurement_data_lcms.cpp",
   "file": "C:\\Users\\unisys\\Documents\\Studium\\Analytik-Praktikum\\qAlgorithms\\src\\qalgorithms_measurement_data_lcms.cpp",
   "output": "CMakeFiles\\qAlgorithms.dir\\src\\qalgorithms_measurement_data_lcms.cpp.obj"
 },
 {
   "directory": "C:/Users/unisys/Documents/Studium/Analytik-Praktikum/qAlgorithms/build",
-  "command": "C:\\msys64\\ucrt64\\bin\\c++.exe -IC:/Users/unisys/Documents/Studium/Analytik-Praktikum/qAlgorithms/include -IC:/Users/unisys/Documents/Studium/Analytik-Praktikum/qAlgorithms/external/StreamCraft/src -g -std=gnu++20 -Wall -Wno-unknown-pragmas -fdiagnostics-color=always -O3 -g -fopenmp -o CMakeFiles\\qAlgorithms.dir\\src\\qalgorithms_qbin.cpp.obj -c C:\\Users\\unisys\\Documents\\Studium\\Analytik-Praktikum\\qAlgorithms\\src\\qalgorithms_qbin.cpp",
+  "command": "C:\\msys64\\ucrt64\\bin\\c++.exe -IC:/Users/unisys/Documents/Studium/Analytik-Praktikum/qAlgorithms/include -IC:/Users/unisys/Documents/Studium/Analytik-Praktikum/qAlgorithms/external/StreamCraft/src -g -std=gnu++20 -Wall -Wuninitialized -Wno-unknown-pragmas -fdiagnostics-color=always -O3 -g -fopenmp -o CMakeFiles\\qAlgorithms.dir\\src\\qalgorithms_qbin.cpp.obj -c C:\\Users\\unisys\\Documents\\Studium\\Analytik-Praktikum\\qAlgorithms\\src\\qalgorithms_qbin.cpp",
   "file": "C:\\Users\\unisys\\Documents\\Studium\\Analytik-Praktikum\\qAlgorithms\\src\\qalgorithms_qbin.cpp",
   "output": "CMakeFiles\\qAlgorithms.dir\\src\\qalgorithms_qbin.cpp.obj"
 },
 {
   "directory": "C:/Users/unisys/Documents/Studium/Analytik-Praktikum/qAlgorithms/build",
-  "command": "C:\\msys64\\ucrt64\\bin\\c++.exe -IC:/Users/unisys/Documents/Studium/Analytik-Praktikum/qAlgorithms/include -IC:/Users/unisys/Documents/Studium/Analytik-Praktikum/qAlgorithms/external/StreamCraft/src -g -std=gnu++20 -Wall -Wno-unknown-pragmas -fdiagnostics-color=always -O3 -g -fopenmp -o CMakeFiles\\qAlgorithms.dir\\src\\qalgorithms_qpeaks.cpp.obj -c C:\\Users\\unisys\\Documents\\Studium\\Analytik-Praktikum\\qAlgorithms\\src\\qalgorithms_qpeaks.cpp",
+  "command": "C:\\msys64\\ucrt64\\bin\\c++.exe -IC:/Users/unisys/Documents/Studium/Analytik-Praktikum/qAlgorithms/include -IC:/Users/unisys/Documents/Studium/Analytik-Praktikum/qAlgorithms/external/StreamCraft/src -g -std=gnu++20 -Wall -Wuninitialized -Wno-unknown-pragmas -fdiagnostics-color=always -O3 -g -fopenmp -o CMakeFiles\\qAlgorithms.dir\\src\\qalgorithms_qpeaks.cpp.obj -c C:\\Users\\unisys\\Documents\\Studium\\Analytik-Praktikum\\qAlgorithms\\src\\qalgorithms_qpeaks.cpp",
   "file": "C:\\Users\\unisys\\Documents\\Studium\\Analytik-Praktikum\\qAlgorithms\\src\\qalgorithms_qpeaks.cpp",
   "output": "CMakeFiles\\qAlgorithms.dir\\src\\qalgorithms_qpeaks.cpp.obj"
 },
 {
   "directory": "C:/Users/unisys/Documents/Studium/Analytik-Praktikum/qAlgorithms/build",
-  "command": "C:\\msys64\\ucrt64\\bin\\c++.exe -IC:/Users/unisys/Documents/Studium/Analytik-Praktikum/qAlgorithms/include -IC:/Users/unisys/Documents/Studium/Analytik-Praktikum/qAlgorithms/external/StreamCraft/src -g -std=gnu++20 -Wall -Wno-unknown-pragmas -fdiagnostics-color=always -O3 -g -fopenmp -o CMakeFiles\\qAlgorithms.dir\\src\\qalgorithms_utils.cpp.obj -c C:\\Users\\unisys\\Documents\\Studium\\Analytik-Praktikum\\qAlgorithms\\src\\qalgorithms_utils.cpp",
+  "command": "C:\\msys64\\ucrt64\\bin\\c++.exe -IC:/Users/unisys/Documents/Studium/Analytik-Praktikum/qAlgorithms/include -IC:/Users/unisys/Documents/Studium/Analytik-Praktikum/qAlgorithms/external/StreamCraft/src -g -std=gnu++20 -Wall -Wuninitialized -Wno-unknown-pragmas -fdiagnostics-color=always -O3 -g -fopenmp -o CMakeFiles\\qAlgorithms.dir\\src\\qalgorithms_utils.cpp.obj -c C:\\Users\\unisys\\Documents\\Studium\\Analytik-Praktikum\\qAlgorithms\\src\\qalgorithms_utils.cpp",
   "file": "C:\\Users\\unisys\\Documents\\Studium\\Analytik-Praktikum\\qAlgorithms\\src\\qalgorithms_utils.cpp",
   "output": "CMakeFiles\\qAlgorithms.dir\\src\\qalgorithms_utils.cpp.obj"
 }

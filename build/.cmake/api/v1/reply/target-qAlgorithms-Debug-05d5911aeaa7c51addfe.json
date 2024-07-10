@@ -67,6 +67,10 @@
 				},
 				{
 					"backtrace" : 3,
+					"fragment" : "-Wuninitialized"
+				},
+				{
+					"backtrace" : 3,
 					"fragment" : "-Wno-unknown-pragmas"
 				},
 				{

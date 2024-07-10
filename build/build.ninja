@@ -51,84 +51,84 @@ build cmake_object_order_depends_target_qAlgorithms: phony || .
 
 build CMakeFiles/qAlgorithms.dir/external/StreamCraft/src/StreamCraft_mzml.cpp.obj: CXX_COMPILER__qAlgorithms_unscanned_Debug C$:/Users/unisys/Documents/Studium/Analytik-Praktikum/qAlgorithms/external/StreamCraft/src/StreamCraft_mzml.cpp || cmake_object_order_depends_target_qAlgorithms
   DEP_FILE = CMakeFiles\qAlgorithms.dir\external\StreamCraft\src\StreamCraft_mzml.cpp.obj.d
-  FLAGS = -g -std=gnu++20 -Wall -Wno-unknown-pragmas -fdiagnostics-color=always -O3 -g -fopenmp
+  FLAGS = -g -std=gnu++20 -Wall -Wuninitialized -Wno-unknown-pragmas -fdiagnostics-color=always -O3 -g -fopenmp
   INCLUDES = -IC:/Users/unisys/Documents/Studium/Analytik-Praktikum/qAlgorithms/include -IC:/Users/unisys/Documents/Studium/Analytik-Praktikum/qAlgorithms/external/StreamCraft/src
   OBJECT_DIR = CMakeFiles\qAlgorithms.dir
   OBJECT_FILE_DIR = CMakeFiles\qAlgorithms.dir\external\StreamCraft\src
 
 build CMakeFiles/qAlgorithms.dir/external/StreamCraft/src/StreamCraft_mzxml.cpp.obj: CXX_COMPILER__qAlgorithms_unscanned_Debug C$:/Users/unisys/Documents/Studium/Analytik-Praktikum/qAlgorithms/external/StreamCraft/src/StreamCraft_mzxml.cpp || cmake_object_order_depends_target_qAlgorithms
   DEP_FILE = CMakeFiles\qAlgorithms.dir\external\StreamCraft\src\StreamCraft_mzxml.cpp.obj.d
-  FLAGS = -g -std=gnu++20 -Wall -Wno-unknown-pragmas -fdiagnostics-color=always -O3 -g -fopenmp
+  FLAGS = -g -std=gnu++20 -Wall -Wuninitialized -Wno-unknown-pragmas -fdiagnostics-color=always -O3 -g -fopenmp
   INCLUDES = -IC:/Users/unisys/Documents/Studium/Analytik-Praktikum/qAlgorithms/include -IC:/Users/unisys/Documents/Studium/Analytik-Praktikum/qAlgorithms/external/StreamCraft/src
   OBJECT_DIR = CMakeFiles\qAlgorithms.dir
   OBJECT_FILE_DIR = CMakeFiles\qAlgorithms.dir\external\StreamCraft\src
 
 build CMakeFiles/qAlgorithms.dir/external/StreamCraft/src/StreamCraft_utils.cpp.obj: CXX_COMPILER__qAlgorithms_unscanned_Debug C$:/Users/unisys/Documents/Studium/Analytik-Praktikum/qAlgorithms/external/StreamCraft/src/StreamCraft_utils.cpp || cmake_object_order_depends_target_qAlgorithms
   DEP_FILE = CMakeFiles\qAlgorithms.dir\external\StreamCraft\src\StreamCraft_utils.cpp.obj.d
-  FLAGS = -g -std=gnu++20 -Wall -Wno-unknown-pragmas -fdiagnostics-color=always -O3 -g -fopenmp
+  FLAGS = -g -std=gnu++20 -Wall -Wuninitialized -Wno-unknown-pragmas -fdiagnostics-color=always -O3 -g -fopenmp
   INCLUDES = -IC:/Users/unisys/Documents/Studium/Analytik-Praktikum/qAlgorithms/include -IC:/Users/unisys/Documents/Studium/Analytik-Praktikum/qAlgorithms/external/StreamCraft/src
   OBJECT_DIR = CMakeFiles\qAlgorithms.dir
   OBJECT_FILE_DIR = CMakeFiles\qAlgorithms.dir\external\StreamCraft\src
 
 build CMakeFiles/qAlgorithms.dir/src/qalgorithms_datatype_mass_spectrum.cpp.obj: CXX_COMPILER__qAlgorithms_unscanned_Debug C$:/Users/unisys/Documents/Studium/Analytik-Praktikum/qAlgorithms/src/qalgorithms_datatype_mass_spectrum.cpp || cmake_object_order_depends_target_qAlgorithms
   DEP_FILE = CMakeFiles\qAlgorithms.dir\src\qalgorithms_datatype_mass_spectrum.cpp.obj.d
-  FLAGS = -g -std=gnu++20 -Wall -Wno-unknown-pragmas -fdiagnostics-color=always -O3 -g -fopenmp
+  FLAGS = -g -std=gnu++20 -Wall -Wuninitialized -Wno-unknown-pragmas -fdiagnostics-color=always -O3 -g -fopenmp
   INCLUDES = -IC:/Users/unisys/Documents/Studium/Analytik-Praktikum/qAlgorithms/include -IC:/Users/unisys/Documents/Studium/Analytik-Praktikum/qAlgorithms/external/StreamCraft/src
   OBJECT_DIR = CMakeFiles\qAlgorithms.dir
   OBJECT_FILE_DIR = CMakeFiles\qAlgorithms.dir\src
 
 build CMakeFiles/qAlgorithms.dir/src/qalgorithms_datatype_peak.cpp.obj: CXX_COMPILER__qAlgorithms_unscanned_Debug C$:/Users/unisys/Documents/Studium/Analytik-Praktikum/qAlgorithms/src/qalgorithms_datatype_peak.cpp || cmake_object_order_depends_target_qAlgorithms
   DEP_FILE = CMakeFiles\qAlgorithms.dir\src\qalgorithms_datatype_peak.cpp.obj.d
-  FLAGS = -g -std=gnu++20 -Wall -Wno-unknown-pragmas -fdiagnostics-color=always -O3 -g -fopenmp
+  FLAGS = -g -std=gnu++20 -Wall -Wuninitialized -Wno-unknown-pragmas -fdiagnostics-color=always -O3 -g -fopenmp
   INCLUDES = -IC:/Users/unisys/Documents/Studium/Analytik-Praktikum/qAlgorithms/include -IC:/Users/unisys/Documents/Studium/Analytik-Praktikum/qAlgorithms/external/StreamCraft/src
   OBJECT_DIR = CMakeFiles\qAlgorithms.dir
   OBJECT_FILE_DIR = CMakeFiles\qAlgorithms.dir\src
 
 build CMakeFiles/qAlgorithms.dir/src/qalgorithms_main.cpp.obj: CXX_COMPILER__qAlgorithms_unscanned_Debug C$:/Users/unisys/Documents/Studium/Analytik-Praktikum/qAlgorithms/src/qalgorithms_main.cpp || cmake_object_order_depends_target_qAlgorithms
   DEP_FILE = CMakeFiles\qAlgorithms.dir\src\qalgorithms_main.cpp.obj.d
-  FLAGS = -g -std=gnu++20 -Wall -Wno-unknown-pragmas -fdiagnostics-color=always -O3 -g -fopenmp
+  FLAGS = -g -std=gnu++20 -Wall -Wuninitialized -Wno-unknown-pragmas -fdiagnostics-color=always -O3 -g -fopenmp
   INCLUDES = -IC:/Users/unisys/Documents/Studium/Analytik-Praktikum/qAlgorithms/include -IC:/Users/unisys/Documents/Studium/Analytik-Praktikum/qAlgorithms/external/StreamCraft/src
   OBJECT_DIR = CMakeFiles\qAlgorithms.dir
   OBJECT_FILE_DIR = CMakeFiles\qAlgorithms.dir\src
 
 build CMakeFiles/qAlgorithms.dir/src/qalgorithms_matrix.cpp.obj: CXX_COMPILER__qAlgorithms_unscanned_Debug C$:/Users/unisys/Documents/Studium/Analytik-Praktikum/qAlgorithms/src/qalgorithms_matrix.cpp || cmake_object_order_depends_target_qAlgorithms
   DEP_FILE = CMakeFiles\qAlgorithms.dir\src\qalgorithms_matrix.cpp.obj.d
-  FLAGS = -g -std=gnu++20 -Wall -Wno-unknown-pragmas -fdiagnostics-color=always -O3 -g -fopenmp
+  FLAGS = -g -std=gnu++20 -Wall -Wuninitialized -Wno-unknown-pragmas -fdiagnostics-color=always -O3 -g -fopenmp
   INCLUDES = -IC:/Users/unisys/Documents/Studium/Analytik-Praktikum/qAlgorithms/include -IC:/Users/unisys/Documents/Studium/Analytik-Praktikum/qAlgorithms/external/StreamCraft/src
   OBJECT_DIR = CMakeFiles\qAlgorithms.dir
   OBJECT_FILE_DIR = CMakeFiles\qAlgorithms.dir\src
 
 build CMakeFiles/qAlgorithms.dir/src/qalgorithms_measurement_data.cpp.obj: CXX_COMPILER__qAlgorithms_unscanned_Debug C$:/Users/unisys/Documents/Studium/Analytik-Praktikum/qAlgorithms/src/qalgorithms_measurement_data.cpp || cmake_object_order_depends_target_qAlgorithms
   DEP_FILE = CMakeFiles\qAlgorithms.dir\src\qalgorithms_measurement_data.cpp.obj.d
-  FLAGS = -g -std=gnu++20 -Wall -Wno-unknown-pragmas -fdiagnostics-color=always -O3 -g -fopenmp
+  FLAGS = -g -std=gnu++20 -Wall -Wuninitialized -Wno-unknown-pragmas -fdiagnostics-color=always -O3 -g -fopenmp
   INCLUDES = -IC:/Users/unisys/Documents/Studium/Analytik-Praktikum/qAlgorithms/include -IC:/Users/unisys/Documents/Studium/Analytik-Praktikum/qAlgorithms/external/StreamCraft/src
   OBJECT_DIR = CMakeFiles\qAlgorithms.dir
   OBJECT_FILE_DIR = CMakeFiles\qAlgorithms.dir\src
 
 build CMakeFiles/qAlgorithms.dir/src/qalgorithms_measurement_data_lcms.cpp.obj: CXX_COMPILER__qAlgorithms_unscanned_Debug C$:/Users/unisys/Documents/Studium/Analytik-Praktikum/qAlgorithms/src/qalgorithms_measurement_data_lcms.cpp || cmake_object_order_depends_target_qAlgorithms
   DEP_FILE = CMakeFiles\qAlgorithms.dir\src\qalgorithms_measurement_data_lcms.cpp.obj.d
-  FLAGS = -g -std=gnu++20 -Wall -Wno-unknown-pragmas -fdiagnostics-color=always -O3 -g -fopenmp
+  FLAGS = -g -std=gnu++20 -Wall -Wuninitialized -Wno-unknown-pragmas -fdiagnostics-color=always -O3 -g -fopenmp
   INCLUDES = -IC:/Users/unisys/Documents/Studium/Analytik-Praktikum/qAlgorithms/include -IC:/Users/unisys/Documents/Studium/Analytik-Praktikum/qAlgorithms/external/StreamCraft/src
   OBJECT_DIR = CMakeFiles\qAlgorithms.dir
   OBJECT_FILE_DIR = CMakeFiles\qAlgorithms.dir\src
 
 build CMakeFiles/qAlgorithms.dir/src/qalgorithms_qbin.cpp.obj: CXX_COMPILER__qAlgorithms_unscanned_Debug C$:/Users/unisys/Documents/Studium/Analytik-Praktikum/qAlgorithms/src/qalgorithms_qbin.cpp || cmake_object_order_depends_target_qAlgorithms
   DEP_FILE = CMakeFiles\qAlgorithms.dir\src\qalgorithms_qbin.cpp.obj.d
-  FLAGS = -g -std=gnu++20 -Wall -Wno-unknown-pragmas -fdiagnostics-color=always -O3 -g -fopenmp
+  FLAGS = -g -std=gnu++20 -Wall -Wuninitialized -Wno-unknown-pragmas -fdiagnostics-color=always -O3 -g -fopenmp
   INCLUDES = -IC:/Users/unisys/Documents/Studium/Analytik-Praktikum/qAlgorithms/include -IC:/Users/unisys/Documents/Studium/Analytik-Praktikum/qAlgorithms/external/StreamCraft/src
   OBJECT_DIR = CMakeFiles\qAlgorithms.dir
   OBJECT_FILE_DIR = CMakeFiles\qAlgorithms.dir\src
 
 build CMakeFiles/qAlgorithms.dir/src/qalgorithms_qpeaks.cpp.obj: CXX_COMPILER__qAlgorithms_unscanned_Debug C$:/Users/unisys/Documents/Studium/Analytik-Praktikum/qAlgorithms/src/qalgorithms_qpeaks.cpp || cmake_object_order_depends_target_qAlgorithms
   DEP_FILE = CMakeFiles\qAlgorithms.dir\src\qalgorithms_qpeaks.cpp.obj.d
-  FLAGS = -g -std=gnu++20 -Wall -Wno-unknown-pragmas -fdiagnostics-color=always -O3 -g -fopenmp
+  FLAGS = -g -std=gnu++20 -Wall -Wuninitialized -Wno-unknown-pragmas -fdiagnostics-color=always -O3 -g -fopenmp
   INCLUDES = -IC:/Users/unisys/Documents/Studium/Analytik-Praktikum/qAlgorithms/include -IC:/Users/unisys/Documents/Studium/Analytik-Praktikum/qAlgorithms/external/StreamCraft/src
   OBJECT_DIR = CMakeFiles\qAlgorithms.dir
   OBJECT_FILE_DIR = CMakeFiles\qAlgorithms.dir\src
 
 build CMakeFiles/qAlgorithms.dir/src/qalgorithms_utils.cpp.obj: CXX_COMPILER__qAlgorithms_unscanned_Debug C$:/Users/unisys/Documents/Studium/Analytik-Praktikum/qAlgorithms/src/qalgorithms_utils.cpp || cmake_object_order_depends_target_qAlgorithms
   DEP_FILE = CMakeFiles\qAlgorithms.dir\src\qalgorithms_utils.cpp.obj.d
-  FLAGS = -g -std=gnu++20 -Wall -Wno-unknown-pragmas -fdiagnostics-color=always -O3 -g -fopenmp
+  FLAGS = -g -std=gnu++20 -Wall -Wuninitialized -Wno-unknown-pragmas -fdiagnostics-color=always -O3 -g -fopenmp
   INCLUDES = -IC:/Users/unisys/Documents/Studium/Analytik-Praktikum/qAlgorithms/include -IC:/Users/unisys/Documents/Studium/Analytik-Praktikum/qAlgorithms/external/StreamCraft/src
   OBJECT_DIR = CMakeFiles\qAlgorithms.dir
   OBJECT_FILE_DIR = CMakeFiles\qAlgorithms.dir\src
