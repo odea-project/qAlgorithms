@@ -14,7 +14,8 @@ namespace q
     return sum;
   }
 
-  size_t sum(const std::vector<size_t> &vec)
+  size_t
+  sum(const std::vector<size_t> &vec)
   {
     double sum = 0.0;
     for (const auto &elem : vec)
@@ -24,7 +25,8 @@ namespace q
     return sum;
   }
 
-  double sum(const std::vector<double> &vec)
+  double
+  sum(const std::vector<double> &vec)
   {
     double sum = 0.0;
     for (const auto &elem : vec)
@@ -44,7 +46,23 @@ namespace q
     return sum;
   }
 
-  double exp_approx_d(const double x)
+  float
+  sum8(const __m256 &vec)
+  {
+    const __m128 hiQuad = _mm256_extractf128_ps(vec, 1);     // hiQuad = ( x7, x6, x5, x4 )
+    const __m128 loQuad = _mm256_castps256_ps128(vec);       // loQuad = ( x3, x2, x1, x0 )
+    const __m128 sumQuad = _mm_add_ps(loQuad, hiQuad);       // sumQuad = ( x3 + x7, x2 + x6, x1 + x5, x0 + x4 )
+    const __m128 loDual = sumQuad;                           // loDual = ( -, -, x1 + x5, x0 + x4 )
+    const __m128 hiDual = _mm_movehl_ps(sumQuad, sumQuad);   // hiDual = ( -, -, x3 + x7, x2 + x6 )
+    const __m128 sumDual = _mm_add_ps(loDual, hiDual);       // sumDual = ( -, -, x1 + x3 + x5 + x7, x0 + x2 + x4 + x6 )
+    const __m128 lo = sumDual;                               // lo = ( -, -, -, x0 + x2 + x4 + x6 )
+    const __m128 hi = _mm_shuffle_ps(sumDual, sumDual, 0x1); // hi = ( -, -, -, x1 + x3 + x5 + x7 )
+    const __m128 sum = _mm_add_ss(lo, hi);                   // sum = ( -, -, -, x0 + x1 + x2 + x3 + x4 + x5 + x6 + x7 )
+    return _mm_cvtss_f32(sum);
+  }
+
+  double
+  exp_approx_d(const double x)
   {
     constexpr double LOG2E = 1.44269504088896340736;
     constexpr double OFFSET = 1022.9329329329329;
@@ -76,7 +94,6 @@ namespace q
     return result;
   }
 
-
   float erf_approx_f(const float x)
   {
     float sign = x < 0 ? -1.0f : 1.0f; // get sign as the approximation is only valid for positive x
@@ -86,9 +103,9 @@ namespace q
     constexpr float a3 = 0.000972f;    // empirically determined
     constexpr float a4 = 0.078108f;    // empirically determined
     t = 1.0f + t * (a1 + t * (a2 + t * (a3 + t * a4)));
-    t = t * t * t * t; // t^4
+    t = t * t * t * t;               // t^4
     return sign * (1.0f - 1.0f / t); // return the final approximation
-  } 
+  }
 
   double dawson5(double x)
   {

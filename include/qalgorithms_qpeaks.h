@@ -65,19 +65,6 @@ namespace q
 
             static void initialize();
 
-            q::Matrices::Vector
-            calcYhat(
-                const int left_limit,
-                const int right_limit,
-                const q::Matrices::Matrix_mc &beta,
-                const size_t idx);
-
-            q::Matrices::Vector
-            calcYhat(
-                const int left_limit,
-                const int right_limit,
-                const q::Matrices::Vector &beta);
-
             /**
              * @brief Calculate the yhat vector for the given scale and coefficients.
              *
@@ -120,6 +107,8 @@ namespace q
             static __m256 LINSPACE_UP_POS_256;        // 256 bit register with 0, 1, 2, 3, 4, 5, 6, 7
             static __m256 LINSPACE_UP_NEG_256;        // 256 bit register with 0, -1, -2, -3, -4, -5, -6, -7
             static __m256 LINSPACE_DOWN_NEG_256;      // 256 bit register with -7, -6, -5, -4, -3, -2, -1, 0
+            static __m256i LINSPACE_UP_INT_256;        // 256 bit register with 0, 1, 2, 3, 4, 5, 6, 7
+            static __m256i LINSPACE_DOWN_INT_256;      // 256 bit register with 7, 6, 5, 4, 3, 2, 1, 0
             static __m256 MINUS_ONE_256;              // 256 bit register with -1
 
             int global_maxScale;
@@ -131,7 +120,7 @@ namespace q
                 int scale;                 // scale of the regression window, i.e., 2*scale+1 = window size
                 int df;                    // degree of freedom, interpolated data points will not be considered
                 double apex_position;      // position of the apex of the peak
-                double mse;                // mean squared error
+                float mse;                // mean squared error
                 __m128 coeff;              // regression coefficients
                 bool isValid;              // flag to indicate if the regression is valid
                 double left_limit;         // left limit of the peak regression window
@@ -144,7 +133,7 @@ namespace q
                     int scale,
                     int df,
                     double apex_position,
-                    double mse,
+                    float mse,
                     __m128 coeff,
                     bool isValid = true,
                     double left_limit = 0.0,
@@ -180,8 +169,8 @@ namespace q
             validateRegressions(
                 const __m128 *beta,
                 const size_t n_segments,
-                const q::Matrices::Vector &Y,
-                const q::Matrices::Vector &Ylog,
+                const float *y_start,
+                const float *ylog_start,
                 const q::Matrices::BoolVector &df,
                 const int scale,
                 std::vector<std::unique_ptr<validRegression>> &validRegressions);
@@ -189,8 +178,8 @@ namespace q
             void
             mergeRegressionsOverScales(
                 std::vector<std::unique_ptr<validRegression>> &validRegressions,
-                const q::Matrices::Vector &Ylog,
-                const q::Matrices::Vector &Y,
+                const float *y_start,
+                const float *ylog_start,
                 const q::Matrices::BoolVector &df);
 
             std::vector<std::unique_ptr<DataType::Peak>>
@@ -203,17 +192,20 @@ namespace q
             std::vector<std::vector<std::unique_ptr<DataType::Peak>>>
             createPeakList(std::vector<std::vector<std::unique_ptr<DataType::Peak>>> &allPeaks);
 
-            double
+            float
             calcSSE(
                 const q::Matrices::Vector &yhat,
                 const q::Matrices::Vector &y,
                 const float *y_start = nullptr) const;
-
-            double
-            calcSSEexp(
-                const q::Matrices::Vector &yhat_log,
-                const q::Matrices::Vector &y,
-                const float *y_start = nullptr) const;
+            
+            float
+            calcSSE(
+                const int left_limit,
+                const int right_limit,
+                const __m128 &coeff,
+                const float *y_start = nullptr,
+                const bool calc_EXP = false,
+                const bool calc_CHISQ = false) const;
 
             /**
              * @brief Calculate the best mean squared error of the regression model with different regression windows BUT same window size.
@@ -227,7 +219,7 @@ namespace q
              */
             void
             calcExtendedMse(
-                const q::Matrices::Vector &Y,
+                const float *y_start,
                 const std::vector<std::unique_ptr<validRegression>> &regressions,
                 const q::Matrices::BoolVector &df);
 
@@ -305,7 +297,7 @@ namespace q
                 const double apex_position,
                 const int scale,
                 const int index_loop,
-                const q::Matrices::Vector &Y,
+                const float * y_start, 
                 float &apexToEdge) const;
 
             /**
@@ -324,7 +316,7 @@ namespace q
                 const __m128 &coeff,
                 const double inverseMatrix_2_2,
                 const double inverseMatrix_3_3,
-                const double mse,
+                const float mse,
                 const int df_sum) const;
 
             /**
@@ -339,7 +331,7 @@ namespace q
              */
             bool
             isValidPeakHeight(
-                const double mse,
+                const float mse,
                 const size_t index,
                 const int scale,
                 const double apex_position,
@@ -363,7 +355,7 @@ namespace q
             bool
             isValidPeakArea(
                 const __m128 &coeff,
-                const double mse,
+                const float mse,
                 const int scale,
                 const int df_sum,
                 double &area,
@@ -409,12 +401,6 @@ namespace q
                 __m128 *result,
                 __m128 *products,
                 const size_t buffer_size);
-
-            // q::Matrices::Matrix_mc
-            // convolve_fast(
-            //     const size_t scale,
-            //     const float (&vec)[512],
-            //     const size_t n);
         };
     } // namespace Algorithms
 } // namespace q

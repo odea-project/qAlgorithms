@@ -115,23 +115,27 @@ namespace q
 #pragma region "initialize"
     alignas(16) float q::Algorithms::qPeaks::x_square[128];   // array to store the square of the x values
     alignas(16) float q::Algorithms::qPeaks::invArray[64][6]; // array to store the 6 unique values of the inverse matrix for each scale
-    __m128 q::Algorithms::qPeaks::ZERO_128;
-    __m256 q::Algorithms::qPeaks::ZERO_256;
-    __m128 q::Algorithms::qPeaks::KEY_128;
-    __m256 q::Algorithms::qPeaks::LINSPACE_UP_POS_256;
-    __m256 q::Algorithms::qPeaks::LINSPACE_UP_NEG_256;
-    __m256 q::Algorithms::qPeaks::LINSPACE_DOWN_NEG_256;
-    __m256 q::Algorithms::qPeaks::MINUS_ONE_256;
+    __m128 q::Algorithms::qPeaks::ZERO_128;                   // [0., 0., 0., 0.]
+    __m256 q::Algorithms::qPeaks::ZERO_256;                   // [0., 0., 0., 0., 0., 0., 0., 0.]
+    __m128 q::Algorithms::qPeaks::KEY_128;                    // [0., 4., 2., 1.]
+    __m256 q::Algorithms::qPeaks::LINSPACE_UP_POS_256;        // [7., 6., 5., 4., 3., 2., 1., 0.]
+    __m256 q::Algorithms::qPeaks::LINSPACE_UP_NEG_256;        // [-7., -6., -5., -4., -3., -2., -1., 0.]
+    __m256 q::Algorithms::qPeaks::LINSPACE_DOWN_NEG_256;      // [0., -1., -2., -3., -4., -5., -6., -7.]
+    __m256i q::Algorithms::qPeaks::LINSPACE_UP_INT_256;       // [7, 6, 5, 4, 3, 2, 1, 0]
+    __m256i q::Algorithms::qPeaks::LINSPACE_DOWN_INT_256;     // [0, 1, 2, 3, 4, 5, 6, 7]
+    __m256 q::Algorithms::qPeaks::MINUS_ONE_256;              // [-1., -1., -1., -1., -1., -1., -1., -1.]
     void qPeaks::initialize()
     {
 
-      ZERO_128 = _mm_setzero_ps();                                                          // init __m128 ZERO_128 with {0., 0., 0., 0.}
-      ZERO_256 = _mm256_setzero_ps();                                                       // init __m256 ZERO_256 with {0., 0., 0., 0., 0., 0., 0., 0.}
-      KEY_128 = _mm_set_ps(1.f, 2.f, 4.f, 0.f);                                             // init __m128 KEY_128 with {0., 4., 2., 1.}
-      LINSPACE_UP_POS_256 = _mm256_set_ps(7.f, 6.f, 5.f, 4.f, 3.f, 2.f, 1.f, 0.f);          // init __m256 LINSPACE_256 with {0., 1., 2., 3., 4., 5., 6., 7.}
-      LINSPACE_UP_NEG_256 = _mm256_set_ps(-7.f, -6.f, -5.f, -4.f, -3.f, -2.f, -1.f, 0.f);   // init __m256 LINSPACE_256 with {0., -1., -2., -3., -4., -5., -6., -7.}
-      LINSPACE_DOWN_NEG_256 = _mm256_set_ps(0.f, -1.f, -2.f, -3.f, -4.f, -5.f, -6.f, -7.f); // init __m256 LINSPACE_256 with {0., -1., -2., -3., -4., -5., -6., -7.}
-      MINUS_ONE_256 = _mm256_set1_ps(-1.f);                                                 // init __m256 MINUS_ONE_256 with {-1., -1., -1., -1., -1., -1., -1., -1.}
+      ZERO_128 = _mm_setzero_ps();
+      ZERO_256 = _mm256_setzero_ps();
+      KEY_128 = _mm_set_ps(1.f, 2.f, 4.f, 0.f);
+      LINSPACE_UP_POS_256 = _mm256_set_ps(7.f, 6.f, 5.f, 4.f, 3.f, 2.f, 1.f, 0.f);
+      LINSPACE_UP_NEG_256 = _mm256_set_ps(-7.f, -6.f, -5.f, -4.f, -3.f, -2.f, -1.f, 0.f);
+      LINSPACE_DOWN_NEG_256 = _mm256_set_ps(0.f, -1.f, -2.f, -3.f, -4.f, -5.f, -6.f, -7.f);
+      LINSPACE_UP_INT_256 = _mm256_set_epi32(7, 6, 5, 4, 3, 2, 1, 0);
+      LINSPACE_DOWN_INT_256 = _mm256_set_epi32(0, 1, 2, 3, 4, 5, 6, 7);
+      MINUS_ONE_256 = _mm256_set1_ps(-1.f);
       for (int i = 0; i < 128; ++i)
       {
         x_square[i] = i * i;
@@ -207,8 +211,8 @@ namespace q
             }
 
             // store x and y values in RefMatrix objects
-            q::Matrices::Vector Y(n);
-            q::Matrices::Vector X(n);
+            alignas(32) q::Matrices::Vector Y(n);
+            alignas(32) q::Matrices::Vector X(n);
             q::Matrices::BoolVector df(n);
             for (size_t i = 0; i < n; i++)
             {
@@ -239,7 +243,9 @@ namespace q
         std::vector<std::unique_ptr<validRegression>> &validRegressions)
     {
       size_t n = Y.n;
-      q::Matrices::Vector Ylog = logn(Y); // perform log-transform on Y
+      alignas(32) q::Matrices::Vector Ylog = logn(Y); // perform log-transform on Y
+      const float *ylog_start = Ylog.begin();
+      const float *y_start = Y.begin();
       int maxScale = std::min(this->global_maxScale, (int)(n - 1) / 2);
       validRegressions.reserve(calculateNumberOfRegressions(n));
       alignas(16) float ylog_array[512];
@@ -252,15 +258,15 @@ namespace q
       }
       for (int scale = 2; scale <= maxScale; scale++)
       {
-        const size_t k = 2 * scale + 1;                    //@todo delete k
-        const size_t n_segments = n - k + 1;               //@todo delete n_segments
+        const size_t k = 2 * scale + 1;                    // window size
+        const size_t n_segments = n - k + 1;               // number of segments, i.e. regressions
         alignas(16) __m128 *beta = new __m128[n_segments]; // coefficients matrix
 
         (n <= 512) ? convolve_static(scale, ylog_array, n, beta) : convolve_dynamic(scale, Ylog.elements, n, beta);
-        validateRegressions(beta, n_segments, Y, Ylog, df, scale, validRegressions);
+        validateRegressions(beta, n_segments, y_start, ylog_start, df, scale, validRegressions);
         delete[] beta;
       } // end for scale loop
-      mergeRegressionsOverScales(validRegressions, Ylog, Y, df);
+      mergeRegressionsOverScales(validRegressions, y_start, ylog_start, df);
     } // end runningRegression
 #pragma endregion runningRegression
 
@@ -268,16 +274,18 @@ namespace q
     void qPeaks::validateRegressions(
         const __m128 *beta,                // coefficients matrix
         const size_t n_segments,           // number of segments, i.e. regressions
-        const q::Matrices::Vector &Y,      // measured values
-        const q::Matrices::Vector &Ylog,   // log-transformed measured values
+        const float *y_start,              // pointer to the start of the Y matrix
+        const float *ylog_start,           // pointer to the start of the Ylog matrix
         const q::Matrices::BoolVector &df, // degree of freedom vector, 0: interpolated, 1: measured
         const int scale,                   // scale, i.e., the number of data points in a half window excluding the center point
         std::vector<std::unique_ptr<validRegression>> &validRegressions)
     {
       // declare constants
       const double inverseMatrix_2_2 = invArray[scale][4]; // variance of the quadratic term left side of the peak
+
       // declare variables
       std::vector<std::unique_ptr<validRegression>> validRegressionsTmp; // temporary vector to store valid regressions <index, apex_position>
+
       // iterate columwise over the coefficients matrix beta
       for (size_t i = 0; i < n_segments; i++)
       {
@@ -329,7 +337,7 @@ namespace q
           This block of code implements the apex to edge filter. It calculates the ratio of the apex signal to the edge signal and ensures that the ratio is greater than 2. This is a pre-filter for later signal-to-noise ratio checkups.
         */
         float apexToEdge = 0.f;
-        if (!isValidApexToEdge(apex_position, scale, static_cast<int>(i), Y, apexToEdge))
+        if (!isValidApexToEdge(apex_position, scale, static_cast<int>(i), y_start, apexToEdge))
         {
           continue; // invalid apex to edge ratio
         }
@@ -338,8 +346,7 @@ namespace q
           Quadratic Term Filter:
           This block of code implements the quadratic term filter. It calculates the mean squared error (MSE) between the predicted and actual values. Then it calculates the t-value for the quadratic term. If the t-value is less than the corresponding value in the tValuesArray, the quadratic term is considered statistically insignificant, and the loop continues to the next iteration.
         */
-        const q::Matrices::Vector yhat = calcYhat(-scale, scale, coeff);
-        const double mse = calcSSE(yhat, Ylog, Ylog.begin() + i) / df_sum; // mean squared error
+        const float mse = calcSSE(-scale, scale, coeff, ylog_start + i) / (df_sum - 4); // mean squared error
 
         if (!isValidQuadraticTerm(coeff, inverseMatrix_2_2, inverseMatrix_2_2, mse, df_sum))
         {
@@ -371,7 +378,7 @@ namespace q
           Chi-Square Filter:
           This block of code implements the chi-square filter. It calculates the chi-square value based on the weighted chi squared sum of expected and measured y values in the exponential domain. If the chi-square value is less than the corresponding value in the chiSquareArray, the loop continues to the next iteration.
         */
-        double chiSquare = calcChiSquareEXP(yhat, Y, Y.begin() + i);
+        float chiSquare = calcSSE(-scale, scale, coeff, y_start + i, true, true);
         if (chiSquare < chiSquareArray[df_sum - 5])
         {
           continue; // statistical insignificance of the chi-square value
@@ -389,13 +396,13 @@ namespace q
                 df_sum - 4,                // df
                 apex_position + i + scale, // apex position in x-axis 0:n
                 0,                         // initial MSE
-                coeff,               // coefficients register
-                true,                // isValid
-                left_limit,          // left_limit
-                right_limit,         // right_limit
-                area,                // peak area
-                uncertainty_height,  // uncertainty of the peak height
-                uncertainty_area     // uncertainty of the peak area
+                coeff,                     // coefficients register
+                true,                      // isValid
+                left_limit,                // left_limit
+                right_limit,               // right_limit
+                area,                      // peak area
+                uncertainty_height,        // uncertainty of the peak height
+                uncertainty_area           // uncertainty of the peak area
                 ));
       } // end for loop
       // early return if no or only one valid peak
@@ -454,7 +461,7 @@ namespace q
         }
         else
         { // survival of the fittest based on mse between original data and reconstructed (exp transform of regression)
-          calcExtendedMse(Y, group, df);
+          calcExtendedMse(y_start, group, df);
           for (auto &regression : group)
           {
             if (regression->isValid)
@@ -471,8 +478,8 @@ namespace q
     void
     qPeaks::mergeRegressionsOverScales(
         std::vector<std::unique_ptr<validRegression>> &validRegressions,
-        const q::Matrices::Vector &Ylog,
-        const q::Matrices::Vector &Y,
+        const float *y_start,
+        const float *ylog_start,
         const q::Matrices::BoolVector &df)
     {
       if (validRegressions.empty())
@@ -519,12 +526,13 @@ namespace q
           {
             if ((*it_ref_peak)->mse == 0.0)
             { // calculate the mse of the ref peak
-              const q::Matrices::Vector yhat_exp = calcYhat(
-                  ((*it_ref_peak)->left_limit) - (*it_ref_peak)->index_x0,  // left limit of the ref peak
-                  ((*it_ref_peak)->right_limit) - (*it_ref_peak)->index_x0, // right limit of the ref peak
-                  (*it_ref_peak)->coeff,                                    // regression coefficients
-                  true);
-              (*it_ref_peak)->mse = calcSSE(yhat_exp, Y, Y.begin() + (int)(*it_ref_peak)->left_limit) / (*it_ref_peak)->df; // calculate the mean squared error (MSE) between the predicted and actual values
+              (*it_ref_peak)->mse = calcSSE(
+                                        ((*it_ref_peak)->left_limit) - (*it_ref_peak)->index_x0,  // left limit of the ref peak
+                                        ((*it_ref_peak)->right_limit) - (*it_ref_peak)->index_x0, // right limit of the ref peak
+                                        (*it_ref_peak)->coeff,                                    // regression coefficients
+                                        y_start + (int)(*it_ref_peak)->left_limit,                // pointer to the start of the Y matrix
+                                        true) /
+                                    (*it_ref_peak)->df;
             }
             grpDF += (*it_ref_peak)->df;                        // add the degree of freedom
             grpMSE += (*it_ref_peak)->mse * (*it_ref_peak)->df; // add the sum of squared errors
@@ -545,12 +553,13 @@ namespace q
 
         if ((*it_new_peak)->mse == 0.0)
         { // calculate the mse of the current peak
-          const q::Matrices::Vector yhat_exp = calcYhat(
-              ((*it_new_peak)->left_limit) - (*it_new_peak)->index_x0,  // left limit of the new peak
-              ((*it_new_peak)->right_limit) - (*it_new_peak)->index_x0, // right limit of the new peak
-              (*it_new_peak)->coeff,                                    // regression coefficients
-              true);
-          (*it_new_peak)->mse = calcSSE(yhat_exp, Y, Y.begin() + (int)(*it_new_peak)->left_limit) / (*it_new_peak)->df; // calculate the mean squared error (MSE) between the predicted and actual values
+          (*it_new_peak)->mse = calcSSE(
+                                    ((*it_new_peak)->left_limit) - (*it_new_peak)->index_x0,  // left limit of the new peak
+                                    ((*it_new_peak)->right_limit) - (*it_new_peak)->index_x0, // right limit of the new peak
+                                    (*it_new_peak)->coeff,                                    // regression coefficients
+                                    y_start + (int)(*it_new_peak)->left_limit,                // pointer to the start of the Y matrix
+                                    true) /
+                                (*it_new_peak)->df;
         }
 
         if (numPeaksInGroup == 1)
@@ -560,7 +569,7 @@ namespace q
           std::vector<std::unique_ptr<validRegression>> tmpRegressions;
           tmpRegressions.push_back(std::move(*it_new_peak));
           tmpRegressions.push_back(std::move(validRegressionsInGroup[0][0]));
-          calcExtendedMse(Y, tmpRegressions, df);
+          calcExtendedMse(y_start, tmpRegressions, df);
           // Move the unique_ptrs back to validRegressionsInGroup
           validRegressionsInGroup[0][0] = std::move(tmpRegressions[1]);
           *it_new_peak = std::move(tmpRegressions[0]);
@@ -611,7 +620,7 @@ namespace q
         peaks.push_back(std::make_unique<DataType::Peak>(
             scanNumber,
             apex_position,
-            exp_approx_d(((float *)&coeff)[0] + (regression->apex_position - regression->index_x0) * ((float *)&coeff)[1] * .5)));  // peak height (exp(b0 - b1^2/4/b2)) with position being -b1/2/b2
+            exp_approx_d(((float *)&coeff)[0] + (regression->apex_position - regression->index_x0) * ((float *)&coeff)[1] * .5))); // peak height (exp(b0 - b1^2/4/b2)) with position being -b1/2/b2
 
         // add additional information to the peak object
         peaks.back()->area = regression->area * exp_b0;
@@ -619,7 +628,7 @@ namespace q
         peaks.back()->heightUncertainty = regression->uncertainty_height;
         // peaks.back()->positionUncertainty = regression->uncertainty_position * dx;
         // peaks.back()->dqsPeak = regression->dqs;
-        
+
         peaks.back()->beta0 = ((float *)&coeff)[0];
         peaks.back()->beta1 = ((float *)&coeff)[1];
         peaks.back()->beta2 = ((float *)&coeff)[2];
@@ -689,46 +698,184 @@ namespace q
 #pragma endregion "createPeakList"
 
 #pragma region calcSSE
-    double
+    // float
+    // qPeaks::calcSSE(
+    //     const q::Matrices::Vector &yhat,
+    //     const q::Matrices::Vector &y,
+    //     const float *y_start) const
+    // {
+    //   if (y_start == nullptr)
+    //   {
+    //     y_start = y.begin();
+    //   }
+    //   return std::inner_product(
+    //       yhat.begin(),  // start of yhat
+    //       yhat.end(),    // end of yhat
+    //       y_start,       // start of y
+    //       0.0,           // initial value
+    //       std::plus<>(), // binary operation
+    //       [](float a, float b)
+    //       {
+    //         float diff = a - b; // calculate the difference between a and b
+    //         return diff * diff; // return the square of the difference
+    //       });
+    // } // end calcSSE
+
+    float
     qPeaks::calcSSE(
-        const q::Matrices::Vector &yhat,
-        const q::Matrices::Vector &y,
-        const float *y_start) const
+        const int left_limit,
+        const int right_limit,
+        const __m128 &coeff,
+        const float *y_start,
+        const bool calc_EXP,
+        const bool calc_CHISQ) const
     {
+      // exception handling if the right limits is negative or the left limit is positive
+      if (right_limit < 0 || left_limit > 0)
+      {
+        throw std::invalid_argument("right_limit must be positive and left_limit must be negative");
+      }
+
+      // exception if nullptr is passed
       if (y_start == nullptr)
       {
-        y_start = y.begin();
+        throw std::invalid_argument("y_start must not be nullptr");
       }
-      return std::inner_product(
-          yhat.begin(),  // start of yhat
-          yhat.end(),    // end of yhat
-          y_start,       // start of y
-          0.0,           // initial value
-          std::plus<>(), // binary operation
-          [](double a, double b)
-          {
-            double diff = a - b; // calculate the difference between a and b
-            return diff * diff;  // return the square of the difference
-          });
+
+      float result = 0.0f; // result variable
+
+      const int n = right_limit - left_limit + 1;      // length of the result vector
+      const int nFullSegments_left = -left_limit / 8;  // calculate the number of full segments of 8 elements per side
+      const int nFullSegments_right = right_limit / 8; // calculate the number of full segments of 8 elements per side
+      const int nRemaining_left = -left_limit % 8;     // calculate the number of remaining elements
+      const int nRemaining_right = right_limit % 8;    // calculate the number of remaining elements
+
+      // Load the coefficients
+      const __m256 b0 = _mm256_set1_ps(((float *)&coeff)[0]);
+      const __m256 b1 = _mm256_set1_ps(((float *)&coeff)[1]);
+      const __m256 b2 = _mm256_set1_ps(((float *)&coeff)[2]);
+      const __m256 b3 = _mm256_set1_ps(((float *)&coeff)[3]);
+
+      // LEFT SIDE
+      // Calculate the full segments
+      int j = 0;
+      float i = static_cast<float>(left_limit);
+      for (int iSegment = 0; iSegment < nFullSegments_left; ++iSegment, i += 8.0f, j += 8)
+      {
+        // Load 8 values of i directly as float
+        __m256 x_left = _mm256_add_ps(_mm256_set1_ps(i), LINSPACE_UP_POS_256); // x vector : -k to -k+7
+        // Calculate the yhat values
+        __m256 yhat_left = _mm256_fmadd_ps(_mm256_fmadd_ps(b2, x_left, b1), x_left, b0); // b0 + b1 * x + b2 * x^2
+        if (calc_EXP)
+        {
+          yhat_left = exp_approx_vf(yhat_left); // calculate the exp of the yhat values (if needed)
+        }
+        __m256 y_vec = _mm256_load_ps(y_start + j);    // Load 8 values from y considering the offset j
+        __m256 diff = _mm256_sub_ps(y_vec, yhat_left); // Calculate the difference between y and yhat
+        __m256 diff_sq = _mm256_mul_ps(diff, diff);    // Calculate the square of the difference
+        if (calc_CHISQ)
+        {
+          diff_sq = _mm256_div_ps(diff_sq, yhat_left); // Calculate the weighted square of the difference
+        }
+        result += q::sum8(diff_sq); // Calculate the sum of the squares and add it to the result
+      }
+
+      // Calculate the yhat values for the remaining elements
+      if (nRemaining_left > 0)
+      {
+        __m256 x_left = _mm256_add_ps(_mm256_set1_ps(-static_cast<float>(nRemaining_left)), LINSPACE_UP_POS_256); // x vector : -nRemaining_left to -nRemaining_left+7
+        __m256 yhat_left = _mm256_fmadd_ps(_mm256_fmadd_ps(b2, x_left, b1), x_left, b0);                          // b0 + b1 * x + b2 * x^2
+        if (calc_EXP)
+        {
+          yhat_left = exp_approx_vf(yhat_left); // calculate the exp of the yhat values (if needed)
+        }
+        // Load the remaining values from y
+        alignas(32) float y_left[8] = {0.0f};
+        std::copy(y_start - left_limit - nRemaining_left, y_start - left_limit, y_left);
+        __m256 y_vec = _mm256_load_ps(y_left);
+
+        __m256i mask = _mm256_cmpgt_epi32(_mm256_set1_epi32(nRemaining_left), LINSPACE_UP_INT_256); // mask for the remaining elements
+        yhat_left = _mm256_blendv_ps(y_vec, yhat_left, _mm256_castsi256_ps(mask));                  // set the remaining elements to zero
+
+        __m256 diff = _mm256_sub_ps(y_vec, yhat_left); // calculate the difference between y and yhat
+        __m256 diff_sq = _mm256_mul_ps(diff, diff);    // calculate the square of the difference
+        if (calc_CHISQ)
+        {
+          diff_sq = _mm256_div_ps(diff_sq, yhat_left);                                         // calculate the weighted square of the difference
+          diff_sq = _mm256_blendv_ps(_mm256_setzero_ps(), diff_sq, _mm256_castsi256_ps(mask)); // set the nan values to zero
+        }
+        result += q::sum8(diff_sq); // calculate the sum of the squares and add it to the result
+      }
+
+      // RIGHT SIDE
+      // Calculate the yhat values for the full segments
+      int k = n - 8;
+      i = static_cast<float>(-right_limit);
+      for (int iSegment = 0; iSegment < nFullSegments_right; ++iSegment, i += 8.0f, k -= 8)
+      {
+        // Load 8 values of i directly as float
+        __m256 x_right = _mm256_add_ps(_mm256_set1_ps(-i), LINSPACE_DOWN_NEG_256); // x vector : k-7 to k
+        // Calculate the yhat values
+        __m256 yhat_right = _mm256_fmadd_ps(_mm256_fmadd_ps(b3, x_right, b1), x_right, b0); // b0 + b1 * x + b3 * x^2
+        if (calc_EXP)
+        {
+          yhat_right = exp_approx_vf(yhat_right); // calculate the exp of the yhat values (if needed)
+        }
+        __m256 y_vec = _mm256_load_ps(y_start + k);     // Load 8 values from y considering the offset j
+        __m256 diff = _mm256_sub_ps(y_vec, yhat_right); // Calculate the difference between y and yhat
+        __m256 diff_sq = _mm256_mul_ps(diff, diff);     // Calculate the square of the difference
+        if (calc_CHISQ)
+        {
+          diff_sq = _mm256_div_ps(diff_sq, yhat_right); // Calculate the weighted square of the difference
+        }
+        result += q::sum8(diff_sq); // Calculate the sum of the squares and add it to the result
+      }
+
+      // Calculate the yhat values for the remaining elements including center
+      if (nRemaining_right > 0)
+      {
+        __m256 yhat_right = _mm256_fmadd_ps(_mm256_fmadd_ps(b3, LINSPACE_UP_POS_256, b1), LINSPACE_UP_POS_256, b0); // b0 + b1 * x + b3 * x^2
+        if (calc_EXP)
+        {
+          yhat_right = exp_approx_vf(yhat_right); // calculate the exp of the yhat values (if needed)
+        }
+        // Load the remaining values from y
+        alignas(32) float y_right[8] = {0.0f};
+        std::copy(y_start - left_limit, y_start - left_limit + nRemaining_right + 1, y_right);
+
+        __m256 y_vec = _mm256_load_ps(y_right);
+
+        __m256i mask = _mm256_cmpgt_epi32(_mm256_set1_epi32(nRemaining_right + 1), LINSPACE_UP_INT_256); // mask for the remaining elements
+        yhat_right = _mm256_blendv_ps(y_vec, yhat_right, _mm256_castsi256_ps(mask));                     // set the remaining elements to zero
+
+        __m256 diff = _mm256_sub_ps(y_vec, yhat_right); // calculate the difference between y and yhat
+        __m256 diff_sq = _mm256_mul_ps(diff, diff);     // calculate the square of the difference
+        if (calc_CHISQ)
+        {
+          diff_sq = _mm256_div_ps(diff_sq, yhat_right);                                        // calculate the weighted square of the difference
+          diff_sq = _mm256_blendv_ps(_mm256_setzero_ps(), diff_sq, _mm256_castsi256_ps(mask)); // set the nan values to zero
+        }
+        result += q::sum8(diff_sq); // calculate the sum of the squares and add it to the result
+      }
+      return result;
     } // end calcSSE
 #pragma endregion calcSSE
 
 #pragma region calcExtendedMse
     void
     qPeaks::calcExtendedMse(
-        const q::Matrices::Vector &Y,                                     // measured data (not log-transformed data)
+        const float *y_start,                                             // start of the measured data
         const std::vector<std::unique_ptr<validRegression>> &regressions, // regressions to compare
         const q::Matrices::BoolVector &df)                                // degrees of freedom
     {
       /*
         The function consists of the following steps:
         1. Identify left and right limit of the grouped regression windows.
-        2. Calculate yhat based on the coefficients matrix B and the extended design matrix X.
-        3. Calculate the mean squared error (MSE) between the predicted and actual values.
-        4. Identify the best regression based on the MSE and return the MSE and the index of the best regression.
+        2. Calculate the mean squared error (MSE) between the predicted and actual values.
+        3. Identify the best regression based on the MSE and return the MSE and the index of the best regression.
       */
       // declare variables
-      double best_mse = std::numeric_limits<double>::infinity();
+      float best_mse = std::numeric_limits<float>::infinity();
       auto best_regression = regressions.begin();
 
       // step 1: identify left (smallest) and right (largest) limit of the grouped regression windows
@@ -753,16 +900,16 @@ namespace q
 
       for (auto regression = regressions.begin(); regression != regressions.end(); ++regression)
       {
-        // step 2: calculate yhat based on the coefficients matrix B and the extended design matrix X
-        const q::Matrices::Vector yhat_exp = calcYhat(
-            left_limit - (*regression)->index_x0,
-            right_limit - (*regression)->index_x0,
-            (*regression)->coeff,
-            true);
-        // step 3: calculate the mean squared error (MSE) between the predicted and actual values
-        const double mse = calcSSE(yhat_exp, Y, Y.begin() + left_limit) / (df_sum - 4);
+        // step 2: calculate the mean squared error (MSE) between the predicted and actual values
+        const float mse = calcSSE(
+                              left_limit - (*regression)->index_x0,  // left limit of the regression window (normalized scale)
+                              right_limit - (*regression)->index_x0, // right limit of the regression window (normalized scale)
+                              (*regression)->coeff,                  // regression coefficients
+                              y_start + left_limit,                  // start of the measured data
+                              true) /                                // calculate the exp of the yhat values
+                          (df_sum - 4);
 
-        // step 4: identify the best regression based on the MSE and return the MSE and the index of the best regression
+        // step 3: identify the best regression based on the MSE and return the MSE and the index of the best regression
         if (mse < best_mse)
         {
           best_mse = mse;
@@ -782,31 +929,31 @@ namespace q
 #pragma endregion calcExtendedMse
 
 #pragma region calcChiSquareEXP
-    double
-    qPeaks::calcChiSquareEXP(
-        const q::Matrices::Vector &yhat_log,
-        const q::Matrices::Vector &Y,
-        const float *y_start) const
-    {
-      if (y_start == nullptr)
-      {
-        y_start = Y.begin();
-      }
+    // double
+    // qPeaks::calcChiSquareEXP(
+    //     const q::Matrices::Vector &yhat_log,
+    //     const q::Matrices::Vector &Y,
+    //     const float *y_start) const
+    // {
+    //   if (y_start == nullptr)
+    //   {
+    //     y_start = Y.begin();
+    //   }
 
-      size_t n = yhat_log.n;
-      double sum = 0.0;
+    //   size_t n = yhat_log.n;
+    //   double sum = 0.0;
 
-      q::Matrices::Vector yhat_exp(n);
-      std::transform(yhat_log.begin(), yhat_log.end(), yhat_exp.begin(), exp_approx_d);
+    //   q::Matrices::Vector yhat_exp(n);
+    //   std::transform(yhat_log.begin(), yhat_log.end(), yhat_exp.begin(), exp_approx_d);
 
-      for (size_t i = 0; i < n; ++i)
-      {
-        double diff = yhat_exp[i] - *y_start;
-        sum += diff * diff / yhat_exp[i];
-        ++y_start;
-      }
-      return sum;
-    } // end calcChiSquareEXP
+    //   for (size_t i = 0; i < n; ++i)
+    //   {
+    //     double diff = yhat_exp[i] - *y_start;
+    //     sum += diff * diff / yhat_exp[i];
+    //     ++y_start;
+    //   }
+    //   return sum;
+    // } // end calcChiSquareEXP
 #pragma endregion calcChiSquareEXP
 
 #pragma region calcDF
@@ -928,15 +1075,15 @@ namespace q
         const double apex_position,
         const int scale,
         const int index_loop,
-        const q::Matrices::Vector &Y,
+        const float *y_start,
         float &apexToEdge) const
     {
       int idx_apex = (int)std::round(apex_position) + scale + index_loop; // index of the apex
       int idx_left = index_loop;                                          // index of the left edge
       int idx_right = 2 * scale + index_loop;                             // index of the right edge
-      float apex = Y[idx_apex];                                           // apex value
-      float left = Y[idx_left];                                           // left edge value
-      float right = Y[idx_right];                                         // right edge value
+      float apex = *(y_start + idx_apex);                                 // apex value
+      float left = *(y_start + idx_left);                                 // left edge value
+      float right = *(y_start + idx_right);                               // right edge value
       apexToEdge = (left < right) ? (apex / left) : (apex / right);       // difference between the apex and the edge
       return apexToEdge > 2;                                              // return true if the ratio is greater than 2
     }
@@ -948,7 +1095,7 @@ namespace q
         const __m128 &coeff,
         const double inverseMatrix_2_2,
         const double inverseMatrix_3_3,
-        const double mse,
+        const float mse,
         const int df_sum) const
     {
       double tValue = std::max(                                                 // t-value for the quadratic term
@@ -961,7 +1108,7 @@ namespace q
 #pragma region isValidPeakHeight
     bool
     qPeaks::isValidPeakHeight(
-        const double mse,
+        const float mse,
         const size_t index,
         const int scale,
         const double apex_position,
@@ -1008,7 +1155,7 @@ namespace q
       {
         Jacobian_height[3] -= edge_position * edge_position; // adjust for uncertainty calculation of apex to edge ratio
       }
-      double uncertainty_apexToEdge = std::sqrt(mse * multiplyVecMatrixVecTranspose(Jacobian_height, scale));
+      float uncertainty_apexToEdge = std::sqrt(mse * multiplyVecMatrixVecTranspose(Jacobian_height, scale));
       return (apexToEdge - 2) / (apexToEdge * uncertainty_apexToEdge) > tValuesArray[df_sum - 5];
     }
 #pragma endregion isValidPeakHeight
@@ -1017,7 +1164,7 @@ namespace q
     bool
     qPeaks::isValidPeakArea(
         const __m128 &coeff,
-        const double mse,
+        const float mse,
         const int scale,
         const int df_sum,
         double &area,
@@ -1078,8 +1225,6 @@ namespace q
       float x_right = scale; // right limit due to the window
       float y_left = 0;      // y value at the left limit
       float y_right = 0;     // y value at the right limit
-
-      // std::transform(yhat_log.begin(), yhat_log.end(), yhat_exp.begin(), exp_approx); // calculate the exp of the yhat_log values
 
       const float err_L_covered = ///@todo : need to be revised
           (b2 < 0)
@@ -1194,110 +1339,110 @@ namespace q
 #pragma endregion createInverseAndPseudoInverse
 
 #pragma region "yhat"
-    q::Matrices::Vector
-    qPeaks::calcYhat(
-        const int left_limit,  // a negative value, e.g., -scale
-        const int right_limit, // a positive value, e.g., scale
-        const __m128 &coeff,
-        const bool calc_EXP)
-    {
-      // exception handling if the right limits is negative or the left limit is positive
-      if (right_limit < 0 || left_limit > 0)
-      {
-        throw std::invalid_argument("right_limit must be positive and left_limit must be negative");
-      }
+    // q::Matrices::Vector
+    // qPeaks::calcYhat(
+    //     const int left_limit,  // a negative value, e.g., -scale
+    //     const int right_limit, // a positive value, e.g., scale
+    //     const __m128 &coeff,
+    //     const bool calc_EXP)
+    // {
+    //   // exception handling if the right limits is negative or the left limit is positive
+    //   if (right_limit < 0 || left_limit > 0)
+    //   {
+    //     throw std::invalid_argument("right_limit must be positive and left_limit must be negative");
+    //   }
 
-      const size_t n = right_limit - left_limit + 1;      // length of the result vector
-      const size_t nFullSegments_left = -left_limit / 8;  // calculate the number of full segments of 8 elements per side
-      const size_t nFullSegments_right = right_limit / 8; // calculate the number of full segments of 8 elements per side
-      const size_t nRemaining_left = -left_limit % 8;     // calculate the number of remaining elements
-      const size_t nRemaining_right = right_limit % 8;    // calculate the number of remaining elements
-      alignas(32) q::Matrices::Vector yhat(n);            // result vector
+    //   const size_t n = right_limit - left_limit + 1;      // length of the result vector
+    //   const size_t nFullSegments_left = -left_limit / 8;  // calculate the number of full segments of 8 elements per side
+    //   const size_t nFullSegments_right = right_limit / 8; // calculate the number of full segments of 8 elements per side
+    //   const size_t nRemaining_left = -left_limit % 8;     // calculate the number of remaining elements
+    //   const size_t nRemaining_right = right_limit % 8;    // calculate the number of remaining elements
+    //   alignas(32) q::Matrices::Vector yhat(n);            // result vector
 
-      // Load the coefficients
-      const __m256 b0 = _mm256_set1_ps(((float *)&coeff)[0]);
-      const __m256 b1 = _mm256_set1_ps(((float *)&coeff)[1]);
-      const __m256 b2 = _mm256_set1_ps(((float *)&coeff)[2]);
-      const __m256 b3 = _mm256_set1_ps(((float *)&coeff)[3]);
+    //   // Load the coefficients
+    //   const __m256 b0 = _mm256_set1_ps(((float *)&coeff)[0]);
+    //   const __m256 b1 = _mm256_set1_ps(((float *)&coeff)[1]);
+    //   const __m256 b2 = _mm256_set1_ps(((float *)&coeff)[2]);
+    //   const __m256 b3 = _mm256_set1_ps(((float *)&coeff)[3]);
 
-      // LEFT SIDE
-      // Calculate the yhat values for the full segments
-      size_t j = 0;
-      float i = static_cast<float>(left_limit);
-      for (size_t iSegment = 0; iSegment < nFullSegments_left; ++iSegment, i += 8.0f, j += 8)
-      {
-        // Load 8 values of i directly as float
-        __m256 x_left = _mm256_add_ps(_mm256_set1_ps(i), LINSPACE_UP_POS_256); // x vector : -k to -k+7
-        // Calculate the yhat values
-        __m256 yhat_left = _mm256_fmadd_ps(_mm256_fmadd_ps(b2, x_left, b1), x_left, b0); // b0 + b1 * x + b2 * x^2
-        if (calc_EXP)
-        {
-          yhat_left = exp_approx_vf(yhat_left); // calculate the exp of the yhat values (if needed)
-        }
-        // Store the result into yhat
-        _mm256_store_ps(&yhat[j], yhat_left);
-      }
+    //   // LEFT SIDE
+    //   // Calculate the yhat values for the full segments
+    //   size_t j = 0;
+    //   float i = static_cast<float>(left_limit);
+    //   for (size_t iSegment = 0; iSegment < nFullSegments_left; ++iSegment, i += 8.0f, j += 8)
+    //   {
+    //     // Load 8 values of i directly as float
+    //     __m256 x_left = _mm256_add_ps(_mm256_set1_ps(i), LINSPACE_UP_POS_256); // x vector : -k to -k+7
+    //     // Calculate the yhat values
+    //     __m256 yhat_left = _mm256_fmadd_ps(_mm256_fmadd_ps(b2, x_left, b1), x_left, b0); // b0 + b1 * x + b2 * x^2
+    //     if (calc_EXP)
+    //     {
+    //       yhat_left = exp_approx_vf(yhat_left); // calculate the exp of the yhat values (if needed)
+    //     }
+    //     // Store the result into yhat
+    //     _mm256_store_ps(&yhat[j], yhat_left);
+    //   }
 
-      // Calculate the yhat values for the remaining elements
-      if (nRemaining_left > 0)
-      {
-        __m256 yhat_left = _mm256_fmadd_ps(_mm256_fmadd_ps(b2, LINSPACE_UP_NEG_256, b1), LINSPACE_UP_NEG_256, b0); // b0 + b1 * x + b2 * x^2
-        if (calc_EXP)
-        {
-          yhat_left = exp_approx_vf(yhat_left); // calculate the exp of the yhat values (if needed)
-        }
-        // Store the remaining result into yhat from yhat_left[0] to yhat_left[nRemaining-1] and yhat_right[0] to yhat_right[nRemaining-1]
-        for (size_t i = 1; i <= nRemaining_left; ++i)
-        {
-          yhat[-left_limit - i] = ((float *)&yhat_left)[i];
-        }
-      }
+    //   // Calculate the yhat values for the remaining elements
+    //   if (nRemaining_left > 0)
+    //   {
+    //     __m256 yhat_left = _mm256_fmadd_ps(_mm256_fmadd_ps(b2, LINSPACE_UP_NEG_256, b1), LINSPACE_UP_NEG_256, b0); // b0 + b1 * x + b2 * x^2
+    //     if (calc_EXP)
+    //     {
+    //       yhat_left = exp_approx_vf(yhat_left); // calculate the exp of the yhat values (if needed)
+    //     }
+    //     // Store the remaining result into yhat from yhat_left[0] to yhat_left[nRemaining-1] and yhat_right[0] to yhat_right[nRemaining-1]
+    //     for (size_t i = 1; i <= nRemaining_left; ++i)
+    //     {
+    //       yhat[-left_limit - i] = ((float *)&yhat_left)[i];
+    //     }
+    //   }
 
-      // RIGHT SIDE
-      // Calculate the yhat values for the full segments
-      size_t k = n - 8;
-      i = static_cast<float>(-right_limit);
-      for (size_t iSegment = 0; iSegment < nFullSegments_right; ++iSegment, i += 8.0f, k -= 8)
-      {
-        // Load 8 values of i directly as float
-        __m256 x_right = _mm256_add_ps(_mm256_set1_ps(-i), LINSPACE_DOWN_NEG_256); // x vector : k-7 to k
-        // Calculate the yhat values
-        __m256 yhat_right = _mm256_fmadd_ps(_mm256_fmadd_ps(b3, x_right, b1), x_right, b0); // b0 + b1 * x + b3 * x^2
-        if (calc_EXP)
-        {
-          yhat_right = exp_approx_vf(yhat_right); // calculate the exp of the yhat values (if needed)
-        }
+    //   // RIGHT SIDE
+    //   // Calculate the yhat values for the full segments
+    //   size_t k = n - 8;
+    //   i = static_cast<float>(-right_limit);
+    //   for (size_t iSegment = 0; iSegment < nFullSegments_right; ++iSegment, i += 8.0f, k -= 8)
+    //   {
+    //     // Load 8 values of i directly as float
+    //     __m256 x_right = _mm256_add_ps(_mm256_set1_ps(-i), LINSPACE_DOWN_NEG_256); // x vector : k-7 to k
+    //     // Calculate the yhat values
+    //     __m256 yhat_right = _mm256_fmadd_ps(_mm256_fmadd_ps(b3, x_right, b1), x_right, b0); // b0 + b1 * x + b3 * x^2
+    //     if (calc_EXP)
+    //     {
+    //       yhat_right = exp_approx_vf(yhat_right); // calculate the exp of the yhat values (if needed)
+    //     }
 
-        // Store the result into yhat
-        _mm256_store_ps(&yhat[k], yhat_right);
-      }
+    //     // Store the result into yhat
+    //     _mm256_store_ps(&yhat[k], yhat_right);
+    //   }
 
-      // Calculate the yhat values for the remaining elements
-      if (nRemaining_right > 0)
-      {
-        __m256 yhat_right = _mm256_fmadd_ps(_mm256_fmadd_ps(b3, LINSPACE_UP_POS_256, b1), LINSPACE_UP_POS_256, b0); // b0 + b1 * x + b3 * x^2
-        if (calc_EXP)
-        {
-          yhat_right = exp_approx_vf(yhat_right); // calculate the exp of the yhat values (if needed)
-        }
-        // Store the remaining result into yhat from yhat_left[0] to yhat_left[nRemaining-1] and yhat_right[0] to yhat_right[nRemaining-1]
-        for (size_t i = 1; i <= nRemaining_right; ++i)
-        {
-          yhat[-left_limit + i] = ((float *)&yhat_right)[i];
-        }
-      }
+    //   // Calculate the yhat values for the remaining elements
+    //   if (nRemaining_right > 0)
+    //   {
+    //     __m256 yhat_right = _mm256_fmadd_ps(_mm256_fmadd_ps(b3, LINSPACE_UP_POS_256, b1), LINSPACE_UP_POS_256, b0); // b0 + b1 * x + b3 * x^2
+    //     if (calc_EXP)
+    //     {
+    //       yhat_right = exp_approx_vf(yhat_right); // calculate the exp of the yhat values (if needed)
+    //     }
+    //     // Store the remaining result into yhat from yhat_left[0] to yhat_left[nRemaining-1] and yhat_right[0] to yhat_right[nRemaining-1]
+    //     for (size_t i = 1; i <= nRemaining_right; ++i)
+    //     {
+    //       yhat[-left_limit + i] = ((float *)&yhat_right)[i];
+    //     }
+    //   }
 
-      // fill the yhat values for the center x = 0, i.e., yhat[center] = b0
-      if (calc_EXP)
-      {
-        yhat[-left_limit] = exp_approx_d(((float *)&coeff)[0]);
-      }
-      else
-      {
-        yhat[-left_limit] = ((float *)&coeff)[0];
-      }
-      return yhat;
-    }
+    //   // fill the yhat values for the center x = 0, i.e., yhat[center] = b0
+    //   if (calc_EXP)
+    //   {
+    //     yhat[-left_limit] = exp_approx_d(((float *)&coeff)[0]);
+    //   }
+    //   else
+    //   {
+    //     yhat[-left_limit] = ((float *)&coeff)[0];
+    //   }
+    //   return yhat;
+    // }
 #pragma endregion "yhat"
 
 #pragma region info

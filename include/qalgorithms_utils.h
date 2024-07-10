@@ -13,6 +13,7 @@
 #include <cstdint>
 #include <numeric>
 #include <cstdio>
+#include <cstdlib>
 #include <memory>
 #include <string>
 #include <stdexcept>
@@ -25,6 +26,7 @@ namespace q
     size_t sum(const std::vector<size_t> &vec);
     double sum(const std::vector<double> &vec);
     int sum(const bool *vec, size_t n);
+    float sum8(const __m256 &vec);
 
     /**
      * @brief Fast exponential approximation base on Bit Manipulation.
