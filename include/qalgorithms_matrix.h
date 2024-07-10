@@ -14,7 +14,6 @@
 /* This file includes the q::matrix class*/
 namespace q
 {
-  extern size_t vectorDestructions, matrixDestructions;
 
   namespace Matrices
   {
