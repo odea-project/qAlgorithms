@@ -299,8 +299,7 @@ namespace q
      * @return Vector
      */
     q::Matrices::Vector
-    logn(
-        const q::Matrices::Vector &vec);
+    logn(const float *vec_start, const float *vec_end);
 
 #pragma endregion "Vector Operations"
 

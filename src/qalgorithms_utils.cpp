@@ -516,13 +516,12 @@ namespace q
 #pragma region "Vector Operations"
 
   q::Matrices::Vector
-  logn(
-      const q::Matrices::Vector &vec)
+  logn(const float *vec_start, const float *vec_end)
   {
-    q::Matrices::Vector result(vec.n);
+    q::Matrices::Vector result(vec_end - vec_start);
     std::transform(
-        vec.begin(),    // start of vec
-        vec.end(),      // end of vec
+        vec_start,    // start of vec
+        vec_end,      // end of vec
         result.begin(), // start of result
         [](double x)
         {

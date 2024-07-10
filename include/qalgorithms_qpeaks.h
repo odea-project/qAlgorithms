@@ -65,21 +65,6 @@ namespace q
 
             static void initialize();
 
-            /**
-             * @brief Calculate the yhat vector for the given scale and coefficients.
-             *
-             * @param left_limit : Left limit of the regression window
-             * @param right_limit : Right limit of the regression window
-             * @param coeff : Coefficients of the regression model
-             * @return q::Matrices::Vector : yhat vector
-             */
-            q::Matrices::Vector
-            calcYhat(
-                const int left_limit,
-                const int right_limit,
-                const __m128 &coeff,
-                const bool calc_EXP = false);
-
             // debugging
             void info() const;
             void printMatrices(int scale) const;
@@ -161,8 +146,9 @@ namespace q
 
             void
             runningRegression(
-                const q::Matrices::Vector &Y,
-                const q::Matrices::BoolVector &df,
+                const float *y_start,
+                const bool *df_start,
+                const int n,
                 std::vector<std::unique_ptr<validRegression>> &validRegressions);
 
             void
@@ -171,7 +157,7 @@ namespace q
                 const size_t n_segments,
                 const float *y_start,
                 const float *ylog_start,
-                const q::Matrices::BoolVector &df,
+                const bool *df_start,
                 const int scale,
                 std::vector<std::unique_ptr<validRegression>> &validRegressions);
 
@@ -180,23 +166,17 @@ namespace q
                 std::vector<std::unique_ptr<validRegression>> &validRegressions,
                 const float *y_start,
                 const float *ylog_start,
-                const q::Matrices::BoolVector &df);
+                const bool *df_start);
 
             std::vector<std::unique_ptr<DataType::Peak>>
             createPeaks(
                 const std::vector<std::unique_ptr<validRegression>> &validRegressions,
-                const q::Matrices::Vector &Y,
-                const q::Matrices::Vector &X,
+                const float *y_start,
+                const float *x_start,
                 const int scanNumber);
 
             std::vector<std::vector<std::unique_ptr<DataType::Peak>>>
             createPeakList(std::vector<std::vector<std::unique_ptr<DataType::Peak>>> &allPeaks);
-
-            float
-            calcSSE(
-                const q::Matrices::Vector &yhat,
-                const q::Matrices::Vector &y,
-                const float *y_start = nullptr) const;
             
             float
             calcSSE(
@@ -221,19 +201,7 @@ namespace q
             calcExtendedMse(
                 const float *y_start,
                 const std::vector<std::unique_ptr<validRegression>> &regressions,
-                const q::Matrices::BoolVector &df);
-
-            /**
-             * @brief Calculate the chi square value of the regression model with the given regression window in the exponential space.
-             * @param yhat_log : Log transformed prediction
-             * @param y_exp : Exponential transformed measurement data
-             * @return double : Chi square value
-             */
-            double
-            calcChiSquareEXP(
-                const q::Matrices::Vector &yhat_log,
-                const q::Matrices::Vector &y_exp,
-                const float *y_start = nullptr) const;
+                const bool *df_start);
 
             /**
              * @brief Calculate the degree of freedom of the regression model with the given regression window.
@@ -246,7 +214,7 @@ namespace q
              */
             int
             calcDF(
-                const q::Matrices::BoolVector &df,
+                const bool *df_start,
                 const size_t left_limit,
                 const size_t right_limit);
 
