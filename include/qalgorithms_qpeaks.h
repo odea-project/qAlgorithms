@@ -154,7 +154,7 @@ namespace q
             void
             validateRegressions(
                 const __m128 *beta,
-                const size_t n_segments,
+                const int n_segments,
                 const float *y_start,
                 const float *ylog_start,
                 const bool *df_start,
@@ -186,6 +186,15 @@ namespace q
                 const float *y_start = nullptr,
                 const bool calc_EXP = false,
                 const bool calc_CHISQ = false) const;
+
+            float 
+      calcSSE_test(
+    const int left_limit,
+    const int right_limit,
+    const __m128 &coeff,
+    const float *y_start = nullptr,
+    const bool calc_EXP = false,
+    const bool calc_CHISQ = false) const;
 
             /**
              * @brief Calculate the best mean squared error of the regression model with different regression windows BUT same window size.

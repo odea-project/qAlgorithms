@@ -246,22 +246,22 @@ namespace q
         const int n,
         std::vector<std::unique_ptr<validRegression>> &validRegressions)
     {
-      alignas(32) q::Matrices::Vector Ylog = logn(y_start, y_start+n); // perform log-transform on Y
+      alignas(32) q::Matrices::Vector Ylog = logn(y_start, y_start + n); // perform log-transform on Y
       const float *ylog_start = Ylog.begin();
       int maxScale = std::min(this->global_maxScale, (int)(n - 1) / 2);
       validRegressions.reserve(calculateNumberOfRegressions(n));
       alignas(16) float ylog_array[512];
       if (n <= 512)
       {
-        for (size_t i = 0; i < n; i++)
+        for (int i = 0; i < n; i++)
         {
           ylog_array[i] = Ylog[i];
         }
       }
       for (int scale = 2; scale <= maxScale; scale++)
       {
-        const size_t k = 2 * scale + 1;                    // window size
-        const size_t n_segments = n - k + 1;               // number of segments, i.e. regressions
+        const int k = 2 * scale + 1;                       // window size
+        const int n_segments = n - k + 1;                  // number of segments, i.e. regressions
         alignas(16) __m128 *beta = new __m128[n_segments]; // coefficients matrix
 
         (n <= 512) ? convolve_static(scale, ylog_array, n, beta) : convolve_dynamic(scale, Ylog.elements, n, beta);
@@ -274,12 +274,12 @@ namespace q
 
 #pragma region validateRegressions
     void qPeaks::validateRegressions(
-        const __m128 *beta,                // coefficients matrix
-        const size_t n_segments,           // number of segments, i.e. regressions
-        const float *y_start,              // pointer to the start of the Y matrix
-        const float *ylog_start,           // pointer to the start of the Ylog matrix
-        const bool *df_start, // degree of freedom vector, 0: interpolated, 1: measured
-        const int scale,                   // scale, i.e., the number of data points in a half window excluding the center point
+        const __m128 *beta,      // coefficients matrix
+        const int n_segments,    // number of segments, i.e. regressions
+        const float *y_start,    // pointer to the start of the Y matrix
+        const float *ylog_start, // pointer to the start of the Ylog matrix
+        const bool *df_start,    // degree of freedom vector, 0: interpolated, 1: measured
+        const int scale,         // scale, i.e., the number of data points in a half window excluding the center point
         std::vector<std::unique_ptr<validRegression>> &validRegressions)
     {
       // declare constants
@@ -317,8 +317,8 @@ namespace q
           Degree of Freedom Filter:
           This block of code implements the degree of freedom filter. It calculates the degree of freedom based df vector. If the degree of freedom is less than 5, the loop continues to the next iteration. The value 5 is chosen as the minimum number of data points required to fit a quadratic regression model.
         */
-        double left_limit = (valley_position < 0) ? std::max((double)i, valley_position + i + scale) : i;
-        double right_limit = (valley_position > 0) ? std::min((double)i + 2 * scale, valley_position + i + scale) : i + 2 * scale;
+        const double left_limit = (valley_position < 0) ? std::max((double)i, valley_position + i + scale) : i;
+        const double right_limit = (valley_position > 0) ? std::min((double)i + 2 * scale, valley_position + i + scale) : i + 2 * scale;
         df_sum = calcDF(df_start, left_limit, right_limit); // update the degree of freedom considering the left and right limits
         if (df_sum < 5)
         {
@@ -380,7 +380,7 @@ namespace q
           Chi-Square Filter:
           This block of code implements the chi-square filter. It calculates the chi-square value based on the weighted chi squared sum of expected and measured y values in the exponential domain. If the chi-square value is less than the corresponding value in the chiSquareArray, the loop continues to the next iteration.
         */
-        float chiSquare = calcSSE(-scale, scale, coeff, y_start + i, true, true);
+        const float chiSquare = calcSSE(-scale, scale, coeff, y_start + i, true, true);
         if (chiSquare < chiSquareArray[df_sum - 5])
         {
           continue; // statistical insignificance of the chi-square value
@@ -735,107 +735,73 @@ namespace q
       const __m256 b2 = _mm256_set1_ps(((float *)&coeff)[2]);
       const __m256 b3 = _mm256_set1_ps(((float *)&coeff)[3]);
 
-      // LEFT SIDE
-      // Calculate the full segments
-      int j = 0;
-      float i = static_cast<float>(left_limit);
-      for (int iSegment = 0; iSegment < nFullSegments_left; ++iSegment, i += 8.0f, j += 8)
+      // Lambda function to calculate the full segments
+      auto calcFullSegments = [&](int j, const int dj, float i, const float i_sign, const int nFullSegments, const __m256 LINSPACE, const __m256 b_quadratic) -> void
       {
-        // Load 8 values of i directly as float
-        __m256 x_left = _mm256_add_ps(_mm256_set1_ps(i), LINSPACE_UP_POS_256); // x vector : -k to -k+7
-        // Calculate the yhat values
-        __m256 yhat_left = _mm256_fmadd_ps(_mm256_fmadd_ps(b2, x_left, b1), x_left, b0); // b0 + b1 * x + b2 * x^2
+        for (int iSegment = 0; iSegment < nFullSegments; ++iSegment, i += 8.0f, j += dj)
+        {
+          // Load 8 values of i directly as float
+          const __m256 x = _mm256_add_ps(_mm256_set1_ps(i * i_sign), LINSPACE); // x vector : -k to -k+7
+          // Calculate the yhat values
+          __m256 yhat = _mm256_fmadd_ps(_mm256_fmadd_ps(b_quadratic, x, b1), x, b0); // b0 + b1 * x + b2 * x^2
+          if (calc_EXP)
+          {
+            yhat = exp_approx_vf(yhat); // calculate the exp of the yhat values (if needed)
+          }
+          const __m256 y_vec = _mm256_load_ps(y_start + j); // Load 8 values from y considering the offset j
+          const __m256 diff = _mm256_sub_ps(y_vec, yhat);   // Calculate the difference between y and yhat
+          __m256 diff_sq = _mm256_mul_ps(diff, diff);       // Calculate the square of the difference
+          if (calc_CHISQ)
+          {
+            diff_sq = _mm256_div_ps(diff_sq, yhat); // Calculate the weighted square of the difference
+          }
+          result += q::sum8(diff_sq); // Calculate the sum of the squares and add it to the result
+        }
+      };
+
+      // Lambda function to calculate the yhat values for the remaining elements
+      auto calcRemaining = [&](const int nRemaining, const __m256 x, const int y_start_offset, const int y_end_offset, const int mask_offset, const __m256 b_quadratic) -> void
+      {
+        // Calculate the yhat values for the remaining elements
+        __m256 yhat = _mm256_fmadd_ps(_mm256_fmadd_ps(b_quadratic, x, b1), x, b0); // b0 + b1 * x + b2 * x^2
         if (calc_EXP)
         {
-          yhat_left = exp_approx_vf(yhat_left); // calculate the exp of the yhat values (if needed)
+          yhat = exp_approx_vf(yhat); // calculate the exp of the yhat values (if needed)
         }
-        __m256 y_vec = _mm256_load_ps(y_start + j);    // Load 8 values from y considering the offset j
-        __m256 diff = _mm256_sub_ps(y_vec, yhat_left); // Calculate the difference between y and yhat
-        __m256 diff_sq = _mm256_mul_ps(diff, diff);    // Calculate the square of the difference
+        // Load the remaining values from y
+        alignas(32) float y_remaining[8] = {0.0f};
+        std::copy(y_start - left_limit + y_start_offset, y_start - left_limit + y_end_offset, y_remaining);
+        const __m256 y_vec = _mm256_load_ps(y_remaining);
+
+        const __m256i mask = _mm256_cmpgt_epi32(_mm256_set1_epi32(nRemaining + mask_offset), LINSPACE_UP_INT_256); // mask for the remaining elements
+        yhat = _mm256_blendv_ps(y_vec, yhat, _mm256_castsi256_ps(mask));                                           // set the remaining elements to zero
+
+        const __m256 diff = _mm256_sub_ps(y_vec, yhat); // calculate the difference between y and yhat
+        __m256 diff_sq = _mm256_mul_ps(diff, diff);     // calculate the square of the difference
         if (calc_CHISQ)
         {
-          diff_sq = _mm256_div_ps(diff_sq, yhat_left); // Calculate the weighted square of the difference
+          diff_sq = _mm256_div_ps(diff_sq, yhat);                                              // calculate the weighted square of the difference
+          diff_sq = _mm256_blendv_ps(_mm256_setzero_ps(), diff_sq, _mm256_castsi256_ps(mask)); // set the nan values to zero
         }
-        result += q::sum8(diff_sq); // Calculate the sum of the squares and add it to the result
-      }
+        result += q::sum8(diff_sq); // calculate the sum of the squares and add it to the result
+      };
+
+      // Calculate the full segments
+      calcFullSegments(0, 8, static_cast<float>(left_limit), 1.f, nFullSegments_left, LINSPACE_UP_POS_256, b2);
+      calcFullSegments(n - 8, -8, static_cast<float>(-right_limit), -1.f, nFullSegments_right, LINSPACE_DOWN_NEG_256, b3);
 
       // Calculate the yhat values for the remaining elements
       if (nRemaining_left > 0)
       {
         __m256 x_left = _mm256_add_ps(_mm256_set1_ps(-static_cast<float>(nRemaining_left)), LINSPACE_UP_POS_256); // x vector : -nRemaining_left to -nRemaining_left+7
-        __m256 yhat_left = _mm256_fmadd_ps(_mm256_fmadd_ps(b2, x_left, b1), x_left, b0);                          // b0 + b1 * x + b2 * x^2
-        if (calc_EXP)
-        {
-          yhat_left = exp_approx_vf(yhat_left); // calculate the exp of the yhat values (if needed)
-        }
-        // Load the remaining values from y
-        alignas(32) float y_left[8] = {0.0f};
-        std::copy(y_start - left_limit - nRemaining_left, y_start - left_limit, y_left);
-        __m256 y_vec = _mm256_load_ps(y_left);
-
-        __m256i mask = _mm256_cmpgt_epi32(_mm256_set1_epi32(nRemaining_left), LINSPACE_UP_INT_256); // mask for the remaining elements
-        yhat_left = _mm256_blendv_ps(y_vec, yhat_left, _mm256_castsi256_ps(mask));                  // set the remaining elements to zero
-
-        __m256 diff = _mm256_sub_ps(y_vec, yhat_left); // calculate the difference between y and yhat
-        __m256 diff_sq = _mm256_mul_ps(diff, diff);    // calculate the square of the difference
-        if (calc_CHISQ)
-        {
-          diff_sq = _mm256_div_ps(diff_sq, yhat_left);                                         // calculate the weighted square of the difference
-          diff_sq = _mm256_blendv_ps(_mm256_setzero_ps(), diff_sq, _mm256_castsi256_ps(mask)); // set the nan values to zero
-        }
-        result += q::sum8(diff_sq); // calculate the sum of the squares and add it to the result
+        calcRemaining(nRemaining_left, x_left, -nRemaining_left, 0, 0, b2);
       }
 
-      // RIGHT SIDE
-      // Calculate the yhat values for the full segments
-      int k = n - 8;
-      i = static_cast<float>(-right_limit);
-      for (int iSegment = 0; iSegment < nFullSegments_right; ++iSegment, i += 8.0f, k -= 8)
-      {
-        // Load 8 values of i directly as float
-        __m256 x_right = _mm256_add_ps(_mm256_set1_ps(-i), LINSPACE_DOWN_NEG_256); // x vector : k-7 to k
-        // Calculate the yhat values
-        __m256 yhat_right = _mm256_fmadd_ps(_mm256_fmadd_ps(b3, x_right, b1), x_right, b0); // b0 + b1 * x + b3 * x^2
-        if (calc_EXP)
-        {
-          yhat_right = exp_approx_vf(yhat_right); // calculate the exp of the yhat values (if needed)
-        }
-        __m256 y_vec = _mm256_load_ps(y_start + k);     // Load 8 values from y considering the offset j
-        __m256 diff = _mm256_sub_ps(y_vec, yhat_right); // Calculate the difference between y and yhat
-        __m256 diff_sq = _mm256_mul_ps(diff, diff);     // Calculate the square of the difference
-        if (calc_CHISQ)
-        {
-          diff_sq = _mm256_div_ps(diff_sq, yhat_right); // Calculate the weighted square of the difference
-        }
-        result += q::sum8(diff_sq); // Calculate the sum of the squares and add it to the result
-      }
-
-      // Calculate the yhat values for the remaining elements including center
       if (nRemaining_right > 0)
       {
-        __m256 yhat_right = _mm256_fmadd_ps(_mm256_fmadd_ps(b3, LINSPACE_UP_POS_256, b1), LINSPACE_UP_POS_256, b0); // b0 + b1 * x + b3 * x^2
-        if (calc_EXP)
-        {
-          yhat_right = exp_approx_vf(yhat_right); // calculate the exp of the yhat values (if needed)
-        }
-        // Load the remaining values from y
-        alignas(32) float y_right[8] = {0.0f};
-        std::copy(y_start - left_limit, y_start - left_limit + nRemaining_right + 1, y_right);
-
-        __m256 y_vec = _mm256_load_ps(y_right);
-
-        __m256i mask = _mm256_cmpgt_epi32(_mm256_set1_epi32(nRemaining_right + 1), LINSPACE_UP_INT_256); // mask for the remaining elements
-        yhat_right = _mm256_blendv_ps(y_vec, yhat_right, _mm256_castsi256_ps(mask));                     // set the remaining elements to zero
-
-        __m256 diff = _mm256_sub_ps(y_vec, yhat_right); // calculate the difference between y and yhat
-        __m256 diff_sq = _mm256_mul_ps(diff, diff);     // calculate the square of the difference
-        if (calc_CHISQ)
-        {
-          diff_sq = _mm256_div_ps(diff_sq, yhat_right);                                        // calculate the weighted square of the difference
-          diff_sq = _mm256_blendv_ps(_mm256_setzero_ps(), diff_sq, _mm256_castsi256_ps(mask)); // set the nan values to zero
-        }
-        result += q::sum8(diff_sq); // calculate the sum of the squares and add it to the result
+        calcRemaining(nRemaining_right, LINSPACE_UP_POS_256, 0, nRemaining_right + 1, 1, b3);
       }
+
       return result;
     } // end calcSSE
 #pragma endregion calcSSE
@@ -845,7 +811,7 @@ namespace q
     qPeaks::calcExtendedMse(
         const float *y_start,                                             // start of the measured data
         const std::vector<std::unique_ptr<validRegression>> &regressions, // regressions to compare
-        const bool *df_start)                                // degrees of freedom
+        const bool *df_start)                                             // degrees of freedom
     {
       /*
         The function consists of the following steps:
