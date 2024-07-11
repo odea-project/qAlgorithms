@@ -80,13 +80,49 @@ bool interpolateZeroGaps(std::vector<int> x, std::vector<double> &y)
         y[b] = std::exp(endCoeffs[0] * x[b] * x[b] + endCoeffs[1] * x[b] + endCoeffs[2]);
     }
     // interpolate all missing points from the closest four real points
+    int p1 = 0;
+    int p2 = 0;
+    int p3 = 0;
+    int p4 = 0;
+    int zeroRegionStart = 0;
+    int zeroRegionEnd = 0;
+
     for (size_t i = 0; i < x.size(); i++)
     {
         // iterate until an intensity == 0 is found
-        // count until intensity != 0
-        // add next two points for interpolation
-        // interpolate x times
+        if ((y[i] == 0) & (zeroRegionStart == 0))
+        {
+            zeroRegionStart = i;
+            p1 = i - 2;
+            p2 = i - 1;
         }
+        if ((y[i] != 0) & (zeroRegionStart != 0))
+        {
+            zeroRegionEnd = i; // not -1 since condition is j < End
+            p3 = i;
+        }
+        if (p3 != 0)
+        {
+            if (y[i + 1] == 0)
+            {
+                size_t j = i + 1;
+                while (y[j] == 0)
+                {
+                    ++j;
+                }
+                p4 = j;
+            }
+            else
+            {
+                p4 = i + 1;
+            }
+            // at this point, all four points for the interpolation are known
+            for (size_t j = zeroRegionStart; j < zeroRegionEnd; i++)
+            {
+                /* code */
+            }
+        }
+    }
 }
 
 // for four points, estimate x by merging all possible four functions f(x1,x2,x2), f(x2,x3,x4) etc.

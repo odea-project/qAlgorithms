@@ -1,6 +1,4 @@
-Anzahl Tests je Durchlauf
-210229_C1_S1_W_MI_1_pos.mzML
-
+https://gpufit.readthedocs.io/en/latest/introduction.html
 
 
 
@@ -46,8 +44,6 @@ Skalieren über Intensität für Kurvenanpassung nicht sonderlich vielverspreche
 
 C:\PROGRA~2\GnuWin32\bin\make.exe
 
-valgrind für Speicherdeallokierung, address sanitiser zum Laufen bringen
-
 Gibt es einen Zusammenhang zwischen Zentroidfehler und der Eigenschaft, 
 nicht in einem Bin zu landen / Anfang Bzw. Ende eines Bins zu sein?
 
@@ -62,11 +58,6 @@ https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0125108
 https://link.springer.com/article/10.1007/s41060-021-00275-z#Sec2
 
 großen Multistandard-Datensatz anfragen (bfg - Datenbank)
-
-Korrelationen mit Anzahl fehlender scans?
-
-Falsche DQS: Bin wurde von einem viel größeren abgetrennt, der critVal entsprechend reduziert hat.
-    zeigen kein besonders auffälliges Verhalten Bzgl. subsetting-Schritt
 
 Bin Reassembly sollte erst nach Aufreinigung der zu großen Bins passieren, diese müssen aber 
     von der Rekonstruktion ausgeschlossen werden
