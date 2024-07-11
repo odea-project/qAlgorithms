@@ -210,26 +210,66 @@ namespace q
               continue; // not enough data points to fit a quadratic regression model
             }
 
-            // store x and y values in RefMatrix objects
-            alignas(32) q::Matrices::Vector Y(n);
-            alignas(32) q::Matrices::Vector X(n);
-            q::Matrices::BoolVector df(n);
-            for (int i = 0; i < n; i++)
+            // depending on the number of data points, a static (fast) or dynamic (slow) approach is used.
+            if (n <= 512)
             {
-              X[i] = data[i]->x();
-              df[i] = data[i]->df;
-              Y[i] = data[i]->y();
+              alignas(32) float Y[512];    // measured y values
+              alignas(32) float Ylog[512]; // log-transformed measured y values
+              alignas(32) float X[512];    // measured x values
+              alignas(32) bool df[512];    // degree of freedom vector, 0: interpolated, 1: measured
+              std::vector<std::unique_ptr<validRegression>> validRegressions; // @todo : switch to 2048 fixed size array to avoid dynamic allocation
+
+              // pointers to the start and end (n) of the data
+              const float *y_start = Y;
+              float *ylog_start = Ylog;
+              const float *x_start = X;
+              const bool *df_start = df;
+              // const float *y_end = y_start + n;
+              // const float *ylog_end = ylog_start + n;
+              // const float *x_end = x_start + n;
+              // const bool *df_end = df_start + n;
+
+              for (int i = 0; i < n; i++)
+              {
+                Y[i] = data[i]->y();
+                X[i] = data[i]->x();
+                df[i] = data[i]->df;
+              }
+              // perform log-transform on Y
+              std::transform(y_start, y_start + n, ylog_start, [](float y) { return std::log(y); });
+              runningRegression(y_start, ylog_start, df_start, n, 512, validRegressions);
+              if (validRegressions.empty())
+              {
+                continue; // no valid peaks
+              }
+              all_peaks[i] = createPeaks(validRegressions, y_start, x_start, dataObj.getScanNumber());
             }
-            const bool *df_start = df.begin();
-            const float *y_start = Y.begin();
-            const float *x_start = X.begin();
-            std::vector<std::unique_ptr<validRegression>> validRegressions;
-            runningRegression(y_start, df_start, n, validRegressions);
-            if (validRegressions.empty())
-            {
-              continue; // no valid peaks
-            }
-            all_peaks[i] = createPeaks(validRegressions, y_start, x_start, dataObj.getScanNumber());
+            // else
+            // {
+            //   // // store x and y values in Vectors
+            //   // alignas(32) q::Matrices::Vector Y(n);
+            //   // alignas(32) q::Matrices::Vector X(n);
+            //   // q::Matrices::BoolVector df(n);  
+            //   // for (int i = 0; i < n; i++)
+            //   // {
+            //   //   X[i] = data[i]->x();
+            //   //   df[i] = data[i]->df;
+            //   //   Y[i] = data[i]->y();
+            //   // }
+            //   // const bool *df_start = df.begin();
+            //   // const float *y_start = Y.begin();
+            //   // const float *x_start = X.begin();
+            //   // alignas(32) q::Matrices::Vector Ylog = logn(y_start, y_start + n); // perform log-transform on Y+
+            //   // float *ylog_start = Ylog.begin();
+              
+            //   // std::vector<std::unique_ptr<validRegression>> validRegressions;
+            //   // runningRegression(y_start, ylog_start, df_start, n, validRegressions);
+            //   // if (validRegressions.empty())
+            //   // {
+            //   //   continue; // no valid peaks
+            //   // }
+            //   // all_peaks[i] = createPeaks(validRegressions, y_start, x_start, dataObj.getScanNumber());
+            // }
           } // end parallel for loop
         ; },
           dataVec); // end visit
@@ -242,31 +282,24 @@ namespace q
 #pragma region runningRegression
     void qPeaks::runningRegression(
         const float *y_start,
+        const float *ylog_start,
         const bool *df_start,
-        const int n,
+        const int n, // number of data points
+        const int N, // size of arrays: 512 for static, n for dynamic
         std::vector<std::unique_ptr<validRegression>> &validRegressions)
     {
-      alignas(32) q::Matrices::Vector Ylog = logn(y_start, y_start + n); // perform log-transform on Y
-      const float *ylog_start = Ylog.begin();
       int maxScale = std::min(this->global_maxScale, (int)(n - 1) / 2);
       validRegressions.reserve(calculateNumberOfRegressions(n));
-      alignas(16) float ylog_array[512];
-      if (n <= 512)
-      {
-        for (int i = 0; i < n; i++)
-        {
-          ylog_array[i] = Ylog[i];
-        }
-      }
       for (int scale = 2; scale <= maxScale; scale++)
       {
-        const int k = 2 * scale + 1;                       // window size
-        const int n_segments = n - k + 1;                  // number of segments, i.e. regressions
-        alignas(16) __m128 *beta = new __m128[n_segments]; // coefficients matrix
-
-        (n <= 512) ? convolve_static(scale, ylog_array, n, beta) : convolve_dynamic(scale, Ylog.elements, n, beta);
+        const int k = 2 * scale + 1;                 // window size
+        int n_segments = N - k + 1;                  // number of segments, i.e. regressions considering the array size
+        alignas(16) __m128 beta[n_segments];         // coefficients matrix
+        convolve_static(scale, ylog_start, n, beta); // do the regression
+        n_segments = n - k + 1;                      // number of segments, i.e. regressions considering the number of data points
+        // (n <= 512) ? convolve_static(scale, ylog_start, n, beta) : convolve_dynamic(scale, ylog_start, n, beta);
         validateRegressions(beta, n_segments, y_start, ylog_start, df_start, scale, validRegressions);
-        delete[] beta;
+        // delete[] beta;
       } // end for scale loop
       mergeRegressionsOverScales(validRegressions, y_start, ylog_start, df_start);
     } // end runningRegression
@@ -1270,7 +1303,7 @@ namespace q
     void
     qPeaks::convolve_static(
         const size_t scale,
-        const float (&vec)[512],
+        const float *vec,
         const size_t n,
         __m128 *beta)
     {

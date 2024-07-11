@@ -35,15 +35,15 @@ namespace q
              */
             struct DataPoint
             {
-                double intensity;
-                double mz;
+                float intensity;
+                float mz;
                 int df;
 
-                DataPoint(double intensity, double mz, int df) : intensity(intensity), mz(mz), df(df) {}
+                DataPoint(float intensity, float mz, int df) : intensity(intensity), mz(mz), df(df) {}
                 // getters for x and y
-                double &x() { return mz; }
-                double &y() { return intensity; }
-                void setY(double y) { intensity = y; }
+                float &x() { return mz; }
+                float &y() { return intensity; }
+                void setY(float y) { intensity = y; }
             };
 
             // constructors

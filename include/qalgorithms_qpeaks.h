@@ -104,28 +104,28 @@ namespace q
                 int index_x0;              // index of window center (x==0) in the Y matrix
                 int scale;                 // scale of the regression window, i.e., 2*scale+1 = window size
                 int df;                    // degree of freedom, interpolated data points will not be considered
-                double apex_position;      // position of the apex of the peak
+                float apex_position;      // position of the apex of the peak
                 float mse;                // mean squared error
                 __m128 coeff;              // regression coefficients
                 bool isValid;              // flag to indicate if the regression is valid
-                double left_limit;         // left limit of the peak regression window
-                double right_limit;        // right limit of the peak regression window
-                double area;               // area of the peak
-                double uncertainty_area;   // uncertainty of the area
-                double uncertainty_height; // uncertainty of the height
+                float left_limit;         // left limit of the peak regression window
+                float right_limit;        // right limit of the peak regression window
+                float area;               // area of the peak
+                float uncertainty_area;   // uncertainty of the area
+                float uncertainty_height; // uncertainty of the height
                 validRegression(
                     int index_x0,
                     int scale,
                     int df,
-                    double apex_position,
+                    float apex_position,
                     float mse,
                     __m128 coeff,
                     bool isValid = true,
-                    double left_limit = 0.0,
-                    double right_limit = 0.0,
-                    double area = 0.0,
-                    double uncertainty_area = 0.0,
-                    double uncertainty_height = 0.0)
+                    float left_limit = 0.0f,
+                    float right_limit = 0.0f,
+                    float area = 0.0f,
+                    float uncertainty_area = 0.0f,
+                    float uncertainty_height = 0.0f)
                     : index_x0(index_x0),
                       scale(scale),
                       df(df),
@@ -147,8 +147,10 @@ namespace q
             void
             runningRegression(
                 const float *y_start,
+                const float *ylog_start,
                 const bool *df_start,
-                const int n,
+                const int n, 
+                const int N, 
                 std::vector<std::unique_ptr<validRegression>> &validRegressions);
 
             void
@@ -359,7 +361,7 @@ namespace q
             void
             convolve_static(
                 const size_t scale,
-                const float (&vec)[512],
+                const float *vec,
                 const size_t n,
                 __m128 *beta);
 
