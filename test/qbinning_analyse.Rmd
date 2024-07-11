@@ -41,13 +41,13 @@ points_total = 3568033
 bins_total = 55910
 notbinned_total = 1102746
 
-# summary <- read.csv("C:/Users/unisys/Documents/Studium/Analytik-Praktikum/qAlgorithms/selectBins_summary.csv")
+# summary <- read.csv("C:/Users/unisys/Documents/Studium/Analytik-Praktikum/rawdata/warburg_summary.csv")
 
 # "../../selectbins_summary.csv"
 # bins <- read.csv("../../selectbins_full.csv")
 # notbinned = read.csv("../../qbinning_notbinned.csv")
 summary$errorcode = as.numeric(lapply(summary$errorcode, bits))
-summary$errorcode = summary$errorcode - 10000000
+# summary$errorcode = summary$errorcode - 10000000
 
 summary = summary[order(summary$size, decreasing = TRUE),]
 

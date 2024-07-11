@@ -24,6 +24,7 @@ namespace q
 {
     namespace qBinning
     {
+#pragma region "misc"
         // declarations of static functions
         /// @brief calculate the mean distance in mz to all other elements of a sorted vector for one element
         /// @param pointsInBin vector of data points sorted by mz
@@ -105,6 +106,7 @@ namespace q
             return true;
             // CentroidedData is always a vector of vectors where the first index is the scan number (starting at 1) and every scsn is sorted by mz
         }
+#pragma endregion "misc"
 
 #pragma region "BinContainer"
 
@@ -234,7 +236,6 @@ namespace q
             startingRebin.pointsInBin.reserve(outOfBins.size() + incompleteBins.size() * 16); // @todo test the average size for non-warburg data
             if (!outOfBins.empty())
             {
-                std::cout << outOfBins[0]->mz;
                 startingRebin.pointsInBin.insert(startingRebin.pointsInBin.end(), outOfBins.begin(), outOfBins.end()); // copy outofbins into new bin
                 outOfBins.resize(0);
             }
@@ -254,7 +255,6 @@ namespace q
             assert(!redoneBins.empty());
             // calculate DQS on new bins
             this->assignDQSB(rawdata, maxdist, true);
-            std::cout << "..";
             // re-add the newly constructed bins to finishedBins
             if (redoneBins.size() < incompleteBins.size()) // there will be gaps left in finsihedBins that must be closed
             {
@@ -597,7 +597,9 @@ namespace q
                 medianMZ = (pointsInBin[posMedian]->mz + pointsInBin[posMedian + 1]->mz) / 2; // +1 to round to nearest, since integers are truncated
             }
 
-            bool maxScansReduced = false;         // add this many dummy values to prevent segfault when bin is in one of the last scans
+            bool maxScansReduced = false; // add this many dummy values to prevent segfault when bin is in one of the last scans
+
+            // @todo move the creation of minMaxOutPerScan to its own function (?)
             std::vector<double> minMaxOutPerScan; // contains both mz values (per scan) next or closest to all m/z in the bin
 
             minMaxOutPerScan.reserve((scanRangeEnd - scanRangeStart + 1) * 2);
@@ -774,6 +776,31 @@ namespace q
             return;
         }
 
+        void BinContainer::reconstructFromStdev(unsigned int maxdist)
+        {
+            // find all not binned points and add them to a bin
+            // cond 1: mz must be within one standard deviation of mz
+            // cond 2: point must be within maxdist scans of the bin borders
+            // cond 3: If a point would be added to two bins, add it to none
+            /*
+            Bool vector of length notbinned
+            vector of start, end for all bins (mz-stdev and mz+stdev)
+            if point between start, end -> bool[i]
+            if bool[i] true -> next point
+            */
+            // -1 = does not fit any bin, -2 = fits two ore more, bin number if only one fits so far
+            std::vector<int> selectedOnce(outOfBins.size(), -1);
+            std::vector<double> massrange(finshedBins.size() * 2);
+            for (Bin currentBin : finishedBins)
+            {
+                // make stdandard deviation a function of bin
+                massrange.push_back(
+                    // min possible mz
+                );
+                massrange.push_back();
+            }
+        }
+
         SummaryOutput Bin::summariseBin()
         {
             size_t binsize = pointsInBin.size();
@@ -807,26 +834,28 @@ namespace q
 
             // bins should be sorted by mz when entering here
             bool asymmetricMZ = false;
-            if (binsize > 8)
+            if (binsize > 11)
             {
-                double mzThird = (pointsInBin.back()->mz - pointsInBin.front()->mz) / 4;
+                double lowestMZ = pointsInBin.front()->mz;
+                double mzThird = (pointsInBin.back()->mz - lowestMZ) / 3;
                 size_t border1 = 0;
                 size_t border2 = 0;
                 int counter = 0;
                 while (border2 == 0)
                 {
                     double mz = pointsInBin[counter]->mz;
-                    if ((border1 == 0) & (mz > mzThird))
+                    if ((border1 == 0) & (mz - lowestMZ > mzThird))
                     {
                         border1 = counter + 1;
                     }
-                    if ((border1 != 0) & (mz > 3 * mzThird))
+                    if ((border1 != 0) & (mz - lowestMZ > 2 * mzThird))
                     {
                         border2 = counter + 1;
                     }
                     ++counter;
                 }
-                if ((border1 > border2 - border1) | (border2 - border1 > binsize - border2))
+                // @todo reasoning for 1.25 and min 12 points
+                if ((border1 > (border2 - border1) * 1.25) | (border2 - border1 > (binsize - border2) * 1.25))
                 {
                     asymmetricMZ = true;
                 }
@@ -849,11 +878,12 @@ namespace q
             double prev2nd = prevInt;
             int idxHighest = 0;
             int idx2ndHighest = 0;
-            for (size_t i = 0; i < pointsInBin.size(); i++)
+            for (size_t i = 1; i < pointsInBin.size(); i++)
             {
                 double cenInt = pointsInBin[i]->intensity;
-                if (!intensityGap | (abs(cenInt - pointsInBin[i - 1]->intensity) > pointsInBin[i - 1]->intensity))
+                if (!intensityGap & (abs(cenInt - pointsInBin[i - 1]->intensity) > pointsInBin[i - 1]->intensity))
                 {
+                    // @todo this should be more robust - consider stdev of 1. derivative
                     intensityGap = true;
                 }
                 if (cenInt > prev2nd)
@@ -874,7 +904,7 @@ namespace q
             }
             if (abs(idxHighest - idx2ndHighest) > 6)
             {
-                intensityGap = true;
+                twoMaxima = true;
             }
 
             bool halfPeakL = true;
@@ -899,23 +929,26 @@ namespace q
             }
 
             bool halfPeakR = true;
-            prevInt = INFINITY;
-            wrongCount = 0;
-            for (qCentroid *cen : pointsInBin)
+            if (!halfPeakL)
             {
-                if (cen->intensity < prevInt)
+                prevInt = INFINITY;
+                wrongCount = 0;
+                for (qCentroid *cen : pointsInBin)
                 {
-                    prevInt = cen->intensity;
-                    wrongCount = 0;
-                }
-                else
-                {
-                    ++wrongCount;
-                }
-                if (wrongCount > 1)
-                {
-                    halfPeakR = false;
-                    break;
+                    if (cen->intensity < prevInt)
+                    {
+                        prevInt = cen->intensity;
+                        wrongCount = 0;
+                    }
+                    else
+                    {
+                        ++wrongCount;
+                    }
+                    if (wrongCount > 1)
+                    {
+                        halfPeakR = false;
+                        break;
+                    }
                 }
             }
 
@@ -933,7 +966,7 @@ namespace q
             {
                 selector |= std::byte{0b00000100};
             }
-            if (abs(meanMZ - medianMZ) > 2 * meanCenError)
+            if (abs(meanMZ - medianMZ) > 2 * meanCenError) // standard error instead?
             {
                 selector |= std::byte{0b00001000};
             }
@@ -1165,7 +1198,10 @@ namespace q
 
     }
 }
-int notmain()
+
+//
+//
+int main()
 {
     std::cout << "starting...\n";
 
@@ -1174,7 +1210,7 @@ int notmain()
     int inputMaxdist = 6;
     q::qBinning::maxdist = inputMaxdist;
 
-    std::string filename_input = "../../rawdata/210229_C1_S1_W_MI_1_pos_centroids.csv"; // no variability after qCentroiding
+    std::string filename_input = "../../rawdata/control_bins.csv"; // no variability after qCentroiding
 
     const std::filesystem::path p = filename_input;
     if (!std::filesystem::exists(p))
@@ -1187,8 +1223,8 @@ int notmain()
     q::qBinning::CentroidedData testdata;
     // path to data, mz, centroid error, scan number, intensity, DQS centroid
     //  path to data, scan position, mz, centroid error, scan number, intensity, DQS centroid
-    // if (!q::qBinning::readcsv(&testdata, filename_input, 0, 1, 3, 4, 6)) // ../../rawdata/control_bins.csv reduced_DQSdiff
-    if (!q::qBinning::readcsv(&testdata, filename_input, 1, 2, 3, 4, 5))
+    if (!q::qBinning::readcsv(&testdata, filename_input, 0, 1, 3, 4, 6)) // ../../rawdata/control_bins.csv reduced_DQSdiff
+    // if (!q::qBinning::readcsv(&testdata, filename_input, 1, 2, 3, 4, 5))
     {
         exit(101); // error codes: 1.. = reading / writing failed, 2.. = improper input,
     }

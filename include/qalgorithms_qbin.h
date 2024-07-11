@@ -10,6 +10,7 @@ namespace q
 {
     namespace qBinning
     {
+#pragma region "utility"
         // qCentroid Struct (contains all user-specified variables found in source file)
         // Output of qCentroiding @todo move to utils / shared data file
         struct qCentroid
@@ -79,6 +80,18 @@ namespace q
             double DQSC_min;
             double mean_error;
         };
+
+        struct runAssessor // one of these per analysed measurement
+        {
+            std::vector<std::byte> errorcodes;
+            std::vector<int> countOfBins;
+            std::vector<int> countOfPoints;
+            std::vector<double> meanDQSB;
+            int totalPoints;
+            int unbinnedPoints;
+            int countDQSbelow0;
+        };
+#pragma endregion "utility"
 
         // Bin Class
         class Bin
@@ -156,6 +169,8 @@ namespace q
             /// @param maxdist the largest gap in scans which a bin can have while still being considered valid
             void makeDQSB(const CentroidedData *rawdata, const unsigned int maxdist);
 
+            void reconstructFromStdev(unsigned int maxdist);
+
             /// @brief summarise the bin to one line, with the parameters size, mean_mz, median_mz, stdev_mz, mean_scans, median_scans,
             /// DQSB_base, DQSB_control, DQSB_worst, min_DQSC, meanError. DQSB_worst is calculated by assuming the MOD of all points in the
             /// bin to be equal to the critical value. Additionally, the function computes a 1-byte code for up to 8 states of interest.
@@ -211,7 +226,11 @@ namespace q
                                                     // include metadata from the mzml where possible.
                                                     // Some measure of overall spectrum quality should also be given.
 
-            /// @brief Add all bins identified as having hot ends to outofbins and redo the binning
+            /// @brief Add all bins identified as having hot ends to outofbins and redo the binning using subsetBins
+            /// @param dimensions parameter for subsetBins, see there for a detailed explanation
+            /// @param rawdata the CentroidedData object from which all bins in finishedBins were generated
+            /// @param notbinned points which were not used in a previous binning step
+            /// @param maxdist the largest gap in scans which a bin can have while still being considered valid
             void redoBinningIfTooclose(const std::vector<int> dimensions, const CentroidedData *rawdata, std::vector<qCentroid *> notbinned, const unsigned int maxdist);
 
             void printAllBins(std::string path, const CentroidedData *rawdata); // @todo remove rawdata dependency

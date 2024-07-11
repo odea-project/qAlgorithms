@@ -142,7 +142,7 @@ Error codes:
 ```{r trends by sample}
 ggplot(sum_all)+
   geom_line(aes(as.factor(sample), mean_DQS, color = as.factor(errorcode), group = errorcode))+
-  geom_point(aes(as.factor(sample), mean_DQS, color = as.factor(errorcode), ))
+  geom_point(aes(as.factor(sample), mean_DQS, color = as.factor(errorcode), size = 2*  binPerc))+
   scale_x_discrete(guide = guide_axis(n.dodge=3))
 
 ggplot(sum_all)+
