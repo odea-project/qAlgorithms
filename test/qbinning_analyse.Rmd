@@ -42,6 +42,10 @@ bins_total = 55910
 notbinned_total = 1102746
 
 # summary <- read.csv("C:/Users/unisys/Documents/Studium/Analytik-Praktikum/rawdata/warburg_summary.csv")
+# summary <- read.csv("G:/_Studium/Analytik-Praktikum/qbinning/rawdata/warburg_summary.csv")
+summary$errorcode = as.numeric(lapply(summary$errorcode, bits))
+# bins <- read.csv("G:/_Studium/Analytik-Praktikum/qbinning/rawdata/warburg_selectBins_full.csv") 
+
 
 # "../../selectbins_summary.csv"
 # bins <- read.csv("../../selectbins_full.csv")
@@ -51,12 +55,15 @@ summary$errorcode = as.numeric(lapply(summary$errorcode, bits))
 
 summary = summary[order(summary$size, decreasing = TRUE),]
 
-summary %>% group_by(errorcode) %>% summarise(bin_count = n(), total_points = sum(size), ratio = sum(size)/n(), dqsCen = mean(DQSC_min)) 
+summary %>% group_by(errorcode) %>% summarise(bin_count = n(), total_points = sum(size), ratio = sum(size)/n(), dqsCen = mean(DQSC_min), meanDQS = mean(DQSB_scaled)) 
 
 stats = as.data.frame(table(summary$errorcode)) # alle ungeraden Zahlen haben duplikate
 stats$Var1 = as.numeric(levels(stats$Var1))
 
-
+selectIDs = summary$ID[which(summary$errorcode == 10000)]
+for (i in selectIDs) {
+  binViewer(summary,bins,i)
+}
 
 ```
 
@@ -73,10 +80,14 @@ binViewer = function(summary, fullbins, binID){
   rateNext = T
   while (rateNext) {
     ppm5 = summary$mean_mz[which(summary$ID == binID)] * 5 * 10^-6
+    meanMZ = summary$mean_mz[which(summary$ID == binID)]
+    stdev = summary$stdev_mz[which(summary$ID == binID)]
     print(ggplot(fullbins[which(fullbins$ID == binID),])+
       geom_point(aes(mz, scan, color = intensity))+ 
-      geom_vline(xintercept = summary$mean_mz[which(summary$ID == binID)] - ppm5, linewidth = 0.2, linetype = "dashed")+
-      geom_vline(xintercept = summary$mean_mz[which(summary$ID == binID)] + ppm5, linewidth = 0.2, linetype = "dashed")+
+      geom_vline(xintercept = meanMZ - ppm5, linewidth = 0.2, linetype = "dashed")+
+      geom_vline(xintercept = meanMZ + ppm5, linewidth = 0.2, linetype = "dashed")+
+      geom_vline(xintercept = meanMZ - stdev, linewidth = 0.2, linetype = "dashed", color = "red")+
+      geom_vline(xintercept = meanMZ + stdev, linewidth = 0.2, linetype = "dashed", color = "red")+  
       xlab("m/z")+
       ylab("Scan Number")+
       theme(panel.background = element_rect(fill = "lightblue1",
@@ -93,8 +104,10 @@ binViewer = function(summary, fullbins, binID){
       binID = binID - 1
     } else if(input == "p"){
       print(ggplot(fullbins[which(fullbins$ID == binID),])+
-      geom_point(aes(scan, intensity, colour = mz))+
-      scale_color_viridis_c()+
+      geom_point(aes(scan, intensity, colour = mz), size = 2)+
+      geom_col(aes(scan, intensity, fill = mz), colour = "lightblue1", width = 0.3)+
+      scale_fill_continuous()+
+      # scale_color_viridis_c()+
       labs(caption = sprintf("BinID: %d | Errorcode: %d", binID, summary$errorcode[binID])))
       readline("Press Enter to return to bin")
     } else {
@@ -107,18 +120,19 @@ binViewer = function(summary, fullbins, binID){
 ```
 
 ```{r plotting}
-targetBin = bins[which(bins$ID == 7),]
-
-ggplot(targetBin)+
-  geom_point(aes(mz, scan, color = intensity))+ # , color = as.factor(ID)
-  xlab("m/z")+
-  ylab("Scan Number")+
-  theme(panel.background = element_rect(fill = "lightblue1",
-                                colour = "lightblue1",
-                                linewidth = 0.5, linetype = "solid"))+
-  scale_color_viridis_c(option = "plasma", direction = -1)+
-  labs(caption = sprintf("Errorcode: %d", summary$errorcode[22]))
-
+targetBin = bins[which(bins$ID == 730),]
+binID = c(700,701)
+ggplot(bins[which(bins$ID == binID),])+
+  geom_point(aes(mz, scan, color = intensity))+ 
+      geom_vline(xintercept = summary$mean_mz[which(summary$ID == binID)] - 0.002, linewidth = 0.2, linetype = "dashed")+
+      geom_vline(xintercept = summary$mean_mz[which(summary$ID == binID)] + 0.002, linewidth = 0.2, linetype = "dashed")+
+      xlab("m/z")+
+      ylab("Scan Number")+
+      theme(panel.background = element_rect(fill = "lightblue1",
+            colour = "lightblue1", linewidth = 0.5, linetype = "solid"))+
+      scale_color_viridis_c(option = "plasma", direction = -1)+
+      labs(caption = sprintf("BinID: %d | Errorcode: %d", binID, summary$errorcode[binID]))
+    
 
 ggplot(targetBin)+
  geom_point(aes(scan, intensity))

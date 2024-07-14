@@ -103,10 +103,14 @@ namespace q
             double medianMZ;
 
         public:
+            // @todo get mz and scan min/max at the earliest opportunity
+            double mzMin;
+            double mzMax;
+            int scanMin;
+            int scanMax;
+
             bool l_maxdist_tooclose = false;
             bool r_maxdist_tooclose = false; // Check if there is a point within maxdist
-            double l_maxdist_abs;            // the smallest mz that could be a member of this bin
-            double r_maxdist_abs;            // the largest mz that could be a member of this bin
 
             std::vector<qCentroid *> pointsInBin; // @todo does not change after bin creation, check for performance improvement when using cast const
             std::vector<double> activeOS;         // Order Space
@@ -169,7 +173,7 @@ namespace q
             /// @param maxdist the largest gap in scans which a bin can have while still being considered valid
             void makeDQSB(const CentroidedData *rawdata, const unsigned int maxdist);
 
-            void reconstructFromStdev(unsigned int maxdist);
+            double calcStdevMZ();
 
             /// @brief summarise the bin to one line, with the parameters size, mean_mz, median_mz, stdev_mz, mean_scans, median_scans,
             /// DQSB_base, DQSB_control, DQSB_worst, min_DQSC, meanError. DQSB_worst is calculated by assuming the MOD of all points in the
@@ -232,6 +236,10 @@ namespace q
             /// @param notbinned points which were not used in a previous binning step
             /// @param maxdist the largest gap in scans which a bin can have while still being considered valid
             void redoBinningIfTooclose(const std::vector<int> dimensions, const CentroidedData *rawdata, std::vector<qCentroid *> notbinned, const unsigned int maxdist);
+
+            void mergeByStdev(double mzFilterLower, double mzFilterUpper);
+
+            void reconstructFromStdev(unsigned int maxdist);
 
             void printAllBins(std::string path, const CentroidedData *rawdata); // @todo remove rawdata dependency
 
