@@ -9,35 +9,9 @@ namespace q
 {
   namespace Algorithms
   {
-#pragma region Constructors and Destructor
-    // Constructor
+    // Constructor and Destructor
     qPeaks::qPeaks() {}
-
-    qPeaks::qPeaks(const q::MeasurementData::varDataType &dataVec)
-    {
-      std::visit(
-          [this](auto &&arg)
-          {
-            // push two nullptr to the designMatrices, inverseMatrices, and psuedoInverses vectors to store the matrices for scale 2
-            for (int i = 0; i < 2; i++)
-            {
-              this->designMatrices.push_back(nullptr);
-              this->inverseMatrices.push_back(nullptr);
-              this->psuedoInverses.push_back(nullptr);
-            }
-            // iterate over the range of the maxScale to create Matrices for each scale
-            for (int scale = 2; scale <= this->global_maxScale; scale++)
-            {
-              createDesignMatrix(scale);
-              createInverseAndPseudoInverse(*(designMatrices.back()));
-            }
-          },
-          dataVec);
-    }
-
-    // Destructor
     qPeaks::~qPeaks() {}
-#pragma endregion Constructors and Destructor
 
 #pragma region "peakListToCSV"
     void
@@ -240,32 +214,31 @@ namespace q
               }
               all_peaks[i] = createPeaks_static(validRegressions, validRegressionsIndex, y_start, x_start, dataObj.getScanNumber());
             }
-            // else
-            // {
-            //   // // store x and y values in Vectors
-            //   // alignas(32) q::Matrices::Vector Y(n);
-            //   // alignas(32) q::Matrices::Vector X(n);
-            //   // q::Matrices::BoolVector df(n);  
-            //   // for (int i = 0; i < n; i++)
-            //   // {
-            //   //   X[i] = data[i]->x();
-            //   //   df[i] = data[i]->df;
-            //   //   Y[i] = data[i]->y();
-            //   // }
-            //   // const bool *df_start = df.begin();
-            //   // const float *y_start = Y.begin();
-            //   // const float *x_start = X.begin();
-            //   // alignas(32) q::Matrices::Vector Ylog = logn(y_start, y_start + n); // perform log-transform on Y+
-            //   // float *ylog_start = Ylog.begin();
+            else
+            { // dynamic approach
+              alignas(32) q::Matrices::Vector Y(n);
+              alignas(32) q::Matrices::Vector X(n);
+              q::Matrices::BoolVector df(n);  
+              std::vector<std::unique_ptr<validRegression>> validRegressions;
+              for (int i = 0; i < n; i++)
+              {
+                X[i] = data[i]->x();
+                df[i] = data[i]->df;
+                Y[i] = data[i]->y();
+              }
+              const float *y_start = Y.begin();
+              alignas(32) q::Matrices::Vector Ylog = logn(y_start, y_start + n); // perform log-transform on Y
+              float *ylog_start = Ylog.begin();
+              const float *x_start = X.begin();
+              const bool *df_start = df.begin();
               
-            //   // std::vector<std::unique_ptr<validRegression>> validRegressions;
-            //   // runningRegression(y_start, ylog_start, df_start, n, validRegressions);
-            //   // if (validRegressions.empty())
-            //   // {
-            //   //   continue; // no valid peaks
-            //   // }
-            //   // all_peaks[i] = createPeaks(validRegressions, y_start, x_start, dataObj.getScanNumber());
-            // }
+              runningRegression(y_start, ylog_start, df_start, n, validRegressions);
+              if (validRegressions.empty())
+              {
+                continue; // no valid peaks
+              }
+              all_peaks[i] = createPeaks(validRegressions, y_start, x_start, dataObj.getScanNumber());
+            }
           } // end parallel for loop
         ; },
           dataVec); // end visit
@@ -281,21 +254,28 @@ namespace q
         const float *ylog_start,
         const bool *df_start,
         const int n, // number of data points
-        const int N, // size of arrays: 512 for static, n for dynamic
         std::vector<std::unique_ptr<validRegression>> &validRegressions)
     {
       const int maxScale = std::min(this->global_maxScale, (int)(n - 1) / 2);
       validRegressions.reserve(calculateNumberOfRegressions(n));
       for (int scale = 2; scale <= maxScale; scale++)
       {
-        const int k = 2 * scale + 1;                 // window size
-        const int n_segments_static = N - k + 1;     // number of segments, i.e. regressions considering the array size
-        alignas(16) __m128 beta[n_segments_static];  // coefficients matrix
-        convolve_static(scale, ylog_start, n, beta); // do the regression
-        const int n_segments = n - k + 1;            // number of segments, i.e. regressions considering the number of data points
-        // (n <= 512) ? convolve_static(scale, ylog_start, n, beta) : convolve_dynamic(scale, ylog_start, n, beta);
+        const int k = 2 * scale + 1;                       // window size
+        const int n_segments = n - k + 1;                  // number of segments, i.e. regressions considering the array size
+        alignas(16) __m128 *beta = new __m128[n_segments]; // coefficients matrix
+        convolve_dynamic(scale, ylog_start, n, beta);      // do the regression
         validateRegressions(beta, n_segments, y_start, ylog_start, df_start, scale, validRegressions);
       } // end for scale loop
+      // // std::cout << "\n-------\n";
+      // if (validRegressions.size() == 14)
+      // {
+      //   std::cout << "\n\n\n";
+      //   for (int i = 0; i < validRegressions.size(); i++)
+      //   {
+      //     std::cout << validRegressions[i]->index_x0 << ", " << validRegressions[i]->scale << std::endl;
+      //   }
+      //   exit(0);
+      // }
       mergeRegressionsOverScales(validRegressions, y_start, ylog_start, df_start);
     } // end runningRegression
 #pragma endregion runningRegression
@@ -320,6 +300,16 @@ namespace q
         const int n_segments = n - k + 1;            // number of segments, i.e. regressions considering the number of data points
         validateRegressions_static(beta, n_segments, y_start, ylog_start, df_start, scale, validRegressionsIndex, validRegressions);
       } // end for scale loop
+      // std::cout << "\n-------\n";
+      // if (validRegressionsIndex == 11)
+      // {
+      //   std::cout << "\n\n\n";
+      //   for (int i = 0; i < 11; i++)
+      //   {
+      //     std::cout << validRegressions[i].index_x0 << ", " << validRegressions[i].scale << std::endl;
+      //   }
+      //   exit(0);
+      // }
       mergeRegressionsOverScales_static(validRegressions, validRegressionsIndex, y_start, ylog_start, df_start);
     }
 #pragma endregion "running regression static"
@@ -376,6 +366,7 @@ namespace q
                 // 0.f                        // uncertainty of the peak area
                 ));
       } // end for loop
+      
       // early return if no or only one valid peak
       if (validRegressionsTmp.size() < 2)
       {
@@ -495,6 +486,7 @@ namespace q
         validRegressionsTmp[validRegressionsIndexTmp].right_limit = right_limit;                 // right_limit
         validRegressionsIndexTmp++;
       } // end for loop
+      // std::cout << validRegressionsIndexTmp << ", ";
       // early return if no or only one valid peak
       if (validRegressionsIndexTmp < 2)
       {
@@ -1186,6 +1178,10 @@ namespace q
           (*regression)->mse = mse;
           best_regression = regression;
         }
+        else
+        {
+          (*regression)->isValid = false;
+        }
       } // end for loop (index in groupIndices)
       // set isValid to false for all regressions except the best one
       for (auto regression = regressions.begin(); regression != regressions.end(); ++regression)
@@ -1405,6 +1401,11 @@ namespace q
         float &apex_position,
         float &valley_position) const
     {
+      // check if beta 2 or beta 3 is zero
+      if (((float *)&coeff)[2] == 0.0f || ((float *)&coeff)[3] == 0.0f)
+      {
+        return false; // invalid case
+      }
       // calculate key by checking the signs of coeff
       __m128 res = _mm_set1_ps(-.5f);               // res = -0.5
       __m128 signs = _mm_cmplt_ps(coeff, ZERO_128); // compare the coefficients with zero, results will have the following values: 0xFFFFFFFF if the value is negative, 0x00000000 if the value is positive
@@ -1711,42 +1712,7 @@ namespace q
     }
 #pragma endregion isValidPeakArea
 
-#pragma region createDesignMatrix
-    void qPeaks::createDesignMatrix(const int scale)
-    {
-      // construct matrix
-      int m = 4;
-      int n = 2 * scale + 1;
-      q::Matrices::Matrix X(n, m);
-
-      for (int i = 0; i < n; i++)
-      {
-        double x = static_cast<double>(i - scale);
-        X(i, 0) = 1.0; // first column is always 1
-        X(i, 1) = x;   // x vector (centered) from -scale to scale
-        if (x < 0)
-        {
-          X(i, 2) = x * x; // x^2 vector
-        }
-        else
-        {
-          X(i, 3) = x * x; // x^2 vector
-        }
-      }
-      // add the matrix to the designMatrices vector
-      designMatrices.push_back(std::make_unique<q::Matrices::Matrix>(X));
-    }
-#pragma endregion createDesignMatrix
-
-#pragma region createInverseAndPseudoInverse
-    void qPeaks::createInverseAndPseudoInverse(const q::Matrices::Matrix &X)
-    {
-      q::Matrices::Matrix Xt = transpose(X);
-      q::Matrices::Matrix XtX = Xt * X;
-      inverseMatrices.push_back(std::make_unique<q::Matrices::Matrix>(inv(XtX)));
-      psuedoInverses.push_back(std::make_unique<q::Matrices::Matrix>(*(inverseMatrices.back()) * Xt));
-    }
-
+#pragma region calculateNumberOfRegressions
     int qPeaks::calculateNumberOfRegressions(const int n) const
     {
       /*
@@ -1761,17 +1727,7 @@ namespace q
       }
       return sum;
     }
-#pragma endregion createInverseAndPseudoInverse
-
-#pragma region info
-    void qPeaks::info() const
-    {
-      std::cout << "qPeaks object\n";
-      std::cout << "designMatrices size: " << designMatrices.size() << "\n";
-      std::cout << "inverseMatrices size: " << inverseMatrices.size() << "\n";
-      std::cout << "psuedoInverses size: " << psuedoInverses.size() << "\n";
-    }
-#pragma endregion info
+#pragma endregion calculateNumberOfRegressions
 
 #pragma region "convolve regression"
 
@@ -1812,11 +1768,12 @@ namespace q
 
       alignas(16) __m128 *result = new __m128[n - 2 * scale];
       alignas(16) __m128 *products = new __m128[n];
+      const __m128 flipSign = _mm_set_ps(1.0f, 1.0f, -1.0f, 1.0f);
       convolve_SIMD(scale, vec, n, result, products, n);
 
       for (size_t i = 0; i < n - 2 * scale; i++)
       {
-        beta[i] = result[i];
+        beta[i] = _mm_mul_ps(_mm_shuffle_ps(result[i], result[i], 0b10110100), flipSign); // swap beta2 and beta3 and flip the sign of beta1 // @todo: this is a temporary solution
       }
     }
 
@@ -1887,17 +1844,5 @@ namespace q
       }
     }
 #pragma endregion "convolve regression"
-
-#pragma region printMatrices
-    void qPeaks::printMatrices(int scale) const
-    {
-      std::cout << "Design Matrix\n";
-      print(*(designMatrices[scale]));
-      std::cout << "\nInverse Matrix\n";
-      print(*(inverseMatrices[scale]));
-      std::cout << "\nPseudo-Inverse Matrix\n";
-      print(*(psuedoInverses[scale]));
-    }
-#pragma endregion printMatrices
   } // namespace Algorithms
 } // namespace q

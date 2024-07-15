@@ -94,7 +94,7 @@ int main()
   // qPEAKS
   std::cout << "create qPeaks object..............";
   q::MeasurementData::varDataType dataObject = &(lcmsData.data);
-  q::Algorithms::qPeaks qpeaks(dataObject);
+  q::Algorithms::qPeaks qpeaks;
   SetConsoleTextAttribute(hConsole, 10);
   std::cout << "done\n";
   SetConsoleTextAttribute(hConsole, 15);

@@ -32,16 +32,9 @@ namespace q
         {
         public:
             static const int global_maxScale = 15; // maximum scale for regression window
-            // Constructor
+
+            // Constructor and Destructor
             qPeaks();
-
-            /**
-             * @brief Construct a new q Peaks object using varDataType object to initialize the object Matrices.
-             * @param dataVec
-             */
-            qPeaks(const q::MeasurementData::varDataType &dataVec);
-
-            // Destructor
             ~qPeaks();
 
             // methods
@@ -67,15 +60,7 @@ namespace q
 
             static void initialize();
 
-            // debugging
-            void info() const;
-            void printMatrices(int scale) const;
-
         private:
-            std::vector<std::unique_ptr<q::Matrices::Matrix>> designMatrices;  // will be deleted in future
-            std::vector<std::unique_ptr<q::Matrices::Matrix>> inverseMatrices; // will be deleted in future
-            std::vector<std::unique_ptr<q::Matrices::Matrix>> psuedoInverses;  // will be deleted in future
-
             /**
              * @brief Array of the unique entries from the inverse matrix: ( X.T * X ) ^-1
              * @details the matrix has the following structure:
@@ -191,7 +176,6 @@ namespace q
                 const float *ylog_start,
                 const bool *df_start,
                 const int n,
-                const int N,
                 std::vector<std::unique_ptr<validRegression>> &validRegressions);
 
             void
