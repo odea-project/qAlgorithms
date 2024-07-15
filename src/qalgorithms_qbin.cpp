@@ -314,8 +314,9 @@ namespace q
             }
         }
 
-        void BinContainer::reconstructFromStdev(unsigned int maxdist)
+        void BinContainer::reconstructFromStdev(int maxdist)
         {
+
             // find all not binned points and add them to a bin
             // cond 1: mz must be within one standard deviation of mz
             // cond 2: point must be within maxdist scans of the bin borders
@@ -329,35 +330,59 @@ namespace q
             // -1 = does not fit any bin, -2 = fits two ore more, bin number if only one fits so far
             const double numOfBins = finishedBins.size();
             const double numOfUnbinned = outOfBins.size();
-            std::vector<int> selectedOnce(numOfUnbinned, -1);
-            std::vector<double> massrange(numOfBins * 2);
+            std::vector<int> selectedOnce(numOfUnbinned, 0);
+            std::vector<BinBorders> massrange;
+            massrange.reserve(numOfBins);
+            // sort to stop test earlier
+            std::sort(finishedBins.begin(), finishedBins.end(), [](Bin lhs, Bin rhs)
+                      { return lhs.mzMin < rhs.mzMin; });
+            std::sort(outOfBins.begin(), outOfBins.end(), [](const qCentroid *lhs, const qCentroid *rhs)
+                      { return lhs->mz < rhs->mz; });
+
             for (Bin currentBin : finishedBins)
             {
                 double stdev = currentBin.calcStdevMZ(); // @todo consider merging minmax and stdev
-                auto minmax = std::minmax_element(currentBin.pointsInBin.begin(), currentBin.pointsInBin.end(),
-                                                  [](qCentroid *lhs, qCentroid *rhs)
-                                                  { return lhs->mz < rhs->mz; });
-                qCentroid *a = *minmax.first;
-                qCentroid *b = *minmax.second;
+
                 double trueVcrit = 3.05037165842070 * pow(log(currentBin.pointsInBin.size() + 1), (-0.4771864667153)) * stdev;
-                massrange.push_back(a->mz + trueVcrit);
-                massrange.push_back(b->mz + trueVcrit);
-                // massrange is organised as border_lower1, border_upper_1, border_lower2, border_upper_2, etc.
+                massrange.push_back(BinBorders{currentBin.scanMin - maxdist - 1, currentBin.scanMax + maxdist + 1,
+                                               currentBin.mzMin - trueVcrit, currentBin.mzMax + trueVcrit});
             }
 
             // for every point, iterate until two matches are found
+            size_t startPoint = 0;
+            int tmpCounter = 0;
             for (size_t i = 0; i < numOfUnbinned; i++)
             {
-                size_t testposition = 0;
-                bool oneMore = true;
-                while (oneMore)
+                size_t testposition = startPoint;
+                bool oneMore = false;
+                while (testposition < numOfBins)
                 {
-                    if ((massrange[testposition] <= outOfBins[i]->mz) & (massrange[testposition + 1] >= outOfBins[i]->mz))
+                    // stop if mass is greater than last min +0.1
+                    if (massrange[testposition].massRangeEnd < outOfBins[i]->mz)
                     {
-                        /* code */
+                        startPoint = testposition;
+                        break;
                     }
+                    // if the bin could accept this point
+                    else if (((massrange[testposition].scanRangeStart < outOfBins[i]->scanNo) &
+                              (massrange[testposition].scanRangeEnd > outOfBins[i]->scanNo)) &
+                             ((massrange[testposition].massRangeStart <= outOfBins[i]->mz) &
+                              (massrange[testposition].massRangeEnd >= outOfBins[i]->mz)))
+                    {
+
+                        if (oneMore)
+                        {
+                            selectedOnce[i] = -1;
+                            break;
+                        }
+                        selectedOnce[i] = testposition;
+                        oneMore = true;
+                        ++tmpCounter;
+                    }
+                    ++testposition;
                 }
             }
+            std::cout << tmpCounter;
         }
 
         void BinContainer::printAllBins(std::string path, const CentroidedData *rawdata)
@@ -477,7 +502,7 @@ namespace q
 
 #pragma region "Bin"
 
-        Bin::Bin(){};
+        Bin::Bin() {};
 
         Bin::Bin(const std::vector<qCentroid *>::iterator &binStartInOS, const std::vector<qCentroid *>::iterator &binEndInOS) // const std::vector<qCentroid> &sourceList,
         {
@@ -1040,7 +1065,8 @@ namespace q
             }
             // @todo no more than 80% of points outside of 1.3 sigma (~80% coverage)
             // if ((meanMZ + 3 * stdevMZ < r_maxdist_abs) | (meanMZ - 3 * stdevMZ > l_maxdist_abs)) // if a value in the bin is outside of 3 sigma
-            // toobroad never applies
+            // toobroad never applies, probably due to the way bins are formed
+            // @todo find test for mz distribution in scans
             if (toobroad)
             {
                 selector |= std::byte{0b00010000};
@@ -1272,7 +1298,7 @@ namespace q
 
 //
 //
-int main()
+int notmain()
 {
     std::cout << "starting...\n";
 
@@ -1311,6 +1337,8 @@ int main()
     testcontainer.assignDQSB(&testdata, inputMaxdist, false); // int = max dist in scans
 
     testcontainer.redoBinningIfTooclose(measurementDimensions, &testdata, q::qBinning::outOfBins, q::qBinning::maxdist);
+
+    testcontainer.reconstructFromStdev(6);
 
     // print bin selection
     testcontainer.printSelectBins(std::byte{0b11111111}, true, "../.."); // one bit per test
