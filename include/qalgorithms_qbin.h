@@ -81,7 +81,7 @@ namespace q
             double mean_error;
         };
 
-        struct runAssessor // one of these per analysed measurement
+        struct RunAssessor // one of these per analysed measurement
         {
             std::vector<std::byte> errorcodes;
             std::vector<int> countOfBins;
@@ -91,6 +91,15 @@ namespace q
             int unbinnedPoints;
             int countDQSbelow0;
         };
+
+        struct BinBorders
+        {
+            int scanRangeStart;
+            int scanRangeEnd;
+            double massRangeStart;
+            double massRangeEnd;
+        };
+
 #pragma endregion "utility"
 
         // Bin Class
@@ -239,7 +248,7 @@ namespace q
 
             void mergeByStdev(double mzFilterLower, double mzFilterUpper);
 
-            void reconstructFromStdev(unsigned int maxdist);
+            void reconstructFromStdev(int maxdist);
 
             void printAllBins(std::string path, const CentroidedData *rawdata); // @todo remove rawdata dependency
 

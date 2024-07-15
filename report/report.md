@@ -193,15 +193,21 @@ the same distribution. This distance decreases exponentially with group size, me
 is much less likely for a dissimilar mass to belong to a large bin with a high 
 density towards the edges of the probability distribution than a small bin with
 low coverage of the entire distribution. 
-The order spaces are normalized to the centroid error, which estimates the standard deviation of the assumed normal distribution. This cannot
-be empirically determined before binning is complete.
+The order spaces are normalized to the centroid error, which estimates the standard deviation of the 
+assumed normal distribution. This cannotbe empirically determined before binning is complete.
 The detailed derivation of the test statistic can be found in the supporting
 information provided by Reuschenbach et al. (2023)[@reuschenbachQBinningDataQualityBased2023].
 This criterion is then checked for the largest order space of every bin. When the
 critical distance is surpassed, the two resulting fragments are controlled.
 If no order space is greater than the critical distance and there are more than
-five points in a fragment, it is turned into a new open bin. Five points are limited since no peak can be fitted to smaller ones, considering a peak model that uses four coefficients, e.g., the qPeaks model by Reuschenbach et al., 2024.
+five points in a fragment, it is turned into a new open bin. The limit of five points was chosen 
+since no peak can be fitted to smaller ones, considering a peak model that uses four 
+coefficients, e.g., the qPeaks model by Reuschenbach et al., 2024.
 Once no fragment can be subset further, the resulting bins are subset by scans.
+
+Addendum: Testing as of 15.07.2024 showed that the estimate of the standard deviation
+is correct in the vast majority of cases. After the rebinning step, only six points
+existed which were assigned incorrectly.
 
 For subsetting a bin by the separation dimension like *scans*, it is sorted by scans and then subset at every 
 position where the difference between two neighboring points is greater than six.

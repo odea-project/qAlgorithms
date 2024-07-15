@@ -87,6 +87,28 @@ bins_SFC_02_21 = read.csv("C:/Users/unisys/Documents/Studium/Analytik-Praktikum/
 bins_SFC_03_22 = read.csv("C:/Users/unisys/Documents/Studium/Analytik-Praktikum/rawdata/Exchange_SFC-data/230222_SFC_Modelling_MixF_03_22_selectBins_full.csv")
 bins_SFC_01_20 = read.csv("C:/Users/unisys/Documents/Studium/Analytik-Praktikum/rawdata/Exchange_SFC-data/230222_SFC_Modelling_MixF_01_20_selectBins_full.csv")
 
+# Design of experiment for SFC
+s_SFC_DoE_RO02_06 = read.csv("C:/Users/unisys/Documents/Studium/Messdaten/mzml/SFC_DoE/240123_VqF_DoE-pos_RO02_06_summary.csv")
+s_SFC_DoE_RO02_06$errorcode = as.numeric(lapply(s_SFC_DoE_RO02_06$errorcode, bits))
+s_SFC_DoE_RO03_08 = read.csv("C:/Users/unisys/Documents/Studium/Messdaten/mzml/SFC_DoE/240123_VqF_DoE-pos_RO03_08_summary.csv")
+s_SFC_DoE_RO03_08$errorcode = as.numeric(lapply(s_SFC_DoE_RO03_08$errorcode, bits))
+s_SFC_DoE_RO11_24 = read.csv("C:/Users/unisys/Documents/Studium/Messdaten/mzml/SFC_DoE/240123_VqF_DoE-pos_RO11_24_summary.csv")
+s_SFC_DoE_RO11_24$errorcode = as.numeric(lapply(s_SFC_DoE_RO11_24$errorcode, bits))
+s_SFC_DoE_RO24_50 = read.csv("C:/Users/unisys/Documents/Studium/Messdaten/mzml/SFC_DoE/240123_VqF_DoE-pos_RO24_50_summary.csv")
+s_SFC_DoE_RO24_50$errorcode = as.numeric(lapply(s_SFC_DoE_RO24_50$errorcode, bits))
+s_SFC_DoE_RO29_60 = read.csv("C:/Users/unisys/Documents/Studium/Messdaten/mzml/SFC_DoE/240123_VqF_DoE-pos_RO29_60_summary.csv")
+s_SFC_DoE_RO29_60$errorcode = as.numeric(lapply(s_SFC_DoE_RO29_60$errorcode, bits))
+s_SFC_DoE_RO42_86 = read.csv("C:/Users/unisys/Documents/Studium/Messdaten/mzml/SFC_DoE/240123_VqF_DoE-pos_RO42_86_summary.csv")
+s_SFC_DoE_RO42_86$errorcode = as.numeric(lapply(s_SFC_DoE_RO42_86$errorcode, bits))
+
+bins_SFC_DoE_RO02_06 = read.csv("C:/Users/unisys/Documents/Studium/Messdaten/mzml/SFC_DoE/240123_VqF_DoE-pos_RO02_06_selectBins_full.csv")
+bins_SFC_DoE_RO03_08 = read.csv("C:/Users/unisys/Documents/Studium/Messdaten/mzml/SFC_DoE/240123_VqF_DoE-pos_RO03_08_selectBins_full.csv")
+bins_SFC_DoE_RO11_24 = read.csv("C:/Users/unisys/Documents/Studium/Messdaten/mzml/SFC_DoE/240123_VqF_DoE-pos_RO11_24_selectBins_full.csv")
+bins_SFC_DoE_RO24_50 = read.csv("C:/Users/unisys/Documents/Studium/Messdaten/mzml/SFC_DoE/240123_VqF_DoE-pos_RO24_50_selectBins_full.csv")
+bins_SFC_DoE_RO29_60 = read.csv("C:/Users/unisys/Documents/Studium/Messdaten/mzml/SFC_DoE/240123_VqF_DoE-pos_RO29_60_selectBins_full.csv")
+bins_SFC_DoE_RO42_86 = read.csv("C:/Users/unisys/Documents/Studium/Messdaten/mzml/SFC_DoE/240123_VqF_DoE-pos_RO42_86_selectBins_full.csv")
+
+
 ```
 
 ```{r summary-summary function}
@@ -104,10 +126,13 @@ sumsum = function(summaryFrame){
 
 
 
-summaries = c("s_blank_pure_1", "s_blank_pure_2", "s_blank_pure_3",
-              "s_blank_standard_1", "s_blank_standard_2", "s_blank_standard_3",
-              "s_full_1", "s_full_2", "s_full_3",
-              "s_SFC_01_20", "s_SFC_02_21", "s_SFC_03_22")
+# summaries = c("s_blank_pure_1", "s_blank_pure_2", "s_blank_pure_3",
+#               "s_blank_standard_1", "s_blank_standard_2", "s_blank_standard_3",
+#               "s_full_1", "s_full_2", "s_full_3",
+#               "s_SFC_01_20", "s_SFC_02_21", "s_SFC_03_22")
+
+summaries = c("s_SFC_DoE_RO02_06", "s_SFC_DoE_RO03_08", "s_SFC_DoE_RO11_24",
+              "s_SFC_DoE_RO24_50", "s_SFC_DoE_RO29_60", "s_SFC_DoE_RO42_86")
 
 sum_all = data.frame(errorcode = 0, sample = "none", bin_count = 0, total_points = 0, 
                      average_size = 0, mean_DQS = 0, mean_stdev = 0, binPerc = 0)
@@ -123,9 +148,22 @@ for (name in summaries) {
   sum_all = rbind(sum_all, measurement)
 }
 sum_all = sum_all[-1,]
-sum_all = sum_all[which(sum_all$bin_count > 10),]
+
+errorcounts = sum_all %>% group_by(errorcode) %>% summarise(count = sum(bin_count), meanDQS = mean(mean_DQS))
+
+sum_all$errorfac = NA
+sum_all$groupDQS = NA
+for (i in 1:length(sum_all$errorcode)) {
+  sum_all$errorfac[i] = errorcounts$count[which(errorcounts$errorcode == sum_all$errorcode[i])]
+  sum_all$groupDQS[i] = errorcounts$meanDQS[which(errorcounts$errorcode == sum_all$errorcode[i])]
+}
+sum_all$testview = (sum_all$mean_DQS - sum_all$groupDQS) * log(sum_all$bin_count) * sum_all$total_points / sum_all$errorfac
+
+# sum_all = sum_all[which(sum_all$bin_count > 10),]
 # sum_all$errorcode = as.numeric(lapply(sum_all$errorcode, bits))
 # sum_all$errorcode = sum_all$errorcode - 10000000
+
+sum_all %>% group_by(errorcode) %>% summarise(total = sum(abs(testview))) %>% arrange(-total)
 
 ```
 Error codes:
@@ -149,11 +187,19 @@ ggplot(sum_all)+
   geom_point(aes(as.factor(sample), mean_stdev, color = as.factor(errorcode)))+
   scale_x_discrete(guide = guide_axis(n.dodge=3))
 
+ggplot(sum_all)+
+  geom_line(aes(as.factor(sample), testview, color = as.factor(errorcode), group = errorcode))+
+  scale_x_discrete(guide = guide_axis(n.dodge=3))
+
+ggplot(sum_all)+
+  geom_line(aes(as.factor(sample), binPerc, color = as.factor(errorcode), group = errorcode))+
+  scale_x_discrete(guide = guide_axis(n.dodge=3))
+
 # ggplot(s_full_1)+
 #   geom_point(aes(mean_mz,mean_scans))
 # 
-ggplot(s_full_2)+
-  geom_point(aes(mean_mz,mean_scans))
+# ggplot(s_full_2)+
+#   geom_point(aes(mean_mz,mean_scans))
 # 
 # ggplot(s_full_3)+
 #   geom_point(aes(mean_mz,mean_scans))
