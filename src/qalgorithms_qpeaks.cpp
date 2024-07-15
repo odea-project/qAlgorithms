@@ -266,16 +266,6 @@ namespace q
         convolve_dynamic(scale, ylog_start, n, beta);      // do the regression
         validateRegressions(beta, n_segments, y_start, ylog_start, df_start, scale, validRegressions);
       } // end for scale loop
-      // // std::cout << "\n-------\n";
-      // if (validRegressions.size() == 14)
-      // {
-      //   std::cout << "\n\n\n";
-      //   for (int i = 0; i < validRegressions.size(); i++)
-      //   {
-      //     std::cout << validRegressions[i]->index_x0 << ", " << validRegressions[i]->scale << std::endl;
-      //   }
-      //   exit(0);
-      // }
       mergeRegressionsOverScales(validRegressions, y_start, ylog_start, df_start);
     } // end runningRegression
 #pragma endregion runningRegression
@@ -300,16 +290,6 @@ namespace q
         const int n_segments = n - k + 1;            // number of segments, i.e. regressions considering the number of data points
         validateRegressions_static(beta, n_segments, y_start, ylog_start, df_start, scale, validRegressionsIndex, validRegressions);
       } // end for scale loop
-      // std::cout << "\n-------\n";
-      // if (validRegressionsIndex == 11)
-      // {
-      //   std::cout << "\n\n\n";
-      //   for (int i = 0; i < 11; i++)
-      //   {
-      //     std::cout << validRegressions[i].index_x0 << ", " << validRegressions[i].scale << std::endl;
-      //   }
-      //   exit(0);
-      // }
       mergeRegressionsOverScales_static(validRegressions, validRegressionsIndex, y_start, ylog_start, df_start);
     }
 #pragma endregion "running regression static"
@@ -338,9 +318,11 @@ namespace q
         float apex_position = 0.f;     // apex position
         int left_limit = 0;            // left limit of the peak
         int right_limit = 0;           // right limit of the peak
+        float area = 0.f;              // peak area
+        float uncertainty_area = 0.f;  // uncertainty of the peak area
 
         // validate the regression
-        if (!validateRegressions_testseries(inverseMatrix_2_2, i, scale, df_start, y_start, ylog_start, coeff, df_sum, apex_position, left_limit, right_limit))
+        if (!validateRegressions_testseries(inverseMatrix_2_2, i, scale, df_start, y_start, ylog_start, coeff, df_sum, apex_position, left_limit, right_limit, area, uncertainty_area))
         {
           continue; // invalid regression
         }
@@ -360,13 +342,12 @@ namespace q
                 coeff,                     // coefficients register
                 true,                      // isValid
                 left_limit,                // left_limit
-                right_limit                // right_limit
-                // 0.f,                       // peak area
-                // 0.f,                       // uncertainty of the peak height
-                // 0.f                        // uncertainty of the peak area
+                right_limit,               // right_limit
+                0.f,                       // peak area
+                0.f                        // uncertainty of the peak area
+                // 0.f                        // uncertainty of the peak height
                 ));
       } // end for loop
-      
       // early return if no or only one valid peak
       if (validRegressionsTmp.size() < 2)
       {
@@ -463,9 +444,11 @@ namespace q
         float apex_position = 0.f;     // apex position
         int left_limit = 0;            // left limit of the peak
         int right_limit = 0;           // right limit of the peak
+        float area = 0.f;              // peak area
+        float uncertainty_area = 0.f;  // uncertainty of the peak area
 
         // validate the regression
-        if (!validateRegressions_testseries(inverseMatrix_2_2, i, scale, df_start, y_start, ylog_start, coeff, df_sum, apex_position, left_limit, right_limit))
+        if (!validateRegressions_testseries(inverseMatrix_2_2, i, scale, df_start, y_start, ylog_start, coeff, df_sum, apex_position, left_limit, right_limit, area, uncertainty_area))
         {
           continue; // invalid regression
         }
@@ -484,9 +467,10 @@ namespace q
         validRegressionsTmp[validRegressionsIndexTmp].isValid = true;                            // isValid
         validRegressionsTmp[validRegressionsIndexTmp].left_limit = left_limit;                   // left_limit
         validRegressionsTmp[validRegressionsIndexTmp].right_limit = right_limit;                 // right_limit
+        validRegressionsTmp[validRegressionsIndexTmp].area = area;                               // peak area
+        validRegressionsTmp[validRegressionsIndexTmp].uncertainty_area = uncertainty_area;       // uncertainty of the peak area
         validRegressionsIndexTmp++;
       } // end for loop
-      // std::cout << validRegressionsIndexTmp << ", ";
       // early return if no or only one valid peak
       if (validRegressionsIndexTmp < 2)
       {
@@ -540,6 +524,11 @@ namespace q
         {                                                                                                    // the two regressions differ,
           processGroup(i, start_index_group);                                                                // process the group
           start_index_group = i + 1;                                                                         // start index of the next group
+          if (i == last_valid_index - 1)
+          { // if last round compare, add the last regression to the valid regressions
+            *(validRegressions + validRegressionsIndex) = validRegressionsTmp[i + 1];
+            validRegressionsIndex++;
+          }
         }
         else
         {
@@ -565,7 +554,9 @@ namespace q
         int &df_sum,
         float &apex_position,
         int &left_limit,
-        int &right_limit)
+        int &right_limit,
+        float &area,
+        float &uncertainty_area)
     {
       /*
           Degree of Freedom Filter:
@@ -643,8 +634,6 @@ namespace q
         This block of code implements the area filter. It calculates the Jacobian matrix for the peak area based on the coefficients matrix B. Then it calculates the uncertainty of the peak area based on the Jacobian matrix. If the peak area is statistically insignificant, the loop continues to the next iteration.
         NOTE: this function does not consider b0: i.e. to get the real uncertainty and area multiply both with Exp(b0) later. This is done to avoid exp function at this point
       */
-      float area = 0.0;
-      float uncertainty_area = 0.0;
       if (!isValidPeakArea(coeff, mse, scale, df_sum, area, uncertainty_area))
       {
         return false; // statistical insignificance of the area
@@ -892,8 +881,8 @@ namespace q
             exp_approx_d(((float *)&coeff)[0] + (regression->apex_position - regression->index_x0) * ((float *)&coeff)[1] * .5))); // peak height (exp(b0 - b1^2/4/b2)) with position being -b1/2/b2
 
         // add additional information to the peak object
-        peaks.back()->area = 0.;              // regression->area * exp_b0;
-        peaks.back()->areaUncertainty = 0.;   // regression->uncertainty_area * exp_b0;
+        peaks.back()->area = regression->area * exp_b0;
+        peaks.back()->areaUncertainty = regression->uncertainty_area * exp_b0;
         peaks.back()->heightUncertainty = 0.; // regression->uncertainty_height;
         // peaks.back()->positionUncertainty = regression->uncertainty_position * dx;
         // peaks.back()->dqsPeak = regression->dqs;
@@ -942,9 +931,9 @@ namespace q
             exp_approx_d(((float *)&coeff)[0] + (regression.apex_position - regression.index_x0) * ((float *)&coeff)[1] * .5))); // peak height (exp(b0 - b1^2/4/b2)) with position being -b1/2/b2
 
         // add additional information to the peak object
-        peaks.back()->area = regression.scale; // regression->area * exp_b0;
-        peaks.back()->areaUncertainty = 0.;    // regression->uncertainty_area * exp_b0;
-        peaks.back()->heightUncertainty = 0.;  // regression->uncertainty_height;
+        peaks.back()->area = regression.area * exp_b0;
+        peaks.back()->areaUncertainty = regression.uncertainty_area * exp_b0;
+        peaks.back()->heightUncertainty = 0.; // regression->uncertainty_height;
         // peaks.back()->positionUncertainty = regression->uncertainty_position * dx;
         // peaks.back()->dqsPeak = regression->dqs;
 

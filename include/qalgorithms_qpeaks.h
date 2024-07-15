@@ -86,17 +86,17 @@ namespace q
             // define valid regression struct
             struct validRegression
             {
-                int index_x0;        // index of window center (x==0) in the Y matrix
-                int scale;           // scale of the regression window, i.e., 2*scale+1 = window size
-                int df;              // degree of freedom, interpolated data points will not be considered
-                float apex_position; // position of the apex of the peak
-                float mse;           // mean squared error
-                __m128 coeff;        // regression coefficients
-                bool isValid;        // flag to indicate if the regression is valid
-                float left_limit;    // left limit of the peak regression window
-                float right_limit;   // right limit of the peak regression window
-                // float area;               // area of the peak
-                // float uncertainty_area;   // uncertainty of the area
+                int index_x0;           // index of window center (x==0) in the Y matrix
+                int scale;              // scale of the regression window, i.e., 2*scale+1 = window size
+                int df;                 // degree of freedom, interpolated data points will not be considered
+                float apex_position;    // position of the apex of the peak
+                float mse;              // mean squared error
+                __m128 coeff;           // regression coefficients
+                bool isValid;           // flag to indicate if the regression is valid
+                float left_limit;       // left limit of the peak regression window
+                float right_limit;      // right limit of the peak regression window
+                float area;             // area of the peak
+                float uncertainty_area; // uncertainty of the area
                 // float uncertainty_height; // uncertainty of the height
 
                 validRegression(
@@ -108,9 +108,9 @@ namespace q
                     __m128 coeff = _mm_setzero_ps(),
                     bool isValid = false,
                     float left_limit = 0.0f,
-                    float right_limit = 0.0f) //,
-                    // float area = 0.0f,
-                    // float uncertainty_area = 0.0f,
+                    float right_limit = 0.0f,
+                    float area = 0.0f,
+                    float uncertainty_area = 0.0f)
                     // float uncertainty_height = 0.0f)
                     : index_x0(index_x0),
                       scale(scale),
@@ -120,50 +120,28 @@ namespace q
                       coeff(coeff),
                       isValid(isValid),
                       left_limit(left_limit),
-                      right_limit(right_limit)
+                      right_limit(right_limit),
+                      area(area),
+                      uncertainty_area(uncertainty_area)
                 {
-                } //,
-                  //   area(area),
-                  //   uncertainty_area(uncertainty_area),
-                  //   uncertainty_height(uncertainty_height) {}
+                } 
             };
 
             struct validRegression_static
             {
-                int index_x0;        // index of window center (x==0) in the Y matrix
-                int scale;           // scale of the regression window, i.e., 2*scale+1 = window size
-                int df;              // degree of freedom, interpolated data points will not be considered
-                float apex_position; // position of the apex of the peak
-                float mse;           // mean squared error
-                __m128 coeff;        // regression coefficients
-                bool isValid;        // flag to indicate if the regression is valid
-                int left_limit;      // left limit of the peak regression window
-                int right_limit;     // right limit of the peak regression window
-                // float area;               // area of the peak
-                // float uncertainty_area;   // uncertainty of the area
+                int index_x0;           // index of window center (x==0) in the Y matrix
+                int scale;              // scale of the regression window, i.e., 2*scale+1 = window size
+                int df;                 // degree of freedom, interpolated data points will not be considered
+                float apex_position;    // position of the apex of the peak
+                float mse;              // mean squared error
+                __m128 coeff;           // regression coefficients
+                bool isValid;           // flag to indicate if the regression is valid
+                int left_limit;         // left limit of the peak regression window
+                int right_limit;        // right limit of the peak regression window
+                float area;             // area of the peak
+                float uncertainty_area; // uncertainty of the area
                 // float uncertainty_height; // uncertainty of the height
                 validRegression_static() = default;
-                // void setValues(
-                //     int index_x0 = 0,
-                //     int scale = 0,
-                //     int df = 0,
-                //     float apex_position = 0.0f,
-                //     float mse = 0.0f,
-                //     __m128 coeff = _mm_setzero_ps(),
-                //     bool isValid = false,
-                //     float left_limit = 0.0f,
-                //     float right_limit = 0.0f)
-                // {
-                //     this->index_x0 = index_x0;
-                //     this->scale = scale;
-                //     this->df = df;
-                //     this->apex_position = apex_position;
-                //     this->mse = mse;
-                //     this->coeff = coeff;
-                //     this->isValid = isValid;
-                //     this->left_limit = left_limit;
-                //     this->right_limit = right_limit;
-                // }
             };
 
             // methods
@@ -220,7 +198,9 @@ namespace q
                 int &df_sum,
                 float &apex_position,
                 int &left_limit,
-                int &right_limit);
+                int &right_limit,
+                float &area,
+                float &uncertainty_area);
 
             void
             mergeRegressionsOverScales(
