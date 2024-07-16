@@ -28,16 +28,20 @@ namespace q
             sc::MZML &data)
         {
             std::vector<int> indices = data.get_spectra_index(); // get all indices
-#pragma omp parallel for
+// #pragma omp parallel for
             for (int index : indices) // loop over all indices
             {
                 // load spectrum
                 alignas(64) std::vector<std::vector<double>> spectrum = data.get_spectrum(index); // get spectrum at index
+                if (spectrum[0].size() < 5)
+                {
+                    continue; // skip due to lack of data, i.e., degree of freedom will be zero
+                }
                 alignas(32) std::vector<std::vector<float>> spectrum_float(spectrum.size());
                 for (size_t i = 0; i < spectrum.size(); i++)
                 {
                     spectrum_float[i].reserve(spectrum[i].size());
-                    std::transform(spectrum[i].begin(), spectrum[i].end(), spectrum_float[i].begin(), [](double d) { return static_cast<float>(d); });
+                    std::transform(spectrum[i].begin(), spectrum[i].end(), std::back_inserter(spectrum_float[i]), [](double d) { return static_cast<float>(d); });
                 }
                 spectrum_float.push_back(std::vector<float>(spectrum_float[0].size(), 1.0)); // add df column for interpolation
 

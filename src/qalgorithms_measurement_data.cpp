@@ -129,9 +129,9 @@ namespace q
     MeasurementData::zeroFilling_vec(std::vector<std::vector<float>> &data)
     {
       const int numPoints = data[0].size(); // number of data points
-
+      size_t numZeros = 4;            // number of added zeros to store separator positions. it is initialized with 4 to address that later 4 data points will be added at the front of the vector
       // initialize the expected difference
-      float expectedDifference = 0.0;
+      float expectedDifference = 0.0f;
       if (numPoints > 128)
       { // static approach: mean of the 8 lowest distances
         float differences[128];
@@ -148,11 +148,68 @@ namespace q
       }
       else
       { // dynamic approach
-        // todo: implement dynamic approach
+        float *differences = new float[numPoints - 1];
+        for (int i = 0; i < numPoints - 1; i++)
+        {
+          differences[i] = data[0][i + 1] - data[0][i];
+        }
+        std::sort(differences, differences + numPoints - 1);
+        for (int i = 0; i < std::min(8, numPoints - 1); i++)
+        {
+          expectedDifference += differences[i];
+        }
+        expectedDifference /= std::min(8, numPoints - 1);
+        delete[] differences;
       }
 
-      // analyze the data for gaps, i.e., differences > 1.75 * expectedDifference, and fill the gaps by adding new data points at the end of the vector
-
+      // analyze data for gaps, i.e., differences > 1.75 * expectedDifference, and fill the gaps by adding new data points at the end of the vector
+      std::vector<size_t> separators;
+      for (int i = 0; i < numPoints - 1; i++)
+      {
+        // consider the difference between two neighboring data points from differences vector and compare it with 1.75 * expectedDifference
+        float difference = data[0][i + 1] - data[0][i];
+        if (difference > 1.75f * expectedDifference)
+        {
+          // calculate the gap size; need to be rounded to the nearest integer
+          int gapSize = static_cast<int>(difference / expectedDifference - 1);
+          // check if the gapSize is larger than k, as this is the maximum gap size
+          if (gapSize <= 8)
+          {
+            // add gapSize new data points at the end of the vector
+            for (int j = 1; j <= gapSize; j++)
+            {
+              data[0].push_back(data[0][i] + j * expectedDifference);
+              data[1].push_back(0.0f);
+              data[2].push_back(0.0f);
+            }
+            numZeros += gapSize;
+          }
+          else
+          {
+            // limit the gap size to 8 and add 4 new data points close to the (i) and (i+1) data point
+            gapSize = 8;
+            // add 4 new data points close to the (i) data point
+            for (int j = 1; j <= 4; j++)
+            {
+              data[0].push_back(data[0][i] + j * expectedDifference);
+              data[1].push_back(0.0f);
+              data[2].push_back(0.0f);
+            }
+            // add 4 new data points close to the (i+1) data point
+            for (int j = 4; j >= 1; j--)
+            {
+              data[0].push_back(data[0][i + 1] - j * expectedDifference);
+              data[1].push_back(0.0f);
+              data[2].push_back(0.0f);
+            }
+          }   
+        }
+        else
+        {
+          // update expectedDifference
+          expectedDifference = (expectedDifference + data[0][i + 1] - data[0][i]) * .5;
+        }
+      }
     }
 
     void MeasurementData::cutData(varDataType &dataVec, size_t &maxKey)
