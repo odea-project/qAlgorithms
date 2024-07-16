@@ -104,8 +104,8 @@ binViewer = function(summary, fullbins, binID){
       binID = binID - 1
     } else if(input == "p"){
       print(ggplot(fullbins[which(fullbins$ID == binID),])+
-      geom_point(aes(scan, intensity, colour = mz), size = 2)+
-      geom_col(aes(scan, intensity, fill = mz), colour = "lightblue1", width = 0.3)+
+      # geom_point(aes(scan, intensity, colour = DQSC), size = 2)+
+      geom_col(aes(scan, intensity, fill = DQSC), colour = "lightblue1", width = 0.3)+
       scale_fill_continuous()+
       # scale_color_viridis_c()+
       labs(caption = sprintf("BinID: %d | Errorcode: %d", binID, summary$errorcode[binID])))
@@ -150,5 +150,14 @@ ggplot(targetBin)+
  geom_point(aes(mz, intensity))
   
   
+```
+
+```{r subset ratios}
+mz1 = c(5.58,2.72,1.65,1.58)
+mz2 = c(6.21,5.12,2.42,2.5)
+
+ggplot()+
+  geom_point(aes(y = mz1, x = 1:4), color = "red1")+
+  geom_point(aes(y = mz2, x = 1:4), color = "lightblue3")
 ```
 

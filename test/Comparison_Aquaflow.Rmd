@@ -111,12 +111,32 @@ bins_SFC_DoE_RO42_86 = read.csv("C:/Users/unisys/Documents/Studium/Messdaten/mzm
 
 ```
 
-```{r summary-summary function}
-sumsum = function(summaryFrame){
-  lowDQSpercentage = length(summaryFrame$ID[which(summaryFrame$DQSB_scaled < 0.2)]) / length(summaryFrame$ID)
-  summaryFrame = summaryFrame[which(summaryFrame$DQSB_scaled < 0.2),]
-  
-}
+```{r read lc data}
+s_Kali_Pu_Penc_2.9HCO3_2_Indigo_neg = read.csv("C:/Users/unisys/Documents/Studium/Messdaten/LCMS_pressure_error/22090920_Kali_Pu_Penc_2,9HCO3_2_Indigo_neg_summary.csv")
+s_Kali_Pu_Penc_2.9HCO3_2_Indigo_neg$errorcode = as.numeric(lapply(s_Kali_Pu_Penc_2.9HCO3_2_Indigo_neg$errorcode, bits))
+s_Kali_Pu_Penc_2.9HCO3_2_Indigo_pos = read.csv("C:/Users/unisys/Documents/Studium/Messdaten/LCMS_pressure_error/22090920_Kali_Pu_Penc_2,9HCO3_2_Indigo_pos_summary.csv")
+s_Kali_Pu_Penc_2.9HCO3_2_Indigo_pos$errorcode = as.numeric(lapply(s_Kali_Pu_Penc_2.9HCO3_2_Indigo_pos$errorcode, bits))
+
+s_Kali_Pu_Penc_2.9HCO3_0_Indigo_pos = read.csv("C:/Users/unisys/Documents/Studium/Messdaten/LCMS_pressure_error/22090912_Kali_Pu_Penc_2,9HCO3_0_Indigo_pos_summary.csv")
+s_Kali_Pu_Penc_2.9HCO3_0_Indigo_pos$errorcode = as.numeric(lapply(s_Kali_Pu_Penc_2.9HCO3_0_Indigo_pos$errorcode, bits))
+s_Kali_Pu_Penc_2.9HCO3_2_pos = read.csv("C:/Users/unisys/Documents/Studium/Messdaten/LCMS_pressure_error/22090910_Kali_Pu_Penc_2,9HCO3_2_pos_summary.csv")
+s_Kali_Pu_Penc_2.9HCO3_2_pos$errorcode = as.numeric(lapply(s_22090910_Kali_Pu_Penc_2.9HCO3_2_pos$errorcode, bits))
+s_Kali__H2O_1_pos = read.csv("C:/Users/unisys/Documents/Studium/Messdaten/LCMS_pressure_error/22090901_H2O_1_pos_summary.csv")
+s_Kali__H2O_1_pos$errorcode = as.numeric(lapply(s_Kali__H2O_1_pos$errorcode, bits))
+s_Kali__H2O_3_pos = read.csv("C:/Users/unisys/Documents/Studium/Messdaten/LCMS_pressure_error/22090921_H2O_3_pos_summary.csv")
+s_Kali__H2O_3_pos$errorcode = as.numeric(lapply(s_Kali__H2O_3_pos$errorcode, bits))
+
+
+bins_Kali_Pu_Penc_2.9HCO3_2_Indigo_neg = read.csv("C:/Users/unisys/Documents/Studium/Messdaten/LCMS_pressure_error/22090920_Kali_Pu_Penc_2,9HCO3_2_Indigo_neg_selectBins_full.csv")
+bins_Kali_Pu_Penc_2.9HCO3_2_Indigo_pos = read.csv("C:/Users/unisys/Documents/Studium/Messdaten/LCMS_pressure_error/22090920_Kali_Pu_Penc_2,9HCO3_2_Indigo_pos_selectBins_full.csv")
+
+bins_Kali_Pu_Penc_2.9HCO3_0_Indigo_pos = read.csv("C:/Users/unisys/Documents/Studium/Messdaten/LCMS_pressure_error/22090912_Kali_Pu_Penc_2,9HCO3_0_Indigo_pos_selectBins_full.csv")
+bins_Kali_Pu_Penc_2.9HCO3_2_pos = read.csv("C:/Users/unisys/Documents/Studium/Messdaten/LCMS_pressure_error/22090910_Kali_Pu_Penc_2,9HCO3_2_pos_selectBins_full.csv")
+bins_Kali__H2O_1_pos = read.csv("C:/Users/unisys/Documents/Studium/Messdaten/LCMS_pressure_error/22090901_H2O_1_pos_selectBins_full.csv")
+bins_Kali__H2O_3_pos = read.csv("C:/Users/unisys/Documents/Studium/Messdaten/LCMS_pressure_error/22090921_H2O_3_pos_selectBins_full.csv")
+
+
+s_Kali_Pu_Penc_2.9HCO3_2_Indigo_pos %>% group_by(errorcode) %>% summarise(bin_count = n(), total_points = sum(size), ratio = sum(size)/n(), dqsCen = mean(DQSC_min), meanDQS = mean(DQSB_scaled)) 
 
 
 ```
@@ -124,15 +144,22 @@ sumsum = function(summaryFrame){
 
 ```{r unified summary frame}
 
-
+summaries = c("s_Kali_Pu_Penc_2.9HCO3_2_Indigo_neg",
+              "s_Kali_Pu_Penc_2.9HCO3_2_Indigo_pos",
+              "s_Kali_Pu_Penc_2.9HCO3_0_Indigo_pos",
+              "s_22090910_Kali_Pu_Penc_2.9HCO3_2_pos",
+              "s_Kali__H2O_1_pos", "s_Kali__H2O_3_pos"
+              )
 
 # summaries = c("s_blank_pure_1", "s_blank_pure_2", "s_blank_pure_3",
 #               "s_blank_standard_1", "s_blank_standard_2", "s_blank_standard_3",
 #               "s_full_1", "s_full_2", "s_full_3",
 #               "s_SFC_01_20", "s_SFC_02_21", "s_SFC_03_22")
 
-summaries = c("s_SFC_DoE_RO02_06", "s_SFC_DoE_RO03_08", "s_SFC_DoE_RO11_24",
-              "s_SFC_DoE_RO24_50", "s_SFC_DoE_RO29_60", "s_SFC_DoE_RO42_86")
+# summaries = c("s_SFC_DoE_RO02_06", "s_SFC_DoE_RO03_08", "s_SFC_DoE_RO11_24",
+#               "s_SFC_DoE_RO24_50", "s_SFC_DoE_RO29_60", "s_SFC_DoE_RO42_86")
+
+
 
 sum_all = data.frame(errorcode = 0, sample = "none", bin_count = 0, total_points = 0, 
                      average_size = 0, mean_DQS = 0, mean_stdev = 0, binPerc = 0)
@@ -157,7 +184,7 @@ for (i in 1:length(sum_all$errorcode)) {
   sum_all$errorfac[i] = errorcounts$count[which(errorcounts$errorcode == sum_all$errorcode[i])]
   sum_all$groupDQS[i] = errorcounts$meanDQS[which(errorcounts$errorcode == sum_all$errorcode[i])]
 }
-sum_all$testview = (sum_all$mean_DQS - sum_all$groupDQS) * log(sum_all$bin_count) * sum_all$total_points / sum_all$errorfac
+sum_all$testview = (sum_all$mean_DQS - sum_all$groupDQS) / (sum_all$mean_DQS + sum_all$groupDQS) #* log(sum_all$bin_count) * sum_all$total_points / sum_all$errorfac
 
 # sum_all = sum_all[which(sum_all$bin_count > 10),]
 # sum_all$errorcode = as.numeric(lapply(sum_all$errorcode, bits))

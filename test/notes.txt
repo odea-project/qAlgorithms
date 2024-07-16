@@ -1,5 +1,7 @@
 https://gpufit.readthedocs.io/en/latest/introduction.html
 
+Wo schlägt vcrit an, wenn ich den Datensatz nach Intensität sortiere?
+
 Erstelle Felder für allgemeine Parameter der Probe wie Leitfähigkeit
 
 Finde objektiven Parameter, um die Mittleren Abstände an die Bingröße
