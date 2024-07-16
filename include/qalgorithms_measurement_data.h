@@ -38,7 +38,15 @@ namespace q
          * @param dataVec A vector of variant data types
          * @param k The maximum gap size
          */
-        void zeroFilling(varDataType& dataVec, int k);
+        void 
+        zeroFilling(
+            varDataType &dataVec, 
+            int k);
+        
+        void
+        zeroFilling_vec(
+            std::vector<std::vector<float>> &data
+        );
 
         /**
          * @brief Cut the data into smaller data sets
@@ -46,7 +54,10 @@ namespace q
          * @param dataVec A variant data type
          * @param maxKey The maximum key value in the current data vector. This value is used to create a new key for the new data subset.
          */
-        void cutData(varDataType& dataVec, size_t &maxKey);
+        void 
+        cutData(
+            varDataType& dataVec, 
+            size_t &maxKey);
 
         /**
          * @brief Filter small data sets

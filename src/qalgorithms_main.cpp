@@ -1,5 +1,6 @@
 // internal
 #include "../include/qalgorithms_measurement_data_lcms.h"
+#include "../include/qalgorithms_measurement_data_tensor.h"
 #include "../include/qalgorithms_qpeaks.h"
 #include "../include/qalgorithms_ascii_logo.h"
 
@@ -43,7 +44,11 @@ int main()
   if (filename_input.find(".mzML") != std::string::npos)
   {
     sc::MZML data(filename_input);
-    lcmsData.readStreamCraftMZML(data);
+    // lcmsData.readStreamCraftMZML(data);
+    q::MeasurementData::TensorData tensorData;
+    tensorData.readStreamCraftMZML(data);
+    std::cout << "/n ----- completed -----" << std::endl;
+    exit(0);
   }
   else if (filename_input.find(".csv") != std::string::npos)
   {

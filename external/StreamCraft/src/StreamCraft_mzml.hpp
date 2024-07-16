@@ -155,6 +155,7 @@ namespace sc {
         utils::MS_SPECTRA_HEADERS get_spectra_headers(std::vector<int> indices = {});
         utils::MS_CHROMATOGRAMS_HEADERS get_chromatograms_headers(std::vector<int> indices = {});
         std::vector<std::vector<std::vector<double>>> get_spectra(std::vector<int> indices = {});
+        std::vector<std::vector<double>> get_spectrum(int index);
         std::vector<std::vector<std::vector<double>>> get_chromatograms(std::vector<int> indices = {});
 
         std::vector<int> get_spectra_index(std::vector<int> indices = {});
