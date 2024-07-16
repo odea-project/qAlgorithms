@@ -174,6 +174,9 @@ namespace q
             /// @param counter counter shared between all calls of the recursive function, used to count number of function calls
             void subsetScan(std::deque<Bin> *bincontainer, std::vector<Bin> *finishedBins, const int maxdist, unsigned int &counter);
 
+            // usage: Start once before rebinning, cut affected bins and add them to the deque
+            void subsetNaturalBreaksMZ(std::deque<Bin> *bincontainer, std::vector<Bin> *finishedBins);
+
             /// @brief generate the data quality score for all data points in a bin
             /// @details for every point in the bin the mean distance in mz to other elements of the bin and the shortest distance to an
             /// element not in the bin is calculated. The outer distance may not be to a point more than maxdist scans away from the

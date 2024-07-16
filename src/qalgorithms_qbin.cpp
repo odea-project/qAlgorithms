@@ -293,26 +293,26 @@ namespace q
             return;
         }
 
-        void BinContainer::mergeByStdev(double mzFilterLower, double mzFilterUpper)
-        {
-            // find all bins which could be grouped together when taking the
-            // standard deviation as true error
-            const double numOfBins = finishedBins.size();
-            std::vector<int> selectedOnce(outOfBins.size(), -1);
-            std::vector<double> massrange(numOfBins * 2);
-            for (Bin currentBin : finishedBins)
-            {
-                double stdev = currentBin.calcStdevMZ(); // @todo consider merging minmax and stdev
-                auto minmax = std::minmax_element(currentBin.pointsInBin.begin(), currentBin.pointsInBin.end(),
-                                                  [](qCentroid *lhs, qCentroid *rhs)
-                                                  { return lhs->mz < rhs->mz; });
-                qCentroid *a = *minmax.first;
-                qCentroid *b = *minmax.second;
-                massrange.push_back(a->mz + stdev);
-                massrange.push_back(b->mz + stdev);
-                // massrange is organised as border_lower1, border_upper_1, border_lower2, border_upper_2, etc.
-            }
-        }
+        // void BinContainer::mergeByStdev(double mzFilterLower, double mzFilterUpper)
+        // {
+        //     // find all bins which could be grouped together when taking the
+        //     // standard deviation as true error
+        //     const double numOfBins = finishedBins.size();
+        //     std::vector<int> selectedOnce(outOfBins.size(), -1);
+        //     std::vector<double> massrange(numOfBins * 2);
+        //     for (Bin currentBin : finishedBins)
+        //     {
+        //         double stdev = currentBin.calcStdevMZ(); // @todo consider merging minmax and stdev
+        //         auto minmax = std::minmax_element(currentBin.pointsInBin.begin(), currentBin.pointsInBin.end(),
+        //                                           [](qCentroid *lhs, qCentroid *rhs)
+        //                                           { return lhs->mz < rhs->mz; });
+        //         qCentroid *a = *minmax.first;
+        //         qCentroid *b = *minmax.second;
+        //         massrange.push_back(a->mz + stdev);
+        //         massrange.push_back(b->mz + stdev);
+        //         // massrange is organised as border_lower1, border_upper_1, border_lower2, border_upper_2, etc.
+        //     }
+        // }
 
         void BinContainer::reconstructFromStdev(int maxdist)
         {
@@ -348,6 +348,9 @@ namespace q
                                                currentBin.mzMin - trueVcrit, currentBin.mzMax + trueVcrit});
             }
 
+            // store potential conflicts as pairs for later merging
+            std::vector<std::pair<int, int>> conflictOfBinterest;
+
             // for every point, iterate until two matches are found
             size_t startPoint = 0;
             int tmpCounter = 0;
@@ -372,7 +375,10 @@ namespace q
 
                         if (oneMore)
                         {
-                            selectedOnce[i] = -1;
+                            // which bad pair is associated with this point is described by the negative index
+                            conflictOfBinterest.push_back({testposition, selectedOnce[i]});
+                            selectedOnce[i] = -conflictOfBinterest.size() - 1;
+                            oneMore = false;
                             break;
                         }
                         selectedOnce[i] = testposition;
@@ -381,8 +387,14 @@ namespace q
                     }
                     ++testposition;
                 }
+                if (oneMore)
+                {
+                    // add found points to the bins @todo move before DQSB calculation
+                    finishedBins[i].pointsInBin.push_back(outOfBins[selectedOnce[i]]);
+                }
             }
-            std::cout << tmpCounter;
+            std::cout << tmpCounter << "points added to bins based on corrected estimate\n";
+            // return conflictOfBinterest; // @todo add a way to work with this
         }
 
         void BinContainer::printAllBins(std::string path, const CentroidedData *rawdata)
@@ -659,6 +671,19 @@ namespace q
             }
         }
 
+        void Bin::subsetNaturalBreaksMZ(std::deque<Bin> *bincontainer, std::vector<Bin> *finishedBins)
+        {
+            // data arrives sorted by scans, must be sorted
+            std::sort(pointsInBin.begin(), pointsInBin.end(), [](const qCentroid *lhs, const qCentroid *rhs)
+                      { return lhs->mz < rhs->mz; });
+            // determine group size using density
+            // decide possible test groups
+            // compare sum of squared distances pairwise
+            int numGroups = 3;
+            @todo
+            // min groupsize is five - start with distances between minima as start groupings
+        }
+
         void Bin::makeDQSB(const CentroidedData *rawdata, const unsigned int maxdist) // @todo split this function
         {
             // assumes bin is saved sorted by scans, since the result from scan gap checks is the final control
@@ -911,33 +936,34 @@ namespace q
             DQS_control = DQS_control / binsize;
 
             // bins should be sorted by mz when entering here
-            bool asymmetricMZ = false;
-            if (binsize > 11)
-            {
-                double lowestMZ = pointsInBin.front()->mz;
-                double mzThird = (pointsInBin.back()->mz - lowestMZ) / 3;
-                size_t border1 = 0;
-                size_t border2 = 0;
-                int counter = 0;
-                while (border2 == 0)
-                {
-                    double mz = pointsInBin[counter]->mz;
-                    if ((border1 == 0) & (mz - lowestMZ > mzThird))
-                    {
-                        border1 = counter + 1;
-                    }
-                    if ((border1 != 0) & (mz - lowestMZ > 2 * mzThird))
-                    {
-                        border2 = counter + 1;
-                    }
-                    ++counter;
-                }
-                // @todo reasoning for 1.25 and min 12 points
-                if ((border1 > (border2 - border1) * 1.25) | (border2 - border1 > (binsize - border2) * 1.25))
-                {
-                    asymmetricMZ = true;
-                }
-            }
+            // test removed due to not working as expected
+            // bool asymmetricMZ = false;
+            // if (binsize > 11)
+            // {
+            //     double lowestMZ = pointsInBin.front()->mz;
+            //     double mzThird = (pointsInBin.back()->mz - lowestMZ) / 3;
+            //     size_t border1 = 0;
+            //     size_t border2 = 0;
+            //     int counter = 0;
+            //     while (border2 == 0)
+            //     {
+            //         double mz = pointsInBin[counter]->mz;
+            //         if ((border1 == 0) & (mz - lowestMZ > mzThird))
+            //         {
+            //             border1 = counter + 1;
+            //         }
+            //         if ((border1 != 0) & (mz - lowestMZ > 2 * mzThird))
+            //         {
+            //             border2 = counter + 1;
+            //         }
+            //         ++counter;
+            //     }
+            //     // @todo reasoning for 1.25 and min 12 points
+            //     if ((border1 > (border2 - border1) * 1.25) | (border2 - border1 > (binsize - border2) * 1.25))
+            //     {
+            //         asymmetricMZ = true;
+            //     }
+            // }
 
             // calc DQS when assuming the MOD to be critval
             double sumOfDist = 0;
@@ -1069,7 +1095,7 @@ namespace q
             // @todo find test for mz distribution in scans
             if (toobroad)
             {
-                selector |= std::byte{0b00010000};
+                selector |= std::byte{0b00010000}; // also does not work for data which contains multiple visible mass traces
             }
             if (intensityGap)
             {
@@ -1079,7 +1105,7 @@ namespace q
             {
                 selector |= std::byte{0b01000000};
             }
-            if (asymmetricMZ) // middle third of total mz should be at least a third of total points
+            if (false)
             {
                 selector |= std::byte{0b10000000};
             }
