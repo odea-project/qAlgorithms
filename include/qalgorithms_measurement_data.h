@@ -12,6 +12,8 @@
 #include <algorithm>
 #include <cmath>
 #include <cassert>
+#include <fstream> // for debugging
+#include <iomanip>
 
 namespace q
 {
@@ -40,14 +42,13 @@ namespace q
          * @param k The maximum gap size
          */
         void 
-        zeroFilling(
-            varDataType &dataVec, 
-            int k);
+        zeroFilling(varDataType &dataVec, int k);
         
         void
-        zeroFilling_vec(
-            std::vector<std::vector<float>> &data
-        );
+        zeroFilling_vec(std::vector<std::vector<double>> &data, double expectedDifference);
+
+        double
+        calcExpectedDiff(std::vector<double> &data);
 
         /**
          * @brief Cut the data into smaller data sets

@@ -47,7 +47,8 @@ namespace q
          */
         void 
         readStreamCraftMZML(
-            sc::MZML &data
+            sc::MZML &data,
+            const bool ms1only = true
         );
 
 

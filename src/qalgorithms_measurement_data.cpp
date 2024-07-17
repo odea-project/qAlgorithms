@@ -106,7 +106,7 @@ namespace q
                      separators.push_back(dataObj.dataPoints.size() - 1);
                      // flip separators vector
                      std::reverse(separators.begin(), separators.end());
-                     // cumulative difference for separators // HERE IS SOME ERROR
+                     // cumulative difference for separators
                      for (size_t i = 0; i < separators.size() - 1; i++)
                      {
                        separators[i] = separators[i] - separators[i + 1];
@@ -126,44 +126,44 @@ namespace q
     } // end of zeroFilling
 
     void
-    MeasurementData::zeroFilling_vec(std::vector<std::vector<float>> &data)
+    MeasurementData::zeroFilling_vec(std::vector<std::vector<double>> &data, double expectedDifference)
     {
       const int numPoints = data[0].size(); // number of data points
-      size_t numZeros = 4;            // number of added zeros to store separator positions. it is initialized with 4 to address that later 4 data points will be added at the front of the vector
-      // initialize the expected difference
-      float expectedDifference = 0.0f;
-      if (numPoints > 128)
-      { // static approach: mean of the 8 lowest distances
-        float differences[128];
-        for (int i = 0; i < 128 - 1; i++)
+      int counter = 4;                      // number of added zeros to store separator positions. it is initialized with 4 to address that later 4 data points will be added at the front of the vector
+      int numZeros = 0;                     // number of zeros
+
+      // lamda function to add new data points at the end of the vector
+      auto addDataPoints = [&data, &counter, &numZeros, &expectedDifference](int gapSize, int i, int loop_index, int sign, bool interpolate) -> void
+      {
+        if (interpolate)
         {
-          differences[i] = data[0][i + 1] - data[0][i];
+          // calculate the interpolated y-axis values using linear interpolation
+          const double differece_y_per_gapsize = (data[1][i + 1] - data[1][i]) / (gapSize + 1);
+
+          for (int n = 1; n < gapSize; n++)
+          {
+            data[0].push_back(data[0][i] + loop_index * expectedDifference * sign);
+            data[1].push_back(data[1][i] + loop_index * differece_y_per_gapsize);
+            data[2].push_back(0.0);
+            loop_index += sign;
+          }
         }
-        std::sort(differences, differences + 128);
-        for (int i = 0; i < 8; i++)
+        else
         {
-          expectedDifference += differences[i];
+          for (int j = 0; j < gapSize; j++)
+          {
+            data[0].push_back(data[0][i] + loop_index * expectedDifference * sign);
+            data[1].push_back(0.0);
+            data[2].push_back(0.0);
+            loop_index += sign;
+          }
         }
-        expectedDifference /= 8;
-      }
-      else
-      { // dynamic approach
-        float *differences = new float[numPoints - 1];
-        for (int i = 0; i < numPoints - 1; i++)
-        {
-          differences[i] = data[0][i + 1] - data[0][i];
-        }
-        std::sort(differences, differences + numPoints - 1);
-        for (int i = 0; i < std::min(8, numPoints - 1); i++)
-        {
-          expectedDifference += differences[i];
-        }
-        expectedDifference /= std::min(8, numPoints - 1);
-        delete[] differences;
-      }
+        counter += gapSize;
+        numZeros += gapSize;
+      };
 
       // analyze data for gaps, i.e., differences > 1.75 * expectedDifference, and fill the gaps by adding new data points at the end of the vector
-      std::vector<size_t> separators;
+      std::vector<int> separators;
       for (int i = 0; i < numPoints - 1; i++)
       {
         // consider the difference between two neighboring data points from differences vector and compare it with 1.75 * expectedDifference
@@ -174,42 +174,80 @@ namespace q
           int gapSize = static_cast<int>(difference / expectedDifference - 1);
           // check if the gapSize is larger than k, as this is the maximum gap size
           if (gapSize <= 8)
-          {
-            // add gapSize new data points at the end of the vector
-            for (int j = 1; j <= gapSize; j++)
-            {
-              data[0].push_back(data[0][i] + j * expectedDifference);
-              data[1].push_back(0.0f);
-              data[2].push_back(0.0f);
-            }
-            numZeros += gapSize;
+          {                                        // SMALL GAP
+            addDataPoints(gapSize, i, 1, 1, true); // add gapSize new data points at the end of the vector
           }
           else
-          {
+          { // LARGE GAP
             // limit the gap size to 8 and add 4 new data points close to the (i) and (i+1) data point
             gapSize = 8;
-            // add 4 new data points close to the (i) data point
-            for (int j = 1; j <= 4; j++)
-            {
-              data[0].push_back(data[0][i] + j * expectedDifference);
-              data[1].push_back(0.0f);
-              data[2].push_back(0.0f);
-            }
-            // add 4 new data points close to the (i+1) data point
-            for (int j = 4; j >= 1; j--)
-            {
-              data[0].push_back(data[0][i + 1] - j * expectedDifference);
-              data[1].push_back(0.0f);
-              data[2].push_back(0.0f);
-            }
-          }   
+            addDataPoints(4, i, 1, 1, false);      // add 4 new data points close to the (i) data point
+            separators.push_back(counter);         // add the separator to the vector
+            addDataPoints(4, i + 1, 4, -1, false); // add 4 new data points close to the (i+1) data point
+          }
         }
         else
         {
           // update expectedDifference
           expectedDifference = (expectedDifference + data[0][i + 1] - data[0][i]) * .5;
         }
+        counter++;
       }
+      // extrapolate the data by adding 4 new data points at the end of the vector
+      addDataPoints(4, 0, 4, -1, false);            // extrapolation to the left
+      addDataPoints(4, numPoints - 1, 1, 1, false); // extrapolation to the right
+      counter -= 4;
+      // add the last index of data vector to the separators vector
+      separators.push_back(data[0].size() - 1);
+      // cumulative difference for separators
+      for (size_t i = 0; i < separators.size() - 1; i++)
+      {
+        separators[i] = separators[i] - separators[i + 1];
+      }
+      // delete the last element of the separators vector
+      separators.pop_back();
+
+      std::cout << "Data size: " << data[0].size() << std::endl;
+      std::cout << "Data size: " << data[1].size() << std::endl;
+      std::cout << "Data size: " << data[2].size() << std::endl;
+      exit(0);
+    }
+
+    double
+    MeasurementData::calcExpectedDiff(std::vector<double> &data)
+    {
+      const int numPoints = data.size(); // number of data points
+      double expectedDifference = 0.0;
+      if (numPoints > 128)
+      { // static approach: mean of the 8 lowest distances
+        alignas(64) double differences[128];
+        for (int i = 0; i < 128 - 1; i++)
+        {
+          differences[i] = data[i + 1] - data[i];
+        }
+        std::sort(differences, differences + 128);
+        for (int i = 0; i < 8; i++)
+        {
+          expectedDifference += differences[i];
+        }
+        expectedDifference /= 8;
+      }
+      else
+      { // dynamic approach
+        alignas(64) double *differences = new double[numPoints - 1];
+        for (int i = 0; i < numPoints - 1; i++)
+        {
+          differences[i] = data[i + 1] - data[i];
+        }
+        std::sort(differences, differences + numPoints - 1);
+        for (int i = 0; i < std::min(8, numPoints - 1); i++)
+        {
+          expectedDifference += differences[i];
+        }
+        expectedDifference /= std::min(8, numPoints - 1);
+        delete[] differences;
+      }
+      return expectedDifference;
     }
 
     void MeasurementData::cutData(varDataType &dataVec, size_t &maxKey)

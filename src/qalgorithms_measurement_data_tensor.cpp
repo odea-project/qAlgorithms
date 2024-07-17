@@ -25,10 +25,24 @@ namespace q
 
         void
         TensorData::readStreamCraftMZML(
-            sc::MZML &data)
+            sc::MZML &data,
+            const bool ms1only)
         {
-            std::vector<int> indices = data.get_spectra_index(); // get all indices
-// #pragma omp parallel for
+            std::vector<int> indices = data.get_spectra_index();   // get all indices
+            std::vector<int> ms_levels = data.get_spectra_level(); // get all MS levels
+            if (ms1only)
+            {
+                indices.erase(std::remove_if(indices.begin(), indices.end(), [&ms_levels](int i)
+                                             { return ms_levels[i] != 1; }),
+                              indices.end()); // keep only MS1 spectra
+            }
+
+            double expectedDifference = 0.0;
+            {
+                alignas(64) std::vector<double> data_vec = data.get_spectrum(indices[0])[0]; // get first spectrum (x-axis)
+                expectedDifference = calcExpectedDiff(data_vec);                             // calculate expected difference
+            }
+            // #pragma omp parallel for
             for (int index : indices) // loop over all indices
             {
                 // load spectrum
@@ -37,16 +51,10 @@ namespace q
                 {
                     continue; // skip due to lack of data, i.e., degree of freedom will be zero
                 }
-                alignas(32) std::vector<std::vector<float>> spectrum_float(spectrum.size());
-                for (size_t i = 0; i < spectrum.size(); i++)
-                {
-                    spectrum_float[i].reserve(spectrum[i].size());
-                    std::transform(spectrum[i].begin(), spectrum[i].end(), std::back_inserter(spectrum_float[i]), [](double d) { return static_cast<float>(d); });
-                }
-                spectrum_float.push_back(std::vector<float>(spectrum_float[0].size(), 1.0)); // add df column for interpolation
+                spectrum.push_back(std::vector<double>(spectrum[0].size(), 1.0)); // add df column for interpolation
 
                 // zero filling
-                zeroFilling_vec(spectrum_float);
+                zeroFilling_vec(spectrum, expectedDifference); // zero fill the spectrum
             }
         }
     } // namespace MeasurementData
