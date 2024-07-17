@@ -1,0 +1,60 @@
+---
+title: "Identify cases of bad binning"
+author: "Daniel Höhn"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(pracma)
+```
+
+```{r read data}
+s_full_1 = read.csv("C:/Users/unisys/Documents/Studium/Messdaten/mzml/AquaFlow_MS1/210229_C1_S1_W_MI_1_pos_summary.csv")
+s_full_1$errorcode = as.numeric(lapply(s_full_1$errorcode, bits))
+# blanks
+s_b1 = read.csv("G:/Messdaten/LC_orbitrap_kali/22090901_H2O_1_pos_summary.csv")
+s_b2 = read.csv("G:/Messdaten/LC_orbitrap_kali/22090911_H2O_2_pos_summary.csv")
+s_b3 = read.csv("G:/Messdaten/LC_orbitrap_kali/22090921_H2O_3_pos_summary.csv")
+s_b4 = read.csv("G:/Messdaten/LC_orbitrap_kali/22090935_H2O_4_pos_summary.csv")
+s_b1$errorcode = as.numeric(lapply(s_b1$errorcode, bits))
+s_b2$errorcode = as.numeric(lapply(s_b2$errorcode, bits))
+s_b3$errorcode = as.numeric(lapply(s_b3$errorcode, bits))
+s_b4$errorcode = as.numeric(lapply(s_b4$errorcode, bits))
+
+bins_b1 = read.csv("G:/Messdaten/LC_orbitrap_kali/22090901_H2O_1_pos_selectBins_full.csv")
+bins_b2 = read.csv("G:/Messdaten/LC_orbitrap_kali/22090911_H2O_2_pos_selectBins_full.csv")
+bins_b3 = read.csv("G:/Messdaten/LC_orbitrap_kali/22090921_H2O_3_pos_selectBins_full.csv")
+bins_b4 = read.csv("G:/Messdaten/LC_orbitrap_kali/22090935_H2O_4_pos_selectBins_full.csv")
+
+ = read.csv("G:/Messdaten/LC_orbitrap_kali/22090917_Kali_Pu_Penc_2,9HCO3_0,2_Indigo_neg.mzML")
+ = read.csv("G:/Messdaten/LC_orbitrap_kali/22090917_Kali_Pu_Penc_2,9HCO3_0,2_Indigo_pos.mzML")
+ = read.csv("G:/Messdaten/LC_orbitrap_kali/22090918_Kali_Pu_Penc_2,9HCO3_0,5_Indigo_neg.mzML")
+ = read.csv("G:/Messdaten/LC_orbitrap_kali/22090918_Kali_Pu_Penc_2,9HCO3_0,5_Indigo_pos.mzML")
+ = read.csv("G:/Messdaten/LC_orbitrap_kali/22090919_Kali_Pu_Penc_2,9HCO3_1_Indigo_neg.mzML")
+ = read.csv("G:/Messdaten/LC_orbitrap_kali/22090919_Kali_Pu_Penc_2,9HCO3_1_Indigo_pos.mzML")
+ = read.csv("G:/Messdaten/LC_orbitrap_kali/22090920_Kali_Pu_Penc_2,9HCO3_2_Indigo_neg.mzML")
+ = read.csv("G:/Messdaten/LC_orbitrap_kali/22090920_Kali_Pu_Penc_2,9HCO3_2_Indigo_pos.mzML")
+ = read.csv("G:/Messdaten/LC_orbitrap_kali/22090902_Kali_Pu_Penc_2,9HCO3_0_pos.mzML")
+ = read.csv("G:/Messdaten/LC_orbitrap_kali/22090903_Kali_Pu_Penc_2,9HCO3_0,01_pos.mzML")
+ = read.csv("G:/Messdaten/LC_orbitrap_kali/22090904_Kali_Pu_Penc_2,9HCO3_0,02_pos.mzML")
+ = read.csv("G:/Messdaten/LC_orbitrap_kali/22090905_Kali_Pu_Penc_2,9HCO3_0,05_pos.mzML")
+ = read.csv("G:/Messdaten/LC_orbitrap_kali/22090906_Kali_Pu_Penc_2,9HCO3_0,1_pos.mzML")
+ = read.csv("G:/Messdaten/LC_orbitrap_kali/22090907_Kali_Pu_Penc_2,9HCO3_0,2_pos.mzML")
+ = read.csv("G:/Messdaten/LC_orbitrap_kali/22090908_Kali_Pu_Penc_2,9HCO3_0,5_pos.mzML")
+ = read.csv("G:/Messdaten/LC_orbitrap_kali/22090909_Kali_Pu_Penc_2,9HCO3_1_pos.mzML")
+ = read.csv("G:/Messdaten/LC_orbitrap_kali/22090910_Kali_Pu_Penc_2,9HCO3_2_pos.mzML")
+ = read.csv("G:/Messdaten/LC_orbitrap_kali/22090912_Kali_Pu_Penc_2,9HCO3_0_Indigo_neg.mzML")
+ = read.csv("G:/Messdaten/LC_orbitrap_kali/22090912_Kali_Pu_Penc_2,9HCO3_0_Indigo_pos.mzML")
+ = read.csv("G:/Messdaten/LC_orbitrap_kali/22090913_Kali_Pu_Penc_2,9HCO3_0,01_Indigo_neg.mzML")
+ = read.csv("G:/Messdaten/LC_orbitrap_kali/22090913_Kali_Pu_Penc_2,9HCO3_0,01_Indigo_pos.mzML")
+ = read.csv("G:/Messdaten/LC_orbitrap_kali/22090914_Kali_Pu_Penc_2,9HCO3_0,02_Indigo_neg.mzML")
+ = read.csv("G:/Messdaten/LC_orbitrap_kali/22090914_Kali_Pu_Penc_2,9HCO3_0,02_Indigo_pos.mzML")
+ = read.csv("G:/Messdaten/LC_orbitrap_kali/22090915_Kali_Pu_Penc_2,9HCO3_0,05_Indigo_neg.mzML")
+ = read.csv("G:/Messdaten/LC_orbitrap_kali/22090915_Kali_Pu_Penc_2,9HCO3_0,05_Indigo_pos.mzML")
+ = read.csv("G:/Messdaten/LC_orbitrap_kali/22090916_Kali_Pu_Penc_2,9HCO3_0,1_Indigo_neg.mzML")
+ = read.csv("G:/Messdaten/LC_orbitrap_kali/22090916_Kali_Pu_Penc_2,9HCO3_0,1_Indigo_pos.mzML")
+```
+
