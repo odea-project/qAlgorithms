@@ -29,32 +29,152 @@ bins_b2 = read.csv("G:/Messdaten/LC_orbitrap_kali/22090911_H2O_2_pos_selectBins_
 bins_b3 = read.csv("G:/Messdaten/LC_orbitrap_kali/22090921_H2O_3_pos_selectBins_full.csv")
 bins_b4 = read.csv("G:/Messdaten/LC_orbitrap_kali/22090935_H2O_4_pos_selectBins_full.csv")
 
- = read.csv("G:/Messdaten/LC_orbitrap_kali/22090917_Kali_Pu_Penc_2,9HCO3_0,2_Indigo_neg.mzML")
- = read.csv("G:/Messdaten/LC_orbitrap_kali/22090917_Kali_Pu_Penc_2,9HCO3_0,2_Indigo_pos.mzML")
- = read.csv("G:/Messdaten/LC_orbitrap_kali/22090918_Kali_Pu_Penc_2,9HCO3_0,5_Indigo_neg.mzML")
- = read.csv("G:/Messdaten/LC_orbitrap_kali/22090918_Kali_Pu_Penc_2,9HCO3_0,5_Indigo_pos.mzML")
- = read.csv("G:/Messdaten/LC_orbitrap_kali/22090919_Kali_Pu_Penc_2,9HCO3_1_Indigo_neg.mzML")
- = read.csv("G:/Messdaten/LC_orbitrap_kali/22090919_Kali_Pu_Penc_2,9HCO3_1_Indigo_pos.mzML")
- = read.csv("G:/Messdaten/LC_orbitrap_kali/22090920_Kali_Pu_Penc_2,9HCO3_2_Indigo_neg.mzML")
- = read.csv("G:/Messdaten/LC_orbitrap_kali/22090920_Kali_Pu_Penc_2,9HCO3_2_Indigo_pos.mzML")
- = read.csv("G:/Messdaten/LC_orbitrap_kali/22090902_Kali_Pu_Penc_2,9HCO3_0_pos.mzML")
- = read.csv("G:/Messdaten/LC_orbitrap_kali/22090903_Kali_Pu_Penc_2,9HCO3_0,01_pos.mzML")
- = read.csv("G:/Messdaten/LC_orbitrap_kali/22090904_Kali_Pu_Penc_2,9HCO3_0,02_pos.mzML")
- = read.csv("G:/Messdaten/LC_orbitrap_kali/22090905_Kali_Pu_Penc_2,9HCO3_0,05_pos.mzML")
- = read.csv("G:/Messdaten/LC_orbitrap_kali/22090906_Kali_Pu_Penc_2,9HCO3_0,1_pos.mzML")
- = read.csv("G:/Messdaten/LC_orbitrap_kali/22090907_Kali_Pu_Penc_2,9HCO3_0,2_pos.mzML")
- = read.csv("G:/Messdaten/LC_orbitrap_kali/22090908_Kali_Pu_Penc_2,9HCO3_0,5_pos.mzML")
- = read.csv("G:/Messdaten/LC_orbitrap_kali/22090909_Kali_Pu_Penc_2,9HCO3_1_pos.mzML")
- = read.csv("G:/Messdaten/LC_orbitrap_kali/22090910_Kali_Pu_Penc_2,9HCO3_2_pos.mzML")
- = read.csv("G:/Messdaten/LC_orbitrap_kali/22090912_Kali_Pu_Penc_2,9HCO3_0_Indigo_neg.mzML")
- = read.csv("G:/Messdaten/LC_orbitrap_kali/22090912_Kali_Pu_Penc_2,9HCO3_0_Indigo_pos.mzML")
- = read.csv("G:/Messdaten/LC_orbitrap_kali/22090913_Kali_Pu_Penc_2,9HCO3_0,01_Indigo_neg.mzML")
- = read.csv("G:/Messdaten/LC_orbitrap_kali/22090913_Kali_Pu_Penc_2,9HCO3_0,01_Indigo_pos.mzML")
- = read.csv("G:/Messdaten/LC_orbitrap_kali/22090914_Kali_Pu_Penc_2,9HCO3_0,02_Indigo_neg.mzML")
- = read.csv("G:/Messdaten/LC_orbitrap_kali/22090914_Kali_Pu_Penc_2,9HCO3_0,02_Indigo_pos.mzML")
- = read.csv("G:/Messdaten/LC_orbitrap_kali/22090915_Kali_Pu_Penc_2,9HCO3_0,05_Indigo_neg.mzML")
- = read.csv("G:/Messdaten/LC_orbitrap_kali/22090915_Kali_Pu_Penc_2,9HCO3_0,05_Indigo_pos.mzML")
- = read.csv("G:/Messdaten/LC_orbitrap_kali/22090916_Kali_Pu_Penc_2,9HCO3_0,1_Indigo_neg.mzML")
- = read.csv("G:/Messdaten/LC_orbitrap_kali/22090916_Kali_Pu_Penc_2,9HCO3_0,1_Indigo_pos.mzML")
+ # = read.csv("G:/Messdaten/LC_orbitrap_kali/22090917_Kali_Pu_Penc_2,9HCO3_0,2_Indigo_neg.mzML")
+ # = read.csv("G:/Messdaten/LC_orbitrap_kali/22090917_Kali_Pu_Penc_2,9HCO3_0,2_Indigo_pos.mzML")
+ # = read.csv("G:/Messdaten/LC_orbitrap_kali/22090918_Kali_Pu_Penc_2,9HCO3_0,5_Indigo_neg.mzML")
+ # = read.csv("G:/Messdaten/LC_orbitrap_kali/22090918_Kali_Pu_Penc_2,9HCO3_0,5_Indigo_pos.mzML")
+ # = read.csv("G:/Messdaten/LC_orbitrap_kali/22090919_Kali_Pu_Penc_2,9HCO3_1_Indigo_neg.mzML")
+ # = read.csv("G:/Messdaten/LC_orbitrap_kali/22090919_Kali_Pu_Penc_2,9HCO3_1_Indigo_pos.mzML")
+ # = read.csv("G:/Messdaten/LC_orbitrap_kali/22090920_Kali_Pu_Penc_2,9HCO3_2_Indigo_neg.mzML")
+ # = read.csv("G:/Messdaten/LC_orbitrap_kali/22090920_Kali_Pu_Penc_2,9HCO3_2_Indigo_pos.mzML")
+ # = read.csv("G:/Messdaten/LC_orbitrap_kali/22090902_Kali_Pu_Penc_2,9HCO3_0_pos.mzML")
+ # = read.csv("G:/Messdaten/LC_orbitrap_kali/22090903_Kali_Pu_Penc_2,9HCO3_0,01_pos.mzML")
+ # = read.csv("G:/Messdaten/LC_orbitrap_kali/22090904_Kali_Pu_Penc_2,9HCO3_0,02_pos.mzML")
+ # = read.csv("G:/Messdaten/LC_orbitrap_kali/22090905_Kali_Pu_Penc_2,9HCO3_0,05_pos.mzML")
+ # = read.csv("G:/Messdaten/LC_orbitrap_kali/22090906_Kali_Pu_Penc_2,9HCO3_0,1_pos.mzML")
+ # = read.csv("G:/Messdaten/LC_orbitrap_kali/22090907_Kali_Pu_Penc_2,9HCO3_0,2_pos.mzML")
+ # = read.csv("G:/Messdaten/LC_orbitrap_kali/22090908_Kali_Pu_Penc_2,9HCO3_0,5_pos.mzML")
+ # = read.csv("G:/Messdaten/LC_orbitrap_kali/22090909_Kali_Pu_Penc_2,9HCO3_1_pos.mzML")
+ # = read.csv("G:/Messdaten/LC_orbitrap_kali/22090910_Kali_Pu_Penc_2,9HCO3_2_pos.mzML")
+ # = read.csv("G:/Messdaten/LC_orbitrap_kali/22090912_Kali_Pu_Penc_2,9HCO3_0_Indigo_neg.mzML")
+ # = read.csv("G:/Messdaten/LC_orbitrap_kali/22090912_Kali_Pu_Penc_2,9HCO3_0_Indigo_pos.mzML")
+ # = read.csv("G:/Messdaten/LC_orbitrap_kali/22090913_Kali_Pu_Penc_2,9HCO3_0,01_Indigo_neg.mzML")
+ # = read.csv("G:/Messdaten/LC_orbitrap_kali/22090913_Kali_Pu_Penc_2,9HCO3_0,01_Indigo_pos.mzML")
+ # = read.csv("G:/Messdaten/LC_orbitrap_kali/22090914_Kali_Pu_Penc_2,9HCO3_0,02_Indigo_neg.mzML")
+ # = read.csv("G:/Messdaten/LC_orbitrap_kali/22090914_Kali_Pu_Penc_2,9HCO3_0,02_Indigo_pos.mzML")
+ # = read.csv("G:/Messdaten/LC_orbitrap_kali/22090915_Kali_Pu_Penc_2,9HCO3_0,05_Indigo_neg.mzML")
+ # = read.csv("G:/Messdaten/LC_orbitrap_kali/22090915_Kali_Pu_Penc_2,9HCO3_0,05_Indigo_pos.mzML")
+ # = read.csv("G:/Messdaten/LC_orbitrap_kali/22090916_Kali_Pu_Penc_2,9HCO3_0,1_Indigo_neg.mzML")
+ # = read.csv("G:/Messdaten/LC_orbitrap_kali/22090916_Kali_Pu_Penc_2,9HCO3_0,1_Indigo_pos.mzML")
 ```
+
+```{r read lc data}
+s_Kali_Pu_Penc_2.9HCO3_2_Indigo_neg = read.csv("C:/Users/unisys/Documents/Studium/Messdaten/LCMS_pressure_error/22090920_Kali_Pu_Penc_2,9HCO3_2_Indigo_neg_summary.csv")
+s_Kali_Pu_Penc_2.9HCO3_2_Indigo_neg$errorcode = as.numeric(lapply(s_Kali_Pu_Penc_2.9HCO3_2_Indigo_neg$errorcode, bits))
+s_Kali_Pu_Penc_2.9HCO3_2_Indigo_pos = read.csv("C:/Users/unisys/Documents/Studium/Messdaten/LCMS_pressure_error/22090920_Kali_Pu_Penc_2,9HCO3_2_Indigo_pos_summary.csv")
+s_Kali_Pu_Penc_2.9HCO3_2_Indigo_pos$errorcode = as.numeric(lapply(s_Kali_Pu_Penc_2.9HCO3_2_Indigo_pos$errorcode, bits))
+
+s_Kali_Pu_Penc_2.9HCO3_0_Indigo_pos = read.csv("C:/Users/unisys/Documents/Studium/Messdaten/LCMS_pressure_error/22090912_Kali_Pu_Penc_2,9HCO3_0_Indigo_pos_summary.csv")
+s_Kali_Pu_Penc_2.9HCO3_0_Indigo_pos$errorcode = as.numeric(lapply(s_Kali_Pu_Penc_2.9HCO3_0_Indigo_pos$errorcode, bits))
+s_Kali_Pu_Penc_2.9HCO3_2_pos = read.csv("C:/Users/unisys/Documents/Studium/Messdaten/LCMS_pressure_error/22090910_Kali_Pu_Penc_2,9HCO3_2_pos_summary.csv")
+s_Kali_Pu_Penc_2.9HCO3_2_pos$errorcode = as.numeric(lapply(s_22090910_Kali_Pu_Penc_2.9HCO3_2_pos$errorcode, bits))
+s_Kali__H2O_1_pos = read.csv("C:/Users/unisys/Documents/Studium/Messdaten/LCMS_pressure_error/22090901_H2O_1_pos_summary.csv")
+s_Kali__H2O_1_pos$errorcode = as.numeric(lapply(s_Kali__H2O_1_pos$errorcode, bits))
+s_Kali__H2O_3_pos = read.csv("C:/Users/unisys/Documents/Studium/Messdaten/LCMS_pressure_error/22090921_H2O_3_pos_summary.csv")
+s_Kali__H2O_3_pos$errorcode = as.numeric(lapply(s_Kali__H2O_3_pos$errorcode, bits))
+
+
+bins_Kali_Pu_Penc_2.9HCO3_2_Indigo_neg = read.csv("C:/Users/unisys/Documents/Studium/Messdaten/LCMS_pressure_error/22090920_Kali_Pu_Penc_2,9HCO3_2_Indigo_neg_selectBins_full.csv")
+bins_Kali_Pu_Penc_2.9HCO3_2_Indigo_pos = read.csv("C:/Users/unisys/Documents/Studium/Messdaten/LCMS_pressure_error/22090920_Kali_Pu_Penc_2,9HCO3_2_Indigo_pos_selectBins_full.csv")
+
+bins_Kali_Pu_Penc_2.9HCO3_0_Indigo_pos = read.csv("C:/Users/unisys/Documents/Studium/Messdaten/LCMS_pressure_error/22090912_Kali_Pu_Penc_2,9HCO3_0_Indigo_pos_selectBins_full.csv")
+bins_Kali_Pu_Penc_2.9HCO3_2_pos = read.csv("C:/Users/unisys/Documents/Studium/Messdaten/LCMS_pressure_error/22090910_Kali_Pu_Penc_2,9HCO3_2_pos_selectBins_full.csv")
+bins_Kali__H2O_1_pos = read.csv("C:/Users/unisys/Documents/Studium/Messdaten/LCMS_pressure_error/22090901_H2O_1_pos_selectBins_full.csv")
+bins_Kali__H2O_3_pos = read.csv("C:/Users/unisys/Documents/Studium/Messdaten/LCMS_pressure_error/22090921_H2O_3_pos_selectBins_full.csv")
+
+
+s_Kali_Pu_Penc_2.9HCO3_2_Indigo_pos %>% group_by(errorcode) %>% summarise(bin_count = n(), total_points = sum(size), ratio = sum(size)/n(), dqsCen = mean(DQSC_min), meanDQS = mean(DQSB_scaled)) 
+
+
+```
+
+```{r increase grouping strictness}
+# 4, 16 17, 38, 57 128 144 309 310 321
+# which(s_Kali__H2O_1_pos$errorcode %% 2 == 1)
+# s_warburg = read.csv("C:/Users/unisys/Documents/Studium/Analytik-Praktikum/warburg_summary.csv")
+# bins_warburg = read.csv("C:/Users/unisys/Documents/Studium/Analytik-Praktikum/warburg_selectBins_full.csv")
+
+# a = bins_Kali_Pu_Penc_2.9HCO3_2_Indigo_neg[which(bins_Kali_Pu_Penc_2.9HCO3_2_Indigo_neg$ID == 321),]
+# a = bins_Kali__H2O_1_pos[which(bins_Kali__H2O_1_pos$ID == 13),]
+a = bins_warburg[which(bins_warburg$ID == 1279),]
+
+a = a[order(a$mz),]
+
+b = abs(a$scan[-1] - a$scan[1:(length(a$ID)-1)])
+
+# ggplot()+
+#   geom_histogram(aes(a$mz), bins = round(sqrt(length(a$ID))))+
+#   geom_vline(xintercept = c(1:nbins * binwidth + min_mz)[which(maxPoints)])
+# approach: form sqrt(n) bins, find the local minima. Local maxima should be num(minima) -1
+nbins = round(sqrt(length(a$ID)))
+binwidth = (max(a$mz) - min(a$mz)) / nbins
+min_mz = min(a$mz)
+max_mz = max(a$mz)
+currentBinMax = min_mz + binwidth
+bincounts = NULL
+mz_pos = 1
+
+for (i in 1:nbins) {
+  counter = 0
+  while (a$mz[mz_pos] < currentBinMax & mz_pos <= length(a$ID)) {
+    counter = counter + 1
+    mz_pos = mz_pos + 1
+  }
+  bincounts[i] = counter
+  currentBinMax = currentBinMax + binwidth
+}
+# find local maxima first to minimise effect of noise on group count
+# group separation is between two maxima
+# set broad tolerance level
+tolerance = mean(abs(diff(bincounts)))/2
+maxPoints = (bincounts > (c(bincounts[-1],0) + tolerance)) & (bincounts > (c(0, bincounts[-nbins]) + tolerance))
+# set two edge bins to false since only one comparison could be made
+maxPoints[1] = FALSE
+maxPoints[nbins] = FALSE
+
+# find edges of the groups
+minPoints = (bincounts < (c(bincounts[-1],0))) & (bincounts < (c(0, bincounts[-nbins])))
+
+maxIdx = which(maxPoints)
+# assume position of max is middle of group
+groupMaxima = maxIdx * binwidth + 0.5 * binwidth + min_mz
+if(length(groupMaxima) > 1){
+newBins = rep(0, length(groupMaxima)-1)
+for (i in 1:(length(groupMaxima)-1)) {
+  startIdx = which(a$mz > groupMaxima[i])[1]
+  endIdx = which(a$mz > groupMaxima[i+1])[1]
+  minpos = -1
+  minError = Inf
+  for (j in (startIdx+5):(endIdx-5)) {
+    mean1 = mean(a$mz[startIdx:j])
+    mean2 = mean(a$mz[j:endIdx])
+    err = sum((a$mz[startIdx:j] - mean1)^2) + sum((a$mz[j:endIdx] - mean2)^2)
+    if(err < minError){
+      minError = err
+      minpos = j
+    }
+  }
+  newBins[i] = minpos
+  
+  
+}
+}
+ggplot(a)+
+  geom_point(aes(x = mz, y = scan))+
+  geom_vline(xintercept = a$mz[newBins], color = "red")
+
+
+# 
+# minIdx = which(minPoints)
+# if(minIdx[1] < maxIdx[1]){
+#   minIdx = minIdx[-1]}
+# if(sum(minIdx < maxIdx) > 1){
+#     
+# }
+# only optimise using two neighbouring half groups
+# start check at maxpos + 5, go until next maxpos - 5
+# optimise mean dev^2 for both groups
+```
+
+
 

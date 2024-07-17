@@ -39,7 +39,7 @@ namespace q
         struct DatapointEIC
         {
             double mz;
-            double rt;
+            // double rt;
             unsigned int scan;
             double intensity; // convert to int here?
             double DQS;

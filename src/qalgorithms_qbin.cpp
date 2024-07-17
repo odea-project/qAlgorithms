@@ -393,7 +393,7 @@ namespace q
                     finishedBins[i].pointsInBin.push_back(outOfBins[selectedOnce[i]]);
                 }
             }
-            std::cout << tmpCounter << "points added to bins based on corrected estimate\n";
+            std::cout << tmpCounter << " points added to bins based on corrected estimate\n";
             // return conflictOfBinterest; // @todo add a way to work with this
         }
 
@@ -671,18 +671,18 @@ namespace q
             }
         }
 
-        void Bin::subsetNaturalBreaksMZ(std::deque<Bin> *bincontainer, std::vector<Bin> *finishedBins)
-        {
-            // data arrives sorted by scans, must be sorted
-            std::sort(pointsInBin.begin(), pointsInBin.end(), [](const qCentroid *lhs, const qCentroid *rhs)
-                      { return lhs->mz < rhs->mz; });
-            // determine group size using density
-            // decide possible test groups
-            // compare sum of squared distances pairwise
-            int numGroups = 3;
-            @todo
-            // min groupsize is five - start with distances between minima as start groupings
-        }
+        // void Bin::subsetNaturalBreaksMZ(std::deque<Bin> *bincontainer, std::vector<Bin> *finishedBins)
+        // {
+        //     // data arrives sorted by scans, must be sorted
+        //     std::sort(pointsInBin.begin(), pointsInBin.end(), [](const qCentroid *lhs, const qCentroid *rhs)
+        //               { return lhs->mz < rhs->mz; });
+        //     // determine group size using density
+        //     // decide possible test groups
+        //     // compare sum of squared distances pairwise
+        //     int numGroups = 3;
+        //     @todo this will not work properly
+        //     // min groupsize is five - start with distances between minima as start groupings
+        // }
 
         void Bin::makeDQSB(const CentroidedData *rawdata, const unsigned int maxdist) // @todo split this function
         {
@@ -914,6 +914,7 @@ namespace q
             double DQS_control = 0;
             double meanCenError = 0;
             double worstCentroid = INFINITY;
+            double maxInt = 0;
             for (size_t i = 0; i < binsize; i++)
             {
                 meanMZ += pointsInBin[i]->mz;
@@ -922,6 +923,10 @@ namespace q
                 if (pointsInBin[i]->DQScentroid < worstCentroid)
                 {
                     worstCentroid = pointsInBin[i]->DQScentroid;
+                }
+                if (pointsInBin[i]->intensity > maxInt)
+                {
+                    maxInt = pointsInBin[i]->intensity;
                 }
 
                 meanDQS_base += DQSB_base[i];
@@ -974,6 +979,12 @@ namespace q
 
             std::sort(pointsInBin.begin(), pointsInBin.end(), [](qCentroid *lhs, qCentroid *rhs)
                       { return lhs->scanNo < rhs->scanNo; });
+
+            bool oneSided = false;
+            if ((pointsInBin.front()->intensity == maxInt) | (pointsInBin.back()->intensity == maxInt))
+            {
+                oneSided = true;
+            }
 
             // test for one-sided intensity profile, two maxima and acceptable normal distribution
             bool intensityGap = false;
@@ -1090,9 +1101,9 @@ namespace q
                 selector |= std::byte{0b00001000};
             }
             // middle third of total mz should be at least a third of total points
-            if (asymmetricMZ)
+            if (oneSided)
             {
-                selector |= std::byte{0b00010000}; // also does not work for data which contains multiple visible mass traces
+                selector |= std::byte{0b00010000}; // only check for max at the edges
             }
             if (intensityGap)
             {
@@ -1307,6 +1318,8 @@ namespace q
 
             activeBins.printSelectBins(std::byte{0b11111111}, true, outpath); //@todo make this a function parameter
 
+            activeBins.reconstructFromStdev(6);
+
             std::cout << "\n\nDone!\n\n";
 
             outOfBins.resize(0);
@@ -1316,6 +1329,7 @@ namespace q
             // @todo bins must be sorted by scans before being passed to centroiding
 
             std::vector<q::qBinning::EIC> nothing;
+            std::cout << "\nRETURNS EMPTY VECTOR AS OF NOW, REPLACE WITH RETURNbINS()";
 
             return nothing; // activeBins.returnBins();
         }
