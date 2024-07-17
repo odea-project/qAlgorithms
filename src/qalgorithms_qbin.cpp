@@ -1089,11 +1089,8 @@ namespace q
             {
                 selector |= std::byte{0b00001000};
             }
-            // @todo no more than 80% of points outside of 1.3 sigma (~80% coverage)
-            // if ((meanMZ + 3 * stdevMZ < r_maxdist_abs) | (meanMZ - 3 * stdevMZ > l_maxdist_abs)) // if a value in the bin is outside of 3 sigma
-            // toobroad never applies, probably due to the way bins are formed
-            // @todo find test for mz distribution in scans
-            if (toobroad)
+            // middle third of total mz should be at least a third of total points
+            if (asymmetricMZ)
             {
                 selector |= std::byte{0b00010000}; // also does not work for data which contains multiple visible mass traces
             }
@@ -1105,7 +1102,11 @@ namespace q
             {
                 selector |= std::byte{0b01000000};
             }
-            if (false)
+            // if ((meanMZ + 3 * stdevMZ < r_maxdist_abs) | (meanMZ - 3 * stdevMZ > l_maxdist_abs)) // if a value in the bin is outside of 3 sigma
+            // toobroad never applies, probably due to the way bins are formed
+            // @todo find test for mz distribution in scans
+            // @todo consider replacing this with stdev > n ppm (2-3)
+            if (toobroad)
             {
                 selector |= std::byte{0b10000000};
             }
