@@ -48,7 +48,8 @@ namespace q
         void 
         readStreamCraftMZML(
             sc::MZML &data,
-            const bool ms1only = true
+            const bool ms1only = true,
+            const int start_index = 0
         );
 
 

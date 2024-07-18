@@ -209,7 +209,7 @@ namespace q
       }
       addDataPoints(4, numPoints - 1, numPoints - 1, 1, 1, 1, false); // extrapolation to the right
 
-      for (int i = 0; i < sorted_indexes.size(); ++i)
+      for (int i = 0; i < static_cast<int>(sorted_indexes.size()); ++i)
       {
         while (sorted_indexes[i] != i)
         {
@@ -257,6 +257,32 @@ namespace q
         delete[] differences;
       }
       return expectedDifference;
+    }
+
+    void
+    MeasurementData::isZeroFillingNeeded(
+        std::vector<double> &data,
+        bool &needsZeroFilling)
+    {
+      int numOfBlocks = 0;
+      const int zeros_in_a_row = 8; // typical value for Orbitrap data
+      for (auto it = data.begin(); it != data.end(); ++it)
+      {
+        int counter = 0;
+        while (*it == 0.0)
+        {
+          counter++;
+          it++;
+        }
+        if (counter == zeros_in_a_row)
+        {
+          numOfBlocks++;
+        }
+      }
+      if (numOfBlocks > 3)
+      {
+        needsZeroFilling = false;
+      }
     }
 
     void MeasurementData::cutData(varDataType &dataVec, size_t &maxKey)
@@ -643,6 +669,44 @@ namespace q
         block_start_x = block_end_x + 8;
         block_end_x = block_start_x;
         block_max_x = block_start_x;
+      } // end of while loop
+    } // end of extrapolateData_vec
+
+    int
+    MeasurementData::intra_extrapolateData_vec(
+        std::vector<std::vector<double>> &data,
+        std::vector<std::vector<double>::iterator> &separators)
+    {
+      // define iterators for the data vector
+      auto it_x = data[0].begin();    // x-axis iterator
+      auto it_y = data[1].begin();    // y-axis iterator
+      auto it_df = data[2].begin();   // df iterator
+      const auto end = data[1].end(); // end of the data vector
+      int block_counter = 0;          // number of the current block
+      for (; it_y != end; ++it_y, ++it_x, ++it_df)
+      {
+        int counter = 0;
+        while (*it_y == 0.0)
+        {
+          counter++;
+          it_y++;
+          it_x++;
+          *it_df = 0.0;
+          it_df++;
+          if (it_y == end)
+          {
+            return block_counter;
+          }
+        }
+        if (counter == 8)
+        {
+          block_counter++;
+          if (block_counter > 1) // ignore the first block
+          {
+            separators.push_back(it_y - 4);
+          }
+          continue;
+        }
       }
     }
   } // namespace MeasurementData

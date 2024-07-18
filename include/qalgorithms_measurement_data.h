@@ -51,6 +51,11 @@ namespace q
             double
             calcExpectedDiff(std::vector<double> &data);
 
+            void
+            isZeroFillingNeeded(
+                std::vector<double> &data,
+                bool &needsZeroFilling);
+
             /**
              * @brief Cut the data into smaller data sets
              * @details The cutData method cuts the data into smaller data sets. The method uses the separator value to split the data into smaller data sets. The separator value is set to -1.0 for the x-axis and -1.0 for the y-axis. For each cut, the method creates a new data subset and stores it in the data vector using a sub-dataset ID as the secondary key.
@@ -90,6 +95,11 @@ namespace q
             extrapolateData_vec(
                 std::vector<std::vector<double>> &data,
                 std::vector<double>::iterator *separators);
+
+            int
+            intra_extrapolateData_vec(
+                std::vector<std::vector<double>> &data,
+                std::vector<std::vector<double>::iterator> &separators);
 
             // debugging
             // virtual void print() = 0;
