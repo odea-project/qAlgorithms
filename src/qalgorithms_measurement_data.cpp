@@ -125,26 +125,31 @@ namespace q
                  dataVec); // end of visit
     } // end of zeroFilling
 
-    void
-    MeasurementData::zeroFilling_vec(std::vector<std::vector<double>> &data, double expectedDifference)
+    int
+    MeasurementData::zeroFilling_vec(
+        std::vector<std::vector<double>> &data,
+        double expectedDifference)
     {
-      const int numPoints = data[0].size(); // number of data points
-      int counter = 4;                      // number of added zeros to store separator positions. it is initialized with 4 to address that later 4 data points will be added at the front of the vector
-      int numZeros = 0;                     // number of zeros
+      const int numPoints = data[0].size();       // number of data points
+      std::vector<int> sorted_indexes(numPoints); // vector to store the sorted indexes of the data points
+      int counter = 4;                            // number of added zeros to store separator positions. it is initialized with 4 to address that later 4 data points will be added at the front of the vector
+      int numZeros = 0;                           // number of zeros
+      int num_subsets = 0;                        // number of subsets
 
       // lamda function to add new data points at the end of the vector
-      auto addDataPoints = [&data, &counter, &numZeros, &expectedDifference](int gapSize, int i, int loop_index, int sign, bool interpolate) -> void
+      auto addDataPoints = [&data, &counter, &numZeros, &expectedDifference, &sorted_indexes](int gapSize, int i, int k, int index_offset, int loop_index, int sign, bool interpolate) -> void
       {
         if (interpolate)
         {
           // calculate the interpolated y-axis values using linear interpolation
           const double differece_y_per_gapsize = (data[1][i + 1] - data[1][i]) / (gapSize + 1);
 
-          for (int n = 1; n < gapSize; n++)
+          for (int j = 0; j < gapSize; j++)
           {
             data[0].push_back(data[0][i] + loop_index * expectedDifference * sign);
             data[1].push_back(data[1][i] + loop_index * differece_y_per_gapsize);
             data[2].push_back(0.0);
+            sorted_indexes.push_back(sorted_indexes[k] + j + index_offset);
             loop_index += sign;
           }
         }
@@ -155,6 +160,7 @@ namespace q
             data[0].push_back(data[0][i] + loop_index * expectedDifference * sign);
             data[1].push_back(0.0);
             data[2].push_back(0.0);
+            sorted_indexes.push_back(sorted_indexes[k] + j + index_offset);
             loop_index += sign;
           }
         }
@@ -163,9 +169,9 @@ namespace q
       };
 
       // analyze data for gaps, i.e., differences > 1.75 * expectedDifference, and fill the gaps by adding new data points at the end of the vector
-      std::vector<int> separators;
       for (int i = 0; i < numPoints - 1; i++)
       {
+        sorted_indexes[i] = counter;
         // consider the difference between two neighboring data points from differences vector and compare it with 1.75 * expectedDifference
         float difference = data[0][i + 1] - data[0][i];
         if (difference > 1.75f * expectedDifference)
@@ -174,16 +180,16 @@ namespace q
           int gapSize = static_cast<int>(difference / expectedDifference - 1);
           // check if the gapSize is larger than k, as this is the maximum gap size
           if (gapSize <= 8)
-          {                                        // SMALL GAP
-            addDataPoints(gapSize, i, 1, 1, true); // add gapSize new data points at the end of the vector
+          {                                              // SMALL GAP
+            addDataPoints(gapSize, i, i, 1, 1, 1, true); // add gapSize new data points at the end of the vector
           }
           else
           { // LARGE GAP
             // limit the gap size to 8 and add 4 new data points close to the (i) and (i+1) data point
             gapSize = 8;
-            addDataPoints(4, i, 1, 1, false);      // add 4 new data points close to the (i) data point
-            separators.push_back(counter);         // add the separator to the vector
-            addDataPoints(4, i + 1, 4, -1, false); // add 4 new data points close to the (i+1) data point
+            addDataPoints(4, i, i, 1, 1, 1, false);      // add 4 new data points close to the (i) data point
+            addDataPoints(4, i + 1, i, 5, 4, -1, false); // add 4 new data points close to the (i+1) data point
+            num_subsets++;
           }
         }
         else
@@ -193,25 +199,28 @@ namespace q
         }
         counter++;
       }
+      sorted_indexes[numPoints - 1] = counter;
       // extrapolate the data by adding 4 new data points at the end of the vector
-      addDataPoints(4, 0, 4, -1, false);            // extrapolation to the left
-      addDataPoints(4, numPoints - 1, 1, 1, false); // extrapolation to the right
-      counter -= 4;
-      // add the last index of data vector to the separators vector
-      separators.push_back(data[0].size() - 1);
-      // cumulative difference for separators
-      for (size_t i = 0; i < separators.size() - 1; i++)
+      addDataPoints(4, 0, 0, 1, 4, -1, false); // extrapolation to the left
+      // correct the sorted indexes for the first 4 data points to 0, 1, 2, 3
+      for (int i = 0; i < 4; i++)
       {
-        separators[i] = separators[i] - separators[i + 1];
+        sorted_indexes[sorted_indexes.size() - 4 + i] = i;
       }
-      // delete the last element of the separators vector
-      separators.pop_back();
+      addDataPoints(4, numPoints - 1, numPoints - 1, 1, 1, 1, false); // extrapolation to the right
 
-      std::cout << "Data size: " << data[0].size() << std::endl;
-      std::cout << "Data size: " << data[1].size() << std::endl;
-      std::cout << "Data size: " << data[2].size() << std::endl;
-      exit(0);
-    }
+      for (int i = 0; i < sorted_indexes.size(); ++i)
+      {
+        while (sorted_indexes[i] != i)
+        {
+          std::swap(data[0][i], data[0][sorted_indexes[i]]);
+          std::swap(data[1][i], data[1][sorted_indexes[i]]);
+          std::swap(data[2][i], data[2][sorted_indexes[i]]);
+          std::swap(sorted_indexes[i], sorted_indexes[sorted_indexes[i]]);
+        }
+      }
+      return num_subsets + 1;
+    } // end of zeroFilling_vec
 
     double
     MeasurementData::calcExpectedDiff(std::vector<double> &data)
@@ -516,5 +525,125 @@ namespace q
                       }), arg->end()); },
                  dataVec); // end of visit
     } // end of interpolateData
+
+    void
+    MeasurementData::extrapolateData_vec(
+        std::vector<std::vector<double>> &data,
+        std::vector<double>::iterator *separators)
+    {
+      // lambda function to calculate the coefficients b0, b1, and b2 for the quadratic extrapolation
+      auto calculateCoefficients = [](const double *x, const double *y, double &b0, double &b1, double &b2)
+      {
+        double x1 = x[0], y1 = y[0];
+        double x2 = x[1], y2 = y[1];
+        double x3 = x[2], y3 = y[2];
+
+        double denom = (x1 - x2) * (x1 - x3) * (x2 - x3);
+
+        double a = (x3 * (y2 - y1) + x2 * (y1 - y3) + x1 * (y3 - y2)) / denom;
+        double b = (x3 * x3 * (y1 - y2) + x2 * x2 * (y3 - y1) + x1 * x1 * (y2 - y3)) / denom;
+        double c = (x2 * x3 * (x2 - x3) * y1 + x3 * x1 * (x3 - x1) * y2 + x1 * x2 * (x1 - x2) * y3) / denom;
+
+        b0 = c;
+        b1 = b;
+        b2 = a;
+      };
+
+      // define iterators for the data vector
+      auto block_start_y = data[1].begin() + 4; // start of the block
+      auto block_end_y = data[1].begin() + 4;   // end of the block
+      auto block_max_y = data[1].begin() + 4;   // maximum of the block
+      auto block_start_x = data[0].begin() + 4; // start of the block
+      auto block_end_x = data[0].begin() + 4;   // end of the block
+      auto block_max_x = data[0].begin() + 4;   // maximum of the block
+      const auto end = data[1].end() - 5;       // last non-zero value
+      int block_counter = 0;                    // number of the current block
+      while (true)
+      {
+        // adjust iterators to the next block
+        while (*block_start_y == 0.0)
+        {
+          block_start_y++;
+          block_end_y++;
+          block_max_y++;
+          block_start_x++;
+          block_end_x++;
+          block_max_x++;
+          if (block_end_y == data[1].end())
+          {
+            return;
+          }
+        }
+
+        // find the maximum and end of the block
+        while (*block_end_y != 0.0)
+        {
+          if (*block_end_y > *block_max_y)
+          {
+            block_max_y = block_end_y;
+            block_max_x = block_end_x;
+          }
+          block_end_y++;
+          block_end_x++;
+        }
+        // set separator
+        separators[block_counter] = block_end_y + 3;
+        block_counter++;
+        // check if the block is valid
+        if ((block_max_y == block_start_y) || (block_max_y == block_end_y))
+        {
+          // check if the last block is reached
+          if (block_end_y - 1 == end)
+          {
+            return;
+          }
+          // jump to the next block
+          block_start_y = block_end_y + 8;
+          block_end_y = block_start_y;
+          block_max_y = block_start_y;
+          block_start_x = block_end_x + 8;
+          block_end_x = block_start_x;
+          block_max_x = block_start_x;
+          continue;
+        }
+
+        // calculate the coefficients b0, b1, and b2 for the quadratic extrapolation
+        double x[3] = {0.0, *block_max_x - *block_start_x, *(block_end_x - 1) - *block_start_x};
+        double y[3] = {std::log(*block_start_y), std::log(*block_max_y), std::log(*(block_end_y - 1))};
+        double b0, b1, b2;
+        calculateCoefficients(x, y, b0, b1, b2);
+        // extrapolate the zeros
+        auto it_y = block_start_y - 4;
+        auto it_x = block_start_x - 4;
+        for (int i = 0; i < 4; i++)
+        {
+          const double x = *it_x - *block_start_x;
+          *it_y = exp_approx_d(b0 + x * (b1 + x * b2));
+          it_y++;
+          it_x++;
+        }
+        it_y = block_end_y;
+        it_x = block_end_x;
+        for (int i = 0; i < 4; i++)
+        {
+          const double x = *it_x - *block_start_x;
+          *it_y = exp_approx_d(b0 + x * (b1 + x * b2));
+          it_y++;
+          it_x++;
+        }
+
+        if (block_end_y - 1 == end)
+        {
+          return;
+        }
+        // jump to the next block
+        block_start_y = block_end_y + 8;
+        block_end_y = block_start_y;
+        block_max_y = block_start_y;
+        block_start_x = block_end_x + 8;
+        block_end_x = block_start_x;
+        block_max_x = block_start_x;
+      }
+    }
   } // namespace MeasurementData
 } // namespace q

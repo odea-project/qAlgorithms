@@ -54,7 +54,12 @@ namespace q
                 spectrum.push_back(std::vector<double>(spectrum[0].size(), 1.0)); // add df column for interpolation
 
                 // zero filling
-                zeroFilling_vec(spectrum, expectedDifference); // zero fill the spectrum
+
+                int num_subsets = zeroFilling_vec(spectrum, expectedDifference);                            // zero fill the spectrum
+                // std::cout << "size of spectrum: " << spectrum[0].size() << ", " << spectrum[1].size() << ", " << spectrum[2].size() << std::endl;
+                // std::vector<double>::iterator *separators = new std::vector<double>::iterator[num_subsets]; // Dynamically allocate memory for separators (y axis)
+                // extrapolateData_vec(spectrum, separators);                                                  // interpolate the data when zero filled
+                // delete[] separators;                                                                        // delete separators
             }
         }
     } // namespace MeasurementData
