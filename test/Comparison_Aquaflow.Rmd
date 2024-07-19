@@ -24,6 +24,7 @@ s_blank_standard_2 = read.csv("G:/_Studium/Analytik-Praktikum/bin/Daten_AquaFlow
 s_blank_standard_3 = read.csv("G:/_Studium/Analytik-Praktikum/bin/Daten_AquaFlow/210229_Blank_SW_MI_I_3_pos_summary.csv")
 
 s_full_1 = read.csv("G:/_Studium/Analytik-Praktikum/bin/Daten_AquaFlow/210229_C1_S1_W_MI_1_pos_summary.csv")
+s_full_1$errorcode = as.numeric(lapply(s_full_1$errorcode, bits))
 s_full_2 = read.csv("G:/_Studium/Analytik-Praktikum/bin/Daten_AquaFlow/210229_C1_S1_W_MI_2_pos_summary.csv")
 s_full_3 = read.csv("G:/_Studium/Analytik-Praktikum/bin/Daten_AquaFlow/210229_C1_S1_W_MI_3_pos_summary.csv")
 
@@ -111,6 +112,9 @@ bins_SFC_DoE_RO42_86 = read.csv("C:/Users/unisys/Documents/Studium/Messdaten/mzm
 
 ```
 
+```{r}
+s_full_1 %>% group_by(errorcode) %>% summarise(bins = n(), centroids = sum(size), ratio = round(sum(size)/n(),digits = 3), dqsCen = mean(DQSC_min), meanDQS = mean(DQSB_scaled))
+```
 
 
 

@@ -330,12 +330,12 @@ namespace q
             // -1 = does not fit any bin, -2 = fits two ore more, bin number if only one fits so far
             const double numOfBins = finishedBins.size();
             const double numOfUnbinned = outOfBins.size();
-            std::vector<int> selectedOnce(numOfUnbinned, 0);
+            std::vector<int> selectedOnce(numOfUnbinned, -1);
             std::vector<BinBorders> massrange;
             massrange.reserve(numOfBins);
             // sort to stop test earlier
             std::sort(finishedBins.begin(), finishedBins.end(), [](Bin lhs, Bin rhs)
-                      { return lhs.mzMin < rhs.mzMin; });
+                      { return lhs.mzMax < rhs.mzMax; });
             std::sort(outOfBins.begin(), outOfBins.end(), [](const qCentroid *lhs, const qCentroid *rhs)
                       { return lhs->mz < rhs->mz; });
 
@@ -358,18 +358,19 @@ namespace q
             {
                 size_t testposition = startPoint;
                 bool oneMore = false;
+                int testPositive = -1;
                 while (testposition < numOfBins)
                 {
-                    // stop if mass is greater than last min +0.1
-                    if (massrange[testposition].massRangeEnd < outOfBins[i]->mz)
+                    // stop if mass is greater than last min +0.01
+                    if (massrange[testposition].massRangeEnd + 0.01 < outOfBins[i]->mz)
                     {
                         startPoint = testposition;
                         break;
                     }
                     // if the bin could accept this point
-                    else if (((massrange[testposition].scanRangeStart < outOfBins[i]->scanNo) &
-                              (massrange[testposition].scanRangeEnd > outOfBins[i]->scanNo)) &
-                             ((massrange[testposition].massRangeStart <= outOfBins[i]->mz) &
+                    else if (((massrange[testposition].scanRangeStart < int(outOfBins[i]->scanNo)) &&
+                              (massrange[testposition].scanRangeEnd > int(outOfBins[i]->scanNo))) &&
+                             ((massrange[testposition].massRangeStart <= outOfBins[i]->mz) &&
                               (massrange[testposition].massRangeEnd >= outOfBins[i]->mz)))
                     {
 
@@ -382,6 +383,7 @@ namespace q
                             break;
                         }
                         selectedOnce[i] = testposition;
+                        testPositive = testposition;
                         oneMore = true;
                         ++tmpCounter;
                     }
@@ -390,7 +392,7 @@ namespace q
                 if (oneMore)
                 {
                     // add found points to the bins @todo move before DQSB calculation
-                    finishedBins[i].pointsInBin.push_back(outOfBins[selectedOnce[i]]);
+                    finishedBins[testPositive].pointsInBin.push_back(outOfBins[i]);
                 }
             }
             std::cout << tmpCounter << " points added to bins based on corrected estimate\n";
@@ -441,7 +443,7 @@ namespace q
             // print optional summary file
             // filename to directory
             size_t found = location.find_last_of("/\\");
-            std::cout << location.substr(0, found) << "\n";
+            std::cout << "base filename: " << location.substr(0, found) << "\n";
             std::filesystem::path p = location.substr(0, found);
 
             if (!std::filesystem::exists(p))
@@ -484,7 +486,7 @@ namespace q
             // print all bins
             if (fullBins)
             {
-                std::string binsFull = location + "_selectBins_full.csv";
+                std::string binsFull = location + "_bins.csv";
                 std::fstream file_out_all;
                 std::stringstream output_all;
                 file_out_all.open(binsFull, std::ios::out);
@@ -514,7 +516,7 @@ namespace q
 
 #pragma region "Bin"
 
-        Bin::Bin() {};
+        Bin::Bin(){};
 
         Bin::Bin(const std::vector<qCentroid *>::iterator &binStartInOS, const std::vector<qCentroid *>::iterator &binEndInOS) // const std::vector<qCentroid> &sourceList,
         {
@@ -914,19 +916,16 @@ namespace q
             double DQS_control = 0;
             double meanCenError = 0;
             double worstCentroid = INFINITY;
-            double maxInt = 0;
+            double meanInt = 0;
             for (size_t i = 0; i < binsize; i++)
             {
                 meanMZ += pointsInBin[i]->mz;
+                meanInt += pointsInBin[i]->intensity;
                 meanScan += pointsInBin[i]->scanNo;
                 meanCenError += pointsInBin[i]->mzError;
                 if (pointsInBin[i]->DQScentroid < worstCentroid)
                 {
                     worstCentroid = pointsInBin[i]->DQScentroid;
-                }
-                if (pointsInBin[i]->intensity > maxInt)
-                {
-                    maxInt = pointsInBin[i]->intensity;
                 }
 
                 meanDQS_base += DQSB_base[i];
@@ -934,6 +933,7 @@ namespace q
             }
 
             meanMZ = meanMZ / binsize;
+            meanInt = meanInt / binsize;
             meanScan = meanScan / binsize;
             meanDQS_base = meanDQS_base / binsize;
             meanDQS_scaled = meanDQS_scaled / binsize;
@@ -953,11 +953,11 @@ namespace q
             //     while (border2 == 0)
             //     {
             //         double mz = pointsInBin[counter]->mz;
-            //         if ((border1 == 0) & (mz - lowestMZ > mzThird))
+            //         if ((border1 == 0) && (mz - lowestMZ > mzThird))
             //         {
             //             border1 = counter + 1;
             //         }
-            //         if ((border1 != 0) & (mz - lowestMZ > 2 * mzThird))
+            //         if ((border1 != 0) && (mz - lowestMZ > 2 * mzThird))
             //         {
             //             border2 = counter + 1;
             //         }
@@ -978,67 +978,73 @@ namespace q
             double stdevMZ = sqrt(sumOfDist / (binsize - 1));
 
             std::sort(pointsInBin.begin(), pointsInBin.end(), [](qCentroid *lhs, qCentroid *rhs)
-                      { return lhs->scanNo < rhs->scanNo; });
+                      { return lhs->intensity < rhs->intensity; });
 
+            // is the first or last scan the highest intensity?
+            // these bins cannot be fitted with a gaussian peak
             bool oneSided = false;
-            if ((pointsInBin.front()->intensity == maxInt) | (pointsInBin.back()->intensity == maxInt))
+            if ((pointsInBin.back()->scanNo == scanMin) | (pointsInBin.back()->scanNo == scanMax))
             {
                 oneSided = true;
             }
 
-            // test for one-sided intensity profile, two maxima and acceptable normal distribution
-            bool intensityGap = false;
+            // the second and third highest intensity should each be
+            // within maxdist of the highest instensity
             bool twoMaxima = false;
-            double prevInt = pointsInBin[0]->intensity;
-            double prev2nd = prevInt;
-            int idxHighest = 0;
-            int idx2ndHighest = 0;
+            {
+                int scanOfMax = pointsInBin.back()->scanNo;
+                int scanOf2nd = (pointsInBin.back() - 1)->scanNo;
+                int scanOf3rd = (pointsInBin.back() - 2)->scanNo;
+                if ((abs(scanOfMax - scanOf2nd) > maxdist) | (abs(scanOfMax - scanOf3rd) > maxdist))
+                {
+                    twoMaxima = true;
+                }
+            }
+
+            // iterate to calculate stdev of mz and intensity
+            // identify the largest difference between ordered
+            // intensities and compare to vcrit of intensity later
+            double mzErrorSquared = 0;
+            double intensityErrorSquared = 0;
+            double greatestIntGap = 0;
             // count the occurences of points outside the 1.3 sigma interval - should be 20% or less
             // 1.3 sigma was chosen to have a tolerance of one point for bins of size five
             bool toobroad = false;
             size_t noSigma = 0;
-            double mzSigmaUpper = meanMZ - stdevMZ;
-            double mzSigmaLower = meanMZ + stdevMZ;
-            for (size_t i = 1; i < binsize; i++)
+            double mzSigmaLower = meanMZ - stdevMZ * 1.3;
+            double mzSigmaUpper = meanMZ + stdevMZ * 1.3;
+            for (size_t i = 0; i < binsize; i++)
             {
-                double cenInt = pointsInBin[i]->intensity;
-                if (!intensityGap & (abs(cenInt - pointsInBin[i - 1]->intensity) > pointsInBin[i - 1]->intensity))
-                {
-                    // @todo this should be more robust - consider stdev of 1. derivative
-                    intensityGap = true;
-                }
-                if (cenInt > prev2nd)
-                {
-                    if (cenInt > prevInt) // former max is new 2nd max
-                    {
-                        prev2nd = prevInt;
-                        prevInt = cenInt;
-                        idx2ndHighest = idxHighest;
-                        idxHighest = i;
-                    }
-                    else // new 2nd max found
-                    {
-                        prev2nd = cenInt;
-                        idx2ndHighest = i;
-                    }
-                }
-                if ((pointsInBin[i]->mz > mzSigmaLower) & (pointsInBin[i]->mz < mzSigmaUpper))
+                // count occurences of points outside of 1.3 sigma interval
+                if ((pointsInBin[i]->mz > mzSigmaLower) && (pointsInBin[i]->mz < mzSigmaUpper))
                 {
                     ++noSigma;
                 }
+                // make squared error of mz and intensity, find largest gap between intensities
+                intensityErrorSquared += (meanInt - pointsInBin[i]->intensity) * (meanInt - pointsInBin[i]->intensity);
+                if (i < binsize - 1)
+                {
+                    double intDiff = pointsInBin[i + 1]->intensity - pointsInBin[i]->intensity;
+                    if (intDiff > greatestIntGap)
+                    {
+                        greatestIntGap = intDiff;
+                    }
+                }
+            }
+            double vcritIntensity = 3.05037165842070 * pow(log(binsize), (-0.4771864667153)) * sqrt(meanInt / (binsize - 1));
+            bool intensityOutlier = false;
+            if (greatestIntGap > vcritIntensity)
+            {
+                intensityOutlier = true;
             }
 
-            if (abs(idxHighest - idx2ndHighest) > 6)
-            {
-                twoMaxima = true;
-            }
-            if (noSigma > (binsize / 5))
+            if (noSigma < (binsize * 4) / 5) // if less than 80% of the bin are within 1.3 sigma
             {
                 toobroad = true;
             }
 
             bool halfPeakL = true;
-            prevInt = 0;
+            double prevInt = 0;
             int wrongCount = 0;
             for (qCentroid *cen : pointsInBin)
             {
@@ -1082,7 +1088,7 @@ namespace q
                 }
             }
 
-            // @todo use enums here
+            // @todo vcrit greater true vcrit
             std::byte selector{0b00000000}; // used as bitmask during printSelectBins()
             if (duplicateScan)
             {
@@ -1105,7 +1111,7 @@ namespace q
             {
                 selector |= std::byte{0b00010000}; // only check for max at the edges
             }
-            if (intensityGap)
+            if (intensityOutlier)
             {
                 selector |= std::byte{0b00100000};
             }
@@ -1313,12 +1319,11 @@ namespace q
 
             // @todo add a way for selection / bin summary to be given upstream
 
-            // @todo add bin reassembly code here
+            // move centroids from outOfBins into existing bins
             activeBins.redoBinningIfTooclose(measurementDimensions, &centroidedData, q::qBinning::outOfBins, q::qBinning::maxdist);
+            activeBins.reconstructFromStdev(6);
 
             activeBins.printSelectBins(std::byte{0b11111111}, true, outpath); //@todo make this a function parameter
-
-            activeBins.reconstructFromStdev(6);
 
             std::cout << "\n\nDone!\n\n";
 
@@ -1339,7 +1344,7 @@ namespace q
 
 //
 //
-int notmain()
+int main()
 {
     std::cout << "starting...\n";
 

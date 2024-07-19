@@ -38,6 +38,14 @@ int main()
 
     // @todo add option to take in a text file containing execution parameters and a list of target files
     std::vector<std::string> target_files_full{
+        "G:/Messdaten/AquaFlow_Rohdaten_SurfaceWater/210229_Blank_SW_I_1_pos.mzML",
+        "G:/Messdaten/AquaFlow_Rohdaten_SurfaceWater/210229_C1_S1_I_1_pos.mzML",
+        "G:/Messdaten/AquaFlow_Rohdaten_SurfaceWater/210229_C2_S1_I_1_pos.mzML",
+        "G:/Messdaten/AquaFlow_Rohdaten_SurfaceWater/210229_C3_S1_I_1_pos.mzML",
+        "G:/Messdaten/AquaFlow_Rohdaten_SurfaceWater/210229_T1_S1_I_1_pos.mzML",
+        "G:/Messdaten/AquaFlow_Rohdaten_SurfaceWater/210229_T2_S1_I_1_pos.mzML",
+        "G:/Messdaten/AquaFlow_Rohdaten_SurfaceWater/210311_C1_S5_I_1.mzML",
+        "G:/Messdaten/AquaFlow_Rohdaten_SurfaceWater/210311_C2_S5_I_1.mzML"
         // "G:/Messdaten/LC_orbitrap_kali/22090917_Kali_Pu_Penc_2,9HCO3_0,2_Indigo_neg.mzML",
         // "G:/Messdaten/LC_orbitrap_kali/22090917_Kali_Pu_Penc_2,9HCO3_0,2_Indigo_pos.mzML",
         // "G:/Messdaten/LC_orbitrap_kali/22090918_Kali_Pu_Penc_2,9HCO3_0,5_Indigo_neg.mzML",
@@ -68,30 +76,28 @@ int main()
         // "G:/Messdaten/LC_orbitrap_kali/22090915_Kali_Pu_Penc_2,9HCO3_0,05_Indigo_neg.mzML",
         // "G:/Messdaten/LC_orbitrap_kali/22090915_Kali_Pu_Penc_2,9HCO3_0,05_Indigo_pos.mzML",
         // "G:/Messdaten/LC_orbitrap_kali/22090916_Kali_Pu_Penc_2,9HCO3_0,1_Indigo_neg.mzML",
-        // "G:/Messdaten/LC_orbitrap_kali/22090916_Kali_Pu_Penc_2,9HCO3_0,1_Indigo_pos.mzML"
+        // "G:/Messdaten/LC_orbitrap_kali/22090916_Kali_Pu_Penc_2,9HCO3_0,1_Indigo_pos.mzML",
 
         // "C:/Users/unisys/Documents/Studium/Messdaten/LCMS_pressure_error/22090916_Kali_Pu_Penc_2,9HCO3_0,1_Indigo_neg.mzML",
-        "C:/Users/unisys/Documents/Studium/Messdaten/LCMS_pressure_error/22090913_Kali_Pu_Penc_2,9HCO3_0,01_Indigo_pos.mzML",
-        "C:/Users/unisys/Documents/Studium/Messdaten/LCMS_pressure_error/22090912_Kali_Pu_Penc_2,9HCO3_0_Indigo_pos.mzML",
-        "C:/Users/unisys/Documents/Studium/Messdaten/LCMS_pressure_error/22090910_Kali_Pu_Penc_2,9HCO3_2_pos.mzML",
-        "C:/Users/unisys/Documents/Studium/Messdaten/LCMS_pressure_error/22090903_Kali_Pu_Penc_2,9HCO3_0,01_pos.mzML",
-        "C:/Users/unisys/Documents/Studium/Messdaten/LCMS_pressure_error/22090902_Kali_Pu_Penc_2,9HCO3_0_pos.mzML",
-        "C:/Users/unisys/Documents/Studium/Messdaten/LCMS_pressure_error/22090901_H2O_1_pos.mzML",
-        "C:/Users/unisys/Documents/Studium/Messdaten/LCMS_pressure_error/22090921_H2O_3_pos.mzML",
-        "C:/Users/unisys/Documents/Studium/Messdaten/LCMS_pressure_error/22090935_H2O_4_pos.mzML",
-        "C:/Users/unisys/Documents/Studium/Messdaten/LCMS_pressure_error/22090920_Kali_Pu_Penc_2,9HCO3_2_Indigo_pos.mzML",
-        "C:/Users/unisys/Documents/Studium/Messdaten/LCMS_pressure_error/22090920_Kali_Pu_Penc_2,9HCO3_2_Indigo_neg.mzML"
+        // "C:/Users/unisys/Documents/Studium/Messdaten/LCMS_pressure_error/22090913_Kali_Pu_Penc_2,9HCO3_0,01_Indigo_pos.mzML",
+        // "C:/Users/unisys/Documents/Studium/Messdaten/LCMS_pressure_error/22090912_Kali_Pu_Penc_2,9HCO3_0_Indigo_pos.mzML",
+        // "C:/Users/unisys/Documents/Studium/Messdaten/LCMS_pressure_error/22090910_Kali_Pu_Penc_2,9HCO3_2_pos.mzML",
+        // "C:/Users/unisys/Documents/Studium/Messdaten/LCMS_pressure_error/22090903_Kali_Pu_Penc_2,9HCO3_0,01_pos.mzML",
+        // "C:/Users/unisys/Documents/Studium/Messdaten/LCMS_pressure_error/22090902_Kali_Pu_Penc_2,9HCO3_0_pos.mzML",
+        // "C:/Users/unisys/Documents/Studium/Messdaten/LCMS_pressure_error/22090901_H2O_1_pos.mzML",
+        // "C:/Users/unisys/Documents/Studium/Messdaten/LCMS_pressure_error/22090921_H2O_3_pos.mzML",
+        // "C:/Users/unisys/Documents/Studium/Messdaten/LCMS_pressure_error/22090935_H2O_4_pos.mzML",
+        // "C:/Users/unisys/Documents/Studium/Messdaten/LCMS_pressure_error/22090920_Kali_Pu_Penc_2,9HCO3_2_Indigo_pos.mzML",
+        // "C:/Users/unisys/Documents/Studium/Messdaten/LCMS_pressure_error/22090920_Kali_Pu_Penc_2,9HCO3_2_Indigo_neg.mzML"
         // "C:/Users/unisys/Documents/Studium/Messdaten/mzml/SFC_DoE/240123_VqF_DoE-pos_RO02_06.mzML",
-        // // "C:/Users/unisys/Documents/Studium/Messdaten/mzml/SFC_DoE/240123_VqF_DoE-pos_RO03_08.mzML",
-        // // "C:/Users/unisys/Documents/Studium/Messdaten/mzml/SFC_DoE/240123_VqF_DoE-pos_RO11_24.mzML",
-        // // "C:/Users/unisys/Documents/Studium/Messdaten/mzml/SFC_DoE/240123_VqF_DoE-pos_RO24_50.mzML",
-        // // "C:/Users/unisys/Documents/Studium/Messdaten/mzml/SFC_DoE/240123_VqF_DoE-pos_RO29_60.mzML",
-        // // "C:/Users/unisys/Documents/Studium/Messdaten/mzml/SFC_DoE/240123_VqF_DoE-pos_RO42_86.mzML",
-        // "G:/_Studium/Analytik-Praktikum/qbinning/rawdata/210229_C1_S1_W_MI_1_pos.mzML",
+        // "C:/Users/unisys/Documents/Studium/Messdaten/mzml/SFC_DoE/240123_VqF_DoE-pos_RO03_08.mzML",
+        // "C:/Users/unisys/Documents/Studium/Messdaten/mzml/SFC_DoE/240123_VqF_DoE-pos_RO11_24.mzML",
+        // "C:/Users/unisys/Documents/Studium/Messdaten/mzml/SFC_DoE/240123_VqF_DoE-pos_RO24_50.mzML",
+        // "C:/Users/unisys/Documents/Studium/Messdaten/mzml/SFC_DoE/240123_VqF_DoE-pos_RO29_60.mzML",
+        // "C:/Users/unisys/Documents/Studium/Messdaten/mzml/SFC_DoE/240123_VqF_DoE-pos_RO42_86.mzML",
         // "C:/Users/unisys/Documents/Studium/Messdaten/mzml/AquaFlow_MS1/210229_C1_S1_W_MI_1_pos.mzML",
         // "C:/Users/unisys/Documents/Studium/Messdaten/mzml/AquaFlow_MS1/210229_C1_S1_W_MI_2_pos.mzML", // some error during binning here?
         // "C:/Users/unisys/Documents/Studium/Messdaten/mzml/AquaFlow_MS1/210229_C1_S1_W_MI_3_pos.mzML",
-        // // "nonsense", // @todo add bypass if one of the files is bad
         // "C:/Users/unisys/Documents/Studium/Messdaten/mzml/AquaFlow_MS1/210229_Blank_SW_MI_I_1_pos.mzML",
         // "C:/Users/unisys/Documents/Studium/Messdaten/mzml/AquaFlow_MS1/210229_Blank_SW_MI_I_2_pos.mzML",
         // "C:/Users/unisys/Documents/Studium/Messdaten/mzml/AquaFlow_MS1/210229_Blank_SW_MI_I_3_pos.mzML",
