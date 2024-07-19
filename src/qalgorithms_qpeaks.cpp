@@ -160,101 +160,101 @@ namespace q
 #pragma endregion "initialize"
 
 #pragma region findPeaks
-//     std::vector<std::vector<std::unique_ptr<DataType::Peak>>>
-//     qPeaks::findPeaks(
-//         const q::MeasurementData::varDataType &dataVec)
-//     {
-//       std::vector<std::vector<std::unique_ptr<DataType::Peak>>> all_peaks;
-//       std::visit(
-//           [&all_peaks, this](auto &&arg)
-//           {
-//           all_peaks.resize(arg->size());
-//         // iterate over the map of varDataType datatype objects
-// #pragma omp parallel for // use parallel for loop to iterate over the dataVec
-//           for (size_t i = 0; i < arg->size(); i++)
-//           {
-//             // de-reference the unique pointer of the object
-//             auto &pair =  (*arg)[i];         // pair is a unique pointer to a datatype object
-//             auto &dataObj = *(pair.get());   // dataObj is a datatype object
-//             auto &data = dataObj.dataPoints; // data is a vector of unique pointers to data points structures
-//             int n = data.size();
-//             if (n < 5)
-//             {
-//               continue; // not enough data points to fit a quadratic regression model
-//             }
+    //     std::vector<std::vector<std::unique_ptr<DataType::Peak>>>
+    //     qPeaks::findPeaks(
+    //         const q::MeasurementData::varDataType &dataVec)
+    //     {
+    //       std::vector<std::vector<std::unique_ptr<DataType::Peak>>> all_peaks;
+    //       std::visit(
+    //           [&all_peaks, this](auto &&arg)
+    //           {
+    //           all_peaks.resize(arg->size());
+    //         // iterate over the map of varDataType datatype objects
+    // #pragma omp parallel for // use parallel for loop to iterate over the dataVec
+    //           for (size_t i = 0; i < arg->size(); i++)
+    //           {
+    //             // de-reference the unique pointer of the object
+    //             auto &pair =  (*arg)[i];         // pair is a unique pointer to a datatype object
+    //             auto &dataObj = *(pair.get());   // dataObj is a datatype object
+    //             auto &data = dataObj.dataPoints; // data is a vector of unique pointers to data points structures
+    //             int n = data.size();
+    //             if (n < 5)
+    //             {
+    //               continue; // not enough data points to fit a quadratic regression model
+    //             }
 
-//             // depending on the number of data points, a static (fast) or dynamic (slow) approach is used.
-//             if (n <= 512)
-//             { // static approach
-//               alignas(32) float Y[512];               // measured y values
-//               alignas(32) float Ylog[512];            // log-transformed measured y values
-//               alignas(32) float X[512];               // measured x values
-//               alignas(32) bool df[512];               // degree of freedom vector, 0: interpolated, 1: measured
-//               validRegression_static validRegressions[2048]; // array of valid regressions with default initialization, i.e., random states
-//               int validRegressionsIndex = 0;          // index of the valid regressions
+    //             // depending on the number of data points, a static (fast) or dynamic (slow) approach is used.
+    //             if (n <= 512)
+    //             { // static approach
+    //               alignas(32) float Y[512];               // measured y values
+    //               alignas(32) float Ylog[512];            // log-transformed measured y values
+    //               alignas(32) float X[512];               // measured x values
+    //               alignas(32) bool df[512];               // degree of freedom vector, 0: interpolated, 1: measured
+    //               validRegression_static validRegressions[2048]; // array of valid regressions with default initialization, i.e., random states
+    //               int validRegressionsIndex = 0;          // index of the valid regressions
 
-//               // pointers to the start and end (n) of the data
-//               const float *y_start = Y;
-//               float *ylog_start = Ylog;
-//               const float *x_start = X;
-//               const bool *df_start = df;
+    //               // pointers to the start and end (n) of the data
+    //               const float *y_start = Y;
+    //               float *ylog_start = Ylog;
+    //               const float *x_start = X;
+    //               const bool *df_start = df;
 
-//               for (int i = 0; i < n; i++)
-//               {
-//                 Y[i] = data[i]->y();
-//                 X[i] = data[i]->x();
-//                 df[i] = data[i]->df;
-//               }
-//               // perform log-transform on Y
-//               std::transform(y_start, y_start + n, ylog_start, [](float y) { return std::log(y); });
-//               runningRegression_static(y_start, ylog_start, df_start, n, validRegressions, validRegressionsIndex);
-//               if (validRegressionsIndex == 0)
-//               {
-//                 continue; // no valid peaks
-//               }
-//               all_peaks[i] = createPeaks_static(validRegressions, validRegressionsIndex, y_start, x_start, dataObj.getScanNumber());
-//             }
-//             else
-//             { // dynamic approach
-//               alignas(32) q::Matrices::Vector Y(n);
-//               alignas(32) q::Matrices::Vector X(n);
-//               q::Matrices::BoolVector df(n);  
-//               std::vector<std::unique_ptr<validRegression>> validRegressions;
-//               for (int i = 0; i < n; i++)
-//               {
-//                 X[i] = data[i]->x();
-//                 df[i] = data[i]->df;
-//                 Y[i] = data[i]->y();
-//               }
-//               const float *y_start = Y.begin();
-//               alignas(32) q::Matrices::Vector Ylog = logn(y_start, y_start + n); // perform log-transform on Y
-//               float *ylog_start = Ylog.begin();
-//               const float *x_start = X.begin();
-//               const bool *df_start = df.begin();
-              
-//               runningRegression(y_start, ylog_start, df_start, n, validRegressions);
-//               if (validRegressions.empty())
-//               {
-//                 continue; // no valid peaks
-//               }
-//               all_peaks[i] = createPeaks(validRegressions, y_start, x_start, dataObj.getScanNumber());
-//             }
-//           } // end parallel for loop
-//         ; },
-//           dataVec); // end visit
-//       // create the sorted peak list
-//       return createPeakList(all_peaks);
-//       return all_peaks;
-//     } // end findPeaks
+    //               for (int i = 0; i < n; i++)
+    //               {
+    //                 Y[i] = data[i]->y();
+    //                 X[i] = data[i]->x();
+    //                 df[i] = data[i]->df;
+    //               }
+    //               // perform log-transform on Y
+    //               std::transform(y_start, y_start + n, ylog_start, [](float y) { return std::log(y); });
+    //               runningRegression_static(y_start, ylog_start, df_start, n, validRegressions, validRegressionsIndex);
+    //               if (validRegressionsIndex == 0)
+    //               {
+    //                 continue; // no valid peaks
+    //               }
+    //               all_peaks[i] = createPeaks_static(validRegressions, validRegressionsIndex, y_start, x_start, dataObj.getScanNumber());
+    //             }
+    //             else
+    //             { // dynamic approach
+    //               alignas(32) q::Matrices::Vector Y(n);
+    //               alignas(32) q::Matrices::Vector X(n);
+    //               q::Matrices::BoolVector df(n);
+    //               std::vector<std::unique_ptr<validRegression>> validRegressions;
+    //               for (int i = 0; i < n; i++)
+    //               {
+    //                 X[i] = data[i]->x();
+    //                 df[i] = data[i]->df;
+    //                 Y[i] = data[i]->y();
+    //               }
+    //               const float *y_start = Y.begin();
+    //               alignas(32) q::Matrices::Vector Ylog = logn(y_start, y_start + n); // perform log-transform on Y
+    //               float *ylog_start = Ylog.begin();
+    //               const float *x_start = X.begin();
+    //               const bool *df_start = df.begin();
+
+    //               runningRegression(y_start, ylog_start, df_start, n, validRegressions);
+    //               if (validRegressions.empty())
+    //               {
+    //                 continue; // no valid peaks
+    //               }
+    //               all_peaks[i] = createPeaks(validRegressions, y_start, x_start, dataObj.getScanNumber());
+    //             }
+    //           } // end parallel for loop
+    //         ; },
+    //           dataVec); // end visit
+    //       // create the sorted peak list
+    //       return createPeakList(all_peaks);
+    //       return all_peaks;
+    //     } // end findPeaks
 
     // std::vector<std::vector<std::unique_ptr<DataType::Peak>>>
     void
     qPeaks::findPeaks(
+        std::vector<std::unique_ptr<DataType::Peak>> &all_peaks,
         std::vector<std::vector<double>> &dataVec,
         std::vector<std::vector<double>::iterator> &separators)
     {
-      std::vector<std::vector<std::unique_ptr<DataType::Peak>>> all_peaks;
-      all_peaks.resize(separators.size() - 2);
+      
       // iterate over the blocks marked by the separators, which point to the last element of each block.
       // the separators point to x values
       // the first and last block need to be ignored.
@@ -279,13 +279,13 @@ namespace q
           continue;
         }
         if (n <= 512)
-        { // static approach
-          alignas(32) float Y[512];               // measured y values
-          alignas(32) float Ylog[512];            // log-transformed measured y values
-          alignas(32) float X[512];               // measured x values
-          alignas(32) bool df[512];               // degree of freedom vector, 0: interpolated, 1: measured
+        {                                                // static approach
+          alignas(32) float Y[512];                      // measured y values
+          alignas(32) float Ylog[512];                   // log-transformed measured y values
+          alignas(32) float X[512];                      // measured x values
+          alignas(32) bool df[512];                      // degree of freedom vector, 0: interpolated, 1: measured
           validRegression_static validRegressions[2048]; // array of valid regressions with default initialization, i.e., random states
-          int validRegressionsIndex = 0;          // index of the valid regressions
+          int validRegressionsIndex = 0;                 // index of the valid regressions
 
           // pointers to the start and end (n) of the data
           const float *y_start = Y;
@@ -303,16 +303,16 @@ namespace q
             it_df++;
           }
           // perform log-transform on Y
-          std::transform(y_start, y_start + n, ylog_start, [](float y) { return std::log(y); });
+          std::transform(y_start, y_start + n, ylog_start, [](float y)
+                         { return std::log(y); });
           runningRegression_static(y_start, ylog_start, df_start, n, validRegressions, validRegressionsIndex);
           if (validRegressionsIndex == 0)
           {
             continue; // no valid peaks
           }
-          all_peaks[std::distance(separators.begin(), it_sep)-1] = createPeaks_static(validRegressions, validRegressionsIndex, y_start, x_start, 0);
+          createPeaks_static(all_peaks, validRegressions, validRegressionsIndex, y_start, x_start, 0);
         }
       }
-      // return all_peaks;
     }
 #pragma endregion findPeaks
 
@@ -1014,6 +1014,52 @@ namespace q
       } // end for loop
 
       return peaks;
+    }
+
+    void
+    qPeaks::createPeaks_static(
+        std::vector<std::unique_ptr<DataType::Peak>> &peaks,
+        validRegression_static *validRegressions,
+        const int validRegressionsIndex,
+        const float *y_start,
+        const float *x_start,
+        const int scanNumber)
+    {
+      // iterate over the validRegressions vector
+      for (int i = 0; i < validRegressionsIndex; i++)
+      {
+        auto &regression = validRegressions[i];
+        if (!regression.isValid)
+        {
+          continue;
+        }
+        // re-scale the apex position to x-axis
+        const double x0 = *(x_start + (int)std::floor(regression.apex_position));
+        const double dx = *(x_start + (int)std::ceil(regression.apex_position)) - x0;
+        const double apex_position = x0 + dx * (regression.apex_position - std::floor(regression.apex_position));
+
+        const __m128 coeff = regression.coeff;
+        const float exp_b0 = exp_approx_d(((float *)&coeff)[0]); // exp(b0)
+        // create a new peak object and push it to the peaks vector; the peak object is created using the scan number, the apex position and the peak height
+        peaks.push_back(std::make_unique<DataType::Peak>(
+            scanNumber,
+            apex_position,
+            exp_approx_d(((float *)&coeff)[0] + (regression.apex_position - regression.index_x0) * ((float *)&coeff)[1] * .5))); // peak height (exp(b0 - b1^2/4/b2)) with position being -b1/2/b2
+
+        // add additional information to the peak object
+        peaks.back()->area = regression.area * exp_b0;
+        peaks.back()->areaUncertainty = regression.uncertainty_area * exp_b0;
+        peaks.back()->heightUncertainty = 0.; // regression->uncertainty_height;
+        // peaks.back()->positionUncertainty = regression->uncertainty_position * dx;
+        // peaks.back()->dqsPeak = regression->dqs;
+
+        peaks.back()->beta0 = ((float *)&coeff)[0];
+        peaks.back()->beta1 = ((float *)&coeff)[1];
+        peaks.back()->beta2 = ((float *)&coeff)[2];
+        peaks.back()->beta3 = ((float *)&coeff)[3];
+        peaks.back()->x0 = *(x_start + regression.index_x0);
+        peaks.back()->dx = dx;
+      } // end for loop
     }
 #pragma endregion "create peaks static"
 

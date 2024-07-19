@@ -2,7 +2,6 @@
 
 // internal
 #include "../include/qalgorithms_measurement_data_tensor.h"
-#include "../include/qalgorithms_qpeaks.h"
 
 namespace q
 {
@@ -26,6 +25,7 @@ namespace q
 
         void
         TensorData::readStreamCraftMZML(
+            q::Algorithms::qPeaks &qpeaks,
             sc::MZML &data,
             const bool ms1only,
             const int start_index)
@@ -44,12 +44,10 @@ namespace q
             {
                 alignas(64) std::vector<std::vector<double>> data_vec = data.get_spectrum(indices[start_index]); // get first spectrum (x-axis)
                 expectedDifference = calcExpectedDiff(data_vec[0]);                                              // calculate expected difference & check if Orbitrap
-                std::cout << "expected difference: " << expectedDifference << std::endl;
-                isZeroFillingNeeded(data_vec[1], needsZeroFilling); // check if zero filling is needed
+                isZeroFillingNeeded(data_vec[1], needsZeroFilling);                                              // check if zero filling is needed
             }
             if (needsZeroFilling)
             {
-
 #pragma omp parallel for
                 for (int index : indices) // loop over all indices
                 {
@@ -73,44 +71,27 @@ namespace q
             else
             {
 #pragma omp parallel for
-                for (int index : indices) // loop over all indices
+                for (size_t i = 0; i < indices.size(); ++i) // loop over all indices
                 {
+                    const int index = indices[i]; // spectrum index
                     if (index < start_index)
                     {
                         continue; // skip due to index
                     }
-                    // load spectrum
-                    alignas(64) std::vector<std::vector<double>> spectrum = data.get_spectrum(index); // get spectrum at index
-                    
+                    alignas(64) std::vector<std::vector<double>> spectrum = data.get_spectrum(index); // spectrum at index
                     if (spectrum[0].size() < 5)
                     {
                         continue; // skip due to lack of data, i.e., degree of freedom will be zero
                     }
-                    // std::cout << "index: " << index << std::endl;
-                    // std::cout << "spectrum size: " << spectrum[0].size() << std::endl;
                     spectrum.push_back(std::vector<double>(spectrum[0].size(), 1.0)); // add df column for interpolation
-                    // print spectrum[0], spectrum[1] and spectrum[2] with 10 decimal places to csv file
-                    // std::ofstream file("spectrum.csv");
-                    // for (size_t i = 0; i < spectrum[0].size(); i++)
-                    // {
-                    //     file << std::fixed << std::setprecision(10) << spectrum[0][i] << "," << spectrum[1][i] << "," << spectrum[2][i] << std::endl;
-                    // }
-                    // file.close();
-                    std::vector<std::vector<double>::iterator> separators;            // create separators
+                    std::vector<std::vector<double>::iterator> separators;            // vector of iterators at separation points (x axis)
                     cutData_vec(spectrum, expectedDifference, separators);            // find separation points in the data
-                    // preint separators with 10 deicmal places to csv file
-                    // std::ofstream file2("separators.csv");
-                    // for (size_t i = 0; i < separators.size(); i++)
-                    // {
-                    //     file2 << std::fixed << std::setprecision(10) << *separators[i] << std::endl;
-                    // }
-                    // file2.close();
                     interpolateData_vec(spectrum, separators);                        // interpolate the data
                     extrapolateData_vec(spectrum, separators);                        // extrapolate the data
-                    
-                    exit(0);
-                }
-            }
+                    std::vector<std::unique_ptr<DataType::Peak>> centroids;           // create vector of unique pointers to peaks
+                    qpeaks.findPeaks(centroids, spectrum, separators);                // find peaks
+                } // for
+            } // else
         } // readStreamCraftMZML
     } // namespace MeasurementData
 } // namespace q

@@ -2,7 +2,8 @@
 #define QALGORITHMS_MEASUREMENT_DATA_TENSOR_H
 
 // internal
-#include "qalgorithms_measurement_data.h"
+#include "../include/qalgorithms_measurement_data.h"
+#include "../include/qalgorithms_qpeaks.h"
 
 // external
 #include "../external/StreamCraft/src/StreamCraft_mzml.hpp"
@@ -47,6 +48,7 @@ namespace q
          */
         void 
         readStreamCraftMZML(
+            q::Algorithms::qPeaks &qpeaks,
             sc::MZML &data,
             const bool ms1only = true,
             const int start_index = 0

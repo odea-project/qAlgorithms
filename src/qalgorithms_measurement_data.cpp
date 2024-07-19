@@ -338,7 +338,12 @@ namespace q
       for (; it_x != data[0].end() - 5; ++it_x, ++it_y)
       {
         if (*it_y != 0.0 || *(it_y + 1) != 0.0 || *(it_y - 3) != 0 || *(it_y + 4) != 0)
-        {
+        { // skip if y is not like [0 0 0 0 0 0 0 0]
+          continue;
+        }
+
+        if ((*it_x - *(it_x - 1)) > (*(it_x + 1) - *it_x) || (*(it_x + 1) - *it_x) < (*(it_x + 2) - *(it_x + 1)))
+        { // skip if the largest gap is not in the middle of the 8 zeros
           continue;
         }
 
@@ -346,10 +351,10 @@ namespace q
         {
           separators.push_back(it_x);
         }
-        else
-        {
-          expectedDifference = (expectedDifference + *(it_x + 1) - *it_x) * .5;
-        }
+        // else
+        // {
+        //   expectedDifference = (expectedDifference + *(it_x + 1) - *it_x) * .5;
+        // }
       } // end of for loop
       separators.push_back(data[0].end() - 1);
     } // end of cutData_vec

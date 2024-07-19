@@ -48,6 +48,7 @@ namespace q
             // std::vector<std::vector<std::unique_ptr<DataType::Peak>>>
             void
             findPeaks(
+                std::vector<std::unique_ptr<DataType::Peak>> &all_peaks,
                 std::vector<std::vector<double>> &dataVec,
                 std::vector<std::vector<double>::iterator> &separators);
 
@@ -232,6 +233,15 @@ namespace q
 
             std::vector<std::unique_ptr<DataType::Peak>>
             createPeaks_static(
+                validRegression_static *validRegressions,
+                const int validRegressionsIndex,
+                const float *y_start,
+                const float *x_start,
+                const int scanNumber);
+
+            void
+            createPeaks_static(
+                std::vector<std::unique_ptr<DataType::Peak>> &peaks,
                 validRegression_static *validRegressions,
                 const int validRegressionsIndex,
                 const float *y_start,
