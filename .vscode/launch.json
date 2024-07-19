@@ -20,7 +20,7 @@
                     "ignoreFailures": true
                 }
             ],
-            "preLaunchTask": "build qAlgorithms" // Name des Build-Tasks
+            "preLaunchTask": "build qAlgorithms no optimize" // Name des Build-Tasks
         },
         {
             "name": "(gdb) Launch ucrt",

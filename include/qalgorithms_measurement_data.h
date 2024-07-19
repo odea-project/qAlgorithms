@@ -66,6 +66,12 @@ namespace q
             cutData(
                 varDataType &dataVec,
                 size_t &maxKey);
+            
+            void
+            cutData_vec(
+                std::vector<std::vector<double>> &data,
+                double expectedDifference,
+                std::vector<std::vector<double>::iterator> &separators);
 
             /**
              * @brief Filter small data sets
@@ -96,8 +102,13 @@ namespace q
                 std::vector<std::vector<double>> &data,
                 std::vector<double>::iterator *separators);
 
-            int
-            intra_extrapolateData_vec(
+            void
+            interpolateData_vec(
+                std::vector<std::vector<double>> &data,
+                std::vector<std::vector<double>::iterator> &separators);
+            
+            void
+            extrapolateData_vec(
                 std::vector<std::vector<double>> &data,
                 std::vector<std::vector<double>::iterator> &separators);
 

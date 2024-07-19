@@ -141,13 +141,15 @@ namespace q
       {
         if (interpolate)
         {
-          // calculate the interpolated y-axis values using linear interpolation
-          const double differece_y_per_gapsize = (data[1][i + 1] - data[1][i]) / (gapSize + 1);
+          // calculate the interpolated y-axis values using log interpolation
+          const double diff = std::pow(data[1][i + 1] / data[1][i], 1.0 / (gapSize + 1));
+          // const double differece_y_per_gapsize = (data[1][i + 1] - data[1][i]) / (gapSize + 1);
 
           for (int j = 0; j < gapSize; j++)
           {
             data[0].push_back(data[0][i] + loop_index * expectedDifference * sign);
-            data[1].push_back(data[1][i] + loop_index * differece_y_per_gapsize);
+            data[1].push_back(data[1][i] * std::pow(diff, j + 1));
+            // data[1].push_back(data[1][i] + loop_index * differece_y_per_gapsize);
             data[2].push_back(0.0);
             sorted_indexes.push_back(sorted_indexes[k] + j + index_offset);
             loop_index += sign;
@@ -273,6 +275,11 @@ namespace q
         {
           counter++;
           it++;
+          if (it == data.end())
+          {
+            it--;
+            break;
+          }
         }
         if (counter == zeros_in_a_row)
         {
@@ -319,6 +326,33 @@ namespace q
                  },
                  dataVec); // end of visit
     } // end of cutData
+
+    void
+    MeasurementData::cutData_vec(
+        std::vector<std::vector<double>> &data,
+        double expectedDifference,
+        std::vector<std::vector<double>::iterator> &separators)
+    {
+      auto it_x = data[0].begin() + 3;
+      auto it_y = data[1].begin() + 3;
+      for (; it_x != data[0].end() - 5; ++it_x, ++it_y)
+      {
+        if (*it_y != 0.0 || *(it_y + 1) != 0.0 || *(it_y - 3) != 0 || *(it_y + 4) != 0)
+        {
+          continue;
+        }
+
+        if (*(it_x + 1) - *it_x > 10 * expectedDifference)
+        {
+          separators.push_back(it_x);
+        }
+        else
+        {
+          expectedDifference = (expectedDifference + *(it_x + 1) - *it_x) * .5;
+        }
+      } // end of for loop
+      separators.push_back(data[0].end() - 1);
+    } // end of cutData_vec
 
     void MeasurementData::filterSmallDataSets(varDataType &dataVec)
     {
@@ -672,42 +706,145 @@ namespace q
       } // end of while loop
     } // end of extrapolateData_vec
 
-    int
-    MeasurementData::intra_extrapolateData_vec(
+    void
+    MeasurementData::interpolateData_vec(
         std::vector<std::vector<double>> &data,
         std::vector<std::vector<double>::iterator> &separators)
     {
       // define iterators for the data vector
-      auto it_x = data[0].begin();    // x-axis iterator
-      auto it_y = data[1].begin();    // y-axis iterator
-      auto it_df = data[2].begin();   // df iterator
-      const auto end = data[1].end(); // end of the data vector
-      int block_counter = 0;          // number of the current block
-      for (; it_y != end; ++it_y, ++it_x, ++it_df)
+      auto it_x = data[0].begin() + 8;       // x-axis iterator
+      auto it_y = data[1].begin() + 8;       // y-axis iterator
+      auto it_df = data[2].begin() + 8;      // df iterator
+      auto it_sep = separators.begin() + 1;  // separator iterator; start from the second separator
+      const auto end = separators.end() - 1; // end of the separators vector; the last separator is not considered
+      for (; it_sep != end; ++it_sep, it_x += 8, it_y += 8, it_df += 8)
+      { // iterate over the blocks
+        for (; it_x != *it_sep - 3; ++it_x, ++it_y, ++it_df)
+        { // iterate in the block
+          if (*it_y == 0.0)
+          { // count number of zeros in a row
+            int counter = 0;
+            while (*it_y == 0.0)
+            {
+              *it_df = 0.0;
+              it_df++;
+              it_x++;
+              it_y++;
+              counter++;
+              if (it_x == *it_sep - 3)
+              {
+                break;
+              }
+            } // end of while loop
+            // log interpolate between it_y - counter and it_y
+            double diff = 0.0;
+            if (*(it_y - counter - 1) != 0.0)
+            {                                                                      // ordinary case is considered
+              diff = std::pow(*it_y / *(it_y - counter - 1), 1.0 / (counter + 1)); // nth root of the y values ratio
+              if (diff == 0.0)
+              { // there is no value to the right of the gap
+                diff = 0.5;
+              }
+              for (auto it = it_y - counter; it != it_y; ++it)
+              {
+                *it = *(it - 1) * diff;
+              }
+            }
+            else
+            { // there is no value to the left of the gap
+              for (auto it = it_y - 1; it != it_y - counter - 1; --it)
+              {
+                *it = *(it + 1) * .5; // half of the value to the right
+              }
+            } // end of if-else statement
+          } // end of if (*it_y == 0.0)
+          if (it_x == *it_sep - 3)
+          {
+            break;
+          }
+        } // end of for loop (block)
+      } // end of for loop (separators)
+    } // end of interpolateData_vec
+
+    void
+    MeasurementData::extrapolateData_vec(
+        std::vector<std::vector<double>> &data,
+        std::vector<std::vector<double>::iterator> &separators)
+    {
+      // lambda function to calculate the coefficients b0, b1, and b2 for the quadratic extrapolation
+      auto calculateCoefficients = [](const double *x, const double *y, double &b0, double &b1, double &b2)
       {
-        int counter = 0;
-        while (*it_y == 0.0)
-        {
-          counter++;
-          it_y++;
-          it_x++;
+        double x1 = x[0], y1 = y[0];
+        double x2 = x[1], y2 = y[1];
+        double x3 = x[2], y3 = y[2];
+
+        double denom = (x1 - x2) * (x1 - x3) * (x2 - x3);
+
+        double a = (x3 * (y2 - y1) + x2 * (y1 - y3) + x1 * (y3 - y2)) / denom;
+        double b = (x3 * x3 * (y1 - y2) + x2 * x2 * (y3 - y1) + x1 * x1 * (y2 - y3)) / denom;
+        double c = (x2 * x3 * (x2 - x3) * y1 + x3 * x1 * (x3 - x1) * y2 + x1 * x2 * (x1 - x2) * y3) / denom;
+
+        b0 = c;
+        b1 = b;
+        b2 = a;
+      };
+
+      // define iterators for the data vector
+      auto block_start_y = data[1].begin() + 8; // start of the block
+      auto block_end_y = data[1].begin() + 8;   // end of the block
+      auto block_max_y = data[1].begin() + 8;   // maximum of the block
+      auto block_start_x = data[0].begin() + 8; // start of the block
+      auto block_end_x = data[0].begin() + 8;   // end of the block
+      auto block_max_x = data[0].begin() + 8;   // maximum of the block
+      auto block_end_df = data[2].begin() + 8;  // df of the block
+      auto it_df = data[2].begin() + 4;         // df of the block
+      auto it_x = data[0].begin() + 4;          // x-axis iterator
+      auto it_y = data[1].begin() + 4;          // y-axis iterator
+      for (auto it_sep = separators.begin() + 1; it_sep != separators.end() - 1; ++it_sep)
+      { // iterate over the blocks
+        while (block_end_x != *it_sep - 3)
+        { // find maximum of the block
+          if (*block_end_y > *block_max_y)
+          {
+            block_max_y = block_end_y;
+            block_max_x = block_end_x;
+          }
+          block_end_y++;
+          block_end_x++;
+          block_end_df++;
+        }
+        // calculate the coefficients b0, b1, and b2 for the quadratic extrapolation
+        double x[3] = {0.0, *block_max_x - *block_start_x, *(block_end_x - 1) - *block_start_x};
+        double y[3] = {std::log(*block_start_y), std::log(*block_max_y), std::log(*(block_end_y - 1))};
+        double b0, b1, b2;
+        calculateCoefficients(x, y, b0, b1, b2);
+        // extrapolate the zeros
+        for (; it_y != block_start_y; ++it_x, ++it_y, ++it_df)
+        { // extrapolate to the left
+          const double x = *it_x - *block_start_x;
+          *it_y = exp_approx_d(b0 + x * (b1 + x * b2));
           *it_df = 0.0;
-          it_df++;
-          if (it_y == end)
-          {
-            return block_counter;
-          }
         }
-        if (counter == 8)
-        {
-          block_counter++;
-          if (block_counter > 1) // ignore the first block
-          {
-            separators.push_back(it_y - 4);
-          }
-          continue;
+        // update the iterators
+        it_x = block_end_x;
+        it_y = block_end_y;
+        it_df = block_end_df;
+        for (; it_x != *it_sep + 1; ++it_x, ++it_y, ++it_df)
+        { 
+          // extrapolate to the right
+          const double x = *it_x - *block_start_x;
+          *it_y = exp_approx_d(b0 + x * (b1 + x * b2));
+          *it_df = 0.0;
         }
-      }
-    }
+        // update the iterators
+        block_start_y = block_end_y + 8;
+        block_end_y = block_start_y;  
+        block_max_y = block_start_y;
+        block_start_x = block_end_x + 8;
+        block_end_x = block_start_x;
+        block_max_x = block_start_x;
+        block_end_df = block_end_df + 8;
+      } // end of for loop (separators)
+    } // end of extrapolateData_vec
   } // namespace MeasurementData
 } // namespace q

@@ -45,8 +45,9 @@ int main()
   {
     sc::MZML data(filename_input);
     // lcmsData.readStreamCraftMZML(data);
+    q::Algorithms::qPeaks qpeaks;
     q::MeasurementData::TensorData tensorData;
-    tensorData.readStreamCraftMZML(data);
+    tensorData.readStreamCraftMZML(data, true, 13);
     std::cout << "/n ----- completed -----" << std::endl;
     exit(0);
   }

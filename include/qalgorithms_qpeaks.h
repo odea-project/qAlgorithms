@@ -4,7 +4,7 @@
 
 // internal
 #include "qalgorithms_matrix.h"
-#include "qalgorithms_measurement_data.h"
+// #include "qalgorithms_measurement_data.h"
 #include "qalgorithms_utils.h"
 #include "qalgorithms_datatype_peak.h"
 
@@ -42,8 +42,14 @@ namespace q
              * @brief Find the peaks in the data. Container function to call the findPeaks method.
              * @param dataVec
              */
-            std::vector<std::vector<std::unique_ptr<DataType::Peak>>>
-            findPeaks(const q::MeasurementData::varDataType &dataVec);
+            // std::vector<std::vector<std::unique_ptr<DataType::Peak>>>
+            // findPeaks(const q::MeasurementData::varDataType &dataVec);
+
+            // std::vector<std::vector<std::unique_ptr<DataType::Peak>>>
+            void
+            findPeaks(
+                std::vector<std::vector<double>> &dataVec,
+                std::vector<std::vector<double>::iterator> &separators);
 
             // export
             void
@@ -124,7 +130,7 @@ namespace q
                       area(area),
                       uncertainty_area(uncertainty_area)
                 {
-                } 
+                }
             };
 
             struct validRegression_static
