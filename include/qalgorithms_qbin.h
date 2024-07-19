@@ -18,7 +18,7 @@ namespace q
             double mz;
             double mzError = -1;
             // double RT;
-            unsigned int scanNo;
+            unsigned int scanNo; // @todo make int
             double intensity;
             double DQScentroid;
         };
