@@ -32,3 +32,10 @@ useable results, the expected difference between regions had to be
 scaled, while the division into thirds had no basis in the expected
 behaviour of normally distributed data and was extremely sensitive to
 outliers.
+
+## test for points outside three sigma interval
+This test was implemented to identify those bins that
+were too broad (in mz) to form visually identifiable ion traces.
+It was removed due to outliers not directly corelating with
+good bins - often, points with very low intensity at the edges of
+the relevant scan interval triggered the detection.

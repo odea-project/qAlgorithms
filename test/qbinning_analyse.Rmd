@@ -68,6 +68,7 @@ stats$Var1 = as.numeric(levels(stats$Var1))
 # ggplot(summary)+
 #   geom_point(aes(median_mz, mean_scans, color = as.factor(errorcode)))+
 #   theme(legend.position="none")
+# binSelectionViewer(summary,bins,summary$ID[which(summary$errorcode == 0)])
 ```
 
 ```{r binviewer and rater}
@@ -157,7 +158,7 @@ binSelectionViewer = function(summary, fullbins, IDvector){
     } else if(input == "p"){
       print(ggplot(fullbins[which(fullbins$ID == binID),])+
       # geom_point(aes(scan, intensity, colour = DQSC), size = 2)+
-      geom_col(aes(scan, intensity, fill = DQSB_scaled), colour = NA, width = 0.3)+
+      geom_col(aes(scan, intensity, fill = DQSC), colour = NA, width = 0.3)+
 
       scale_fill_continuous()+
       theme_bw()+

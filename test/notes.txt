@@ -1,3 +1,7 @@
+Duplikate erst entfernen, nachdem alle überlappenden Bins anderweitig entfernt wurden.
+DQSC ist ein guter Indikator für den Punkt, der entfernt werden sollte.
+Wahrscheinlich ist es sinnvoll, Duplikate nicht in die Abschätzung von mz mit einzubeziehen
+
 https://gpufit.readthedocs.io/en/latest/introduction.html
 
 Wo schlägt vcrit an, wenn ich den Datensatz nach Intensität sortiere?
@@ -48,6 +52,10 @@ C:\PROGRA~2\GnuWin32\bin\make.exe
 
 Gibt es einen Zusammenhang zwischen Zentroidfehler und der Eigenschaft, 
 nicht in einem Bin zu landen / Anfang Bzw. Ende eines Bins zu sein?
+ -> bei Duplikaten ist der Punkt, der am ehesten nicht in den Bin passt,
+    häufig auch der mit dem schlechtesten DQSC. #
+ -> die Standardabweichung ist nicht ausschlaggebend
+    für die Zuordnung von Fehlercodes
 
 Config-Datei
 
@@ -65,64 +73,3 @@ Bin Reassembly sollte erst nach Aufreinigung der zu großen Bins passieren, dies
     von der Rekonstruktion ausgeschlossen werden
 
 Bin Recutting: Suche nach ungewöhnlichen Mustern, Quantifizierung über summary-Params
-
-// Template for a matrix. The dimensions are decided at run time
-// This template makes a matrix of arbitrary dimensions
-// There is no bounds checking
-template <typename T>
-class Matrix {
-public:
-// constructor with number of rows and columns
-Matrix(int rows, int columns) {
-// save number of rows and columns
-this->rows = rows;
-this->columns = columns;
-// allocate memory
-p = new T[rows * columns];
-if (p == 0) {
-// .. error message here: allocation failed
-}
-else {
-// initialize all elements to zero
-for (int i = 0; i < rows * columns; i++) {
-p[i] = 0;
-}
-}
-}
-// get number of rows
-int nrows() const {
-return rows;
-}
-// get number of columns
-int ncols() const {
-return columns;
-}
-// destructor
-~Matrix() {
-if (p) delete[] p; // free the memory
-}
-// Operator [] gives a pointer to row number r.
-// A second [] with the column number gives a single element
-T * operator[] (int r) {
-// no bounds check
-return p + r * columns;
-}
-protected:
-int rows; // number of rows
-int columns; // number of columns
-T * p; // pointer to memory
-};
-105
-// ...
-// Example of use:
-// Make a matrix of doubles with 8 rows and 10 columns
-Matrix<double> mat(8,10);
-// Put a value in row 3, column 5
-mat[3][5] = 12.34;
-// Print out the matrix
-for (int r = 0; r < mat.nrows(); r++) {
-for (int c = 0; c < mat.ncols(); c++) {
-printf("%5.2f ", mat[r][c]);
-}
-printf("\n");
-}
