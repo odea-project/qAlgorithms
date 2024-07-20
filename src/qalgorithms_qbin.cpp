@@ -354,11 +354,13 @@ namespace q
             // for every point, iterate until two matches are found
             size_t startPoint = 0;
             int tmpCounter = 0;
+            int binModCount = 0;
             for (size_t i = 0; i < numOfUnbinned; i++)
             {
                 size_t testposition = startPoint;
                 bool oneMore = false;
                 int testPositive = -1;
+                int prevtest = -1;
                 while (testposition < numOfBins)
                 {
                     // stop if mass is greater than last min +0.01
@@ -393,9 +395,15 @@ namespace q
                 {
                     // add found points to the bins @todo move before DQSB calculation
                     finishedBins[testPositive].pointsInBin.push_back(outOfBins[i]);
+                    if (testPositive != prevtest)
+                    {
+                        prevtest = testPositive;
+                        ++binModCount;
+                    }
                 }
             }
-            std::cout << tmpCounter << " points added to bins based on corrected estimate\n";
+            std::cout << tmpCounter << " points added to " << binModCount << " bins based on corrected estimate\n"
+                      << conflictOfBinterest.size() << " points are within the range of two bins";
             // return conflictOfBinterest; // @todo add a way to work with this
         }
 
@@ -516,7 +524,7 @@ namespace q
 
 #pragma region "Bin"
 
-        Bin::Bin(){};
+        Bin::Bin() {};
 
         Bin::Bin(const std::vector<qCentroid *>::iterator &binStartInOS, const std::vector<qCentroid *>::iterator &binEndInOS) // const std::vector<qCentroid> &sourceList,
         {
@@ -940,37 +948,6 @@ namespace q
             meanCenError = meanCenError / binsize;
             DQS_control = DQS_control / binsize;
 
-            // bins should be sorted by mz when entering here
-            // test removed due to not working as expected
-            // bool asymmetricMZ = false;
-            // if (binsize > 11)
-            // {
-            //     double lowestMZ = pointsInBin.front()->mz;
-            //     double mzThird = (pointsInBin.back()->mz - lowestMZ) / 3;
-            //     size_t border1 = 0;
-            //     size_t border2 = 0;
-            //     int counter = 0;
-            //     while (border2 == 0)
-            //     {
-            //         double mz = pointsInBin[counter]->mz;
-            //         if ((border1 == 0) && (mz - lowestMZ > mzThird))
-            //         {
-            //             border1 = counter + 1;
-            //         }
-            //         if ((border1 != 0) && (mz - lowestMZ > 2 * mzThird))
-            //         {
-            //             border2 = counter + 1;
-            //         }
-            //         ++counter;
-            //     }
-            //     // @todo reasoning for 1.25 and min 12 points
-            //     if ((border1 > (border2 - border1) * 1.25) | (border2 - border1 > (binsize - border2) * 1.25))
-            //     {
-            //         asymmetricMZ = true;
-            //     }
-            // }
-
-            // calc DQS when assuming the MOD to be critval
             double sumOfDist = 0;
             std::for_each(pointsInBin.begin(), pointsInBin.end(), [&](const qCentroid *point)
                           { sumOfDist += (point->mz - meanMZ) * (point->mz - meanMZ); }); // squared distance to mean
@@ -987,18 +964,21 @@ namespace q
             {
                 oneSided = true;
             }
+            if ((pointsInBin[binsize - 2]->scanNo == scanMin) | (pointsInBin[binsize - 2]->scanNo == scanMax))
+            {
+                oneSided = true;
+            }
 
             // the second and third highest intensity should each be
             // within maxdist of the highest instensity
             bool twoMaxima = false;
+
+            int scanOfMax = pointsInBin.back()->scanNo;
+            int scanOf2nd = pointsInBin[binsize - 2]->scanNo;
+            int scanOf3rd = pointsInBin[binsize - 3]->scanNo;
+            if ((abs(scanOfMax - scanOf2nd) > maxdist) | (abs(scanOfMax - scanOf3rd) > maxdist))
             {
-                int scanOfMax = pointsInBin.back()->scanNo;
-                int scanOf2nd = (pointsInBin.back() - 1)->scanNo;
-                int scanOf3rd = (pointsInBin.back() - 2)->scanNo;
-                if ((abs(scanOfMax - scanOf2nd) > maxdist) | (abs(scanOfMax - scanOf3rd) > maxdist))
-                {
-                    twoMaxima = true;
-                }
+                twoMaxima = true;
             }
 
             // iterate to calculate stdev of mz and intensity
@@ -1031,7 +1011,7 @@ namespace q
                     }
                 }
             }
-            double vcritIntensity = 3.05037165842070 * pow(log(binsize), (-0.4771864667153)) * sqrt(meanInt / (binsize - 1));
+            double vcritIntensity = 3.05037165842070 * pow(log(binsize), (-0.4771864667153)) * sqrt(intensityErrorSquared / (binsize - 1));
             bool intensityOutlier = false;
             if (greatestIntGap > vcritIntensity)
             {
@@ -1044,13 +1024,13 @@ namespace q
             }
 
             bool halfPeakL = true;
-            double prevInt = 0;
+            int prevScan = 0;
             int wrongCount = 0;
             for (qCentroid *cen : pointsInBin)
             {
-                if (cen->intensity > prevInt)
+                if (cen->scanNo > prevScan)
                 {
-                    prevInt = cen->intensity;
+                    prevScan = cen->scanNo;
                     wrongCount = 0;
                 }
                 else
@@ -1067,13 +1047,13 @@ namespace q
             bool halfPeakR = true;
             if (!halfPeakL)
             {
-                prevInt = INFINITY;
+                prevScan = INFINITY;
                 wrongCount = 0;
                 for (qCentroid *cen : pointsInBin)
                 {
-                    if (cen->intensity < prevInt)
+                    if (cen->scanNo < prevScan)
                     {
-                        prevInt = cen->intensity;
+                        prevScan = cen->scanNo;
                         wrongCount = 0;
                     }
                     else
@@ -1344,7 +1324,7 @@ namespace q
 
 //
 //
-int main()
+int notmain()
 {
     std::cout << "starting...\n";
 

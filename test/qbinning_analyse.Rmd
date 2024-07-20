@@ -31,8 +31,9 @@ critVal <- function(n){
 summary <- read.csv("../../results/warburg_summary.csv")
 bins <- read.csv("../../results/warburg_bins.csv")
 
-
-
+summary = read.csv("C:/Users/unisys/Documents/Studium/Messdaten/warburg_summary.csv")
+bins = read.csv("C:/Users/unisys/Documents/Studium/Messdaten/warburg_bins.csv")
+summary$errorcode = as.numeric(lapply(summary$errorcode, bits))
 
 ```
 
@@ -116,6 +117,59 @@ binViewer = function(summary, fullbins, binID){
       buf = as.numeric(input)
       if(!is.na(buf)){
         binID = buf}
+    }
+  }
+}
+
+
+binSelectionViewer = function(summary, fullbins, IDvector){
+  
+  IDpos = 1
+  binID = IDvector[IDpos]
+  rateNext = T
+  while (rateNext) {
+    ppm2.5 = summary$mean_mz[which(summary$ID == binID)] * 2.5 * 10^-6
+    meanMZ = summary$mean_mz[which(summary$ID == binID)]
+    stdev = summary$stdev_mz[which(summary$ID == binID)]
+    
+    print(ggplot(fullbins[which(fullbins$ID == binID),])+
+      geom_point(aes(mz, scan, color = intensity))+ 
+      geom_vline(xintercept = meanMZ - ppm2.5, linewidth = 0.2, linetype = "dashed")+
+      geom_vline(xintercept = meanMZ + ppm2.5, linewidth = 0.2, linetype = "dashed")+
+      geom_vline(xintercept = meanMZ - stdev, linewidth = 0.2, linetype = "dashed", color = "red")+
+      geom_vline(xintercept = meanMZ + stdev, linewidth = 0.2, linetype = "dashed", color = "red")+  
+      xlab("m/z")+
+      ylab("Scan Number")+
+      theme(panel.background = element_rect(fill = "lightblue1",
+            colour = "lightblue1", linewidth = 0.5, linetype = "solid"))+
+      scale_color_viridis_c(option = "plasma", direction = -1)+
+      labs(caption = sprintf("BinID: %d | Errorcode: %d", binID, summary$errorcode[binID]))
+    )
+    input = readline()
+    if(input == "#"){
+      rateNext = F
+    } else if(input == ""){
+      IDpos = IDpos + 1
+      binID = IDvector[IDpos]
+    } else if(input == "<") {
+      IDpos = IDpos - 1
+      binID = IDvector[IDpos]
+    } else if(input == "p"){
+      print(ggplot(fullbins[which(fullbins$ID == binID),])+
+      # geom_point(aes(scan, intensity, colour = DQSC), size = 2)+
+      geom_col(aes(scan, intensity, fill = DQSB_scaled), colour = NA, width = 0.3)+
+
+      scale_fill_continuous()+
+      theme_bw()+
+      # scale_color_viridis_c()+
+      labs(caption = sprintf("BinID: %d | Errorcode: %d", binID, summary$errorcode[binID])))
+      readline("Press Enter to return to bin")
+    } else {
+      buf = as.numeric(input)
+      if(!is.na(buf)){
+        IDpos = IDpos + buf
+        binID = IDvector[IDpos]
+      }
     }
   }
 }
