@@ -94,6 +94,7 @@ namespace q
 
         struct BinBorders
         {
+            int binPosition;
             int scanRangeStart;
             int scanRangeEnd;
             double massRangeStart;
@@ -102,13 +103,13 @@ namespace q
 
 #pragma endregion "utility"
 
-        // Bin Class
+        // Bin Class @todo get under size 128
         class Bin
         {
         private:
             std::vector<double> cumError; // cumulative error in mz
             double pt_MakeDQSB;           // rm?
-            bool duplicateScan = false;   // are two points with the same scan number in this bin?
+
             double medianMZ;
 
         public:
@@ -118,6 +119,7 @@ namespace q
             int scanMin;
             int scanMax;
 
+            bool duplicateScan = false; // are two points with the same scan number in this bin?
             bool l_maxdist_tooclose = false;
             bool r_maxdist_tooclose = false; // Check if there is a point within maxdist
 
@@ -220,8 +222,8 @@ namespace q
 
             /// @brief create a new bin that contains all unused datapoints and the bins which were not fully completed
             /// @param selectedBins indices of bins which are to be rebinned
-            /// @param outOfBins points which could not be assigned to a bin on the first passthrough
-            void makeReassemblyBin(std::vector<size_t> selectedBins, std::vector<qCentroid *> outOfBins); // @todo integrate this function
+            /// @param notInBins points which could not be assigned to a bin on the first passthrough
+            void makeReassemblyBin(std::vector<size_t> selectedBins, std::vector<qCentroid *> notInBins); // @todo integrate this function
 
             /// @brief perform the specified subsetting operations on the binDeque. Elements are added to the back and deleted from the front
             /// @param dimensions which dimensions should be used for subsetting in what order. 1 = subsetting by mz, 2 = subsetting by scans.
