@@ -82,10 +82,10 @@ namespace q
                 {
                     row.push_back(std::stod(cell));
                 }
-                const unsigned int i_scanNo = (unsigned int)row[d_scanNo];
-                if (i_scanNo > rawData->allDatapoints.size() - 1)
+                const int i_scanNo = (int)row[d_scanNo];
+                if (size_t(i_scanNo) > rawData->allDatapoints.size() - 1)
                 {
-                    for (size_t i = rawData->allDatapoints.size() - 1; i < i_scanNo; i++)
+                    for (size_t i = rawData->allDatapoints.size() - 1; i < size_t(i_scanNo); i++)
                     {
                         rawData->allDatapoints.push_back(std::vector<qCentroid>(0));
                     }
@@ -125,7 +125,7 @@ namespace q
             binDeque.push_back(firstBin);
         }
 
-        void BinContainer::subsetBins(const std::vector<int> dimensions, const unsigned int maxdist, bool rebin, const double massError = -1)
+        void BinContainer::subsetBins(const std::vector<int> dimensions, const int maxdist, bool rebin, const double massError = -1)
         {
             auto timeStart = std::chrono::high_resolution_clock::now();
             auto timeEnd = std::chrono::high_resolution_clock::now();
@@ -187,7 +187,7 @@ namespace q
             std::cout << "completed subsetting\n";
         }
 
-        void BinContainer::assignDQSB(const CentroidedData *rawdata, const unsigned int maxdist, bool rebin)
+        void BinContainer::assignDQSB(const CentroidedData *rawdata, const int maxdist, bool rebin)
         {
             auto timeStart = std::chrono::high_resolution_clock::now();
 
@@ -202,7 +202,7 @@ namespace q
             std::cout << "Finished Calculating DQSBs in " << (timeEnd - timeStart).count() << " ns\n";
         }
 
-        void BinContainer::redoBinningIfTooclose(const std::vector<int> dimensions, const CentroidedData *rawdata, std::vector<qCentroid *> notbinned, const unsigned int maxdist)
+        void BinContainer::redoBinningIfTooclose(const std::vector<int> dimensions, const CentroidedData *rawdata, std::vector<qCentroid *> notbinned, const int maxdist)
         {
             std::cout << "starting re-binning procedure...\n";
             // assemble new bin by copying bins with hot ends into notInBins
@@ -410,7 +410,7 @@ namespace q
                     }
                     // update duplicate finder and minmax of scans / mz
                     bool duplicate = false;
-                    int scanMin = INFINITY;
+                    int scanMin = 2147483647; // max possible value of int
                     int scanMax = 0;
                     double mzMin = INFINITY;
                     double mzMax = 0;
@@ -546,7 +546,7 @@ namespace q
                 output_all << "ID,mz,scan,intensity,mzError,DQSC,DQSB_base,DQSB_scaled\n";
                 for (size_t i = 0; i < indices.size(); i++)
                 {
-                    const unsigned int pos = indices[i];
+                    const int pos = indices[i];
                     std::vector<qCentroid *> binnedPoints = finishedBins[pos].pointsInBin;
 
                     for (size_t j = 0; j < binnedPoints.size(); j++)
@@ -625,7 +625,7 @@ namespace q
             std::partial_sum(cumError.begin(), cumError.end(), cumError.begin());
         }
 
-        void Bin::subsetMZ(std::deque<Bin> *bincontainer, std::vector<double> &OS, const int binStartInOS, const int binEndInOS, unsigned int &counter) // bincontainer is binDeque of BinContainer // OS cannot be solved with pointers since index has to be transferred to frature list
+        void Bin::subsetMZ(std::deque<Bin> *bincontainer, std::vector<double> &OS, const int binStartInOS, const int binEndInOS, int &counter) // bincontainer is binDeque of BinContainer // OS cannot be solved with pointers since index has to be transferred to frature list
         {
             // @todo bad data input still causes an early termination here
             assert(binStartInOS >= 0);
@@ -664,7 +664,7 @@ namespace q
             }
         }
 
-        void Bin::subsetScan(std::deque<Bin> *bincontainer, std::vector<Bin> *finishedBins, const int maxdist, unsigned int &counter)
+        void Bin::subsetScan(std::deque<Bin> *bincontainer, std::vector<Bin> *finishedBins, const int maxdist, int &counter)
         {
             // function is called on a bin sorted by mz
             int control_duplicatesIn = 0;
@@ -740,7 +740,7 @@ namespace q
         //     // min groupsize is five - start with distances between minima as start groupings
         // }
 
-        void Bin::makeDQSB(const CentroidedData *rawdata, const unsigned int maxdist) // @todo split this function
+        void Bin::makeDQSB(const CentroidedData *rawdata, const int maxdist) // @todo split this function
         {
             // assumes bin is saved sorted by scans, since the result from scan gap checks is the final control
             const size_t binsize = pointsInBin.size();
@@ -898,12 +898,12 @@ namespace q
                 // currentRangeStart gives position of the first value in minMaxOutPerScan that must be considered,
                 // assuming the first value in minMaxOutPerScan (index 0) is only relevant to the
                 // qCentroid in the lowest scan. For every increase in scans, that range starts two elements later
-                const unsigned int currentRangeStart = (pointsInBin[i]->scanNo - scanMin) * 2;
-                const unsigned int currentRangeEnd = currentRangeStart + maxdist * 4 + 1;
+                const int currentRangeStart = (pointsInBin[i]->scanNo - scanMin) * 2;
+                const int currentRangeEnd = currentRangeStart + maxdist * 4 + 1;
 
-                assert(currentRangeEnd < minMaxOutPerScan.size());
+                assert(size_t(currentRangeEnd) < minMaxOutPerScan.size());
 
-                for (unsigned int j = currentRangeStart; j < currentRangeEnd; j++) // from lowest scan to highest scan relevant to this
+                for (int j = currentRangeStart; j < currentRangeEnd; j++) // from lowest scan to highest scan relevant to this
                 // point, +1 since scan no of point has to be included.
                 {
                     double dist = std::abs(currentMZ - minMaxOutPerScan[j]);
@@ -1029,7 +1029,7 @@ namespace q
             // iterate to calculate stdev of mz and intensity
             // identify the largest difference between ordered
             // intensities and compare to vcrit of intensity later
-            double mzErrorSquared = 0;
+            // double mzErrorSquared = 0;
             double intensityErrorSquared = 0;
             double greatestIntGap = 0;
             // count the occurences of points outside the 1.3 sigma interval - should be 20% or less
@@ -1092,7 +1092,7 @@ namespace q
             bool halfPeakR = true;
             if (!halfPeakL)
             {
-                prevScan = INFINITY;
+                prevScan = 2147483647; // max possible value of int
                 wrongCount = 0;
                 for (qCentroid *cen : pointsInBin)
                 {
@@ -1188,10 +1188,10 @@ namespace q
             std::sort(pointsInBin.begin(), pointsInBin.end(), [](qCentroid *lhs, qCentroid *rhs)
                       { return lhs->scanNo < rhs->scanNo; });
 
-            unsigned int firstScan = pointsInBin.front()->scanNo;
+            int firstScan = pointsInBin.front()->scanNo;
             int eicsize = pointsInBin.back()->scanNo - firstScan + 1;
 
-            std::vector<unsigned int> tmp_scanNumbers(eicsize);
+            std::vector<int> tmp_scanNumbers(eicsize);
             std::vector<double> tmp_mz(eicsize);
             std::vector<double> tmp_intensities(eicsize);
             std::vector<double> tmp_DQSB(eicsize);
@@ -1200,7 +1200,7 @@ namespace q
             // the quadratic interpolator expects empty spaces at the ends of the vector
             const int bufferZeroes = 4;
             std::iota(tmp_scanNumbers.begin(), tmp_scanNumbers.begin() + eicsize + 2 * bufferZeroes, firstScan - bufferZeroes);
-            unsigned int prevScan = firstScan - bufferZeroes;
+            int prevScan = firstScan - bufferZeroes;
 
             for (size_t i = bufferZeroes; i < pointsInBin.size() + bufferZeroes; i++)
             {

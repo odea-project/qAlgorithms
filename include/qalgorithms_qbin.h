@@ -18,7 +18,7 @@ namespace q
             double mz;
             double mzError = -1;
             // double RT;
-            unsigned int scanNo; // @todo make int
+            int scanNo; // @todo make int
             double intensity;
             double DQScentroid;
         };
@@ -40,7 +40,7 @@ namespace q
         {
             double mz;
             // double rt;
-            unsigned int scan;
+            int scan;
             double intensity; // convert to int here?
             double DQS;
         };
@@ -55,7 +55,7 @@ namespace q
 
         struct EIC // Extracted Ion Chromatogram
         {
-            std::vector<unsigned int> scanNumbers;
+            std::vector<int> scanNumbers;
             std::vector<double> mz;
             std::vector<double> intensities;
             std::vector<double> DQSB;
@@ -163,7 +163,7 @@ namespace q
             /// @param startBin index relating to the order space at which the bin starts
             /// @param endBin index relating to the order space at which the bin ends
             /// @param counter counter shared between all calls of the recursive function, used to count number of function calls
-            void subsetMZ(std::deque<Bin> *bincontainer, std::vector<double> &OS, const int startBin, const int endBin, unsigned int &counter);
+            void subsetMZ(std::deque<Bin> *bincontainer, std::vector<double> &OS, const int startBin, const int endBin, int &counter);
 
             /// @brief divide a bin sorted by scans if there are gaps greater than maxdist in it. Bins that cannot be divided are closed.
             /// @details this function sorts all members of a bin by scans and iterates over them. If a gap greater than maxdist exists,
@@ -174,7 +174,7 @@ namespace q
             /// @param finishedBins if the input bin was not split, it will be added to this
             /// @param maxdist the largest gap in scans which a bin can have while still being considered valid
             /// @param counter counter shared between all calls of the recursive function, used to count number of function calls
-            void subsetScan(std::deque<Bin> *bincontainer, std::vector<Bin> *finishedBins, const int maxdist, unsigned int &counter);
+            void subsetScan(std::deque<Bin> *bincontainer, std::vector<Bin> *finishedBins, const int maxdist, int &counter);
 
             // usage: Start once before rebinning, cut affected bins and add them to the deque
             void subsetNaturalBreaksMZ(std::deque<Bin> *bincontainer, std::vector<Bin> *finishedBins);
@@ -185,7 +185,7 @@ namespace q
             /// binned datapoint. It is assumed that the bin is sorted by scans when makeDQSB is called @todo change to more generic solution?
             /// @param rawdata the CentroidedData object from which the bin was generated
             /// @param maxdist the largest gap in scans which a bin can have while still being considered valid
-            void makeDQSB(const CentroidedData *rawdata, const unsigned int maxdist);
+            void makeDQSB(const CentroidedData *rawdata, const int maxdist);
 
             double calcStdevMZ();
 
@@ -209,7 +209,7 @@ namespace q
             // void readcsv(std::string user_file, std::vector<qCentroid> output, int d_mz, int d_mzError, int d_RT, int d_scanNo); // implemented for featurelist
             std::deque<Bin> binDeque;    // @todo add case for no viable bins
             std::vector<Bin> redoneBins; // store bins after reassembly/cutting here
-            unsigned int subsetCount;
+            int subsetCount;
 
         public:
             std::vector<Bin> finishedBins; // only includes bins which cannot be further subdivided
@@ -229,12 +229,12 @@ namespace q
             /// @param dimensions which dimensions should be used for subsetting in what order. 1 = subsetting by mz, 2 = subsetting by scans.
             /// Important: The last element of dimensions must determine bins to be finished, and no other subsetter may add to finsihedBins.
             /// @param maxdist the largest gap in scans which a bin can have while still being considered valid
-            void subsetBins(const std::vector<int> dimensions, const unsigned int maxdist, bool rebin, const double massError);
+            void subsetBins(const std::vector<int> dimensions, const int maxdist, bool rebin, const double massError);
 
             /// @brief apply DQSB_base function to all completed bins
             /// @param rawdata the CentroidedData object from which all bins in finishedBins were generated
             /// @param maxdist the largest gap in scans which a bin can have while still being considered valid
-            void assignDQSB(const CentroidedData *rawdata, const unsigned int maxdist, bool rebin);
+            void assignDQSB(const CentroidedData *rawdata, const int maxdist, bool rebin);
 
             void printBinSummary(std::string path); // @todo create a better summary function which gives a
                                                     // detailed report, including what the test actually does,
@@ -249,7 +249,7 @@ namespace q
             /// @param rawdata the CentroidedData object from which all bins in finishedBins were generated
             /// @param notbinned points which were not used in a previous binning step
             /// @param maxdist the largest gap in scans which a bin can have while still being considered valid
-            void redoBinningIfTooclose(const std::vector<int> dimensions, const CentroidedData *rawdata, std::vector<qCentroid *> notbinned, const unsigned int maxdist);
+            void redoBinningIfTooclose(const std::vector<int> dimensions, const CentroidedData *rawdata, std::vector<qCentroid *> notbinned, const int maxdist);
 
             void mergeByStdev(double mzFilterLower, double mzFilterUpper);
 
