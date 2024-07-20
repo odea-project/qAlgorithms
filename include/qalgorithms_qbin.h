@@ -253,7 +253,7 @@ namespace q
 
             void mergeByStdev(double mzFilterLower, double mzFilterUpper);
 
-            void reconstructFromStdev(int maxdist);
+            void reconstructFromStdev(const CentroidedData *rawdata, int maxdist);
 
             void printAllBins(std::string path, const CentroidedData *rawdata); // @todo remove rawdata dependency
 

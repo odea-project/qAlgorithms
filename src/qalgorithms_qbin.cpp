@@ -118,7 +118,7 @@ namespace q
 
         BinContainer::BinContainer() {}
 
-        void BinContainer::makeFirstBin(CentroidedData *rawdata) // @todo inline
+        void BinContainer::makeFirstBin(CentroidedData *rawdata)
         {
             finishedBins.reserve(rawdata->lengthAllPoints / 50); // max of two reallocations
             Bin firstBin(rawdata);
@@ -187,7 +187,7 @@ namespace q
             std::cout << "completed subsetting\n";
         }
 
-        void BinContainer::assignDQSB(const CentroidedData *rawdata, const unsigned int maxdist, bool rebin) // @todo assert
+        void BinContainer::assignDQSB(const CentroidedData *rawdata, const unsigned int maxdist, bool rebin)
         {
             auto timeStart = std::chrono::high_resolution_clock::now();
 
@@ -215,16 +215,18 @@ namespace q
                 {
                     incompleteBins.push_back(i);
                 }
-                // else // @todo check for better way
-                // {
-                //     double meanDQS = 0;
-                //     std::accumulate(finishedBins[i].DQSB_base.begin(), finishedBins[i].DQSB_base.begin(), meanDQS);
-                //     meanDQS = meanDQS / finishedBins[i].DQSB_base.size();
-                //     if (meanDQS <= 0)
-                //     {
-                //         incompleteBins.push_back(i);
-                //     }
-                // }
+                else if (finishedBins[i].duplicateScan)
+                {
+                    incompleteBins.push_back(i);
+                }
+                else // @todo check for better way
+                {
+                    double meanDQS = std::accumulate(finishedBins[i].DQSB_base.begin(), finishedBins[i].DQSB_base.end(), 0.0);
+                    if (meanDQS <= 0)
+                    {
+                        incompleteBins.push_back(i);
+                    }
+                }
             }
             if (incompleteBins.empty())
             {
@@ -314,7 +316,7 @@ namespace q
         //     }
         // }
 
-        void BinContainer::reconstructFromStdev(int maxdist)
+        void BinContainer::reconstructFromStdev(const CentroidedData *rawdata, int maxdist)
         {
 
             // find all not binned points and add them to a bin
@@ -406,8 +408,12 @@ namespace q
                         prevtest = binInsertPoint;
                         ++binModCount;
                     }
-                    // update duplicate finder
+                    // update duplicate finder and minmax of scans / mz
                     bool duplicate = false;
+                    int scanMin = INFINITY;
+                    int scanMax = 0;
+                    double mzMin = INFINITY;
+                    double mzMax = 0;
                     for (qCentroid *cen : finishedBins[binInsertPoint].pointsInBin)
                     {
                         if (cen->intensity == notInBins[i]->intensity)
@@ -415,8 +421,29 @@ namespace q
                             duplicate = true;
                             break;
                         }
+                        if (cen->mz > mzMax)
+                        {
+                            mzMax = cen->mz;
+                        }
+                        if (cen->mz < mzMin)
+                        {
+                            mzMin = cen->mz;
+                        }
+                        if (cen->scanNo > scanMax)
+                        {
+                            scanMax = cen->scanNo;
+                        }
+                        if (cen->scanNo < scanMin)
+                        {
+                            scanMin = cen->scanNo;
+                        }
                     }
                     finishedBins[binInsertPoint].duplicateScan = duplicate;
+                    finishedBins[binInsertPoint].makeDQSB(rawdata, maxdist);
+                    finishedBins[binInsertPoint].mzMax = mzMax;
+                    finishedBins[binInsertPoint].mzMin = mzMin;
+                    finishedBins[binInsertPoint].scanMax = scanMax;
+                    finishedBins[binInsertPoint].scanMin = scanMin;
                 }
             }
             std::cout << tmpCounter << " points added to " << binModCount << " bins based on corrected estimate\n"
@@ -541,7 +568,7 @@ namespace q
 
 #pragma region "Bin"
 
-        Bin::Bin() {};
+        Bin::Bin(){};
 
         Bin::Bin(const std::vector<qCentroid *>::iterator &binStartInOS, const std::vector<qCentroid *>::iterator &binEndInOS) // const std::vector<qCentroid> &sourceList,
         {
@@ -679,6 +706,8 @@ namespace q
             // check for open bin at the end
             if (lastpos == 0) // no cut has occurred
             {
+                scanMin = pointsInBin.front()->scanNo;
+                scanMax = pointsInBin.back()->scanNo;
                 finishedBins->push_back(bincontainer->front());
                 duplicatesTotal += control_duplicatesIn;
             }
@@ -718,10 +747,9 @@ namespace q
             DQSB_base.reserve(binsize);
             DQSB_scaled.reserve(binsize);
             // determine start and end of relevant scan section, used as repeats for the for loop; -1 since accessed vector is zero-indexed
-            scanMin = pointsInBin.front()->scanNo;
-            scanMax = pointsInBin.back()->scanNo;
-            int scanRangeStart = pointsInBin.front()->scanNo - maxdist;
-            int scanRangeEnd = pointsInBin.back()->scanNo + maxdist;
+
+            int scanRangeStart = scanMin - maxdist;
+            int scanRangeEnd = scanMax + maxdist;
 
             // determine min and max in mz - sort, since then calculation of inner distances is significantly faster
             std::sort(pointsInBin.begin(), pointsInBin.end(), [](qCentroid *lhs, qCentroid *rhs)
@@ -1315,7 +1343,7 @@ namespace q
 
             // move centroids from notInBins into existing bins
             activeBins.redoBinningIfTooclose(measurementDimensions, &centroidedData, q::qBinning::notInBins, q::qBinning::maxdist);
-            activeBins.reconstructFromStdev(6);
+            activeBins.reconstructFromStdev(&centroidedData, 6);
 
             activeBins.printSelectBins(std::byte{0b11111111}, true, outpath); //@todo make this a function parameter
 
@@ -1379,7 +1407,7 @@ int main()
 
     testcontainer.redoBinningIfTooclose(measurementDimensions, &testdata, q::qBinning::notInBins, q::qBinning::maxdist);
 
-    testcontainer.reconstructFromStdev(6);
+    testcontainer.reconstructFromStdev(&testdata, 6);
 
     // print bin selection
     testcontainer.printSelectBins(std::byte{0b11111111}, true, "../.."); // one bit per test
