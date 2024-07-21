@@ -145,7 +145,7 @@ namespace q
                         for (size_t j = 0; j < startpoint; j++) // for every element in the deque before writing new bins
                         {
                             binDeque.front().makeOS();
-                            if (massError < 0) // @todo more efficient solution?
+                            if (massError < 0) // @todo more efficient solution / remove entirely?
                             {
                                 binDeque.front().makeCumError(); // always after order space, since makeOS sorts
                             }
@@ -219,7 +219,7 @@ namespace q
                 {
                     incompleteBins.push_back(i);
                 }
-                else // @todo check for better way
+                else
                 {
                     double DQSsum = std::accumulate(finishedBins[i].DQSB_base.begin(), finishedBins[i].DQSB_base.end(), 0.0);
                     if (DQSsum <= 0) // no need to check average since DQSB isn ot scaled
@@ -245,7 +245,6 @@ namespace q
             {
                 std::cout << "no not-binned points, continuing...\n";
             }
-            // @todo is it sensible to leave as much space free?
             // copy old pointsInBin for each selected bin
             for (size_t i : incompleteBins)
             {
@@ -295,6 +294,7 @@ namespace q
             return;
         }
 
+        // This function was removed since it never applied
         // void BinContainer::mergeByStdev(double mzFilterLower, double mzFilterUpper)
         // {
         //     // find all bins which could be grouped together when taking the
@@ -344,7 +344,7 @@ namespace q
             int binpos = 0;
             for (Bin currentBin : finishedBins)
             {
-                double stdev = currentBin.calcStdevMZ(); // @todo consider merging minmax and stdev
+                double stdev = currentBin.calcStdevMZ();
 
                 double trueVcrit = 3.05037165842070 * pow(log(currentBin.pointsInBin.size() + 1), (-0.4771864667153)) * stdev;
                 binRange.push_back(BinBorders{
@@ -401,7 +401,7 @@ namespace q
                 }
                 if (oneMore)
                 {
-                    // add found points to the bins @todo move before DQSB calculation
+                    // add found points to the bins
                     finishedBins[binInsertPoint].pointsInBin.push_back(notInBins[i]);
                     if (binInsertPoint != prevtest)
                     {
@@ -456,22 +456,18 @@ namespace q
             std::stringstream output;
             file_out.open(path, std::ios::out);
             assert(file_out.is_open());
-            // possible symbols
-            // char shapes[] = "acGuxnoQzRsTvjIEf"; // random shape when displaying with makie @todo does not work
 
-            output << "mz,scan,ID,DQSC,DQSB_base\n";
+            output << "mz,scan,ID,DQSC,DQSB_scaled\n";
 
-            for (size_t i = 0; i < finishedBins.size(); i++) // @todo make faster
+            for (size_t i = 0; i < finishedBins.size(); i++)
             {
-                // char x = shapes[rand() % 17];
-                // int colour = i % 9; // 10 colours total @todo printf
                 std::vector<qCentroid *> binnedPoints = finishedBins[i].pointsInBin;
 
                 for (size_t j = 0; j < binnedPoints.size(); j++)
                 {
                     char buffer[128];
                     sprintf(buffer, "%0.15f,%d,%zu,%0.15f,%0.15f\n", binnedPoints[j]->mz, binnedPoints[j]->scanNo, i + 1,
-                            binnedPoints[i]->DQScentroid, finishedBins[i].DQSB_base[j]);
+                            binnedPoints[i]->DQScentroid, finishedBins[i].DQSB_scaled[j]);
                     output << buffer;
                 }
             }
@@ -489,12 +485,12 @@ namespace q
             return finalBins;
         };
 
-        void BinContainer::printSelectBins(std::byte mask, bool fullBins, std::string location) // @todo combine with makeBinSelection
+        void BinContainer::printSelectBins(std::byte mask, bool fullBins, std::string location)
         {
             // print optional summary file
             // filename to directory
             size_t found = location.find_last_of("/\\");
-            std::cout << "base filename: " << location.substr(0, found) << "\n";
+            std::cout << "base filename: " << location << "\n";
             std::filesystem::path p = location.substr(0, found);
 
             if (!std::filesystem::exists(p))
@@ -596,12 +592,10 @@ namespace q
             // std::cout << " <- mass, sort OK ";
 
             activeOS.reserve(pointsInBin.size());               // OS = Order Space
-            for (size_t i = 0; i < pointsInBin.size() - 1; i++) // -1 to prevent accessing outside of vector @todo adjacent_element
+            for (size_t i = 0; i < pointsInBin.size() - 1; i++) // -1 to prevent accessing outside of vector
             {
                 activeOS.push_back((pointsInBin[i + 1]->mz - pointsInBin[i]->mz) * 1000000);
             }
-            // std::adjacent_difference(pointsInBin.begin(), pointsInBin.end(), activeOS.begin(), [](const qCentroid *cen)
-            //                          { return cen->mz * 1000000; });
 
             activeOS.push_back(NAN); // last element of OS is never checked, dummy value due to recursive function
             return;
@@ -626,7 +620,6 @@ namespace q
 
         void Bin::subsetMZ(std::deque<Bin> *bincontainer, std::vector<double> &OS, const int binStartInOS, const int binEndInOS, int &counter) // bincontainer is binDeque of BinContainer // OS cannot be solved with pointers since index has to be transferred to frature list
         {
-            // @todo bad data input still causes an early termination here
             assert(binStartInOS >= 0);
             assert(binEndInOS >= binStartInOS);
             const int binsizeInOS = binEndInOS - binStartInOS + 1; // +1 to avoid length zero
@@ -672,7 +665,7 @@ namespace q
                       { return lhs->scanNo < rhs->scanNo; });
             std::vector<qCentroid *>::iterator newstart = pointsInBin.begin();
             int lastpos = 0;
-            for (size_t i = 0; i < binSize - 1; i++) // -1 since difference to next data point is checked @todo rework to start at i = 0
+            for (size_t i = 0; i < binSize - 1; i++) // -1 since difference to next data point is checked
             {
                 int distanceScan = pointsInBin[i + 1]->scanNo - pointsInBin[i]->scanNo;
                 if (distanceScan > maxdist) // bin needs to be split
@@ -681,7 +674,7 @@ namespace q
                     // less than five points in bin
                     if (i - lastpos + 1 < 5) // +1 since i starts at 0
                     {
-                        for (size_t j = lastpos; j <= i; j++) // @todo make macro for compile time exclusion
+                        for (size_t j = lastpos; j <= i; j++)
                         {
                             qCentroid *F = *(pointsInBin.begin() + j);
                             notInBins.push_back(F);
@@ -689,8 +682,10 @@ namespace q
                     }
                     else
                     {
-                        // viable bin, stable in scan dimension @todo fixed error of last element being omitted
-                        Bin output(newstart, pointsInBin.begin() + i + 1); // +1 since otherwise last element of the correct range is not included
+                        // viable bin, stable in scan dimension
+                        // +1 since otherwise last element of the correct range is not included
+                        Bin output(newstart, pointsInBin.begin() + i + 1);
+                        assert(output.pointsInBin.size() > 4);
                         bincontainer->push_back(output);
                     }
                     lastpos = i + 1;                          // sets previous i to the position one i ahead, since
@@ -710,15 +705,16 @@ namespace q
                 finishedBins->back().scanMax = pointsInBin.back()->scanNo;
                 duplicatesTotal += control_duplicatesIn;
             }
-            else if (binSize - lastpos >= 5) // binsize starts at 1 // @todo check for correctness
+            else if (binSize - lastpos > 4) // binsize starts at 1
             {
-                // viable bin, stable in scan dimension @todo checked for correctness
+                // viable bin, stable in scan dimension
                 Bin output(newstart, pointsInBin.end());
+                assert(output.pointsInBin.size() > 4);
                 bincontainer->push_back(output);
             }
             else
             {
-                for (size_t j = lastpos; j < pointsInBin.size(); j++) // @todo checked for correctness
+                for (size_t j = lastpos; j < pointsInBin.size(); j++)
                 {
                     qCentroid *F = *(pointsInBin.begin() + j);
                     notInBins.push_back(F);
@@ -835,15 +831,16 @@ namespace q
                     {
                         minMaxOutPerScan.push_back(rawdata->allDatapoints[i][scansize].mz);
                         minFound = true;
-                        continue; // @todo work with goto here
+                        continue;
                     }
                     else
                     {
                         needle = scansize;
                     }
                 }
-                // rawdata is always sorted by mz within scans @todo add goto to skip needless loop steps
-                // use two while loops to find desired value from any place in the scan, accounts for large shifts between scans
+                // rawdata is always sorted by mz within scans
+                // use two while loops to find desired value from any place in
+                // the scan, accounts for large shifts between scans
                 if (!minFound)
                 {
                     while (rawdata->allDatapoints[i][needle].mz < mzMin)
@@ -974,6 +971,7 @@ namespace q
         SummaryOutput Bin::summariseBin()
         {
             size_t binsize = pointsInBin.size();
+
             double meanMZ = 0;
             double meanScan = 0;
             double meanDQS_base = 0;
@@ -1026,7 +1024,7 @@ namespace q
             {
                 oneSided = true;
             }
-            if ((pointsInBin[binsize - 2]->scanNo == scanMin) | (pointsInBin[binsize - 2]->scanNo == scanMax))
+            else if ((pointsInBin[binsize - 2]->scanNo == scanMin) | (pointsInBin[binsize - 2]->scanNo == scanMax))
             {
                 oneSided = true;
             }
@@ -1131,6 +1129,7 @@ namespace q
             }
 
             // @todo vcrit greater true vcrit
+            // @todo intensities are all the same
             std::byte selector{0b00000000}; // used as bitmask during printSelectBins()
             if (duplicateScan)
             {
@@ -1294,7 +1293,6 @@ namespace q
             }
             // dqs = (MOD - MID) * (1 / (1 + MID)) / dqs; // sm(i) term
             // interval transform, equivalent to (dqs + 1) / 2;
-            // if dqs = nan, set it to 1 during EIC construction @todo
             // return fmal((MOD - MID) / fmal(MID, dqs, dqs), 0.5, 0.5);
             return (MOD - MID) / fmal(MID, dqs, dqs);
         }
@@ -1370,10 +1368,8 @@ namespace q
 
             std::cout.rdbuf(old); // restore previous standard out
 
-            // @todo bins must be sorted by scans before being passed to centroiding
-
             std::vector<q::qBinning::EIC> nothing;
-            std::cout << "\nRETURNS EMPTY VECTOR AS OF NOW, REPLACE WITH RETURNbINS()";
+            std::cout << "\nRETURNS EMPTY VECTOR AS OF NOW, REPLACE WITH RETURNBINS()\n";
 
             return nothing; // activeBins.returnBins();
         }
@@ -1383,7 +1379,7 @@ namespace q
 
 //
 //
-int notmain()
+int main()
 {
     std::cout << "starting...\n";
     //   << sizeof(std::vector<int>);

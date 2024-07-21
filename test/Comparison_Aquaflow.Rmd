@@ -120,33 +120,34 @@ s_full_1 %>% group_by(errorcode) %>% summarise(bins = n(), centroids = sum(size)
 
 ```{r unified summary frame}
 
-summaries = c("s_Kali_Pu_Penc_2.9HCO3_2_Indigo_neg",
-              "s_Kali_Pu_Penc_2.9HCO3_2_Indigo_pos",
-              "s_Kali_Pu_Penc_2.9HCO3_0_Indigo_pos",
-              "s_22090910_Kali_Pu_Penc_2.9HCO3_2_pos",
-              "s_Kali__H2O_1_pos", "s_Kali__H2O_3_pos"
-              )
+# summaries = c("s_Kali_Pu_Penc_2.9HCO3_2_Indigo_neg",
+#               "s_Kali_Pu_Penc_2.9HCO3_2_Indigo_pos",
+#               "s_Kali_Pu_Penc_2.9HCO3_0_Indigo_pos",
+#               "s_22090910_Kali_Pu_Penc_2.9HCO3_2_pos",
+#               "s_Kali__H2O_1_pos", "s_Kali__H2O_3_pos"
+#               )
 
 # summaries = c("s_blank_pure_1", "s_blank_pure_2", "s_blank_pure_3",
 #               "s_blank_standard_1", "s_blank_standard_2", "s_blank_standard_3",
 #               "s_full_1", "s_full_2", "s_full_3",
 #               "s_SFC_01_20", "s_SFC_02_21", "s_SFC_03_22")
 
-# summaries = c("s_SFC_DoE_RO02_06", "s_SFC_DoE_RO03_08", "s_SFC_DoE_RO11_24",
-#               "s_SFC_DoE_RO24_50", "s_SFC_DoE_RO29_60", "s_SFC_DoE_RO42_86")
+summaries = c("s_SFC_DoE_RO02_06", "s_SFC_DoE_RO03_08", "s_SFC_DoE_RO11_24",
+              "s_SFC_DoE_RO24_50", "s_SFC_DoE_RO29_60", "s_SFC_DoE_RO42_86")
 
 
 
 sum_all = data.frame(errorcode = 0, sample = "none", bin_count = 0, total_points = 0, 
-                     average_size = 0, mean_DQS = 0, mean_stdev = 0, binPerc = 0)
+                     average_size = 0, mean_DQS = 0, mean_stdev = 0, binPerc = 0, pointPerc = 0)
 
 for (name in summaries) {
   measurement = get(name) 
   lengthTotal = length(measurement$errorcode)
+  pointsTotal = sum(measurement$size)
   measurement = measurement %>% group_by(errorcode) %>% 
     summarise(sample = name, bin_count = n(), total_points = sum(size), 
               average_size = sum(size)/n(), mean_DQS = mean(DQSB_base), 
-              mean_stdev = mean(stdev_mz), binPerc = n()/lengthTotal)
+              mean_stdev = mean(stdev_mz), binPerc = n()/lengthTotal, pointPerc = sum(size)/pointsTotal)
   
   sum_all = rbind(sum_all, measurement)
 }
@@ -185,6 +186,13 @@ ggplot(sum_all)+
   geom_line(aes(as.factor(sample), mean_DQS, color = as.factor(errorcode), group = errorcode))+
   geom_point(aes(as.factor(sample), mean_DQS, color = as.factor(errorcode), size = 2*  binPerc))+
   scale_x_discrete(guide = guide_axis(n.dodge=3))
+
+ggplot(sum_all)+
+  geom_line(aes(as.factor(sample), pointPerc, color = as.factor(errorcode), group = errorcode))+
+  geom_point(aes(as.factor(sample), pointPerc, color = as.factor(errorcode), size = 2*  binPerc))+
+  geom_point(data = sum_all[which(sum_all$errorcode == 0),], aes(as.factor(sample), pointPerc, shape = "-"))+
+  scale_x_discrete(guide = guide_axis(n.dodge=3))+
+  theme(legend.position = "none")
 
 ggplot(sum_all)+
   geom_point(aes(as.factor(sample), mean_stdev, color = as.factor(errorcode)))+

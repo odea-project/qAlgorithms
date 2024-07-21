@@ -1,6 +1,12 @@
+Bins 2201, 2251 in s_SFC_DoE_RO02_06 überprüfen
+Bin 11698 hat ähnliches Problem, sieht nach ANzeigefehler aus
+Wenn 100000 zutrifft und der Bin entsprechend klein ist, sieht eine Lorentz-Kurve nach einem besseren Fit aus
+
 Duplikate erst entfernen, nachdem alle überlappenden Bins anderweitig entfernt wurden.
 DQSC ist ein guter Indikator für den Punkt, der entfernt werden sollte.
 Wahrscheinlich ist es sinnvoll, Duplikate nicht in die Abschätzung von mz mit einzubeziehen
+
+Test: Können die Intensitäten im Bin unterschieden werden?
 
 https://gpufit.readthedocs.io/en/latest/introduction.html
 

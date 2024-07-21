@@ -102,7 +102,8 @@ s_Kali__H2O_1_pos = read.csv("C:/Users/unisys/Documents/Studium/Messdaten/LCMS_p
 s_Kali__H2O_1_pos$errorcode = as.numeric(lapply(s_Kali__H2O_1_pos$errorcode, bits))
 s_Kali__H2O_3_pos = read.csv("C:/Users/unisys/Documents/Studium/Messdaten/LCMS_pressure_error/22090921_H2O_3_pos_summary.csv")
 s_Kali__H2O_3_pos$errorcode = as.numeric(lapply(s_Kali__H2O_3_pos$errorcode, bits))
-
+s_Kali__H2O_4_pos = read.csv("C:/Users/unisys/Documents/Studium/Messdaten/LCMS_pressure_error/22090935_H2O_4_pos_summary.csv")
+s_Kali__H2O_4_pos$errorcode = as.numeric(lapply(s_Kali__H2O_4_pos$errorcode, bits))
 
 bins_Kali_Pu_Penc_2.9HCO3_2_Indigo_neg = read.csv("C:/Users/unisys/Documents/Studium/Messdaten/LCMS_pressure_error/22090920_Kali_Pu_Penc_2,9HCO3_2_Indigo_neg_bins.csv")
 bins_Kali_Pu_Penc_2.9HCO3_2_Indigo_pos = read.csv("C:/Users/unisys/Documents/Studium/Messdaten/LCMS_pressure_error/22090920_Kali_Pu_Penc_2,9HCO3_2_Indigo_pos_bins.csv")
@@ -111,9 +112,10 @@ bins_Kali_Pu_Penc_2.9HCO3_0_Indigo_pos = read.csv("C:/Users/unisys/Documents/Stu
 bins_Kali_Pu_Penc_2.9HCO3_2_pos = read.csv("C:/Users/unisys/Documents/Studium/Messdaten/LCMS_pressure_error/22090910_Kali_Pu_Penc_2,9HCO3_2_pos_bins.csv")
 bins_Kali__H2O_1_pos = read.csv("C:/Users/unisys/Documents/Studium/Messdaten/LCMS_pressure_error/22090901_H2O_1_pos_bins.csv")
 bins_Kali__H2O_3_pos = read.csv("C:/Users/unisys/Documents/Studium/Messdaten/LCMS_pressure_error/22090921_H2O_3_pos_bins.csv")
+bins_Kali__H2O_4_pos = read.csv("C:/Users/unisys/Documents/Studium/Messdaten/LCMS_pressure_error/22090935_H2O_4_pos_bins.csv")
 
-
-s_Kali_Pu_Penc_2.9HCO3_2_Indigo_pos %>% group_by(errorcode) %>% summarise(bin_count = n(), total_points = sum(size), ratio = sum(size)/n(), dqsCen = mean(DQSC_min), meanDQS = mean(DQSB_scaled)) 
+allpoints = sum(s_Kali__H2O_4_pos$size)
+s_Kali__H2O_4_pos %>% group_by(errorcode) %>% summarise(bin_count = n(), perc_dataset = round(sum(size) / allpoints * 100, digits = 2), ratio = round(sum(size)/n(), digits = 2), dqsCen = mean(DQSC_min), meanDQS = mean(DQSB_scaled)) 
 
 
 ```
