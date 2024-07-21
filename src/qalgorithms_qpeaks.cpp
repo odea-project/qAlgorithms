@@ -664,7 +664,7 @@ namespace q
                 }
             }
 
-            unsigned int scanRelative = 0;
+            int scanRelative = 0;
             for (auto &pair : peakMap)
             {
                 std::vector<std::unique_ptr<DataType::Peak>> &peaks = pair.second;
