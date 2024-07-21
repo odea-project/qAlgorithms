@@ -102,7 +102,7 @@ namespace q
             //     std::sort(rawData->allDatapoints[i].begin(), rawData->allDatapoints[i].end(), [](const qCentroid lhs, const qCentroid rhs)
             //               { return lhs.mz < rhs.mz; });
             // }
-            std::cout << "Finished reading file in " << time(0) - now << " seconds\nRead " << lengthAllPoints << " datapoints in " << rawData->allDatapoints.size() << " scans\n";
+            std::cout << "Finished reading file in " << time(0) - now << " seconds\nRead " << lengthAllPoints << " datapoints in " << rawData->allDatapoints.size() - 1 << " scans\n";
             return true;
             // CentroidedData is always a vector of vectors where the first index is the scan number (starting at 1) and every scsn is sorted by mz
         }
@@ -419,7 +419,6 @@ namespace q
                         if (cen->intensity == notInBins[i]->intensity)
                         {
                             duplicate = true;
-                            break;
                         }
                         if (cen->mz > mzMax)
                         {
@@ -439,11 +438,11 @@ namespace q
                         }
                     }
                     finishedBins[binInsertPoint].duplicateScan = duplicate;
-                    finishedBins[binInsertPoint].makeDQSB(rawdata, maxdist);
                     finishedBins[binInsertPoint].mzMax = mzMax;
                     finishedBins[binInsertPoint].mzMin = mzMin;
                     finishedBins[binInsertPoint].scanMax = scanMax;
                     finishedBins[binInsertPoint].scanMin = scanMin;
+                    finishedBins[binInsertPoint].makeDQSB(rawdata, maxdist);
                 }
             }
             std::cout << tmpCounter << " points added to " << binModCount << " bins based on corrected estimate\n"
@@ -568,7 +567,7 @@ namespace q
 
 #pragma region "Bin"
 
-        Bin::Bin(){};
+        Bin::Bin() {};
 
         Bin::Bin(const std::vector<qCentroid *>::iterator &binStartInOS, const std::vector<qCentroid *>::iterator &binEndInOS) // const std::vector<qCentroid> &sourceList,
         {
@@ -706,9 +705,9 @@ namespace q
             // check for open bin at the end
             if (lastpos == 0) // no cut has occurred
             {
-                scanMin = pointsInBin.front()->scanNo;
-                scanMax = pointsInBin.back()->scanNo;
                 finishedBins->push_back(bincontainer->front());
+                finishedBins->back().scanMin = pointsInBin.front()->scanNo;
+                finishedBins->back().scanMax = pointsInBin.back()->scanNo;
                 duplicatesTotal += control_duplicatesIn;
             }
             else if (binSize - lastpos >= 5) // binsize starts at 1 // @todo check for correctness
@@ -772,8 +771,10 @@ namespace q
             bool maxScansReduced = false; // add this many dummy values to prevent segfault when bin is in one of the last scans
 
             // @todo move the creation of minMaxOutPerScan to its own function (?)
-            std::vector<double> minMaxOutPerScan; // contains both mz values (per scan) next or closest to all m/z in the bin
-
+            // contains both mz values (per scan) next or closest to all m/z in the bin
+            std::vector<double> minMaxOutPerScan;
+            // +1 since both values are relevant to the range
+            minMaxOutPerScan.reserve((scanMax - scanMin + 1) * 2 + 4 * maxdist);
             if (scanRangeStart < 1)
             {
                 while (scanRangeStart < 1)
@@ -789,8 +790,6 @@ namespace q
                 maxScansReduced = true; // dummy values have to be added later
                 scanRangeEnd = rawdata->allDatapoints.size() - 1;
             }
-
-            minMaxOutPerScan.reserve((scanRangeEnd - scanRangeStart + 1) * 2);
 
             // for all scans relevant to the bin
             int needle = 0; // position in scan where a value was found - starts at 0 for first scan
@@ -899,17 +898,19 @@ namespace q
                 // assuming the first value in minMaxOutPerScan (index 0) is only relevant to the
                 // qCentroid in the lowest scan. For every increase in scans, that range starts two elements later
                 const int currentRangeStart = (pointsInBin[i]->scanNo - scanMin) * 2;
-                const int currentRangeEnd = currentRangeStart + maxdist * 4 + 1;
+                const int currentRangeEnd = currentRangeStart + maxdist * 4 + 1; // +1 removed
 
-                if (size_t(currentRangeEnd) > minMaxOutPerScan.size())
-                {
-                    std::cout << "rangeEnd: " << currentRangeEnd << ", minMax: " << minMaxOutPerScan.size() << ", Point: " << i << ", binsize: " << binsize << "\n";
-                    for (size_t i = 0; i < binsize; i++)
-                    {
-                        std::cout << pointsInBin[i]->scanNo << ", ";
-                    }
-                    std::cout << "\n";
-                }
+                // if (size_t(currentRangeEnd) > minMaxOutPerScan.size() - 1)
+                // {
+                //     std::cout << "rangeEnd: " << currentRangeEnd << ", minMax: " << minMaxOutPerScan.size()
+                //               << ", Point: " << i + 1 << ", binsize: " << binsize << ", rangeStart: "
+                //               << currentRangeStart << ", scanmin: " << scanMin << ", scanmax: " << scanMax << "\n";
+                //     for (size_t i = 0; i < binsize; i++)
+                //     {
+                //         std::cout << pointsInBin[i]->scanNo << ", ";
+                //     }
+                //     std::cout << "\n";
+                // }
 
                 assert(size_t(currentRangeEnd) < minMaxOutPerScan.size());
 
