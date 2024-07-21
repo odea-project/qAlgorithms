@@ -221,8 +221,8 @@ namespace q
                 }
                 else // @todo check for better way
                 {
-                    double meanDQS = std::accumulate(finishedBins[i].DQSB_base.begin(), finishedBins[i].DQSB_base.end(), 0.0);
-                    if (meanDQS <= 0)
+                    double DQSsum = std::accumulate(finishedBins[i].DQSB_base.begin(), finishedBins[i].DQSB_base.end(), 0.0);
+                    if (DQSsum <= 0) // no need to check average since DQSB isn ot scaled
                     {
                         incompleteBins.push_back(i);
                     }
@@ -746,8 +746,8 @@ namespace q
             const size_t binsize = pointsInBin.size();
             DQSB_base.reserve(binsize);
             DQSB_scaled.reserve(binsize);
-            // determine start and end of relevant scan section, used as repeats for the for loop; -1 since accessed vector is zero-indexed
-
+            // determine start and end of relevant scan section, used as repeats for the for loop
+            // borders include relevant values
             int scanRangeStart = scanMin - maxdist;
             int scanRangeEnd = scanMax + maxdist;
 
@@ -774,8 +774,6 @@ namespace q
             // @todo move the creation of minMaxOutPerScan to its own function (?)
             std::vector<double> minMaxOutPerScan; // contains both mz values (per scan) next or closest to all m/z in the bin
 
-            minMaxOutPerScan.reserve((scanRangeEnd - scanRangeStart + 1) * 2);
-
             if (scanRangeStart < 1)
             {
                 while (scanRangeStart < 1)
@@ -791,6 +789,8 @@ namespace q
                 maxScansReduced = true; // dummy values have to be added later
                 scanRangeEnd = rawdata->allDatapoints.size() - 1;
             }
+
+            minMaxOutPerScan.reserve((scanRangeEnd - scanRangeStart + 1) * 2);
 
             // for all scans relevant to the bin
             int needle = 0; // position in scan where a value was found - starts at 0 for first scan
@@ -901,10 +901,21 @@ namespace q
                 const int currentRangeStart = (pointsInBin[i]->scanNo - scanMin) * 2;
                 const int currentRangeEnd = currentRangeStart + maxdist * 4 + 1;
 
+                if (size_t(currentRangeEnd) > minMaxOutPerScan.size())
+                {
+                    std::cout << "rangeEnd: " << currentRangeEnd << ", minMax: " << minMaxOutPerScan.size() << ", Point: " << i << ", binsize: " << binsize << "\n";
+                    for (size_t i = 0; i < binsize; i++)
+                    {
+                        std::cout << pointsInBin[i]->scanNo << ", ";
+                    }
+                    std::cout << "\n";
+                }
+
                 assert(size_t(currentRangeEnd) < minMaxOutPerScan.size());
 
-                for (int j = currentRangeStart; j < currentRangeEnd; j++) // from lowest scan to highest scan relevant to this
-                // point, +1 since scan no of point has to be included.
+                for (int j = currentRangeStart; j < currentRangeEnd; j++)
+                // from lowest scan to highest scan relevant to this
+                // point, +1 since scan number of point has to be included.
                 {
                     double dist = std::abs(currentMZ - minMaxOutPerScan[j]);
                     if (dist < minDist_base)
@@ -1006,6 +1017,11 @@ namespace q
             // these bins cannot be fitted with a gaussian peak
             bool oneSided = false;
             if ((pointsInBin.back()->scanNo == scanMin) | (pointsInBin.back()->scanNo == scanMax))
+            {
+                oneSided = true;
+            }
+            // added this part since the smallest scale doesn't fit without interpolating here
+            else if ((pointsInBin.back()->scanNo == scanMin + 1) | (pointsInBin.back()->scanNo == scanMax - 1))
             {
                 oneSided = true;
             }
@@ -1366,7 +1382,7 @@ namespace q
 
 //
 //
-int main()
+int notmain()
 {
     std::cout << "starting...\n";
     //   << sizeof(std::vector<int>);
