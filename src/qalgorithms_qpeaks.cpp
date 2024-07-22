@@ -215,21 +215,19 @@ namespace q
           validRegression_static validRegressions[2048]; // array of valid regressions with default initialization, i.e., random states
           int validRegressionsIndex = 0;                 // index of the valid regressions
 
-          // pointers to the start and end (n) of the data
-          const float *y_start = Y;
-          float *ylog_start = Ylog;
-          const float *mz_start = X;
-          const bool *df_start = df;
+          // iterators to the start of the data
+          const auto y_start = Y;
+          const auto ylog_start = Ylog;
+          const auto mz_start = X;
+          const auto df_start = df;
 
-          for (int i = 0; i < n; i++)
-          {
-            Y[i] = *it_y;
-            X[i] = *it_mz;
-            df[i] = *it_df;
-            it_mz++;
-            it_y++;
-            it_df++;
-          }
+          std::copy(it_y, it_y + n, Y);
+          std::copy(it_mz, it_mz + n, X);
+          std::copy(it_df, it_df + n, df);
+          it_y += n;
+          it_mz += n;
+          it_df += n;
+
           // perform log-transform on Y
           std::transform(y_start, y_start + n, ylog_start, [](float y)
                          { return std::log(y); });
@@ -294,29 +292,28 @@ namespace q
           validRegression_static validRegressions[2048]; // array of valid regressions with default initialization, i.e., random states
           int validRegressionsIndex = 0;                 // index of the valid regressions
 
-          // pointers to the start and end (n) of the data
-          const float *y_start = Y;
-          float *ylog_start = Ylog;
-          const float *rt_start = X;
-          const bool *df_start = df;
-          const float *mz_start = mz;
-          const float *dqs_cen_start = dqs_cen;
-          const float *dqs_bin_start = dqs_bin;
-          for (int i = 0; i < n; i++)
-          {
-            Y[i] = *it_y;
-            X[i] = *it_rt;
-            df[i] = *it_df;
-            mz[i] = *it_mz;
-            dqs_cen[i] = *it_dqs_cen;
-            dqs_bin[i] = *it_dqs_bin;
-            it_rt++;
-            it_y++;
-            it_df++;
-            it_mz++;
-            it_dqs_cen++;
-            it_dqs_bin++;
-          }
+          // iterator to the start 
+          const auto y_start = Y;
+          const auto ylog_start = Ylog;
+          const auto rt_start = X;
+          const auto df_start = df;
+          const auto mz_start = mz;
+          const auto dqs_cen_start = dqs_cen;
+          const auto dqs_bin_start = dqs_bin;
+
+          std::copy(it_y, it_y + n, Y);
+          std::copy(it_rt, it_rt + n, X);
+          std::copy(it_df, it_df + n, df);
+          std::copy(it_mz, it_mz + n, mz);
+          std::copy(it_dqs_cen, it_dqs_cen + n, dqs_cen);
+          std::copy(it_dqs_bin, it_dqs_bin + n, dqs_bin);
+          it_rt += n;
+          it_y += n;
+          it_df += n;
+          it_mz += n;
+          it_dqs_cen += n;
+          it_dqs_bin += n;
+
           // perform log-transform on Y
           std::transform(y_start, y_start + n, ylog_start, [](float y)
                          { return std::log(y); });
@@ -331,36 +328,40 @@ namespace q
         } // end static approach
         else
         { // dynamic approach
-          alignas(32) q::Matrices::Vector Y(n);
-          alignas(32) q::Matrices::Vector X(n);
-          q::Matrices::BoolVector df(n);
-          q::Matrices::Vector mz(n);
-          q::Matrices::Vector dqs_cen(n);
-          q::Matrices::Vector dqs_bin(n);
+          alignas(32) float *Y = new float[n];
+          alignas(32) float *Ylog = new float[n];
+          alignas(32) float *X = new float[n];
+          alignas(32) bool *df = new bool[n];
+          alignas(32) float *mz = new float[n];
+          alignas(32) float *dqs_cen = new float[n];
+          alignas(32) float *dqs_bin = new float[n];
           std::vector<std::unique_ptr<validRegression_static>> validRegressions;
-          for (int i = 0; i < n; i++)
-          {
-            X[i] = *it_rt;
-            df[i] = *it_df;
-            Y[i] = *it_y;
-            mz[i] = *it_mz;
-            dqs_cen[i] = *it_dqs_cen;
-            dqs_bin[i] = *it_dqs_bin;
-            it_rt++;
-            it_y++;
-            it_df++;
-            it_mz++;
-            it_dqs_cen++;
-            it_dqs_bin++;
-          }
-          const float *y_start = Y.begin();
-          alignas(32) q::Matrices::Vector Ylog = logn(y_start, y_start + n); // perform log-transform on Y
-          float *ylog_start = Ylog.begin();
-          const float *rt_start = X.begin();
-          const bool *df_start = df.begin();
-          const float *mz_start = mz.begin();
-          const float *dqs_cen_start = dqs_cen.begin();
-          const float *dqs_bin_start = dqs_bin.begin();
+
+          // iterator to the start 
+          const auto y_start = Y;
+          const auto ylog_start = Ylog;
+          const auto rt_start = X;
+          const auto df_start = df;
+          const auto mz_start = mz;
+          const auto dqs_cen_start = dqs_cen;
+          const auto dqs_bin_start = dqs_bin;
+
+          std::copy(it_y, it_y + n, Y);
+          std::copy(it_rt, it_rt + n, X);
+          std::copy(it_df, it_df + n, df);
+          std::copy(it_mz, it_mz + n, mz);
+          std::copy(it_dqs_cen, it_dqs_cen + n, dqs_cen);
+          std::copy(it_dqs_bin, it_dqs_bin + n, dqs_bin);
+          it_rt += n;
+          it_y += n;
+          it_df += n;
+          it_mz += n;
+          it_dqs_cen += n;
+          it_dqs_bin += n;
+          
+          // perform log-transform on Y
+          std::transform(y_start, y_start + n, ylog_start, [](float y)
+                         { return std::log(y); });
           runningRegression(y_start, ylog_start, df_start, n, validRegressions);
           if (validRegressions.empty())
           {

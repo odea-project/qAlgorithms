@@ -40,13 +40,6 @@ namespace q
             ~qPeaks();
 
             // methods
-            /**
-             * @brief Find the peaks in the data. Container function to call the findPeaks method.
-             * @param dataVec
-             */
-            // std::vector<std::vector<std::unique_ptr<DataType::Peak>>>
-            // findPeaks(const q::MeasurementData::varDataType &dataVec);
-
             void
             findCentroids(
                 std::vector<std::unique_ptr<DataType::Peak>> &all_peaks,
