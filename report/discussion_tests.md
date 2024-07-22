@@ -1,4 +1,4 @@
-# Discarded or Modified Tests:
+# Discarded or Modified Criteria:
 
 ## point within maxdist but not within maxdist + 1
 The test was removed due to not providing actionable, non-redundant
@@ -39,3 +39,12 @@ were too broad (in mz) to form visually identifiable ion traces.
 It was removed due to outliers not directly corelating with
 good bins - often, points with very low intensity at the edges of
 the relevant scan interval triggered the detection.
+
+# Bin Categories:
+
+## Bin with duplicate scan:
+These bins should not be passed to the centroiding algorithm.
+The information that a duplicate was included is passed with the
+errorcode, while the centroid with the higher DQSC is retained.
+
+## 

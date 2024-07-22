@@ -113,7 +113,10 @@ bins_SFC_DoE_RO42_86 = read.csv("C:/Users/unisys/Documents/Studium/Messdaten/mzm
 ```
 
 ```{r}
-s_full_1 %>% group_by(errorcode) %>% summarise(bins = n(), centroids = sum(size), ratio = round(sum(size)/n(),digits = 3), dqsCen = mean(DQSC_min), meanDQS = mean(DQSB_scaled))
+s_SFC_DoE_RO42_86 %>% group_by(errorcode) %>% summarise(bins = n(), centroids = sum(size), ratio = round(sum(size)/n(),digits = 3), dqsCen = mean(DQSC_min), meanDQS = mean(DQSB_scaled))
+select = s_SFC_DoE_RO42_86$ID[which(s_SFC_DoE_RO42_86$errorcode %% 20 != 0)]
+
+
 ```
 
 
@@ -185,7 +188,8 @@ Error codes:
 ggplot(sum_all)+
   geom_line(aes(as.factor(sample), mean_DQS, color = as.factor(errorcode), group = errorcode))+
   geom_point(aes(as.factor(sample), mean_DQS, color = as.factor(errorcode), size = 2*  binPerc))+
-  scale_x_discrete(guide = guide_axis(n.dodge=3))
+  scale_x_discrete(guide = guide_axis(n.dodge=3))+
+  theme(legend.position = "none")
 
 ggplot(sum_all)+
   geom_line(aes(as.factor(sample), pointPerc, color = as.factor(errorcode), group = errorcode))+
@@ -196,15 +200,18 @@ ggplot(sum_all)+
 
 ggplot(sum_all)+
   geom_point(aes(as.factor(sample), mean_stdev, color = as.factor(errorcode)))+
-  scale_x_discrete(guide = guide_axis(n.dodge=3))
+  scale_x_discrete(guide = guide_axis(n.dodge=3))+
+  theme(legend.position = "none")
 
 ggplot(sum_all)+
   geom_line(aes(as.factor(sample), testview, color = as.factor(errorcode), group = errorcode))+
-  scale_x_discrete(guide = guide_axis(n.dodge=3))
+  scale_x_discrete(guide = guide_axis(n.dodge=3))+
+  theme(legend.position = "none")
 
 ggplot(sum_all)+
   geom_line(aes(as.factor(sample), binPerc, color = as.factor(errorcode), group = errorcode))+
-  scale_x_discrete(guide = guide_axis(n.dodge=3))
+  scale_x_discrete(guide = guide_axis(n.dodge=3))+
+  theme(legend.position = "none")
 
 # ggplot(s_full_1)+
 #   geom_point(aes(mean_mz,mean_scans))
