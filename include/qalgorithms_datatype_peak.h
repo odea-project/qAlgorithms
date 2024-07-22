@@ -43,7 +43,7 @@ namespace q
     public:
       // constructors
       Peak();
-      Peak(int sampleID, double position, double height);
+      // Peak(int sampleID, double position, double height);
 
       // destructor
       ~Peak();
@@ -51,26 +51,32 @@ namespace q
       // properties
       // required
       int sampleID;
-      double position;
+      // double position;
       double height;
 
       // optional
       double area;
       double width;
-      double positionUncertainty;
+      // double positionUncertainty;
       double heightUncertainty;
-      double widthUncertainty;
+      // double widthUncertainty;
       double areaUncertainty;
       double dqsPeak;
-      double beta0;
-      double beta1;
-      double beta2;
-      double beta3;
-      double valleyPosition;
-      int df;
-      int xIndex;
-      double x0;
-      double dx;
+      double dqsBin;
+      double dqsCen;
+      // double beta0;
+      // double beta1;
+      // double beta2;
+      // double beta3;
+      // double valleyPosition;
+      // int df;
+      // int xIndex;
+      // double x0;
+      // double dx;
+      double retentionTime;
+      double mz;
+      double retentionTimeUncertainty;
+      double mzUncertainty;
       // methods
       void print();
     };
