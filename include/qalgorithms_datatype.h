@@ -10,44 +10,44 @@ namespace q
          * @brief Different types of data that can be stored in a data file
          * @details The data fields are used to store different types of data in a data file.
          * @param INTENSITY The intensity of the MS signal
-         * @param SUB_ID The sub-dataset ID @todo unused
-         * @param DATA_ID The data ID @todo unused
-         * @param DATAPOINT The data point @todo unused
-         * @param IONIZATIONMODE The ionization mode, i.e. whether the signal is from positive or negative mode @todo unused
+         * @param SUB_ID The sub-dataset ID
+         * @param DATA_ID The data ID
+         * @param DATAPOINT The data point
+         * @param IONIZATIONMODE The ionization mode, i.e. whether the signal is from positive or negative mode
          * @param MZ The mass-to-charge ratio of the MS signal
-         * @param MSLEVEL The MS level, i.e. whether the signal is from MS1 or MS2 @todo unused
-         * @param MEASUREMENTMODE The measurement mode, i.e. whether the signal is profile or centroid @todo underscore  @todo unused
-         * @param RETENTIONTIME The retention time of the LC-MS signal @todo RT as property of the LC, scan as property of MS
+         * @param MSLEVEL The MS level, i.e. whether the signal is from MS1 or MS2
+         * @param MEASUREMENTMODE The measurement mode, i.e. whether the signal is profile or centroid
+         * @param RETENTIONTIME The retention time of the LC-MS signal
          * @param SCANNUMBER The scan number of the LC-MS signal
-         * @param PEAK_ID The peak ID @todo unused
-         * @param PEAK_AREA The area of the peak @todo unused
-         * @param PEAK_HEIGHT The height of the peak @todo unused
-         * @param PEAK_WIDTH The width of the peak @todo unused
-         * @param PEAK_POSITION The position of the peak @todo unused
-         * @param DQS_PEAK The data quality score of the peak \cite{reuschenbach2022development} @todo unused
-         * @param PEAK_AREA_UNCERTAINTY The uncertainty of the peak area @todo unused
-         * @param PEAK_HEIGHT_UNCERTAINTY The uncertainty of the peak height @todo unused
-         * @param PEAK_WIDTH_UNCERTAINTY The uncertainty of the peak width @todo unused
-         * @param PEAK_POSITION_UNCERTAINTY The uncertainty of the peak position @todo unused
-         * @param BETA_0 The regression coefficient @todo unused
-         * @param BETA_1 The regression coefficient @todo unused
-         * @param BETA_2 The regression coefficient @todo unused
-         * @param BETA_3 The regression coefficient @todo unused
-         * @param VALLEY_POSITION The valley position of the peak @todo change to VALLEY_POSITION_PEAK @todo unused
+         * @param PEAK_ID The peak ID
+         * @param PEAK_AREA The area of the peak
+         * @param PEAK_HEIGHT The height of the peak
+         * @param PEAK_WIDTH The width of the peak
+         * @param PEAK_POSITION The position of the peak
+         * @param DQS_PEAK The data quality score of the peak \cite{reuschenbach2022development}
+         * @param PEAK_AREA_UNCERTAINTY The uncertainty of the peak area
+         * @param PEAK_HEIGHT_UNCERTAINTY The uncertainty of the peak height
+         * @param PEAK_WIDTH_UNCERTAINTY The uncertainty of the peak width
+         * @param PEAK_POSITION_UNCERTAINTY The uncertainty of the peak position
+         * @param BETA_0 The regression coefficient
+         * @param BETA_1 The regression coefficient
+         * @param BETA_2 The regression coefficient
+         * @param BETA_3 The regression coefficient
+         * @param VALLEY_POSITION The valley position of the peak
          * @param DF The degrees of freedom
-         * @param X_INDEX The index of the regression window position @todo rename to REGRESSION_WINDOW_INDEX
+         * @param X_INDEX The index of the regression window position
          *
          */
-        enum class DataField // @todo check if this can be split
+        enum class DataField
         {
             // general fields
             INTENSITY, // signal intensity
-            SUB_ID,    // sub-dataset ID
-            DATA_ID,   // data ID
-            DATAPOINT, // data point
+            SUB_ID,    // sub-dataset ID @todo more expressive name
+            DATA_ID,   // data ID @todo more expressive name
+            DATAPOINT, // data point @todo more expressive name
 
             // MS fields
-            IONIZATIONMODE,  // positive or negative @todo unused
+            IONIZATIONMODE,  // positive or negative
             MEASUREMENTMODE, // profile or centroid
             MSLEVEL,         // MS1 or MS2
             MZ,              // mass-to-charge ratio
@@ -62,15 +62,25 @@ namespace q
             PEAK_HEIGHT,
             PEAK_WIDTH,
             PEAK_POSITION,
-            DQS_PEAK, // DQS: Data Quality Score \cite{reuschenbach2022development}
+
+            // Quality scores
+            DQS_CENTROID,
+            DQS_PEAK,
+            DQS_BIN,
+
+            // Uncertainty fields
             PEAK_AREA_UNCERTAINTY,
             PEAK_HEIGHT_UNCERTAINTY,
             PEAK_WIDTH_UNCERTAINTY,
             PEAK_POSITION_UNCERTAINTY,
-            BETA_0,          // regression coefficients
-            BETA_1,          // regression coefficients
-            BETA_2,          // regression coefficients
-            BETA_3,          // regression coefficients
+            RETENTIONTIME_UNCERTAINTY,
+            MZ_UNCERTAINTY,
+
+            // Regression fields
+            BETA_0,          // regression coefficient
+            BETA_1,          // regression coefficient
+            BETA_2,          // regression coefficient
+            BETA_3,          // regression coefficient
             VALLEY_POSITION, // optional: some peaks have a valley position
             DF,              // degrees of freedom
             X_INDEX,         // index of the regression window position
@@ -78,7 +88,7 @@ namespace q
             // Add new data fields here
         };
 
-        // additional categorical data sub types
+        // additional categorical data sub types @todo these belong into a unified metadata object
         enum class IonizationMode
         {
             Positive,
