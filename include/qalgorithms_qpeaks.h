@@ -63,11 +63,6 @@ namespace q
 
             // export
             void
-            peakListToCSV(
-                const std::vector<std::vector<std::unique_ptr<DataType::Peak>>> &allPeaks,
-                const std::string &filename) const;
-
-            void
             plotPeaksToPython(
                 const std::string &filename_input,
                 const std::string &filename_output,
@@ -102,54 +97,6 @@ namespace q
             static __m256i LINSPACE_DOWN_INT_256;     // 256 bit register with 7, 6, 5, 4, 3, 2, 1, 0
             static __m256 MINUS_ONE_256;              // 256 bit register with -1
 
-            // define valid regression struct
-            struct validRegression
-            {
-                int index_x0;           // index of window center (x==0) in the Y matrix
-                int scale;              // scale of the regression window, i.e., 2*scale+1 = window size
-                int df;                 // degree of freedom, interpolated data points will not be considered
-                float apex_position;    // position of the apex of the peak
-                float mse;              // mean squared error
-                __m128 coeff;           // regression coefficients
-                bool isValid;           // flag to indicate if the regression is valid
-                float left_limit;       // left limit of the peak regression window
-                float right_limit;      // right limit of the peak regression window
-                float area;             // area of the peak
-                float uncertainty_area; // uncertainty of the area
-                // float uncertainty_height; // uncertainty of the height
-                float uncertainty_pos; // uncertainty of the position
-
-                validRegression(
-                    int index_x0 = 0,
-                    int scale = 0,
-                    int df = 0,
-                    float apex_position = 0.0f,
-                    float mse = 0.0f,
-                    __m128 coeff = _mm_setzero_ps(),
-                    bool isValid = false,
-                    float left_limit = 0.0f,
-                    float right_limit = 0.0f,
-                    float area = 0.0f,
-                    float uncertainty_area = 0.0f,
-                    // float uncertainty_height = 0.0f)
-                    float uncertainty_pos = 0.0f)
-                    : index_x0(index_x0),
-                      scale(scale),
-                      df(df),
-                      apex_position(apex_position),
-                      mse(mse),
-                      coeff(coeff),
-                      isValid(isValid),
-                      left_limit(left_limit),
-                      right_limit(right_limit),
-                      area(area),
-                      uncertainty_area(uncertainty_area),
-                      // uncertainty_height(uncertainty_height),
-                      uncertainty_pos(uncertainty_pos)
-                {
-                }
-            };
-
             struct validRegression_static
             {
                 int index_x0;           // index of window center (x==0) in the Y matrix
@@ -178,7 +125,7 @@ namespace q
                 const float *ylog_start,
                 const bool *df_start,
                 const int n,
-                std::vector<std::unique_ptr<validRegression>> &validRegressions);
+                std::vector<std::unique_ptr<validRegression_static>> &validRegressions);
 
             void
             runningRegression_static(
@@ -197,7 +144,7 @@ namespace q
                 const float *ylog_start,
                 const bool *df_start,
                 const int scale,
-                std::vector<std::unique_ptr<validRegression>> &validRegressions);
+                std::vector<std::unique_ptr<validRegression_static>> &validRegressions);
 
             void
             validateRegressions_static(
@@ -229,7 +176,7 @@ namespace q
 
             void
             mergeRegressionsOverScales(
-                std::vector<std::unique_ptr<validRegression>> &validRegressions,
+                std::vector<std::unique_ptr<validRegression_static>> &validRegressions,
                 const float *y_start,
                 const float *ylog_start,
                 const bool *df_start);
@@ -242,42 +189,17 @@ namespace q
                 const float *ylog_start,
                 const bool *df_start);
 
-            // std::vector<std::unique_ptr<DataType::Peak>>
-            // createPeaks(
-            //     const std::vector<std::unique_ptr<validRegression>> &validRegressions,
-            //     const float *y_start,
-            //     const float *x_start,
-            //     const int scanNumber,
-            //     const float retentionTime);
-
-            // std::vector<std::unique_ptr<DataType::Peak>>
-            // createPeaks_static(
-            //     validRegression_static *validRegressions,
-            //     const int validRegressionsIndex,
-            //     const float *y_start,
-            //     const float *x_start,
-            //     const int scanNumber,
-            //     const float retentionTime);
-
-            // void
-            // createPeaks_static(
-            //     std::vector<std::unique_ptr<DataType::Peak>> &peaks,
-            //     validRegression_static *validRegressions,
-            //     const int validRegressionsIndex,
-            //     const float *y_start,
-            //     const float *x_start,
-            //     const int scanNumber,
-            //     const float retentionTime);
-            
-            // void
-            // createPeaks_static_chromatogram(
-            //     std::vector<std::unique_ptr<DataType::Peak>> &peaks,
-            //     validRegression_static *validRegressions,
-            //     const int validRegressionsIndex,
-            //     const float *y_start,
-            //     const float *x_start,
-            //     const int scanNumber,
-            //     const float mz);
+            void
+            createPeaks(
+                std::vector<std::unique_ptr<DataType::Peak>> &peaks,
+                const std::vector<std::unique_ptr<validRegression_static>> &validRegressions,
+                const float *y_start,
+                const float *mz_start,
+                const float *rt_start,
+                const float *dqs_cen,
+                const float *dqs_bin,
+                const float *dqs_peak,
+                const int scanNumber);
             
             void
             createPeaks_static(
@@ -291,9 +213,18 @@ namespace q
                 const float *dqs_bin,
                 const float *dqs_peak,
                 const int scanNumber);
-
-            // std::vector<std::vector<std::unique_ptr<DataType::Peak>>>
-            // createPeakList(std::vector<std::vector<std::unique_ptr<DataType::Peak>>> &allPeaks);
+            
+            void
+            addPeakProperties(
+                std::vector<std::unique_ptr<DataType::Peak>> &peaks,
+                const validRegression_static &regression,
+                const float *y_start,
+                const float *mz_start,
+                const float *rt_start,
+                const float *dqs_cen,
+                const float *dqs_bin,
+                const float *dqs_peak,
+                const int scanNumber);
 
             float
             calcSSE(
@@ -317,7 +248,7 @@ namespace q
             void
             calcExtendedMse(
                 const float *y_start,
-                const std::vector<std::unique_ptr<validRegression>> &regressions,
+                const std::vector<std::unique_ptr<validRegression_static>> &regressions,
                 const bool *df_start);
 
             void
