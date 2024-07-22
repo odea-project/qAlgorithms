@@ -128,16 +128,19 @@ namespace q
     int
     MeasurementData::zeroFilling_vec(
         std::vector<std::vector<double>> &data,
-        double expectedDifference)
+        double expectedDifference,
+        const bool updateExpectedDifference)
     {
       const int numPoints = data[0].size();       // number of data points
       std::vector<int> sorted_indexes(numPoints); // vector to store the sorted indexes of the data points
       int counter = 4;                            // number of added zeros to store separator positions. it is initialized with 4 to address that later 4 data points will be added at the front of the vector
       int numZeros = 0;                           // number of zeros
       int num_subsets = 0;                        // number of subsets
+      bool containsDublicates = false;            // flag to indicate if the data contains dublicates
+      const size_t size_data = data.size();
 
       // lamda function to add new data points at the end of the vector
-      auto addDataPoints = [&data, &counter, &numZeros, &expectedDifference, &sorted_indexes](int gapSize, int i, int k, int index_offset, int loop_index, int sign, bool interpolate) -> void
+      auto addDataPoints = [&data, &counter, &numZeros, &expectedDifference, &sorted_indexes, size_data](int gapSize, int i, int k, int index_offset, int loop_index, int sign, bool interpolate) -> void
       {
         if (interpolate)
         {
@@ -149,8 +152,10 @@ namespace q
           {
             data[0].push_back(data[0][i] + loop_index * expectedDifference * sign);
             data[1].push_back(data[1][i] * std::pow(diff, j + 1));
-            // data[1].push_back(data[1][i] + loop_index * differece_y_per_gapsize);
-            data[2].push_back(0.0);
+            for (size_t l = 2; l < size_data; l++)
+            {
+              data[l].push_back(0.0);
+            }
             sorted_indexes.push_back(sorted_indexes[k] + j + index_offset);
             loop_index += sign;
           }
@@ -160,8 +165,10 @@ namespace q
           for (int j = 0; j < gapSize; j++)
           {
             data[0].push_back(data[0][i] + loop_index * expectedDifference * sign);
-            data[1].push_back(0.0);
-            data[2].push_back(0.0);
+            for (size_t l = 1; l < size_data; l++)
+            {
+              data[l].push_back(0.0);
+            }
             sorted_indexes.push_back(sorted_indexes[k] + j + index_offset);
             loop_index += sign;
           }
@@ -196,8 +203,27 @@ namespace q
         }
         else
         {
-          // update expectedDifference
-          expectedDifference = (expectedDifference + data[0][i + 1] - data[0][i]) * .5;
+          // check for dublicates, i.e., difference < .1 * expectedDifference
+          if (difference < .1 * expectedDifference)
+          {
+            containsDublicates = true;
+            if (data[1][i] > data[1][i + 1])
+            {
+              data[2][i + 1] = -255.0; // mark the data point for deletion
+            }
+            else
+            {
+              data[2][i] = -255.0; // mark the data point for deletion
+            }
+          }
+          else
+          {
+            // update expectedDifference
+            if (updateExpectedDifference)
+            {
+              expectedDifference = (expectedDifference + data[0][i + 1] - data[0][i]) * .5;
+            }
+          }
         }
         counter++;
       }
@@ -215,12 +241,33 @@ namespace q
       {
         while (sorted_indexes[i] != i)
         {
-          std::swap(data[0][i], data[0][sorted_indexes[i]]);
-          std::swap(data[1][i], data[1][sorted_indexes[i]]);
-          std::swap(data[2][i], data[2][sorted_indexes[i]]);
+          for (size_t j = 0; j < size_data; j++)
+          {
+            std::swap(data[j][i], data[j][sorted_indexes[i]]);
+          }
           std::swap(sorted_indexes[i], sorted_indexes[sorted_indexes[i]]);
         }
       }
+      if (containsDublicates)
+      {
+        for (int i = 0; i < numPoints; i++)
+        {
+          if (data[2][i] == -255.0)
+          {
+            for (size_t j = 0; j < size_data; j++)
+            {
+              data[j][i] = -255.0;
+            }
+          }
+        }
+        auto removeCondition = [](double value)
+        { return value == -255.0; };
+        for (size_t j = 0; j < size_data; j++)
+        {
+          data[j].erase(std::remove_if(data[j].begin(), data[j].end(), removeCondition), data[j].end());
+        }
+      }
+
       return num_subsets + 1;
     } // end of zeroFilling_vec
 
@@ -328,7 +375,7 @@ namespace q
     } // end of cutData
 
     void
-    MeasurementData::cutData_vec(
+    MeasurementData::cutData_vec_orbitrap(
         std::vector<std::vector<double>> &data,
         double expectedDifference,
         std::vector<std::vector<double>::iterator> &separators)
@@ -594,7 +641,7 @@ namespace q
     void
     MeasurementData::extrapolateData_vec(
         std::vector<std::vector<double>> &data,
-        std::vector<double>::iterator *separators)
+        std::vector<std::vector<double>::iterator> &separators)
     {
       // lambda function to calculate the coefficients b0, b1, and b2 for the quadratic extrapolation
       auto calculateCoefficients = [](const double *x, const double *y, double &b0, double &b1, double &b2)
@@ -652,7 +699,7 @@ namespace q
           block_end_x++;
         }
         // set separator
-        separators[block_counter] = block_end_y + 3;
+        separators[block_counter] = block_end_x + 3;
         block_counter++;
         // check if the block is valid
         if ((block_max_y == block_start_y) || (block_max_y == block_end_y))
@@ -712,7 +759,7 @@ namespace q
     } // end of extrapolateData_vec
 
     void
-    MeasurementData::interpolateData_vec(
+    MeasurementData::interpolateData_vec_orbitrap(
         std::vector<std::vector<double>> &data,
         std::vector<std::vector<double>::iterator> &separators)
     {
@@ -772,7 +819,7 @@ namespace q
     } // end of interpolateData_vec
 
     void
-    MeasurementData::extrapolateData_vec(
+    MeasurementData::extrapolateData_vec_orbitrap(
         std::vector<std::vector<double>> &data,
         std::vector<std::vector<double>::iterator> &separators)
     {
@@ -835,7 +882,7 @@ namespace q
         it_y = block_end_y;
         it_df = block_end_df;
         for (; it_x != *it_sep + 1; ++it_x, ++it_y, ++it_df)
-        { 
+        {
           // extrapolate to the right
           const double x = *it_x - *block_start_x;
           *it_y = exp_approx_d(b0 + x * (b1 + x * b2));
@@ -843,7 +890,7 @@ namespace q
         }
         // update the iterators
         block_start_y = block_end_y + 8;
-        block_end_y = block_start_y;  
+        block_end_y = block_start_y;
         block_max_y = block_start_y;
         block_start_x = block_end_x + 8;
         block_end_x = block_start_x;

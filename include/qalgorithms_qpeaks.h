@@ -7,6 +7,7 @@
 // #include "qalgorithms_measurement_data.h"
 #include "qalgorithms_utils.h"
 #include "qalgorithms_datatype_peak.h"
+#include "qalgorithms_qbin.h"
 
 // external
 #include <vector>
@@ -19,6 +20,7 @@
 #include <xmmintrin.h> // SSE
 #include <immintrin.h> // AVX
 #include <cassert>
+#include <iomanip>
 
 /* This file includes the q::qPeaks class*/
 namespace q
@@ -45,7 +47,14 @@ namespace q
             // std::vector<std::vector<std::unique_ptr<DataType::Peak>>>
             // findPeaks(const q::MeasurementData::varDataType &dataVec);
 
-            // std::vector<std::vector<std::unique_ptr<DataType::Peak>>>
+            void
+            findCentroids(
+                std::vector<std::unique_ptr<DataType::Peak>> &all_peaks,
+                std::vector<std::vector<double>> &dataVec,
+                std::vector<std::vector<double>::iterator> &separators,
+                const int scanNumber,
+                const float retentionTime);
+            
             void
             findPeaks(
                 std::vector<std::unique_ptr<DataType::Peak>> &all_peaks,
@@ -64,6 +73,9 @@ namespace q
                 const std::string &filename_output,
                 const bool includeFits = true,
                 const bool featureMap = false) const;
+
+            qBinning::CentroidedData 
+            passToBinning(std::vector<std::vector<std::unique_ptr<q::DataType::Peak>>> &allPeaks, size_t numberOfScans);
 
             static void initialize();
 
@@ -105,6 +117,7 @@ namespace q
                 float area;             // area of the peak
                 float uncertainty_area; // uncertainty of the area
                 // float uncertainty_height; // uncertainty of the height
+                float uncertainty_pos; // uncertainty of the position
 
                 validRegression(
                     int index_x0 = 0,
@@ -117,8 +130,9 @@ namespace q
                     float left_limit = 0.0f,
                     float right_limit = 0.0f,
                     float area = 0.0f,
-                    float uncertainty_area = 0.0f)
+                    float uncertainty_area = 0.0f,
                     // float uncertainty_height = 0.0f)
+                    float uncertainty_pos = 0.0f)
                     : index_x0(index_x0),
                       scale(scale),
                       df(df),
@@ -129,7 +143,9 @@ namespace q
                       left_limit(left_limit),
                       right_limit(right_limit),
                       area(area),
-                      uncertainty_area(uncertainty_area)
+                      uncertainty_area(uncertainty_area),
+                      // uncertainty_height(uncertainty_height),
+                      uncertainty_pos(uncertainty_pos)
                 {
                 }
             };
@@ -147,6 +163,7 @@ namespace q
                 int right_limit;        // right limit of the peak regression window
                 float area;             // area of the peak
                 float uncertainty_area; // uncertainty of the area
+                float uncertainty_pos;  // uncertainty of the position
                 // float uncertainty_height; // uncertainty of the height
                 validRegression_static() = default;
             };
@@ -207,7 +224,8 @@ namespace q
                 int &left_limit,
                 int &right_limit,
                 float &area,
-                float &uncertainty_area);
+                float &uncertainty_area,
+                float &uncertainty_pos);
 
             void
             mergeRegressionsOverScales(
@@ -224,32 +242,58 @@ namespace q
                 const float *ylog_start,
                 const bool *df_start);
 
-            std::vector<std::unique_ptr<DataType::Peak>>
-            createPeaks(
-                const std::vector<std::unique_ptr<validRegression>> &validRegressions,
-                const float *y_start,
-                const float *x_start,
-                const int scanNumber);
+            // std::vector<std::unique_ptr<DataType::Peak>>
+            // createPeaks(
+            //     const std::vector<std::unique_ptr<validRegression>> &validRegressions,
+            //     const float *y_start,
+            //     const float *x_start,
+            //     const int scanNumber,
+            //     const float retentionTime);
 
-            std::vector<std::unique_ptr<DataType::Peak>>
-            createPeaks_static(
-                validRegression_static *validRegressions,
-                const int validRegressionsIndex,
-                const float *y_start,
-                const float *x_start,
-                const int scanNumber);
+            // std::vector<std::unique_ptr<DataType::Peak>>
+            // createPeaks_static(
+            //     validRegression_static *validRegressions,
+            //     const int validRegressionsIndex,
+            //     const float *y_start,
+            //     const float *x_start,
+            //     const int scanNumber,
+            //     const float retentionTime);
 
+            // void
+            // createPeaks_static(
+            //     std::vector<std::unique_ptr<DataType::Peak>> &peaks,
+            //     validRegression_static *validRegressions,
+            //     const int validRegressionsIndex,
+            //     const float *y_start,
+            //     const float *x_start,
+            //     const int scanNumber,
+            //     const float retentionTime);
+            
+            // void
+            // createPeaks_static_chromatogram(
+            //     std::vector<std::unique_ptr<DataType::Peak>> &peaks,
+            //     validRegression_static *validRegressions,
+            //     const int validRegressionsIndex,
+            //     const float *y_start,
+            //     const float *x_start,
+            //     const int scanNumber,
+            //     const float mz);
+            
             void
             createPeaks_static(
                 std::vector<std::unique_ptr<DataType::Peak>> &peaks,
                 validRegression_static *validRegressions,
                 const int validRegressionsIndex,
                 const float *y_start,
-                const float *x_start,
+                const float *mz_start,
+                const float *rt_start,
+                const float *dqs_cen,
+                const float *dqs_bin,
+                const float *dqs_peak,
                 const int scanNumber);
 
-            std::vector<std::vector<std::unique_ptr<DataType::Peak>>>
-            createPeakList(std::vector<std::vector<std::unique_ptr<DataType::Peak>>> &allPeaks);
+            // std::vector<std::vector<std::unique_ptr<DataType::Peak>>>
+            // createPeakList(std::vector<std::vector<std::unique_ptr<DataType::Peak>>> &allPeaks);
 
             float
             calcSSE(
@@ -420,23 +464,13 @@ namespace q
                 float &area,
                 float &uncertainty_area) const;
 
-            /**
-             * @brief Create a Design Matrix object for the given scale.
-             * @details The design matrix is a matrix of size (2*scale+1) x 4. The basis for x is a vector of integers from -scale to scale. The first column is a vector of ones, the second column is a vector of x values, the third and fourth columns are vectors of x^2 values. However, the third column is only filled with x^2 values if x is less than 0. The fourth column is only filled with x^2 values if x is greater than 0.
-             *
-             * @param scale
-             * @return Matrix
-             */
             void
-            createDesignMatrix(const int scale);
-
-            /**
-             * @brief Create the inverse and pseudo-inverse matrices for the given design matrix.
-             *
-             * @param X is input design matrix
-             */
-            void
-            createInverseAndPseudoInverse(const q::Matrices::Matrix &X);
+            calcUncertaintyPosition(
+                const float mse, 
+                const __m128 &coeff, 
+                const float apex_position, 
+                const int scale,
+                float &uncertainty_pos) const;
 
             void
             convolve_static(

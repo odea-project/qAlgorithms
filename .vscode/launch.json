@@ -41,7 +41,7 @@
                     "ignoreFailures": true
                 }
             ],
-            "preLaunchTask": "build qPeak_class_test_ucrt no optimize"//"build qAlgorithms" // Name des Build-Tasks
+            "preLaunchTask": "build qPeak_class_test_ucrt"//"build qAlgorithms" // Name des Build-Tasks
         },
         {
             "name": "C/C++: g++.exe build and debug active file",

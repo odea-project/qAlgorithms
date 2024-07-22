@@ -46,7 +46,8 @@ namespace q
             int 
             zeroFilling_vec(
                 std::vector<std::vector<double>> &data,
-                double expectedDifference);
+                double expectedDifference,
+                const bool updateExpectedDifference = true);
 
             double
             calcExpectedDiff(std::vector<double> &data);
@@ -68,7 +69,7 @@ namespace q
                 size_t &maxKey);
             
             void
-            cutData_vec(
+            cutData_vec_orbitrap(
                 std::vector<std::vector<double>> &data,
                 double expectedDifference,
                 std::vector<std::vector<double>::iterator> &separators);
@@ -100,15 +101,15 @@ namespace q
             void 
             extrapolateData_vec(
                 std::vector<std::vector<double>> &data,
-                std::vector<double>::iterator *separators);
+                std::vector<std::vector<double>::iterator> &separators);
 
             void
-            interpolateData_vec(
+            interpolateData_vec_orbitrap(
                 std::vector<std::vector<double>> &data,
                 std::vector<std::vector<double>::iterator> &separators);
             
             void
-            extrapolateData_vec(
+            extrapolateData_vec_orbitrap(
                 std::vector<std::vector<double>> &data,
                 std::vector<std::vector<double>::iterator> &separators);
 

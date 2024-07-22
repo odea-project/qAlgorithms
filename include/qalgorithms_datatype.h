@@ -62,11 +62,21 @@ namespace q
             PEAK_HEIGHT,
             PEAK_WIDTH,
             PEAK_POSITION,
-            DQS_PEAK, // DQS: Data Quality Score \cite{reuschenbach2022development}
+
+            // Quality scores
+            DQS_CENTROID, 
+            DQS_PEAK,    
+            DQS_BIN,
+
+            // Uncertainty fields
             PEAK_AREA_UNCERTAINTY,
             PEAK_HEIGHT_UNCERTAINTY,
             PEAK_WIDTH_UNCERTAINTY,
             PEAK_POSITION_UNCERTAINTY,
+            RETENTIONTIME_UNCERTAINTY,
+            MZ_UNCERTAINTY,
+
+            // Regression fields
             BETA_0,          // regression coefficients
             BETA_1,          // regression coefficients
             BETA_2,          // regression coefficients
