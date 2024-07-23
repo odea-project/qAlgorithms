@@ -60,7 +60,16 @@ int main()
     auto end = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> duration = end - start;
     PRINT_DONE_no_n
-    std::cout << " in " << duration.count() << " s" << std::endl;
+    std::cout << " in " << duration.count() << " s";
+    size_t num_centroids = 0;
+    for (size_t i = 0; i < centroids.size(); ++i)
+    {
+      for (size_t j = 0; j < centroids[i].size(); ++j)
+      {
+        num_centroids++;
+      }
+    }
+    std::cout << " (" << num_centroids << " centroids)" << std::endl;
 
     std::cout << "prepare data for qBinning.........";
     q::Algorithms::qBinning::CentroidedData testdata = qpeaks.passToBinning(centroids, centroids.size());
@@ -72,7 +81,8 @@ int main()
     end = std::chrono::high_resolution_clock::now();
     duration = end - start;
     PRINT_DONE_no_n
-    std::cout << " in " << duration.count() << " s" << std::endl;
+    std::cout << " in " << duration.count() << " s";
+    std::cout << " (" << binnedData.size() << " EICs)" << std::endl;
 
     std::cout << "find chromatographic peaks........";
     start = std::chrono::high_resolution_clock::now();
@@ -81,7 +91,16 @@ int main()
     end = std::chrono::high_resolution_clock::now();
     duration = end - start;
     PRINT_DONE_no_n
-    std::cout << " in " << duration.count() << " s" << std::endl;
+    std::cout << " in " << duration.count() << " s";
+    size_t num_peaks = 0;
+    for (size_t i = 0; i < peaks.size(); ++i)
+    {
+      for (size_t j = 0; j < peaks[i].size(); ++j)
+      {
+        num_peaks++;
+      }
+    }
+    std::cout << " (" << num_peaks << " peaks)" << std::endl;
 
     // write peaks to csv file
     std::cout << "write peaks to file...............";

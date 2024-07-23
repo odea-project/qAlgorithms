@@ -13,6 +13,17 @@ namespace q
         TensorData::~TensorData() {}
 
         // methods
+        float
+        TensorData::calcRTDiff(std::vector<double> &retention_times)
+        {
+            float sum = 0.0;
+            for (size_t i = 1; i < retention_times.size(); ++i)
+            {
+                sum += retention_times[i] - retention_times[i - 1];
+            }
+            return sum / (retention_times.size() - 1);
+        }
+
         void
         TensorData::readCSV(
             std::string filename,
@@ -41,7 +52,7 @@ namespace q
                               indices.end()); // keep only MS1 spectra
             }
             std::vector<double> retention_times = data.get_spectra_rt(indices); // get retention times
-
+            rt_diff = calcRTDiff(retention_times);                              // retention time difference
             std::vector<std::vector<std::unique_ptr<DataType::Peak>>> centroids =
                 std::vector<std::vector<std::unique_ptr<DataType::Peak>>>(indices.size()); // create vector of unique pointers to peaks
             {
@@ -106,9 +117,8 @@ namespace q
         {
             std::vector<std::vector<std::unique_ptr<DataType::Peak>>> peaks =
                 std::vector<std::vector<std::unique_ptr<DataType::Peak>>>(data.size()); // create vector of unique pointers to peaks
-            double expectedDifference = calcExpectedDiff(data[0].rententionTimes);      // expected difference between two consecutive x-axis values
-                                                                                        // #pragma omp parallel for
-            for (size_t i = 0; i < data.size(); ++i)                                    // loop over all data
+#pragma omp parallel for
+            for (size_t i = 0; i < data.size(); ++i) // loop over all data
             {
                 const int num_data_points = data[i].scanNumbers.size(); // number of data points
                 if (num_data_points < 5)
@@ -123,10 +133,10 @@ namespace q
                      data[i].DQSC,
                      data[i].DQSB}; // create vector of retention times and intensities
 
-                int num_subsets = zeroFilling_vec(eic, expectedDifference, false);  // zero fill the spectrum
+                int num_subsets = zeroFilling_vec(eic, rt_diff, false);             // zero fill the spectrum
                 std::vector<std::vector<double>::iterator> separators(num_subsets); // vector of iterators at separation points (x axis)
                 extrapolateData_vec(eic, separators);                               // interpolate the data when zero filled
-                qpeaks.findPeaks(peaks[i], eic, separators);                   // find peaks
+                qpeaks.findPeaks(peaks[i], eic, separators);                        // find peaks
             } // parallel for
             return peaks;
         } // readQBinning
