@@ -14,7 +14,8 @@ namespace q
     {
         /**
          * @brief A class to store 3D tensor measurement data, e.g., LC-MS data
-         * @details The TensorData class is a subclass of the MeasurementData class used to store 3D tensor measurement data, e.g., LC-MS data.
+         * @details The TensorData class is a subclass of the MeasurementData
+         * class used to store 3D tensor measurement data, e.g., LC-MS data.
          *
          * @param data A 3D tensor of LC-MS data /ref DataType::LC_MS
          */
@@ -40,7 +41,9 @@ namespace q
             // methods
             /**
              * @brief Read 3D tensor data from a StreamCraft mzML object
-             * @details The readStreamCraftMZML method reads 3D tensor data from a StreamCraft mzML object and stores it in the TensorData object. A StreamCraft mzML object is created by using sc::MZML z("path to mzML file").
+             * @details The readStreamCraftMZML method reads 3D tensor data
+             * from a StreamCraft mzML object and stores it in the TensorData object.
+             * A StreamCraft mzML object is created by using sc::MZML z("path to mzML file").
              *
              * @param data : StreamCraft mzML object
              * @param ms1only : boolean to indicate if only MS1 spectra should be read

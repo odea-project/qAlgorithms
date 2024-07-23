@@ -27,7 +27,8 @@
 int main(int argc, char *argv[])
 {
     std::string filename_input;
-    std::filesystem::path p;
+    std::filesystem::path pathSource;
+    std::filesystem::path pathOutput;
     // ask for file if none are specified
     if (argc == 1)
     {
@@ -35,26 +36,32 @@ int main(int argc, char *argv[])
                   << "to process that file. You must select an .mzML file.  ";
         std::cin >> filename_input;
         // filename_input = "C:/Users/unisys/Documents/Studium/Messdaten/LCMS_pressure_error/22090901_H2O_1_pos.mzML";
-        p = filename_input;
-        if (!std::filesystem::exists(p))
+        pathSource = filename_input;
+        if (!std::filesystem::exists(pathSource))
         {
-            std::cout << "Error: The selected file does not exist.\nSupplied path: " << std::filesystem::absolute(p)
+            std::cout << "Error: The selected file does not exist.\nSupplied path: " << std::filesystem::absolute(pathSource)
                       << "\nCurrent directory: " << std::filesystem::current_path() << "\n\nTerminated Program.\n\n";
             exit(101); // @todo sensible exit codes
         }
-        if (p.extension() != ".mzML") // @todo make sure this is the end of the filename, switch to regex
+        if (pathSource.extension() != ".mzML") // @todo make sure this is the end of the filename, switch to regex
         {
-            std::cout << "Error: the selected file has the type " << p.extension() << ", but only \".mzML\" is supported";
+            std::cout << "Error: the selected file has the type " << pathSource.extension() << ", but only \".mzML\" is supported";
             exit(101); // @todo sensible exit codes
         }
-    }
-    else if (argc == 2)
-    {
-        std::string argument = argv[1];
-        // check if this is a filepath
-        if ((argument == "-h") | (argument == "-help"))
+        std::cout << "\nfile accepted, enter the output directory or \"#\" to use the input directory:  ";
+        std::cin >> filename_input;
+        if (filename_input == "#")
         {
-            std::cout << "help";
+            pathOutput = pathSource;
+        }
+        else
+        {
+            pathOutput = filename_input;
+            if (pathOutput == pathSource)
+            {
+                std::cout << "Error: use \"#\" if you want to save your results to the location of your input file";
+                exit(101);
+            }
         }
     }
 
@@ -65,6 +72,7 @@ int main(int argc, char *argv[])
     bool recursiveSearch = false;
     bool fileSpecified = false;
 
+#pragma region cli arguments
     for (int i = 1; i < argc; i++)
     {
         std::string argument = argv[i];
@@ -76,7 +84,9 @@ int main(int argc, char *argv[])
                       << "As of now (23.07.2024), only mzML files are supported. This program accepts the following command-line arguments:"
                       << "-h, -help: open this help menu\n"
                       << "-s, -silent: do not print progress reports to standard out\n"
+                      << "-w, -wordy: print a detailed progress report to standard out"
                       << "-f, -file: specifies the input file. Use as -f FILEPATH\n"
+                      << "-tl, -tasklist: pass a list of file paths to the function"
                       << "-r, -recursive: recursive search for .mzML files in the specified directory. "
                       << "Use as -r DIRECTORY\n"
                       << "-o, -output: directory into which all output files should be printed. "
@@ -115,9 +125,15 @@ int main(int argc, char *argv[])
         }
     }
 
+    if (!fileSpecified)
+    {
+        std::cout << "Error: no file supplied. Specify a file using the -f flag.\n";
+        exit(1);
+    }
+
     if (fileSpecified & recursiveSearch)
     {
-        std::cout << "Error: Recursive search and task file are incompatible\n";
+        std::cout << "Error: Recursive search and target file are incompatible\n";
         exit(100);
     }
 
@@ -135,7 +151,8 @@ int main(int argc, char *argv[])
 
     std::cout << "reading file...\n";
 
-    sc::MZML data(filename_input);             // create mzML object
+#pragma region file processing
+    sc::MZML data(filename_input);             // create mzML object @todo change to use filesystem::path
     q::Algorithms::qPeaks qpeaks;              // create qPeaks object
     q::MeasurementData::TensorData tensorData; // create tensorData object
     std::vector<std::vector<std::unique_ptr<q::DataType::Peak>>> centroids =
