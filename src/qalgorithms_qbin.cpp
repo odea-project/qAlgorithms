@@ -1130,6 +1130,10 @@ namespace q
                     }
                 }
 
+                // @todo make use of the sorting
+                std::sort(pointsInBin.begin(), pointsInBin.end(), [](qCentroid *lhs, qCentroid *rhs)
+                          { return lhs->scanNo < rhs->scanNo; });
+
                 // @todo vcrit greater true vcrit
                 // @todo intensities are all the same
                 std::byte selector{0b00000000}; // used as bitmask during printSelectBins()
@@ -1209,6 +1213,7 @@ namespace q
                 int firstScan = pointsInBin.front()->scanNo;
                 int eicsize = pointsInBin.back()->scanNo - firstScan + 1;
 
+                std::byte bincode = this->summariseBin().errorcode; // this step contains sorting by scans for the time being @todo
                 std::vector<int> tmp_scanNumbers(eicsize);
                 std::vector<double> tmp_mz(eicsize);
                 std::vector<double> tmp_intensities(eicsize);
@@ -1216,40 +1221,29 @@ namespace q
                 std::vector<double> tmp_DQSC(eicsize);
 
                 // the quadratic interpolator expects empty spaces at the ends of the vector
-                const int bufferZeroes = 4;
-                std::iota(tmp_scanNumbers.begin(), tmp_scanNumbers.begin() + eicsize + 2 * bufferZeroes, firstScan - bufferZeroes);
-                int prevScan = firstScan - bufferZeroes;
+                // const int bufferZeroes = 4;
+                // std::iota(tmp_scanNumbers.begin(), tmp_scanNumbers.begin() + eicsize + 2 * bufferZeroes, firstScan - bufferZeroes);
+                // int prevScan = firstScan - bufferZeroes;
 
-                for (size_t i = bufferZeroes; i < pointsInBin.size() + bufferZeroes; i++)
+                int prevScan = 0;
+                for (size_t i = 0; i < pointsInBin.size(); i++)
                 {
-                    qCentroid *point = pointsInBin[i];
-                    while (point->scanNo != prevScan)
-                    {
-                        tmp_mz.push_back(-1);
-                        tmp_intensities.push_back(0);
-                        tmp_DQSB.push_back(-1);
-                        tmp_DQSC.push_back(-1);
-                        ++prevScan;
-                    }
-                    // assert(tmp_intensities[i+1] == point->intensity);
 
+                    qCentroid *point = pointsInBin[i];
+                    if (point->scanNo == prevScan)
+                    {
+                    }
+
+                    ++prevScan;
                     tmp_scanNumbers.push_back(point->scanNo);
                     prevScan = point->scanNo;
                     tmp_mz.push_back(point->mz);
                     tmp_DQSB.push_back(DQSB_base[i]);
                     tmp_DQSC.push_back(point->DQScentroid);
                 }
-                // add buffer to the back
-                for (int i = 0; i < bufferZeroes; i++)
-                {
-                    tmp_mz.push_back(-1);
-                    tmp_intensities.push_back(0);
-                    tmp_DQSB.push_back(-1);
-                    tmp_DQSC.push_back(-1);
-                }
-                // assert(tmp_mz.size() == tmp_scanNumbers.size());
 
                 EIC returnVal = {
+                    bincode,
                     tmp_scanNumbers,
                     tmp_mz,
                     tmp_intensities,
@@ -1330,7 +1324,7 @@ namespace q
 
 #pragma endregion "Functions"
 
-            std::vector<EIC> performQbinning(CentroidedData centroidedData, std::string outpath, int inputMaxdist = 6, bool silent = false)
+            std::vector<EIC> performQbinning(CentroidedData centroidedData, std::string outpath, int inputMaxdist, bool silent, bool printBinSummary)
             {
                 std::streambuf *old = std::cout.rdbuf(); // save standard out config
                 std::stringstream ss;
@@ -1362,15 +1356,16 @@ namespace q
                 activeBins.redoBinningIfTooclose(measurementDimensions, &centroidedData, notInBins, maxdist);
                 activeBins.reconstructFromStdev(&centroidedData, 6);
 
-                activeBins.printSelectBins(std::byte{0b11111111}, true, outpath); //@todo make this a function parameter
-
-                std::cout << "\n\nDone!\n\n";
+                if (printBinSummary)
+                {
+                    activeBins.printSelectBins(std::byte{0b11111111}, true, outpath);
+                }
 
                 notInBins.resize(0);
 
                 std::cout.rdbuf(old); // restore previous standard out
 
-                return activeBins.returnBins();
+                return activeBins.returnBins(); // @todo do not calculate the summary twice when printing bins
             }
 
         }
