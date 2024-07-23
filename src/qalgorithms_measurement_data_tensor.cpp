@@ -77,10 +77,11 @@ namespace q
                     {
                         continue; // skip due to lack of data, i.e., degree of freedom will be zero
                     }
-                    spectrum.push_back(std::vector<double>(spectrum[0].size(), 1.0));   // add df column for interpolation
-                    int num_subsets = zeroFilling_vec(spectrum, expectedDifference);    // zero fill the spectrum
-                    std::vector<std::vector<double>::iterator> separators(num_subsets); // vector of iterators at separation points (x axis)
-                    extrapolateData_vec(spectrum, separators);                          // interpolate the data when zero filled
+                    spectrum.push_back(std::vector<double>(spectrum[0].size(), 1.0));                    // add df column for interpolation
+                    int num_subsets = zeroFilling_vec(spectrum, expectedDifference);                     // zero fill the spectrum
+                    std::vector<std::vector<double>::iterator> separators(num_subsets);                  // vector of iterators at separation points (x axis)
+                    extrapolateData_vec(spectrum, separators);                                           // interpolate the data when zero filled
+                    qpeaks.findCentroids(centroids[i], spectrum, separators, index, retention_times[i]); // find peaks
                 } // for
             } // if zero filling
             else

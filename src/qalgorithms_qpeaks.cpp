@@ -292,7 +292,7 @@ namespace q
           validRegression_static validRegressions[2048]; // array of valid regressions with default initialization, i.e., random states
           int validRegressionsIndex = 0;                 // index of the valid regressions
 
-          // iterator to the start 
+          // iterator to the start
           const auto y_start = Y;
           const auto ylog_start = Ylog;
           const auto rt_start = X;
@@ -337,7 +337,7 @@ namespace q
           alignas(32) float *dqs_bin = new float[n];
           std::vector<std::unique_ptr<validRegression_static>> validRegressions;
 
-          // iterator to the start 
+          // iterator to the start
           const auto y_start = Y;
           const auto ylog_start = Ylog;
           const auto rt_start = X;
@@ -358,7 +358,7 @@ namespace q
           it_mz += n;
           it_dqs_cen += n;
           it_dqs_bin += n;
-          
+
           // perform log-transform on Y
           std::transform(y_start, y_start + n, ylog_start, [](float y)
                          { return std::log(y); });
@@ -1102,7 +1102,7 @@ namespace q
       {
         // re-scale the apex position to x-axis
         const double rt0 = *(rt_start + (int)std::floor(regression.apex_position));
-        const double drt = *(rt_start + (int)std::ceil(regression.apex_position)) - rt0;
+        const double drt = *(rt_start + (int)std::floor(regression.apex_position) + 1) - rt0;
         const double apex_position = rt0 + drt * (regression.apex_position - std::floor(regression.apex_position));
         peaks.back()->retentionTime = apex_position;
         peaks.back()->retentionTimeUncertainty = regression.uncertainty_pos * drt;
@@ -1117,7 +1117,7 @@ namespace q
       {
         // re-scale the apex position to x-axis
         const double mz0 = *(mz_start + (int)std::floor(regression.apex_position));
-        const double dmz = *(mz_start + (int)std::ceil(regression.apex_position)) - mz0;
+        const double dmz = *(mz_start + (int)std::floor(regression.apex_position) + 1) - mz0;
         const double apex_position = mz0 + dmz * (regression.apex_position - std::floor(regression.apex_position));
         peaks.back()->mz = apex_position;
         peaks.back()->mzUncertainty = regression.uncertainty_pos * dmz;
