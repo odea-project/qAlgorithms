@@ -133,7 +133,7 @@ int main(int argc, char *argv[])
         exit(1);
     }
 
-    std::cout << "reading file... ";
+    std::cout << "reading file...\n";
 
     sc::MZML data(filename_input);             // create mzML object
     q::Algorithms::qPeaks qpeaks;              // create qPeaks object
