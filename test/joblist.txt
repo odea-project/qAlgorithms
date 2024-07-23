@@ -1,0 +1,10 @@
+C:/Users/gerri/OneDrive/Desktop/op/230222_SFC_Modelling_MixF_01_20.mzML
+C:/Users/gerri/OneDrive/Desktop/op/230222_SFC_Modelling_MixF_02_21.mzML
+C:/Users/gerri/OneDrive/Desktop/op/230222_SFC_Modelling_MixF_03_22.mzML
+C:/Users/gerri/OneDrive/Desktop/op/240123_VqF_DoE-pos_RO42_86.mzML
+C:/Users/gerri/OneDrive/Desktop/op/240123_VqF_DoE-pos_RO02_06.mzML
+C:/Users/gerri/OneDrive/Desktop/op/240123_VqF_DoE-pos_RO03_08.mzML
+C:/Users/gerri/OneDrive/Desktop/op/240123_VqF_DoE-pos_RO11_24.mzML
+C:/Users/gerri/OneDrive/Desktop/op/240123_VqF_DoE-pos_RO24_50.mzML
+C:/Users/gerri/OneDrive/Desktop/op/240123_VqF_DoE-pos_RO29_60.mzML
+END_OF_FILE
