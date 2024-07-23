@@ -5,7 +5,8 @@
 #include <vector>
 #include <string>
 
-// Goal: all functions modify individual features, which are combined to a bin. The bin contains all features and the functions necessary to summarise which features are present
+// Goal: all functions modify individual features, which are combined to a bin.
+// The bin contains all features and the functions necessary to summarise which features are present
 namespace q
 {
     namespace Algorithms
@@ -53,6 +54,7 @@ namespace q
 
             struct EIC // Extracted Ion Chromatogram
             {
+                std::byte errorcode;
                 std::vector<int> scanNumbers;
                 std::vector<double> rententionTimes;
                 std::vector<double> mz;
@@ -272,7 +274,7 @@ namespace q
             void check_MOD_outOfBins(const Bin *target, const std::vector<qCentroid *> notBinned, const int maxdist);
 
             // ### wrapper function to execute qbinning on a CentroidedData struct ###
-            std::vector<EIC> performQbinning(const CentroidedData centroidedData, std::string outpath, int maxdist, bool silent);
+            std::vector<EIC> performQbinning(const CentroidedData centroidedData, std::string outpath, int maxdist, bool silent, bool printBinSummary);
 
         }
     }

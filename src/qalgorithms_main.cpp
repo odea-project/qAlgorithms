@@ -27,15 +27,36 @@
 int main(int argc, char *argv[])
 {
     std::string filename_input;
+    std::filesystem::path p;
     // ask for file if none are specified
-    if (argc < 2)
+    if (argc == 1)
     {
         std::cout << "Enter a filename (replace every backslash with a forward slash) "
-                  << "to process that file ";
+                  << "to process that file. You must select an .mzML file.  ";
+        std::cin >> filename_input;
+        // filename_input = "C:/Users/unisys/Documents/Studium/Messdaten/LCMS_pressure_error/22090901_H2O_1_pos.mzML";
+        p = filename_input;
+        if (!std::filesystem::exists(p))
+        {
+            std::cout << "Error: The selected file does not exist.\nSupplied path: " << std::filesystem::absolute(p)
+                      << "\nCurrent directory: " << std::filesystem::current_path() << "\n\nTerminated Program.\n\n";
+            exit(101); // @todo sensible exit codes
+        }
+        if (p.extension() != ".mzML") // @todo make sure this is the end of the filename, switch to regex
+        {
+            std::cout << "Error: the selected file has the type " << p.extension() << ", but only \".mzML\" is supported";
+            exit(101); // @todo sensible exit codes
+        }
     }
-
-    std::cout << "Enter the filename (*.mzML): ";
-    std::cin >> filename_input;
+    else if (argc == 2)
+    {
+        std::string argument = argv[1];
+        // check if this is a filepath
+        if ((argument == "-h") | (argument == "-help"))
+        {
+            std::cout << "help";
+        }
+    }
 
     // if only one argument is given, check if it is any variation of help
     // if this is not the case, try to use the string as a filepath
@@ -49,7 +70,10 @@ int main(int argc, char *argv[])
         std::string argument = argv[i];
         if ((argument == "-h") | (argument == "-help"))
         {
-            std::cout << argv[0] << " help options:\n"
+            std::cout << argv[0] << " help information:\n"
+                      << "qAlgorithms is a software project for non-target screening using mass spectrometry."
+                      << "For more information, visit our github page: https://github.com/odea-project/qAlgorithms\n"
+                      << "As of now (23.07.2024), only mzML files are supported. This program accepts the following command-line arguments:"
                       << "-h, -help: open this help menu\n"
                       << "-s, -silent: do not print progress reports to standard out\n"
                       << "-f, -file: specifies the input file. Use as -f FILEPATH\n"
@@ -59,7 +83,13 @@ int main(int argc, char *argv[])
                       << " Use as -o DIRECTORY. If you want to print all results into the folder which "
                       << "contains the .mzML file, write \"#\". The default output is standard out, "
                       << "unless you did not specify an input file. in that case, "
-                      << "you will be prompted to enter the output location.\n";
+                      << "you will be prompted to enter the output location.\n"
+                      << "-pb, -printbins: If this flag is set, both bin summary information and "
+                      << "all binned centroids will be printed to the output location in addition "
+                      << "to the final peak table. The files end in _summary.csv and _bins.csv.\n"
+                      << "-log: This option will create a detailed log file in the program directory.";
+
+            exit(0);
         }
         if ((argument == "-s") | (argument == "-silent"))
         {
@@ -100,18 +130,10 @@ int main(int argc, char *argv[])
     {
         std::cout << "Error: file not found\n"
                   << std::endl;
-        exit(0);
+        exit(1);
     }
 
     std::cout << "reading file... ";
-
-    // check if the input file a mzML file
-    if (!(filename_input.find(".mzML") != std::string::npos))
-    {
-        std::cout << "Error: you must supply a .mzML file\n";
-        // break;
-        exit(0);
-    }
 
     sc::MZML data(filename_input);             // create mzML object
     q::Algorithms::qPeaks qpeaks;              // create qPeaks object
@@ -126,12 +148,12 @@ int main(int argc, char *argv[])
     std::cout << "produced " << testdata.lengthAllPoints << " centroids from " << centroids.size()
               << " spectra in " << (timeEnd - timeStart).count() << " ns\n\n";
 
-    bool verboseQbinning = false;
+    bool silentBinning = true;
     timeStart = std::chrono::high_resolution_clock::now();
-    std::vector<q::Algorithms::qBinning::EIC> binnedData = q::Algorithms::qBinning::performQbinning(testdata, summary_output_location, 6, verboseQbinning);
+    std::vector<q::Algorithms::qBinning::EIC> binnedData = q::Algorithms::qBinning::performQbinning(testdata, summary_output_location, 6, silentBinning, false);
     timeEnd = std::chrono::high_resolution_clock::now();
 
-    if (verboseQbinning)
+    if (silentBinning)
     {
         std::cout << "assembled " << binnedData.size() << " bins in " << (timeEnd - timeStart).count() << " ns\n\n";
     }
@@ -145,6 +167,7 @@ int main(int argc, char *argv[])
     // write peaks to csv file
     std::cout << "writing peaks to file... ";
     std::string output_filename = "output.csv";
+    exit(10);
     std::ofstream output_file(output_filename);
     output_file << "mz,rt,int,mzUncertainty,rtUncertainty,intUncertainty,dqs_cen,dqs_bin,dqs_peak\n";
     for (size_t i = 0; i < peaks.size(); ++i)
