@@ -7,6 +7,8 @@
 #include <variant>
 #include <algorithm>
 #include <cmath>
+#include <iostream> // debug printing
+#include <cassert>
 
 // qalgorithm_measurement_data.cpp
 
@@ -132,14 +134,13 @@ namespace q
                  dataVec); // end of visit
     } // end of zeroFilling
 
-    int
-    MeasurementData::zeroFilling_vec(
+    int MeasurementData::zeroFilling_vec(
         std::vector<std::vector<double>> &data,
         double expectedDifference,
         const bool updateExpectedDifference)
     {
       const int numPoints = data[0].size();       // number of data points
-      std::vector<int> sorted_indexes(numPoints); // vector to store the sorted indexes of the data points
+      std::vector<int> sorted_indices(numPoints); // vector to store the sorted indices of the data points
       int counter = 4;                            // number of added zeros to store separator positions. it is initialized with 4 to address that later 4 data points will be added at the front of the vector
       int numZeros = 0;                           // number of zeros
       int num_subsets = 0;                        // number of subsets
@@ -147,7 +148,7 @@ namespace q
       const size_t size_data = data.size();
 
       // lamda function to add new data points at the end of the vector
-      auto addDataPoints = [&data, &counter, &numZeros, &expectedDifference, &sorted_indexes, size_data](int gapSize, int i, int k, int index_offset, int loop_index, int sign, bool interpolate) -> void
+      auto addDataPoints = [&data, &counter, &numZeros, &expectedDifference, &sorted_indices, size_data](int gapSize, int i, int k, int index_offset, int loop_index, int sign, bool interpolate) -> void
       {
         if (interpolate)
         {
@@ -163,7 +164,7 @@ namespace q
             {
               data[l].push_back(0.0);
             }
-            sorted_indexes.push_back(sorted_indexes[k] + j + index_offset);
+            sorted_indices.push_back(sorted_indices[k] + j + index_offset);
             loop_index += sign;
           }
         }
@@ -176,7 +177,7 @@ namespace q
             {
               data[l].push_back(0.0);
             }
-            sorted_indexes.push_back(sorted_indexes[k] + j + index_offset);
+            sorted_indices.push_back(sorted_indices[k] + j + index_offset);
             loop_index += sign;
           }
         }
@@ -187,7 +188,7 @@ namespace q
       // analyze data for gaps, i.e., differences > 1.75 * expectedDifference, and fill the gaps by adding new data points at the end of the vector
       for (int i = 0; i < numPoints - 1; i++)
       {
-        sorted_indexes[i] = counter;
+        sorted_indices[i] = counter;
         // consider the difference between two neighboring data points from differences vector and compare it with 1.75 * expectedDifference
         float difference = data[0][i + 1] - data[0][i];
         if (difference > 1.75f * expectedDifference)
@@ -234,27 +235,33 @@ namespace q
         }
         counter++;
       }
-      sorted_indexes[numPoints - 1] = counter;
+
+      assert(counter > 0);
+      sorted_indices[numPoints - 1] = counter;
       // extrapolate the data by adding 4 new data points at the end of the vector
       addDataPoints(4, 0, 0, 1, 4, -1, false); // extrapolation to the left
-      // correct the sorted indexes for the first 4 data points to 0, 1, 2, 3
+      // correct the sorted indices for the first 4 data points to 0, 1, 2, 3
       for (int i = 0; i < 4; i++)
       {
-        sorted_indexes[sorted_indexes.size() - 4 + i] = i;
+        sorted_indices[sorted_indices.size() - 4 + i] = i;
       }
       addDataPoints(4, numPoints - 1, numPoints - 1, 1, 1, 1, false); // extrapolation to the right
 
-      for (int i = 0; i < static_cast<int>(sorted_indexes.size()); ++i)
+      std::cout << "l1 " << sorted_indices.size();
+      for (int i = 0; i < static_cast<int>(sorted_indices.size()); ++i)
       {
-        while (sorted_indexes[i] != i)
+        while (sorted_indices[i] != i)
         {
           for (size_t j = 0; j < size_data; j++)
           {
-            std::swap(data[j][i], data[j][sorted_indexes[i]]);
+            std::swap(data[j][i], data[j][sorted_indices[i]]);
           }
-          std::swap(sorted_indexes[i], sorted_indexes[sorted_indexes[i]]);
+          std::swap(sorted_indices[i], sorted_indices[sorted_indices[i]]);
+          std::cout << " | " << i << ", " << sorted_indices[i];
         }
+        std::cout << ".";
       }
+      std::cout << "l2 ";
       if (containsDublicates)
       {
         for (int i = 0; i < numPoints; i++)
@@ -274,7 +281,7 @@ namespace q
           data[j].erase(std::remove_if(data[j].begin(), data[j].end(), removeCondition), data[j].end());
         }
       }
-
+      std::cout << "l3 ";
       return num_subsets + 1;
     } // end of zeroFilling_vec
 

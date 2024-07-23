@@ -114,8 +114,12 @@ namespace q
             std::vector<std::vector<std::unique_ptr<DataType::Peak>>> peaks =
                 std::vector<std::vector<std::unique_ptr<DataType::Peak>>>(data.size()); // create vector of unique pointers to peaks
             double expectedDifference = calcExpectedDiff(data[0].rententionTimes);      // expected difference between two consecutive x-axis values
-                                                                                        // #pragma omp parallel for
-            for (size_t i = 0; i < data.size(); ++i)                                    // loop over all data
+            // #pragma omp parallel for
+            std::cout << "diffcalc... ";
+            bool a = true;
+            bool b = true;
+            bool c = true;
+            for (size_t i = 0; i < data.size(); ++i) // loop over all data
             {
                 const int num_data_points = data[i].scanNumbers.size(); // number of data points
                 if (num_data_points < 5)
@@ -130,11 +134,28 @@ namespace q
                      data[i].DQSC,
                      data[i].DQSB}; // create vector of retention times and intensities
 
-                int num_subsets = zeroFilling_vec(eic, expectedDifference, false);  // zero fill the spectrum
+                int num_subsets = zeroFilling_vec(eic, expectedDifference, false); // zero fill the spectrum
+                if (a)
+                {
+                    a = false;
+                    std::cout << "zero filing... ";
+                }
+
                 std::vector<std::vector<double>::iterator> separators(num_subsets); // vector of iterators at separation points (x axis)
                 extrapolateData_vec(eic, separators);                               // interpolate the data when zero filled
-                qpeaks.findPeaks(peaks[i], eic, separators);                        // find peaks
+                if (b)
+                {
+                    b = false;
+                    std::cout << "extrapoating... ";
+                }
+                qpeaks.findPeaks(peaks[i], eic, separators); // find peaks
+                if (c)
+                {
+                    c = false;
+                    std::cout << "finding peaks... ";
+                }
             } // parallel for
+            std::cout << "peaks made";
             return peaks;
         } // readQBinning
     } // namespace MeasurementData

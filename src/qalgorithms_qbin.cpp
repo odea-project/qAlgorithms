@@ -669,6 +669,7 @@ namespace q
                 int lastpos = 0;
                 for (size_t i = 0; i < binSize - 1; i++) // -1 since difference to next data point is checked
                 {
+                    assert(pointsInBin[i + 1]->RT > pointsInBin[i]->RT);
                     int distanceScan = pointsInBin[i + 1]->scanNo - pointsInBin[i]->scanNo;
                     if (distanceScan > maxdist) // bin needs to be split
                     {
@@ -1130,10 +1131,6 @@ namespace q
                     }
                 }
 
-                // @todo make use of the sorting
-                std::sort(pointsInBin.begin(), pointsInBin.end(), [](qCentroid *lhs, qCentroid *rhs)
-                          { return lhs->scanNo < rhs->scanNo; });
-
                 // @todo vcrit greater true vcrit
                 // @todo intensities are all the same
                 std::byte selector{0b00000000}; // used as bitmask during printSelectBins()
@@ -1210,34 +1207,50 @@ namespace q
                 std::sort(pointsInBin.begin(), pointsInBin.end(), [](qCentroid *lhs, qCentroid *rhs)
                           { return lhs->scanNo < rhs->scanNo; });
 
-                int firstScan = pointsInBin.front()->scanNo;
-                int eicsize = pointsInBin.back()->scanNo - firstScan + 1;
+                int eicsize = pointsInBin.size();
 
                 std::byte bincode = this->summariseBin().errorcode; // this step contains sorting by scans for the time being @todo
-                std::vector<int> tmp_scanNumbers(eicsize);
-                std::vector<double> tmp_mz(eicsize);
-                std::vector<double> tmp_intensities(eicsize);
-                std::vector<double> tmp_DQSB(eicsize);
-                std::vector<double> tmp_DQSC(eicsize);
+                std::vector<int> tmp_scanNumbers;
+                tmp_scanNumbers.reserve(eicsize);
+                std::vector<double> tmp_rt;
+                tmp_rt.reserve(eicsize);
+                std::vector<double> tmp_mz;
+                tmp_mz.reserve(eicsize);
+                std::vector<double> tmp_intensities;
+                tmp_intensities.reserve(eicsize);
+                std::vector<double> tmp_DQSB;
+                tmp_DQSB.reserve(eicsize);
+                std::vector<double> tmp_DQSC;
+                tmp_DQSC.reserve(eicsize);
 
                 // the quadratic interpolator expects empty spaces at the ends of the vector
                 // const int bufferZeroes = 4;
                 // std::iota(tmp_scanNumbers.begin(), tmp_scanNumbers.begin() + eicsize + 2 * bufferZeroes, firstScan - bufferZeroes);
                 // int prevScan = firstScan - bufferZeroes;
 
-                int prevScan = 0;
+                int prevScan = 0; // scan 0 is always empty
                 for (size_t i = 0; i < pointsInBin.size(); i++)
                 {
 
                     qCentroid *point = pointsInBin[i];
                     if (point->scanNo == prevScan)
                     {
+                        // for duplicates, remove the centroid with the
+                        // worse DQSC. This decision was made based on
+                        // limited observations in four different real datasets
+                        if (point->DQScentroid < tmp_DQSC.back())
+                        {
+                            continue;
+                        }
                     }
+                    // assert(tmp_rt.back() < point->RT);
 
-                    ++prevScan;
+                    prevScan = point->scanNo;
                     tmp_scanNumbers.push_back(point->scanNo);
+                    tmp_rt.push_back(point->RT);
                     prevScan = point->scanNo;
                     tmp_mz.push_back(point->mz);
+                    tmp_intensities.push_back(point->intensity);
                     tmp_DQSB.push_back(DQSB_base[i]);
                     tmp_DQSC.push_back(point->DQScentroid);
                 }
@@ -1245,6 +1258,7 @@ namespace q
                 EIC returnVal = {
                     bincode,
                     tmp_scanNumbers,
+                    tmp_rt,
                     tmp_mz,
                     tmp_intensities,
                     tmp_DQSB,
