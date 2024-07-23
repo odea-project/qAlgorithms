@@ -10,7 +10,7 @@ namespace q
   namespace Matrices //@todo check if the less extensive solution also works
   {
     // constructor and destructor
-    Matrix::Matrix() : rows(0), cols(0){};
+    Matrix::Matrix() : rows(0), cols(0) {};
 
     Matrix::Matrix(size_t rows, size_t cols) : rows(rows), cols(cols)
     {

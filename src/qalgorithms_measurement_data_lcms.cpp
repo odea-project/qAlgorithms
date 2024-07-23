@@ -29,177 +29,177 @@ namespace q
         // {
         // }
 
-        bool LCMSData::readCSV(std::string filename, size_t rowStart, int rowEnd, int colStart, int colEnd, char separator, std::vector<DataField> variableTypes)
-        {
-            // @todo currenty only
-            // open the file
-            std::ifstream file(filename);
-            std::string line;
-            std::vector<std::vector<std::string>> raw_data;
+        // bool LCMSData::readCSV(std::string filename, size_t rowStart, int rowEnd, int colStart, int colEnd, char separator, std::vector<DataField> variableTypes)
+        // {
+        //     // @todo currenty only
+        //     // open the file
+        //     std::ifstream file(filename);
+        //     std::string line;
+        //     std::vector<std::vector<std::string>> raw_data;
 
-            if (!file.is_open())
-            {
-                std::cout << "the file could not be opened\n";
-                return false;
-            }
+        //     if (!file.is_open())
+        //     {
+        //         std::cout << "the file could not be opened\n";
+        //         return false;
+        //     }
 
-            if (!file.good())
-            {
-                std::cout << "something is wrong with the input file\n";
-                return false;
-            }
+        //     if (!file.good())
+        //     {
+        //         std::cout << "something is wrong with the input file\n";
+        //         return false;
+        //     }
 
-            // if rowEnd is -1, then set it to the maximum number of rows @todo cast to unsigned int, -1 = max size
-            if (rowEnd == -1)
-            {
-                rowEnd = 1000000;
-            }
+        //     // if rowEnd is -1, then set it to the maximum number of rows @todo cast to unsigned int, -1 = max size
+        //     if (rowEnd == -1)
+        //     {
+        //         rowEnd = 1000000;
+        //     }
 
-            // if colEnd is -1, then set it to the maximum number of columns
-            if (colEnd == -1)
-            {
-                colEnd = 1000000;
-            }
+        //     // if colEnd is -1, then set it to the maximum number of columns
+        //     if (colEnd == -1)
+        //     {
+        //         colEnd = 1000000;
+        //     }
 
-            // find the DataFiled::SCANNUMBER as this is the key for the LCMSData vector
-            bool flag = false;
-            size_t scanNumberIndex = 0;
-            for (size_t i = 0; i < variableTypes.size(); i++)
-            {
-                if (variableTypes[i] == DataField::SCANNUMBER)
-                {
-                    scanNumberIndex = i;
-                    flag = true;
-                    break;
-                }
-            }
-            // check if scanNumberIndex is found
-            if (!flag)
-            {
-                std::cerr << "The scan number is not found in the variable types" << std::endl;
-                return false;
-            }
+        //     // find the DataFiled::SCANNUMBER as this is the key for the LCMSData vector
+        //     bool flag = false;
+        //     size_t scanNumberIndex = 0;
+        //     for (size_t i = 0; i < variableTypes.size(); i++)
+        //     {
+        //         if (variableTypes[i] == DataField::SCANNUMBER)
+        //         {
+        //             scanNumberIndex = i;
+        //             flag = true;
+        //             break;
+        //         }
+        //     }
+        //     // check if scanNumberIndex is found
+        //     if (!flag)
+        //     {
+        //         std::cerr << "The scan number is not found in the variable types" << std::endl;
+        //         return false;
+        //     }
 
-            // find the DataFiled::RETENTIONTIME
-            flag = false;
-            size_t retentionTimeIndex = 0;
-            for (size_t i = 0; i < variableTypes.size(); i++)
-            {
-                if (variableTypes[i] == DataField::RETENTIONTIME)
-                {
-                    retentionTimeIndex = i;
-                    flag = true;
-                    break;
-                }
-            }
-            // check if retentionTimeIndex is found
-            if (!flag)
-            {
-                std::cerr << "The retention time is not found in the variable types" << std::endl;
-                return false;
-            }
+        //     // find the DataFiled::RETENTIONTIME
+        //     flag = false;
+        //     size_t retentionTimeIndex = 0;
+        //     for (size_t i = 0; i < variableTypes.size(); i++)
+        //     {
+        //         if (variableTypes[i] == DataField::RETENTIONTIME)
+        //         {
+        //             retentionTimeIndex = i;
+        //             flag = true;
+        //             break;
+        //         }
+        //     }
+        //     // check if retentionTimeIndex is found
+        //     if (!flag)
+        //     {
+        //         std::cerr << "The retention time is not found in the variable types" << std::endl;
+        //         return false;
+        //     }
 
-            // find the DataFiled::MZ
-            flag = false;
-            size_t mzIndex = 0;
-            for (size_t i = 0; i < variableTypes.size(); i++)
-            {
-                if (variableTypes[i] == DataField::MZ)
-                {
-                    mzIndex = i;
-                    flag = true;
-                    break;
-                }
-            }
-            // check if mzIndex is found
-            if (!flag)
-            {
-                std::cerr << "The mz is not found in the variable types" << std::endl;
-                return false;
-            }
+        //     // find the DataFiled::MZ
+        //     flag = false;
+        //     size_t mzIndex = 0;
+        //     for (size_t i = 0; i < variableTypes.size(); i++)
+        //     {
+        //         if (variableTypes[i] == DataField::MZ)
+        //         {
+        //             mzIndex = i;
+        //             flag = true;
+        //             break;
+        //         }
+        //     }
+        //     // check if mzIndex is found
+        //     if (!flag)
+        //     {
+        //         std::cerr << "The mz is not found in the variable types" << std::endl;
+        //         return false;
+        //     }
 
-            // find the DataFiled::INTENSITY
-            flag = false;
-            size_t intensityIndex = 0;
-            for (size_t i = 0; i < variableTypes.size(); i++)
-            {
-                if (variableTypes[i] == DataField::INTENSITY)
-                {
-                    intensityIndex = i;
-                    flag = true;
-                    break;
-                }
-            }
-            // check if intensityIndex is found
-            if (!flag)
-            {
-                std::cerr << "The intensity is not found in the variable types" << std::endl;
-                return false;
-            }
+        //     // find the DataFiled::INTENSITY
+        //     flag = false;
+        //     size_t intensityIndex = 0;
+        //     for (size_t i = 0; i < variableTypes.size(); i++)
+        //     {
+        //         if (variableTypes[i] == DataField::INTENSITY)
+        //         {
+        //             intensityIndex = i;
+        //             flag = true;
+        //             break;
+        //         }
+        //     }
+        //     // check if intensityIndex is found
+        //     if (!flag)
+        //     {
+        //         std::cerr << "The intensity is not found in the variable types" << std::endl;
+        //         return false;
+        //     }
 
-            // read the file
-            int rowCounter = 0;
-            int colCounter = 0;
+        //     // read the file
+        //     int rowCounter = 0;
+        //     int colCounter = 0;
 
-            for (size_t i = 0; i < rowStart; i++)
-            {
-                std::getline(file, line); // only start parsing after rowStart lines
-            }
-            while (std::getline(file, line) && rowCounter < rowEnd)
-            {
-                std::vector<std::string> row;
-                std::stringstream lineStream(line);
-                std::string cell;
-                colCounter = 0;
-                while (std::getline(lineStream, cell, separator))
-                {
-                    if (colCounter >= colStart && colCounter < colEnd)
-                    {
-                        row.push_back(cell);
-                    }
-                    colCounter++;
-                }
-                raw_data.push_back(row);
-                rowCounter++;
-            }
-            file.close();
+        //     for (size_t i = 0; i < rowStart; i++)
+        //     {
+        //         std::getline(file, line); // only start parsing after rowStart lines
+        //     }
+        //     while (std::getline(file, line) && rowCounter < rowEnd)
+        //     {
+        //         std::vector<std::string> row;
+        //         std::stringstream lineStream(line);
+        //         std::string cell;
+        //         colCounter = 0;
+        //         while (std::getline(lineStream, cell, separator))
+        //         {
+        //             if (colCounter >= colStart && colCounter < colEnd)
+        //             {
+        //                 row.push_back(cell);
+        //             }
+        //             colCounter++;
+        //         }
+        //         raw_data.push_back(row);
+        //         rowCounter++;
+        //     }
+        //     file.close();
 
-            if (raw_data[0].size() != variableTypes.size())
-            {
-                std::cerr << "The number of columns in the raw data does not match the number of variable types" << std::endl;
-                return false;
-                // exit(102);
-            }
+        //     if (raw_data[0].size() != variableTypes.size())
+        //     {
+        //         std::cerr << "The number of columns in the raw data does not match the number of variable types" << std::endl;
+        //         return false;
+        //         // exit(102);
+        //     }
 
-            // transfer the raw data to the data vector
-            maxKey = 0;
+        //     // transfer the raw data to the data vector
+        //     maxKey = 0;
 
-            this->data.reserve(raw_data.size());
-            for (size_t i = 0; i < raw_data.size(); i++)
-            {
-                // check if the scan number is already in the data vector
-                size_t scanNumber = std::stoi(raw_data[i][scanNumberIndex]);
-                if (this->data.size() < scanNumber + 1)
-                { // scan number is not found in the data vector; initialize a new MassSpectrum object and add meta information
-                    // add the MassSpectrum object to the data vector
-                    this->data.push_back(std::make_unique<MassSpectrum>());
-                    // add the scan number to the MassSpectrum object
-                    (*this->data[scanNumber]->metaData)[DataField::SCANNUMBER] = VariableType(scanNumber);
-                    // add the retention time to the MassSpectrum object
-                    (*this->data[scanNumber]->metaData)[DataField::RETENTIONTIME] = VariableType(std::stod(raw_data[i][retentionTimeIndex]));
-                    // update the maxKey
-                    if (scanNumber > maxKey)
-                    {
-                        maxKey = scanNumber;
-                    }
-                }
-                // create a new DataPoint object and add it to the DataPoint Vector
-                double intensity = std::stod(raw_data[i][intensityIndex]);
-                int df = (intensity > 0) ? 1 : 0;
-                this->data[scanNumber]->dataPoints.push_back(std::make_unique<DataPoint>(intensity, std::stod(raw_data[i][mzIndex]), df));
-            }
-            return true;
-        }
+        //     this->data.reserve(raw_data.size());
+        //     for (size_t i = 0; i < raw_data.size(); i++)
+        //     {
+        //         // check if the scan number is already in the data vector
+        //         size_t scanNumber = std::stoi(raw_data[i][scanNumberIndex]);
+        //         if (this->data.size() < scanNumber + 1)
+        //         { // scan number is not found in the data vector; initialize a new MassSpectrum object and add meta information
+        //             // add the MassSpectrum object to the data vector
+        //             this->data.push_back(std::make_unique<MassSpectrum>());
+        //             // add the scan number to the MassSpectrum object
+        //             (*this->data[scanNumber]->metaData)[DataField::SCANNUMBER] = VariableType(scanNumber);
+        //             // add the retention time to the MassSpectrum object
+        //             (*this->data[scanNumber]->metaData)[DataField::RETENTIONTIME] = VariableType(std::stod(raw_data[i][retentionTimeIndex]));
+        //             // update the maxKey
+        //             if (scanNumber > maxKey)
+        //             {
+        //                 maxKey = scanNumber;
+        //             }
+        //         }
+        //         // create a new DataPoint object and add it to the DataPoint Vector
+        //         double intensity = std::stod(raw_data[i][intensityIndex]);
+        //         int df = (intensity > 0) ? 1 : 0;
+        //         this->data[scanNumber]->dataPoints.push_back(std::make_unique<DataPoint>(intensity, std::stod(raw_data[i][mzIndex]), df));
+        //     }
+        //     return true;
+        // }
 
         bool LCMSData::readStreamCraftMZML(sc::MZML &data, std::vector<double> &rt, std::vector<int> &scans, std::array<double, 2> rt_window)
         {

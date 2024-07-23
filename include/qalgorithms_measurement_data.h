@@ -30,12 +30,12 @@ namespace q
         {
         public:
             // destructor
-            virtual ~MeasurementData(){};
+            virtual ~MeasurementData() {};
 
             // methods
-            virtual bool readCSV(std::string filename, int rowStart, int rowEnd,
-                                 int colStart, int colEnd, char separator,
-                                 std::vector<DataType::DataField> variableTypes) = 0;
+            // virtual bool readCSV(std::string filename, int rowStart, int rowEnd,
+            //                      int colStart, int colEnd, char separator,
+            //                      std::vector<DataType::DataField> variableTypes) = 0;
 
             /**
              * @brief Identify and fill gaps in the data
