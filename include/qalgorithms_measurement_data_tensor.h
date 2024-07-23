@@ -55,6 +55,7 @@ namespace q
                 q::Algorithms::qPeaks &qpeaks,
                 sc::MZML &data,
                 const bool ms1only = true,
+                const std::string polarity = "positive",
                 const int start_index = 0);
 
             std::vector<std::vector<std::unique_ptr<DataType::Peak>>>

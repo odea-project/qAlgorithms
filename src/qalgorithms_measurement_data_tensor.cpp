@@ -39,23 +39,32 @@ namespace q
             q::Algorithms::qPeaks &qpeaks,
             sc::MZML &data,
             const bool ms1only,
+            const std::string polarity,
             const int start_index)
         {
-            std::vector<std::string> spectrum_mode = data.get_spectra_mode(); // get spectrum mode
-            double expectedDifference = 0.0;                                  // expected difference between two consecutive x-axis values
-            bool needsZeroFilling = true;                                     // check if the instrument is Orbitrap
-            std::vector<int> indices = data.get_spectra_index();              // get all indices
-            std::vector<int> ms_levels = data.get_spectra_level();            // get all MS levels
+            std::vector<std::string> spectrum_mode = data.get_spectra_mode();         // get spectrum mode (centroid or profile)
+            std::vector<std::string> spectrum_polarity = data.get_spectra_polarity(); // get spectrum polarity (positive or negative)
+            double expectedDifference = 0.0;                                          // expected difference between two consecutive x-axis values
+            bool needsZeroFilling = true;                                             // check if the instrument is Orbitrap
+            std::vector<int> indices = data.get_spectra_index();                      // get all indices
+            std::vector<int> ms_levels = data.get_spectra_level();                    // get all MS levels
             if (ms1only)
             {
                 indices.erase(std::remove_if(indices.begin(), indices.end(), [&ms_levels](int i)
                                              { return ms_levels[i] != 1; }),
                               indices.end()); // keep only MS1 spectra
             }
+            indices.erase(std::remove_if(indices.begin(), indices.end(), [&spectrum_polarity, &polarity](int i)
+                                         { return spectrum_polarity[i] != polarity; }),
+                          indices.end());                                       // keep only spectra with the specified polarity
             std::vector<double> retention_times = data.get_spectra_rt(indices); // get retention times
             rt_diff = calcRTDiff(retention_times);                              // retention time difference
             std::vector<std::vector<std::unique_ptr<DataType::Peak>>> centroids =
                 std::vector<std::vector<std::unique_ptr<DataType::Peak>>>(indices.size()); // create vector of unique pointers to peaks
+            if (centroids.size() == 0)
+            {
+                return centroids;
+            }
             {
                 alignas(64) std::vector<std::vector<double>> data_vec = data.get_spectrum(indices[start_index]); // get first spectrum (x-axis)
                 expectedDifference = calcExpectedDiff(data_vec[0]);                                              // calculate expected difference & check if Orbitrap
@@ -119,7 +128,7 @@ namespace q
         {
             std::vector<std::vector<std::unique_ptr<DataType::Peak>>> peaks =
                 std::vector<std::vector<std::unique_ptr<DataType::Peak>>>(data.size()); // create vector of unique pointers to peaks
-// #pragma omp parallel for
+#pragma omp parallel for
             for (size_t i = 0; i < data.size(); ++i) // loop over all data
             {
                 const int num_data_points = data[i].scanNumbers.size(); // number of data points
@@ -142,8 +151,8 @@ namespace q
                 // exit(0);
                 int num_subsets = zeroFilling_vec(eic, rt_diff, false);             // zero fill the spectrum
                 std::vector<std::vector<double>::iterator> separators(num_subsets); // vector of iterators at separation points (x axis)
-                extrapolateData_vec(eic, separators);                        
-                qpeaks.findPeaks(peaks[i], eic, separators);                        // find peaks
+                extrapolateData_vec(eic, separators);
+                qpeaks.findPeaks(peaks[i], eic, separators); // find peaks
             } // parallel for
             return peaks;
         } // readQBinning
