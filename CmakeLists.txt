@@ -9,7 +9,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 find_package(OpenMP REQUIRED)
 
 # Set compiler flags
-add_compile_options(-Wall -Wuninitialized -Wno-unknown-pragmas -fdiagnostics-color=always -O3 -g ${OpenMP_CXX_FLAGS}) #  -O3
+add_compile_options(-Wall -Wuninitialized -Wno-unknown-pragmas -fdiagnostics-color=always -mavx2 -march=haswell -O3 -g ${OpenMP_CXX_FLAGS}) #  -O3
 
 # Set include directories
 include_directories(include external/StreamCraft/src)

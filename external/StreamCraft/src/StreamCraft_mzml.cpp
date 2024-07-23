@@ -1789,6 +1789,24 @@ std::vector<std::vector<std::vector<double>>> sc::mzml::MZML::get_spectra(std::v
   return sp;
 };
 
+std::vector<std::vector<double>>
+sc::mzml::MZML::get_spectrum(int index)
+{
+  std::vector<std::vector<double>> spectrum;
+  std::vector<pugi::xml_node> spectra_nodes = link_vector_spectra_nodes();
+
+  if (spectra_nodes.size() == 0)
+  {
+    std::cerr << "No spectra found!" << std::endl;
+    return spectrum;
+  }
+
+  const pugi::xml_node &spectrum_node = spectra_nodes[index];
+  spectrum = extract_spectrum(spectrum_node);
+
+  return spectrum;
+}
+
 std::vector<std::vector<std::vector<double>>> sc::mzml::MZML::get_chromatograms(std::vector<int> indices)
 {
 

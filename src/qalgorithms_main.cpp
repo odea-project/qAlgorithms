@@ -1,258 +1,163 @@
 // internal
-#include "qalgorithms_measurement_data_lcms.h"
-#include "qalgorithms_qpeaks.h"
-#include "qalgorithms_matrix.h"
-#include "qalgorithms_qbin.h"
+#include "../include/qalgorithms_measurement_data_lcms.h"
+#include "../include/qalgorithms_measurement_data_tensor.h"
+#include "../include/qalgorithms_qpeaks.h"
 
 // external
-#include "StreamCraft_mzml.h" //@todo check if this is actually used here
+#include "../external/StreamCraft/src/StreamCraft_mzml.h"
 #include <iostream>
 #include <chrono>
-#include <cstdlib>
-#include <string>
-#include <sstream>
-#include <filesystem> // printing absolute path in case read fails
 #include <fstream>
+#include <cstdlib>
+#include <iomanip>
+#include <filesystem> // printing absolute path in case read fails
 
-namespace q
+// console output
+#define PRINT_DONE                         \
+    SetConsoleTextAttribute(hConsole, 10); \
+    std::cout << "done\n";                 \
+    SetConsoleTextAttribute(hConsole, 15);
+
+// console output
+#define PRINT_DONE_no_n                    \
+    SetConsoleTextAttribute(hConsole, 10); \
+    std::cout << "done";                   \
+    SetConsoleTextAttribute(hConsole, 15);
+
+int main(int argc, char *argv[])
 {
-    struct positionDataMassSpectra
+    std::string filename_input;
+    // ask for file if none are specified
+    if (argc < 2)
     {
-        std::vector<double> retentionTimes;
-        std::vector<int> absoluteScans;
-    };
-}
+        std::cout << "Enter a filename (replace every backslash with a forward slash) "
+                  << "to process that file ";
+    }
 
-int main()
-{
+    std::cout << "Enter the filename (*.mzML): ";
+    std::cin >> filename_input;
+
+    // if only one argument is given, check if it is any variation of help
+    // if this is not the case, try to use the string as a filepath
+
     bool silent = false;
+    bool recursiveSearch = false;
+    bool fileSpecified = false;
 
-    std::streambuf *old = std::cout.rdbuf(); // save standard out config
-    std::stringstream ss;
-
-    if (silent) // redirect standard out to ss
+    for (int i = 1; i < argc; i++)
     {
-        std::cout.rdbuf(ss.rdbuf());
+        std::string argument = argv[i];
+        if ((argument == "-h") | (argument == "-help"))
+        {
+            std::cout << argv[0] << " help options:\n"
+                      << "-h, -help: open this help menu\n"
+                      << "-s, -silent: do not print progress reports to standard out\n"
+                      << "-f, -file: specifies the input file. Use as -f FILEPATH\n"
+                      << "-r, -recursive: recursive search for .mzML files in the specified directory. "
+                      << "Use as -r DIRECTORY\n"
+                      << "-o, -output: directory into which all output files should be printed. "
+                      << " Use as -o DIRECTORY. If you want to print all results into the folder which "
+                      << "contains the .mzML file, write \"#\". The default output is standard out, "
+                      << "unless you did not specify an input file. in that case, "
+                      << "you will be prompted to enter the output location.\n";
+        }
+        if ((argument == "-s") | (argument == "-silent"))
+        {
+            silent = true;
+        }
+        if ((argument == "-f") | (argument == "-file"))
+        {
+            // @todo
+            fileSpecified = true;
+            ++i;
+        }
+        if ((argument == "-r") | (argument == "-recursive"))
+        {
+            // @todo
+            recursiveSearch = true;
+            ++i;
+        }
+        if ((argument == "-o") | (argument == "-output"))
+        {
+            // @todo
+            recursiveSearch = true;
+            ++i;
+        }
     }
-    std::cout << "starting...\n";
 
-    // @todo add option to take in a text file containing execution parameters and a list of target files
-    std::vector<std::string> target_files_full{
-        // "G:/Messdaten/AquaFlow_Rohdaten_SurfaceWater/210229_Blank_SW_I_1_pos.mzML",
-        // "G:/Messdaten/AquaFlow_Rohdaten_SurfaceWater/210229_C1_S1_I_1_pos.mzML",
-        // "G:/Messdaten/AquaFlow_Rohdaten_SurfaceWater/210229_C2_S1_I_1_pos.mzML",
-        // "G:/Messdaten/AquaFlow_Rohdaten_SurfaceWater/210229_C3_S1_I_1_pos.mzML",
-        // "G:/Messdaten/AquaFlow_Rohdaten_SurfaceWater/210229_T1_S1_I_1_pos.mzML",
-        // "G:/Messdaten/AquaFlow_Rohdaten_SurfaceWater/210229_T2_S1_I_1_pos.mzML",
-        // "G:/Messdaten/AquaFlow_Rohdaten_SurfaceWater/210311_C1_S5_I_1.mzML",
-        // "G:/Messdaten/AquaFlow_Rohdaten_SurfaceWater/210311_C2_S5_I_1.mzML"
-        // "G:/Messdaten/LC_orbitrap_kali/22090917_Kali_Pu_Penc_2,9HCO3_0,2_Indigo_neg.mzML",
-        // "G:/Messdaten/LC_orbitrap_kali/22090917_Kali_Pu_Penc_2,9HCO3_0,2_Indigo_pos.mzML",
-        // "G:/Messdaten/LC_orbitrap_kali/22090918_Kali_Pu_Penc_2,9HCO3_0,5_Indigo_neg.mzML",
-        // "G:/Messdaten/LC_orbitrap_kali/22090918_Kali_Pu_Penc_2,9HCO3_0,5_Indigo_pos.mzML",
-        // "G:/Messdaten/LC_orbitrap_kali/22090919_Kali_Pu_Penc_2,9HCO3_1_Indigo_neg.mzML",
-        // "G:/Messdaten/LC_orbitrap_kali/22090919_Kali_Pu_Penc_2,9HCO3_1_Indigo_pos.mzML",
-        // "G:/Messdaten/LC_orbitrap_kali/22090920_Kali_Pu_Penc_2,9HCO3_2_Indigo_neg.mzML",
-        // "G:/Messdaten/LC_orbitrap_kali/22090920_Kali_Pu_Penc_2,9HCO3_2_Indigo_pos.mzML",
-        // "G:/Messdaten/LC_orbitrap_kali/22090921_H2O_3_pos.mzML",
-        // "G:/Messdaten/LC_orbitrap_kali/22090935_H2O_4_pos.mzML",
-        // "G:/Messdaten/LC_orbitrap_kali/22090901_H2O_1_pos.mzML",
-        // "G:/Messdaten/LC_orbitrap_kali/22090902_Kali_Pu_Penc_2,9HCO3_0_pos.mzML",
-        // "G:/Messdaten/LC_orbitrap_kali/22090903_Kali_Pu_Penc_2,9HCO3_0,01_pos.mzML",
-        // "G:/Messdaten/LC_orbitrap_kali/22090904_Kali_Pu_Penc_2,9HCO3_0,02_pos.mzML",
-        // "G:/Messdaten/LC_orbitrap_kali/22090905_Kali_Pu_Penc_2,9HCO3_0,05_pos.mzML",
-        // "G:/Messdaten/LC_orbitrap_kali/22090906_Kali_Pu_Penc_2,9HCO3_0,1_pos.mzML",
-        // "G:/Messdaten/LC_orbitrap_kali/22090907_Kali_Pu_Penc_2,9HCO3_0,2_pos.mzML",
-        // "G:/Messdaten/LC_orbitrap_kali/22090908_Kali_Pu_Penc_2,9HCO3_0,5_pos.mzML",
-        // "G:/Messdaten/LC_orbitrap_kali/22090909_Kali_Pu_Penc_2,9HCO3_1_pos.mzML",
-        // "G:/Messdaten/LC_orbitrap_kali/22090910_Kali_Pu_Penc_2,9HCO3_2_pos.mzML",
-        // "G:/Messdaten/LC_orbitrap_kali/22090911_H2O_2_pos.mzML",
-        // "G:/Messdaten/LC_orbitrap_kali/22090912_Kali_Pu_Penc_2,9HCO3_0_Indigo_neg.mzML",
-        // "G:/Messdaten/LC_orbitrap_kali/22090912_Kali_Pu_Penc_2,9HCO3_0_Indigo_pos.mzML",
-        // "G:/Messdaten/LC_orbitrap_kali/22090913_Kali_Pu_Penc_2,9HCO3_0,01_Indigo_neg.mzML",
-        // "G:/Messdaten/LC_orbitrap_kali/22090913_Kali_Pu_Penc_2,9HCO3_0,01_Indigo_pos.mzML",
-        // "G:/Messdaten/LC_orbitrap_kali/22090914_Kali_Pu_Penc_2,9HCO3_0,02_Indigo_neg.mzML",
-        // "G:/Messdaten/LC_orbitrap_kali/22090914_Kali_Pu_Penc_2,9HCO3_0,02_Indigo_pos.mzML",
-        // "G:/Messdaten/LC_orbitrap_kali/22090915_Kali_Pu_Penc_2,9HCO3_0,05_Indigo_neg.mzML",
-        // "G:/Messdaten/LC_orbitrap_kali/22090915_Kali_Pu_Penc_2,9HCO3_0,05_Indigo_pos.mzML",
-        // "G:/Messdaten/LC_orbitrap_kali/22090916_Kali_Pu_Penc_2,9HCO3_0,1_Indigo_neg.mzML",
-        // "G:/Messdaten/LC_orbitrap_kali/22090916_Kali_Pu_Penc_2,9HCO3_0,1_Indigo_pos.mzML",
-
-        // "C:/Users/unisys/Documents/Studium/Messdaten/LCMS_pressure_error/22090916_Kali_Pu_Penc_2,9HCO3_0,1_Indigo_neg.mzML",
-        // "C:/Users/unisys/Documents/Studium/Messdaten/LCMS_pressure_error/22090913_Kali_Pu_Penc_2,9HCO3_0,01_Indigo_pos.mzML",
-        // "C:/Users/unisys/Documents/Studium/Messdaten/LCMS_pressure_error/22090912_Kali_Pu_Penc_2,9HCO3_0_Indigo_pos.mzML",
-        // "C:/Users/unisys/Documents/Studium/Messdaten/LCMS_pressure_error/22090910_Kali_Pu_Penc_2,9HCO3_2_pos.mzML",
-        // "C:/Users/unisys/Documents/Studium/Messdaten/LCMS_pressure_error/22090903_Kali_Pu_Penc_2,9HCO3_0,01_pos.mzML",
-        // "C:/Users/unisys/Documents/Studium/Messdaten/LCMS_pressure_error/22090902_Kali_Pu_Penc_2,9HCO3_0_pos.mzML",
-        // "C:/Users/unisys/Documents/Studium/Messdaten/LCMS_pressure_error/22090901_H2O_1_pos.mzML",
-        // "C:/Users/unisys/Documents/Studium/Messdaten/LCMS_pressure_error/22090921_H2O_3_pos.mzML",
-        // "C:/Users/unisys/Documents/Studium/Messdaten/LCMS_pressure_error/22090935_H2O_4_pos.mzML",
-        // "C:/Users/unisys/Documents/Studium/Messdaten/LCMS_pressure_error/22090920_Kali_Pu_Penc_2,9HCO3_2_Indigo_pos.mzML",
-        // "C:/Users/unisys/Documents/Studium/Messdaten/LCMS_pressure_error/22090920_Kali_Pu_Penc_2,9HCO3_2_Indigo_neg.mzML"
-        "C:/Users/unisys/Documents/Studium/Messdaten/mzml/SFC_DoE/240123_VqF_DoE-pos_RO02_06.mzML",
-        "C:/Users/unisys/Documents/Studium/Messdaten/mzml/SFC_DoE/240123_VqF_DoE-pos_RO03_08.mzML",
-        "C:/Users/unisys/Documents/Studium/Messdaten/mzml/SFC_DoE/240123_VqF_DoE-pos_RO11_24.mzML",
-        "C:/Users/unisys/Documents/Studium/Messdaten/mzml/SFC_DoE/240123_VqF_DoE-pos_RO24_50.mzML",
-        "C:/Users/unisys/Documents/Studium/Messdaten/mzml/SFC_DoE/240123_VqF_DoE-pos_RO29_60.mzML",
-        "C:/Users/unisys/Documents/Studium/Messdaten/mzml/SFC_DoE/240123_VqF_DoE-pos_RO42_86.mzML",
-        "C:/Users/unisys/Documents/Studium/Messdaten/mzml/AquaFlow_MS1/210229_C1_S1_W_MI_1_pos.mzML",
-        "C:/Users/unisys/Documents/Studium/Messdaten/mzml/AquaFlow_MS1/210229_C1_S1_W_MI_2_pos.mzML", // some error during binning here?
-        "C:/Users/unisys/Documents/Studium/Messdaten/mzml/AquaFlow_MS1/210229_C1_S1_W_MI_3_pos.mzML",
-        "C:/Users/unisys/Documents/Studium/Messdaten/mzml/AquaFlow_MS1/210229_Blank_SW_MI_I_1_pos.mzML",
-        "C:/Users/unisys/Documents/Studium/Messdaten/mzml/AquaFlow_MS1/210229_Blank_SW_MI_I_2_pos.mzML",
-        "C:/Users/unisys/Documents/Studium/Messdaten/mzml/AquaFlow_MS1/210229_Blank_SW_MI_I_3_pos.mzML",
-        "C:/Users/unisys/Documents/Studium/Messdaten/mzml/AquaFlow_MS1/210229_Blank1.mzML",
-        "C:/Users/unisys/Documents/Studium/Messdaten/mzml/AquaFlow_MS1/210229_Blank2.mzML",
-        "C:/Users/unisys/Documents/Studium/Messdaten/mzml/AquaFlow_MS1/210229_Blank3.mzML",
-        // "C:/Users/unisys/Documents/Studium/Analytik-Praktikum/rawdata/Exchange_SFC-data/230222_SFC_Modelling_MixF_02_21.mzML",
-        // "C:/Users/unisys/Documents/Studium/Analytik-Praktikum/rawdata/Exchange_SFC-data/230222_SFC_Modelling_MixF_03_22.mzML",
-        // "C:/Users/unisys/Documents/Studium/Analytik-Praktikum/rawdata/Exchange_SFC-data/230222_SFC_Modelling_MixF_01_20.mzML",
-    };
-
-    for (std::string currentFile : target_files_full)
+    if (fileSpecified & recursiveSearch)
     {
-        auto timeStart = std::chrono::high_resolution_clock::now();
-
-        // ### removed user input (make this an argument of main) and overzealous status updates
-
-        // initialize qPeaks static variables
-        q::Algorithms::qPeaks::initialize(); // @todo constexpr
-        bool isCSV = false;
-
-        std::string filename_input = currentFile; // "../../rawdata/example_profile.mzML"; // @todo make this a command line argument
-        // "../../rawdata/example_profile.mzML"
-        // "../rawdata/example_profile.mzML"
-        // "../test/test_orbitrap.csv"
-        // "../qAlgorithms/test/test_orbitrap.csv"
-
-        std::filesystem::path p = filename_input;
-        if (!std::filesystem::exists(p))
-        {
-            std::cout << "Error: The selected file does not exist.\nSupplied path: " << std::filesystem::absolute(p)
-                      << "\nCurrent directory: " << std::filesystem::current_path() << "\n\nTerminated Program.\n\n";
-            exit(101);
-        }
-
-        std::cout << "Executing qAlgorithms on " << std::filesystem::canonical(p) << '\n';
-
-        q::positionDataMassSpectra indexDict;
-
-        q::MeasurementData::LCMSData lcmsData;
-
-        bool fileOK = false;
-
-        // check if the input file is a CSV file or a mzML file
-        // @todo solve this by first extracting all characters from the last dot to the
-        // end of the string and then implement method selection using a switch statement
-        // char filetype[16] = p.extension();
-
-        if (filename_input.find(".mzML") != std::string::npos) // @todo make sure this is the end of the filename, switch to regex
-        {
-            sc::MZML data(filename_input);
-            fileOK = lcmsData.readStreamCraftMZML(data, indexDict.retentionTimes, indexDict.absoluteScans);
-        }
-        else if (filename_input.find(".csv") != std::string::npos) // @todo make sure this is the end of the filename, switch to regex
-        {
-            fileOK = lcmsData.readCSV(filename_input, 1, -1, 0, -1, ',',
-                                      {q::DataType::DataField::MZ,
-                                       q::DataType::DataField::INTENSITY,
-                                       q::DataType::DataField::SCANNUMBER,
-                                       q::DataType::DataField::RETENTIONTIME}); // @todo make the cols user defined and offer these as default values
-            isCSV = true;
-        }
-        else
-        {
-            std::cout << "Error: only .mzML and .csv files are supported" << std::endl;
-        }
-
-        if (!fileOK)
-        { // terminate program if readCSV failed
-            exit(101);
-        }
-
-        auto timeEnd = std::chrono::high_resolution_clock::now();
-
-        size_t totalScans = lcmsData.numDatasets(); // needed to construct binning object
-
-        std::cout << "finished reading " << totalScans << " mass spectra in " << (timeEnd - timeStart).count() << " ns\n\n";
-
-        // @todo add timings here, include option to skip output or create .log for more elaborate diagnostics
-        timeStart = std::chrono::high_resolution_clock::now();
-
-        std::cout << "zero filling ... ";
-        lcmsData.zeroFilling();
-
-        std::cout << "cutting data ... ";
-        lcmsData.cutData(); // @todo integrate any and all filtering during this step
-
-        std::cout << "filtering ... ";
-        lcmsData.filterSmallDataSets();
-
-        std::cout << "interpolating ... \n";
-        lcmsData.interpolateData();
-
-        timeEnd = std::chrono::high_resolution_clock::now();
-        std::cout << "reduced data to " << lcmsData.numDatasets() << " datasets in " << (timeEnd - timeStart).count() << " ns\n\n";
-
-        // qPEAKS
-        timeStart = std::chrono::high_resolution_clock::now();
-        std::cout << "finding peaks...\n";
-
-        q::MeasurementData::varDataType dataObject = &(lcmsData.data);
-
-        q::Algorithms::qPeaks qpeaks(dataObject);
-
-        std::vector<std::vector<std::unique_ptr<q::DataType::Peak>>> temp_peaks = qpeaks.findPeaks(dataObject);
-
-        q::qBinning::CentroidedData testdata = qpeaks.passToBinning(temp_peaks, totalScans);
-
-        // std::vector<std::vector<std::unique_ptr<q::DataType::Peak>>> peaks = qpeaks.createPeakList(temp_peaks); // @todo check for better data structures
-
-        timeEnd = std::chrono::high_resolution_clock::now();
-        std::cout << "found " << testdata.lengthAllPoints << " peaks in " << (timeEnd - timeStart).count()
-                  << " ns\n\nstarting qbinning submodule...\n\n";
-
-        // write peaks to file @todo output location should always be determined by the user!
-        // std::string filename_output = filename_input;
-        // // remove the file extension
-        // filename_output = filename_output.substr(0, filename_output.find_last_of("."));
-        // filename_output += "_peaks.csv";
-        // std::string filename_output = "../../peaktable_full2_5.csv";
-        // qpeaks.printAllPeaks(peaks, filename_output);
-
-        size_t found = filename_input.find_last_of(".");
-        std::string summary_output_location = filename_input.substr(0, found);
-
-        // print faulty dataset
-        // std::string binsFull = summary_output_location + "_centroids.csv";
-        // std::fstream file_out_all;
-        // std::stringstream output_all;
-        // file_out_all.open(binsFull, std::ios::out);
-        // assert(file_out_all.is_open());
-        // output_all << "ID,mz,scan,intensity,mzError,DQSC,DQSB_base,DQSB_scaled\n";
-        // for (size_t i = 0; i < testdata.allDatapoints.size(); i++)
-        // {
-
-        //     std::vector<q::qBinning::qCentroid> binnedPoints = testdata.allDatapoints[i];
-
-        //     for (size_t j = 0; j < binnedPoints.size(); j++)
-        //     {
-        //         char buffer[128];
-        //         // scan position, mz, centroid error, scan number, intensity, DQS centroid
-        //         sprintf(buffer, "%u,%0.15f,%0.15f,%d,%0.15f,%0.15f\n",
-        //                 i, binnedPoints[j].mz, binnedPoints[j].mzError,
-        //                 binnedPoints[j].scanNo, binnedPoints[j].intensity, binnedPoints[j].DQScentroid);
-        //         output_all << buffer;
-        //     }
-        // }
-        // file_out_all << output_all.str();
-        // file_out_all.close();
-
-        std::vector<q::qBinning::EIC> binnedData = q::qBinning::performQbinning(testdata, summary_output_location, 6, false);
-
-        std::cout << "done\n";
-
-        std::cout.rdbuf(old); // restore previous standard out
+        std::cout << "Error: Recursive search and task file are incompatible\n";
+        exit(100);
     }
+
+    // initialize qPeaks static variables and lcmsData object
+    q::Algorithms::qPeaks::initialize();
+
+    auto timeStart = std::chrono::high_resolution_clock::now();
+    // check if file exists; if not, repeat the input until a valid file is entered
+    if (!std::ifstream(filename_input))
+    {
+        std::cout << "Error: file not found\n"
+                  << std::endl;
+        exit(0);
+    }
+
+    std::cout << "reading file... ";
+
+    // check if the input file a mzML file
+    if (!(filename_input.find(".mzML") != std::string::npos))
+    {
+        std::cout << "Error: you must supply a .mzML file\n";
+        // break;
+        exit(0);
+    }
+
+    sc::MZML data(filename_input);             // create mzML object
+    q::Algorithms::qPeaks qpeaks;              // create qPeaks object
+    q::MeasurementData::TensorData tensorData; // create tensorData object
+    std::vector<std::vector<std::unique_ptr<q::DataType::Peak>>> centroids =
+        tensorData.findCentroids_MZML(qpeaks, data, true, 10); // read mzML file and find centroids via qPeaks
+
+    q::Algorithms::qBinning::CentroidedData testdata = qpeaks.passToBinning(centroids, centroids.size());
+    std::string summary_output_location = "summary_output_location";
+    auto timeEnd = std::chrono::high_resolution_clock::now();
+
+    std::cout << "produced " << testdata.lengthAllPoints << " centroids from " << centroids.size()
+              << " spectra in " << (timeEnd - timeStart).count() << " ns\n\n";
+
+    bool verboseQbinning = false;
+    timeStart = std::chrono::high_resolution_clock::now();
+    std::vector<q::Algorithms::qBinning::EIC> binnedData = q::Algorithms::qBinning::performQbinning(testdata, summary_output_location, 6, verboseQbinning);
+    timeEnd = std::chrono::high_resolution_clock::now();
+
+    if (verboseQbinning)
+    {
+        std::cout << "assembled " << binnedData.size() << " bins in " << (timeEnd - timeStart).count() << " ns\n\n";
+    }
+
+    timeStart = std::chrono::high_resolution_clock::now();
+    std::vector<std::vector<std::unique_ptr<q::DataType::Peak>>> peaks =
+        tensorData.findPeaks_QBIN(qpeaks, binnedData);
+    timeEnd = std::chrono::high_resolution_clock::now();
+    std::cout << "found " << peaks.size() << " peaks in " << (timeEnd - timeStart).count() << " ns\n\n";
+
+    // write peaks to csv file
+    std::cout << "writing peaks to file... ";
+    std::string output_filename = "output.csv";
+    std::ofstream output_file(output_filename);
+    output_file << "mz,rt,int,mzUncertainty,rtUncertainty,intUncertainty,dqs_cen,dqs_bin,dqs_peak\n";
+    for (size_t i = 0; i < peaks.size(); ++i)
+    {
+        for (size_t j = 0; j < peaks[i].size(); ++j)
+        {
+            output_file << peaks[i][j]->mz << "," << peaks[i][j]->retentionTime << "," << peaks[i][j]->area << ","
+                        << peaks[i][j]->mzUncertainty << "," << peaks[i][j]->retentionTimeUncertainty << ","
+                        << peaks[i][j]->areaUncertainty << "," << peaks[i][j]->dqsCen << "," << peaks[i][j]->dqsBin
+                        << "," << peaks[i][j]->dqsPeak << "\n";
+        }
+    }
+    output_file.close();
+
     return 0;
 }

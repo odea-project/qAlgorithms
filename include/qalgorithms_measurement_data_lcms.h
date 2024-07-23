@@ -43,9 +43,9 @@ namespace q
              * @param variableTypes The variable types. Required variable types: DataField::SCANNUMBER,
              *                      DataField::RETENTIONTIME, DataField::MZ, and DataField::INTENSITY
              */
-            bool readCSV(std::string filename, size_t rowStart, int rowEnd,
-                         int colStart, int colEnd, char separator,
-                         std::vector<DataType::DataField> variableTypes);
+            // bool readCSV(std::string filename, size_t rowStart, int rowEnd,
+            //              int colStart, int colEnd, char separator,
+            //              std::vector<DataType::DataField> variableTypes);
 
             /**
              * @brief Read LC-MS data from a StreamCraft mzML object

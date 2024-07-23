@@ -565,7 +565,7 @@ namespace q
 
 #pragma region "Bin"
 
-            Bin::Bin(){};
+            Bin::Bin() {};
 
             Bin::Bin(const std::vector<qCentroid *>::iterator &binStartInOS, const std::vector<qCentroid *>::iterator &binEndInOS) // const std::vector<qCentroid> &sourceList,
             {
@@ -1370,10 +1370,7 @@ namespace q
 
                 std::cout.rdbuf(old); // restore previous standard out
 
-                std::vector<EIC> nothing;
-                std::cout << "\nRETURNS EMPTY VECTOR AS OF NOW, REPLACE WITH RETURNBINS()\n";
-
-                return nothing; // activeBins.returnBins();
+                return activeBins.returnBins();
             }
 
         }
@@ -1382,7 +1379,7 @@ namespace q
 
 //
 //
-int main()
+int notmain()
 {
     std::cout << "starting...\n";
     //   << sizeof(std::vector<int>);

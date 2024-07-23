@@ -79,6 +79,14 @@
 				},
 				{
 					"backtrace" : 3,
+					"fragment" : "-mavx2"
+				},
+				{
+					"backtrace" : 3,
+					"fragment" : "-march=haswell"
+				},
+				{
+					"backtrace" : 3,
 					"fragment" : "-O3"
 				},
 				{
@@ -123,7 +131,10 @@
 				8,
 				9,
 				10,
-				11
+				11,
+				12,
+				13,
+				14
 			]
 		}
 	],
@@ -191,7 +202,10 @@
 				8,
 				9,
 				10,
-				11
+				11,
+				12,
+				13,
+				14
 			]
 		}
 	],
@@ -213,6 +227,12 @@
 			"backtrace" : 1,
 			"compileGroupIndex" : 0,
 			"path" : "external/StreamCraft/src/StreamCraft_utils.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "src/qalgorithms_datatype_chromatogram.cpp",
 			"sourceGroupIndex" : 0
 		},
 		{
@@ -249,6 +269,18 @@
 			"backtrace" : 1,
 			"compileGroupIndex" : 0,
 			"path" : "src/qalgorithms_measurement_data_lcms.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "src/qalgorithms_measurement_data_tensor.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "src/qalgorithms_qPattern.cpp",
 			"sourceGroupIndex" : 0
 		},
 		{
