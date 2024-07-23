@@ -4,6 +4,7 @@
 #include <deque>
 #include <vector>
 #include <string>
+#include <filesystem> // printing absolute path in case read fails
 
 // Goal: all functions modify individual features, which are combined to a bin.
 // The bin contains all features and the functions necessary to summarise which features are present
@@ -266,7 +267,7 @@ namespace q
                 /// the input would have to be std::byte{0b00000001}
                 /// @param fullBins Should all bins which are included in the summary be printed in full?
                 /// @param location path to the folder in which both files should be created
-                void printSelectBins(std::byte mask, bool fullBins, std::string location);
+                void printSelectBins(std::byte mask, bool fullBins, std::filesystem::path location);
             };
 
             // utility functions
@@ -274,7 +275,7 @@ namespace q
             void check_MOD_outOfBins(const Bin *target, const std::vector<qCentroid *> notBinned, const int maxdist);
 
             // ### wrapper function to execute qbinning on a CentroidedData struct ###
-            std::vector<EIC> performQbinning(const CentroidedData centroidedData, std::string outpath, int maxdist, bool silent, bool printBinSummary);
+            std::vector<EIC> performQbinning(const CentroidedData centroidedData, std::filesystem::path outpath, int maxdist, bool silent, bool printBinSummary);
 
         }
     }

@@ -487,27 +487,23 @@ namespace q
                 return finalBins;
             };
 
-            void BinContainer::printSelectBins(std::byte mask, bool fullBins, std::string location)
+            void BinContainer::printSelectBins(std::byte mask, bool fullBins, std::filesystem::path location)
             {
                 // print optional summary file
-                // filename to directory
-                size_t found = location.find_last_of("/\\");
-                std::cout << "base filename: " << location << "\n";
-                std::filesystem::path p = location.substr(0, found);
 
-                if (!std::filesystem::exists(p))
+                if (!std::filesystem::exists(location))
                 {
-                    std::cout << "Error during summary printing: The selected directory does not exist.\nSupplied path: " << std::filesystem::absolute(p)
+                    std::cout << "Error during summary printing: The selected directory does not exist.\nSupplied path: " << std::filesystem::absolute(location)
                               << "\nCurrent directory: " << std::filesystem::current_path() << "\ncontinuing...\n";
                     return;
                 }
                 if (fullBins)
                 {
-                    std::cout << "writing bin summary and complete centroids to " << std::filesystem::canonical(p) << '\n';
+                    std::cout << "writing bin summary and complete centroids to " << std::filesystem::canonical(location) << '\n';
                 }
                 else
                 {
-                    std::cout << "writing bin summary to " << std::filesystem::canonical(p) << '\n';
+                    std::cout << "writing bin summary to " << std::filesystem::canonical(location) << '\n';
                 }
 
                 std::string binsSummary = location + "_summary.csv";
@@ -565,7 +561,7 @@ namespace q
 
 #pragma region "Bin"
 
-            Bin::Bin() {};
+            Bin::Bin(){};
 
             Bin::Bin(const std::vector<qCentroid *>::iterator &binStartInOS, const std::vector<qCentroid *>::iterator &binEndInOS) // const std::vector<qCentroid> &sourceList,
             {
@@ -1338,7 +1334,7 @@ namespace q
 
 #pragma endregion "Functions"
 
-            std::vector<EIC> performQbinning(CentroidedData centroidedData, std::string outpath, int inputMaxdist, bool silent, bool printBinSummary)
+            std::vector<EIC> performQbinning(CentroidedData centroidedData, std::filesystem::path outpath, int inputMaxdist, bool silent, bool printBinSummary)
             {
                 std::streambuf *old = std::cout.rdbuf(); // save standard out config
                 std::stringstream ss;
