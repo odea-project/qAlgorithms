@@ -46,41 +46,23 @@ namespace q
       // initialise empty vector with enough room for all scans - centroids[0] must remain empty
       std::vector<std::vector<q::Algorithms::qBinning::qCentroid>> centroids(numberOfScans + 1, std::vector<qBinning::qCentroid>(0));
       int totalCentroids = 0;
-      // create a temporary unordered map of peaks based on sampleID
-      // sample ID = position of mass spectrum in order
-      std::unordered_map<int, std::vector<std::unique_ptr<DataType::Peak>>> peakMap;
-      // iterate over the peaks vector
+      int scanRelative = 0;
       for (size_t i = 0; i < allPeaks.size(); ++i)
       {
         if (!allPeaks[i].empty())
         {
-          auto &peaks = allPeaks[i];
-          // iterate over the peaks vector
-          for (size_t j = 0; j < peaks.size(); ++j)
+          ++scanRelative; // scans start at 1
+          // sort the peaks in ascending order of retention time
+          std::sort(allPeaks[i].begin(), allPeaks[i].end(), [](const std::unique_ptr<q::DataType::Peak> &a, const std::unique_ptr<q::DataType::Peak> &b)
+                    { return a->retentionTime < b->retentionTime; });
+          for (size_t j = 0; j < allPeaks[i].size(); ++j)
           {
-            auto &peak = peaks[j];
-            if (peakMap.find(peak->sampleID) == peakMap.end()) // if the sample ID is not in the map, create a new entry?
-            {
-              peakMap[peak->sampleID] = std::vector<std::unique_ptr<DataType::Peak>>();
-            }
-            peakMap[peak->sampleID].push_back(std::move(peak));
+            auto &peak = allPeaks[i][j];
+            qBinning::qCentroid F = qBinning::qCentroid{peak->mz, peak->mzUncertainty, peak->retentionTime,
+                                                        scanRelative, peak->area, peak->dqsCen};
+            centroids[scanRelative].push_back(F);
+            ++totalCentroids;
           }
-        }
-      }
-
-      int scanRelative = 0;
-      for (auto &pair : peakMap)
-      {
-        std::vector<std::unique_ptr<DataType::Peak>> &peaks = pair.second;
-        ++scanRelative; // scans start at 1
-        // since the scans arrive in reverse order,
-        for (size_t j = peaks.size(); j-- > 0;)
-        {
-          auto &peak = peaks[j];
-          qBinning::qCentroid F = qBinning::qCentroid{peak->mz, peak->mzUncertainty, peak->retentionTime,
-                                                      scanRelative, peak->area, peak->dqsCen};
-          centroids[scanRelative].push_back(F);
-          ++totalCentroids;
         }
       }
       // the first scan must be empty for compatibility with qBinning
@@ -238,6 +220,37 @@ namespace q
           }
           createPeaks_static(all_peaks, validRegressions, validRegressionsIndex, y_start, mz_start, rt_start, nullptr, nullptr, rt_start, scanNumber);
         } // end static approach
+        else
+        { // dynamic approach
+          alignas(32) float *Y = new float[n];
+          alignas(32) float *Ylog = new float[n];
+          alignas(32) float *X = new float[n];
+          alignas(32) bool *df = new bool[n];
+          std::vector<std::unique_ptr<validRegression_static>> validRegressions;
+
+          // iterator to the start
+          const auto y_start = Y;
+          const auto ylog_start = Ylog;
+          const auto mz_start = X;
+          const auto df_start = df;
+
+          std::copy(it_y, it_y + n, Y);
+          std::copy(it_mz, it_mz + n, X);
+          std::copy(it_df, it_df + n, df);
+          it_y += n;
+          it_df += n;
+          it_mz += n;
+
+          // perform log-transform on Y
+          std::transform(y_start, y_start + n, ylog_start, [](float y)
+                         { return std::log(y); });
+          runningRegression(y_start, ylog_start, df_start, n, validRegressions);
+          if (validRegressions.empty())
+          {
+            continue; // no valid peaks
+          }
+          createPeaks(all_peaks, validRegressions, y_start, mz_start, rt_start, nullptr, nullptr, rt_start, scanNumber);
+        } // end dynamic approach
       } // end for loop
     } // end findPeaks
 #pragma endregion "find centroids"

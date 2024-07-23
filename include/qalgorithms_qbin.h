@@ -4,9 +4,9 @@
 #include <deque>
 #include <vector>
 #include <string>
-#include "../include/qalgorithms_utils.h"
 
-// Goal: all functions modify individual features, which are combined to a bin. The bin contains all features and the functions necessary to summarise which features are present
+// Goal: all functions modify individual features, which are combined to a bin.
+// The bin contains all features and the functions necessary to summarise which features are present
 namespace q
 {
     namespace Algorithms
@@ -21,7 +21,7 @@ namespace q
                 double mz;
                 double mzError = -1;
                 double RT;
-                int scanNo; // @todo make int
+                int scanNo;
                 double intensity;
                 double DQScentroid;
             };
@@ -32,13 +32,9 @@ namespace q
                 std::vector<std::vector<qCentroid>> allDatapoints;
             };
 
-            // "mz" "mzError" "RT" "scanNo" "intensity" "controlID" "controlCentroidDQS" "controlBinDQS"
             bool readcsv(CentroidedData *rawData, std::string user_file, int d_mz, int d_mzError, int d_scanNo, int d_intensity, int d_DQScentroid);
 
-            // bool readPeaktable(CentroidedData *peakData); // not sensible to include this here
-
             // return object of qbinning
-
             struct DatapointEIC
             {
                 double mz;
@@ -58,6 +54,7 @@ namespace q
 
             struct EIC // Extracted Ion Chromatogram
             {
+                std::byte errorcode;
                 std::vector<int> scanNumbers;
                 std::vector<double> rententionTimes;
                 std::vector<double> mz;
@@ -112,8 +109,6 @@ namespace q
             {
             private:
                 std::vector<double> cumError; // cumulative error in mz
-                double pt_MakeDQSB;           // rm?
-
                 double medianMZ;
 
             public:
@@ -265,17 +260,6 @@ namespace q
 
                 std::vector<EIC> returnBins();
 
-                // void printTstats();
-
-                // void printworstDQS();
-
-                /// @brief The function calculates the summary of a bin and selects bins with at least one state of interest.
-                /// @param mask every bit of this byte controls if the corresponding test is considered for returning the
-                /// selection. For example, for returning only bins in which the first test condition applies,
-                /// the input would have to be std::byte{0b00000001}
-                /// @return A vector of all closed bins which have at least one state of interest
-                // const std::vector<int> makeBinSelection(std::byte mask);
-
                 /// @brief Print the individual bin members and optionally the bin summary in a separate .csv
                 /// @param mask every bit of this byte controls if the corresponding test is considered for returning the
                 /// selection. For example, for returning only bins in which the first test condition applies,
@@ -290,7 +274,8 @@ namespace q
             void check_MOD_outOfBins(const Bin *target, const std::vector<qCentroid *> notBinned, const int maxdist);
 
             // ### wrapper function to execute qbinning on a CentroidedData struct ###
-            std::vector<EIC> performQbinning(const CentroidedData centroidedData, std::string outpath, int maxdist, bool silent);
+            std::vector<EIC> performQbinning(const CentroidedData centroidedData, std::string outpath, int maxdist, bool silent, bool printBinSummary);
+
         }
     }
 }

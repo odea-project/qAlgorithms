@@ -71,7 +71,6 @@ int main()
       }
     }
     std::cout << " (" << num_centroids << " centroids)" << std::endl;
-    PRINT_DONE
 
     std::cout << "prepare data for qBinning.........";
     q::Algorithms::qBinning::CentroidedData testdata = qpeaks.passToBinning(centroids, centroids.size());
@@ -79,7 +78,7 @@ int main()
     std::cout << "perform qBinning..................";
     std::string summary_output_location = "summary_output_location";
     start = std::chrono::high_resolution_clock::now();
-    std::vector<q::Algorithms::qBinning::EIC> binnedData = q::Algorithms::qBinning::performQbinning(testdata, summary_output_location, 6, true);
+    std::vector<q::Algorithms::qBinning::EIC> binnedData = q::Algorithms::qBinning::performQbinning(testdata, summary_output_location, 6, true, false);
     end = std::chrono::high_resolution_clock::now();
     duration = end - start;
     PRINT_DONE_no_n

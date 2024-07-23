@@ -41,10 +41,11 @@ namespace q
             const bool ms1only,
             const int start_index)
         {
-            double expectedDifference = 0.0;                       // expected difference between two consecutive x-axis values
-            bool needsZeroFilling = true;                          // check if the instrument is Orbitrap
-            std::vector<int> indices = data.get_spectra_index();   // get all indices
-            std::vector<int> ms_levels = data.get_spectra_level(); // get all MS levels
+            std::vector<std::string> spectrum_mode = data.get_spectra_mode(); // get spectrum mode
+            double expectedDifference = 0.0;                                  // expected difference between two consecutive x-axis values
+            bool needsZeroFilling = true;                                     // check if the instrument is Orbitrap
+            std::vector<int> indices = data.get_spectra_index();              // get all indices
+            std::vector<int> ms_levels = data.get_spectra_level();            // get all MS levels
             if (ms1only)
             {
                 indices.erase(std::remove_if(indices.begin(), indices.end(), [&ms_levels](int i)
@@ -118,7 +119,7 @@ namespace q
         {
             std::vector<std::vector<std::unique_ptr<DataType::Peak>>> peaks =
                 std::vector<std::vector<std::unique_ptr<DataType::Peak>>>(data.size()); // create vector of unique pointers to peaks
-#pragma omp parallel for
+// #pragma omp parallel for
             for (size_t i = 0; i < data.size(); ++i) // loop over all data
             {
                 const int num_data_points = data[i].scanNumbers.size(); // number of data points
@@ -133,10 +134,15 @@ namespace q
                      data[i].mz,
                      data[i].DQSC,
                      data[i].DQSB}; // create vector of retention times and intensities
-
+                // std::cout << "\n -------------------------\n";
+                // for (size_t j = 0; j < eic[0].size(); ++j)
+                // {
+                //     std::cout << std::setprecision(8) << data[i].scanNumbers[j] << " " << eic[0][j] << " " << eic[1][j] << " " << eic[2][j] << " " << eic[3][j] << " " << eic[4][j] << " " << eic[5][j] << std::endl;
+                // }
+                // exit(0);
                 int num_subsets = zeroFilling_vec(eic, rt_diff, false);             // zero fill the spectrum
                 std::vector<std::vector<double>::iterator> separators(num_subsets); // vector of iterators at separation points (x axis)
-                extrapolateData_vec(eic, separators);                               // interpolate the data when zero filled
+                extrapolateData_vec(eic, separators);                        
                 qpeaks.findPeaks(peaks[i], eic, separators);                        // find peaks
             } // parallel for
             return peaks;
