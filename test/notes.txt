@@ -1,3 +1,5 @@
+Bin-Summary visualisierung: Plotte alle Bins mit mehr als x Fehlern als eigene Kategorie
+
 Kann der Anteil, den der Peak am EIC hat, auch für Korellation zwischen 
 Datensätzen verwendet werden?
 

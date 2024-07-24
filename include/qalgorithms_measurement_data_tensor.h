@@ -21,6 +21,10 @@ namespace q
          */
         class TensorData : public MeasurementData
         {
+        private:
+            float rt_diff;
+            float calcRTDiff(std::vector<double> &retention_times);
+
         public:
             // constructors
             TensorData();
@@ -28,8 +32,7 @@ namespace q
             // destructor
             ~TensorData();
 
-            bool
-            readCSV(
+            bool readCSV(
                 std::string filename,
                 int rowStart,
                 int rowEnd,
@@ -55,6 +58,7 @@ namespace q
                 q::Algorithms::qPeaks &qpeaks,
                 sc::MZML &data,
                 const bool ms1only = true,
+                const std::string polarity = "positive", // @todo why not a bool?
                 const int start_index = 0);
 
             std::vector<std::vector<std::unique_ptr<DataType::Peak>>>

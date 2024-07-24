@@ -27,8 +27,7 @@ namespace q
         // qPeaks::~qPeaks() {}
 
 #pragma region "plotPeaksToPython"
-        void
-        qPeaks::plotPeaksToPython(
+        void qPeaks::plotPeaksToPython(
             const std::string &filename_input,
             const std::string &filename_output,
             const bool includeFits,
@@ -54,48 +53,70 @@ namespace q
 
 #pragma region "pass to qBinning"
         qBinning::CentroidedData
-        qPeaks::passToBinning(std::vector<std::vector<std::unique_ptr<q::DataType::Peak>>> &allPeaks, size_t numberOfScans)
+        qPeaks::passToBinning(std::vector<std::vector<std::unique_ptr<q::DataType::Peak>>> &allPeaks)
         {
+            std::cout << "ok\n";
+            // assert(numberOfScans == allPeaks.size());
             // initialise empty vector with enough room for all scans - centroids[0] must remain empty
-            std::vector<std::vector<q::Algorithms::qBinning::qCentroid>> centroids(numberOfScans + 1, std::vector<qBinning::qCentroid>(0));
+            std::vector<std::vector<q::Algorithms::qBinning::qCentroid>> centroids(allPeaks.size() + 1, std::vector<qBinning::qCentroid>(0));
             int totalCentroids = 0;
             // create a temporary unordered map of peaks based on sampleID
             // sample ID = position of mass spectrum in order
-            std::unordered_map<int, std::vector<std::unique_ptr<DataType::Peak>>> peakMap;
+            // std::unordered_map<int, std::vector<std::unique_ptr<DataType::Peak>>> peakMap;
             // iterate over the peaks vector
-            for (size_t i = 0; i < allPeaks.size(); ++i)
+            // for (size_t i = 0; i < allPeaks.size(); ++i)
+            // {
+            //     if (!allPeaks[i].empty())
+            //     {
+            //         auto &peaks = allPeaks[i];
+            //         // iterate over the peaks vector
+            //         for (size_t j = 0; j < peaks.size(); ++j)
+            //         {
+            //             auto &peak = peaks[j];
+            //             if (peakMap.find(peak->sampleID) == peakMap.end()) // if the sample ID is not in the map, create a new entry?
+            //             {
+            //                 peakMap[peak->sampleID] = std::vector<std::unique_ptr<DataType::Peak>>();
+            //             }
+            //             peakMap[peak->sampleID].push_back(std::move(peak));
+            //         }
+            //     }
+            // }
+
+            // int scanRelative = 0;
+            // for (auto &pair : peakMap)
+            // {
+            //     std::vector<std::unique_ptr<DataType::Peak>> &peaks = pair.second;
+            //     ++scanRelative; // scans start at 1
+            //     // since the scans arrive in reverse order,
+            //     for (size_t j = peaks.size(); j-- > 0;)
+            //     {
+            //         auto &peak = peaks[j];
+            //         qBinning::qCentroid F = qBinning::qCentroid{peak->mz, peak->mzUncertainty, peak->retentionTime,
+            //                                                     scanRelative, peak->area, peak->dqsCen};
+            //         centroids[scanRelative].push_back(F);
+            //         ++totalCentroids;
+            //     }
+            // }
+
+            int scanRelative = 1;
+            for (int i = 0; i < allPeaks.size(); ++i)
             {
-                if (!allPeaks[i].empty())
+                auto &peaks = allPeaks[i];
+                if (!peaks.empty())
                 {
-                    auto &peaks = allPeaks[i];
-                    // iterate over the peaks vector
                     for (size_t j = 0; j < peaks.size(); ++j)
                     {
-                        auto &peak = peaks[j];
-                        if (peakMap.find(peak->sampleID) == peakMap.end()) // if the sample ID is not in the map, create a new entry?
-                        {
-                            peakMap[peak->sampleID] = std::vector<std::unique_ptr<DataType::Peak>>();
-                        }
-                        peakMap[peak->sampleID].push_back(std::move(peak));
+                        qBinning::qCentroid F = qBinning::qCentroid{peaks[j]->mz, peaks[j]->mzUncertainty,
+                                                                    peaks[j]->retentionTime, scanRelative, peaks[j]->area, peaks[j]->dqsCen};
+                        volatile qBinning::qCentroid F2 = F;
+                        centroids[scanRelative].push_back(F);
+                        ++totalCentroids;
                     }
+                    volatile int a = i;
+                    ++scanRelative;
                 }
             }
 
-            int scanRelative = 0;
-            for (auto &pair : peakMap)
-            {
-                std::vector<std::unique_ptr<DataType::Peak>> &peaks = pair.second;
-                ++scanRelative; // scans start at 1
-                // since the scans arrive in reverse order,
-                for (size_t j = peaks.size(); j-- > 0;)
-                {
-                    auto &peak = peaks[j];
-                    qBinning::qCentroid F = qBinning::qCentroid{peak->mz, peak->mzUncertainty, peak->retentionTime,
-                                                                scanRelative, peak->area, peak->dqsCen};
-                    centroids[scanRelative].push_back(F);
-                    ++totalCentroids;
-                }
-            }
             // the first scan must be empty for compatibility with qBinning
             assert(centroids[0].empty());
 
@@ -185,8 +206,7 @@ namespace q
 #pragma endregion "initialize"
 
 #pragma region "find centroids"
-        void
-        qPeaks::findCentroids(
+        void qPeaks::findCentroids(
             std::vector<std::unique_ptr<DataType::Peak>> &all_peaks,
             std::vector<std::vector<double>> &dataVec,
             std::vector<std::vector<double>::iterator> &separators,
@@ -251,13 +271,43 @@ namespace q
                     }
                     createPeaks_static(all_peaks, validRegressions, validRegressionsIndex, y_start, mz_start, rt_start, nullptr, nullptr, rt_start, scanNumber);
                 } // end static approach
+                else
+                { // dynamic approach
+                    alignas(32) float *Y = new float[n];
+                    alignas(32) float *Ylog = new float[n];
+                    alignas(32) float *X = new float[n];
+                    alignas(32) bool *df = new bool[n];
+                    std::vector<std::unique_ptr<validRegression_static>> validRegressions;
+
+                    // iterator to the start
+                    const auto y_start = Y;
+                    const auto ylog_start = Ylog;
+                    const auto mz_start = X;
+                    const auto df_start = df;
+
+                    std::copy(it_y, it_y + n, Y);
+                    std::copy(it_mz, it_mz + n, X);
+                    std::copy(it_df, it_df + n, df);
+                    it_y += n;
+                    it_df += n;
+                    it_mz += n;
+
+                    // perform log-transform on Y
+                    std::transform(y_start, y_start + n, ylog_start, [](float y)
+                                   { return std::log(y); });
+                    runningRegression(y_start, ylog_start, df_start, n, validRegressions);
+                    if (validRegressions.empty())
+                    {
+                        continue; // no valid peaks
+                    }
+                    createPeaks(all_peaks, validRegressions, y_start, mz_start, rt_start, nullptr, nullptr, rt_start, scanNumber);
+                } // end dynamic approach
             } // end for loop
         } // end findPeaks
 #pragma endregion "find centroids"
 
 #pragma region "find peaks"
-        void
-        qPeaks::findPeaks(
+        void qPeaks::findPeaks(
             std::vector<std::unique_ptr<DataType::Peak>> &all_peaks,
             std::vector<std::vector<double>> &dataVec,
             std::vector<std::vector<double>::iterator> &separators)
