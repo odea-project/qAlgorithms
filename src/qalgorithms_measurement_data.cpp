@@ -245,6 +245,7 @@ namespace q
           {
             std::swap(data[j][i], data[j][sorted_indexes[i]]);
           }
+          assert(sorted_indexes[i] != sorted_indexes[sorted_indexes[i]]);
           std::swap(sorted_indexes[i], sorted_indexes[sorted_indexes[i]]);
         }
       }

@@ -2,7 +2,8 @@
 #include "../include/qalgorithms_measurement_data_lcms.h"
 #include "../include/qalgorithms_measurement_data_tensor.h"
 #include "../include/qalgorithms_qpeaks.h"
-#include "../include/qalgorithms_ascii_logo.h"
+#include "../include/qalgorithms_console_output.h"
+// #include "../include/qalgorithms_ascii_logo.h"
 
 // external
 #include "../external/StreamCraft/src/StreamCraft_mzml.hpp"
@@ -12,41 +13,9 @@
 #include <cstdlib>
 #include <iomanip>
 
-// console output
-#define PRINT_DONE                       \
-  SetConsoleTextAttribute(hConsole, 10); \
-  std::cout << "done\n";                 \
-  SetConsoleTextAttribute(hConsole, 15);
-
-// console output
-#define PRINT_DONE_no_n                  \
-  SetConsoleTextAttribute(hConsole, 10); \
-  std::cout << "done";                   \
-  SetConsoleTextAttribute(hConsole, 15);
-
-// console output
-#define PRINT_NO_CENTROIDS               \
-  SetConsoleTextAttribute(hConsole, 12); \
-  std::cout << "no centroids found\n";   \
-  SetConsoleTextAttribute(hConsole, 15);
-
-// console output
-#define PRINT_POLARITY(polarity)                   \
-  SetConsoleTextAttribute(hConsole, 11);           \
-  std::cout << "\npolarity: " << polarity << "\n"; \
-  SetConsoleTextAttribute(hConsole, 15);
-
-// console output
-#define PRINT_FILE(filename, i, i_total)                                          \
-  SetConsoleTextAttribute(hConsole, 6);                                           \
-  std::cout << "\n[" << i << " / " << i_total << "]\nfile: " << filename << "\n"; \
-  SetConsoleTextAttribute(hConsole, 15);
-
 int main()
 {
-  // print logo
-  HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
-  q::logo::print_qpeaks();
+  PRINT_LOGO
   // initialize qPeaks static variables and lcmsData object
   q::Algorithms::qPeaks::initialize();
 
@@ -107,10 +76,10 @@ int main()
       for (auto polarity : polarities)
       {
         PRINT_POLARITY(polarity)
-        std::cout << "read file.........................";
+        PRINT_READ_FILE
         sc::MZML data(fileName); // create mzML object
         PRINT_DONE
-        std::cout << "find centroids....................";
+        PRINT_FIND_CENTROIDS
         q::Algorithms::qPeaks qpeaks;              // create qPeaks object
         q::MeasurementData::TensorData tensorData; // create tensorData object
         auto start = std::chrono::high_resolution_clock::now();
@@ -123,9 +92,6 @@ int main()
           std::cout << "no centroids found" << std::endl;
           continue;
         }
-        PRINT_DONE_no_n
-                std::cout
-            << " in " << duration.count() << " s";
         size_t num_centroids = 0;
         for (size_t i = 0; i < centroids.size(); ++i)
         {
@@ -134,31 +100,23 @@ int main()
             num_centroids++;
           }
         }
-        std::cout << " (" << num_centroids << " centroids)" << std::endl;
+        PRINT_DONE_TIME(duration, num_centroids)
 
-        std::cout << "prepare data for qBinning.........";
+        PRINT_FIND_EICS
         q::Algorithms::qBinning::CentroidedData testdata = qpeaks.passToBinning(centroids, centroids.size());
-        PRINT_DONE
-        std::cout << "perform qBinning..................";
         std::string summary_output_location = "summary_output_location";
         start = std::chrono::high_resolution_clock::now();
         std::vector<q::Algorithms::qBinning::EIC> binnedData = q::Algorithms::qBinning::performQbinning(testdata, summary_output_location, 6, true, false);
         end = std::chrono::high_resolution_clock::now();
         duration = end - start;
-        PRINT_DONE_no_n
-                std::cout
-            << " in " << duration.count() << " s";
-        std::cout << " (" << binnedData.size() << " EICs)" << std::endl;
+        PRINT_DONE_TIME(duration, binnedData.size())
 
-        std::cout << "find chromatographic peaks........";
+        PRINT_FIND_CHROMATROGRAPHIC_PEAKS
         start = std::chrono::high_resolution_clock::now();
         std::vector<std::vector<std::unique_ptr<q::DataType::Peak>>> peaks =
             tensorData.findPeaks_QBIN(qpeaks, binnedData);
         end = std::chrono::high_resolution_clock::now();
         duration = end - start;
-        PRINT_DONE_no_n
-                std::cout
-            << " in " << duration.count() << " s";
         size_t num_peaks = 0;
         for (size_t i = 0; i < peaks.size(); ++i)
         {
@@ -167,10 +125,10 @@ int main()
             num_peaks++;
           }
         }
-        std::cout << " (" << num_peaks << " peaks)" << std::endl;
+        PRINT_DONE_TIME(duration, num_peaks)
 
         // write peaks to csv file
-        std::cout << "write peaks to file...............";
+        PRINT_WRITE_FEATURES_TO_FILE
         // use file input name to create output file name with polarity_features.csv extension
         std::string output_filename = fileName.substr(0, fileName.find_last_of(".")) + "_" + polarity + "_features.csv";
         std::ofstream output_file(output_filename);

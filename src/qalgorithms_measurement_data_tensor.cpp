@@ -70,12 +70,14 @@ namespace q
                 expectedDifference = calcExpectedDiff(data_vec[0]);                                              // calculate expected difference & check if Orbitrap
                 isZeroFillingNeeded(data_vec[1], needsZeroFilling);                                              // check if zero filling is needed
             }
+            std::cout << expectedDifference << std::endl;
 
             if (needsZeroFilling)
             {
-#pragma omp parallel for
+// #pragma omp parallel for
                 for (size_t i = 0; i < indices.size(); ++i) // loop over all indices
                 {
+                    std::cout << "a";
                     const int index = indices[i]; // spectrum index
                     if (index < start_index)
                     {
@@ -143,12 +145,6 @@ namespace q
                      data[i].mz,
                      data[i].DQSC,
                      data[i].DQSB}; // create vector of retention times and intensities
-                // std::cout << "\n -------------------------\n";
-                // for (size_t j = 0; j < eic[0].size(); ++j)
-                // {
-                //     std::cout << std::setprecision(8) << data[i].scanNumbers[j] << " " << eic[0][j] << " " << eic[1][j] << " " << eic[2][j] << " " << eic[3][j] << " " << eic[4][j] << " " << eic[5][j] << std::endl;
-                // }
-                // exit(0);
                 int num_subsets = zeroFilling_vec(eic, rt_diff, false);             // zero fill the spectrum
                 std::vector<std::vector<double>::iterator> separators(num_subsets); // vector of iterators at separation points (x axis)
                 extrapolateData_vec(eic, separators);
