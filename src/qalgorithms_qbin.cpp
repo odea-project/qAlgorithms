@@ -487,7 +487,7 @@ namespace q
                 return finalBins;
             };
 
-            void BinContainer::printSelectBins(std::byte mask, bool fullBins, std::filesystem::path location)
+            void BinContainer::printSelectBins(bool printCentroids, std::filesystem::path location, std::string filename)
             {
                 // print optional summary file
 
@@ -497,7 +497,7 @@ namespace q
                               << "\nCurrent directory: " << std::filesystem::current_path() << "\ncontinuing...\n";
                     return;
                 }
-                if (fullBins)
+                if (!printCentroids)
                 {
                     std::cout << "writing bin summary and complete centroids to " << std::filesystem::canonical(location) << '\n';
                 }
@@ -506,11 +506,11 @@ namespace q
                     std::cout << "writing bin summary to " << std::filesystem::canonical(location) << '\n';
                 }
 
-                std::string binsSummary = location + "_summary.csv";
                 std::vector<size_t> indices;
                 std::fstream file_out_sum;
                 std::stringstream output_sum;
-                file_out_sum.open(binsSummary, std::ios::out);
+                location.filename() = filename + "_summary";
+                file_out_sum.open(location.replace_extension(".csv"), std::ios::out);
                 assert(file_out_sum.is_open());
                 output_sum << "ID,errorcode,size,mean_mz,median_mz,stdev_mz,mean_scans,DQSB_base,DQSB_scaled,DQSC_min,mean_error\n";
                 for (size_t i = 0; i < finishedBins.size(); i++)
@@ -529,12 +529,12 @@ namespace q
                 file_out_sum << output_sum.str();
                 file_out_sum.close();
                 // print all bins
-                if (fullBins)
+                if (printCentroids)
                 {
-                    std::string binsFull = location + "_bins.csv";
                     std::fstream file_out_all;
                     std::stringstream output_all;
-                    file_out_all.open(binsFull, std::ios::out);
+                    location.filename() = filename + "_bins";
+                    file_out_all.open(location.replace_extension(".csv"), std::ios::out);
                     assert(file_out_all.is_open());
                     output_all << "ID,mz,scan,intensity,mzError,DQSC,DQSB_base,DQSB_scaled\n";
                     for (size_t i = 0; i < indices.size(); i++)
@@ -561,7 +561,7 @@ namespace q
 
 #pragma region "Bin"
 
-            Bin::Bin(){};
+            Bin::Bin() {};
 
             Bin::Bin(const std::vector<qCentroid *>::iterator &binStartInOS, const std::vector<qCentroid *>::iterator &binEndInOS) // const std::vector<qCentroid> &sourceList,
             {
@@ -665,7 +665,11 @@ namespace q
                 int lastpos = 0;
                 for (size_t i = 0; i < binSize - 1; i++) // -1 since difference to next data point is checked
                 {
-                    assert(pointsInBin[i + 1]->RT > pointsInBin[i]->RT);
+                    if (pointsInBin[i + 1]->RT < pointsInBin[i]->RT)
+                    {
+                        std::cout << pointsInBin[i + 1]->RT << ", " << pointsInBin[i]->RT << "\n";
+                        volatile auto checkthis = pointsInBin;
+                    }
                     int distanceScan = pointsInBin[i + 1]->scanNo - pointsInBin[i]->scanNo;
                     if (distanceScan > maxdist) // bin needs to be split
                     {
@@ -1200,9 +1204,6 @@ namespace q
 
             EIC Bin::createEIC()
             {
-                std::sort(pointsInBin.begin(), pointsInBin.end(), [](qCentroid *lhs, qCentroid *rhs)
-                          { return lhs->scanNo < rhs->scanNo; });
-
                 int eicsize = pointsInBin.size();
 
                 std::byte bincode = this->summariseBin().errorcode; // this step contains sorting by scans for the time being @todo
@@ -1218,6 +1219,9 @@ namespace q
                 tmp_DQSB.reserve(eicsize);
                 std::vector<double> tmp_DQSC;
                 tmp_DQSC.reserve(eicsize);
+
+                std::sort(pointsInBin.begin(), pointsInBin.end(), [](qCentroid *lhs, qCentroid *rhs)
+                          { return lhs->scanNo < rhs->scanNo; });
 
                 // the quadratic interpolator expects empty spaces at the ends of the vector
                 // const int bufferZeroes = 4;
@@ -1239,7 +1243,7 @@ namespace q
                             continue;
                         }
                     }
-                    // assert(tmp_rt.back() < point->RT);
+                    assert(tmp_rt.back() < point->RT);
 
                     prevScan = point->scanNo;
                     tmp_scanNumbers.push_back(point->scanNo);
@@ -1334,7 +1338,8 @@ namespace q
 
 #pragma endregion "Functions"
 
-            std::vector<EIC> performQbinning(CentroidedData centroidedData, std::filesystem::path outpath, int inputMaxdist, bool silent, bool printBinSummary)
+            std::vector<EIC> performQbinning(CentroidedData centroidedData, std::filesystem::path outpath, std::string filename,
+                                             int inputMaxdist, bool silent, bool printBinSummary, bool printCentroids)
             {
                 std::streambuf *old = std::cout.rdbuf(); // save standard out config
                 std::stringstream ss;
@@ -1351,7 +1356,8 @@ namespace q
                 duplicatesTotal = 0;
                 BinContainer activeBins;
                 activeBins.makeFirstBin(&centroidedData);
-                std::vector<int> measurementDimensions = {SubsetMethods::mz, SubsetMethods::scans}; // at least one element must be terminator
+                // at least one element must be terminator @todo make this a function parameter
+                std::vector<int> measurementDimensions = {SubsetMethods::mz, SubsetMethods::scans};
                 activeBins.subsetBins(measurementDimensions, maxdist, false);
 
                 std::cout << "Total duplicates: " << duplicatesTotal << "\n--\ncalculating DQSBs...\n";
@@ -1368,7 +1374,7 @@ namespace q
 
                 if (printBinSummary)
                 {
-                    activeBins.printSelectBins(std::byte{0b11111111}, true, outpath);
+                    activeBins.printSelectBins(printCentroids, outpath, filename);
                 }
 
                 notInBins.resize(0);
@@ -1428,7 +1434,7 @@ int notmain()
     testcontainer.reconstructFromStdev(&testdata, 6);
 
     // print bin selection
-    testcontainer.printSelectBins(std::byte{0b11111111}, true, "../.."); // one bit per test
+    testcontainer.printSelectBins(true, p, "test"); // one bit per test
 
     // testcontainer.printBinSummary("../../summary_bins.csv");
     // testcontainer.printworstDQS();

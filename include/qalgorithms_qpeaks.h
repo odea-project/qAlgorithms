@@ -68,7 +68,7 @@ namespace q
                 std::vector<std::vector<double>> &dataVec,
                 std::vector<std::vector<double>::iterator> &separators);
 
-            qBinning::CentroidedData passToBinning(std::vector<std::vector<std::unique_ptr<q::DataType::Peak>>> &allPeaks, size_t numberOfScans);
+            qBinning::CentroidedData passToBinning(std::vector<std::vector<std::unique_ptr<q::DataType::Peak>>> &allPeaks);
 
             // export
             // void printAllPeaks(
