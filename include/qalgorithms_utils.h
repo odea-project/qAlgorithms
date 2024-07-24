@@ -7,16 +7,7 @@
 
 // external
 #include <vector>
-#include <iostream>
-#include <cmath>
-#include <map>
-#include <cstdint>
-#include <numeric>
-#include <cstdio>
-#include <cstdlib>
-#include <memory>
 #include <string>
-#include <stdexcept>
 #include <immintrin.h>
 
 namespace q
@@ -323,9 +314,9 @@ namespace q
         const q::Matrices::Vector &A);
 #pragma endregion "print functions"
 
-#pragma region "execute commands"
-    std::string
-    exec(const char *cmd);
-#pragma endregion "execute commands"
+// #pragma region "execute commands"
+//     std::string
+//     exec(const char *cmd);
+// #pragma endregion "execute commands"
 } // namespace q
 #endif // QALGORITHMS_UTILS_H

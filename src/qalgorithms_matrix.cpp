@@ -1,6 +1,7 @@
 // qalgorithms_matrix.cpp
 
 #include "../include/qalgorithms_matrix.h"
+#include <algorithm>
 
 namespace q
 {

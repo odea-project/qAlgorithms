@@ -3,11 +3,7 @@
 #define QALGORITHMS_MATRIX_H
 
 // external
-#include <iostream>
-#include <cmath>
-#include <algorithm>
-#include <array>
-#include <cstdint>
+#include <cstddef>
 
 /* This file includes the q::matrix class*/
 namespace q

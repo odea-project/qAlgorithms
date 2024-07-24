@@ -51,7 +51,7 @@ int main()
     q::Algorithms::qPeaks qpeaks;
     q::MeasurementData::TensorData tensorData;
     auto start = std::chrono::high_resolution_clock::now();
-    tensorData.readStreamCraftMZML(qpeaks, data, true, 10);
+    tensorData.findCentroids_MZML(qpeaks, data, true, "positive", 10);
     auto end = std::chrono::high_resolution_clock::now();
     PRINT_DONE
     std::cout << "                 in : ";

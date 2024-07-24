@@ -3,24 +3,15 @@
 #define QALGORITHMS_QPEAKS_H
 
 // internal
-#include "qalgorithms_matrix.h"
-// #include "qalgorithms_measurement_data.h"
-#include "qalgorithms_utils.h"
 #include "qalgorithms_datatype_peak.h"
 #include "qalgorithms_qbin.h"
 
 // external
 #include <vector>
 #include <memory>
-#include <omp.h>
-#include <limits>
-#include <numeric>
-#include <fstream>
-#include <cstdlib>
-#include <xmmintrin.h> // SSE
+
 #include <immintrin.h> // AVX
-#include <cassert>
-#include <iomanip>
+
 
 /* This file includes the q::qPeaks class*/
 namespace q

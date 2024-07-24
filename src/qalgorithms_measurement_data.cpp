@@ -2,11 +2,60 @@
 
 // internal
 #include "../include/qalgorithms_measurement_data.h"
+#include "../include/qalgorithms_matrix.h"
+#include "../include/qalgorithms_utils.h"
+#include <cmath>
+#include <fstream>
 
 namespace q
 {
   namespace MeasurementData
   {
+    std::vector<std::vector<std::unique_ptr<DataType::Peak>>>
+    MeasurementData::transfereCentroids(
+        sc::MZML &data,
+        std::vector<int> &indices,
+        std::vector<double> &retention_times,
+        const int start_index)
+    {
+      std::vector<std::vector<std::unique_ptr<DataType::Peak>>> centroids(indices.size());
+#pragma omp parallel for
+      for (size_t i = 0; i < indices.size(); ++i) // loop over all indices
+      {
+        const int index = indices[i]; // spectrum index
+        if (index < start_index)
+        {
+          continue; // skip due to index
+        }
+        // get the spectrum
+        alignas(64) std::vector<std::vector<double>> spectrum = data.get_spectrum(index);
+        // print spectrum to csv file
+        // std::string filename = "test.csv";
+        // std::ofstream file(filename);
+        // for (size_t j = 0; j < spectrum[0].size(); j++)
+        // {
+        //   file << spectrum[0][j] << "," << spectrum[1][j] << std::endl;
+        // }
+        // file.close();
+        // exit(0);
+        for (size_t j = 0; j < spectrum[0].size(); j++)
+        {
+          if (spectrum[1][j] < 1000)
+          {
+            continue; // skip due to low intensity
+          }
+          centroids[i].push_back(std::make_unique<DataType::Peak>());
+          centroids[i].back()->sampleID = index;
+          centroids[i].back()->mz = spectrum[0][j];
+          centroids[i].back()->area = spectrum[1][j];
+          centroids[i].back()->retentionTime = retention_times[i];
+          centroids[i].back()->dqsCen = 0.0;
+          centroids[i].back()->mzUncertainty = spectrum[0][j] * 5e-6; // 5 ppm
+        }
+      }
+      return centroids;
+    }
+
     void MeasurementData::zeroFilling(varDataType &dataVec, int k)
     {
       std::visit([k](auto &&arg)
@@ -245,7 +294,6 @@ namespace q
           {
             std::swap(data[j][i], data[j][sorted_indexes[i]]);
           }
-          assert(sorted_indexes[i] != sorted_indexes[sorted_indexes[i]]);
           std::swap(sorted_indexes[i], sorted_indexes[sorted_indexes[i]]);
         }
       }

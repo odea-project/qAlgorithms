@@ -2,11 +2,10 @@
 #define QALGORITHMS_MEASUREMENT_DATA_LCMS_H
 
 // internal
-#include "qalgorithms_measurement_data.h"
+#include "../include/qalgorithms_measurement_data.h"
 
 // external
 #include "../external/StreamCraft/src/StreamCraft_mzml.hpp"
-#include <vector>
 
 namespace q
 {

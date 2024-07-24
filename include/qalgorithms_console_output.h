@@ -2,7 +2,7 @@
 #define CONSOLE_OUTPUT_H
 
 #include <iostream>
-#include <windows.h> // Für SetConsoleTextAttribute
+#include <windows.h>
 
 // define colors
 #define BLACK 0
@@ -94,8 +94,7 @@
 
 #define PRINT_LOGO                                            \
   SetConsoleOutputCP(CP_UTF8);                                \
-  \                                                                                                    
-HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);            \
+  HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);          \
   std::cout << "\n";                                          \
   std::cout << "    ";                                        \
   SetConsoleTextAttribute(hConsole, LIGHT_RED);               \

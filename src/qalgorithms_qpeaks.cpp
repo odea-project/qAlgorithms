@@ -2,6 +2,11 @@
 //
 // internal
 #include "../include/qalgorithms_qpeaks.h"
+#include "../include/qalgorithms_utils.h"
+#include <algorithm>
+#include <cassert>
+#include <numeric>
+#include <cmath>
 
 // external
 
@@ -34,7 +39,8 @@ namespace q
         return;
       }
       std::string command = "python python/plotPeaksToPython.py " + filename_input + " " + filename_output + " " + std::to_string(includeFits) + " " + std::to_string(featureMap);
-      std::string result = exec(command.c_str());
+      std::string result;
+      std::system(command.c_str());
       std::cout << result;
     }
 #pragma endregion "plotPeaksToPython"

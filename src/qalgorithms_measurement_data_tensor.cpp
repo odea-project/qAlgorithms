@@ -58,7 +58,11 @@ namespace q
                                          { return spectrum_polarity[i] != polarity; }),
                           indices.end());                                       // keep only spectra with the specified polarity
             std::vector<double> retention_times = data.get_spectra_rt(indices); // get retention times
-            rt_diff = calcRTDiff(retention_times);                              // retention time difference
+            if (spectrum_mode[0] == "centroid")
+            {
+                return transfereCentroids(data, indices, retention_times, start_index);
+            }
+            rt_diff = calcRTDiff(retention_times); // retention time difference
             std::vector<std::vector<std::unique_ptr<DataType::Peak>>> centroids =
                 std::vector<std::vector<std::unique_ptr<DataType::Peak>>>(indices.size()); // create vector of unique pointers to peaks
             if (centroids.size() == 0)
@@ -70,14 +74,12 @@ namespace q
                 expectedDifference = calcExpectedDiff(data_vec[0]);                                              // calculate expected difference & check if Orbitrap
                 isZeroFillingNeeded(data_vec[1], needsZeroFilling);                                              // check if zero filling is needed
             }
-            std::cout << expectedDifference << std::endl;
 
             if (needsZeroFilling)
             {
-// #pragma omp parallel for
+#pragma omp parallel for
                 for (size_t i = 0; i < indices.size(); ++i) // loop over all indices
                 {
-                    std::cout << "a";
                     const int index = indices[i]; // spectrum index
                     if (index < start_index)
                     {
@@ -144,7 +146,7 @@ namespace q
                      std::vector<double>(num_data_points, 1.0),
                      data[i].mz,
                      data[i].DQSC,
-                     data[i].DQSB}; // create vector of retention times and intensities
+                     data[i].DQSB};                                                 // create vector of retention times and intensities
                 int num_subsets = zeroFilling_vec(eic, rt_diff, false);             // zero fill the spectrum
                 std::vector<std::vector<double>::iterator> separators(num_subsets); // vector of iterators at separation points (x axis)
                 extrapolateData_vec(eic, separators);

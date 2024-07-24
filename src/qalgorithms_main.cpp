@@ -3,7 +3,6 @@
 #include "../include/qalgorithms_measurement_data_tensor.h"
 #include "../include/qalgorithms_qpeaks.h"
 #include "../include/qalgorithms_console_output.h"
-// #include "../include/qalgorithms_ascii_logo.h"
 
 // external
 #include "../external/StreamCraft/src/StreamCraft_mzml.hpp"
