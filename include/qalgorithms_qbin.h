@@ -21,7 +21,7 @@ namespace q
             {
                 double mz;
                 double mzError = -1;
-                double RT;
+                float RT;
                 int scanNo;
                 double intensity;
                 double DQScentroid;
@@ -113,6 +113,11 @@ namespace q
                 double medianMZ;
 
             public:
+                std::vector<qCentroid *> pointsInBin; // @todo does not change after bin creation, check for performance improvement when using cast const
+                std::vector<double> activeOS;         // Order Space
+                std::vector<double> DQSB_base;        // DQSB when all distances are considered equal
+                std::vector<double> DQSB_scaled;      // DQSB if a gaussian falloff is assumed
+
                 // @todo get mz and scan min/max at the earliest opportunity
                 double mzMin;
                 double mzMax;
@@ -122,11 +127,6 @@ namespace q
                 bool duplicateScan = false; // are two points with the same scan number in this bin?
                 bool l_maxdist_tooclose = false;
                 bool r_maxdist_tooclose = false; // Check if there is a point within maxdist
-
-                std::vector<qCentroid *> pointsInBin; // @todo does not change after bin creation, check for performance improvement when using cast const
-                std::vector<double> activeOS;         // Order Space
-                std::vector<double> DQSB_base;        // DQSB when all distances are considered equal
-                std::vector<double> DQSB_scaled;      // DQSB if a gaussian falloff is assumed
 
                 /// @brief generate a bin that is a subset of an existing bin using two iterators.
                 /// @details since this extracts a continuous sequence, it is only a good idea
@@ -138,8 +138,7 @@ namespace q
                 /// @brief generate a bin by adding pointers to all points in rawdata to pointsInBin
                 /// @param rawdata a set of raw data on which binning is to be performed
                 Bin(CentroidedData *rawdata);
-                Bin(); // @todo why can these not be deleted?
-                ~Bin();
+                Bin();
 
                 /// @brief generate the activeOS vector containing the difference to the next greatest mz for every point
                 void makeOS();
