@@ -58,11 +58,11 @@ namespace q
                                          { return spectrum_polarity[i] != polarity; }),
                           indices.end());                                       // keep only spectra with the specified polarity
             std::vector<double> retention_times = data.get_spectra_rt(indices); // get retention times
+            rt_diff = calcRTDiff(retention_times); // retention time difference
             if (spectrum_mode[0] == "centroid")
             {
                 return transfereCentroids(data, indices, retention_times, start_index);
             }
-            rt_diff = calcRTDiff(retention_times); // retention time difference
             std::vector<std::vector<std::unique_ptr<DataType::Peak>>> centroids =
                 std::vector<std::vector<std::unique_ptr<DataType::Peak>>>(indices.size()); // create vector of unique pointers to peaks
             if (centroids.size() == 0)
@@ -130,10 +130,6 @@ namespace q
             q::Algorithms::qPeaks &qpeaks,
             std::vector<q::Algorithms::qBinning::EIC> &data)
         {
-            auto compare = [](const std::vector<double> &a, const std::vector<double> &b)
-            {
-                return a[0] < b[0]; // sort by x-axis
-            };
             std::vector<std::vector<std::unique_ptr<DataType::Peak>>> peaks =
                 std::vector<std::vector<std::unique_ptr<DataType::Peak>>>(data.size()); // create vector of unique pointers to peaks
 #pragma omp parallel for
@@ -144,17 +140,42 @@ namespace q
                 {
                     continue; // skip due to lack of data, i.e., degree of freedom will be zero
                 }
-                std::vector<std::vector<double>> eic =
-                    {data[i].rententionTimes,
-                     data[i].intensities,
-                     std::vector<double>(num_data_points, 1.0),
-                     data[i].mz,
-                     data[i].DQSC,
-                     data[i].DQSB}; // create vector of retention times and intensities
-                if (!std::is_sorted(eic[0].begin(), eic[0].end()))
+                std::vector<size_t> indices(data[i].scanNumbers.size());
+                std::iota(indices.begin(), indices.end(), 0);
+                auto compare = [&data, &i](size_t a, size_t b)
                 {
-                    std::sort(eic.begin(), eic.end(), compare); // sort by x-axis
+                    return data[i].rententionTimes[a] < data[i].rententionTimes[b];
+                };
+
+                std::vector<std::vector<double>> eic;
+                if (!std::is_sorted(data[i].rententionTimes.begin(), data[i].rententionTimes.end())) // WILL BE DELETED IN THE FUTURE
+                {
+                    std::sort(indices.begin(), indices.end(), compare);
+                    std::vector<double> rt_sorted(num_data_points);
+                    std::vector<double> int_sorted(num_data_points);
+                    std::vector<double> mz_sorted(num_data_points);
+                    std::vector<double> DQSC_sorted(num_data_points);
+                    std::vector<double> DQSB_sorted(num_data_points);
+                    for (size_t j = 0; j < num_data_points; ++j)
+                    {
+                        rt_sorted[j] = data[i].rententionTimes[indices[j]];
+                        int_sorted[j] = data[i].intensities[indices[j]];
+                        mz_sorted[j] = data[i].mz[indices[j]];
+                        DQSC_sorted[j] = data[i].DQSC[indices[j]];
+                        DQSB_sorted[j] = data[i].DQSB[indices[j]];
+                    }
+                    eic = {rt_sorted, int_sorted, std::vector<double>(num_data_points, 1.0), mz_sorted, DQSC_sorted, DQSB_sorted}; // create vector of retention times and intensities
                 }
+                else
+                {
+                    eic = {data[i].rententionTimes,
+                           data[i].intensities,
+                           std::vector<double>(num_data_points, 1.0),
+                           data[i].mz,
+                           data[i].DQSC,
+                           data[i].DQSB}; // create vector of retention times and intensities
+                }
+
                 int num_subsets = zeroFilling_vec(eic, rt_diff, false);             // zero fill the spectrum
                 std::vector<std::vector<double>::iterator> separators(num_subsets); // vector of iterators at separation points (x axis)
                 extrapolateData_vec(eic, separators);
