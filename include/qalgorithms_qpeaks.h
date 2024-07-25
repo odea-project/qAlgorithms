@@ -18,7 +18,7 @@
 // #include <cstdlib>
 // #include <sstream>
 // #include <cassert>
-#include <xmmintrin.h> // SSE
+// #include <xmmintrin.h> // SSE
 #include <immintrin.h> // AVX
 
 /* This file includes the q::qPeaks class*/
@@ -33,7 +33,7 @@ namespace q
         {
         public:
             static const int global_maxScale = 15; // maximum scale for regression window
-            qPeaks();
+            // qPeaks();
 
             /**
              * @brief Construct a new q Peaks object using varDataType object to initialize the object Matrices.

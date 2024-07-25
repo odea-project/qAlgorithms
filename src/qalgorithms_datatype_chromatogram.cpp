@@ -37,10 +37,6 @@ namespace q
             std::reverse(dataPoints.begin(), dataPoints.end());
         }
 
-        Chromatogram::~Chromatogram()
-        {
-            // destructor
-        }
         // methods
         void
         Chromatogram::addDataPoint(double intensity, double mz, int df)

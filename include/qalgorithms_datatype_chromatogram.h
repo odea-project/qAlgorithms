@@ -62,9 +62,6 @@ namespace q
              */
             Chromatogram(Chromatogram &parent, size_t k);
 
-            // destructor
-            ~Chromatogram();
-
             // methods
             /**
              * @brief Add a data point to the chromatogram

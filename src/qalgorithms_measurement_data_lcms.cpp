@@ -25,10 +25,6 @@ namespace q
             maxKey = 0;
         }
 
-        // LCMSData::~LCMSData() // this is implicity declared
-        // {
-        // }
-
         // bool LCMSData::readCSV(std::string filename, size_t rowStart, int rowEnd, int colStart, int colEnd, char separator, std::vector<DataField> variableTypes)
         // {
         //     // @todo currenty only

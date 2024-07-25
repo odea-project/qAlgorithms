@@ -1,7 +1,7 @@
 // internal
-#include "../include/qalgorithms_measurement_data_lcms.h"
-#include "../include/qalgorithms_measurement_data_tensor.h"
-#include "../include/qalgorithms_qpeaks.h"
+#include "qalgorithms_measurement_data_lcms.h"
+#include "qalgorithms_measurement_data_tensor.h"
+#include "qalgorithms_qpeaks.h"
 
 // external
 #include "../external/StreamCraft/src/StreamCraft_mzml.h"
@@ -11,12 +11,14 @@
 #include <cstdlib>
 #include <iomanip>
 #include <filesystem> // printing absolute path in case read fails
+#include <string>
+#include <sstream>
 
 int main(int argc, char *argv[])
 {
     std::string filename_input;
     bool inSpecified;
-    std::filesystem::path pathSource;
+    std::filesystem::path pathInput;
     bool outSpecified;
     std::filesystem::path pathOutput;
     std::string filename;
@@ -24,40 +26,41 @@ int main(int argc, char *argv[])
     // ask for file if none are specified
     if (argc == 1)
     {
+        // @todo check standard in and use that if it isn't empty
         std::cout << "Enter a filename (replace every backslash with a forward slash) "
                   << "to process that file. You must select an .mzML file.  ";
         std::cin >> filename_input;
         // filename_input = "C:/Users/unisys/Documents/Studium/Messdaten/LCMS_pressure_error/22090901_H2O_1_pos.mzML";
-        pathSource = filename_input;
-        if (!std::filesystem::exists(pathSource))
+        pathInput = filename_input;
+        if (!std::filesystem::exists(pathInput))
         {
-            std::cout << "Error: The selected file does not exist.\nSupplied path: " << std::filesystem::canonical(pathSource)
-                      << "\nCurrent directory: " << std::filesystem::current_path() << "\n\nTerminated Program.\n\n";
+            std::cerr << "Error: The selected file does not exist.\n"
+                      << std::filesystem::canonical(pathInput);
+        }
+        if (pathInput.extension() != ".mzML")
+        {
+            std::cerr << "Error: the selected file has the type " << pathInput.extension() << ", but only \".mzML\" is supported\n";
             exit(101); // @todo sensible exit codes
         }
-        if (pathSource.extension() != ".mzML")
-        {
-            std::cout << "Error: the selected file has the type " << pathSource.extension() << ", but only \".mzML\" is supported";
-            exit(101); // @todo sensible exit codes
-        }
-        filename = pathSource.filename().string();
+        filename = pathInput.filename().string();
         std::cout << "\nfile accepted, enter the output directory or \"#\" to use the input directory:  ";
         std::cin >> filename_input;
         if (filename_input == "#")
         {
-            pathOutput = pathSource.parent_path();
+            pathOutput = pathInput.parent_path();
         }
         else
         {
             pathOutput = filename_input;
-            if (pathOutput == pathSource)
+            if (pathOutput == pathInput)
             {
-                std::cout << "Error: use \"#\" if you want to save your results to the location of your input file";
+                std::cerr << "Error: use \"#\" if you want to save your results to the location of your input file\n";
                 exit(101);
             }
         }
         inSpecified = true;
         outSpecified = true;
+        tasklist.push_back(pathInput);
     }
 
     // if only one argument is given, check if it is any variation of help
@@ -84,7 +87,7 @@ int main(int argc, char *argv[])
                       << "-h, -help: open this help menu\n"
                       << "-s, -silent: do not print progress reports to standard out\n"
                       << "-w, -wordy: print a detailed progress report to standard out"
-                      << "-f, -file: specifies the input file. Use as -f FILEPATH\n"
+                      << "-f, -files: specifies the input files. More than one file can be passed. Use as -f FILEPATH FILEPATH etc.\n" // @todo allow piping of file list
                       << "-tl, -tasklist: pass a list of file paths to the function"
                       << "-r, -recursive: recursive search for .mzML files in the specified directory. "
                       << "Use as -r DIRECTORY\n"
@@ -98,8 +101,8 @@ int main(int argc, char *argv[])
                       << "-pb, -printbins: If this flag is set, both bin summary information and "
                       << "all binned centroids will be printed to the output location in addition "
                       << "to the final peak table. The files end in _summary.csv and _bins.csv.\n"
-                      << "-e, -extended: print additional information into the final peak list."
-                      << "-log: This option will create a detailed log file in the program directory.";
+                      << "-e, -extended: print additional information into the final peak list.\n"
+                      << "-log: This option will create a detailed log file in the program directory.\n";
 
             exit(0);
         }
@@ -113,18 +116,94 @@ int main(int argc, char *argv[])
             wordyProgress = true;
             continue;
         }
-        if ((argument == "-f") | (argument == "-file"))
+        if ((argument == "-f") | (argument == "-files"))
         {
-            // @todo
+            // @todo loop until the first string which contains a "-" and add those files to the task list
             inSpecified = true;
             ++i;
+            int control = i;
+            pathInput = argv[i];
+            while (std::filesystem::exists(pathInput))
+            {
+                if (pathInput.extension() != ".mzML")
+                {
+                    std::cerr << "Error: only .mzML files are supported. The file input has been skipped.\n";
+                }
+                else
+                {
+                    tasklist.push_back(pathInput);
+                }
+                ++i;
+                pathInput = argv[i];
+            }
+            if (i == control)
+            {
+                std::cerr << "Error: argument -files was set, but no valid file supplied.\n";
+                inSpecified = false;
+            }
+
             continue;
         }
         if ((argument == "-tl") | (argument == "-tasklist"))
         {
-            // @todo
             tasklistSpecified = true;
             ++i;
+            pathInput = argv[i];
+            if (!std::filesystem::exists(pathInput))
+            {
+                std::cerr << "Error: The selected tasklist file does not exist.\n"
+                          << std::filesystem::canonical(pathInput);
+            }
+            std::ifstream file(pathInput);
+            std::filesystem::path pathTemp;
+            std::string line;
+            bool firstline = true;
+            while (std::getline(file, line))
+            {
+                if (firstline)
+                {
+                    if (line != "TASKFILE")
+                    {
+                        std::cerr << "Error: The taskfile is not formatted correctly. The first line of the taskfile must be \"TASKFILE\"\n";
+                        exit(101);
+                    }
+                    firstline = false;
+                    continue;
+                }
+                if (line[0] == char('#'))
+                {
+                    continue;
+                }
+                if (line[0] == char('-'))
+                {
+                    continue;
+                }
+
+                pathTemp = line;
+
+                if (pathTemp.extension() != ".mzML")
+                {
+                    std::cerr << "Error: only .mzML files are supported. The tasklist entry has been skipped.\n";
+                    continue;
+                }
+                if (!std::filesystem::exists(pathInput))
+                {
+                    std::cerr << "Error: a specified file does not exist. I has been removed from the tasklist.\n";
+                }
+
+                tasklist.push_back(pathTemp);
+            }
+            /*@todo
+            the task file should contain a list of all files the program
+            should run over. It should give access to additional settings,
+            for example per-group output location and multiple recursion points.
+            Lines can be commented out with a "#". empty lines are ignored.
+            The file must start with a line containing only "TASKFILE" and
+            should accept some standardised user data like name and project.
+            Suggested options:
+                ADDDATE: The current date (YYYYMMDD) is added with an underscore
+                to the front of the filename
+            */
             continue;
         }
         if ((argument == "-r") | (argument == "-recursive"))
@@ -132,6 +211,7 @@ int main(int argc, char *argv[])
             // @todo
             recursiveSearch = true;
             ++i;
+
             continue;
         }
         if ((argument == "-o") | (argument == "-output"))
@@ -139,6 +219,11 @@ int main(int argc, char *argv[])
             // @todo
             recursiveSearch = true;
             ++i;
+            pathOutput = argv[i];
+            if (!std::filesystem::exists(pathOutput))
+            {
+                std::cerr << "Error: the specified";
+            }
             continue;
         }
         if ((argument == "-ps") | (argument == "-printsummary"))
@@ -166,27 +251,28 @@ int main(int argc, char *argv[])
 
     if ((!inSpecified & !recursiveSearch) & (!tasklistSpecified))
     {
-        std::cout << "Error: no input file supplied. Specify a file using the -f, -r or -tl flag. Execute qAlgorithms with the -h flag for more information\n";
+        std::cerr << "Error: no input file supplied. Specify a file using the -f, -r or -tl flag. Execute qAlgorithms with the -h flag for more information\n";
         exit(1);
     }
 
     if (inSpecified & recursiveSearch)
     {
-        std::cout << "Error: Recursive search and target file are incompatible\n";
+        std::cerr << "Error: Recursive search and target file are incompatible\n";
         exit(100);
     }
     if (tasklistSpecified & recursiveSearch)
     {
-        std::cout << "Error: Recursive search and task list are incompatible\n";
+        std::cerr << "Error: Recursive search and task list are incompatible\n";
         exit(100);
     }
     if (inSpecified & tasklistSpecified)
     {
-        std::cout << "Both an input file and a tasklist were specified. The file has been added to the tasklist.\n";
+        std::cerr << "Both an input file and a tasklist were specified. The file has been added to the tasklist.\n";
         // @todo
     }
 
 #pragma region file processing
+    for (std::filesystem::path pathSource : tasklist)
     {
         if (!outSpecified)
         {

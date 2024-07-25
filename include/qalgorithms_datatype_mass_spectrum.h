@@ -69,9 +69,6 @@ namespace q
              */
             MassSpectrum(MassSpectrum &parent, const size_t k);
 
-            // destructor
-            ~MassSpectrum();
-
             // methods
             /**
              * @brief Add a data point to the mass spectrum

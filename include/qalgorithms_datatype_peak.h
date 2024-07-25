@@ -41,13 +41,6 @@ namespace q
     class Peak
     {
     public:
-      // constructors
-      Peak();
-      // Peak(int sampleID, double position, double height);
-
-      // destructor
-      ~Peak();
-
       // properties
       // required
       int sampleID;

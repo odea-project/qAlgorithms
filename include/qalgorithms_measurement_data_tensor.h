@@ -26,12 +26,6 @@ namespace q
             float calcRTDiff(std::vector<double> &retention_times);
 
         public:
-            // constructors
-            TensorData();
-
-            // destructor
-            ~TensorData();
-
             bool readCSV(
                 std::string filename,
                 int rowStart,

@@ -23,11 +23,6 @@ namespace q
       std::copy(other.elements, other.elements + (rows * cols), elements);
     }
 
-    Matrix::~Matrix()
-    {
-      delete[] elements;
-    }
-
     // access
     double &
     Matrix::operator()(size_t row, size_t col)
@@ -67,11 +62,6 @@ namespace q
     Matrix_mc::Matrix_mc(const size_t rows, const size_t cols) : rows(rows), cols(cols)
     {
       elements = new double[rows * cols]();
-    }
-
-    Matrix_mc::~Matrix_mc()
-    {
-      delete[] elements;
     }
 
     Matrix_mc::Matrix_mc(const Matrix_mc &other) : rows(other.rows), cols(other.cols)
@@ -127,11 +117,6 @@ namespace q
     Matrix_mc_4x4::Matrix_mc_4x4()
     {
       std::fill_n(elements, 16, 0.0);
-    }
-
-    Matrix_mc_4x4::~Matrix_mc_4x4()
-    {
-      // empty because elements is a stack array
     }
 
     Matrix_mc_4x4::Matrix_mc_4x4(const Matrix_mc_4x4 &other)
@@ -206,11 +191,6 @@ namespace q
       elements = new double[n]();
     }
 
-    Vector::~Vector()
-    {
-      delete[] elements;
-    }
-
     Vector::Vector(const Vector &other) : n(other.n)
     {
       elements = new double[n];
@@ -273,11 +253,6 @@ namespace q
     BoolVector::BoolVector(const size_t n) : n(n)
     {
       elements = new bool[n]();
-    }
-
-    BoolVector::~BoolVector()
-    {
-      delete[] elements;
     }
 
     BoolVector::BoolVector(const BoolVector &other) : n(other.n)

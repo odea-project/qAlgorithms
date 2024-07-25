@@ -138,7 +138,7 @@ namespace q
                 /// @brief generate a bin by adding pointers to all points in rawdata to pointsInBin
                 /// @param rawdata a set of raw data on which binning is to be performed
                 Bin(CentroidedData *rawdata);
-                Bin();
+                Bin(); // @todo why can these not be deleted?
                 ~Bin();
 
                 /// @brief generate the activeOS vector containing the difference to the next greatest mz for every point
