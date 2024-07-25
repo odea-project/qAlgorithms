@@ -52,48 +52,8 @@ namespace q
         qBinning::CentroidedData
         qPeaks::passToBinning(std::vector<std::vector<std::unique_ptr<q::DataType::Peak>>> &allPeaks)
         {
-            std::cout << "ok\n";
-            // assert(numberOfScans == allPeaks.size());
-            // initialise empty vector with enough room for all scans - centroids[0] must remain empty
             std::vector<std::vector<q::Algorithms::qBinning::qCentroid>> centroids(allPeaks.size() + 1, std::vector<qBinning::qCentroid>(0));
             int totalCentroids = 0;
-            // create a temporary unordered map of peaks based on sampleID
-            // sample ID = position of mass spectrum in order
-            // std::unordered_map<int, std::vector<std::unique_ptr<DataType::Peak>>> peakMap;
-            // iterate over the peaks vector
-            // for (size_t i = 0; i < allPeaks.size(); ++i)
-            // {
-            //     if (!allPeaks[i].empty())
-            //     {
-            //         auto &peaks = allPeaks[i];
-            //         // iterate over the peaks vector
-            //         for (size_t j = 0; j < peaks.size(); ++j)
-            //         {
-            //             auto &peak = peaks[j];
-            //             if (peakMap.find(peak->sampleID) == peakMap.end()) // if the sample ID is not in the map, create a new entry?
-            //             {
-            //                 peakMap[peak->sampleID] = std::vector<std::unique_ptr<DataType::Peak>>();
-            //             }
-            //             peakMap[peak->sampleID].push_back(std::move(peak));
-            //         }
-            //     }
-            // }
-
-            // int scanRelative = 0;
-            // for (auto &pair : peakMap)
-            // {
-            //     std::vector<std::unique_ptr<DataType::Peak>> &peaks = pair.second;
-            //     ++scanRelative; // scans start at 1
-            //     // since the scans arrive in reverse order,
-            //     for (size_t j = peaks.size(); j-- > 0;)
-            //     {
-            //         auto &peak = peaks[j];
-            //         qBinning::qCentroid F = qBinning::qCentroid{peak->mz, peak->mzUncertainty, peak->retentionTime,
-            //                                                     scanRelative, peak->area, peak->dqsCen};
-            //         centroids[scanRelative].push_back(F);
-            //         ++totalCentroids;
-            //     }
-            // }
 
             int scanRelative = 1;
             for (size_t i = 0; i < allPeaks.size(); ++i)

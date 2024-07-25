@@ -577,7 +577,6 @@ namespace q
                     }
                 }
             }
-            Bin::~Bin() {}
 
             void Bin::makeOS()
             {

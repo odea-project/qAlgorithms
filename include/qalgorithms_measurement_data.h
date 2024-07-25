@@ -30,7 +30,7 @@ namespace q
         {
         public:
             // destructor
-            virtual ~MeasurementData() {};
+            // virtual ~MeasurementData() {};
 
             std::vector<std::vector<std::unique_ptr<DataType::Peak>>>
             transfereCentroids(

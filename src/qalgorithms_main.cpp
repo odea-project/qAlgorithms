@@ -17,9 +17,9 @@
 int main(int argc, char *argv[])
 {
     std::string filename_input;
-    bool inSpecified;
+    bool inSpecified = false;
     std::filesystem::path pathInput;
-    bool outSpecified;
+    bool outSpecified = false;
     std::filesystem::path pathOutput;
     std::string filename;
     std::vector<std::filesystem::path> tasklist;
@@ -121,33 +121,42 @@ int main(int argc, char *argv[])
             // @todo loop until the first string which contains a "-" and add those files to the task list
             inSpecified = true;
             ++i;
-            int control = i;
             pathInput = argv[i];
+            if ((i == argc) | !(std::filesystem::exists(pathInput)))
+            {
+                std::cerr << "Error: argument -files was set, but no valid file supplied.\n";
+                inSpecified = false;
+            }
             while (std::filesystem::exists(pathInput))
             {
+                pathInput = argv[i];
                 if (pathInput.extension() != ".mzML")
                 {
                     std::cerr << "Error: only .mzML files are supported. The file input has been skipped.\n";
                 }
                 else
                 {
+                    std::cout << "input ok";
                     tasklist.push_back(pathInput);
                 }
                 ++i;
-                pathInput = argv[i];
-            }
-            if (i == control)
-            {
-                std::cerr << "Error: argument -files was set, but no valid file supplied.\n";
-                inSpecified = false;
+                if (i == argc)
+                {
+                    break;
+                }
             }
 
             continue;
         }
-        if ((argument == "-tl") | (argument == "-tasklist"))
+        if ((argument == "-tl") | (argument == "-tasklist")) // @todo test this
         {
             tasklistSpecified = true;
             ++i;
+            if (i == argc)
+            {
+                std::cerr << "Error: no task list specified.\n";
+                exit(101);
+            }
             pathInput = argv[i];
             if (!std::filesystem::exists(pathInput))
             {
@@ -174,7 +183,8 @@ int main(int argc, char *argv[])
                 {
                     continue;
                 }
-                if (line[0] == char('-'))
+                if (line[0] == char('$'))
+                //@todo add argument checker
                 {
                     continue;
                 }
@@ -211,18 +221,59 @@ int main(int argc, char *argv[])
             // @todo
             recursiveSearch = true;
             ++i;
+            if (i == argc)
+            {
+                std::cerr << "Error: no target directory specified.\n";
+                exit(101);
+            }
+            pathInput = argv[i];
+            if (!std::filesystem::exists(pathInput))
+            {
+                std::cerr << "Error: the target path for recursive search does not exist.\n";
+                exit(101);
+            }
+            if (std::filesystem::exists(pathInput.filename()))
+            {
+                std::cerr << "Error: the target directory for recursive search cannot be a file.\n";
+            }
+            int fileCounter = 0;
+            for (auto const &dir_entry : std::filesystem::recursive_directory_iterator(pathInput))
+            {
+                pathInput = dir_entry;
+
+                if (pathInput.extension() == ".mzML")
+                {
+                    tasklist.push_back(pathInput);
+                    ++fileCounter;
+                }
+            }
+            if (fileCounter == 0)
+            {
+                std::cerr << "Warning: no files were found by recursive search.\n";
+            }
 
             continue;
         }
         if ((argument == "-o") | (argument == "-output"))
         {
             // @todo
-            recursiveSearch = true;
+            outSpecified = true;
             ++i;
+            if (i == argc)
+            {
+                std::cerr << "Error: no output directory specified.\n";
+                exit(101);
+            }
             pathOutput = argv[i];
             if (!std::filesystem::exists(pathOutput))
             {
-                std::cerr << "Error: the specified";
+                std::cerr << "Error: the specified output path does not exist.\n";
+                exit(101);
+            }
+            if (std::filesystem::exists(pathOutput.filename()))
+            {
+                std::cerr << "Error: the output directory cannot be a file.\n";
+                exit(101);
             }
             continue;
         }
@@ -251,8 +302,15 @@ int main(int argc, char *argv[])
 
     if ((!inSpecified & !recursiveSearch) & (!tasklistSpecified))
     {
-        std::cerr << "Error: no input file supplied. Specify a file using the -f, -r or -tl flag. Execute qAlgorithms with the -h flag for more information\n";
+        std::cerr << "Error: no input file supplied. Specify a file using the -f, -r or "
+                  << "-tl flag. Execute qAlgorithms with the -h flag for more information\n";
         exit(1);
+    }
+    if (recursiveSearch & !outSpecified)
+    {
+        std::cerr << "Error: Recursive search requires you to specify an output directory. Set -o to \"#\" "
+                  << "to use the location of every processed file. (currently unsupported)\n";
+        exit(100);
     }
 
     if (inSpecified & recursiveSearch)
@@ -267,15 +325,26 @@ int main(int argc, char *argv[])
     }
     if (inSpecified & tasklistSpecified)
     {
-        std::cerr << "Both an input file and a tasklist were specified. The file has been added to the tasklist.\n";
+        std::cerr << "Warning: Both an input file and a tasklist were specified. The file has been added to the tasklist.\n";
         // @todo
+    }
+    if (silent & wordyProgress)
+    {
+        std::cerr << "Warning: -wordy overrides -silent\n";
     }
 
 #pragma region file processing
     for (std::filesystem::path pathSource : tasklist)
     {
+        bool printOnce = true;
         if (!outSpecified)
         {
+            if (printOnce)
+            {
+                printOnce = false;
+                std::cerr << "Warning: no output location specified, printing output to file location\n";
+            }
+
             pathOutput = pathSource.parent_path(); // @todo include route to standard out
         }
 
@@ -283,10 +352,17 @@ int main(int argc, char *argv[])
         q::Algorithms::qPeaks::initialize();
 
         auto timeStart = std::chrono::high_resolution_clock::now();
-        std::cout << "reading file...";
+        if (!silent)
+        {
+            std::cout << "\nreading file " << pathSource << " ...";
+        }
 
         sc::MZML data(std::filesystem::canonical(pathSource).string()); // create mzML object @todo change to use filesystem::path
-        std::cout << " ok\n";
+        if (!silent)
+        {
+            std::cout << " ok\n";
+        }
+
         q::Algorithms::qPeaks qpeaks;              // create qPeaks object
         q::MeasurementData::TensorData tensorData; // create tensorData object
         // @todo add check if set polarity is correct
@@ -300,13 +376,12 @@ int main(int argc, char *argv[])
         std::cout << "produced " << testdata.lengthAllPoints << " centroids from " << centroids.size()
                   << " spectra in " << (timeEnd - timeStart).count() << " ns\n\n";
 
-        bool silentBinning = false;
         timeStart = std::chrono::high_resolution_clock::now();
         std::vector<q::Algorithms::qBinning::EIC> binnedData = q::Algorithms::qBinning::performQbinning(
-            testdata, pathOutput, filename, 6, silentBinning, printSummary, printBins);
+            testdata, pathOutput, filename, 6, !wordyProgress, printSummary, printBins);
         timeEnd = std::chrono::high_resolution_clock::now();
 
-        if (silentBinning)
+        if (!silent)
         {
             std::cout << "assembled " << binnedData.size() << " bins in " << (timeEnd - timeStart).count() << " ns\n\n";
         }
@@ -318,8 +393,9 @@ int main(int argc, char *argv[])
         std::cout << "found " << peaks.size() << " peaks in " << (timeEnd - timeStart).count() << " ns\n\n";
 
         // write peaks to csv file
-        std::cout << "writing peaks to file... ";
+        std::cout << "writing peaks to file... \n";
         std::string output_filename = "output.csv";
+        continue;
         exit(10);
         std::ofstream output_file(output_filename);
         output_file << "mz,rt,int,mzUncertainty,rtUncertainty,intUncertainty,dqs_cen,dqs_bin,dqs_peak\n";
