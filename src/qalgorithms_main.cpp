@@ -9,6 +9,7 @@
 #include <iostream>
 #include <chrono>
 #include <fstream>
+#include <filesystem>
 #include <cstdlib>
 #include <iomanip>
 
@@ -31,7 +32,7 @@ int main()
   }
   // check if the input file is a txt file
   std::vector<std::string> fileNames;
-  if (filename_input.find(".txt") != std::string::npos)
+  if (std::filesystem::path(filename_input).extension() == ".txt")
   {
     const std::string endOfFile = "END_OF_FILE";
     std::ifstream file(filename_input);
@@ -68,7 +69,7 @@ int main()
   for (auto fileName : fileNames)
   {
     // check if the input file a mzML file
-    if (fileName.find(".mzML") != std::string::npos)
+    if (std::filesystem::path(fileName).extension() == ".mzML")
     {
       PRINT_FILE(fileName, i, i_total)
       std::vector<std::string> polarities = {"positive", "negative"};
@@ -145,6 +146,11 @@ int main()
         PRINT_DONE
       } // for polarities
     } // if mzML
+    else
+    {
+      PRINT_FILE(fileName, i, i_total)
+      std::cout << "Error: file extension not supported" << std::endl;
+    }
     i++;
   } // for fileNames
   return 0;

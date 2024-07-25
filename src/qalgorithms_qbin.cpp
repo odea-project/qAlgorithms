@@ -1207,10 +1207,7 @@ namespace q
 
             EIC Bin::createEIC()
             {
-                std::sort(pointsInBin.begin(), pointsInBin.end(), [](qCentroid *lhs, qCentroid *rhs)
-                          { return lhs->scanNo < rhs->scanNo; });
-
-                int eicsize = pointsInBin.size();
+                const int eicsize = pointsInBin.size();
 
                 std::byte bincode = this->summariseBin().errorcode; // this step contains sorting by scans for the time being @todo
                 std::vector<int> tmp_scanNumbers;
@@ -1226,6 +1223,9 @@ namespace q
                 tmp_DQSB.reserve(eicsize);
                 tmp_DQSC.reserve(eicsize);
 
+                std::sort(pointsInBin.begin(), pointsInBin.end(), [](qCentroid *lhs, qCentroid *rhs)
+                          { return lhs->RT < rhs->RT; });
+
                 int prevScan = 0;
                 for (size_t i = 0; i < pointsInBin.size(); i++)
                 {
@@ -1234,8 +1234,8 @@ namespace q
                     if (point->scanNo == prevScan)
                     {
                     }
-
-                    ++prevScan;
+                    // assert(tmp_retentionTimes.back() < point->RT);
+                    prevScan = point->scanNo;
                     tmp_scanNumbers.push_back(point->scanNo);
                     prevScan = point->scanNo;
                     tmp_retentionTimes.push_back(point->RT);
