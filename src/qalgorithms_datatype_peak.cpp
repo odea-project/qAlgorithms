@@ -11,9 +11,7 @@ namespace q
   namespace DataType
   {
     // Peak
-    Peak::Peak() {};
     // Peak::Peak(int sampleID, double position, double height) : sampleID(sampleID), position(position), height(height){};
-    Peak::~Peak() {};
 
     // dubugging
     void Peak::print()

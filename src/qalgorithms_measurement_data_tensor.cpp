@@ -12,13 +12,10 @@ namespace q
 {
     namespace MeasurementData
     {
-        // constructors and destructor
-        TensorData::TensorData() {}
-
-        TensorData::~TensorData() {}
 
         // methods
-        float TensorData::calcRTDiff(std::vector<double> &retention_times)
+        float
+        TensorData::calcRTDiff(std::vector<double> &retention_times)
         {
             float sum = 0.0;
             for (size_t i = 1; i < retention_times.size(); ++i)
@@ -37,7 +34,7 @@ namespace q
             char separator,
             std::vector<DataType::DataField> variableTypes)
         {
-            return false;
+            return true;
         }
 
         std::vector<std::vector<std::unique_ptr<DataType::Peak>>>
@@ -48,7 +45,6 @@ namespace q
             const std::string polarity,
             const int start_index)
         {
-            // @todo most of these are always identical, better solution
             std::vector<std::string> spectrum_mode = data.get_spectra_mode();         // get spectrum mode (centroid or profile)
             std::vector<std::string> spectrum_polarity = data.get_spectra_polarity(); // get spectrum polarity (positive or negative)
             double expectedDifference = 0.0;                                          // expected difference between two consecutive x-axis values
@@ -66,6 +62,10 @@ namespace q
                           indices.end());                                       // keep only spectra with the specified polarity
             std::vector<double> retention_times = data.get_spectra_rt(indices); // get retention times
             rt_diff = calcRTDiff(retention_times);                              // retention time difference
+            if (spectrum_mode[0] == "centroid")
+            {
+                return transfereCentroids(data, indices, retention_times, start_index);
+            }
             std::vector<std::vector<std::unique_ptr<DataType::Peak>>> centroids =
                 std::vector<std::vector<std::unique_ptr<DataType::Peak>>>(indices.size()); // create vector of unique pointers to peaks
             if (centroids.size() == 0)
@@ -80,7 +80,7 @@ namespace q
 
             if (needsZeroFilling)
             {
-                // #pragma omp parallel for
+#pragma omp parallel for
                 for (size_t i = 0; i < indices.size(); ++i) // loop over all indices
                 {
                     const int index = indices[i]; // spectrum index
@@ -135,8 +135,7 @@ namespace q
         {
             std::vector<std::vector<std::unique_ptr<DataType::Peak>>> peaks =
                 std::vector<std::vector<std::unique_ptr<DataType::Peak>>>(data.size()); // create vector of unique pointers to peaks
-            double expectedDifference = calcExpectedDiff(data[0].rententionTimes);      // expected difference between two consecutive x-axis values
-            // #pragma omp parallel for
+#pragma omp parallel for
             for (size_t i = 0; i < data.size(); ++i) // loop over all data
             {
                 const int num_data_points = data[i].scanNumbers.size(); // number of data points
@@ -144,19 +143,46 @@ namespace q
                 {
                     continue; // skip due to lack of data, i.e., degree of freedom will be zero
                 }
-                std::vector<std::vector<double>> eic =
-                    {data[i].rententionTimes,
-                     data[i].intensities,
-                     std::vector<double>(num_data_points, 1.0),
-                     data[i].mz,
-                     data[i].DQSC,
-                     data[i].DQSB}; // create vector of retention times and intensities
+                std::vector<size_t> indices(data[i].scanNumbers.size());
+                std::iota(indices.begin(), indices.end(), 0);
+                auto compare = [&data, &i](size_t a, size_t b)
+                {
+                    return data[i].rententionTimes[a] < data[i].rententionTimes[b];
+                };
 
-                int num_subsets = zeroFilling_vec(eic, expectedDifference, false); // zero fill the spectrum
+                std::vector<std::vector<double>> eic;
+                if (!std::is_sorted(data[i].rententionTimes.begin(), data[i].rententionTimes.end())) // WILL BE DELETED IN THE FUTURE
+                {
+                    std::sort(indices.begin(), indices.end(), compare);
+                    std::vector<double> rt_sorted(num_data_points);
+                    std::vector<double> int_sorted(num_data_points);
+                    std::vector<double> mz_sorted(num_data_points);
+                    std::vector<double> DQSC_sorted(num_data_points);
+                    std::vector<double> DQSB_sorted(num_data_points);
+                    for (int j = 0; j < num_data_points; ++j)
+                    {
+                        rt_sorted[j] = data[i].rententionTimes[indices[j]];
+                        int_sorted[j] = data[i].intensities[indices[j]];
+                        mz_sorted[j] = data[i].mz[indices[j]];
+                        DQSC_sorted[j] = data[i].DQSC[indices[j]];
+                        DQSB_sorted[j] = data[i].DQSB[indices[j]];
+                    }
+                    eic = {rt_sorted, int_sorted, std::vector<double>(num_data_points, 1.0), mz_sorted, DQSC_sorted, DQSB_sorted}; // create vector of retention times and intensities
+                }
+                else
+                {
+                    eic = {data[i].rententionTimes,
+                           data[i].intensities,
+                           std::vector<double>(num_data_points, 1.0),
+                           data[i].mz,
+                           data[i].DQSC,
+                           data[i].DQSB}; // create vector of retention times and intensities
+                }
 
+                int num_subsets = zeroFilling_vec(eic, rt_diff, false);             // zero fill the spectrum
                 std::vector<std::vector<double>::iterator> separators(num_subsets); // vector of iterators at separation points (x axis)
-                extrapolateData_vec(eic, separators);                               // interpolate the data when zero filled
-                qpeaks.findPeaks(peaks[i], eic, separators);                        // find peaks
+                extrapolateData_vec(eic, separators);
+                qpeaks.findPeaks(peaks[i], eic, separators); // find peaks
             } // parallel for
             return peaks;
         } // readQBinning

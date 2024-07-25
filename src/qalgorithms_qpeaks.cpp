@@ -22,9 +22,6 @@ namespace q
 {
     namespace Algorithms
     {
-        // Constructor and Destructor
-        qPeaks::qPeaks() {}
-        // qPeaks::~qPeaks() {}
 
 #pragma region "plotPeaksToPython"
         void qPeaks::plotPeaksToPython(
@@ -99,7 +96,7 @@ namespace q
             // }
 
             int scanRelative = 1;
-            for (int i = 0; i < allPeaks.size(); ++i)
+            for (size_t i = 0; i < allPeaks.size(); ++i)
             {
                 auto &peaks = allPeaks[i];
                 if (!peaks.empty())
@@ -108,11 +105,9 @@ namespace q
                     {
                         qBinning::qCentroid F = qBinning::qCentroid{peaks[j]->mz, peaks[j]->mzUncertainty,
                                                                     peaks[j]->retentionTime, scanRelative, peaks[j]->area, peaks[j]->dqsCen};
-                        volatile qBinning::qCentroid F2 = F;
                         centroids[scanRelative].push_back(F);
                         ++totalCentroids;
                     }
-                    volatile int a = i;
                     ++scanRelative;
                 }
             }

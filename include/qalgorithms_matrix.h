@@ -34,7 +34,6 @@ namespace q
       Matrix();
       Matrix(size_t rows, size_t cols);
       Matrix(const Matrix &other);
-      ~Matrix();
 
       double &
       operator()(size_t row, size_t col);
@@ -64,7 +63,6 @@ namespace q
       size_t rows, cols;
 
       Matrix_mc(const size_t rows, const size_t cols);
-      ~Matrix_mc();
 
       Matrix_mc(const Matrix_mc &other);
 
@@ -95,8 +93,7 @@ namespace q
     public:
       double elements[16];
 
-      Matrix_mc_4x4();
-      ~Matrix_mc_4x4();
+      Matrix_mc_4x4(); // this constructor is defined
 
       Matrix_mc_4x4(const Matrix_mc_4x4 &other);
 
@@ -142,7 +139,6 @@ namespace q
       size_t n;
 
       Vector(const size_t n);
-      ~Vector();
 
       Vector(const Vector &other);
 
@@ -182,7 +178,6 @@ namespace q
       size_t n;
 
       BoolVector(const size_t n);
-      ~BoolVector();
 
       BoolVector(const BoolVector &other);
 

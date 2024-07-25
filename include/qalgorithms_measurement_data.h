@@ -3,8 +3,8 @@
 
 // internal
 #include "qalgorithms_datatype_mass_spectrum.h"
-// #include "qalgorithms_matrix.h"
-// #include "qalgorithms_utils.h"
+#include "qalgorithms_datatype_peak.h"
+#include "../external/StreamCraft/src/StreamCraft_mzml.h"
 
 // external
 #include <string>
@@ -31,6 +31,13 @@ namespace q
         public:
             // destructor
             virtual ~MeasurementData() {};
+
+            std::vector<std::vector<std::unique_ptr<DataType::Peak>>>
+            transfereCentroids(
+                sc::MZML &data,
+                std::vector<int> &indices,
+                std::vector<double> &retention_times,
+                const int start_index);
 
             // methods
             // virtual bool readCSV(std::string filename, int rowStart, int rowEnd,

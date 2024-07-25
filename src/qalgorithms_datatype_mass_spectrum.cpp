@@ -30,10 +30,6 @@ namespace q
       std::reverse(dataPoints.begin(), dataPoints.end());
     }
 
-    MassSpectrum::~MassSpectrum()
-    {
-      // destructor
-    }
     // methods
     void MassSpectrum::addDataPoint(double intensity, double mz, int df)
     {

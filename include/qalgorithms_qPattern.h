@@ -25,7 +25,6 @@ namespace q
         {
         public:
             PeakConnector(int *originPoint, int *endPoint);
-            ~PeakConnector();
 
             // connected points
             int *origin;

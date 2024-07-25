@@ -56,20 +56,19 @@ namespace q
 
             bool readcsv(CentroidedData *rawData, std::string user_file, int d_mz, int d_mzError, int d_scanNo, int d_intensity, int d_DQScentroid)
             { // @todo stop segfaults when reading empty lines; use buffers for speedup
-                int now = time(0);
                 int lengthAllPoints = 0;
                 rawData->allDatapoints.push_back(std::vector<qCentroid>(0)); // first element empty since scans are 1-indexed
                 std::ifstream file(user_file);
                 if (!file.is_open())
                 {
-                    std::cout << "the file could not be opened\n";
+                    std::cerr << "the file could not be opened\n";
 
                     return false;
                 }
 
                 if (!file.good())
                 {
-                    std::cout << "something is wrong with the input file\n";
+                    std::cerr << "something is wrong with the input file\n";
                     return false;
                 }
                 std::string line;
@@ -98,13 +97,12 @@ namespace q
                     ++lengthAllPoints;
                     rawData->allDatapoints[i_scanNo].push_back(F); // every subvector in allDatapoints is one complete scan - does not require a sorted input file!
                 }
-                // #pragma omp parallel for
-                // for (size_t i = 1; i < rawData->allDatapoints.size(); i++) // make sure data conforms to expectations
-                // {
-                //     std::sort(rawData->allDatapoints[i].begin(), rawData->allDatapoints[i].end(), [](const qCentroid lhs, const qCentroid rhs)
-                //               { return lhs.mz < rhs.mz; });
-                // }
-                std::cout << "Finished reading file in " << time(0) - now << " seconds\nRead " << lengthAllPoints << " datapoints in " << rawData->allDatapoints.size() - 1 << " scans\n";
+                for (size_t i = 1; i < rawData->allDatapoints.size(); i++) // make sure data conforms to expectations
+                {
+                    std::sort(rawData->allDatapoints[i].begin(), rawData->allDatapoints[i].end(), [](const qCentroid lhs, const qCentroid rhs)
+                              { return lhs.mz < rhs.mz; });
+                }
+                std::cout << "Read " << lengthAllPoints << " datapoints in " << rawData->allDatapoints.size() - 1 << " scans\n";
                 return true;
                 // CentroidedData is always a vector of vectors where the first index is the scan number (starting at 1) and every scsn is sorted by mz
             }
@@ -177,7 +175,7 @@ namespace q
                         }
 
                         default:
-                            std::cout << "\nSeparation method " << dimensions[i] << " is not a valid parameter, terminating program\n";
+                            std::cerr << "\nSeparation method " << dimensions[i] << " is not a valid parameter, terminating program\n";
                             exit(201);
                         }
                         timeEnd = std::chrono::high_resolution_clock::now();
@@ -493,18 +491,18 @@ namespace q
 
                 if (!std::filesystem::exists(location))
                 {
-                    std::cout << "Error during summary printing: The selected directory does not exist.\nSupplied path: " << std::filesystem::absolute(location)
+                    std::cerr << "Error during summary printing: The selected directory does not exist.\nSupplied path: " << std::filesystem::absolute(location)
                               << "\nCurrent directory: " << std::filesystem::current_path() << "\ncontinuing...\n";
                     return;
                 }
-                if (!printCentroids)
-                {
-                    std::cout << "writing bin summary and complete centroids to " << std::filesystem::canonical(location) << '\n';
-                }
-                else
-                {
-                    std::cout << "writing bin summary to " << std::filesystem::canonical(location) << '\n';
-                }
+                // if (!printCentroids)
+                // {
+                //     std::cout << "writing bin summary and complete centroids to " << std::filesystem::canonical(location) << '\n';
+                // }
+                // else
+                // {
+                //     std::cout << "writing bin summary to " << std::filesystem::canonical(location) << '\n';
+                // }
 
                 std::vector<size_t> indices;
                 std::fstream file_out_sum;
@@ -583,11 +581,9 @@ namespace q
 
             void Bin::makeOS()
             {
-                // assert(pointsInBin.size() > 4);
-                // std::cout << pointsInBin[4]->mz;
+                assert(pointsInBin.size() > 4);
                 std::sort(pointsInBin.begin(), pointsInBin.end(), [](const qCentroid *lhs, const qCentroid *rhs)
                           { return lhs->mz < rhs->mz; });
-                // std::cout << " <- mass, sort OK ";
 
                 activeOS.reserve(pointsInBin.size());               // OS = Order Space
                 for (size_t i = 0; i < pointsInBin.size() - 1; i++) // -1 to prevent accessing outside of vector
@@ -665,11 +661,6 @@ namespace q
                 int lastpos = 0;
                 for (size_t i = 0; i < binSize - 1; i++) // -1 since difference to next data point is checked
                 {
-                    if (pointsInBin[i + 1]->RT < pointsInBin[i]->RT)
-                    {
-                        std::cout << pointsInBin[i + 1]->RT << ", " << pointsInBin[i]->RT << "\n";
-                        volatile auto checkthis = pointsInBin;
-                    }
                     int distanceScan = pointsInBin[i + 1]->scanNo - pointsInBin[i]->scanNo;
                     if (distanceScan > maxdist) // bin needs to be split
                     {
@@ -899,18 +890,6 @@ namespace q
                     // qCentroid in the lowest scan. For every increase in scans, that range starts two elements later
                     const int currentRangeStart = (pointsInBin[i]->scanNo - scanMin) * 2;
                     const int currentRangeEnd = currentRangeStart + maxdist * 4 + 1; // +1 removed
-
-                    // if (size_t(currentRangeEnd) > minMaxOutPerScan.size() - 1)
-                    // {
-                    //     std::cout << "rangeEnd: " << currentRangeEnd << ", minMax: " << minMaxOutPerScan.size()
-                    //               << ", Point: " << i + 1 << ", binsize: " << binsize << ", rangeStart: "
-                    //               << currentRangeStart << ", scanmin: " << scanMin << ", scanmax: " << scanMax << "\n";
-                    //     for (size_t i = 0; i < binsize; i++)
-                    //     {
-                    //         std::cout << pointsInBin[i]->scanNo << ", ";
-                    //     }
-                    //     std::cout << "\n";
-                    // }
 
                     assert(size_t(currentRangeEnd) < minMaxOutPerScan.size());
 
@@ -1341,7 +1320,7 @@ namespace q
             std::vector<EIC> performQbinning(CentroidedData centroidedData, std::filesystem::path outpath, std::string filename,
                                              int inputMaxdist, bool silent, bool printBinSummary, bool printCentroids)
             {
-                std::streambuf *old = std::cout.rdbuf(); // save standard out config
+                std::streambuf *old = std::cout.rdbuf(); // save standard out config @todo change this
                 std::stringstream ss;
 
                 if (silent) // @todo change this to a global variable
