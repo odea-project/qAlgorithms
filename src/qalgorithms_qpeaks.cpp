@@ -64,7 +64,7 @@ namespace q
                     for (size_t j = 0; j < peaks.size(); ++j)
                     {
                         qBinning::qCentroid F = qBinning::qCentroid{peaks[j]->mz, peaks[j]->mzUncertainty,
-                                                                    peaks[j]->retentionTime, scanRelative, peaks[j]->area, peaks[j]->dqsCen};
+                                                                    float(peaks[j]->retentionTime), scanRelative, peaks[j]->area, peaks[j]->dqsCen};
                         centroids[scanRelative].push_back(F);
                         ++totalCentroids;
                     }
@@ -1048,6 +1048,7 @@ namespace q
                 {
                     continue;
                 }
+                assert(peaks.capacity() >= 0);
                 addPeakProperties(peaks, regression, y_start, mz_start, rt_start, dqs_cen, dqs_bin, dqs_peak, scanNumber);
             }
         }
@@ -1097,7 +1098,7 @@ namespace q
                 return std::make_pair(weighted_mean, uncertaintiy);
             }; // end lambda function
 
-            // create new peak object and push it to the peaks vector
+            // create new peak object and push it to the peaks vector @todo create a local object and move it
             peaks.push_back(std::make_unique<DataType::Peak>());
 
             // add scanNumber
