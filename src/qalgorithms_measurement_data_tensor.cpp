@@ -51,6 +51,7 @@ namespace q
             bool needsZeroFilling = true;                                             // check if the instrument is Orbitrap
             std::vector<int> indices = data.get_spectra_index();                      // get all indices
             std::vector<int> ms_levels = data.get_spectra_level();                    // get all MS levels
+
             if (ms1only)
             {
                 indices.erase(std::remove_if(indices.begin(), indices.end(), [&ms_levels](int i)
@@ -80,7 +81,7 @@ namespace q
 
             if (needsZeroFilling)
             {
-#pragma omp parallel for
+                // #pragma omp parallel for
                 for (size_t i = 0; i < indices.size(); ++i) // loop over all indices
                 {
                     const int index = indices[i]; // spectrum index
@@ -103,7 +104,7 @@ namespace q
             } // if zero filling
             else
             {
-#pragma omp parallel for
+                // #pragma omp parallel for
                 for (size_t i = 0; i < indices.size(); ++i) // loop over all indices
                 {
                     const int index = indices[i]; // spectrum index
@@ -135,10 +136,10 @@ namespace q
         {
             std::vector<std::vector<std::unique_ptr<DataType::Peak>>> peaks =
                 std::vector<std::vector<std::unique_ptr<DataType::Peak>>>(data.size()); // create vector of unique pointers to peaks
-#pragma omp parallel for
-            for (size_t i = 0; i < data.size(); ++i) // loop over all data
+                                                                                        // #pragma omp parallel for
+            for (size_t i = 0; i < data.size(); ++i)                                    // loop over all data
             {
-                const int num_data_points = data[i].scanNumbers.size(); // number of data points
+                const size_t num_data_points = data[i].scanNumbers.size(); // number of data points
                 if (num_data_points < 5)
                 {
                     continue; // skip due to lack of data, i.e., degree of freedom will be zero
@@ -159,7 +160,7 @@ namespace q
                     std::vector<double> mz_sorted(num_data_points);
                     std::vector<double> DQSC_sorted(num_data_points);
                     std::vector<double> DQSB_sorted(num_data_points);
-                    for (int j = 0; j < num_data_points; ++j)
+                    for (size_t j = 0; j < num_data_points; ++j)
                     {
                         rt_sorted[j] = data[i].rententionTimes[indices[j]];
                         int_sorted[j] = data[i].intensities[indices[j]];

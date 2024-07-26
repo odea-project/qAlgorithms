@@ -334,8 +334,10 @@ int main(int argc, char *argv[])
     }
 
 #pragma region file processing
+    const std::vector<std::string> polarities = {"positive", "negative"};
     for (std::filesystem::path pathSource : tasklist)
     {
+
         bool printOnce = true;
         if (!outSpecified)
         {
@@ -362,54 +364,66 @@ int main(int argc, char *argv[])
         {
             std::cout << " ok\n";
         }
-
-        q::Algorithms::qPeaks qpeaks;              // create qPeaks object
-        q::MeasurementData::TensorData tensorData; // create tensorData object
-        // @todo add check if set polarity is correct
-        std::vector<std::vector<std::unique_ptr<q::DataType::Peak>>> centroids =
-            tensorData.findCentroids_MZML(qpeaks, data, true, "positive", 10); // read mzML file and find centroids via qPeaks
-        // std::cout << "centroided\n";
-        q::Algorithms::qBinning::CentroidedData testdata = qpeaks.passToBinning(centroids);
-        volatile auto checkthis = testdata;
-        auto timeEnd = std::chrono::high_resolution_clock::now();
-
-        std::cout << "produced " << testdata.lengthAllPoints << " centroids from " << centroids.size()
-                  << " spectra in " << (timeEnd - timeStart).count() << " ns\n\n";
-
-        timeStart = std::chrono::high_resolution_clock::now();
-        std::vector<q::Algorithms::qBinning::EIC> binnedData = q::Algorithms::qBinning::performQbinning(
-            testdata, pathOutput, filename, 6, !wordyProgress, printSummary, printBins);
-        timeEnd = std::chrono::high_resolution_clock::now();
-
-        if (!silent)
+        for (auto polarity : polarities)
         {
-            std::cout << "assembled " << binnedData.size() << " bins in " << (timeEnd - timeStart).count() << " ns\n\n";
-        }
-
-        timeStart = std::chrono::high_resolution_clock::now();
-        std::vector<std::vector<std::unique_ptr<q::DataType::Peak>>> peaks =
-            tensorData.findPeaks_QBIN(qpeaks, binnedData);
-        timeEnd = std::chrono::high_resolution_clock::now();
-        std::cout << "found " << peaks.size() << " peaks in " << (timeEnd - timeStart).count() << " ns\n\n";
-
-        // write peaks to csv file
-        std::cout << "writing peaks to file... \n";
-        std::string output_filename = "output.csv";
-        continue;
-        exit(10);
-        std::ofstream output_file(output_filename);
-        output_file << "mz,rt,int,mzUncertainty,rtUncertainty,intUncertainty,dqs_cen,dqs_bin,dqs_peak\n";
-        for (size_t i = 0; i < peaks.size(); ++i)
-        {
-            for (size_t j = 0; j < peaks[i].size(); ++j)
+            q::Algorithms::qPeaks qpeaks;              // create qPeaks object
+            q::MeasurementData::TensorData tensorData; // create tensorData object
+            // @todo add check if set polarity is correct
+            std::vector<std::vector<std::unique_ptr<q::DataType::Peak>>> centroids =
+                tensorData.findCentroids_MZML(qpeaks, data, true, polarity, 10); // read mzML file and find centroids via qPeaks
+            // std::cout << "centroided\n";
+            if (centroids.size() < 5)
             {
-                output_file << peaks[i][j]->mz << "," << peaks[i][j]->retentionTime << "," << peaks[i][j]->area << ","
-                            << peaks[i][j]->mzUncertainty << "," << peaks[i][j]->retentionTimeUncertainty << ","
-                            << peaks[i][j]->areaUncertainty << "," << peaks[i][j]->dqsCen << "," << peaks[i][j]->dqsBin
-                            << "," << peaks[i][j]->dqsPeak << "\n";
+                std::cout << "skipping, mode: " << polarity << "\n";
+                continue;
             }
+
+            q::Algorithms::qBinning::CentroidedData binThis = qpeaks.passToBinning(centroids);
+            auto timeEnd = std::chrono::high_resolution_clock::now();
+
+            std::cout << "produced " << binThis.lengthAllPoints << " centroids from " << centroids.size()
+                      << " spectra in " << (timeEnd - timeStart).count() << " ns\n\n";
+
+            timeStart = std::chrono::high_resolution_clock::now();
+            std::vector<q::Algorithms::qBinning::EIC> binnedData = q::Algorithms::qBinning::performQbinning(
+                binThis, pathOutput, filename, 6, !wordyProgress, printSummary, printBins);
+            timeEnd = std::chrono::high_resolution_clock::now();
+
+            if (!silent)
+            {
+                std::cout << "assembled " << binnedData.size() << " bins in " << (timeEnd - timeStart).count() << " ns\n\n";
+            }
+
+            timeStart = std::chrono::high_resolution_clock::now();
+            std::vector<std::vector<std::unique_ptr<q::DataType::Peak>>> peaks =
+                tensorData.findPeaks_QBIN(qpeaks, binnedData);
+            timeEnd = std::chrono::high_resolution_clock::now();
+            std::cout << "found " << peaks.size() << " peaks in " << (timeEnd - timeStart).count() << " ns\n\n";
+
+            // write peaks to csv file
+            std::cout << "writing peaks to file... \n";
+            std::string output_filename = "output.csv";
+            continue;
+            exit(10);
+            std::ofstream output_file(output_filename);
+            output_file << "mz,rt,int,mzUncertainty,rtUncertainty,intUncertainty,dqs_cen,dqs_bin,dqs_peak\n";
+            for (size_t i = 0; i < peaks.size(); ++i)
+            {
+                for (size_t j = 0; j < peaks[i].size(); ++j)
+                {
+                    output_file << peaks[i][j]->mz << "," << peaks[i][j]->retentionTime << "," << peaks[i][j]->area << ","
+                                << peaks[i][j]->mzUncertainty << "," << peaks[i][j]->retentionTimeUncertainty << ","
+                                << peaks[i][j]->areaUncertainty << "," << peaks[i][j]->dqsCen << "," << peaks[i][j]->dqsBin
+                                << "," << peaks[i][j]->dqsPeak << "\n";
+                }
+            }
+            output_file.close();
         }
-        output_file.close();
     }
+    if (!silent)
+    {
+        std::cout << "Completed data processing on " << tasklist.size() << " files.\n\n";
+    }
+
     return 0;
 }
