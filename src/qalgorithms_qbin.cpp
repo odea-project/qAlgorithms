@@ -7,16 +7,11 @@
 #include <fstream>
 #include <sstream>
 #include <algorithm>
-// #include <functional>
 #include <iterator>
-// #include <thread> // unused as of now
-// #include <ranges>
 #include <deque> // main bin container is a deque
 #include <string>
-// #include <iomanip> // for printing with full precision
 #include <chrono> // time code execution
 #include <ctime>
-// #include <regex>
 // #include <omp.h>
 #include <filesystem> // printing absolute path in case read fails
 
@@ -91,8 +86,8 @@ namespace q
                             rawData->allDatapoints.push_back(std::vector<qCentroid>(0));
                         }
                     }
-                    qCentroid F = qCentroid{row[d_mz], row[d_mzError], i_scanNo, row[d_intensity],
-                                            row[d_DQScentroid]};
+                    qCentroid F = qCentroid{row[d_mz], row[d_mzError], -1, i_scanNo, row[d_intensity],
+                                            row[d_DQScentroid]}; // @todo add rt reading back in
 
                     ++lengthAllPoints;
                     rawData->allDatapoints[i_scanNo].push_back(F); // every subvector in allDatapoints is one complete scan - does not require a sorted input file!
@@ -122,6 +117,7 @@ namespace q
             {
                 finishedBins.reserve(rawdata->lengthAllPoints / 50); // max of two reallocations
                 Bin firstBin(rawdata);
+                assert(firstBin.pointsInBin.size() < 4); // @todo remove
                 binDeque.push_back(firstBin);
             }
 
@@ -1200,11 +1196,6 @@ namespace q
 
                 std::sort(pointsInBin.begin(), pointsInBin.end(), [](qCentroid *lhs, qCentroid *rhs)
                           { return lhs->scanNo < rhs->scanNo; });
-
-                // the quadratic interpolator expects empty spaces at the ends of the vector
-                // const int bufferZeroes = 4;
-                // std::iota(tmp_scanNumbers.begin(), tmp_scanNumbers.begin() + eicsize + 2 * bufferZeroes, firstScan - bufferZeroes);
-                // int prevScan = firstScan - bufferZeroes;
 
                 int prevScan = 0; // scan 0 is always empty
                 for (size_t i = 0; i < pointsInBin.size(); i++)

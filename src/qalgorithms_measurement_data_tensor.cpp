@@ -134,6 +134,10 @@ namespace q
             q::Algorithms::qPeaks &qpeaks,
             std::vector<q::Algorithms::qBinning::EIC> &data)
         {
+            auto compare = [](const std::vector<double> &a, const std::vector<double> &b)
+            {
+                return a[0] < b[0]; // sort by x-axis
+            };
             std::vector<std::vector<std::unique_ptr<DataType::Peak>>> peaks =
                 std::vector<std::vector<std::unique_ptr<DataType::Peak>>>(data.size()); // create vector of unique pointers to peaks
                                                                                         // #pragma omp parallel for
@@ -178,6 +182,10 @@ namespace q
                            data[i].mz,
                            data[i].DQSC,
                            data[i].DQSB}; // create vector of retention times and intensities
+                    if (!std::is_sorted(eic[0].begin(), eic[0].end()))
+                    {
+                        std::sort(eic.begin(), eic.end(), compare); // sort by x-axis
+                    }
                 }
 
                 int num_subsets = zeroFilling_vec(eic, rt_diff, false);             // zero fill the spectrum
