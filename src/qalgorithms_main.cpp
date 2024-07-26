@@ -13,6 +13,71 @@
 #include <filesystem> // printing absolute path in case read fails
 #include <string>
 #include <sstream>
+namespace q
+{
+    bool printPeaklist(std::vector<std::vector<std::unique_ptr<q::DataType::Peak>>> peaktable,
+                       std::filesystem::path pathOutput, std::string filename, bool elaborate)
+    {
+        if (elaborate)
+        {
+            filename += "_ex";
+        }
+        pathOutput.filename() = filename;
+        pathOutput.extension() = ".csv";
+        std::fstream file_out;
+        std::stringstream output;
+        file_out.open(pathOutput, std::ios::out);
+        if (!file_out.is_open())
+        {
+            return 1;
+        }
+
+        if (elaborate)
+        {
+
+            output << "ID,mz,mzUncertainty,retentionTime,retentionTimeUncertainty,"
+                   << "area,areaUncertainty,dqsCen,dqsBin,dqsPeak\n ";
+            int counter = 0;
+            for (size_t i = 0; i < peaktable.size(); i++)
+            {
+                for (size_t j = 0; j < peaktable[i].size(); ++j)
+                {
+                    auto peak = *peaktable[i][j];
+                    char buffer[128];
+                    sprintf(buffer, "%d,%0.8f,%0.8f,%0.8f,%0.8f,%0.8f,%0.8f,%0.8f,%0.8f,%0.8f\n",
+                            counter, peak.mz, peak.mzUncertainty, peak.retentionTime, peak.retentionTimeUncertainty,
+                            peak.area, peak.areaUncertainty, peak.dqsCen, peak.dqsBin, peak.dqsPeak);
+                    output << buffer;
+                    ++counter;
+                }
+            }
+        }
+        else
+        {
+            output << "ID,mz,mzUncertainty,retentionTime,retentionTimeUncertainty,"
+                   << "area,areaUncertainty,dqsCen,dqsBin,dqsPeak\n ";
+            int counter = 0;
+            for (size_t i = 0; i < peaktable.size(); i++)
+            {
+                for (size_t j = 0; j < peaktable[i].size(); ++j)
+                {
+                    auto peak = *peaktable[i][j];
+                    char buffer[128];
+                    sprintf(buffer, "%0.8f,%0.8f,%0.8f,%0.8f,%0.8f,%0.8f,%0.8f,%0.8f,%0.8f\n",
+                            peak.mz, peak.mzUncertainty, peak.retentionTime, peak.retentionTimeUncertainty,
+                            peak.area, peak.areaUncertainty, peak.dqsCen, peak.dqsBin, peak.dqsPeak);
+                    output << buffer;
+                    ++counter;
+                }
+            }
+        }
+
+        file_out << output.str();
+        file_out.close();
+        return 0;
+    }
+
+}
 
 int main(int argc, char *argv[])
 {
@@ -118,7 +183,7 @@ int main(int argc, char *argv[])
         }
         if ((argument == "-f") | (argument == "-files"))
         {
-            // @todo loop until the first string which contains a "-" and add those files to the task list
+            // loop until the first string which contains a "-" and add those files to the task list
             inSpecified = true;
             ++i;
             pathInput = argv[i];
@@ -136,7 +201,6 @@ int main(int argc, char *argv[])
                 }
                 else
                 {
-                    std::cout << "input ok";
                     tasklist.push_back(pathInput);
                 }
                 ++i;
@@ -332,6 +396,7 @@ int main(int argc, char *argv[])
     {
         std::cerr << "Warning: -wordy overrides -silent\n";
     }
+#pragma endregion cli arguments
 
 #pragma region file processing
     const std::vector<std::string> polarities = {"positive", "negative"};
@@ -362,7 +427,7 @@ int main(int argc, char *argv[])
         sc::MZML data(std::filesystem::canonical(pathSource).string()); // create mzML object @todo change to use filesystem::path
         if (!silent)
         {
-            std::cout << " ok\n";
+            std::cout << " file ok\n";
         }
         for (auto polarity : polarities)
         {
@@ -372,17 +437,22 @@ int main(int argc, char *argv[])
             std::vector<std::vector<std::unique_ptr<q::DataType::Peak>>> centroids =
                 tensorData.findCentroids_MZML(qpeaks, data, true, polarity, 10); // read mzML file and find centroids via qPeaks
             // std::cout << "centroided\n";
-            if (centroids.size() < 5)
+            if ((centroids.size() < 5) & !silent)
             {
-                std::cout << "skipping, mode: " << polarity << "\n";
+                std::cout << "skipping mode: " << polarity << "\n";
                 continue;
             }
+            // adjust filename to include polarity here
+            filename += polarity;
 
             q::Algorithms::qBinning::CentroidedData binThis = qpeaks.passToBinning(centroids);
             auto timeEnd = std::chrono::high_resolution_clock::now();
 
-            std::cout << "produced " << binThis.lengthAllPoints << " centroids from " << centroids.size()
-                      << " spectra in " << (timeEnd - timeStart).count() << " ns\n\n";
+            if (!silent)
+            {
+                std::cout << "produced " << binThis.lengthAllPoints << " centroids from " << centroids.size()
+                          << " spectra in " << (timeEnd - timeStart).count() << " ns\n\n";
+            }
 
             timeStart = std::chrono::high_resolution_clock::now();
             std::vector<q::Algorithms::qBinning::EIC> binnedData = q::Algorithms::qBinning::performQbinning(
@@ -398,26 +468,19 @@ int main(int argc, char *argv[])
             std::vector<std::vector<std::unique_ptr<q::DataType::Peak>>> peaks =
                 tensorData.findPeaks_QBIN(qpeaks, binnedData);
             timeEnd = std::chrono::high_resolution_clock::now();
-            std::cout << "found " << peaks.size() << " peaks in " << (timeEnd - timeStart).count() << " ns\n\n";
-
-            // write peaks to csv file
-            std::cout << "writing peaks to file... \n";
-            std::string output_filename = "output.csv";
-            continue;
-            exit(10);
-            std::ofstream output_file(output_filename);
-            output_file << "mz,rt,int,mzUncertainty,rtUncertainty,intUncertainty,dqs_cen,dqs_bin,dqs_peak\n";
-            for (size_t i = 0; i < peaks.size(); ++i)
+            if (!silent)
             {
-                for (size_t j = 0; j < peaks[i].size(); ++j)
-                {
-                    output_file << peaks[i][j]->mz << "," << peaks[i][j]->retentionTime << "," << peaks[i][j]->area << ","
-                                << peaks[i][j]->mzUncertainty << "," << peaks[i][j]->retentionTimeUncertainty << ","
-                                << peaks[i][j]->areaUncertainty << "," << peaks[i][j]->dqsCen << "," << peaks[i][j]->dqsBin
-                                << "," << peaks[i][j]->dqsPeak << "\n";
-                }
+                std::cout << "found " << peaks.size() << " peaks in " << (timeEnd - timeStart).count() << " ns\n\n";
+                std::cout << "writing peaks to file... \n";
             }
-            output_file.close();
+            // write peaks to csv file
+
+            continue;
+
+            if (q::printPeaklist(peaks, pathOutput, filename, printExtended) & !silent)
+            {
+                std::cerr << "Error: could not open file to print to. The program has not terminated.\n";
+            }
         }
     }
     if (!silent)

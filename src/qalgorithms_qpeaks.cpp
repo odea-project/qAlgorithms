@@ -61,10 +61,12 @@ namespace q
                 auto &peaks = allPeaks[i];
                 if (!peaks.empty())
                 {
+                    float prevRT = peaks[0]->retentionTime;
                     for (size_t j = 0; j < peaks.size(); ++j)
                     {
                         qBinning::qCentroid F = qBinning::qCentroid{peaks[j]->mz, peaks[j]->mzUncertainty,
                                                                     float(peaks[j]->retentionTime), scanRelative, peaks[j]->area, peaks[j]->dqsCen};
+                        assert(prevRT == F.RT);
                         centroids[scanRelative].push_back(F);
                         ++totalCentroids;
                     }
