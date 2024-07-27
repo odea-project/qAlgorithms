@@ -15,10 +15,10 @@
 #include <sstream>
 namespace q
 {
-    bool printPeaklist(std::vector<std::vector<std::unique_ptr<q::DataType::Peak>>> peaktable,
-                       std::filesystem::path pathOutput, std::string filename, bool elaborate)
+    bool printPeaklist(std::vector<std::vector<q::DataType::Peak>> peaktable,
+                       std::filesystem::path pathOutput, std::string filename, bool verbose)
     {
-        if (elaborate)
+        if (verbose)
         {
             filename += "_ex";
         }
@@ -32,7 +32,7 @@ namespace q
             return 1;
         }
 
-        if (elaborate)
+        if (verbose)
         {
 
             output << "ID,mz,mzUncertainty,retentionTime,retentionTimeUncertainty,"
@@ -42,7 +42,7 @@ namespace q
             {
                 for (size_t j = 0; j < peaktable[i].size(); ++j)
                 {
-                    auto peak = *peaktable[i][j];
+                    auto peak = peaktable[i][j];
                     char buffer[128];
                     sprintf(buffer, "%d,%0.8f,%0.8f,%0.8f,%0.8f,%0.8f,%0.8f,%0.8f,%0.8f,%0.8f\n",
                             counter, peak.mz, peak.mzUncertainty, peak.retentionTime, peak.retentionTimeUncertainty,
@@ -61,7 +61,7 @@ namespace q
             {
                 for (size_t j = 0; j < peaktable[i].size(); ++j)
                 {
-                    auto peak = *peaktable[i][j];
+                    auto peak = peaktable[i][j];
                     char buffer[128];
                     sprintf(buffer, "%0.8f,%0.8f,%0.8f,%0.8f,%0.8f,%0.8f,%0.8f,%0.8f,%0.8f\n",
                             peak.mz, peak.mzUncertainty, peak.retentionTime, peak.retentionTimeUncertainty,
@@ -79,6 +79,33 @@ namespace q
 
 }
 
+const std::string helpinfo = " help information:\n"
+                             "qAlgorithms is a software project for non-target screening using mass spectrometry."
+                             "For more information, visit our github page: https://github.com/odea-project/qAlgorithms\n"
+                             "As of now (23.07.2024), only mzML files are supported. This program accepts the following command-line arguments:"
+                             "-h, -help: open this help menu\n"
+                             "-s, -silent: do not print progress reports to standard out\n"
+                             "-v, -verbose: print a detailed progress report to standard out"
+                             "-f, -files: specifies the input files. More than one file can be passed. Use as -f FILEPATH FILEPATH etc.\n" // @todo allow piping of file list
+                             "-tl, -tasklist: pass a list of file paths to the function. A tasklist can also contain directories "
+                             "to search recursively and output directories for different blocks of the input files. "
+                             "You can comment out lines by starting them with a \"#\"\n" // @todo update
+                             "-r, -recursive <DIRECTORY>: recursive search for .mzML files in the specified directory.\n"
+                             "-o, -output <DIRECTORY>: directory into which all output files should be printed. "
+                             "If you want to print all results into the folder which "
+                             "contains the .mzML file, write \"#\". The default output is standard out, "
+                             "unless you did not specify an input file. in that case, you will be prompted to "
+                             "enter the output location. If the specified location does not exist, a new directory is created\n"
+                             "-ps, -printsummary: print summarised information on the bins in addition to "
+                             "the peaktable. It is saved to your output directory using as FILENAME_summary.csv\n"
+                             "-pb, -printbins: If this flag is set, both bin summary information and "
+                             "all binned centroids will be printed to the output location in addition "
+                             "to the final peak table. The files end in _summary.csv and _bins.csv.\n"
+                             "-pp, -printpeaks: print the peak tables as csv.\n"
+                             "-e, -extended: print additional information into the final peak list. You do not"
+                             " have to also set the -pp flag.\n"
+                             "-log: This option will create a detailed log file in the program directory.\n";
+
 int main(int argc, char *argv[])
 {
     std::string filename_input;
@@ -92,8 +119,8 @@ int main(int argc, char *argv[])
     if (argc == 1)
     {
         // @todo check standard in and use that if it isn't empty
-        std::cout << "Enter a filename (replace every backslash with a forward slash) "
-                  << "to process that file. You must select an .mzML file.  ";
+        std::cout << "Start qAlgorithms with the -h flag for a complete list of options. "
+                     "Enter a filename to process that file. You must select a .mzML file:    ";
         std::cin >> filename_input;
         // filename_input = "C:/Users/unisys/Documents/Studium/Messdaten/LCMS_pressure_error/22090901_H2O_1_pos.mzML";
         pathInput = filename_input;
@@ -132,11 +159,12 @@ int main(int argc, char *argv[])
     // if this is not the case, try to use the string as a filepath
 
     bool silent = false;
-    bool wordyProgress = false;
+    bool verboseProgress = false;
     bool recursiveSearch = false;
     bool tasklistSpecified = false;
     bool printSummary = false;
     bool printBins = false;
+    bool printPeaks;
     bool printExtended = false;
 
 #pragma region cli arguments
@@ -145,29 +173,7 @@ int main(int argc, char *argv[])
         std::string argument = argv[i];
         if ((argument == "-h") | (argument == "-help"))
         {
-            std::cout << argv[0] << " help information:\n"
-                      << "qAlgorithms is a software project for non-target screening using mass spectrometry."
-                      << "For more information, visit our github page: https://github.com/odea-project/qAlgorithms\n"
-                      << "As of now (23.07.2024), only mzML files are supported. This program accepts the following command-line arguments:"
-                      << "-h, -help: open this help menu\n"
-                      << "-s, -silent: do not print progress reports to standard out\n"
-                      << "-w, -wordy: print a detailed progress report to standard out"
-                      << "-f, -files: specifies the input files. More than one file can be passed. Use as -f FILEPATH FILEPATH etc.\n" // @todo allow piping of file list
-                      << "-tl, -tasklist: pass a list of file paths to the function"
-                      << "-r, -recursive: recursive search for .mzML files in the specified directory. "
-                      << "Use as -r DIRECTORY\n"
-                      << "-o, -output: directory into which all output files should be printed. "
-                      << " Use as -o DIRECTORY. If you want to print all results into the folder which "
-                      << "contains the .mzML file, write \"#\". The default output is standard out, "
-                      << "unless you did not specify an input file. in that case, you will be prompted to "
-                      << "enter the output location. If the specified location does not exist, a new directory is created\n"
-                      << "-ps, -printsummary: print summarised information on the bins in addition to "
-                      << "the peaktable. It is saved to your output directory using as FILENAME_summary.csv\n"
-                      << "-pb, -printbins: If this flag is set, both bin summary information and "
-                      << "all binned centroids will be printed to the output location in addition "
-                      << "to the final peak table. The files end in _summary.csv and _bins.csv.\n"
-                      << "-e, -extended: print additional information into the final peak list.\n"
-                      << "-log: This option will create a detailed log file in the program directory.\n";
+            std::cout << argv[0] << helpinfo;
 
             exit(0);
         }
@@ -178,7 +184,7 @@ int main(int argc, char *argv[])
         }
         if ((argument == "-w") | (argument == "-wordy"))
         {
-            wordyProgress = true;
+            verboseProgress = true;
             continue;
         }
         if ((argument == "-f") | (argument == "-files"))
@@ -307,7 +313,7 @@ int main(int argc, char *argv[])
 
                 if (pathInput.extension() == ".mzML")
                 {
-                    tasklist.push_back(pathInput);
+                    tasklist.push_back(std::filesystem::canonical(pathInput));
                     ++fileCounter;
                 }
             }
@@ -352,9 +358,15 @@ int main(int argc, char *argv[])
             printBins = true;
             continue;
         }
+        if ((argument == "-pp") | (argument == "-printpeaks"))
+        {
+            printPeaks = true;
+            continue;
+        }
         if ((argument == "-e") | (argument == "-extended"))
         {
             printExtended = true;
+            printPeaks = true;
             continue;
         }
         if (argument == "-log")
@@ -392,9 +404,9 @@ int main(int argc, char *argv[])
         std::cerr << "Warning: Both an input file and a tasklist were specified. The file has been added to the tasklist.\n";
         // @todo
     }
-    if (silent & wordyProgress)
+    if (silent & verboseProgress)
     {
-        std::cerr << "Warning: -wordy overrides -silent\n";
+        std::cerr << "Warning: -verbose overrides -silent\n";
     }
 #pragma endregion cli arguments
 
@@ -456,7 +468,7 @@ int main(int argc, char *argv[])
 
             timeStart = std::chrono::high_resolution_clock::now();
             std::vector<q::Algorithms::qBinning::EIC> binnedData = q::Algorithms::qBinning::performQbinning(
-                binThis, pathOutput, filename, 6, !wordyProgress, printSummary, printBins);
+                binThis, pathOutput, filename, 6, !verboseProgress, printSummary, printBins);
             timeEnd = std::chrono::high_resolution_clock::now();
 
             if (!silent)
@@ -465,22 +477,88 @@ int main(int argc, char *argv[])
             }
 
             timeStart = std::chrono::high_resolution_clock::now();
-            std::vector<std::vector<std::unique_ptr<q::DataType::Peak>>> peaks =
-                tensorData.findPeaks_QBIN(qpeaks, binnedData);
+            auto peaks = tensorData.findPeaks_QBIN(qpeaks, binnedData);
             timeEnd = std::chrono::high_resolution_clock::now();
             if (!silent)
             {
                 std::cout << "found " << peaks.size() << " peaks in " << (timeEnd - timeStart).count() << " ns\n\n";
                 std::cout << "writing peaks to file... \n";
             }
-            // write peaks to csv file
 
-            continue;
+            // std::vector<std::vector<q::DataType::Peak>> processPeaks = tensorData.remove_unique_ptr(qpeaks, peaks);
 
-            if (q::printPeaklist(peaks, pathOutput, filename, printExtended) & !silent)
+            // continue;
+
+            if (printPeaks)
             {
-                std::cerr << "Error: could not open file to print to. The program has not terminated.\n";
+                if (!q::printPeaklist(peaks, pathOutput, filename, printExtended))
+                {
+                    std::cerr << "Error: could not open output path during peaklist printing. Program terminated.\n";
+                    exit(1); // @todo sensible error codes
+                }
             }
+#pragma region print peaktable
+            //@todo understand why this does not work as an individual function
+            // if (printPeaks)
+            // {
+            //     if (printExtended)
+            //     {
+            //         filename += "_ex";
+            //     }
+            //     pathOutput.filename() = filename;
+            //     pathOutput.extension() = ".csv";
+            //     std::fstream file_out;
+            //     std::stringstream output;
+            //     file_out.open(pathOutput, std::ios::out);
+            //     if (!file_out.is_open())
+            //     {
+            //         return 1;
+            //     }
+
+            //     if (printExtended)
+            //     {
+
+            //         output << "ID,mz,mzUncertainty,retentionTime,retentionTimeUncertainty,"
+            //                << "area,areaUncertainty,dqsCen,dqsBin,dqsPeak\n ";
+            //         int counter = 0;
+            //         for (size_t i = 0; i < peaks.size(); i++)
+            //         {
+            //             for (size_t j = 0; j < peaks[i].size(); ++j)
+            //             {
+            //                 auto peak = *peaks[i][j];
+            //                 char buffer[128];
+            //                 sprintf(buffer, "%d,%0.8f,%0.8f,%0.8f,%0.8f,%0.8f,%0.8f,%0.8f,%0.8f,%0.8f\n",
+            //                         counter, peak.mz, peak.mzUncertainty, peak.retentionTime, peak.retentionTimeUncertainty,
+            //                         peak.area, peak.areaUncertainty, peak.dqsCen, peak.dqsBin, peak.dqsPeak);
+            //                 output << buffer;
+            //                 ++counter;
+            //             }
+            //         }
+            //     }
+            //     else
+            //     {
+            //         output << "mz,mzUncertainty,retentionTime,retentionTimeUncertainty,"
+            //                << "area,areaUncertainty,dqsCen,dqsBin,dqsPeak\n ";
+            //         int counter = 0;
+            //         for (size_t i = 0; i < peaks.size(); i++)
+            //         {
+            //             for (size_t j = 0; j < peaks[i].size(); ++j)
+            //             {
+            //                 auto peak = *peaks[i][j];
+            //                 char buffer[128];
+            //                 sprintf(buffer, "%0.8f,%0.8f,%0.8f,%0.8f,%0.8f,%0.8f,%0.8f,%0.8f,%0.8f\n",
+            //                         peak.mz, peak.mzUncertainty, peak.retentionTime, peak.retentionTimeUncertainty,
+            //                         peak.area, peak.areaUncertainty, peak.dqsCen, peak.dqsBin, peak.dqsPeak);
+            //                 output << buffer;
+            //                 ++counter;
+            //             }
+            //         }
+            //     }
+
+            //     file_out << output.str();
+            //     file_out.close();
+            // }
+#pragma endregion print peaktable
         }
     }
     if (!silent)
