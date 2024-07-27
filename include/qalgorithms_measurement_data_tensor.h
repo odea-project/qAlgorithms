@@ -55,10 +55,13 @@ namespace q
                 const std::string polarity = "positive", // @todo why not a bool?
                 const int start_index = 0);
 
-            std::vector<std::vector<std::unique_ptr<DataType::Peak>>>
+            std::vector<std::vector<DataType::Peak>>
             findPeaks_QBIN(
                 q::Algorithms::qPeaks &qpeaks,
                 std::vector<q::Algorithms::qBinning::EIC> &data);
+
+            // std::vector<std::vector<DataType::Peak>>
+            // remove_unique_ptr(q::Algorithms::qPeaks &qpeaks, std::vector<std::vector<std::unique_ptr<DataType::Peak>>>);
         };
     } // namespace MeasurementData
 } // namespace q

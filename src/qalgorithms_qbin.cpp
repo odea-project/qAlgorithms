@@ -117,7 +117,7 @@ namespace q
             {
                 finishedBins.reserve(rawdata->lengthAllPoints / 50); // max of two reallocations
                 Bin firstBin(rawdata);
-                assert(firstBin.pointsInBin.size() < 4); // @todo remove
+                assert(firstBin.pointsInBin.size() > 4); // @todo remove
                 binDeque.push_back(firstBin);
             }
 

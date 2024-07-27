@@ -129,7 +129,7 @@ namespace q
             return centroids;
         } // readStreamCraftMZML
 
-        std::vector<std::vector<std::unique_ptr<DataType::Peak>>>
+        std::vector<std::vector<DataType::Peak>>
         TensorData::findPeaks_QBIN(
             q::Algorithms::qPeaks &qpeaks,
             std::vector<q::Algorithms::qBinning::EIC> &data)
@@ -150,15 +150,13 @@ namespace q
                 }
                 std::vector<size_t> indices(data[i].scanNumbers.size());
                 std::iota(indices.begin(), indices.end(), 0);
-                auto compare = [&data, &i](size_t a, size_t b)
-                {
-                    return data[i].rententionTimes[a] < data[i].rententionTimes[b];
-                };
+                // auto compare =
 
                 std::vector<std::vector<double>> eic;
                 if (!std::is_sorted(data[i].rententionTimes.begin(), data[i].rententionTimes.end())) // WILL BE DELETED IN THE FUTURE
                 {
-                    std::sort(indices.begin(), indices.end(), compare);
+                    std::sort(indices.begin(), indices.end(), [&data, &i](size_t a, size_t b)
+                              { return data[i].rententionTimes[a] < data[i].rententionTimes[b]; });
                     std::vector<double> rt_sorted(num_data_points);
                     std::vector<double> int_sorted(num_data_points);
                     std::vector<double> mz_sorted(num_data_points);
@@ -193,7 +191,33 @@ namespace q
                 extrapolateData_vec(eic, separators);
                 qpeaks.findPeaks(peaks[i], eic, separators); // find peaks
             } // parallel for
-            return peaks;
+            // return peaks;
+
+            std::vector<std::vector<DataType::Peak>> returnVec(peaks.size());
+            for (size_t i = 0; i < peaks.size(); i++)
+            {
+                returnVec[i].reserve(peaks[i].size());
+                for (size_t j = 0; j < peaks[i].size(); j++)
+                {
+                    returnVec[i].push_back(*peaks[i][j]);
+                }
+            }
+            return returnVec;
         } // readQBinning
+
+        // std::vector<std::vector<DataType::Peak>>
+        // remove_unique_ptr(q::Algorithms::qPeaks &qpeaks, std::vector<std::vector<std::unique_ptr<DataType::Peak>>> targetVec)
+        // {
+        //     std::vector<std::vector<DataType::Peak>> returnVec(targetVec.size());
+        //     for (size_t i = 0; i < targetVec.size(); i++)
+        //     {
+        //         returnVec[i].reserve(targetVec[i].size());
+        //         for (size_t j = 0; j < targetVec[i].size(); j++)
+        //         {
+        //             returnVec[i].push_back(*targetVec[i][j]);
+        //         }
+        //     }
+        //     return returnVec;
+        // }
     } // namespace MeasurementData
 } // namespace q
