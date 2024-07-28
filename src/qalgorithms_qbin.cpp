@@ -159,9 +159,9 @@ namespace q
                         case scans:
                         {
                             subsetType = "Scans";
+                            // the function that determines if a bin was completed must know if
+                            // binning was already completed once
                             std::vector<Bin> &target = rebin ? redoneBins : finishedBins;
-                            // move bins to the normal container. Choose redoneBins if finsihedBins was already filled once
-
                             for (size_t j = 0; j < startpoint; j++)
                             {
                                 binDeque.front().subsetScan(&binDeque, &target, maxdist, subsetCount);
@@ -175,8 +175,17 @@ namespace q
                             exit(201);
                         }
                         timeEnd = std::chrono::high_resolution_clock::now();
-                        std::cout << "subset in " << subsetType << "\nTime: " << (timeEnd - timeStart).count() << " ns\nSubsets performed: "
-                                  << subsetCount << "\nClosed Bins: " << finishedBins.size() << "\n--\nOpen Bins: " << binDeque.size() << " - ";
+                        if (rebin)
+                        {
+                            std::cout << "subset in " << subsetType << "\nTime: " << (timeEnd - timeStart).count() << " ns\nSubsets performed: "
+                                      << subsetCount << "\nClosed Bins: " << redoneBins.size() << "\n--\nOpen Bins: " << binDeque.size() << " - ";
+                        }
+                        else
+                        {
+                            std::cout << "subset in " << subsetType << "\nTime: " << (timeEnd - timeStart).count() << " ns\nSubsets performed: "
+                                      << subsetCount << "\nClosed Bins: " << finishedBins.size() << "\n--\nOpen Bins: " << binDeque.size() << " - ";
+                        }
+
                         timeStart = std::chrono::high_resolution_clock::now();
                     }
                 }
@@ -463,7 +472,7 @@ namespace q
                     {
                         char buffer[128];
                         sprintf(buffer, "%0.15f,%d,%zu,%0.15f,%0.15f\n", binnedPoints[j]->mz, binnedPoints[j]->scanNo, i + 1,
-                                binnedPoints[i]->DQScentroid, finishedBins[i].DQSB_scaled[j]);
+                                binnedPoints[i]->DQSCentroid, finishedBins[i].DQSB_scaled[j]);
                         output << buffer;
                     }
                 }
@@ -541,7 +550,7 @@ namespace q
                             char buffer[256];
                             sprintf(buffer, "%d,%0.15f,%d,%0.2f,%0.15f,%0.9f,%0.9f,%0.9f\n",
                                     pos + 1, binnedPoints[j]->mz, binnedPoints[j]->scanNo,
-                                    binnedPoints[j]->intensity, binnedPoints[j]->mzError, binnedPoints[j]->DQScentroid,
+                                    binnedPoints[j]->intensity, binnedPoints[j]->mzError, binnedPoints[j]->DQSCentroid,
                                     finishedBins[pos].DQSB_base[j], finishedBins[pos].DQSB_scaled[j]);
                             output_all << buffer;
                         }
@@ -656,6 +665,7 @@ namespace q
                 int lastpos = 0;
                 for (size_t i = 0; i < binSize - 1; i++) // -1 since difference to next data point is checked
                 {
+                    assert(pointsInBin[i + 1]->RT >= pointsInBin[i]->RT);
                     int distanceScan = pointsInBin[i + 1]->scanNo - pointsInBin[i]->scanNo;
                     if (distanceScan > maxdist) // bin needs to be split
                     {
@@ -963,9 +973,9 @@ namespace q
                     meanInt += pointsInBin[i]->intensity;
                     meanScan += pointsInBin[i]->scanNo;
                     meanCenError += pointsInBin[i]->mzError;
-                    if (pointsInBin[i]->DQScentroid < worstCentroid)
+                    if (pointsInBin[i]->DQSCentroid < worstCentroid)
                     {
-                        worstCentroid = pointsInBin[i]->DQScentroid;
+                        worstCentroid = pointsInBin[i]->DQSCentroid;
                     }
 
                     meanDQS_base += DQSB_base[i];
@@ -1207,12 +1217,25 @@ namespace q
                         // for duplicates, remove the centroid with the
                         // worse DQSC. This decision was made based on
                         // limited observations in four different real datasets
-                        if (point->DQScentroid < tmp_DQSC.back())
+                        if (point->DQSCentroid < tmp_DQSC.back())
                         {
                             continue;
                         }
+                        else
+                        {
+                            tmp_scanNumbers.pop_back();
+                            tmp_rt.pop_back();
+                            tmp_mz.pop_back();
+                            tmp_intensities.pop_back();
+                            tmp_DQSB.pop_back();
+                            tmp_DQSC.pop_back();
+                        }
                     }
-                    assert(tmp_rt.back() < point->RT);
+                    if (!tmp_rt.empty())
+                    {
+                        assert(tmp_scanNumbers.back() < point->scanNo);
+                        assert(tmp_rt.back() < point->RT);
+                    }
 
                     prevScan = point->scanNo;
                     tmp_scanNumbers.push_back(point->scanNo);
@@ -1221,7 +1244,7 @@ namespace q
                     tmp_mz.push_back(point->mz);
                     tmp_intensities.push_back(point->intensity);
                     tmp_DQSB.push_back(DQSB_base[i]);
-                    tmp_DQSC.push_back(point->DQScentroid);
+                    tmp_DQSC.push_back(point->DQSCentroid);
                 }
 
                 EIC returnVal = {

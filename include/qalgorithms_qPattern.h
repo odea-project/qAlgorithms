@@ -1,4 +1,6 @@
-#include <../include/qalgorithms_qbin.h>
+// #include <../include/qalgorithms_qbin.h>
+
+#include <vector>
 
 namespace q
 {
@@ -13,6 +15,11 @@ namespace q
             sH2O
         };
 
+        std::vector<double> massDiffs =
+            {
+                1.0033 // a13C
+        };
+
         // struct AdductPath
         // {
         //     // implements the general form [M + n(Kation) - (n-1)H]+
@@ -21,29 +28,32 @@ namespace q
         //     int cationCharge;
         // };
 
-        class PeakConnector
+        struct PeakConnector
         {
-        public:
-            PeakConnector(int *originPoint, int *endPoint);
-
+            // connection type - one of adducts, isotopolouges or neutral loss
+            // the only identifier of this property is the absolute difference
+            // in mz. "type" is constructed by following a network and pushing
+            // back every step
+            MassDifference step;
+            std::vector<MassDifference> type;
             // connected points
             int *origin;
             int *end;
-            bool reversible;
 
-            // connection type - one of adducts, isotopolouges or neutral loss
-            // the only identifier of this property is the absolute difference
-            // in mz
-            MassDifference type;
+            // 0 for origin peak, then counts up. This is set after network construction.
+            int chainPosition;
 
             // total shift the assignment introduces into the system
             double shiftMZ;
             double shiftRT;
 
+            double errorcodeMatch; // overlap between codes in percent
+
             // quality score shift
             bool DQSCincrease;
             bool DQSBincrease;
-            double errorcodeMatch; // overlap between scores in percent
+            bool DQSPincrease;
+            bool reversible; // does this matter?
         };
 
     }

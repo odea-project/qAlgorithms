@@ -40,6 +40,11 @@ namespace q
             int counter = 0;
             for (size_t i = 0; i < peaktable.size(); i++)
             {
+                if (peaktable[i].empty())
+                {
+                    continue;
+                }
+
                 for (size_t j = 0; j < peaktable[i].size(); ++j)
                 {
                     auto peak = peaktable[i][j];
@@ -119,9 +124,14 @@ int main(int argc, char *argv[])
     if (argc == 1)
     {
         // @todo check standard in and use that if it isn't empty
-        std::cout << "Start qAlgorithms with the -h flag for a complete list of options. "
+        std::cout << "Enter \"-h\" for a complete list of options.\n"
                      "Enter a filename to process that file. You must select a .mzML file:    ";
         std::cin >> filename_input;
+        if ((filename_input == "-h") | (filename_input == "-help"))
+        {
+            std::cout << argv[0] << helpinfo;
+            exit(0);
+        }
         // filename_input = "C:/Users/unisys/Documents/Studium/Messdaten/LCMS_pressure_error/22090901_H2O_1_pos.mzML";
         pathInput = filename_input;
         if (!std::filesystem::exists(pathInput))
@@ -182,12 +192,12 @@ int main(int argc, char *argv[])
             silent = true;
             continue;
         }
-        if ((argument == "-w") | (argument == "-wordy"))
+        else if ((argument == "-v") | (argument == "-verbose"))
         {
             verboseProgress = true;
             continue;
         }
-        if ((argument == "-f") | (argument == "-files"))
+        else if ((argument == "-f") | (argument == "-files"))
         {
             // loop until the first string which contains a "-" and add those files to the task list
             inSpecified = true;
@@ -196,7 +206,7 @@ int main(int argc, char *argv[])
             if ((i == argc) | !(std::filesystem::exists(pathInput)))
             {
                 std::cerr << "Error: argument -files was set, but no valid file supplied.\n";
-                inSpecified = false;
+                exit(101);
             }
             while (std::filesystem::exists(pathInput))
             {
@@ -215,10 +225,8 @@ int main(int argc, char *argv[])
                     break;
                 }
             }
-
-            continue;
         }
-        if ((argument == "-tl") | (argument == "-tasklist")) // @todo test this
+        else if ((argument == "-tl") | (argument == "-tasklist")) // @todo test this
         {
             tasklistSpecified = true;
             ++i;
@@ -247,13 +255,13 @@ int main(int argc, char *argv[])
                         exit(101);
                     }
                     firstline = false;
-                    continue;
                 }
+
                 if (line[0] == char('#'))
                 {
                     continue;
                 }
-                if (line[0] == char('$'))
+                else if (line[0] == char('$'))
                 //@todo add argument checker
                 {
                     continue;
@@ -263,12 +271,13 @@ int main(int argc, char *argv[])
 
                 if (pathTemp.extension() != ".mzML")
                 {
-                    std::cerr << "Error: only .mzML files are supported. The tasklist entry has been skipped.\n";
+                    std::cerr << "Warning: only .mzML files are supported. The tasklist entry " << pathTemp << " has been skipped.\n";
                     continue;
                 }
-                if (!std::filesystem::exists(pathInput))
+                else if (!std::filesystem::exists(pathTemp))
                 {
-                    std::cerr << "Error: a specified file does not exist. I has been removed from the tasklist.\n";
+                    std::cerr << "Warning: the file " << pathTemp << " does not exist. I has been removed from the tasklist.\n";
+                    continue;
                 }
 
                 tasklist.push_back(pathTemp);
@@ -284,9 +293,8 @@ int main(int argc, char *argv[])
                 ADDDATE: The current date (YYYYMMDD) is added with an underscore
                 to the front of the filename
             */
-            continue;
         }
-        if ((argument == "-r") | (argument == "-recursive"))
+        else if ((argument == "-r") | (argument == "-recursive"))
         {
             // @todo
             recursiveSearch = true;
@@ -302,7 +310,7 @@ int main(int argc, char *argv[])
                 std::cerr << "Error: the target path for recursive search does not exist.\n";
                 exit(101);
             }
-            if (std::filesystem::exists(pathInput.filename()))
+            else if (std::filesystem::exists(pathInput.filename()))
             {
                 std::cerr << "Error: the target directory for recursive search cannot be a file.\n";
             }
@@ -321,10 +329,8 @@ int main(int argc, char *argv[])
             {
                 std::cerr << "Warning: no files were found by recursive search.\n";
             }
-
-            continue;
         }
-        if ((argument == "-o") | (argument == "-output"))
+        else if ((argument == "-o") | (argument == "-output"))
         {
             // @todo
             outSpecified = true;
@@ -340,39 +346,38 @@ int main(int argc, char *argv[])
                 std::cerr << "Error: the specified output path does not exist.\n";
                 exit(101);
             }
-            if (std::filesystem::exists(pathOutput.filename()))
+            else if (std::filesystem::exists(pathOutput.filename()))
             {
                 std::cerr << "Error: the output directory cannot be a file.\n";
                 exit(101);
             }
-            continue;
         }
-        if ((argument == "-ps") | (argument == "-printsummary"))
+        else if ((argument == "-ps") | (argument == "-printsummary"))
         {
             printSummary = true;
-            continue;
         }
-        if ((argument == "-pb") | (argument == "-printbins"))
+        else if ((argument == "-pb") | (argument == "-printbins"))
         {
             printSummary = true;
             printBins = true;
-            continue;
         }
-        if ((argument == "-pp") | (argument == "-printpeaks"))
+        else if ((argument == "-pp") | (argument == "-printpeaks"))
         {
             printPeaks = true;
-            continue;
         }
-        if ((argument == "-e") | (argument == "-extended"))
+        else if ((argument == "-e") | (argument == "-extended"))
         {
             printExtended = true;
             printPeaks = true;
-            continue;
         }
-        if (argument == "-log")
+        else if (argument == "-log")
         {
             //@todo write the executed command into the logfile
-            continue;
+        }
+        else
+        {
+            std::cerr << "Error: unknown argument " << argument << ", terminating program.\n";
+            exit(1);
         }
     }
 
@@ -477,11 +482,18 @@ int main(int argc, char *argv[])
             }
 
             timeStart = std::chrono::high_resolution_clock::now();
+            // every subvector of peaks corresponds to the bin ID
             auto peaks = tensorData.findPeaks_QBIN(qpeaks, binnedData);
             timeEnd = std::chrono::high_resolution_clock::now();
             if (!silent)
             {
-                std::cout << "found " << peaks.size() << " peaks in " << (timeEnd - timeStart).count() << " ns\n\n";
+                int peakCount = 0;
+                for (size_t i = 0; i < peaks.size(); i++)
+                {
+                    peakCount += peaks[i].size();
+                }
+
+                std::cout << "found " << peakCount << " peaks in " << (timeEnd - timeStart).count() << " ns\n\n";
                 std::cout << "writing peaks to file... \n";
             }
 
@@ -497,68 +509,7 @@ int main(int argc, char *argv[])
                     exit(1); // @todo sensible error codes
                 }
             }
-#pragma region print peaktable
-            //@todo understand why this does not work as an individual function
-            // if (printPeaks)
-            // {
-            //     if (printExtended)
-            //     {
-            //         filename += "_ex";
-            //     }
-            //     pathOutput.filename() = filename;
-            //     pathOutput.extension() = ".csv";
-            //     std::fstream file_out;
-            //     std::stringstream output;
-            //     file_out.open(pathOutput, std::ios::out);
-            //     if (!file_out.is_open())
-            //     {
-            //         return 1;
-            //     }
-
-            //     if (printExtended)
-            //     {
-
-            //         output << "ID,mz,mzUncertainty,retentionTime,retentionTimeUncertainty,"
-            //                << "area,areaUncertainty,dqsCen,dqsBin,dqsPeak\n ";
-            //         int counter = 0;
-            //         for (size_t i = 0; i < peaks.size(); i++)
-            //         {
-            //             for (size_t j = 0; j < peaks[i].size(); ++j)
-            //             {
-            //                 auto peak = *peaks[i][j];
-            //                 char buffer[128];
-            //                 sprintf(buffer, "%d,%0.8f,%0.8f,%0.8f,%0.8f,%0.8f,%0.8f,%0.8f,%0.8f,%0.8f\n",
-            //                         counter, peak.mz, peak.mzUncertainty, peak.retentionTime, peak.retentionTimeUncertainty,
-            //                         peak.area, peak.areaUncertainty, peak.dqsCen, peak.dqsBin, peak.dqsPeak);
-            //                 output << buffer;
-            //                 ++counter;
-            //             }
-            //         }
-            //     }
-            //     else
-            //     {
-            //         output << "mz,mzUncertainty,retentionTime,retentionTimeUncertainty,"
-            //                << "area,areaUncertainty,dqsCen,dqsBin,dqsPeak\n ";
-            //         int counter = 0;
-            //         for (size_t i = 0; i < peaks.size(); i++)
-            //         {
-            //             for (size_t j = 0; j < peaks[i].size(); ++j)
-            //             {
-            //                 auto peak = *peaks[i][j];
-            //                 char buffer[128];
-            //                 sprintf(buffer, "%0.8f,%0.8f,%0.8f,%0.8f,%0.8f,%0.8f,%0.8f,%0.8f,%0.8f\n",
-            //                         peak.mz, peak.mzUncertainty, peak.retentionTime, peak.retentionTimeUncertainty,
-            //                         peak.area, peak.areaUncertainty, peak.dqsCen, peak.dqsBin, peak.dqsPeak);
-            //                 output << buffer;
-            //                 ++counter;
-            //             }
-            //         }
-            //     }
-
-            //     file_out << output.str();
-            //     file_out.close();
-            // }
-#pragma endregion print peaktable
+            // @todo add peak grouping here
         }
     }
     if (!silent)

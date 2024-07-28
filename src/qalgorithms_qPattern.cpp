@@ -7,9 +7,6 @@ namespace q
 {
     namespace qPattern
     {
-        PeakConnector::PeakConnector(int *originPoint, int *endPoint) {
-
-        };
 
     }
 }
@@ -21,6 +18,12 @@ namespace q
 starting at the best DQSB, iterate over all other entries,
 starting with the lowest mass. Work with two sorted vectors
 each containing pointers to the peak objects.
+
+Construct a chain of carbon isotopes first. Only the root
+of such a carbon chain can be the start of an adduct network.
+During this step, chains cannot branch.
+Priority of adduct assignment is given to points high up in
+a carbon isotope structure
 
 Take the mass error of the peaks as absolute tolerance
 
