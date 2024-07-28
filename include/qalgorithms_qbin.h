@@ -24,7 +24,7 @@ namespace q
                 float RT;
                 int scanNo;
                 double intensity;
-                double DQScentroid;
+                double DQSCentroid;
             };
 
             struct CentroidedData
