@@ -512,8 +512,9 @@ namespace q
                 std::vector<size_t> indices;
                 std::fstream file_out_sum;
                 std::stringstream output_sum;
-                location.filename() = filename + "_summary";
-                file_out_sum.open(location.replace_extension(".csv"), std::ios::out);
+                location /= (filename + "_summary.csv");
+                std::cout << "writing summary to: " << location << "\n";
+                file_out_sum.open(location, std::ios::out);
                 assert(file_out_sum.is_open());
                 output_sum << "ID,errorcode,size,mean_mz,median_mz,stdev_mz,mean_scans,DQSB_base,DQSB_scaled,DQSC_min,mean_error\n";
                 for (size_t i = 0; i < finishedBins.size(); i++)
@@ -536,8 +537,9 @@ namespace q
                 {
                     std::fstream file_out_all;
                     std::stringstream output_all;
-                    location.filename() = filename + "_bins";
-                    file_out_all.open(location.replace_extension(".csv"), std::ios::out);
+                    location.replace_filename(filename + "_bins.csv");
+                    std::cout << "writing bins to: " << location << "\n";
+                    file_out_all.open(location, std::ios::out);
                     assert(file_out_all.is_open());
                     output_all << "ID,mz,scan,intensity,mzError,DQSC,DQSB_base,DQSB_scaled\n";
                     for (size_t i = 0; i < indices.size(); i++)
@@ -1364,7 +1366,7 @@ namespace q
                 activeBins.redoBinningIfTooclose(measurementDimensions, &centroidedData, notInBins, maxdist);
                 activeBins.reconstructFromStdev(&centroidedData, 6);
 
-                if (printBinSummary)
+                if (printBinSummary | printCentroids)
                 {
                     activeBins.printSelectBins(printCentroids, outpath, filename);
                 }

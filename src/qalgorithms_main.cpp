@@ -15,21 +15,27 @@
 #include <sstream>
 namespace q
 {
-    bool printPeaklist(std::vector<std::vector<q::DataType::Peak>> peaktable,
-                       std::filesystem::path pathOutput, std::string filename, bool verbose)
+    void printPeaklist(std::vector<std::vector<q::DataType::Peak>> peaktable,
+                       std::filesystem::path pathOutput, std::string filename, bool verbose, bool silent)
     {
         if (verbose)
         {
             filename += "_ex";
         }
-        pathOutput.filename() = filename;
-        pathOutput.extension() = ".csv";
+        filename += "_peaks.csv";
+        pathOutput /= filename;
+        if (!silent)
+        {
+            std::cout << "writing peaks to: " << pathOutput << "\n";
+        }
+
         std::fstream file_out;
         std::stringstream output;
         file_out.open(pathOutput, std::ios::out);
         if (!file_out.is_open())
         {
-            return 1;
+            std::cerr << "Error: could not open output path during peaklist printing. Program terminated.\n";
+            exit(1); // @todo sensible error codes
         }
 
         if (verbose)
@@ -79,7 +85,7 @@ namespace q
 
         file_out << output.str();
         file_out.close();
-        return 0;
+        return;
     }
 
 }
@@ -114,12 +120,13 @@ const std::string helpinfo = " help information:\n"
 int main(int argc, char *argv[])
 {
     std::string filename_input;
-    bool inSpecified = false;
+    volatile bool inSpecified = false;
     std::filesystem::path pathInput;
-    bool outSpecified = false;
+    volatile bool outSpecified = false;
     std::filesystem::path pathOutput;
-    std::string filename;
+
     std::vector<std::filesystem::path> tasklist;
+    volatile bool printPeaks = false;
     // ask for file if none are specified
     if (argc == 1)
     {
@@ -144,9 +151,9 @@ int main(int argc, char *argv[])
             std::cerr << "Error: the selected file has the type " << pathInput.extension() << ", but only \".mzML\" is supported\n";
             exit(101); // @todo sensible exit codes
         }
-        filename = pathInput.filename().string();
         std::cout << "\nfile accepted, enter the output directory or \"#\" to use the input directory:  ";
         std::cin >> filename_input;
+        printPeaks = true;
         if (filename_input == "#")
         {
             pathOutput = pathInput.parent_path();
@@ -168,14 +175,13 @@ int main(int argc, char *argv[])
     // if only one argument is given, check if it is any variation of help
     // if this is not the case, try to use the string as a filepath
 
-    bool silent = false;
-    bool verboseProgress = false;
-    bool recursiveSearch = false;
-    bool tasklistSpecified = false;
-    bool printSummary = false;
-    bool printBins = false;
-    bool printPeaks;
-    bool printExtended = false;
+    volatile bool silent = false;
+    volatile bool verboseProgress = false;
+    volatile bool recursiveSearch = false;
+    volatile bool tasklistSpecified = false;
+    volatile bool printSummary = false;
+    volatile bool printBins = false;
+    volatile bool printExtended = false;
 
 #pragma region cli arguments
     for (int i = 1; i < argc; i++)
@@ -184,36 +190,32 @@ int main(int argc, char *argv[])
         if ((argument == "-h") | (argument == "-help"))
         {
             std::cout << argv[0] << helpinfo;
-
             exit(0);
         }
         if ((argument == "-s") | (argument == "-silent"))
         {
             silent = true;
-            continue;
         }
         else if ((argument == "-v") | (argument == "-verbose"))
         {
             verboseProgress = true;
-            continue;
         }
         else if ((argument == "-f") | (argument == "-files"))
         {
             // loop until the first string which contains a "-" and add those files to the task list
             inSpecified = true;
             ++i;
-            pathInput = argv[i];
-            if ((i == argc) | !(std::filesystem::exists(pathInput)))
+            if ((i == argc))
             {
                 std::cerr << "Error: argument -files was set, but no valid file supplied.\n";
                 exit(101);
             }
+            pathInput = std::filesystem::canonical(argv[i]);
             while (std::filesystem::exists(pathInput))
             {
-                pathInput = argv[i];
                 if (pathInput.extension() != ".mzML")
                 {
-                    std::cerr << "Error: only .mzML files are supported. The file input has been skipped.\n";
+                    std::cerr << "Warning: only .mzML files are supported. The file input has been skipped.\n";
                 }
                 else
                 {
@@ -222,6 +224,12 @@ int main(int argc, char *argv[])
                 ++i;
                 if (i == argc)
                 {
+                    break;
+                }
+                pathInput = std::filesystem::weakly_canonical(argv[i]);
+                if (!std::filesystem::exists(pathInput))
+                {
+                    --i;
                     break;
                 }
             }
@@ -329,6 +337,7 @@ int main(int argc, char *argv[])
             {
                 std::cerr << "Warning: no files were found by recursive search.\n";
             }
+            pathInput = NULL;
         }
         else if ((argument == "-o") | (argument == "-output"))
         {
@@ -416,6 +425,7 @@ int main(int argc, char *argv[])
 #pragma endregion cli arguments
 
 #pragma region file processing
+    std::string filename;
     const std::vector<std::string> polarities = {"positive", "negative"};
     for (std::filesystem::path pathSource : tasklist)
     {
@@ -430,6 +440,10 @@ int main(int argc, char *argv[])
             }
 
             pathOutput = pathSource.parent_path(); // @todo include route to standard out
+        }
+        else if (!silent)
+        {
+            std::cout << "printing output to: " << pathOutput;
         }
 
         // initialize qPeaks static variables and lcmsData object @todo constexpr
@@ -448,6 +462,7 @@ int main(int argc, char *argv[])
         }
         for (auto polarity : polarities)
         {
+            filename = pathSource.stem().string();
             q::Algorithms::qPeaks qpeaks;              // create qPeaks object
             q::MeasurementData::TensorData tensorData; // create tensorData object
             // @todo add check if set polarity is correct
@@ -460,7 +475,7 @@ int main(int argc, char *argv[])
                 continue;
             }
             // adjust filename to include polarity here
-            filename += polarity;
+            filename += ("_" + polarity);
 
             q::Algorithms::qBinning::CentroidedData binThis = qpeaks.passToBinning(centroids);
             auto timeEnd = std::chrono::high_resolution_clock::now();
@@ -494,7 +509,6 @@ int main(int argc, char *argv[])
                 }
 
                 std::cout << "found " << peakCount << " peaks in " << (timeEnd - timeStart).count() << " ns\n\n";
-                std::cout << "writing peaks to file... \n";
             }
 
             // std::vector<std::vector<q::DataType::Peak>> processPeaks = tensorData.remove_unique_ptr(qpeaks, peaks);
@@ -503,11 +517,7 @@ int main(int argc, char *argv[])
 
             if (printPeaks)
             {
-                if (!q::printPeaklist(peaks, pathOutput, filename, printExtended))
-                {
-                    std::cerr << "Error: could not open output path during peaklist printing. Program terminated.\n";
-                    exit(1); // @todo sensible error codes
-                }
+                q::printPeaklist(peaks, pathOutput, filename, printExtended, silent);
             }
             // @todo add peak grouping here
         }
