@@ -166,32 +166,32 @@ namespace q
         std::vector<std::vector<double>> &dataVec,
         std::vector<std::vector<double>::iterator> &separators,
         const int scanNumber,
-        const float retentionTime)
+        const float retentionTime,
+        const int additionalZeros)
     {
-
       // iterate over the blocks marked by the separators, which point to the last element of each block.
       // the separators point to x values
       // the first and last block need to be ignored.
       // define iterators
-      auto it_mz = dataVec[0].begin() + 4;          // start of the second block
-      auto it_y = dataVec[1].begin() + 4;           // start of the second block
-      auto it_df = dataVec[2].begin() + 4;          // start of the second block
-      auto it_sep = separators.begin() + 1;         // start of the second block
-      const auto it_sep_end = separators.end() - 1; // end of the last block
-      const float rt[2] = {-255.f, retentionTime};  // retention time vector
-      const float *rt_start = rt;                   // start of the retention time vector
+      auto it_mz = dataVec[0].begin();             // start of the second block
+      auto it_y = dataVec[1].begin();              // start of the second block
+      auto it_df = dataVec[2].begin();             // start of the second block
+      auto it_sep = separators.begin();            // start of the second block
+      const auto it_sep_end = separators.end();    // end of the last block
+      const float rt[2] = {-255.f, retentionTime}; // retention time vector
+      const float *rt_start = rt;                  // start of the retention time vector
       // iterate over the blocks
       for (; it_sep != it_sep_end; it_sep++)
       {
         // calculate the number of data points in the block
-        const int n = std::distance(it_mz, *it_sep) + 1;
-        if (n < 13)
+        const int n = std::distance(it_mz, *it_sep) + 1 - 2 * additionalZeros;
+        // check if first of last data of the block is zero; zeros appear if extrapolation was not meaningful, i.e., apex at the edge of the datablock
+        const bool containsZero = *it_y == 0 || *(it_y + n - 1) == 0;
+        if (n < 9 || containsZero)
         {
-          // not enough data points to fit a quadratic regression model
-          // 13 due to 8 points are extrapolated and 5 points are needed for the regression
-          it_mz = it_mz + n;
-          it_y = it_y + n;
-          it_df = it_df + n;
+          it_mz = it_mz + n + 2 * additionalZeros;
+          it_y = it_y + n + 2 * additionalZeros;
+          it_df = it_df + n + 2 * additionalZeros;
           continue;
         }
         if (n <= 512)
@@ -212,9 +212,9 @@ namespace q
           std::copy(it_y, it_y + n, Y);
           std::copy(it_mz, it_mz + n, X);
           std::copy(it_df, it_df + n, df);
-          it_y += n;
-          it_mz += n;
-          it_df += n;
+          it_y += n + 2 * additionalZeros;
+          it_mz += n + 2 * additionalZeros;
+          it_df += n + 2 * additionalZeros;
 
           // perform log-transform on Y
           std::transform(y_start, y_start + n, ylog_start, [](float y)
@@ -243,9 +243,9 @@ namespace q
           std::copy(it_y, it_y + n, Y);
           std::copy(it_mz, it_mz + n, X);
           std::copy(it_df, it_df + n, df);
-          it_y += n;
-          it_df += n;
-          it_mz += n;
+          it_y += n + 2 * additionalZeros;
+          it_df += n + 2 * additionalZeros;
+          it_mz += n + 2 * additionalZeros;
 
           // perform log-transform on Y
           std::transform(y_start, y_start + n, ylog_start, [](float y)

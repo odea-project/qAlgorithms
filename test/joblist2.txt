@@ -1,0 +1,11 @@
+C:/Users/grenn/Desktop/Selina_Daten/Raw_datafiles/centroided/240511_07.mzML
+C:/Users/grenn/Desktop/Selina_Daten/Raw_datafiles/centroided/240511_08.mzML
+C:/Users/grenn/Desktop/Selina_Daten/Raw_datafiles/centroided/240511_11.mzML
+C:/Users/grenn/Desktop/Selina_Daten/Raw_datafiles/centroided/240511_14.mzML
+C:/Users/grenn/Desktop/Selina_Daten/Raw_datafiles/centroided/240511_28.mzML
+C:/Users/grenn/Desktop/Selina_Daten/Raw_datafiles/centroided/240511_43.mzML
+C:/Users/grenn/Desktop/Selina_Daten/Raw_datafiles/centroided/240511_53.mzML
+C:/Users/grenn/Desktop/Selina_Daten/Raw_datafiles/centroided/240511_54.mzML
+C:/Users/grenn/Desktop/Selina_Daten/Raw_datafiles/centroided/240511_63.mzML
+C:/Users/grenn/Desktop/Selina_Daten/Raw_datafiles/centroided/240511_72.mzML
+C:/Users/grenn/Desktop/Selina_Daten/Raw_datafiles/centroided/240511_80.mzML

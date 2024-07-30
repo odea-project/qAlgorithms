@@ -2,6 +2,8 @@
 
 // internal
 #include "../include/qalgorithms_measurement_data_tensor.h"
+#include <cassert>
+#include <fstream>
 
 namespace q
 {
@@ -44,84 +46,119 @@ namespace q
         {
             std::vector<std::string> spectrum_mode = data.get_spectra_mode();         // get spectrum mode (centroid or profile)
             std::vector<std::string> spectrum_polarity = data.get_spectra_polarity(); // get spectrum polarity (positive or negative)
-            double expectedDifference = 0.0;                                          // expected difference between two consecutive x-axis values
-            bool needsZeroFilling = true;                                             // check if the instrument is Orbitrap
             std::vector<int> indices = data.get_spectra_index();                      // get all indices
             std::vector<int> ms_levels = data.get_spectra_level();                    // get all MS levels
+            std::vector<int> num_datapoints = data.get_spectra_array_length();        // get number of data points
+            double expectedDifference = 0.0;                                          // expected difference between two consecutive x-axis values
+            bool yContainsZeros = false;                                              // check if y-axis contains zeros
+            bool needsZeroFilling = true;                                             // mainly for treating Orbitrap data
+
+            // FILTER MS1 SPECTRA
             if (ms1only)
             {
                 indices.erase(std::remove_if(indices.begin(), indices.end(), [&ms_levels](int i)
                                              { return ms_levels[i] != 1; }),
                               indices.end()); // keep only MS1 spectra
             }
-            indices.erase(std::remove_if(indices.begin(), indices.end(), [&spectrum_polarity, &polarity](int i)
-                                         { return spectrum_polarity[i] != polarity; }),
-                          indices.end());                                       // keep only spectra with the specified polarity
-            std::vector<double> retention_times = data.get_spectra_rt(indices); // get retention times
-            rt_diff = calcRTDiff(retention_times); // retention time difference
-            if (spectrum_mode[0] == "centroid")
+
+            // FILTER POLARITY and START INDEX and ARRAY LENGTH
+            indices.erase(std::remove_if(indices.begin(), indices.end(), [&spectrum_polarity, &num_datapoints, &polarity, &start_index](int i)
+                                         { return spectrum_polarity[i] != polarity || i < start_index || num_datapoints[i] < 5; }),
+                          indices.end()); // keep only spectra with the specified polarity and start index and array length > 5
+
+            // CHECK IF CENTROIDED SPECTRA
+            int num_centroided_spectra = std::count(spectrum_mode.begin(), spectrum_mode.end(), "centroid");
+            if (num_centroided_spectra > spectrum_mode.size() * .5) // in profile mode sometimes centroided spectra appear as well
             {
+                std::vector<double> retention_times = data.get_spectra_rt(indices); // get retention times
+                rt_diff = calcRTDiff(retention_times);
                 return transfereCentroids(data, indices, retention_times, start_index);
             }
-            std::vector<std::vector<std::unique_ptr<DataType::Peak>>> centroids =
-                std::vector<std::vector<std::unique_ptr<DataType::Peak>>>(indices.size()); // create vector of unique pointers to peaks
-            if (centroids.size() == 0)
+
+            // FILTER SPECTRUM MODE (PROFILE)
+            if (num_centroided_spectra != 0)
             {
-                return centroids;
-            }
-            {
-                alignas(64) std::vector<std::vector<double>> data_vec = data.get_spectrum(indices[start_index]); // get first spectrum (x-axis)
-                expectedDifference = calcExpectedDiff(data_vec[0]);                                              // calculate expected difference & check if Orbitrap
-                isZeroFillingNeeded(data_vec[1], needsZeroFilling);                                              // check if zero filling is needed
+                indices.erase(std::remove_if(indices.begin(), indices.end(), [&spectrum_mode](int i)
+                                             { return spectrum_mode[i] != "profile"; }),
+                              indices.end()); // keep only profile spectra
             }
 
-            if (needsZeroFilling)
+            std::vector<double> retention_times = data.get_spectra_rt(indices); // get retention times
+            rt_diff = calcRTDiff(retention_times);                              // retention time difference
+
+            std::vector<std::vector<std::unique_ptr<DataType::Peak>>> centroids =
+                std::vector<std::vector<std::unique_ptr<DataType::Peak>>>(indices.size()); // create vector of unique pointers to peaks
+
+            // CALCULATE EXPECTED DIFFERENCE & CHECK FOR ZEROS
+            {
+                std::vector<std::vector<double>> data_vec = data.get_spectrum(indices[start_index]); // get first spectrum (x-axis)
+                expectedDifference = calcExpectedDiff(data_vec[0]);                                  // calculate expected difference & check if Orbitrap
+                yContainsZeros = std::any_of(data_vec[1].begin(), data_vec[1].end(), [](double value)
+                                             { return value == 0.0; }); // check if y-axis contains zeros
+                if (yContainsZeros)
+                {
+                    isZeroFillingNeeded(data_vec[1], needsZeroFilling); // check if zero filling is needed
+                }
+            }
+
+            // TREAT DATA WITHOUT ZEROS (ZERO FILLING, INTERPOLATION, EXTRAPOLATION)
+            if (!yContainsZeros)
             {
 #pragma omp parallel for
                 for (size_t i = 0; i < indices.size(); ++i) // loop over all indices
                 {
-                    const int index = indices[i]; // spectrum index
-                    if (index < start_index)
-                    {
-                        continue; // skip due to index
-                    }
-
-                    alignas(64) std::vector<std::vector<double>> spectrum = data.get_spectrum(index); // get spectrum at index
-                    if (spectrum[0].size() < 5)
-                    {
-                        continue; // skip due to lack of data, i.e., degree of freedom will be zero
-                    }
+                    const int index = indices[i];                                                        // spectrum index
+                    std::vector<std::vector<double>> spectrum = data.get_spectrum(index);                // get spectrum at index
                     spectrum.push_back(std::vector<double>(spectrum[0].size(), 1.0));                    // add df column for interpolation
-                    int num_subsets = zeroFilling_vec(spectrum, expectedDifference);                     // zero fill the spectrum
+                    int num_subsets = zeroFilling_blocksAndGaps(spectrum, expectedDifference);           // zero fill the spectrum
                     std::vector<std::vector<double>::iterator> separators(num_subsets);                  // vector of iterators at separation points (x axis)
                     extrapolateData_vec(spectrum, separators);                                           // interpolate the data when zero filled
                     qpeaks.findCentroids(centroids[i], spectrum, separators, index, retention_times[i]); // find peaks
                 } // for
+                return centroids;
             } // if zero filling
-            else
+
+            // TREAT DATA WITH ZEROS (INTERPOLATION, EXTRAPOLATION)
+            if (!needsZeroFilling)
             {
 #pragma omp parallel for
                 for (size_t i = 0; i < indices.size(); ++i) // loop over all indices
                 {
-                    const int index = indices[i]; // spectrum index
-                    if (index < start_index)
-                    {
-                        continue; // skip due to index
-                    }
-                    alignas(64) std::vector<std::vector<double>> spectrum = data.get_spectrum(index); // spectrum at index
-                    if (spectrum[0].size() < 5)
-                    {
-                        continue; // skip due to lack of data, i.e., degree of freedom will be zero
-                    }
-
-                    spectrum.push_back(std::vector<double>(spectrum[0].size(), 1.0));                    // add df column for interpolation
-                    std::vector<std::vector<double>::iterator> separators;                               // vector of iterators at separation points (x axis)
-                    cutData_vec_orbitrap(spectrum, expectedDifference, separators);                      // find separation points in the data
-                    interpolateData_vec_orbitrap(spectrum, separators);                                  // interpolate the data
-                    extrapolateData_vec_orbitrap(spectrum, separators);                                  // extrapolate the data
-                    qpeaks.findCentroids(centroids[i], spectrum, separators, index, retention_times[i]); // find peaks
+                    const int additionalZeros = 2;
+                    const int index = indices[i];                                                                         // spectrum index
+                    std::vector<std::vector<double>> spectrum = data.get_spectrum(index);                                 // spectrum at index
+                    spectrum.push_back(std::vector<double>(spectrum[0].size(), 1.0));                                     // add df column for interpolation
+                    std::vector<std::vector<double>::iterator> separators;                                                // vector of iterators at separation points (x axis)
+                    cutData_vec_orbitrap(spectrum, expectedDifference, separators);                                       // find separation points in the data
+                    interpolateData_vec_orbitrap(spectrum, separators);                                                   // interpolate the data
+                    extrapolateData_vec_orbitrap(spectrum, separators);                                                   // extrapolate the data
+                    qpeaks.findCentroids(centroids[i], spectrum, separators, index, retention_times[i], additionalZeros); // find peaks
                 } // for
+                return centroids;
             } // else zero filling (not needed)
+
+// TREAT DATA WITH ZEROS (ZERO FILLING only for block separation, INTERPOLATION only at zeros, EXTRAPOLATION)
+// #pragma omp parallel for
+            for (size_t i = 0; i < indices.size(); ++i) // loop over all indices
+            {
+                const int index = indices[i];                                           // spectrum index
+                std::vector<std::vector<double>> spectrum = data.get_spectrum(index);   // spectrum at index
+                spectrum.push_back(std::vector<double>(spectrum[0].size(), 1.0));       // add df column for interpolation
+                int num_subsets = zeroFilling_blocksOnly(spectrum, expectedDifference); // zero fill the spectrum
+                // print spectrum[0], spectrum[1], spectrum[2]
+                std::string filename = "spectrum_" + std::to_string(index) + ".csv";
+                std::ofstream file(filename);
+                for (size_t j = 0; j < spectrum[0].size(); ++j)
+                {
+                    file << spectrum[0][j] << "," << spectrum[1][j] << "," << spectrum[2][j] << std::endl;
+                }
+                file.close();
+                exit(0);
+                // int num_subsets = zeroFilling_vec(spectrum, expectedDifference);                     // zero fill the spectrum
+                // std::vector<std::vector<double>::iterator> separators(num_subsets);                  // vector of iterators at separation points (x axis)
+                // extrapolateData_vec(spectrum, separators);                                           // interpolate the data when zero filled
+                // qpeaks.findCentroids(centroids[i], spectrum, separators, index, retention_times[i]); // find peaks
+            } // for
             return centroids;
         } // readStreamCraftMZML
 
@@ -176,7 +213,7 @@ namespace q
                            data[i].DQSB}; // create vector of retention times and intensities
                 }
 
-                int num_subsets = zeroFilling_vec(eic, rt_diff, false);             // zero fill the spectrum
+                int num_subsets = zeroFilling_blocksAndGaps(eic, rt_diff, false);   // zero fill the spectrum
                 std::vector<std::vector<double>::iterator> separators(num_subsets); // vector of iterators at separation points (x axis)
                 extrapolateData_vec(eic, separators);
                 qpeaks.findPeaks(peaks[i], eic, separators); // find peaks

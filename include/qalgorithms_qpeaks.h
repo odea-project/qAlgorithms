@@ -37,7 +37,8 @@ namespace q
                 std::vector<std::vector<double>> &dataVec,
                 std::vector<std::vector<double>::iterator> &separators,
                 const int scanNumber,
-                const float retentionTime);
+                const float retentionTime,
+                const int additionalZeros = 0);
             
             void
             findPeaks(

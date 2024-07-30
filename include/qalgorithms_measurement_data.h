@@ -45,7 +45,13 @@ namespace q
             zeroFilling(varDataType &dataVec, int k);
 
             int 
-            zeroFilling_vec(
+            zeroFilling_blocksAndGaps(
+                std::vector<std::vector<double>> &data,
+                double expectedDifference,
+                const bool updateExpectedDifference = true);
+
+            int 
+            zeroFilling_blocksOnly(
                 std::vector<std::vector<double>> &data,
                 double expectedDifference,
                 const bool updateExpectedDifference = true);
