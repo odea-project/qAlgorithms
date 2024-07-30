@@ -41,7 +41,7 @@ namespace q
         if (verbose)
         {
 
-            output << "ID,mz,mzUncertainty,retentionTime,retentionTimeUncertainty,"
+            output << "ID,binID,mz,mzUncertainty,retentionTime,retentionTimeUncertainty,"
                    << "area,areaUncertainty,dqsCen,dqsBin,dqsPeak\n ";
             int counter = 0;
             for (size_t i = 0; i < peaktable.size(); i++)
@@ -55,8 +55,8 @@ namespace q
                 {
                     auto peak = peaktable[i][j];
                     char buffer[128];
-                    sprintf(buffer, "%d,%0.8f,%0.8f,%0.8f,%0.8f,%0.8f,%0.8f,%0.8f,%0.8f,%0.8f\n",
-                            counter, peak.mz, peak.mzUncertainty, peak.retentionTime, peak.retentionTimeUncertainty,
+                    sprintf(buffer, "%d,%d,%0.8f,%0.8f,%0.8f,%0.8f,%0.8f,%0.8f,%0.8f,%0.8f,%0.8f\n",
+                            counter, i + 1, peak.mz, peak.mzUncertainty, peak.retentionTime, peak.retentionTimeUncertainty,
                             peak.area, peak.areaUncertainty, peak.dqsCen, peak.dqsBin, peak.dqsPeak);
                     output << buffer;
                     ++counter;
@@ -65,7 +65,7 @@ namespace q
         }
         else
         {
-            output << "ID,mz,mzUncertainty,retentionTime,retentionTimeUncertainty,"
+            output << "mz,mzUncertainty,retentionTime,retentionTimeUncertainty,"
                    << "area,areaUncertainty,dqsCen,dqsBin,dqsPeak\n ";
             int counter = 0;
             for (size_t i = 0; i < peaktable.size(); i++)
@@ -90,32 +90,35 @@ namespace q
 
 }
 
-const std::string helpinfo = " help information:\n"
-                             "qAlgorithms is a software project for non-target screening using mass spectrometry."
-                             "For more information, visit our github page: https://github.com/odea-project/qAlgorithms\n"
-                             "As of now (23.07.2024), only mzML files are supported. This program accepts the following command-line arguments:"
-                             "-h, -help: open this help menu\n"
-                             "-s, -silent: do not print progress reports to standard out\n"
-                             "-v, -verbose: print a detailed progress report to standard out"
-                             "-f, -files: specifies the input files. More than one file can be passed. Use as -f FILEPATH FILEPATH etc.\n" // @todo allow piping of file list
-                             "-tl, -tasklist: pass a list of file paths to the function. A tasklist can also contain directories "
+const std::string helpinfo = " help information:\n\n"
+                             "    qAlgorithms is a software project for non-target screening using mass spectrometry."
+                             "    For more information, visit our github page: https://github.com/odea-project/qAlgorithms\n"
+                             "    As of now (23.07.2024), only mzML files are supported. This program accepts the following command-line arguments:\n\n"
+                             "      -h, -help:  open this help menu\n\n"
+                             "    Input settings:\n"
+                             "      -f, -files: specifies the input files. More than one file can be passed. Use as -f FILEPATH FILEPATH etc.\n" // @todo allow piping of file list
+                             "      -tl, -tasklist: pass a list of file paths to the function. A tasklist can also contain directories "
                              "to search recursively and output directories for different blocks of the input files. "
                              "You can comment out lines by starting them with a \"#\"\n" // @todo update
-                             "-r, -recursive <DIRECTORY>: recursive search for .mzML files in the specified directory.\n"
-                             "-o, -output <DIRECTORY>: directory into which all output files should be printed. "
+                             "      -r, -recursive <DIRECTORY>: recursive search for .mzML files in the specified directory.\n\n"
+                             "    Output settings:\n"
+                             "      -o, -output <DIRECTORY>: directory into which all output files should be printed. "
                              "If you want to print all results into the folder which "
-                             "contains the .mzML file, write \"#\". The default output is standard out, "
+                             "contains the .mzML file, write \"#\". The default output is standard out, " // @todo is this a good idea?
                              "unless you did not specify an input file. in that case, you will be prompted to "
                              "enter the output location. If the specified location does not exist, a new directory is created\n"
-                             "-ps, -printsummary: print summarised information on the bins in addition to "
+                             "      -ps, -printsummary: print summarised information on the bins in addition to "
                              "the peaktable. It is saved to your output directory using as FILENAME_summary.csv\n"
-                             "-pb, -printbins: If this flag is set, both bin summary information and "
+                             "      -pb, -printbins: If this flag is set, both bin summary information and "
                              "all binned centroids will be printed to the output location in addition "
                              "to the final peak table. The files end in _summary.csv and _bins.csv.\n"
-                             "-pp, -printpeaks: print the peak tables as csv.\n"
-                             "-e, -extended: print additional information into the final peak list. You do not"
-                             " have to also set the -pp flag.\n"
-                             "-log: This option will create a detailed log file in the program directory.\n";
+                             "      -pp, -printpeaks: print the peak tables as csv.\n"
+                             "      -e, -extended: print additional information into the final peak list. You do not"
+                             " have to also set the -pp flag.\n\n"
+                             "    Program behaviour:\n"
+                             "      -s, -silent: do not print progress reports to standard out\n"
+                             "      -v, -verbose: print a detailed progress report to standard out\n"
+                             "      -log: This option will create a detailed log file in the program directory.\n"; // @todo
 
 int main(int argc, char *argv[])
 {
@@ -136,7 +139,7 @@ int main(int argc, char *argv[])
         std::cin >> filename_input;
         if ((filename_input == "-h") | (filename_input == "-help"))
         {
-            std::cout << argv[0] << helpinfo;
+            std::cout << "    " << argv[0] << helpinfo;
             exit(0);
         }
         // filename_input = "C:/Users/unisys/Documents/Studium/Messdaten/LCMS_pressure_error/22090901_H2O_1_pos.mzML";
@@ -189,7 +192,7 @@ int main(int argc, char *argv[])
         std::string argument = argv[i];
         if ((argument == "-h") | (argument == "-help"))
         {
-            std::cout << argv[0] << helpinfo;
+            std::cout << "    " << argv[0] << helpinfo;
             exit(0);
         }
         if ((argument == "-s") | (argument == "-silent"))
@@ -337,7 +340,7 @@ int main(int argc, char *argv[])
             {
                 std::cerr << "Warning: no files were found by recursive search.\n";
             }
-            pathInput = NULL;
+            pathInput = "";
         }
         else if ((argument == "-o") | (argument == "-output"))
         {
