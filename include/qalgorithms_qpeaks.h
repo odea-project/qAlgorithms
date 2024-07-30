@@ -6,7 +6,7 @@
 #include "qalgorithms_matrix.h"
 // #include "qalgorithms_measurement_data.h"
 #include "qalgorithms_datatype_peak.h"
-#include "qAlgorithms_qbin.h"
+#include "qalgorithms_qbin.h"
 
 // external
 #include <vector>
