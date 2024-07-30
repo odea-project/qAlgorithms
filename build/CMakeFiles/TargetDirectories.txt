@@ -1,3 +1,0 @@
-C:/Users/unisys/Documents/Studium/Analytik-Praktikum/qAlgorithms/build/CMakeFiles/qAlgorithms.dir
-C:/Users/unisys/Documents/Studium/Analytik-Praktikum/qAlgorithms/build/CMakeFiles/edit_cache.dir
-C:/Users/unisys/Documents/Studium/Analytik-Praktikum/qAlgorithms/build/CMakeFiles/rebuild_cache.dir

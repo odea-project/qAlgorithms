@@ -1,3 +1,98 @@
+## Abbreviations:
+@todo copy from report
+
+
+# Notes on the design of visual process quality estimators
+An emerging and highly relevant problem in the field of NTS is
+the fast and accurate estimation of total data quality or total
+measurement quality through an operator. Especially for routine 
+measurements, replicates and other series of very similar samples
+this involves comparing the different steps of a series with 
+each other, ideally over hundreds of samples at once.
+
+These requirements place significant restrictions on the possible
+ways to communicate the deluge of data that comes with (possibly)
+years of measurements. Here, only two options are viable:
+1) Machine-assisted or machine-led processing and search for regions of high change
+2) A reductive approach that produces metadata which is still sensitive to shifts, but human-comprehensive
+
+While these options are not exclusive, the final step of any
+automated evaluation still needs to be that of communicating relevant
+results to the instrument operator.
+
+## Differentiating process quality from result quality
+Previous work by https://doi.org/10.1016/j.trac.2020.116063 highlighted
+quality assurance as a core issue for nontargeted mass spectrometry and
+presented different dimensions for quality during an analysis.
+Expanding on the step of "result reporting", 
+
+Result quality, as understood here, is the reliability and completeness
+of all features at the end of any given processing workflow. For a
+feature to be reliable, it has to correspond to a real molecule
+that can be found within the sample in terms of mass and behaviour
+in the chromatographic dimension or other dimensions of separation.
+Furtermore, a reliable feature must conform to the MS2 spectrum,
+if such a spectrum was produced by the instrument. After componentisation,
+the source feature [@todo better name] should include only features
+which have a high degree of certainty. The highest reliability in
+a dataset is achieved if no false positives exist.
+
+Completeness is the degree to which all molecules in the sample that arrived at
+the mass detector could be reconstructed from the final list of components.
+
+Since both measures depend on ground truth, it is not always sensible
+to provide an estimator for result quality. The central difference 
+between results and process as proposed here is that results serve
+as the basis for some decision, be it through a researcher deciding
+on the next experiment, a water treatment plant worker taking preventative
+measures against a detected contaminant or a sampling system repeating
+an operation. In all such cases, the process does not factor into
+the final decision, unless it is as an abstract measure of confidence.
+
+Process quality consists of the data processing workflow and the
+(inferred) quality of the different steps from sampling to
+retrieving the final result data set. The process can be split
+into the two general steps of data acquisition and data processing.
+The former presents a complex system that is impossible to perfectly
+reproduce and very difficult to monitor in a quantitative manner.
+While practices can be standardised, identification of errors 
+with robust statistical methods is not easily realised. [@todo]
+On the other hand, data processing must be deterministic
+and fully quantifiable in order to enable automation. As such,
+it is a viable point for introducing measures of process quality
+both into existing systems and retroactively assessing the process
+quality of past measurement series, provided the unmodified data was archived.
+
+In terms of the fully formulated mathematical operations from
+unprocessed data to the result table, quality describes the 
+overlap between the assumed model that dictates selection,
+combination and normalisation of data and the produced 
+results. An example for such a quality parameter was developed
+by Reuschenbach et al. [qcentroids]: The quality score describes
+the overlap between the fitted gaussian curve and the measured 
+data points. While such parameters give insight into the 
+reliability of data, be it on a per-EIC, per-feature
+or per-component level, this information does not directly 
+derive from or relate to the result quality.
+
+More importantly, if multiple steps feature a parameter of 
+process quality, the different qualities likely can not
+be converted into each other or otherwise combined without
+losing relevant information or producing distorted estimations.
+
+Under these conditions, deriving any indication of quantitative
+result certainty on a per-result basis from the entire process 
+is not possible. Instead, process quality can either serve
+as a trigger for computation intensive corrections while
+processing is active or as a way to provide non-quantitative
+insight into the programs doing the processing to the operator.
+
+
+# General Notes on Tests:
+The tests presented here were developed as assessors for the quality
+of the binning process. As such, they do not intend to make predictions
+on the final peak quality, if a peak will be found, or how 
+
 # Discarded or Modified Criteria:
 
 ## point within maxdist but not within maxdist + 1

@@ -6,6 +6,11 @@ namespace q
 {
     namespace qPattern
     {
+        struct FeaturePeak
+        {
+            /* data */
+        };
+
         enum MassDifference
         {
             a13C,
@@ -42,6 +47,8 @@ namespace q
 
             // 0 for origin peak, then counts up. This is set after network construction.
             int chainPosition;
+            // this ID is unique and used to refer to the connector when walking a tree
+            int orderID;
 
             // total shift the assignment introduces into the system
             double shiftMZ;
@@ -54,6 +61,12 @@ namespace q
             bool DQSBincrease;
             bool DQSPincrease;
             bool reversible; // does this matter?
+        };
+
+        struct Peaklist
+        {
+            std::vector<std::vector<FeaturePeak>> featurelist;
+            std::vector<std::vector<PeakConnector>> connectorlist;
         };
 
     }
