@@ -8,7 +8,10 @@ namespace q
     {
         struct FeaturePeak
         {
-            /* data */
+            double mz;
+            double RT;
+            double mzErr;
+            double RTerr;
         };
 
         enum MassDifference

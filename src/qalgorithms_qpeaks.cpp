@@ -83,7 +83,7 @@ namespace q
                           { return lhs.mz < rhs.mz; });
             }
 
-            return qBinning::CentroidedData{totalCentroids, centroids};
+            return qBinning::CentroidedData{centroids, totalCentroids};
         }
 #pragma endregion "pass to qBinning"
 

@@ -24,33 +24,41 @@ namespace q
                 float RT;
                 int scanNo;
                 double intensity;
-                double DQSCentroid;
+                double DQSCentroid; // this and RT could be moved outside of the struct
             };
+
+            // depending on the instrumentation, binning requires different subsetting
+            // procedures. Instead of making those user parameters, the correct steps
+            // are selected based on known behaviour @todo make maxdist depend on this
+            enum MeasurementType
+            {
+                LC_HRMS,
+                GC_HRMS,
+                IMS_HRMS,
+                LC_IMS_HRMS,
+                LC_LC_HRMS,
+                LCxLC_HRMS,
+                LC_UV_HRMS,
+                LC_MS_IMS
+            };
+
+            // @todo does the ion source have an effect on the binning decisions to be made?
+            // enum IonSource {
+            //     ESI,
+            //     EI,
+            //     APCI,
+            //     PI,
+            //     LI,
+            //     LTP
+            // };
 
             struct CentroidedData
             {
-                int lengthAllPoints; // number of centroids in all scans
                 std::vector<std::vector<qCentroid>> allDatapoints;
-            };
-
-            bool readcsv(CentroidedData *rawData, std::string user_file, int d_mz, int d_mzError, int d_scanNo, int d_intensity, int d_DQScentroid);
-
-            // return object of qbinning
-            struct DatapointEIC
-            {
-                double mz;
-                // double rt;
-                int scan;
-                double intensity; // convert to int here?
-                double DQS;
-            };
-
-            struct EIC_old // Extracted Ion Chromatogram
-            {
-                std::vector<DatapointEIC> pointsInEIC;
-                double meanDQS;
-                double meanMZ;
-                double maxInt;
+                int lengthAllPoints; // number of centroids in all scans
+                // int scanFold; // number of scans after which the next chromatographic fraction arrives (LC_IMS or LCxLC)
+                // MeasurementType instrumentation;
+                // bool ionisation; // 0 = negative, 1 = positive
             };
 
             struct EIC // Extracted Ion Chromatogram
@@ -94,15 +102,6 @@ namespace q
                 int countDQSbelow0;
             };
 
-            struct BinBorders
-            {
-                int binPosition;
-                int scanRangeStart;
-                int scanRangeEnd;
-                double massRangeStart;
-                double massRangeEnd;
-            };
-
 #pragma endregion "utility"
 
             // Bin Class @todo get under size 128
@@ -127,6 +126,7 @@ namespace q
                 bool duplicateScan = false; // are two points with the same scan number in this bin?
                 bool l_maxdist_tooclose = false;
                 bool r_maxdist_tooclose = false; // Check if there is a point within maxdist
+                std::byte errorcode;
 
                 /// @brief generate a bin that is a subset of an existing bin using two iterators.
                 /// @details since this extracts a continuous sequence, it is only a good idea
@@ -193,10 +193,9 @@ namespace q
                 /// bin to be equal to the critical value. Additionally, the function computes a 1-byte code for up to 8 states of interest.
                 /// The respective bit is set to 1 if the defined state is present. Possible states of interest are too large a discrepancy
                 /// between mean and median or the presence of duplicate values.
+                /// @details This function also sets the "errorcode" parameter of the bin it executes on.
                 /// @return A struct containing the summary information. The first entry is the error code.
                 SummaryOutput summariseBin();
-
-                EIC_old createEIC_old();
 
                 EIC createEIC();
             };
@@ -205,8 +204,7 @@ namespace q
             class BinContainer
             {
             private:
-                // void readcsv(std::string user_file, std::vector<qCentroid> output, int d_mz, int d_mzError, int d_RT, int d_scanNo); // implemented for featurelist
-                std::deque<Bin> binDeque;    // @todo add case for no viable bins
+                std::deque<Bin> binDeque;
                 std::vector<Bin> redoneBins; // store bins after reassembly/cutting here
                 int subsetCount;
 
@@ -254,9 +252,7 @@ namespace q
 
                 void reconstructFromStdev(const CentroidedData *rawdata, int maxdist);
 
-                void printAllBins(std::string path, const CentroidedData *rawdata); // @todo remove rawdata dependency
-
-                void printBinningReport(std::string path); // <- here
+                void printAllBins(std::string path);
 
                 std::vector<EIC> returnBins();
 
@@ -269,14 +265,22 @@ namespace q
                 void printSelectBins(bool printCentroids, std::filesystem::path location, std::string filename);
             };
 
-            // utility functions
+            // #######################################################################################################
 
-            void check_MOD_outOfBins(const Bin *target, const std::vector<qCentroid *> notBinned, const int maxdist);
+            /// @brief wrapper function to execute qbinning on a CentroidedData struct
+            /// @param centroidedData centroid list generated by qPeaks.passToBinning(...), defined in qalgorithms_qpeaks.cpp
+            /// @param outpath directroy into which the summary and bins will be printed, if the option was selected
+            /// @param filename name stem for summary and bins csv files
+            /// @param maxdist maximum distance in the scans dimension that is allowed within a bin
+            /// @param silent if this option is selected, no progress reports will be printed to std::cout
+            /// @param printBinSummary print summary file
+            /// @param printCentroids print all centroids for all bins
+            /// @return returns the centroids as a collection of vectors
+            std::vector<EIC> performQbinning(const CentroidedData centroidedData, std::filesystem::path outpath,
+                                             std::string filename, int maxdist,
+                                             bool silent, bool printBinSummary, bool printCentroids);
 
-            // ### wrapper function to execute qbinning on a CentroidedData struct ###
-            std::vector<EIC> performQbinning(const CentroidedData centroidedData, std::filesystem::path outpath, std::string filename,
-                                             int maxdist, bool silent, bool printBinSummary, bool printCentroids);
-
+            // ######################################################################################################
         }
     }
 }
