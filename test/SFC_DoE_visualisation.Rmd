@@ -6,36 +6,29 @@ library(pracma)
 ```
 
 ```{r binviewer with peak region drawn}
-binPeakViewer = function(summary, fullbins, peaks, IDvector){
+peakViewer = function(summary, fullbins, peaks, IDvector){
   
   IDpos = 1
-  binID = IDvector[IDpos]
+  peakID = IDvector[IDpos]
+  
   rateNext = T
   while (rateNext) {
+    binID = peaks$dqsBin[peakID]
+    centroids = fullbins[which(fullbins$ID == binID),]
     
     meanMZ = summary$mean_mz[which(summary$ID == binID)]
     stdev = summary$stdev_mz[which(summary$ID == binID)]
     # rectangle corners for peak region
-    peak = peaks[which(peaks$binID == binID),]
-    xl = c()
-    xu = c()
-    yl = c()
-    yu= c()
-    if(is.atomic(peak)){
-      for (entry in peak) {
-        xl = c(xl, entry$mz - entry$mzUncertainty)
-        xu = c(xu, entry$mz + entry$mzUncertainty)
-        yl = c(yl, entry$retentionTime - entry$retentionTimeUncertainty)
-        yu = c(yu, entry$retentionTime + entry$retentionTimeUncertainty)
-      }
-    }
+    
+        xl = peaks$mz[peakID] - peaks$mzUncertainty[peakID]
+        xu = peaks$mz[peakID] + peaks$mzUncertainty[peakID]
+        yl = peaks$retentionTime[peakID] - peaks$retentionTimeUncertainty[peakID]
+        yu = peaks$retentionTime[peakID] + peaks$retentionTimeUncertainty[peakID]
     
     
-    
-    
-    print(ggplot(fullbins[which(fullbins$ID == binID),])+
-      geom_rect(xmin = xl, xmax = xu, ymin = yl, ymax = yu, fill = "lightgreen")+
-      geom_point(aes(mz, scan, color = intensity))+ 
+    print(ggplot()+
+      geom_rect(aes(xmin = xl, xmax = xu, ymin = yl, ymax = yu), fill = "lightgreen")+
+      geom_point(aes(centroids$mz, centroids$scan, color = centroids$intensity))+ 
       
       geom_vline(xintercept = meanMZ - stdev, linewidth = 0.2, linetype = "dashed", color = "red")+
       geom_vline(xintercept = meanMZ + stdev, linewidth = 0.2, linetype = "dashed", color = "red")+  

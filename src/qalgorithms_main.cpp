@@ -447,7 +447,7 @@ int main(int argc, char *argv[])
 
             pathOutput = pathSource.parent_path(); // @todo include route to standard out
         }
-        else if (!silent)
+        else if (!silent & (printPeaks | printSummary))
         {
             std::cout << "printing output to: " << pathOutput;
         }

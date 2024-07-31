@@ -1,5 +1,3 @@
-Ionenquelle sollte angegeben werden
-
 Dedizierte Exportfunktion für Bilder
 
 Bin-Summary visualisierung: Plotte alle Bins mit mehr als x Fehlern als eigene Kategorie
@@ -7,18 +5,9 @@ Bin-Summary visualisierung: Plotte alle Bins mit mehr als x Fehlern als eigene K
 Kann der Anteil, den der Peak am EIC hat, auch für Korellation zwischen 
 Datensätzen verwendet werden?
 
-Bins 2201, 2251 in s_SFC_DoE_RO02_06 überprüfen
-Bin 11698 hat ähnliches Problem, sieht nach Anzeigefehler aus
- -> falsche Zentroidliste wurde verwendet
-
 Wenn 100000 zutrifft und der Bin entsprechend klein ist, sieht eine Lorentz-Kurve nach einem besseren Fit aus
 
 Ordne Fehlercodes so, dass eine größere Zahl schlechter ist
-
-Duplikate erst entfernen, nachdem alle überlappenden Bins anderweitig entfernt wurden.
-DQSC ist ein guter Indikator für den Punkt, der entfernt werden sollte.
-Wahrscheinlich ist es sinnvoll, Duplikate nicht in die Abschätzung von mz mit einzubeziehen
- -> Duplikate werden im EIC-Konstruktor entfernt
 
 Test: Können die Intensitäten im Bin unterschieden werden?
 
