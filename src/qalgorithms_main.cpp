@@ -13,6 +13,7 @@
 #include <filesystem> // printing absolute path in case read fails
 #include <string>
 #include <sstream>
+
 namespace q
 {
     void printPeaklist(std::vector<std::vector<q::DataType::Peak>> peaktable,
@@ -90,7 +91,7 @@ namespace q
 
 }
 
-const std::string helpinfo = " help information:\n\n"
+const std::string helpinfo = " help information:\n\n" // @todo std::format
                              "    qAlgorithms is a software project for non-target screening using mass spectrometry.\n"
                              "    For more information, visit our github page: https://github.com/odea-project/qAlgorithms.\n"
                              "    As of now (30.07.2024), only mzML files are supported. This program accepts the following command-line arguments:\n\n"
@@ -447,7 +448,7 @@ int main(int argc, char *argv[])
 
             pathOutput = pathSource.parent_path(); // @todo include route to standard out
         }
-        else if (!silent & (printPeaks | printSummary))
+        else if (!silent && (printPeaks | printSummary))
         {
             std::cout << "printing output to: " << pathOutput;
         }
@@ -458,10 +459,17 @@ int main(int argc, char *argv[])
         auto timeStart = std::chrono::high_resolution_clock::now();
         if (!silent)
         {
-            std::cout << "\nreading file " << pathSource << " ...";
+            std::cout << "\nreading file " << pathSource << " ... ";
         }
 
         sc::MZML data(std::filesystem::canonical(pathSource).string()); // create mzML object @todo change to use filesystem::path
+
+        if (!data.loading_result)
+        {
+            std::cerr << "Error: the file is defective.\n";
+            exit(101);
+        }
+
         if (!silent)
         {
             std::cout << " file ok\n";
@@ -484,6 +492,7 @@ int main(int argc, char *argv[])
             filename += ("_" + polarity);
 
             q::Algorithms::qBinning::CentroidedData binThis = qpeaks.passToBinning(centroids);
+
             auto timeEnd = std::chrono::high_resolution_clock::now();
 
             if (!silent)
@@ -505,6 +514,7 @@ int main(int argc, char *argv[])
             timeStart = std::chrono::high_resolution_clock::now();
             // every subvector of peaks corresponds to the bin ID
             auto peaks = tensorData.findPeaks_QBIN(qpeaks, binnedData);
+
             timeEnd = std::chrono::high_resolution_clock::now();
             if (!silent)
             {
