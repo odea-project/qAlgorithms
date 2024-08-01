@@ -21,8 +21,14 @@ namespace q
         class TensorData : public MeasurementData
         {
         private:
-        float rt_diff; 
-        float calcRTDiff(std::vector<double> &retention_times);
+            float rt_diff;
+            float calcRTDiff(std::vector<double> &retention_times);
+
+            std::vector<dataPoint>
+            mzmlToDataPoint(
+                sc::MZML &data,
+                const int index);
+
         public:
             // constructors
             TensorData();

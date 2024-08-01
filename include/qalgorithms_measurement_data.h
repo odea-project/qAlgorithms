@@ -21,20 +21,39 @@ namespace q
          */
         class MeasurementData
         {
-            public:
+        protected:
+            // variables
+            struct dataPoint
+            {
+                float x;
+                float y;
+                bool df;
+                float dqsCentroid;
+                float dqsBinning;
+                int scanNumber;
+            };
+            
+
+        public:
+            // variables
+            struct treatedData
+            {
+                std::vector<dataPoint> dataPoints;
+                std::vector<std::vector<dataPoint>::iterator> separators;
+            };
             // destructor
-            virtual ~MeasurementData(){};
+            virtual ~MeasurementData() {};
 
             // methods
             virtual void readCSV(std::string filename, int rowStart, int rowEnd, int colStart, int colEnd, char separator, std::vector<DataType::DataField> variableTypes) = 0;
 
-
             std::vector<std::vector<std::unique_ptr<DataType::Peak>>>
             transfereCentroids(
-                sc::MZML &data, 
+                sc::MZML &data,
                 std::vector<int> &indices,
-                std::vector<double> &retention_times, 
+                std::vector<double> &retention_times,
                 const int start_index);
+
             /**
              * @brief Identify and fill gaps in the data
              * @details The zeroFilling method identifies and fills gaps in the data. The method uses difference between two neighboring data points to identify gaps. If the difference is 1.75 times greater than expected, then the method fills the gap with zero values for y-axis and inter/extrapolated values for x-axis values. For the expected difference, the method the difference of the last two data points that not show a gap. However, the first expected difference is set to the median of the differences of the total data points. However, the maximum gap size is set to "k/2" per side, i.e., "k" in total, where there is a gap leftover between the fourth and fifth data points.
@@ -44,13 +63,13 @@ namespace q
             void
             zeroFilling(varDataType &dataVec, int k);
 
-            int 
+            int
             zeroFilling_blocksAndGaps(
                 std::vector<std::vector<double>> &data,
                 double expectedDifference,
                 const bool updateExpectedDifference = true);
 
-            int 
+            int
             zeroFilling_blocksOnly(
                 std::vector<std::vector<double>> &data,
                 double expectedDifference,
@@ -74,7 +93,7 @@ namespace q
             cutData(
                 varDataType &dataVec,
                 size_t &maxKey);
-            
+
             void
             cutData_vec_orbitrap(
                 std::vector<std::vector<double>> &data,
@@ -97,15 +116,15 @@ namespace q
 
             /**
              * @brief Gaussian extrapolate y-axis values
-             * while data[1] will look like: 0 0 0 0 y1 y2 y3...yi 0 0 0 0 0 0 0 0 yj yk yl...yn 0 0 0 0 0 0 0 0... and so on. 
-             * The idea is to extrapolate the zeros using parabola extrapolation of the blocks of non-zero values. 
-             * For parabola, first, last and maximum values are considered. 
-             * We use the log data for the extrapolation and back-transform the extrapolated values to linear space. 
+             * while data[1] will look like: 0 0 0 0 y1 y2 y3...yi 0 0 0 0 0 0 0 0 yj yk yl...yn 0 0 0 0 0 0 0 0... and so on.
+             * The idea is to extrapolate the zeros using parabola extrapolation of the blocks of non-zero values.
+             * For parabola, first, last and maximum values are considered.
+             * We use the log data for the extrapolation and back-transform the extrapolated values to linear space.
              * This will lead to gaussian extrapolation of the zeros.
              * @param data is structured as follows:
              * data[0] = x-axis values; data[1] = y-axis values; data[2] = df values
              */
-            void 
+            void
             extrapolateData_vec(
                 std::vector<std::vector<double>> &data,
                 std::vector<std::vector<double>::iterator> &separators);
@@ -114,14 +133,22 @@ namespace q
             interpolateData_vec_orbitrap(
                 std::vector<std::vector<double>> &data,
                 std::vector<std::vector<double>::iterator> &separators);
-            
+
             void
             extrapolateData_vec_orbitrap(
                 std::vector<std::vector<double>> &data,
                 std::vector<std::vector<double>::iterator> &separators);
 
-            // debugging
-            // virtual void print() = 0;
+            /**
+             * @brief Inter/extrapolate gaps in data and define separation markers for data blocks.
+             *
+             * @param dataPoints : {x, y, df, dqsCentroid, dqsBinning, scanNumber}
+             *
+             * @return std::vector<std::vector<dataPoint>::iterator> : separation markers for data blocks
+             */
+            treatedData
+            pretreatData(std::vector<dataPoint> &dataPoints,
+                         float expectedDifference);
         };
     } // namespace MeasurmentData
 }

@@ -4,6 +4,7 @@
 
 // internal
 #include "qalgorithms_datatype_peak.h"
+#include "qalgorithms_measurement_data.h"
 #include "qalgorithms_qbin.h"
 
 // external
@@ -31,6 +32,14 @@ namespace q
             ~qPeaks();
 
             // methods
+            void
+            findCentroids(
+                std::vector<std::unique_ptr<DataType::Peak>> &all_peaks,
+                q::MeasurementData::MeasurementData::treatedData &treatedData,
+                const int scanNumber,
+                const float retentionTime
+            );
+
             void
             findCentroids(
                 std::vector<std::unique_ptr<DataType::Peak>> &all_peaks,

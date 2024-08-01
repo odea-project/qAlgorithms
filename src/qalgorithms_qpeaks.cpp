@@ -163,6 +163,15 @@ namespace q
     void
     qPeaks::findCentroids(
         std::vector<std::unique_ptr<DataType::Peak>> &all_peaks,
+        q::MeasurementData::MeasurementData::treatedData &treatedData,
+        const int scanNumber,
+        const float retentionTime)
+    {
+    }
+
+    void
+    qPeaks::findCentroids(
+        std::vector<std::unique_ptr<DataType::Peak>> &all_peaks,
         std::vector<std::vector<double>> &dataVec,
         std::vector<std::vector<double>::iterator> &separators,
         const int scanNumber,

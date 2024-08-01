@@ -26,6 +26,35 @@ namespace q
             return sum / (retention_times.size() - 1);
         }
 
+        std::vector<TensorData::dataPoint>
+        TensorData::mzmlToDataPoint(
+            sc::MZML &data,
+            const int index)
+        {
+            std::vector<std::vector<double>> spectrum = data.get_spectrum(index); // get spectrum at index
+            std::vector<TensorData::dataPoint> data_points;                       // create vector of data points
+            data_points.reserve(spectrum[0].size());                              // reserve memory for data points
+            for (size_t i = 0; i < spectrum[0].size(); ++i)
+            {
+                if (spectrum[1][i] == 0.0)
+                {
+                    continue; // skip zero values
+                }
+                TensorData::dataPoint dp;  // create data point
+                dp.x = spectrum[0][i];     // x-axis value
+                dp.y = spectrum[1][i];     // y-axis value
+                dp.df = true;              // df value
+                data_points.push_back(dp); // add data point to vector
+            }
+            // add end point for later pretreatment
+            TensorData::dataPoint dp;
+            dp.x = std::numeric_limits<float>::infinity();
+            dp.y = 0.0;
+            dp.df = false;
+            data_points.push_back(dp);
+            return data_points;
+        }
+
         void
         TensorData::readCSV(
             std::string filename,
@@ -138,27 +167,23 @@ namespace q
             } // else zero filling (not needed)
 
 // TREAT DATA WITH ZEROS (ZERO FILLING only for block separation, INTERPOLATION only at zeros, EXTRAPOLATION)
-// #pragma omp parallel for
+#pragma omp parallel for
             for (size_t i = 0; i < indices.size(); ++i) // loop over all indices
             {
-                const int index = indices[i];                                           // spectrum index
-                std::vector<std::vector<double>> spectrum = data.get_spectrum(index);   // spectrum at index
-                spectrum.push_back(std::vector<double>(spectrum[0].size(), 1.0));       // add df column for interpolation
-                int num_subsets = zeroFilling_blocksOnly(spectrum, expectedDifference); // zero fill the spectrum
-                // print spectrum[0], spectrum[1], spectrum[2]
-                std::string filename = "spectrum_" + std::to_string(index) + ".csv";
-                std::ofstream file(filename);
-                for (size_t j = 0; j < spectrum[0].size(); ++j)
-                {
-                    file << spectrum[0][j] << "," << spectrum[1][j] << "," << spectrum[2][j] << std::endl;
-                }
-                file.close();
-                exit(0);
-                // int num_subsets = zeroFilling_vec(spectrum, expectedDifference);                     // zero fill the spectrum
+                const int index = indices[i]; // spectrum index
+                std::vector<TensorData::dataPoint> dataPoints = mzmlToDataPoint(data, index);
+                TensorData::treatedData treatedData = pretreatData(dataPoints, expectedDifference);
+
+                // int num_subsets = zeroFilling_blocksOnly(spectrum, expectedDifference);              // zero fill the spectrum
+                // assert(num_subsets > 0);                                                             // check if number of subsets is greater than zero
                 // std::vector<std::vector<double>::iterator> separators(num_subsets);                  // vector of iterators at separation points (x axis)
                 // extrapolateData_vec(spectrum, separators);                                           // interpolate the data when zero filled
-                // qpeaks.findCentroids(centroids[i], spectrum, separators, index, retention_times[i]); // find peaks
+                // if (index==162)
+                // { // DIE SEPARATOREN SIND NOCH NICHT KORREKT. GGF ist der vector nicht vollständig
+                //     qpeaks.findCentroids(centroids[i], spectrum, separators, index, retention_times[i]); // find peaks
+                // }
             } // for
+
             return centroids;
         } // readStreamCraftMZML
 

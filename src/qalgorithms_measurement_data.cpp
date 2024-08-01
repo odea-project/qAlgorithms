@@ -457,7 +457,7 @@ namespace q
         }
         counter++;
       }
-      sorted_indexes[numPoints - 1] = counter;
+      sorted_indexes[numPoints - 1] = sorted_indexes.size() - 1;
 
       // ADD FIRST ZERO
       double diff = data[0][2] - data[0][1];
@@ -468,7 +468,11 @@ namespace q
       sorted_indexes[1] = 1;
       // set index 0 to the last element
       counter++;
-      sorted_indexes[0] = counter;
+      sorted_indexes[0] = sorted_indexes.size() - 1;
+      if (data[1][1] == 0)
+      {
+        data[2][1] = 0;
+      }
 
       // SORT DATA
       for (int i = 0; i < static_cast<int>(sorted_indexes.size()); ++i)
@@ -482,6 +486,14 @@ namespace q
           std::swap(sorted_indexes[i], sorted_indexes[sorted_indexes[i]]);
         }
       }
+      // delete the last element of the data vectors
+      for (size_t j = 0; j < numRows; j++)
+      {
+        data[j].pop_back();
+      }
+      // set the last two elements of data[2] to zero
+      data[2][data[2].size() - 1] = 0;
+      data[2][data[2].size() - 2] = 0;
       return num_subsets + 1;
     }
 
@@ -912,10 +924,19 @@ namespace q
           }
           block_end_y++;
           block_end_x++;
+          if (block_end_y == data[1].end())
+          {
+            return;
+          }
         }
         // set separator
         separators[block_counter] = block_end_x + separatingZeros - 1;
         block_counter++;
+        // check if counter is larger than the size of the separators vector
+        if (block_counter >= separators.size())
+        {
+          return;
+        }
         // check if the block is valid
         if ((block_max_y == block_start_y) || (block_max_y == block_end_y))
         {
@@ -1113,5 +1134,140 @@ namespace q
         block_end_df = block_end_df + 8;
       } // end of for loop (separators)
     } // end of extrapolateData_vec
+
+    MeasurementData::treatedData
+    MeasurementData::pretreatData(
+        std::vector<MeasurementData::dataPoint> &dataPoints,
+        float expectedDifference)
+    {
+
+      // lambda function to calculate the coefficients b0, b1, and b2 for the quadratic extrapolation
+      auto calculateCoefficients = [](const float *x, const float *y, float &b0, float &b1, float &b2)
+      {
+        float x1 = x[0], y1 = y[0];
+        float x2 = x[1], y2 = y[1];
+        float x3 = x[2], y3 = y[2];
+
+        float denom = (x1 - x2) * (x1 - x3) * (x2 - x3);
+
+        float a = (x3 * (y2 - y1) + x2 * (y1 - y3) + x1 * (y3 - y2)) / denom;
+        float b = (x3 * x3 * (y1 - y2) + x2 * x2 * (y3 - y1) + x1 * x1 * (y2 - y3)) / denom;
+        float c = (x2 * x3 * (x2 - x3) * y1 + x3 * x1 * (x3 - x1) * y2 + x1 * x2 * (x1 - x2) * y3) / denom;
+
+        b0 = c;
+        b1 = b;
+        b2 = a;
+      };
+      treatedData treatedData = {std::vector<dataPoint>(), std::vector<std::vector<dataPoint>::iterator>()};
+      treatedData.dataPoints.reserve(dataPoints.size() * 2); // reserve memory for the new data points
+      auto it_dataPoint = dataPoints.begin();                   // iterator for the data points
+      const auto it_dataPoint_end = dataPoints.end() - 1;       // end of the data points (last element is infinty point)
+      auto it_maxOfBlock = dataPoints.begin();                  // maximum of the block (y-axis)
+      int blockSize = 0;                                        // size of the current block
+
+      // add the first to zeros to the dataPoints_new vector
+      for (int i = 0; i < 2; i++)
+      {
+        dataPoint dp;
+        dp.x = 0.f;
+        dp.y = 0.f;
+        dp.df = false;
+        treatedData.dataPoints.push_back(dp);
+      }
+      treatedData.separators.push_back(treatedData.dataPoints.begin()); // add the first separator
+
+      // iterate over the data points
+      for (; it_dataPoint != it_dataPoint_end; it_dataPoint++)
+      {
+        blockSize++;
+        treatedData.dataPoints.push_back(*it_dataPoint);
+        const float dx = (it_dataPoint + 1)->x - it_dataPoint->x;
+        if (dx > 1.75 * expectedDifference)
+        { // gap detected
+          const int gapSize = static_cast<int>(dx / expectedDifference) - 1;
+          // const float dx_before = it_dataPoint->x - (it_dataPoint - 1)->x; // dx before the gap
+          // if (dx_before > .75 * expectedDifference && dx_before < 1.75)
+          // {
+          //   expectedDifference = it_dataPoint->x - (it_dataPoint - 1)->x; // update the expected difference
+          // }
+          if (gapSize < 4)
+          {
+            // add gapSize interpolated datapoints
+            const float dy = std::pow((it_dataPoint + 1)->y / it_dataPoint->y, 1.0 / (gapSize + 1)); // dy for log interpolation
+            for (int i = 1; i <= gapSize; i++)
+            {
+              dataPoint dp;
+              dp.x = it_dataPoint->x + i * expectedDifference;
+              dp.y = it_dataPoint->y * std::pow(dy, i);
+              dp.df = false;
+              treatedData.dataPoints.push_back(dp);
+            }
+          }
+          else
+          { // END OF BLOCK, EXTRAPOLATION STARTS
+            // add 4 datapoints (two extrapolated [end of current block] and two zeros [start of next block]) extrapolate the first two datapoints of this block
+            if (blockSize < 5)
+            {
+              // delete all data points of the block in treatedData.dataPoints except the first two zeros marked by the separator.back()+2
+              treatedData.dataPoints.erase(treatedData.separators.back() + 2, treatedData.dataPoints.end());
+            }
+            else
+            {
+              const auto it_startOfBlock = (treatedData.separators.back() + 2);
+              const float x[3] = {0.f, it_maxOfBlock->x - it_startOfBlock->x, it_dataPoint->x - it_startOfBlock->x};
+              const float y[3] = {std::log(it_startOfBlock->y), std::log(it_maxOfBlock->y), std::log(it_dataPoint->y)};
+              float b0, b1, b2;
+              calculateCoefficients(x, y, b0, b1, b2);
+              // extrapolate the left side of the block
+              for (int i = 0; i < 2; i++)
+              {
+                (treatedData.separators.back() + i)->x = it_startOfBlock->x - (2 - i) * expectedDifference;
+                const float x = (treatedData.separators.back() + i)->x - it_startOfBlock->x;
+                (treatedData.separators.back() + i)->y = std::exp(b0 + x * (b1 + x * b2));
+              }
+              // add the extrapolated data points to the right side of the block
+              for (int i = 0; i < 2; i++)
+              {
+                dataPoint dp;
+                dp.x = it_dataPoint->x + (i + 1) * expectedDifference;
+                const float x = dp.x - it_startOfBlock->x;
+                dp.y = std::exp(b0 + x * (b1 + x * b2));
+                dp.df = false;
+                treatedData.dataPoints.push_back(dp);
+              }
+              // add the zeros to the treatedData.dataPoints vector to start the next block
+              for (int i = 0; i < 2; i++)
+              {
+                dataPoint dp;
+                dp.x = 0.f;
+                dp.y = 0.f;
+                dp.df = false;
+                treatedData.dataPoints.push_back(dp);
+              }
+              treatedData.separators.push_back(treatedData.dataPoints.end() - 2); // add the separator
+              it_maxOfBlock = it_dataPoint + 1;               // update the maximum of the block
+            }
+            blockSize = 0; // reset the block size
+          }
+        } //
+        else
+        {
+          if (it_maxOfBlock->y < it_dataPoint->y)
+          {
+            it_maxOfBlock = it_dataPoint; // update the maximum of the block
+          }
+          if (dx > .75 * expectedDifference)
+          {
+            expectedDifference = (expectedDifference + dx) * .5; // update the expected difference
+          }
+        }
+      } // end of for loop
+
+      // delete the last two zeros
+      treatedData.dataPoints.pop_back();
+      treatedData.dataPoints.pop_back();
+      treatedData.separators.pop_back();
+      return treatedData;
+    } // end of pretreatData
   } // namespace MeasurementData
 } // namespace q
