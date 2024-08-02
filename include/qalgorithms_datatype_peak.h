@@ -5,10 +5,7 @@
 // internal
 #include "qalgorithms_datatype.h"
 
-// external
-// #include <unordered_map>
-// #include <iostream>
-// #include <vector>
+// up to date with commit d769ca8, removed explicit constructor and destructor to enable move semantics
 
 /* This file includes the q::DataType::Peak and q::DataType::PeakList classes*/
 namespace q
@@ -17,7 +14,11 @@ namespace q
   {
     /**
      * @brief A class to store peak data
-     * @details The Peak class is used to store peak data. It contains the position, height, width, and area of the peak. The class also contains the uncertainty of the peak position, height, width, and area, the data quality score of the peak, the regression coefficients, the valley position, the degrees of freedom, and the index of the regression window position.
+     * @details The Peak class is used to store peak data. It contains the position, height,
+     * width, and area of the peak. The class also contains the uncertainty of the peak
+     * position, height, width, and area, the data quality score of the peak, the
+     * regression coefficients, the valley position, the degrees of freedom, and the
+     * index of the regression window position.
      * @param sampleID The sample ID
      * @param position The position of the peak
      * @param height The height of the peak

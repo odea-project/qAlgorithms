@@ -3,13 +3,10 @@
 #ifndef QALGORITHMS_MATRIX_H // Include guarde to prevent double inclusion
 #define QALGORITHMS_MATRIX_H
 
-// external @todo most of these are not needed for matrix implementation
+// external
 #include <stddef.h> // size_t
-// #include <iostream>
-// #include <cmath>
-// #include <algorithm>
-// #include <array>
-// #include <cstdint>
+
+//  up to date with commit 6086f2e
 
 /* This file includes the q::matrix class*/
 namespace q
@@ -49,7 +46,7 @@ namespace q
     };
 
     /**
-     * @brief A clase to store a matrix with major column order storage
+     * @brief A class to store a matrix with major column order storage
      * @details The Matrix_mc class is used to store a matrix of doubles with major column order storage.
      *
      * @param elements A pointer to the elements of the matrix

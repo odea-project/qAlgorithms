@@ -4,12 +4,13 @@
 // internal
 #include "qalgorithms_datatype.h"
 
-// external @todo move to cpp file
+// external
 #include <variant>
 #include <vector>
 #include <unordered_map>
 #include <memory> // unique pointer
-// #include <algorithm>
+
+// up to date with commit 2fa36fa
 
 namespace q
 {

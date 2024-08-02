@@ -1,6 +1,7 @@
 #ifndef QALGORITHMS_DATATYPE_H
 #define QALGORITHMS_DATATYPE_H
 
+// up to date with commit d769ca8
 namespace q
 {
 
@@ -42,9 +43,9 @@ namespace q
         {
             // general fields
             INTENSITY, // signal intensity
-            SUB_ID,    // sub-dataset ID @todo more expressive name
-            DATA_ID,   // data ID @todo more expressive name
-            DATAPOINT, // data point @todo more expressive name
+            SUB_ID,    // sub-dataset ID
+            DATA_ID,   // data ID
+            DATAPOINT, // data point
 
             // MS fields
             IONIZATIONMODE,  // positive or negative
@@ -77,10 +78,10 @@ namespace q
             MZ_UNCERTAINTY,
 
             // Regression fields
-            BETA_0,          // regression coefficient
-            BETA_1,          // regression coefficient
-            BETA_2,          // regression coefficient
-            BETA_3,          // regression coefficient
+            BETA_0,          // regression coefficients
+            BETA_1,          // regression coefficients
+            BETA_2,          // regression coefficients
+            BETA_3,          // regression coefficients
             VALLEY_POSITION, // optional: some peaks have a valley position
             DF,              // degrees of freedom
             X_INDEX,         // index of the regression window position
@@ -88,7 +89,7 @@ namespace q
             // Add new data fields here
         };
 
-        // additional categorical data sub types @todo these belong into a unified metadata object
+        // additional categorical data sub types
         enum class IonizationMode
         {
             Positive,

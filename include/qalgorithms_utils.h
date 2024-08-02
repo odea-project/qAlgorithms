@@ -7,16 +7,10 @@
 
 // external
 #include <vector>
-// #include <iostream>
-// #include <cmath>
-// #include <map>
-// #include <cstdint>
-// #include <numeric>
-// #include <cstdio>
-// #include <memory>
 #include <string>
-// #include <stdexcept>
 #include <immintrin.h>
+
+// up to date with commit dccdf9f
 
 namespace q
 {
@@ -96,6 +90,41 @@ namespace q
         const std::vector<bool> &B);
 
     double erfi(const double x);
+
+    void interpolate_loglinear(
+        const int gapSize,
+        const double expectedDifference,
+        const int index,
+        const size_t numRows,
+        std::vector<std::vector<double>> &data,
+        std::vector<int> &sorted_indexes);
+
+    void interpolate_loglinear_nopush(
+        const int gapSize,
+        const int index,
+        std::vector<std::vector<double>> &data);
+
+    void interpolate_loglinear_nopush(
+        const int gapSize,
+        const int index,
+        const int numAddedZeroes,
+        std::vector<std::vector<double>> &data);
+
+    void extrapolate_x_left(
+        const int separatingZeros,
+        const double expectedDifference,
+        const int index,
+        const size_t numRows,
+        std::vector<std::vector<double>> &data,
+        std::vector<int> &sorted_indexes);
+
+    void extrapolate_x_right(
+        const int separatingZeros,
+        const double expectedDifference,
+        const int index,
+        const size_t numRows,
+        std::vector<std::vector<double>> &data,
+        std::vector<int> &sorted_indexes);
 
     const q::Matrices::Matrix linreg(
         const std::vector<double> &xData,
@@ -275,8 +304,9 @@ namespace q
 
     // /**
     //  * @brief Convolution of a vector with a kernel matrix
-    //  * @details This function takes a vector and a kernel matrix as input
-    //  * and returns a new matrix that is the result of convolving the input vector with the kernel matrix.
+    //  * @details This function takes a vector and a kernel matrix
+    //  * as input and returns a new matrix that is the result of
+    //  * convolving the input vector with the kernel matrix.
     //  *
     //  * @param vec : array of doubles* stored in the vector class
     //  * @param n : size of the array
@@ -327,8 +357,7 @@ namespace q
 #pragma region "Vector Operations"
     /**
      * @brief calculate the log of a vector
-     * @details This function takes a vector as input and returns a new vector
-     * that is the element-wise natural logarithm of the input vector.
+     * @details This function takes a vector as input and returns a new vector that is the element-wise natural logarithm of the input vector.
      *
      * @param vec : vector of doubles
      * @return Vector
@@ -358,9 +387,9 @@ namespace q
         const q::Matrices::Vector &A);
 #pragma endregion "print functions"
 
-#pragma region "execute commands"
-    std::string
-    exec(const char *cmd);
-#pragma endregion "execute commands"
+    // #pragma region "execute commands"
+    //     std::string
+    //     exec(const char *cmd);
+    // #pragma endregion "execute commands"
 } // namespace q
 #endif // QALGORITHMS_UTILS_H

@@ -8,14 +8,15 @@
 // external
 #include "../external/StreamCraft/src/StreamCraft_mzml.h"
 
+// up to date with commit 47da7e1
+
 namespace q
 {
     namespace MeasurementData
     {
         /**
          * @brief A class to store 3D tensor measurement data, e.g., LC-MS data
-         * @details The TensorData class is a subclass of the MeasurementData
-         * class used to store 3D tensor measurement data, e.g., LC-MS data.
+         * @details The TensorData class is a subclass of the MeasurementData class used to store 3D tensor measurement data, e.g., LC-MS data.
          *
          * @param data A 3D tensor of LC-MS data /ref DataType::LC_MS
          */
@@ -24,6 +25,11 @@ namespace q
         private:
             float rt_diff;
             float calcRTDiff(std::vector<double> &retention_times);
+
+            std::vector<dataPoint>
+            mzmlToDataPoint(
+                sc::MZML &data,
+                const int index);
 
         public:
             bool readCSV(
@@ -59,9 +65,6 @@ namespace q
             findPeaks_QBIN(
                 q::Algorithms::qPeaks &qpeaks,
                 std::vector<q::Algorithms::qBinning::EIC> &data);
-
-            // std::vector<std::vector<DataType::Peak>>
-            // remove_unique_ptr(q::Algorithms::qPeaks &qpeaks, std::vector<std::vector<std::unique_ptr<DataType::Peak>>>);
         };
     } // namespace MeasurementData
 } // namespace q
