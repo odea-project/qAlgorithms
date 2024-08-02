@@ -6,13 +6,8 @@
 #include "qalgorithms_datatype_peak.h"
 #include "../external/StreamCraft/src/StreamCraft_mzml.h"
 
-// external
-#include <string>
 #include <vector>
 #include <memory>
-// #include <iostream>
-// #include <algorithm>
-// #include <cmath>
 
 namespace q
 {
@@ -28,7 +23,25 @@ namespace q
          */
         class MeasurementData
         {
+        protected:
+            // variables
+            struct dataPoint
+            {
+                float x;
+                float y;
+                bool df;
+                float dqsCentroid;
+                float dqsBinning;
+                int scanNumber;
+            };
+
         public:
+            // variables
+            struct treatedData
+            {
+                std::vector<dataPoint> dataPoints;
+                std::vector<std::vector<dataPoint>::iterator> separators;
+            };
             // destructor
             // virtual ~MeasurementData() {};
 
@@ -59,8 +72,14 @@ namespace q
              */
             void zeroFilling(varDataType &dataVec, int k);
 
-            // @todo documentation
-            int zeroFilling_vec(
+            int
+            zeroFilling_blocksAndGaps(
+                std::vector<std::vector<double>> &data,
+                double expectedDifference,
+                const bool updateExpectedDifference = true);
+
+            int
+            zeroFilling_blocksOnly(
                 std::vector<std::vector<double>> &data,
                 double expectedDifference,
                 const bool updateExpectedDifference = true);
@@ -126,6 +145,17 @@ namespace q
             void extrapolateData_vec_orbitrap(
                 std::vector<std::vector<double>> &data,
                 std::vector<std::vector<double>::iterator> &separators);
+
+            /**
+             * @brief Inter/extrapolate gaps in data and define separation markers for data blocks.
+             *
+             * @param dataPoints : {x, y, df, dqsCentroid, dqsBinning, scanNumber}
+             *
+             * @return std::vector<std::vector<dataPoint>::iterator> : separation markers for data blocks
+             */
+            treatedData
+            pretreatData(std::vector<dataPoint> &dataPoints,
+                         float expectedDifference);
         };
     } // namespace MeasurmentData
 }
