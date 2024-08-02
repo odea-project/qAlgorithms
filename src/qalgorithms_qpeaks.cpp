@@ -5,6 +5,7 @@
 #include "qalgorithms_matrix.h"
 #include "qalgorithms_utils.h"
 #include "qalgorithms_qbin.h"
+#include "qalgorithms_measurement_data.h"
 
 #include <algorithm>
 #include <variant> // std::visit
@@ -17,6 +18,8 @@
 #include <cassert>
 #include <omp.h>
 #include <unordered_map>
+
+// up to date with commit 47da7e1
 
 namespace q
 {
@@ -43,7 +46,8 @@ namespace q
                 return;
             }
             std::string command = "python python/plotPeaksToPython.py " + filename_input + " " + filename_output + " " + std::to_string(includeFits) + " " + std::to_string(featureMap);
-            std::string result = exec(command.c_str());
+            std::string result;
+            std::system(command.c_str());
             std::cout << result;
         }
 #pragma endregion "plotPeaksToPython"
@@ -165,35 +169,44 @@ namespace q
 #pragma region "find centroids"
         void qPeaks::findCentroids(
             std::vector<std::unique_ptr<DataType::Peak>> &all_peaks,
-            std::vector<std::vector<double>> &dataVec,
-            std::vector<std::vector<double>::iterator> &separators,
+            q::MeasurementData::MeasurementData::treatedData &treatedData,
             const int scanNumber,
             const float retentionTime)
         {
+            std::cerr << "function void qPeaks::findCentroids(... not defined in line 168\n";
+        }
 
+        void qPeaks::findCentroids(
+            std::vector<std::unique_ptr<DataType::Peak>> &all_peaks,
+            std::vector<std::vector<double>> &dataVec,
+            std::vector<std::vector<double>::iterator> &separators,
+            const int scanNumber,
+            const float retentionTime,
+            const int additionalZeros)
+        {
             // iterate over the blocks marked by the separators, which point to the last element of each block.
             // the separators point to x values
             // the first and last block need to be ignored.
             // define iterators
-            auto it_mz = dataVec[0].begin() + 4;          // start of the second block
-            auto it_y = dataVec[1].begin() + 4;           // start of the second block
-            auto it_df = dataVec[2].begin() + 4;          // start of the second block
-            auto it_sep = separators.begin() + 1;         // start of the second block
-            const auto it_sep_end = separators.end() - 1; // end of the last block
-            const float rt[2] = {-255.f, retentionTime};  // retention time vector
-            const float *rt_start = rt;                   // start of the retention time vector
+            auto it_mz = dataVec[0].begin();             // start of the second block
+            auto it_y = dataVec[1].begin();              // start of the second block
+            auto it_df = dataVec[2].begin();             // start of the second block
+            auto it_sep = separators.begin();            // start of the second block
+            const auto it_sep_end = separators.end();    // end of the last block
+            const float rt[2] = {-255.f, retentionTime}; // retention time vector
+            const float *rt_start = rt;                  // start of the retention time vector
             // iterate over the blocks
             for (; it_sep != it_sep_end; it_sep++)
             {
                 // calculate the number of data points in the block
-                const int n = std::distance(it_mz, *it_sep) + 1;
-                if (n < 13)
+                const int n = std::distance(it_mz, *it_sep) + 1 - 2 * additionalZeros;
+                // check if first of last data of the block is zero; zeros appear if extrapolation was not meaningful, i.e., apex at the edge of the datablock
+                const bool containsZero = *it_y == 0 || *(it_y + n - 1) == 0;
+                if (n < 9 || containsZero)
                 {
-                    // not enough data points to fit a quadratic regression model
-                    // 13 due to 8 points are extrapolated and 5 points are needed for the regression
-                    it_mz = it_mz + n;
-                    it_y = it_y + n;
-                    it_df = it_df + n;
+                    it_mz = it_mz + n + 2 * additionalZeros;
+                    it_y = it_y + n + 2 * additionalZeros;
+                    it_df = it_df + n + 2 * additionalZeros;
                     continue;
                 }
                 if (n <= 512)
@@ -214,9 +227,9 @@ namespace q
                     std::copy(it_y, it_y + n, Y);
                     std::copy(it_mz, it_mz + n, X);
                     std::copy(it_df, it_df + n, df);
-                    it_y += n;
-                    it_mz += n;
-                    it_df += n;
+                    it_y += n + 2 * additionalZeros;
+                    it_mz += n + 2 * additionalZeros;
+                    it_df += n + 2 * additionalZeros;
 
                     // perform log-transform on Y
                     std::transform(y_start, y_start + n, ylog_start, [](float y)
@@ -245,9 +258,9 @@ namespace q
                     std::copy(it_y, it_y + n, Y);
                     std::copy(it_mz, it_mz + n, X);
                     std::copy(it_df, it_df + n, df);
-                    it_y += n;
-                    it_df += n;
-                    it_mz += n;
+                    it_y += n + 2 * additionalZeros;
+                    it_df += n + 2 * additionalZeros;
+                    it_mz += n + 2 * additionalZeros;
 
                     // perform log-transform on Y
                     std::transform(y_start, y_start + n, ylog_start, [](float y)
@@ -264,7 +277,8 @@ namespace q
 #pragma endregion "find centroids"
 
 #pragma region "find peaks"
-        void qPeaks::findPeaks(
+        void
+        qPeaks::findPeaks(
             std::vector<std::unique_ptr<DataType::Peak>> &all_peaks,
             std::vector<std::vector<double>> &dataVec,
             std::vector<std::vector<double>::iterator> &separators)
@@ -1123,7 +1137,7 @@ namespace q
             {
                 // re-scale the apex position to x-axis
                 const double rt0 = *(rt_start + (int)std::floor(regression.apex_position));
-                const double drt = *(rt_start + (int)std::ceil(regression.apex_position)) - rt0;
+                const double drt = *(rt_start + (int)std::floor(regression.apex_position) + 1) - rt0;
                 const double apex_position = rt0 + drt * (regression.apex_position - std::floor(regression.apex_position));
                 peaks.back()->retentionTime = apex_position;
                 peaks.back()->retentionTimeUncertainty = regression.uncertainty_pos * drt;
@@ -1138,7 +1152,7 @@ namespace q
             {
                 // re-scale the apex position to x-axis
                 const double mz0 = *(mz_start + (int)std::floor(regression.apex_position));
-                const double dmz = *(mz_start + (int)std::ceil(regression.apex_position)) - mz0;
+                const double dmz = *(mz_start + (int)std::floor(regression.apex_position) + 1) - mz0;
                 const double apex_position = mz0 + dmz * (regression.apex_position - std::floor(regression.apex_position));
                 peaks.back()->mz = apex_position;
                 peaks.back()->mzUncertainty = regression.uncertainty_pos * dmz;

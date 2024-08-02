@@ -2,21 +2,20 @@
 
 // internal
 #include "../include/qalgorithms_measurement_data.h"
+#include "../include/qalgorithms_matrix.h"
 #include "../include/qalgorithms_utils.h"
 
 #include <variant>
 #include <algorithm>
 #include <cmath>
-#include <iostream> // debug printing
-#include <cassert>
+#include <fstream>
 
-// qalgorithm_measurement_data.cpp
+// up to date with commit 47da7e1
 
 namespace q
 {
   namespace MeasurementData
   {
-
     std::vector<std::vector<std::unique_ptr<DataType::Peak>>>
     MeasurementData::transfereCentroids(
         sc::MZML &data,
@@ -25,7 +24,7 @@ namespace q
         const int start_index)
     {
       std::vector<std::vector<std::unique_ptr<DataType::Peak>>> centroids(indices.size());
-      // #pragma omp parallel for
+#pragma omp parallel for
       for (size_t i = 0; i < indices.size(); ++i) // loop over all indices
       {
         const int index = indices[i]; // spectrum index
@@ -181,92 +180,53 @@ namespace q
     } // end of zeroFilling
 
     int
-    MeasurementData::zeroFilling_vec(
+    MeasurementData::zeroFilling_blocksAndGaps(
         std::vector<std::vector<double>> &data,
         double expectedDifference,
         const bool updateExpectedDifference)
     {
       const int numPoints = data[0].size();       // number of data points
+      const size_t numRows = data.size();         // number of vectors in the data vector
+      const int separatingZeros = 2;              // number of zeros added to begin and end of a data block
       std::vector<int> sorted_indexes(numPoints); // vector to store the sorted indexes of the data points
-      int counter = 4;                            // number of added zeros to store separator positions. it is initialized with 4 to address that later 4 data points will be added at the front of the vector
-      int numZeros = 0;                           // number of zeros
+      int counter = separatingZeros;              // number of added zeros to store separator positions. it is initialized with 4 to address that later 4 data points will be added at the front of the vector
       int num_subsets = 0;                        // number of subsets
       bool containsDublicates = false;            // flag to indicate if the data contains dublicates
-      const size_t size_data = data.size();
 
-      // lamda function to add new data points at the end of the vector
-      auto addDataPoints = [&data, &counter, &numZeros, &expectedDifference, &sorted_indexes, size_data](int gapSize, int i, int k, int index_offset, int loop_index, int sign, bool interpolate) -> void
-      {
-        if (interpolate)
-        {
-          // calculate the interpolated y-axis values using log interpolation
-          const double diff = std::pow(data[1][i + 1] / data[1][i], 1.0 / (gapSize + 1));
-          // const double differece_y_per_gapsize = (data[1][i + 1] - data[1][i]) / (gapSize + 1);
-
-          for (int j = 0; j < gapSize; j++)
-          {
-            data[0].push_back(data[0][i] + loop_index * expectedDifference * sign);
-            data[1].push_back(data[1][i] * std::pow(diff, j + 1));
-            for (size_t l = 2; l < size_data; l++)
-            {
-              data[l].push_back(0.0);
-            }
-            sorted_indexes.push_back(sorted_indexes[k] + j + index_offset);
-            loop_index += sign;
-          }
-        }
-        else
-        {
-          for (int j = 0; j < gapSize; j++)
-          {
-            data[0].push_back(data[0][i] + loop_index * expectedDifference * sign);
-            for (size_t l = 1; l < size_data; l++)
-            {
-              data[l].push_back(0.0);
-            }
-            sorted_indexes.push_back(sorted_indexes[k] + j + index_offset);
-            loop_index += sign;
-          }
-        }
-        counter += gapSize;
-        numZeros += gapSize;
-      };
-
-      // analyze data for gaps, i.e., differences > 1.75 * expectedDifference,
-      // and fill the gaps by adding new data points at the end of the vector
       for (int i = 0; i < numPoints - 1; i++)
       {
         sorted_indexes[i] = counter;
-        // consider the difference between two neighboring data points
-        // from differences vector and compare it with 1.75 * expectedDifference
+        // consider the difference between two neighboring data points from differences vector and compare it with 1.75 * expectedDifference
         float difference = data[0][i + 1] - data[0][i];
         if (difference > 1.75f * expectedDifference)
         {
           // calculate the gap size; need to be rounded to the nearest integer
           int gapSize = static_cast<int>(difference / expectedDifference - 1);
           // check if the gapSize is larger than k, as this is the maximum gap size
-          if (gapSize <= 8)
-          {                                              // SMALL GAP
-            addDataPoints(gapSize, i, i, 1, 1, 1, true); // add gapSize new data points at the end of the vector
+          if (gapSize < 2 * separatingZeros)
+          { // SMALL GAP
+            interpolate_loglinear(gapSize, expectedDifference, i, numRows, data, sorted_indexes);
+            counter += gapSize;
           }
           else
           { // LARGE GAP
-            // limit the gap size to 8 and add 4 new data points close to the (i) and (i+1) data point
-            gapSize = 8;
-            addDataPoints(4, i, i, 1, 1, 1, false);      // add 4 new data points close to the (i) data point
-            addDataPoints(4, i + 1, i, 5, 4, -1, false); // add 4 new data points close to the (i+1) data point
+            // limit the gap size to 2*separatingZeros and add separatingZeros new data points close to the (i) and (i+1) data point
+            gapSize = 2 * separatingZeros;
+            extrapolate_x_right(separatingZeros, expectedDifference, i, numRows, data, sorted_indexes);
+            extrapolate_x_left(separatingZeros, expectedDifference, i, numRows, data, sorted_indexes);
+            counter += 2 * separatingZeros;
             num_subsets++;
           }
         }
         else
         {
-          // check for dublicates, i.e., difference < .1 * expectedDifference @todo validate
-          if (difference < 0.1 * expectedDifference)
+          // check for dublicates, i.e., difference < .1 * expectedDifference
+          if (difference < .1 * expectedDifference)
           {
             containsDublicates = true;
             if (data[1][i] > data[1][i + 1])
             {
-              data[2][i + 1] = -255.0; // mark the data point for deletion @todo use NaN or -Inf
+              data[2][i + 1] = -255.0; // mark the data point for deletion
             }
             else
             {
@@ -285,34 +245,36 @@ namespace q
         counter++;
       }
       sorted_indexes[numPoints - 1] = counter;
-      // extrapolate the data by adding 4 new data points at the end of the vector
-      addDataPoints(4, 0, 0, 1, 4, -1, false); // extrapolation to the left
-      // correct the sorted indexes for the first 4 data points to 0, 1, 2, 3
-      for (int i = 0; i < 4; i++)
-      {
-        sorted_indexes[sorted_indexes.size() - 4 + i] = i;
-      }
-      addDataPoints(4, numPoints - 1, numPoints - 1, 1, 1, 1, false); // extrapolation to the right
 
+      // ADD FIRST AND LAST ZEROS
+      extrapolate_x_left(separatingZeros, expectedDifference, 0, numRows, data, sorted_indexes);
+      for (int i = 0; i < separatingZeros; i++)
+      {
+        sorted_indexes[sorted_indexes.size() - separatingZeros + i] = i;
+      }
+      extrapolate_x_right(separatingZeros, expectedDifference, numPoints - 1, numRows, data, sorted_indexes);
+
+      // SORT DATA
       for (int i = 0; i < static_cast<int>(sorted_indexes.size()); ++i)
       {
         while (sorted_indexes[i] != i)
         {
-          for (size_t j = 0; j < size_data; j++)
+          for (size_t j = 0; j < numRows; j++)
           {
             std::swap(data[j][i], data[j][sorted_indexes[i]]);
           }
-          assert(sorted_indexes[i] != sorted_indexes[sorted_indexes[i]]);
           std::swap(sorted_indexes[i], sorted_indexes[sorted_indexes[i]]);
         }
       }
+
+      // DELETE DUPLICATES
       if (containsDublicates)
       {
         for (int i = 0; i < numPoints; i++)
         {
           if (data[2][i] == -255.0)
           {
-            for (size_t j = 0; j < size_data; j++)
+            for (size_t j = 0; j < numRows; j++)
             {
               data[j][i] = -255.0;
             }
@@ -320,7 +282,7 @@ namespace q
         }
         auto removeCondition = [](double value)
         { return value == -255.0; };
-        for (size_t j = 0; j < size_data; j++)
+        for (size_t j = 0; j < numRows; j++)
         {
           data[j].erase(std::remove_if(data[j].begin(), data[j].end(), removeCondition), data[j].end());
         }
@@ -328,6 +290,217 @@ namespace q
 
       return num_subsets + 1;
     } // end of zeroFilling_vec
+
+    int
+    MeasurementData::zeroFilling_blocksOnly(
+        std::vector<std::vector<double>> &data,
+        double expectedDifference,
+        const bool updateExpectedDifference)
+    {
+      const int numPoints = data[0].size();       // number of data points
+      const size_t numRows = data.size();         // number of vectors in the data vector
+      const int separatingZeros = 2;              // number of zeros added to begin and end of a data block
+      std::vector<int> sorted_indexes(numPoints); // vector to store the sorted indexes of the data points
+      int counter = separatingZeros;              // number of added zeros to store separator positions.
+      int num_subsets = 0;                        // number of subsets
+
+      for (int i = separatingZeros; i < numPoints - 1; i++)
+      {
+        sorted_indexes[i] = counter;
+        // LEFT_BLOCK, 0, 0, 0, 0, RIGHT_BLOCK
+        if (data[1][i] == 0)
+        {
+          // CASE 1: LEFT_BLOCK, 0, RIGHT_BLOCK => INTERPOLATE between LEFT_BLOCK and RIGHT_BLOCK
+          // CASE 2: LEFT_BLOCK, 0, 0, RIGHT_BLOCK => INTERPOLATE between LEFT_BLOCK and RIGHT_BLOCK
+          // CASE 3: LEFT_BLOCK, 0, 0, 0, RIGHT_BLOCK => INTERPOLATE between LEFT_BLOCK and RIGHT_BLOCK
+          // CASE 4: LEFT_BLOCK, 0, GAP=1, 0, RIGHT_BLOCK => ADD ONE ZERO FOR THE GAP AND INTERPOLATE BETWEEN LEFT_BLOCK AND RIGHT_BLOCK
+          // CASE 5: LEFT_BLOCK, 0, GAP>=2, 0, RIGHT_BLOCK => ADD TWO ZEROS FOR THE GAP AND KEEP BLOCKS SEPARATED
+          // CASE 6: LEFT_BLOCK, 0, GAP, 0, 0, RIGHT_BLOCK => ADD ONE ZERO FOR THE GAP (LEFT SIDE) AND KEEP BLOCKS SEPARATED
+          // CASE 7: LEFT_BLOCK, 0, 0, GAP, 0, RIGHT_BLOCK => ADD ONE ZERO FOR THE GAP (RIGHT SIDE) AND KEEP BLOCKS SEPARATED
+
+          double ref_difference = data[0][i] - data[0][i - 1];
+
+          // CASE 1
+          if (data[1][i - 1] != 0 && data[1][i + 1] != 0)
+          {
+            interpolate_loglinear_nopush(1, i - 1, data);
+            counter++;
+            continue;
+          }
+
+          // CASE 2, 4, 5
+          if (data[1][i - 1] != 0 && data[1][i + 1] == 0 && data[1][i + 2] != 0)
+          {
+            double diff = data[0][i + 1] - data[0][i];
+            int gapSize = static_cast<int>(diff / ref_difference - 1);
+
+            // CASE 2
+            if (gapSize == 0)
+            {
+              interpolate_loglinear_nopush(2, i - 1, data);
+              counter++;
+              i++;
+              sorted_indexes[i] = counter;
+              counter++;
+              continue;
+            }
+
+            // CASE 4
+            if (gapSize == 1)
+            {
+              const double dy = std::pow(data[1][i + 2] / data[1][i - 1], 1.0 / (4));
+              data[0].push_back(data[0][i] + ref_difference); // add and interpolate x2
+              data[1][i] = data[1][i - 1] * dy;               // interpolate y1
+              data[1].push_back(data[1][i] * dy);             // add and interpolate y2
+              data[1][i + 1] = data[1].back() * dy;           // interpolate y3
+              data[2].push_back(0);                           // add df2 as zero
+              data[2][i] = 0;                                 // set df1 to zero
+              data[2][i + 1] = 0;                             // set df3 to zero
+              counter++;
+              sorted_indexes.push_back(counter); // add the index of the new data point
+              counter++;
+              i++;
+              sorted_indexes[i] = counter;
+              counter++;
+              continue;
+            }
+
+            // CASE 5
+            if (gapSize >= 2)
+            {
+              data[0].push_back(data[0][i] + ref_difference);     // add and interpolate x2
+              data[0].push_back(data[0][i + 1] - ref_difference); // add and interpolate x3
+              data[1].push_back(0);                               // add y2
+              data[1].push_back(0);                               // add y3
+              data[2].push_back(0);                               // add df2
+              data[2].push_back(0);                               // add df3
+              data[2][i] = 0;                                     // set df1 to zero
+              data[2][i + 1] = 0;                                 // set df3 to zero
+              num_subsets++;
+              counter++;
+              sorted_indexes.push_back(counter); // add the index of the new data point
+              counter++;
+              sorted_indexes.push_back(counter); // add the index of the new data point
+              counter++;
+              i++;
+              sorted_indexes[i] = counter;
+              counter++;
+              continue;
+            }
+            std::cerr << "ERROR: CASE 2, 4, 5" << std::endl;
+          }
+
+          // CASE 3, 6, 7
+          if (data[1][i - 1] != 0 && data[1][i + 1] == 0 && data[1][i + 2] == 0 && data[1][i + 3] != 0)
+          {
+            double diff = data[0][i + 2] - data[0][i];
+            int gapSize = static_cast<int>(diff / ref_difference - 1);
+
+            // CASE 3
+            if (gapSize == 1)
+            {
+              interpolate_loglinear_nopush(3, i - 1, data);
+              counter++;
+              i++;
+              sorted_indexes[i] = counter;
+              counter++;
+              i++;
+              sorted_indexes[i] = counter;
+              counter++;
+              continue;
+            }
+
+            // CASE 6, 7
+            if (gapSize >= 2)
+            {
+              double dx1 = data[0][i + 1] - data[0][i];
+              double dx2 = data[0][i + 2] - data[0][i + 1];
+              if (dx1 > dx2)
+              {                                                 // CASE 6
+                data[0].push_back(data[0][i] + ref_difference); // add and interpolate x2
+                data[1].push_back(0);                           // add y2
+                data[2].push_back(0);                           // add df2
+                data[2][i] = 0;                                 // set df1 to zero
+                data[2][i + 1] = 0;                             // set df3 to zero
+                data[2][i + 2] = 0;                             // set df4 to zero
+                num_subsets++;
+                counter++;
+                sorted_indexes.push_back(counter); // add the index of the new data point
+                counter++;
+                i++;
+                sorted_indexes[i] = counter;
+                counter++;
+                i++;
+                sorted_indexes[i] = counter;
+                counter++;
+                continue;
+              }
+              else
+              {                                                     // CASE 7
+                data[0].push_back(data[0][i + 2] - ref_difference); // add and interpolate x3
+                data[1].push_back(0);                               // add y3
+                data[2].push_back(0);                               // add df3
+                data[2][i] = 0;                                     // set df1 to zero
+                data[2][i + 1] = 0;                                 // set df2 to zero
+                data[2][i + 2] = 0;                                 // set df4 to zero
+                num_subsets++;
+                counter++;
+                i++;
+                sorted_indexes[i] = counter;
+                counter++;
+                sorted_indexes.push_back(counter); // add the index of the new data point
+                counter++;
+                i++;
+                sorted_indexes[i] = counter;
+                counter++;
+                continue;
+              }
+              std::cerr << "ERROR: CASE 6, 7" << std::endl;
+            }
+            std::cerr << "ERROR: CASE 3, 6, 7" << std::endl;
+          }
+        }
+        counter++;
+      }
+      sorted_indexes[numPoints - 1] = sorted_indexes.size() - 1;
+
+      // ADD FIRST ZERO
+      double diff = data[0][2] - data[0][1];
+      data[0].push_back(data[0][1] - diff); // add and interpolate x1
+      data[1].push_back(0);                 // add y1
+      data[2].push_back(0);                 // add df1
+      sorted_indexes.push_back(0);
+      sorted_indexes[1] = 1;
+      // set index 0 to the last element
+      counter++;
+      sorted_indexes[0] = sorted_indexes.size() - 1;
+      if (data[1][1] == 0)
+      {
+        data[2][1] = 0;
+      }
+
+      // SORT DATA
+      for (int i = 0; i < static_cast<int>(sorted_indexes.size()); ++i)
+      {
+        while (sorted_indexes[i] != i)
+        {
+          for (size_t j = 0; j < numRows; j++)
+          {
+            std::swap(data[j][i], data[j][sorted_indexes[i]]);
+          }
+          std::swap(sorted_indexes[i], sorted_indexes[sorted_indexes[i]]);
+        }
+      }
+      // delete the last element of the data vectors
+      for (size_t j = 0; j < numRows; j++)
+      {
+        data[j].pop_back();
+      }
+      // set the last two elements of data[2] to zero
+      data[2][data[2].size() - 1] = 0;
+      data[2][data[2].size() - 2] = 0;
+      return num_subsets + 1;
+    }
 
     double
     MeasurementData::calcExpectedDiff(std::vector<double> &data)
@@ -696,7 +869,8 @@ namespace q
                  dataVec); // end of visit
     } // end of interpolateData
 
-    void MeasurementData::extrapolateData_vec(
+    void
+    MeasurementData::extrapolateData_vec(
         std::vector<std::vector<double>> &data,
         std::vector<std::vector<double>::iterator> &separators)
     {
@@ -719,14 +893,15 @@ namespace q
       };
 
       // define iterators for the data vector
-      auto block_start_y = data[1].begin() + 4; // start of the block
-      auto block_end_y = data[1].begin() + 4;   // end of the block
-      auto block_max_y = data[1].begin() + 4;   // maximum of the block
-      auto block_start_x = data[0].begin() + 4; // start of the block
-      auto block_end_x = data[0].begin() + 4;   // end of the block
-      auto block_max_x = data[0].begin() + 4;   // maximum of the block
-      const auto end = data[1].end() - 5;       // last non-zero value
-      int block_counter = 0;                    // number of the current block
+      const int separatingZeros = 2;                          // number of zeros added to begin and end of a data block
+      auto block_start_y = data[1].begin() + separatingZeros; // start of the block
+      auto block_end_y = data[1].begin() + separatingZeros;   // end of the block
+      auto block_max_y = data[1].begin() + separatingZeros;   // maximum of the block
+      auto block_start_x = data[0].begin() + separatingZeros; // start of the block
+      auto block_end_x = data[0].begin() + separatingZeros;   // end of the block
+      auto block_max_x = data[0].begin() + separatingZeros;   // maximum of the block
+      const auto end = data[1].end() - separatingZeros - 1;   // last non-zero value
+      int block_counter = 0;                                  // number of the current block
       while (true)
       {
         // adjust iterators to the next block
@@ -754,10 +929,19 @@ namespace q
           }
           block_end_y++;
           block_end_x++;
+          if (block_end_y == data[1].end())
+          {
+            return;
+          }
         }
         // set separator
-        separators[block_counter] = block_end_x + 3;
+        separators[block_counter] = block_end_x + separatingZeros - 1;
         block_counter++;
+        // check if counter is larger than the size of the separators vector
+        if (block_counter >= separators.size())
+        {
+          return;
+        }
         // check if the block is valid
         if ((block_max_y == block_start_y) || (block_max_y == block_end_y))
         {
@@ -767,10 +951,10 @@ namespace q
             return;
           }
           // jump to the next block
-          block_start_y = block_end_y + 8;
+          block_start_y = block_end_y + 2 * separatingZeros;
           block_end_y = block_start_y;
           block_max_y = block_start_y;
-          block_start_x = block_end_x + 8;
+          block_start_x = block_end_x + 2 * separatingZeros;
           block_end_x = block_start_x;
           block_max_x = block_start_x;
           continue;
@@ -782,9 +966,9 @@ namespace q
         double b0, b1, b2;
         calculateCoefficients(x, y, b0, b1, b2);
         // extrapolate the zeros
-        auto it_y = block_start_y - 4;
-        auto it_x = block_start_x - 4;
-        for (int i = 0; i < 4; i++)
+        auto it_y = block_start_y - separatingZeros;
+        auto it_x = block_start_x - separatingZeros;
+        for (int i = 0; i < separatingZeros; i++)
         {
           const double x = *it_x - *block_start_x;
           *it_y = exp_approx_d(b0 + x * (b1 + x * b2));
@@ -793,7 +977,7 @@ namespace q
         }
         it_y = block_end_y;
         it_x = block_end_x;
-        for (int i = 0; i < 4; i++)
+        for (int i = 0; i < separatingZeros; i++)
         {
           const double x = *it_x - *block_start_x;
           *it_y = exp_approx_d(b0 + x * (b1 + x * b2));
@@ -806,10 +990,10 @@ namespace q
           return;
         }
         // jump to the next block
-        block_start_y = block_end_y + 8;
+        block_start_y = block_end_y + 2 * separatingZeros;
         block_end_y = block_start_y;
         block_max_y = block_start_y;
-        block_start_x = block_end_x + 8;
+        block_start_x = block_end_x + 2 * separatingZeros;
         block_end_x = block_start_x;
         block_max_x = block_start_x;
       } // end of while loop
@@ -955,5 +1139,140 @@ namespace q
         block_end_df = block_end_df + 8;
       } // end of for loop (separators)
     } // end of extrapolateData_vec
+
+    MeasurementData::treatedData
+    MeasurementData::pretreatData(
+        std::vector<MeasurementData::dataPoint> &dataPoints,
+        float expectedDifference)
+    {
+
+      // lambda function to calculate the coefficients b0, b1, and b2 for the quadratic extrapolation
+      auto calculateCoefficients = [](const float *x, const float *y, float &b0, float &b1, float &b2)
+      {
+        float x1 = x[0], y1 = y[0];
+        float x2 = x[1], y2 = y[1];
+        float x3 = x[2], y3 = y[2];
+
+        float denom = (x1 - x2) * (x1 - x3) * (x2 - x3);
+
+        float a = (x3 * (y2 - y1) + x2 * (y1 - y3) + x1 * (y3 - y2)) / denom;
+        float b = (x3 * x3 * (y1 - y2) + x2 * x2 * (y3 - y1) + x1 * x1 * (y2 - y3)) / denom;
+        float c = (x2 * x3 * (x2 - x3) * y1 + x3 * x1 * (x3 - x1) * y2 + x1 * x2 * (x1 - x2) * y3) / denom;
+
+        b0 = c;
+        b1 = b;
+        b2 = a;
+      };
+      treatedData treatedData = {std::vector<dataPoint>(), std::vector<std::vector<dataPoint>::iterator>()};
+      treatedData.dataPoints.reserve(dataPoints.size() * 2); // reserve memory for the new data points
+      auto it_dataPoint = dataPoints.begin();                // iterator for the data points
+      const auto it_dataPoint_end = dataPoints.end() - 1;    // end of the data points (last element is infinty point)
+      auto it_maxOfBlock = dataPoints.begin();               // maximum of the block (y-axis)
+      int blockSize = 0;                                     // size of the current block
+
+      // add the first to zeros to the dataPoints_new vector
+      for (int i = 0; i < 2; i++)
+      {
+        dataPoint dp;
+        dp.x = 0.f;
+        dp.y = 0.f;
+        dp.df = false;
+        treatedData.dataPoints.push_back(dp);
+      }
+      treatedData.separators.push_back(treatedData.dataPoints.begin()); // add the first separator
+
+      // iterate over the data points
+      for (; it_dataPoint != it_dataPoint_end; it_dataPoint++)
+      {
+        blockSize++;
+        treatedData.dataPoints.push_back(*it_dataPoint);
+        const float dx = (it_dataPoint + 1)->x - it_dataPoint->x;
+        if (dx > 1.75 * expectedDifference)
+        { // gap detected
+          const int gapSize = static_cast<int>(dx / expectedDifference) - 1;
+          // const float dx_before = it_dataPoint->x - (it_dataPoint - 1)->x; // dx before the gap
+          // if (dx_before > .75 * expectedDifference && dx_before < 1.75)
+          // {
+          //   expectedDifference = it_dataPoint->x - (it_dataPoint - 1)->x; // update the expected difference
+          // }
+          if (gapSize < 4)
+          {
+            // add gapSize interpolated datapoints
+            const float dy = std::pow((it_dataPoint + 1)->y / it_dataPoint->y, 1.0 / (gapSize + 1)); // dy for log interpolation
+            for (int i = 1; i <= gapSize; i++)
+            {
+              dataPoint dp;
+              dp.x = it_dataPoint->x + i * expectedDifference;
+              dp.y = it_dataPoint->y * std::pow(dy, i);
+              dp.df = false;
+              treatedData.dataPoints.push_back(dp);
+            }
+          }
+          else
+          { // END OF BLOCK, EXTRAPOLATION STARTS
+            // add 4 datapoints (two extrapolated [end of current block] and two zeros [start of next block]) extrapolate the first two datapoints of this block
+            if (blockSize < 5)
+            {
+              // delete all data points of the block in treatedData.dataPoints except the first two zeros marked by the separator.back()+2
+              treatedData.dataPoints.erase(treatedData.separators.back() + 2, treatedData.dataPoints.end());
+            }
+            else
+            {
+              const auto it_startOfBlock = (treatedData.separators.back() + 2);
+              const float x[3] = {0.f, it_maxOfBlock->x - it_startOfBlock->x, it_dataPoint->x - it_startOfBlock->x};
+              const float y[3] = {std::log(it_startOfBlock->y), std::log(it_maxOfBlock->y), std::log(it_dataPoint->y)};
+              float b0, b1, b2;
+              calculateCoefficients(x, y, b0, b1, b2);
+              // extrapolate the left side of the block
+              for (int i = 0; i < 2; i++)
+              {
+                (treatedData.separators.back() + i)->x = it_startOfBlock->x - (2 - i) * expectedDifference;
+                const float x = (treatedData.separators.back() + i)->x - it_startOfBlock->x;
+                (treatedData.separators.back() + i)->y = std::exp(b0 + x * (b1 + x * b2));
+              }
+              // add the extrapolated data points to the right side of the block
+              for (int i = 0; i < 2; i++)
+              {
+                dataPoint dp;
+                dp.x = it_dataPoint->x + (i + 1) * expectedDifference;
+                const float x = dp.x - it_startOfBlock->x;
+                dp.y = std::exp(b0 + x * (b1 + x * b2));
+                dp.df = false;
+                treatedData.dataPoints.push_back(dp);
+              }
+              // add the zeros to the treatedData.dataPoints vector to start the next block
+              for (int i = 0; i < 2; i++)
+              {
+                dataPoint dp;
+                dp.x = 0.f;
+                dp.y = 0.f;
+                dp.df = false;
+                treatedData.dataPoints.push_back(dp);
+              }
+              treatedData.separators.push_back(treatedData.dataPoints.end() - 2); // add the separator
+              it_maxOfBlock = it_dataPoint + 1;                                   // update the maximum of the block
+            }
+            blockSize = 0; // reset the block size
+          }
+        } //
+        else
+        {
+          if (it_maxOfBlock->y < it_dataPoint->y)
+          {
+            it_maxOfBlock = it_dataPoint; // update the maximum of the block
+          }
+          if (dx > .75 * expectedDifference)
+          {
+            expectedDifference = (expectedDifference + dx) * .5; // update the expected difference
+          }
+        }
+      } // end of for loop
+
+      // delete the last two zeros
+      treatedData.dataPoints.pop_back();
+      treatedData.dataPoints.pop_back();
+      treatedData.separators.pop_back();
+      return treatedData;
+    } // end of pretreatData
   } // namespace MeasurementData
 } // namespace q
