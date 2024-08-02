@@ -3,23 +3,16 @@
 #define QALGORITHMS_QPEAKS_H
 
 // internal
-#include "qalgorithms_matrix.h"
-// #include "qalgorithms_measurement_data.h"
 #include "qalgorithms_datatype_peak.h"
+// #include "qalgorithms_measurement_data.h"
 #include "qalgorithms_qbin.h"
 
 // external
 #include <vector>
-#include <memory>
-// #include <omp.h>
-// #include <limits>
-// #include <numeric>
-// #include <fstream>
-// #include <cstdlib>
-// #include <sstream>
-// #include <cassert>
-// #include <xmmintrin.h> // SSE
+#include <memory>      // unique_ptr
 #include <immintrin.h> // AVX
+
+// up to date with commit 47da7e1
 
 /* This file includes the q::qPeaks class*/
 namespace q
@@ -33,70 +26,38 @@ namespace q
         {
         public:
             static const int global_maxScale = 15; // maximum scale for regression window
-            // qPeaks();
 
-            /**
-             * @brief Construct a new q Peaks object using varDataType object to initialize the object Matrices.
-             * @param dataVec
-             */
-            // qPeaks(const q::MeasurementData::varDataType &dataVec);
+            // methods
+            void findCentroids(
+                std::vector<std::unique_ptr<DataType::Peak>> &all_peaks,
+                q::MeasurementData::MeasurementData::treatedData &treatedData,
+                const int scanNumber,
+                const float retentionTime);
 
-            /**
-             * @brief Find the peaks in the data. Container function to call the findPeaks method.
-             * @todo there is no findPeaks method that is called here, suggested change:
-             * @brief call an anonymous function on datavec to first find the best-fitting regressions
-             * and then return a peak list (?)
-             * @param dataVec
-             * @return @todo this is unclear
-             */
-            // std::vector<std::vector<std::unique_ptr<q::DataType::Peak>>> findPeaks(const q::MeasurementData::varDataType &dataVec);
-
-            // std::vector<std::vector<std::unique_ptr<DataType::Peak>>> createPeakList(
-            // std::vector<std::vector<std::unique_ptr<DataType::Peak>>> &allPeaks);
-
-            void
-            findCentroids(
+            void findCentroids(
                 std::vector<std::unique_ptr<DataType::Peak>> &all_peaks,
                 std::vector<std::vector<double>> &dataVec,
                 std::vector<std::vector<double>::iterator> &separators,
                 const int scanNumber,
-                const float retentionTime);
+                const float retentionTime,
+                const int additionalZeros = 0);
 
-            void
-            findPeaks(
+            void findPeaks(
                 std::vector<std::unique_ptr<DataType::Peak>> &all_peaks,
                 std::vector<std::vector<double>> &dataVec,
                 std::vector<std::vector<double>::iterator> &separators);
 
-            qBinning::CentroidedData passToBinning(std::vector<std::vector<std::unique_ptr<q::DataType::Peak>>> &allPeaks);
-
             // export
-            // void printAllPeaks(
-            //     const std::vector<std::vector<std::unique_ptr<DataType::Peak>>> &allPeaks,
-            //     const std::string &filename) const;
-
             void plotPeaksToPython(
                 const std::string &filename_input,
                 const std::string &filename_output,
                 const bool includeFits = true,
                 const bool featureMap = false) const;
 
-            static void initialize(); // @todo what does this initialise, exactly?
+            qBinning::CentroidedData passToBinning(std::vector<std::vector<std::unique_ptr<q::DataType::Peak>>> &allPeaks,
+                                                   size_t numberOfScans);
 
-            q::Matrices::Vector calcYhat(
-                const int left_limit,
-                const int right_limit,
-                const q::Matrices::Matrix_mc &beta,
-                const size_t idx);
-
-            q::Matrices::Vector calcYhat(
-                const int left_limit,
-                const int right_limit,
-                const q::Matrices::Vector &beta);
-
-            // debugging
-            void info() const;
-            void printMatrices(int scale) const;
+            static void initialize();
 
         private:
             /**

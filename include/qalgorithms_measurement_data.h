@@ -9,6 +9,8 @@
 #include <vector>
 #include <memory>
 
+// up to date with commit 47da7e1
+
 namespace q
 {
     namespace MeasurementData
@@ -72,14 +74,12 @@ namespace q
              */
             void zeroFilling(varDataType &dataVec, int k);
 
-            int
-            zeroFilling_blocksAndGaps(
+            int zeroFilling_blocksAndGaps(
                 std::vector<std::vector<double>> &data,
                 double expectedDifference,
                 const bool updateExpectedDifference = true);
 
-            int
-            zeroFilling_blocksOnly(
+            int zeroFilling_blocksOnly(
                 std::vector<std::vector<double>> &data,
                 double expectedDifference,
                 const bool updateExpectedDifference = true);
