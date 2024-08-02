@@ -434,9 +434,10 @@ int main(int argc, char *argv[])
 #pragma region file processing
     std::string filename;
     const std::vector<std::string> polarities = {"positive", "negative"};
+    int counter = 0;
     for (std::filesystem::path pathSource : tasklist)
     {
-
+        counter++;
         bool printOnce = true;
         if (!outSpecified)
         {
@@ -459,7 +460,8 @@ int main(int argc, char *argv[])
         auto timeStart = std::chrono::high_resolution_clock::now();
         if (!silent)
         {
-            std::cout << "\nreading file " << pathSource << " ... ";
+            std::cout << "\nreading file " << counter << " of " << tasklist.size() << ":\n"
+                      << pathSource << "\n... ";
         }
 
         sc::MZML data(std::filesystem::canonical(pathSource).string()); // create mzML object @todo change to use filesystem::path
@@ -488,6 +490,7 @@ int main(int argc, char *argv[])
                 std::cout << "skipping mode: " << polarity << "\n";
                 continue;
             }
+            std::cout << "Processing " << polarity << " peaks\n";
             // adjust filename to include polarity here
             filename += ("_" + polarity);
 

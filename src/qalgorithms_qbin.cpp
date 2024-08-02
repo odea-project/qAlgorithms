@@ -273,7 +273,7 @@ namespace q
                     }
                     while (i < incompleteBins.size()) // transfer elements from finishedBins
                     {
-                        finishedBins[incompleteBins[i]] = finishedBins.back();
+                        finishedBins[incompleteBins[i]] = std::move(finishedBins.back());
                         finishedBins.pop_back();
                         ++i;
                     }
@@ -489,19 +489,8 @@ namespace q
                                     mergedBin.makeDQSB(rawdata, maxdist);
 
                                     redoneBins.push_back(mergedBin);
-                                    // @todo results are acceptable, but sometimes two good bins would be
-                                    // merged. Solve this problem by only merging if a test is positive
-                                    // std::cerr << "mz,scan,intensity\n";
-                                    // for (auto cen : binA->pointsInBin)
-                                    // {
-                                    //     std::cerr << cen->mz << "," << cen->scanNo << "," << cen->intensity << "\n";
-                                    // }
-                                    // std::cerr << "\n";
-                                    // for (auto cen : binB->pointsInBin)
-                                    // {
-                                    //     std::cerr << cen->mz << "," << cen->scanNo << "," << cen->intensity << "\n";
-                                    // }
-                                    // std::cerr << "\n#####################\n";
+                                    // advance by one so one bin is not merged twice by accident
+                                    ++i;
                                 }
                             }
                         }
@@ -512,34 +501,19 @@ namespace q
                     return;
                 }
 
-                if (redoneBins.size() < combinedBins.size()) // there will be gaps left in finsihedBins that must be closed
+                // there will always be gaps in the data
+                size_t i = 0;
+                for (Bin newBin : redoneBins) // fill gaps with new bins
                 {
-                    size_t i = 0;
-                    for (Bin newBin : redoneBins) // fill gaps with new bins
-                    {
-                        finishedBins[combinedBins[i]] = newBin;
-                        ++i;
-                    }
-                    while (i < combinedBins.size()) // transfer elements from finishedBins
-                    {
-                        finishedBins[combinedBins[i]] = finishedBins.back();
-                        finishedBins.pop_back();
-                        ++i;
-                    }
+                    finishedBins[combinedBins[i]] = newBin;
+                    ++i;
                 }
-                else
+                while (i < combinedBins.size()) // transfer elements from finishedBins
                 {
-                    size_t i = 0;
-                    for (size_t j : combinedBins)
-                    {
-                        finishedBins[j] = redoneBins[i];
-                        ++i;
-                    }
-                    while (i < redoneBins.size())
-                    {
-                        finishedBins.push_back(redoneBins[i]);
-                        ++i;
-                    }
+                    // volatile int position = combinedBins[i];
+                    finishedBins[combinedBins[i]] = std::move(finishedBins.back());
+                    finishedBins.pop_back();
+                    ++i;
                 }
 
                 std::cout << "merged " << combinedBins.size() << " one-sided bins into " << redoneBins.size() << " new bins\n";
