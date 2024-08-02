@@ -4,7 +4,7 @@
 
 // internal
 #include "qalgorithms_datatype_peak.h"
-// #include "qalgorithms_measurement_data.h"
+#include "qalgorithms_measurement_data.h"
 #include "qalgorithms_qbin.h"
 
 // external
@@ -54,8 +54,7 @@ namespace q
                 const bool includeFits = true,
                 const bool featureMap = false) const;
 
-            qBinning::CentroidedData passToBinning(std::vector<std::vector<std::unique_ptr<q::DataType::Peak>>> &allPeaks,
-                                                   size_t numberOfScans);
+            qBinning::CentroidedData passToBinning(std::vector<std::vector<std::unique_ptr<q::DataType::Peak>>> &allPeaks);
 
             static void initialize();
 
