@@ -8,7 +8,7 @@ the fast and accurate estimation of total data quality or total
 measurement quality through an operator. Especially for routine 
 measurements, replicates and other series of very similar samples
 this involves comparing the different steps of a series with 
-each other, ideally over hundreds of samples at once.
+each other, ideally over a large amount of samples at once.
 
 These requirements place significant restrictions on the possible
 ways to communicate the deluge of data that comes with (possibly)
@@ -24,7 +24,15 @@ results to the instrument operator.
 Previous work by https://doi.org/10.1016/j.trac.2020.116063 highlighted
 quality assurance as a core issue for nontargeted mass spectrometry and
 presented different dimensions for quality during an analysis.
-Expanding on the step of "result reporting", 
+Expanding on the step of "result reporting", a distinction should be
+made between reporting the entire measurement for purposes of replication
+and controlling through peer review and the reporting of just the 
+measurement results. @todo et. al. only consider reporting of the
+results after interpretation, with raw data and the processing
+steps being provided in addition. Besides being impractical to replicate
+and thus very unlikely for this vital control to take place during peer 
+review, it is not possible to estimate the algorithmic performance from
+just the algorithm on a per-sample basis accurately during NTA.
 
 Result quality, as understood here, is the reliability and completeness
 of all features at the end of any given processing workflow. For a
@@ -87,8 +95,48 @@ as a trigger for computation intensive corrections while
 processing is active or as a way to provide non-quantitative
 insight into the programs doing the processing to the operator.
 
+# Preformance criteria - Fourier Transform:
+The fourier transform employed in FT-ICR and Orbitrap type mass
+spectrometers is not something the instrument operator has access to.
+With techniques like phase-constrained deconvolution [@todo paper]
+being possible, 
+Without vendor cooperation, it will not be possible to estimate 
+sensible quality criteria or to implement quality reporting
+at this stage of the data processing.
 
-# General Notes on Tests:
+# Performance criteria - Centroiding:
+It should be noted that not all approaches to mass spectrometric
+data processing utilise centroiding of the raw spectra. @todo MCR approach
+To differentiate between the data at different steps of processing,
+a group of m/z value, retention time and intensity before any processing
+has taken place is referred to as "signal point".
+
+During centroiding, large amounts of signal points are reduced to
+centroids, which encompass multiple signal points, while other signal
+points are not added to centroids and consequently removed from the dataset.
+A traditional estimation of false positive or false negatives is
+not possible at this step, since any per-signal point information is 
+lost during the following steps towards componentisation.
+
+## Centroid quality score
+The DQSC currently implemented through the qAlgorithms workflow
+gives the percentage to which any given centroid conforms to the
+expected gaussian shape. [@todo paper] 
+
+## signal point retention
+Another perspective on process quality is the unifomity of intermediate
+results when comparing replicates or time series that should be 
+consistent, for example drinking water. In these cases, under 
+ideal circumstances, all processing steps should have very similar
+results, not just the final componentisation.
+One such process parameters that can be obtained is the percentage
+of signal points that are included in centroids, for every mass
+spectrum in a measurement.
+
+## centroid density
+noise estimator?
+
+# General Notes on Tests - Binning:
 The tests presented here were developed as assessors for the quality
 of the binning process. As such, they do not intend to make predictions
 on the final peak quality, if a peak will be found, or how 
