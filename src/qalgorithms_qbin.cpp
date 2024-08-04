@@ -482,6 +482,7 @@ namespace q
                                     mergedBin.scanMin = std::min(binA->scanMin, binB->scanMin);
                                     // @todo no check for duplicates is performed here,
                                     // since that is already included in the EIC export
+                                    // @todo only merge if the slanted side matches?
 
                                     mergedBin.pointsInBin.insert(mergedBin.pointsInBin.end(), binA->pointsInBin.begin(), binA->pointsInBin.end());
                                     mergedBin.pointsInBin.insert(mergedBin.pointsInBin.end(), binB->pointsInBin.begin(), binB->pointsInBin.end());

@@ -32,6 +32,7 @@ namespace q
             // are selected based on known behaviour @todo make maxdist depend on this
             enum MeasurementType
             {
+                // instrumentation detail which could be relevant to binning
                 LC_HRMS,
                 GC_HRMS,
                 IMS_HRMS,
@@ -39,7 +40,9 @@ namespace q
                 LC_LC_HRMS,
                 LCxLC_HRMS,
                 LC_UV_HRMS,
-                LC_MS_IMS
+                LC_MS_IMS,
+                // measurement independent binning application
+                FIND_COMPONENT
             };
 
             // @todo does the ion source have an effect on the binning decisions to be made?
