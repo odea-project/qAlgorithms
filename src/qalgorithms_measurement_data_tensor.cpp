@@ -32,27 +32,76 @@ namespace q
             const int index)
         {
             std::vector<std::vector<double>> spectrum = data.get_spectrum(index); // get spectrum at index
-            std::vector<TensorData::dataPoint> data_points;                       // create vector of data points
-            data_points.reserve(spectrum[0].size());                              // reserve memory for data points
+            std::vector<TensorData::dataPoint> dataPoints;                        // create vector of data points
+            dataPoints.reserve(spectrum[0].size());                               // reserve memory for data points
             for (size_t i = 0; i < spectrum[0].size(); ++i)
             {
                 if (spectrum[1][i] == 0.0)
                 {
                     continue; // skip zero values
                 }
-                TensorData::dataPoint dp;  // create data point
-                dp.x = spectrum[0][i];     // x-axis value
-                dp.y = spectrum[1][i];     // y-axis value
-                dp.df = true;              // df value
-                data_points.push_back(dp); // add data point to vector
+                TensorData::dataPoint dp; // create data point
+                dp.x = spectrum[0][i];    // x-axis value
+                dp.y = spectrum[1][i];    // y-axis value
+                dp.df = true;             // df value
+                dataPoints.push_back(dp); // add data point to vector
             }
             // add end point for later pretreatment
             TensorData::dataPoint dp;
             dp.x = std::numeric_limits<float>::infinity();
-            dp.y = 0.0;
-            dp.df = false;
-            data_points.push_back(dp);
-            return data_points;
+            dataPoints.push_back(dp);
+            return dataPoints;
+        }
+
+        std::vector<TensorData::dataPoint>
+        TensorData::qbinToDataPoint(
+            q::Algorithms::qBinning::EIC &eic)
+        {
+            std::vector<TensorData::dataPoint> dataPoints;  // create vector of data points
+            dataPoints.reserve(eic.scanNumbers.size() + 1); // reserve memory for data points
+
+            if (!is_sorted(eic.rententionTimes.begin(), eic.rententionTimes.end())) // WILL BE DELETED IN THE FUTURE
+            {
+                auto compare = [&eic](size_t a, size_t b)
+                {
+                    return eic.rententionTimes[a] < eic.rententionTimes[b];
+                };
+                std::vector<size_t> indices(eic.scanNumbers.size());
+                std::iota(indices.begin(), indices.end(), 0);
+                std::sort(indices.begin(), indices.end(), compare);
+                for (size_t i = 0; i < eic.scanNumbers.size(); ++i)
+                {
+                    TensorData::dataPoint dp;                    // create data point
+                    dp.x = eic.rententionTimes[indices[i]];      // x-axis value
+                    dp.y = eic.intensities[indices[i]];          // y-axis value
+                    dp.df = true;                                // df value
+                    dp.dqsCentroid = eic.DQSC[indices[i]];       // dqs centroid value
+                    dp.dqsBinning = eic.DQSB[indices[i]];        // dqs binning value
+                    dp.scanNumber = eic.scanNumbers[indices[i]]; // scan number
+                    dp.mz = eic.mz[indices[i]];                  // mz ratio
+                    dataPoints.push_back(dp);                    // add data point to vector
+                }
+            }
+            else
+            {
+                for (size_t i = 0; i < eic.scanNumbers.size(); ++i)
+                {
+                    TensorData::dataPoint dp;           // create data point
+                    dp.x = eic.rententionTimes[i];      // x-axis value
+                    dp.y = eic.intensities[i];          // y-axis value
+                    dp.df = true;                       // df value
+                    dp.dqsCentroid = eic.DQSC[i];       // dqs centroid value
+                    dp.dqsBinning = eic.DQSB[i];        // dqs binning value
+                    dp.scanNumber = eic.scanNumbers[i]; // scan number
+                    dp.mz = eic.mz[i];                  // mz ratio
+                    dataPoints.push_back(dp);           // add data point to vector
+                }
+            }
+            // add end point for later pretreatment
+            TensorData::dataPoint dp;
+            dp.x = std::numeric_limits<float>::infinity();
+            dataPoints.push_back(dp);
+            return dataPoints;
         }
 
         void
@@ -79,8 +128,6 @@ namespace q
             std::vector<int> ms_levels = data.get_spectra_level();                    // get all MS levels
             std::vector<int> num_datapoints = data.get_spectra_array_length();        // get number of data points
             double expectedDifference = 0.0;                                          // expected difference between two consecutive x-axis values
-            bool yContainsZeros = false;                                              // check if y-axis contains zeros
-            bool needsZeroFilling = true;                                             // mainly for treating Orbitrap data
 
             // FILTER MS1 SPECTRA
             if (ms1only)
@@ -122,66 +169,15 @@ namespace q
             {
                 std::vector<std::vector<double>> data_vec = data.get_spectrum(indices[start_index]); // get first spectrum (x-axis)
                 expectedDifference = calcExpectedDiff(data_vec[0]);                                  // calculate expected difference & check if Orbitrap
-                yContainsZeros = std::any_of(data_vec[1].begin(), data_vec[1].end(), [](double value)
-                                             { return value == 0.0; }); // check if y-axis contains zeros
-                if (yContainsZeros)
-                {
-                    isZeroFillingNeeded(data_vec[1], needsZeroFilling); // check if zero filling is needed
-                }
             }
 
-            // TREAT DATA WITHOUT ZEROS (ZERO FILLING, INTERPOLATION, EXTRAPOLATION)
-            if (!yContainsZeros)
-            {
-#pragma omp parallel for
-                for (size_t i = 0; i < indices.size(); ++i) // loop over all indices
-                {
-                    const int index = indices[i];                                                        // spectrum index
-                    std::vector<std::vector<double>> spectrum = data.get_spectrum(index);                // get spectrum at index
-                    spectrum.push_back(std::vector<double>(spectrum[0].size(), 1.0));                    // add df column for interpolation
-                    int num_subsets = zeroFilling_blocksAndGaps(spectrum, expectedDifference);           // zero fill the spectrum
-                    std::vector<std::vector<double>::iterator> separators(num_subsets);                  // vector of iterators at separation points (x axis)
-                    extrapolateData_vec(spectrum, separators);                                           // interpolate the data when zero filled
-                    qpeaks.findCentroids(centroids[i], spectrum, separators, index, retention_times[i]); // find peaks
-                } // for
-                return centroids;
-            } // if zero filling
-
-            // TREAT DATA WITH ZEROS (INTERPOLATION, EXTRAPOLATION)
-            if (!needsZeroFilling)
-            {
-#pragma omp parallel for
-                for (size_t i = 0; i < indices.size(); ++i) // loop over all indices
-                {
-                    const int additionalZeros = 2;
-                    const int index = indices[i];                                                                         // spectrum index
-                    std::vector<std::vector<double>> spectrum = data.get_spectrum(index);                                 // spectrum at index
-                    spectrum.push_back(std::vector<double>(spectrum[0].size(), 1.0));                                     // add df column for interpolation
-                    std::vector<std::vector<double>::iterator> separators;                                                // vector of iterators at separation points (x axis)
-                    cutData_vec_orbitrap(spectrum, expectedDifference, separators);                                       // find separation points in the data
-                    interpolateData_vec_orbitrap(spectrum, separators);                                                   // interpolate the data
-                    extrapolateData_vec_orbitrap(spectrum, separators);                                                   // extrapolate the data
-                    qpeaks.findCentroids(centroids[i], spectrum, separators, index, retention_times[i], additionalZeros); // find peaks
-                } // for
-                return centroids;
-            } // else zero filling (not needed)
-
-// TREAT DATA WITH ZEROS (ZERO FILLING only for block separation, INTERPOLATION only at zeros, EXTRAPOLATION)
 #pragma omp parallel for
             for (size_t i = 0; i < indices.size(); ++i) // loop over all indices
             {
-                const int index = indices[i]; // spectrum index
-                std::vector<TensorData::dataPoint> dataPoints = mzmlToDataPoint(data, index);
-                TensorData::treatedData treatedData = pretreatData(dataPoints, expectedDifference);
-
-                // int num_subsets = zeroFilling_blocksOnly(spectrum, expectedDifference);              // zero fill the spectrum
-                // assert(num_subsets > 0);                                                             // check if number of subsets is greater than zero
-                // std::vector<std::vector<double>::iterator> separators(num_subsets);                  // vector of iterators at separation points (x axis)
-                // extrapolateData_vec(spectrum, separators);                                           // interpolate the data when zero filled
-                // if (index==162)
-                // { // DIE SEPARATOREN SIND NOCH NICHT KORREKT. GGF ist der vector nicht vollständig
-                //     qpeaks.findCentroids(centroids[i], spectrum, separators, index, retention_times[i]); // find peaks
-                // }
+                const int index = indices[i];                                                       // spectrum index
+                std::vector<TensorData::dataPoint> dataPoints = mzmlToDataPoint(data, index);       // convert mzml to data points
+                TensorData::treatedData treatedData = pretreatData(dataPoints, expectedDifference); // inter/extrapolate data, and identify data blocks
+                qpeaks.findCentroids(centroids[i], treatedData, index, retention_times[i]);         // find peaks in data blocks of treated data
             } // for
 
             return centroids;
@@ -194,7 +190,7 @@ namespace q
         {
             std::vector<std::vector<std::unique_ptr<DataType::Peak>>> peaks =
                 std::vector<std::vector<std::unique_ptr<DataType::Peak>>>(data.size()); // create vector of unique pointers to peaks
-#pragma omp parallel for
+// #pragma omp parallel for
             for (size_t i = 0; i < data.size(); ++i) // loop over all data
             {
                 const int num_data_points = data[i].scanNumbers.size(); // number of data points
@@ -202,46 +198,10 @@ namespace q
                 {
                     continue; // skip due to lack of data, i.e., degree of freedom will be zero
                 }
-                std::vector<size_t> indices(data[i].scanNumbers.size());
-                std::iota(indices.begin(), indices.end(), 0);
-                auto compare = [&data, &i](size_t a, size_t b)
-                {
-                    return data[i].rententionTimes[a] < data[i].rententionTimes[b];
-                };
-
-                std::vector<std::vector<double>> eic;
-                if (!std::is_sorted(data[i].rententionTimes.begin(), data[i].rententionTimes.end())) // WILL BE DELETED IN THE FUTURE
-                {
-                    std::sort(indices.begin(), indices.end(), compare);
-                    std::vector<double> rt_sorted(num_data_points);
-                    std::vector<double> int_sorted(num_data_points);
-                    std::vector<double> mz_sorted(num_data_points);
-                    std::vector<double> DQSC_sorted(num_data_points);
-                    std::vector<double> DQSB_sorted(num_data_points);
-                    for (size_t j = 0; j < num_data_points; ++j)
-                    {
-                        rt_sorted[j] = data[i].rententionTimes[indices[j]];
-                        int_sorted[j] = data[i].intensities[indices[j]];
-                        mz_sorted[j] = data[i].mz[indices[j]];
-                        DQSC_sorted[j] = data[i].DQSC[indices[j]];
-                        DQSB_sorted[j] = data[i].DQSB[indices[j]];
-                    }
-                    eic = {rt_sorted, int_sorted, std::vector<double>(num_data_points, 1.0), mz_sorted, DQSC_sorted, DQSB_sorted}; // create vector of retention times and intensities
-                }
-                else
-                {
-                    eic = {data[i].rententionTimes,
-                           data[i].intensities,
-                           std::vector<double>(num_data_points, 1.0),
-                           data[i].mz,
-                           data[i].DQSC,
-                           data[i].DQSB}; // create vector of retention times and intensities
-                }
-
-                int num_subsets = zeroFilling_blocksAndGaps(eic, rt_diff, false);   // zero fill the spectrum
-                std::vector<std::vector<double>::iterator> separators(num_subsets); // vector of iterators at separation points (x axis)
-                extrapolateData_vec(eic, separators);
-                qpeaks.findPeaks(peaks[i], eic, separators); // find peaks
+                std::vector<dataPoint> dataPoints = qbinToDataPoint(data[i]);       // convert qbin to data points
+                treatedData treatedData = pretreatData(dataPoints, rt_diff, false); // inter/extrapolate data, and identify data blocks
+                // std::cout << "index: " << i << std::endl;
+                qpeaks.findPeaks(peaks[i],treatedData);
             } // parallel for
             return peaks;
         } // readQBinning

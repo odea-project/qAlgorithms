@@ -31,6 +31,7 @@ namespace q
                 float dqsCentroid;
                 float dqsBinning;
                 int scanNumber;
+                float mz;
             };
             
 
@@ -148,7 +149,8 @@ namespace q
              */
             treatedData
             pretreatData(std::vector<dataPoint> &dataPoints,
-                         float expectedDifference);
+                         float expectedDifference,
+                         const bool updateExpectedDifference = true);
         };
     } // namespace MeasurmentData
 }

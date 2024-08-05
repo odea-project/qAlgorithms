@@ -28,6 +28,10 @@ namespace q
             mzmlToDataPoint(
                 sc::MZML &data,
                 const int index);
+            
+            std::vector<dataPoint>
+            qbinToDataPoint(
+                q::Algorithms::qBinning::EIC &eic);
 
         public:
             // constructors

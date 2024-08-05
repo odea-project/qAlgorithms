@@ -106,7 +106,7 @@ int main()
         q::Algorithms::qBinning::CentroidedData testdata = qpeaks.passToBinning(centroids, centroids.size());
         std::string summary_output_location = "summary_output_location";
         start = std::chrono::high_resolution_clock::now();
-        std::vector<q::Algorithms::qBinning::EIC> binnedData = q::Algorithms::qBinning::performQbinning(testdata, summary_output_location, 6, true, false);
+        std::vector<q::Algorithms::qBinning::EIC> binnedData = q::Algorithms::qBinning::performQbinning(testdata, summary_output_location, 3, true, false);
         end = std::chrono::high_resolution_clock::now();
         duration = end - start;
         PRINT_DONE_TIME(duration, binnedData.size())

@@ -13,7 +13,6 @@
 
 #include <immintrin.h> // AVX
 
-
 /* This file includes the q::qPeaks class*/
 namespace q
 {
@@ -37,8 +36,7 @@ namespace q
                 std::vector<std::unique_ptr<DataType::Peak>> &all_peaks,
                 q::MeasurementData::MeasurementData::treatedData &treatedData,
                 const int scanNumber,
-                const float retentionTime
-            );
+                const float retentionTime);
 
             void
             findCentroids(
@@ -48,7 +46,12 @@ namespace q
                 const int scanNumber,
                 const float retentionTime,
                 const int additionalZeros = 0);
-            
+
+            void
+            findPeaks(
+                std::vector<std::unique_ptr<DataType::Peak>> &all_peaks,
+                q::MeasurementData::MeasurementData::treatedData &treatedData);
+
             void
             findPeaks(
                 std::vector<std::unique_ptr<DataType::Peak>> &all_peaks,
@@ -63,7 +66,7 @@ namespace q
                 const bool includeFits = true,
                 const bool featureMap = false) const;
 
-            qBinning::CentroidedData 
+            qBinning::CentroidedData
             passToBinning(std::vector<std::vector<std::unique_ptr<q::DataType::Peak>>> &allPeaks, size_t numberOfScans);
 
             static void initialize();
@@ -190,11 +193,12 @@ namespace q
                 const float *y_start,
                 const float *mz_start,
                 const float *rt_start,
+                const bool *df_start,
                 const float *dqs_cen,
                 const float *dqs_bin,
                 const float *dqs_peak,
                 const int scanNumber);
-            
+
             void
             createPeaks_static(
                 std::vector<std::unique_ptr<DataType::Peak>> &peaks,
@@ -203,11 +207,12 @@ namespace q
                 const float *y_start,
                 const float *mz_start,
                 const float *rt_start,
+                const bool *df_start,
                 const float *dqs_cen,
                 const float *dqs_bin,
                 const float *dqs_peak,
                 const int scanNumber);
-            
+
             void
             addPeakProperties(
                 std::vector<std::unique_ptr<DataType::Peak>> &peaks,
@@ -215,6 +220,7 @@ namespace q
                 const float *y_start,
                 const float *mz_start,
                 const float *rt_start,
+                const bool *df_sart,
                 const float *dqs_cen,
                 const float *dqs_bin,
                 const float *dqs_peak,
@@ -391,9 +397,9 @@ namespace q
 
             void
             calcUncertaintyPosition(
-                const float mse, 
-                const __m128 &coeff, 
-                const float apex_position, 
+                const float mse,
+                const __m128 &coeff,
+                const float apex_position,
                 const int scale,
                 float &uncertainty_pos) const;
 

@@ -1358,7 +1358,7 @@ namespace q
 
                 // move centroids from notInBins into existing bins
                 activeBins.redoBinningIfTooclose(measurementDimensions, &centroidedData, notInBins, maxdist);
-                activeBins.reconstructFromStdev(&centroidedData, 6);
+                activeBins.reconstructFromStdev(&centroidedData, maxdist);
 
                 if (printBinSummary)
                 {
