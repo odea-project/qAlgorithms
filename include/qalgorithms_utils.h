@@ -83,46 +83,6 @@ namespace q
 
     double erfi(const double x);
 
-    void
-    interpolate_loglinear(
-        const int gapSize,
-        const double expectedDifference,
-        const int index,
-        const size_t numRows,
-        std::vector<std::vector<double>> &data,
-        std::vector<int> &sorted_indexes);
-    
-    void
-    interpolate_loglinear_nopush(
-        const int gapSize,
-        const int index,
-        std::vector<std::vector<double>> &data);
-
-    void
-    interpolate_loglinear_nopush(
-        const int gapSize,
-        const int index,
-        const int numAddedZeroes,
-        std::vector<std::vector<double>> &data);
-    
-    void
-    extrapolate_x_left(
-        const int separatingZeros,
-        const double expectedDifference,
-        const int index,
-        const size_t numRows,
-        std::vector<std::vector<double>> &data,
-        std::vector<int> &sorted_indexes);
-    
-    void
-    extrapolate_x_right(
-        const int separatingZeros,
-        const double expectedDifference,
-        const int index,
-        const size_t numRows,
-        std::vector<std::vector<double>> &data,
-        std::vector<int> &sorted_indexes);
-
     const q::Matrices::Matrix linreg(
         const std::vector<double> &xData,
         const std::vector<double> &yData,

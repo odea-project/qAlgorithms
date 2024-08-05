@@ -39,24 +39,9 @@ namespace q
                 const float retentionTime);
 
             void
-            findCentroids(
-                std::vector<std::unique_ptr<DataType::Peak>> &all_peaks,
-                std::vector<std::vector<double>> &dataVec,
-                std::vector<std::vector<double>::iterator> &separators,
-                const int scanNumber,
-                const float retentionTime,
-                const int additionalZeros = 0);
-
-            void
             findPeaks(
                 std::vector<std::unique_ptr<DataType::Peak>> &all_peaks,
                 q::MeasurementData::MeasurementData::treatedData &treatedData);
-
-            void
-            findPeaks(
-                std::vector<std::unique_ptr<DataType::Peak>> &all_peaks,
-                std::vector<std::vector<double>> &dataVec,
-                std::vector<std::vector<double>::iterator> &separators);
 
             // export
             void

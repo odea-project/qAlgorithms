@@ -40,15 +40,25 @@ namespace q
                 {
                     continue; // skip zero values
                 }
-                TensorData::dataPoint dp; // create data point
-                dp.x = spectrum[0][i];    // x-axis value
-                dp.y = spectrum[1][i];    // y-axis value
-                dp.df = true;             // df value
+                TensorData::dataPoint dp( // create data point
+                    spectrum[0][i],       // x-axis value
+                    spectrum[1][i],       // y-axis value
+                    true,                 // df value
+                    0.0,                  // dqs centroid value
+                    0.0,                  // dqs binning value
+                    0,                    // scan number
+                    0.0);                 // mz ratio
                 dataPoints.push_back(dp); // add data point to vector
             }
             // add end point for later pretreatment
-            TensorData::dataPoint dp;
-            dp.x = std::numeric_limits<float>::infinity();
+            TensorData::dataPoint dp(                   // create data point
+                std::numeric_limits<float>::infinity(), // x-axis value
+                0.0,                                    // y-axis value
+                false,                                  // df value
+                0.0,                                    // dqs centroid value
+                0.0,                                    // dqs binning value
+                0,                                      // scan number
+                0.0);                                   // mz ratio
             dataPoints.push_back(dp);
             return dataPoints;
         }
@@ -71,35 +81,41 @@ namespace q
                 std::sort(indices.begin(), indices.end(), compare);
                 for (size_t i = 0; i < eic.scanNumbers.size(); ++i)
                 {
-                    TensorData::dataPoint dp;                    // create data point
-                    dp.x = eic.rententionTimes[indices[i]];      // x-axis value
-                    dp.y = eic.intensities[indices[i]];          // y-axis value
-                    dp.df = true;                                // df value
-                    dp.dqsCentroid = eic.DQSC[indices[i]];       // dqs centroid value
-                    dp.dqsBinning = eic.DQSB[indices[i]];        // dqs binning value
-                    dp.scanNumber = eic.scanNumbers[indices[i]]; // scan number
-                    dp.mz = eic.mz[indices[i]];                  // mz ratio
-                    dataPoints.push_back(dp);                    // add data point to vector
+                    TensorData::dataPoint dp(            // create data point
+                        eic.rententionTimes[indices[i]], // x-axis value
+                        eic.intensities[indices[i]],     // y-axis value
+                        true,                            // df value
+                        eic.DQSC[indices[i]],            // dqs centroid value
+                        eic.DQSB[indices[i]],            // dqs binning value
+                        eic.scanNumbers[indices[i]],     // scan number
+                        eic.mz[indices[i]]);             // mz ratio
+                    dataPoints.push_back(dp);            // add data point to vector
                 }
             }
             else
             {
                 for (size_t i = 0; i < eic.scanNumbers.size(); ++i)
                 {
-                    TensorData::dataPoint dp;           // create data point
-                    dp.x = eic.rententionTimes[i];      // x-axis value
-                    dp.y = eic.intensities[i];          // y-axis value
-                    dp.df = true;                       // df value
-                    dp.dqsCentroid = eic.DQSC[i];       // dqs centroid value
-                    dp.dqsBinning = eic.DQSB[i];        // dqs binning value
-                    dp.scanNumber = eic.scanNumbers[i]; // scan number
-                    dp.mz = eic.mz[i];                  // mz ratio
-                    dataPoints.push_back(dp);           // add data point to vector
+                    TensorData::dataPoint dp(   // create data point
+                        eic.rententionTimes[i], // x-axis value
+                        eic.intensities[i],     // y-axis value
+                        true,                   // df value
+                        eic.DQSC[i],            // dqs centroid value
+                        eic.DQSB[i],            // dqs binning value
+                        eic.scanNumbers[i],     // scan number
+                        eic.mz[i]);             // mz ratio
+                    dataPoints.push_back(dp);   // add data point to vector
                 }
             }
             // add end point for later pretreatment
-            TensorData::dataPoint dp;
-            dp.x = std::numeric_limits<float>::infinity();
+            TensorData::dataPoint dp(                   // create data point
+                std::numeric_limits<float>::infinity(), // x-axis value
+                0.0,                                    // y-axis value
+                false,                                  // df value
+                0.0,                                    // dqs centroid value
+                0.0,                                    // dqs binning value
+                0,                                      // scan number
+                0.0);                                   // mz ratio
             dataPoints.push_back(dp);
             return dataPoints;
         }
@@ -190,7 +206,7 @@ namespace q
         {
             std::vector<std::vector<std::unique_ptr<DataType::Peak>>> peaks =
                 std::vector<std::vector<std::unique_ptr<DataType::Peak>>>(data.size()); // create vector of unique pointers to peaks
-// #pragma omp parallel for
+#pragma omp parallel for
             for (size_t i = 0; i < data.size(); ++i) // loop over all data
             {
                 const int num_data_points = data[i].scanNumbers.size(); // number of data points
@@ -200,8 +216,7 @@ namespace q
                 }
                 std::vector<dataPoint> dataPoints = qbinToDataPoint(data[i]);       // convert qbin to data points
                 treatedData treatedData = pretreatData(dataPoints, rt_diff, false); // inter/extrapolate data, and identify data blocks
-                // std::cout << "index: " << i << std::endl;
-                qpeaks.findPeaks(peaks[i],treatedData);
+                qpeaks.findPeaks(peaks[i], treatedData);
             } // parallel for
             return peaks;
         } // readQBinning
