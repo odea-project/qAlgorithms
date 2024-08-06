@@ -1,5 +1,6 @@
 # Introduction
-```
+<div style="line-height: 1;">
+<pre>
     ███ █ ███        █ █  █
     █ █ █ █ █          █  █
 ███ ███ █ ███ ███ ██ █ ██ ███ █████ █▀▀
@@ -7,7 +8,8 @@
 ███ █ █ ███ █ ███ █  █ ██ █ █ █   █ ▄▄█
   █         █
   █       ███ https://github.com/odea-project/qAlgorithms
-```
+</pre>
+</div>
 Welcome to `qAlgorithms`, a comprehensive collection of C++ libraries designed to process analytical data. We focus on the non-target screening data domain, ensuring precise and reliable data processing for this complex field.
 
 ## Documentation
