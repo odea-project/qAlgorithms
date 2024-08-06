@@ -1,6 +1,6 @@
-# Introduction
 ![qAlgorithms Logo](references/qAlogo.png)
 
+# Introduction
 Welcome to `qAlgorithms`, a comprehensive collection of C++ libraries designed to process analytical data. We focus on the non-target screening data domain, ensuring precise and reliable data processing for this complex field.
 
 ## Documentation
