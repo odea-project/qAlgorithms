@@ -2,10 +2,12 @@
 
 // internal
 #include "../include/qalgorithms_measurement_data.h"
-#include "../include/qalgorithms_matrix.h"
 #include "../include/qalgorithms_utils.h"
+
+// external
 #include <cmath>
 #include <fstream>
+#include <algorithm>
 
 namespace q
 {

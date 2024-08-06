@@ -53,7 +53,9 @@ std::string sc::utils::encode_big_endian(const std::vector<double>& input, const
     
     for (size_t i = 0; i < input.size(); ++i) {
         float floatValue = static_cast<float>(input[i]);
-        uint32_t value = reinterpret_cast<uint32_t&>(const_cast<float&>(floatValue));
+        uint32_t value;
+        std::memcpy(&value, &floatValue, sizeof(float));
+        // uint32_t value = reinterpret_cast<uint32_t&>(const_cast<float&>(floatValue));
         for (size_t j = 0; j < sizeof(float); ++j) {
           bytes[i * sizeof(float) + j] = (value >> (8 * (sizeof(float) - 1 - j))) & 0xFF;
         }
@@ -116,8 +118,10 @@ std::vector<double> sc::utils::decode_big_endian(const std::string& str, const i
       for (int j = 0; j < precision; ++j) {
         value = (value << 8) | bytes[i * precision + j];
       }
-
-      result[i] = reinterpret_cast<double&>(value);
+      double doubleValue;
+      std::memcpy(&doubleValue, &value, sizeof(double));
+      result[i] = doubleValue;
+      // result[i] = reinterpret_cast<double&>(value);
 
     } else if (precision == 4) {
       uint32_t value = 0;
@@ -125,10 +129,12 @@ std::vector<double> sc::utils::decode_big_endian(const std::string& str, const i
       for (int j = 0; j < precision; ++j) {
         value = (value << 8) | bytes[i * precision + j];
       }
-      
-      float floatValue = reinterpret_cast<float&>(value);
-      
+      float floatValue;
+      std::memcpy(&floatValue, &value, sizeof(float));
       result[i] = static_cast<double>(floatValue);
+      // float floatValue = reinterpret_cast<float&>(value);
+      
+      // result[i] = static_cast<double>(floatValue);
 
     } else {
       throw("Precision must be 4 (32-bit) or 8 (64-bit)!");

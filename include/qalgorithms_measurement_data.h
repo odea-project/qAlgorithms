@@ -2,7 +2,7 @@
 #define QALGORITHMS_MEASUREMENT_DATA_H
 
 // internal
-#include "../include/qalgorithms_datatype_mass_spectrum.h"
+// #include "../include/qalgorithms_datatype_mass_spectrum.h"
 #include "../include/qalgorithms_datatype_peak.h"
 #include "../external/StreamCraft/src/StreamCraft_mzml.hpp"
 
@@ -13,8 +13,8 @@ namespace q
 {
     namespace MeasurementData
     {
-        using MS = std::vector<std::unique_ptr<DataType::MassSpectrum>> *; // pointer to a vector of mass spectra
-        using varDataType = std::variant<MS>;                              // add more data types if needed
+        // using MS = std::vector<std::unique_ptr<DataType::MassSpectrum>> *; // pointer to a vector of mass spectra
+        // using varDataType = std::variant<MS>;                              // add more data types if needed
         /**
          * @brief A class to store measurement data
          * @details The MeasurementData class is a virtual class used to store measurement data. Based on the type of measurement data, the MeasurementData class can be subclassed to store different types of measurement data.
@@ -51,14 +51,14 @@ namespace q
 
                 void addSeparator(int index)
                 {
-                    if (index < dataPoints.size())
+                    if (index < static_cast<int>(dataPoints.size()))
                     {
                         separators.push_back(index);
                     }
                 }
             };
                 // methods
-                virtual void readCSV(std::string filename, int rowStart, int rowEnd, int colStart, int colEnd, char separator, std::vector<DataType::DataField> variableTypes) = 0;
+                // virtual void readCSV(std::string filename, int rowStart, int rowEnd, int colStart, int colEnd, char separator, std::vector<DataType::DataField> variableTypes) = 0;
 
                 std::vector<std::vector<std::unique_ptr<DataType::Peak>>>
                 transfereCentroids(

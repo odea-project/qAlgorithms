@@ -1,5 +1,4 @@
 // internal
-#include "../include/qalgorithms_measurement_data_lcms.h"
 #include "../include/qalgorithms_measurement_data_tensor.h"
 #include "../include/qalgorithms_qpeaks.h"
 #include "../include/qalgorithms_console_output.h"
@@ -103,10 +102,9 @@ int main()
         PRINT_DONE_TIME(duration, num_centroids)
 
         PRINT_FIND_EICS
-        q::Algorithms::qBinning::CentroidedData testdata = qpeaks.passToBinning(centroids, centroids.size());
-        std::string summary_output_location = "summary_output_location";
+        q::Algorithms::qBinning::CentroidedData unbinnedCentroids = qpeaks.passToBinning(centroids, centroids.size());
         start = std::chrono::high_resolution_clock::now();
-        std::vector<q::Algorithms::qBinning::EIC> binnedData = q::Algorithms::qBinning::performQbinning(testdata, summary_output_location, 3, true, false);
+        std::vector<q::Algorithms::qBinning::EIC> binnedData = q::Algorithms::qBinning::performQbinning(unbinnedCentroids, "", "", 3, true, false, false);
         end = std::chrono::high_resolution_clock::now();
         duration = end - start;
         PRINT_DONE_TIME(duration, binnedData.size())

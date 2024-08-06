@@ -2,18 +2,18 @@
 
 // internal
 #include "../include/qalgorithms_measurement_data_tensor.h"
+
+// external
 #include <cassert>
 #include <fstream>
+#include <algorithm>
+#include <numeric>
 
 namespace q
 {
     namespace MeasurementData
     {
-        // constructors and destructor
-        TensorData::TensorData() {}
-
-        TensorData::~TensorData() {}
-
+#pragma region "private methods"
         // methods
         float
         TensorData::calcRTDiff(std::vector<double> &retention_times)
@@ -119,17 +119,9 @@ namespace q
             dataPoints.push_back(dp);
             return dataPoints;
         }
+#pragma endregion "private methods"
 
-        void
-        TensorData::readCSV(
-            std::string filename,
-            int rowStart,
-            int rowEnd,
-            int colStart,
-            int colEnd,
-            char separator,
-            std::vector<DataType::DataField> variableTypes) {}
-
+#pragma region "find centroids"
         std::vector<std::vector<std::unique_ptr<DataType::Peak>>>
         TensorData::findCentroids_MZML(
             q::Algorithms::qPeaks &qpeaks,
@@ -198,7 +190,9 @@ namespace q
 
             return centroids;
         } // readStreamCraftMZML
+#pragma endregion "find centroids"
 
+#pragma region "find peaks"
         std::vector<std::vector<std::unique_ptr<DataType::Peak>>>
         TensorData::findPeaks_QBIN(
             q::Algorithms::qPeaks &qpeaks,
@@ -219,6 +213,7 @@ namespace q
                 qpeaks.findPeaks(peaks[i], treatedData);
             } // parallel for
             return peaks;
-        } // readQBinning
+        } // findPeaks_QBIN
+#pragma endregion "find peaks"
     } // namespace MeasurementData
 } // namespace q

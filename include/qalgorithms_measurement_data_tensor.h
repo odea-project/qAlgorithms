@@ -34,22 +34,6 @@ namespace q
                 q::Algorithms::qBinning::EIC &eic);
 
         public:
-            // constructors
-            TensorData();
-
-            // destructor
-            ~TensorData();
-
-            void
-            readCSV(
-                std::string filename,
-                int rowStart,
-                int rowEnd,
-                int colStart,
-                int colEnd,
-                char separator,
-                std::vector<DataType::DataField> variableTypes);
-
             // methods
             /**
              * @brief Read 3D tensor data from a StreamCraft mzML object

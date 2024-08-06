@@ -80,7 +80,7 @@ namespace q
                   { return lhs.mz < rhs.mz; });
       }
 
-      return qBinning::CentroidedData{totalCentroids, centroids};
+      return qBinning::CentroidedData{centroids, totalCentroids};
     }
 #pragma endregion "pass to qBinning"
 
@@ -248,106 +248,6 @@ namespace q
         }
       }
     }
-
-    // void
-    // qPeaks::findCentroids(
-    //     std::vector<std::unique_ptr<DataType::Peak>> &all_peaks,
-    //     std::vector<std::vector<double>> &dataVec,
-    //     std::vector<std::vector<double>::iterator> &separators,
-    //     const int scanNumber,
-    //     const float retentionTime,
-    //     const int additionalZeros)
-    // {
-    //   // iterate over the blocks marked by the separators, which point to the last element of each block.
-    //   // the separators point to x values
-    //   // the first and last block need to be ignored.
-    //   // define iterators
-    //   auto it_mz = dataVec[0].begin();             // start of the second block
-    //   auto it_y = dataVec[1].begin();              // start of the second block
-    //   auto it_df = dataVec[2].begin();             // start of the second block
-    //   auto it_sep = separators.begin();            // start of the second block
-    //   const auto it_sep_end = separators.end();    // end of the last block
-    //   const float rt[2] = {-255.f, retentionTime}; // retention time vector
-    //   const float *rt_start = rt;                  // start of the retention time vector
-    //   // iterate over the blocks
-    //   for (; it_sep != it_sep_end; it_sep++)
-    //   {
-    //     // calculate the number of data points in the block
-    //     const int n = std::distance(it_mz, *it_sep) + 1 - 2 * additionalZeros;
-    //     // check if first of last data of the block is zero; zeros appear if extrapolation was not meaningful, i.e., apex at the edge of the datablock
-    //     const bool containsZero = *it_y == 0 || *(it_y + n - 1) == 0;
-    //     if (n < 9 || containsZero)
-    //     {
-    //       it_mz = it_mz + n + 2 * additionalZeros;
-    //       it_y = it_y + n + 2 * additionalZeros;
-    //       it_df = it_df + n + 2 * additionalZeros;
-    //       continue;
-    //     }
-    //     if (n <= 512)
-    //     {                                                // static approach
-    //       alignas(32) float Y[512];                      // measured y values
-    //       alignas(32) float Ylog[512];                   // log-transformed measured y values
-    //       alignas(32) float X[512];                      // measured x values
-    //       alignas(32) bool df[512];                      // degree of freedom vector, 0: interpolated, 1: measured
-    //       validRegression_static validRegressions[2048]; // array of valid regressions with default initialization, i.e., random states
-    //       int validRegressionsIndex = 0;                 // index of the valid regressions
-
-    //       // iterators to the start of the data
-    //       const auto y_start = Y;
-    //       const auto ylog_start = Ylog;
-    //       const auto mz_start = X;
-    //       const auto df_start = df;
-
-    //       std::copy(it_y, it_y + n, Y);
-    //       std::copy(it_mz, it_mz + n, X);
-    //       std::copy(it_df, it_df + n, df);
-    //       it_y += n + 2 * additionalZeros;
-    //       it_mz += n + 2 * additionalZeros;
-    //       it_df += n + 2 * additionalZeros;
-
-    //       // perform log-transform on Y
-    //       std::transform(y_start, y_start + n, ylog_start, [](float y)
-    //                      { return std::log(y); });
-    //       runningRegression_static(y_start, ylog_start, df_start, n, validRegressions, validRegressionsIndex);
-    //       if (validRegressionsIndex == 0)
-    //       {
-    //         continue; // no valid peaks
-    //       }
-    //       createPeaks_static(all_peaks, validRegressions, validRegressionsIndex, y_start, mz_start, rt_start, df_start, nullptr, nullptr, rt_start, scanNumber);
-    //     } // end static approach
-    //     else
-    //     { // dynamic approach
-    //       alignas(32) float *Y = new float[n];
-    //       alignas(32) float *Ylog = new float[n];
-    //       alignas(32) float *X = new float[n];
-    //       alignas(32) bool *df = new bool[n];
-    //       std::vector<std::unique_ptr<validRegression_static>> validRegressions;
-
-    //       // iterator to the start
-    //       const auto y_start = Y;
-    //       const auto ylog_start = Ylog;
-    //       const auto mz_start = X;
-    //       const auto df_start = df;
-
-    //       std::copy(it_y, it_y + n, Y);
-    //       std::copy(it_mz, it_mz + n, X);
-    //       std::copy(it_df, it_df + n, df);
-    //       it_y += n + 2 * additionalZeros;
-    //       it_df += n + 2 * additionalZeros;
-    //       it_mz += n + 2 * additionalZeros;
-
-    //       // perform log-transform on Y
-    //       std::transform(y_start, y_start + n, ylog_start, [](float y)
-    //                      { return std::log(y); });
-    //       runningRegression(y_start, ylog_start, df_start, n, validRegressions);
-    //       if (validRegressions.empty())
-    //       {
-    //         continue; // no valid peaks
-    //       }
-    //       createPeaks(all_peaks, validRegressions, y_start, mz_start, rt_start, df_start, nullptr, nullptr, rt_start, scanNumber);
-    //     } // end dynamic approach
-    //   } // end for loop
-    // } // end findPeaks
 #pragma endregion "find centroids"
 
 #pragma region "find peaks"
@@ -359,6 +259,7 @@ namespace q
       for (auto it_separators = treatedData.separators.begin(); it_separators != treatedData.separators.end() - 1; it_separators++)
       {
         const int n = *(it_separators + 1) - *it_separators; // calculate the number of data points in the block
+        assert(n > 0);                                       // check if the number of data points is greater than 0
         if (n <= 512)
         {
           // STATIC APPROACH
@@ -457,136 +358,6 @@ namespace q
         }
       }
     }
-
-    // void
-    // qPeaks::findPeaks(
-    //     std::vector<std::unique_ptr<DataType::Peak>> &all_peaks,
-    //     std::vector<std::vector<double>> &dataVec,
-    //     std::vector<std::vector<double>::iterator> &separators)
-    // {
-    //   // iterate over the blocks marked by the separators, which point to the last element of each block.
-    //   // the separators point to x values
-    //   // the first and last block need to be ignored.
-    //   // define iterators
-    //   auto it_rt = dataVec[0].begin();          // start of the second block
-    //   auto it_y = dataVec[1].begin();           // start of the second block
-    //   auto it_df = dataVec[2].begin();          // start of the second block
-    //   auto it_mz = dataVec[3].begin();          // start of the second block
-    //   auto it_dqs_cen = dataVec[4].begin();     // start of the second block
-    //   auto it_dqs_bin = dataVec[5].begin();     // start of the second block
-    //   auto it_sep = separators.begin();         // start of the second block
-    //   const auto it_sep_end = separators.end(); // end of the last block
-    //   const int num_of_loops = std::distance(it_sep, it_sep_end);
-
-    //   // iterate over the blocks
-    //   for (int i = 0; i < num_of_loops; i++, it_sep++)
-    //   {
-    //     // calculate the number of data points in the block
-    //     const int n = std::distance(it_rt, *it_sep) + 1;
-    //     if (n < 13)
-    //     {
-    //       // not enough data points to fit a quadratic regression model
-    //       // 13 due to 8 points are extrapolated and 5 points are needed for the regression
-    //       it_rt = it_rt + n;
-    //       it_y = it_y + n;
-    //       it_df = it_df + n;
-    //       it_mz = it_mz + n;
-    //       it_dqs_cen = it_dqs_cen + n;
-    //       it_dqs_bin = it_dqs_bin + n;
-    //       continue;
-    //     }
-    //     if (n <= 512)
-    //     {                                                // static approach
-    //       alignas(32) float Y[512];                      // measured y values
-    //       alignas(32) float Ylog[512];                   // log-transformed measured y values
-    //       alignas(32) float X[512];                      // measured x values
-    //       alignas(32) bool df[512];                      // degree of freedom vector, 0: interpolated, 1: measured
-    //       alignas(32) float mz[512];                     // measured mz values
-    //       alignas(32) float dqs_cen[512];                // measured dqs values
-    //       alignas(32) float dqs_bin[512];                // measured dqs values
-    //       validRegression_static validRegressions[2048]; // array of valid regressions with default initialization, i.e., random states
-    //       int validRegressionsIndex = 0;                 // index of the valid regressions
-
-    //       // iterator to the start
-    //       const auto y_start = Y;
-    //       const auto ylog_start = Ylog;
-    //       const auto rt_start = X;
-    //       const auto df_start = df;
-    //       const auto mz_start = mz;
-    //       const auto dqs_cen_start = dqs_cen;
-    //       const auto dqs_bin_start = dqs_bin;
-
-    //       std::copy(it_y, it_y + n, Y);
-    //       std::copy(it_rt, it_rt + n, X);
-    //       std::copy(it_df, it_df + n, df);
-    //       std::copy(it_mz, it_mz + n, mz);
-    //       std::copy(it_dqs_cen, it_dqs_cen + n, dqs_cen);
-    //       std::copy(it_dqs_bin, it_dqs_bin + n, dqs_bin);
-    //       it_rt += n;
-    //       it_y += n;
-    //       it_df += n;
-    //       it_mz += n;
-    //       it_dqs_cen += n;
-    //       it_dqs_bin += n;
-
-    //       // perform log-transform on Y
-    //       std::transform(y_start, y_start + n, ylog_start, [](float y)
-    //                      { return std::log(y); });
-    //       runningRegression_static(y_start, ylog_start, df_start, n, validRegressions, validRegressionsIndex);
-    //       if (validRegressionsIndex == 0)
-    //       {
-    //         continue; // no valid peaks
-    //       }
-    //       mz[0] = -255.f; // this is to calculate mz as weighted mean
-    //       createPeaks_static(all_peaks, validRegressions, validRegressionsIndex, y_start, mz_start, rt_start, df_start, dqs_cen_start, dqs_bin_start, nullptr, -1);
-    //       // createPeaks_static_chromatogram(all_peaks, validRegressions, validRegressionsIndex, y_start, x_start, 0, mz);
-    //     } // end static approach
-    //     else
-    //     { // dynamic approach
-    //       alignas(32) float *Y = new float[n];
-    //       alignas(32) float *Ylog = new float[n];
-    //       alignas(32) float *X = new float[n];
-    //       alignas(32) bool *df = new bool[n];
-    //       alignas(32) float *mz = new float[n];
-    //       alignas(32) float *dqs_cen = new float[n];
-    //       alignas(32) float *dqs_bin = new float[n];
-    //       std::vector<std::unique_ptr<validRegression_static>> validRegressions;
-
-    //       // iterator to the start
-    //       const auto y_start = Y;
-    //       const auto ylog_start = Ylog;
-    //       const auto rt_start = X;
-    //       const auto df_start = df;
-    //       const auto mz_start = mz;
-    //       const auto dqs_cen_start = dqs_cen;
-    //       const auto dqs_bin_start = dqs_bin;
-
-    //       std::copy(it_y, it_y + n, Y);
-    //       std::copy(it_rt, it_rt + n, X);
-    //       std::copy(it_df, it_df + n, df);
-    //       std::copy(it_mz, it_mz + n, mz);
-    //       std::copy(it_dqs_cen, it_dqs_cen + n, dqs_cen);
-    //       std::copy(it_dqs_bin, it_dqs_bin + n, dqs_bin);
-    //       it_rt += n;
-    //       it_y += n;
-    //       it_df += n;
-    //       it_mz += n;
-    //       it_dqs_cen += n;
-    //       it_dqs_bin += n;
-
-    //       // perform log-transform on Y
-    //       std::transform(y_start, y_start + n, ylog_start, [](float y)
-    //                      { return std::log(y); });
-    //       runningRegression(y_start, ylog_start, df_start, n, validRegressions);
-    //       if (validRegressions.empty())
-    //       {
-    //         continue; // no valid peaks
-    //       }
-    //       mz[0] = -255.f; // this is to calculate mz as weighted mean
-    //       createPeaks(all_peaks, validRegressions, y_start, mz_start, rt_start, df_start, dqs_cen_start, dqs_bin_start, nullptr, -1);
-    //     } // end dynamic approach
-    //   } // end for loop
-    // } // end findPeaks
 #pragma endregion "find peaks"
 
 #pragma region "running regression"
