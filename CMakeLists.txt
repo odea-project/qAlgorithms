@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.12)
-project(qAlgorithms VERSION 24.06)
+project(qAlgorithms VERSION 24.08)
 
 # Set C++ standard
 set(CMAKE_CXX_STANDARD 20)
@@ -9,7 +9,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 find_package(OpenMP REQUIRED)
 
 # Set compiler flags
-add_compile_options(-Wall -Wno-unknown-pragmas -fdiagnostics-color=always -g -O3 ${OpenMP_CXX_FLAGS})
+add_compile_options(-Wall -Wno-unknown-pragmas -fdiagnostics-color=always -g -O3 -mavx2 -mfma ${OpenMP_CXX_FLAGS})
 
 # Set include directories
 include_directories(include external/StreamCraft/src)
