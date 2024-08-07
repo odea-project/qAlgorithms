@@ -215,7 +215,7 @@ namespace q
           alignas(32) float *Ylog = new float[n];
           alignas(32) float *X = new float[n];
           alignas(32) bool *df = new bool[n];
-          std::vector<std::unique_ptr<validRegression_static>> validRegressions;
+          std::vector<validRegression_static> validRegressions;
 
           // iterator to the start
           const auto y_start = Y;
@@ -314,7 +314,7 @@ namespace q
           alignas(32) float *mz = new float[n];
           alignas(32) float *dqs_cen = new float[n];
           alignas(32) float *dqs_bin = new float[n];
-          std::vector<std::unique_ptr<validRegression_static>> validRegressions;
+          std::vector<validRegression_static> validRegressions;
 
           // iterator to the start
           const auto y_start = Y;
@@ -366,7 +366,7 @@ namespace q
         const float *ylog_start,
         const bool *df_start,
         const int n, // number of data points
-        std::vector<std::unique_ptr<validRegression_static>> &validRegressions)
+        std::vector<validRegression_static> &validRegressions)
     {
       const int maxScale = std::min(this->global_maxScale, (int)(n - 1) / 2);
       validRegressions.reserve(calculateNumberOfRegressions(n));
@@ -414,13 +414,13 @@ namespace q
         const float *ylog_start, // pointer to the start of the Ylog matrix
         const bool *df_start,    // degree of freedom vector, 0: interpolated, 1: measured
         const int scale,         // scale, i.e., the number of data points in a half window excluding the center point
-        std::vector<std::unique_ptr<validRegression_static>> &validRegressions)
+        std::vector<validRegression_static> &validRegressions)
     {
       // declare constants
       const float inverseMatrix_2_2 = invArray[scale][4]; // variance of the quadratic term left side of the peak
 
       // declare variables
-      std::vector<std::unique_ptr<validRegression_static>> validRegressionsTmp; // temporary vector to store valid regressions <index, apex_position>
+      std::vector<validRegression_static> validRegressionsTmp; // temporary vector to store valid regressions <index, apex_position>
 
       // iterate columwise over the coefficients matrix beta
       for (int i = 0; i < n_segments; i++)
@@ -445,19 +445,20 @@ namespace q
           Add to a temporary vector of valid regressions:
           This block of code adds the valid peak to a temporary vector of valid regressions. It calculates the left and right limits of the peak based on the valley position. Then it stores the index of the valid regression in the temporary vector of valid regressions.
         */
-        validRegressionsTmp.push_back(std::make_unique<validRegression_static>());
-        validRegressionsTmp.back()->index_x0 = i + scale;                      // index of the center of the window (x==0) in the Y matrix
-        validRegressionsTmp.back()->scale = scale;                             // scale
-        validRegressionsTmp.back()->df = df_sum - 4;                           // df
-        validRegressionsTmp.back()->apex_position = apex_position + i + scale; // apex position in x-axis 0:n
-        validRegressionsTmp.back()->mse = 0;                                   // initial MSE
-        validRegressionsTmp.back()->coeff = coeff;                             // coefficients register
-        validRegressionsTmp.back()->isValid = true;                            // isValid
-        validRegressionsTmp.back()->left_limit = left_limit;                   // left_limit
-        validRegressionsTmp.back()->right_limit = right_limit;                 // right_limit
-        validRegressionsTmp.back()->area = area;                               // peak area
-        validRegressionsTmp.back()->uncertainty_area = uncertainty_area;       // uncertainty of the peak area
-        validRegressionsTmp.back()->uncertainty_pos = uncertainty_pos;         // uncertainty of the peak position
+        validRegression_static vr;
+        vr.index_x0 = i + scale;                      // index of the center of the window (x==0) in the Y matrix
+        vr.scale = scale;                             // scale
+        vr.df = df_sum - 4;                           // df
+        vr.apex_position = apex_position + i + scale; // apex position in x-axis 0:n
+        vr.mse = 0;                                   // initial MSE
+        vr.coeff = coeff;                             // coefficients register
+        vr.isValid = true;                            // isValid
+        vr.left_limit = left_limit;                   // left_limit
+        vr.right_limit = right_limit;                 // right_limit
+        vr.area = area;                               // peak area
+        vr.uncertainty_area = uncertainty_area;       // uncertainty of the peak area
+        vr.uncertainty_pos = uncertainty_pos;         // uncertainty of the peak position
+        validRegressionsTmp.push_back(vr);            // push to the temporary vector of valid regressions
       } // end for loop
       // early return if no or only one valid peak
       if (validRegressionsTmp.size() < 2)
@@ -476,7 +477,7 @@ namespace q
         - At least one apex of a pair of peaks is within the window of the other peak. (Overlap of two maxima)
       */
 
-      std::vector<std::vector<std::unique_ptr<validRegression_static>>> regressionGroups; // vector of vectors of valid regressions, i.e., groups of valid regressions
+      std::vector<std::vector<validRegression_static>> regressionGroups; // vector of vectors of valid regressions, i.e., groups of valid regressions
 
       auto it_peak = validRegressionsTmp.begin(); // iterator for the peak
       auto it_peak_next = std::next(it_peak);     // iterator for the next peak
@@ -485,21 +486,21 @@ namespace q
       {
         // check if the difference between two peak apexes is less than 4 (Nyquist Shannon Sampling Theorem, separation of two maxima), or if the apex of a peak is within the window of the other peak (Overlap of two maxima)
         if (
-            std::abs((*it_peak)->apex_position - (*it_peak_next)->apex_position) > 4 && // Nyquist Shannon Sampling Theorem, separation of two maxima
-            (*it_peak)->apex_position < (*it_peak_next)->left_limit &&                  // Left peak is not within the window of the right peak
-            (*it_peak_next)->apex_position > (*it_peak)->right_limit                    // Right peak is not within the window of the left peak
+            std::abs(it_peak->apex_position - it_peak_next->apex_position) > 4 && // Nyquist Shannon Sampling Theorem, separation of two maxima
+            it_peak->apex_position < it_peak_next->left_limit &&                  // Left peak is not within the window of the right peak
+            it_peak_next->apex_position > it_peak->right_limit                    // Right peak is not within the window of the left peak
         )
-        {                                                                                                            // the two regressions differ, i.e. create a new group and move all regressions from start to it_peak to this group
-          regressionGroups.push_back(std::vector<std::unique_ptr<q::Algorithms::qPeaks::validRegression_static>>()); // create a new group
-          std::move(validRegressionsTmp.begin(), it_peak_next, std::back_inserter(regressionGroups.back()));         // move all regressions from start to it_peak to this group
-          it_peak_next = validRegressionsTmp.erase(validRegressionsTmp.begin(), it_peak_next);                       // erase the moved regressions from the temporary vector of valid regressions
+        {                                                                                                    // the two regressions differ, i.e. create a new group and move all regressions from start to it_peak to this group
+          regressionGroups.push_back(std::vector<q::Algorithms::qPeaks::validRegression_static>());          // create a new group
+          std::move(validRegressionsTmp.begin(), it_peak_next, std::back_inserter(regressionGroups.back())); // move all regressions from start to it_peak to this group
+          it_peak_next = validRegressionsTmp.erase(validRegressionsTmp.begin(), it_peak_next);               // erase the moved regressions from the temporary vector of valid regressions
         }
         it_peak = it_peak_next;
         ++it_peak_next;
         if (it_peak_next == validRegressionsTmp.end())
-        {                                                                                                            // the last peak is reached
-          regressionGroups.push_back(std::vector<std::unique_ptr<q::Algorithms::qPeaks::validRegression_static>>()); // create a new group
-          std::move(validRegressionsTmp.begin(), it_peak_next, std::back_inserter(regressionGroups.back()));         // move all regressions from start to it_peak to this group
+        {                                                                                                    // the last peak is reached
+          regressionGroups.push_back(std::vector<q::Algorithms::qPeaks::validRegression_static>());          // create a new group
+          std::move(validRegressionsTmp.begin(), it_peak_next, std::back_inserter(regressionGroups.back())); // move all regressions from start to it_peak to this group
         }
       } // end while loop
 
@@ -518,7 +519,7 @@ namespace q
           calcExtendedMse(y_start, group, df_start);
           for (auto &regression : group)
           {
-            if (regression->isValid)
+            if (regression.isValid)
             {
               validRegressions.push_back(std::move(regression));
             }
@@ -772,7 +773,7 @@ namespace q
 #pragma region mergeRegressionsOverScales
     void
     qPeaks::mergeRegressionsOverScales(
-        std::vector<std::unique_ptr<validRegression_static>> &validRegressions,
+        std::vector<validRegression_static> &validRegressions,
         const float *y_start,
         const float *ylog_start,
         const bool *df_start)
@@ -796,8 +797,8 @@ namespace q
       // iterate over the validRegressions vector
       for (auto it_new_peak = validRegressions.begin(); it_new_peak != validRegressions.end(); ++it_new_peak)
       {
-        const double left_limit = (*it_new_peak)->left_limit;       // left limit of the current peak regression window in the Y matrix
-        const double right_limit = (*it_new_peak)->right_limit;     // right limit of the current peak regression window in the Y matrix
+        const double left_limit = it_new_peak->left_limit;          // left limit of the current peak regression window in the Y matrix
+        const double right_limit = it_new_peak->right_limit;        // right limit of the current peak regression window in the Y matrix
         double grpMSE = 0;                                          // group mean squared error
         int grpDF = 0;                                              // group degree of freedom
         int numPeaksInGroup = 0;                                    // number of peaks in the group
@@ -807,31 +808,31 @@ namespace q
         // iterate over the validRegressions vector till the new peak
         for (; it_ref_peak < it_new_peak; ++it_ref_peak)
         {
-          if (!(*it_ref_peak)->isValid)
+          if (!it_ref_peak->isValid)
           {
             continue; // skip the invalid peaks
           }
           if ( // check for the overlap of the peaks
               (
-                  (*it_ref_peak)->apex_position > left_limit &&   // ref peak matches the left limit
-                  (*it_ref_peak)->apex_position < right_limit) || // ref peak matches the right limit
+                  it_ref_peak->apex_position > left_limit &&   // ref peak matches the left limit
+                  it_ref_peak->apex_position < right_limit) || // ref peak matches the right limit
               (
-                  (*it_new_peak)->apex_position > (*it_ref_peak)->left_limit && // new peak matches the left limit
-                  (*it_new_peak)->apex_position < (*it_ref_peak)->right_limit)) // new peak matches the right limit
+                  it_new_peak->apex_position > it_ref_peak->left_limit && // new peak matches the left limit
+                  it_new_peak->apex_position < it_ref_peak->right_limit)) // new peak matches the right limit
           {
-            if ((*it_ref_peak)->mse == 0.0)
+            if (it_ref_peak->mse == 0.0)
             { // calculate the mse of the ref peak
-              (*it_ref_peak)->mse = calcSSE(
-                                        ((*it_ref_peak)->left_limit) - (*it_ref_peak)->index_x0,  // left limit of the ref peak
-                                        ((*it_ref_peak)->right_limit) - (*it_ref_peak)->index_x0, // right limit of the ref peak
-                                        (*it_ref_peak)->coeff,                                    // regression coefficients
-                                        y_start + (int)(*it_ref_peak)->left_limit,                // pointer to the start of the Y matrix
-                                        true) /
-                                    (*it_ref_peak)->df;
+              it_ref_peak->mse = calcSSE(
+                                     (it_ref_peak->left_limit) - it_ref_peak->index_x0,  // left limit of the ref peak
+                                     (it_ref_peak->right_limit) - it_ref_peak->index_x0, // right limit of the ref peak
+                                     it_ref_peak->coeff,                                 // regression coefficients
+                                     y_start + (int)it_ref_peak->left_limit,             // pointer to the start of the Y matrix
+                                     true) /
+                                 it_ref_peak->df;
             }
-            grpDF += (*it_ref_peak)->df;                        // add the degree of freedom
-            grpMSE += (*it_ref_peak)->mse * (*it_ref_peak)->df; // add the sum of squared errors
-            numPeaksInGroup++;                                  // increment the number of peaks in the group
+            grpDF += it_ref_peak->df;                     // add the degree of freedom
+            grpMSE += it_ref_peak->mse * it_ref_peak->df; // add the sum of squared errors
+            numPeaksInGroup++;                            // increment the number of peaks in the group
             // add the iterator of the ref peak to a vector of iterators
             validRegressionsInGroup.push_back(it_ref_peak);
           }
@@ -846,22 +847,22 @@ namespace q
           continue; // no peaks in the group, i.e., the current peak stays valid
         }
 
-        if ((*it_new_peak)->mse == 0.0)
+        if (it_new_peak->mse == 0.0)
         { // calculate the mse of the current peak
-          (*it_new_peak)->mse = calcSSE(
-                                    ((*it_new_peak)->left_limit) - (*it_new_peak)->index_x0,  // left limit of the new peak
-                                    ((*it_new_peak)->right_limit) - (*it_new_peak)->index_x0, // right limit of the new peak
-                                    (*it_new_peak)->coeff,                                    // regression coefficients
-                                    y_start + (int)(*it_new_peak)->left_limit,                // pointer to the start of the Y matrix
-                                    true) /
-                                (*it_new_peak)->df;
+          it_new_peak->mse = calcSSE(
+                                 (it_new_peak->left_limit) - it_new_peak->index_x0,  // left limit of the new peak
+                                 (it_new_peak->right_limit) - it_new_peak->index_x0, // right limit of the new peak
+                                 it_new_peak->coeff,                                 // regression coefficients
+                                 y_start + (int)it_new_peak->left_limit,             // pointer to the start of the Y matrix
+                                 true) /
+                             it_new_peak->df;
         }
 
         if (numPeaksInGroup == 1)
         {
           // calculate the extended MSE using the current peak and the ref peak and set the worse one to invalid
           // create a temporary std::vector<std::unique_ptr<validRegression>> with the new peak and the ref peak
-          std::vector<std::unique_ptr<validRegression_static>> tmpRegressions;
+          std::vector<validRegression_static> tmpRegressions;
           tmpRegressions.push_back(std::move(*it_new_peak));
           tmpRegressions.push_back(std::move(validRegressionsInGroup[0][0]));
           calcExtendedMse(y_start, tmpRegressions, df_start);
@@ -870,24 +871,24 @@ namespace q
           *it_new_peak = std::move(tmpRegressions[0]);
           continue;
         }
-        if ((*it_new_peak)->mse < grpMSE)
+        if (it_new_peak->mse < grpMSE)
         {
           // Set isValid to false for the candidates from the group
           for (auto it_ref_peak : validRegressionsInGroup)
           {
-            (*it_ref_peak)->isValid = false;
+            it_ref_peak->isValid = false;
           }
         }
         else
         { // Set isValid to false for the current peak
-          (*it_new_peak)->isValid = false;
+          it_new_peak->isValid = false;
         }
       } // end for loop, outer loop, it_current_peak
 
       // Remove the peaks with isValid == false from the validRegressions
       validRegressions.erase(std::remove_if(validRegressions.begin(), validRegressions.end(),
                                             [](const auto &peak)
-                                            { return !peak->isValid; }),
+                                            { return !peak.isValid; }),
                              validRegressions.end());
     } // end mergeRegressionsOverScales
 #pragma endregion mergeRegressionsOverScales
@@ -975,7 +976,7 @@ namespace q
     void
     qPeaks::createPeaks(
         std::vector<std::unique_ptr<DataType::Peak>> &peaks,
-        const std::vector<std::unique_ptr<validRegression_static>> &validRegressions,
+        const std::vector<validRegression_static> &validRegressions,
         const float *y_start,
         const float *mz_start,
         const float *rt_start,
@@ -988,11 +989,11 @@ namespace q
       // iterate over the validRegressions vector
       for (auto &regression : validRegressions)
       {
-        if (!regression->isValid)
+        if (!regression.isValid)
         {
           continue;
         }
-        addPeakProperties(peaks, *regression, y_start, mz_start, rt_start, df_start, dqs_cen, dqs_bin, dqs_peak, scanNumber);
+        addPeakProperties(peaks, regression, y_start, mz_start, rt_start, df_start, dqs_cen, dqs_bin, dqs_peak, scanNumber);
       }
     }
 
@@ -1258,9 +1259,9 @@ namespace q
 #pragma region calcExtendedMse
     void
     qPeaks::calcExtendedMse(
-        const float *y_start,                                                    // start of the measured data
-        const std::vector<std::unique_ptr<validRegression_static>> &regressions, // regressions to compare
-        const bool *df_start)                                                    // degrees of freedom
+        const float *y_start,                             // start of the measured data
+        std::vector<validRegression_static> &regressions, // regressions to compare
+        const bool *df_start)                             // degrees of freedom
     {
       /*
         The function consists of the following steps:
@@ -1273,12 +1274,12 @@ namespace q
       auto best_regression = regressions.begin();
 
       // step 1: identify left (smallest) and right (largest) limit of the grouped regression windows
-      int left_limit = static_cast<int>(regressions.front()->left_limit);
-      int right_limit = static_cast<int>(regressions.front()->right_limit);
+      int left_limit = static_cast<int>(regressions.front().left_limit);
+      int right_limit = static_cast<int>(regressions.front().right_limit);
       for (auto regression = regressions.begin(); regression != regressions.end(); ++regression)
       {
-        left_limit = std::min(left_limit, static_cast<int>((*regression)->left_limit));
-        right_limit = std::max(right_limit, static_cast<int>((*regression)->right_limit));
+        left_limit = std::min(left_limit, static_cast<int>(regression->left_limit));
+        right_limit = std::max(right_limit, static_cast<int>(regression->right_limit));
       }
 
       const int df_sum = calcDF(df_start, left_limit, right_limit);
@@ -1287,7 +1288,7 @@ namespace q
         // set isValid to false for all regressions
         for (auto regression = regressions.begin(); regression != regressions.end(); ++regression)
         {
-          (*regression)->isValid = false;
+          regression->isValid = false;
         }
         return; // not enough degrees of freedom
       }
@@ -1296,23 +1297,23 @@ namespace q
       {
         // step 2: calculate the mean squared error (MSE) between the predicted and actual values
         const float mse = calcSSE(
-                              left_limit - (*regression)->index_x0,  // left limit of the regression window (normalized scale)
-                              right_limit - (*regression)->index_x0, // right limit of the regression window (normalized scale)
-                              (*regression)->coeff,                  // regression coefficients
-                              y_start + left_limit,                  // start of the measured data
-                              true) /                                // calculate the exp of the yhat values
+                              left_limit - regression->index_x0,  // left limit of the regression window (normalized scale)
+                              right_limit - regression->index_x0, // right limit of the regression window (normalized scale)
+                              regression->coeff,                  // regression coefficients
+                              y_start + left_limit,               // start of the measured data
+                              true) /                             // calculate the exp of the yhat values
                           (df_sum - 4);
 
         // step 3: identify the best regression based on the MSE and return the MSE and the index of the best regression
         if (mse < best_mse)
         {
           best_mse = mse;
-          (*regression)->mse = mse;
+          regression->mse = mse;
           best_regression = regression;
         }
         else
         {
-          (*regression)->isValid = false;
+          regression->isValid = false;
         }
       } // end for loop (index in groupIndices)
       // set isValid to false for all regressions except the best one
@@ -1320,7 +1321,7 @@ namespace q
       {
         if (regression != best_regression)
         {
-          (*regression)->isValid = false;
+          regression->isValid = false;
         }
       }
     } // end qPeaks::calcExtendedMse

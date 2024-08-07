@@ -93,7 +93,6 @@ namespace q
                 float area;             // area of the peak
                 float uncertainty_area; // uncertainty of the area
                 float uncertainty_pos;  // uncertainty of the position
-                // float uncertainty_height; // uncertainty of the height
                 validRegression_static() = default;
             };
 
@@ -107,7 +106,7 @@ namespace q
                 const float *ylog_start,
                 const bool *df_start,
                 const int n,
-                std::vector<std::unique_ptr<validRegression_static>> &validRegressions);
+                std::vector<validRegression_static> &validRegressions);
 
             void
             runningRegression_static(
@@ -126,7 +125,7 @@ namespace q
                 const float *ylog_start,
                 const bool *df_start,
                 const int scale,
-                std::vector<std::unique_ptr<validRegression_static>> &validRegressions);
+                std::vector<validRegression_static> &validRegressions);
 
             void
             validateRegressions_static(
@@ -158,7 +157,7 @@ namespace q
 
             void
             mergeRegressionsOverScales(
-                std::vector<std::unique_ptr<validRegression_static>> &validRegressions,
+                std::vector<validRegression_static> &validRegressions,
                 const float *y_start,
                 const float *ylog_start,
                 const bool *df_start);
@@ -174,7 +173,7 @@ namespace q
             void
             createPeaks(
                 std::vector<std::unique_ptr<DataType::Peak>> &peaks,
-                const std::vector<std::unique_ptr<validRegression_static>> &validRegressions,
+                const std::vector<validRegression_static> &validRegressions,
                 const float *y_start,
                 const float *mz_start,
                 const float *rt_start,
@@ -233,7 +232,7 @@ namespace q
             void
             calcExtendedMse(
                 const float *y_start,
-                const std::vector<std::unique_ptr<validRegression_static>> &regressions,
+                std::vector<validRegression_static> &regressions,
                 const bool *df_start);
 
             void
