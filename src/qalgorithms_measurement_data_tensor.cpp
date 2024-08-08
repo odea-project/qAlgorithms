@@ -122,7 +122,7 @@ namespace q
 #pragma endregion "private methods"
 
 #pragma region "find centroids"
-        std::vector<std::vector<std::unique_ptr<DataType::Peak>>>
+        std::vector<std::vector<DataType::Peak>>
         TensorData::findCentroids_MZML(
             q::Algorithms::qPeaks &qpeaks,
             sc::MZML &data,
@@ -170,8 +170,8 @@ namespace q
             std::vector<double> retention_times = data.get_spectra_rt(indices); // get retention times
             rt_diff = calcRTDiff(retention_times);                              // retention time difference
 
-            std::vector<std::vector<std::unique_ptr<DataType::Peak>>> centroids =
-                std::vector<std::vector<std::unique_ptr<DataType::Peak>>>(indices.size()); // create vector of unique pointers to peaks
+            std::vector<std::vector<DataType::Peak>> centroids =
+                std::vector<std::vector<DataType::Peak>>(indices.size()); // create vector of unique pointers to peaks
 
             // CALCULATE EXPECTED DIFFERENCE & CHECK FOR ZEROS
             {
@@ -198,8 +198,8 @@ namespace q
             q::Algorithms::qPeaks &qpeaks,
             std::vector<q::Algorithms::qBinning::EIC> &data)
         {
-            std::vector<std::vector<std::unique_ptr<DataType::Peak>>> peaks =
-                std::vector<std::vector<std::unique_ptr<DataType::Peak>>>(data.size()); // create vector of unique pointers to peaks
+            std::vector<std::vector<DataType::Peak>> peaks =
+                std::vector<std::vector<DataType::Peak>>(data.size()); // create vector of unique pointers to peaks
 #pragma omp parallel for
             for (size_t i = 0; i < data.size(); ++i) // loop over all data
             {
@@ -212,18 +212,18 @@ namespace q
                 treatedData treatedData = pretreatData(dataPoints, rt_diff, false); // inter/extrapolate data, and identify data blocks
                 qpeaks.findPeaks(peaks[i], treatedData);
             } // parallel for
-            // return peaks;
+            return peaks;
 
-            std::vector<std::vector<DataType::Peak>> returnVec(peaks.size());
-            for (size_t i = 0; i < peaks.size(); i++)
-            {
-                returnVec[i].reserve(peaks[i].size());
-                for (size_t j = 0; j < peaks[i].size(); j++)
-                {
-                    returnVec[i].push_back(*peaks[i][j]);
-                }
-            }
-            return returnVec;
+            // std::vector<std::vector<DataType::Peak>> returnVec(peaks.size());
+            // for (size_t i = 0; i < peaks.size(); i++)
+            // {
+            //     returnVec[i].reserve(peaks[i].size());
+            //     for (size_t j = 0; j < peaks[i].size(); j++)
+            //     {
+            //         returnVec[i].push_back(*peaks[i][j]);
+            //     }
+            // }
+            // return returnVec;
         } // readQBinning
     } // namespace MeasurementData
 } // namespace q

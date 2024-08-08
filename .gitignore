@@ -55,3 +55,7 @@ latex
 .pdf
 .cache
 .clang-format
+
+# matplotplusplus
+external/matplotplusplus
+external/sciplot
