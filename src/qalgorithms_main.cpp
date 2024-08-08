@@ -1,5 +1,5 @@
 // internal
-#include "qalgorithms_measurement_data_lcms.h"
+// #include "qalgorithms_measurement_data_lcms.h"
 #include "qalgorithms_measurement_data_tensor.h"
 #include "qalgorithms_qpeaks.h"
 
@@ -7,12 +7,14 @@
 #include "../external/StreamCraft/src/StreamCraft_mzml.h"
 #include <iostream>
 #include <chrono>
-#include <fstream>
+#include <fstream> // write peaks to file
 #include <cstdlib>
 #include <iomanip>
 #include <filesystem> // printing absolute path in case read fails
 #include <string>
-#include <sstream>
+#include <sstream>   // write peaks to file
+#include <algorithm> // remove duplicates from task list
+#include <map>       // remove duplicates from task list
 
 namespace q
 {
@@ -27,7 +29,7 @@ namespace q
         pathOutput /= filename;
         if (!silent)
         {
-            std::cout << "writing peaks to: " << pathOutput << "\n";
+            std::cout << "writing peaks to: " << pathOutput << "\n\n";
         }
 
         std::fstream file_out;
@@ -133,6 +135,9 @@ int main(int argc, char *argv[])
     std::filesystem::path pathOutput;
 
     std::vector<std::filesystem::path> tasklist;
+
+    std::multimap<size_t, std::filesystem::path> tasklist2;
+
     volatile bool printPeaks = false;
     // ask for file if none are specified
     if (argc == 1)
@@ -177,6 +182,8 @@ int main(int argc, char *argv[])
         inSpecified = true;
         outSpecified = true;
         tasklist.push_back(pathInput);
+        size_t filesize = std::filesystem::file_size(pathInput);
+        tasklist2.insert({filesize, pathInput});
     }
 
     // if only one argument is given, check if it is any variation of help
@@ -227,6 +234,8 @@ int main(int argc, char *argv[])
                 else
                 {
                     tasklist.push_back(pathInput);
+                    size_t filesize = std::filesystem::file_size(pathInput);
+                    tasklist2.insert({filesize, pathInput});
                 }
                 ++i;
                 if (i == argc)
@@ -296,6 +305,8 @@ int main(int argc, char *argv[])
                 }
 
                 tasklist.push_back(pathTemp);
+                size_t filesize = std::filesystem::file_size(pathTemp);
+                tasklist2.insert({filesize, pathTemp});
             }
             /*@todo
             the task file should contain a list of all files the program
@@ -337,6 +348,8 @@ int main(int argc, char *argv[])
                 if (pathInput.extension() == ".mzML")
                 {
                     tasklist.push_back(std::filesystem::canonical(pathInput));
+                    size_t filesize = std::filesystem::file_size(pathInput);
+                    tasklist2.insert({filesize, pathInput});
                     ++fileCounter;
                 }
             }
@@ -428,12 +441,52 @@ int main(int argc, char *argv[])
     if (silent & verboseProgress)
     {
         std::cerr << "Warning: -verbose overrides -silent\n";
+        silent = false;
     }
+
+    // remove duplicates from tasklist
+    size_t prevsize = tasklist.size();
+    std::sort(tasklist.begin(), tasklist.end());
+    tasklist.erase(std::unique(tasklist.begin(), tasklist.end()), tasklist.end());
+    if ((tasklist.size() < prevsize))
+    {
+        std::cerr << "Warning: removed " << prevsize - tasklist.size() << " duplicate emtries from tasklist\n";
+    }
+
+    // remove duplicate files
+    // create vector of unique keys (file sizes)
+    // multimap is sorted by keys in ascending order
+    size_t prevsize = tasklist2.size();
+    std::vector<size_t> keys;
+    size_t prevkey = 0;
+    for (const auto &pair : tasklist2)
+    {
+        size_t key = pair.first;
+        if (key != prevkey)
+        {
+            prevkey = key;
+            keys.push_back(key);
+        }
+    }
+    if ((keys.size() < prevsize))
+    {
+        std::cerr << "Warning: removed " << prevsize - keys.size() << " duplicate emtries from tasklist\n"; // @todo
+    }
+
+    for (size_t key : keys)
+    {
+        // files are hashed by filesize. First, search for sizes with more then one entry
+        if (tasklist2.count(key) != 1)
+        {
+            // calculate hashes of selected files
+        }
+    }
+
 #pragma endregion cli arguments
 
 #pragma region file processing
     std::string filename;
-    const std::vector<std::string> polarities = {"positive", "negative"};
+    const std::vector<std::string> polarities = {"positive", "negative"}; // @todo make bool
     int counter = 0;
     for (std::filesystem::path pathSource : tasklist)
     {
@@ -474,7 +527,7 @@ int main(int argc, char *argv[])
 
         if (!silent)
         {
-            std::cout << " file ok\n";
+            std::cout << " file ok\n\n";
         }
         for (auto polarity : polarities)
         {
@@ -500,8 +553,8 @@ int main(int argc, char *argv[])
 
             if (!silent)
             {
-                std::cout << "produced " << binThis.lengthAllPoints << " centroids from " << centroids.size()
-                          << " spectra in " << (timeEnd - timeStart).count() << " ns\n\n";
+                std::cout << "    produced " << binThis.lengthAllPoints << " centroids from " << centroids.size()
+                          << " spectra in " << (timeEnd - timeStart).count() << " ns\n";
             }
 
             timeStart = std::chrono::high_resolution_clock::now();
@@ -511,7 +564,7 @@ int main(int argc, char *argv[])
 
             if (!silent)
             {
-                std::cout << "assembled " << binnedData.size() << " bins in " << (timeEnd - timeStart).count() << " ns\n\n";
+                std::cout << "    assembled " << binnedData.size() << " bins in " << (timeEnd - timeStart).count() << " ns\n";
             }
 
             timeStart = std::chrono::high_resolution_clock::now();
@@ -527,7 +580,7 @@ int main(int argc, char *argv[])
                     peakCount += peaks[i].size();
                 }
 
-                std::cout << "found " << peakCount << " peaks in " << (timeEnd - timeStart).count() << " ns\n\n";
+                std::cout << "    found " << peakCount << " peaks in " << (timeEnd - timeStart).count() << " ns\n";
             }
 
             // std::vector<std::vector<q::DataType::Peak>> processPeaks = tensorData.remove_unique_ptr(qpeaks, peaks);
