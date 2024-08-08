@@ -8,8 +8,6 @@
 // external
 #include "../external/StreamCraft/src/StreamCraft_mzml.h"
 
-// up to date with commit 47da7e1
-
 namespace q
 {
     namespace MeasurementData
@@ -26,27 +24,18 @@ namespace q
             float rt_diff;
             float calcRTDiff(std::vector<double> &retention_times);
 
-            std::vector<dataPoint>
-            mzmlToDataPoint(
+            std::vector<dataPoint> mzmlToDataPoint(
                 sc::MZML &data,
                 const int index);
 
-        public:
-            bool readCSV(
-                std::string filename,
-                int rowStart,
-                int rowEnd,
-                int colStart,
-                int colEnd,
-                char separator,
-                std::vector<DataType::DataField> variableTypes);
+            std::vector<dataPoint> qbinToDataPoint(
+                q::Algorithms::qBinning::EIC &eic);
 
+        public:
             // methods
             /**
              * @brief Read 3D tensor data from a StreamCraft mzML object
-             * @details The readStreamCraftMZML method reads 3D tensor data
-             * from a StreamCraft mzML object and stores it in the TensorData object.
-             * A StreamCraft mzML object is created by using sc::MZML z("path to mzML file").
+             * @details The readStreamCraftMZML method reads 3D tensor data from a StreamCraft mzML object and stores it in the TensorData object. A StreamCraft mzML object is created by using sc::MZML z("path to mzML file").
              *
              * @param data : StreamCraft mzML object
              * @param ms1only : boolean to indicate if only MS1 spectra should be read
@@ -58,7 +47,7 @@ namespace q
                 q::Algorithms::qPeaks &qpeaks,
                 sc::MZML &data,
                 const bool ms1only = true,
-                const std::string polarity = "positive", // @todo why not a bool?
+                const std::string polarity = "positive",
                 const int start_index = 0);
 
             std::vector<std::vector<DataType::Peak>>

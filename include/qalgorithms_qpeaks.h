@@ -9,10 +9,9 @@
 
 // external
 #include <vector>
-#include <memory>      // unique_ptr
-#include <immintrin.h> // AVX
+#include <memory>
 
-// up to date with commit 47da7e1
+#include <immintrin.h> // AVX
 
 /* This file includes the q::qPeaks class*/
 namespace q
@@ -27,34 +26,33 @@ namespace q
         public:
             static const int global_maxScale = 15; // maximum scale for regression window
 
+            // Constructor and Destructor
+            qPeaks();
+            ~qPeaks();
+
             // methods
-            void findCentroids(
+            void
+            findCentroids(
                 std::vector<std::unique_ptr<DataType::Peak>> &all_peaks,
                 q::MeasurementData::MeasurementData::treatedData &treatedData,
                 const int scanNumber,
                 const float retentionTime);
 
-            void findCentroids(
+            void
+            findPeaks(
                 std::vector<std::unique_ptr<DataType::Peak>> &all_peaks,
-                std::vector<std::vector<double>> &dataVec,
-                std::vector<std::vector<double>::iterator> &separators,
-                const int scanNumber,
-                const float retentionTime,
-                const int additionalZeros = 0);
-
-            void findPeaks(
-                std::vector<std::unique_ptr<DataType::Peak>> &all_peaks,
-                std::vector<std::vector<double>> &dataVec,
-                std::vector<std::vector<double>::iterator> &separators);
+                q::MeasurementData::MeasurementData::treatedData &treatedData);
 
             // export
-            void plotPeaksToPython(
+            void
+            plotPeaksToPython(
                 const std::string &filename_input,
                 const std::string &filename_output,
                 const bool includeFits = true,
                 const bool featureMap = false) const;
 
-            qBinning::CentroidedData passToBinning(std::vector<std::vector<std::unique_ptr<q::DataType::Peak>>> &allPeaks);
+            qBinning::CentroidedData
+            passToBinning(std::vector<std::vector<std::unique_ptr<q::DataType::Peak>>> &allPeaks);
 
             static void initialize();
 
@@ -95,7 +93,6 @@ namespace q
                 float area;             // area of the peak
                 float uncertainty_area; // uncertainty of the area
                 float uncertainty_pos;  // uncertainty of the position
-                // float uncertainty_height; // uncertainty of the height
                 validRegression_static() = default;
             };
 
@@ -109,7 +106,7 @@ namespace q
                 const float *ylog_start,
                 const bool *df_start,
                 const int n,
-                std::vector<std::unique_ptr<validRegression_static>> &validRegressions);
+                std::vector<validRegression_static> &validRegressions);
 
             void
             runningRegression_static(
@@ -128,7 +125,7 @@ namespace q
                 const float *ylog_start,
                 const bool *df_start,
                 const int scale,
-                std::vector<std::unique_ptr<validRegression_static>> &validRegressions);
+                std::vector<validRegression_static> &validRegressions);
 
             void
             validateRegressions_static(
@@ -160,7 +157,7 @@ namespace q
 
             void
             mergeRegressionsOverScales(
-                std::vector<std::unique_ptr<validRegression_static>> &validRegressions,
+                std::vector<validRegression_static> &validRegressions,
                 const float *y_start,
                 const float *ylog_start,
                 const bool *df_start);
@@ -176,10 +173,11 @@ namespace q
             void
             createPeaks(
                 std::vector<std::unique_ptr<DataType::Peak>> &peaks,
-                const std::vector<std::unique_ptr<validRegression_static>> &validRegressions,
+                const std::vector<validRegression_static> &validRegressions,
                 const float *y_start,
                 const float *mz_start,
                 const float *rt_start,
+                const bool *df_start,
                 const float *dqs_cen,
                 const float *dqs_bin,
                 const float *dqs_peak,
@@ -193,6 +191,7 @@ namespace q
                 const float *y_start,
                 const float *mz_start,
                 const float *rt_start,
+                const bool *df_start,
                 const float *dqs_cen,
                 const float *dqs_bin,
                 const float *dqs_peak,
@@ -205,6 +204,7 @@ namespace q
                 const float *y_start,
                 const float *mz_start,
                 const float *rt_start,
+                const bool *df_sart,
                 const float *dqs_cen,
                 const float *dqs_bin,
                 const float *dqs_peak,
@@ -238,7 +238,7 @@ namespace q
             void
             calcExtendedMse(
                 const float *y_start,
-                const std::vector<std::unique_ptr<validRegression_static>> &regressions,
+                std::vector<validRegression_static> &regressions,
                 const bool *df_start);
 
             void
@@ -282,8 +282,7 @@ namespace q
                 const int right_limit);
 
             /**
-             * @brief Calculate the apex (and if possible the valley) position of the peak.
-             * Return true if the calculated positions are valid.
+             * @brief Calculate the apex (and if possible the valley) position of the peak. And return true if the positions are calculated are valid.
              * @param coeff : Matrix of regression coefficients
              * @param scale : Window size scale, e.g., 5 means the window size is 11 (2*5+1)
              * @param apex_position : apex position
@@ -300,10 +299,7 @@ namespace q
 
             /**
              * @brief Calculate the Matrix Product of J * Xinv * J^T for uncertainty calculation.
-             * @details The function calculates the matrix product of J * Xinv * J^T.
-             * The matrix J is the Jacobian matrix with an 1x4 size. The matrix Xinv is
-             * the inverse matrix of X^T * X, where X is the design matrix.
-             * The matrix J * Xinv * J^T is a 1x1 matrix, i.e., a scalar value.
+             * @details The function calculates the matrix product of J * Xinv * J^T. The matrix J is the Jacobian matrix with an 1x4 size. The matrix Xinv is the inverse matrix of X^T * X, where X is the design matrix. The matrix J * Xinv * J^T is a 1x1 matrix, i.e., a scalar value.
              *
              * @param vec
              * @param scale
@@ -315,21 +311,14 @@ namespace q
                 const int scale) const;
 
             /**
-             * @brief Checks if peak maximum is twice as high as the signal
-             * at the edge of the regression window.
-             * @details The test is used as a fast pre-test for signal-to-noise ratio
-             * which will be calculated later. However, s/n siginificance is time
-             * consuming due to MSE calculation. The reference value of two is used due
-             * to t = (apex/edge - 2) / (apex/edge * sqrt()). If apex is equal or less than
-             * two times the edge, the t value is less than zero,
-             * which means that SNR cannot be significant.
+             * @brief Checks if peak maximum is twice as high as the signal at the edge of the regression window.
+             * @details The test is used as a fast pre-test for signal-to-noise ratio which will be calculated later. However, s/n siginificance is time consuming due to MSE calculation. The reference value of two is used due to t = (apex/edge - 2) / (apex/edge * sqrt()). If apex is equal or less than two times the edge, the t value is less than zero, which means that SNR cannot be significant.
              *
              * @param apex_position
              * @param scale
              * @param index_loop
              * @param Y
-             * @param apexToEdge : The ratio of the peak maximum to the signal at the edge of the
-             * regression window. This value is calculated by the function.
+             * @param apexToEdge : The ratio of the peak maximum to the signal at the edge of the regression window. This value is calculated by the function.
              * @return true
              * @return false
              */
@@ -380,12 +369,7 @@ namespace q
 
             /**
              * @brief Check if the peak area and the covered peak area are valid using t-test.
-             * @details The function calculates the peak area and the covered peak area
-             * using the regression coefficients. The peak area is the integral of the
-             * regression model from -infinity to +infinity. The covered peak area is the
-             * integral of the regression model from the left limit of the regression window
-             * to the right limit of the regression window. Moreover, the trapzoid under
-             * the peak is considered as not covered peak area.
+             * @details The function calculates the peak area and the covered peak area using the regression coefficients. The peak area is the integral of the regression model from -infinity to +infinity. The covered peak area is the integral of the regression model from the left limit of the regression window to the right limit of the regression window. Moreover, the trapzoid under the peak is considered as not covered peak area.
              *
              * @param coeff : Matrix of regression coefficients
              * @param mse : mean squared error
