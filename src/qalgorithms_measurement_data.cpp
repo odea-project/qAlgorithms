@@ -13,14 +13,14 @@ namespace q
 {
   namespace MeasurementData
   {
-    std::vector<std::vector<std::unique_ptr<DataType::Peak>>>
+    std::vector<std::vector<DataType::Peak>>
     MeasurementData::transfereCentroids(
         sc::MZML &data,
         std::vector<int> &indices,
         std::vector<double> &retention_times,
         const int start_index)
     {
-      std::vector<std::vector<std::unique_ptr<DataType::Peak>>> centroids(indices.size());
+      std::vector<std::vector<DataType::Peak>> centroids(indices.size());
 #pragma omp parallel for
       for (size_t i = 0; i < indices.size(); ++i) // loop over all indices
       {
@@ -37,13 +37,13 @@ namespace q
           {
             continue; // skip due to low intensity
           }
-          centroids[i].push_back(std::make_unique<DataType::Peak>());
-          centroids[i].back()->sampleID = index;
-          centroids[i].back()->mz = spectrum[0][j];
-          centroids[i].back()->area = spectrum[1][j];
-          centroids[i].back()->retentionTime = retention_times[i];
-          centroids[i].back()->dqsCen = 0.0;
-          centroids[i].back()->mzUncertainty = spectrum[0][j] * 5e-6; // 5 ppm
+          centroids[i].push_back(DataType::Peak());
+          centroids[i].back().sampleID = index;
+          centroids[i].back().mz = spectrum[0][j];
+          centroids[i].back().area = spectrum[1][j];
+          centroids[i].back().retentionTime = retention_times[i];
+          centroids[i].back().dqsCen = 0.0;
+          centroids[i].back().mzUncertainty = spectrum[0][j] * 5e-6; // 5 ppm
         }
       }
       return centroids;

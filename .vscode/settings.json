@@ -67,7 +67,11 @@
         "bitset": "cpp",
         "regex": "cpp",
         "cstdarg": "cpp",
-        "cstring": "cpp"
+        "cstring": "cpp",
+        "complex": "cpp",
+        "set": "cpp",
+        "future": "cpp",
+        "valarray": "cpp"
     },
     "spellright.language": [
         "de"

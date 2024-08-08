@@ -40,9 +40,9 @@ namespace q
              * @param data : StreamCraft mzML object
              * @param ms1only : boolean to indicate if only MS1 spectra should be read
              * @param start_index : index of the first spectrum to be read
-             * @return std::vector<std::vector<std::unique_ptr<DataType::Peak>>> : list of peaks
+             * @return std::vector<std::vector<DataType::Peak>> : list of peaks
              */
-            std::vector<std::vector<std::unique_ptr<DataType::Peak>>>
+            std::vector<std::vector<DataType::Peak>>
             findCentroids_MZML(
                 q::Algorithms::qPeaks &qpeaks,
                 sc::MZML &data,

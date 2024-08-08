@@ -14,9 +14,6 @@ namespace q
 {
     namespace Algorithms
     {
-        // Constructor and Destructor
-        qPeaks::qPeaks() {}
-        qPeaks::~qPeaks() {}
 
 #pragma region "plotPeaksToPython"
         void
@@ -47,7 +44,7 @@ namespace q
 
 #pragma region "pass to qBinning"
         qBinning::CentroidedData
-        qPeaks::passToBinning(std::vector<std::vector<std::unique_ptr<q::DataType::Peak>>> &allPeaks)
+        qPeaks::passToBinning(std::vector<std::vector<q::DataType::Peak>> &allPeaks)
         {
             // initialise empty vector with enough room for all scans - centroids[0] must remain empty
             std::vector<std::vector<q::Algorithms::qBinning::qCentroid>> centroids(allPeaks.size() + 1, std::vector<qBinning::qCentroid>(0));
@@ -59,13 +56,13 @@ namespace q
                 {
                     ++scanRelative; // scans start at 1
                     // sort the peaks in ascending order of retention time
-                    std::sort(allPeaks[i].begin(), allPeaks[i].end(), [](const std::unique_ptr<q::DataType::Peak> &a, const std::unique_ptr<q::DataType::Peak> &b)
-                              { return a->retentionTime < b->retentionTime; });
+                    std::sort(allPeaks[i].begin(), allPeaks[i].end(), [](const q::DataType::Peak a, const q::DataType::Peak b)
+                              { return a.retentionTime < b.retentionTime; });
                     for (size_t j = 0; j < allPeaks[i].size(); ++j)
                     {
                         auto &peak = allPeaks[i][j];
-                        qBinning::qCentroid F = qBinning::qCentroid{peak->mz, peak->mzUncertainty, peak->retentionTime,
-                                                                    scanRelative, peak->area, peak->dqsCen};
+                        qBinning::qCentroid F = qBinning::qCentroid{peak.mz, peak.mzUncertainty, peak.retentionTime,
+                                                                    scanRelative, peak.area, peak.dqsCen};
                         centroids[scanRelative].push_back(F);
                         ++totalCentroids;
                     }
@@ -162,7 +159,7 @@ namespace q
 #pragma region "find centroids"
         void
         qPeaks::findCentroids(
-            std::vector<std::unique_ptr<DataType::Peak>> &all_peaks,
+            std::vector<DataType::Peak> &all_peaks,
             q::MeasurementData::MeasurementData::treatedData &treatedData,
             const int scanNumber,
             const float retentionTime)
@@ -253,7 +250,7 @@ namespace q
 #pragma region "find peaks"
         void
         qPeaks::findPeaks(
-            std::vector<std::unique_ptr<DataType::Peak>> &all_peaks,
+            std::vector<DataType::Peak> &all_peaks,
             q::MeasurementData::MeasurementData::treatedData &treatedData)
         {
             for (auto it_separators = treatedData.separators.begin(); it_separators != treatedData.separators.end() - 1; it_separators++)
@@ -975,7 +972,7 @@ namespace q
 #pragma region "create peaks"
         void
         qPeaks::createPeaks(
-            std::vector<std::unique_ptr<DataType::Peak>> &peaks,
+            std::vector<DataType::Peak> &peaks,
             const std::vector<validRegression_static> &validRegressions,
             const float *y_start,
             const float *mz_start,
@@ -999,7 +996,7 @@ namespace q
 
         void
         qPeaks::createPeaks_static(
-            std::vector<std::unique_ptr<DataType::Peak>> &peaks,
+            std::vector<DataType::Peak> &peaks,
             validRegression_static *validRegressions,
             const int validRegressionsIndex,
             const float *y_start,
@@ -1027,7 +1024,7 @@ namespace q
 #pragma region "add peak properties"
         void
         qPeaks::addPeakProperties(
-            std::vector<std::unique_ptr<DataType::Peak>> &peaks,
+            std::vector<DataType::Peak> &peaks,
             const validRegression_static &regression,
             const float *y_start,
             const float *mz_start,
@@ -1144,7 +1141,7 @@ namespace q
             {
                 peak.dqsPeak = experfc(regression.uncertainty_area / regression.area, -1.0);
             }
-            peaks.push_back(std::make_unique<DataType::Peak>(peak));
+            peaks.push_back(peak);
         }
 
 #pragma endregion "add peak properties"

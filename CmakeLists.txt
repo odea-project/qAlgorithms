@@ -7,12 +7,14 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 
 # OpenMP support
 find_package(OpenMP REQUIRED)
+# find_package(Matplot++ REQUIRED)
 
 # Set compiler flags
 add_compile_options(-Wall -Wuninitialized -Wno-unknown-pragmas -fdiagnostics-color=always -mavx2 -march=haswell -O3 -g ${OpenMP_CXX_FLAGS}) #  -O3
 
 # Set include directories
 include_directories(include external/StreamCraft/src)
+# add_subdirectory(external/matplotplusplus)
 
 # Source files
 file(GLOB_RECURSE SOURCES "src/*.cpp" "external/StreamCraft/src/*.cpp")
@@ -21,4 +23,5 @@ file(GLOB_RECURSE SOURCES "src/*.cpp" "external/StreamCraft/src/*.cpp")
 add_executable(${PROJECT_NAME} ${SOURCES})
 
 # Linker flags
+# target_link_libraries(${PROJECT_NAME} PUBLIC Matplot++::matplot z ${OpenMP_CXX_LIBRARIES})
 target_link_libraries(${PROJECT_NAME} z ${OpenMP_CXX_LIBRARIES})

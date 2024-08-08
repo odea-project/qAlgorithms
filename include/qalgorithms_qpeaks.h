@@ -9,7 +9,6 @@
 
 // external
 #include <vector>
-#include <memory>
 
 #include <immintrin.h> // AVX
 
@@ -26,21 +25,17 @@ namespace q
         public:
             static const int global_maxScale = 15; // maximum scale for regression window
 
-            // Constructor and Destructor
-            qPeaks();
-            ~qPeaks();
-
             // methods
             void
             findCentroids(
-                std::vector<std::unique_ptr<DataType::Peak>> &all_peaks,
+                std::vector<DataType::Peak> &all_peaks,
                 q::MeasurementData::MeasurementData::treatedData &treatedData,
                 const int scanNumber,
                 const float retentionTime);
 
             void
             findPeaks(
-                std::vector<std::unique_ptr<DataType::Peak>> &all_peaks,
+                std::vector<DataType::Peak> &all_peaks,
                 q::MeasurementData::MeasurementData::treatedData &treatedData);
 
             // export
@@ -52,7 +47,7 @@ namespace q
                 const bool featureMap = false) const;
 
             qBinning::CentroidedData
-            passToBinning(std::vector<std::vector<std::unique_ptr<q::DataType::Peak>>> &allPeaks);
+            passToBinning(std::vector<std::vector<q::DataType::Peak>> &allPeaks);
 
             static void initialize();
 
@@ -172,7 +167,7 @@ namespace q
 
             void
             createPeaks(
-                std::vector<std::unique_ptr<DataType::Peak>> &peaks,
+                std::vector<DataType::Peak> &peaks,
                 const std::vector<validRegression_static> &validRegressions,
                 const float *y_start,
                 const float *mz_start,
@@ -185,7 +180,7 @@ namespace q
 
             void
             createPeaks_static(
-                std::vector<std::unique_ptr<DataType::Peak>> &peaks,
+                std::vector<DataType::Peak> &peaks,
                 validRegression_static *validRegressions,
                 const int validRegressionsIndex,
                 const float *y_start,
@@ -199,7 +194,7 @@ namespace q
 
             void
             addPeakProperties(
-                std::vector<std::unique_ptr<DataType::Peak>> &peaks,
+                std::vector<DataType::Peak> &peaks,
                 const validRegression_static &regression,
                 const float *y_start,
                 const float *mz_start,

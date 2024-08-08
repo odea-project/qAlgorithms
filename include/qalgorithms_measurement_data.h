@@ -7,7 +7,6 @@
 #include "../external/StreamCraft/src/StreamCraft_mzml.h"
 
 #include <vector>
-#include <memory>
 
 namespace q
 {
@@ -60,7 +59,7 @@ namespace q
             // methods
             // virtual void readCSV(std::string filename, int rowStart, int rowEnd, int colStart, int colEnd, char separator, std::vector<DataType::DataField> variableTypes) = 0;
 
-            std::vector<std::vector<std::unique_ptr<DataType::Peak>>>
+            std::vector<std::vector<DataType::Peak>>
             transfereCentroids(
                 sc::MZML &data,
                 std::vector<int> &indices,

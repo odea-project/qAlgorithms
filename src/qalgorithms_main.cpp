@@ -99,18 +99,20 @@ const std::string helpinfo = " help information:\n\n" // @todo std::format
                              "    As of now (30.07.2024), only mzML files are supported. This program accepts the following command-line arguments:\n\n"
                              "      -h, -help:  open this help menu\n\n"
                              "    Input settings:\n"
-                             "      -f,  -files <PATH>:         specifies the input files. More than one file can be passed. Use as -f FILEPATH FILEPATH etc.\n" // @todo allow piping of file list
-                             "      -tl, -tasklist <PATH>:      pass a list of file paths to the function. A tasklist can also contain directories\n"
-                             "                                  to search recursively and output directories for different blocks of the input files.\n"
-                             "                                  You can comment out lines by starting them with a \"#\"\n" // @todo update
+                             "      Note that duplicate input files are removed by default.\n"
+                             "      -f,  -files <PATH>:          specifies the input files. More than one file can be passed. Use as -f FILEPATH FILEPATH etc.\n" // @todo allow piping of file list
+                             "      -tl, -tasklist <PATH>:       pass a list of file paths to the function. A tasklist can also contain directories\n"
+                             "                                   to search recursively and output directories for different blocks of the input files.\n"
+                             "                                   You can comment out lines by starting them with a \"#\"\n" // @todo update
                              "      -r,  -recursive <DIRECTORY>: recursive search for .mzML files in the specified directory.\n\n"
                              "    Output settings:\n"
+                             "      The filename is always the original filename extended by the polarity.\n"
                              "      -o,  -output <DIRECTORY>:   directory into which all output files should be printed.\n"
                              "                                  If you want to print all results into the folder which contains the\n"
                              "                                  .mzML file, write \"#\". The default output is standard out,\n" // @todo is this a good idea?
                              "                                  unless you did not specify an input file. in that case, you will\n"
                              "                                  be prompted to enter the output location. If the specified\n"
-                             "                                  location does not exist, a new directory is created\n"
+                             "                                  location does not exist, a new directory is created.\n"
                              "      -ps, -printsummary:         print summarised information on the bins in addition to\n"
                              "                                  the peaktable. It is saved to your output directory\n"
                              "                                  under the name FILENAME_summary.csv\n"
@@ -128,6 +130,7 @@ const std::string helpinfo = " help information:\n\n" // @todo std::format
 
 int main(int argc, char *argv[])
 {
+
     std::string filename_input;
     volatile bool inSpecified = false;
     std::filesystem::path pathInput;
@@ -456,7 +459,7 @@ int main(int argc, char *argv[])
     // remove duplicate files
     // create vector of unique keys (file sizes)
     // multimap is sorted by keys in ascending order
-    size_t prevsize = tasklist2.size();
+    // size_t prevsize = tasklist2.size();
     std::vector<size_t> keys;
     size_t prevkey = 0;
     for (const auto &pair : tasklist2)
@@ -535,7 +538,7 @@ int main(int argc, char *argv[])
             q::Algorithms::qPeaks qpeaks;              // create qPeaks object
             q::MeasurementData::TensorData tensorData; // create tensorData object
             // @todo add check if set polarity is correct
-            std::vector<std::vector<std::unique_ptr<q::DataType::Peak>>> centroids =
+            std::vector<std::vector<q::DataType::Peak>> centroids =
                 tensorData.findCentroids_MZML(qpeaks, data, true, polarity, 10); // read mzML file and find centroids via qPeaks
             // std::cout << "centroided\n";
             if ((centroids.size() < 5) & !silent)
@@ -559,7 +562,7 @@ int main(int argc, char *argv[])
 
             timeStart = std::chrono::high_resolution_clock::now();
             std::vector<q::Algorithms::qBinning::EIC> binnedData = q::Algorithms::qBinning::performQbinning(
-                binThis, pathOutput, filename, 6, !verboseProgress, printSummary, printBins);
+                binThis, pathOutput, filename, 3, !verboseProgress, printSummary, printBins); // set maxdist here
             timeEnd = std::chrono::high_resolution_clock::now();
 
             if (!silent)
