@@ -71,7 +71,8 @@
         "complex": "cpp",
         "set": "cpp",
         "future": "cpp",
-        "valarray": "cpp"
+        "valarray": "cpp",
+        "list": "cpp"
     },
     "spellright.language": [
         "de"
@@ -81,5 +82,6 @@
         "plaintext"
     ],
     "makefile.makePath": "C:\\PROGRA~2\\GnuWin32\\bin\\make.exe",
-    "editor.formatOnSave": true
+    "editor.formatOnSave": true,
+    "C_Cpp.default.cppStandard": "c++20"
 }
