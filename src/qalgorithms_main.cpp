@@ -15,6 +15,7 @@
 #include <sstream>   // write peaks to file
 #include <algorithm> // remove duplicates from task list
 #include <map>       // remove duplicates from task list
+#include <ranges>    // comparison of char arrays during duplicate filtering
 
 namespace q
 {
@@ -139,8 +140,6 @@ int main(int argc, char *argv[])
 
     std::vector<std::filesystem::path> tasklist;
 
-    std::multimap<size_t, std::filesystem::path> tasklist2;
-
     volatile bool printPeaks = false;
     // ask for file if none are specified
     if (argc == 1)
@@ -185,8 +184,6 @@ int main(int argc, char *argv[])
         inSpecified = true;
         outSpecified = true;
         tasklist.push_back(pathInput);
-        size_t filesize = std::filesystem::file_size(pathInput);
-        tasklist2.insert({filesize, pathInput});
     }
 
     // if only one argument is given, check if it is any variation of help
@@ -237,8 +234,6 @@ int main(int argc, char *argv[])
                 else
                 {
                     tasklist.push_back(pathInput);
-                    size_t filesize = std::filesystem::file_size(pathInput);
-                    tasklist2.insert({filesize, pathInput});
                 }
                 ++i;
                 if (i == argc)
@@ -308,8 +303,6 @@ int main(int argc, char *argv[])
                 }
 
                 tasklist.push_back(pathTemp);
-                size_t filesize = std::filesystem::file_size(pathTemp);
-                tasklist2.insert({filesize, pathTemp});
             }
             /*@todo
             the task file should contain a list of all files the program
@@ -351,8 +344,7 @@ int main(int argc, char *argv[])
                 if (pathInput.extension() == ".mzML")
                 {
                     tasklist.push_back(std::filesystem::canonical(pathInput));
-                    size_t filesize = std::filesystem::file_size(pathInput);
-                    tasklist2.insert({filesize, pathInput});
+
                     ++fileCounter;
                 }
             }
@@ -448,12 +440,18 @@ int main(int argc, char *argv[])
     }
 
     // remove duplicates from tasklist
+    // this will only remove duplicate file paths
     size_t prevsize = tasklist.size();
     std::sort(tasklist.begin(), tasklist.end());
     tasklist.erase(std::unique(tasklist.begin(), tasklist.end()), tasklist.end());
-    if ((tasklist.size() < prevsize))
+
+    int duplicateCount = prevsize - tasklist.size();
+
+    std::multimap<size_t, std::filesystem::path> tasklist2;
+    for (auto path : tasklist)
     {
-        std::cerr << "Warning: removed " << prevsize - tasklist.size() << " duplicate emtries from tasklist\n";
+        size_t filesize = std::filesystem::file_size(path);
+        tasklist2.insert({filesize, path});
     }
 
     // remove duplicate files
@@ -471,18 +469,139 @@ int main(int argc, char *argv[])
             keys.push_back(key);
         }
     }
-    if ((keys.size() < prevsize))
-    {
-        std::cerr << "Warning: removed " << prevsize - keys.size() << " duplicate emtries from tasklist\n"; // @todo
-    }
+
+    tasklist.resize(0);
 
     for (size_t key : keys)
     {
-        // files are hashed by filesize. First, search for sizes with more then one entry
-        if (tasklist2.count(key) != 1)
+        // files are hashed by filesize. First, search for sizes with more than one entry
+        size_t numDubs = tasklist2.count(key);
+        if (numDubs != 1)
         {
-            // calculate hashes of selected files
+            // for every file, read the first 25 kb and then compare strings
+            // this will work because most metadata should be covered by this, while not
+            // reading in the first mass spectrum
+            auto reduce = tasklist2.find(key);
+            std::ifstream file1;
+            const size_t readLength = 25000;
+
+            if (numDubs == 2)
+            {
+                char first[readLength];
+                char second[readLength];
+                file1.open(reduce->second);
+                file1.read(first, readLength);
+                file1.close();
+                std::advance(reduce, 1);
+                file1.open(reduce->second);
+                file1.read(second, readLength);
+                file1.close();
+                if (std::ranges::equal(first, second))
+                {
+                    // both entries are identical, only add one
+                    ++duplicateCount;
+                    tasklist.push_back(reduce->second);
+                }
+                else
+                {
+                    // files have the same size, but are different - add both
+                    tasklist.push_back(reduce->second);
+                    std::advance(reduce, -1);
+                    tasklist.push_back(reduce->second);
+                }
+            }
+            else
+            {
+
+                std::vector<std::filesystem::path> findDoubles;
+                findDoubles.reserve(numDubs);
+                std::vector<char[readLength]> firstChars(numDubs);
+                bool keepIndex[numDubs] = {true};
+                // transfer all relevant values to a different vector
+                for (size_t i = 0; i < numDubs; i++)
+                {
+                    std::advance(reduce, i);
+                    findDoubles.push_back(reduce->second);
+                    // read the first 25 kb per file into the comparison vector
+                    file1.open(reduce->second);
+                    file1.read(firstChars[i], readLength);
+                    file1.close();
+                }
+                // compare all values and note the duplicates
+                for (size_t i = 0; i < numDubs; i++)
+                {
+                    for (size_t j = i + 1; j < numDubs; j++)
+                    {
+                        if (std::ranges::equal(firstChars[i], firstChars[j]))
+                        {
+                            // marks all duplicates exept the last as false
+                            keepIndex[i] = false;
+                            ++duplicateCount;
+                            break;
+                        }
+                    }
+                }
+                // add all unique files to the tasklist
+                for (size_t i = 0; i < numDubs; i++)
+                {
+                    if (keepIndex[i])
+                    {
+                        tasklist.push_back(findDoubles[i]);
+                    }
+                }
+            }
         }
+        else
+        {
+            // the file is unique
+            tasklist.push_back(tasklist2.find(key)->second);
+        }
+    }
+
+    if (duplicateCount > 0)
+    {
+        std::cerr << "Warning: removed " << duplicateCount << " duplicate files\n";
+    }
+
+    // check for duplicate file names and rename them automatically
+    // extract filenames as strings to a vector for comparison
+
+    bool duplicate_Name_different_Content = false;
+    std::vector<std::string> itemNames;
+    size_t tlSize = tasklist.size();
+    for (size_t i = 0; i < tlSize; i++)
+    {
+        itemNames.push_back(tasklist[i].filename().string());
+    }
+
+    for (size_t i = 0; i < tlSize; i++)
+    {
+        std::vector<size_t> duplicates;
+
+        for (size_t j = i + 1; j < tlSize; j++)
+        {
+            if (itemNames[j] != "")
+            {
+                duplicates.push_back(j);
+                itemNames[j] = "";
+            }
+        }
+
+        if (duplicates.size() != 0)
+        {
+            duplicate_Name_different_Content = true;
+            std::string dupliName = itemNames[i];
+            duplicates.push_back(i); // i was not added during the loop
+            for (size_t j = 0; j < duplicates.size(); j++)
+            {
+                itemNames[duplicates[j]] = dupliName + "_" + std::to_string(j + 1);
+            }
+        }
+    }
+    if (duplicate_Name_different_Content)
+    {
+        std::cerr << "Warning: files with the same name but different content exist. "
+                     "The output files have been renamed to <FILENAME>_1, <FILENAME>_2, etc.\n";
     }
 
 #pragma endregion cli arguments
@@ -493,7 +612,7 @@ int main(int argc, char *argv[])
     int counter = 0;
     for (std::filesystem::path pathSource : tasklist)
     {
-        counter++;
+
         bool printOnce = true;
         if (!outSpecified)
         {
@@ -516,7 +635,7 @@ int main(int argc, char *argv[])
         auto timeStart = std::chrono::high_resolution_clock::now();
         if (!silent)
         {
-            std::cout << "\nreading file " << counter << " of " << tasklist.size() << ":\n"
+            std::cout << "\nreading file " << counter + 1 << " of " << tasklist.size() << ":\n"
                       << pathSource << "\n... ";
         }
 
@@ -532,6 +651,9 @@ int main(int argc, char *argv[])
         {
             std::cout << " file ok\n\n";
         }
+        // update filename to name without duplicates
+        pathSource.filename() = itemNames[counter];
+
         for (auto polarity : polarities)
         {
             filename = pathSource.stem().string();
@@ -595,6 +717,8 @@ int main(int argc, char *argv[])
                 q::printPeaklist(peaks, pathOutput, filename, printExtended, silent);
             }
             // @todo add peak grouping here
+
+            counter++;
         }
     }
     if (!silent)
