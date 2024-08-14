@@ -179,7 +179,7 @@ namespace q
                 expectedDifference = calcExpectedDiff(data_vec[0]);                                  // calculate expected difference & check if Orbitrap
             }
 
-#pragma omp parallel for
+            // #pragma omp parallel for
             for (size_t i = 0; i < indices.size(); ++i) // loop over all indices
             {
                 const int index = indices[i];                                                       // spectrum index
@@ -200,8 +200,8 @@ namespace q
         {
             std::vector<std::vector<DataType::Peak>> peaks =
                 std::vector<std::vector<DataType::Peak>>(data.size()); // create vector of unique pointers to peaks
-#pragma omp parallel for
-            for (size_t i = 0; i < data.size(); ++i) // loop over all data
+                                                                       // #pragma omp parallel for
+            for (size_t i = 0; i < data.size(); ++i)                   // loop over all data
             {
                 const int num_data_points = data[i].scanNumbers.size(); // number of data points
                 if (num_data_points < 5)
