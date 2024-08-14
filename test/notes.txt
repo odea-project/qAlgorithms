@@ -88,3 +88,12 @@ Bin Reassembly sollte erst nach Aufreinigung der zu großen Bins passieren, dies
 Bin Recutting: Suche nach ungewöhnlichen Mustern, Quantifizierung über summary-Params
 
 Consolas, 'Courier New', monospace
+C/C++ extension pack
+cmake, cmake tools
+
+ist Masse auch in MS2? Prüfe bei niedrigster Kollisionsenergie
+	-> in-source fragmentation
+welche spektren sind ähnlich? -> pairwise Ähnlichkeitsmatrix, dann Kurve
+	Aufpassen: peakverzerrung
+
+.cdresult ist eine SQL database

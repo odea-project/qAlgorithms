@@ -104,6 +104,17 @@ Without vendor cooperation, it will not be possible to estimate
 sensible quality criteria or to implement quality reporting
 at this stage of the data processing.
 
+# Performance criteria - File Conversion
+Due to most instruments providing measurements in proprietary formants,
+they have to be converted using other software tools before processing.
+At this stage, there is the potential for floating-point imprecision
+to lead to different results for the same input file when using 
+different software or different versions of the same software. [https://github.com/ProteoWizard/pwiz/issues/2407]
+While the current accuracy of mass instruments does not usually
+require more than 15 digits of precision, as the required accuracy
+increases this could start affecting analysis results.
+The maximum mass precision should be reported in the output file.
+
 # Performance criteria - Centroiding:
 It should be noted that not all approaches to mass spectrometric
 data processing utilise centroiding of the raw spectra. @todo MCR approach
@@ -191,3 +202,11 @@ The information that a duplicate was included is passed with the
 errorcode, while the centroid with the higher DQSC is retained.
 
 ## 
+
+# Criteria validation
+Performance criteria must be robust, especially if further processing
+actions are taken based on them. As such, established tests must
+be validated using a representative sample of errors in the analysis
+process.
+
+## Design of Experiment as reference data

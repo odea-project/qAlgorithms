@@ -20,13 +20,22 @@
 namespace q
 {
     void printPeaklist(std::vector<std::vector<q::DataType::Peak>> peaktable,
-                       std::filesystem::path pathOutput, std::string filename, bool verbose, bool silent)
+                       std::filesystem::path pathOutput, std::string filename,
+                       bool verbose, bool silent, bool prebinning)
     {
         if (verbose)
         {
             filename += "_ex";
         }
-        filename += "_peaks.csv";
+        if (prebinning)
+        {
+            filename += "_centroids.csv";
+        }
+        else
+        {
+            filename += "_peaks.csv";
+        }
+
         pathOutput /= filename;
         if (!silent)
         {
@@ -114,6 +123,7 @@ const std::string helpinfo = " help information:\n\n" // @todo std::format
                              "                                  unless you did not specify an input file. in that case, you will\n"
                              "                                  be prompted to enter the output location. If the specified\n"
                              "                                  location does not exist, a new directory is created.\n"
+                             "      -pc, -printcentroids:       print all centroids produced after the first run of qcentroids.\n"
                              "      -ps, -printsummary:         print summarised information on the bins in addition to\n"
                              "                                  the peaktable. It is saved to your output directory\n"
                              "                                  under the name FILENAME_summary.csv\n"
@@ -124,6 +134,7 @@ const std::string helpinfo = " help information:\n\n" // @todo std::format
                              "      -e,  -extended:             print additional information into the final peak list. You do not\n"
                              "                                  have to also set the -pp flag. Currently, only bin ID and peak ID\n"
                              "                                  are added to the output.\n"
+                             "      -pa, -printall:             print all availvable resutlts.\n"
                              "    \nProgram behaviour:\n"
                              "      -s, -silent:    do not print progress reports to standard out\n"
                              "      -v, -verbose:   print a detailed progress report to standard out\n"
@@ -196,6 +207,7 @@ int main(int argc, char *argv[])
     volatile bool printSummary = false;
     volatile bool printBins = false;
     volatile bool printExtended = false;
+    volatile bool printCentroids = false;
 
 #pragma region cli arguments
     for (int i = 1; i < argc; i++)
@@ -376,6 +388,10 @@ int main(int argc, char *argv[])
                 exit(101);
             }
         }
+        else if ((argument == "-pc") | (argument == "-printcentroids"))
+        {
+            printCentroids = true;
+        }
         else if ((argument == "-ps") | (argument == "-printsummary"))
         {
             printSummary = true;
@@ -391,6 +407,14 @@ int main(int argc, char *argv[])
         }
         else if ((argument == "-e") | (argument == "-extended"))
         {
+            printExtended = true;
+            printPeaks = true;
+        }
+        else if ((argument == "-pa") | (argument == "-printall"))
+        {
+            printCentroids = true;
+            printBins = true;
+            printSummary = true;
             printExtended = true;
             printPeaks = true;
         }
@@ -478,7 +502,7 @@ int main(int argc, char *argv[])
         size_t numDubs = tasklist2.count(key);
         if (numDubs != 1)
         {
-            // for every file, read the first 25 kb and then compare strings
+            // for every file, read the first 25 Kbit and then compare strings
             // this will work because most metadata should be covered by this, while not
             // reading in the first mass spectrum
             auto reduce = tasklist2.find(key);
@@ -580,14 +604,14 @@ int main(int argc, char *argv[])
 
         for (size_t j = i + 1; j < tlSize; j++)
         {
-            if (itemNames[j] != "")
+            if ((itemNames[j] != "") && (itemNames[j] == itemNames[i]))
             {
                 duplicates.push_back(j);
                 itemNames[j] = "";
             }
         }
 
-        if (duplicates.size() != 0)
+        if (!duplicates.empty())
         {
             duplicate_Name_different_Content = true;
             std::string dupliName = itemNames[i];
@@ -668,9 +692,47 @@ int main(int argc, char *argv[])
                 std::cout << "skipping mode: " << polarity << "\n";
                 continue;
             }
-            std::cout << "Processing " << polarity << " peaks\n";
+            if (!silent)
+            {
+                std::cout << "Processing " << polarity << " peaks\n";
+            }
             // adjust filename to include polarity here
             filename += ("_" + polarity);
+            if (printCentroids)
+            {
+                q::printPeaklist(centroids, pathOutput, filename, printExtended, silent, true);
+            }
+
+            // @todo remove diagnostics later
+            std::vector<float> DQScen;
+            for (auto spectrum : centroids)
+            {
+                DQScen.reserve(spectrum.size() + DQScen.size());
+                for (auto point : spectrum)
+                {
+                    DQScen.push_back(point.dqsCen);
+                }
+            }
+            std::sort(DQScen.begin(), DQScen.end());
+            double lower_Q = 0;
+            double upper_Q = 0;
+            double mean = 0;
+            size_t quartile = DQScen.size() / 4;
+            for (size_t i = 0; i < DQScen.size(); i++)
+            {
+                mean += DQScen[i];
+                if (i == quartile)
+                {
+                    lower_Q = mean / quartile;
+                }
+                if (i == DQScen.size() - quartile)
+                {
+                    upper_Q = mean;
+                }
+            }
+            upper_Q = (mean - upper_Q) / quartile;
+            mean /= DQScen.size();
+            std::cerr << filename << ": " << lower_Q << ", " << mean << ", " << upper_Q << "\n";
 
             q::Algorithms::qBinning::CentroidedData binThis = qpeaks.passToBinning(centroids);
 
@@ -714,12 +776,11 @@ int main(int argc, char *argv[])
 
             if (printPeaks)
             {
-                q::printPeaklist(peaks, pathOutput, filename, printExtended, silent);
+                q::printPeaklist(peaks, pathOutput, filename, printExtended, silent, false);
             }
             // @todo add peak grouping here
-
-            counter++;
         }
+        counter++;
     }
     if (!silent)
     {
