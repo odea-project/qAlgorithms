@@ -95,6 +95,7 @@ namespace q
                 }
             }
         }
+        auto test = peaktable.size();
 
         file_out << output.str();
         file_out.close();
@@ -687,10 +688,13 @@ int main(int argc, char *argv[])
             std::vector<std::vector<q::DataType::Peak>> centroids =
                 tensorData.findCentroids_MZML(qpeaks, data, true, polarity, 10); // read mzML file and find centroids via qPeaks
             // std::cout << "centroided\n";
-            if ((centroids.size() < 5) & !silent)
+            if (centroids.size() < 5)
             {
-                std::cout << "skipping mode: " << polarity << "\n";
                 continue;
+                if (!silent)
+                {
+                    std::cout << "skipping mode: " << polarity << "\n";
+                }
             }
             if (!silent)
             {
