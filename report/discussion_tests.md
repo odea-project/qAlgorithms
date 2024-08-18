@@ -77,7 +77,7 @@ overlap between the assumed model that dictates selection,
 combination and normalisation of data and the produced 
 results. An example for such a quality parameter was developed
 by Reuschenbach et al. [qcentroids]: The quality score describes
-the overlap between the fitted gaussian curve and the measured 
+the overlap between a fitted gaussian curve and the measured 
 data points. While such parameters give insight into the 
 reliability of data, be it on a per-EIC, per-feature
 or per-component level, this information does not directly 
@@ -94,6 +94,23 @@ is not possible. Instead, process quality can either serve
 as a trigger for computation intensive corrections while
 processing is active or as a way to provide non-quantitative
 insight into the programs doing the processing to the operator.
+
+## Measuring process quality
+Performance criteria must be robust, especially if further processing
+actions are taken based on them. As such, established tests must
+be validated using a representative sample of errors in the analysis
+process.
+
+### Current means of stability monitoring
+-consistency in mass accuracy of some internal standards
+
+### Design of Experiment as reference data
+
+### Validation criteria
+For the purposes of this evaluation, measurements withing a
+series are ranked based on their median DQSF. A characteristic
+found to correlate with the median DQSF is considered to be an
+indicator for that process to have performed well.
 
 # Preformance criteria - Fourier Transform:
 The fourier transform employed in FT-ICR and Orbitrap type mass
@@ -133,6 +150,14 @@ lost during the following steps towards componentisation.
 The DQSC currently implemented through the qAlgorithms workflow
 gives the percentage to which any given centroid conforms to the
 expected gaussian shape. [@todo paper] 
+The following test utilising the DQSC was considered:
+    For every measurement, the mean DQSC and the mean DQSCs of
+    upper and lower quartile were calculated with the compared 
+    criteria being the relative change between the three.
+    This test was discarded because the difference between
+    six samples of a DoE measurement series was less than 0.005
+    in every category. The same observation was made when testing
+    blank, standard and samples of a different measurement run.
 
 ## signal point retention
 Another perspective on process quality is the unifomity of intermediate
@@ -144,8 +169,11 @@ One such process parameters that can be obtained is the percentage
 of signal points that are included in centroids, for every mass
 spectrum in a measurement.
 
-## centroid density
-noise estimator?
+
+## centroid count / density
+It is assumed that generally, more initial signals equal a lower chance
+of false negatives. As such, the amount of centroids produced - irrespective
+of the DQSC - is also a measure of process quality during centroiding.
 
 # General Notes on Tests - Binning:
 The tests presented here were developed as assessors for the quality
@@ -203,10 +231,3 @@ errorcode, while the centroid with the higher DQSC is retained.
 
 ## 
 
-# Criteria validation
-Performance criteria must be robust, especially if further processing
-actions are taken based on them. As such, established tests must
-be validated using a representative sample of errors in the analysis
-process.
-
-## Design of Experiment as reference data
