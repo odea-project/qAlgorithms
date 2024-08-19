@@ -229,5 +229,64 @@ These bins should not be passed to the centroiding algorithm.
 The information that a duplicate was included is passed with the
 errorcode, while the centroid with the higher DQSC is retained.
 
-## 
+# Viability test for simple process parameters
+Tested parameters:
+* mean DQSC
+* mean DQSB
+* mean DQSF
+* Number of centroids
+* Number of bins
+* Number of Features
 
+A sample dataset consisting of 32 different analysis runs with qAlgorithms
+was assembled from six SFC-HRMS mixed mode measurements (12 processes),
+six LC-HRMS blank measurements and 14 normal LC-HRMS measurements, two of
+which were measured with negative polarity.
+
+The process parameters were controlled for normal distribution using a one-sided
+t-test with an alpha of 0.01. No parameter was normally distributed. 
+
+A PCA grouped by polarity was performed to find relevant parameters for 
+process performance. In both cases, the numbers of centroids, bins and features
+were highly correlating. In the positive case mean scores for bins and
+features correlated, which did not apply for negative measurements. For both,
+DQSC was roughly orthogonal to DQSF. When using only nine measurements from 
+the same series, the quality scores changed significantly.
+
+The consistency of both the centroids to bin and the bin to feature ratio
+could be a good criteria for finding process errors and a general measure
+of effectiveness. When checking these parameters against the nine-sample
+series, results were very consistent with the exception of one measurement. 
+The deviant measurement was notable in that (roughly) the first 800 scans
+contained a total of three centroids. It was taken as an example of an
+undesireable measurement, which a given test would have to detect.
+This finding was controlled against the mixed mode measurements,
+with the expectation that negative mode measurements would perform worse
+than positive mode ones. 
+
+For the criteria "centroids to bins", the deviant measurement had values
+25% lower than the series. Negative mode scores were also consistently lower.
+There were no significant differences within positive and negative series.
+A third series, which was selected for containing many poorly separated mass
+traces in the EIC, had generally higher values, but showed significant deviation.
+
+For the criteria "bins to feature", the undesireable measurement had a significantly
+greater (factor six) value than the rest of its series. Positive measurements in
+mixed mode had slightly higher values than negatives, both showing little in-group
+deviation. The third series had very high in-group deviance.
+
+The criteria "centroids to features" displayed similar behaviour to "centroids to bin".
+It is not considered further, since it depends on both other criteria being
+applicable for its validity.
+
+"centroids to bin" covers both the number of discarded centroids and the average
+binsize. It measures the total data reduction as a result of binning. Preliminary
+tests imply that it is largely dependent on system conditions, although more exhaustive
+measurement series are needed here. 
+
+"bins to feature" combines the number of bins with no features with the average number of
+bins with one or more features. Here, the ideal number is one. A high number of features 
+per bin implies generally poor separation of ion traces, and thus less reliable results.
+The amount of bins without any features could function as an estimator for the noise
+level in the measurement. While this needs to be validated, a temporally resolved noise
+indicator could also serve a valuable role in combining different measurements.
