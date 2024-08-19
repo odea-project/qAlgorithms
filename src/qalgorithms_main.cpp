@@ -95,8 +95,6 @@ namespace q
                 }
             }
         }
-        auto test = peaktable.size();
-
         file_out << output.str();
         file_out.close();
         return;
@@ -756,7 +754,7 @@ int main(int argc, char *argv[])
 
             if (!silent)
             {
-                // std::cout << "    assembled " << binnedData.size() << " bins in " << (timeEnd - timeStart).count() << " ns\n";
+                std::cout << "    assembled " << binnedData.size() << " bins in " << (timeEnd - timeStart).count() << " ns\n";
             }
 
             // @todo remove diagnostics
@@ -780,28 +778,48 @@ int main(int argc, char *argv[])
 
             double meanDQSF = 0;
             int peakCount = 0;
+            int truebins = 0;
+            int onlyone = 0;
             for (size_t i = 0; i < peaks.size(); i++)
             {
                 peakCount += peaks[i].size();
                 if (!peaks[i].empty())
                 {
+                    ++truebins;
                     for (auto peak : peaks[i])
                     {
                         meanDQSF += peak.dqsPeak;
                     }
+                    if (peaks[i].size() == 1)
+                    {
+                        ++onlyone;
+                    }
+                    
+                }
+                else
+                {
+                    double binMeanMZ = 0;
+                    double binMeanRT = 0;
+                    int binsize = binnedData[i].mz.size();
+                    for (int j = 0; j < binsize; j++)
+                    {
+                        binMeanMZ += binnedData[i].mz[j];
+                        binMeanRT += binnedData[i].rententionTimes[j];
+                    }
+                    // std::cout << binMeanMZ / binsize << ", " << binMeanRT / binsize << "\n";
                 }
             }
             meanDQSF /= peakCount;
             if (!silent)
             {
 
-                // std::cout << "    found " << peakCount << " peaks in " << (timeEnd - timeStart).count() << " ns\n";
+                std::cout << "    found " << peakCount << " peaks in " << (timeEnd - timeStart).count() << " ns\n";
             }
-
             // @todo remove diagnostics
-            std::cerr << meanDQSF << ", " << binThis.lengthAllPoints << ", " << binnedData.size() << ", "
-                      << peakCount << ", " << meanDQSC << ", " << meanDQSB << ", " << polarity << ", " << filename << "\n";
+            // std::cerr << meanDQSF << ", " << binThis.lengthAllPoints << ", " << binnedData.size() << ", "
+            //           << peakCount << ", " << meanDQSC << ", " << meanDQSB << ", " << polarity << ", " << filename << "\n";
             // continue;
+            std::cerr << peakCount << ", " << truebins << ", " << onlyone << ", " << filename << "\n";
 
             if (printPeaks)
             {

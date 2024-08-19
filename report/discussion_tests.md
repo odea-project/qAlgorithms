@@ -239,7 +239,7 @@ Tested parameters:
 * Number of Features
 
 A sample dataset consisting of 32 different analysis runs with qAlgorithms
-was assembled from six SFC-HRMS mixed mode measurements (12 processes),
+was assembled from six SFC-HRMS polarity switching measurements (12 processes),
 six LC-HRMS blank measurements and 14 normal LC-HRMS measurements, two of
 which were measured with negative polarity.
 
@@ -260,7 +260,7 @@ series, results were very consistent with the exception of one measurement.
 The deviant measurement was notable in that (roughly) the first 800 scans
 contained a total of three centroids. It was taken as an example of an
 undesireable measurement, which a given test would have to detect.
-This finding was controlled against the mixed mode measurements,
+This finding was controlled against the measurements with polarity switching,
 with the expectation that negative mode measurements would perform worse
 than positive mode ones. 
 
@@ -272,7 +272,7 @@ traces in the EIC, had generally higher values, but showed significant deviation
 
 For the criteria "bins to feature", the undesireable measurement had a significantly
 greater (factor six) value than the rest of its series. Positive measurements in
-mixed mode had slightly higher values than negatives, both showing little in-group
+for the SFC data had slightly higher values than negatives, both showing little in-group
 deviation. The third series had very high in-group deviance.
 
 The criteria "centroids to features" displayed similar behaviour to "centroids to bin".
@@ -289,4 +289,89 @@ bins with one or more features. Here, the ideal number is one. A high number of 
 per bin implies generally poor separation of ion traces, and thus less reliable results.
 The amount of bins without any features could function as an estimator for the noise
 level in the measurement. While this needs to be validated, a temporally resolved noise
-indicator could also serve a valuable role in combining different measurements.
+indicator could also serve a valuable role in combining different measurements. For
+the present samples, bins which do not produce features are primarily found 
+at low masses as well as the beginning and end of the measurement. This conforms
+to general expectations.
+
+The criteria of having close to one feature per bin, only counting bins that 
+contain at least one feature, was additionally tested usingdata which was 
+recorded during a highly unstable pressure profile in the LC. It is
+assumed that this negatively effects all steps of data evaluation. This step was 
+taken due to the previously used measurement now displaying a ratio close to one,
+which contradicted the previously observed behaviour. The data recorded during 
+unstable pressure did have a high number of features being detected in each bin,
+as well as a high degree of variance between individual measurements.
+The SFC measurements in positive and negative mode had between one and 1.5 
+features per bin. 
+
+In terms of general utility, the two most promising tests for stability of
+measurement conditions and process quality are 
+
+# Further research
+While the criteria found through exploratory data analysis are seemingly able
+to make broad statements about process quality, they need to be related to
+result quality for certainty in this regard. Such an analysis depends on
+functioning and well-tested componentisation being implemented for the
+qAlgorithms project and should consider factoring in only relevant regions
+of the measurement. This relevance could be estimated over the proximity
+to a bin which did not contain any features, which would de-priorise 
+features still affected by void-time effluent. 
+
+For being useful tools in decisionmaking, the control chart must also include
+critical values for out of control situations. These should be identified
+systematically by provoking cases that produce the smallest error which
+invalidates the measurement.
+
+# Expansions to qAlgorithms
+Data visualisation is currently (19.08.2024) not implemented for qAlgorithms.
+Furthermore, it does not have an internal representation of measurement 
+series. This results in the user having to invest additional time to create 
+such control charts and manually select which files to include.
+
+Adding data visualisation could be handled through a third-party library
+and would decrease the time and skill needed to use qAlgorithms in
+this regard. While advantageous, defining out-of-control situations
+and detecting them based on statistical approaches could remove the
+need for human interaction in this regard, too.
+
+Useful data visualisation requires implementing some way of declaring
+a relation between different measurements by the user. Since such
+a function is also required for componentisation and assigning MS2 spectra,
+it should be the next step in expanding the project. 
+Since DDA MS2 spectra will not be binned, separate methods of establishing 
+process quality will have to be devised here. It could be sensible 
+decision to include templates for common applications, such as monitoring
+the stability of a system over time. This would ideally include a way to check 
+the general system stability without re-processing potentially thousands of files again.
+
+# Software and Data
+All calculations in R were performed with R 4.4.0[@rcoreteamLanguageEnvironmentStatistical2023], 
+using the packages tidyverse 2.0.0[@wickhamWelcomeTidyverse2019].
+Images were generated using ggplot2 3.5.1[ggplot2].
+
+qAlgorithms is written in base C++, using only standard library functions[@ISOInternationalStandard].
+For reading in files, the StreamCraft library is used[https://github.com/odea-project/StreamCraft].
+It was compiled with gcc 13.2.0[@freesoftwarefoundationinc.UsingGNUCompiler1988].
+
+UV degredation of ibuprofen with peracetic acid:
+This dataset was measured while a pump defect on the LC caused the
+column pressure to increase and decrease rapidly. It is used because
+these conditions should cause the produced data to be no longer
+binned reliably, leading to the majority of features being wrong.
+
+SFC-HERMS data:
+This dataset is from a design of experiment series trying out different
+ion source parameters. The source was set to polarity switching, 
+resulting in two datasets per measurement after evaluation.
+
+Aquaflow data:[Non-target Analysis and Chemometric Evaluation of a Passive Sampler Monitoring of Small Streams]
+Three blanks, three standards and three samples from the Aquaflow 
+project, all measured in positive mode. One sample measurement
+is notable for not containing any centroids for the first 800 scans.
+
+Other reference data:
+Excerpt of a measurement series containing four blanks, and seven
+ozonation experiments with indigo, two of which were measured in
+negative mode. These measurements were primarily chosen for their 
+small filesize and poor chromatographic separation.

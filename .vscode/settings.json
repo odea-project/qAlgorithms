@@ -1,4 +1,7 @@
 {
     "task.verboseLogging": true,
-    "C_Cpp.loggingLevel": "Debug"
+    "C_Cpp.loggingLevel": "Debug",
+    "files.associations": {
+        "iostream": "cpp"
+    }
 }
