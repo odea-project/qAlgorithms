@@ -156,8 +156,8 @@ int main(int argc, char *argv[])
     if (argc == 1)
     {
         // @todo check standard in and use that if it isn't empty
-        // std::cout << "Enter \"-h\" for a complete list of options.\n"
-        "Enter a filename to process that file. You must select a .mzML file:    ";
+        std::cout << "Enter \"-h\" for a complete list of options.\n"
+                     "Enter a filename to process that file. You must select a .mzML file:    ";
         std::cin >> filename_input;
         if ((filename_input == "-h") | (filename_input == "-help"))
         {
@@ -176,7 +176,7 @@ int main(int argc, char *argv[])
             std::cerr << "Error: the selected file has the type " << pathInput.extension() << ", but only \".mzML\" is supported\n";
             exit(101); // @todo sensible exit codes
         }
-        // std::cout << "\nfile accepted, enter the output directory or \"#\" to use the input directory:  ";
+        std::cout << "\nfile accepted, enter the output directory or \"#\" to use the input directory:  ";
         std::cin >> filename_input;
         printPeaks = true;
         if (filename_input == "#")
@@ -795,7 +795,7 @@ int main(int argc, char *argv[])
 
             // @todo remove diagnostics
             std::cerr << meanDQSF << ", " << binThis.lengthAllPoints << ", " << binnedData.size() << ", "
-                      << peakCount << ", " << meanDQSC << ", " << meanDQSB << " | " << filename << "\n";
+                      << peakCount << ", " << meanDQSC << ", " << meanDQSB << ", " << polarity << ", " << filename << "\n";
             // continue;
 
             if (printPeaks)
