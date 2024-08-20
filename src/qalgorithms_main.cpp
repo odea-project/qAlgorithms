@@ -39,7 +39,7 @@ namespace q
         pathOutput /= filename;
         if (!silent)
         {
-            // std::cout << "writing peaks to: " << pathOutput << "\n\n";
+            std::cout << "writing peaks to: " << pathOutput << "\n\n";
         }
 
         std::fstream file_out;
@@ -160,7 +160,7 @@ int main(int argc, char *argv[])
         std::cin >> filename_input;
         if ((filename_input == "-h") | (filename_input == "-help"))
         {
-            // std::cout << "    " << argv[0] << helpinfo;
+            std::cout << "    " << argv[0] << helpinfo;
             exit(0);
         }
         // filename_input = "C:/Users/unisys/Documents/Studium/Messdaten/LCMS_pressure_error/22090901_H2O_1_pos.mzML";
@@ -214,7 +214,7 @@ int main(int argc, char *argv[])
         std::string argument = argv[i];
         if ((argument == "-h") | (argument == "-help"))
         {
-            // std::cout << "\n    " << argv[0] << helpinfo;
+            std::cout << "\n    " << argv[0] << helpinfo;
             exit(0);
         }
         if ((argument == "-s") | (argument == "-silent"))
@@ -649,7 +649,7 @@ int main(int argc, char *argv[])
         }
         else if (!silent && (printPeaks | printSummary))
         {
-            // std::cout << "printing output to: " << pathOutput;
+            std::cout << "printing output to: " << pathOutput;
         }
 
         // initialize qPeaks static variables and lcmsData object @todo constexpr
@@ -658,7 +658,7 @@ int main(int argc, char *argv[])
         auto timeStart = std::chrono::high_resolution_clock::now();
         if (!silent)
         {
-            // std::cout << "\nreading file " << counter + 1 << " of " << tasklist.size() << ":\n"
+            std::cout << "\nreading file " << counter + 1 << " of " << tasklist.size() << ":\n"
             //   << pathSource << "\n... ";
         }
 
@@ -672,7 +672,7 @@ int main(int argc, char *argv[])
 
         if (!silent)
         {
-            // std::cout << " file ok\n\n";
+            std::cout << " file ok\n\n";
         }
         // update filename to name without duplicates
         pathSource.filename() = itemNames[counter];
@@ -685,7 +685,7 @@ int main(int argc, char *argv[])
             // @todo add check if set polarity is correct
             std::vector<std::vector<q::DataType::Peak>> centroids =
                 tensorData.findCentroids_MZML(qpeaks, data, true, polarity, 10); // read mzML file and find centroids via qPeaks
-            // std::cout << "centroided\n";
+            std::cout << "centroided\n";
             if (centroids.size() < 5)
             {
                 
@@ -697,7 +697,7 @@ int main(int argc, char *argv[])
             }
             if (!silent)
             {
-                // std::cout << "Processing " << polarity << " peaks\n";
+                std::cout << "Processing " << polarity << " peaks\n";
             }
             // adjust filename to include polarity here
             filename += ("_" + polarity);
@@ -743,7 +743,7 @@ int main(int argc, char *argv[])
 
             if (!silent)
             {
-                // std::cout << "    produced " << binThis.lengthAllPoints << " centroids from " << centroids.size()
+                std::cout << "    produced " << binThis.lengthAllPoints << " centroids from " << centroids.size()
                 //   << " spectra in " << (timeEnd - timeStart).count() << " ns\n";
             }
 
@@ -806,7 +806,7 @@ int main(int argc, char *argv[])
                         binMeanMZ += binnedData[i].mz[j];
                         binMeanRT += binnedData[i].rententionTimes[j];
                     }
-                    // std::cout << binMeanMZ / binsize << ", " << binMeanRT / binsize << "\n";
+                    std::cout << binMeanMZ / binsize << ", " << binMeanRT / binsize << "\n";
                 }
             }
             meanDQSF /= peakCount;
@@ -831,7 +831,7 @@ int main(int argc, char *argv[])
     }
     if (!silent)
     {
-        // std::cout << "Completed data processing on " << tasklist.size() << " files.\n\n";
+        std::cout << "Completed data processing on " << tasklist.size() << " files.\n\n";
     }
 
     return 0;

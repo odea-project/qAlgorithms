@@ -1,6 +1,14 @@
 Konstruktor/Destruktor prüfen 
 
+Qualitätsparameter Komponentisierung: Innerhalb einer Komponente, erweitere erst so, dass alle 
+Massen in jeder Komponente der Gruppe vertreten sind. Gib dann jeder Masse je Komponente die %
+Übereinstimmung mit anderen Massen dieser Kategorie. Bsp:
+M1 existiert in allen Komponenten, daher hat sie den Score 1.
+M2 existiert nur in einer von zehn Komponenten. In der einen hat sie einen score von 0.1, den
+neun 0.9.
 
+Zusätzliches Kriterium fürs Binning: Wahrscheinlichkeit, dass in einem Bin zwei 
+Verteilungen vorliegen (bestimme über Umstellen von vcrit)
 
 Dedizierte Exportfunktion für Bilder
 
@@ -23,6 +31,7 @@ Erstelle Felder für allgemeine Parameter der Probe wie Leitfähigkeit
 
 Finde objektiven Parameter, um die Mittleren Abstände an die Bingröße
 anzupassen (/binsize?)
+    Entfällt, da Zentroidieren maximal den Abstand 3 verträgt
 
 C1_S1_W_MI_1/2/3 sind Standards zum reinen Flusswasser hinzugespiked.
 Blanks1/2/3 sind Systemblanks: Reinstwasser

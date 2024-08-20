@@ -272,7 +272,7 @@ traces in the EIC, had generally higher values, but showed significant deviation
 
 For the criteria "bins to feature", the undesireable measurement had a significantly
 greater (factor six) value than the rest of its series. Positive measurements in
-for the SFC data had slightly higher values than negatives, both showing little in-group
+the SFC data had slightly higher values than negatives, both showing little in-group
 deviation. The third series had very high in-group deviance.
 
 The criteria "centroids to features" displayed similar behaviour to "centroids to bin".
@@ -295,18 +295,27 @@ at low masses as well as the beginning and end of the measurement. This conforms
 to general expectations.
 
 The criteria of having close to one feature per bin, only counting bins that 
-contain at least one feature, was additionally tested usingdata which was 
+contain at least one feature, was additionally tested using data which was 
 recorded during a highly unstable pressure profile in the LC. It is
 assumed that this negatively effects all steps of data evaluation. This step was 
 taken due to the previously used measurement now displaying a ratio close to one,
-which contradicted the previously observed behaviour. The data recorded during 
+which contradicted the previously assumed behaviour. The data recorded during 
 unstable pressure did have a high number of features being detected in each bin,
 as well as a high degree of variance between individual measurements.
 The SFC measurements in positive and negative mode had between one and 1.5 
 features per bin. 
+A relalted property is the fraction of bins which contain only one feature
+in relation to bins which contain at least one feature. This is anticorrelated
+with the above mentioned criteria for obvious reasons, but shows slightly higher
+in-group deviation. This lowers its viability as a test parameter.
 
 In terms of general utility, the two most promising tests for stability of
 measurement conditions and process quality are 
+
+Notably, blanks and samples produce very similar results for all criteria 
+tested. This could be explained by noise making up the absolute majority
+of signals, which implies these citeria only respond to irregularities
+during chromatography.
 
 # Further research
 While the criteria found through exploratory data analysis are seemingly able
@@ -317,11 +326,22 @@ qAlgorithms project and should consider factoring in only relevant regions
 of the measurement. This relevance could be estimated over the proximity
 to a bin which did not contain any features, which would de-priorise 
 features still affected by void-time effluent. 
+The degree to which such a method is oversensitive could be reduced by
+Implementing different warning levels with independent criteria.
+
 
 For being useful tools in decisionmaking, the control chart must also include
 critical values for out of control situations. These should be identified
 systematically by provoking cases that produce the smallest error which
 invalidates the measurement.
+
+Finding the root cause of detected problems purely through analysing the
+data is unlikely to work for cases which do not result from an error in
+the processing pipeline. Here is a possible application for machine learning
+systems, which are trained on a relevant subset of the processing data and 
+then used once an out of control situation occurs. For this approach to
+be viable, it must be established that all used variables are largely
+independent of 
 
 # Expansions to qAlgorithms
 Data visualisation is currently (19.08.2024) not implemented for qAlgorithms.

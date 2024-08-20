@@ -1,0 +1,85 @@
+---
+title: "Untitled"
+author: "Daniel Höhn"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(ggfortify)
+library(plotly)
+```
+
+```{r}
+peakStats = as.data.frame(read.csv("C:/Users/unisys/Documents/Studium/Messdaten/scores_19.08.csv"))
+peakStats$polarity = peakStats$polarity == 1
+peakStats$year = str_extract(peakStats$filename , "^...")
+peakStats$year[13] = "error"
+peakStats = peakStats[-1,]
+peakStats = peakStats[-33,]
+
+```
+
+```{r}
+pca_peaks = prcomp(peakStats[which(peakStats$polarity == T), 1:6], scale = T)
+pca_peaks$rotation = pca_peaks$rotation * -1
+
+pca_peaks$sdev^2 / sum(pca_peaks$sdev^2)
+
+biplot(pca_peaks, scale = T)
+
+autoplot(pca_peaks, data = peakStats[which(peakStats$polarity),], colour = 'year',
+
+              loadings = TRUE, loadings.colour = 'blue',
+
+              loadings.label = TRUE, loadings.label.size = 3) 
+
+
+
+###########
+
+pca_peaks2 = prcomp(peakStats[which(!peakStats$polarity), 1:6], scale = T)
+pca_peaks2$rotation = pca_peaks2$rotation * -1
+
+pca_peaks2$sdev^2 / sum(pca_peaks2$sdev^2)
+
+biplot(pca_peaks2, scale = T)
+```
+```{r}
+ggplot(peakStats[1:32,])+
+  geom_point(aes(filename, numCens / numBins))+
+  scale_x_discrete(guide = guide_axis(angle = 60))
+ggplot(peakStats[1:32,])+
+    geom_point(aes(filename, numBins / numPeaks))+
+    scale_x_discrete(guide = guide_axis(angle = 60))
+ggplot(peakStats[1:32,])+
+    geom_point(aes(filename, numCens / numPeaks))+
+    scale_x_discrete(guide = guide_axis(angle = 60))
+```
+
+```{r}
+emptybins = read.csv("./emptybins.csv")
+# plot(emptybins)
+bintypes = read.csv("./bintypes.csv")
+aqflow = read.csv("./aquaflow_crit2.csv")
+aqflow$type1 = str_extract(aqflow$file, "[A-Z].")
+aqflow$type2 = str_extract(aqflow$file, "[A-Z]._I")
+
+ggplot(emptybins)+
+  geom_hex(aes(mz,RT))
+
+ggplot(aqflow)+
+  geom_point(aes(file, onlyOne/numFull, colour = type2))+
+  scale_x_discrete(guide = guide_axis(angle = 60))
+
+ggplot(aqflow)+
+  geom_point(aes(file, numPeaks/numFull, colour = type2))+
+  scale_x_discrete(guide = guide_axis(angle = 60))
+
+ggplot(bintypes)+
+  geom_point(aes(file, numPeaks/numFull))+
+  scale_x_discrete(guide = guide_axis(angle = 60))
+```
+
