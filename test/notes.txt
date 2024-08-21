@@ -1,5 +1,7 @@
 Konstruktor/Destruktor prüfen 
 
+https://massive.ucsd.edu/ProteoSAFe/datasets.jsp#%7B%22full_search_input%22%3A%22TOF%22%2C%22table_sort_history%22%3A%22createdMillis_dsc%22%2C%22query%22%3A%7B%7D%7D
+
 Qualitätsparameter Komponentisierung: Innerhalb einer Komponente, erweitere erst so, dass alle 
 Massen in jeder Komponente der Gruppe vertreten sind. Gib dann jeder Masse je Komponente die %
 Übereinstimmung mit anderen Massen dieser Kategorie. Bsp:

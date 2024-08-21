@@ -1,6 +1,19 @@
-## Abbreviations:
-@todo copy from report
-
+## Abbreviations and definitions:
+[@todo] remove irrelevant entries
+* NTS - Non-Target Screening
+* (HR)MS - (High Resolution) Mass Spectrometry 
+* m/z, mz - Mass to Charge Ratio
+* RT - Retention Time
+* GC - Gas Chromatography
+* (HP)LC - (High Performance) Liquid Chromatography
+* EIC - Extracted Ion Chromatogram
+* OS - Order Space
+* DQS(B/C) - Data Quality Score (of a Bin/Centroid)
+* MID - Mean Inner Distance: The average distance in mz of an element to all other elements in a bin
+* MOD - Minimum Outer Distance: The shortest distance in mz to an element not in the bin
+* CPU - Central Processing Unit
+* ppm - Parts Per Million (10e-6)
+[@todo] move all definitions for within the workflow here
 
 # Notes on the design of visual process quality estimators
 An emerging and highly relevant problem in the field of NTS is
@@ -12,13 +25,13 @@ each other, ideally over a large amount of samples at once.
 
 These requirements place significant restrictions on the possible
 ways to communicate the deluge of data that comes with (possibly)
-years of measurements. Here, only two options are viable:
+years of measurements. Here, two types of approaches can be viable:
 1) Machine-assisted or machine-led processing and search for regions of high change
 2) A reductive approach that produces metadata which is still sensitive to shifts, but human-comprehensive
 
 While these options are not exclusive, the final step of any
 automated evaluation still needs to be that of communicating relevant
-results to the instrument operator.
+results to the instrument operator. 
 
 ## Differentiating process quality from result quality
 Previous work by https://doi.org/10.1016/j.trac.2020.116063 highlighted
@@ -31,8 +44,9 @@ measurement results. @todo et. al. only consider reporting of the
 results after interpretation, with raw data and the processing
 steps being provided in addition. Besides being impractical to replicate
 and thus very unlikely for this vital control to take place during peer 
-review, it is not possible to estimate the algorithmic performance from
-just the algorithm on a per-sample basis accurately during NTA.
+review, it is not possible to estimate the algorithmic performance 
+relating to result quality from just the algorithm on a per-sample 
+basis accurately during NTA.
 
 Result quality, as understood here, is the reliability and completeness
 of all features at the end of any given processing workflow. For a
@@ -43,12 +57,13 @@ Furtermore, a reliable feature must conform to the MS2 spectrum,
 if such a spectrum was produced by the instrument. After componentisation,
 the source feature [@todo better name] should include only features
 which have a high degree of certainty. The highest reliability in
-a dataset is achieved if no false positives exist.
+a dataset is achieved if no false positives or negatives exist,
+meaning the final results are a complete description of the sample contents.
 
 Completeness is the degree to which all molecules in the sample that arrived at
 the mass detector could be reconstructed from the final list of components.
 
-Since both measures depend on ground truth, it is not always sensible
+Since both measures depend on ground truth, it is not always sensible [@todo] very similar measures, change
 to provide an estimator for result quality. The central difference 
 between results and process as proposed here is that results serve
 as the basis for some decision, be it through a researcher deciding
@@ -101,16 +116,21 @@ actions are taken based on them. As such, established tests must
 be validated using a representative sample of errors in the analysis
 process.
 
-### Current means of stability monitoring
+### Current means of stability / quality monitoring
 -consistency in mass accuracy of some internal standards
-
-### Design of Experiment as reference data
+[https://www.sciencedirect.com/science/article/pii/S0165993621000236#bib63]
+Caballero-Casero et Al. proposed guidelines on analytical
+performance reporting in the context of human metabolomics.
+The suggested criteria are sensitivity, selectivity, 
+accuracy, stability and representativeness[]. All five largely
+depend on internal standards, with the excpection of stability.
+The authors propose hard limit values for these, 
 
 ### Validation criteria
 For the purposes of this evaluation, measurements withing a
 series are ranked based on their median DQSF. A characteristic
 found to correlate with the median DQSF is considered to be an
-indicator for that process to have performed well.
+indicator for that process to have performed well. [rework]
 
 # Preformance criteria - Fourier Transform:
 The fourier transform employed in FT-ICR and Orbitrap type mass
@@ -341,7 +361,18 @@ the processing pipeline. Here is a possible application for machine learning
 systems, which are trained on a relevant subset of the processing data and 
 then used once an out of control situation occurs. For this approach to
 be viable, it must be established that all used variables are largely
-independent of 
+independent of instrument-specific conditions first. Such a confirmation
+would have to involve many different groups contributing data and using
+multiple models, the results of which would also have to be evaluated
+separately. Such a control period would massively increase the workload
+per analysis for a likely unsustainable amount of time. As such, 
+instrument-specific models for routine measurements could be a better 
+focus of development, if machine learning is to be employed at all.
+
+The only mass analyser used for performance evaluation was the orbitrap.
+To which degree the results are transferable to, for example, a QTOF,
+would require a series being measured on both. At the time of writing,
+no series of profile TOF data was availvable for comparisons.
 
 # Expansions to qAlgorithms
 Data visualisation is currently (19.08.2024) not implemented for qAlgorithms.
@@ -389,9 +420,13 @@ Aquaflow data:[Non-target Analysis and Chemometric Evaluation of a Passive Sampl
 Three blanks, three standards and three samples from the Aquaflow 
 project, all measured in positive mode. One sample measurement
 is notable for not containing any centroids for the first 800 scans.
+Naming: C = control, T = treatment, S = sampling time
 
 Other reference data:
 Excerpt of a measurement series containing four blanks, and seven
 ozonation experiments with indigo, two of which were measured in
 negative mode. These measurements were primarily chosen for their 
 small filesize and poor chromatographic separation.
+
+PFAS data:
+HPLC-orbitrap measurements
