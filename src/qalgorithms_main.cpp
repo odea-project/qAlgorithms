@@ -100,28 +100,124 @@ namespace q
         return;
     }
 
-}
+    std::vector<std::filesystem::path> controlInput(std::vector<std::string> inputTasks, const std::string filetype){
+        namespace fs = std::filesystem;
+        std::vector<fs::path> outputTasks;
+        outputTasks.reserve(inputTasks.size());
+        struct TaskEntry
+        {
+            fs::path path;
+            size_t filesize;
+        };
+        std::vector<TaskEntry> tasklist;
+        tasklist.reserve(inputTasks.size());
+        // find all valid inputs and add them to the task list
+        for (std::string inputPath : inputTasks)
+        {
+            fs::path currentPath{inputPath};
+            if (!fs::exists(currentPath))
+            {
+                std::cerr << "Warning: the file \"" << inputPath << "\" does not exist.\n";
+                continue;
+                // @todo consider terminating the program here
+                exit(1);
+            }
+            currentPath = fs::canonical(currentPath);
+            auto status = fs::status(currentPath);
 
-const std::string helpinfo = " help information:\n\n" // @todo std::format
+            if (status.type() == fs::file_type::regular)
+            {
+                if (currentPath.extension() != filetype)
+                {
+                    std::cerr << "Warning: only " << filetype << " files are supported. The file \"" 
+                              << inputPath << "\" has been skipped.\n";
+                    continue;
+                    // @todo consider terminating the program here        
+                }
+                tasklist.push_back(TaskEntry{currentPath, fs::file_size(currentPath)});
+            }
+            else if (status.type() == fs::file_type::directory)
+            {
+                // recursively search for relevant files
+                for (auto const &dir_entry : fs::recursive_directory_iterator(currentPath))
+                {
+                    fs::path recursivePath = fs::canonical(dir_entry);
+                    if (recursivePath.extension() == filetype)
+                    {
+                        tasklist.push_back(TaskEntry{recursivePath, fs::file_size(recursivePath)});
+                    }
+                    
+                }
+            }
+            else
+            {
+                std::cerr << "Warning: \"" << inputPath << "\" is not a supported file or directory. The file has been skipped.\n";
+            }
+        }
+        // remove duplicate files
+        size_t tasknumber = tasklist.size();
+        int removedEntries = 0;
+        if (tasknumber == 0){
+            std::cerr << "Error: no valid files selected.\n";
+            exit(1);
+        }
+        std::sort(tasklist.begin(), tasklist.end(), [](const TaskEntry lhs, const TaskEntry rhs)
+                          { return lhs.filesize < rhs.filesize; });
+        size_t prevsize = tasklist[0].filesize;
+        for (size_t i = 1; i < tasknumber; i++)
+        {
+            if (tasklist[i].filesize == prevsize)
+            {
+                std::ifstream fileConflict;
+                char firstChars[25000];
+                fileConflict.open(tasklist[i-1].path);
+                fileConflict.read(firstChars, 25000);
+                fileConflict.close();
+                std::string s = firstChars;
+                auto hash1 = std::hash<std::string>{}(s);
+
+                fileConflict.open(tasklist[i].path);
+                fileConflict.read(firstChars, 25000);
+                fileConflict.close();
+                s = firstChars;
+                auto hash2 = std::hash<std::string>{}(s);
+                if (hash1 == hash2)
+                {
+                    tasklist[i - 1].filesize = 0; // always keeps last so comparison by file size works
+                    ++removedEntries;
+                }
+            }
+            prevsize = tasklist[i].filesize;
+        }
+        if (removedEntries > 0)
+        {
+            std::cerr << "Warning: removed " << removedEntries << " duplicate input files from processing queue.\n";
+        }
+        for (auto entry : tasklist)
+        {
+            if(entry.filesize > 0)
+            {
+                outputTasks.push_back(entry.path);
+            }
+        }
+        return(outputTasks);
+    }
+
+    const std::string helpinfo = " help information:\n\n" // @todo std::format
                              "    qAlgorithms is a software project for non-target screening using mass spectrometry.\n"
                              "    For more information, visit our github page: https://github.com/odea-project/qAlgorithms.\n"
                              "    As of now (30.07.2024), only mzML files are supported. This program accepts the following command-line arguments:\n\n"
                              "      -h, -help:  open this help menu\n\n"
                              "    Input settings:\n"
-                             "      Note that duplicate input files are removed by default.\n"
-                             "      -f,  -files <PATH>:          specifies the input files. More than one file can be passed. Use as -f FILEPATH FILEPATH etc.\n" // @todo allow piping of file list
-                             "      -tl, -tasklist <PATH>:       pass a list of file paths to the function. A tasklist can also contain directories\n"
-                             "                                   to search recursively and output directories for different blocks of the input files.\n"
-                             "                                   You can comment out lines by starting them with a \"#\"\n" // @todo update
-                             "      -r,  -recursive <DIRECTORY>: recursive search for .mzML files in the specified directory.\n\n"
+                             "      Note that duplicate input files are removed by default, even when they have a different name.\n"
+                             "      -i,  -input <PATH> [PATH]   input files or directories in which to recursively search for .mzML files.\n"
+                             "                                  you can enter any number of targets, as long as no file starts with a \"-\".\n"
+                             "      -tl, -tasklist <PATH>:      pass a list of file paths to the function. A tasklist can also contain directories\n"
+                             "                                  to search recursively and output directories for different blocks of the input files.\n"
+                             "                                  You can comment out lines by starting them with a \"#\"\n" // @todo update
                              "    Output settings:\n"
                              "      The filename is always the original filename extended by the polarity.\n"
                              "      -o,  -output <DIRECTORY>:   directory into which all output files should be printed.\n"
-                             "                                  If you want to print all results into the folder which contains the\n"
-                             "                                  .mzML file, write \"#\". The default output is standard out,\n" // @todo is this a good idea?
-                             "                                  unless you did not specify an input file. in that case, you will\n"
-                             "                                  be prompted to enter the output location. If the specified\n"
-                             "                                  location does not exist, a new directory is created.\n"
                              "      -pc, -printcentroids:       print all centroids produced after the first run of qcentroids.\n"
                              "      -ps, -printsummary:         print summarised information on the bins in addition to\n"
                              "                                  the peaktable. It is saved to your output directory\n"
@@ -134,10 +230,15 @@ const std::string helpinfo = " help information:\n\n" // @todo std::format
                              "                                  have to also set the -pp flag. Currently, only bin ID and peak ID\n"
                              "                                  are added to the output.\n"
                              "      -pa, -printall:             print all availvable resutlts.\n"
-                             "    \nProgram behaviour:\n"
+                             "\n    Program behaviour:\n"
                              "      -s, -silent:    do not print progress reports to standard out\n"
                              "      -v, -verbose:   print a detailed progress report to standard out\n"
-                             "      -log:           This option will create a detailed log file in the program directory.\n"; // @todo
+                             "      -log:           This option will create a detailed log file in the program directory.\n" // @todo
+                             "\n      Analysis options:\n"
+                             "      -MS2: also process MS2 spectra"; // @todo
+}
+
+
 
 int main(int argc, char *argv[])
 {
@@ -160,7 +261,7 @@ int main(int argc, char *argv[])
         std::cin >> filename_input;
         if ((filename_input == "-h") | (filename_input == "-help"))
         {
-            std::cout << "    " << argv[0] << helpinfo;
+            std::cout << "    " << argv[0] << q::helpinfo;
             exit(0);
         }
         // filename_input = "C:/Users/unisys/Documents/Studium/Messdaten/LCMS_pressure_error/22090901_H2O_1_pos.mzML";
@@ -198,23 +299,22 @@ int main(int argc, char *argv[])
 
     // if only one argument is given, check if it is any variation of help
     // if this is not the case, try to use the string as a filepath
-
+#pragma region cli arguments
     volatile bool silent = false;
     volatile bool verboseProgress = false;
-    volatile bool recursiveSearch = false;
     volatile bool tasklistSpecified = false;
     volatile bool printSummary = false;
     volatile bool printBins = false;
     volatile bool printExtended = false;
     volatile bool printCentroids = false;
+    std::vector<std::string> suppliedPaths;
 
-#pragma region cli arguments
     for (int i = 1; i < argc; i++)
     {
         std::string argument = argv[i];
         if ((argument == "-h") | (argument == "-help"))
         {
-            std::cout << "\n    " << argv[0] << helpinfo;
+            std::cout << "\n    " << argv[0] << q::helpinfo;
             exit(0);
         }
         if ((argument == "-s") | (argument == "-silent"))
@@ -225,39 +325,32 @@ int main(int argc, char *argv[])
         {
             verboseProgress = true;
         }
-        else if ((argument == "-f") | (argument == "-files"))
+        else if ((argument == "-i") | (argument == "-input"))
         {
-            // loop until the first string which contains a "-" and add those files to the task list
-            inSpecified = true;
             ++i;
-            if ((i == argc))
+            if (i == argc)
             {
-                std::cerr << "Error: argument -files was set, but no valid file supplied.\n";
+                std::cerr << "Error: argument -input was set, but no valid file supplied.\n";
                 exit(101);
             }
-            pathInput = std::filesystem::canonical(argv[i]);
-            while (std::filesystem::exists(pathInput))
+            std::string inputString = argv[i];
+            if (inputString[0] == '-')
             {
-                if (pathInput.extension() != ".mzML")
-                {
-                    std::cerr << "Warning: only .mzML files are supported. The file input has been skipped.\n";
-                }
-                else
-                {
-                    tasklist.push_back(pathInput);
-                }
+                std::cerr << "Error: argument -input was set, but no valid file supplied.\n";
+                exit(101);
+            }
+            while ((inputString[0] != '-') && (i < argc))
+            {
+                suppliedPaths.push_back(inputString);
                 ++i;
-                if (i == argc)
-                {
-                    break;
-                }
-                pathInput = std::filesystem::weakly_canonical(argv[i]);
-                if (!std::filesystem::exists(pathInput))
+                inputString = argv[i];
+                if (inputString[0] == '-')
                 {
                     --i;
-                    break;
                 }
             }
+            
+            inSpecified = true;
         }
         else if ((argument == "-tl") | (argument == "-tasklist")) // @todo test this
         {
@@ -327,44 +420,6 @@ int main(int argc, char *argv[])
                 to the front of the filename
             */
         }
-        else if ((argument == "-r") | (argument == "-recursive"))
-        {
-            // @todo
-            recursiveSearch = true;
-            ++i;
-            if (i == argc)
-            {
-                std::cerr << "Error: no target directory specified.\n";
-                exit(101);
-            }
-            pathInput = argv[i];
-            if (!std::filesystem::exists(pathInput))
-            {
-                std::cerr << "Error: the target path for recursive search does not exist.\n";
-                exit(101);
-            }
-            else if (std::filesystem::exists(pathInput.filename()))
-            {
-                std::cerr << "Error: the target directory for recursive search cannot be a file.\n";
-            }
-            int fileCounter = 0;
-            for (auto const &dir_entry : std::filesystem::recursive_directory_iterator(pathInput))
-            {
-                pathInput = dir_entry;
-
-                if (pathInput.extension() == ".mzML")
-                {
-                    tasklist.push_back(std::filesystem::canonical(pathInput));
-
-                    ++fileCounter;
-                }
-            }
-            if (fileCounter == 0)
-            {
-                std::cerr << "Warning: no files were found by recursive search.\n";
-            }
-            pathInput = "";
-        }
         else if ((argument == "-o") | (argument == "-output"))
         {
             // @todo
@@ -428,27 +483,15 @@ int main(int argc, char *argv[])
         }
     }
 
-    if ((!inSpecified & !recursiveSearch) & (!tasklistSpecified))
+    if (!inSpecified & !tasklistSpecified)
     {
-        std::cerr << "Error: no input file supplied. Specify a file using the -f, -r or "
-                  << "-tl flag. Execute qAlgorithms with the -h flag for more information\n";
+        std::cerr << "Error: no input file supplied. Specify a file or directorey using the -i or "
+                  << "-tl flag. Execute qAlgorithms with the -h flag for more information.\n";
         exit(1);
     }
-    if (recursiveSearch & !outSpecified)
+    if (!outSpecified)
     {
-        std::cerr << "Error: Recursive search requires you to specify an output directory. Set -o to \"#\" "
-                  << "to use the location of every processed file. (currently unsupported)\n";
-        exit(100);
-    }
-
-    if (inSpecified & recursiveSearch)
-    {
-        std::cerr << "Error: Recursive search and target file are incompatible\n";
-        exit(100);
-    }
-    if (tasklistSpecified & recursiveSearch)
-    {
-        std::cerr << "Error: Recursive search and task list are incompatible\n";
+        std::cerr << "Error: You must specify an output directory.\n";
         exit(100);
     }
     if (inSpecified & tasklistSpecified)
@@ -458,174 +501,16 @@ int main(int argc, char *argv[])
     }
     if (silent & verboseProgress)
     {
-        std::cerr << "Warning: -verbose overrides -silent\n";
+        std::cerr << "Warning: -verbose overrides -silent.\n";
         silent = false;
     }
-
-    // remove duplicates from tasklist
-    // this will only remove duplicate file paths
-    size_t prevsize = tasklist.size();
-    std::sort(tasklist.begin(), tasklist.end());
-    tasklist.erase(std::unique(tasklist.begin(), tasklist.end()), tasklist.end());
-
-    int duplicateCount = prevsize - tasklist.size();
-
-    std::multimap<size_t, std::filesystem::path> tasklist2;
-    for (auto path : tasklist)
+    if(!((printCentroids | printSummary) | printPeaks))
     {
-        size_t filesize = std::filesystem::file_size(path);
-        tasklist2.insert({filesize, path});
+        std::cerr << "Warning: no output files will be written.\n";
     }
 
-    // remove duplicate files
-    // create vector of unique keys (file sizes)
-    // multimap is sorted by keys in ascending order
-    // size_t prevsize = tasklist2.size();
-    std::vector<size_t> keys;
-    size_t prevkey = 0;
-    for (const auto &pair : tasklist2)
-    {
-        size_t key = pair.first;
-        if (key != prevkey)
-        {
-            prevkey = key;
-            keys.push_back(key);
-        }
-    }
-
-    tasklist.resize(0);
-
-    for (size_t key : keys)
-    {
-        // files are hashed by filesize. First, search for sizes with more than one entry
-        size_t numDubs = tasklist2.count(key);
-        if (numDubs != 1)
-        {
-            // for every file, read the first 25 Kbit and then compare strings
-            // this will work because most metadata should be covered by this, while not
-            // reading in the first mass spectrum
-            auto reduce = tasklist2.find(key);
-            std::ifstream file1;
-            const size_t readLength = 25000;
-
-            if (numDubs == 2)
-            {
-                char first[readLength];
-                char second[readLength];
-                file1.open(reduce->second);
-                file1.read(first, readLength);
-                file1.close();
-                std::advance(reduce, 1);
-                file1.open(reduce->second);
-                file1.read(second, readLength);
-                file1.close();
-                if (std::ranges::equal(first, second))
-                {
-                    // both entries are identical, only add one
-                    ++duplicateCount;
-                    tasklist.push_back(reduce->second);
-                }
-                else
-                {
-                    // files have the same size, but are different - add both
-                    tasklist.push_back(reduce->second);
-                    std::advance(reduce, -1);
-                    tasklist.push_back(reduce->second);
-                }
-            }
-            else
-            {
-
-                std::vector<std::filesystem::path> findDoubles;
-                findDoubles.reserve(numDubs);
-                std::vector<char[readLength]> firstChars(numDubs);
-                bool keepIndex[numDubs] = {true};
-                // transfer all relevant values to a different vector
-                for (size_t i = 0; i < numDubs; i++)
-                {
-                    std::advance(reduce, i);
-                    findDoubles.push_back(reduce->second);
-                    // read the first 25 kb per file into the comparison vector
-                    file1.open(reduce->second);
-                    file1.read(firstChars[i], readLength);
-                    file1.close();
-                }
-                // compare all values and note the duplicates
-                for (size_t i = 0; i < numDubs; i++)
-                {
-                    for (size_t j = i + 1; j < numDubs; j++)
-                    {
-                        if (std::ranges::equal(firstChars[i], firstChars[j]))
-                        {
-                            // marks all duplicates exept the last as false
-                            keepIndex[i] = false;
-                            ++duplicateCount;
-                            break;
-                        }
-                    }
-                }
-                // add all unique files to the tasklist
-                for (size_t i = 0; i < numDubs; i++)
-                {
-                    if (keepIndex[i])
-                    {
-                        tasklist.push_back(findDoubles[i]);
-                    }
-                }
-            }
-        }
-        else
-        {
-            // the file is unique
-            tasklist.push_back(tasklist2.find(key)->second);
-        }
-    }
-
-    if (duplicateCount > 0)
-    {
-        std::cerr << "Warning: removed " << duplicateCount << " duplicate files\n";
-    }
-
-    // check for duplicate file names and rename them automatically
-    // extract filenames as strings to a vector for comparison
-
-    bool duplicate_Name_different_Content = false;
-    std::vector<std::string> itemNames;
-    size_t tlSize = tasklist.size();
-    for (size_t i = 0; i < tlSize; i++)
-    {
-        itemNames.push_back(tasklist[i].filename().string());
-    }
-
-    for (size_t i = 0; i < tlSize; i++)
-    {
-        std::vector<size_t> duplicates;
-
-        for (size_t j = i + 1; j < tlSize; j++)
-        {
-            if ((itemNames[j] != "") && (itemNames[j] == itemNames[i]))
-            {
-                duplicates.push_back(j);
-                itemNames[j] = "";
-            }
-        }
-
-        if (!duplicates.empty())
-        {
-            duplicate_Name_different_Content = true;
-            std::string dupliName = itemNames[i];
-            duplicates.push_back(i); // i was not added during the loop
-            for (size_t j = 0; j < duplicates.size(); j++)
-            {
-                itemNames[duplicates[j]] = dupliName + "_" + std::to_string(j + 1);
-            }
-        }
-    }
-    if (duplicate_Name_different_Content)
-    {
-        std::cerr << "Warning: files with the same name but different content exist. "
-                     "The output files have been renamed to <FILENAME>_1, <FILENAME>_2, etc.\n";
-    }
+    // the final task list contains only unique files, sorted by filesize
+    tasklist = q::controlInput(suppliedPaths, ".mzML");
 
 #pragma endregion cli arguments
 
@@ -633,6 +518,8 @@ int main(int argc, char *argv[])
     std::string filename;
     const std::vector<std::string> polarities = {"positive", "negative"}; // @todo make bool
     int counter = 0;
+    // @todo add dedicated diagnostics function
+    std::cout << "numCens,numBins,numPeaks,numLoadedBins,numNarrowBin,\n";
     for (std::filesystem::path pathSource : tasklist)
     {
 
@@ -659,7 +546,7 @@ int main(int argc, char *argv[])
         if (!silent)
         {
             std::cout << "\nreading file " << counter + 1 << " of " << tasklist.size() << ":\n"
-            //   << pathSource << "\n... ";
+              << pathSource << "\n... ";
         }
 
         sc::MZML data(std::filesystem::canonical(pathSource).string()); // create mzML object @todo change to use filesystem::path
@@ -674,8 +561,8 @@ int main(int argc, char *argv[])
         {
             std::cout << " file ok\n\n";
         }
-        // update filename to name without duplicates
-        pathSource.filename() = itemNames[counter];
+        // update filename to name without duplicates @todo find better solution
+        // pathSource.filename() = itemNames[counter];
 
         for (auto polarity : polarities)
         {
@@ -685,7 +572,6 @@ int main(int argc, char *argv[])
             // @todo add check if set polarity is correct
             std::vector<std::vector<q::DataType::Peak>> centroids =
                 tensorData.findCentroids_MZML(qpeaks, data, true, polarity, 10); // read mzML file and find centroids via qPeaks
-            std::cout << "centroided\n";
             if (centroids.size() < 5)
             {
                 
@@ -744,7 +630,7 @@ int main(int argc, char *argv[])
             if (!silent)
             {
                 std::cout << "    produced " << binThis.lengthAllPoints << " centroids from " << centroids.size()
-                //   << " spectra in " << (timeEnd - timeStart).count() << " ns\n";
+                  << " spectra in " << (timeEnd - timeStart).count() << " ns\n";
             }
 
             timeStart = std::chrono::high_resolution_clock::now();
