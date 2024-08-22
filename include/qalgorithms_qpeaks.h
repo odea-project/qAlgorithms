@@ -23,7 +23,7 @@ namespace q
         class qPeaks
         {
         public:
-            static const int global_maxScale = 15; // maximum scale for regression window
+            const int global_maxScale = 15; // maximum scale for regression window
 
             // methods
             void

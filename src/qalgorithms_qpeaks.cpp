@@ -82,8 +82,8 @@ namespace q
 #pragma endregion "pass to qBinning"
 
 #pragma region "initialize"
-        alignas(16) float q::Algorithms::qPeaks::x_square[128];   // array to store the square of the x values
-        alignas(16) float q::Algorithms::qPeaks::invArray[64][6]; // array to store the 6 unique values of the inverse matrix for each scale
+        alignas(float) float q::Algorithms::qPeaks::x_square[128];   // array to store the square of the x values
+        alignas(float) float q::Algorithms::qPeaks::invArray[64][6]; // array to store the 6 unique values of the inverse matrix for each scale
         __m128 q::Algorithms::qPeaks::ZERO_128;                   // [0., 0., 0., 0.]
         __m256 q::Algorithms::qPeaks::ZERO_256;                   // [0., 0., 0., 0., 0., 0., 0., 0.]
         __m128 q::Algorithms::qPeaks::KEY_128;                    // [0., 4., 2., 1.]
@@ -173,10 +173,10 @@ namespace q
                 if (n <= 512)
                 {
                     // STATIC APPROACH
-                    alignas(32) float Y[512];                      // measured y values
-                    alignas(32) float Ylog[512];                   // log-transformed measured y values
-                    alignas(32) float X[512];                      // measured x values
-                    alignas(32) bool df[512];                      // degree of freedom vector, 0: interpolated, 1: measured
+                    alignas(float) float Y[512];                      // measured y values
+                    alignas(float) float Ylog[512];                   // log-transformed measured y values
+                    alignas(float) float X[512];                      // measured x values
+                    alignas(bool) bool df[512];                      // degree of freedom vector, 0: interpolated, 1: measured
                     validRegression_static validRegressions[2048]; // array of valid regressions with default initialization, i.e., random states
                     int validRegressionsIndex = 0;                 // index of the valid regressions
 
@@ -208,10 +208,10 @@ namespace q
                 else
                 {
                     // DYNAMIC APPROACH
-                    alignas(32) float *Y = new float[n];
-                    alignas(32) float *Ylog = new float[n];
-                    alignas(32) float *X = new float[n];
-                    alignas(32) bool *df = new bool[n];
+                    alignas(float) float *Y = new float[n];
+                    alignas(float) float *Ylog = new float[n];
+                    alignas(float) float *X = new float[n];
+                    alignas(float) bool *df = new bool[n];
                     std::vector<validRegression_static> validRegressions;
 
                     // iterator to the start
@@ -260,13 +260,13 @@ namespace q
                 if (n <= 512)
                 {
                     // STATIC APPROACH
-                    alignas(32) float Y[512];                      // measured y values
-                    alignas(32) float Ylog[512];                   // log-transformed measured y values
-                    alignas(32) float X[512];                      // measured x values
-                    alignas(32) bool df[512];                      // degree of freedom vector, 0: interpolated, 1: measured
-                    alignas(32) float mz[512];                     // measured mz values
-                    alignas(32) float dqs_cen[512];                // measured dqs values
-                    alignas(32) float dqs_bin[512];                // measured dqs values
+                    alignas(float) float Y[512];                      // measured y values
+                    alignas(float) float Ylog[512];                   // log-transformed measured y values
+                    alignas(float) float X[512];                      // measured x values
+                    alignas(bool) bool df[512];                      // degree of freedom vector, 0: interpolated, 1: measured
+                    alignas(float) float mz[512];                     // measured mz values
+                    alignas(float) float dqs_cen[512];                // measured dqs values
+                    alignas(float) float dqs_bin[512];                // measured dqs values
                     validRegression_static validRegressions[2048]; // array of valid regressions with default initialization, i.e., random states
                     int validRegressionsIndex = 0;                 // index of the valid regressions
 
@@ -304,13 +304,13 @@ namespace q
                 else
                 {
                     // DYNAMIC APPROACH
-                    alignas(32) float *Y = new float[n];
-                    alignas(32) float *Ylog = new float[n];
-                    alignas(32) float *X = new float[n];
-                    alignas(32) bool *df = new bool[n];
-                    alignas(32) float *mz = new float[n];
-                    alignas(32) float *dqs_cen = new float[n];
-                    alignas(32) float *dqs_bin = new float[n];
+                    alignas(float) float *Y = new float[n];
+                    alignas(float) float *Ylog = new float[n];
+                    alignas(float) float *X = new float[n];
+                    alignas(bool) bool *df = new bool[n];
+                    alignas(float) float *mz = new float[n];
+                    alignas(float) float *dqs_cen = new float[n];
+                    alignas(float) float *dqs_bin = new float[n];
                     std::vector<validRegression_static> validRegressions;
 
                     // iterator to the start
@@ -365,13 +365,13 @@ namespace q
             const int n, // number of data points
             std::vector<validRegression_static> &validRegressions)
         {
-            const int maxScale = std::min(this->global_maxScale, (int)(n - 1) / 2);
+            const int maxScale = std::min(global_maxScale, (int)(n - 1) / 2);
             validRegressions.reserve(calculateNumberOfRegressions(n));
             for (int scale = 2; scale <= maxScale; scale++)
             {
                 const int k = 2 * scale + 1;                       // window size
                 const int n_segments = n - k + 1;                  // number of segments, i.e. regressions considering the array size
-                alignas(16) __m128 *beta = new __m128[n_segments]; // coefficients matrix
+                alignas(__m128) __m128 *beta = new __m128[n_segments]; // coefficients matrix
                 convolve_dynamic(scale, ylog_start, n, beta);      // do the regression
                 validateRegressions(beta, n_segments, y_start, ylog_start, df_start, scale, validRegressions);
             } // end for scale loop
@@ -389,12 +389,12 @@ namespace q
             validRegression_static *validRegressions,
             int &validRegressionsIndex)
         {
-            int maxScale = std::min(this->global_maxScale, (int)(n - 1) / 2);
+            int maxScale = std::min(global_maxScale, (int)(n - 1) / 2);
 
             for (int scale = 2; scale <= maxScale; scale++)
             {
                 const int k = 2 * scale + 1;                 // window size
-                alignas(16) __m128 beta[512];                // coefficients matrix
+                alignas(__m128) __m128 beta[512];                // coefficients matrix
                 convolve_static(scale, ylog_start, n, beta); // do the regression
                 const int n_segments = n - k + 1;            // number of segments, i.e. regressions considering the number of data points
                 validateRegressions_static(beta, n_segments, y_start, ylog_start, df_start, scale, validRegressionsIndex, validRegressions);
@@ -1195,7 +1195,7 @@ namespace q
                     {
                         yhat = exp_approx_vf(yhat); // calculate the exp of the yhat values (if needed)
                     }
-                    const __m256 y_vec = _mm256_load_ps(y_start + j); // Load 8 values from y considering the offset j
+                    const __m256 y_vec = _mm256_loadu_ps(y_start + j); // Load 8 values from y considering the offset j
                     const __m256 diff = _mm256_sub_ps(y_vec, yhat);   // Calculate the difference between y and yhat
                     __m256 diff_sq = _mm256_mul_ps(diff, diff);       // Calculate the square of the difference
                     if (calc_CHISQ)
@@ -1216,9 +1216,9 @@ namespace q
                     yhat = exp_approx_vf(yhat); // calculate the exp of the yhat values (if needed)
                 }
                 // Load the remaining values from y
-                alignas(32) float y_remaining[8] = {0.0f};
+                alignas(float) float y_remaining[8] = {0.0f};
                 std::copy(y_start - left_limit + y_start_offset, y_start - left_limit + y_end_offset, y_remaining);
-                const __m256 y_vec = _mm256_load_ps(y_remaining);
+                const __m256 y_vec = _mm256_loadu_ps(y_remaining);
 
                 const __m256i mask = _mm256_cmpgt_epi32(_mm256_set1_epi32(nRemaining + mask_offset), LINSPACE_UP_INT_256); // mask for the remaining elements
                 yhat = _mm256_blendv_ps(y_vec, yhat, _mm256_castsi256_ps(mask));                                           // set the remaining elements to zero
@@ -1514,12 +1514,21 @@ namespace q
             const int left_limit,  // left limit
             const int right_limit) // right limit
         {
-            return std::accumulate(
-                df_start + left_limit,
-                df_start + right_limit + 1,
-                0,
-                [](int sum, bool p)
-                { return sum + p; });
+            int degreesOfFreedom = 0;
+            for (size_t i = left_limit; i < right_limit + 1; i++)
+            {
+                if (df_start[i])
+                {
+                    ++degreesOfFreedom;
+                }
+            }
+            return degreesOfFreedom;
+            // return std::accumulate(
+            //     df_start + left_limit,
+            //     df_start + right_limit + 1,
+            //     0,
+            //     [](int sum, bool p)
+            //     { return sum + p; });
         } // end calcDF
 #pragma endregion calcDF
 
@@ -1880,7 +1889,7 @@ namespace q
             return n * (maxScale-1) - sumScales*2;
             */
             int sum = 0;
-            for (int i = 4; i <= this->global_maxScale * 2; i += 2)
+            for (int i = 4; i <= global_maxScale * 2; i += 2)
             {
                 sum += std::max(0, n - i);
             }
@@ -1902,8 +1911,8 @@ namespace q
                 throw std::invalid_argument("n must be greater or equal to 2 * scale + 1");
             }
 
-            alignas(16) __m128 result[512];
-            alignas(16) __m128 products[512];
+            alignas(__m128) __m128 result[512];
+            alignas(__m128) __m128 products[512];
             const __m128 flipSign = _mm_set_ps(1.0f, 1.0f, -1.0f, 1.0f);
             convolve_SIMD(scale, vec, n, result, products, 512);
 
@@ -1925,8 +1934,8 @@ namespace q
                 throw std::invalid_argument("n must be greater or equal to 2 * scale + 1");
             }
 
-            alignas(16) __m128 *result = new __m128[n - 2 * scale];
-            alignas(16) __m128 *products = new __m128[n];
+            alignas(__m128) __m128 *result = new __m128[n - 2 * scale];
+            alignas(__m128) __m128 *products = new __m128[n];
             const __m128 flipSign = _mm_set_ps(1.0f, 1.0f, -1.0f, 1.0f);
             convolve_SIMD(scale, vec, n, result, products, n);
 
@@ -1934,6 +1943,8 @@ namespace q
             {
                 beta[i] = _mm_mul_ps(_mm_shuffle_ps(result[i], result[i], 0b10110100), flipSign); // swap beta2 and beta3 and flip the sign of beta1 // @todo: this is a temporary solution
             }
+            delete result;
+            delete products;
         }
 
         void
@@ -1949,17 +1960,18 @@ namespace q
             size_t n_segments = n - k + 1;
             size_t centerpoint = k / 2;
 
-            for (size_t i = 0; i < n_segments; ++i)
-            {
-                result[i] = _mm_setzero_ps();
-            }
+            // removed: all elements of result are modified
+            // for (size_t i = 0; i < n_segments; ++i)
+            // {
+            //     result[i] = _mm_setzero_ps();
+            // }
 
             for (size_t i = 0; i < n; ++i)
             {
                 products[i] = _mm_setzero_ps();
             }
 
-            alignas(16) __m128 kernel[3];
+            alignas(__m128) __m128 kernel[3];
             kernel[0] = _mm_set_ps(invArray[scale][1], invArray[scale][1], 0.0f, invArray[scale][0]);
             kernel[1] = _mm_set_ps(invArray[scale][3] - invArray[scale][5], -invArray[scale][3] - invArray[scale][4], -invArray[scale][2] - invArray[scale][3], -invArray[scale][1]);
             kernel[2] = _mm_set_ps(2.f * invArray[scale][5], 2.f * invArray[scale][4], 2.f * invArray[scale][3], 2.f * invArray[scale][1]);
@@ -1969,13 +1981,15 @@ namespace q
             for (size_t i = 0; i < n_segments; i++)
             {
                 __m128 vec_values = _mm_set1_ps(vec[i + centerpoint]);
-                result[i] = _mm_fmadd_ps(vec_values, kernel[0], result[i]);
+                // result[i] = _mm_fmadd_ps(vec_values, kernel[0], result[i]);
+                result[i] = _mm_mul_ps(vec_values, kernel[0]);
             }
 
             for (size_t i = 1; i < scale + 1; i++)
             {
                 int u = 0;
                 kernel[1] = _mm_add_ps(kernel[1], kernel[2]);
+                // kernel[1] = kernel[1] original + i * kernel[2]
                 kernel[0] = _mm_add_ps(kernel[0], kernel[1]);
 
 #pragma GCC ivdep

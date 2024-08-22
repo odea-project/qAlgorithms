@@ -107,7 +107,7 @@ namespace q
         struct TaskEntry
         {
             fs::path path;
-            size_t filesize;
+            uintmax_t filesize;
         };
         std::vector<TaskEntry> tasklist;
         tasklist.reserve(inputTasks.size());
@@ -211,7 +211,8 @@ namespace q
                              "    Input settings:\n"
                              "      Note that duplicate input files are removed by default, even when they have a different name.\n"
                              "      -i,  -input <PATH> [PATH]   input files or directories in which to recursively search for .mzML files.\n"
-                             "                                  you can enter any number of targets, as long as no file starts with a \"-\".\n"
+                             "                                  you can enter any number of targets, as long as no file starts with a \"-\""
+                             "                                  or contains two dots in a row.\n"
                              "      -tl, -tasklist <PATH>:      pass a list of file paths to the function. A tasklist can also contain directories\n"
                              "                                  to search recursively and output directories for different blocks of the input files.\n"
                              "                                  You can comment out lines by starting them with a \"#\"\n" // @todo update
@@ -245,9 +246,9 @@ int main(int argc, char *argv[])
 
     std::string filename_input;
     volatile bool inSpecified = false;
-    std::filesystem::path pathInput;
     volatile bool outSpecified = false;
     std::filesystem::path pathOutput;
+    std::vector<std::string> suppliedPaths;
 
     std::vector<std::filesystem::path> tasklist;
 
@@ -261,40 +262,26 @@ int main(int argc, char *argv[])
         std::cin >> filename_input;
         if ((filename_input == "-h") | (filename_input == "-help"))
         {
-            std::cout << "    " << argv[0] << q::helpinfo;
+            std::cout << "    " << argv[0] << q::helpinfo << "\n\n";
             exit(0);
         }
+        std::cout << filename_input << "\n";
+        suppliedPaths.push_back(filename_input);
         // filename_input = "C:/Users/unisys/Documents/Studium/Messdaten/LCMS_pressure_error/22090901_H2O_1_pos.mzML";
-        pathInput = filename_input;
-        if (!std::filesystem::exists(pathInput))
-        {
-            std::cerr << "Error: The selected file does not exist.\n"
-                      << std::filesystem::canonical(pathInput);
-        }
-        if (pathInput.extension() != ".mzML")
-        {
-            std::cerr << "Error: the selected file has the type " << pathInput.extension() << ", but only \".mzML\" is supported\n";
-            exit(101); // @todo sensible exit codes
-        }
-        std::cout << "\nfile accepted, enter the output directory or \"#\" to use the input directory:  ";
-        std::cin >> filename_input;
+        std::cout << "\nEnter the output directory or \"#\" to use the input directory:  ";
+        std::string filename_output;
+        std::cin >> filename_output;
         printPeaks = true;
-        if (filename_input == "#")
+        if (filename_output == "#")
         {
-            pathOutput = pathInput.parent_path();
+            pathOutput = suppliedPaths[0];
         }
         else
         {
             pathOutput = filename_input;
-            if (pathOutput == pathInput)
-            {
-                std::cerr << "Error: use \"#\" if you want to save your results to the location of your input file\n";
-                exit(101);
-            }
         }
         inSpecified = true;
         outSpecified = true;
-        tasklist.push_back(pathInput);
     }
 
     // if only one argument is given, check if it is any variation of help
@@ -307,7 +294,7 @@ int main(int argc, char *argv[])
     volatile bool printBins = false;
     volatile bool printExtended = false;
     volatile bool printCentroids = false;
-    std::vector<std::string> suppliedPaths;
+    
 
     for (int i = 1; i < argc; i++)
     {
@@ -361,7 +348,7 @@ int main(int argc, char *argv[])
                 std::cerr << "Error: no task list specified.\n";
                 exit(101);
             }
-            pathInput = argv[i];
+            std::filesystem::path pathInput = argv[i];
             if (!std::filesystem::exists(pathInput))
             {
                 std::cerr << "Error: The selected tasklist file does not exist.\n"
@@ -692,7 +679,7 @@ int main(int argc, char *argv[])
                         binMeanMZ += binnedData[i].mz[j];
                         binMeanRT += binnedData[i].rententionTimes[j];
                     }
-                    std::cout << binMeanMZ / binsize << ", " << binMeanRT / binsize << "\n";
+                    // std::cout << binMeanMZ / binsize << ", " << binMeanRT / binsize << "\n";
                 }
             }
             meanDQSF /= peakCount;
@@ -705,11 +692,11 @@ int main(int argc, char *argv[])
             // std::cerr << meanDQSF << ", " << binThis.lengthAllPoints << ", " << binnedData.size() << ", "
             //           << peakCount << ", " << meanDQSC << ", " << meanDQSB << ", " << polarity << ", " << filename << "\n";
             // continue;
-            std::cerr << peakCount << ", " << truebins << ", " << onlyone << ", " << filename << "\n";
+            // std::cerr << peakCount << ", " << truebins << ", " << onlyone << ", " << filename << "\n";
 
             if (printPeaks)
             {
-                q::printPeaklist(peaks, pathOutput, filename, printExtended, silent, false);
+                // q::printPeaklist(peaks, pathOutput, filename, printExtended, silent, false);
             }
             // @todo add peak grouping here
         }
