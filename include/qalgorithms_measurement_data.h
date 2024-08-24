@@ -4,7 +4,7 @@
 // internal
 // #include "../include/qalgorithms_datatype_mass_spectrum.h"
 #include "../include/qalgorithms_datatype_peak.h"
-#include "../external/StreamCraft/src/StreamCraft_mzml.h"
+#include "../external/StreamCraft/src/StreamCraft_mzml.hpp"
 
 #include <vector>
 

@@ -179,7 +179,7 @@ namespace q
                 expectedDifference = calcExpectedDiff(data_vec[0]);                                  // calculate expected difference & check if Orbitrap
             }
 
-            // #pragma omp parallel for
+#pragma omp parallel for
             for (size_t i = 0; i < indices.size(); ++i) // loop over all indices
             {
                 const int index = indices[i];                                                       // spectrum index

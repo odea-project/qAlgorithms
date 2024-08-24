@@ -6,7 +6,7 @@
 #include "../include/qalgorithms_qpeaks.h"
 
 // external
-#include "../external/StreamCraft/src/StreamCraft_mzml.h"
+#include "../external/StreamCraft/src/StreamCraft_mzml.hpp"
 
 namespace q
 {
