@@ -1,4 +1,4 @@
-#include "StreamCraft_mzml.h"
+#include "StreamCraft_mzml.hpp"
 #include <omp.h>
 #include <filesystem>
 #include <cstring>
@@ -400,7 +400,7 @@ sc::MS_SPECTRA_HEADERS sc::mzml::MZML::extract_spectra_headers(const std::vector
 
   headers.resize_all(n);
 
-  // #pragma omp parallel for
+#pragma omp parallel for
   for (int i = 0; i < n; i++)
   {
 
@@ -672,7 +672,7 @@ std::vector<std::vector<std::vector<double>>> sc::mzml::MZML::extract_spectra(co
 
   sp.resize(n);
 
-  // #pragma omp parallel for
+#pragma omp parallel for
   for (int i = 0; i < n; i++)
   {
 
@@ -901,7 +901,7 @@ std::vector<std::vector<std::vector<double>>> sc::mzml::MZML::extract_chromatogr
 
   chr.resize(n);
 
-  // #pragma omp parallel for
+#pragma omp parallel for
   for (int i = 0; i < n; i++)
   {
     const int &index = idxs[i];

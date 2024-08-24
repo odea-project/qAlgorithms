@@ -1,4 +1,4 @@
-#include "StreamCraft_utils.h"
+#include "StreamCraft_utils.hpp"
 #include <vector>
 #include <string>
 #include <cstring>

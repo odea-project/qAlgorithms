@@ -15,7 +15,7 @@
 #include PUGIXML_PATH
 
 #define STREAMCRAFT_HEADER_ONLY
-#include "StreamCraft_utils.h"
+#include "StreamCraft_utils.hpp"
 
 namespace sc
 {

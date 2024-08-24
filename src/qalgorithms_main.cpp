@@ -4,7 +4,7 @@
 #include "qalgorithms_qpeaks.h"
 
 // external
-#include "../external/StreamCraft/src/StreamCraft_mzml.h"
+#include "../external/StreamCraft/src/StreamCraft_mzml.hpp"
 #include <iostream>
 #include <chrono>
 #include <fstream> // write peaks to file
@@ -78,17 +78,22 @@ namespace q
         }
         else
         {
-            output << "mz,mzUncertainty,retentionTime,retentionTimeUncertainty,"
+            output << "ID,binID,mz,mzUncertainty,retentionTime,retentionTimeUncertainty,"
                    << "area,areaUncertainty,dqsCen,dqsBin,dqsPeak\n ";
-            int counter = 0;
+            int counter = 1;
             for (size_t i = 0; i < peaktable.size(); i++)
             {
+                if (peaktable[i].empty())
+                {
+                    continue;
+                }
+
                 for (size_t j = 0; j < peaktable[i].size(); ++j)
                 {
                     auto peak = peaktable[i][j];
                     char buffer[128];
-                    sprintf(buffer, "%0.8f,%0.8f,%0.8f,%0.8f,%0.8f,%0.8f,%0.8f,%0.8f,%0.8f\n",
-                            peak.mz, peak.mzUncertainty, peak.retentionTime, peak.retentionTimeUncertainty,
+                    sprintf(buffer, "%d,%d,%0.8f,%0.8f,%0.8f,%0.8f,%0.8f,%0.8f,%0.8f,%0.8f,%0.8f\n",
+                            counter, int(i + 1), peak.mz, peak.mzUncertainty, peak.retentionTime, peak.retentionTimeUncertainty,
                             peak.area, peak.areaUncertainty, peak.dqsCen, peak.dqsBin, peak.dqsPeak);
                     output << buffer;
                     ++counter;
@@ -100,7 +105,8 @@ namespace q
         return;
     }
 
-    std::vector<std::filesystem::path> controlInput(std::vector<std::string> inputTasks, const std::string filetype){
+    std::vector<std::filesystem::path> controlInput(std::vector<std::string> inputTasks, const std::string filetype)
+    {
         namespace fs = std::filesystem;
         std::vector<fs::path> outputTasks;
         outputTasks.reserve(inputTasks.size());
@@ -129,10 +135,10 @@ namespace q
             {
                 if (currentPath.extension() != filetype)
                 {
-                    std::cerr << "Warning: only " << filetype << " files are supported. The file \"" 
+                    std::cerr << "Warning: only " << filetype << " files are supported. The file \""
                               << inputPath << "\" has been skipped.\n";
                     continue;
-                    // @todo consider terminating the program here        
+                    // @todo consider terminating the program here
                 }
                 tasklist.push_back(TaskEntry{currentPath, fs::file_size(currentPath)});
             }
@@ -146,7 +152,6 @@ namespace q
                     {
                         tasklist.push_back(TaskEntry{recursivePath, fs::file_size(recursivePath)});
                     }
-                    
                 }
             }
             else
@@ -157,12 +162,13 @@ namespace q
         // remove duplicate files
         size_t tasknumber = tasklist.size();
         int removedEntries = 0;
-        if (tasknumber == 0){
+        if (tasknumber == 0)
+        {
             std::cerr << "Error: no valid files selected.\n";
             exit(1);
         }
         std::sort(tasklist.begin(), tasklist.end(), [](const TaskEntry lhs, const TaskEntry rhs)
-                          { return lhs.filesize < rhs.filesize; });
+                  { return lhs.filesize < rhs.filesize; });
         size_t prevsize = tasklist[0].filesize;
         for (size_t i = 1; i < tasknumber; i++)
         {
@@ -170,7 +176,7 @@ namespace q
             {
                 std::ifstream fileConflict;
                 char firstChars[25000];
-                fileConflict.open(tasklist[i-1].path);
+                fileConflict.open(tasklist[i - 1].path);
                 fileConflict.read(firstChars, 25000);
                 fileConflict.close();
                 std::string s = firstChars;
@@ -195,51 +201,49 @@ namespace q
         }
         for (auto entry : tasklist)
         {
-            if(entry.filesize > 0)
+            if (entry.filesize > 0)
             {
                 outputTasks.push_back(entry.path);
             }
         }
-        return(outputTasks);
+        return (outputTasks);
     }
 
     const std::string helpinfo = " help information:\n\n" // @todo std::format
-                             "    qAlgorithms is a software project for non-target screening using mass spectrometry.\n"
-                             "    For more information, visit our github page: https://github.com/odea-project/qAlgorithms.\n"
-                             "    As of now (30.07.2024), only mzML files are supported. This program accepts the following command-line arguments:\n\n"
-                             "      -h, -help:  open this help menu\n\n"
-                             "    Input settings:\n"
-                             "      Note that duplicate input files are removed by default, even when they have a different name.\n"
-                             "      -i,  -input <PATH> [PATH]   input files or directories in which to recursively search for .mzML files.\n"
-                             "                                  you can enter any number of targets, as long as no file starts with a \"-\""
-                             "                                  or contains two dots in a row.\n"
-                             "      -tl, -tasklist <PATH>:      pass a list of file paths to the function. A tasklist can also contain directories\n"
-                             "                                  to search recursively and output directories for different blocks of the input files.\n"
-                             "                                  You can comment out lines by starting them with a \"#\"\n" // @todo update
-                             "    Output settings:\n"
-                             "      The filename is always the original filename extended by the polarity.\n"
-                             "      -o,  -output <DIRECTORY>:   directory into which all output files should be printed.\n"
-                             "      -pc, -printcentroids:       print all centroids produced after the first run of qcentroids.\n"
-                             "      -ps, -printsummary:         print summarised information on the bins in addition to\n"
-                             "                                  the peaktable. It is saved to your output directory\n"
-                             "                                  under the name FILENAME_summary.csv\n"
-                             "      -pb, -printbins:            If this flag is set, both bin summary information and\n"
-                             "                                  all binned centroids will be printed to the output location\n"
-                             "                                  in addition to the final peak table. The file ends in _bins.csv.\n"
-                             "      -pp, -printpeaks:           print the peak tables as csv.\n"
-                             "      -e,  -extended:             print additional information into the final peak list. You do not\n"
-                             "                                  have to also set the -pp flag. Currently, only bin ID and peak ID\n"
-                             "                                  are added to the output.\n"
-                             "      -pa, -printall:             print all availvable resutlts.\n"
-                             "\n    Program behaviour:\n"
-                             "      -s, -silent:    do not print progress reports to standard out\n"
-                             "      -v, -verbose:   print a detailed progress report to standard out\n"
-                             "      -log:           This option will create a detailed log file in the program directory.\n" // @todo
-                             "\n      Analysis options:\n"
-                             "      -MS2: also process MS2 spectra"; // @todo
+                                 "    qAlgorithms is a software project for non-target screening using mass spectrometry.\n"
+                                 "    For more information, visit our github page: https://github.com/odea-project/qAlgorithms.\n"
+                                 "    As of now (30.07.2024), only mzML files are supported. This program accepts the following command-line arguments:\n\n"
+                                 "      -h, -help:  open this help menu\n\n"
+                                 "    Input settings:\n"
+                                 "      Note that duplicate input files are removed by default, even when they have a different name.\n"
+                                 "      -i,  -input <PATH> [PATH]   input files or directories in which to recursively search for .mzML files.\n"
+                                 "                                  you can enter any number of targets, as long as no file starts with a \"-\""
+                                 "                                  or contains two dots in a row.\n"
+                                 "      -tl, -tasklist <PATH>:      pass a list of file paths to the function. A tasklist can also contain directories\n"
+                                 "                                  to search recursively and output directories for different blocks of the input files.\n"
+                                 "                                  You can comment out lines by starting them with a \"#\"\n" // @todo update
+                                 "    Output settings:\n"
+                                 "      The filename is always the original filename extended by the polarity.\n"
+                                 "      -o,  -output <DIRECTORY>:   directory into which all output files should be printed.\n"
+                                 "      -pc, -printcentroids:       print all centroids produced after the first run of qcentroids.\n"
+                                 "      -ps, -printsummary:         print summarised information on the bins in addition to\n"
+                                 "                                  the peaktable. It is saved to your output directory\n"
+                                 "                                  under the name FILENAME_summary.csv\n"
+                                 "      -pb, -printbins:            If this flag is set, both bin summary information and\n"
+                                 "                                  all binned centroids will be printed to the output location\n"
+                                 "                                  in addition to the final peak table. The file ends in _bins.csv.\n"
+                                 "      -pp, -printpeaks:           print the peak tables as csv.\n"
+                                 "      -e,  -extended:             print additional information into the final peak list. You do not\n"
+                                 "                                  have to also set the -pp flag. Currently, only bin ID and peak ID\n"
+                                 "                                  are added to the output.\n"
+                                 "      -pa, -printall:             print all availvable resutlts.\n"
+                                 "\n    Program behaviour:\n"
+                                 "      -s, -silent:    do not print progress reports to standard out\n"
+                                 "      -v, -verbose:   print a detailed progress report to standard out\n"
+                                 "      -log:           This option will create a detailed log file in the program directory.\n" // @todo
+                                 "\n      Analysis options:\n"
+                                 "      -MS2: also process MS2 spectra"; // @todo
 }
-
-
 
 int main(int argc, char *argv[])
 {
@@ -294,7 +298,6 @@ int main(int argc, char *argv[])
     volatile bool printBins = false;
     volatile bool printExtended = false;
     volatile bool printCentroids = false;
-    
 
     for (int i = 1; i < argc; i++)
     {
@@ -336,7 +339,7 @@ int main(int argc, char *argv[])
                     --i;
                 }
             }
-            
+
             inSpecified = true;
         }
         else if ((argument == "-tl") | (argument == "-tasklist")) // @todo test this
@@ -491,7 +494,7 @@ int main(int argc, char *argv[])
         std::cerr << "Warning: -verbose overrides -silent.\n";
         silent = false;
     }
-    if(!((printCentroids | printSummary) | printPeaks))
+    if (!((printCentroids | printSummary) | printPeaks))
     {
         std::cerr << "Warning: no output files will be written.\n";
     }
@@ -501,12 +504,26 @@ int main(int argc, char *argv[])
 
 #pragma endregion cli arguments
 
+    // Temporary diagnostics file creation, rework this into the log function?
+    std::filesystem::path pathLogging{argv[0]};
+    // pathLogging.filename() = "log_qBinning_beta.csv";
+    pathLogging = std::filesystem::canonical(pathLogging.parent_path());
+    pathLogging /= "log_qBinning_beta.csv";
+    if (std::filesystem::exists(pathLogging))
+    {
+        std::cerr << "Warning: the processing log has been overwritten\n";
+    }
+    std::fstream logWriter;
+    logWriter.open(pathLogging, std::ios::out);
+    logWriter << "filename, numSpectra, numCentroids, meanDQSC, numBins_empty, numBins_one, numBins_more, meanDQSB, numFeatures, meanDQSF\n";
+    logWriter.close();
+
 #pragma region file processing
     std::string filename;
     const std::vector<std::string> polarities = {"positive", "negative"}; // @todo make bool
-    int counter = 0;
+    int counter = 1;
     // @todo add dedicated diagnostics function
-    std::cout << "numCens,numBins,numPeaks,numLoadedBins,numNarrowBin,\n";
+    // std::cout << "numCens,numBins,numPeaks,numLoadedBins,numNarrowBin,\n";
     for (std::filesystem::path pathSource : tasklist)
     {
 
@@ -532,8 +549,8 @@ int main(int argc, char *argv[])
         auto timeStart = std::chrono::high_resolution_clock::now();
         if (!silent)
         {
-            std::cout << "\nreading file " << counter + 1 << " of " << tasklist.size() << ":\n"
-              << pathSource << "\n... ";
+            std::cout << "\nreading file " << counter << " of " << tasklist.size() << ":\n"
+                      << pathSource << "\n... ";
         }
 
         sc::MZML data(std::filesystem::canonical(pathSource).string()); // create mzML object @todo change to use filesystem::path
@@ -548,8 +565,7 @@ int main(int argc, char *argv[])
         {
             std::cout << " file ok\n\n";
         }
-        // update filename to name without duplicates @todo find better solution
-        // pathSource.filename() = itemNames[counter];
+        // update filename to name without duplicates @todo find better solution / should this happen?
 
         for (auto polarity : polarities)
         {
@@ -561,7 +577,7 @@ int main(int argc, char *argv[])
                 tensorData.findCentroids_MZML(qpeaks, data, true, polarity, 10); // read mzML file and find centroids via qPeaks
             if (centroids.size() < 5)
             {
-                
+
                 if (!silent)
                 {
                     std::cout << "skipping mode: " << polarity << "\n";
@@ -580,35 +596,14 @@ int main(int argc, char *argv[])
             }
 
             // @todo remove diagnostics later
-            std::vector<float> DQScen;
+            double meanDQSC = 0;
             for (auto spectrum : centroids)
             {
-                DQScen.reserve(spectrum.size() + DQScen.size());
                 for (auto point : spectrum)
                 {
-                    DQScen.push_back(point.dqsCen);
+                    meanDQSC += point.dqsCen;
                 }
             }
-            // std::sort(DQScen.begin(), DQScen.end());
-            // double lower_Q = 0;
-            // double upper_Q = 0;
-            double meanDQSC = 0;
-            // size_t quartile = DQScen.size() / 4;
-            for (size_t i = 0; i < DQScen.size(); i++)
-            {
-                meanDQSC += DQScen[i];
-                // if (i == quartile)
-                // {
-                //     lower_Q = meanDQSC / quartile;
-                // }
-                // if (i == DQScen.size() - quartile)
-                // {
-                //     upper_Q = meanDQSC;
-                // }
-            }
-            // upper_Q = (meanDQSC - upper_Q) / quartile;
-            meanDQSC /= DQScen.size();
-            // std::cerr << filename << ": " << lower_Q << ", " << meanDQSC << ", " << upper_Q << "\n";
 
             q::Algorithms::qBinning::CentroidedData binThis = qpeaks.passToBinning(centroids);
 
@@ -617,7 +612,7 @@ int main(int argc, char *argv[])
             if (!silent)
             {
                 std::cout << "    produced " << binThis.lengthAllPoints << " centroids from " << centroids.size()
-                  << " spectra in " << (timeEnd - timeStart).count() << " ns\n";
+                          << " spectra in " << (timeEnd - timeStart).count() << " ns\n";
             }
 
             timeStart = std::chrono::high_resolution_clock::now();
@@ -651,14 +646,14 @@ int main(int argc, char *argv[])
 
             double meanDQSF = 0;
             int peakCount = 0;
-            int truebins = 0;
+            int dudBins = 0;
             int onlyone = 0;
+            int overfullBins = 0;
             for (size_t i = 0; i < peaks.size(); i++)
             {
                 peakCount += peaks[i].size();
                 if (!peaks[i].empty())
                 {
-                    ++truebins;
                     for (auto peak : peaks[i])
                     {
                         meanDQSF += peak.dqsPeak;
@@ -667,18 +662,22 @@ int main(int argc, char *argv[])
                     {
                         ++onlyone;
                     }
-                    
+                    else
+                    {
+                        overfullBins++;
+                    }
                 }
                 else
                 {
-                    double binMeanMZ = 0;
-                    double binMeanRT = 0;
-                    int binsize = binnedData[i].mz.size();
-                    for (int j = 0; j < binsize; j++)
-                    {
-                        binMeanMZ += binnedData[i].mz[j];
-                        binMeanRT += binnedData[i].rententionTimes[j];
-                    }
+                    dudBins++;
+                    // double binMeanMZ = 0;
+                    // double binMeanRT = 0;
+                    // int binsize = binnedData[i].mz.size();
+                    // for (int j = 0; j < binsize; j++)
+                    // {
+                    //     binMeanMZ += binnedData[i].mz[j];
+                    //     binMeanRT += binnedData[i].rententionTimes[j];
+                    // }
                     // std::cout << binMeanMZ / binsize << ", " << binMeanRT / binsize << "\n";
                 }
             }
@@ -694,9 +693,16 @@ int main(int argc, char *argv[])
             // continue;
             // std::cerr << peakCount << ", " << truebins << ", " << onlyone << ", " << filename << "\n";
 
+            //@todo , numBins_empty, numBins_one, numBins_more, meanDQSB
+            logWriter.open(pathLogging, std::ios::app);
+            logWriter << filename << centroids.size() << ", " << binThis.lengthAllPoints << ", "
+                      << meanDQSC / binThis.lengthAllPoints << ", " << dudBins << ", " << onlyone
+                      << ", " << overfullBins << ", " << meanDQSB << ", " << peakCount << ", " << meanDQSF << "\n";
+            logWriter.close();
+
             if (printPeaks)
             {
-                // q::printPeaklist(peaks, pathOutput, filename, printExtended, silent, false);
+                q::printPeaklist(peaks, pathOutput, filename, printExtended, silent, false);
             }
             // @todo add peak grouping here
         }

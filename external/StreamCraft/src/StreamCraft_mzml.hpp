@@ -14,7 +14,7 @@
 
 #include PUGIXML_PATH
 
-#include "StreamCraft_utils.h"
+#include "StreamCraft_utils.hpp"
 
 namespace sc
 {

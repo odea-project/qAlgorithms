@@ -84,15 +84,15 @@ namespace q
 #pragma region "initialize"
         alignas(float) float q::Algorithms::qPeaks::x_square[128];   // array to store the square of the x values
         alignas(float) float q::Algorithms::qPeaks::invArray[64][6]; // array to store the 6 unique values of the inverse matrix for each scale
-        __m128 q::Algorithms::qPeaks::ZERO_128;                   // [0., 0., 0., 0.]
-        __m256 q::Algorithms::qPeaks::ZERO_256;                   // [0., 0., 0., 0., 0., 0., 0., 0.]
-        __m128 q::Algorithms::qPeaks::KEY_128;                    // [0., 4., 2., 1.]
-        __m256 q::Algorithms::qPeaks::LINSPACE_UP_POS_256;        // [7., 6., 5., 4., 3., 2., 1., 0.]
-        __m256 q::Algorithms::qPeaks::LINSPACE_UP_NEG_256;        // [-7., -6., -5., -4., -3., -2., -1., 0.]
-        __m256 q::Algorithms::qPeaks::LINSPACE_DOWN_NEG_256;      // [0., -1., -2., -3., -4., -5., -6., -7.]
-        __m256i q::Algorithms::qPeaks::LINSPACE_UP_INT_256;       // [7, 6, 5, 4, 3, 2, 1, 0]
-        __m256i q::Algorithms::qPeaks::LINSPACE_DOWN_INT_256;     // [0, 1, 2, 3, 4, 5, 6, 7]
-        __m256 q::Algorithms::qPeaks::MINUS_ONE_256;              // [-1., -1., -1., -1., -1., -1., -1., -1.]
+        __m128 q::Algorithms::qPeaks::ZERO_128;                      // [0., 0., 0., 0.]
+        __m256 q::Algorithms::qPeaks::ZERO_256;                      // [0., 0., 0., 0., 0., 0., 0., 0.]
+        __m128 q::Algorithms::qPeaks::KEY_128;                       // [0., 4., 2., 1.]
+        __m256 q::Algorithms::qPeaks::LINSPACE_UP_POS_256;           // [7., 6., 5., 4., 3., 2., 1., 0.]
+        __m256 q::Algorithms::qPeaks::LINSPACE_UP_NEG_256;           // [-7., -6., -5., -4., -3., -2., -1., 0.]
+        __m256 q::Algorithms::qPeaks::LINSPACE_DOWN_NEG_256;         // [0., -1., -2., -3., -4., -5., -6., -7.]
+        __m256i q::Algorithms::qPeaks::LINSPACE_UP_INT_256;          // [7, 6, 5, 4, 3, 2, 1, 0]
+        __m256i q::Algorithms::qPeaks::LINSPACE_DOWN_INT_256;        // [0, 1, 2, 3, 4, 5, 6, 7]
+        __m256 q::Algorithms::qPeaks::MINUS_ONE_256;                 // [-1., -1., -1., -1., -1., -1., -1., -1.]
 
         void qPeaks::initialize()
         {
@@ -173,10 +173,10 @@ namespace q
                 if (n <= 512)
                 {
                     // STATIC APPROACH
-                    alignas(float) float Y[512];                      // measured y values
-                    alignas(float) float Ylog[512];                   // log-transformed measured y values
-                    alignas(float) float X[512];                      // measured x values
-                    alignas(bool) bool df[512];                      // degree of freedom vector, 0: interpolated, 1: measured
+                    alignas(float) float Y[512];                   // measured y values
+                    alignas(float) float Ylog[512];                // log-transformed measured y values
+                    alignas(float) float X[512];                   // measured x values
+                    alignas(bool) bool df[512];                    // degree of freedom vector, 0: interpolated, 1: measured
                     validRegression_static validRegressions[2048]; // array of valid regressions with default initialization, i.e., random states
                     int validRegressionsIndex = 0;                 // index of the valid regressions
 
@@ -260,13 +260,13 @@ namespace q
                 if (n <= 512)
                 {
                     // STATIC APPROACH
-                    alignas(float) float Y[512];                      // measured y values
-                    alignas(float) float Ylog[512];                   // log-transformed measured y values
-                    alignas(float) float X[512];                      // measured x values
-                    alignas(bool) bool df[512];                      // degree of freedom vector, 0: interpolated, 1: measured
-                    alignas(float) float mz[512];                     // measured mz values
-                    alignas(float) float dqs_cen[512];                // measured dqs values
-                    alignas(float) float dqs_bin[512];                // measured dqs values
+                    alignas(float) float Y[512];                   // measured y values
+                    alignas(float) float Ylog[512];                // log-transformed measured y values
+                    alignas(float) float X[512];                   // measured x values
+                    alignas(bool) bool df[512];                    // degree of freedom vector, 0: interpolated, 1: measured
+                    alignas(float) float mz[512];                  // measured mz values
+                    alignas(float) float dqs_cen[512];             // measured dqs values
+                    alignas(float) float dqs_bin[512];             // measured dqs values
                     validRegression_static validRegressions[2048]; // array of valid regressions with default initialization, i.e., random states
                     int validRegressionsIndex = 0;                 // index of the valid regressions
 
@@ -369,10 +369,10 @@ namespace q
             validRegressions.reserve(calculateNumberOfRegressions(n));
             for (int scale = 2; scale <= maxScale; scale++)
             {
-                const int k = 2 * scale + 1;                       // window size
-                const int n_segments = n - k + 1;                  // number of segments, i.e. regressions considering the array size
+                const int k = 2 * scale + 1;                           // window size
+                const int n_segments = n - k + 1;                      // number of segments, i.e. regressions considering the array size
                 alignas(__m128) __m128 *beta = new __m128[n_segments]; // coefficients matrix
-                convolve_dynamic(scale, ylog_start, n, beta);      // do the regression
+                convolve_dynamic(scale, ylog_start, n, beta);          // do the regression
                 validateRegressions(beta, n_segments, y_start, ylog_start, df_start, scale, validRegressions);
             } // end for scale loop
             mergeRegressionsOverScales(validRegressions, y_start, ylog_start, df_start);
@@ -394,7 +394,7 @@ namespace q
             for (int scale = 2; scale <= maxScale; scale++)
             {
                 const int k = 2 * scale + 1;                 // window size
-                alignas(__m128) __m128 beta[512];                // coefficients matrix
+                alignas(__m128) __m128 beta[512];            // coefficients matrix
                 convolve_static(scale, ylog_start, n, beta); // do the regression
                 const int n_segments = n - k + 1;            // number of segments, i.e. regressions considering the number of data points
                 validateRegressions_static(beta, n_segments, y_start, ylog_start, df_start, scale, validRegressionsIndex, validRegressions);
@@ -1196,13 +1196,13 @@ namespace q
                         yhat = exp_approx_vf(yhat); // calculate the exp of the yhat values (if needed)
                     }
                     const __m256 y_vec = _mm256_loadu_ps(y_start + j); // Load 8 values from y considering the offset j
-                    const __m256 diff = _mm256_sub_ps(y_vec, yhat);   // Calculate the difference between y and yhat
-                    __m256 diff_sq = _mm256_mul_ps(diff, diff);       // Calculate the square of the difference
+                    const __m256 diff = _mm256_sub_ps(y_vec, yhat);    // Calculate the difference between y and yhat
+                    __m256 diff_sq = _mm256_mul_ps(diff, diff);        // Calculate the square of the difference
                     if (calc_CHISQ)
                     {
                         diff_sq = _mm256_div_ps(diff_sq, yhat); // Calculate the weighted square of the difference
                     }
-                    result += q::sum8(diff_sq); // Calculate the sum of the squares and add it to the result
+                    result += sum8(diff_sq); // Calculate the sum of the squares and add it to the result
                 }
             };
 
@@ -1230,7 +1230,7 @@ namespace q
                     diff_sq = _mm256_div_ps(diff_sq, yhat);                                              // calculate the weighted square of the difference
                     diff_sq = _mm256_blendv_ps(_mm256_setzero_ps(), diff_sq, _mm256_castsi256_ps(mask)); // set the nan values to zero
                 }
-                result += q::sum8(diff_sq); // calculate the sum of the squares and add it to the result
+                result += sum8(diff_sq); // calculate the sum of the squares and add it to the result
             };
 
             // Calculate the full segments

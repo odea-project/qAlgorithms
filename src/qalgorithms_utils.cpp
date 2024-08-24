@@ -52,7 +52,7 @@ namespace q
     return sum;
   }
 
-  inline float sum8(const __m256 &vec)
+  float sum8(const __m256 &vec) // why does this break when inlined?
   {
     float sum = 0;
     for (size_t i = 0; i < 8; i++)
