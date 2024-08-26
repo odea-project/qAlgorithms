@@ -1,3 +1,7 @@
+210311_C3_S7_I_1_pos ist komisch
+
+DQSB MID nur innerhalb von maxdist scans, MOD nich gauss, sondern -50% skalieren
+
 Konstruktor/Destruktor prüfen 
 
 https://massive.ucsd.edu/ProteoSAFe/datasets.jsp#%7B%22full_search_input%22%3A%22TOF%22%2C%22table_sort_history%22%3A%22createdMillis_dsc%22%2C%22query%22%3A%7B%7D%7D

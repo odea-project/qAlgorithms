@@ -249,6 +249,56 @@ These bins should not be passed to the centroiding algorithm.
 The information that a duplicate was included is passed with the
 errorcode, while the centroid with the higher DQSC is retained.
 
+# Development of a consistency parameter from process statistics
+When assessing the entire process from profile-mode spectra to 
+components, it is important to find parameters that are responsive
+to a broad number of deviations within the system. Multiple of the 
+presented categories are highly selective regarding the types of
+properties they give insight into, and as such not well-suited to
+form the basis of a sum parameter for process quality.
+
+Tested parameters:
+* mean DQSC
+* mean DQSB
+* mean DQSF
+* Number of centroids
+* Number of bins
+  * Number of bins with no features
+  * Number of bins with one feature
+  * number of bins with more than one features
+* Number of features
+
+The three quality parameters (DQSC, DQSB, DQSF) calculated during the
+different steps of qAlgorithms describe the model consistency of that
+step to a limited degree. When taking their mean value at the end of their
+respective step, they can indicate large differences between datasets
+and make a statement about when during processing such a shift took place.
+Tests with different datasets showed that their correlation is inconsistent,
+sometimes (anti)correlating strongly and other times being roughly orthogonal.
+This implies that they contain information which can not be coerced into
+one sum parameter without losing predictive power.
+
+It was observed that, when ordered by time of recording, the differences
+between scores of neighbouring measurements are close to zero for defect-free
+measurement series. Two different series of similar samples which were
+measured one month apart had very similar DQSCs, barring one exception.
+DQSB and DQSF showed a similar jump in difference, but tend to have a higher 
+base fluctuation in the used datasets.
+In the tested data, the first measurement of the continued series had 
+abnormally many spectra recorded. This lead to two noticeable changes
+in DQSC (refer image). To use the DQSC as a consistency parameter, the
+display algorithm would have to account for such outliers and add an
+explanation for the operator to the marked region. The threshold for an
+out-of-control situation should be dynamically generated out of the 
+dataset. The greatest observed difference was 0.0017, which is ca. 2.5
+times geater than the mean fluctuation. The standard deviation within
+an outlier-free measurement series is 0.00036. The established three-sigma
+interval for denoting outliers would be applcable to this use case,
+and it is worth considering as the least sensitive stability measure
+for a running system.
+[@todo] DQSB, DQSF
+
+
 # Viability test for simple process parameters
 Tested parameters:
 * mean DQSC
@@ -349,6 +399,10 @@ features still affected by void-time effluent.
 The degree to which such a method is oversensitive could be reduced by
 Implementing different warning levels with independent criteria.
 
+The implemented visualisation tools should be validated using realistic
+conditions under which instrument performance is reduced, like measurements
+with an old column, or measurements after the system has been inactive for
+a prolonged period of time. 
 
 For being useful tools in decisionmaking, the control chart must also include
 critical values for out of control situations. These should be identified
@@ -411,7 +465,7 @@ column pressure to increase and decrease rapidly. It is used because
 these conditions should cause the produced data to be no longer
 binned reliably, leading to the majority of features being wrong.
 
-SFC-HERMS data:
+SFC-HRMS data:
 This dataset is from a design of experiment series trying out different
 ion source parameters. The source was set to polarity switching, 
 resulting in two datasets per measurement after evaluation.
@@ -421,6 +475,7 @@ Three blanks, three standards and three samples from the Aquaflow
 project, all measured in positive mode. One sample measurement
 is notable for not containing any centroids for the first 800 scans.
 Naming: C = control, T = treatment, S = sampling time
+Another sample contained 5000 MS1 spectra, while usually only 1300 were recorded.
 
 Other reference data:
 Excerpt of a measurement series containing four blanks, and seven

@@ -695,7 +695,7 @@ int main(int argc, char *argv[])
 
             //@todo , numBins_empty, numBins_one, numBins_more, meanDQSB
             logWriter.open(pathLogging, std::ios::app);
-            logWriter << filename << centroids.size() << ", " << binThis.lengthAllPoints << ", "
+            logWriter << filename << ", " << centroids.size() << ", " << binThis.lengthAllPoints << ", "
                       << meanDQSC / binThis.lengthAllPoints << ", " << dudBins << ", " << onlyone
                       << ", " << overfullBins << ", " << meanDQSB << ", " << peakCount << ", " << meanDQSF << "\n";
             logWriter.close();
