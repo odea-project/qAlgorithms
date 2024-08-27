@@ -151,10 +151,14 @@ While the current accuracy of mass instruments does not usually
 require more than 15 digits of precision, as the required accuracy
 increases this could start affecting analysis results.
 The maximum mass precision should be reported in the output file.
+Conversion tools which depend on file transfer and user parameters
+are additionally a potential source of user error. These cannot be
+detected when using the vendor supplied instrument software for
+visual inspection of the mass spectra.
 
 # Performance criteria - Centroiding:
 It should be noted that not all approaches to mass spectrometric
-data processing utilise centroiding of the raw spectra. @todo MCR approach
+data processing necesarily utilise centroiding of the raw spectra. @todo MCR approach
 To differentiate between the data at different steps of processing,
 a group of m/z value, retention time and intensity before any processing
 has taken place is referred to as "signal point".
@@ -166,7 +170,7 @@ A traditional estimation of false positive or false negatives is
 not possible at this step, since any per-signal point information is 
 lost during the following steps towards componentisation.
 
-## Centroid quality score
+## Centroid quality score (DQSC)
 The DQSC currently implemented through the qAlgorithms workflow
 gives the percentage to which any given centroid conforms to the
 expected gaussian shape. [@todo paper] 
@@ -194,6 +198,17 @@ spectrum in a measurement.
 It is assumed that generally, more initial signals equal a lower chance
 of false negatives. As such, the amount of centroids produced - irrespective
 of the DQSC - is also a measure of process quality during centroiding.
+
+## Bin quality score (DQSB)
+The DQSB in its current implementation [@todo] (paper binning, report 1) gives a measure of how well separated
+a bin is from its environment by comparing the distances within a bin with
+the distance to the closest point outside of it. In its original conception,
+this only takes the retention time into account when searching for the closest
+points not in the bin. To achieve greater locality of the score, the program
+was modified such that only points within the maximal gap distance are used
+to calculate the mean in-group differences in mz. This change led to, on
+average, slightly lower scores. Furthermore, scaling was introduced for 
+the outer distance. (see [section])
 
 # General Notes on Tests - Binning:
 The tests presented here were developed as assessors for the quality
@@ -428,7 +443,7 @@ To which degree the results are transferable to, for example, a QTOF,
 would require a series being measured on both. At the time of writing,
 no series of profile TOF data was availvable for comparisons.
 
-# Expansions to qAlgorithms
+# planned Expansions to qAlgorithms
 Data visualisation is currently (19.08.2024) not implemented for qAlgorithms.
 Furthermore, it does not have an internal representation of measurement 
 series. This results in the user having to invest additional time to create 
@@ -449,6 +464,47 @@ process quality will have to be devised here. It could be sensible
 decision to include templates for common applications, such as monitoring
 the stability of a system over time. This would ideally include a way to check 
 the general system stability without re-processing potentially thousands of files again.
+
+# performed modifications to qAlgorithms 
+## modified centroiding
+An advantage of the qCentroids approach [@todo] is that peaks can also
+be found if "gaps" exsist, meaning either through instrument behaviour
+or a processing error no intensity was measured where it should have 
+been. These missing points are interpolated, previously bridging gaps
+of up to seven points. This accepted gap size has been lowered to three
+points, since at a greater number of unknowns the risk of connecting two
+unrelated peaks and lowering the overall data quality was too great. 
+Accordingly, the greatest tolerated gap in scans within a bin has been
+changed to three, which corresponds to a 12.5% chance of three real
+signals being overlooked.
+
+## DQSB calculation
+Two elements of the DQSB calculation were changed:
+* The calculation of the mean inner distance (MID)
+* The scaling factor for minimum outer distance (MOD)
+Previously, the MID was calculated per point by averaging the
+distances from one point to every other member point of a given bin.
+This was changed, since a large part of the bin which this distance
+was calculated for will, in many cases, later be discarded by 
+isolating the feature region. In order for the DQSB to better reflect
+its later use case, now only those points within the maximum tolerated
+distance (currently three, see above) are considered. This led to a slight
+reduction in the average quality scores, although the exact effects still
+need to be evaluated. 
+
+With a similar consideration of the relevant scan range, now scaling is
+introduced based on the likelihood with which a relevant point was not 
+detected. In the worst case scenario, this results in a 50% likelihood
+that the point was not measured erroneously [@qBinning]. To reflect this
+behaviour, the MOD is doubled if it connects to a point with a one-scan
+difference, quadrupled for a two scan difference etc.. A previously implemented
+scaling approach doubled the MOD if it was to a point with the greatest 
+possible scan distance and fell off to no increase in distance for a point
+in the same scan. It was not extensively tested and discarded because the
+reasoning behind it did not translate into assumptions of the grouping model.
+If more lenient gaps are considered again in the future, this scaling 
+will likely have to be reworked to not automatically exclude remote but
+relevant points from influencing the DQSB.
 
 # Software and Data
 All calculations in R were performed with R 4.4.0[@rcoreteamLanguageEnvironmentStatistical2023], 

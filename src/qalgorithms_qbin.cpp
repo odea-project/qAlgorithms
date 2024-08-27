@@ -28,6 +28,8 @@ namespace q
             /// @return vector of the mean inner distances for all elements in the same order as pointsInBin
             static std::vector<double> meanDistance(const std::vector<qCentroid *> pointsInBin);
 
+            static std::vector<double> meanDistanceRegional(const std::vector<qCentroid *> pointsInBin, int maxdist);
+
             /// @brief calculate the data quality score as described by Reuschenbach et al. for one datapoint in a bin
             /// @param MID mean inner distance in mz to all other elements in the bin
             /// @param MOD minimum outer distance - the shortest distance in mz to a data point that is within maxdist and not in the bin
@@ -239,6 +241,7 @@ namespace q
                     std::cout << "nothing to re-bin, continuing...\n";
                     return;
                 }
+                std::cout << "processing " << incompleteBins.size() << " bins\n";
                 // Assemble new starting bin
                 Bin startingRebin;
                 startingRebin.pointsInBin.reserve(notInBins.size() + incompleteBins.size() * 16); // @todo test the average size for non-warburg data
@@ -885,11 +888,28 @@ namespace q
 
                 // determine min and max in mz - sort, since then calculation of inner distances is significantly faster
                 std::sort(pointsInBin.begin(), pointsInBin.end(), [](qCentroid *lhs, qCentroid *rhs)
-                          { return lhs->mz < rhs->mz; });
-                mzMin = pointsInBin.front()->mz;
-                mzMax = pointsInBin.back()->mz;
+                          { return lhs->scanNo < rhs->scanNo; });
 
-                std::vector<double> meanInnerDistances = meanDistance(pointsInBin);
+                double mzMin1 = INFINITY;
+                double mzMax1 = 0;
+                for (auto cen : pointsInBin)
+                {
+                    if (cen->mz < mzMin1){
+                        mzMin1 = cen->mz;
+                    }
+                    if (cen->mz > mzMax1){
+                        mzMax1 = cen->mz;
+                    }
+                }
+                // mzMin = pointsInBin.front()->mz;
+                // mzMax = pointsInBin.back()->mz;
+                // assert(mzMin == mzMin1);
+                // assert(mzMax == mzMax1);
+                this->mzMax = mzMax1;
+                this->mzMin = mzMin1;
+
+                // std::vector<double> meanInnerDistances = meanDistance(pointsInBin);
+                std::vector<double> meanInnerDistances = meanDistanceRegional(pointsInBin, maxdist);
                 // find median in mz
                 const int posMedian = binsize / 2;
                 if (binsize & 1)
@@ -901,9 +921,8 @@ namespace q
                     medianMZ = (pointsInBin[posMedian]->mz + pointsInBin[posMedian + 1]->mz) / 2; // +1 to round to nearest, since integers are truncated
                 }
 
-                bool maxScansReduced = false; // add this many dummy values to prevent segfault when bin is in one of the last scans
+                bool maxScansReduced = false; // is maxScan + maxdist greater than the largest scan?
 
-                // @todo move the creation of minMaxOutPerScan to its own function (?)
                 // contains both mz values (per scan) next or closest to all m/z in the bin
                 std::vector<double> minMaxOutPerScan;
                 // +1 since both values are relevant to the range
@@ -1004,7 +1023,8 @@ namespace q
                         minMaxOutPerScan.push_back(rawdata->allDatapoints[i][needle].mz);
                     }
                 }
-                // minMaxOutPerScan contains the relevant distances in order of scans, with both min and max per scan being stored for comparison
+                // minMaxOutPerScan contains the relevant points in order of scans,
+                // for every scan the two closest values from both ends of the bin
                 if (maxScansReduced) // add dummy values after last scan
                 {
                     while (minMaxOutPerScan.capacity() != minMaxOutPerScan.size())
@@ -1398,6 +1418,40 @@ namespace q
                 return output;
             }
 
+            static std::vector<double> meanDistanceRegional(const std::vector<qCentroid *> pointsInBin, int maxdist)
+            {
+                // the other mean distance considers all points in the Bin.
+                // It is sensible to only use the mean distance of all points
+                // within maxdist scans
+                // this function assumes the bin to be sorted by scans
+                const size_t binsize = pointsInBin.size();
+                std::vector<double> output(binsize);
+                size_t position = 0;
+                for (size_t i = 0; i < binsize; i++)
+                {
+                    int scanRegionStart = pointsInBin[i]->scanNo - maxdist; // can be negative
+                    int scanRegionEnd = pointsInBin[i]->scanNo + maxdist + 1;
+                    double accum = 0;
+                    while (pointsInBin[position]->scanNo < scanRegionStart)
+                    {
+                        position++;
+                    }
+                    size_t readPos = position;
+                    while (pointsInBin[readPos]->scanNo < scanRegionEnd)
+                    {
+                        accum += abs(pointsInBin[readPos]->mz - pointsInBin[i]->mz);
+                        readPos++;
+                        if (readPos == binsize)
+                        {
+                            break;
+                        }
+                        
+                    }
+                    output[i] = accum/ double(readPos - position - 1); // -1 since the distance of an element to itself is not factored in
+                }
+                return output;
+            }
+
             static inline double calcDQS(const double MID, const double MOD) // mean inner distance, minimum outer distance
             {
                 double dqs(MOD); // MOD should always be less than MID, less cache misses
@@ -1435,6 +1489,25 @@ namespace q
                 }
             }
 
+            static void scaleDistancesForDQS_linear(int maxdist) // @experimental
+            {
+                // Assumption: every point which is found in a neighbouring scan, but not the 
+                // current one, has a 50% chance of existing. As such, it can only be half
+                // as relevant as another point in the same scan. To scale, A distance in the
+                // same scan is multiplied by one, one further by two, then by four etc.
+                scalarForMOD.resize(maxdist * 4 + 2);     // every value is doubled, same length as selected mz vector during DQS calculation
+                double scalarSingle = pow(2, maxdist);
+                for (int i = 0; i < 2 * maxdist + 1; i++) // scalarForMod contains the correct scaling to be used on the MOD for any maxdist
+                {
+                    scalarForMOD[i] = scalarSingle;
+                    scalarForMOD[i + 1] = scalarSingle;
+                    scalarForMOD[scalarForMOD.size() - 1 - i] = scalarSingle;
+                    scalarForMOD[scalarForMOD.size() - 2 - i] = scalarSingle; 
+                    i++;
+                    scalarSingle /= 2;
+                }
+            }
+
 #pragma endregion "Functions"
 
             std::vector<EIC> performQbinning(CentroidedData centroidedData, std::filesystem::path outpath, std::string filename,
@@ -1462,7 +1535,7 @@ namespace q
 
                 // this sets q::scalarForMOD to the correct scaling so that at the
                 // distance in scans == maxdist the curve encloses 99% of its area
-                scaleDistancesForDQS_gauss(maxdist);
+                scaleDistancesForDQS_linear(maxdist);
                 activeBins.assignDQSB(&centroidedData, maxdist, false);
 
                 // @todo add a way for selection / bin summary to be given upstream
@@ -1527,7 +1600,7 @@ int notmain()
     std::cout << "Total duplicates: " << q::Algorithms::qBinning::duplicatesTotal << "\n--\ncalculating DQSBs...\n";
 
     // calculate data quality scores
-    q::Algorithms::qBinning::scaleDistancesForDQS_gauss(inputMaxdist); // this sets q::scalarForMOD to the correct scaling so that at the distance in scans == maxdist the curve encloses 99% of its area
+    q::Algorithms::qBinning::scaleDistancesForDQS_linear(inputMaxdist); // this sets q::scalarForMOD to the correct scaling so that at the distance in scans == maxdist the curve encloses 99% of its area
     testcontainer.assignDQSB(&testdata, inputMaxdist, false);          // int = max dist in scans
 
     testcontainer.redoBinningIfTooclose(measurementDimensions, &testdata, q::Algorithms::qBinning::notInBins, q::Algorithms::qBinning::maxdist);

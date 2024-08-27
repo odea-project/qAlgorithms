@@ -117,14 +117,19 @@ fullPCA = autoplot(pca_all, data = allProcessed[,], label = T,
 
 ggplotly(fullPCA)
 
-noBlanks = allProcessed[which(!allProcessed$blank & allProcessed$polarity),]
-seriesBreaks = c(1, 24, 40, 58)
-breakNames = c("29.02", "11.03", "ozonation", "PFAS")
+noBlanks = allProcessed[which(allProcessed$polarity),]
+xaxis = 1:(length(noBlanks$numSpectra)-1)
+seriesBreaks = c(1, 3, 27, 43, 65)
+breakNames = c("Standards", "29.02", "11.03", "ozonation", "PFAS")
 ggplot()+
-  geom_line(aes(1:62, (diff(noBlanks$meanDQSC)), colour = "DQSC"), linewidth = 1)+
-  geom_line(aes(1:62, (diff(noBlanks$meanDQSB)), colour = "DQSB"), linewidth = 0.8)+
-  geom_line(aes(1:62, (diff(noBlanks$meanDQSF)), colour = "DQSF"), linewidth = 0.6)+
+  geom_line(aes(xaxis, (diff(noBlanks$meanDQSC)), colour = "DQSC"), linewidth = 1)+
+  geom_line(aes(xaxis, (diff(noBlanks$meanDQSB)), colour = "DQSB"), linewidth = 0.8)+
+  geom_line(aes(xaxis, (diff(noBlanks$meanDQSF)), colour = "DQSF"), linewidth = 0.6)+
   geom_vline(xintercept = seriesBreaks, linewidth = 1, linetype = "dashed")
-  
+
+
+ggplot(allProcessed)+
+  geom_point(aes(row.names(allProcessed), numFeatures/(numBins_one), colour = year))+
+  scale_x_discrete(guide = guide_axis(angle = 60))  
 ```
 
