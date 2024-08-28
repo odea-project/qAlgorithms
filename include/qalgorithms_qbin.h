@@ -24,6 +24,7 @@ namespace q
                 float RT;
                 int scanNo;
                 double intensity;
+                double intensity_height;
                 double DQSCentroid; // this and RT could be moved outside of the struct
             };
 
@@ -71,6 +72,7 @@ namespace q
                 std::vector<double> rententionTimes;
                 std::vector<double> mz;
                 std::vector<double> intensities;
+                std::vector<double> intensities_height;
                 std::vector<double> DQSB;
                 std::vector<double> DQSC;
 

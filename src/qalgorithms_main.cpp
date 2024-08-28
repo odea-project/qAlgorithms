@@ -130,13 +130,13 @@ int main()
         // use file input name to create output file name with polarity_features.csv extension
         std::string output_filename = fileName.substr(0, fileName.find_last_of(".")) + "_" + polarity + "_features.csv";
         std::ofstream output_file(output_filename);
-        output_file << "mz,rt,int,mzUncertainty,rtUncertainty,intUncertainty,dqs_cen,dqs_bin,dqs_peak\n";
+        output_file << "mz,rt,area,height,mzUncertainty,rtUncertainty,areaUncertainty,heightUncertainty,dqs_cen,dqs_bin,dqs_peak\n";
         for (size_t i = 0; i < peaks.size(); ++i)
         {
           for (size_t j = 0; j < peaks[i].size(); ++j)
           {
-            output_file << peaks[i][j]->mz << "," << peaks[i][j]->retentionTime << "," << peaks[i][j]->area << ","
-                        << peaks[i][j]->mzUncertainty << "," << peaks[i][j]->retentionTimeUncertainty << "," << peaks[i][j]->areaUncertainty << ","
+            output_file << peaks[i][j]->mz << "," << peaks[i][j]->retentionTime << "," << peaks[i][j]->area << "," << peaks[i][j]->height << ","
+                        << peaks[i][j]->mzUncertainty << "," << peaks[i][j]->retentionTimeUncertainty << "," << peaks[i][j]->areaUncertainty << "," << peaks[i][j]->heightUncertainty << ","
                         << peaks[i][j]->dqsCen << "," << peaks[i][j]->dqsBin << "," << peaks[i][j]->dqsPeak << "\n";
           }
         }

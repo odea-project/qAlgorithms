@@ -7,6 +7,7 @@
 #include <cassert>
 #include <numeric>
 #include <cmath>
+#include <fstream>
 
 // external
 
@@ -65,7 +66,7 @@ namespace q
           {
             auto &peak = allPeaks[i][j];
             qBinning::qCentroid F = qBinning::qCentroid{peak->mz, peak->mzUncertainty, peak->retentionTime,
-                                                        scanRelative, peak->area, peak->dqsCen};
+                                                        scanRelative, peak->area, peak->height, peak->dqsCen};
             centroids[scanRelative].push_back(F);
             ++totalCentroids;
           }
@@ -425,19 +426,20 @@ namespace q
       // iterate columwise over the coefficients matrix beta
       for (int i = 0; i < n_segments; i++)
       {
-        const __m128 &coeff = beta[i]; // coefficient register from beta @ i
-        int df_sum = 0;                // sum of the degree of freedom
-        float apex_position = 0.f;     // apex position
-        int left_limit = 0;            // left limit of the peak
-        int right_limit = 0;           // right limit of the peak
-        float area = 0.f;              // peak area
-        float uncertainty_area = 0.f;  // uncertainty of the peak area
-        float uncertainty_pos = 0.f;   // uncertainty of the peak position
+        const __m128 &coeff = beta[i];  // coefficient register from beta @ i
+        int df_sum = 0;                 // sum of the degree of freedom
+        float apex_position = 0.f;      // apex position
+        int left_limit = 0;             // left limit of the peak
+        int right_limit = 0;            // right limit of the peak
+        float area = 0.f;               // peak area
+        float uncertainty_area = 0.f;   // uncertainty of the peak area
+        float uncertainty_pos = 0.f;    // uncertainty of the peak position
+        float uncertainty_height = 0.f; // uncertainty of the peak height
 
         // validate the regression
-        if (!validateRegressions_testseries(inverseMatrix_2_2, i, scale, df_start, y_start, ylog_start, coeff, df_sum, apex_position, left_limit, right_limit, area, uncertainty_area, uncertainty_pos))
+        if (!validateRegressions_testseries(inverseMatrix_2_2, i, scale, df_start, y_start, ylog_start, coeff, df_sum, apex_position, left_limit, right_limit, area, uncertainty_area, uncertainty_pos, uncertainty_height))
         {
-          continue; // invalid regression
+          continue; // peak is not valid
         }
 
         // at this point, the peak is validated
@@ -458,6 +460,7 @@ namespace q
         vr.area = area;                               // peak area
         vr.uncertainty_area = uncertainty_area;       // uncertainty of the peak area
         vr.uncertainty_pos = uncertainty_pos;         // uncertainty of the peak position
+        vr.uncertainty_height = uncertainty_height;   // uncertainty of the peak height
         validRegressionsTmp.push_back(vr);            // push to the temporary vector of valid regressions
       } // end for loop
       // early return if no or only one valid peak
@@ -551,20 +554,46 @@ namespace q
       // iterate columwise over the coefficients matrix beta
       for (int i = 0; i < n_segments; i++)
       {
-        const __m128 &coeff = beta[i]; // coefficient register from beta @ i
-        int df_sum = 0;                // sum of the degree of freedom
-        float apex_position = 0.f;     // apex position
-        int left_limit = 0;            // left limit of the peak
-        int right_limit = 0;           // right limit of the peak
-        float area = 0.f;              // peak area
-        float uncertainty_area = 0.f;  // uncertainty of the peak area
-        float uncertainty_pos = 0.f;   // uncertainty of the peak position
+        const __m128 &coeff = beta[i];  // coefficient register from beta @ i
+        int df_sum = 0;                 // sum of the degree of freedom
+        float apex_position = 0.f;      // apex position
+        int left_limit = 0;             // left limit of the peak
+        int right_limit = 0;            // right limit of the peak
+        float area = 0.f;               // peak area
+        float uncertainty_area = 0.f;   // uncertainty of the peak area
+        float uncertainty_pos = 0.f;    // uncertainty of the peak position
+        float uncertainty_height = 0.f; // uncertainty of the peak height
 
         // validate the regression
-        if (!validateRegressions_testseries(inverseMatrix_2_2, i, scale, df_start, y_start, ylog_start, coeff, df_sum, apex_position, left_limit, right_limit, area, uncertainty_area, uncertainty_pos))
+        if (!validateRegressions_testseries(inverseMatrix_2_2, i, scale, df_start, y_start, ylog_start, coeff, df_sum, apex_position, left_limit, right_limit, area, uncertainty_area, uncertainty_pos, uncertainty_height))
         {
-          continue; // invalid regression
+          // #pragma omp critical
+          // {
+          // std::ofstream logfile("logfile_invalidRegression.txt", std::ios::app);
+          // if (logfile.is_open()) {
+          //   logfile << "Coefficients: ";
+          //   for (int j = 0; j < 4; j++) {
+          //     logfile << coeff[j] << " ";
+          //   }
+          //   logfile << std::endl;
+          //   logfile.close();
+          // }}
+          continue; // peak is not valid
         }
+        // else
+        // {
+        //   #pragma omp critical
+        //   {
+        //   std::ofstream logfile("logfile_validRegression.txt", std::ios::app);
+        //   if (logfile.is_open()) {
+        //     logfile << "Coefficients: ";
+        //     for (int j = 0; j < 4; j++) {
+        //       logfile << coeff[j] << " ";
+        //     }
+        //     logfile << std::endl;
+        //     logfile.close();
+        //   }}
+        // }
 
         // at this point, the peak is validated
         /*
@@ -583,6 +612,7 @@ namespace q
         validRegressionsTmp[validRegressionsIndexTmp].area = area;                               // peak area
         validRegressionsTmp[validRegressionsIndexTmp].uncertainty_area = uncertainty_area;       // uncertainty of the peak area
         validRegressionsTmp[validRegressionsIndexTmp].uncertainty_pos = uncertainty_pos;         // uncertainty of the peak position
+        validRegressionsTmp[validRegressionsIndexTmp].uncertainty_height = uncertainty_height;   // uncertainty of the peak height
         validRegressionsIndexTmp++;
       } // end for loop
       // early return if no or only one valid peak
@@ -671,7 +701,8 @@ namespace q
         int &right_limit,
         float &area,
         float &uncertainty_area,
-        float &uncertainty_pos)
+        float &uncertainty_pos,
+        float &uncertainty_height)
     {
       /*
           Degree of Freedom Filter:
@@ -738,7 +769,7 @@ namespace q
         Height Filter:
         This block of code implements the height filter. It calculates the height of the peak based on the coefficients matrix B. Then it calculates the uncertainty of the height based on the Jacobian matrix and the variance-covariance matrix of the coefficients. If the height is statistically insignificant, the loop continues to the next iteration.
       */
-      float uncertainty_height = 0.0; // at this point without height, i.e., to get the real uncertainty multiply with height later. This is done to avoid exp function at this point
+      // at this point height uncertainty without height, i.e., to get the real uncertainty multiply with height later. This is done to avoid exp function at this point
       if (!isValidPeakHeight(mse, i, scale, apex_position, valley_position, df_sum, apexToEdge, uncertainty_height))
       {
         return false; // statistical insignificance of the height
@@ -1043,8 +1074,7 @@ namespace q
       {
         // weighted mean using y_start as weighting factor and left_limit right_limit as range
         int n = right_limit - left_limit + 1;
-        float sum_xw = 0.0;     // sum of x*w
-        float sum_weight = 0.0; // sum of w
+        float mean_wt = 0.0; // mean of w
         for (int j = left_limit; j <= right_limit; j++)
         {
           if (!*(df + j))
@@ -1052,8 +1082,19 @@ namespace q
             n--;
             continue;
           }
-          sum_xw += *(x + j) * *(w + j);
-          sum_weight += *(w + j);
+          mean_wt += *(w + j);
+        }
+        mean_wt /= n;
+        float sum_xw = 0.0;     // sum of x*w
+        float sum_weight = 0.0; // sum of w
+        for (int j = left_limit; j <= right_limit; j++)
+        {
+          if (!*(df + j))
+          {
+            continue;
+          }
+          sum_xw += *(x + j) * *(w + j) / mean_wt;
+          sum_weight += *(w + j) / mean_wt;
         }
         float weighted_mean = sum_xw / sum_weight;
         float sum_Qxxw = 0.0; // sum of (x - mean)^2 * w
@@ -1082,6 +1123,7 @@ namespace q
       // add height
       const __m128 coeff = regression.coeff;
       peak.height = exp_approx_d(((float *)&coeff)[0] + (regression.apex_position - regression.index_x0) * ((float *)&coeff)[1] * .5); // peak height (exp(b0 - b1^2/4/b2)) with position being -b1/2/b2
+      peak.heightUncertainty = regression.uncertainty_height * peak.height;
 
       // add area
       const float exp_b0 = exp_approx_d(((float *)&coeff)[0]); // exp(b0)

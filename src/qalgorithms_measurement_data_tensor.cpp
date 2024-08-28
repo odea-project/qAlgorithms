@@ -81,30 +81,30 @@ namespace q
                 std::sort(indices.begin(), indices.end(), compare);
                 for (size_t i = 0; i < eic.scanNumbers.size(); ++i)
                 {
-                    TensorData::dataPoint dp(            // create data point
-                        eic.rententionTimes[indices[i]], // x-axis value
-                        eic.intensities[indices[i]],     // y-axis value
-                        true,                            // df value
-                        eic.DQSC[indices[i]],            // dqs centroid value
-                        eic.DQSB[indices[i]],            // dqs binning value
-                        eic.scanNumbers[indices[i]],     // scan number
-                        eic.mz[indices[i]]);             // mz ratio
-                    dataPoints.push_back(dp);            // add data point to vector
+                    TensorData::dataPoint dp(               // create data point
+                        eic.rententionTimes[indices[i]],    // x-axis value
+                        eic.intensities_height[indices[i]], // y-axis value
+                        true,                               // df value
+                        eic.DQSC[indices[i]],               // dqs centroid value
+                        eic.DQSB[indices[i]],               // dqs binning value
+                        eic.scanNumbers[indices[i]],        // scan number
+                        eic.mz[indices[i]]);                // mz ratio
+                    dataPoints.push_back(dp);               // add data point to vector
                 }
             }
             else
             {
                 for (size_t i = 0; i < eic.scanNumbers.size(); ++i)
                 {
-                    TensorData::dataPoint dp(   // create data point
-                        eic.rententionTimes[i], // x-axis value
-                        eic.intensities[i],     // y-axis value
-                        true,                   // df value
-                        eic.DQSC[i],            // dqs centroid value
-                        eic.DQSB[i],            // dqs binning value
-                        eic.scanNumbers[i],     // scan number
-                        eic.mz[i]);             // mz ratio
-                    dataPoints.push_back(dp);   // add data point to vector
+                    TensorData::dataPoint dp(      // create data point
+                        eic.rententionTimes[i],    // x-axis value
+                        eic.intensities_height[i], // y-axis value
+                        true,                      // df value
+                        eic.DQSC[i],               // dqs centroid value
+                        eic.DQSB[i],               // dqs binning value
+                        eic.scanNumbers[i],        // scan number
+                        eic.mz[i]);                // mz ratio
+                    dataPoints.push_back(dp);      // add data point to vector
                 }
             }
             // add end point for later pretreatment

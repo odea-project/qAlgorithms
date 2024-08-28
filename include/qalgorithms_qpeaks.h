@@ -93,6 +93,7 @@ namespace q
                 float area;             // area of the peak
                 float uncertainty_area; // uncertainty of the area
                 float uncertainty_pos;  // uncertainty of the position
+                float uncertainty_height; // uncertainty of the height
                 validRegression_static() = default;
             };
 
@@ -153,7 +154,8 @@ namespace q
                 int &right_limit,
                 float &area,
                 float &uncertainty_area,
-                float &uncertainty_pos);
+                float &uncertainty_pos,
+                float &uncertainty_height);
 
             void
             mergeRegressionsOverScales(

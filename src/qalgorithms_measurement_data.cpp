@@ -41,6 +41,7 @@ namespace q
           centroids[i].back()->sampleID = index;
           centroids[i].back()->mz = spectrum[0][j];
           centroids[i].back()->area = spectrum[1][j];
+          centroids[i].back()->height = spectrum[1][j];
           centroids[i].back()->retentionTime = retention_times[i];
           centroids[i].back()->dqsCen = 0.0;
           centroids[i].back()->mzUncertainty = spectrum[0][j] * 5e-6; // 5 ppm

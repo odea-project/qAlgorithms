@@ -1312,6 +1312,8 @@ namespace q
                 tmp_mz.reserve(eicsize);
                 std::vector<double> tmp_intensities;
                 tmp_intensities.reserve(eicsize);
+                std::vector<double> tmp_intensities_height;
+                tmp_intensities_height.reserve(eicsize);
                 std::vector<double> tmp_DQSB;
                 tmp_DQSB.reserve(eicsize);
                 std::vector<double> tmp_DQSC;
@@ -1340,6 +1342,7 @@ namespace q
                             tmp_rt.pop_back();
                             tmp_mz.pop_back();
                             tmp_intensities.pop_back();
+                            tmp_intensities_height.pop_back();
                             tmp_DQSB.pop_back();
                             tmp_DQSC.pop_back();
                         }
@@ -1356,6 +1359,7 @@ namespace q
                     prevScan = point->scanNo;
                     tmp_mz.push_back(point->mz);
                     tmp_intensities.push_back(point->intensity);
+                    tmp_intensities_height.push_back(point->intensity_height);
                     tmp_DQSB.push_back(DQSB_base[i]);
                     tmp_DQSC.push_back(point->DQSCentroid);
                 }
@@ -1366,6 +1370,7 @@ namespace q
                     tmp_rt,
                     tmp_mz,
                     tmp_intensities,
+                    tmp_intensities_height,
                     tmp_DQSB,
                     tmp_DQSC};
 
