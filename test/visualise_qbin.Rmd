@@ -121,15 +121,42 @@ noBlanks = allProcessed[which(allProcessed$polarity),]
 xaxis = 1:(length(noBlanks$numSpectra)-1)
 seriesBreaks = c(1, 3, 27, 43, 65)
 breakNames = c("Standards", "29.02", "11.03", "ozonation", "PFAS")
+s1 = max(diff(noBlanks$meanDQSC))
+s2 = max(diff(noBlanks$numCentroids))
 ggplot()+
-  geom_line(aes(xaxis, (diff(noBlanks$meanDQSC)), colour = "DQSC"), linewidth = 1)+
-  geom_line(aes(xaxis, (diff(noBlanks$meanDQSB)), colour = "DQSB"), linewidth = 0.8)+
-  geom_line(aes(xaxis, (diff(noBlanks$meanDQSF)), colour = "DQSF"), linewidth = 0.6)+
-  geom_vline(xintercept = seriesBreaks, linewidth = 1, linetype = "dashed")
+  geom_line(aes(xaxis, (diff(noBlanks$meanDQSC))/s1, colour = "DQSC"), linewidth = 1)+
+  geom_line(aes(xaxis, diff(noBlanks$numCentroids)/s2, colour = "count"), linewidth = 1)+
+#  geom_line(aes(xaxis, (diff(noBlanks$meanDQSB)), colour = "DQSB"), linewidth = 0.8)+
+#  geom_line(aes(xaxis, (diff(noBlanks$meanDQSF)), colour = "DQSF"), linewidth = 0.6)+
+  geom_vline(xintercept = seriesBreaks, linewidth = 0.6, linetype = "dashed")
 
 
 ggplot(allProcessed)+
   geom_point(aes(row.names(allProcessed), numFeatures/(numBins_one), colour = year))+
-  scale_x_discrete(guide = guide_axis(angle = 60))  
+  scale_x_discrete(guide = guide_axis(angle = 60))
+
+ggplot(allProcessed)+
+  geom_point(aes(row.names(allProcessed), numBins_empty/(numBins_one + numBins_more), colour = year))+
+  scale_x_discrete(guide = guide_axis(angle = 60))
+
+# ggplot(allProcessed)+ # no clear differentiation
+#   geom_point(aes(row.names(allProcessed), numBins_more/(numBins_one), colour = year))+
+#   scale_x_discrete(guide = guide_axis(angle = 60))
+
+ggplot(allProcessed)+
+  geom_point(aes(row.names(allProcessed), numBins_empty/(numCentroids), colour = year))+
+  scale_x_discrete(guide = guide_axis(angle = 60))
+
+ggplot(allProcessed)+
+  geom_point(aes(row.names(allProcessed), (numBins_more + numBins_one)/numFeatures, colour = year))+
+  scale_x_discrete(guide = guide_axis(angle = 60))
+
+ggplot(allProcessed)+
+  geom_point(aes(row.names(allProcessed), (numBins_empty)/numFeatures, colour = year))+
+  scale_x_discrete(guide = guide_axis(angle = 60))
+
+ggplot(allProcessed)+
+  geom_point(aes(x = 1:91, y = diff(numCentroids/(numBins_empty + numBins_one + numBins_more)), colour = year))+
+  scale_x_discrete(guide = guide_axis(angle = 60))
 ```
 

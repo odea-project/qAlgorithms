@@ -1,4 +1,64 @@
-## Abbreviations and definitions:
+Evaluation of different approaches for determining and visualising <!-- omit in toc -->
+process quality in LC-HRMS nontarget measurement series as part of the qAlgorithms project <!-- omit in toc -->
+-----------------------------------------------------------------------------------------------
+Report concluding the research practical by Daniel Höhn, supervised by Felix Drees and Gerrit Renner <!-- omit in toc -->
+
+- [Abstract](#abstract)
+- [Abbreviations and definitions:](#abbreviations-and-definitions)
+- [Notes on the design of visual process quality estimators](#notes-on-the-design-of-visual-process-quality-estimators)
+  - [Differentiating process quality from result quality](#differentiating-process-quality-from-result-quality)
+  - [Measuring process quality](#measuring-process-quality)
+    - [Current means of stability / quality monitoring](#current-means-of-stability--quality-monitoring)
+    - [Validation criteria](#validation-criteria)
+- [Preformance criteria - Fourier Transform:](#preformance-criteria---fourier-transform)
+- [Performance criteria - File Conversion](#performance-criteria---file-conversion)
+- [Performance criteria - Centroiding:](#performance-criteria---centroiding)
+  - [Centroid quality score (DQSC)](#centroid-quality-score-dqsc)
+  - [signal point retention](#signal-point-retention)
+  - [centroid count / density](#centroid-count--density)
+  - [Bin quality score (DQSB)](#bin-quality-score-dqsb)
+- [General Notes on Tests - Binning:](#general-notes-on-tests---binning)
+- [Discarded or Modified Criteria:](#discarded-or-modified-criteria)
+  - [point within maxdist but not within maxdist + 1](#point-within-maxdist-but-not-within-maxdist--1)
+  - [one-sided intensity profile](#one-sided-intensity-profile)
+  - [test for asymmetry in mz](#test-for-asymmetry-in-mz)
+  - [test for points outside three sigma interval](#test-for-points-outside-three-sigma-interval)
+- [Bin Categories:](#bin-categories)
+  - [Bin with duplicate scan:](#bin-with-duplicate-scan)
+- [Development of a consistency parameter from process statistics](#development-of-a-consistency-parameter-from-process-statistics)
+  - [Consistency of the centroiding algorithm](#consistency-of-the-centroiding-algorithm)
+  - [Consistency of the Binning algorithm](#consistency-of-the-binning-algorithm)
+- [Viability test for simple process parameters](#viability-test-for-simple-process-parameters)
+- [Further research](#further-research)
+- [planned Expansions to qAlgorithms](#planned-expansions-to-qalgorithms)
+- [performed modifications to qAlgorithms](#performed-modifications-to-qalgorithms)
+  - [modified centroiding](#modified-centroiding)
+  - [DQSB calculation](#dqsb-calculation)
+- [Software and Data](#software-and-data)
+
+
+# Abstract
+One important property of nontarget measurements is the comparability of different
+measurements of a series with each other. This is especially relevant when
+routine measurements of, for example, wastewater treatment plant effluent are
+taken to monitor the overall water quality. 
+The decision of whether a system is stable enough for measurements to be comparable
+is non-standardised and often depending on manual data review. The amount of
+manhours needed drastically reduces the amount of measurements which can be
+processed as part of a routine series, while introducing a subjective bias
+into the type of discrepancies that would lead to the exclusion of a measurement.
+Additionally, such decisions are often made based on standard mixtures, which 
+only provide limited coverage of a dataset and have the potential of masking
+trace compounds with very similar chromatographic behaviour and mass.
+
+The goal of this project is to suggest and, to a limited degree, validate multiple
+different approaches to describing and quantifying system stability as one
+central component of result comparability. To this end, statistics generated
+within the qAlgorithms data evaluation pipeline are collected for multiple
+different measurement series. The process is designed to be fully automated,
+requiring no user input during data processing.
+
+# Abbreviations and definitions:
 [@todo] remove irrelevant entries
 * NTS - Non-Target Screening
 * (HR)MS - (High Resolution) Mass Spectrometry 
@@ -293,6 +353,8 @@ sometimes (anti)correlating strongly and other times being roughly orthogonal.
 This implies that they contain information which can not be coerced into
 one sum parameter without losing predictive power.
 
+## Consistency of the centroiding algorithm
+
 It was observed that, when ordered by time of recording, the differences
 between scores of neighbouring measurements are close to zero for defect-free
 measurement series. Two different series of similar samples which were
@@ -311,6 +373,40 @@ an outlier-free measurement series is 0.00036. The established three-sigma
 interval for denoting outliers would be applcable to this use case,
 and it is worth considering as the least sensitive stability measure
 for a running system.
+
+Similar effects can be observed when viewing the differences between
+the total number of centroids per measurement. To display both graphs together,
+they were normalised so that their greatest point was 1.
+The number of recorded spectra is inconsistent between measurements,
+usually deviating by around four. Whether this had an influence on the
+displayed results was tested by calculating the differences between
+all points before and after normalising them to the number of recorded
+spectra. Both series were normalised to their maximum value afterwards.
+The greatest absolute difference between the two series was 1.1 10e-16.
+This is within the floating point error, and both results can be
+considered identical. The most visible difference to the DQSC variation
+is that here, blanks do appear as a visible decrease.
+
+The combined view shows a change in both parameters if the series changes,
+both being largely constant within the group of known good measurements.
+An increase in DQSC does not necessarily coincide with an increase in 
+the centroid count. Within a series, some cases exist where only one of the
+two experiences a major shift. Neither of the two has a consistently higher 
+noise level. 
+
+For an eventual user-facing implementation, blanks could be removed 
+when displaying the differences in count.
+
+## Consistency of the Binning algorithm
+
+The consistency of binning should be evaluated without taking the 
+consistency assessment during centroiding into account. This has the
+advantage that it can still be used if the centroiding was performed 
+using another algorithm, while also not amplifying potential distortions
+introduced in the previous step.
+
+
+
 [@todo] DQSB, DQSF
 
 
@@ -511,7 +607,7 @@ All calculations in R were performed with R 4.4.0[@rcoreteamLanguageEnvironmentS
 using the packages tidyverse 2.0.0[@wickhamWelcomeTidyverse2019].
 Images were generated using ggplot2 3.5.1[ggplot2].
 
-qAlgorithms is written in base C++, using only standard library functions[@ISOInternationalStandard].
+qAlgorithms is written in base C++ 20, using only standard library functions[@ISOInternationalStandard].
 For reading in files, the StreamCraft library is used[https://github.com/odea-project/StreamCraft].
 It was compiled with gcc 13.2.0[@freesoftwarefoundationinc.UsingGNUCompiler1988].
 
