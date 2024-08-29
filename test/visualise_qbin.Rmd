@@ -88,7 +88,7 @@ ggplot(aqflow[42:57,][-8,])+
 ```
 
 ```{r for all 94 sets}
-allProcessed = read.csv("../log_qBinning_beta.csv", comment.char = "#")
+allProcessed = read.csv("../build/log_qBinning_beta.csv", comment.char = "#")
 allProcessed = allProcessed[order(allProcessed$filename),]
 
 allProcessed = as.data.frame(allProcessed[,2:(length(allProcessed[1,]))], row.names = allProcessed[,1])
@@ -125,10 +125,10 @@ s1 = max(diff(noBlanks$meanDQSC))
 s2 = max(diff(noBlanks$numCentroids))
 ggplot()+
   geom_line(aes(xaxis, (diff(noBlanks$meanDQSC))/s1, colour = "DQSC"), linewidth = 1)+
-  geom_line(aes(xaxis, diff(noBlanks$numCentroids)/s2, colour = "count"), linewidth = 1)+
+  geom_line(aes(xaxis, diff(noBlanks$numCentroids)/s2, colour = "count"), linewidth = 1)
 #  geom_line(aes(xaxis, (diff(noBlanks$meanDQSB)), colour = "DQSB"), linewidth = 0.8)+
 #  geom_line(aes(xaxis, (diff(noBlanks$meanDQSF)), colour = "DQSF"), linewidth = 0.6)+
-  geom_vline(xintercept = seriesBreaks, linewidth = 0.6, linetype = "dashed")
+  # geom_vline(xintercept = seriesBreaks, linewidth = 0.6, linetype = "dashed")
 
 
 ggplot(allProcessed)+

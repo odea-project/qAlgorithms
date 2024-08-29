@@ -12,6 +12,7 @@ Report concluding the research practical by Daniel Höhn, supervised by Felix Dr
     - [Validation criteria](#validation-criteria)
 - [Preformance criteria - Fourier Transform:](#preformance-criteria---fourier-transform)
 - [Performance criteria - File Conversion](#performance-criteria---file-conversion)
+- [Established methods for fault detection](#established-methods-for-fault-detection)
 - [Performance criteria - Centroiding:](#performance-criteria---centroiding)
   - [Centroid quality score (DQSC)](#centroid-quality-score-dqsc)
   - [signal point retention](#signal-point-retention)
@@ -68,10 +69,7 @@ requiring no user input during data processing.
 * (HP)LC - (High Performance) Liquid Chromatography
 * EIC - Extracted Ion Chromatogram
 * OS - Order Space
-* DQS(B/C) - Data Quality Score (of a Bin/Centroid)
-* MID - Mean Inner Distance: The average distance in mz of an element to all other elements in a bin
-* MOD - Minimum Outer Distance: The shortest distance in mz to an element not in the bin
-* CPU - Central Processing Unit
+* DQS(B/C/F) - Data Quality Score (of a Bin/Centroid/Feature)
 * ppm - Parts Per Million (10e-6)
 [@todo] move all definitions for within the workflow here
 
@@ -215,6 +213,11 @@ Conversion tools which depend on file transfer and user parameters
 are additionally a potential source of user error. These cannot be
 detected when using the vendor supplied instrument software for
 visual inspection of the mass spectra.
+
+# Established methods for fault detection
+process monitoring
+ SECTION IV.
+Signal-Based Data-Driven FDD
 
 # Performance criteria - Centroiding:
 It should be noted that not all approaches to mass spectrometric
@@ -510,6 +513,12 @@ features still affected by void-time effluent.
 The degree to which such a method is oversensitive could be reduced by
 Implementing different warning levels with independent criteria.
 
+Depending on the instrument mode, i.e. just recording MS1 spectra, 
+data-dependent or data-independent MS2 spectra, the time between MS1 
+scans and as such the binning results are likely to differ. It should
+be ensured that an implemented test does not mark these as non-comparable,
+if necessary by implementing a different test for these cases.
+
 The implemented visualisation tools should be validated using realistic
 conditions under which instrument performance is reduced, like measurements
 with an old column, or measurements after the system has been inactive for
@@ -538,6 +547,14 @@ The only mass analyser used for performance evaluation was the orbitrap.
 To which degree the results are transferable to, for example, a QTOF,
 would require a series being measured on both. At the time of writing,
 no series of profile TOF data was availvable for comparisons.
+
+Some applications for system stability visualisation in the environmental
+sciences will deal with data that is subject to seasonal changes. 
+Here, critical values for out-of-control sitautions should not be based
+on the entirety of the data but only a relatively recent subset.
+Similarly, if a change to the instrumentation is made, there needs to
+be a user friendly way to exclude previous measurements from indfluencining
+the baseline of new measurements.
 
 # planned Expansions to qAlgorithms
 Data visualisation is currently (19.08.2024) not implemented for qAlgorithms.
@@ -637,3 +654,10 @@ small filesize and poor chromatographic separation.
 
 PFAS data:
 HPLC-orbitrap measurements
+
+High-consistency standards
+As a reference for a stable system, ten replicates of a standard mixture
+in pure water were mesasured on an HPLC-orbitrap system. They were 
+measured at the end of a longer run and are assumed to represent 
+samples which do not significantly differ from each other in terms
+of instrument conditions or sample content.

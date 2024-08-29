@@ -1,5 +1,7 @@
 210311_C3_S7_I_1_pos ist komisch
 
+suche nach nicht kovertierten dateien wenn ein leeres Verzeichnis gelesen wurde
+
 DQSB MID nur innerhalb von maxdist scans, MOD nich gauss, sondern -50% skalieren
 
 Konstruktor/Destruktor prüfen 
