@@ -4,13 +4,14 @@ project(qAlgorithms VERSION 24.06)
 # Set C++ standard
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
+# set(CMAKE_FIND_LIBRARY_SUFFIXES ".a")
 
 # OpenMP support
 find_package(OpenMP REQUIRED)
 # find_package(Matplot++ REQUIRED)
 
 # Set compiler flags
-add_compile_options(-Wall -Wuninitialized -Wno-unknown-pragmas -fdiagnostics-color=always -mavx2 -march=skylake -O2 -g ${OpenMP_CXX_FLAGS}) #  -O3
+add_compile_options(-Wall -Wuninitialized -Wno-unknown-pragmas -fdiagnostics-color=always -fopenmp -static -mavx2 -march=skylake -O2 -g ${OpenMP_CXX_FLAGS}) #  -O3
 
 # Set include directories
 include_directories(include external/StreamCraft/src)
@@ -24,4 +25,4 @@ add_executable(${PROJECT_NAME} ${SOURCES})
 
 # Linker flags
 # target_link_libraries(${PROJECT_NAME} PUBLIC Matplot++::matplot z ${OpenMP_CXX_LIBRARIES})
-target_link_libraries(${PROJECT_NAME} z ${OpenMP_CXX_LIBRARIES})
+target_link_libraries(${PROJECT_NAME} z ${OpenMP_CXX_LIBRARIES} -static) #
