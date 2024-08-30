@@ -154,9 +154,11 @@ namespace q
             int num_centroided_spectra = std::count(spectrum_mode.begin(), spectrum_mode.end(), "centroid");
             if (num_centroided_spectra > spectrum_mode.size() * .5) // in profile mode sometimes centroided spectra appear as well
             {
+                std::cerr << "Warning: qAlgorithms is intended for profile spectra. A base uncertainty of" 
+                          << " 5 ppm is assumed for all supplied centroids\n";
                 std::vector<double> retention_times = data.get_spectra_rt(indices); // get retention times
                 rt_diff = calcRTDiff(retention_times);
-                return transfereCentroids(data, indices, retention_times, start_index);
+                return transferCentroids(data, indices, retention_times, start_index, ppm_for_precentroided_data);
             }
 
             // FILTER SPECTRUM MODE (PROFILE)

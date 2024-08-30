@@ -35,6 +35,7 @@ Report concluding the research practical by Daniel Höhn, supervised by Felix Dr
 - [performed modifications to qAlgorithms](#performed-modifications-to-qalgorithms)
   - [modified centroiding](#modified-centroiding)
   - [DQSB calculation](#dqsb-calculation)
+- [Conclusion](#conclusion)
 - [Software and Data](#software-and-data)
 
 
@@ -89,7 +90,14 @@ years of measurements. Here, two types of approaches can be viable:
 
 While these options are not exclusive, the final step of any
 automated evaluation still needs to be that of communicating relevant
-results to the instrument operator. 
+results to the instrument operator. Such communication is especially
+relevant to the qAlgorithms project, since the quality parameters supplied
+can cause confusion with users.
+For example, one user of the project asked which threshold to set
+for selecting peaks generated with qAlgorithms. This misunderstanding
+could be prevented by including an explicit descriptor that states
+the viability of the measurement and communicates a point up to
+which all data generated is reliable.
 
 ## Differentiating process quality from result quality
 Previous work by https://doi.org/10.1016/j.trac.2020.116063 highlighted
@@ -218,6 +226,8 @@ visual inspection of the mass spectra.
 process monitoring
  SECTION IV.
 Signal-Based Data-Driven FDD
+Established fault detection methods utilise practices that fall under the
+broader category of signal-based data driven fault detection.
 
 # Performance criteria - Centroiding:
 It should be noted that not all approaches to mass spectrometric
@@ -618,6 +628,13 @@ reasoning behind it did not translate into assumptions of the grouping model.
 If more lenient gaps are considered again in the future, this scaling 
 will likely have to be reworked to not automatically exclude remote but
 relevant points from influencing the DQSB.
+
+# Conclusion
+It could be shown that, using exclusively very broad statistics generated 
+as part of the qAlgorithms pipeline, some statements about sample similarity
+are possible. This could be applied to monitor system stability, and 
+methods for effectively visualising such changes were developed.
+
 
 # Software and Data
 All calculations in R were performed with R 4.4.0[@rcoreteamLanguageEnvironmentStatistical2023], 

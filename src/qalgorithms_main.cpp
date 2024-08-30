@@ -19,6 +19,9 @@
 
 namespace q
 {
+
+    double MeasurementData::ppm_for_precentroided_data = 5;
+
     void printPeaklist(std::vector<std::vector<q::DataType::Peak>> peaktable,
                        std::filesystem::path pathOutput, std::string filename,
                        bool verbose, bool silent, bool prebinning)
@@ -218,7 +221,8 @@ namespace q
                                  "      Note that duplicate input files are removed by default, even when they have a different name.\n"
                                  "      -i,  -input <PATH> [PATH]   input files or directories in which to recursively search for .mzML files.\n"
                                  "                                  you can enter any number of targets, as long as no file starts with a \"-\""
-                                 "                                  or contains two dots in a row.\n"
+                                 "                                  or contains two dots in a row. It is possible to use the -i flag multiple\n"
+                                 "                                  times within one execution."
                                  "      -tl, -tasklist <PATH>:      pass a list of file paths to the function. A tasklist can also contain directories\n"
                                  "                                  to search recursively and output directories for different blocks of the input files.\n"
                                  "                                  You can comment out lines by starting them with a \"#\"\n" // @todo update
@@ -242,7 +246,11 @@ namespace q
                                  "      -v, -verbose:   print a detailed progress report to standard out\n"
                                  "      -log:           This option will create a detailed log file in the program directory.\n" // @todo
                                  "\n      Analysis options:\n"
-                                 "      -MS2: also process MS2 spectra"; // @todo
+                                 "      -MS2: also process MS2 spectra (not implemented yet)\n" // @todo
+                                 "      -ppm <number>:  this sets the centroid error when reading in pre-centroided data\n"
+                                 "                      with qAlgorithms to <number> * 10^-6 * m/z of the centroid. We recommend\n"
+                                 "                      you always use the centroiding algorithm implemented in qAlgorithms.\n"
+                                 "                      By default, this value is set to 5.\n";
 }
 
 int main(int argc, char *argv[])
@@ -278,7 +286,8 @@ int main(int argc, char *argv[])
         printPeaks = true;
         if (filename_output == "#")
         {
-            pathOutput = suppliedPaths[0];
+            std::filesystem::path outDir = suppliedPaths[0];
+            pathOutput = outDir.parent_path();
         }
         else
         {
@@ -344,6 +353,8 @@ int main(int argc, char *argv[])
         }
         else if ((argument == "-tl") | (argument == "-tasklist")) // @todo test this
         {
+            std::cerr << "The tasklist functionality is not implemented currently.Please use -i.\n";
+            exit(0);
             tasklistSpecified = true;
             ++i;
             if (i == argc)
@@ -413,6 +424,13 @@ int main(int argc, char *argv[])
         else if ((argument == "-o") | (argument == "-output"))
         {
             // @todo
+            if (outSpecified)
+            {
+                std::cerr << "Error: two output locations specified. For complex output location"
+                          << "structures, it is recommended you use the tasklist input.";
+                exit(101); // @todo
+            }
+
             outSpecified = true;
             ++i;
             if (i == argc)
@@ -426,11 +444,18 @@ int main(int argc, char *argv[])
                 std::cerr << "Error: the specified output path does not exist.\n";
                 exit(101);
             }
-            else if (std::filesystem::exists(pathOutput.filename()))
+            else if (std::filesystem::status(pathOutput).type() != std::filesystem::file_type::directory)
             {
-                std::cerr << "Error: the output directory cannot be a file.\n";
+                std::cerr << "Error: the output location must be a directory.\n";
                 exit(101);
             }
+        }
+        else if (argument == "-ppm")
+        {
+            ++i;
+            double modifiedPPM = std::stod(argv[i]);
+            q::MeasurementData::ppm_for_precentroided_data = modifiedPPM;
+            std::cerr << "Notice: the changed centroid certainty will only affect pre-centroided data.\n";
         }
         else if ((argument == "-pc") | (argument == "-printcentroids"))
         {
@@ -464,6 +489,7 @@ int main(int argc, char *argv[])
         }
         else if (argument == "-log")
         {
+            std::cerr << "Logging is not implemented yet.\n";
             //@todo write the executed command into the logfile
         }
         else

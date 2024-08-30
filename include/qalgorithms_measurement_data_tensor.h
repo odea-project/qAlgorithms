@@ -12,6 +12,8 @@ namespace q
 {
     namespace MeasurementData
     {
+        extern double ppm_for_precentroided_data;
+        
         /**
          * @brief A class to store 3D tensor measurement data, e.g., LC-MS data
          * @details The TensorData class is a subclass of the MeasurementData class used to store 3D tensor measurement data, e.g., LC-MS data.
