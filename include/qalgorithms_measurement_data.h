@@ -59,12 +59,12 @@ namespace q
             // methods
             // virtual void readCSV(std::string filename, int rowStart, int rowEnd, int colStart, int colEnd, char separator, std::vector<DataType::DataField> variableTypes) = 0;
 
-            std::vector<std::vector<DataType::Peak>>
-            transfereCentroids(
+            std::vector<std::vector<DataType::Peak>> transferCentroids(
                 sc::MZML &data,
                 std::vector<int> &indices,
                 std::vector<double> &retention_times,
-                const int start_index);
+                const int start_index,
+                double PPMerror);
 
             double
             calcExpectedDiff(std::vector<double> &data);
