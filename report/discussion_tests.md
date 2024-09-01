@@ -98,6 +98,9 @@ for selecting peaks generated with qAlgorithms. This misunderstanding
 could be prevented by including an explicit descriptor that states
 the viability of the measurement and communicates a point up to
 which all data generated is reliable.
+Similarly, (final) output data should always be provided in a format that
+ist compatible with spreadsheet software like Microsoft Excel, or,
+for more complex data, some relevant subset of it. 
 
 ## Differentiating process quality from result quality
 Previous work by https://doi.org/10.1016/j.trac.2020.116063 highlighted
@@ -628,6 +631,14 @@ reasoning behind it did not translate into assumptions of the grouping model.
 If more lenient gaps are considered again in the future, this scaling 
 will likely have to be reworked to not automatically exclude remote but
 relevant points from influencing the DQSB.
+
+An edge case was addressed which led to incorrect peaks being returned.
+The error occurred when, during peak finding within a bin, the selected
+centroids no longer fulfilled the statistical criteria for belonging to the
+same mass trace. A test was added which controlled the maximum order space,
+normalised to the standard deviation of masses within the peak, against the
+critical distance as described for qBinning [@qBinning]. These Peaks are
+now returned with a DQSF of -1 to indicate them being incorrect.
 
 # Conclusion
 It could be shown that, using exclusively very broad statistics generated 

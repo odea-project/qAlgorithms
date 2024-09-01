@@ -48,6 +48,8 @@ namespace q
       float mz;
       float retentionTimeUncertainty;
       float mzUncertainty;
+      int idxPeakStart;
+      int idxPeakEnd;
     };
   } // namespace DataType
 } // namespace q

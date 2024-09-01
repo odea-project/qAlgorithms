@@ -986,7 +986,7 @@ namespace q
             // iterate over the validRegressions vector
             for (auto &regression : validRegressions)
             {
-                if (!regression.isValid)
+                if (!regression.isValid) // @todo why are non-valid regressions passed into the vector?
                 {
                     continue;
                 }
@@ -1141,6 +1141,10 @@ namespace q
             {
                 peak.dqsPeak = experfc(regression.uncertainty_area / regression.area, -1.0);
             }
+
+            // start and end indices
+            peak.idxPeakStart = regression.left_limit;
+            peak.idxPeakEnd = regression.right_limit;
             peaks.push_back(peak);
         }
 
@@ -1943,8 +1947,8 @@ namespace q
             {
                 beta[i] = _mm_mul_ps(_mm_shuffle_ps(result[i], result[i], 0b10110100), flipSign); // swap beta2 and beta3 and flip the sign of beta1 // @todo: this is a temporary solution
             }
-            delete result;
-            delete products;
+            delete[] result;
+            delete[] products;
         }
 
         void
