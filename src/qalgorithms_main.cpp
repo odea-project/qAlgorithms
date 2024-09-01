@@ -212,6 +212,42 @@ namespace q
         return (outputTasks);
     }
 
+    bool massTraceStable(std::vector<double> massesBin, int idxStart, int idxEnd)
+    {
+        size_t peaksize = idxEnd - idxStart + 1;
+        std::vector<double> massesPeak(peaksize);
+        for (size_t i = 0; i < peaksize; i++)
+        {
+            massesPeak[i] = massesBin[idxStart + i];
+        }
+        std::sort(massesPeak.begin(), massesPeak.end());
+
+        // critval @todo make this one function
+        double mean = 0;
+        double stddev = 0;
+        for (size_t i = 0; i < peaksize; i++)
+        {
+            mean += massesPeak[i];
+        }
+        mean /= peaksize;
+        for (size_t i = 0; i < peaksize; i++)
+        {
+            stddev += (massesPeak[i] - mean) * (massesPeak[i] - mean);
+        }
+        stddev = sqrt(stddev / (peaksize - 1));
+
+        double vcrit = 3.05037165842070 * pow(log(peaksize), (-0.4771864667153)) * stddev;
+        for (size_t i = 1; i < peaksize; i++)
+        {
+            [[unlikely]] if (massesPeak[i] - massesPeak[i - 1] > vcrit)
+            {
+                // std::cerr << "Bad mass trace found\n"; // @todo remove error message
+                return false;
+            }
+        }
+        return true;
+    }
+
     const std::string helpinfo = " help information:\n\n" // @todo std::format
                                  "    qAlgorithms is a software project for non-target screening using mass spectrometry.\n"
                                  "    For more information, visit our github page: https://github.com/odea-project/qAlgorithms.\n"
@@ -289,6 +325,12 @@ int main(int argc, char *argv[])
             std::filesystem::path outDir = suppliedPaths[0];
             pathOutput = outDir.parent_path();
         }
+        else if ((filename_output == "-h") | (filename_output == "-help"))
+        {
+            std::cout << "    " << argv[0] << q::helpinfo << "\n\n";
+            exit(0);
+        }
+
         else
         {
             pathOutput = filename_input;
@@ -667,6 +709,28 @@ int main(int argc, char *argv[])
             timeStart = std::chrono::high_resolution_clock::now();
             // every subvector of peaks corresponds to the bin ID
             auto peaks = tensorData.findPeaks_QBIN(qpeaks, binnedData);
+            // make sure that every peak contains only one mass trace
+            for (size_t i = 0; i < peaks.size(); i++)
+            {
+                if (!peaks[i].empty())
+                {
+                    auto massesBin = binnedData[i].mz;
+                    for (size_t j = 0; j < peaks[i].size(); j++)
+                    {
+                        if (!q::massTraceStable(massesBin, peaks[i][j].idxPeakStart, peaks[i][j].idxPeakEnd))
+                        {
+                            std::cerr << peaks[i][j].mz << ", " << peaks[i][j].retentionTime << ", "
+                                      << peaks[i][j].area << ", " << peaks[i][j].dqsPeak << "\n";
+                            // problems do not only occur at very low masses or the edges of out chromoatography
+                            // recommendation: do not pass these peaks to result table
+                            peaks[i][j].dqsPeak = -1;
+
+                            // @todo consider removing these or add a correction set somewhere later
+                            // @todo add some documentation regarding the scores
+                        }
+                    }
+                }
+            }
 
             timeEnd = std::chrono::high_resolution_clock::now();
 
