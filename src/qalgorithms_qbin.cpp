@@ -51,58 +51,58 @@ namespace q
 #define NO_MIN_FOUND -INFINITY
 #define NO_MAX_FOUND -INFINITY
 
-            bool readcsv(CentroidedData *rawData, std::string user_file, int d_mz, int d_mzError, int d_scanNo, int d_intensity, int d_DQScentroid)
-            { // @todo stop segfaults when reading empty lines; use buffers for speedup
-                int lengthAllPoints = 0;
-                rawData->allDatapoints.push_back(std::vector<qCentroid>(0)); // first element empty since scans are 1-indexed
-                std::ifstream file(user_file);
-                if (!file.is_open())
-                {
-                    std::cerr << "the file could not be opened\n";
+            // bool readcsv(CentroidedData *rawData, std::string user_file, int d_mz, int d_mzError, int d_scanNo, int d_intensity, int d_DQScentroid)
+            // { // @todo stop segfaults when reading empty lines; use buffers for speedup
+            //     int lengthAllPoints = 0;
+            //     rawData->allDatapoints.push_back(std::vector<qCentroid>(0)); // first element empty since scans are 1-indexed
+            //     std::ifstream file(user_file);
+            //     if (!file.is_open())
+            //     {
+            //         std::cerr << "the file could not be opened\n";
 
-                    return false;
-                }
+            //         return false;
+            //     }
 
-                if (!file.good())
-                {
-                    std::cerr << "something is wrong with the input file\n";
-                    return false;
-                }
-                std::string line;
-                std::string dummy;
-                std::getline(file, dummy); // do not read first row @todo check if first row starts with a number; parralelise?
-                while (std::getline(file, line))
-                {
-                    std::istringstream ss(line);
-                    std::string cell;
-                    std::vector<double> row;
-                    while (std::getline(ss, cell, ','))
-                    {
-                        row.push_back(std::stod(cell));
-                    }
-                    const int i_scanNo = (int)row[d_scanNo];
-                    if (size_t(i_scanNo) > rawData->allDatapoints.size() - 1)
-                    {
-                        for (size_t i = rawData->allDatapoints.size() - 1; i < size_t(i_scanNo); i++)
-                        {
-                            rawData->allDatapoints.push_back(std::vector<qCentroid>(0));
-                        }
-                    }
-                    qCentroid F = qCentroid{row[d_mz], row[d_mzError], -1, i_scanNo, row[d_intensity],
-                                            row[d_DQScentroid]}; // @todo add rt reading back in
+            //     if (!file.good())
+            //     {
+            //         std::cerr << "something is wrong with the input file\n";
+            //         return false;
+            //     }
+            //     std::string line;
+            //     std::string dummy;
+            //     std::getline(file, dummy); // do not read first row @todo check if first row starts with a number; parralelise?
+            //     while (std::getline(file, line))
+            //     {
+            //         std::istringstream ss(line);
+            //         std::string cell;
+            //         std::vector<double> row;
+            //         while (std::getline(ss, cell, ','))
+            //         {
+            //             row.push_back(std::stod(cell));
+            //         }
+            //         const int i_scanNo = (int)row[d_scanNo];
+            //         if (size_t(i_scanNo) > rawData->allDatapoints.size() - 1)
+            //         {
+            //             for (size_t i = rawData->allDatapoints.size() - 1; i < size_t(i_scanNo); i++)
+            //             {
+            //                 rawData->allDatapoints.push_back(std::vector<qCentroid>(0));
+            //             }
+            //         }
+            //         qCentroid F = qCentroid{row[d_mz], row[d_mzError], -1, i_scanNo, row[d_intensity],
+            //                                 row[d_DQScentroid]}; // @todo add rt reading back in
 
-                    ++lengthAllPoints;
-                    rawData->allDatapoints[i_scanNo].push_back(F); // every subvector in allDatapoints is one complete scan - does not require a sorted input file!
-                }
-                for (size_t i = 1; i < rawData->allDatapoints.size(); i++) // make sure data conforms to expectations
-                {
-                    std::sort(rawData->allDatapoints[i].begin(), rawData->allDatapoints[i].end(), [](const qCentroid lhs, const qCentroid rhs)
-                              { return lhs.mz < rhs.mz; });
-                }
-                std::cout << "Read " << lengthAllPoints << " datapoints in " << rawData->allDatapoints.size() - 1 << " scans\n";
-                return true;
-                // CentroidedData is always a vector of vectors where the first index is the scan number (starting at 1) and every scsn is sorted by mz
-            }
+            //         ++lengthAllPoints;
+            //         rawData->allDatapoints[i_scanNo].push_back(F); // every subvector in allDatapoints is one complete scan - does not require a sorted input file!
+            //     }
+            //     for (size_t i = 1; i < rawData->allDatapoints.size(); i++) // make sure data conforms to expectations
+            //     {
+            //         std::sort(rawData->allDatapoints[i].begin(), rawData->allDatapoints[i].end(), [](const qCentroid lhs, const qCentroid rhs)
+            //                   { return lhs.mz < rhs.mz; });
+            //     }
+            //     std::cout << "Read " << lengthAllPoints << " datapoints in " << rawData->allDatapoints.size() - 1 << " scans\n";
+            //     return true;
+            //     // CentroidedData is always a vector of vectors where the first index is the scan number (starting at 1) and every scsn is sorted by mz
+            // }
 #pragma endregion "misc"
 
 #pragma region "BinContainer"
@@ -418,7 +418,7 @@ namespace q
                         double mzMax = 0;
                         for (qCentroid *cen : finishedBins[binInsertPoint].pointsInBin)
                         {
-                            if (cen->intensity == notInBins[i]->intensity)
+                            if (cen->int_area == notInBins[i]->int_area)
                             {
                                 duplicate = true;
                             }
@@ -614,7 +614,7 @@ namespace q
                     std::cout << "writing bins to: " << location << "\n";
                     file_out_all.open(location, std::ios::out);
                     assert(file_out_all.is_open());
-                    output_all << "ID,mz,scan,intensity,mzError,DQSC,DQSB_base,DQSB_scaled\n";
+                    output_all << "ID,mz,scan,int_area,mzError,DQSC,DQSB_base,DQSB_scaled\n";
                     for (size_t i = 0; i < indices.size(); i++)
                     {
                         const int pos = indices[i];
@@ -625,7 +625,7 @@ namespace q
                             char buffer[256];
                             sprintf(buffer, "%d,%0.15f,%d,%0.2f,%0.15f,%0.9f,%0.9f,%0.9f\n",
                                     pos + 1, binnedPoints[j]->mz, binnedPoints[j]->scanNo,
-                                    binnedPoints[j]->intensity, binnedPoints[j]->mzError, binnedPoints[j]->DQSCentroid,
+                                    binnedPoints[j]->int_area, binnedPoints[j]->mzError, binnedPoints[j]->DQSCentroid,
                                     finishedBins[pos].DQSB_base[j], finishedBins[pos].DQSB_scaled[j]);
                             output_all << buffer;
                         }
@@ -798,36 +798,36 @@ namespace q
                 // check for open bin at the end
                 if (lastpos == 0) // no cut has occurred
                 {
-                    // check for half-peak shape by highest and 2nd highest intensity
+                    // check for half-peak shape by highest and 2nd highest int_area
                     double intMax = 0;
                     double intMax2 = 0;
                     for (auto cen : pointsInBin)
                     {
-                        if (cen->intensity > intMax)
+                        if (cen->int_area > intMax)
                         {
                             intMax2 = intMax;
-                            intMax = cen->intensity;
+                            intMax = cen->int_area;
                         }
-                        else if (cen->intensity > intMax2)
+                        else if (cen->int_area > intMax2)
                         {
-                            intMax2 = cen->intensity;
+                            intMax2 = cen->int_area;
                         }
                     }
                     bool lslant = false;
                     bool rslant = false;
-                    if ((pointsInBin.front()->intensity == intMax) | (pointsInBin.front()->intensity == intMax2))
+                    if ((pointsInBin.front()->int_area == intMax) | (pointsInBin.front()->int_area == intMax2))
                     {
                         lslant = true;
                     }
-                    else if ((pointsInBin.front() + 1)->intensity == intMax)
+                    else if ((pointsInBin.front() + 1)->int_area == intMax)
                     {
                         lslant = true;
                     }
-                    if ((pointsInBin.back()->intensity == intMax) | (pointsInBin.back()->intensity == intMax2))
+                    if ((pointsInBin.back()->int_area == intMax) | (pointsInBin.back()->int_area == intMax2))
                     {
                         lslant = true;
                     }
-                    else if ((pointsInBin.back() + 1)->intensity == intMax)
+                    else if ((pointsInBin.back() + 1)->int_area == intMax)
                     {
                         lslant = true;
                     }
@@ -894,10 +894,12 @@ namespace q
                 double mzMax1 = 0;
                 for (auto cen : pointsInBin)
                 {
-                    if (cen->mz < mzMin1){
+                    if (cen->mz < mzMin1)
+                    {
                         mzMin1 = cen->mz;
                     }
-                    if (cen->mz > mzMax1){
+                    if (cen->mz > mzMax1)
+                    {
                         mzMax1 = cen->mz;
                     }
                 }
@@ -1128,7 +1130,7 @@ namespace q
                 for (size_t i = 0; i < binsize; i++)
                 {
                     meanMZ += pointsInBin[i]->mz;
-                    meanInt += pointsInBin[i]->intensity;
+                    meanInt += pointsInBin[i]->int_area;
                     meanScan += pointsInBin[i]->scanNo;
                     meanCenError += pointsInBin[i]->mzError;
                     if (pointsInBin[i]->DQSCentroid < worstCentroid)
@@ -1155,9 +1157,9 @@ namespace q
                 double stdevMZ = sqrt(sumOfDist / (binsize - 1));
 
                 std::sort(pointsInBin.begin(), pointsInBin.end(), [](qCentroid *lhs, qCentroid *rhs)
-                          { return lhs->intensity < rhs->intensity; });
+                          { return lhs->int_area < rhs->int_area; });
 
-                // is the first or last scan the highest intensity?
+                // is the first or last scan the highest int_area?
                 // these bins cannot be fitted with a gaussian peak
                 bool oneSided = false;
                 if ((pointsInBin.back()->scanNo == scanMin) | (pointsInBin.back()->scanNo == scanMax))
@@ -1174,7 +1176,7 @@ namespace q
                     oneSided = true;
                 }
 
-                // the second and third highest intensity should each be
+                // the second and third highest int_area should each be
                 // within maxdist of the highest instensity
                 bool twoMaxima = false;
 
@@ -1186,9 +1188,9 @@ namespace q
                     twoMaxima = true;
                 }
 
-                // iterate to calculate stdev of mz and intensity
+                // iterate to calculate stdev of mz and int_area
                 // identify the largest difference between ordered
-                // intensities and compare to vcrit of intensity later
+                // intensities and compare to vcrit of int_area later
                 // double mzErrorSquared = 0;
                 double intensityErrorSquared = 0;
                 double greatestIntGap = 0;
@@ -1205,11 +1207,11 @@ namespace q
                     {
                         ++noSigma;
                     }
-                    // make squared error of mz and intensity, find largest gap between intensities
-                    intensityErrorSquared += (meanInt - pointsInBin[i]->intensity) * (meanInt - pointsInBin[i]->intensity);
+                    // make squared error of mz and int_area, find largest gap between intensities
+                    intensityErrorSquared += (meanInt - pointsInBin[i]->int_area) * (meanInt - pointsInBin[i]->int_area);
                     if (i < binsize - 1)
                     {
-                        double intDiff = pointsInBin[i + 1]->intensity - pointsInBin[i]->intensity;
+                        double intDiff = pointsInBin[i + 1]->int_area - pointsInBin[i]->int_area;
                         if (intDiff > greatestIntGap)
                         {
                             greatestIntGap = intDiff;
@@ -1302,7 +1304,7 @@ namespace q
                 {
                     selector |= std::byte{0b00100000};
                 }
-                if (twoMaxima) // mostly uniform increase in intensity over bin
+                if (twoMaxima) // mostly uniform increase in int_area over bin
                 {
                     selector |= std::byte{0b01000000};
                 }
@@ -1329,11 +1331,13 @@ namespace q
                 tmp_rt.reserve(eicsize);
                 std::vector<double> tmp_mz;
                 tmp_mz.reserve(eicsize);
-                std::vector<double> tmp_intensities;
-                tmp_intensities.reserve(eicsize);
-                std::vector<double> tmp_DQSB;
+                std::vector<float> tmp_ints_area;
+                tmp_ints_area.reserve(eicsize);
+                std::vector<float> tmp_ints_height;
+                tmp_ints_height.reserve(eicsize);
+                std::vector<float> tmp_DQSB;
                 tmp_DQSB.reserve(eicsize);
-                std::vector<double> tmp_DQSC;
+                std::vector<float> tmp_DQSC;
                 tmp_DQSC.reserve(eicsize);
 
                 std::sort(pointsInBin.begin(), pointsInBin.end(), [](qCentroid *lhs, qCentroid *rhs)
@@ -1358,7 +1362,8 @@ namespace q
                             tmp_scanNumbers.pop_back();
                             tmp_rt.pop_back();
                             tmp_mz.pop_back();
-                            tmp_intensities.pop_back();
+                            tmp_ints_area.pop_back();
+                            tmp_ints_height.pop_back();
                             tmp_DQSB.pop_back();
                             tmp_DQSC.pop_back();
                         }
@@ -1374,7 +1379,8 @@ namespace q
                     tmp_rt.push_back(point->RT);
                     prevScan = point->scanNo;
                     tmp_mz.push_back(point->mz);
-                    tmp_intensities.push_back(point->intensity);
+                    tmp_ints_area.push_back(point->int_area);
+                    tmp_ints_height.push_back(point->int_height);
                     tmp_DQSB.push_back(DQSB_base[i]);
                     tmp_DQSC.push_back(point->DQSCentroid);
                 }
@@ -1384,7 +1390,8 @@ namespace q
                     tmp_scanNumbers,
                     tmp_rt,
                     tmp_mz,
-                    tmp_intensities,
+                    tmp_ints_area,
+                    tmp_ints_height,
                     tmp_DQSB,
                     tmp_DQSC};
 
@@ -1445,9 +1452,8 @@ namespace q
                         {
                             break;
                         }
-                        
                     }
-                    output[i] = accum/ double(readPos - position - 1); // -1 since the distance of an element to itself is not factored in
+                    output[i] = accum / double(readPos - position - 1); // -1 since the distance of an element to itself is not factored in
                 }
                 return output;
             }
@@ -1459,50 +1465,48 @@ namespace q
                 {
                     dqs = MID;
                 }
-                // dqs = (MOD - MID) * (1 / (1 + MID)) / dqs; // sm(i) term
-                // interval transform, equivalent to (dqs + 1) / 2;
-                // return fmal((MOD - MID) / fmal(MID, dqs, dqs), 0.5, 0.5);
+                // dqs = (MOD - MID) * (1 / (1 + MID)) / dqs
                 return (MOD - MID) / fmal(MID, dqs, dqs);
             }
 
-            static void scaleDistancesForDQS_gauss(int maxdist) // @experimental
-            {
-                // calculate the gauss function transformed so that f(x = 0) == 1
-                static const double scaleHeight = 2.506628274631;    // scale the curve height
-                static const double xAtMaxdist = 2.575829;           // x for the normal dist at maxdist. x for maxdist*2+1 == 0
-                const double xPerStep = xAtMaxdist / maxdist;        // point at which the gauss function is calculated at x=1
-                static const double invSqrt2Pi = 0.3989422804014327; // 1/(sqrt(2*pi*sigma^2)) for sigma == 1
-                scalarForMOD.resize(maxdist * 4 + 2);                // every value is doubled, same length as selected mz vector during DQS calculation
-                for (int i = 0; i < maxdist; i++)                    // add the x values where the gauss curve must be calculated
-                {
-                    scalarForMOD[i * 2] = xPerStep * (maxdist - i);
-                }
-                for (int i = 0; i < 2 * maxdist + 1; i++) // scalarForMod contains the correct scaling to be used on the MOD for any maxdist
-                {
-                    // 1 (base scaling) + 1 - gauss mod (scalar for distance) ; equivalent of an upside-down gauss curve with f(x = 0) == 1 used for scaling
-                    const double scalarSingle = 1 + 1 - scaleHeight * invSqrt2Pi * std::exp(-scalarForMOD[i] * scalarForMOD[i] / 2);
-                    scalarForMOD[i] = scalarSingle;
-                    scalarForMOD[i + 1] = scalarSingle;
-                    scalarForMOD[scalarForMOD.size() - 1 - i] = scalarSingle;
-                    scalarForMOD[scalarForMOD.size() - 2 - i] = scalarSingle; // values at maxdist and maxdist + 1 are always == 1 + (floating point error)
-                    i++;
-                }
-            }
+            // static void scaleDistancesForDQS_gauss(int maxdist) // @experimental
+            // {
+            //     // calculate the gauss function transformed so that f(x = 0) == 1
+            //     static const double scaleHeight = 2.506628274631;    // scale the curve height
+            //     static const double xAtMaxdist = 2.575829;           // x for the normal dist at maxdist. x for maxdist*2+1 == 0
+            //     const double xPerStep = xAtMaxdist / maxdist;        // point at which the gauss function is calculated at x=1
+            //     static const double invSqrt2Pi = 0.3989422804014327; // 1/(sqrt(2*pi*sigma^2)) for sigma == 1
+            //     scalarForMOD.resize(maxdist * 4 + 2);                // every value is doubled, same length as selected mz vector during DQS calculation
+            //     for (int i = 0; i < maxdist; i++)                    // add the x values where the gauss curve must be calculated
+            //     {
+            //         scalarForMOD[i * 2] = xPerStep * (maxdist - i);
+            //     }
+            //     for (int i = 0; i < 2 * maxdist + 1; i++) // scalarForMod contains the correct scaling to be used on the MOD for any maxdist
+            //     {
+            //         // 1 (base scaling) + 1 - gauss mod (scalar for distance) ; equivalent of an upside-down gauss curve with f(x = 0) == 1 used for scaling
+            //         const double scalarSingle = 1 + 1 - scaleHeight * invSqrt2Pi * std::exp(-scalarForMOD[i] * scalarForMOD[i] / 2);
+            //         scalarForMOD[i] = scalarSingle;
+            //         scalarForMOD[i + 1] = scalarSingle;
+            //         scalarForMOD[scalarForMOD.size() - 1 - i] = scalarSingle;
+            //         scalarForMOD[scalarForMOD.size() - 2 - i] = scalarSingle; // values at maxdist and maxdist + 1 are always == 1 + (floating point error)
+            //         i++;
+            //     }
+            // }
 
             static void scaleDistancesForDQS_linear(int maxdist) // @experimental
             {
-                // Assumption: every point which is found in a neighbouring scan, but not the 
+                // Assumption: every point which is found in a neighbouring scan, but not the
                 // current one, has a 50% chance of existing. As such, it can only be half
                 // as relevant as another point in the same scan. To scale, A distance in the
                 // same scan is multiplied by one, one further by two, then by four etc.
-                scalarForMOD.resize(maxdist * 4 + 2);     // every value is doubled, same length as selected mz vector during DQS calculation
+                scalarForMOD.resize(maxdist * 4 + 2); // every value is doubled, same length as selected mz vector during DQS calculation
                 double scalarSingle = pow(2, maxdist);
                 for (int i = 0; i < 2 * maxdist + 1; i++) // scalarForMod contains the correct scaling to be used on the MOD for any maxdist
                 {
                     scalarForMOD[i] = scalarSingle;
                     scalarForMOD[i + 1] = scalarSingle;
                     scalarForMOD[scalarForMOD.size() - 1 - i] = scalarSingle;
-                    scalarForMOD[scalarForMOD.size() - 2 - i] = scalarSingle; 
+                    scalarForMOD[scalarForMOD.size() - 2 - i] = scalarSingle;
                     i++;
                     scalarSingle /= 2;
                 }
@@ -1555,7 +1559,8 @@ namespace q
 
                 std::cout.rdbuf(old); // restore previous standard out
 
-                return activeBins.returnBins(); // @todo do not calculate the summary twice when printing bins
+                auto test = activeBins.returnBins();
+                return test; // @todo do not calculate the summary twice when printing bins
             }
 
         }
@@ -1564,58 +1569,58 @@ namespace q
 
 //
 //
-int notmain()
-{
-    std::cout << "starting...\n";
-    //   << sizeof(std::vector<int>);
+// int notmain()
+// {
+//     std::cout << "starting...\n";
+//     //   << sizeof(std::vector<int>);
 
-    q::Algorithms::qBinning::duplicatesTotal = 0;
+//     q::Algorithms::qBinning::duplicatesTotal = 0;
 
-    int inputMaxdist = 6;
-    q::Algorithms::qBinning::maxdist = inputMaxdist;
+//     int inputMaxdist = 6;
+//     q::Algorithms::qBinning::maxdist = inputMaxdist;
 
-    std::string filename_input = "../../rawdata/control_bins.csv"; // no variability after qCentroiding
+//     std::string filename_input = "../../rawdata/control_bins.csv"; // no variability after qCentroiding
 
-    const std::filesystem::path p = filename_input;
-    if (!std::filesystem::exists(p))
-    {
-        std::cout << "Error: The selected file does not exist.\nSupplied path: " << std::filesystem::absolute(p)
-                  << "\nCurrent directory: " << std::filesystem::current_path() << "\n\nTerminated Program.\n\n";
-        exit(101);
-    }
+//     const std::filesystem::path p = filename_input;
+//     if (!std::filesystem::exists(p))
+//     {
+//         std::cout << "Error: The selected file does not exist.\nSupplied path: " << std::filesystem::absolute(p)
+//                   << "\nCurrent directory: " << std::filesystem::current_path() << "\n\nTerminated Program.\n\n";
+//         exit(101);
+//     }
 
-    q::Algorithms::qBinning::CentroidedData testdata;
-    // path to data, mz, centroid error, scan number, intensity, DQS centroid
-    //  path to data, scan position, mz, centroid error, scan number, intensity, DQS centroid
-    if (!q::Algorithms::qBinning::readcsv(&testdata, filename_input, 0, 1, 3, 4, 6)) // ../../rawdata/control_bins.csv reduced_DQSdiff
-    // if (!q::qBinning::readcsv(&testdata, filename_input, 1, 2, 3, 4, 5))
-    {
-        exit(101); // error codes: 1.. = reading / writing failed, 2.. = improper input,
-    }
+//     q::Algorithms::qBinning::CentroidedData testdata;
+//     // path to data, mz, centroid error, scan number, int_area, DQS centroid
+//     //  path to data, scan position, mz, centroid error, scan number, int_area, DQS centroid
+//     if (!q::Algorithms::qBinning::readcsv(&testdata, filename_input, 0, 1, 3, 4, 6)) // ../../rawdata/control_bins.csv reduced_DQSdiff
+//     // if (!q::qBinning::readcsv(&testdata, filename_input, 1, 2, 3, 4, 5))
+//     {
+//         exit(101); // error codes: 1.. = reading / writing failed, 2.. = improper input,
+//     }
 
-    q::Algorithms::qBinning::BinContainer testcontainer;
-    testcontainer.makeFirstBin(&testdata);
-    std::vector<int> measurementDimensions = {q::Algorithms::qBinning::SubsetMethods::mz, q::Algorithms::qBinning::SubsetMethods::scans}; // at least one element must be terminator
-    testcontainer.subsetBins(measurementDimensions, inputMaxdist, false);                                                                 // add value after maxdist for error in ppm instead of centroid error
-    std::cout << "Total duplicates: " << q::Algorithms::qBinning::duplicatesTotal << "\n--\ncalculating DQSBs...\n";
+//     q::Algorithms::qBinning::BinContainer testcontainer;
+//     testcontainer.makeFirstBin(&testdata);
+//     std::vector<int> measurementDimensions = {q::Algorithms::qBinning::SubsetMethods::mz, q::Algorithms::qBinning::SubsetMethods::scans}; // at least one element must be terminator
+//     testcontainer.subsetBins(measurementDimensions, inputMaxdist, false);                                                                 // add value after maxdist for error in ppm instead of centroid error
+//     std::cout << "Total duplicates: " << q::Algorithms::qBinning::duplicatesTotal << "\n--\ncalculating DQSBs...\n";
 
-    // calculate data quality scores
-    q::Algorithms::qBinning::scaleDistancesForDQS_linear(inputMaxdist); // this sets q::scalarForMOD to the correct scaling so that at the distance in scans == maxdist the curve encloses 99% of its area
-    testcontainer.assignDQSB(&testdata, inputMaxdist, false);          // int = max dist in scans
+//     // calculate data quality scores
+//     q::Algorithms::qBinning::scaleDistancesForDQS_linear(inputMaxdist); // this sets q::scalarForMOD to the correct scaling so that at the distance in scans == maxdist the curve encloses 99% of its area
+//     testcontainer.assignDQSB(&testdata, inputMaxdist, false);           // int = max dist in scans
 
-    testcontainer.redoBinningIfTooclose(measurementDimensions, &testdata, q::Algorithms::qBinning::notInBins, q::Algorithms::qBinning::maxdist);
+//     testcontainer.redoBinningIfTooclose(measurementDimensions, &testdata, q::Algorithms::qBinning::notInBins, q::Algorithms::qBinning::maxdist);
 
-    testcontainer.reconstructFromStdev(&testdata, 6);
+//     testcontainer.reconstructFromStdev(&testdata, 6);
 
-    // print bin selection
-    testcontainer.printSelectBins(true, p, "test"); // one bit per test
+//     // print bin selection
+//     testcontainer.printSelectBins(true, p, "test"); // one bit per test
 
-    // testcontainer.printBinSummary("../../summary_bins.csv");
-    // testcontainer.printworstDQS();
-    // testcontainer.printTstats();
-    // testcontainer.printAllBins("../../qbinning_binlist.csv", &testdata);
-    std::cout << "printed all bins\n";
+//     // testcontainer.printBinSummary("../../summary_bins.csv");
+//     // testcontainer.printworstDQS();
+//     // testcontainer.printTstats();
+//     // testcontainer.printAllBins("../../qbinning_binlist.csv", &testdata);
+//     std::cout << "printed all bins\n";
 
-    std::cout << "\n\nDone!\n\n";
-    return 0;
-}
+//     std::cout << "\n\nDone!\n\n";
+//     return 0;
+// }

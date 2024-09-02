@@ -62,7 +62,7 @@ namespace q
                     {
                         auto &peak = allPeaks[i][j];
                         qBinning::qCentroid F = qBinning::qCentroid{peak.mz, peak.mzUncertainty, peak.retentionTime,
-                                                                    scanRelative, peak.area, peak.dqsCen};
+                                                                    scanRelative, peak.area, peak.height, peak.dqsCen};
                         centroids[scanRelative].push_back(F);
                         ++totalCentroids;
                     }
@@ -430,9 +430,13 @@ namespace q
                 float area = 0.f;              // peak area
                 float uncertainty_area = 0.f;  // uncertainty of the peak area
                 float uncertainty_pos = 0.f;   // uncertainty of the peak position
+                float uncertainty_height = 0.f;
 
                 // validate the regression
-                if (!validateRegressions_testseries(inverseMatrix_2_2, i, scale, df_start, y_start, ylog_start, coeff, df_sum, apex_position, left_limit, right_limit, area, uncertainty_area, uncertainty_pos))
+                if (!validateRegressions_testseries(inverseMatrix_2_2, i, scale, df_start, y_start,
+                                                    ylog_start, coeff, df_sum, apex_position,
+                                                    left_limit, right_limit, area, uncertainty_area,
+                                                    uncertainty_pos, uncertainty_height))
                 {
                     continue; // invalid regression
                 }
@@ -440,7 +444,9 @@ namespace q
                 // at this point, the peak is validated
                 /*
                   Add to a temporary vector of valid regressions:
-                  This block of code adds the valid peak to a temporary vector of valid regressions. It calculates the left and right limits of the peak based on the valley position. Then it stores the index of the valid regression in the temporary vector of valid regressions.
+                  This block of code adds the valid peak to a temporary vector of valid regressions.
+                  It calculates the left and right limits of the peak based on the valley position.
+                  Then it stores the index of the valid regression in the temporary vector of valid regressions.
                 */
                 validRegression_static vr;
                 vr.index_x0 = i + scale;                      // index of the center of the window (x==0) in the Y matrix
@@ -454,6 +460,7 @@ namespace q
                 vr.right_limit = right_limit;                 // right_limit
                 vr.area = area;                               // peak area
                 vr.uncertainty_area = uncertainty_area;       // uncertainty of the peak area
+                vr.uncertainty_height = uncertainty_height;   // uncertainty of the peak height
                 vr.uncertainty_pos = uncertainty_pos;         // uncertainty of the peak position
                 validRegressionsTmp.push_back(vr);            // push to the temporary vector of valid regressions
             } // end for loop
@@ -469,9 +476,13 @@ namespace q
             }
             /*
               Grouping:
-              This block of code implements the grouping. It groups the valid peaks based on the apex positions. Peaks are defined as similar, i.e., members of the same group, if they fullfill at least one of the following conditions:
-              - The difference between two peak apexes is less than 4. (Nyquist Shannon Sampling Theorem, separation of two maxima)
-              - At least one apex of a pair of peaks is within the window of the other peak. (Overlap of two maxima)
+              This block of code implements the grouping. It groups the valid peaks based
+              on the apex positions. Peaks are defined as similar, i.e., members of the
+              same group, if they fullfill at least one of the following conditions:
+              - The difference between two peak apexes is less than 4. (Nyquist Shannon
+              Sampling Theorem, separation of two maxima)
+              - At least one apex of a pair of peaks is within the window of the other peak.
+              (Overlap of two maxima)
             */
 
             std::vector<std::vector<validRegression_static>> regressionGroups; // vector of vectors of valid regressions, i.e., groups of valid regressions
@@ -555,10 +566,14 @@ namespace q
                 int right_limit = 0;           // right limit of the peak
                 float area = 0.f;              // peak area
                 float uncertainty_area = 0.f;  // uncertainty of the peak area
-                float uncertainty_pos = 0.f;   // uncertainty of the peak position
+                float uncertainty_height = 0.f;
+                float uncertainty_pos = 0.f; // uncertainty of the peak position
 
                 // validate the regression
-                if (!validateRegressions_testseries(inverseMatrix_2_2, i, scale, df_start, y_start, ylog_start, coeff, df_sum, apex_position, left_limit, right_limit, area, uncertainty_area, uncertainty_pos))
+                if (!validateRegressions_testseries(inverseMatrix_2_2, i, scale, df_start, y_start,
+                                                    ylog_start, coeff, df_sum, apex_position,
+                                                    left_limit, right_limit, area, uncertainty_area,
+                                                    uncertainty_pos, uncertainty_height))
                 {
                     continue; // invalid regression
                 }
@@ -579,6 +594,7 @@ namespace q
                 validRegressionsTmp[validRegressionsIndexTmp].right_limit = right_limit;                 // right_limit
                 validRegressionsTmp[validRegressionsIndexTmp].area = area;                               // peak area
                 validRegressionsTmp[validRegressionsIndexTmp].uncertainty_area = uncertainty_area;       // uncertainty of the peak area
+                validRegressionsTmp[validRegressionsIndexTmp].uncertainty_height = uncertainty_height;   // uncertainty of the peak height
                 validRegressionsTmp[validRegressionsIndexTmp].uncertainty_pos = uncertainty_pos;         // uncertainty of the peak position
                 validRegressionsIndexTmp++;
             } // end for loop
@@ -653,8 +669,7 @@ namespace q
 #pragma endregion "validate regressions static"
 
 #pragma region "validate regression test series"
-        bool
-        qPeaks::validateRegressions_testseries(
+        bool qPeaks::validateRegressions_testseries(
             const float inverseMatrix_2_2,
             const int i,
             const int scale,
@@ -668,11 +683,16 @@ namespace q
             int &right_limit,
             float &area,
             float &uncertainty_area,
-            float &uncertainty_pos)
+            float &uncertainty_pos,
+            float &uncertainty_height)
         {
             /*
                 Degree of Freedom Filter:
-                This block of code implements the degree of freedom filter. It calculates the degree of freedom based df vector. If the degree of freedom is less than 5, the loop continues to the next iteration. The value 5 is chosen as the minimum number of data points required to fit a quadratic regression model.
+                This block of code implements the degree of freedom filter.
+                It calculates the degree of freedom based df vector. If the
+                degree of freedom is less than 5, the loop continues to the next
+                iteration. The value 5 is chosen as the minimum number of data
+                points required to fit a quadratic regression model.
               */
             df_sum = calcDF(df_start, i, 2 * scale + i); // calculate the sum of the degree of freedom (df_sum)
             if (df_sum < 5)
@@ -682,7 +702,11 @@ namespace q
 
             /*
               Apex and Valley Position Filter:
-              This block of code implements the apex and valley position filter. It calculates the apex and valley positions based on the coefficients matrix B. If the apex is outside the data range, the loop continues to the next iteration. If the apex and valley positions are too close to each other, the loop continues to the next iteration.
+              This block of code implements the apex and valley position filter.
+              It calculates the apex and valley positions based on the coefficients
+              matrix B. If the apex is outside the data range, the loop continues
+              to the next iteration. If the apex and valley positions are too close
+              to each other, the loop continues to the next iteration.
             */
             float valley_position;
             if (!calculateApexAndValleyPositions(coeff, scale, apex_position, valley_position))
@@ -692,7 +716,10 @@ namespace q
 
             /*
               Degree of Freedom Filter:
-              This block of code implements the degree of freedom filter. It calculates the degree of freedom based df vector. If the degree of freedom is less than 5, the loop continues to the next iteration. The value 5 is chosen as the minimum number of data points required to fit a quadratic regression model.
+              This block of code implements the degree of freedom filter. It calculates the
+              degree of freedom based df vector. If the degree of freedom is less than 5,
+              the loop continues to the next iteration. The value 5 is chosen as the
+              minimum number of data points required to fit a quadratic regression model.
             */
             left_limit = (valley_position < 0) ? std::max(i, static_cast<int>(valley_position) + i + scale) : i;
             right_limit = (valley_position > 0) ? std::min(i + 2 * scale, static_cast<int>(valley_position) + i + scale) : i + 2 * scale;
@@ -704,7 +731,10 @@ namespace q
 
             /*
               Area Pre-Filter:
-              This test is used to check if the later-used arguments for exp and erf functions are within the valid range, i.e., |x^2| < 25. If the test fails, the loop continues to the next iteration. x is in this case -apex_position * b1 / 2 and -valley_position * b1 / 2.
+              This test is used to check if the later-used arguments for exp and erf
+              functions are within the valid range, i.e., |x^2| < 25. If the test fails,
+              the loop continues to the next iteration.
+              x is in this case -apex_position * b1 / 2 and -valley_position * b1 / 2.
             */
             if (apex_position * ((float *)&coeff)[1] > 50 || valley_position * ((float *)&coeff)[1] < -50)
             {
@@ -713,7 +743,10 @@ namespace q
 
             /*
               Apex to Edge Filter:
-              This block of code implements the apex to edge filter. It calculates the ratio of the apex signal to the edge signal and ensures that the ratio is greater than 2. This is a pre-filter for later signal-to-noise ratio checkups.
+              This block of code implements the apex to edge filter. It calculates
+              the ratio of the apex signal to the edge signal and ensures that the
+              ratio is greater than 2. This is a pre-filter for later
+              signal-to-noise ratio checkups.
             */
             float apexToEdge = 0.f;
             if (!isValidApexToEdge(apex_position, scale, i, y_start, apexToEdge))
@@ -723,7 +756,12 @@ namespace q
 
             /*
               Quadratic Term Filter:
-              This block of code implements the quadratic term filter. It calculates the mean squared error (MSE) between the predicted and actual values. Then it calculates the t-value for the quadratic term. If the t-value is less than the corresponding value in the tValuesArray, the quadratic term is considered statistically insignificant, and the loop continues to the next iteration.
+              This block of code implements the quadratic term filter. It calculates
+              the mean squared error (MSE) between the predicted and actual values.
+              Then it calculates the t-value for the quadratic term. If the t-value
+              is less than the corresponding value in the tValuesArray, the quadratic
+              term is considered statistically insignificant, and the loop continues
+              to the next iteration.
             */
             const float mse = calcSSE(-scale, scale, coeff, ylog_start + i) / (df_sum - 4); // mean squared error
 
@@ -733,9 +771,15 @@ namespace q
             }
             /*
               Height Filter:
-              This block of code implements the height filter. It calculates the height of the peak based on the coefficients matrix B. Then it calculates the uncertainty of the height based on the Jacobian matrix and the variance-covariance matrix of the coefficients. If the height is statistically insignificant, the loop continues to the next iteration.
+              This block of code implements the height filter. It calculates the height
+              of the peak based on the coefficients matrix B. Then it calculates the
+              uncertainty of the height based on the Jacobian matrix and the variance-covariance
+              matrix of the coefficients. If the height is statistically insignificant,
+              the loop continues to the next iteration.
             */
-            float uncertainty_height = 0.0; // at this point without height, i.e., to get the real uncertainty multiply with height later. This is done to avoid exp function at this point
+            // float uncertainty_height = 0.0;
+            // at this point without height, i.e., to get the real uncertainty
+            // multiply with height later. This is done to avoid exp function at this point
             if (!isValidPeakHeight(mse, i, scale, apex_position, valley_position, df_sum, apexToEdge, uncertainty_height))
             {
                 return false; // statistical insignificance of the height
@@ -743,8 +787,12 @@ namespace q
 
             /*
               Area Filter:
-              This block of code implements the area filter. It calculates the Jacobian matrix for the peak area based on the coefficients matrix B. Then it calculates the uncertainty of the peak area based on the Jacobian matrix. If the peak area is statistically insignificant, the loop continues to the next iteration.
-              NOTE: this function does not consider b0: i.e. to get the real uncertainty and area multiply both with Exp(b0) later. This is done to avoid exp function at this point
+              This block of code implements the area filter. It calculates the Jacobian
+              matrix for the peak area based on the coefficients matrix B. Then it calculates
+              the uncertainty of the peak area based on the Jacobian matrix. If the peak
+              area is statistically insignificant, the loop continues to the next iteration.
+              NOTE: this function does not consider b0: i.e. to get the real uncertainty and
+              area multiply both with Exp(b0) later. This is done to avoid exp function at this point
             */
             if (!isValidPeakArea(coeff, mse, scale, df_sum, area, uncertainty_area))
             {
@@ -753,7 +801,10 @@ namespace q
 
             /*
               Chi-Square Filter:
-              This block of code implements the chi-square filter. It calculates the chi-square value based on the weighted chi squared sum of expected and measured y values in the exponential domain. If the chi-square value is less than the corresponding value in the chiSquareArray, the loop continues to the next iteration.
+              This block of code implements the chi-square filter. It calculates the chi-square
+              value based on the weighted chi squared sum of expected and measured y values in
+              the exponential domain. If the chi-square value is less than the corresponding
+              value in the chiSquareArray, the loop continues to the next iteration.
             */
             const float chiSquare = calcSSE(-scale, scale, coeff, y_start + i, true, true);
             if (chiSquare < chiSquareArray[df_sum - 5])
@@ -787,7 +838,9 @@ namespace q
 
             /*
               Grouping Over Scales:
-              This block of code implements the grouping over scales. It groups the valid peaks based on the apex positions. Peaks are defined as similar, i.e., members of the same group, if they fullfill at least one of the following conditions:
+              This block of code implements the grouping over scales. It groups the valid
+              peaks based on the apex positions. Peaks are defined as similar, i.e.,
+              members of the same group, if they fullfill at least one of the following conditions:
               - The difference between two peak apexes is less than 4. (Nyquist Shannon Sampling Theorem, separation of two maxima)
               - At least one apex of a pair of peaks is within the window of the other peak. (Overlap of two maxima)
             */
@@ -1040,8 +1093,7 @@ namespace q
             {
                 // weighted mean using y_start as weighting factor and left_limit right_limit as range
                 int n = right_limit - left_limit + 1;
-                float sum_xw = 0.0;     // sum of x*w
-                float sum_weight = 0.0; // sum of w
+                float mean_wt = 0.0; // mean of w
                 for (int j = left_limit; j <= right_limit; j++)
                 {
                     if (!*(df + j))
@@ -1049,8 +1101,19 @@ namespace q
                         n--;
                         continue;
                     }
-                    sum_xw += *(x + j) * *(w + j);
-                    sum_weight += *(w + j);
+                    mean_wt += *(w + j);
+                }
+                mean_wt /= n;
+                float sum_xw = 0.0;     // sum of x*w
+                float sum_weight = 0.0; // sum of w
+                for (int j = left_limit; j <= right_limit; j++)
+                {
+                    if (!*(df + j))
+                    {
+                        continue;
+                    }
+                    sum_xw += *(x + j) * *(w + j) / mean_wt;
+                    sum_weight += *(w + j) / mean_wt;
                 }
                 float weighted_mean = sum_xw / sum_weight;
                 float sum_Qxxw = 0.0; // sum of (x - mean)^2 * w
@@ -1079,6 +1142,7 @@ namespace q
             // add height
             const __m128 coeff = regression.coeff;
             peak.height = exp_approx_d(((float *)&coeff)[0] + (regression.apex_position - regression.index_x0) * ((float *)&coeff)[1] * .5); // peak height (exp(b0 - b1^2/4/b2)) with position being -b1/2/b2
+            peak.heightUncertainty = regression.uncertainty_height * peak.height;
 
             // add area
             const float exp_b0 = exp_approx_d(((float *)&coeff)[0]); // exp(b0)

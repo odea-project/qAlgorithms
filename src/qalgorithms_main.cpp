@@ -22,6 +22,14 @@ namespace q
 
     double MeasurementData::ppm_for_precentroided_data = 5;
 
+    struct ProfilePoint
+    {
+        float mz;
+        float rt;
+        int scan;
+        float intensity;
+    };
+
     void printPeaklist(std::vector<std::vector<q::DataType::Peak>> peaktable,
                        std::filesystem::path pathOutput, std::string filename,
                        bool verbose, bool silent, bool prebinning)
@@ -57,8 +65,8 @@ namespace q
         if (verbose)
         {
 
-            output << "ID,binID,mz,mzUncertainty,retentionTime,retentionTimeUncertainty,"
-                   << "area,areaUncertainty,dqsCen,dqsBin,dqsPeak\n ";
+            output << "ID,binID,startIndex,endIndex,mz,mzUncertainty,retentionTime,retentionTimeUncertainty,"
+                   << "area,areaUncertainty,height,heightUncertainty,dqsCen,dqsBin,dqsPeak\n";
             int counter = 1;
             for (size_t i = 0; i < peaktable.size(); i++)
             {
@@ -71,9 +79,10 @@ namespace q
                 {
                     auto peak = peaktable[i][j];
                     char buffer[128];
-                    sprintf(buffer, "%d,%d,%0.8f,%0.8f,%0.8f,%0.8f,%0.8f,%0.8f,%0.8f,%0.8f,%0.8f\n",
-                            counter, int(i + 1), peak.mz, peak.mzUncertainty, peak.retentionTime, peak.retentionTimeUncertainty,
-                            peak.area, peak.areaUncertainty, peak.dqsCen, peak.dqsBin, peak.dqsPeak);
+                    sprintf(buffer, "%d,%d,%d,%d,%0.8f,%0.8f,%0.8f,%0.8f,%0.8f,%0.8f,%0.8f,%0.8f,%0.8f\n",
+                            counter, int(i + 1), peak.idxPeakStart, peak.idxPeakEnd, peak.mz, peak.mzUncertainty,
+                            peak.retentionTime, peak.retentionTimeUncertainty, peak.area, peak.areaUncertainty,
+                            peak.dqsCen, peak.dqsBin, peak.dqsPeak);
                     output << buffer;
                     ++counter;
                 }
@@ -81,7 +90,7 @@ namespace q
         }
         else
         {
-            output << "ID,binID,mz,mzUncertainty,retentionTime,retentionTimeUncertainty,"
+            output << "ID,mz,mzUncertainty,retentionTime,retentionTimeUncertainty,"
                    << "area,areaUncertainty,dqsCen,dqsBin,dqsPeak\n ";
             int counter = 1;
             for (size_t i = 0; i < peaktable.size(); i++)
@@ -96,11 +105,45 @@ namespace q
                     auto peak = peaktable[i][j];
                     char buffer[128];
                     sprintf(buffer, "%d,%d,%0.8f,%0.8f,%0.8f,%0.8f,%0.8f,%0.8f,%0.8f,%0.8f,%0.8f\n",
-                            counter, int(i + 1), peak.mz, peak.mzUncertainty, peak.retentionTime, peak.retentionTimeUncertainty,
+                            counter, peak.mz, peak.mzUncertainty, peak.retentionTime, peak.retentionTimeUncertainty,
                             peak.area, peak.areaUncertainty, peak.dqsCen, peak.dqsBin, peak.dqsPeak);
                     output << buffer;
                     ++counter;
                 }
+            }
+        }
+        file_out << output.str();
+        file_out.close();
+        return;
+    }
+
+    void printProfilePoints(std::vector<std::vector<ProfilePoint>> peakComponents,
+                            std::filesystem::path pathOutput, std::string filename, bool silent)
+    {
+        filename += "_subprofiles.csv";
+        pathOutput /= filename;
+        if (!silent)
+        {
+            std::cout << "writing profile information of peaks to: " << pathOutput << "\n\n";
+        }
+
+        std::fstream file_out;
+        std::stringstream output;
+        file_out.open(pathOutput, std::ios::out);
+        if (!file_out.is_open())
+        {
+            std::cerr << "Error: could not open output path during peaklist printing. Program terminated.\n";
+            exit(1); // @todo sensible error codes
+        }
+        output << "peakID,mz,retentionTime,scanNumber,intensity\n";
+        for (size_t i = 0; i < peakComponents.size(); i++)
+        {
+            for (auto point : peakComponents[i])
+            {
+                char buffer[64];
+                sprintf(buffer, "%d,%0.8f,%0.8f,%d,%0.8f\n",
+                        i, point.mz, point.rt, point.scan, point.intensity);
+                output << buffer;
             }
         }
         file_out << output.str();
@@ -274,9 +317,13 @@ namespace q
                                  "                                  in addition to the final peak table. The file ends in _bins.csv.\n"
                                  "      -pp, -printpeaks:           print the peak tables as csv.\n"
                                  "      -e,  -extended:             print additional information into the final peak list. You do not\n"
-                                 "                                  have to also set the -pp flag. Currently, only bin ID and peak ID\n"
-                                 "                                  are added to the output.\n"
-                                 "      -pa, -printall:             print all availvable resutlts.\n"
+                                 "                                  have to also set the -pp flag. The extended output includes the.\n"
+                                 "                                  ID of the bin a given peak was found in, its start and end \n"
+                                 "                                  position (by index) within the bin and the intensity as apex height.\n"
+                                 "      -sp, -subprofile:           instead of the peaks, print all proflie-mode data points which\n"
+                                 "                                  were used to create the final peaks. This does not return any quality\n"
+                                 "                                  scores. Only use this option when reading in prodile mode files.\n"
+                                 "      -pa, -printall:             print all availvable resutlts. You will probably not need to do this.\n"
                                  "\n    Program behaviour:\n"
                                  "      -s, -silent:    do not print progress reports to standard out\n"
                                  "      -v, -verbose:   print a detailed progress report to standard out\n"
@@ -349,6 +396,7 @@ int main(int argc, char *argv[])
     volatile bool printBins = false;
     volatile bool printExtended = false;
     volatile bool printCentroids = false;
+    volatile bool printSubProfile = false;
 
     for (int i = 1; i < argc; i++)
     {
@@ -521,6 +569,10 @@ int main(int argc, char *argv[])
             printExtended = true;
             printPeaks = true;
         }
+        else if ((argument == "-sp") | (argument == "-subprofile"))
+        {
+            printSubProfile = true;
+        }
         else if ((argument == "-pa") | (argument == "-printall"))
         {
             printCentroids = true;
@@ -528,6 +580,7 @@ int main(int argc, char *argv[])
             printSummary = true;
             printExtended = true;
             printPeaks = true;
+            printSubProfile = true;
         }
         else if (argument == "-log")
         {
@@ -583,7 +636,8 @@ int main(int argc, char *argv[])
     }
     std::fstream logWriter;
     logWriter.open(pathLogging, std::ios::out);
-    logWriter << "filename, numSpectra, numCentroids, meanDQSC, numBins_empty, numBins_one, numBins_more, meanDQSB, numFeatures, meanDQSF\n";
+    logWriter << "filename, numSpectra, numCentroids, meanDQSC, numBins_empty, numBins_one,"
+                 " numBins_more, meanDQSB, numFeatures, badFeatures, meanDQSF\n";
     logWriter.close();
 
 #pragma region file processing
@@ -710,6 +764,7 @@ int main(int argc, char *argv[])
             // every subvector of peaks corresponds to the bin ID
             auto peaks = tensorData.findPeaks_QBIN(qpeaks, binnedData);
             // make sure that every peak contains only one mass trace
+            size_t peaksWithMassGaps = 0;
             for (size_t i = 0; i < peaks.size(); i++)
             {
                 if (!peaks[i].empty())
@@ -719,8 +774,9 @@ int main(int argc, char *argv[])
                     {
                         if (!q::massTraceStable(massesBin, peaks[i][j].idxPeakStart, peaks[i][j].idxPeakEnd))
                         {
-                            std::cerr << peaks[i][j].mz << ", " << peaks[i][j].retentionTime << ", "
-                                      << peaks[i][j].area << ", " << peaks[i][j].dqsPeak << "\n";
+                            ++peaksWithMassGaps;
+                            // std::cerr << peaks[i][j].mz << ", " << peaks[i][j].retentionTime << ", "
+                            //           << peaks[i][j].area << ", " << peaks[i][j].dqsPeak << "\n";
                             // problems do not only occur at very low masses or the edges of out chromoatography
                             // recommendation: do not pass these peaks to result table
                             peaks[i][j].dqsPeak = -1;
@@ -730,6 +786,10 @@ int main(int argc, char *argv[])
                         }
                     }
                 }
+            }
+            if (verboseProgress)
+            {
+                std::cout << peaksWithMassGaps << " peaks were erroneously constructed from more than one mass trace\n";
             }
 
             timeEnd = std::chrono::high_resolution_clock::now();
@@ -746,7 +806,10 @@ int main(int argc, char *argv[])
                 {
                     for (auto peak : peaks[i])
                     {
-                        meanDQSF += peak.dqsPeak;
+                        if (peak.dqsPeak > 0)
+                        {
+                            meanDQSF += peak.dqsPeak;
+                        }
                     }
                     if (peaks[i].size() == 1)
                     {
@@ -786,14 +849,29 @@ int main(int argc, char *argv[])
             //@todo , numBins_empty, numBins_one, numBins_more, meanDQSB
             logWriter.open(pathLogging, std::ios::app);
             logWriter << filename << ", " << centroids.size() << ", " << binThis.lengthAllPoints << ", "
-                      << meanDQSC / binThis.lengthAllPoints << ", " << dudBins << ", " << onlyone
-                      << ", " << overfullBins << ", " << meanDQSB << ", " << peakCount << ", " << meanDQSF << "\n";
+                      << meanDQSC / binThis.lengthAllPoints << ", " << dudBins << ", " << onlyone << ", "
+                      << overfullBins << ", " << meanDQSB << ", " << peakCount << ", " << peaksWithMassGaps
+                      << ", " << meanDQSF << "\n";
             logWriter.close();
 
             if (printPeaks)
             {
                 q::printPeaklist(peaks, pathOutput, filename, printExtended, silent, false);
             }
+            // if (printSubProfile)
+            // {
+            //     for (size_t i = 0; i < peaks.size(); i++)
+            //     {
+            //         if (!peaks[i].empty())
+            //         {
+            //             auto massesBin = binnedData[i].mz;
+            //             for (size_t j = 0; j < peaks[i].size(); j++)
+            //             {
+            //             }
+            //         }
+            //     }
+            // }
+
             // @todo add peak grouping here
         }
         counter++;

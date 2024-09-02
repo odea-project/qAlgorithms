@@ -83,13 +83,14 @@ namespace q
                 {
                     TensorData::dataPoint dp(            // create data point
                         eic.rententionTimes[indices[i]], // x-axis value
-                        eic.intensities[indices[i]],     // y-axis value
-                        true,                            // df value
-                        eic.DQSC[indices[i]],            // dqs centroid value
-                        eic.DQSB[indices[i]],            // dqs binning value
-                        eic.scanNumbers[indices[i]],     // scan number
-                        eic.mz[indices[i]]);             // mz ratio
-                    dataPoints.push_back(dp);            // add data point to vector
+                        eic.ints_area[indices[i]],       // y-axis value
+                        // eic.ints_height[indices[i]],
+                        true,                        // df value
+                        eic.DQSC[indices[i]],        // dqs centroid value
+                        eic.DQSB[indices[i]],        // dqs binning value
+                        eic.scanNumbers[indices[i]], // scan number
+                        eic.mz[indices[i]]);         // mz ratio
+                    dataPoints.push_back(dp);        // add data point to vector
                 }
             }
             else
@@ -98,13 +99,14 @@ namespace q
                 {
                     TensorData::dataPoint dp(   // create data point
                         eic.rententionTimes[i], // x-axis value
-                        eic.intensities[i],     // y-axis value
-                        true,                   // df value
-                        eic.DQSC[i],            // dqs centroid value
-                        eic.DQSB[i],            // dqs binning value
-                        eic.scanNumbers[i],     // scan number
-                        eic.mz[i]);             // mz ratio
-                    dataPoints.push_back(dp);   // add data point to vector
+                        eic.ints_area[i],       // y-axis value
+                        // eic.ints_height[i],
+                        true,                 // df value
+                        eic.DQSC[i],          // dqs centroid value
+                        eic.DQSB[i],          // dqs binning value
+                        eic.scanNumbers[i],   // scan number
+                        eic.mz[i]);           // mz ratio
+                    dataPoints.push_back(dp); // add data point to vector
                 }
             }
             // add end point for later pretreatment
@@ -154,7 +156,7 @@ namespace q
             int num_centroided_spectra = std::count(spectrum_mode.begin(), spectrum_mode.end(), "centroid");
             if (num_centroided_spectra > spectrum_mode.size() * .5) // in profile mode sometimes centroided spectra appear as well
             {
-                std::cerr << "Warning: qAlgorithms is intended for profile spectra. A base uncertainty of" 
+                std::cerr << "Warning: qAlgorithms is intended for profile spectra. A base uncertainty of"
                           << " 5 ppm is assumed for all supplied centroids\n";
                 std::vector<double> retention_times = data.get_spectra_rt(indices); // get retention times
                 rt_diff = calcRTDiff(retention_times);

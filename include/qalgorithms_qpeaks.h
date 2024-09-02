@@ -76,35 +76,34 @@ namespace q
 
             struct validRegression_static
             {
-                int index_x0;           // index of window center (x==0) in the Y matrix
-                int scale;              // scale of the regression window, i.e., 2*scale+1 = window size
-                int df;                 // degree of freedom, interpolated data points will not be considered
-                float apex_position;    // position of the apex of the peak
-                float mse;              // mean squared error
-                __m128 coeff;           // regression coefficients
-                bool isValid;           // flag to indicate if the regression is valid
-                int left_limit;         // left limit of the peak regression window
-                int right_limit;        // right limit of the peak regression window
-                float area;             // area of the peak
+                int index_x0;        // index of window center (x==0) in the Y matrix
+                int scale;           // scale of the regression window, i.e., 2*scale+1 = window size
+                int df;              // degree of freedom, interpolated data points will not be considered
+                float apex_position; // position of the apex of the peak
+                float mse;           // mean squared error
+                __m128 coeff;        // regression coefficients
+                bool isValid;        // flag to indicate if the regression is valid
+                int left_limit;      // left limit of the peak regression window
+                int right_limit;     // right limit of the peak regression window
+                float area;          // area of the peak
+                // float height;
                 float uncertainty_area; // uncertainty of the area
                 float uncertainty_pos;  // uncertainty of the position
+                float uncertainty_height;
                 validRegression_static() = default;
             };
 
             // methods
-            int
-            calculateNumberOfRegressions(const int n) const;
+            int calculateNumberOfRegressions(const int n) const;
 
-            void
-            runningRegression(
+            void runningRegression(
                 const float *y_start,
                 const float *ylog_start,
                 const bool *df_start,
                 const int n,
                 std::vector<validRegression_static> &validRegressions);
 
-            void
-            runningRegression_static(
+            void runningRegression_static(
                 const float *y_start,
                 const float *ylog_start,
                 const bool *df_start,
@@ -112,8 +111,7 @@ namespace q
                 validRegression_static *validRegressions,
                 int &validRegressionsIndex);
 
-            void
-            validateRegressions(
+            void validateRegressions(
                 const __m128 *beta,
                 const int n_segments,
                 const float *y_start,
@@ -122,8 +120,7 @@ namespace q
                 const int scale,
                 std::vector<validRegression_static> &validRegressions);
 
-            void
-            validateRegressions_static(
+            void validateRegressions_static(
                 const __m128 *beta,
                 const int n_segments,
                 const float *y_start,
@@ -133,8 +130,7 @@ namespace q
                 int &validRegressionsIndex,
                 validRegression_static *validRegressions);
 
-            bool
-            validateRegressions_testseries(
+            bool validateRegressions_testseries(
                 const float inverseMatrix_2_2,
                 const int i,
                 const int scale,
@@ -148,25 +144,23 @@ namespace q
                 int &right_limit,
                 float &area,
                 float &uncertainty_area,
-                float &uncertainty_pos);
+                float &uncertainty_pos,
+                float &uncertainty_height);
 
-            void
-            mergeRegressionsOverScales(
+            void mergeRegressionsOverScales(
                 std::vector<validRegression_static> &validRegressions,
                 const float *y_start,
                 const float *ylog_start,
                 const bool *df_start);
 
-            void
-            mergeRegressionsOverScales_static(
+            void mergeRegressionsOverScales_static(
                 validRegression_static *validRegressions,
                 const int n_regressions,
                 const float *y_start,
                 const float *ylog_start,
                 const bool *df_start);
 
-            void
-            createPeaks(
+            void createPeaks(
                 std::vector<DataType::Peak> &peaks,
                 const std::vector<validRegression_static> &validRegressions,
                 const float *y_start,
@@ -178,8 +172,7 @@ namespace q
                 const float *dqs_peak,
                 const int scanNumber);
 
-            void
-            createPeaks_static(
+            void createPeaks_static(
                 std::vector<DataType::Peak> &peaks,
                 validRegression_static *validRegressions,
                 const int validRegressionsIndex,
@@ -192,8 +185,7 @@ namespace q
                 const float *dqs_peak,
                 const int scanNumber);
 
-            void
-            addPeakProperties(
+            void addPeakProperties(
                 std::vector<DataType::Peak> &peaks,
                 const validRegression_static &regression,
                 const float *y_start,
@@ -205,8 +197,7 @@ namespace q
                 const float *dqs_peak,
                 const int scanNumber);
 
-            float
-            calcSSE(
+            float calcSSE(
                 const int left_limit,
                 const int right_limit,
                 const __m128 &coeff,
@@ -230,28 +221,24 @@ namespace q
              * @param scale : Window size scale, e.g., 5 means the window size is 11 (2*5+1)
              * @return std::pair<double,int> : MSE and index of the best regression window
              */
-            void
-            calcExtendedMse(
+            void calcExtendedMse(
                 const float *y_start,
                 std::vector<validRegression_static> &regressions,
                 const bool *df_start);
 
-            void
-            calcExtendedMse_static(
+            void calcExtendedMse_static(
                 const float *y_start,
                 validRegression_static *regressions_start,
                 const int n_regressions,
                 const bool *df_start);
 
-            void
-            calcExtendedMsePair_static(
+            void calcExtendedMsePair_static(
                 const float *y_start,
                 validRegression_static *low_scale_regression,
                 validRegression_static *hi_scale_regression,
                 const bool *df_start);
 
-            void
-            calcExtendedMseOverScales_static(
+            void calcExtendedMseOverScales_static(
                 const float *y_start,
                 validRegression_static *validRegressions,
                 const std::vector<int> &validRegressionsInGroup,
@@ -270,8 +257,7 @@ namespace q
              * @param right_limit : End index of the regression window
              * @return int : Degree of freedom
              */
-            int
-            calcDF(
+            int calcDF(
                 const bool *df_start,
                 const int left_limit,
                 const int right_limit);
@@ -285,8 +271,7 @@ namespace q
              * @return true : if the apex and valley positions are valid
              * @return false : if the apex and valley positions are not valid (e.g., the apex position is not in the regression window)
              */
-            bool
-            calculateApexAndValleyPositions(
+            bool calculateApexAndValleyPositions(
                 const __m128 &coeff,
                 const int scale,
                 float &apex_position,
@@ -300,8 +285,7 @@ namespace q
              * @param scale
              * @return float
              */
-            float
-            multiplyVecMatrixVecTranspose(
+            float multiplyVecMatrixVecTranspose(
                 const float vec[4],
                 const int scale) const;
 
@@ -317,8 +301,7 @@ namespace q
              * @return true
              * @return false
              */
-            bool
-            isValidApexToEdge(
+            bool isValidApexToEdge(
                 const double apex_position,
                 const int scale,
                 const int index_loop,
@@ -334,8 +317,7 @@ namespace q
              * @return true : if the quadratic term is valid
              * @return false : if the quadratic term is not valid
              */
-            bool
-            isValidQuadraticTerm(
+            bool isValidQuadraticTerm(
                 const __m128 &coeff,
                 const float inverseMatrix_2_2,
                 const float mse,
@@ -351,8 +333,7 @@ namespace q
              * @return true : if the peak height is valid
              * @return false : if the peak height is not valid
              */
-            bool
-            isValidPeakHeight(
+            bool isValidPeakHeight(
                 const float mse,
                 const int index,
                 const int scale,
@@ -375,8 +356,7 @@ namespace q
              * @return true : if the peak area is valid
              * @return false : if the peak area is not valid
              */
-            bool
-            isValidPeakArea(
+            bool isValidPeakArea(
                 const __m128 &coeff,
                 const float mse,
                 const int scale,
@@ -384,30 +364,26 @@ namespace q
                 float &area,
                 float &uncertainty_area) const;
 
-            void
-            calcUncertaintyPosition(
+            void calcUncertaintyPosition(
                 const float mse,
                 const __m128 &coeff,
                 const float apex_position,
                 const int scale,
                 float &uncertainty_pos) const;
 
-            void
-            convolve_static(
+            void convolve_static(
                 const size_t scale,
                 const float *vec,
                 const size_t n,
                 __m128 *beta);
 
-            void
-            convolve_dynamic(
+            void convolve_dynamic(
                 const size_t scale,
                 const float *vec,
                 const size_t n,
                 __m128 *beta);
 
-            void
-            convolve_SIMD(
+            void convolve_SIMD(
                 const size_t scale,
                 const float *vec,
                 const size_t n,
