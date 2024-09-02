@@ -21,7 +21,7 @@ namespace q
         double PPMerror)
     {
       std::vector<std::vector<DataType::Peak>> centroids(indices.size());
-// #pragma omp parallel for
+      // #pragma omp parallel for
       for (size_t i = 0; i < indices.size(); ++i) // loop over all indices
       {
         const int index = indices[i]; // spectrum index
@@ -41,6 +41,7 @@ namespace q
           centroids[i].back().sampleID = index;
           centroids[i].back().mz = spectrum[0][j];
           centroids[i].back().area = spectrum[1][j];
+          centroids[i].back().height = spectrum[1][j];
           centroids[i].back().retentionTime = retention_times[i];
           centroids[i].back().dqsCen = -1.0;
           centroids[i].back().mzUncertainty = spectrum[0][j] * PPMerror * 10e-6; // 5 ppm default

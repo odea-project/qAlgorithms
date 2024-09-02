@@ -421,7 +421,10 @@ advantage that it can still be used if the centroiding was performed
 using another algorithm, while also not amplifying potential distortions
 introduced in the previous step.
 
-
+## Validity of the identified peaks
+During development, it was found that some generated peaks will not
+fulfill the condition of being part of only one mass trace. Around ten
+percent of all peaks found in each displayed this behaviour.
 
 [@todo] DQSB, DQSF
 

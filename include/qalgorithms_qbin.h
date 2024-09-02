@@ -15,6 +15,18 @@ namespace q
         namespace qBinning
         {
 #pragma region "utility"
+
+            // the metacentroid contains information that is centroid-specific but not
+            // required during the processing.
+            struct metaCentroid
+            {
+                float RT;
+                float int_area;
+                float int_height;
+                float DQSCentroid;
+                int profileIdxStart;
+                int profileIdxEnd;
+            };
             // qCentroid Struct (contains all user-specified variables found in source file)
             // Output of qCentroiding @todo move to utils / shared data file
             struct qCentroid
@@ -23,8 +35,10 @@ namespace q
                 double mzError = -1;
                 float RT;
                 int scanNo;
-                double intensity;
-                double DQSCentroid; // this and RT could be moved outside of the struct
+                float int_area;
+                float int_height;
+                float DQSCentroid; // this and RT could be moved outside of the struct
+                // metaCentroid *metadata; // pointer to metadata
             };
 
             // depending on the instrumentation, binning requires different subsetting
@@ -58,6 +72,7 @@ namespace q
             struct CentroidedData
             {
                 std::vector<std::vector<qCentroid>> allDatapoints;
+                // std::vector<metaCentroid> metadata;
                 int lengthAllPoints; // number of centroids in all scans
                 // int scanFold; // number of scans after which the next chromatographic fraction arrives (LC_IMS or LCxLC)
                 // MeasurementType instrumentation;
@@ -70,9 +85,10 @@ namespace q
                 std::vector<int> scanNumbers;
                 std::vector<double> rententionTimes;
                 std::vector<double> mz;
-                std::vector<double> intensities;
-                std::vector<double> DQSB;
-                std::vector<double> DQSC;
+                std::vector<float> ints_area;
+                std::vector<float> ints_height;
+                std::vector<float> DQSB;
+                std::vector<float> DQSC;
 
                 // only include basic summary params if useful
                 // double meanDQS;
