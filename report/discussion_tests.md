@@ -29,6 +29,8 @@ Report concluding the research practical by Daniel Höhn, supervised by Felix Dr
 - [Development of a consistency parameter from process statistics](#development-of-a-consistency-parameter-from-process-statistics)
   - [Consistency of the centroiding algorithm](#consistency-of-the-centroiding-algorithm)
   - [Consistency of the Binning algorithm](#consistency-of-the-binning-algorithm)
+  - [Validity of the identified peaks](#validity-of-the-identified-peaks)
+- [Error traceability](#error-traceability)
 - [Viability test for simple process parameters](#viability-test-for-simple-process-parameters)
 - [Further research](#further-research)
 - [planned Expansions to qAlgorithms](#planned-expansions-to-qalgorithms)
@@ -82,6 +84,11 @@ measurements, replicates and other series of very similar samples
 this involves comparing the different steps of a series with 
 each other, ideally over a large amount of samples at once.
 
+Another point of application is the stability of a pooled sample
+over the course of very long measurement series. Here, an easy way
+of assessing the total stability over the entire dataset reduces
+the workload of an instument operator.
+
 These requirements place significant restrictions on the possible
 ways to communicate the deluge of data that comes with (possibly)
 years of measurements. Here, two types of approaches can be viable:
@@ -100,7 +107,7 @@ the viability of the measurement and communicates a point up to
 which all data generated is reliable.
 Similarly, (final) output data should always be provided in a format that
 ist compatible with spreadsheet software like Microsoft Excel, or,
-for more complex data, some relevant subset of it. 
+for more complex data, some relevant subset which is human-readable. 
 
 ## Differentiating process quality from result quality
 Previous work by https://doi.org/10.1016/j.trac.2020.116063 highlighted
@@ -187,19 +194,53 @@ process.
 
 ### Current means of stability / quality monitoring
 -consistency in mass accuracy of some internal standards
-[https://www.sciencedirect.com/science/article/pii/S0165993621000236#bib63]
+[https://www.sciencedirect.com/science/article/pii/S0165993621000236]
 Caballero-Casero et Al. proposed guidelines on analytical
 performance reporting in the context of human metabolomics.
 The suggested criteria are sensitivity, selectivity, 
-accuracy, stability and representativeness[]. All five largely
-depend on internal standards, with the excpection of stability.
+accuracy, stability and representativeness. All five largely
+depend on internal standards, with the excpection of stability, which
+also proposes consistency in the number of features as an addition 
+to the recovery of internal standards.
 The authors propose hard limit values for these, 
+In addition, internal standards never achieve full coverage
+of a given chemical space in terms of retention time, mass
+or ionisation behaviour. This limits the general applicability
+of quality control by means of (exclusively) internal standards.
 
 ### Validation criteria
 For the purposes of this evaluation, measurements withing a
 series are ranked based on their median DQSF. A characteristic
 found to correlate with the median DQSF is considered to be an
 indicator for that process to have performed well. [rework]
+
+Due to the lack of established quality parameters, a comparison
+with some "true" measure of quality is not possible. While the
+quality scores implemented in qAlgorithms provide some information
+regarding process quality, no correlation with result quality has
+been established. Furthermore, errors persisting in the program
+itself are possible. These factors reduce the viability of qAlgorithms
+itself for controlling process quality variables. Since it could
+be shown that the DQSF correlates with reproducibility [qPeaks],
+The DQSF could function as an indicator for a process variable
+not providing correct information should features with very high
+scores contribute significantly to a very low process score.
+
+To resolve this issue, two datasets - one for a case with no errors,
+one for a case with a lot of errors - are used. The error-free series
+consists of ten replicates of a matrix-free standard solution, measured 
+in succession, with no noticeable deviation from each other. It is assumed
+that this dataset and similar ones are fully free of data which would 
+cause issues during processing with qAlgorithms. As such, any test that would
+identify one of the ten measurements as defective is considered to be 
+unreliable.
+[@todo] recovery of standards
+As a positive control, data from an UV degradation experiment was used.
+During the measurement, the column pressure was highly unstable.
+It is assumed that the individual measurements are both highly inconsistent
+for replicates and generally contain bad peak assignments due to
+the elution profile no longer being gaussian. A test which identifies
+these measurements as defective is considered to be viable.
 
 # Preformance criteria - Fourier Transform:
 The fourier transform employed in FT-ICR and Orbitrap type mass
@@ -424,10 +465,30 @@ introduced in the previous step.
 ## Validity of the identified peaks
 During development, it was found that some generated peaks will not
 fulfill the condition of being part of only one mass trace. Around ten
-percent of all peaks found in each displayed this behaviour.
+percent of all peaks found each displayed this behaviour. This property
+of a peak implies poorly resolved mass traces during the binning step,
+while the fact that a peak could be constructed points towards mostly singular 
+noise datapoints being included. Peak scores in these "contaminated" bins are
+not noticeably distinct from those in regular bins.
+This is an issue that needs to be adressed during regression validation.
+Here, the proposed process statistic is the total number of regressions
+(per bin) that were invalid because of such a mass trace inconsistency
+before the best fit was reached. 
 
 [@todo] DQSB, DQSF
 
+# Error traceability
+An important part of communicating an error to the operator is to
+establish complete traceability from the questionable result to
+the raw data. This allows users to control the output with a 
+different tool and, ideally, compare the original data which both used 
+to generate their final result. qAlgorithms provides the user with
+the option to view only those parts of the input data that was used
+to construct peaks. @todo
+This option also enables the processing of uncertain, but highly
+relevant masses by means of especially computationally expensive
+methods without demanding very powerful processors, a lot of
+energy or a lot of time. 
 
 # Viability test for simple process parameters
 Tested parameters:

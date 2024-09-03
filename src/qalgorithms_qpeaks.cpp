@@ -1039,11 +1039,11 @@ namespace q
             // iterate over the validRegressions vector
             for (auto &regression : validRegressions)
             {
-                if (!regression.isValid) // @todo why are non-valid regressions passed into the vector?
+                if (regression.isValid)
                 {
-                    continue;
+                    addPeakProperties(peaks, regression, y_start, mz_start, rt_start,
+                                      df_start, dqs_cen, dqs_bin, dqs_peak, scanNumber);
                 }
-                addPeakProperties(peaks, regression, y_start, mz_start, rt_start, df_start, dqs_cen, dqs_bin, dqs_peak, scanNumber);
             }
         }
 
@@ -1065,11 +1065,11 @@ namespace q
             for (int i = 0; i < validRegressionsIndex; i++)
             {
                 auto &regression = validRegressions[i];
-                if (!regression.isValid)
+                if (regression.isValid)
                 {
-                    continue;
+                    addPeakProperties(peaks, regression, y_start, mz_start, rt_start,
+                                      df_start, dqs_cen, dqs_bin, dqs_peak, scanNumber);
                 }
-                addPeakProperties(peaks, regression, y_start, mz_start, rt_start, df_start, dqs_cen, dqs_bin, dqs_peak, scanNumber);
             }
         }
 #pragma endregion "create peaks"
@@ -1089,7 +1089,8 @@ namespace q
             const int scanNumber)
         {
             // Lambda function to calculate the weighted mean and variance
-            auto calcWeightedMeanAndVariance = [](const float *x, const float *w, const bool *df, const int left_limit, const int right_limit) -> std::pair<float, float>
+            auto calcWeightedMeanAndVariance = [](const float *x, const float *w, const bool *df,
+                                                  const int left_limit, const int right_limit) -> std::pair<float, float>
             {
                 // weighted mean using y_start as weighting factor and left_limit right_limit as range
                 int n = right_limit - left_limit + 1;
@@ -1207,8 +1208,14 @@ namespace q
             }
 
             // start and end indices
-            peak.idxPeakStart = regression.left_limit;
-            peak.idxPeakEnd = regression.right_limit;
+            peak.idxPeakStart = regression.left_limit - 3;
+            if (peak.idxPeakStart < 0)
+            {
+                peak.idxPeakStart = 0;
+            }
+
+            peak.idxPeakEnd = regression.right_limit - 3;
+
             peaks.push_back(peak);
         }
 

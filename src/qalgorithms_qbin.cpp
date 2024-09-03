@@ -26,8 +26,12 @@ namespace q
             /// @brief calculate the mean distance in mz to all other elements of a sorted vector for one element
             /// @param pointsInBin vector of data points sorted by mz
             /// @return vector of the mean inner distances for all elements in the same order as pointsInBin
-            static std::vector<double> meanDistance(const std::vector<qCentroid *> pointsInBin);
+            // static std::vector<double> meanDistance(const std::vector<qCentroid *> pointsInBin);
 
+            /// @brief calculate the mean distance in mz to all other close elements of a sorted vector for one element
+            /// @param pointsInBin vector of data points sorted by scans
+            /// @param maxdist maximum distance in scans for similar points
+            /// @return vector of the mean inner distances for all elements in the same order as pointsInBin
             static std::vector<double> meanDistanceRegional(const std::vector<qCentroid *> pointsInBin, int maxdist);
 
             /// @brief calculate the data quality score as described by Reuschenbach et al. for one datapoint in a bin
@@ -36,7 +40,9 @@ namespace q
             /// @return the data quality score for the specified element
             static inline double calcDQS(const double MID, const double MOD); // Mean Inner Distance, Minimum Outer Distance
 
-            static void scaleDistancesForDQS_gauss(int maxdist); // @experimental
+            // static void scaleDistancesForDQS_gauss(int maxdist); // removed
+
+            static void scaleDistancesForDQS_linear(int maxdist); // @experimental
 
             // binning-specific variables
             int maxdist;
@@ -597,7 +603,7 @@ namespace q
                     // {
                     indices.push_back(i); // save these bins for printing
                     char buffer[256];
-                    sprintf(buffer, "%lu,%d,%lu,%0.15f,%0.15f,%0.15f,%0.2f,%0.9f,%0.9f,%0.9f,%0.15f\n",
+                    sprintf(buffer, "%zu,%d,%zu,%0.15f,%0.15f,%0.15f,%0.2f,%0.9f,%0.9f,%0.9f,%0.15f\n",
                             i + 1, int(res.errorcode), res.binsize, res.mean_mz, res.median_mz, res.stddev_mz,
                             res.mean_scans, res.DQSB_base, res.DQSB_scaled, res.DQSC_min, res.mean_error);
                     output_sum << buffer;
@@ -1402,28 +1408,28 @@ namespace q
 
 #pragma region "Functions"
 
-            static std::vector<double> meanDistance(const std::vector<qCentroid *> pointsInBin)
-            {
-                // assumes bin is sorted by mz
-                const size_t binsize = pointsInBin.size();
-                const double ld_binsize(binsize);
-                std::vector<double> output(binsize);
-                double totalSum = std::accumulate(pointsInBin.begin(), pointsInBin.end(), 0.0, [](double acc, const qCentroid *point)
-                                                  { return acc + point->mz; }); // totalSum is the sum of all mz ahead of the current element
-                double beforeSum = 0;                                           // beforeSum is the sum of all mz which had their distance calculated already
-                for (size_t i = 0; i < binsize; i++)
-                {
-                    const double ld_i(i);
-                    double v1 = fmal(pointsInBin[i]->mz, -(ld_binsize - ld_i), totalSum); // sum of all distances to mz ahead of the current element
-                    // (totalSum - pointsInBin[i]->mz * (binsize - i));
-                    double v2 = fmal(pointsInBin[i]->mz, ld_i, -beforeSum); // sum of all distances to mz past the current element (starts at 0)
-                    // (pointsInBin[i]->mz * i - beforeSum);
-                    beforeSum += pointsInBin[i]->mz;
-                    totalSum -= pointsInBin[i]->mz;
-                    output[i] = (v1 + v2) / (binsize - 1); // -1 since the distance of an element to itself is not factored in
-                }
-                return output;
-            }
+            // static std::vector<double> meanDistance(const std::vector<qCentroid *> pointsInBin)
+            // {
+            //     // assumes bin is sorted by mz
+            //     const size_t binsize = pointsInBin.size();
+            //     const double ld_binsize(binsize);
+            //     std::vector<double> output(binsize);
+            //     double totalSum = std::accumulate(pointsInBin.begin(), pointsInBin.end(), 0.0, [](double acc, const qCentroid *point)
+            //                                       { return acc + point->mz; }); // totalSum is the sum of all mz ahead of the current element
+            //     double beforeSum = 0;                                           // beforeSum is the sum of all mz which had their distance calculated already
+            //     for (size_t i = 0; i < binsize; i++)
+            //     {
+            //         const double ld_i(i);
+            //         double v1 = fmal(pointsInBin[i]->mz, -(ld_binsize - ld_i), totalSum); // sum of all distances to mz ahead of the current element
+            //         // (totalSum - pointsInBin[i]->mz * (binsize - i));
+            //         double v2 = fmal(pointsInBin[i]->mz, ld_i, -beforeSum); // sum of all distances to mz past the current element (starts at 0)
+            //         // (pointsInBin[i]->mz * i - beforeSum);
+            //         beforeSum += pointsInBin[i]->mz;
+            //         totalSum -= pointsInBin[i]->mz;
+            //         output[i] = (v1 + v2) / (binsize - 1); // -1 since the distance of an element to itself is not factored in
+            //     }
+            //     return output;
+            // }
 
             static std::vector<double> meanDistanceRegional(const std::vector<qCentroid *> pointsInBin, int maxdist)
             {

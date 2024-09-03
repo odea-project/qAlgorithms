@@ -202,10 +202,9 @@ namespace q
             q::Algorithms::qPeaks &qpeaks,
             std::vector<q::Algorithms::qBinning::EIC> &data)
         {
-            std::vector<std::vector<DataType::Peak>> peaks =
-                std::vector<std::vector<DataType::Peak>>(data.size()); // create vector of unique pointers to peaks
-                                                                       // #pragma omp parallel for
-            for (size_t i = 0; i < data.size(); ++i)                   // loop over all data
+            std::vector<std::vector<DataType::Peak>> peaks(data.size()); // create vector of unique pointers to peaks
+                                                                         // #pragma omp parallel for
+            for (size_t i = 0; i < data.size(); ++i)                     // loop over all data
             {
                 const int num_data_points = data[i].scanNumbers.size(); // number of data points
                 if (num_data_points < 5)

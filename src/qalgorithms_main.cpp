@@ -32,7 +32,8 @@ namespace q
 
     void printPeaklist(std::vector<std::vector<q::DataType::Peak>> peaktable,
                        std::filesystem::path pathOutput, std::string filename,
-                       bool verbose, bool silent, bool prebinning)
+                       std::vector<Algorithms::qBinning::EIC> *originalBins,
+                       bool verbose, bool silent, bool prebinning, bool skipError)
     {
         if (verbose)
         {
@@ -59,33 +60,75 @@ namespace q
         if (!file_out.is_open())
         {
             std::cerr << "Error: could not open output path during peaklist printing. Program terminated.\n";
-            exit(1); // @todo sensible error codes
+            if (skipError)
+            {
+                return;
+            }
+            else
+            {
+                exit(1); // @todo sensible error codes
+            }
         }
 
         if (verbose)
         {
 
-            output << "ID,binID,startIndex,endIndex,mz,mzUncertainty,retentionTime,retentionTimeUncertainty,"
-                   << "area,areaUncertainty,height,heightUncertainty,dqsCen,dqsBin,dqsPeak\n";
-            int counter = 1;
-            for (size_t i = 0; i < peaktable.size(); i++)
+            if (originalBins == nullptr)
             {
-                if (peaktable[i].empty())
+                output << "ID,binID,startIndex,endIndex,mz,mzUncertainty,retentionTime,retentionTimeUncertainty,"
+                       << "area,areaUncertainty,height,heightUncertainty,dqsCen,dqsBin,dqsPeak\n";
+                int counter = 1;
+                for (size_t i = 0; i < peaktable.size(); i++)
                 {
-                    continue;
-                }
+                    if (peaktable[i].empty())
+                    {
+                        continue;
+                    }
 
-                for (size_t j = 0; j < peaktable[i].size(); ++j)
-                {
-                    auto peak = peaktable[i][j];
-                    char buffer[128];
-                    sprintf(buffer, "%d,%d,%d,%d,%0.8f,%0.8f,%0.8f,%0.8f,%0.8f,%0.8f,%0.8f,%0.8f,%0.8f\n",
-                            counter, int(i + 1), peak.idxPeakStart, peak.idxPeakEnd, peak.mz, peak.mzUncertainty,
-                            peak.retentionTime, peak.retentionTimeUncertainty, peak.area, peak.areaUncertainty,
-                            peak.dqsCen, peak.dqsBin, peak.dqsPeak);
-                    output << buffer;
-                    ++counter;
+                    for (size_t j = 0; j < peaktable[i].size(); ++j)
+                    {
+                        auto peak = peaktable[i][j];
+                        char buffer[128];
+                        sprintf(buffer, "%d,%d,%d,%d,%0.8f,%0.8f,%0.8f,%0.8f,%0.8f,%0.8f,%0.8f,%0.8f,%0.8f\n",
+                                counter, int(i + 1), peak.idxPeakStart, peak.idxPeakEnd, peak.mz, peak.mzUncertainty,
+                                peak.retentionTime, peak.retentionTimeUncertainty, peak.area, peak.areaUncertainty,
+                                peak.dqsCen, peak.dqsBin, peak.dqsPeak);
+                        output << buffer;
+                        ++counter;
+                    }
                 }
+            }
+            else
+            {
+                auto allBins = *originalBins;
+                // auto currentBin = originalBins->begin();
+                output << "ID,binID,lowestRT,highestRT,mz,mzUncertainty,retentionTime,retentionTimeUncertainty,"
+                       << "area,areaUncertainty,height,heightUncertainty,dqsCen,dqsBin,dqsPeak\n";
+                int counter = 1;
+                for (size_t i = 0; i < peaktable.size(); i++)
+                {
+                    if (peaktable[i].empty())
+                    {
+                        continue;
+                    }
+                    q::Algorithms::qBinning::EIC *currentBin = &allBins[i];
+
+                    auto RTs = currentBin->mz;
+                    for (size_t j = 0; j < peaktable[i].size(); ++j)
+                    {
+                        auto peak = peaktable[i][j];
+                        // std::cout << i << ", " << counter << ", " << currentBin->DQSB.size() << ", " << peak.idxPeakStart << ", " << peak.idxPeakEnd << "\n";
+                        // assert((peak.idxPeakEnd - 3) < currentBin->mz.size());
+                        char buffer[128];
+                        sprintf(buffer, "%d,%d,%0.8f,%0.8f,%0.8f,%0.8f,%0.8f,%0.8f,%0.8f,%0.8f,%0.8f,%0.8f,%0.8f\n",
+                                counter, int(i + 1), RTs[peak.idxPeakStart], RTs[peak.idxPeakEnd], peak.mz, peak.mzUncertainty,
+                                peak.retentionTime, peak.retentionTimeUncertainty, peak.area, peak.areaUncertainty,
+                                peak.dqsCen, peak.dqsBin, peak.dqsPeak);
+                        output << buffer;
+                        ++counter;
+                    }
+                }
+                // std::advance(currentBin, 1);
             }
         }
         else
@@ -104,7 +147,7 @@ namespace q
                 {
                     auto peak = peaktable[i][j];
                     char buffer[128];
-                    sprintf(buffer, "%d,%d,%0.8f,%0.8f,%0.8f,%0.8f,%0.8f,%0.8f,%0.8f,%0.8f,%0.8f\n",
+                    sprintf(buffer, "%d,%0.8f,%0.8f,%0.8f,%0.8f,%0.8f,%0.8f,%0.8f,%0.8f,%0.8f\n",
                             counter, peak.mz, peak.mzUncertainty, peak.retentionTime, peak.retentionTimeUncertainty,
                             peak.area, peak.areaUncertainty, peak.dqsCen, peak.dqsBin, peak.dqsPeak);
                     output << buffer;
@@ -118,7 +161,8 @@ namespace q
     }
 
     void printProfilePoints(std::vector<std::vector<ProfilePoint>> peakComponents,
-                            std::filesystem::path pathOutput, std::string filename, bool silent)
+                            std::filesystem::path pathOutput, std::string filename,
+                            bool silent, bool skipError)
     {
         filename += "_subprofiles.csv";
         pathOutput /= filename;
@@ -133,7 +177,14 @@ namespace q
         if (!file_out.is_open())
         {
             std::cerr << "Error: could not open output path during peaklist printing. Program terminated.\n";
-            exit(1); // @todo sensible error codes
+            if (skipError)
+            {
+                return;
+            }
+            else
+            {
+                exit(1); // @todo sensible error codes
+            }
         }
         output << "peakID,mz,retentionTime,scanNumber,intensity\n";
         for (size_t i = 0; i < peakComponents.size(); i++)
@@ -141,7 +192,7 @@ namespace q
             for (auto point : peakComponents[i])
             {
                 char buffer[64];
-                sprintf(buffer, "%d,%0.8f,%0.8f,%d,%0.8f\n",
+                sprintf(buffer, "%zu,%0.8f,%0.8f,%d,%0.8f\n",
                         i, point.mz, point.rt, point.scan, point.intensity);
                 output << buffer;
             }
@@ -151,7 +202,7 @@ namespace q
         return;
     }
 
-    std::vector<std::filesystem::path> controlInput(std::vector<std::string> inputTasks, const std::string filetype)
+    std::vector<std::filesystem::path> controlInput(std::vector<std::string> inputTasks, const std::string filetype, bool skipError)
     {
         namespace fs = std::filesystem;
         std::vector<fs::path> outputTasks;
@@ -170,9 +221,14 @@ namespace q
             if (!fs::exists(currentPath))
             {
                 std::cerr << "Warning: the file \"" << inputPath << "\" does not exist.\n";
-                continue;
-                // @todo consider terminating the program here
-                exit(1);
+                if (skipError)
+                {
+                    continue;
+                }
+                else
+                {
+                    exit(1);
+                }
             }
             currentPath = fs::canonical(currentPath);
             auto status = fs::status(currentPath);
@@ -294,41 +350,43 @@ namespace q
     const std::string helpinfo = " help information:\n\n" // @todo std::format
                                  "    qAlgorithms is a software project for non-target screening using mass spectrometry.\n"
                                  "    For more information, visit our github page: https://github.com/odea-project/qAlgorithms.\n"
-                                 "    As of now (30.07.2024), only mzML files are supported. This program accepts the following command-line arguments:\n\n"
+                                 "    As of now (2024-09-03), only mzML files are supported. This program accepts the following command-line arguments:\n\n"
                                  "      -h, -help:  open this help menu\n\n"
                                  "    Input settings:\n"
                                  "      Note that duplicate input files are removed by default, even when they have a different name.\n"
                                  "      -i,  -input <PATH> [PATH]   input files or directories in which to recursively search for .mzML files.\n"
-                                 "                                  you can enter any number of targets, as long as no file starts with a \"-\""
+                                 "                                  you can enter any number of targets, as long as no file starts with a \"-\"\n"
                                  "                                  or contains two dots in a row. It is possible to use the -i flag multiple\n"
-                                 "                                  times within one execution."
+                                 "                                  times within one execution.\n"
                                  "      -tl, -tasklist <PATH>:      pass a list of file paths to the function. A tasklist can also contain directories\n"
                                  "                                  to search recursively and output directories for different blocks of the input files.\n"
-                                 "                                  You can comment out lines by starting them with a \"#\"\n" // @todo update
+                                 "                                  You can comment out lines by starting them with a \"#\".\n" // @todo update
                                  "    Output settings:\n"
-                                 "      The filename is always the original filename extended by the polarity.\n"
+                                 "      The filename is always the original filename extended by the polarity and the processing step.\n"
                                  "      -o,  -output <DIRECTORY>:   directory into which all output files should be printed.\n"
                                  "      -pc, -printcentroids:       print all centroids produced after the first run of qcentroids.\n"
                                  "      -ps, -printsummary:         print summarised information on the bins in addition to\n"
                                  "                                  the peaktable. It is saved to your output directory\n"
-                                 "                                  under the name FILENAME_summary.csv\n"
+                                 "                                  under the name FILENAME_summary.csv.\n"
                                  "      -pb, -printbins:            If this flag is set, both bin summary information and\n"
                                  "                                  all binned centroids will be printed to the output location\n"
                                  "                                  in addition to the final peak table. The file ends in _bins.csv.\n"
                                  "      -pp, -printpeaks:           print the peak tables as csv.\n"
                                  "      -e,  -extended:             print additional information into the final peak list. You do not\n"
-                                 "                                  have to also set the -pp flag. The extended output includes the.\n"
-                                 "                                  ID of the bin a given peak was found in, its start and end \n"
+                                 "                                  have to also set the -pp flag. The extended output includes the\n"
+                                 "                                  ID of the bin a given peak was found in, its start and end\n"
                                  "                                  position (by index) within the bin and the intensity as apex height.\n"
                                  "      -sp, -subprofile:           instead of the peaks, print all proflie-mode data points which\n"
                                  "                                  were used to create the final peaks. This does not return any quality\n"
                                  "                                  scores. Only use this option when reading in prodile mode files.\n"
                                  "      -pa, -printall:             print all availvable resutlts. You will probably not need to do this.\n"
-                                 "\n    Program behaviour:\n"
-                                 "      -s, -silent:    do not print progress reports to standard out\n"
-                                 "      -v, -verbose:   print a detailed progress report to standard out\n"
+                                 "    Program behaviour:\n"
+                                 "      -s, -silent:    do not print progress reports to standard out.\n"
+                                 "      -v, -verbose:   print a detailed progress report to standard out.\n"
+                                 "      -skip-error:    if processing fails, the program will not exit and instead start processing\n"
+                                 "                      the next file in the tasklist.\n"
                                  "      -log:           This option will create a detailed log file in the program directory.\n" // @todo
-                                 "\n      Analysis options:\n"
+                                 "    Analysis options:\n"
                                  "      -MS2: also process MS2 spectra (not implemented yet)\n" // @todo
                                  "      -ppm <number>:  this sets the centroid error when reading in pre-centroided data\n"
                                  "                      with qAlgorithms to <number> * 10^-6 * m/z of the centroid. We recommend\n"
@@ -391,6 +449,7 @@ int main(int argc, char *argv[])
 #pragma region cli arguments
     volatile bool silent = false;
     volatile bool verboseProgress = false;
+    volatile bool skipError = false;
     volatile bool tasklistSpecified = false;
     volatile bool printSummary = false;
     volatile bool printBins = false;
@@ -516,7 +575,7 @@ int main(int argc, char *argv[])
             // @todo
             if (outSpecified)
             {
-                std::cerr << "Error: two output locations specified. For complex output location"
+                std::cerr << "Error: two output locations specified. For complex output location "
                           << "structures, it is recommended you use the tasklist input.";
                 exit(101); // @todo
             }
@@ -587,6 +646,11 @@ int main(int argc, char *argv[])
             std::cerr << "Logging is not implemented yet.\n";
             //@todo write the executed command into the logfile
         }
+        else if (argument == "-skip-error")
+        {
+            std::cerr << "Warning: processing will ignore defective files.\n";
+            skipError = true;
+        }
         else
         {
             std::cerr << "Error: unknown argument " << argument << ", terminating program.\n";
@@ -621,7 +685,7 @@ int main(int argc, char *argv[])
     }
 
     // the final task list contains only unique files, sorted by filesize
-    tasklist = q::controlInput(suppliedPaths, ".mzML");
+    tasklist = q::controlInput(suppliedPaths, ".mzML", skipError);
 
 #pragma endregion cli arguments
 
@@ -680,7 +744,14 @@ int main(int argc, char *argv[])
         if (!data.loading_result)
         {
             std::cerr << "Error: the file is defective.\n";
-            exit(101);
+            if (skipError)
+            {
+                continue;
+            }
+            else
+            {
+                exit(101);
+            }
         }
 
         if (!silent)
@@ -714,7 +785,7 @@ int main(int argc, char *argv[])
             filename += ("_" + polarity);
             if (printCentroids)
             {
-                q::printPeaklist(centroids, pathOutput, filename, printExtended, silent, true);
+                q::printPeaklist(centroids, pathOutput, filename, nullptr, printExtended, silent, true, skipError);
             }
 
             // @todo remove diagnostics later
@@ -765,6 +836,7 @@ int main(int argc, char *argv[])
             auto peaks = tensorData.findPeaks_QBIN(qpeaks, binnedData);
             // make sure that every peak contains only one mass trace
             size_t peaksWithMassGaps = 0;
+            double meanDQSF = 0;
             for (size_t i = 0; i < peaks.size(); i++)
             {
                 if (!peaks[i].empty())
@@ -772,6 +844,15 @@ int main(int argc, char *argv[])
                     auto massesBin = binnedData[i].mz;
                     for (size_t j = 0; j < peaks[i].size(); j++)
                     {
+                        if (peaks[i][j].idxPeakEnd < (binnedData[i].mz.size() - 1))
+                        {
+                            // this will not work, since idxPeakEnd counts all interpolated points
+                            // solution: determine lowest real scan number, then find largest scan <= largest
+                            // possible that is in the real bin
+                            assert((peaks[i][j].idxPeakEnd - (binnedData[i].mz.size() - 1)) < 4);
+                            peaks[i][j].idxPeakEnd = (binnedData[i].mz.size() - 1);
+                        }
+
                         if (!q::massTraceStable(massesBin, peaks[i][j].idxPeakStart, peaks[i][j].idxPeakEnd))
                         {
                             ++peaksWithMassGaps;
@@ -784,9 +865,14 @@ int main(int argc, char *argv[])
                             // @todo consider removing these or add a correction set somewhere later
                             // @todo add some documentation regarding the scores
                         }
+                        else
+                        {
+                            meanDQSF += peaks[i][j].dqsPeak;
+                        }
                     }
                 }
             }
+
             if (verboseProgress)
             {
                 std::cout << peaksWithMassGaps << " peaks were erroneously constructed from more than one mass trace\n";
@@ -794,7 +880,6 @@ int main(int argc, char *argv[])
 
             timeEnd = std::chrono::high_resolution_clock::now();
 
-            double meanDQSF = 0;
             int peakCount = 0;
             int dudBins = 0;
             int onlyone = 0;
@@ -804,13 +889,6 @@ int main(int argc, char *argv[])
                 peakCount += peaks[i].size();
                 if (!peaks[i].empty())
                 {
-                    for (auto peak : peaks[i])
-                    {
-                        if (peak.dqsPeak > 0)
-                        {
-                            meanDQSF += peak.dqsPeak;
-                        }
-                    }
                     if (peaks[i].size() == 1)
                     {
                         ++onlyone;
@@ -834,7 +912,7 @@ int main(int argc, char *argv[])
                     // std::cout << binMeanMZ / binsize << ", " << binMeanRT / binsize << "\n";
                 }
             }
-            meanDQSF /= peakCount;
+            meanDQSF /= peakCount - peaksWithMassGaps;
             if (!silent)
             {
 
@@ -856,7 +934,7 @@ int main(int argc, char *argv[])
 
             if (printPeaks)
             {
-                q::printPeaklist(peaks, pathOutput, filename, printExtended, silent, false);
+                q::printPeaklist(peaks, pathOutput, filename, &binnedData, printExtended, silent, false, skipError);
             }
             // if (printSubProfile)
             // {
