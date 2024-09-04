@@ -1208,13 +1208,9 @@ namespace q
             }
 
             // start and end indices
-            peak.idxPeakStart = regression.left_limit - 3;
-            if (peak.idxPeakStart < 0)
-            {
-                peak.idxPeakStart = 0;
-            }
+            peak.idxPeakStart = regression.left_limit;
 
-            peak.idxPeakEnd = regression.right_limit - 3;
+            peak.idxPeakEnd = regression.right_limit;
 
             peaks.push_back(peak);
         }

@@ -32,7 +32,7 @@ namespace q
 
     void printPeaklist(std::vector<std::vector<q::DataType::Peak>> peaktable,
                        std::filesystem::path pathOutput, std::string filename,
-                       std::vector<Algorithms::qBinning::EIC> *originalBins,
+                       std::vector<Algorithms::qBinning::EIC> originalBins,
                        bool verbose, bool silent, bool prebinning, bool skipError)
     {
         if (verbose)
@@ -73,7 +73,7 @@ namespace q
         if (verbose)
         {
 
-            if (originalBins == nullptr)
+            if (prebinning)
             {
                 output << "ID,binID,startIndex,endIndex,mz,mzUncertainty,retentionTime,retentionTimeUncertainty,"
                        << "area,areaUncertainty,height,heightUncertainty,dqsCen,dqsBin,dqsPeak\n";
@@ -89,7 +89,7 @@ namespace q
                     {
                         auto peak = peaktable[i][j];
                         char buffer[128];
-                        sprintf(buffer, "%d,%d,%d,%d,%0.8f,%0.8f,%0.8f,%0.8f,%0.8f,%0.8f,%0.8f,%0.8f,%0.8f\n",
+                        sprintf(buffer, "%d,%d,%d,%d,%0.8f,%0.8f,%0.4f,%0.4f,%0.8f,%0.8f,%0.8f,%0.8f,%0.8f\n",
                                 counter, int(i + 1), peak.idxPeakStart, peak.idxPeakEnd, peak.mz, peak.mzUncertainty,
                                 peak.retentionTime, peak.retentionTimeUncertainty, peak.area, peak.areaUncertainty,
                                 peak.dqsCen, peak.dqsBin, peak.dqsPeak);
@@ -100,32 +100,27 @@ namespace q
             }
             else
             {
-                auto allBins = *originalBins;
                 // auto currentBin = originalBins->begin();
                 output << "ID,binID,lowestRT,highestRT,mz,mzUncertainty,retentionTime,retentionTimeUncertainty,"
                        << "area,areaUncertainty,height,heightUncertainty,dqsCen,dqsBin,dqsPeak\n";
                 int counter = 1;
                 for (size_t i = 0; i < peaktable.size(); i++)
                 {
-                    if (peaktable[i].empty())
+                    if (!peaktable[i].empty())
                     {
-                        continue;
-                    }
-                    q::Algorithms::qBinning::EIC *currentBin = &allBins[i];
+                        std::vector<double> RTs = originalBins[i].rententionTimes;
+                        for (size_t j = 0; j < peaktable[i].size(); ++j)
+                        {
 
-                    auto RTs = currentBin->mz;
-                    for (size_t j = 0; j < peaktable[i].size(); ++j)
-                    {
-                        auto peak = peaktable[i][j];
-                        // std::cout << i << ", " << counter << ", " << currentBin->DQSB.size() << ", " << peak.idxPeakStart << ", " << peak.idxPeakEnd << "\n";
-                        // assert((peak.idxPeakEnd - 3) < currentBin->mz.size());
-                        char buffer[128];
-                        sprintf(buffer, "%d,%d,%0.8f,%0.8f,%0.8f,%0.8f,%0.8f,%0.8f,%0.8f,%0.8f,%0.8f,%0.8f,%0.8f\n",
-                                counter, int(i + 1), RTs[peak.idxPeakStart], RTs[peak.idxPeakEnd], peak.mz, peak.mzUncertainty,
-                                peak.retentionTime, peak.retentionTimeUncertainty, peak.area, peak.areaUncertainty,
-                                peak.dqsCen, peak.dqsBin, peak.dqsPeak);
-                        output << buffer;
-                        ++counter;
+                            auto peak = peaktable[i][j];
+                            char buffer[256];
+                            sprintf(buffer, "%d,%d,%0.4f,%0.4f,%0.8f,%0.8f,%0.4f,%0.4f,%0.8f,%0.8f,%0.8f,%0.8f,%0.8f\n",
+                                    counter, int(i + 1), RTs[peak.idxPeakStart], RTs[peak.idxPeakEnd], peak.mz, peak.mzUncertainty,
+                                    peak.retentionTime, peak.retentionTimeUncertainty, peak.area, peak.areaUncertainty,
+                                    peak.dqsCen, peak.dqsBin, peak.dqsPeak);
+                            output << buffer;
+                            ++counter;
+                        }
                     }
                 }
                 // std::advance(currentBin, 1);
@@ -147,7 +142,7 @@ namespace q
                 {
                     auto peak = peaktable[i][j];
                     char buffer[128];
-                    sprintf(buffer, "%d,%0.8f,%0.8f,%0.8f,%0.8f,%0.8f,%0.8f,%0.8f,%0.8f,%0.8f\n",
+                    sprintf(buffer, "%d,%0.8f,%0.8f,%0.4f,%0.4f,%0.8f,%0.8f,%0.8f,%0.8f,%0.8f\n",
                             counter, peak.mz, peak.mzUncertainty, peak.retentionTime, peak.retentionTimeUncertainty,
                             peak.area, peak.areaUncertainty, peak.dqsCen, peak.dqsBin, peak.dqsPeak);
                     output << buffer;
@@ -314,10 +309,11 @@ namespace q
     bool massTraceStable(std::vector<double> massesBin, int idxStart, int idxEnd)
     {
         size_t peaksize = idxEnd - idxStart + 1;
-        std::vector<double> massesPeak(peaksize);
+        // std::cout << idxStart << ", " << idxEnd << ", " << peaksize << "\n";
+        std::vector<double> massesPeak;
         for (size_t i = 0; i < peaksize; i++)
         {
-            massesPeak[i] = massesBin[idxStart + i];
+            massesPeak.push_back(massesBin[idxStart + i]);
         }
         std::sort(massesPeak.begin(), massesPeak.end());
 
@@ -785,7 +781,8 @@ int main(int argc, char *argv[])
             filename += ("_" + polarity);
             if (printCentroids)
             {
-                q::printPeaklist(centroids, pathOutput, filename, nullptr, printExtended, silent, true, skipError);
+                std::vector<q::Algorithms::qBinning::EIC> dummy;
+                q::printPeaklist(centroids, pathOutput, filename, dummy, printExtended, silent, true, skipError);
             }
 
             // @todo remove diagnostics later
@@ -842,17 +839,43 @@ int main(int argc, char *argv[])
                 if (!peaks[i].empty())
                 {
                     auto massesBin = binnedData[i].mz;
+                    auto scansBin = binnedData[i].scanNumbers;
+                    int lowestScan = scansBin[0];
                     for (size_t j = 0; j < peaks[i].size(); j++)
                     {
-                        if (peaks[i][j].idxPeakEnd < (binnedData[i].mz.size() - 1))
+                        // at this point, the regression indices include two zeroes
+                        // to each side and all intermediate values interpolated.
+                        // To find the real regression borders, this has to be accounted for.
+                        // regressionIdx = 2 => first point in bin is start of regression
+                        bool startSearch = true;
+                        int tmpEndVal = -1;
+                        for (size_t a = 0; a < scansBin.size(); a++)
                         {
-                            // this will not work, since idxPeakEnd counts all interpolated points
-                            // solution: determine lowest real scan number, then find largest scan <= largest
-                            // possible that is in the real bin
-                            assert((peaks[i][j].idxPeakEnd - (binnedData[i].mz.size() - 1)) < 4);
-                            peaks[i][j].idxPeakEnd = (binnedData[i].mz.size() - 1);
+                            int regressionIdx = scansBin[a] - lowestScan + 2;
+                            if (startSearch && (regressionIdx >= peaks[i][j].idxPeakStart))
+                            {
+                                startSearch = false;
+                                peaks[i][j].idxPeakStart = a;
+                            }
+                            else if (regressionIdx <= peaks[i][j].idxPeakEnd)
+                            {
+                                tmpEndVal = a;
+                                if (regressionIdx == peaks[i][j].idxPeakEnd)
+                                {
+                                    break;
+                                }
+                            }
                         }
+                        peaks[i][j].idxPeakEnd = tmpEndVal;
+                        assert(tmpEndVal > peaks[i][j].idxPeakStart);
+                        assert(tmpEndVal < scansBin.size());
+                        // if (i == 2400)
+                        // {
+                        //     std::cout << "\n " << peaks[i][j].idxPeakStart << ", " << peaks[i][j].idxPeakEnd << ", "
+                        //               << scansBin.size() << "\n";
+                        // }
 
+                        // idxPeakStart/End are the index referring to the bin in which a peak was found
                         if (!q::massTraceStable(massesBin, peaks[i][j].idxPeakStart, peaks[i][j].idxPeakEnd))
                         {
                             ++peaksWithMassGaps;
@@ -860,7 +883,7 @@ int main(int argc, char *argv[])
                             //           << peaks[i][j].area << ", " << peaks[i][j].dqsPeak << "\n";
                             // problems do not only occur at very low masses or the edges of out chromoatography
                             // recommendation: do not pass these peaks to result table
-                            peaks[i][j].dqsPeak = -1;
+                            peaks[i][j].dqsPeak *= -1;
 
                             // @todo consider removing these or add a correction set somewhere later
                             // @todo add some documentation regarding the scores
@@ -934,7 +957,7 @@ int main(int argc, char *argv[])
 
             if (printPeaks)
             {
-                q::printPeaklist(peaks, pathOutput, filename, &binnedData, printExtended, silent, false, skipError);
+                q::printPeaklist(peaks, pathOutput, filename, binnedData, printExtended, silent, false, skipError);
             }
             // if (printSubProfile)
             // {
