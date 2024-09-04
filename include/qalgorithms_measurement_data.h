@@ -20,8 +20,8 @@ namespace q
          * @details The MeasurementData class is a virtual class used to store measurement data. Based on the type of measurement data, the MeasurementData class can be subclassed to store different types of measurement data.
          */
         class MeasurementData
-        {
-        protected:
+        {        
+        public:
             // variables
             struct dataPoint
             {
@@ -37,8 +37,6 @@ namespace q
                     : x(x), y(y), df(df), dqsCentroid(dqsCentroid), dqsBinning(dqsBinning), scanNumber(scanNumber), mz(mz) {}
             };
 
-        public:
-            // variables
             struct treatedData
             {
                 std::vector<dataPoint> dataPoints;

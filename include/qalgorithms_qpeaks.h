@@ -81,23 +81,41 @@ namespace q
 
             struct validRegression_static
             {
-                int index_x0;           // index of window center (x==0) in the Y matrix
-                int scale;              // scale of the regression window, i.e., 2*scale+1 = window size
-                int df;                 // degree of freedom, interpolated data points will not be considered
-                float apex_position;    // position of the apex of the peak
-                float mse;              // mean squared error
-                __m128 coeff;           // regression coefficients
-                bool isValid;           // flag to indicate if the regression is valid
-                int left_limit;         // left limit of the peak regression window
-                int right_limit;        // right limit of the peak regression window
-                float area;             // area of the peak
-                float uncertainty_area; // uncertainty of the area
-                float uncertainty_pos;  // uncertainty of the position
+                int index_x0;             // index of window center (x==0) in the Y matrix
+                int scale;                // scale of the regression window, i.e., 2*scale+1 = window size
+                int df;                   // degree of freedom, interpolated data points will not be considered
+                float apex_position;      // position of the apex of the peak
+                float mse;                // mean squared error
+                __m128 coeff;             // regression coefficients
+                bool isValid;             // flag to indicate if the regression is valid
+                int left_limit;           // left limit of the peak regression window
+                int right_limit;          // right limit of the peak regression window
+                float area;               // area of the peak
+                float uncertainty_area;   // uncertainty of the area
+                float uncertainty_pos;    // uncertainty of the position
                 float uncertainty_height; // uncertainty of the height
                 validRegression_static() = default;
             };
 
             // methods
+            void
+            copyData(
+                const std::vector<q::MeasurementData::MeasurementData::dataPoint> &dataPoints,
+                float *Y,
+                float *X,
+                bool *df,
+                int startIdx,
+                int endIdx,
+                float* mz = nullptr, 
+                float* dqsCentroid = nullptr, 
+                float* dqsBinning = nullptr);
+
+            void
+            logTransform(
+                const float *y_start,
+                float *ylog_start,
+                int n);
+
             int
             calculateNumberOfRegressions(const int n) const;
 

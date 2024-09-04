@@ -160,6 +160,56 @@ namespace q
     }
 #pragma endregion "initialize"
 
+#pragma region "data pre treatment"
+    void
+    qPeaks::copyData(
+        const std::vector<q::MeasurementData::MeasurementData::dataPoint> &dataPoints,
+        float *Y,
+        float *X,
+        bool *df,
+        int startIdx,
+        int endIdx,
+        float *mz,
+        float *dqsCentroid,
+        float *dqsBinning)
+    {
+      int i = 0;
+      if (mz && dqsCentroid && dqsBinning)
+      {
+        for (int idx = startIdx; idx < endIdx; idx++)
+        {
+          Y[i] = dataPoints[idx].y;
+          X[i] = dataPoints[idx].x;
+          df[i] = dataPoints[idx].df;
+          mz[i] = dataPoints[idx].mz;
+          dqsCentroid[i] = dataPoints[idx].dqsCentroid;
+          dqsBinning[i] = dataPoints[idx].dqsBinning;
+          i++;
+        }
+      }
+      else
+      {
+        for (int idx = startIdx; idx < endIdx; idx++)
+        {
+          Y[i] = dataPoints[idx].y;
+          X[i] = dataPoints[idx].x;
+          df[i] = dataPoints[idx].df;
+          i++;
+        }
+      }
+    }
+
+    void
+    qPeaks::logTransform(
+        const float *y_start,
+        float *ylog_start,
+        int n)
+    {
+      std::transform(y_start, y_start + n, ylog_start, [](float y)
+                     { return std::log(y); });
+    }
+#pragma endregion "data pre treatment"
+
 #pragma region "find centroids"
     void
     qPeaks::findCentroids(
@@ -168,80 +218,61 @@ namespace q
         const int scanNumber,
         const float retentionTime)
     {
-      const float rt[2] = {-255.f, retentionTime}; // this will asign peaks to the retention time
+      const float rt[2] = {-255.f, retentionTime}; // this will assign peaks to the retention time
       const float *rt_start = rt;                  // start of the retention time vector
 
       for (auto it_separators = treatedData.separators.begin(); it_separators != treatedData.separators.end() - 1; it_separators++)
       {
         const int n = *(it_separators + 1) - *it_separators; // calculate the number of data points in the block
-        if (n <= 512)
+        const int blockSizeThreshold = 512;
+        bool isStatic = n <= blockSizeThreshold;
+
+        float *Y = nullptr;
+        float *Ylog = nullptr;
+        float *X = nullptr;
+        bool *df = nullptr;
+
+        validRegression_static validRegressions[2048];               // for static approach
+        std::vector<validRegression_static> validRegressionsDynamic; // for dynamic approach
+        int validRegressionsIndex = 0;
+
+        if (isStatic)
         {
-          // STATIC APPROACH
-          alignas(32) float Y[512];                      // measured y values
-          alignas(32) float Ylog[512];                   // log-transformed measured y values
-          alignas(32) float X[512];                      // measured x values
-          alignas(32) bool df[512];                      // degree of freedom vector, 0: interpolated, 1: measured
-          validRegression_static validRegressions[2048]; // array of valid regressions with default initialization, i.e., random states
-          int validRegressionsIndex = 0;                 // index of the valid regressions
-
-          // iterators to the start of the data
-          const auto y_start = Y;
-          const auto ylog_start = Ylog;
-          const auto mz_start = X;
-          const auto df_start = df;
-
-          int i = 0;
-          for (int idx = *it_separators; idx < *(it_separators + 1); idx++)
-          {
-            Y[i] = treatedData.dataPoints[idx].y;
-            X[i] = treatedData.dataPoints[idx].x;
-            df[i] = treatedData.dataPoints[idx].df;
-            i++;
-          }
-
-          // perform log-transform on Y
-          std::transform(y_start, y_start + n, ylog_start, [](float y)
-                         { return std::log(y); });
-          runningRegression_static(y_start, ylog_start, df_start, n, validRegressions, validRegressionsIndex);
-          if (validRegressionsIndex == 0)
-          {
-            continue; // no valid peaks
-          }
-          createPeaks_static(all_peaks, validRegressions, validRegressionsIndex, y_start, mz_start, rt_start, df_start, nullptr, nullptr, rt_start, scanNumber);
+          alignas(32) float staticY[512], staticYlog[512], staticX[512];
+          alignas(32) bool staticDf[512];
+          Y = staticY;
+          Ylog = staticYlog;
+          X = staticX;
+          df = staticDf;
         }
         else
         {
-          // DYNAMIC APPROACH
-          alignas(32) float *Y = new float[n];
-          alignas(32) float *Ylog = new float[n];
-          alignas(32) float *X = new float[n];
-          alignas(32) bool *df = new bool[n];
-          std::vector<validRegression_static> validRegressions;
+          Y = new float[n];
+          Ylog = new float[n];
+          X = new float[n];
+          df = new bool[n];
+        }
 
-          // iterator to the start
-          const auto y_start = Y;
-          const auto ylog_start = Ylog;
-          const auto mz_start = X;
-          const auto df_start = df;
+        // Copy data to Y, X, and df
+        copyData(treatedData.dataPoints, Y, X, df, *it_separators, *(it_separators + 1));
 
-          int i = 0;
-          for (int idx = *it_separators; idx < *(it_separators + 1); idx++)
-          {
-            Y[i] = treatedData.dataPoints[idx].y;
-            X[i] = treatedData.dataPoints[idx].x;
-            df[i] = treatedData.dataPoints[idx].df;
-            i++;
-          }
+        // Log-transform Y
+        logTransform(Y, Ylog, n);
 
-          // perform log-transform on Y
-          std::transform(y_start, y_start + n, ylog_start, [](float y)
-                         { return std::log(y); });
-          runningRegression(y_start, ylog_start, df_start, n, validRegressions);
-          if (validRegressions.empty())
-          {
+        // Perform regression
+        if (isStatic)
+        {
+          runningRegression_static(Y, Ylog, df, n, validRegressions, validRegressionsIndex);
+          if (validRegressionsIndex == 0)
             continue; // no valid peaks
-          }
-          createPeaks(all_peaks, validRegressions, y_start, mz_start, rt_start, df_start, nullptr, nullptr, rt_start, scanNumber);
+          createPeaks_static(all_peaks, validRegressions, validRegressionsIndex, Y, X, rt_start, df, nullptr, nullptr, rt_start, scanNumber);
+        }
+        else
+        {
+          runningRegression(Y, Ylog, df, n, validRegressionsDynamic);
+          if (validRegressionsDynamic.empty())
+            continue; // no valid peaks
+          createPeaks(all_peaks, validRegressionsDynamic, Y, X, rt_start, df, nullptr, nullptr, rt_start, scanNumber);
           delete[] Y;
           delete[] Ylog;
           delete[] X;
@@ -259,96 +290,67 @@ namespace q
     {
       for (auto it_separators = treatedData.separators.begin(); it_separators != treatedData.separators.end() - 1; it_separators++)
       {
-        const int n = *(it_separators + 1) - *it_separators; // calculate the number of data points in the block
-        assert(n > 0);                                       // check if the number of data points is greater than 0
-        if (n <= 512)
+        const int n = *(it_separators + 1) - *it_separators; // Calculate the number of data points in the block
+        const int blockSizeThreshold = 512;                  // Threshold for static or dynamic approach
+        bool isStatic = n <= blockSizeThreshold;
+
+        float *Y = nullptr, *Ylog = nullptr, *X = nullptr, *mz = nullptr, *dqs_cen = nullptr, *dqs_bin = nullptr;
+        bool *df = nullptr;
+
+        if (isStatic)
         {
-          // STATIC APPROACH
-          alignas(32) float Y[512];                      // measured y values
-          alignas(32) float Ylog[512];                   // log-transformed measured y values
-          alignas(32) float X[512];                      // measured x values
-          alignas(32) bool df[512];                      // degree of freedom vector, 0: interpolated, 1: measured
-          alignas(32) float mz[512];                     // measured mz values
-          alignas(32) float dqs_cen[512];                // measured dqs values
-          alignas(32) float dqs_bin[512];                // measured dqs values
-          validRegression_static validRegressions[2048]; // array of valid regressions with default initialization, i.e., random states
-          int validRegressionsIndex = 0;                 // index of the valid regressions
-
-          // iterators to the start of the data
-          const auto y_start = Y;
-          const auto ylog_start = Ylog;
-          const auto rt_start = X;
-          const auto df_start = df;
-          const auto mz_start = mz;
-          const auto dqs_cen_start = dqs_cen;
-          const auto dqs_bin_start = dqs_bin;
-          int i = 0;
-          for (int idx = *it_separators; idx < *(it_separators + 1); idx++)
-          {
-            Y[i] = treatedData.dataPoints[idx].y;
-            X[i] = treatedData.dataPoints[idx].x;
-            df[i] = treatedData.dataPoints[idx].df;
-            mz[i] = treatedData.dataPoints[idx].mz;
-            dqs_cen[i] = treatedData.dataPoints[idx].dqsCentroid;
-            dqs_bin[i] = treatedData.dataPoints[idx].dqsBinning;
-            i++;
-          }
-
-          // perform log-transform on Y
-          std::transform(y_start, y_start + n, ylog_start, [](float y)
-                         { return std::log(y); });
-          runningRegression_static(y_start, ylog_start, df_start, n, validRegressions, validRegressionsIndex);
-          if (validRegressionsIndex == 0)
-          {
-            continue; // no valid peaks
-          }
-          mz[0] = -255.f; // this is to calculate mz as weighted mean
-          createPeaks_static(all_peaks, validRegressions, validRegressionsIndex, y_start, mz_start, rt_start, df_start, dqs_cen_start, dqs_bin_start, nullptr, -1);
+          // Static arrays for up to 512 data points
+          alignas(32) float staticY[512], staticYlog[512], staticX[512], staticMz[512], staticDqsCen[512], staticDqsBin[512];
+          alignas(32) bool staticDf[512];
+          Y = staticY;
+          Ylog = staticYlog;
+          X = staticX;
+          df = staticDf;
+          mz = staticMz;
+          dqs_cen = staticDqsCen;
+          dqs_bin = staticDqsBin;
         }
         else
         {
-          // DYNAMIC APPROACH
-          alignas(32) float *Y = new float[n];
-          alignas(32) float *Ylog = new float[n];
-          alignas(32) float *X = new float[n];
-          alignas(32) bool *df = new bool[n];
-          alignas(32) float *mz = new float[n];
-          alignas(32) float *dqs_cen = new float[n];
-          alignas(32) float *dqs_bin = new float[n];
-          std::vector<validRegression_static> validRegressions;
+          // Dynamically allocate arrays for larger data points
+          Y = new float[n];
+          Ylog = new float[n];
+          X = new float[n];
+          df = new bool[n];
+          mz = new float[n];
+          dqs_cen = new float[n];
+          dqs_bin = new float[n];
+        }
 
-          // iterator to the start
-          const auto y_start = Y;
-          const auto ylog_start = Ylog;
-          const auto rt_start = X;
-          const auto df_start = df;
-          const auto mz_start = mz;
-          const auto dqs_cen_start = dqs_cen;
-          const auto dqs_bin_start = dqs_bin;
+        // Copy data using the helper function
+        copyData(treatedData.dataPoints, Y, X, df, *it_separators, *(it_separators + 1), mz, dqs_cen, dqs_bin);
 
-          int i = 0;
-          assert(n == *(it_separators + 1) - *it_separators);
-          for (int idx = *it_separators; idx < *(it_separators + 1); idx++)
-          {
-            Y[i] = treatedData.dataPoints[idx].y;
-            X[i] = treatedData.dataPoints[idx].x;
-            df[i] = treatedData.dataPoints[idx].df;
-            mz[i] = treatedData.dataPoints[idx].mz;
-            dqs_cen[i] = treatedData.dataPoints[idx].dqsCentroid;
-            dqs_bin[i] = treatedData.dataPoints[idx].dqsBinning;
-            i++;
-          }
+        // Log-transform Y using the helper function
+        logTransform(Y, Ylog, n);
 
-          // perform log-transform on Y
-          std::transform(y_start, y_start + n, ylog_start, [](float y)
-                         { return std::log(y); });
-          runningRegression(y_start, ylog_start, df_start, n, validRegressions);
-          if (validRegressions.empty())
-          {
-            continue; // no valid peaks
-          }
-          mz[0] = -255.f; // this is to calculate mz as weighted mean
-          createPeaks(all_peaks, validRegressions, y_start, mz_start, rt_start, df_start, dqs_cen_start, dqs_bin_start, nullptr, -1);
+        // Perform regression
+        if (isStatic)
+        {
+          validRegression_static validRegressions[2048]; // Static array for valid regressions
+          int validRegressionsIndex = 0;
+          runningRegression_static(Y, Ylog, df, n, validRegressions, validRegressionsIndex);
+          if (validRegressionsIndex == 0)
+            continue; // No valid peaks, skip this block
+
+          mz[0] = -255.f; // To calculate mz as weighted mean
+          createPeaks_static(all_peaks, validRegressions, validRegressionsIndex, Y, mz, X, df, dqs_cen, dqs_bin, nullptr, -1);
+        }
+        else
+        {
+          std::vector<validRegression_static> validRegressionsDynamic;
+          runningRegression(Y, Ylog, df, n, validRegressionsDynamic);
+          if (validRegressionsDynamic.empty())
+            continue; // No valid peaks, skip this block
+
+          mz[0] = -255.f; // To calculate mz as weighted mean
+          createPeaks(all_peaks, validRegressionsDynamic, Y, mz, X, df, dqs_cen, dqs_bin, nullptr, -1);
+
+          // Free dynamically allocated memory
           delete[] Y;
           delete[] Ylog;
           delete[] X;
@@ -761,7 +763,7 @@ namespace q
       */
       const float mse = calcSSE(-scale, scale, coeff, ylog_start + i) / (df_sum - 4); // mean squared error
 
-      //asert check if mse is nan or inf
+      // asert check if mse is nan or inf
       assert(!std::isnan(mse) && !std::isinf(mse));
 
       if (!isValidQuadraticTerm(coeff, inverseMatrix_2_2, mse, df_sum))
@@ -2007,6 +2009,13 @@ namespace q
         products[i] = _mm_setzero_ps();
       }
 
+      /*
+      The kernel is defined as follows:
+      kernel[0]: contains 4 values, i.e., a column of the pseudo inverse; one value for each coefficient (b0,b1,b2,b3).
+      kernel[1]: contains the update values for the kernel[0] values; this is required to consider another column of the pseudo inverse.
+      kernel[2]: contains the update values for the kernel[1] values; this is required to consider another column of the pseudo inverse.
+      ==> i.e., the kernel column values are updated like this: kernel[0] = kernel[0] + kernel[1] + n * kernel[2]
+      */
       alignas(16) __m128 kernel[3];
       kernel[0] = _mm_set_ps(invArray[scale][1], invArray[scale][1], 0.0f, invArray[scale][0]);
       kernel[1] = _mm_set_ps(invArray[scale][3] - invArray[scale][5], -invArray[scale][3] - invArray[scale][4], -invArray[scale][2] - invArray[scale][3], -invArray[scale][1]);
@@ -2017,14 +2026,14 @@ namespace q
       for (size_t i = 0; i < n_segments; i++)
       {
         __m128 vec_values = _mm_set1_ps(vec[i + centerpoint]);
-        result[i] = _mm_fmadd_ps(vec_values, kernel[0], result[i]);
+        result[i] = _mm_fmadd_ps(vec_values, kernel[0], result[i]); // adding contribution of the center points
       }
 
       for (size_t i = 1; i < scale + 1; i++)
       {
         int u = 0;
-        kernel[1] = _mm_add_ps(kernel[1], kernel[2]);
-        kernel[0] = _mm_add_ps(kernel[0], kernel[1]);
+        kernel[1] = _mm_add_ps(kernel[1], kernel[2]); // update the kernel[1] values
+        kernel[0] = _mm_add_ps(kernel[0], kernel[1]); // update the kernel[0] values
 
 #pragma GCC ivdep
 #pragma GCC unroll 8
@@ -2046,7 +2055,7 @@ namespace q
           __m128 products_temp = _mm_permute_ps(products[j], 0b10110100);
           __m128 sign_flip = _mm_set_ps(1.0f, 1.0f, -1.0f, 1.0f);
           products_temp = _mm_fmadd_ps(products_temp, sign_flip, products[2 * i + j]);
-          result[j] = _mm_add_ps(result[j], products_temp);
+          result[j] = _mm_add_ps(result[j], products_temp); // adding contribution of the side points
         }
       }
     }
