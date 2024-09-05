@@ -102,7 +102,8 @@ namespace q
             {
                 // @todo add peak borders
                 output << "ID,binID,binIdxStart,binIdxEnd,mz,mzUncertainty,retentionTime,retentionTimeUncertainty,"
-                       << "lowestRetentionTime,highestRetentionTime,area,areaUncertainty,height,heightUncertainty,dqsCen,dqsBin,dqsPeak\n";
+                       << "lowestRetentionTime,highestRetentionTime,area,areaUncertainty,height,heightUncertainty,"
+                       << "binTestCode,dqsCen,dqsBin,dqsPeak\n";
                 unsigned int counter = 1;
                 for (size_t i = 0; i < peaktable.size(); i++)
                 {
@@ -114,10 +115,10 @@ namespace q
 
                             auto peak = peaktable[i][j];
                             char buffer[256];
-                            sprintf(buffer, "%d,%d,%d,%d,%0.4f,%0.4f,%0.8f,%0.8f,%0.4f,%0.4f,%0.8f,%0.8f,%0.8f,%0.8f,%0.8f,%0.8f,%0.8f\n",
+                            sprintf(buffer, "%d,%d,%d,%d,%0.4f,%0.4f,%0.8f,%0.8f,%0.4f,%0.4f,%0.8f,%0.8f,%0.8f,%0.8f,%d,%0.8f,%0.8f,%0.8f\n",
                                     counter, int(i + 1), peak.idxPeakStart, peak.idxPeakEnd, peak.mz, peak.mzUncertainty,
                                     peak.retentionTime, peak.retentionTimeUncertainty, RTs[peak.idxPeakStart], RTs[peak.idxPeakEnd],
-                                    peak.area, peak.areaUncertainty, peak.height, peak.heightUncertainty,
+                                    peak.area, peak.areaUncertainty, peak.height, peak.heightUncertainty, int(originalBins[i].errorcode),
                                     peak.dqsCen, peak.dqsBin, peak.dqsPeak);
                             output << buffer;
                             ++counter;
@@ -715,7 +716,7 @@ int main(int argc, char *argv[])
     std::fstream logWriter;
     logWriter.open(pathLogging, std::ios::out);
     logWriter << "filename, numSpectra, numCentroids, meanDQSC, numBins_empty, numBins_one,"
-                 " numBins_more, meanDQSB, numFeatures, badFeatures, meanDQSF\n";
+                 " numBins_more, meanDQSB, numFeatures, badFeatures, meanDQSF, testFailedPeak, testPassedPeak, testPassedTotal \n";
     logWriter.close();
 
 #pragma region file processing
@@ -860,11 +861,28 @@ int main(int argc, char *argv[])
             auto peaks = tensorData.findPeaks_QBIN(qpeaks, binnedData);
             // make sure that every peak contains only one mass trace
             size_t peaksWithMassGaps = 0;
+            size_t testsPassedTotal = 0;
+            size_t testsPassedPeak = 0;
+            size_t testFailedPeak = 0;
             double meanDQSF = 0;
             for (size_t i = 0; i < peaks.size(); i++)
             {
+                if (!bool(binnedData[i].errorcode))
+                {
+                    ++testsPassedTotal;
+                }
+
                 if (!peaks[i].empty())
                 {
+                    if (bool(binnedData[i].errorcode))
+                    {
+                        ++testFailedPeak;
+                    }
+                    else
+                    {
+                        ++testsPassedPeak;
+                    }
+
                     auto massesBin = binnedData[i].mz;
                     auto scansBin = binnedData[i].scanNumbers;
                     int lowestScan = scansBin[0];
@@ -874,10 +892,13 @@ int main(int argc, char *argv[])
                         // to each side and all intermediate values interpolated.
                         // To find the real regression borders, this has to be accounted for.
                         // regressionIdx = 2 => first point in bin is start of regression
+                        assert((peaks[i][j].idxPeakEnd - peaks[i][j].idxPeakStart) < (scansBin.front() - scansBin.back() + 5));
                         bool startSearch = true;
                         size_t tmpEndVal = 0;
+                        std::cout << "\n " << peaks[i][j].idxPeakStart << ", " << peaks[i][j].idxPeakEnd << "\n";
                         for (size_t a = 0; a < scansBin.size(); a++)
                         {
+                            std::cout << scansBin[a] << ", ";
                             size_t regressionIdx = scansBin[a] - lowestScan + 2;
                             if (startSearch && (regressionIdx >= peaks[i][j].idxPeakStart))
                             {
@@ -893,6 +914,13 @@ int main(int argc, char *argv[])
                                 }
                             }
                         }
+                        if (tmpEndVal == 0)
+                        {
+                            tmpEndVal = scansBin.size() - 1;
+                        }
+                        std::cout << "\n " << peaks[i][j].idxPeakStart << ", " << peaks[i][j].idxPeakEnd << ", "
+                                  << tmpEndVal << ", " << scansBin.size() << "\n";
+                        std::cout.flush();
                         peaks[i][j].idxPeakEnd = tmpEndVal;
                         assert(tmpEndVal > peaks[i][j].idxPeakStart);
                         assert(tmpEndVal < scansBin.size());
@@ -979,7 +1007,7 @@ int main(int argc, char *argv[])
             logWriter << filename << ", " << centroids.size() << ", " << binThis.lengthAllPoints << ", "
                       << meanDQSC / binThis.lengthAllPoints << ", " << dudBins << ", " << onlyone << ", "
                       << overfullBins << ", " << meanDQSB << ", " << peakCount << ", " << peaksWithMassGaps
-                      << ", " << meanDQSF << "\n";
+                      << ", " << meanDQSF << testFailedPeak << ", " << testsPassedPeak << ", " << testsPassedTotal << "\n";
             logWriter.close();
 
             if (printPeaks)
