@@ -17,8 +17,9 @@ Report concluding the research practical by Daniel Höhn, supervised by Felix Dr
   - [Centroid quality score (DQSC)](#centroid-quality-score-dqsc)
   - [signal point retention](#signal-point-retention)
   - [centroid count / density](#centroid-count--density)
+- [Performance criteria - Binning:](#performance-criteria---binning)
   - [Bin quality score (DQSB)](#bin-quality-score-dqsb)
-- [General Notes on Tests - Binning:](#general-notes-on-tests---binning)
+  - [Bin property tests:](#bin-property-tests)
 - [Discarded or Modified Criteria:](#discarded-or-modified-criteria)
   - [point within maxdist but not within maxdist + 1](#point-within-maxdist-but-not-within-maxdist--1)
   - [one-sided intensity profile](#one-sided-intensity-profile)
@@ -316,6 +317,8 @@ It is assumed that generally, more initial signals equal a lower chance
 of false negatives. As such, the amount of centroids produced - irrespective
 of the DQSC - is also a measure of process quality during centroiding.
 
+# Performance criteria - Binning:
+
 ## Bin quality score (DQSB)
 The DQSB in its current implementation [@todo] (paper binning, report 1) gives a measure of how well separated
 a bin is from its environment by comparing the distances within a bin with
@@ -327,10 +330,27 @@ to calculate the mean in-group differences in mz. This change led to, on
 average, slightly lower scores. Furthermore, scaling was introduced for 
 the outer distance. (see [section])
 
-# General Notes on Tests - Binning:
-The tests presented here were developed as assessors for the quality
-of the binning process. As such, they do not intend to make predictions
-on the final peak quality, if a peak will be found, or how 
+## Bin property tests:
+In addition to the quality score, multiple property tests are performed on 
+each bin. These serve the purpose of descibing commonly observed patterns
+during binning that often occur in distorted bins. These secondary tests
+are used to take corrective action where this is possible, or to relax the
+strictness of some binning parameters. This is sometimes necessary because
+the peak finding algorithm assumes all centroids to have the same mz. 
+
+While not all tests are applicable for improving the data passed to qPeaks, 
+they give further insight into how the process functioned. Since all tests
+aim to identify points of failure in the bins without knowledge about the
+regression, the number of bins which did not fail any test, the number of
+these bins that contained at least one peak and the number of bins with 
+at least one positive test that contained one or more peaks are also taken
+as parameters for the binning / peak finding process.
+
+A complete overview of all currently used tests and those tests that were
+implemented at one point and then removed is given below. Tests can be
+used both for corrective action and to assess bin quality, since a correction
+is not always possible. Every bin which shows positive for these could
+not be improved through the described process.
 
 # Discarded or Modified Criteria:
 
@@ -464,16 +484,30 @@ introduced in the previous step.
 
 ## Validity of the identified peaks
 During development, it was found that some generated peaks will not
-fulfill the condition of being part of only one mass trace. Around ten
-percent of all peaks found each displayed this behaviour. This property
+fulfill the condition of being part of only one mass trace. Around two
+percent of all peaks found displayed this behaviour. This property
 of a peak implies poorly resolved mass traces during the binning step,
 while the fact that a peak could be constructed points towards mostly singular 
 noise datapoints being included. Peak scores in these "contaminated" bins are
 not noticeably distinct from those in regular bins.
-This is an issue that needs to be adressed during regression validation.
-Here, the proposed process statistic is the total number of regressions
-(per bin) that were invalid because of such a mass trace inconsistency
-before the best fit was reached. 
+It is possible that these bad inclusions are a result of the "correct" centroid,
+that being the real signal of this ion trace in the given scan, not
+being detected by the centroiding algorith while still being measured in
+the instrument. Such issues could be addressed by finding a way to utilise
+regions of the scan which did not suffice for centroid representation
+or by interpolating such points instead when fitting the regression.
+It could also be possible to introduce more region specific filters during
+binning to find these points and search for a better fitting centroid.
+The total number of these peaks is also a process statistic that can be
+used for generalised performance assessment, since every peak with these 
+characteristics represents an error during processing.
+It is, however, not directly clear where in processing this error occurred.
+It could be that in the profile data, a better fitting signal was overlooked
+because it did not fulfill the minimum standards for a peak. The possibility
+exists that after binning, if the relevant point was a duplicate, the 
+wrong choice was made. This cannot be the main reason for such errors due
+to the rarity of duplicate scans in bins. It is also possible that no
+profile signal exists at the point
 
 [@todo] DQSB, DQSF
 

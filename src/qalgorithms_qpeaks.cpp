@@ -964,7 +964,9 @@ namespace q
 
             /*
               Grouping Over Scales:
-              This block of code implements the grouping over scales. It groups the valid peaks based on the apex positions. Peaks are defined as similar, i.e., members of the same group, if they fullfill at least one of the following conditions:
+              This block of code implements the grouping over scales. It groups the valid peaks based
+              on the apex positions. Peaks are defined as similar, i.e., members of the same group,
+              if they fullfill at least one of the following conditions:
               - The difference between two peak apexes is less than 4. (Nyquist Shannon Sampling Theorem, separation of two maxima)
               - At least one apex of a pair of peaks is within the window of the other peak. (Overlap of two maxima)
             */
@@ -1023,8 +1025,7 @@ namespace q
 #pragma endregion "merge regressions over scales static"
 
 #pragma region "create peaks"
-        void
-        qPeaks::createPeaks(
+        void qPeaks::createPeaks(
             std::vector<DataType::Peak> &peaks,
             const std::vector<validRegression_static> &validRegressions,
             const float *y_start,
@@ -1413,8 +1414,8 @@ namespace q
             float best_mse = std::numeric_limits<float>::infinity();
 
             // step 1: identify left (smallest) and right (largest) limit of the grouped regression windows
-            int left_limit = regressions_start->left_limit;
-            int right_limit = regressions_start->right_limit;
+            unsigned int left_limit = regressions_start->left_limit;
+            unsigned int right_limit = regressions_start->right_limit;
             for (int i = 1; i < n_regressions; i++)
             {
                 left_limit = std::min(left_limit, (regressions_start + i)->left_limit);
@@ -1525,8 +1526,7 @@ namespace q
 #pragma endregion calcExtendedMsePair_static
 
 #pragma region calcExtendedMseOverScales_static
-        void
-        qPeaks::calcExtendedMseOverScales_static(
+        void qPeaks::calcExtendedMseOverScales_static(
             const float *y_start,
             validRegression_static *validRegressions,
             const std::vector<int> &validRegressionsInGroup,
@@ -1581,11 +1581,11 @@ namespace q
 
 #pragma region calcDF
         int qPeaks::calcDF(
-            const bool *df_start,  // start of the degrees of freedom
-            const int left_limit,  // left limit
-            const int right_limit) // right limit
+            const bool *df_start,     // start of the degrees of freedom
+            unsigned int left_limit,  // left limit
+            unsigned int right_limit) // right limit
         {
-            int degreesOfFreedom = 0;
+            unsigned int degreesOfFreedom = 0;
             for (size_t i = left_limit; i < right_limit + 1; i++)
             {
                 if (df_start[i])

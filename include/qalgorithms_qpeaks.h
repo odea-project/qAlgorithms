@@ -76,16 +76,16 @@ namespace q
 
             struct validRegression_static
             {
-                int index_x0;        // index of window center (x==0) in the Y matrix
-                int scale;           // scale of the regression window, i.e., 2*scale+1 = window size
-                int df;              // degree of freedom, interpolated data points will not be considered
-                float apex_position; // position of the apex of the peak
-                float mse;           // mean squared error
-                __m128 coeff;        // regression coefficients
-                bool isValid;        // flag to indicate if the regression is valid
-                int left_limit;      // left limit of the peak regression window
-                int right_limit;     // right limit of the peak regression window
-                float area;          // area of the peak
+                int index_x0;             // index of window center (x==0) in the Y matrix
+                int scale;                // scale of the regression window, i.e., 2*scale+1 = window size
+                int df;                   // degree of freedom, interpolated data points will not be considered
+                float apex_position;      // position of the apex of the peak
+                float mse;                // mean squared error
+                __m128 coeff;             // regression coefficients
+                bool isValid;             // flag to indicate if the regression is valid
+                unsigned int left_limit;  // left limit of the peak regression window
+                unsigned int right_limit; // right limit of the peak regression window
+                float area;               // area of the peak
                 // float height;
                 float uncertainty_area; // uncertainty of the area
                 float uncertainty_pos;  // uncertainty of the position
@@ -259,8 +259,8 @@ namespace q
              */
             int calcDF(
                 const bool *df_start,
-                const int left_limit,
-                const int right_limit);
+                unsigned int left_limit,
+                unsigned int right_limit);
 
             /**
              * @brief Calculate the apex (and if possible the valley) position of the peak. And return true if the positions are calculated are valid.

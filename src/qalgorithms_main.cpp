@@ -100,10 +100,10 @@ namespace q
             }
             else
             {
-                // auto currentBin = originalBins->begin();
-                output << "ID,binID,lowestRT,highestRT,mz,mzUncertainty,retentionTime,retentionTimeUncertainty,"
-                       << "area,areaUncertainty,height,heightUncertainty,dqsCen,dqsBin,dqsPeak\n";
-                int counter = 1;
+                // @todo add peak borders
+                output << "ID,binID,binIdxStart,binIdxEnd,mz,mzUncertainty,retentionTime,retentionTimeUncertainty,"
+                       << "lowestRetentionTime,highestRetentionTime,area,areaUncertainty,height,heightUncertainty,dqsCen,dqsBin,dqsPeak\n";
+                unsigned int counter = 1;
                 for (size_t i = 0; i < peaktable.size(); i++)
                 {
                     if (!peaktable[i].empty())
@@ -114,9 +114,10 @@ namespace q
 
                             auto peak = peaktable[i][j];
                             char buffer[256];
-                            sprintf(buffer, "%d,%d,%0.4f,%0.4f,%0.8f,%0.8f,%0.4f,%0.4f,%0.8f,%0.8f,%0.8f,%0.8f,%0.8f\n",
-                                    counter, int(i + 1), RTs[peak.idxPeakStart], RTs[peak.idxPeakEnd], peak.mz, peak.mzUncertainty,
-                                    peak.retentionTime, peak.retentionTimeUncertainty, peak.area, peak.areaUncertainty,
+                            sprintf(buffer, "%d,%d,%d,%d,%0.4f,%0.4f,%0.8f,%0.8f,%0.4f,%0.4f,%0.8f,%0.8f,%0.8f,%0.8f,%0.8f,%0.8f,%0.8f\n",
+                                    counter, int(i + 1), peak.idxPeakStart, peak.idxPeakEnd, peak.mz, peak.mzUncertainty,
+                                    peak.retentionTime, peak.retentionTimeUncertainty, RTs[peak.idxPeakStart], RTs[peak.idxPeakEnd],
+                                    peak.area, peak.areaUncertainty, peak.height, peak.heightUncertainty,
                                     peak.dqsCen, peak.dqsBin, peak.dqsPeak);
                             output << buffer;
                             ++counter;
@@ -130,7 +131,7 @@ namespace q
         {
             output << "ID,mz,mzUncertainty,retentionTime,retentionTimeUncertainty,"
                    << "area,areaUncertainty,dqsCen,dqsBin,dqsPeak\n ";
-            int counter = 1;
+            unsigned int counter = 1;
             for (size_t i = 0; i < peaktable.size(); i++)
             {
                 if (peaktable[i].empty())
@@ -258,7 +259,7 @@ namespace q
         }
         // remove duplicate files
         size_t tasknumber = tasklist.size();
-        int removedEntries = 0;
+        unsigned int removedEntries = 0;
         if (tasknumber == 0)
         {
             std::cerr << "Error: no valid files selected.\n";
@@ -271,20 +272,36 @@ namespace q
         {
             if (tasklist[i].filesize == prevsize)
             {
+                size_t readLength = 25000;
                 std::ifstream fileConflict;
-                char firstChars[25000];
+                char firstChars[readLength];
+                char secondChars[readLength];
                 fileConflict.open(tasklist[i - 1].path);
-                fileConflict.read(firstChars, 25000);
+                fileConflict.read(firstChars, readLength);
                 fileConflict.close();
-                std::string s = firstChars;
-                auto hash1 = std::hash<std::string>{}(s);
+                // std::string s = firstChars;
+                // auto hash1 = std::hash<std::string>{}(s);
 
                 fileConflict.open(tasklist[i].path);
-                fileConflict.read(firstChars, 25000);
+                fileConflict.read(firstChars, readLength);
                 fileConflict.close();
-                s = firstChars;
-                auto hash2 = std::hash<std::string>{}(s);
-                if (hash1 == hash2)
+                // s = firstChars;
+                // auto hash2 = std::hash<std::string>{}(s);
+                // if (hash1 == hash2)
+                // {
+                //     tasklist[i - 1].filesize = 0; // always keeps last so comparison by file size works
+                //     ++removedEntries;
+                // }
+                bool sameFiles = true;
+                for (size_t j = 0; j < readLength; j++)
+                {
+                    if (firstChars[j] != secondChars[j])
+                    {
+                        sameFiles = false;
+                        break;
+                    }
+                }
+                if (sameFiles)
                 {
                     tasklist[i - 1].filesize = 0; // always keeps last so comparison by file size works
                     ++removedEntries;
@@ -371,7 +388,8 @@ namespace q
                                  "      -e,  -extended:             print additional information into the final peak list. You do not\n"
                                  "                                  have to also set the -pp flag. The extended output includes the\n"
                                  "                                  ID of the bin a given peak was found in, its start and end\n"
-                                 "                                  position (by index) within the bin and the intensity as apex height.\n"
+                                 "                                  position (by index) within the bin, the lowest and highest retenetion \n"
+                                 "                                  times in the peak and the intensity as apex height.\n"
                                  "      -sp, -subprofile:           instead of the peaks, print all proflie-mode data points which\n"
                                  "                                  were used to create the final peaks. This does not return any quality\n"
                                  "                                  scores. Only use this option when reading in prodile mode files.\n"
@@ -797,6 +815,15 @@ int main(int argc, char *argv[])
 
             q::Algorithms::qBinning::CentroidedData binThis = qpeaks.passToBinning(centroids);
 
+            if (printSubProfile)
+            {
+                // create a subset of the profile data which only contains binned points
+                // organisation: bin ID -> vector<vector<profile point>>
+                // after peak finding, use the peak borders to annotate which profile
+                // points were part of which peak.
+                // @todo consider adding the option to also print surrounding profile points
+            }
+
             auto timeEnd = std::chrono::high_resolution_clock::now();
 
             if (!silent)
@@ -848,10 +875,10 @@ int main(int argc, char *argv[])
                         // To find the real regression borders, this has to be accounted for.
                         // regressionIdx = 2 => first point in bin is start of regression
                         bool startSearch = true;
-                        int tmpEndVal = -1;
+                        size_t tmpEndVal = 0;
                         for (size_t a = 0; a < scansBin.size(); a++)
                         {
-                            int regressionIdx = scansBin[a] - lowestScan + 2;
+                            size_t regressionIdx = scansBin[a] - lowestScan + 2;
                             if (startSearch && (regressionIdx >= peaks[i][j].idxPeakStart))
                             {
                                 startSearch = false;
