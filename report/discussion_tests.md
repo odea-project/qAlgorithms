@@ -352,7 +352,40 @@ used both for corrective action and to assess bin quality, since a correction
 is not always possible. Every bin which shows positive for these could
 not be improved through the described process.
 
-# Discarded or Modified Criteria:
+### Two or more centroids of the same scan
+This test is necessary because the peakfinder cannot utilise more than one 
+centroid per scan. All bins where this applies are marked. Before finding
+peaks, only the centroid with the highest DQSC is retained. For most 
+datasets, the rate of bins with duplicates is below 0.1%, with many
+affected bins being ones that contain a hundred or more centroids.
+
+### Unbinned points within the critical distance 
+During binning, sometimes points are not included in a bin
+despite - taken in isolation - fulfilling the criteria for
+inclusion. However, they cannot be part of the bin without 
+also including more points. Since the critical distance
+shrinks with the number of points, the bin is split
+into the one or two bins that fulfill this test.
+This test does not count points that would increase
+the critical distance such that the bin would be split
+by themselves.
+
+This test is used in conjunction with the next to 
+combine two bins which show signs of being split in
+the middle of a peak.
+
+### Signs of a halved peak
+If a peak shows a uniform monotonous rise in intensities,
+which is defined as at least every other centroid having 
+a higher intensity than the previously highest intensity,
+it is considered to be one half of a peak. Bins which 
+fulfill this criteria generally contain few data points.
+
+Both this and the previous test are specific to the beginning
+and end of a peak, although this information is lost after 
+completed binning.
+
+## Discarded or Modified Criteria:
 
 ## point within maxdist but not within maxdist + 1
 The test was removed due to not providing actionable, non-redundant
