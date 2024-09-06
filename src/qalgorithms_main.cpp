@@ -20,7 +20,10 @@
 namespace q
 {
 
-    double MeasurementData::ppm_for_precentroided_data = 5;
+    // this is set to -5 to track if the argument was set or not. Since a negative
+    // number during input causes the program to exit, the warning only triggers
+    // if the ppm value is positve.
+    double MeasurementData::ppm_for_precentroided_data = -5;
 
     struct ProfilePoint
     {
@@ -617,9 +620,29 @@ int main(int argc, char *argv[])
         else if (argument == "-ppm")
         {
             ++i;
-            double modifiedPPM = std::stod(argv[i]);
+            if (i == argc)
+            {
+                std::cerr << "Error: -ppm set, but no centroid error specified.\n";
+                exit(1);
+            }
+
+            double modifiedPPM;
+            try
+            {
+                modifiedPPM = std::stod(argv[i]);
+            }
+            catch (std::invalid_argument)
+            {
+                std::cerr << "Error: the centroid error cannot be set to \"" << argv[i] << "\" ppm.\n";
+                exit(1);
+            }
+            if (modifiedPPM <= 0)
+            {
+                std::cerr << "Error: the centroid error must be greater than 0.";
+                exit(1);
+            }
+
             q::MeasurementData::ppm_for_precentroided_data = modifiedPPM;
-            std::cerr << "Notice: the changed centroid certainty will only affect pre-centroided data.\n";
         }
         else if ((argument == "-pc") | (argument == "-printcentroids"))
         {

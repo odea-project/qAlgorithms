@@ -139,6 +139,16 @@ namespace q
             std::vector<int> num_datapoints = data.get_spectra_array_length();        // get number of data points
             double expectedDifference = 0.0;                                          // expected difference between two consecutive x-axis values
 
+            bool displayPPMwarning = false;
+            if (ppm_for_precentroided_data == -5)
+            {
+                ppm_for_precentroided_data = 5;
+            }
+            else
+            {
+                displayPPMwarning = true;
+            }
+
             // FILTER MS1 SPECTRA
             if (ms1only)
             {
@@ -154,17 +164,22 @@ namespace q
 
             // CHECK IF CENTROIDED SPECTRA
             int num_centroided_spectra = std::count(spectrum_mode.begin(), spectrum_mode.end(), "centroid");
-            if (num_centroided_spectra > spectrum_mode.size() * .5) // in profile mode sometimes centroided spectra appear as well
+            if (num_centroided_spectra > spectrum_mode.size() / 2) // in profile mode sometimes centroided spectra appear as well
             {
-                std::cerr << "Warning: qAlgorithms is intended for profile spectra. A base uncertainty of"
-                          << " 5 ppm is assumed for all supplied centroids\n";
+                std::cerr << "Warning: qAlgorithms is intended for profile spectra. A base uncertainty of "
+                          << ppm_for_precentroided_data << " ppm is assumed for all supplied centroids\n";
                 std::vector<double> retention_times = data.get_spectra_rt(indices); // get retention times
                 rt_diff = calcRTDiff(retention_times);
                 return transferCentroids(data, indices, retention_times, start_index, ppm_for_precentroided_data);
             }
 
+            if (displayPPMwarning)
+            {
+                std::cerr << "Notice: the changed centroid certainty will only affect pre-centroided data.\n";
+            }
+
             // FILTER SPECTRUM MODE (PROFILE)
-            if (num_centroided_spectra != 0)
+            if (num_centroided_spectra != 0) // @todo should these really be discarded?
             {
                 indices.erase(std::remove_if(indices.begin(), indices.end(), [&spectrum_mode](int i)
                                              { return spectrum_mode[i] != "profile"; }),
@@ -190,7 +205,12 @@ namespace q
                 std::vector<TensorData::dataPoint> dataPoints = mzmlToDataPoint(data, index);       // convert mzml to data points
                 TensorData::treatedData treatedData = pretreatData(dataPoints, expectedDifference); // inter/extrapolate data, and identify data blocks
                 qpeaks.findCentroids(centroids[i], treatedData, index, retention_times[i]);         // find peaks in data blocks of treated data
-            } // for
+            }
+
+            if (!displayPPMwarning)
+            {
+                ppm_for_precentroided_data = -5;
+            }
 
             return centroids;
         } // readStreamCraftMZML
