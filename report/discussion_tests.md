@@ -20,7 +20,14 @@ Report concluding the research practical by Daniel Höhn, supervised by Felix Dr
 - [Performance criteria - Binning:](#performance-criteria---binning)
   - [Bin quality score (DQSB)](#bin-quality-score-dqsb)
   - [Bin property tests:](#bin-property-tests)
-- [Discarded or Modified Criteria:](#discarded-or-modified-criteria)
+    - [Two or more centroids of the same scan](#two-or-more-centroids-of-the-same-scan)
+    - [Unbinned points within the critical distance](#unbinned-points-within-the-critical-distance)
+    - [Signs of a halved peak](#signs-of-a-halved-peak)
+    - [Drastic mass shifts](#drastic-mass-shifts)
+    - [Asymmetric distribution of mz](#asymmetric-distribution-of-mz)
+    - [At least two possible maxima in intensity](#at-least-two-possible-maxima-in-intensity)
+    - [mz distribution is broader than expected](#mz-distribution-is-broader-than-expected)
+  - [Discarded or Modified Criteria:](#discarded-or-modified-criteria)
   - [point within maxdist but not within maxdist + 1](#point-within-maxdist-but-not-within-maxdist--1)
   - [one-sided intensity profile](#one-sided-intensity-profile)
   - [test for asymmetry in mz](#test-for-asymmetry-in-mz)
@@ -384,6 +391,36 @@ fulfill this criteria generally contain few data points.
 Both this and the previous test are specific to the beginning
 and end of a peak, although this information is lost after 
 completed binning.
+
+In some cases, peaks that are part of one very large bin
+are cut, despite the mass differences being within tolerance
+if they are viewed without considering the large amount of noise
+data that is also within the bin. If the other half ends up as a 
+viable bin, one correct peak more can be found if both halves 
+are merged again. Since they were split due to too many points
+lowering the critical distance below what is reasonable for the
+peak, if a bin that could contain half a peak has a point of another
+bin in range (determined by the previous test), both bins have 
+a distance of no more than three scans and the assumed peak apex is
+in the same direction (in scans) as the bin that is considered for
+a merge, Both are combined even if this leads to the critical distance
+being surpassed. If this merge is correct, one more peak can be 
+characterised. If it is incorrect, either no peak is found in the
+region and the merge has no effect or, in the worst case, the mass
+of a correct peak is slightly distorted by including some 
+otherwise avoidable noise.
+
+### Drastic mass shifts
+
+
+### Asymmetric distribution of mz
+
+
+### At least two possible maxima in intensity
+
+
+### mz distribution is broader than expected
+
 
 ## Discarded or Modified Criteria:
 
