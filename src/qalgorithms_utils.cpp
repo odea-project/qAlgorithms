@@ -54,11 +54,12 @@ namespace q
 
   float sum8(const __m256 &vec) // why does this break when inlined?
   {
-    float sum = 0;
-    for (size_t i = 0; i < 8; i++)
-    {
-      sum += vec[i];
-    }
+    // float sum = 0;
+    // for (size_t i = 0; i < 8; i++)
+    // {
+    //   sum += vec[i];
+    // }
+    float sum = vec[0] + vec[1] + vec[3] + vec[4] + vec[5] + vec[6] + vec[7];
     return sum;
 
     // const __m128 hiQuad = _mm256_extractf128_ps(vec, 1);     // hiQuad = ( x7, x6, x5, x4 )
