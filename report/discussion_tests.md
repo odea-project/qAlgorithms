@@ -25,19 +25,19 @@ Report concluding the research practical by Daniel Höhn, supervised by Felix Dr
     - [Signs of a halved peak](#signs-of-a-halved-peak)
     - [Drastic mass shifts](#drastic-mass-shifts)
     - [Asymmetric distribution of mz](#asymmetric-distribution-of-mz)
+    - [Maximum intensity at edge of bin](#maximum-intensity-at-edge-of-bin)
     - [At least two possible maxima in intensity](#at-least-two-possible-maxima-in-intensity)
-    - [mz distribution is broader than expected](#mz-distribution-is-broader-than-expected)
-  - [Discarded or Modified Criteria:](#discarded-or-modified-criteria)
-  - [point within maxdist but not within maxdist + 1](#point-within-maxdist-but-not-within-maxdist--1)
-  - [one-sided intensity profile](#one-sided-intensity-profile)
-  - [test for asymmetry in mz](#test-for-asymmetry-in-mz)
-  - [test for points outside three sigma interval](#test-for-points-outside-three-sigma-interval)
-- [Bin Categories:](#bin-categories)
-  - [Bin with duplicate scan:](#bin-with-duplicate-scan)
+  - [Discarded Criteria:](#discarded-criteria)
+    - [point within maxdist but not within maxdist + 1](#point-within-maxdist-but-not-within-maxdist--1)
+    - [one-sided intensity profile](#one-sided-intensity-profile)
+    - [test for asymmetry in mz](#test-for-asymmetry-in-mz)
+    - [test for points outside three sigma interval](#test-for-points-outside-three-sigma-interval)
+- [Performance criteria - Peak Finding:](#performance-criteria---peak-finding)
+  - [DQSF](#dqsf)
+  - [Validity of the identified peaks](#validity-of-the-identified-peaks)
 - [Development of a consistency parameter from process statistics](#development-of-a-consistency-parameter-from-process-statistics)
   - [Consistency of the centroiding algorithm](#consistency-of-the-centroiding-algorithm)
   - [Consistency of the Binning algorithm](#consistency-of-the-binning-algorithm)
-  - [Validity of the identified peaks](#validity-of-the-identified-peaks)
 - [Error traceability](#error-traceability)
 - [Viability test for simple process parameters](#viability-test-for-simple-process-parameters)
 - [Further research](#further-research)
@@ -414,27 +414,42 @@ of a correct peak is slightly distorted by including some
 otherwise avoidable noise.
 
 ### Drastic mass shifts
-
+A bin is considered to undergo a drastic mass shift if median and
+mean in mz are more than two times the mean centroid error apart.
+Bins display this behaviour if at the end of a bin, few points 
+undergo a drastic increase or decrease in mz.
+This test is not used for corrective action.
 
 ### Asymmetric distribution of mz
+Assuming a normal distribution, 80% of points should be within the
+1.3 sigma interval. 80% were chosen as the limit so that one point
+of deviation is still within tolerance for bins of size 5.
+This test is not used for corrective action.
 
+### Maximum intensity at edge of bin
+If the highest intensity in a bin is at the first or last centroid of
+the bin, it can not be the apex of an interpolated peak. This goes
+against the model behaviour of a correct bin.
+This test is not used for corrective action, but could be employed 
+as another sign of a halved peak.
 
 ### At least two possible maxima in intensity
+If the highest and second-highest intensity in a bin are more than
+three scans apart, more than one regression for this peak is expected.
+If only one peak was found, this could justify a closer look at the bin.
+This test is not used for corrective action yet.
 
 
-### mz distribution is broader than expected
+## Discarded Criteria:
 
-
-## Discarded or Modified Criteria:
-
-## point within maxdist but not within maxdist + 1
+### point within maxdist but not within maxdist + 1
 The test was removed due to not providing actionable, non-redundant
 information. With the addition of a standard-deviation corrected
 estimate for the critical distance, potentially interesting outliers
 are already covered. The ones which aren't included are represented
 through the DQSB.
 
-## one-sided intensity profile
+### one-sided intensity profile
 Originally, this test only checked if the maximum intensity of the
 bin was also the first or last scan which is covered by the bin. 
 This would prevent a gaussian fit with a maximum within the bin.
@@ -444,7 +459,7 @@ This is especially likely for small bins purely containing noise.
 As such, the test condition was changed to the maximum being the smallest,
 the smallest + 1, the largest or the largest - 1 scan.
 
-## test for asymmetry in mz
+### test for asymmetry in mz
 A relatively frequent problem with the binning results is that
 sometimes, either a low-deviation mass trace identified visually
 has a lot of noise on one side or is binned together with a different
@@ -460,19 +475,55 @@ scaled, while the division into thirds had no basis in the expected
 behaviour of normally distributed data and was extremely sensitive to
 outliers.
 
-## test for points outside three sigma interval
+### test for points outside three sigma interval
 This test was implemented to identify those bins that
 were too broad (in mz) to form visually identifiable ion traces.
 It was removed due to outliers not directly corelating with
 good bins - often, points with very low intensity at the edges of
 the relevant scan interval triggered the detection.
 
-# Bin Categories:
+# Performance criteria - Peak Finding:
+## DQSF
+The DQSF describes how well the chromatographic peak underlying a 
+feature fits the peak model. It already serves as a way for the user
+to priorise peaks for further analysis and make a qualified decision 
+regarding conflicts in componentisation or assignemnt of MS2 spectra. [qpeaks]
+However, the feature-specific nature of the DQSF makes it unwieldy as
+a tool for assessing the entire dataset. When taking the mean or median,
+The few features of extremely high quality lose impact, whereas a more
+selective subset of peaks loses its validity concerning the entire 
+dataset. While the mean DQSF is used for sum parameter characterisation
+of a dataset, it is not used as the foundation for a test regarding
+consistency or anything else. It is assumed that a relevant difference
+in DQSF would be noticeably more strongly through the other observed peak properties.
 
-## Bin with duplicate scan:
-These bins should not be passed to the centroiding algorithm.
-The information that a duplicate was included is passed with the
-errorcode, while the centroid with the higher DQSC is retained.
+## Validity of the identified peaks
+During development, it was found that some generated peaks will not
+fulfill the condition of being part of only one mass trace. Around two
+percent of all peaks found displayed this behaviour. This property
+of a peak implies poorly resolved mass traces during the binning step,
+while the fact that a peak could be constructed points towards mostly singular 
+noise datapoints being included. Peak scores in these "contaminated" bins are
+not noticeably distinct from those in regular bins.
+It is possible that these bad inclusions are a result of the "correct" centroid,
+that being the real signal of this ion trace in the given scan, not
+being detected by the centroiding algorith while still being measured in
+the instrument. Such issues could be addressed by finding a way to utilise
+regions of the scan which did not suffice for centroid representation
+or by interpolating such points instead when fitting the regression.
+It could also be possible to introduce more region specific filters during
+binning to find these points and search for a better fitting centroid.
+The total number of these peaks is also a process statistic that can be
+used for generalised performance assessment, since every peak with these 
+characteristics represents an error during processing.
+It is, however, not directly clear where in processing this error occurred.
+It could be that in the profile data, a better fitting signal was overlooked
+because it did not fulfill the minimum standards for a peak. The possibility
+exists that after binning, if the relevant point was a duplicate, the 
+wrong choice was made. This cannot be the main reason for such errors due
+to the rarity of duplicate scans in bins. It is also possible that no
+profile signal exists at the point
+
 
 # Development of a consistency parameter from process statistics
 When assessing the entire process from profile-mode spectra to 
@@ -526,7 +577,7 @@ for a running system.
 
 Similar effects can be observed when viewing the differences between
 the total number of centroids per measurement. To display both graphs together,
-they were normalised so that their greatest point was 1.
+they were normalised so that their greatest point, respectively, was 1.
 The number of recorded spectra is inconsistent between measurements,
 usually deviating by around four. Whether this had an influence on the
 displayed results was tested by calculating the differences between
@@ -555,32 +606,7 @@ advantage that it can still be used if the centroiding was performed
 using another algorithm, while also not amplifying potential distortions
 introduced in the previous step.
 
-## Validity of the identified peaks
-During development, it was found that some generated peaks will not
-fulfill the condition of being part of only one mass trace. Around two
-percent of all peaks found displayed this behaviour. This property
-of a peak implies poorly resolved mass traces during the binning step,
-while the fact that a peak could be constructed points towards mostly singular 
-noise datapoints being included. Peak scores in these "contaminated" bins are
-not noticeably distinct from those in regular bins.
-It is possible that these bad inclusions are a result of the "correct" centroid,
-that being the real signal of this ion trace in the given scan, not
-being detected by the centroiding algorith while still being measured in
-the instrument. Such issues could be addressed by finding a way to utilise
-regions of the scan which did not suffice for centroid representation
-or by interpolating such points instead when fitting the regression.
-It could also be possible to introduce more region specific filters during
-binning to find these points and search for a better fitting centroid.
-The total number of these peaks is also a process statistic that can be
-used for generalised performance assessment, since every peak with these 
-characteristics represents an error during processing.
-It is, however, not directly clear where in processing this error occurred.
-It could be that in the profile data, a better fitting signal was overlooked
-because it did not fulfill the minimum standards for a peak. The possibility
-exists that after binning, if the relevant point was a duplicate, the 
-wrong choice was made. This cannot be the main reason for such errors due
-to the rarity of duplicate scans in bins. It is also possible that no
-profile signal exists at the point
+
 
 [@todo] DQSB, DQSF
 
@@ -809,7 +835,7 @@ centroids no longer fulfilled the statistical criteria for belonging to the
 same mass trace. A test was added which controlled the maximum order space,
 normalised to the standard deviation of masses within the peak, against the
 critical distance as described for qBinning [@qBinning]. These Peaks are
-now returned with a DQSF of -1 to indicate them being incorrect.
+now returned with a negative DQSF to indicate them being incorrect.
 
 # Conclusion
 It could be shown that, using exclusively very broad statistics generated 
