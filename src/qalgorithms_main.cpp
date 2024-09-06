@@ -631,7 +631,7 @@ int main(int argc, char *argv[])
             {
                 modifiedPPM = std::stod(argv[i]);
             }
-            catch (std::invalid_argument)
+            catch (std::invalid_argument const &)
             {
                 std::cerr << "Error: the centroid error cannot be set to \"" << argv[i] << "\" ppm.\n";
                 exit(1);
@@ -749,7 +749,7 @@ int main(int argc, char *argv[])
     std::fstream logWriter;
     logWriter.open(pathLogging, std::ios::out);
     logWriter << "filename, numSpectra, numCentroids, meanDQSC, numBins_empty, numBins_one,"
-                 " numBins_more, meanDQSB, numFeatures, badFeatures, meanDQSF, testFailedPeak, testPassedPeak, testPassedTotal \n";
+                 " numBins_more, meanDQSB, numFeatures, badFeatures, meanDQSF\n"; // , testFailedPeak, testPassedPeak, testPassedTotal
     logWriter.close();
 
 #pragma region file processing
@@ -931,7 +931,7 @@ int main(int argc, char *argv[])
                         // assert((peaks[i][j].idxPeakEnd - peaks[i][j].idxPeakStart) < (scansBin.back() - scansBin.front() + 5));
                         // std::cout << peaks[i][j].mz << ", " << massesBin[0] << " | " << peaks[i][j].retentionTime << ", "
                         //           << binnedData[i].rententionTimes[massesBin.size() / 2] << "\n";
-                        if ((peaks[i][j].idxPeakEnd) > (scansBin.back() - scansBin.front() + 5))
+                        if (int(peaks[i][j].idxPeakEnd) > (scansBin.back() - scansBin.front() + 5))
                         {
                             // std::cout << "\n " << peaks[i][j].idxPeakStart << ", " << peaks[i][j].idxPeakEnd << ", "
                             //           << scansBin.front() << " | " << lowestScan << ", " << scansBin.back()
@@ -941,7 +941,7 @@ int main(int argc, char *argv[])
 
                         bool startSearch = true;
                         size_t tmpEndVal = 0;
-                        int tmpLeftLim = peaks[i][j].idxPeakStart;
+                        // int tmpLeftLim = peaks[i][j].idxPeakStart;
 
                         for (size_t a = 0; a < scansBin.size(); a++)
                         {
@@ -980,7 +980,7 @@ int main(int argc, char *argv[])
                             //           << ", " << scansBin.back() << ", " << peaks[i][j].dqsPeak << ", " << peaks[i][j].height
                             //           << ", " << binnedData[i].ints_area[127] << "\n";
                             // exit(1);
-                            peaks[i][j].dqsPeak = -1;
+                            peaks[i][j].dqsPeak = -10;
                             peaks[i][j].idxPeakStart = 0;
                             tmpEndVal = scansBin.size() - 1;
                         }
@@ -1014,7 +1014,7 @@ int main(int argc, char *argv[])
                     }
                 }
             }
-            std::cout << testsPassedTotal << ", " << testsPassedPeak << ", " << testFailedPeak << "\n";
+            // std::cout << testsPassedTotal << ", " << testsPassedPeak << ", " << testFailedPeak << "\n";
 
             if (verboseProgress)
             {

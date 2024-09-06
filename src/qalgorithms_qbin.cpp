@@ -1173,14 +1173,14 @@ namespace q
                     oneSided = true;
                 }
                 // added this part since the smallest scale doesn't fit without interpolating here
-                else if ((pointsInBin.back()->scanNo == scanMin + 1) | (pointsInBin.back()->scanNo == scanMax - 1))
-                {
-                    oneSided = true;
-                }
-                else if ((pointsInBin[binsize - 2]->scanNo == scanMin) | (pointsInBin[binsize - 2]->scanNo == scanMax))
-                {
-                    oneSided = true;
-                }
+                // else if ((pointsInBin.back()->scanNo == scanMin + 1) | (pointsInBin.back()->scanNo == scanMax - 1))
+                // {
+                //     oneSided = true;
+                // }
+                // else if ((pointsInBin[binsize - 2]->scanNo == scanMin) | (pointsInBin[binsize - 2]->scanNo == scanMax))
+                // {
+                //     oneSided = true;
+                // }
 
                 // the second and third highest int_area should each be
                 // within maxdist of the highest instensity

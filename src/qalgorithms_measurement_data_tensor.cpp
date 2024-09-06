@@ -163,7 +163,7 @@ namespace q
                           indices.end()); // keep only spectra with the specified polarity and start index and array length > 5
 
             // CHECK IF CENTROIDED SPECTRA
-            int num_centroided_spectra = std::count(spectrum_mode.begin(), spectrum_mode.end(), "centroid");
+            size_t num_centroided_spectra = std::count(spectrum_mode.begin(), spectrum_mode.end(), "centroid");
             if (num_centroided_spectra > spectrum_mode.size() / 2) // in profile mode sometimes centroided spectra appear as well
             {
                 std::cerr << "Warning: qAlgorithms is intended for profile spectra. A base uncertainty of "
