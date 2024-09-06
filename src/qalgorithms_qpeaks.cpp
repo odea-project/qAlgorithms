@@ -44,14 +44,24 @@ namespace q
 
 #pragma region "pass to qBinning"
         qBinning::CentroidedData
-        qPeaks::passToBinning(std::vector<std::vector<q::DataType::Peak>> &allPeaks)
+        qPeaks::passToBinning(std::vector<std::vector<q::DataType::Peak>> &allPeaks, std::vector<unsigned int> addEmpty)
         {
             // initialise empty vector with enough room for all scans - centroids[0] must remain empty
             std::vector<std::vector<q::Algorithms::qBinning::qCentroid>> centroids(allPeaks.size() + 1, std::vector<qBinning::qCentroid>(0));
             int totalCentroids = 0;
             int scanRelative = 0;
+            // std::vector<qBinning::qCentroid> scan(0);
             for (size_t i = 0; i < allPeaks.size(); ++i)
             {
+                if (addEmpty[i] != 0)
+                {
+                    for (size_t j = 0; j < addEmpty[i]; j++)
+                    {
+                        centroids.push_back(std::vector<qBinning::qCentroid>(0));
+                        scanRelative++;
+                    }
+                }
+
                 if (!allPeaks[i].empty())
                 {
                     ++scanRelative; // scans start at 1
@@ -66,6 +76,11 @@ namespace q
                         centroids[scanRelative].push_back(F);
                         ++totalCentroids;
                     }
+                }
+                else
+                {
+                    centroids.push_back(std::vector<qBinning::qCentroid>(0));
+                    scanRelative++;
                 }
             }
             // the first scan must be empty for compatibility with qBinning
@@ -1212,6 +1227,8 @@ namespace q
             peak.idxPeakStart = regression.left_limit;
 
             peak.idxPeakEnd = regression.right_limit;
+
+            // peak.dqsPeak = regression.scale;
 
             peaks.push_back(peak);
         }

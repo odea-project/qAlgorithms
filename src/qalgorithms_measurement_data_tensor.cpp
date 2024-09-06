@@ -124,10 +124,10 @@ namespace q
 #pragma endregion "private methods"
 
 #pragma region "find centroids"
-        std::vector<std::vector<DataType::Peak>>
-        TensorData::findCentroids_MZML(
+        std::vector<std::vector<DataType::Peak>> TensorData::findCentroids_MZML(
             q::Algorithms::qPeaks &qpeaks,
             sc::MZML &data,
+            std::vector<unsigned int> &addEmpty,
             const bool ms1only,
             const std::string polarity,
             const int start_index)
@@ -210,6 +210,21 @@ namespace q
             if (!displayPPMwarning)
             {
                 ppm_for_precentroided_data = -5;
+            }
+
+            // determine where the peak finding will interpolate points and pass this information
+            // to the binning step. addEmpty contains the number of empty scans to be added into
+            // the qCentroids object at the given position.
+            addEmpty.resize(indices.size());
+            std::fill(addEmpty.begin(), addEmpty.end(), 0);
+            for (size_t i = 1; i < indices.size() + 1; i++)
+            {
+                if (retention_times[i + 1] - retention_times[i] > rt_diff * 1.75)
+                {
+                    addEmpty[i]++;
+                    retention_times[i] += rt_diff * 1.75;
+                    i--;
+                }
             }
 
             return centroids;

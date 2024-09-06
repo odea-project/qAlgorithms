@@ -358,6 +358,9 @@ implemented at one point and then removed is given below. Tests can be
 used both for corrective action and to assess bin quality, since a correction
 is not always possible. Every bin which shows positive for these could
 not be improved through the described process.
+As of now, the found peaks do not stem from any bins that did not trigger 
+any test during binning. The additional criteria are not considered to
+carry any degree of certainty for that reason.
 
 ### Two or more centroids of the same scan
 This test is necessary because the peakfinder cannot utilise more than one 

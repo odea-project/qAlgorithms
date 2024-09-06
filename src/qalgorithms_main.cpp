@@ -36,7 +36,7 @@ namespace q
     void printPeaklist(std::vector<std::vector<q::DataType::Peak>> peaktable,
                        std::filesystem::path pathOutput, std::string filename,
                        std::vector<Algorithms::qBinning::EIC> originalBins,
-                       bool verbose, bool silent, bool prebinning, bool skipError)
+                       bool verbose, bool silent, bool prebinning, bool skipError) // @todo mz range, rt range
     {
         if (verbose)
         {
@@ -641,6 +641,16 @@ int main(int argc, char *argv[])
                 std::cerr << "Error: the centroid error must be greater than 0.";
                 exit(1);
             }
+            if (modifiedPPM > 1000000)
+            {
+                std::cerr << "Error: the centroid error is set to 100% or greater (\"" << argv[i] << "\").";
+                exit(1);
+            }
+            if (std::isnan(modifiedPPM))
+            {
+                std::cerr << "Error: the centroid error must be a number, but was set to NaN.";
+                exit(1);
+            }
 
             q::MeasurementData::ppm_for_precentroided_data = modifiedPPM;
         }
@@ -803,9 +813,10 @@ int main(int argc, char *argv[])
             filename = pathSource.stem().string();
             q::Algorithms::qPeaks qpeaks;              // create qPeaks object
             q::MeasurementData::TensorData tensorData; // create tensorData object
+            std::vector<unsigned int> addEmptyScans;   // make sure the retention time interpolation does not add unexpected points to bins
             // @todo add check if set polarity is correct
             std::vector<std::vector<q::DataType::Peak>> centroids =
-                tensorData.findCentroids_MZML(qpeaks, data, true, polarity, 10); // read mzML file and find centroids via qPeaks
+                tensorData.findCentroids_MZML(qpeaks, data, addEmptyScans, true, polarity, 10); // read mzML file and find centroids via qPeaks
             if (centroids.size() < 5)
             {
 
@@ -837,7 +848,7 @@ int main(int argc, char *argv[])
                 }
             }
 
-            q::Algorithms::qBinning::CentroidedData binThis = qpeaks.passToBinning(centroids);
+            q::Algorithms::qBinning::CentroidedData binThis = qpeaks.passToBinning(centroids, addEmptyScans);
 
             if (printSubProfile)
             {
@@ -883,6 +894,7 @@ int main(int argc, char *argv[])
             // every subvector of peaks corresponds to the bin ID
             auto peaks = tensorData.findPeaks_QBIN(qpeaks, binnedData);
             // make sure that every peak contains only one mass trace
+            assert(peaks.size() == binnedData.size());
             size_t peaksWithMassGaps = 0;
             size_t testsPassedTotal = 0;
             size_t testsPassedPeak = 0;
@@ -907,6 +919,7 @@ int main(int argc, char *argv[])
                     }
 
                     auto massesBin = binnedData[i].mz;
+                    // auto rtsBin = binnedData[i].rententionTimes;
                     auto scansBin = binnedData[i].scanNumbers;
                     int lowestScan = scansBin[0];
                     for (size_t j = 0; j < peaks[i].size(); j++)
@@ -915,13 +928,24 @@ int main(int argc, char *argv[])
                         // to each side and all intermediate values interpolated.
                         // To find the real regression borders, this has to be accounted for.
                         // regressionIdx = 2 => first point in bin is start of regression
-                        assert((peaks[i][j].idxPeakEnd - peaks[i][j].idxPeakStart) < (scansBin.front() - scansBin.back() + 5));
+                        // assert((peaks[i][j].idxPeakEnd - peaks[i][j].idxPeakStart) < (scansBin.back() - scansBin.front() + 5));
+                        // std::cout << peaks[i][j].mz << ", " << massesBin[0] << " | " << peaks[i][j].retentionTime << ", "
+                        //           << binnedData[i].rententionTimes[massesBin.size() / 2] << "\n";
+                        if ((peaks[i][j].idxPeakEnd) > (scansBin.back() - scansBin.front() + 5))
+                        {
+                            // std::cout << "\n " << peaks[i][j].idxPeakStart << ", " << peaks[i][j].idxPeakEnd << ", "
+                            //           << scansBin.front() << " | " << lowestScan << ", " << scansBin.back()
+                            //           << ", " << peaks[i][j].areaUncertainty << "\n";
+                            exit(1);
+                        }
+
                         bool startSearch = true;
                         size_t tmpEndVal = 0;
-                        std::cout << "\n " << peaks[i][j].idxPeakStart << ", " << peaks[i][j].idxPeakEnd << "\n";
+                        int tmpLeftLim = peaks[i][j].idxPeakStart;
+
                         for (size_t a = 0; a < scansBin.size(); a++)
                         {
-                            std::cout << scansBin[a] << ", ";
+                            // std::cout << scansBin[a] << ", ";
                             size_t regressionIdx = scansBin[a] - lowestScan + 2;
                             if (startSearch && (regressionIdx >= peaks[i][j].idxPeakStart))
                             {
@@ -937,13 +961,30 @@ int main(int argc, char *argv[])
                                 }
                             }
                         }
+                        assert(!startSearch);
                         if (tmpEndVal == 0)
                         {
                             tmpEndVal = scansBin.size() - 1;
                         }
-                        std::cout << "\n " << peaks[i][j].idxPeakStart << ", " << peaks[i][j].idxPeakEnd << ", "
-                                  << tmpEndVal << ", " << scansBin.size() << "\n";
-                        std::cout.flush();
+                        // std::cout << "\n " << peaks[i][j].idxPeakStart << ", " << peaks[i][j].idxPeakEnd << ", "
+                        //           << tmpEndVal << ", " << scansBin.size() << "\n";
+                        // std::cout.flush();
+                        if (tmpEndVal < peaks[i][j].idxPeakStart)
+                        {
+                            // for (auto a : rtsBin)
+                            // {
+                            //     std::cout << a << ", ";
+                            // }
+                            // std::cout << "\n\n " << tmpLeftLim << ", " << peaks[i][j].idxPeakEnd << ", "
+                            //           << peaks[i][j].idxPeakStart << ", " << tmpEndVal << ", " << scansBin.front()
+                            //           << ", " << scansBin.back() << ", " << peaks[i][j].dqsPeak << ", " << peaks[i][j].height
+                            //           << ", " << binnedData[i].ints_area[127] << "\n";
+                            // exit(1);
+                            peaks[i][j].dqsPeak = -1;
+                            peaks[i][j].idxPeakStart = 0;
+                            tmpEndVal = scansBin.size() - 1;
+                        }
+
                         peaks[i][j].idxPeakEnd = tmpEndVal;
                         assert(tmpEndVal > peaks[i][j].idxPeakStart);
                         assert(tmpEndVal < scansBin.size());
@@ -973,6 +1014,7 @@ int main(int argc, char *argv[])
                     }
                 }
             }
+            std::cout << testsPassedTotal << ", " << testsPassedPeak << ", " << testFailedPeak << "\n";
 
             if (verboseProgress)
             {
@@ -1030,7 +1072,7 @@ int main(int argc, char *argv[])
             logWriter << filename << ", " << centroids.size() << ", " << binThis.lengthAllPoints << ", "
                       << meanDQSC / binThis.lengthAllPoints << ", " << dudBins << ", " << onlyone << ", "
                       << overfullBins << ", " << meanDQSB << ", " << peakCount << ", " << peaksWithMassGaps
-                      << ", " << meanDQSF << testFailedPeak << ", " << testsPassedPeak << ", " << testsPassedTotal << "\n";
+                      << ", " << meanDQSF << /*testFailedPeak << ", " << testsPassedPeak << ", " << testsPassedTotal <<*/ "\n";
             logWriter.close();
 
             if (printPeaks)
