@@ -14,8 +14,6 @@
 #include <string>
 #include <sstream>   // write peaks to file
 #include <algorithm> // remove duplicates from task list
-#include <map>       // remove duplicates from task list
-#include <ranges>    // comparison of char arrays during duplicate filtering
 
 namespace q
 {
@@ -749,7 +747,7 @@ int main(int argc, char *argv[])
     std::fstream logWriter;
     logWriter.open(pathLogging, std::ios::out);
     logWriter << "filename, numSpectra, numCentroids, meanDQSC, numBins_empty, numBins_one,"
-                 " numBins_more, meanDQSB, numFeatures, badFeatures, meanDQSF\n"; // , testFailedPeak, testPassedPeak, testPassedTotal
+                 " numBins_more, meanDQSB, numFeatures, badFeatures, impossibleRegs, meanDQSF\n"; // , testFailedPeak, testPassedPeak, testPassedTotal
     logWriter.close();
 
 #pragma region file processing
@@ -794,6 +792,7 @@ int main(int argc, char *argv[])
             std::cerr << "Error: the file is defective.\n";
             if (skipError)
             {
+                ++counter;
                 continue;
             }
             else
@@ -804,7 +803,7 @@ int main(int argc, char *argv[])
 
         if (!silent)
         {
-            std::cout << " file ok\n\n";
+            std::cout << " file ok\n";
         }
         // update filename to name without duplicates @todo find better solution / should this happen?
 
@@ -900,6 +899,7 @@ int main(int argc, char *argv[])
             size_t testsPassedPeak = 0;
             size_t testFailedPeak = 0;
             double meanDQSF = 0;
+            int impossibleRegression = 0;
             for (size_t i = 0; i < peaks.size(); i++)
             {
                 if (!bool(binnedData[i].errorcode))
@@ -980,19 +980,25 @@ int main(int argc, char *argv[])
                             //           << ", " << scansBin.back() << ", " << peaks[i][j].dqsPeak << ", " << peaks[i][j].height
                             //           << ", " << binnedData[i].ints_area[127] << "\n";
                             // exit(1);
+                            ++impossibleRegression;
                             peaks[i][j].dqsPeak = -10;
                             peaks[i][j].idxPeakStart = 0;
                             tmpEndVal = scansBin.size() - 1;
+                            continue;
                         }
 
                         peaks[i][j].idxPeakEnd = tmpEndVal;
                         assert(tmpEndVal > peaks[i][j].idxPeakStart);
                         assert(tmpEndVal < scansBin.size());
-                        // if (i == 2400)
-                        // {
-                        //     std::cout << "\n " << peaks[i][j].idxPeakStart << ", " << peaks[i][j].idxPeakEnd << ", "
-                        //               << scansBin.size() << "\n";
-                        // }
+
+                        if ((tmpEndVal - peaks[i][j].idxPeakStart + 1) < 5)
+                        {
+                            ++impossibleRegression;
+                            peaks[i][j].dqsPeak = -10;
+                            peaks[i][j].idxPeakStart = 0;
+                            tmpEndVal = scansBin.size() - 1;
+                            continue;
+                        }
 
                         // idxPeakStart/End are the index referring to the bin in which a peak was found
                         if (!q::massTraceStable(massesBin, peaks[i][j].idxPeakStart, peaks[i][j].idxPeakEnd))
@@ -1055,9 +1061,13 @@ int main(int argc, char *argv[])
                     // std::cout << binMeanMZ / binsize << ", " << binMeanRT / binsize << "\n";
                 }
             }
-            meanDQSF /= peakCount - peaksWithMassGaps;
+            meanDQSF /= peakCount - peaksWithMassGaps - impossibleRegression;
             if (!silent)
             {
+                if (impossibleRegression != 0)
+                {
+                    std::cerr << impossibleRegression << " bad regressions\n";
+                }
 
                 std::cout << "    found " << peakCount << " peaks in " << (timeEnd - timeStart).count() << " ns\n";
             }
@@ -1071,7 +1081,7 @@ int main(int argc, char *argv[])
             logWriter.open(pathLogging, std::ios::app);
             logWriter << filename << ", " << centroids.size() << ", " << binThis.lengthAllPoints << ", "
                       << meanDQSC / binThis.lengthAllPoints << ", " << dudBins << ", " << onlyone << ", "
-                      << overfullBins << ", " << meanDQSB << ", " << peakCount << ", " << peaksWithMassGaps
+                      << overfullBins << ", " << meanDQSB << ", " << peakCount << ", " << peaksWithMassGaps << ", " << impossibleRegression
                       << ", " << meanDQSF << /*testFailedPeak << ", " << testsPassedPeak << ", " << testsPassedTotal <<*/ "\n";
             logWriter.close();
 

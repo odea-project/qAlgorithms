@@ -788,6 +788,11 @@ decision to include templates for common applications, such as monitoring
 the stability of a system over time. This would ideally include a way to check 
 the general system stability without re-processing potentially thousands of files again.
 
+During development of this tool, some regressions covered less than five
+real datapoints. While it is unknown what causes this issue at the moment,
+it must be adressed. The root cause is possibly another inherent property
+of the peak which could in turn be used to describe the overall data quality.
+
 # performed modifications to qAlgorithms 
 ## modified centroiding
 An advantage of the qCentroids approach [@todo] is that peaks can also

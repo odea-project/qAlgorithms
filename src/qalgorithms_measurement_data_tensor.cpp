@@ -217,7 +217,7 @@ namespace q
             // the qCentroids object at the given position.
             addEmpty.resize(indices.size());
             std::fill(addEmpty.begin(), addEmpty.end(), 0);
-            for (size_t i = 1; i < indices.size() + 1; i++)
+            for (int i = 0; i < int(indices.size()) - 1; i++) // i can be -1 briefly if there is a scan missing between 1. and 2. element
             {
                 if (retention_times[i + 1] - retention_times[i] > rt_diff * 1.75)
                 {
@@ -238,8 +238,8 @@ namespace q
             std::vector<q::Algorithms::qBinning::EIC> &data)
         {
             std::vector<std::vector<DataType::Peak>> peaks(data.size()); // create vector of unique pointers to peaks
-                                                                         // #pragma omp parallel for
-            for (size_t i = 0; i < data.size(); ++i)                     // loop over all data
+#pragma omp parallel for
+            for (size_t i = 0; i < data.size(); ++i) // loop over all data
             {
                 const int num_data_points = data[i].scanNumbers.size(); // number of data points
                 if (num_data_points < 5)
