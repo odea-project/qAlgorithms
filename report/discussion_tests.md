@@ -792,6 +792,9 @@ During development of this tool, some regressions covered less than five
 real datapoints. While it is unknown what causes this issue at the moment,
 it must be adressed. The root cause is possibly another inherent property
 of the peak which could in turn be used to describe the overall data quality.
+The detectable errors (as percentage of affected features) show no clear pattern
+and deviate roughly as much within a measurement series as between series.
+As such, they were not included as process parameters.
 
 # performed modifications to qAlgorithms 
 ## modified centroiding
