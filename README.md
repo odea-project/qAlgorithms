@@ -16,14 +16,14 @@ Please note that qAlgorithms is still in active development and result accuracy
 cannot be guaranteed at this stage. 
 
 ## Windows
-The entire qAlgorithms workflow is provided as an executable under "Releases" on
+The entire qAlgorithms workflow is provided as an executable under ["Releases"](https://github.com/odea-project/qAlgorithms/releases) on
 our github repository.
-Note that qAlgorithms requires the libraries `libgcc_s_seh-1.dll`, `libgomp-1.dll` 
-and `libwinpthread-1.dll`. If they are not present on your system already, you
-can also download them under "Releases".
+Note that qAlgorithms requires the libraries [`libgcc_s_seh-1.dll`](https://github.com/odea-project/qAlgorithms/releases/download/v0.1.1.beta/libgcc_s_seh-1.dll), [`libgomp-1.dll`](https://github.com/odea-project/qAlgorithms/releases/download/v0.1.1.beta/libgomp-1.dll) 
+and [`libwinpthread-1.dll`](https://github.com/odea-project/qAlgorithms/releases/download/v0.1.1.beta/libwinpthread-1.dll). If they are not present on your system already, you can also download them under "Releases" 
+or by clicking on the filenames above. There is no need to download the source code.
 
 ## Linux
-Currently, no Linux releases are proveided. We recommend you to clone the repository
+Currently, no Linux releases are provided. We recommend you to clone the repository
 and compile from source using cmake and GCC.
 
 ## Usage
@@ -64,9 +64,11 @@ Some things to keep in mind:
   All peaks which are provided in the peak table are statistically significant.
   The best current usage for quality scores is priorisation of peaks 
   during further analysis.
+* A negative DQSpeak means that the regression is more uncertain than the DQSpeak implies.
+* A DQSpeak of -10 means that the peak is (probably) incorrect. This is a temporary solution.
 
 ## Documentation
-Full documentation can be found [here](https://odea-project.github.io/qAlgorithms/html/)
+Full documentation can be found [here](https://odea-project.github.io/qAlgorithms/html/).
 
 # Philosophy
 Unlike many traditional data processing tools, our algorithms do not rely on manual user input 

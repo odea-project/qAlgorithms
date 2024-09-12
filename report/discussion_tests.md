@@ -8,7 +8,6 @@ Report concluding the research practical by Daniel Höhn, supervised by Felix Dr
 - [Notes on the design of visual process quality estimators](#notes-on-the-design-of-visual-process-quality-estimators)
   - [Differentiating process quality from result quality](#differentiating-process-quality-from-result-quality)
   - [Measuring process quality](#measuring-process-quality)
-    - [Current means of stability / quality monitoring](#current-means-of-stability--quality-monitoring)
     - [Validation criteria](#validation-criteria)
 - [Preformance criteria - Fourier Transform:](#preformance-criteria---fourier-transform)
 - [Performance criteria - File Conversion](#performance-criteria---file-conversion)
@@ -79,7 +78,6 @@ requiring no user input during data processing.
 * GC - Gas Chromatography
 * (HP)LC - (High Performance) Liquid Chromatography
 * EIC - Extracted Ion Chromatogram
-* OS - Order Space
 * DQS(B/C/F) - Data Quality Score (of a Bin/Centroid/Feature)
 * ppm - Parts Per Million (10e-6)
 [@todo] move all definitions for within the workflow here
@@ -91,11 +89,21 @@ measurement quality through an operator. Especially for routine
 measurements, replicates and other series of very similar samples
 this involves comparing the different steps of a series with 
 each other, ideally over a large amount of samples at once.
+The higher the amount of routine meansurements per sampling
+interval, the higher the time needed for evaluation. This limits
+the granularity of data and potentially restricts the analysis 
+throughput to a number of measurements below the upper maximum
+dictated through the instrumentation and selected chromatographic
+method. Even if existing procedures need to be kept in place due
+to contractual obligations, automated classification could select
+the most relevant measurement from a series of technical replicates
 
 Another point of application is the stability of a pooled sample
 over the course of very long measurement series. Here, an easy way
-of assessing the total stability over the entire dataset reduces
-the workload of an instument operator.
+of assessing the total stability while the instrument is still in 
+operation allows the operator to react quickly to urgent problems
+and gives limited insight into regions of the dataset not covered
+by the detailed stablility assessment.
 
 These requirements place significant restrictions on the possible
 ways to communicate the deluge of data that comes with (possibly)
@@ -105,7 +113,8 @@ years of measurements. Here, two types of approaches can be viable:
 
 While these options are not exclusive, the final step of any
 automated evaluation still needs to be that of communicating relevant
-results to the instrument operator. Such communication is especially
+results to the instrument operator, ideally filtering out all irrelevant
+information in the process. Such communication is especially
 relevant to the qAlgorithms project, since the quality parameters supplied
 can cause confusion with users.
 For example, one user of the project asked which threshold to set
@@ -118,18 +127,21 @@ ist compatible with spreadsheet software like Microsoft Excel, or,
 for more complex data, some relevant subset which is human-readable. 
 
 ## Differentiating process quality from result quality
-Previous work by https://doi.org/10.1016/j.trac.2020.116063 highlighted
+Previous work by Schulze et. al. (https://doi.org/10.1016/j.trac.2020.116063) highlighted
 quality assurance as a core issue for nontargeted mass spectrometry and
-presented different dimensions for quality during an analysis.
+discussed different dimensions for quality during an analysis.
 Expanding on the step of "result reporting", a distinction should be
 made between reporting the entire measurement for purposes of replication
 and controlling through peer review and the reporting of just the 
-measurement results. @todo et. al. only consider reporting of the
-results after interpretation, with raw data and the processing
-steps being provided in addition. Besides being impractical to replicate
-and thus very unlikely for this vital control to take place during peer 
+measurement results. Schulze et. al. only consider reporting of the
+results after interpretation, with the processing parameters and (unspecified)
+statistical parameters being provided in addition. 
+Confidence is also understood as the confidence of a correct identification,
+not confidence in the peak being distinct from noise.
+Besides it being impractical to replicate
+without all raw data being provided and thus very unlikely for this vital control to take place during peer 
 review, it is not possible to estimate the algorithmic performance 
-relating to result quality from just the algorithm on a per-sample 
+relating to result quality from just the algorithm settings on a per-sample 
 basis accurately during NTA.
 
 Result quality, as understood here, is the reliability and completeness
@@ -139,22 +151,24 @@ that can be found within the sample in terms of mass and behaviour
 in the chromatographic dimension or other dimensions of separation.
 Furtermore, a reliable feature must conform to the MS2 spectrum,
 if such a spectrum was produced by the instrument. After componentisation,
-the source feature [@todo better name] should include only features
+every component should include only features
 which have a high degree of certainty. The highest reliability in
 a dataset is achieved if no false positives or negatives exist,
 meaning the final results are a complete description of the sample contents.
 
 Completeness is the degree to which all molecules in the sample that arrived at
 the mass detector could be reconstructed from the final list of components.
+[@todo] very similar measures, change
 
-Since both measures depend on ground truth, it is not always sensible [@todo] very similar measures, change
+Since both measures depend on ground truth, it is not always sensible 
 to provide an estimator for result quality. The central difference 
 between results and process as proposed here is that results serve
 as the basis for some decision, be it through a researcher deciding
 on the next experiment, a water treatment plant worker taking preventative
-measures against a detected contaminant or a sampling system repeating
-an operation. In all such cases, the process does not factor into
+measures against a detected contaminant. In all such cases, the process does not factor into
 the final decision, unless it is as an abstract measure of confidence.
+The only decision based on a process parameter would be whether to
+repeat a measurement de to a suspected error during sampling or analysis.
 
 Process quality consists of the data processing workflow and the
 (inferred) quality of the different steps from sampling to
@@ -199,9 +213,11 @@ Performance criteria must be robust, especially if further processing
 actions are taken based on them. As such, established tests must
 be validated using a representative sample of errors in the analysis
 process.
-
-### Current means of stability / quality monitoring
--consistency in mass accuracy of some internal standards
+Current techniques to this end rely on a large amount and variety
+of standard substances, which can then be described in terms
+of recovery and mass accuracy. Internal standards always come with
+the problem of only covering a limited region of the dataset and 
+potentially masking similar compounds at low intensities.
 [https://www.sciencedirect.com/science/article/pii/S0165993621000236]
 Caballero-Casero et Al. proposed guidelines on analytical
 performance reporting in the context of human metabolomics.
@@ -335,7 +351,7 @@ points not in the bin. To achieve greater locality of the score, the program
 was modified such that only points within the maximal gap distance are used
 to calculate the mean in-group differences in mz. This change led to, on
 average, slightly lower scores. Furthermore, scaling was introduced for 
-the outer distance. (see [section])
+the outer distance. (see [here](#dqsb-calculation))
 
 ## Bin property tests:
 In addition to the quality score, multiple property tests are performed on 
@@ -588,6 +604,11 @@ This is within the floating point error, and both results can be
 considered identical. The most visible difference to the DQSC variation
 is that here, blanks do appear as a visible decrease.
 
+The solution chosen for confidence limits uses a separately recorded
+series of ten technical replicates. Their similarity is confirmed via
+PCA before asserting them as the best-case scenario for a given set
+of instrument conditions. 
+
 The combined view shows a change in both parameters if the series changes,
 both being largely constant within the group of known good measurements.
 An increase in DQSC does not necessarily coincide with an increase in 
@@ -711,6 +732,12 @@ tested. This could be explained by noise making up the absolute majority
 of signals, which implies these citeria only respond to irregularities
 during chromatography.
 
+When using the different quality scores for general assessments of data
+quality over a dataset, for example choosing instrument settings on basis
+of a design of experiment, it should be controlled that the differences
+which form the basis for a decision are greater than the random deviation
+which is present in a series of technical replicates.
+
 # Further research
 While the criteria found through exploratory data analysis are seemingly able
 to make broad statements about process quality, they need to be related to
@@ -795,6 +822,9 @@ of the peak which could in turn be used to describe the overall data quality.
 The detectable errors (as percentage of affected features) show no clear pattern
 and deviate roughly as much within a measurement series as between series.
 As such, they were not included as process parameters.
+They seem to affect bins which contain multiple mass traces disproportionally
+often when compared to other regressions. The effect is likely not bin-specific, since
+good regressions also exist within the affected large bins.
 
 # performed modifications to qAlgorithms 
 ## modified centroiding

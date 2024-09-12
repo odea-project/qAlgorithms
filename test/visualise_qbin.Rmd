@@ -144,6 +144,9 @@ ggplotly(fullPCA)
 # mark breaks between series in graphs
 relativeSD = sd(allProcessed$numCentroids[120:129]) / mean(allProcessed$numCentroids[120:129])
 DQSC_SD = sd(allProcessed$meanDQSC[120:129])
+sd_bin1 = sd(allProcessed$numBins_one[120:129])
+sd_bin0 = sd(allProcessed$numBins_empty[120:129])
+sd_bin2 = sd(allProcessed$numBins_more[120:129])
 selectedProcess = allProcessed[c(1:44, 120:129), ]
 seriesBreaks = (selectedProcess$series[-1] != selectedProcess$series[-length(selectedProcess$series)])
 seriesBreaks = which(seriesBreaks) + 0.5
@@ -172,10 +175,44 @@ ggplot(selectedProcess)+
   geom_point(aes(row.names(selectedProcess), numBins_more, colour = series, shape = "more"))+
   scale_x_discrete(guide = guide_axis(angle = 60))
 
+ggplot(selectedProcess)+
+  geom_point(aes(row.names(selectedProcess), numBins_empty * numBins_more, colour = series))+
+  scale_x_discrete(guide = guide_axis(angle = 60))
+
 # absolute deviation from mean / sd of control?
+deviations = selectedProcess %>% group_by(series) %>% summarise(b1 = mean(numBins_one), b0 = mean(numBins_empty), b2 = mean(numBins_more))
+display_b1 = 0
+display_b0 = 0
+display_b2 = 0
+for (i in 1:length(selectedProcess$numSpectra)) {
+  display_b1[i] = (selectedProcess$numBins_one[i] - deviations$b1[
+    which(deviations$series == selectedProcess$series[i])])
+  display_b0[i] = (selectedProcess$numBins_empty[i] - deviations$b0[
+    which(deviations$series == selectedProcess$series[i])])
+  display_b2[i] = (selectedProcess$numBins_more[i] - deviations$b2[
+    which(deviations$series == selectedProcess$series[i])])
+}
+display_devs = data.frame(min = 1:length(display_b0), max = 1:length(display_b0), mean = 1:length(display_b0))
+for (i in 1:length(display_b0)) {
+  display_devs$min[i] = min(display_b1[i], display_b0[i], display_b2[i])
+  display_devs$max[i] = max(display_b1[i], display_b0[i], display_b2[i])
+  display_devs$mean[i] = mean(display_b1[i], display_b0[i], display_b2[i])
+}
+
 
 ggplot(selectedProcess)+
-  geom_point(aes(row.names(selectedProcess), numFeatures/(numBins_one), colour = series))+
+  geom_point(aes(row.names(selectedProcess), display_b1 / sd_bin1, colour = series, shape = "One"))+
+  geom_point(aes(row.names(selectedProcess), display_b2 / sd_bin2, colour = series, shape = "Multiple"))+
+  geom_point(aes(row.names(selectedProcess), display_b1 / sd_bin1, colour = series, shape = "None"))
+
+# Observation: the three points are very similar for the triplicate blank
+ggplot(selectedProcess)+
+  geom_linerange(aes(row.names(selectedProcess), 
+                     ymin = display_devs$min, ymax = display_devs$max, colour = series),
+                 linewidth = 1.4)
+
+ggplot(selectedProcess)+
+  geom_point(aes(row.names(selectedProcess), numFeatures/(numBins_one + numBins_more), colour = series))+
   scale_x_discrete(guide = guide_axis(angle = 60))
 
 ggplot(selectedProcess)+
@@ -194,9 +231,9 @@ ggplot(selectedProcess)+
   geom_point(aes(row.names(selectedProcess), (numBins_more + numBins_one)/numFeatures, colour = series))+
   scale_x_discrete(guide = guide_axis(angle = 60))
 
-ggplot(selectedProcess)+
-  geom_point(aes(row.names(selectedProcess), (numBins_empty)/numFeatures, colour = series))+
-  scale_x_discrete(guide = guide_axis(angle = 60))
+# ggplot(selectedProcess)+ # removed - no useful information and not a sensible relation
+#   geom_point(aes(row.names(selectedProcess), (numBins_empty)/numFeatures, colour = series))+
+#   scale_x_discrete(guide = guide_axis(angle = 60))
 
 # ggplot(selectedProcess)+
 #   geom_point(aes(x = 1:91, y = diff(numCentroids/(numBins_empty + numBins_one + numBins_more)), colour = series))+

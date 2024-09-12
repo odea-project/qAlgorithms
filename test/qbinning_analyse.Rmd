@@ -134,7 +134,7 @@ binSelectionViewer = function(summary, fullbins, IDvector){
     stdev = summary$stdev_mz[which(summary$ID == binID)]
     
     print(ggplot(fullbins[which(fullbins$ID == binID),])+
-      geom_point(aes(mz, scan, color = intensity))+ 
+      geom_point(aes(mz, scan, color = int_area))+ 
       geom_vline(xintercept = meanMZ - ppm2.5, linewidth = 0.2, linetype = "dashed")+
       geom_vline(xintercept = meanMZ + ppm2.5, linewidth = 0.2, linetype = "dashed")+
       geom_vline(xintercept = meanMZ - stdev, linewidth = 0.2, linetype = "dashed", color = "red")+
@@ -162,7 +162,7 @@ binSelectionViewer = function(summary, fullbins, IDvector){
         binID = IDvector[IDpos]
       } else {
         print(ggplot(fullbins[which(fullbins$ID == binID),])+
-          geom_col(aes(scan, intensity, fill = DQSC), colour = NA, width = 0.3)+
+          geom_col(aes(scan, int_area, fill = DQSC), colour = NA, width = 0.3)+
           scale_fill_continuous()+
           theme_bw()+
           labs(caption = sprintf("BinID: %d | Errorcode: %d", binID, summary$errorcode[binID])))
@@ -171,9 +171,27 @@ binSelectionViewer = function(summary, fullbins, IDvector){
         binID = IDvector[IDpos]
       }
     }
+    if (IDpos > length(IDvector)){
+      return()
+    }
   }
 }
 ```
+
+```{r}
+peaks = read.csv("C:/Users/unisys/Documents/Studium/Messdaten/22090902_Kali_Pu_Penc_2.9HCO3_0_pos_positive_ex_peaks.csv")
+summary = read.csv("C:/Users/unisys/Documents/Studium/Messdaten/22090902_Kali_Pu_Penc_2.9HCO3_0_pos_positive_summary.csv")
+bins = read.csv("C:/Users/unisys/Documents/Studium/Messdaten/22090902_Kali_Pu_Penc_2.9HCO3_0_pos_positive_bins.csv")
+
+peaks = read.csv("C:/Users/unisys/Documents/Studium/Messdaten/SP_DDA_P1_positive_ex_peaks.csv")
+summary = read.csv("C:/Users/unisys/Documents/Studium/Messdaten/SP_DDA_P1_positive_summary.csv")
+bins = read.csv("C:/Users/unisys/Documents/Studium/Messdaten/SP_DDA_P1_positive_bins.csv")
+  
+IDs = unique(peaks$binID[which(peaks$dqsPeak == -10)])
+
+binSelectionViewer(summary, bins, IDs)
+```
+
 
 ```{r plotting}
 targetBin = bins[which(bins$ID == 730),]
