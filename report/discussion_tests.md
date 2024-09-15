@@ -46,7 +46,11 @@ Report concluding the research practical by Daniel Höhn, supervised by Felix Dr
   - [DQSB calculation](#dqsb-calculation)
 - [Conclusion](#conclusion)
 - [Software and Data](#software-and-data)
-
+# Change structure to:
+- problem
+- selected process parameters
+- suggested stability tests
+- test validaton with different data
 
 # Abstract
 One important property of nontarget measurements is the comparability of different
@@ -82,7 +86,7 @@ requiring no user input during data processing.
 * ppm - Parts Per Million (10e-6)
 [@todo] move all definitions for within the workflow here
 
-# Notes on the design of visual process quality estimators
+# Process quality estimators
 An emerging and highly relevant problem in the field of NTS is
 the fast and accurate estimation of total data quality or total
 measurement quality through an operator. Especially for routine 
@@ -96,14 +100,16 @@ throughput to a number of measurements below the upper maximum
 dictated through the instrumentation and selected chromatographic
 method. Even if existing procedures need to be kept in place due
 to contractual obligations, automated classification could select
-the most relevant measurement from a series of technical replicates
+the most relevant measurement from a series of technical replicates.
 
 Another point of application is the stability of a pooled sample
 over the course of very long measurement series. Here, an easy way
 of assessing the total stability while the instrument is still in 
 operation allows the operator to react quickly to urgent problems
 and gives limited insight into regions of the dataset not covered
-by the detailed stablility assessment.
+by the detailed stablility assessment. Similar problems arise when
+modifying the instrumentation while still requiring comparability
+with the previous series.
 
 These requirements place significant restrictions on the possible
 ways to communicate the deluge of data that comes with (possibly)
@@ -151,16 +157,12 @@ that can be found within the sample in terms of mass and behaviour
 in the chromatographic dimension or other dimensions of separation.
 Furtermore, a reliable feature must conform to the MS2 spectrum,
 if such a spectrum was produced by the instrument. After componentisation,
-every component should include only features
-which have a high degree of certainty. The highest reliability in
+every component should include only features which have a high degree of 
+certainty. The highest reliability in
 a dataset is achieved if no false positives or negatives exist,
 meaning the final results are a complete description of the sample contents.
 
-Completeness is the degree to which all molecules in the sample that arrived at
-the mass detector could be reconstructed from the final list of components.
-[@todo] very similar measures, change
-
-Since both measures depend on ground truth, it is not always sensible 
+Since this measure depends on ground truth, it is not always sensible 
 to provide an estimator for result quality. The central difference 
 between results and process as proposed here is that results serve
 as the basis for some decision, be it through a researcher deciding
@@ -177,7 +179,8 @@ into the two general steps of data acquisition and data processing.
 The former presents a complex system that is impossible to perfectly
 reproduce and very difficult to monitor in a quantitative manner.
 While practices can be standardised, identification of errors 
-with robust statistical methods is not easily realised. [@todo]
+with robust statistical methods is not easily realised once
+sample processing has been performed, especially after prolonged periods of time. 
 On the other hand, data processing must be deterministic
 and fully quantifiable in order to enable automation. As such,
 it is a viable point for introducing measures of process quality
@@ -207,6 +210,9 @@ is not possible. Instead, process quality can either serve
 as a trigger for computation intensive corrections while
 processing is active or as a way to provide non-quantitative
 insight into the programs doing the processing to the operator.
+Such insights are not limited to result certainty estimators,
+but can give concrete feedback regarding the effectiveness
+of a change in the process or the impact of a known disruption.
 
 ## Measuring process quality
 Performance criteria must be robust, especially if further processing
@@ -880,6 +886,13 @@ It could be shown that, using exclusively very broad statistics generated
 as part of the qAlgorithms pipeline, some statements about sample similarity
 are possible. This could be applied to monitor system stability, and 
 methods for effectively visualising such changes were developed.
+Nontheless, siginficantly more measurements using different instrumentation
+is necessary to confirm the universal applicability of such measures. Additionally,
+the presented hypothesies should be tested using directed measurements.
+
+The next step of this project is establishing boundary conditions on basis of
+a model or robust heuristic. This should be established for all control charts
+and validated using different datasets.
 
 
 # Software and Data
