@@ -84,6 +84,7 @@ requiring no user input during data processing.
 * EIC - Extracted Ion Chromatogram
 * DQS(B/C/F) - Data Quality Score (of a Bin/Centroid/Feature)
 * ppm - Parts Per Million (10e-6)
+* PCA - Principal Component Analysis
 [@todo] move all definitions for within the workflow here
 
 # Process quality estimators
@@ -238,11 +239,93 @@ of a given chemical space in terms of retention time, mass
 or ionisation behaviour. This limits the general applicability
 of quality control by means of (exclusively) internal standards.
 
-### Validation criteria
-For the purposes of this evaluation, measurements withing a
-series are ranked based on their median DQSF. A characteristic
-found to correlate with the median DQSF is considered to be an
-indicator for that process to have performed well. [rework]
+# Selected Process Statistics
+For the purposes of this analysis, characterisitic properties of
+the qAlgorithms process were selected. These parameters are supposed
+to cover the entire runtime of the algorithm and be significantly
+different between different datasets.
+
+When assessing the entire process from profile-mode spectra to 
+the final feature list, it is important to find parameters that 
+are responsive to a broad number of deviations within the system,
+while still being specific enough so that no change prevents another
+from being percieved.
+
+Tested parameters:
+* mean DQSC
+* mean DQSB
+* mean DQSF
+* Number of centroids
+* Number of bins
+  * Bins with no features
+  * Bins with one feature
+  * Bins with more than one features
+* Number of Features
+  * Normal Features
+  * Features with highly divergent mass trace
+  * Features with too few member centroids
+
+The three quality parameters (DQSC, DQSB, DQSF) calculated during the
+different steps of qAlgorithms describe the model consistency of that
+step to a limited degree. When taking their mean value at the end of their
+respective step, they can indicate large differences between datasets
+and make a statement about when during processing such a shift took place.
+Here, an increase or decrease in quality is not necessarily related to an
+actual increase in process quality for DQSC and DQSB. With the current
+peak model, some noise tends to result in very low-intensity centroids 
+with a very high score. Real signals have generally lower scores.
+Similarly, bins with a real peak tend to have worse scores than very
+small bins of data which does not contain a peak.
+
+The different counts were selected due to them not being calculation
+intensive or dependent on mathematical transformations. The latter
+was avoided due to the possibility of introducing additional uncertainty
+or some unknown bias into the parameters.
+
+The centroid count is taken for all centroids with at least five profile
+points. Depending on further additions to qAlgorithms, the count of 
+centroids which do not fulfill this criteria in isolation could also be
+considered.
+
+The three different bin counts were selected with the reasoning that 
+many bins with no features are indicative of a noisy dataset and having
+multiple peaks in the same bin implies poor chromatographic performance.
+One bin containing one peak is the desired outcome.
+
+For features, only those which do not fulfill one of the two error conditions
+were used. This is because evidently wrong results will be corrected
+in future versions of qAlgorithms, possibly by ovehauling the process behind
+feature construction. 
+
+All three count statistics were normalised to the number of scans within a 
+measurement to remain comparable between different measurement series.
+This number changes within the individual series, but only by small amounts.
+
+## Test Dataset
+
+The test dataset consists of eleven different groups from seven different
+measurement series, all recorded using an orbitrap mass spectrometer and
+electrospray ionisation, but differing chromatography. For further details,
+see [Software and Data](#software-and-data). Positive and negative mode 
+measurements of the same sample are considered two groups.
+
+The process statistics were controlled for normal distribution using a one-sided
+t-test with an alpha of 0.01. No parameter was normally distributed. This is
+taken as sufficient reason for them being meaningfully distinct between
+datasets, under the assumption that algorithm-induced noise follows a
+normal distribution. As such, all can be included in the PCA. 
+
+Tests with different datasets showed that their correlation is inconsistent,
+sometimes (anti)correlating strongly and other times being roughly orthogonal.
+This implies that they contain information which can not be coerced into
+one sum parameter without losing predictive power.
+
+A PCA grouped by polarity was performed to find relevant parameters for 
+process performance. In both cases, the numbers of centroids, bins and features
+were highly correlating. In the positive case mean scores for bins and
+features correlated, which did not apply for negative measurements. For both,
+DQSC was roughly orthogonal to DQSF. When using only nine measurements from 
+the same series, the quality scores changed significantly.
 
 Due to the lack of established quality parameters, a comparison
 with some "true" measure of quality is not possible. While the
@@ -272,7 +355,11 @@ for replicates and generally contain bad peak assignments due to
 the elution profile no longer being gaussian. A test which identifies
 these measurements as defective is considered to be viable.
 
-# Preformance criteria - Fourier Transform:
+# Developed Tests
+
+# Calculations not covered by qAlgorithms (remove?)
+
+## Preformance criteria - Fourier Transform:
 The fourier transform employed in FT-ICR and Orbitrap type mass
 spectrometers is not something the instrument operator has access to.
 With techniques like phase-constrained deconvolution [@todo paper]
@@ -281,7 +368,7 @@ Without vendor cooperation, it will not be possible to estimate
 sensible quality criteria or to implement quality reporting
 at this stage of the data processing.
 
-# Performance criteria - File Conversion
+## Performance criteria - File Conversion
 Due to most instruments providing measurements in proprietary formants,
 they have to be converted using other software tools before processing.
 At this stage, there is the potential for floating-point imprecision
@@ -548,33 +635,7 @@ profile signal exists at the point
 
 
 # Development of a consistency parameter from process statistics
-When assessing the entire process from profile-mode spectra to 
-components, it is important to find parameters that are responsive
-to a broad number of deviations within the system. Multiple of the 
-presented categories are highly selective regarding the types of
-properties they give insight into, and as such not well-suited to
-form the basis of a sum parameter for process quality.
 
-Tested parameters:
-* mean DQSC
-* mean DQSB
-* mean DQSF
-* Number of centroids
-* Number of bins
-  * Number of bins with no features
-  * Number of bins with one feature
-  * number of bins with more than one features
-* Number of features
-
-The three quality parameters (DQSC, DQSB, DQSF) calculated during the
-different steps of qAlgorithms describe the model consistency of that
-step to a limited degree. When taking their mean value at the end of their
-respective step, they can indicate large differences between datasets
-and make a statement about when during processing such a shift took place.
-Tests with different datasets showed that their correlation is inconsistent,
-sometimes (anti)correlating strongly and other times being roughly orthogonal.
-This implies that they contain information which can not be coerced into
-one sum parameter without losing predictive power.
 
 ## Consistency of the centroiding algorithm
 
@@ -664,15 +725,7 @@ was assembled from six SFC-HRMS polarity switching measurements (12 processes),
 six LC-HRMS blank measurements and 14 normal LC-HRMS measurements, two of
 which were measured with negative polarity.
 
-The process parameters were controlled for normal distribution using a one-sided
-t-test with an alpha of 0.01. No parameter was normally distributed. 
 
-A PCA grouped by polarity was performed to find relevant parameters for 
-process performance. In both cases, the numbers of centroids, bins and features
-were highly correlating. In the positive case mean scores for bins and
-features correlated, which did not apply for negative measurements. For both,
-DQSC was roughly orthogonal to DQSF. When using only nine measurements from 
-the same series, the quality scores changed significantly.
 
 The consistency of both the centroids to bin and the bin to feature ratio
 could be a good criteria for finding process errors and a general measure

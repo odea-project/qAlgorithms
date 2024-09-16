@@ -108,6 +108,8 @@ allProcessed$blank = (str_detect(row.names(allProcessed), "H2O") | str_detect(ro
 allProcessed$series = "none"
 allProcessed$series[which(allProcessed$year == 202401)] = "PFAS+"
 allProcessed$series[which(allProcessed$year == -202401)] = "PFAS-"
+allProcessed$series[which(allProcessed$year == 202402)] = "PFAS+"
+allProcessed$series[which(allProcessed$year == -202402)] = "PFAS-"
 allProcessed$series[which(allProcessed$year == 202408)] = "pump_error+"
 allProcessed$series[which(allProcessed$year == 210229)] = "Aquaflow_D1+"
 allProcessed$series[which(allProcessed$year == 210229 & allProcessed$blank)] = "Aquaflow_D1_B+"
@@ -147,7 +149,11 @@ DQSC_SD = sd(allProcessed$meanDQSC[120:129])
 sd_bin1 = sd(allProcessed$numBins_one[120:129])
 sd_bin0 = sd(allProcessed$numBins_empty[120:129])
 sd_bin2 = sd(allProcessed$numBins_more[120:129])
-selectedProcess = allProcessed[c(93:107, 120:129), ] # allProcessed[c(1:44, 120:129), ]
+sd_binAll = sd(allProcessed$numBins_more[120:129] + allProcessed$numBins_one[120:129])
+selectedProcess = 
+  # allProcessed[c(108:129), ]# SFC-DoE
+  # allProcessed[c(93:107, 120:129), ] # pump error
+  allProcessed[c(1:44, 120:129), ] # aquaflow
 seriesBreaks = (selectedProcess$series[-1] != selectedProcess$series[-length(selectedProcess$series)])
 seriesBreaks = which(seriesBreaks) + 0.5
 
@@ -180,10 +186,11 @@ ggplot(selectedProcess)+
 #   scale_x_discrete(guide = guide_axis(angle = 60))
 
 # absolute deviation from mean / sd of control?
-deviations = selectedProcess %>% group_by(series) %>% summarise(b1 = mean(numBins_one), b0 = mean(numBins_empty), b2 = mean(numBins_more))
+deviations = selectedProcess %>% group_by(series) %>% summarise(b1 = mean(numBins_one), b0 = mean(numBins_empty), b2 = mean(numBins_more), bAll = mean(numBins_more + numBins_one))
 display_b1 = 0
 display_b0 = 0
 display_b2 = 0
+display_bAll = 0
 for (i in 1:length(selectedProcess$numSpectra)) {
   display_b1[i] = (selectedProcess$numBins_one[i] - deviations$b1[
     which(deviations$series == selectedProcess$series[i])])
@@ -191,20 +198,23 @@ for (i in 1:length(selectedProcess$numSpectra)) {
     which(deviations$series == selectedProcess$series[i])])
   display_b2[i] = (selectedProcess$numBins_more[i] - deviations$b2[
     which(deviations$series == selectedProcess$series[i])])
+  display_bAll[i] = (selectedProcess$numBins_more[i] + selectedProcess$numBins_one[i] - deviations$bAll[
+    which(deviations$series == selectedProcess$series[i])])
 }
 display_devs = data.frame(min = 1:length(display_b0), max = 1:length(display_b0), mean = 1:length(display_b0))
 for (i in 1:length(display_b0)) {
-  display_devs$min[i] = min(display_b1[i] / sd_bin1, display_b0[i] / sd_bin0, display_b2[i] / sd_bin2)
-  display_devs$max[i] = max(display_b1[i] / sd_bin1, display_b0[i] / sd_bin0, display_b2[i] / sd_bin2)
-  display_devs$mean[i] = mean(display_b1[i] / sd_bin1, display_b0[i] / sd_bin0, display_b2[i] / sd_bin2)
+  display_devs$min[i] = min(display_bAll[i] / sd_binAll, display_b0[i] / sd_bin0)
+  display_devs$max[i] = max(display_bAll[i] / sd_binAll, display_b0[i] / sd_bin0)
+  # display_devs$mean[i] = mean(display_bAll[i] / sd_binAll, display_b0[i] / sd_bin0)
 }
 
 
 # ggplot(selectedProcess)+
-#   geom_point(aes(row.names(selectedProcess), display_b1 / sd_bin1, colour = series, shape = "One"))+
-#   geom_point(aes(row.names(selectedProcess), display_b2 / sd_bin2, colour = series, shape = "Multiple"))+
-#   geom_point(aes(row.names(selectedProcess), display_b0 / sd_bin0, colour = series, shape = "None"))+
-#   scale_x_discrete(guide = guide_axis(angle = 60))
+  # geom_point(aes(row.names(selectedProcess), display_b1 / sd_bin1, colour = series, shape = "One"))+
+  # geom_point(aes(row.names(selectedProcess), display_b2 / sd_bin2, colour = series, shape = "Multiple"))+
+  # geom_point(aes(row.names(selectedProcess), display_b0 / sd_bin0, colour = series, shape = "None"))+
+  # geom_point(aes(row.names(selectedProcess), display_bAll / sd_binAll, colour = series, shape = "All"))+
+  # scale_x_discrete(guide = guide_axis(angle = 60))
 
 # Observation: the three points are very similar for the triplicate blank
 ggplot(selectedProcess)+
@@ -221,9 +231,10 @@ ggplot(selectedProcess)+
 #   geom_point(aes(row.names(selectedProcess), numBins_empty/(numBins_one + numBins_more), colour = series))+
 #   scale_x_discrete(guide = guide_axis(angle = 60))
 
-# ggplot(selectedProcess)+ # no clear differentiation
-#   geom_point(aes(row.names(selectedProcess), numBins_more/(numBins_one), colour = series))+
-#   scale_x_discrete(guide = guide_axis(angle = 60))
+# less noise -> high data quality?
+ggplot(selectedProcess)+ # no clear differentiation
+  geom_point(aes(row.names(selectedProcess), numBins_more/(numBins_one), colour = series))+
+  scale_x_discrete(guide = guide_axis(angle = 60))
 
 # ggplot(selectedProcess)+
 #   geom_point(aes(row.names(selectedProcess), numBins_empty/(numCentroids), colour = series))+
