@@ -110,7 +110,7 @@ namespace q
                 {
                     if (!peaktable[i].empty())
                     {
-                        std::vector<double> RTs = originalBins[i].rententionTimes;
+                        std::vector<float> RTs = originalBins[i].rententionTimes;
                         for (size_t j = 0; j < peaktable[i].size(); ++j)
                         {
 
@@ -325,11 +325,11 @@ namespace q
         return (outputTasks);
     }
 
-    bool massTraceStable(std::vector<double> massesBin, int idxStart, int idxEnd)
+    bool massTraceStable(std::vector<float> massesBin, int idxStart, int idxEnd)
     {
         size_t peaksize = idxEnd - idxStart + 1;
         // std::cout << idxStart << ", " << idxEnd << ", " << peaksize << "\n";
-        std::vector<double> massesPeak;
+        std::vector<float> massesPeak;
         for (size_t i = 0; i < peaksize; i++)
         {
             massesPeak.push_back(massesBin[idxStart + i]);
@@ -337,8 +337,8 @@ namespace q
         std::sort(massesPeak.begin(), massesPeak.end());
 
         // critval @todo make this one function
-        double mean = 0;
-        double stddev = 0;
+        float mean = 0;
+        float stddev = 0;
         for (size_t i = 0; i < peaksize; i++)
         {
             mean += massesPeak[i];
@@ -350,7 +350,7 @@ namespace q
         }
         stddev = sqrt(stddev / (peaksize - 1));
 
-        double vcrit = 3.05037165842070 * pow(log(peaksize), (-0.4771864667153)) * stddev;
+        float vcrit = 3.05037165842070 * pow(log(peaksize), (-0.4771864667153)) * stddev;
         for (size_t i = 1; i < peaksize; i++)
         {
             [[unlikely]] if (massesPeak[i] - massesPeak[i - 1] > vcrit)
