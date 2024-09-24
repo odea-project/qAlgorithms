@@ -31,8 +31,8 @@ namespace q
             // Output of qCentroiding @todo move to utils / shared data file
             struct qCentroid
             {
-                double mz;
                 double mzError = -1;
+                float mz;
                 float RT;
                 int scanNo;
                 float int_area;
@@ -83,8 +83,8 @@ namespace q
             {
                 std::byte errorcode;
                 std::vector<int> scanNumbers;
-                std::vector<double> rententionTimes;
-                std::vector<double> mz;
+                std::vector<float> rententionTimes;
+                std::vector<float> mz;
                 std::vector<float> ints_area;
                 std::vector<float> ints_height;
                 std::vector<float> DQSB;
@@ -100,14 +100,14 @@ namespace q
             {
                 std::byte errorcode;
                 size_t binsize;
-                double mean_mz;
-                double median_mz;
-                double stddev_mz;
-                double mean_scans;
-                double DQSB_base;
-                double DQSB_scaled;
-                double DQSC_min;
-                double mean_error;
+                float mean_mz;
+                float median_mz;
+                float stddev_mz;
+                float mean_scans;
+                float DQSB_base;
+                float DQSB_scaled;
+                float DQSC_min;
+                float mean_error;
             };
 
             struct RunAssessor // one of these per analysed measurement
@@ -115,7 +115,7 @@ namespace q
                 std::vector<std::byte> errorcodes;
                 std::vector<int> countOfBins;
                 std::vector<int> countOfPoints;
-                std::vector<double> meanDQSB;
+                std::vector<float> meanDQSB;
                 int totalPoints;
                 int unbinnedPoints;
                 int countDQSbelow0;
@@ -128,17 +128,17 @@ namespace q
             {
             private:
                 std::vector<double> cumError; // cumulative error in mz
-                double medianMZ;
+                float medianMZ;
 
             public:
                 std::vector<qCentroid *> pointsInBin; // @todo does not change after bin creation, check for performance improvement when using cast const
                 std::vector<double> activeOS;         // Order Space
-                std::vector<double> DQSB_base;        // DQSB when all distances are considered equal
-                std::vector<double> DQSB_scaled;      // DQSB if a gaussian falloff is assumed
+                std::vector<float> DQSB_base;         // DQSB when all distances are considered equal
+                std::vector<float> DQSB_scaled;       // DQSB if a gaussian falloff is assumed
 
                 // @todo get mz and scan min/max at the earliest opportunity
-                double mzMin;
-                double mzMax;
+                float mzMin;
+                float mzMax;
                 int scanMin;
                 int scanMax;
 
@@ -166,7 +166,7 @@ namespace q
 
                 /// @brief generate the cumError vector for this bin
                 void makeCumError();
-                void makeCumError(const double ppm); // if no centroid error exists @todo remove
+                // void makeCumError(const double ppm); // if no centroid error exists @todo remove
 
                 /// @brief divide a bin sorted by mz the difference in mz of its members and return the new bins to the bin deque. Recursive function.
                 /// @details this function iterates over the order space of a previously generated bin by searching for the maximum
@@ -207,7 +207,7 @@ namespace q
                 /// @param maxdist the largest gap in scans which a bin can have while still being considered valid
                 void makeDQSB(const CentroidedData *rawdata, const int maxdist);
 
-                double calcStdevMZ();
+                float calcStdevMZ();
 
                 /// @brief summarise the bin to one line, with the parameters size, mean_mz, median_mz, stdev_mz, mean_scans, median_scans,
                 /// DQSB_base, DQSB_control, DQSB_worst, min_DQSC, meanError. DQSB_worst is calculated by assuming the MOD of all points in the

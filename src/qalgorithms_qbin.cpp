@@ -32,13 +32,13 @@ namespace q
             /// @param pointsInBin vector of data points sorted by scans
             /// @param maxdist maximum distance in scans for similar points
             /// @return vector of the mean inner distances for all elements in the same order as pointsInBin
-            static std::vector<double> meanDistanceRegional(const std::vector<qCentroid *> pointsInBin, int maxdist);
+            static std::vector<float> meanDistanceRegional(const std::vector<qCentroid *> pointsInBin, int maxdist);
 
             /// @brief calculate the data quality score as described by Reuschenbach et al. for one datapoint in a bin
             /// @param MID mean inner distance in mz to all other elements in the bin
             /// @param MOD minimum outer distance - the shortest distance in mz to a data point that is within maxdist and not in the bin
             /// @return the data quality score for the specified element
-            static inline double calcDQS(const double MID, const double MOD); // Mean Inner Distance, Minimum Outer Distance
+            static inline float calcDQS(const float MID, const float MOD); // Mean Inner Distance, Minimum Outer Distance
 
             // static void scaleDistancesForDQS_gauss(int maxdist); // removed
 
@@ -48,7 +48,7 @@ namespace q
             int maxdist;
             std::vector<qCentroid *> notInBins; // this vector contains all points which are not included in bins
             int duplicatesTotal;                // total times the distance 0 (in scans) was measured in closed bins
-            std::vector<double> scalarForMOD;   // This vector contains factors for an inverse gaussian scaling of distances during DQS calculation
+            std::vector<float> scalarForMOD;    // This vector contains factors for an inverse gaussian scaling of distances during DQS calculation
 
 #define IGNORE -256 // nonsense value if no real number exists. Must be
                     // negative since it is used later when searching for
@@ -149,14 +149,14 @@ namespace q
                             for (size_t j = 0; j < startpoint; j++) // for every element in the deque before writing new bins
                             {
                                 binDeque.front().makeOS();
-                                [[unlikely]] if (massError < 0) // @todo more efficient solution / remove entirely?
-                                {
-                                    binDeque.front().makeCumError(); // always after order space, since makeOS sorts
-                                }
-                                else
-                                {
-                                    binDeque.front().makeCumError(massError);
-                                }
+                                // [[unlikely]] if (massError < 0) // @todo more efficient solution / remove entirely?
+                                // {
+                                binDeque.front().makeCumError(); // always after order space, since makeOS sorts
+                                // }
+                                // else
+                                // {
+                                //     binDeque.front().makeCumError(massError);
+                                // }
                                 // takes element from binDeque, starts subsetting, appends bins to binDeque
                                 binDeque.front().subsetMZ(&binDeque, binDeque.front().activeOS, 0, binDeque.front().activeOS.size() - 1, subsetCount);
                                 binDeque.pop_front(); // remove the element that was processed from binDeque
@@ -235,8 +235,8 @@ namespace q
                     }
                     else
                     {
-                        double DQSsum = std::accumulate(finishedBins[i].DQSB_base.begin(), finishedBins[i].DQSB_base.end(), 0.0);
-                        if (DQSsum <= 0) // no need to check average since DQSB isn ot scaled
+                        float DQSsum = std::accumulate(finishedBins[i].DQSB_base.begin(), finishedBins[i].DQSB_base.end(), 0.0);
+                        if (DQSsum <= 0) // no need to check average since DQSB is not scaled
                         {
                             incompleteBins.push_back(i);
                         }
@@ -326,8 +326,8 @@ namespace q
                 struct BinBorders
                 {
 
-                    double massRangeStart;
-                    double massRangeEnd;
+                    float massRangeStart;
+                    float massRangeEnd;
                     int binPosition;
                     int scanRangeStart;
                     int scanRangeEnd;
@@ -346,9 +346,9 @@ namespace q
                 int binpos = 0;
                 for (Bin currentBin : finishedBins)
                 {
-                    double stdev = currentBin.calcStdevMZ();
+                    float stdev = currentBin.calcStdevMZ();
 
-                    double trueVcrit = 3.05037165842070 * pow(log(currentBin.pointsInBin.size() + 1), (-0.4771864667153)) * stdev;
+                    float trueVcrit = 3.05037165842070 * pow(log(currentBin.pointsInBin.size() + 1), (-0.4771864667153)) * stdev;
                     binRange.push_back(BinBorders{
                         currentBin.mzMin - trueVcrit,
                         currentBin.mzMax + trueVcrit,
@@ -420,8 +420,8 @@ namespace q
                         bool duplicate = false;
                         int scanMin = 2147483647; // max possible value of int
                         int scanMax = 0;
-                        double mzMin = INFINITY;
-                        double mzMax = 0;
+                        float mzMin = INFINITY;
+                        float mzMax = 0;
                         for (qCentroid *cen : finishedBins[binInsertPoint].pointsInBin)
                         {
                             if (cen->int_area == notInBins[i]->int_area)
@@ -550,7 +550,7 @@ namespace q
                     for (size_t j = 0; j < binnedPoints.size(); j++)
                     {
                         char buffer[128];
-                        sprintf(buffer, "%0.15f,%d,%zu,%0.15f,%0.15f\n", binnedPoints[j]->mz, binnedPoints[j]->scanNo, i + 1,
+                        sprintf(buffer, "%0.8f,%d,%zu,%0.8f,%0.8f\n", binnedPoints[j]->mz, binnedPoints[j]->scanNo, i + 1,
                                 binnedPoints[i]->DQSCentroid, finishedBins[i].DQSB_scaled[j]);
                         output << buffer;
                     }
@@ -603,7 +603,7 @@ namespace q
                     // {
                     indices.push_back(i); // save these bins for printing
                     char buffer[256];
-                    sprintf(buffer, "%zu,%d,%zu,%0.15f,%0.15f,%0.15f,%0.2f,%0.9f,%0.9f,%0.9f,%0.15f\n",
+                    sprintf(buffer, "%zu,%d,%zu,%0.8f,%0.8f,%0.8f,%0.2f,%0.6f,%0.6f,%0.6f,%0.8f\n",
                             i + 1, int(res.errorcode), res.binsize, res.mean_mz, res.median_mz, res.stddev_mz,
                             res.mean_scans, res.DQSB_base, res.DQSB_scaled, res.DQSC_min, res.mean_error);
                     output_sum << buffer;
@@ -629,7 +629,7 @@ namespace q
                         for (size_t j = 0; j < binnedPoints.size(); j++)
                         {
                             char buffer[256];
-                            sprintf(buffer, "%d,%0.15f,%d,%0.2f,%0.15f,%0.9f,%0.9f,%0.9f\n",
+                            sprintf(buffer, "%d,%0.8f,%d,%0.2f,%0.8f,%0.6f,%0.6f,%0.6f\n",
                                     pos + 1, binnedPoints[j]->mz, binnedPoints[j]->scanNo,
                                     binnedPoints[j]->int_area, binnedPoints[j]->mzError, binnedPoints[j]->DQSCentroid,
                                     finishedBins[pos].DQSB_base[j], finishedBins[pos].DQSB_scaled[j]);
@@ -670,10 +670,10 @@ namespace q
                 std::sort(pointsInBin.begin(), pointsInBin.end(), [](const qCentroid *lhs, const qCentroid *rhs)
                           { return lhs->mz < rhs->mz; });
 
-                activeOS.reserve(pointsInBin.size());               // OS = Order Space
+                this->activeOS.reserve(pointsInBin.size());         // OS = Order Space
                 for (size_t i = 0; i < pointsInBin.size() - 1; i++) // -1 to prevent accessing outside of vector
                 {
-                    activeOS.push_back((pointsInBin[i + 1]->mz - pointsInBin[i]->mz) * 1000000);
+                    activeOS.push_back((pointsInBin[i + 1]->mz - pointsInBin[i]->mz));
                 }
 
                 activeOS.push_back(NAN); // last element of OS is never checked, dummy value due to recursive function
@@ -682,22 +682,23 @@ namespace q
 
             void Bin::makeCumError()
             {
-                cumError.reserve(pointsInBin.size());
+                this->cumError.reserve(pointsInBin.size());
                 cumError.push_back(0); // the first element has a precursor error of 0
                 std::transform(pointsInBin.begin(), pointsInBin.end(), back_inserter(cumError), [](qCentroid *F)
-                               { return F->mzError * 1000000; });                     // *1000000 for compatibility with ppm
+                               { return F->mzError; });                               // *1000000 for compatibility with ppm
                 std::partial_sum(cumError.begin(), cumError.end(), cumError.begin()); // cumulative sum
             }
 
-            void Bin::makeCumError(const double ppm)
-            {
-                cumError.reserve(pointsInBin.size());
-                std::transform(pointsInBin.begin(), pointsInBin.end(), back_inserter(cumError), [ppm](qCentroid *F)
-                               { return F->mz * ppm; });
-                std::partial_sum(cumError.begin(), cumError.end(), cumError.begin());
-            }
+            // void Bin::makeCumError(const double ppm)
+            // {
+            //     cumError.reserve(pointsInBin.size());
+            //     std::transform(pointsInBin.begin(), pointsInBin.end(), back_inserter(cumError), [ppm](qCentroid *F)
+            //                    { return F->mz * ppm; });
+            //     std::partial_sum(cumError.begin(), cumError.end(), cumError.begin());
+            // }
 
-            void Bin::subsetMZ(std::deque<Bin> *bincontainer, std::vector<double> &OS, const int binStartInOS, const int binEndInOS, int &counter) // bincontainer is binDeque of BinContainer // OS cannot be solved with pointers since index has to be transferred to frature list
+            void Bin::subsetMZ(std::deque<Bin> *bincontainer, std::vector<double> &OS,
+                               const int binStartInOS, const int binEndInOS, int &counter) // bincontainer is binDeque of BinContainer // OS cannot be solved with pointers since index has to be transferred to frature list
             {
                 assert(binStartInOS >= 0);
                 assert(binEndInOS >= binStartInOS);
@@ -718,9 +719,9 @@ namespace q
                 ++counter;
                 auto pmax = std::max_element(OS.begin() + binStartInOS, OS.begin() + binEndInOS);
 
-                double vcrit = 3.05037165842070 * pow(log(binsizeInOS), (-0.4771864667153)) * // critical value for alpha = 0.01 @todo add functionality for custom alpha?
-                               (cumError[binEndInOS + 1] - cumError[binStartInOS]);           // + 1 to binEnd since cumerror starts at 0
-                double max = *pmax * binsizeInOS;                                             // moved binsize here since multiplication is faster than division
+                double vcrit = 3.05037165842070 * pow(log(binsizeInOS), (-0.4771864667153)) *   // critical value for alpha = 0.01 @todo add functionality for custom alpha?
+                               (this->cumError[binEndInOS + 1] - this->cumError[binStartInOS]); // + 1 to binEnd since cumerror starts at 0
+                double max = *pmax * binsizeInOS;                                               // moved binsize here since multiplication is faster than division
 
                 [[unlikely]] if (max < vcrit) // all values in range are part of one mz bin
                 {
@@ -896,8 +897,8 @@ namespace q
                 std::sort(pointsInBin.begin(), pointsInBin.end(), [](qCentroid *lhs, qCentroid *rhs)
                           { return lhs->scanNo < rhs->scanNo; });
 
-                double mzMin1 = INFINITY;
-                double mzMax1 = 0;
+                float mzMin1 = INFINITY;
+                float mzMax1 = 0;
                 for (auto cen : pointsInBin)
                 {
                     if (cen->mz < mzMin1)
@@ -917,7 +918,7 @@ namespace q
                 this->mzMin = mzMin1;
 
                 // std::vector<double> meanInnerDistances = meanDistance(pointsInBin);
-                std::vector<double> meanInnerDistances = meanDistanceRegional(pointsInBin, maxdist);
+                std::vector<float> meanInnerDistances = meanDistanceRegional(pointsInBin, maxdist);
                 // find median in mz
                 const int posMedian = binsize / 2;
                 if (binsize & 1)
@@ -932,7 +933,7 @@ namespace q
                 bool maxScansReduced = false; // is maxScan + maxdist greater than the largest scan?
 
                 // contains both mz values (per scan) next or closest to all m/z in the bin
-                std::vector<double> minMaxOutPerScan;
+                std::vector<float> minMaxOutPerScan;
                 // +1 since both values are relevant to the range
                 minMaxOutPerScan.reserve((scanMax - scanMin + 1) * 2 + 4 * maxdist);
                 [[unlikely]] if (scanRangeStart < 1)
@@ -1042,19 +1043,19 @@ namespace q
                 }
 
                 // calculate critical DQS for finding points that are within the critical distance in mz and maxdist scans
-                double meanerror = std::accumulate(pointsInBin.begin(), pointsInBin.end(), 0.0, [](double error, const qCentroid *point)
-                                                   { return error + point->mzError; }) /
-                                   binsize;
-                double vcrit = 3.05037165842070 * pow(log(binsize + 1), (-0.4771864667153)) * meanerror;
+                float meanerror = std::accumulate(pointsInBin.begin(), pointsInBin.end(), 0.0, [](float error, const qCentroid *point)
+                                                  { return error + point->mzError; }) /
+                                  binsize;
+                float vcrit = 3.05037165842070 * pow(log(binsize + 1), (-0.4771864667153)) * meanerror;
                 // binsize + 1 to not include points which would be removed after adding them
                 // vcrit has the same scaling as mz of bin centroids
 
                 // find min distance in minMaxOutPerScan, then calculate DQS for that point
                 for (size_t i = 0; i < binsize; i++)
                 {
-                    double minDist_base = INFINITY;
-                    double minDist_scaled = INFINITY;
-                    const double currentMZ = pointsInBin[i]->mz;
+                    float minDist_base = INFINITY;
+                    float minDist_scaled = INFINITY;
+                    float currentMZ = pointsInBin[i]->mz;
 
                     // currentRangeStart gives position of the first value in minMaxOutPerScan that must be considered,
                     // assuming the first value in minMaxOutPerScan (index 0) is only relevant to the
@@ -1068,12 +1069,12 @@ namespace q
                     // from lowest scan to highest scan relevant to this
                     // point, +1 since scan number of point has to be included.
                     {
-                        double dist = std::abs(currentMZ - minMaxOutPerScan[j]);
+                        float dist = std::abs(currentMZ - minMaxOutPerScan[j]);
                         if (dist < minDist_base)
                         {
                             minDist_base = dist;
                         }
-                        double scaledDist = dist * scalarForMOD[j - currentRangeStart];
+                        float scaledDist = dist * scalarForMOD[j - currentRangeStart];
                         if (scaledDist < minDist_scaled) // scaling is calculated by a separate function
                         {
                             minDist_scaled = scaledDist;
@@ -1087,7 +1088,7 @@ namespace q
                     // if the DQS at either end is less than critDQS, a point exists that could be included in the bin
                     if (i == 0) // first element of the bin when sorted by mz
                     {
-                        double critDQS = calcDQS(meanInnerDistances[i], vcrit);
+                        float critDQS = calcDQS(meanInnerDistances[i], vcrit);
                         if (critDQS > DQSB_base[i])
                         {
                             l_maxdist_tooclose = true;
@@ -1095,7 +1096,7 @@ namespace q
                     }
                     if (i == binsize - 1) // last element of the bin when sorted by mz
                     {
-                        double critDQS = calcDQS(meanInnerDistances[i], vcrit);
+                        float critDQS = calcDQS(meanInnerDistances[i], vcrit);
                         if (critDQS > DQSB_base[i])
                         {
                             r_maxdist_tooclose = true;
@@ -1105,16 +1106,16 @@ namespace q
                 return;
             }
 
-            double Bin::calcStdevMZ()
+            float Bin::calcStdevMZ()
             {
-                double meanMZ = 0;
+                float meanMZ = 0;
                 for (size_t i = 0; i < pointsInBin.size(); i++)
                 {
                     meanMZ += pointsInBin[i]->mz;
                 }
 
                 meanMZ = meanMZ / pointsInBin.size();
-                double sumOfDist = 0;
+                float sumOfDist = 0;
                 std::for_each(pointsInBin.begin(), pointsInBin.end(), [&](const qCentroid *point)
                               { sumOfDist += (point->mz - meanMZ) * (point->mz - meanMZ); }); // squared distance to mean
 
@@ -1125,14 +1126,14 @@ namespace q
             {
                 size_t binsize = pointsInBin.size();
 
-                double meanMZ = 0;
-                double meanScan = 0;
-                double meanDQS_base = 0;
-                double meanDQS_scaled = 0;
-                double DQS_control = 0;
-                double meanCenError = 0;
-                double worstCentroid = INFINITY;
-                double meanInt = 0;
+                float meanMZ = 0;
+                float meanScan = 0;
+                float meanDQS_base = 0;
+                float meanDQS_scaled = 0;
+                float DQS_control = 0;
+                float meanCenError = 0;
+                float worstCentroid = INFINITY;
+                float meanInt = 0;
                 for (size_t i = 0; i < binsize; i++)
                 {
                     meanMZ += pointsInBin[i]->mz;
@@ -1156,11 +1157,11 @@ namespace q
                 meanCenError = meanCenError / binsize;
                 DQS_control = DQS_control / binsize;
 
-                double sumOfDist = 0;
+                float sumOfDist = 0;
                 std::for_each(pointsInBin.begin(), pointsInBin.end(), [&](const qCentroid *point)
                               { sumOfDist += (point->mz - meanMZ) * (point->mz - meanMZ); }); // squared distance to mean
 
-                double stdevMZ = sqrt(sumOfDist / (binsize - 1));
+                float stdevMZ = sqrt(sumOfDist / (binsize - 1));
 
                 std::sort(pointsInBin.begin(), pointsInBin.end(), [](qCentroid *lhs, qCentroid *rhs)
                           { return lhs->int_area < rhs->int_area; });
@@ -1198,14 +1199,14 @@ namespace q
                 // identify the largest difference between ordered
                 // intensities and compare to vcrit of int_area later
                 // double mzErrorSquared = 0;
-                double intensityErrorSquared = 0;
-                double greatestIntGap = 0;
+                float intensityErrorSquared = 0;
+                float greatestIntGap = 0;
                 // count the occurences of points outside the 1.3 sigma interval - should be 20% or less
                 // 1.3 sigma was chosen to have a tolerance of one point for bins of size five
                 bool toobroad = false;
                 size_t noSigma = 0;
-                double mzSigmaLower = meanMZ - stdevMZ * 1.3;
-                double mzSigmaUpper = meanMZ + stdevMZ * 1.3;
+                float mzSigmaLower = meanMZ - stdevMZ * 1.3;
+                float mzSigmaUpper = meanMZ + stdevMZ * 1.3;
                 for (size_t i = 0; i < binsize; i++)
                 {
                     // count occurences of points outside of 1.3 sigma interval
@@ -1217,15 +1218,15 @@ namespace q
                     intensityErrorSquared += (meanInt - pointsInBin[i]->int_area) * (meanInt - pointsInBin[i]->int_area);
                     if (i < binsize - 1)
                     {
-                        double intDiff = pointsInBin[i + 1]->int_area - pointsInBin[i]->int_area;
+                        float intDiff = pointsInBin[i + 1]->int_area - pointsInBin[i]->int_area;
                         if (intDiff > greatestIntGap)
                         {
                             greatestIntGap = intDiff;
                         }
                     }
                 }
-                const double vcritIntensity = 3.05037165842070 * pow(log(binsize), (-0.4771864667153)) *
-                                              sqrt(intensityErrorSquared / (binsize - 1));
+                const float vcritIntensity = 3.05037165842070 * pow(log(binsize), (-0.4771864667153)) *
+                                             sqrt(intensityErrorSquared / (binsize - 1));
                 bool intensityOutlier = false;
                 if (greatestIntGap > vcritIntensity)
                 {
@@ -1333,9 +1334,9 @@ namespace q
                 std::byte bincode = this->summariseBin().errorcode; // this step contains sorting by scans for the time being @todo
                 std::vector<int> tmp_scanNumbers;
                 tmp_scanNumbers.reserve(eicsize);
-                std::vector<double> tmp_rt;
+                std::vector<float> tmp_rt;
                 tmp_rt.reserve(eicsize);
-                std::vector<double> tmp_mz;
+                std::vector<float> tmp_mz;
                 tmp_mz.reserve(eicsize);
                 std::vector<float> tmp_ints_area;
                 tmp_ints_area.reserve(eicsize);
@@ -1431,20 +1432,20 @@ namespace q
             //     return output;
             // }
 
-            static std::vector<double> meanDistanceRegional(const std::vector<qCentroid *> pointsInBin, int maxdist)
+            static std::vector<float> meanDistanceRegional(const std::vector<qCentroid *> pointsInBin, int maxdist)
             {
                 // the other mean distance considers all points in the Bin.
                 // It is sensible to only use the mean distance of all points
                 // within maxdist scans
                 // this function assumes the bin to be sorted by scans
                 const size_t binsize = pointsInBin.size();
-                std::vector<double> output(binsize);
+                std::vector<float> output(binsize);
                 size_t position = 0;
                 for (size_t i = 0; i < binsize; i++)
                 {
                     int scanRegionStart = pointsInBin[i]->scanNo - maxdist; // can be negative
                     int scanRegionEnd = pointsInBin[i]->scanNo + maxdist + 1;
-                    double accum = 0;
+                    float accum = 0;
                     while (pointsInBin[position]->scanNo < scanRegionStart)
                     {
                         position++;
@@ -1459,14 +1460,14 @@ namespace q
                             break;
                         }
                     }
-                    output[i] = accum / double(readPos - position - 1); // -1 since the distance of an element to itself is not factored in
+                    output[i] = accum / float(readPos - position - 1); // -1 since the distance of an element to itself is not factored in
                 }
                 return output;
             }
 
-            static inline double calcDQS(const double MID, const double MOD) // mean inner distance, minimum outer distance
+            static inline float calcDQS(float MID, float MOD) // mean inner distance, minimum outer distance
             {
-                double dqs(MOD); // MOD should always be less than MID, less cache misses
+                float dqs(MOD); // MOD should always be less than MID, less cache misses
                 [[unlikely]] if (dqs < MID)
                 {
                     dqs = MID;
@@ -1506,7 +1507,7 @@ namespace q
                 // as relevant as another point in the same scan. To scale, A distance in the
                 // same scan is multiplied by one, one further by two, then by four etc.
                 scalarForMOD.resize(maxdist * 4 + 2); // every value is doubled, same length as selected mz vector during DQS calculation
-                double scalarSingle = pow(2, maxdist);
+                float scalarSingle = pow(2, maxdist);
                 for (int i = 0; i < 2 * maxdist + 1; i++) // scalarForMod contains the correct scaling to be used on the MOD for any maxdist
                 {
                     scalarForMOD[i] = scalarSingle;

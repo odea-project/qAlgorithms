@@ -71,7 +71,7 @@ namespace q
                     for (size_t j = 0; j < allPeaks[i].size(); ++j)
                     {
                         auto &peak = allPeaks[i][j];
-                        qBinning::qCentroid F = qBinning::qCentroid{peak.mz, peak.mzUncertainty, peak.retentionTime,
+                        qBinning::qCentroid F = qBinning::qCentroid{peak.mzUncertainty, peak.mz, peak.retentionTime,
                                                                     scanRelative, peak.area, peak.height, peak.dqsCen};
                         centroids[scanRelative].push_back(F);
                         ++totalCentroids;
