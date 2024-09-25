@@ -263,8 +263,7 @@ namespace q
 #pragma endregion "find centroids"
 
 #pragma region "find peaks"
-        void
-        qPeaks::findPeaks(
+        void qPeaks::findPeaks(
             std::vector<DataType::Peak> &all_peaks,
             q::MeasurementData::MeasurementData::treatedData &treatedData)
         {

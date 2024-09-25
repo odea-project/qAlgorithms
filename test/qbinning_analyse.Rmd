@@ -9,166 +9,76 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 # knitr::opts_knit$set(root.dir = "G:/_Studium/Analytik-Praktikum/qbinning")
 library(tidyverse)
-library(data.table)
-library(patchwork)
-library(TeachingDemos)
-library(pracma)
+# library(data.table)
+# library(patchwork)
+# library(TeachingDemos)
+# library(pracma)
+# 
 
-makeDQS <- function(MID, MOD){
-  dqs = (MOD - MID) * (1 / (1 + MID)) / max(MID, MOD)
-  dqs = (dqs + 1) / 2
-  return(dqs)
-}
-critVal <- function(n){
-  ## Function generating the critical mz difference using order statistics
-  
-  critVal <- 3.05037165842070*log(n)^(-0.4771864667153)
-  return(critVal)
-}
-```
-
-```{r check bin summary}
-summary <- read.csv("../../results/warburg_summary.csv")
-bins <- read.csv("../../results/warburg_bins.csv")
-
-summary = read.csv("C:/Users/unisys/Documents/Studium/Messdaten/warburg_summary.csv")
-bins = read.csv("C:/Users/unisys/Documents/Studium/Messdaten/warburg_bins.csv")
-summary$errorcode = as.numeric(lapply(summary$errorcode, bits))
-
-```
-
-```{r error analysis}
-points_total = 3568033
-bins_total = 55910
-notbinned_total = 1102746
-
-# summary <- read.csv("C:/Users/unisys/Documents/Studium/Analytik-Praktikum/rawdata/warburg_summary.csv")
-summary <- read.csv("G:/_Studium/Analytik-Praktikum/qbinning/results/warburg_summary.csv")
-summary$errorcode = as.numeric(lapply(summary$errorcode, bits))
-bins <- read.csv("G:/_Studium/Analytik-Praktikum/qbinning/results/warburg_bins.csv")
-
-
-# "../../selectbins_summary.csv"
-# bins <- read.csv("../../selectbins_full.csv")
-# notbinned = read.csv("../../qbinning_notbinned.csv")
-# summary$errorcode = summary$errorcode - 10000000
-
-summary = summary[order(summary$size, decreasing = TRUE),]
-
-summary %>% group_by(errorcode) %>% summarise(bins = n(), centroids = sum(size), ratio = round(sum(size)/n(),digits = 3), dqsCen = mean(DQSC_min), meanDQS = mean(DQSB_scaled)) 
-
-stats = as.data.frame(table(summary$errorcode)) # alle ungeraden Zahlen haben duplikate
-stats$Var1 = as.numeric(levels(stats$Var1))
-
-# selectIDs = summary$ID[which(summary$errorcode == 10000)]
-# for (i in selectIDs) {
-#   binViewer(summary,bins,i)
-# }
-
-# ggplot(summary)+
-#   geom_point(aes(median_mz, mean_scans, color = as.factor(errorcode)))+
-#   theme(legend.position="none")
-# binSelectionViewer(summary,bins,summary$ID[which(summary$errorcode == 0)])
 ```
 
 ```{r binviewer and rater}
-# last_viewed_bin = 646
-# 
-# binRater(summary,bins,last_viewed_bin)
-# 
-# # summary$manual[83]
-
-binViewer = function(summary, fullbins, binID){
- 
-  readline("Press Enter to continue.")
-  rateNext = T
-  while (rateNext) {
-    ppm5 = summary$mean_mz[which(summary$ID == binID)] * 5 * 10^-6
-    meanMZ = summary$mean_mz[which(summary$ID == binID)]
-    stdev = summary$stdev_mz[which(summary$ID == binID)]
-    print(ggplot(fullbins[which(fullbins$ID == binID),])+
-      geom_point(aes(mz, scan, color = intensity))+ 
-      geom_vline(xintercept = meanMZ - ppm5, linewidth = 0.2, linetype = "dashed")+
-      geom_vline(xintercept = meanMZ + ppm5, linewidth = 0.2, linetype = "dashed")+
-      geom_vline(xintercept = meanMZ - stdev, linewidth = 0.2, linetype = "dashed", color = "red")+
-      geom_vline(xintercept = meanMZ + stdev, linewidth = 0.2, linetype = "dashed", color = "red")+  
-      xlab("m/z")+
-      ylab("Scan Number")+
-      theme(panel.background = element_rect(fill = "lightblue1",
-            colour = "lightblue1", linewidth = 0.5, linetype = "solid"))+
-      scale_color_viridis_c(option = "plasma", direction = -1)+
-      labs(caption = sprintf("BinID: %d | Errorcode: %d", binID, summary$errorcode[binID]))
-    )
-    input = readline()
-    if(input == "#"){
-      rateNext = F
-    } else if(input == "<") {
-      binID = binID - 1
-    } else if(input == "+"){
-      binID = binID + 1
-    } else {
-      buf = as.numeric(input)
-      if(!is.na(buf)){
-        binID = buf
-    } else {
-        print(ggplot(fullbins[which(fullbins$ID == binID),])+
-          geom_col(aes(scan, intensity, fill = DQSB_scaled), colour = NA, width = 0.3)+
-          scale_fill_continuous()+
-          labs(caption = sprintf("BinID: %d | Errorcode: %d", binID, summary$errorcode[binID])))
-        readline()
-        binID = binID + 1
-      }
-    }
-  }
-}
-
-
-binSelectionViewer = function(summary, fullbins, IDvector){
+# uses peak ids for the vector
+binSelectionViewer = function(peaks, summary, fullbins, IDvector){
   
   IDpos = 1
-  binID = IDvector[IDpos]
+  peakID = IDvector[IDpos]
+  binID = peaks$binID[peakID]
   rateNext = T
   while (rateNext) {
-    ppm2.5 = summary$mean_mz[which(summary$ID == binID)] * 2.5 * 10^-6
-    meanMZ = summary$mean_mz[which(summary$ID == binID)]
-    stdev = summary$stdev_mz[which(summary$ID == binID)]
+    meanMZ = peaks$mz[peakID]
+    # ppm2 = meanMZ * 10^-5
+    stdev = peaks$mzUncertainty[peakID] / 10
+    indices = fullbins$scan[which(fullbins$ID == binID)]
+    indices = indices[order(indices)]
+    interceptStart = indices[peaks$binIdxStart[peakID] + 1]
+    interceptEnd   = indices[peaks$binIdxEnd[peakID]]
     
     print(ggplot(fullbins[which(fullbins$ID == binID),])+
       geom_point(aes(mz, scan, color = int_area))+ 
-      geom_vline(xintercept = meanMZ - ppm2.5, linewidth = 0.2, linetype = "dashed")+
-      geom_vline(xintercept = meanMZ + ppm2.5, linewidth = 0.2, linetype = "dashed")+
+      # geom_vline(xintercept = meanMZ - ppm2, linewidth = 0.2, linetype = "dashed")+
+      # geom_vline(xintercept = meanMZ + ppm2, linewidth = 0.2, linetype = "dashed")+
       geom_vline(xintercept = meanMZ - stdev, linewidth = 0.2, linetype = "dashed", color = "red")+
-      geom_vline(xintercept = meanMZ + stdev, linewidth = 0.2, linetype = "dashed", color = "red")+  
+      geom_vline(xintercept = meanMZ + stdev, linewidth = 0.2, linetype = "dashed", color = "red")+
+      geom_vline(xintercept = meanMZ, linewidth = 0.3, linetype = "dashed", color = "green3")+
+      geom_hline(yintercept = interceptStart - 0.5, linewidth = 0.35, color = "red")+
+      geom_hline(yintercept = interceptEnd + 0.5, linewidth = 0.35, color = "red")+
       xlab("m/z")+
       ylab("Scan Number")+
       theme(panel.background = element_rect(fill = "lightblue1",
             colour = "lightblue1", linewidth = 0.5, linetype = "solid"))+
       scale_color_viridis_c(option = "plasma", direction = -1)+
-      labs(caption = sprintf("BinID: %d | Errorcode: %d", binID, summary$errorcode[binID]))
+      labs(caption = sprintf("L: %d, R: %d | PeakID: %d | Errorcode: %d", interceptStart, interceptEnd, peakID, summary$errorcode[binID]))
     )
     input = readline()
     if(input == "#"){
       rateNext = F
     } else if(input == "+"){
       IDpos = IDpos + 1
-      binID = IDvector[IDpos]
-    } else if(input == "<") {
+      peakID = IDvector[IDpos]
+      binID = peaks$binID[peakID]
+    } else if(input == "-") {
       IDpos = IDpos - 1
-      binID = IDvector[IDpos]
+      peakID = IDvector[IDpos]
+      binID = peaks$binID[peakID]
     } else {
       buf = as.numeric(input)
       if(!is.na(buf)){
         IDpos = IDpos + buf
-        binID = IDvector[IDpos]
+        peakID = IDvector[IDpos]
+        binID = peaks$binID[peakID]
       } else {
         print(ggplot(fullbins[which(fullbins$ID == binID),])+
           geom_col(aes(scan, int_area, fill = DQSC), colour = NA, width = 0.3)+
           scale_fill_continuous()+
+          geom_vline(xintercept = interceptStart - 0.5, linewidth = 0.35, color = "red")+
+          geom_vline(xintercept = interceptEnd + 0.5, linewidth = 0.35, color = "red")+
           theme_bw()+
-          labs(caption = sprintf("BinID: %d | Errorcode: %d", binID, summary$errorcode[binID])))
+          labs(caption = sprintf("DQSF: %f | PeakID: %d | Errorcode: %d", peaks$dqsPeak[peakID], peakID, summary$errorcode[binID])))
         readline()
         IDpos = IDpos + 1
-        binID = IDvector[IDpos]
+        peakID = IDvector[IDpos]
+        binID = peaks$binID[peakID]
       }
     }
     if (IDpos > length(IDvector)){
@@ -187,7 +97,7 @@ peaks = read.csv("C:/Users/unisys/Documents/Studium/Messdaten/SP_DDA_P1_positive
 summary = read.csv("C:/Users/unisys/Documents/Studium/Messdaten/SP_DDA_P1_positive_summary.csv")
 bins = read.csv("C:/Users/unisys/Documents/Studium/Messdaten/SP_DDA_P1_positive_bins.csv")
   
-IDs = unique(peaks$binID[which(peaks$dqsPeak == -10)])
+IDs = unique(peaks$binID[which(peaks$dqsPeak < 0)])
 
 binSelectionViewer(summary, bins, IDs)
 ```

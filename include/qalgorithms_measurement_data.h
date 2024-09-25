@@ -76,10 +76,10 @@ namespace q
              *
              * @return std::vector<std::vector<dataPoint>::iterator> : separation markers for data blocks
              */
-            treatedData
-            pretreatData(std::vector<dataPoint> &dataPoints,
-                         float expectedDifference,
-                         const bool updateExpectedDifference = true);
+            treatedData pretreatData(std::vector<dataPoint> &dataPoints,
+                                     std::vector<unsigned int> &binIdx,
+                                     float expectedDifference,
+                                     const bool updateExpectedDifference = true);
         };
     } // namespace MeasurmentData
 }

@@ -199,10 +199,11 @@ namespace q
 #pragma omp parallel for
             for (size_t i = 0; i < indices.size(); ++i) // loop over all indices
             {
-                const int index = indices[i];                                                       // spectrum index
-                std::vector<TensorData::dataPoint> dataPoints = mzmlToDataPoint(data, index);       // convert mzml to data points
-                TensorData::treatedData treatedData = pretreatData(dataPoints, expectedDifference); // inter/extrapolate data, and identify data blocks
-                qpeaks.findCentroids(centroids[i], treatedData, index, retention_times[i]);         // find peaks in data blocks of treated data
+                const int index = indices[i];                                                 // spectrum index
+                std::vector<TensorData::dataPoint> dataPoints = mzmlToDataPoint(data, index); // convert mzml to data points
+                std::vector<unsigned int> dummy;
+                TensorData::treatedData treatedData = pretreatData(dataPoints, dummy, expectedDifference); // inter/extrapolate data, and identify data blocks
+                qpeaks.findCentroids(centroids[i], treatedData, index, retention_times[i]);                // find peaks in data blocks of treated data
             }
 
             if (!displayPPMwarning)
@@ -235,18 +236,41 @@ namespace q
             q::Algorithms::qPeaks &qpeaks,
             std::vector<q::Algorithms::qBinning::EIC> &data)
         {
-            std::vector<std::vector<DataType::Peak>> peaks(data.size()); // create vector of unique pointers to peaks
-#pragma omp parallel for
-            for (size_t i = 0; i < data.size(); ++i) // loop over all data
+            std::vector<std::vector<DataType::Peak>> peaks(data.size()); // create vector of  peaks
+                                                                         // #pragma omp parallel for
+            for (size_t i = 0; i < data.size(); ++i)                     // loop over all data
             {
+
                 const int num_data_points = data[i].scanNumbers.size(); // number of data points
                 if (num_data_points < 5)
                 {
                     continue; // skip due to lack of data, i.e., degree of freedom will be zero
                 }
-                std::vector<dataPoint> dataPoints = qbinToDataPoint(data[i]);       // convert qbin to data points
-                treatedData treatedData = pretreatData(dataPoints, rt_diff, false); // inter/extrapolate data, and identify data blocks
+                std::vector<dataPoint> dataPoints = qbinToDataPoint(data[i]); // convert qbin to data points
+                std::vector<unsigned int> binIndexConverter;
+                treatedData treatedData = pretreatData(dataPoints, binIndexConverter, rt_diff, false); // inter/extrapolate data, and identify data blocks
+
                 qpeaks.findPeaks(peaks[i], treatedData);
+                if (!peaks[i].empty())
+                {
+                    for (size_t j = 0; j < peaks[i].size(); j++)
+                    {
+                        assert(peaks[i][j].idxPeakEnd < binIndexConverter.size());
+                        peaks[i][j].idxPeakStart = binIndexConverter[peaks[i][j].idxPeakStart];
+                        // the end point is only correct if it is real. Check if the next point
+                        // has the same index - if yes, -1 to end index
+                        unsigned int tmpIdx = peaks[i][j].idxPeakEnd;
+                        peaks[i][j].idxPeakEnd = binIndexConverter[peaks[i][j].idxPeakEnd];
+                        if (tmpIdx + 1 != binIndexConverter.size())
+                        {
+                            if (binIndexConverter[tmpIdx] == binIndexConverter[tmpIdx + 1])
+                            {
+                                peaks[i][j].idxPeakEnd--;
+                            }
+                        }
+                    }
+                }
+
             } // parallel for
             return peaks;
 
