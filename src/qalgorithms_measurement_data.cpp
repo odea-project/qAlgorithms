@@ -87,9 +87,9 @@ namespace q
       return expectedDifference;
     }
 
-    MeasurementData::treatedData
-    MeasurementData::pretreatData(
+    MeasurementData::treatedData MeasurementData::pretreatData(
         std::vector<MeasurementData::dataPoint> &dataPoints,
+        std::vector<unsigned int> &binIdx,
         float expectedDifference,
         const bool updateExpectedDifference)
     {
@@ -119,10 +119,15 @@ namespace q
       auto it_maxOfBlock = dataPoints.begin();                                  // maximum of the block (y-axis)
       int blockSize = 0;                                                        // size of the current block
 
+      binIdx.reserve(dataPoints.size() * 2);
+
+      unsigned int realIdx = 0;
       // add the first to zeros to the dataPoints_new vector
       for (int i = 0; i < 2; i++)
       {
         treatedData.addDataPoint(0.f, 0.f, false, 0.f, 0.f, 0, 0.f);
+        binIdx.push_back(realIdx);
+        assert(binIdx.size() == treatedData.dataPoints.size());
       }
       treatedData.addSeparator(0); // add the first separator
 
@@ -131,9 +136,13 @@ namespace q
       {
         blockSize++;
         treatedData.dataPoints.push_back(*it_dataPoint);
+        binIdx.push_back(realIdx);
+        assert(binIdx.size() == treatedData.dataPoints.size());
+        ++realIdx;
         const float dx = (it_dataPoint + 1)->x - it_dataPoint->x;
         if (dx > 1.75 * expectedDifference)
         { // gap detected
+
           const int gapSize = static_cast<int>(dx / expectedDifference) - 1;
           if (gapSize < 4)
           {
@@ -141,6 +150,7 @@ namespace q
             const float dy = std::pow((it_dataPoint + 1)->y / it_dataPoint->y, 1.0 / (gapSize + 1)); // dy for log interpolation
             for (int i = 1; i <= gapSize; i++)
             {
+              binIdx.push_back(realIdx);
               treatedData.addDataPoint(
                   it_dataPoint->x + i * expectedDifference, // x-axis
                   it_dataPoint->y * std::pow(dy, i),        // y-axis
@@ -150,15 +160,23 @@ namespace q
                   0,                                        // scanNumber
                   0.f);                                     // mz
             }
+            assert(binIdx.size() == treatedData.dataPoints.size());
           }
           else
           { // END OF BLOCK, EXTRAPOLATION STARTS
-            // add 4 datapoints (two extrapolated [end of current block] and two zeros [start of next block]) extrapolate the first two datapoints of this block
+            // add 4 datapoints (two extrapolated [end of current block] and two zeros
+            // [start of next block]) extrapolate the first two datapoints of this block
             if (blockSize < 5)
             {
-              // delete all data points of the block in treatedData.dataPoints except the first two zeros marked by the separator.back()+2
+              // delete all data points of the block in treatedData.dataPoints except the
+              // first two zeros marked by the separator.back()+2
               auto it_startOfBlock = treatedData.dataPoints.begin() + treatedData.separators.back() + 2;
               treatedData.dataPoints.erase(it_startOfBlock, treatedData.dataPoints.end());
+              while (binIdx.size() != treatedData.dataPoints.size())
+              {
+                binIdx.pop_back();
+              }
+              assert(binIdx.size() == treatedData.dataPoints.size());
             }
             else
             {
@@ -183,6 +201,9 @@ namespace q
                       0.f,                                            // dqsBinning
                       0,                                              // scanNumber
                       0.f);                                           // mz
+
+                  binIdx.push_back(realIdx);
+                  assert(binIdx.size() == treatedData.dataPoints.size());
                 }
               }
               else
@@ -212,12 +233,16 @@ namespace q
                       0.f,                              // dqsBinning
                       0,                                // scanNumber
                       0.f);                             // mz
+                  binIdx.push_back(realIdx);
+                  assert(binIdx.size() == treatedData.dataPoints.size());
                 }
               }
               // add the zeros to the treatedData.dataPoints vector to start the next block
               for (int i = 0; i < 2; i++)
               {
                 treatedData.addDataPoint(0.f, 0.f, false, 0.f, 0.f, 0, 0.f);
+                binIdx.push_back(realIdx);
+                assert(binIdx.size() == treatedData.dataPoints.size());
               }
               treatedData.addSeparator(treatedData.dataPoints.size() - 2); // add the separator
               it_maxOfBlock = it_dataPoint + 1;                            // update the maximum of the block
@@ -227,6 +252,8 @@ namespace q
         } //
         else
         {
+          // binIdx.push_back(realIdx);
+          // realIdx++;
           if (it_maxOfBlock->y < it_dataPoint->y)
           {
             it_maxOfBlock = it_dataPoint; // update the maximum of the block
@@ -237,12 +264,18 @@ namespace q
           }
         }
       } // end of for loop
+      assert(binIdx.size() == treatedData.dataPoints.size());
 
-      // delete the last two zeros
+      binIdx.pop_back();
+      binIdx.pop_back();
+
+      // delete the last two zeros // @todo why?
       treatedData.dataPoints.pop_back();
       treatedData.dataPoints.pop_back();
       // change the last separator to the end of the dataPoints vector
       treatedData.separators.back() = treatedData.dataPoints.size();
+      assert(binIdx.size() == treatedData.dataPoints.size());
+
       return treatedData;
     } // end of pretreatData
   } // namespace MeasurementData

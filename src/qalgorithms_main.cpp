@@ -90,7 +90,7 @@ namespace q
                     {
                         auto peak = peaktable[i][j];
                         char buffer[128];
-                        sprintf(buffer, "%d,%d,%d,%d,%0.8f,%0.8f,%0.4f,%0.4f,%0.8f,%0.8f,%0.8f,%0.8f,%0.8f\n",
+                        sprintf(buffer, "%d,%d,%d,%d,%0.6f,%0.6f,%0.4f,%0.4f,%0.3f,%0.3f,%0.5f,%0.5f,%0.5f\n",
                                 counter, int(i + 1), peak.idxPeakStart, peak.idxPeakEnd, peak.mz, peak.mzUncertainty,
                                 peak.retentionTime, peak.retentionTimeUncertainty, peak.area, peak.areaUncertainty,
                                 peak.dqsCen, peak.dqsBin, peak.dqsPeak);
@@ -116,7 +116,7 @@ namespace q
 
                             auto peak = peaktable[i][j];
                             char buffer[256];
-                            sprintf(buffer, "%d,%d,%d,%d,%0.4f,%0.4f,%0.8f,%0.8f,%0.4f,%0.4f,%0.8f,%0.8f,%0.8f,%0.8f,%d,%0.8f,%0.8f,%0.8f\n",
+                            sprintf(buffer, "%d,%d,%d,%d,%0.6f,%0.6f,%0.4f,%0.4f,%0.4f,%0.4f,%0.3f,%0.3f,%0.3f,%0.3f,%d,%0.5f,%0.5f,%0.5f\n",
                                     counter, int(i + 1), peak.idxPeakStart, peak.idxPeakEnd, peak.mz, peak.mzUncertainty,
                                     peak.retentionTime, peak.retentionTimeUncertainty, RTs[peak.idxPeakStart], RTs[peak.idxPeakEnd],
                                     peak.area, peak.areaUncertainty, peak.height, peak.heightUncertainty, int(originalBins[i].errorcode),
@@ -145,7 +145,7 @@ namespace q
                 {
                     auto peak = peaktable[i][j];
                     char buffer[128];
-                    sprintf(buffer, "%d,%0.8f,%0.8f,%0.4f,%0.4f,%0.8f,%0.8f,%0.8f,%0.8f,%0.8f\n",
+                    sprintf(buffer, "%d,%0.6f,%0.6f,%0.4f,%0.4f,%0.3f,%0.3f,%0.5f,%0.5f,%0.5f\n",
                             counter, peak.mz, peak.mzUncertainty, peak.retentionTime, peak.retentionTimeUncertainty,
                             peak.area, peak.areaUncertainty, peak.dqsCen, peak.dqsBin, peak.dqsPeak);
                     output << buffer;
@@ -906,6 +906,11 @@ int main(int argc, char *argv[])
                 {
                     ++testsPassedTotal;
                 }
+                if (i == 170)
+                {
+                    // std::cout << " ok";
+                    volatile bool none = false;
+                }
 
                 if (!peaks[i].empty())
                 {
@@ -931,74 +936,76 @@ int main(int argc, char *argv[])
                         // assert((peaks[i][j].idxPeakEnd - peaks[i][j].idxPeakStart) < (scansBin.back() - scansBin.front() + 5));
                         // std::cout << peaks[i][j].mz << ", " << massesBin[0] << " | " << peaks[i][j].retentionTime << ", "
                         //           << binnedData[i].rententionTimes[massesBin.size() / 2] << "\n";
-                        if (int(peaks[i][j].idxPeakEnd) > (scansBin.back() - scansBin.front() + 5))
-                        {
-                            // std::cout << "\n " << peaks[i][j].idxPeakStart << ", " << peaks[i][j].idxPeakEnd << ", "
-                            //           << scansBin.front() << " | " << lowestScan << ", " << scansBin.back()
-                            //           << ", " << peaks[i][j].areaUncertainty << "\n";
-                            exit(1);
-                        }
+                        // if (int(peaks[i][j].idxPeakEnd) > (scansBin.back() - scansBin.front() + 5))
+                        // {
+                        //     // std::cout << "\n " << peaks[i][j].idxPeakStart << ", " << peaks[i][j].idxPeakEnd << ", "
+                        //     //           << scansBin.front() << " | " << lowestScan << ", " << scansBin.back()
+                        //     //           << ", " << peaks[i][j].areaUncertainty << "\n";
+                        //     exit(1);
+                        // }
 
-                        bool startSearch = true;
-                        size_t tmpEndVal = 0;
-                        // int tmpLeftLim = peaks[i][j].idxPeakStart;
+                        // bool startSearch = true;
+                        // size_t tmpEndVal = 0;
+                        // // int tmpLeftLim = peaks[i][j].idxPeakStart;
 
-                        for (size_t a = 0; a < scansBin.size(); a++)
-                        {
-                            // std::cout << scansBin[a] << ", ";
-                            size_t regressionIdx = scansBin[a] - lowestScan + 2;
-                            if (startSearch && (regressionIdx >= peaks[i][j].idxPeakStart))
-                            {
-                                startSearch = false;
-                                peaks[i][j].idxPeakStart = a;
-                            }
-                            else if (regressionIdx <= peaks[i][j].idxPeakEnd)
-                            {
-                                tmpEndVal = a;
-                                if (regressionIdx == peaks[i][j].idxPeakEnd)
-                                {
-                                    break;
-                                }
-                            }
-                        }
-                        assert(!startSearch);
-                        if (tmpEndVal == 0)
-                        {
-                            tmpEndVal = scansBin.size() - 1;
-                        }
-                        // std::cout << "\n " << peaks[i][j].idxPeakStart << ", " << peaks[i][j].idxPeakEnd << ", "
-                        //           << tmpEndVal << ", " << scansBin.size() << "\n";
-                        // std::cout.flush();
-                        if (tmpEndVal < peaks[i][j].idxPeakStart)
-                        {
-                            // for (auto a : rtsBin)
-                            // {
-                            //     std::cout << a << ", ";
-                            // }
-                            // std::cout << "\n\n " << tmpLeftLim << ", " << peaks[i][j].idxPeakEnd << ", "
-                            //           << peaks[i][j].idxPeakStart << ", " << tmpEndVal << ", " << scansBin.front()
-                            //           << ", " << scansBin.back() << ", " << peaks[i][j].dqsPeak << ", " << peaks[i][j].height
-                            //           << ", " << binnedData[i].ints_area[127] << "\n";
-                            // exit(1);
-                            ++impossibleRegression;
-                            peaks[i][j].dqsPeak = -10;
-                            peaks[i][j].idxPeakStart = 0;
-                            tmpEndVal = scansBin.size() - 1;
-                            continue;
-                        }
+                        // for (size_t a = 0; a < scansBin.size(); a++)
+                        // {
+                        //     // std::cout << scansBin[a] << ", ";
+                        //     size_t regressionIdx = scansBin[a] - lowestScan + 2;
+                        //     if (startSearch && (regressionIdx >= peaks[i][j].idxPeakStart))
+                        //     {
+                        //         startSearch = false;
+                        //         peaks[i][j].idxPeakStart = a;
+                        //     }
+                        //     else if (regressionIdx <= peaks[i][j].idxPeakEnd)
+                        //     {
+                        //         tmpEndVal = a;
+                        //         if (regressionIdx == peaks[i][j].idxPeakEnd)
+                        //         {
+                        //             break;
+                        //         }
+                        //     }
+                        // }
+                        // assert(!startSearch);
+                        // if (tmpEndVal == 0)
+                        // {
+                        //     tmpEndVal = scansBin.size() - 1;
+                        // }
+                        // // std::cout << "\n " << peaks[i][j].idxPeakStart << ", " << peaks[i][j].idxPeakEnd << ", "
+                        // //           << tmpEndVal << ", " << scansBin.size() << "\n";
+                        // // std::cout.flush();
+                        // if (tmpEndVal < peaks[i][j].idxPeakStart)
+                        // {
+                        //     // for (auto a : rtsBin)
+                        //     // {
+                        //     //     std::cout << a << ", ";
+                        //     // }
+                        //     // std::cout << "\n\n " << tmpLeftLim << ", " << peaks[i][j].idxPeakEnd << ", "
+                        //     //           << peaks[i][j].idxPeakStart << ", " << tmpEndVal << ", " << scansBin.front()
+                        //     //           << ", " << scansBin.back() << ", " << peaks[i][j].dqsPeak << ", " << peaks[i][j].height
+                        //     //           << ", " << binnedData[i].ints_area[127] << "\n";
+                        //     // exit(1);
+                        //     ++impossibleRegression;
+                        //     volatile auto tmpPeak = peaks[i][j];
+                        //     peaks[i][j].dqsPeak = -10;
+                        //     peaks[i][j].idxPeakStart = 0;
+                        //     tmpEndVal = scansBin.size() - 1;
+                        //     continue;
+                        // }
 
-                        peaks[i][j].idxPeakEnd = tmpEndVal;
-                        assert(tmpEndVal > peaks[i][j].idxPeakStart);
-                        assert(tmpEndVal < scansBin.size());
+                        // assert(tmpEndVal > peaks[i][j].idxPeakStart);
+                        // assert(tmpEndVal < scansBin.size());
 
-                        if ((tmpEndVal - peaks[i][j].idxPeakStart + 1) < 5)
-                        {
-                            ++impossibleRegression;
-                            peaks[i][j].dqsPeak = -10;
-                            peaks[i][j].idxPeakStart = 0;
-                            tmpEndVal = scansBin.size() - 1;
-                            continue;
-                        }
+                        // if ((tmpEndVal - peaks[i][j].idxPeakStart + 1) < 5)
+                        // {
+                        //     volatile auto tmpPeak = peaks[i][j];
+                        //     ++impossibleRegression;
+                        //     peaks[i][j].dqsPeak = -10;
+                        //     peaks[i][j].idxPeakStart = 0;
+                        //     tmpEndVal = scansBin.size() - 1;
+                        //     continue;
+                        // }
+                        // peaks[i][j].idxPeakEnd = tmpEndVal;
 
                         // idxPeakStart/End are the index referring to the bin in which a peak was found
                         if (!q::massTraceStable(massesBin, peaks[i][j].idxPeakStart, peaks[i][j].idxPeakEnd))
