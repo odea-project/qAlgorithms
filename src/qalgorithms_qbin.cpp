@@ -1311,7 +1311,7 @@ namespace q
                 {
                     selector |= std::byte{0b00100000};
                 }
-                if (twoMaxima) // mostly uniform increase in int_area over bin
+                if (false) // twoMaxima mostly uniform increase in int_area over bin
                 {
                     selector |= std::byte{0b01000000};
                 }
@@ -1322,6 +1322,11 @@ namespace q
                 }
 
                 this->errorcode = selector;
+
+                if (selector == std::byte{0b00000000})
+                {
+                    std::cerr << "+";
+                }
 
                 return SummaryOutput{selector, binsize, meanMZ, medianMZ, stdevMZ, meanScan, meanDQS_base,
                                      meanDQS_scaled, worstCentroid, meanCenError};

@@ -542,23 +542,27 @@ against the model behaviour of a correct bin.
 This test is not used for corrective action, but could be employed 
 as another sign of a halved peak.
 
-### At least two possible maxima in intensity
+
+## Discarded Criteria: 
+[@todo] Is this a sensible category? 
+
+### At Least Two Possible Maxima in Intensity
 If the highest and second-highest intensity in a bin are more than
 three scans apart, more than one regression for this peak is expected.
 If only one peak was found, this could justify a closer look at the bin.
-This test is not used for corrective action yet.
+This test has been discarded since at bin-stage, this information is
+not useable for corrective action and the test condition is fulfilled
+too often where no feature was found. A similar test on a per-feature 
+basis is preferable.
 
-
-## Discarded Criteria:
-
-### point within maxdist but not within maxdist + 1
+### Point Within Maxdist but not Within Maxdist + 1
 The test was removed due to not providing actionable, non-redundant
 information. With the addition of a standard-deviation corrected
 estimate for the critical distance, potentially interesting outliers
 are already covered. The ones which aren't included are represented
 through the DQSB.
 
-### one-sided intensity profile
+### One-Sided Intensity Profile
 Originally, this test only checked if the maximum intensity of the
 bin was also the first or last scan which is covered by the bin. 
 This would prevent a gaussian fit with a maximum within the bin.
@@ -568,7 +572,7 @@ This is especially likely for small bins purely containing noise.
 As such, the test condition was changed to the maximum being the smallest,
 the smallest + 1, the largest or the largest - 1 scan.
 
-### test for asymmetry in mz
+### Test for Asymmetry in MZ
 A relatively frequent problem with the binning results is that
 sometimes, either a low-deviation mass trace identified visually
 has a lot of noise on one side or is binned together with a different
@@ -584,7 +588,7 @@ scaled, while the division into thirds had no basis in the expected
 behaviour of normally distributed data and was extremely sensitive to
 outliers.
 
-### test for points outside three sigma interval
+### Test for Points Outside Three Sigma Interval
 This test was implemented to identify those bins that
 were too broad (in mz) to form visually identifiable ion traces.
 It was removed due to outliers not directly corelating with
@@ -606,7 +610,7 @@ of a dataset, it is not used as the foundation for a test regarding
 consistency or anything else. It is assumed that a relevant difference
 in DQSF would be noticeably more strongly through the other observed peak properties.
 
-## Validity of the identified peaks
+## Validity of the Identified Peaks
 During development, it was found that some generated peaks will not
 fulfill the condition of being part of only one mass trace. Around two
 percent of all peaks found displayed this behaviour. This property
@@ -631,13 +635,22 @@ because it did not fulfill the minimum standards for a peak. The possibility
 exists that after binning, if the relevant point was a duplicate, the 
 wrong choice was made. This cannot be the main reason for such errors due
 to the rarity of duplicate scans in bins. It is also possible that no
-profile signal exists at the point
+profile signal exists at the point.
+
+Another frequent cause of this behaviour is the centroid mass showing a
+rapid change in either direction once the signal intensity surpasses 
+some value. The mass returns to its previous position once the intensity
+is below this value again. Examples of this effect could be observed in all
+controlled samples, which makes the hypothesis that this is an orbitrap-specific
+effect plausible. 
+
+Corrective measures will have to differentiate between both cases.
 
 
-# Development of a consistency parameter from process statistics
+# Development of Consistency Parameters from Process Statistics
 
 
-## Consistency of the centroiding algorithm
+## Consistency of the Centroiding Algorithm
 
 It was observed that, when ordered by time of recording, the differences
 between scores of neighbouring measurements are close to zero for defect-free
@@ -665,11 +678,15 @@ The number of recorded spectra is inconsistent between measurements,
 usually deviating by around four. Whether this had an influence on the
 displayed results was tested by calculating the differences between
 all points before and after normalising them to the number of recorded
-spectra. Both series were normalised to their maximum value afterwards.
+spectra. Both series were scales afterwards such that their maximum value was one.
 The greatest absolute difference between the two series was 1.1 10e-16.
 This is within the floating point error, and both results can be
 considered identical. The most visible difference to the DQSC variation
 is that here, blanks do appear as a visible decrease.
+
+Normalising to the number of spectra is done primarily to use the ten
+replicate measurements as a baseline for series measured using another method.
+In a real application, normalisation is not necessary.
 
 The solution chosen for confidence limits uses a separately recorded
 series of ten technical replicates. Their similarity is confirmed via
@@ -783,8 +800,28 @@ in relation to bins which contain at least one feature. This is anticorrelated
 with the above mentioned criteria for obvious reasons, but shows slightly higher
 in-group deviation. This lowers its viability as a test parameter.
 
-In terms of general utility, the two most promising tests for stability of
-measurement conditions and process quality are 
+## Binning Similarity Visualisation
+The base reasoning behind this visualisation is that the three categories
+should show as little deviation as possible. Since no meaningful difference
+between bins with one or more than one regressions in them could be found,
+both are combined through summation. Consistency for both groups is expressed
+as the difference from the series mean for every element of a series.
+For the ten replicates, it was observed that these two measures lie very
+close together and are close to zero. To communicate both properties with
+one two-dimensional grapic, the display of bars spanning between the two points
+defined by the deviation of the number of bins with no regression from the
+series mean and the same property for bins with at least one regression.
+
+Using the Aquaflow dataset as a test case (image), it can be observed that
+the two different types of samples (control and treatment) can be distinguished 
+visually without being considered during plot construction. This was not the
+case for the consistency using centroiding data. The blanks (D1_B+)
+have a very high similarity, while the two days (D1+ and D2+) are mainly
+distinguished by their in-group deviation. The wave pattern observed in
+D1+ matches the sampling time.
+
+The measurement already identified with the centroid parameters is also
+noticeably different in this visualisation.
 
 Notably, blanks and samples produce very similar results for all criteria 
 tested. This could be explained by noise making up the absolute majority
@@ -797,7 +834,7 @@ of a design of experiment, it should be controlled that the differences
 which form the basis for a decision are greater than the random deviation
 which is present in a series of technical replicates.
 
-# Further research
+# Further Research
 While the criteria found through exploratory data analysis are seemingly able
 to make broad statements about process quality, they need to be related to
 result quality for certainty in this regard. Such an analysis depends on
@@ -852,7 +889,7 @@ Similarly, if a change to the instrumentation is made, there needs to
 be a user friendly way to exclude previous measurements from indfluencining
 the baseline of new measurements.
 
-# planned Expansions to qAlgorithms
+# Planned Expansions to qAlgorithms
 Data visualisation is currently (19.08.2024) not implemented for qAlgorithms.
 Furthermore, it does not have an internal representation of measurement 
 series. This results in the user having to invest additional time to create 
@@ -874,19 +911,9 @@ decision to include templates for common applications, such as monitoring
 the stability of a system over time. This would ideally include a way to check 
 the general system stability without re-processing potentially thousands of files again.
 
-During development of this tool, some regressions covered less than five
-real datapoints. While it is unknown what causes this issue at the moment,
-it must be adressed. The root cause is possibly another inherent property
-of the peak which could in turn be used to describe the overall data quality.
-The detectable errors (as percentage of affected features) show no clear pattern
-and deviate roughly as much within a measurement series as between series.
-As such, they were not included as process parameters.
-They seem to affect bins which contain multiple mass traces disproportionally
-often when compared to other regressions. The effect is likely not bin-specific, since
-good regressions also exist within the affected large bins.
 
-# performed modifications to qAlgorithms 
-## modified centroiding
+# Performed Modifications to qAlgorithms 
+## Modified Centroiding
 An advantage of the qCentroids approach [@todo] is that peaks can also
 be found if "gaps" exsist, meaning either through instrument behaviour
 or a processing error no intensity was measured where it should have 

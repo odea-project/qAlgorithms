@@ -192,12 +192,12 @@ display_b0 = 0
 display_b2 = 0
 display_bAll = 0
 for (i in 1:length(selectedProcess$numSpectra)) {
-  display_b1[i] = (selectedProcess$numBins_one[i] - deviations$b1[
-    which(deviations$series == selectedProcess$series[i])])
+  # display_b1[i] = (selectedProcess$numBins_one[i] - deviations$b1[
+  #   which(deviations$series == selectedProcess$series[i])])
   display_b0[i] = (selectedProcess$numBins_empty[i] - deviations$b0[
     which(deviations$series == selectedProcess$series[i])])
-  display_b2[i] = (selectedProcess$numBins_more[i] - deviations$b2[
-    which(deviations$series == selectedProcess$series[i])])
+  # display_b2[i] = (selectedProcess$numBins_more[i] - deviations$b2[
+  #   which(deviations$series == selectedProcess$series[i])])
   display_bAll[i] = (selectedProcess$numBins_more[i] + selectedProcess$numBins_one[i] - deviations$bAll[
     which(deviations$series == selectedProcess$series[i])])
 }
