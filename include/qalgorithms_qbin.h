@@ -147,7 +147,7 @@ namespace q
                 bool r_maxdist_tooclose = false; // Check if there is a point within maxdist
                 bool l_slanted;
                 bool r_slanted;
-                std::byte errorcode;
+                std::byte errorcode{0b00000000};
 
                 /// @brief generate a bin that is a subset of an existing bin using two iterators.
                 /// @details since this extracts a continuous sequence, it is only a good idea
