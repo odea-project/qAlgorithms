@@ -3,14 +3,18 @@ process quality in LC-HRMS nontarget measurement series as part of the qAlgorith
 -----------------------------------------------------------------------------------------------
 Report concluding the research practical by Daniel Höhn, supervised by Felix Drees and Gerrit Renner <!-- omit in toc -->
 
+- [Change structure to:](#change-structure-to)
 - [Abstract](#abstract)
 - [Abbreviations and definitions:](#abbreviations-and-definitions)
-- [Notes on the design of visual process quality estimators](#notes-on-the-design-of-visual-process-quality-estimators)
+- [Process quality estimators](#process-quality-estimators)
   - [Differentiating process quality from result quality](#differentiating-process-quality-from-result-quality)
   - [Measuring process quality](#measuring-process-quality)
-    - [Validation criteria](#validation-criteria)
-- [Preformance criteria - Fourier Transform:](#preformance-criteria---fourier-transform)
-- [Performance criteria - File Conversion](#performance-criteria---file-conversion)
+- [Selected Process Statistics](#selected-process-statistics)
+  - [Test Dataset](#test-dataset)
+- [Developed Tests](#developed-tests)
+- [Calculations not covered by qAlgorithms (remove?)](#calculations-not-covered-by-qalgorithms-remove)
+  - [Preformance criteria - Fourier Transform:](#preformance-criteria---fourier-transform)
+  - [Performance criteria - File Conversion](#performance-criteria---file-conversion)
 - [Established methods for fault detection](#established-methods-for-fault-detection)
 - [Performance criteria - Centroiding:](#performance-criteria---centroiding)
   - [Centroid quality score (DQSC)](#centroid-quality-score-dqsc)
@@ -25,27 +29,30 @@ Report concluding the research practical by Daniel Höhn, supervised by Felix Dr
     - [Drastic mass shifts](#drastic-mass-shifts)
     - [Asymmetric distribution of mz](#asymmetric-distribution-of-mz)
     - [Maximum intensity at edge of bin](#maximum-intensity-at-edge-of-bin)
-    - [At least two possible maxima in intensity](#at-least-two-possible-maxima-in-intensity)
   - [Discarded Criteria:](#discarded-criteria)
-    - [point within maxdist but not within maxdist + 1](#point-within-maxdist-but-not-within-maxdist--1)
-    - [one-sided intensity profile](#one-sided-intensity-profile)
-    - [test for asymmetry in mz](#test-for-asymmetry-in-mz)
-    - [test for points outside three sigma interval](#test-for-points-outside-three-sigma-interval)
+    - [At Least Two Possible Maxima in Intensity](#at-least-two-possible-maxima-in-intensity)
+    - [Point Within Maxdist but not Within Maxdist + 1](#point-within-maxdist-but-not-within-maxdist--1)
+    - [One-Sided Intensity Profile](#one-sided-intensity-profile)
+    - [Test for Asymmetry in MZ](#test-for-asymmetry-in-mz)
+    - [Test for Points Outside Three Sigma Interval](#test-for-points-outside-three-sigma-interval)
 - [Performance criteria - Peak Finding:](#performance-criteria---peak-finding)
   - [DQSF](#dqsf)
-  - [Validity of the identified peaks](#validity-of-the-identified-peaks)
-- [Development of a consistency parameter from process statistics](#development-of-a-consistency-parameter-from-process-statistics)
-  - [Consistency of the centroiding algorithm](#consistency-of-the-centroiding-algorithm)
+  - [Validity of the Identified Peaks](#validity-of-the-identified-peaks)
+- [Development of Consistency Parameters from Process Statistics](#development-of-consistency-parameters-from-process-statistics)
+  - [Consistency of the Centroiding Algorithm](#consistency-of-the-centroiding-algorithm)
   - [Consistency of the Binning algorithm](#consistency-of-the-binning-algorithm)
+  - [Feature List Similarity Visualisation](#feature-list-similarity-visualisation)
 - [Error traceability](#error-traceability)
-- [Viability test for simple process parameters](#viability-test-for-simple-process-parameters)
-- [Further research](#further-research)
-- [planned Expansions to qAlgorithms](#planned-expansions-to-qalgorithms)
-- [performed modifications to qAlgorithms](#performed-modifications-to-qalgorithms)
-  - [modified centroiding](#modified-centroiding)
+- [Further Research](#further-research)
+- [Planned Expansions to qAlgorithms](#planned-expansions-to-qalgorithms)
+- [Performed Modifications to qAlgorithms](#performed-modifications-to-qalgorithms)
+  - [Modified Centroiding](#modified-centroiding)
   - [DQSB calculation](#dqsb-calculation)
 - [Conclusion](#conclusion)
 - [Software and Data](#software-and-data)
+  - [Software](#software)
+  - [Data](#data)
+- [References](#references)
 # Change structure to:
 - problem
 - selected process parameters
@@ -263,7 +270,6 @@ Tested parameters:
 * Number of Features
   * Normal Features
   * Features with highly divergent mass trace
-  * Features with too few member centroids
 
 The three quality parameters (DQSC, DQSB, DQSF) calculated during the
 different steps of qAlgorithms describe the model consistency of that
@@ -292,7 +298,7 @@ many bins with no features are indicative of a noisy dataset and having
 multiple peaks in the same bin implies poor chromatographic performance.
 One bin containing one peak is the desired outcome.
 
-For features, only those which do not fulfill one of the two error conditions
+For features, only those which do not fulfill the error condition
 were used. This is because evidently wrong results will be corrected
 in future versions of qAlgorithms, possibly by ovehauling the process behind
 feature construction. 
@@ -622,7 +628,8 @@ It is possible that these bad inclusions are a result of the "correct" centroid,
 that being the real signal of this ion trace in the given scan, not
 being detected by the centroiding algorith while still being measured in
 the instrument. Such issues could be addressed by finding a way to utilise
-regions of the scan which did not suffice for centroid representation
+regions of the scan which contain real peaks with a width less than 
+five and as such not constituting a viable peak during centroiding
 or by interpolating such points instead when fitting the regression.
 It could also be possible to introduce more region specific filters during
 binning to find these points and search for a better fitting centroid.
@@ -698,22 +705,114 @@ both being largely constant within the group of known good measurements.
 An increase in DQSC does not necessarily coincide with an increase in 
 the centroid count. Within a series, some cases exist where only one of the
 two experiences a major shift. Neither of the two has a consistently higher 
-noise level. 
+noise level. Black, dashed lines denote the border between two series.
+At these points, it is expected to see a major shift in both score and
+count once.
 
 For an eventual user-facing implementation, blanks could be removed 
-when displaying the differences in count.
+when displaying the differences in count and score.
 
 ## Consistency of the Binning algorithm
 
-The consistency of binning should be evaluated without taking the 
-consistency assessment during centroiding into account. This has the
+The consistency of binning is evaluated without taking data unrelated
+to the binning step into account. This has the
 advantage that it can still be used if the centroiding was performed 
 using another algorithm, while also not amplifying potential distortions
-introduced in the previous step.
+introduced in the previous step. It also allows, to a limited extent,
+a localised view on the binning process. As such, only the properties
+number of bins with no feature, number of bins with one feature and 
+number of bins with more than one feature were considered for consistency.
+The DQSB was not included since it is not considered to provide valuable 
+information on a dataset-wide basis yet.
+
+The base reasoning behind the developed visualisation is that the three categories
+should show as little deviation as possible. Since no meaningful difference
+between bins with one or more than one regressions in them could be found,
+both are combined through summation. Consistency for both groups is expressed
+as the difference from the series mean for every element of a series.
+The per-measurement difference from the series mean is called "bin deviation" 
+in the following.
+For the ten replicates, it was observed that these two measures lie very
+close together and are close to zero. To communicate both properties with
+one two-dimensional grapic, the display of bars spanning between the two points
+defined by the deviation of the number of bins with no regression from the
+series mean and the same property for bins with at least one regression.
+This difference is called "deviation width" in the following.
+The case of one end of the deviation width being above and the other below 
+zero was observed in the standard replicates.
+
+Using the Aquaflow dataset as a test case (image), it can be observed that
+the two different types of samples (control and treatment) can be distinguished 
+visually from the bin deviation, without this property being considered 
+during plot construction. This was not the
+case for the consistency using centroiding data. The blanks (D1_B+)
+have a very high similarity, while the two days (D1+ and D2+) are mainly
+distinguished by their in-group deviation. The wave pattern observed in
+D1+ matches the sampling time. Deviation width is significantly greater than
+the standards used as a baseline.
+
+The measurement already identified with the centroid parameters is also
+noticeably different in this visualisation.
+
+The positive control using the pump error dataset (image) shows massive deviation
+from the series mean between different measurements and generally very large
+deviation widths. Due to the scaling, the baseline is only barely visible in some
+cases. Not a single measurement has a bin deviation lower than 25.
+It is easily visible that there is no internal consistency for this series.
+
+The SFC data (image) shows generally similar bin deviation for both positive and
+negative mode, with the deviation width being larger for negative mode.
+No clear optimum is visible. 
+
+The calibration series (image) is in the same range as the standard samples 
+for samples with and without indigo, as well as the blanks. Negative mode 
+measurements are not noticeably different from positie mode. Notably,
+the measurement kaliHCO3_0.02_indigo_p, which has very low values for both
+centroid parameters, does not show noteable bin deviation or greater 
+deviation width than the standards. The blank measurement 01_H2O_1_p shows very 
+high deviation in all four parameters discussed.
+
+The PFAS data shows much greater inconsistency for the positive mode measurements
+than the negative mode measurements. A similar behaviour is observed in the DQSC,
+which fluctuates slightly more in positive than negative mode. A possible reason
+is that this series consists mostly of blanks.
+
+While the chosen visualisation allows the identification of strong outliers,
+decision limits are not implemented. The main challenge regarding those is
+the observed sensitivity to different data properties. If the use case is 
+exclusively one type of sample that is expected to have no seasonal deviations
+like drinking water, an approach using the standard deviation of some preceding
+time period could be viable. For other sample types, another possible use case
+is control of another test which concluded similarity, but with a high degree of
+uncertainty. 
+
+## Feature List Similarity Visualisation
+The similarity parameter for the feature generation test is the number of features
+normalised to the number of scans. This measure was chosen due to the high
+consistency observed in the ten replicates. As control limit, the three
+sigma interval of the standard replicate is used. A line is used to mark the 
+group mean, with the out of control condition being fulfilled if the tolerance
+interval of a point does not include the group mean (image).
+Scaling the means of different groups is unlikely to be useful, although it 
+causes minor distortion in the present case due to the reference data being
+from a different measurement series.
 
 
+Notably, blanks and samples produce very similar results for all criteria 
+tested. This could be explained by noise making up the absolute majority
+of signals, which implies these citeria only respond to irregularities
+during chromatography.
 
-[@todo] DQSB, DQSF
+When using the different quality scores for general assessments of data
+quality over a dataset, for example choosing instrument settings on basis
+of a design of experiment, it should be controlled that the differences
+which form the basis for a decision are greater than the random deviation
+which is present in a series of technical replicates. For the present
+measures of difference, one singular decision parameter is difficult to
+construct. 
+
+The aquaflow data 
+Issue: heavy distortion of mean due to massive outlier
 
 # Error traceability
 An important part of communicating an error to the operator is to
@@ -727,112 +826,6 @@ This option also enables the processing of uncertain, but highly
 relevant masses by means of especially computationally expensive
 methods without demanding very powerful processors, a lot of
 energy or a lot of time. 
-
-# Viability test for simple process parameters
-Tested parameters:
-* mean DQSC
-* mean DQSB
-* mean DQSF
-* Number of centroids
-* Number of bins
-* Number of Features
-
-A sample dataset consisting of 32 different analysis runs with qAlgorithms
-was assembled from six SFC-HRMS polarity switching measurements (12 processes),
-six LC-HRMS blank measurements and 14 normal LC-HRMS measurements, two of
-which were measured with negative polarity.
-
-
-
-The consistency of both the centroids to bin and the bin to feature ratio
-could be a good criteria for finding process errors and a general measure
-of effectiveness. When checking these parameters against the nine-sample
-series, results were very consistent with the exception of one measurement. 
-The deviant measurement was notable in that (roughly) the first 800 scans
-contained a total of three centroids. It was taken as an example of an
-undesireable measurement, which a given test would have to detect.
-This finding was controlled against the measurements with polarity switching,
-with the expectation that negative mode measurements would perform worse
-than positive mode ones. 
-
-For the criteria "centroids to bins", the deviant measurement had values
-25% lower than the series. Negative mode scores were also consistently lower.
-There were no significant differences within positive and negative series.
-A third series, which was selected for containing many poorly separated mass
-traces in the EIC, had generally higher values, but showed significant deviation.
-
-For the criteria "bins to feature", the undesireable measurement had a significantly
-greater (factor six) value than the rest of its series. Positive measurements in
-the SFC data had slightly higher values than negatives, both showing little in-group
-deviation. The third series had very high in-group deviance.
-
-The criteria "centroids to features" displayed similar behaviour to "centroids to bin".
-It is not considered further, since it depends on both other criteria being
-applicable for its validity.
-
-"centroids to bin" covers both the number of discarded centroids and the average
-binsize. It measures the total data reduction as a result of binning. Preliminary
-tests imply that it is largely dependent on system conditions, although more exhaustive
-measurement series are needed here. 
-
-"bins to feature" combines the number of bins with no features with the average number of
-bins with one or more features. Here, the ideal number is one. A high number of features 
-per bin implies generally poor separation of ion traces, and thus less reliable results.
-The amount of bins without any features could function as an estimator for the noise
-level in the measurement. While this needs to be validated, a temporally resolved noise
-indicator could also serve a valuable role in combining different measurements. For
-the present samples, bins which do not produce features are primarily found 
-at low masses as well as the beginning and end of the measurement. This conforms
-to general expectations.
-
-The criteria of having close to one feature per bin, only counting bins that 
-contain at least one feature, was additionally tested using data which was 
-recorded during a highly unstable pressure profile in the LC. It is
-assumed that this negatively effects all steps of data evaluation. This step was 
-taken due to the previously used measurement now displaying a ratio close to one,
-which contradicted the previously assumed behaviour. The data recorded during 
-unstable pressure did have a high number of features being detected in each bin,
-as well as a high degree of variance between individual measurements.
-The SFC measurements in positive and negative mode had between one and 1.5 
-features per bin. 
-A relalted property is the fraction of bins which contain only one feature
-in relation to bins which contain at least one feature. This is anticorrelated
-with the above mentioned criteria for obvious reasons, but shows slightly higher
-in-group deviation. This lowers its viability as a test parameter.
-
-## Binning Similarity Visualisation
-The base reasoning behind this visualisation is that the three categories
-should show as little deviation as possible. Since no meaningful difference
-between bins with one or more than one regressions in them could be found,
-both are combined through summation. Consistency for both groups is expressed
-as the difference from the series mean for every element of a series.
-For the ten replicates, it was observed that these two measures lie very
-close together and are close to zero. To communicate both properties with
-one two-dimensional grapic, the display of bars spanning between the two points
-defined by the deviation of the number of bins with no regression from the
-series mean and the same property for bins with at least one regression.
-
-Using the Aquaflow dataset as a test case (image), it can be observed that
-the two different types of samples (control and treatment) can be distinguished 
-visually without being considered during plot construction. This was not the
-case for the consistency using centroiding data. The blanks (D1_B+)
-have a very high similarity, while the two days (D1+ and D2+) are mainly
-distinguished by their in-group deviation. The wave pattern observed in
-D1+ matches the sampling time.
-
-The measurement already identified with the centroid parameters is also
-noticeably different in this visualisation.
-
-Notably, blanks and samples produce very similar results for all criteria 
-tested. This could be explained by noise making up the absolute majority
-of signals, which implies these citeria only respond to irregularities
-during chromatography.
-
-When using the different quality scores for general assessments of data
-quality over a dataset, for example choosing instrument settings on basis
-of a design of experiment, it should be controlled that the differences
-which form the basis for a decision are greater than the random deviation
-which is present in a series of technical replicates.
 
 # Further Research
 While the criteria found through exploratory data analysis are seemingly able
@@ -974,46 +967,66 @@ The next step of this project is establishing boundary conditions on basis of
 a model or robust heuristic. This should be established for all control charts
 and validated using different datasets.
 
+While it was not possible to test in a real application, the developed
+visualisations did fulfill the expectations regarding their behaviour
+when used for clearly defective data and data that did not contain any
+known issues. The control limits derived from the standard deviation
+of a good measurement replicate present a viable solution for identifying 
+outliers for the measurements that were tested, with the exception of the 
+aquaflow data. Here, the problem was grouping multiple different samples
+together, which is not a problem with the intended use case.
+
 
 # Software and Data
+## Software
 All calculations in R were performed with R 4.4.0[@rcoreteamLanguageEnvironmentStatistical2023], 
 using the packages tidyverse 2.0.0[@wickhamWelcomeTidyverse2019].
 Images were generated using ggplot2 3.5.1[ggplot2].
 
 qAlgorithms is written in base C++ 20, using only standard library functions[@ISOInternationalStandard].
 For reading in files, the StreamCraft library is used[https://github.com/odea-project/StreamCraft].
-It was compiled with gcc 13.2.0[@freesoftwarefoundationinc.UsingGNUCompiler1988].
+It was compiled with gcc 13.2.0[@freesoftwarefoundationinc.UsingGNUCompiler1988] 
+and cmake 3.29.6[@todo].
 
-UV degredation of ibuprofen with peracetic acid:
+## Data
+1) UV degredation of ibuprofen with peracetic acid:
 This dataset was measured while a pump defect on the LC caused the
 column pressure to increase and decrease rapidly. It is used because
 these conditions should cause the produced data to be no longer
 binned reliably, leading to the majority of features being wrong.
 
-SFC-HRMS data:
+2) SFC-HRMS data:
 This dataset is from a design of experiment series trying out different
 ion source parameters. The source was set to polarity switching, 
 resulting in two datasets per measurement after evaluation.
 
-Aquaflow data:[Non-target Analysis and Chemometric Evaluation of a Passive Sampler Monitoring of Small Streams]
+3) Aquaflow data: [Non-target Analysis and Chemometric Evaluation of a Passive Sampler Monitoring of Small Streams]
 Three blanks, three standards and three samples from the Aquaflow 
 project, all measured in positive mode. One sample measurement
 is notable for not containing any centroids for the first 800 scans.
 Naming: C = control, T = treatment, S = sampling time
 Another sample contained 5000 MS1 spectra, while usually only 1300 were recorded.
 
-Other reference data:
+4) Calibration series:
 Excerpt of a measurement series containing four blanks, and seven
 ozonation experiments with indigo, two of which were measured in
 negative mode. These measurements were primarily chosen for their 
 small filesize and poor chromatographic separation.
 
-PFAS data:
-HPLC-orbitrap measurements
+5) PFAS data:
+HPLC-orbitrap measurements consisting of blank measurements and
+water samples containing PFAS.
 
-High-consistency standards
+6) High-consistency standards
 As a reference for a stable system, ten replicates of a standard mixture
 in pure water were mesasured on an HPLC-orbitrap system. They were 
 measured at the end of a longer run and are assumed to represent 
 samples which do not significantly differ from each other in terms
 of instrument conditions or sample content.
+Of the eight compounds in the sample, 2-4 (average 2.5) were recovered
+using the currently existing limits of mz +/- mzUncertainty and lowest /
+highest retention time. These tolerances are subject to change and as 
+such, recovery is not considered as a way to determine one measurement
+as better than another.
+
+# References

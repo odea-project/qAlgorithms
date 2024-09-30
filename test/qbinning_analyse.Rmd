@@ -166,3 +166,21 @@ for (i in 1:length(s_full_1$ID)) {
 
 ```
 
+```{r recovery}
+standards = data.frame(mz = c(193.096, 196.1157, 161.1071, 177.102, 180.1207, 163.1227, 167.1478, 174.0539),
+                       rt = c(2.43*60, 2.45*60,  4.24*60,  5.39*60, 5.83*60,  5.61*60,  5.61*60,  7.77*60))
+
+hits = c(0,0,0,0,0,0,0,0,0,0)
+for (i in 1:10) {
+  filename = paste0("C:/Users/unisys/Documents/Studium/Messdaten/SP_DDA_P",i,"_positive_ex_peaks.csv")
+  peaklist = read.csv(filename)
+  peaklist = peaklist[which((peaklist$mz > 160) & (peaklist$mz < 200)),]
+  peaklist = peaklist[which((peaklist$retentionTime > 2*60) & (peaklist$retentionTime < 8*60)),]
+  for (j in 1:8) {
+    selection = (peaklist$mz > standards$mz[j] - peaklist$mzUncertainty) & (peaklist$mz < standards$mz[j] + peaklist$mzUncertainty)
+    if (sum((peaklist$lowestRetentionTime[selection] < standards$rt[j]) & (peaklist$highestRetentionTime[selection] > standards$rt[j]))) {
+      hits[i] = hits[i] + 1
+    }
+    }
+}
+```

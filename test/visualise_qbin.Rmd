@@ -105,23 +105,26 @@ negatives = which(!allProcessed$polarity)
 allProcessed$year[negatives] = allProcessed$year[negatives] * -1
 
 allProcessed$blank = (str_detect(row.names(allProcessed), "H2O") | str_detect(row.names(allProcessed), "Blank"))
-allProcessed$series = "none"
-allProcessed$series[which(allProcessed$year == 202401)] = "PFAS+"
-allProcessed$series[which(allProcessed$year == -202401)] = "PFAS-"
-allProcessed$series[which(allProcessed$year == 202402)] = "PFAS+"
-allProcessed$series[which(allProcessed$year == -202402)] = "PFAS-"
-allProcessed$series[which(allProcessed$year == 202408)] = "pump_error+"
-allProcessed$series[which(allProcessed$year == 210229)] = "Aquaflow_D1+"
-allProcessed$series[which(allProcessed$year == 210229 & allProcessed$blank)] = "Aquaflow_D1_B+"
-allProcessed$series[which(allProcessed$year == 210311)] = "Aquaflow_D2+"
-allProcessed$series[which(allProcessed$year == 220909)] = "Indigo+"
-allProcessed$series[which(allProcessed$year == -220909)] = "Indigo-"
-allProcessed$series[which(allProcessed$year == 240123)] = "SFC_DoE+"
-allProcessed$series[which(allProcessed$year == -240123)] = "SFC_DoE-"
-allProcessed$series[which(allProcessed$year == 240821)] = "stds_deca+"
+allProcessed$Series = "none"
+allProcessed$Series[which(allProcessed$year == 202401)] = "PFAS+"
+allProcessed$Series[which(allProcessed$year == -202401)] = "PFAS-"
+allProcessed$Series[which(allProcessed$year == 202402)] = "PFAS+"
+allProcessed$Series[which(allProcessed$year == -202402)] = "PFAS-"
+allProcessed$Series[which(allProcessed$year == 202408)] = "pump_error+"
+allProcessed$Series[which(allProcessed$year == 210229)] = "Aquaflow_D1+"
+allProcessed$Series[which(allProcessed$year == 210229 & allProcessed$blank)] = "Aquaflow_D1_B+"
+allProcessed$Series[which(allProcessed$year == 210311)] = "Aquaflow_D2+"
+allProcessed$Series[which(allProcessed$year == 220909)] = "Indigo+"
+allProcessed$Series[which(allProcessed$year == -220909)] = "Indigo-"
+allProcessed$Series[which(allProcessed$year == 240123)] = "SFC_DoE+"
+allProcessed$Series[which(allProcessed$year == -240123)] = "SFC_DoE-"
+allProcessed$Series[which(allProcessed$year == 240821)] = "stds_deca+"
+allProcessed$name = str_replace(str_sub(row.names(allProcessed), 7, -8), "pos_p", "p")
+allProcessed$name = str_replace(str_replace(allProcessed$name, "^_", ""), "neg_n", "n")
+allProcessed$name = str_replace(allProcessed$name, "05_AA_DK_Ibu_pH6", "PE")
+allProcessed$name = str_replace(allProcessed$name, ".._Kali_Pu_Penc_2.9", "kali")
 
-
-allProcessed = allProcessed[order(allProcessed$series),]
+allProcessed = allProcessed[order(allProcessed$Series),]
 
 numericCols = c(2,4,5,6,8)
 allProcessed[,numericCols] = allProcessed[,numericCols]/allProcessed$numSpectra
@@ -134,7 +137,7 @@ pca_all$rotation = pca_all$rotation * -1
 # pca_all$sdev^2 / sum(pca_all$sdev^2)
 
 fullPCA = autoplot(pca_all, data = allProcessed[,], label = F, 
-              label.size = 3.2, colour = 'series', shape = T,
+              label.size = 3.2, colour = 'Series', shape = T,
 
               loadings = TRUE, loadings.colour = 'blue',
 
@@ -143,22 +146,28 @@ fullPCA = autoplot(pca_all, data = allProcessed[,], label = F,
 ggplotly(fullPCA)
 
 ### only use these for related data so the scaling stays ok ###
-# mark breaks between series in graphs
+# mark breaks between Series in graphs
 relativeSD = sd(allProcessed$numCentroids[120:129]) / mean(allProcessed$numCentroids[120:129])
 DQSC_SD = sd(allProcessed$meanDQSC[120:129])
 sd_bin1 = sd(allProcessed$numBins_one[120:129])
 sd_bin0 = sd(allProcessed$numBins_empty[120:129])
 sd_bin2 = sd(allProcessed$numBins_more[120:129])
 sd_binAll = sd(allProcessed$numBins_more[120:129] + allProcessed$numBins_one[120:129])
+```
+
+```{r images}
 selectedProcess = 
+  allProcessed[c(1:44, 120:129), ] # aquaflow
   # allProcessed[c(108:129), ]# SFC-DoE
   # allProcessed[c(93:107, 120:129), ] # pump error
-  allProcessed[c(1:44, 120:129), ] # aquaflow
-seriesBreaks = (selectedProcess$series[-1] != selectedProcess$series[-length(selectedProcess$series)])
-seriesBreaks = which(seriesBreaks) + 0.5
+  # allProcessed[c(45:75, 120:129), ] # kali ozonation
+  # allProcessed[c(76:92, 120:129), ] # pfas
+SeriesBreaks = (selectedProcess$Series[-1] != selectedProcess$Series[-length(selectedProcess$Series)])
+SeriesBreaks = which(SeriesBreaks) + 0.5
 
 
-xaxis = 1:(length(selectedProcess$numSpectra)-1)
+Sample = as.factor(1:(length(selectedProcess$numSpectra)-1) + 0.5) 
+label = selectedProcess$name[-length(Sample)]
 
 breakNames = c("Standards", "29.02", "11.03", "ozonation", "PFAS")
 s1 = max(diff(selectedProcess$meanDQSC))
@@ -167,39 +176,39 @@ s2 = max(diff(selectedProcess$numCentroids))
 delim = 10 * max(relativeSD / s2, DQSC_SD / s1)
 
 ggplot()+
-  geom_line(aes(xaxis, (diff(selectedProcess$meanDQSC))/s1, colour = "DQSC"), linewidth = 1, alpha = 0.8)+
-  geom_line(aes(xaxis, diff(selectedProcess$numCentroids)/s2, colour = "count"), linewidth = 0.85, alpha = 0.8)+
-#  geom_line(aes(xaxis, (diff(noBlanks$meanDQSB)), colour = "DQSB"), linewidth = 0.8)+
-#  geom_line(aes(xaxis, (diff(noBlanks$meanDQSF)), colour = "DQSF"), linewidth = 0.6)+
-  geom_vline(xintercept = seriesBreaks, linewidth = 0.6, linetype = "dashed", alpha = 0.5)+
+  geom_line(aes(Sample, (diff(selectedProcess$meanDQSC))/s1, group = "DQSC", colour = "DQSC"), linewidth = 1, alpha = 0.8)+
+  geom_line(aes(Sample, diff(selectedProcess$numCentroids)/s2, group = "Count", colour = "Count"), linewidth = 0.85, alpha = 0.8)+
+#  geom_line(aes(Sample, (diff(noBlanks$meanDQSB)), colour = "DQSB"), linewidth = 0.8)+
+#  geom_line(aes(Sample, (diff(noBlanks$meanDQSF)), colour = "DQSF"), linewidth = 0.6)+
+  geom_vline(xintercept = SeriesBreaks, linewidth = 0.6, linetype = "dashed", alpha = 0.5)+
   geom_hline(yintercept = c(delim, -delim), linewidth = 0.4, colour = "green3")+
-  geom_hline(yintercept = c(delim * 10, -delim * 10), linewidth = 0.4, colour = "red")
+  geom_hline(yintercept = c(delim * 10, -delim * 10), linewidth = 0.4, colour = "red")+
+  scale_x_discrete(labels = label, guide = guide_axis(angle = 60))+
+  xlab("Sample")+
+  ylab("Centroid Dissimilarity")
 
 ggplot(selectedProcess)+
-  geom_point(aes(row.names(selectedProcess), numBins_empty, colour = series, shape = "empty"))+
-  geom_point(aes(row.names(selectedProcess), numBins_one, colour = series, shape = "one"))+
-  geom_point(aes(row.names(selectedProcess), numBins_more, colour = series, shape = "more"))+
+  geom_point(aes(name, numBins_empty, colour = Series, shape = "empty"))+
+  geom_point(aes(name, numBins_one, colour = Series, shape = "one"))+
+  geom_point(aes(name, numBins_more, colour = Series, shape = "more"))+
   scale_x_discrete(guide = guide_axis(angle = 60))
 
-# ggplot(selectedProcess)+
-#   geom_point(aes(row.names(selectedProcess), numBins_empty * numBins_more, colour = series))+
-#   scale_x_discrete(guide = guide_axis(angle = 60))
 
 # absolute deviation from mean / sd of control?
-deviations = selectedProcess %>% group_by(series) %>% summarise(b1 = mean(numBins_one), b0 = mean(numBins_empty), b2 = mean(numBins_more), bAll = mean(numBins_more + numBins_one))
+deviations = selectedProcess %>% group_by(Series) %>% summarise(b1 = mean(numBins_one), b0 = mean(numBins_empty), b2 = mean(numBins_more), bAll = mean(numBins_more + numBins_one))
 display_b1 = 0
 display_b0 = 0
 display_b2 = 0
 display_bAll = 0
 for (i in 1:length(selectedProcess$numSpectra)) {
   # display_b1[i] = (selectedProcess$numBins_one[i] - deviations$b1[
-  #   which(deviations$series == selectedProcess$series[i])])
+  #   which(deviations$Series == selectedProcess$Series[i])])
   display_b0[i] = (selectedProcess$numBins_empty[i] - deviations$b0[
-    which(deviations$series == selectedProcess$series[i])])
+    which(deviations$Series == selectedProcess$Series[i])])
   # display_b2[i] = (selectedProcess$numBins_more[i] - deviations$b2[
-  #   which(deviations$series == selectedProcess$series[i])])
+  #   which(deviations$Series == selectedProcess$Series[i])])
   display_bAll[i] = (selectedProcess$numBins_more[i] + selectedProcess$numBins_one[i] - deviations$bAll[
-    which(deviations$series == selectedProcess$series[i])])
+    which(deviations$Series == selectedProcess$Series[i])])
 }
 display_devs = data.frame(min = 1:length(display_b0), max = 1:length(display_b0), mean = 1:length(display_b0))
 for (i in 1:length(display_b0)) {
@@ -209,47 +218,29 @@ for (i in 1:length(display_b0)) {
 }
 
 
-# ggplot(selectedProcess)+
-  # geom_point(aes(row.names(selectedProcess), display_b1 / sd_bin1, colour = series, shape = "One"))+
-  # geom_point(aes(row.names(selectedProcess), display_b2 / sd_bin2, colour = series, shape = "Multiple"))+
-  # geom_point(aes(row.names(selectedProcess), display_b0 / sd_bin0, colour = series, shape = "None"))+
-  # geom_point(aes(row.names(selectedProcess), display_bAll / sd_binAll, colour = series, shape = "All"))+
-  # scale_x_discrete(guide = guide_axis(angle = 60))
 
 # Observation: the three points are very similar for the triplicate blank
 ggplot(selectedProcess)+
-  geom_linerange(aes(row.names(selectedProcess), 
-                     ymin = display_devs$min, ymax = display_devs$max, colour = series),
+  geom_linerange(aes(name[1:length(numSpectra)], 
+                     ymin = display_devs$min, ymax = display_devs$max, colour = Series),
                  linewidth = 1.4)+
-  scale_x_discrete(guide = guide_axis(angle = 60))
+  scale_x_discrete(guide = guide_axis(angle = 60))+
+  xlab("Sample")+
+  ylab("Bin Deviation")
+   
 
-# ggplot(selectedProcess)+
-#   geom_point(aes(row.names(selectedProcess), numFeatures/(numBins_one + numBins_more), colour = series))+
-#   scale_x_discrete(guide = guide_axis(angle = 60))
-# 
-# ggplot(selectedProcess)+
-#   geom_point(aes(row.names(selectedProcess), numBins_empty/(numBins_one + numBins_more), colour = series))+
-#   scale_x_discrete(guide = guide_axis(angle = 60))
+threesigma = 3 * sd(selectedProcess$numFeatures[(length(selectedProcess$numFeatures) - 9):length(selectedProcess$numFeatures)])
 
-# less noise -> high data quality?
-ggplot(selectedProcess)+ # no clear differentiation
-  geom_point(aes(row.names(selectedProcess), numBins_more/(numBins_one), colour = series))+
-  scale_x_discrete(guide = guide_axis(angle = 60))
+meanlines = selectedProcess %>% group_by(Series) %>% summarise(mean = mean(numFeatures))
 
-# ggplot(selectedProcess)+
-#   geom_point(aes(row.names(selectedProcess), numBins_empty/(numCentroids), colour = series))+
-#   scale_x_discrete(guide = guide_axis(angle = 60))
-# 
-# ggplot(selectedProcess)+
-#   geom_point(aes(row.names(selectedProcess), (numBins_more + numBins_one)/numFeatures, colour = series))+
-#   scale_x_discrete(guide = guide_axis(angle = 60))
+ggplot(selectedProcess)+ 
+  geom_point(aes(name, numFeatures, colour = Series))+
+  geom_errorbar(aes(name, ymin = numFeatures - threesigma, ymax = numFeatures + threesigma, colour = Series))+
+  geom_hline(yintercept = meanlines$mean)+
+  scale_x_discrete(guide = guide_axis(angle = 60))+
+  xlab("Sample")+
+  ylab("Feature Count")
 
-# ggplot(selectedProcess)+ # removed - no useful information and not a sensible relation
-#   geom_point(aes(row.names(selectedProcess), (numBins_empty)/numFeatures, colour = series))+
-#   scale_x_discrete(guide = guide_axis(angle = 60))
 
-# ggplot(selectedProcess)+
-#   geom_point(aes(x = 1:91, y = diff(numCentroids/(numBins_empty + numBins_one + numBins_more)), colour = series))+
-#   scale_x_discrete(guide = guide_axis(angle = 60))
 ```
 
