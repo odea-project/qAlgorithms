@@ -942,7 +942,7 @@ int main(int argc, char *argv[])
                     }
                 }
             }
-            std::cout << testsPassedTotal << ", " << testsPassedPeak << ", " << testsFailedPeak << ", " << peaks.size() - testsPassedTotal << "\n";
+            // std::cout << testsPassedTotal << ", " << testsPassedPeak << ", " << testsFailedPeak << ", " << peaks.size() - testsPassedTotal << "\n";
 
             if (verboseProgress)
             {

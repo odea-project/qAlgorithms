@@ -1323,10 +1323,10 @@ namespace q
 
                 this->errorcode = selector;
 
-                if (selector == std::byte{0b00000000})
-                {
-                    std::cerr << "+";
-                }
+                // if (selector == std::byte{0b00000000})
+                // {
+                //     std::cerr << "+";
+                // }
 
                 return SummaryOutput{selector, binsize, meanMZ, medianMZ, stdevMZ, meanScan, meanDQS_base,
                                      meanDQS_scaled, worstCentroid, meanCenError};
