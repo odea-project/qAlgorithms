@@ -12,14 +12,14 @@ Report concluding the research practical by Daniel Höhn, supervised by Felix Dr
 - [Selected Process Statistics](#selected-process-statistics)
   - [Test Dataset](#test-dataset)
 - [Developed Tests](#developed-tests)
-- [Calculations not covered by qAlgorithms (remove?)](#calculations-not-covered-by-qalgorithms-remove)
+- [Calculations not covered by qAlgorithms](#calculations-not-covered-by-qalgorithms)
   - [Preformance criteria - Fourier Transform:](#preformance-criteria---fourier-transform)
   - [Performance criteria - File Conversion](#performance-criteria---file-conversion)
 - [Established methods for fault detection](#established-methods-for-fault-detection)
 - [Performance criteria - Centroiding:](#performance-criteria---centroiding)
   - [Centroid quality score (DQSC)](#centroid-quality-score-dqsc)
-  - [signal point retention](#signal-point-retention)
-  - [centroid count / density](#centroid-count--density)
+  - [Signal Point Retention](#signal-point-retention)
+  - [Centroid Count](#centroid-count)
 - [Performance criteria - Binning:](#performance-criteria---binning)
   - [Bin quality score (DQSB)](#bin-quality-score-dqsb)
   - [Bin property tests:](#bin-property-tests)
@@ -80,8 +80,15 @@ within the qAlgorithms data evaluation pipeline are collected for multiple
 different measurement series. The process is designed to be fully automated,
 requiring no user input during data processing.
 
+Three complimentary approaches, each covering one of centroiding, binning and 
+feature creation, were developed and tested using six different measurement
+series. The resulting graphs allowed a visual distinction between different
+groups of data, as well as the identification of potential outliers within
+groups. These methods can be used for (limited) applications where the question
+of broad sample similarity arises and demonstrate the utility of the 
+chosen process statistics.
+
 # Abbreviations and definitions:
-[@todo] remove irrelevant entries
 * NTS - Non-Target Screening
 * (HR)MS - (High Resolution) Mass Spectrometry 
 * m/z, mz - Mass to Charge Ratio
@@ -108,7 +115,7 @@ throughput to a number of measurements below the upper maximum
 dictated through the instrumentation and selected chromatographic
 method. Even if existing procedures need to be kept in place due
 to contractual obligations, automated classification could select
-the most relevant measurement from a series of technical replicates.
+the most relevant or representative measurement from a series of technical replicates.
 
 Another point of application is the stability of a pooled sample
 over the course of very long measurement series. Here, an easy way
@@ -229,9 +236,7 @@ be validated using a representative sample of errors in the analysis
 process.
 Current techniques to this end rely on a large amount and variety
 of standard substances, which can then be described in terms
-of recovery and mass accuracy. Internal standards always come with
-the problem of only covering a limited region of the dataset and 
-potentially masking similar compounds at low intensities.
+of recovery and mass accuracy of internal standards. 
 [https://www.sciencedirect.com/science/article/pii/S0165993621000236]
 Caballero-Casero et Al. proposed guidelines on analytical
 performance reporting in the context of human metabolomics.
@@ -240,17 +245,24 @@ accuracy, stability and representativeness. All five largely
 depend on internal standards, with the excpection of stability, which
 also proposes consistency in the number of features as an addition 
 to the recovery of internal standards.
-The authors propose hard limit values for these, 
+The authors propose hard limit values for these, based on parameters
+reported by questioned labs. These parameters 
 In addition, internal standards never achieve full coverage
 of a given chemical space in terms of retention time, mass
 or ionisation behaviour. This limits the general applicability
 of quality control by means of (exclusively) internal standards.
+If very high amounts of standards are used in high concentrations
+to facilitate high recovery, this also has the potential to mask
+relevant trace compounds with similar behaviour.
 
 # Selected Process Statistics
 For the purposes of this analysis, characterisitic properties of
 the qAlgorithms process were selected. These parameters are supposed
 to cover the entire runtime of the algorithm and be significantly
-different between different datasets.
+different between different datasets. An advantage of only considering
+process statistics is that the amount of data to be considered
+is massively reduced, which in turn removes limits imposed by data storage
+and transportation for almost all applications.
 
 When assessing the entire process from profile-mode spectra to 
 the final feature list, it is important to find parameters that 
@@ -342,7 +354,7 @@ itself are possible. These factors reduce the viability of qAlgorithms
 itself for controlling process quality variables. Since it could
 be shown that the DQSF correlates with reproducibility [qPeaks],
 The DQSF could function as an indicator for a process variable
-not providing correct information should features with very high
+not providing correct information should features with very data quality
 scores contribute significantly to a very low process score.
 
 To resolve this issue, two datasets - one for a case with no errors,
@@ -353,17 +365,26 @@ that this dataset and similar ones are fully free of data which would
 cause issues during processing with qAlgorithms. As such, any test that would
 identify one of the ten measurements as defective is considered to be 
 unreliable.
-[@todo] recovery of standards
-As a positive control, data from an UV degradation experiment was used.
+
+As a positive control, data from a UV degradation experiment was used.
 During the measurement, the column pressure was highly unstable.
 It is assumed that the individual measurements are both highly inconsistent
 for replicates and generally contain bad peak assignments due to
 the elution profile no longer being gaussian. A test which identifies
 these measurements as defective is considered to be viable.
 
+The mean DQSF values for the positive control average around 0.71,
+while those for the standard solution average 0.73. With one exception,
+the negative control measurements have the lowest DQSFs present in the
+dataset. The four highest DQSFs in the test data belong to blank measurements
+from two different series.
+
 # Developed Tests
 
-# Calculations not covered by qAlgorithms (remove?)
+# Calculations not covered by qAlgorithms 
+// Diesen Abschnitt entfernen / kürzen? Ich halte es zwar für sinnvoll,
+// auf die Schritte hinzuweisen, die wir nicht abdecken, bin mir mit der
+// Umsetzung hier aber nicht sicher
 
 ## Preformance criteria - Fourier Transform:
 The fourier transform employed in FT-ICR and Orbitrap type mass
@@ -390,6 +411,11 @@ detected when using the vendor supplied instrument software for
 visual inspection of the mass spectra.
 
 # Established methods for fault detection
+
+// hier hab ich überlegt, ein Review-Paper für Data-Driven
+// Fehlerdetektion  zu benutzen - findest du das zu weit hergeholt?
+// https://ieeexplore.ieee.org/document/6423903
+
 process monitoring
  SECTION IV.
 Signal-Based Data-Driven FDD
@@ -398,7 +424,9 @@ broader category of signal-based data driven fault detection.
 
 # Performance criteria - Centroiding:
 It should be noted that not all approaches to mass spectrometric
-data processing necesarily utilise centroiding of the raw spectra. @todo MCR approach
+data processing necesarily utilise centroiding of the raw spectra.
+For these cases, measures of process quality are unlikely to be comparable 
+to those presented here.
 To differentiate between the data at different steps of processing,
 a group of m/z value, retention time and intensity before any processing
 has taken place is referred to as "signal point".
@@ -413,17 +441,21 @@ lost during the following steps towards componentisation.
 ## Centroid quality score (DQSC)
 The DQSC currently implemented through the qAlgorithms workflow
 gives the percentage to which any given centroid conforms to the
-expected gaussian shape. [@todo paper] 
+expected gaussian shape. This correlates with the reliability
+of the  [@todo paper] 
 The following test utilising the DQSC was considered:
     For every measurement, the mean DQSC and the mean DQSCs of
     upper and lower quartile were calculated with the compared 
-    criteria being the relative change between the three.
-    This test was discarded because the difference between
-    six samples of a DoE measurement series was less than 0.005
-    in every category. The same observation was made when testing
-    blank, standard and samples of a different measurement run.
+    criteria being the mean relative change between the three.
+    This test was discarded because the measure of difference was
+    smaller than 50% of the standard deviation of the DQSC for
+    all samples of the negative control series.
 
-## signal point retention
+## Signal Point Retention
+
+// Ich bin mir hier nicht sicher, wie sinnvoll ein entsprechender 
+// Parameter tatsächlich ist. Müsste man wahrscheinlich ausprobieren.
+
 Another perspective on process quality is the unifomity of intermediate
 results when comparing replicates or time series that should be 
 consistent, for example drinking water. In these cases, under 
@@ -433,8 +465,20 @@ One such process parameters that can be obtained is the percentage
 of signal points that are included in centroids, for every mass
 spectrum in a measurement.
 
+This parameter is not yet implemented in qAlgorithms at the time
+of writing, while further questions as to the concrete implementation
+remain. Notably, points at the edges of the observed mass region are
+generally less relevant to the dataset, and the first few scans
+encompass the void time of the chromatography. 
+Since development of the centroiding algorithm is not fully completed,
+future changes stand to enable this and similar measures with a more
+represenatative coverage of the dataset than currently possible.
 
-## centroid count / density
+## Centroid Count 
+
+// Ich hab eine ähnliche Argumentation für die Menge an Features in
+// einem Paper gelesen, halte das aber im Rückblick nicht für zwangsweise sinnvoll.
+
 It is assumed that generally, more initial signals equal a lower chance
 of false negatives. As such, the amount of centroids produced - irrespective
 of the DQSC - is also a measure of process quality during centroiding.
@@ -613,8 +657,9 @@ The few features of extremely high quality lose impact, whereas a more
 selective subset of peaks loses its validity concerning the entire 
 dataset. While the mean DQSF is used for sum parameter characterisation
 of a dataset, it is not used as the foundation for a test regarding
-consistency or anything else. It is assumed that a relevant difference
-in DQSF would be noticeably more strongly through the other observed peak properties.
+consistency or anything else. Based on preliminary tests it is assumed 
+that a relevant difference in DQSF does not provide information not 
+covered by any of the other presented tests.
 
 ## Validity of the Identified Peaks
 During development, it was found that some generated peaks will not
@@ -656,6 +701,8 @@ Corrective measures will have to differentiate between both cases.
 
 # Development of Consistency Parameters from Process Statistics
 
+// Ich habe hier nur Bilder für Aquaflow und die 
+// Positivkontrolle (PC) im Verzeichnis hinterlegt.
 
 ## Consistency of the Centroiding Algorithm
 
@@ -665,18 +712,9 @@ measurement series. Two different series of similar samples which were
 measured one month apart had very similar DQSCs, barring one exception.
 DQSB and DQSF showed a similar jump in difference, but tend to have a higher 
 base fluctuation in the used datasets.
-In the tested data, the first measurement of the continued series had 
+In the tested data, the last measurement of the continued series had 
 abnormally many spectra recorded. This lead to two noticeable changes
-in DQSC (refer image). To use the DQSC as a consistency parameter, the
-display algorithm would have to account for such outliers and add an
-explanation for the operator to the marked region. The threshold for an
-out-of-control situation should be dynamically generated out of the 
-dataset. The greatest observed difference was 0.0017, which is ca. 2.5
-times geater than the mean fluctuation. The standard deviation within
-an outlier-free measurement series is 0.00036. The established three-sigma
-interval for denoting outliers would be applcable to this use case,
-and it is worth considering as the least sensitive stability measure
-for a running system.
+in DQSC (refer image aquaflow). 
 
 Similar effects can be observed when viewing the differences between
 the total number of centroids per measurement. To display both graphs together,
@@ -698,7 +736,19 @@ In a real application, normalisation is not necessary.
 The solution chosen for confidence limits uses a separately recorded
 series of ten technical replicates. Their similarity is confirmed via
 PCA before asserting them as the best-case scenario for a given set
-of instrument conditions. 
+of instrument conditions. In the shown series, this reference data
+is included as a separate series using the naming SP_DDA... and
+separated using a dashed black line.
+The warning limit is set to ten times the greatest relative standard
+deviation of the control series regarding scaled DQSC and centroid count,
+the exception limit to twenty times that.
+The exception limit was chosen such that the difference between different
+measurement series always surpassed this value with at least one of
+the two differences, while the warning limit was set to 50% of that.
+The warning limit does not serve a clear purpose in its current implementation,
+since all known outliers massively exceeded the exception limit. For
+a better value, a measurement displaying relevant drift in this parameter is
+required for a heuristic estimation of sensible limits.
 
 The combined view shows a change in both parameters if the series changes,
 both being largely constant within the group of known good measurements.
@@ -707,10 +757,23 @@ the centroid count. Within a series, some cases exist where only one of the
 two experiences a major shift. Neither of the two has a consistently higher 
 noise level. Black, dashed lines denote the border between two series.
 At these points, it is expected to see a major shift in both score and
-count once.
+count once. This combination exists primarily to reduce the number of
+images which constitute the final assessment and is not required for
+an automated evaluation.
 
 For an eventual user-facing implementation, blanks could be removed 
-when displaying the differences in count and score.
+when displaying the differences in count and score. Additionally, the
+display algorithm should account for outliers and add an explanation for 
+the operator to the relevant region. This could also be realised by two 
+independent tests for consistency on mean DQSC and centroid count.
+
+For the positive control, this visualisation is made hard to evaluate
+visually due to the very large change in centroid count to the 
+replicates. For better visibility, these are not included in the graph. (centroid_test_PC)
+Despite one point over the warning limit and two others visibly
+different from 0, with the current configuration it is not obvious
+that this data 
+
 
 ## Consistency of the Binning algorithm
 
@@ -811,8 +874,14 @@ which is present in a series of technical replicates. For the present
 measures of difference, one singular decision parameter is difficult to
 construct. 
 
-The aquaflow data 
-Issue: heavy distortion of mean due to massive outlier
+One issue with taking the mean as a baseline is heavy distortion through
+large outliers. A more robust measure, like the median, has the potential
+to introduce a bias when two separate groups exist in the data. Both cases
+are fulfilled for the aquaflow dataset (feature_test_aquaflow), where one 
+outlier distorts the mean and the not recognised groups of control and 
+treatment. Here, a possible solution is to remove a detected outlier from 
+the mean and repeat the process until only non-outliers remain. Such an
+approach requires limits to the amount of points that can be discarded
 
 # Error traceability
 An important part of communicating an error to the operator is to
@@ -987,6 +1056,9 @@ qAlgorithms is written in base C++ 20, using only standard library functions[@IS
 For reading in files, the StreamCraft library is used[https://github.com/odea-project/StreamCraft].
 It was compiled with gcc 13.2.0[@freesoftwarefoundationinc.UsingGNUCompiler1988] 
 and cmake 3.29.6[@todo].
+
+The scripts used to generate the presented images and associatedcalculations 
+are availvable on the [qAlgorithms github](https://github.com/odea-project/qAlgorithms/tree/qBinning_beta/test)
 
 ## Data
 1) UV degredation of ibuprofen with peracetic acid:

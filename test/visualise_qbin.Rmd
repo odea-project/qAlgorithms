@@ -157,16 +157,16 @@ sd_binAll = sd(allProcessed$numBins_more[120:129] + allProcessed$numBins_one[120
 
 ```{r images}
 selectedProcess = 
-  allProcessed[c(1:44, 120:129), ] # aquaflow
+  # allProcessed[c(1:44, 120:129), ] # aquaflow
   # allProcessed[c(108:129), ]# SFC-DoE
-  # allProcessed[c(93:107, 120:129), ] # pump error
+  allProcessed[c(93:107, 120:129), ] # pump error
   # allProcessed[c(45:75, 120:129), ] # kali ozonation
   # allProcessed[c(76:92, 120:129), ] # pfas
 SeriesBreaks = (selectedProcess$Series[-1] != selectedProcess$Series[-length(selectedProcess$Series)])
 SeriesBreaks = which(SeriesBreaks) + 0.5
 
 
-Sample = as.factor(1:(length(selectedProcess$numSpectra)-1) + 0.5) 
+Sample = as.factor(1:(length(selectedProcess$numSpectra)-1)) 
 label = selectedProcess$name[-length(Sample)]
 
 breakNames = c("Standards", "29.02", "11.03", "ozonation", "PFAS")
@@ -182,7 +182,7 @@ ggplot()+
 #  geom_line(aes(Sample, (diff(noBlanks$meanDQSF)), colour = "DQSF"), linewidth = 0.6)+
   geom_vline(xintercept = SeriesBreaks, linewidth = 0.6, linetype = "dashed", alpha = 0.5)+
   geom_hline(yintercept = c(delim, -delim), linewidth = 0.4, colour = "green3")+
-  geom_hline(yintercept = c(delim * 10, -delim * 10), linewidth = 0.4, colour = "red")+
+  geom_hline(yintercept = c(delim * 2, -delim * 2), linewidth = 0.4, colour = "red")+
   scale_x_discrete(labels = label, guide = guide_axis(angle = 60))+
   xlab("Sample")+
   ylab("Centroid Dissimilarity")
@@ -240,6 +240,10 @@ ggplot(selectedProcess)+
   scale_x_discrete(guide = guide_axis(angle = 60))+
   xlab("Sample")+
   ylab("Feature Count")
+
+ggplot(selectedProcess)+
+  geom_point(aes(name, meanDQSF))
+
 
 
 ```
