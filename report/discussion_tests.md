@@ -3,32 +3,31 @@ process quality in LC-HRMS nontarget measurement series as part of the qAlgorith
 -----------------------------------------------------------------------------------------------
 Report concluding the research practical by Daniel Höhn, supervised by Felix Drees and Gerrit Renner <!-- omit in toc -->
 
-- [Change structure to:](#change-structure-to)
 - [Abstract](#abstract)
-- [Abbreviations and definitions:](#abbreviations-and-definitions)
-- [Process quality estimators](#process-quality-estimators)
-  - [Differentiating process quality from result quality](#differentiating-process-quality-from-result-quality)
-  - [Measuring process quality](#measuring-process-quality)
+- [Abbreviations and Definitions:](#abbreviations-and-definitions)
+- [Process Quality Estimators](#process-quality-estimators)
+  - [Differentiating Process Quality from Result Quality](#differentiating-process-quality-from-result-quality)
+  - [Measuring Process Quality](#measuring-process-quality)
 - [Selected Process Statistics](#selected-process-statistics)
   - [Test Dataset](#test-dataset)
 - [Developed Tests](#developed-tests)
-- [Calculations not covered by qAlgorithms](#calculations-not-covered-by-qalgorithms)
-  - [Preformance criteria - Fourier Transform:](#preformance-criteria---fourier-transform)
-  - [Performance criteria - File Conversion](#performance-criteria---file-conversion)
-- [Established methods for fault detection](#established-methods-for-fault-detection)
-- [Performance criteria - Centroiding:](#performance-criteria---centroiding)
-  - [Centroid quality score (DQSC)](#centroid-quality-score-dqsc)
+- [Calculations not Covered by qAlgorithms](#calculations-not-covered-by-qalgorithms)
+  - [Preformance Criteria - Fourier Transform:](#preformance-criteria---fourier-transform)
+  - [Performance Criteria - File Conversion](#performance-criteria---file-conversion)
+- [Established Methods for Fault Detection](#established-methods-for-fault-detection)
+- [Performance Criteria - Centroiding:](#performance-criteria---centroiding)
+  - [Centroid Quality Score (DQSC)](#centroid-quality-score-dqsc)
   - [Signal Point Retention](#signal-point-retention)
   - [Centroid Count](#centroid-count)
-- [Performance criteria - Binning:](#performance-criteria---binning)
-  - [Bin quality score (DQSB)](#bin-quality-score-dqsb)
-  - [Bin property tests:](#bin-property-tests)
-    - [Two or more centroids of the same scan](#two-or-more-centroids-of-the-same-scan)
-    - [Unbinned points within the critical distance](#unbinned-points-within-the-critical-distance)
-    - [Signs of a halved peak](#signs-of-a-halved-peak)
-    - [Drastic mass shifts](#drastic-mass-shifts)
-    - [Asymmetric distribution of mz](#asymmetric-distribution-of-mz)
-    - [Maximum intensity at edge of bin](#maximum-intensity-at-edge-of-bin)
+- [Performance Criteria - Binning:](#performance-criteria---binning)
+  - [Bin Quality Score (DQSB)](#bin-quality-score-dqsb)
+  - [Bin Property Tests:](#bin-property-tests)
+    - [Two or More Centroids of the Same Scan](#two-or-more-centroids-of-the-same-scan)
+    - [Unbinned Points Within the Critical Distance](#unbinned-points-within-the-critical-distance)
+    - [Signs of a Halved Peak](#signs-of-a-halved-peak)
+    - [Drastic Mass Shifts](#drastic-mass-shifts)
+    - [Asymmetric Distribution of MZ](#asymmetric-distribution-of-mz)
+    - [Maximum Intensity at Edge of Bin](#maximum-intensity-at-edge-of-bin)
   - [Discarded Criteria:](#discarded-criteria)
     - [At Least Two Possible Maxima in Intensity](#at-least-two-possible-maxima-in-intensity)
     - [Point Within Maxdist but not Within Maxdist + 1](#point-within-maxdist-but-not-within-maxdist--1)
@@ -53,11 +52,6 @@ Report concluding the research practical by Daniel Höhn, supervised by Felix Dr
   - [Software](#software)
   - [Data](#data)
 - [References](#references)
-# Change structure to:
-- problem
-- selected process parameters
-- suggested stability tests
-- test validaton with different data
 
 # Abstract
 One important property of nontarget measurements is the comparability of different
@@ -85,10 +79,12 @@ feature creation, were developed and tested using six different measurement
 series. The resulting graphs allowed a visual distinction between different
 groups of data, as well as the identification of potential outliers within
 groups. These methods can be used for (limited) applications where the question
-of broad sample similarity arises and demonstrate the utility of the 
-chosen process statistics.
+of broad sample similarity arises and demonstrate the general utility of the 
+chosen process statistics. This puts a future research focus on deriving
+insights from high-resolution mass spectra that is not related to specific
+features or components, but rather their distribution and relations.
 
-# Abbreviations and definitions:
+# Abbreviations and Definitions:
 * NTS - Non-Target Screening
 * (HR)MS - (High Resolution) Mass Spectrometry 
 * m/z, mz - Mass to Charge Ratio
@@ -101,7 +97,7 @@ chosen process statistics.
 * PCA - Principal Component Analysis
 [@todo] move all definitions for within the workflow here
 
-# Process quality estimators
+# Process Quality Estimators
 An emerging and highly relevant problem in the field of NTS is
 the fast and accurate estimation of total data quality or total
 measurement quality through an operator. Especially for routine 
@@ -122,7 +118,9 @@ over the course of very long measurement series. Here, an easy way
 of assessing the total stability while the instrument is still in 
 operation allows the operator to react quickly to urgent problems
 and gives limited insight into regions of the dataset not covered
-by the detailed stablility assessment. Similar problems arise when
+by a more detailed stablility assessment using internal standards or 
+the intensity of selected peaks chosen from a previously recorded
+measurement of the pooled sample. Similar problems arise when
 modifying the instrumentation while still requiring comparability
 with the previous series.
 
@@ -144,10 +142,10 @@ could be prevented by including an explicit descriptor that states
 the viability of the measurement and communicates a point up to
 which all data generated is reliable.
 Similarly, (final) output data should always be provided in a format that
-ist compatible with spreadsheet software like Microsoft Excel, or,
+is compatible with spreadsheet software like Microsoft Excel, or,
 for more complex data, some relevant subset which is human-readable. 
 
-## Differentiating process quality from result quality
+## Differentiating Process Quality from Result Quality
 Previous work by Schulze et. al. (https://doi.org/10.1016/j.trac.2020.116063) highlighted
 quality assurance as a core issue for nontargeted mass spectrometry and
 discussed different dimensions for quality during an analysis.
@@ -159,8 +157,8 @@ results after interpretation, with the processing parameters and (unspecified)
 statistical parameters being provided in addition. 
 Confidence is also understood as the confidence of a correct identification,
 not confidence in the peak being distinct from noise.
-Besides it being impractical to replicate
-without all raw data being provided and thus very unlikely for this vital control to take place during peer 
+Besides it being impractical to replicate without all raw data being provided 
+and thus very unlikely for this vital control to take place during peer 
 review, it is not possible to estimate the algorithmic performance 
 relating to result quality from just the algorithm settings on a per-sample 
 basis accurately during NTA.
@@ -229,7 +227,7 @@ Such insights are not limited to result certainty estimators,
 but can give concrete feedback regarding the effectiveness
 of a change in the process or the impact of a known disruption.
 
-## Measuring process quality
+## Measuring Process Quality
 Performance criteria must be robust, especially if further processing
 actions are taken based on them. As such, established tests must
 be validated using a representative sample of errors in the analysis
@@ -294,16 +292,26 @@ peak model, some noise tends to result in very low-intensity centroids
 with a very high score. Real signals have generally lower scores.
 Similarly, bins with a real peak tend to have worse scores than very
 small bins of data which does not contain a peak.
+The DQSF is the only score which makes a statement about result quality,
+since it serves as a measure of repeatability. [qPeaks]
 
-The different counts were selected due to them not being calculation
-intensive or dependent on mathematical transformations. The latter
+DQSC and DQSB were taken in full. An alternative would be to only consider
+the scores of those points that were included in a feature, since both exist
+as centroid-specific numbers at one point of the processing. This was 
+decided against to mitigate the impact potential unknown problems with 
+the processing would have on such a selection. A complimentary approach
+which only considers such "useable" data should also incorporate the
+as of now not implemented processes of componentisation and alignment.
+
+The different counts were selected since they are not calculation
+intensive or dependent on mathematical transformations to obtain. The latter
 was avoided due to the possibility of introducing additional uncertainty
 or some unknown bias into the parameters.
 
 The centroid count is taken for all centroids with at least five profile
 points. Depending on further additions to qAlgorithms, the count of 
-centroids which do not fulfill this criteria in isolation could also be
-considered.
+centroids which do not fulfill this criteria in isolation, but are still
+part of some regressions, could also be considered.
 
 The three different bin counts were selected with the reasoning that 
 many bins with no features are indicative of a noisy dataset and having
@@ -318,14 +326,18 @@ feature construction.
 All three count statistics were normalised to the number of scans within a 
 measurement to remain comparable between different measurement series.
 This number changes within the individual series, but only by small amounts.
+It could also be considered to remove those scans which are not share between
+datasets, provided a measure of analytical viablility on a 
+per-spectrum basis is established.
 
 ## Test Dataset
 
 The test dataset consists of eleven different groups from seven different
 measurement series, all recorded using an orbitrap mass spectrometer and
-electrospray ionisation, but differing chromatography. For further details,
+electrospray ionisation, but differing chromatography and ion source conditions. For further details,
 see [Software and Data](#software-and-data). Positive and negative mode 
-measurements of the same sample are considered two groups.
+measurements of the same sample are considered two groups, including 
+one series using polarity switching.
 
 The process statistics were controlled for normal distribution using a one-sided
 t-test with an alpha of 0.01. No parameter was normally distributed. This is
@@ -343,7 +355,17 @@ process performance. In both cases, the numbers of centroids, bins and features
 were highly correlating. In the positive case mean scores for bins and
 features correlated, which did not apply for negative measurements. For both,
 DQSC was roughly orthogonal to DQSF. When using only nine measurements from 
-the same series, the quality scores changed significantly.
+the same series, the relation and impact of the quality scores changed significantly.
+
+For further confirmation, one PCA containing all 119 processed samples was performed.
+In the combined view, the different counts correlate, while mean DQSB and DQSF
+roughly anticorrelate with the counts. the mean DQSC is orthogonal to both.
+Four separate groups can be observed for the pump error, all with large 
+distance in the dominant principal component. Similarly, one outlier can
+be observed for the aquaflow D2 series. The ten replicates used as negative
+control cluster very closely together.
+
+[@todo] add plotly interactive graph here
 
 Due to the lack of established quality parameters, a comparison
 with some "true" measure of quality is not possible. While the
@@ -381,21 +403,22 @@ from two different series.
 
 # Developed Tests
 
-# Calculations not covered by qAlgorithms 
+# Calculations not Covered by qAlgorithms 
 // Diesen Abschnitt entfernen / kürzen? Ich halte es zwar für sinnvoll,
 // auf die Schritte hinzuweisen, die wir nicht abdecken, bin mir mit der
 // Umsetzung hier aber nicht sicher
 
-## Preformance criteria - Fourier Transform:
+## Preformance Criteria - Fourier Transform:
 The fourier transform employed in FT-ICR and Orbitrap type mass
 spectrometers is not something the instrument operator has access to.
-With techniques like phase-constrained deconvolution [@todo paper]
-being possible, 
+With techniques like phase-constrained deconvolution [https://pubs.acs.org/doi/10.1021/acs.analchem.6b03636]
+being possible, the potential negative influence of processing performed
+in the instrument should be quantified and given with high granularity.
 Without vendor cooperation, it will not be possible to estimate 
-sensible quality criteria or to implement quality reporting
+sensible quality criteria or to implement means of quality reporting
 at this stage of the data processing.
 
-## Performance criteria - File Conversion
+## Performance Criteria - File Conversion
 Due to most instruments providing measurements in proprietary formants,
 they have to be converted using other software tools before processing.
 At this stage, there is the potential for floating-point imprecision
@@ -410,7 +433,7 @@ are additionally a potential source of user error. These cannot be
 detected when using the vendor supplied instrument software for
 visual inspection of the mass spectra.
 
-# Established methods for fault detection
+# Established Methods for Fault Detection
 
 // hier hab ich überlegt, ein Review-Paper für Data-Driven
 // Fehlerdetektion  zu benutzen - findest du das zu weit hergeholt?
@@ -422,7 +445,7 @@ Signal-Based Data-Driven FDD
 Established fault detection methods utilise practices that fall under the
 broader category of signal-based data driven fault detection.
 
-# Performance criteria - Centroiding:
+# Performance Criteria - Centroiding:
 It should be noted that not all approaches to mass spectrometric
 data processing necesarily utilise centroiding of the raw spectra.
 For these cases, measures of process quality are unlikely to be comparable 
@@ -438,11 +461,11 @@ A traditional estimation of false positive or false negatives is
 not possible at this step, since any per-signal point information is 
 lost during the following steps towards componentisation.
 
-## Centroid quality score (DQSC)
+## Centroid Quality Score (DQSC)
 The DQSC currently implemented through the qAlgorithms workflow
 gives the percentage to which any given centroid conforms to the
 expected gaussian shape. This correlates with the reliability
-of the  [@todo paper] 
+of the generated centroid. [qCentroids] 
 The following test utilising the DQSC was considered:
     For every measurement, the mean DQSC and the mean DQSCs of
     upper and lower quartile were calculated with the compared 
@@ -483,9 +506,9 @@ It is assumed that generally, more initial signals equal a lower chance
 of false negatives. As such, the amount of centroids produced - irrespective
 of the DQSC - is also a measure of process quality during centroiding.
 
-# Performance criteria - Binning:
+# Performance Criteria - Binning:
 
-## Bin quality score (DQSB)
+## Bin Quality Score (DQSB)
 The DQSB in its current implementation [@todo] (paper binning, report 1) gives a measure of how well separated
 a bin is from its environment by comparing the distances within a bin with
 the distance to the closest point outside of it. In its original conception,
@@ -496,7 +519,7 @@ to calculate the mean in-group differences in mz. This change led to, on
 average, slightly lower scores. Furthermore, scaling was introduced for 
 the outer distance. (see [here](#dqsb-calculation))
 
-## Bin property tests:
+## Bin Property Tests:
 In addition to the quality score, multiple property tests are performed on 
 each bin. These serve the purpose of descibing commonly observed patterns
 during binning that often occur in distorted bins. These secondary tests
@@ -521,14 +544,14 @@ As of now, the found peaks do not stem from any bins that did not trigger
 any test during binning. The additional criteria are not considered to
 carry any degree of certainty for that reason.
 
-### Two or more centroids of the same scan
+### Two or More Centroids of the Same Scan
 This test is necessary because the peakfinder cannot utilise more than one 
 centroid per scan. All bins where this applies are marked. Before finding
 peaks, only the centroid with the highest DQSC is retained. For most 
 datasets, the rate of bins with duplicates is below 0.1%, with many
 affected bins being ones that contain a hundred or more centroids.
 
-### Unbinned points within the critical distance 
+### Unbinned Points Within the Critical Distance 
 During binning, sometimes points are not included in a bin
 despite - taken in isolation - fulfilling the criteria for
 inclusion. However, they cannot be part of the bin without 
@@ -543,7 +566,7 @@ This test is used in conjunction with the next to
 combine two bins which show signs of being split in
 the middle of a peak.
 
-### Signs of a halved peak
+### Signs of a Halved Peak
 If a peak shows a uniform monotonous rise in intensities,
 which is defined as at least every other centroid having 
 a higher intensity than the previously highest intensity,
@@ -572,20 +595,20 @@ region and the merge has no effect or, in the worst case, the mass
 of a correct peak is slightly distorted by including some 
 otherwise avoidable noise.
 
-### Drastic mass shifts
+### Drastic Mass Shifts
 A bin is considered to undergo a drastic mass shift if median and
 mean in mz are more than two times the mean centroid error apart.
 Bins display this behaviour if at the end of a bin, few points 
 undergo a drastic increase or decrease in mz.
 This test is not used for corrective action.
 
-### Asymmetric distribution of mz
+### Asymmetric Distribution of MZ
 Assuming a normal distribution, 80% of points should be within the
 1.3 sigma interval. 80% were chosen as the limit so that one point
 of deviation is still within tolerance for bins of size 5.
 This test is not used for corrective action.
 
-### Maximum intensity at edge of bin
+### Maximum Intensity at Edge of Bin
 If the highest intensity in a bin is at the first or last centroid of
 the bin, it can not be the apex of an interpolated peak. This goes
 against the model behaviour of a correct bin.
@@ -772,8 +795,23 @@ visually due to the very large change in centroid count to the
 replicates. For better visibility, these are not included in the graph. (centroid_test_PC)
 Despite one point over the warning limit and two others visibly
 different from 0, with the current configuration it is not obvious
-that this data 
+that this data is not sensible to consider for further analysis.
 
+In the Aquaflow data, the previously known outlier can be identified by a 
+large change in both parameters. The three blank measurements also
+exceed the exception limit. While the centroid count stays largely 
+constant, the DQSC varies enough to surpass the warning limit for
+cases in which differing sampling points are next to each other.
+
+The SFC data shows much stronger deviation than the control series.
+The change from positive to negative data causes the centroid count to
+go over the exception limit, but not the DQSC. This behaviour is expected,
+since the different points have differing settings for the ion source.
+
+In the calibration series, negative measurements are more similar than 
+positive ones. The change from positive to negative mode causes both 
+parameters to exceed the exception limit. One possible outlier exists,
+although it is not detected through one of the other tests.
 
 ## Consistency of the Binning algorithm
 
@@ -950,6 +988,10 @@ on the entirety of the data but only a relatively recent subset.
 Similarly, if a change to the instrumentation is made, there needs to
 be a user friendly way to exclude previous measurements from indfluencining
 the baseline of new measurements.
+
+For some possible outliers, only one of the three tests resulted in a
+detection. Here, it is necessary to establish concrete decision parameters
+for when to consider such a measurement an outlier.
 
 # Planned Expansions to qAlgorithms
 Data visualisation is currently (19.08.2024) not implemented for qAlgorithms.
