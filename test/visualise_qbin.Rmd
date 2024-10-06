@@ -95,8 +95,6 @@ allProcessed = read.csv("../log_qBinning_beta.csv", comment.char = "#")
 allProcessed = as.data.frame(allProcessed[,2:(length(allProcessed[1,]))], row.names = allProcessed[,1])
 # normalise errors of peakfinding to number of features
 allProcessed$badFeatures = allProcessed$badFeatures / allProcessed$numFeatures
-allProcessed$impossibleRegs = allProcessed$impossibleRegs / allProcessed$numFeatures
-
 
 allProcessed$polarity = str_ends(row.names(allProcessed), "positive")
 allProcessed$year = str_extract(row.names(allProcessed) , "^......")
@@ -159,8 +157,8 @@ sd_binAll = sd(allProcessed$numBins_more[120:129] + allProcessed$numBins_one[120
 selectedProcess = 
   # allProcessed[c(1:44, 120:129), ] # aquaflow
   # allProcessed[c(108:129), ]# SFC-DoE
-  # allProcessed[c(93:107, 120:129), ] # pump error
-  allProcessed[c(45:75, 120:129), ] # kali ozonation
+  allProcessed[c(93:107, 120:129), ] # pump error
+  # allProcessed[c(45:75, 120:129), ] # kali ozonation
   # allProcessed[c(76:92, 120:129), ] # pfas
 SeriesBreaks = (selectedProcess$Series[-1] != selectedProcess$Series[-length(selectedProcess$Series)])
 SeriesBreaks = which(SeriesBreaks) + 0.5

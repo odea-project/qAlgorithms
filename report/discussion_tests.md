@@ -260,7 +260,9 @@ to cover the entire runtime of the algorithm and be significantly
 different between different datasets. An advantage of only considering
 process statistics is that the amount of data to be considered
 is massively reduced, which in turn removes limits imposed by data storage
-and transportation for almost all applications.
+and transportation for almost all applications. Furthermore, if meaningful
+information can be derived from such broad measures, this could sidestep
+the restrictions imposed on sharing data by industry and government.
 
 When assessing the entire process from profile-mode spectra to 
 the final feature list, it is important to find parameters that 
@@ -356,8 +358,10 @@ were highly correlating. In the positive case mean scores for bins and
 features correlated, which did not apply for negative measurements. For both,
 DQSC was roughly orthogonal to DQSF. When using only nine measurements from 
 the same series, the relation and impact of the quality scores changed significantly.
+One GC-HRMS dataset was also processed, but not included in the test dataset due to 
+being too different from the LC-HRMS data and distorting the PCA. 
 
-For further confirmation, one PCA containing all 119 processed samples was performed.
+For further confirmation, one PCA containing all 129 processed samples was performed.
 In the combined view, the different counts correlate, while mean DQSB and DQSF
 roughly anticorrelate with the counts. the mean DQSC is orthogonal to both.
 Four separate groups can be observed for the pump error, all with large 
@@ -684,6 +688,15 @@ consistency or anything else. Based on preliminary tests it is assumed
 that a relevant difference in DQSF does not provide information not 
 covered by any of the other presented tests.
 
+## Replicate Features
+While not implemented at this point in time, the number of times
+a feature is found in a set of technical replicates is also of 
+interest for evaluating process quality. If process statistics 
+can be shown to correlate with high replicability, this provides both
+further insight into the importance different processing steps have
+and a way to optimise instrument conditions towards good data
+while reducing the measurements performed to this end.
+
 ## Validity of the Identified Peaks
 During development, it was found that some generated peaks will not
 fulfill the condition of being part of only one mass trace. Around two
@@ -993,8 +1006,16 @@ For some possible outliers, only one of the three tests resulted in a
 detection. Here, it is necessary to establish concrete decision parameters
 for when to consider such a measurement an outlier.
 
+All process parameters were taken as means. This is probably not the best
+possible approach to characterise the general structure of a dataset, since
+it ignores the way these parameters exist in relation to the three 
+dimensions mz, RT and intensity. The development of a relational model
+mapping these to the selected process variables and offering a more precise
+comparison between datasets was out of scope for the present work.
+[@todo] studies with a modeling approach?
+
 # Planned Expansions to qAlgorithms
-Data visualisation is currently (19.08.2024) not implemented for qAlgorithms.
+Data visualisation is currently (04.10.2024) not implemented for qAlgorithms.
 Furthermore, it does not have an internal representation of measurement 
 series. This results in the user having to invest additional time to create 
 such control charts and manually select which files to include.
@@ -1087,6 +1108,15 @@ outliers for the measurements that were tested, with the exception of the
 aquaflow data. Here, the problem was grouping multiple different samples
 together, which is not a problem with the intended use case.
 
+The main advantages of process parameters as used here are a massive reduction
+in the data, both in terms of size and complexity, as well as the ability
+to compare two or more datasets without depending on the produced feature lists.
+In consequence, data sharing is radically simplified and the processing time
+for large datasets drastically reduced. Since basic functionality could be 
+demonstrated, further work focusing on deriving measurement-specific information
+on, for example, suspected representativeness regarding the sample, is a promising 
+direction for the qAlgorithms project to take.
+
 
 # Software and Data
 ## Software
@@ -1099,8 +1129,8 @@ For reading in files, the StreamCraft library is used[https://github.com/odea-pr
 It was compiled with gcc 13.2.0[@freesoftwarefoundationinc.UsingGNUCompiler1988] 
 and cmake 3.29.6[@todo].
 
-The scripts used to generate the presented images and associatedcalculations 
-are availvable on the [qAlgorithms github](https://github.com/odea-project/qAlgorithms/tree/qBinning_beta/test)
+The scripts used to generate the presented images and associated calculations 
+are availvable on the [qAlgorithms github](https://github.com/odea-project/qAlgorithms/tree/qBinning_beta/test).
 
 ## Data
 1) UV degredation of ibuprofen with peracetic acid:

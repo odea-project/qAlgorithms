@@ -747,7 +747,7 @@ int main(int argc, char *argv[])
     std::fstream logWriter;
     logWriter.open(pathLogging, std::ios::out);
     logWriter << "filename, numSpectra, numCentroids, meanDQSC, numBins_empty, numBins_one,"
-                 " numBins_more, meanDQSB, numFeatures, badFeatures, impossibleRegs, meanDQSF\n"; // , testFailedPeak, testPassedPeak, testPassedTotal
+                 " numBins_more, meanDQSB, numFeatures, badFeatures, meanDQSF\n"; // , testFailedPeak, testPassedPeak, testPassedTotal
     logWriter.close();
 
 #pragma region file processing
@@ -899,16 +899,15 @@ int main(int argc, char *argv[])
             size_t testsPassedPeak = 0;
             size_t testsFailedPeak = 0;
             double meanDQSF = 0;
-            int impossibleRegression = 0;
             for (size_t i = 0; i < peaks.size(); i++)
             {
-                if (binnedData[i].errorcode == std::byte{0b01000000})
+                if (binnedData[i].errorcode == std::byte{0b00000000})
                 {
                     ++testsPassedTotal;
                 }
                 if (!peaks[i].empty())
                 {
-                    if (binnedData[i].errorcode == std::byte{0b01000000})
+                    if (binnedData[i].errorcode == std::byte{0b00000000})
                     {
                         ++testsPassedPeak;
                     }
@@ -983,14 +982,9 @@ int main(int argc, char *argv[])
                     // std::cout << binMeanMZ / binsize << ", " << binMeanRT / binsize << "\n";
                 }
             }
-            meanDQSF /= peakCount - peaksWithMassGaps - impossibleRegression;
+            meanDQSF /= peakCount - peaksWithMassGaps;
             if (!silent)
             {
-                if (impossibleRegression != 0)
-                {
-                    std::cerr << impossibleRegression << " bad regressions\n";
-                }
-
                 std::cout << "    found " << peakCount << " peaks in " << (timeEnd - timeStart).count() << " ns\n";
             }
             // @todo remove diagnostics
@@ -1003,8 +997,8 @@ int main(int argc, char *argv[])
             logWriter.open(pathLogging, std::ios::app);
             logWriter << filename << ", " << centroids.size() << ", " << binThis.lengthAllPoints << ", "
                       << meanDQSC / binThis.lengthAllPoints << ", " << dudBins << ", " << onlyone << ", "
-                      << overfullBins << ", " << meanDQSB << ", " << peakCount << ", " << peaksWithMassGaps << ", " << impossibleRegression
-                      << ", " << meanDQSF << /*testFailedPeak << ", " << testsPassedPeak << ", " << testsPassedTotal <<*/ "\n";
+                      << overfullBins << ", " << meanDQSB << ", " << peakCount << ", " << peaksWithMassGaps << ", "
+                      << meanDQSF << /*testFailedPeak << ", " << testsPassedPeak << ", " << testsPassedTotal <<*/ "\n";
             logWriter.close();
 
             if (printPeaks)
