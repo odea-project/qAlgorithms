@@ -119,15 +119,15 @@ allProcessed$Series[which(allProcessed$year == -240123)] = "SFC_DoE-"
 allProcessed$Series[which(allProcessed$year == 240821)] = "stds_deca+"
 allProcessed$name = str_replace(str_sub(row.names(allProcessed), 7, -8), "pos_p", "p")
 allProcessed$name = str_replace(str_replace(allProcessed$name, "^_", ""), "neg_n", "n")
-allProcessed$name = str_replace(allProcessed$name, "05_AA_DK_Ibu_pH6", "PE")
+allProcessed$name = str_replace(allProcessed$name, "05_AA_DK_Ibu", "PE")
 allProcessed$name = str_replace(allProcessed$name, ".._Kali_Pu_Penc_2.9", "kali")
 
-allProcessed = allProcessed[order(allProcessed$Series),]
+allProcessed = allProcessed[order(allProcessed$Series, allProcessed$name),]
 
 numericCols = c(2,4,5,6,8)
 allProcessed[,numericCols] = allProcessed[,numericCols]/allProcessed$numSpectra
 
-pca_all = prcomp(allProcessed[, c(2:8,11)], scale = T )
+pca_all = prcomp(allProcessed[, c(2:8,10)], scale = T )
 pca_all$rotation = pca_all$rotation * -1
 
 # [which(allProcessed$year == '21'),]
@@ -141,25 +141,26 @@ fullPCA = autoplot(pca_all, data = allProcessed[,], label = F,
 
               loadings.label = TRUE, loadings.label.size = 3)
 
-ggplotly(fullPCA)
+# ggplotly(fullPCA)
 
 ### only use these for related data so the scaling stays ok ###
 # mark breaks between Series in graphs
-relativeSD = sd(allProcessed$numCentroids[120:129]) / mean(allProcessed$numCentroids[120:129])
-DQSC_SD = sd(allProcessed$meanDQSC[120:129])
-sd_bin1 = sd(allProcessed$numBins_one[120:129])
-sd_bin0 = sd(allProcessed$numBins_empty[120:129])
-sd_bin2 = sd(allProcessed$numBins_more[120:129])
-sd_binAll = sd(allProcessed$numBins_more[120:129] + allProcessed$numBins_one[120:129])
+relativeSD = sd(allProcessed$numCentroids[130:139]) / mean(allProcessed$numCentroids[130:139])
+DQSC_SD = sd(allProcessed$meanDQSC[130:139])
+sd_bin1 = sd(allProcessed$numBins_one[130:139])
+sd_bin0 = sd(allProcessed$numBins_empty[130:139])
+sd_bin2 = sd(allProcessed$numBins_more[130:139])
+sd_binAll = sd(allProcessed$numBins_more[130:139] + allProcessed$numBins_one[130:139])
 ```
 
 ```{r images}
 selectedProcess = 
-  # allProcessed[c(1:44, 120:129), ] # aquaflow
-  # allProcessed[c(108:129), ]# SFC-DoE
-  allProcessed[c(93:107, 120:129), ] # pump error
-  # allProcessed[c(45:75, 120:129), ] # kali ozonation
-  # allProcessed[c(76:92, 120:129), ] # pfas
+  # allProcessed[c(1:44, 130:139), ] # aquaflow
+  # allProcessed[c(118:129, 130:139), ]# SFC-DoE
+  allProcessed[c(93:102, 130:139), ] # gradual pump error
+  # allProcessed[c(45:75, 130:139), ] # kali ozonation
+  # allProcessed[c(76:92, 130:139), ] # pfas
+  # allProcessed[c(103:117, 130:139), ] # pump error
 SeriesBreaks = (selectedProcess$Series[-1] != selectedProcess$Series[-length(selectedProcess$Series)])
 SeriesBreaks = which(SeriesBreaks) + 0.5
 
@@ -168,8 +169,8 @@ Sample = as.factor(1:(length(selectedProcess$numSpectra)-1))
 label = selectedProcess$name[-length(Sample)]
 
 breakNames = c("Standards", "29.02", "11.03", "ozonation", "PFAS")
-s1 = max(diff(selectedProcess$meanDQSC))
-s2 = max(diff(selectedProcess$numCentroids))
+s1 = max(abs(diff(selectedProcess$meanDQSC)))
+s2 = max(abs(diff(selectedProcess$numCentroids)))
 
 delim = 10 * max(relativeSD / s2, DQSC_SD / s1)
 
@@ -193,18 +194,13 @@ ggplot(selectedProcess)+
 
 
 # absolute deviation from mean / sd of control?
-deviations = selectedProcess %>% group_by(Series) %>% summarise(b1 = mean(numBins_one), b0 = mean(numBins_empty), b2 = mean(numBins_more), bAll = mean(numBins_more + numBins_one))
-display_b1 = 0
+deviations = selectedProcess %>% group_by(Series) %>% summarise(b0 = mean(numBins_empty), bAll = mean(numBins_more + numBins_one))
 display_b0 = 0
-display_b2 = 0
 display_bAll = 0
 for (i in 1:length(selectedProcess$numSpectra)) {
-  # display_b1[i] = (selectedProcess$numBins_one[i] - deviations$b1[
-  #   which(deviations$Series == selectedProcess$Series[i])])
   display_b0[i] = (selectedProcess$numBins_empty[i] - deviations$b0[
     which(deviations$Series == selectedProcess$Series[i])])
-  # display_b2[i] = (selectedProcess$numBins_more[i] - deviations$b2[
-  #   which(deviations$Series == selectedProcess$Series[i])])
+  
   display_bAll[i] = (selectedProcess$numBins_more[i] + selectedProcess$numBins_one[i] - deviations$bAll[
     which(deviations$Series == selectedProcess$Series[i])])
 }

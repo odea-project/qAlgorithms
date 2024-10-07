@@ -1,5 +1,5 @@
-Evaluation of different approaches for determining and visualising <!-- omit in toc -->
-process quality in LC-HRMS nontarget measurement series as part of the qAlgorithms project <!-- omit in toc -->
+Evaluation of different, process statistic based approaches for describing and visualising <!-- omit in toc -->
+measurement similarity in LC-HRMS nontarget measurement series as part of the qAlgorithms project <!-- omit in toc -->
 -----------------------------------------------------------------------------------------------
 Report concluding the research practical by Daniel Höhn, supervised by Felix Drees and Gerrit Renner <!-- omit in toc -->
 
@@ -36,11 +36,16 @@ Report concluding the research practical by Daniel Höhn, supervised by Felix Dr
     - [Test for Points Outside Three Sigma Interval](#test-for-points-outside-three-sigma-interval)
 - [Performance criteria - Peak Finding:](#performance-criteria---peak-finding)
   - [DQSF](#dqsf)
+  - [Replicate Features](#replicate-features)
   - [Validity of the Identified Peaks](#validity-of-the-identified-peaks)
 - [Development of Consistency Parameters from Process Statistics](#development-of-consistency-parameters-from-process-statistics)
   - [Consistency of the Centroiding Algorithm](#consistency-of-the-centroiding-algorithm)
   - [Consistency of the Binning algorithm](#consistency-of-the-binning-algorithm)
   - [Feature List Similarity Visualisation](#feature-list-similarity-visualisation)
+- [Applying the Developed Tests](#applying-the-developed-tests)
+  - [Applied Test: Centroid Stability](#applied-test-centroid-stability)
+  - [Applied Test: Bin Stability](#applied-test-bin-stability)
+  - [Applied Test: Feature Stability](#applied-test-feature-stability)
 - [Error traceability](#error-traceability)
 - [Further Research](#further-research)
 - [Planned Expansions to qAlgorithms](#planned-expansions-to-qalgorithms)
@@ -54,28 +59,38 @@ Report concluding the research practical by Daniel Höhn, supervised by Felix Dr
 - [References](#references)
 
 # Abstract
-One important property of nontarget measurements is the comparability of different
-measurements of a series with each other. This is especially relevant when
-routine measurements of, for example, wastewater treatment plant effluent are
-taken to monitor the overall water quality. 
+
+Untargeted analysis using mass spectrometry generates large amounts of data
+that are difficult to store, share and process in large quantities. To adress
+this issue, information regarding the processing performed with qAlgorithms
+is examined regarding its chemical informativeness. The property chosen as 
+representative for chemical information in general is the similarity of 
+measurements taken using the same or similar system conditions, where very
+low similarity without an evident reason rooted in the sample is taken as
+a reason to consider it non-comparable to the other samples.
+
+Such an estimate is especially relevant when routine measurements of, for example, 
+wastewater treatment plant effluent are taken to monitor the overall water quality. 
 The decision of whether a system is stable enough for measurements to be comparable
 is non-standardised and often depending on manual data review. The amount of
 manhours needed drastically reduces the amount of measurements which can be
 processed as part of a routine series, while introducing a subjective bias
 into the type of discrepancies that would lead to the exclusion of a measurement.
+// Dieser Abschnitt ist wahrscheinlich nicht mehr relevant
 Additionally, such decisions are often made based on standard mixtures, which 
 only provide limited coverage of a dataset and have the potential of masking
 trace compounds with very similar chromatographic behaviour and mass.
 
-The goal of this project is to suggest and, to a limited degree, validate multiple
-different approaches to describing and quantifying system stability as one
-central component of result comparability. To this end, statistics generated
-within the qAlgorithms data evaluation pipeline are collected for multiple
-different measurement series. The process is designed to be fully automated,
-requiring no user input during data processing.
+The goal of this project is to find, describe and test different, dataset-wide
+properties which do not depend on knowledge regarding specific features.
+System stability is chosen as one central component of result comparability
+which is independent of detailed information regarding the samples used. 
+To this end, statistics generated within the qAlgorithms data evaluation 
+pipeline are collected for multiple different measurement series. The process 
+is designed to be fully automated, requiring no user input during data processing.
 
 Three complimentary approaches, each covering one of centroiding, binning and 
-feature creation, were developed and tested using six different measurement
+feature creation, were developed and tested using seven different measurement
 series. The resulting graphs allowed a visual distinction between different
 groups of data, as well as the identification of potential outliers within
 groups. These methods can be used for (limited) applications where the question
@@ -83,6 +98,8 @@ of broad sample similarity arises and demonstrate the general utility of the
 chosen process statistics. This puts a future research focus on deriving
 insights from high-resolution mass spectra that is not related to specific
 features or components, but rather their distribution and relations.
+
+@todo series 7 results
 
 # Abbreviations and Definitions:
 * NTS - Non-Target Screening
@@ -98,6 +115,7 @@ features or components, but rather their distribution and relations.
 [@todo] move all definitions for within the workflow here
 
 # Process Quality Estimators
+
 An emerging and highly relevant problem in the field of NTS is
 the fast and accurate estimation of total data quality or total
 measurement quality through an operator. Especially for routine 
@@ -179,11 +197,11 @@ Since this measure depends on ground truth, it is not always sensible
 to provide an estimator for result quality. The central difference 
 between results and process as proposed here is that results serve
 as the basis for some decision, be it through a researcher deciding
-on the next experiment, a water treatment plant worker taking preventative
-measures against a detected contaminant. In all such cases, the process does not factor into
+on the next experiment or a water treatment plant worker taking preventative
+measures due to a detected contaminant. In all such cases, the process does not factor into
 the final decision, unless it is as an abstract measure of confidence.
-The only decision based on a process parameter would be whether to
-repeat a measurement de to a suspected error during sampling or analysis.
+In contrast, the only decision based on a process parameter would be whether to
+repeat a measurement due to a suspected error during sampling or analysis.
 
 Process quality consists of the data processing workflow and the
 (inferred) quality of the different steps from sampling to
@@ -194,6 +212,8 @@ reproduce and very difficult to monitor in a quantitative manner.
 While practices can be standardised, identification of errors 
 with robust statistical methods is not easily realised once
 sample processing has been performed, especially after prolonged periods of time. 
+Here, error prevention is the most sensible practice, strategies for which have
+been discussed by Schulze et. Al [https://doi.org/10.1016/j.trac.2020.116063] among others.
 On the other hand, data processing must be deterministic
 and fully quantifiable in order to enable automation. As such,
 it is a viable point for introducing measures of process quality
@@ -214,7 +234,7 @@ derive from or relate to the result quality.
 
 More importantly, if multiple steps feature a parameter of 
 process quality, the different qualities likely can not
-be converted into each other or otherwise combined without
+be converted into each other, or otherwise combined, without
 losing relevant information or producing distorted estimations.
 
 Under these conditions, deriving any indication of quantitative
@@ -231,12 +251,11 @@ of a change in the process or the impact of a known disruption.
 Performance criteria must be robust, especially if further processing
 actions are taken based on them. As such, established tests must
 be validated using a representative sample of errors in the analysis
-process.
-Current techniques to this end rely on a large amount and variety
+process. Current techniques to this end rely on a large amount and variety
 of standard substances, which can then be described in terms
-of recovery and mass accuracy of internal standards. 
-[https://www.sciencedirect.com/science/article/pii/S0165993621000236]
-Caballero-Casero et Al. proposed guidelines on analytical
+of recovery and mass accuracy of internal standards. [https://www.doi.org/10.1016/j.aca.2016.06.030]
+
+Caballero-Casero et Al. [https://www.sciencedirect.com/science/article/pii/S0165993621000236] proposed guidelines on analytical
 performance reporting in the context of human metabolomics.
 The suggested criteria are sensitivity, selectivity, 
 accuracy, stability and representativeness. All five largely
@@ -262,7 +281,7 @@ process statistics is that the amount of data to be considered
 is massively reduced, which in turn removes limits imposed by data storage
 and transportation for almost all applications. Furthermore, if meaningful
 information can be derived from such broad measures, this could sidestep
-the restrictions imposed on sharing data by industry and government.
+the non-technical restrictions imposed on sharing data by industry and government.
 
 When assessing the entire process from profile-mode spectra to 
 the final feature list, it is important to find parameters that 
@@ -297,8 +316,9 @@ small bins of data which does not contain a peak.
 The DQSF is the only score which makes a statement about result quality,
 since it serves as a measure of repeatability. [qPeaks]
 
-DQSC and DQSB were taken in full. An alternative would be to only consider
-the scores of those points that were included in a feature, since both exist
+The means of DQSC and DQSB were calculated from all produced scores. 
+An alternative would be to only consider the scores of those 
+points that were included in a feature, since both exist
 as centroid-specific numbers at one point of the processing. This was 
 decided against to mitigate the impact potential unknown problems with 
 the processing would have on such a selection. A complimentary approach
@@ -320,10 +340,13 @@ many bins with no features are indicative of a noisy dataset and having
 multiple peaks in the same bin implies poor chromatographic performance.
 One bin containing one peak is the desired outcome.
 
-For features, only those which do not fulfill the error condition
-were used. This is because evidently wrong results will be corrected
-in future versions of qAlgorithms, possibly by ovehauling the process behind
-feature construction. 
+For feature count and mean DQSF, only those features which do not 
+fulfill the error condition were used. This is because the mechanism 
+behind "unstable" mass traces is not understood to the extent that certainty
+regarding their validity exist. The count of error-laden features is
+not used as a process statistic, since it is unclear whether they represent
+an oversight in the algorithm, a behaviour that can be corrected robustly
+or an emergent property of the dataset not explained through other, more direct influences.
 
 All three count statistics were normalised to the number of scans within a 
 measurement to remain comparable between different measurement series.
@@ -843,7 +866,19 @@ The base reasoning behind the developed visualisation is that the three categori
 should show as little deviation as possible. Since no meaningful difference
 between bins with one or more than one regressions in them could be found,
 both are combined through summation. Consistency for both groups is expressed
-as the difference from the series mean for every element of a series.
+
+... relative to the same properties of the reference dataset. For both groups, zero
+is the mean of the reference data. The absolute difference in average bins per spectrum
+is called "bin deviation" in the following.
+
+For the ten replicates, it was observed that both groups show very low bin deviation.
+In the datasets with obvious outliers shown in the PCA, but especially the Aquaflow
+series, it could be observed that for those bin deviations, the two measures were
+much further apart than in the other reference data. From this, it was assumed that
+both deviations being highly dissimilar indicates an undesireable property of the 
+data
+
+... as the difference from the series mean for every element of a series.
 The per-measurement difference from the series mean is called "bin deviation" 
 in the following.
 For the ten replicates, it was observed that these two measures lie very
@@ -934,14 +969,60 @@ treatment. Here, a possible solution is to remove a detected outlier from
 the mean and repeat the process until only non-outliers remain. Such an
 approach requires limits to the amount of points that can be discarded
 
+# Applying the Developed Tests
+The similarity measures as descibed so far were tested on dataset 7),
+which was not included in their design. Here, the most interesting 
+property is that the pump pressure started being irregular gradually,
+with early measurements showing a stable pressure profile and the last
+measurements being performed under highly irregular pressure. 
+The expected test behaviour is that the dissimilarity increases primarily 
+as a function of measurement time. 
+
+From visual comparison of the pressure profile, it is expected that 
+measurement 9, but 10 at the latest, are seen as outliers by the tests.
+While arbitrary, the data has not been utilised at the time of writing
+and no empiric measure of usefulness exists.
+
+[@todo] images
+
+## Applied Test: Centroid Stability
+A general increase in disorder for both centroid parameters can be 
+observed, but exception limit is only passed for the last two measurements.
+The warning limit is only surpassed once (at measurement 10) before that.
+While the general principles are viable, the decided limit values are
+not sensitive enough to respond to the problems in this dataset.
+[@todo] deviation relative to the standards.
+
+## Applied Test: Bin Stability
+Here, the first anomaly is again measurement 10. Notably, te distinction
+is that the deviation width is very low, similar to the standards.
+The following measurements show a large increas in both deviation and deviation width.
+The general curve conforms to expectations, with a gradual increase that escalates
+towards the end. 
+
+It is questionable how sensible it is to set the deviation zero to a 
+baseline defined by standards, especially if those standards belong to a 
+different series. Assuming the point with lower than expected deviation
+width to be a random outlier, in this case the general trend is that
+a higher deviation means worse data, while a larger than average deviation
+with is added for especially severe outliers.
+
+Such an assumption, of course, needs to be validated using comparable datasets.
+
+## Applied Test: Feature Stability
+This test shows similar results to the bin stability test, with a 
+noticeable increse starting with measurement 10 and 12, 13 and 14 having
+a much greater feature count. 
+
 # Error traceability
+// remove and add point to introduction
 An important part of communicating an error to the operator is to
 establish complete traceability from the questionable result to
 the raw data. This allows users to control the output with a 
 different tool and, ideally, compare the original data which both used 
 to generate their final result. qAlgorithms provides the user with
 the option to view only those parts of the input data that was used
-to construct peaks. @todo
+to construct peaks. [@todo]
 This option also enables the processing of uncertain, but highly
 relevant masses by means of especially computationally expensive
 methods without demanding very powerful processors, a lot of
@@ -1144,22 +1225,29 @@ This dataset is from a design of experiment series trying out different
 ion source parameters. The source was set to polarity switching, 
 resulting in two datasets per measurement after evaluation.
 
-3) Aquaflow data: [Non-target Analysis and Chemometric Evaluation of a Passive Sampler Monitoring of Small Streams]
+3) Aquaflow data: [https://pubs.acs.org/doi/10.1021/acs.est.1c08014] // stimmt der Artikel?
 Three blanks, three standards and three samples from the Aquaflow 
 project, all measured in positive mode. One sample measurement
 is notable for not containing any centroids for the first 800 scans.
 Naming: C = control, T = treatment, S = sampling time
 Another sample contained 5000 MS1 spectra, while usually only 1300 were recorded.
+The samples are wastewater effluent [@todo]
+The measurements were performed one day apart, but the two runs contained samples
+from different sampling points. As such, discrepancies are not 
+assured to stem from the daily variation in instrument conditions.
 
 4) Calibration series:
 Excerpt of a measurement series containing four blanks, and seven
 ozonation experiments with indigo, two of which were measured in
 negative mode. These measurements were primarily chosen for their 
-small filesize and poor chromatographic separation.
+small filesize and poor chromatographic separation. No information
+regarding the type of sample exist, but a standard solution in 
+millipore water is likely from the naming scheme.
 
 5) PFAS data:
 HPLC-orbitrap measurements consisting of blank measurements and
 water samples containing PFAS.
+[@todo] mit oder ohne matrix?
 
 6) High-consistency standards
 As a reference for a stable system, ten replicates of a standard mixture
@@ -1173,4 +1261,21 @@ highest retention time. These tolerances are subject to change and as
 such, recovery is not considered as a way to determine one measurement
 as better than another.
 
+7) A repeat of the failed series that makes up dataset 1), performed
+at the same conditions and with equivalent samples. Here, the same
+error of varying pump pressure occurred, but with an observable, gradual 
+increase from a ca. 15 bar mean amplitude to up to 70 bar amplitudes in the
+pump pressure over a four-hour timeframe. 
+13 complete measurements were performed and the instrument stopped halfway 
+through the 14th. Of these, four measurements could not be converted to
+mzML files successfully. For an overview, see the attached image. Note that
+the filenames in the LC results are incorrect. 
+[@todo] image
+For this dataset, the mean DQSF shows a clear decreasing trend over time.
+
 # References
+
+[@todo] bibtex export
+
+Special thanks to David Kniesel for suffering extended periods of instrument 
+failure and supplying his data.
