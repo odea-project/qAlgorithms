@@ -151,13 +151,25 @@ sd_bin1 = sd(allProcessed$numBins_one[130:139])
 sd_bin0 = sd(allProcessed$numBins_empty[130:139])
 sd_bin2 = sd(allProcessed$numBins_more[130:139])
 sd_binAll = sd(allProcessed$numBins_more[130:139] + allProcessed$numBins_one[130:139])
+
+sel = which(allProcessed$Series != "pump_error+")
+model = lm(allProcessed$numFeatures[sel] ~ with(allProcessed, numBins_empty[sel] + numBins_one[sel] + numBins_more[sel]))
+ggplot(allProcessed)+
+  geom_point(aes(x = (numBins_empty + numBins_one + numBins_more), y = numFeatures, colour = Series))+
+  geom_abline(slope = model$coefficients[[2]], intercept = model$coefficients[[1]])+
+  xlab("Relative Bin Count")+
+  ylab("Relative Feature Count")+
+  labs(caption = paste0("R² = ", round(summary(model)$adj.r.squared, digits = 3)))
+
+
+
 ```
 
 ```{r images}
 selectedProcess = 
   # allProcessed[c(1:44, 130:139), ] # aquaflow
   # allProcessed[c(118:129, 130:139), ]# SFC-DoE
-  allProcessed[c(93:102, 130:139), ] # gradual pump error
+  # allProcessed[c(93:102, 130:139), ] # gradual pump error
   # allProcessed[c(45:75, 130:139), ] # kali ozonation
   # allProcessed[c(76:92, 130:139), ] # pfas
   # allProcessed[c(103:117, 130:139), ] # pump error

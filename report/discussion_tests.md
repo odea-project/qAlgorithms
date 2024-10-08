@@ -42,11 +42,11 @@ Report concluding the research practical by Daniel Höhn, supervised by Felix Dr
   - [Consistency of the Centroiding Algorithm](#consistency-of-the-centroiding-algorithm)
   - [Consistency of the Binning algorithm](#consistency-of-the-binning-algorithm)
   - [Feature List Similarity Visualisation](#feature-list-similarity-visualisation)
+  - [Combined Binning and Feature Test](#combined-binning-and-feature-test)
 - [Applying the Developed Tests](#applying-the-developed-tests)
   - [Applied Test: Centroid Stability](#applied-test-centroid-stability)
   - [Applied Test: Bin Stability](#applied-test-bin-stability)
   - [Applied Test: Feature Stability](#applied-test-feature-stability)
-- [Error traceability](#error-traceability)
 - [Further Research](#further-research)
 - [Planned Expansions to qAlgorithms](#planned-expansions-to-qalgorithms)
 - [Performed Modifications to qAlgorithms](#performed-modifications-to-qalgorithms)
@@ -99,7 +99,9 @@ chosen process statistics. This puts a future research focus on deriving
 insights from high-resolution mass spectra that is not related to specific
 features or components, but rather their distribution and relations.
 
-@todo series 7 results
+The utility of the developed tests could be demostrated using a dataset
+where the pump pressure fluctuation gradually increased, with the
+measurements becoming unusable after a certain point.
 
 # Abbreviations and Definitions:
 * NTS - Non-Target Screening
@@ -112,10 +114,8 @@ features or components, but rather their distribution and relations.
 * DQS(B/C/F) - Data Quality Score (of a Bin/Centroid/Feature)
 * ppm - Parts Per Million (10e-6)
 * PCA - Principal Component Analysis
-[@todo] move all definitions for within the workflow here
 
 # Process Quality Estimators
-
 An emerging and highly relevant problem in the field of NTS is
 the fast and accurate estimation of total data quality or total
 measurement quality through an operator. Especially for routine 
@@ -287,7 +287,9 @@ When assessing the entire process from profile-mode spectra to
 the final feature list, it is important to find parameters that 
 are responsive to a broad number of deviations within the system,
 while still being specific enough so that no change prevents another
-from being percieved.
+from being percieved. An additional desireable quality is the tracability
+from one detected error to the root cause or, in lieu of that, the point
+in the algorithm where such an error occured.
 
 Tested parameters:
 * mean DQSC
@@ -544,7 +546,7 @@ points not in the bin. To achieve greater locality of the score, the program
 was modified such that only points within the maximal gap distance are used
 to calculate the mean in-group differences in mz. This change led to, on
 average, slightly lower scores. Furthermore, scaling was introduced for 
-the outer distance. (see [here](#dqsb-calculation))
+the outer distance (see [here](#dqsb-calculation)).
 
 ## Bin Property Tests:
 In addition to the quality score, multiple property tests are performed on 
@@ -923,8 +925,10 @@ high deviation in all four parameters discussed.
 
 The PFAS data shows much greater inconsistency for the positive mode measurements
 than the negative mode measurements. A similar behaviour is observed in the DQSC,
-which fluctuates slightly more in positive than negative mode. A possible reason
-is that this series consists mostly of blanks.
+which fluctuates slightly more in positive than negative mode. This effect is 
+similar for real samples and instrument blanks, so potential matrix effects on
+the stability parameter likely have a strongly reduced effect compared to the 
+ionisation.
 
 While the chosen visualisation allows the identification of strong outliers,
 decision limits are not implemented. The main challenge regarding those is
@@ -967,7 +971,36 @@ are fulfilled for the aquaflow dataset (feature_test_aquaflow), where one
 outlier distorts the mean and the not recognised groups of control and 
 treatment. Here, a possible solution is to remove a detected outlier from 
 the mean and repeat the process until only non-outliers remain. Such an
-approach requires limits to the amount of points that can be discarded
+approach requires limits to the amount of points that can be discarded.
+
+## Combined Binning and Feature Test
+For all datasets, redundancy between the binning test and the feature test 
+exist. In terms of non-quantitative results, the relative height of the two
+counts is very similar, with the main difference being the different measures
+of quality. The feature test provides a rudimentary decision limit for outliers,
+while the less concrete deviation width is only useful if the difference 
+between two measurements is large. The similarity is reasonable, since the
+amount of features in total directly depends on the amount of bins with features.
+This suggests another way of describing consistency or general usability,
+in that the degree with which a measurement conforms to a linear relationship 
+between total bin count and total feature count (or some otherwise determined
+subset of the two). 
+[@todo] image relation_bins_features.jpg
+Shown is the line of the linear regression calculated from all points not part of the
+two pump error series. The one known outlier in Aquaflow_D1+ is noticeably 
+further away from the regression line and much lower in terms of bin and feature
+count, but still much more similar to the other data than the measurements
+performed while the pressure fluctuated.
+
+It is noteable that the different datasets follow (seemingly) the same function,
+which also almost passes through the point (0, 0). More data is required to establish 
+a proper test based on adherence to a linear relation which uses a heuristic
+function, and to determine if such a test is sensible. For longer series, 
+an approach utilising a set of reference measurements to create a starting
+point and then modifying the reference function as new data is recorded
+is also thinkable. An important issue to solve here is that only data
+which does not display undesireable properties is included in the regression.
+
 
 # Applying the Developed Tests
 The similarity measures as descibed so far were tested on dataset 7),
@@ -987,7 +1020,7 @@ and no empiric measure of usefulness exists.
 
 ## Applied Test: Centroid Stability
 A general increase in disorder for both centroid parameters can be 
-observed, but exception limit is only passed for the last two measurements.
+observed, but the exception limit is only passed for the last two measurements.
 The warning limit is only surpassed once (at measurement 10) before that.
 While the general principles are viable, the decided limit values are
 not sensitive enough to respond to the problems in this dataset.
@@ -1014,20 +1047,6 @@ This test shows similar results to the bin stability test, with a
 noticeable increse starting with measurement 10 and 12, 13 and 14 having
 a much greater feature count. 
 
-# Error traceability
-// remove and add point to introduction
-An important part of communicating an error to the operator is to
-establish complete traceability from the questionable result to
-the raw data. This allows users to control the output with a 
-different tool and, ideally, compare the original data which both used 
-to generate their final result. qAlgorithms provides the user with
-the option to view only those parts of the input data that was used
-to construct peaks. [@todo]
-This option also enables the processing of uncertain, but highly
-relevant masses by means of especially computationally expensive
-methods without demanding very powerful processors, a lot of
-energy or a lot of time. 
-
 # Further Research
 While the criteria found through exploratory data analysis are seemingly able
 to make broad statements about process quality, they need to be related to
@@ -1046,7 +1065,7 @@ scans and as such the binning results are likely to differ. It should
 be ensured that an implemented test does not mark these as non-comparable,
 if necessary by implementing a different test for these cases.
 
-The implemented visualisation tools should be validated using realistic
+The implemented visualisation tools should be validated using additional realistic
 conditions under which instrument performance is reduced, like measurements
 with an old column, or measurements after the system has been inactive for
 a prolonged period of time. 
@@ -1093,7 +1112,10 @@ it ignores the way these parameters exist in relation to the three
 dimensions mz, RT and intensity. The development of a relational model
 mapping these to the selected process variables and offering a more precise
 comparison between datasets was out of scope for the present work.
-[@todo] studies with a modeling approach?
+Progress towards this could be made by demonstrating a linear relation
+between bin count and feature count which is consistent for all measurements
+in the test dataset which did not stem from a series with known defects.
+[@todo] studies with a modeling approach? // hier eher unangebracht
 
 # Planned Expansions to qAlgorithms
 Data visualisation is currently (04.10.2024) not implemented for qAlgorithms.
@@ -1193,10 +1215,15 @@ The main advantages of process parameters as used here are a massive reduction
 in the data, both in terms of size and complexity, as well as the ability
 to compare two or more datasets without depending on the produced feature lists.
 In consequence, data sharing is radically simplified and the processing time
-for large datasets drastically reduced. Since basic functionality could be 
-demonstrated, further work focusing on deriving measurement-specific information
-on, for example, suspected representativeness regarding the sample, is a promising 
-direction for the qAlgorithms project to take.
+for large datasets drastically reduced. The addition of a set of identifying
+properties to datasets could also be used to find generally similar data
+over thousands to millions of other measurements, provided a database
+is established. For example, such efforts could make it easier to find 
+relevant optimisation strategies from otherwise unrelated studies.
+
+Since basic functionality could be demonstrated, further work focusing on 
+deriving measurement-specific information on, for example, suspected representativeness 
+regarding the sample, is a promising direction for the qAlgorithms project to take.
 
 
 # Software and Data
@@ -1207,8 +1234,7 @@ Images were generated using ggplot2 3.5.1[ggplot2].
 
 qAlgorithms is written in base C++ 20, using only standard library functions[@ISOInternationalStandard].
 For reading in files, the StreamCraft library is used[https://github.com/odea-project/StreamCraft].
-It was compiled with gcc 13.2.0[@freesoftwarefoundationinc.UsingGNUCompiler1988] 
-and cmake 3.29.6[@todo].
+It was compiled with gcc 13.2.0[@freesoftwarefoundationinc.UsingGNUCompiler1988].
 
 The scripts used to generate the presented images and associated calculations 
 are availvable on the [qAlgorithms github](https://github.com/odea-project/qAlgorithms/tree/qBinning_beta/test).
@@ -1246,10 +1272,10 @@ millipore water is likely from the naming scheme.
 
 5) PFAS data:
 HPLC-orbitrap measurements consisting of blank measurements and
-water samples containing PFAS.
-[@todo] mit oder ohne matrix?
+water samples containing PFAS. Unisensor samples were filtered
+to remove matrix before measurement.
 
-6) High-consistency standards
+1) High-consistency standards
 As a reference for a stable system, ten replicates of a standard mixture
 in pure water were mesasured on an HPLC-orbitrap system. They were 
 measured at the end of a longer run and are assumed to represent 
@@ -1261,7 +1287,7 @@ highest retention time. These tolerances are subject to change and as
 such, recovery is not considered as a way to determine one measurement
 as better than another.
 
-7) A repeat of the failed series that makes up dataset 1), performed
+1) A repeat of the failed series that makes up dataset 1), performed
 at the same conditions and with equivalent samples. Here, the same
 error of varying pump pressure occurred, but with an observable, gradual 
 increase from a ca. 15 bar mean amplitude to up to 70 bar amplitudes in the

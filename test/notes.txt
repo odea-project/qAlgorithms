@@ -1,3 +1,6 @@
+https://stackoverflow.com/questions/61906480/how-to-display-ggplotly-plots-with-dynamically-created-tabs-and-for-loops#
+https://stackoverflow.com/questions/53444333/dynamic-tabsets-with-multiple-plots-r-markdown?rq=3
+
 210311_C3_S7_I_1_pos ist komisch
     => Eine fehlerhafte Regression hat den DQSF beeinträchtigt
 
