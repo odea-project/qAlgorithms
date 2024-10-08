@@ -120,7 +120,7 @@ allProcessed$Series[which(allProcessed$year == 240821)] = "stds_deca+"
 allProcessed$name = str_replace(str_sub(row.names(allProcessed), 7, -8), "pos_p", "p")
 allProcessed$name = str_replace(str_replace(allProcessed$name, "^_", ""), "neg_n", "n")
 allProcessed$name = str_replace(allProcessed$name, "05_AA_DK_Ibu", "PE")
-allProcessed$name = str_replace(allProcessed$name, ".._Kali_Pu_Penc_2.9", "kali")
+allProcessed$name = str_replace(allProcessed$name, "Kali_Pu_Penc_2.9", "kali")
 
 allProcessed = allProcessed[order(allProcessed$Series, allProcessed$name),]
 
@@ -157,11 +157,9 @@ model = lm(allProcessed$numFeatures[sel] ~ with(allProcessed, numBins_empty[sel]
 ggplot(allProcessed)+
   geom_point(aes(x = (numBins_empty + numBins_one + numBins_more), y = numFeatures, colour = Series))+
   geom_abline(slope = model$coefficients[[2]], intercept = model$coefficients[[1]])+
-  xlab("Relative Bin Count")+
-  ylab("Relative Feature Count")+
+  xlab("Relative Bin Count [Bins / Scan]")+
+  ylab("Relative Feature Count [Features / Scan]")+
   labs(caption = paste0("R² = ", round(summary(model)$adj.r.squared, digits = 3)))
-
-
 
 ```
 
@@ -169,7 +167,7 @@ ggplot(allProcessed)+
 selectedProcess = 
   # allProcessed[c(1:44, 130:139), ] # aquaflow
   # allProcessed[c(118:129, 130:139), ]# SFC-DoE
-  # allProcessed[c(93:102, 130:139), ] # gradual pump error
+  allProcessed[c(93:102, 130:139), ] # gradual pump error
   # allProcessed[c(45:75, 130:139), ] # kali ozonation
   # allProcessed[c(76:92, 130:139), ] # pfas
   # allProcessed[c(103:117, 130:139), ] # pump error
@@ -199,6 +197,14 @@ ggplot()+
   ylab("Centroid Dissimilarity")
 
 ggplot(selectedProcess)+
+  geom_point(aes(name, numCentroids / s1))+
+  geom_point(aes(name, meanDQSC / s2))+
+  scale_x_discrete(labels = label, guide = guide_axis(angle = 60))+
+  xlab("Sample")+
+  ylab("Centroid Dissimilarity")
+  
+
+ggplot(selectedProcess)+
   geom_point(aes(name, numBins_empty, colour = Series, shape = "empty"))+
   geom_point(aes(name, numBins_one, colour = Series, shape = "one"))+
   geom_point(aes(name, numBins_more, colour = Series, shape = "more"))+
@@ -218,8 +224,8 @@ for (i in 1:length(selectedProcess$numSpectra)) {
 }
 display_devs = data.frame(min = 1:length(display_b0), max = 1:length(display_b0), mean = 1:length(display_b0))
 for (i in 1:length(display_b0)) {
-  display_devs$min[i] = min(display_bAll[i] / sd_binAll, display_b0[i] / sd_bin0)
-  display_devs$max[i] = max(display_bAll[i] / sd_binAll, display_b0[i] / sd_bin0)
+  display_devs$min[i] = min(display_bAll[i] , display_b0[i] )
+  display_devs$max[i] = max(display_bAll[i] , display_b0[i] )
   # display_devs$mean[i] = mean(display_bAll[i] / sd_binAll, display_b0[i] / sd_bin0)
 }
 
@@ -250,6 +256,12 @@ ggplot(selectedProcess)+
 ggplot(selectedProcess)+
   geom_point(aes(name, meanDQSF))
 
+ggplot(selectedProcess)+
+  geom_text(aes(x = (numBins_empty + numBins_one + numBins_more), y = numFeatures, label = name), size = 3)+
+  geom_point(aes(x = (numBins_empty + numBins_one + numBins_more), y = numFeatures, colour = Series))+
+  geom_abline(slope = model$coefficients[[2]], intercept = model$coefficients[[1]])+
+  xlab("Relative Bin Count [Bins / Scan]")+
+  ylab("Relative Feature Count [Features / Scan]")
 
 
 ```

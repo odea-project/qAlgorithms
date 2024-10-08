@@ -40,18 +40,15 @@ Report concluding the research practical by Daniel Höhn, supervised by Felix Dr
   - [Validity of the Identified Peaks](#validity-of-the-identified-peaks)
 - [Development of Consistency Parameters from Process Statistics](#development-of-consistency-parameters-from-process-statistics)
   - [Consistency of the Centroiding Algorithm](#consistency-of-the-centroiding-algorithm)
-  - [Consistency of the Binning algorithm](#consistency-of-the-binning-algorithm)
-  - [Feature List Similarity Visualisation](#feature-list-similarity-visualisation)
+  - [Consistency of the Binning Algorithm](#consistency-of-the-binning-algorithm)
+  - [Consistency of the Feature-finding Algorithm](#consistency-of-the-feature-finding-algorithm)
+  - [Result Differences Between Centroid and Binning / Feature Test](#result-differences-between-centroid-and-binning--feature-test)
   - [Combined Binning and Feature Test](#combined-binning-and-feature-test)
 - [Applying the Developed Tests](#applying-the-developed-tests)
   - [Applied Test: Centroid Stability](#applied-test-centroid-stability)
   - [Applied Test: Bin Stability](#applied-test-bin-stability)
   - [Applied Test: Feature Stability](#applied-test-feature-stability)
 - [Further Research](#further-research)
-- [Planned Expansions to qAlgorithms](#planned-expansions-to-qalgorithms)
-- [Performed Modifications to qAlgorithms](#performed-modifications-to-qalgorithms)
-  - [Modified Centroiding](#modified-centroiding)
-  - [DQSB calculation](#dqsb-calculation)
 - [Conclusion](#conclusion)
 - [Software and Data](#software-and-data)
   - [Software](#software)
@@ -76,10 +73,6 @@ is non-standardised and often depending on manual data review. The amount of
 manhours needed drastically reduces the amount of measurements which can be
 processed as part of a routine series, while introducing a subjective bias
 into the type of discrepancies that would lead to the exclusion of a measurement.
-// Dieser Abschnitt ist wahrscheinlich nicht mehr relevant
-Additionally, such decisions are often made based on standard mixtures, which 
-only provide limited coverage of a dataset and have the potential of masking
-trace compounds with very similar chromatographic behaviour and mass.
 
 The goal of this project is to find, describe and test different, dataset-wide
 properties which do not depend on knowledge regarding specific features.
@@ -101,7 +94,8 @@ features or components, but rather their distribution and relations.
 
 The utility of the developed tests could be demostrated using a dataset
 where the pump pressure fluctuation gradually increased, with the
-measurements becoming unusable after a certain point.
+measurements becoming unusable after a certain point. Additionally,
+a generally applicable model of result consistency is presented for the qAlgorithms workflow
 
 # Abbreviations and Definitions:
 * NTS - Non-Target Screening
@@ -549,6 +543,8 @@ average, slightly lower scores. Furthermore, scaling was introduced for
 the outer distance (see [here](#dqsb-calculation)).
 
 ## Bin Property Tests:
+// Es lohnt sich wahrscheinlich nicht, diesen Abschnitt beizubehalten. Ich halte die
+// Tests zwar für erwähnenswert, aber sie tragen nicht wirklich zum Gesamtkunstwerk bei.
 In addition to the quality score, multiple property tests are performed on 
 each bin. These serve the purpose of descibing commonly observed patterns
 during binning that often occur in distorted bins. These secondary tests
@@ -851,7 +847,7 @@ positive ones. The change from positive to negative mode causes both
 parameters to exceed the exception limit. One possible outlier exists,
 although it is not detected through one of the other tests.
 
-## Consistency of the Binning algorithm
+## Consistency of the Binning Algorithm
 
 The consistency of binning is evaluated without taking data unrelated
 to the binning step into account. This has the
@@ -939,7 +935,7 @@ time period could be viable. For other sample types, another possible use case
 is control of another test which concluded similarity, but with a high degree of
 uncertainty. 
 
-## Feature List Similarity Visualisation
+## Consistency of the Feature-finding Algorithm
 The similarity parameter for the feature generation test is the number of features
 normalised to the number of scans. This measure was chosen due to the high
 consistency observed in the ten replicates. As control limit, the three
@@ -972,6 +968,19 @@ outlier distorts the mean and the not recognised groups of control and
 treatment. Here, a possible solution is to remove a detected outlier from 
 the mean and repeat the process until only non-outliers remain. Such an
 approach requires limits to the amount of points that can be discarded.
+
+## Result Differences Between Centroid and Binning / Feature Test
+It is noteable that the centroid evaluation does not correlate with the
+other tests in terms of probable outliers or signal fluctuation. This
+implies that some changes in the instrument condition or the sample behaviour 
+are noteable, but made undetectable through the processing that follows 
+centroiding. Series 4) demonstrates this well, since by all other comparison methods,
+including PCA, the series shows a very high consistency, with the exception
+of one outlier. This outlier is still cleraly visible in the bin count
+consistency, but additionally a fluctuation in the centroid count between two
+states (seemingly) independent from anything but sample order can be observed.
+If such an effect exists in the binning or feature test, it is not noticeable.
+
 
 ## Combined Binning and Feature Test
 For all datasets, redundancy between the binning test and the feature test 
@@ -1115,79 +1124,14 @@ comparison between datasets was out of scope for the present work.
 Progress towards this could be made by demonstrating a linear relation
 between bin count and feature count which is consistent for all measurements
 in the test dataset which did not stem from a series with known defects.
-[@todo] studies with a modeling approach? // hier eher unangebracht
 
-# Planned Expansions to qAlgorithms
-Data visualisation is currently (04.10.2024) not implemented for qAlgorithms.
-Furthermore, it does not have an internal representation of measurement 
-series. This results in the user having to invest additional time to create 
-such control charts and manually select which files to include.
-
-Adding data visualisation could be handled through a third-party library
-and would decrease the time and skill needed to use qAlgorithms in
-this regard. While advantageous, defining out-of-control situations
-and detecting them based on statistical approaches could remove the
-need for human interaction in this regard, too.
-
-Useful data visualisation requires implementing some way of declaring
-a relation between different measurements by the user. Since such
-a function is also required for componentisation and assigning MS2 spectra,
-it should be the next step in expanding the project. 
-Since DDA MS2 spectra will not be binned, separate methods of establishing 
-process quality will have to be devised here. It could be sensible 
-decision to include templates for common applications, such as monitoring
-the stability of a system over time. This would ideally include a way to check 
-the general system stability without re-processing potentially thousands of files again.
-
-
-# Performed Modifications to qAlgorithms 
-## Modified Centroiding
-An advantage of the qCentroids approach [@todo] is that peaks can also
-be found if "gaps" exsist, meaning either through instrument behaviour
-or a processing error no intensity was measured where it should have 
-been. These missing points are interpolated, previously bridging gaps
-of up to seven points. This accepted gap size has been lowered to three
-points, since at a greater number of unknowns the risk of connecting two
-unrelated peaks and lowering the overall data quality was too great. 
-Accordingly, the greatest tolerated gap in scans within a bin has been
-changed to three, which corresponds to a 12.5% chance of three real
-signals being overlooked.
-
-## DQSB calculation
-Two elements of the DQSB calculation were changed:
-* The calculation of the mean inner distance (MID)
-* The scaling factor for minimum outer distance (MOD)
-Previously, the MID was calculated per point by averaging the
-distances from one point to every other member point of a given bin.
-This was changed, since a large part of the bin which this distance
-was calculated for will, in many cases, later be discarded by 
-isolating the feature region. In order for the DQSB to better reflect
-its later use case, now only those points within the maximum tolerated
-distance (currently three, see above) are considered. This led to a slight
-reduction in the average quality scores, although the exact effects still
-need to be evaluated. 
-
-With a similar consideration of the relevant scan range, now scaling is
-introduced based on the likelihood with which a relevant point was not 
-detected. In the worst case scenario, this results in a 50% likelihood
-that the point was not measured erroneously [@qBinning]. To reflect this
-behaviour, the MOD is doubled if it connects to a point with a one-scan
-difference, quadrupled for a two scan difference etc.. A previously implemented
-scaling approach doubled the MOD if it was to a point with the greatest 
-possible scan distance and fell off to no increase in distance for a point
-in the same scan. It was not extensively tested and discarded because the
-reasoning behind it did not translate into assumptions of the grouping model.
-If more lenient gaps are considered again in the future, this scaling 
-will likely have to be reworked to not automatically exclude remote but
-relevant points from influencing the DQSB.
-
-An edge case was addressed which led to incorrect peaks being returned.
-The error occurred when, during peak finding within a bin, the selected
-centroids no longer fulfilled the statistical criteria for belonging to the
-same mass trace. A test was added which controlled the maximum order space,
-normalised to the standard deviation of masses within the peak, against the
-critical distance as described for qBinning [@qBinning]. These Peaks are
-now returned with a negative DQSF to indicate them being incorrect.
+While the relative bin count worked well for most presented tests, it
+does not accurately convey the true average bin count per scan.
+The average bin count as understood here is the amount of bins which contain
+one point from this scan, and then the average being taken over this
+count for all scans. It would be interesting to see if the relative bin
+count can serve as a substitute for such a parameter or if sognificant 
+differences exist between the two.
 
 # Conclusion
 It could be shown that, using exclusively very broad statistics generated 
@@ -1195,8 +1139,9 @@ as part of the qAlgorithms pipeline, some statements about sample similarity
 are possible. This could be applied to monitor system stability, and 
 methods for effectively visualising such changes were developed.
 Nontheless, siginficantly more measurements using different instrumentation
-is necessary to confirm the universal applicability of such measures. Additionally,
-the presented hypothesies should be tested using directed measurements.
+are necessary to confirm the universal applicability of such measures. Additionally,
+the proposed linear relation between relative bin count and relative feature
+count should be tested using directed measurements.
 
 The next step of this project is establishing boundary conditions on basis of
 a model or robust heuristic. This should be established for all control charts
@@ -1224,6 +1169,11 @@ relevant optimisation strategies from otherwise unrelated studies.
 Since basic functionality could be demonstrated, further work focusing on 
 deriving measurement-specific information on, for example, suspected representativeness 
 regarding the sample, is a promising direction for the qAlgorithms project to take.
+The generalised test for consistency further opens up the possibility of a
+standardised comparison between different processing algorithms, where 
+a low deviation denotes good datasets. Through this, the presented work makes
+a relevant contribution to the future of Non-Target Screening methods and
+their optimisation towards result reliability.
 
 
 # Software and Data
