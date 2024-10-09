@@ -161,16 +161,26 @@ ggplot(allProcessed)+
   ylab("Relative Feature Count [Features / Scan]")+
   labs(caption = paste0("R² = ", round(summary(model)$adj.r.squared, digits = 3)))
 
+devline_all = ggplot(allProcessed)+
+  geom_text(aes(x = (numBins_empty + numBins_one + numBins_more), y = numFeatures, label = name), size = 3.2)+
+  geom_point(aes(x = (numBins_empty + numBins_one + numBins_more), y = numFeatures, colour = Series))+
+  geom_abline(slope = model$coefficients[[2]], intercept = model$coefficients[[1]])+
+  xlab("Relative Bin Count [Bins / Scan]")+
+  ylab("Relative Feature Count [Features / Scan]")+
+  labs(caption = paste0("R² = ", round(summary(model)$adj.r.squared, digits = 3)))
+
+ggplotly(devline_all)
+
 ```
 
 ```{r images}
 selectedProcess = 
   # allProcessed[c(1:44, 130:139), ] # aquaflow
   # allProcessed[c(118:129, 130:139), ]# SFC-DoE
-  allProcessed[c(93:102, 130:139), ] # gradual pump error
+  # allProcessed[c(93:102, 130:139), ] # gradual pump error
   # allProcessed[c(45:75, 130:139), ] # kali ozonation
   # allProcessed[c(76:92, 130:139), ] # pfas
-  # allProcessed[c(103:117, 130:139), ] # pump error
+  allProcessed[c(103:117, 130:139), ] # pump error
 SeriesBreaks = (selectedProcess$Series[-1] != selectedProcess$Series[-length(selectedProcess$Series)])
 SeriesBreaks = which(SeriesBreaks) + 0.5
 
@@ -216,10 +226,10 @@ deviations = selectedProcess %>% group_by(Series) %>% summarise(b0 = mean(numBin
 display_b0 = 0
 display_bAll = 0
 for (i in 1:length(selectedProcess$numSpectra)) {
-  display_b0[i] = (selectedProcess$numBins_empty[i] - deviations$b0[
+  display_b0[i] = (selectedProcess$numBins_empty[i] / deviations$b0[
     which(deviations$Series == selectedProcess$Series[i])])
   
-  display_bAll[i] = (selectedProcess$numBins_more[i] + selectedProcess$numBins_one[i] - deviations$bAll[
+  display_bAll[i] = ((selectedProcess$numBins_more[i] + selectedProcess$numBins_one[i]) / deviations$bAll[
     which(deviations$Series == selectedProcess$Series[i])])
 }
 display_devs = data.frame(min = 1:length(display_b0), max = 1:length(display_b0), mean = 1:length(display_b0))
@@ -256,13 +266,14 @@ ggplot(selectedProcess)+
 ggplot(selectedProcess)+
   geom_point(aes(name, meanDQSF))
 
-ggplot(selectedProcess)+
-  geom_text(aes(x = (numBins_empty + numBins_one + numBins_more), y = numFeatures, label = name), size = 3)+
+series_graph = ggplot(selectedProcess)+
+  geom_text(aes(x = (numBins_empty + numBins_one + numBins_more), y = numFeatures, label = name), size = 3.2)+
   geom_point(aes(x = (numBins_empty + numBins_one + numBins_more), y = numFeatures, colour = Series))+
   geom_abline(slope = model$coefficients[[2]], intercept = model$coefficients[[1]])+
   xlab("Relative Bin Count [Bins / Scan]")+
   ylab("Relative Feature Count [Features / Scan]")
 
+# ggplotly(series_graph)
 
 ```
 
