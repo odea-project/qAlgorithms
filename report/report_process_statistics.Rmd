@@ -6,6 +6,9 @@ output:
 bookdown::html_document2: 
   fig_caption: yes
   number_sections: yes
+bibliography: Process-Quality-Visualiser.bib
+citation_package: biblatex
+biblatexoptions: [backend=bibtex, maxcitenames=2]
 ---
 Report concluding the research practical by Daniel Höhn, supervised by Felix Drees and Gerrit Renner {.unnumbered}
 ---
@@ -97,7 +100,7 @@ devline_all_nameless = ggplot(allProcessed)+
 devline_all = ggplot(allProcessed)+
   geom_text(aes(x = (numBins_empty + numBins_one + numBins_more), y = numFeatures, label = name), size = 3.2)+
   geom_point(aes(x = (numBins_empty + numBins_one + numBins_more), y = numFeatures, colour = Series))+
-  geom_abline(slope = model$coefficients[[2]], intercept = model$coefficients[[1]])+
+  geom_abline(slope = model$coefficients[[2]], intercept = model$coefficients[[1]], colour = "red", linetype = "dashed")+
   xlab("Relative Bin Count [Bins / Scan]")+
   ylab("Relative Feature Count [Features / Scan]")+
   labs(caption = paste0("R² = ", round(summary(model)$adj.r.squared, digits = 3)))
@@ -115,7 +118,6 @@ plot_series = list(Aquaflow = c(1:44, 130:139), SFC_DoE = c(118:129, 130:139), p
   - [Measuring Process Quality](#measuring-process-quality)
 - [Selected Process Statistics](#selected-process-statistics)
   - [Test Dataset](#test-dataset)
-- [Developed Tests](#developed-tests)
 - [Calculations not Covered by qAlgorithms](#calculations-not-covered-by-qalgorithms)
   - [Preformance Criteria - Fourier Transform:](#preformance-criteria---fourier-transform)
   - [Performance Criteria - File Conversion](#performance-criteria---file-conversion)
@@ -206,6 +208,7 @@ a generally applicable model of result consistency is presented for the qAlgorit
 * DQS(B/C/F) - Data Quality Score (of a Bin/Centroid/Feature)
 * ppm - Parts Per Million (10e-6)
 * PCA - Principal Component Analysis
+* DDA - Data Dependent Acquisition
 
 # Process Quality Estimators
 An emerging and highly relevant problem in the field of NTS is
@@ -256,7 +259,7 @@ is compatible with spreadsheet software like Microsoft Excel, or,
 for more complex data, some relevant subset which is human-readable. 
 
 ## Differentiating Process Quality from Result Quality
-Previous work by Schulze et. al. (https://doi.org/10.1016/j.trac.2020.116063) highlighted
+Previous work by Schulze et. al. [@schulzeAssessmentQualityAssurance2020a] highlighted
 quality assurance as a core issue for nontargeted mass spectrometry and
 discussed different dimensions for quality during an analysis.
 Expanding on the step of "result reporting", a distinction should be
@@ -305,7 +308,7 @@ While practices can be standardised, identification of errors
 with robust statistical methods is not easily realised once
 sample processing has been performed, especially after prolonged periods of time. 
 Here, error prevention is the most sensible practice, strategies for which have
-been discussed by Schulze et. Al [https://doi.org/10.1016/j.trac.2020.116063] among others.
+been discussed by Schulze et. Al  [@schulzeAssessmentQualityAssurance2020a] among others.
 On the other hand, data processing must be deterministic
 and fully quantifiable in order to enable automation. As such,
 it is a viable point for introducing measures of process quality
@@ -317,7 +320,7 @@ unprocessed data to the result table, quality describes the
 overlap between the assumed model that dictates selection,
 combination and normalisation of data and the produced 
 results. An example for such a quality parameter was developed
-by Reuschenbach et al. [qcentroids]: The quality score describes
+by Reuschenbach et al. [reuschenbachDevelopmentScoringParameter2022]: The quality score describes
 the overlap between a fitted gaussian curve and the measured 
 data points. While such parameters give insight into the 
 reliability of data, be it on a per-EIC, per-feature
@@ -345,12 +348,12 @@ actions are taken based on them. As such, established tests must
 be validated using a representative sample of errors in the analysis
 process. Current techniques to this end rely on a large amount and variety
 of standard substances, which can then be described in terms
-of recovery and mass accuracy of internal standards. [https://www.doi.org/10.1016/j.aca.2016.06.030]
+of recovery and mass accuracy of internal standards [@baderGeneralStrategiesIncrease2016].
 
-Caballero-Casero et Al. [https://www.sciencedirect.com/science/article/pii/S0165993621000236] proposed guidelines on analytical
+Caballero-Casero et Al. proposed guidelines on analytical
 performance reporting in the context of human metabolomics.
 The suggested criteria are sensitivity, selectivity, 
-accuracy, stability and representativeness. All five largely
+accuracy, stability and representativeness [@caballero-caseroHarmonisedCriteriaQuality2021]. All five largely
 depend on internal standards, with the excpection of stability, which
 also proposes consistency in the number of features as an addition 
 to the recovery of internal standards.
@@ -408,7 +411,7 @@ with a very high score. Real signals have generally lower scores.
 Similarly, bins with a real peak tend to have worse scores than very
 small bins of data which does not contain a peak.
 The DQSF is the only score which makes a statement about result quality,
-since it serves as a measure of repeatability. [qPeaks]
+since it serves as a measure of repeatability [@reuschenbachQPeaksLinearRegressionBased2024].
 
 The means of DQSC and DQSB were calculated from all produced scores. 
 An alternative would be to only consider the scores of those 
@@ -493,7 +496,7 @@ regarding process quality, no correlation with result quality has
 been established. Furthermore, errors persisting in the program
 itself are possible. These factors reduce the viability of qAlgorithms
 itself for controlling process quality variables. Since it could
-be shown that the DQSF correlates with reproducibility [qPeaks],
+be shown that the DQSF correlates with reproducibility [@reuschenbachQPeaksLinearRegressionBased2024],
 The DQSF could function as an indicator for a process variable
 not providing correct information should features with very data quality
 scores contribute significantly to a very low process score.
@@ -520,8 +523,6 @@ the negative control measurements have the lowest DQSFs present in the
 dataset. The four highest DQSFs in the test data belong to blank measurements
 from two different series.
 
-# Developed Tests
-
 # Calculations not Covered by qAlgorithms 
 // Diesen Abschnitt entfernen / kürzen? Ich halte es zwar für sinnvoll,
 // auf die Schritte hinzuweisen, die wir nicht abdecken, bin mir mit der
@@ -530,7 +531,7 @@ from two different series.
 ## Preformance Criteria - Fourier Transform:
 The fourier transform employed in FT-ICR and Orbitrap type mass
 spectrometers is not something the instrument operator has access to.
-With techniques like phase-constrained deconvolution [https://pubs.acs.org/doi/10.1021/acs.analchem.6b03636]
+With techniques like phase-constrained deconvolution [@grinfeldPhaseConstrainedSpectrumDeconvolution2017]
 being possible, the potential negative influence of processing performed
 in the instrument should be quantified and given with high granularity.
 Without vendor cooperation, it will not be possible to estimate 
@@ -572,7 +573,7 @@ lost during the following steps towards componentisation.
 The DQSC currently implemented through the qAlgorithms workflow
 gives the percentage to which any given centroid conforms to the
 expected gaussian shape. This correlates with the reliability
-of the generated centroid. [qCentroids] 
+of the generated centroid [@reuschenbachDevelopmentScoringParameter2022]. 
 The following test utilising the DQSC was considered:
 
 For every measurement, the mean DQSC and the mean DQSCs of
@@ -608,7 +609,7 @@ represenatative coverage of the dataset than currently possible.
 # Performance Criteria - Binning:
 
 ## Bin Quality Score (DQSB)
-The DQSB in its current implementation [@todo] (paper binning, report 1) gives a measure of how well separated
+The DQSB in its current implementation [@reuschenbachQBinningDataQualityBased2023]  [@todo] (report 1) gives a measure of how well separated
 a bin is from its environment by comparing the distances within a bin with
 the distance to the closest point outside of it. In its original conception,
 this only takes the retention time into account when searching for the closest
@@ -616,7 +617,7 @@ points not in the bin. To achieve greater locality of the score, the program
 was modified such that only points within the maximal gap distance are used
 to calculate the mean in-group differences in mz. This change led to, on
 average, slightly lower scores. Furthermore, scaling was introduced for 
-the outer distance (see [here](#dqsb-calculation)).
+the outer distance.
 
 ## Bin Property Tests:
 // Es lohnt sich wahrscheinlich nicht, diesen Abschnitt beizubehalten. Ich halte die
@@ -715,12 +716,13 @@ the bin, it can not be the apex of an interpolated peak. This goes
 against the model behaviour of a correct bin.
 This test is not used for corrective action, but could be employed 
 as another sign of a halved peak.
+
 # Performance criteria - Peak Finding:
 ## DQSF
 The DQSF describes how well the chromatographic peak underlying a 
 feature fits the peak model. It already serves as a way for the user
 to priorise peaks for further analysis and make a qualified decision 
-regarding conflicts in componentisation or assignemnt of MS2 spectra. [qpeaks]
+regarding conflicts in componentisation or assignemnt of MS2 spectra [@reuschenbachQPeaksLinearRegressionBased2024.
 However, the feature-specific nature of the DQSF makes it unwieldy as
 a tool for assessing the entire dataset. When taking the mean or median,
 The few features of extremely high quality lose impact, whereas a more
@@ -843,10 +845,12 @@ the operator to the relevant region. This could also be realised by two
 independent tests for consistency on mean DQSC and centroid count.
 
 ```{r plot selection, echo=FALSE}
-i = 1
 
-for (series in plot_series) {
-  selectedProcess = allProcessed[series, ]
+centroid_plot = function(selectedProcess) {
+
+  # selectedProcess = allProcessed[series, ]
+  
+  # print(diff(selectedProcess$meanDQSC))
   
 SeriesBreaks = (selectedProcess$Series[-1] != selectedProcess$Series[-length(selectedProcess$Series)])
 SeriesBreaks = which(SeriesBreaks) + 0.5
@@ -860,28 +864,23 @@ s2 = max(abs(diff(selectedProcess$numCentroids)))
 
 delim = 10 * max(relativeSD / s2, DQSC_SD / s1)
   
-plot = ggplot()+
-  geom_line(aes(Sample, (diff(selectedProcess$meanDQSC))/s1, group = "DQSC", colour = "DQSC"), linewidth = 1, alpha = 0.8)+
-  geom_line(aes(Sample, diff(selectedProcess$numCentroids)/s2, group = "Count", colour = "Count"), linewidth = 0.85, alpha = 0.8)+
-  geom_vline(xintercept = SeriesBreaks, linewidth = 0.6, linetype = "dashed", alpha = 0.5)+
-  geom_hline(yintercept = c(delim, -delim), linewidth = 0.4, colour = "green3")+
-  geom_hline(yintercept = c(delim * 2, -delim * 2), linewidth = 0.4, colour = "red")+
-  scale_x_discrete(labels = label, guide = guide_axis(angle = 60))+
-  xlab("Sample")+
-  ylab("Centroid Dissimilarity")
-  
-assign(paste0("plot",i), plot, envir=.GlobalEnv)
-  
-i = i+1
-if (i==2){
-  stop()
-}
+ plot = ggplot()+
+   geom_line(aes(Sample, (diff(selectedProcess$meanDQSC))/s1, group = "DQSC", colour = "DQSC"), linewidth = 1, alpha = 0.8)+
+   geom_line(aes(Sample, diff(selectedProcess$numCentroids)/s2, group = "Count", colour = "Count"), linewidth = 0.85, alpha = 0.8)+
+   geom_vline(xintercept = SeriesBreaks, linewidth = 0.6, linetype = "dashed", alpha = 0.5)+
+   geom_hline(yintercept = c(delim, -delim), linewidth = 0.4, colour = "green3")+
+   geom_hline(yintercept = c(delim * 2, -delim * 2), linewidth = 0.4, colour = "red")+
+   scale_x_discrete(labels = label, guide = guide_axis(angle = 60))+
+   xlab("Sample")+
+   ylab("Centroid Dissimilarity")
+
+print(plot)
 }
 ```
 
 ### Dataset: Pump Error
-```{r plot3, echo=FALSE}
-print(plot3)
+```{r cplot3, echo=FALSE}
+centroid_plot(allProcessed[plot_series[[3]], ])
 ```
 
 For the positive control, this visualisation is made hard to evaluate
@@ -892,8 +891,8 @@ different from 0, with the current configuration it is not obvious
 that this data is not sensible to consider for further analysis.
 
 ### Dataset: Aquaflow
-```{r plot1, echo=FALSE}
-print(plot1)
+```{r cplot1, echo=FALSE}
+centroid_plot(allProcessed[plot_series[[1]], ])
 ```
 
 In the Aquaflow data, the previously known outlier can be identified by a 
@@ -903,19 +902,598 @@ constant, the DQSC varies enough to surpass the warning limit for
 cases in which differing sampling points are next to each other.
 
 ### Dataset: SFC-DoE
-```{r plot2, echo=FALSE}
-print(plot2)
+```{r cplot2, echo=FALSE}
+centroid_plot(allProcessed[plot_series[[2]], ])
 ```
+
 The SFC data shows much stronger deviation than the control series.
 The change from positive to negative data causes the centroid count to
 go over the exception limit, but not the DQSC. This behaviour is expected,
 since the different points have differing settings for the ion source.
 
 ### Dataset: Calibration Series
-```{r plot5, echo=FALSE}
-print(plot5)
+```{r cplot5, echo=FALSE}
+centroid_plot(allProcessed[plot_series[[5]], ])
 ```
+
 In the calibration series, negative measurements are more similar than 
 positive ones. The change from positive to negative mode causes both 
 parameters to exceed the exception limit. One possible outlier exists,
 although it is not detected through one of the other tests.
+
+### Dataset: PFAS
+```{r cplot4, echo=FALSE}
+centroid_plot(allProcessed[plot_series[[4]], ])
+```
+
+In the PFAS dataset, blanks show a large dissimilarity to each other and 
+non-blank samples. Between the four real samples, differences are smaller. 
+For this dataset, the difference between the replicate standards and positive 
+mode PFAS samples was so small it does not exceed the exception limit for either 
+property. While it is likely not a critical issue due to only occurring once, 
+this demonstrates that the two measures do not detect every relevant difference between samples.
+
+
+
+## Consistency of the Binning Algorithm {.tabset}
+
+```{r plot binning, echo=FALSE}
+binning_plot = function(selectedProcess){
+  deviations = selectedProcess %>% group_by(Series) %>% summarise(b0 = mean(numBins_empty), bAll = mean(numBins_more + numBins_one))
+display_b0 = 0
+display_bAll = 0
+for (i in 1:length(selectedProcess$numSpectra)) {
+  display_b0[i] = (selectedProcess$numBins_empty[i] / deviations$b0[
+    which(deviations$Series == selectedProcess$Series[i])])
+  
+  display_bAll[i] = ((selectedProcess$numBins_more[i] + selectedProcess$numBins_one[i]) / deviations$bAll[
+    which(deviations$Series == selectedProcess$Series[i])])
+}
+display_devs = data.frame(min = 1:length(display_b0), max = 1:length(display_b0), mean = 1:length(display_b0))
+for (i in 1:length(display_b0)) {
+  display_devs$min[i] = min(display_bAll[i] , display_b0[i] )
+  display_devs$max[i] = max(display_bAll[i] , display_b0[i] )
+  # display_devs$mean[i] = mean(display_bAll[i] / sd_binAll, display_b0[i] / sd_bin0)
+}
+
+
+
+# Observation: the three points are very similar for the triplicate blank
+plot = ggplot(selectedProcess)+
+  geom_linerange(aes(name[1:length(numSpectra)], 
+                     ymin = display_devs$min, ymax = display_devs$max, colour = Series),
+                 linewidth = 1.4)+
+  scale_x_discrete(guide = guide_axis(angle = 60))+
+  xlab("Sample")+
+  ylab("Bin Deviation")
+
+print(plot)
+}
+```
+
+
+The consistency of binning is evaluated without taking data unrelated
+to the binning step into account. This has the
+advantage that it can still be used if the centroiding was performed 
+using another algorithm, while also not amplifying potential distortions
+introduced in the previous step. It also allows, to a limited extent,
+a localised view on the binning process. As such, only the properties
+number of bins with no feature, number of bins with one feature and 
+number of bins with more than one feature were considered for consistency.
+The DQSB was not included since it is not considered to provide valuable 
+information on a dataset-wide basis yet.
+
+The base reasoning behind the developed visualisation is that the three categories
+should show as little deviation as possible. Since no meaningful difference
+between bins with one or more than one regressions in them could be found,
+both are combined through summation. Consistency for both groups is expressed
+relative to the same properties of the reference dataset. For both groups, the 
+data is centered to the mean of the reference data. The absolute difference in 
+average bins per spectrum is called "bin deviation" in the following.
+
+For the ten replicates, it was observed that both groups show very low bin deviation.
+In the datasets with obvious outliers shown in the PCA, but especially the Aquaflow
+series, it could be observed that for those bin deviations, the two measures were
+much further apart than in the other reference data. From this, it was assumed that
+both deviations being highly dissimilar indicates an undesireable property of the 
+data. For all datasets, the total count of bins with no features was higher than the
+count of bins with features for all measurements. The case of one  deviation width 
+being above and the other below zero was observed in the standard replicates 
+and some other measurements.
+
+To express both properties in a plot, the two bin deviations are visualised as a
+bar connecting the two points. This serves to ease the comparison between distances
+to the observer. This distance is referred to as deviation width in the following.
+
+While the chosen visualisation allows the identification of strong outliers,
+decision limits are not implemented. The main challenge regarding those is
+the observed sensitivity to different data properties. If the use case is 
+exclusively one type of sample that is expected to have no seasonal deviations
+like drinking water, an approach using the standard deviation of some preceding
+time period could be viable. For other sample types, another possible use case
+is control of a different test which concluded similarity, but with a high 
+degree of uncertainty. 
+
+### Dataset: Pump Error
+```{r bplot3, echo=FALSE}
+binning_plot(allProcessed[plot_series[[3]], ])
+```
+
+The positive control using the pump error dataset shows massive deviation
+from the series mean between different measurements and generally very large
+deviation widths. Due to the scaling, the baseline is only barely visible in some
+cases. Not a single measurement has a bin deviation lower than 25.
+It is easily visible that there is no internal consistency for this series.
+
+### Dataset: Aquaflow
+```{r bplot1, echo=FALSE}
+binning_plot(allProcessed[plot_series[[1]], ])
+```
+
+Using the Aquaflow dataset as a test case, it can be observed that
+the two different types of samples (control and treatment) can be distinguished 
+visually from the bin deviation, without this property being considered 
+during plot construction. This was not the
+case for the consistency using centroiding data. The blanks (D1_B+)
+have a very high similarity, while the two days (D1+ and D2+) are mainly
+distinguished by their in-group deviation. The wave pattern observed in
+D1+ matches the sampling time. Deviation width is significantly greater than
+the standards used as a baseline.
+
+The measurement already identified with the centroid parameters is also
+noticeably different in this visualisation.
+
+### Dataset: SFC-DoE
+```{r bplot2, echo=FALSE}
+binning_plot(allProcessed[plot_series[[2]], ])
+```
+
+The SFC data shows generally similar bin deviation for both positive and
+negative mode, with the deviation width being larger for negative mode.
+No clear optimum is visible. Since all measurements have differing conditions,
+the series does not have a stable mean value the measurements cluster around.
+When taking the deviation width as a measure of quality, the settings used for
+RO11_08 seem to be the best for both positive and negative mode.
+
+
+
+### Dataset: Calibration Series
+```{r bplot5, echo=FALSE}
+binning_plot(allProcessed[plot_series[[5]], ])
+```
+
+The calibration series is in the same range as the standard samples 
+for samples with and without indigo, as well as the blanks. Negative mode 
+measurements are not noticeably different from positie mode. Notably,
+the measurement kaliHCO3_0.02_indigo_p, which has very low values for both
+centroid parameters, does not show noteable bin deviation or greater 
+deviation width than the standards. The blank measurement 01_H2O_1_p shows very 
+high deviation in both.
+
+### Dataset: PFAS
+```{r bplot4, echo=FALSE}
+binning_plot(allProcessed[plot_series[[4]], ])
+```
+
+The PFAS data shows much greater inconsistency for the positive mode measurements
+than the negative mode measurements. A similar behaviour is observed in the DQSC,
+which fluctuates slightly more in positive than negative mode. This effect is 
+similar for real samples and instrument blanks, so potential matrix effects on
+the stability parameter likely have a strongly reduced effect compared to the 
+ionisation.
+
+## Consistency of the Feature-finding Algorithm {.tabset}
+```{r plot features, echo=FALSE}
+feature_plot = function(selectedProcess){
+  threesigma = 3 * sd(selectedProcess$numFeatures[(length(selectedProcess$numFeatures) - 9):length(selectedProcess$numFeatures)])
+
+meanlines = selectedProcess %>% group_by(Series) %>% summarise(mean = mean(numFeatures))
+
+plot = ggplot(selectedProcess)+ 
+  geom_point(aes(name, numFeatures, colour = Series))+
+  geom_errorbar(aes(name, ymin = numFeatures - threesigma, ymax = numFeatures + threesigma, colour = Series))+
+  geom_hline(yintercept = meanlines$mean)+
+  scale_x_discrete(guide = guide_axis(angle = 60))+
+  xlab("Sample")+
+  ylab("Feature Count")
+print(plot)
+}
+```
+
+
+The similarity parameter for the feature generation test is the number of features
+normalised to the number of scans. This measure was chosen due to the high
+consistency observed in the ten replicates. As control limit, the three
+sigma interval of the standard replicate is used. A line is used to mark the 
+group mean, with the out of control condition being fulfilled if the tolerance
+interval of a point does not include the group mean (image).
+Scaling the means of different groups is unlikely to be useful, although it 
+causes minor distortion in the present case due to the reference data being
+from a different measurement series.
+
+Notably, blanks and samples produce very similar results for all criteria 
+tested. This could be explained by noise making up the absolute majority
+of signals, which implies these citeria only respond to irregularities
+during chromatography.
+
+When using the different quality scores for general assessments of data
+quality over a dataset, for example choosing instrument settings on basis
+of a design of experiment, it should be controlled that the differences
+which form the basis for a decision are greater than the random deviation
+which is present in a series of technical replicates. For the present
+measures of difference, one singular decision parameter is difficult to
+construct. 
+
+One issue with taking the mean as a baseline is heavy distortion through
+large outliers. A more robust measure, like the median, has the potential
+to introduce a bias when two separate groups exist in the data. Both cases
+are fulfilled for the aquaflow dataset, where one 
+outlier distorts the mean and the not recognised groups of control and 
+treatment. Here, a possible solution is to remove a detected outlier from 
+the mean and repeat the process until only non-outliers remain. Such an
+approach requires limits to the amount of points that can be discarded.
+
+### Dataset: Pump Error
+```{r fplot3, echo=FALSE}
+feature_plot(allProcessed[plot_series[[3]], ])
+```
+
+
+### Dataset: Aquaflow
+```{r fplot1, echo=FALSE}
+feature_plot(allProcessed[plot_series[[1]], ])
+```
+
+
+### Dataset: SFC-DoE
+```{r fplot2, echo=FALSE}
+feature_plot(allProcessed[plot_series[[2]], ])
+```
+
+
+### Dataset: Calibration Series
+```{r fplot5, echo=FALSE}
+feature_plot(allProcessed[plot_series[[5]], ])
+```
+
+
+### Dataset: PFAS
+```{r fplot4, echo=FALSE}
+feature_plot(allProcessed[plot_series[[4]], ])
+```
+
+## Result Differences Between Centroid and Binning / Feature Test
+It is noteable that the centroid evaluation does not correlate with the
+other tests in terms of probable outliers or signal fluctuation. This
+implies that some changes in the instrument condition or the sample behaviour 
+are noteable, but made undetectable through the processing that follows 
+centroiding. Series 4) demonstrates this well, since by all other comparison methods,
+including PCA, the series shows a very high consistency, with the exception
+of one outlier. This outlier is still cleraly visible in the bin count
+consistency, but additionally a fluctuation in the centroid count between two
+states (seemingly) independent from anything but sample order can be observed.
+If such an effect exists in the binning or feature test, it is not noticeable.
+
+
+## Combined Binning and Feature Test
+For all datasets, redundancy between the binning test and the feature test 
+exist. In terms of non-quantitative results, the relative height of the two
+counts is very similar, with the main difference being the different measures
+of quality. The feature test provides a rudimentary decision limit for outliers,
+while the less concrete deviation width is only useful if the difference 
+between two measurements is large. The similarity is reasonable, since the
+amount of features in total directly depends on the amount of bins with features.
+This suggests another way of describing consistency or general usability,
+in that the degree with which a measurement conforms to a linear relationship 
+between total bin count and total feature count (or some otherwise determined
+subset of the two). As with the other tests, the counts are normalised to the
+number of scans. There is no distortion introduced here, since both axis are 
+scaled by the same value. This makes different series comparable.
+
+```{r linear relation, echo=FALSE}
+ggplotly(devline_all)
+```
+
+
+Shown is the line of the linear regression calculated from all points not part of the
+two pump error series. The one known outlier in Aquaflow_D1+ is noticeably 
+further away from the regression line and much lower in terms of bin and feature
+count, but still much more similar to the other data than the measurements
+performed while the pressure fluctuated. The standard samples cluster very close 
+together on the line. For the tested data, it appears possible to express the 
+similarity between two samples, after features have been determined, as the geometric
+distance between them in this plot. The distance from the regression line 
+serves as an equivalent to the regression width, with previously detected
+outliers having a greater distance than the rest of their dataset.
+
+It is noteable that the different datasets follow (seemingly) the same function,
+which also almost passes through the point (0, 0). More data is required to establish 
+a proper test based on adherence to a linear relation which uses a heuristic
+function, and to determine if such a test is sensible. For longer series, 
+an approach utilising a set of reference measurements to create a starting
+point and then modifying the reference function as new data is recorded
+is also thinkable. An important issue to solve here is that only data
+which does not display undesireable properties is included in the regression.
+
+# Applying the Developed Tests {.tabset}
+The similarity measures as descibed so far were tested on dataset 7),
+which was not included in their design. Here, the most interesting 
+property is that the pump pressure started being irregular gradually,
+with early measurements showing a stable pressure profile and the last
+measurements being performed under highly irregular pressure. 
+The expected test behaviour is that the dissimilarity increases primarily 
+as a function of measurement time. 
+
+From visual comparison of the pressure profile, it is expected that 
+measurement 9, but 10 at the latest, are seen as outliers by the tests.
+While arbitrary, the data has not been utilised at the time of writing
+and no empiric measure of usefulness exists.
+
+```{r gradual pump error indices, echo=FALSE}
+peSelection = allProcessed[c(93:102, 130:139), ]
+```
+
+
+## Applied Test: Centroid Stability
+```{r appCen, echo=FALSE}
+centroid_plot(peSelection)
+```
+
+A general increase in disorder for both centroid parameters can be 
+observed, but the exception limit is only passed for the last two measurements.
+The warning limit is only surpassed once (at measurement 10) before that.
+While the general principles are viable, the decided limit values are
+not sensitive enough to respond to the problems in this dataset.
+
+
+## Applied Test: Bin Stability
+```{r appBin, echo=FALSE}
+binning_plot(peSelection)
+```
+Here, the first anomaly is again measurement 10. Notably, the distinction
+is that the deviation width is very low, similar to the standards.
+The following measurements show a large increas in both deviation and deviation width.
+The general curve conforms to expectations, with a gradual increase that escalates
+towards the end. 
+
+It is questionable how sensible it is to set the deviation zero to a 
+baseline defined by standards, especially if those standards belong to a 
+different series. Assuming the point with lower than expected deviation
+width to be a random outlier, in this case the general trend is that
+a higher deviation means worse data, while a larger than average deviation
+with is added for especially severe outliers.
+
+Such an assumption, of course, needs to be validated using comparable datasets.
+
+## Applied Test: Feature Stability
+```{r appFeat, echo=FALSE}
+feature_plot(peSelection)
+```
+This test shows similar results to the bin stability test, with a 
+noticeable increse starting with measurement 10 and 12, 13 and 14 having
+a much greater feature count. Again, the issue of a distorted mean arises
+through the severe outliers.
+
+## Applied Test: Feature-Bin Ratio
+```{r series graph, echo=FALSE}
+series_graph = ggplot(peSelection)+
+  geom_text(aes(x = (numBins_empty + numBins_one + numBins_more), y = numFeatures, label = name), size = 3.2)+
+  geom_point(aes(x = (numBins_empty + numBins_one + numBins_more), y = numFeatures, colour = Series))+
+  geom_abline(slope = model$coefficients[[2]], intercept = model$coefficients[[1]])+
+  xlab("Relative Bin Count [Bins / Scan]")+
+  ylab("Relative Feature Count [Features / Scan]")
+
+ggplotly(series_graph)
+```
+
+It can be observed that the three obvious outliers have drastically different
+values from the regression. Starting at the sixth measurement, a clear upwards
+trend in the relative feature count can be observed. Starting at the first
+measurement, the bin count increases with time. This way of displaying data
+expresses everything the bin stability test intended to communicate more clearly
+and with the added benefit of a (semi) quantitative comparison. The deviation
+width is also communicated, but without actually including the distinction 
+between bin types in the data. Very similar, but not necessarily identical 
+information is included through the relative feature count. This supports both the 
+relevance of such a measure and makes the bin consisteny test itself superfluous.
+
+# Further Research
+While the criteria found through exploratory data analysis are seemingly able
+to make broad statements about process quality, they need to be related to
+result quality for certainty in this regard. Such an analysis depends on
+functioning and well-tested componentisation being implemented for the
+qAlgorithms project and should consider factoring in only relevant regions
+of the measurement. This relevance could be estimated over the proximity
+to a bin which did not contain any features, which would de-priorise 
+features still affected by void-time effluent. 
+The degree to which such a method is oversensitive could be reduced by
+Implementing different warning levels with independent criteria.
+
+Depending on the instrument mode, i.e. just recording MS1 spectra, 
+data-dependent or data-independent MS2 spectra, the time between MS1 
+scans and as such the binning results are likely to differ. It should
+be ensured that an implemented test does not mark these as non-comparable,
+if necessary by implementing a different test for these cases.
+
+The implemented visualisation tools should be validated using additional realistic
+conditions under which instrument performance is reduced, like measurements
+with an old column, or measurements after the system has been inactive for
+a prolonged period of time. 
+
+For being useful tools in decisionmaking, the control chart must also include
+critical values for out of control situations. These should be identified
+systematically by provoking cases that produce the smallest error which
+invalidates the measurement.
+
+Finding the root cause of detected problems purely through analysing the
+data is unlikely to work for cases which do not result from an error in
+the processing pipeline. Here is a possible application for machine learning
+systems, which are trained on a relevant subset of the processing data and 
+then used once an out of control situation occurs. For this approach to
+be viable, it must be established that all used variables are largely
+independent of instrument-specific conditions first. Such a confirmation
+would have to involve many different groups contributing data and using
+multiple models, the results of which would also have to be evaluated
+separately. Such a control period would massively increase the workload
+per analysis for a likely unsustainable amount of time. As such, 
+instrument-specific models for routine measurements could be a better 
+focus of development, if machine learning is to be employed at all.
+
+The only mass analyser used for performance evaluation was the orbitrap.
+To which degree the results are transferable to, for example, a QTOF,
+would require a series being measured on both. At the time of writing,
+no series of profile TOF data was availvable for comparisons.
+
+Some applications for system stability visualisation in the environmental
+sciences will deal with data that is subject to seasonal changes. 
+Here, critical values for out-of-control sitautions should not be based
+on the entirety of the data but only a relatively recent subset.
+Similarly, if a change to the instrumentation is made, there needs to
+be a user friendly way to exclude previous measurements from indfluencining
+the baseline of new measurements.
+
+For some possible outliers, only one of the three tests resulted in a
+detection. Here, it is necessary to establish concrete decision parameters
+for when to consider such a measurement an outlier.
+
+All process parameters were taken as means. This is probably not the best
+possible approach to characterise the general structure of a dataset, since
+it ignores the way these parameters exist in relation to the three 
+dimensions mz, RT and intensity. The development of a relational model
+mapping these to the selected process variables and offering a more precise
+comparison between datasets was out of scope for the present work.
+Progress towards this could be made by demonstrating a linear relation
+between bin count and feature count which is consistent for all measurements
+in the test dataset which did not stem from a series with known defects.
+
+While the relative bin count worked well for most presented tests, it
+does not accurately convey the true average bin count per scan.
+The average bin count as understood here is the amount of bins which contain
+one point from this scan, and then the average being taken over this
+count for all scans. It would be interesting to see if the relative bin
+count can serve as a substitute for such a parameter or if sognificant 
+differences exist between the two.
+
+# Conclusion
+It could be shown that, using exclusively very broad statistics generated 
+as part of the qAlgorithms pipeline, some statements about sample similarity
+are possible. This could be applied to monitor system stability, and 
+methods for effectively visualising such changes were developed.
+Nontheless, siginficantly more measurements using different instrumentation
+are necessary to confirm the universal applicability of such measures. Additionally,
+the proposed linear relation between relative bin count and relative feature
+count should be tested using directed measurements.
+
+The next step of this project is establishing boundary conditions on basis of
+a model or robust heuristic. This should be established for all control charts
+and validated using different datasets.
+
+While it was not possible to test in a real application, the developed
+visualisations did fulfill the expectations regarding their behaviour
+when used for clearly defective data and data that did not contain any
+known issues. The control limits derived from the standard deviation
+of a good measurement replicate present a viable solution for identifying 
+outliers for the measurements that were tested, with the exception of the 
+aquaflow data. Here, the problem was grouping multiple different samples
+together, which is not a problem with the intended use case.
+
+The main advantages of process parameters as used here are a massive reduction
+in the data, both in terms of size and complexity, as well as the ability
+to compare two or more datasets without depending on the produced feature lists.
+In consequence, data sharing is radically simplified and the processing time
+for large datasets drastically reduced. The addition of a set of identifying
+properties to datasets could also be used to find generally similar data
+over thousands to millions of other measurements, provided a database
+is established. For example, such efforts could make it easier to find 
+relevant optimisation strategies from otherwise unrelated studies.
+
+Since basic functionality could be demonstrated, further work focusing on 
+deriving measurement-specific information on, for example, suspected representativeness 
+regarding the sample, is a promising direction for the qAlgorithms project to take.
+The generalised test for consistency further opens up the possibility of a
+standardised comparison between different processing algorithms, where 
+a low deviation denotes good datasets. Through this, the presented work makes
+a relevant contribution to the future of Non-Target Screening methods and
+their optimisation towards result reliability.
+
+
+# Software and Data
+## Software
+All calculations in R were performed with R 4.4.0 [@rcoreteamLanguageEnvironmentStatistical2023], 
+using the packages tidyverse 2.0.0 [@wickhamWelcomeTidyverse2019].
+Images were generated using ggplot2 3.5.1[ggplot2].
+
+qAlgorithms is written in base C++ 20, using only standard library functions.
+For reading in files, the StreamCraft library is used[https://github.com/odea-project/StreamCraft].
+It was compiled with gcc 13.2.0 [@freesoftwarefoundationinc.UsingGNUCompiler1988].
+
+The scripts used to generate the presented images and associated calculations 
+are availvable on the [qAlgorithms github](https://github.com/odea-project/qAlgorithms/tree/qBinning_beta/test).
+
+## Data
+1) UV degredation of ibuprofen with peracetic acid:
+This dataset was measured while a pump defect on the LC caused the
+column pressure to increase and decrease rapidly. It is used because
+these conditions should cause the produced data to be no longer
+binned reliably, leading to the majority of features being wrong.
+
+2) SFC-HRMS data:
+This dataset is from a design of experiment series trying out different
+ion source parameters. The source was set to polarity switching, 
+resulting in two datasets per measurement after evaluation.
+
+3) Aquaflow data: 
+Three blanks, three standards and three samples from the Aquaflow 
+project, all measured in positive mode. One sample measurement
+is notable for not containing any centroids for the first 800 scans.
+Naming: C = control, T = treatment, S = sampling time
+Another sample contained 5000 MS1 spectra, while usually only 1300 were recorded.
+The samples are wastewater effluent comparing the effects an
+additional treatment step had on the water quality.
+The measurements were performed one day apart, but the two runs contained samples
+from different sampling points. As such, discrepancies are not 
+assured to stem from the daily variation in instrument conditions.
+
+4) Calibration series:
+Excerpt of a measurement series containing four blanks, and seven
+ozonation experiments with indigo, two of which were measured in
+negative mode. These measurements were primarily chosen for their 
+small filesize and poor chromatographic separation. No information
+regarding the type of sample exist, but a standard solution in 
+millipore water is likely from the naming scheme.
+
+5) PFAS data:
+HPLC-orbitrap DDA measurements consisting of blank measurements and
+water samples containing PFAS. Unisensor samples were filtered
+to remove matrix before measurement. It is only a small subsample
+of a larger series which was selected by filesize for ease of
+data transfer and processing.
+
+6) High-consistency standards
+As a reference for a stable system, ten replicates of a standard mixture
+in pure water were mesasured on an HPLC-orbitrap system. They were 
+measured at the end of a longer run and are assumed to represent 
+samples which do not significantly differ from each other in terms
+of instrument conditions or sample content.
+Of the eight compounds in the sample, 2-4 (average 2.5) were recovered
+using the currently existing limits of mz +/- mzUncertainty and lowest /
+highest retention time. These tolerances are subject to change and as 
+such, recovery is not considered as a way to determine one measurement
+as better than another.
+
+7) A repeat of the failed series that makes up dataset 1), performed
+at the same conditions and with equivalent samples. Here, the same
+error of varying pump pressure occurred, but with an observable, gradual 
+increase from a ca. 15 bar mean amplitude to up to 70 bar amplitudes in the
+pump pressure over a four-hour timeframe. 
+13 complete measurements were performed and the instrument stopped halfway 
+through the 14th. Of these, four measurements could not be converted to
+mzML files successfully. For an overview, see the attached image. Note that
+the filenames in the LC results are incorrect. 
+ [@todo] image
+For this dataset, the mean DQSF shows a clear decreasing trend over time.
+
+Special thanks to David Kniesel for suffering extended periods of instrument 
+failure and supplying his resulting data.
+
+# References

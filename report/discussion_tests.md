@@ -10,7 +10,6 @@ Report concluding the research practical by Daniel Höhn, supervised by Felix Dr
   - [Measuring Process Quality](#measuring-process-quality)
 - [Selected Process Statistics](#selected-process-statistics)
   - [Test Dataset](#test-dataset)
-- [Developed Tests](#developed-tests)
 - [Calculations not Covered by qAlgorithms](#calculations-not-covered-by-qalgorithms)
   - [Preformance Criteria - Fourier Transform:](#preformance-criteria---fourier-transform)
   - [Performance Criteria - File Conversion](#performance-criteria---file-conversion)
@@ -109,6 +108,7 @@ a generally applicable model of result consistency is presented for the qAlgorit
 * DQS(B/C/F) - Data Quality Score (of a Bin/Centroid/Feature)
 * ppm - Parts Per Million (10e-6)
 * PCA - Principal Component Analysis
+* DDA - Data Dependent Acquisition
 
 # Process Quality Estimators
 An emerging and highly relevant problem in the field of NTS is
@@ -425,8 +425,6 @@ while those for the standard solution average 0.73. With one exception,
 the negative control measurements have the lowest DQSFs present in the
 dataset. The four highest DQSFs in the test data belong to blank measurements
 from two different series.
-
-# Developed Tests
 
 # Calculations not Covered by qAlgorithms 
 // Diesen Abschnitt entfernen / kürzen? Ich halte es zwar für sinnvoll,
@@ -1218,13 +1216,14 @@ This dataset is from a design of experiment series trying out different
 ion source parameters. The source was set to polarity switching, 
 resulting in two datasets per measurement after evaluation.
 
-3) Aquaflow data: [https://pubs.acs.org/doi/10.1021/acs.est.1c08014] // stimmt der Artikel?
+3) Aquaflow data: 
 Three blanks, three standards and three samples from the Aquaflow 
 project, all measured in positive mode. One sample measurement
 is notable for not containing any centroids for the first 800 scans.
 Naming: C = control, T = treatment, S = sampling time
 Another sample contained 5000 MS1 spectra, while usually only 1300 were recorded.
-The samples are wastewater effluent [@todo]
+The samples are wastewater effluent comparing the effects an
+additional treatment step had on the water quality.
 The measurements were performed one day apart, but the two runs contained samples
 from different sampling points. As such, discrepancies are not 
 assured to stem from the daily variation in instrument conditions.
@@ -1238,9 +1237,11 @@ regarding the type of sample exist, but a standard solution in
 millipore water is likely from the naming scheme.
 
 5) PFAS data:
-HPLC-orbitrap measurements consisting of blank measurements and
+HPLC-orbitrap DDA measurements consisting of blank measurements and
 water samples containing PFAS. Unisensor samples were filtered
-to remove matrix before measurement.
+to remove matrix before measurement. It is only a small subsample
+of a larger series which was selected by filesize for ease of
+data transfer and processing.
 
 1) High-consistency standards
 As a reference for a stable system, ten replicates of a standard mixture
