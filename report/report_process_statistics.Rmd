@@ -524,9 +524,6 @@ dataset. The four highest DQSFs in the test data belong to blank measurements
 from two different series.
 
 # Calculations not Covered by qAlgorithms 
-// Diesen Abschnitt entfernen / kürzen? Ich halte es zwar für sinnvoll,
-// auf die Schritte hinzuweisen, die wir nicht abdecken, bin mir mit der
-// Umsetzung hier aber nicht sicher
 
 ## Preformance Criteria - Fourier Transform:
 The fourier transform employed in FT-ICR and Orbitrap type mass
@@ -585,9 +582,6 @@ all samples of the negative control series.
 
 ## Signal Point Retention
 
-// Ich bin mir hier nicht sicher, wie sinnvoll ein entsprechender 
-// Parameter tatsächlich ist. Müsste man wahrscheinlich ausprobieren.
-
 Another perspective on process quality is the unifomity of intermediate
 results when comparing replicates or time series that should be 
 consistent, for example drinking water. In these cases, under 
@@ -609,7 +603,7 @@ represenatative coverage of the dataset than currently possible.
 # Performance Criteria - Binning:
 
 ## Bin Quality Score (DQSB)
-The DQSB in its current implementation [@reuschenbachQBinningDataQualityBased2023]  [@todo] (report 1) gives a measure of how well separated
+The DQSB in its current implementation [@reuschenbachQBinningDataQualityBased2023] gives a measure of how well separated
 a bin is from its environment by comparing the distances within a bin with
 the distance to the closest point outside of it. In its original conception,
 this only takes the retention time into account when searching for the closest
@@ -620,8 +614,7 @@ average, slightly lower scores. Furthermore, scaling was introduced for
 the outer distance.
 
 ## Bin Property Tests:
-// Es lohnt sich wahrscheinlich nicht, diesen Abschnitt beizubehalten. Ich halte die
-// Tests zwar für erwähnenswert, aber sie tragen nicht wirklich zum Gesamtkunstwerk bei.
+
 In addition to the quality score, multiple property tests are performed on 
 each bin. These serve the purpose of descibing commonly observed patterns
 during binning that often occur in distorted bins. These secondary tests
@@ -1428,9 +1421,10 @@ For reading in files, the StreamCraft library is used[https://github.com/odea-pr
 It was compiled with gcc 13.2.0 [@freesoftwarefoundationinc.UsingGNUCompiler1988].
 
 The scripts used to generate the presented images and associated calculations 
-are availvable on the [qAlgorithms github](https://github.com/odea-project/qAlgorithms/tree/qBinning_beta/test).
+are availvable on the [qAlgorithms github](https://github.com/odea-project/qAlgorithms/tree/qBinning_beta/test), 
+as is a [detailed description of the binning algorithm](https://github.com/odea-project/qAlgorithms/tree/qBinning_beta/report/report.md).
 
-## Data
+## Data {.tabset}
 1) UV degredation of ibuprofen with peracetic acid:
 This dataset was measured while a pump defect on the LC caused the
 column pressure to increase and decrease rapidly. It is used because
@@ -1490,10 +1484,19 @@ pump pressure over a four-hour timeframe.
 through the 14th. Of these, four measurements could not be converted to
 mzML files successfully. For an overview, see the attached image. Note that
 the filenames in the LC results are incorrect. 
- [@todo] image
 For this dataset, the mean DQSF shows a clear decreasing trend over time.
 
 Special thanks to David Kniesel for suffering extended periods of instrument 
 failure and supplying his resulting data.
+
+### Hide Pressure Curves
+
+
+### Show Pressure Curves
+
+```{r pressure plot, echo=FALSE}
+knitr::include_graphics("./pump_pressure_david_08-08.jpg")
+```
+Green checkmarks denote the datasets that could be converted to .MZml successfully.
 
 # References
