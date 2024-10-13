@@ -170,6 +170,17 @@ namespace q
                           << ppm_for_precentroided_data << " ppm is assumed for all supplied centroids\n";
                 std::vector<double> retention_times = data.get_spectra_rt(indices); // get retention times
                 rt_diff = calcRTDiff(retention_times);
+                addEmpty.resize(indices.size());
+                std::fill(addEmpty.begin(), addEmpty.end(), 0);
+                for (int i = 0; i < int(indices.size()) - 1; i++) // i can be -1 briefly if there is a scan missing between 1. and 2. element
+                {
+                    if (retention_times[i + 1] - retention_times[i] > rt_diff * 1.75)
+                    {
+                        addEmpty[i]++;
+                        retention_times[i] += rt_diff * 1.75;
+                        i--;
+                    }
+                }
                 return transferCentroids(data, indices, retention_times, start_index, ppm_for_precentroided_data);
             }
 

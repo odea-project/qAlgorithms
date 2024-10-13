@@ -152,6 +152,8 @@ sd_bin0 = sd(allProcessed$numBins_empty[130:139])
 sd_bin2 = sd(allProcessed$numBins_more[130:139])
 sd_binAll = sd(allProcessed$numBins_more[130:139] + allProcessed$numBins_one[130:139])
 
+threesigma = 3 * sd(allProcessed$numFeatures[130:139])
+
 sel = which(allProcessed$Series != "pump_error+")
 model = lm(allProcessed$numFeatures[sel] ~ with(allProcessed, numBins_empty[sel] + numBins_one[sel] + numBins_more[sel]))
 ggplot(allProcessed)+
@@ -173,6 +175,29 @@ ggplotly(devline_all)
 
 ```
 
+```{r daten selina}
+seldata = read.csv("../build/log_qBinning_beta.csv")
+seldata = as.data.frame(seldata[,2:(length(seldata[1,]))], row.names = seldata[,1])
+seldata$badFeatures = seldata$badFeatures / seldata$numFeatures
+seldata$polarity = TRUE
+seldata$year = 240511
+seldata$blank = FALSE
+seldata$Series = "Seldata"
+seldata$name = str_replace(str_sub(row.names(seldata), 7, -8), "pos_p", "p")
+
+seldata[,numericCols] = seldata[,numericCols]/seldata$numSpectra
+
+ggplotly(ggplot(rbind(allProcessed, seldata))+
+  geom_text(aes(x = (numBins_empty + numBins_one + numBins_more), y = numFeatures, label = name), size = 3.2)+
+  geom_point(aes(x = (numBins_empty + numBins_one + numBins_more), y = numFeatures, colour = Series))+
+  geom_abline(slope = model$coefficients[[2]], intercept = model$coefficients[[1]])+
+  xlab("Relative Bin Count [Bins / Scan]")+
+  ylab("Relative Feature Count [Features / Scan]")+
+  labs(caption = paste0("R² = ", round(summary(model)$adj.r.squared, digits = 3))))
+
+```
+
+
 ```{r images}
 selectedProcess = 
   # allProcessed[c(1:44, 130:139), ] # aquaflow
@@ -180,7 +205,8 @@ selectedProcess =
   # allProcessed[c(93:102, 130:139), ] # gradual pump error
   # allProcessed[c(45:75, 130:139), ] # kali ozonation
   # allProcessed[c(76:92, 130:139), ] # pfas
-  allProcessed[c(103:117, 130:139), ] # pump error
+  # allProcessed[c(103:117, 130:139), ] # pump error
+  seldata 
 SeriesBreaks = (selectedProcess$Series[-1] != selectedProcess$Series[-length(selectedProcess$Series)])
 SeriesBreaks = which(SeriesBreaks) + 0.5
 
@@ -249,9 +275,6 @@ ggplot(selectedProcess)+
   scale_x_discrete(guide = guide_axis(angle = 60))+
   xlab("Sample")+
   ylab("Bin Deviation")
-   
-
-threesigma = 3 * sd(selectedProcess$numFeatures[(length(selectedProcess$numFeatures) - 9):length(selectedProcess$numFeatures)])
 
 meanlines = selectedProcess %>% group_by(Series) %>% summarise(mean = mean(numFeatures))
 
@@ -273,7 +296,7 @@ series_graph = ggplot(selectedProcess)+
   xlab("Relative Bin Count [Bins / Scan]")+
   ylab("Relative Feature Count [Features / Scan]")
 
-# ggplotly(series_graph)
+ggplotly(series_graph)
 
 ```
 

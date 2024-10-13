@@ -454,7 +454,7 @@ int main(int argc, char *argv[])
 
         else
         {
-            pathOutput = filename_input;
+            pathOutput = filename_output;
         }
         inSpecified = true;
         outSpecified = true;
