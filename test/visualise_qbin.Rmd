@@ -183,7 +183,12 @@ seldata$polarity = TRUE
 seldata$year = 240511
 seldata$blank = FALSE
 seldata$Series = "Seldata"
-seldata$name = str_replace(str_sub(row.names(seldata), 7, -8), "pos_p", "p")
+# seldata$name = str_replace(str_sub(row.names(seldata), 7, -8), "pos_p", "p")
+seldata$name = row.names(seldata)
+seldata$Series = str_sub(seldata$name, 11)
+seldata$Sample = str_sub(seldata$name, 8,9)
+seldata$ppm = as.numeric(str_extract(seldata$Series, "[0-9.]+"))
+seldata$ppm[which(seldata$ppm > 20)] = 0
 
 seldata[,numericCols] = seldata[,numericCols]/seldata$numSpectra
 
@@ -202,11 +207,11 @@ ggplotly(ggplot(rbind(allProcessed, seldata))+
 selectedProcess = 
   # allProcessed[c(1:44, 130:139), ] # aquaflow
   # allProcessed[c(118:129, 130:139), ]# SFC-DoE
-  # allProcessed[c(93:102, 130:139), ] # gradual pump error
+  allProcessed[c(93:102, 130:139), ] # gradual pump error
   # allProcessed[c(45:75, 130:139), ] # kali ozonation
   # allProcessed[c(76:92, 130:139), ] # pfas
   # allProcessed[c(103:117, 130:139), ] # pump error
-  seldata 
+  # seldata 
 SeriesBreaks = (selectedProcess$Series[-1] != selectedProcess$Series[-length(selectedProcess$Series)])
 SeriesBreaks = which(SeriesBreaks) + 0.5
 
@@ -289,12 +294,23 @@ ggplot(selectedProcess)+
 ggplot(selectedProcess)+
   geom_point(aes(name, meanDQSF))
 
-series_graph = ggplot(selectedProcess)+
-  geom_text(aes(x = (numBins_empty + numBins_one + numBins_more), y = numFeatures, label = name), size = 3.2)+
+ggplot(selectedProcess)+
+  geom_point(aes(ppm, meanDQSF, colour = Sample))+
+  xlab("ppm")+
+  ylab("Mean DQSF")
+
+ggplot(selectedProcess)+
   geom_point(aes(x = (numBins_empty + numBins_one + numBins_more), y = numFeatures, colour = Series))+
   geom_abline(slope = model$coefficients[[2]], intercept = model$coefficients[[1]])+
   xlab("Relative Bin Count [Bins / Scan]")+
   ylab("Relative Feature Count [Features / Scan]")
+
+series_graph = ggplot(selectedProcess)+
+  geom_point(aes(x = (numBins_empty + numBins_one + numBins_more), y = numFeatures, colour = Series))+
+  geom_text(aes(x = (numBins_empty + numBins_one + numBins_more), y = numFeatures, label = name), size = 2.6)+
+  geom_abline(slope = model$coefficients[[2]], intercept = model$coefficients[[1]])+
+  xlab("Relative Bin Count [Bins per Scans]")+
+  ylab("Relative Feature Count [Features / Scans]")
 
 ggplotly(series_graph)
 
