@@ -176,7 +176,7 @@ ggplotly(devline_all)
 ```
 
 ```{r daten selina}
-seldata = read.csv("../build/log_qBinning_beta.csv")
+seldata = read.csv("C:/Users/unisys/Downloads/metadata_centroiding_selina.csv")
 seldata = as.data.frame(seldata[,2:(length(seldata[1,]))], row.names = seldata[,1])
 seldata$badFeatures = seldata$badFeatures / seldata$numFeatures
 seldata$polarity = TRUE
@@ -207,11 +207,11 @@ ggplotly(ggplot(rbind(allProcessed, seldata))+
 selectedProcess = 
   # allProcessed[c(1:44, 130:139), ] # aquaflow
   # allProcessed[c(118:129, 130:139), ]# SFC-DoE
-  allProcessed[c(93:102, 130:139), ] # gradual pump error
+  # allProcessed[c(93:102, 130:139), ] # gradual pump error
   # allProcessed[c(45:75, 130:139), ] # kali ozonation
   # allProcessed[c(76:92, 130:139), ] # pfas
   # allProcessed[c(103:117, 130:139), ] # pump error
-  # seldata 
+  seldata
 SeriesBreaks = (selectedProcess$Series[-1] != selectedProcess$Series[-length(selectedProcess$Series)])
 SeriesBreaks = which(SeriesBreaks) + 0.5
 
