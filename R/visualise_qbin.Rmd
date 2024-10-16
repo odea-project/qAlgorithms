@@ -1,0 +1,318 @@
+---
+title: "Untitled"
+author: "Daniel Höhn"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(ggfortify)
+library(plotly)
+```
+
+```{r}
+peakStats = as.data.frame(read.csv("C:/Users/unisys/Documents/Studium/Messdaten/scores_19.08.csv"))
+peakStats$polarity = peakStats$polarity == 1
+peakStats$year = str_extract(peakStats$filename , "^...")
+peakStats$year[13] = "error"
+peakStats = peakStats[-1,]
+peakStats = peakStats[-33,]
+
+```
+
+```{r}
+pca_peaks = prcomp(peakStats[which(peakStats$polarity == T), 1:6], scale = T)
+pca_peaks$rotation = pca_peaks$rotation * -1
+
+pca_peaks$sdev^2 / sum(pca_peaks$sdev^2)
+
+biplot(pca_peaks, scale = T)
+
+autoplot(pca_peaks, data = peakStats[which(peakStats$polarity),], colour = 'year',
+
+              loadings = TRUE, loadings.colour = 'blue',
+
+              loadings.label = TRUE, loadings.label.size = 3) 
+
+
+
+###########
+
+pca_peaks2 = prcomp(peakStats[which(!peakStats$polarity), 1:6], scale = T)
+pca_peaks2$rotation = pca_peaks2$rotation * -1
+
+pca_peaks2$sdev^2 / sum(pca_peaks2$sdev^2)
+
+biplot(pca_peaks2, scale = T)
+```
+
+```{r}
+ggplot(peakStats[1:32,])+
+  geom_point(aes(filename, numCens / numBins))+
+  scale_x_discrete(guide = guide_axis(angle = 60))
+ggplot(peakStats[1:32,])+
+    geom_point(aes(filename, numBins / numPeaks))+
+    scale_x_discrete(guide = guide_axis(angle = 60))
+ggplot(peakStats[1:32,])+
+    geom_point(aes(filename, numCens / numPeaks))+
+    scale_x_discrete(guide = guide_axis(angle = 60))
+```
+
+```{r}
+emptybins = read.csv("./emptybins.csv")
+# plot(emptybins)
+bintypes = read.csv("./bintypes.csv")
+aqflow = read.csv("./aquaflow_crit2.csv")
+aqflow$type1 = str_extract(aqflow$file, "[A-Z].")
+aqflow$type2 = str_extract(aqflow$file, "[A-Z]._I")
+
+ggplot(emptybins)+
+  geom_hex(aes(mz,RT))
+
+ggplot(aqflow[1:41,])+
+  geom_point(aes(file, onlyOne/numFull, colour = type2))+
+  scale_x_discrete(guide = guide_axis(angle = 60))
+
+ggplot(aqflow[1:41,])+
+  geom_point(aes(file, numPeaks/numFull, colour = type1))+
+  scale_x_discrete(guide = guide_axis(angle = 60))
+
+ggplot(bintypes)+
+  geom_point(aes(file, numPeaks/numFull))+
+  scale_x_discrete(guide = guide_axis(angle = 60))
+
+ggplot(aqflow[42:57,][-8,])+
+  geom_point(aes(file, numPeaks/numFull))+
+  scale_x_discrete(guide = guide_axis(angle = 60))
+```
+
+```{r for all 94 sets}
+allProcessed = read.csv("../log_qBinning_beta.csv", comment.char = "#")
+
+
+allProcessed = as.data.frame(allProcessed[,2:(length(allProcessed[1,]))], row.names = allProcessed[,1])
+# normalise errors of peakfinding to number of features
+allProcessed$badFeatures = allProcessed$badFeatures / allProcessed$numFeatures
+
+allProcessed$polarity = str_ends(row.names(allProcessed), "positive")
+allProcessed$year = str_extract(row.names(allProcessed) , "^......")
+allProcessed$year = as.numeric(allProcessed$year)
+negatives = which(!allProcessed$polarity)
+allProcessed$year[negatives] = allProcessed$year[negatives] * -1
+
+allProcessed$blank = (str_detect(row.names(allProcessed), "H2O") | str_detect(row.names(allProcessed), "Blank"))
+allProcessed$Series = "none"
+allProcessed$Series[which(allProcessed$year == 202401)] = "PFAS+"
+allProcessed$Series[which(allProcessed$year == -202401)] = "PFAS-"
+allProcessed$Series[which(allProcessed$year == 202402)] = "PFAS+"
+allProcessed$Series[which(allProcessed$year == -202402)] = "PFAS-"
+allProcessed$Series[which(allProcessed$year == 202408)] = "pump_error+"
+allProcessed$Series[which(allProcessed$year == 210229)] = "Aquaflow_D1+"
+allProcessed$Series[which(allProcessed$year == 210229 & allProcessed$blank)] = "Aquaflow_D1_B+"
+allProcessed$Series[which(allProcessed$year == 210311)] = "Aquaflow_D2+"
+allProcessed$Series[which(allProcessed$year == 220909)] = "Indigo+"
+allProcessed$Series[which(allProcessed$year == -220909)] = "Indigo-"
+allProcessed$Series[which(allProcessed$year == 240123)] = "SFC_DoE+"
+allProcessed$Series[which(allProcessed$year == -240123)] = "SFC_DoE-"
+allProcessed$Series[which(allProcessed$year == 240821)] = "stds_deca+"
+allProcessed$name = str_replace(str_sub(row.names(allProcessed), 7, -8), "pos_p", "p")
+allProcessed$name = str_replace(str_replace(allProcessed$name, "^_", ""), "neg_n", "n")
+allProcessed$name = str_replace(allProcessed$name, "05_AA_DK_Ibu", "PE")
+allProcessed$name = str_replace(allProcessed$name, "Kali_Pu_Penc_2.9", "kali")
+
+allProcessed = allProcessed[order(allProcessed$Series, allProcessed$name),]
+
+numericCols = c(2,4,5,6,8)
+allProcessed[,numericCols] = allProcessed[,numericCols]/allProcessed$numSpectra
+
+pca_all = prcomp(allProcessed[, c(2:8,10)], scale = T )
+pca_all$rotation = pca_all$rotation * -1
+
+# [which(allProcessed$year == '21'),]
+
+# pca_all$sdev^2 / sum(pca_all$sdev^2)
+
+fullPCA = autoplot(pca_all, data = allProcessed[,], label = F, 
+              label.size = 3.2, colour = 'Series', shape = T,
+
+              loadings = TRUE, loadings.colour = 'blue',
+
+              loadings.label = TRUE, loadings.label.size = 3)
+
+# ggplotly(fullPCA)
+
+### only use these for related data so the scaling stays ok ###
+# mark breaks between Series in graphs
+relativeSD = sd(allProcessed$numCentroids[130:139]) / mean(allProcessed$numCentroids[130:139])
+DQSC_SD = sd(allProcessed$meanDQSC[130:139])
+sd_bin1 = sd(allProcessed$numBins_one[130:139])
+sd_bin0 = sd(allProcessed$numBins_empty[130:139])
+sd_bin2 = sd(allProcessed$numBins_more[130:139])
+sd_binAll = sd(allProcessed$numBins_more[130:139] + allProcessed$numBins_one[130:139])
+
+threesigma = 3 * sd(allProcessed$numFeatures[130:139])
+
+sel = which(allProcessed$Series != "pump_error+")
+model = lm(allProcessed$numFeatures[sel] ~ with(allProcessed, numBins_empty[sel] + numBins_one[sel] + numBins_more[sel]))
+ggplot(allProcessed)+
+  geom_point(aes(x = (numBins_empty + numBins_one + numBins_more), y = numFeatures, colour = Series))+
+  geom_abline(slope = model$coefficients[[2]], intercept = model$coefficients[[1]])+
+  xlab("Relative Bin Count [Bins / Scan]")+
+  ylab("Relative Feature Count [Features / Scan]")+
+  labs(caption = paste0("R² = ", round(summary(model)$adj.r.squared, digits = 3)))
+
+devline_all = ggplot(allProcessed)+
+  geom_text(aes(x = (numBins_empty + numBins_one + numBins_more), y = numFeatures, label = name), size = 3.2)+
+  geom_point(aes(x = (numBins_empty + numBins_one + numBins_more), y = numFeatures, colour = Series))+
+  geom_abline(slope = model$coefficients[[2]], intercept = model$coefficients[[1]])+
+  xlab("Relative Bin Count [Bins / Scan]")+
+  ylab("Relative Feature Count [Features / Scan]")+
+  labs(caption = paste0("R² = ", round(summary(model)$adj.r.squared, digits = 3)))
+
+ggplotly(devline_all)
+
+```
+
+```{r daten selina}
+seldata = read.csv("C:/Users/unisys/Downloads/metadata_centroiding_selina.csv")
+seldata = as.data.frame(seldata[,2:(length(seldata[1,]))], row.names = seldata[,1])
+seldata$badFeatures = seldata$badFeatures / seldata$numFeatures
+seldata$polarity = TRUE
+seldata$year = 240511
+seldata$blank = FALSE
+seldata$Series = "Seldata"
+# seldata$name = str_replace(str_sub(row.names(seldata), 7, -8), "pos_p", "p")
+seldata$name = row.names(seldata)
+seldata$Series = str_sub(seldata$name, 11)
+seldata$Sample = str_sub(seldata$name, 8,9)
+seldata$ppm = as.numeric(str_extract(seldata$Series, "[0-9.]+"))
+seldata$ppm[which(seldata$ppm > 20)] = 0
+
+seldata[,numericCols] = seldata[,numericCols]/seldata$numSpectra
+
+ggplotly(ggplot(rbind(allProcessed, seldata))+
+  geom_text(aes(x = (numBins_empty + numBins_one + numBins_more), y = numFeatures, label = name), size = 3.2)+
+  geom_point(aes(x = (numBins_empty + numBins_one + numBins_more), y = numFeatures, colour = Series))+
+  geom_abline(slope = model$coefficients[[2]], intercept = model$coefficients[[1]])+
+  xlab("Relative Bin Count [Bins / Scan]")+
+  ylab("Relative Feature Count [Features / Scan]")+
+  labs(caption = paste0("R² = ", round(summary(model)$adj.r.squared, digits = 3))))
+
+```
+
+
+```{r images}
+selectedProcess = 
+  # allProcessed[c(1:44, 130:139), ] # aquaflow
+  # allProcessed[c(118:129, 130:139), ]# SFC-DoE
+  # allProcessed[c(93:102, 130:139), ] # gradual pump error
+  # allProcessed[c(45:75, 130:139), ] # kali ozonation
+  # allProcessed[c(76:92, 130:139), ] # pfas
+  # allProcessed[c(103:117, 130:139), ] # pump error
+  seldata
+SeriesBreaks = (selectedProcess$Series[-1] != selectedProcess$Series[-length(selectedProcess$Series)])
+SeriesBreaks = which(SeriesBreaks) + 0.5
+
+
+Sample = as.factor(1:(length(selectedProcess$numSpectra)-1)) 
+label = selectedProcess$name[-length(Sample)]
+
+breakNames = c("Standards", "29.02", "11.03", "ozonation", "PFAS")
+s1 = max(abs(diff(selectedProcess$meanDQSC)))
+s2 = max(abs(diff(selectedProcess$numCentroids)))
+
+delim = 10 * max(relativeSD / s2, DQSC_SD / s1)
+
+ggplot()+
+  geom_line(aes(Sample, (diff(selectedProcess$meanDQSC))/s1, group = "DQSC", colour = "DQSC"), linewidth = 1, alpha = 0.8)+
+  geom_line(aes(Sample, diff(selectedProcess$numCentroids)/s2, group = "Count", colour = "Count"), linewidth = 0.85, alpha = 0.8)+
+#  geom_line(aes(Sample, (diff(noBlanks$meanDQSB)), colour = "DQSB"), linewidth = 0.8)+
+#  geom_line(aes(Sample, (diff(noBlanks$meanDQSF)), colour = "DQSF"), linewidth = 0.6)+
+  geom_vline(xintercept = SeriesBreaks, linewidth = 0.6, linetype = "dashed", alpha = 0.5)+
+  geom_hline(yintercept = c(delim, -delim), linewidth = 0.4, colour = "green3")+
+  geom_hline(yintercept = c(delim * 2, -delim * 2), linewidth = 0.4, colour = "red")+
+  scale_x_discrete(labels = label, guide = guide_axis(angle = 60))+
+  xlab("Sample")+
+  ylab("Centroid Dissimilarity")
+
+ggplot(selectedProcess)+
+  geom_point(aes(name, numCentroids / s1))+
+  geom_point(aes(name, meanDQSC / s2))+
+  scale_x_discrete(labels = label, guide = guide_axis(angle = 60))+
+  xlab("Sample")+
+  ylab("Centroid Dissimilarity")
+  
+
+ggplot(selectedProcess)+
+  geom_point(aes(name, numBins_empty, colour = Series, shape = "empty"))+
+  geom_point(aes(name, numBins_one, colour = Series, shape = "one"))+
+  geom_point(aes(name, numBins_more, colour = Series, shape = "more"))+
+  scale_x_discrete(guide = guide_axis(angle = 60))
+
+
+# absolute deviation from mean / sd of control?
+deviations = selectedProcess %>% group_by(Series) %>% summarise(b0 = mean(numBins_empty), bAll = mean(numBins_more + numBins_one))
+display_b0 = 0
+display_bAll = 0
+for (i in 1:length(selectedProcess$numSpectra)) {
+  display_b0[i] = (selectedProcess$numBins_empty[i] / deviations$b0[
+    which(deviations$Series == selectedProcess$Series[i])])
+  
+  display_bAll[i] = ((selectedProcess$numBins_more[i] + selectedProcess$numBins_one[i]) / deviations$bAll[
+    which(deviations$Series == selectedProcess$Series[i])])
+}
+display_devs = data.frame(min = 1:length(display_b0), max = 1:length(display_b0), mean = 1:length(display_b0))
+for (i in 1:length(display_b0)) {
+  display_devs$min[i] = min(display_bAll[i] , display_b0[i] )
+  display_devs$max[i] = max(display_bAll[i] , display_b0[i] )
+  # display_devs$mean[i] = mean(display_bAll[i] / sd_binAll, display_b0[i] / sd_bin0)
+}
+
+
+
+# Observation: the three points are very similar for the triplicate blank
+ggplot(selectedProcess)+
+  geom_linerange(aes(name[1:length(numSpectra)], 
+                     ymin = display_devs$min, ymax = display_devs$max, colour = Series),
+                 linewidth = 1.4)+
+  scale_x_discrete(guide = guide_axis(angle = 60))+
+  xlab("Sample")+
+  ylab("Bin Deviation")
+
+meanlines = selectedProcess %>% group_by(Series) %>% summarise(mean = mean(numFeatures))
+
+ggplot(selectedProcess)+ 
+  geom_point(aes(name, numFeatures, colour = Series))+
+  geom_errorbar(aes(name, ymin = numFeatures - threesigma, ymax = numFeatures + threesigma, colour = Series))+
+  geom_hline(yintercept = meanlines$mean)+
+  scale_x_discrete(guide = guide_axis(angle = 60))+
+  xlab("Sample")+
+  ylab("Feature Count")
+
+ggplot(selectedProcess)+
+  geom_point(aes(name, meanDQSF))
+
+ggplot(selectedProcess)+
+  geom_point(aes(ppm, meanDQSF, colour = Sample))+
+  xlab("ppm")+
+  ylab("Mean DQSF")
+
+ggplot(selectedProcess)+
+  geom_point(aes(x = (numBins_empty + numBins_one + numBins_more), y = numFeatures, colour = Series))+
+  geom_abline(slope = model$coefficients[[2]], intercept = model$coefficients[[1]])+
+  xlab("Relative Bin Count [Bins / Scan]")+
+  ylab("Relative Feature Count [Features / Scan]")
+
+series_graph = ggplot(selectedProcess)+
+  geom_point(aes(x = (numBins_empty + numBins_one + numBins_more), y = numFeatures, colour = Series))+
+  geom_text(aes(x = (numBins_empty + numBins_one + numBins_more), y = numFeatures, label = name), size = 2.6)+
+  geom_abline(slope = model$coefficients[[2]], intercept = model$coefficients[[1]])+
+  xlab("Relative Bin Count [Bins per Scans]")+
+  ylab("Relative Feature Count [Features / Scans]")
+
+ggplotly(series_graph)
+
+```
+

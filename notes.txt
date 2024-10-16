@@ -1,0 +1,92 @@
+https://stackoverflow.com/questions/61906480/how-to-display-ggplotly-plots-with-dynamically-created-tabs-and-for-loops#
+https://stackoverflow.com/questions/53444333/dynamic-tabsets-with-multiple-plots-r-markdown?rq=3
+
+210311_C3_S7_I_1_pos ist komisch
+    => Eine fehlerhafte Regression hat den DQSF beeinträchtigt
+
+suche nach nicht kovertierten dateien wenn ein leeres Verzeichnis gelesen wurde
+
+DQSB MID nur innerhalb von maxdist scans, MOD nich gauss, sondern -50% skalieren
+
+Konstruktor/Destruktor prüfen 
+
+https://massive.ucsd.edu/ProteoSAFe/datasets.jsp#%7B%22full_search_input%22%3A%22TOF%22%2C%22table_sort_history%22%3A%22createdMillis_dsc%22%2C%22query%22%3A%7B%7D%7D
+
+Qualitätsparameter Komponentisierung: Innerhalb einer Komponente, erweitere erst so, dass alle 
+Massen in jeder Komponente der Gruppe vertreten sind. Gib dann jeder Masse je Komponente die %
+Übereinstimmung mit anderen Massen dieser Kategorie. Bsp:
+M1 existiert in allen Komponenten, daher hat sie den Score 1.
+M2 existiert nur in einer von zehn Komponenten. In der einen hat sie einen score von 0.1, den
+neun 0.9.
+
+Zusätzliches Kriterium fürs Binning: Wahrscheinlichkeit, dass in einem Bin zwei 
+Verteilungen vorliegen (bestimme über Umstellen von vcrit)
+    Nicht linear lösbares Problem
+
+Dedizierte Exportfunktion für Bilder
+
+Kann der Anteil, den der Peak am EIC hat, auch für Korellation zwischen 
+Datensätzen verwendet werden?
+
+Ordne Fehlercodes so, dass eine größere Zahl schlechter ist
+
+Test: Können die Intensitäten im Bin unterschieden werden?
+
+https://gpufit.readthedocs.io/en/latest/introduction.html
+
+Wo schlägt vcrit an, wenn ich den Datensatz nach Intensität sortiere?
+
+Erstelle Felder für allgemeine Parameter der Probe wie Leitfähigkeit
+
+C1_S1_W_MI_1/2/3 sind Standards zum reinen Flusswasser hinzugespiked.
+Blanks1/2/3 sind Systemblanks: Reinstwasser
+Die anderen Blanks sind mit Standards gespiked.
+
+Nur positiv-modus
+
+Standards (u.a.):
+Name		Masse		RT(min)	RT(s)	Addukt
+Diclofenac	324.0260	14.4	864	M + H+
+Sulfamethoxazol	258.0845	7.53	451.8	M + H+
+Metoprolol	275.2352	7.50	450	M + 2H+
+Carbamazepin	245.1525	10.13	607.8	M + H+
+
+Je nach Datensatz kann es sinnvoll sein, auch "halbe" Peaks, bei denen 
+das Intensitätsprofil nach dem höchsten Wert abbricht, mit einzubeziehen
+
+Mehrere Datensätze (Replikate), mit einer von Standards eingegrenzten Region
+-> Prüfe Verteilung von Rauschen und prüfe, inwiefern Binparameter bei der Zuordnung helfen
+
+https://github.com/sgorsten/linalg
+
+Skalieren über Intensität für Kurvenanpassung nicht sonderlich vielversprechend
+
+C:\PROGRA~2\GnuWin32\bin\make.exe
+
+Gibt es einen Zusammenhang zwischen Zentroidfehler und der Eigenschaft, 
+nicht in einem Bin zu landen / Anfang Bzw. Ende eines Bins zu sein?
+ -> bei Duplikaten ist der Punkt, der am ehesten nicht in den Bin passt,
+    häufig auch der mit dem schlechtesten DQSC. 
+
+https://www.agner.org/optimize/optimizing_cpp.pdf
+
+prüfen, wie das Programm skaliert -> subdatensätze
+
+https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0125108
+
+https://link.springer.com/article/10.1007/s41060-021-00275-z#Sec2
+
+großen Multistandard-Datensatz anfragen (bfg - Datenbank)
+
+Bin Reassembly sollte erst nach Aufreinigung der zu großen Bins passieren, diese müssen aber 
+    von der Rekonstruktion ausgeschlossen werden
+
+Bin Recutting: Suche nach ungewöhnlichen Mustern, Quantifizierung über summary-Params
+    Die Fehlercodes funktionieren nicht so wie vorgesehen
+
+ist Masse auch in MS2? Prüfe bei niedrigster Kollisionsenergie
+	-> in-source fragmentation
+welche spektren sind ähnlich? -> pairwise Ähnlichkeitsmatrix, dann Kurve
+	Aufpassen: peakverzerrung
+
+.cdresult ist eine SQL database

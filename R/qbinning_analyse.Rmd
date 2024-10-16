@@ -1,0 +1,186 @@
+---
+title: "Analysis qbinning"
+author: "Daniel Höhn"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+# knitr::opts_knit$set(root.dir = "G:/_Studium/Analytik-Praktikum/qbinning")
+library(tidyverse)
+# library(data.table)
+# library(patchwork)
+# library(TeachingDemos)
+# library(pracma)
+# 
+
+```
+
+```{r binviewer and rater}
+# uses peak ids for the vector
+binSelectionViewer = function(peaks, summary, fullbins, IDvector){
+  
+  IDpos = 1
+  peakID = IDvector[IDpos]
+  binID = peaks$binID[peakID]
+  rateNext = T
+  while (rateNext) {
+    meanMZ = peaks$mz[peakID]
+    # ppm2 = meanMZ * 10^-5
+    stdev = peaks$mzUncertainty[peakID] / 10
+    indices = fullbins$scan[which(fullbins$ID == binID)]
+    indices = indices[order(indices)]
+    interceptStart = indices[peaks$binIdxStart[peakID] + 1]
+    interceptEnd   = indices[peaks$binIdxEnd[peakID]]
+    
+    print(ggplot(fullbins[which(fullbins$ID == binID),])+
+      geom_point(aes(mz, scan, color = int_area))+ 
+      # geom_vline(xintercept = meanMZ - ppm2, linewidth = 0.2, linetype = "dashed")+
+      # geom_vline(xintercept = meanMZ + ppm2, linewidth = 0.2, linetype = "dashed")+
+      geom_vline(xintercept = meanMZ - stdev, linewidth = 0.2, linetype = "dashed", color = "red")+
+      geom_vline(xintercept = meanMZ + stdev, linewidth = 0.2, linetype = "dashed", color = "red")+
+      geom_vline(xintercept = meanMZ, linewidth = 0.3, linetype = "dashed", color = "green3")+
+      geom_hline(yintercept = interceptStart - 0.5, linewidth = 0.35, color = "red")+
+      geom_hline(yintercept = interceptEnd + 0.5, linewidth = 0.35, color = "red")+
+      xlab("m/z")+
+      ylab("Scan Number")+
+      theme(panel.background = element_rect(fill = "lightblue1",
+            colour = "lightblue1", linewidth = 0.5, linetype = "solid"))+
+      scale_color_viridis_c(option = "plasma", direction = -1)+
+      labs(caption = sprintf("L: %d, R: %d | PeakID: %d | Errorcode: %d", interceptStart, interceptEnd, peakID, summary$errorcode[binID]))
+    )
+    input = readline()
+    if(input == "#"){
+      rateNext = F
+    } else if(input == "+"){
+      IDpos = IDpos + 1
+      peakID = IDvector[IDpos]
+      binID = peaks$binID[peakID]
+    } else if(input == "-") {
+      IDpos = IDpos - 1
+      peakID = IDvector[IDpos]
+      binID = peaks$binID[peakID]
+    } else {
+      buf = as.numeric(input)
+      if(!is.na(buf)){
+        IDpos = IDpos + buf
+        peakID = IDvector[IDpos]
+        binID = peaks$binID[peakID]
+      } else {
+        print(ggplot(fullbins[which(fullbins$ID == binID),])+
+          geom_col(aes(scan, int_area, fill = DQSC), colour = NA, width = 0.3)+
+          scale_fill_continuous()+
+          geom_vline(xintercept = interceptStart - 0.5, linewidth = 0.35, color = "red")+
+          geom_vline(xintercept = interceptEnd + 0.5, linewidth = 0.35, color = "red")+
+          theme_bw()+
+          labs(caption = sprintf("DQSF: %f | PeakID: %d | Errorcode: %d", peaks$dqsPeak[peakID], peakID, summary$errorcode[binID])))
+        readline()
+        IDpos = IDpos + 1
+        peakID = IDvector[IDpos]
+        binID = peaks$binID[peakID]
+      }
+    }
+    if (IDpos > length(IDvector)){
+      return()
+    }
+  }
+}
+```
+
+```{r}
+peaks = read.csv("C:/Users/unisys/Documents/Studium/Messdaten/22090902_Kali_Pu_Penc_2.9HCO3_0_pos_positive_ex_peaks.csv")
+summary = read.csv("C:/Users/unisys/Documents/Studium/Messdaten/22090902_Kali_Pu_Penc_2.9HCO3_0_pos_positive_summary.csv")
+bins = read.csv("C:/Users/unisys/Documents/Studium/Messdaten/22090902_Kali_Pu_Penc_2.9HCO3_0_pos_positive_bins.csv")
+
+peaks = read.csv("C:/Users/unisys/Documents/Studium/Messdaten/SP_DDA_P1_positive_ex_peaks.csv")
+summary = read.csv("C:/Users/unisys/Documents/Studium/Messdaten/SP_DDA_P1_positive_summary.csv")
+bins = read.csv("C:/Users/unisys/Documents/Studium/Messdaten/SP_DDA_P1_positive_bins.csv")
+  
+IDs = unique(peaks$binID[which(peaks$dqsPeak < 0)])
+
+binSelectionViewer(summary, bins, IDs)
+```
+
+
+```{r plotting}
+targetBin = bins[which(bins$ID == 730),]
+binID = c(700,701)
+ggplot(bins[which(bins$ID == binID),])+
+  geom_point(aes(mz, scan, color = intensity))+ 
+      geom_vline(xintercept = summary$mean_mz[which(summary$ID == binID)] - 0.002, linewidth = 0.2, linetype = "dashed")+
+      geom_vline(xintercept = summary$mean_mz[which(summary$ID == binID)] + 0.002, linewidth = 0.2, linetype = "dashed")+
+      xlab("m/z")+
+      ylab("Scan Number")+
+      theme(panel.background = element_rect(fill = "lightblue1",
+            colour = "lightblue1", linewidth = 0.5, linetype = "solid"))+
+      scale_color_viridis_c(option = "plasma", direction = -1)+
+      labs(caption = sprintf("BinID: %d | Errorcode: %d", binID, summary$errorcode[binID]))
+    
+
+ggplot(targetBin)+
+ geom_point(aes(scan, intensity))
+
+ggplot(targetBin)+
+ geom_point(aes(scan, intensity * DQSC))
+
+ggplot(targetBin)+
+ geom_point(aes(scan, intensity * DQSB_base))
+
+ggplot(targetBin)+
+ geom_point(aes(scan, intensity * DQSB_scaled))
+
+ggplot(targetBin)+
+ geom_point(aes(mz, intensity))
+  
+  
+```
+
+```{r subset ratios}
+mz1 = c(5.58,2.72,1.65,1.58)
+mz2 = c(6.21,5.12,2.42,2.5)
+
+ggplot()+
+  geom_point(aes(y = mz1, x = 1:4), color = "red1")+
+  geom_point(aes(y = mz2, x = 1:4), color = "lightblue3")
+
+tmp = (bins[which(bins$ID == 30050),])
+tmp = tmp[order(tmp$intensity),]
+vcrit = critVal(length(tmp$ID)) * std(tmp$intensity)
+
+ggplot()+
+  geom_point(aes(diff(tmp$intensity), 2:length(tmp$ID)))+
+  geom_hline(yintercept = vcrit)
+
+
+testcount = 0 # summary: 1879
+for (i in 1:length(s_full_1$ID)) {
+  tmp = (bins[which(bins$ID == i),])
+  tmp = tmp[order(tmp$intensity),]
+  vcrit = critVal(length(tmp$ID)) * sd(tmp$intensity)
+  if(max(diff(tmp$intensity)) > vcrit){
+    testcount = testcount + 1
+  }
+}
+
+
+```
+
+```{r recovery}
+standards = data.frame(mz = c(193.096, 196.1157, 161.1071, 177.102, 180.1207, 163.1227, 167.1478, 174.0539),
+                       rt = c(2.43*60, 2.45*60,  4.24*60,  5.39*60, 5.83*60,  5.61*60,  5.61*60,  7.77*60))
+
+hits = c(0,0,0,0,0,0,0,0,0,0)
+for (i in 1:10) {
+  filename = paste0("C:/Users/unisys/Documents/Studium/Messdaten/SP_DDA_P",i,"_positive_ex_peaks.csv")
+  peaklist = read.csv(filename)
+  peaklist = peaklist[which((peaklist$mz > 160) & (peaklist$mz < 200)),]
+  peaklist = peaklist[which((peaklist$retentionTime > 2*60) & (peaklist$retentionTime < 8*60)),]
+  for (j in 1:8) {
+    selection = (peaklist$mz > standards$mz[j] - peaklist$mzUncertainty) & (peaklist$mz < standards$mz[j] + peaklist$mzUncertainty)
+    if (sum((peaklist$lowestRetentionTime[selection] < standards$rt[j]) & (peaklist$highestRetentionTime[selection] > standards$rt[j]))) {
+      hits[i] = hits[i] + 1
+    }
+    }
+}
+```
