@@ -74,12 +74,13 @@ for (i in 2:(length(standardMasses) + 1)) {
   result_table[1,i] = 0
 }
 filenames = read.csv("~/Work/Messdaten/Selina_Daten/eval_varied_ppm/filenames.txt")
+filenames = filenames[,1]
 
-for (i in 1:length(filenames[,1])) {
-  name = paste0("~/Work/Messdaten/Selina_Daten/eval_varied_ppm/", filenames[i,1])
+for (i in 1:length(filenames)) {
+  name = paste0("~/Work/Messdaten/Selina_Daten/eval_varied_ppm/", filenames[i])
   result = processPeak(name, standardMasses)
   result_table = rbind(result_table, result)
-  result_table$file[i+1] = filenames[i,1] # first row is empty due to initialization
+  result_table$file[i+1] = filenames[i] # first row is empty due to initialization
 }
 
 result_table = result_table[-1,]
@@ -88,7 +89,7 @@ result_table$sumZero = 0
 result_table$sumOnce = 0
 result_table$sumMore = 0
 
-for (i in 1:length(filenames[,1])) {
+for (i in 1:length(filenames)) {
   zcount = 0
   ocount = 0
   mcount = 0
@@ -113,18 +114,19 @@ standardsTable = function(filename, standards, ppm){
   # results per dataset
   n = length(standards)
   matchingFeatures = data.frame(std_mass = -1, foundMZ = -1, foundRT = -1, 
-                                fountInt = -1, otherMatches = -1)
-  tmpData = read.csv(filename)
+                                foundInt = -1, otherMatches = -1)
+  tmpData = read.csv(paste0("~/Work/Messdaten/Selina_Daten/eval_varied_ppm/", filename))
   for (i in 1:n) {
-    select = tmpData[which(tmpData$mz > (standards[i] - ppm * tmpData$mz)),]
-    select = select[which(select$mz > (standards[i] - ppm * select$mz)),]
+    select = tmpData[which(tmpData$mz > (standards[i] - 10e-6 * ppm * tmpData$mz)),]
+    select = select[which(select$mz < (standards[i] + 10e-6 * ppm * select$mz)),]
     if(length(select[,1]) == 0){
+
       matchingFeatures = rbind(matchingFeatures, c(standards[i], 0, -1, 0, 0))
     } else {
       matchingFeatures = rbind(matchingFeatures, 
                              data.frame(std_mass = standards[i], foundMZ = select$mz, 
-                                        foundRT=select$retentionTime, foundInt = select$height,
-                                        otherMatches = length(select$mz)))
+                                        foundRT = select$retentionTime, foundInt = select$height,
+                                        otherMatches = length(select$mz) - 1))
     }
     
   }
@@ -145,17 +147,17 @@ elimination = function(matchGroup, toleranceRT){ # only works if not-founds are 
   for (i in 1:length(matchGroup$mz)) {
     namePos = which(eliminated$filename == matchGroup$filename[i])
     if(eliminated$found[namePos]) {
-      groupBreaks = cbind(groupBreaks, i)
+      groupBreaks = rbind(groupBreaks, i)
       eliminated$found = FALSE
       print("case 1 occured")
     } else if((matchGroup$retentionTime[i + 1] - matchGroup$retentionTime[i]) > toleranceRT){
-      groupBreaks = cbind(groupBreaks, i)
+      groupBreaks = rbind(groupBreaks, i)
       eliminated$found = FALSE
     } else {
       eliminated$found[namePos] = TRUE
     }
   }
-  groupBreaks = cbind(groupBreaks, length(matchGroup$mz))
+  groupBreaks = rbind(groupBreaks, length(matchGroup$mz))
 
   lpos = which(diff(groupBreaks) == max(diff(groupBreaks)))
   rpos = groupBreaks[lpos + 1]
@@ -190,4 +192,17 @@ elimination = function(matchGroup, toleranceRT){ # only works if not-founds are 
 }
 ```
 
+```{r}
+matchingFeatures = data.frame(std_mass = -1, foundMZ = -1, foundRT = -1, 
+                                foundInt = -1, otherMatches = -1, filename = "none", matchPPM = 0)
+for (name in filenames) {
+  matchingFeatures = rbind(matchingFeatures, standardsTable(name, standardMasses, 10))
+}
+matchingFeatures = matchingFeatures[-1,]
+```
+
+```{r}
+matchingFeatures = matchingFeatures[order(matchingFeatures$std_mass),]
+
+```
 
