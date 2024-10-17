@@ -74,8 +74,8 @@ processPeak = function(filename, targetMasses){
 ```
 
 ```{r}
-# pathPreset = "~/Work/Messdaten/Selina_Daten/eval_varied_ppm/"
-pathPreset = "C:/Users/unisys/Documents/Studium/Messdaten/eval_varied_ppm/"
+pathPreset = "~/Work/Messdaten/Selina_Daten/eval_varied_ppm/"
+# pathPreset = "C:/Users/unisys/Documents/Studium/Messdaten/eval_varied_ppm/"
 
 result_table = data.frame(file = "None")
 for (i in 2:(length(standardMasses) + 1)) {
@@ -116,6 +116,9 @@ for (i in 1:length(filenames)) {
   result_table$sumOnce[i] = ocount
   result_table$sumMore[i] = mcount
 }
+
+ggplot(result_table %>% group_by(file))+
+  geom_bar(aes(sumZero))
 ```
 
 ```{r create combined FL}
@@ -141,7 +144,7 @@ standardsTable = function(pathPreset, filename, standards, ppm){
   }
   matchingFeatures$filename = filename
   matchingFeatures$matchPPM = ppm
-  return(matchingFeatures[-1,]) # return all features that could be standard compunds (by mass)
+  return(matchingFeatures[-1,]) # return all features that could be standard compounds (by mass)
 }
 
 elimination = function(matchGroup, toleranceRT){ # only works if not-founds are not included
@@ -150,49 +153,74 @@ elimination = function(matchGroup, toleranceRT){ # only works if not-founds are 
   }
   # one group ends if it would contain the same file twice
   eliminated = data.frame(filename = unique(matchGroup$filename), found = FALSE)
-  groupBreaks = c(1)
-  matchGroup = matchGroup[order(matchGroup$retentionTime),]
   
-  for (i in 1:length(matchGroup$mz)) {
-    namePos = which(eliminated$filename == matchGroup$filename[i])
-    if(eliminated$found[namePos]) {
-      groupBreaks = rbind(groupBreaks, i)
-      eliminated$found = FALSE
-      print("case 1 occured")
-    } else if((matchGroup$retentionTime[i + 1] - matchGroup$retentionTime[i]) > toleranceRT){
-      groupBreaks = rbind(groupBreaks, i)
-      eliminated$found = FALSE
-    } else {
-      eliminated$found[namePos] = TRUE
-    }
-  }
-  groupBreaks = rbind(groupBreaks, length(matchGroup$mz))
+  matchGroup = matchGroup[order(matchGroup$foundRT),]
+  
+  groupBreaks = c(1, which(diff(matchGroup$foundRT) > toleranceRT)+1, length(matchGroup$foundMZ)+1) # starting point of group, includes one past length to avoid overflow
+  
+  # for (i in 1:length(matchGroup$foundMZ)) {
+  #   namePos = which(eliminated$filename == matchGroup$filename[i])
+  #   if(eliminated$found[namePos]) {
+  #     groupBreaks = rbind(groupBreaks, i)
+  #     eliminated$found = FALSE
+  #     print("case 1 occured")
+  #   } else if(
+  #       replace_na(((matchGroup$foundRT[i + 1] - matchGroup$foundRT[i]) > toleranceRT), FALSE)
+  #     ){
+  #     groupBreaks = c(groupBreaks, i)
+  #     eliminated$found = FALSE
+  #   } else {
+  #     eliminated$found[namePos] = TRUE
+  #   }
+  # }
+  # groupBreaks = c(groupBreaks, length(matchGroup$foundMZ))
 
   lpos = which(diff(groupBreaks) == max(diff(groupBreaks)))
-  rpos = groupBreaks[lpos + 1]
-  selector = lpos:rpos
+  
+  selector = 0
+  
   if (length(lpos) > 1){
+    # print("crash")
     # only return the group with the closest mean mz
+    selector = (groupBreaks[lpos[1]]):(groupBreaks[lpos[1] + 1] - 1)
     for (i in 2:length(lpos)) {
-      selector2 = cbind(selector, lpos[i]:rpos[i])
-      if (abs(mean(matchGroup$mz[selector]) - matchGroup$std_mass[1]) >
-          abs(mean(matchGroup$mz[selector2]) - matchGroup$std_mass[1])
+      
+      selector2 = (groupBreaks[lpos[1]]):(groupBreaks[lpos[1] + 1] - 1)
+      if (abs(mean(matchGroup$foundMZ[selector]) - matchGroup$std_mass[1]) >
+          abs(mean(matchGroup$foundMZ[selector2]) - matchGroup$std_mass[1])
           ){
         # the second dataset is a better fit, since it has a lower mean deviation from the standard
         selector = selector2
       }
     }
+  } else {
+    rpos = groupBreaks[lpos + 1] - 1
+    lpos = groupBreaks[lpos]
+    selector = lpos:rpos
   }
-  resultGroup = matchGroup[selector,] %>% summarise(std_mz = first(std_mz), 
-                                                    meanMZ = mean(mz), 
-                                                    sdevMZ = sd(mz),
-                                                    meanRT = mean(retentionTime), 
-                                                    sdevRT = sd(retentionTime),
-                                                    meanInt = mean(height),
-                                                    sdevInt = sd(height),
-                                                    selectedCount = length(selector),
-                                                    totalCount = length(matchGroup$mz),
-                                                    leftBehind = length(eliminated$found) - length(selector)
+  
+  count = length(matchGroup$foundMZ)
+  eliminations = 0
+  matchGroup = matchGroup[selector,]
+  
+  if(length(selector) != length(unique(matchGroup$filename[selector]))){
+    matchGroup$mzdiff = abs(matchGroup$foundMZ - matchGroup$std_mass[1])
+    massSelection = matchGroup %>% group_by(filename) %>% summarise(mindiff = min(mzdiff))
+    eliminations = length(matchGroup$std_mass) - length(massSelection$mindiff)
+    matchGroup = matchGroup[which(matchGroup$mzdiff %in% massSelection$mindiff),]
+  }
+ 
+  
+  resultGroup = matchGroup %>% summarise(std_mz = first(std_mass), 
+                                                    meanMZ = mean(foundMZ), 
+                                                    sdevMZ = sd(foundMZ),
+                                                    meanRT = mean(foundRT), 
+                                                    sdevRT = sd(foundRT),
+                                                    meanInt = mean(foundInt),
+                                                    sdevInt = sd(foundInt),
+                                                    selectedCount = length(matchGroup$foundMZ),
+                                                    totalCount = count,
+                                                    eliminated = eliminations
                                                     )
   
   
@@ -221,20 +249,36 @@ subFeatures = subFeatures[order(subFeatures$std_mass),]
 ```
 
 ```{r}
-recovery = data.frame(std_mass = -1, found = FALSE, discardRate = -1, sampleRate = -1)
+recovery = data.frame(std_mz = 0, 
+      meanMZ = 0, 
+      sdevMZ = 0,
+      meanRT = 0, 
+      sdevRT = 0,
+      meanInt = 0,
+      sdevInt = 0,
+      selectedCount = 0,
+      totalCount = 0,
+      eliminated = 0,
+      samplesFound = 0)
+
 for (i in 1:length(standardMasses)) {
   mass = standardMasses[i]
   massGroup = subFeatures[which(subFeatures$std_mass == mass),]
   if (sum(massGroup$foundMZ) == 0) {
-    recovery[i,] = c(mass, 0, -1, -1)
+    recovery[i,] = c(mass, rep(0,10))
   } else {
     notfound = massGroup$foundMZ == 0
     massGroup = massGroup[!notfound,]
     notfound = sum(notfound) # notfound is the first quality parameter
-  
+    recovery[i,] = c(elimination(massGroup, 6), length(unique(massGroup$filename)))
   }
   
 }
+
+recovery$sdevMZ[which(recovery$selectedCount == 2)] = NA
+recovery$sdevRT[which(recovery$selectedCount == 2)] = NA
+recovery$sdevInt[which(recovery$selectedCount == 2)] = NA
+#write_csv(recovery, "standard_overview_tol-10ppm_masserror-0.5ppm.csv")
 ```
 
 
