@@ -3,6 +3,11 @@ title: "standards_recovery"
 output: html_document
 date: "2024-10-15"
 ---
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+```
+
 ```{r}
 standardMasses = c(
 124.0807302,
@@ -69,15 +74,19 @@ processPeak = function(filename, targetMasses){
 ```
 
 ```{r}
+# pathPreset = "~/Work/Messdaten/Selina_Daten/eval_varied_ppm/"
+pathPreset = "C:/Users/unisys/Documents/Studium/Messdaten/eval_varied_ppm/"
+
 result_table = data.frame(file = "None")
 for (i in 2:(length(standardMasses) + 1)) {
   result_table[1,i] = 0
 }
-filenames = read.csv("~/Work/Messdaten/Selina_Daten/eval_varied_ppm/filenames.txt")
+
+filenames = read.csv(paste0(pathPreset, "filenames.txt"))
 filenames = filenames[,1]
 
 for (i in 1:length(filenames)) {
-  name = paste0("~/Work/Messdaten/Selina_Daten/eval_varied_ppm/", filenames[i])
+  name = paste0(pathPreset, filenames[i])
   result = processPeak(name, standardMasses)
   result_table = rbind(result_table, result)
   result_table$file[i+1] = filenames[i] # first row is empty due to initialization
@@ -110,12 +119,12 @@ for (i in 1:length(filenames)) {
 ```
 
 ```{r create combined FL}
-standardsTable = function(filename, standards, ppm){
+standardsTable = function(pathPreset, filename, standards, ppm){
   # results per dataset
   n = length(standards)
   matchingFeatures = data.frame(std_mass = -1, foundMZ = -1, foundRT = -1, 
                                 foundInt = -1, otherMatches = -1)
-  tmpData = read.csv(paste0("~/Work/Messdaten/Selina_Daten/eval_varied_ppm/", filename))
+  tmpData = read.csv(paste0(pathPreset, filename))
   for (i in 1:n) {
     select = tmpData[which(tmpData$mz > (standards[i] - 10e-6 * ppm * tmpData$mz)),]
     select = select[which(select$mz < (standards[i] + 10e-6 * ppm * select$mz)),]
@@ -196,13 +205,36 @@ elimination = function(matchGroup, toleranceRT){ # only works if not-founds are 
 matchingFeatures = data.frame(std_mass = -1, foundMZ = -1, foundRT = -1, 
                                 foundInt = -1, otherMatches = -1, filename = "none", matchPPM = 0)
 for (name in filenames) {
-  matchingFeatures = rbind(matchingFeatures, standardsTable(name, standardMasses, 10))
+  matchingFeatures = rbind(matchingFeatures, standardsTable(pathPreset, name, standardMasses, 10))
 }
 matchingFeatures = matchingFeatures[-1,]
 ```
 
 ```{r}
-matchingFeatures = matchingFeatures[order(matchingFeatures$std_mass),]
+subFeatures = matchingFeatures[which(
+ as.numeric(
+   str_match(matchingFeatures$filename, "[0-9]+_[0-9]+_(.+)pos")[,2])
+ == 0.5
+),]
+subFeatures = subFeatures[order(subFeatures$std_mass),]
 
 ```
+
+```{r}
+recovery = data.frame(std_mass = -1, found = FALSE, discardRate = -1, sampleRate = -1)
+for (i in 1:length(standardMasses)) {
+  mass = standardMasses[i]
+  massGroup = subFeatures[which(subFeatures$std_mass == mass),]
+  if (sum(massGroup$foundMZ) == 0) {
+    recovery[i,] = c(mass, 0, -1, -1)
+  } else {
+    notfound = massGroup$foundMZ == 0
+    massGroup = massGroup[!notfound,]
+    notfound = sum(notfound) # notfound is the first quality parameter
+  
+  }
+  
+}
+```
+
 
