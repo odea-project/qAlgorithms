@@ -142,7 +142,7 @@ namespace q
             bool displayPPMwarning = false;
             if (ppm_for_precentroided_data == -5)
             {
-                ppm_for_precentroided_data = 5;
+                ppm_for_precentroided_data = 0.25; // this error applied to most good centroids in the datasets we checked
             }
             else
             {
