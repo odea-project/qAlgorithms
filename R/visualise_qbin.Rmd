@@ -156,12 +156,22 @@ threesigma = 3 * sd(allProcessed$numFeatures[130:139])
 
 sel = which(allProcessed$Series != "pump_error+")
 model = lm(allProcessed$numFeatures[sel] ~ with(allProcessed, numBins_empty[sel] + numBins_one[sel] + numBins_more[sel]))
-ggplot(allProcessed)+
-  geom_point(aes(x = (numBins_empty + numBins_one + numBins_more), y = numFeatures, colour = Series))+
-  geom_abline(slope = model$coefficients[[2]], intercept = model$coefficients[[1]])+
+
+line_construction = ggplot(allProcessed[sel,])+
+  geom_point(aes(x = (numBins_empty + numBins_one + numBins_more), y = numFeatures, colour = str_sub(Series, 1, -2)), size = 3.6)+
+  geom_abline(slope = model$coefficients[[2]], intercept = model$coefficients[[1]], linewidth = 2, linetype = "dashed")+
   xlab("Relative Bin Count [Bins / Scan]")+
   ylab("Relative Feature Count [Features / Scan]")+
-  labs(caption = paste0("R² = ", round(summary(model)$adj.r.squared, digits = 3)))
+  labs(caption = paste0("R² = ", round(summary(model)$adj.r.squared, digits = 3)),
+       colour = "Measurement Type")+
+  theme_bw()+
+  # guides(colour = guide_legend(title = "Measurement Type"))+
+  scale_colour_discrete(labels=c("WWTP Effluent\nDay 1", 
+                                 "WWTP Effluent\nDay 1 (Blanks)", 
+                                 "WWTP Effluent\nDay 2", "Ozonation", 
+                                 "PFAS (positive\nand negative)", 
+                                 "SFC DoE\n(polarity switching)", 
+                                 "Ten standard\nreplicates"))
 
 devline_all = ggplot(allProcessed)+
   geom_text(aes(x = (numBins_empty + numBins_one + numBins_more), y = numFeatures, label = name), size = 3.2)+
@@ -171,9 +181,52 @@ devline_all = ggplot(allProcessed)+
   ylab("Relative Feature Count [Features / Scan]")+
   labs(caption = paste0("R² = ", round(summary(model)$adj.r.squared, digits = 3)))
 
-ggplotly(devline_all)
+# ggplotly(devline_all)
 
+ggsave(plot = line_construction + theme(text = element_text(size = 20), legend.text = element_text(margin = margin(t = 5, b = 5, unit = "pt"))), 
+       filename = "C:/Users/unisys/Documents/Studium/Analytik-Praktikum/report/line_construction.png", 
+       scale = 2, width = 1980, height = 1080, units = "px")
 ```
+
+```{r gradual plots}
+
+line_gradual = ggplot(allProcessed[c(sel,93:102),])+
+  geom_point(aes(x = (numBins_empty + numBins_one + numBins_more), y = numFeatures, colour = as.factor(Series == "pump_error+")), size = 3.6)+
+  geom_abline(slope = model$coefficients[[2]], intercept = model$coefficients[[1]], linewidth = 2, linetype = "dashed")+
+  xlab("Relative Bin Count [Bins / Scan]")+
+  ylab("Relative Feature Count [Features / Scan]")+
+  labs(caption = paste0("R² = ", round(summary(model)$adj.r.squared, digits = 3)),
+       colour = "Measurement Type")+
+  theme_bw()+
+  scale_colour_discrete(labels=c("Points used for\nline construction", 
+                                 "Pressure regulator\nstops functioning"))
+
+ggsave(plot = line_gradual + theme(text = element_text(size = 20), legend.text = element_text(margin = margin(t = 5, b = 5, unit = "pt"))), 
+       filename = "C:/Users/unisys/Documents/Studium/Analytik-Praktikum/report/line_gradual_error.png", 
+       scale = 2, width = 1980, height = 1080, units = "px")
+
+allProcessed$Series[sel] = "anormal"
+allProcessed$Series[93:102] = "gradual"
+
+line_total = ggplot(allProcessed)+
+  geom_point(aes(x = (numBins_empty + numBins_one + numBins_more), y = numFeatures, 
+                 colour = Series), size = 3.6)+
+  geom_abline(slope = model$coefficients[[2]], intercept = model$coefficients[[1]], linewidth = 2, linetype = "dashed")+
+  xlab("Relative Bin Count [Bins / Scan]")+
+  ylab("Relative Feature Count [Features / Scan]")+
+  labs(caption = paste0("R² = ", round(summary(model)$adj.r.squared, digits = 3)),
+       colour = "Measurement Type")+
+  theme_bw()+
+  scale_colour_discrete(labels=c("Points used for\nline construction", 
+                                 "Pressure regulator\nstops functioning",
+                                 "Feather in pump\nis broken"))
+
+ggsave(plot = line_total + theme(text = element_text(size = 20), legend.text = element_text(margin = margin(t = 5, b = 5, unit = "pt"))), 
+       filename = "C:/Users/unisys/Documents/Studium/Analytik-Praktikum/report/line_total_error.png", 
+       scale = 2, width = 1980, height = 1080, units = "px")
+```
+
+
 
 ```{r daten selina}
 seldata = read.csv("C:/Users/unisys/Downloads/metadata_centroiding_selina.csv")
@@ -207,11 +260,11 @@ ggplotly(ggplot(rbind(allProcessed, seldata))+
 selectedProcess = 
   # allProcessed[c(1:44, 130:139), ] # aquaflow
   # allProcessed[c(118:129, 130:139), ]# SFC-DoE
-  # allProcessed[c(93:102, 130:139), ] # gradual pump error
+  allProcessed[c(93:102, 130:139), ] # gradual pump error
   # allProcessed[c(45:75, 130:139), ] # kali ozonation
   # allProcessed[c(76:92, 130:139), ] # pfas
   # allProcessed[c(103:117, 130:139), ] # pump error
-  seldata
+  # seldata
 SeriesBreaks = (selectedProcess$Series[-1] != selectedProcess$Series[-length(selectedProcess$Series)])
 SeriesBreaks = which(SeriesBreaks) + 0.5
 
@@ -314,5 +367,25 @@ series_graph = ggplot(selectedProcess)+
 
 ggplotly(series_graph)
 
+```
+
+```{r dqsf}
+selectedProcess = allProcessed[93:102,]
+selectedProcess$time = as.numeric(str_extract(selectedProcess$name, "[0-9]+")) * 16
+
+selectedProcess = allProcessed[130:139,]
+selectedProcess$time = as.numeric(str_sub(str_extract(selectedProcess$name, "P[0-9]+"), start = 2)) * 16
+
+DQSFtrend = ggplot(selectedProcess)+
+  geom_point(aes(x = time, y = meanDQSF), size = 3)+
+  # scale_x_discrete(guide = guide_axis(angle = 60))+
+  xlab("Time Since HPLC Start [min]")+
+  ylab("Mean DQS of Features")+
+  theme_bw()+
+  scale_y_continuous(limits = c(0.73, 0.74))
+
+ggsave(plot = DQSFtrend + theme(text = element_text(size = 20)), 
+       filename = "C:/Users/unisys/Documents/Studium/Analytik-Praktikum/report/DQSFcompare.png", 
+       scale = 2, width = 1980, height = 1080, units = "px")
 ```
 

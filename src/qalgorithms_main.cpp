@@ -805,14 +805,14 @@ int main(int argc, char *argv[])
         {
             std::cout << " file ok\n";
         }
-        // update filename to name without duplicates @todo find better solution / should this happen?
+        // implement way to try out ppm values
+        // std::vector<float> ppmValues{0.01, 0.05, 0.1, 0.2, 0.25, 0.5, 1.0, 1.5, 2.0, 2.5, 3.0, 4.0, 5.0, 7.5, 10, 15, 20};
 
-        std::vector<float> ppmValues{0.01, 0.05, 0.1, 0.2, 0.25, 0.5, 1.0, 1.5, 2.0, 2.5, 3.0, 4.0, 5.0, 7.5, 10, 15, 20};
-
-        for (auto setPPM : ppmValues)
+        // for (auto setPPM : ppmValues)
+        for (auto polarity : polarities)
         {
-            std::string polarity = "positive";
-            q::MeasurementData::ppm_for_precentroided_data = setPPM;
+            // std::string polarity = "positive";
+            // q::MeasurementData::ppm_for_precentroided_data = setPPM;
             filename = pathSource.stem().string();
             q::Algorithms::qPeaks qpeaks;              // create qPeaks object
             q::MeasurementData::TensorData tensorData; // create tensorData object
@@ -834,7 +834,8 @@ int main(int argc, char *argv[])
                 std::cout << "Processing " << polarity << " peaks\n";
             }
             // adjust filename to include polarity here
-            filename += ("_" + std::to_string(q::MeasurementData::ppm_for_precentroided_data) + "pos");
+            // filename += ("_" + std::to_string(q::MeasurementData::ppm_for_precentroided_data) + "pos");
+            filename += polarity;
             if (printCentroids)
             {
                 std::vector<q::Algorithms::qBinning::EIC> dummy;
