@@ -12,6 +12,8 @@ namespace q
 {
     namespace MeasurementData
     {
+        extern double ppm_for_precentroided_data;
+
         /**
          * @brief A class to store 3D tensor measurement data, e.g., LC-MS data
          * @details The TensorData class is a subclass of the MeasurementData class used to store 3D tensor measurement data, e.g., LC-MS data.
@@ -24,32 +26,11 @@ namespace q
             float rt_diff;
             float calcRTDiff(std::vector<double> &retention_times);
 
-            std::vector<dataPoint>
-            mzmlToDataPoint(
-                sc::MZML &data,
-                const int index);
-            
-            std::vector<dataPoint>
-            qbinToDataPoint(
-                q::Algorithms::qBinning::EIC &eic);
+            std::vector<dataPoint> mzmlToDataPoint(sc::MZML &data, const int index);
+
+            std::vector<dataPoint> qbinToDataPoint(q::Algorithms::qBinning::EIC &eic);
 
         public:
-            // constructors
-            TensorData();
-
-            // destructor
-            ~TensorData();
-
-            void
-            readCSV(
-                std::string filename,
-                int rowStart,
-                int rowEnd,
-                int colStart,
-                int colEnd,
-                char separator,
-                std::vector<DataType::DataField> variableTypes);
-
             // methods
             /**
              * @brief Read 3D tensor data from a StreamCraft mzML object
@@ -58,18 +39,17 @@ namespace q
              * @param data : StreamCraft mzML object
              * @param ms1only : boolean to indicate if only MS1 spectra should be read
              * @param start_index : index of the first spectrum to be read
-             * @return std::vector<std::vector<std::unique_ptr<DataType::Peak>>> : list of peaks
+             * @return std::vector<std::vector<DataType::Peak>> : list of peaks
              */
-            std::vector<std::vector<std::unique_ptr<DataType::Peak>>>
-            findCentroids_MZML(
+            std::vector<std::vector<DataType::Peak>> findCentroids_MZML(
                 q::Algorithms::qPeaks &qpeaks,
                 sc::MZML &data,
+                std::vector<unsigned int> &addEmpty,
                 const bool ms1only = true,
                 const std::string polarity = "positive",
                 const int start_index = 0);
 
-            std::vector<std::vector<std::unique_ptr<DataType::Peak>>>
-            findPeaks_QBIN(
+            std::vector<std::vector<DataType::Peak>> findPeaks_QBIN(
                 q::Algorithms::qPeaks &qpeaks,
                 std::vector<q::Algorithms::qBinning::EIC> &data);
         };

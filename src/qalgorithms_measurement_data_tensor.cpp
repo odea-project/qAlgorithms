@@ -2,18 +2,18 @@
 
 // internal
 #include "../include/qalgorithms_measurement_data_tensor.h"
+
+// external
 #include <cassert>
 #include <fstream>
+#include <algorithm>
+#include <numeric>
 
 namespace q
 {
     namespace MeasurementData
     {
-        // constructors and destructor
-        TensorData::TensorData() {}
-
-        TensorData::~TensorData() {}
-
+#pragma region "private methods"
         // methods
         float
         TensorData::calcRTDiff(std::vector<double> &retention_times)
@@ -40,15 +40,25 @@ namespace q
                 {
                     continue; // skip zero values
                 }
-                TensorData::dataPoint dp; // create data point
-                dp.x = spectrum[0][i];    // x-axis value
-                dp.y = spectrum[1][i];    // y-axis value
-                dp.df = true;             // df value
+                TensorData::dataPoint dp( // create data point
+                    spectrum[0][i],       // x-axis value
+                    spectrum[1][i],       // y-axis value
+                    true,                 // df value
+                    0.0,                  // dqs centroid value
+                    0.0,                  // dqs binning value
+                    0,                    // scan number
+                    0.0);                 // mz ratio
                 dataPoints.push_back(dp); // add data point to vector
             }
             // add end point for later pretreatment
-            TensorData::dataPoint dp;
-            dp.x = std::numeric_limits<float>::infinity();
+            TensorData::dataPoint dp(                   // create data point
+                std::numeric_limits<float>::infinity(), // x-axis value
+                0.0,                                    // y-axis value
+                false,                                  // df value
+                0.0,                                    // dqs centroid value
+                0.0,                                    // dqs binning value
+                0,                                      // scan number
+                0.0);                                   // mz ratio
             dataPoints.push_back(dp);
             return dataPoints;
         }
@@ -71,53 +81,53 @@ namespace q
                 std::sort(indices.begin(), indices.end(), compare);
                 for (size_t i = 0; i < eic.scanNumbers.size(); ++i)
                 {
-                    TensorData::dataPoint dp;                    // create data point
-                    dp.x = eic.rententionTimes[indices[i]];      // x-axis value
-                    dp.y = eic.intensities[indices[i]];          // y-axis value
-                    dp.df = true;                                // df value
-                    dp.dqsCentroid = eic.DQSC[indices[i]];       // dqs centroid value
-                    dp.dqsBinning = eic.DQSB[indices[i]];        // dqs binning value
-                    dp.scanNumber = eic.scanNumbers[indices[i]]; // scan number
-                    dp.mz = eic.mz[indices[i]];                  // mz ratio
-                    dataPoints.push_back(dp);                    // add data point to vector
+                    TensorData::dataPoint dp(            // create data point
+                        eic.rententionTimes[indices[i]], // x-axis value
+                        eic.ints_area[indices[i]],       // y-axis value
+                        // eic.ints_height[indices[i]],
+                        true,                        // df value
+                        eic.DQSC[indices[i]],        // dqs centroid value
+                        eic.DQSB[indices[i]],        // dqs binning value
+                        eic.scanNumbers[indices[i]], // scan number
+                        eic.mz[indices[i]]);         // mz ratio
+                    dataPoints.push_back(dp);        // add data point to vector
                 }
             }
             else
             {
                 for (size_t i = 0; i < eic.scanNumbers.size(); ++i)
                 {
-                    TensorData::dataPoint dp;           // create data point
-                    dp.x = eic.rententionTimes[i];      // x-axis value
-                    dp.y = eic.intensities[i];          // y-axis value
-                    dp.df = true;                       // df value
-                    dp.dqsCentroid = eic.DQSC[i];       // dqs centroid value
-                    dp.dqsBinning = eic.DQSB[i];        // dqs binning value
-                    dp.scanNumber = eic.scanNumbers[i]; // scan number
-                    dp.mz = eic.mz[i];                  // mz ratio
-                    dataPoints.push_back(dp);           // add data point to vector
+                    TensorData::dataPoint dp(   // create data point
+                        eic.rententionTimes[i], // x-axis value
+                        eic.ints_area[i],       // y-axis value
+                        // eic.ints_height[i],
+                        true,                 // df value
+                        eic.DQSC[i],          // dqs centroid value
+                        eic.DQSB[i],          // dqs binning value
+                        eic.scanNumbers[i],   // scan number
+                        eic.mz[i]);           // mz ratio
+                    dataPoints.push_back(dp); // add data point to vector
                 }
             }
             // add end point for later pretreatment
-            TensorData::dataPoint dp;
-            dp.x = std::numeric_limits<float>::infinity();
+            TensorData::dataPoint dp(                   // create data point
+                std::numeric_limits<float>::infinity(), // x-axis value
+                0.0,                                    // y-axis value
+                false,                                  // df value
+                0.0,                                    // dqs centroid value
+                0.0,                                    // dqs binning value
+                0,                                      // scan number
+                0.0);                                   // mz ratio
             dataPoints.push_back(dp);
             return dataPoints;
         }
+#pragma endregion "private methods"
 
-        void
-        TensorData::readCSV(
-            std::string filename,
-            int rowStart,
-            int rowEnd,
-            int colStart,
-            int colEnd,
-            char separator,
-            std::vector<DataType::DataField> variableTypes) {}
-
-        std::vector<std::vector<std::unique_ptr<DataType::Peak>>>
-        TensorData::findCentroids_MZML(
+#pragma region "find centroids"
+        std::vector<std::vector<DataType::Peak>> TensorData::findCentroids_MZML(
             q::Algorithms::qPeaks &qpeaks,
             sc::MZML &data,
+            std::vector<unsigned int> &addEmpty,
             const bool ms1only,
             const std::string polarity,
             const int start_index)
@@ -128,6 +138,16 @@ namespace q
             std::vector<int> ms_levels = data.get_spectra_level();                    // get all MS levels
             std::vector<int> num_datapoints = data.get_spectra_array_length();        // get number of data points
             double expectedDifference = 0.0;                                          // expected difference between two consecutive x-axis values
+
+            bool displayPPMwarning = false;
+            if (ppm_for_precentroided_data == -5)
+            {
+                ppm_for_precentroided_data = 0.25; // this error applied to most good centroids in the datasets we checked
+            }
+            else
+            {
+                displayPPMwarning = true;
+            }
 
             // FILTER MS1 SPECTRA
             if (ms1only)
@@ -143,16 +163,34 @@ namespace q
                           indices.end()); // keep only spectra with the specified polarity and start index and array length > 5
 
             // CHECK IF CENTROIDED SPECTRA
-            int num_centroided_spectra = std::count(spectrum_mode.begin(), spectrum_mode.end(), "centroid");
-            if (num_centroided_spectra > spectrum_mode.size() * .5) // in profile mode sometimes centroided spectra appear as well
+            size_t num_centroided_spectra = std::count(spectrum_mode.begin(), spectrum_mode.end(), "centroid");
+            if (num_centroided_spectra > spectrum_mode.size() / 2) // in profile mode sometimes centroided spectra appear as well
             {
+                std::cerr << "Warning: qAlgorithms is intended for profile spectra. A base uncertainty of "
+                          << ppm_for_precentroided_data << " ppm is assumed for all supplied centroids\n";
                 std::vector<double> retention_times = data.get_spectra_rt(indices); // get retention times
                 rt_diff = calcRTDiff(retention_times);
-                return transfereCentroids(data, indices, retention_times, start_index);
+                addEmpty.resize(indices.size());
+                std::fill(addEmpty.begin(), addEmpty.end(), 0);
+                for (int i = 0; i < int(indices.size()) - 1; i++) // i can be -1 briefly if there is a scan missing between 1. and 2. element
+                {
+                    if (retention_times[i + 1] - retention_times[i] > rt_diff * 1.75)
+                    {
+                        addEmpty[i]++;
+                        retention_times[i] += rt_diff * 1.75;
+                        i--;
+                    }
+                }
+                return transferCentroids(data, indices, retention_times, start_index, ppm_for_precentroided_data);
+            }
+
+            if (displayPPMwarning)
+            {
+                std::cerr << "Notice: the changed centroid certainty will only affect pre-centroided data.\n";
             }
 
             // FILTER SPECTRUM MODE (PROFILE)
-            if (num_centroided_spectra != 0)
+            if (num_centroided_spectra != 0) // @todo should these really be discarded?
             {
                 indices.erase(std::remove_if(indices.begin(), indices.end(), [&spectrum_mode](int i)
                                              { return spectrum_mode[i] != "profile"; }),
@@ -162,48 +200,101 @@ namespace q
             std::vector<double> retention_times = data.get_spectra_rt(indices); // get retention times
             rt_diff = calcRTDiff(retention_times);                              // retention time difference
 
-            std::vector<std::vector<std::unique_ptr<DataType::Peak>>> centroids =
-                std::vector<std::vector<std::unique_ptr<DataType::Peak>>>(indices.size()); // create vector of unique pointers to peaks
+            std::vector<std::vector<DataType::Peak>> centroids =
+                std::vector<std::vector<DataType::Peak>>(indices.size()); // create vector of peaks
 
             // CALCULATE EXPECTED DIFFERENCE & CHECK FOR ZEROS
-            {
-                std::vector<std::vector<double>> data_vec = data.get_spectrum(indices[start_index]); // get first spectrum (x-axis)
-                expectedDifference = calcExpectedDiff(data_vec[0]);                                  // calculate expected difference & check if Orbitrap
-            }
+            std::vector<std::vector<double>> data_vec = data.get_spectrum(indices[start_index]); // get first spectrum (x-axis)
+            expectedDifference = calcExpectedDiff(data_vec[0]);                                  // calculate expected difference & check if Orbitrap
 
 #pragma omp parallel for
             for (size_t i = 0; i < indices.size(); ++i) // loop over all indices
             {
-                const int index = indices[i];                                                       // spectrum index
-                std::vector<TensorData::dataPoint> dataPoints = mzmlToDataPoint(data, index);       // convert mzml to data points
-                TensorData::treatedData treatedData = pretreatData(dataPoints, expectedDifference); // inter/extrapolate data, and identify data blocks
-                qpeaks.findCentroids(centroids[i], treatedData, index, retention_times[i]);         // find peaks in data blocks of treated data
-            } // for
+                const int index = indices[i];                                                 // spectrum index
+                std::vector<TensorData::dataPoint> dataPoints = mzmlToDataPoint(data, index); // convert mzml to data points
+                std::vector<unsigned int> dummy;
+                TensorData::treatedData treatedData = pretreatData(dataPoints, dummy, expectedDifference); // inter/extrapolate data, and identify data blocks
+                qpeaks.findCentroids(centroids[i], treatedData, index, retention_times[i]);                // find peaks in data blocks of treated data
+            }
+
+            if (!displayPPMwarning)
+            {
+                ppm_for_precentroided_data = -5;
+            }
+
+            // determine where the peak finding will interpolate points and pass this information
+            // to the binning step. addEmpty contains the number of empty scans to be added into
+            // the qCentroids object at the given position.
+            addEmpty.resize(indices.size());
+            std::fill(addEmpty.begin(), addEmpty.end(), 0);
+            for (int i = 0; i < int(indices.size()) - 1; i++) // i can be -1 briefly if there is a scan missing between 1. and 2. element
+            {
+                if (retention_times[i + 1] - retention_times[i] > rt_diff * 1.75)
+                {
+                    addEmpty[i]++;
+                    retention_times[i] += rt_diff * 1.75;
+                    i--;
+                }
+            }
 
             return centroids;
         } // readStreamCraftMZML
+#pragma endregion "find centroids"
 
-        std::vector<std::vector<std::unique_ptr<DataType::Peak>>>
+#pragma region "find peaks"
+        std::vector<std::vector<DataType::Peak>>
         TensorData::findPeaks_QBIN(
             q::Algorithms::qPeaks &qpeaks,
             std::vector<q::Algorithms::qBinning::EIC> &data)
         {
-            std::vector<std::vector<std::unique_ptr<DataType::Peak>>> peaks =
-                std::vector<std::vector<std::unique_ptr<DataType::Peak>>>(data.size()); // create vector of unique pointers to peaks
-// #pragma omp parallel for
-            for (size_t i = 0; i < data.size(); ++i) // loop over all data
+            std::vector<std::vector<DataType::Peak>> peaks(data.size()); // create vector of  peaks
+                                                                         // #pragma omp parallel for
+            for (size_t i = 0; i < data.size(); ++i)                     // loop over all data
             {
+
                 const int num_data_points = data[i].scanNumbers.size(); // number of data points
                 if (num_data_points < 5)
                 {
                     continue; // skip due to lack of data, i.e., degree of freedom will be zero
                 }
-                std::vector<dataPoint> dataPoints = qbinToDataPoint(data[i]);       // convert qbin to data points
-                treatedData treatedData = pretreatData(dataPoints, rt_diff, false); // inter/extrapolate data, and identify data blocks
-                // std::cout << "index: " << i << std::endl;
-                qpeaks.findPeaks(peaks[i],treatedData);
+                std::vector<dataPoint> dataPoints = qbinToDataPoint(data[i]); // convert qbin to data points
+                std::vector<unsigned int> binIndexConverter;
+                treatedData treatedData = pretreatData(dataPoints, binIndexConverter, rt_diff, false); // inter/extrapolate data, and identify data blocks
+
+                qpeaks.findPeaks(peaks[i], treatedData);
+                if (!peaks[i].empty())
+                {
+                    for (size_t j = 0; j < peaks[i].size(); j++)
+                    {
+                        assert(peaks[i][j].idxPeakEnd < binIndexConverter.size());
+                        peaks[i][j].idxPeakStart = binIndexConverter[peaks[i][j].idxPeakStart];
+                        // the end point is only correct if it is real. Check if the next point
+                        // has the same index - if yes, -1 to end index
+                        unsigned int tmpIdx = peaks[i][j].idxPeakEnd;
+                        peaks[i][j].idxPeakEnd = binIndexConverter[peaks[i][j].idxPeakEnd];
+                        if (tmpIdx + 1 != binIndexConverter.size())
+                        {
+                            if (binIndexConverter[tmpIdx] == binIndexConverter[tmpIdx + 1])
+                            {
+                                peaks[i][j].idxPeakEnd--;
+                            }
+                        }
+                    }
+                }
+
             } // parallel for
             return peaks;
+
+            // std::vector<std::vector<DataType::Peak>> returnVec(peaks.size());
+            // for (size_t i = 0; i < peaks.size(); i++)
+            // {
+            //     returnVec[i].reserve(peaks[i].size());
+            //     for (size_t j = 0; j < peaks[i].size(); j++)
+            //     {
+            //         returnVec[i].push_back(*peaks[i][j]);
+            //     }
+            // }
+            // return returnVec;
         } // readQBinning
     } // namespace MeasurementData
 } // namespace q
