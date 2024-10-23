@@ -1,0 +1,206 @@
+[
+{
+  "directory": "C:/Users/grenn/Desktop/clean_op/qAlgorithms/external/zlib131/build",
+  "command": "C:\\msys64\\mingw64\\bin\\gcc.exe -DZLIB_DLL -D_LARGEFILE64_SOURCE=1 @CMakeFiles/zlib.dir/includes_C.rsp -g -o CMakeFiles\\zlib.dir\\adler32.c.obj -c C:\\Users\\grenn\\Desktop\\clean_op\\qAlgorithms\\external\\zlib131\\adler32.c",
+  "file": "C:/Users/grenn/Desktop/clean_op/qAlgorithms/external/zlib131/adler32.c",
+  "output": "CMakeFiles/zlib.dir/adler32.c.obj"
+},
+{
+  "directory": "C:/Users/grenn/Desktop/clean_op/qAlgorithms/external/zlib131/build",
+  "command": "C:\\msys64\\mingw64\\bin\\gcc.exe -DZLIB_DLL -D_LARGEFILE64_SOURCE=1 @CMakeFiles/zlib.dir/includes_C.rsp -g -o CMakeFiles\\zlib.dir\\compress.c.obj -c C:\\Users\\grenn\\Desktop\\clean_op\\qAlgorithms\\external\\zlib131\\compress.c",
+  "file": "C:/Users/grenn/Desktop/clean_op/qAlgorithms/external/zlib131/compress.c",
+  "output": "CMakeFiles/zlib.dir/compress.c.obj"
+},
+{
+  "directory": "C:/Users/grenn/Desktop/clean_op/qAlgorithms/external/zlib131/build",
+  "command": "C:\\msys64\\mingw64\\bin\\gcc.exe -DZLIB_DLL -D_LARGEFILE64_SOURCE=1 @CMakeFiles/zlib.dir/includes_C.rsp -g -o CMakeFiles\\zlib.dir\\crc32.c.obj -c C:\\Users\\grenn\\Desktop\\clean_op\\qAlgorithms\\external\\zlib131\\crc32.c",
+  "file": "C:/Users/grenn/Desktop/clean_op/qAlgorithms/external/zlib131/crc32.c",
+  "output": "CMakeFiles/zlib.dir/crc32.c.obj"
+},
+{
+  "directory": "C:/Users/grenn/Desktop/clean_op/qAlgorithms/external/zlib131/build",
+  "command": "C:\\msys64\\mingw64\\bin\\gcc.exe -DZLIB_DLL -D_LARGEFILE64_SOURCE=1 @CMakeFiles/zlib.dir/includes_C.rsp -g -o CMakeFiles\\zlib.dir\\deflate.c.obj -c C:\\Users\\grenn\\Desktop\\clean_op\\qAlgorithms\\external\\zlib131\\deflate.c",
+  "file": "C:/Users/grenn/Desktop/clean_op/qAlgorithms/external/zlib131/deflate.c",
+  "output": "CMakeFiles/zlib.dir/deflate.c.obj"
+},
+{
+  "directory": "C:/Users/grenn/Desktop/clean_op/qAlgorithms/external/zlib131/build",
+  "command": "C:\\msys64\\mingw64\\bin\\gcc.exe -DZLIB_DLL -D_LARGEFILE64_SOURCE=1 @CMakeFiles/zlib.dir/includes_C.rsp -g -o CMakeFiles\\zlib.dir\\gzclose.c.obj -c C:\\Users\\grenn\\Desktop\\clean_op\\qAlgorithms\\external\\zlib131\\gzclose.c",
+  "file": "C:/Users/grenn/Desktop/clean_op/qAlgorithms/external/zlib131/gzclose.c",
+  "output": "CMakeFiles/zlib.dir/gzclose.c.obj"
+},
+{
+  "directory": "C:/Users/grenn/Desktop/clean_op/qAlgorithms/external/zlib131/build",
+  "command": "C:\\msys64\\mingw64\\bin\\gcc.exe -DZLIB_DLL -D_LARGEFILE64_SOURCE=1 @CMakeFiles/zlib.dir/includes_C.rsp -g -o CMakeFiles\\zlib.dir\\gzlib.c.obj -c C:\\Users\\grenn\\Desktop\\clean_op\\qAlgorithms\\external\\zlib131\\gzlib.c",
+  "file": "C:/Users/grenn/Desktop/clean_op/qAlgorithms/external/zlib131/gzlib.c",
+  "output": "CMakeFiles/zlib.dir/gzlib.c.obj"
+},
+{
+  "directory": "C:/Users/grenn/Desktop/clean_op/qAlgorithms/external/zlib131/build",
+  "command": "C:\\msys64\\mingw64\\bin\\gcc.exe -DZLIB_DLL -D_LARGEFILE64_SOURCE=1 @CMakeFiles/zlib.dir/includes_C.rsp -g -o CMakeFiles\\zlib.dir\\gzread.c.obj -c C:\\Users\\grenn\\Desktop\\clean_op\\qAlgorithms\\external\\zlib131\\gzread.c",
+  "file": "C:/Users/grenn/Desktop/clean_op/qAlgorithms/external/zlib131/gzread.c",
+  "output": "CMakeFiles/zlib.dir/gzread.c.obj"
+},
+{
+  "directory": "C:/Users/grenn/Desktop/clean_op/qAlgorithms/external/zlib131/build",
+  "command": "C:\\msys64\\mingw64\\bin\\gcc.exe -DZLIB_DLL -D_LARGEFILE64_SOURCE=1 @CMakeFiles/zlib.dir/includes_C.rsp -g -o CMakeFiles\\zlib.dir\\gzwrite.c.obj -c C:\\Users\\grenn\\Desktop\\clean_op\\qAlgorithms\\external\\zlib131\\gzwrite.c",
+  "file": "C:/Users/grenn/Desktop/clean_op/qAlgorithms/external/zlib131/gzwrite.c",
+  "output": "CMakeFiles/zlib.dir/gzwrite.c.obj"
+},
+{
+  "directory": "C:/Users/grenn/Desktop/clean_op/qAlgorithms/external/zlib131/build",
+  "command": "C:\\msys64\\mingw64\\bin\\gcc.exe -DZLIB_DLL -D_LARGEFILE64_SOURCE=1 @CMakeFiles/zlib.dir/includes_C.rsp -g -o CMakeFiles\\zlib.dir\\inflate.c.obj -c C:\\Users\\grenn\\Desktop\\clean_op\\qAlgorithms\\external\\zlib131\\inflate.c",
+  "file": "C:/Users/grenn/Desktop/clean_op/qAlgorithms/external/zlib131/inflate.c",
+  "output": "CMakeFiles/zlib.dir/inflate.c.obj"
+},
+{
+  "directory": "C:/Users/grenn/Desktop/clean_op/qAlgorithms/external/zlib131/build",
+  "command": "C:\\msys64\\mingw64\\bin\\gcc.exe -DZLIB_DLL -D_LARGEFILE64_SOURCE=1 @CMakeFiles/zlib.dir/includes_C.rsp -g -o CMakeFiles\\zlib.dir\\infback.c.obj -c C:\\Users\\grenn\\Desktop\\clean_op\\qAlgorithms\\external\\zlib131\\infback.c",
+  "file": "C:/Users/grenn/Desktop/clean_op/qAlgorithms/external/zlib131/infback.c",
+  "output": "CMakeFiles/zlib.dir/infback.c.obj"
+},
+{
+  "directory": "C:/Users/grenn/Desktop/clean_op/qAlgorithms/external/zlib131/build",
+  "command": "C:\\msys64\\mingw64\\bin\\gcc.exe -DZLIB_DLL -D_LARGEFILE64_SOURCE=1 @CMakeFiles/zlib.dir/includes_C.rsp -g -o CMakeFiles\\zlib.dir\\inftrees.c.obj -c C:\\Users\\grenn\\Desktop\\clean_op\\qAlgorithms\\external\\zlib131\\inftrees.c",
+  "file": "C:/Users/grenn/Desktop/clean_op/qAlgorithms/external/zlib131/inftrees.c",
+  "output": "CMakeFiles/zlib.dir/inftrees.c.obj"
+},
+{
+  "directory": "C:/Users/grenn/Desktop/clean_op/qAlgorithms/external/zlib131/build",
+  "command": "C:\\msys64\\mingw64\\bin\\gcc.exe -DZLIB_DLL -D_LARGEFILE64_SOURCE=1 @CMakeFiles/zlib.dir/includes_C.rsp -g -o CMakeFiles\\zlib.dir\\inffast.c.obj -c C:\\Users\\grenn\\Desktop\\clean_op\\qAlgorithms\\external\\zlib131\\inffast.c",
+  "file": "C:/Users/grenn/Desktop/clean_op/qAlgorithms/external/zlib131/inffast.c",
+  "output": "CMakeFiles/zlib.dir/inffast.c.obj"
+},
+{
+  "directory": "C:/Users/grenn/Desktop/clean_op/qAlgorithms/external/zlib131/build",
+  "command": "C:\\msys64\\mingw64\\bin\\gcc.exe -DZLIB_DLL -D_LARGEFILE64_SOURCE=1 @CMakeFiles/zlib.dir/includes_C.rsp -g -o CMakeFiles\\zlib.dir\\trees.c.obj -c C:\\Users\\grenn\\Desktop\\clean_op\\qAlgorithms\\external\\zlib131\\trees.c",
+  "file": "C:/Users/grenn/Desktop/clean_op/qAlgorithms/external/zlib131/trees.c",
+  "output": "CMakeFiles/zlib.dir/trees.c.obj"
+},
+{
+  "directory": "C:/Users/grenn/Desktop/clean_op/qAlgorithms/external/zlib131/build",
+  "command": "C:\\msys64\\mingw64\\bin\\gcc.exe -DZLIB_DLL -D_LARGEFILE64_SOURCE=1 @CMakeFiles/zlib.dir/includes_C.rsp -g -o CMakeFiles\\zlib.dir\\uncompr.c.obj -c C:\\Users\\grenn\\Desktop\\clean_op\\qAlgorithms\\external\\zlib131\\uncompr.c",
+  "file": "C:/Users/grenn/Desktop/clean_op/qAlgorithms/external/zlib131/uncompr.c",
+  "output": "CMakeFiles/zlib.dir/uncompr.c.obj"
+},
+{
+  "directory": "C:/Users/grenn/Desktop/clean_op/qAlgorithms/external/zlib131/build",
+  "command": "C:\\msys64\\mingw64\\bin\\gcc.exe -DZLIB_DLL -D_LARGEFILE64_SOURCE=1 @CMakeFiles/zlib.dir/includes_C.rsp -g -o CMakeFiles\\zlib.dir\\zutil.c.obj -c C:\\Users\\grenn\\Desktop\\clean_op\\qAlgorithms\\external\\zlib131\\zutil.c",
+  "file": "C:/Users/grenn/Desktop/clean_op/qAlgorithms/external/zlib131/zutil.c",
+  "output": "CMakeFiles/zlib.dir/zutil.c.obj"
+},
+{
+  "directory": "C:/Users/grenn/Desktop/clean_op/qAlgorithms/external/zlib131/build",
+  "command": "C:\\msys64\\mingw64\\bin\\gcc.exe -D_LARGEFILE64_SOURCE=1 @CMakeFiles/zlibstatic.dir/includes_C.rsp -g -o CMakeFiles\\zlibstatic.dir\\adler32.c.obj -c C:\\Users\\grenn\\Desktop\\clean_op\\qAlgorithms\\external\\zlib131\\adler32.c",
+  "file": "C:/Users/grenn/Desktop/clean_op/qAlgorithms/external/zlib131/adler32.c",
+  "output": "CMakeFiles/zlibstatic.dir/adler32.c.obj"
+},
+{
+  "directory": "C:/Users/grenn/Desktop/clean_op/qAlgorithms/external/zlib131/build",
+  "command": "C:\\msys64\\mingw64\\bin\\gcc.exe -D_LARGEFILE64_SOURCE=1 @CMakeFiles/zlibstatic.dir/includes_C.rsp -g -o CMakeFiles\\zlibstatic.dir\\compress.c.obj -c C:\\Users\\grenn\\Desktop\\clean_op\\qAlgorithms\\external\\zlib131\\compress.c",
+  "file": "C:/Users/grenn/Desktop/clean_op/qAlgorithms/external/zlib131/compress.c",
+  "output": "CMakeFiles/zlibstatic.dir/compress.c.obj"
+},
+{
+  "directory": "C:/Users/grenn/Desktop/clean_op/qAlgorithms/external/zlib131/build",
+  "command": "C:\\msys64\\mingw64\\bin\\gcc.exe -D_LARGEFILE64_SOURCE=1 @CMakeFiles/zlibstatic.dir/includes_C.rsp -g -o CMakeFiles\\zlibstatic.dir\\crc32.c.obj -c C:\\Users\\grenn\\Desktop\\clean_op\\qAlgorithms\\external\\zlib131\\crc32.c",
+  "file": "C:/Users/grenn/Desktop/clean_op/qAlgorithms/external/zlib131/crc32.c",
+  "output": "CMakeFiles/zlibstatic.dir/crc32.c.obj"
+},
+{
+  "directory": "C:/Users/grenn/Desktop/clean_op/qAlgorithms/external/zlib131/build",
+  "command": "C:\\msys64\\mingw64\\bin\\gcc.exe -D_LARGEFILE64_SOURCE=1 @CMakeFiles/zlibstatic.dir/includes_C.rsp -g -o CMakeFiles\\zlibstatic.dir\\deflate.c.obj -c C:\\Users\\grenn\\Desktop\\clean_op\\qAlgorithms\\external\\zlib131\\deflate.c",
+  "file": "C:/Users/grenn/Desktop/clean_op/qAlgorithms/external/zlib131/deflate.c",
+  "output": "CMakeFiles/zlibstatic.dir/deflate.c.obj"
+},
+{
+  "directory": "C:/Users/grenn/Desktop/clean_op/qAlgorithms/external/zlib131/build",
+  "command": "C:\\msys64\\mingw64\\bin\\gcc.exe -D_LARGEFILE64_SOURCE=1 @CMakeFiles/zlibstatic.dir/includes_C.rsp -g -o CMakeFiles\\zlibstatic.dir\\gzclose.c.obj -c C:\\Users\\grenn\\Desktop\\clean_op\\qAlgorithms\\external\\zlib131\\gzclose.c",
+  "file": "C:/Users/grenn/Desktop/clean_op/qAlgorithms/external/zlib131/gzclose.c",
+  "output": "CMakeFiles/zlibstatic.dir/gzclose.c.obj"
+},
+{
+  "directory": "C:/Users/grenn/Desktop/clean_op/qAlgorithms/external/zlib131/build",
+  "command": "C:\\msys64\\mingw64\\bin\\gcc.exe -D_LARGEFILE64_SOURCE=1 @CMakeFiles/zlibstatic.dir/includes_C.rsp -g -o CMakeFiles\\zlibstatic.dir\\gzlib.c.obj -c C:\\Users\\grenn\\Desktop\\clean_op\\qAlgorithms\\external\\zlib131\\gzlib.c",
+  "file": "C:/Users/grenn/Desktop/clean_op/qAlgorithms/external/zlib131/gzlib.c",
+  "output": "CMakeFiles/zlibstatic.dir/gzlib.c.obj"
+},
+{
+  "directory": "C:/Users/grenn/Desktop/clean_op/qAlgorithms/external/zlib131/build",
+  "command": "C:\\msys64\\mingw64\\bin\\gcc.exe -D_LARGEFILE64_SOURCE=1 @CMakeFiles/zlibstatic.dir/includes_C.rsp -g -o CMakeFiles\\zlibstatic.dir\\gzread.c.obj -c C:\\Users\\grenn\\Desktop\\clean_op\\qAlgorithms\\external\\zlib131\\gzread.c",
+  "file": "C:/Users/grenn/Desktop/clean_op/qAlgorithms/external/zlib131/gzread.c",
+  "output": "CMakeFiles/zlibstatic.dir/gzread.c.obj"
+},
+{
+  "directory": "C:/Users/grenn/Desktop/clean_op/qAlgorithms/external/zlib131/build",
+  "command": "C:\\msys64\\mingw64\\bin\\gcc.exe -D_LARGEFILE64_SOURCE=1 @CMakeFiles/zlibstatic.dir/includes_C.rsp -g -o CMakeFiles\\zlibstatic.dir\\gzwrite.c.obj -c C:\\Users\\grenn\\Desktop\\clean_op\\qAlgorithms\\external\\zlib131\\gzwrite.c",
+  "file": "C:/Users/grenn/Desktop/clean_op/qAlgorithms/external/zlib131/gzwrite.c",
+  "output": "CMakeFiles/zlibstatic.dir/gzwrite.c.obj"
+},
+{
+  "directory": "C:/Users/grenn/Desktop/clean_op/qAlgorithms/external/zlib131/build",
+  "command": "C:\\msys64\\mingw64\\bin\\gcc.exe -D_LARGEFILE64_SOURCE=1 @CMakeFiles/zlibstatic.dir/includes_C.rsp -g -o CMakeFiles\\zlibstatic.dir\\inflate.c.obj -c C:\\Users\\grenn\\Desktop\\clean_op\\qAlgorithms\\external\\zlib131\\inflate.c",
+  "file": "C:/Users/grenn/Desktop/clean_op/qAlgorithms/external/zlib131/inflate.c",
+  "output": "CMakeFiles/zlibstatic.dir/inflate.c.obj"
+},
+{
+  "directory": "C:/Users/grenn/Desktop/clean_op/qAlgorithms/external/zlib131/build",
+  "command": "C:\\msys64\\mingw64\\bin\\gcc.exe -D_LARGEFILE64_SOURCE=1 @CMakeFiles/zlibstatic.dir/includes_C.rsp -g -o CMakeFiles\\zlibstatic.dir\\infback.c.obj -c C:\\Users\\grenn\\Desktop\\clean_op\\qAlgorithms\\external\\zlib131\\infback.c",
+  "file": "C:/Users/grenn/Desktop/clean_op/qAlgorithms/external/zlib131/infback.c",
+  "output": "CMakeFiles/zlibstatic.dir/infback.c.obj"
+},
+{
+  "directory": "C:/Users/grenn/Desktop/clean_op/qAlgorithms/external/zlib131/build",
+  "command": "C:\\msys64\\mingw64\\bin\\gcc.exe -D_LARGEFILE64_SOURCE=1 @CMakeFiles/zlibstatic.dir/includes_C.rsp -g -o CMakeFiles\\zlibstatic.dir\\inftrees.c.obj -c C:\\Users\\grenn\\Desktop\\clean_op\\qAlgorithms\\external\\zlib131\\inftrees.c",
+  "file": "C:/Users/grenn/Desktop/clean_op/qAlgorithms/external/zlib131/inftrees.c",
+  "output": "CMakeFiles/zlibstatic.dir/inftrees.c.obj"
+},
+{
+  "directory": "C:/Users/grenn/Desktop/clean_op/qAlgorithms/external/zlib131/build",
+  "command": "C:\\msys64\\mingw64\\bin\\gcc.exe -D_LARGEFILE64_SOURCE=1 @CMakeFiles/zlibstatic.dir/includes_C.rsp -g -o CMakeFiles\\zlibstatic.dir\\inffast.c.obj -c C:\\Users\\grenn\\Desktop\\clean_op\\qAlgorithms\\external\\zlib131\\inffast.c",
+  "file": "C:/Users/grenn/Desktop/clean_op/qAlgorithms/external/zlib131/inffast.c",
+  "output": "CMakeFiles/zlibstatic.dir/inffast.c.obj"
+},
+{
+  "directory": "C:/Users/grenn/Desktop/clean_op/qAlgorithms/external/zlib131/build",
+  "command": "C:\\msys64\\mingw64\\bin\\gcc.exe -D_LARGEFILE64_SOURCE=1 @CMakeFiles/zlibstatic.dir/includes_C.rsp -g -o CMakeFiles\\zlibstatic.dir\\trees.c.obj -c C:\\Users\\grenn\\Desktop\\clean_op\\qAlgorithms\\external\\zlib131\\trees.c",
+  "file": "C:/Users/grenn/Desktop/clean_op/qAlgorithms/external/zlib131/trees.c",
+  "output": "CMakeFiles/zlibstatic.dir/trees.c.obj"
+},
+{
+  "directory": "C:/Users/grenn/Desktop/clean_op/qAlgorithms/external/zlib131/build",
+  "command": "C:\\msys64\\mingw64\\bin\\gcc.exe -D_LARGEFILE64_SOURCE=1 @CMakeFiles/zlibstatic.dir/includes_C.rsp -g -o CMakeFiles\\zlibstatic.dir\\uncompr.c.obj -c C:\\Users\\grenn\\Desktop\\clean_op\\qAlgorithms\\external\\zlib131\\uncompr.c",
+  "file": "C:/Users/grenn/Desktop/clean_op/qAlgorithms/external/zlib131/uncompr.c",
+  "output": "CMakeFiles/zlibstatic.dir/uncompr.c.obj"
+},
+{
+  "directory": "C:/Users/grenn/Desktop/clean_op/qAlgorithms/external/zlib131/build",
+  "command": "C:\\msys64\\mingw64\\bin\\gcc.exe -D_LARGEFILE64_SOURCE=1 @CMakeFiles/zlibstatic.dir/includes_C.rsp -g -o CMakeFiles\\zlibstatic.dir\\zutil.c.obj -c C:\\Users\\grenn\\Desktop\\clean_op\\qAlgorithms\\external\\zlib131\\zutil.c",
+  "file": "C:/Users/grenn/Desktop/clean_op/qAlgorithms/external/zlib131/zutil.c",
+  "output": "CMakeFiles/zlibstatic.dir/zutil.c.obj"
+},
+{
+  "directory": "C:/Users/grenn/Desktop/clean_op/qAlgorithms/external/zlib131/build",
+  "command": "C:\\msys64\\mingw64\\bin\\gcc.exe -D_LARGEFILE64_SOURCE=1 @CMakeFiles/example.dir/includes_C.rsp -g -o CMakeFiles\\example.dir\\test\\example.c.obj -c C:\\Users\\grenn\\Desktop\\clean_op\\qAlgorithms\\external\\zlib131\\test\\example.c",
+  "file": "C:/Users/grenn/Desktop/clean_op/qAlgorithms/external/zlib131/test/example.c",
+  "output": "CMakeFiles/example.dir/test/example.c.obj"
+},
+{
+  "directory": "C:/Users/grenn/Desktop/clean_op/qAlgorithms/external/zlib131/build",
+  "command": "C:\\msys64\\mingw64\\bin\\gcc.exe -D_LARGEFILE64_SOURCE=1 @CMakeFiles/minigzip.dir/includes_C.rsp -g -o CMakeFiles\\minigzip.dir\\test\\minigzip.c.obj -c C:\\Users\\grenn\\Desktop\\clean_op\\qAlgorithms\\external\\zlib131\\test\\minigzip.c",
+  "file": "C:/Users/grenn/Desktop/clean_op/qAlgorithms/external/zlib131/test/minigzip.c",
+  "output": "CMakeFiles/minigzip.dir/test/minigzip.c.obj"
+},
+{
+  "directory": "C:/Users/grenn/Desktop/clean_op/qAlgorithms/external/zlib131/build",
+  "command": "C:\\msys64\\mingw64\\bin\\gcc.exe -D_LARGEFILE64_SOURCE=1 @CMakeFiles/example64.dir/includes_C.rsp -g -D_FILE_OFFSET_BITS=64 -o CMakeFiles\\example64.dir\\test\\example.c.obj -c C:\\Users\\grenn\\Desktop\\clean_op\\qAlgorithms\\external\\zlib131\\test\\example.c",
+  "file": "C:/Users/grenn/Desktop/clean_op/qAlgorithms/external/zlib131/test/example.c",
+  "output": "CMakeFiles/example64.dir/test/example.c.obj"
+},
+{
+  "directory": "C:/Users/grenn/Desktop/clean_op/qAlgorithms/external/zlib131/build",
+  "command": "C:\\msys64\\mingw64\\bin\\gcc.exe -D_LARGEFILE64_SOURCE=1 @CMakeFiles/minigzip64.dir/includes_C.rsp -g -D_FILE_OFFSET_BITS=64 -o CMakeFiles\\minigzip64.dir\\test\\minigzip.c.obj -c C:\\Users\\grenn\\Desktop\\clean_op\\qAlgorithms\\external\\zlib131\\test\\minigzip.c",
+  "file": "C:/Users/grenn/Desktop/clean_op/qAlgorithms/external/zlib131/test/minigzip.c",
+  "output": "CMakeFiles/minigzip64.dir/test/minigzip.c.obj"
+}
+]

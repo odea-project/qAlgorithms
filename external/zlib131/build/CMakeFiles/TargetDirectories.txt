@@ -1,0 +1,13 @@
+C:/Users/grenn/Desktop/clean_op/qAlgorithms/external/zlib131/build/CMakeFiles/zlib.dir
+C:/Users/grenn/Desktop/clean_op/qAlgorithms/external/zlib131/build/CMakeFiles/zlibstatic.dir
+C:/Users/grenn/Desktop/clean_op/qAlgorithms/external/zlib131/build/CMakeFiles/example.dir
+C:/Users/grenn/Desktop/clean_op/qAlgorithms/external/zlib131/build/CMakeFiles/minigzip.dir
+C:/Users/grenn/Desktop/clean_op/qAlgorithms/external/zlib131/build/CMakeFiles/example64.dir
+C:/Users/grenn/Desktop/clean_op/qAlgorithms/external/zlib131/build/CMakeFiles/minigzip64.dir
+C:/Users/grenn/Desktop/clean_op/qAlgorithms/external/zlib131/build/CMakeFiles/test.dir
+C:/Users/grenn/Desktop/clean_op/qAlgorithms/external/zlib131/build/CMakeFiles/edit_cache.dir
+C:/Users/grenn/Desktop/clean_op/qAlgorithms/external/zlib131/build/CMakeFiles/rebuild_cache.dir
+C:/Users/grenn/Desktop/clean_op/qAlgorithms/external/zlib131/build/CMakeFiles/list_install_components.dir
+C:/Users/grenn/Desktop/clean_op/qAlgorithms/external/zlib131/build/CMakeFiles/install.dir
+C:/Users/grenn/Desktop/clean_op/qAlgorithms/external/zlib131/build/CMakeFiles/install/local.dir
+C:/Users/grenn/Desktop/clean_op/qAlgorithms/external/zlib131/build/CMakeFiles/install/strip.dir

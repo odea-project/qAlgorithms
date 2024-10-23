@@ -7,6 +7,7 @@
 #include <cassert>
 #include <numeric>
 #include <cmath>
+#include <fstream>
 
 // external
 

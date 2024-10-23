@@ -5,8 +5,11 @@
 #include "../include/qalgorithms_utils.h"
 
 // external
+
+// external
 #include <cmath>
 #include <fstream>
+#include <algorithm>
 #include <algorithm>
 
 namespace q
@@ -119,6 +122,13 @@ namespace q
       auto it_maxOfBlock = dataPoints.begin();                                  // maximum of the block (y-axis)
       int blockSize = 0;                                                        // size of the current block
 
+      treatedData treatedData = {std::vector<dataPoint>(), std::vector<int>()}; // treated data
+      treatedData.dataPoints.reserve(dataPoints.size() * 2);                    // reserve memory for the new data points
+      auto it_dataPoint = dataPoints.begin();                                   // iterator for the data points
+      const auto it_dataPoint_end = dataPoints.end() - 1;                       // end of the data points (last element is infinty point)
+      auto it_maxOfBlock = dataPoints.begin();                                  // maximum of the block (y-axis)
+      int blockSize = 0;                                                        // size of the current block
+
       binIdx.reserve(dataPoints.size() * 2);
 
       unsigned int realIdx = 0;
@@ -129,6 +139,7 @@ namespace q
         binIdx.push_back(realIdx);
         assert(binIdx.size() == treatedData.dataPoints.size());
       }
+      treatedData.addSeparator(0); // add the first separator
       treatedData.addSeparator(0); // add the first separator
 
       // iterate over the data points
@@ -244,6 +255,8 @@ namespace q
                 binIdx.push_back(realIdx);
                 assert(binIdx.size() == treatedData.dataPoints.size());
               }
+              treatedData.addSeparator(treatedData.dataPoints.size() - 2); // add the separator
+              it_maxOfBlock = it_dataPoint + 1;                            // update the maximum of the block
               treatedData.addSeparator(treatedData.dataPoints.size() - 2); // add the separator
               it_maxOfBlock = it_dataPoint + 1;                            // update the maximum of the block
             }

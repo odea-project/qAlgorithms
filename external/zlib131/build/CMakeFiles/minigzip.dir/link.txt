@@ -1,0 +1,3 @@
+"C:\Program Files\CMake\bin\cmake.exe" -E rm -f CMakeFiles\minigzip.dir/objects.a
+C:\msys64\mingw64\bin\ar.exe qc CMakeFiles\minigzip.dir/objects.a @CMakeFiles\minigzip.dir\objects1.rsp
+C:\msys64\mingw64\bin\gcc.exe -g -Wl,--whole-archive CMakeFiles\minigzip.dir/objects.a -Wl,--no-whole-archive -o minigzip.exe -Wl,--out-implib,libminigzip.dll.a -Wl,--major-image-version,0,--minor-image-version,0 @CMakeFiles\minigzip.dir\linkLibs.rsp

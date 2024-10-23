@@ -5,6 +5,7 @@
 #include <vector>
 #include <string>
 #include <filesystem> // printing absolute path in case read fails
+#include <filesystem> // printing absolute path in case read fails
 
 // Goal: all functions modify individual features, which are combined to a bin.
 // The bin contains all features and the functions necessary to summarise which features are present
@@ -74,6 +75,9 @@ namespace q
                 std::vector<std::vector<qCentroid>> allDatapoints;
                 // std::vector<metaCentroid> metadata;
                 int lengthAllPoints; // number of centroids in all scans
+                // int scanFold; // number of scans after which the next chromatographic fraction arrives (LC_IMS or LCxLC)
+                // MeasurementType instrumentation;
+                // bool ionisation; // 0 = negative, 1 = positive
                 // int scanFold; // number of scans after which the next chromatographic fraction arrives (LC_IMS or LCxLC)
                 // MeasurementType instrumentation;
                 // bool ionisation; // 0 = negative, 1 = positive
@@ -215,6 +219,7 @@ namespace q
                 /// The respective bit is set to 1 if the defined state is present. Possible states of interest are too large a discrepancy
                 /// between mean and median or the presence of duplicate values.
                 /// @details This function also sets the "errorcode" parameter of the bin it executes on.
+                /// @details This function also sets the "errorcode" parameter of the bin it executes on.
                 /// @return A struct containing the summary information. The first entry is the error code.
                 SummaryOutput summariseBin();
 
@@ -225,6 +230,7 @@ namespace q
             class BinContainer
             {
             private:
+                std::deque<Bin> binDeque;
                 std::deque<Bin> binDeque;
                 std::vector<Bin> redoneBins; // store bins after reassembly/cutting here
                 int subsetCount;
@@ -261,6 +267,13 @@ namespace q
                                                               // Make sure to test the report for human-readability and
                                                               // include metadata from the mzml where possible.
                                                               // Some measure of overall spectrum quality should also be given.
+                void printBinSummary(std::string path) const; // @todo create a better summary function which gives a
+                                                              // detailed report, including what the test actually does,
+                                                              // the mz subset after which a bin was complete, statistics
+                                                              // regarding the rest of the bins in terms of size, count etc.
+                                                              // Make sure to test the report for human-readability and
+                                                              // include metadata from the mzml where possible.
+                                                              // Some measure of overall spectrum quality should also be given.
 
                 /// @brief Add all bins identified as having hot ends to outofbins and redo the binning using subsetBins
                 /// @param dimensions parameter for subsetBins, see there for a detailed explanation
@@ -269,11 +282,15 @@ namespace q
                 /// @param maxdist the largest gap in scans which a bin can have while still being considered valid
                 void redoBinningIfTooclose(const std::vector<int> dimensions, const CentroidedData *rawdata,
                                            std::vector<qCentroid *> notbinned, const int maxdist);
+                void redoBinningIfTooclose(const std::vector<int> dimensions, const CentroidedData *rawdata,
+                                           std::vector<qCentroid *> notbinned, const int maxdist);
 
+                // void mergeByStdev(double mzFilterLower, double mzFilterUpper);
                 // void mergeByStdev(double mzFilterLower, double mzFilterUpper);
 
                 void reconstructFromStdev(const CentroidedData *rawdata, int maxdist);
 
+                void printAllBins(std::string path) const;
                 void printAllBins(std::string path) const;
 
                 std::vector<EIC> returnBins();
@@ -284,6 +301,7 @@ namespace q
                 /// the input would have to be std::byte{0b00000001}
                 /// @param fullBins Should all bins which are included in the summary be printed in full?
                 /// @param location path to the folder in which both files should be created
+                void printSelectBins(bool printCentroids, std::filesystem::path location, std::string filename);
                 void printSelectBins(bool printCentroids, std::filesystem::path location, std::string filename);
             };
 
@@ -301,7 +319,22 @@ namespace q
             std::vector<EIC> performQbinning(const CentroidedData centroidedData, std::filesystem::path outpath,
                                              std::string filename, int maxdist,
                                              bool silent, bool printBinSummary, bool printCentroids);
+            // ####################################################################################################### //
 
+            /// @brief wrapper function to execute qbinning on a CentroidedData struct
+            /// @param centroidedData centroid list generated by qPeaks.passToBinning(...), defined in qalgorithms_qpeaks.cpp
+            /// @param outpath directroy into which the summary and bins will be printed, if the option was selected
+            /// @param filename name stem for summary and bins csv files
+            /// @param maxdist maximum distance in the scans dimension that is allowed within a bin
+            /// @param silent if this option is selected, no progress reports will be printed to std::cout
+            /// @param printBinSummary print summary file
+            /// @param printCentroids print all centroids for all bins
+            /// @return returns the centroids as a collection of vectors
+            std::vector<EIC> performQbinning(const CentroidedData centroidedData, std::filesystem::path outpath,
+                                             std::string filename, int maxdist,
+                                             bool silent, bool printBinSummary, bool printCentroids);
+
+            // ###################################################################################################### //
             // ###################################################################################################### //
         }
     }

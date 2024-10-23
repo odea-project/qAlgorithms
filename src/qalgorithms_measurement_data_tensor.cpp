@@ -4,8 +4,12 @@
 #include "../include/qalgorithms_measurement_data_tensor.h"
 
 // external
+
+// external
 #include <cassert>
 #include <fstream>
+#include <algorithm>
+#include <numeric>
 #include <algorithm>
 #include <numeric>
 
@@ -13,6 +17,7 @@ namespace q
 {
     namespace MeasurementData
     {
+#pragma region "private methods"
 #pragma region "private methods"
         // methods
         float
@@ -31,7 +36,7 @@ namespace q
             sc::MZML &data,
             const int index)
         {
-            std::vector<std::vector<double>> spectrum = data.get_spectrum(index); // get spectrum at index
+            std::vector<std::vector<double>> spectrum = data.get_spectrum(index); // get spectrum at index @todo will be update using .binary_data
             std::vector<TensorData::dataPoint> dataPoints;                        // create vector of data points
             dataPoints.reserve(spectrum[0].size());                               // reserve memory for data points
             for (size_t i = 0; i < spectrum[0].size(); ++i)
@@ -48,9 +53,25 @@ namespace q
                     0.0,                  // dqs binning value
                     0,                    // scan number
                     0.0);                 // mz ratio
+                TensorData::dataPoint dp( // create data point
+                    spectrum[0][i],       // x-axis value
+                    spectrum[1][i],       // y-axis value
+                    true,                 // df value
+                    0.0,                  // dqs centroid value
+                    0.0,                  // dqs binning value
+                    0,                    // scan number
+                    0.0);                 // mz ratio
                 dataPoints.push_back(dp); // add data point to vector
             }
             // add end point for later pretreatment
+            TensorData::dataPoint dp(                   // create data point
+                std::numeric_limits<float>::infinity(), // x-axis value
+                0.0,                                    // y-axis value
+                false,                                  // df value
+                0.0,                                    // dqs centroid value
+                0.0,                                    // dqs binning value
+                0,                                      // scan number
+                0.0);                                   // mz ratio
             TensorData::dataPoint dp(                   // create data point
                 std::numeric_limits<float>::infinity(), // x-axis value
                 0.0,                                    // y-axis value
@@ -110,6 +131,14 @@ namespace q
                 }
             }
             // add end point for later pretreatment
+            TensorData::dataPoint dp(                   // create data point
+                std::numeric_limits<float>::infinity(), // x-axis value
+                0.0,                                    // y-axis value
+                false,                                  // df value
+                0.0,                                    // dqs centroid value
+                0.0,                                    // dqs binning value
+                0,                                      // scan number
+                0.0);                                   // mz ratio
             TensorData::dataPoint dp(                   // create data point
                 std::numeric_limits<float>::infinity(), // x-axis value
                 0.0,                                    // y-axis value
@@ -239,6 +268,7 @@ namespace q
 
             return centroids;
         } // readStreamCraftMZML
+#pragma endregion "find centroids"
 #pragma endregion "find centroids"
 
 #pragma region "find peaks"

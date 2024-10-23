@@ -3,6 +3,7 @@
 
 // internal
 // #include "../include/qalgorithms_datatype_mass_spectrum.h"
+// #include "../include/qalgorithms_datatype_mass_spectrum.h"
 #include "../include/qalgorithms_datatype_peak.h"
 #include "../external/StreamCraft/src/StreamCraft_mzml.hpp"
 
@@ -14,13 +15,15 @@ namespace q
     {
         // using MS = std::vector<std::unique_ptr<DataType::MassSpectrum>> *; // pointer to a vector of mass spectra
         // using varDataType = std::variant<MS>;                              // add more data types if needed
+        // using MS = std::vector<std::unique_ptr<DataType::MassSpectrum>> *; // pointer to a vector of mass spectra
+        // using varDataType = std::variant<MS>;                              // add more data types if needed
         /**
          * @brief A class to store measurement data
          * @details The MeasurementData class is a virtual class used to store measurement data. Based on the type of measurement data, the MeasurementData class can be subclassed to store different types of measurement data.
          */
         class MeasurementData
         {
-        protected:
+        public:
             // variables
             struct dataPoint
             {
@@ -31,6 +34,9 @@ namespace q
                 float dqsBinning;
                 int scanNumber;
                 float mz;
+
+                dataPoint(float x, float y, bool df, float dqsCentroid, float dqsBinning, int scanNumber, float mz)
+                    : x(x), y(y), df(df), dqsCentroid(dqsCentroid), dqsBinning(dqsBinning), scanNumber(scanNumber), mz(mz) {}
 
                 dataPoint(float x, float y, bool df, float dqsCentroid, float dqsBinning, int scanNumber, float mz)
                     : x(x), y(y), df(df), dqsCentroid(dqsCentroid), dqsBinning(dqsBinning), scanNumber(scanNumber), mz(mz) {}
