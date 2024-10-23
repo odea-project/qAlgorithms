@@ -1188,7 +1188,7 @@ namespace q
                 const double dmz = *(mz_start + (int)std::floor(regression.apex_position) + 1) - mz0;
                 const double apex_position = mz0 + dmz * (regression.apex_position - std::floor(regression.apex_position));
                 peak.mz = apex_position;
-                peak.mzUncertainty = regression.uncertainty_pos * dmz;
+                peak.mzUncertainty = regression.uncertainty_pos * dmz * tValuesArray[regression.df + 1] * sqrt(1 + 1 / (regression.df + 4));
             }
             else
             {
