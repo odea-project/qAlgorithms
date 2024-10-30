@@ -30,29 +30,32 @@ namespace q
             float heightPercent;
         };
 
+        struct Eliminator
+        {
+            std::vector<int> conflictingIdxs;
+            int trueIdx;
+        };
+
         struct FeatureComponent
         {
             std::vector<q::DataType::Peak *> members; // size n
             std::vector<FeatureMatch> connections;    // size n^2 - n ; idx = n * featureIdx + 0:n-1
+            Eliminator *resolveConflict;              // nullptr if no conflicts exist
             float totalScore;
             unsigned int measurementID;
-        };
-
-        struct Eliminator
-        {
-            int originIdx[2];
-            int targetIdx[2];
-            FeatureComponent &origin;
-            FeatureComponent &target;
+            bool rejected;
         };
 
 #pragma endregion structs
 
 #pragma region functions
 
-        std::vector<FeatureComponent> initialComponentBinner(std::vector<q::DataType::Peak> *featureList);
+        std::vector<q::DataType::Peak *> collapseFeaturelist(std::vector<std::vector<q::DataType::Peak>> &peaks);
 
-        void binningRT(std::vector<int[2]> *componentStartEnd, std::vector<float> &OS, std::vector<float> &error, int startBin, int endBin);
+        std::vector<FeatureComponent> initialComponentBinner(std::vector<q::DataType::Peak *> &featureList);
+
+        void binningRT(std::vector<std::vector<q::DataType::Peak *>> &componentStartEnd, std::vector<q::DataType::Peak *> &featureList,
+                       std::vector<float> &OS, std::vector<float> &error, int startBin, int endBin);
 
 #pragma endregion functions
 
