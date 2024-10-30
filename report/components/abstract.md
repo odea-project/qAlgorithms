@@ -1,3 +1,14 @@
+# Title Suggestions
+qPattern:
+Development of a Quality-Focused Componentisation Algorithm for Data Evaluation in Non-Target Screening
+Introducing a new, Parameter-Free Componentisation Algorithm for Replicate Measurements in Non-Target Screening
+A New Componentisation Strategy for Mass Spectra in Non-Target Screening Utilising Statistical Decision Limits.
+Componentisation of mass spectra leveraging statistical tests and known confidence levels for grouping
+Approach to componentisation of multiple mass spectra providing certainty measures for formed groups without requiring user input // zu spezifisch
+A quality-focused, Integrated Strategy for componentisation of (replicate) HPLC/HRMS measurements
+
+qPattern: Development of a Quality-Focused, User-Independent, Automated Componentisation Strategy for Non-Target Screening with HPLC-HRMS.
+
 # Abstract Master Thesis
 
 Contaminants of emergent concern threaten the quality of drinking and surface water worldwide.
