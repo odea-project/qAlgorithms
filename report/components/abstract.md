@@ -1,14 +1,14 @@
 # Abstract Master Thesis
 
-Chemicals of emergent concern threaten the quality of drinking and surface water worldwide.
+Contaminants of emergent concern threaten the quality of drinking and surface water worldwide.
 Often, these substances are not described, which means they cannot be reliably measured 
 with conventional analytical approaches. To this end, non-target screening
 serves as a methodology through which a large amount of unknown compounds can 
 be detected and responded to without indentification. Many challenges remain unil
 non-target analysis is easily reproducible applicable without expert knowledge, 
-especially regarding the data processing in NTS. This processing is a series of algorithms
+especially regarding the data processing in NTS. Processing consists of a series of algorithms
 which aim at removing chemical and instrument noise from measurement data until
-only that information which is related to compounds within the sample remain, all while
+only that information which is related to compounds within the sample remains, all while
 minimising the amount of falsely removed signals. The process of feature list construction
 has already been implemented within the qAlgorithms project. A feature describes
 a signal whose intensity follows a gaussian shape in the time dimension.
@@ -22,10 +22,8 @@ into the feature list and helps reduce the data complexity caused by in-source f
 Multiple independent groups in the fields of metabolomics and environmental science 
 developed and sucessfully employed different approaches for grouping feature 
 lists within one measurement, between different measurements, or both. These often
-rely on user-supplied parameters, (in the case of machine learning approaches)
-user-supplied training data or are heavily integrated in different analysis
-workflows. These workflows, again, depend on user parameters and, in some cases,
-include the use of proprietary software with expensive licenses.
+rely on user-supplied parameters or are otherwise not consistent between labs,
+for example by depending pre-trained models for machine learning solutions.
 
 The goal of this thesis is to develop an approach to clustering feature 
 lists which operates without user parameters, runs on a consumer laptop 
@@ -46,7 +44,8 @@ the feature list will be performed by qAlgorithms. The generated
 data will be archived on the institute server and the most relevant test series uploaded
 to a data archive with comprehensive descritions regarding the experimental procedures.
 Links to these datasets will be published to the qAlgorithms github page and distributed 
-with the source code.
+with the source code. The comparison will focus on how reproducible groupings are in
+relation to the developed quality score.
 
 The task of remaining completely parameter-free and providing the novel strategy
 of resolving uncertainties only when reaching a point where a decision is necessary
