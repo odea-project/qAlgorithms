@@ -83,7 +83,7 @@ namespace q
             return;
         }
 
-        std::vector<FeatureComponent> initialComponentBinner(std::vector<q::DataType::Peak *> &featureList)
+        std::vector<FeatureComponent> initialComponentBinner(std::vector<q::DataType::Peak *> &featureList, unsigned int replicateID)
         {
             int featureCount = featureList.size();
             std::vector<float> orderSpace(featureCount, 0);

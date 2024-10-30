@@ -50,9 +50,18 @@ namespace q
 
 #pragma region functions
 
+        /// @brief Function to remove the two dimensional structure of the qPeaks result. The object itself
+        /// cannot be modified after this
+        /// @param peaks peaks object returned after call to findpeaks
+        /// @return pointers to elements of the vector. Note that modifications to the original peaks vector invalidate the whole componentisation
         std::vector<q::DataType::Peak *> collapseFeaturelist(std::vector<std::vector<q::DataType::Peak>> &peaks);
 
-        std::vector<FeatureComponent> initialComponentBinner(std::vector<q::DataType::Peak *> &featureList);
+        /// @brief
+        /// @details note that the FeatureComponents do not preserve binning information, since it cannot be used to reliably match datasets
+        /// @param featureList feature list generated through collapseFeaturelist
+        /// @param replicateID The component is assigned a unique ID to match it with other datasets
+        /// @return
+        std::vector<FeatureComponent> initialComponentBinner(std::vector<q::DataType::Peak *> &featureList, unsigned int replicateID);
 
         void binningRT(std::vector<std::vector<q::DataType::Peak *>> &componentStartEnd, std::vector<q::DataType::Peak *> &featureList,
                        std::vector<float> &OS, std::vector<float> &error, int startBin, int endBin);

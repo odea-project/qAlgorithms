@@ -31,6 +31,13 @@ namespace q
         float intensity;
     };
 
+    struct TaskItem
+    {
+        std::filesystem::path path;
+        unsigned int replicateGroup;
+        unsigned int fileID; // count upwards after reading everything in
+    };
+
     void printPeaklist(std::vector<std::vector<q::DataType::Peak>> peaktable,
                        std::filesystem::path pathOutput, std::string filename,
                        std::vector<Algorithms::qBinning::EIC> originalBins,
@@ -376,7 +383,7 @@ namespace q
                                  "      -tl, -tasklist <PATH>:      pass a list of file paths to the function. A tasklist can also contain directories\n"
                                  "                                  to search recursively and output directories for different blocks of the input files.\n"
                                  "                                  You can comment out lines by starting them with a \"#\".\n" // @todo update
-                                 "    Output settings:\n"
+                                 "    Single-file output settings:\n"
                                  "      The filename is always the original filename extended by the polarity and the processing step.\n"
                                  "      -o,  -output <DIRECTORY>:   directory into which all output files should be printed.\n"
                                  "      -pc, -printcentroids:       print all centroids produced after the first run of qcentroids.\n"
@@ -518,7 +525,7 @@ int main(int argc, char *argv[])
         }
         else if ((argument == "-tl") | (argument == "-tasklist")) // @todo test this
         {
-            std::cerr << "The tasklist functionality is not implemented currently.Please use -i.\n";
+            std::cerr << "The tasklist functionality is not implemented currently. Please use -i.\n";
             exit(0);
             tasklistSpecified = true;
             ++i;
@@ -556,23 +563,20 @@ int main(int argc, char *argv[])
                 else if (line[0] == char('$'))
                 //@todo add argument checker
                 {
+                    // this argument is set to increment the series
+                    if (line.find("$SERIES") != line.npos)
+                    {
+                        /* code */
+                    }
+                    else if (line.find("$REPLICATES") != line.npos)
+                    {
+                        // this argument denotes a series of replicates (repeat injection)
+                    }
+
                     continue;
                 }
 
-                pathTemp = line;
-
-                if (pathTemp.extension() != ".mzML")
-                {
-                    std::cerr << "Warning: only .mzML files are supported. The tasklist entry " << pathTemp << " has been skipped.\n";
-                    continue;
-                }
-                else if (!std::filesystem::exists(pathTemp))
-                {
-                    std::cerr << "Warning: the file " << pathTemp << " does not exist. I has been removed from the tasklist.\n";
-                    continue;
-                }
-
-                tasklist.push_back(pathTemp);
+                suppliedPaths.push_back(line);
             }
             /*@todo
             the task file should contain a list of all files the program
@@ -639,15 +643,20 @@ int main(int argc, char *argv[])
                 std::cerr << "Error: the centroid error must be greater than 0.";
                 exit(1);
             }
+            if (std::isnan(modifiedPPM))
+            {
+                std::cerr << "Error: the centroid error must be a number, but was set to NaN.";
+                exit(1);
+            }
             if (modifiedPPM > 1000000)
             {
                 std::cerr << "Error: the centroid error is set to 100% or greater (\"" << argv[i] << "\").";
                 exit(1);
             }
-            if (std::isnan(modifiedPPM))
+            if (modifiedPPM > 0.8)
             {
-                std::cerr << "Error: the centroid error must be a number, but was set to NaN.";
-                exit(1);
+                std::cerr << "Warning: you have set the centroid error to \"" << argv[i] << "\", with the expected range \n"
+                          << "being between 0.2 and 0.5 ppm. The centroid error is not the mz tolerance from ex. XCMS.";
             }
 
             q::MeasurementData::ppm_for_precentroided_data = modifiedPPM;
