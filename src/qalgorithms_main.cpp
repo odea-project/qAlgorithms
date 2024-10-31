@@ -2,6 +2,8 @@
 // #include "qalgorithms_measurement_data_lcms.h"
 #include "qalgorithms_measurement_data_tensor.h"
 #include "qalgorithms_qpeaks.h"
+#include "qalgorithms_qbin.h"
+#include "qalgorithms_qPattern.h"
 
 // external
 #include "../external/StreamCraft/src/StreamCraft_mzml.hpp"
@@ -244,6 +246,10 @@ namespace q
                 {
                     std::cerr << "Warning: only " << filetype << " files are supported. The file \""
                               << inputPath << "\" has been skipped.\n";
+                    if (currentPath.extension() == ".mzml")
+                    {
+                        std::cerr << "Warning: qAlgorithms is case-sensitive. Please change the file extension to \".mzML\"";
+                    }
                     continue;
                     // @todo consider terminating the program here
                 }
@@ -372,14 +378,17 @@ namespace q
     const std::string helpinfo = " help information:\n\n" // @todo std::format
                                  "    qAlgorithms is a software project for non-target screening using mass spectrometry.\n"
                                  "    For more information, visit our github page: https://github.com/odea-project/qAlgorithms.\n"
-                                 "    As of now (2024-09-03), only mzML files are supported. This program accepts the following command-line arguments:\n\n"
+                                 "    As of now (2024-10-31), only mzML files are supported. This program accepts the following command-line arguments:\n\n"
                                  "      -h, -help:  open this help menu\n\n"
+                                 "    Note that filenames may never start with a \"-\".\n"
                                  "    Input settings:\n"
                                  "      Note that duplicate input files are removed by default, even when they have a different name.\n"
                                  "      -i,  -input <PATH> [PATH]   input files or directories in which to recursively search for .mzML files.\n"
                                  "                                  you can enter any number of targets, as long as no file starts with a \"-\"\n"
                                  "                                  or contains two dots in a row. It is possible to use the -i flag multiple\n"
                                  "                                  times within one execution.\n"
+                                 "                                  Note that qAlgorithms is case-sensitive when searching for files recursively. Make\n"
+                                 "                                  sure all your files have the correct extension (.mzML) and are not all lowercase (.mzml).\n"
                                  "      -tl, -tasklist <PATH>:      pass a list of file paths to the function. A tasklist can also contain directories\n"
                                  "                                  to search recursively and output directories for different blocks of the input files.\n"
                                  "                                  You can comment out lines by starting them with a \"#\".\n" // @todo update
@@ -408,7 +417,9 @@ namespace q
                                  "      -v, -verbose:   print a detailed progress report to standard out.\n"
                                  "      -skip-error:    if processing fails, the program will not exit and instead start processing\n"
                                  "                      the next file in the tasklist.\n"
-                                 "      -log:           This option will create a detailed log file in the program directory.\n" // @todo
+                                 "      -log:           This option will create a detailed log file in the program directory.\n"
+                                 "                      A name can be supplied with a string following the argument. If this is not\n"
+                                 "                      done by the user, the default log will be written or overwritten.\n"
                                  "    Analysis options:\n"
                                  "      -MS2: also process MS2 spectra (not implemented yet)\n" // @todo
                                  "      -ppm <number>:  this sets the centroid error when reading in pre-centroided data\n"
@@ -479,6 +490,8 @@ int main(int argc, char *argv[])
     volatile bool printExtended = false;
     volatile bool printCentroids = false;
     volatile bool printSubProfile = false;
+    volatile bool doLogging = false;
+    std::string logfileName = "log_qAlgorithms.csv";
 
     for (int i = 1; i < argc; i++)
     {
@@ -698,8 +711,15 @@ int main(int argc, char *argv[])
         }
         else if (argument == "-log")
         {
-            std::cerr << "Logging is not implemented yet.\n";
-            //@todo write the executed command into the logfile
+            doLogging = true;
+            if (i + 1 != argc)
+            {
+                std::string logName = argv[i + 1];
+                if (logName[0] != '-')
+                {
+                    logfileName = logName;
+                }
+            }
         }
         else if (argument == "-skip-error")
         {
@@ -748,16 +768,20 @@ int main(int argc, char *argv[])
     std::filesystem::path pathLogging{argv[0]};
     // pathLogging.filename() = "log_qBinning_beta.csv";
     pathLogging = std::filesystem::canonical(pathLogging.parent_path());
-    pathLogging /= "log_qBinning_beta.csv";
-    if (std::filesystem::exists(pathLogging))
-    {
-        std::cerr << "Warning: the processing log has been overwritten\n";
-    }
+    pathLogging /= logfileName;
     std::fstream logWriter;
-    logWriter.open(pathLogging, std::ios::out);
-    logWriter << "filename, numSpectra, numCentroids, meanDQSC, numBins_empty, numBins_one,"
-                 " numBins_more, meanDQSB, numFeatures, badFeatures, meanDQSF\n"; // , testFailedPeak, testPassedPeak, testPassedTotal
-    logWriter.close();
+    if (doLogging)
+    /// @todo make a separate logging object
+    {
+        if (std::filesystem::exists(pathLogging))
+        {
+            std::cerr << "Warning: the processing log has been overwritten\n";
+        }
+        logWriter.open(pathLogging, std::ios::out);
+        logWriter << "filename, numSpectra, numCentroids, meanDQSC, numBins_empty, numBins_one,"
+                     " numBins_more, meanDQSB, numFeatures, badFeatures, meanDQSF\n"; // , testFailedPeak, testPassedPeak, testPassedTotal
+        logWriter.close();
+    }
 
 #pragma region file processing
     std::string filename;
@@ -1001,20 +1025,16 @@ int main(int argc, char *argv[])
             {
                 std::cout << "    found " << peakCount << " peaks in " << (timeEnd - timeStart).count() << " ns\n";
             }
-            // @todo remove diagnostics
-            // std::cerr << meanDQSF << ", " << binThis.lengthAllPoints << ", " << binnedData.size() << ", "
-            //           << peakCount << ", " << meanDQSC << ", " << meanDQSB << ", " << polarity << ", " << filename << "\n";
-            // continue;
-            // std::cerr << peakCount << ", " << truebins << ", " << onlyone << ", " << filename << "\n";
+            if (doLogging)
+            {
 
-            //@todo , numBins_empty, numBins_one, numBins_more, meanDQSB
-            logWriter.open(pathLogging, std::ios::app);
-            logWriter << filename << ", " << centroids.size() << ", " << binThis.lengthAllPoints << ", "
-                      << meanDQSC / binThis.lengthAllPoints << ", " << dudBins << ", " << onlyone << ", "
-                      << overfullBins << ", " << meanDQSB << ", " << peakCount << ", " << peaksWithMassGaps << ", "
-                      << meanDQSF << /*testFailedPeak << ", " << testsPassedPeak << ", " << testsPassedTotal <<*/ "\n";
-            logWriter.close();
-
+                logWriter.open(pathLogging, std::ios::app);
+                logWriter << filename << ", " << centroids.size() << ", " << binThis.lengthAllPoints << ", "
+                          << meanDQSC / binThis.lengthAllPoints << ", " << dudBins << ", " << onlyone << ", "
+                          << overfullBins << ", " << meanDQSB << ", " << peakCount << ", " << peaksWithMassGaps << ", "
+                          << meanDQSF << /*testFailedPeak << ", " << testsPassedPeak << ", " << testsPassedTotal <<*/ "\n";
+                logWriter.close();
+            }
             if (printPeaks)
             {
                 q::printPeaklist(peaks, pathOutput, filename, binnedData, printExtended, silent, false, skipError);
@@ -1034,6 +1054,9 @@ int main(int argc, char *argv[])
             // }
 
             // @todo add peak grouping here
+
+            auto peakpointer = q::qPattern::collapseFeaturelist(peaks);
+            q::qPattern::initialComponentBinner(peakpointer, 1);
         }
         counter++;
     }

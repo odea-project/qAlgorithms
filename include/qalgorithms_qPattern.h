@@ -60,11 +60,20 @@ namespace q
         /// @details note that the FeatureComponents do not preserve binning information, since it cannot be used to reliably match datasets
         /// @param featureList feature list generated through collapseFeaturelist
         /// @param replicateID The component is assigned a unique ID to match it with other datasets
-        /// @return
-        std::vector<FeatureComponent> initialComponentBinner(std::vector<q::DataType::Peak *> &featureList, unsigned int replicateID);
+        /// @return @todo
+        void initialComponentBinner(std::vector<q::DataType::Peak *> &featureList, unsigned int replicateID);
 
+        /// @brief function which groups features within one sample by retention time. Groups tend to be overly large.
+        /// @param componentStartEnd
+        /// @param featureList
+        /// @param OS
+        /// @param error
+        /// @param startBin
+        /// @param endBin
         void binningRT(std::vector<std::vector<q::DataType::Peak *>> &componentStartEnd, std::vector<q::DataType::Peak *> &featureList,
                        std::vector<float> &OS, std::vector<float> &error, int startBin, int endBin);
+
+        std::vector<std::vector<q::DataType::Peak *>> groupDecay(std::vector<q::DataType::Peak *>);
 
 #pragma endregion functions
 
