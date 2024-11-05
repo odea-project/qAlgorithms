@@ -49,7 +49,7 @@ namespace q
                 const std::string polarity = "positive",
                 const int start_index = 0);
 
-            std::vector<std::vector<DataType::Peak>> findPeaks_QBIN(
+            std::vector<DataType::Peak> findPeaks_QBIN(
                 q::Algorithms::qPeaks &qpeaks,
                 std::vector<q::Algorithms::qBinning::EIC> &data);
         };

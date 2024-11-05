@@ -28,6 +28,9 @@ namespace q
      * @param mz The mass-to-charge ratio of the peak
      * @param retentionTimeUncertainty The uncertainty of the retention time
      * @param mzUncertainty The uncertainty of the mass-to-charge ratio
+     * @param idxBin bin in which the feature was found
+     * @param idxPeakStart index of first (if sorted by RT) point of the bin which is part of this peak
+     * @param idxPeakEnd index of last (if sorted by RT) point of the bin which is part of this peak
      */
     class Peak
     {
@@ -48,6 +51,7 @@ namespace q
       float mz;
       float retentionTimeUncertainty;
       float mzUncertainty;
+      int idxBin;
       unsigned int idxPeakStart;
       unsigned int idxPeakEnd;
     };
