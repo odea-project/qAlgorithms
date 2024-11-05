@@ -18,25 +18,26 @@ namespace q
 {
     namespace qPattern
     {
-        std::vector<q::DataType::Peak *> collapseFeaturelist(std::vector<std::vector<q::DataType::Peak>> &peaks)
-        {
-            std::vector<q::DataType::Peak *> returnVec;
-            returnVec.reserve(peaks.size() / 2);
-            for (size_t i = 0; i < peaks.size(); i++)
-            {
-                if (!peaks[i].empty())
-                {
-                    for (size_t j = 0; j < peaks[i].size(); j++)
-                    {
-                        returnVec.push_back(&peaks[i][j]);
-                    }
-                }
-            }
-            returnVec.shrink_to_fit();
-            return returnVec;
-        }
+        // function no longer needed
+        // std::vector<q::DataType::Peak *> collapseFeaturelist(std::vector<std::vector<q::DataType::Peak>> &peaks, std::vector<size_t> binIndices)
+        // {
+        //     std::vector<q::DataType::Peak *> returnVec;
+        //     returnVec.reserve(peaks.size() / 2);
+        //     for (size_t i = 0; i < peaks.size(); i++)
+        //     {
+        //         if (!peaks[i].empty())
+        //         {
+        //             for (size_t j = 0; j < peaks[i].size(); j++)
+        //             {
+        //                 returnVec.push_back(&peaks[i][j]);
+        //             }
+        //         }
+        //     }
+        //     returnVec.shrink_to_fit();
+        //     return returnVec;
+        // }
 
-        void binningRT(std::vector<std::vector<q::DataType::Peak *>> &componentStartEnd, std::vector<q::DataType::Peak *> &featureList,
+        void binningRT(std::vector<std::vector<int>> &componentStartEnd, std::vector<q::DataType::Peak *> &featureList,
                        std::vector<float> &OS, std::vector<float> &error, int startBin, int endBin)
         {
             /// adapted generic binning function @todo add into qBinning
@@ -50,12 +51,12 @@ namespace q
             if (max < vcrit)
             {
                 // grouping OK
-                std::vector<q::DataType::Peak *> component;
+                std::vector<int> component;
                 component.reserve(size);
 
                 for (size_t i = 0; i < size; i++)
                 {
-                    component.push_back(featureList[startBin + i]);
+                    component.push_back(startBin + i);
                 }
 
                 componentStartEnd.push_back(component);
@@ -67,7 +68,7 @@ namespace q
                 int cutIdx = std::distance(OS.begin(), pmax); // end of the first half
                 if (cutIdx == startBin)
                 {
-                    componentStartEnd.push_back(std::vector<q::DataType::Peak *>{1, featureList[startBin]});
+                    componentStartEnd.push_back(std::vector<int>{1, startBin});
                 }
                 else
                 {
@@ -75,7 +76,7 @@ namespace q
                 }
                 if (cutIdx + 1 == endBin)
                 {
-                    componentStartEnd.push_back(std::vector<q::DataType::Peak *>{1, featureList[endBin]});
+                    componentStartEnd.push_back(std::vector<int>{1, endBin});
                 }
                 else
                 {
@@ -85,7 +86,7 @@ namespace q
             return;
         }
 
-        void initialComponentBinner(std::vector<q::DataType::Peak *> &featureList, unsigned int replicateID)
+        void initialComponentBinner(std::vector<q::DataType::Peak> &featureList, unsigned int replicateID)
         {
             int featureCount = featureList.size();
             std::vector<float> orderSpace(featureCount, 0);
@@ -99,13 +100,13 @@ namespace q
             cumError.push_back(0); // always substract the sum of everything before the current range
             for (int i = 0; i < featureCount; i++)
             {
-                cumError.push_back(featureList[i]->retentionTimeUncertainty);
+                cumError.push_back(featureList[i].retentionTimeUncertainty);
             }
             std::partial_sum(cumError.begin(), cumError.end(), cumError.begin()); // cumulative sum
 
             for (int i = 0; i < featureCount - 1; i++)
             {
-                orderSpace[i] = featureList[i + 1]->retentionTime - featureList[i]->retentionTime;
+                orderSpace[i] = featureList[i + 1].retentionTime - featureList[i].retentionTime;
             }
             // orderSpace contains all differences of the ordered data and a 0 at the last position
 
@@ -117,7 +118,7 @@ namespace q
             //     }
             // }
 
-            std::vector<std::vector<q::DataType::Peak *>> preComponents;
+            std::vector<std::vector<int>> preComponents; // every vector contains the indices of component members
             binningRT(preComponents, featureList, orderSpace, cumError, 0, featureCount - 1);
             // all components will be constructed within the thusly defined groups
             /// @todo make sure to control for adherence to binning when finalising components
@@ -127,7 +128,22 @@ namespace q
             /// @todo process parameter: groups of size 1 after component decay
             for (size_t i = 0; i < preComponents.size(); i++)
             {
-                std::cout << preComponents[i].size() << ",";
+                if (preComponents[i].size() > 30)
+                {
+                    exit(1);
+                }
+                std::vector<int> tmpComp = preComponents[0];
+                std::cout << tmpComp.size() << "\n\n";
+                for (size_t j = 0; j < tmpComp.size(); j++)
+                {
+                    std::cout << featureList[tmpComp[j]].retentionTime << ",";
+                }
+                std::cout << "b\n";
+                for (size_t j = 0; j < tmpComp.size(); j++)
+                {
+                    std::cout << featureList[tmpComp[j]].area << ",";
+                }
+                std::cout << "\n\n";
             }
         }
     }

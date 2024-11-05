@@ -49,14 +49,8 @@ namespace q
         {
             filename += "_ex";
         }
-        if (prebinning)
-        {
-            filename += "_centroids.csv";
-        }
-        else
-        {
-            filename += "_peaks.csv";
-        }
+
+        filename += "_centroids.csv";
 
         pathOutput /= filename;
         if (!silent)
@@ -83,60 +77,58 @@ namespace q
         if (verbose)
         {
 
-            if (prebinning)
+            output << "ID,binID,startIndex,endIndex,mz,mzUncertainty,retentionTime,retentionTimeUncertainty,"
+                   << "area,areaUncertainty,height,heightUncertainty,dqsCen,dqsBin,dqsPeak\n";
+            int counter = 1;
+            for (size_t i = 0; i < peaktable.size(); i++)
             {
-                output << "ID,binID,startIndex,endIndex,mz,mzUncertainty,retentionTime,retentionTimeUncertainty,"
-                       << "area,areaUncertainty,height,heightUncertainty,dqsCen,dqsBin,dqsPeak\n";
-                int counter = 1;
-                for (size_t i = 0; i < peaktable.size(); i++)
+                if (peaktable[i].empty())
                 {
-                    if (peaktable[i].empty())
-                    {
-                        continue;
-                    }
+                    continue;
+                }
 
-                    for (size_t j = 0; j < peaktable[i].size(); ++j)
-                    {
-                        auto peak = peaktable[i][j];
-                        char buffer[128];
-                        sprintf(buffer, "%d,%d,%d,%d,%0.6f,%0.6f,%0.4f,%0.4f,%0.3f,%0.3f,%0.5f,%0.5f,%0.5f\n",
-                                counter, int(i + 1), peak.idxPeakStart, peak.idxPeakEnd, peak.mz, peak.mzUncertainty,
-                                peak.retentionTime, peak.retentionTimeUncertainty, peak.area, peak.areaUncertainty,
-                                peak.dqsCen, peak.dqsBin, peak.dqsPeak);
-                        output << buffer;
-                        ++counter;
-                    }
+                for (size_t j = 0; j < peaktable[i].size(); ++j)
+                {
+                    auto peak = peaktable[i][j];
+                    char buffer[128];
+                    sprintf(buffer, "%d,%d,%d,%d,%0.6f,%0.6f,%0.4f,%0.4f,%0.3f,%0.3f,%0.5f,%0.5f,%0.5f\n",
+                            counter, int(i + 1), peak.idxPeakStart, peak.idxPeakEnd, peak.mz, peak.mzUncertainty,
+                            peak.retentionTime, peak.retentionTimeUncertainty, peak.area, peak.areaUncertainty,
+                            peak.dqsCen, peak.dqsBin, peak.dqsPeak);
+                    output << buffer;
+                    ++counter;
                 }
             }
-            else
-            {
-                // @todo add peak borders
-                output << "ID,binID,binIdxStart,binIdxEnd,mz,mzUncertainty,retentionTime,retentionTimeUncertainty,"
-                       << "lowestRetentionTime,highestRetentionTime,area,areaUncertainty,height,heightUncertainty,"
-                       << "binTestCode,dqsCen,dqsBin,dqsPeak\n";
-                unsigned int counter = 1;
-                for (size_t i = 0; i < peaktable.size(); i++)
-                {
-                    if (!peaktable[i].empty())
-                    {
-                        std::vector<float> RTs = originalBins[i].rententionTimes;
-                        for (size_t j = 0; j < peaktable[i].size(); ++j)
-                        {
 
-                            auto peak = peaktable[i][j];
-                            char buffer[256];
-                            sprintf(buffer, "%d,%d,%d,%d,%0.6f,%0.6f,%0.4f,%0.4f,%0.4f,%0.4f,%0.3f,%0.3f,%0.3f,%0.3f,%d,%0.5f,%0.5f,%0.5f\n",
-                                    counter, int(i + 1), peak.idxPeakStart, peak.idxPeakEnd, peak.mz, peak.mzUncertainty,
-                                    peak.retentionTime, peak.retentionTimeUncertainty, RTs[peak.idxPeakStart], RTs[peak.idxPeakEnd],
-                                    peak.area, peak.areaUncertainty, peak.height, peak.heightUncertainty, int(originalBins[i].errorcode),
-                                    peak.dqsCen, peak.dqsBin, peak.dqsPeak);
-                            output << buffer;
-                            ++counter;
-                        }
-                    }
-                }
-                // std::advance(currentBin, 1);
-            }
+            // else
+            // {
+            //     // @todo add peak borders
+            //     output << "ID,binID,binIdxStart,binIdxEnd,mz,mzUncertainty,retentionTime,retentionTimeUncertainty,"
+            //            << "lowestRetentionTime,highestRetentionTime,area,areaUncertainty,height,heightUncertainty,"
+            //            << "binTestCode,dqsCen,dqsBin,dqsPeak\n";
+            //     unsigned int counter = 1;
+            //     for (size_t i = 0; i < peaktable.size(); i++)
+            //     {
+            //         if (!peaktable[i].empty())
+            //         {
+            //             std::vector<float> RTs = originalBins[i].rententionTimes;
+            //             for (size_t j = 0; j < peaktable[i].size(); ++j)
+            //             {
+
+            //                 auto peak = peaktable[i][j];
+            //                 char buffer[256];
+            //                 sprintf(buffer, "%d,%d,%d,%d,%0.6f,%0.6f,%0.4f,%0.4f,%0.4f,%0.4f,%0.3f,%0.3f,%0.3f,%0.3f,%d,%0.5f,%0.5f,%0.5f\n",
+            //                         counter, int(i + 1), peak.idxPeakStart, peak.idxPeakEnd, peak.mz, peak.mzUncertainty,
+            //                         peak.retentionTime, peak.retentionTimeUncertainty, RTs[peak.idxPeakStart], RTs[peak.idxPeakEnd],
+            //                         peak.area, peak.areaUncertainty, peak.height, peak.heightUncertainty, int(originalBins[i].errorcode),
+            //                         peak.dqsCen, peak.dqsBin, peak.dqsPeak);
+            //                 output << buffer;
+            //                 ++counter;
+            //             }
+            //         }
+            //     }
+            //     // std::advance(currentBin, 1);
+            // }
         }
         else
         {
@@ -207,6 +199,46 @@ namespace q
         file_out << output.str();
         file_out.close();
         return;
+    }
+
+    void printFeatureList(std::vector<q::DataType::Peak> peaktable,
+                          std::filesystem::path pathOutput, std::string filename,
+                          std::vector<Algorithms::qBinning::EIC> originalBins,
+                          bool verbose, bool silent, bool prebinning, bool skipError)
+    {
+        if (verbose)
+        {
+            filename += "_ex";
+        }
+
+        filename += "_features.csv";
+
+        pathOutput /= filename;
+        if (!silent)
+        {
+            std::cout << "writing peaks to: " << pathOutput << "\n\n";
+        }
+
+        std::fstream file_out;
+        std::stringstream output;
+        file_out.open(pathOutput, std::ios::out);
+        if (!file_out.is_open())
+        {
+            std::cerr << "Error: could not open output path during peaklist printing. Program terminated.\n";
+            if (skipError)
+            {
+                return;
+            }
+            else
+            {
+                exit(1); // @todo sensible error codes
+            }
+        }
+
+        if (verbose)
+        {
+            // code
+        }
     }
 
     std::vector<std::filesystem::path> controlInput(std::vector<std::string> inputTasks, const std::string filetype, bool skipError)
@@ -778,8 +810,7 @@ int main(int argc, char *argv[])
             std::cerr << "Warning: the processing log has been overwritten\n";
         }
         logWriter.open(pathLogging, std::ios::out);
-        logWriter << "filename, numSpectra, numCentroids, meanDQSC, numBins_empty, numBins_one,"
-                     " numBins_more, meanDQSB, numFeatures, badFeatures, meanDQSF\n"; // , testFailedPeak, testPassedPeak, testPassedTotal
+        logWriter << "filename, numSpectra, numCentroids, meanDQSC, numBins, meanDQSB, numFeatures, badFeatures, meanDQSF\n";
         logWriter.close();
     }
 
@@ -931,54 +962,35 @@ int main(int argc, char *argv[])
             // every subvector of peaks corresponds to the bin ID
             auto peaks = tensorData.findPeaks_QBIN(qpeaks, binnedData);
             // make sure that every peak contains only one mass trace
-            assert(peaks.size() == binnedData.size());
-            size_t peaksWithMassGaps = 0;
-            size_t testsPassedTotal = 0;
-            size_t testsPassedPeak = 0;
-            size_t testsFailedPeak = 0;
+            assert(peaks.size() < binnedData.size());
+            int peaksWithMassGaps = 0;
             double meanDQSF = 0;
             for (size_t i = 0; i < peaks.size(); i++)
             {
-                if (binnedData[i].errorcode == std::byte{0b00000000})
+                int binIdx = peaks[i].idxBin;
+                auto massesBin = binnedData[binIdx].mz;
+                // auto rtsBin = binnedData[binIdx].rententionTimes;
+                auto scansBin = binnedData[binIdx].scanNumbers;
+
+                // idxPeakStart/End are the index referring to the bin in which a peak was found
+                if (!q::massTraceStable(massesBin, peaks[i].idxPeakStart, peaks[i].idxPeakEnd))
                 {
-                    ++testsPassedTotal;
+                    ++peaksWithMassGaps;
+                    // std::cerr << peaks[i][j].mz << ", " << peaks[i][j].retentionTime << ", "
+                    //           << peaks[i][j].area << ", " << peaks[i][j].dqsPeak << "\n";
+                    // problems do not only occur at very low masses or the edges of out chromoatography
+                    // recommendation: do not pass these peaks to result table
+                    peaks[i].dqsPeak *= -1;
+
+                    // @todo consider removing these or add a correction set somewhere later
+                    // @todo add some documentation regarding the scores
                 }
-                if (!peaks[i].empty())
+                else
                 {
-                    if (binnedData[i].errorcode == std::byte{0b00000000})
-                    {
-                        ++testsPassedPeak;
-                    }
-                    else
-                    {
-                        ++testsFailedPeak;
-                    }
-
-                    auto massesBin = binnedData[i].mz;
-                    // auto rtsBin = binnedData[i].rententionTimes;
-                    auto scansBin = binnedData[i].scanNumbers;
-                    for (size_t j = 0; j < peaks[i].size(); j++)
-                    {
-                        // idxPeakStart/End are the index referring to the bin in which a peak was found
-                        if (!q::massTraceStable(massesBin, peaks[i][j].idxPeakStart, peaks[i][j].idxPeakEnd))
-                        {
-                            ++peaksWithMassGaps;
-                            // std::cerr << peaks[i][j].mz << ", " << peaks[i][j].retentionTime << ", "
-                            //           << peaks[i][j].area << ", " << peaks[i][j].dqsPeak << "\n";
-                            // problems do not only occur at very low masses or the edges of out chromoatography
-                            // recommendation: do not pass these peaks to result table
-                            peaks[i][j].dqsPeak *= -1;
-
-                            // @todo consider removing these or add a correction set somewhere later
-                            // @todo add some documentation regarding the scores
-                        }
-                        else
-                        {
-                            meanDQSF += peaks[i][j].dqsPeak;
-                        }
-                    }
+                    meanDQSF += peaks[i].dqsPeak;
                 }
             }
+
             // std::cout << testsPassedTotal << ", " << testsPassedPeak << ", " << testsFailedPeak << ", " << peaks.size() - testsPassedTotal << "\n";
 
             if (verboseProgress)
@@ -988,56 +1000,23 @@ int main(int argc, char *argv[])
 
             timeEnd = std::chrono::high_resolution_clock::now();
 
-            int peakCount = 0;
-            int dudBins = 0;
-            int onlyone = 0;
-            int overfullBins = 0;
-            for (size_t i = 0; i < peaks.size(); i++)
-            {
-                peakCount += peaks[i].size();
-                if (!peaks[i].empty())
-                {
-                    if (peaks[i].size() == 1)
-                    {
-                        ++onlyone;
-                    }
-                    else
-                    {
-                        overfullBins++;
-                    }
-                }
-                else
-                {
-                    dudBins++;
-                    // double binMeanMZ = 0;
-                    // double binMeanRT = 0;
-                    // int binsize = binnedData[i].mz.size();
-                    // for (int j = 0; j < binsize; j++)
-                    // {
-                    //     binMeanMZ += binnedData[i].mz[j];
-                    //     binMeanRT += binnedData[i].rententionTimes[j];
-                    // }
-                    // std::cout << binMeanMZ / binsize << ", " << binMeanRT / binsize << "\n";
-                }
-            }
-            meanDQSF /= peakCount - peaksWithMassGaps;
+            meanDQSF /= peaks.size() - peaksWithMassGaps;
             if (!silent)
             {
-                std::cout << "    found " << peakCount << " peaks in " << (timeEnd - timeStart).count() << " ns\n";
+                std::cout << "    found " << peaks.size() << " peaks in " << (timeEnd - timeStart).count() << " ns\n";
             }
             if (doLogging)
             {
 
                 logWriter.open(pathLogging, std::ios::app);
                 logWriter << filename << ", " << centroids.size() << ", " << binThis.lengthAllPoints << ", "
-                          << meanDQSC / binThis.lengthAllPoints << ", " << dudBins << ", " << onlyone << ", "
-                          << overfullBins << ", " << meanDQSB << ", " << peakCount << ", " << peaksWithMassGaps << ", "
-                          << meanDQSF << /*testFailedPeak << ", " << testsPassedPeak << ", " << testsPassedTotal <<*/ "\n";
+                          << meanDQSC / binThis.lengthAllPoints << ", " << binnedData.size() << ", " << meanDQSB
+                          << ", " << peaks.size() << ", " << peaksWithMassGaps << ", " << meanDQSF << "\n";
                 logWriter.close();
             }
             if (printPeaks)
             {
-                q::printPeaklist(peaks, pathOutput, filename, binnedData, printExtended, silent, false, skipError);
+                // q::printPeaklist(peaks, pathOutput, filename, binnedData, printExtended, silent, false, skipError);
             }
             // if (printSubProfile)
             // {
@@ -1055,8 +1034,8 @@ int main(int argc, char *argv[])
 
             // @todo add peak grouping here
 
-            auto peakpointer = q::qPattern::collapseFeaturelist(peaks);
-            q::qPattern::initialComponentBinner(peakpointer, 1);
+            // auto peakpointer = q::qPattern::collapseFeaturelist(peaks);
+            q::qPattern::initialComponentBinner(peaks, 1);
         }
         counter++;
     }

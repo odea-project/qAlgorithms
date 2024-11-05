@@ -242,18 +242,17 @@ namespace q
 #pragma endregion "find centroids"
 
 #pragma region "find peaks"
-        std::vector<std::vector<DataType::Peak>>
-        TensorData::findPeaks_QBIN(
+        std::vector<DataType::Peak> TensorData::findPeaks_QBIN(
             q::Algorithms::qPeaks &qpeaks,
             std::vector<q::Algorithms::qBinning::EIC> &data)
         {
-            std::vector<std::vector<DataType::Peak>> peaks(data.size()); // create vector of  peaks
-                                                                         // #pragma omp parallel for
-            for (size_t i = 0; i < data.size(); ++i)                     // loop over all data
+            std::vector<DataType::Peak> peaks;    // return vector for feature list
+            peaks.reserve(data.size() * 0.7);     // should be enough to fit all features without reallocation
+            std::vector<DataType::Peak> tmpPeaks; // add features to this before pasting into FL
+#pragma omp parallel for
+            for (size_t i = 0; i < data.size(); ++i) // loop over all data
             {
-
-                const int num_data_points = data[i].scanNumbers.size(); // number of data points
-                if (num_data_points < 5)
+                if (data[i].scanNumbers.size() < 5)
                 {
                     continue; // skip due to lack of data, i.e., degree of freedom will be zero
                 }
@@ -261,26 +260,29 @@ namespace q
                 std::vector<unsigned int> binIndexConverter;
                 treatedData treatedData = pretreatData(dataPoints, binIndexConverter, rt_diff, false); // inter/extrapolate data, and identify data blocks
 
-                qpeaks.findPeaks(peaks[i], treatedData);
-                if (!peaks[i].empty())
+                qpeaks.findPeaks(tmpPeaks, treatedData);
+                if (!tmpPeaks.empty())
                 {
-                    for (size_t j = 0; j < peaks[i].size(); j++)
+                    for (size_t j = 0; j < tmpPeaks.size(); j++)
                     {
-                        assert(peaks[i][j].idxPeakEnd < binIndexConverter.size());
-                        peaks[i][j].idxPeakStart = binIndexConverter[peaks[i][j].idxPeakStart];
+                        assert(tmpPeaks[j].idxPeakEnd < binIndexConverter.size());
+                        tmpPeaks[j].idxPeakStart = binIndexConverter[tmpPeaks[j].idxPeakStart];
+                        tmpPeaks[j].idxBin = i;
                         // the end point is only correct if it is real. Check if the next point
                         // has the same index - if yes, -1 to end index
-                        unsigned int tmpIdx = peaks[i][j].idxPeakEnd;
-                        peaks[i][j].idxPeakEnd = binIndexConverter[peaks[i][j].idxPeakEnd];
+                        unsigned int tmpIdx = tmpPeaks[j].idxPeakEnd;
+                        tmpPeaks[j].idxPeakEnd = binIndexConverter[tmpPeaks[j].idxPeakEnd];
                         if (tmpIdx + 1 != binIndexConverter.size())
                         {
                             if (binIndexConverter[tmpIdx] == binIndexConverter[tmpIdx + 1])
                             {
-                                peaks[i][j].idxPeakEnd--;
+                                tmpPeaks[j].idxPeakEnd--;
                             }
                         }
+                        peaks.push_back(std::move(tmpPeaks[j])); // remove 2D structure of FL
                     }
                 }
+                tmpPeaks.clear();
 
             } // parallel for
             return peaks;
