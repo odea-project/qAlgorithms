@@ -38,9 +38,9 @@ namespace q
 
         struct FeatureComponent
         {
-            std::vector<q::DataType::Peak *> members; // size n
-            std::vector<FeatureMatch> connections;    // size n^2 - n ; idx = n * featureIdx + 0:n-1
-            Eliminator *resolveConflict;              // nullptr if no conflicts exist
+            std::vector<int> members;              // size n
+            std::vector<FeatureMatch> connections; // size n^2 - n ; idx = n * featureIdx + 0:n-1
+            Eliminator *resolveConflict;           // nullptr if no conflicts exist
             float totalScore;
             unsigned int measurementID;
             bool rejected;
@@ -73,7 +73,7 @@ namespace q
         void binningRT(std::vector<std::vector<int>> &compGroups, std::vector<q::DataType::Peak> &featureList,
                        std::vector<float> &OS, std::vector<float> &error, int startBin, int endBin);
 
-        std::vector<std::vector<q::DataType::Peak *>> groupDecay(std::vector<q::DataType::Peak *>);
+        std::vector<std::vector<q::DataType::Peak>> groupDecay(std::vector<q::DataType::Peak>);
 
 #pragma endregion functions
 

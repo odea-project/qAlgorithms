@@ -249,7 +249,10 @@ namespace q
             std::vector<DataType::Peak> peaks;    // return vector for feature list
             peaks.reserve(data.size() * 0.7);     // should be enough to fit all features without reallocation
             std::vector<DataType::Peak> tmpPeaks; // add features to this before pasting into FL
-#pragma omp parallel for
+
+            // #pragma omp parallel for
+            /// activating this pracma invalidates results @todo why?
+
             for (size_t i = 0; i < data.size(); ++i) // loop over all data
             {
                 if (data[i].scanNumbers.size() < 5)
