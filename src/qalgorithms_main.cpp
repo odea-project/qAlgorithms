@@ -42,16 +42,9 @@ namespace q
 
     void printPeaklist(std::vector<std::vector<q::DataType::Peak>> peaktable,
                        std::filesystem::path pathOutput, std::string filename,
-                       std::vector<Algorithms::qBinning::EIC> originalBins,
-                       bool verbose, bool silent, bool prebinning, bool skipError) // @todo mz range, rt range
+                       bool silent, bool skipError) // @todo mz range, rt range
     {
-        if (verbose)
-        {
-            filename += "_ex";
-        }
-
         filename += "_centroids.csv";
-
         pathOutput /= filename;
         if (!silent)
         {
@@ -74,86 +67,26 @@ namespace q
             }
         }
 
-        if (verbose)
+        output << "ID,mz,mzUncertainty,retentionTime,retentionTimeUncertainty,"
+               << "area,areaUncertainty,dqsCen\n ";
+        unsigned int counter = 1;
+        for (size_t i = 0; i < peaktable.size(); i++)
         {
-
-            output << "ID,binID,startIndex,endIndex,mz,mzUncertainty,retentionTime,retentionTimeUncertainty,"
-                   << "area,areaUncertainty,height,heightUncertainty,dqsCen,dqsBin,dqsPeak\n";
-            int counter = 1;
-            for (size_t i = 0; i < peaktable.size(); i++)
+            if (!peaktable[i].empty())
             {
-                if (peaktable[i].empty())
-                {
-                    continue;
-                }
-
-                for (size_t j = 0; j < peaktable[i].size(); ++j)
-                {
-                    auto peak = peaktable[i][j];
-                    char buffer[128];
-                    sprintf(buffer, "%d,%d,%d,%d,%0.6f,%0.6f,%0.4f,%0.4f,%0.3f,%0.3f,%0.5f,%0.5f,%0.5f\n",
-                            counter, int(i + 1), peak.idxPeakStart, peak.idxPeakEnd, peak.mz, peak.mzUncertainty,
-                            peak.retentionTime, peak.retentionTimeUncertainty, peak.area, peak.areaUncertainty,
-                            peak.dqsCen, peak.dqsBin, peak.dqsPeak);
-                    output << buffer;
-                    ++counter;
-                }
-            }
-
-            // else
-            // {
-            //     // @todo add peak borders
-            //     output << "ID,binID,binIdxStart,binIdxEnd,mz,mzUncertainty,retentionTime,retentionTimeUncertainty,"
-            //            << "lowestRetentionTime,highestRetentionTime,area,areaUncertainty,height,heightUncertainty,"
-            //            << "binTestCode,dqsCen,dqsBin,dqsPeak\n";
-            //     unsigned int counter = 1;
-            //     for (size_t i = 0; i < peaktable.size(); i++)
-            //     {
-            //         if (!peaktable[i].empty())
-            //         {
-            //             std::vector<float> RTs = originalBins[i].rententionTimes;
-            //             for (size_t j = 0; j < peaktable[i].size(); ++j)
-            //             {
-
-            //                 auto peak = peaktable[i][j];
-            //                 char buffer[256];
-            //                 sprintf(buffer, "%d,%d,%d,%d,%0.6f,%0.6f,%0.4f,%0.4f,%0.4f,%0.4f,%0.3f,%0.3f,%0.3f,%0.3f,%d,%0.5f,%0.5f,%0.5f\n",
-            //                         counter, int(i + 1), peak.idxPeakStart, peak.idxPeakEnd, peak.mz, peak.mzUncertainty,
-            //                         peak.retentionTime, peak.retentionTimeUncertainty, RTs[peak.idxPeakStart], RTs[peak.idxPeakEnd],
-            //                         peak.area, peak.areaUncertainty, peak.height, peak.heightUncertainty, int(originalBins[i].errorcode),
-            //                         peak.dqsCen, peak.dqsBin, peak.dqsPeak);
-            //                 output << buffer;
-            //                 ++counter;
-            //             }
-            //         }
-            //     }
-            //     // std::advance(currentBin, 1);
-            // }
-        }
-        else
-        {
-            output << "ID,mz,mzUncertainty,retentionTime,retentionTimeUncertainty,"
-                   << "area,areaUncertainty,dqsCen,dqsBin,dqsPeak\n ";
-            unsigned int counter = 1;
-            for (size_t i = 0; i < peaktable.size(); i++)
-            {
-                if (peaktable[i].empty())
-                {
-                    continue;
-                }
-
                 for (size_t j = 0; j < peaktable[i].size(); ++j)
                 {
                     auto peak = peaktable[i][j];
                     char buffer[128];
                     sprintf(buffer, "%d,%0.6f,%0.6f,%0.4f,%0.4f,%0.3f,%0.3f,%0.5f,%0.5f,%0.5f\n",
                             counter, peak.mz, peak.mzUncertainty, peak.retentionTime, peak.retentionTimeUncertainty,
-                            peak.area, peak.areaUncertainty, peak.dqsCen, peak.dqsBin, peak.dqsPeak);
+                            peak.area, peak.areaUncertainty, peak.dqsCen);
                     output << buffer;
                     ++counter;
                 }
             }
         }
+
         file_out << output.str();
         file_out.close();
         return;
@@ -204,9 +137,9 @@ namespace q
     void printFeatureList(std::vector<q::DataType::Peak> peaktable,
                           std::filesystem::path pathOutput, std::string filename,
                           std::vector<Algorithms::qBinning::EIC> originalBins,
-                          bool verbose, bool silent, bool prebinning, bool skipError)
+                          bool verbose, bool silent, bool skipError)
     {
-        if (verbose)
+        if (false) // @todo
         {
             filename += "_ex";
         }
@@ -237,8 +170,33 @@ namespace q
 
         if (verbose)
         {
-            // code
+            output << "ID,binID,binIdxStart,binIdxEnd,mz,mzUncertainty,retentionTime,retentionTimeUncertainty,"
+                   << "lowestRetentionTime,highestRetentionTime,area,areaUncertainty,height,heightUncertainty,"
+                   << "binTestCode,dqsCen,dqsBin,dqsPeak\n";
+            unsigned int counter = 1;
+            for (size_t i = 0; i < peaktable.size(); i++)
+            {
+                auto peak = peaktable[i];
+                int binID = peak.idxBin;
+                std::vector<float> RTs = originalBins[binID].rententionTimes;
+
+                char buffer[256];
+                sprintf(buffer, "%d,%d,%d,%d,%0.6f,%0.6f,%0.4f,%0.4f,%0.4f,%0.4f,%0.3f,%0.3f,%0.3f,%0.3f,%d,%0.5f,%0.5f,%0.5f\n",
+                        counter, binID, peak.idxPeakStart, peak.idxPeakEnd, peak.mz, peak.mzUncertainty,
+                        peak.retentionTime, peak.retentionTimeUncertainty, RTs[peak.idxPeakStart], RTs[peak.idxPeakEnd],
+                        peak.area, peak.areaUncertainty, peak.height, peak.heightUncertainty, int(originalBins[binID].errorcode),
+                        peak.dqsCen, peak.dqsBin, peak.dqsPeak);
+                output << buffer;
+                ++counter;
+            }
         }
+        else
+        {
+            /// code @todo should this exist?
+        }
+        file_out << output.str();
+        file_out.close();
+        return;
     }
 
     std::vector<std::filesystem::path> controlInput(std::vector<std::string> inputTasks, const std::string filetype, bool skipError)
@@ -902,8 +860,7 @@ int main(int argc, char *argv[])
             filename += polarity;
             if (printCentroids)
             {
-                std::vector<q::Algorithms::qBinning::EIC> dummy;
-                q::printPeaklist(centroids, pathOutput, filename, dummy, printExtended, silent, true, skipError);
+                q::printPeaklist(centroids, pathOutput, filename, silent, skipError);
             }
 
             // @todo remove diagnostics later
@@ -1016,7 +973,7 @@ int main(int argc, char *argv[])
             }
             if (printPeaks)
             {
-                // q::printPeaklist(peaks, pathOutput, filename, binnedData, printExtended, silent, false, skipError);
+                q::printFeatureList(peaks, pathOutput, filename, binnedData, printExtended, silent, skipError);
             }
             // if (printSubProfile)
             // {

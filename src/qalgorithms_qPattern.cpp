@@ -37,7 +37,7 @@ namespace q
         //     return returnVec;
         // }
 
-        void binningRT(std::vector<std::vector<int>> &componentStartEnd, std::vector<q::DataType::Peak *> &featureList,
+        void binningRT(std::vector<std::vector<int>> &componentStartEnd, std::vector<q::DataType::Peak> &featureList,
                        std::vector<float> &OS, std::vector<float> &error, int startBin, int endBin)
         {
             /// adapted generic binning function @todo add into qBinning
@@ -68,7 +68,7 @@ namespace q
                 int cutIdx = std::distance(OS.begin(), pmax); // end of the first half
                 if (cutIdx == startBin)
                 {
-                    componentStartEnd.push_back(std::vector<int>{1, startBin});
+                    componentStartEnd.push_back(std::vector<int>{startBin});
                 }
                 else
                 {
@@ -76,7 +76,7 @@ namespace q
                 }
                 if (cutIdx + 1 == endBin)
                 {
-                    componentStartEnd.push_back(std::vector<int>{1, endBin});
+                    componentStartEnd.push_back(std::vector<int>{endBin});
                 }
                 else
                 {
@@ -93,8 +93,8 @@ namespace q
             std::vector<float> cumError;
             cumError.reserve(featureCount);
 
-            std::sort(featureList.begin(), featureList.end(), [](q::DataType::Peak *lhs, q::DataType::Peak *rhs)
-                      { return lhs->retentionTime < rhs->retentionTime; });
+            std::sort(featureList.begin(), featureList.end(), [](q::DataType::Peak &lhs, q::DataType::Peak &rhs)
+                      { return lhs.retentionTime < rhs.retentionTime; });
 
             // create order space
             cumError.push_back(0); // always substract the sum of everything before the current range
@@ -126,25 +126,68 @@ namespace q
             // groups of size one are always valid components?
 
             /// @todo process parameter: groups of size 1 after component decay
-            for (size_t i = 0; i < preComponents.size(); i++)
+            int overlapCount = 0;
+            for (size_t i = 1; i < preComponents.size(); i++) // @todo change back to i = 1
             {
-                if (preComponents[i].size() > 30)
+                std::vector<int> tmpComp = preComponents[i];
+                float bridge = featureList[tmpComp[0]].retentionTime - featureList[preComponents[i - 1].back()].retentionTime;
+                float tol1 = featureList[tmpComp[0]].retentionTimeUncertainty;
+                float tol2 = featureList[preComponents[i - 1].back()].retentionTimeUncertainty;
+
+                if (0.6 < std::min(tol1, tol2))
                 {
-                    exit(1);
+                    std::cout << "-";
                 }
-                std::vector<int> tmpComp = preComponents[0];
-                std::cout << tmpComp.size() << "\n\n";
-                for (size_t j = 0; j < tmpComp.size(); j++)
+
+                if (bridge < std::min(tol1, tol2))
                 {
-                    std::cout << featureList[tmpComp[j]].retentionTime << ",";
+                    std::cout << "H";
+                    ++overlapCount;
                 }
-                std::cout << "b\n";
-                for (size_t j = 0; j < tmpComp.size(); j++)
+                else if (bridge < std::max(tol1, tol2))
                 {
-                    std::cout << featureList[tmpComp[j]].area << ",";
+                    std::cout << "X";
+                    ++overlapCount;
                 }
-                std::cout << "\n\n";
+                else if (bridge < tol1 + tol2)
+                {
+                    std::cout << "O";
+                    ++overlapCount;
+                }
+
+                // std::cout << tmpComp.size() << "\n\n";
+                if (preComponents[i].size() == 1)
+                {
+                    continue;
+                }
+                // std::cout << tmpComp.size() << "; ";
+                for (size_t j = 1; j < tmpComp.size(); j++)
+                {
+                    // std::cout << featureList[tmpComp[j]].retentionTime << ",";
+                    float diff = featureList[tmpComp[j]].retentionTime - featureList[tmpComp[j - 1]].retentionTime;
+                    float err1 = featureList[tmpComp[j - 1]].retentionTimeUncertainty;
+                    float err2 = featureList[tmpComp[j]].retentionTimeUncertainty;
+                    // if (diff > (err1 + err2))
+                    // {
+                    //     std::cout << "H";
+                    // }
+                    // else if (diff > std::max(err1, err2))
+                    // {
+                    //     std::cout << "X";
+                    // }
+                    // else if (diff > std::min(err1, err2))
+                    // {
+                    //     std::cout << "O";
+                    // }
+                }
+                // std::cout << "b\n";
+                // for (size_t j = 0; j < tmpComp.size(); j++)
+                // {
+                //     std::cout << featureList[tmpComp[j]].mz << ",";
+                // }
+                // std::cout << "\n";
             }
+            std::cout << "\noverlap: " << overlapCount << "; percent: " << float(overlapCount) / preComponents.size() << "\n";
         }
     }
 }
