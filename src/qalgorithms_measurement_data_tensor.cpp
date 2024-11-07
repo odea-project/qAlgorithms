@@ -124,10 +124,11 @@ namespace q
 #pragma endregion "private methods"
 
 #pragma region "find centroids"
-        std::vector<std::vector<DataType::Peak>> TensorData::findCentroids_MZML(
+        std::vector<std::vector<DataType::CentroidPeak>> TensorData::findCentroids_MZML(
             q::Algorithms::qPeaks &qpeaks,
             sc::MZML &data,
             std::vector<unsigned int> &addEmpty,
+            std::vector<float> &convertRT,
             const bool ms1only,
             const std::string polarity,
             const int start_index)
@@ -140,7 +141,7 @@ namespace q
             double expectedDifference = 0.0;                                          // expected difference between two consecutive x-axis values
 
             bool displayPPMwarning = false;
-            if (ppm_for_precentroided_data == -5)
+            if (ppm_for_precentroided_data == -INFINITY)
             {
                 ppm_for_precentroided_data = 0.25; // this error applied to most good centroids in the datasets we checked
             }
@@ -162,16 +163,21 @@ namespace q
                                          { return spectrum_polarity[i] != polarity || i < start_index || num_datapoints[i] < 5; }),
                           indices.end()); // keep only spectra with the specified polarity and start index and array length > 5
 
+            std::vector<double> retention_times = data.get_spectra_rt(indices); // get retention times
+            rt_diff = calcRTDiff(retention_times);                              // retention time difference
+            convertRT.clear();
+            convertRT.reserve(indices.size());
+            convertRT.push_back(NAN);            // first scan is index 1
+            addEmpty.resize(indices.size() + 1); // same length as convertRT if no empty scans exist
+            std::fill(addEmpty.begin(), addEmpty.end(), 0);
+
             // CHECK IF CENTROIDED SPECTRA
             size_t num_centroided_spectra = std::count(spectrum_mode.begin(), spectrum_mode.end(), "centroid");
             if (num_centroided_spectra > spectrum_mode.size() / 2) // in profile mode sometimes centroided spectra appear as well
             {
                 std::cerr << "Warning: qAlgorithms is intended for profile spectra. A base uncertainty of "
                           << ppm_for_precentroided_data << " ppm is assumed for all supplied centroids\n";
-                std::vector<double> retention_times = data.get_spectra_rt(indices); // get retention times
-                rt_diff = calcRTDiff(retention_times);
-                addEmpty.resize(indices.size());
-                std::fill(addEmpty.begin(), addEmpty.end(), 0);
+
                 for (int i = 0; i < int(indices.size()) - 1; i++) // i can be -1 briefly if there is a scan missing between 1. and 2. element
                 {
                     if (retention_times[i + 1] - retention_times[i] > rt_diff * 1.75)
@@ -180,7 +186,9 @@ namespace q
                         retention_times[i] += rt_diff * 1.75;
                         i--;
                     }
+                    convertRT.push_back(retention_times[i]); // convertRT[scan] = retention time of centroid
                 }
+                convertRT.push_back(retention_times[indices.size() - 1]);
                 return transferCentroids(data, indices, retention_times, start_index, ppm_for_precentroided_data);
             }
 
@@ -197,11 +205,7 @@ namespace q
                               indices.end()); // keep only profile spectra
             }
 
-            std::vector<double> retention_times = data.get_spectra_rt(indices); // get retention times
-            rt_diff = calcRTDiff(retention_times);                              // retention time difference
-
-            std::vector<std::vector<DataType::Peak>> centroids =
-                std::vector<std::vector<DataType::Peak>>(indices.size()); // create vector of peaks
+            std::vector<std::vector<DataType::CentroidPeak>> centroids(indices.size()); // create vector of peaks
 
             // CALCULATE EXPECTED DIFFERENCE & CHECK FOR ZEROS
             std::vector<std::vector<double>> data_vec = data.get_spectrum(indices[start_index]); // get first spectrum (x-axis)
@@ -219,14 +223,14 @@ namespace q
 
             if (!displayPPMwarning)
             {
-                ppm_for_precentroided_data = -5;
+                ppm_for_precentroided_data = -INFINITY;
             }
 
             // determine where the peak finding will interpolate points and pass this information
             // to the binning step. addEmpty contains the number of empty scans to be added into
-            // the qCentroids object at the given position.
-            addEmpty.resize(indices.size());
-            std::fill(addEmpty.begin(), addEmpty.end(), 0);
+            // the qCentroids object at the given position. convertRT can later be used to look up
+            // the retention time by the scan number, so that memory usage is reduced during binning
+
             for (int i = 0; i < int(indices.size()) - 1; i++) // i can be -1 briefly if there is a scan missing between 1. and 2. element
             {
                 if (retention_times[i + 1] - retention_times[i] > rt_diff * 1.75)
@@ -235,20 +239,21 @@ namespace q
                     retention_times[i] += rt_diff * 1.75;
                     i--;
                 }
+                convertRT.push_back(retention_times[i]); // convertRT[scan] = retention time of centroid
             }
-
+            convertRT.push_back(retention_times[indices.size() - 1]);
             return centroids;
         } // readStreamCraftMZML
 #pragma endregion "find centroids"
 
 #pragma region "find peaks"
-        std::vector<DataType::Peak> TensorData::findPeaks_QBIN(
+        std::vector<DataType::FeaturePeak> TensorData::findPeaks_QBIN(
             q::Algorithms::qPeaks &qpeaks,
             std::vector<q::Algorithms::qBinning::EIC> &data)
         {
-            std::vector<DataType::Peak> peaks;    // return vector for feature list
-            peaks.reserve(data.size() * 0.7);     // should be enough to fit all features without reallocation
-            std::vector<DataType::Peak> tmpPeaks; // add features to this before pasting into FL
+            std::vector<DataType::FeaturePeak> peaks;    // return vector for feature list
+            peaks.reserve(data.size() * 0.7);            // should be enough to fit all features without reallocation
+            std::vector<DataType::FeaturePeak> tmpPeaks; // add features to this before pasting into FL
 
             // #pragma omp parallel for
             /// activating this pracma invalidates results @todo why?

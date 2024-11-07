@@ -59,7 +59,7 @@ namespace q
             // methods
             // virtual void readCSV(std::string filename, int rowStart, int rowEnd, int colStart, int colEnd, char separator, std::vector<DataType::DataField> variableTypes) = 0;
 
-            std::vector<std::vector<DataType::Peak>> transferCentroids(
+            std::vector<std::vector<DataType::CentroidPeak>> transferCentroids(
                 sc::MZML &data,
                 std::vector<int> &indices,
                 std::vector<double> &retention_times,

@@ -13,14 +13,14 @@ namespace q
 {
   namespace MeasurementData
   {
-    std::vector<std::vector<DataType::Peak>> MeasurementData::transferCentroids(
+    std::vector<std::vector<DataType::CentroidPeak>> MeasurementData::transferCentroids(
         sc::MZML &data,
         std::vector<int> &indices,
         std::vector<double> &retention_times,
         const int start_index,
         double PPMerror)
     {
-      std::vector<std::vector<DataType::Peak>> centroids(indices.size());
+      std::vector<std::vector<DataType::CentroidPeak>> centroids(indices.size());
 #pragma omp parallel for
       for (size_t i = 0; i < indices.size(); ++i) // loop over all indices
       {
@@ -37,12 +37,12 @@ namespace q
           {
             continue; // skip due to low intensity
           }
-          centroids[i].push_back(DataType::Peak());
-          centroids[i].back().sampleID = index;
+          centroids[i].push_back(DataType::CentroidPeak());
+          centroids[i].back().scanNumber = index;
           centroids[i].back().mz = spectrum[0][j];
           centroids[i].back().area = spectrum[1][j];
           centroids[i].back().height = spectrum[1][j];
-          centroids[i].back().retentionTime = retention_times[i];
+          // centroids[i].back().retentionTime = retention_times[i]; // @todo fix this
           centroids[i].back().dqsCen = -1.0;
           centroids[i].back().mzUncertainty = spectrum[0][j] * PPMerror * 10e-6; // 5 ppm default
         }

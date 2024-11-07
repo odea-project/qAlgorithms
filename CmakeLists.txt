@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.12)
-project(qAlgorithms VERSION 24.06)
+project(qAlgorithms VERSION 0.2.1)
 
 # Set C++ standard
 set(CMAKE_CXX_STANDARD 20)

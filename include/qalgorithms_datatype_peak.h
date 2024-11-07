@@ -32,28 +32,67 @@ namespace q
      * @param idxPeakStart index of first (if sorted by RT) point of the bin which is part of this peak
      * @param idxPeakEnd index of last (if sorted by RT) point of the bin which is part of this peak
      */
-    class Peak
-    {
-    public:
-      // properties
-      int sampleID;
-      float height;
+    // struct Peak
+    // {
+    //   // properties
+    //   int sampleID; // @todo only relevant after a dataset is done
+    //   float height;
+    //   float area;
+    //   float width;
+    //   float heightUncertainty;
+    //   float areaUncertainty;
+    //   float dqsPeak;       // only relevant for features
+    //   float dqsBin;        // can be calculated when needed
+    //   float dqsCen;        // relevant for centroids, can be calculated for features
+    //   float retentionTime; // only relevant for features
+    //   float mz;
+    //   float retentionTimeUncertainty; // s.o.
+    //   float mzUncertainty;
 
-      // optional
+    //   // only relevant for features
+    //   int idxBin;
+    //   unsigned int idxPeakStart; // degrees of freedom = idxPeakEnd - idxPeakStart
+    //   unsigned int idxPeakEnd;
+    //   float beta0;
+    //   float beta1;
+    //   float beta2;
+    //   float beta3;
+    // };
+
+    struct CentroidPeak
+    {
+      float height;
       float area;
       float width;
       float heightUncertainty;
       float areaUncertainty;
-      float dqsPeak;
-      float dqsBin;
       float dqsCen;
-      float retentionTime;
+      float mz;
+      float mzUncertainty;
+      int scanNumber;
+    };
+
+    struct FeaturePeak
+    {
+      float height;
+      float area;
+      float width;
+      float heightUncertainty;
+      float areaUncertainty;
+      float dqsPeak;       // only relevant for features
+      float dqsBin;        // can be calculated when needed
+      float dqsCen;        // can be calculated when needed
+      float retentionTime; // only relevant for features
       float mz;
       float retentionTimeUncertainty;
       float mzUncertainty;
       int idxBin;
-      unsigned int idxPeakStart;
+      unsigned int idxPeakStart; // degrees of freedom = idxPeakEnd - idxPeakStart
       unsigned int idxPeakEnd;
+      float beta0;
+      float beta1;
+      float beta2;
+      float beta3;
     };
   } // namespace DataType
 } // namespace q
