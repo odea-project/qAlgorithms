@@ -37,7 +37,7 @@ namespace q
         //     return returnVec;
         // }
 
-        void binningRT(std::vector<std::vector<int>> &componentStartEnd, std::vector<q::DataType::Peak> &featureList,
+        void binningRT(std::vector<std::vector<int>> &componentStartEnd, std::vector<q::DataType::FeaturePeak> &featureList,
                        std::vector<float> &OS, std::vector<float> &error, int startBin, int endBin)
         {
             /// adapted generic binning function @todo add into qBinning
@@ -86,14 +86,14 @@ namespace q
             return;
         }
 
-        void initialComponentBinner(std::vector<q::DataType::Peak> &featureList, unsigned int replicateID)
+        void initialComponentBinner(std::vector<q::DataType::FeaturePeak> &featureList, unsigned int replicateID)
         {
             int featureCount = featureList.size();
             std::vector<float> orderSpace(featureCount, 0);
             std::vector<float> cumError;
             cumError.reserve(featureCount);
 
-            std::sort(featureList.begin(), featureList.end(), [](q::DataType::Peak &lhs, q::DataType::Peak &rhs)
+            std::sort(featureList.begin(), featureList.end(), [](q::DataType::FeaturePeak &lhs, q::DataType::FeaturePeak &rhs)
                       { return lhs.retentionTime < rhs.retentionTime; });
 
             // create order space

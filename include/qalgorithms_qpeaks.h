@@ -27,13 +27,13 @@ namespace q
 
             // methods
             void findCentroids(
-                std::vector<DataType::Peak> &all_peaks,
+                std::vector<DataType::CentroidPeak> &all_peaks,
                 q::MeasurementData::MeasurementData::treatedData &treatedData,
                 const int scanNumber,
                 const float retentionTime);
 
             void findPeaks(
-                std::vector<DataType::Peak> &all_peaks,
+                std::vector<DataType::FeaturePeak> &all_peaks,
                 q::MeasurementData::MeasurementData::treatedData &treatedData);
 
             // export
@@ -43,8 +43,8 @@ namespace q
                 const bool includeFits = true,
                 const bool featureMap = false) const;
 
-            qBinning::CentroidedData passToBinning(std::vector<std::vector<q::DataType::Peak>> &allPeaks,
-                                                   std::vector<unsigned int> addEmpty);
+            qBinning::CentroidedData passToBinning(std::vector<std::vector<q::DataType::CentroidPeak>> &allPeaks,
+                                                   std::vector<unsigned int> addEmpty, std::vector<float> convertRT);
 
             static void initialize();
 
@@ -157,21 +157,33 @@ namespace q
                 const float *ylog_start,
                 const bool *df_start);
 
-            void createPeaks(
-                std::vector<DataType::Peak> &peaks,
-                const std::vector<validRegression_static> &validRegressions,
+            // void createPeaks(
+            //     std::vector<DataType::Peak> &peaks,
+            //     const std::vector<validRegression_static> &validRegressions,
+            //     const float *y_start,
+            //     const float *mz_start,
+            //     const float *rt_start,
+            //     const bool *df_start,
+            //     const float *dqs_cen,
+            //     const float *dqs_bin,
+            //     const float *dqs_peak,
+            //     const int scanNumber);
+
+            void createCentroidPeaks(
+                std::vector<DataType::CentroidPeak> &peaks,
+                validRegression_static *validRegressions,
+                std::vector<validRegression_static> *validRegressionsVec,
+                const int validRegressionsIndex,
                 const float *y_start,
                 const float *mz_start,
                 const float *rt_start,
                 const bool *df_start,
-                const float *dqs_cen,
-                const float *dqs_bin,
-                const float *dqs_peak,
                 const int scanNumber);
 
-            void createPeaks_static(
-                std::vector<DataType::Peak> &peaks,
+            void createFeaturePeaks(
+                std::vector<DataType::FeaturePeak> &peaks,
                 validRegression_static *validRegressions,
+                std::vector<validRegression_static> *validRegressionsVec,
                 const int validRegressionsIndex,
                 const float *y_start,
                 const float *mz_start,
@@ -179,20 +191,7 @@ namespace q
                 const bool *df_start,
                 const float *dqs_cen,
                 const float *dqs_bin,
-                const float *dqs_peak,
-                const int scanNumber);
-
-            void addPeakProperties(
-                std::vector<DataType::Peak> &peaks,
-                const validRegression_static &regression,
-                const float *y_start,
-                const float *mz_start,
-                const float *rt_start,
-                const bool *df_sart,
-                const float *dqs_cen,
-                const float *dqs_bin,
-                const float *dqs_peak,
-                const int scanNumber);
+                const float *dqs_peak);
 
             float calcSSE(
                 const int left_limit,
@@ -401,6 +400,9 @@ namespace q
                 __m128 *products,
                 const size_t buffer_size);
         };
+
+        std::pair<float, float> weightedMeanAndVariance(const float *x, const float *w, const bool *df,
+                                                        int left_limit, int right_limit);
     } // namespace Algorithms
 } // namespace q
 

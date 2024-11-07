@@ -41,15 +41,16 @@ namespace q
              * @param start_index : index of the first spectrum to be read
              * @return std::vector<std::vector<DataType::Peak>> : list of peaks
              */
-            std::vector<std::vector<DataType::Peak>> findCentroids_MZML(
+            std::vector<std::vector<DataType::CentroidPeak>> findCentroids_MZML(
                 q::Algorithms::qPeaks &qpeaks,
                 sc::MZML &data,
                 std::vector<unsigned int> &addEmpty,
+                std::vector<float> &convertRT,
                 const bool ms1only = true,
                 const std::string polarity = "positive",
                 const int start_index = 0);
 
-            std::vector<DataType::Peak> findPeaks_QBIN(
+            std::vector<DataType::FeaturePeak> findPeaks_QBIN(
                 q::Algorithms::qPeaks &qpeaks,
                 std::vector<q::Algorithms::qBinning::EIC> &data);
         };

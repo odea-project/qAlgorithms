@@ -23,7 +23,7 @@ namespace q
     // this is set to -5 to track if the argument was set or not. Since a negative
     // number during input causes the program to exit, the warning only triggers
     // if the ppm value is positve.
-    double MeasurementData::ppm_for_precentroided_data = -5;
+    double MeasurementData::ppm_for_precentroided_data = -INFINITY;
 
     struct ProfilePoint
     {
@@ -40,9 +40,9 @@ namespace q
         unsigned int fileID; // count upwards after reading everything in
     };
 
-    void printPeaklist(std::vector<std::vector<q::DataType::Peak>> peaktable,
-                       std::filesystem::path pathOutput, std::string filename,
-                       bool silent, bool skipError) // @todo mz range, rt range
+    void printPeaklist(std::vector<std::vector<q::DataType::CentroidPeak>> peaktable,
+                       std::vector<float> convertRT, std::filesystem::path pathOutput,
+                       std::string filename, bool silent, bool skipError)
     {
         filename += "_centroids.csv";
         pathOutput /= filename;
@@ -67,8 +67,8 @@ namespace q
             }
         }
 
-        output << "ID,mz,mzUncertainty,retentionTime,retentionTimeUncertainty,"
-               << "area,areaUncertainty,dqsCen\n ";
+        output << "ID,mz,mzUncertainty,scanNumber,retentionTime,area,areaUncertainty,"
+               << "height,heightUncertainty,dqsCen\n";
         unsigned int counter = 1;
         for (size_t i = 0; i < peaktable.size(); i++)
         {
@@ -78,9 +78,9 @@ namespace q
                 {
                     auto peak = peaktable[i][j];
                     char buffer[128];
-                    sprintf(buffer, "%d,%0.6f,%0.6f,%0.4f,%0.4f,%0.3f,%0.3f,%0.5f,%0.5f,%0.5f\n",
-                            counter, peak.mz, peak.mzUncertainty, peak.retentionTime, peak.retentionTimeUncertainty,
-                            peak.area, peak.areaUncertainty, peak.dqsCen);
+                    sprintf(buffer, "%d,%0.6f,%0.6f,%d,%0.4f,%0.4f,%0.4f,%0.4f,%0.4f,%0.5f\n",
+                            counter, peak.mz, peak.mzUncertainty, peak.scanNumber, convertRT[peak.scanNumber],
+                            peak.area, peak.areaUncertainty, peak.height, peak.heightUncertainty, peak.dqsCen);
                     output << buffer;
                     ++counter;
                 }
@@ -134,7 +134,7 @@ namespace q
         return;
     }
 
-    void printFeatureList(std::vector<q::DataType::Peak> peaktable,
+    void printFeatureList(std::vector<q::DataType::FeaturePeak> peaktable,
                           std::filesystem::path pathOutput, std::string filename,
                           std::vector<Algorithms::qBinning::EIC> originalBins,
                           bool verbose, bool silent, bool skipError)
@@ -839,9 +839,10 @@ int main(int argc, char *argv[])
             q::Algorithms::qPeaks qpeaks;              // create qPeaks object
             q::MeasurementData::TensorData tensorData; // create tensorData object
             std::vector<unsigned int> addEmptyScans;   // make sure the retention time interpolation does not add unexpected points to bins
+            std::vector<float> convertRT;
             // @todo add check if set polarity is correct
-            std::vector<std::vector<q::DataType::Peak>> centroids =
-                tensorData.findCentroids_MZML(qpeaks, data, addEmptyScans, true, polarity, 10); // read mzML file and find centroids via qPeaks
+            std::vector<std::vector<q::DataType::CentroidPeak>> centroids =
+                tensorData.findCentroids_MZML(qpeaks, data, addEmptyScans, convertRT, true, polarity, 10); // read mzML file and find centroids via qPeaks
             if (centroids.size() < 5)
             {
 
@@ -860,7 +861,7 @@ int main(int argc, char *argv[])
             filename += polarity;
             if (printCentroids)
             {
-                q::printPeaklist(centroids, pathOutput, filename, silent, skipError);
+                q::printPeaklist(centroids, convertRT, pathOutput, filename, silent, skipError);
             }
 
             // @todo remove diagnostics later
@@ -873,7 +874,12 @@ int main(int argc, char *argv[])
                 }
             }
 
-            q::Algorithms::qBinning::CentroidedData binThis = qpeaks.passToBinning(centroids, addEmptyScans);
+            q::Algorithms::qBinning::CentroidedData binThis = qpeaks.passToBinning(centroids, addEmptyScans, convertRT);
+
+            // for (size_t i = 0; i < convertRT.size(); i++)
+            // {
+            //     std::cout << i << ", " << binThis.allDatapoints[i].size() << ", " << addEmptyScans[i] << ", " << convertRT[i] << "\n";
+            // }
 
             if (printSubProfile)
             {
@@ -992,7 +998,7 @@ int main(int argc, char *argv[])
             // @todo add peak grouping here
 
             // auto peakpointer = q::qPattern::collapseFeaturelist(peaks);
-            q::qPattern::initialComponentBinner(peaks, 1);
+            // q::qPattern::initialComponentBinner(peaks, 1);
         }
         counter++;
     }

@@ -771,6 +771,7 @@ namespace q
                 int lastpos = 0;
                 for (size_t i = 0; i < binSize - 1; i++) // -1 since difference to next data point is checked
                 {
+                    /// @todo remove rt from qCentroid
                     assert(pointsInBin[i + 1]->RT >= pointsInBin[i]->RT);
                     int distanceScan = pointsInBin[i + 1]->scanNo - pointsInBin[i]->scanNo;
                     if (distanceScan > maxdist) // bin needs to be split
