@@ -20,7 +20,6 @@ namespace q
             // required during the processing.
             struct metaCentroid
             {
-                float RT;
                 float int_area;
                 float int_height;
                 float DQSCentroid;
@@ -31,14 +30,12 @@ namespace q
             // Output of qCentroiding @todo move to utils / shared data file
             struct qCentroid
             {
-                double mzError = -1;
+                float mzError = -1;
                 float mz;
-                float RT;
                 int scanNo;
-                float int_area;
-                float int_height;
-                float DQSCentroid; // this and RT could be moved outside of the struct
-                // metaCentroid *metadata; // pointer to metadata
+                float int_area;   // the intensity is never used during binning @todo
+                float int_height; // s.o.
+                float DQSCentroid;
             };
 
             // depending on the instrumentation, binning requires different subsetting
@@ -89,11 +86,6 @@ namespace q
                 std::vector<float> ints_height;
                 std::vector<float> DQSB;
                 std::vector<float> DQSC;
-
-                // only include basic summary params if useful
-                // double meanDQS;
-                // double meanMZ;
-                // double maxInt;
             };
 
             struct SummaryOutput
@@ -128,7 +120,7 @@ namespace q
             {
             private:
                 std::vector<double> cumError; // cumulative error in mz
-                float medianMZ;
+                // float medianMZ;
 
             public:
                 std::vector<qCentroid *> pointsInBin; // @todo does not change after bin creation, check for performance improvement when using cast const
@@ -218,7 +210,7 @@ namespace q
                 /// @return A struct containing the summary information. The first entry is the error code.
                 SummaryOutput summariseBin();
 
-                EIC createEIC();
+                EIC createEIC(std::vector<float> convertRT);
             };
 
             // BinContainer
@@ -276,7 +268,8 @@ namespace q
 
                 void printAllBins(std::string path) const;
 
-                std::vector<EIC> returnBins();
+                // retention times are assigned only at this step
+                std::vector<EIC> returnBins(std::vector<float> convertRT);
 
                 /// @brief Print the individual bin members and optionally the bin summary in a separate .csv
                 /// @param mask every bit of this byte controls if the corresponding test is considered for returning the
@@ -298,8 +291,8 @@ namespace q
             /// @param printBinSummary print summary file
             /// @param printCentroids print all centroids for all bins
             /// @return returns the centroids as a collection of vectors
-            std::vector<EIC> performQbinning(const CentroidedData centroidedData, std::filesystem::path outpath,
-                                             std::string filename, int maxdist,
+            std::vector<EIC> performQbinning(const CentroidedData centroidedData, std::vector<float> convertRT,
+                                             std::filesystem::path outpath, std::string filename, int maxdist,
                                              bool silent, bool printBinSummary, bool printCentroids);
 
             // ###################################################################################################### //

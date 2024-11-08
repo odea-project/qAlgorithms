@@ -558,13 +558,13 @@ namespace q
                 file_out << output.str();
             }
 
-            std::vector<EIC> BinContainer::returnBins()
+            std::vector<EIC> BinContainer::returnBins(std::vector<float> convertRT)
             {
                 std::vector<EIC> finalBins;
                 finalBins.reserve(finishedBins.size());
                 for (size_t i = 0; i < finishedBins.size(); i++)
                 {
-                    finalBins.push_back(finishedBins[i].createEIC());
+                    finalBins.push_back(finishedBins[i].createEIC(convertRT));
                 }
                 return finalBins;
             };
@@ -772,7 +772,7 @@ namespace q
                 for (size_t i = 0; i < binSize - 1; i++) // -1 since difference to next data point is checked
                 {
                     /// @todo remove rt from qCentroid
-                    assert(pointsInBin[i + 1]->RT >= pointsInBin[i]->RT);
+                    assert(pointsInBin[i + 1]->scanNo >= pointsInBin[i]->scanNo);
                     int distanceScan = pointsInBin[i + 1]->scanNo - pointsInBin[i]->scanNo;
                     if (distanceScan > maxdist) // bin needs to be split
                     {
@@ -921,15 +921,15 @@ namespace q
                 // std::vector<double> meanInnerDistances = meanDistance(pointsInBin);
                 std::vector<float> meanInnerDistances = meanDistanceRegional(pointsInBin, maxdist);
                 // find median in mz
-                const int posMedian = binsize / 2;
-                if (binsize & 1)
-                {
-                    medianMZ = pointsInBin[posMedian]->mz; // for lenght 1: index 0
-                }
-                else
-                {
-                    medianMZ = (pointsInBin[posMedian]->mz + pointsInBin[posMedian + 1]->mz) / 2; // +1 to round to nearest, since integers are truncated
-                }
+                // const int posMedian = binsize / 2;
+                // if (binsize & 1)
+                // {
+                //     medianMZ = pointsInBin[posMedian]->mz; // for lenght 1: index 0
+                // }
+                // else
+                // {
+                //     medianMZ = (pointsInBin[posMedian]->mz + pointsInBin[posMedian + 1]->mz) / 2; // +1 to round to nearest, since integers are truncated
+                // }
 
                 bool maxScansReduced = false; // is maxScan + maxdist greater than the largest scan?
 
@@ -1299,10 +1299,10 @@ namespace q
                 {
                     selector |= std::byte{0b00000100};
                 }
-                if (abs(meanMZ - medianMZ) > 2 * meanCenError) // standard error instead?
-                {
-                    selector |= std::byte{0b00001000};
-                }
+                // if (abs(meanMZ - medianMZ) > 2 * meanCenError) // standard error instead? @todo median calculation above
+                // {
+                //     selector |= std::byte{0b00001000};
+                // }
                 // middle third of total mz should be at least a third of total points
                 if (oneSided)
                 {
@@ -1329,11 +1329,13 @@ namespace q
                 //     std::cerr << "+";
                 // }
 
-                return SummaryOutput{selector, binsize, meanMZ, medianMZ, stdevMZ, meanScan, meanDQS_base,
+                // return SummaryOutput{selector, binsize, meanMZ, medianMZ, stdevMZ, meanScan, meanDQS_base,
+                //                      meanDQS_scaled, worstCentroid, meanCenError};
+                return SummaryOutput{selector, binsize, meanMZ, -1, stdevMZ, meanScan, meanDQS_base,
                                      meanDQS_scaled, worstCentroid, meanCenError};
             }
 
-            EIC Bin::createEIC()
+            EIC Bin::createEIC(std::vector<float> convertRT)
             {
                 int eicsize = pointsInBin.size();
 
@@ -1381,16 +1383,14 @@ namespace q
                             tmp_DQSC.pop_back();
                         }
                     }
-                    if (!tmp_rt.empty())
+                    if (!tmp_scanNumbers.empty())
                     {
                         assert(tmp_scanNumbers.back() < point->scanNo);
-                        assert(tmp_rt.back() < point->RT);
                     }
 
                     prevScan = point->scanNo;
-                    tmp_scanNumbers.push_back(point->scanNo);
-                    tmp_rt.push_back(point->RT);
-                    prevScan = point->scanNo;
+                    tmp_scanNumbers.push_back(prevScan);
+                    tmp_rt.push_back(convertRT[prevScan]);
                     tmp_mz.push_back(point->mz);
                     tmp_ints_area.push_back(point->int_area);
                     tmp_ints_height.push_back(point->int_height);
@@ -1527,8 +1527,8 @@ namespace q
 
 #pragma endregion "Functions"
 
-            std::vector<EIC> performQbinning(CentroidedData centroidedData, std::filesystem::path outpath, std::string filename,
-                                             int maxdist, bool silent, bool printBinSummary, bool printCentroids)
+            std::vector<EIC> performQbinning(CentroidedData centroidedData, std::vector<float> convertRT, std::filesystem::path outpath,
+                                             std::string filename, int maxdist, bool silent, bool printBinSummary, bool printCentroids)
             {
                 std::streambuf *old = std::cout.rdbuf(); // save standard out config @todo change this
                 std::stringstream ss;
@@ -1572,7 +1572,7 @@ namespace q
 
                 std::cout.rdbuf(old); // restore previous standard out
 
-                auto test = activeBins.returnBins();
+                auto test = activeBins.returnBins(convertRT);
                 return test; // @todo do not calculate the summary twice when printing bins
             }
 

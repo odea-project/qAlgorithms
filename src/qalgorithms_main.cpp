@@ -722,7 +722,7 @@ int main(int argc, char *argv[])
             exit(1);
         }
     }
-
+    std::cout << "ok";
     if (!inSpecified & !tasklistSpecified)
     {
         std::cerr << "Error: no input file supplied. Specify a file or directorey using the -i or "
@@ -732,6 +732,7 @@ int main(int argc, char *argv[])
     if (!outSpecified)
     {
         std::cerr << "Error: You must specify an output directory.\n";
+        std::cerr.flush();
         exit(100);
     }
     if (inSpecified & tasklistSpecified)
@@ -874,7 +875,7 @@ int main(int argc, char *argv[])
                 }
             }
 
-            q::Algorithms::qBinning::CentroidedData binThis = qpeaks.passToBinning(centroids, addEmptyScans, convertRT);
+            q::Algorithms::qBinning::CentroidedData binThis = qpeaks.passToBinning(centroids, addEmptyScans);
 
             // for (size_t i = 0; i < convertRT.size(); i++)
             // {
@@ -900,7 +901,7 @@ int main(int argc, char *argv[])
 
             timeStart = std::chrono::high_resolution_clock::now();
             std::vector<q::Algorithms::qBinning::EIC> binnedData = q::Algorithms::qBinning::performQbinning(
-                binThis, pathOutput, filename, 3, !verboseProgress, printSummary, printBins); // set maxdist here
+                binThis, convertRT, pathOutput, filename, 3, !verboseProgress, printSummary, printBins); // set maxdist here
             timeEnd = std::chrono::high_resolution_clock::now();
 
             if (!silent)
