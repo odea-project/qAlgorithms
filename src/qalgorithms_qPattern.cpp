@@ -86,6 +86,34 @@ namespace q
             return;
         }
 
+        int absoluteNearest(const unsigned int sourceFeature, std::vector<q::DataType::FeaturePeak> &featureList,
+                            std::vector<float> limits_L, std::vector<float> limits_R, std::vector<bool> validPositions)
+        {
+            // assumes feature list is sorted by RT.
+            // limits are defined as RT +- RT uncertiainty
+            unsigned int minRT = sourceFeature;
+            while ((limits_R[minRT] > limits_L[sourceFeature]) && (minRT > 0))
+            {
+                minRT--;
+            }
+            if (limits_R[minRT] < limits_L[sourceFeature])
+            {
+                minRT++;
+            }
+
+            unsigned int maxRT = sourceFeature;
+            while ((limits_L[maxRT] < limits_R[sourceFeature]) && (maxRT < limits_L.size()))
+            {
+                maxRT++;
+            }
+            if (limits_L[maxRT] > limits_R[sourceFeature])
+            {
+                maxRT++;
+            }
+            // the range minRT : maxRT contains all features which are relevant for the pairwise comparison
+            // find feature with the least dissimilar regression (excluding height information)
+        }
+
         void initialComponentBinner(std::vector<q::DataType::FeaturePeak> &featureList, unsigned int replicateID)
         {
             int featureCount = featureList.size();
