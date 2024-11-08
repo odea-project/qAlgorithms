@@ -1,3 +1,23 @@
+Bifurcating Dendrogram:
+Für einen Datensatz werden zwei unterschiedliche Komponentisierungen durchgeführt, eine davon mit qPattern
+Für qPattern wird ein eindeutiges Entscheidungskriterium formuliert.
+Das Ähnlichkeitskriterium wird als ein System ausgedrückt, in dem der gesamte Datensatz immer
+    an der unähnlichsten Stelle getrennt wird Bzw. an der ähnlichsten zusammengeführt wird. Diese
+    Trennung wird für alle Punkte durchgeführt, so dass die 1. Gruppe der ganze Datensatz ist und
+    alle Gruppen so lange getrennt werden, bis sie nur noch ein Feature enthalten.
+Für jedes Feature wird der Gruppenverlauf als ein Vektor des Formats {Gruppe 1, Untergruppe in Bezug auf Gruppe 1} ausgedrückt.
+    Es enthält ebenfalls einen Index, der angibt, ab welchem Punkt die Gruppierung abgeschlossen war
+Die Gruppenähnlichkeit zwischen qPattern und dem anderen Algorithmus soll bestimmt werden.
+    Für jedes Feature sind nur die finalen Komponenten des anderen Algorithmus verfügbar.
+Nun lässt sich auf einer per-Feature Basis angeben, wie viele Schritte notwendig sind, bis die
+    Komponentisierung durch qPattern eine Gruppe trennt, die durch den anderen Algorithmus 
+    erstellt wurde.
+Je später die Diskrepanzen auftreten, desto weniger unterschiedlich sind sich die Ergebnisse.
+    Diese Unterscheidung funktioniert auch für Gruppen, die nur durch den verglichenen Algorithmus
+    noch weiter getrennt wurden.
+
+Konstantin / Jonas (AAC) haben Koelutionsreihen von Citraten?
+
 https://stackoverflow.com/questions/61906480/how-to-display-ggplotly-plots-with-dynamically-created-tabs-and-for-loops#
 https://stackoverflow.com/questions/53444333/dynamic-tabsets-with-multiple-plots-r-markdown?rq=3
 

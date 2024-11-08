@@ -75,6 +75,9 @@ namespace q
 
         std::vector<std::vector<q::DataType::FeaturePeak>> groupDecay(std::vector<q::DataType::FeaturePeak>);
 
+        int absoluteNearest(q::DataType::FeaturePeak sourceFeature, std::vector<q::DataType::FeaturePeak> &featureList,
+                            std::vector<bool> validPositions);
+
 #pragma endregion functions
 
     }

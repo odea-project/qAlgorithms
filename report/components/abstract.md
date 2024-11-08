@@ -69,3 +69,60 @@ the precise calculation steps taken to produce it, existing algorithms could be
 better compared. The open nature of the GPL3-licensed qAlgorithms codebase also 
 enables anyone to use the supplied project as a starting point for other,
 unaffiliated componentisation strategies or to improve existing ones.
+
+
+structure
+---
+# Title Page
+# Eidesstattliche Versicherung
+
+# Abstract (EN + DE)
+
+# Table of Contents
+# Table of Images
+# List of Abbreviations
+
+# Introduction
+## What is NTS, why is it relevant?
+unknown substances are relevant when searching for pollution in water, 
+identifying degredation products of pharmaceuticals or in understanding
+metabolisms of various organisms
+
+NTS: qualitatively describe the chemical space in a way that allows for
+concrete interpretation as relating to the research question
+## Challenges in NTS
+### 
+## Existing Componentisation Algorithms
+### Overview (table)
+### Comparison by Solution Strategies 
+#### grouping by elution profile
+#### tolerance in RT
+#### adduct table lookup
+
+# qPattern (better name pending)
+## Demands towards the new algorithm
+## Failed strategies, and why?
+## Concrete implementation
+## Integration with qAlgorithms
+
+# Characterisation of qPattern
+## Coelution series
+## Comparison with other programs
+### bifurcating dendrogram comparison
+### correctness check with relevant (synthetic?) data
+### characterise set with occurrence of known adduct / isotopologue mass differences?
+### computation speed and user friendliness
+#### user test / write short tutorial if necessary
+## Discussion: Were the set Goals achieved?
+
+# Componentisation between sets
+Note: this part will likely have to be ommitted due to time constraints
+## Extended dendrogram approach
+## time delay of group resolution (is this a good idea?)
+## Comparison with other programs (low details)
+
+# Case Study: Using qAlgorithms for something
+
+# Further Research
+
+# Conclusion
