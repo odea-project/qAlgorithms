@@ -44,7 +44,7 @@ namespace q
 
 #pragma region "pass to qBinning"
         qBinning::CentroidedData
-        qPeaks::passToBinning(std::vector<std::vector<q::DataType::CentroidPeak>> &allPeaks, std::vector<unsigned int> addEmpty, std::vector<float> convertRT)
+        qPeaks::passToBinning(std::vector<std::vector<q::DataType::CentroidPeak>> &allPeaks, std::vector<unsigned int> addEmpty)
         {
             // initialise empty vector with enough room for all scans - centroids[0] must remain empty
             std::vector<std::vector<q::Algorithms::qBinning::qCentroid>> centroids(allPeaks.size() + 1, std::vector<qBinning::qCentroid>(0));
@@ -71,8 +71,7 @@ namespace q
                     for (size_t j = 0; j < allPeaks[i].size(); ++j)
                     {
                         auto &peak = allPeaks[i][j];
-                        qBinning::qCentroid F = qBinning::qCentroid{peak.mzUncertainty, peak.mz, convertRT[scanRelative], // peak.retentionTime,
-                                                                    scanRelative, peak.area, peak.height, peak.dqsCen};
+                        qBinning::qCentroid F = qBinning::qCentroid{peak.mzUncertainty, peak.mz, scanRelative, peak.area, peak.height, peak.dqsCen};
                         centroids[scanRelative].push_back(F);
                         ++totalCentroids;
                     }
@@ -1255,6 +1254,11 @@ namespace q
                     peak.idxPeakStart = regression.left_limit;
                     peak.idxPeakEnd = regression.right_limit;
 
+                    peak.beta0 = regression.coeff[0];
+                    peak.beta1 = regression.coeff[1];
+                    peak.beta2 = regression.coeff[2];
+                    peak.beta3 = regression.coeff[3];
+
                     peaks.push_back(std::move(peak));
                 }
             }
@@ -2116,7 +2120,8 @@ namespace q
                 {
                     if (2 * i + j >= buffer_size)
                     {
-                        throw std::out_of_range("Index out of range for products array: n=" + std::to_string(n) + " i=" + std::to_string(i) + " j=" + std::to_string(j));
+                        throw std::out_of_range("Index out of range for products array: n=" + std::to_string(n) +
+                                                " i=" + std::to_string(i) + " j=" + std::to_string(j));
                     }
                     __m128 products_temp = _mm_permute_ps(products[j], 0b10110100);
                     __m128 sign_flip = _mm_set_ps(1.0f, 1.0f, -1.0f, 1.0f);

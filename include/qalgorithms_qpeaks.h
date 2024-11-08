@@ -44,7 +44,7 @@ namespace q
                 const bool featureMap = false) const;
 
             qBinning::CentroidedData passToBinning(std::vector<std::vector<q::DataType::CentroidPeak>> &allPeaks,
-                                                   std::vector<unsigned int> addEmpty, std::vector<float> convertRT);
+                                                   std::vector<unsigned int> addEmpty);
 
             static void initialize();
 
