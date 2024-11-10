@@ -8,7 +8,7 @@
 #include <cstdint>
 #include <assert.h>
 
-namespace q
+namespace qAlgorithms
 {
   int sum(const std::vector<int> &vec)
   {
