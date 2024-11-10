@@ -57,6 +57,7 @@ qAlgorithms
 .cache
 .clang-format
 .vscode
+vgcore*
 
 # matplotplusplus
 external/matplotplusplus

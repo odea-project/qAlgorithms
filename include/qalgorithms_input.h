@@ -1,10 +1,14 @@
 #include <filesystem>
 #include <vector>
 
-namespace q {
-    class MeasurementSeries {
-        public:
-        enum MeasurementType{
+namespace qAlgorithms
+{
+
+    class MeasurementSeries
+    {
+    public:
+        enum MeasurementType
+        {
             sample,
             spikedSample,
             standards,
@@ -17,7 +21,7 @@ namespace q {
             MeasurementType type;
 
             int msLevel;
-            
+
             int position; // allows sorting by concentration etc.
             // sample name (only refers to unknown component)
             // replicate number
@@ -26,7 +30,5 @@ namespace q {
             // chromatography
             // mass detector
         };
-        
-
     };
 }

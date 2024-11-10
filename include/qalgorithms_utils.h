@@ -7,7 +7,7 @@
 #include <string>
 #include <immintrin.h>
 
-namespace q
+namespace qAlgorithms
 {
 
     int sum(const std::vector<int> &vec);
@@ -90,5 +90,5 @@ namespace q
     extern const float tValuesArray[256];
     extern const float chiSquareArray[256];
     extern const double SQRTPI_2;
-} // namespace q
+}
 #endif // QALGORITHMS_UTILS_H
