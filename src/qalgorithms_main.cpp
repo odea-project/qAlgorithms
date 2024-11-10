@@ -801,7 +801,7 @@ int main(int argc, char *argv[])
         }
 
         // initialize qPeaks static variables and lcmsData object @todo constexpr
-        qPeaks::initialize();
+        // initialize();
 
         auto timeStart = std::chrono::high_resolution_clock::now();
         if (!silent)
