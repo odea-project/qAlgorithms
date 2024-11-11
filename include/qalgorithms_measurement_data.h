@@ -30,6 +30,7 @@ namespace qAlgorithms
         std::vector<dataPoint> dataPoints;
         std::vector<int> separators;
 
+        /// @todo purge this
         void addDataPoint(float x, float y, bool df, float dqsCentroid, float dqsBinning, int scanNumber, float mz)
         {
             dataPoints.emplace_back(x, y, df, dqsCentroid, dqsBinning, scanNumber, mz);

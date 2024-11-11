@@ -130,7 +130,7 @@ namespace qAlgorithms
     {
         std::vector<std::string> spectrum_mode = data.get_spectra_mode();         // get spectrum mode (centroid or profile)
         std::vector<std::string> spectrum_polarity = data.get_spectra_polarity(); // get spectrum polarity (positive or negative)
-        std::vector<int> indices = data.get_spectra_index();                      // get all indices
+        std::vector<int> scanIDs = data.get_spectra_index();                      // contains IDs of all relevant mass spectra
         std::vector<int> ms_levels = data.get_spectra_level();                    // get all MS levels
         std::vector<int> num_datapoints = data.get_spectra_array_length();        // get number of data points
         double expectedDifference = 0.0;                                          // expected difference between two consecutive x-axis values
@@ -148,22 +148,22 @@ namespace qAlgorithms
         // FILTER MS1 SPECTRA
         if (ms1only)
         {
-            indices.erase(std::remove_if(indices.begin(), indices.end(), [&ms_levels](int i)
+            scanIDs.erase(std::remove_if(scanIDs.begin(), scanIDs.end(), [&ms_levels](int i)
                                          { return ms_levels[i] != 1; }),
-                          indices.end()); // keep only MS1 spectra
+                          scanIDs.end()); // keep only MS1 spectra
         }
 
         // FILTER POLARITY and START INDEX and ARRAY LENGTH
-        indices.erase(std::remove_if(indices.begin(), indices.end(), [&spectrum_polarity, &num_datapoints, &polarity, &start_index](int i)
+        scanIDs.erase(std::remove_if(scanIDs.begin(), scanIDs.end(), [&spectrum_polarity, &num_datapoints, &polarity, &start_index](int i)
                                      { return spectrum_polarity[i] != polarity || i < start_index || num_datapoints[i] < 5; }),
-                      indices.end()); // keep only spectra with the specified polarity and start index and array length > 5
+                      scanIDs.end()); // keep only spectra with the specified polarity and start index and array length > 5
 
-        std::vector<double> retention_times = data.get_spectra_rt(indices); // get retention times
+        std::vector<double> retention_times = data.get_spectra_rt(scanIDs); // get retention times
         rt_diff = calcRTDiff(retention_times);                              // retention time difference
         convertRT.clear();
-        convertRT.reserve(indices.size());
+        convertRT.reserve(scanIDs.size());
         convertRT.push_back(NAN);            // first scan is index 1
-        addEmpty.resize(indices.size() + 1); // same length as convertRT if no empty scans exist
+        addEmpty.resize(scanIDs.size() + 1); // same length as convertRT if no empty scans exist
         std::fill(addEmpty.begin(), addEmpty.end(), 0);
 
         // CHECK IF CENTROIDED SPECTRA
@@ -173,7 +173,7 @@ namespace qAlgorithms
             std::cerr << "Warning: qAlgorithms is intended for profile spectra. A base uncertainty of "
                       << ppm_for_precentroided_data << " ppm is assumed for all supplied centroids\n";
 
-            for (int i = 0; i < int(indices.size()) - 1; i++) // i can be -1 briefly if there is a scan missing between 1. and 2. element
+            for (int i = 0; i < int(scanIDs.size()) - 1; i++) // i can be -1 briefly if there is a scan missing between 1. and 2. element
             {
                 if (retention_times[i + 1] - retention_times[i] > rt_diff * 1.75)
                 {
@@ -183,8 +183,8 @@ namespace qAlgorithms
                 }
                 convertRT.push_back(retention_times[i]); // convertRT[scan] = retention time of centroid
             }
-            convertRT.push_back(retention_times[indices.size() - 1]);
-            return transferCentroids(data, indices, retention_times, start_index, ppm_for_precentroided_data);
+            convertRT.push_back(retention_times[scanIDs.size() - 1]);
+            return transferCentroids(data, scanIDs, retention_times, start_index, ppm_for_precentroided_data);
         }
 
         if (displayPPMwarning)
@@ -195,25 +195,25 @@ namespace qAlgorithms
         // FILTER SPECTRUM MODE (PROFILE)
         if (num_centroided_spectra != 0) // @todo should these really be discarded?
         {
-            indices.erase(std::remove_if(indices.begin(), indices.end(), [&spectrum_mode](int i)
+            scanIDs.erase(std::remove_if(scanIDs.begin(), scanIDs.end(), [&spectrum_mode](int i)
                                          { return spectrum_mode[i] != "profile"; }),
-                          indices.end()); // keep only profile spectra
+                          scanIDs.end()); // keep only profile spectra
         }
 
-        std::vector<std::vector<qAlgorithms::CentroidPeak>> centroids(indices.size()); // create vector of peaks
+        std::vector<std::vector<qAlgorithms::CentroidPeak>> centroids(scanIDs.size()); // create vector of peaks
 
         // CALCULATE EXPECTED DIFFERENCE & CHECK FOR ZEROS
-        std::vector<std::vector<double>> data_vec = data.get_spectrum(indices[start_index]); // get first spectrum (x-axis)
+        std::vector<std::vector<double>> data_vec = data.get_spectrum(scanIDs[start_index]); // get first spectrum (x-axis)
         expectedDifference = calcExpectedDiff(data_vec[0]);                                  // calculate expected difference & check if Orbitrap
 
-#pragma omp parallel for
-        for (size_t i = 0; i < indices.size(); ++i) // loop over all indices
+#pragma omp parallel for // @todo falsified results on fast pc (fixed)
+        for (size_t i = 0; i < scanIDs.size(); ++i)
         {
-            const int index = indices[i];                                     // spectrum index
+            const int index = scanIDs[i];                                     // spectrum index
             std::vector<dataPoint> dataPoints = mzmlToDataPoint(data, index); // convert mzml to data points
             std::vector<unsigned int> dummy;
             treatedData treatedData = pretreatData(dataPoints, dummy, expectedDifference); // inter/extrapolate data, and identify data blocks
-            findCentroids(centroids[i], treatedData, index, retention_times[i]);           // find peaks in data blocks of treated data
+            centroids[i] = findCentroids(treatedData, index, retention_times[i]);          // find peaks in data blocks of treated data
         }
 
         if (!displayPPMwarning)
@@ -225,8 +225,9 @@ namespace qAlgorithms
         // to the binning step. addEmpty contains the number of empty scans to be added into
         // the qCentroids object at the given position. convertRT can later be used to look up
         // the retention time by the scan number, so that memory usage is reduced during binning
+        // retention_times contains the corresponding RT retention_times[scanNo]
 
-        for (int i = 0; i < int(indices.size()) - 1; i++) // i can be -1 briefly if there is a scan missing between 1. and 2. element
+        for (int i = 0; i < int(scanIDs.size()) - 1; i++) // i can be -1 briefly if there is a scan missing between 1. and 2. element
         {
             if (retention_times[i + 1] - retention_times[i] > rt_diff * 1.75)
             {
@@ -236,7 +237,7 @@ namespace qAlgorithms
             }
             convertRT.push_back(retention_times[i]); // convertRT[scan] = retention time of centroid
         }
-        convertRT.push_back(retention_times[indices.size() - 1]);
+        convertRT.push_back(retention_times[scanIDs.size() - 1]);
         return centroids;
     } // readStreamCraftMZML
 #pragma endregion "find centroids"

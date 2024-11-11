@@ -724,7 +724,7 @@ int main(int argc, char *argv[])
             exit(1);
         }
     }
-    std::cout << "ok";
+
     if (!inSpecified & !tasklistSpecified)
     {
         std::cerr << "Error: no input file supplied. Specify a file or directorey using the -i or "
@@ -848,7 +848,6 @@ int main(int argc, char *argv[])
                                                                                   rtDiff, true, polarity, 10); // read mzML file and find centroids via qPeaks
             if (centroids.size() < 5)
             {
-
                 if (!silent)
                 {
                     std::cout << "skipping mode: " << polarity << "\n";
