@@ -10,6 +10,7 @@
 
 namespace qAlgorithms
 {
+    /// @todo datapoint should only contain x and y, replace with a two-vector approach in the near future
     struct dataPoint
     {
         float x;
@@ -20,8 +21,8 @@ namespace qAlgorithms
         int scanNumber;
         float mz;
 
-        dataPoint(float x, float y, bool df, float dqsCentroid, float dqsBinning, int scanNumber, float mz)
-            : x(x), y(y), df(df), dqsCentroid(dqsCentroid), dqsBinning(dqsBinning), scanNumber(scanNumber), mz(mz) {}
+        // dataPoint(float x, float y, bool df, float dqsCentroid, float dqsBinning, int scanNumber, float mz)
+        //     : x(x), y(y), df(df), dqsCentroid(dqsCentroid), dqsBinning(dqsBinning), scanNumber(scanNumber), mz(mz) {}
     };
 
     struct treatedData
