@@ -15,7 +15,7 @@ namespace qAlgorithms
 {
 #pragma region "pass to qBinning"
 
-    CentroidedData qPeaks::passToBinning(std::vector<std::vector<CentroidPeak>> &allPeaks, std::vector<unsigned int> addEmpty)
+    CentroidedData passToBinning(std::vector<std::vector<CentroidPeak>> &allPeaks, std::vector<unsigned int> addEmpty)
     {
         // initialise empty vector with enough room for all scans - centroids[0] must remain empty
         std::vector<std::vector<qCentroid>> centroids(allPeaks.size() + 1, std::vector<qCentroid>(0));
@@ -133,7 +133,7 @@ namespace qAlgorithms
 #pragma endregion "initialize"
 
 #pragma region "find centroids"
-    void qPeaks::findCentroids(
+    void findCentroids(
         std::vector<CentroidPeak> &all_peaks,
         treatedData &treatedData,
         const int scanNumber,
@@ -223,7 +223,7 @@ namespace qAlgorithms
 #pragma endregion "find centroids"
 
 #pragma region "find peaks"
-    void qPeaks::findPeaks(
+    void findPeaks(
         std::vector<FeaturePeak> &all_peaks,
         treatedData &treatedData)
     {
@@ -333,7 +333,7 @@ namespace qAlgorithms
 #pragma endregion "find peaks"
 
 #pragma region "running regression"
-    void qPeaks::runningRegression(
+    void runningRegression(
         const float *y_start,
         const float *ylog_start,
         const bool *df_start,
@@ -355,7 +355,7 @@ namespace qAlgorithms
 #pragma endregion "running regression"
 
 #pragma region "running regression static"
-    void qPeaks::runningRegression_static(
+    void runningRegression_static(
         const float *y_start,
         const float *ylog_start,
         const bool *df_start,
@@ -378,7 +378,7 @@ namespace qAlgorithms
 #pragma endregion "running regression static"
 
 #pragma region validateRegressions
-    void qPeaks::validateRegressions(
+    void validateRegressions(
         const __m128 *beta,      // coefficients matrix
         const int n_segments,    // number of segments, i.e. regressions
         const float *y_start,    // pointer to the start of the Y matrix
@@ -408,10 +408,10 @@ namespace qAlgorithms
             float uncertainty_height = 0.f;
 
             // validate the regression
-            if (!qPeaks::validateRegressions_testseries(inverseMatrix_2_2, i, scale, df_start, y_start,
-                                                        ylog_start, coeff, df_sum, apex_position,
-                                                        left_limit, right_limit, area, uncertainty_area,
-                                                        uncertainty_pos, uncertainty_height))
+            if (!validateRegressions_testseries(inverseMatrix_2_2, i, scale, df_start, y_start,
+                                                ylog_start, coeff, df_sum, apex_position,
+                                                left_limit, right_limit, area, uncertainty_area,
+                                                uncertainty_pos, uncertainty_height))
             {
                 continue; // invalid regression
             }
@@ -513,7 +513,7 @@ namespace qAlgorithms
 #pragma endregion validateRegressions
 
 #pragma region "validate regressions static"
-    void qPeaks::validateRegressions_static(
+    void validateRegressions_static(
         const __m128 *beta,
         const int n_segments,
         const float *y_start,
@@ -545,10 +545,10 @@ namespace qAlgorithms
             float uncertainty_pos = 0.f; // uncertainty of the peak position
 
             // validate the regression
-            if (!qPeaks::validateRegressions_testseries(inverseMatrix_2_2, i, scale, df_start, y_start,
-                                                        ylog_start, coeff, df_sum, apex_position,
-                                                        left_limit, right_limit, area, uncertainty_area,
-                                                        uncertainty_pos, uncertainty_height))
+            if (!validateRegressions_testseries(inverseMatrix_2_2, i, scale, df_start, y_start,
+                                                ylog_start, coeff, df_sum, apex_position,
+                                                left_limit, right_limit, area, uncertainty_area,
+                                                uncertainty_pos, uncertainty_height))
             {
                 continue; // invalid regression
             }
@@ -585,7 +585,7 @@ namespace qAlgorithms
         }
 
         // lambda function to process a group of valid regressions, i.e., find the peak with the lowest MSE and push it to the valid regressions
-        auto processGroup = [this, &validRegressions, &validRegressionsTmp, &validRegressionsIndex, y_start, df_start](int i, int start_index_group)
+        auto processGroup = [&validRegressions, &validRegressionsTmp, &validRegressionsIndex, y_start, df_start](int i, int start_index_group)
         {
             int group_size = i - start_index_group + 1; // size of the group
             if (group_size == 1)
@@ -644,7 +644,7 @@ namespace qAlgorithms
 #pragma endregion "validate regressions static"
 
 #pragma region "validate regression test series"
-    bool qPeaks::validateRegressions_testseries(
+    bool validateRegressions_testseries(
         const float inverseMatrix_2_2,
         const int i,
         const int scale,
@@ -738,7 +738,7 @@ namespace qAlgorithms
           term is considered statistically insignificant, and the loop continues
           to the next iteration.
         */
-        float mse = qPeaks::calcSSE(-scale, scale, coeff, ylog_start + i) / (df_sum - 4); // mean squared error
+        float mse = calcSSE(-scale, scale, coeff, ylog_start + i) / (df_sum - 4); // mean squared error
 
         if (!isValidQuadraticTerm(coeff, inverseMatrix_2_2, mse, df_sum))
         {
@@ -781,7 +781,7 @@ namespace qAlgorithms
           the exponential domain. If the chi-square value is less than the corresponding
           value in the chiSquareArray, the loop continues to the next iteration.
         */
-        float chiSquare = qPeaks::calcSSE(-scale, scale, coeff, y_start + i, true, true);
+        float chiSquare = calcSSE(-scale, scale, coeff, y_start + i, true, true);
         if (chiSquare < chiSquareArray[df_sum - 5])
         {
             return false; // statistical insignificance of the chi-square value
@@ -794,7 +794,7 @@ namespace qAlgorithms
 #pragma endregion "validate regression test series"
 
 #pragma region mergeRegressionsOverScales
-    void qPeaks::mergeRegressionsOverScales(
+    void mergeRegressionsOverScales(
         std::vector<ValidRegression_static> &validRegressions,
         const float *y_start,
         const float *ylog_start,
@@ -846,7 +846,7 @@ namespace qAlgorithms
                 {
                     if (it_ref_peak->mse == 0.0)
                     { // calculate the mse of the ref peak
-                        it_ref_peak->mse = qPeaks::calcSSE(
+                        it_ref_peak->mse = calcSSE(
                                                (it_ref_peak->left_limit) - it_ref_peak->index_x0,  // left limit of the ref peak
                                                (it_ref_peak->right_limit) - it_ref_peak->index_x0, // right limit of the ref peak
                                                it_ref_peak->coeff,                                 // regression coefficients
@@ -873,7 +873,7 @@ namespace qAlgorithms
 
             if (it_new_peak->mse == 0.0)
             { // calculate the mse of the current peak
-                it_new_peak->mse = qPeaks::calcSSE(
+                it_new_peak->mse = calcSSE(
                                        (it_new_peak->left_limit) - it_new_peak->index_x0,  // left limit of the new peak
                                        (it_new_peak->right_limit) - it_new_peak->index_x0, // right limit of the new peak
                                        it_new_peak->coeff,                                 // regression coefficients
@@ -918,7 +918,7 @@ namespace qAlgorithms
 #pragma endregion mergeRegressionsOverScales
 
 #pragma region "merge regressions over scales static"
-    void qPeaks::mergeRegressionsOverScales_static(
+    void mergeRegressionsOverScales_static(
         ValidRegression_static *validRegressions,
         const int n_regressions,
         const float *y_start,
@@ -1061,7 +1061,7 @@ namespace qAlgorithms
         return std::make_pair(weighted_mean, uncertaintiy);
     };
 
-    void qPeaks::createCentroidPeaks(
+    void createCentroidPeaks(
         std::vector<CentroidPeak> &peaks,
         ValidRegression_static *validRegressions,
         std::vector<ValidRegression_static> *validRegressionsVec, // @todo only accept one regressions type
@@ -1134,7 +1134,7 @@ namespace qAlgorithms
         }
     }
 
-    void qPeaks::createFeaturePeaks(
+    void createFeaturePeaks(
         std::vector<FeaturePeak> &peaks,
         ValidRegression_static *validRegressions,
         std::vector<ValidRegression_static> *validRegressionsVec,
@@ -1225,8 +1225,8 @@ namespace qAlgorithms
     }
 #pragma endregion "create peaks"
 
-#pragma region qPeaks::calcSSE
-    float qPeaks::calcSSE(
+#pragma region calcSSE
+    float calcSSE(
         const int left_limit,
         const int right_limit,
         const __m128 &coeff,
@@ -1332,11 +1332,11 @@ namespace qAlgorithms
         }
 
         return result;
-    } // end qPeaks::calcSSE
-#pragma endregion qPeaks::calcSSE
+    } // end calcSSE
+#pragma endregion calcSSE
 
 #pragma region calcExtendedMse
-    void qPeaks::calcExtendedMse(
+    void calcExtendedMse(
         const float *y_start,                             // start of the measured data
         std::vector<ValidRegression_static> &regressions, // regressions to compare
         const bool *df_start)                             // degrees of freedom
@@ -1374,7 +1374,7 @@ namespace qAlgorithms
         for (auto regression = regressions.begin(); regression != regressions.end(); ++regression)
         {
             // step 2: calculate the mean squared error (MSE) between the predicted and actual values
-            const float mse = qPeaks::calcSSE(
+            const float mse = calcSSE(
                                   left_limit - regression->index_x0,  // left limit of the regression window (normalized scale)
                                   right_limit - regression->index_x0, // right limit of the regression window (normalized scale)
                                   regression->coeff,                  // regression coefficients
@@ -1406,7 +1406,7 @@ namespace qAlgorithms
 #pragma endregion calcExtendedMse
 
 #pragma region calcExtendedMse_static
-    void qPeaks::calcExtendedMse_static(
+    void calcExtendedMse_static(
         const float *y_start,
         ValidRegression_static *regressions_start,
         const int n_regressions,
@@ -1444,7 +1444,7 @@ namespace qAlgorithms
         for (int i = 0; i < n_regressions; ++i)
         {
             // step 2: calculate the mean squared error (MSE) between the predicted and actual values
-            const float mse = qPeaks::calcSSE(
+            const float mse = calcSSE(
                                   left_limit - (regressions_start + i)->index_x0,  // left limit of the regression window (normalized scale)
                                   right_limit - (regressions_start + i)->index_x0, // right limit of the regression window (normalized scale)
                                   (regressions_start + i)->coeff,                  // regression coefficients
@@ -1475,7 +1475,7 @@ namespace qAlgorithms
 #pragma endregion calcExtendedMse_static
 
 #pragma region calcExtendedMsePair_static
-    void qPeaks::calcExtendedMsePair_static(
+    void calcExtendedMsePair_static(
         const float *y_start,
         ValidRegression_static *low_scale_regression,
         ValidRegression_static *hi_scale_regression,
@@ -1502,7 +1502,7 @@ namespace qAlgorithms
         }
 
         // step 2: calculate the mean squared error (MSE) between the predicted and actual values
-        float mse_low_scale = qPeaks::calcSSE(
+        float mse_low_scale = calcSSE(
                                   left_limit - low_scale_regression->index_x0,  // left limit of the regression window (normalized scale)
                                   right_limit - low_scale_regression->index_x0, // right limit of the regression window (normalized scale)
                                   low_scale_regression->coeff,                  // regression coefficients
@@ -1510,7 +1510,7 @@ namespace qAlgorithms
                                   true) /                                       // calculate the exp of the yhat values
                               (df_sum - 4);
 
-        float mse_hi_scale = qPeaks::calcSSE(
+        float mse_hi_scale = calcSSE(
                                  left_limit - hi_scale_regression->index_x0,  // left limit of the regression window (normalized scale)
                                  right_limit - hi_scale_regression->index_x0, // right limit of the regression window (normalized scale)
                                  hi_scale_regression->coeff,                  // regression coefficients
@@ -1533,7 +1533,7 @@ namespace qAlgorithms
 #pragma endregion calcExtendedMsePair_static
 
 #pragma region calcExtendedMseOverScales_static
-    void qPeaks::calcExtendedMseOverScales_static(
+    void calcExtendedMseOverScales_static(
         const float *y_start,
         ValidRegression_static *validRegressions,
         const std::vector<int> &validRegressionsInGroup,
@@ -1543,7 +1543,7 @@ namespace qAlgorithms
         // check new_peak for mse
         if (validRegressions[i_new_peak].mse == 0.0)
         { // calculate the mse of the current peak
-            validRegressions[i_new_peak].mse = qPeaks::calcSSE(
+            validRegressions[i_new_peak].mse = calcSSE(
                                                    validRegressions[i_new_peak].left_limit - validRegressions[i_new_peak].index_x0,  // left limit of the new peak (normalized scale)
                                                    validRegressions[i_new_peak].right_limit - validRegressions[i_new_peak].index_x0, // right limit of the new peak (normalized scale)
                                                    validRegressions[i_new_peak].coeff,                                               // regression coefficients
@@ -1559,7 +1559,7 @@ namespace qAlgorithms
         {
             if (validRegressions[i_ref_peak].mse == 0.0)
             { // calculate the mse of the ref peak
-                validRegressions[i_ref_peak].mse = qPeaks::calcSSE(
+                validRegressions[i_ref_peak].mse = calcSSE(
                                                        validRegressions[i_ref_peak].left_limit - validRegressions[i_ref_peak].index_x0,  // left limit of the ref peak (normalized scale)
                                                        validRegressions[i_ref_peak].right_limit - validRegressions[i_ref_peak].index_x0, // right limit of the ref peak (normalized scale)
                                                        validRegressions[i_ref_peak].coeff,                                               // regression coefficients
@@ -1587,7 +1587,7 @@ namespace qAlgorithms
 #pragma endregion calcExtendedMseOverScales_static
 
 #pragma region calcDF
-    int qPeaks::calcDF(
+    int calcDF(
         const bool *df_start,     // start of the degrees of freedom
         unsigned int left_limit,  // left limit
         unsigned int right_limit) // right limit
@@ -1605,11 +1605,11 @@ namespace qAlgorithms
 #pragma endregion calcDF
 
 #pragma region calculateApexAndValleyPositions
-    bool qPeaks::calculateApexAndValleyPositions(
+    bool calculateApexAndValleyPositions(
         const __m128 &coeff,
         const int scale,
         float &apex_position,
-        float &valley_position) const
+        float &valley_position)
     {
         // check if beta 2 or beta 3 is zero
         if (((float *)&coeff)[2] == 0.0f || ((float *)&coeff)[3] == 0.0f)
@@ -1663,9 +1663,9 @@ namespace qAlgorithms
 #pragma endregion calculateApexAndValleyPositions
 
 #pragma region "multiplyVecMatrixVecTranspose"
-    float qPeaks::multiplyVecMatrixVecTranspose(
+    float multiplyVecMatrixVecTranspose(
         const float vec[4],
-        const int scale) const
+        const int scale)
     {
         // Prefetch the inverse matrix to improve cache performance
         const auto invArray = initialize();
@@ -1709,12 +1709,12 @@ namespace qAlgorithms
 #pragma endregion "multiplyVecMatrixVecTranspose"
 
 #pragma region "isValidApexToEdge"
-    bool qPeaks::isValidApexToEdge(
+    bool isValidApexToEdge(
         const double apex_position,
         const int scale,
         const int index_loop,
         const float *y_start,
-        float &apexToEdge) const
+        float &apexToEdge)
     {
         int idx_apex = (int)std::round(apex_position) + scale + index_loop; // index of the apex
         int idx_left = index_loop;                                          // index of the left edge
@@ -1729,11 +1729,11 @@ namespace qAlgorithms
 #pragma endregion "isValidApexToEdge"
 
 #pragma region isValidQuadraticTerm
-    bool qPeaks::isValidQuadraticTerm(
+    bool isValidQuadraticTerm(
         const __m128 &coeff,
         const float inverseMatrix_2_2,
         const float mse,
-        const int df_sum) const
+        const int df_sum)
     {
         double tValue = std::max(                                                 // t-value for the quadratic term
             std::abs(((float *)&coeff)[2]) / std::sqrt(inverseMatrix_2_2 * mse),  // t-value for the quadratic term left side of the peak
@@ -1743,7 +1743,7 @@ namespace qAlgorithms
 #pragma endregion isValidQuadraticTerm
 
 #pragma region isValidPeakHeight
-    bool qPeaks::isValidPeakHeight(
+    bool isValidPeakHeight(
         const float mse,
         const int index,
         const int scale,
@@ -1751,7 +1751,7 @@ namespace qAlgorithms
         const float valley_position,
         const int df_sum,
         const float apexToEdge,
-        float &uncertainty_height) const
+        float &uncertainty_height)
     {
         float Jacobian_height[4];           // Jacobian matrix for the height
         Jacobian_height[0] = 1.f;           // height;
@@ -1797,13 +1797,13 @@ namespace qAlgorithms
 #pragma endregion isValidPeakHeight
 
 #pragma region isValidPeakArea
-    bool qPeaks::isValidPeakArea(
+    bool isValidPeakArea(
         const __m128 &coeff,
         const float mse,
         const int scale,
         const int df_sum,
         float &area,
-        float &uncertainty_area) const
+        float &uncertainty_area)
     {
         // predefine expressions
         float b1 = ((float *)&coeff)[1];
@@ -1922,12 +1922,12 @@ namespace qAlgorithms
 #pragma endregion isValidPeakArea
 
 #pragma region "calcUncertaintyPosition"
-    void qPeaks::calcUncertaintyPosition(
+    void calcUncertaintyPosition(
         const float mse,
         const __m128 &coeff,
         const float apex_position,
         const int scale,
-        float &uncertainty_pos) const
+        float &uncertainty_pos)
     {
         const float _b1 = 1 / ((float *)&coeff)[1];
         const float _b2 = 1 / ((float *)&coeff)[2];
@@ -1950,7 +1950,7 @@ namespace qAlgorithms
 #pragma endregion "calcUncertaintyPosition"
 
 #pragma region calculateNumberOfRegressions
-    int qPeaks::calculateNumberOfRegressions(const int n) const
+    int calculateNumberOfRegressions(const int n)
     {
         /*
         int maxScale = (int) (n - 1) / 2;
@@ -1968,7 +1968,7 @@ namespace qAlgorithms
 
 #pragma region "convolve regression"
 
-    void qPeaks::convolve_static(
+    void convolve_static(
         const size_t scale,
         const float *vec,
         const size_t n,
@@ -1990,7 +1990,7 @@ namespace qAlgorithms
         }
     }
 
-    void qPeaks::convolve_dynamic(
+    void convolve_dynamic(
         const size_t scale,
         const float *vec,
         const size_t n,
@@ -2014,7 +2014,7 @@ namespace qAlgorithms
         delete[] products;
     }
 
-    void qPeaks::convolve_SIMD(
+    void convolve_SIMD(
         const size_t scale,
         const float *vec,
         const size_t n,
