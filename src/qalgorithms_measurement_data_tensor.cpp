@@ -13,17 +13,17 @@ namespace qAlgorithms
 {
 #pragma region "private methods"
     // methods
-    float TensorData::calcRTDiff(std::vector<double> &retention_times)
+    const float calcRTDiff(std::vector<double> &retention_times)
     {
         float sum = 0.0;
         for (size_t i = 1; i < retention_times.size(); ++i)
         {
             sum += retention_times[i] - retention_times[i - 1];
         }
-        return sum / (retention_times.size() - 1);
+        return sum / float(retention_times.size() - 1);
     }
 
-    std::vector<dataPoint> TensorData::mzmlToDataPoint(
+    std::vector<dataPoint> mzmlToDataPoint(
         sc::MZML &data,
         const int index)
     {
@@ -59,7 +59,7 @@ namespace qAlgorithms
         return dataPoints;
     }
 
-    std::vector<dataPoint> TensorData::qbinToDataPoint(
+    std::vector<dataPoint> qbinToDataPoint(
         qAlgorithms::EIC &eic)
     {
         std::vector<dataPoint> dataPoints;              // create vector of data points
@@ -119,10 +119,11 @@ namespace qAlgorithms
 #pragma endregion "private methods"
 
 #pragma region "find centroids"
-    std::vector<std::vector<qAlgorithms::CentroidPeak>> TensorData::findCentroids_MZML(
+    std::vector<std::vector<qAlgorithms::CentroidPeak>> findCentroids_MZML(
         sc::MZML &data,
         std::vector<unsigned int> &addEmpty,
         std::vector<float> &convertRT,
+        float &rt_diff,
         const bool ms1only,
         const std::string polarity,
         const int start_index)
@@ -241,8 +242,8 @@ namespace qAlgorithms
 #pragma endregion "find centroids"
 
 #pragma region "find peaks"
-    std::vector<qAlgorithms::FeaturePeak> TensorData::findPeaks_QBIN(
-        std::vector<qAlgorithms::EIC> &data)
+    std::vector<qAlgorithms::FeaturePeak> findPeaks_QBIN(
+        std::vector<qAlgorithms::EIC> &data, float rt_diff)
     {
         std::vector<qAlgorithms::FeaturePeak> peaks;    // return vector for feature list
         peaks.reserve(data.size() * 0.7);               // should be enough to fit all features without reallocation
