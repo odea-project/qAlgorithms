@@ -105,7 +105,6 @@ namespace qAlgorithms
         ValidRegression_static *validRegressions);
 
     bool validateRegressions_testseries(
-        const float inverseMatrix_2_2,
         const int i,
         const int scale,
         const bool *df_start,
@@ -299,7 +298,7 @@ namespace qAlgorithms
      */
     bool isValidQuadraticTerm(
         const __m128 &coeff,
-        const float inverseMatrix_2_2,
+        const int scale,
         const float mse,
         const int df_sum);
 

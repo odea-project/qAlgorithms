@@ -67,19 +67,6 @@ namespace qAlgorithms
 #pragma endregion "pass to qBinning"
 
 #pragma region "initialize"
-    // alignas(float) float x_square[128];   // array to store the square of the x values
-    // alignas(float) float invArray[64][6]; // array to store the 6 unique values of the inverse matrix for each scale
-    // __m128 ZERO_128;                      // [0., 0., 0., 0.]
-    // __m256 ZERO_256;                      // [0., 0., 0., 0., 0., 0., 0., 0.]
-    // __m128 KEY_128;                       // [0., 4., 2., 1.]
-    // __m256 LINSPACE_UP_POS_256;           // [7., 6., 5., 4., 3., 2., 1., 0.]
-    // __m256 LINSPACE_UP_NEG_256;           // [-7., -6., -5., -4., -3., -2., -1., 0.]
-    // __m256 LINSPACE_DOWN_NEG_256;         // [0., -1., -2., -3., -4., -5., -6., -7.]
-    // __m256i LINSPACE_UP_INT_256;          // [7, 6, 5, 4, 3, 2, 1, 0]
-    // __m256i LINSPACE_DOWN_INT_256;        // [0, 1, 2, 3, 4, 5, 6, 7]
-    // __m256 MINUS_ONE_256;                 // [-1., -1., -1., -1., -1., -1., -1., -1.]
-
-    // alignas(16) static float invArray[64][6]; // contains the unique entries from the inverse matrix
 
     constexpr std::array<float, 384> initialize()
     {
@@ -90,7 +77,7 @@ namespace qAlgorithms
         float XtX_12 = 0.f;
         float XtX_13 = 0.f;
         float XtX_22 = 0.f;
-        for (int i = 1; i < 64; ++i) // @todo warum i = 1?
+        for (int i = 1; i < 64; ++i)
         {
             XtX_00 += 2.f;
             XtX_02 += i * i;
@@ -119,7 +106,6 @@ namespace qAlgorithms
             float inv_31 = -(-L_21 * inv_11 + L_32 * inv_21) / L_33;
             float inv_32 = -L_32 * inv_22 / L_33;
 
-            /// rewrite so that access is invArray[(scale-1) * 6 + (1:6)] @todo
             invArray[i * 6 + 0] = inv_00 * inv_00 + inv_20 * inv_20 + inv_30 * inv_30; // cell: 0,0
             invArray[i * 6 + 1] = inv_22 * inv_20 + inv_32 * inv_30;                   // cell: 0,2
             invArray[i * 6 + 2] = inv_11 * inv_11 + inv_21 * inv_21 + inv_31 * inv_31; // cell: 1,1
@@ -128,11 +114,11 @@ namespace qAlgorithms
             invArray[i * 6 + 5] = inv_32 * inv_33;                                     // cell: 2,3
         }
         return invArray;
-        // return 1;
     }
 #pragma endregion "initialize"
 
 #pragma region "find centroids"
+    /// @todo make all_peaks the return value
     void findCentroids(
         std::vector<CentroidPeak> &all_peaks,
         treatedData &treatedData,
@@ -220,9 +206,8 @@ namespace qAlgorithms
 #pragma endregion "find centroids"
 
 #pragma region "find peaks"
-    void findPeaks(
-        std::vector<FeaturePeak> &all_peaks,
-        treatedData &treatedData)
+    /// @todo make all_peaks the return value
+    void findPeaks(std::vector<FeaturePeak> &all_peaks, treatedData &treatedData)
     {
         for (auto it_separators = treatedData.separators.begin(); it_separators != treatedData.separators.end() - 1; it_separators++)
         {
@@ -384,11 +369,6 @@ namespace qAlgorithms
         const int scale,         // scale, i.e., the number of data points in a half window excluding the center point
         std::vector<ValidRegression_static> &validRegressions)
     {
-        // declare constants
-        const auto invArray = initialize();
-        const float inverseMatrix_2_2 = invArray[scale * 6 + 4]; // variance of the quadratic term left side of the peak
-
-        // declare variables
         std::vector<ValidRegression_static> validRegressionsTmp; // temporary vector to store valid regressions <index, apex_position>
 
         // iterate columwise over the coefficients matrix beta
@@ -405,7 +385,7 @@ namespace qAlgorithms
             float uncertainty_height = 0.f;
 
             // validate the regression
-            if (!validateRegressions_testseries(inverseMatrix_2_2, i, scale, df_start, y_start,
+            if (!validateRegressions_testseries(i, scale, df_start, y_start,
                                                 ylog_start, coeff, df_sum, apex_position,
                                                 left_limit, right_limit, area, uncertainty_area,
                                                 uncertainty_pos, uncertainty_height))
@@ -486,7 +466,11 @@ namespace qAlgorithms
 
         /*
           Survival of the Fittest Filter:
-          This block of code implements the survival of the fittest filter. It selects the peak with the lowest mean squared error (MSE) as the representative of the group. If the group contains only one peak, the peak is directly pushed to the valid regressions. If the group contains multiple peaks, the peak with the lowest MSE is selected as the representative of the group and pushed to the valid regressions.
+          This block of code implements the survival of the fittest filter. It selects the peak
+          with the lowest mean squared error (MSE) as the representative of the group. If the
+          group contains only one peak, the peak is directly pushed to the valid regressions.
+          If the group contains multiple peaks, the peak with the lowest MSE is selected as
+          the representative of the group and pushed to the valid regressions.
         */
         for (auto &group : regressionGroups)
         {
@@ -520,11 +504,6 @@ namespace qAlgorithms
         int &validRegressionsIndex,
         ValidRegression_static *validRegressions)
     {
-        // declare constants
-        const auto invArray = initialize();
-        const float inverseMatrix_2_2 = invArray[scale * 6 + 4]; // variance of the quadratic term left side of the peak
-
-        // declare variables
         ValidRegression_static validRegressionsTmp[512]; // temporary vector to store valid regressions initialized with random states
         int validRegressionsIndexTmp = 0;                // index of the valid regressions
 
@@ -542,7 +521,7 @@ namespace qAlgorithms
             float uncertainty_pos = 0.f; // uncertainty of the peak position
 
             // validate the regression
-            if (!validateRegressions_testseries(inverseMatrix_2_2, i, scale, df_start, y_start,
+            if (!validateRegressions_testseries(i, scale, df_start, y_start,
                                                 ylog_start, coeff, df_sum, apex_position,
                                                 left_limit, right_limit, area, uncertainty_area,
                                                 uncertainty_pos, uncertainty_height))
@@ -553,7 +532,9 @@ namespace qAlgorithms
             // at this point, the peak is validated
             /*
               Add to a temporary vector of valid regressions:
-              This block of code adds the valid peak to a temporary vector of valid regressions. It calculates the left and right limits of the peak based on the valley position. Then it stores the index of the valid regression in the temporary vector of valid regressions.
+              This block of code adds the valid peak to a temporary vector of valid regressions.
+              It calculates the left and right limits of the peak based on the valley position.
+              Then it stores the index of the valid regression in the temporary vector of valid regressions.
             */
             validRegressionsTmp[validRegressionsIndexTmp].index_x0 = i + scale;                      // index of the center of the window (x==0) in the Y matrix
             validRegressionsTmp[validRegressionsIndexTmp].scale = scale;                             // scale
@@ -642,7 +623,6 @@ namespace qAlgorithms
 
 #pragma region "validate regression test series"
     bool validateRegressions_testseries(
-        const float inverseMatrix_2_2,
         const int i,
         const int scale,
         const bool *df_start,
@@ -737,7 +717,7 @@ namespace qAlgorithms
         */
         float mse = calcSSE(-scale, scale, coeff, ylog_start + i) / (df_sum - 4); // mean squared error
 
-        if (!isValidQuadraticTerm(coeff, inverseMatrix_2_2, mse, df_sum))
+        if (!isValidQuadraticTerm(coeff, scale, mse, df_sum))
         {
             return false; // statistical insignificance of the quadratic term
         }
@@ -1677,14 +1657,15 @@ namespace qAlgorithms
 #pragma region isValidQuadraticTerm
     bool isValidQuadraticTerm(
         const __m128 &coeff,
-        const float inverseMatrix_2_2,
+        const int scale,
         const float mse,
         const int df_sum)
     {
-        double tValue = std::max(                                                 // t-value for the quadratic term
-            std::abs(((float *)&coeff)[2]) / std::sqrt(inverseMatrix_2_2 * mse),  // t-value for the quadratic term left side of the peak
-            std::abs(((float *)&coeff)[3]) / std::sqrt(inverseMatrix_2_2 * mse)); // t-value for the quadratic term right side of the peak
-        return tValue > tValuesArray[df_sum - 5];                                 // statistical significance of the quadratic term
+        float divisor = std::sqrt((initialize())[scale * 6 + 4] * mse); // inverseMatrix_2_2 is at position 4 of initialize()
+        double tValue = std::max(                                       // t-value for the quadratic term
+            std::abs(((float *)&coeff)[2]) / divisor,                   // t-value for the quadratic term left side of the peak
+            std::abs(((float *)&coeff)[3]) / divisor);                  // t-value for the quadratic term right side of the peak
+        return tValue > tValuesArray[df_sum - 5];                       // statistical significance of the quadratic term
     }
 #pragma endregion isValidQuadraticTerm
 
