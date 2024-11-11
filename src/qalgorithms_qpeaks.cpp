@@ -139,9 +139,6 @@ namespace qAlgorithms
         const int scanNumber,
         const float retentionTime)
     {
-        const float rt[2] = {-255.f, retentionTime}; // this will assign peaks to the retention time
-        const float *rt_start = rt;                  // start of the retention time vector
-
         for (auto it_separators = treatedData.separators.begin(); it_separators != treatedData.separators.end() - 1; it_separators++)
         {
             const int n = *(it_separators + 1) - *it_separators; // calculate the number of data points in the block
@@ -178,7 +175,7 @@ namespace qAlgorithms
                 {
                     continue; // no valid peaks
                 }
-                createCentroidPeaks(all_peaks, validRegressions, nullptr, validRegressionsIndex, y_start, mz_start, rt_start, df_start, scanNumber);
+                createCentroidPeaks(all_peaks, validRegressions, nullptr, validRegressionsIndex, y_start, mz_start, df_start, scanNumber);
             }
             else
             {
@@ -212,7 +209,7 @@ namespace qAlgorithms
                 {
                     continue; // no valid peaks
                 }
-                createCentroidPeaks(all_peaks, nullptr, &validRegressions, validRegressions.size(), y_start, mz_start, rt_start, df_start, scanNumber);
+                createCentroidPeaks(all_peaks, nullptr, &validRegressions, validRegressions.size(), y_start, mz_start, df_start, scanNumber);
                 delete[] Y;
                 delete[] Ylog;
                 delete[] X;
@@ -998,28 +995,7 @@ namespace qAlgorithms
 #pragma endregion "merge regressions over scales static"
 
 #pragma region "create peaks"
-    // void createPeaks(
-    //     std::vector<Peak> &peaks,
-    //     const std::vector<ValidRegression_static> &validRegressions,
-    //     const float *y_start,
-    //     const float *mz_start,
-    //     const float *rt_start,
-    //     const bool *df_start,
-    //     const float *dqs_cen,
-    //     const float *dqs_bin,
-    //     const float *dqs_peak,
-    //     const int scanNumber)
-    // {
-    //     // iterate over the validRegressions vector
-    //     for (auto &regression : validRegressions)
-    //     {
-    //         if (regression.isValid)
-    //         {
-    //             addPeakProperties(peaks, regression, y_start, mz_start, rt_start,
-    //                               df_start, dqs_cen, dqs_bin, dqs_peak, scanNumber);
-    //         }
-    //     }
-    // }
+
     std::pair<float, float> weightedMeanAndVariance(const float *x, const float *w, const bool *df,
                                                     int left_limit, int right_limit)
     {
@@ -1068,7 +1044,6 @@ namespace qAlgorithms
         const int validRegressionsIndex,
         const float *y_start,
         const float *mz_start,
-        const float *rt_start,
         const bool *df_start,
         const int scanNumber)
     {
@@ -1106,22 +1081,11 @@ namespace qAlgorithms
                 peak.area = regression.area * exp_b0;
                 peak.areaUncertainty = regression.uncertainty_area * exp_b0;
 
-                // rt not needed for centroids at this stage
-
-                if (*mz_start != -255.f) // @todo check which branch is which
-                {
-                    // re-scale the apex position to x-axis
-                    float mz0 = *(mz_start + (int)std::floor(regression.apex_position));
-                    float dmz = *(mz_start + (int)std::floor(regression.apex_position) + 1) - mz0;
-                    peak.mz = mz0 + dmz * (regression.apex_position - std::floor(regression.apex_position));
-                    peak.mzUncertainty = regression.uncertainty_pos * dmz * tValuesArray[regression.df + 1] * sqrt(1 + 1 / (regression.df + 4));
-                }
-                else
-                {
-                    std::pair<float, float> mz = weightedMeanAndVariance(mz_start, y_start, df_start, regression.left_limit, regression.right_limit);
-                    peak.mz = mz.first;
-                    peak.mzUncertainty = mz.second;
-                }
+                // re-scale the apex position to x-axis
+                float mz0 = *(mz_start + (int)std::floor(regression.apex_position));
+                float dmz = *(mz_start + (int)std::floor(regression.apex_position) + 1) - mz0;
+                peak.mz = mz0 + dmz * (regression.apex_position - std::floor(regression.apex_position));
+                peak.mzUncertainty = regression.uncertainty_pos * dmz * tValuesArray[regression.df + 1] * sqrt(1 + 1 / (regression.df + 4));
 
                 peak.dqsCen = experfc(regression.uncertainty_area / regression.area, -1.0);
 
@@ -1179,34 +1143,16 @@ namespace qAlgorithms
                 peak.area = regression.area * exp_b0;
                 peak.areaUncertainty = regression.uncertainty_area * exp_b0;
 
-                if (*rt_start != -255.f)
-                {
-                    // re-scale the apex position to x-axis
-                    const double rt0 = *(rt_start + (int)std::floor(regression.apex_position));
-                    const double drt = *(rt_start + (int)std::floor(regression.apex_position) + 1) - rt0;
-                    const double apex_position = rt0 + drt * (regression.apex_position - std::floor(regression.apex_position));
-                    peak.retentionTime = apex_position;
-                    peak.retentionTimeUncertainty = regression.uncertainty_pos * drt;
-                }
-                else
-                {
-                    peak.retentionTime = *(rt_start + 1);
-                }
+                const double rt0 = *(rt_start + (int)std::floor(regression.apex_position));
+                const double drt = *(rt_start + (int)std::floor(regression.apex_position) + 1) - rt0;
+                const double apex_position = rt0 + drt * (regression.apex_position - std::floor(regression.apex_position));
+                peak.retentionTime = apex_position;
+                peak.retentionTimeUncertainty = regression.uncertainty_pos * drt;
 
-                if (*mz_start != -255.f) // @todo check which branch is which
-                {
-                    // re-scale the apex position to x-axis
-                    float mz0 = *(mz_start + (int)std::floor(regression.apex_position));
-                    float dmz = *(mz_start + (int)std::floor(regression.apex_position) + 1) - mz0;
-                    peak.mz = mz0 + dmz * (regression.apex_position - std::floor(regression.apex_position));
-                    peak.mzUncertainty = regression.uncertainty_pos * dmz * tValuesArray[regression.df + 1] * sqrt(1 + 1 / (regression.df + 4));
-                }
-                else
-                {
-                    std::pair<float, float> mz = weightedMeanAndVariance(mz_start, y_start, df_start, regression.left_limit, regression.right_limit);
-                    peak.mz = mz.first;
-                    peak.mzUncertainty = mz.second;
-                }
+                std::pair<float, float> mz = weightedMeanAndVariance(mz_start, y_start, df_start, regression.left_limit, regression.right_limit);
+                peak.mz = mz.first;
+                peak.mzUncertainty = mz.second;
+
                 peak.dqsCen = weightedMeanAndVariance(dqs_cen, y_start, df_start, regression.left_limit, regression.right_limit).first;
                 peak.dqsBin = weightedMeanAndVariance(dqs_bin, y_start, df_start, regression.left_limit, regression.right_limit).first;
                 peak.dqsPeak = experfc(regression.uncertainty_area / regression.area, -1.0);
