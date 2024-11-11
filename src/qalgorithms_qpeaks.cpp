@@ -81,9 +81,9 @@ namespace qAlgorithms
 
     // alignas(16) static float invArray[64][6]; // contains the unique entries from the inverse matrix
 
-    std::array<float, 384> initialize()
+    constexpr std::array<float, 384> initialize()
     {
-        float invArray[384];
+        std::array<float, 384> invArray;
         float XtX_00 = 1.f;
         float XtX_02 = 0.f;
         float XtX_11 = 0.f;
@@ -119,13 +119,13 @@ namespace qAlgorithms
             float inv_31 = -(-L_21 * inv_11 + L_32 * inv_21) / L_33;
             float inv_32 = -L_32 * inv_22 / L_33;
 
-            /// rewrite so that access is invArray[scale * 6 + (1:6)] @todo
-            invArray[i][0] = inv_00 * inv_00 + inv_20 * inv_20 + inv_30 * inv_30; // cell: 0,0
-            invArray[i][1] = inv_22 * inv_20 + inv_32 * inv_30;                   // cell: 0,2
-            invArray[i][2] = inv_11 * inv_11 + inv_21 * inv_21 + inv_31 * inv_31; // cell: 1,1
-            invArray[i][3] = -inv_31 * inv_33;                                    // cell: 1,2
-            invArray[i][4] = inv_33 * inv_33;                                     // cell: 2,2
-            invArray[i][5] = inv_32 * inv_33;                                     // cell: 2,3
+            /// rewrite so that access is invArray[(scale-1) * 6 + (1:6)] @todo
+            invArray[i * 6 + 0] = inv_00 * inv_00 + inv_20 * inv_20 + inv_30 * inv_30; // cell: 0,0
+            invArray[i * 6 + 1] = inv_22 * inv_20 + inv_32 * inv_30;                   // cell: 0,2
+            invArray[i * 6 + 2] = inv_11 * inv_11 + inv_21 * inv_21 + inv_31 * inv_31; // cell: 1,1
+            invArray[i * 6 + 3] = -inv_31 * inv_33;                                    // cell: 1,2
+            invArray[i * 6 + 4] = inv_33 * inv_33;                                     // cell: 2,2
+            invArray[i * 6 + 5] = inv_32 * inv_33;                                     // cell: 2,3
         }
         return invArray;
         // return 1;
@@ -162,7 +162,7 @@ namespace qAlgorithms
                 const auto df_start = df;
 
                 int i = 0;
-                for (int idx = *it_separators; idx < *(it_separators + 1); idx++)
+                for (int idx = *it_separators; idx < *(it_separators + 1); idx++) // @todo should be idx = 0; idx < n+1
                 {
                     Y[i] = treatedData.dataPoints[idx].y;
                     X[i] = treatedData.dataPoints[idx].x;
@@ -388,7 +388,8 @@ namespace qAlgorithms
         std::vector<ValidRegression_static> &validRegressions)
     {
         // declare constants
-        const float inverseMatrix_2_2 = invArray[scale][4]; // variance of the quadratic term left side of the peak
+        const auto invArray = initialize();
+        const float inverseMatrix_2_2 = invArray[scale * 6 + 4]; // variance of the quadratic term left side of the peak
 
         // declare variables
         std::vector<ValidRegression_static> validRegressionsTmp; // temporary vector to store valid regressions <index, apex_position>
@@ -523,7 +524,8 @@ namespace qAlgorithms
         ValidRegression_static *validRegressions)
     {
         // declare constants
-        const float inverseMatrix_2_2 = invArray[scale][4]; // variance of the quadratic term left side of the peak
+        const auto invArray = initialize();
+        const float inverseMatrix_2_2 = invArray[scale * 6 + 4]; // variance of the quadratic term left side of the peak
 
         // declare variables
         ValidRegression_static validRegressionsTmp[512]; // temporary vector to store valid regressions initialized with random states
@@ -1599,12 +1601,6 @@ namespace qAlgorithms
             }
         }
         return degreesOfFreedom;
-        // return std::accumulate(
-        //     df_start + left_limit,
-        //     df_start + right_limit + 1,
-        //     0,
-        //     [](int sum, bool p)
-        //     { return sum + p; });
     } // end calcDF
 #pragma endregion calcDF
 
@@ -1672,7 +1668,8 @@ namespace qAlgorithms
         const int scale) const
     {
         // Prefetch the inverse matrix to improve cache performance
-        _mm_prefetch(reinterpret_cast<const char *>(&invArray[scale][0]), _MM_HINT_T0);
+        const auto invArray = initialize();
+        _mm_prefetch(reinterpret_cast<const char *>(&invArray[scale * 6 + 0]), _MM_HINT_T0);
 
         // Load the vector values
         __m128 vec_values = _mm_loadu_ps(vec);
@@ -1700,12 +1697,12 @@ namespace qAlgorithms
         __m128 v3_v3 = _mm_mul_ps(temp6, temp6); // v3_v3 = vec[3] * vec[3]
 
         // Calculate the result
-        float result = _mm_cvtss_f32(v0_v0) * invArray[scale][0] +
-                       _mm_cvtss_f32(v1_v1) * invArray[scale][2] +
-                       invArray[scale][4] * (_mm_cvtss_f32(v2_v2) + _mm_cvtss_f32(v3_v3)) +
-                       2 * (invArray[scale][1] * (_mm_cvtss_f32(v0_v1) + _mm_cvtss_f32(v0_v2)) +
-                            invArray[scale][3] * (_mm_cvtss_f32(v1_v2) - _mm_cvtss_f32(v1_v3)) +
-                            _mm_cvtss_f32(v2_v3) * invArray[scale][5]);
+        float result = _mm_cvtss_f32(v0_v0) * invArray[scale * 6 + 0] +
+                       _mm_cvtss_f32(v1_v1) * invArray[scale * 6 + 2] +
+                       invArray[scale * 6 + 4] * (_mm_cvtss_f32(v2_v2) + _mm_cvtss_f32(v3_v3)) +
+                       2 * (invArray[scale * 6 + 1] * (_mm_cvtss_f32(v0_v1) + _mm_cvtss_f32(v0_v2)) +
+                            invArray[scale * 6 + 3] * (_mm_cvtss_f32(v1_v2) - _mm_cvtss_f32(v1_v3)) +
+                            _mm_cvtss_f32(v2_v3) * invArray[scale * 6 + 5]);
 
         return result;
     }
@@ -2040,10 +2037,11 @@ namespace qAlgorithms
             products[i] = _mm_setzero_ps();
         }
 
+        const auto invArray = initialize();
         alignas(__m128) __m128 kernel[3];
-        kernel[0] = _mm_set_ps(invArray[scale][1], invArray[scale][1], 0.0f, invArray[scale][0]);
-        kernel[1] = _mm_set_ps(invArray[scale][3] - invArray[scale][5], -invArray[scale][3] - invArray[scale][4], -invArray[scale][2] - invArray[scale][3], -invArray[scale][1]);
-        kernel[2] = _mm_set_ps(2.f * invArray[scale][5], 2.f * invArray[scale][4], 2.f * invArray[scale][3], 2.f * invArray[scale][1]);
+        kernel[0] = _mm_set_ps(invArray[scale * 6 + 1], invArray[scale * 6 + 1], 0.0f, invArray[scale * 6 + 0]);
+        kernel[1] = _mm_set_ps(invArray[scale * 6 + 3] - invArray[scale * 6 + 5], -invArray[scale * 6 + 3] - invArray[scale * 6 + 4], -invArray[scale * 6 + 2] - invArray[scale * 6 + 3], -invArray[scale * 6 + 1]);
+        kernel[2] = _mm_set_ps(2.f * invArray[scale * 6 + 5], 2.f * invArray[scale * 6 + 4], 2.f * invArray[scale * 6 + 3], 2.f * invArray[scale * 6 + 1]);
 
 #pragma GCC ivdep
 #pragma GCC unroll 8

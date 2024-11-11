@@ -191,9 +191,9 @@ namespace qAlgorithms
             for (size_t j = 1; j < tmpComp.size(); j++)
             {
                 // std::cout << featureList[tmpComp[j]].retentionTime << ",";
-                float diff = featureList[tmpComp[j]].retentionTime - featureList[tmpComp[j - 1]].retentionTime;
-                float err1 = featureList[tmpComp[j - 1]].retentionTimeUncertainty;
-                float err2 = featureList[tmpComp[j]].retentionTimeUncertainty;
+                // float diff = featureList[tmpComp[j]].retentionTime - featureList[tmpComp[j - 1]].retentionTime;
+                // float err1 = featureList[tmpComp[j - 1]].retentionTimeUncertainty;
+                // float err2 = featureList[tmpComp[j]].retentionTimeUncertainty;
                 // if (diff > (err1 + err2))
                 // {
                 //     std::cout << "H";
