@@ -36,8 +36,7 @@ namespace qAlgorithms
 
     static const int global_maxScale = 15; // maximum scale for regression window @todo gloabl variables
 
-    void findCentroids(
-        std::vector<CentroidPeak> &all_peaks,
+    std::vector<CentroidPeak> findCentroids(
         treatedData &treatedData,
         const int scanNumber,
         const float retentionTime);

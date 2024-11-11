@@ -118,13 +118,12 @@ namespace qAlgorithms
 #pragma endregion "initialize"
 
 #pragma region "find centroids"
-    /// @todo make all_peaks the return value
-    void findCentroids(
-        std::vector<CentroidPeak> &all_peaks,
+    std::vector<CentroidPeak> findCentroids(
         treatedData &treatedData,
         const int scanNumber,
         const float retentionTime)
     {
+        std::vector<CentroidPeak> allPeaks;
         for (auto it_separators = treatedData.separators.begin(); it_separators != treatedData.separators.end() - 1; it_separators++)
         {
             const int n = *(it_separators + 1) - *it_separators; // calculate the number of data points in the block
@@ -161,7 +160,7 @@ namespace qAlgorithms
                 {
                     continue; // no valid peaks
                 }
-                createCentroidPeaks(all_peaks, validRegressions, nullptr, validRegressionsIndex, y_start, mz_start, df_start, scanNumber);
+                createCentroidPeaks(allPeaks, validRegressions, nullptr, validRegressionsIndex, y_start, mz_start, df_start, scanNumber);
             }
             else
             {
@@ -195,13 +194,14 @@ namespace qAlgorithms
                 {
                     continue; // no valid peaks
                 }
-                createCentroidPeaks(all_peaks, nullptr, &validRegressions, validRegressions.size(), y_start, mz_start, df_start, scanNumber);
+                createCentroidPeaks(allPeaks, nullptr, &validRegressions, validRegressions.size(), y_start, mz_start, df_start, scanNumber);
                 delete[] Y;
                 delete[] Ylog;
                 delete[] X;
                 delete[] df;
             }
         }
+        return allPeaks;
     }
 #pragma endregion "find centroids"
 
