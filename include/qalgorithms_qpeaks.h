@@ -34,14 +34,14 @@ namespace qAlgorithms
         ValidRegression_static() = default;
     };
 
+    static const int global_maxScale = 15; // maximum scale for regression window @todo gloabl variables
+
     /**
      * @brief A class to store and apply a peak evaluation model.
      */
     class qPeaks
     {
     public:
-        const int global_maxScale = 15; // maximum scale for regression window
-
         // methods
         void findCentroids(
             std::vector<CentroidPeak> &all_peaks,

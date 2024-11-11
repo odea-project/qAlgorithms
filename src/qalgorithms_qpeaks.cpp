@@ -139,7 +139,7 @@ namespace qAlgorithms
         const int scanNumber,
         const float retentionTime)
     {
-        const float rt[2] = {-255.f, retentionTime}; // this will asign peaks to the retention time
+        const float rt[2] = {-255.f, retentionTime}; // this will assign peaks to the retention time
         const float *rt_start = rt;                  // start of the retention time vector
 
         for (auto it_separators = treatedData.separators.begin(); it_separators != treatedData.separators.end() - 1; it_separators++)
