@@ -661,7 +661,7 @@ namespace qAlgorithms
           to each other, the loop continues to the next iteration.
         */
         float valley_position;
-        if (!calculateApexAndValleyPositions(coeff, scale, apex_position, valley_position))
+        if (!calcApexAndValleyPositions(coeff, scale, apex_position, valley_position))
         {
             return false; // invalid apex and valley positions
         }
@@ -700,8 +700,9 @@ namespace qAlgorithms
           ratio is greater than 2. This is a pre-filter for later
           signal-to-noise ratio checkups.
         */
-        float apexToEdge = 0.f;
-        if (!isValidApexToEdge(apex_position, scale, i, y_start, apexToEdge))
+        float apexToEdge = calcApexToEdge(apex_position, scale, i, y_start);
+        // if (!isValidApexToEdge(apex_position, scale, i, y_start, apexToEdge))
+        if (apexToEdge < 3)
         {
             return false; // invalid apex to edge ratio
         }
@@ -764,7 +765,7 @@ namespace qAlgorithms
             return false; // statistical insignificance of the chi-square value
         }
 
-        calcUncertaintyPosition(mse, coeff, apex_position, scale, uncertainty_pos);
+        uncertainty_pos = calcUncertaintyPosition(mse, coeff, apex_position, scale);
 
         return true;
     }
@@ -1513,7 +1514,7 @@ namespace qAlgorithms
 #pragma endregion calcExtendedMseOverScales_static
 
 #pragma region calcDF
-    int calcDF(
+    unsigned int calcDF(
         const bool *df_start,     // start of the degrees of freedom
         unsigned int left_limit,  // left limit
         unsigned int right_limit) // right limit
@@ -1531,12 +1532,13 @@ namespace qAlgorithms
 #pragma endregion calcDF
 
 #pragma region calculateApexAndValleyPositions
-    bool calculateApexAndValleyPositions(
+    bool calcApexAndValleyPositions(
         const __m128 &coeff,
         const int scale,
         float &apex_position,
         float &valley_position)
     {
+        // @todo deconvolute this function
         // check if beta 2 or beta 3 is zero
         if (((float *)&coeff)[2] == 0.0f || ((float *)&coeff)[3] == 0.0f)
         {
@@ -1546,7 +1548,8 @@ namespace qAlgorithms
         __m128 ZERO_128 = _mm_setzero_ps();
         __m128 res = _mm_set1_ps(-.5f); // res = -0.5
         __m128 KEY_128 = _mm_set_ps(1.f, 2.f, 4.f, 0.f);
-        __m128 signs = _mm_cmplt_ps(coeff, ZERO_128); // compare the coefficients with zero, results will have the following values: 0xFFFFFFFF if the value is negative, 0x00000000 if the value is positive
+        __m128 signs = _mm_cmplt_ps(coeff, ZERO_128); // compare the coefficients with zero, results will have the following values:
+                                                      // 0xFFFFFFFF if the value is negative, 0x00000000 if the value is positive
         signs = _mm_and_ps(signs, KEY_128);           // multiply a key value if the value of the coefficient is negative, i.e., b0 * 0, b1 * 4, b2 * 2, b3 * 1
         signs = _mm_hadd_ps(signs, signs);            // horizontal add of the signs
         signs = _mm_hadd_ps(signs, signs);            // horizontal add of the signs, now all values are the same, i.e. the sum
@@ -1634,13 +1637,12 @@ namespace qAlgorithms
     }
 #pragma endregion "multiplyVecMatrixVecTranspose"
 
-#pragma region "isValidApexToEdge"
-    bool isValidApexToEdge(
+#pragma region "calcApexToEdge"
+    float calcApexToEdge(
         const double apex_position,
         const int scale,
         const int index_loop,
-        const float *y_start,
-        float &apexToEdge)
+        const float *y_start)
     {
         int idx_apex = (int)std::round(apex_position) + scale + index_loop; // index of the apex
         int idx_left = index_loop;                                          // index of the left edge
@@ -1648,8 +1650,7 @@ namespace qAlgorithms
         float apex = *(y_start + idx_apex);                                 // apex value
         float left = *(y_start + idx_left);                                 // left edge value
         float right = *(y_start + idx_right);                               // right edge value
-        apexToEdge = (left < right) ? (apex / left) : (apex / right);       // difference between the apex and the edge
-        return apexToEdge > 2;                                              // return true if the ratio is greater than 2
+        return (left < right) ? (apex / left) : (apex / right);             // difference between the apex and the edge
     }
 
 #pragma endregion "isValidApexToEdge"
@@ -1849,12 +1850,11 @@ namespace qAlgorithms
 #pragma endregion isValidPeakArea
 
 #pragma region "calcUncertaintyPosition"
-    void calcUncertaintyPosition(
+    float calcUncertaintyPosition(
         const float mse,
         const __m128 &coeff,
         const float apex_position,
-        const int scale,
-        float &uncertainty_pos)
+        const int scale)
     {
         const float _b1 = 1 / ((float *)&coeff)[1];
         const float _b2 = 1 / ((float *)&coeff)[2];
@@ -1872,7 +1872,7 @@ namespace qAlgorithms
             J[2] = 0;
             J[3] = -apex_position * _b3;
         }
-        uncertainty_pos = std::sqrt(mse * multiplyVecMatrixVecTranspose(J, scale));
+        return std::sqrt(mse * multiplyVecMatrixVecTranspose(J, scale));
     }
 #pragma endregion "calcUncertaintyPosition"
 
