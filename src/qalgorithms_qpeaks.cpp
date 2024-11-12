@@ -173,7 +173,7 @@ namespace q
 #pragma region "find centroids"
         void qPeaks::findCentroids(
             std::vector<DataType::CentroidPeak> &all_peaks,
-            q::MeasurementData::MeasurementData::treatedData &treatedData,
+            q::MeasurementData::treatedData &treatedData,
             const int scanNumber,
             const float retentionTime)
         {
@@ -263,7 +263,7 @@ namespace q
 #pragma region "find peaks"
         void qPeaks::findPeaks(
             std::vector<DataType::FeaturePeak> &all_peaks,
-            q::MeasurementData::MeasurementData::treatedData &treatedData)
+            q::MeasurementData::treatedData &treatedData)
         {
             for (auto it_separators = treatedData.separators.begin(); it_separators != treatedData.separators.end() - 1; it_separators++)
             {

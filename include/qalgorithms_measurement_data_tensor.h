@@ -12,7 +12,7 @@ namespace q
 {
     namespace MeasurementData
     {
-        extern double ppm_for_precentroided_data;
+        extern double ppm_for_precentroided_data; // global variable
 
         /**
          * @brief A class to store 3D tensor measurement data, e.g., LC-MS data
@@ -20,40 +20,38 @@ namespace q
          *
          * @param data A 3D tensor of LC-MS data /ref DataType::LC_MS
          */
-        class TensorData : public MeasurementData
-        {
-        private:
-            float rt_diff;
-            float calcRTDiff(std::vector<double> &retention_times);
 
-            std::vector<dataPoint> mzmlToDataPoint(sc::MZML &data, const int index);
+        float calcRTDiff(std::vector<double> &retention_times);
 
-            std::vector<dataPoint> qbinToDataPoint(q::Algorithms::qBinning::EIC &eic);
+        std::vector<dataPoint> mzmlToDataPoint(sc::MZML &data, const int index);
 
-        public:
-            // methods
-            /**
-             * @brief Read 3D tensor data from a StreamCraft mzML object
-             * @details The readStreamCraftMZML method reads 3D tensor data from a StreamCraft mzML object and stores it in the TensorData object. A StreamCraft mzML object is created by using sc::MZML z("path to mzML file").
-             *
-             * @param data : StreamCraft mzML object
-             * @param ms1only : boolean to indicate if only MS1 spectra should be read
-             * @param start_index : index of the first spectrum to be read
-             * @return std::vector<std::vector<DataType::Peak>> : list of peaks
-             */
-            std::vector<std::vector<DataType::CentroidPeak>> findCentroids_MZML(
-                q::Algorithms::qPeaks &qpeaks,
-                sc::MZML &data,
-                std::vector<unsigned int> &addEmpty,
-                std::vector<float> &convertRT,
-                const bool ms1only = true,
-                const std::string polarity = "positive",
-                const int start_index = 0);
+        std::vector<dataPoint> qbinToDataPoint(q::Algorithms::qBinning::EIC &eic);
 
-            std::vector<DataType::FeaturePeak> findPeaks_QBIN(
-                q::Algorithms::qPeaks &qpeaks,
-                std::vector<q::Algorithms::qBinning::EIC> &data);
-        };
+        // methods
+        /**
+         * @brief Read 3D tensor data from a StreamCraft mzML object
+         * @details The readStreamCraftMZML method reads 3D tensor data from a StreamCraft mzML object and stores it in the TensorData object. A StreamCraft mzML object is created by using sc::MZML z("path to mzML file").
+         *
+         * @param data : StreamCraft mzML object
+         * @param ms1only : boolean to indicate if only MS1 spectra should be read
+         * @param start_index : index of the first spectrum to be read
+         * @return std::vector<std::vector<DataType::Peak>> : list of peaks
+         */
+        std::vector<std::vector<DataType::CentroidPeak>> findCentroids_MZML(
+            q::Algorithms::qPeaks &qpeaks,
+            sc::MZML &data,
+            std::vector<unsigned int> &addEmpty,
+            std::vector<float> &convertRT,
+            float &rt_diff,
+            const bool ms1only = true,
+            const std::string polarity = "positive",
+            const int start_index = 0);
+
+        std::vector<DataType::FeaturePeak> findPeaks_QBIN(
+            q::Algorithms::qPeaks &qpeaks,
+            std::vector<q::Algorithms::qBinning::EIC> &data,
+            float rt_diff);
+
     } // namespace MeasurementData
 } // namespace q
 

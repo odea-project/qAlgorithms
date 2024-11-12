@@ -13,7 +13,7 @@ namespace q
 {
   namespace MeasurementData
   {
-    std::vector<std::vector<DataType::CentroidPeak>> MeasurementData::transferCentroids(
+    std::vector<std::vector<DataType::CentroidPeak>> transferCentroids(
         sc::MZML &data,
         std::vector<int> &indices,
         std::vector<double> &retention_times,
@@ -51,7 +51,7 @@ namespace q
     }
 
     double
-    MeasurementData::calcExpectedDiff(std::vector<double> &data)
+    calcExpectedDiff(std::vector<double> &data)
     {
       const int numPoints = data.size(); // number of data points
       double expectedDifference = 0.0;
@@ -87,8 +87,8 @@ namespace q
       return expectedDifference;
     }
 
-    MeasurementData::treatedData MeasurementData::pretreatData(
-        std::vector<MeasurementData::dataPoint> &dataPoints,
+    treatedData pretreatData(
+        std::vector<dataPoint> &dataPoints,
         std::vector<unsigned int> &binIdx,
         float expectedDifference,
         const bool updateExpectedDifference)
