@@ -16,6 +16,8 @@
 
 namespace qAlgorithms
 {
+    constexpr std::array<float, 384> initialize();
+
     /**
      * @brief A class to store and apply a peak evaluation model.
      */
@@ -35,9 +37,6 @@ namespace qAlgorithms
         CentroidedData passToBinning(std::vector<std::vector<CentroidPeak>> &allPeaks,
                                      std::vector<unsigned int> addEmpty);
 
-        static void initialize();
-
-    private:
         /**
          * @brief Array of the unique entries from the inverse matrix: ( X.T * X ) ^-1
          * @details the matrix has the following structure:
@@ -48,7 +47,7 @@ namespace qAlgorithms
          * The structure of the array is as follows:
          * invArray[scale][{A,B,C,D,E,F}]
          */
-        alignas(16) static float invArray[64][6]; // contains the unique entries from the inverse matrix
+        // alignas(16) static float invArray[64][6]; // contains the unique entries from the inverse matrix
 
         struct validRegression_static
         {

@@ -422,6 +422,12 @@ int main(int argc, char *argv[])
 {
     using namespace qAlgorithms;
 
+    // auto array_new = initialize();
+    // for (size_t i = 0; i < 384; i++)
+    // {
+    //     std::cout << array_new[i] << ",";
+    // }
+
     std::string filename_input;
     volatile bool inSpecified = false;
     volatile bool outSpecified = false;
@@ -798,9 +804,6 @@ int main(int argc, char *argv[])
         {
             std::cout << "printing output to: " << pathOutput;
         }
-
-        // initialize qPeaks static variables and lcmsData object @todo constexpr
-        qPeaks::initialize();
 
         auto timeStart = std::chrono::high_resolution_clock::now();
         if (!silent)
