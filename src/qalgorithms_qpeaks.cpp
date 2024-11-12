@@ -1,8 +1,10 @@
 // qalgorithms_qpeaks.cpp
 //
 // internal
-#include "../include/qalgorithms_qpeaks.h"
-#include "../include/qalgorithms_utils.h"
+#include "qalgorithms_qpeaks.h"
+#include "qalgorithms_utils.h"
+#include "qalgorithms_global_vars.h"
+
 #include <algorithm>
 #include <cassert>
 #include <numeric>
@@ -147,7 +149,7 @@ namespace qAlgorithms
         const int scanNumber,
         const float retentionTime)
     {
-        const float rt[2] = {-255.f, retentionTime}; // this will asign peaks to the retention time
+        const float rt[2] = {-255.f, retentionTime}; // this will assign peaks to the retention time
         const float *rt_start = rt;                  // start of the retention time vector
 
         for (auto it_separators = treatedData.separators.begin(); it_separators != treatedData.separators.end() - 1; it_separators++)
@@ -347,7 +349,7 @@ namespace qAlgorithms
         const int n, // number of data points
         std::vector<validRegression_static> &validRegressions)
     {
-        const int maxScale = std::min(global_maxScale, (int)(n - 1) / 2);
+        const int maxScale = std::min(GLOBAL_MAXSCALE, (int)(n - 1) / 2);
         validRegressions.reserve(calculateNumberOfRegressions(n));
         for (int scale = 2; scale <= maxScale; scale++)
         {
@@ -371,7 +373,7 @@ namespace qAlgorithms
         validRegression_static *validRegressions,
         int &validRegressionsIndex)
     {
-        int maxScale = std::min(global_maxScale, (int)(n - 1) / 2);
+        int maxScale = std::min(GLOBAL_MAXSCALE, (int)(n - 1) / 2);
 
         for (int scale = 2; scale <= maxScale; scale++)
         {
@@ -1972,7 +1974,7 @@ namespace qAlgorithms
         return n * (maxScale-1) - sumScales*2;
         */
         int sum = 0;
-        for (int i = 4; i <= global_maxScale * 2; i += 2)
+        for (int i = 4; i <= GLOBAL_MAXSCALE * 2; i += 2)
         {
             sum += std::max(0, n - i);
         }

@@ -10,7 +10,6 @@
 
 namespace qAlgorithms
 {
-    extern double ppm_for_precentroided_data; // global variable
 
     /**
      * @brief A class to store 3D tensor measurement data, e.g., LC-MS data
