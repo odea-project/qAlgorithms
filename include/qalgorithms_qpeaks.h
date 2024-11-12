@@ -227,7 +227,7 @@ namespace qAlgorithms
      * @param right_limit : End index of the regression window
      * @return int : Degree of freedom
      */
-    int calcDF(
+    unsigned int calcDF(
         const bool *df_start,
         unsigned int left_limit,
         unsigned int right_limit);
@@ -242,7 +242,7 @@ namespace qAlgorithms
      * @return true : if the apex and valley positions are valid
      * @return false : if the apex and valley positions are not valid (e.g., the apex position is not in the regression window)
      */
-    bool calculateApexAndValleyPositions(
+    bool calcApexAndValleyPositions(
         const __m128 &coeff,
         const int scale,
         float &apex_position,
@@ -279,12 +279,11 @@ namespace qAlgorithms
      * @return true
      * @return false
      */
-    bool isValidApexToEdge(
+    float calcApexToEdge(
         const double apex_position,
         const int scale,
         const int index_loop,
-        const float *y_start,
-        float &apexToEdge);
+        const float *y_start);
 
     /**
      * @brief Check if the quadratic term of the regression model is valid using t-test.
@@ -347,12 +346,11 @@ namespace qAlgorithms
         float &area,
         float &uncertainty_area);
 
-    void calcUncertaintyPosition(
+    float calcUncertaintyPosition(
         const float mse,
         const __m128 &coeff,
         const float apex_position,
-        const int scale,
-        float &uncertainty_pos);
+        const int scale);
 
     void convolve_static(
         const size_t scale,
