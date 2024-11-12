@@ -1,7 +1,8 @@
 // qalgorithms_measurement_data_tensor.cpp
 
 // internal
-#include "../include/qalgorithms_measurement_data_tensor.h"
+#include "qalgorithms_measurement_data_tensor.h"
+#include "qalgorithms_global_vars.h"
 
 // external
 #include <cassert>
@@ -140,9 +141,9 @@ namespace qAlgorithms
         double expectedDifference = 0.0;                                          // expected difference between two consecutive x-axis values
 
         bool displayPPMwarning = false;
-        if (ppm_for_precentroided_data == -INFINITY)
+        if (PPM_PRECENTROIDED == -INFINITY)
         {
-            ppm_for_precentroided_data = 0.25; // this error applied to most good centroids in the datasets we checked
+            PPM_PRECENTROIDED = 0.25; // this error applied to most good centroids in the datasets we checked
         }
         else
         {
@@ -175,7 +176,7 @@ namespace qAlgorithms
         if (num_centroided_spectra > spectrum_mode.size() / 2) // in profile mode sometimes centroided spectra appear as well
         {
             std::cerr << "Warning: qAlgorithms is intended for profile spectra. A base uncertainty of "
-                      << ppm_for_precentroided_data << " ppm is assumed for all supplied centroids\n";
+                      << PPM_PRECENTROIDED << " ppm is assumed for all supplied centroids\n";
 
             for (int i = 0; i < int(indices.size()) - 1; i++) // i can be -1 briefly if there is a scan missing between 1. and 2. element
             {
@@ -188,7 +189,7 @@ namespace qAlgorithms
                 convertRT.push_back(retention_times[i]); // convertRT[scan] = retention time of centroid
             }
             convertRT.push_back(retention_times[indices.size() - 1]);
-            return transferCentroids(data, indices, retention_times, start_index, ppm_for_precentroided_data);
+            return transferCentroids(data, indices, retention_times, start_index, PPM_PRECENTROIDED);
         }
 
         if (displayPPMwarning)
@@ -222,7 +223,7 @@ namespace qAlgorithms
 
         if (!displayPPMwarning)
         {
-            ppm_for_precentroided_data = -INFINITY;
+            PPM_PRECENTROIDED = -INFINITY;
         }
 
         // determine where the peak finding will interpolate points and pass this information

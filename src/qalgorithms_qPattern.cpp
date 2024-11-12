@@ -1,6 +1,7 @@
 // #include <../include/qalgorithms_qbin.h>
-#include "../include/qalgorithms_qPattern.h"
+#include "qalgorithms_qPattern.h"
 #include "qalgorithms_datatype_peak.h"
+#include "qalgorithms_global_vars.h"
 
 #include <algorithm> // sorting
 #include <cmath>     // pow and log
@@ -40,7 +41,7 @@ namespace qAlgorithms
     {
         /// adapted generic binning function @todo add into qBinning
         unsigned int size = endBin - startBin + 1;
-        float vcrit = 3.05037165842070 * pow(log(size), (-0.4771864667153)) * (error[endBin + 1] - error[startBin]); // cumError starts with 0
+        float vcrit = 3.05037165842070 * pow(log(size), (TOLERANCE_BINNING)) * (error[endBin + 1] - error[startBin]); // cumError starts with 0
         /// @todo check for correct calculation in qBinning
         assert(vcrit > 0);
         auto pmax = std::max_element(OS.begin() + startBin, OS.begin() + endBin);
@@ -190,9 +191,9 @@ namespace qAlgorithms
             for (size_t j = 1; j < tmpComp.size(); j++)
             {
                 // std::cout << featureList[tmpComp[j]].retentionTime << ",";
-                float diff = featureList[tmpComp[j]].retentionTime - featureList[tmpComp[j - 1]].retentionTime;
-                float err1 = featureList[tmpComp[j - 1]].retentionTimeUncertainty;
-                float err2 = featureList[tmpComp[j]].retentionTimeUncertainty;
+                // float diff = featureList[tmpComp[j]].retentionTime - featureList[tmpComp[j - 1]].retentionTime;
+                // float err1 = featureList[tmpComp[j - 1]].retentionTimeUncertainty;
+                // float err2 = featureList[tmpComp[j]].retentionTimeUncertainty;
                 // if (diff > (err1 + err2))
                 // {
                 //     std::cout << "H";

@@ -1,4 +1,6 @@
-#include "../include/qalgorithms_qbin.h"
+#include "qalgorithms_qbin.h"
+#include "qalgorithms_global_vars.h"
+
 #include <cassert>
 #include <iostream>
 #include <vector>
@@ -345,7 +347,7 @@ namespace qAlgorithms
         {
             float stdev = currentBin.calcStdevMZ();
 
-            float trueVcrit = 3.05037165842070 * pow(log(currentBin.pointsInBin.size() + 1), (-0.4771864667153)) * stdev;
+            float trueVcrit = 3.05037165842070 * pow(log(currentBin.pointsInBin.size() + 1), (TOLERANCE_BINNING)) * stdev;
             binRange.push_back(BinBorders{
                 currentBin.mzMin - trueVcrit,
                 currentBin.mzMax + trueVcrit,
@@ -716,7 +718,7 @@ namespace qAlgorithms
         ++counter;
         auto pmax = std::max_element(OS.begin() + binStartInOS, OS.begin() + binEndInOS);
 
-        double vcrit = 3.05037165842070 * pow(log(binsizeInOS), (-0.4771864667153)) *   // critical value for alpha = 0.01 @todo add functionality for custom alpha?
+        double vcrit = 3.05037165842070 * pow(log(binsizeInOS), (TOLERANCE_BINNING)) *  // critical value for alpha = 0.01 @todo add functionality for custom alpha?
                        (this->cumError[binEndInOS + 1] - this->cumError[binStartInOS]); // + 1 to binEnd since cumerror starts at 0
         double max = *pmax * binsizeInOS;                                               // moved binsize here since multiplication is faster than division
 
@@ -1044,7 +1046,7 @@ namespace qAlgorithms
         float meanerror = std::accumulate(pointsInBin.begin(), pointsInBin.end(), 0.0, [](float error, const qCentroid *point)
                                           { return error + point->mzError; }) /
                           binsize;
-        float vcrit = 3.05037165842070 * pow(log(binsize + 1), (-0.4771864667153)) * meanerror;
+        float vcrit = 3.05037165842070 * pow(log(binsize + 1), (TOLERANCE_BINNING)) * meanerror;
         // binsize + 1 to not include points which would be removed after adding them
         // vcrit has the same scaling as mz of bin centroids
 
@@ -1223,7 +1225,7 @@ namespace qAlgorithms
                 }
             }
         }
-        const float vcritIntensity = 3.05037165842070 * pow(log(binsize), (-0.4771864667153)) *
+        const float vcritIntensity = 3.05037165842070 * pow(log(binsize), (TOLERANCE_BINNING)) *
                                      sqrt(intensityErrorSquared / (binsize - 1));
         bool intensityOutlier = false;
         if (greatestIntGap > vcritIntensity)

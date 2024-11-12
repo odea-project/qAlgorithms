@@ -22,9 +22,6 @@ namespace qAlgorithms
     class qPeaks
     {
     public:
-        const int global_maxScale = 15; // maximum scale for regression window
-
-        // methods
         void findCentroids(
             std::vector<CentroidPeak> &all_peaks,
             treatedData &treatedData,
@@ -36,7 +33,7 @@ namespace qAlgorithms
             treatedData &treatedData);
 
         CentroidedData passToBinning(std::vector<std::vector<CentroidPeak>> &allPeaks,
-                                                  std::vector<unsigned int> addEmpty);
+                                     std::vector<unsigned int> addEmpty);
 
         static void initialize();
 

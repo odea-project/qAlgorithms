@@ -4,6 +4,7 @@
 #include "qalgorithms_qpeaks.h"
 #include "qalgorithms_qbin.h"
 #include "qalgorithms_qPattern.h"
+#include "qalgorithms_global_vars.h"
 
 // external
 #include "../external/StreamCraft/src/StreamCraft_mzml.hpp"
@@ -19,10 +20,10 @@
 
 namespace qAlgorithms
 {
-    // this is set to -5 to track if the argument was set or not. Since a negative
-    // number during input causes the program to exit, the warning only triggers
-    // if the ppm value is positve.
-    extern double ppm_for_precentroided_data = -INFINITY;
+    /// ### set global variables ###
+    float PPM_PRECENTROIDED = -INFINITY; // -Infinity sets it to the default value if no user input changes it
+    double TOLERANCE_BINNING = -0.4771864667153;
+    int GLOBAL_MAXSCALE = 15;
 
     struct ProfilePoint
     {
@@ -352,7 +353,7 @@ namespace qAlgorithms
         }
         stddev = sqrt(stddev / (peaksize - 1));
 
-        float vcrit = 3.05037165842070 * pow(log(peaksize), (-0.4771864667153)) * stddev;
+        float vcrit = 3.05037165842070 * pow(log(peaksize), (TOLERANCE_BINNING)) * stddev;
         for (size_t i = 1; i < peaksize; i++)
         {
             [[unlikely]] if (massesPeak[i] - massesPeak[i - 1] > vcrit)
@@ -662,7 +663,7 @@ int main(int argc, char *argv[])
                           << "being between 0.2 and 0.5 ppm. The centroid error is not the mz tolerance from ex. XCMS.";
             }
 
-            ppm_for_precentroided_data = modifiedPPM;
+            PPM_PRECENTROIDED = modifiedPPM;
         }
         else if ((argument == "-pc") | (argument == "-printcentroids"))
         {
@@ -835,7 +836,7 @@ int main(int argc, char *argv[])
         for (auto polarity : polarities)
         {
             // std::string polarity = "positive";
-            // ppm_for_precentroided_data = setPPM;
+            // PPM_PRECENTROIDED = setPPM;
             filename = pathSource.stem().string();
             qPeaks qpeaks;                           // create qPeaks object
             std::vector<unsigned int> addEmptyScans; // make sure the retention time interpolation does not add unexpected points to bins
@@ -858,7 +859,7 @@ int main(int argc, char *argv[])
                 std::cout << "Processing " << polarity << " peaks\n";
             }
             // adjust filename to include polarity here
-            // filename += ("_" + std::to_string(ppm_for_precentroided_data) + "pos");
+            // filename += ("_" + std::to_string(PPM_PRECENTROIDED) + "pos");
             filename += polarity;
             if (printCentroids)
             {
