@@ -68,34 +68,11 @@ namespace qAlgorithms
 #pragma endregion "pass to qBinning"
 
 #pragma region "initialize"
-    alignas(float) float qPeaks::x_square[128];   // array to store the square of the x values
     alignas(float) float qPeaks::invArray[64][6]; // array to store the 6 unique values of the inverse matrix for each scale
-    __m128 qPeaks::ZERO_128;                      // [0., 0., 0., 0.]
-    __m256 qPeaks::ZERO_256;                      // [0., 0., 0., 0., 0., 0., 0., 0.]
-    __m128 qPeaks::KEY_128;                       // [0., 4., 2., 1.]
-    __m256 qPeaks::LINSPACE_UP_POS_256;           // [7., 6., 5., 4., 3., 2., 1., 0.]
-    __m256 qPeaks::LINSPACE_UP_NEG_256;           // [-7., -6., -5., -4., -3., -2., -1., 0.]
-    __m256 qPeaks::LINSPACE_DOWN_NEG_256;         // [0., -1., -2., -3., -4., -5., -6., -7.]
-    __m256i qPeaks::LINSPACE_UP_INT_256;          // [7, 6, 5, 4, 3, 2, 1, 0]
-    __m256i qPeaks::LINSPACE_DOWN_INT_256;        // [0, 1, 2, 3, 4, 5, 6, 7]
-    __m256 qPeaks::MINUS_ONE_256;                 // [-1., -1., -1., -1., -1., -1., -1., -1.]
 
     void qPeaks::initialize()
     {
 
-        ZERO_128 = _mm_setzero_ps();
-        ZERO_256 = _mm256_setzero_ps();
-        KEY_128 = _mm_set_ps(1.f, 2.f, 4.f, 0.f);
-        LINSPACE_UP_POS_256 = _mm256_set_ps(7.f, 6.f, 5.f, 4.f, 3.f, 2.f, 1.f, 0.f);
-        LINSPACE_UP_NEG_256 = _mm256_set_ps(-7.f, -6.f, -5.f, -4.f, -3.f, -2.f, -1.f, 0.f);
-        LINSPACE_DOWN_NEG_256 = _mm256_set_ps(0.f, -1.f, -2.f, -3.f, -4.f, -5.f, -6.f, -7.f);
-        LINSPACE_UP_INT_256 = _mm256_set_epi32(7, 6, 5, 4, 3, 2, 1, 0);
-        LINSPACE_DOWN_INT_256 = _mm256_set_epi32(0, 1, 2, 3, 4, 5, 6, 7);
-        MINUS_ONE_256 = _mm256_set1_ps(-1.f);
-        for (int i = 0; i < 128; ++i)
-        {
-            x_square[i] = i * i;
-        }
         // init invArray
         float XtX_00 = 1.f;
         float XtX_02 = 0.f;
@@ -106,11 +83,11 @@ namespace qAlgorithms
         for (int i = 1; i < 64; ++i)
         {
             XtX_00 += 2.f;
-            XtX_02 += x_square[i];
+            XtX_02 += i * i;
             XtX_11 = XtX_02 * 2.f;
-            XtX_13 += x_square[i] * i;
+            XtX_13 += i * i * i;
             XtX_12 = -XtX_13;
-            XtX_22 += x_square[i] * x_square[i];
+            XtX_22 += i * i * i * i;
 
             float L_00 = std::sqrt(XtX_00);
             float L_11 = std::sqrt(XtX_11);
@@ -1310,6 +1287,7 @@ namespace qAlgorithms
             std::copy(y_start - left_limit + y_start_offset, y_start - left_limit + y_end_offset, y_remaining);
             const __m256 y_vec = _mm256_loadu_ps(y_remaining);
 
+            __m256i LINSPACE_UP_INT_256 = _mm256_set_epi32(7, 6, 5, 4, 3, 2, 1, 0);
             const __m256i mask = _mm256_cmpgt_epi32(_mm256_set1_epi32(nRemaining + mask_offset), LINSPACE_UP_INT_256); // mask for the remaining elements
             yhat = _mm256_blendv_ps(y_vec, yhat, _mm256_castsi256_ps(mask));                                           // set the remaining elements to zero
 
@@ -1324,6 +1302,10 @@ namespace qAlgorithms
         };
 
         // Calculate the full segments
+        __m256 LINSPACE_UP_POS_256 = _mm256_set_ps(7.f, 6.f, 5.f, 4.f, 3.f, 2.f, 1.f, 0.f);
+
+        __m256 LINSPACE_DOWN_NEG_256 = _mm256_set_ps(0.f, -1.f, -2.f, -3.f, -4.f, -5.f, -6.f, -7.f);
+
         calcFullSegments(0, 8, static_cast<float>(left_limit), 1.f, nFullSegments_left, LINSPACE_UP_POS_256, b2);
         calcFullSegments(n - 8, -8, static_cast<float>(-right_limit), -1.f, nFullSegments_right, LINSPACE_DOWN_NEG_256, b3);
 
@@ -1632,7 +1614,9 @@ namespace qAlgorithms
             return false; // invalid case
         }
         // calculate key by checking the signs of coeff
-        __m128 res = _mm_set1_ps(-.5f);               // res = -0.5
+        __m128 res = _mm_set1_ps(-.5f); // res = -0.5
+        __m128 ZERO_128 = _mm_setzero_ps();
+        __m128 KEY_128 = _mm_set_ps(1.f, 2.f, 4.f, 0.f);
         __m128 signs = _mm_cmplt_ps(coeff, ZERO_128); // compare the coefficients with zero, results will have the following values: 0xFFFFFFFF if the value is negative, 0x00000000 if the value is positive
         signs = _mm_and_ps(signs, KEY_128);           // multiply a key value if the value of the coefficient is negative, i.e., b0 * 0, b1 * 4, b2 * 2, b3 * 1
         signs = _mm_hadd_ps(signs, signs);            // horizontal add of the signs

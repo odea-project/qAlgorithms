@@ -49,16 +49,6 @@ namespace qAlgorithms
          * invArray[scale][{A,B,C,D,E,F}]
          */
         alignas(16) static float invArray[64][6]; // contains the unique entries from the inverse matrix
-        alignas(16) static float x_square[128];   // contains the squares from 0 to 127^2
-        static __m128 ZERO_128;                   // 128 bit register with all zeros
-        static __m256 ZERO_256;                   // 256 bit register with all zeros
-        static __m128 KEY_128;                    // 128 bit register with 0, 4, 2, 1
-        static __m256 LINSPACE_UP_POS_256;        // 256 bit register with 0, 1, 2, 3, 4, 5, 6, 7
-        static __m256 LINSPACE_UP_NEG_256;        // 256 bit register with 0, -1, -2, -3, -4, -5, -6, -7
-        static __m256 LINSPACE_DOWN_NEG_256;      // 256 bit register with -7, -6, -5, -4, -3, -2, -1, 0
-        static __m256i LINSPACE_UP_INT_256;       // 256 bit register with 0, 1, 2, 3, 4, 5, 6, 7
-        static __m256i LINSPACE_DOWN_INT_256;     // 256 bit register with 7, 6, 5, 4, 3, 2, 1, 0
-        static __m256 MINUS_ONE_256;              // 256 bit register with -1
 
         struct validRegression_static
         {
