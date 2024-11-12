@@ -28,13 +28,13 @@ namespace q
             // methods
             void findCentroids(
                 std::vector<DataType::CentroidPeak> &all_peaks,
-                q::MeasurementData::MeasurementData::treatedData &treatedData,
+                q::MeasurementData::treatedData &treatedData,
                 const int scanNumber,
                 const float retentionTime);
 
             void findPeaks(
                 std::vector<DataType::FeaturePeak> &all_peaks,
-                q::MeasurementData::MeasurementData::treatedData &treatedData);
+                q::MeasurementData::treatedData &treatedData);
 
             // export
             void plotPeaksToPython(

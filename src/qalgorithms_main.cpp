@@ -837,13 +837,13 @@ int main(int argc, char *argv[])
             // std::string polarity = "positive";
             // q::MeasurementData::ppm_for_precentroided_data = setPPM;
             filename = pathSource.stem().string();
-            q::Algorithms::qPeaks qpeaks;              // create qPeaks object
-            q::MeasurementData::TensorData tensorData; // create tensorData object
-            std::vector<unsigned int> addEmptyScans;   // make sure the retention time interpolation does not add unexpected points to bins
+            q::Algorithms::qPeaks qpeaks;            // create qPeaks object
+            std::vector<unsigned int> addEmptyScans; // make sure the retention time interpolation does not add unexpected points to bins
             std::vector<float> convertRT;
+            float diff_rt = 0;
             // @todo add check if set polarity is correct
             std::vector<std::vector<q::DataType::CentroidPeak>> centroids =
-                tensorData.findCentroids_MZML(qpeaks, data, addEmptyScans, convertRT, true, polarity, 10); // read mzML file and find centroids via qPeaks
+                q::MeasurementData::findCentroids_MZML(qpeaks, data, addEmptyScans, convertRT, diff_rt, true, polarity, 10); // read mzML file and find centroids via qPeaks
             if (centroids.size() < 5)
             {
 
@@ -924,7 +924,7 @@ int main(int argc, char *argv[])
 
             timeStart = std::chrono::high_resolution_clock::now();
             // every subvector of peaks corresponds to the bin ID
-            auto peaks = tensorData.findPeaks_QBIN(qpeaks, binnedData);
+            auto peaks = q::MeasurementData::findPeaks_QBIN(qpeaks, binnedData, diff_rt);
             // make sure that every peak contains only one mass trace
             assert(peaks.size() < binnedData.size());
             int peaksWithMassGaps = 0;

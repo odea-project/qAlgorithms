@@ -18,69 +18,66 @@ namespace q
          * @brief A class to store measurement data
          * @details The MeasurementData class is a virtual class used to store measurement data. Based on the type of measurement data, the MeasurementData class can be subclassed to store different types of measurement data.
          */
-        class MeasurementData
+
+        // variables
+        struct dataPoint
         {
-        protected:
-            // variables
-            struct dataPoint
-            {
-                float x;
-                float y;
-                bool df;
-                float dqsCentroid;
-                float dqsBinning;
-                int scanNumber;
-                float mz;
+            float x;
+            float y;
+            bool df;
+            float dqsCentroid;
+            float dqsBinning;
+            int scanNumber;
+            float mz;
 
-                dataPoint(float x, float y, bool df, float dqsCentroid, float dqsBinning, int scanNumber, float mz)
-                    : x(x), y(y), df(df), dqsCentroid(dqsCentroid), dqsBinning(dqsBinning), scanNumber(scanNumber), mz(mz) {}
-            };
-
-        public:
-            // variables
-            struct treatedData
-            {
-                std::vector<dataPoint> dataPoints;
-                std::vector<int> separators;
-
-                void addDataPoint(float x, float y, bool df, float dqsCentroid, float dqsBinning, int scanNumber, float mz)
-                {
-                    dataPoints.emplace_back(x, y, df, dqsCentroid, dqsBinning, scanNumber, mz);
-                }
-
-                void addSeparator(int index)
-                {
-                    if (index < static_cast<int>(dataPoints.size()))
-                    {
-                        separators.push_back(index);
-                    }
-                }
-            };
-            // methods
-            // virtual void readCSV(std::string filename, int rowStart, int rowEnd, int colStart, int colEnd, char separator, std::vector<DataType::DataField> variableTypes) = 0;
-
-            std::vector<std::vector<DataType::CentroidPeak>> transferCentroids(
-                sc::MZML &data,
-                std::vector<int> &indices,
-                std::vector<double> &retention_times,
-                const int start_index,
-                double PPMerror);
-
-            double
-            calcExpectedDiff(std::vector<double> &data);
-
-            /**
-             * @brief Inter/extrapolate gaps in data and define separation markers for data blocks.
-             *
-             * @param dataPoints : {x, y, df, dqsCentroid, dqsBinning, scanNumber}
-             *
-             * @return std::vector<std::vector<dataPoint>::iterator> : separation markers for data blocks
-             */
-            treatedData pretreatData(std::vector<dataPoint> &dataPoints,
-                                     std::vector<unsigned int> &binIdx,
-                                     float expectedDifference,
-                                     const bool updateExpectedDifference = true);
+            dataPoint(float x, float y, bool df, float dqsCentroid, float dqsBinning, int scanNumber, float mz)
+                : x(x), y(y), df(df), dqsCentroid(dqsCentroid), dqsBinning(dqsBinning), scanNumber(scanNumber), mz(mz) {}
         };
-    } // namespace MeasurmentData
-}
+
+        // variables
+        struct treatedData
+        {
+            std::vector<dataPoint> dataPoints;
+            std::vector<int> separators;
+
+            void addDataPoint(float x, float y, bool df, float dqsCentroid, float dqsBinning, int scanNumber, float mz)
+            {
+                dataPoints.emplace_back(x, y, df, dqsCentroid, dqsBinning, scanNumber, mz);
+            }
+
+            void addSeparator(int index)
+            {
+                if (index < static_cast<int>(dataPoints.size()))
+                {
+                    separators.push_back(index);
+                }
+            }
+        };
+        // methods
+        // virtual void readCSV(std::string filename, int rowStart, int rowEnd, int colStart, int colEnd, char separator, std::vector<DataType::DataField> variableTypes) = 0;
+
+        std::vector<std::vector<DataType::CentroidPeak>> transferCentroids(
+            sc::MZML &data,
+            std::vector<int> &indices,
+            std::vector<double> &retention_times,
+            const int start_index,
+            double PPMerror);
+
+        double
+        calcExpectedDiff(std::vector<double> &data);
+
+        /**
+         * @brief Inter/extrapolate gaps in data and define separation markers for data blocks.
+         *
+         * @param dataPoints : {x, y, df, dqsCentroid, dqsBinning, scanNumber}
+         *
+         * @return std::vector<std::vector<dataPoint>::iterator> : separation markers for data blocks
+         */
+        treatedData pretreatData(std::vector<dataPoint> &dataPoints,
+                                 std::vector<unsigned int> &binIdx,
+                                 float expectedDifference,
+                                 const bool updateExpectedDifference = true);
+    }
+} // namespace MeasurmentData
+
 #endif // QALGORITHMS_MEASUREMENT_DATA_H

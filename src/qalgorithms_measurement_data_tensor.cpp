@@ -16,7 +16,7 @@ namespace q
 #pragma region "private methods"
         // methods
         float
-        TensorData::calcRTDiff(std::vector<double> &retention_times)
+        calcRTDiff(std::vector<double> &retention_times)
         {
             float sum = 0.0;
             for (size_t i = 1; i < retention_times.size(); ++i)
@@ -26,13 +26,13 @@ namespace q
             return sum / (retention_times.size() - 1);
         }
 
-        std::vector<TensorData::dataPoint>
-        TensorData::mzmlToDataPoint(
+        std::vector<dataPoint>
+        mzmlToDataPoint(
             sc::MZML &data,
             const int index)
         {
             std::vector<std::vector<double>> spectrum = data.get_spectrum(index); // get spectrum at index
-            std::vector<TensorData::dataPoint> dataPoints;                        // create vector of data points
+            std::vector<dataPoint> dataPoints;                                    // create vector of data points
             dataPoints.reserve(spectrum[0].size());                               // reserve memory for data points
             for (size_t i = 0; i < spectrum[0].size(); ++i)
             {
@@ -40,7 +40,7 @@ namespace q
                 {
                     continue; // skip zero values
                 }
-                TensorData::dataPoint dp( // create data point
+                dataPoint dp(             // create data point
                     spectrum[0][i],       // x-axis value
                     spectrum[1][i],       // y-axis value
                     true,                 // df value
@@ -51,7 +51,7 @@ namespace q
                 dataPoints.push_back(dp); // add data point to vector
             }
             // add end point for later pretreatment
-            TensorData::dataPoint dp(                   // create data point
+            dataPoint dp(                               // create data point
                 std::numeric_limits<float>::infinity(), // x-axis value
                 0.0,                                    // y-axis value
                 false,                                  // df value
@@ -63,11 +63,11 @@ namespace q
             return dataPoints;
         }
 
-        std::vector<TensorData::dataPoint>
-        TensorData::qbinToDataPoint(
+        std::vector<dataPoint>
+        qbinToDataPoint(
             q::Algorithms::qBinning::EIC &eic)
         {
-            std::vector<TensorData::dataPoint> dataPoints;  // create vector of data points
+            std::vector<dataPoint> dataPoints;              // create vector of data points
             dataPoints.reserve(eic.scanNumbers.size() + 1); // reserve memory for data points
 
             if (!is_sorted(eic.rententionTimes.begin(), eic.rententionTimes.end())) // WILL BE DELETED IN THE FUTURE
@@ -81,7 +81,7 @@ namespace q
                 std::sort(indices.begin(), indices.end(), compare);
                 for (size_t i = 0; i < eic.scanNumbers.size(); ++i)
                 {
-                    TensorData::dataPoint dp(            // create data point
+                    dataPoint dp(                        // create data point
                         eic.rententionTimes[indices[i]], // x-axis value
                         eic.ints_area[indices[i]],       // y-axis value
                         // eic.ints_height[indices[i]],
@@ -97,7 +97,7 @@ namespace q
             {
                 for (size_t i = 0; i < eic.scanNumbers.size(); ++i)
                 {
-                    TensorData::dataPoint dp(   // create data point
+                    dataPoint dp(               // create data point
                         eic.rententionTimes[i], // x-axis value
                         eic.ints_area[i],       // y-axis value
                         // eic.ints_height[i],
@@ -110,7 +110,7 @@ namespace q
                 }
             }
             // add end point for later pretreatment
-            TensorData::dataPoint dp(                   // create data point
+            dataPoint dp(                               // create data point
                 std::numeric_limits<float>::infinity(), // x-axis value
                 0.0,                                    // y-axis value
                 false,                                  // df value
@@ -124,11 +124,12 @@ namespace q
 #pragma endregion "private methods"
 
 #pragma region "find centroids"
-        std::vector<std::vector<DataType::CentroidPeak>> TensorData::findCentroids_MZML(
+        std::vector<std::vector<DataType::CentroidPeak>> findCentroids_MZML(
             q::Algorithms::qPeaks &qpeaks,
             sc::MZML &data,
             std::vector<unsigned int> &addEmpty,
             std::vector<float> &convertRT,
+            float &rt_diff,
             const bool ms1only,
             const std::string polarity,
             const int start_index)
@@ -214,11 +215,11 @@ namespace q
 #pragma omp parallel for
             for (size_t i = 0; i < indices.size(); ++i) // loop over all indices
             {
-                const int index = indices[i];                                                 // spectrum index
-                std::vector<TensorData::dataPoint> dataPoints = mzmlToDataPoint(data, index); // convert mzml to data points
+                const int index = indices[i];                                     // spectrum index
+                std::vector<dataPoint> dataPoints = mzmlToDataPoint(data, index); // convert mzml to data points
                 std::vector<unsigned int> dummy;
-                TensorData::treatedData treatedData = pretreatData(dataPoints, dummy, expectedDifference); // inter/extrapolate data, and identify data blocks
-                qpeaks.findCentroids(centroids[i], treatedData, index, retention_times[i]);                // find peaks in data blocks of treated data
+                treatedData treatedData = pretreatData(dataPoints, dummy, expectedDifference); // inter/extrapolate data, and identify data blocks
+                qpeaks.findCentroids(centroids[i], treatedData, index, retention_times[i]);    // find peaks in data blocks of treated data
             }
 
             if (!displayPPMwarning)
@@ -247,9 +248,10 @@ namespace q
 #pragma endregion "find centroids"
 
 #pragma region "find peaks"
-        std::vector<DataType::FeaturePeak> TensorData::findPeaks_QBIN(
+        std::vector<DataType::FeaturePeak> findPeaks_QBIN(
             q::Algorithms::qPeaks &qpeaks,
-            std::vector<q::Algorithms::qBinning::EIC> &data)
+            std::vector<q::Algorithms::qBinning::EIC> &data,
+            float rt_diff)
         {
             std::vector<DataType::FeaturePeak> peaks;    // return vector for feature list
             peaks.reserve(data.size() * 0.7);            // should be enough to fit all features without reallocation
@@ -294,17 +296,6 @@ namespace q
 
             } // parallel for
             return peaks;
-
-            // std::vector<std::vector<DataType::Peak>> returnVec(peaks.size());
-            // for (size_t i = 0; i < peaks.size(); i++)
-            // {
-            //     returnVec[i].reserve(peaks[i].size());
-            //     for (size_t j = 0; j < peaks[i].size(); j++)
-            //     {
-            //         returnVec[i].push_back(*peaks[i][j]);
-            //     }
-            // }
-            // return returnVec;
         } // readQBinning
     } // namespace MeasurementData
 } // namespace q
