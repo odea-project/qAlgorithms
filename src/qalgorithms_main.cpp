@@ -17,13 +17,12 @@
 #include <sstream>   // write peaks to file
 #include <algorithm> // remove duplicates from task list
 
-namespace q
+namespace qAlgorithms
 {
-
     // this is set to -5 to track if the argument was set or not. Since a negative
     // number during input causes the program to exit, the warning only triggers
     // if the ppm value is positve.
-    double MeasurementData::ppm_for_precentroided_data = -INFINITY;
+    extern double ppm_for_precentroided_data = -INFINITY;
 
     struct ProfilePoint
     {
@@ -40,7 +39,7 @@ namespace q
         unsigned int fileID; // count upwards after reading everything in
     };
 
-    void printPeaklist(std::vector<std::vector<q::DataType::CentroidPeak>> peaktable,
+    void printPeaklist(std::vector<std::vector<CentroidPeak>> peaktable,
                        std::vector<float> convertRT, std::filesystem::path pathOutput,
                        std::string filename, bool silent, bool skipError)
     {
@@ -134,9 +133,9 @@ namespace q
         return;
     }
 
-    void printFeatureList(std::vector<q::DataType::FeaturePeak> peaktable,
+    void printFeatureList(std::vector<FeaturePeak> peaktable,
                           std::filesystem::path pathOutput, std::string filename,
-                          std::vector<Algorithms::qBinning::EIC> originalBins,
+                          std::vector<EIC> originalBins,
                           bool verbose, bool silent, bool skipError)
     {
         if (false) // @todo
@@ -420,6 +419,7 @@ namespace q
 
 int main(int argc, char *argv[])
 {
+    using namespace qAlgorithms;
 
     std::string filename_input;
     volatile bool inSpecified = false;
@@ -439,7 +439,7 @@ int main(int argc, char *argv[])
         std::cin >> filename_input;
         if ((filename_input == "-h") | (filename_input == "-help"))
         {
-            std::cout << "    " << argv[0] << q::helpinfo << "\n\n";
+            std::cout << "    " << argv[0] << helpinfo << "\n\n";
             exit(0);
         }
         std::cout << filename_input << "\n";
@@ -456,7 +456,7 @@ int main(int argc, char *argv[])
         }
         else if ((filename_output == "-h") | (filename_output == "-help"))
         {
-            std::cout << "    " << argv[0] << q::helpinfo << "\n\n";
+            std::cout << "    " << argv[0] << helpinfo << "\n\n";
             exit(0);
         }
 
@@ -488,7 +488,7 @@ int main(int argc, char *argv[])
         std::string argument = argv[i];
         if ((argument == "-h") | (argument == "-help"))
         {
-            std::cout << "\n    " << argv[0] << q::helpinfo;
+            std::cout << "\n    " << argv[0] << helpinfo;
             exit(0);
         }
         if ((argument == "-s") | (argument == "-silent"))
@@ -662,7 +662,7 @@ int main(int argc, char *argv[])
                           << "being between 0.2 and 0.5 ppm. The centroid error is not the mz tolerance from ex. XCMS.";
             }
 
-            q::MeasurementData::ppm_for_precentroided_data = modifiedPPM;
+            ppm_for_precentroided_data = modifiedPPM;
         }
         else if ((argument == "-pc") | (argument == "-printcentroids"))
         {
@@ -751,7 +751,7 @@ int main(int argc, char *argv[])
     }
 
     // the final task list contains only unique files, sorted by filesize
-    tasklist = q::controlInput(suppliedPaths, ".mzML", skipError);
+    tasklist = controlInput(suppliedPaths, ".mzML", skipError);
 
 #pragma endregion cli arguments
 
@@ -799,7 +799,7 @@ int main(int argc, char *argv[])
         }
 
         // initialize qPeaks static variables and lcmsData object @todo constexpr
-        q::Algorithms::qPeaks::initialize();
+        qPeaks::initialize();
 
         auto timeStart = std::chrono::high_resolution_clock::now();
         if (!silent)
@@ -835,15 +835,15 @@ int main(int argc, char *argv[])
         for (auto polarity : polarities)
         {
             // std::string polarity = "positive";
-            // q::MeasurementData::ppm_for_precentroided_data = setPPM;
+            // ppm_for_precentroided_data = setPPM;
             filename = pathSource.stem().string();
-            q::Algorithms::qPeaks qpeaks;            // create qPeaks object
+            qPeaks qpeaks;                           // create qPeaks object
             std::vector<unsigned int> addEmptyScans; // make sure the retention time interpolation does not add unexpected points to bins
             std::vector<float> convertRT;
             float diff_rt = 0;
             // @todo add check if set polarity is correct
-            std::vector<std::vector<q::DataType::CentroidPeak>> centroids =
-                q::MeasurementData::findCentroids_MZML(qpeaks, data, addEmptyScans, convertRT, diff_rt, true, polarity, 10); // read mzML file and find centroids via qPeaks
+            std::vector<std::vector<CentroidPeak>> centroids =
+                findCentroids_MZML(qpeaks, data, addEmptyScans, convertRT, diff_rt, true, polarity, 10); // read mzML file and find centroids via qPeaks
             if (centroids.size() < 5)
             {
 
@@ -858,11 +858,11 @@ int main(int argc, char *argv[])
                 std::cout << "Processing " << polarity << " peaks\n";
             }
             // adjust filename to include polarity here
-            // filename += ("_" + std::to_string(q::MeasurementData::ppm_for_precentroided_data) + "pos");
+            // filename += ("_" + std::to_string(ppm_for_precentroided_data) + "pos");
             filename += polarity;
             if (printCentroids)
             {
-                q::printPeaklist(centroids, convertRT, pathOutput, filename, silent, skipError);
+                printPeaklist(centroids, convertRT, pathOutput, filename, silent, skipError);
             }
 
             // @todo remove diagnostics later
@@ -875,7 +875,7 @@ int main(int argc, char *argv[])
                 }
             }
 
-            q::Algorithms::qBinning::CentroidedData binThis = qpeaks.passToBinning(centroids, addEmptyScans);
+            CentroidedData binThis = qpeaks.passToBinning(centroids, addEmptyScans);
 
             // for (size_t i = 0; i < convertRT.size(); i++)
             // {
@@ -900,7 +900,7 @@ int main(int argc, char *argv[])
             }
 
             timeStart = std::chrono::high_resolution_clock::now();
-            std::vector<q::Algorithms::qBinning::EIC> binnedData = q::Algorithms::qBinning::performQbinning(
+            std::vector<EIC> binnedData = performQbinning(
                 binThis, convertRT, pathOutput, filename, 3, !verboseProgress, printSummary, printBins); // set maxdist here
             timeEnd = std::chrono::high_resolution_clock::now();
 
@@ -924,7 +924,7 @@ int main(int argc, char *argv[])
 
             timeStart = std::chrono::high_resolution_clock::now();
             // every subvector of peaks corresponds to the bin ID
-            auto peaks = q::MeasurementData::findPeaks_QBIN(qpeaks, binnedData, diff_rt);
+            auto peaks = findPeaks_QBIN(qpeaks, binnedData, diff_rt);
             // make sure that every peak contains only one mass trace
             assert(peaks.size() < binnedData.size());
             int peaksWithMassGaps = 0;
@@ -937,7 +937,7 @@ int main(int argc, char *argv[])
                 auto scansBin = binnedData[binIdx].scanNumbers;
 
                 // idxPeakStart/End are the index referring to the bin in which a peak was found
-                if (!q::massTraceStable(massesBin, peaks[i].idxPeakStart, peaks[i].idxPeakEnd))
+                if (!massTraceStable(massesBin, peaks[i].idxPeakStart, peaks[i].idxPeakEnd))
                 {
                     ++peaksWithMassGaps;
                     // std::cerr << peaks[i][j].mz << ", " << peaks[i][j].retentionTime << ", "
@@ -980,7 +980,7 @@ int main(int argc, char *argv[])
             }
             if (printPeaks)
             {
-                q::printFeatureList(peaks, pathOutput, filename, binnedData, printExtended, silent, skipError);
+                printFeatureList(peaks, pathOutput, filename, binnedData, printExtended, silent, skipError);
             }
             // if (printSubProfile)
             // {
@@ -998,8 +998,8 @@ int main(int argc, char *argv[])
 
             // @todo add peak grouping here
 
-            // auto peakpointer = q::qPattern::collapseFeaturelist(peaks);
-            // q::qPattern::initialComponentBinner(peaks, 1);
+            // auto peakpointer = collapseFeaturelist(peaks);
+            // initialComponentBinner(peaks, 1);
         }
         counter++;
     }
