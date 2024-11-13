@@ -379,12 +379,15 @@ namespace qAlgorithms
         // iterate columwise over the coefficients matrix beta
         for (int i = 0; i < n_segments; i++)
         {
-            const __m128 &coeff = beta[i]; // coefficient register from beta @ i
-            ValidRegression_static selectRegression = makeValidRegression(i, scale, df_start, y_start,
-                                                                          ylog_start, coeff);
-            if (selectRegression.isValid)
+            if (calcDF(df_start, i, 2 * scale + i) > 4)
             {
-                validRegressionsTmp.push_back(selectRegression);
+                const __m128 &coeff = beta[i]; // coefficient register from beta @ i
+                ValidRegression_static selectRegression = makeValidRegression(i, scale, df_start, y_start,
+                                                                              ylog_start, coeff);
+                if (selectRegression.isValid)
+                {
+                    validRegressionsTmp.push_back(selectRegression);
+                }
             }
         }
         // early return if no or only one valid peak
@@ -482,13 +485,17 @@ namespace qAlgorithms
         // iterate columwise over the coefficients matrix beta
         for (int i = 0; i < n_segments; i++)
         {
-            const __m128 &coeff = beta[i]; // coefficient register from beta @ i
-            ValidRegression_static selectRegression = makeValidRegression(i, scale, df_start, y_start,
-                                                                          ylog_start, coeff);
-            if (selectRegression.isValid)
+            if (calcDF(df_start, i, 2 * scale + i) > 4)
             {
-                validRegressionsTmp[validRegressionsIndexTmp] = selectRegression;
-                validRegressionsIndexTmp++;
+                const __m128 &coeff = beta[i]; // coefficient register from beta @ i
+                // @todo add test for coeff = 0
+                ValidRegression_static selectRegression = makeValidRegression(i, scale, df_start, y_start,
+                                                                              ylog_start, coeff);
+                if (selectRegression.isValid)
+                {
+                    validRegressionsTmp[validRegressionsIndexTmp] = selectRegression;
+                    validRegressionsIndexTmp++;
+                }
             }
         }
         // early return if no or only one valid peak
@@ -571,22 +578,7 @@ namespace qAlgorithms
         const float *y_start,
         const float *ylog_start,
         const __m128 &coeff)
-    {
-        /*
-            Degree of Freedom Filter:
-            This block of code implements the degree of freedom filter.
-            It calculates the degree of freedom based df vector. If the
-            degree of freedom is less than 5, the loop continues to the next
-            iteration. The value 5 is chosen as the minimum number of data
-            points required to fit a quadratic regression model.
-          */
-        if (calcDF(df_start, i, 2 * scale + i) < 5)
-        {
-            ValidRegression_static badReg;
-            badReg.isValid = false;
-            return badReg; // degree of freedom less than 5; i.e., less then 5 measured data points
-        }
-
+    { // @todo order by effort to calculate
         /*
           Apex and Valley Position Filter:
           This block of code implements the apex and valley position filter.
@@ -678,14 +670,16 @@ namespace qAlgorithms
           the loop continues to the next iteration.
         */
 
-        float uncertainty_height = 0.0; // @todo why always 0?
-        // if (1 / uncertainty_height <= T_VALUES[df_sum - 5]) // statistical significance of the peak height
-        // {
-        //     return false;
-        // }
+        float uncertainty_height = calcPeakHeightUncert(mse, scale, apex_position);
+        if (1 / uncertainty_height <= T_VALUES[df_sum - 5]) // statistical significance of the peak height
+        {
+            ValidRegression_static badReg;
+            badReg.isValid = false;
+            return badReg;
+        }
         // at this point without height, i.e., to get the real uncertainty
         // multiply with height later. This is done to avoid exp function at this point
-        if (!isValidPeakHeight(mse, i, scale, apex_position, valley_position, df_sum, apexToEdge, uncertainty_height))
+        if (!isValidPeakHeight(mse, scale, apex_position, valley_position, df_sum, apexToEdge))
         {
             ValidRegression_static badReg;
             badReg.isValid = false;
@@ -1569,10 +1563,7 @@ namespace qAlgorithms
 #pragma region "multiplyVecMatrixVecTranspose"
     float multiplyVecMatrixVecTranspose(const float vec[4], const int scale)
     {
-        // Prefetch the inverse matrix to improve cache performance
-        // auto invArray = initialize();
-        // _mm_prefetch(reinterpret_cast<const char *>(&INV_ARRAY[scale * 6 + 0]), _MM_HINT_T0);
-
+        // @todo refactor
         // Load the vector values
         __m128 vec_values = _mm_loadu_ps(vec);
 
@@ -1671,34 +1662,12 @@ namespace qAlgorithms
 
     bool isValidPeakHeight(
         const float mse,
-        const int index,
         const int scale,
         const float apex_position,
         float valley_position,
         const int df_sum,
-        const float apexToEdge,
-        float &uncertainty_height)
+        const float apexToEdge)
     {
-        // float Jacobian_height[4];           // Jacobian matrix for the height
-        // Jacobian_height[0] = 1.f;           // height;
-        // Jacobian_height[1] = apex_position; // apex_position * height;
-        // if (apex_position < 0)
-        // {
-        //     Jacobian_height[2] = apex_position * apex_position; // apex_position * Jacobian_height[1];
-        //     Jacobian_height[3] = 0;
-        // }
-        // else
-        // {
-        //     Jacobian_height[2] = 0;
-        //     Jacobian_height[3] = apex_position * apex_position; // apex_position * Jacobian_height[1];
-        // }
-        // uncertainty_height = std::sqrt(mse * multiplyVecMatrixVecTranspose(Jacobian_height, scale)); // at this point without height, i.e., to get the real uncertainty multiply with height later. This is done to avoid exp function at this point
-
-        // if (1 / uncertainty_height <= T_VALUES[df_sum - 5]) // statistical significance of the peak height
-        // {
-        //     return false;
-        // }
-
         // check if the peak height is significantly greater than edge signal
 
         float Jacobian_height2[4]{0, 0, 0, 0};
@@ -1850,7 +1819,7 @@ namespace qAlgorithms
         J_covered[2] = -B1_2_B2 * (J_2_L_covered + J_1_L_covered / b1) - trpzd_b2;
         J_covered[3] = -B1_2_B3 * (J_2_R_covered + J_1_R_covered / b1) - trpzd_b3;
 
-        const float area_uncertainty_covered = std::sqrt(mse * multiplyVecMatrixVecTranspose(J_covered, scale));
+        float area_uncertainty_covered = std::sqrt(mse * multiplyVecMatrixVecTranspose(J_covered, scale));
 
         return J_covered[0] / area_uncertainty_covered > T_VALUES[df_sum - 5]; // statistical significance of the peak area
     }
@@ -1863,9 +1832,9 @@ namespace qAlgorithms
         const float apex_position,
         const int scale)
     {
-        const float _b1 = 1 / ((float *)&coeff)[1];
-        const float _b2 = 1 / ((float *)&coeff)[2];
-        const float _b3 = 1 / ((float *)&coeff)[3];
+        float _b1 = 1 / ((float *)&coeff)[1];
+        float _b2 = 1 / ((float *)&coeff)[2];
+        float _b3 = 1 / ((float *)&coeff)[3];
         float J[4]; // Jacobian matrix
         J[0] = 0.f;
         J[1] = apex_position * _b1;
@@ -1886,11 +1855,6 @@ namespace qAlgorithms
 #pragma region calculateNumberOfRegressions
     int calculateNumberOfRegressions(const int n)
     {
-        /*
-        int maxScale = (int) (n - 1) / 2;
-        int sumScales = (int) (maxScale * (maxScale + 1) / 2) - 1;
-        return n * (maxScale-1) - sumScales*2;
-        */
         int sum = 0;
         for (int i = 4; i <= GLOBAL_MAXSCALE * 2; i += 2)
         {
