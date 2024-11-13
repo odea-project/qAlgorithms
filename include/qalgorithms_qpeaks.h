@@ -233,7 +233,7 @@ namespace qAlgorithms
      */
     float multiplyVecMatrixVecTranspose(
         const float vec[4],
-        const int scale);
+        int scale);
 
     /**
      * @brief Checks if peak maximum is twice as high as the signal at the edge of the regression window.
