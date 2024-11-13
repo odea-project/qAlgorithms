@@ -31,8 +31,10 @@ namespace qAlgorithms
         float uncertainty_area; // uncertainty of the area
         float uncertainty_pos;  // uncertainty of the position
         float uncertainty_height;
-        ValidRegression_static() = default;
+        // ValidRegression_static() = default;
     };
+
+    std::array<float, 384> initialize();
 
     static const int global_maxScale = 15; // maximum scale for regression window @todo gloabl variables
 
@@ -103,21 +105,13 @@ namespace qAlgorithms
         int &validRegressionsIndex,
         ValidRegression_static *validRegressions);
 
-    bool validateRegressions_testseries(
+    ValidRegression_static validateRegressions_testseries(
         const int i,
         const int scale,
         const bool *df_start,
         const float *y_start,
         const float *ylog_start,
-        const __m128 &coeff,
-        int &df_sum,
-        float &apex_position,
-        int &left_limit,
-        int &right_limit,
-        float &area,
-        float &uncertainty_area,
-        float &uncertainty_pos,
-        float &uncertainty_height);
+        const __m128 &coeff);
 
     void mergeRegressionsOverScales(
         std::vector<ValidRegression_static> &validRegressions,
