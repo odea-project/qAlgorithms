@@ -285,22 +285,16 @@ namespace qAlgorithms
      */
     bool isValidPeakHeight(
         const float mse,
-        const int index,
-        const int scale,
-        const float apex_position,
-        float valley_position,
-        const int df_sum,
-        const float apexToEdge,
-        float &uncertainty_height);
-
-    float calcPeakHeightUncert(
-        const float mse,
-        const int index,
         const int scale,
         const float apex_position,
         float valley_position,
         const int df_sum,
         const float apexToEdge);
+
+    float calcPeakHeightUncert(
+        const float mse,
+        const int scale,
+        const float apex_position);
 
     /**
      * @brief Check if the peak area and the covered peak area are valid using t-test.
