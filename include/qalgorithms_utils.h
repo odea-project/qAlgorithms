@@ -85,9 +85,5 @@ namespace qAlgorithms
         const std::vector<bool> &B);
 
     double erfi(const double x);
-
-    extern const float tValuesArray[256];
-    extern const float chiSquareArray[256];
-    extern const double SQRTPI_2;
 }
 #endif // QALGORITHMS_UTILS_H
