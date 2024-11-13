@@ -122,12 +122,12 @@ namespace qAlgorithms
 #pragma endregion "initialize"
 
 #pragma region "find centroids"
-    void findCentroids(
-        std::vector<CentroidPeak> &all_peaks,
+    std::vector<CentroidPeak> findCentroids(
         treatedData &treatedData,
         const int scanNumber,
         const float retentionTime)
     {
+        std::vector<CentroidPeak> all_peaks;
         for (auto it_separators = treatedData.separators.begin(); it_separators != treatedData.separators.end() - 1; it_separators++)
         {
             const int n = *(it_separators + 1) - *it_separators; // calculate the number of data points in the block
@@ -205,6 +205,7 @@ namespace qAlgorithms
                 delete[] df;
             }
         }
+        return all_peaks;
     }
 #pragma endregion "find centroids"
 
@@ -258,7 +259,8 @@ namespace qAlgorithms
                 {
                     continue; // no valid peaks
                 }
-                createFeaturePeaks(all_peaks, validRegressions, nullptr, validRegressionsIndex, y_start, mz_start, rt_start, df_start, dqs_cen_start, dqs_bin_start, nullptr);
+                createFeaturePeaks(all_peaks, validRegressions, nullptr, validRegressionsIndex, y_start, mz_start,
+                                   rt_start, df_start, dqs_cen_start, dqs_bin_start);
             }
             else
             {
@@ -302,7 +304,8 @@ namespace qAlgorithms
                 {
                     continue; // no valid peaks
                 }
-                createFeaturePeaks(all_peaks, nullptr, &validRegressions, validRegressions.size(), y_start, mz_start, rt_start, df_start, dqs_cen_start, dqs_bin_start, nullptr);
+                createFeaturePeaks(all_peaks, nullptr, &validRegressions, validRegressions.size(), y_start,
+                                   mz_start, rt_start, df_start, dqs_cen_start, dqs_bin_start);
                 delete[] Y;
                 delete[] Ylog;
                 delete[] X;
@@ -377,26 +380,13 @@ namespace qAlgorithms
         for (int i = 0; i < n_segments; i++)
         {
             const __m128 &coeff = beta[i]; // coefficient register from beta @ i
-            ValidRegression_static selectRegression = validateRegressions_testseries(i, scale, df_start, y_start,
-                                                                                     ylog_start, coeff);
-            if (!selectRegression.isValid)
-            {
-                continue; // invalid regression
-            }
-            else
+            ValidRegression_static selectRegression = makeValidRegression(i, scale, df_start, y_start,
+                                                                          ylog_start, coeff);
+            if (selectRegression.isValid)
             {
                 validRegressionsTmp.push_back(selectRegression);
             }
-
-            // at this point, the peak is validated
-            /*
-              Add to a temporary vector of valid regressions:
-              This block of code adds the valid peak to a temporary vector of valid regressions.
-              It calculates the left and right limits of the peak based on the valley position.
-              Then it stores the index of the valid regression in the temporary vector of valid regressions.
-            */
-
-        } // end for loop
+        }
         // early return if no or only one valid peak
         if (validRegressionsTmp.size() < 2)
         {
@@ -493,27 +483,14 @@ namespace qAlgorithms
         for (int i = 0; i < n_segments; i++)
         {
             const __m128 &coeff = beta[i]; // coefficient register from beta @ i
-            ValidRegression_static selectRegression = validateRegressions_testseries(i, scale, df_start, y_start,
-                                                                                     ylog_start, coeff);
-            if (!selectRegression.isValid)
-            {
-                continue; // invalid regression
-            }
-            else
+            ValidRegression_static selectRegression = makeValidRegression(i, scale, df_start, y_start,
+                                                                          ylog_start, coeff);
+            if (selectRegression.isValid)
             {
                 validRegressionsTmp[validRegressionsIndexTmp] = selectRegression;
+                validRegressionsIndexTmp++;
             }
-
-            // at this point, the peak is validated
-            /*
-              Add to a temporary vector of valid regressions:
-              This block of code adds the valid peak to a temporary vector of valid regressions. It
-              calculates the left and right limits of the peak based on the valley position. Then it
-              stores the index of the valid regression in the temporary vector of valid regressions.
-            */
-
-            validRegressionsIndexTmp++;
-        } // end for loop
+        }
         // early return if no or only one valid peak
         if (validRegressionsIndexTmp < 2)
         {
@@ -587,7 +564,7 @@ namespace qAlgorithms
 
 #pragma region "validate regression test series"
 
-    ValidRegression_static validateRegressions_testseries(
+    ValidRegression_static makeValidRegression(
         const int i,
         const int scale,
         const bool *df_start,
@@ -603,8 +580,7 @@ namespace qAlgorithms
             iteration. The value 5 is chosen as the minimum number of data
             points required to fit a quadratic regression model.
           */
-        int df_sum = calcDF(df_start, i, 2 * scale + i); // calculate the sum of the degree of freedom (df_sum)
-        if (df_sum < 5)
+        if (calcDF(df_start, i, 2 * scale + i) < 5)
         {
             ValidRegression_static badReg;
             badReg.isValid = false;
@@ -639,7 +615,7 @@ namespace qAlgorithms
         unsigned int left_limit = (valley_position < 0) ? std::max(i, static_cast<int>(valley_position) + i + scale) : i;
         unsigned int right_limit = (valley_position > 0) ? std::min(i + 2 * scale, static_cast<int>(valley_position) + i + scale) : i + 2 * scale;
 
-        df_sum = calcDF(df_start, left_limit, right_limit); // update the degree of freedom considering the left and right limits
+        int df_sum = calcDF(df_start, left_limit, right_limit); // degrees of freedom considering the left and right limits
         if (df_sum < 5)
         {
             ValidRegression_static badReg;
@@ -1084,8 +1060,7 @@ namespace qAlgorithms
         const float *rt_start,
         const bool *df_start,
         const float *dqs_cen,
-        const float *dqs_bin,
-        const float *dqs_peak)
+        const float *dqs_bin)
     {
         // iterate over the validRegressions vector
         for (int i = 0; i < validRegressionsIndex; i++)
@@ -1525,13 +1500,7 @@ namespace qAlgorithms
             }
         }
         return degreesOfFreedom;
-        // return std::accumulate(
-        //     df_start + left_limit,
-        //     df_start + right_limit + 1,
-        //     0,
-        //     [](int sum, bool p)
-        //     { return sum + p; });
-    } // end calcDF
+    }
 #pragma endregion calcDF
 
 #pragma region calculateApexAndValleyPositions
@@ -1593,10 +1562,7 @@ namespace qAlgorithms
 #pragma endregion calculateApexAndValleyPositions
 
 #pragma region "multiplyVecMatrixVecTranspose"
-    float
-    multiplyVecMatrixVecTranspose(
-        const float vec[4],
-        const int scale)
+    float multiplyVecMatrixVecTranspose(const float vec[4], const int scale)
     {
         // Prefetch the inverse matrix to improve cache performance
         // auto invArray = initialize();
@@ -1675,8 +1641,7 @@ namespace qAlgorithms
 #pragma endregion isValidQuadraticTerm
 
 #pragma region isValidPeakHeight
-    bool
-    isValidPeakHeight(
+    bool isValidPeakHeight(
         const float mse,
         const int index,
         const int scale,
@@ -1900,8 +1865,7 @@ namespace qAlgorithms
 
 #pragma region "convolve regression"
 
-    void
-    convolve_static(
+    void convolve_static(
         const size_t scale,
         const float *vec,
         const size_t n,
@@ -1923,8 +1887,7 @@ namespace qAlgorithms
         }
     }
 
-    void
-    convolve_dynamic(
+    void convolve_dynamic(
         const size_t scale,
         const float *vec,
         const size_t n,
@@ -1948,8 +1911,7 @@ namespace qAlgorithms
         delete[] products;
     }
 
-    void
-    convolve_SIMD(
+    void convolve_SIMD(
         const size_t scale,
         const float *vec,
         const size_t n,
@@ -1961,17 +1923,10 @@ namespace qAlgorithms
         size_t n_segments = n - k + 1;
         size_t centerpoint = k / 2;
 
-        // removed: all elements of result are modified
-        // for (size_t i = 0; i < n_segments; ++i)
-        // {
-        //     result[i] = _mm_setzero_ps();
-        // }
-
         for (size_t i = 0; i < n; ++i)
         {
             products[i] = _mm_setzero_ps();
         }
-        // auto invArray = initialize();
         alignas(__m128) __m128 kernel[3];
         kernel[0] = _mm_set_ps(INV_ARRAY[scale * 6 + 1], INV_ARRAY[scale * 6 + 1], 0.0f, INV_ARRAY[scale * 6 + 0]);
         kernel[1] = _mm_set_ps(INV_ARRAY[scale * 6 + 3] - INV_ARRAY[scale * 6 + 5], -INV_ARRAY[scale * 6 + 3] - INV_ARRAY[scale * 6 + 4], -INV_ARRAY[scale * 6 + 2] - INV_ARRAY[scale * 6 + 3], -INV_ARRAY[scale * 6 + 1]);
