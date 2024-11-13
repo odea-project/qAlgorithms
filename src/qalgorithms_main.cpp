@@ -24,6 +24,7 @@ namespace qAlgorithms
     float PPM_PRECENTROIDED = -INFINITY; // -Infinity sets it to the default value if no user input changes it
     double TOLERANCE_BINNING = -0.4771864667153;
     int GLOBAL_MAXSCALE = 15;
+    std::array<float, 384> INV_ARRAY = initialize();
 
     struct ProfilePoint
     {

@@ -69,9 +69,9 @@ namespace qAlgorithms
 #pragma endregion "pass to qBinning"
 
 #pragma region "initialize"
-    // alignas(float) float qPeaks::invArray[64][6]; // array to store the 6 unique values of the inverse matrix for each scale
+    // alignas(float) float qPeaks::INV_ARRAY[64][6]; // array to store the 6 unique values of the inverse matrix for each scale
 
-    constexpr std::array<float, 384> initialize()
+    const std::array<float, 384> initialize()
     {
         std::array<float, 384> invArray;
         // init invArray
@@ -377,8 +377,8 @@ namespace qAlgorithms
         std::vector<validRegression_static> &validRegressions)
     {
         // declare constants
-        auto invArray = initialize();
-        const float inverseMatrix_2_2 = invArray[scale * 6 + 4]; // variance of the quadratic term left side of the peak
+        // auto invArray = initialize();
+        const float inverseMatrix_2_2 = INV_ARRAY[scale * 6 + 4]; // variance of the quadratic term left side of the peak
 
         // declare variables
         std::vector<validRegression_static> validRegressionsTmp; // temporary vector to store valid regressions <index, apex_position>
@@ -514,8 +514,8 @@ namespace qAlgorithms
         validRegression_static *validRegressions)
     {
         // declare constants
-        auto invArray = initialize();
-        const float inverseMatrix_2_2 = invArray[scale * 6 + 4]; // variance of the quadratic term left side of the peak
+        // auto invArray = initialize();
+        const float inverseMatrix_2_2 = INV_ARRAY[scale * 6 + 4]; // variance of the quadratic term left side of the peak
 
         // declare variables
         validRegression_static validRegressionsTmp[512]; // temporary vector to store valid regressions initialized with random states
@@ -1670,8 +1670,8 @@ namespace qAlgorithms
         const int scale) const
     {
         // Prefetch the inverse matrix to improve cache performance
-        auto invArray = initialize();
-        _mm_prefetch(reinterpret_cast<const char *>(&invArray[scale * 6 + 0]), _MM_HINT_T0);
+        // auto invArray = initialize();
+        _mm_prefetch(reinterpret_cast<const char *>(&INV_ARRAY[scale * 6 + 0]), _MM_HINT_T0);
 
         // Load the vector values
         __m128 vec_values = _mm_loadu_ps(vec);
@@ -1700,12 +1700,12 @@ namespace qAlgorithms
 
         // Calculate the result
         // auto invArray = initialize();
-        float result = _mm_cvtss_f32(v0_v0) * invArray[scale * 6 + 0] +
-                       _mm_cvtss_f32(v1_v1) * invArray[scale * 6 + 2] +
-                       invArray[scale * 6 + 4] * (_mm_cvtss_f32(v2_v2) + _mm_cvtss_f32(v3_v3)) +
-                       2 * (invArray[scale * 6 + 1] * (_mm_cvtss_f32(v0_v1) + _mm_cvtss_f32(v0_v2)) +
-                            invArray[scale * 6 + 3] * (_mm_cvtss_f32(v1_v2) - _mm_cvtss_f32(v1_v3)) +
-                            _mm_cvtss_f32(v2_v3) * invArray[scale * 6 + 5]);
+        float result = _mm_cvtss_f32(v0_v0) * INV_ARRAY[scale * 6 + 0] +
+                       _mm_cvtss_f32(v1_v1) * INV_ARRAY[scale * 6 + 2] +
+                       INV_ARRAY[scale * 6 + 4] * (_mm_cvtss_f32(v2_v2) + _mm_cvtss_f32(v3_v3)) +
+                       2 * (INV_ARRAY[scale * 6 + 1] * (_mm_cvtss_f32(v0_v1) + _mm_cvtss_f32(v0_v2)) +
+                            INV_ARRAY[scale * 6 + 3] * (_mm_cvtss_f32(v1_v2) - _mm_cvtss_f32(v1_v3)) +
+                            _mm_cvtss_f32(v2_v3) * INV_ARRAY[scale * 6 + 5]);
 
         return result;
     }
@@ -2045,11 +2045,11 @@ namespace qAlgorithms
         {
             products[i] = _mm_setzero_ps();
         }
-        auto invArray = initialize();
+        // auto invArray = initialize();
         alignas(__m128) __m128 kernel[3];
-        kernel[0] = _mm_set_ps(invArray[scale * 6 + 1], invArray[scale * 6 + 1], 0.0f, invArray[scale * 6 + 0]);
-        kernel[1] = _mm_set_ps(invArray[scale * 6 + 3] - invArray[scale * 6 + 5], -invArray[scale * 6 + 3] - invArray[scale * 6 + 4], -invArray[scale * 6 + 2] - invArray[scale * 6 + 3], -invArray[scale * 6 + 1]);
-        kernel[2] = _mm_set_ps(2.f * invArray[scale * 6 + 5], 2.f * invArray[scale * 6 + 4], 2.f * invArray[scale * 6 + 3], 2.f * invArray[scale * 6 + 1]);
+        kernel[0] = _mm_set_ps(INV_ARRAY[scale * 6 + 1], INV_ARRAY[scale * 6 + 1], 0.0f, INV_ARRAY[scale * 6 + 0]);
+        kernel[1] = _mm_set_ps(INV_ARRAY[scale * 6 + 3] - INV_ARRAY[scale * 6 + 5], -INV_ARRAY[scale * 6 + 3] - INV_ARRAY[scale * 6 + 4], -INV_ARRAY[scale * 6 + 2] - INV_ARRAY[scale * 6 + 3], -INV_ARRAY[scale * 6 + 1]);
+        kernel[2] = _mm_set_ps(2.f * INV_ARRAY[scale * 6 + 5], 2.f * INV_ARRAY[scale * 6 + 4], 2.f * INV_ARRAY[scale * 6 + 3], 2.f * INV_ARRAY[scale * 6 + 1]);
 
 #pragma GCC ivdep
 #pragma GCC unroll 8
