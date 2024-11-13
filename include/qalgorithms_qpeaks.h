@@ -146,7 +146,6 @@ namespace qAlgorithms
         const int validRegressionsIndex,
         const float *y_start,
         const float *mz_start,
-        const float *rt_start,
         const bool *df_start,
         const int scanNumber);
 
