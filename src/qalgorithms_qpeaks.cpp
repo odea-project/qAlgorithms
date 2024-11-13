@@ -17,7 +17,7 @@ namespace qAlgorithms
 {
 
 #pragma region "pass to qBinning"
-    CentroidedData qPeaks::passToBinning(std::vector<std::vector<CentroidPeak>> &allPeaks, std::vector<unsigned int> addEmpty)
+    CentroidedData passToBinning(std::vector<std::vector<CentroidPeak>> &allPeaks, std::vector<unsigned int> addEmpty)
     {
         // initialise empty vector with enough room for all scans - centroids[0] must remain empty
         std::vector<std::vector<qCentroid>> centroids(allPeaks.size() + 1, std::vector<qCentroid>(0));
@@ -69,7 +69,7 @@ namespace qAlgorithms
 #pragma endregion "pass to qBinning"
 
 #pragma region "initialize"
-    // alignas(float) float qPeaks::INV_ARRAY[64][6]; // array to store the 6 unique values of the inverse matrix for each scale
+    // alignas(float) float INV_ARRAY[64][6]; // array to store the 6 unique values of the inverse matrix for each scale
 
     const std::array<float, 384> initialize()
     {
@@ -122,7 +122,7 @@ namespace qAlgorithms
 #pragma endregion "initialize"
 
 #pragma region "find centroids"
-    void qPeaks::findCentroids(
+    void findCentroids(
         std::vector<CentroidPeak> &all_peaks,
         treatedData &treatedData,
         const int scanNumber,
@@ -212,7 +212,7 @@ namespace qAlgorithms
 #pragma endregion "find centroids"
 
 #pragma region "find peaks"
-    void qPeaks::findPeaks(
+    void findPeaks(
         std::vector<FeaturePeak> &all_peaks,
         treatedData &treatedData)
     {
@@ -321,7 +321,7 @@ namespace qAlgorithms
 #pragma endregion "find peaks"
 
 #pragma region "running regression"
-    void qPeaks::runningRegression(
+    void runningRegression(
         const float *y_start,
         const float *ylog_start,
         const bool *df_start,
@@ -344,7 +344,7 @@ namespace qAlgorithms
 
 #pragma region "running regression static"
     void
-    qPeaks::runningRegression_static(
+    runningRegression_static(
         const float *y_start,
         const float *ylog_start,
         const bool *df_start,
@@ -367,7 +367,7 @@ namespace qAlgorithms
 #pragma endregion "running regression static"
 
 #pragma region validateRegressions
-    void qPeaks::validateRegressions(
+    void validateRegressions(
         const __m128 *beta,      // coefficients matrix
         const int n_segments,    // number of segments, i.e. regressions
         const float *y_start,    // pointer to the start of the Y matrix
@@ -463,7 +463,7 @@ namespace qAlgorithms
                 it_peak_next->apex_position > it_peak->right_limit                    // Right peak is not within the window of the left peak
             )
             {                                                                                                      // the two regressions differ, i.e. create a new group and move all regressions from start to it_peak to this group
-                regressionGroups.push_back(std::vector<qPeaks::validRegression_static>());                         // create a new group
+                regressionGroups.push_back(std::vector<validRegression_static>());                                 // create a new group
                 std::move(validRegressionsTmp.begin(), it_peak_next, std::back_inserter(regressionGroups.back())); // move all regressions from start to it_peak to this group
                 it_peak_next = validRegressionsTmp.erase(validRegressionsTmp.begin(), it_peak_next);               // erase the moved regressions from the temporary vector of valid regressions
             }
@@ -471,7 +471,7 @@ namespace qAlgorithms
             ++it_peak_next;
             if (it_peak_next == validRegressionsTmp.end())
             {                                                                                                      // the last peak is reached
-                regressionGroups.push_back(std::vector<qPeaks::validRegression_static>());                         // create a new group
+                regressionGroups.push_back(std::vector<validRegression_static>());                                 // create a new group
                 std::move(validRegressionsTmp.begin(), it_peak_next, std::back_inserter(regressionGroups.back())); // move all regressions from start to it_peak to this group
             }
         } // end while loop
@@ -503,7 +503,7 @@ namespace qAlgorithms
 
 #pragma region "validate regressions static"
     void
-    qPeaks::validateRegressions_static(
+    validateRegressions_static(
         const __m128 *beta,
         const int n_segments,
         const float *y_start,
@@ -575,7 +575,7 @@ namespace qAlgorithms
         }
 
         // lambda function to process a group of valid regressions, i.e., find the peak with the lowest MSE and push it to the valid regressions
-        auto processGroup = [this, &validRegressions, &validRegressionsTmp, &validRegressionsIndex, y_start, df_start](int i, int start_index_group)
+        auto processGroup = [&validRegressions, &validRegressionsTmp, &validRegressionsIndex, y_start, df_start](int i, int start_index_group)
         {
             int group_size = i - start_index_group + 1; // size of the group
             if (group_size == 1)
@@ -634,7 +634,7 @@ namespace qAlgorithms
 #pragma endregion "validate regressions static"
 
 #pragma region "validate regression test series"
-    bool qPeaks::validateRegressions_testseries(
+    bool validateRegressions_testseries(
         const float inverseMatrix_2_2,
         const int i,
         const int scale,
@@ -785,7 +785,7 @@ namespace qAlgorithms
 
 #pragma region mergeRegressionsOverScales
     void
-    qPeaks::mergeRegressionsOverScales(
+    mergeRegressionsOverScales(
         std::vector<validRegression_static> &validRegressions,
         const float *y_start,
         const float *ylog_start,
@@ -910,7 +910,7 @@ namespace qAlgorithms
 
 #pragma region "merge regressions over scales static"
     void
-    qPeaks::mergeRegressionsOverScales_static(
+    mergeRegressionsOverScales_static(
         validRegression_static *validRegressions,
         const int n_regressions,
         const float *y_start,
@@ -990,7 +990,7 @@ namespace qAlgorithms
 #pragma endregion "merge regressions over scales static"
 
 #pragma region "create peaks"
-    // void qPeaks::createPeaks(
+    // void createPeaks(
     //     std::vector<Peak> &peaks,
     //     const std::vector<validRegression_static> &validRegressions,
     //     const float *y_start,
@@ -1053,7 +1053,7 @@ namespace qAlgorithms
         return std::make_pair(weighted_mean, uncertaintiy);
     };
 
-    void qPeaks::createCentroidPeaks(
+    void createCentroidPeaks(
         std::vector<CentroidPeak> &peaks,
         validRegression_static *validRegressions,
         std::vector<validRegression_static> *validRegressionsVec,
@@ -1127,7 +1127,7 @@ namespace qAlgorithms
         }
     }
 
-    void qPeaks::createFeaturePeaks(
+    void createFeaturePeaks(
         std::vector<FeaturePeak> &peaks,
         validRegression_static *validRegressions,
         std::vector<validRegression_static> *validRegressionsVec,
@@ -1219,13 +1219,13 @@ namespace qAlgorithms
 #pragma endregion "create peaks"
 
 #pragma region calcSSE
-    float qPeaks::calcSSE(
+    float calcSSE(
         const int left_limit,
         const int right_limit,
         const __m128 &coeff,
         const float *y_start,
         const bool calc_EXP,
-        const bool calc_CHISQ) const
+        const bool calc_CHISQ)
     {
         // exception handling if the right limits is negative or the left limit is positive
         if (right_limit < 0 || left_limit > 0)
@@ -1331,7 +1331,7 @@ namespace qAlgorithms
 
 #pragma region calcExtendedMse
     void
-    qPeaks::calcExtendedMse(
+    calcExtendedMse(
         const float *y_start,                             // start of the measured data
         std::vector<validRegression_static> &regressions, // regressions to compare
         const bool *df_start)                             // degrees of freedom
@@ -1397,11 +1397,11 @@ namespace qAlgorithms
                 regression->isValid = false;
             }
         }
-    } // end qPeaks::calcExtendedMse
+    } // end calcExtendedMse
 #pragma endregion calcExtendedMse
 
 #pragma region calcExtendedMse_static
-    void qPeaks::calcExtendedMse_static(
+    void calcExtendedMse_static(
         const float *y_start,
         validRegression_static *regressions_start,
         const int n_regressions,
@@ -1470,7 +1470,7 @@ namespace qAlgorithms
 #pragma endregion calcExtendedMse_static
 
 #pragma region calcExtendedMsePair_static
-    void qPeaks::calcExtendedMsePair_static(
+    void calcExtendedMsePair_static(
         const float *y_start,
         validRegression_static *low_scale_regression,
         validRegression_static *hi_scale_regression,
@@ -1528,7 +1528,7 @@ namespace qAlgorithms
 #pragma endregion calcExtendedMsePair_static
 
 #pragma region calcExtendedMseOverScales_static
-    void qPeaks::calcExtendedMseOverScales_static(
+    void calcExtendedMseOverScales_static(
         const float *y_start,
         validRegression_static *validRegressions,
         const std::vector<int> &validRegressionsInGroup,
@@ -1582,7 +1582,7 @@ namespace qAlgorithms
 #pragma endregion calcExtendedMseOverScales_static
 
 #pragma region calcDF
-    int qPeaks::calcDF(
+    int calcDF(
         const bool *df_start,     // start of the degrees of freedom
         unsigned int left_limit,  // left limit
         unsigned int right_limit) // right limit
@@ -1606,11 +1606,11 @@ namespace qAlgorithms
 #pragma endregion calcDF
 
 #pragma region calculateApexAndValleyPositions
-    bool qPeaks::calculateApexAndValleyPositions(
+    bool calculateApexAndValleyPositions(
         const __m128 &coeff,
         const int scale,
         float &apex_position,
-        float &valley_position) const
+        float &valley_position)
     {
         // check if beta 2 or beta 3 is zero
         if (((float *)&coeff)[2] == 0.0f || ((float *)&coeff)[3] == 0.0f)
@@ -1665,9 +1665,9 @@ namespace qAlgorithms
 
 #pragma region "multiplyVecMatrixVecTranspose"
     float
-    qPeaks::multiplyVecMatrixVecTranspose(
+    multiplyVecMatrixVecTranspose(
         const float vec[4],
-        const int scale) const
+        const int scale)
     {
         // Prefetch the inverse matrix to improve cache performance
         // auto invArray = initialize();
@@ -1713,12 +1713,12 @@ namespace qAlgorithms
 
 #pragma region "isValidApexToEdge"
     bool
-    qPeaks::isValidApexToEdge(
+    isValidApexToEdge(
         const double apex_position,
         const int scale,
         const int index_loop,
         const float *y_start,
-        float &apexToEdge) const
+        float &apexToEdge)
     {
         int idx_apex = (int)std::round(apex_position) + scale + index_loop; // index of the apex
         int idx_left = index_loop;                                          // index of the left edge
@@ -1733,11 +1733,11 @@ namespace qAlgorithms
 #pragma endregion "isValidApexToEdge"
 
 #pragma region isValidQuadraticTerm
-    bool qPeaks::isValidQuadraticTerm(
+    bool isValidQuadraticTerm(
         const __m128 &coeff,
         const float inverseMatrix_2_2,
         const float mse,
-        const int df_sum) const
+        const int df_sum)
     {
         double tValue = std::max(                                                 // t-value for the quadratic term
             std::abs(((float *)&coeff)[2]) / std::sqrt(inverseMatrix_2_2 * mse),  // t-value for the quadratic term left side of the peak
@@ -1748,7 +1748,7 @@ namespace qAlgorithms
 
 #pragma region isValidPeakHeight
     bool
-    qPeaks::isValidPeakHeight(
+    isValidPeakHeight(
         const float mse,
         const int index,
         const int scale,
@@ -1756,7 +1756,7 @@ namespace qAlgorithms
         const float valley_position,
         const int df_sum,
         const float apexToEdge,
-        float &uncertainty_height) const
+        float &uncertainty_height)
     {
         float Jacobian_height[4];           // Jacobian matrix for the height
         Jacobian_height[0] = 1.f;           // height;
@@ -1802,13 +1802,13 @@ namespace qAlgorithms
 #pragma endregion isValidPeakHeight
 
 #pragma region isValidPeakArea
-    bool qPeaks::isValidPeakArea(
+    bool isValidPeakArea(
         const __m128 &coeff,
         const float mse,
         const int scale,
         const int df_sum,
         float &area,
-        float &uncertainty_area) const
+        float &uncertainty_area)
     {
         // predefine expressions
         float b1 = ((float *)&coeff)[1];
@@ -1928,12 +1928,12 @@ namespace qAlgorithms
 
 #pragma region "calcUncertaintyPosition"
     void
-    qPeaks::calcUncertaintyPosition(
+    calcUncertaintyPosition(
         const float mse,
         const __m128 &coeff,
         const float apex_position,
         const int scale,
-        float &uncertainty_pos) const
+        float &uncertainty_pos)
     {
         const float _b1 = 1 / ((float *)&coeff)[1];
         const float _b2 = 1 / ((float *)&coeff)[2];
@@ -1956,7 +1956,7 @@ namespace qAlgorithms
 #pragma endregion "calcUncertaintyPosition"
 
 #pragma region calculateNumberOfRegressions
-    int qPeaks::calculateNumberOfRegressions(const int n) const
+    int calculateNumberOfRegressions(const int n)
     {
         /*
         int maxScale = (int) (n - 1) / 2;
@@ -1975,7 +1975,7 @@ namespace qAlgorithms
 #pragma region "convolve regression"
 
     void
-    qPeaks::convolve_static(
+    convolve_static(
         const size_t scale,
         const float *vec,
         const size_t n,
@@ -1998,7 +1998,7 @@ namespace qAlgorithms
     }
 
     void
-    qPeaks::convolve_dynamic(
+    convolve_dynamic(
         const size_t scale,
         const float *vec,
         const size_t n,
@@ -2023,7 +2023,7 @@ namespace qAlgorithms
     }
 
     void
-    qPeaks::convolve_SIMD(
+    convolve_SIMD(
         const size_t scale,
         const float *vec,
         const size_t n,

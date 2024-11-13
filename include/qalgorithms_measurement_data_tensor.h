@@ -35,7 +35,6 @@ namespace qAlgorithms
      * @return std::vector<std::vector<DataType::Peak>> : list of peaks
      */
     std::vector<std::vector<CentroidPeak>> findCentroids_MZML(
-        qPeaks &qpeaks,
         sc::MZML &data,
         std::vector<unsigned int> &addEmpty,
         std::vector<float> &convertRT,
@@ -45,7 +44,6 @@ namespace qAlgorithms
         const int start_index = 0);
 
     std::vector<FeaturePeak> findPeaks_QBIN(
-        qPeaks &qpeaks,
         std::vector<EIC> &data,
         float rt_diff);
 

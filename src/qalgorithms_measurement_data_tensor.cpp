@@ -124,7 +124,6 @@ namespace qAlgorithms
 
 #pragma region "find centroids"
     std::vector<std::vector<CentroidPeak>> findCentroids_MZML(
-        qPeaks &qpeaks,
         sc::MZML &data,
         std::vector<unsigned int> &addEmpty,
         std::vector<float> &convertRT,
@@ -218,7 +217,7 @@ namespace qAlgorithms
             std::vector<dataPoint> dataPoints = mzmlToDataPoint(data, index); // convert mzml to data points
             std::vector<unsigned int> dummy;
             treatedData treatedData = pretreatData(dataPoints, dummy, expectedDifference); // inter/extrapolate data, and identify data blocks
-            qpeaks.findCentroids(centroids[i], treatedData, index, retention_times[i]);    // find peaks in data blocks of treated data
+            findCentroids(centroids[i], treatedData, index, retention_times[i]);           // find peaks in data blocks of treated data
         }
 
         if (!displayPPMwarning)
@@ -248,7 +247,6 @@ namespace qAlgorithms
 
 #pragma region "find peaks"
     std::vector<FeaturePeak> findPeaks_QBIN(
-        qPeaks &qpeaks,
         std::vector<EIC> &data,
         float rt_diff)
     {
@@ -269,7 +267,7 @@ namespace qAlgorithms
             std::vector<unsigned int> binIndexConverter;
             treatedData treatedData = pretreatData(dataPoints, binIndexConverter, rt_diff, false); // inter/extrapolate data, and identify data blocks
 
-            qpeaks.findPeaks(tmpPeaks, treatedData);
+            findPeaks(tmpPeaks, treatedData);
             if (!tmpPeaks.empty())
             {
                 for (size_t j = 0; j < tmpPeaks.size(); j++)
