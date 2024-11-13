@@ -376,11 +376,6 @@ namespace qAlgorithms
         const int scale,         // scale, i.e., the number of data points in a half window excluding the center point
         std::vector<validRegression_static> &validRegressions)
     {
-        // declare constants
-        // auto invArray = initialize();
-        const float inverseMatrix_2_2 = INV_ARRAY[scale * 6 + 4]; // variance of the quadratic term left side of the peak
-
-        // declare variables
         std::vector<validRegression_static> validRegressionsTmp; // temporary vector to store valid regressions <index, apex_position>
 
         // iterate columwise over the coefficients matrix beta
@@ -397,7 +392,7 @@ namespace qAlgorithms
             float uncertainty_height = 0.f;
 
             // validate the regression
-            if (!validateRegressions_testseries(inverseMatrix_2_2, i, scale, df_start, y_start,
+            if (!validateRegressions_testseries(i, scale, df_start, y_start,
                                                 ylog_start, coeff, df_sum, apex_position,
                                                 left_limit, right_limit, area, uncertainty_area,
                                                 uncertainty_pos, uncertainty_height))
@@ -478,7 +473,11 @@ namespace qAlgorithms
 
         /*
           Survival of the Fittest Filter:
-          This block of code implements the survival of the fittest filter. It selects the peak with the lowest mean squared error (MSE) as the representative of the group. If the group contains only one peak, the peak is directly pushed to the valid regressions. If the group contains multiple peaks, the peak with the lowest MSE is selected as the representative of the group and pushed to the valid regressions.
+          This block of code implements the survival of the fittest filter. It selects the peak with
+          the lowest mean squared error (MSE) as the representative of the group. If the group contains
+          only one peak, the peak is directly pushed to the valid regressions. If the group contains
+          multiple peaks, the peak with the lowest MSE is selected as the representative of the group
+          and pushed to the valid regressions.
         */
         for (auto &group : regressionGroups)
         {
@@ -513,11 +512,6 @@ namespace qAlgorithms
         int &validRegressionsIndex,
         validRegression_static *validRegressions)
     {
-        // declare constants
-        // auto invArray = initialize();
-        const float inverseMatrix_2_2 = INV_ARRAY[scale * 6 + 4]; // variance of the quadratic term left side of the peak
-
-        // declare variables
         validRegression_static validRegressionsTmp[512]; // temporary vector to store valid regressions initialized with random states
         int validRegressionsIndexTmp = 0;                // index of the valid regressions
 
@@ -535,7 +529,7 @@ namespace qAlgorithms
             float uncertainty_pos = 0.f; // uncertainty of the peak position
 
             // validate the regression
-            if (!validateRegressions_testseries(inverseMatrix_2_2, i, scale, df_start, y_start,
+            if (!validateRegressions_testseries(i, scale, df_start, y_start,
                                                 ylog_start, coeff, df_sum, apex_position,
                                                 left_limit, right_limit, area, uncertainty_area,
                                                 uncertainty_pos, uncertainty_height))
@@ -546,7 +540,9 @@ namespace qAlgorithms
             // at this point, the peak is validated
             /*
               Add to a temporary vector of valid regressions:
-              This block of code adds the valid peak to a temporary vector of valid regressions. It calculates the left and right limits of the peak based on the valley position. Then it stores the index of the valid regression in the temporary vector of valid regressions.
+              This block of code adds the valid peak to a temporary vector of valid regressions. It
+              calculates the left and right limits of the peak based on the valley position. Then it
+              stores the index of the valid regression in the temporary vector of valid regressions.
             */
             validRegressionsTmp[validRegressionsIndexTmp].index_x0 = i + scale;                      // index of the center of the window (x==0) in the Y matrix
             validRegressionsTmp[validRegressionsIndexTmp].scale = scale;                             // scale
@@ -601,7 +597,8 @@ namespace qAlgorithms
 
         /*
           Grouping:
-          This block of code implements the grouping. It groups the valid peaks based on the apex positions. Peaks are defined as similar, i.e., members of the same group, if they fullfill at least one of the following conditions:
+          This block of code implements the grouping. It groups the valid peaks based on the apex positions.
+          Peaks are defined as similar, i.e., members of the same group, if they fullfill at least one of the following conditions:
           - The difference between two peak apexes is less than 4. (Nyquist Shannon Sampling Theorem, separation of two maxima)
           - At least one apex of a pair of peaks is within the window of the other peak. (Overlap of two maxima)
         */
@@ -635,7 +632,6 @@ namespace qAlgorithms
 
 #pragma region "validate regression test series"
     bool validateRegressions_testseries(
-        const float inverseMatrix_2_2,
         const int i,
         const int scale,
         const bool *df_start,
@@ -730,7 +726,7 @@ namespace qAlgorithms
         */
         const float mse = calcSSE(-scale, scale, coeff, ylog_start + i) / (df_sum - 4); // mean squared error
 
-        if (!isValidQuadraticTerm(coeff, inverseMatrix_2_2, mse, df_sum))
+        if (!isValidQuadraticTerm(coeff, scale, mse, df_sum))
         {
             return false; // statistical insignificance of the quadratic term
         }
@@ -1735,14 +1731,15 @@ namespace qAlgorithms
 #pragma region isValidQuadraticTerm
     bool isValidQuadraticTerm(
         const __m128 &coeff,
-        const float inverseMatrix_2_2,
+        const int scale,
         const float mse,
         const int df_sum)
     {
-        double tValue = std::max(                                                 // t-value for the quadratic term
-            std::abs(((float *)&coeff)[2]) / std::sqrt(inverseMatrix_2_2 * mse),  // t-value for the quadratic term left side of the peak
-            std::abs(((float *)&coeff)[3]) / std::sqrt(inverseMatrix_2_2 * mse)); // t-value for the quadratic term right side of the peak
-        return tValue > tValuesArray[df_sum - 5];                                 // statistical significance of the quadratic term
+        float divisor = std::sqrt(INV_ARRAY[scale * 6 + 4] * mse); // inverseMatrix_2_2 is at position 4 of initialize()
+        double tValue = std::max(                                  // t-value for the quadratic term
+            std::abs(((float *)&coeff)[2]) / divisor,              // t-value for the quadratic term left side of the peak
+            std::abs(((float *)&coeff)[3]) / divisor);             // t-value for the quadratic term right side of the peak
+        return tValue > tValuesArray[df_sum - 5];                  // statistical significance of the quadratic term
     }
 #pragma endregion isValidQuadraticTerm
 
