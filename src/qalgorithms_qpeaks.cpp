@@ -1560,48 +1560,6 @@ namespace qAlgorithms
     }
 #pragma endregion calculateApexAndValleyPositions
 
-#pragma region "multiplyVecMatrixVecTranspose"
-    float multiplyVecMatrixVecTranspose(const float vec[4], const int scale)
-    {
-        // @todo refactor
-        // Load the vector values
-        __m128 vec_values = _mm_loadu_ps(vec);
-
-        // Calculate the products of the vector values
-        __m128 v0_v0 = _mm_mul_ps(vec_values, vec_values);                              // v0_v0 = vec[0] * vec[0]
-        __m128 temp1 = _mm_shuffle_ps(vec_values, vec_values, _MM_SHUFFLE(1, 0, 0, 0)); // temp1 = vec[1], vec[0], vec[0], vec[0]
-        __m128 temp2 = _mm_shuffle_ps(vec_values, vec_values, _MM_SHUFFLE(2, 2, 1, 1)); // temp2 = vec[2], vec[2], vec[1], vec[1]
-        __m128 v0_v1 = _mm_mul_ps(temp1, temp2);                                        // v0_v1 = vec[0] * vec[1], vec[1] * vec[2], etc.
-
-        __m128 temp3 = _mm_shuffle_ps(vec_values, vec_values, _MM_SHUFFLE(3, 3, 3, 3)); // temp3 = vec[3], vec[3], vec[3], vec[3]
-        __m128 v0_v2 = _mm_mul_ps(vec_values, temp3);                                   // v0_v2 = vec[0] * vec[2], vec[1] * vec[3], etc.
-
-        __m128 temp4 = _mm_shuffle_ps(vec_values, vec_values, _MM_SHUFFLE(1, 1, 1, 1)); // temp4 = vec[1], vec[1], vec[1], vec[1]
-        __m128 v1_v1 = _mm_mul_ps(temp4, temp4);                                        // v1_v1 = vec[1] * vec[1]
-
-        __m128 temp5 = _mm_shuffle_ps(vec_values, vec_values, _MM_SHUFFLE(2, 2, 2, 2)); // temp5 = vec[2], vec[2], vec[2], vec[2]
-        __m128 v1_v2 = _mm_mul_ps(temp5, temp4);                                        // v1_v2 = vec[2] * vec[1]
-
-        __m128 temp6 = _mm_shuffle_ps(vec_values, vec_values, _MM_SHUFFLE(3, 3, 3, 3)); // temp6 = vec[3], vec[3], vec[3], vec[3]
-        __m128 v1_v3 = _mm_mul_ps(temp6, temp4);                                        // v1_v3 = vec[3] * vec[1]
-
-        __m128 v2_v2 = _mm_mul_ps(temp5, temp5); // v2_v2 = vec[2] * vec[2]
-        __m128 v2_v3 = _mm_mul_ps(temp5, temp6); // v2_v3 = vec[2] * vec[3]
-        __m128 v3_v3 = _mm_mul_ps(temp6, temp6); // v3_v3 = vec[3] * vec[3]
-
-        // Calculate the result
-        // auto invArray = initialize();
-        float result = _mm_cvtss_f32(v0_v0) * INV_ARRAY[scale * 6 + 0] +
-                       _mm_cvtss_f32(v1_v1) * INV_ARRAY[scale * 6 + 2] +
-                       INV_ARRAY[scale * 6 + 4] * (_mm_cvtss_f32(v2_v2) + _mm_cvtss_f32(v3_v3)) +
-                       2 * (INV_ARRAY[scale * 6 + 1] * (_mm_cvtss_f32(v0_v1) + _mm_cvtss_f32(v0_v2)) +
-                            INV_ARRAY[scale * 6 + 3] * (_mm_cvtss_f32(v1_v2) - _mm_cvtss_f32(v1_v3)) +
-                            _mm_cvtss_f32(v2_v3) * INV_ARRAY[scale * 6 + 5]);
-
-        return result;
-    }
-#pragma endregion "multiplyVecMatrixVecTranspose"
-
 #pragma region "isValidApexToEdge"
 
     float calcApexToEdge(
@@ -1973,6 +1931,19 @@ namespace qAlgorithms
                 result[j] = _mm_add_ps(result[j], products_temp);
             }
         }
+    }
+
+    float multiplyVecMatrixVecTranspose(const float vec[4], int scale)
+    {
+        scale *= 6;
+        const float result = vec[0] * vec[0] * INV_ARRAY[scale + 0] +
+                             vec[1] * vec[1] * INV_ARRAY[scale + 2] +
+                             (vec[2] * vec[2] + vec[3] * vec[3]) * INV_ARRAY[scale + 4] +
+                             2 * vec[2] * vec[3] * INV_ARRAY[scale + 5] +
+                             2 * vec[0] * (vec[1] + vec[3]) * INV_ARRAY[scale + 1] +
+                             2 * vec[1] * (vec[2] - vec[3]) * INV_ARRAY[scale + 3];
+
+        return result;
     }
 #pragma endregion "convolve regression"
 }
