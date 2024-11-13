@@ -217,7 +217,7 @@ namespace qAlgorithms
             std::vector<dataPoint> dataPoints = mzmlToDataPoint(data, index); // convert mzml to data points
             std::vector<unsigned int> dummy;
             treatedData treatedData = pretreatData(dataPoints, dummy, expectedDifference); // inter/extrapolate data, and identify data blocks
-            findCentroids(centroids[i], treatedData, index, retention_times[i]);           // find peaks in data blocks of treated data
+            centroids[i] = findCentroids(treatedData, index, retention_times[i]);          // find peaks in data blocks of treated data
         }
 
         if (!displayPPMwarning)

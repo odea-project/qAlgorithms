@@ -730,7 +730,6 @@ int main(int argc, char *argv[])
             exit(1);
         }
     }
-    std::cout << "ok";
     if (!inSpecified & !tasklistSpecified)
     {
         std::cerr << "Error: no input file supplied. Specify a file or directorey using the -i or "

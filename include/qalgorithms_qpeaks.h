@@ -18,8 +18,7 @@ namespace qAlgorithms
 {
     const std::array<float, 384> initialize();
 
-    void findCentroids(
-        std::vector<CentroidPeak> &all_peaks,
+    std::vector<CentroidPeak> findCentroids(
         treatedData &treatedData,
         const int scanNumber,
         const float retentionTime);
@@ -98,7 +97,7 @@ namespace qAlgorithms
         int &validRegressionsIndex,
         ValidRegression_static *validRegressions);
 
-    ValidRegression_static validateRegressions_testseries(
+    ValidRegression_static makeValidRegression(
         const int i,
         const int scale,
         const bool *df_start,
@@ -139,8 +138,7 @@ namespace qAlgorithms
         const float *rt_start,
         const bool *df_start,
         const float *dqs_cen,
-        const float *dqs_bin,
-        const float *dqs_peak);
+        const float *dqs_bin);
 
     float calcSSE(
         const int left_limit,
