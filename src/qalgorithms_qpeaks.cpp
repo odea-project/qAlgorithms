@@ -138,7 +138,7 @@ namespace qAlgorithms
                 alignas(float) float Ylog[512];                // log-transformed measured y values
                 alignas(float) float X[512];                   // measured x values
                 alignas(bool) bool df[512];                    // degree of freedom vector, 0: interpolated, 1: measured
-                validRegression_static validRegressions[2048]; // array of valid regressions with default initialization, i.e., random states
+                ValidRegression_static validRegressions[2048]; // array of valid regressions with default initialization, i.e., random states
                 int validRegressionsIndex = 0;                 // index of the valid regressions
 
                 // iterators to the start of the data
@@ -173,7 +173,7 @@ namespace qAlgorithms
                 alignas(float) float *Ylog = new float[n];
                 alignas(float) float *X = new float[n];
                 alignas(float) bool *df = new bool[n];
-                std::vector<validRegression_static> validRegressions;
+                std::vector<ValidRegression_static> validRegressions;
 
                 // iterator to the start
                 const auto y_start = Y;
@@ -227,7 +227,7 @@ namespace qAlgorithms
                 alignas(float) float mz[512];                  // measured mz values
                 alignas(float) float dqs_cen[512];             // measured dqs values
                 alignas(float) float dqs_bin[512];             // measured dqs values
-                validRegression_static validRegressions[2048]; // array of valid regressions with default initialization, i.e., random states
+                ValidRegression_static validRegressions[2048]; // array of valid regressions with default initialization, i.e., random states
                 int validRegressionsIndex = 0;                 // index of the valid regressions
 
                 // iterators to the start of the data
@@ -270,7 +270,7 @@ namespace qAlgorithms
                 alignas(float) float *mz = new float[n];
                 alignas(float) float *dqs_cen = new float[n];
                 alignas(float) float *dqs_bin = new float[n];
-                std::vector<validRegression_static> validRegressions;
+                std::vector<ValidRegression_static> validRegressions;
 
                 // iterator to the start
                 const auto y_start = Y;
@@ -321,7 +321,7 @@ namespace qAlgorithms
         const float *ylog_start,
         const bool *df_start,
         const int n, // number of data points
-        std::vector<validRegression_static> &validRegressions)
+        std::vector<ValidRegression_static> &validRegressions)
     {
         const int maxScale = std::min(GLOBAL_MAXSCALE, (int)(n - 1) / 2);
         validRegressions.reserve(calculateNumberOfRegressions(n));
@@ -344,7 +344,7 @@ namespace qAlgorithms
         const float *ylog_start,
         const bool *df_start,
         const int n,
-        validRegression_static *validRegressions,
+        ValidRegression_static *validRegressions,
         int &validRegressionsIndex)
     {
         int maxScale = std::min(GLOBAL_MAXSCALE, (int)(n - 1) / 2);
@@ -369,30 +369,23 @@ namespace qAlgorithms
         const float *ylog_start, // pointer to the start of the Ylog matrix
         const bool *df_start,    // degree of freedom vector, 0: interpolated, 1: measured
         const int scale,         // scale, i.e., the number of data points in a half window excluding the center point
-        std::vector<validRegression_static> &validRegressions)
+        std::vector<ValidRegression_static> &validRegressions)
     {
-        std::vector<validRegression_static> validRegressionsTmp; // temporary vector to store valid regressions <index, apex_position>
+        std::vector<ValidRegression_static> validRegressionsTmp; // temporary vector to store valid regressions <index, apex_position>
 
         // iterate columwise over the coefficients matrix beta
         for (int i = 0; i < n_segments; i++)
         {
             const __m128 &coeff = beta[i]; // coefficient register from beta @ i
-            int df_sum = 0;                // sum of the degree of freedom
-            float apex_position = 0.f;     // apex position
-            int left_limit = 0;            // left limit of the peak
-            int right_limit = 0;           // right limit of the peak
-            float area = 0.f;              // peak area
-            float uncertainty_area = 0.f;  // uncertainty of the peak area
-            float uncertainty_pos = 0.f;   // uncertainty of the peak position
-            float uncertainty_height = 0.f;
-
-            // validate the regression
-            if (!validateRegressions_testseries(i, scale, df_start, y_start,
-                                                ylog_start, coeff, df_sum, apex_position,
-                                                left_limit, right_limit, area, uncertainty_area,
-                                                uncertainty_pos, uncertainty_height))
+            ValidRegression_static selectRegression = validateRegressions_testseries(i, scale, df_start, y_start,
+                                                                                     ylog_start, coeff);
+            if (!selectRegression.isValid)
             {
                 continue; // invalid regression
+            }
+            else
+            {
+                validRegressionsTmp.push_back(selectRegression);
             }
 
             // at this point, the peak is validated
@@ -402,21 +395,7 @@ namespace qAlgorithms
               It calculates the left and right limits of the peak based on the valley position.
               Then it stores the index of the valid regression in the temporary vector of valid regressions.
             */
-            validRegression_static vr;
-            vr.index_x0 = i + scale;                      // index of the center of the window (x==0) in the Y matrix
-            vr.scale = scale;                             // scale
-            vr.df = df_sum - 4;                           // df
-            vr.apex_position = apex_position + i + scale; // apex position in x-axis 0:n
-            vr.mse = 0;                                   // initial MSE
-            vr.coeff = coeff;                             // coefficients register
-            vr.isValid = true;                            // isValid
-            vr.left_limit = left_limit;                   // left_limit
-            vr.right_limit = right_limit;                 // right_limit
-            vr.area = area;                               // peak area
-            vr.uncertainty_area = uncertainty_area;       // uncertainty of the peak area
-            vr.uncertainty_height = uncertainty_height;   // uncertainty of the peak height
-            vr.uncertainty_pos = uncertainty_pos;         // uncertainty of the peak position
-            validRegressionsTmp.push_back(vr);            // push to the temporary vector of valid regressions
+
         } // end for loop
         // early return if no or only one valid peak
         if (validRegressionsTmp.size() < 2)
@@ -439,7 +418,7 @@ namespace qAlgorithms
           (Overlap of two maxima)
         */
 
-        std::vector<std::vector<validRegression_static>> regressionGroups; // vector of vectors of valid regressions, i.e., groups of valid regressions
+        std::vector<std::vector<ValidRegression_static>> regressionGroups; // vector of vectors of valid regressions, i.e., groups of valid regressions
 
         auto it_peak = validRegressionsTmp.begin(); // iterator for the peak
         auto it_peak_next = std::next(it_peak);     // iterator for the next peak
@@ -453,7 +432,7 @@ namespace qAlgorithms
                 it_peak_next->apex_position > it_peak->right_limit                    // Right peak is not within the window of the left peak
             )
             {                                                                                                      // the two regressions differ, i.e. create a new group and move all regressions from start to it_peak to this group
-                regressionGroups.push_back(std::vector<validRegression_static>());                                 // create a new group
+                regressionGroups.push_back(std::vector<ValidRegression_static>());                                 // create a new group
                 std::move(validRegressionsTmp.begin(), it_peak_next, std::back_inserter(regressionGroups.back())); // move all regressions from start to it_peak to this group
                 it_peak_next = validRegressionsTmp.erase(validRegressionsTmp.begin(), it_peak_next);               // erase the moved regressions from the temporary vector of valid regressions
             }
@@ -461,7 +440,7 @@ namespace qAlgorithms
             ++it_peak_next;
             if (it_peak_next == validRegressionsTmp.end())
             {                                                                                                      // the last peak is reached
-                regressionGroups.push_back(std::vector<validRegression_static>());                                 // create a new group
+                regressionGroups.push_back(std::vector<ValidRegression_static>());                                 // create a new group
                 std::move(validRegressionsTmp.begin(), it_peak_next, std::back_inserter(regressionGroups.back())); // move all regressions from start to it_peak to this group
             }
         } // end while loop
@@ -505,31 +484,24 @@ namespace qAlgorithms
         const bool *df_start,
         const int scale,
         int &validRegressionsIndex,
-        validRegression_static *validRegressions)
+        ValidRegression_static *validRegressions)
     {
-        validRegression_static validRegressionsTmp[512]; // temporary vector to store valid regressions initialized with random states
+        ValidRegression_static validRegressionsTmp[512]; // temporary vector to store valid regressions initialized with random states
         int validRegressionsIndexTmp = 0;                // index of the valid regressions
 
         // iterate columwise over the coefficients matrix beta
         for (int i = 0; i < n_segments; i++)
         {
             const __m128 &coeff = beta[i]; // coefficient register from beta @ i
-            int df_sum = 0;                // sum of the degree of freedom
-            float apex_position = 0.f;     // apex position
-            int left_limit = 0;            // left limit of the peak
-            int right_limit = 0;           // right limit of the peak
-            float area = 0.f;              // peak area
-            float uncertainty_area = 0.f;  // uncertainty of the peak area
-            float uncertainty_height = 0.f;
-            float uncertainty_pos = 0.f; // uncertainty of the peak position
-
-            // validate the regression
-            if (!validateRegressions_testseries(i, scale, df_start, y_start,
-                                                ylog_start, coeff, df_sum, apex_position,
-                                                left_limit, right_limit, area, uncertainty_area,
-                                                uncertainty_pos, uncertainty_height))
+            ValidRegression_static selectRegression = validateRegressions_testseries(i, scale, df_start, y_start,
+                                                                                     ylog_start, coeff);
+            if (!selectRegression.isValid)
             {
                 continue; // invalid regression
+            }
+            else
+            {
+                validRegressionsTmp[validRegressionsIndexTmp] = selectRegression;
             }
 
             // at this point, the peak is validated
@@ -539,19 +511,7 @@ namespace qAlgorithms
               calculates the left and right limits of the peak based on the valley position. Then it
               stores the index of the valid regression in the temporary vector of valid regressions.
             */
-            validRegressionsTmp[validRegressionsIndexTmp].index_x0 = i + scale;                      // index of the center of the window (x==0) in the Y matrix
-            validRegressionsTmp[validRegressionsIndexTmp].scale = scale;                             // scale
-            validRegressionsTmp[validRegressionsIndexTmp].df = df_sum - 4;                           // df
-            validRegressionsTmp[validRegressionsIndexTmp].apex_position = apex_position + i + scale; // apex position in x-axis 0:n
-            validRegressionsTmp[validRegressionsIndexTmp].mse = 0;                                   // initial MSE
-            validRegressionsTmp[validRegressionsIndexTmp].coeff = coeff;                             // coefficients register
-            validRegressionsTmp[validRegressionsIndexTmp].isValid = true;                            // isValid
-            validRegressionsTmp[validRegressionsIndexTmp].left_limit = left_limit;                   // left_limit
-            validRegressionsTmp[validRegressionsIndexTmp].right_limit = right_limit;                 // right_limit
-            validRegressionsTmp[validRegressionsIndexTmp].area = area;                               // peak area
-            validRegressionsTmp[validRegressionsIndexTmp].uncertainty_area = uncertainty_area;       // uncertainty of the peak area
-            validRegressionsTmp[validRegressionsIndexTmp].uncertainty_height = uncertainty_height;   // uncertainty of the peak height
-            validRegressionsTmp[validRegressionsIndexTmp].uncertainty_pos = uncertainty_pos;         // uncertainty of the peak position
+
             validRegressionsIndexTmp++;
         } // end for loop
         // early return if no or only one valid peak
@@ -577,7 +537,7 @@ namespace qAlgorithms
             else
             { // multiple item group
                 // survival of the fittest based on mse between original data and reconstructed (exp transform of regression)
-                validRegression_static *regression_start = &validRegressionsTmp[start_index_group]; // start of the group
+                ValidRegression_static *regression_start = &validRegressionsTmp[start_index_group]; // start of the group
                 calcExtendedMse_static(y_start, regression_start, group_size, df_start);            // calculate the extended MSE
                 for (int j = 0; j < group_size; j++)
                 {
@@ -626,21 +586,14 @@ namespace qAlgorithms
 #pragma endregion "validate regressions static"
 
 #pragma region "validate regression test series"
-    bool validateRegressions_testseries(
+
+    ValidRegression_static validateRegressions_testseries(
         const int i,
         const int scale,
         const bool *df_start,
         const float *y_start,
         const float *ylog_start,
-        const __m128 &coeff,
-        int &df_sum,
-        float &apex_position,
-        int &left_limit,
-        int &right_limit,
-        float &area,
-        float &uncertainty_area,
-        float &uncertainty_pos,
-        float &uncertainty_height)
+        const __m128 &coeff)
     {
         /*
             Degree of Freedom Filter:
@@ -650,10 +603,12 @@ namespace qAlgorithms
             iteration. The value 5 is chosen as the minimum number of data
             points required to fit a quadratic regression model.
           */
-        df_sum = calcDF(df_start, i, 2 * scale + i); // calculate the sum of the degree of freedom (df_sum)
+        int df_sum = calcDF(df_start, i, 2 * scale + i); // calculate the sum of the degree of freedom (df_sum)
         if (df_sum < 5)
         {
-            return false; // degree of freedom less than 5; i.e., less then 5 measured data points
+            ValidRegression_static badReg;
+            badReg.isValid = false;
+            return badReg; // degree of freedom less than 5; i.e., less then 5 measured data points
         }
 
         /*
@@ -665,9 +620,13 @@ namespace qAlgorithms
           to each other, the loop continues to the next iteration.
         */
         float valley_position;
-        if (!calculateApexAndValleyPositions(coeff, scale, apex_position, valley_position))
+        // @todo apex is always 0
+        float apex_position = 0.f;
+        if (!calcApexAndValleyPositions(coeff, scale, apex_position, valley_position))
         {
-            return false; // invalid apex and valley positions
+            ValidRegression_static badReg;
+            badReg.isValid = false;
+            return badReg; // invalid apex and valley positions
         }
 
         /*
@@ -677,24 +636,29 @@ namespace qAlgorithms
           the loop continues to the next iteration. The value 5 is chosen as the
           minimum number of data points required to fit a quadratic regression model.
         */
-        left_limit = (valley_position < 0) ? std::max(i, static_cast<int>(valley_position) + i + scale) : i;
-        right_limit = (valley_position > 0) ? std::min(i + 2 * scale, static_cast<int>(valley_position) + i + scale) : i + 2 * scale;
+        unsigned int left_limit = (valley_position < 0) ? std::max(i, static_cast<int>(valley_position) + i + scale) : i;
+        unsigned int right_limit = (valley_position > 0) ? std::min(i + 2 * scale, static_cast<int>(valley_position) + i + scale) : i + 2 * scale;
+
         df_sum = calcDF(df_start, left_limit, right_limit); // update the degree of freedom considering the left and right limits
         if (df_sum < 5)
         {
-            return false; // degree of freedom less than 5; i.e., less then 5 measured data points
+            ValidRegression_static badReg;
+            badReg.isValid = false;
+            return badReg; // degree of freedom less than 5; i.e., less then 5 measured data points
         }
 
         /*
           Area Pre-Filter:
           This test is used to check if the later-used arguments for exp and erf
           functions are within the valid range, i.e., |x^2| < 25. If the test fails,
-          the loop continues to the next iteration.
+          the loop continues to the next iteration. @todo why 25?
           x is in this case -apex_position * b1 / 2 and -valley_position * b1 / 2.
         */
         if (apex_position * ((float *)&coeff)[1] > 50 || valley_position * ((float *)&coeff)[1] < -50)
         {
-            return false; // invalid area pre-filter
+            ValidRegression_static badReg;
+            badReg.isValid = false;
+            return badReg; // invalid area pre-filter
         }
 
         /*
@@ -704,10 +668,12 @@ namespace qAlgorithms
           ratio is greater than 2. This is a pre-filter for later
           signal-to-noise ratio checkups.
         */
-        float apexToEdge = 0.f;
-        if (!isValidApexToEdge(apex_position, scale, i, y_start, apexToEdge))
+        float apexToEdge = calcApexToEdge(apex_position, scale, i, y_start);
+        if (!(apexToEdge > 2))
         {
-            return false; // invalid apex to edge ratio
+            ValidRegression_static badReg;
+            badReg.isValid = false;
+            return badReg; // invalid apex to edge ratio
         }
 
         /*
@@ -719,11 +685,13 @@ namespace qAlgorithms
           term is considered statistically insignificant, and the loop continues
           to the next iteration.
         */
-        const float mse = calcSSE(-scale, scale, coeff, ylog_start + i) / (df_sum - 4); // mean squared error
+        float mse = calcSSE(-scale, scale, coeff, ylog_start + i) / (df_sum - 4); // mean squared error
 
         if (!isValidQuadraticTerm(coeff, scale, mse, df_sum))
         {
-            return false; // statistical insignificance of the quadratic term
+            ValidRegression_static badReg;
+            badReg.isValid = false;
+            return badReg; // statistical insignificance of the quadratic term
         }
         /*
           Height Filter:
@@ -733,12 +701,14 @@ namespace qAlgorithms
           matrix of the coefficients. If the height is statistically insignificant,
           the loop continues to the next iteration.
         */
-        // float uncertainty_height = 0.0;
+        float uncertainty_height = 0.0; // @todo why always 0?
         // at this point without height, i.e., to get the real uncertainty
         // multiply with height later. This is done to avoid exp function at this point
         if (!isValidPeakHeight(mse, i, scale, apex_position, valley_position, df_sum, apexToEdge, uncertainty_height))
         {
-            return false; // statistical insignificance of the height
+            ValidRegression_static badReg;
+            badReg.isValid = false;
+            return badReg; // statistical insignificance of the height
         }
 
         /*
@@ -750,9 +720,13 @@ namespace qAlgorithms
           NOTE: this function does not consider b0: i.e. to get the real uncertainty and
           area multiply both with Exp(b0) later. This is done to avoid exp function at this point
         */
+        float area = 0.f; // peak area
+        float uncertainty_area = 0.f;
         if (!isValidPeakArea(coeff, mse, scale, df_sum, area, uncertainty_area))
         {
-            return false; // statistical insignificance of the area
+            ValidRegression_static badReg;
+            badReg.isValid = false;
+            return badReg; // statistical insignificance of the area
         }
 
         /*
@@ -762,22 +736,37 @@ namespace qAlgorithms
           the exponential domain. If the chi-square value is less than the corresponding
           value in the chiSquareArray, the loop continues to the next iteration.
         */
-        const float chiSquare = calcSSE(-scale, scale, coeff, y_start + i, true, true);
+        float chiSquare = calcSSE(-scale, scale, coeff, y_start + i, true, true);
         if (chiSquare < chiSquareArray[df_sum - 5])
         {
-            return false; // statistical insignificance of the chi-square value
+            ValidRegression_static badReg;
+            badReg.isValid = false;
+            return badReg; // statistical insignificance of the chi-square value
         }
 
-        calcUncertaintyPosition(mse, coeff, apex_position, scale, uncertainty_pos);
+        float uncertainty_pos = calcUncertaintyPosition(mse, coeff, apex_position, scale);
 
-        return true;
+        return ValidRegression_static{
+            i + scale,
+            scale,
+            df_sum - 4, // @todo add explanation for -4
+            apex_position + i + scale,
+            0, // mse @todo
+            coeff,
+            true,
+            left_limit,
+            right_limit,
+            area,
+            uncertainty_area,
+            uncertainty_pos,
+            uncertainty_height};
     }
 #pragma endregion "validate regression test series"
 
 #pragma region mergeRegressionsOverScales
     void
     mergeRegressionsOverScales(
-        std::vector<validRegression_static> &validRegressions,
+        std::vector<ValidRegression_static> &validRegressions,
         const float *y_start,
         const float *ylog_start,
         const bool *df_start)
@@ -868,7 +857,7 @@ namespace qAlgorithms
             {
                 // calculate the extended MSE using the current peak and the ref peak and set the worse one to invalid
                 // create a temporary std::vector<std::unique_ptr<validRegression>> with the new peak and the ref peak
-                std::vector<validRegression_static> tmpRegressions;
+                std::vector<ValidRegression_static> tmpRegressions;
                 tmpRegressions.push_back(std::move(*it_new_peak));
                 tmpRegressions.push_back(std::move(validRegressionsInGroup[0][0]));
                 calcExtendedMse(y_start, tmpRegressions, df_start);
@@ -902,7 +891,7 @@ namespace qAlgorithms
 #pragma region "merge regressions over scales static"
     void
     mergeRegressionsOverScales_static(
-        validRegression_static *validRegressions,
+        ValidRegression_static *validRegressions,
         const int n_regressions,
         const float *y_start,
         const float *ylog_start,
@@ -1025,8 +1014,8 @@ namespace qAlgorithms
 
     void createCentroidPeaks(
         std::vector<CentroidPeak> &peaks,
-        validRegression_static *validRegressions,
-        std::vector<validRegression_static> *validRegressionsVec,
+        ValidRegression_static *validRegressions,
+        std::vector<ValidRegression_static> *validRegressionsVec,
         const int validRegressionsIndex,
         const float *y_start,
         const float *mz_start,
@@ -1036,7 +1025,7 @@ namespace qAlgorithms
         // iterate over the validRegressions vector
         for (int i = 0; i < validRegressionsIndex; i++)
         {
-            validRegression_static regression;
+            ValidRegression_static regression;
 
             if (validRegressionsVec == nullptr)
             {
@@ -1087,8 +1076,8 @@ namespace qAlgorithms
 
     void createFeaturePeaks(
         std::vector<FeaturePeak> &peaks,
-        validRegression_static *validRegressions,
-        std::vector<validRegression_static> *validRegressionsVec,
+        ValidRegression_static *validRegressions,
+        std::vector<ValidRegression_static> *validRegressionsVec,
         const int validRegressionsIndex,
         const float *y_start,
         const float *mz_start,
@@ -1101,7 +1090,7 @@ namespace qAlgorithms
         // iterate over the validRegressions vector
         for (int i = 0; i < validRegressionsIndex; i++)
         {
-            validRegression_static regression;
+            ValidRegression_static regression;
             if (validRegressionsVec == nullptr)
             {
                 regression = validRegressions[i]; // @todo does this work?
@@ -1273,7 +1262,7 @@ namespace qAlgorithms
     void
     calcExtendedMse(
         const float *y_start,                             // start of the measured data
-        std::vector<validRegression_static> &regressions, // regressions to compare
+        std::vector<ValidRegression_static> &regressions, // regressions to compare
         const bool *df_start)                             // degrees of freedom
     {
         /*
@@ -1343,7 +1332,7 @@ namespace qAlgorithms
 #pragma region calcExtendedMse_static
     void calcExtendedMse_static(
         const float *y_start,
-        validRegression_static *regressions_start,
+        ValidRegression_static *regressions_start,
         const int n_regressions,
         const bool *df_start)
     {
@@ -1412,8 +1401,8 @@ namespace qAlgorithms
 #pragma region calcExtendedMsePair_static
     void calcExtendedMsePair_static(
         const float *y_start,
-        validRegression_static *low_scale_regression,
-        validRegression_static *hi_scale_regression,
+        ValidRegression_static *low_scale_regression,
+        ValidRegression_static *hi_scale_regression,
         const bool *df_start)
     {
         /*
@@ -1470,7 +1459,7 @@ namespace qAlgorithms
 #pragma region calcExtendedMseOverScales_static
     void calcExtendedMseOverScales_static(
         const float *y_start,
-        validRegression_static *validRegressions,
+        ValidRegression_static *validRegressions,
         const std::vector<int> &validRegressionsInGroup,
         const int i_new_peak)
     {
@@ -1546,7 +1535,7 @@ namespace qAlgorithms
 #pragma endregion calcDF
 
 #pragma region calculateApexAndValleyPositions
-    bool calculateApexAndValleyPositions(
+    bool calcApexAndValleyPositions(
         const __m128 &coeff,
         const int scale,
         float &apex_position,
@@ -1652,13 +1641,12 @@ namespace qAlgorithms
 #pragma endregion "multiplyVecMatrixVecTranspose"
 
 #pragma region "isValidApexToEdge"
-    bool
-    isValidApexToEdge(
+
+    float calcApexToEdge(
         const double apex_position,
         const int scale,
         const int index_loop,
-        const float *y_start,
-        float &apexToEdge)
+        const float *y_start)
     {
         int idx_apex = (int)std::round(apex_position) + scale + index_loop; // index of the apex
         int idx_left = index_loop;                                          // index of the left edge
@@ -1666,8 +1654,7 @@ namespace qAlgorithms
         float apex = *(y_start + idx_apex);                                 // apex value
         float left = *(y_start + idx_left);                                 // left edge value
         float right = *(y_start + idx_right);                               // right edge value
-        apexToEdge = (left < right) ? (apex / left) : (apex / right);       // difference between the apex and the edge
-        return apexToEdge > 2;                                              // return true if the ratio is greater than 2
+        return (left < right) ? (apex / left) : (apex / right);             // difference between the apex and the edge
     }
 
 #pragma endregion "isValidApexToEdge"
@@ -1868,13 +1855,11 @@ namespace qAlgorithms
 #pragma endregion isValidPeakArea
 
 #pragma region "calcUncertaintyPosition"
-    void
-    calcUncertaintyPosition(
+    float calcUncertaintyPosition(
         const float mse,
         const __m128 &coeff,
         const float apex_position,
-        const int scale,
-        float &uncertainty_pos)
+        const int scale)
     {
         const float _b1 = 1 / ((float *)&coeff)[1];
         const float _b2 = 1 / ((float *)&coeff)[2];
@@ -1892,7 +1877,7 @@ namespace qAlgorithms
             J[2] = 0;
             J[3] = -apex_position * _b3;
         }
-        uncertainty_pos = std::sqrt(mse * multiplyVecMatrixVecTranspose(J, scale));
+        return std::sqrt(mse * multiplyVecMatrixVecTranspose(J, scale));
     }
 #pragma endregion "calcUncertaintyPosition"
 

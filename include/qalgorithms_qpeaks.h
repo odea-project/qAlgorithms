@@ -43,7 +43,7 @@ namespace qAlgorithms
      */
     // alignas(16) static float invArray[64][6]; // contains the unique entries from the inverse matrix
 
-    struct validRegression_static
+    struct ValidRegression_static
     {
         int index_x0;             // index of window center (x==0) in the Y matrix
         int scale;                // scale of the regression window, i.e., 2*scale+1 = window size
@@ -69,14 +69,14 @@ namespace qAlgorithms
         const float *ylog_start,
         const bool *df_start,
         const int n,
-        std::vector<validRegression_static> &validRegressions);
+        std::vector<ValidRegression_static> &validRegressions);
 
     void runningRegression_static(
         const float *y_start,
         const float *ylog_start,
         const bool *df_start,
         const int n,
-        validRegression_static *validRegressions,
+        ValidRegression_static *validRegressions,
         int &validRegressionsIndex);
 
     void validateRegressions(
@@ -86,7 +86,7 @@ namespace qAlgorithms
         const float *ylog_start,
         const bool *df_start,
         const int scale,
-        std::vector<validRegression_static> &validRegressions);
+        std::vector<ValidRegression_static> &validRegressions);
 
     void validateRegressions_static(
         const __m128 *beta,
@@ -96,53 +96,33 @@ namespace qAlgorithms
         const bool *df_start,
         const int scale,
         int &validRegressionsIndex,
-        validRegression_static *validRegressions);
+        ValidRegression_static *validRegressions);
 
-    bool validateRegressions_testseries(
+    ValidRegression_static validateRegressions_testseries(
         const int i,
         const int scale,
         const bool *df_start,
         const float *y_start,
         const float *ylog_start,
-        const __m128 &coeff,
-        int &df_sum,
-        float &apex_position,
-        int &left_limit,
-        int &right_limit,
-        float &area,
-        float &uncertainty_area,
-        float &uncertainty_pos,
-        float &uncertainty_height);
+        const __m128 &coeff);
 
     void mergeRegressionsOverScales(
-        std::vector<validRegression_static> &validRegressions,
+        std::vector<ValidRegression_static> &validRegressions,
         const float *y_start,
         const float *ylog_start,
         const bool *df_start);
 
     void mergeRegressionsOverScales_static(
-        validRegression_static *validRegressions,
+        ValidRegression_static *validRegressions,
         const int n_regressions,
         const float *y_start,
         const float *ylog_start,
         const bool *df_start);
 
-    // void createPeaks(
-    //     std::vector<Peak> &peaks,
-    //     const std::vector<validRegression_static> &validRegressions,
-    //     const float *y_start,
-    //     const float *mz_start,
-    //     const float *rt_start,
-    //     const bool *df_start,
-    //     const float *dqs_cen,
-    //     const float *dqs_bin,
-    //     const float *dqs_peak,
-    //     const int scanNumber);
-
     void createCentroidPeaks(
         std::vector<CentroidPeak> &peaks,
-        validRegression_static *validRegressions,
-        std::vector<validRegression_static> *validRegressionsVec,
+        ValidRegression_static *validRegressions,
+        std::vector<ValidRegression_static> *validRegressionsVec,
         const int validRegressionsIndex,
         const float *y_start,
         const float *mz_start,
@@ -151,8 +131,8 @@ namespace qAlgorithms
 
     void createFeaturePeaks(
         std::vector<FeaturePeak> &peaks,
-        validRegression_static *validRegressions,
-        std::vector<validRegression_static> *validRegressionsVec,
+        ValidRegression_static *validRegressions,
+        std::vector<ValidRegression_static> *validRegressionsVec,
         const int validRegressionsIndex,
         const float *y_start,
         const float *mz_start,
@@ -188,24 +168,24 @@ namespace qAlgorithms
      */
     void calcExtendedMse(
         const float *y_start,
-        std::vector<validRegression_static> &regressions,
+        std::vector<ValidRegression_static> &regressions,
         const bool *df_start);
 
     void calcExtendedMse_static(
         const float *y_start,
-        validRegression_static *regressions_start,
+        ValidRegression_static *regressions_start,
         const int n_regressions,
         const bool *df_start);
 
     void calcExtendedMsePair_static(
         const float *y_start,
-        validRegression_static *low_scale_regression,
-        validRegression_static *hi_scale_regression,
+        ValidRegression_static *low_scale_regression,
+        ValidRegression_static *hi_scale_regression,
         const bool *df_start);
 
     void calcExtendedMseOverScales_static(
         const float *y_start,
-        validRegression_static *validRegressions,
+        ValidRegression_static *validRegressions,
         const std::vector<int> &validRegressionsInGroup,
         const int i_new_peak);
 
@@ -237,7 +217,7 @@ namespace qAlgorithms
      * @return true : if the apex and valley positions are valid
      * @return false : if the apex and valley positions are not valid (e.g., the apex position is not in the regression window)
      */
-    bool calculateApexAndValleyPositions(
+    bool calcApexAndValleyPositions(
         const __m128 &coeff,
         const int scale,
         float &apex_position,
@@ -274,12 +254,11 @@ namespace qAlgorithms
      * @return true
      * @return false
      */
-    bool isValidApexToEdge(
+    float calcApexToEdge(
         const double apex_position,
         const int scale,
         const int index_loop,
-        const float *y_start,
-        float &apexToEdge);
+        const float *y_start);
 
     /**
      * @brief Check if the quadratic term of the regression model is valid using t-test.
@@ -342,12 +321,11 @@ namespace qAlgorithms
         float &area,
         float &uncertainty_area);
 
-    void calcUncertaintyPosition(
+    float calcUncertaintyPosition(
         const float mse,
         const __m128 &coeff,
         const float apex_position,
-        const int scale,
-        float &uncertainty_pos);
+        const int scale);
 
     void convolve_static(
         const size_t scale,
