@@ -16,7 +16,7 @@
 
 namespace qAlgorithms
 {
-    constexpr std::array<float, 384> initialize();
+    const std::array<float, 384> initialize();
 
     /**
      * @brief A class to store and apply a peak evaluation model.
