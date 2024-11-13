@@ -44,12 +44,12 @@ namespace qAlgorithms
 
     struct ValidRegression_static
     {
+        __m128 coeff;             // regression coefficients
         int index_x0;             // index of window center (x==0) in the Y matrix
         int scale;                // scale of the regression window, i.e., 2*scale+1 = window size
         int df;                   // degree of freedom, interpolated data points will not be considered
         float apex_position;      // position of the apex of the peak
         float mse;                // mean squared error
-        __m128 coeff;             // regression coefficients
         bool isValid;             // flag to indicate if the regression is valid
         unsigned int left_limit;  // left limit of the peak regression window
         unsigned int right_limit; // right limit of the peak regression window
@@ -288,10 +288,19 @@ namespace qAlgorithms
         const int index,
         const int scale,
         const float apex_position,
-        const float valley_position,
+        float valley_position,
         const int df_sum,
         const float apexToEdge,
         float &uncertainty_height);
+
+    float calcPeakHeightUncert(
+        const float mse,
+        const int index,
+        const int scale,
+        const float apex_position,
+        float valley_position,
+        const int df_sum,
+        const float apexToEdge);
 
     /**
      * @brief Check if the peak area and the covered peak area are valid using t-test.
