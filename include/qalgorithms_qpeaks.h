@@ -42,8 +42,14 @@ namespace qAlgorithms
      */
     // alignas(16) static float invArray[64][6]; // contains the unique entries from the inverse matrix
 
+    struct RegCoeffs
+    {
+        float b0, b1, b2, b3;
+    };
+
     struct ValidRegression_static
     {
+        RegCoeffs newCoeffs;
         __m128 coeff;             // regression coefficients
         int index_x0;             // index of window center (x==0) in the Y matrix
         int scale;                // scale of the regression window, i.e., 2*scale+1 = window size
@@ -315,7 +321,7 @@ namespace qAlgorithms
      * @return false : if the peak area is not valid
      */
     bool isValidPeakArea(
-        const __m128 coeff,
+        RegCoeffs coeff,
         const float mse,
         const int scale,
         const int df_sum,
@@ -324,7 +330,7 @@ namespace qAlgorithms
 
     float calcUncertaintyPosition(
         const float mse,
-        const __m128 coeff,
+        RegCoeffs coeff,
         const float apex_position,
         const int scale);
 
