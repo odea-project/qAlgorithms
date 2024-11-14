@@ -579,6 +579,11 @@ namespace qAlgorithms
         const float *ylog_start,
         const __m128 coeff)
     { // @todo order by effort to calculate
+        RegCoeffs replacer;
+        replacer.b0 = ((float *)&coeff)[0];
+        replacer.b1 = ((float *)&coeff)[1];
+        replacer.b2 = ((float *)&coeff)[2];
+        replacer.b3 = ((float *)&coeff)[3];
         /*
           Apex and Valley Position Filter:
           This block of code implements the apex and valley position filter.
@@ -588,7 +593,7 @@ namespace qAlgorithms
           to each other, the loop continues to the next iteration.
         */
         // check if beta 2 or beta 3 is zero
-        if (((float *)&coeff)[2] == 0.0f || ((float *)&coeff)[3] == 0.0f)
+        if (replacer.b2 == 0.0f || replacer.b3 == 0.0f)
         {
             ValidRegression_static badReg;
             badReg.isValid = false;
@@ -631,7 +636,7 @@ namespace qAlgorithms
           the loop continues to the next iteration. @todo why 25?
           x is in this case -apex_position * b1 / 2 and -valley_position * b1 / 2.
         */
-        if (apex_position * ((float *)&coeff)[1] > 50 || valley_position * ((float *)&coeff)[1] < -50)
+        if (apex_position * replacer.b1 > 50 || valley_position * replacer.b1 < -50)
         {
             ValidRegression_static badReg;
             badReg.isValid = false;
@@ -708,7 +713,7 @@ namespace qAlgorithms
         float area = 0.f; // peak area
         float uncertainty_area = 0.f;
         // @todo replace coeff
-        if (!isValidPeakArea(coeff, mse, scale, df_sum, area, uncertainty_area))
+        if (!isValidPeakArea(replacer, mse, scale, df_sum, area, uncertainty_area))
         {
             ValidRegression_static badReg;
             badReg.isValid = false;
@@ -730,9 +735,10 @@ namespace qAlgorithms
             return badReg; // statistical insignificance of the chi-square value
         }
         // @todo replace coeff
-        float uncertainty_pos = calcUncertaintyPosition(mse, coeff, apex_position, scale);
+        float uncertainty_pos = calcUncertaintyPosition(mse, replacer, apex_position, scale);
 
         return ValidRegression_static{
+            replacer,
             coeff,
             i + scale,
             scale,
@@ -1712,7 +1718,7 @@ namespace qAlgorithms
 
 #pragma region isValidPeakArea
     bool isValidPeakArea(
-        const __m128 coeff,
+        RegCoeffs coeff,
         const float mse,
         const int scale,
         const int df_sum,
@@ -1720,9 +1726,9 @@ namespace qAlgorithms
         float &uncertainty_area)
     {
         // predefine expressions
-        float b1 = ((float *)&coeff)[1];
-        float b2 = ((float *)&coeff)[2];
-        float b3 = ((float *)&coeff)[3];
+        float b1 = coeff.b1;
+        float b2 = coeff.b2;
+        float b3 = coeff.b3;
         float _SQRTB2 = 1 / std::sqrt(std::abs(b2));
         float _SQRTB3 = 1 / std::sqrt(std::abs(b3));
         float B1_2_SQRTB2 = b1 / 2 * _SQRTB2;
@@ -1838,13 +1844,13 @@ namespace qAlgorithms
 #pragma region "calcUncertaintyPosition"
     float calcUncertaintyPosition(
         const float mse,
-        const __m128 coeff,
+        RegCoeffs coeff,
         const float apex_position,
         const int scale)
     {
-        float _b1 = 1 / ((float *)&coeff)[1];
-        float _b2 = 1 / ((float *)&coeff)[2];
-        float _b3 = 1 / ((float *)&coeff)[3];
+        float _b1 = 1 / coeff.b1;
+        float _b2 = 1 / coeff.b2;
+        float _b3 = 1 / coeff.b3;
         float J[4]; // Jacobian matrix
         J[0] = 0.f;
         J[1] = apex_position * _b1;
