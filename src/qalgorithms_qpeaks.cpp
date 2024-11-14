@@ -4,6 +4,7 @@
 #include "qalgorithms_qpeaks.h"
 #include "qalgorithms_utils.h"
 #include "qalgorithms_global_vars.h"
+#include "qalgorithms_datatype_peak.h"
 
 #include <algorithm>
 #include <cassert>
@@ -336,7 +337,7 @@ namespace qAlgorithms
             convolve_dynamic(scale, ylog_start, n, beta); // do the regression
             validateRegressions(beta, n_segments, y_start, ylog_start, df_start, scale, validRegressions);
         } // end for scale loop
-        mergeRegressionsOverScales(validRegressions, y_start, ylog_start, df_start);
+        mergeRegressionsOverScales(validRegressions, y_start, df_start);
     } // end runningRegression
 #pragma endregion "running regression"
 
@@ -354,13 +355,14 @@ namespace qAlgorithms
 
         for (int scale = 2; scale <= maxScale; scale++)
         {
-            const int k = 2 * scale + 1;                 // window size
-            __m128 beta[512];                            // coefficients matrix
-            convolve_static(scale, ylog_start, n, beta); // do the regression
-            const int n_segments = n - k + 1;            // number of segments, i.e. regressions considering the number of data points
+            @todo move this part into validateRegressions_static();
+            const int k = 2 * scale + 1; // window size
+            // __m128 beta[512];                                   // coefficients matrix
+            auto beta = convolve_static(scale, ylog_start, n); // do the regression
+            const int n_segments = n - k + 1;                  // number of segments, i.e. regressions considering the number of data points
             validateRegressions_static(beta, n_segments, y_start, ylog_start, df_start, scale, validRegressionsIndex, validRegressions);
         } // end for scale loop
-        mergeRegressionsOverScales_static(validRegressions, validRegressionsIndex, y_start, ylog_start, df_start);
+        mergeRegressionsOverScales_static(validRegressions, validRegressionsIndex, y_start, df_start);
     }
 #pragma endregion "running regression static"
 
@@ -756,11 +758,9 @@ namespace qAlgorithms
 #pragma endregion "validate regression test series"
 
 #pragma region mergeRegressionsOverScales
-    void
-    mergeRegressionsOverScales(
+    void mergeRegressionsOverScales(
         std::vector<ValidRegression_static> &validRegressions,
         const float *y_start,
-        const float *ylog_start,
         const bool *df_start)
     {
         if (validRegressions.empty())
@@ -881,12 +881,11 @@ namespace qAlgorithms
 #pragma endregion mergeRegressionsOverScales
 
 #pragma region "merge regressions over scales static"
-    void
-    mergeRegressionsOverScales_static(
+    void mergeRegressionsOverScales_static(
         ValidRegression_static *validRegressions,
         const int n_regressions,
         const float *y_start,
-        const float *ylog_start,
+        // const float *ylog_start,
         const bool *df_start)
     {
         if (n_regressions == 0)
@@ -1127,10 +1126,7 @@ namespace qAlgorithms
                 peak.idxPeakStart = regression.left_limit;
                 peak.idxPeakEnd = regression.right_limit;
 
-                peak.beta0 = regression.coeff[0];
-                peak.beta1 = regression.coeff[1];
-                peak.beta2 = regression.coeff[2];
-                peak.beta3 = regression.coeff[3];
+                peak.coefficients = coeff;
 
                 peaks.push_back(std::move(peak));
             }
@@ -1907,18 +1903,18 @@ namespace qAlgorithms
 #pragma endregion calculateNumberOfRegressions
 
 #pragma region "convolve regression"
+    // these chain to return beta for a regression
 
-    void convolve_static(
+    __m128 convolve_static(
         const size_t scale,
         const float *vec,
-        const size_t n,
-        __m128 *beta)
+        const size_t n)
     {
         if (n < 2 * scale + 1)
         {
             throw std::invalid_argument("n must be greater or equal to 2 * scale + 1");
         }
-
+        __m128 beta[512];
         __m128 result[512];
         __m128 products[512];
         const __m128 flipSign = _mm_set_ps(1.0f, 1.0f, -1.0f, 1.0f);
@@ -1928,6 +1924,7 @@ namespace qAlgorithms
         {
             beta[i] = _mm_mul_ps(_mm_shuffle_ps(result[i], result[i], 0b10110100), flipSign); // swap beta2 and beta3 and flip the sign of beta1 // @todo: this is a temporary solution
         }
+        return *beta;
     }
 
     void convolve_dynamic(
