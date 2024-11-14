@@ -42,30 +42,6 @@ namespace qAlgorithms
      */
     // alignas(16) static float invArray[64][6]; // contains the unique entries from the inverse matrix
 
-    struct RegCoeffs
-    {
-        float b0, b1, b2, b3;
-    };
-
-    struct ValidRegression_static
-    {
-        RegCoeffs newCoeffs;
-        __m128 coeff;             // regression coefficients
-        int index_x0;             // index of window center (x==0) in the Y matrix
-        int scale;                // scale of the regression window, i.e., 2*scale+1 = window size
-        int df;                   // degree of freedom, interpolated data points will not be considered
-        float apex_position;      // position of the apex of the peak
-        float mse;                // mean squared error
-        bool isValid;             // flag to indicate if the regression is valid
-        unsigned int left_limit;  // left limit of the peak regression window
-        unsigned int right_limit; // right limit of the peak regression window
-        float area;               // area of the peak
-        // float height;
-        float uncertainty_area; // uncertainty of the area
-        float uncertainty_pos;  // uncertainty of the position
-        float uncertainty_height;
-    };
-
     // methods
     int calcNumberOfRegressions(const int n);
 
@@ -114,14 +90,13 @@ namespace qAlgorithms
     void mergeRegressionsOverScales(
         std::vector<ValidRegression_static> &validRegressions,
         const float *y_start,
-        const float *ylog_start,
         const bool *df_start);
 
     void mergeRegressionsOverScales_static(
         ValidRegression_static *validRegressions,
         const int n_regressions,
         const float *y_start,
-        const float *ylog_start,
+        // const float *ylog_start,
         const bool *df_start);
 
     void createCentroidPeaks(
@@ -334,11 +309,10 @@ namespace qAlgorithms
         const float apex_position,
         const int scale);
 
-    void convolve_static(
+    __m128 convolve_static(
         const size_t scale,
         const float *vec,
-        const size_t n,
-        __m128 *beta);
+        const size_t n);
 
     void convolve_dynamic(
         const size_t scale,
