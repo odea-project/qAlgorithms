@@ -210,7 +210,7 @@ namespace qAlgorithms
         std::vector<std::vector<double>> data_vec = data.get_spectrum(indices[start_index]); // get first spectrum (x-axis)
         expectedDifference = calcExpectedDiff(data_vec[0]);                                  // calculate expected difference & check if Orbitrap
 
-#pragma omp parallel for
+#                                                   // pragma omp parallel for
         for (size_t i = 0; i < indices.size(); ++i) // loop over all indices
         {
             const int index = indices[i];                                     // spectrum index
@@ -254,7 +254,7 @@ namespace qAlgorithms
         peaks.reserve(data.size() * 0.7);  // should be enough to fit all features without reallocation
         std::vector<FeaturePeak> tmpPeaks; // add features to this before pasting into FL
 
-        // #pragma omp parallel for
+        // #// pragma omp parallel for
         /// activating this pracma invalidates results @todo why?
 
         for (size_t i = 0; i < data.size(); ++i) // loop over all data
