@@ -670,7 +670,7 @@ namespace qAlgorithms
         //    @todo replace coeff;
         float mse = calcSSE(-scale, scale, replacer, ylog_start + i) / (df_sum - 4); // mean squared error
 
-        if (!isValidQuadraticTerm(coeff, scale, mse, df_sum))
+        if (!isValidQuadraticTerm(replacer, scale, mse, df_sum))
         {
             ValidRegression_static badReg;
             badReg.isValid = false;
@@ -1582,32 +1582,27 @@ namespace qAlgorithms
         signs = _mm_hadd_ps(signs, signs);            // horizontal add of the signs, now all values are the same, i.e. the sum
         int key = _mm_cvtss_si32(signs);
 
+        res = _mm_mul_ps(res, _mm_shuffle_ps(coeff, coeff, 0b01010101)); // res = -0.5 * b1
+        res = _mm_div_ps(res, coeff);                                    // res = -0.5 * b1 / b2
+
         switch (key)
         {
-        case 7:                                                              // Case 1a: apex left
-            res = _mm_mul_ps(res, _mm_shuffle_ps(coeff, coeff, 0b01010101)); // res = -0.5 * b1
-            res = _mm_div_ps(res, coeff);                                    // res = -0.5 * b1 / b2
-            apex_position = ((float *)&res)[2];                              //-B1 / 2 / B2;  // is negative
-            valley_position = 0;                                             // no valley point
-            return apex_position > -scale + 1;                               // scale +1: prevent apex position to be at the edge of the data
+        case 7:                                 // Case 1a: apex left
+            apex_position = ((float *)&res)[2]; //-B1 / 2 / B2;  // is negative
+            valley_position = 0;                // no valley point
+            return apex_position > -scale + 1;  // scale +1: prevent apex position to be at the edge of the data
 
-        case 3:                                                              // Case 1b: apex right
-            res = _mm_mul_ps(res, _mm_shuffle_ps(coeff, coeff, 0b01010101)); // res = -0.5 * b1
-            res = _mm_div_ps(res, coeff);                                    // res = -0.5 * b1 / b2
-            apex_position = ((float *)&res)[3];                              //-B1 / 2 / B3;     // is positive
-            valley_position = 0;                                             // no valley point
-            return apex_position < scale - 1;                                // scale -1: prevent apex position to be at the edge of the data
+        case 3:                                 // Case 1b: apex right
+            apex_position = ((float *)&res)[3]; //-B1 / 2 / B3;     // is positive
+            valley_position = 0;                // no valley point
+            return apex_position < scale - 1;   // scale -1: prevent apex position to be at the edge of the data
 
         case 6:                                                                       // Case 2a: apex left | valley right
-            res = _mm_mul_ps(res, _mm_shuffle_ps(coeff, coeff, 0b01010101));          // res = -0.5 * b1
-            res = _mm_div_ps(res, coeff);                                             // res = -0.5 * b1 / b2
             apex_position = ((float *)&res)[2];                                       //-B1 / 2 / B2;                                             // is negative
             valley_position = ((float *)&res)[3];                                     //-B1 / 2 / B3;                                           // is positive
             return apex_position > -scale + 1 && valley_position - apex_position > 2; // scale +1: prevent apex position to be at the edge of the data
 
         case 1:                                                                      // Case 2b: apex right | valley left
-            res = _mm_mul_ps(res, _mm_shuffle_ps(coeff, coeff, 0b01010101));         // res = -0.5 * b1
-            res = _mm_div_ps(res, coeff);                                            // res = -0.5 * b1 / b2
             apex_position = ((float *)&res)[3];                                      //-B1 / 2 / B3;                                            // is positive
             valley_position = ((float *)&res)[2];                                    //-B1 / 2 / B2;                                          // is negative
             return apex_position < scale - 1 && apex_position - valley_position > 2; // scale -1: prevent apex position to be at the edge of the data
@@ -1639,15 +1634,15 @@ namespace qAlgorithms
 
 #pragma region isValidQuadraticTerm
     bool isValidQuadraticTerm(
-        const __m128 coeff,
+        RegCoeffs coeff,
         const int scale,
         const float mse,
         const int df_sum)
     {
         float divisor = std::sqrt(INV_ARRAY[scale * 6 + 4] * mse); // inverseMatrix_2_2 is at position 4 of initialize()
         double tValue = std::max(                                  // t-value for the quadratic term
-            std::abs(((float *)&coeff)[2]) / divisor,              // t-value for the quadratic term left side of the peak
-            std::abs(((float *)&coeff)[3]) / divisor);             // t-value for the quadratic term right side of the peak
+            std::abs(coeff.b2) / divisor,                          // t-value for the quadratic term left side of the peak
+            std::abs(coeff.b3) / divisor);                         // t-value for the quadratic term right side of the peak
         return tValue > T_VALUES[df_sum - 5];                      // statistical significance of the quadratic term
     }
 #pragma endregion isValidQuadraticTerm
