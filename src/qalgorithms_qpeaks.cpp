@@ -668,7 +668,7 @@ namespace qAlgorithms
           to the next iteration.
         */
         //    @todo replace coeff;
-        float mse = calcSSE(-scale, scale, coeff, ylog_start + i) / (df_sum - 4); // mean squared error
+        float mse = calcSSE(-scale, scale, replacer, ylog_start + i) / (df_sum - 4); // mean squared error
 
         if (!isValidQuadraticTerm(coeff, scale, mse, df_sum))
         {
@@ -727,7 +727,7 @@ namespace qAlgorithms
           the exponential domain. If the chi-square value is less than the corresponding
           value in the CHI_SQUARES, the loop continues to the next iteration.
         */
-        float chiSquare = calcSSE(-scale, scale, coeff, y_start + i, true, true);
+        float chiSquare = calcSSE(-scale, scale, replacer, y_start + i, true, true);
         if (chiSquare < CHI_SQUARES[df_sum - 5])
         {
             ValidRegression_static badReg;
@@ -812,7 +812,7 @@ namespace qAlgorithms
                         it_ref_peak->mse = calcSSE(
                                                (it_ref_peak->left_limit) - it_ref_peak->index_x0,  // left limit of the ref peak
                                                (it_ref_peak->right_limit) - it_ref_peak->index_x0, // right limit of the ref peak
-                                               it_ref_peak->coeff,                                 // regression coefficients
+                                               it_ref_peak->newCoeffs,                             // regression coefficients
                                                y_start + (int)it_ref_peak->left_limit,             // pointer to the start of the Y matrix
                                                true) /
                                            it_ref_peak->df;
@@ -839,7 +839,7 @@ namespace qAlgorithms
                 it_new_peak->mse = calcSSE(
                                        (it_new_peak->left_limit) - it_new_peak->index_x0,  // left limit of the new peak
                                        (it_new_peak->right_limit) - it_new_peak->index_x0, // right limit of the new peak
-                                       it_new_peak->coeff,                                 // regression coefficients
+                                       it_new_peak->newCoeffs,                             // regression coefficients
                                        y_start + (int)it_new_peak->left_limit,             // pointer to the start of the Y matrix
                                        true) /
                                    it_new_peak->df;
@@ -1040,12 +1040,12 @@ namespace qAlgorithms
                 peak.scanNumber = scanNumber;
 
                 // add height
-                __m128 coeff = regression.coeff;
-                peak.height = exp_approx_d(((float *)&coeff)[0] + (regression.apex_position - regression.index_x0) * ((float *)&coeff)[1] * .5); // peak height (exp(b0 - b1^2/4/b2)) with position being -b1/2/b2
+                RegCoeffs coeff = regression.newCoeffs;
+                peak.height = exp_approx_d(coeff.b0 + (regression.apex_position - regression.index_x0) * coeff.b1 * 0.5); // peak height (exp(b0 - b1^2/4/b2)) with position being -b1/2/b2
                 peak.heightUncertainty = regression.uncertainty_height * peak.height;
 
                 // add area
-                float exp_b0 = exp_approx_d(((float *)&coeff)[0]); // exp(b0)
+                float exp_b0 = exp_approx_d(coeff.b0); // exp(b0)
                 peak.area = regression.area * exp_b0;
                 peak.areaUncertainty = regression.uncertainty_area * exp_b0;
 
@@ -1101,12 +1101,12 @@ namespace qAlgorithms
                 FeaturePeak peak;
 
                 // add height
-                __m128 coeff = regression.coeff;
-                peak.height = exp_approx_d(((float *)&coeff)[0] + (regression.apex_position - regression.index_x0) * ((float *)&coeff)[1] * .5); // peak height (exp(b0 - b1^2/4/b2)) with position being -b1/2/b2
+                RegCoeffs coeff = regression.newCoeffs;
+                peak.height = exp_approx_d(coeff.b0 + (regression.apex_position - regression.index_x0) * coeff.b1 * 0.5); // peak height (exp(b0 - b1^2/4/b2)) with position being -b1/2/b2
                 peak.heightUncertainty = regression.uncertainty_height * peak.height;
 
                 // add area
-                float exp_b0 = exp_approx_d(((float *)&coeff)[0]); // exp(b0)
+                float exp_b0 = exp_approx_d(coeff.b0); // exp(b0)
                 peak.area = regression.area * exp_b0;
                 peak.areaUncertainty = regression.uncertainty_area * exp_b0;
 
@@ -1141,20 +1141,20 @@ namespace qAlgorithms
 #pragma region calcSSE
 
     // Lambda function to calculate the full segments
-    float calcFullSegments(const __m128 coeff, int limit_L, int limit_R, const float *y_start, bool calc_EXP, bool calc_CHISQ)
+    float calcFullSegments(RegCoeffs coeff, int limit_L, int limit_R, const float *y_start, bool calc_EXP, bool calc_CHISQ)
     {
         assert(limit_L < 0);
         assert(limit_R > 0);
         float result = 0;
-        const __m256 b0 = _mm256_set1_ps(((float *)&coeff)[0]); // b0 is eight times coeff 0
-        const __m256 b1 = _mm256_set1_ps(((float *)&coeff)[1]); // b1 is eight times coeff 1
+        const __m256 b0 = _mm256_set1_ps(coeff.b0); // b0 is eight times coeff 0
+        const __m256 b1 = _mm256_set1_ps(coeff.b1); // b1 is eight times coeff 1
         {
             // left side
             int j = 0;
             int nFullSegments = -limit_L / 8;
 
             __m256 LINSPACE = _mm256_set_ps(7.f, 6.f, 5.f, 4.f, 3.f, 2.f, 1.f, 0.f);
-            __m256 b2 = _mm256_set1_ps(((float *)&coeff)[2]);
+            __m256 b2 = _mm256_set1_ps(coeff.b2);
             __m256 x = _mm256_add_ps(_mm256_set1_ps(limit_L - 8.0), LINSPACE); // formerly i
 
             for (int iSegment = 0; iSegment < nFullSegments; ++iSegment, j += 8)
@@ -1185,7 +1185,7 @@ namespace qAlgorithms
             int nFullSegments = limit_R / 8;
 
             __m256 LINSPACE = _mm256_set_ps(0.f, -1.f, -2.f, -3.f, -4.f, -5.f, -6.f, -7.f);
-            __m256 b_quadratic = _mm256_set1_ps(((float *)&coeff)[3]);
+            __m256 b_quadratic = _mm256_set1_ps(coeff.b3);
             __m256 x = _mm256_add_ps(_mm256_set1_ps(-i), LINSPACE); // x vector : -k to -k+7
 
             for (int iSegment = 0; iSegment < nFullSegments; ++iSegment, i += 8.0f, j -= 8)
@@ -1211,12 +1211,12 @@ namespace qAlgorithms
         return result;
     };
 
-    float calcRemaining(const __m128 coeff, const int nRemaining, const __m256 x, const int y_start_offset,
+    float calcRemaining(RegCoeffs coeff, const int nRemaining, const __m256 x, const int y_start_offset,
                         const int y_end_offset, const int mask_offset, const __m256 b_quadratic,
                         bool calc_EXP, bool calc_CHISQ, const float *y_start, int left_limit)
     {
-        const __m256 b0 = _mm256_set1_ps(((float *)&coeff)[0]);
-        const __m256 b1 = _mm256_set1_ps(((float *)&coeff)[1]);
+        const __m256 b0 = _mm256_set1_ps(coeff.b0);
+        const __m256 b1 = _mm256_set1_ps(coeff.b1);
 
         // Calculate the yhat values for the remaining elements
         __m256 yhat = _mm256_fmadd_ps(_mm256_fmadd_ps(b_quadratic, x, b1), x, b0); // b0 + b1 * x + b2 * x^2
@@ -1246,7 +1246,7 @@ namespace qAlgorithms
     float calcSSE(
         const int left_limit,
         const int right_limit,
-        const __m128 coeff,
+        RegCoeffs coeff,
         const float *y_start,
         const bool calc_EXP,
         const bool calc_CHISQ)
@@ -1279,14 +1279,14 @@ namespace qAlgorithms
         __m256 LINSPACE_UP_POS_256 = _mm256_set_ps(7.f, 6.f, 5.f, 4.f, 3.f, 2.f, 1.f, 0.f);
         if (nRemaining_left > 0)
         {
-            const __m256 b2 = _mm256_set1_ps(((float *)&coeff)[2]);
+            const __m256 b2 = _mm256_set1_ps(coeff.b2);
             __m256 x_left = _mm256_add_ps(_mm256_set1_ps(-static_cast<float>(nRemaining_left)), LINSPACE_UP_POS_256); // x vector : -nRemaining_left to -nRemaining_left+7
             result += calcRemaining(coeff, nRemaining_left, x_left, -nRemaining_left, 0, 0, b2, calc_EXP, calc_CHISQ, y_start, left_limit);
         }
 
         if (nRemaining_right > 0)
         {
-            const __m256 b3 = _mm256_set1_ps(((float *)&coeff)[3]);
+            const __m256 b3 = _mm256_set1_ps(coeff.b3);
             result += calcRemaining(coeff, nRemaining_right, LINSPACE_UP_POS_256, 0, nRemaining_right + 1, 1, b3, calc_EXP, calc_CHISQ, y_start, left_limit);
         }
 
@@ -1337,7 +1337,7 @@ namespace qAlgorithms
             const float mse = calcSSE(
                                   left_limit - regression->index_x0,  // left limit of the regression window (normalized scale)
                                   right_limit - regression->index_x0, // right limit of the regression window (normalized scale)
-                                  regression->coeff,                  // regression coefficients
+                                  regression->newCoeffs,              // regression coefficients
                                   y_start + left_limit,               // start of the measured data
                                   true) /                             // calculate the exp of the yhat values
                               (df_sum - 4);
@@ -1407,7 +1407,7 @@ namespace qAlgorithms
             const float mse = calcSSE(
                                   left_limit - (regressions_start + i)->index_x0,  // left limit of the regression window (normalized scale)
                                   right_limit - (regressions_start + i)->index_x0, // right limit of the regression window (normalized scale)
-                                  (regressions_start + i)->coeff,                  // regression coefficients
+                                  (regressions_start + i)->newCoeffs,              // regression coefficients
                                   y_start + left_limit,                            // start of the measured data
                                   true) /                                          // calculate the exp of the yhat values
                               (df_sum - 4);
@@ -1465,7 +1465,7 @@ namespace qAlgorithms
         const float mse_low_scale = calcSSE(
                                         left_limit - low_scale_regression->index_x0,  // left limit of the regression window (normalized scale)
                                         right_limit - low_scale_regression->index_x0, // right limit of the regression window (normalized scale)
-                                        low_scale_regression->coeff,                  // regression coefficients
+                                        low_scale_regression->newCoeffs,              // regression coefficients
                                         y_start + left_limit,                         // start of the measured data
                                         true) /                                       // calculate the exp of the yhat values
                                     (df_sum - 4);
@@ -1473,7 +1473,7 @@ namespace qAlgorithms
         const float mse_hi_scale = calcSSE(
                                        left_limit - hi_scale_regression->index_x0,  // left limit of the regression window (normalized scale)
                                        right_limit - hi_scale_regression->index_x0, // right limit of the regression window (normalized scale)
-                                       hi_scale_regression->coeff,                  // regression coefficients
+                                       hi_scale_regression->newCoeffs,              // regression coefficients
                                        y_start + left_limit,                        // start of the measured data
                                        true) /                                      // calculate the exp of the yhat values
                                    (df_sum - 4);
@@ -1506,7 +1506,7 @@ namespace qAlgorithms
             validRegressions[i_new_peak].mse = calcSSE(
                                                    validRegressions[i_new_peak].left_limit - validRegressions[i_new_peak].index_x0,  // left limit of the new peak (normalized scale)
                                                    validRegressions[i_new_peak].right_limit - validRegressions[i_new_peak].index_x0, // right limit of the new peak (normalized scale)
-                                                   validRegressions[i_new_peak].coeff,                                               // regression coefficients
+                                                   validRegressions[i_new_peak].newCoeffs,                                           // regression coefficients
                                                    y_start + validRegressions[i_new_peak].left_limit,
                                                    true) /
                                                validRegressions[i_new_peak].df;
@@ -1522,7 +1522,7 @@ namespace qAlgorithms
                 validRegressions[i_ref_peak].mse = calcSSE(
                                                        validRegressions[i_ref_peak].left_limit - validRegressions[i_ref_peak].index_x0,  // left limit of the ref peak (normalized scale)
                                                        validRegressions[i_ref_peak].right_limit - validRegressions[i_ref_peak].index_x0, // right limit of the ref peak (normalized scale)
-                                                       validRegressions[i_ref_peak].coeff,                                               // regression coefficients
+                                                       validRegressions[i_ref_peak].newCoeffs,                                           // regression coefficients
                                                        y_start + validRegressions[i_ref_peak].left_limit,
                                                        true) /
                                                    validRegressions[i_ref_peak].df;
