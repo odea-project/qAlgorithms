@@ -327,7 +327,7 @@ namespace qAlgorithms
         std::vector<ValidRegression_static> &validRegressions)
     {
         const int maxScale = std::min(GLOBAL_MAXSCALE, (int)(n - 1) / 2);
-        validRegressions.reserve(calculateNumberOfRegressions(n));
+        validRegressions.reserve(calcNumberOfRegressions(n));
         for (int scale = 2; scale <= maxScale; scale++)
         {
             const int k = 2 * scale + 1;                  // window size
@@ -604,7 +604,7 @@ namespace qAlgorithms
         // @todo apex is always 0
         float apex_position = 0.f;
         // no easy replace
-        if (!calcApexAndValleyPositions(coeff, scale, apex_position, valley_position))
+        if (!calcApexAndValleyPos(coeff, scale, apex_position, valley_position))
         {
             ValidRegression_static badReg;
             badReg.isValid = false;
@@ -735,7 +735,7 @@ namespace qAlgorithms
             return badReg; // statistical insignificance of the chi-square value
         }
         // @todo replace coeff
-        float uncertainty_pos = calcUncertaintyPosition(mse, replacer, apex_position, scale);
+        float uncertainty_pos = calcUncertaintyPos(mse, replacer, apex_position, scale);
 
         return ValidRegression_static{
             replacer,
@@ -951,12 +951,12 @@ namespace qAlgorithms
 
             if (validRegressionsInGroup.size() == 1)
             { // comparison of two regressions just with different scale.
-                calcExtendedMsePair_static(y_start, &validRegressions[validRegressionsInGroup[0]], &validRegressions[i_new_peak], df_start);
+                calcExtendedMsePair(y_start, &validRegressions[validRegressionsInGroup[0]], &validRegressions[i_new_peak], df_start);
                 continue; // continue with the next new peak
             }
 
             // comparison of the new regression (high) with multiple ref regressions (low)
-            calcExtendedMseOverScales_static(y_start, validRegressions, validRegressionsInGroup, i_new_peak);
+            calcExtendedMseOverScales(y_start, validRegressions, validRegressionsInGroup, i_new_peak);
         }
     } // end mergeRegressionsOverScales_static
 #pragma endregion "merge regressions over scales static"
@@ -1146,74 +1146,69 @@ namespace qAlgorithms
         assert(limit_L < 0);
         assert(limit_R > 0);
         float result = 0;
-        const __m256 b0 = _mm256_set1_ps(coeff.b0); // b0 is eight times coeff 0
-        const __m256 b1 = _mm256_set1_ps(coeff.b1); // b1 is eight times coeff 1
+        __m256 b0 = _mm256_set1_ps(coeff.b0); // b0 is eight times coeff 0
+        __m256 b1 = _mm256_set1_ps(coeff.b1); // b1 is eight times coeff 1
+        __m256 b2 = _mm256_set1_ps(coeff.b2);
+        __m256 b3 = _mm256_set1_ps(coeff.b3);
+
+        // left side
+        int j = 0;
+        int nFullSegments = -limit_L / 8;
+        __m256 LINSPACE = _mm256_set_ps(7.f, 6.f, 5.f, 4.f, 3.f, 2.f, 1.f, 0.f);
+        __m256 x = _mm256_add_ps(_mm256_set1_ps(limit_L - 8.0), LINSPACE); // formerly i
+
+        for (int iSegment = 0; iSegment < nFullSegments; ++iSegment, j += 8)
         {
-            // left side
-            int j = 0;
-            int nFullSegments = -limit_L / 8;
-
-            __m256 LINSPACE = _mm256_set_ps(7.f, 6.f, 5.f, 4.f, 3.f, 2.f, 1.f, 0.f);
-            __m256 b2 = _mm256_set1_ps(coeff.b2);
-            __m256 x = _mm256_add_ps(_mm256_set1_ps(limit_L - 8.0), LINSPACE); // formerly i
-
-            for (int iSegment = 0; iSegment < nFullSegments; ++iSegment, j += 8)
+            // Load 8 values of i directly as float
+            x = _mm256_add_ps(_mm256_set1_ps(8), x); // x vector : -k to -k+7
+            // Calculate the yhat values
+            __m256 yhat = _mm256_fmadd_ps(_mm256_fmadd_ps(b2, x, b1), x, b0); // b0 + b1 * x + b2 * x^2
+            if (calc_EXP)
             {
-                // Load 8 values of i directly as float
-                x = _mm256_add_ps(_mm256_set1_ps(8), x); // x vector : -k to -k+7
-                // Calculate the yhat values
-                __m256 yhat = _mm256_fmadd_ps(_mm256_fmadd_ps(b2, x, b1), x, b0); // b0 + b1 * x + b2 * x^2
-                if (calc_EXP)
-                {
-                    yhat = exp_approx_vf(yhat); // calculate the exp of the yhat values (if needed)
-                }
-                const __m256 y_vec = _mm256_loadu_ps(y_start + j); // Load 8 values from y considering the offset j
-                const __m256 diff = _mm256_sub_ps(y_vec, yhat);    // Calculate the difference between y and yhat
-                __m256 diff_sq = _mm256_mul_ps(diff, diff);        // Calculate the square of the difference
-                if (calc_CHISQ)
-                {
-                    diff_sq = _mm256_div_ps(diff_sq, yhat); // Calculate the weighted square of the difference
-                }
-                result += sum8(diff_sq); // Calculate the sum of the squares and add it to the result
+                yhat = exp_approx_vf(yhat); // calculate the exp of the yhat values (if needed)
             }
+            const __m256 y_vec = _mm256_loadu_ps(y_start + j); // Load 8 values from y considering the offset j
+            const __m256 diff = _mm256_sub_ps(y_vec, yhat);    // Calculate the difference between y and yhat
+            __m256 diff_sq = _mm256_mul_ps(diff, diff);        // Calculate the square of the difference
+            if (calc_CHISQ)
+            {
+                diff_sq = _mm256_div_ps(diff_sq, yhat); // Calculate the weighted square of the difference
+            }
+            result += sum8(diff_sq); // Calculate the sum of the squares and add it to the result
         }
 
+        // right side
+        j = (limit_R - limit_L + 1 - 8);
+        nFullSegments = limit_R / 8;
+        LINSPACE = _mm256_set_ps(0.f, -1.f, -2.f, -3.f, -4.f, -5.f, -6.f, -7.f);
+        x = _mm256_add_ps(_mm256_set1_ps(limit_R + 8.0), LINSPACE); // x vector : -k to -k+7
+
+        for (int iSegment = 0; iSegment < nFullSegments; ++iSegment, j -= 8)
         {
-            // right side
-            int j = (limit_R - limit_L + 1 - 8);
-            float i = -static_cast<float>(limit_R);
-            int nFullSegments = limit_R / 8;
-
-            __m256 LINSPACE = _mm256_set_ps(0.f, -1.f, -2.f, -3.f, -4.f, -5.f, -6.f, -7.f);
-            __m256 b_quadratic = _mm256_set1_ps(coeff.b3);
-            __m256 x = _mm256_add_ps(_mm256_set1_ps(-i), LINSPACE); // x vector : -k to -k+7
-
-            for (int iSegment = 0; iSegment < nFullSegments; ++iSegment, i += 8.0f, j -= 8)
+            // Load 8 values of i directly as float
+            x = _mm256_add_ps(_mm256_set1_ps(-8.0), x); // x vector : -k to -k+7
+            // Calculate the yhat values
+            __m256 yhat = _mm256_fmadd_ps(_mm256_fmadd_ps(b3, x, b1), x, b0); // b0 + b1 * x + b2 * x^2
+            if (calc_EXP)
             {
-                // Load 8 values of i directly as float
-                x = _mm256_add_ps(_mm256_set1_ps(-i), LINSPACE); // x vector : -k to -k+7
-                // Calculate the yhat values
-                __m256 yhat = _mm256_fmadd_ps(_mm256_fmadd_ps(b_quadratic, x, b1), x, b0); // b0 + b1 * x + b2 * x^2
-                if (calc_EXP)
-                {
-                    yhat = exp_approx_vf(yhat); // calculate the exp of the yhat values (if needed)
-                }
-                const __m256 y_vec = _mm256_loadu_ps(y_start + j); // Load 8 values from y considering the offset j
-                const __m256 diff = _mm256_sub_ps(y_vec, yhat);    // Calculate the difference between y and yhat
-                __m256 diff_sq = _mm256_mul_ps(diff, diff);        // Calculate the square of the difference
-                if (calc_CHISQ)
-                {
-                    diff_sq = _mm256_div_ps(diff_sq, yhat); // Calculate the weighted square of the difference
-                }
-                result += sum8(diff_sq); // Calculate the sum of the squares and add it to the result
+                yhat = exp_approx_vf(yhat); // calculate the exp of the yhat values (if needed)
             }
+            const __m256 y_vec = _mm256_loadu_ps(y_start + j); // Load 8 values from y considering the offset j
+            const __m256 diff = _mm256_sub_ps(y_vec, yhat);    // Calculate the difference between y and yhat
+            __m256 diff_sq = _mm256_mul_ps(diff, diff);        // Calculate the square of the difference
+            if (calc_CHISQ)
+            {
+                diff_sq = _mm256_div_ps(diff_sq, yhat); // Calculate the weighted square of the difference
+            }
+            result += sum8(diff_sq); // Calculate the sum of the squares and add it to the result
         }
+
         return result;
     };
 
     float calcRemaining(RegCoeffs coeff, const int nRemaining, const __m256 x, const int y_start_offset,
                         const int y_end_offset, const int mask_offset, const __m256 b_quadratic,
-                        bool calc_EXP, bool calc_CHISQ, const float *y_start, int left_limit)
+                        bool calc_EXP, bool calc_CHISQ, const float *y_start, int limit_L, int limit_R)
     {
         const __m256 b0 = _mm256_set1_ps(coeff.b0);
         const __m256 b1 = _mm256_set1_ps(coeff.b1);
@@ -1226,7 +1221,7 @@ namespace qAlgorithms
         }
         // Load the remaining values from y
         float y_remaining[8] = {0.0f};
-        std::copy(y_start - left_limit + y_start_offset, y_start - left_limit + y_end_offset, y_remaining);
+        std::copy(y_start - limit_L + y_start_offset, y_start - limit_L + y_end_offset, y_remaining);
         const __m256 y_vec = _mm256_loadu_ps(y_remaining);
 
         __m256i LINSPACE_UP_INT_256 = _mm256_set_epi32(7, 6, 5, 4, 3, 2, 1, 0);
@@ -1281,13 +1276,13 @@ namespace qAlgorithms
         {
             const __m256 b2 = _mm256_set1_ps(coeff.b2);
             __m256 x_left = _mm256_add_ps(_mm256_set1_ps(-static_cast<float>(nRemaining_left)), LINSPACE_UP_POS_256); // x vector : -nRemaining_left to -nRemaining_left+7
-            result += calcRemaining(coeff, nRemaining_left, x_left, -nRemaining_left, 0, 0, b2, calc_EXP, calc_CHISQ, y_start, left_limit);
+            result += calcRemaining(coeff, nRemaining_left, x_left, -nRemaining_left, 0, 0, b2, calc_EXP, calc_CHISQ, y_start, left_limit, right_limit);
         }
 
         if (nRemaining_right > 0)
         {
             const __m256 b3 = _mm256_set1_ps(coeff.b3);
-            result += calcRemaining(coeff, nRemaining_right, LINSPACE_UP_POS_256, 0, nRemaining_right + 1, 1, b3, calc_EXP, calc_CHISQ, y_start, left_limit);
+            result += calcRemaining(coeff, nRemaining_right, LINSPACE_UP_POS_256, 0, nRemaining_right + 1, 1, b3, calc_EXP, calc_CHISQ, y_start, left_limit, right_limit);
         }
 
         return result;
@@ -1434,8 +1429,8 @@ namespace qAlgorithms
     }
 #pragma endregion calcExtendedMse_static
 
-#pragma region calcExtendedMsePair_static
-    void calcExtendedMsePair_static(
+#pragma region calcExtendedMsePair
+    void calcExtendedMsePair(
         const float *y_start,
         ValidRegression_static *low_scale_regression,
         ValidRegression_static *hi_scale_regression,
@@ -1490,10 +1485,10 @@ namespace qAlgorithms
             low_scale_regression->isValid = false;
         }
     }
-#pragma endregion calcExtendedMsePair_static
+#pragma endregion calcExtendedMsePair
 
-#pragma region calcExtendedMseOverScales_static
-    void calcExtendedMseOverScales_static(
+#pragma region calcExtendedMseOverScales
+    void calcExtendedMseOverScales(
         const float *y_start,
         ValidRegression_static *validRegressions,
         const std::vector<int> &validRegressionsInGroup,
@@ -1544,7 +1539,7 @@ namespace qAlgorithms
             validRegressions[i_new_peak].isValid = false;
         }
     }
-#pragma endregion calcExtendedMseOverScales_static
+#pragma endregion calcExtendedMseOverScales
 
 #pragma region calcDF
     int calcDF(
@@ -1564,8 +1559,8 @@ namespace qAlgorithms
     }
 #pragma endregion calcDF
 
-#pragma region calculateApexAndValleyPositions
-    bool calcApexAndValleyPositions(
+#pragma region calcApexAndValleyPos
+    bool calcApexAndValleyPos(
         const __m128 coeff,
         const int scale,
         float &apex_position,
@@ -1611,7 +1606,7 @@ namespace qAlgorithms
             return false; // invalid case
         } // end switch
     }
-#pragma endregion calculateApexAndValleyPositions
+#pragma endregion calcApexAndValleyPos
 
 #pragma region "isValidApexToEdge"
 
@@ -1837,7 +1832,7 @@ namespace qAlgorithms
 #pragma endregion isValidPeakArea
 
 #pragma region "calcUncertaintyPosition"
-    float calcUncertaintyPosition(
+    float calcUncertaintyPos(
         const float mse,
         RegCoeffs coeff,
         const float apex_position,
@@ -1864,7 +1859,7 @@ namespace qAlgorithms
 #pragma endregion "calcUncertaintyPosition"
 
 #pragma region calculateNumberOfRegressions
-    int calculateNumberOfRegressions(const int n)
+    int calcNumberOfRegressions(const int n)
     {
         int sum = 0;
         for (int i = 4; i <= GLOBAL_MAXSCALE * 2; i += 2)
