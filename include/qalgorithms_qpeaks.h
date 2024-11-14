@@ -149,7 +149,7 @@ namespace qAlgorithms
     float calcSSE(
         const int left_limit,
         const int right_limit,
-        const __m128 coeff,
+        RegCoeffs coeff,
         const float *y_start = nullptr,
         const bool calc_EXP = false,
         const bool calc_CHISQ = false);
