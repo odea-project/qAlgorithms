@@ -1145,7 +1145,7 @@ namespace qAlgorithms
     {
         assert(limit_L < 0);
         assert(limit_R > 0);
-        float result = 0;
+        double result = 0;
         __m256 b0 = _mm256_set1_ps(coeff.b0); // b0 is eight times coeff 0
         __m256 b1 = _mm256_set1_ps(coeff.b1); // b1 is eight times coeff 1
         __m256 b2 = _mm256_set1_ps(coeff.b2);
@@ -1153,14 +1153,42 @@ namespace qAlgorithms
 
         // left side
         int j = 0;
-        int nFullSegments = -limit_L / 8;
+        long int nFullSegments = -limit_L;
+
+        double result2 = 0.0f;
+        for (long int iSegment = 0; iSegment < nFullSegments; iSegment++)
+        {
+            double new_x = limit_L + iSegment;
+            double y_base = coeff.b0 + coeff.b1 * new_x + coeff.b2 * new_x * new_x;
+            double y_new = y_base;
+            if (calc_EXP)
+            {
+                y_new = exp_approx_d(y_base); // calculate the exp of the yhat values (if needed)
+            }
+            double y_current = y_start[iSegment];
+            double newdiff = (y_current - y_new) * (y_current - y_new);
+            if (newdiff == INFINITY)
+            {
+                std::cout << y_base << ", " << y_new;
+                exit(1);
+            }
+            if (calc_CHISQ)
+            {
+                assert(y_new != 0);
+                newdiff = newdiff / y_new; // Calculate the weighted square of the difference
+            }
+            result2 += newdiff;
+        }
+
         __m256 LINSPACE = _mm256_set_ps(7.f, 6.f, 5.f, 4.f, 3.f, 2.f, 1.f, 0.f);
         __m256 x = _mm256_add_ps(_mm256_set1_ps(limit_L - 8.0), LINSPACE); // formerly i
-
+        nFullSegments = -limit_L / 8;
+        j = 0;
         for (int iSegment = 0; iSegment < nFullSegments; ++iSegment, j += 8)
         {
             // Load 8 values of i directly as float
             x = _mm256_add_ps(_mm256_set1_ps(8), x); // x vector : -k to -k+7
+
             // Calculate the yhat values
             __m256 yhat = _mm256_fmadd_ps(_mm256_fmadd_ps(b2, x, b1), x, b0); // b0 + b1 * x + b2 * x^2
             if (calc_EXP)
@@ -1176,6 +1204,12 @@ namespace qAlgorithms
             }
             result += sum8(diff_sq); // Calculate the sum of the squares and add it to the result
         }
+
+        // std::cout << abs(result2 - result) << " " << nFullSegments << ", ";
+        // std::cout.flush();
+        // assert(abs(abs(result2) - abs(result)) < 0.00001);
+
+        // result = result2;
 
         // right side
         j = (limit_R - limit_L + 1 - 8);
@@ -1261,7 +1295,11 @@ namespace qAlgorithms
         float result = 0.0f; // result variable
 
         // Calculate the full segments
-        result += calcFullSegments(coeff, left_limit, right_limit, y_start, calc_EXP, calc_CHISQ);
+        // only applies if there are at least eight numbers on one side of the peak
+        if (left_limit < -7 || right_limit > 7)
+        {
+            result += calcFullSegments(coeff, left_limit, right_limit, y_start, calc_EXP, calc_CHISQ);
+        }
 
         const int nRemaining_left = -left_limit % 8;  // calculate the number of remaining elements
         const int nRemaining_right = right_limit % 8; // calculate the number of remaining elements

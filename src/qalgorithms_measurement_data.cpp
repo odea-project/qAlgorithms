@@ -19,7 +19,7 @@ namespace qAlgorithms
       double PPMerror)
   {
     std::vector<std::vector<CentroidPeak>> centroids(indices.size());
-#pragma omp parallel for
+#                                               // pragma omp parallel for
     for (size_t i = 0; i < indices.size(); ++i) // loop over all indices
     {
       const int index = indices[i]; // spectrum index
