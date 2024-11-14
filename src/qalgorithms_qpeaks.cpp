@@ -1260,29 +1260,27 @@ namespace qAlgorithms
 
         float result = 0.0f; // result variable
 
+        // Calculate the full segments
+        result += calcFullSegments(coeff, left_limit, right_limit, y_start, calc_EXP, calc_CHISQ);
+
         const int nRemaining_left = -left_limit % 8;  // calculate the number of remaining elements
         const int nRemaining_right = right_limit % 8; // calculate the number of remaining elements
 
-        // Calculate the full segments
-        result += calcFullSegments(coeff, left_limit, right_limit, y_start, calc_EXP, calc_CHISQ);
-        // result += calcFullSegments(coeff, -1.f,
-        //                            calc_EXP, calc_CHISQ, y_start, left_limit, right_limit);
-
-        // Lambda function to calculate the yhat values for the remaining elements
-
-        // Calculate the yhat values for the remaining elements
         __m256 LINSPACE_UP_POS_256 = _mm256_set_ps(7.f, 6.f, 5.f, 4.f, 3.f, 2.f, 1.f, 0.f);
+
         if (nRemaining_left > 0)
         {
             const __m256 b2 = _mm256_set1_ps(coeff.b2);
             __m256 x_left = _mm256_add_ps(_mm256_set1_ps(-static_cast<float>(nRemaining_left)), LINSPACE_UP_POS_256); // x vector : -nRemaining_left to -nRemaining_left+7
-            result += calcRemaining(coeff, nRemaining_left, x_left, -nRemaining_left, 0, 0, b2, calc_EXP, calc_CHISQ, y_start, left_limit, right_limit);
+            result += calcRemaining(coeff, nRemaining_left, x_left, -nRemaining_left, 0, 0, b2,
+                                    calc_EXP, calc_CHISQ, y_start, left_limit, right_limit);
         }
 
         if (nRemaining_right > 0)
         {
             const __m256 b3 = _mm256_set1_ps(coeff.b3);
-            result += calcRemaining(coeff, nRemaining_right, LINSPACE_UP_POS_256, 0, nRemaining_right + 1, 1, b3, calc_EXP, calc_CHISQ, y_start, left_limit, right_limit);
+            result += calcRemaining(coeff, nRemaining_right, LINSPACE_UP_POS_256, 0, nRemaining_right + 1, 1, b3,
+                                    calc_EXP, calc_CHISQ, y_start, left_limit, right_limit);
         }
 
         return result;
