@@ -224,7 +224,7 @@ namespace qAlgorithms
         incompleteBins.reserve(finishedBins.size() / 10);
         for (size_t i = 0; i < finishedBins.size(); i++)
         {
-            if ((finishedBins[i].l_maxdist_tooclose | finishedBins[i].r_maxdist_tooclose))
+            if ((finishedBins[i].l_maxdist_tooclose || finishedBins[i].r_maxdist_tooclose))
             {
                 incompleteBins.push_back(i);
             }
@@ -822,7 +822,7 @@ namespace qAlgorithms
             }
             bool lslant = false;
             bool rslant = false;
-            if ((pointsInBin.front()->int_area == intMax) | (pointsInBin.front()->int_area == intMax2))
+            if ((pointsInBin.front()->int_area == intMax) || (pointsInBin.front()->int_area == intMax2))
             {
                 lslant = true;
             }
@@ -830,7 +830,7 @@ namespace qAlgorithms
             {
                 lslant = true;
             }
-            if ((pointsInBin.back()->int_area == intMax) | (pointsInBin.back()->int_area == intMax2))
+            if ((pointsInBin.back()->int_area == intMax) || (pointsInBin.back()->int_area == intMax2))
             {
                 lslant = true;
             }
@@ -1169,16 +1169,16 @@ namespace qAlgorithms
         // is the first or last scan the highest int_area?
         // these bins cannot be fitted with a gaussian peak
         bool oneSided = false;
-        if ((pointsInBin.back()->scanNo == scanMin) | (pointsInBin.back()->scanNo == scanMax))
+        if ((pointsInBin.back()->scanNo == scanMin) || (pointsInBin.back()->scanNo == scanMax))
         {
             oneSided = true;
         }
         // added this part since the smallest scale doesn't fit without interpolating here
-        // else if ((pointsInBin.back()->scanNo == scanMin + 1) | (pointsInBin.back()->scanNo == scanMax - 1))
+        // else if ((pointsInBin.back()->scanNo == scanMin + 1) || (pointsInBin.back()->scanNo == scanMax - 1))
         // {
         //     oneSided = true;
         // }
-        // else if ((pointsInBin[binsize - 2]->scanNo == scanMin) | (pointsInBin[binsize - 2]->scanNo == scanMax))
+        // else if ((pointsInBin[binsize - 2]->scanNo == scanMin) || (pointsInBin[binsize - 2]->scanNo == scanMax))
         // {
         //     oneSided = true;
         // }
@@ -1190,7 +1190,7 @@ namespace qAlgorithms
         int scanOfMax = pointsInBin.back()->scanNo;
         int scanOf2nd = pointsInBin[binsize - 2]->scanNo;
         int scanOf3rd = pointsInBin[binsize - 3]->scanNo;
-        if ((abs(scanOfMax - scanOf2nd) > maxdist) | (abs(scanOfMax - scanOf3rd) > maxdist))
+        if ((abs(scanOfMax - scanOf2nd) > maxdist) || (abs(scanOfMax - scanOf3rd) > maxdist))
         {
             twoMaxima = true;
         }
@@ -1290,11 +1290,11 @@ namespace qAlgorithms
         {
             selector |= std::byte{0b00000001};
         }
-        if (l_maxdist_tooclose | r_maxdist_tooclose)
+        if (l_maxdist_tooclose || r_maxdist_tooclose)
         {
             selector |= std::byte{0b00000010};
         }
-        if (halfPeakL | halfPeakR)
+        if (halfPeakL || halfPeakR)
         {
             selector |= std::byte{0b00000100};
         }
@@ -1315,7 +1315,7 @@ namespace qAlgorithms
         {
             selector |= std::byte{0b01000000};
         }
-        // if ((meanMZ + 3 * stdevMZ < r_maxdist_abs) | (meanMZ - 3 * stdevMZ > l_maxdist_abs)) // if a value in the bin is outside of 3 sigma
+        // if ((meanMZ + 3 * stdevMZ < r_maxdist_abs) || (meanMZ - 3 * stdevMZ > l_maxdist_abs)) // if a value in the bin is outside of 3 sigma
         if (toobroad)
         {
             selector |= std::byte{0b10000000};
@@ -1562,7 +1562,7 @@ namespace qAlgorithms
 
         // @todo add bin merger for halved bins here
 
-        if (printBinSummary | printCentroids)
+        if (printBinSummary || printCentroids)
         {
             activeBins.printSelectBins(printCentroids, outpath, filename);
         }

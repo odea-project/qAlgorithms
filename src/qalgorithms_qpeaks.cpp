@@ -69,7 +69,7 @@ namespace qAlgorithms
 #pragma endregion "pass to qBinning"
 
 #pragma region "initialize"
-    // alignas(float) float INV_ARRAY[64][6]; // array to store the 6 unique values of the inverse matrix for each scale
+    //  float INV_ARRAY[64][6]; // array to store the 6 unique values of the inverse matrix for each scale
 
     const std::array<float, 384> initialize()
     {
@@ -134,10 +134,10 @@ namespace qAlgorithms
             if (n <= 512)
             {
                 // STATIC APPROACH
-                alignas(float) float Y[512];                   // measured y values
-                alignas(float) float Ylog[512];                // log-transformed measured y values
-                alignas(float) float X[512];                   // measured x values
-                alignas(bool) bool df[512];                    // degree of freedom vector, 0: interpolated, 1: measured
+                float Y[512];                                  // measured y values
+                float Ylog[512];                               // log-transformed measured y values
+                float X[512];                                  // measured x values
+                bool df[512];                                  // degree of freedom vector, 0: interpolated, 1: measured
                 ValidRegression_static validRegressions[2048]; // array of valid regressions with default initialization, i.e., random states
                 int validRegressionsIndex = 0;                 // index of the valid regressions
 
@@ -169,10 +169,10 @@ namespace qAlgorithms
             else
             {
                 // DYNAMIC APPROACH
-                alignas(float) float *Y = new float[n];
-                alignas(float) float *Ylog = new float[n];
-                alignas(float) float *X = new float[n];
-                alignas(float) bool *df = new bool[n];
+                float *Y = new float[n];
+                float *Ylog = new float[n];
+                float *X = new float[n];
+                bool *df = new bool[n];
                 std::vector<ValidRegression_static> validRegressions;
 
                 // iterator to the start
@@ -221,13 +221,13 @@ namespace qAlgorithms
             if (n <= 512)
             {
                 // STATIC APPROACH
-                alignas(float) float Y[512];                   // measured y values
-                alignas(float) float Ylog[512];                // log-transformed measured y values
-                alignas(float) float X[512];                   // measured x values
-                alignas(bool) bool df[512];                    // degree of freedom vector, 0: interpolated, 1: measured
-                alignas(float) float mz[512];                  // measured mz values
-                alignas(float) float dqs_cen[512];             // measured dqs values
-                alignas(float) float dqs_bin[512];             // measured dqs values
+                float Y[512];                                  // measured y values
+                float Ylog[512];                               // log-transformed measured y values
+                float X[512];                                  // measured x values
+                bool df[512];                                  // degree of freedom vector, 0: interpolated, 1: measured
+                float mz[512];                                 // measured mz values
+                float dqs_cen[512];                            // measured dqs values
+                float dqs_bin[512];                            // measured dqs values
                 ValidRegression_static validRegressions[2048]; // array of valid regressions with default initialization, i.e., random states
                 int validRegressionsIndex = 0;                 // index of the valid regressions
 
@@ -265,13 +265,13 @@ namespace qAlgorithms
             else
             {
                 // DYNAMIC APPROACH
-                alignas(float) float *Y = new float[n];
-                alignas(float) float *Ylog = new float[n];
-                alignas(float) float *X = new float[n];
-                alignas(bool) bool *df = new bool[n];
-                alignas(float) float *mz = new float[n];
-                alignas(float) float *dqs_cen = new float[n];
-                alignas(float) float *dqs_bin = new float[n];
+                float *Y = new float[n];
+                float *Ylog = new float[n];
+                float *X = new float[n];
+                bool *df = new bool[n];
+                float *mz = new float[n];
+                float *dqs_cen = new float[n];
+                float *dqs_bin = new float[n];
                 std::vector<ValidRegression_static> validRegressions;
 
                 // iterator to the start
@@ -330,10 +330,10 @@ namespace qAlgorithms
         validRegressions.reserve(calculateNumberOfRegressions(n));
         for (int scale = 2; scale <= maxScale; scale++)
         {
-            const int k = 2 * scale + 1;                           // window size
-            const int n_segments = n - k + 1;                      // number of segments, i.e. regressions considering the array size
-            alignas(__m128) __m128 *beta = new __m128[n_segments]; // coefficients matrix
-            convolve_dynamic(scale, ylog_start, n, beta);          // do the regression
+            const int k = 2 * scale + 1;                  // window size
+            const int n_segments = n - k + 1;             // number of segments, i.e. regressions considering the array size
+            __m128 *beta = new __m128[n_segments];        // coefficients matrix
+            convolve_dynamic(scale, ylog_start, n, beta); // do the regression
             validateRegressions(beta, n_segments, y_start, ylog_start, df_start, scale, validRegressions);
         } // end for scale loop
         mergeRegressionsOverScales(validRegressions, y_start, ylog_start, df_start);
@@ -355,7 +355,7 @@ namespace qAlgorithms
         for (int scale = 2; scale <= maxScale; scale++)
         {
             const int k = 2 * scale + 1;                 // window size
-            alignas(__m128) __m128 beta[512];            // coefficients matrix
+            __m128 beta[512];                            // coefficients matrix
             convolve_static(scale, ylog_start, n, beta); // do the regression
             const int n_segments = n - k + 1;            // number of segments, i.e. regressions considering the number of data points
             validateRegressions_static(beta, n_segments, y_start, ylog_start, df_start, scale, validRegressionsIndex, validRegressions);
@@ -381,7 +381,7 @@ namespace qAlgorithms
         {
             if (calcDF(df_start, i, 2 * scale + i) > 4)
             {
-                const __m128 &coeff = beta[i]; // coefficient register from beta @ i
+                const __m128 coeff = beta[i]; // coefficient register from beta @ i
                 ValidRegression_static selectRegression = makeValidRegression(i, scale, df_start, y_start,
                                                                               ylog_start, coeff);
                 if (selectRegression.isValid)
@@ -487,7 +487,7 @@ namespace qAlgorithms
         {
             if (calcDF(df_start, i, 2 * scale + i) > 4)
             {
-                const __m128 &coeff = beta[i]; // coefficient register from beta @ i
+                const __m128 coeff = beta[i]; // coefficient register from beta @ i
                 // @todo add test for coeff = 0
                 ValidRegression_static selectRegression = makeValidRegression(i, scale, df_start, y_start,
                                                                               ylog_start, coeff);
@@ -577,7 +577,7 @@ namespace qAlgorithms
         const bool *df_start,
         const float *y_start,
         const float *ylog_start,
-        const __m128 &coeff)
+        const __m128 coeff)
     { // @todo order by effort to calculate
         /*
           Apex and Valley Position Filter:
@@ -587,9 +587,18 @@ namespace qAlgorithms
           to the next iteration. If the apex and valley positions are too close
           to each other, the loop continues to the next iteration.
         */
+        // check if beta 2 or beta 3 is zero
+        if (((float *)&coeff)[2] == 0.0f || ((float *)&coeff)[3] == 0.0f)
+        {
+            ValidRegression_static badReg;
+            badReg.isValid = false;
+            return badReg; // invalid case
+        }
+
         float valley_position;
         // @todo apex is always 0
         float apex_position = 0.f;
+        // no easy replace
         if (!calcApexAndValleyPositions(coeff, scale, apex_position, valley_position))
         {
             ValidRegression_static badReg;
@@ -653,6 +662,7 @@ namespace qAlgorithms
           term is considered statistically insignificant, and the loop continues
           to the next iteration.
         */
+        //    @todo replace coeff;
         float mse = calcSSE(-scale, scale, coeff, ylog_start + i) / (df_sum - 4); // mean squared error
 
         if (!isValidQuadraticTerm(coeff, scale, mse, df_sum))
@@ -697,6 +707,7 @@ namespace qAlgorithms
         */
         float area = 0.f; // peak area
         float uncertainty_area = 0.f;
+        // @todo replace coeff
         if (!isValidPeakArea(coeff, mse, scale, df_sum, area, uncertainty_area))
         {
             ValidRegression_static badReg;
@@ -718,7 +729,7 @@ namespace qAlgorithms
             badReg.isValid = false;
             return badReg; // statistical insignificance of the chi-square value
         }
-
+        // @todo replace coeff
         float uncertainty_pos = calcUncertaintyPosition(mse, coeff, apex_position, scale);
 
         return ValidRegression_static{
@@ -1124,7 +1135,7 @@ namespace qAlgorithms
 #pragma region calcSSE
 
     // Lambda function to calculate the full segments
-    float calcFullSegments(const __m128 &coeff, int limit_L, int limit_R, const float *y_start, bool calc_EXP, bool calc_CHISQ)
+    float calcFullSegments(const __m128 coeff, int limit_L, int limit_R, const float *y_start, bool calc_EXP, bool calc_CHISQ)
     {
         assert(limit_L < 0);
         assert(limit_R > 0);
@@ -1194,7 +1205,7 @@ namespace qAlgorithms
         return result;
     };
 
-    float calcRemaining(const __m128 &coeff, const int nRemaining, const __m256 x, const int y_start_offset,
+    float calcRemaining(const __m128 coeff, const int nRemaining, const __m256 x, const int y_start_offset,
                         const int y_end_offset, const int mask_offset, const __m256 b_quadratic,
                         bool calc_EXP, bool calc_CHISQ, const float *y_start, int left_limit)
     {
@@ -1208,7 +1219,7 @@ namespace qAlgorithms
             yhat = exp_approx_vf(yhat); // calculate the exp of the yhat values (if needed)
         }
         // Load the remaining values from y
-        alignas(float) float y_remaining[8] = {0.0f};
+        float y_remaining[8] = {0.0f};
         std::copy(y_start - left_limit + y_start_offset, y_start - left_limit + y_end_offset, y_remaining);
         const __m256 y_vec = _mm256_loadu_ps(y_remaining);
 
@@ -1229,7 +1240,7 @@ namespace qAlgorithms
     float calcSSE(
         const int left_limit,
         const int right_limit,
-        const __m128 &coeff,
+        const __m128 coeff,
         const float *y_start,
         const bool calc_EXP,
         const bool calc_CHISQ)
@@ -1549,18 +1560,14 @@ namespace qAlgorithms
 
 #pragma region calculateApexAndValleyPositions
     bool calcApexAndValleyPositions(
-        const __m128 &coeff,
+        const __m128 coeff,
         const int scale,
         float &apex_position,
         float &valley_position)
     {
-        // check if beta 2 or beta 3 is zero
-        if (((float *)&coeff)[2] == 0.0f || ((float *)&coeff)[3] == 0.0f)
-        {
-            return false; // invalid case
-        }
+        assert(((float *)&coeff)[2] != 0.0f || ((float *)&coeff)[3] != 0.0f);
         // calculate key by checking the signs of coeff
-        __m128 res = _mm_set1_ps(-.5f); // res = -0.5
+        __m128 res = _mm_set1_ps(-0.5f); // res = -0.5
         __m128 ZERO_128 = _mm_setzero_ps();
         __m128 KEY_128 = _mm_set_ps(1.f, 2.f, 4.f, 0.f);
         __m128 signs = _mm_cmplt_ps(coeff, ZERO_128); // compare the coefficients with zero, results will have the following values: 0xFFFFFFFF if the value is negative, 0x00000000 if the value is positive
@@ -1626,7 +1633,7 @@ namespace qAlgorithms
 
 #pragma region isValidQuadraticTerm
     bool isValidQuadraticTerm(
-        const __m128 &coeff,
+        const __m128 coeff,
         const int scale,
         const float mse,
         const int df_sum)
@@ -1705,7 +1712,7 @@ namespace qAlgorithms
 
 #pragma region isValidPeakArea
     bool isValidPeakArea(
-        const __m128 &coeff,
+        const __m128 coeff,
         const float mse,
         const int scale,
         const int df_sum,
@@ -1716,8 +1723,8 @@ namespace qAlgorithms
         float b1 = ((float *)&coeff)[1];
         float b2 = ((float *)&coeff)[2];
         float b3 = ((float *)&coeff)[3];
-        float _SQRTB2 = 1 / std::sqrt(std::abs(-b2));
-        float _SQRTB3 = 1 / std::sqrt(std::abs(-b3));
+        float _SQRTB2 = 1 / std::sqrt(std::abs(b2));
+        float _SQRTB3 = 1 / std::sqrt(std::abs(b3));
         float B1_2_SQRTB2 = b1 / 2 * _SQRTB2;
         float B1_2_SQRTB3 = b1 / 2 * _SQRTB3;
         float B1_2_B2 = b1 / 2 / b2;
@@ -1831,7 +1838,7 @@ namespace qAlgorithms
 #pragma region "calcUncertaintyPosition"
     float calcUncertaintyPosition(
         const float mse,
-        const __m128 &coeff,
+        const __m128 coeff,
         const float apex_position,
         const int scale)
     {
@@ -1880,8 +1887,8 @@ namespace qAlgorithms
             throw std::invalid_argument("n must be greater or equal to 2 * scale + 1");
         }
 
-        alignas(__m128) __m128 result[512];
-        alignas(__m128) __m128 products[512];
+        __m128 result[512];
+        __m128 products[512];
         const __m128 flipSign = _mm_set_ps(1.0f, 1.0f, -1.0f, 1.0f);
         convolve_SIMD(scale, vec, n, result, products, 512);
 
@@ -1902,8 +1909,8 @@ namespace qAlgorithms
             throw std::invalid_argument("n must be greater or equal to 2 * scale + 1");
         }
 
-        alignas(__m128) __m128 *result = new __m128[n - 2 * scale];
-        alignas(__m128) __m128 *products = new __m128[n];
+        __m128 *result = new __m128[n - 2 * scale];
+        __m128 *products = new __m128[n];
         const __m128 flipSign = _mm_set_ps(1.0f, 1.0f, -1.0f, 1.0f);
         convolve_SIMD(scale, vec, n, result, products, n);
 
@@ -1931,7 +1938,7 @@ namespace qAlgorithms
         {
             products[i] = _mm_setzero_ps();
         }
-        alignas(__m128) __m128 kernel[3];
+        __m128 kernel[3];
         kernel[0] = _mm_set_ps(INV_ARRAY[scale * 6 + 1], INV_ARRAY[scale * 6 + 1], 0.0f, INV_ARRAY[scale * 6 + 0]);
         kernel[1] = _mm_set_ps(INV_ARRAY[scale * 6 + 3] - INV_ARRAY[scale * 6 + 5], -INV_ARRAY[scale * 6 + 3] - INV_ARRAY[scale * 6 + 4], -INV_ARRAY[scale * 6 + 2] - INV_ARRAY[scale * 6 + 3], -INV_ARRAY[scale * 6 + 1]);
         kernel[2] = _mm_set_ps(2.f * INV_ARRAY[scale * 6 + 5], 2.f * INV_ARRAY[scale * 6 + 4], 2.f * INV_ARRAY[scale * 6 + 3], 2.f * INV_ARRAY[scale * 6 + 1]);

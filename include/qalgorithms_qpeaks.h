@@ -103,7 +103,7 @@ namespace qAlgorithms
         const bool *df_start,
         const float *y_start,
         const float *ylog_start,
-        const __m128 &coeff);
+        const __m128 coeff);
 
     void mergeRegressionsOverScales(
         std::vector<ValidRegression_static> &validRegressions,
@@ -143,7 +143,7 @@ namespace qAlgorithms
     float calcSSE(
         const int left_limit,
         const int right_limit,
-        const __m128 &coeff,
+        const __m128 coeff,
         const float *y_start = nullptr,
         const bool calc_EXP = false,
         const bool calc_CHISQ = false);
@@ -216,7 +216,7 @@ namespace qAlgorithms
      * @return false : if the apex and valley positions are not valid (e.g., the apex position is not in the regression window)
      */
     bool calcApexAndValleyPositions(
-        const __m128 &coeff,
+        const __m128 coeff,
         const int scale,
         float &apex_position,
         float &valley_position);
@@ -268,7 +268,7 @@ namespace qAlgorithms
      * @return false : if the quadratic term is not valid
      */
     bool isValidQuadraticTerm(
-        const __m128 &coeff,
+        const __m128 coeff,
         const int scale,
         const float mse,
         const int df_sum);
@@ -315,7 +315,7 @@ namespace qAlgorithms
      * @return false : if the peak area is not valid
      */
     bool isValidPeakArea(
-        const __m128 &coeff,
+        const __m128 coeff,
         const float mse,
         const int scale,
         const int df_sum,
@@ -324,7 +324,7 @@ namespace qAlgorithms
 
     float calcUncertaintyPosition(
         const float mse,
-        const __m128 &coeff,
+        const __m128 coeff,
         const float apex_position,
         const int scale);
 

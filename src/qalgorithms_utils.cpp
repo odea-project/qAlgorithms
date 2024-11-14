@@ -188,7 +188,7 @@ namespace qAlgorithms
     std::vector<bool> result(A.size());
     for (size_t i = 0; i < A.size(); i++)
     {
-      result[i] = A[i] & B[i];
+      result[i] = A[i] && B[i];
     }
     return result;
   }
