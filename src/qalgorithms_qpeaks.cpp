@@ -1122,6 +1122,86 @@ namespace qAlgorithms
 #pragma endregion "create peaks"
 
 #pragma region calcSSE
+
+    // Lambda function to calculate the full segments
+    float calcFullSegments(const __m128 &coeff, int j, float i, const float i_sign, const int nFullSegments,
+                           bool calc_EXP, bool calc_CHISQ, const float *y_start)
+    {
+        float result = 0;
+        const __m256 b0 = _mm256_set1_ps(((float *)&coeff)[0]); // b0 is eight times coeff 0
+        const __m256 b1 = _mm256_set1_ps(((float *)&coeff)[1]); // b1 is eight times coeff 1
+
+        __m256 LINSPACE;
+        int dj;
+        __m256 b_quadratic;
+
+        if (i_sign == 1)
+        {
+            dj = 8;
+            LINSPACE = _mm256_set_ps(7.f, 6.f, 5.f, 4.f, 3.f, 2.f, 1.f, 0.f);
+            b_quadratic = _mm256_set1_ps(((float *)&coeff)[2]);
+        }
+        else
+        {
+            dj = -8;
+            LINSPACE = _mm256_set_ps(0.f, -1.f, -2.f, -3.f, -4.f, -5.f, -6.f, -7.f);
+            b_quadratic = _mm256_set1_ps(((float *)&coeff)[3]);
+        }
+
+        for (int iSegment = 0; iSegment < nFullSegments; ++iSegment, i += 8.0f, j += dj)
+        {
+            // Load 8 values of i directly as float
+            const __m256 x = _mm256_add_ps(_mm256_set1_ps(i * i_sign), LINSPACE); // x vector : -k to -k+7
+            // Calculate the yhat values
+            __m256 yhat = _mm256_fmadd_ps(_mm256_fmadd_ps(b_quadratic, x, b1), x, b0); // b0 + b1 * x + b2 * x^2
+            if (calc_EXP)
+            {
+                yhat = exp_approx_vf(yhat); // calculate the exp of the yhat values (if needed)
+            }
+            const __m256 y_vec = _mm256_loadu_ps(y_start + j); // Load 8 values from y considering the offset j
+            const __m256 diff = _mm256_sub_ps(y_vec, yhat);    // Calculate the difference between y and yhat
+            __m256 diff_sq = _mm256_mul_ps(diff, diff);        // Calculate the square of the difference
+            if (calc_CHISQ)
+            {
+                diff_sq = _mm256_div_ps(diff_sq, yhat); // Calculate the weighted square of the difference
+            }
+            result += sum8(diff_sq); // Calculate the sum of the squares and add it to the result
+        }
+        return result;
+    };
+
+    float calcRemaining(const __m128 &coeff, const int nRemaining, const __m256 x, const int y_start_offset,
+                        const int y_end_offset, const int mask_offset, const __m256 b_quadratic,
+                        bool calc_EXP, bool calc_CHISQ, const float *y_start, int left_limit)
+    {
+        const __m256 b0 = _mm256_set1_ps(((float *)&coeff)[0]);
+        const __m256 b1 = _mm256_set1_ps(((float *)&coeff)[1]);
+
+        // Calculate the yhat values for the remaining elements
+        __m256 yhat = _mm256_fmadd_ps(_mm256_fmadd_ps(b_quadratic, x, b1), x, b0); // b0 + b1 * x + b2 * x^2
+        if (calc_EXP)
+        {
+            yhat = exp_approx_vf(yhat); // calculate the exp of the yhat values (if needed)
+        }
+        // Load the remaining values from y
+        alignas(float) float y_remaining[8] = {0.0f};
+        std::copy(y_start - left_limit + y_start_offset, y_start - left_limit + y_end_offset, y_remaining);
+        const __m256 y_vec = _mm256_loadu_ps(y_remaining);
+
+        __m256i LINSPACE_UP_INT_256 = _mm256_set_epi32(7, 6, 5, 4, 3, 2, 1, 0);
+        const __m256i mask = _mm256_cmpgt_epi32(_mm256_set1_epi32(nRemaining + mask_offset), LINSPACE_UP_INT_256); // mask for the remaining elements
+        yhat = _mm256_blendv_ps(y_vec, yhat, _mm256_castsi256_ps(mask));                                           // set the remaining elements to zero
+
+        const __m256 diff = _mm256_sub_ps(y_vec, yhat); // calculate the difference between y and yhat
+        __m256 diff_sq = _mm256_mul_ps(diff, diff);     // calculate the square of the difference
+        if (calc_CHISQ)
+        {
+            diff_sq = _mm256_div_ps(diff_sq, yhat);                                              // calculate the weighted square of the difference
+            diff_sq = _mm256_blendv_ps(_mm256_setzero_ps(), diff_sq, _mm256_castsi256_ps(mask)); // set the nan values to zero
+        }
+        return sum8(diff_sq); // calculate the sum of the squares and add it to the result
+    };
+
     float calcSSE(
         const int left_limit,
         const int right_limit,
@@ -1151,81 +1231,27 @@ namespace qAlgorithms
         const int nRemaining_right = right_limit % 8;    // calculate the number of remaining elements
 
         // Load the coefficients
-        const __m256 b0 = _mm256_set1_ps(((float *)&coeff)[0]);
-        const __m256 b1 = _mm256_set1_ps(((float *)&coeff)[1]);
         const __m256 b2 = _mm256_set1_ps(((float *)&coeff)[2]);
         const __m256 b3 = _mm256_set1_ps(((float *)&coeff)[3]);
-
-        // Lambda function to calculate the full segments
-        auto calcFullSegments = [&](int j, const int dj, float i, const float i_sign, const int nFullSegments, const __m256 LINSPACE, const __m256 b_quadratic) -> void
-        {
-            for (int iSegment = 0; iSegment < nFullSegments; ++iSegment, i += 8.0f, j += dj)
-            {
-                // Load 8 values of i directly as float
-                const __m256 x = _mm256_add_ps(_mm256_set1_ps(i * i_sign), LINSPACE); // x vector : -k to -k+7
-                // Calculate the yhat values
-                __m256 yhat = _mm256_fmadd_ps(_mm256_fmadd_ps(b_quadratic, x, b1), x, b0); // b0 + b1 * x + b2 * x^2
-                if (calc_EXP)
-                {
-                    yhat = exp_approx_vf(yhat); // calculate the exp of the yhat values (if needed)
-                }
-                const __m256 y_vec = _mm256_loadu_ps(y_start + j); // Load 8 values from y considering the offset j
-                const __m256 diff = _mm256_sub_ps(y_vec, yhat);    // Calculate the difference between y and yhat
-                __m256 diff_sq = _mm256_mul_ps(diff, diff);        // Calculate the square of the difference
-                if (calc_CHISQ)
-                {
-                    diff_sq = _mm256_div_ps(diff_sq, yhat); // Calculate the weighted square of the difference
-                }
-                result += sum8(diff_sq); // Calculate the sum of the squares and add it to the result
-            }
-        };
-
-        // Lambda function to calculate the yhat values for the remaining elements
-        auto calcRemaining = [&](const int nRemaining, const __m256 x, const int y_start_offset, const int y_end_offset, const int mask_offset, const __m256 b_quadratic) -> void
-        {
-            // Calculate the yhat values for the remaining elements
-            __m256 yhat = _mm256_fmadd_ps(_mm256_fmadd_ps(b_quadratic, x, b1), x, b0); // b0 + b1 * x + b2 * x^2
-            if (calc_EXP)
-            {
-                yhat = exp_approx_vf(yhat); // calculate the exp of the yhat values (if needed)
-            }
-            // Load the remaining values from y
-            alignas(float) float y_remaining[8] = {0.0f};
-            std::copy(y_start - left_limit + y_start_offset, y_start - left_limit + y_end_offset, y_remaining);
-            const __m256 y_vec = _mm256_loadu_ps(y_remaining);
-
-            __m256i LINSPACE_UP_INT_256 = _mm256_set_epi32(7, 6, 5, 4, 3, 2, 1, 0);
-            const __m256i mask = _mm256_cmpgt_epi32(_mm256_set1_epi32(nRemaining + mask_offset), LINSPACE_UP_INT_256); // mask for the remaining elements
-            yhat = _mm256_blendv_ps(y_vec, yhat, _mm256_castsi256_ps(mask));                                           // set the remaining elements to zero
-
-            const __m256 diff = _mm256_sub_ps(y_vec, yhat); // calculate the difference between y and yhat
-            __m256 diff_sq = _mm256_mul_ps(diff, diff);     // calculate the square of the difference
-            if (calc_CHISQ)
-            {
-                diff_sq = _mm256_div_ps(diff_sq, yhat);                                              // calculate the weighted square of the difference
-                diff_sq = _mm256_blendv_ps(_mm256_setzero_ps(), diff_sq, _mm256_castsi256_ps(mask)); // set the nan values to zero
-            }
-            result += sum8(diff_sq); // calculate the sum of the squares and add it to the result
-        };
 
         // Calculate the full segments
         __m256 LINSPACE_UP_POS_256 = _mm256_set_ps(7.f, 6.f, 5.f, 4.f, 3.f, 2.f, 1.f, 0.f);
 
-        __m256 LINSPACE_DOWN_NEG_256 = _mm256_set_ps(0.f, -1.f, -2.f, -3.f, -4.f, -5.f, -6.f, -7.f);
+        result += calcFullSegments(coeff, 0, static_cast<float>(left_limit), 1.f, nFullSegments_left, calc_EXP, calc_CHISQ, y_start);
+        result += calcFullSegments(coeff, n - 8, static_cast<float>(-right_limit), -1.f, nFullSegments_right, calc_EXP, calc_CHISQ, y_start);
 
-        calcFullSegments(0, 8, static_cast<float>(left_limit), 1.f, nFullSegments_left, LINSPACE_UP_POS_256, b2);
-        calcFullSegments(n - 8, -8, static_cast<float>(-right_limit), -1.f, nFullSegments_right, LINSPACE_DOWN_NEG_256, b3);
+        // Lambda function to calculate the yhat values for the remaining elements
 
         // Calculate the yhat values for the remaining elements
         if (nRemaining_left > 0)
         {
             __m256 x_left = _mm256_add_ps(_mm256_set1_ps(-static_cast<float>(nRemaining_left)), LINSPACE_UP_POS_256); // x vector : -nRemaining_left to -nRemaining_left+7
-            calcRemaining(nRemaining_left, x_left, -nRemaining_left, 0, 0, b2);
+            result += calcRemaining(coeff, nRemaining_left, x_left, -nRemaining_left, 0, 0, b2, calc_EXP, calc_CHISQ, y_start, left_limit);
         }
 
         if (nRemaining_right > 0)
         {
-            calcRemaining(nRemaining_right, LINSPACE_UP_POS_256, 0, nRemaining_right + 1, 1, b3);
+            result += calcRemaining(coeff, nRemaining_right, LINSPACE_UP_POS_256, 0, nRemaining_right + 1, 1, b3, calc_EXP, calc_CHISQ, y_start, left_limit);
         }
 
         return result;
