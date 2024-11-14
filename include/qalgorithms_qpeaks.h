@@ -67,7 +67,7 @@ namespace qAlgorithms
     };
 
     // methods
-    int calculateNumberOfRegressions(const int n);
+    int calcNumberOfRegressions(const int n);
 
     void runningRegression(
         const float *y_start,
@@ -181,13 +181,13 @@ namespace qAlgorithms
         const int n_regressions,
         const bool *df_start);
 
-    void calcExtendedMsePair_static(
+    void calcExtendedMsePair(
         const float *y_start,
         ValidRegression_static *low_scale_regression,
         ValidRegression_static *hi_scale_regression,
         const bool *df_start);
 
-    void calcExtendedMseOverScales_static(
+    void calcExtendedMseOverScales(
         const float *y_start,
         ValidRegression_static *validRegressions,
         const std::vector<int> &validRegressionsInGroup,
@@ -221,7 +221,7 @@ namespace qAlgorithms
      * @return true : if the apex and valley positions are valid
      * @return false : if the apex and valley positions are not valid (e.g., the apex position is not in the regression window)
      */
-    bool calcApexAndValleyPositions(
+    bool calcApexAndValleyPos(
         const __m128 coeff,
         const int scale,
         float &apex_position,
@@ -328,7 +328,7 @@ namespace qAlgorithms
         float &area,
         float &uncertainty_area);
 
-    float calcUncertaintyPosition(
+    float calcUncertaintyPos(
         const float mse,
         RegCoeffs coeff,
         const float apex_position,
