@@ -450,7 +450,7 @@ int main(int argc, char *argv[])
         std::cout << "Enter \"-h\" for a complete list of options.\n"
                      "Enter a filename to process that file. You must select a .mzML file:    ";
         std::cin >> filename_input;
-        if ((filename_input == "-h") | (filename_input == "-help"))
+        if ((filename_input == "-h") || (filename_input == "-help"))
         {
             std::cout << "    " << argv[0] << helpinfo << "\n\n";
             exit(0);
@@ -467,7 +467,7 @@ int main(int argc, char *argv[])
             std::filesystem::path outDir = suppliedPaths[0];
             pathOutput = outDir.parent_path();
         }
-        else if ((filename_output == "-h") | (filename_output == "-help"))
+        else if ((filename_output == "-h") || (filename_output == "-help"))
         {
             std::cout << "    " << argv[0] << helpinfo << "\n\n";
             exit(0);
@@ -494,25 +494,26 @@ int main(int argc, char *argv[])
     volatile bool printCentroids = false;
     volatile bool printSubProfile = false;
     volatile bool doLogging = false;
+    volatile bool noOverwrite = false; // @todo implement
     std::string logfileName = "log_qAlgorithms.csv";
 
     for (int i = 1; i < argc; i++)
     {
         std::string argument = argv[i];
-        if ((argument == "-h") | (argument == "-help"))
+        if ((argument == "-h") || (argument == "-help"))
         {
             std::cout << "\n    " << argv[0] << helpinfo;
             exit(0);
         }
-        if ((argument == "-s") | (argument == "-silent"))
+        if ((argument == "-s") || (argument == "-silent"))
         {
             silent = true;
         }
-        else if ((argument == "-v") | (argument == "-verbose"))
+        else if ((argument == "-v") || (argument == "-verbose"))
         {
             verboseProgress = true;
         }
-        else if ((argument == "-i") | (argument == "-input"))
+        else if ((argument == "-i") || (argument == "-input"))
         {
             ++i;
             if (i == argc)
@@ -539,7 +540,7 @@ int main(int argc, char *argv[])
 
             inSpecified = true;
         }
-        else if ((argument == "-tl") | (argument == "-tasklist")) // @todo test this
+        else if ((argument == "-tl") || (argument == "-tasklist")) // @todo test this
         {
             std::cerr << "The tasklist functionality is not implemented currently. Please use -i.\n";
             exit(0);
@@ -606,7 +607,7 @@ int main(int argc, char *argv[])
                 to the front of the filename
             */
         }
-        else if ((argument == "-o") | (argument == "-output"))
+        else if ((argument == "-o") || (argument == "-output"))
         {
             // @todo
             if (outSpecified)
@@ -677,33 +678,33 @@ int main(int argc, char *argv[])
 
             PPM_PRECENTROIDED = modifiedPPM;
         }
-        else if ((argument == "-pc") | (argument == "-printcentroids"))
+        else if ((argument == "-pc") || (argument == "-printcentroids"))
         {
             printCentroids = true;
         }
-        else if ((argument == "-ps") | (argument == "-printsummary"))
+        else if ((argument == "-ps") || (argument == "-printsummary"))
         {
             printSummary = true;
         }
-        else if ((argument == "-pb") | (argument == "-printbins"))
+        else if ((argument == "-pb") || (argument == "-printbins"))
         {
             printSummary = true;
             printBins = true;
         }
-        else if ((argument == "-pp") | (argument == "-printpeaks"))
+        else if ((argument == "-pp") || (argument == "-printpeaks"))
         {
             printPeaks = true;
         }
-        else if ((argument == "-e") | (argument == "-extended"))
+        else if ((argument == "-e") || (argument == "-extended"))
         {
             printExtended = true;
             printPeaks = true;
         }
-        else if ((argument == "-sp") | (argument == "-subprofile"))
+        else if ((argument == "-sp") || (argument == "-subprofile"))
         {
             printSubProfile = true;
         }
-        else if ((argument == "-pa") | (argument == "-printall"))
+        else if ((argument == "-pa") || (argument == "-printall"))
         {
             printCentroids = true;
             printBins = true;
@@ -735,7 +736,7 @@ int main(int argc, char *argv[])
             exit(1);
         }
     }
-    if (!inSpecified & !tasklistSpecified)
+    if (!inSpecified && !tasklistSpecified)
     {
         std::cerr << "Error: no input file supplied. Specify a file or directorey using the -i or "
                   << "-tl flag. Execute qAlgorithms with the -h flag for more information.\n";
@@ -747,17 +748,17 @@ int main(int argc, char *argv[])
         std::cerr.flush();
         exit(100);
     }
-    if (inSpecified & tasklistSpecified)
+    if (inSpecified && tasklistSpecified)
     {
         std::cerr << "Warning: Both an input file and a tasklist were specified. The file has been added to the tasklist.\n";
         // @todo
     }
-    if (silent & verboseProgress)
+    if (silent && verboseProgress)
     {
         std::cerr << "Warning: -verbose overrides -silent.\n";
         silent = false;
     }
-    if (!((printCentroids | printSummary) | printPeaks))
+    if (!((printCentroids || printSummary) || printPeaks))
     {
         std::cerr << "Warning: no output files will be written.\n";
     }
@@ -794,18 +795,12 @@ int main(int argc, char *argv[])
     for (std::filesystem::path pathSource : tasklist)
     {
 
-        bool printOnce = true;
         if (!outSpecified)
         {
-            if (printOnce)
-            {
-                printOnce = false;
-                std::cerr << "Warning: no output location specified, printing output to file location\n";
-            }
-
+            std::cerr << "Warning: no output location specified, printing output to file location\n";
             pathOutput = pathSource.parent_path(); // @todo include route to standard out
         }
-        else if (!silent && (printPeaks | printSummary))
+        else if (!silent && (printPeaks || printSummary))
         {
             std::cout << "printing output to: " << pathOutput;
         }
