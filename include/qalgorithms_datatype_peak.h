@@ -2,10 +2,7 @@
 #ifndef QALGORITHMS_DATATYPE_PEAK_H
 #define QALGORITHMS_DATATYPE_PEAK_H
 
-// internal
-// #include "qalgorithms_datatype.h"
-
-// external
+#include <immintrin.h> // AVX
 
 /* This file includes the Peak and PeakList classes*/
 
@@ -31,32 +28,30 @@ namespace qAlgorithms
    * @param idxPeakStart index of first (if sorted by RT) point of the bin which is part of this peak
    * @param idxPeakEnd index of last (if sorted by RT) point of the bin which is part of this peak
    */
-  // struct Peak
-  // {
-  //   // properties
-  //   int sampleID; // @todo only relevant after a dataset is done
-  //   float height;
-  //   float area;
-  //   float width;
-  //   float heightUncertainty;
-  //   float areaUncertainty;
-  //   float dqsPeak;       // only relevant for features
-  //   float dqsBin;        // can be calculated when needed
-  //   float dqsCen;        // relevant for centroids, can be calculated for features
-  //   float retentionTime; // only relevant for features
-  //   float mz;
-  //   float retentionTimeUncertainty; // s.o.
-  //   float mzUncertainty;
 
-  //   // only relevant for features
-  //   int idxBin;
-  //   unsigned int idxPeakStart; // degrees of freedom = idxPeakEnd - idxPeakStart
-  //   unsigned int idxPeakEnd;
-  //   float beta0;
-  //   float beta1;
-  //   float beta2;
-  //   float beta3;
-  // };
+  struct RegCoeffs
+  {
+    float b0, b1, b2, b3;
+  };
+
+  struct ValidRegression_static
+  {
+    RegCoeffs newCoeffs;
+    __m128 coeff;             // regression coefficients
+    int index_x0;             // index of window center (x==0) in the Y matrix
+    int scale;                // scale of the regression window, i.e., 2*scale+1 = window size
+    int df;                   // degree of freedom, interpolated data points will not be considered
+    float apex_position;      // position of the apex of the peak
+    float mse;                // mean squared error
+    bool isValid;             // flag to indicate if the regression is valid
+    unsigned int left_limit;  // left limit of the peak regression window
+    unsigned int right_limit; // right limit of the peak regression window
+    float area;               // area of the peak
+    // float height;
+    float uncertainty_area; // uncertainty of the area
+    float uncertainty_pos;  // uncertainty of the position
+    float uncertainty_height;
+  };
 
   struct CentroidPeak
   {
@@ -73,6 +68,7 @@ namespace qAlgorithms
 
   struct FeaturePeak
   {
+    RegCoeffs coefficients;
     float height;
     float area;
     float width;
@@ -88,10 +84,6 @@ namespace qAlgorithms
     int idxBin;
     unsigned int idxPeakStart; // degrees of freedom = idxPeakEnd - idxPeakStart
     unsigned int idxPeakEnd;
-    float beta0;
-    float beta1;
-    float beta2;
-    float beta3;
   };
 }
 
