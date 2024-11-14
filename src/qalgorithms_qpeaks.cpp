@@ -1124,48 +1124,72 @@ namespace qAlgorithms
 #pragma region calcSSE
 
     // Lambda function to calculate the full segments
-    float calcFullSegments(const __m128 &coeff, int j, float i, const float i_sign, const int nFullSegments,
-                           bool calc_EXP, bool calc_CHISQ, const float *y_start)
+    float calcFullSegments(const __m128 &coeff, int limit_L, int limit_R, const float *y_start, bool calc_EXP, bool calc_CHISQ)
     {
+        assert(limit_L < 0);
+        assert(limit_R > 0);
         float result = 0;
         const __m256 b0 = _mm256_set1_ps(((float *)&coeff)[0]); // b0 is eight times coeff 0
         const __m256 b1 = _mm256_set1_ps(((float *)&coeff)[1]); // b1 is eight times coeff 1
-
-        __m256 LINSPACE;
-        int dj;
-        __m256 b_quadratic;
-
-        if (i_sign == 1)
         {
-            dj = 8;
-            LINSPACE = _mm256_set_ps(7.f, 6.f, 5.f, 4.f, 3.f, 2.f, 1.f, 0.f);
-            b_quadratic = _mm256_set1_ps(((float *)&coeff)[2]);
-        }
-        else
-        {
-            dj = -8;
-            LINSPACE = _mm256_set_ps(0.f, -1.f, -2.f, -3.f, -4.f, -5.f, -6.f, -7.f);
-            b_quadratic = _mm256_set1_ps(((float *)&coeff)[3]);
-        }
+            // left side
+            int j = 0;
+            int nFullSegments = -limit_L / 8;
 
-        for (int iSegment = 0; iSegment < nFullSegments; ++iSegment, i += 8.0f, j += dj)
-        {
-            // Load 8 values of i directly as float
-            const __m256 x = _mm256_add_ps(_mm256_set1_ps(i * i_sign), LINSPACE); // x vector : -k to -k+7
-            // Calculate the yhat values
-            __m256 yhat = _mm256_fmadd_ps(_mm256_fmadd_ps(b_quadratic, x, b1), x, b0); // b0 + b1 * x + b2 * x^2
-            if (calc_EXP)
+            __m256 LINSPACE = _mm256_set_ps(7.f, 6.f, 5.f, 4.f, 3.f, 2.f, 1.f, 0.f);
+            __m256 b2 = _mm256_set1_ps(((float *)&coeff)[2]);
+            __m256 x = _mm256_add_ps(_mm256_set1_ps(limit_L - 8.0), LINSPACE); // formerly i
+
+            for (int iSegment = 0; iSegment < nFullSegments; ++iSegment, j += 8)
             {
-                yhat = exp_approx_vf(yhat); // calculate the exp of the yhat values (if needed)
+                // Load 8 values of i directly as float
+                x = _mm256_add_ps(_mm256_set1_ps(8), x); // x vector : -k to -k+7
+                // Calculate the yhat values
+                __m256 yhat = _mm256_fmadd_ps(_mm256_fmadd_ps(b2, x, b1), x, b0); // b0 + b1 * x + b2 * x^2
+                if (calc_EXP)
+                {
+                    yhat = exp_approx_vf(yhat); // calculate the exp of the yhat values (if needed)
+                }
+                const __m256 y_vec = _mm256_loadu_ps(y_start + j); // Load 8 values from y considering the offset j
+                const __m256 diff = _mm256_sub_ps(y_vec, yhat);    // Calculate the difference between y and yhat
+                __m256 diff_sq = _mm256_mul_ps(diff, diff);        // Calculate the square of the difference
+                if (calc_CHISQ)
+                {
+                    diff_sq = _mm256_div_ps(diff_sq, yhat); // Calculate the weighted square of the difference
+                }
+                result += sum8(diff_sq); // Calculate the sum of the squares and add it to the result
             }
-            const __m256 y_vec = _mm256_loadu_ps(y_start + j); // Load 8 values from y considering the offset j
-            const __m256 diff = _mm256_sub_ps(y_vec, yhat);    // Calculate the difference between y and yhat
-            __m256 diff_sq = _mm256_mul_ps(diff, diff);        // Calculate the square of the difference
-            if (calc_CHISQ)
+        }
+
+        {
+            // right side
+            int j = (limit_R - limit_L + 1 - 8);
+            float i = -static_cast<float>(limit_R);
+            int nFullSegments = limit_R / 8;
+
+            __m256 LINSPACE = _mm256_set_ps(0.f, -1.f, -2.f, -3.f, -4.f, -5.f, -6.f, -7.f);
+            __m256 b_quadratic = _mm256_set1_ps(((float *)&coeff)[3]);
+            __m256 x = _mm256_add_ps(_mm256_set1_ps(-i), LINSPACE); // x vector : -k to -k+7
+
+            for (int iSegment = 0; iSegment < nFullSegments; ++iSegment, i += 8.0f, j -= 8)
             {
-                diff_sq = _mm256_div_ps(diff_sq, yhat); // Calculate the weighted square of the difference
+                // Load 8 values of i directly as float
+                x = _mm256_add_ps(_mm256_set1_ps(-i), LINSPACE); // x vector : -k to -k+7
+                // Calculate the yhat values
+                __m256 yhat = _mm256_fmadd_ps(_mm256_fmadd_ps(b_quadratic, x, b1), x, b0); // b0 + b1 * x + b2 * x^2
+                if (calc_EXP)
+                {
+                    yhat = exp_approx_vf(yhat); // calculate the exp of the yhat values (if needed)
+                }
+                const __m256 y_vec = _mm256_loadu_ps(y_start + j); // Load 8 values from y considering the offset j
+                const __m256 diff = _mm256_sub_ps(y_vec, yhat);    // Calculate the difference between y and yhat
+                __m256 diff_sq = _mm256_mul_ps(diff, diff);        // Calculate the square of the difference
+                if (calc_CHISQ)
+                {
+                    diff_sq = _mm256_div_ps(diff_sq, yhat); // Calculate the weighted square of the difference
+                }
+                result += sum8(diff_sq); // Calculate the sum of the squares and add it to the result
             }
-            result += sum8(diff_sq); // Calculate the sum of the squares and add it to the result
         }
         return result;
     };
@@ -1224,33 +1248,28 @@ namespace qAlgorithms
 
         float result = 0.0f; // result variable
 
-        const int n = right_limit - left_limit + 1;      // length of the result vector
-        const int nFullSegments_left = -left_limit / 8;  // calculate the number of full segments of 8 elements per side
-        const int nFullSegments_right = right_limit / 8; // calculate the number of full segments of 8 elements per side
-        const int nRemaining_left = -left_limit % 8;     // calculate the number of remaining elements
-        const int nRemaining_right = right_limit % 8;    // calculate the number of remaining elements
-
-        // Load the coefficients
-        const __m256 b2 = _mm256_set1_ps(((float *)&coeff)[2]);
-        const __m256 b3 = _mm256_set1_ps(((float *)&coeff)[3]);
+        const int nRemaining_left = -left_limit % 8;  // calculate the number of remaining elements
+        const int nRemaining_right = right_limit % 8; // calculate the number of remaining elements
 
         // Calculate the full segments
-        __m256 LINSPACE_UP_POS_256 = _mm256_set_ps(7.f, 6.f, 5.f, 4.f, 3.f, 2.f, 1.f, 0.f);
-
-        result += calcFullSegments(coeff, 0, static_cast<float>(left_limit), 1.f, nFullSegments_left, calc_EXP, calc_CHISQ, y_start);
-        result += calcFullSegments(coeff, n - 8, static_cast<float>(-right_limit), -1.f, nFullSegments_right, calc_EXP, calc_CHISQ, y_start);
+        result += calcFullSegments(coeff, left_limit, right_limit, y_start, calc_EXP, calc_CHISQ);
+        // result += calcFullSegments(coeff, -1.f,
+        //                            calc_EXP, calc_CHISQ, y_start, left_limit, right_limit);
 
         // Lambda function to calculate the yhat values for the remaining elements
 
         // Calculate the yhat values for the remaining elements
+        __m256 LINSPACE_UP_POS_256 = _mm256_set_ps(7.f, 6.f, 5.f, 4.f, 3.f, 2.f, 1.f, 0.f);
         if (nRemaining_left > 0)
         {
+            const __m256 b2 = _mm256_set1_ps(((float *)&coeff)[2]);
             __m256 x_left = _mm256_add_ps(_mm256_set1_ps(-static_cast<float>(nRemaining_left)), LINSPACE_UP_POS_256); // x vector : -nRemaining_left to -nRemaining_left+7
             result += calcRemaining(coeff, nRemaining_left, x_left, -nRemaining_left, 0, 0, b2, calc_EXP, calc_CHISQ, y_start, left_limit);
         }
 
         if (nRemaining_right > 0)
         {
+            const __m256 b3 = _mm256_set1_ps(((float *)&coeff)[3]);
             result += calcRemaining(coeff, nRemaining_right, LINSPACE_UP_POS_256, 0, nRemaining_right + 1, 1, b3, calc_EXP, calc_CHISQ, y_start, left_limit);
         }
 
