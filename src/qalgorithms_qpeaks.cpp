@@ -355,12 +355,12 @@ namespace qAlgorithms
 
         for (int scale = 2; scale <= maxScale; scale++)
         {
-            @todo move this part into validateRegressions_static();
-            const int k = 2 * scale + 1; // window size
+            // @todo move this part into validateRegressions_static();
+            // const int k = 2 * scale + 1; // window size
             // __m128 beta[512];                                   // coefficients matrix
-            auto beta = convolve_static(scale, ylog_start, n); // do the regression
-            const int n_segments = n - k + 1;                  // number of segments, i.e. regressions considering the number of data points
-            validateRegressions_static(beta, n_segments, y_start, ylog_start, df_start, scale, validRegressionsIndex, validRegressions);
+            // auto beta = convolve_static(scale, ylog_start, n); // do the regression
+            // const int n_segments = n - k + 1;                  // number of segments, i.e. regressions considering the number of data points
+            validateRegressions_static(n, y_start, ylog_start, df_start, scale, validRegressionsIndex, validRegressions);
         } // end for scale loop
         mergeRegressionsOverScales_static(validRegressions, validRegressionsIndex, y_start, df_start);
     }
@@ -470,10 +470,8 @@ namespace qAlgorithms
 #pragma endregion validateRegressions
 
 #pragma region "validate regressions static"
-    void
-    validateRegressions_static(
-        const __m128 *beta,
-        const int n_segments,
+    void validateRegressions_static(
+        const int n,
         const float *y_start,
         const float *ylog_start,
         const bool *df_start,
@@ -481,8 +479,10 @@ namespace qAlgorithms
         int &validRegressionsIndex,
         ValidRegression_static *validRegressions)
     {
-        ValidRegression_static validRegressionsTmp[512]; // temporary vector to store valid regressions initialized with random states
-        int validRegressionsIndexTmp = 0;                // index of the valid regressions
+        ValidRegression_static validRegressionsTmp[512];                      // temporary vector to store valid regressions initialized with random states
+        int validRegressionsIndexTmp = 0;                                     // index of the valid regressions
+        std::array<__m128, 512> beta = convolve_static(scale, ylog_start, n); // do the regression @todo move inside this function
+        const int n_segments = n - 2 * scale;                                 // number of segments, i.e. regressions considering the number of data points
 
         // iterate columwise over the coefficients matrix beta
         for (int i = 0; i < n_segments; i++)
@@ -1905,7 +1905,7 @@ namespace qAlgorithms
 #pragma region "convolve regression"
     // these chain to return beta for a regression
 
-    __m128 convolve_static(
+    std::array<__m128, 512> convolve_static(
         const size_t scale,
         const float *vec,
         const size_t n)
@@ -1914,7 +1914,8 @@ namespace qAlgorithms
         {
             throw std::invalid_argument("n must be greater or equal to 2 * scale + 1");
         }
-        __m128 beta[512];
+        std::array<__m128, 512> beta;
+        // __m128 beta[512];
         __m128 result[512];
         __m128 products[512];
         const __m128 flipSign = _mm_set_ps(1.0f, 1.0f, -1.0f, 1.0f);
@@ -1924,7 +1925,7 @@ namespace qAlgorithms
         {
             beta[i] = _mm_mul_ps(_mm_shuffle_ps(result[i], result[i], 0b10110100), flipSign); // swap beta2 and beta3 and flip the sign of beta1 // @todo: this is a temporary solution
         }
-        return *beta;
+        return beta;
     }
 
     void convolve_dynamic(
