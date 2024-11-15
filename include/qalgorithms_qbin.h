@@ -55,14 +55,6 @@ namespace qAlgorithms
     };
 
     // @todo does the ion source have an effect on the binning decisions to be made?
-    // enum IonSource {
-    //     ESI,
-    //     EI,
-    //     APCI,
-    //     PI,
-    //     LI,
-    //     LTP
-    // };
 
     struct CentroidedData
     {

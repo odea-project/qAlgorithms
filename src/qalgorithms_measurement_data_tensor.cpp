@@ -254,7 +254,7 @@ namespace qAlgorithms
         peaks.reserve(data.size() * 0.7);  // should be enough to fit all features without reallocation
         std::vector<FeaturePeak> tmpPeaks; // add features to this before pasting into FL
 
-        // #// pragma omp parallel for
+        // pragma omp parallel for
         /// activating this pracma invalidates results @todo why?
 
         for (size_t i = 0; i < data.size(); ++i) // loop over all data
@@ -290,8 +290,7 @@ namespace qAlgorithms
                 }
             }
             tmpPeaks.clear();
-
-        } // parallel for
+        }
         return peaks;
     } // readQBinning
 }
