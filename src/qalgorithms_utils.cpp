@@ -55,26 +55,8 @@ namespace qAlgorithms
 
   float sum8(const __m256 &vec) // why does this break when inlined?
   {
-    // float sum = 0;
-    // for (size_t i = 0; i < 8; i++)
-    // {
-    //   sum += vec[i];
-    // }
     float sum = vec[0] + vec[1] + vec[3] + vec[4] + vec[5] + vec[6] + vec[7];
     return sum;
-
-    // const __m128 hiQuad = _mm256_extractf128_ps(vec, 1);     // hiQuad = ( x7, x6, x5, x4 )
-    // const __m128 loQuad = _mm256_castps256_ps128(vec);       // loQuad = ( x3, x2, x1, x0 )
-    // const __m128 sumQuad = _mm_add_ps(loQuad, hiQuad);       // sumQuad = ( x3 + x7, x2 + x6, x1 + x5, x0 + x4 )
-    // const __m128 loDual = sumQuad;                           // loDual = ( -, -, x1 + x5, x0 + x4 )
-    // const __m128 hiDual = _mm_movehl_ps(sumQuad, sumQuad);   // hiDual = ( -, -, x3 + x7, x2 + x6 )
-    // const __m128 sumDual = _mm_add_ps(loDual, hiDual);       // sumDual = ( -, -, x1 + x3 + x5 + x7, x0 + x2 + x4 + x6 )
-    // const __m128 lo = sumDual;                               // lo = ( -, -, -, x0 + x2 + x4 + x6 )
-    // const __m128 hi = _mm_shuffle_ps(sumDual, sumDual, 0x1); // hi = ( -, -, -, x1 + x3 + x5 + x7 )
-    // const __m128 sum2 = _mm_add_ss(lo, hi);                   // sum = ( -, -, -, x0 + x1 + x2 + x3 + x4 + x5 + x6 + x7 )
-    // // return _mm_cvtss_f32(sum);
-    // std::cout << sum << ", " << (_mm_cvtss_f32(sum2)) << "\n";
-    // std::cout.flush();
   }
 
   double

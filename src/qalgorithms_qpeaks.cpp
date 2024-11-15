@@ -342,8 +342,7 @@ namespace qAlgorithms
 #pragma endregion "running regression"
 
 #pragma region "running regression static"
-    void
-    runningRegression_static(
+    void runningRegression_static(
         const float *y_start,
         const float *ylog_start,
         const bool *df_start,
@@ -351,15 +350,11 @@ namespace qAlgorithms
         ValidRegression_static *validRegressions,
         int &validRegressionsIndex)
     {
+        // @todo return a vector of valid regressions
         int maxScale = std::min(GLOBAL_MAXSCALE, (int)(n - 1) / 2);
 
         for (int scale = 2; scale <= maxScale; scale++)
         {
-            // @todo move this part into validateRegressions_static();
-            // const int k = 2 * scale + 1; // window size
-            // __m128 beta[512];                                   // coefficients matrix
-            // auto beta = convolve_static(scale, ylog_start, n); // do the regression
-            // const int n_segments = n - k + 1;                  // number of segments, i.e. regressions considering the number of data points
             validateRegressions_static(n, y_start, ylog_start, df_start, scale, validRegressionsIndex, validRegressions);
         } // end for scale loop
         mergeRegressionsOverScales_static(validRegressions, validRegressionsIndex, y_start, df_start);
@@ -1915,7 +1910,6 @@ namespace qAlgorithms
             throw std::invalid_argument("n must be greater or equal to 2 * scale + 1");
         }
         std::array<__m128, 512> beta;
-        // __m128 beta[512];
         __m128 result[512];
         __m128 products[512];
         const __m128 flipSign = _mm_set_ps(1.0f, 1.0f, -1.0f, 1.0f);
@@ -2021,9 +2015,9 @@ namespace qAlgorithms
         const float result = vec[0] * vec[0] * INV_ARRAY[scale + 0] +
                              vec[1] * vec[1] * INV_ARRAY[scale + 2] +
                              (vec[2] * vec[2] + vec[3] * vec[3]) * INV_ARRAY[scale + 4] +
-                             2 * vec[2] * vec[3] * INV_ARRAY[scale + 5] +
-                             2 * vec[0] * (vec[1] + vec[3]) * INV_ARRAY[scale + 1] +
-                             2 * vec[1] * (vec[2] - vec[3]) * INV_ARRAY[scale + 3];
+                             2 * (vec[2] * vec[3] * INV_ARRAY[scale + 5] +
+                                  vec[0] * (vec[1] + vec[3]) * INV_ARRAY[scale + 1] +
+                                  vec[1] * (vec[2] - vec[3]) * INV_ARRAY[scale + 3]);
 
         return result;
     }

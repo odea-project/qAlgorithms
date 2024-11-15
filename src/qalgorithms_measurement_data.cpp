@@ -19,7 +19,7 @@ namespace qAlgorithms
       double PPMerror)
   {
     std::vector<std::vector<CentroidPeak>> centroids(indices.size());
-#                                               // pragma omp parallel for
+    // #pragma omp parallel for
     for (size_t i = 0; i < indices.size(); ++i) // loop over all indices
     {
       const int index = indices[i]; // spectrum index
@@ -48,8 +48,7 @@ namespace qAlgorithms
     return centroids;
   }
 
-  double
-  calcExpectedDiff(std::vector<double> &data)
+  double calcExpectedDiff(std::vector<double> &data)
   {
     const int numPoints = data.size(); // number of data points
     double expectedDifference = 0.0;
@@ -93,6 +92,7 @@ namespace qAlgorithms
   {
 
     // lambda function to calculate the coefficients b0, b1, and b2 for the quadratic extrapolation
+    // @todo move this to where it is called
     auto calculateCoefficients = [](const float *x, const float *y, float &b0, float &b1, float &b2)
     {
       float x1 = x[0], y1 = y[0];
