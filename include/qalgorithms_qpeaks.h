@@ -70,8 +70,7 @@ namespace qAlgorithms
         std::vector<ValidRegression_static> &validRegressions);
 
     void validateRegressions_static(
-        const __m128 *beta,
-        const int n_segments,
+        const int n,
         const float *y_start,
         const float *ylog_start,
         const bool *df_start,
@@ -309,7 +308,7 @@ namespace qAlgorithms
         const float apex_position,
         const int scale);
 
-    __m128 convolve_static(
+    std::array<__m128, 512> convolve_static(
         const size_t scale,
         const float *vec,
         const size_t n);
