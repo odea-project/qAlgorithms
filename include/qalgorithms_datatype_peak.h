@@ -34,7 +34,7 @@ namespace qAlgorithms
     float b0, b1, b2, b3;
   };
 
-  struct ValidRegression_static
+  struct RegressionGauss
   {
     RegCoeffs newCoeffs;
     __m128 coeff;             // regression coefficients
