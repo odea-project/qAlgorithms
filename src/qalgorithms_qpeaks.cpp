@@ -418,16 +418,10 @@ namespace qAlgorithms
           (Overlap of two maxima)
         */
 
-        std::vector<ValidRegression_static> validRegsTmp2 = validRegsTmp;
-        // vector of vectors of valid regressions, i.e., groups of valid regressions
-        std::vector<std::vector<ValidRegression_static>> regressionGroups;
         // vector with the access pattern [2*i] for start and [2*i + 1] for end point of a regression group
         // @todo first group always starts at 0, so the vector can have the access pattern vec[i - 1] + 1 : vec[i]
         std::vector<int> startEndGroups;
         startEndGroups.reserve(validRegsTmp.size());
-
-        auto it_peak = validRegsTmp2.begin();   // iterator for the peak
-        auto it_peak_next = std::next(it_peak); // iterator for the next peak
 
         size_t prev_i = 0;
 
@@ -449,31 +443,6 @@ namespace qAlgorithms
         startEndGroups.push_back(prev_i);
         startEndGroups.push_back(validRegsTmp.size() - 1); // last group ends with index of the last element
 
-        while (it_peak_next != validRegsTmp2.end()) // iterate over the temporary vector of valid regressions
-        {
-            // check if the difference between two peak apexes is less than 4 (Nyquist Shannon Sampling Theorem,
-            // separation of two maxima), or if the apex of a peak is within the window of the other peak (Overlap of two maxima)
-            if (
-                std::abs(it_peak->apex_position - it_peak_next->apex_position) > 4 && // Nyquist Shannon Sampling Theorem, separation of two maxima
-                it_peak->apex_position < it_peak_next->left_limit &&                  // Left peak is not within the window of the right peak
-                it_peak_next->apex_position > it_peak->right_limit                    // Right peak is not within the window of the left peak
-            )
-            {
-                // the two regressions differ, i.e. create a new group and move all regressions from start to it_peak to this group
-                regressionGroups.push_back(std::vector<ValidRegression_static>());
-                std::move(validRegsTmp2.begin(), it_peak_next, std::back_inserter(regressionGroups.back()));
-                // erase the moved regressions from the temporary vector of valid regressions
-                it_peak_next = validRegsTmp2.erase(validRegsTmp2.begin(), it_peak_next);
-            }
-            it_peak = it_peak_next;
-            ++it_peak_next;
-        }
-
-        regressionGroups.push_back(std::vector<ValidRegression_static>());                           // create a new group
-        std::copy(validRegsTmp2.begin(), it_peak_next, std::back_inserter(regressionGroups.back())); // move all regressions from start to it_peak to this group
-
-        assert(regressionGroups.size() == startEndGroups.size() / 2); // works
-
         /*
           Survival of the Fittest Filter:
           This block of code implements the survival of the fittest filter. It selects the peak with
@@ -482,15 +451,12 @@ namespace qAlgorithms
           multiple peaks, the peak with the lowest MSE is selected as the representative of the group
           and pushed to the valid regressions.
         */
-        int groupIdx = 0;
-        for (auto &group : regressionGroups)
+        for (size_t groupIdx = 0; groupIdx < startEndGroups.size(); groupIdx += 2)
         {
-            if (group.size() == 1)
+            if (startEndGroups[groupIdx] == startEndGroups[groupIdx + 1])
             { // already isolated peak => push to valid regressions
-                assert(startEndGroups[groupIdx] == startEndGroups[groupIdx + 1]);
                 int regIdx = startEndGroups[groupIdx];
-                assert(validRegsTmp[regIdx].index_x0 == group.front().index_x0);
-                validRegressions.push_back(group.front());
+                validRegressions.push_back(std::move(validRegsTmp[regIdx]));
             }
             else
             { // survival of the fittest based on mse between original data and reconstructed (exp transform of regression)
@@ -500,18 +466,8 @@ namespace qAlgorithms
 
                 ValidRegression_static bestReg = validRegsTmp[bestRegIdx.first];
                 bestReg.mse = bestRegIdx.second;
-
-                calcExtendedMse(y_start, group, df_start);
-                for (auto &regression : group)
-                {
-                    if (regression.isValid)
-                    {
-                        assert(regression.mse == bestReg.mse);
-                        validRegressions.push_back(std::move(regression));
-                    }
-                }
-            } // end if; single item or group with multiple members
-            groupIdx += 2;
+                validRegressions.push_back(std::move(bestReg));
+            }
         } // end for loop (group in vector of groups)
     } // end validateRegressions
 #pragma endregion validateRegressions

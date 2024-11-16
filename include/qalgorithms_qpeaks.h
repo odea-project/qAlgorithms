@@ -149,7 +149,7 @@ namespace qAlgorithms
         std::vector<ValidRegression_static> &regressions,
         const bool *df_start);
 
-    std::pair<size_t, float> findBestRegression(
+    std::pair<size_t, float> calcExtendedMse(
         const float *y_start,
         std::vector<ValidRegression_static> regressions,
         const bool *df_start,
