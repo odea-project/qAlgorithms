@@ -135,12 +135,12 @@ namespace qAlgorithms
             if (n <= 512)
             {
                 // STATIC APPROACH
-                float Y[512];                                  // measured y values
-                float Ylog[512];                               // log-transformed measured y values
-                float X[512];                                  // measured x values
-                bool df[512];                                  // degree of freedom vector, 0: interpolated, 1: measured
-                ValidRegression_static validRegressions[2048]; // array of valid regressions with default initialization, i.e., random states
-                int validRegressionsIndex = 0;                 // index of the valid regressions
+                float Y[512];                           // measured y values
+                float Ylog[512];                        // log-transformed measured y values
+                float X[512];                           // measured x values
+                bool df[512];                           // degree of freedom vector, 0: interpolated, 1: measured
+                RegressionGauss validRegressions[2048]; // array of valid regressions with default initialization, i.e., random states
+                int validRegressionsIndex = 0;          // index of the valid regressions
 
                 // iterators to the start of the data
                 const auto y_start = Y;
@@ -174,7 +174,7 @@ namespace qAlgorithms
                 float *Ylog = new float[n];
                 float *X = new float[n];
                 bool *df = new bool[n];
-                std::vector<ValidRegression_static> validRegressions;
+                std::vector<RegressionGauss> validRegressions;
 
                 // iterator to the start
                 const auto y_start = Y;
@@ -222,15 +222,15 @@ namespace qAlgorithms
             if (n <= 512)
             {
                 // STATIC APPROACH
-                float Y[512];                                  // measured y values
-                float Ylog[512];                               // log-transformed measured y values
-                float X[512];                                  // measured x values
-                bool df[512];                                  // degree of freedom vector, 0: interpolated, 1: measured
-                float mz[512];                                 // measured mz values
-                float dqs_cen[512];                            // measured dqs values
-                float dqs_bin[512];                            // measured dqs values
-                ValidRegression_static validRegressions[2048]; // array of valid regressions with default initialization, i.e., random states
-                int validRegressionsIndex = 0;                 // index of the valid regressions
+                float Y[512];                           // measured y values
+                float Ylog[512];                        // log-transformed measured y values
+                float X[512];                           // measured x values
+                bool df[512];                           // degree of freedom vector, 0: interpolated, 1: measured
+                float mz[512];                          // measured mz values
+                float dqs_cen[512];                     // measured dqs values
+                float dqs_bin[512];                     // measured dqs values
+                RegressionGauss validRegressions[2048]; // array of valid regressions with default initialization, i.e., random states
+                int validRegressionsIndex = 0;          // index of the valid regressions
 
                 // iterators to the start of the data
                 const auto y_start = Y;
@@ -273,7 +273,7 @@ namespace qAlgorithms
                 float *mz = new float[n];
                 float *dqs_cen = new float[n];
                 float *dqs_bin = new float[n];
-                std::vector<ValidRegression_static> validRegressions;
+                std::vector<RegressionGauss> validRegressions;
 
                 // iterator to the start
                 const auto y_start = Y;
@@ -325,7 +325,7 @@ namespace qAlgorithms
         const float *ylog_start,
         const bool *df_start,
         const int n, // number of data points
-        std::vector<ValidRegression_static> &validRegressions)
+        std::vector<RegressionGauss> &validRegressions)
     {
         const int maxScale = std::min(GLOBAL_MAXSCALE, (int)(n - 1) / 2);
 
@@ -347,7 +347,10 @@ namespace qAlgorithms
             // validRegressions.push_back(
             //     validateRegressions(beta, n_segments, y_start, ylog_start, df_start, scale, validRegressions));
         } // end for scale loop
-        mergeRegressionsOverScales(validRegressions, y_start, df_start);
+        if (validRegressions.size() > 1)
+        {
+            mergeRegressionsOverScales(validRegressions, y_start, df_start);
+        }
     } // end runningRegression
 #pragma endregion "running regression"
 
@@ -357,7 +360,7 @@ namespace qAlgorithms
         const float *ylog_start,
         const bool *df_start,
         const int n,
-        ValidRegression_static *validRegressions,
+        RegressionGauss *validRegressions,
         int &validRegressionsIndex)
     {
         // @todo return a vector of valid regressions
@@ -379,9 +382,9 @@ namespace qAlgorithms
         const float *ylog_start, // pointer to the start of the Ylog matrix
         const bool *df_start,    // degree of freedom vector, 0: interpolated, 1: measured
         const int scale,         // scale, i.e., the number of data points in a half window excluding the center point
-        std::vector<ValidRegression_static> &validRegressions)
+        std::vector<RegressionGauss> &validRegressions)
     {
-        std::vector<ValidRegression_static> validRegsTmp; // temporary vector to store valid regressions <index, apex_position>
+        std::vector<RegressionGauss> validRegsTmp; // temporary vector to store valid regressions <index, apex_position>
 
         // iterate columwise over the coefficients matrix beta
         for (int i = 0; i < n_segments; i++)
@@ -389,8 +392,8 @@ namespace qAlgorithms
             if (calcDF(df_start, i, 2 * scale + i) > 4)
             {
                 const __m128 coeff = beta[i]; // coefficient register from beta @ i
-                ValidRegression_static selectRegression = makeValidRegression(i, scale, df_start, y_start,
-                                                                              ylog_start, coeff);
+                RegressionGauss selectRegression = makeValidRegression(i, scale, df_start, y_start,
+                                                                       ylog_start, coeff);
                 if (selectRegression.isValid)
                 {
                     validRegsTmp.push_back(selectRegression);
@@ -464,7 +467,7 @@ namespace qAlgorithms
                 auto bestRegIdx = findBestRegression(y_start, validRegsTmp, df_start,
                                                      startEndGroups[groupIdx], startEndGroups[groupIdx + 1]);
 
-                ValidRegression_static bestReg = validRegsTmp[bestRegIdx.first];
+                RegressionGauss bestReg = validRegsTmp[bestRegIdx.first];
                 bestReg.mse = bestRegIdx.second;
                 validRegressions.push_back(std::move(bestReg));
             }
@@ -480,9 +483,9 @@ namespace qAlgorithms
         const bool *df_start,
         const int scale,
         int &validRegressionsIndex,
-        ValidRegression_static *validRegressions)
+        RegressionGauss *validRegressions)
     {
-        ValidRegression_static validRegressionsTmp[512];                      // temporary vector to store valid regressions initialized with random states
+        RegressionGauss validRegressionsTmp[512];                             // temporary vector to store valid regressions initialized with random states
         int validRegressionsIndexTmp = 0;                                     // index of the valid regressions
         std::array<__m128, 512> beta = convolve_static(scale, ylog_start, n); // do the regression
         const int n_segments = n - 2 * scale;                                 // number of segments, i.e. regressions considering the number of data points
@@ -494,8 +497,8 @@ namespace qAlgorithms
             {
                 const __m128 coeff = beta[i]; // coefficient register from beta @ i
                 // @todo add test for coeff = 0
-                ValidRegression_static selectRegression = makeValidRegression(i, scale, df_start, y_start,
-                                                                              ylog_start, coeff);
+                RegressionGauss selectRegression = makeValidRegression(i, scale, df_start, y_start,
+                                                                       ylog_start, coeff);
                 if (selectRegression.isValid)
                 {
                     validRegressionsTmp[validRegressionsIndexTmp] = selectRegression;
@@ -526,8 +529,8 @@ namespace qAlgorithms
             else
             { // multiple item group
                 // survival of the fittest based on mse between original data and reconstructed (exp transform of regression)
-                ValidRegression_static *regression_start = &validRegressionsTmp[start_index_group]; // start of the group
-                calcExtendedMse_static(y_start, regression_start, group_size, df_start);            // calculate the extended MSE
+                RegressionGauss *regression_start = &validRegressionsTmp[start_index_group]; // start of the group
+                calcExtendedMse_static(y_start, regression_start, group_size, df_start);     // calculate the extended MSE
                 for (int j = 0; j < group_size; j++)
                 {
                     if (regression_start[j].isValid)
@@ -576,7 +579,7 @@ namespace qAlgorithms
 
 #pragma region "validate regression test series"
 
-    ValidRegression_static makeValidRegression(
+    RegressionGauss makeValidRegression(
         const int i,
         const int scale,
         const bool *df_start,
@@ -600,7 +603,7 @@ namespace qAlgorithms
         // check if beta 2 or beta 3 is zero
         if (replacer.b2 == 0.0f || replacer.b3 == 0.0f)
         {
-            ValidRegression_static badReg;
+            RegressionGauss badReg;
             badReg.isValid = false;
             return badReg; // invalid case
         }
@@ -610,7 +613,7 @@ namespace qAlgorithms
         // no easy replace
         if (!calcApexAndValleyPos(coeff, scale, apex_position, valley_position))
         {
-            ValidRegression_static badReg;
+            RegressionGauss badReg;
             badReg.isValid = false;
             return badReg; // invalid apex and valley positions
         }
@@ -628,7 +631,7 @@ namespace qAlgorithms
         int df_sum = calcDF(df_start, left_limit, right_limit); // degrees of freedom considering the left and right limits
         if (df_sum < 5)
         {
-            ValidRegression_static badReg;
+            RegressionGauss badReg;
             badReg.isValid = false;
             return badReg; // degree of freedom less than 5; i.e., less then 5 measured data points
         }
@@ -642,7 +645,7 @@ namespace qAlgorithms
         */
         if (apex_position * replacer.b1 > 50 || valley_position * replacer.b1 < -50)
         {
-            ValidRegression_static badReg;
+            RegressionGauss badReg;
             badReg.isValid = false;
             return badReg; // invalid area pre-filter
         }
@@ -657,7 +660,7 @@ namespace qAlgorithms
         float apexToEdge = calcApexToEdge(apex_position, scale, i, y_start);
         if (!(apexToEdge > 2))
         {
-            ValidRegression_static badReg;
+            RegressionGauss badReg;
             badReg.isValid = false;
             return badReg; // invalid apex to edge ratio
         }
@@ -675,7 +678,7 @@ namespace qAlgorithms
 
         if (!isValidQuadraticTerm(replacer, scale, mse, df_sum))
         {
-            ValidRegression_static badReg;
+            RegressionGauss badReg;
             badReg.isValid = false;
             return badReg; // statistical insignificance of the quadratic term
         }
@@ -691,7 +694,7 @@ namespace qAlgorithms
         float uncertainty_height = calcPeakHeightUncert(mse, scale, apex_position);
         if (1 / uncertainty_height <= T_VALUES[df_sum - 5]) // statistical significance of the peak height
         {
-            ValidRegression_static badReg;
+            RegressionGauss badReg;
             badReg.isValid = false;
             return badReg;
         }
@@ -699,7 +702,7 @@ namespace qAlgorithms
         // multiply with height later. This is done to avoid exp function at this point
         if (!isValidPeakHeight(mse, scale, apex_position, valley_position, df_sum, apexToEdge))
         {
-            ValidRegression_static badReg;
+            RegressionGauss badReg;
             badReg.isValid = false;
             return badReg; // statistical insignificance of the height
         }
@@ -717,7 +720,7 @@ namespace qAlgorithms
         float uncertainty_area = 0.f;
         if (!isValidPeakArea(replacer, mse, scale, df_sum, area, uncertainty_area))
         {
-            ValidRegression_static badReg;
+            RegressionGauss badReg;
             badReg.isValid = false;
             return badReg; // statistical insignificance of the area
         }
@@ -732,13 +735,13 @@ namespace qAlgorithms
         float chiSquare = calcSSE(-scale, scale, replacer, y_start + i, true, true);
         if (chiSquare < CHI_SQUARES[df_sum - 5])
         {
-            ValidRegression_static badReg;
+            RegressionGauss badReg;
             badReg.isValid = false;
             return badReg; // statistical insignificance of the chi-square value
         }
         float uncertainty_pos = calcUncertaintyPos(mse, replacer, apex_position, scale);
 
-        return ValidRegression_static{
+        return RegressionGauss{
             replacer,
             coeff,
             i + scale,
@@ -758,20 +761,10 @@ namespace qAlgorithms
 
 #pragma region mergeRegressionsOverScales
     void mergeRegressionsOverScales(
-        std::vector<ValidRegression_static> &validRegressions,
+        std::vector<RegressionGauss> &validRegressions,
         const float *y_start,
         const bool *df_start)
     {
-        if (validRegressions.empty())
-        {
-            return; // no valid peaks at all
-        }
-
-        if (validRegressions.size() == 1)
-        {
-            return; // only one valid regression, i.e., no further grouping required; validRegressions is already fine.
-        }
-
         /*
           Grouping Over Scales:
           This block of code implements the grouping over scales. It groups the valid
@@ -780,6 +773,7 @@ namespace qAlgorithms
           - The difference between two peak apexes is less than 4. (Nyquist Shannon Sampling Theorem, separation of two maxima)
           - At least one apex of a pair of peaks is within the window of the other peak. (Overlap of two maxima)
         */
+
         // iterate over the validRegressions vector
         for (auto it_new_peak = validRegressions.begin(); it_new_peak != validRegressions.end(); ++it_new_peak)
         {
@@ -792,46 +786,45 @@ namespace qAlgorithms
             std::vector<decltype(it_ref_peak)> validRegressionsInGroup; // vector of iterators
 
             // iterate over the validRegressions vector till the new peak
+            // first iteration always false
             for (; it_ref_peak < it_new_peak; ++it_ref_peak)
             {
-                if (!it_ref_peak->isValid)
-                {
-                    continue; // skip the invalid peaks
-                }
-                if ( // check for the overlap of the peaks
-                    (
-                        it_ref_peak->apex_position > left_limit &&   // ref peak matches the left limit
-                        it_ref_peak->apex_position < right_limit) || // ref peak matches the right limit
-                    (
-                        it_new_peak->apex_position > it_ref_peak->left_limit && // new peak matches the left limit
-                        it_new_peak->apex_position < it_ref_peak->right_limit)) // new peak matches the right limit
-                {
-                    if (it_ref_peak->mse == 0.0)
-                    { // calculate the mse of the ref peak
-                        it_ref_peak->mse = calcSSE(
-                                               (it_ref_peak->left_limit) - it_ref_peak->index_x0,  // left limit of the ref peak
-                                               (it_ref_peak->right_limit) - it_ref_peak->index_x0, // right limit of the ref peak
-                                               it_ref_peak->newCoeffs,                             // regression coefficients
-                                               y_start + (int)it_ref_peak->left_limit,             // pointer to the start of the Y matrix
-                                               true) /
-                                           it_ref_peak->df;
+                if (it_ref_peak->isValid)
+                {        // only check valid regressions @todo only pass valid peaks into this function
+                    if ( // check for the overlap of the peaks
+                        (
+                            it_ref_peak->apex_position > left_limit &&   // ref peak matches the left limit
+                            it_ref_peak->apex_position < right_limit) || // ref peak matches the right limit
+                        (
+                            it_new_peak->apex_position > it_ref_peak->left_limit && // new peak matches the left limit
+                            it_new_peak->apex_position < it_ref_peak->right_limit)) // new peak matches the right limit
+                    {
+                        if (it_ref_peak->mse == 0.0)
+                        { // calculate the mse of the ref peak
+                            it_ref_peak->mse = calcSSE(
+                                                   (it_ref_peak->left_limit) - it_ref_peak->index_x0,  // left limit of the ref peak
+                                                   (it_ref_peak->right_limit) - it_ref_peak->index_x0, // right limit of the ref peak
+                                                   it_ref_peak->newCoeffs,                             // regression coefficients
+                                                   y_start + (int)it_ref_peak->left_limit,             // pointer to the start of the Y matrix
+                                                   true) /
+                                               it_ref_peak->df;
+                        }
+                        grpDF += it_ref_peak->df;                     // add the degree of freedom
+                        grpMSE += it_ref_peak->mse * it_ref_peak->df; // add the sum of squared errors
+                        numPeaksInGroup++;                            // increment the number of peaks in the group
+                        // add the iterator of the ref peak to a vector of iterators
+                        validRegressionsInGroup.push_back(it_ref_peak);
                     }
-                    grpDF += it_ref_peak->df;                     // add the degree of freedom
-                    grpMSE += it_ref_peak->mse * it_ref_peak->df; // add the sum of squared errors
-                    numPeaksInGroup++;                            // increment the number of peaks in the group
-                    // add the iterator of the ref peak to a vector of iterators
-                    validRegressionsInGroup.push_back(it_ref_peak);
                 }
+
             } // end for loop, inner loop, it_ref_peak
 
-            if (grpDF > 0)
+            if (grpDF < 1)
             {
-                grpMSE /= grpDF;
+                continue;
             }
-            else
-            {
-                continue; // no peaks in the group, i.e., the current peak stays valid
-            }
+
+            grpMSE /= grpDF;
 
             if (it_new_peak->mse == 0.0)
             { // calculate the mse of the current peak
@@ -848,7 +841,7 @@ namespace qAlgorithms
             {
                 // calculate the extended MSE using the current peak and the ref peak and set the worse one to invalid
                 // create a temporary std::vector<std::unique_ptr<validRegression>> with the new peak and the ref peak
-                std::vector<ValidRegression_static> tmpRegressions;
+                std::vector<RegressionGauss> tmpRegressions;
                 tmpRegressions.push_back(std::move(*it_new_peak));
                 tmpRegressions.push_back(std::move(validRegressionsInGroup[0][0]));
                 calcExtendedMse(y_start, tmpRegressions, df_start);
@@ -870,18 +863,29 @@ namespace qAlgorithms
                 it_new_peak->isValid = false;
             }
         } // end for loop, outer loop, it_current_peak
+        std::vector<RegressionGauss> finalRegs;
+
+        for (size_t i = 0; i < validRegressions.size(); i++)
+        {
+            if (validRegressions[i].isValid)
+            {
+                finalRegs.push_back(validRegressions[i]);
+            }
+        }
 
         // Remove the peaks with isValid == false from the validRegressions
         validRegressions.erase(std::remove_if(validRegressions.begin(), validRegressions.end(),
                                               [](const auto &peak)
                                               { return !peak.isValid; }),
                                validRegressions.end());
+        assert(finalRegs[0].index_x0 == validRegressions[0].index_x0);
+        validRegressions = finalRegs;
     } // end mergeRegressionsOverScales
 #pragma endregion mergeRegressionsOverScales
 
 #pragma region "merge regressions over scales static"
     void mergeRegressionsOverScales_static(
-        ValidRegression_static *validRegressions,
+        RegressionGauss *validRegressions,
         const int n_regressions,
         const float *y_start,
         // const float *ylog_start,
@@ -1004,8 +1008,8 @@ namespace qAlgorithms
 
     void createCentroidPeaks(
         std::vector<CentroidPeak> &peaks,
-        ValidRegression_static *validRegressions,
-        std::vector<ValidRegression_static> *validRegressionsVec,
+        RegressionGauss *validRegressions,
+        std::vector<RegressionGauss> *validRegressionsVec,
         const int validRegressionsIndex,
         const float *y_start,
         const float *mz_start,
@@ -1015,7 +1019,7 @@ namespace qAlgorithms
         // iterate over the validRegressions vector
         for (int i = 0; i < validRegressionsIndex; i++)
         {
-            ValidRegression_static regression;
+            RegressionGauss regression;
 
             if (validRegressionsVec == nullptr)
             {
@@ -1066,8 +1070,8 @@ namespace qAlgorithms
 
     void createFeaturePeaks(
         std::vector<FeaturePeak> &peaks,
-        ValidRegression_static *validRegressions,
-        std::vector<ValidRegression_static> *validRegressionsVec,
+        RegressionGauss *validRegressions,
+        std::vector<RegressionGauss> *validRegressionsVec,
         const int validRegressionsIndex,
         const float *y_start,
         const float *mz_start,
@@ -1079,7 +1083,7 @@ namespace qAlgorithms
         // iterate over the validRegressions vector
         for (int i = 0; i < validRegressionsIndex; i++)
         {
-            ValidRegression_static regression;
+            RegressionGauss regression;
             if (validRegressionsVec == nullptr)
             {
                 regression = validRegressions[i];
@@ -1323,25 +1327,18 @@ namespace qAlgorithms
 #pragma region calcExtendedMse
     std::pair<size_t, float> findBestRegression( // index, mse
         const float *y_start,                    // start of the measured data
-        std::vector<ValidRegression_static> regressions,
+        std::vector<RegressionGauss> regressions,
         const bool *df_start,
         size_t startIdx,
         size_t endIdx) // degrees of freedom
     {
-        /*
-          The function consists of the following steps:
-          1. Identify left and right limit of the grouped regression windows.
-          2. Calculate the mean squared error (MSE) between the predicted and actual values.
-          3. Identify the best regression based on the MSE and return the MSE and the index of the best regression.
-        */
-        // declare variables
         float best_mse = INFINITY;
         auto best_regression = regressions.begin();
         size_t bestRegIdx = 0;
 
-        // step 1: identify left (smallest) and right (largest) limit of the grouped regression windows
-        unsigned int left_limit = std::numeric_limits<int>::max();
-        unsigned int right_limit = 0;
+        // identify left (smallest) and right (largest) limit of the grouped regression windows
+        unsigned int left_limit = regressions[0].left_limit;
+        unsigned int right_limit = regressions[0].right_limit;
         for (size_t i = startIdx; i < endIdx + 1; i++)
         {
             left_limit = std::min(left_limit, regressions[i].left_limit);
@@ -1358,23 +1355,23 @@ namespace qAlgorithms
                                   right_limit - regressions[i].index_x0, // right limit of the regression window (normalized scale)
                                   regressions[i].newCoeffs,              // regression coefficients
                                   y_start + left_limit,                  // start of the measured data
-                                  true) /                                // calculate the exp of the yhat values
-                              (df_sum - 4);
+                                  true) /
+                              (df_sum - 4); // calculate the exp of the yhat values
+            // mse /= (df_sum - 4);
 
-            // step 3: identify the best regression based on the MSE and return the MSE and the index of the best regression
             if (mse < best_mse)
             {
                 best_mse = mse;
                 bestRegIdx = i;
             }
-        } // end for loop (index in groupIndices)
+        }
         return std::pair(bestRegIdx, best_mse);
     }
 
     void calcExtendedMse(
-        const float *y_start,                             // start of the measured data
-        std::vector<ValidRegression_static> &regressions, // regressions to compare
-        const bool *df_start)                             // degrees of freedom
+        const float *y_start,                      // start of the measured data
+        std::vector<RegressionGauss> &regressions, // regressions to compare
+        const bool *df_start)                      // degrees of freedom
     {
         /*
           The function consists of the following steps:
@@ -1445,7 +1442,7 @@ namespace qAlgorithms
 #pragma region calcExtendedMse_static
     void calcExtendedMse_static(
         const float *y_start,
-        ValidRegression_static *regressions_start,
+        RegressionGauss *regressions_start,
         const int n_regressions,
         const bool *df_start)
     {
@@ -1514,8 +1511,8 @@ namespace qAlgorithms
 #pragma region calcExtendedMsePair
     void calcExtendedMsePair(
         const float *y_start,
-        ValidRegression_static *low_scale_regression,
-        ValidRegression_static *hi_scale_regression,
+        RegressionGauss *low_scale_regression,
+        RegressionGauss *hi_scale_regression,
         const bool *df_start)
     {
         /*
@@ -1572,7 +1569,7 @@ namespace qAlgorithms
 #pragma region calcExtendedMseOverScales
     void calcExtendedMseOverScales(
         const float *y_start,
-        ValidRegression_static *validRegressions,
+        RegressionGauss *validRegressions,
         const std::vector<int> &validRegressionsInGroup,
         const int i_new_peak)
     {

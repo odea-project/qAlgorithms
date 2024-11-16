@@ -50,14 +50,14 @@ namespace qAlgorithms
         const float *ylog_start,
         const bool *df_start,
         const int n,
-        std::vector<ValidRegression_static> &validRegressions);
+        std::vector<RegressionGauss> &validRegressions);
 
     void runningRegression_static(
         const float *y_start,
         const float *ylog_start,
         const bool *df_start,
         const int n,
-        ValidRegression_static *validRegressions,
+        RegressionGauss *validRegressions,
         int &validRegressionsIndex);
 
     void validateRegressions(
@@ -67,7 +67,7 @@ namespace qAlgorithms
         const float *ylog_start,
         const bool *df_start,
         const int scale,
-        std::vector<ValidRegression_static> &validRegressions);
+        std::vector<RegressionGauss> &validRegressions);
 
     void validateRegressions_static(
         const int n,
@@ -76,9 +76,9 @@ namespace qAlgorithms
         const bool *df_start,
         const int scale,
         int &validRegressionsIndex,
-        ValidRegression_static *validRegressions);
+        RegressionGauss *validRegressions);
 
-    ValidRegression_static makeValidRegression(
+    RegressionGauss makeValidRegression(
         const int i,
         const int scale,
         const bool *df_start,
@@ -87,12 +87,12 @@ namespace qAlgorithms
         const __m128 coeff);
 
     void mergeRegressionsOverScales(
-        std::vector<ValidRegression_static> &validRegressions,
+        std::vector<RegressionGauss> &validRegressions,
         const float *y_start,
         const bool *df_start);
 
     void mergeRegressionsOverScales_static(
-        ValidRegression_static *validRegressions,
+        RegressionGauss *validRegressions,
         const int n_regressions,
         const float *y_start,
         // const float *ylog_start,
@@ -100,8 +100,8 @@ namespace qAlgorithms
 
     void createCentroidPeaks(
         std::vector<CentroidPeak> &peaks,
-        ValidRegression_static *validRegressions,
-        std::vector<ValidRegression_static> *validRegressionsVec,
+        RegressionGauss *validRegressions,
+        std::vector<RegressionGauss> *validRegressionsVec,
         const int validRegressionsIndex,
         const float *y_start,
         const float *mz_start,
@@ -110,8 +110,8 @@ namespace qAlgorithms
 
     void createFeaturePeaks(
         std::vector<FeaturePeak> &peaks,
-        ValidRegression_static *validRegressions,
-        std::vector<ValidRegression_static> *validRegressionsVec,
+        RegressionGauss *validRegressions,
+        std::vector<RegressionGauss> *validRegressionsVec,
         const int validRegressionsIndex,
         const float *y_start,
         const float *mz_start,
@@ -146,31 +146,31 @@ namespace qAlgorithms
      */
     void calcExtendedMse(
         const float *y_start,
-        std::vector<ValidRegression_static> &regressions,
+        std::vector<RegressionGauss> &regressions,
         const bool *df_start);
 
-    std::pair<size_t, float> calcExtendedMse(
+    std::pair<size_t, float> findBestRegression(
         const float *y_start,
-        std::vector<ValidRegression_static> regressions,
+        std::vector<RegressionGauss> regressions,
         const bool *df_start,
         size_t startIdx,
         size_t endIdx);
 
     void calcExtendedMse_static(
         const float *y_start,
-        ValidRegression_static *regressions_start,
+        RegressionGauss *regressions_start,
         const int n_regressions,
         const bool *df_start);
 
     void calcExtendedMsePair(
         const float *y_start,
-        ValidRegression_static *low_scale_regression,
-        ValidRegression_static *hi_scale_regression,
+        RegressionGauss *low_scale_regression,
+        RegressionGauss *hi_scale_regression,
         const bool *df_start);
 
     void calcExtendedMseOverScales(
         const float *y_start,
-        ValidRegression_static *validRegressions,
+        RegressionGauss *validRegressions,
         const std::vector<int> &validRegressionsInGroup,
         const int i_new_peak);
 
