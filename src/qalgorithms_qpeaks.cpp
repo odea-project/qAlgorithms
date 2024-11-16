@@ -328,7 +328,15 @@ namespace qAlgorithms
         std::vector<ValidRegression_static> &validRegressions)
     {
         const int maxScale = std::min(GLOBAL_MAXSCALE, (int)(n - 1) / 2);
-        validRegressions.reserve(calcNumberOfRegressions(n));
+
+        // @todo is this more efficient than just reserving a relatively large amount?
+        int sum = 0;
+        for (int i = 4; i <= GLOBAL_MAXSCALE * 2; i += 2)
+        {
+            sum += std::max(0, n - i);
+        }
+
+        validRegressions.reserve(sum);
         for (int scale = 2; scale <= maxScale; scale++)
         {
             const int k = 2 * scale + 1;                  // window size
@@ -414,13 +422,13 @@ namespace qAlgorithms
         // vector of vectors of valid regressions, i.e., groups of valid regressions
         std::vector<std::vector<ValidRegression_static>> regressionGroups;
         // vector with the access pattern [2*i] for start and [2*i + 1] for end point of a regression group
+        // @todo first group always starts at 0, so the vector can have the access pattern vec[i - 1] + 1 : vec[i]
         std::vector<int> startEndGroups;
         startEndGroups.reserve(validRegsTmp.size());
 
         auto it_peak = validRegsTmp2.begin();   // iterator for the peak
         auto it_peak_next = std::next(it_peak); // iterator for the next peak
 
-        // startEndGroups.push_back(0); // first group starts with first regression
         size_t prev_i = 0;
 
         for (size_t i = 0; i < validRegsTmp.size() - 1; i++)
@@ -462,7 +470,7 @@ namespace qAlgorithms
         }
 
         regressionGroups.push_back(std::vector<ValidRegression_static>());                           // create a new group
-        std::move(validRegsTmp2.begin(), it_peak_next, std::back_inserter(regressionGroups.back())); // move all regressions from start to it_peak to this group
+        std::copy(validRegsTmp2.begin(), it_peak_next, std::back_inserter(regressionGroups.back())); // move all regressions from start to it_peak to this group
 
         assert(regressionGroups.size() == startEndGroups.size() / 2); // works
 
@@ -480,18 +488,25 @@ namespace qAlgorithms
             if (group.size() == 1)
             { // already isolated peak => push to valid regressions
                 assert(startEndGroups[groupIdx] == startEndGroups[groupIdx + 1]);
-                std::cout << validRegsTmp[groupIdx].df << "\n";
-                assert(validRegsTmp[groupIdx].df == group.front().df);
+                int regIdx = startEndGroups[groupIdx];
+                assert(validRegsTmp[regIdx].index_x0 == group.front().index_x0);
                 validRegressions.push_back(group.front());
             }
             else
             { // survival of the fittest based on mse between original data and reconstructed (exp transform of regression)
-                assert(startEndGroups[groupIdx * 2] != startEndGroups[2 * groupIdx + 1]);
+                assert(startEndGroups[groupIdx] != startEndGroups[groupIdx + 1]);
+                auto bestRegIdx = findBestRegression(y_start, validRegsTmp, df_start,
+                                                     startEndGroups[groupIdx], startEndGroups[groupIdx + 1]);
+
+                ValidRegression_static bestReg = validRegsTmp[bestRegIdx.first];
+                bestReg.mse = bestRegIdx.second;
+
                 calcExtendedMse(y_start, group, df_start);
                 for (auto &regression : group)
                 {
                     if (regression.isValid)
                     {
+                        assert(regression.mse == bestReg.mse);
                         validRegressions.push_back(std::move(regression));
                     }
                 }
@@ -513,7 +528,7 @@ namespace qAlgorithms
     {
         ValidRegression_static validRegressionsTmp[512];                      // temporary vector to store valid regressions initialized with random states
         int validRegressionsIndexTmp = 0;                                     // index of the valid regressions
-        std::array<__m128, 512> beta = convolve_static(scale, ylog_start, n); // do the regression @todo move inside this function
+        std::array<__m128, 512> beta = convolve_static(scale, ylog_start, n); // do the regression
         const int n_segments = n - 2 * scale;                                 // number of segments, i.e. regressions considering the number of data points
 
         // iterate columwise over the coefficients matrix beta
@@ -635,7 +650,6 @@ namespace qAlgorithms
         }
 
         float valley_position;
-        // @todo apex is always 0
         float apex_position = 0.f;
         // no easy replace
         if (!calcApexAndValleyPos(coeff, scale, apex_position, valley_position))
@@ -701,7 +715,6 @@ namespace qAlgorithms
           term is considered statistically insignificant, and the loop continues
           to the next iteration.
         */
-        //    @todo replace coeff;
         float mse = calcSSE(-scale, scale, replacer, ylog_start + i) / (df_sum - 4); // mean squared error
 
         if (!isValidQuadraticTerm(replacer, scale, mse, df_sum))
@@ -746,7 +759,6 @@ namespace qAlgorithms
         */
         float area = 0.f; // peak area
         float uncertainty_area = 0.f;
-        // @todo replace coeff
         if (!isValidPeakArea(replacer, mse, scale, df_sum, area, uncertainty_area))
         {
             ValidRegression_static badReg;
@@ -768,7 +780,6 @@ namespace qAlgorithms
             badReg.isValid = false;
             return badReg; // statistical insignificance of the chi-square value
         }
-        // @todo replace coeff
         float uncertainty_pos = calcUncertaintyPos(mse, replacer, apex_position, scale);
 
         return ValidRegression_static{
@@ -1052,7 +1063,7 @@ namespace qAlgorithms
 
             if (validRegressionsVec == nullptr)
             {
-                regression = validRegressions[i]; // @todo does this work?
+                regression = validRegressions[i];
             }
             else if (validRegressions == nullptr)
             {
@@ -1115,7 +1126,7 @@ namespace qAlgorithms
             ValidRegression_static regression;
             if (validRegressionsVec == nullptr)
             {
-                regression = validRegressions[i]; // @todo does this work?
+                regression = validRegressions[i];
             }
             else if (validRegressions == nullptr)
             {
@@ -1354,8 +1365,57 @@ namespace qAlgorithms
 #pragma endregion calcSSE
 
 #pragma region calcExtendedMse
-    void
-    calcExtendedMse(
+    std::pair<size_t, float> findBestRegression( // index, mse
+        const float *y_start,                    // start of the measured data
+        std::vector<ValidRegression_static> regressions,
+        const bool *df_start,
+        size_t startIdx,
+        size_t endIdx) // degrees of freedom
+    {
+        /*
+          The function consists of the following steps:
+          1. Identify left and right limit of the grouped regression windows.
+          2. Calculate the mean squared error (MSE) between the predicted and actual values.
+          3. Identify the best regression based on the MSE and return the MSE and the index of the best regression.
+        */
+        // declare variables
+        float best_mse = INFINITY;
+        auto best_regression = regressions.begin();
+        size_t bestRegIdx = 0;
+
+        // step 1: identify left (smallest) and right (largest) limit of the grouped regression windows
+        unsigned int left_limit = std::numeric_limits<int>::max();
+        unsigned int right_limit = 0;
+        for (size_t i = startIdx; i < endIdx + 1; i++)
+        {
+            left_limit = std::min(left_limit, regressions[i].left_limit);
+            right_limit = std::max(right_limit, regressions[i].right_limit);
+        }
+
+        const int df_sum = calcDF(df_start, left_limit, right_limit);
+
+        for (size_t i = startIdx; i < endIdx + 1; i++)
+        {
+            // step 2: calculate the mean squared error (MSE) between the predicted and actual values
+            const float mse = calcSSE(
+                                  left_limit - regressions[i].index_x0,  // left limit of the regression window (normalized scale)
+                                  right_limit - regressions[i].index_x0, // right limit of the regression window (normalized scale)
+                                  regressions[i].newCoeffs,              // regression coefficients
+                                  y_start + left_limit,                  // start of the measured data
+                                  true) /                                // calculate the exp of the yhat values
+                              (df_sum - 4);
+
+            // step 3: identify the best regression based on the MSE and return the MSE and the index of the best regression
+            if (mse < best_mse)
+            {
+                best_mse = mse;
+                bestRegIdx = i;
+            }
+        } // end for loop (index in groupIndices)
+        return std::pair(bestRegIdx, best_mse);
+    }
+
+    void calcExtendedMse(
         const float *y_start,                             // start of the measured data
         std::vector<ValidRegression_static> &regressions, // regressions to compare
         const bool *df_start)                             // degrees of freedom
@@ -1367,12 +1427,12 @@ namespace qAlgorithms
           3. Identify the best regression based on the MSE and return the MSE and the index of the best regression.
         */
         // declare variables
-        float best_mse = std::numeric_limits<float>::infinity();
+        float best_mse = INFINITY;
         auto best_regression = regressions.begin();
 
         // step 1: identify left (smallest) and right (largest) limit of the grouped regression windows
-        int left_limit = static_cast<int>(regressions.front().left_limit);
-        int right_limit = static_cast<int>(regressions.front().right_limit);
+        int left_limit = std::numeric_limits<int>::max();
+        int right_limit = 0;
         for (auto regression = regressions.begin(); regression != regressions.end(); ++regression)
         {
             left_limit = std::min(left_limit, static_cast<int>(regression->left_limit));
@@ -1380,8 +1440,10 @@ namespace qAlgorithms
         }
 
         const int df_sum = calcDF(df_start, left_limit, right_limit);
-        if (df_sum <= 4)
+        if (df_sum <= 4) // @todo this condition is never fulfilled
         {
+            std::cerr << "BANG!";
+            exit(1);
             // set isValid to false for all regressions
             for (auto regression = regressions.begin(); regression != regressions.end(); ++regression)
             {
@@ -1835,7 +1897,7 @@ namespace qAlgorithms
         float y_left = 0;      // y value at the left limit
         float y_right = 0;     // y value at the right limit
 
-        float err_L_covered = /// @todo : need to be revised
+        float err_L_covered = /// @todo : needs to be revised
             (b2 < 0)
                 ?                                                                                                   // ordinary peak half, take always scale as integration limit; we use erf instead of erfi due to the sqrt of absoulte value
                 erf_approx_f((b1 - 2 * b2 * scale) / 2 * _SQRTB2) * EXP_B12 * SQRTPI_2 + err_L - SQRTPI_2 * EXP_B12 // std::erf((b1 - 2 * b2 * scale) / 2 / SQRTB2) + err_L - 1
@@ -1846,7 +1908,7 @@ namespace qAlgorithms
                     : // valley point is inside the window, use valley point as limit
                     err_L;
 
-        const float err_R_covered = ///@todo : need to be revised
+        const float err_R_covered = ///@todo : needs to be revised
             (b3 < 0)
                 ?                                                                                                   // ordinary peak half, take always scale as integration limit; we use erf instead of erfi due to the sqrt of absoulte value
                 err_R - SQRTPI_2 * EXP_B13 - erf_approx_f((b1 + 2 * b3 * scale) / 2 * _SQRTB3) * SQRTPI_2 * EXP_B13 // err_R - 1 - std::erf((b1 + 2 * b3 * scale) / 2 / SQRTB3)
@@ -1922,17 +1984,17 @@ namespace qAlgorithms
     }
 #pragma endregion "calcUncertaintyPosition"
 
-#pragma region calculateNumberOfRegressions
-    int calcNumberOfRegressions(const int n)
-    {
-        int sum = 0;
-        for (int i = 4; i <= GLOBAL_MAXSCALE * 2; i += 2)
-        {
-            sum += std::max(0, n - i);
-        }
-        return sum;
-    }
-#pragma endregion calculateNumberOfRegressions
+    // #pragma region calculateNumberOfRegressions
+    //     int calcNumberOfRegressions(const int n) // previously in validRegressions.reserve()
+    //     {
+    //         int sum = 0;
+    //         for (int i = 4; i <= GLOBAL_MAXSCALE * 2; i += 2)
+    //         {
+    //             sum += std::max(0, n - i);
+    //         }
+    //         return sum;
+    //     }
+    // #pragma endregion calculateNumberOfRegressions
 
 #pragma region "convolve regression"
     // these chain to return beta for a regression
@@ -1953,8 +2015,8 @@ namespace qAlgorithms
         convolve_SIMD(scale, vec, n, result, products, 512);
 
         for (size_t i = 0; i < n - 2 * scale; i++)
-        {
-            beta[i] = _mm_mul_ps(_mm_shuffle_ps(result[i], result[i], 0b10110100), flipSign); // swap beta2 and beta3 and flip the sign of beta1 // @todo: this is a temporary solution
+        { // swap beta2 and beta3 and flip the sign of beta1 // @todo: this is a temporary solution
+            beta[i] = _mm_mul_ps(_mm_shuffle_ps(result[i], result[i], 0b10110100), flipSign);
         }
         return beta;
     }
@@ -1976,8 +2038,8 @@ namespace qAlgorithms
         convolve_SIMD(scale, vec, n, result, products, n);
 
         for (size_t i = 0; i < n - 2 * scale; i++)
-        {
-            beta[i] = _mm_mul_ps(_mm_shuffle_ps(result[i], result[i], 0b10110100), flipSign); // swap beta2 and beta3 and flip the sign of beta1 // @todo: this is a temporary solution
+        { // swap beta2 and beta3 and flip the sign of beta1 // @todo: this is a temporary solution
+            beta[i] = _mm_mul_ps(_mm_shuffle_ps(result[i], result[i], 0b10110100), flipSign);
         }
         delete[] result;
         delete[] products;

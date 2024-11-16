@@ -149,6 +149,13 @@ namespace qAlgorithms
         std::vector<ValidRegression_static> &regressions,
         const bool *df_start);
 
+    std::pair<size_t, float> findBestRegression(
+        const float *y_start,
+        std::vector<ValidRegression_static> regressions,
+        const bool *df_start,
+        size_t startIdx,
+        size_t endIdx);
+
     void calcExtendedMse_static(
         const float *y_start,
         ValidRegression_static *regressions_start,
@@ -331,4 +338,4 @@ namespace qAlgorithms
                                                     int left_limit, int right_limit);
 }
 
-#endif // QALGORITHMS_QPEAKS_H
+#endif
