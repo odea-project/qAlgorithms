@@ -52,14 +52,6 @@ namespace qAlgorithms
         const int n,
         std::vector<RegressionGauss> &validRegressions);
 
-    void runningRegression_static(
-        const float *y_start,
-        const float *ylog_start,
-        const bool *df_start,
-        const int n,
-        RegressionGauss *validRegressions,
-        int &validRegressionsIndex);
-
     void validateRegressions(
         const __m128 *beta,
         const int n_segments,
@@ -86,8 +78,8 @@ namespace qAlgorithms
         const float *ylog_start,
         const __m128 coeff);
 
-    void mergeRegressionsOverScales(
-        std::vector<RegressionGauss> &validRegressions,
+    std::vector<RegressionGauss> mergeRegressionsOverScales(
+        std::vector<RegressionGauss> validRegressions,
         const float *y_start,
         const bool *df_start);
 
