@@ -55,7 +55,7 @@ namespace qAlgorithms
 
   float sum8(const __m256 &vec) // why does this break when inlined?
   {
-    float sum = vec[0] + vec[1] + vec[3] + vec[4] + vec[5] + vec[6] + vec[7];
+    float sum = vec[0] + vec[1] + vec[2] + vec[3] + vec[4] + vec[5] + vec[6] + vec[7];
     return sum;
   }
 

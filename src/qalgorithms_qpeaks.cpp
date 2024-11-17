@@ -907,16 +907,7 @@ namespace qAlgorithms
         const float *y_start,
         const bool *df_start)
     {
-        // @todo return vector
-        if (n_regressions == 0)
-        {
-            return; // no valid peaks at all
-        }
-
-        if (n_regressions == 1)
-        {
-            return; // only one valid regression, i.e., no further grouping required; validRegressions is already fine.
-        }
+        // @todo return vector containing only
         assert(n_regressions > 1);
         /*
           Grouping Over Scales:
@@ -1161,11 +1152,6 @@ namespace qAlgorithms
     {
         assert(limit_L < 0);
         assert(limit_R > 0);
-        double result = 0;
-        __m256 b0 = _mm256_set1_ps(coeff.b0); // b0 is eight times coeff 0
-        __m256 b1 = _mm256_set1_ps(coeff.b1); // b1 is eight times coeff 1
-        __m256 b2 = _mm256_set1_ps(coeff.b2);
-        __m256 b3 = _mm256_set1_ps(coeff.b3);
 
         // left side
         int j = 0;
@@ -1183,18 +1169,21 @@ namespace qAlgorithms
             }
             double y_current = y_start[iSegment];
             double newdiff = (y_current - y_new) * (y_current - y_new);
-            if (newdiff == INFINITY)
-            {
-                std::cout << y_base << ", " << y_new;
-                exit(1);
-            }
+            assert(newdiff != INFINITY);
             if (calc_CHISQ)
             {
                 assert(y_new != 0);
                 newdiff = newdiff / y_new; // Calculate the weighted square of the difference
             }
+            std::cout << newdiff << ", ";
             result2 += newdiff;
         }
+        std::cout << "\n";
+        double result = 0;
+        __m256 b0 = _mm256_set1_ps(coeff.b0); // b0 is eight times coeff 0
+        __m256 b1 = _mm256_set1_ps(coeff.b1); // b1 is eight times coeff 1
+        __m256 b2 = _mm256_set1_ps(coeff.b2);
+        __m256 b3 = _mm256_set1_ps(coeff.b3);
 
         __m256 LINSPACE = _mm256_set_ps(7.f, 6.f, 5.f, 4.f, 3.f, 2.f, 1.f, 0.f);
         __m256 x = _mm256_add_ps(_mm256_set1_ps(limit_L - 8.0), LINSPACE); // formerly i
@@ -1218,12 +1207,20 @@ namespace qAlgorithms
             {
                 diff_sq = _mm256_div_ps(diff_sq, yhat); // Calculate the weighted square of the difference
             }
+            double accum = 0;
+            for (size_t i = 0; i < 8; i++)
+            {
+                std::cout << diff_sq[i] << ", ";
+                accum += diff_sq[i];
+            }
+
             result += sum8(diff_sq); // Calculate the sum of the squares and add it to the result
         }
 
-        // std::cout << abs(result2 - result) << " " << nFullSegments << ", ";
-        // std::cout.flush();
-        // assert(abs(abs(result2) - abs(result)) < 0.00001);
+        std::cout << "\n"
+                  << result2 << ", " << result << " " << nFullSegments << ", ";
+        std::cout.flush();
+        assert(abs(abs(result2) - abs(result)) < 0.00001);
 
         // result = result2;
 
