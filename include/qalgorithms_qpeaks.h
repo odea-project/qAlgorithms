@@ -144,10 +144,6 @@ namespace qAlgorithms
      * @param scale : Window size scale, e.g., 5 means the window size is 11 (2*5+1)
      * @return std::pair<double,int> : MSE and index of the best regression window
      */
-    void calcExtendedMse(
-        const float *y_start,
-        std::vector<RegressionGauss> &regressions,
-        const bool *df_start);
 
     std::pair<size_t, float> findBestRegression(
         const float *y_start,
