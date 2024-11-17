@@ -873,6 +873,15 @@ namespace qAlgorithms
             }
         }
 
+        std::vector<RegressionGauss> finalRegs;
+        for (size_t i = 0; i < validRegressions.size(); i++)
+        {
+            if (validRegressions[i].isValid)
+            {
+                finalRegs.push_back(validRegressions[i]);
+            }
+        }
+
         // Remove the peaks with isValid == false from the validRegressions
         validRegressions.erase(std::remove_if(validRegressions.begin(), validRegressions.end(),
                                               [](const auto &peak)
@@ -1337,8 +1346,8 @@ namespace qAlgorithms
         size_t bestRegIdx = 0;
 
         // identify left (smallest) and right (largest) limit of the grouped regression windows
-        unsigned int left_limit = regressions[0].left_limit;
-        unsigned int right_limit = regressions[0].right_limit;
+        unsigned int left_limit = regressions[startIdx].left_limit;
+        unsigned int right_limit = regressions[startIdx].right_limit;
         for (size_t i = startIdx; i < endIdx + 1; i++)
         {
             left_limit = std::min(left_limit, regressions[i].left_limit);
