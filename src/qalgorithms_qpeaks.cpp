@@ -1175,7 +1175,7 @@ namespace qAlgorithms
                 assert(y_new != 0);
                 newdiff = newdiff / y_new; // Calculate the weighted square of the difference
             }
-            std::cout << newdiff << ", ";
+            // std::cout << newdiff << ", ";
             result2 += newdiff;
         }
         std::cout << "\n";
@@ -1210,17 +1210,17 @@ namespace qAlgorithms
             double accum = 0;
             for (size_t i = 0; i < 8; i++)
             {
-                std::cout << diff_sq[i] << ", ";
+                // std::cout << diff_sq[i] << ", ";
                 accum += diff_sq[i];
             }
 
-            result += sum8(diff_sq); // Calculate the sum of the squares and add it to the result
+            result += accum; // sum8(diff_sq); // Calculate the sum of the squares and add it to the result
         }
 
-        std::cout << "\n"
-                  << result2 << ", " << result << " " << nFullSegments << ", ";
-        std::cout.flush();
-        assert(abs(abs(result2) - abs(result)) < 0.00001);
+        // std::cout << "\n"
+        //           << result2 << ", " << result << " " << -limit_L << "\n";
+        // std::cout.flush();
+        // assert(abs(abs(result2) - abs(result)) < 0.00001);
 
         // result = result2;
 
@@ -1293,17 +1293,28 @@ namespace qAlgorithms
         const bool calc_EXP,
         const bool calc_CHISQ)
     {
-        // exception handling if the right limits is negative or the left limit is positive
-        if (right_limit < 0 || left_limit > 0)
+        double result2 = 0.0f;
+        for (long int iSegment = -left_limit; iSegment < right_limit; iSegment++)
         {
-            throw std::invalid_argument("right_limit must be positive and left_limit must be negative");
+            double new_x = iSegment;
+            double y_base = coeff.b0 + coeff.b1 * new_x + coeff.b2 * new_x * new_x;
+            double y_new = y_base;
+            if (calc_EXP)
+            {
+                y_new = exp_approx_d(y_base); // calculate the exp of the yhat values (if needed)
+            }
+            double y_current = y_start[iSegment];
+            double newdiff = (y_current - y_new) * (y_current - y_new);
+            assert(newdiff != INFINITY);
+            if (calc_CHISQ)
+            {
+                assert(y_new != 0);
+                newdiff = newdiff / y_new; // Calculate the weighted square of the difference
+            }
+            // std::cout << newdiff << ", ";
+            result2 += newdiff;
         }
-
-        // exception if nullptr is passed
-        if (y_start == nullptr)
-        {
-            throw std::invalid_argument("y_start must not be nullptr");
-        }
+        std::cout << result2 << ", ";
 
         float result = 0.0f; // result variable
 
@@ -1313,6 +1324,8 @@ namespace qAlgorithms
         {
             result += calcFullSegments(coeff, left_limit, right_limit, y_start, calc_EXP, calc_CHISQ);
         }
+
+        std::cout << result << ", ";
 
         const int nRemaining_left = -left_limit % 8;  // calculate the number of remaining elements
         const int nRemaining_right = right_limit % 8; // calculate the number of remaining elements
@@ -1327,13 +1340,17 @@ namespace qAlgorithms
                                     calc_EXP, calc_CHISQ, y_start, left_limit, right_limit);
         }
 
+        std::cout << result << ", ";
+
         if (nRemaining_right > 0)
         {
             const __m256 b3 = _mm256_set1_ps(coeff.b3);
             result += calcRemaining(coeff, nRemaining_right, LINSPACE_UP_POS_256, 0, nRemaining_right + 1, 1, b3,
                                     calc_EXP, calc_CHISQ, y_start, left_limit, right_limit);
         }
+        std::cout << result << ", ";
 
+        exit(1);
         return result;
     } // end calcSSE
 #pragma endregion calcSSE
