@@ -32,6 +32,7 @@ std::string sc::utils::encode_little_endian(const std::vector<double> &input, co
   }
   else
   {
+    // @todo fix exceptions
     throw("Precision must be 4 (32-bit) or 8 (64-bit)!");
   }
 };
@@ -76,6 +77,7 @@ std::string sc::utils::encode_big_endian(const std::vector<double> &input, const
   }
   else
   {
+    // @todo fix exceptions
     throw("Precision must be 4 (32-bit) or 8 (64-bit)!");
   }
 }
@@ -107,6 +109,7 @@ std::vector<double> sc::utils::decode_little_endian(const std::string &str, cons
     }
     else
     {
+      // @todo fix exceptions
       throw("Precision must be 4 (32-bit) or 8 (64-bit)!");
     }
   }
@@ -155,6 +158,7 @@ std::vector<double> sc::utils::decode_big_endian(const std::string &str, const i
     }
     else
     {
+      // @todo fix exceptions
       throw("Precision must be 4 (32-bit) or 8 (64-bit)!");
     }
   }

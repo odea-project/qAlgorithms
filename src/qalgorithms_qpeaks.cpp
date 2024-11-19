@@ -393,11 +393,14 @@ namespace qAlgorithms
             if (calcDF(df_start, i, 2 * scale + i) > 4)
             {
                 const __m128 coeff = beta[i]; // coefficient register from beta @ i
-                RegressionGauss selectRegression = makeValidRegression(i, scale, df_start, y_start,
-                                                                       ylog_start, coeff);
-                if (selectRegression.isValid)
+                if (coeff[2] != 0.0f && coeff[3] != 0.0f)
                 {
-                    validRegsTmp.push_back(selectRegression);
+                    RegressionGauss selectRegression = makeValidRegression(i, scale, df_start, y_start,
+                                                                           ylog_start, coeff);
+                    if (selectRegression.isValid)
+                    {
+                        validRegsTmp.push_back(selectRegression);
+                    }
                 }
             }
         }
@@ -496,13 +499,15 @@ namespace qAlgorithms
             if (calcDF(df_start, i, 2 * scale + i) > 4)
             {
                 const __m128 coeff = beta[i]; // coefficient register from beta @ i
-                // @todo add test for coeff = 0
-                RegressionGauss selectRegression = makeValidRegression(i, scale, df_start, y_start,
-                                                                       ylog_start, coeff);
-                if (selectRegression.isValid)
+                if (((float *)&coeff)[2] != 0.0f && ((float *)&coeff)[3] != 0.0f)
                 {
-                    validRegressionsTmp[validRegressionsIndexTmp] = selectRegression;
-                    validRegressionsIndexTmp++;
+                    RegressionGauss selectRegression = makeValidRegression(i, scale, df_start, y_start,
+                                                                           ylog_start, coeff);
+                    if (selectRegression.isValid)
+                    {
+                        validRegressionsTmp[validRegressionsIndexTmp] = selectRegression;
+                        validRegressionsIndexTmp++;
+                    }
                 }
             }
         }
@@ -592,6 +597,14 @@ namespace qAlgorithms
         replacer.b1 = ((float *)&coeff)[1];
         replacer.b2 = ((float *)&coeff)[2];
         replacer.b3 = ((float *)&coeff)[3];
+
+        // check if beta 2 or beta 3 is zero ; moved outside of this function
+        // if (replacer.b2 == 0.0f || replacer.b3 == 0.0f)
+        // {
+        //     RegressionGauss badReg;
+        //     badReg.isValid = false;
+        //     return badReg; // invalid case
+        // }
         /*
           Apex and Valley Position Filter:
           This block of code implements the apex and valley position filter.
@@ -600,14 +613,6 @@ namespace qAlgorithms
           to the next iteration. If the apex and valley positions are too close
           to each other, the loop continues to the next iteration.
         */
-        // check if beta 2 or beta 3 is zero
-        if (replacer.b2 == 0.0f || replacer.b3 == 0.0f)
-        {
-            RegressionGauss badReg;
-            badReg.isValid = false;
-            return badReg; // invalid case
-        }
-
         float valley_position;
         float apex_position = 0.f;
         // no easy replace
@@ -716,8 +721,17 @@ namespace qAlgorithms
           NOTE: this function does not consider b0: i.e. to get the real uncertainty and
           area multiply both with Exp(b0) later. This is done to avoid exp function at this point
         */
-        float area = 0.f; // peak area
-        float uncertainty_area = 0.f;
+        // it might be preferential to combine both functions again or store the common matrix somewhere
+        auto tmpPair = calcPeakAreaUncert(replacer, mse, scale, df_sum);
+        float area = tmpPair.first;
+        float uncertainty_area = tmpPair.second;
+
+        if (area / uncertainty_area <= T_VALUES[df_sum - 5])
+        {
+            RegressionGauss badReg;
+            badReg.isValid = false;
+            return badReg; // statistical insignificance of the area
+        }
         if (!isValidPeakArea(replacer, mse, scale, df_sum, area, uncertainty_area))
         {
             RegressionGauss badReg;
@@ -1670,14 +1684,38 @@ namespace qAlgorithms
         __m128 res = _mm_set1_ps(-0.5f); // res = -0.5
         __m128 ZERO_128 = _mm_setzero_ps();
         __m128 KEY_128 = _mm_set_ps(1.f, 2.f, 4.f, 0.f);
-        __m128 signs = _mm_cmplt_ps(coeff, ZERO_128); // compare the coefficients with zero, results will have the following values: 0xFFFFFFFF if the value is negative, 0x00000000 if the value is positive
-        signs = _mm_and_ps(signs, KEY_128);           // multiply a key value if the value of the coefficient is negative, i.e., b0 * 0, b1 * 4, b2 * 2, b3 * 1
-        signs = _mm_hadd_ps(signs, signs);            // horizontal add of the signs
-        signs = _mm_hadd_ps(signs, signs);            // horizontal add of the signs, now all values are the same, i.e. the sum
+        // compare the coefficients with zero, results will have the following values:
+        // 0xFFFFFFFF if the value is negative, 0x00000000 if the value is positive
+        __m128 signs = _mm_cmplt_ps(coeff, ZERO_128);
+        signs = _mm_and_ps(signs, KEY_128); // multiply a key value if the value if the coefficient is negative, i.e., b0 * 0, b1 * 4, b2 * 2, b3 * 1
+        signs = _mm_hadd_ps(signs, signs);  // horizontal add of the signs
+        signs = _mm_hadd_ps(signs, signs);  // horizontal add of the signs, now all values are the same, i.e. the sum
         int key = _mm_cvtss_si32(signs);
 
         res = _mm_mul_ps(res, _mm_shuffle_ps(coeff, coeff, 0b01010101)); // res = -0.5 * b1
         res = _mm_div_ps(res, coeff);                                    // res = -0.5 * b1 / b2
+
+        // key = 7: b1, b2, b3 are negative
+        // key = 6: b1, b2 are negative, b3 is positive
+        // key = 3: b1, b3 are negative, b2 is positive
+        // key = 1: b1, b2 are positive, b3 is negative
+        // key = 0, key = 5:
+        if (key == 7)
+        {
+            assert(coeff[1] < 0 && ((float *)&coeff)[2] < 0 && coeff[3] < 0);
+        }
+        else if (key == 6)
+        {
+            assert(coeff[1] < 0 && ((float *)&coeff)[2] < 0 && coeff[3] > 0);
+        }
+        else if (key == 3)
+        {
+            // assert(coeff[1] < 0 && ((float *)&coeff)[2] > 0 && coeff[3] < 0); // assert fails, misunderstanding of key?
+        }
+        else if (key == 1)
+        {
+            assert(coeff[1] > 0 && ((float *)&coeff)[2] > 0 && coeff[3] < 0);
+        }
 
         switch (key)
         {
@@ -1692,12 +1730,12 @@ namespace qAlgorithms
             return apex_position < scale - 1;   // scale -1: prevent apex position to be at the edge of the data
 
         case 6:                                                                       // Case 2a: apex left | valley right
-            apex_position = ((float *)&res)[2];                                       //-B1 / 2 / B2;                                             // is negative
+            apex_position = ((float *)&res)[2];                                       //-B1 / 2 / B2;                                           // is negative
             valley_position = ((float *)&res)[3];                                     //-B1 / 2 / B3;                                           // is positive
             return apex_position > -scale + 1 && valley_position - apex_position > 2; // scale +1: prevent apex position to be at the edge of the data
 
         case 1:                                                                      // Case 2b: apex right | valley left
-            apex_position = ((float *)&res)[3];                                      //-B1 / 2 / B3;                                            // is positive
+            apex_position = ((float *)&res)[3];                                      //-B1 / 2 / B3;                                          // is positive
             valley_position = ((float *)&res)[2];                                    //-B1 / 2 / B2;                                          // is negative
             return apex_position < scale - 1 && apex_position - valley_position > 2; // scale -1: prevent apex position to be at the edge of the data
 
@@ -1806,15 +1844,13 @@ namespace qAlgorithms
 #pragma endregion isValidPeakHeight
 
 #pragma region isValidPeakArea
-    bool isValidPeakArea(
+
+    std::pair<float, float> calcPeakAreaUncert(
         RegCoeffs coeff,
         const float mse,
         const int scale,
-        const int df_sum,
-        float &area,
-        float &uncertainty_area)
+        const int df_sum)
     {
-        // predefine expressions
         float b1 = coeff.b1;
         float b2 = coeff.b2;
         float b3 = coeff.b3;
@@ -1823,9 +1859,7 @@ namespace qAlgorithms
         float B1_2_SQRTB2 = b1 / 2 * _SQRTB2;
         float B1_2_SQRTB3 = b1 / 2 * _SQRTB3;
         float B1_2_B2 = b1 / 2 / b2;
-        float EXP_B12 = exp_approx_d(-b1 * B1_2_B2 / 2);
         float B1_2_B3 = b1 / 2 / b3;
-        float EXP_B13 = exp_approx_d(-b1 * B1_2_B3 / 2);
 
         // initialize variables
         float J[4]; // Jacobian matrix
@@ -1856,13 +1890,51 @@ namespace qAlgorithms
         J[2] = -B1_2_B2 * (J_2_L + J_1_L / b1);
         J[3] = -B1_2_B3 * (J_2_R + J_1_R / b1);
 
-        area = J[0]; // at this point the area is without exp(b0), i.e., to get the real area multiply with exp(b0) later. This is done to avoid exp function at this point
-        uncertainty_area = std::sqrt(mse * multiplyVecMatrixVecTranspose(J, scale));
+        float area = J[0]; // at this point the area is without exp(b0), i.e., to get the real area multiply with exp(b0) later. This is done to avoid exp function at this point
+        float uncertainty_area = std::sqrt(mse * multiplyVecMatrixVecTranspose(J, scale));
 
-        if (area / uncertainty_area <= T_VALUES[df_sum - 5])
-        {
-            return false;
-        }
+        return std::pair(area, uncertainty_area);
+    }
+
+    bool isValidPeakArea(
+        RegCoeffs coeff,
+        const float mse,
+        const int scale,
+        const int df_sum,
+        float &area,
+        float &uncertainty_area)
+    {
+        // predefine expressions
+        float b1 = coeff.b1;
+        float b2 = coeff.b2;
+        float b3 = coeff.b3;
+        float _SQRTB2 = 1 / std::sqrt(std::abs(b2));
+        float _SQRTB3 = 1 / std::sqrt(std::abs(b3));
+        float B1_2_SQRTB2 = b1 / 2 * _SQRTB2;
+        float B1_2_SQRTB3 = b1 / 2 * _SQRTB3;
+        float B1_2_B2 = b1 / 2 / b2;
+        float EXP_B12 = exp_approx_d(-b1 * B1_2_B2 / 2);
+        float B1_2_B3 = b1 / 2 / b3;
+        float EXP_B13 = exp_approx_d(-b1 * B1_2_B3 / 2);
+
+        // here we have to check if there is a valley point or not
+        const float err_L =
+            (b2 < 0)
+                ? experfc(B1_2_SQRTB2, -1.0) // 1 - std::erf(b1 / 2 / SQRTB2) // ordinary peak
+                : dawson5(B1_2_SQRTB2);      // erfi(b1 / 2 / SQRTB2);        // peak with valley point;
+
+        float err_R =
+            (b3 < 0)
+                ? experfc(B1_2_SQRTB3, 1.0) // 1 + std::erf(b1 / 2 / SQRTB3) // ordinary peak
+                : dawson5(-B1_2_SQRTB3);    // -erfi(b1 / 2 / SQRTB3);       // peak with valley point ;
+
+        // calculate the Jacobian matrix terms
+        float J_1_common_L = _SQRTB2; // SQRTPI_2 * EXP_B12 / SQRTB2;
+        float J_1_common_R = _SQRTB3; // SQRTPI_2 * EXP_B13 / SQRTB3;
+        float J_2_common_L = B1_2_B2 / b1;
+        float J_2_common_R = B1_2_B3 / b1;
+
+        // previous point of termination
 
         float J_covered[4];    // Jacobian matrix for the covered peak area
         float x_left = -scale; // left limit due to the window
@@ -1979,7 +2051,9 @@ namespace qAlgorithms
     {
         if (n < 2 * scale + 1)
         {
-            throw std::invalid_argument("n must be greater or equal to 2 * scale + 1");
+            std::cerr << "n must be greater or equal to 2 * scale + 1. Process terminated";
+            // throw std::invalid_argument("n must be greater or equal to 2 * scale + 1");
+            exit(1);
         }
         std::array<__m128, 512> beta;
         __m128 result[512];
@@ -2002,7 +2076,9 @@ namespace qAlgorithms
     {
         if (n < 2 * scale + 1)
         {
-            throw std::invalid_argument("n must be greater or equal to 2 * scale + 1");
+            std::cerr << "n must be greater or equal to 2 * scale + 1. Process terminated";
+            // throw std::invalid_argument("n must be greater or equal to 2 * scale + 1");
+            exit(1);
         }
 
         __m128 *result = new __m128[n - 2 * scale];
@@ -2070,8 +2146,10 @@ namespace qAlgorithms
             {
                 if (2 * i + j >= buffer_size)
                 {
-                    throw std::out_of_range("Index out of range for products array: n=" + std::to_string(n) +
-                                            " i=" + std::to_string(i) + " j=" + std::to_string(j));
+                    // throw std::out_of_range("Index out of range for products array: n=" + std::to_string(n) +
+                    //                         " i=" + std::to_string(i) + " j=" + std::to_string(j));
+                    std::cerr << "Index out of range for products array: n = " << n << " i = " << i << " j = " << j;
+                    exit(1);
                 }
                 __m128 products_temp = _mm_permute_ps(products[j], 0b10110100);
                 __m128 sign_flip = _mm_set_ps(1.0f, 1.0f, -1.0f, 1.0f);
