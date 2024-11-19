@@ -76,6 +76,8 @@ namespace qAlgorithms
     {
         std::array<float, 384> invArray;
         // init invArray
+        // XtX = transposed(Matrix X ) * Matrix X
+        // XtX_xy: x = row number; y = column number
         float XtX_00 = 1.f;
         float XtX_02 = 0.f;
         float XtX_11 = 0.f;
@@ -1147,6 +1149,67 @@ namespace qAlgorithms
 
 #pragma region calcSSE
 
+    float calcSegments(RegCoeffs coeff, int limit_L, int limit_R, const float *y_start, bool calc_EXP, bool calc_CHISQ)
+    {
+        // integral of (b0 + b1 * x + b2 OR b3 * x^2 - y)^2 for the full peak
+        // b2 is used for left half, b3 for right
+        assert(limit_L < 0);
+        assert(limit_R > 0);
+
+        double result = 0.0;
+
+        // left side
+        long int lengthLeft = -limit_L;
+
+        for (int iSegment = 0; iSegment < lengthLeft; iSegment++)
+        {
+            double new_x = limit_L + iSegment;
+            double y_base = coeff.b0 + coeff.b1 * new_x + coeff.b2 * new_x * new_x;
+            double y_new = y_base;
+            if (calc_EXP)
+            {
+                y_new = exp_approx_d(y_base); // calculate the exp of the yhat values (if needed)
+            }
+            double y_current = y_start[iSegment];
+            double newdiff = (y_current - y_new) * (y_current - y_new);
+            assert(newdiff != INFINITY);
+            if (calc_CHISQ)
+            {
+                assert(y_new != 0);
+                newdiff = newdiff / y_new; // Calculate the weighted square of the difference
+            }
+            // std::cout << newdiff << ", ";
+            result += newdiff;
+        }
+        // apex
+        result += (coeff.b0 - y_start[lengthLeft]) * (coeff.b0 - y_start[lengthLeft]); // x = 0 -> (b0 - y)^2
+
+        // right side
+        long int lengthRight = limit_R + 1;
+
+        for (int iSegment = 1; iSegment < lengthRight; iSegment++) // iSegment = 0 is center point calculated above
+        {
+            // double new_x = limit_L + iSegment;
+            double y_base = coeff.b0 + coeff.b1 * iSegment + coeff.b3 * iSegment * iSegment; // b3 instead of b2
+            double y_new = y_base;
+            if (calc_EXP)
+            {
+                y_new = exp_approx_d(y_base); // calculate the exp of the yhat values (if needed)
+            }
+            double y_current = y_start[iSegment + lengthLeft]; // y_start[0] is the leftmost y value
+            double newdiff = (y_current - y_new) * (y_current - y_new);
+            assert(newdiff != INFINITY);
+            if (calc_CHISQ)
+            {
+                assert(y_new != 0);
+                newdiff = newdiff / y_new; // Calculate the weighted square of the difference
+            }
+            // std::cout << newdiff << ", ";
+            result += newdiff;
+        }
+        return result;
+    }
+
     // Lambda function to calculate the full segments
     float calcFullSegments(RegCoeffs coeff, int limit_L, int limit_R, const float *y_start, bool calc_EXP, bool calc_CHISQ)
     {
@@ -1178,7 +1241,7 @@ namespace qAlgorithms
             // std::cout << newdiff << ", ";
             result2 += newdiff;
         }
-        std::cout << "\n";
+        // std::cout << "\n";
         double result = 0;
         __m256 b0 = _mm256_set1_ps(coeff.b0); // b0 is eight times coeff 0
         __m256 b1 = _mm256_set1_ps(coeff.b1); // b1 is eight times coeff 1
@@ -1314,7 +1377,7 @@ namespace qAlgorithms
             // std::cout << newdiff << ", ";
             result2 += newdiff;
         }
-        std::cout << result2 << ", ";
+        // std::cout << result2 << ", ";
 
         float result = 0.0f; // result variable
 
@@ -1325,7 +1388,7 @@ namespace qAlgorithms
             result += calcFullSegments(coeff, left_limit, right_limit, y_start, calc_EXP, calc_CHISQ);
         }
 
-        std::cout << result << ", ";
+        // std::cout << result << ", ";
 
         const int nRemaining_left = -left_limit % 8;  // calculate the number of remaining elements
         const int nRemaining_right = right_limit % 8; // calculate the number of remaining elements
@@ -1340,7 +1403,7 @@ namespace qAlgorithms
                                     calc_EXP, calc_CHISQ, y_start, left_limit, right_limit);
         }
 
-        std::cout << result << ", ";
+        // std::cout << result << ", ";
 
         if (nRemaining_right > 0)
         {
@@ -1348,9 +1411,11 @@ namespace qAlgorithms
             result += calcRemaining(coeff, nRemaining_right, LINSPACE_UP_POS_256, 0, nRemaining_right + 1, 1, b3,
                                     calc_EXP, calc_CHISQ, y_start, left_limit, right_limit);
         }
-        std::cout << result << ", ";
+        // std::cout << result << ", ";
 
-        exit(1);
+        // return calcSegments(coeff, left_limit, right_limit, y_start, calc_EXP, calc_CHISQ);
+
+        // exit(1);
         return result;
     } // end calcSSE
 #pragma endregion calcSSE
@@ -1364,7 +1429,7 @@ namespace qAlgorithms
         size_t endIdx) // degrees of freedom
     {
         float best_mse = INFINITY;
-        auto best_regression = regressions.begin();
+        // auto best_regression = regressions.begin();
         size_t bestRegIdx = 0;
 
         // identify left (smallest) and right (largest) limit of the grouped regression windows
@@ -1381,14 +1446,13 @@ namespace qAlgorithms
         for (size_t i = startIdx; i < endIdx + 1; i++)
         {
             // step 2: calculate the mean squared error (MSE) between the predicted and actual values
-            const float mse = calcSSE(
-                                  left_limit - regressions[i].index_x0,  // left limit of the regression window (normalized scale)
-                                  right_limit - regressions[i].index_x0, // right limit of the regression window (normalized scale)
-                                  regressions[i].newCoeffs,              // regression coefficients
-                                  y_start + left_limit,                  // start of the measured data
-                                  true) /
-                              (df_sum - 4); // calculate the exp of the yhat values
-            // mse /= (df_sum - 4);
+            float mse = calcSSE(
+                left_limit - regressions[i].index_x0,  // left limit of the regression window (normalized scale)
+                right_limit - regressions[i].index_x0, // right limit of the regression window (normalized scale)
+                regressions[i].newCoeffs,              // regression coefficients
+                y_start + left_limit,                  // start of the measured data
+                true);                                 // calculate the exp of the yhat values
+            mse /= (df_sum - 4);
 
             if (mse < best_mse)
             {
@@ -1437,13 +1501,13 @@ namespace qAlgorithms
         for (int i = 0; i < n_regressions; ++i)
         {
             // step 2: calculate the mean squared error (MSE) between the predicted and actual values
-            const float mse = calcSSE(
-                                  left_limit - (regressions_start + i)->index_x0,  // left limit of the regression window (normalized scale)
-                                  right_limit - (regressions_start + i)->index_x0, // right limit of the regression window (normalized scale)
-                                  (regressions_start + i)->newCoeffs,              // regression coefficients
-                                  y_start + left_limit,                            // start of the measured data
-                                  true) /                                          // calculate the exp of the yhat values
-                              (df_sum - 4);
+            float mse = calcSSE(
+                left_limit - (regressions_start + i)->index_x0,  // left limit of the regression window (normalized scale)
+                right_limit - (regressions_start + i)->index_x0, // right limit of the regression window (normalized scale)
+                (regressions_start + i)->newCoeffs,              // regression coefficients
+                y_start + left_limit,                            // start of the measured data
+                true);                                           // calculate the exp of the yhat values
+            mse /= (df_sum - 4);
 
             // step 3: identify the best regression based on the MSE and return the MSE and the index of the best regression
             if (mse < best_mse)
@@ -1493,21 +1557,21 @@ namespace qAlgorithms
         }
 
         // step 2: calculate the mean squared error (MSE) between the predicted and actual values
-        const float mse_low_scale = calcSSE(
-                                        left_limit - low_scale_regression->index_x0,  // left limit of the regression window (normalized scale)
-                                        right_limit - low_scale_regression->index_x0, // right limit of the regression window (normalized scale)
-                                        low_scale_regression->newCoeffs,              // regression coefficients
-                                        y_start + left_limit,                         // start of the measured data
-                                        true) /                                       // calculate the exp of the yhat values
-                                    (df_sum - 4);
+        float mse_low_scale = calcSSE(
+            left_limit - low_scale_regression->index_x0,  // left limit of the regression window (normalized scale)
+            right_limit - low_scale_regression->index_x0, // right limit of the regression window (normalized scale)
+            low_scale_regression->newCoeffs,              // regression coefficients
+            y_start + left_limit,                         // start of the measured data
+            true);                                        // calculate the exp of the yhat values
+        mse_low_scale /= (df_sum - 4);
 
-        const float mse_hi_scale = calcSSE(
-                                       left_limit - hi_scale_regression->index_x0,  // left limit of the regression window (normalized scale)
-                                       right_limit - hi_scale_regression->index_x0, // right limit of the regression window (normalized scale)
-                                       hi_scale_regression->newCoeffs,              // regression coefficients
-                                       y_start + left_limit,                        // start of the measured data
-                                       true) /                                      // calculate the exp of the yhat values
-                                   (df_sum - 4);
+        float mse_hi_scale = calcSSE(
+            left_limit - hi_scale_regression->index_x0,  // left limit of the regression window (normalized scale)
+            right_limit - hi_scale_regression->index_x0, // right limit of the regression window (normalized scale)
+            hi_scale_regression->newCoeffs,              // regression coefficients
+            y_start + left_limit,                        // start of the measured data
+            true);                                       // calculate the exp of the yhat values
+        mse_hi_scale /= (df_sum - 4);
 
         // step 3: identify the best regression based on the MSE and return the MSE and the index of the best regression
         if (mse_low_scale < mse_hi_scale)
@@ -1528,6 +1592,7 @@ namespace qAlgorithms
         const std::vector<int> &validRegressionsInGroup,
         const int i_new_peak)
     {
+        // @todo is the mse calculated for all regressions?
         // comparison of the new regression (high) with multiple ref regressions (low)
         // check new_peak for mse
         if (validRegressions[i_new_peak].mse == 0.0)
