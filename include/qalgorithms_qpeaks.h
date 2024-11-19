@@ -289,6 +289,13 @@ namespace qAlgorithms
      * @return true : if the peak area is valid
      * @return false : if the peak area is not valid
      */
+
+    std::pair<float, float> calcPeakAreaUncert(
+        RegCoeffs coeff,
+        const float mse,
+        const int scale,
+        const int df_sum);
+
     bool isValidPeakArea(
         RegCoeffs coeff,
         const float mse,

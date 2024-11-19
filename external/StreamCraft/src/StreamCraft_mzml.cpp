@@ -500,6 +500,7 @@ sc::mzml::MZML_BINARY_METADATA sc::mzml::MZML::extract_binary_metadata(const pug
   }
   else
   {
+    // @todo fix exceptions
     throw("Encoding precision with accession MS:1000521, MS:1000522 or MS:1000523 not found!");
   }
 
@@ -546,6 +547,7 @@ sc::mzml::MZML_BINARY_METADATA sc::mzml::MZML::extract_binary_metadata(const pug
 
   if (!has_bin_data_type)
   {
+    // @todo fix exceptions
     throw("Encoded data type could not be found matching the mzML official vocabolary!");
   }
 
@@ -597,6 +599,7 @@ std::vector<std::vector<double>> sc::mzml::MZML::extract_spectrum(const pugi::xm
 
   if (number_spectra_binary_arrays != number_bins)
   {
+    // @todo fix exceptions
     throw("Binary array length does not match binary array length of first spectrum!");
   }
 
@@ -626,6 +629,7 @@ std::vector<std::vector<double>> sc::mzml::MZML::extract_spectrum(const pugi::xm
 
     if (bin_array_size != number_traces)
     {
+      // @todo fix exceptions
       throw("Number of traces in binary array does not match the value of the spectrum header!");
     }
 
@@ -844,6 +848,7 @@ std::vector<std::vector<double>> sc::mzml::MZML::extract_chromatogram(const pugi
 
     if (bin_array_size != number_traces)
     {
+      // @todo fix exceptions
       throw("Number of traces in binary array does not match the value of the chromatogram header!");
     }
 
@@ -870,6 +875,7 @@ std::vector<std::vector<double>> sc::mzml::MZML::extract_chromatogram(const pugi
     {
       if (chrom[0].size() != chrom[i].size())
       {
+        // @todo fix exceptions
         throw("Number of traces in binary arrays of the chromatogram does not match!");
       }
     }
