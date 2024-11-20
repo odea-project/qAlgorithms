@@ -499,7 +499,7 @@ namespace qAlgorithms
             if (calcDF(df_start, i, 2 * scale + i) > 4)
             {
                 const __m128 coeff = beta[i]; // coefficient register from beta @ i
-                if (((float *)&coeff)[2] != 0.0f && ((float *)&coeff)[3] != 0.0f)
+                if (coeff[2] != 0.0f && coeff[3] != 0.0f)
                 {
                     RegressionGauss selectRegression = makeValidRegression(i, scale, df_start, y_start,
                                                                            ylog_start, coeff);
@@ -1679,69 +1679,51 @@ namespace qAlgorithms
         float &apex_position,
         float &valley_position)
     {
-        assert(((float *)&coeff)[2] != 0.0f || ((float *)&coeff)[3] != 0.0f);
+        assert(coeff[0] != 0);
+        assert(coeff[2] != 0 && coeff[3] != 0);
         // calculate key by checking the signs of coeff
-        __m128 res = _mm_set1_ps(-0.5f); // res = -0.5
-        __m128 ZERO_128 = _mm_setzero_ps();
-        __m128 KEY_128 = _mm_set_ps(1.f, 2.f, 4.f, 0.f);
-        // compare the coefficients with zero, results will have the following values:
-        // 0xFFFFFFFF if the value is negative, 0x00000000 if the value is positive
-        __m128 signs = _mm_cmplt_ps(coeff, ZERO_128);
-        signs = _mm_and_ps(signs, KEY_128); // multiply a key value if the value if the coefficient is negative, i.e., b0 * 0, b1 * 4, b2 * 2, b3 * 1
-        signs = _mm_hadd_ps(signs, signs);  // horizontal add of the signs
-        signs = _mm_hadd_ps(signs, signs);  // horizontal add of the signs, now all values are the same, i.e. the sum
-        int key = _mm_cvtss_si32(signs);
-
+        __m128 res = _mm_set1_ps(-0.5f);                                 // res = -0.5
         res = _mm_mul_ps(res, _mm_shuffle_ps(coeff, coeff, 0b01010101)); // res = -0.5 * b1
         res = _mm_div_ps(res, coeff);                                    // res = -0.5 * b1 / b2
 
-        // key = 7: b1, b2, b3 are negative
-        // key = 6: b1, b2 are negative, b3 is positive
-        // key = 3: b1, b3 are negative, b2 is positive
-        // key = 1: b1, b2 are positive, b3 is negative
-        // key = 0, key = 5:
-        if (key == 7)
+        int key = _mm_movemask_ps(_mm_cmplt_ps(coeff, _mm_setzero_ps()));
+        // b1, b2, b3 are negative            ; 1110 = 14
+        // b1, b2 are negative, b3 is positive; 0110 = 6
+        // b2, b3 are negative, b1 is positive; 1100 = 12
+        // b1, b2 are positive, b3 is negative; 1000 = 8
+        enum keyCase
         {
-            assert(coeff[1] < 0 && ((float *)&coeff)[2] < 0 && coeff[3] < 0);
-        }
-        else if (key == 6)
-        {
-            assert(coeff[1] < 0 && ((float *)&coeff)[2] < 0 && coeff[3] > 0);
-        }
-        else if (key == 3)
-        {
-            // assert(coeff[1] < 0 && ((float *)&coeff)[2] > 0 && coeff[3] < 0); // assert fails, misunderstanding of key?
-        }
-        else if (key == 1)
-        {
-            assert(coeff[1] > 0 && ((float *)&coeff)[2] > 0 && coeff[3] < 0);
-        }
+            apexLeft_valleyNone = 14,
+            apexRight_valleyNone = 12,
+            apexLeft_valleyRight = 6,
+            apexRight_valleyLeft = 8
+        };
 
         switch (key)
         {
-        case 7:                                 // Case 1a: apex left
+        case apexLeft_valleyNone:
             apex_position = ((float *)&res)[2]; //-B1 / 2 / B2;  // is negative
             valley_position = 0;                // no valley point
             return apex_position > -scale + 1;  // scale +1: prevent apex position to be at the edge of the data
 
-        case 3:                                 // Case 1b: apex right
+        case apexRight_valleyNone:              // Case 1b: apex right
             apex_position = ((float *)&res)[3]; //-B1 / 2 / B3;     // is positive
             valley_position = 0;                // no valley point
             return apex_position < scale - 1;   // scale -1: prevent apex position to be at the edge of the data
 
-        case 6:                                                                       // Case 2a: apex left | valley right
+        case apexLeft_valleyRight:
             apex_position = ((float *)&res)[2];                                       //-B1 / 2 / B2;                                           // is negative
             valley_position = ((float *)&res)[3];                                     //-B1 / 2 / B3;                                           // is positive
             return apex_position > -scale + 1 && valley_position - apex_position > 2; // scale +1: prevent apex position to be at the edge of the data
 
-        case 1:                                                                      // Case 2b: apex right | valley left
+        case apexRight_valleyLeft:
             apex_position = ((float *)&res)[3];                                      //-B1 / 2 / B3;                                          // is positive
             valley_position = ((float *)&res)[2];                                    //-B1 / 2 / B2;                                          // is negative
             return apex_position < scale - 1 && apex_position - valley_position > 2; // scale -1: prevent apex position to be at the edge of the data
 
         default:
             return false; // invalid case
-        } // end switch
+        }
     }
 #pragma endregion calcApexAndValleyPos
 
