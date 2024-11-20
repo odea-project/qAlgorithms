@@ -849,7 +849,6 @@ int main(int argc, char *argv[])
                 findCentroids_MZML(data, addEmptyScans, convertRT, diff_rt, true, polarity, 10); // read mzML file and find centroids via qPeaks
             if (centroids.size() < 5)
             {
-
                 if (!silent)
                 {
                     std::cout << "skipping mode: " << polarity << "\n";
@@ -906,6 +905,19 @@ int main(int argc, char *argv[])
             std::vector<EIC> binnedData = performQbinning(
                 binThis, convertRT, pathOutput, filename, 3, !verboseProgress, printSummary, printBins); // set maxdist here
             timeEnd = std::chrono::high_resolution_clock::now();
+
+            if (binnedData.size() == 0)
+            {
+                std::cerr << "Error: no bins could be constructed from the data.\n";
+                if (!skipError)
+                {
+                    exit(1);
+                }
+                else
+                {
+                    continue;
+                }
+            }
 
             if (!silent)
             {
@@ -1004,6 +1016,9 @@ int main(int argc, char *argv[])
             // auto peakpointer = collapseFeaturelist(peaks);
             // initialComponentBinner(peaks, 1);
         }
+        // if this is not reset, the warning will be displayed for every file until the
+        // program exits when processing a task list
+        PPM_PRECENTROIDED = -INFINITY;
         counter++;
     }
     if (!silent)
