@@ -679,7 +679,6 @@ namespace qAlgorithms
           term is considered statistically insignificant, and the loop continues
           to the next iteration.
         */
-        // float mse = calcSSE(-scale, scale, replacer, ylog_start + i); // mean squared error
         float mse = calcSSE_base(replacer, ylog_start + i, -scale, scale);
         mse /= (df_sum - 4);
 
@@ -748,7 +747,6 @@ namespace qAlgorithms
           the exponential domain. If the chi-square value is less than the corresponding
           value in the CHI_SQUARES, the loop continues to the next iteration.
         */
-        // float chiSquare = calcSSE(-scale, scale, replacer, y_start + i, true, true);
         float chiSquare = calcSSE_chisqared(replacer, y_start + i, -scale, scale);
         if (chiSquare < CHI_SQUARES[df_sum - 5])
         {
@@ -817,13 +815,6 @@ namespace qAlgorithms
                     {
                         if (validRegressions[j].mse == 0.0)
                         { // calculate the mse of the ref peak
-                            // validRegressions[j].mse = calcSSE(
-                            //                               (validRegressions[j].left_limit) - validRegressions[j].index_x0,  // left limit of the ref peak
-                            //                               (validRegressions[j].right_limit) - validRegressions[j].index_x0, // right limit of the ref peak
-                            //                               validRegressions[j].newCoeffs,                                    // regression coefficients
-                            //                               y_start + (int)validRegressions[j].left_limit,                    // pointer to the start of the Y matrix
-                            //                               true) /
-                            //                           validRegressions[j].df;
                             validRegressions[j].mse = calcSSE_exp(
                                 validRegressions[j].newCoeffs,
                                 y_start + (int)validRegressions[j].left_limit,
@@ -850,13 +841,6 @@ namespace qAlgorithms
 
             if (validRegressions[i].mse == 0.0)
             { // calculate the mse of the current peak
-                // validRegressions[i].mse = calcSSE(
-                //                               left_limit - validRegressions[i].index_x0,  // left limit of the new peak
-                //                               right_limit - validRegressions[i].index_x0, // right limit of the new peak
-                //                               validRegressions[i].newCoeffs,              // regression coefficients
-                //                               y_start + left_limit,                       // pointer to the start of the Y matrix
-                //                               true) /
-                //                           validRegressions[i].df;
                 validRegressions[i].mse = calcSSE_exp(
                     validRegressions[i].newCoeffs,
                     y_start + left_limit,
@@ -865,47 +849,6 @@ namespace qAlgorithms
                 validRegressions[i].mse /= validRegressions[i].df;
             }
 
-            // @todo this part of the code does not seem to do anything
-            // if (numPeaksInGroup == 1)
-            {
-                //     // calculate the extended MSE using the current peak and the ref peak and set the worse one to invalid
-                //     // create a temporary std::vector<std::unique_ptr<validRegression>> with the new peak and the ref peak
-                //     size_t idxSec = validRegressionsInGroup[0];
-                //     int leftLimitMSE = std::min(left_limit, validRegressions[idxSec].left_limit);
-                //     int rightLimitMSE = std::max(right_limit, validRegressions[idxSec].right_limit);
-                //     const int df_sum = calcDF(df_start, left_limit, right_limit);
-
-                //     const float mse_i = calcSSE(
-                //                             leftLimitMSE - validRegressions[i].index_x0,  // left limit of the regression window (normalized scale)
-                //                             rightLimitMSE - validRegressions[i].index_x0, // right limit of the regression window (normalized scale)
-                //                             validRegressions[i].newCoeffs,                // regression coefficients
-                //                             y_start + leftLimitMSE,                       // start of the measured data
-                //                             true) /                                       // calculate the exp of the yhat values
-                //                         (df_sum - 4);
-
-                //     const float mse_s = calcSSE(
-                //                             leftLimitMSE - validRegressions[idxSec].index_x0,  // left limit of the regression window (normalized scale)
-                //                             rightLimitMSE - validRegressions[idxSec].index_x0, // right limit of the regression window (normalized scale)
-                //                             validRegressions[idxSec].newCoeffs,                // regression coefficients
-                //                             y_start + leftLimitMSE,                            // start of the measured data
-                //                             true) /                                            // calculate the exp of the yhat values
-                //                         (df_sum - 4);
-
-                //     if (mse_i < mse_s)
-                //     {
-                //         // mse_i is the better regression
-                //         validRegressions[i].mse = mse_i;
-                //         validRegressions[i].isValid = true;
-                //         validRegressions[idxSec].isValid = false;
-                //     }
-                //     else
-                //     {
-                //         validRegressions[idxSec].mse = mse_s;
-                //         validRegressions[idxSec].isValid = true;
-                //         validRegressions[i].isValid = false;
-                //     }
-                //     continue;
-            }
             if (validRegressions[i].mse < grpMSE)
             {
                 // Set isValid to false for the candidates from the group
@@ -1213,6 +1156,7 @@ namespace qAlgorithms
 
     float calcSSE_exp(RegCoeffs coeff, const float *y_start, int limit_L, int limit_R)
     {
+        // @todo should the normalisation be included as a function argument?
         assert(limit_L < 0 && limit_R > 0);
 
         double result = 0.0;
@@ -1277,295 +1221,6 @@ namespace qAlgorithms
         return result;
     }
 
-    float calcSegments(RegCoeffs coeff, int limit_L, int limit_R, const float *y_start, bool calc_EXP, bool calc_CHISQ)
-    {
-
-        // calculation of: a): SSE      -> sum((y-yhat)^2)
-        //                 b): SSE(exp) -> sum((exp(y)-exp(yhat))^2)
-        //                 c): CHIsq    -> sum((exp(y)-exp(yhat))^2 / exp(yhat))
-        //  where: y is a vector of observed intensities
-        //         yhat are the expected intensities based on: yhat = b0 + x * (b1 + x * b2) for x < 0
-        //                                                          = b0 + x * (b1 + x * b3) for x > 0
-        //                                                          = b0 for x == 0
-
-        assert(limit_L < 0 && limit_R > 0);
-
-        double result = 0.0;
-
-        // left side
-        int lengthLeft = -limit_L; // @daniel: why long int?
-
-        for (int iSegment = 0; iSegment < lengthLeft; iSegment++)
-        {
-            double new_x = limit_L + iSegment;
-            double y_base = coeff.b0 + coeff.b1 * new_x + coeff.b2 * new_x * new_x; // @daniel: i suggest b0 + x * (b1 + x * b2) // change after confirmed function
-
-            if (calc_EXP) // @daniel if branching is a problem, we can also consider splitting the function into 3 functions, right? // yes, probably the best way if only three cases exist
-            {
-                y_base = exp_approx_d(y_base); // calculate the exp of the yhat values (if needed)
-            }
-            double y_current = y_start[iSegment];
-            double newdiff = (y_base - y_current) * (y_base - y_current);
-            assert(newdiff != INFINITY);
-
-            if (calc_CHISQ) // @daniel: in our algorithm chi squares will always calculated for exp data. We could use this for optimization.
-            {
-                assert(y_base != 0);
-                newdiff = newdiff / y_base; // Calculate the weighted square of the difference (chi-squares)
-            }
-            // std::cout << newdiff << ", ";
-            result += newdiff;
-        }
-        // apex // @daniel this is not the apex. it is the x==0 case, and here the same with exp and chi-square should be considered as in the loops above. i.e. we should solve this in a different way
-        if (calc_EXP)
-        {
-            double coeff_exp = exp_approx_d(coeff.b0);
-            double diff = (coeff_exp - y_start[lengthLeft]) * (coeff_exp - y_start[lengthLeft]);
-            if (calc_CHISQ)
-            {
-                assert(coeff_exp != 0);
-                diff /= coeff_exp;
-            }
-            result += diff;
-        }
-        else
-        {
-            result += (coeff.b0 - y_start[lengthLeft]) * (coeff.b0 - y_start[lengthLeft]); // x = 0 -> (b0 - y)^2
-        }
-        // right side // @daniel isnt this more or less the same like we did in the other loop? i suggest merging these to reduce redundancies // context switch with b3 is both more confusing and less efficient
-        long int lengthRight = limit_R + 1;
-        for (int iSegment = 1; iSegment < lengthRight; iSegment++) // iSegment = 0 is center point calculated above
-        {
-            // double new_x = limit_L + iSegment;
-            double y_base = coeff.b0 + coeff.b1 * iSegment + coeff.b3 * iSegment * iSegment; // b3 instead of b2
-            if (calc_EXP)
-            {
-                y_base = exp_approx_d(y_base); // calculate the exp of the yhat values (if needed)
-            }
-            double y_current = y_start[iSegment + lengthLeft]; // y_start[0] is the leftmost y value
-            double newdiff = (y_current - y_base) * (y_current - y_base);
-            assert(newdiff != INFINITY);
-            if (calc_CHISQ)
-            {
-                assert(y_base != 0);
-                newdiff = newdiff / y_base; // Calculate the weighted square of the difference
-            }
-            // std::cout << newdiff << ", ";
-            result += newdiff;
-        }
-        assert(!isnan(result));
-        return result;
-    }
-
-    // Lambda function to calculate the full segments
-    float calcFullSegments(RegCoeffs coeff, int limit_L, int limit_R, const float *y_start, bool calc_EXP, bool calc_CHISQ)
-    {
-        assert(limit_L < 0);
-        assert(limit_R > 0);
-
-        // left side
-        int j = 0;
-        long int nFullSegments = -limit_L;
-
-        double result2 = 0.0f;
-        for (long int iSegment = 0; iSegment < nFullSegments; iSegment++)
-        {
-            double new_x = limit_L + iSegment;
-            double y_base = coeff.b0 + coeff.b1 * new_x + coeff.b2 * new_x * new_x;
-            double y_new = y_base;
-            if (calc_EXP)
-            {
-                y_new = exp_approx_d(y_base); // calculate the exp of the yhat values (if needed)
-            }
-            double y_current = y_start[iSegment];
-            double newdiff = (y_current - y_new) * (y_current - y_new);
-            assert(newdiff != INFINITY);
-            if (calc_CHISQ)
-            {
-                assert(y_new != 0);
-                newdiff = newdiff / y_new; // Calculate the weighted square of the difference
-            }
-            // std::cout << newdiff << ", ";
-            result2 += newdiff;
-        }
-        // std::cout << "\n";
-        double result = 0;
-        __m256 b0 = _mm256_set1_ps(coeff.b0); // b0 is eight times coeff 0
-        __m256 b1 = _mm256_set1_ps(coeff.b1); // b1 is eight times coeff 1
-        __m256 b2 = _mm256_set1_ps(coeff.b2);
-        __m256 b3 = _mm256_set1_ps(coeff.b3);
-
-        __m256 LINSPACE = _mm256_set_ps(7.f, 6.f, 5.f, 4.f, 3.f, 2.f, 1.f, 0.f);
-        __m256 x = _mm256_add_ps(_mm256_set1_ps(limit_L - 8.0), LINSPACE); // formerly i
-        nFullSegments = -limit_L / 8;
-        j = 0;
-        for (int iSegment = 0; iSegment < nFullSegments; ++iSegment, j += 8)
-        {
-            // Load 8 values of i directly as float
-            x = _mm256_add_ps(_mm256_set1_ps(8), x); // x vector : -k to -k+7
-
-            // Calculate the yhat values
-            __m256 yhat = _mm256_fmadd_ps(_mm256_fmadd_ps(b2, x, b1), x, b0); // b0 + b1 * x + b2 * x^2
-            if (calc_EXP)
-            {
-                yhat = exp_approx_vf(yhat); // calculate the exp of the yhat values (if needed)
-            }
-            const __m256 y_vec = _mm256_loadu_ps(y_start + j); // Load 8 values from y considering the offset j
-            const __m256 diff = _mm256_sub_ps(y_vec, yhat);    // Calculate the difference between y and yhat
-            __m256 diff_sq = _mm256_mul_ps(diff, diff);        // Calculate the square of the difference
-            if (calc_CHISQ)
-            {
-                diff_sq = _mm256_div_ps(diff_sq, yhat); // Calculate the weighted square of the difference
-            }
-            double accum = 0;
-            for (size_t i = 0; i < 8; i++)
-            {
-                // std::cout << diff_sq[i] << ", ";
-                accum += diff_sq[i];
-            }
-
-            result += accum; // sum8(diff_sq); // Calculate the sum of the squares and add it to the result
-        }
-
-        // std::cout << "\n"
-        //           << result2 << ", " << result << " " << -limit_L << "\n";
-        // std::cout.flush();
-        // assert(abs(abs(result2) - abs(result)) < 0.00001);
-
-        // result = result2;
-
-        // right side
-        j = (limit_R - limit_L + 1 - 8);
-        nFullSegments = limit_R / 8;
-        LINSPACE = _mm256_set_ps(0.f, -1.f, -2.f, -3.f, -4.f, -5.f, -6.f, -7.f);
-        x = _mm256_add_ps(_mm256_set1_ps(limit_R + 8.0), LINSPACE); // x vector : -k to -k+7
-
-        for (int iSegment = 0; iSegment < nFullSegments; ++iSegment, j -= 8)
-        {
-            // Load 8 values of i directly as float
-            x = _mm256_add_ps(_mm256_set1_ps(-8.0), x); // x vector : -k to -k+7
-            // Calculate the yhat values
-            __m256 yhat = _mm256_fmadd_ps(_mm256_fmadd_ps(b3, x, b1), x, b0); // b0 + b1 * x + b2 * x^2
-            if (calc_EXP)
-            {
-                yhat = exp_approx_vf(yhat); // calculate the exp of the yhat values (if needed)
-            }
-            const __m256 y_vec = _mm256_loadu_ps(y_start + j); // Load 8 values from y considering the offset j
-            const __m256 diff = _mm256_sub_ps(y_vec, yhat);    // Calculate the difference between y and yhat
-            __m256 diff_sq = _mm256_mul_ps(diff, diff);        // Calculate the square of the difference
-            if (calc_CHISQ)
-            {
-                diff_sq = _mm256_div_ps(diff_sq, yhat); // Calculate the weighted square of the difference
-            }
-            result += sum8(diff_sq); // Calculate the sum of the squares and add it to the result
-        }
-
-        return result;
-    };
-
-    float calcRemaining(RegCoeffs coeff, const int nRemaining, const __m256 x, const int y_start_offset,
-                        const int y_end_offset, const int mask_offset, const __m256 b_quadratic,
-                        bool calc_EXP, bool calc_CHISQ, const float *y_start, int limit_L, int limit_R)
-    {
-        const __m256 b0 = _mm256_set1_ps(coeff.b0);
-        const __m256 b1 = _mm256_set1_ps(coeff.b1);
-
-        // Calculate the yhat values for the remaining elements
-        __m256 yhat = _mm256_fmadd_ps(_mm256_fmadd_ps(b_quadratic, x, b1), x, b0); // b0 + b1 * x + b2 * x^2
-        if (calc_EXP)
-        {
-            yhat = exp_approx_vf(yhat); // calculate the exp of the yhat values (if needed)
-        }
-        // Load the remaining values from y
-        float y_remaining[8] = {0.0f};
-        std::copy(y_start - limit_L + y_start_offset, y_start - limit_L + y_end_offset, y_remaining);
-        const __m256 y_vec = _mm256_loadu_ps(y_remaining);
-
-        __m256i LINSPACE_UP_INT_256 = _mm256_set_epi32(7, 6, 5, 4, 3, 2, 1, 0);
-        const __m256i mask = _mm256_cmpgt_epi32(_mm256_set1_epi32(nRemaining + mask_offset), LINSPACE_UP_INT_256); // mask for the remaining elements
-        yhat = _mm256_blendv_ps(y_vec, yhat, _mm256_castsi256_ps(mask));                                           // set the remaining elements to zero
-
-        const __m256 diff = _mm256_sub_ps(y_vec, yhat); // calculate the difference between y and yhat
-        __m256 diff_sq = _mm256_mul_ps(diff, diff);     // calculate the square of the difference
-        if (calc_CHISQ)
-        {
-            diff_sq = _mm256_div_ps(diff_sq, yhat);                                              // calculate the weighted square of the difference
-            diff_sq = _mm256_blendv_ps(_mm256_setzero_ps(), diff_sq, _mm256_castsi256_ps(mask)); // set the nan values to zero
-        }
-        return sum8(diff_sq); // calculate the sum of the squares and add it to the result
-    };
-
-    float calcSSE(
-        const int left_limit,
-        const int right_limit,
-        RegCoeffs coeff,
-        const float *y_start,
-        const bool calc_EXP,
-        const bool calc_CHISQ)
-    {
-        double result2 = 0.0f;
-        for (long int iSegment = -left_limit; iSegment < right_limit; iSegment++)
-        {
-            double new_x = iSegment;
-            double y_base = coeff.b0 + coeff.b1 * new_x + coeff.b2 * new_x * new_x;
-            double y_new = y_base;
-            if (calc_EXP)
-            {
-                y_new = exp_approx_d(y_base); // calculate the exp of the yhat values (if needed)
-            }
-            double y_current = y_start[iSegment];
-            double newdiff = (y_current - y_new) * (y_current - y_new);
-            assert(newdiff != INFINITY);
-            if (calc_CHISQ)
-            {
-                assert(y_new != 0);
-                newdiff = newdiff / y_new; // Calculate the weighted square of the difference
-            }
-            // std::cout << newdiff << ", ";
-            result2 += newdiff;
-        }
-        // std::cout << result2 << ", ";
-
-        float result = 0.0f; // result variable
-
-        // Calculate the full segments
-        // only applies if there are at least eight numbers on one side of the peak
-        if (left_limit < -7 || right_limit > 7)
-        {
-            result += calcFullSegments(coeff, left_limit, right_limit, y_start, calc_EXP, calc_CHISQ);
-        }
-
-        // std::cout << result << ", ";
-
-        const int nRemaining_left = -left_limit % 8;  // calculate the number of remaining elements
-        const int nRemaining_right = right_limit % 8; // calculate the number of remaining elements
-
-        __m256 LINSPACE_UP_POS_256 = _mm256_set_ps(7.f, 6.f, 5.f, 4.f, 3.f, 2.f, 1.f, 0.f);
-
-        if (nRemaining_left > 0)
-        {
-            const __m256 b2 = _mm256_set1_ps(coeff.b2);
-            __m256 x_left = _mm256_add_ps(_mm256_set1_ps(-static_cast<float>(nRemaining_left)), LINSPACE_UP_POS_256); // x vector : -nRemaining_left to -nRemaining_left+7
-            result += calcRemaining(coeff, nRemaining_left, x_left, -nRemaining_left, 0, 0, b2,
-                                    calc_EXP, calc_CHISQ, y_start, left_limit, right_limit);
-        }
-
-        // std::cout << result << ", ";
-
-        if (nRemaining_right > 0)
-        {
-            const __m256 b3 = _mm256_set1_ps(coeff.b3);
-            result += calcRemaining(coeff, nRemaining_right, LINSPACE_UP_POS_256, 0, nRemaining_right + 1, 1, b3,
-                                    calc_EXP, calc_CHISQ, y_start, left_limit, right_limit);
-        }
-        // std::cout << result << ", ";
-
-        // std::cout << calcSegments(coeff, left_limit, right_limit, y_start, calc_EXP, calc_CHISQ) << " ; ";
-        return calcSegments(coeff, left_limit, right_limit, y_start, calc_EXP, calc_CHISQ);
-
-        // exit(1);
-        // return result;
-    }
 #pragma endregion calcSSE
 
 #pragma region calcExtendedMse
@@ -1594,12 +1249,6 @@ namespace qAlgorithms
         for (size_t i = startIdx; i < endIdx + 1; i++)
         {
             // step 2: calculate the mean squared error (MSE) between the predicted and actual values
-            // float mse = calcSSE(
-            //     left_limit - regressions[i].index_x0,  // left limit of the regression window (normalized scale)
-            //     right_limit - regressions[i].index_x0, // right limit of the regression window (normalized scale)
-            //     regressions[i].newCoeffs,              // regression coefficients
-            //     y_start + left_limit,                  // start of the measured data
-            //     true);                                 // calculate the exp of the yhat values
             float mse = calcSSE_exp(regressions[i].newCoeffs,
                                     y_start + left_limit,
                                     left_limit - regressions[i].index_x0,
@@ -1653,12 +1302,6 @@ namespace qAlgorithms
         for (int i = 0; i < n_regressions; ++i)
         {
             // step 2: calculate the mean squared error (MSE) between the predicted and actual values
-            // float mse = calcSSE(
-            //     left_limit - (regressions_start + i)->index_x0,  // left limit of the regression window (normalized scale)
-            //     right_limit - (regressions_start + i)->index_x0, // right limit of the regression window (normalized scale)
-            //     (regressions_start + i)->newCoeffs,              // regression coefficients
-            //     y_start + left_limit,                            // start of the measured data
-            //     true);                                           // calculate the exp of the yhat values
             float mse = calcSSE_exp((regressions_start + i)->newCoeffs,
                                     y_start + left_limit,
                                     left_limit - (regressions_start + i)->index_x0,
@@ -1713,26 +1356,12 @@ namespace qAlgorithms
         }
 
         // step 2: calculate the mean squared error (MSE) between the predicted and actual values
-        // float mse_low_scale = calcSSE(
-        //     left_limit - low_scale_regression->index_x0,  // left limit of the regression window (normalized scale)
-        //     right_limit - low_scale_regression->index_x0, // right limit of the regression window (normalized scale)
-        //     low_scale_regression->newCoeffs,              // regression coefficients
-        //     y_start + left_limit,                         // start of the measured data
-        //     true);                                        // calculate the exp of the yhat values
-
         float mse_low_scale = calcSSE_exp(
             low_scale_regression->newCoeffs,
             y_start + left_limit,
             left_limit - low_scale_regression->index_x0,
             right_limit - low_scale_regression->index_x0);
         mse_low_scale /= (df_sum - 4);
-
-        // float mse_hi_scale = calcSSE(
-        //     left_limit - hi_scale_regression->index_x0,  // left limit of the regression window (normalized scale)
-        //     right_limit - hi_scale_regression->index_x0, // right limit of the regression window (normalized scale)
-        //     hi_scale_regression->newCoeffs,              // regression coefficients
-        //     y_start + left_limit,                        // start of the measured data
-        //     true);                                       // calculate the exp of the yhat values
 
         float mse_hi_scale = calcSSE_exp(
             hi_scale_regression->newCoeffs,
@@ -1765,13 +1394,6 @@ namespace qAlgorithms
         // check new_peak for mse
         if (validRegressions[i_new_peak].mse == 0.0)
         { // calculate the mse of the current peak
-            // validRegressions[i_new_peak].mse = calcSSE(
-            //                                        validRegressions[i_new_peak].left_limit - validRegressions[i_new_peak].index_x0,  // left limit of the new peak (normalized scale)
-            //                                        validRegressions[i_new_peak].right_limit - validRegressions[i_new_peak].index_x0, // right limit of the new peak (normalized scale)
-            //                                        validRegressions[i_new_peak].newCoeffs,                                           // regression coefficients
-            //                                        y_start + validRegressions[i_new_peak].left_limit,
-            //                                        true) /
-            //                                    validRegressions[i_new_peak].df;
             validRegressions[i_new_peak].mse = calcSSE_exp(
                 validRegressions[i_new_peak].newCoeffs,
                 y_start + validRegressions[i_new_peak].left_limit,
@@ -1787,13 +1409,6 @@ namespace qAlgorithms
         {
             if (validRegressions[i_ref_peak].mse == 0.0)
             { // calculate the mse of the ref peak
-                // validRegressions[i_ref_peak].mse = calcSSE(
-                //                                        validRegressions[i_ref_peak].left_limit - validRegressions[i_ref_peak].index_x0,  // left limit of the ref peak (normalized scale)
-                //                                        validRegressions[i_ref_peak].right_limit - validRegressions[i_ref_peak].index_x0, // right limit of the ref peak (normalized scale)
-                //                                        validRegressions[i_ref_peak].newCoeffs,                                           // regression coefficients
-                //                                        y_start + validRegressions[i_ref_peak].left_limit,
-                //                                        true) /
-                //                                    validRegressions[i_ref_peak].df;
                 validRegressions[i_ref_peak].mse = calcSSE_exp(
                     validRegressions[i_ref_peak].newCoeffs,
                     y_start + validRegressions[i_ref_peak].left_limit,
