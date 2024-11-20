@@ -188,6 +188,7 @@ namespace qAlgorithms
                 convertRT.push_back(retention_times[i]); // convertRT[scan] = retention time of centroid
             }
             convertRT.push_back(retention_times[indices.size() - 1]);
+            assert(addEmpty.size() == indices.size() + 1);
             return transferCentroids(data, indices, retention_times, start_index, PPM_PRECENTROIDED);
         }
 
@@ -210,7 +211,7 @@ namespace qAlgorithms
         std::vector<std::vector<double>> data_vec = data.get_spectrum(indices[start_index]); // get first spectrum (x-axis)
         expectedDifference = calcExpectedDiff(data_vec[0]);                                  // calculate expected difference & check if Orbitrap
 
-#                                                   // pragma omp parallel for
+        // # pragma omp parallel for
         for (size_t i = 0; i < indices.size(); ++i) // loop over all indices
         {
             const int index = indices[i];                                     // spectrum index
@@ -241,6 +242,7 @@ namespace qAlgorithms
             convertRT.push_back(retention_times[i]); // convertRT[scan] = retention time of centroid
         }
         convertRT.push_back(retention_times[indices.size() - 1]);
+        assert(addEmpty.size() == indices.size() + 1);
         return centroids;
     } // readStreamCraftMZML
 #pragma endregion "find centroids"

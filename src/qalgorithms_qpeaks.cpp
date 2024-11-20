@@ -24,6 +24,12 @@ namespace qAlgorithms
         std::vector<std::vector<qCentroid>> centroids(allPeaks.size() + 1, std::vector<qCentroid>(0));
         int totalCentroids = 0;
         int scanRelative = 0;
+        int addTotal = 0;
+        for (size_t i = 0; i < addEmpty.size(); i++)
+        {
+            addTotal += addEmpty[i];
+        }
+
         // std::vector<qCentroid> scan(0);
         for (size_t i = 0; i < allPeaks.size(); ++i)
         {
@@ -46,6 +52,7 @@ namespace qAlgorithms
                 {
                     auto &peak = allPeaks[i][j];
                     qCentroid F = qCentroid{peak.mzUncertainty, peak.mz, scanRelative, peak.area, peak.height, peak.dqsCen};
+                    assert(F.scanNo <= allPeaks.size() + addTotal);
                     centroids[scanRelative].push_back(F);
                     ++totalCentroids;
                 }

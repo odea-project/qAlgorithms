@@ -120,7 +120,8 @@ namespace qAlgorithms
 
                 [[unlikely]] default:
                     std::cerr << "\nSeparation method " << dimensions[i] << " is not a valid parameter, terminating program\n";
-                    exit(201);
+                    finishedBins.clear();
+                    goto exit;
                 }
                 timeEnd = std::chrono::high_resolution_clock::now();
                 if (rebin)
@@ -138,6 +139,7 @@ namespace qAlgorithms
             }
         }
         std::cout << "completed subsetting\n";
+    exit:
     }
 
     void BinContainer::assignDQSB(const CentroidedData *rawdata, const int maxdist, bool rebin)
@@ -145,7 +147,9 @@ namespace qAlgorithms
         auto timeStart = std::chrono::high_resolution_clock::now();
 
         std::vector<Bin> &target = rebin ? redoneBins : finishedBins;
-        assert(target[0].DQSB_base.size() == 0); // bins are sorted after DQSB calculation, meaning scanMin and ScanMax parameters are wrong
+        // bins are sorted after DQSB calculation, meaning scanMin and ScanMax parameters are wrong
+        // this only works if bins exist
+        assert(target[0].DQSB_base.size() == 0);
 
         for (size_t i = 0; i < target.size(); i++)
         {
@@ -208,7 +212,10 @@ namespace qAlgorithms
         binDeque.push_back(startingRebin);
         // call binning wrapper with a vector other than finishedbins as write target
         this->subsetBins(dimensions, maxdist, true);
-        assert(!redoneBins.empty());
+        if (redoneBins.empty())
+        {
+            return;
+        }
         // calculate DQS on new bins
         this->assignDQSB(rawdata, maxdist, true);
         // re-add the newly constructed bins to finishedBins
@@ -673,6 +680,7 @@ namespace qAlgorithms
 
     void Bin::subsetScan(std::deque<Bin> *bincontainer, std::vector<Bin> *finishedBins, const int maxdist, int &counter)
     {
+        assert(!pointsInBin.empty());
         // function is called on a bin sorted by mz
         int control_duplicatesIn = 0;
         const size_t binSize = pointsInBin.size();
@@ -682,6 +690,13 @@ namespace qAlgorithms
         int lastpos = 0;
         for (size_t i = 0; i < binSize - 1; i++) // -1 since difference to next data point is checked
         {
+            if (pointsInBin[i + 1]->scanNo < pointsInBin[i]->scanNo)
+            {
+                // @todo probably undefined behaviour, since taking this print out causes
+                // the assert to fail despite the sorting earlier
+                std::cerr << pointsInBin[i + 1]->scanNo << ", " << pointsInBin[i]->scanNo << ", " << i << "\n";
+            }
+
             assert(pointsInBin[i + 1]->scanNo >= pointsInBin[i]->scanNo);
             int distanceScan = pointsInBin[i + 1]->scanNo - pointsInBin[i]->scanNo;
             if (distanceScan > maxdist) // bin needs to be split
@@ -1365,7 +1380,7 @@ namespace qAlgorithms
 
         if (silent) // @todo change this to a global variable
         {
-            std::cout.rdbuf(ss.rdbuf());
+            std::cout.rdbuf(ss.rdbuf()); // @todo this is a very bad idea
         }
 
         std::cout << "starting binning process...\n";
@@ -1377,6 +1392,14 @@ namespace qAlgorithms
         // at least one element must be terminator @todo make this a function parameter
         std::vector<int> measurementDimensions = {SubsetMethods::mz, SubsetMethods::scans};
         activeBins.subsetBins(measurementDimensions, maxdist, false);
+
+        if (activeBins.finishedBins.size() < 1)
+        {
+            // no bins were found -> critical error in the program
+            // this case was observed when reading in pure noise, which contained no signals
+            std::cout.rdbuf(old); // restore previous standard out
+            return std::vector<EIC>{};
+        }
 
         std::cout << "Total duplicates: " << duplicatesTotal << "\n--\ncalculating DQSBs...\n";
 
