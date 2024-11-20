@@ -27,6 +27,9 @@ Currently, no Linux releases are provided. We recommend you to clone the reposit
 and compile from source using cmake and GCC.
 
 ## Usage
+
+**Please note that as of this moment, qAlgorithms has a memory leak.** 
+**Do not process more than 70 to 150 (depending on your total free RAM) files at once for the time being.**
 On windows, start qAlgorithms.exe using powershell. Avoid non-ASCII characters in 
 filenames. If a folder or filename has a space in it, you need to enter the absolute
 path with quotes to read in everything correctly.
