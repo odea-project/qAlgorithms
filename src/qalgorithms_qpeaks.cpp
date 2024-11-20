@@ -679,7 +679,9 @@ namespace qAlgorithms
           term is considered statistically insignificant, and the loop continues
           to the next iteration.
         */
-        float mse = calcSSE(-scale, scale, replacer, ylog_start + i) / (df_sum - 4); // mean squared error
+        // float mse = calcSSE(-scale, scale, replacer, ylog_start + i); // mean squared error
+        float mse = calcSSE_base(replacer, ylog_start + i, -scale, scale);
+        mse /= (df_sum - 4);
 
         if (!isValidQuadraticTerm(replacer, scale, mse, df_sum))
         {
@@ -746,7 +748,8 @@ namespace qAlgorithms
           the exponential domain. If the chi-square value is less than the corresponding
           value in the CHI_SQUARES, the loop continues to the next iteration.
         */
-        float chiSquare = calcSSE(-scale, scale, replacer, y_start + i, true, true);
+        // float chiSquare = calcSSE(-scale, scale, replacer, y_start + i, true, true);
+        float chiSquare = calcSSE_chisqared(replacer, y_start + i, -scale, scale);
         if (chiSquare < CHI_SQUARES[df_sum - 5])
         {
             RegressionGauss badReg;
@@ -814,13 +817,19 @@ namespace qAlgorithms
                     {
                         if (validRegressions[j].mse == 0.0)
                         { // calculate the mse of the ref peak
-                            validRegressions[j].mse = calcSSE(
-                                                          (validRegressions[j].left_limit) - validRegressions[j].index_x0,  // left limit of the ref peak
-                                                          (validRegressions[j].right_limit) - validRegressions[j].index_x0, // right limit of the ref peak
-                                                          validRegressions[j].newCoeffs,                                    // regression coefficients
-                                                          y_start + (int)validRegressions[j].left_limit,                    // pointer to the start of the Y matrix
-                                                          true) /
-                                                      validRegressions[j].df;
+                            // validRegressions[j].mse = calcSSE(
+                            //                               (validRegressions[j].left_limit) - validRegressions[j].index_x0,  // left limit of the ref peak
+                            //                               (validRegressions[j].right_limit) - validRegressions[j].index_x0, // right limit of the ref peak
+                            //                               validRegressions[j].newCoeffs,                                    // regression coefficients
+                            //                               y_start + (int)validRegressions[j].left_limit,                    // pointer to the start of the Y matrix
+                            //                               true) /
+                            //                           validRegressions[j].df;
+                            validRegressions[j].mse = calcSSE_exp(
+                                validRegressions[j].newCoeffs,
+                                y_start + (int)validRegressions[j].left_limit,
+                                validRegressions[j].left_limit - validRegressions[j].index_x0,
+                                validRegressions[j].right_limit - validRegressions[j].index_x0);
+                            validRegressions[j].mse /= validRegressions[j].df;
                         }
                         grpDF += validRegressions[j].df;                            // add the degree of freedom
                         grpMSE += validRegressions[j].mse * validRegressions[j].df; // add the sum of squared errors
@@ -841,13 +850,19 @@ namespace qAlgorithms
 
             if (validRegressions[i].mse == 0.0)
             { // calculate the mse of the current peak
-                validRegressions[i].mse = calcSSE(
-                                              left_limit - validRegressions[i].index_x0,  // left limit of the new peak
-                                              right_limit - validRegressions[i].index_x0, // right limit of the new peak
-                                              validRegressions[i].newCoeffs,              // regression coefficients
-                                              y_start + left_limit,                       // pointer to the start of the Y matrix
-                                              true) /
-                                          validRegressions[i].df;
+                // validRegressions[i].mse = calcSSE(
+                //                               left_limit - validRegressions[i].index_x0,  // left limit of the new peak
+                //                               right_limit - validRegressions[i].index_x0, // right limit of the new peak
+                //                               validRegressions[i].newCoeffs,              // regression coefficients
+                //                               y_start + left_limit,                       // pointer to the start of the Y matrix
+                //                               true) /
+                //                           validRegressions[i].df;
+                validRegressions[i].mse = calcSSE_exp(
+                    validRegressions[i].newCoeffs,
+                    y_start + left_limit,
+                    left_limit - validRegressions[i].index_x0,
+                    right_limit - validRegressions[i].index_x0);
+                validRegressions[i].mse /= validRegressions[i].df;
             }
 
             // @todo this part of the code does not seem to do anything
@@ -1163,6 +1178,105 @@ namespace qAlgorithms
 
 #pragma region calcSSE
 
+    float calcSSE_base(RegCoeffs coeff, const float *y_start, int limit_L, int limit_R)
+    {
+        assert(limit_L < 0 && limit_R > 0);
+
+        double result = 0.0;
+
+        // left side
+        int lengthLeft = -limit_L;
+        for (int iSegment = 0; iSegment < lengthLeft; iSegment++)
+        {
+            double new_x = limit_L + iSegment;
+            double y_base = coeff.b0 + coeff.b1 * new_x + coeff.b2 * new_x * new_x; // @daniel: i suggest b0 + x * (b1 + x * b2) // change after confirmed function
+            double y_current = y_start[iSegment];
+            double newdiff = (y_base - y_current) * (y_base - y_current);
+
+            result += newdiff;
+        }
+        // center point
+        result += (coeff.b0 - y_start[lengthLeft]) * (coeff.b0 - y_start[lengthLeft]); // x = 0 -> (b0 - y)^2
+
+        // right side
+        int lengthRight = limit_R + 1;
+        for (int iSegment = 1; iSegment < lengthRight; iSegment++) // iSegment = 0 is center point calculated above
+        {
+            double y_base = coeff.b0 + coeff.b1 * iSegment + coeff.b3 * iSegment * iSegment; // b3 instead of b2
+            double y_current = y_start[iSegment + lengthLeft];                               // y_start[0] is the leftmost y value
+            double newdiff = (y_current - y_base) * (y_current - y_base);
+
+            result += newdiff;
+        }
+        return result;
+    }
+
+    float calcSSE_exp(RegCoeffs coeff, const float *y_start, int limit_L, int limit_R)
+    {
+        assert(limit_L < 0 && limit_R > 0);
+
+        double result = 0.0;
+
+        // left side
+        int lengthLeft = -limit_L;
+        for (int iSegment = 0; iSegment < lengthLeft; iSegment++)
+        {
+            double new_x = limit_L + iSegment;
+            double y_base = exp_approx_d(coeff.b0 + coeff.b1 * new_x + coeff.b2 * new_x * new_x); // @daniel: i suggest b0 + x * (b1 + x * b2) // change after confirmed function
+            double y_current = y_start[iSegment];
+            double newdiff = (y_base - y_current) * (y_base - y_current);
+
+            result += newdiff;
+        }
+        // center point
+        result += (exp_approx_d(coeff.b0) - y_start[lengthLeft]) * (exp_approx_d(coeff.b0) - y_start[lengthLeft]); // x = 0 -> (b0 - y)^2
+
+        int lengthRight = limit_R + 1;
+        for (int iSegment = 1; iSegment < lengthRight; iSegment++) // iSegment = 0 is center point (calculated above)
+        {
+            double y_base = exp_approx_d(coeff.b0 + coeff.b1 * iSegment + coeff.b3 * iSegment * iSegment); // b3 instead of b2
+            double y_current = y_start[iSegment + lengthLeft];                                             // y_start[0] is the leftmost y value
+            double newdiff = (y_current - y_base) * (y_current - y_base);
+
+            result += newdiff;
+        }
+        return result;
+    }
+
+    float calcSSE_chisqared(RegCoeffs coeff, const float *y_start, int limit_L, int limit_R)
+    {
+        assert(limit_L < 0 && limit_R > 0);
+
+        double result = 0.0;
+
+        // left side
+        int lengthLeft = -limit_L;
+        for (int iSegment = 0; iSegment < lengthLeft; iSegment++)
+        {
+            double new_x = limit_L + iSegment;
+            double y_base = exp_approx_d(coeff.b0 + coeff.b1 * new_x + coeff.b2 * new_x * new_x); // @daniel: i suggest b0 + x * (b1 + x * b2) // change after confirmed function
+            double y_current = y_start[iSegment];
+            double newdiff = (y_base - y_current) * (y_base - y_current);
+
+            result += newdiff / y_base;
+        }
+        // center point
+        result += (exp_approx_d(coeff.b0) - y_start[lengthLeft]) *
+                  (exp_approx_d(coeff.b0) - y_start[lengthLeft]) /
+                  exp_approx_d(coeff.b0); // x = 0 -> (b0 - y)^2
+
+        int lengthRight = limit_R + 1;
+        for (int iSegment = 1; iSegment < lengthRight; iSegment++) // iSegment = 0 is center point (calculated above)
+        {
+            double y_base = exp_approx_d(coeff.b0 + coeff.b1 * iSegment + coeff.b3 * iSegment * iSegment); // b3 instead of b2
+            double y_current = y_start[iSegment + lengthLeft];                                             // y_start[0] is the leftmost y value
+            double newdiff = (y_current - y_base) * (y_current - y_base);
+
+            result += newdiff / y_base;
+        }
+        return result;
+    }
+
     float calcSegments(RegCoeffs coeff, int limit_L, int limit_R, const float *y_start, bool calc_EXP, bool calc_CHISQ)
     {
 
@@ -1444,13 +1558,14 @@ namespace qAlgorithms
             result += calcRemaining(coeff, nRemaining_right, LINSPACE_UP_POS_256, 0, nRemaining_right + 1, 1, b3,
                                     calc_EXP, calc_CHISQ, y_start, left_limit, right_limit);
         }
-        std::cout << result << ", ";
+        // std::cout << result << ", ";
 
-        std::cout << calcSegments(coeff, left_limit, right_limit, y_start, calc_EXP, calc_CHISQ) << " ; ";
+        // std::cout << calcSegments(coeff, left_limit, right_limit, y_start, calc_EXP, calc_CHISQ) << " ; ";
+        return calcSegments(coeff, left_limit, right_limit, y_start, calc_EXP, calc_CHISQ);
 
         // exit(1);
-        return result;
-    } // end calcSSE
+        // return result;
+    }
 #pragma endregion calcSSE
 
 #pragma region calcExtendedMse
@@ -1479,12 +1594,16 @@ namespace qAlgorithms
         for (size_t i = startIdx; i < endIdx + 1; i++)
         {
             // step 2: calculate the mean squared error (MSE) between the predicted and actual values
-            float mse = calcSSE(
-                left_limit - regressions[i].index_x0,  // left limit of the regression window (normalized scale)
-                right_limit - regressions[i].index_x0, // right limit of the regression window (normalized scale)
-                regressions[i].newCoeffs,              // regression coefficients
-                y_start + left_limit,                  // start of the measured data
-                true);                                 // calculate the exp of the yhat values
+            // float mse = calcSSE(
+            //     left_limit - regressions[i].index_x0,  // left limit of the regression window (normalized scale)
+            //     right_limit - regressions[i].index_x0, // right limit of the regression window (normalized scale)
+            //     regressions[i].newCoeffs,              // regression coefficients
+            //     y_start + left_limit,                  // start of the measured data
+            //     true);                                 // calculate the exp of the yhat values
+            float mse = calcSSE_exp(regressions[i].newCoeffs,
+                                    y_start + left_limit,
+                                    left_limit - regressions[i].index_x0,
+                                    right_limit - regressions[i].index_x0);
             mse /= (df_sum - 4);
 
             if (mse < best_mse)
@@ -1534,12 +1653,16 @@ namespace qAlgorithms
         for (int i = 0; i < n_regressions; ++i)
         {
             // step 2: calculate the mean squared error (MSE) between the predicted and actual values
-            float mse = calcSSE(
-                left_limit - (regressions_start + i)->index_x0,  // left limit of the regression window (normalized scale)
-                right_limit - (regressions_start + i)->index_x0, // right limit of the regression window (normalized scale)
-                (regressions_start + i)->newCoeffs,              // regression coefficients
-                y_start + left_limit,                            // start of the measured data
-                true);                                           // calculate the exp of the yhat values
+            // float mse = calcSSE(
+            //     left_limit - (regressions_start + i)->index_x0,  // left limit of the regression window (normalized scale)
+            //     right_limit - (regressions_start + i)->index_x0, // right limit of the regression window (normalized scale)
+            //     (regressions_start + i)->newCoeffs,              // regression coefficients
+            //     y_start + left_limit,                            // start of the measured data
+            //     true);                                           // calculate the exp of the yhat values
+            float mse = calcSSE_exp((regressions_start + i)->newCoeffs,
+                                    y_start + left_limit,
+                                    left_limit - (regressions_start + i)->index_x0,
+                                    right_limit - (regressions_start + i)->index_x0);
             mse /= (df_sum - 4);
 
             // step 3: identify the best regression based on the MSE and return the MSE and the index of the best regression
@@ -1590,20 +1713,32 @@ namespace qAlgorithms
         }
 
         // step 2: calculate the mean squared error (MSE) between the predicted and actual values
-        float mse_low_scale = calcSSE(
-            left_limit - low_scale_regression->index_x0,  // left limit of the regression window (normalized scale)
-            right_limit - low_scale_regression->index_x0, // right limit of the regression window (normalized scale)
-            low_scale_regression->newCoeffs,              // regression coefficients
-            y_start + left_limit,                         // start of the measured data
-            true);                                        // calculate the exp of the yhat values
+        // float mse_low_scale = calcSSE(
+        //     left_limit - low_scale_regression->index_x0,  // left limit of the regression window (normalized scale)
+        //     right_limit - low_scale_regression->index_x0, // right limit of the regression window (normalized scale)
+        //     low_scale_regression->newCoeffs,              // regression coefficients
+        //     y_start + left_limit,                         // start of the measured data
+        //     true);                                        // calculate the exp of the yhat values
+
+        float mse_low_scale = calcSSE_exp(
+            low_scale_regression->newCoeffs,
+            y_start + left_limit,
+            left_limit - low_scale_regression->index_x0,
+            right_limit - low_scale_regression->index_x0);
         mse_low_scale /= (df_sum - 4);
 
-        float mse_hi_scale = calcSSE(
-            left_limit - hi_scale_regression->index_x0,  // left limit of the regression window (normalized scale)
-            right_limit - hi_scale_regression->index_x0, // right limit of the regression window (normalized scale)
-            hi_scale_regression->newCoeffs,              // regression coefficients
-            y_start + left_limit,                        // start of the measured data
-            true);                                       // calculate the exp of the yhat values
+        // float mse_hi_scale = calcSSE(
+        //     left_limit - hi_scale_regression->index_x0,  // left limit of the regression window (normalized scale)
+        //     right_limit - hi_scale_regression->index_x0, // right limit of the regression window (normalized scale)
+        //     hi_scale_regression->newCoeffs,              // regression coefficients
+        //     y_start + left_limit,                        // start of the measured data
+        //     true);                                       // calculate the exp of the yhat values
+
+        float mse_hi_scale = calcSSE_exp(
+            hi_scale_regression->newCoeffs,
+            y_start + left_limit,
+            left_limit - hi_scale_regression->index_x0,
+            right_limit - hi_scale_regression->index_x0);
         mse_hi_scale /= (df_sum - 4);
 
         // step 3: identify the best regression based on the MSE and return the MSE and the index of the best regression
@@ -1630,13 +1765,19 @@ namespace qAlgorithms
         // check new_peak for mse
         if (validRegressions[i_new_peak].mse == 0.0)
         { // calculate the mse of the current peak
-            validRegressions[i_new_peak].mse = calcSSE(
-                                                   validRegressions[i_new_peak].left_limit - validRegressions[i_new_peak].index_x0,  // left limit of the new peak (normalized scale)
-                                                   validRegressions[i_new_peak].right_limit - validRegressions[i_new_peak].index_x0, // right limit of the new peak (normalized scale)
-                                                   validRegressions[i_new_peak].newCoeffs,                                           // regression coefficients
-                                                   y_start + validRegressions[i_new_peak].left_limit,
-                                                   true) /
-                                               validRegressions[i_new_peak].df;
+            // validRegressions[i_new_peak].mse = calcSSE(
+            //                                        validRegressions[i_new_peak].left_limit - validRegressions[i_new_peak].index_x0,  // left limit of the new peak (normalized scale)
+            //                                        validRegressions[i_new_peak].right_limit - validRegressions[i_new_peak].index_x0, // right limit of the new peak (normalized scale)
+            //                                        validRegressions[i_new_peak].newCoeffs,                                           // regression coefficients
+            //                                        y_start + validRegressions[i_new_peak].left_limit,
+            //                                        true) /
+            //                                    validRegressions[i_new_peak].df;
+            validRegressions[i_new_peak].mse = calcSSE_exp(
+                validRegressions[i_new_peak].newCoeffs,
+                y_start + validRegressions[i_new_peak].left_limit,
+                validRegressions[i_new_peak].left_limit - validRegressions[i_new_peak].index_x0,
+                validRegressions[i_new_peak].right_limit - validRegressions[i_new_peak].index_x0);
+            validRegressions[i_new_peak].mse /= validRegressions[i_new_peak].df;
         }
         // calculate the group sse
         float groupSSE = 0.0f;
@@ -1646,13 +1787,19 @@ namespace qAlgorithms
         {
             if (validRegressions[i_ref_peak].mse == 0.0)
             { // calculate the mse of the ref peak
-                validRegressions[i_ref_peak].mse = calcSSE(
-                                                       validRegressions[i_ref_peak].left_limit - validRegressions[i_ref_peak].index_x0,  // left limit of the ref peak (normalized scale)
-                                                       validRegressions[i_ref_peak].right_limit - validRegressions[i_ref_peak].index_x0, // right limit of the ref peak (normalized scale)
-                                                       validRegressions[i_ref_peak].newCoeffs,                                           // regression coefficients
-                                                       y_start + validRegressions[i_ref_peak].left_limit,
-                                                       true) /
-                                                   validRegressions[i_ref_peak].df;
+                // validRegressions[i_ref_peak].mse = calcSSE(
+                //                                        validRegressions[i_ref_peak].left_limit - validRegressions[i_ref_peak].index_x0,  // left limit of the ref peak (normalized scale)
+                //                                        validRegressions[i_ref_peak].right_limit - validRegressions[i_ref_peak].index_x0, // right limit of the ref peak (normalized scale)
+                //                                        validRegressions[i_ref_peak].newCoeffs,                                           // regression coefficients
+                //                                        y_start + validRegressions[i_ref_peak].left_limit,
+                //                                        true) /
+                //                                    validRegressions[i_ref_peak].df;
+                validRegressions[i_ref_peak].mse = calcSSE_exp(
+                    validRegressions[i_ref_peak].newCoeffs,
+                    y_start + validRegressions[i_ref_peak].left_limit,
+                    validRegressions[i_ref_peak].left_limit - validRegressions[i_ref_peak].index_x0,
+                    validRegressions[i_ref_peak].right_limit - validRegressions[i_ref_peak].index_x0);
+                validRegressions[i_ref_peak].mse /= validRegressions[i_ref_peak].df;
             }
             groupSSE += validRegressions[i_ref_peak].mse * validRegressions[i_ref_peak].df;
             groupDF += validRegressions[i_ref_peak].df;
@@ -2029,18 +2176,6 @@ namespace qAlgorithms
         return std::sqrt(mse * multiplyVecMatrixVecTranspose(J, scale));
     }
 #pragma endregion "calcUncertaintyPosition"
-
-    // #pragma region calculateNumberOfRegressions
-    //     int calcNumberOfRegressions(const int n) // previously in validRegressions.reserve()
-    //     {
-    //         int sum = 0;
-    //         for (int i = 4; i <= GLOBAL_MAXSCALE * 2; i += 2)
-    //         {
-    //             sum += std::max(0, n - i);
-    //         }
-    //         return sum;
-    //     }
-    // #pragma endregion calculateNumberOfRegressions
 
 #pragma region "convolve regression"
     // these chain to return beta for a regression
