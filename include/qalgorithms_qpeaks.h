@@ -120,6 +120,12 @@ namespace qAlgorithms
         const bool calc_EXP = false,
         const bool calc_CHISQ = false);
 
+    float calcSSE_base(RegCoeffs coeff, const float *y_start, int limit_L, int limit_R);
+
+    float calcSSE_exp(RegCoeffs coeff, const float *y_start, int limit_L, int limit_R);
+
+    float calcSSE_chisqared(RegCoeffs coeff, const float *y_start, int limit_L, int limit_R);
+
     /**
      * @brief Calculate the best mean squared error of the regression model
      * with different regression windows BUT same window size.
