@@ -1165,62 +1165,81 @@ namespace qAlgorithms
 
     float calcSegments(RegCoeffs coeff, int limit_L, int limit_R, const float *y_start, bool calc_EXP, bool calc_CHISQ)
     {
-        // integral of (b0 + b1 * x + b2 OR b3 * x^2 - y)^2 for the full peak
-        // b2 is used for left half, b3 for right
-        assert(limit_L < 0);
-        assert(limit_R > 0);
+
+        // calculation of: a): SSE      -> sum((y-yhat)^2)
+        //                 b): SSE(exp) -> sum((exp(y)-exp(yhat))^2)
+        //                 c): CHIsq    -> sum((exp(y)-exp(yhat))^2 / exp(yhat))
+        //  where: y is a vector of observed intensities
+        //         yhat are the expected intensities based on: yhat = b0 + x * (b1 + x * b2) for x < 0
+        //                                                          = b0 + x * (b1 + x * b3) for x > 0
+        //                                                          = b0 for x == 0
+
+        assert(limit_L < 0 && limit_R > 0);
 
         double result = 0.0;
 
         // left side
-        long int lengthLeft = -limit_L;
+        int lengthLeft = -limit_L; // @daniel: why long int?
 
         for (int iSegment = 0; iSegment < lengthLeft; iSegment++)
         {
             double new_x = limit_L + iSegment;
-            double y_base = coeff.b0 + coeff.b1 * new_x + coeff.b2 * new_x * new_x;
-            double y_new = y_base;
-            if (calc_EXP)
+            double y_base = coeff.b0 + coeff.b1 * new_x + coeff.b2 * new_x * new_x; // @daniel: i suggest b0 + x * (b1 + x * b2) // change after confirmed function
+
+            if (calc_EXP) // @daniel if branching is a problem, we can also consider splitting the function into 3 functions, right? // yes, probably the best way if only three cases exist
             {
-                y_new = exp_approx_d(y_base); // calculate the exp of the yhat values (if needed)
+                y_base = exp_approx_d(y_base); // calculate the exp of the yhat values (if needed)
             }
             double y_current = y_start[iSegment];
-            double newdiff = (y_current - y_new) * (y_current - y_new);
+            double newdiff = (y_base - y_current) * (y_base - y_current);
             assert(newdiff != INFINITY);
-            if (calc_CHISQ)
+
+            if (calc_CHISQ) // @daniel: in our algorithm chi squares will always calculated for exp data. We could use this for optimization.
             {
-                assert(y_new != 0);
-                newdiff = newdiff / y_new; // Calculate the weighted square of the difference
+                assert(y_base != 0);
+                newdiff = newdiff / y_base; // Calculate the weighted square of the difference (chi-squares)
             }
             // std::cout << newdiff << ", ";
             result += newdiff;
         }
-        // apex
-        result += (coeff.b0 - y_start[lengthLeft]) * (coeff.b0 - y_start[lengthLeft]); // x = 0 -> (b0 - y)^2
-
-        // right side
+        // apex // @daniel this is not the apex. it is the x==0 case, and here the same with exp and chi-square should be considered as in the loops above. i.e. we should solve this in a different way
+        if (calc_EXP)
+        {
+            double coeff_exp = exp_approx_d(coeff.b0);
+            double diff = (coeff_exp - y_start[lengthLeft]) * (coeff_exp - y_start[lengthLeft]);
+            if (calc_CHISQ)
+            {
+                assert(coeff_exp != 0);
+                diff /= coeff_exp;
+            }
+            result += diff;
+        }
+        else
+        {
+            result += (coeff.b0 - y_start[lengthLeft]) * (coeff.b0 - y_start[lengthLeft]); // x = 0 -> (b0 - y)^2
+        }
+        // right side // @daniel isnt this more or less the same like we did in the other loop? i suggest merging these to reduce redundancies // context switch with b3 is both more confusing and less efficient
         long int lengthRight = limit_R + 1;
-
         for (int iSegment = 1; iSegment < lengthRight; iSegment++) // iSegment = 0 is center point calculated above
         {
             // double new_x = limit_L + iSegment;
             double y_base = coeff.b0 + coeff.b1 * iSegment + coeff.b3 * iSegment * iSegment; // b3 instead of b2
-            double y_new = y_base;
             if (calc_EXP)
             {
-                y_new = exp_approx_d(y_base); // calculate the exp of the yhat values (if needed)
+                y_base = exp_approx_d(y_base); // calculate the exp of the yhat values (if needed)
             }
             double y_current = y_start[iSegment + lengthLeft]; // y_start[0] is the leftmost y value
-            double newdiff = (y_current - y_new) * (y_current - y_new);
+            double newdiff = (y_current - y_base) * (y_current - y_base);
             assert(newdiff != INFINITY);
             if (calc_CHISQ)
             {
-                assert(y_new != 0);
-                newdiff = newdiff / y_new; // Calculate the weighted square of the difference
+                assert(y_base != 0);
+                newdiff = newdiff / y_base; // Calculate the weighted square of the difference
             }
             // std::cout << newdiff << ", ";
             result += newdiff;
         }
+        assert(!isnan(result));
         return result;
     }
 
@@ -1425,9 +1444,9 @@ namespace qAlgorithms
             result += calcRemaining(coeff, nRemaining_right, LINSPACE_UP_POS_256, 0, nRemaining_right + 1, 1, b3,
                                     calc_EXP, calc_CHISQ, y_start, left_limit, right_limit);
         }
-        // std::cout << result << ", ";
+        std::cout << result << ", ";
 
-        // return calcSegments(coeff, left_limit, right_limit, y_start, calc_EXP, calc_CHISQ);
+        std::cout << calcSegments(coeff, left_limit, right_limit, y_start, calc_EXP, calc_CHISQ) << " ; ";
 
         // exit(1);
         return result;
