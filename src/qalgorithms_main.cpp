@@ -22,6 +22,7 @@ namespace qAlgorithms
 {
     /// ### set global variables ###
     float PPM_PRECENTROIDED = -INFINITY;               // -Infinity sets it to the default value if no user input changes it
+    float MZ_ABSOLUTE_PRECENTROIDED = -INFINITY;       // see above
     const double TOLERANCE_BINNING = -0.4771864667153; // precalculated tolerance for alpha = 0.05
     const int GLOBAL_MAXSCALE = 15;                    // @todo is this a sensible maximum?
     std::array<float, 384> INV_ARRAY = initialize();   // @todo make constexpr
@@ -523,7 +524,8 @@ int main(int argc, char *argv[])
     volatile bool printCentroids = false;
     volatile bool printSubProfile = false;
     volatile bool doLogging = false;
-    volatile bool noOverwrite = false; // @todo implement
+    volatile bool noOverwrite = false;
+    volatile bool predictFuture = false; // @todo implement
     std::string logfileName = "log_qAlgorithms.csv";
 
     for (int i = 1; i < argc; i++)
@@ -534,7 +536,11 @@ int main(int argc, char *argv[])
             std::cout << "\n    " << argv[0] << helpinfo;
             exit(0);
         }
-        if ((argument == "-s") || (argument == "-silent"))
+        else if (argument == "-divination")
+        {
+            predictFuture = true;
+        }
+        else if ((argument == "-s") || (argument == "-silent"))
         {
             silent = true;
         }
@@ -767,7 +773,28 @@ int main(int argc, char *argv[])
             std::cerr << "Error: unknown argument " << argument << ", terminating program.\n";
             exit(1);
         }
+    } // end of reading in command line arguments
+
+    if (predictFuture)
+    {
+        // if (tasklistSpecified)
+        // {
+        //     // set params for the following measurements dynamically @todo
+        // }
+
+        std::cerr << "qAlgorithms will try to predict the best settings for user-supplied mass inaccuracies.\n"
+                  << "This is an estimate - uniform parameters for every centroid do not accurately represent reality!\n";
+        silent = false;
+        verboseProgress = false;
+        skipError = false;
+        printSummary = false;
+        printBins = false;
+        printExtended = false;
+        printCentroids = false;
+        printSubProfile = false;
+        doLogging = false;
     }
+
     if (!inSpecified && !tasklistSpecified)
     {
         std::cerr << "Error: no input file supplied. Specify a file or directorey using the -i or "
@@ -797,6 +824,12 @@ int main(int argc, char *argv[])
 
     // the final task list contains only unique files, sorted by filesize
     tasklist = controlInput(suppliedPaths, ".mzML", skipError);
+
+    if (predictFuture && tasklist.size() > 1)
+    {
+        std::cerr << "Error: prediction of good centroid error estimation only works on one file!\n";
+        exit(1);
+    }
 
 #pragma endregion cli arguments
 
@@ -900,21 +933,26 @@ int main(int argc, char *argv[])
             }
 
             // @todo remove diagnostics later
-            double meanDQSC = 0;
-            for (auto spectrum : centroids)
-            {
-                for (auto point : spectrum)
-                {
-                    meanDQSC += point.dqsCen;
-                }
-            }
 
             CentroidedData binThis = passToBinning(centroids, addEmptyScans);
 
-            // for (size_t i = 0; i < convertRT.size(); i++)
-            // {
-            //     std::cout << i << ", " << binThis.allDatapoints[i].size() << ", " << addEmptyScans[i] << ", " << convertRT[i] << "\n";
-            // }
+            double meanDQSC = 0;
+            double meanCenErrorRel = 0;
+            double meanCenErrorAbs = 0;
+
+            for (size_t i = 0; i < binThis.allDatapoints.size(); i++)
+            {
+                for (size_t j = 0; j < binThis.allDatapoints[i].size(); i++)
+                {
+                    // correlate centroid error with nearest neighbour distance in one scan somehow?
+                    meanCenErrorRel += binThis.allDatapoints[i][j].mzError / binThis.allDatapoints[i][j].mz;
+                    meanCenErrorAbs += binThis.allDatapoints[i][j].mzError;
+                    meanDQSC += binThis.allDatapoints[i][j].DQSCentroid;
+                }
+            }
+            meanCenErrorAbs /= binThis.lengthAllPoints;
+            meanCenErrorRel /= binThis.lengthAllPoints;
+            //
 
             if (printSubProfile)
             {
