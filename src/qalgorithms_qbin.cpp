@@ -1028,7 +1028,6 @@ namespace qAlgorithms
         float meanScan = 0;
         float meanDQS_base = 0;
         float meanDQS_scaled = 0;
-        float DQS_control = 0;
         float meanCenError = 0;
         float worstCentroid = INFINITY;
         float meanInt = 0;
@@ -1053,7 +1052,6 @@ namespace qAlgorithms
         meanDQS_base = meanDQS_base / binsize;
         meanDQS_scaled = meanDQS_scaled / binsize;
         meanCenError = meanCenError / binsize;
-        DQS_control = DQS_control / binsize;
 
         float sumOfDist = 0;
         std::for_each(pointsInBin.begin(), pointsInBin.end(), [&](const qCentroid *point)

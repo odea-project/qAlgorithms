@@ -313,26 +313,18 @@ namespace qAlgorithms
         {
             if (tasklist[i].filesize == prevsize)
             {
-                size_t readLength = 25000;
+                const size_t readLength = 25000;
                 std::ifstream fileConflict;
                 char firstChars[readLength];
                 char secondChars[readLength];
                 fileConflict.open(tasklist[i - 1].path);
                 fileConflict.read(firstChars, readLength);
                 fileConflict.close();
-                // std::string s = firstChars;
-                // auto hash1 = std::hash<std::string>{}(s);
 
                 fileConflict.open(tasklist[i].path);
                 fileConflict.read(firstChars, readLength);
                 fileConflict.close();
-                // s = firstChars;
-                // auto hash2 = std::hash<std::string>{}(s);
-                // if (hash1 == hash2)
-                // {
-                //     tasklist[i - 1].filesize = 0; // always keeps last so comparison by file size works
-                //     ++removedEntries;
-                // }
+
                 bool sameFiles = true;
                 for (size_t j = 0; j < readLength; j++)
                 {
@@ -940,9 +932,15 @@ int main(int argc, char *argv[])
             double meanCenErrorRel = 0;
             double meanCenErrorAbs = 0;
 
-            for (size_t i = 0; i < binThis.allDatapoints.size(); i++)
+            // index in allDatapoints corresponds to scan number!
+            for (size_t i = 1; i < binThis.allDatapoints.size() - 1; i++)
             {
-                for (size_t j = 0; j < binThis.allDatapoints[i].size(); i++)
+                if (binThis.allDatapoints[i].empty())
+                {
+                    continue;
+                }
+
+                for (size_t j = 0; j < binThis.allDatapoints[i].size() - 1; j++)
                 {
                     // correlate centroid error with nearest neighbour distance in one scan somehow?
                     meanCenErrorRel += binThis.allDatapoints[i][j].mzError / binThis.allDatapoints[i][j].mz;
