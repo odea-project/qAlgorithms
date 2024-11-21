@@ -52,35 +52,19 @@ namespace qAlgorithms
   {
     const int numPoints = data.size(); // number of data points
     double expectedDifference = 0.0;
-    if (numPoints > 128)
-    { // static approach: mean of the 8 lowest distances
-      alignas(64) double differences[128];
-      for (int i = 0; i < 128 - 1; i++)
-      {
-        differences[i] = data[i + 1] - data[i];
-      }
-      std::sort(differences, differences + 128);
-      for (int i = 0; i < 8; i++)
-      {
-        expectedDifference += differences[i];
-      }
-      expectedDifference /= 8;
+    // static approach: mean of the 8 lowest distances @todo why 8?
+    std::vector<double> differences(numPoints - 1);
+    for (int i = 0; i < numPoints - 1; i++)
+    {
+      differences[i] = data[i + 1] - data[i];
     }
-    else
-    { // dynamic approach
-      alignas(64) double *differences = new double[numPoints - 1];
-      for (int i = 0; i < numPoints - 1; i++)
-      {
-        differences[i] = data[i + 1] - data[i];
-      }
-      std::sort(differences, differences + numPoints - 1);
-      for (int i = 0; i < std::min(8, numPoints - 1); i++)
-      {
-        expectedDifference += differences[i];
-      }
-      expectedDifference /= std::min(8, numPoints - 1);
-      delete[] differences;
+    std::sort(differences.begin(), differences.end());
+    for (int i = 0; i < std::min(8, numPoints - 1); i++)
+    {
+      expectedDifference += differences[i];
     }
+    expectedDifference /= std::min(8, numPoints - 1);
+
     return expectedDifference;
   }
 

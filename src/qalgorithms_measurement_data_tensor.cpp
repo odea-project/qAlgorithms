@@ -161,6 +161,7 @@ namespace qAlgorithms
         indices.erase(std::remove_if(indices.begin(), indices.end(), [&spectrum_polarity, &num_datapoints, &polarity, &start_index](int i)
                                      { return spectrum_polarity[i] != polarity || i < start_index || num_datapoints[i] < 5; }),
                       indices.end()); // keep only spectra with the specified polarity and start index and array length > 5
+        indices.shrink_to_fit();
 
         std::vector<double> retention_times = data.get_spectra_rt(indices); // get retention times
         rt_diff = calcRTDiff(retention_times);                              // retention time difference
@@ -172,7 +173,7 @@ namespace qAlgorithms
 
         // CHECK IF CENTROIDED SPECTRA
         size_t num_centroided_spectra = std::count(spectrum_mode.begin(), spectrum_mode.end(), "centroid");
-        if (num_centroided_spectra > spectrum_mode.size() / 2) // in profile mode sometimes centroided spectra appear as well
+        if (num_centroided_spectra > spectrum_mode.size() / 2) // in profile mode sometimes centroided spectra appear as well @todo is 2 a good idea?
         {
             std::cerr << "Warning: qAlgorithms is intended for profile spectra. A base uncertainty of "
                       << PPM_PRECENTROIDED << " ppm is assumed for all supplied centroids\n";
@@ -199,6 +200,8 @@ namespace qAlgorithms
                                          { return spectrum_mode[i] != "profile"; }),
                           indices.end()); // keep only profile spectra
         }
+        indices.shrink_to_fit();
+        addEmpty.resize(indices.size() + 1); // make sure empty scans (if needed) are added in the right place
 
         std::vector<std::vector<CentroidPeak>> centroids(indices.size()); // create vector of peaks
 
@@ -226,7 +229,7 @@ namespace qAlgorithms
         // the qCentroids object at the given position. convertRT can later be used to look up
         // the retention time by the scan number, so that memory usage is reduced during binning
 
-        for (int i = 0; i < int(indices.size()) - 1; i++) // i can be -1 briefly if there is a scan missing between 1. and 2. element
+        for (size_t i = 0; i < indices.size() - 1; i++) // i can be -1 briefly if there is a scan missing between 1. and 2. element
         {
             if (retention_times[i + 1] - retention_times[i] > rt_diff * 1.75)
             {
@@ -238,7 +241,7 @@ namespace qAlgorithms
             convertRT.push_back(retention_times[i]); // convertRT[scan] = retention time of centroid
         }
         convertRT.push_back(retention_times[indices.size() - 1]);
-        assert(addEmpty.size() == indices.size() + 1);
+        assert(addEmpty.size() == indices.size() + 1); // this assert fails with the
         return centroids;
     } // readStreamCraftMZML
 #pragma endregion "find centroids"
