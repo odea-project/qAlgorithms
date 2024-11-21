@@ -8,7 +8,7 @@
 
 namespace qAlgorithms
 {
-    struct dataPoint
+    struct dataPoint // @todo remove this (again)
     {
         float x;
         float y;
@@ -39,7 +39,7 @@ namespace qAlgorithms
         }
     };
 
-    std::vector<std::vector<CentroidPeak>> transferCentroids(
+    std::vector<std::vector<CentroidPeak>> transferCentroids( // @todo merge with findPeaks_mzml
         sc::MZML &data,
         std::vector<int> &indices,
         std::vector<double> &retention_times,

@@ -138,8 +138,8 @@ namespace qAlgorithms
                 timeStart = std::chrono::high_resolution_clock::now();
             }
         }
-        std::cout << "completed subsetting\n";
     exit:
+        std::cout << "completed subsetting\n";
     }
 
     void BinContainer::assignDQSB(const CentroidedData *rawdata, const int maxdist, bool rebin)

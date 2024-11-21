@@ -52,7 +52,7 @@ namespace qAlgorithms
                 {
                     auto &peak = allPeaks[i][j];
                     qCentroid F = qCentroid{peak.mzUncertainty, peak.mz, scanRelative, peak.area, peak.height, peak.dqsCen};
-                    assert(F.scanNo <= allPeaks.size() + addTotal);
+                    assert(F.scanNo <= int(addTotal + allPeaks.size()));
                     centroids[scanRelative].push_back(F);
                     ++totalCentroids;
                 }
