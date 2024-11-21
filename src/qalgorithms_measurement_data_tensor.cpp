@@ -192,11 +192,6 @@ namespace qAlgorithms
             return transferCentroids(data, indices, retention_times, start_index, PPM_PRECENTROIDED);
         }
 
-        if (displayPPMwarning)
-        {
-            std::cerr << "Notice: the changed centroid certainty will only affect pre-centroided data.\n";
-        }
-
         // FILTER SPECTRUM MODE (PROFILE)
         if (num_centroided_spectra != 0) // @todo should these really be discarded?
         {
@@ -236,6 +231,7 @@ namespace qAlgorithms
             if (retention_times[i + 1] - retention_times[i] > rt_diff * 1.75)
             {
                 addEmpty[i]++;
+                assert(addEmpty[i] < 5);
                 retention_times[i] += rt_diff * 1.75;
                 i--;
             }

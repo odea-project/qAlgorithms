@@ -40,23 +40,33 @@ namespace qAlgorithms
     struct TaskItem
     {
         std::filesystem::path path;
-        unsigned int replicateGroup;
-        unsigned int fileID; // count upwards after reading everything in
+        unsigned int replicateGroup; // @todo
+        unsigned int fileID;         // count upwards after reading everything in
     };
 
     /// @todo make universal print function, fix out-of-bounds access, chi squared test for binning
     void printPeaklist(std::vector<std::vector<CentroidPeak>> peaktable,
                        std::vector<float> convertRT, std::filesystem::path pathOutput,
-                       std::string filename, bool silent, bool skipError)
+                       std::string filename, bool silent, bool skipError, bool noOverwrite)
     {
         filename += "_centroids.csv";
         pathOutput /= filename;
+
+        if (std::filesystem::exists(pathOutput))
+        {
+            if (noOverwrite)
+            {
+                std::cerr << "Warning: " << pathOutput << " already exists and will not be overwritten\n";
+                return;
+            }
+            std::filesystem::remove(pathOutput);
+        }
         if (!silent)
         {
             std::cout << "writing peaks to: " << pathOutput << "\n\n";
         }
 
-        std::fstream file_out;
+        std::ofstream file_out;
         std::stringstream output;
         file_out.open(pathOutput, std::ios::out);
         if (!file_out.is_open())
@@ -99,16 +109,27 @@ namespace qAlgorithms
 
     void printProfilePoints(std::vector<std::vector<ProfilePoint>> peakComponents,
                             std::filesystem::path pathOutput, std::string filename,
-                            bool silent, bool skipError)
+                            bool silent, bool skipError, bool noOverwrite)
     {
         filename += "_subprofiles.csv";
         pathOutput /= filename;
+
+        if (std::filesystem::exists(pathOutput))
+        {
+            if (noOverwrite)
+            {
+                std::cerr << "Warning: " << pathOutput << " already exists and will not be overwritten\n";
+                return;
+            }
+            std::filesystem::remove(pathOutput);
+        }
+
         if (!silent)
         {
             std::cout << "writing profile information of peaks to: " << pathOutput << "\n\n";
         }
 
-        std::fstream file_out;
+        std::ofstream file_out;
         std::stringstream output;
         file_out.open(pathOutput, std::ios::out);
         if (!file_out.is_open())
@@ -142,7 +163,7 @@ namespace qAlgorithms
     void printFeatureList(std::vector<FeaturePeak> peaktable,
                           std::filesystem::path pathOutput, std::string filename,
                           std::vector<EIC> originalBins,
-                          bool verbose, bool silent, bool skipError)
+                          bool verbose, bool silent, bool skipError, bool noOverwrite)
     {
         if (false) // @todo
         {
@@ -150,14 +171,23 @@ namespace qAlgorithms
         }
 
         filename += "_features.csv";
-
         pathOutput /= filename;
+
+        if (std::filesystem::exists(pathOutput))
+        {
+            if (noOverwrite)
+            {
+                std::cerr << "Warning: " << pathOutput << " already exists and will not be overwritten\n";
+                return;
+            }
+            std::filesystem::remove(pathOutput);
+        }
         if (!silent)
         {
             std::cout << "writing peaks to: " << pathOutput << "\n\n";
         }
 
-        std::fstream file_out;
+        std::ofstream file_out;
         std::stringstream output;
         file_out.open(pathOutput, std::ios::out);
         if (!file_out.is_open())
@@ -410,29 +440,28 @@ namespace qAlgorithms
                                  "    Program behaviour:\n"
                                  "      -s, -silent:    do not print progress reports to standard out.\n"
                                  "      -v, -verbose:   print a detailed progress report to standard out.\n"
-                                 "      -skip-existing  @todo"
+                                 "      -skip-existing  do not write to files that already exist, even if an output option is set.\n"
                                  "      -skip-error:    if processing fails, the program will not exit and instead start processing\n"
                                  "                      the next file in the tasklist.\n"
                                  "      -log:           This option will create a detailed log file in the program directory.\n"
                                  "                      A name can be supplied with a string following the argument. If this is not\n"
                                  "                      done by the user, the default log will be written or overwritten.\n"
                                  "    Analysis options:\n"
-                                 "      -MS2: also process MS2 spectra (not implemented yet)\n" // @todo
-                                 "      -ppm <number>:  this sets the centroid error when reading in pre-centroided data\n"
-                                 "                      with qAlgorithms to <number> * 10^-6 * m/z of the centroid. We recommend\n"
-                                 "                      you always use the centroiding algorithm implemented in qAlgorithms.\n"
-                                 "                      By default, this value is set to 5.\n";
+                                 "      -MS2:               also process MS2 spectra (not implemented yet)\n" // @todo
+                                 "      -ppm <number>:      this sets the centroid error when reading in pre-centroided data\n"
+                                 "                          with qAlgorithms to <number> * 10^-6 * m/z of the centroid. We recommend\n"
+                                 "                          you always use the centroiding algorithm implemented in qAlgorithms.\n"
+                                 "                          By default, this value is set to 5.\n"
+                                 "      -mz-abs <number>:   add this absolute error (in Dalton) to the relative error specified by -ppm.\n"
+                                 "      -divination:        process a profile mode dataset and return the best estimates for -ppm and -mz-abs.\n"
+                                 "                          This is intended for cases in which some data is only available in centroided form,\n"
+                                 "                          but an equivalent measurement in profile mode exists. As the name implies, this\n"
+                                 "                          is only intended for giving a realistic estimate and in no way statistically sound.\n"; //@todo
 }
 
 int main(int argc, char *argv[])
 {
-    using namespace qAlgorithms;
-
-    // auto array_new = initialize();
-    // for (size_t i = 0; i < 384; i++)
-    // {
-    //     std::cout << array_new[i] << ",";
-    // }
+    using namespace qAlgorithms; // considered bad practice from what i see online, but i believe it is acceptable for this program
 
     std::string filename_input;
     volatile bool inSpecified = false;
@@ -670,11 +699,14 @@ int main(int argc, char *argv[])
                 std::cerr << "Error: the centroid error is set to 100% or greater (\"" << argv[i] << "\").";
                 exit(1);
             }
-            if (modifiedPPM > 0.8)
+            if (modifiedPPM > 0.5 || modifiedPPM < 0.05)
             {
                 std::cerr << "Warning: you have set the centroid error to \"" << argv[i] << "\", with the expected range \n"
-                          << "being between 0.2 and 0.5 ppm. The centroid error is not the mz tolerance from ex. XCMS.";
+                          << "being between 0.05 and 0.5 ppm. Are you sure this is what you want?\n"
+                          << "The centroid error is not the mz tolerance from ROI-type approaches.\n";
             }
+
+            std::cerr << "Notice: the changed centroid certainty will only affect pre-centroided data.\n";
 
             PPM_PRECENTROIDED = modifiedPPM;
         }
@@ -864,7 +896,7 @@ int main(int argc, char *argv[])
             filename += polarity;
             if (printCentroids)
             {
-                printPeaklist(centroids, convertRT, pathOutput, filename, silent, skipError);
+                printPeaklist(centroids, convertRT, pathOutput, filename, silent, skipError, noOverwrite);
             }
 
             // @todo remove diagnostics later
@@ -995,7 +1027,7 @@ int main(int argc, char *argv[])
             }
             if (printPeaks)
             {
-                printFeatureList(peaks, pathOutput, filename, binnedData, printExtended, silent, skipError);
+                printFeatureList(peaks, pathOutput, filename, binnedData, printExtended, silent, skipError, noOverwrite);
             }
             // if (printSubProfile)
             // {
@@ -1016,9 +1048,6 @@ int main(int argc, char *argv[])
             // auto peakpointer = collapseFeaturelist(peaks);
             // initialComponentBinner(peaks, 1);
         }
-        // if this is not reset, the warning will be displayed for every file until the
-        // program exits when processing a task list
-        PPM_PRECENTROIDED = -INFINITY;
         counter++;
     }
     if (!silent)
