@@ -52,6 +52,7 @@ namespace qAlgorithms
                 {
                     auto &peak = allPeaks[i][j];
                     qCentroid F = qCentroid{peak.mzUncertainty, peak.mz, scanRelative, peak.area, peak.height, peak.dqsCen};
+                    assert(F.scanNo > 0);
                     assert(F.scanNo <= int(addTotal + allPeaks.size()));
                     centroids[scanRelative].push_back(F);
                     ++totalCentroids;
@@ -803,7 +804,6 @@ namespace qAlgorithms
             const unsigned int right_limit = validRegressions[i].right_limit; // right limit of the current peak regression window in the Y matrix
             double grpMSE = 0;                                                // group mean squared error
             int grpDF = 0;                                                    // group degree of freedom
-            int numPeaksInGroup = 0;                                          // number of peaks in the group
             std::vector<size_t> validRegressionsInGroup;                      // vector of indices
 
             // iterate over the validRegressions vector till the new peak
@@ -831,7 +831,6 @@ namespace qAlgorithms
                         }
                         grpDF += validRegressions[j].df;                            // add the degree of freedom
                         grpMSE += validRegressions[j].mse * validRegressions[j].df; // add the sum of squared errors
-                        numPeaksInGroup++;                                          // increment the number of peaks in the group
                         // add the iterator of the ref peak to a vector of iterators
                         validRegressionsInGroup.push_back(j);
                     }
