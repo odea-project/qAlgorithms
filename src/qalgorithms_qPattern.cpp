@@ -111,6 +111,7 @@ namespace qAlgorithms
         }
         // the range minRT : maxRT contains all features which are relevant for the pairwise comparison
         // find feature with the least dissimilar regression (excluding height information)
+        return 0;
     }
 
     void initialComponentBinner(std::vector<FeaturePeak> &featureList, unsigned int replicateID)
