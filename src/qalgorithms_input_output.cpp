@@ -79,7 +79,7 @@ namespace qAlgorithms
 
 #pragma region "command line arguments"
 
-    UserInputSettings passCliArgs(const int argc, char *argv[])
+    UserInputSettings passCliArgs(int argc, char *argv[])
     {
         // this function processes all cli arguments supplied by the user
         assert(argc > 0);
@@ -88,6 +88,9 @@ namespace qAlgorithms
         UserInputSettings args;
         assert(args.inputPaths.empty());
         assert(args.outputPath.empty());
+
+        // argc = 0;
+        // args.inputPaths.push_back("/home/terry/Work/Messdaten/");
 
         if (argc == 1)
         {
@@ -316,10 +319,14 @@ namespace qAlgorithms
         }
         if (args.outputPath.empty())
         {
-            std::cerr << "Error: You must specify an output directory.\n";
-            goodInputs = false;
+            std::cerr << "Warning: no output directory specified.\n";
+            if (args.printCentroids || args.printSummary || args.printFeatures)
+            {
+                std::cerr << "Error: no output files can be written.\n";
+                goodInputs = false;
+            }
         }
-        if (!std::filesystem::exists(args.outputPath))
+        else if (!std::filesystem::exists(args.outputPath))
         {
             std::cerr << "Error: the specified output path does not exist.\n";
             goodInputs = false;

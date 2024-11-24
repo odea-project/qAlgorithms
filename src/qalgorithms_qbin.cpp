@@ -198,7 +198,7 @@ namespace qAlgorithms
         [[unlikely]] if (!notInBins.empty())
         {
             startingRebin.pointsInBin.insert(startingRebin.pointsInBin.end(), notInBins.begin(), notInBins.end()); // copy outofbins into new bin
-            notInBins.resize(0);
+            notInBins.clear();
         }
         else
         {
@@ -589,12 +589,15 @@ namespace qAlgorithms
     Bin::Bin(CentroidedData *rawdata) // @todo relatively time intensive, better solution?; why does rawdata need to be mutable?
     {
         // collect indices for
+        assert(pointsInBin.empty());
         pointsInBin.reserve(rawdata->lengthAllPoints);
         for (size_t i = 1; i < rawdata->allDatapoints.size(); i++)
         {
             for (size_t j = 0; j < rawdata->allDatapoints[i].size(); j++)
             {
                 pointsInBin.push_back(&rawdata->allDatapoints[i][j]);
+                assert(pointsInBin.back()->scanNo > 0);
+                assert(pointsInBin.back()->scanNo < rawdata->allDatapoints.size() + 1);
             }
         }
     }
@@ -690,6 +693,7 @@ namespace qAlgorithms
         int lastpos = 0;
         for (size_t i = 0; i < binSize - 1; i++) // -1 since difference to next data point is checked
         {
+            assert(pointsInBin[i]->scanNo > 0);
             if (pointsInBin[i + 1]->scanNo < pointsInBin[i]->scanNo)
             {
                 // @todo probably undefined behaviour, since taking this print out causes
@@ -1383,6 +1387,7 @@ namespace qAlgorithms
 
         std::cout << "starting binning process...\n";
 
+        notInBins.clear();                                     // @todo remove global variable
         notInBins.reserve(centroidedData.lengthAllPoints / 4); // @todo can this be estimated better?
         duplicatesTotal = 0;                                   // global variable
         BinContainer activeBins;
@@ -1417,7 +1422,7 @@ namespace qAlgorithms
             activeBins.printSelectBins(printCentroids, outpath, filename);
         }
 
-        notInBins.resize(0);
+        notInBins.clear();
 
         std::cout.rdbuf(old); // restore previous standard out
 
