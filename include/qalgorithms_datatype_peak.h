@@ -3,7 +3,8 @@
 #define QALGORITHMS_DATATYPE_PEAK_H
 
 #include <immintrin.h> // AVX
-
+#include <cstddef>     // errorcode in EIC @todo just make this an int
+#include <vector>
 /* This file includes the Peak and PeakList classes*/
 
 namespace qAlgorithms
@@ -84,6 +85,18 @@ namespace qAlgorithms
     int idxBin;
     unsigned int idxPeakStart; // degrees of freedom = idxPeakEnd - idxPeakStart
     unsigned int idxPeakEnd;
+  };
+
+  struct EIC // Extracted Ion Chromatogram
+  {
+    std::byte errorcode;
+    std::vector<int> scanNumbers;
+    std::vector<float> rententionTimes;
+    std::vector<float> mz;
+    std::vector<float> ints_area;
+    std::vector<float> ints_height;
+    std::vector<float> DQSB;
+    std::vector<float> DQSC;
   };
 }
 

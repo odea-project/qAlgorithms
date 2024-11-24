@@ -25,10 +25,7 @@ namespace qAlgorithms
         return sum / (retention_times.size() - 1);
     }
 
-    std::vector<dataPoint>
-    mzmlToDataPoint(
-        sc::MZML &data,
-        const int index)
+    std::vector<dataPoint> mzmlToDataPoint(sc::MZML &data, const int index)
     {
         std::vector<std::vector<double>> spectrum = data.get_spectrum(index); // get spectrum at index
         std::vector<dataPoint> dataPoints;                                    // create vector of data points
@@ -62,9 +59,7 @@ namespace qAlgorithms
         return dataPoints;
     }
 
-    std::vector<dataPoint>
-    qbinToDataPoint(
-        EIC &eic)
+    std::vector<dataPoint> qbinToDataPoint(EIC &eic)
     {
         std::vector<dataPoint> dataPoints;              // create vector of data points
         dataPoints.reserve(eic.scanNumbers.size() + 1); // reserve memory for data points
@@ -139,6 +134,8 @@ namespace qAlgorithms
         std::vector<int> num_datapoints = data.get_spectra_array_length();        // get number of data points
         double expectedDifference = 0.0;                                          // expected difference between two consecutive x-axis values
 
+        assert(!indices.empty() && num_datapoints[0] > 0);
+
         bool displayPPMwarning = false;
         if (PPM_PRECENTROIDED == -INFINITY)
         {
@@ -155,12 +152,20 @@ namespace qAlgorithms
             indices.erase(std::remove_if(indices.begin(), indices.end(), [&ms_levels](int i)
                                          { return ms_levels[i] != 1; }),
                           indices.end()); // keep only MS1 spectra
+            assert(!indices.empty());
         }
 
         // FILTER POLARITY and START INDEX and ARRAY LENGTH
         indices.erase(std::remove_if(indices.begin(), indices.end(), [&spectrum_polarity, &num_datapoints, &polarity, &start_index](int i)
                                      { return spectrum_polarity[i] != polarity || i < start_index || num_datapoints[i] < 5; }),
                       indices.end()); // keep only spectra with the specified polarity and start index and array length > 5
+        if (indices.empty())
+        {
+            std::vector<std::vector<CentroidPeak>> empty;
+            assert(empty.empty());
+            return empty;
+        }
+
         indices.shrink_to_fit();
 
         std::vector<double> retention_times = data.get_spectra_rt(indices); // get retention times
@@ -199,9 +204,11 @@ namespace qAlgorithms
             indices.erase(std::remove_if(indices.begin(), indices.end(), [&spectrum_mode](int i)
                                          { return spectrum_mode[i] != "profile"; }),
                           indices.end()); // keep only profile spectra
+            assert(!indices.empty());
         }
         indices.shrink_to_fit();
         addEmpty.resize(indices.size() + 1); // make sure empty scans (if needed) are added in the right place
+        assert(addEmpty.size() == indices.size() + 1);
 
         std::vector<std::vector<CentroidPeak>> centroids(indices.size()); // create vector of peaks
 
