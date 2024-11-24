@@ -2,7 +2,7 @@
 #include "qalgorithms_measurement_data_tensor.h"
 #include "qalgorithms_qpeaks.h"
 #include "qalgorithms_qbin.h"
-#include "qalgorithms_qPattern.h"
+#include "qalgorithms_qpattern.h"
 #include "qalgorithms_global_vars.h"
 #include "qalgorithms_input_output.h"
 
