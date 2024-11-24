@@ -117,7 +117,7 @@ int main(int argc, char *argv[])
     // std::cout << "numCens,numBins,numPeaks,numLoadedBins,numNarrowBin,\n";
     for (std::filesystem::path pathSource : tasklist)
     {
-        assert(!userArgs.outputPath.empty());
+        assert(!(userArgs.outputPath.empty() && (userArgs.printFeatures || userArgs.printSummary || userArgs.printCentroids)));
         if (!userArgs.silent && (userArgs.printFeatures || userArgs.printSummary || userArgs.printCentroids))
         {
             std::cout << "Output directory: " << userArgs.outputPath; // @todo not really necessary

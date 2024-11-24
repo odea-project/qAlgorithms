@@ -35,7 +35,7 @@ namespace qAlgorithms
         bool tasklistSpecified = false; // @todo implement
     };
 
-    UserInputSettings passCliArgs(const int argc, char *argv[]);
+    UserInputSettings passCliArgs(int argc, char *argv[]);
 
     bool inputsAreSensible(UserInputSettings &args);
 
