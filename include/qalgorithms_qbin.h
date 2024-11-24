@@ -6,6 +6,8 @@
 #include <string>
 #include <filesystem> // printing absolute path in case read fails
 
+#include "qalgorithms_datatype_peak.h"
+
 // Goal: all functions modify individual features, which are combined to a bin.
 // The bin contains all features and the functions necessary to summarise which features are present
 
@@ -64,18 +66,6 @@ namespace qAlgorithms
         // int scanFold; // number of scans after which the next chromatographic fraction arrives (LC_IMS or LCxLC)
         // MeasurementType instrumentation;
         // bool ionisation; // 0 = negative, 1 = positive
-    };
-
-    struct EIC // Extracted Ion Chromatogram
-    {
-        std::byte errorcode;
-        std::vector<int> scanNumbers;
-        std::vector<float> rententionTimes;
-        std::vector<float> mz;
-        std::vector<float> ints_area;
-        std::vector<float> ints_height;
-        std::vector<float> DQSB;
-        std::vector<float> DQSC;
     };
 
     struct SummaryOutput
