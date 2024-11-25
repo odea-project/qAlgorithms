@@ -83,7 +83,7 @@ int main(int argc, char *argv[])
     // the final task list contains only unique files, sorted by filesize
     auto tasklist = controlInput(userArgs.inputPaths, userArgs.skipError);
 
-#pragma endregion cli arguments
+    auto absoluteStart = std::chrono::high_resolution_clock::now();
 
     // Temporary diagnostics file creation, rework this into the log function?
     std::filesystem::path pathLogging{argv[0]};
@@ -213,11 +213,12 @@ int main(int argc, char *argv[])
             }
 
             auto timeEnd = std::chrono::high_resolution_clock::now();
+            std::chrono::duration<float> timePassed = std::chrono::duration_cast<std::chrono::milliseconds>(timeEnd - timeStart);
 
             if (!userArgs.silent)
             {
                 std::cout << "    produced " << binThis.lengthAllPoints << " centroids from " << centroids.size()
-                          << " spectra in " << (timeEnd - timeStart).count() << " ns\n";
+                          << " spectra in " << timePassed.count() << " s\n";
             }
 
             timeStart = std::chrono::high_resolution_clock::now();
@@ -241,7 +242,8 @@ int main(int argc, char *argv[])
 
             if (!userArgs.silent)
             {
-                std::cout << "    assembled " << binnedData.size() << " bins in " << (timeEnd - timeStart).count() << " ns\n";
+                timePassed = std::chrono::duration_cast<std::chrono::milliseconds>(timeEnd - timeStart);
+                std::cout << "    assembled " << binnedData.size() << " bins in " << timePassed.count() << " s\n";
             }
 
             // @todo remove diagnostics
@@ -302,7 +304,8 @@ int main(int argc, char *argv[])
             meanDQSF /= peaks.size() - peaksWithMassGaps;
             if (!userArgs.silent)
             {
-                std::cout << "    found " << peaks.size() << " peaks in " << (timeEnd - timeStart).count() << " ns\n";
+                timePassed = std::chrono::duration_cast<std::chrono::milliseconds>(timeEnd - timeStart);
+                std::cout << "    found " << peaks.size() << " peaks in " << timePassed.count() << " s\n";
             }
             if (userArgs.doLogging)
             {
@@ -339,9 +342,11 @@ int main(int argc, char *argv[])
         }
         counter++;
     }
+    auto absoluteEnd = std::chrono::high_resolution_clock::now();
     if (!userArgs.silent)
     {
-        std::cout << "Completed data processing on " << tasklist.size() << " files.\n\n";
+        std::chrono::duration<float> timePassed = std::chrono::duration_cast<std::chrono::milliseconds>(absoluteEnd - absoluteStart);
+        std::cout << "Completed data processing on " << tasklist.size() << " files in" << timePassed.count() << " s.\n\n";
     }
 
     return 0;
