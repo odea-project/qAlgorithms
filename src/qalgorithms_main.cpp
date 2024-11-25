@@ -109,6 +109,7 @@ int main(int argc, char *argv[])
     int counter = 1;
     // @todo add dedicated diagnostics function
     // std::cout << "numCens,numBins,numPeaks,numLoadedBins,numNarrowBin,\n";
+    // #pragma omp parallel for // there is a memory leak in findCentroids_MZML
     for (std::filesystem::path pathSource : tasklist)
     {
         assert(!(userArgs.outputPath.empty() && (userArgs.printFeatures || userArgs.printSummary || userArgs.printCentroids)));
@@ -147,7 +148,6 @@ int main(int argc, char *argv[])
         for (auto polarity : polarities)
         {
             // std::string polarity = "positive";
-            // PPM_PRECENTROIDED = setPPM;
             filename = pathSource.stem().string();
             std::vector<unsigned int> addEmptyScans; // make sure the retention time interpolation does not add unexpected points to bins
             std::vector<float> convertRT;
@@ -167,6 +167,7 @@ int main(int argc, char *argv[])
             {
                 std::cout << "Processing " << polarity << " peaks\n";
             }
+            // continue;
             // adjust filename to include polarity here
             // filename += ("_" + std::to_string(PPM_PRECENTROIDED) + "pos");
             filename = filename + "_" + polarity;
@@ -346,7 +347,7 @@ int main(int argc, char *argv[])
     if (!userArgs.silent)
     {
         std::chrono::duration<float> timePassed = std::chrono::duration_cast<std::chrono::milliseconds>(absoluteEnd - absoluteStart);
-        std::cout << "Completed data processing on " << tasklist.size() << " files in" << timePassed.count() << " s.\n\n";
+        std::cout << "Completed data processing on " << tasklist.size() << " files in " << timePassed.count() << " s.\n\n";
     }
 
     return 0;
