@@ -18,6 +18,11 @@ Je später die Diskrepanzen auftreten, desto weniger unterschiedlich sind sich d
 
 Konstantin / Jonas (AAC) haben Koelutionsreihen von Citraten?
 
+Offenes Problem: 
+Abschätzung des Zentroidfehlers für vorzentroidierte Daten. Mögliche Lösung über neuen Binning-Algo.
+Gibt es lineare Zshg nach einem Denoising?
+Abschätzung des Zentroidfehlers über maximale Gauss-Überlappung von zwei benachbarten Zentroiden.
+
 https://stackoverflow.com/questions/61906480/how-to-display-ggplotly-plots-with-dynamically-created-tabs-and-for-loops#
 https://stackoverflow.com/questions/53444333/dynamic-tabsets-with-multiple-plots-r-markdown?rq=3
 
