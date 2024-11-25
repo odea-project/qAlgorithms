@@ -77,6 +77,7 @@ namespace qAlgorithms
 
     UserInputSettings passCliArgs(int argc, char *argv[])
     {
+        volatile bool debug = false;
         // this function processes all cli arguments supplied by the user
         assert(argc > 0);
 
@@ -85,12 +86,10 @@ namespace qAlgorithms
         assert(args.inputPaths.empty());
         assert(args.outputPath.empty());
 
-        volatile bool debug = false;
-
         if (debug)
         {
             argc = 0;
-            args.inputPaths.push_back("C:/Users/unisys/Documents/Studium/Messdaten/daten_selina/240511_80.mzML");
+            args.inputPaths.push_back("/home/terry/Work/Messdaten/david/20240805_AA_DK_Ibu_pH6_15min_20240806221730.mzML");
         }
 
         if (argc == 1)
