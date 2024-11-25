@@ -809,6 +809,13 @@ namespace qAlgorithms
         // borders include relevant values
         int scanRangeStart = scanMin - maxdist;
         int scanRangeEnd = scanMax + maxdist;
+        // early abort if the bin covers all scans - this cannot be representative
+        if (scanRangeEnd - scanRangeStart > rawdata->allDatapoints.size())
+        {
+            DQSB_base.assign(binsize, -1);
+            DQSB_scaled.assign(binsize, -1);
+            return;
+        }
 
         // determine min and max in mz - sort, since then calculation of inner distances is significantly faster
         std::sort(pointsInBin.begin(), pointsInBin.end(), [](qCentroid *lhs, qCentroid *rhs)
@@ -1252,13 +1259,32 @@ namespace qAlgorithms
         std::sort(pointsInBin.begin(), pointsInBin.end(), [](qCentroid *lhs, qCentroid *rhs)
                   { return lhs->scanNo < rhs->scanNo; });
 
-        int prevScan = 0; // scan 0 is always empty
+        int prevScan = 0;   // scan 0 is always empty
+        double prevInt = 0; // for pre-centroided data
         for (size_t i = 0; i < pointsInBin.size(); i++)
         {
 
             qCentroid *point = pointsInBin[i];
             if (point->scanNo == prevScan)
             {
+                if (point->DQSCentroid == tmp_DQSC.back())
+                {
+                    if (point->int_area < prevInt)
+                    {
+                        continue;
+                    }
+                    else
+                    {
+                        tmp_scanNumbers.pop_back();
+                        tmp_rt.pop_back();
+                        tmp_mz.pop_back();
+                        tmp_ints_area.pop_back();
+                        tmp_ints_height.pop_back();
+                        tmp_DQSB.pop_back();
+                        tmp_DQSC.pop_back();
+                    }
+                }
+
                 // for duplicates, remove the centroid with the
                 // worse DQSC. This decision was made based on
                 // limited observations in four different real datasets
@@ -1283,6 +1309,7 @@ namespace qAlgorithms
             }
 
             prevScan = point->scanNo;
+            prevInt = point->int_area;
             tmp_scanNumbers.push_back(prevScan);
             tmp_rt.push_back(convertRT[prevScan]);
             tmp_mz.push_back(point->mz);
@@ -1291,6 +1318,14 @@ namespace qAlgorithms
             tmp_DQSB.push_back(DQSB_base[i]);
             tmp_DQSC.push_back(point->DQSCentroid);
         }
+
+        tmp_scanNumbers.shrink_to_fit();
+        tmp_rt.shrink_to_fit();
+        tmp_mz.shrink_to_fit();
+        tmp_ints_area.shrink_to_fit();
+        tmp_ints_height.shrink_to_fit();
+        tmp_DQSB.shrink_to_fit();
+        tmp_DQSC.shrink_to_fit();
 
         EIC returnVal = {
             bincode,
@@ -1413,7 +1448,7 @@ namespace qAlgorithms
 
         // move centroids from notInBins into existing bins
         activeBins.redoBinningIfTooclose(measurementDimensions, &centroidedData, notInBins, maxdist);
-        activeBins.reconstructFromStdev(&centroidedData, maxdist);
+        // activeBins.reconstructFromStdev(&centroidedData, maxdist); // this part of the binning process has been removed due to lacking statistical foundation
 
         // @todo add bin merger for halved bins here
 

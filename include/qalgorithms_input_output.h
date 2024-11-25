@@ -30,8 +30,6 @@ namespace qAlgorithms
         bool skipError = false;
         bool noOverwrite = false;
         float newPPM = 0;               // @todo not a good idea
-        bool predictFuture = false;     // @todo implement
-        bool believeFuture = false;     // @todo implement
         bool tasklistSpecified = false; // @todo implement
     };
 

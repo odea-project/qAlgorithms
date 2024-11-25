@@ -31,10 +31,11 @@ namespace qAlgorithms
       alignas(64) std::vector<std::vector<double>> spectrum = data.get_spectrum(index);
       for (size_t j = 0; j < spectrum[0].size(); j++)
       {
-        if (spectrum[1][j] < 1000)
+        if (spectrum[1][j] < 750)
         {
-          continue; // skip due to low intensity
+          continue;
         }
+
         centroids[i].push_back(CentroidPeak());
         centroids[i].back().scanNumber = index;
         centroids[i].back().mz = spectrum[0][j];
@@ -42,7 +43,7 @@ namespace qAlgorithms
         centroids[i].back().height = spectrum[1][j];
         // centroids[i].back().retentionTime = retention_times[i]; // @todo fix this
         centroids[i].back().dqsCen = -1.0;
-        centroids[i].back().mzUncertainty = spectrum[0][j] * PPMerror * 10e-6; // 5 ppm default
+        centroids[i].back().mzUncertainty = spectrum[0][j] * PPMerror * 10e-6; // 0.25 ppm default
       }
     }
     return centroids;
