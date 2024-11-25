@@ -83,12 +83,6 @@ int main(int argc, char *argv[])
     // the final task list contains only unique files, sorted by filesize
     auto tasklist = controlInput(userArgs.inputPaths, userArgs.skipError);
 
-    if (userArgs.predictFuture && tasklist.size() > 1)
-    {
-        std::cerr << "Error: prediction of good centroid error estimation only works on one file!\n";
-        exit(1);
-    }
-
 #pragma endregion cli arguments
 
     // Temporary diagnostics file creation, rework this into the log function?
@@ -118,10 +112,6 @@ int main(int argc, char *argv[])
     for (std::filesystem::path pathSource : tasklist)
     {
         assert(!(userArgs.outputPath.empty() && (userArgs.printFeatures || userArgs.printSummary || userArgs.printCentroids)));
-        if (!userArgs.silent && (userArgs.printFeatures || userArgs.printSummary || userArgs.printCentroids))
-        {
-            std::cout << "Output directory: " << userArgs.outputPath; // @todo not really necessary
-        }
 
         auto timeStart = std::chrono::high_resolution_clock::now();
         if (!userArgs.silent)
@@ -179,7 +169,7 @@ int main(int argc, char *argv[])
             }
             // adjust filename to include polarity here
             // filename += ("_" + std::to_string(PPM_PRECENTROIDED) + "pos");
-            filename += polarity;
+            filename = filename + "_" + polarity;
             if (userArgs.printCentroids)
             {
                 printPeaklist(centroids, convertRT, userArgs.outputPath, filename, userArgs.silent, userArgs.skipError, userArgs.noOverwrite);

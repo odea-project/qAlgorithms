@@ -12,7 +12,7 @@ find_package(OpenMP REQUIRED)
 # find_package(Matplot++ REQUIRED)
 
 # Set compiler flags
-add_compile_options(-Wall -Wuninitialized -Wno-unknown-pragmas -fdiagnostics-color=always -fopenmp -mavx2 -march=native -O0 -ggdb3 ${OpenMP_CXX_FLAGS}) #  -O3
+add_compile_options(-Wall -Wuninitialized -Wno-unknown-pragmas -fdiagnostics-color=always -fopenmp -mavx2 -march=native -O2 -ggdb3 ${OpenMP_CXX_FLAGS}) #  -O3
 
 # Set include directories
 include_directories(include external/StreamCraft/src)
@@ -20,6 +20,11 @@ include_directories(include external/StreamCraft/src)
 
 # Source files
 file(GLOB_RECURSE SOURCES "src/*.cpp" "external/StreamCraft/src/*.cpp")
+
+# flags for static compile 
+# set(CMAKE_FIND_LIBRARY_SUFFIXES ".a")
+# set(BUILD_SHARED_LIBS OFF)
+# set(CMAKE_EXE_LINKER_FLAGS "-static")
 
 # Add executable target
 add_executable(${PROJECT_NAME} ${SOURCES})
