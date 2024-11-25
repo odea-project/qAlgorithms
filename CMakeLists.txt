@@ -5,7 +5,8 @@ project(qAlgorithms VERSION 0.2.1)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 # set(CMAKE_FIND_LIBRARY_SUFFIXES ".a")
-# set (CMAKE_CXX_FLAGS "-mno-avx") # valgrind does not support avx
+set(CMAKE_BUILD_TYPE "Debug")
+set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_LINKER_FLAGS_DEBUG} -fno-omit-frame-pointer -fsanitize=address")
 
 # OpenMP support
 find_package(OpenMP REQUIRED)
