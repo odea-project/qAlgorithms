@@ -9,276 +9,92 @@ library(tidyverse)
 ```
 
 ```{r}
-standardMasses = c(
-124.0807302,
-136.1463818,
-155.0897,
-176.1583118,
-204.1441423,
-218.0657781,
-235.148076,
-275.2346132,
-284.2491156,
-300.049067,
-304.2069,
-127.073232,
-130.1092854,
-135.06709,
-136.051099,
-136.112637,
-152.071164,
-172.133771,
-207.149747,
-212.118787,
-233.024854,
-237.102795,
-242.143948,
-250.06503,
-254.059949,
-268.191281,
-277.101743,
-278.190884,
-278.212033,
-308.152982,
-325.171628,
-346.122556,
-389.163205,
-285.185,
-423.170041,
-436.234891,
-559.260831,
-734.468517,
-748.484167
-)
-
-
+targetCompounds = read_tsv("./standards_samuel.csv", comment = "#", col_types = "cddl")
+targetCompounds$rt_s = 60 * targetCompounds$rt_min
+files = read.csv("./filenames.csv")
+tolerances = list(tol_mz_ppm = 10, tol_rt_s = 0.15 * 60)
 ```
 
+
 ```{r}
-processPeak = function(filename, targetMasses){
-  lenMass = length(targetMasses)
-  tmpFeaturelist = read.csv(filename)
-  MZlimit_lower = tmpFeaturelist$mz - tmpFeaturelist$mzUncertainty
-  MZlimit_upper = tmpFeaturelist$mz + tmpFeaturelist$mzUncertainty
-  returnVec = rep(-1, lenMass + 1) # empty field for name
+processPeak = function(filename, targetCompounds, tolerances) {
+  lenMass = length(targetCompounds$name)
+  tmpFeaturelist = read.csv(filename$path)
+  ppm_tol = 10 ^ -6 * tolerances$tol_mz_ppm
+  MZlimit_lower = tmpFeaturelist$mz - ppm_tol * tmpFeaturelist$mz
+  MZlimit_upper = tmpFeaturelist$mz + ppm_tol * tmpFeaturelist$mz
+  RTlimit_lower = tmpFeaturelist$retentionTime - tolerances$tol_rt_s
+  RTlimit_upper = tmpFeaturelist$retentionTime + tolerances$tol_rt_s
+  returnVec = data.frame(
+    name = "null",
+    mz = 0,
+    rt_min = 0,
+    internal_std = F,
+    type = "none",
+    rt_s = 0,
+    area = 0,
+    height = 0,
+    DQSB = 0,
+    DQSF = 0
+  )
   
   for (i in 1:lenMass) {
-    targetMass = targetMasses[i]
-    lower_ok = MZlimit_lower < targetMass
-    upper_ok = MZlimit_upper > targetMass
-    returnVec[i + 1] = sum(lower_ok & upper_ok) # total number of possible matches for this mass
-  }
-  
-  return(returnVec) # vector containing the number of possible hits for all masses, in order
-}
-```
-
-```{r}
-pathPreset = "~/Work/Messdaten/Selina_Daten/eval_varied_ppm/"
-# pathPreset = "C:/Users/unisys/Documents/Studium/Messdaten/eval_varied_ppm/"
-
-result_table = data.frame(file = "None")
-for (i in 2:(length(standardMasses) + 1)) {
-  result_table[1,i] = 0
-}
-
-filenames = read.csv(paste0(pathPreset, "filenames.txt"))
-filenames = filenames[,1]
-
-for (i in 1:length(filenames)) {
-  name = paste0(pathPreset, filenames[i])
-  result = processPeak(name, standardMasses)
-  result_table = rbind(result_table, result)
-  result_table$file[i+1] = filenames[i] # first row is empty due to initialization
-}
-
-result_table = result_table[-1,]
-
-result_table$sumZero = 0
-result_table$sumOnce = 0
-result_table$sumMore = 0
-
-for (i in 1:length(filenames)) {
-  zcount = 0
-  ocount = 0
-  mcount = 0
-  
-  for (j in 2:(length(standardMasses) + 1)) {
-    if (result_table[i,j] == 0){
-      zcount = zcount + 1
-    } else if (result_table[i,j] == 1){
-      ocount = ocount + 1
-    }else if (result_table[i,j] > 1){
-      mcount = mcount + 1
-    }
-  }
-  result_table$sumZero[i] = zcount
-  result_table$sumOnce[i] = ocount
-  result_table$sumMore[i] = mcount
-}
-
-ggplot(result_table %>% group_by(file))+
-  geom_bar(aes(sumZero))
-```
-
-```{r create combined FL}
-standardsTable = function(pathPreset, filename, standards, ppm){
-  # results per dataset
-  n = length(standards)
-  matchingFeatures = data.frame(std_mass = -1, foundMZ = -1, foundRT = -1, 
-                                foundInt = -1, otherMatches = -1)
-  tmpData = read.csv(paste0(pathPreset, filename))
-  for (i in 1:n) {
-    select = tmpData[which(tmpData$mz > (standards[i] - 10e-6 * ppm * tmpData$mz)),]
-    select = select[which(select$mz < (standards[i] + 10e-6 * ppm * select$mz)),]
-    if(length(select[,1]) == 0){
-
-      matchingFeatures = rbind(matchingFeatures, c(standards[i], 0, -1, 0, 0))
+    targetMass = targetCompounds[i, ]
+    in_tolerance = MZlimit_lower < targetMass$mz
+    in_tolerance = ((MZlimit_upper > targetMass$mz) & in_tolerance)
+    in_tolerance = ((RTlimit_lower < targetMass$rt_s) &
+                      in_tolerance)
+    in_tolerance = ((RTlimit_upper > targetMass$rt_s) &
+                      in_tolerance)
+    if (sum(in_tolerance) == 0) {
+      # the compound was not found
+      returnVec[i, ] = c(name = targetMass$name, 0, 0, targetMass$internal_std, 
+                         type = filename$type, 0, 0, 0, 0, 0)
     } else {
-      matchingFeatures = rbind(matchingFeatures, 
-                             data.frame(std_mass = standards[i], foundMZ = select$mz, 
-                                        foundRT = select$retentionTime, foundInt = select$height,
-                                        otherMatches = length(select$mz) - 1))
+      viableFeatures = tmpFeaturelist[in_tolerance, ]
+      viableFeatures$numFeat = which(in_tolerance)
+      if (sum(in_tolerance) > 1) {
+        viableFeatures$diff_mz = abs(viableFeatures$mz - targetMass$mz)
+        viableFeatures = viableFeatures[which(viableFeatures$diff_mz == min(viableFeatures$diff_mz)), ]
+      } 
+
+      returnVec[i, ] = c(
+        name = targetMass$name,
+        viableFeatures$mz,
+        viableFeatures$retentionTime / 60,
+        targetMass$internal_std,
+        type = filename$type,
+        viableFeatures$retentionTime,
+        viableFeatures$area,
+        viableFeatures$height,
+        viableFeatures$dqsBin,
+        viableFeatures$dqsPeak
+      )
     }
-    
-  }
-  matchingFeatures$filename = filename
-  matchingFeatures$matchPPM = ppm
-  return(matchingFeatures[-1,]) # return all features that could be standard compounds (by mass)
-}
-
-elimination = function(matchGroup, toleranceRT){ # only works if not-founds are not included
-  if(length(unique(matchGroup$std_mass)) != 1){
-    return(NA)
-  }
-  # one group ends if it would contain the same file twice
-  eliminated = data.frame(filename = unique(matchGroup$filename), found = FALSE)
-  
-  matchGroup = matchGroup[order(matchGroup$foundRT),]
-  
-  groupBreaks = c(1, which(diff(matchGroup$foundRT) > toleranceRT)+1, length(matchGroup$foundMZ)+1) # starting point of group, includes one past length to avoid overflow
-  
-  # for (i in 1:length(matchGroup$foundMZ)) {
-  #   namePos = which(eliminated$filename == matchGroup$filename[i])
-  #   if(eliminated$found[namePos]) {
-  #     groupBreaks = rbind(groupBreaks, i)
-  #     eliminated$found = FALSE
-  #     print("case 1 occured")
-  #   } else if(
-  #       replace_na(((matchGroup$foundRT[i + 1] - matchGroup$foundRT[i]) > toleranceRT), FALSE)
-  #     ){
-  #     groupBreaks = c(groupBreaks, i)
-  #     eliminated$found = FALSE
-  #   } else {
-  #     eliminated$found[namePos] = TRUE
-  #   }
-  # }
-  # groupBreaks = c(groupBreaks, length(matchGroup$foundMZ))
-
-  lpos = which(diff(groupBreaks) == max(diff(groupBreaks)))
-  
-  selector = 0
-  
-  if (length(lpos) > 1){
-    # print("crash")
-    # only return the group with the closest mean mz
-    selector = (groupBreaks[lpos[1]]):(groupBreaks[lpos[1] + 1] - 1)
-    for (i in 2:length(lpos)) {
-      
-      selector2 = (groupBreaks[lpos[1]]):(groupBreaks[lpos[1] + 1] - 1)
-      if (abs(mean(matchGroup$foundMZ[selector]) - matchGroup$std_mass[1]) >
-          abs(mean(matchGroup$foundMZ[selector2]) - matchGroup$std_mass[1])
-          ){
-        # the second dataset is a better fit, since it has a lower mean deviation from the standard
-        selector = selector2
-      }
-    }
-  } else {
-    rpos = groupBreaks[lpos + 1] - 1
-    lpos = groupBreaks[lpos]
-    selector = lpos:rpos
   }
   
-  count = length(matchGroup$foundMZ)
-  eliminations = 0
-  matchGroup = matchGroup[selector,]
-  
-  if(length(selector) != length(unique(matchGroup$filename[selector]))){
-    matchGroup$mzdiff = abs(matchGroup$foundMZ - matchGroup$std_mass[1])
-    massSelection = matchGroup %>% group_by(filename) %>% summarise(mindiff = min(mzdiff))
-    eliminations = length(matchGroup$std_mass) - length(massSelection$mindiff)
-    matchGroup = matchGroup[which(matchGroup$mzdiff %in% massSelection$mindiff),]
-  }
- 
-  
-  resultGroup = matchGroup %>% summarise(std_mz = first(std_mass), 
-                                                    meanMZ = mean(foundMZ), 
-                                                    sdevMZ = sd(foundMZ),
-                                                    meanRT = mean(foundRT), 
-                                                    sdevRT = sd(foundRT),
-                                                    meanInt = mean(foundInt),
-                                                    sdevInt = sd(foundInt),
-                                                    selectedCount = length(matchGroup$foundMZ),
-                                                    totalCount = count,
-                                                    eliminated = eliminations
-                                                    )
-  
-  
-
-  return(resultGroup)
+  return(returnVec) # vector containing all assigned features or zero
 }
 ```
 
 ```{r}
-matchingFeatures = data.frame(std_mass = -1, foundMZ = -1, foundRT = -1, 
-                                foundInt = -1, otherMatches = -1, filename = "none", matchPPM = 0)
-for (name in filenames) {
-  matchingFeatures = rbind(matchingFeatures, standardsTable(pathPreset, name, standardMasses, 10))
+resultVector = data.frame(
+    name = "null",
+    mz = 0,
+    rt_min = 0,
+    internal_std = F,
+    type = "none",
+    rt_s = 0,
+    area = 0,
+    height = 0,
+    DQSB = 0,
+    DQSF = 0
+  )
+
+for (index in 1:length(files$path)) {
+  resultVector = rbind(resultVector, processPeak(files[index,], targetCompounds, tolerances))
 }
-matchingFeatures = matchingFeatures[-1,]
-```
-
-```{r}
-subFeatures = matchingFeatures[which(
- as.numeric(
-   str_match(matchingFeatures$filename, "[0-9]+_[0-9]+_(.+)pos")[,2])
- == 0.5
-),]
-subFeatures = subFeatures[order(subFeatures$std_mass),]
-
-```
-
-```{r}
-recovery = data.frame(std_mz = 0, 
-      meanMZ = 0, 
-      sdevMZ = 0,
-      meanRT = 0, 
-      sdevRT = 0,
-      meanInt = 0,
-      sdevInt = 0,
-      selectedCount = 0,
-      totalCount = 0,
-      eliminated = 0,
-      samplesFound = 0)
-
-for (i in 1:length(standardMasses)) {
-  mass = standardMasses[i]
-  massGroup = subFeatures[which(subFeatures$std_mass == mass),]
-  if (sum(massGroup$foundMZ) == 0) {
-    recovery[i,] = c(mass, rep(0,10))
-  } else {
-    notfound = massGroup$foundMZ == 0
-    massGroup = massGroup[!notfound,]
-    notfound = sum(notfound) # notfound is the first quality parameter
-    recovery[i,] = c(elimination(massGroup, 6), length(unique(massGroup$filename)))
-  }
-  
-}
-
-recovery$sdevMZ[which(recovery$selectedCount == 2)] = NA
-recovery$sdevRT[which(recovery$selectedCount == 2)] = NA
-recovery$sdevInt[which(recovery$selectedCount == 2)] = NA
-#write_csv(recovery, "standard_overview_tol-10ppm_masserror-0.5ppm.csv")
+resultVector = resultVector[-1,]
 ```
 
 
