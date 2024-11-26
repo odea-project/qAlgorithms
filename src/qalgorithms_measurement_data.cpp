@@ -51,9 +51,8 @@ namespace qAlgorithms
 
   double calcExpectedDiff(std::vector<double> &data)
   {
-    const int numPoints = data.size(); // number of data points
-    int lowerLimit = 2 * numPoints / 100;
-    int upperLimit = numPoints - 2 * numPoints / 100;
+    const int numPoints = data.size();                 // number of data points
+    int upperLimit = numPoints - 95 * numPoints / 100; // check lowest 5% for expected difference
     double expectedDifference = 0.0;
     // static approach: mean of the 8 lowest distances @todo why 8?
     std::vector<double> differences(numPoints - 1);
@@ -62,11 +61,11 @@ namespace qAlgorithms
       differences[i] = data[i + 1] - data[i];
     }
     std::sort(differences.begin(), differences.end());
-    for (int i = lowerLimit; i < upperLimit; i++)
+    for (int i = 0; i < upperLimit; i++)
     {
       expectedDifference += differences[i];
     }
-    expectedDifference /= numPoints - 4 * numPoints / 100;
+    expectedDifference /= upperLimit;
 
     return expectedDifference;
   }
