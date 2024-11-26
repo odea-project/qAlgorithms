@@ -506,15 +506,16 @@ namespace qAlgorithms
         {
             if (calcDF(df_start, i, 2 * scale + i) > 4)
             {
-                const __m128 coeff = beta[i]; // coefficient register from beta @ i
-                assert(coeff[2] != 0.0f && coeff[3] != 0.0f);
-
-                RegressionGauss selectRegression = makeValidRegression(i, scale, df_start, y_start,
-                                                                       ylog_start, coeff);
-                if (selectRegression.isValid)
+                const __m128 coeff = beta[i];             // coefficient register from beta @ i
+                if (coeff[2] != 0.0f && coeff[3] != 0.0f) // this case occurs, prevent at creation of beat @todo
                 {
-                    validRegressionsTmp[validRegressionsIndexTmp] = selectRegression;
-                    validRegressionsIndexTmp++;
+                    RegressionGauss selectRegression = makeValidRegression(i, scale, df_start, y_start,
+                                                                           ylog_start, coeff);
+                    if (selectRegression.isValid)
+                    {
+                        validRegressionsTmp[validRegressionsIndexTmp] = selectRegression;
+                        validRegressionsIndexTmp++;
+                    }
                 }
             }
         }
@@ -1805,7 +1806,7 @@ namespace qAlgorithms
         const float *vec,
         const size_t n)
     {
-        assert((n < 2 * scale + 1) && "n must be greater or equal to 2 * scale + 1. Process terminated");
+        assert(n > 2 * scale);
 
         std::array<__m128, 512> beta;
         __m128 result[512];

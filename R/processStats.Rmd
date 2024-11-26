@@ -1,0 +1,69 @@
+---
+title: "process parameters"
+output: html_document
+date: "2024-11-26"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+```
+
+```{r}
+processStats = read.csv("~/Work/ODEA/qAlgorithms/build/log_qAlgorithms_all.csv")
+
+processStats = as.data.frame(processStats[,2:(length(processStats[1,]))], row.names = processStats[,1])
+# normalise errors of peakfinding to number of features
+processStats$badFeatures = processStats$badFeatures / processStats$numFeatures
+
+processStats$polarity = str_ends(row.names(processStats), "positive")
+processStats$year = str_extract(row.names(processStats) , "^......")
+processStats$year = as.numeric(processStats$year)
+negatives = which(!processStats$polarity)
+processStats$year[negatives] = processStats$year[negatives] * -1
+
+processStats$Series = "none"
+processStats$Series[which(processStats$year == 202401)] = "PFAS+"
+processStats$Series[which(processStats$year == -202401)] = "PFAS-"
+processStats$Series[which(processStats$year == 202402)] = "PFAS+"
+processStats$Series[which(processStats$year == -202402)] = "PFAS-"
+processStats$Series[which(processStats$year == 202408)] = "pump_error+"
+processStats$Series[which(processStats$year == 210229)] = "Aquaflow_D1+"
+processStats$Series[which(processStats$year == 210229 & processStats$blank)] = "Aquaflow_D1_B+"
+processStats$Series[which(processStats$year == 210311)] = "Aquaflow_D2+"
+processStats$Series[which(processStats$year == 220909)] = "Indigo+"
+processStats$Series[which(processStats$year == -220909)] = "Indigo-"
+processStats$Series[which(processStats$year == 240123)] = "SFC_DoE+"
+processStats$Series[which(processStats$year == -240123)] = "SFC_DoE-"
+processStats$Series[which(processStats$year == 240601)] = "10_stds"
+processStats$Series[which(processStats$year == 241010)] = "NR003"
+processStats$Series[which(processStats$year == 241015)] = "NR004"
+processStats$Series[which(processStats$year == 241018)] = "NR005"
+
+processStats$name = str_replace(str_sub(row.names(processStats), 7, -8), "pos_p", "p")
+processStats$name = str_replace(str_replace(processStats$name, "^_", ""), "neg_n", "n")
+
+```
+
+```{r}
+sel = which(processStats$Series != "pump_error+")
+y = (processStats$numFeatures[sel] / processStats$numSpectra[sel])
+x = (processStats$numBins[sel] / processStats$numSpectra[sel])
+model = lm(y ~ x)
+
+line_construction = ggplot(processStats)+
+  geom_point(aes(x = numBins / numSpectra, y = numFeatures / numSpectra, colour = Series), size = 3)+
+  geom_abline(slope = model$coefficients[[2]], intercept = model$coefficients[[1]], linewidth = 1.6, linetype = "dashed")+
+  xlab("Relative Bin Count [Bins / Scan]")+
+  ylab("Relative Feature Count [Features / Scan]")+
+  labs(caption = paste0(length(sel), " points, inclination = ", round(model$coefficients[[2]], digits = 3),", R² = ", round(summary(model)$adj.r.squared, digits = 3), "  "),
+       colour = "Measurement Type")+
+  theme_bw()
+```
+
+```{r}
+ggsave(plot = line_construction + theme(text = element_text(size = 20), legend.text = element_text(margin = margin(t = 5, b = 5, unit = "pt"))), 
+       filename = "~/Work/new_line.png", 
+       scale = 2.3, width = 1980, height = 1080, units = "px")
+```
+
