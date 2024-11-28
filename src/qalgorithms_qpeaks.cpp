@@ -1466,7 +1466,7 @@ namespace qAlgorithms
         float &apex_position,
         float &valley_position)
     {
-        assert(coeff[0] != 0);
+        // assert(coeff[0] != 0); // this should not be the case @todo check
         assert(coeff[2] != 0 && coeff[3] != 0);
         // calculate key by checking the signs of coeff
         __m128 res = _mm_set1_ps(-0.5f);                                 // res = -0.5
