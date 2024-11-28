@@ -12,7 +12,7 @@ library(tidyverse)
 targetCompounds = read_tsv("./standards_samuel.csv", comment = "#", col_types = "cddl")
 targetCompounds$rt_s = 60 * targetCompounds$rt_min
 files = read.csv("./filenames.csv")
-tolerances = list(tol_mz_ppm = 10, tol_rt_s = 0.15 * 60)
+tolerances = list(tol_mz_ppm = 10, tol_rt_s = 1.65 * 60)
 ```
 
 
@@ -97,4 +97,7 @@ for (index in 1:length(files$path)) {
 resultVector = resultVector[-1,]
 ```
 
+```{r}
+write.csv(resultVector, "./results_samuel.csv")
+```
 
