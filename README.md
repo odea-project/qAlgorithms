@@ -7,6 +7,8 @@ precise and reliable data processing for this complex field.
 In the spirit of open data evaluation, as little encapsulation as possible is used in the
 source code itself. Functions are written with the goal of communicating the entirety of
 their mathematical operations to the reader, provided he has some understanding of functions and structs.
+We encourage you, the end user, to read our source code when working with qAlgorithms. This
+increases the chance for errors to be found and keeps the project maintainable.
 
 We are always open for suggestions and feedback regarding your useage of our algorithms,
 so do not hesitate to open an issue on our github page.
@@ -16,28 +18,36 @@ parameters with some degree of confidence. If you have performed an experiment w
 resulted in data that allows you to infer its general quality (on basis of the experimental
 conditions) or measured more than 10 replicates of a sample with a complex, but well-described
 matrix, we would appreciate your support. You can contact us by opening an issue or sending
-a request to our [Zenodo community](https://zenodo.org/communities/nontarget).
+a request to our [Zenodo community](https://zenodo.org/communities/nontarget). Here, we have
+also provided example files for trying out qAlgorithms.
 
 # Installation and Usage
 Please note that qAlgorithms is still in active development and result accuracy
 cannot be guaranteed at this stage. 
 
 ## Windows
-The entire qAlgorithms workflow is provided as an executable under ["Releases"](https://github.com/odea-project/qAlgorithms/releases) on
-our github repository.
-Note that qAlgorithms requires the libraries [`libgcc_s_seh-1.dll`](https://github.com/odea-project/qAlgorithms/releases/download/v0.1.1.beta/libgcc_s_seh-1.dll), [`libgomp-1.dll`](https://github.com/odea-project/qAlgorithms/releases/download/v0.1.1.beta/libgomp-1.dll) 
+The entire qAlgorithms workflow is provided as an executable under ["Releases"](https://github.com/odea-project/qAlgorithms/releases) 
+on our github repository. Note that qAlgorithms requires the libraries 
+[`libgcc_s_seh-1.dll`](https://github.com/odea-project/qAlgorithms/releases/download/v0.1.1.beta/libgcc_s_seh-1.dll), [`libgomp-1.dll`](https://github.com/odea-project/qAlgorithms/releases/download/v0.1.1.beta/libgomp-1.dll) 
 and [`libwinpthread-1.dll`](https://github.com/odea-project/qAlgorithms/releases/download/v0.1.1.beta/libwinpthread-1.dll). If they are not present on your system already, you can also download them under "Releases" 
 or by clicking on the filenames above. There is no need to download the source code.
+
+To run qAlgorithms, the three .dll files and qAlgorithms.exe must be in the same directory.
 
 ## Linux
 Currently, no Linux releases are provided. We recommend you to clone the repository
 and compile from source using cmake and GCC.
 
 ## Usage
-
 On windows, start qAlgorithms.exe using powershell. Avoid non-ASCII characters in 
 filenames. If a folder or filename has a space in it, you need to enter the absolute
-path with quotes to read in everything correctly.
+path with quotes or escape the space character with "\" to read in everything correctly.
+To open powershell in the qAlgorithms directory, open it with the windows explorer and type 
+"powershell" into the path field.
+
+On linux, you can execute qAlgorithms through bash and use special characters like µ
+in filenames. We use the std::filesystem library, so you are limited by that.
+
 To use qAlgorithms for processing mass spectrometry data, you need to convert your
 measurements into .mzML files, for example with msconvert. Currently, only MS1 
 data can be used, so you save some disk space if you filter them out at this stage.
@@ -90,7 +100,7 @@ the measurement data itself. This approach allows the algorithms to dynamically 
 utilize the quality of the data, ensuring robust and reproducible results every time.
 
 qAlgorithms aims to make your processing as fast as possible, so you don't have to spend more
-time waiting for your computer to finish than evaluating results.
+time with processing rather than evaluating results.
 
 ## Scientific Rigor
 Our commitment to scientific validity is unwavering. The algorithms within `qAlgorithms` are 
