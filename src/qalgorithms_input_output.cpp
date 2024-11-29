@@ -10,7 +10,7 @@
 #include <assert.h>
 #include <cmath> // isnan()
 
-#include "qalgorithms_datatype_peak.h"
+#include "qalgorithms_datatypes.h"
 #include "qalgorithms_input_output.h"
 #include "qalgorithms_global_vars.h"
 

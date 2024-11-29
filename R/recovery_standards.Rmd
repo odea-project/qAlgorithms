@@ -11,6 +11,9 @@ library(tidyverse)
 ```{r}
 targetCompounds = read_tsv("./standards_samuel.csv", comment = "#", col_types = "cddl")
 targetCompounds$rt_s = 60 * targetCompounds$rt_min
+suspectCompounds = read_tsv("./suspects_samuel.tsv", comment = "#", col_types = "cddd")
+suspectCompounds$internal_std = FALSE
+
 files = read.csv("./filenames.csv")
 tolerances = list(tol_mz_ppm = 10, tol_rt_s = 1.65 * 60)
 ```
@@ -92,12 +95,13 @@ resultVector = data.frame(
   )
 
 for (index in 1:length(files$path)) {
-  resultVector = rbind(resultVector, processPeak(files[index,], targetCompounds, tolerances))
+   resultVector = rbind(resultVector, processPeak(files[index,], suspectCompounds, tolerances))
+  # resultVector = rbind(resultVector, processPeak(files[index,], targetCompounds, tolerances))
 }
 resultVector = resultVector[-1,]
 ```
 
 ```{r}
-write.csv(resultVector, "./results_samuel.csv")
+write.csv(resultVector, "./results_samuel_suspects.csv")
 ```
 

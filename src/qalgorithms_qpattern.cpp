@@ -1,6 +1,6 @@
 // #include <../include/qalgorithms_qbin.h>
 #include "qalgorithms_qpattern.h"
-#include "qalgorithms_datatype_peak.h"
+#include "qalgorithms_datatypes.h"
 #include "qalgorithms_global_vars.h"
 
 #include <algorithm> // sorting
