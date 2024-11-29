@@ -41,7 +41,7 @@ and compile from source using cmake and GCC.
 ## Usage
 On windows, start qAlgorithms.exe using powershell. Avoid non-ASCII characters in 
 filenames. If a folder or filename has a space in it, you need to enter the absolute
-path with quotes or escape the space character with "\" to read in everything correctly.
+path with quotes or escape the space character with "\\" to read in everything correctly.
 To open powershell in the qAlgorithms directory, open it with the windows explorer and type 
 "powershell" into the path field.
 
