@@ -7,9 +7,8 @@
 #include <string>
 #include <immintrin.h>
 
-namespace q
+namespace qAlgorithms
 {
-
     int sum(const std::vector<int> &vec);
     size_t sum(const std::vector<size_t> &vec);
     double sum(const std::vector<double> &vec);
@@ -86,9 +85,5 @@ namespace q
         const std::vector<bool> &B);
 
     double erfi(const double x);
-
-    extern const float tValuesArray[256];
-    extern const float chiSquareArray[256];
-    extern const double SQRTPI_2;
-} // namespace q
+}
 #endif // QALGORITHMS_UTILS_H

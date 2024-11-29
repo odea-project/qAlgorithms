@@ -264,7 +264,7 @@ sc::MS_SPECTRA_HEADERS sc::mzxml::MZXML::extract_spectra_headers(const std::vect
 
   headers.resize_all(n);
 
-#pragma omp parallel for
+  // # pragma omp parallel for
   for (int i = 0; i < n; i++)
   {
 
@@ -368,7 +368,7 @@ std::vector<std::vector<std::vector<double>>> sc::mzxml::MZXML::extract_spectra(
 
   sp.resize(n);
 
-#pragma omp parallel for
+  // # pragma omp parallel for
   for (int i = 0; i < n; i++)
   {
 

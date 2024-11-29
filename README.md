@@ -1,15 +1,22 @@
 # Introduction
 
-Welcome to `qAlgorithms`, a comprehensive collection of C++ libraries designed specifically 
+Welcome to `qAlgorithms`, a comprehensive C++ library designed specifically 
 for processing analytical data. Our focus is on the non-target screening data domain, ensuring 
 precise and reliable data processing for this complex field.
 
-The `qBinning Beta` aims to expand the existing program by finding and eliminating edge
-cases during the binning that lead to less accurate results and experiments with additional
-control prameters throughout the entire program.
+In the spirit of open data evaluation, as little encapsulation as possible is used in the
+source code itself. Functions are written with the goal of communicating the entirety of
+their mathematical operations to the reader, provided he has some understanding of functions and structs.
 
 We are always open for suggestions and feedback regarding your useage of our algorithms,
 so do not hesitate to open an issue on our github page.
+
+Additionally, we are interested in measurement data that allows us to test our quality
+parameters with some degree of confidence. If you have performed an experiment which
+resulted in data that allows you to infer its general quality (on basis of the experimental
+conditions) or measured more than 10 replicates of a sample with a complex, but well-described
+matrix, we would appreciate your support. You can contact us by opening an issue or sending
+a request to our [Zenodo community](https://zenodo.org/communities/nontarget).
 
 # Installation and Usage
 Please note that qAlgorithms is still in active development and result accuracy
@@ -27,6 +34,7 @@ Currently, no Linux releases are provided. We recommend you to clone the reposit
 and compile from source using cmake and GCC.
 
 ## Usage
+
 On windows, start qAlgorithms.exe using powershell. Avoid non-ASCII characters in 
 filenames. If a folder or filename has a space in it, you need to enter the absolute
 path with quotes to read in everything correctly.
@@ -55,6 +63,9 @@ Some things to keep in mind:
   centroided data, it is not possible to estimate an individual uncertainty
   for centroids, which leads to less accurate results. Where possible, process
   profile mode spectra instead.
+* **Expanding on the above point, current tests indicate that pre-centroided**
+  **data can not be processed with high reliability. If at all possible, use**
+  **only profile mode spectra. The centroid error is only marginally dependent on m/z, leading to inaccurate binning.**
 * If you do not specify which results you want, no output will be written
 * If multiple copies of the same file are found during recursive search,
   only one of them will be processed
@@ -64,8 +75,10 @@ Some things to keep in mind:
   All peaks which are provided in the peak table are statistically significant.
   The best current usage for quality scores is priorisation of peaks 
   during further analysis.
-* A negative DQSpeak means that the regression is more uncertain than the DQSpeak implies.
-* A DQSpeak of -10 means that the peak is (probably) incorrect. This is a temporary solution.
+* A negative DQSpeak means that the m/z given for feature is more uncertain than the DQSpeak 
+  implies. This does not mean that the feature does not exist, or that the calculated
+  mass is wildly inaccurate. We suspect that this is caused by detector saturation,
+  but have not undertaken research in this regard.
 
 ## Documentation
 Full documentation can be found [here](https://odea-project.github.io/qAlgorithms/html/).

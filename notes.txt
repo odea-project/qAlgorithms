@@ -1,3 +1,28 @@
+Bifurcating Dendrogram:
+Für einen Datensatz werden zwei unterschiedliche Komponentisierungen durchgeführt, eine davon mit qPattern
+Für qPattern wird ein eindeutiges Entscheidungskriterium formuliert.
+Das Ähnlichkeitskriterium wird als ein System ausgedrückt, in dem der gesamte Datensatz immer
+    an der unähnlichsten Stelle getrennt wird Bzw. an der ähnlichsten zusammengeführt wird. Diese
+    Trennung wird für alle Punkte durchgeführt, so dass die 1. Gruppe der ganze Datensatz ist und
+    alle Gruppen so lange getrennt werden, bis sie nur noch ein Feature enthalten.
+Für jedes Feature wird der Gruppenverlauf als ein Vektor des Formats {Gruppe 1, Untergruppe in Bezug auf Gruppe 1} ausgedrückt.
+    Es enthält ebenfalls einen Index, der angibt, ab welchem Punkt die Gruppierung abgeschlossen war
+Die Gruppenähnlichkeit zwischen qPattern und dem anderen Algorithmus soll bestimmt werden.
+    Für jedes Feature sind nur die finalen Komponenten des anderen Algorithmus verfügbar.
+Nun lässt sich auf einer per-Feature Basis angeben, wie viele Schritte notwendig sind, bis die
+    Komponentisierung durch qPattern eine Gruppe trennt, die durch den anderen Algorithmus 
+    erstellt wurde.
+Je später die Diskrepanzen auftreten, desto weniger unterschiedlich sind sich die Ergebnisse.
+    Diese Unterscheidung funktioniert auch für Gruppen, die nur durch den verglichenen Algorithmus
+    noch weiter getrennt wurden.
+
+Konstantin / Jonas (AAC) haben Koelutionsreihen von Citraten?
+
+Offenes Problem: 
+Abschätzung des Zentroidfehlers für vorzentroidierte Daten. Mögliche Lösung über neuen Binning-Algo.
+Gibt es lineare Zshg nach einem Denoising?
+Abschätzung des Zentroidfehlers über maximale Gauss-Überlappung von zwei benachbarten Zentroiden.
+
 https://stackoverflow.com/questions/61906480/how-to-display-ggplotly-plots-with-dynamically-created-tabs-and-for-loops#
 https://stackoverflow.com/questions/53444333/dynamic-tabsets-with-multiple-plots-r-markdown?rq=3
 
@@ -54,20 +79,6 @@ Carbamazepin	245.1525	10.13	607.8	M + H+
 Je nach Datensatz kann es sinnvoll sein, auch "halbe" Peaks, bei denen 
 das Intensitätsprofil nach dem höchsten Wert abbricht, mit einzubeziehen
 
-Mehrere Datensätze (Replikate), mit einer von Standards eingegrenzten Region
--> Prüfe Verteilung von Rauschen und prüfe, inwiefern Binparameter bei der Zuordnung helfen
-
-https://github.com/sgorsten/linalg
-
-Skalieren über Intensität für Kurvenanpassung nicht sonderlich vielversprechend
-
-C:\PROGRA~2\GnuWin32\bin\make.exe
-
-Gibt es einen Zusammenhang zwischen Zentroidfehler und der Eigenschaft, 
-nicht in einem Bin zu landen / Anfang Bzw. Ende eines Bins zu sein?
- -> bei Duplikaten ist der Punkt, der am ehesten nicht in den Bin passt,
-    häufig auch der mit dem schlechtesten DQSC. 
-
 https://www.agner.org/optimize/optimizing_cpp.pdf
 
 prüfen, wie das Programm skaliert -> subdatensätze
@@ -81,12 +92,3 @@ großen Multistandard-Datensatz anfragen (bfg - Datenbank)
 Bin Reassembly sollte erst nach Aufreinigung der zu großen Bins passieren, diese müssen aber 
     von der Rekonstruktion ausgeschlossen werden
 
-Bin Recutting: Suche nach ungewöhnlichen Mustern, Quantifizierung über summary-Params
-    Die Fehlercodes funktionieren nicht so wie vorgesehen
-
-ist Masse auch in MS2? Prüfe bei niedrigster Kollisionsenergie
-	-> in-source fragmentation
-welche spektren sind ähnlich? -> pairwise Ähnlichkeitsmatrix, dann Kurve
-	Aufpassen: peakverzerrung
-
-.cdresult ist eine SQL database
