@@ -1,11 +1,12 @@
-// qalgorithms_datatype_peak.h
+// qalgorithms_datatypes.h
 #ifndef QALGORITHMS_DATATYPE_PEAK_H
 #define QALGORITHMS_DATATYPE_PEAK_H
 
 #include <immintrin.h> // AVX
 #include <cstddef>     // errorcode in EIC @todo just make this an int
 #include <vector>
-/* This file includes the Peak and PeakList classes*/
+
+/* This file includes the structs used for data management in qAlgorithms*/
 
 namespace qAlgorithms
 {
