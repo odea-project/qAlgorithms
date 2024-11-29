@@ -59,7 +59,7 @@ namespace qAlgorithms
     /// @param featureList feature list generated through collapseFeaturelist
     /// @param replicateID The component is assigned a unique ID to match it with other datasets
     /// @return @todo
-    void initialComponentBinner(std::vector<FeaturePeak> &featureList, unsigned int replicateID);
+    void initialComponentGrouping(std::vector<FeaturePeak> &featureList, unsigned int replicateID);
 
     /// @brief function which groups features within one sample by retention time. Groups tend to be overly large.
     /// @param componentStartEnd
