@@ -4,7 +4,7 @@
 #include <vector>
 #include <filesystem>
 #include <string>
-#include "qalgorithms_datatype_peak.h"
+#include "qalgorithms_datatypes.h"
 
 namespace qAlgorithms
 {

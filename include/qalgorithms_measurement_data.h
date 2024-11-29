@@ -1,7 +1,7 @@
 #ifndef QALGORITHMS_MEASUREMENT_DATA_H
 #define QALGORITHMS_MEASUREMENT_DATA_H
 
-#include "../include/qalgorithms_datatype_peak.h"
+#include "../include/qalgorithms_datatypes.h"
 #include "../external/StreamCraft/src/StreamCraft_mzml.hpp"
 
 #include <vector>

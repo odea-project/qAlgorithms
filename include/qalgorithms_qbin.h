@@ -6,7 +6,7 @@
 #include <string>
 #include <filesystem> // printing absolute path in case read fails
 
-#include "qalgorithms_datatype_peak.h"
+#include "qalgorithms_datatypes.h"
 
 // Goal: all functions modify individual features, which are combined to a bin.
 // The bin contains all features and the functions necessary to summarise which features are present

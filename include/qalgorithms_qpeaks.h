@@ -3,7 +3,7 @@
 #define QALGORITHMS_QPEAKS_H
 
 // internal
-#include "qalgorithms_datatype_peak.h"
+#include "qalgorithms_datatypes.h"
 #include "qalgorithms_measurement_data.h"
 #include "qalgorithms_qbin.h"
 

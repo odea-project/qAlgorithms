@@ -4,7 +4,7 @@
 #include "qalgorithms_qpeaks.h"
 #include "qalgorithms_utils.h"
 #include "qalgorithms_global_vars.h"
-#include "qalgorithms_datatype_peak.h"
+#include "qalgorithms_datatypes.h"
 
 #include <algorithm>
 #include <cassert>
