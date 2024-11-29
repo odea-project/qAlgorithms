@@ -114,27 +114,46 @@ namespace qAlgorithms
         return 0;
     }
 
-    void initialComponentBinner(std::vector<FeaturePeak> &featureList, unsigned int replicateID)
+    void initialComponentGrouping(std::vector<FeaturePeak> &featureList, unsigned int replicateID)
     {
+        // this function creates pairs of similar features. A pair is only formed if for neither
+        // feature there is another feature which is more similar than the pair member, i.e.
+        // both features form a reliable group.
         int featureCount = featureList.size();
+        std::vector<FeaturePeak *> featurePointers(featureCount, nullptr);
         std::vector<float> orderSpace(featureCount, 0);
         std::vector<float> cumError;
         cumError.reserve(featureCount);
 
-        std::sort(featureList.begin(), featureList.end(), [](FeaturePeak &lhs, FeaturePeak &rhs)
-                  { return lhs.retentionTime < rhs.retentionTime; });
+        for (int i = 0; i < featureCount; i++)
+        {
+            featurePointers[i] = &(featureList[i]);
+        }
+
+        // @todo features should be returned sorted by RT already
+        std::sort(featurePointers.begin(), featurePointers.end(), [](FeaturePeak *lhs, FeaturePeak *rhs)
+                  { return lhs->retentionTime < rhs->retentionTime; });
+
+        // create a vector of all regression coefficients modified to use RT as the x-axis @todo no need to be dynamic
+        std::vector<RegCoeffs> movedCoefficients(featureCount, RegCoeffs{0, 0, 0, 0});
+
+        for (int i = 0; i < featureCount; i++)
+        {
+            // coefficients shift
+            RegCoeffs newCoeffs = featurePointers[i]->coefficients;
+        }
 
         // create order space
         cumError.push_back(0); // always substract the sum of everything before the current range
         for (int i = 0; i < featureCount; i++)
         {
-            cumError.push_back(featureList[i].retentionTimeUncertainty);
+            cumError.push_back(featurePointers[i]->retentionTimeUncertainty);
         }
         std::partial_sum(cumError.begin(), cumError.end(), cumError.begin()); // cumulative sum
 
         for (int i = 0; i < featureCount - 1; i++)
         {
-            orderSpace[i] = featureList[i + 1].retentionTime - featureList[i].retentionTime;
+            orderSpace[i] = featurePointers[i + 1]->retentionTime - featurePointers[i]->retentionTime;
         }
         // orderSpace contains all differences of the ordered data and a 0 at the last position
 
