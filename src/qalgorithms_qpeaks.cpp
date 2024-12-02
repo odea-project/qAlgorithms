@@ -216,6 +216,10 @@ namespace qAlgorithms
                 runningRegression(y_start, ylog_start, df_start, n, validRegressions);
                 if (validRegressions.empty())
                 {
+                    delete[] Y;
+                    delete[] Ylog;
+                    delete[] X;
+                    delete[] df;
                     continue; // no valid peaks
                 }
                 createCentroidPeaks(all_peaks, nullptr, &validRegressions, validRegressions.size(), y_start, mz_start, df_start, scanNumber);
@@ -332,6 +336,13 @@ namespace qAlgorithms
                 runningRegression(y_start, ylog_start, df_start, n, validRegressions);
                 if (validRegressions.empty())
                 {
+                    delete[] Y;
+                    delete[] Ylog;
+                    delete[] X;
+                    delete[] df;
+                    delete[] mz;
+                    delete[] dqs_cen;
+                    delete[] dqs_bin;
                     continue; // no valid peaks
                 }
                 createFeaturePeaks(all_peaks, nullptr, &validRegressions, validRegressions.size(), y_start,
@@ -1834,8 +1845,8 @@ namespace qAlgorithms
             exit(1);
         }
 
-        __m128 *result = new __m128[n - 2 * scale];
-        __m128 *products = new __m128[n];
+        __m128 result[n - 2 * scale];
+        __m128 products[n];
         const __m128 flipSign = _mm_set_ps(1.0f, 1.0f, -1.0f, 1.0f);
         convolve_SIMD(scale, vec, n, result, products, n);
 
@@ -1843,8 +1854,6 @@ namespace qAlgorithms
         { // swap beta2 and beta3 and flip the sign of beta1 // @todo: this is a temporary solution
             beta[i] = _mm_mul_ps(_mm_shuffle_ps(result[i], result[i], 0b10110100), flipSign);
         }
-        delete[] result;
-        delete[] products;
     }
 
     void convolve_SIMD(
