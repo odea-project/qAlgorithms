@@ -41,13 +41,7 @@ namespace qAlgorithms
 
     // static void scaleDistancesForDQS_gauss(int maxdist); // removed
 
-    static void scaleDistancesForDQS_linear(int maxdist); // @experimental
-
-    // binning-specific variables
-    int maxdist;
-    std::vector<qCentroid *> notInBins; // this vector contains all points which are not included in bins
-    int duplicatesTotal;                // total times the distance 0 (in scans) was measured in closed bins
-    std::vector<float> scalarForMOD;    // This vector contains factors for an inverse gaussian scaling of distances during DQS calculation
+    static std::vector<float> scaleDistancesForDQS_linear(int maxdist); // @experimental
 
 #define IGNORE -256 // nonsense value if no real number exists. Must be
                     // negative since it is used later when searching for
@@ -98,7 +92,8 @@ namespace qAlgorithms
                         binDeque.front().makeOS();
                         binDeque.front().makeCumError(); // always after order space, since makeOS sorts
                         // takes element from binDeque, starts subsetting, appends bins to binDeque
-                        binDeque.front().subsetMZ(&binDeque, binDeque.front().activeOS, 0, binDeque.front().activeOS.size() - 1, subsetCount);
+                        binDeque.front().subsetMZ(&binDeque, binDeque.front().activeOS, notInBins,
+                                                  0, binDeque.front().activeOS.size() - 1, subsetCount);
                         binDeque.pop_front(); // remove the element that was processed from binDeque
                     }
                     break;
@@ -112,7 +107,7 @@ namespace qAlgorithms
                     std::vector<Bin> &target = rebin ? redoneBins : finishedBins;
                     for (size_t j = 0; j < startpoint; j++)
                     {
-                        binDeque.front().subsetScan(&binDeque, &target, maxdist, subsetCount);
+                        binDeque.front().subsetScan(&binDeque, &target, notInBins, maxdist, subsetCount);
                         binDeque.pop_front();
                     }
                     break;
@@ -146,6 +141,7 @@ namespace qAlgorithms
     {
         auto timeStart = std::chrono::high_resolution_clock::now();
 
+        std::vector<float> scalarForMOD = scaleDistancesForDQS_linear(maxdist);
         std::vector<Bin> &target = rebin ? redoneBins : finishedBins;
         // bins are sorted after DQSB calculation, meaning scanMin and ScanMax parameters are wrong
         // this only works if bins exist
@@ -153,14 +149,14 @@ namespace qAlgorithms
 
         for (size_t i = 0; i < target.size(); i++)
         {
-            target[i].makeDQSB(rawdata, maxdist);
+            target[i].makeDQSB(rawdata, scalarForMOD, maxdist);
         }
         auto timeEnd = std::chrono::high_resolution_clock::now();
         std::cout << "Finished Calculating DQSBs in " << (timeEnd - timeStart).count() << " ns\n";
     }
 
     void BinContainer::redoBinningIfTooclose(const std::vector<int> dimensions, const CentroidedData *rawdata,
-                                             std::vector<qCentroid *> notbinned, const int maxdist)
+                                             const int maxdist)
     {
         std::cout << "starting re-binning procedure...\n";
         // assemble new bin by copying bins with hot ends into notInBins
@@ -396,7 +392,7 @@ namespace qAlgorithms
                 finishedBins[binInsertPoint].mzMin = mzMin;
                 finishedBins[binInsertPoint].scanMax = scanMax;
                 finishedBins[binInsertPoint].scanMin = scanMin;
-                finishedBins[binInsertPoint].makeDQSB(rawdata, maxdist);
+                // finishedBins[binInsertPoint].makeDQSB(rawdata, maxdist); // @todo
             }
         }
         std::cout << tmpCounter << " points added to " << binModCount << " bins based on corrected estimate\n"
@@ -442,7 +438,7 @@ namespace qAlgorithms
                             mergedBin.pointsInBin.insert(mergedBin.pointsInBin.end(), binA->pointsInBin.begin(), binA->pointsInBin.end());
                             mergedBin.pointsInBin.insert(mergedBin.pointsInBin.end(), binB->pointsInBin.begin(), binB->pointsInBin.end());
 
-                            mergedBin.makeDQSB(rawdata, maxdist);
+                            // mergedBin.makeDQSB(rawdata, maxdist); // @todo
 
                             redoneBins.push_back(mergedBin);
                             // advance by one so one bin is not merged twice by accident
@@ -504,18 +500,19 @@ namespace qAlgorithms
         file_out << output.str();
     }
 
-    std::vector<EIC> BinContainer::returnBins(std::vector<float> convertRT)
+    std::vector<EIC> BinContainer::returnBins(std::vector<float> convertRT, int maxdist)
     {
         std::vector<EIC> finalBins;
         finalBins.reserve(finishedBins.size());
         for (size_t i = 0; i < finishedBins.size(); i++)
         {
-            finalBins.push_back(finishedBins[i].createEIC(convertRT));
+            finalBins.push_back(finishedBins[i].createEIC(convertRT, maxdist));
         }
         return finalBins;
     };
 
-    void BinContainer::printSelectBins(bool printCentroids, bool printSummary, std::filesystem::path location, std::string filename)
+    void BinContainer::printSelectBins(bool printCentroids, bool printSummary, std::filesystem::path location,
+                                       std::string filename, int maxdist)
     {
         // print optional summary file
 
@@ -538,7 +535,7 @@ namespace qAlgorithms
             output_sum << "ID,errorcode,size,mean_mz,median_mz,stdev_mz,mean_scans,DQSB_base,DQSB_scaled,DQSC_min,mean_error\n";
             for (size_t i = 0; i < finishedBins.size(); i++)
             {
-                SummaryOutput res = finishedBins[i].summariseBin();
+                SummaryOutput res = finishedBins[i].summariseBin(maxdist);
                 indices.push_back(i); // save these bins for printing
                 char buffer[256];
                 sprintf(buffer, "%zu,%d,%zu,%0.8f,%0.8f,%0.8f,%0.2f,%0.6f,%0.6f,%0.6f,%0.8f\n",
@@ -631,7 +628,7 @@ namespace qAlgorithms
         std::partial_sum(cumError.begin(), cumError.end(), cumError.begin()); // cumulative sum
     }
 
-    void Bin::subsetMZ(std::deque<Bin> *bincontainer, std::vector<double> &OS,
+    void Bin::subsetMZ(std::deque<Bin> *bincontainer, std::vector<double> &OS, std::vector<qCentroid *> &notInBins,
                        const int binStartInOS, const int binEndInOS, int &counter) // bincontainer is binDeque of BinContainer // OS cannot be solved with pointers since index has to be transferred to frature list
     {
         assert(binStartInOS >= 0);
@@ -661,7 +658,7 @@ namespace qAlgorithms
             // only continue if binsize is greater five
             if (cutpos + 1 > 4)
             {
-                subsetMZ(bincontainer, OS, binStartInOS, binStartInOS + cutpos, counter);
+                subsetMZ(bincontainer, OS, notInBins, binStartInOS, binStartInOS + cutpos, counter);
             }
             else
             {
@@ -672,7 +669,7 @@ namespace qAlgorithms
             }
             if (binEndInOS - binStartInOS - cutpos - 1 > 4)
             {
-                subsetMZ(bincontainer, OS, binStartInOS + cutpos + 1, binEndInOS, counter);
+                subsetMZ(bincontainer, OS, notInBins, binStartInOS + cutpos + 1, binEndInOS, counter);
             }
             else
             {
@@ -685,11 +682,11 @@ namespace qAlgorithms
         }
     }
 
-    void Bin::subsetScan(std::deque<Bin> *bincontainer, std::vector<Bin> *finishedBins, const int maxdist, int &counter)
+    void Bin::subsetScan(std::deque<Bin> *bincontainer, std::vector<Bin> *finishedBins,
+                         std::vector<qCentroid *> &notInBins, const int maxdist, int &counter)
     {
         assert(!pointsInBin.empty());
         // function is called on a bin sorted by mz
-        int control_duplicatesIn = 0;
         const size_t binSize = pointsInBin.size();
         std::sort(pointsInBin.begin(), pointsInBin.end(), [](qCentroid *lhs, qCentroid *rhs)
                   { return lhs->scanNo < rhs->scanNo; });
@@ -733,7 +730,6 @@ namespace qAlgorithms
             else if (distanceScan == 0)
             {
                 duplicateScan = true;
-                ++control_duplicatesIn;
             }
         }
         // check for open bin at the end
@@ -784,7 +780,6 @@ namespace qAlgorithms
             finishedBins->back().scanMax = pointsInBin.back()->scanNo;
             finishedBins->back().l_slanted = lslant;
             finishedBins->back().r_slanted = rslant;
-            duplicatesTotal += control_duplicatesIn;
         }
         else if (binSize - lastpos > 4) // binsize starts at 1
         {
@@ -803,7 +798,7 @@ namespace qAlgorithms
         }
     }
 
-    void Bin::makeDQSB(const CentroidedData *rawdata, const int maxdist) // @todo split this function
+    void Bin::makeDQSB(const CentroidedData *rawdata, const std::vector<float> scalarForMOD, const int maxdist) // @todo split this function
     {
         // assumes bin is saved sorted by scans, since the result from scan gap checks is the final control
         const size_t binsize = pointsInBin.size();
@@ -1035,7 +1030,7 @@ namespace qAlgorithms
         return sqrt(sumOfDist / (pointsInBin.size() - 1));
     }
 
-    SummaryOutput Bin::summariseBin()
+    SummaryOutput Bin::summariseBin(int maxdist) // @todo rework this
     {
         size_t binsize = pointsInBin.size();
 
@@ -1240,11 +1235,11 @@ namespace qAlgorithms
                              meanDQS_scaled, worstCentroid, meanCenError};
     }
 
-    EIC Bin::createEIC(std::vector<float> convertRT)
+    EIC Bin::createEIC(std::vector<float> convertRT, int maxdist)
     {
         int eicsize = pointsInBin.size();
 
-        std::byte bincode = this->summariseBin().errorcode; // this step contains sorting by scans for the time being @todo
+        std::byte bincode = this->summariseBin(maxdist).errorcode; // this step contains sorting by scans for the time being @todo
         std::vector<int> tmp_scanNumbers;
         tmp_scanNumbers.reserve(eicsize);
         std::vector<float> tmp_rt;
@@ -1392,8 +1387,10 @@ namespace qAlgorithms
         return (MOD - MID) / fmal(MID, dqs, dqs);
     }
 
-    static void scaleDistancesForDQS_linear(int maxdist) // @experimental
+    static std::vector<float> scaleDistancesForDQS_linear(int maxdist) // @experimental
     {
+        // This vector contains factors for an inverse gaussian scaling of distances during DQS calculation
+        std::vector<float> scalarForMOD;
         // Assumption: every point which is found in a neighbouring scan, but not the
         // current one, has a 50% chance of existing. As such, it can only be half
         // as relevant as another point in the same scan. To scale, A distance in the
@@ -1409,6 +1406,7 @@ namespace qAlgorithms
             i++;
             scalarSingle /= 2;
         }
+        return scalarForMOD;
     }
 
 #pragma endregion "Functions"
@@ -1426,10 +1424,8 @@ namespace qAlgorithms
 
         std::cout << "starting binning process...\n";
 
-        notInBins.clear();                                     // @todo remove global variable
-        notInBins.reserve(centroidedData.lengthAllPoints / 4); // @todo can this be estimated better?
-        duplicatesTotal = 0;                                   // global variable
         BinContainer activeBins;
+        activeBins.notInBins.reserve(centroidedData.lengthAllPoints / 4); // @todo can this be estimated better?
         activeBins.makeFirstBin(&centroidedData);
         // at least one element must be terminator @todo make this a function parameter
         std::vector<int> measurementDimensions = {SubsetMethods::mz, SubsetMethods::scans};
@@ -1443,29 +1439,27 @@ namespace qAlgorithms
             return std::vector<EIC>{};
         }
 
-        std::cout << "Total duplicates: " << duplicatesTotal << "\n--\ncalculating DQSBs...\n";
+        std::cout << "calculating DQSBs...\n";
 
         // this sets q::scalarForMOD to the correct scaling so that at the
         // distance in scans == maxdist the curve encloses 99% of its area
-        scaleDistancesForDQS_linear(maxdist);
+        // std::vector<float> scalarForMOD = scaleDistancesForDQS_linear(maxdist);
         activeBins.assignDQSB(&centroidedData, maxdist, false);
 
         // move centroids from notInBins into existing bins
-        activeBins.redoBinningIfTooclose(measurementDimensions, &centroidedData, notInBins, maxdist);
+        activeBins.redoBinningIfTooclose(measurementDimensions, &centroidedData, maxdist);
         // activeBins.reconstructFromStdev(&centroidedData, maxdist); // this part of the binning process has been removed due to lacking statistical foundation
 
         // @todo add bin merger for halved bins here
 
         if (printBinSummary || printCentroids)
         {
-            activeBins.printSelectBins(printCentroids, printBinSummary, outpath, filename);
+            activeBins.printSelectBins(printCentroids, printBinSummary, outpath, filename, maxdist);
         }
-
-        notInBins.clear();
 
         std::cout.rdbuf(old); // restore previous standard out
 
-        auto test = activeBins.returnBins(convertRT);
+        auto test = activeBins.returnBins(convertRT, maxdist);
         return test; // @todo do not calculate the summary twice when printing bins
     }
 

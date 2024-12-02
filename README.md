@@ -83,6 +83,7 @@ Some things to keep in mind:
 * **Expanding on the above point, current tests indicate that pre-centroided**
   **data can not be processed with high reliability. If at all possible, use**
   **only profile mode spectra. The centroid error is only marginally dependent on m/z, leading to inaccurate binning.**
+* Check out the [Wiki page](https://github.com/odea-project/qAlgorithms/wiki/Questions-regarding-the-use-of-qAlgorithms) for more details on using qAlgorithms.
 * If you do not specify which results you want, no output will be written
 * If multiple copies of the same file are found during recursive search,
   only one of them will be processed

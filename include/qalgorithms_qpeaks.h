@@ -313,12 +313,6 @@ namespace qAlgorithms
         const float *vec,
         const size_t n);
 
-    void convolve_dynamic(
-        const size_t scale,
-        const float *vec,
-        const size_t n,
-        __m128 *beta);
-
     void convolve_SIMD(
         const size_t scale,
         const float *vec,
