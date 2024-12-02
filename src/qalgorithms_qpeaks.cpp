@@ -139,96 +139,53 @@ namespace qAlgorithms
         const float retentionTime)
     {
         std::vector<CentroidPeak> all_peaks;
+        int maxWindowSize;
+
         for (auto it_separators = treatedData.separators.begin(); it_separators != treatedData.separators.end() - 1; it_separators++)
         {
-            const int n = *(it_separators + 1) - *it_separators; // calculate the number of data points in the block
-            if (n <= 512)
-            {
-                // STATIC APPROACH
-                float Y[512];                           // measured y values
-                float Ylog[512];                        // log-transformed measured y values
-                float X[512];                           // measured x values
-                bool df[512];                           // degree of freedom vector, 0: interpolated, 1: measured
-                RegressionGauss validRegressions[2048]; // array of valid regressions with default initialization, i.e., random states
-                int validRegressionsIndex = 0;          // index of the valid regressions
-
-                // iterators to the start of the data
-                const auto y_start = Y;
-                const auto ylog_start = Ylog;
-                const auto mz_start = X;
-                const auto df_start = df;
-
-                int i = 0;
-                for (int idx = *it_separators; idx < *(it_separators + 1); idx++)
-                {
-                    Y[i] = treatedData.dataPoints[idx].y;
-                    X[i] = treatedData.dataPoints[idx].x;
-                    df[i] = treatedData.dataPoints[idx].df;
-                    i++;
-                }
-
-                // perform log-transform on Y
-                std::transform(y_start, y_start + n, ylog_start, [](float y)
-                               { return std::log(y); });
-                int maxScale = std::min(GLOBAL_MAXSCALE, (int)(n - 1) / 2);
-
-                for (int scale = 2; scale <= maxScale; scale++)
-                {
-                    validateRegressions_static(n, y_start, ylog_start, df_start, scale, validRegressionsIndex, validRegressions);
-                } // end for scale loop
-                if (validRegressionsIndex == 0)
-                {
-                    continue; // no valid peaks
-                }
-                if (validRegressionsIndex > 1)
-                {
-                    mergeRegressionsOverScales_static(validRegressions, validRegressionsIndex, y_start, df_start);
-                }
-                createCentroidPeaks(all_peaks, validRegressions, nullptr, validRegressionsIndex, y_start, mz_start, df_start, scanNumber);
-            }
-            else
-            {
-                // DYNAMIC APPROACH
-                float *Y = new float[n];
-                float *Ylog = new float[n];
-                float *X = new float[n];
-                bool *df = new bool[n];
-                std::vector<RegressionGauss> validRegressions;
-
-                // iterator to the start
-                const auto y_start = Y;
-                const auto ylog_start = Ylog;
-                const auto mz_start = X;
-                const auto df_start = df;
-
-                int i = 0;
-                for (int idx = *it_separators; idx < *(it_separators + 1); idx++)
-                {
-                    Y[i] = treatedData.dataPoints[idx].y;
-                    X[i] = treatedData.dataPoints[idx].x;
-                    df[i] = treatedData.dataPoints[idx].df;
-                    i++;
-                }
-
-                // perform log-transform on Y
-                std::transform(y_start, y_start + n, ylog_start, [](float y)
-                               { return std::log(y); });
-                runningRegression(y_start, ylog_start, df_start, n, validRegressions);
-                if (validRegressions.empty())
-                {
-                    delete[] Y;
-                    delete[] Ylog;
-                    delete[] X;
-                    delete[] df;
-                    continue; // no valid peaks
-                }
-                createCentroidPeaks(all_peaks, nullptr, &validRegressions, validRegressions.size(), y_start, mz_start, df_start, scanNumber);
-                delete[] Y;
-                delete[] Ylog;
-                delete[] X;
-                delete[] df;
-            }
+            int length = *(it_separators + 1) - *it_separators; // calculate the number of data points in the block
+            maxWindowSize = maxWindowSize < length ? length : maxWindowSize;
         }
+        float *Y = new float[maxWindowSize];
+        float *Ylog = new float[maxWindowSize];
+        float *X = new float[maxWindowSize];
+        bool *df = new bool[maxWindowSize];
+
+        for (auto it_separators = treatedData.separators.begin(); it_separators != treatedData.separators.end() - 1; it_separators++)
+        {
+            const int n = *(it_separators + 1) - *it_separators;
+
+            std::vector<RegressionGauss> validRegressions;
+
+            // iterator to the start
+            const auto y_start = Y;
+            const auto ylog_start = Ylog;
+            const auto mz_start = X;
+            const auto df_start = df;
+
+            int i = 0;
+            for (int idx = *it_separators; idx < *(it_separators + 1); idx++)
+            {
+                Y[i] = treatedData.dataPoints[idx].y;
+                X[i] = treatedData.dataPoints[idx].x;
+                df[i] = treatedData.dataPoints[idx].df;
+                i++;
+            }
+
+            // perform log-transform on Y
+            std::transform(y_start, y_start + n, ylog_start, [](float y)
+                           { return std::log(y); });
+            runningRegression(y_start, ylog_start, df_start, n, validRegressions);
+            if (validRegressions.empty())
+            {
+                continue; // no valid peaks
+            }
+            createCentroidPeaks(all_peaks, nullptr, &validRegressions, validRegressions.size(), y_start, mz_start, df_start, scanNumber);
+        }
+        delete[] Y;
+        delete[] Ylog;
+        delete[] X;
+        delete[] df;
         return all_peaks;
     }
 #pragma endregion "find centroids"
@@ -238,124 +195,67 @@ namespace qAlgorithms
         std::vector<FeaturePeak> &all_peaks,
         treatedData &treatedData)
     {
+        int maxWindowSize;
+        for (auto it_separators = treatedData.separators.begin(); it_separators != treatedData.separators.end() - 1; it_separators++)
+        {
+            int length = *(it_separators + 1) - *it_separators; // calculate the number of data points in the block
+            maxWindowSize = maxWindowSize < length ? length : maxWindowSize;
+        }
+        float *Y = new float[maxWindowSize];
+        float *Ylog = new float[maxWindowSize];
+        float *X = new float[maxWindowSize];
+        bool *df = new bool[maxWindowSize];
+        float *mz = new float[maxWindowSize];
+        float *dqs_cen = new float[maxWindowSize];
+        float *dqs_bin = new float[maxWindowSize];
+
         for (auto it_separators = treatedData.separators.begin(); it_separators != treatedData.separators.end() - 1; it_separators++)
         {
             const int n = *(it_separators + 1) - *it_separators; // calculate the number of data points in the block
             assert(n > 0);                                       // check if the number of data points is greater than 0
-            if (n <= 512)
+
+            std::vector<RegressionGauss> validRegressions;
+
+            // iterator to the start
+            const auto y_start = Y;
+            const auto ylog_start = Ylog;
+            const auto rt_start = X;
+            const auto df_start = df;
+            const auto mz_start = mz;
+            const auto dqs_cen_start = dqs_cen;
+            const auto dqs_bin_start = dqs_bin;
+
+            int i = 0;
+            assert(n == *(it_separators + 1) - *it_separators);
+            for (int idx = *it_separators; idx < *(it_separators + 1); idx++)
             {
-                // STATIC APPROACH
-                float Y[512];                           // measured y values
-                float Ylog[512];                        // log-transformed measured y values
-                float X[512];                           // measured x values
-                bool df[512];                           // degree of freedom vector, 0: interpolated, 1: measured
-                float mz[512];                          // measured mz values
-                float dqs_cen[512];                     // measured dqs values
-                float dqs_bin[512];                     // measured dqs values
-                RegressionGauss validRegressions[2048]; // array of valid regressions with default initialization, i.e., random states
-                int validRegressionsIndex = 0;          // index of the valid regressions
-
-                // iterators to the start of the data
-                const auto y_start = Y;
-                const auto ylog_start = Ylog;
-                const auto rt_start = X;
-                const auto df_start = df;
-                const auto mz_start = mz;
-                const auto dqs_cen_start = dqs_cen;
-                const auto dqs_bin_start = dqs_bin;
-                int i = 0;
-                for (int idx = *it_separators; idx < *(it_separators + 1); idx++)
-                {
-                    Y[i] = treatedData.dataPoints[idx].y;
-                    X[i] = treatedData.dataPoints[idx].x;
-                    df[i] = treatedData.dataPoints[idx].df;
-                    mz[i] = treatedData.dataPoints[idx].mz;
-                    dqs_cen[i] = treatedData.dataPoints[idx].dqsCentroid;
-                    dqs_bin[i] = treatedData.dataPoints[idx].dqsBinning;
-                    i++;
-                }
-
-                // perform log-transform on Y
-                std::transform(y_start, y_start + n, ylog_start, [](float y)
-                               { return std::log(y); });
-                int maxScale = std::min(GLOBAL_MAXSCALE, (int)(n - 1) / 2);
-
-                for (int scale = 2; scale <= maxScale; scale++)
-                {
-                    validateRegressions_static(n, y_start, ylog_start, df_start, scale, validRegressionsIndex, validRegressions);
-                } // end for scale loop
-
-                if (validRegressionsIndex == 0)
-                {
-                    continue; // no valid peaks
-                }
-                if (validRegressionsIndex > 1)
-                {
-                    mergeRegressionsOverScales_static(validRegressions, validRegressionsIndex, y_start, df_start);
-                }
-                createFeaturePeaks(all_peaks, validRegressions, nullptr, validRegressionsIndex, y_start, mz_start,
-                                   rt_start, df_start, dqs_cen_start, dqs_bin_start);
+                Y[i] = treatedData.dataPoints[idx].y;
+                X[i] = treatedData.dataPoints[idx].x;
+                df[i] = treatedData.dataPoints[idx].df;
+                mz[i] = treatedData.dataPoints[idx].mz;
+                dqs_cen[i] = treatedData.dataPoints[idx].dqsCentroid;
+                dqs_bin[i] = treatedData.dataPoints[idx].dqsBinning;
+                i++;
             }
-            else
+
+            // perform log-transform on Y
+            std::transform(y_start, y_start + n, ylog_start, [](float y)
+                           { return std::log(y); });
+            runningRegression(y_start, ylog_start, df_start, n, validRegressions);
+            if (validRegressions.empty())
             {
-                // DYNAMIC APPROACH
-                float *Y = new float[n];
-                float *Ylog = new float[n];
-                float *X = new float[n];
-                bool *df = new bool[n];
-                float *mz = new float[n];
-                float *dqs_cen = new float[n];
-                float *dqs_bin = new float[n];
-                std::vector<RegressionGauss> validRegressions;
-
-                // iterator to the start
-                const auto y_start = Y;
-                const auto ylog_start = Ylog;
-                const auto rt_start = X;
-                const auto df_start = df;
-                const auto mz_start = mz;
-                const auto dqs_cen_start = dqs_cen;
-                const auto dqs_bin_start = dqs_bin;
-
-                int i = 0;
-                assert(n == *(it_separators + 1) - *it_separators);
-                for (int idx = *it_separators; idx < *(it_separators + 1); idx++)
-                {
-                    Y[i] = treatedData.dataPoints[idx].y;
-                    X[i] = treatedData.dataPoints[idx].x;
-                    df[i] = treatedData.dataPoints[idx].df;
-                    mz[i] = treatedData.dataPoints[idx].mz;
-                    dqs_cen[i] = treatedData.dataPoints[idx].dqsCentroid;
-                    dqs_bin[i] = treatedData.dataPoints[idx].dqsBinning;
-                    i++;
-                }
-
-                // perform log-transform on Y
-                std::transform(y_start, y_start + n, ylog_start, [](float y)
-                               { return std::log(y); });
-                runningRegression(y_start, ylog_start, df_start, n, validRegressions);
-                if (validRegressions.empty())
-                {
-                    delete[] Y;
-                    delete[] Ylog;
-                    delete[] X;
-                    delete[] df;
-                    delete[] mz;
-                    delete[] dqs_cen;
-                    delete[] dqs_bin;
-                    continue; // no valid peaks
-                }
-                createFeaturePeaks(all_peaks, nullptr, &validRegressions, validRegressions.size(), y_start,
-                                   mz_start, rt_start, df_start, dqs_cen_start, dqs_bin_start);
-                delete[] Y;
-                delete[] Ylog;
-                delete[] X;
-                delete[] df;
-                delete[] mz;
-                delete[] dqs_cen;
-                delete[] dqs_bin;
+                continue; // no valid peaks
             }
+            createFeaturePeaks(all_peaks, nullptr, &validRegressions, validRegressions.size(), y_start,
+                               mz_start, rt_start, df_start, dqs_cen_start, dqs_bin_start);
         }
+        delete[] Y;
+        delete[] Ylog;
+        delete[] X;
+        delete[] df;
+        delete[] mz;
+        delete[] dqs_cen;
+        delete[] dqs_bin;
     }
 #pragma endregion "find peaks"
 
@@ -379,19 +279,33 @@ namespace qAlgorithms
         validRegressions.reserve(sum);
         for (int scale = 2; scale <= maxScale; scale++)
         {
-            const int k = 2 * scale + 1;                  // window size
-            const int n_segments = n - k + 1;             // number of segments, i.e. regressions considering the array size
-            __m128 *beta = new __m128[n_segments];        // coefficients matrix
-            convolve_dynamic(scale, ylog_start, n, beta); // do the regression
+            const int k = 2 * scale + 1;           // window size
+            const int n_segments = n - k + 1;      // number of segments, i.e. regressions considering the array size
+            __m128 *beta = new __m128[n_segments]; // coefficients matrix @todo move outside of loop, probably causes a stack overflow with large data
+            // convolve_dynamic(scale, ylog_start, n, beta); // do the regression
+            assert(n > 2 * scale);
+
+            __m128 result[n - 2 * scale];
+            __m128 products[n];
+            const __m128 flipSign = _mm_set_ps(1.0f, 1.0f, -1.0f, 1.0f);
+            convolve_SIMD(scale, ylog_start, n, result, products, n);
+
+            for (size_t i = 0; i < n - 2 * scale; i++)
+            { // swap beta2 and beta3 and flip the sign of beta1 // @todo: this is a temporary solution
+                beta[i] = _mm_mul_ps(_mm_shuffle_ps(result[i], result[i], 0b10110100), flipSign);
+            }
+
             validateRegressions(beta, n_segments, y_start, ylog_start, df_start, scale, validRegressions);
+            delete[] beta;
             // validRegressions.push_back(
             //     validateRegressions(beta, n_segments, y_start, ylog_start, df_start, scale, validRegressions));
-        } // end for scale loop
+        }
         if (validRegressions.size() > 1)
         {
             validRegressions = mergeRegressionsOverScales(validRegressions, y_start, df_start);
         }
-    } // end runningRegression
+        return;
+    }
 #pragma endregion "running regression"
 
 #pragma region validateRegressions
@@ -547,7 +461,7 @@ namespace qAlgorithms
             int group_size = i - start_index_group + 1; // size of the group
             if (group_size == 1)
             { // single item group
-                *(validRegressions + validRegressionsIndex) = validRegressionsTmp[start_index_group];
+                validRegressions[validRegressionsIndex] = validRegressionsTmp[start_index_group];
                 validRegressionsIndex++;
             }
             else
@@ -559,7 +473,7 @@ namespace qAlgorithms
                 {
                     if (regression_start[j].isValid)
                     {
-                        *(validRegressions + validRegressionsIndex) = regression_start[j]; // push the peak to the valid regressions
+                        validRegressions[validRegressionsIndex] = regression_start[j]; // push the peak to the valid regressions
                         validRegressionsIndex++;
                     }
                 }
@@ -899,7 +813,10 @@ namespace qAlgorithms
         const bool *df_start)
     {
         // @todo return vector containing only
-        assert(n_regressions > 1);
+        if (n_regressions == 1)
+        {
+            return;
+        }
         /*
           Grouping Over Scales:
           This block of code implements the grouping over scales. It groups the valid peaks based
@@ -959,7 +876,7 @@ namespace qAlgorithms
             // comparison of the new regression (high) with multiple ref regressions (low)
             calcExtendedMseOverScales(y_start, validRegressions, validRegressionsInGroup, i_new_peak);
         }
-    } // end mergeRegressionsOverScales_static
+    }
 #pragma endregion "merge regressions over scales static"
 
 #pragma region "create peaks"
@@ -1832,30 +1749,6 @@ namespace qAlgorithms
         return beta;
     }
 
-    void convolve_dynamic(
-        const size_t scale,
-        const float *vec,
-        const size_t n,
-        __m128 *beta)
-    {
-        if (n < 2 * scale + 1)
-        {
-            std::cerr << "n must be greater or equal to 2 * scale + 1. Process terminated";
-            // throw std::invalid_argument("n must be greater or equal to 2 * scale + 1");
-            exit(1);
-        }
-
-        __m128 result[n - 2 * scale];
-        __m128 products[n];
-        const __m128 flipSign = _mm_set_ps(1.0f, 1.0f, -1.0f, 1.0f);
-        convolve_SIMD(scale, vec, n, result, products, n);
-
-        for (size_t i = 0; i < n - 2 * scale; i++)
-        { // swap beta2 and beta3 and flip the sign of beta1 // @todo: this is a temporary solution
-            beta[i] = _mm_mul_ps(_mm_shuffle_ps(result[i], result[i], 0b10110100), flipSign);
-        }
-    }
-
     void convolve_SIMD(
         const size_t scale,
         const float *vec,
@@ -1877,8 +1770,6 @@ namespace qAlgorithms
         kernel[1] = _mm_set_ps(INV_ARRAY[scale * 6 + 3] - INV_ARRAY[scale * 6 + 5], -INV_ARRAY[scale * 6 + 3] - INV_ARRAY[scale * 6 + 4], -INV_ARRAY[scale * 6 + 2] - INV_ARRAY[scale * 6 + 3], -INV_ARRAY[scale * 6 + 1]);
         kernel[2] = _mm_set_ps(2.f * INV_ARRAY[scale * 6 + 5], 2.f * INV_ARRAY[scale * 6 + 4], 2.f * INV_ARRAY[scale * 6 + 3], 2.f * INV_ARRAY[scale * 6 + 1]);
 
-#pragma GCC ivdep
-#pragma GCC unroll 8
         for (size_t i = 0; i < n_segments; i++)
         {
             __m128 vec_values = _mm_set1_ps(vec[i + centerpoint]);
@@ -1893,8 +1784,6 @@ namespace qAlgorithms
             // kernel[1] = kernel[1] original + i * kernel[2]
             kernel[0] = _mm_add_ps(kernel[0], kernel[1]);
 
-#pragma GCC ivdep
-#pragma GCC unroll 8
             for (size_t j = scale - i; j < (n - scale + i); j++)
             {
                 __m128 vec_values = _mm_set1_ps(vec[j]);
@@ -1902,8 +1791,6 @@ namespace qAlgorithms
                 u++;
             }
 
-#pragma GCC ivdep
-#pragma GCC unroll 8
             for (size_t j = 0; j < n_segments; j++)
             {
                 if (2 * i + j >= buffer_size)

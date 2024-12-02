@@ -90,7 +90,7 @@ namespace qAlgorithms
         if (debug)
         {
             argc = 0;
-            args.inputPaths.push_back("/home/terry/Work/Messdaten/david/20240805_AA_DK_Ibu_pH6_15min_20240806221730.mzML");
+            args.inputPaths.push_back("/home/terry/Work/Messdaten/211012_KG_001.mzML");
         }
 
         if (argc == 1)
