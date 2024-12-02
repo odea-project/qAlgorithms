@@ -257,7 +257,7 @@ namespace qAlgorithms
         /// the input would have to be std::byte{0b00000001}
         /// @param fullBins Should all bins which are included in the summary be printed in full?
         /// @param location path to the folder in which both files should be created
-        void printSelectBins(bool printCentroids, std::filesystem::path location, std::string filename);
+        void printSelectBins(bool printCentroids, bool printSummary, std::filesystem::path location, std::string filename);
     };
 
     // ####################################################################################################### //
