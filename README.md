@@ -32,7 +32,13 @@ on our github repository. Note that qAlgorithms requires the libraries
 and [`libwinpthread-1.dll`](https://github.com/odea-project/qAlgorithms/releases/download/v0.1.1.beta/libwinpthread-1.dll). If they are not present on your system already, you can also download them under "Releases" 
 or by clicking on the filenames above. There is no need to download the source code.
 
-To run qAlgorithms, the three .dll files and qAlgorithms.exe must be in the same directory.
+To run qAlgorithms, the three .dll files and qAlgorithms.exe must be in the same directory
+as the executable.
+
+If you are unfamiliar with using the shell, keep in mind that you can use relative paths. "." is
+the current directory and ".." is the directory above the current one. When you want to refer to 
+files in your current directory, use ".\\". This is also required when running qAlgorithms, provided
+you did not add it to the PATH system variable.
 
 ## Linux
 Currently, no Linux releases are provided. We recommend you to clone the repository
@@ -54,13 +60,14 @@ data can be used, so you save some disk space if you filter them out at this sta
 
 qAlgorithms is a command line utility which reads mzML files and outputs them
 as csv. You can select individual files or an entire directory to search for
-mzML files recursively. All output is written into one folder, which you also
+mzML files recursively. All output is written into one directory, which you also
 must specify. Below are some commands you will likely use:
 
-`./qAlgorithms.exe -h` - Display the help menu, listing all availvable options.
+`./qAlgorithms.exe -h` - Display the help menu, listing all availvable options. (currently,
+executing qAlgorithms without any options also opens the help menu).
 
-`./qAlgorithms.exe -i C:/example/path/measurement.mzML -o ../my/results -printpeaks` - 
-Process the file measurement.mzML and write a file with every detected peak
+`./qAlgorithms.exe -i C:/example/path/measurement.mzML -o ../my/results -printfeatures` - 
+Process the file measurement.mzML and write a feature list with every detected peak
 into the directory "results".
 
 `./qAlgorithms.exe -i ./allMeasurements -o ./results -printall` - searches the directory
@@ -89,6 +96,10 @@ Some things to keep in mind:
   implies. This does not mean that the feature does not exist, or that the calculated
   mass is wildly inaccurate. We suspect that this is caused by detector saturation,
   but have not undertaken research in this regard.
+* A negative DQSbin means that the bin a feature originates from spans the entire measurement.
+  In this case, it is not possible to calculate an accurate DQSbin. Features this applies to are 
+  more likely subject to mass inaccuracies not covered by existing code, or otherwise contaminated.
+  Features can be relevant data even if found in such a bin.
 
 ## Documentation
 Full documentation can be found [here](https://odea-project.github.io/qAlgorithms/html/).

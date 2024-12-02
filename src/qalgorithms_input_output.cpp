@@ -45,13 +45,13 @@ namespace qAlgorithms
                                  "      -pb, -printbins:            If this flag is set, both bin summary information and\n"
                                  "                                  all binned centroids will be printed to the output location\n"
                                  "                                  in addition to the final peak table. The file ends in _bins.csv.\n"
-                                 "      -pf, -printpeaks:           print the peak tables as csv.\n"
+                                 "      -pf, -printfeatures         print the feature list as csv.\n"
                                  "      -e,  -extended:             print additional information into the final peak list. You do not\n"
                                  "                                  have to also set the -pf flag. The extended output includes the\n"
                                  "                                  ID of the bin a given peak was found in, its start and end\n"
                                  "                                  position (by index) within the bin, the lowest and highest retenetion \n"
                                  "                                  times in the peak and the intensity as apex height.\n"
-                                 "      -sp, -subprofile:           instead of the peaks, print all proflie-mode data points which\n"
+                                 "      -sp, -subprofile:           (not implemented yet) instead of the peaks, print all proflie-mode data points which\n" // @todo
                                  "                                  were used to create the final peaks. This does not return any quality\n"
                                  "                                  scores. Only use this option when reading in prodile mode files.\n"
                                  "      -pa, -printall:             print all availvable resutlts. You will probably not need to do this.\n"
@@ -69,8 +69,9 @@ namespace qAlgorithms
                                  "      -ppm <number>:      this sets the centroid error when reading in pre-centroided data\n"
                                  "                          with qAlgorithms to <number> * 10^-6 * m/z of the centroid. We recommend\n"
                                  "                          you always use the centroiding algorithm implemented in qAlgorithms.\n"
-                                 "                          By default, this value is set to 5.\n"
-                                 "      -mz-abs <number>:   add this absolute error (in Dalton) to the relative error specified by -ppm.\n"; //@todo
+                                 "                          This parameter is significantly different from an EIC standard deviation estimator (XCMS)!\n"
+                                 "                          By default, this value is set to 0.25.\n"
+                                 "      -mz-abs <number>:   (not implemented yet) add this absolute error (in Dalton) to the relative error specified by -ppm.\n"; //@todo
 #pragma endregion helpstring
 
 #pragma region "command line arguments"
@@ -142,6 +143,7 @@ namespace qAlgorithms
             }
             else if ((argument == "-tl") || (argument == "-tasklist")) // @todo test this
             {
+                std::cerr << "Error: tasklist support is not integrated at the moment.\n";
 
                 args.tasklistSpecified = true;
                 ++i;
@@ -176,7 +178,7 @@ namespace qAlgorithms
                 if (args.outputPath != "")
                 {
                     std::cerr << "Error: two output locations specified. For complex output location "
-                              << "structures, it is recommended you use the tasklist input.\n";
+                              << "structures, it is recommended you use the tasklist input (not implemented yet).\n";
                     args.outputPath = "";
                     return args;
                 }
@@ -240,7 +242,6 @@ namespace qAlgorithms
             }
             else if ((argument == "-pb") || (argument == "-printbins"))
             {
-                args.printSummary = true;
                 args.printBins = true;
             }
             else if ((argument == "-pf") || (argument == "-printfeatures"))
