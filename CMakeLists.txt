@@ -23,9 +23,9 @@ include_directories(include external/StreamCraft/src)
 file(GLOB_RECURSE SOURCES "src/*.cpp" "external/StreamCraft/src/*.cpp")
 
 # flags for static compile 
-set(CMAKE_FIND_LIBRARY_SUFFIXES ".a")
-set(BUILD_SHARED_LIBS OFF)
-set(CMAKE_EXE_LINKER_FLAGS "-static")
+# set(CMAKE_FIND_LIBRARY_SUFFIXES ".a")
+# set(BUILD_SHARED_LIBS OFF)
+# set(CMAKE_EXE_LINKER_FLAGS "-static")
 
 # Add executable target
 add_executable(${PROJECT_NAME} ${SOURCES})

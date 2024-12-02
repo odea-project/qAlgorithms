@@ -155,7 +155,8 @@ namespace qAlgorithms
         /// @param startBin index relating to the order space at which the bin starts
         /// @param endBin index relating to the order space at which the bin ends
         /// @param counter counter shared between all calls of the recursive function, used to count number of function calls
-        void subsetMZ(std::deque<Bin> *bincontainer, std::vector<double> &OS, const int startBin, const int endBin, int &counter);
+        void subsetMZ(std::deque<Bin> *bincontainer, std::vector<double> &OS, std::vector<qCentroid *> &notInBins,
+                      const int startBin, const int endBin, int &counter);
 
         /// @brief divide a bin sorted by scans if there are gaps greater than maxdist in it. Bins that cannot be divided are closed.
         /// @details this function sorts all members of a bin by scans and iterates over them. If a gap greater than maxdist exists,
@@ -166,7 +167,8 @@ namespace qAlgorithms
         /// @param finishedBins if the input bin was not split, it will be added to this
         /// @param maxdist the largest gap in scans which a bin can have while still being considered valid
         /// @param counter counter shared between all calls of the recursive function, used to count number of function calls
-        void subsetScan(std::deque<Bin> *bincontainer, std::vector<Bin> *finishedBins, const int maxdist, int &counter);
+        void subsetScan(std::deque<Bin> *bincontainer, std::vector<Bin> *finishedBins,
+                        std::vector<qCentroid *> &notInBins, const int maxdist, int &counter);
 
         // usage: Start once before rebinning, cut affected bins and add them to the deque
         void subsetNaturalBreaksMZ(std::deque<Bin> *bincontainer, std::vector<Bin> *finishedBins);
@@ -177,7 +179,7 @@ namespace qAlgorithms
         /// binned datapoint. It is assumed that the bin is sorted by scans when makeDQSB is called @todo change to more generic solution?
         /// @param rawdata the CentroidedData object from which the bin was generated
         /// @param maxdist the largest gap in scans which a bin can have while still being considered valid
-        void makeDQSB(const CentroidedData *rawdata, const int maxdist);
+        void makeDQSB(const CentroidedData *rawdata, const std::vector<float> scalarForMOD, const int maxdist);
 
         float calcStdevMZ();
 
@@ -188,9 +190,9 @@ namespace qAlgorithms
         /// between mean and median or the presence of duplicate values.
         /// @details This function also sets the "errorcode" parameter of the bin it executes on.
         /// @return A struct containing the summary information. The first entry is the error code.
-        SummaryOutput summariseBin();
+        SummaryOutput summariseBin(int maxdist);
 
-        EIC createEIC(std::vector<float> convertRT);
+        EIC createEIC(std::vector<float> convertRT, int maxdist);
     };
 
     // BinContainer
@@ -202,7 +204,8 @@ namespace qAlgorithms
         int subsetCount;
 
     public:
-        std::vector<Bin> finishedBins; // only includes bins which cannot be further subdivided
+        std::vector<Bin> finishedBins;      // only includes bins which cannot be further subdivided
+        std::vector<qCentroid *> notInBins; // this vector contains all points which are not included in bins
 
         BinContainer();
 
@@ -240,7 +243,7 @@ namespace qAlgorithms
         /// @param notbinned points which were not used in a previous binning step
         /// @param maxdist the largest gap in scans which a bin can have while still being considered valid
         void redoBinningIfTooclose(const std::vector<int> dimensions, const CentroidedData *rawdata,
-                                   std::vector<qCentroid *> notbinned, const int maxdist);
+                                   const int maxdist);
 
         // void mergeByStdev(double mzFilterLower, double mzFilterUpper);
 
@@ -249,7 +252,7 @@ namespace qAlgorithms
         void printAllBins(std::string path) const;
 
         // retention times are assigned only at this step
-        std::vector<EIC> returnBins(std::vector<float> convertRT);
+        std::vector<EIC> returnBins(std::vector<float> convertRT, int maxdist);
 
         /// @brief Print the individual bin members and optionally the bin summary in a separate .csv
         /// @param mask every bit of this byte controls if the corresponding test is considered for returning the
@@ -257,7 +260,8 @@ namespace qAlgorithms
         /// the input would have to be std::byte{0b00000001}
         /// @param fullBins Should all bins which are included in the summary be printed in full?
         /// @param location path to the folder in which both files should be created
-        void printSelectBins(bool printCentroids, bool printSummary, std::filesystem::path location, std::string filename);
+        void printSelectBins(bool printCentroids, bool printSummary, std::filesystem::path location,
+                             std::string filename, int maxdist);
     };
 
     // ####################################################################################################### //
