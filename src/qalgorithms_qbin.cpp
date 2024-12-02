@@ -515,7 +515,7 @@ namespace qAlgorithms
         return finalBins;
     };
 
-    void BinContainer::printSelectBins(bool printCentroids, std::filesystem::path location, std::string filename)
+    void BinContainer::printSelectBins(bool printCentroids, bool printSummary, std::filesystem::path location, std::string filename)
     {
         // print optional summary file
 
@@ -526,29 +526,33 @@ namespace qAlgorithms
             return;
         }
 
-        std::vector<size_t> indices;
-        std::fstream file_out_sum;
-        std::stringstream output_sum;
-        location /= (filename + "_summary.csv");
-        std::cout << "writing summary to: " << location << "\n";
-        file_out_sum.open(location, std::ios::out);
-        assert(file_out_sum.is_open());
-        output_sum << "ID,errorcode,size,mean_mz,median_mz,stdev_mz,mean_scans,DQSB_base,DQSB_scaled,DQSC_min,mean_error\n";
-        for (size_t i = 0; i < finishedBins.size(); i++)
+        if (printSummary)
         {
-            SummaryOutput res = finishedBins[i].summariseBin();
-            indices.push_back(i); // save these bins for printing
-            char buffer[256];
-            sprintf(buffer, "%zu,%d,%zu,%0.8f,%0.8f,%0.8f,%0.2f,%0.6f,%0.6f,%0.6f,%0.8f\n",
-                    i + 1, int(res.errorcode), res.binsize, res.mean_mz, res.median_mz, res.stddev_mz,
-                    res.mean_scans, res.DQSB_base, res.DQSB_scaled, res.DQSC_min, res.mean_error);
-            output_sum << buffer;
+            std::vector<size_t> indices;
+            std::fstream file_out_sum;
+            std::stringstream output_sum;
+            location /= (filename + "_summary.csv");
+            std::cout << "writing summary to: " << location << "\n";
+            file_out_sum.open(location, std::ios::out);
+            assert(file_out_sum.is_open());
+            output_sum << "ID,errorcode,size,mean_mz,median_mz,stdev_mz,mean_scans,DQSB_base,DQSB_scaled,DQSC_min,mean_error\n";
+            for (size_t i = 0; i < finishedBins.size(); i++)
+            {
+                SummaryOutput res = finishedBins[i].summariseBin();
+                indices.push_back(i); // save these bins for printing
+                char buffer[256];
+                sprintf(buffer, "%zu,%d,%zu,%0.8f,%0.8f,%0.8f,%0.2f,%0.6f,%0.6f,%0.6f,%0.8f\n",
+                        i + 1, int(res.errorcode), res.binsize, res.mean_mz, res.median_mz, res.stddev_mz,
+                        res.mean_scans, res.DQSB_base, res.DQSB_scaled, res.DQSC_min, res.mean_error);
+                output_sum << buffer;
+            }
+            file_out_sum << output_sum.str();
+            file_out_sum.close();
         }
-        file_out_sum << output_sum.str();
-        file_out_sum.close();
         // print all bins
         if (printCentroids)
         {
+            std::vector<size_t> indices;
             std::fstream file_out_all;
             std::stringstream output_all;
             location.replace_filename(filename + "_bins.csv");
@@ -1454,7 +1458,7 @@ namespace qAlgorithms
 
         if (printBinSummary || printCentroids)
         {
-            activeBins.printSelectBins(printCentroids, outpath, filename);
+            activeBins.printSelectBins(printCentroids, printBinSummary, outpath, filename);
         }
 
         notInBins.clear();
