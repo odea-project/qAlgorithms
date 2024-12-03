@@ -258,11 +258,12 @@ int main(int argc, char *argv[])
                     if (dqsb == -1)
                     {
                         badBinCount++;
-                        continue;
+                        goto nextbin;
                     }
                     ++count;
                     meanDQSB += dqsb;
                 }
+            nextbin:
             }
             meanDQSB /= count;
 
@@ -319,7 +320,7 @@ int main(int argc, char *argv[])
 
                 logWriter.open(pathLogging, std::ios::app);
                 logWriter << filename << ", " << centroids.size() << ", " << binThis.lengthAllPoints << ", "
-                          << meanDQSC / binThis.lengthAllPoints << ", " << binnedData.size() << "," << badBinCount << ", " << meanDQSB
+                          << meanDQSC / binThis.lengthAllPoints << ", " << binnedData.size() << ", " << badBinCount << ", " << meanDQSB
                           << ", " << peaks.size() << ", " << peaksWithMassGaps << ", " << meanDQSF << "\n";
                 logWriter.close();
             }
