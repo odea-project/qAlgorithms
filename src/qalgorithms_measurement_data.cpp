@@ -28,7 +28,13 @@ namespace qAlgorithms
         continue; // skip due to index
       }
       // get the spectrum
-      alignas(64) std::vector<std::vector<double>> spectrum = data.get_spectrum(index);
+      std::vector<std::vector<double>> spectrum = data.get_spectrum(index);
+      if (spectrum.empty())
+      {
+        std::cerr << "Error: spectrum decode at position " << index << " failed.\n";
+        continue;
+      }
+
       for (size_t j = 0; j < spectrum[0].size(); j++)
       {
         if (spectrum[1][j] < 750)
