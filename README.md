@@ -76,6 +76,8 @@ All intermediate results, those being centroids, bins and peaks, are written to 
 file and saved to the "results" directory. 
 
 Some things to keep in mind:
+* currently, reading in data which contains MS2 spectra crashes the program.
+  We are working on resolving this issue at the moment.
 * qAlgorithms can process both profile data and centroided data. When using
   centroided data, it is not possible to estimate an individual uncertainty
   for centroids, which leads to less accurate results. Where possible, process

@@ -99,7 +99,7 @@ int main(int argc, char *argv[])
             std::cerr << "Warning: the processing log has been overwritten\n";
         }
         logWriter.open(pathLogging, std::ios::out);
-        logWriter << "filename, numSpectra, numCentroids, meanDQSC, numBins, meanDQSB, numFeatures, badFeatures, meanDQSF\n";
+        logWriter << "filename, numSpectra, numCentroids, meanDQSC, numBins, binsTooLarge, meanDQSB, numFeatures, badFeatures, meanDQSF\n";
         logWriter.close();
     }
 
@@ -249,11 +249,17 @@ int main(int argc, char *argv[])
 
             // @todo remove diagnostics
             int count = 0;
+            int badBinCount = 0;
             double meanDQSB = 0;
             for (auto EIC : binnedData)
             {
                 for (double dqsb : EIC.DQSB)
                 {
+                    if (dqsb == -1)
+                    {
+                        badBinCount++;
+                        continue;
+                    }
                     ++count;
                     meanDQSB += dqsb;
                 }
@@ -313,7 +319,7 @@ int main(int argc, char *argv[])
 
                 logWriter.open(pathLogging, std::ios::app);
                 logWriter << filename << ", " << centroids.size() << ", " << binThis.lengthAllPoints << ", "
-                          << meanDQSC / binThis.lengthAllPoints << ", " << binnedData.size() << ", " << meanDQSB
+                          << meanDQSC / binThis.lengthAllPoints << ", " << binnedData.size() << "," << badBinCount << ", " << meanDQSB
                           << ", " << peaks.size() << ", " << peaksWithMassGaps << ", " << meanDQSF << "\n";
                 logWriter.close();
             }

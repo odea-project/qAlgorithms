@@ -90,7 +90,7 @@ namespace qAlgorithms
         if (debug)
         {
             argc = 0;
-            args.inputPaths.push_back("/home/terry/Work/Messdaten/211012_KG_001.mzML");
+            args.inputPaths.push_back("C:/Users/unisys/Documents/Studium/Messdaten/Wasser2_neg.mzML");
         }
 
         if (argc == 1)
