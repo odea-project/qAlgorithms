@@ -96,16 +96,17 @@ namespace qAlgorithms
         if (argc == 1)
         {
             std::cerr << helpinfo;
-            return args;
+            exit(0);
+            // return args;
         }
-
         for (int i = 1; i < argc; i++)
         {
             std::string argument = argv[i];
             if ((argument == "-h") || (argument == "-help"))
             {
                 std::cout << "\n    " << argv[0] << helpinfo;
-                return args;
+                exit(0);
+                // return args;
             }
             else if ((argument == "-s") || (argument == "-silent"))
             {
