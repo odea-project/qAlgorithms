@@ -38,7 +38,11 @@ as the executable.
 If you are unfamiliar with using the shell, keep in mind that you can use relative paths. "." is
 the current directory and ".." is the directory above the current one. When you want to refer to 
 files in your current directory, use ".\\". This is also required when running qAlgorithms, provided
-you did not add it to the PATH system variable.
+you did not add it to the PATH system variable. You have to supply your desired input as arguments to the
+qAlgorithms.exe command. Enter a space after every argument (refer to the example commands a bit further down).
+Execute the command by pressing the "enter" key.
+
+You can also drag a folder into the powershell window to copy its path into the command line. 
 
 ## Linux
 Currently, no Linux releases are provided. We recommend you to clone the repository
@@ -51,8 +55,8 @@ path with quotes or escape the space character with "\\" to read in everything c
 To open powershell in the qAlgorithms directory, open it with the windows explorer and type 
 "powershell" into the path field.
 
-On linux, you can execute qAlgorithms through bash and use special characters like µ
-in filenames. We use the std::filesystem library, so you are limited by that.
+On linux, you can use special characters like µ in filenames, provided your terminal supports
+them. We use the [std::filesystem library](https://en.cppreference.com/w/cpp/filesystem), so you are limited by that.
 
 To use qAlgorithms for processing mass spectrometry data, you need to convert your
 measurements into .mzML files, for example with msconvert. Currently, only MS1 
@@ -61,7 +65,7 @@ data can be used, so you save some disk space if you filter them out at this sta
 qAlgorithms is a command line utility which reads mzML files and outputs them
 as csv. You can select individual files or an entire directory to search for
 mzML files recursively. All output is written into one directory, which you also
-must specify. Below are some commands you will likely use:
+must specify. Below are some commands you will likely use (replace example paths with your system paths):
 
 `./qAlgorithms.exe -h` - Display the help menu, listing all availvable options. (currently,
 executing qAlgorithms without any options also opens the help menu).
@@ -86,9 +90,12 @@ Some things to keep in mind:
   **data can not be processed with high reliability. If at all possible, use**
   **only profile mode spectra. The centroid error is only marginally dependent on m/z, leading to inaccurate binning.**
 * Check out the [Wiki page](https://github.com/odea-project/qAlgorithms/wiki/Questions-regarding-the-use-of-qAlgorithms) for more details on using qAlgorithms.
-* If you do not specify which results you want, no output will be written
+* If you do not specify which results you want, no output will be written.
+* If the program crashes, check if your problem matches one of the known bugs on our
+  [issues page](https://github.com/odea-project/qAlgorithms/issues). If a workaround exists,
+  we will provide it there while a proper solution is being worked on.
 * If multiple copies of the same file are found during recursive search,
-  only one of them will be processed
+  only one of them will be processed.
 * The different quality scores do not serve as a way to remove peaks from
   your results. They only indicate how well the data at every step fit our
   model assumptions regarding the mathematical properties of real peaks.
