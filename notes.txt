@@ -1,3 +1,15 @@
+readme: 
+Mac erwähnen
+alle Win-spezifischen Dinge in einen Teil packen
+Ganz oben auf primitive Anleitung hinweisen
+ASCII verlinken, evtl als Zahlen, Buchstaben, Unterstriche ausdrücken
+powershell verlinken
+Wiki-Seite: Header für alle Augaben erläutern
+Toten Link zu docs entfernen
+# Philosophy prosaisch aufzuhübschen
+qCentroids ist eine Variation von qPeaks, sollte im readme korrigiert werden
+
+
 Bifurcating Dendrogram:
 Für einen Datensatz werden zwei unterschiedliche Komponentisierungen durchgeführt, eine davon mit qPattern
 Für qPattern wird ein eindeutiges Entscheidungskriterium formuliert.
