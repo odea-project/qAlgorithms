@@ -20,8 +20,7 @@ namespace qAlgorithms
 
     std::vector<CentroidPeak> findCentroids(
         treatedData &treatedData,
-        const int scanNumber,
-        const float retentionTime);
+        const int scanNumber);
 
     void findPeaks(
         std::vector<FeaturePeak> &all_peaks,
@@ -80,8 +79,7 @@ namespace qAlgorithms
 
     std::vector<RegressionGauss> mergeRegressionsOverScales(
         std::vector<RegressionGauss> validRegressions,
-        const float *y_start,
-        const bool *df_start);
+        const float *y_start);
 
     void mergeRegressionsOverScales_static(
         RegressionGauss *validRegressions,
@@ -92,7 +90,6 @@ namespace qAlgorithms
 
     void createCentroidPeaks(
         std::vector<CentroidPeak> &peaks,
-        RegressionGauss *validRegressions,
         std::vector<RegressionGauss> *validRegressionsVec,
         const int validRegressionsIndex,
         const float *y_start,
@@ -102,7 +99,6 @@ namespace qAlgorithms
 
     void createFeaturePeaks(
         std::vector<FeaturePeak> &peaks,
-        RegressionGauss *validRegressions,
         std::vector<RegressionGauss> *validRegressionsVec,
         const int validRegressionsIndex,
         const float *y_start,
@@ -288,19 +284,13 @@ namespace qAlgorithms
      * @return false : if the peak area is not valid
      */
 
-    std::pair<float, float> calcPeakAreaUncert(
-        RegCoeffs coeff,
-        const float mse,
-        const int scale,
-        const int df_sum);
+    std::pair<float, float> calcPeakAreaUncert(RegCoeffs coeff, const float mse, const int scale);
 
     bool isValidPeakArea(
         RegCoeffs coeff,
         const float mse,
         const int scale,
-        const int df_sum,
-        float &area,
-        float &uncertainty_area);
+        const int df_sum);
 
     float calcUncertaintyPos(
         const float mse,
