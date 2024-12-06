@@ -133,10 +133,7 @@ namespace qAlgorithms
 #pragma endregion "initialize"
 
 #pragma region "find centroids"
-    std::vector<CentroidPeak> findCentroids(
-        treatedData &treatedData,
-        const int scanNumber,
-        const float retentionTime)
+    std::vector<CentroidPeak> findCentroids(treatedData &treatedData, const int scanNumber)
     {
         std::vector<CentroidPeak> all_peaks;
         int maxWindowSize = 0;
@@ -180,7 +177,7 @@ namespace qAlgorithms
             {
                 continue; // no valid peaks
             }
-            createCentroidPeaks(all_peaks, nullptr, &validRegressions, validRegressions.size(), y_start, mz_start, df_start, scanNumber);
+            createCentroidPeaks(all_peaks, &validRegressions, validRegressions.size(), y_start, mz_start, df_start, scanNumber);
         }
         delete[] Y;
         delete[] Ylog;
@@ -191,9 +188,7 @@ namespace qAlgorithms
 #pragma endregion "find centroids"
 
 #pragma region "find peaks"
-    void findPeaks(
-        std::vector<FeaturePeak> &all_peaks,
-        treatedData &treatedData)
+    void findPeaks(std::vector<FeaturePeak> &all_peaks, treatedData &treatedData)
     {
         int maxWindowSize = 0;
         for (auto it_separators = treatedData.separators.begin(); it_separators != treatedData.separators.end() - 1; it_separators++)
@@ -246,7 +241,7 @@ namespace qAlgorithms
             {
                 continue; // no valid peaks
             }
-            createFeaturePeaks(all_peaks, nullptr, &validRegressions, validRegressions.size(), y_start,
+            createFeaturePeaks(all_peaks, &validRegressions, validRegressions.size(), y_start,
                                mz_start, rt_start, df_start, dqs_cen_start, dqs_bin_start);
         }
         delete[] Y;
@@ -302,7 +297,7 @@ namespace qAlgorithms
         }
         if (validRegressions.size() > 1)
         {
-            validRegressions = mergeRegressionsOverScales(validRegressions, y_start, df_start);
+            validRegressions = mergeRegressionsOverScales(validRegressions, y_start);
         }
         return;
     }
@@ -656,7 +651,7 @@ namespace qAlgorithms
           area multiply both with Exp(b0) later. This is done to avoid exp function at this point
         */
         // it might be preferential to combine both functions again or store the common matrix somewhere
-        auto tmpPair = calcPeakAreaUncert(replacer, mse, scale, df_sum);
+        auto tmpPair = calcPeakAreaUncert(replacer, mse, scale);
         float area = tmpPair.first;
         float uncertainty_area = tmpPair.second;
 
@@ -666,7 +661,7 @@ namespace qAlgorithms
             badReg.isValid = false;
             return badReg; // statistical insignificance of the area
         }
-        if (!isValidPeakArea(replacer, mse, scale, df_sum, area, uncertainty_area))
+        if (!isValidPeakArea(replacer, mse, scale, df_sum))
         {
             RegressionGauss badReg;
             badReg.isValid = false;
@@ -708,10 +703,7 @@ namespace qAlgorithms
 #pragma endregion "validate regression test series"
 
 #pragma region mergeRegressionsOverScales
-    std::vector<RegressionGauss> mergeRegressionsOverScales(
-        std::vector<RegressionGauss> validRegressions,
-        const float *y_start,
-        const bool *df_start)
+    std::vector<RegressionGauss> mergeRegressionsOverScales(std::vector<RegressionGauss> validRegressions, const float *y_start)
     {
         /*
           Grouping Over Scales:
@@ -924,7 +916,6 @@ namespace qAlgorithms
 
     void createCentroidPeaks(
         std::vector<CentroidPeak> &peaks,
-        RegressionGauss *validRegressions,
         std::vector<RegressionGauss> *validRegressionsVec,
         const int validRegressionsIndex,
         const float *y_start,
@@ -932,24 +923,11 @@ namespace qAlgorithms
         const bool *df_start,
         const int scanNumber)
     {
+        assert(!validRegressionsVec->empty());
         // iterate over the validRegressions vector
         for (int i = 0; i < validRegressionsIndex; i++)
         {
-            RegressionGauss regression;
-
-            if (validRegressionsVec == nullptr)
-            {
-                regression = validRegressions[i];
-            }
-            else if (validRegressions == nullptr)
-            {
-                regression = (*validRegressionsVec)[i];
-            }
-            else
-            {
-                std::cerr << "Error: no regressions supplied";
-                assert(false);
-            }
+            RegressionGauss regression = (*validRegressionsVec)[i];
 
             if (regression.isValid)
             {
@@ -986,7 +964,6 @@ namespace qAlgorithms
 
     void createFeaturePeaks(
         std::vector<FeaturePeak> &peaks,
-        RegressionGauss *validRegressions,
         std::vector<RegressionGauss> *validRegressionsVec,
         const int validRegressionsIndex,
         const float *y_start,
@@ -999,20 +976,8 @@ namespace qAlgorithms
         // iterate over the validRegressions vector
         for (int i = 0; i < validRegressionsIndex; i++)
         {
-            RegressionGauss regression;
-            if (validRegressionsVec == nullptr)
-            {
-                regression = validRegressions[i];
-            }
-            else if (validRegressions == nullptr)
-            {
-                regression = (*validRegressionsVec)[i];
-            }
-            else
-            {
-                std::cerr << "Error: no regressions supplied";
-                assert(false);
-            }
+            assert(!validRegressionsVec->empty());
+            RegressionGauss regression = (*validRegressionsVec)[i];
 
             if (regression.isValid)
             {
@@ -1402,6 +1367,7 @@ namespace qAlgorithms
         res = _mm_div_ps(res, coeff);                                    // res = -0.5 * b1 / b2
 
         int key = _mm_movemask_ps(_mm_cmplt_ps(coeff, _mm_setzero_ps()));
+        // _mm_movemask_ps returns the sign bits of the input array
         // b1, b2, b3 are negative            ; 1110 = 14
         // b1, b2 are negative, b3 is positive; 0110 = 6
         // b2, b3 are negative, b1 is positive; 1100 = 12
@@ -1542,11 +1508,7 @@ namespace qAlgorithms
 
 #pragma region isValidPeakArea
 
-    std::pair<float, float> calcPeakAreaUncert(
-        RegCoeffs coeff,
-        const float mse,
-        const int scale,
-        const int df_sum)
+    std::pair<float, float> calcPeakAreaUncert(RegCoeffs coeff, const float mse, const int scale)
     {
         float b1 = coeff.b1;
         float b2 = coeff.b2;
@@ -1558,7 +1520,6 @@ namespace qAlgorithms
         float B1_2_B2 = b1 / 2 / b2;
         float B1_2_B3 = b1 / 2 / b3;
 
-        // initialize variables
         float J[4]; // Jacobian matrix
 
         // here we have to check if there is a valley point or not
@@ -1597,11 +1558,8 @@ namespace qAlgorithms
         RegCoeffs coeff,
         const float mse,
         const int scale,
-        const int df_sum,
-        float &area,
-        float &uncertainty_area)
+        const int df_sum)
     {
-        // predefine expressions
         float b1 = coeff.b1;
         float b2 = coeff.b2;
         float b3 = coeff.b3;
@@ -1630,8 +1588,6 @@ namespace qAlgorithms
         float J_1_common_R = _SQRTB3; // SQRTPI_2 * EXP_B13 / SQRTB3;
         float J_2_common_L = B1_2_B2 / b1;
         float J_2_common_R = B1_2_B3 / b1;
-
-        // previous point of termination
 
         float J_covered[4];    // Jacobian matrix for the covered peak area
         float x_left = -scale; // left limit due to the window
@@ -1695,7 +1651,7 @@ namespace qAlgorithms
 
         float area_uncertainty_covered = std::sqrt(mse * multiplyVecMatrixVecTranspose(J_covered, scale));
 
-        return J_covered[0] / area_uncertainty_covered > T_VALUES[df_sum - 5]; // statistical significance of the peak area
+        return J_covered[0] / area_uncertainty_covered > T_VALUES[df_sum - 5]; // statistical significance of the peak area (boolean)
     }
 #pragma endregion isValidPeakArea
 
