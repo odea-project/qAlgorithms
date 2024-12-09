@@ -35,6 +35,8 @@ namespace qAlgorithms
 
     UserInputSettings passCliArgs(int argc, char *argv[]);
 
+    UserInputSettings interactiveMode(char *argv[]);
+
     bool inputsAreSensible(UserInputSettings &args);
 
 #pragma endregion "command line arguments"
