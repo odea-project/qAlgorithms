@@ -87,17 +87,15 @@ namespace qAlgorithms
         assert(args.inputPaths.empty());
         assert(args.outputPath.empty());
 
-        if (debug)
+        if (argc == 1 && !debug)
+        {
+            // run in interactive mode
+            args = interactiveMode(argv);
+        }
+        else
         {
             argc = 0;
             args.inputPaths.push_back("C:/Users/unisys/Documents/Studium/Messdaten/Wasser2_neg.mzML");
-        }
-
-        if (argc == 1)
-        {
-            std::cerr << helpinfo;
-            exit(0);
-            // return args;
         }
         for (int i = 1; i < argc; i++)
         {
@@ -294,6 +292,44 @@ namespace qAlgorithms
         return args;
     }
 
+    UserInputSettings interactiveMode(char *argv[])
+    {
+        // this function is called if qAlgorithms is executed without arguments
+        std::cout << "    ### qAlgorithms interactive terminal interface ###\n"
+                  << "relative paths are not supported in this mode\n"
+                  << "drag the folder or file you want to process into this window and press \"enter\" to continue:\n";
+        std::string inputPath;
+        std::cin >> inputPath;
+
+        std::cout << "drag the folder you want the output files written to into this window and press \"enter\" to continue.\n"
+                  << "enter \"#\" to write to the input path.\n";
+        std::string outputPath;
+        std::cin >> outputPath;
+
+        if (outputPath[0] == '#')
+        {
+            outputPath = inputPath;
+        }
+        std::cout << outputPath;
+        return UserInputSettings{
+            // user input for input and output
+            std::vector<std::string>{inputPath},
+            outputPath,
+            false,
+            false,
+            false,
+            false,
+            true, // only print standard feature list
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            0,
+            false};
+    }
+
     bool inputsAreSensible(UserInputSettings &args)
     {
         // program exits if an error is found, but only after displaying all warnings
@@ -320,7 +356,7 @@ namespace qAlgorithms
         }
         else if (!std::filesystem::exists(args.outputPath))
         {
-            std::cerr << "Error: the specified output path does not exist.\n";
+            std::cerr << "Error: the specified output path \"" << args.outputPath << "\" does not exist.\n";
             goodInputs = false;
         }
         else if (std::filesystem::status(args.outputPath).type() != std::filesystem::file_type::directory)
