@@ -327,7 +327,8 @@ namespace qAlgorithms
             false,
             false,
             0,
-            false};
+            false,
+            true};
     }
 
     bool inputsAreSensible(UserInputSettings &args)
