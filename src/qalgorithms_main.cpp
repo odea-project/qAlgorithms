@@ -352,9 +352,18 @@ int main(int argc, char *argv[])
     }
     auto absoluteEnd = std::chrono::high_resolution_clock::now();
     if (!userArgs.silent)
-    {
+    { // @todo add number of errors
         std::chrono::duration<float> timePassed = std::chrono::duration_cast<std::chrono::milliseconds>(absoluteEnd - absoluteStart);
         std::cout << "Completed data processing on " << tasklist.size() << " files in " << timePassed.count() << " s.\n\n";
+    }
+    if (userArgs.interactive)
+    {
+        std::cout << "   enter \"exit\" to close this program:\n";
+        std::string userInput;
+        while (userInput != "exit")
+        {
+            std::cin >> userInput;
+        }
     }
 
     return 0;
