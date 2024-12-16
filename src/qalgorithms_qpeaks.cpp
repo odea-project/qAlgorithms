@@ -951,7 +951,8 @@ namespace qAlgorithms
                 peak.mz = mz0 + dmz * (regression.apex_position - std::floor(regression.apex_position));
                 peak.mzUncertainty = regression.uncertainty_pos * dmz * T_VALUES[regression.df + 1] * sqrt(1 + 1 / (regression.df + 4));
 
-                peak.dqsCen = erf_approx_f(regression.uncertainty_area / regression.area);
+                peak.dqsCen = 1 - erf_approx_f(regression.uncertainty_area / regression.area);
+                assert(peak.dqsCen < 1);
 
                 /// @todo consider adding these properties so we can trace back everything completely
                 // peak.idxPeakStart = regression.left_limit;
@@ -1005,7 +1006,8 @@ namespace qAlgorithms
 
                 peak.dqsCen = weightedMeanAndVariance(dqs_cen, y_start, df_start, regression.left_limit, regression.right_limit).first;
                 peak.dqsBin = weightedMeanAndVariance(dqs_bin, y_start, df_start, regression.left_limit, regression.right_limit).first;
-                peak.dqsPeak = erf_approx_f(regression.uncertainty_area / regression.area);
+                peak.dqsPeak = 1 - erf_approx_f(regression.uncertainty_area / regression.area);
+                assert(peak.dqsPeak > 0 && peak.dqsPeak < 1);
 
                 peak.idxPeakStart = regression.left_limit;
                 peak.idxPeakEnd = regression.right_limit;

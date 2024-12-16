@@ -173,7 +173,7 @@ int main(int argc, char *argv[])
             filename = filename + "_" + polarity;
             if (userArgs.printCentroids)
             {
-                printPeaklist(centroids, convertRT, userArgs.outputPath, filename, userArgs.silent, userArgs.skipError, userArgs.noOverwrite);
+                printCentroids(centroids, convertRT, userArgs.outputPath, filename, userArgs.silent, userArgs.skipError, userArgs.noOverwrite);
             }
 
             // @todo remove diagnostics later
