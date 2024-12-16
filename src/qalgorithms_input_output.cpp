@@ -92,7 +92,7 @@ namespace qAlgorithms
             // run in interactive mode
             args = interactiveMode(argv);
         }
-        else
+        else if (debug)
         {
             argc = 0;
             args.inputPaths.push_back("C:/Users/unisys/Documents/Studium/Messdaten/Wasser2_neg.mzML");
@@ -516,9 +516,9 @@ namespace qAlgorithms
 
 #pragma region "print functions"
     /// @todo make universal print function, fix out-of-bounds access, chi squared test for binning
-    void printPeaklist(std::vector<std::vector<CentroidPeak>> peaktable,
-                       std::vector<float> convertRT, std::filesystem::path pathOutput,
-                       std::string filename, bool silent, bool skipError, bool noOverwrite)
+    void printCentroids(std::vector<std::vector<CentroidPeak>> peaktable,
+                        std::vector<float> convertRT, std::filesystem::path pathOutput,
+                        std::string filename, bool silent, bool skipError, bool noOverwrite)
     {
         filename += "_centroids.csv";
         pathOutput /= filename;
@@ -556,7 +556,7 @@ namespace qAlgorithms
                 for (size_t j = 0; j < peaktable[i].size(); ++j)
                 {
                     auto peak = peaktable[i][j];
-                    char buffer[128];
+                    char buffer[256];
                     sprintf(buffer, "%d,%0.6f,%0.6f,%d,%0.4f,%0.4f,%0.4f,%0.4f,%0.4f,%0.5f\n",
                             counter, peak.mz, peak.mzUncertainty, peak.scanNumber, convertRT[peak.scanNumber],
                             peak.area, peak.areaUncertainty, peak.height, peak.heightUncertainty, peak.dqsCen);
