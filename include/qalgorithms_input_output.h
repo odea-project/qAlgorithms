@@ -71,9 +71,9 @@ namespace qAlgorithms
         float intensity;
     };
 
-    void printPeaklist(std::vector<std::vector<CentroidPeak>> peaktable,
-                       std::vector<float> convertRT, std::filesystem::path pathOutput,
-                       std::string filename, bool silent, bool skipError, bool noOverwrite);
+    void printCentroids(std::vector<std::vector<CentroidPeak>> peaktable,
+                        std::vector<float> convertRT, std::filesystem::path pathOutput,
+                        std::string filename, bool silent, bool skipError, bool noOverwrite);
 
     void printProfilePoints(std::vector<std::vector<ProfilePoint>> peakComponents,
                             std::filesystem::path pathOutput, std::string filename,
