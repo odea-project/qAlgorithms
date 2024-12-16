@@ -327,7 +327,8 @@ namespace qAlgorithms
             false,
             false,
             0,
-            false};
+            false,
+            true};
     }
 
     bool inputsAreSensible(UserInputSettings &args)
@@ -389,6 +390,16 @@ namespace qAlgorithms
             std::cerr << "Notice: the changed centroid certainty will only affect pre-centroided data.\n";
             PPM_PRECENTROIDED = args.newPPM;
         }
+        if (!goodInputs && args.interactive)
+        {
+            std::cout << "   inputs are incorrect - enter \"exit\" to close this program:\n";
+            std::string userInput;
+            while (userInput != "exit")
+            {
+                std::cin >> userInput;
+            }
+        }
+
         return goodInputs;
     }
 

@@ -31,6 +31,7 @@ namespace qAlgorithms
         bool noOverwrite = false;
         float newPPM = 0;               // @todo not a good idea
         bool tasklistSpecified = false; // @todo implement
+        bool interactive = false;
     };
 
     UserInputSettings passCliArgs(int argc, char *argv[]);
