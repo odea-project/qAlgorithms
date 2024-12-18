@@ -14,6 +14,8 @@ namespace qAlgorithms
     extern const float CHI_SQUARES[256];
     extern const double SQRTPI_2;
     extern bool PRINT_PPM_WARNING;
+    extern const double OS_CRIT_A; // this value is determined empirically (see https://github.com/GeRe87/OS_critVal)
+    extern const double OS_CRIT_B; // this value is determined empirically (see https://github.com/GeRe87/OS_critVal)
 
     const std::array<float, 384> initialize(); // Declare initialize function
 }
