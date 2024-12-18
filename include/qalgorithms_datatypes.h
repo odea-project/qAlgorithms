@@ -86,6 +86,8 @@ namespace qAlgorithms
     int idxBin;
     unsigned int idxPeakStart; // degrees of freedom = idxPeakEnd - idxPeakStart
     unsigned int idxPeakEnd;
+    float mse; // mean squared error
+    float rt0; // retention time of the swtichting point considering beta 2 and beta 3
   };
 
   struct EIC // Extracted Ion Chromatogram
