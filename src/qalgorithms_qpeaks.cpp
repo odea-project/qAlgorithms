@@ -1090,6 +1090,9 @@ namespace qAlgorithms
             {
                 FeaturePeak peak;
 
+                // add mse
+                peak.mse = regression.mse;
+
                 // add height
                 RegCoeffs coeff = regression.newCoeffs;
                 peak.height = exp_approx_d(coeff.b0 + (regression.apex_position - regression.index_x0) * coeff.b1 * 0.5); // peak height (exp(b0 - b1^2/4/b2)) with position being -b1/2/b2
@@ -1118,6 +1121,10 @@ namespace qAlgorithms
                 peak.idxPeakEnd = regression.right_limit;
 
                 peak.coefficients = coeff;
+                peak.coefficients.b1 /= drt; // scaling b1 to be in the same unit as the retention time
+                peak.coefficients.b2 /= drt * drt; // scaling b2 to be in the same unit as the retention time
+                peak.coefficients.b3 /= drt * drt; // scaling b3 to be in the same unit as the retention time
+                peak.rt0 = rt0; // switching point between two segments considering beta 2 and beta 3
 
                 peaks.push_back(std::move(peak));
             }
