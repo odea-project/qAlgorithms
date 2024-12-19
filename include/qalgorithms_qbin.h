@@ -93,6 +93,8 @@ namespace qAlgorithms
         int countDQSbelow0;
     };
 
+    const double binningCritVal(size_t n, double uncertainty); // critical value for deciding if a bin exists or not
+
 #pragma endregion "utility"
 
     // Bin Class @todo get under size 128

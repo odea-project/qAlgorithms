@@ -50,6 +50,11 @@ namespace qAlgorithms
 #define NO_MIN_FOUND -INFINITY
 #define NO_MAX_FOUND -INFINITY
 
+    const double binningCritVal(size_t n, double stdDev)
+    {
+        return OS_CRIT_A + (OS_CRIT_B / std::sqrt(std::log(n + 1))) * stdDev;
+    }
+
 #pragma endregion "misc"
 
 #pragma region "BinContainer"
@@ -289,7 +294,8 @@ namespace qAlgorithms
         {
             float stdev = currentBin.calcStdevMZ();
 
-            float trueVcrit = 3.05037165842070 * pow(log(currentBin.pointsInBin.size() + 1), (TOLERANCE_BINNING)) * stdev;
+            // float trueVcrit = 3.05037165842070 * pow(log(currentBin.pointsInBin.size() + 1), (TOLERANCE_BINNING)) * stdev;
+            float trueVcrit = binningCritVal(currentBin.pointsInBin.size(), stdev);
             binRange.push_back(BinBorders{
                 currentBin.mzMin - trueVcrit,
                 currentBin.mzMax + trueVcrit,
@@ -641,9 +647,11 @@ namespace qAlgorithms
         ++counter;
         auto pmax = std::max_element(OS.begin() + binStartInOS, OS.begin() + binEndInOS);
 
-        double vcrit = 3.05037165842070 * pow(log(binsizeInOS), (TOLERANCE_BINNING)) *  // critical value for alpha = 0.01 @todo add functionality for custom alpha?
-                       (this->cumError[binEndInOS + 1] - this->cumError[binStartInOS]); // + 1 to binEnd since cumerror starts at 0
-        double max = *pmax * binsizeInOS;                                               // moved binsize here since multiplication is faster than division
+        // double vcrit = 3.05037165842070 * pow(log(binsizeInOS), (TOLERANCE_BINNING)) *  // critical value for alpha = 0.01 @todo add functionality for custom alpha?
+        //                (this->cumError[binEndInOS + 1] - this->cumError[binStartInOS]); // + 1 to binEnd since cumerror starts at 0
+        // double max = *pmax * binsizeInOS;                                               // moved binsize here since multiplication is faster than division
+        double vcrit = binningCritVal(binsizeInOS, (this->cumError[binEndInOS + 1] - this->cumError[binStartInOS]) / binsizeInOS);
+        double max = *pmax;
 
         [[unlikely]] if (max < vcrit) // all values in range are part of one mz bin
         {
@@ -954,7 +962,8 @@ namespace qAlgorithms
         float meanerror = std::accumulate(pointsInBin.begin(), pointsInBin.end(), 0.0, [](float error, const qCentroid *point)
                                           { return error + point->mzError; }) /
                           binsize;
-        float vcrit = 3.05037165842070 * pow(log(binsize + 1), (TOLERANCE_BINNING)) * meanerror;
+        // float vcrit = 3.05037165842070 * pow(log(binsize + 1), (TOLERANCE_BINNING)) * meanerror;
+        double vcrit = binningCritVal(binsize, meanerror);
         // binsize + 1 to not include points which would be removed after adding them
         // vcrit has the same scaling as mz of bin centroids
 
@@ -1131,13 +1140,13 @@ namespace qAlgorithms
                 }
             }
         }
-        const float vcritIntensity = 3.05037165842070 * pow(log(binsize), (TOLERANCE_BINNING)) *
-                                     sqrt(intensityErrorSquared / (binsize - 1));
-        bool intensityOutlier = false;
-        if (greatestIntGap > vcritIntensity)
-        {
-            intensityOutlier = true;
-        }
+        // const float vcritIntensity = 3.05037165842070 * pow(log(binsize), (TOLERANCE_BINNING)) *
+        //                              sqrt(intensityErrorSquared / (binsize - 1));
+        bool intensityOutlier = false; // this is not a sensible thing to test @todo
+        // if (greatestIntGap > vcritIntensity)
+        // {
+        //     intensityOutlier = true;
+        // }
 
         if (noSigma < (binsize * 4) / 5) // if less than 80% of the bin are within 1.3 sigma
         {
