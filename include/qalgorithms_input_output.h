@@ -18,7 +18,6 @@ namespace qAlgorithms
         // output options
         bool printCentroids = false;
         bool printBins = false;
-        bool printSummary = false;
         bool printExtended = false;
         bool printFeatures = false;
         bool printSubProfile = false;
