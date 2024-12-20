@@ -115,7 +115,7 @@ int main(int argc, char *argv[])
     // #pragma omp parallel for // there is a memory leak in findCentroids_MZML
     for (std::filesystem::path pathSource : tasklist)
     {
-        assert(!(userArgs.outputPath.empty() && (userArgs.printFeatures || userArgs.printSummary || userArgs.printCentroids)));
+        assert(!(userArgs.outputPath.empty() && (userArgs.printFeatures || userArgs.printBins || userArgs.printCentroids)));
 
         auto timeStart = std::chrono::high_resolution_clock::now();
         if (!userArgs.silent)
@@ -228,7 +228,7 @@ int main(int argc, char *argv[])
             timeStart = std::chrono::high_resolution_clock::now();
             std::vector<EIC> binnedData = performQbinning(
                 binThis, convertRT, userArgs.outputPath, filename, 3, // set maxdist here
-                !userArgs.verboseProgress, userArgs.printSummary, userArgs.printBins);
+                !userArgs.verboseProgress, userArgs.printBins);
             timeEnd = std::chrono::high_resolution_clock::now();
 
             if (binnedData.size() == 0)

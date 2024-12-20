@@ -39,9 +39,6 @@ namespace qAlgorithms
                                  "      The filename is always the original filename extended by the polarity and the processing step.\n"
                                  "      -o,  -output <DIRECTORY>:   directory into which all output files should be printed.\n"
                                  "      -pc, -printcentroids:       print all centroids produced after the first run of qcentroids.\n"
-                                 "      -ps, -printsummary:         print summarised information on the bins in addition to\n"
-                                 "                                  the peaktable. It is saved to your output directory\n"
-                                 "                                  under the name FILENAME_summary.csv.\n"
                                  "      -pb, -printbins:            If this flag is set, both bin summary information and\n"
                                  "                                  all binned centroids will be printed to the output location\n"
                                  "                                  in addition to the final peak table. The file ends in _bins.csv.\n"
@@ -95,7 +92,8 @@ namespace qAlgorithms
         else if (debug)
         {
             argc = 0;
-            args.inputPaths.push_back("C:/Users/unisys/Documents/Studium/Messdaten/Wasser2_neg.mzML");
+            // args.inputPaths.push_back("C:/Users/unisys/Documents/Studium/Messdaten/Wasser2_neg.mzML");
+            args.inputPaths.push_back("/home/terry/Work/Messdaten/LC_orbitrap_kali/");
         }
         for (int i = 1; i < argc; i++)
         {
@@ -235,10 +233,6 @@ namespace qAlgorithms
             {
                 args.printCentroids = true;
             }
-            else if ((argument == "-ps") || (argument == "-printsummary"))
-            {
-                args.printSummary = true;
-            }
             else if ((argument == "-pb") || (argument == "-printbins"))
             {
                 args.printBins = true;
@@ -259,7 +253,6 @@ namespace qAlgorithms
             {
                 args.printCentroids = true;
                 args.printBins = true;
-                args.printSummary = true;
                 args.printExtended = true;
                 args.printSubProfile = true;
             }
@@ -325,7 +318,6 @@ namespace qAlgorithms
             false,
             false,
             false,
-            false,
             0,
             false,
             true};
@@ -345,7 +337,7 @@ namespace qAlgorithms
         if (args.outputPath.empty())
         {
 
-            if (args.printCentroids || args.printSummary || args.printFeatures)
+            if (args.printCentroids || args.printFeatures)
             {
                 std::cerr << "Error: no output files can be written.\n";
                 goodInputs = false;
@@ -375,7 +367,7 @@ namespace qAlgorithms
             std::cerr << "Warning: -verbose overrides -silent.\n";
             args.silent = false;
         }
-        if (!((args.printCentroids || args.printSummary) || args.printFeatures) && !(args.outputPath.empty()))
+        if (!((args.printCentroids || args.printBins) || args.printFeatures) && !(args.outputPath.empty()))
         {
             std::cerr << "Warning: no output files will be written.\n";
         }
@@ -586,6 +578,9 @@ namespace qAlgorithms
                             std::filesystem::path pathOutput, std::string filename,
                             bool silent, bool skipError, bool noOverwrite)
     {
+        // @todo should this be added to the program?
+        std::cout << "subprofiles might not be a valid concept, exiting.\n";
+        exit(1);
         filename += "_subprofiles.csv";
         pathOutput /= filename;
 
@@ -668,7 +663,7 @@ namespace qAlgorithms
 
         output << "ID,binID,binIdxStart,binIdxEnd,mz,mzUncertainty,retentionTime,retentionTimeUncertainty,"
                << "lowestRetentionTime,highestRetentionTime,area,areaUncertainty,height,heightUncertainty,"
-               << "binTestCode,dqsCen,dqsBin,dqsPeak\n";
+               << "dqsCen,dqsBin,dqsPeak\n";
         unsigned int counter = 1;
         for (size_t i = 0; i < peaktable.size(); i++)
         {
@@ -677,10 +672,10 @@ namespace qAlgorithms
             std::vector<float> RTs = originalBins[binID].rententionTimes;
 
             char buffer[256];
-            sprintf(buffer, "%d,%d,%d,%d,%0.6f,%0.6f,%0.4f,%0.4f,%0.4f,%0.4f,%0.3f,%0.3f,%0.3f,%0.3f,%d,%0.5f,%0.5f,%0.5f\n",
+            sprintf(buffer, "%d,%d,%d,%d,%0.6f,%0.6f,%0.4f,%0.4f,%0.4f,%0.4f,%0.3f,%0.3f,%0.3f,%0.3f,%0.5f,%0.5f,%0.5f\n",
                     counter, binID, peak.idxPeakStart, peak.idxPeakEnd, peak.mz, peak.mzUncertainty,
                     peak.retentionTime, peak.retentionTimeUncertainty, RTs[peak.idxPeakStart], RTs[peak.idxPeakEnd],
-                    peak.area, peak.areaUncertainty, peak.height, peak.heightUncertainty, int(originalBins[binID].errorcode),
+                    peak.area, peak.areaUncertainty, peak.height, peak.heightUncertainty,
                     peak.dqsCen, peak.dqsBin, peak.dqsPeak);
             output << buffer;
             ++counter;
