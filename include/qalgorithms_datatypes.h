@@ -90,7 +90,7 @@ namespace qAlgorithms
 
   struct EIC // Extracted Ion Chromatogram
   {
-    std::byte errorcode;
+    // std::byte errorcode;
     std::vector<int> scanNumbers;
     std::vector<float> rententionTimes;
     std::vector<float> mz;

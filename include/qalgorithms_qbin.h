@@ -68,19 +68,19 @@ namespace qAlgorithms
         // bool ionisation; // 0 = negative, 1 = positive
     };
 
-    struct SummaryOutput
-    {
-        std::byte errorcode;
-        size_t binsize;
-        float mean_mz;
-        float median_mz;
-        float stddev_mz;
-        float mean_scans;
-        float DQSB_base;
-        float DQSB_scaled;
-        float DQSC_min;
-        float mean_error;
-    };
+    // struct SummaryOutput
+    // {
+    //     std::byte errorcode;
+    //     size_t binsize;
+    //     float mean_mz;
+    //     float median_mz;
+    //     float stddev_mz;
+    //     float mean_scans;
+    //     float DQSB_base;
+    //     float DQSB_scaled;
+    //     float DQSC_min;
+    //     float mean_error;
+    // };
 
     struct RunAssessor // one of these per analysed measurement
     {
@@ -119,9 +119,6 @@ namespace qAlgorithms
         bool duplicateScan = false; // are two points with the same scan number in this bin?
         bool l_maxdist_tooclose = false;
         bool r_maxdist_tooclose = false; // Check if there is a point within maxdist
-        bool l_slanted;
-        bool r_slanted;
-        std::byte errorcode{0b00000000};
 
         /// @brief generate a bin that is a subset of an existing bin using two iterators.
         /// @details since this extracts a continuous sequence, it is only a good idea
@@ -192,7 +189,7 @@ namespace qAlgorithms
         /// between mean and median or the presence of duplicate values.
         /// @details This function also sets the "errorcode" parameter of the bin it executes on.
         /// @return A struct containing the summary information. The first entry is the error code.
-        SummaryOutput summariseBin(int maxdist);
+        // SummaryOutput summariseBin(int maxdist);
 
         EIC createEIC(std::vector<float> convertRT, int maxdist);
     };
@@ -231,14 +228,6 @@ namespace qAlgorithms
         /// @param maxdist the largest gap in scans which a bin can have while still being considered valid
         void assignDQSB(const CentroidedData *rawdata, const int maxdist, bool rebin);
 
-        void printBinSummary(std::string path) const; // @todo create a better summary function which gives a
-                                                      // detailed report, including what the test actually does,
-                                                      // the mz subset after which a bin was complete, statistics
-                                                      // regarding the rest of the bins in terms of size, count etc.
-                                                      // Make sure to test the report for human-readability and
-                                                      // include metadata from the mzml where possible.
-                                                      // Some measure of overall spectrum quality should also be given.
-
         /// @brief Add all bins identified as having hot ends to outofbins and redo the binning using subsetBins
         /// @param dimensions parameter for subsetBins, see there for a detailed explanation
         /// @param rawdata the CentroidedData object from which all bins in finishedBins were generated
@@ -251,8 +240,6 @@ namespace qAlgorithms
 
         void reconstructFromStdev(const CentroidedData *rawdata, int maxdist);
 
-        void printAllBins(std::string path) const;
-
         // retention times are assigned only at this step
         std::vector<EIC> returnBins(std::vector<float> convertRT, int maxdist);
 
@@ -262,7 +249,7 @@ namespace qAlgorithms
         /// the input would have to be std::byte{0b00000001}
         /// @param fullBins Should all bins which are included in the summary be printed in full?
         /// @param location path to the folder in which both files should be created
-        void printSelectBins(bool printCentroids, bool printSummary, std::filesystem::path location,
+        void printSelectBins(bool printCentroids, std::filesystem::path location,
                              std::string filename, int maxdist);
     };
 
@@ -274,12 +261,11 @@ namespace qAlgorithms
     /// @param filename name stem for summary and bins csv files
     /// @param maxdist maximum distance in the scans dimension that is allowed within a bin
     /// @param silent if this option is selected, no progress reports will be printed to std::cout
-    /// @param printBinSummary print summary file
     /// @param printCentroids print all centroids for all bins
     /// @return returns the centroids as a collection of vectors
     std::vector<EIC> performQbinning(const CentroidedData centroidedData, std::vector<float> convertRT,
                                      std::filesystem::path outpath, std::string filename, int maxdist,
-                                     bool silent, bool printBinSummary, bool printCentroids);
+                                     bool silent, bool printCentroids);
 
     // ###################################################################################################### //
 }

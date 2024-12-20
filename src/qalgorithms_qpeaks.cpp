@@ -143,6 +143,7 @@ namespace qAlgorithms
             int length = *(it_separators + 1) - *it_separators; // calculate the number of data points in the block
             maxWindowSize = maxWindowSize < length ? length : maxWindowSize;
         }
+        assert(maxWindowSize > 0);
         float *Y = new float[maxWindowSize];
         float *Ylog = new float[maxWindowSize];
         float *X = new float[maxWindowSize];
