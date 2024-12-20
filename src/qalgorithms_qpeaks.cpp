@@ -179,6 +179,17 @@ namespace qAlgorithms
             }
             createCentroidPeaks(all_peaks, &validRegressions, validRegressions.size(), y_start, mz_start, df_start, scanNumber);
         }
+        bool crash = false;
+        if (treatedData.separators.size() < treatedData.dataPoints.size() / 100)
+            crash = true; // @todo check for validity
+        if (treatedData.separators.size() > treatedData.dataPoints.size() / 2)
+            crash = true;
+        if (crash)
+        {
+            std::cout << treatedData.separators.size() << ", " << treatedData.dataPoints.size();
+            std::cout.flush();
+            exit(1);
+        }
         delete[] Y;
         delete[] Ylog;
         delete[] X;
@@ -526,13 +537,6 @@ namespace qAlgorithms
         replacer.b2 = ((float *)&coeff)[2];
         replacer.b3 = ((float *)&coeff)[3];
 
-        // check if beta 2 or beta 3 is zero ; moved outside of this function
-        // if (replacer.b2 == 0.0f || replacer.b3 == 0.0f)
-        // {
-        //     RegressionGauss badReg;
-        //     badReg.isValid = false;
-        //     return badReg; // invalid case
-        // }
         /*
           Apex and Valley Position Filter:
           This block of code implements the apex and valley position filter.
@@ -937,26 +941,28 @@ namespace qAlgorithms
 
                 // add height
                 RegCoeffs coeff = regression.newCoeffs;
-                peak.height = exp_approx_d(coeff.b0 + (regression.apex_position - regression.index_x0) * coeff.b1 * 0.5); // peak height (exp(b0 - b1^2/4/b2)) with position being -b1/2/b2
+                peak.height = exp_approx_d(coeff.b0 + (regression.apex_position - regression.index_x0) * coeff.b1 * 0.5);
+                // peak height (exp(b0 - b1^2/4/b2)) with position being -b1/2/b2
                 peak.heightUncertainty = regression.uncertainty_height * peak.height;
 
-                // add area
-                float exp_b0 = exp_approx_d(coeff.b0); // exp(b0)
-                peak.area = regression.area * exp_b0;
-                peak.areaUncertainty = regression.uncertainty_area * exp_b0;
-
-                // re-scale the apex position to x-axis
                 float mz0 = *(mz_start + (int)std::floor(regression.apex_position));
-                float dmz = *(mz_start + (int)std::floor(regression.apex_position) + 1) - mz0;
-                peak.mz = mz0 + dmz * (regression.apex_position - std::floor(regression.apex_position));
-                peak.mzUncertainty = regression.uncertainty_pos * dmz * T_VALUES[regression.df + 1] * sqrt(1 + 1 / (regression.df + 4));
+                float delta_mz = *(mz_start + (int)std::floor(regression.apex_position) + 1) - mz0;
+
+                // add scaled area
+                float exp_b0 = exp_approx_d(coeff.b0); // exp(b0)
+                peak.area = regression.area * exp_b0 * delta_mz;
+                peak.areaUncertainty = regression.uncertainty_area * exp_b0 * delta_mz;
+
+                // add scaled apex position (mz)
+                peak.mz = mz0 + delta_mz * (regression.apex_position - std::floor(regression.apex_position));
+                peak.mzUncertainty = regression.uncertainty_pos * delta_mz * T_VALUES[regression.df + 1] * sqrt(1 + 1 / (regression.df + 4));
 
                 peak.dqsCen = 1 - erf_approx_f(regression.uncertainty_area / regression.area);
                 assert(peak.dqsCen < 1);
 
                 /// @todo consider adding these properties so we can trace back everything completely
                 // peak.idxPeakStart = regression.left_limit;
-                // peak.idxPeakEnd = regression.right_limit;
+                // peak.idxPeakEnd = regression.right_limit - 1;
 
                 peaks.push_back(std::move(peak));
             }
@@ -989,16 +995,16 @@ namespace qAlgorithms
                 peak.height = exp_approx_d(coeff.b0 + (regression.apex_position - regression.index_x0) * coeff.b1 * 0.5); // peak height (exp(b0 - b1^2/4/b2)) with position being -b1/2/b2
                 peak.heightUncertainty = regression.uncertainty_height * peak.height;
 
+                const double rt0 = *(rt_start + (int)std::floor(regression.apex_position));
+                const double delta_rt = *(rt_start + (int)std::floor(regression.apex_position) + 1) - rt0;
+                const double apex_position = rt0 + delta_rt * (regression.apex_position - std::floor(regression.apex_position));
+                peak.retentionTime = apex_position;
+                peak.retentionTimeUncertainty = regression.uncertainty_pos * delta_rt;
+
                 // add area
                 float exp_b0 = exp_approx_d(coeff.b0); // exp(b0)
-                peak.area = regression.area * exp_b0;
-                peak.areaUncertainty = regression.uncertainty_area * exp_b0;
-
-                const double rt0 = *(rt_start + (int)std::floor(regression.apex_position));
-                const double drt = *(rt_start + (int)std::floor(regression.apex_position) + 1) - rt0;
-                const double apex_position = rt0 + drt * (regression.apex_position - std::floor(regression.apex_position));
-                peak.retentionTime = apex_position;
-                peak.retentionTimeUncertainty = regression.uncertainty_pos * drt;
+                peak.area = regression.area * exp_b0 * delta_rt;
+                peak.areaUncertainty = regression.uncertainty_area * exp_b0 * delta_rt;
 
                 std::pair<float, float> mz = weightedMeanAndVariance(mz_start, y_start, df_start, regression.left_limit, regression.right_limit);
                 peak.mz = mz.first;
@@ -1010,8 +1016,12 @@ namespace qAlgorithms
                 assert(peak.dqsPeak > 0 && peak.dqsPeak < 1);
 
                 peak.idxPeakStart = regression.left_limit;
-                peak.idxPeakEnd = regression.right_limit;
+                peak.idxPeakEnd = regression.right_limit - 1;
 
+                //
+                coeff.b1 /= delta_rt;
+                coeff.b2 /= delta_rt * delta_rt;
+                coeff.b3 /= delta_rt * delta_rt;
                 peak.coefficients = coeff;
 
                 peaks.push_back(std::move(peak));
@@ -1067,7 +1077,7 @@ namespace qAlgorithms
         for (int iSegment = 0; iSegment < lengthLeft; iSegment++)
         {
             double new_x = limit_L + iSegment;
-            double y_base = exp_approx_d(coeff.b0 + coeff.b1 * new_x + coeff.b2 * new_x * new_x); // @daniel: i suggest b0 + x * (b1 + x * b2) // change after confirmed function
+            double y_base = exp_approx_d(coeff.b0 + coeff.b1 * new_x + coeff.b2 * new_x * new_x);
             double y_current = y_start[iSegment];
             double newdiff = (y_base - y_current) * (y_base - y_current);
 
