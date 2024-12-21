@@ -79,6 +79,9 @@ namespace qAlgorithms
                             std::filesystem::path pathOutput, std::string filename,
                             bool silent, bool skipError, bool noOverwrite);
 
+    void printBins(std::vector<EIC> bins, std::filesystem::path pathOutput, std::string filename,
+                   bool silent, bool skipError, bool noOverwrite);
+
     void printFeatureList(std::vector<FeaturePeak> peaktable,
                           std::filesystem::path pathOutput, std::string filename,
                           std::vector<EIC> originalBins,

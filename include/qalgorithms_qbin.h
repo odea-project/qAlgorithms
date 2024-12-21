@@ -242,15 +242,6 @@ namespace qAlgorithms
 
         // retention times are assigned only at this step
         std::vector<EIC> returnBins(std::vector<float> convertRT, int maxdist);
-
-        /// @brief Print the individual bin members and optionally the bin summary in a separate .csv
-        /// @param mask every bit of this byte controls if the corresponding test is considered for returning the
-        /// selection. For example, for returning only bins in which the first test condition applies,
-        /// the input would have to be std::byte{0b00000001}
-        /// @param fullBins Should all bins which are included in the summary be printed in full?
-        /// @param location path to the folder in which both files should be created
-        void printSelectBins(bool printCentroids, std::filesystem::path location,
-                             std::string filename, int maxdist);
     };
 
     // ####################################################################################################### //
@@ -264,8 +255,7 @@ namespace qAlgorithms
     /// @param printCentroids print all centroids for all bins
     /// @return returns the centroids as a collection of vectors
     std::vector<EIC> performQbinning(const CentroidedData centroidedData, std::vector<float> convertRT,
-                                     std::filesystem::path outpath, std::string filename, int maxdist,
-                                     bool silent, bool printCentroids);
+                                     int maxdist, bool silent);
 
     // ###################################################################################################### //
 }
