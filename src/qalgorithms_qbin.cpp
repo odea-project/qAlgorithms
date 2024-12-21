@@ -291,72 +291,6 @@ namespace qAlgorithms
         return finalBins;
     };
 
-    void BinContainer::printSelectBins(bool printCentroids, std::filesystem::path location,
-                                       std::string filename, int maxdist)
-    {
-        // print optional summary file
-
-        if (!std::filesystem::exists(location))
-        {
-            std::cerr << "Error during summary printing: The selected directory does not exist.\nSupplied path: " << std::filesystem::absolute(location)
-                      << "\nCurrent directory: " << std::filesystem::current_path() << "\ncontinuing...\n";
-            return;
-        }
-
-        // if (printSummary)
-        // {
-        //     std::vector<size_t> indices;
-        //     std::fstream file_out_sum;
-        //     std::stringstream output_sum;
-        //     location /= (filename + "_summary.csv");
-        //     std::cout << "writing summary to: " << location << "\n";
-        //     file_out_sum.open(location, std::ios::out);
-        //     assert(file_out_sum.is_open());
-        //     output_sum << "ID,errorcode,size,mean_mz,median_mz,stdev_mz,mean_scans,DQSB_base,DQSB_scaled,DQSC_min,mean_error\n";
-        //     for (size_t i = 0; i < finishedBins.size(); i++)
-        //     {
-        //         SummaryOutput res = finishedBins[i].summariseBin(maxdist);
-        //         indices.push_back(i); // save these bins for printing
-        //         char buffer[256];
-        //         sprintf(buffer, "%zu,%d,%zu,%0.8f,%0.8f,%0.8f,%0.2f,%0.6f,%0.6f,%0.6f,%0.8f\n",
-        //                 i + 1, int(res.errorcode), res.binsize, res.mean_mz, res.median_mz, res.stddev_mz,
-        //                 res.mean_scans, res.DQSB_base, res.DQSB_scaled, res.DQSC_min, res.mean_error);
-        //         output_sum << buffer;
-        //     }
-        //     file_out_sum << output_sum.str();
-        //     file_out_sum.close();
-        // }
-        // print all bins
-        if (printCentroids)
-        {
-            std::vector<size_t> indices;
-            std::fstream file_out_all;
-            std::stringstream output_all;
-            location.replace_filename(filename + "_bins.csv");
-            std::cout << "writing bins to: " << location << "\n";
-            file_out_all.open(location, std::ios::out);
-            assert(file_out_all.is_open());
-            output_all << "ID,mz,scan,int_area,mzError,DQSC,DQSB_base,DQSB_scaled\n";
-            for (size_t i = 0; i < indices.size(); i++)
-            {
-                const int pos = indices[i];
-                std::vector<qCentroid *> binnedPoints = finishedBins[pos].pointsInBin;
-
-                for (size_t j = 0; j < binnedPoints.size(); j++)
-                {
-                    char buffer[256];
-                    sprintf(buffer, "%d,%0.8f,%d,%0.2f,%0.8f,%0.6f,%0.6f,%0.6f\n",
-                            pos + 1, binnedPoints[j]->mz, binnedPoints[j]->scanNo,
-                            binnedPoints[j]->int_area, binnedPoints[j]->mzError, binnedPoints[j]->DQSCentroid,
-                            finishedBins[pos].DQSB_base[j], finishedBins[pos].DQSB_scaled[j]);
-                    output_all << buffer;
-                }
-            }
-            file_out_all << output_all.str();
-            file_out_all.close();
-        }
-    };
-
 #pragma endregion "BinContainer"
 
 #pragma region "Bin"
@@ -951,8 +885,7 @@ namespace qAlgorithms
 
 #pragma endregion "Functions"
 
-    std::vector<EIC> performQbinning(CentroidedData centroidedData, std::vector<float> convertRT, std::filesystem::path outpath,
-                                     std::string filename, int maxdist, bool silent, bool printCentroids)
+    std::vector<EIC> performQbinning(CentroidedData centroidedData, std::vector<float> convertRT, int maxdist, bool silent)
     {
         std::streambuf *old = std::cout.rdbuf(); // save standard out config @todo change this
         std::stringstream ss;
@@ -987,11 +920,6 @@ namespace qAlgorithms
         // activeBins.reconstructFromStdev(&centroidedData, maxdist); // this part of the binning process has been removed due to lacking statistical foundation
 
         // @todo add bin merger for halved bins here
-
-        if (printCentroids) // @todo move outside of this function
-        {
-            activeBins.printSelectBins(printCentroids, outpath, filename, maxdist);
-        }
 
         std::cout.rdbuf(old); // restore previous standard out
 
