@@ -52,212 +52,282 @@ namespace qAlgorithms
 
     const double binningCritVal(size_t n, double stdDev)
     {
-        return OS_CRIT_A + (OS_CRIT_B / std::sqrt(std::log(n + 1))) * stdDev;
+        return (OS_CRIT_A + (OS_CRIT_B / std::sqrt(std::log(n + 1)))) * stdDev;
     }
 
 #pragma endregion "misc"
 
 #pragma region "BinContainer"
 
-    enum SubsetMethods
+    BinContainer initialiseBinning(CentroidedData *rawdata)
     {
-        mz,
-        scans
-    };
-
-    BinContainer::BinContainer() {}
-
-    void BinContainer::makeFirstBin(CentroidedData *rawdata)
-    {
-        finishedBins.reserve(rawdata->lengthAllPoints / 50); // max of two reallocations
-        Bin firstBin(rawdata);
-        assert(firstBin.pointsInBin.size() > 4); // @todo remove
-        binDeque.push_back(firstBin);
+        BinContainer bincontainer;
+        Bin firstBin;
+        firstBin.pointsInBin.reserve(rawdata->lengthAllPoints);
+        for (size_t i = 0; i < rawdata->allDatapoints.size(); i++)
+        {
+            size_t points = rawdata->allDatapoints[i].size();
+            for (size_t j = 0; j < points; j++)
+            {
+                firstBin.pointsInBin.push_back(&(rawdata->allDatapoints[i][j]));
+            }
+        }
+        bincontainer.processBinsF.push_back(firstBin);
+        return bincontainer;
     }
 
-    void BinContainer::subsetBins(const std::vector<int> dimensions, const int maxdist, bool rebin, const double massError = -1)
+    std::string subsetBins(BinContainer &bincontainer, std::vector<SubsetMethods> dimensions, const int maxdist)
     {
         auto timeStart = std::chrono::high_resolution_clock::now();
         auto timeEnd = std::chrono::high_resolution_clock::now();
-        std::string subsetType;
-        std::cout << "\nOpen Bins: " << binDeque.size() << " - ";
-        while (!binDeque.empty()) // while elements are in the bin deque -> if any bin is not fully subset
+        std::string logOutput = "Binning Start:\n";
+        bincontainer.readFrom = false; // starting bin is in processBinsF
+        assert(bincontainer.processBinsT.empty());
+        assert(!bincontainer.processBinsF.empty());
+        size_t subsetIdx = 0;
+        size_t previousViableBins = 0;
+
+        std::vector<Bin> *sourceBins;
+        std::vector<Bin> *targetBins;
+
+        while (!(bincontainer.processBinsF.empty() && bincontainer.processBinsT.empty()))
         {
-            for (size_t i = 0; i < dimensions.size(); i++) // dimensions vector allows user to choose order of executing subsetting actions.
+            // loop until all bins have been moved into finsihedBins or discarded
+            // the target array is supplied via pointer, facilitates reuse
+            if (bincontainer.readFrom)
             {
-                const size_t startpoint = binDeque.size(); // startpoint is the first element of the deque that will not be subset, equivalent to do n times
-                subsetCount = 0;
-                switch (dimensions[i])
-                {
-                case mz:
-                {
-                    subsetType = "MZ";
-                    for (size_t j = 0; j < startpoint; j++) // for every element in the deque before writing new bins
-                    {
-                        binDeque.front().makeOS();
-                        binDeque.front().makeCumError(); // always after order space, since makeOS sorts
-                        // takes element from binDeque, starts subsetting, appends bins to binDeque
-                        binDeque.front().subsetMZ(&binDeque, binDeque.front().activeOS, notInBins,
-                                                  0, binDeque.front().activeOS.size() - 1, subsetCount);
-                        binDeque.pop_front(); // remove the element that was processed from binDeque
-                    }
-                    break;
-                }
-
-                case scans:
-                {
-                    subsetType = "Scans";
-                    // the function that determines if a bin was completed must know if
-                    // binning was already completed once
-                    std::vector<Bin> &target = rebin ? redoneBins : finishedBins;
-                    for (size_t j = 0; j < startpoint; j++)
-                    {
-                        binDeque.front().subsetScan(&binDeque, &target, notInBins, maxdist, subsetCount);
-                        binDeque.pop_front();
-                    }
-                    break;
-                }
-
-                [[unlikely]] default:
-                    std::cerr << "\nSeparation method " << dimensions[i] << " is not a valid parameter, terminating program\n";
-                    finishedBins.clear();
-                    goto exit;
-                }
-                timeEnd = std::chrono::high_resolution_clock::now();
-                if (rebin)
-                {
-                    std::cout << "subset in " << subsetType << "\nTime: " << (timeEnd - timeStart).count() << " ns\nSubsets performed: "
-                              << subsetCount << "\nClosed Bins: " << redoneBins.size() << "\n--\nOpen Bins: " << binDeque.size() << " - ";
-                }
-                else
-                {
-                    std::cout << "subset in " << subsetType << "\nTime: " << (timeEnd - timeStart).count() << " ns\nSubsets performed: "
-                              << subsetCount << "\nClosed Bins: " << finishedBins.size() << "\n--\nOpen Bins: " << binDeque.size() << " - ";
-                }
-
-                timeStart = std::chrono::high_resolution_clock::now();
-            }
-        }
-    exit:
-        std::cout << "completed subsetting\n";
-    }
-
-    void BinContainer::assignDQSB(const CentroidedData *rawdata, const int maxdist, bool rebin)
-    {
-        auto timeStart = std::chrono::high_resolution_clock::now();
-
-        std::vector<float> scalarForMOD = scaleDistancesForDQS_linear(maxdist);
-        std::vector<Bin> &target = rebin ? redoneBins : finishedBins;
-        // bins are sorted after DQSB calculation, meaning scanMin and ScanMax parameters are wrong
-        // this only works if bins exist
-        assert(target[0].DQSB_base.size() == 0);
-
-        for (size_t i = 0; i < target.size(); i++)
-        {
-            target[i].makeDQSB(rawdata, scalarForMOD, maxdist);
-        }
-        auto timeEnd = std::chrono::high_resolution_clock::now();
-        std::cout << "Finished Calculating DQSBs in " << (timeEnd - timeStart).count() << " ns\n";
-    }
-
-    void BinContainer::redoBinningIfTooclose(const std::vector<int> dimensions, const CentroidedData *rawdata,
-                                             const int maxdist)
-    {
-        std::cout << "starting re-binning procedure...\n";
-        // assemble new bin by copying bins with hot ends into notInBins
-        std::vector<size_t> incompleteBins;
-
-        incompleteBins.reserve(finishedBins.size() / 10);
-        for (size_t i = 0; i < finishedBins.size(); i++)
-        {
-            if ((finishedBins[i].l_maxdist_tooclose || finishedBins[i].r_maxdist_tooclose))
-            {
-                incompleteBins.push_back(i);
-            }
-            else if (finishedBins[i].duplicateScan)
-            {
-                incompleteBins.push_back(i);
+                sourceBins = &bincontainer.processBinsT;
+                targetBins = &bincontainer.processBinsF;
             }
             else
             {
-                float DQSsum = std::accumulate(finishedBins[i].DQSB_base.begin(), finishedBins[i].DQSB_base.end(), 0.0);
-                if (DQSsum <= 0) // no need to check average since DQSB is not scaled
+                sourceBins = &bincontainer.processBinsF;
+                targetBins = &bincontainer.processBinsT;
+            }
+
+            int subsetCount = 0;
+            switch (dimensions[subsetIdx])
+            {
+            case mz:
+            {
+                for (size_t j = 0; j < sourceBins->size(); j++) // for every element in the deque before writing new bins
                 {
-                    incompleteBins.push_back(i);
+                    Bin processThis = (*sourceBins)[j];
+                    processThis.makeOS();
+                    processThis.makeCumError();
+                    processThis.subsetMZ(targetBins, processThis.activeOS, bincontainer.notInBins,
+                                         0, processThis.activeOS.size() - 1, subsetCount);
+                }
+                // @todo logging
+                break;
+            }
+
+            case scans:
+            {
+                for (size_t j = 0; j < sourceBins->size(); j++)
+                {
+                    (*sourceBins)[j].subsetScan(targetBins, bincontainer.notInBins, maxdist, subsetCount);
+                }
+                // @todo logging
+                break;
+            }
+
+            case duplicates:
+            {
+                for (size_t j = 0; j < sourceBins->size(); j++)
+                {
+                    if ((*sourceBins)[j].unchanged && (*sourceBins)[j].duplicateScan)
+                    {
+                        deduplicateBin(targetBins, &bincontainer.notInBins, (*sourceBins)[j]);
+                    }
+                    else
+                    {
+                        targetBins->push_back((*sourceBins)[j]);
+                    }
+                }
+                break;
+                // @todo logging
+            }
+
+            case finaliser:
+            {
+                // if the "unchanged" property of a bin is true, all selected tests have passed
+                for (size_t j = 0; j < sourceBins->size(); j++)
+                {
+                    if ((*sourceBins)[j].unchanged)
+                    {
+                        bincontainer.viableBins.push_back((*sourceBins)[j]);
+                    }
+                    else
+                    {
+                        targetBins->push_back((*sourceBins)[j]);
+                    }
+                }
+                break;
+            }
+
+            default:
+                std::cerr << "\nSeparation method " << dimensions[subsetIdx] << " is not a valid parameter, terminating program\n";
+                bincontainer.viableBins.clear();
+                bincontainer.finalBins.clear();
+                bincontainer.processBinsF.clear();
+                bincontainer.processBinsT.clear();
+            }
+
+            // reset subset index if it would exceed the supplied array
+            subsetIdx++;
+            if (subsetIdx >= dimensions.size())
+            {
+                subsetIdx = 0;
+                // at the end of every run, discarded centroids are added as one new bin
+                // this is only done if at least one bin was found in the last iteration
+                if (bincontainer.viableBins.size() != previousViableBins)
+                {
+                    previousViableBins = bincontainer.viableBins.size();
+                    targetBins->push_back(Bin{});
+                    targetBins->back().pointsInBin = bincontainer.notInBins;
+                    bincontainer.notInBins.clear();
+                }
+            }
+            // remove bins from source array
+            sourceBins->clear();
+            // switch target and source array
+            bincontainer.readFrom = !bincontainer.readFrom;
+        }
+        // reset to input condition
+        bincontainer.readFrom = false;
+        return logOutput;
+    }
+
+    void deduplicateBin(std::vector<Bin> *target, std::vector<qCentroid *> *notInBins, Bin bin)
+    {
+        assert(bin.duplicateScan);
+        assert(bin.medianMZ > 1);
+        std::sort(bin.pointsInBin.begin(), bin.pointsInBin.end(), [](qCentroid *lhs, qCentroid *rhs)
+                  { return lhs->scanNo < rhs->scanNo; });
+        Bin returnBin;
+        returnBin.pointsInBin.reserve(bin.pointsInBin.size());
+        // add dummy centroid to the end of the bin
+        qCentroid dummy;
+        dummy.mz = 0;
+        dummy.scanNo = 0;
+        bin.pointsInBin.push_back(&dummy); // pointer will be not be invalidated since bin is copied
+        for (size_t i = 1; i < bin.pointsInBin.size(); i++)
+        {
+            if (bin.pointsInBin[i]->scanNo == bin.pointsInBin[i - 1]->scanNo)
+            {
+                double left = abs(bin.medianMZ - bin.pointsInBin[i - 1]->mz);
+                double right = abs(bin.medianMZ - bin.pointsInBin[i]->mz);
+                if (left > right)
+                {
+                    returnBin.pointsInBin.push_back(bin.pointsInBin[i - 1]);
+                    i++; // position i will not be considered again
+                    notInBins->push_back(bin.pointsInBin[i]);
+                }
+                else
+                {
+                    notInBins->push_back(bin.pointsInBin[i - 1]);
+                }
+            }
+            else
+            {
+                returnBin.pointsInBin.push_back(bin.pointsInBin[i - 1]);
+            }
+        }
+        if (returnBin.pointsInBin.size() < 5)
+        {
+            for (size_t i = 0; i < returnBin.pointsInBin.size(); i++)
+            {
+                notInBins->push_back(returnBin.pointsInBin[i]);
+            }
+            return;
+        }
+
+        target->push_back(returnBin);
+    }
+
+    bool binLimitsOK(Bin sourceBin, const CentroidedData *rawdata, const int maxdist)
+    {
+        // check if a point within maxdist is closer than the critical value
+        // in every scan, the relevant points are outside of the bin limits but inside
+        // the limits + the critical distance of a bin with n+1 members
+        size_t binsize = sourceBin.pointsInBin.size();
+        double binError = 0;
+        for (size_t i = 0; i < binsize; i++)
+        {
+            binError += sourceBin.pointsInBin[i]->mzError;
+        }
+        binError /= binsize;
+        double vcrit = binningCritVal(binsize + 1, binError);
+        double lowerLimitMZ = sourceBin.mzMin - vcrit;
+        double upperLimitMZ = sourceBin.mzMax + vcrit;
+
+        for (int scan = sourceBin.scanMin; scan < sourceBin.scanMax + 1; scan++)
+        {
+            auto currentScans = &rawdata->allDatapoints[scan];
+            size_t position = 0;
+            // check the entire array up to the bin region for possible missed inclusions
+            while ((*currentScans)[position].mz < sourceBin.mzMin)
+            {
+                if ((*currentScans)[position].mz > lowerLimitMZ)
+                {
+                    return false;
+                }
+                position++;
+                // stop access outside of array
+                if (position == currentScans->size())
+                {
+                    position--;
+                    break;
+                }
+            }
+            // conditions switch, now the points of interest are smaller than the limit and greater than the bin border
+            while ((*currentScans)[position].mz < upperLimitMZ)
+            {
+                if ((*currentScans)[position].mz > sourceBin.mzMax)
+                {
+                    return false;
+                }
+                position++;
+                // stop access outside of array
+                if (position == currentScans->size())
+                {
+                    break;
+                }
+            }
+            // there are no points which should be part of the bin, but are not
+        }
+        return true;
+    }
+
+    int selectRebin(BinContainer *bins, const CentroidedData *rawdata, const int maxdist)
+    {
+        // move all bins without binning artefacts into finishedBins vector
+        assert(bins->processBinsF.size() > 0);
+        assert(!bins->readFrom);
+        int dissolvedCount = 0;
+        for (size_t i = 0; i < bins->viableBins.size(); i++)
+        {
+            Bin currentBin = bins->viableBins[i];
+
+            if (binLimitsOK(currentBin, rawdata, maxdist))
+            {
+                bins->finalBins.push_back(currentBin);
+            }
+            else
+            {
+                dissolvedCount++;
+                for (qCentroid *cen : currentBin.pointsInBin)
+                {
+                    bins->processBinsF.front().pointsInBin.push_back(cen);
                 }
             }
         }
-        if (incompleteBins.empty())
-        {
-            std::cout << "nothing to re-bin, continuing...\n";
-            return;
-        }
-        std::cout << "processing " << incompleteBins.size() << " bins\n";
-        // Assemble new starting bin
-        Bin startingRebin;
-        startingRebin.pointsInBin.reserve(notInBins.size() + incompleteBins.size() * 16); // @todo test the average size for non-warburg data
-        [[unlikely]] if (!notInBins.empty())
-        {
-            startingRebin.pointsInBin.insert(startingRebin.pointsInBin.end(), notInBins.begin(), notInBins.end()); // copy outofbins into new bin
-            notInBins.clear();
-        }
-        else
-        {
-            std::cout << "no not-binned points, continuing...\n";
-        }
-        // copy old pointsInBin for each selected bin
-        for (size_t i : incompleteBins)
-        {
-            startingRebin.pointsInBin.insert(startingRebin.pointsInBin.end(), finishedBins[i].pointsInBin.begin(), finishedBins[i].pointsInBin.end());
-        }
-        binDeque.push_back(startingRebin);
-        // call binning wrapper with a vector other than finishedbins as write target
-        this->subsetBins(dimensions, maxdist, true);
-        if (redoneBins.empty())
-        {
-            return;
-        }
-        // calculate DQS on new bins
-        this->assignDQSB(rawdata, maxdist, true);
-        // re-add the newly constructed bins to finishedBins
-        if (redoneBins.size() < incompleteBins.size()) // there will be gaps left in finsihedBins that must be closed
-        {
-            size_t i = 0;
-            for (Bin newBin : redoneBins) // fill gaps with new bins
-            {
-                finishedBins[incompleteBins[i]] = newBin;
-                ++i;
-            }
-            while (i < incompleteBins.size()) // transfer elements from finishedBins
-            {
-                finishedBins[incompleteBins[i]] = std::move(finishedBins.back());
-                finishedBins.pop_back();
-                ++i;
-            }
-        }
-        else
-        {
-            size_t i = 0;
-            for (size_t j : incompleteBins)
-            {
-                finishedBins[j] = redoneBins[i];
-                ++i;
-            }
-            while (i < redoneBins.size())
-            {
-                finishedBins.push_back(redoneBins[i]);
-                ++i;
-            }
-        }
-
-        std::cout << "re-binning completed\nremoved " << incompleteBins.size() << " incomplete bins, added "
-                  << redoneBins.size() << " corrected bins\n";
-
-        redoneBins.resize(0); // allow other functions to use redoneBins
-        return;
+        bins->viableBins.clear();
+        return dissolvedCount;
     }
 
-    void BinContainer::reconstructFromStdev(const CentroidedData *rawdata, int maxdist)
+    void reconstructFromStdev(const CentroidedData *rawdata, int maxdist)
     {
 
         // find all not binned points and add them to a bin
@@ -279,17 +349,6 @@ namespace qAlgorithms
 
         // return conflictOfBinterest; // @todo add a way to work with this
     }
-
-    std::vector<EIC> BinContainer::returnBins(std::vector<float> convertRT, int maxdist)
-    {
-        std::vector<EIC> finalBins;
-        finalBins.reserve(finishedBins.size());
-        for (size_t i = 0; i < finishedBins.size(); i++)
-        {
-            finalBins.push_back(finishedBins[i].createEIC(convertRT, maxdist));
-        }
-        return finalBins;
-    };
 
 #pragma endregion "BinContainer"
 
@@ -342,8 +401,8 @@ namespace qAlgorithms
         std::partial_sum(cumError.begin(), cumError.end(), cumError.begin()); // cumulative sum
     }
 
-    void Bin::subsetMZ(std::deque<Bin> *bincontainer, std::vector<double> &OS, std::vector<qCentroid *> &notInBins,
-                       const int binStartInOS, const int binEndInOS, int &counter) // bincontainer is binDeque of BinContainer // OS cannot be solved with pointers since index has to be transferred to frature list
+    void Bin::subsetMZ(std::vector<Bin> *bincontainer, std::vector<double> &OS, std::vector<qCentroid *> &notInBins,
+                       const int binStartInOS, const int binEndInOS, int &counter) // bincontainer is binDeque of BinContainer_old // OS cannot be solved with pointers since index has to be transferred to frature list
     {
         assert(binStartInOS >= 0);
         assert(binEndInOS >= binStartInOS);
@@ -361,9 +420,13 @@ namespace qAlgorithms
         double vcrit = binningCritVal(binsizeInOS, (this->cumError[binEndInOS + 1] - this->cumError[binStartInOS]) / binsizeInOS);
         double max = *pmax;
 
-        [[unlikely]] if (max < vcrit) // all values in range are part of one mz bin
+        if (max < vcrit) // all values in range are part of one mz bin
         {
             Bin output(pointsInBin.begin() + binStartInOS, pointsInBin.begin() + binEndInOS + 1); // binEndInOS+1 since the iterator has to point behind the last element to put into the vector
+            output.mzMin = output.pointsInBin.front()->mz;
+            output.mzMax = output.pointsInBin.back()->mz;
+            output.unchanged = true;
+            output.medianMZ = output.pointsInBin[output.pointsInBin.size() / 2]->mz;
             bincontainer->push_back(output);
             return;
         }
@@ -398,8 +461,7 @@ namespace qAlgorithms
         }
     }
 
-    void Bin::subsetScan(std::deque<Bin> *bincontainer, std::vector<Bin> *finishedBins,
-                         std::vector<qCentroid *> &notInBins, const int maxdist, int &counter)
+    void Bin::subsetScan(std::vector<Bin> *bincontainer, std::vector<qCentroid *> &notInBins, const int maxdist, int &counter)
     {
         assert(!pointsInBin.empty());
         // function is called on a bin sorted by mz
@@ -445,15 +507,17 @@ namespace qAlgorithms
             }
             else if (distanceScan == 0)
             {
-                duplicateScan = true;
+                this->duplicateScan = true;
             }
         }
         // check for open bin at the end
         if (lastpos == 0)
-        { // no cut has occurred, the bin is viable
-            finishedBins->push_back(bincontainer->front());
-            finishedBins->back().scanMin = pointsInBin.front()->scanNo;
-            finishedBins->back().scanMax = pointsInBin.back()->scanNo;
+        {
+            // no cut has occurred, the bin is viable
+            this->scanMin = pointsInBin.front()->scanNo;
+            this->scanMax = pointsInBin.back()->scanNo;
+            this->unchanged = true;
+            bincontainer->push_back(*this);
         }
         else if (binSize - lastpos > 4) // binsize starts at 1
         {
@@ -724,8 +788,6 @@ namespace qAlgorithms
         tmp_ints_area.reserve(eicsize);
         std::vector<float> tmp_ints_height;
         tmp_ints_height.reserve(eicsize);
-        std::vector<float> tmp_DQSB;
-        tmp_DQSB.reserve(eicsize);
         std::vector<float> tmp_DQSC;
         tmp_DQSC.reserve(eicsize);
 
@@ -736,78 +798,23 @@ namespace qAlgorithms
         double prevInt = 0; // for pre-centroided data
         for (size_t i = 0; i < pointsInBin.size(); i++)
         {
-
             qCentroid *point = pointsInBin[i];
-            if (point->scanNo == prevScan)
-            {
-                if (point->DQSCentroid == tmp_DQSC.back())
-                {
-                    if (point->int_area < prevInt)
-                    {
-                        continue;
-                    }
-                    else
-                    {
-                        tmp_scanNumbers.pop_back();
-                        tmp_rt.pop_back();
-                        tmp_mz.pop_back();
-                        tmp_ints_area.pop_back();
-                        tmp_ints_height.pop_back();
-                        tmp_DQSB.pop_back();
-                        tmp_DQSC.pop_back();
-                    }
-                }
 
-                // for duplicates, remove the centroid with the
-                // worse DQSC. This decision was made based on
-                // limited observations in four different real datasets
-                if (point->DQSCentroid < tmp_DQSC.back())
-                {
-                    continue;
-                }
-                else
-                {
-                    tmp_scanNumbers.pop_back();
-                    tmp_rt.pop_back();
-                    tmp_mz.pop_back();
-                    tmp_ints_area.pop_back();
-                    tmp_ints_height.pop_back();
-                    tmp_DQSB.pop_back();
-                    tmp_DQSC.pop_back();
-                }
-            }
-            if (!tmp_scanNumbers.empty())
-            {
-                assert(tmp_scanNumbers.back() < point->scanNo);
-            }
-
-            prevScan = point->scanNo;
-            prevInt = point->int_area;
             tmp_scanNumbers.push_back(prevScan);
             tmp_rt.push_back(convertRT[prevScan]);
             tmp_mz.push_back(point->mz);
             tmp_ints_area.push_back(point->int_area);
             tmp_ints_height.push_back(point->int_height);
-            tmp_DQSB.push_back(DQSB_base[i]);
             tmp_DQSC.push_back(point->DQSCentroid);
         }
 
-        tmp_scanNumbers.shrink_to_fit();
-        tmp_rt.shrink_to_fit();
-        tmp_mz.shrink_to_fit();
-        tmp_ints_area.shrink_to_fit();
-        tmp_ints_height.shrink_to_fit();
-        tmp_DQSB.shrink_to_fit();
-        tmp_DQSC.shrink_to_fit();
-
         EIC returnVal = {
-            // bincode,
             tmp_scanNumbers,
             tmp_rt,
             tmp_mz,
             tmp_ints_area,
             tmp_ints_height,
-            tmp_DQSB,
+            DQSB_base,
             tmp_DQSC};
 
         return returnVal;
@@ -887,44 +894,78 @@ namespace qAlgorithms
 
     std::vector<EIC> performQbinning(CentroidedData centroidedData, std::vector<float> convertRT, int maxdist, bool silent)
     {
-        std::streambuf *old = std::cout.rdbuf(); // save standard out config @todo change this
-        std::stringstream ss;
-
         if (silent) // @todo change this to a global variable
         {
-            std::cout.rdbuf(ss.rdbuf()); // @todo this is a very bad idea
+            // std::cout.rdbuf(ss.rdbuf()); // @todo this is a very bad idea
         }
-
+        std::string logger = "";
+        // @todo this vector should be supplied by the calling function
+        std::vector<SubsetMethods> measurementDimensions = {SubsetMethods::mz,
+                                                            SubsetMethods::scans,
+                                                            SubsetMethods::duplicates};
+        measurementDimensions.push_back(SubsetMethods::finaliser);
         std::cout << "starting binning process...\n";
 
-        BinContainer activeBins;
-        activeBins.notInBins.reserve(centroidedData.lengthAllPoints / 4); // @todo can this be estimated better?
-        activeBins.makeFirstBin(&centroidedData);
-        // at least one element must be terminator @todo make this a function parameter
-        std::vector<int> measurementDimensions = {SubsetMethods::mz, SubsetMethods::scans};
-        activeBins.subsetBins(measurementDimensions, maxdist, false);
-
-        if (activeBins.finishedBins.size() < 1)
+        BinContainer activeBins = initialiseBinning(&centroidedData);
+        // rebinning is not separated into a function
+        // binning is repeated until the input length is constant
+        size_t viableBinCount = 1;
+        while (true)
         {
-            // no bins were found -> critical error in the program
-            // this case was observed when reading in pure noise, which contained no signals
-            std::cout.rdbuf(old); // restore previous standard out
-            return std::vector<EIC>{};
+            logger += subsetBins(activeBins, measurementDimensions, maxdist);
+            // if the same amount of bins as in the previous operation was found,
+            // the process is considered complete
+            if (viableBinCount == activeBins.viableBins.size())
+            {
+                break;
+            }
+            viableBinCount = activeBins.viableBins.size();
+            // add empty start bin for rebinner
+            activeBins.processBinsF.push_back(Bin{});
+            // add all points that were not binned into the new bin, since these centroids
+            // tend to contain smaller bins which were not properly processed due to being
+            // at the borders of a cutting region
+            activeBins.processBinsF.front().pointsInBin = activeBins.notInBins;
+            activeBins.notInBins.clear();
+            int rebinCount = selectRebin(&activeBins, &centroidedData, maxdist);
+            // @todo logging
+        }
+        // no change in bin result, so all found bins are considered final
+        for (Bin bin : activeBins.viableBins)
+        {
+            activeBins.finalBins.push_back(bin);
+        }
+        activeBins.viableBins.clear();
+        // remove duplicates from bins
+
+        auto scalar = scaleDistancesForDQS_linear(maxdist);
+        for (size_t i = 0; i < activeBins.finalBins.size(); i++)
+        {
+            activeBins.finalBins[i].makeDQSB(&centroidedData, scalar, maxdist);
         }
 
+        // at least one element must be terminator @todo make this a function parameter
+
+        // activeBins.subsetBins_old(measurementDimensions, maxdist, false);
+
         std::cout << "calculating DQSBs...\n";
-        activeBins.assignDQSB(&centroidedData, maxdist, false);
+        // activeBins.assignDQSB(&centroidedData, maxdist, false);
 
         // move centroids from notInBins into existing bins
-        activeBins.redoBinningIfTooclose(measurementDimensions, &centroidedData, maxdist);
+        // activeBins.redoBinningIfTooclose(measurementDimensions, &centroidedData, maxdist);
         // activeBins.reconstructFromStdev(&centroidedData, maxdist); // this part of the binning process has been removed due to lacking statistical foundation
 
         // @todo add bin merger for halved bins here
 
-        std::cout.rdbuf(old); // restore previous standard out
+        // std::cout.rdbuf(old); // restore previous standard out
 
-        auto test = activeBins.returnBins(convertRT, maxdist);
-        return test; // @todo do not calculate the summary twice when printing bins
+        std::vector<EIC> finalBins;
+        size_t binCount = activeBins.finalBins.size();
+        finalBins.reserve(binCount);
+        for (size_t i = 0; i < binCount; i++)
+        {
+            finalBins.push_back(activeBins.finalBins[i].createEIC(convertRT, maxdist));
+        }
+        return finalBins;
     }
-
 }
