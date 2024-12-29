@@ -88,6 +88,22 @@ namespace qAlgorithms
     unsigned int idxPeakEnd;
   };
 
+  struct qCentroid
+  {
+    float mzError = -1;
+    float mz;
+    int scanNo;
+    float int_area;   // the intensity is never used during binning @todo
+    float int_height; // s.o.
+    float DQSCentroid;
+  };
+
+  struct CentroidedData
+  {
+    std::vector<std::vector<qCentroid>> allDatapoints;
+    int lengthAllPoints; // number of centroids in all scans
+  };
+
   struct EIC // Extracted Ion Chromatogram
   {
     // std::byte errorcode;
