@@ -8,42 +8,37 @@
 
 #include "qalgorithms_datatypes.h"
 
-// Goal: all functions modify individual features, which are combined to a bin.
-// The bin contains all features and the functions necessary to summarise which features are present
-
 namespace qAlgorithms
 {
-
 #pragma region "utility"
-
     // the metacentroid contains information that is centroid-specific but not
     // required during the processing.
-    struct metaCentroid
-    {
-        float int_area;
-        float int_height;
-        float DQSCentroid;
-        int profileIdxStart;
-        int profileIdxEnd;
-    };
+    // struct metaCentroid
+    // {
+    //     float int_area;
+    //     float int_height;
+    //     float DQSCentroid;
+    //     int profileIdxStart;
+    //     int profileIdxEnd;
+    // };
 
     // depending on the instrumentation, binning requires different subsetting
     // procedures. Instead of making those user parameters, the correct steps
     // are selected based on known behaviour @todo make maxdist depend on this
-    enum MeasurementType
-    {
-        // instrumentation detail which could be relevant to binning
-        LC_HRMS,
-        GC_HRMS,
-        IMS_HRMS,
-        LC_IMS_HRMS,
-        LC_LC_HRMS,
-        LCxLC_HRMS,
-        LC_UV_HRMS,
-        LC_MS_IMS,
-        // measurement independent binning application
-        FIND_COMPONENT
-    };
+    // enum MeasurementType
+    // {
+    //     // instrumentation detail which could be relevant to binning
+    //     LC_HRMS,
+    //     GC_HRMS,
+    //     IMS_HRMS,
+    //     LC_IMS_HRMS,
+    //     LC_LC_HRMS,
+    //     LCxLC_HRMS,
+    //     LC_UV_HRMS,
+    //     LC_MS_IMS,
+    //     // measurement independent binning application
+    //     FIND_COMPONENT
+    // };
 
     enum SubsetMethods
     {
@@ -54,30 +49,6 @@ namespace qAlgorithms
     };
 
     // @todo does the ion source have an effect on the binning decisions to be made?
-
-    // struct CentroidedData
-    // {
-    //     std::vector<std::vector<qCentroid>> allDatapoints;
-    //     // std::vector<metaCentroid> metadata;
-    //     int lengthAllPoints; // number of centroids in all scans
-    //     // int scanFold; // number of scans after which the next chromatographic fraction arrives (LC_IMS or LCxLC)
-    //     // MeasurementType instrumentation;
-    //     // bool ionisation; // 0 = negative, 1 = positive
-    // };
-
-    // struct SummaryOutput
-    // {
-    //     std::byte errorcode;
-    //     size_t binsize;
-    //     float mean_mz;
-    //     float median_mz;
-    //     float stddev_mz;
-    //     float mean_scans;
-    //     float DQSB_base;
-    //     float DQSB_scaled;
-    //     float DQSC_min;
-    //     float mean_error;
-    // };
 
     struct RunAssessor // one of these per analysed measurement
     {
@@ -104,10 +75,10 @@ namespace qAlgorithms
         // float medianMZ;
 
     public:
-        std::vector<qCentroid *> pointsInBin; // @todo does not change after bin creation, check for performance improvement when using cast const
-        std::vector<double> activeOS;         // Order Space
-        std::vector<float> DQSB_base;         // DQSB when all distances are considered equal
-        std::vector<float> DQSB_scaled;       // DQSB if a gaussian falloff is assumed
+        std::vector<const qCentroid *> pointsInBin; // @todo does not change after bin creation, check for performance improvement when using cast const
+        std::vector<double> activeOS;               // Order Space
+        std::vector<float> DQSB_base;               // DQSB when all distances are considered equal
+        std::vector<float> DQSB_scaled;             // DQSB if a gaussian falloff is assumed
 
         // @todo get mz and scan min/max at the earliest opportunity
         float mzMin = -1;
@@ -126,7 +97,7 @@ namespace qAlgorithms
         /// to construct a new bin like this after a completed subsetting step.
         /// @param startBin left border of the new bin
         /// @param endBin right border of the new bin
-        Bin(const std::vector<qCentroid *>::iterator &startBin, const std::vector<qCentroid *>::iterator &endBin); //
+        Bin(const std::vector<const qCentroid *>::iterator &startBin, const std::vector<const qCentroid *>::iterator &endBin); //
 
         /// @brief generate a bin by adding pointers to all points in rawdata to pointsInBin
         /// @param rawdata a set of raw data on which binning is to be performed
@@ -155,7 +126,7 @@ namespace qAlgorithms
         /// @param startBin index relating to the order space at which the bin starts
         /// @param endBin index relating to the order space at which the bin ends
         /// @param counter counter shared between all calls of the recursive function, used to count number of function calls
-        void subsetMZ(std::vector<Bin> *bincontainer, std::vector<double> &OS, std::vector<qCentroid *> &notInBins,
+        void subsetMZ(std::vector<Bin> *bincontainer, std::vector<double> &OS, std::vector<const qCentroid *> &notInBins,
                       const int startBin, const int endBin, int &counter);
 
         /// @brief divide a bin sorted by scans if there are gaps greater than maxdist in it. Bins that cannot be divided are closed.
@@ -166,7 +137,7 @@ namespace qAlgorithms
         /// @param bincontainer if the input bin was split, the newly created bins will be added to this
         /// @param maxdist the largest gap in scans which a bin can have while still being considered valid
         /// @param counter counter shared between all calls of the recursive function, used to count number of function calls
-        void subsetScan(std::vector<Bin> *bincontainer, std::vector<qCentroid *> &notInBins, const int maxdist, int &counter);
+        void subsetScan(std::vector<Bin> *bincontainer, std::vector<const qCentroid *> &notInBins, const size_t maxdist, int &counter);
 
         /// @brief generate the data quality score for all data points in a bin
         /// @details for every point in the bin the mean distance in mz to other elements of the bin and the shortest distance to an
@@ -174,20 +145,9 @@ namespace qAlgorithms
         /// binned datapoint. It is assumed that the bin is sorted by scans when makeDQSB is called @todo change to more generic solution?
         /// @param rawdata the CentroidedData object from which the bin was generated
         /// @param maxdist the largest gap in scans which a bin can have while still being considered valid
-        void makeDQSB(const CentroidedData *rawdata, const std::vector<float> scalarForMOD, const int maxdist);
+        void makeDQSB(const CentroidedData *rawdata, const std::vector<float> scalarForMOD, const size_t maxdist);
 
-        float calcStdevMZ();
-
-        /// @brief summarise the bin to one line, with the parameters size, mean_mz, median_mz, stdev_mz, mean_scans, median_scans,
-        /// DQSB_base, DQSB_control, DQSB_worst, min_DQSC, meanError. DQSB_worst is calculated by assuming the MOD of all points in the
-        /// bin to be equal to the critical value. Additionally, the function computes a 1-byte code for up to 8 states of interest.
-        /// The respective bit is set to 1 if the defined state is present. Possible states of interest are too large a discrepancy
-        /// between mean and median or the presence of duplicate values.
-        /// @details This function also sets the "errorcode" parameter of the bin it executes on.
-        /// @return A struct containing the summary information. The first entry is the error code.
-        // SummaryOutput summariseBin(int maxdist);
-
-        EIC createEIC(std::vector<float> convertRT, int maxdist);
+        EIC createEIC(std::vector<float> convertRT, size_t maxdist);
     };
 
     bool binLimitsOK(Bin sourceBin, const CentroidedData *rawdata, const int maxdist);
@@ -198,38 +158,36 @@ namespace qAlgorithms
     // BinContainer
     struct BinContainer
     {
-        std::vector<Bin> processBinsF;      // bin target in the starting case
-        std::vector<Bin> processBinsT;      // bin target one past the starting case
-        std::vector<Bin> viableBins;        // only includes bins which cannot be further subdivided
-        std::vector<Bin> finalBins;         // bins which have been confirmed to not include incorrect binning
-        std::vector<qCentroid *> notInBins; // this vector contains all points which are not included in bins
-        int subsetCount;                    // @todo necessary?
-        int inputBinCount;                  // number of bins that were rebinned in the last iteration
+        std::vector<Bin> processBinsF;            // bin target in the starting case
+        std::vector<Bin> processBinsT;            // bin target one past the starting case
+        std::vector<Bin> viableBins;              // only includes bins which cannot be further subdivided
+        std::vector<Bin> finalBins;               // bins which have been confirmed to not include incorrect binning
+        std::vector<const qCentroid *> notInBins; // this vector contains all points which are not included in bins
+        int subsetCount;                          // @todo necessary?
+        int inputBinCount;                        // number of bins that were rebinned in the last iteration
         bool readFrom = false;
     };
 
     BinContainer initialiseBinning(CentroidedData *rawdata);
 
-    std::string subsetBins(BinContainer &bincontainer, std::vector<SubsetMethods> dimensions, const int maxdist);
+    std::string subsetBins(BinContainer &bincontainer, std::vector<SubsetMethods> dimensions, const size_t maxdist);
 
-    int selectRebin(BinContainer *bins, const CentroidedData *rawdata, const int maxdist);
+    int selectRebin(BinContainer *bins, const CentroidedData *rawdata, const size_t maxdist);
 
     // remove points with duplicate scans from a bin by choosing the one closest to the median
-    void deduplicateBin(std::vector<Bin> *target, std::vector<qCentroid *> *notInBins, Bin bin);
+    void deduplicateBin(std::vector<Bin> *target, std::vector<const qCentroid *> *notInBins, Bin bin);
 
 #pragma endregion "Bin Container"
     // ####################################################################################################### //
 
     /// @brief wrapper function to execute qbinning on a CentroidedData struct
     /// @param centroidedData centroid list generated by qPeaks.passToBinning(...), defined in qalgorithms_qpeaks.cpp
-    /// @param outpath directroy into which the summary and bins will be printed, if the option was selected
-    /// @param filename name stem for summary and bins csv files
+    /// @param convertRT vector containing the retention time for every scan number
     /// @param maxdist maximum distance in the scans dimension that is allowed within a bin
-    /// @param silent if this option is selected, no progress reports will be printed to std::cout
-    /// @param printCentroids print all centroids for all bins
+    /// @param verbose if this option is selected, additional progress report is written to standard out
     /// @return returns the centroids as a collection of vectors
-    std::vector<EIC> performQbinning(const CentroidedData centroidedData, std::vector<float> convertRT,
-                                     int maxdist, bool silent);
+    std::vector<EIC> performQbinning(const CentroidedData *centroidedData, const std::vector<float> convertRT,
+                                     size_t maxdist, bool verbose);
 
     // ###################################################################################################### //
 }
