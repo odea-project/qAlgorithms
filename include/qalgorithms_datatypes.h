@@ -101,7 +101,7 @@ namespace qAlgorithms
   struct CentroidedData
   {
     std::vector<std::vector<qCentroid>> allDatapoints;
-    int lengthAllPoints; // number of centroids in all scans
+    size_t lengthAllPoints; // number of centroids in all scans
   };
 
   struct EIC // Extracted Ion Chromatogram
@@ -110,6 +110,7 @@ namespace qAlgorithms
     std::vector<int> scanNumbers;
     std::vector<float> rententionTimes;
     std::vector<float> mz;
+    std::vector<float> predInterval;
     std::vector<float> ints_area;
     std::vector<float> ints_height;
     std::vector<float> DQSB;

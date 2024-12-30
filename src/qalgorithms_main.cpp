@@ -225,8 +225,8 @@ int main(int argc, char *argv[])
 
             timeStart = std::chrono::high_resolution_clock::now();
             std::vector<EIC> binnedData = performQbinning(
-                binThis, convertRT, 3, // set maxdist here - reasoned as likelihood of real trace being onverlooked being at worst 50%
-                !userArgs.verboseProgress);
+                &binThis, convertRT, 3, // set maxdist here - reasoned as likelihood of real trace being onverlooked being at worst 50%
+                userArgs.verboseProgress);
             timeEnd = std::chrono::high_resolution_clock::now();
 
             if (binnedData.size() == 0)
