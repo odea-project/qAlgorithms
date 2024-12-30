@@ -5,7 +5,6 @@
 // internal
 #include "qalgorithms_datatypes.h"
 #include "qalgorithms_measurement_data.h"
-#include "qalgorithms_qbin.h"
 
 // external
 #include <vector>
