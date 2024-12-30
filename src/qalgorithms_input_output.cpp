@@ -698,7 +698,7 @@ namespace qAlgorithms
             {
                 char buffer[128];
                 sprintf(buffer, "%zu,%0.8f,%0.8f,%0.4f,%d,%0.6f,%0.6f,%0.4f,%0.4f\n",
-                        binID, bins[binID].mz[i], bins[binID].predInterval[binID],
+                        binID, bins[binID].mz[i], bins[binID].predInterval[i],
                         bins[binID].rententionTimes[i], bins[binID].scanNumbers[i], bins[binID].ints_area[i],
                         bins[binID].ints_height[i], bins[binID].DQSC[i], bins[binID].DQSB[i]);
                 output << buffer;
