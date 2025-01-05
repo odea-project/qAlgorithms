@@ -47,7 +47,7 @@ namespace qAlgorithms
         const float *y_start,
         const float *ylog_start,
         const bool *df_start,
-        const int n,
+        const size_t n,
         std::vector<RegressionGauss> &validRegressions);
 
     void validateRegressions(

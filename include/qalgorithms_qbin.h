@@ -45,6 +45,7 @@ namespace qAlgorithms
         mz,
         scans,
         duplicates,
+        massjump,
         finaliser // this filter checks if the bin was changed and adds it to the "viable bins" vector if not
     };
 
@@ -176,6 +177,8 @@ namespace qAlgorithms
 
     // remove points with duplicate scans from a bin by choosing the one closest to the median
     void deduplicateBin(std::vector<Bin> *target, std::vector<const qCentroid *> *notInBins, Bin bin);
+
+    void removeMassJumps(std::vector<Bin> *target, std::vector<const qCentroid *> *notInBins, Bin bin);
 
 #pragma endregion "Bin Container"
     // ####################################################################################################### //
