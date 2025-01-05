@@ -181,13 +181,13 @@ namespace qAlgorithms
                 subsetIdx = 0;
                 // at the end of every run, discarded centroids are added as one new bin
                 // this is only done if at least one bin was found in the last iteration
-                if (bincontainer.viableBins.size() != previousViableBins)
-                {
-                    previousViableBins = bincontainer.viableBins.size();
-                    targetBins->push_back(Bin{});
-                    targetBins->back().pointsInBin = bincontainer.notInBins;
-                    bincontainer.notInBins.clear();
-                }
+                // if (bincontainer.viableBins.size() != previousViableBins)
+                // {
+                //     previousViableBins = bincontainer.viableBins.size();
+                //     targetBins->push_back(Bin{});
+                //     targetBins->back().pointsInBin = bincontainer.notInBins;
+                //     bincontainer.notInBins.clear();
+                // }
             }
             // remove bins from source array
             sourceBins->clear();
@@ -253,6 +253,12 @@ namespace qAlgorithms
         }
         assert(returnBin.pointsInBin.size() + duplicateRemovedCount == bin.pointsInBin.size() - 1);
         target->push_back(returnBin);
+    }
+
+    void removeMassJumps(std::vector<Bin> *target, std::vector<const qCentroid *> *notInBins, Bin bin)
+    {
+        // if the distance in mz between two points is too great, the violating point
+        // should be removed.
     }
 
     bool binLimitsOK(Bin sourceBin, const CentroidedData *rawdata, const size_t maxdist)
@@ -548,6 +554,7 @@ namespace qAlgorithms
     void Bin::makeDQSB(const CentroidedData *rawdata, const std::vector<float> scalarForMOD, const size_t maxdist) // @todo split this function
     {
         // assumes bin is saved sorted by scans, since the result from scan gap checks is the final control
+        // @todo it could be a good idea to only relate the score to points that are not in bins
         const size_t binsize = pointsInBin.size();
         DQSB_base.reserve(binsize);
         DQSB_scaled.reserve(binsize);
@@ -824,16 +831,15 @@ namespace qAlgorithms
     static std::vector<float> meanDistanceRegional(const std::vector<const qCentroid *> pointsInBin, size_t maxdist)
     {
         // the other mean distance considers all points in the Bin.
-        // It is sensible to only use the mean distance of all points
-        // within maxdist scans
+        // It is sensible to only use the mean distance of all points within maxdist scans
         // this function assumes the bin to be sorted by scans
         const size_t binsize = pointsInBin.size();
         std::vector<float> output(binsize);
         size_t position = 0;
         for (size_t i = 0; i < binsize; i++)
         {
-            int scanRegionStart = pointsInBin[i]->scanNo - maxdist; // can be negative
-            int scanRegionEnd = pointsInBin[i]->scanNo + maxdist + 1;
+            int scanRegionStart = pointsInBin[i]->scanNo - maxdist; // can be negative @todo rework
+            size_t scanRegionEnd = pointsInBin[i]->scanNo + maxdist + 1;
             float accum = 0;
             while (pointsInBin[position]->scanNo < scanRegionStart)
             {
@@ -894,6 +900,10 @@ namespace qAlgorithms
     {
         std::string logger = "";
         // @todo this vector should be supplied by the calling function
+        // currently, it is absolutely useless. Consider removal and hardcode the function
+        // only consider time difference and mass. Even in the case of 2D-LC, we expect there
+        // to be individual regions in which signals occur, making alignment a part of
+        // the componentisation
         std::vector<SubsetMethods> measurementDimensions = {SubsetMethods::mz,
                                                             SubsetMethods::scans,
                                                             SubsetMethods::duplicates};
@@ -909,6 +919,8 @@ namespace qAlgorithms
             logger += subsetBins(activeBins, measurementDimensions, maxdist);
             // if the same amount of bins as in the previous operation was found,
             // the process is considered complete
+            // in the current configuration, rebinning takes three times as long
+            // for two additional features, both of which are likely noise anyway
             if (viableBinCount == activeBins.viableBins.size())
             {
                 break;
@@ -921,7 +933,8 @@ namespace qAlgorithms
             // at the borders of a cutting region
             activeBins.processBinsF.front().pointsInBin = activeBins.notInBins;
             activeBins.notInBins.clear();
-            int rebinCount = selectRebin(&activeBins, centroidedData, maxdist);
+            // re-binning during the initial loop would result in some bins being split prematurely
+            // int rebinCount = selectRebin(&activeBins, centroidedData, maxdist);
             // @todo logging
         }
         // no change in bin result, so all found bins are considered final
@@ -930,7 +943,6 @@ namespace qAlgorithms
             activeBins.finalBins.push_back(bin);
         }
         activeBins.viableBins.clear();
-        // remove duplicates from bins
 
         auto scalar = scaleDistancesForDQS_linear(maxdist);
         for (size_t i = 0; i < activeBins.finalBins.size(); i++)
