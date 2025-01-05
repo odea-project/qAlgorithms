@@ -92,7 +92,7 @@ namespace qAlgorithms
   {
     float mzError = -1;
     float mz;
-    int scanNo;
+    unsigned int scanNo;
     float int_area;   // the intensity is never used during binning @todo
     float int_height; // s.o.
     float DQSCentroid;

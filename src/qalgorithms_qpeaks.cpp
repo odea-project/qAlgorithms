@@ -22,9 +22,9 @@ namespace qAlgorithms
     {
         // initialise empty vector with enough room for all scans - centroids[0] must remain empty
         std::vector<std::vector<qCentroid>> centroids(allPeaks.size() + 1, std::vector<qCentroid>(0));
-        int totalCentroids = 0;
-        int scanRelative = 0;
-        int addTotal = 0;
+        size_t totalCentroids = 0;
+        size_t scanRelative = 0;
+        size_t addTotal = 0;
         for (size_t i = 0; i < addEmpty.size(); i++)
         {
             addTotal += addEmpty[i];
@@ -53,7 +53,7 @@ namespace qAlgorithms
                     auto &peak = allPeaks[i][j];
                     qCentroid F = qCentroid{peak.mzUncertainty, peak.mz, scanRelative, peak.area, peak.height, peak.dqsCen};
                     assert(F.scanNo > 0);
-                    assert(F.scanNo <= int(addTotal + allPeaks.size()));
+                    assert(F.scanNo <= (addTotal + allPeaks.size()));
                     centroids[scanRelative].push_back(F);
                     ++totalCentroids;
                 }
@@ -271,20 +271,24 @@ namespace qAlgorithms
         const float *y_start,
         const float *ylog_start,
         const bool *df_start,
-        const int n, // number of data points
+        const size_t n, // number of data points
         std::vector<RegressionGauss> &validRegressions)
     {
-        const int maxScale = std::min(GLOBAL_MAXSCALE, (int)(n - 1) / 2);
+        const size_t maxScale = std::min(GLOBAL_MAXSCALE, (n - 1) / 2);
 
         // @todo is this more efficient than just reserving a relatively large amount?
         int sum = 0;
-        for (int i = 4; i <= GLOBAL_MAXSCALE * 2; i += 2)
+        for (size_t i = 4; i <= GLOBAL_MAXSCALE * 2; i += 2)
         {
-            sum += std::max(0, n - i);
+            if (n > i)
+            {
+                sum += n - i;
+            }
+            // sum += std::max(0, n - i);
         }
 
         validRegressions.reserve(sum);
-        for (int scale = 2; scale <= maxScale; scale++)
+        for (size_t scale = 2; scale <= maxScale; scale++)
         {
             const int k = 2 * scale + 1;           // window size
             const int n_segments = n - k + 1;      // number of segments, i.e. regressions considering the array size
