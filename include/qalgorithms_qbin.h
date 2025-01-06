@@ -167,11 +167,16 @@ namespace qAlgorithms
         int subsetCount;                          // @todo necessary?
         int inputBinCount;                        // number of bins that were rebinned in the last iteration
         bool readFrom = false;
+        // pointers for use during subsetting loop
+        std::vector<Bin> *sourceBins;
+        std::vector<Bin> *targetBins;
     };
+
+    void switchTarget(BinContainer *bincontainer);
 
     BinContainer initialiseBinning(CentroidedData *rawdata);
 
-    std::string subsetBins(BinContainer &bincontainer, std::vector<SubsetMethods> dimensions, const size_t maxdist);
+    std::string subsetBins(BinContainer &bincontainer, const size_t maxdist);
 
     int selectRebin(BinContainer *bins, const CentroidedData *rawdata, const size_t maxdist);
 

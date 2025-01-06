@@ -1,4 +1,4 @@
-#include <../include/qalgorithms_qbin.h>
+// #include <../include/qalgorithms_qbin.h>
 #include "qalgorithms_qpattern.h"
 #include "qalgorithms_datatypes.h"
 #include "qalgorithms_global_vars.h"
@@ -42,7 +42,8 @@ namespace qAlgorithms
         /// adapted generic binning function @todo add into qBinning
         unsigned int size = endBin - startBin + 1;
         // float vcrit = 3.05037165842070 * pow(log(size), (TOLERANCE_BINNING)) * (error[endBin + 1] - error[startBin]); // cumError starts with 0
-        double vcrit = binningCritVal(size, (error[endBin + 1] - error[startBin]) / size);
+        // double vcrit = binningCritVal(size, (error[endBin + 1] - error[startBin]) / size);
+        double vcrit = 0;
         /// @todo check for correct calculation in qBinning
         assert(vcrit > 0);
         auto pmax = std::max_element(OS.begin() + startBin, OS.begin() + endBin);

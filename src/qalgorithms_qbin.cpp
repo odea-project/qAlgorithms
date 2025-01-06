@@ -76,7 +76,24 @@ namespace qAlgorithms
         return bincontainer;
     }
 
-    std::string subsetBins(BinContainer &bincontainer, std::vector<SubsetMethods> dimensions, const size_t maxdist)
+    void switchTarget(BinContainer *bincontainer)
+    {
+        bincontainer->sourceBins->clear();
+        // switch target and source array
+        bincontainer->readFrom = !bincontainer->readFrom;
+        if (bincontainer->readFrom)
+        {
+            bincontainer->sourceBins = &bincontainer->processBinsT;
+            bincontainer->targetBins = &bincontainer->processBinsF;
+        }
+        else
+        {
+            bincontainer->sourceBins = &bincontainer->processBinsF;
+            bincontainer->targetBins = &bincontainer->processBinsT;
+        }
+    }
+
+    std::string subsetBins(BinContainer &bincontainer, const size_t maxdist)
     {
         // auto timeStart = std::chrono::high_resolution_clock::now();
         // auto timeEnd = std::chrono::high_resolution_clock::now();
@@ -84,97 +101,49 @@ namespace qAlgorithms
         bincontainer.readFrom = false; // starting bin is in processBinsF
         assert(bincontainer.processBinsT.empty());
         assert(!bincontainer.processBinsF.empty());
-        size_t subsetIdx = 0;
 
-        std::vector<Bin> *sourceBins;
-        std::vector<Bin> *targetBins;
+        bincontainer.sourceBins = &bincontainer.processBinsF;
+        bincontainer.targetBins = &bincontainer.processBinsT;
 
         while (!(bincontainer.processBinsF.empty() && bincontainer.processBinsT.empty()))
         {
             // loop until all bins have been moved into finsihedBins or discarded
             // the target array is supplied via pointer, facilitates reuse
-            if (bincontainer.readFrom)
-            {
-                sourceBins = &bincontainer.processBinsT;
-                targetBins = &bincontainer.processBinsF;
-            }
-            else
-            {
-                sourceBins = &bincontainer.processBinsF;
-                targetBins = &bincontainer.processBinsT;
-            }
 
             int subsetCount = 0;
-            switch (dimensions[subsetIdx])
+
+            for (size_t j = 0; j < bincontainer.sourceBins->size(); j++) // for every element in the deque before writing new bins
             {
-            case mz:
+                Bin processThis = (*bincontainer.sourceBins)[j];
+                processThis.makeOS();
+                processThis.makeCumError();
+                processThis.subsetMZ(bincontainer.targetBins, processThis.activeOS, bincontainer.notInBins,
+                                     0, processThis.activeOS.size() - 1, subsetCount);
+            }
+            // @todo logging
+
+            switchTarget(&bincontainer);
+
+            for (size_t j = 0; j < bincontainer.sourceBins->size(); j++)
             {
-                for (size_t j = 0; j < sourceBins->size(); j++) // for every element in the deque before writing new bins
+                (*bincontainer.sourceBins)[j].subsetScan(bincontainer.targetBins, bincontainer.notInBins, maxdist, subsetCount);
+            }
+            // @todo logging
+            switchTarget(&bincontainer);
+
+            // if the "unchanged" property of a bin is true, all selected tests have passed
+            for (size_t j = 0; j < bincontainer.sourceBins->size(); j++)
+            {
+                if ((*bincontainer.sourceBins)[j].unchanged)
                 {
-                    Bin processThis = (*sourceBins)[j];
-                    processThis.makeOS();
-                    processThis.makeCumError();
-                    processThis.subsetMZ(targetBins, processThis.activeOS, bincontainer.notInBins,
-                                         0, processThis.activeOS.size() - 1, subsetCount);
+                    bincontainer.viableBins.push_back((*bincontainer.sourceBins)[j]);
                 }
-                // @todo logging
-                break;
-            }
-
-            case scans:
-            {
-                for (size_t j = 0; j < sourceBins->size(); j++)
+                else
                 {
-                    (*sourceBins)[j].subsetScan(targetBins, bincontainer.notInBins, maxdist, subsetCount);
+                    bincontainer.targetBins->push_back((*bincontainer.sourceBins)[j]);
                 }
-                // @todo logging
-                break;
             }
-
-            case finaliser:
-            {
-                // if the "unchanged" property of a bin is true, all selected tests have passed
-                for (size_t j = 0; j < sourceBins->size(); j++)
-                {
-                    if ((*sourceBins)[j].unchanged)
-                    {
-                        bincontainer.viableBins.push_back((*sourceBins)[j]);
-                    }
-                    else
-                    {
-                        targetBins->push_back((*sourceBins)[j]);
-                    }
-                }
-                break;
-            }
-
-            default:
-                std::cerr << "\nSeparation method " << dimensions[subsetIdx] << " is not a valid parameter, terminating program\n";
-                bincontainer.viableBins.clear();
-                bincontainer.finalBins.clear();
-                bincontainer.processBinsF.clear();
-                bincontainer.processBinsT.clear();
-            }
-
-            // reset subset index if it would exceed the supplied array
-            subsetIdx++;
-            if (subsetIdx >= dimensions.size())
-            {
-                subsetIdx = 0;
-                // at the end of every run, discarded centroids are added as one new bin
-                // this is only done if at least one bin was found in the last iteration
-                // if (bincontainer.viableBins.size() != previousViableBins)
-                // {
-                //     previousViableBins = bincontainer.viableBins.size();
-                //     targetBins->push_back(Bin{});
-                //     targetBins->back().pointsInBin = bincontainer.notInBins;
-                //     bincontainer.notInBins.clear();
-                // }
-            }
-            // remove bins from source array
-            sourceBins->clear();
-            // switch target and source array
-            bincontainer.readFrom = !bincontainer.readFrom;
+            switchTarget(&bincontainer);
         }
         // reset to input condition
         bincontainer.readFrom = false;
@@ -881,15 +850,6 @@ namespace qAlgorithms
                                      size_t maxdist, bool verbose)
     {
         std::string logger = "";
-        // @todo this vector should be supplied by the calling function
-        // currently, it is absolutely useless. Consider removal and hardcode the function
-        // only consider time difference and mass. Even in the case of 2D-LC, we expect there
-        // to be individual regions in which signals occur, making alignment a part of
-        // the componentisation
-        std::vector<SubsetMethods> measurementDimensions = {SubsetMethods::mz,
-                                                            SubsetMethods::scans};
-        measurementDimensions.push_back(SubsetMethods::finaliser);
-        // std::cout << "starting binning process...\n";
 
         BinContainer activeBins = initialiseBinning(centroidedData);
         // rebinning is not separated into a function
@@ -897,7 +857,7 @@ namespace qAlgorithms
         size_t viableBinCount = 1;
         while (true)
         {
-            logger += subsetBins(activeBins, measurementDimensions, maxdist);
+            logger += subsetBins(activeBins, maxdist);
             size_t producedBins = activeBins.viableBins.size();
             // if the same amount of bins as in the previous operation was found,
             // the process is considered complete
