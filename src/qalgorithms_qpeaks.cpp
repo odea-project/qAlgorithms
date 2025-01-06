@@ -337,14 +337,15 @@ namespace qAlgorithms
             if (calcDF(df_start, i, 2 * scale + i) > 4)
             {
                 const __m128 coeff = beta[i]; // coefficient register from beta @ i
-                if (coeff[2] != 0.0f && coeff[3] != 0.0f)
+                if (coeff[2] == 0.0f | coeff[3] == 0.0f)
                 {
-                    RegressionGauss selectRegression = makeValidRegression(i, scale, df_start, y_start,
-                                                                           ylog_start, coeff);
-                    if (selectRegression.isValid)
-                    {
-                        validRegsTmp.push_back(selectRegression);
-                    }
+                    continue;
+                }
+                RegressionGauss selectRegression = makeValidRegression(i, scale, df_start, y_start,
+                                                                       ylog_start, coeff);
+                if (selectRegression.isValid)
+                {
+                    validRegsTmp.push_back(selectRegression);
                 }
             }
         }
@@ -422,110 +423,6 @@ namespace qAlgorithms
     } // end validateRegressions
 #pragma endregion validateRegressions
 
-#pragma region "validate regressions static"
-    void validateRegressions_static(
-        const int n,
-        const float *y_start,
-        const float *ylog_start,
-        const bool *df_start,
-        const int scale,
-        int &validRegressionsIndex,
-        RegressionGauss *validRegressions)
-    {
-        RegressionGauss validRegressionsTmp[512];                             // temporary vector to store valid regressions initialized with random states
-        int validRegressionsIndexTmp = 0;                                     // index of the valid regressions
-        std::array<__m128, 512> beta = convolve_static(scale, ylog_start, n); // do the regression
-        const int n_segments = n - 2 * scale;                                 // number of segments, i.e. regressions considering the number of data points
-
-        // iterate columwise over the coefficients matrix beta
-        for (int i = 0; i < n_segments; i++)
-        {
-            if (calcDF(df_start, i, 2 * scale + i) > 4)
-            {
-                const __m128 coeff = beta[i];             // coefficient register from beta @ i
-                if (coeff[2] != 0.0f && coeff[3] != 0.0f) // this case occurs, prevent at creation of beat @todo
-                {
-                    RegressionGauss selectRegression = makeValidRegression(i, scale, df_start, y_start,
-                                                                           ylog_start, coeff);
-                    if (selectRegression.isValid)
-                    {
-                        validRegressionsTmp[validRegressionsIndexTmp] = selectRegression;
-                        validRegressionsIndexTmp++;
-                    }
-                }
-            }
-        }
-        // early return if no or only one valid peak
-        if (validRegressionsIndexTmp < 2)
-        {
-            if (validRegressionsIndexTmp == 1)
-            {
-                *(validRegressions + validRegressionsIndex) = validRegressionsTmp[0];
-                validRegressionsIndex++;
-            }
-            return; // not enough peaks to form a group
-        }
-
-        // lambda function to process a group of valid regressions, i.e., find the peak with the lowest MSE and push it to the valid regressions
-        auto processGroup = [&validRegressions, &validRegressionsTmp, &validRegressionsIndex, y_start, df_start](int i, int start_index_group)
-        {
-            int group_size = i - start_index_group + 1; // size of the group
-            if (group_size == 1)
-            { // single item group
-                validRegressions[validRegressionsIndex] = validRegressionsTmp[start_index_group];
-                validRegressionsIndex++;
-            }
-            else
-            { // multiple item group
-                // survival of the fittest based on mse between original data and reconstructed (exp transform of regression)
-                RegressionGauss *regression_start = &validRegressionsTmp[start_index_group]; // start of the group
-                calcExtendedMse_static(y_start, regression_start, group_size, df_start);     // calculate the extended MSE
-                for (int j = 0; j < group_size; j++)
-                {
-                    if (regression_start[j].isValid)
-                    {
-                        validRegressions[validRegressionsIndex] = regression_start[j]; // push the peak to the valid regressions
-                        validRegressionsIndex++;
-                    }
-                }
-            }
-        };
-
-        /*
-          Grouping:
-          This block of code implements the grouping. It groups the valid peaks based on the apex positions.
-          Peaks are defined as similar, i.e., members of the same group, if they fullfill at least one of the following conditions:
-          - The difference between two peak apexes is less than 4. (Nyquist Shannon Sampling Theorem, separation of two maxima)
-          - At least one apex of a pair of peaks is within the window of the other peak. (Overlap of two maxima)
-        */
-        const int last_valid_index = validRegressionsIndexTmp - 1; // last valid index in the temporary vector of valid regressions
-        int start_index_group = 0;                                 // start index of the group
-        for (int i = 0; i < last_valid_index; i++)
-        {
-            if (
-                std::abs(validRegressionsTmp[i].apex_position - validRegressionsTmp[i + 1].apex_position) > 4 && // difference between two peak apexes is greater than 4 (Nyquist Shannon Sampling Theorem, separation of two maxima)
-                validRegressionsTmp[i].apex_position < validRegressionsTmp[i + 1].left_limit &&                  // left peak is not within the window of the right peak
-                validRegressionsTmp[i + 1].apex_position > validRegressionsTmp[i].right_limit)                   // right peak is not within the window of the left peak
-            {                                                                                                    // the two regressions differ,
-                processGroup(i, start_index_group);                                                              // process the group
-                start_index_group = i + 1;                                                                       // start index of the next group
-                if (i == last_valid_index - 1)
-                { // if last round compare, add the last regression to the valid regressions
-                    *(validRegressions + validRegressionsIndex) = validRegressionsTmp[i + 1];
-                    validRegressionsIndex++;
-                }
-            }
-            else
-            {
-                if (i == last_valid_index - 1)
-                {                                                      // if last round compare
-                    processGroup(last_valid_index, start_index_group); // process the group
-                }
-            }
-        }
-    }
-#pragma endregion "validate regressions static"
-
 #pragma region "validate regression test series"
 
     RegressionGauss makeValidRegression(
@@ -537,10 +434,10 @@ namespace qAlgorithms
         const __m128 coeff)
     { // @todo order by effort to calculate
         RegCoeffs replacer;
-        replacer.b0 = ((float *)&coeff)[0];
-        replacer.b1 = ((float *)&coeff)[1];
-        replacer.b2 = ((float *)&coeff)[2];
-        replacer.b3 = ((float *)&coeff)[3];
+        replacer.b0 = coeff[0];
+        replacer.b1 = coeff[1];
+        replacer.b2 = coeff[2];
+        replacer.b3 = coeff[3];
 
         /*
           Apex and Valley Position Filter:
@@ -806,80 +703,6 @@ namespace qAlgorithms
     } // end mergeRegressionsOverScales
 #pragma endregion mergeRegressionsOverScales
 
-#pragma region "merge regressions over scales static"
-    void mergeRegressionsOverScales_static(
-        RegressionGauss *validRegressions,
-        const int n_regressions,
-        const float *y_start,
-        const bool *df_start)
-    {
-        // @todo return vector containing only
-        if (n_regressions == 1)
-        {
-            return;
-        }
-        /*
-          Grouping Over Scales:
-          This block of code implements the grouping over scales. It groups the valid peaks based
-          on the apex positions. Peaks are defined as similar, i.e., members of the same group,
-          if they fullfill at least one of the following conditions:
-          - The difference between two peak apexes is less than 4. (Nyquist Shannon Sampling Theorem, separation of two maxima)
-          - At least one apex of a pair of peaks is within the window of the other peak. (Overlap of two maxima)
-        */
-        // iterate over the validRegressions vector
-        for (int i_new_peak = 1; i_new_peak < n_regressions; i_new_peak++)
-        {
-            if (!validRegressions[i_new_peak].isValid)
-            {
-                continue; // skip the invalid peaks
-            }
-            const int current_scale = validRegressions[i_new_peak].scale;                   // scale of the current peak
-            const int current_left_limit = validRegressions[i_new_peak].left_limit;         // left limit of the current peak regression window in the Y matrix
-            const int current_right_limit = validRegressions[i_new_peak].right_limit;       // right limit of the current peak regression window in the Y matrix
-            const float current_apex_position = validRegressions[i_new_peak].apex_position; // apex position of the current peak
-            std::vector<int> validRegressionsInGroup;                                       // vector of indices of valid regressions in the group
-            // iterate over the validRegressions vector till the new peak
-            for (int i_ref_peak = 0; i_ref_peak < i_new_peak; i_ref_peak++)
-            {
-                if (!validRegressions[i_ref_peak].isValid)
-                {
-                    continue; // skip the invalid peaks
-                }
-                if (validRegressions[i_ref_peak].scale >= current_scale)
-                {
-                    break; // skip the peaks with a scale greater or equal to the current scale
-                }
-                // check for overlaps
-                if (
-                    (
-                        validRegressions[i_ref_peak].apex_position > current_left_limit &&   // ref peak matches the left limit
-                        validRegressions[i_ref_peak].apex_position < current_right_limit) || // ref peak matches the right limit
-                    (
-                        current_apex_position > validRegressions[i_ref_peak].left_limit && // new peak matches the left limit
-                        current_apex_position < validRegressions[i_ref_peak].right_limit)) // new peak matches the right limit
-                {                                                                          // overlap detected
-                    validRegressionsInGroup.push_back(i_ref_peak);                         // add the index of the ref peak to the vector of indices
-                    continue;                                                              // continue with the next ref peak
-                }
-            } // end for loop, inner loop, i_ref_peak
-
-            if (validRegressionsInGroup.size() == 0)
-            {
-                continue; // no peaks in the group, i.e., the current peak stays valid
-            }
-
-            if (validRegressionsInGroup.size() == 1)
-            { // comparison of two regressions just with different scale.
-                calcExtendedMsePair(y_start, &validRegressions[validRegressionsInGroup[0]], &validRegressions[i_new_peak], df_start);
-                continue; // continue with the next new peak
-            }
-
-            // comparison of the new regression (high) with multiple ref regressions (low)
-            calcExtendedMseOverScales(y_start, validRegressions, validRegressionsInGroup, i_new_peak);
-        }
-    }
-#pragma endregion "merge regressions over scales static"
-
 #pragma region "create peaks"
 
     std::pair<float, float> weightedMeanAndVariance(const float *x, const float *w, const bool *df,
@@ -963,7 +786,6 @@ namespace qAlgorithms
                 peak.mzUncertainty = regression.uncertainty_pos * delta_mz * T_VALUES[regression.df + 1] * sqrt(1 + 1 / (regression.df + 4));
 
                 peak.dqsCen = 1 - erf_approx_f(regression.uncertainty_area / regression.area);
-                assert(peak.dqsCen < 1);
 
                 /// @todo consider adding these properties so we can trace back everything completely
                 // peak.idxPeakStart = regression.left_limit;
@@ -1139,7 +961,6 @@ namespace qAlgorithms
 
 #pragma endregion calcSSE
 
-#pragma region calcExtendedMse
     std::pair<size_t, float> findBestRegression( // index, mse
         const float *y_start,                    // start of the measured data
         std::vector<RegressionGauss> regressions,
@@ -1180,178 +1001,6 @@ namespace qAlgorithms
         return std::pair(bestRegIdx, best_mse);
     }
 
-    void calcExtendedMse_static(
-        const float *y_start,
-        RegressionGauss *regressions_start,
-        const int n_regressions,
-        const bool *df_start)
-    {
-        /*
-          The function consists of the following steps:
-          1. Identify left and right limit of the grouped regression windows.
-          2. Calculate the mean squared error (MSE) between the predicted and actual values.
-          3. Identify the best regression based on the MSE and return the MSE and the index of the best regression.
-        */
-        // declare variables
-        float best_mse = std::numeric_limits<float>::infinity();
-
-        // step 1: identify left (smallest) and right (largest) limit of the grouped regression windows
-        unsigned int left_limit = regressions_start->left_limit;
-        unsigned int right_limit = regressions_start->right_limit;
-        for (int i = 1; i < n_regressions; i++)
-        {
-            left_limit = std::min(left_limit, (regressions_start + i)->left_limit);
-            right_limit = std::max(right_limit, (regressions_start + i)->right_limit);
-        }
-
-        const int df_sum = calcDF(df_start, left_limit, right_limit);
-        if (df_sum <= 4)
-        {
-            // set isValid to false for all regressions
-            for (int i = 0; i < n_regressions; ++i)
-            {
-                (regressions_start + i)->isValid = false;
-            }
-            return; // not enough degrees of freedom
-        }
-
-        for (int i = 0; i < n_regressions; ++i)
-        {
-            // step 2: calculate the mean squared error (MSE) between the predicted and actual values
-            float mse = calcSSE_exp((regressions_start + i)->newCoeffs,
-                                    y_start + left_limit,
-                                    left_limit - (regressions_start + i)->index_x0,
-                                    right_limit - (regressions_start + i)->index_x0);
-            mse /= (df_sum - 4);
-
-            // step 3: identify the best regression based on the MSE and return the MSE and the index of the best regression
-            if (mse < best_mse)
-            {
-                best_mse = mse;
-                (regressions_start + i)->mse = mse;
-            }
-            else
-            {
-                (regressions_start + i)->isValid = false;
-            }
-        } // end for loop (index in groupIndices)
-        // set isValid to false for all regressions except the best one
-        for (int i = 0; i < n_regressions; ++i)
-        {
-            if ((regressions_start + i)->mse > best_mse)
-            {
-                (regressions_start + i)->isValid = false;
-            }
-        }
-    }
-
-    void calcExtendedMsePair(
-        const float *y_start,
-        RegressionGauss *low_scale_regression,
-        RegressionGauss *hi_scale_regression,
-        const bool *df_start)
-    {
-        /*
-          The function consists of the following steps:
-          1. Identify left and right limit of the grouped regression windows.
-          2. Calculate the mean squared error (MSE) between the predicted and actual values.
-          3. Identify the best regression based on the MSE and return the MSE and the index of the best regression.
-        */
-
-        // step 1: identify left (smallest) and right (largest) limit of the grouped regression windows
-        int left_limit = std::min(low_scale_regression->left_limit, hi_scale_regression->left_limit);
-        int right_limit = std::max(low_scale_regression->right_limit, hi_scale_regression->right_limit);
-
-        const int df_sum = calcDF(df_start, left_limit, right_limit);
-        if (df_sum <= 4)
-        {
-            // set isValid to false for all regressions
-            low_scale_regression->isValid = false;
-            hi_scale_regression->isValid = false;
-            return; // not enough degrees of freedom
-        }
-
-        // step 2: calculate the mean squared error (MSE) between the predicted and actual values
-        float mse_low_scale = calcSSE_exp(
-            low_scale_regression->newCoeffs,
-            y_start + left_limit,
-            left_limit - low_scale_regression->index_x0,
-            right_limit - low_scale_regression->index_x0);
-        mse_low_scale /= (df_sum - 4);
-
-        float mse_hi_scale = calcSSE_exp(
-            hi_scale_regression->newCoeffs,
-            y_start + left_limit,
-            left_limit - hi_scale_regression->index_x0,
-            right_limit - hi_scale_regression->index_x0);
-        mse_hi_scale /= (df_sum - 4);
-
-        // step 3: identify the best regression based on the MSE and return the MSE and the index of the best regression
-        if (mse_low_scale < mse_hi_scale)
-        {
-            low_scale_regression->mse = mse_low_scale;
-            hi_scale_regression->isValid = false;
-        }
-        else
-        {
-            hi_scale_regression->mse = mse_hi_scale;
-            low_scale_regression->isValid = false;
-        }
-    }
-
-    void calcExtendedMseOverScales(
-        const float *y_start,
-        RegressionGauss *validRegressions,
-        const std::vector<int> &validRegressionsInGroup,
-        const int i_new_peak)
-    {
-        // @todo is the mse calculated for all regressions?
-        // comparison of the new regression (high) with multiple ref regressions (low)
-        // check new_peak for mse
-        if (validRegressions[i_new_peak].mse == 0.0)
-        { // calculate the mse of the current peak
-            validRegressions[i_new_peak].mse = calcSSE_exp(
-                validRegressions[i_new_peak].newCoeffs,
-                y_start + validRegressions[i_new_peak].left_limit,
-                validRegressions[i_new_peak].left_limit - validRegressions[i_new_peak].index_x0,
-                validRegressions[i_new_peak].right_limit - validRegressions[i_new_peak].index_x0);
-            validRegressions[i_new_peak].mse /= validRegressions[i_new_peak].df;
-        }
-        // calculate the group sse
-        float groupSSE = 0.0f;
-        int groupDF = 0;
-        // iterate through the group of reference peaks
-        for (int i_ref_peak : validRegressionsInGroup)
-        {
-            if (validRegressions[i_ref_peak].mse == 0.0)
-            { // calculate the mse of the ref peak
-                validRegressions[i_ref_peak].mse = calcSSE_exp(
-                    validRegressions[i_ref_peak].newCoeffs,
-                    y_start + validRegressions[i_ref_peak].left_limit,
-                    validRegressions[i_ref_peak].left_limit - validRegressions[i_ref_peak].index_x0,
-                    validRegressions[i_ref_peak].right_limit - validRegressions[i_ref_peak].index_x0);
-                validRegressions[i_ref_peak].mse /= validRegressions[i_ref_peak].df;
-            }
-            groupSSE += validRegressions[i_ref_peak].mse * validRegressions[i_ref_peak].df;
-            groupDF += validRegressions[i_ref_peak].df;
-        }
-        // compare mse of the new peak with the group mse
-        if (validRegressions[i_new_peak].mse < groupSSE / groupDF)
-        {
-            // Set isValid to false for the candidates from the group
-            for (int i_ref_peak : validRegressionsInGroup)
-            {
-                validRegressions[i_ref_peak].isValid = false;
-            }
-        }
-        else
-        { // Set isValid to false for the current peak
-            validRegressions[i_new_peak].isValid = false;
-        }
-    }
-#pragma endregion calcExtendedMse
-
-#pragma region calcDF
     int calcDF(
         const bool *df_start,     // start of the degrees of freedom
         unsigned int left_limit,  // left limit
@@ -1367,7 +1016,6 @@ namespace qAlgorithms
         }
         return degreesOfFreedom;
     }
-#pragma endregion calcDF
 
 #pragma region calcApexAndValleyPos
     bool calcApexAndValleyPos(
@@ -1702,26 +1350,6 @@ namespace qAlgorithms
 #pragma region "convolve regression"
     // these chain to return beta for a regression
 
-    std::array<__m128, 512> convolve_static(
-        const size_t scale,
-        const float *vec,
-        const size_t n)
-    {
-        assert(n > 2 * scale);
-
-        std::array<__m128, 512> beta;
-        __m128 result[512];
-        __m128 products[512];
-        const __m128 flipSign = _mm_set_ps(1.0f, 1.0f, -1.0f, 1.0f);
-        convolve_SIMD(scale, vec, n, result, products, 512);
-
-        for (size_t i = 0; i < n - 2 * scale; i++)
-        { // swap beta2 and beta3 and flip the sign of beta1 // @todo: this is a temporary solution
-            beta[i] = _mm_mul_ps(_mm_shuffle_ps(result[i], result[i], 0b10110100), flipSign);
-        }
-        return beta;
-    }
-
     void convolve_SIMD(
         const size_t scale,
         const float *vec,
@@ -1781,15 +1409,15 @@ namespace qAlgorithms
         }
     }
 
-    float multiplyVecMatrixVecTranspose(const float vec[4], int scale)
+    inline float multiplyVecMatrixVecTranspose(const float vec[4], int scale)
     {
         scale *= 6;
-        const float result = vec[0] * vec[0] * INV_ARRAY[scale + 0] +
-                             vec[1] * vec[1] * INV_ARRAY[scale + 2] +
-                             (vec[2] * vec[2] + vec[3] * vec[3]) * INV_ARRAY[scale + 4] +
-                             2 * (vec[2] * vec[3] * INV_ARRAY[scale + 5] +
-                                  vec[0] * (vec[1] + vec[3]) * INV_ARRAY[scale + 1] +
-                                  vec[1] * (vec[2] - vec[3]) * INV_ARRAY[scale + 3]);
+        float result = vec[0] * vec[0] * INV_ARRAY[scale + 0] +
+                       vec[1] * vec[1] * INV_ARRAY[scale + 2] +
+                       (vec[2] * vec[2] + vec[3] * vec[3]) * INV_ARRAY[scale + 4] +
+                       2 * (vec[2] * vec[3] * INV_ARRAY[scale + 5] +
+                            vec[0] * (vec[1] + vec[3]) * INV_ARRAY[scale + 1] +
+                            vec[1] * (vec[2] - vec[3]) * INV_ARRAY[scale + 3]);
 
         return result;
     }
