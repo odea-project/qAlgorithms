@@ -78,14 +78,13 @@ namespace qAlgorithms
 
     std::string subsetBins(BinContainer &bincontainer, std::vector<SubsetMethods> dimensions, const size_t maxdist)
     {
-        auto timeStart = std::chrono::high_resolution_clock::now();
-        auto timeEnd = std::chrono::high_resolution_clock::now();
+        // auto timeStart = std::chrono::high_resolution_clock::now();
+        // auto timeEnd = std::chrono::high_resolution_clock::now();
         std::string logOutput = "Binning Start:\n";
         bincontainer.readFrom = false; // starting bin is in processBinsF
         assert(bincontainer.processBinsT.empty());
         assert(!bincontainer.processBinsF.empty());
         size_t subsetIdx = 0;
-        size_t previousViableBins = 0;
 
         std::vector<Bin> *sourceBins;
         std::vector<Bin> *targetBins;
@@ -838,7 +837,7 @@ namespace qAlgorithms
         size_t position = 0;
         for (size_t i = 0; i < binsize; i++)
         {
-            int scanRegionStart = pointsInBin[i]->scanNo - maxdist; // can be negative @todo rework
+            size_t scanRegionStart = maxdist < pointsInBin[i]->scanNo ? pointsInBin[i]->scanNo - maxdist : 0;
             size_t scanRegionEnd = pointsInBin[i]->scanNo + maxdist + 1;
             float accum = 0;
             while (pointsInBin[position]->scanNo < scanRegionStart)
@@ -917,15 +916,16 @@ namespace qAlgorithms
         while (true)
         {
             logger += subsetBins(activeBins, measurementDimensions, maxdist);
+            size_t producedBins = activeBins.viableBins.size();
             // if the same amount of bins as in the previous operation was found,
             // the process is considered complete
             // in the current configuration, rebinning takes three times as long
             // for two additional features, both of which are likely noise anyway
-            if (viableBinCount == activeBins.viableBins.size())
+            if (viableBinCount == producedBins)
             {
                 break;
             }
-            viableBinCount = activeBins.viableBins.size();
+            viableBinCount = producedBins;
             // add empty start bin for rebinner
             activeBins.processBinsF.push_back(Bin{});
             // add all points that were not binned into the new bin, since these centroids
