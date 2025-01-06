@@ -131,23 +131,6 @@ namespace qAlgorithms
                 break;
             }
 
-            case duplicates:
-            {
-                for (size_t j = 0; j < sourceBins->size(); j++)
-                {
-                    if ((*sourceBins)[j].unchanged && (*sourceBins)[j].duplicateScan)
-                    {
-                        deduplicateBin(targetBins, &bincontainer.notInBins, (*sourceBins)[j]);
-                    }
-                    else
-                    {
-                        targetBins->push_back((*sourceBins)[j]);
-                    }
-                }
-                break;
-                // @todo logging
-            }
-
             case finaliser:
             {
                 // if the "unchanged" property of a bin is true, all selected tests have passed
@@ -904,8 +887,7 @@ namespace qAlgorithms
         // to be individual regions in which signals occur, making alignment a part of
         // the componentisation
         std::vector<SubsetMethods> measurementDimensions = {SubsetMethods::mz,
-                                                            SubsetMethods::scans,
-                                                            SubsetMethods::duplicates};
+                                                            SubsetMethods::scans};
         measurementDimensions.push_back(SubsetMethods::finaliser);
         // std::cout << "starting binning process...\n";
 
@@ -921,21 +903,41 @@ namespace qAlgorithms
             // the process is considered complete
             // in the current configuration, rebinning takes three times as long
             // for two additional features, both of which are likely noise anyway
+            int duplicateCount = 0;
+            for (size_t j = 0; j < producedBins; j++)
+            {
+                if (activeBins.viableBins[j].duplicateScan)
+                {
+                    duplicateCount++;
+                    deduplicateBin(&activeBins.processBinsF, &activeBins.notInBins, activeBins.viableBins[j]);
+                }
+                else
+                {
+                    activeBins.finalBins.push_back(activeBins.viableBins[j]);
+                }
+            }
+            logger += "removed " + std::to_string(duplicateCount) + " duplicates\n";
+            activeBins.viableBins.clear();
+
             if (viableBinCount == producedBins)
             {
                 break;
             }
             viableBinCount = producedBins;
-            // add empty start bin for rebinner
-            activeBins.processBinsF.push_back(Bin{});
-            // add all points that were not binned into the new bin, since these centroids
-            // tend to contain smaller bins which were not properly processed due to being
-            // at the borders of a cutting region
-            activeBins.processBinsF.front().pointsInBin = activeBins.notInBins;
-            activeBins.notInBins.clear();
-            // re-binning during the initial loop would result in some bins being split prematurely
-            // int rebinCount = selectRebin(&activeBins, centroidedData, maxdist);
-            // @todo logging
+            // only perform rebinning if at least one new bin could be formed
+            if (activeBins.notInBins.size() > 4)
+            {
+                // add empty start bin for rebinner
+                activeBins.processBinsF.push_back(Bin{});
+                // add all points that were not binned into the new bin, since these centroids
+                // tend to contain smaller bins which were not properly processed due to being
+                // at the borders of a cutting region
+                activeBins.processBinsF.back().pointsInBin = activeBins.notInBins;
+                activeBins.notInBins.clear();
+                // re-binning during the initial loop would result in some bins being split prematurely
+                // int rebinCount = selectRebin(&activeBins, centroidedData, maxdist);
+                // @todo logging
+            }
         }
         // no change in bin result, so all found bins are considered final
         for (Bin bin : activeBins.viableBins)
