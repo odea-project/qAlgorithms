@@ -145,6 +145,8 @@ namespace qAlgorithms
             }
             switchTarget(&bincontainer);
         }
+        bincontainer.processBinsF.clear();
+        bincontainer.processBinsT.clear();
         // reset to input condition
         bincontainer.readFrom = false;
         return logOutput;
@@ -854,7 +856,7 @@ namespace qAlgorithms
         BinContainer activeBins = initialiseBinning(centroidedData);
         // rebinning is not separated into a function
         // binning is repeated until the input length is constant
-        size_t viableBinCount = 1;
+        size_t prevFinal = 0;
         while (true)
         {
             logger += subsetBins(activeBins, maxdist);
@@ -879,11 +881,11 @@ namespace qAlgorithms
             logger += "removed " + std::to_string(duplicateCount) + " duplicates\n";
             activeBins.viableBins.clear();
 
-            if (viableBinCount == producedBins)
+            if (prevFinal == activeBins.finalBins.size())
             {
                 break;
             }
-            viableBinCount = producedBins;
+            prevFinal = activeBins.finalBins.size();
             // only perform rebinning if at least one new bin could be formed
             if (activeBins.notInBins.size() > 4)
             {
@@ -899,12 +901,30 @@ namespace qAlgorithms
                 // @todo logging
             }
         }
-        // no change in bin result, so all found bins are considered final
-        for (Bin bin : activeBins.viableBins)
+        // no change in bin result, so all remaining bins cannot be coerced into a valid state
+        if (!activeBins.processBinsF.empty())
         {
-            activeBins.finalBins.push_back(bin);
+            for (Bin bin : activeBins.processBinsF)
+            {
+                for (size_t i = 0; i < bin.pointsInBin.size(); i++)
+                {
+                    activeBins.notInBins.push_back(bin.pointsInBin[i]);
+                }
+            }
+            activeBins.processBinsF.clear();
         }
-        activeBins.viableBins.clear();
+
+        if (!activeBins.processBinsT.empty())
+        {
+            for (Bin bin : activeBins.processBinsT)
+            {
+                for (size_t i = 0; i < bin.pointsInBin.size(); i++)
+                {
+                    activeBins.notInBins.push_back(bin.pointsInBin[i]);
+                }
+            }
+            activeBins.processBinsT.clear();
+        }
 
         auto scalar = scaleDistancesForDQS_linear(maxdist);
         for (size_t i = 0; i < activeBins.finalBins.size(); i++)
