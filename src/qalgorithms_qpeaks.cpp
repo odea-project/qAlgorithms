@@ -172,7 +172,7 @@ namespace qAlgorithms
             // perform log-transform on Y
             std::transform(y_start, y_start + n, ylog_start, [](float y)
                            { return std::log(y); });
-            runningRegression(y_start, ylog_start, df_start, n, validRegressions);
+            runningRegression(y_start, ylog_start, df_start, maxWindowSize, n, validRegressions);
             if (validRegressions.empty())
             {
                 continue; // no valid peaks
@@ -216,21 +216,21 @@ namespace qAlgorithms
         float *dqs_cen = new float[maxWindowSize];
         float *dqs_bin = new float[maxWindowSize];
 
+        // iterator to the start
+        const auto y_start = Y;
+        const auto ylog_start = Ylog;
+        const auto rt_start = X;
+        const auto df_start = df;
+        const auto mz_start = mz;
+        const auto dqs_cen_start = dqs_cen;
+        const auto dqs_bin_start = dqs_bin;
+
+        std::vector<RegressionGauss> validRegressions;
+
         for (auto it_separators = treatedData.separators.begin(); it_separators != treatedData.separators.end() - 1; it_separators++)
         {
             const int n = *(it_separators + 1) - *it_separators; // calculate the number of data points in the block
             assert(n > 0);                                       // check if the number of data points is greater than 0
-
-            std::vector<RegressionGauss> validRegressions;
-
-            // iterator to the start
-            const auto y_start = Y;
-            const auto ylog_start = Ylog;
-            const auto rt_start = X;
-            const auto df_start = df;
-            const auto mz_start = mz;
-            const auto dqs_cen_start = dqs_cen;
-            const auto dqs_bin_start = dqs_bin;
 
             int i = 0;
             assert(n == *(it_separators + 1) - *it_separators);
@@ -248,13 +248,14 @@ namespace qAlgorithms
             // perform log-transform on Y
             std::transform(y_start, y_start + n, ylog_start, [](float y)
                            { return std::log(y); });
-            runningRegression(y_start, ylog_start, df_start, n, validRegressions);
+            runningRegression(y_start, ylog_start, df_start, maxWindowSize, n, validRegressions);
             if (validRegressions.empty())
             {
                 continue; // no valid peaks
             }
             createFeaturePeaks(all_peaks, &validRegressions, validRegressions.size(), y_start,
                                mz_start, rt_start, df_start, dqs_cen_start, dqs_bin_start);
+            validRegressions.clear();
         }
         delete[] Y;
         delete[] Ylog;
@@ -271,10 +272,15 @@ namespace qAlgorithms
         const float *y_start,
         const float *ylog_start,
         const bool *df_start,
+        const size_t arrayMaxLength,
         const size_t n, // number of data points
         std::vector<RegressionGauss> &validRegressions)
     {
         const size_t maxScale = std::min(GLOBAL_MAXSCALE, (n - 1) / 2);
+        // maximum size of the coefficients array is known at compile time
+        size_t maxSize = 1 + n - 2 * GLOBAL_MAXSCALE + 1;
+        assert(maxSize <= arrayMaxLength);
+        volatile __m128 beta_new[maxSize];
 
         validRegressions.reserve(200); // this is the highest result of a test run, should not be a performance concern anyway
         for (size_t scale = 2; scale <= maxScale; scale++)
@@ -282,8 +288,8 @@ namespace qAlgorithms
             const int k = 2 * scale + 1;           // window size
             const int n_segments = n - k + 1;      // number of segments, i.e. regressions considering the array size
             __m128 *beta = new __m128[n_segments]; // coefficients matrix @todo move outside of loop, probably causes a stack overflow with large data
-            // convolve_dynamic(scale, ylog_start, n, beta); // do the regression
             assert(n > 2 * scale);
+            // auto beta = &beta_new;
 
             __m128 result[n - 2 * scale];
             __m128 products[n];
@@ -293,9 +299,11 @@ namespace qAlgorithms
             for (size_t i = 0; i < n - 2 * scale; i++)
             { // swap beta2 and beta3 and flip the sign of beta1 // @todo: this is a temporary solution
                 beta[i] = _mm_mul_ps(_mm_shuffle_ps(result[i], result[i], 0b10110100), flipSign);
+                beta_new[i] = _mm_mul_ps(_mm_shuffle_ps(result[i], result[i], 0b10110100), flipSign);
+                // beta[i] = _mm_add_ps(beta[i], beta[i]);
             }
 
-            validateRegressions(beta, n_segments, y_start, ylog_start, df_start, scale, validRegressions);
+            validateRegressions(beta, n_segments, y_start, ylog_start, df_start, arrayMaxLength, scale, validRegressions);
             delete[] beta;
             // validRegressions.push_back(
             //     validateRegressions(beta, n_segments, y_start, ylog_start, df_start, scale, validRegressions));
@@ -315,7 +323,8 @@ namespace qAlgorithms
         const float *y_start,    // pointer to the start of the Y matrix
         const float *ylog_start, // pointer to the start of the Ylog matrix
         const bool *df_start,    // degree of freedom vector, 0: interpolated, 1: measured
-        const int scale,         // scale, i.e., the number of data points in a half window excluding the center point
+        const size_t arrayMaxLength,
+        const int scale, // scale, i.e., the number of data points in a half window excluding the center point
         std::vector<RegressionGauss> &validRegressions)
     {
         std::vector<RegressionGauss> validRegsTmp; // temporary vector to store valid regressions <index, apex_position>
@@ -920,9 +929,9 @@ namespace qAlgorithms
 
             result += newdiff / y_base;
         }
-        // center point
-        result += (exp_approx_d(coeff.b0) - y_start[lengthLeft]) *
-                  (exp_approx_d(coeff.b0) - y_start[lengthLeft]) /
+        // center point, left and right term are identical
+        result += ((exp_approx_d(coeff.b0) - y_start[lengthLeft]) *
+                   (exp_approx_d(coeff.b0) - y_start[lengthLeft])) /
                   exp_approx_d(coeff.b0); // x = 0 -> (b0 - y)^2
 
         int lengthRight = limit_R + 1;
@@ -1295,7 +1304,7 @@ namespace qAlgorithms
 
         float area_uncertainty_covered = std::sqrt(mse * multiplyVecMatrixVecTranspose(J_covered, scale));
 
-        return J_covered[0] / area_uncertainty_covered > T_VALUES[df_sum - 5]; // statistical significance of the peak area (boolean)
+        return J_covered[0] > T_VALUES[df_sum - 5] * area_uncertainty_covered; // statistical significance of the peak area (boolean)
     }
 #pragma endregion isValidPeakArea
 
