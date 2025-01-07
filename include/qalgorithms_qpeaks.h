@@ -44,7 +44,8 @@ namespace qAlgorithms
         const int scale,
         std::vector<RegressionGauss> &validRegressions);
 
-    RegressionGauss makeValidRegression(
+    void makeValidRegression(
+        RegressionGauss *mutateReg,
         const int i,
         const int scale,
         const bool *df_start,
@@ -58,7 +59,7 @@ namespace qAlgorithms
 
     void createCentroidPeaks(
         std::vector<CentroidPeak> &peaks,
-        std::vector<RegressionGauss> *validRegressionsVec,
+        const std::vector<RegressionGauss> *validRegressionsVec,
         const int validRegressionsIndex,
         const float *y_start,
         const float *mz_start,

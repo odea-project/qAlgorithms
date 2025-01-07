@@ -149,18 +149,17 @@ namespace qAlgorithms
         float *X = new float[maxWindowSize];
         bool *df = new bool[maxWindowSize];
 
+        // iterator to the start
+        const auto y_start = Y;
+        const auto ylog_start = Ylog;
+        const auto mz_start = X;
+        const auto df_start = df;
+
+        std::vector<RegressionGauss> validRegressions;
+
         for (auto it_separators = treatedData.separators.begin(); it_separators != treatedData.separators.end() - 1; it_separators++)
         {
             const int n = *(it_separators + 1) - *it_separators;
-
-            std::vector<RegressionGauss> validRegressions;
-
-            // iterator to the start
-            const auto y_start = Y;
-            const auto ylog_start = Ylog;
-            const auto mz_start = X;
-            const auto df_start = df;
-
             int i = 0;
             for (int idx = *it_separators; idx < *(it_separators + 1); idx++)
             {
@@ -179,6 +178,7 @@ namespace qAlgorithms
                 continue; // no valid peaks
             }
             createCentroidPeaks(all_peaks, &validRegressions, validRegressions.size(), y_start, mz_start, df_start, scanNumber);
+            validRegressions.clear();
         }
         bool crash = false;
         if (treatedData.separators.size() < treatedData.dataPoints.size() / 100)
@@ -276,18 +276,7 @@ namespace qAlgorithms
     {
         const size_t maxScale = std::min(GLOBAL_MAXSCALE, (n - 1) / 2);
 
-        // @todo is this more efficient than just reserving a relatively large amount?
-        int sum = 0;
-        for (size_t i = 4; i <= GLOBAL_MAXSCALE * 2; i += 2)
-        {
-            if (n > i)
-            {
-                sum += n - i;
-            }
-            // sum += std::max(0, n - i);
-        }
-
-        validRegressions.reserve(sum);
+        validRegressions.reserve(200); // this is the highest result of a test run, should not be a performance concern anyway
         for (size_t scale = 2; scale <= maxScale; scale++)
         {
             const int k = 2 * scale + 1;           // window size
@@ -332,33 +321,36 @@ namespace qAlgorithms
         std::vector<RegressionGauss> validRegsTmp; // temporary vector to store valid regressions <index, apex_position>
 
         // iterate columwise over the coefficients matrix beta
+        validRegsTmp.push_back(RegressionGauss{});
         for (int i = 0; i < n_segments; i++)
         {
             if (calcDF(df_start, i, 2 * scale + i) > 4)
             {
                 const __m128 coeff = beta[i]; // coefficient register from beta @ i
-                if (coeff[2] == 0.0f | coeff[3] == 0.0f)
+                if ((coeff[2] == 0.0f) | (coeff[3] == 0.0f))
                 {
                     continue;
                 }
-                RegressionGauss selectRegression = makeValidRegression(i, scale, df_start, y_start,
-                                                                       ylog_start, coeff);
-                if (selectRegression.isValid)
+
+                makeValidRegression(&validRegsTmp.back(), i, scale, df_start, y_start, ylog_start, coeff);
+                if (validRegsTmp.back().isValid)
                 {
-                    validRegsTmp.push_back(selectRegression);
+                    validRegsTmp.push_back(RegressionGauss{});
                 }
             }
         }
-        // early return if no or only one valid peak
-        if (validRegsTmp.size() < 2)
+        if (validRegsTmp.size() == 1)
         {
-            if (validRegsTmp.empty())
-            {
-                return; // no valid peaks
-            }
-            validRegressions.push_back(std::move(validRegsTmp[0]));
-            return; // not enough peaks to form a group
+            return; // no valid peaks
         }
+        // early return if only one valid peak, so no grouping possible
+        if (validRegsTmp.size() == 2)
+        {
+            validRegressions.push_back(std::move(validRegsTmp[0]));
+            return;
+        }
+        // remove the last regression, since it is always empty
+        validRegsTmp.pop_back();
         /*
           Grouping:
           This block of code implements the grouping. It groups the valid peaks based
@@ -425,7 +417,8 @@ namespace qAlgorithms
 
 #pragma region "validate regression test series"
 
-    RegressionGauss makeValidRegression(
+    void makeValidRegression(
+        RegressionGauss *mutateReg,
         const int i,
         const int scale,
         const bool *df_start,
@@ -433,11 +426,10 @@ namespace qAlgorithms
         const float *ylog_start,
         const __m128 coeff)
     { // @todo order by effort to calculate
-        RegCoeffs replacer;
-        replacer.b0 = coeff[0];
-        replacer.b1 = coeff[1];
-        replacer.b2 = coeff[2];
-        replacer.b3 = coeff[3];
+        mutateReg->newCoeffs.b0 = coeff[0];
+        mutateReg->newCoeffs.b1 = coeff[1];
+        mutateReg->newCoeffs.b2 = coeff[2];
+        mutateReg->newCoeffs.b3 = coeff[3];
 
         /*
           Apex and Valley Position Filter:
@@ -448,13 +440,21 @@ namespace qAlgorithms
           to each other, the loop continues to the next iteration.
         */
         float valley_position;
-        float apex_position = 0.f;
         // no easy replace
-        if (!calcApexAndValleyPos(coeff, scale, apex_position, valley_position))
+        if (!calcApexAndValleyPos(coeff, scale, mutateReg->apex_position, valley_position))
         {
-            RegressionGauss badReg;
-            badReg.isValid = false;
-            return badReg; // invalid apex and valley positions
+            return; // invalid apex and valley positions
+        }
+        /*
+          Area Pre-Filter:
+          This test is used to check if the later-used arguments for exp and erf
+          functions are within the valid range, i.e., |x^2| < 25. If the test fails,
+          the loop continues to the next iteration. @todo why 25?
+          x is in this case -apex_position * b1 / 2 and -valley_position * b1 / 2.
+        */
+        if (mutateReg->apex_position * mutateReg->newCoeffs.b1 > 50 || valley_position * mutateReg->newCoeffs.b1 < -50)
+        {
+            return; // invalid area pre-filter
         }
 
         /*
@@ -464,29 +464,26 @@ namespace qAlgorithms
           the loop continues to the next iteration. The value 5 is chosen as the
           minimum number of data points required to fit a quadratic regression model.
         */
-        unsigned int left_limit = (valley_position < 0) ? std::max(i, static_cast<int>(valley_position) + i + scale) : i;
-        unsigned int right_limit = (valley_position > 0) ? std::min(i + 2 * scale, static_cast<int>(valley_position) + i + scale) : i + 2 * scale;
+        mutateReg->left_limit = (valley_position < 0) ? std::max(i, static_cast<int>(valley_position) + i + scale) : i;
+        mutateReg->right_limit = (valley_position > 0) ? std::min(i + 2 * scale, static_cast<int>(valley_position) + i + scale) : i + 2 * scale;
 
-        int df_sum = calcDF(df_start, left_limit, right_limit); // degrees of freedom considering the left and right limits
+        int df_sum = calcDF(df_start, mutateReg->left_limit, mutateReg->right_limit); // degrees of freedom considering the left and right limits
         if (df_sum < 5)
         {
-            RegressionGauss badReg;
-            badReg.isValid = false;
-            return badReg; // degree of freedom less than 5; i.e., less then 5 measured data points
+            return; // degree of freedom less than 5; i.e., less then 5 measured data points
         }
 
         /*
-          Area Pre-Filter:
-          This test is used to check if the later-used arguments for exp and erf
-          functions are within the valid range, i.e., |x^2| < 25. If the test fails,
-          the loop continues to the next iteration. @todo why 25?
-          x is in this case -apex_position * b1 / 2 and -valley_position * b1 / 2.
+          Chi-Square Filter:
+          This block of code implements the chi-square filter. It calculates the chi-square
+          value based on the weighted chi squared sum of expected and measured y values in
+          the exponential domain. If the chi-square value is less than the corresponding
+          value in the CHI_SQUARES, the loop continues to the next iteration.
         */
-        if (apex_position * replacer.b1 > 50 || valley_position * replacer.b1 < -50)
+        float chiSquare = calcSSE_chisqared(mutateReg->newCoeffs, y_start + i, -scale, scale);
+        if (chiSquare < CHI_SQUARES[df_sum - 5])
         {
-            RegressionGauss badReg;
-            badReg.isValid = false;
-            return badReg; // invalid area pre-filter
+            return; // statistical insignificance of the chi-square value
         }
 
         /*
@@ -496,12 +493,10 @@ namespace qAlgorithms
           ratio is greater than 2. This is a pre-filter for later
           signal-to-noise ratio checkups.
         */
-        float apexToEdge = calcApexToEdge(apex_position, scale, i, y_start);
+        float apexToEdge = calcApexToEdge(mutateReg->apex_position, scale, i, y_start);
         if (!(apexToEdge > 2))
         {
-            RegressionGauss badReg;
-            badReg.isValid = false;
-            return badReg; // invalid apex to edge ratio
+            return; // invalid apex to edge ratio
         }
 
         /*
@@ -513,14 +508,16 @@ namespace qAlgorithms
           term is considered statistically insignificant, and the loop continues
           to the next iteration.
         */
-        float mse = calcSSE_base(replacer, ylog_start + i, -scale, scale);
+        float mse = calcSSE_base(mutateReg->newCoeffs, ylog_start + i, -scale, scale);
         mse /= (df_sum - 4);
 
-        if (!isValidQuadraticTerm(replacer, scale, mse, df_sum))
+        if (!isValidQuadraticTerm(mutateReg->newCoeffs, scale, mse, df_sum))
         {
-            RegressionGauss badReg;
-            badReg.isValid = false;
-            return badReg; // statistical insignificance of the quadratic term
+            return; // statistical insignificance of the quadratic term
+        }
+        if (!isValidPeakArea(mutateReg->newCoeffs, mse, scale, df_sum))
+        {
+            return; // statistical insignificance of the area
         }
         /*
           Height Filter:
@@ -531,20 +528,16 @@ namespace qAlgorithms
           the loop continues to the next iteration.
         */
 
-        float uncertainty_height = calcPeakHeightUncert(mse, scale, apex_position);
-        if (1 / uncertainty_height <= T_VALUES[df_sum - 5]) // statistical significance of the peak height
+        mutateReg->uncertainty_height = calcPeakHeightUncert(mse, scale, mutateReg->apex_position);
+        if (1 / mutateReg->uncertainty_height <= T_VALUES[df_sum - 5]) // statistical significance of the peak height
         {
-            RegressionGauss badReg;
-            badReg.isValid = false;
-            return badReg;
+            return;
         }
         // at this point without height, i.e., to get the real uncertainty
         // multiply with height later. This is done to avoid exp function at this point
-        if (!isValidPeakHeight(mse, scale, apex_position, valley_position, df_sum, apexToEdge))
+        if (!isValidPeakHeight(mse, scale, mutateReg->apex_position, valley_position, df_sum, apexToEdge))
         {
-            RegressionGauss badReg;
-            badReg.isValid = false;
-            return badReg; // statistical insignificance of the height
+            return; // statistical insignificance of the height
         }
 
         /*
@@ -557,54 +550,39 @@ namespace qAlgorithms
           area multiply both with Exp(b0) later. This is done to avoid exp function at this point
         */
         // it might be preferential to combine both functions again or store the common matrix somewhere
-        auto tmpPair = calcPeakAreaUncert(replacer, mse, scale);
-        float area = tmpPair.first;
-        float uncertainty_area = tmpPair.second;
+        auto tmpPair = calcPeakAreaUncert(mutateReg->newCoeffs, mse, scale);
+        mutateReg->area = tmpPair.first;
+        mutateReg->uncertainty_area = tmpPair.second;
 
-        if (area / uncertainty_area <= T_VALUES[df_sum - 5])
+        if (mutateReg->area / mutateReg->uncertainty_area <= T_VALUES[df_sum - 5])
         {
-            RegressionGauss badReg;
-            badReg.isValid = false;
-            return badReg; // statistical insignificance of the area
-        }
-        if (!isValidPeakArea(replacer, mse, scale, df_sum))
-        {
-            RegressionGauss badReg;
-            badReg.isValid = false;
-            return badReg; // statistical insignificance of the area
+            return; // statistical insignificance of the area
         }
 
-        /*
-          Chi-Square Filter:
-          This block of code implements the chi-square filter. It calculates the chi-square
-          value based on the weighted chi squared sum of expected and measured y values in
-          the exponential domain. If the chi-square value is less than the corresponding
-          value in the CHI_SQUARES, the loop continues to the next iteration.
-        */
-        float chiSquare = calcSSE_chisqared(replacer, y_start + i, -scale, scale);
-        if (chiSquare < CHI_SQUARES[df_sum - 5])
-        {
-            RegressionGauss badReg;
-            badReg.isValid = false;
-            return badReg; // statistical insignificance of the chi-square value
-        }
-        float uncertainty_pos = calcUncertaintyPos(mse, replacer, apex_position, scale);
+        mutateReg->uncertainty_pos = calcUncertaintyPos(mse, mutateReg->newCoeffs, mutateReg->apex_position, scale);
 
-        return RegressionGauss{
-            replacer,
-            coeff,
-            i + scale,
-            scale,
-            df_sum - 4, // @todo add explanation for -4
-            apex_position + i + scale,
-            0, // mse @todo
-            true,
-            left_limit,
-            right_limit,
-            area,
-            uncertainty_area,
-            uncertainty_pos,
-            uncertainty_height};
+        mutateReg->df = df_sum - 4; // @todo add explanation for -4
+        mutateReg->apex_position += i + scale;
+        mutateReg->scale = scale;
+        mutateReg->index_x0 = scale + i;
+        mutateReg->isValid = true;
+        return;
+
+        // return RegressionGauss{
+        //     replacer,
+        //     coeff,
+        //     i + scale,
+        //     scale,
+        //     df_sum - 4,
+        //     apex_position + i + scale,
+        //     0, // mse @todo
+        //     true,
+        //     left_limit,
+        //     right_limit,
+        //     area,
+        //     uncertainty_area,
+        //     uncertainty_pos,
+        //     uncertainty_height};
     }
 #pragma endregion "validate regression test series"
 
@@ -748,7 +726,7 @@ namespace qAlgorithms
 
     void createCentroidPeaks(
         std::vector<CentroidPeak> &peaks,
-        std::vector<RegressionGauss> *validRegressionsVec,
+        const std::vector<RegressionGauss> *validRegressionsVec,
         const int validRegressionsIndex,
         const float *y_start,
         const float *mz_start,
