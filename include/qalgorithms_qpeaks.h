@@ -32,6 +32,7 @@ namespace qAlgorithms
         const float *y_start,
         const float *ylog_start,
         const bool *df_start,
+        const size_t arrayMaxLength,
         const size_t n,
         std::vector<RegressionGauss> &validRegressions);
 
@@ -41,6 +42,7 @@ namespace qAlgorithms
         const float *y_start,
         const float *ylog_start,
         const bool *df_start,
+        const size_t arrayMaxLength,
         const int scale,
         std::vector<RegressionGauss> &validRegressions);
 
