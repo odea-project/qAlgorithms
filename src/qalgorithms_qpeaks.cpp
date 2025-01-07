@@ -848,7 +848,7 @@ namespace qAlgorithms
         for (int iSegment = 0; iSegment < lengthLeft; iSegment++)
         {
             double new_x = limit_L + iSegment;
-            double y_base = coeff.b0 + coeff.b1 * new_x + coeff.b2 * new_x * new_x; // @daniel: i suggest b0 + x * (b1 + x * b2) // change after confirmed function
+            double y_base = coeff.b0 + (coeff.b1 + coeff.b2 * new_x) * new_x;
             double y_current = y_start[iSegment];
             double newdiff = (y_base - y_current) * (y_base - y_current);
 
@@ -861,8 +861,8 @@ namespace qAlgorithms
         int lengthRight = limit_R + 1;
         for (int iSegment = 1; iSegment < lengthRight; iSegment++) // iSegment = 0 is center point calculated above
         {
-            double y_base = coeff.b0 + coeff.b1 * iSegment + coeff.b3 * iSegment * iSegment; // b3 instead of b2
-            double y_current = y_start[iSegment + lengthLeft];                               // y_start[0] is the leftmost y value
+            double y_base = coeff.b0 + (coeff.b1 + coeff.b3 * iSegment) * iSegment; // b3 instead of b2
+            double y_current = y_start[iSegment + lengthLeft];                      // y_start[0] is the leftmost y value
             double newdiff = (y_current - y_base) * (y_current - y_base);
 
             result += newdiff;
@@ -882,7 +882,7 @@ namespace qAlgorithms
         for (int iSegment = 0; iSegment < lengthLeft; iSegment++)
         {
             double new_x = limit_L + iSegment;
-            double y_base = exp_approx_d(coeff.b0 + coeff.b1 * new_x + coeff.b2 * new_x * new_x);
+            double y_base = exp_approx_d(coeff.b0 + (coeff.b1 + coeff.b2 * new_x) * new_x);
             double y_current = y_start[iSegment];
             double newdiff = (y_base - y_current) * (y_base - y_current);
 
@@ -894,8 +894,8 @@ namespace qAlgorithms
         int lengthRight = limit_R + 1;
         for (int iSegment = 1; iSegment < lengthRight; iSegment++) // iSegment = 0 is center point (calculated above)
         {
-            double y_base = exp_approx_d(coeff.b0 + coeff.b1 * iSegment + coeff.b3 * iSegment * iSegment); // b3 instead of b2
-            double y_current = y_start[iSegment + lengthLeft];                                             // y_start[0] is the leftmost y value
+            double y_base = exp_approx_d(coeff.b0 + (coeff.b1 + coeff.b3 * iSegment) * iSegment); // b3 instead of b2
+            double y_current = y_start[iSegment + lengthLeft];                                    // y_start[0] is the leftmost y value
             double newdiff = (y_current - y_base) * (y_current - y_base);
 
             result += newdiff;
@@ -914,7 +914,7 @@ namespace qAlgorithms
         for (int iSegment = 0; iSegment < lengthLeft; iSegment++)
         {
             double new_x = limit_L + iSegment;
-            double y_base = exp_approx_d(coeff.b0 + coeff.b1 * new_x + coeff.b2 * new_x * new_x); // @daniel: i suggest b0 + x * (b1 + x * b2) // change after confirmed function
+            double y_base = exp_approx_d(coeff.b0 + (coeff.b1 + coeff.b2 * new_x) * new_x);
             double y_current = y_start[iSegment];
             double newdiff = (y_base - y_current) * (y_base - y_current);
 
@@ -928,8 +928,8 @@ namespace qAlgorithms
         int lengthRight = limit_R + 1;
         for (int iSegment = 1; iSegment < lengthRight; iSegment++) // iSegment = 0 is center point (calculated above)
         {
-            double y_base = exp_approx_d(coeff.b0 + coeff.b1 * iSegment + coeff.b3 * iSegment * iSegment); // b3 instead of b2
-            double y_current = y_start[iSegment + lengthLeft];                                             // y_start[0] is the leftmost y value
+            double y_base = exp_approx_d(coeff.b0 + (coeff.b1 + coeff.b3 * iSegment) * iSegment); // b3 instead of b2
+            double y_current = y_start[iSegment + lengthLeft];                                    // y_start[0] is the leftmost y value
             double newdiff = (y_current - y_base) * (y_current - y_base);
 
             result += newdiff / y_base;
@@ -1072,16 +1072,17 @@ namespace qAlgorithms
 
 #pragma region isValidQuadraticTerm
     bool isValidQuadraticTerm(
-        RegCoeffs coeff,
+        const RegCoeffs coeff,
         const int scale,
         const float mse,
         const int df_sum)
     {
         float divisor = std::sqrt(INV_ARRAY[scale * 6 + 4] * mse); // inverseMatrix_2_2 is at position 4 of initialize()
-        double tValue = std::max(                                  // t-value for the quadratic term
-            std::abs(coeff.b2) / divisor,                          // t-value for the quadratic term left side of the peak
-            std::abs(coeff.b3) / divisor);                         // t-value for the quadratic term right side of the peak
-        return tValue > T_VALUES[df_sum - 5];                      // statistical significance of the quadratic term
+        float tValue = std::max(                                   // t-value for the quadratic term
+            std::abs(coeff.b2),                                    // t-value for the quadratic term left side of the peak
+            std::abs(coeff.b3));                                   // t-value for the quadratic term right side of the peak
+        return tValue > T_VALUES[df_sum - 5] * divisor;            // statistical significance of the quadratic term
+        // note that the tvalue would have to be divided by the divisor, but this is not always compiled to a multiplication
     }
 #pragma endregion isValidQuadraticTerm
 
