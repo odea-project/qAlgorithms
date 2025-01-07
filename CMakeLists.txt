@@ -14,7 +14,7 @@ find_package(OpenMP REQUIRED)
 
 # Set compiler flags
 add_compile_options(-Wall -Wuninitialized -Wno-unknown-pragmas -fdiagnostics-color=always 
-                    -fopenmp -mavx2 -march=native 
+                    -fopenmp -mavx2 -march=native -fsanitize=address
                     -O3 -fno-math-errno -ggdb3 ${OpenMP_CXX_FLAGS}) #  -O3
 
 # Set include directories
@@ -35,3 +35,13 @@ add_executable(${PROJECT_NAME} ${SOURCES})
 # Linker flags
 # target_link_libraries(${PROJECT_NAME} PUBLIC Matplot++::matplot z ${OpenMP_CXX_LIBRARIES})
 target_link_libraries(${PROJECT_NAME} z ${OpenMP_CXX_LIBRARIES}) #
+
+if(CMAKE_BUILD_TYPE MATCHES "Debug")
+  set(
+    CMAKE_C_FLAGS
+    "${CMAKE_C_FLAGS} -Werror -fsanitize=undefined -fsanitize=address"
+  )
+  target_link_options(qAlgorithms
+    BEFORE PUBLIC -fsanitize=undefined PUBLIC -fsanitize=address
+  )
+endif()
