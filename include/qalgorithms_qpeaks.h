@@ -185,7 +185,7 @@ namespace qAlgorithms
      * @return false : if the quadratic term is not valid
      */
     bool isValidQuadraticTerm(
-        RegCoeffs coeff,
+        const RegCoeffs coeff,
         const int scale,
         const float mse,
         const int df_sum);
