@@ -33,26 +33,25 @@ namespace qAlgorithms
 
   struct RegCoeffs
   {
-    float b0, b1, b2, b3;
+    float b0, b1, b2, b3 = 0;
   };
 
   struct RegressionGauss
   {
     RegCoeffs newCoeffs;
-    __m128 coeff;             // regression coefficients
-    int index_x0;             // index of window center (x==0) in the Y matrix
-    int scale;                // scale of the regression window, i.e., 2*scale+1 = window size
-    int df;                   // degree of freedom, interpolated data points will not be considered
-    float apex_position;      // position of the apex of the peak
-    float mse;                // mean squared error
-    bool isValid;             // flag to indicate if the regression is valid
-    unsigned int left_limit;  // left limit of the peak regression window
-    unsigned int right_limit; // right limit of the peak regression window
-    float area;               // area of the peak
-    // float height;
-    float uncertainty_area; // uncertainty of the area
-    float uncertainty_pos;  // uncertainty of the position
-    float uncertainty_height;
+    __m128 coeff;                 // regression coefficients
+    int index_x0 = 0;             // index of window center (x==0) in the Y matrix
+    int scale = 0;                // scale of the regression window, i.e., 2*scale+1 = window size
+    int df = 0;                   // degree of freedom, interpolated data points will not be considered
+    float apex_position = 0;      // position of the apex of the peak
+    float mse = 0;                // mean squared error
+    unsigned int left_limit = 0;  // left limit of the peak regression window
+    unsigned int right_limit = 0; // right limit of the peak regression window
+    float area = 0;               // area of the peak
+    float uncertainty_area = 0;   // uncertainty of the area
+    float uncertainty_pos = 0;    // uncertainty of the position
+    float uncertainty_height = 0;
+    bool isValid = false; // flag to indicate if the regression is valid
   };
 
   struct CentroidPeak

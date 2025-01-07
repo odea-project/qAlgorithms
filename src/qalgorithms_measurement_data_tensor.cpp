@@ -259,7 +259,7 @@ namespace qAlgorithms
         float rt_diff)
     {
         std::vector<FeaturePeak> peaks;    // return vector for feature list
-        peaks.reserve(data.size() * 0.7);  // should be enough to fit all features without reallocation
+        peaks.reserve(data.size() / 4);    // should be enough to fit all features without reallocation
         std::vector<FeaturePeak> tmpPeaks; // add features to this before pasting into FL
 
         // pragma omp parallel for

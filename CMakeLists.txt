@@ -15,7 +15,7 @@ find_package(OpenMP REQUIRED)
 # Set compiler flags
 add_compile_options(-Wall -Wuninitialized -Wno-unknown-pragmas -fdiagnostics-color=always 
                     -fopenmp -mavx2 -march=native 
-                    -O2 -fno-math-errno -ggdb3 ${OpenMP_CXX_FLAGS}) #  -O3
+                    -O3 -fno-math-errno -ggdb3 ${OpenMP_CXX_FLAGS}) #  -O3
 
 # Set include directories
 include_directories(include external/StreamCraft/src)
