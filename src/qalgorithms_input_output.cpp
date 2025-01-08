@@ -300,7 +300,14 @@ namespace qAlgorithms
 
         if (outputPath[0] == '#')
         {
-            outputPath = inputPath;
+            if (std::filesystem::status(inputPath).type() != std::filesystem::file_type::directory)
+            {
+                outputPath = std::filesystem::path(inputPath).parent_path();
+            }
+            else
+            {
+                outputPath = inputPath;
+            }
         }
         std::cout << outputPath;
         return UserInputSettings{
