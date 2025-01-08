@@ -279,7 +279,7 @@ namespace qAlgorithms
         const size_t maxScale = std::min(GLOBAL_MAXSCALE, (n - 1) / 2);
         // maximum size of the coefficients array is known at compile time
         size_t maxSize = 1 + n - 2 * GLOBAL_MAXSCALE + 1;
-        assert(maxSize <= arrayMaxLength);
+        assert(maxScale <= arrayMaxLength);
         volatile __m128 beta_new[maxSize];
 
         validRegressions.reserve(200); // this is the highest result of a test run, should not be a performance concern anyway
@@ -629,7 +629,7 @@ namespace qAlgorithms
                         (
                             validRegressions[i].apex_position > validRegressions[j].left_limit && // new peak matches the left limit
                             validRegressions[i].apex_position < validRegressions[j].right_limit)) // new peak matches the right limit
-                    {
+                    {                                                                             // @todo how often is this the case?
                         if (validRegressions[j].mse == 0.0)
                         { // calculate the mse of the ref peak
                             validRegressions[j].mse = calcSSE_exp(
