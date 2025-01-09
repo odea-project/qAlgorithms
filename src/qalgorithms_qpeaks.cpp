@@ -278,9 +278,10 @@ namespace qAlgorithms
     {
         const size_t maxScale = std::min(GLOBAL_MAXSCALE, (n - 1) / 2);
         // maximum size of the coefficients array is known at compile time
-        size_t maxSize = 1 + n - 2 * GLOBAL_MAXSCALE + 1;
+        size_t maxSize = n - (2 * 2 + 1) + 1; // max size is at scale = 2
         assert(maxScale <= arrayMaxLength);
-        volatile __m128 beta_new[maxSize];
+        // adding a variable here leads to a segfault
+        // __m128 beta_new[maxSize];
 
         validRegressions.reserve(200); // this is the highest result of a test run, should not be a performance concern anyway
         for (size_t scale = 2; scale <= maxScale; scale++)
@@ -288,6 +289,7 @@ namespace qAlgorithms
             const int k = 2 * scale + 1;           // window size
             const int n_segments = n - k + 1;      // number of segments, i.e. regressions considering the array size
             __m128 *beta = new __m128[n_segments]; // coefficients matrix @todo move outside of loop, probably causes a stack overflow with large data
+            assert(n_segments <= maxSize);
             assert(n > 2 * scale);
             // auto beta = &beta_new;
 
@@ -299,7 +301,7 @@ namespace qAlgorithms
             for (size_t i = 0; i < n - 2 * scale; i++)
             { // swap beta2 and beta3 and flip the sign of beta1 // @todo: this is a temporary solution
                 beta[i] = _mm_mul_ps(_mm_shuffle_ps(result[i], result[i], 0b10110100), flipSign);
-                beta_new[i] = _mm_mul_ps(_mm_shuffle_ps(result[i], result[i], 0b10110100), flipSign);
+                // beta_new[i] = _mm_mul_ps(_mm_shuffle_ps(result[i], result[i], 0b10110100), flipSign);
                 // beta[i] = _mm_add_ps(beta[i], beta[i]);
             }
 
@@ -328,7 +330,6 @@ namespace qAlgorithms
         std::vector<RegressionGauss> &validRegressions)
     {
         std::vector<RegressionGauss> validRegsTmp; // temporary vector to store valid regressions <index, apex_position>
-
         // iterate columwise over the coefficients matrix beta
         validRegsTmp.push_back(RegressionGauss{});
         for (int i = 0; i < n_segments; i++)
@@ -466,6 +467,7 @@ namespace qAlgorithms
             return; // invalid area pre-filter
         }
 
+        // assert(valley_position != 0);
         if (valley_position < 0)
         {
             mutateReg->left_limit = std::max(i, static_cast<int>(valley_position) + i + scale);
@@ -476,6 +478,8 @@ namespace qAlgorithms
             mutateReg->left_limit = i;
             mutateReg->right_limit = std::min(i + 2 * scale, static_cast<int>(valley_position) + i + scale);
         }
+        mutateReg->left_limit = (valley_position < 0) ? std::max(i, static_cast<int>(valley_position) + i + scale) : i;
+        mutateReg->right_limit = (valley_position > 0) ? std::min(i + 2 * scale, static_cast<int>(valley_position) + i + scale) : i + 2 * scale;
 
         /*
           Degree of Freedom Filter:
@@ -1001,15 +1005,11 @@ namespace qAlgorithms
         float &apex_position,
         float &valley_position)
     {
-        // assert(coeff[0] != 0); // this should not be the case @todo check
         assert(coeff[2] != 0 && coeff[3] != 0);
         // calculate key by checking the signs of coeff
-        __m128 res = _mm_set1_ps(-0.5f);                                 // res = -0.5
-        res = _mm_mul_ps(res, _mm_shuffle_ps(coeff, coeff, 0b01010101)); // res = -0.5 * b1
-        res = _mm_div_ps(res, coeff);                                    // res = -0.5 * b1 / b2
-
-        int key = _mm_movemask_ps(_mm_cmplt_ps(coeff, _mm_setzero_ps()));
         // _mm_movemask_ps returns the sign bits of the input array
+        int key = _mm_movemask_ps(coeff);
+
         // b1, b2, b3 are negative            ; 1110 = 14
         // b1, b2 are negative, b3 is positive; 0110 = 6
         // b2, b3 are negative, b1 is positive; 1100 = 12
@@ -1022,26 +1022,29 @@ namespace qAlgorithms
             apexRight_valleyLeft = 8
         };
 
+        float position_2 = -coeff[1] / (2 * coeff[2]);
+        float position_3 = -coeff[1] / (2 * coeff[3]);
+
         switch (key)
         {
         case apexLeft_valleyNone:
-            apex_position = ((float *)&res)[2]; //-B1 / 2 / B2;  // is negative
-            valley_position = 0;                // no valley point
-            return apex_position > -scale + 1;  // scale +1: prevent apex position to be at the edge of the data
+            apex_position = position_2;        //-B1 / 2 / B2;  // is negative
+            valley_position = 0;               // no valley point
+            return apex_position > -scale + 1; // scale +1: prevent apex position to be at the edge of the data
 
-        case apexRight_valleyNone:              // Case 1b: apex right
-            apex_position = ((float *)&res)[3]; //-B1 / 2 / B3;     // is positive
-            valley_position = 0;                // no valley point
-            return apex_position < scale - 1;   // scale -1: prevent apex position to be at the edge of the data
+        case apexRight_valleyNone:            // Case 1b: apex right
+            apex_position = position_3;       //-B1 / 2 / B3;     // is positive
+            valley_position = 0;              // no valley point
+            return apex_position < scale - 1; // scale -1: prevent apex position to be at the edge of the data
 
         case apexLeft_valleyRight:
-            apex_position = ((float *)&res)[2];                                       //-B1 / 2 / B2;                                           // is negative
-            valley_position = ((float *)&res)[3];                                     //-B1 / 2 / B3;                                           // is positive
+            apex_position = position_2;                                               //-B1 / 2 / B2;      // is negative
+            valley_position = position_3;                                             //-B1 / 2 / B3;      // is positive
             return apex_position > -scale + 1 && valley_position - apex_position > 2; // scale +1: prevent apex position to be at the edge of the data
 
         case apexRight_valleyLeft:
-            apex_position = ((float *)&res)[3];                                      //-B1 / 2 / B3;                                          // is positive
-            valley_position = ((float *)&res)[2];                                    //-B1 / 2 / B2;                                          // is negative
+            apex_position = position_3;                                              //-B1 / 2 / B3;       // is positive
+            valley_position = position_2;                                            //-B1 / 2 / B2;       // is negative
             return apex_position < scale - 1 && apex_position - valley_position > 2; // scale -1: prevent apex position to be at the edge of the data
 
         default:
