@@ -278,7 +278,7 @@ namespace qAlgorithms
     {
         const size_t maxScale = std::min(GLOBAL_MAXSCALE, (n - 1) / 2);
         // maximum size of the coefficients array is known at compile time
-        size_t maxSize = n - (2 * 2 + 1) + 1; // max size is at scale = 2
+        size_t maxSize = n - 4; // max size is at scale = 2
         assert(maxScale <= arrayMaxLength);
         // adding a variable here leads to a segfault
         __m128 beta[maxSize];
@@ -288,7 +288,6 @@ namespace qAlgorithms
         {
             const int k = 2 * scale + 1;      // window size
             const int n_segments = n - k + 1; // number of segments, i.e. regressions considering the array size
-            assert(n_segments <= maxSize);
             assert(n > 2 * scale);
 
             __m128 result[n - 2 * scale];
@@ -317,6 +316,8 @@ namespace qAlgorithms
         __m128 *result,
         __m128 *products)
     {
+        // this function calculates the regression coefficients from the pseudoinverse matrix P and the y-values supplied through vec.
+        // It is equivalent to sum(y[i] * P[i][0]) for beta0, beta1 etc. Every element of result is one set of coefficients (b0, b1, b2, b3)
         size_t k = 2 * scale + 1;
         size_t n_segments = n - k + 1;
         size_t centerpoint = k / 2;
@@ -325,43 +326,43 @@ namespace qAlgorithms
         {
             products[i] = _mm_setzero_ps();
         }
-        __m128 kernel[3];
         size_t scale6 = scale * 6;
-        // kernel[0] in positions 2 and 3 is identical
-        kernel[0] = _mm_set_ps(INV_ARRAY[scale6 + 1],
-                               INV_ARRAY[scale6 + 1],
-                               0.0f,
-                               INV_ARRAY[scale6 + 0]);
-
-        kernel[1] = _mm_set_ps(INV_ARRAY[scale6 + 3] - INV_ARRAY[scale6 + 5],
-                               -INV_ARRAY[scale6 + 3] - INV_ARRAY[scale6 + 4],
-                               -INV_ARRAY[scale6 + 2] - INV_ARRAY[scale6 + 3],
-                               -INV_ARRAY[scale6 + 1]);
-
-        kernel[2] = _mm_set_ps(2.f * INV_ARRAY[scale6 + 5],
-                               2.f * INV_ARRAY[scale6 + 4],
-                               2.f * INV_ARRAY[scale6 + 3],
-                               2.f * INV_ARRAY[scale6 + 1]);
+        // activeKernel in positions 2 and 3 is not identical during the calculation
+        // this kernel is used to exploit symmetry in the pseudoinverse of the regression. It is constructed iteratively in the loop
+        __m128 activeKernel = _mm_set_ps(INV_ARRAY[scale6 + 1],
+                                         INV_ARRAY[scale6 + 1],
+                                         0.0f,
+                                         INV_ARRAY[scale6 + 0]);
+        // this kernel is used to calculate the next active kernel
+        __m128 updateKernel = _mm_set_ps(INV_ARRAY[scale6 + 3] - INV_ARRAY[scale6 + 5],
+                                         -INV_ARRAY[scale6 + 3] - INV_ARRAY[scale6 + 4],
+                                         -INV_ARRAY[scale6 + 2] - INV_ARRAY[scale6 + 3],
+                                         -INV_ARRAY[scale6 + 1]);
+        // this kernel updates the updateKernel. Since the funciton is non-linear, this must be done iteratively
+        const __m128 delayedKernel = _mm_set_ps(2.f * INV_ARRAY[scale6 + 5],
+                                                2.f * INV_ARRAY[scale6 + 4],
+                                                2.f * INV_ARRAY[scale6 + 3],
+                                                2.f * INV_ARRAY[scale6 + 1]);
 
         for (size_t i = 0; i < n_segments; i++)
         {
             // set all elements of vec_values to vec[i + centerpoint]
             __m128 vec_values = _mm_set1_ps(vec[i + centerpoint]);
-            // result[2] is always 0
-            result[i] = _mm_mul_ps(vec_values, kernel[0]);
+            // result[i][2] is always 0
+            result[i] = _mm_mul_ps(vec_values, activeKernel);
         }
 
         for (size_t i = 1; i < scale + 1; i++)
         {
-            // kernel[1] = kernel[1] original + i * kernel[2]
-            kernel[1] = _mm_add_ps(kernel[1], kernel[2]);
-            // kernel[0] = kernel[0] original + i * kernel[1]
-            kernel[0] = _mm_add_ps(kernel[0], kernel[1]);
+            // updateKernel = updateKernel original + i * delayedKernel
+            updateKernel = _mm_add_ps(updateKernel, delayedKernel);
+            // activeKernel = activeKernel original + i * updateKernel
+            activeKernel = _mm_add_ps(activeKernel, updateKernel);
 
             for (size_t j = 0; j < n; j++)
             {
                 __m128 vec_values = _mm_set1_ps(vec[j + scale - i]); // why this?
-                products[j] = _mm_mul_ps(vec_values, kernel[0]);
+                products[j] = _mm_mul_ps(vec_values, activeKernel);
             }
 
             for (size_t j = 0; j < n_segments; j++)
@@ -1406,7 +1407,7 @@ namespace qAlgorithms
 #pragma region "convolve regression"
     // these chain to return beta for a regression
 
-        inline float multiplyVecMatrixVecTranspose(const float vec[4], int scale)
+    inline float multiplyVecMatrixVecTranspose(const float vec[4], int scale)
     {
         scale *= 6;
         float result = vec[0] * vec[0] * INV_ARRAY[scale + 0] +
