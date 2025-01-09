@@ -336,13 +336,18 @@ namespace qAlgorithms
         {
             if (calcDF(df_start, i, 2 * scale + i) > 4)
             {
-                const __m128 coeff = beta[i]; // coefficient register from beta @ i
-                if ((coeff[2] == 0.0f) | (coeff[3] == 0.0f))
+                const __m128 coeff = beta[i];
+                if ((coeff[1] == 0.0f) | (coeff[2] == 0.0f) | (coeff[3] == 0.0f))
                 {
+                    // None of these are a valid regression with the asymmetric model
                     continue;
                 }
+                validRegsTmp.back().newCoeffs.b0 = coeff[0];
+                validRegsTmp.back().newCoeffs.b1 = coeff[1];
+                validRegsTmp.back().newCoeffs.b2 = coeff[2];
+                validRegsTmp.back().newCoeffs.b3 = coeff[3];
 
-                makeValidRegression(&validRegsTmp.back(), i, scale, df_start, y_start, ylog_start, coeff);
+                makeValidRegression(&validRegsTmp.back(), i, scale, df_start, y_start, ylog_start);
                 if (validRegsTmp.back().isValid)
                 {
                     validRegsTmp.push_back(RegressionGauss{});
@@ -433,14 +438,8 @@ namespace qAlgorithms
         const int scale,
         const bool *df_start,
         const float *y_start,
-        const float *ylog_start,
-        const __m128 coeff)
+        const float *ylog_start)
     { // @todo order by effort to calculate
-        mutateReg->newCoeffs.b0 = coeff[0];
-        mutateReg->newCoeffs.b1 = coeff[1];
-        mutateReg->newCoeffs.b2 = coeff[2];
-        mutateReg->newCoeffs.b3 = coeff[3];
-
         /*
           Apex and Valley Position Filter:
           This block of code implements the apex and valley position filter.
@@ -449,9 +448,9 @@ namespace qAlgorithms
           to the next iteration. If the apex and valley positions are too close
           to each other, the loop continues to the next iteration.
         */
-        float valley_position;
+        float valley_position = 0;
         // no easy replace
-        if (!calcApexAndValleyPos(coeff, scale, mutateReg->apex_position, valley_position))
+        if (!calcApexAndValleyPos(mutateReg, scale, valley_position))
         {
             return; // invalid apex and valley positions
         }
@@ -467,8 +466,13 @@ namespace qAlgorithms
             return; // invalid area pre-filter
         }
 
-        // assert(valley_position != 0);
-        if (valley_position < 0)
+        if (valley_position == 0)
+        {
+            // no valley point exists
+            mutateReg->left_limit = i;
+            mutateReg->right_limit = i + 2 * scale;
+        }
+        else if (valley_position < 0)
         {
             mutateReg->left_limit = std::max(i, static_cast<int>(valley_position) + i + scale);
             mutateReg->right_limit = i + 2 * scale;
@@ -478,8 +482,11 @@ namespace qAlgorithms
             mutateReg->left_limit = i;
             mutateReg->right_limit = std::min(i + 2 * scale, static_cast<int>(valley_position) + i + scale);
         }
-        mutateReg->left_limit = (valley_position < 0) ? std::max(i, static_cast<int>(valley_position) + i + scale) : i;
-        mutateReg->right_limit = (valley_position > 0) ? std::min(i + 2 * scale, static_cast<int>(valley_position) + i + scale) : i + 2 * scale;
+        int l_old = (valley_position < 0) ? std::max(i, static_cast<int>(valley_position) + i + scale) : i;
+        int r_old = (valley_position > 0) ? std::min(i + 2 * scale, static_cast<int>(valley_position) + i + scale) : i + 2 * scale;
+
+        assert(l_old == mutateReg->left_limit);
+        assert(r_old == mutateReg->right_limit);
 
         /*
           Degree of Freedom Filter:
@@ -1000,52 +1007,66 @@ namespace qAlgorithms
 
 #pragma region calcApexAndValleyPos
     bool calcApexAndValleyPos(
-        const __m128 coeff,
+        RegressionGauss *mutateReg,
         const int scale,
-        float &apex_position,
         float &valley_position)
     {
-        assert(coeff[2] != 0 && coeff[3] != 0);
+        // symmetric model should apply, this is not possible with the current peak model @todo
+        assert(mutateReg->newCoeffs.b1 != 0);
+        assert(mutateReg->newCoeffs.b2 != 0 && mutateReg->newCoeffs.b3 != 0);
         // calculate key by checking the signs of coeff
         // _mm_movemask_ps returns the sign bits of the input array
-        int key = _mm_movemask_ps(coeff);
+        // int key = _mm_movemask_ps(coeff);
+        int key = 0;
+        if (mutateReg->newCoeffs.b1 < 0)
+        {
+            key += 1;
+        }
+        if (mutateReg->newCoeffs.b2 < 0)
+        {
+            key += 3;
+        }
+        if (mutateReg->newCoeffs.b3 < 0)
+        {
+            key += 5;
+        }
 
-        // b1, b2, b3 are negative            ; 1110 = 14
-        // b1, b2 are negative, b3 is positive; 0110 = 6
-        // b2, b3 are negative, b1 is positive; 1100 = 12
-        // b1, b2 are positive, b3 is negative; 1000 = 8
+        // b1, b2, b3 are negative            ; 1110 = 14 ; 1 + 3 + 5 = 9
+        // b2, b3 are negative, b1 is positive; 1100 = 12 ; 0 + 3 + 5 = 8
+        // b1, b2 are negative, b3 is positive; 0110 = 6  ; 1 + 3 + 0 = 4
+        // b1, b2 are positive, b3 is negative; 1000 = 8  ; 0 + 0 + 5 = 5
         enum keyCase
         {
-            apexLeft_valleyNone = 14,
-            apexRight_valleyNone = 12,
-            apexLeft_valleyRight = 6,
-            apexRight_valleyLeft = 8
+            apexLeft_valleyNone = 9,
+            apexRight_valleyNone = 8,
+            apexLeft_valleyRight = 4,
+            apexRight_valleyLeft = 5
         };
 
-        float position_2 = -coeff[1] / (2 * coeff[2]);
-        float position_3 = -coeff[1] / (2 * coeff[3]);
+        float position_2 = -mutateReg->newCoeffs.b1 / (2 * mutateReg->newCoeffs.b2);
+        float position_3 = -mutateReg->newCoeffs.b1 / (2 * mutateReg->newCoeffs.b3);
 
         switch (key)
         {
         case apexLeft_valleyNone:
-            apex_position = position_2;        //-B1 / 2 / B2;  // is negative
-            valley_position = 0;               // no valley point
-            return apex_position > -scale + 1; // scale +1: prevent apex position to be at the edge of the data
+            mutateReg->apex_position = position_2; //-B1 / 2 / B2;  // is negative
+            valley_position = 0;                   // no valley point
+            return position_2 > -scale + 1;        // scale +1: prevent apex position to be at the edge of the data
 
-        case apexRight_valleyNone:            // Case 1b: apex right
-            apex_position = position_3;       //-B1 / 2 / B3;     // is positive
-            valley_position = 0;              // no valley point
-            return apex_position < scale - 1; // scale -1: prevent apex position to be at the edge of the data
+        case apexRight_valleyNone:                 // Case 1b: apex right
+            mutateReg->apex_position = position_3; //-B1 / 2 / B3;     // is positive
+            valley_position = 0;                   // no valley point
+            return position_3 < scale - 1;         // scale -1: prevent apex position to be at the edge of the data
 
         case apexLeft_valleyRight:
-            apex_position = position_2;                                               //-B1 / 2 / B2;      // is negative
-            valley_position = position_3;                                             //-B1 / 2 / B3;      // is positive
-            return apex_position > -scale + 1 && valley_position - apex_position > 2; // scale +1: prevent apex position to be at the edge of the data
+            mutateReg->apex_position = position_2;                              //-B1 / 2 / B2;      // is negative
+            valley_position = position_3;                                       //-B1 / 2 / B3;      // is positive
+            return position_2 > -scale + 1 && valley_position - position_2 > 2; // scale +1: prevent apex position to be at the edge of the data
 
         case apexRight_valleyLeft:
-            apex_position = position_3;                                              //-B1 / 2 / B3;       // is positive
-            valley_position = position_2;                                            //-B1 / 2 / B2;       // is negative
-            return apex_position < scale - 1 && apex_position - valley_position > 2; // scale -1: prevent apex position to be at the edge of the data
+            mutateReg->apex_position = position_3;                             //-B1 / 2 / B3;       // is positive
+            valley_position = position_2;                                      //-B1 / 2 / B2;       // is negative
+            return position_3 < scale - 1 && position_3 - valley_position > 2; // scale -1: prevent apex position to be at the edge of the data
 
         default:
             return false; // invalid case
