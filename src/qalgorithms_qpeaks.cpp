@@ -281,40 +281,97 @@ namespace qAlgorithms
         size_t maxSize = n - (2 * 2 + 1) + 1; // max size is at scale = 2
         assert(maxScale <= arrayMaxLength);
         // adding a variable here leads to a segfault
-        // __m128 beta_new[maxSize];
+        __m128 beta[maxSize];
 
         validRegressions.reserve(200); // this is the highest result of a test run, should not be a performance concern anyway
         for (size_t scale = 2; scale <= maxScale; scale++)
         {
-            const int k = 2 * scale + 1;           // window size
-            const int n_segments = n - k + 1;      // number of segments, i.e. regressions considering the array size
-            __m128 *beta = new __m128[n_segments]; // coefficients matrix @todo move outside of loop, probably causes a stack overflow with large data
+            const int k = 2 * scale + 1;      // window size
+            const int n_segments = n - k + 1; // number of segments, i.e. regressions considering the array size
             assert(n_segments <= maxSize);
             assert(n > 2 * scale);
-            // auto beta = &beta_new;
 
             __m128 result[n - 2 * scale];
             __m128 products[n];
             const __m128 flipSign = _mm_set_ps(1.0f, 1.0f, -1.0f, 1.0f);
-            convolve_SIMD(scale, ylog_start, n, result, products, n);
+            convolve_SIMD(scale, ylog_start, n, result, products);
 
             for (size_t i = 0; i < n - 2 * scale; i++)
             { // swap beta2 and beta3 and flip the sign of beta1 // @todo: this is a temporary solution
                 beta[i] = _mm_mul_ps(_mm_shuffle_ps(result[i], result[i], 0b10110100), flipSign);
-                // beta_new[i] = _mm_mul_ps(_mm_shuffle_ps(result[i], result[i], 0b10110100), flipSign);
-                // beta[i] = _mm_add_ps(beta[i], beta[i]);
             }
 
             validateRegressions(beta, n_segments, y_start, ylog_start, df_start, arrayMaxLength, scale, validRegressions);
-            delete[] beta;
-            // validRegressions.push_back(
-            //     validateRegressions(beta, n_segments, y_start, ylog_start, df_start, scale, validRegressions));
         }
         if (validRegressions.size() > 1)
         {
             validRegressions = mergeRegressionsOverScales(validRegressions, y_start);
         }
         return;
+    }
+
+    void convolve_SIMD(
+        const size_t scale,
+        const float *vec, // ylog_start
+        const size_t n,   // sumber of data points
+        __m128 *result,
+        __m128 *products)
+    {
+        size_t k = 2 * scale + 1;
+        size_t n_segments = n - k + 1;
+        size_t centerpoint = k / 2;
+
+        for (size_t i = 0; i < n; ++i)
+        {
+            products[i] = _mm_setzero_ps();
+        }
+        __m128 kernel[3];
+        size_t scale6 = scale * 6;
+        // kernel[0] in positions 2 and 3 is identical
+        kernel[0] = _mm_set_ps(INV_ARRAY[scale6 + 1],
+                               INV_ARRAY[scale6 + 1],
+                               0.0f,
+                               INV_ARRAY[scale6 + 0]);
+
+        kernel[1] = _mm_set_ps(INV_ARRAY[scale6 + 3] - INV_ARRAY[scale6 + 5],
+                               -INV_ARRAY[scale6 + 3] - INV_ARRAY[scale6 + 4],
+                               -INV_ARRAY[scale6 + 2] - INV_ARRAY[scale6 + 3],
+                               -INV_ARRAY[scale6 + 1]);
+
+        kernel[2] = _mm_set_ps(2.f * INV_ARRAY[scale6 + 5],
+                               2.f * INV_ARRAY[scale6 + 4],
+                               2.f * INV_ARRAY[scale6 + 3],
+                               2.f * INV_ARRAY[scale6 + 1]);
+
+        for (size_t i = 0; i < n_segments; i++)
+        {
+            // set all elements of vec_values to vec[i + centerpoint]
+            __m128 vec_values = _mm_set1_ps(vec[i + centerpoint]);
+            // result[2] is always 0
+            result[i] = _mm_mul_ps(vec_values, kernel[0]);
+        }
+
+        for (size_t i = 1; i < scale + 1; i++)
+        {
+            // kernel[1] = kernel[1] original + i * kernel[2]
+            kernel[1] = _mm_add_ps(kernel[1], kernel[2]);
+            // kernel[0] = kernel[0] original + i * kernel[1]
+            kernel[0] = _mm_add_ps(kernel[0], kernel[1]);
+
+            for (size_t j = 0; j < n; j++)
+            {
+                __m128 vec_values = _mm_set1_ps(vec[j + scale - i]); // why this?
+                products[j] = _mm_mul_ps(vec_values, kernel[0]);
+            }
+
+            for (size_t j = 0; j < n_segments; j++)
+            {
+                __m128 products_temp = _mm_permute_ps(products[j], 0b10110100); // swap places of b0 and b1(?)
+                __m128 sign_flip = _mm_set_ps(1.0f, 1.0f, -1.0f, 1.0f);         // why only flip the sign of b2?
+                products_temp = _mm_fmadd_ps(products_temp, sign_flip, products[2 * i + j]);
+                result[j] = _mm_add_ps(result[j], products_temp);
+            }
+        }
     }
 #pragma endregion "running regression"
 
@@ -482,11 +539,6 @@ namespace qAlgorithms
             mutateReg->left_limit = i;
             mutateReg->right_limit = std::min(i + 2 * scale, static_cast<int>(valley_position) + i + scale);
         }
-        int l_old = (valley_position < 0) ? std::max(i, static_cast<int>(valley_position) + i + scale) : i;
-        int r_old = (valley_position > 0) ? std::min(i + 2 * scale, static_cast<int>(valley_position) + i + scale) : i + 2 * scale;
-
-        assert(l_old == mutateReg->left_limit);
-        assert(r_old == mutateReg->right_limit);
 
         /*
           Degree of Freedom Filter:
@@ -1354,66 +1406,7 @@ namespace qAlgorithms
 #pragma region "convolve regression"
     // these chain to return beta for a regression
 
-    void convolve_SIMD(
-        const size_t scale,
-        const float *vec,
-        const size_t n,
-        __m128 *result,
-        __m128 *products,
-        const size_t buffer_size)
-    {
-        size_t k = 2 * scale + 1;
-        size_t n_segments = n - k + 1;
-        size_t centerpoint = k / 2;
-
-        for (size_t i = 0; i < n; ++i)
-        {
-            products[i] = _mm_setzero_ps();
-        }
-        __m128 kernel[3];
-        kernel[0] = _mm_set_ps(INV_ARRAY[scale * 6 + 1], INV_ARRAY[scale * 6 + 1], 0.0f, INV_ARRAY[scale * 6 + 0]);
-        kernel[1] = _mm_set_ps(INV_ARRAY[scale * 6 + 3] - INV_ARRAY[scale * 6 + 5], -INV_ARRAY[scale * 6 + 3] - INV_ARRAY[scale * 6 + 4], -INV_ARRAY[scale * 6 + 2] - INV_ARRAY[scale * 6 + 3], -INV_ARRAY[scale * 6 + 1]);
-        kernel[2] = _mm_set_ps(2.f * INV_ARRAY[scale * 6 + 5], 2.f * INV_ARRAY[scale * 6 + 4], 2.f * INV_ARRAY[scale * 6 + 3], 2.f * INV_ARRAY[scale * 6 + 1]);
-
-        for (size_t i = 0; i < n_segments; i++)
-        {
-            __m128 vec_values = _mm_set1_ps(vec[i + centerpoint]);
-            // result[i] = _mm_fmadd_ps(vec_values, kernel[0], result[i]);
-            result[i] = _mm_mul_ps(vec_values, kernel[0]);
-        }
-
-        for (size_t i = 1; i < scale + 1; i++)
-        {
-            int u = 0;
-            kernel[1] = _mm_add_ps(kernel[1], kernel[2]);
-            // kernel[1] = kernel[1] original + i * kernel[2]
-            kernel[0] = _mm_add_ps(kernel[0], kernel[1]);
-
-            for (size_t j = scale - i; j < (n - scale + i); j++)
-            {
-                __m128 vec_values = _mm_set1_ps(vec[j]);
-                products[u] = _mm_mul_ps(vec_values, kernel[0]);
-                u++;
-            }
-
-            for (size_t j = 0; j < n_segments; j++)
-            {
-                if (2 * i + j >= buffer_size)
-                {
-                    // throw std::out_of_range("Index out of range for products array: n=" + std::to_string(n) +
-                    //                         " i=" + std::to_string(i) + " j=" + std::to_string(j));
-                    std::cerr << "Index out of range for products array: n = " << n << " i = " << i << " j = " << j;
-                    exit(1);
-                }
-                __m128 products_temp = _mm_permute_ps(products[j], 0b10110100);
-                __m128 sign_flip = _mm_set_ps(1.0f, 1.0f, -1.0f, 1.0f);
-                products_temp = _mm_fmadd_ps(products_temp, sign_flip, products[2 * i + j]);
-                result[j] = _mm_add_ps(result[j], products_temp);
-            }
-        }
-    }
-
-    inline float multiplyVecMatrixVecTranspose(const float vec[4], int scale)
+        inline float multiplyVecMatrixVecTranspose(const float vec[4], int scale)
     {
         scale *= 6;
         float result = vec[0] * vec[0] * INV_ARRAY[scale + 0] +
