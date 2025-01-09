@@ -75,7 +75,8 @@ namespace qAlgorithms
     float dqsCen;
     float mz;
     float mzUncertainty;
-    int scanNumber;
+    unsigned int scanNumber;
+    unsigned int df; // degrees of freedom
   };
 
   struct FeaturePeak
@@ -106,6 +107,7 @@ namespace qAlgorithms
     float int_area;   // the intensity is never used during binning @todo
     float int_height; // s.o.
     float DQSCentroid;
+    unsigned int df; // degrees of freedom
   };
 
   struct CentroidedData
@@ -117,12 +119,13 @@ namespace qAlgorithms
   struct EIC // Extracted Ion Chromatogram
   {
     // std::byte errorcode;
-    std::vector<int> scanNumbers;
+    std::vector<unsigned int> scanNumbers;
     std::vector<float> rententionTimes;
     std::vector<float> mz;
     std::vector<float> predInterval;
     std::vector<float> ints_area;
     std::vector<float> ints_height;
+    std::vector<unsigned int> df;
     std::vector<float> DQSB;
     std::vector<float> DQSC;
   };

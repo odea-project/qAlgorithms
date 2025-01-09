@@ -23,7 +23,7 @@ namespace qAlgorithms
         // initialise empty vector with enough room for all scans - centroids[0] must remain empty
         std::vector<std::vector<qCentroid>> centroids(allPeaks.size() + 1, std::vector<qCentroid>(0));
         size_t totalCentroids = 0;
-        size_t scanRelative = 0;
+        unsigned int scanRelative = 0;
         size_t addTotal = 0;
         for (size_t i = 0; i < addEmpty.size(); i++)
         {
@@ -51,7 +51,7 @@ namespace qAlgorithms
                 for (size_t j = 0; j < allPeaks[i].size(); ++j)
                 {
                     auto &peak = allPeaks[i][j];
-                    qCentroid F = qCentroid{peak.mzUncertainty, peak.mz, scanRelative, peak.area, peak.height, peak.dqsCen};
+                    qCentroid F = qCentroid{peak.mzUncertainty, peak.mz, scanRelative, peak.area, peak.height, peak.dqsCen, peak.df};
                     assert(F.scanNo > 0);
                     assert(F.scanNo <= (addTotal + allPeaks.size()));
                     centroids[scanRelative].push_back(F);
@@ -361,7 +361,8 @@ namespace qAlgorithms
 
             for (size_t j = 0; j < n; j++)
             {
-                __m128 vec_values = _mm_set1_ps(vec[j + scale - i]); // why this?
+                // max access position of vec is n - 1 + scale + 1, with n being the number of points in ylog
+                __m128 vec_values = _mm_set1_ps(vec[j + scale - i]); // why this? !! there is a buffer overflow for this line (address sanitizer report)
                 products[j] = _mm_mul_ps(vec_values, activeKernel);
             }
 
@@ -826,7 +827,9 @@ namespace qAlgorithms
                 peak.mz = mz0 + delta_mz * (regression.apex_position - std::floor(regression.apex_position));
                 peak.mzUncertainty = regression.uncertainty_pos * delta_mz * T_VALUES[regression.df + 1] * sqrt(1 + 1 / (regression.df + 4));
 
+                // quality params
                 peak.dqsCen = 1 - erf_approx_f(regression.uncertainty_area / regression.area);
+                peak.df = regression.df;
 
                 /// @todo consider adding these properties so we can trace back everything completely
                 // peak.idxPeakStart = regression.left_limit;

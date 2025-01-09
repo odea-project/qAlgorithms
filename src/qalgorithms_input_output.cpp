@@ -593,7 +593,7 @@ namespace qAlgorithms
             return;
         }
         output << "ID,mz,mzUncertainty,scanNumber,retentionTime,area,areaUncertainty,"
-               << "height,heightUncertainty,dqsCen\n";
+               << "height,heightUncertainty,degreesOfFreedom,dqsCen\n";
         unsigned int counter = 1;
         for (size_t i = 0; i < peaktable.size(); i++)
         {
@@ -603,9 +603,9 @@ namespace qAlgorithms
                 {
                     auto peak = peaktable[i][j];
                     char buffer[256];
-                    sprintf(buffer, "%d,%0.6f,%0.6f,%d,%0.4f,%0.4f,%0.4f,%0.4f,%0.4f,%0.5f\n",
+                    sprintf(buffer, "%d,%0.6f,%0.6f,%d,%0.4f,%0.4f,%0.4f,%0.4f,%0.4f,%u,%0.5f\n",
                             counter, peak.mz, peak.mzUncertainty, peak.scanNumber, convertRT[peak.scanNumber],
-                            peak.area, peak.areaUncertainty, peak.height, peak.heightUncertainty, peak.dqsCen);
+                            peak.area, peak.areaUncertainty, peak.height, peak.heightUncertainty, peak.df, peak.dqsCen);
                     output << buffer;
                     ++counter;
                 }
@@ -698,16 +698,16 @@ namespace qAlgorithms
             return;
         }
         // @todo consider if the mz error is relevant when checking individual bins
-        output << "binID,mz,mzError,retentionTime,scanNumber,area,height,DQSC,DQSB\n";
+        output << "binID,mz,mzError,retentionTime,scanNumber,area,height,degreesOfFreedom,DQSC,DQSB\n";
         for (size_t binID = 0; binID < bins.size(); binID++)
         {
             for (size_t i = 0; i < bins[binID].mz.size(); i++)
             {
                 char buffer[128];
-                sprintf(buffer, "%zu,%0.8f,%0.8f,%0.4f,%d,%0.6f,%0.6f,%0.4f,%0.4f\n",
+                sprintf(buffer, "%zu,%0.8f,%0.8f,%0.4f,%d,%0.6f,%0.6f,%u,%0.4f,%0.4f\n",
                         binID, bins[binID].mz[i], bins[binID].predInterval[i],
                         bins[binID].rententionTimes[i], bins[binID].scanNumbers[i], bins[binID].ints_area[i],
-                        bins[binID].ints_height[i], bins[binID].DQSC[i], bins[binID].DQSB[i]);
+                        bins[binID].ints_height[i], bins[binID].df[i], bins[binID].DQSC[i], bins[binID].DQSB[i]);
                 output << buffer;
             }
         }
