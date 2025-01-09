@@ -210,10 +210,10 @@ namespace qAlgorithms
         const int df_sum,
         const float apexToEdge);
 
-    float calcPeakHeightUncert(
+    void calcPeakHeightUncert(
+        RegressionGauss *mutateReg,
         const float mse,
-        const int scale,
-        const float apex_position);
+        const int scale);
 
     /**
      * @brief Check if the peak area and the covered peak area are valid using t-test.
@@ -234,7 +234,7 @@ namespace qAlgorithms
      * @return false : if the peak area is not valid
      */
 
-    std::pair<float, float> calcPeakAreaUncert(RegCoeffs coeff, const float mse, const int scale);
+    void calcPeakAreaUncert(RegressionGauss *mutateReg, const float mse, const int scale);
 
     bool isValidPeakArea(
         RegCoeffs coeff,

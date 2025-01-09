@@ -466,6 +466,17 @@ namespace qAlgorithms
             return; // invalid area pre-filter
         }
 
+        if (valley_position < 0)
+        {
+            mutateReg->left_limit = std::max(i, static_cast<int>(valley_position) + i + scale);
+            mutateReg->right_limit = i + 2 * scale;
+        }
+        else
+        {
+            mutateReg->left_limit = i;
+            mutateReg->right_limit = std::min(i + 2 * scale, static_cast<int>(valley_position) + i + scale);
+        }
+
         /*
           Degree of Freedom Filter:
           This block of code implements the degree of freedom filter. It calculates the
@@ -473,9 +484,6 @@ namespace qAlgorithms
           the loop continues to the next iteration. The value 5 is chosen as the
           minimum number of data points required to fit a quadratic regression model.
         */
-        mutateReg->left_limit = (valley_position < 0) ? std::max(i, static_cast<int>(valley_position) + i + scale) : i;
-        mutateReg->right_limit = (valley_position > 0) ? std::min(i + 2 * scale, static_cast<int>(valley_position) + i + scale) : i + 2 * scale;
-
         int df_sum = calcDF(df_start, mutateReg->left_limit, mutateReg->right_limit); // degrees of freedom considering the left and right limits
         if (df_sum < 5)
         {
@@ -500,7 +508,7 @@ namespace qAlgorithms
           This block of code implements the apex to edge filter. It calculates
           the ratio of the apex signal to the edge signal and ensures that the
           ratio is greater than 2. This is a pre-filter for later
-          signal-to-noise ratio checkups.
+          signal-to-noise ratio checkups. apexToEdge is also required in isValidPeakHeight further down
         */
         float apexToEdge = calcApexToEdge(mutateReg->apex_position, scale, i, y_start);
         if (!(apexToEdge > 2))
@@ -537,7 +545,7 @@ namespace qAlgorithms
           the loop continues to the next iteration.
         */
 
-        mutateReg->uncertainty_height = calcPeakHeightUncert(mse, scale, mutateReg->apex_position);
+        calcPeakHeightUncert(mutateReg, mse, scale);
         if (1 / mutateReg->uncertainty_height <= T_VALUES[df_sum - 5]) // statistical significance of the peak height
         {
             return;
@@ -559,9 +567,7 @@ namespace qAlgorithms
           area multiply both with Exp(b0) later. This is done to avoid exp function at this point
         */
         // it might be preferential to combine both functions again or store the common matrix somewhere
-        auto tmpPair = calcPeakAreaUncert(mutateReg->newCoeffs, mse, scale);
-        mutateReg->area = tmpPair.first;
-        mutateReg->uncertainty_area = tmpPair.second;
+        calcPeakAreaUncert(mutateReg, mse, scale);
 
         if (mutateReg->area / mutateReg->uncertainty_area <= T_VALUES[df_sum - 5])
         {
@@ -576,22 +582,6 @@ namespace qAlgorithms
         mutateReg->index_x0 = scale + i;
         mutateReg->isValid = true;
         return;
-
-        // return RegressionGauss{
-        //     replacer,
-        //     coeff,
-        //     i + scale,
-        //     scale,
-        //     df_sum - 4,
-        //     apex_position + i + scale,
-        //     0, // mse @todo
-        //     true,
-        //     left_limit,
-        //     right_limit,
-        //     area,
-        //     uncertainty_area,
-        //     uncertainty_pos,
-        //     uncertainty_height};
     }
 #pragma endregion "validate regression test series"
 
@@ -1097,26 +1087,27 @@ namespace qAlgorithms
 
 #pragma region isValidPeakHeight
 
-    float calcPeakHeightUncert(
+    void calcPeakHeightUncert(
+        RegressionGauss *mutateReg,
         const float mse,
-        const int scale,
-        const float apex_position)
+        const int scale)
     {
-        float Jacobian_height[4]{1, 0, 0, 0}; // Jacobian matrix for the height
-        Jacobian_height[1] = apex_position;   // apex_position * height;
-        if (apex_position < 0)
+        float Jacobian_height[4]{1, 0, 0, 0};          // Jacobian matrix for the height
+        Jacobian_height[1] = mutateReg->apex_position; // apex_position * height;
+        if (mutateReg->apex_position < 0)
         {
-            Jacobian_height[2] = apex_position * apex_position; // apex_position * Jacobian_height[1];
+            Jacobian_height[2] = mutateReg->apex_position * mutateReg->apex_position; // apex_position * Jacobian_height[1];
             // Jacobian_height[3] = 0;
         }
         else
         {
             // Jacobian_height[2] = 0;
-            Jacobian_height[3] = apex_position * apex_position; // apex_position * Jacobian_height[1];
+            Jacobian_height[3] = mutateReg->apex_position * mutateReg->apex_position; // apex_position * Jacobian_height[1];
         }
         // at this point without height, i.e., to get the real uncertainty
         // multiply with height later. This is done to avoid exp function at this point
-        return std::sqrt(mse * multiplyVecMatrixVecTranspose(Jacobian_height, scale));
+        mutateReg->uncertainty_height = std::sqrt(mse * multiplyVecMatrixVecTranspose(Jacobian_height, scale));
+        return;
     }
 
     bool isValidPeakHeight(
@@ -1161,11 +1152,11 @@ namespace qAlgorithms
 
 #pragma region isValidPeakArea
 
-    std::pair<float, float> calcPeakAreaUncert(RegCoeffs coeff, const float mse, const int scale)
+    void calcPeakAreaUncert(RegressionGauss *mutateReg, const float mse, const int scale)
     {
-        float b1 = coeff.b1;
-        float b2 = coeff.b2;
-        float b3 = coeff.b3;
+        float b1 = mutateReg->newCoeffs.b1;
+        float b2 = mutateReg->newCoeffs.b2;
+        float b3 = mutateReg->newCoeffs.b3;
         float _SQRTB2 = 1 / std::sqrt(std::abs(b2));
         float _SQRTB3 = 1 / std::sqrt(std::abs(b3));
         float B1_2_SQRTB2 = b1 / 2 * _SQRTB2;
@@ -1201,10 +1192,11 @@ namespace qAlgorithms
         J[2] = -B1_2_B2 * (J_2_L + J_1_L / b1);
         J[3] = -B1_2_B3 * (J_2_R + J_1_R / b1);
 
-        float area = J[0]; // at this point the area is without exp(b0), i.e., to get the real area multiply with exp(b0) later. This is done to avoid exp function at this point
-        float uncertainty_area = std::sqrt(mse * multiplyVecMatrixVecTranspose(J, scale));
+        // at this point the area is without exp(b0), i.e., to get the real area multiply with exp(b0) later. This is done to avoid exp function at this point
+        mutateReg->area = J[0];
+        mutateReg->uncertainty_area = std::sqrt(mse * multiplyVecMatrixVecTranspose(J, scale));
 
-        return std::pair(area, uncertainty_area);
+        return;
     }
 
     bool isValidPeakArea(
