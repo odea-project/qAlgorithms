@@ -52,8 +52,7 @@ namespace qAlgorithms
         const int scale,
         const bool *df_start,
         const float *y_start,
-        const float *ylog_start,
-        const __m128 coeff);
+        const float *ylog_start);
 
     std::vector<RegressionGauss> mergeRegressionsOverScales(
         std::vector<RegressionGauss> validRegressions,
@@ -138,9 +137,8 @@ namespace qAlgorithms
      * @return false : if the apex and valley positions are not valid (e.g., the apex position is not in the regression window)
      */
     bool calcApexAndValleyPos(
-        const __m128 coeff,
+        RegressionGauss *mutateReg,
         const int scale,
-        float &apex_position,
         float &valley_position);
 
     /**
