@@ -10,6 +10,17 @@
 
 namespace qAlgorithms
 {
+  struct dataPoint // @todo remove this (again)
+  {
+    float x;
+    float y;
+    bool df;
+    float dqsCentroid;
+    float dqsBinning;
+    int scanNumber;
+    float mz;
+  };
+
   /**
    * @brief A class to store peak data
    * @details The Peak class is used to store peak data. It contains the position, height, width, and area of the peak. The class also contains the uncertainty of the peak position, height, width, and area, the data quality score of the peak, the regression coefficients, the valley position, the degrees of freedom, and the index of the regression window position.
