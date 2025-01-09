@@ -302,7 +302,7 @@ namespace qAlgorithms
         {
             if (std::filesystem::status(inputPath).type() != std::filesystem::file_type::directory)
             {
-                outputPath = std::filesystem::path(inputPath).parent_path();
+                outputPath = std::filesystem::path(inputPath).parent_path().string();
             }
             else
             {
