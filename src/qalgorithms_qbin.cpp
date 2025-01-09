@@ -733,7 +733,7 @@ namespace qAlgorithms
         int eicsize = pointsInBin.size();
 
         // std::byte bincode = this->summariseBin(maxdist).errorcode; // this step contains sorting by scans for the time being @todo
-        std::vector<int> tmp_scanNumbers;
+        std::vector<unsigned int> tmp_scanNumbers;
         tmp_scanNumbers.reserve(eicsize);
         std::vector<float> tmp_rt;
         tmp_rt.reserve(eicsize);
@@ -745,6 +745,8 @@ namespace qAlgorithms
         tmp_ints_area.reserve(eicsize);
         std::vector<float> tmp_ints_height;
         tmp_ints_height.reserve(eicsize);
+        std::vector<unsigned int> tmp_df;
+        tmp_df.reserve(eicsize);
         std::vector<float> tmp_DQSC;
         tmp_DQSC.reserve(eicsize);
 
@@ -771,6 +773,7 @@ namespace qAlgorithms
             tmp_predInterval,
             tmp_ints_area,
             tmp_ints_height,
+            tmp_df,
             DQSB_base,
             tmp_DQSC};
 
