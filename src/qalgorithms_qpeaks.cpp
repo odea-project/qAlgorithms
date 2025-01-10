@@ -902,9 +902,9 @@ namespace qAlgorithms
                 peak.height = exp_approx_d(coeff.b0 + (regression.apex_position - regression.index_x0) * coeff.b1 * 0.5); // peak height (exp(b0 - b1^2/4/b2)) with position being -b1/2/b2
                 peak.heightUncertainty = regression.uncertainty_height * peak.height;
 
-                const double rt0 = *(rt_start + (int)std::floor(regression.apex_position));
-                const double delta_rt = *(rt_start + (int)std::floor(regression.apex_position) + 1) - rt0;
-                const double apex_position = rt0 + delta_rt * (regression.apex_position - std::floor(regression.apex_position));
+                const double rt_leftOfMax = *(rt_start + (int)std::floor(regression.apex_position)); // left of maximum
+                const double delta_rt = *(rt_start + (int)std::floor(regression.apex_position) + 1) - rt_leftOfMax;
+                const double apex_position = rt_leftOfMax + delta_rt * (regression.apex_position - std::floor(regression.apex_position));
                 peak.retentionTime = apex_position;
                 peak.retentionTimeUncertainty = regression.uncertainty_pos * delta_rt;
 
@@ -930,7 +930,7 @@ namespace qAlgorithms
                 coeff.b2 /= delta_rt * delta_rt;
                 coeff.b3 /= delta_rt * delta_rt;
                 peak.coefficients = coeff;
-                peak.rt_switch = rt0; // point at which the two halves intersect
+                peak.rt_switch = rt_leftOfMax; // point at which the two halves intersect @todo not true, fix this
 
                 peaks.push_back(std::move(peak));
             }
