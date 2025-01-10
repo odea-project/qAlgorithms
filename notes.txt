@@ -1,3 +1,7 @@
+check if max distance in RT is actually coerced
+
+add filter for max intensity on the bin edge to binning
+
 Bifurcating Dendrogram:
 Für einen Datensatz werden zwei unterschiedliche Komponentisierungen durchgeführt, eine davon mit qPattern
 Für qPattern wird ein eindeutiges Entscheidungskriterium formuliert.
