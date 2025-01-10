@@ -20,9 +20,9 @@
 namespace qAlgorithms
 {
     /// ### set global variables ###
-    float PPM_PRECENTROIDED = -INFINITY;             // -Infinity sets it to the default value if no user input changes it
-    float MZ_ABSOLUTE_PRECENTROIDED = -INFINITY;     // see above
-    std::array<float, 384> INV_ARRAY = initialize(); // @todo make constexpr
+    float PPM_PRECENTROIDED = -INFINITY;                                         // -Infinity sets it to the default value if no user input changes it
+    float MZ_ABSOLUTE_PRECENTROIDED = -INFINITY;                                 // see above
+    std::array<float, 384> INV_ARRAY = initialize();                             // @todo make constexpr
     bool massTraceStable(std::vector<float> massesBin, int idxStart, int idxEnd) // @todo do this in regression
 
     {
@@ -357,7 +357,7 @@ int main(int argc, char *argv[])
     {
         std::cout << "   enter \"exit\" to close this program:\n";
         std::string userInput;
-        while (userInput != "exit")
+        while (userInput != "exit") // this loop should only terminate upon user input
         {
             std::cin >> userInput;
         }
