@@ -69,7 +69,7 @@ namespace qAlgorithms
                                   "                          This parameter is significantly different from an EIC standard deviation estimator (XCMS)!\n"
                                   "                          By default, this value is set to 0.25.\n"
                                   "      -mz-abs <number>:   (not implemented yet) add this absolute error (in Dalton) to the relative error specified by -ppm.\n"; //@todo
-   
+
 #pragma endregion helpstring
 
 #pragma region "command line arguments"
@@ -126,17 +126,16 @@ namespace qAlgorithms
                     std::cerr << "Error: argument -input was set, but no valid file supplied.\n";
                     return args;
                 }
-                while (i < argc)
+                for (; i < argc; i++)
                 {
                     inputString = argv[i];
                     if (inputString[0] == '-')
                     {
-                        --i;
                         break;
                     }
                     args.inputPaths.push_back(inputString);
-                    i++;
                 }
+                --i;
             }
             else if ((argument == "-tl") || (argument == "-tasklist")) // @todo test this
             {
@@ -430,7 +429,7 @@ namespace qAlgorithms
         {
             std::cout << "   inputs are incorrect - enter \"exit\" to close this program:\n";
             std::string userInput;
-            while (userInput != "exit")
+            while (userInput != "exit") // this loop should only terminate upon user input
             {
                 std::cin >> userInput;
             }

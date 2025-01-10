@@ -663,10 +663,6 @@ namespace qAlgorithms
         // float vcrit = 3.05037165842070 * pow(log(binsize + 1), (TOLERANCE_BINNING)) * meanerror;
         double vcrit = binningCritVal(binsize, meanerror);
 
-        // binsize + 1 to not include points which would be removed after adding them
-        // vcrit has the same scaling as mz of bin centroids
-        float vcrit = (OS_CRIT_A + OS_CRIT_B / std::sqrt(std::log(binsize + 1))) *  meanerror; // + 1 to binEnd since cumerror starts at 0
-
         // find min distance in minMaxOutPerScan, then calculate DQS for that point
         for (size_t i = 0; i < binsize; i++)
         {
@@ -797,12 +793,10 @@ namespace qAlgorithms
             size_t scanRegionStart = maxdist < pointsInBin[i]->scanNo ? pointsInBin[i]->scanNo - maxdist : 0;
             size_t scanRegionEnd = pointsInBin[i]->scanNo + maxdist + 1;
             float accum = 0;
-            while (pointsInBin[position]->scanNo < scanRegionStart)
-            {
-                position++;
-            }
+            for (; pointsInBin[position]->scanNo < scanRegionStart; position++) // increase position until a relevant point is found
+                ;
             size_t readPos = position;
-            while (pointsInBin[readPos]->scanNo < scanRegionEnd)
+            for (; pointsInBin[readPos]->scanNo < scanRegionEnd;)
             {
                 accum += abs(pointsInBin[readPos]->mz - pointsInBin[i]->mz);
                 readPos++;
@@ -860,7 +854,7 @@ namespace qAlgorithms
         // rebinning is not separated into a function
         // binning is repeated until the input length is constant
         size_t prevFinal = 0;
-        while (true)
+        while (true) // @todo prove that this loop always terminates
         {
             logger += subsetBins(activeBins, maxdist);
             size_t producedBins = activeBins.viableBins.size();
@@ -878,6 +872,10 @@ namespace qAlgorithms
                 }
                 else
                 {
+                    // @todo check for min and max intensity being on the borders here.
+                    // also consider if removing these points does affect the bin validity.
+                    // the score should be reworked to consider all unbinned points to compensate
+                    // for more aggressive culling anyhow.
                     activeBins.finalBins.push_back(activeBins.viableBins[j]);
                 }
             }
@@ -935,7 +933,7 @@ namespace qAlgorithms
             activeBins.finalBins[i].makeDQSB(centroidedData, scalar, maxdist);
         }
 
-        // @todo add bin merger for halved bins here
+        // @todo add bin merger for halved bins here ; this ight be a bad idea, find way to prove it
 
         std::vector<EIC> finalBins;
         size_t binCount = activeBins.finalBins.size();
