@@ -725,6 +725,11 @@ namespace qAlgorithms
                                 validRegressions[j].right_limit - validRegressions[j].index_x0);
                             validRegressions[j].mse /= validRegressions[j].df;
                         }
+                        else
+                        {
+                            // the mse was calculated previously
+                            assert(validRegressions[j].mse > 0);
+                        }
                         grpDF += validRegressions[j].df;                            // add the degree of freedom
                         grpMSE += validRegressions[j].mse * validRegressions[j].df; // add the sum of squared errors
                         // add the iterator of the ref peak to a vector of iterators
@@ -920,11 +925,12 @@ namespace qAlgorithms
                 peak.idxPeakStart = regression.left_limit;
                 peak.idxPeakEnd = regression.right_limit - 1;
 
-                //
+                // params needed to merge two peaks
                 coeff.b1 /= delta_rt;
                 coeff.b2 /= delta_rt * delta_rt;
                 coeff.b3 /= delta_rt * delta_rt;
                 peak.coefficients = coeff;
+                peak.rt_switch = rt0; // point at which the two halves intersect
 
                 peaks.push_back(std::move(peak));
             }

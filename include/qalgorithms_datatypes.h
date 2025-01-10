@@ -55,7 +55,7 @@ namespace qAlgorithms
     int scale = 0;                // scale of the regression window, i.e., 2*scale+1 = window size
     int df = 0;                   // degree of freedom, interpolated data points will not be considered
     float apex_position = 0;      // position of the apex of the peak
-    float mse = 0;                // mean squared error
+    float mse = 0;                // mean squared error; this is not always used and should not be a part of the regression struct @todo
     unsigned int left_limit = 0;  // left limit of the peak regression window
     unsigned int right_limit = 0; // right limit of the peak regression window
     float area = 0;               // area of the peak
@@ -97,6 +97,7 @@ namespace qAlgorithms
     int idxBin;
     unsigned int idxPeakStart; // degrees of freedom = idxPeakEnd - idxPeakStart
     unsigned int idxPeakEnd;
+    float rt_switch;
   };
 
   struct qCentroid
