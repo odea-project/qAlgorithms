@@ -297,7 +297,6 @@ namespace qAlgorithms
 
     void reconstructFromStdev(const CentroidedData *rawdata, size_t maxdist)
     {
-
         // find all not binned points and add them to a bin
         // cond 1: mz must be within one standard deviation of mz
         // cond 2: point must be within maxdist scans of the bin borders
@@ -314,7 +313,6 @@ namespace qAlgorithms
 
         // redoneBins.resize(0); // allow other functions to use redoneBins
         // return;
-
         // return conflictOfBinterest; // @todo add a way to work with this
     }
 
@@ -664,8 +662,10 @@ namespace qAlgorithms
                           binsize;
         // float vcrit = 3.05037165842070 * pow(log(binsize + 1), (TOLERANCE_BINNING)) * meanerror;
         double vcrit = binningCritVal(binsize, meanerror);
+
         // binsize + 1 to not include points which would be removed after adding them
         // vcrit has the same scaling as mz of bin centroids
+        float vcrit = (OS_CRIT_A + OS_CRIT_B / std::sqrt(std::log(binsize + 1))) *  meanerror; // + 1 to binEnd since cumerror starts at 0
 
         // find min distance in minMaxOutPerScan, then calculate DQS for that point
         for (size_t i = 0; i < binsize; i++)
