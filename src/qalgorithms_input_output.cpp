@@ -18,60 +18,58 @@ namespace qAlgorithms
 {
 #pragma region helpstring
 
-    const std::string helpinfo = " help information:\n\n" // @todo std::format
-                                 "    qAlgorithms is a software project for non-target screening using mass spectrometry.\n"
-                                 "    For more information, visit our github page: https://github.com/odea-project/qAlgorithms.\n"
-                                 "    As of now (2024-10-31), only mzML files are supported. This program accepts the following command-line arguments:\n\n"
-                                 "      -h, -help:  open this help menu\n\n"
-                                 "    Note that filenames may never start with a \"-\".\n"
-                                 "    Input settings:\n"
-                                 "      Note that duplicate input files are removed by default, even when they have a different name.\n"
-                                 "      -i,  -input <PATH> [PATH]   input files or directories in which to recursively search for .mzML files.\n"
-                                 "                                  you can enter any number of targets, as long as no file starts with a \"-\"\n"
-                                 "                                  or contains two dots in a row. It is possible to use the -i flag multiple\n"
-                                 "                                  times within one execution.\n"
-                                 "                                  Note that qAlgorithms is case-sensitive when searching for files recursively. Make\n"
-                                 "                                  sure all your files have the correct extension (.mzML) and are not all lowercase (.mzml).\n"
-                                 "      -tl, -tasklist <PATH>:      pass a list of file paths to the function. A tasklist can also contain directories\n"
-                                 "                                  to search recursively and output directories for different blocks of the input files.\n"
-                                 "                                  You can comment out lines by starting them with a \"#\".\n" // @todo update
-                                 "    Single-file output settings:\n"
-                                 "      The filename is always the original filename extended by the polarity and the processing step.\n"
-                                 "      -o,  -output <DIRECTORY>:   directory into which all output files should be printed.\n"
-                                 "      -pc, -printcentroids:       print all centroids produced after the first run of qcentroids.\n"
-                                 "      -ps, -printsummary:         print summarised information on the bins in addition to\n"
-                                 "                                  the peaktable. It is saved to your output directory\n"
-                                 "                                  under the name FILENAME_summary.csv.\n"
-                                 "      -pb, -printbins:            If this flag is set, both bin summary information and\n"
-                                 "                                  all binned centroids will be printed to the output location\n"
-                                 "                                  in addition to the final peak table. The file ends in _bins.csv.\n"
-                                 "      -pf, -printfeatures         print the feature list as csv.\n"
-                                 "      -e,  -extended:             print additional information into the final peak list. You do not\n"
-                                 "                                  have to also set the -pf flag. The extended output includes the\n"
-                                 "                                  ID of the bin a given peak was found in, its start and end\n"
-                                 "                                  position (by index) within the bin, the lowest and highest retenetion \n"
-                                 "                                  times in the peak and the intensity as apex height.\n"
-                                 "      -sp, -subprofile:           (not implemented yet) instead of the peaks, print all proflie-mode data points which\n" // @todo
-                                 "                                  were used to create the final peaks. This does not return any quality\n"
-                                 "                                  scores. Only use this option when reading in prodile mode files.\n"
-                                 "      -pa, -printall:             print all availvable resutlts. You will probably not need to do this.\n"
-                                 "    Program behaviour:\n"
-                                 "      -s, -silent:    do not print progress reports to standard out.\n"
-                                 "      -v, -verbose:   print a detailed progress report to standard out.\n"
-                                 "      -skip-existing  do not write to files that already exist, even if an output option is set.\n"
-                                 "      -skip-error:    if processing fails, the program will not exit and instead start processing\n"
-                                 "                      the next file in the tasklist.\n"
-                                 "      -log:           This option will create a detailed log file in the program directory.\n"
-                                 "                      A name can be supplied with a string following the argument. If this is not\n"
-                                 "                      done by the user, the default log will be written or overwritten.\n"
-                                 "    Analysis options:\n"
-                                 "      -MS2:               also process MS2 spectra (not implemented yet)\n" // @todo
-                                 "      -ppm <number>:      this sets the centroid error when reading in pre-centroided data\n"
-                                 "                          with qAlgorithms to <number> * 10^-6 * m/z of the centroid. We recommend\n"
-                                 "                          you always use the centroiding algorithm implemented in qAlgorithms.\n"
-                                 "                          This parameter is significantly different from an EIC standard deviation estimator (XCMS)!\n"
-                                 "                          By default, this value is set to 0.25.\n"
-                                 "      -mz-abs <number>:   (not implemented yet) add this absolute error (in Dalton) to the relative error specified by -ppm.\n"; //@todo
+    static std::string helpinfo = " help information:\n\n" // @todo std::format
+                                  "    qAlgorithms is a software project for non-target screening using mass spectrometry.\n"
+                                  "    For more information, visit our github page: https://github.com/odea-project/qAlgorithms.\n"
+                                  "    As of now (2024-10-31), only mzML files are supported. This program accepts the following command-line arguments:\n\n"
+                                  "      -h, -help:  open this help menu\n\n"
+                                  "    Note that filenames may never start with a \"-\".\n"
+                                  "    Input settings:\n"
+                                  "      Note that duplicate input files are removed by default, even when they have a different name.\n"
+                                  "      -i,  -input <PATH> [PATH]   input files or directories in which to recursively search for .mzML files.\n"
+                                  "                                  you can enter any number of targets, as long as no file starts with a \"-\"\n"
+                                  "                                  or contains two dots in a row. It is possible to use the -i flag multiple\n"
+                                  "                                  times within one execution.\n"
+                                  "                                  Note that qAlgorithms is case-sensitive when searching for files recursively. Make\n"
+                                  "                                  sure all your files have the correct extension (.mzML) and are not all lowercase (.mzml).\n"
+                                  "      -tl, -tasklist <PATH>:      pass a list of file paths to the function. A tasklist can also contain directories\n"
+                                  "                                  to search recursively and output directories for different blocks of the input files.\n"
+                                  "                                  You can comment out lines by starting them with a \"#\".\n" // @todo update
+                                  "    Single-file output settings:\n"
+                                  "      The filename is always the original filename extended by the polarity and the processing step.\n"
+                                  "      -o,  -output <DIRECTORY>:   directory into which all output files should be printed.\n"
+                                  "      -pc, -printcentroids:       print all centroids produced after the first run of qcentroids.\n"
+                                  "      -pb, -printbins:            If this flag is set, both bin summary information and\n"
+                                  "                                  all binned centroids will be printed to the output location\n"
+                                  "                                  in addition to the final peak table. The file ends in _bins.csv.\n"
+                                  "      -pf, -printfeatures         print the feature list as csv.\n"
+                                  "      -e,  -extended:             print additional information into the final peak list. You do not\n"
+                                  "                                  have to also set the -pf flag. The extended output includes the\n"
+                                  "                                  ID of the bin a given peak was found in, its start and end\n"
+                                  "                                  position (by index) within the bin, the lowest and highest retenetion \n"
+                                  "                                  times in the peak and the intensity as apex height.\n"
+                                  "      -sp, -subprofile:           (not implemented yet) instead of the peaks, print all proflie-mode data points which\n" // @todo
+                                  "                                  were used to create the final peaks. This does not return any quality\n"
+                                  "                                  scores. Only use this option when reading in prodile mode files.\n"
+                                  "      -pa, -printall:             print all availvable resutlts. You will probably not need to do this.\n"
+                                  "    Program behaviour:\n"
+                                  "      -s, -silent:    do not print progress reports to standard out.\n"
+                                  "      -v, -verbose:   print a detailed progress report to standard out.\n"
+                                  "      -skip-existing  do not write to files that already exist, even if an output option is set.\n"
+                                  "      -skip-error:    if processing fails, the program will not exit and instead start processing\n"
+                                  "                      the next file in the tasklist.\n"
+                                  "      -log:           This option will create a detailed log file in the program directory.\n"
+                                  "                      A name can be supplied with a string following the argument. If this is not\n"
+                                  "                      done by the user, the default log will be written or overwritten.\n"
+                                  "    Analysis options:\n"
+                                  "      -MS2:               also process MS2 spectra (not implemented yet)\n" // @todo
+                                  "      -ppm <number>:      this sets the centroid error when reading in pre-centroided data\n"
+                                  "                          with qAlgorithms to <number> * 10^-6 * m/z of the centroid. We recommend\n"
+                                  "                          you always use the centroiding algorithm implemented in qAlgorithms.\n"
+                                  "                          This parameter is significantly different from an EIC standard deviation estimator (XCMS)!\n"
+                                  "                          By default, this value is set to 0.25.\n"
+                                  "      -mz-abs <number>:   (not implemented yet) add this absolute error (in Dalton) to the relative error specified by -ppm.\n"; //@todo
+   
 #pragma endregion helpstring
 
 #pragma region "command line arguments"
@@ -80,32 +78,31 @@ namespace qAlgorithms
     {
         volatile bool debug = false;
         // this function processes all cli arguments supplied by the user
-        assert(argc > 0);
 
         // return this struct
         UserInputSettings args;
         assert(args.inputPaths.empty());
         assert(args.outputPath.empty());
 
-        if (debug)
+        if (argc == 1 && !debug)
+        {
+            // run in interactive mode
+            args = interactiveMode(argv);
+        }
+        else if (debug)
         {
             argc = 0;
-            args.inputPaths.push_back("/home/terry/Work/Messdaten/david/20240805_AA_DK_Ibu_pH6_15min_20240806221730.mzML");
+            // args.inputPaths.push_back("C:/Users/unisys/Documents/Studium/Messdaten/Wasser2_neg.mzML");
+            args.inputPaths.push_back("/home/terry/Work/Messdaten/LC_orbitrap_kali/");
         }
-
-        if (argc == 1)
-        {
-            std::cerr << helpinfo;
-            return args;
-        }
-
         for (int i = 1; i < argc; i++)
         {
             std::string argument = argv[i];
             if ((argument == "-h") || (argument == "-help"))
             {
                 std::cout << "\n    " << argv[0] << helpinfo;
-                return args;
+                exit(0);
+                // return args;
             }
             else if ((argument == "-s") || (argument == "-silent"))
             {
@@ -236,10 +233,6 @@ namespace qAlgorithms
             {
                 args.printCentroids = true;
             }
-            else if ((argument == "-ps") || (argument == "-printsummary"))
-            {
-                args.printSummary = true;
-            }
             else if ((argument == "-pb") || (argument == "-printbins"))
             {
                 args.printBins = true;
@@ -260,7 +253,6 @@ namespace qAlgorithms
             {
                 args.printCentroids = true;
                 args.printBins = true;
-                args.printSummary = true;
                 args.printExtended = true;
                 args.printSubProfile = true;
             }
@@ -293,6 +285,51 @@ namespace qAlgorithms
         return args;
     }
 
+    UserInputSettings interactiveMode(char *argv[])
+    {
+        // this function is called if qAlgorithms is executed without arguments
+        std::cout << "    ### qAlgorithms interactive terminal interface ###\n"
+                  << "relative paths are not supported in this mode\n"
+                  << "drag the folder or file you want to process into this window and press \"enter\" to continue:\n";
+        std::string inputPath;
+        std::cin >> inputPath;
+
+        std::cout << "drag the folder you want the output files written to into this window and press \"enter\" to continue.\n"
+                  << "enter \"#\" to write to the input path.\n";
+        std::string outputPath;
+        std::cin >> outputPath;
+
+        if (outputPath[0] == '#')
+        {
+            if (std::filesystem::status(inputPath).type() != std::filesystem::file_type::directory)
+            {
+                outputPath = std::filesystem::path(inputPath).parent_path().string();
+            }
+            else
+            {
+                outputPath = inputPath;
+            }
+        }
+        std::cout << outputPath;
+        return UserInputSettings{
+            // user input for input and output
+            std::vector<std::string>{inputPath},
+            outputPath,
+            false,
+            false,
+            false,
+            false,
+            true, // only print standard feature list
+            false,
+            false,
+            false,
+            false,
+            false,
+            0,
+            false,
+            true};
+    }
+
     bool inputsAreSensible(UserInputSettings &args)
     {
         // program exits if an error is found, but only after displaying all warnings
@@ -307,9 +344,46 @@ namespace qAlgorithms
         if (args.outputPath.empty())
         {
 
-            if (args.printCentroids || args.printSummary || args.printFeatures)
+            if (args.printCentroids || args.printFeatures || args.printBins)
             {
-                std::cerr << "Error: no output files can be written.\n";
+                std::string badOptions = "";
+                bool prevBad = false;
+                if (args.printCentroids)
+                {
+                    prevBad = true;
+                    badOptions += "-printcentroids";
+                }
+                if (args.printBins)
+                {
+                    if (prevBad)
+                    {
+                        badOptions += ", ";
+                    }
+                    prevBad = true;
+                    badOptions += "-printbins";
+                }
+                if (args.printFeatures)
+                {
+                    if (prevBad)
+                    {
+                        badOptions += ", ";
+                    }
+                    badOptions += "-printfeatures";
+                }
+                bool pluralSet = false;
+                if (badOptions.size() > 15) // more than one option was set
+                {
+                    pluralSet = true;
+                }
+
+                if (pluralSet)
+                {
+                    std::cerr << "Error: output flags \"" << badOptions << "\" were set, but no output path supplied.\n";
+                }
+                else
+                {
+                    std::cerr << "Error: output flag \"" << badOptions << "\" was set, but no output path supplied.\n";
+                }
                 goodInputs = false;
             }
             else
@@ -319,7 +393,7 @@ namespace qAlgorithms
         }
         else if (!std::filesystem::exists(args.outputPath))
         {
-            std::cerr << "Error: the specified output path does not exist.\n";
+            std::cerr << "Error: the specified output path \"" << args.outputPath << "\" does not exist.\n";
             goodInputs = false;
         }
         else if (std::filesystem::status(args.outputPath).type() != std::filesystem::file_type::directory)
@@ -337,7 +411,7 @@ namespace qAlgorithms
             std::cerr << "Warning: -verbose overrides -silent.\n";
             args.silent = false;
         }
-        if (!((args.printCentroids || args.printSummary) || args.printFeatures) && !(args.outputPath.empty()))
+        if (!((args.printCentroids || args.printBins) || args.printFeatures) && !(args.outputPath.empty()))
         {
             std::cerr << "Warning: no output files will be written.\n";
         }
@@ -352,6 +426,16 @@ namespace qAlgorithms
             std::cerr << "Notice: the changed centroid certainty will only affect pre-centroided data.\n";
             PPM_PRECENTROIDED = args.newPPM;
         }
+        if (!goodInputs && args.interactive)
+        {
+            std::cout << "   inputs are incorrect - enter \"exit\" to close this program:\n";
+            std::string userInput;
+            while (userInput != "exit")
+            {
+                std::cin >> userInput;
+            }
+        }
+
         return goodInputs;
     }
 
@@ -479,9 +563,9 @@ namespace qAlgorithms
 
 #pragma region "print functions"
     /// @todo make universal print function, fix out-of-bounds access, chi squared test for binning
-    void printPeaklist(std::vector<std::vector<CentroidPeak>> peaktable,
-                       std::vector<float> convertRT, std::filesystem::path pathOutput,
-                       std::string filename, bool silent, bool skipError, bool noOverwrite)
+    void printCentroids(std::vector<std::vector<CentroidPeak>> peaktable,
+                        std::vector<float> convertRT, std::filesystem::path pathOutput,
+                        std::string filename, bool silent, bool skipError, bool noOverwrite)
     {
         filename += "_centroids.csv";
         pathOutput /= filename;
@@ -497,7 +581,7 @@ namespace qAlgorithms
         }
         if (!silent)
         {
-            std::cout << "writing peaks to: " << pathOutput << "\n\n";
+            std::cout << "writing peaks to: " << pathOutput << "\n";
         }
 
         std::ofstream file_out;
@@ -510,7 +594,7 @@ namespace qAlgorithms
             return;
         }
         output << "ID,mz,mzUncertainty,scanNumber,retentionTime,area,areaUncertainty,"
-               << "height,heightUncertainty,dqsCen\n";
+               << "height,heightUncertainty,degreesOfFreedom,dqsCen\n";
         unsigned int counter = 1;
         for (size_t i = 0; i < peaktable.size(); i++)
         {
@@ -519,10 +603,10 @@ namespace qAlgorithms
                 for (size_t j = 0; j < peaktable[i].size(); ++j)
                 {
                     auto peak = peaktable[i][j];
-                    char buffer[128];
-                    sprintf(buffer, "%d,%0.6f,%0.6f,%d,%0.4f,%0.4f,%0.4f,%0.4f,%0.4f,%0.5f\n",
+                    char buffer[256];
+                    sprintf(buffer, "%d,%0.6f,%0.6f,%d,%0.4f,%0.4f,%0.4f,%0.4f,%0.4f,%u,%0.5f\n",
                             counter, peak.mz, peak.mzUncertainty, peak.scanNumber, convertRT[peak.scanNumber],
-                            peak.area, peak.areaUncertainty, peak.height, peak.heightUncertainty, peak.dqsCen);
+                            peak.area, peak.areaUncertainty, peak.height, peak.heightUncertainty, peak.df, peak.dqsCen);
                     output << buffer;
                     ++counter;
                 }
@@ -538,6 +622,9 @@ namespace qAlgorithms
                             std::filesystem::path pathOutput, std::string filename,
                             bool silent, bool skipError, bool noOverwrite)
     {
+        // @todo should this be added to the program?
+        std::cout << "subprofiles might not be a valid concept, exiting.\n";
+        exit(1);
         filename += "_subprofiles.csv";
         pathOutput /= filename;
 
@@ -553,7 +640,7 @@ namespace qAlgorithms
 
         if (!silent)
         {
-            std::cout << "writing profile information of peaks to: " << pathOutput << "\n\n";
+            std::cout << "writing profile information of peaks to: " << pathOutput << "\n";
         }
 
         std::ofstream file_out;
@@ -573,6 +660,55 @@ namespace qAlgorithms
                 char buffer[64];
                 sprintf(buffer, "%zu,%0.8f,%0.8f,%d,%0.8f\n",
                         i, point.mz, point.rt, point.scan, point.intensity);
+                output << buffer;
+            }
+        }
+        file_out << output.str();
+        file_out.close();
+        return;
+    }
+
+    void printBins(std::vector<EIC> bins, std::filesystem::path pathOutput, std::string filename,
+                   bool silent, bool skipError, bool noOverwrite)
+    {
+        filename += "_bins.csv";
+        pathOutput /= filename;
+
+        if (std::filesystem::exists(pathOutput))
+        {
+            if (noOverwrite)
+            {
+                std::cerr << "Warning: " << pathOutput << " already exists and will not be overwritten\n";
+                return;
+            }
+            std::filesystem::remove(pathOutput);
+        }
+
+        if (!silent)
+        {
+            std::cout << "writing bins to: " << pathOutput << "\n";
+        }
+
+        std::ofstream file_out;
+        std::stringstream output;
+        file_out.open(pathOutput, std::ios::out);
+        if (!file_out.is_open())
+        {
+            std::cerr << "Error: could not open output path during bin printing. No files have been written.\n"
+                      << "Filename: " << pathOutput << "\n";
+            return;
+        }
+        // @todo consider if the mz error is relevant when checking individual bins
+        output << "binID,mz,mzError,retentionTime,scanNumber,area,height,degreesOfFreedom,DQSC,DQSB\n";
+        for (size_t binID = 0; binID < bins.size(); binID++)
+        {
+            for (size_t i = 0; i < bins[binID].mz.size(); i++)
+            {
+                char buffer[128];
+                sprintf(buffer, "%zu,%0.8f,%0.8f,%0.4f,%d,%0.6f,%0.6f,%u,%0.4f,%0.4f\n",
+                        binID, bins[binID].mz[i], bins[binID].predInterval[i],
+                        bins[binID].rententionTimes[i], bins[binID].scanNumbers[i], bins[binID].ints_area[i],
+                        bins[binID].ints_height[i], bins[binID].df[i], bins[binID].DQSC[i], bins[binID].DQSB[i]);
                 output << buffer;
             }
         }
@@ -605,7 +741,7 @@ namespace qAlgorithms
         }
         if (!silent)
         {
-            std::cout << "writing peaks to: " << pathOutput << "\n\n";
+            std::cout << "writing peaks to: " << pathOutput << "\n";
         }
 
         std::ofstream file_out;
@@ -620,7 +756,8 @@ namespace qAlgorithms
 
         output << "ID,binID,binIdxStart,binIdxEnd,mz,mzUncertainty,retentionTime,retentionTimeUncertainty,"
                << "lowestRetentionTime,highestRetentionTime,area,areaUncertainty,height,heightUncertainty,"
-               << "mse,binTestCode,dqsCen,dqsBin,dqsPeak,b0,b1,b2,b3,rt0\n";
+               << "dqsCen,dqsBin,dqsPeak,rt_switch,b0,b1,b2,b3\n";
+
         unsigned int counter = 1;
         for (size_t i = 0; i < peaktable.size(); i++)
         {
@@ -629,11 +766,13 @@ namespace qAlgorithms
             std::vector<float> RTs = originalBins[binID].rententionTimes;
 
             char buffer[256];
-            sprintf(buffer, "%d,%d,%d,%d,%0.6f,%0.6f,%0.4f,%0.4f,%0.4f,%0.4f,%0.3f,%0.3f,%0.3f,%0.3f,%0.3f,%d,%0.5f,%0.5f,%0.5f,%0.6f,%0.6f,%0.6f,%0.6f,%0.4f\n",
+            sprintf(buffer, "%d,%d,%d,%d,%0.6f,%0.6f,%0.4f,%0.4f,%0.4f,%0.4f,%0.3f,%0.3f,%0.3f,%0.3f,%0.5f,%0.5f,%0.5f,%0.8f,%0.8f,%0.8f,%0.8f,%0.8f\n",
                     counter, binID, peak.idxPeakStart, peak.idxPeakEnd, peak.mz, peak.mzUncertainty,
                     peak.retentionTime, peak.retentionTimeUncertainty, RTs[peak.idxPeakStart], RTs[peak.idxPeakEnd],
-                    peak.area, peak.areaUncertainty, peak.height, peak.heightUncertainty, peak.mse, int(originalBins[binID].errorcode),
-                    peak.dqsCen, peak.dqsBin, peak.dqsPeak, peak.coefficients.b0, peak.coefficients.b1, peak.coefficients.b2, peak.coefficients.b3, peak.rt0);
+                    peak.area, peak.areaUncertainty, peak.height, peak.heightUncertainty,
+                    peak.dqsCen, peak.dqsBin, peak.dqsPeak,
+                    // properties relevant for componentisation, remove this later
+                    peak.rt_switch, peak.coefficients.b0, peak.coefficients.b1, peak.coefficients.b2, peak.coefficients.b3);
             output << buffer;
             ++counter;
         }

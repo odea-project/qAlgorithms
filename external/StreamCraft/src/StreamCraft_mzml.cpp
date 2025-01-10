@@ -629,6 +629,7 @@ std::vector<std::vector<double>> sc::mzml::MZML::extract_spectrum(const pugi::xm
 
     if (bin_array_size != number_traces)
     {
+      return std::vector<std::vector<double>>{0}; // this happens if an index is tried which does not exist in the data
       // @todo fix exceptions
       throw("Number of traces in binary array does not match the value of the spectrum header!");
     }
@@ -848,6 +849,7 @@ std::vector<std::vector<double>> sc::mzml::MZML::extract_chromatogram(const pugi
 
     if (bin_array_size != number_traces)
     {
+      return std::vector<std::vector<double>>{0};
       // @todo fix exceptions
       throw("Number of traces in binary array does not match the value of the chromatogram header!");
     }

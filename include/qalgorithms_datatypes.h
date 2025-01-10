@@ -10,6 +10,17 @@
 
 namespace qAlgorithms
 {
+  struct dataPoint // @todo remove this (again)
+  {
+    float x;
+    float y;
+    bool df;
+    float dqsCentroid;
+    float dqsBinning;
+    int scanNumber;
+    float mz;
+  };
+
   /**
    * @brief A class to store peak data
    * @details The Peak class is used to store peak data. It contains the position, height, width, and area of the peak. The class also contains the uncertainty of the peak position, height, width, and area, the data quality score of the peak, the regression coefficients, the valley position, the degrees of freedom, and the index of the regression window position.
@@ -33,26 +44,25 @@ namespace qAlgorithms
 
   struct RegCoeffs
   {
-    float b0, b1, b2, b3;
+    float b0, b1, b2, b3 = 0;
   };
 
   struct RegressionGauss
   {
     RegCoeffs newCoeffs;
-    __m128 coeff;             // regression coefficients
-    int index_x0;             // index of window center (x==0) in the Y matrix
-    int scale;                // scale of the regression window, i.e., 2*scale+1 = window size
-    int df;                   // degree of freedom, interpolated data points will not be considered
-    float apex_position;      // position of the apex of the peak
-    float mse;                // mean squared error
-    bool isValid;             // flag to indicate if the regression is valid
-    unsigned int left_limit;  // left limit of the peak regression window
-    unsigned int right_limit; // right limit of the peak regression window
-    float area;               // area of the peak
-    // float height;
-    float uncertainty_area; // uncertainty of the area
-    float uncertainty_pos;  // uncertainty of the position
-    float uncertainty_height;
+    __m128 coeff;                 // regression coefficients
+    int index_x0 = 0;             // index of window center (x==0) in the Y matrix
+    int scale = 0;                // scale of the regression window, i.e., 2*scale+1 = window size
+    int df = 0;                   // degree of freedom, interpolated data points will not be considered
+    float apex_position = 0;      // position of the apex of the peak
+    float mse = 0;                // mean squared error; this is not always used and should not be a part of the regression struct @todo
+    unsigned int left_limit = 0;  // left limit of the peak regression window
+    unsigned int right_limit = 0; // right limit of the peak regression window
+    float area = 0;               // area of the peak
+    float uncertainty_area = 0;   // uncertainty of the area
+    float uncertainty_pos = 0;    // uncertainty of the position
+    float uncertainty_height = 0;
+    bool isValid = false; // flag to indicate if the regression is valid
   };
 
   struct CentroidPeak
@@ -65,7 +75,8 @@ namespace qAlgorithms
     float dqsCen;
     float mz;
     float mzUncertainty;
-    int scanNumber;
+    unsigned int scanNumber;
+    unsigned int df; // degrees of freedom
   };
 
   struct FeaturePeak
@@ -86,18 +97,36 @@ namespace qAlgorithms
     int idxBin;
     unsigned int idxPeakStart; // degrees of freedom = idxPeakEnd - idxPeakStart
     unsigned int idxPeakEnd;
-    float mse; // mean squared error
-    float rt0; // retention time of the swtichting point considering beta 2 and beta 3
+    float rt_switch;
+  };
+
+  struct qCentroid
+  {
+    float mzError = -1;
+    float mz;
+    unsigned int scanNo;
+    float int_area;   // the intensity is never used during binning @todo
+    float int_height; // s.o.
+    float DQSCentroid;
+    unsigned int df; // degrees of freedom
+  };
+
+  struct CentroidedData
+  {
+    std::vector<std::vector<qCentroid>> allDatapoints;
+    size_t lengthAllPoints; // number of centroids in all scans
   };
 
   struct EIC // Extracted Ion Chromatogram
   {
-    std::byte errorcode;
-    std::vector<int> scanNumbers;
+    // std::byte errorcode;
+    std::vector<unsigned int> scanNumbers;
     std::vector<float> rententionTimes;
     std::vector<float> mz;
+    std::vector<float> predInterval;
     std::vector<float> ints_area;
     std::vector<float> ints_height;
+    std::vector<unsigned int> df;
     std::vector<float> DQSB;
     std::vector<float> DQSC;
   };
