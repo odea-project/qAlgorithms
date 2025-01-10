@@ -69,6 +69,7 @@ namespace qAlgorithms
                                   "                          This parameter is significantly different from an EIC standard deviation estimator (XCMS)!\n"
                                   "                          By default, this value is set to 0.25.\n"
                                   "      -mz-abs <number>:   (not implemented yet) add this absolute error (in Dalton) to the relative error specified by -ppm.\n"; //@todo
+   
 #pragma endregion helpstring
 
 #pragma region "command line arguments"
@@ -756,6 +757,7 @@ namespace qAlgorithms
         output << "ID,binID,binIdxStart,binIdxEnd,mz,mzUncertainty,retentionTime,retentionTimeUncertainty,"
                << "lowestRetentionTime,highestRetentionTime,area,areaUncertainty,height,heightUncertainty,"
                << "dqsCen,dqsBin,dqsPeak,rt_switch,b0,b1,b2,b3\n";
+
         unsigned int counter = 1;
         for (size_t i = 0; i < peaktable.size(); i++)
         {
