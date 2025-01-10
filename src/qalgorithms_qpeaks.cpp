@@ -897,6 +897,9 @@ namespace qAlgorithms
             {
                 FeaturePeak peak;
 
+                // add mse
+                peak.mse = regression.mse;
+
                 // add height
                 RegCoeffs coeff = regression.newCoeffs;
                 peak.height = exp_approx_d(coeff.b0 + (regression.apex_position - regression.index_x0) * coeff.b1 * 0.5); // peak height (exp(b0 - b1^2/4/b2)) with position being -b1/2/b2

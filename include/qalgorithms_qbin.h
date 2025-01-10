@@ -185,6 +185,7 @@ namespace qAlgorithms
 
     void removeMassJumps(std::vector<Bin> *target, std::vector<const qCentroid *> *notInBins, Bin bin);
 
+
 #pragma endregion "Bin Container"
     // ####################################################################################################### //
 
