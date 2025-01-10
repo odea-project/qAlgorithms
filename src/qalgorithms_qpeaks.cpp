@@ -291,9 +291,9 @@ namespace qAlgorithms
             assert(n > 2 * scale);
 
             __m128 result[n - 2 * scale];
-            __m128 products[n];
+
             const __m128 flipSign = _mm_set_ps(1.0f, 1.0f, -1.0f, 1.0f);
-            convolve_SIMD(scale, ylog_start, n, result, products);
+            convolve_SIMD(scale, ylog_start, n, result);
 
             for (size_t i = 0; i < n - 2 * scale; i++)
             { // swap beta2 and beta3 and flip the sign of beta1 // @todo: this is a temporary solution
@@ -312,27 +312,31 @@ namespace qAlgorithms
     void convolve_SIMD(
         const size_t scale,
         const float *vec, // ylog_start
-        const size_t n,   // sumber of data points
-        __m128 *result,
-        __m128 *products)
+        const size_t n,   // sumber of data points in vec
+        __m128 *result)
     {
+        assert(scale > 1);
         // this function calculates the regression coefficients from the pseudoinverse matrix P and the y-values supplied through vec.
         // It is equivalent to sum(y[i] * P[i][0]) for beta0, beta1 etc. Every element of result is one set of coefficients (b0, b1, b2, b3)
-        size_t k = 2 * scale + 1;
-        size_t n_segments = n - k + 1;
-        size_t centerpoint = k / 2;
 
+        size_t n_segments = n - 2 * scale;
+        // centerpoint is always == scale
+        // size_t k = 2 * scale + 1;
+        // size_t centerpoint = k / 2;
+        // assert(centerpoint == scale);
+
+        __m128 products[n]; // holds the products of vec and the scale factor
         for (size_t i = 0; i < n; ++i)
         {
             products[i] = _mm_setzero_ps();
         }
         size_t scale6 = scale * 6;
-        // activeKernel in positions 2 and 3 is not identical during the calculation
+        // activeKernel starts as the kernel offsets
         // this kernel is used to exploit symmetry in the pseudoinverse of the regression. It is constructed iteratively in the loop
-        __m128 activeKernel = _mm_set_ps(INV_ARRAY[scale6 + 1],
-                                         INV_ARRAY[scale6 + 1],
-                                         0.0f,
-                                         INV_ARRAY[scale6 + 0]);
+        __m128 activeKernel = _mm_set_ps(INV_ARRAY[scale6 + 1],  // coeff b3
+                                         INV_ARRAY[scale6 + 1],  // coeff b2
+                                         0.0f,                   // coeff b1
+                                         INV_ARRAY[scale6 + 0]); // coeff b0
         // this kernel is used to calculate the next active kernel
         __m128 updateKernel = _mm_set_ps(INV_ARRAY[scale6 + 3] - INV_ARRAY[scale6 + 5],
                                          -INV_ARRAY[scale6 + 3] - INV_ARRAY[scale6 + 4],
@@ -346,8 +350,11 @@ namespace qAlgorithms
 
         for (size_t i = 0; i < n_segments; i++)
         {
-            // set all elements of vec_values to vec[i + centerpoint]
-            __m128 vec_values = _mm_set1_ps(vec[i + centerpoint]);
+            // calculate the center point of the regression window for all applicable vec
+            // max index of vec: vec[n - (2 * scale + 1) + 1 + (2 * scale + 1) / 2]
+            // = n + 1 - (2 * scale + 1) / 2
+            // = n + 1 - scale // scale is always > 1, so vec is not accessed past n - 1
+            __m128 vec_values = _mm_set1_ps(vec[i + scale]);
             // result[i][2] is always 0
             result[i] = _mm_mul_ps(vec_values, activeKernel);
         }
@@ -359,22 +366,46 @@ namespace qAlgorithms
             // activeKernel = activeKernel original + i * updateKernel
             activeKernel = _mm_add_ps(activeKernel, updateKernel);
 
-            for (size_t j = 0; j < n; j++)
+            size_t u = 0;
+            for (size_t j = scale - i; j < (n - scale + i); j++) // j_start = scale - 1 : 0; j_end = n - scale + 1 : n - scale + scale
             {
-                // max access position of vec is n - 1 + scale + 1, with n being the number of points in ylog
-                __m128 vec_values = _mm_set1_ps(vec[j + scale - i]); // why this? !! there is a buffer overflow for this line (address sanitizer report)
-                products[j] = _mm_mul_ps(vec_values, activeKernel);
+                __m128 vec_values = _mm_set1_ps(vec[j]);
+                products[u] = _mm_mul_ps(vec_values, activeKernel); // contains the four coefficient products for vec[j]
+                u++;
             }
 
             for (size_t j = 0; j < n_segments; j++)
             {
-                __m128 products_temp = _mm_permute_ps(products[j], 0b10110100); // swap places of b0 and b1(?)
-                __m128 sign_flip = _mm_set_ps(1.0f, 1.0f, -1.0f, 1.0f);         // why only flip the sign of b2?
-                products_temp = _mm_fmadd_ps(products_temp, sign_flip, products[2 * i + j]);
+                __m128 products_temp = _mm_permute_ps(products[j], 0b10110100);              // swap places of b0 and b1(?)
+                __m128 sign_flip = _mm_set_ps(1.0f, 1.0f, -1.0f, 1.0f);                      // why only flip the sign of b2?
+                products_temp = _mm_fmadd_ps(products_temp, sign_flip, products[2 * i + j]); // why this access pattern? @todo
                 result[j] = _mm_add_ps(result[j], products_temp);
             }
         }
     }
+
+    void convolve_details(
+        const size_t scale,
+        const float *measuredPoints, // ylog_start
+        const size_t arraySize,      // number of data points in vec
+        __m128 *result)              // coefficients b0, b1, b2, b3 for the points supplied through measuredPoints
+    {
+        // this function calculates the four regression coefficients needed to describe a peak
+        // normally, the pseudoinverse would need to be calculated. An equivalent is pre-computed with the
+        // INV_ARRAY global constant.
+
+        // for every element of measuredPoints, the sum of measuredPoints[i] * the pseudoinverse is calculated
+        // per coefficient. The pseudoinverse is an array of size 2 * scale + 1. producs[i] is the sum of
+        // measuredPoints[i] * pseudoiverse[0] to measuredPoints[i + 2 * scale + 1] * pseudoiverse[i + 2 * scale + 1]
+
+        // we use a vector array so that every coefficient can be calculated at once.
+        __m128 products[arraySize];
+        for (size_t i = 0; i < arraySize; ++i)
+        {
+            products[i] = _mm_setzero_ps();
+        }
+    }
+
 #pragma endregion "running regression"
 
 #pragma region validateRegressions

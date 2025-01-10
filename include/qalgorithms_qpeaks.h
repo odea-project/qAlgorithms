@@ -250,8 +250,7 @@ namespace qAlgorithms
         const size_t scale,
         const float *vec,
         const size_t n,
-        __m128 *result,
-        __m128 *products);
+        __m128 *result);
 
     std::pair<float, float> weightedMeanAndVariance(const float *x, const float *w, const bool *df,
                                                     int left_limit, int right_limit);
