@@ -18,7 +18,6 @@ namespace qAlgorithms
         // output options
         bool printCentroids = false;
         bool printBins = false;
-        bool printSummary = false;
         bool printExtended = false;
         bool printFeatures = false;
         bool printSubProfile = false;
@@ -31,9 +30,12 @@ namespace qAlgorithms
         bool noOverwrite = false;
         float newPPM = 0;               // @todo not a good idea
         bool tasklistSpecified = false; // @todo implement
+        bool interactive = false;
     };
 
     UserInputSettings passCliArgs(int argc, char *argv[]);
+
+    UserInputSettings interactiveMode(char *argv[]);
 
     bool inputsAreSensible(UserInputSettings &args);
 
@@ -69,13 +71,16 @@ namespace qAlgorithms
         float intensity;
     };
 
-    void printPeaklist(std::vector<std::vector<CentroidPeak>> peaktable,
-                       std::vector<float> convertRT, std::filesystem::path pathOutput,
-                       std::string filename, bool silent, bool skipError, bool noOverwrite);
+    void printCentroids(std::vector<std::vector<CentroidPeak>> peaktable,
+                        std::vector<float> convertRT, std::filesystem::path pathOutput,
+                        std::string filename, bool silent, bool skipError, bool noOverwrite);
 
     void printProfilePoints(std::vector<std::vector<ProfilePoint>> peakComponents,
                             std::filesystem::path pathOutput, std::string filename,
                             bool silent, bool skipError, bool noOverwrite);
+
+    void printBins(std::vector<EIC> bins, std::filesystem::path pathOutput, std::string filename,
+                   bool silent, bool skipError, bool noOverwrite);
 
     void printFeatureList(std::vector<FeaturePeak> peaktable,
                           std::filesystem::path pathOutput, std::string filename,
