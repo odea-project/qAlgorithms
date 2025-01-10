@@ -5,7 +5,6 @@
 // internal
 #include "qalgorithms_datatypes.h"
 #include "qalgorithms_measurement_data.h"
-#include "qalgorithms_qbin.h"
 
 // external
 #include <vector>
@@ -20,8 +19,7 @@ namespace qAlgorithms
 
     std::vector<CentroidPeak> findCentroids(
         treatedData &treatedData,
-        const int scanNumber,
-        const float retentionTime);
+        const int scanNumber);
 
     void findPeaks(
         std::vector<FeaturePeak> &all_peaks,
@@ -30,26 +28,12 @@ namespace qAlgorithms
     CentroidedData passToBinning(std::vector<std::vector<CentroidPeak>> &allPeaks,
                                  std::vector<unsigned int> addEmpty);
 
-    /**
-     * @brief Array of the unique entries from the inverse matrix: ( X.T * X ) ^-1
-     * @details the matrix has the following structure:
-     * A  0  B  B
-     * 0  C  D -D
-     * B  D  E  F
-     * B -D  F  E
-     * The structure of the array is as follows:
-     * invArray[scale][{A,B,C,D,E,F}]
-     */
-    // alignas(16) static float invArray[64][6]; // contains the unique entries from the inverse matrix
-
-    // methods
-    int calcNumberOfRegressions(const int n);
-
     void runningRegression(
         const float *y_start,
         const float *ylog_start,
         const bool *df_start,
-        const int n,
+        const size_t arrayMaxLength,
+        const size_t n,
         std::vector<RegressionGauss> &validRegressions);
 
     void validateRegressions(
@@ -58,42 +42,25 @@ namespace qAlgorithms
         const float *y_start,
         const float *ylog_start,
         const bool *df_start,
+        const size_t arrayMaxLength,
         const int scale,
         std::vector<RegressionGauss> &validRegressions);
 
-    void validateRegressions_static(
-        const int n,
-        const float *y_start,
-        const float *ylog_start,
-        const bool *df_start,
-        const int scale,
-        int &validRegressionsIndex,
-        RegressionGauss *validRegressions);
-
-    RegressionGauss makeValidRegression(
+    void makeValidRegression(
+        RegressionGauss *mutateReg,
         const int i,
         const int scale,
         const bool *df_start,
         const float *y_start,
-        const float *ylog_start,
-        const __m128 coeff);
+        const float *ylog_start);
 
     std::vector<RegressionGauss> mergeRegressionsOverScales(
         std::vector<RegressionGauss> validRegressions,
-        const float *y_start,
-        const bool *df_start);
-
-    void mergeRegressionsOverScales_static(
-        RegressionGauss *validRegressions,
-        const int n_regressions,
-        const float *y_start,
-        // const float *ylog_start,
-        const bool *df_start);
+        const float *y_start);
 
     void createCentroidPeaks(
         std::vector<CentroidPeak> &peaks,
-        RegressionGauss *validRegressions,
-        std::vector<RegressionGauss> *validRegressionsVec,
+        const std::vector<RegressionGauss> *validRegressionsVec,
         const int validRegressionsIndex,
         const float *y_start,
         const float *mz_start,
@@ -102,7 +69,6 @@ namespace qAlgorithms
 
     void createFeaturePeaks(
         std::vector<FeaturePeak> &peaks,
-        RegressionGauss *validRegressions,
         std::vector<RegressionGauss> *validRegressionsVec,
         const int validRegressionsIndex,
         const float *y_start,
@@ -142,24 +108,6 @@ namespace qAlgorithms
         size_t startIdx,
         size_t endIdx);
 
-    void calcExtendedMse_static(
-        const float *y_start,
-        RegressionGauss *regressions_start,
-        const int n_regressions,
-        const bool *df_start);
-
-    void calcExtendedMsePair(
-        const float *y_start,
-        RegressionGauss *low_scale_regression,
-        RegressionGauss *hi_scale_regression,
-        const bool *df_start);
-
-    void calcExtendedMseOverScales(
-        const float *y_start,
-        RegressionGauss *validRegressions,
-        const std::vector<int> &validRegressionsInGroup,
-        const int i_new_peak);
-
     /**
      * @brief Calculate the degree of freedom of the regression model with the given regression window.
      * @details The degree of freedom is the number of data points minus the
@@ -189,9 +137,8 @@ namespace qAlgorithms
      * @return false : if the apex and valley positions are not valid (e.g., the apex position is not in the regression window)
      */
     bool calcApexAndValleyPos(
-        const __m128 coeff,
+        RegressionGauss *mutateReg,
         const int scale,
-        float &apex_position,
         float &valley_position);
 
     /**
@@ -199,14 +146,11 @@ namespace qAlgorithms
      * @details The function calculates the matrix product of J * Xinv * J^T. The matrix J is
      * the Jacobian matrix with an 1x4 size. The matrix Xinv is the inverse matrix of X^T * X,
      * where X is the design matrix. The matrix J * Xinv * J^T is a 1x1 matrix, i.e., a scalar value.
-     *
      * @param vec
      * @param scale
      * @return float
      */
-    float multiplyVecMatrixVecTranspose(
-        const float vec[4],
-        int scale);
+    inline float multiplyVecMatrixVecTranspose(const float vec[4], int scale);
 
     /**
      * @brief Checks if peak maximum is twice as high as the signal at the edge of the regression window.
@@ -241,7 +185,7 @@ namespace qAlgorithms
      * @return false : if the quadratic term is not valid
      */
     bool isValidQuadraticTerm(
-        RegCoeffs coeff,
+        const RegCoeffs coeff,
         const int scale,
         const float mse,
         const int df_sum);
@@ -264,10 +208,10 @@ namespace qAlgorithms
         const int df_sum,
         const float apexToEdge);
 
-    float calcPeakHeightUncert(
+    void calcPeakHeightUncert(
+        RegressionGauss *mutateReg,
         const float mse,
-        const int scale,
-        const float apex_position);
+        const int scale);
 
     /**
      * @brief Check if the peak area and the covered peak area are valid using t-test.
@@ -288,19 +232,13 @@ namespace qAlgorithms
      * @return false : if the peak area is not valid
      */
 
-    std::pair<float, float> calcPeakAreaUncert(
-        RegCoeffs coeff,
-        const float mse,
-        const int scale,
-        const int df_sum);
+    void calcPeakAreaUncert(RegressionGauss *mutateReg, const float mse, const int scale);
 
     bool isValidPeakArea(
         RegCoeffs coeff,
         const float mse,
         const int scale,
-        const int df_sum,
-        float &area,
-        float &uncertainty_area);
+        const int df_sum);
 
     float calcUncertaintyPos(
         const float mse,
@@ -308,24 +246,11 @@ namespace qAlgorithms
         const float apex_position,
         const int scale);
 
-    std::array<__m128, 512> convolve_static(
-        const size_t scale,
-        const float *vec,
-        const size_t n);
-
-    void convolve_dynamic(
-        const size_t scale,
-        const float *vec,
-        const size_t n,
-        __m128 *beta);
-
     void convolve_SIMD(
         const size_t scale,
         const float *vec,
         const size_t n,
-        __m128 *result,
-        __m128 *products,
-        const size_t buffer_size);
+        __m128 *result);
 
     std::pair<float, float> weightedMeanAndVariance(const float *x, const float *w, const bool *df,
                                                     int left_limit, int right_limit);
