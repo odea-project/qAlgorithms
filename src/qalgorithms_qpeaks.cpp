@@ -177,7 +177,7 @@ namespace qAlgorithms
             {
                 continue; // no valid peaks
             }
-            createCentroidPeaks(all_peaks, &validRegressions, validRegressions.size(), y_start, mz_start, df_start, scanNumber);
+            createCentroidPeaks(&all_peaks, &validRegressions, validRegressions.size(), y_start, mz_start, df_start, scanNumber);
             validRegressions.clear();
         }
         bool crash = false;
@@ -253,7 +253,7 @@ namespace qAlgorithms
             {
                 continue; // no valid peaks
             }
-            createFeaturePeaks(all_peaks, &validRegressions, validRegressions.size(), y_start,
+            createFeaturePeaks(&all_peaks, &validRegressions, validRegressions.size(), y_start,
                                mz_start, rt_start, df_start, dqs_cen_start, dqs_bin_start);
             validRegressions.clear();
         }
@@ -825,7 +825,7 @@ namespace qAlgorithms
     };
 
     void createCentroidPeaks(
-        std::vector<CentroidPeak> &peaks,
+        std::vector<CentroidPeak> *peaks,
         const std::vector<RegressionGauss> *validRegressionsVec,
         const int validRegressionsIndex,
         const float *y_start,
@@ -871,14 +871,14 @@ namespace qAlgorithms
                 // peak.idxPeakStart = regression.left_limit;
                 // peak.idxPeakEnd = regression.right_limit - 1;
 
-                peaks.push_back(std::move(peak));
+                peaks->push_back(std::move(peak));
             }
         }
     }
 
     void createFeaturePeaks(
-        std::vector<FeaturePeak> &peaks,
-        std::vector<RegressionGauss> *validRegressionsVec,
+        std::vector<FeaturePeak> *peaks,
+        const std::vector<RegressionGauss> *validRegressionsVec,
         const int validRegressionsIndex,
         const float *y_start,
         const float *mz_start,
@@ -898,7 +898,7 @@ namespace qAlgorithms
                 FeaturePeak peak;
 
                 // add mse
-                peak.mse = regression.mse;
+                // peak.mse = regression.mse;
 
                 // add height
                 RegCoeffs coeff = regression.newCoeffs;
@@ -923,7 +923,6 @@ namespace qAlgorithms
                 peak.dqsCen = weightedMeanAndVariance(dqs_cen, y_start, df_start, regression.left_limit, regression.right_limit).first;
                 peak.dqsBin = weightedMeanAndVariance(dqs_bin, y_start, df_start, regression.left_limit, regression.right_limit).first;
                 peak.dqsPeak = 1 - erf_approx_f(regression.uncertainty_area / regression.area);
-                assert(peak.dqsPeak > 0 && peak.dqsPeak < 1);
 
                 peak.idxPeakStart = regression.left_limit;
                 peak.idxPeakEnd = regression.right_limit - 1;
@@ -933,9 +932,9 @@ namespace qAlgorithms
                 coeff.b2 /= delta_rt * delta_rt;
                 coeff.b3 /= delta_rt * delta_rt;
                 peak.coefficients = coeff;
-                peak.rt_switch = rt_leftOfMax; // point at which the two halves intersect @todo not true, fix this
+                peak.rt_switch = regression.index_x0; // point at which the two halves intersect @todo not true, fix this
 
-                peaks.push_back(std::move(peak));
+                peaks->push_back(std::move(peak));
             }
         }
     }

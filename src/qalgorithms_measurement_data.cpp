@@ -155,7 +155,7 @@ namespace qAlgorithms
           assert(binIdx.size() == treatedData.dataPoints.size());
         }
         else
-        { // END OF BLOCK, EXTRAPOLATION STARTS
+        { // END OF BLOCK, EXTRAPOLATION STARTS @todo move this into its own function
           // add 4 datapoints (two extrapolated [end of current block] and two zeros
           // [start of next block]) extrapolate the first two datapoints of this block
           if (blockSize < 5)

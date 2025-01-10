@@ -59,7 +59,7 @@ namespace qAlgorithms
         const float *y_start);
 
     void createCentroidPeaks(
-        std::vector<CentroidPeak> &peaks,
+        std::vector<CentroidPeak> *peaks,
         const std::vector<RegressionGauss> *validRegressionsVec,
         const int validRegressionsIndex,
         const float *y_start,
@@ -68,8 +68,8 @@ namespace qAlgorithms
         const int scanNumber);
 
     void createFeaturePeaks(
-        std::vector<FeaturePeak> &peaks,
-        std::vector<RegressionGauss> *validRegressionsVec,
+        std::vector<FeaturePeak> *peaks,
+        const std::vector<RegressionGauss> *validRegressionsVec,
         const int validRegressionsIndex,
         const float *y_start,
         const float *mz_start,
