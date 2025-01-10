@@ -1319,25 +1319,14 @@ namespace qAlgorithms
         float b1 = coeff.b1;
         float b2 = coeff.b2;
         float b3 = coeff.b3;
+        assert(!(b2 > 0 && b3 > 0)); // there would be two valley points, so no maximum of the peak
+
         float _SQRTB2 = 1 / std::sqrt(std::abs(b2));
         float _SQRTB3 = 1 / std::sqrt(std::abs(b3));
-        float B1_2_SQRTB2 = b1 / 2 * _SQRTB2;
-        float B1_2_SQRTB3 = b1 / 2 * _SQRTB3;
         float B1_2_B2 = b1 / 2 / b2;
         float EXP_B12 = exp_approx_d(-b1 * B1_2_B2 / 2);
         float B1_2_B3 = b1 / 2 / b3;
         float EXP_B13 = exp_approx_d(-b1 * B1_2_B3 / 2);
-
-        // here we have to check if there is a valley point or not
-        const float err_L =
-            (b2 < 0)
-                ? experfc(B1_2_SQRTB2, -1.0) // 1 - std::erf(b1 / 2 / SQRTB2) // ordinary peak
-                : dawson5(B1_2_SQRTB2);      // erfi(b1 / 2 / SQRTB2);        // peak with valley point;
-
-        float err_R =
-            (b3 < 0)
-                ? experfc(B1_2_SQRTB3, 1.0) // 1 + std::erf(b1 / 2 / SQRTB3) // ordinary peak
-                : dawson5(-B1_2_SQRTB3);    // -erfi(b1 / 2 / SQRTB3);       // peak with valley point ;
 
         // calculate the Jacobian matrix terms
         float J_1_common_L = _SQRTB2; // SQRTPI_2 * EXP_B12 / SQRTB2;
@@ -1351,37 +1340,65 @@ namespace qAlgorithms
         float y_left = 0;      // y value at the left limit
         float y_right = 0;     // y value at the right limit
 
-        float err_L_covered = /// @todo : needs to be revised
-            (b2 < 0)
-                ?                                                                                                   // ordinary peak half, take always scale as integration limit; we use erf instead of erfi due to the sqrt of absoulte value
-                erf_approx_f((b1 - 2 * b2 * scale) / 2 * _SQRTB2) * EXP_B12 * SQRTPI_2 + err_L - SQRTPI_2 * EXP_B12 // std::erf((b1 - 2 * b2 * scale) / 2 / SQRTB2) + err_L - 1
-                :                                                                                                   // valley point, i.e., check position
-                (-B1_2_B2 < -scale)
-                    ? // valley point is outside the window, use scale as limit
-                    err_L - erfi((b1 - 2 * b2 * scale) / 2 * _SQRTB2) * EXP_B12
-                    : // valley point is inside the window, use valley point as limit
-                    err_L;
-
-        const float err_R_covered = ///@todo : needs to be revised
-            (b3 < 0)
-                ?                                                                                                   // ordinary peak half, take always scale as integration limit; we use erf instead of erfi due to the sqrt of absoulte value
-                err_R - SQRTPI_2 * EXP_B13 - erf_approx_f((b1 + 2 * b3 * scale) / 2 * _SQRTB3) * SQRTPI_2 * EXP_B13 // err_R - 1 - std::erf((b1 + 2 * b3 * scale) / 2 / SQRTB3)
-                :                                                                                                   // valley point, i.e., check position
-                (-B1_2_B3 > scale)
-                    ? // valley point is outside the window, use scale as limit
-                    erfi((b1 + 2 * b3 * scale) / 2 * _SQRTB3) * EXP_B13 + err_R
-                    : // valley point is inside the window, use valley point as limit
-                    err_R;
-
-        // adjust x limits
-        if (b2 > 0 && -B1_2_B2 > -scale)
-        { // valley point is inside the window, use valley point as limit
-            x_left = -B1_2_B2;
+        // here we have to check if there is a valley point or not
+        float err_L = 0;
+        float B1_2_SQRTB2 = b1 / 2 * _SQRTB2;
+        float err_L_covered = 0;
+        if (b2 < 0)
+        {
+            // no valley point
+            // error = 1 - std::erf(b1 / 2 / SQRTB2)
+            err_L = experfc(B1_2_SQRTB2, -1.0);
+            // ordinary peak half, take always scale as integration limit; we use erf instead of erfi due to the sqrt of absoulte value
+            // std::erf((b1 - 2 * b2 * scale) / 2 / SQRTB2) + err_L - 1
+            err_L_covered = erf_approx_f((b1 - 2 * b2 * scale) / 2 * _SQRTB2) * EXP_B12 * SQRTPI_2 + err_L - SQRTPI_2 * EXP_B12;
         }
-
-        if (b3 > 0 && -B1_2_B3 < scale)
-        { // valley point is inside the window, use valley point as limit
-            x_right = -B1_2_B3;
+        else
+        {
+            // valley point on the left side of the apex
+            // error = erfi(b1 / 2 / SQRTB2)
+            err_L = dawson5(B1_2_SQRTB2);
+            // check if the valley point is inside the window for the regression and consider it if necessary
+            if (-B1_2_B2 < -scale)
+            {
+                // valley point is outside the window, use scale as limit
+                err_L_covered = err_L - erfi((b1 - 2 * b2 * scale) / 2 * _SQRTB2) * EXP_B12;
+            }
+            else
+            {
+                // valley point is inside the window, use valley point as limit
+                err_L_covered = err_L;
+                x_left = -B1_2_B2;
+            }
+        }
+        float err_R = 0;
+        float B1_2_SQRTB3 = b1 / 2 * _SQRTB3;
+        float err_R_covered = 0;
+        if (b3 < 0)
+        {
+            // no valley point
+            // error = 1 + std::erf(b1 / 2 / SQRTB3)
+            err_R = experfc(B1_2_SQRTB3, 1.0);
+            // ordinary peak half, take always scale as integration limit; we use erf instead of erfi due to the sqrt of absoulte value
+            // err_R - 1 - std::erf((b1 + 2 * b3 * scale) / 2 / SQRTB3)
+            err_R_covered = err_R - SQRTPI_2 * EXP_B13 - erf_approx_f((b1 + 2 * b3 * scale) / 2 * _SQRTB3) * SQRTPI_2 * EXP_B13;
+        }
+        else
+        {
+            // valley point is on the right side of the apex
+            // error = - erfi(b1 / 2 / SQRTB3)
+            err_R = dawson5(-B1_2_SQRTB3);
+            if (-B1_2_B3 > scale)
+            {
+                // valley point is outside the window, use scale as limit
+                err_R_covered = erfi((b1 + 2 * b3 * scale) / 2 * _SQRTB3) * EXP_B13 + err_R;
+            }
+            else
+            {
+                // valley point is inside the window, use valley point as limit
+                err_R_covered = err_R;
+                x_right = -B1_2_B3;
+            }
         }
 
         // calculate the y values at the left and right limits
