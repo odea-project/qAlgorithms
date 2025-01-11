@@ -1,13 +1,18 @@
 ## Introduction
 
-Welcome to `qAlgorithms`, a comprehensive C++ library designed specifically 
-for processing analytical data. Our focus is on the non-target screening data domain, ensuring 
-precise and reliable data processing for this complex field.
+`qAlgorithms` is a standalone non-target screening analysis workflow for processing Liquid Chromatography
+High-Resolution Mass Spectrometry (LC-HRMS) data. We focus on ensuring precise and reliable processing
+in this complex field, while providing fast processing without depending on user parameters.
+
+While `qAlgorithms` started as a library for processing, the high interdependency of every
+step from profile mode mass spectrum to feature means it requires extensive work from the
+end user to use only one "step" of the processing algorithm. As such, we decided to provide
+a pre-compiled executeable with a low-complexity user interface.
 
 In the spirit of open data evaluation, as little encapsulation as possible is used in the
 source code itself. Functions are written with the goal of communicating the entirety of
 their mathematical operations to the reader, provided he has some understanding of functions and structs.
-We encourage you, the end user, to read our source code when working with qAlgorithms. This
+We encourage you, the end user, to read our source code when working with `qAlgorithms`. This
 increases the chance for errors to be found and keeps the project maintainable.
 
 We are always open for suggestions and feedback regarding your useage of our algorithms,
@@ -18,30 +23,30 @@ parameters with some degree of confidence. If you have performed an experiment w
 resulted in data that allows you to infer its general quality (on basis of the experimental
 conditions) or measured a large amount of replicates of one sample, we would appreciate your 
 support. You can contact us by opening an issue or sending a request to our [Zenodo community](https://zenodo.org/communities/nontarget). 
-Here, we have also provided example files for trying out qAlgorithms.
+Here, we have also provided example files for trying out `qAlgorithms`.
 
 ## Installation and Usage
-Please note that qAlgorithms is still in active development and result accuracy
+Please note that `qAlgorithms` is still in active development and result accuracy
 cannot be guaranteed at this stage. 
 
 ### Windows
-The entire qAlgorithms workflow is provided as an executable under ["Releases"](https://github.com/odea-project/qAlgorithms/releases) 
-on our github repository. Note that qAlgorithms requires the libraries 
+The entire `qAlgorithms` workflow is provided as an executable under ["Releases"](https://github.com/odea-project/qAlgorithms/releases) 
+on our github repository. Note that `qAlgorithms` requires the libraries 
 [`libgcc_s_seh-1.dll`](https://github.com/odea-project/qAlgorithms/releases/download/v0.1.1.beta/libgcc_s_seh-1.dll), [`libgomp-1.dll`](https://github.com/odea-project/qAlgorithms/releases/download/v0.1.1.beta/libgomp-1.dll) 
 and [`libwinpthread-1.dll`](https://github.com/odea-project/qAlgorithms/releases/download/v0.1.1.beta/libwinpthread-1.dll). If they are not present on your system already, you can also download them under "Releases" 
 or by clicking on the filenames above. There is no need to download the source code.
 
-To run qAlgorithms, the three .dll files and qAlgorithms.exe must be in the same directory
+To run `qAlgorithms`, the three .dll files and `qAlgorithms`.exe must be in the same directory
 as the executable.
 
-On windows, double-clicking the exe will open qAlgorithms in interactive mode. Follow the prompts
+On windows, double-clicking the exe will open `qAlgorithms` in interactive mode. Follow the prompts
 in the terminal window to produce a feature list for the file or directory of .mzML files.
 Exclusively use [ASCII characters](https://en.wikipedia.org/wiki/ASCII) in 
 filenames. If a folder or filename has a space in it, you need to enter the absolute
 path with quotes or escape the space character with "\\" to read in everything correctly.
 
-However, we recommend all users to start qAlgorithms.exe using powershell, which is pre-installed on all windows PCs.
-If you are unfamiliar with using the shell, refer to [the basic powershell demonstration for qAlgorithms](https://github.com/odea-project/qAlgorithms/wiki/Tutorial-for-Novice-Users).
+However, we recommend all users to start `qAlgorithms`.exe using powershell, which is pre-installed on all windows PCs.
+If you are unfamiliar with using the shell, refer to [the basic powershell demonstration for `qAlgorithms`](https://github.com/odea-project/qAlgorithms/wiki/Tutorial-for-Novice-Users).
 
 You can also drag a folder into the powershell window to copy its path into the command line. 
 
@@ -54,7 +59,7 @@ them. We use the [std::filesystem library](https://en.cppreference.com/w/cpp/fil
 
 ## Usage
 
-To use qAlgorithms for processing mass spectrometry data, you need to convert your
+To use `qAlgorithms` for processing mass spectrometry data, you need to convert your
 measurements into .mzML files, for example with msconvert. Currently, only MS1 
 data can be used, so you save some disk space if you filter them out at this stage.
 
@@ -64,7 +69,7 @@ mzML files recursively. All output is written into one directory, which you also
 must specify. Below are some commands you will likely use (replace example paths with your system paths):
 
 `./qAlgorithms.exe -h` - Display the help menu, listing all availvable options. (currently,
-executing qAlgorithms without any options also opens the help menu).
+executing `qAlgorithms` without any options also opens the help menu).
 
 `./qAlgorithms.exe -i C:/example/path/measurement.mzML -o ../my/results -printfeatures` - 
 Process the file measurement.mzML and write a feature list with every detected peak
@@ -78,14 +83,14 @@ file and saved to the "results" directory.
 Some things to keep in mind:
 * currently, reading in data which contains MS2 spectra crashes the program.
   We are working on resolving this issue at the moment.
-* qAlgorithms can process both profile data and centroided data. When using
+* `qAlgorithms` can process both profile data and centroided data. When using
   centroided data, it is not possible to estimate an individual uncertainty
   for centroids, which leads to less accurate results. Where possible, process
   profile mode spectra instead.
 * **Expanding on the above point, current tests indicate that pre-centroided**
   **data can not be processed with high reliability. If at all possible, use**
   **only profile mode spectra. The centroid error is only marginally dependent on m/z, leading to inaccurate binning.**
-* Check out the [Wiki page](https://github.com/odea-project/qAlgorithms/wiki/Questions-regarding-the-use-of-qAlgorithms) for more details on using qAlgorithms.
+* Check out the [Wiki page](https://github.com/odea-project/qAlgorithms/wiki/Questions-regarding-the-use-of-qAlgorithms) for more details on using `qAlgorithms`.
 * If you do not specify which results you want, no output will be written.
 * If the program crashes, check if your problem matches one of the known bugs on our
   [issues page](https://github.com/odea-project/qAlgorithms/issues). If a workaround exists,
@@ -98,14 +103,15 @@ Some things to keep in mind:
   All peaks which are provided in the peak table are statistically significant.
   The best current usage for quality scores is priorisation of peaks 
   during further analysis.
-* A negative DQSpeak means that the m/z given for feature is more uncertain than the DQSpeak 
+* A negative DQSpeak means that the m/z given for that feature is more uncertain than the DQSpeak 
   implies. This does not mean that the feature does not exist, or that the calculated
-  mass is wildly inaccurate. We suspect that this is caused by detector saturation,
-  but have not undertaken research in this regard.
+  mass is inaccurate. While we were able to revise the binning algorithm to eliminate a majority
+  of these cases, some remain. 
 * A negative DQSbin means that the bin a feature originates from spans the entire measurement.
   In this case, it is not possible to calculate an accurate DQSbin. Features this applies to are 
   more likely subject to mass inaccuracies not covered by existing code, or otherwise contaminated.
-  Features can be relevant data even if found in such a bin.
+  Features can be relevant data even if found in such a bin. This is an issue we plan on eliminating
+  during the beta phase of `qAlgorithms`.
 
 
 
@@ -130,19 +136,23 @@ transform a file into the chosen output. Every step is programmed with as little
 preceding ones as possible and expressed as a singular method in the source code. This makes it
 more feasible for a C++ literate user to understand the specifics of how a result came to be.
 
-We are licensed under GPL-3, which means that there is no risk of you being unable to use qAlgorithms
+We are licensed under GPL-3, which means that there is no risk of you being unable to use `qAlgorithms`
 even for commercial purposes. The current and all future versions are distributed with source code,
 and you are free to include our libraries in other projects (provided the terms of the license are fulfilled).
 
-Additionally, qAlgorithms aims to make your processing as fast as possible, so you don't have to spend more
-time with processing rather than evaluating results.
+Additionally, `qAlgorithms` is develped with computational performance as a core concern. With `qAlgorithms`,
+we aim for the fastest time-to-insight possible. As scientists, we are dedicated to provinding a smooth
+research experience with rich output data that fits even highly sophisticated questions in your non-target analysis.
 
 We hope that by demonstrating the effectiveness of our approach, more software written by researchers 
-for non-target questions will close in on these ideals. 
+for non-target questions will adopt or improve on these ideals. 
 
 ## Documentation
 No documentation beyond the commented source code exists to this point. Please refer to the
 publications linked below for details on how the algorithms function.
+
+We provide documentation on what the output parameter for the respective files mean on our
+(wiki page) [https://github.com/odea-project/qAlgorithms/wiki/Result-File-Guide]. (currently incomplete)
 
 ## Current Offerings
 
@@ -162,19 +172,19 @@ but implements additional steps for finding the highest amount of statistically
 sound bins. Additionally, the prediction interval is used instead of the mass error.
 
 ### qPeaks Algorithm
-As the current end point of qAlgorithms, `qPeaks` uses a comprehensive peak model 
+As the current end point of `qAlgorithms`, `qPeaks` uses a comprehensive peak model 
 developed by Renner et al. [https://doi.org/10.1021/acs.analchem.4c00494] to 
 identify peaks within the bins generated by qBinning. Every peak is statistically
 significant, sidestepping the need for further filtering steps like a minimum
 intensity requirement. The scores generated provide you with information about
 how well every step of the process to your peak worked, and allow you to make
-a statement about the confidence of your results. Like all parts of the qAlgorithms
+a statement about the confidence of your results. Like all parts of the `qAlgorithms`
 project, `qPeaks` requires no user parameters.
 
-## Future Roadmap
-Our team is continuously researching and developing new algorithms to expand 
-the capabilities of `qAlgorithms`. Stay tuned for more innovative solutions 
-for analytical data processing!
+## Development Roadmap
+Our goal is to provide a specialised, high-precision tool for analytical data processing
+of HRMS data. All current and future additions to `qAlgorithms` are developed with the goal of reducing
+the potential for human error and increasing result reliability.
 
 ---
 
