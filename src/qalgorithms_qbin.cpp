@@ -656,13 +656,6 @@ namespace qAlgorithms
             }
         }
 
-        // calculate critical DQS for finding points that are within the critical distance in mz and maxdist scans
-        float meanerror = std::accumulate(pointsInBin.begin(), pointsInBin.end(), 0.0, [](float error, const qCentroid *point)
-                                          { return error + point->mzError; }) /
-                          binsize;
-        // float vcrit = 3.05037165842070 * pow(log(binsize + 1), (TOLERANCE_BINNING)) * meanerror;
-        double vcrit = binningCritVal(binsize, meanerror);
-
         // find min distance in minMaxOutPerScan, then calculate DQS for that point
         for (size_t i = 0; i < binsize; i++)
         {
@@ -696,27 +689,97 @@ namespace qAlgorithms
 
             DQSB_base.push_back(calcDQS(meanInnerDistances[i], minDist_base));
             DQSB_scaled.push_back(calcDQS(meanInnerDistances[i], minDist_scaled));
-
-            /// section to check hot ends ///
-            // if the DQS at either end is less than critDQS, a point exists that could be included in the bin
-            if (i == 0) // first element of the bin when sorted by mz
-            {
-                float critDQS = calcDQS(meanInnerDistances[i], vcrit);
-                if (critDQS > DQSB_base[i])
-                {
-                    l_maxdist_tooclose = true;
-                }
-            }
-            if (i == binsize - 1) // last element of the bin when sorted by mz
-            {
-                float critDQS = calcDQS(meanInnerDistances[i], vcrit);
-                if (critDQS > DQSB_base[i])
-                {
-                    r_maxdist_tooclose = true;
-                }
-            }
         }
         return;
+    }
+
+    void Bin::makeDQSB_new(std::vector<const qCentroid *> *notInBins, const size_t maxdist)
+    {
+        // iterate over points and only consider mass region + 1. It is assumed that if a distance
+        // of one mz is exceeded, the bin is perfectly separated.
+        size_t idx_lowerLimit = 0;
+        for (; idx_lowerLimit < notInBins->size(); idx_lowerLimit++)
+        {
+            if ((*notInBins)[idx_lowerLimit]->mz > this->mzMin - 1)
+            {
+                break;
+            }
+        }
+        if (idx_lowerLimit == notInBins->size() - 1)
+        {
+            // no points are within range, perfect score
+            std::vector<float> scores(this->pointsInBin.size(), 1.0);
+            this->DQSB_base = scores;
+            this->DQSB_scaled = scores;
+            return;
+        }
+        size_t idx_upperLimit = idx_lowerLimit;
+        for (; idx_upperLimit < notInBins->size(); idx_upperLimit++)
+        {
+            if ((*notInBins)[idx_lowerLimit]->mz < this->mzMax + 1)
+            {
+                break;
+            }
+        }
+        idx_upperLimit++;
+        // all points with a sensible mass distance are between the two indices
+        // continue by moving all points within a relevant scan region into a separate vector
+        std::vector<const qCentroid *> scoreRegion;
+        scoreRegion.reserve((idx_upperLimit - idx_lowerLimit) / 2);
+        for (size_t i = idx_lowerLimit; i < idx_upperLimit; i++)
+        {
+            if (int((*notInBins)[i]->scanNo) > int(this->scanMin - maxdist - 2) && // cast to int due to negative being possible
+                (*notInBins)[i]->scanNo < this->scanMax + maxdist + 2)
+            {
+                // centroid is within maxdist and relevant mz region. However,
+                // one past maxdist is considered for better representativeness
+                // auto test = notInBins[i];
+                scoreRegion.push_back((*notInBins)[i]);
+            }
+        }
+        std::sort(scoreRegion.begin(), scoreRegion.end(), [](const qCentroid *lhs, const qCentroid *rhs)
+                  { return lhs->scanNo < rhs->scanNo; });
+
+        // calculate minimum outer distance
+        std::vector<float> minOuterDistances(this->pointsInBin.size(), INFINITY);
+        this->DQSB_base = minOuterDistances; // make sure DQSB[i] exists further down
+        // calc distance for every possible scan number to simplify algorithm
+        for (size_t i = 0; i < minOuterDistances.size(); i++)
+        {
+            int activeScan = this->pointsInBin[i]->scanNo;
+            float activeMZ = this->pointsInBin[i]->mz;
+            float currentMin = INFINITY;
+            size_t readVal = 0;
+            // advance until first point within maxdist + 1 of scan
+            for (; readVal < scoreRegion.size(); readVal++)
+            {
+                if (scoreRegion[readVal]->scanNo > activeScan - maxdist - 2)
+                {
+                    break;
+                }
+            }
+            for (; readVal < scoreRegion.size(); readVal++)
+            {
+                if (scoreRegion[readVal]->scanNo > activeScan + maxdist + 2)
+                {
+                    break;
+                }
+                float distanceMZ = abs(scoreRegion[readVal]->mz - activeMZ);
+                if (distanceMZ < currentMin)
+                {
+                    currentMin = distanceMZ;
+                }
+            }
+            minOuterDistances[i] = currentMin;
+        }
+
+        // calculate mean inner distance
+        std::vector<float> meanInnerDistances = meanDistanceRegional(pointsInBin, maxdist);
+
+        for (size_t i = 0; i < this->pointsInBin.size(); i++)
+        {
+            this->DQSB_base[i] = calcDQS(meanInnerDistances[i], minOuterDistances[i]);
+        }
     }
 
     // SummaryOutput Bin::summariseBin(size_t maxdist) // @todo rework this
@@ -898,6 +961,7 @@ namespace qAlgorithms
                 activeBins.processBinsF.back().pointsInBin = activeBins.notInBins;
                 activeBins.notInBins.clear();
                 // re-binning during the initial loop would result in some bins being split prematurely
+                // @todo rebinning might be a very bad idea
                 // int rebinCount = selectRebin(&activeBins, centroidedData, maxdist);
                 // @todo logging
             }
@@ -928,9 +992,13 @@ namespace qAlgorithms
         }
 
         auto scalar = scaleDistancesForDQS_linear(maxdist);
+        // calculate the DQSB as the silhouette score, considering only non-separated points
+        std::sort(activeBins.notInBins.begin(), activeBins.notInBins.end(), [](const qCentroid *lhs, const qCentroid *rhs)
+                  { return lhs->mz < rhs->mz; });
         for (size_t i = 0; i < activeBins.finalBins.size(); i++)
         {
             activeBins.finalBins[i].makeDQSB(centroidedData, scalar, maxdist);
+            activeBins.finalBins[i].makeDQSB_new(&activeBins.notInBins, maxdist);
         }
 
         // @todo add bin merger for halved bins here ; this ight be a bad idea, find way to prove it
