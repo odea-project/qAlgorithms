@@ -6,7 +6,7 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 # set(CMAKE_FIND_LIBRARY_SUFFIXES ".a")
 
-if(UNIX)
+if(false)
   set(CMAKE_BUILD_TYPE "Debug-Linux")
 else()
   set(CMAKE_BUILD_TYPE "Debug")
@@ -20,7 +20,7 @@ find_package(OpenMP REQUIRED)
 # Set compiler flags
 add_compile_options(-Wall -Wuninitialized -Wno-unknown-pragmas -fdiagnostics-color=always 
                     -fopenmp -mavx2 -march=native 
-                    -O2 -fno-math-errno -ggdb3 ${OpenMP_CXX_FLAGS}) #  -O3
+                    -O0 -fno-math-errno -ggdb3 ${OpenMP_CXX_FLAGS}) #  -O3
 
 if(CMAKE_BUILD_TYPE MATCHES "Debug-Linux")
   add_compile_options(-fsanitize=address)
