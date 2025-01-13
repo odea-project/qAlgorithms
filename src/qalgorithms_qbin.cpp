@@ -693,11 +693,12 @@ namespace qAlgorithms
         return;
     }
 
-    void Bin::makeDQSB_new(std::vector<const qCentroid *> *notInBins, const size_t maxdist)
+    void Bin::makeDQSB_new(std::vector<const qCentroid *> *notInBins, size_t maxdist)
     {
         // iterate over points and only consider mass region + 0.1. It is assumed that if a distance
         // of 0.1 mz is exceeded, the bin is perfectly separated. This is about 100 times more than
         // the maximum tolerated distance between points even for very low density bins
+        maxdist += 2; // always consider points one past the gap to account for potentially bad separation
         this->DQSB_base.clear();
         size_t idx_lowerLimit = 0;
         float mz_hardLimit = 0.1;
@@ -729,11 +730,11 @@ namespace qAlgorithms
         // continue by moving all points within a relevant scan region into a separate vector
         std::vector<const qCentroid *> scoreRegion;
         scoreRegion.reserve((idx_upperLimit - idx_lowerLimit) / 2);
-        size_t lowestPossibleScan = this->scanMin > maxdist + 2 ? this->scanMin - maxdist - 2 : 0;
+        size_t lowestPossibleScan = this->scanMin > maxdist ? this->scanMin - maxdist : 0;
         for (size_t i = idx_lowerLimit; i < idx_upperLimit; i++)
         {
             if ((*notInBins)[i]->scanNo > lowestPossibleScan && // cast to int due to negative being possible
-                (*notInBins)[i]->scanNo < this->scanMax + maxdist + 2)
+                (*notInBins)[i]->scanNo < this->scanMax + maxdist)
             {
                 // centroid is within maxdist and relevant mz region. However,
                 // one past maxdist is considered for better representativeness
@@ -758,14 +759,14 @@ namespace qAlgorithms
             // binary search
             for (; readVal < scoreRegion.size(); readVal++)
             {
-                if (scoreRegion[readVal]->scanNo > activeScan - maxdist - 2)
+                if (scoreRegion[readVal]->scanNo > activeScan - maxdist)
                 {
                     break;
                 }
             }
             for (; readVal < scoreRegion.size(); readVal++)
             {
-                if (scoreRegion[readVal]->scanNo > activeScan + maxdist + 2)
+                if (scoreRegion[readVal]->scanNo > activeScan + maxdist)
                 {
                     break;
                 }
@@ -788,6 +789,12 @@ namespace qAlgorithms
 
         for (size_t i = 0; i < this->pointsInBin.size(); i++)
         {
+            if (meanInnerDistances[i] == minOuterDistances[i])
+            {
+                this->DQSB_base.push_back(0);
+                continue;
+            }
+
             float tmpDQS = calcDQS(meanInnerDistances[i], minOuterDistances[i]);
             assert(-1 < tmpDQS);
             assert(tmpDQS <= 1);
@@ -1019,8 +1026,8 @@ namespace qAlgorithms
                   { return lhs->mz < rhs->mz; });
         for (size_t i = 0; i < activeBins.finalBins.size(); i++)
         {
-            // activeBins.finalBins[i].makeDQSB(centroidedData, scalar, maxdist);
-            activeBins.finalBins[i].makeDQSB_new(&activeBins.notInBins, maxdist);
+            activeBins.finalBins[i].makeDQSB(centroidedData, scalar, maxdist);
+            // activeBins.finalBins[i].makeDQSB_new(&activeBins.notInBins, maxdist);
         }
 
         // @todo add bin merger for halved bins here ; this ight be a bad idea, find way to prove it
