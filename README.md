@@ -36,19 +36,18 @@ on our github repository. Note that `qAlgorithms` requires the libraries
 and [`libwinpthread-1.dll`](https://github.com/odea-project/qAlgorithms/releases/download/v0.1.1.beta/libwinpthread-1.dll). If they are not present on your system already, you can also download them under "Releases" 
 or by clicking on the filenames above. There is no need to download the source code.
 
-To run `qAlgorithms`, the three .dll files and `qAlgorithms`.exe must be in the same directory
-as the executable.
+To run `qAlgorithms`, the three .dll files and `qAlgorithms.exe` must be in the same directory.
 
-On windows, double-clicking the exe will open `qAlgorithms` in interactive mode. Follow the prompts
+On windows, double-clicking the .exe will open `qAlgorithms` in interactive mode. Follow the prompts
 in the terminal window to produce a feature list for the file or directory of .mzML files.
 Exclusively use [ASCII characters](https://en.wikipedia.org/wiki/ASCII) in 
-filenames. If a folder or filename has a space in it, you need to enter the absolute
+filenames. If a directory or filename has a space in it, you need to enter the absolute
 path with quotes or escape the space character with "\\" to read in everything correctly.
 
-However, we recommend all users to start `qAlgorithms`.exe using powershell, which is pre-installed on all windows PCs.
+However, we recommend all users to start `qAlgorithms.exe` using powershell, which is pre-installed on all windows PCs.
 If you are unfamiliar with using the shell, refer to [the basic powershell demonstration for `qAlgorithms`](https://github.com/odea-project/qAlgorithms/wiki/Tutorial-for-Novice-Users).
 
-You can also drag a folder into the powershell window to copy its path into the command line. 
+You can also drag a directory into the powershell window to copy its path into the command line. 
 
 ### Linux / Mac
 Currently, no Linux releases are provided. We recommend you to clone the repository
@@ -60,16 +59,15 @@ them. We use the [std::filesystem library](https://en.cppreference.com/w/cpp/fil
 ## Usage
 
 To use `qAlgorithms` for processing mass spectrometry data, you need to convert your
-measurements into .mzML files, for example with msconvert. Currently, only MS1 
-data can be used, so you save some disk space if you filter them out at this stage.
+measurements into .mzML files, for example with [msconvert](https://proteowizard.sourceforge.io/) or [ThermoRawFileParser](https://github.com/compomics/ThermoRawFileParser). 
+Currently, only MS1 data can be used, so you save some disk space if you filter them out at this stage.
 
-qAlgorithms is a command line utility which reads mzML files and outputs them
+`qAlgorithms` is a command line utility which reads mzML files and outputs them
 as csv. You can select individual files or an entire directory to search for
-mzML files recursively. All output is written into one directory, which you also
+`.mzML` files recursively. All output is written into one directory, which you also
 must specify. Below are some commands you will likely use (replace example paths with your system paths):
 
-`./qAlgorithms.exe -h` - Display the help menu, listing all availvable options. (currently,
-executing `qAlgorithms` without any options also opens the help menu).
+`./qAlgorithms.exe -h` - Display the help menu, listing all availvable options.
 
 `./qAlgorithms.exe -i C:/example/path/measurement.mzML -o ../my/results -printfeatures` - 
 Process the file measurement.mzML and write a feature list with every detected peak
@@ -107,12 +105,9 @@ Some things to keep in mind:
   implies. This does not mean that the feature does not exist, or that the calculated
   mass is inaccurate. While we were able to revise the binning algorithm to eliminate a majority
   of these cases, some remain. 
-* A negative DQSbin means that the bin a feature originates from spans the entire measurement.
-  In this case, it is not possible to calculate an accurate DQSbin. Features this applies to are 
-  more likely subject to mass inaccuracies not covered by existing code, or otherwise contaminated.
-  Features can be relevant data even if found in such a bin. This is an issue we plan on eliminating
-  during the beta phase of `qAlgorithms`.
-
+* Contrary to the original publication (see below) the DQSbin now ranges from -1 to 1. This was
+  chosen to put additional focus on the case where a point is more similar to the point outside of
+  the bin than the bin subset within a relevant number of scans. 
 
 
 ## Philosophy
@@ -132,8 +127,8 @@ statistically significant, providing confidence in every analysis.
 
 We provide insight into the individual steps that led to a feature throug the use of quality
 scores. Every score preserves information on one of the concrete steps that are necessary to
-transform a file into the chosen output. Every step is programmed with as little dependence on the
-preceding ones as possible and expressed as a singular method in the source code. This makes it
+transform a series of mass spectra into a feature list. Every step is programmed to be clearly
+separated in the source code, with the relevant procedures being as independent from each other as possible. This makes it
 more feasible for a C++ literate user to understand the specifics of how a result came to be.
 
 We are licensed under GPL-3, which means that there is no risk of you being unable to use `qAlgorithms`
@@ -170,6 +165,8 @@ in future analysis by roughly 30%. The current `qBinning` program is based
 on the algorithm presented by Reuschenbach, Renner et al. [https://doi.org/10.1021/acs.analchem.3c01079],
 but implements additional steps for finding the highest amount of statistically
 sound bins. Additionally, the prediction interval is used instead of the mass error.
+The function fitted to the simulated data has also been changed to provide even higher accuracy.
+For details on the implementation, refer to `src/qalgorithms_qbin.cpp`.
 
 ### qPeaks Algorithm
 As the current end point of `qAlgorithms`, `qPeaks` uses a comprehensive peak model 
