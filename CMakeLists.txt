@@ -1,34 +1,55 @@
+# cmake settings for qAlgorithms
+
 cmake_minimum_required(VERSION 3.12)
-project(qAlgorithms VERSION 0.2)
+project(qAlgorithms VERSION 0.2 LANGUAGES CXX)
 
 # Set C++ standard
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
-# set(CMAKE_FIND_LIBRARY_SUFFIXES ".a")
 
-if(false)
+# required libraries
+find_package(OpenMP REQUIRED)
+message(STATUS "OpenMP_CXX_LIBRARIES: ${OpenMP_CXX_LIBRARIES}")
+# find_package(ZLIB REQUIRED)
+# message(STATUS "zlib found: ${ZLIB_INCLUDE_DIRS}, ${ZLIB_LIBRARIES}")
+
+
+### use options by executing cmake with -(argname)=ON as a flag ###
+# user option for enabling address sanitizer when on linux
+option(ASAN "Enable AddressSanitizer" OFF)
+# switch between compiling O0 and O2 without editing this file
+option(DEBUG "Compile with -O0" OFF)
+# static compile the executeable
+option(STATIC "Compile a statically linked executeable" OFF)
+
+if(ASAN AND UNIX AND NOT APPLE)
   set(CMAKE_BUILD_TYPE "Debug-Linux")
 else()
   set(CMAKE_BUILD_TYPE "Debug")
 endif()
-  # set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_LINKER_FLAGS_DEBUG} -fno-omit-frame-pointer -fsanitize=address")
 
-# OpenMP support
-find_package(OpenMP REQUIRED)
-# find_package(Matplot++ REQUIRED)
+if(DEBUG)
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O0")
+else()
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O2")
+endif()
 
 # Set compiler flags
 add_compile_options(-Wall -Wuninitialized -Wno-unknown-pragmas -fdiagnostics-color=always 
                     -fopenmp -mavx2 -march=native 
-                    -O0 -fno-math-errno -ggdb3 ${OpenMP_CXX_FLAGS}) #  -O3
+                    -fno-math-errno -ggdb3 ${OpenMP_CXX_FLAGS}) 
 
 if(CMAKE_BUILD_TYPE MATCHES "Debug-Linux")
   add_compile_options(-fsanitize=address)
 endif()
 
+if(ENABLE_STATIC_COMPILATION)
+    message(STATUS "Enabling static compilation")
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static")
+endif()
+
 # Set include directories
 include_directories(include external/StreamCraft/src)
-# add_subdirectory(external/matplotplusplus)
 
 # Source files
 file(GLOB_RECURSE SOURCES "src/*.cpp" "external/StreamCraft/src/*.cpp")
@@ -42,8 +63,11 @@ file(GLOB_RECURSE SOURCES "src/*.cpp" "external/StreamCraft/src/*.cpp")
 add_executable(${PROJECT_NAME} ${SOURCES})
 
 # Linker flags
-# target_link_libraries(${PROJECT_NAME} PUBLIC Matplot++::matplot z ${OpenMP_CXX_LIBRARIES})
-target_link_libraries(${PROJECT_NAME} z ${OpenMP_CXX_LIBRARIES}) #
+if(OpenMP_CXX_FOUND)
+    target_link_libraries(${PROJECT_NAME} PUBLIC ${OpenMP_CXX_LIBRARIES} z) # "z" is the linker flag for zlib, which is included as a header file
+else()
+    message(FATAL_ERROR "OpenMP not found")
+endif()
 
 if(CMAKE_BUILD_TYPE MATCHES "Debug-Linux")
   set(

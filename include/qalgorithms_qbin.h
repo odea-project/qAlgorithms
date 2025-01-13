@@ -148,7 +148,7 @@ namespace qAlgorithms
         /// @param maxdist the largest gap in scans which a bin can have while still being considered valid
         void makeDQSB(const CentroidedData *rawdata, const std::vector<float> scalarForMOD, const size_t maxdist);
 
-        void makeDQSB_new(std::vector<const qCentroid *> *notInBins, const size_t maxdist);
+        void makeDQSB_new(std::vector<const qCentroid *> *notInBins, size_t maxdist);
 
         EIC createEIC(std::vector<float> convertRT, size_t maxdist);
     };
