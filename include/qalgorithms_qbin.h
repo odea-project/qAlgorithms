@@ -84,8 +84,8 @@ namespace qAlgorithms
         // @todo get mz and scan min/max at the earliest opportunity
         float mzMin = -1;
         float mzMax = -1;
-        int scanMin = -1;
-        int scanMax = -1;
+        unsigned int scanMin = -1;
+        unsigned int scanMax = -1;
         float medianMZ = -1; // only used for removing duplicates
 
         bool unchanged = false;     // if this is true after every test has run once, the bin is viable
@@ -148,7 +148,8 @@ namespace qAlgorithms
         /// @param maxdist the largest gap in scans which a bin can have while still being considered valid
         void makeDQSB(const CentroidedData *rawdata, const std::vector<float> scalarForMOD, const size_t maxdist);
 
-        void makeDQSB_new(std::vector<const qCentroid *> *notInBins, size_t maxdist);
+        // returns the start index of where in the sorted not-binned points the minimum start position is
+        size_t makeDQSB_new(std::vector<const qCentroid *> *notInBins, size_t idx_lowerLimit, size_t maxdist);
 
         EIC createEIC(std::vector<float> convertRT, size_t maxdist);
     };
