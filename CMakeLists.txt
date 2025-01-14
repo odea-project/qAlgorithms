@@ -1,5 +1,7 @@
 # cmake settings for qAlgorithms
 
+### start build with ccmake . in /build to use the config options! ###
+
 cmake_minimum_required(VERSION 3.12)
 project(qAlgorithms VERSION 0.2 LANGUAGES CXX)
 
@@ -16,19 +18,19 @@ message(STATUS "OpenMP_CXX_LIBRARIES: ${OpenMP_CXX_LIBRARIES}")
 
 ### use options by executing cmake with -(argname)=ON as a flag ###
 # user option for enabling address sanitizer when on linux
-option(ASAN "Enable AddressSanitizer" OFF)
+option(V_ASAN "Enable AddressSanitizer" OFF)
 # switch between compiling O0 and O2 without editing this file
-option(DEBUG "Compile with -O0" OFF)
+option(V_DEBUG "Compile with -O0" OFF)
 # static compile the executeable
-option(STATIC "Compile a statically linked executeable" OFF)
+option(V_STATIC "Compile a statically linked executeable" OFF)
 
-if(ASAN AND UNIX AND NOT APPLE)
+if(V_ASAN AND UNIX AND NOT APPLE)
   set(CMAKE_BUILD_TYPE "Debug-Linux")
 else()
   set(CMAKE_BUILD_TYPE "Debug")
 endif()
 
-if(DEBUG)
+if(V_DEBUG)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O0")
 else()
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O2")
@@ -43,7 +45,7 @@ if(CMAKE_BUILD_TYPE MATCHES "Debug-Linux")
   add_compile_options(-fsanitize=address)
 endif()
 
-if(ENABLE_STATIC_COMPILATION)
+if(V_STATIC)
     message(STATUS "Enabling static compilation")
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static")
 endif()
