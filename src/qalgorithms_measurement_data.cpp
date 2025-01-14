@@ -495,16 +495,21 @@ namespace qAlgorithms
     // the qCentroids object at the given position. convertRT can later be used to look up
     // the retention time by the scan number, so that memory usage is reduced during binning
 
-    for (size_t i = 0; i < indices.size() - 1; i++) // i can be -1 briefly if there is a scan missing between 1. and 2. element
+    for (size_t i = 0; i < indices.size() - 1; i++) // i can be -1 briefly if there is a scan missing between 1. and 2. element (fixed by adding else statement)
     {
+      assert(i >= 0);
       if (retention_times[i + 1] - retention_times[i] > rt_diff * 1.75)
       {
         addEmpty[i]++;
         assert(addEmpty[i] < 5);
         retention_times[i] += rt_diff * 1.75;
+        convertRT.push_back(retention_times[i]);
         i--;
       }
-      convertRT.push_back(retention_times[i]); // convertRT[scan] = retention time of centroid
+      else
+      {
+        convertRT.push_back(retention_times[i]); // convertRT[scan] = retention time of centroid
+      }
     }
     convertRT.push_back(retention_times[indices.size() - 1]);
     assert(addEmpty.size() == indices.size() + 1); // this assert fails with the
