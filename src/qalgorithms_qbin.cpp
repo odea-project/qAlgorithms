@@ -230,7 +230,7 @@ namespace qAlgorithms
         double lowerLimitMZ = sourceBin.mzMin - vcrit;
         double upperLimitMZ = sourceBin.mzMax + vcrit;
 
-        for (int scan = sourceBin.scanMin; scan < sourceBin.scanMax + 1; scan++)
+        for (unsigned int scan = sourceBin.scanMin; scan < sourceBin.scanMax + 1; scan++)
         {
             auto currentScans = &rawdata->allDatapoints[scan];
             size_t position = 0;
@@ -511,8 +511,8 @@ namespace qAlgorithms
         DQSB_scaled.reserve(binsize);
         // determine start and end of relevant scan section, used as repeats for the for loop
         // borders include relevant values
-        int scanRangeStart = scanMin - maxdist;
-        int scanRangeEnd = scanMax + maxdist;
+        unsigned int scanRangeStart = this->scanMin > maxdist ? this->scanMin - maxdist : 0;
+        unsigned int scanRangeEnd = scanMax + maxdist;
         assert(scanRangeEnd - scanRangeStart > 0);
         size_t coverage = scanRangeEnd - scanRangeStart;
         // early abort if the bin covers all scans - this cannot be representative
@@ -561,7 +561,7 @@ namespace qAlgorithms
                 ++scanRangeStart;
             }
         }
-        [[unlikely]] if (scanRangeEnd > int(rawdata->allDatapoints.size() - 1))
+        [[unlikely]] if (scanRangeEnd > rawdata->allDatapoints.size() - 1)
         {
             maxScansReduced = true; // dummy values have to be added later
             scanRangeEnd = rawdata->allDatapoints.size() - 1;
@@ -570,7 +570,7 @@ namespace qAlgorithms
         // for all scans relevant to the bin
         int needle = 0; // position in scan where a value was found - starts at 0 for first scan
 
-        for (int i = scanRangeStart; i <= scanRangeEnd; i++)
+        for (unsigned int i = scanRangeStart; i <= scanRangeEnd; i++)
         {
             bool minFound = false; // only execute search if min or max is present in the scan
             bool maxFound = false;
@@ -693,15 +693,29 @@ namespace qAlgorithms
         return;
     }
 
-    void Bin::makeDQSB_new(std::vector<const qCentroid *> *notInBins, size_t maxdist)
+    size_t Bin::makeDQSB_new(std::vector<const qCentroid *> *notInBins, size_t idx_lowerLimit, size_t maxdist)
     {
+        // assume that bins are separated well enough that any gap of this size is close to perfect
+        // separation already, so score = 1
+        assert(idx_lowerLimit < notInBins->size());
+        float mz_hardLimit = 0.1;
+        assert(this->mzMax - this->mzMin < mz_hardLimit);
         // iterate over points and only consider mass region + 0.1. It is assumed that if a distance
         // of 0.1 mz is exceeded, the bin is perfectly separated. This is about 100 times more than
         // the maximum tolerated distance between points even for very low density bins
         maxdist += 2; // always consider points one past the gap to account for potentially bad separation
         this->DQSB_base.clear();
-        size_t idx_lowerLimit = 0;
-        float mz_hardLimit = 0.1;
+
+        if (notInBins->back()->mz < this->mzMin - mz_hardLimit ||
+            notInBins->front()->mz > this->mzMax + mz_hardLimit)
+        {
+            // no points are within range, perfect score
+            std::vector<float> scores(this->pointsInBin.size(), 1.0);
+            this->DQSB_base = scores;
+            this->DQSB_scaled = scores;
+            return idx_lowerLimit;
+        }
+
         // binary search
         for (; idx_lowerLimit < notInBins->size(); idx_lowerLimit++)
         {
@@ -710,18 +724,10 @@ namespace qAlgorithms
                 break;
             }
         }
-        if (idx_lowerLimit == notInBins->size() - 1)
-        {
-            // no points are within range, perfect score
-            std::vector<float> scores(this->pointsInBin.size(), 1.0);
-            this->DQSB_base = scores;
-            this->DQSB_scaled = scores;
-            return;
-        }
         size_t idx_upperLimit = idx_lowerLimit;
         for (; idx_upperLimit < notInBins->size(); idx_upperLimit++)
         {
-            if ((*notInBins)[idx_lowerLimit]->mz > this->mzMax + mz_hardLimit)
+            if ((*notInBins)[idx_upperLimit]->mz > this->mzMax + mz_hardLimit)
             {
                 break;
             }
@@ -800,6 +806,7 @@ namespace qAlgorithms
             assert(tmpDQS <= 1);
             this->DQSB_base.push_back(tmpDQS);
         }
+        return idx_lowerLimit;
     }
 
     // 5.34057617e-05
@@ -1024,10 +1031,13 @@ namespace qAlgorithms
         // calculate the DQSB as the silhouette score, considering only non-separated points
         std::sort(activeBins.notInBins.begin(), activeBins.notInBins.end(), [](const qCentroid *lhs, const qCentroid *rhs)
                   { return lhs->mz < rhs->mz; });
+
+        // setting start position to 0 at this point means that it can be reused, since it is incremented in makeDQSB
+        size_t shared_idxStart = 0;
         for (size_t i = 0; i < activeBins.finalBins.size(); i++)
         {
-            activeBins.finalBins[i].makeDQSB(centroidedData, scalar, maxdist);
-            // activeBins.finalBins[i].makeDQSB_new(&activeBins.notInBins, maxdist);
+            // activeBins.finalBins[i].makeDQSB(centroidedData, scalar, maxdist);
+            shared_idxStart = activeBins.finalBins[i].makeDQSB_new(&activeBins.notInBins, shared_idxStart, maxdist);
         }
 
         // @todo add bin merger for halved bins here ; this ight be a bad idea, find way to prove it
