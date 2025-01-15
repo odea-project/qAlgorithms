@@ -448,13 +448,14 @@ namespace qAlgorithms
         // early return if only one valid peak, so no grouping possible
         if (validRegsTmp.size() == 2)
         {
+            assert(validRegsTmp[0].isValid);
             validRegressions.push_back(std::move(validRegsTmp[0]));
             return;
         }
         // remove the last regression, since it is always empty
         validRegsTmp.pop_back();
         /*
-          Grouping:
+          Grouping:         @todo make this its own function
           This block of code implements the grouping. It groups the valid peaks based
           on the apex positions. Peaks are defined as similar, i.e., members of the
           same group, if they fullfill at least one of the following conditions:
@@ -501,6 +502,7 @@ namespace qAlgorithms
             if (startEndGroups[groupIdx] == startEndGroups[groupIdx + 1])
             { // already isolated peak => push to valid regressions
                 int regIdx = startEndGroups[groupIdx];
+                assert(validRegsTmp[regIdx].isValid);
                 validRegressions.push_back(std::move(validRegsTmp[regIdx]));
             }
             else
@@ -511,6 +513,7 @@ namespace qAlgorithms
 
                 RegressionGauss bestReg = validRegsTmp[bestRegIdx.first];
                 bestReg.mse = bestRegIdx.second;
+                assert(bestReg.isValid);
                 validRegressions.push_back(std::move(bestReg));
             }
         } // end for loop (group in vector of groups)
@@ -670,7 +673,7 @@ namespace qAlgorithms
         mutateReg->uncertainty_pos = calcUncertaintyPos(mse, mutateReg->newCoeffs, mutateReg->apex_position, scale);
 
         mutateReg->df = df_sum - 4; // @todo add explanation for -4
-        mutateReg->apex_position;   // index_x0 must be added to this before forming the peak!
+        // mutateReg->apex_position;   // index_x0 must be added to this before forming the peak!
         mutateReg->scale = scale;
         mutateReg->index_x0 = scale + i;
         mutateReg->isValid = true;
@@ -703,16 +706,19 @@ namespace qAlgorithms
             // first iteration always false
             for (size_t j = 0; j < i; j++)
             {
+                // assert(validRegressions[j].isValid); // this does not work - @todo why?
                 if (validRegressions[j].isValid)
-                {        // only check valid regressions @todo only pass valid peaks into this function
+                { // only check valid regressions @todo only pass valid peaks into this function
+                    float jApexPos = validRegressions[j].apex_position + validRegressions[j].index_x0;
+                    float iApexPos = validRegressions[i].apex_position + validRegressions[i].index_x0;
                     if ( // check for the overlap of the peaks
                         (
-                            validRegressions[j].apex_position > left_limit &&   // ref peak matches the left limit
-                            validRegressions[j].apex_position < right_limit) || // ref peak matches the right limit
+                            jApexPos > left_limit &&   // ref peak matches the left limit
+                            jApexPos < right_limit) || // ref peak matches the right limit
                         (
-                            validRegressions[i].apex_position > validRegressions[j].left_limit && // new peak matches the left limit
-                            validRegressions[i].apex_position < validRegressions[j].right_limit)) // new peak matches the right limit
-                    {                                                                             // @todo how often is this the case?
+                            iApexPos > validRegressions[j].left_limit && // new peak matches the left limit
+                            iApexPos < validRegressions[j].right_limit)) // new peak matches the right limit
+                    {                                                    // @todo how often is this the case?
                         if (validRegressions[j].mse == 0.0)
                         { // calculate the mse of the ref peak
                             validRegressions[j].mse = calcSSE_exp(

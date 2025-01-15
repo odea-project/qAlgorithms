@@ -20,7 +20,7 @@ message(STATUS "OpenMP_CXX_LIBRARIES: ${OpenMP_CXX_LIBRARIES}")
 # user option for enabling address sanitizer when on linux
 option(V_ASAN "Enable AddressSanitizer" OFF)
 # switch between compiling O0 and O2 without editing this file
-option(V_DEBUG "Compile with -O0" ON)
+option(V_DEBUG "Compile with -O0" OFF)
 # static compile the executeable
 option(V_STATIC "Compile a statically linked executeable" OFF)
 
