@@ -670,7 +670,7 @@ namespace qAlgorithms
         mutateReg->uncertainty_pos = calcUncertaintyPos(mse, mutateReg->newCoeffs, mutateReg->apex_position, scale);
 
         mutateReg->df = df_sum - 4; // @todo add explanation for -4
-        mutateReg->apex_position += i + scale;
+        mutateReg->apex_position;   // index_x0 must be added to this before forming the peak!
         mutateReg->scale = scale;
         mutateReg->index_x0 = scale + i;
         mutateReg->isValid = true;
@@ -844,12 +844,13 @@ namespace qAlgorithms
 
                 // add height
                 RegCoeffs coeff = regression.newCoeffs;
-                peak.height = exp_approx_d(coeff.b0 + (regression.apex_position - regression.index_x0) * coeff.b1 * 0.5);
+                float newApex = float(regression.apex_position + regression.index_x0);
+                peak.height = exp_approx_d(coeff.b0 + (newApex - regression.index_x0) * coeff.b1 * 0.5);
                 // peak height (exp(b0 - b1^2/4/b2)) with position being -b1/2/b2
                 peak.heightUncertainty = regression.uncertainty_height * peak.height;
 
-                float mz0 = *(mz_start + (int)std::floor(regression.apex_position));
-                float delta_mz = *(mz_start + (int)std::floor(regression.apex_position) + 1) - mz0;
+                float mz0 = *(mz_start + (int)std::floor(newApex));
+                float delta_mz = *(mz_start + (int)std::floor(newApex) + 1) - mz0;
 
                 // add scaled area
                 float exp_b0 = exp_approx_d(coeff.b0); // exp(b0)
@@ -857,7 +858,7 @@ namespace qAlgorithms
                 peak.areaUncertainty = regression.uncertainty_area * exp_b0 * delta_mz;
 
                 // add scaled apex position (mz)
-                peak.mz = mz0 + delta_mz * (regression.apex_position - std::floor(regression.apex_position));
+                peak.mz = mz0 + delta_mz * (newApex - std::floor(newApex));
                 peak.mzUncertainty = regression.uncertainty_pos * delta_mz * T_VALUES[regression.df + 1] * sqrt(1 + 1 / (regression.df + 4));
 
                 // quality params
@@ -899,12 +900,13 @@ namespace qAlgorithms
 
                 // add height
                 RegCoeffs coeff = regression.newCoeffs;
-                peak.height = exp_approx_d(coeff.b0 + (regression.apex_position - regression.index_x0) * coeff.b1 * 0.5); // peak height (exp(b0 - b1^2/4/b2)) with position being -b1/2/b2
+                float newApex = float(regression.apex_position + regression.index_x0);
+                peak.height = exp_approx_d(coeff.b0 + (newApex - regression.index_x0) * coeff.b1 * 0.5); // peak height (exp(b0 - b1^2/4/b2)) with position being -b1/2/b2
                 peak.heightUncertainty = regression.uncertainty_height * peak.height;
 
-                const double rt_leftOfMax = *(rt_start + (int)std::floor(regression.apex_position)); // left of maximum
-                const double delta_rt = *(rt_start + (int)std::floor(regression.apex_position) + 1) - rt_leftOfMax;
-                const double apex_position = rt_leftOfMax + delta_rt * (regression.apex_position - std::floor(regression.apex_position));
+                const double rt_leftOfMax = *(rt_start + (int)std::floor(newApex)); // left of maximum
+                const double delta_rt = *(rt_start + (int)std::floor(newApex) + 1) - rt_leftOfMax;
+                const double apex_position = rt_leftOfMax + delta_rt * (newApex - std::floor(newApex));
                 peak.retentionTime = apex_position;
                 peak.retentionTimeUncertainty = regression.uncertainty_pos * delta_rt;
 
@@ -925,11 +927,12 @@ namespace qAlgorithms
                 peak.idxPeakEnd = regression.right_limit - 1;
 
                 // params needed to merge two peaks
+                peak.apexLeft = regression.apex_position < 0;
                 coeff.b1 /= delta_rt;
                 coeff.b2 /= delta_rt * delta_rt;
                 coeff.b3 /= delta_rt * delta_rt;
                 peak.coefficients = coeff;
-                peak.rt_switch = regression.index_x0; // point at which the two halves intersect @todo not true, fix this
+                // switch point for apexLeft = true: -b1/2 b2 * delta_x = diff x0 to apex in RT  ;  else -b1 /2 b3 * delta_x
 
                 peaks->push_back(std::move(peak));
             }

@@ -97,7 +97,7 @@ namespace qAlgorithms
     int idxBin;
     unsigned int idxPeakStart; // degrees of freedom = idxPeakEnd - idxPeakStart
     unsigned int idxPeakEnd;
-    float rt_switch;
+    bool apexLeft;
   };
 
   struct qCentroid
