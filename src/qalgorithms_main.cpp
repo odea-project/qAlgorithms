@@ -255,12 +255,11 @@ int main(int argc, char *argv[])
                     if (dqsb == -1)
                     {
                         badBinCount++;
-                        goto nextbin;
+                        break;
                     }
                     ++count;
                     meanDQSB += dqsb;
                 }
-            nextbin:
             }
             meanDQSB /= count;
 
