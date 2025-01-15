@@ -276,11 +276,12 @@ namespace qAlgorithms
         const size_t n, // number of data points
         std::vector<RegressionGauss> &validRegressions)
     {
+        assert(n > 4); // five point minimum is guaranteed by previous functions
         const size_t maxScale = std::min(GLOBAL_MAXSCALE, (n - 1) / 2);
-        // maximum size of the coefficients array is known at compile time
+        // maximum size of the coefficients array is known at time of function call
         size_t maxSize = n - 4; // max size is at scale = 2
         assert(maxScale <= arrayMaxLength);
-        // adding a variable here leads to a segfault
+        // re-use this array for all coefficients
         __m128 beta[maxSize];
 
         validRegressions.reserve(200); // this is the highest result of a test run, should not be a performance concern anyway
@@ -288,17 +289,8 @@ namespace qAlgorithms
         {
             const int k = 2 * scale + 1;      // window size
             const int n_segments = n - k + 1; // number of segments, i.e. regressions considering the array size
-            assert(n > 2 * scale);
 
-            __m128 result[n - 2 * scale];
-
-            const __m128 flipSign = _mm_set_ps(1.0f, 1.0f, -1.0f, 1.0f);
-            convolve_SIMD(scale, ylog_start, n, result);
-
-            for (size_t i = 0; i < n - 2 * scale; i++)
-            { // swap beta2 and beta3 and flip the sign of beta1 // @todo: this is a temporary solution
-                beta[i] = _mm_mul_ps(_mm_shuffle_ps(result[i], result[i], 0b10110100), flipSign);
-            }
+            convolve_SIMD(scale, ylog_start, n, beta); // beta past position n-1 contains initialized, but wrong values - make sure they cannot be accessed
 
             validateRegressions(beta, n_segments, y_start, ylog_start, df_start, arrayMaxLength, scale, validRegressions);
         }
@@ -316,6 +308,7 @@ namespace qAlgorithms
         __m128 *result)
     {
         assert(scale > 1);
+        assert(n > 2 * scale);
         // this function calculates the regression coefficients from the pseudoinverse matrix P and the y-values supplied through vec.
         // It is equivalent to sum(y[i] * P[i][0]) for beta0, beta1 etc. Every element of result is one set of coefficients (b0, b1, b2, b3)
 
@@ -323,7 +316,6 @@ namespace qAlgorithms
         // centerpoint is always == scale
         // size_t k = 2 * scale + 1;
         // size_t centerpoint = k / 2;
-        // assert(centerpoint == scale);
 
         __m128 products[n]; // holds the products of vec and the scale factor
         for (size_t i = 0; i < n; ++i)
@@ -381,6 +373,11 @@ namespace qAlgorithms
                 products_temp = _mm_fmadd_ps(products_temp, sign_flip, products[2 * i + j]); // why this access pattern? @todo
                 result[j] = _mm_add_ps(result[j], products_temp);
             }
+        }
+        const __m128 flipSign = _mm_set_ps(1.0f, 1.0f, -1.0f, 1.0f);
+        for (size_t i = 0; i < n_segments; i++)
+        { // swap beta2 and beta3 and flip the sign of beta1 // @todo: this is a temporary solution
+            result[i] = _mm_mul_ps(_mm_shuffle_ps(result[i], result[i], 0b10110100), flipSign);
         }
     }
 
