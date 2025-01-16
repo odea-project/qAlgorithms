@@ -17,16 +17,11 @@ namespace qAlgorithms
 {
     const std::array<float, 384> initialize();
 
-    std::vector<CentroidPeak> findCentroids(
-        treatedData &treatedData,
-        const int scanNumber);
+    std::vector<CentroidPeak> findCentroids(treatedData &treatedData, const size_t scanNumber);
 
-    void findPeaks(
-        std::vector<FeaturePeak> &all_peaks,
-        treatedData &treatedData);
+    void findPeaks(std::vector<FeaturePeak> &all_peaks, treatedData &treatedData);
 
-    CentroidedData passToBinning(std::vector<std::vector<CentroidPeak>> &allPeaks,
-                                 std::vector<unsigned int> addEmpty);
+    CentroidedData passToBinning(std::vector<std::vector<CentroidPeak>> &allPeaks, std::vector<unsigned int> addEmpty);
 
     void runningRegression(
         const float *y_start,
@@ -38,17 +33,17 @@ namespace qAlgorithms
 
     void validateRegressions(
         const __m128 *beta,
-        const int n_segments,
+        const size_t n_segments,
         const float *y_start,
         const float *ylog_start,
         const bool *df_start,
         const size_t arrayMaxLength,
-        const int scale,
+        const size_t scale,
         std::vector<RegressionGauss> &validRegressions);
 
     void makeValidRegression(
         RegressionGauss *mutateReg,
-        const int i,
+        const size_t i,
         const int scale,
         const bool *df_start,
         const float *y_start,
@@ -61,16 +56,16 @@ namespace qAlgorithms
     void createCentroidPeaks(
         std::vector<CentroidPeak> *peaks,
         const std::vector<RegressionGauss> *validRegressionsVec,
-        const int validRegressionsIndex,
+        const size_t validRegressionsIndex,
         const float *y_start,
         const float *mz_start,
         const bool *df_start,
-        const int scanNumber);
+        const size_t scanNumber);
 
     void createFeaturePeaks(
         std::vector<FeaturePeak> *peaks,
         const std::vector<RegressionGauss> *validRegressionsVec,
-        const int validRegressionsIndex,
+        const size_t validRegressionsIndex,
         const float *y_start,
         const float *mz_start,
         const float *rt_start,
@@ -150,7 +145,7 @@ namespace qAlgorithms
      * @param scale
      * @return float
      */
-    inline float multiplyVecMatrixVecTranspose(const float vec[4], int scale);
+    inline float multiplyVecMatrixVecTranspose(const float vec[4], size_t scale);
 
     /**
      * @brief Checks if peak maximum is twice as high as the signal at the edge of the regression window.
@@ -171,8 +166,8 @@ namespace qAlgorithms
      */
     float calcApexToEdge(
         const double apex_position,
-        const int scale,
-        const int index_loop,
+        const size_t scale,
+        const size_t index_loop,
         const float *y_start);
 
     /**
@@ -188,7 +183,7 @@ namespace qAlgorithms
         const RegCoeffs coeff,
         const int scale,
         const float mse,
-        const int df_sum);
+        const size_t df_sum);
 
     /**
      * @brief Check if the peak height is valid using t-test.
@@ -205,13 +200,13 @@ namespace qAlgorithms
         const int scale,
         const float apex_position,
         float valley_position,
-        const int df_sum,
+        const size_t df_sum,
         const float apexToEdge);
 
     void calcPeakHeightUncert(
         RegressionGauss *mutateReg,
         const float mse,
-        const int scale);
+        const size_t scale);
 
     /**
      * @brief Check if the peak area and the covered peak area are valid using t-test.
@@ -237,14 +232,14 @@ namespace qAlgorithms
     bool isValidPeakArea(
         RegCoeffs coeff,
         const float mse,
-        const int scale,
-        const int df_sum);
+        const int scale, // scale must be an int here for this function to work @todo sensible to change?
+        const size_t df_sum);
 
     float calcUncertaintyPos(
         const float mse,
         RegCoeffs coeff,
         const float apex_position,
-        const int scale);
+        const size_t scale);
 
     void convolve_SIMD(
         const size_t scale,
