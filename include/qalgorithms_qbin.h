@@ -146,10 +146,10 @@ namespace qAlgorithms
         /// binned datapoint. It is assumed that the bin is sorted by scans when makeDQSB is called @todo change to more generic solution?
         /// @param rawdata the CentroidedData object from which the bin was generated
         /// @param maxdist the largest gap in scans which a bin can have while still being considered valid
-        void makeDQSB(const CentroidedData *rawdata, const std::vector<float> scalarForMOD, const size_t maxdist);
+        // void makeDQSB(const CentroidedData *rawdata, const std::vector<float> scalarForMOD, const size_t maxdist);
 
         // returns the start index of where in the sorted not-binned points the minimum start position is
-        size_t makeDQSB_new(std::vector<const qCentroid *> *notInBins, size_t idx_lowerLimit, size_t maxdist);
+        size_t makeDQSB(std::vector<const qCentroid *> *notInBins, size_t idx_lowerLimit, size_t maxdist);
 
         EIC createEIC(std::vector<float> convertRT, size_t maxdist);
     };

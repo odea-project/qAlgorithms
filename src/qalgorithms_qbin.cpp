@@ -39,17 +39,6 @@ namespace qAlgorithms
     /// @return the data quality score for the specified element
     static inline float calcDQS(const float MID, const float MOD); // Mean Inner Distance, Minimum Outer Distance
 
-    // static void scaleDistancesForDQS_gauss(size_t maxdist); // removed
-
-    static std::vector<float> scaleDistancesForDQS_linear(size_t maxdist); // @experimental
-
-#define IGNORE -256 // nonsense value if no real number exists. Must be
-                    // negative since it is used later when searching for
-                    // the smallest distance. It is not set to -Inf so that
-                    // the resulting DQS is still numeric.
-#define NO_MIN_FOUND -INFINITY
-#define NO_MAX_FOUND -INFINITY
-
     const double binningCritVal(size_t n, double stdDev)
     {
         return (OS_CRIT_A + (OS_CRIT_B / std::sqrt(std::log(n + 1)))) * stdDev;
@@ -502,198 +491,7 @@ namespace qAlgorithms
         }
     }
 
-    void Bin::makeDQSB(const CentroidedData *rawdata, const std::vector<float> scalarForMOD, const size_t maxdist) // @todo split this function
-    {
-        // assumes bin is saved sorted by scans, since the result from scan gap checks is the final control
-        // @todo it could be a good idea to only relate the score to points that are not in bins
-        const size_t binsize = pointsInBin.size();
-        DQSB_base.reserve(binsize);
-        DQSB_scaled.reserve(binsize);
-        // determine start and end of relevant scan section, used as repeats for the for loop
-        // borders include relevant values
-        unsigned int scanRangeStart = this->scanMin > maxdist ? this->scanMin - maxdist : 0;
-        unsigned int scanRangeEnd = scanMax + maxdist;
-        assert(scanRangeEnd - scanRangeStart > 0);
-        size_t coverage = scanRangeEnd - scanRangeStart;
-        // early abort if the bin covers all scans - this cannot be representative
-        if (coverage > rawdata->allDatapoints.size())
-        {
-            DQSB_base.assign(binsize, -1);
-            DQSB_scaled.assign(binsize, -1);
-            return;
-        }
-
-        // determine min and max in mz - sort, since then calculation of inner distances is significantly faster
-        std::sort(pointsInBin.begin(), pointsInBin.end(), [](const qCentroid *lhs, const qCentroid *rhs)
-                  { return lhs->scanNo < rhs->scanNo; });
-
-        float mzMin1 = INFINITY;
-        float mzMax1 = 0;
-        for (auto cen : pointsInBin)
-        {
-            if (cen->mz < mzMin1)
-            {
-                mzMin1 = cen->mz;
-            }
-            if (cen->mz > mzMax1)
-            {
-                mzMax1 = cen->mz;
-            }
-        }
-        this->mzMax = mzMax1;
-        this->mzMin = mzMin1;
-
-        std::vector<float> meanInnerDistances = meanDistanceRegional(pointsInBin, maxdist);
-
-        bool maxScansReduced = false; // is maxScan + maxdist greater than the largest scan?
-
-        // contains both mz values (per scan) next or closest to all m/z in the bin
-        std::vector<float> minMaxOutPerScan;
-        // +1 since both values are relevant to the range
-        minMaxOutPerScan.reserve((scanMax - scanMin + 1) * 2 + 4 * maxdist);
-        [[unlikely]] if (scanRangeStart < 1)
-        {
-            while (scanRangeStart < 1)
-            {
-                // fill with dummy values to prevent segfault when distance checker expects negative scan number
-                minMaxOutPerScan.push_back(IGNORE);
-                minMaxOutPerScan.push_back(IGNORE);
-                ++scanRangeStart;
-            }
-        }
-        [[unlikely]] if (scanRangeEnd > rawdata->allDatapoints.size() - 1)
-        {
-            maxScansReduced = true; // dummy values have to be added later
-            scanRangeEnd = rawdata->allDatapoints.size() - 1;
-        }
-
-        // for all scans relevant to the bin
-        int needle = 0; // position in scan where a value was found - starts at 0 for first scan
-
-        for (unsigned int i = scanRangeStart; i <= scanRangeEnd; i++)
-        {
-            bool minFound = false; // only execute search if min or max is present in the scan
-            bool maxFound = false;
-            const int scansize = rawdata->allDatapoints[i].size() - 1;
-            [[unlikely]] if (scansize == -1)
-            {
-                minMaxOutPerScan.push_back(NO_MIN_FOUND);
-                minMaxOutPerScan.push_back(NO_MAX_FOUND);
-                continue;
-            }
-            else [[unlikely]] if (needle > scansize)
-            {
-                needle = scansize; // prevent searching outside of the valid scan region
-            }
-            // check if the bin is outside the region this scan covers
-            if (rawdata->allDatapoints[i][0].mz >= mzMin)
-            {
-                minMaxOutPerScan.push_back(NO_MIN_FOUND);
-                minFound = true;
-                if (rawdata->allDatapoints[i][0].mz > mzMax)
-                {
-                    minMaxOutPerScan.push_back(rawdata->allDatapoints[i][0].mz);
-                    maxFound = true;
-                    continue;
-                }
-                else
-                {
-                    needle = 0;
-                }
-            }
-            // check end of bin
-            if (rawdata->allDatapoints[i][scansize].mz <= mzMax)
-            {
-                minMaxOutPerScan.push_back(NO_MAX_FOUND);
-                maxFound = true;
-                if (rawdata->allDatapoints[i][scansize].mz < mzMin)
-                {
-                    minMaxOutPerScan.push_back(rawdata->allDatapoints[i][scansize].mz);
-                    minFound = true;
-                    continue;
-                }
-                else
-                {
-                    needle = scansize;
-                }
-            }
-            // rawdata is always sorted by mz within scans
-            // use two while loops to find desired value from any place in
-            // the scan, accounts for large shifts between scans
-            [[likely]] if (!minFound)
-            {
-                while (rawdata->allDatapoints[i][needle].mz < mzMin)
-                {
-                    ++needle; // steps through the dataset and increments until needle is the first value >= mzMin
-                }
-                while (rawdata->allDatapoints[i][needle].mz >= mzMin)
-                {
-                    --needle; // steps through the dataset and decrements until needle is the desired mz value
-                }
-                minMaxOutPerScan.push_back(rawdata->allDatapoints[i][needle].mz);
-            }
-
-            [[likely]] if (!maxFound)
-            {
-                while (rawdata->allDatapoints[i][needle].mz > mzMax)
-                {
-                    --needle;
-                }
-                while (rawdata->allDatapoints[i][needle].mz <= mzMax)
-                {
-                    ++needle;
-                }
-                minMaxOutPerScan.push_back(rawdata->allDatapoints[i][needle].mz);
-            }
-        }
-        // minMaxOutPerScan contains the relevant points in order of scans,
-        // for every scan the two closest values from both ends of the bin
-        if (maxScansReduced) // add dummy values after last scan
-        {
-            while (minMaxOutPerScan.capacity() != minMaxOutPerScan.size())
-            {
-                minMaxOutPerScan.push_back(IGNORE);
-            }
-        }
-
-        // find min distance in minMaxOutPerScan, then calculate DQS for that point
-        for (size_t i = 0; i < binsize; i++)
-        {
-            float minDist_base = INFINITY;
-            float minDist_scaled = INFINITY;
-            float currentMZ = pointsInBin[i]->mz;
-
-            // currentRangeStart gives position of the first value in minMaxOutPerScan that must be considered,
-            // assuming the first value in minMaxOutPerScan (index 0) is only relevant to the
-            // qCentroid in the lowest scan. For every increase in scans, that range starts two elements later
-            const int currentRangeStart = (pointsInBin[i]->scanNo - scanMin) * 2;
-            const int currentRangeEnd = currentRangeStart + maxdist * 4 + 1; // +1 removed
-
-            assert(size_t(currentRangeEnd) < minMaxOutPerScan.size());
-
-            for (int j = currentRangeStart; j < currentRangeEnd; j++)
-            // from lowest scan to highest scan relevant to this
-            // point, +1 since scan number of point has to be included.
-            {
-                float dist = std::abs(currentMZ - minMaxOutPerScan[j]);
-                if (dist < minDist_base)
-                {
-                    minDist_base = dist;
-                }
-                float scaledDist = dist * scalarForMOD[j - currentRangeStart];
-                if (scaledDist < minDist_scaled) // scaling is calculated by a separate function
-                {
-                    minDist_scaled = scaledDist;
-                }
-            }
-
-            DQSB_base.push_back(calcDQS(meanInnerDistances[i], minDist_base));
-            DQSB_scaled.push_back(calcDQS(meanInnerDistances[i], minDist_scaled));
-        }
-        return;
-    }
-
-    size_t Bin::makeDQSB_new(std::vector<const qCentroid *> *notInBins, size_t idx_lowerLimit, size_t maxdist)
+    size_t Bin::makeDQSB(std::vector<const qCentroid *> *notInBins, size_t idx_lowerLimit, size_t maxdist)
     {
         // assume that bins are separated well enough that any gap of this size is close to perfect
         // separation already, so score = 1
@@ -920,28 +718,6 @@ namespace qAlgorithms
         return (MOD - MID) / fmal(MID, maxInVal, maxInVal);
     }
 
-    static std::vector<float> scaleDistancesForDQS_linear(size_t maxdist) // @experimental
-    {
-        // This vector contains factors for an inverse gaussian scaling of distances during DQS calculation
-        std::vector<float> scalarForMOD;
-        // Assumption: every point which is found in a neighbouring scan, but not the
-        // current one, has a 50% chance of existing. As such, it can only be half
-        // as relevant as another point in the same scan. To scale, A distance in the
-        // same scan is multiplied by one, one further by two, then by four etc.
-        scalarForMOD.resize(maxdist * 4 + 2); // every value is doubled, same length as selected mz vector during DQS calculation
-        float scalarSingle = pow(2, maxdist);
-        for (size_t i = 0; i < 2 * maxdist + 1; i++) // scalarForMod contains the correct scaling to be used on the MOD for any maxdist
-        {
-            scalarForMOD[i] = scalarSingle;
-            scalarForMOD[i + 1] = scalarSingle;
-            scalarForMOD[scalarForMOD.size() - 1 - i] = scalarSingle;
-            scalarForMOD[scalarForMOD.size() - 2 - i] = scalarSingle;
-            i++;
-            scalarSingle /= 2;
-        }
-        return scalarForMOD;
-    }
-
 #pragma endregion "Functions"
 
     std::vector<EIC> performQbinning(const CentroidedData *centroidedData, const std::vector<float> convertRT,
@@ -1027,7 +803,6 @@ namespace qAlgorithms
             activeBins.processBinsT.clear();
         }
 
-        auto scalar = scaleDistancesForDQS_linear(maxdist);
         // calculate the DQSB as the silhouette score, considering only non-separated points
         std::sort(activeBins.notInBins.begin(), activeBins.notInBins.end(), [](const qCentroid *lhs, const qCentroid *rhs)
                   { return lhs->mz < rhs->mz; });
@@ -1036,8 +811,7 @@ namespace qAlgorithms
         size_t shared_idxStart = 0;
         for (size_t i = 0; i < activeBins.finalBins.size(); i++)
         {
-            // activeBins.finalBins[i].makeDQSB(centroidedData, scalar, maxdist);
-            shared_idxStart = activeBins.finalBins[i].makeDQSB_new(&activeBins.notInBins, shared_idxStart, maxdist);
+            shared_idxStart = activeBins.finalBins[i].makeDQSB(&activeBins.notInBins, shared_idxStart, maxdist);
         }
 
         // @todo add bin merger for halved bins here ; this ight be a bad idea, find way to prove it
