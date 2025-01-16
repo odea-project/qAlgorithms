@@ -668,7 +668,6 @@ namespace qAlgorithms
         }
 
         mutateReg->uncertainty_pos = calcUncertaintyPos(mse, mutateReg->newCoeffs, mutateReg->apex_position, scale);
-
         mutateReg->df = df_sum - 4; // @todo add explanation for -4
         mutateReg->apex_position += i + scale;
         mutateReg->scale = scale;
@@ -929,7 +928,8 @@ namespace qAlgorithms
                 coeff.b2 /= delta_rt * delta_rt;
                 coeff.b3 /= delta_rt * delta_rt;
                 peak.coefficients = coeff;
-                peak.rt_switch = regression.index_x0; // point at which the two halves intersect @todo not true, fix this
+                peak.apexLeft = regression.apex_position < regression.index_x0;
+                // peak.rt_switch = regression.index_x0; // point at which the two halves intersect @todo not true, fix this
 
                 peaks->push_back(std::move(peak));
             }
