@@ -20,7 +20,7 @@ message(STATUS "OpenMP_CXX_LIBRARIES: ${OpenMP_CXX_LIBRARIES}")
 # user option for enabling address sanitizer when on linux
 option(V_ASAN "Enable AddressSanitizer" OFF)
 # switch between compiling O0 and O2 without editing this file
-option(V_DEBUG "Compile with -O0" OFF)
+# option(V_DEBUG "Compile with -O0" OFF)
 # static compile the executeable
 option(V_STATIC "Compile a statically linked executeable" OFF)
 
@@ -30,11 +30,11 @@ else()
   set(CMAKE_BUILD_TYPE "Debug")
 endif()
 
-if(V_DEBUG)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O0")
-else()
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O2")
-endif()
+# if(V_DEBUG)
+#   set(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} -O0)
+# else()
+#   set(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} -O2)
+# endif()
 
 # Set compiler flags
 add_compile_options(-Wall -Wuninitialized -Wno-unknown-pragmas -fdiagnostics-color=always 
@@ -47,7 +47,7 @@ endif()
 
 if(V_STATIC)
     message(STATUS "Enabling static compilation")
-    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static")
+    set(CMAKE_EXE_LINKER_FLAGS ${CMAKE_EXE_LINKER_FLAGS} -static)
 endif()
 
 # Set include directories
@@ -74,7 +74,7 @@ endif()
 if(CMAKE_BUILD_TYPE MATCHES "Debug-Linux")
   set(
     CMAKE_C_FLAGS
-    "${CMAKE_C_FLAGS} -Werror -fsanitize=undefined -fsanitize=address"
+    ${CMAKE_C_FLAGS} -Werror -fsanitize=undefined -fsanitize=address
   )
   target_link_options(qAlgorithms
     BEFORE PUBLIC -fsanitize=undefined PUBLIC -fsanitize=address
