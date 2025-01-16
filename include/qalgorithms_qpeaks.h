@@ -44,7 +44,7 @@ namespace qAlgorithms
     void makeValidRegression(
         RegressionGauss *mutateReg,
         const size_t i,
-        const int scale,
+        const size_t scale,
         const bool *df_start,
         const float *y_start,
         const float *ylog_start);
@@ -116,7 +116,7 @@ namespace qAlgorithms
      * @param right_limit : End index of the regression window
      * @return int : Degree of freedom
      */
-    int calcDF(
+    size_t calcDF(
         const bool *df_start,
         unsigned int left_limit,
         unsigned int right_limit);
@@ -133,7 +133,7 @@ namespace qAlgorithms
      */
     bool calcApexAndValleyPos(
         RegressionGauss *mutateReg,
-        const int scale,
+        const int scale, // this scale needs to be an int since it needs to be negative in the function body
         float &valley_position);
 
     /**
@@ -181,7 +181,7 @@ namespace qAlgorithms
      */
     bool isValidQuadraticTerm(
         const RegCoeffs coeff,
-        const int scale,
+        const size_t scale,
         const float mse,
         const size_t df_sum);
 
@@ -197,7 +197,7 @@ namespace qAlgorithms
      */
     bool isValidPeakHeight(
         const float mse,
-        const int scale,
+        const size_t scale,
         const float apex_position,
         float valley_position,
         const size_t df_sum,
@@ -247,7 +247,7 @@ namespace qAlgorithms
         const size_t n,
         __m128 *result);
 
-    std::pair<float, float> weightedMeanAndVariance(const float *x, const float *w, const bool *df,
+    std::pair<float, float> weightedMeanAndVariance(const float *x, const float *weight, const bool *df,
                                                     int left_limit, int right_limit);
 }
 
