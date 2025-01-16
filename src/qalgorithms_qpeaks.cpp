@@ -133,7 +133,7 @@ namespace qAlgorithms
 #pragma endregion "initialize"
 
 #pragma region "find centroids"
-    std::vector<CentroidPeak> findCentroids(treatedData &treatedData, const int scanNumber)
+    std::vector<CentroidPeak> findCentroids(treatedData &treatedData, const size_t scanNumber)
     {
         std::vector<CentroidPeak> all_peaks;
         int maxWindowSize = 0;
@@ -408,18 +408,18 @@ namespace qAlgorithms
 #pragma region validateRegressions
     void validateRegressions(
         const __m128 *beta,      // coefficients matrix
-        const int n_segments,    // number of segments, i.e. regressions
+        const size_t n_segments, // number of segments, i.e. regressions
         const float *y_start,    // pointer to the start of the Y matrix
         const float *ylog_start, // pointer to the start of the Ylog matrix
         const bool *df_start,    // degree of freedom vector, 0: interpolated, 1: measured
         const size_t arrayMaxLength,
-        const int scale, // scale, i.e., the number of data points in a half window excluding the center point
+        const size_t scale, // scale, i.e., the number of data points in a half window excluding the center point
         std::vector<RegressionGauss> &validRegressions)
     {
         std::vector<RegressionGauss> validRegsTmp; // temporary vector to store valid regressions <index, apex_position>
         // iterate columwise over the coefficients matrix beta
         validRegsTmp.push_back(RegressionGauss{});
-        for (int i = 0; i < n_segments; i++)
+        for (size_t i = 0; i < n_segments; i++)
         {
             if (calcDF(df_start, i, 2 * scale + i) > 4)
             {
@@ -521,7 +521,7 @@ namespace qAlgorithms
 
     void makeValidRegression(
         RegressionGauss *mutateReg,
-        const int i,
+        const size_t i,
         const int scale,
         const bool *df_start,
         const float *y_start,
@@ -577,7 +577,7 @@ namespace qAlgorithms
           the loop continues to the next iteration. The value 5 is chosen as the
           minimum number of data points required to fit a quadratic regression model.
         */
-        int df_sum = calcDF(df_start, mutateReg->left_limit, mutateReg->right_limit); // degrees of freedom considering the left and right limits
+        size_t df_sum = calcDF(df_start, mutateReg->left_limit, mutateReg->right_limit); // degrees of freedom considering the left and right limits
         if (df_sum < 5)
         {
             return; // degree of freedom less than 5; i.e., less then 5 measured data points
@@ -823,15 +823,15 @@ namespace qAlgorithms
     void createCentroidPeaks(
         std::vector<CentroidPeak> *peaks,
         const std::vector<RegressionGauss> *validRegressionsVec,
-        const int validRegressionsIndex,
+        const size_t validRegressionsIndex,
         const float *y_start,
         const float *mz_start,
         const bool *df_start,
-        const int scanNumber)
+        const size_t scanNumber)
     {
         assert(!validRegressionsVec->empty());
         // iterate over the validRegressions vector
-        for (int i = 0; i < validRegressionsIndex; i++)
+        for (size_t i = 0; i < validRegressionsIndex; i++)
         {
             RegressionGauss regression = (*validRegressionsVec)[i];
 
@@ -875,7 +875,7 @@ namespace qAlgorithms
     void createFeaturePeaks(
         std::vector<FeaturePeak> *peaks,
         const std::vector<RegressionGauss> *validRegressionsVec,
-        const int validRegressionsIndex,
+        const size_t validRegressionsIndex,
         const float *y_start,
         const float *mz_start,
         const float *rt_start,
@@ -884,7 +884,7 @@ namespace qAlgorithms
         const float *dqs_bin)
     {
         // iterate over the validRegressions vector
-        for (int i = 0; i < validRegressionsIndex; i++)
+        for (size_t i = 0; i < validRegressionsIndex; i++)
         {
             assert(!validRegressionsVec->empty());
             RegressionGauss regression = (*validRegressionsVec)[i];
@@ -1061,7 +1061,7 @@ namespace qAlgorithms
             right_limit = std::max(right_limit, regressions[i].right_limit);
         }
 
-        const int df_sum = calcDF(df_start, left_limit, right_limit);
+        const size_t df_sum = calcDF(df_start, left_limit, right_limit);
 
         for (size_t i = startIdx; i < endIdx + 1; i++)
         {
@@ -1170,8 +1170,8 @@ namespace qAlgorithms
 
     float calcApexToEdge(
         const double apex_position,
-        const int scale,
-        const int index_loop,
+        const size_t scale,
+        const size_t index_loop,
         const float *y_start)
     {
         int idx_apex = (int)std::round(apex_position) + scale + index_loop; // index of the apex
@@ -1190,7 +1190,7 @@ namespace qAlgorithms
         const RegCoeffs coeff,
         const int scale,
         const float mse,
-        const int df_sum)
+        const size_t df_sum)
     {
         float divisor = std::sqrt(INV_ARRAY[scale * 6 + 4] * mse); // inverseMatrix_2_2 is at position 4 of initialize()
         float tValue = std::max(                                   // t-value for the quadratic term
@@ -1206,7 +1206,7 @@ namespace qAlgorithms
     void calcPeakHeightUncert(
         RegressionGauss *mutateReg,
         const float mse,
-        const int scale)
+        const size_t scale)
     {
         float Jacobian_height[4]{1, 0, 0, 0};          // Jacobian matrix for the height
         Jacobian_height[1] = mutateReg->apex_position; // apex_position * height;
@@ -1231,7 +1231,7 @@ namespace qAlgorithms
         const int scale,
         const float apex_position,
         float valley_position,
-        const int df_sum,
+        const size_t df_sum,
         const float apexToEdge)
     {
         // check if the peak height is significantly greater than edge signal
@@ -1282,7 +1282,7 @@ namespace qAlgorithms
 
         float J[4]; // Jacobian matrix
 
-        // here we have to check if there is a valley point or not
+        // here we have to check if there is a valley point or not // @todo this can be simplified
         const float err_L =
             (b2 < 0)
                 ? experfc(B1_2_SQRTB2, -1.0) // 1 - std::erf(b1 / 2 / SQRTB2) // ordinary peak
@@ -1318,13 +1318,14 @@ namespace qAlgorithms
     bool isValidPeakArea(
         RegCoeffs coeff,
         const float mse,
-        const int scale,
-        const int df_sum)
+        const int scale, // scale must be an int here
+        const size_t df_sum)
     {
         float b1 = coeff.b1;
         float b2 = coeff.b2;
         float b3 = coeff.b3;
         assert(!(b2 > 0 && b3 > 0)); // there would be two valley points, so no maximum of the peak
+        assert(scale > 0);
 
         float _SQRTB2 = 1 / std::sqrt(std::abs(b2));
         float _SQRTB3 = 1 / std::sqrt(std::abs(b3));
@@ -1438,7 +1439,7 @@ namespace qAlgorithms
         const float mse,
         RegCoeffs coeff,
         const float apex_position,
-        const int scale)
+        const size_t scale)
     {
         float _b1 = 1 / coeff.b1;
         float _b2 = 1 / coeff.b2;
@@ -1463,7 +1464,7 @@ namespace qAlgorithms
 #pragma region "convolve regression"
     // these chain to return beta for a regression
 
-    inline float multiplyVecMatrixVecTranspose(const float vec[4], int scale)
+    inline float multiplyVecMatrixVecTranspose(const float vec[4], size_t scale)
     {
         scale *= 6;
         float result = vec[0] * vec[0] * INV_ARRAY[scale + 0] +
