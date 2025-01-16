@@ -38,7 +38,7 @@ endif()
 
 # Set compiler flags
 add_compile_options(-Wall -Wuninitialized -Wno-unknown-pragmas -fdiagnostics-color=always 
-                    -fopenmp -mavx2 -march=native 
+                    -fopenmp -mavx2 -march=native -O2
                     -fno-math-errno -ggdb3 ${OpenMP_CXX_FLAGS}) 
 
 if(CMAKE_BUILD_TYPE MATCHES "Debug-Linux")
