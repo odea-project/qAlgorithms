@@ -522,7 +522,7 @@ namespace qAlgorithms
     void makeValidRegression(
         RegressionGauss *mutateReg,
         const size_t i,
-        const int scale,
+        const size_t scale,
         const bool *df_start,
         const float *y_start,
         const float *ylog_start)
@@ -561,7 +561,8 @@ namespace qAlgorithms
         }
         else if (valley_position < 0)
         {
-            mutateReg->left_limit = std::max(i, static_cast<int>(valley_position) + i + scale);
+            size_t substractor = static_cast<size_t>(abs(valley_position));
+            mutateReg->left_limit = substractor < scale ? i + scale - substractor : i; // std::max(i, static_cast<int>(valley_position) + i + scale);
             mutateReg->right_limit = i + 2 * scale;
         }
         else
@@ -779,44 +780,45 @@ namespace qAlgorithms
 
 #pragma region "create peaks"
 
-    std::pair<float, float> weightedMeanAndVariance(const float *x, const float *w, const bool *df,
+    std::pair<float, float> weightedMeanAndVariance(const float *values, const float *weight, const bool *df,
                                                     int left_limit, int right_limit)
-    {
+    { // @todo rework this function to be more readable
+        // considering that all interpolated points are ignored during this function and afterwards, it might be a good idea to remove them again
+        // assert(right_limit > 0); // only holds for centroids
+        // assert(left_limit > 0);
         // weighted mean using y_start as weighting factor and left_limit right_limit as range
-        int n = right_limit - left_limit + 1;
-        float mean_wt = 0.0; // mean of w
-        for (int j = left_limit; j <= right_limit; j++)
+        int realPoints = right_limit - left_limit + 1;
+        float mean_wt = 0.0;                            // mean of weight
+        float sum_xw = 0.0;                             // sum of values * weight
+        float sum_weight = 0.0;                         // sum of weight
+        for (int j = left_limit; j <= right_limit; j++) // why does this work? there should be an array access at less than 0 @todo
         {
-            if (!*(df + j))
+            if (df[j])
             {
-                n--;
-                continue;
+                mean_wt += *(weight + j);
+                sum_xw += *(values + j) * *(weight + j);
+                sum_weight += *(weight + j);
             }
-            mean_wt += *(w + j);
-        }
-        mean_wt /= n;
-        float sum_xw = 0.0;     // sum of x*w
-        float sum_weight = 0.0; // sum of w
-        for (int j = left_limit; j <= right_limit; j++)
-        {
-            if (!*(df + j))
+            else
             {
-                continue;
+                realPoints--;
             }
-            sum_xw += *(x + j) * *(w + j) / mean_wt;
-            sum_weight += *(w + j) / mean_wt;
         }
+        mean_wt /= realPoints;
+        sum_xw /= mean_wt;
+        sum_weight /= mean_wt;
+
         float weighted_mean = sum_xw / sum_weight;
-        float sum_Qxxw = 0.0; // sum of (x - mean)^2 * w
+        float sum_Qxxw = 0.0; // sum of (values - mean)^2 * weight
         for (int j = left_limit; j <= right_limit; j++)
         {
-            if (*(x + j) <= 0.f)
+            if (*(values + j) <= 0.f)
             {
                 continue;
             }
-            sum_Qxxw += (*(x + j) - weighted_mean) * (*(x + j) - weighted_mean) * *(w + j);
+            sum_Qxxw += (*(values + j) - weighted_mean) * (*(values + j) - weighted_mean) * *(weight + j);
         }
-        float uncertaintiy = std::sqrt(sum_Qxxw / sum_weight / n);
+        float uncertaintiy = std::sqrt(sum_Qxxw / sum_weight / realPoints);
         return std::make_pair(weighted_mean, uncertaintiy);
     };
 
@@ -1081,7 +1083,7 @@ namespace qAlgorithms
         return std::pair(bestRegIdx, best_mse);
     }
 
-    int calcDF(
+    size_t calcDF(
         const bool *df_start,     // start of the degrees of freedom
         unsigned int left_limit,  // left limit
         unsigned int right_limit) // right limit
@@ -1100,7 +1102,7 @@ namespace qAlgorithms
 #pragma region calcApexAndValleyPos
     bool calcApexAndValleyPos(
         RegressionGauss *mutateReg,
-        const int scale,
+        const int scale, // this scale needs to be an int since it needs to be negative in the function body
         float &valley_position)
     {
         // symmetric model should apply, this is not possible with the current peak model @todo
@@ -1188,7 +1190,7 @@ namespace qAlgorithms
 #pragma region isValidQuadraticTerm
     bool isValidQuadraticTerm(
         const RegCoeffs coeff,
-        const int scale,
+        const size_t scale,
         const float mse,
         const size_t df_sum)
     {
@@ -1228,7 +1230,7 @@ namespace qAlgorithms
 
     bool isValidPeakHeight(
         const float mse,
-        const int scale,
+        const size_t scale,
         const float apex_position,
         float valley_position,
         const size_t df_sum,
@@ -1244,7 +1246,7 @@ namespace qAlgorithms
             // float edge_position = (valley_position != 0) ? valley_position : static_cast<float>(-scale);
             if (valley_position == 0)
             {
-                valley_position = static_cast<float>(-scale);
+                valley_position = static_cast<float>(scale) * -1;
             }
 
             Jacobian_height2[1] = apex_position - valley_position;
