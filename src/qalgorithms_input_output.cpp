@@ -755,7 +755,7 @@ namespace qAlgorithms
 
         output << "ID,binID,binIdxStart,binIdxEnd,mz,mzUncertainty,retentionTime,retentionTimeUncertainty,"
                << "lowestRetentionTime,highestRetentionTime,area,areaUncertainty,height,heightUncertainty,"
-               << "dqsCen,dqsBin,dqsPeak,rt_switch,b0,b1,b2,b3\n";
+               << "dqsCen,dqsBin,dqsPeak,apexLeft,b0,b1,b2,b3\n";
 
         unsigned int counter = 1;
         for (size_t i = 0; i < peaktable.size(); i++)
