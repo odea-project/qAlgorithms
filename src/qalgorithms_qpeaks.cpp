@@ -19,6 +19,7 @@ namespace qAlgorithms
     {
         // initialise empty vector with enough room for all scans - centroids[0] must remain empty
         std::vector<std::vector<qCentroid>> centroids(allPeaks.size() + 1, std::vector<qCentroid>(0)); // @todo this is no longer required by the binning algorithm
+        assert(addEmpty.size() >= allPeaks.size());
         size_t totalCentroids = 0;
         unsigned int scanRelative = 0;
         size_t addTotal = 0;
@@ -69,6 +70,48 @@ namespace qAlgorithms
         }
 
         return CentroidedData{centroids, totalCentroids};
+    }
+
+    std::vector<qCentroid> passToBinning_replacer(std::vector<std::vector<CentroidPeak>> &allPeaks, std::vector<unsigned int> addEmpty)
+    {
+        // initialise empty vector with enough room for all scans - centroids[0] must remain empty
+        std::vector<qCentroid> centroids;
+        centroids.reserve(allPeaks.size() * 2);
+        assert(addEmpty.size() >= allPeaks.size());
+        size_t totalCentroids = 0;
+        unsigned int scanRelative = 0;
+        size_t addTotal = 0;
+        for (size_t i = 0; i < addEmpty.size(); i++)
+        {
+            addTotal += addEmpty[i];
+        }
+        for (size_t i = 0; i < allPeaks.size(); ++i)
+        {
+            if (addEmpty[i] != 0)
+            {
+                for (size_t j = 0; j < addEmpty[i]; j++)
+                {
+                    scanRelative++;
+                }
+            }
+            scanRelative++; // scans start at 1
+            if (!allPeaks[i].empty())
+            {
+                // sort the peaks in ascending order of retention time
+                std::sort(allPeaks[i].begin(), allPeaks[i].end(), [](const CentroidPeak a, const CentroidPeak b)
+                          { return a.scanNumber < b.scanNumber; });
+                for (size_t j = 0; j < allPeaks[i].size(); ++j)
+                {
+                    auto &peak = allPeaks[i][j];
+                    qCentroid F = qCentroid{peak.mzUncertainty, peak.mz, scanRelative, peak.area, peak.height, peak.dqsCen, peak.df};
+                    assert(F.scanNo > 0);
+                    assert(F.scanNo <= (addTotal + allPeaks.size()));
+                    centroids.push_back(F);
+                    ++totalCentroids;
+                }
+            }
+        }
+        return centroids;
     }
 #pragma endregion "pass to qBinning"
 

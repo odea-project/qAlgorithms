@@ -209,6 +209,9 @@ namespace qAlgorithms
     std::vector<EIC> performQbinning(const CentroidedData *centroidedData, const std::vector<float> convertRT,
                                      size_t maxdist, bool verbose);
 
+    std::vector<EIC> performQbinning_replace(const std::vector<qCentroid> *centroidedData, const std::vector<float> convertRT,
+                                             size_t maxdist, bool verbose);
+
     // ###################################################################################################### //
 }
 
