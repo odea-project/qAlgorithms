@@ -21,23 +21,6 @@ namespace qAlgorithms
 {
 
 #pragma region "misc"
-    // declarations of static functions
-    /// @brief calculate the mean distance in mz to all other elements of a sorted vector for one element
-    /// @param pointsInBin vector of data points sorted by mz
-    /// @return vector of the mean inner distances for all elements in the same order as pointsInBin
-    // static std::vector<double> meanDistance(const std::vector<const qCentroid *> pointsInBin);
-
-    /// @brief calculate the mean distance in mz to all other close elements of a sorted vector for one element
-    /// @param pointsInBin vector of data points sorted by scans
-    /// @param maxdist maximum distance in scans for similar points
-    /// @return vector of the mean inner distances for all elements in the same order as pointsInBin
-    static std::vector<float> meanDistanceRegional(const std::vector<const qCentroid *> pointsInBin, size_t maxdist);
-
-    /// @brief calculate the data quality score as described by Reuschenbach et al. for one datapoint in a bin
-    /// @param MID mean inner distance in mz to all other elements in the bin
-    /// @param MOD minimum outer distance - the shortest distance in mz to a data point that is within maxdist and not in the bin
-    /// @return the data quality score for the specified element
-    static inline float calcDQS(const float MID, const float MOD); // Mean Inner Distance, Minimum Outer Distance
 
     const double binningCritVal(size_t n, double stdDev)
     {
@@ -311,24 +294,9 @@ namespace qAlgorithms
 
     Bin::Bin() {};
 
-    Bin::Bin(const std::vector<const qCentroid *>::iterator &binStartInOS, const std::vector<const qCentroid *>::iterator &binEndInOS) // const std::vector<qCentroid> &sourceList,
+    Bin::Bin(const std::vector<const qCentroid *>::iterator &binStartInOS, const std::vector<const qCentroid *>::iterator &binEndInOS)
     {
         pointsInBin = std::vector<const qCentroid *>(binStartInOS, binEndInOS);
-    }
-    Bin::Bin(CentroidedData *rawdata) // @todo relatively time intensive, better solution?; why does rawdata need to be mutable?
-    {
-        // collect indices for
-        assert(pointsInBin.empty());
-        pointsInBin.reserve(rawdata->lengthAllPoints);
-        for (size_t i = 1; i < rawdata->allDatapoints.size(); i++)
-        {
-            for (size_t j = 0; j < rawdata->allDatapoints[i].size(); j++)
-            {
-                pointsInBin.push_back(&rawdata->allDatapoints[i][j]);
-                assert(pointsInBin.back()->scanNo > 0);
-                assert(pointsInBin.back()->scanNo < rawdata->allDatapoints.size() + 1);
-            }
-        }
     }
 
     void Bin::makeOS()
@@ -672,7 +640,7 @@ namespace qAlgorithms
 
 #pragma region "Functions"
 
-    static std::vector<float> meanDistanceRegional(const std::vector<const qCentroid *> pointsInBin, size_t maxdist)
+    std::vector<float> meanDistanceRegional(const std::vector<const qCentroid *> pointsInBin, size_t maxdist)
     {
         // the other mean distance considers all points in the Bin.
         // It is sensible to only use the mean distance of all points within maxdist scans
@@ -702,7 +670,7 @@ namespace qAlgorithms
         return output;
     }
 
-    static inline float calcDQS(float MID, float MOD) // mean inner distance, minimum outer distance
+    inline float calcDQS(float MID, float MOD) // mean inner distance, minimum outer distance
     {
         float maxInVal = MOD; // MID should generally be much smaller than MOD
         if (maxInVal < MID)
