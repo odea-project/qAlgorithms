@@ -64,6 +64,18 @@ namespace qAlgorithms
 
     const double binningCritVal(size_t n, double uncertainty); // critical value for deciding if a bin exists or not
 
+    /// @brief calculate the mean distance in mz to all other close elements of a sorted vector for one element
+    /// @param pointsInBin vector of data points sorted by scans
+    /// @param maxdist maximum distance in scans for similar points
+    /// @return vector of the mean inner distances for all elements in the same order as pointsInBin
+    std::vector<float> meanDistanceRegional(const std::vector<const qCentroid *> pointsInBin, size_t maxdist);
+
+    /// @brief calculate the data quality score as described by Reuschenbach et al. for one datapoint in a bin
+    /// @param MID mean inner distance in mz to all other elements in the bin
+    /// @param MOD minimum outer distance - the shortest distance in mz to a data point that is within maxdist and not in the bin
+    /// @return the data quality score for the specified element
+    inline float calcDQS(const float MID, const float MOD); // Mean Inner Distance, Minimum Outer Distance
+
 #pragma endregion "utility"
 
 #pragma region "Bin"
@@ -100,9 +112,6 @@ namespace qAlgorithms
         /// @param endBin right border of the new bin
         Bin(const std::vector<const qCentroid *>::iterator &startBin, const std::vector<const qCentroid *>::iterator &endBin); //
 
-        /// @brief generate a bin by adding pointers to all points in rawdata to pointsInBin
-        /// @param rawdata a set of raw data on which binning is to be performed
-        Bin(CentroidedData *rawdata);
         Bin();
 
         /// @brief generate the activeOS vector containing the difference to the next greatest mz for every point

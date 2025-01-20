@@ -10,15 +10,17 @@ library(tidyverse)
 ```
 
 ```{r read features}
-bins = read_csv("~/Work/ODEA/qAlgorithms/build/22090901_H2O_1_pos_positive_bins.csv")
-peaks = read_csv("~/Work/ODEA/qAlgorithms/build/22090901_H2O_1_pos_positive_features.csv")
+# bins = read_csv("~/Work/ODEA/qAlgorithms/build/22090901_H2O_1_pos_positive_bins.csv")
+# peaks = read_csv("~/Work/ODEA/qAlgorithms/build/22090901_H2O_1_pos_positive_features.csv")
+bins = read_csv("C:/Users/unisys/Documents/Studium/qAlgorithms/build/22090901_H2O_1_pos_positive_bins.csv")
+peaks = read_csv("C:/Users/unisys/Documents/Studium/qAlgorithms/build/22090901_H2O_1_pos_positive_features.csv")
 peaks = peaks[order(peaks$retentionTime),]
 ```
 82 + 312
-
+68 + 391
 ```{r}
-feature_A = 82
-feature_B = 312
+feature_A = 68
+feature_B = 391
 
 feature_A = peaks[which(peaks$ID == feature_A),]
 feature_B = peaks[which(peaks$ID == feature_B),]
@@ -46,12 +48,12 @@ points_B = points_B[clamp_l:clamp_r,]
 
 rts = (feature_A$highestRetentionTime - feature_A$lowestRetentionTime) / 100
 rts = feature_A$lowestRetentionTime + 1:100 * rts
-curve_A = peakShape(rts, feature_A$rt_switch, feature_A$b0, feature_A$b1, feature_A$b2, feature_A$b3)
+curve_A = peakShape(rts, feature_A$retentionTime + feature_A$rt_switch, feature_A$b0, feature_A$b1, feature_A$b2, feature_A$b3)
 ```
 
 ```{r}
 ggplot(rbind(points_A, points_B))+
-  geom_point(aes(retentionTime, area, colour = binID))
+  geom_point(aes(retentionTime, area, colour = as.factor(round(mz))))
 
 
 ```
@@ -73,7 +75,7 @@ peakShape = function(x, rt_switch, b0, b1, b2, b3){
   sq2 = (as.numeric(!(x < rt_switch)) * b3 * x^2)
   # print(squareCoeff)
   # print(sq2)
-  return(exp(- (b0 + x * b1 + squareCoeff + sq2)))
+  return(exp((b0 + x * b1 + squareCoeff + sq2)))
 }
 ```
 
