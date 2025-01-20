@@ -23,6 +23,8 @@ namespace qAlgorithms
 
     CentroidedData passToBinning(std::vector<std::vector<CentroidPeak>> &allPeaks, std::vector<unsigned int> addEmpty);
 
+    std::vector<qCentroid> passToBinning_replacer(std::vector<std::vector<CentroidPeak>> &allPeaks, std::vector<unsigned int> addEmpty);
+
     void runningRegression(
         const float *y_start,
         const float *ylog_start,

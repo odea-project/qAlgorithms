@@ -172,6 +172,7 @@ int main(int argc, char *argv[])
             // @todo remove diagnostics later
 
             CentroidedData binThis = passToBinning(centroids, addEmptyScans);
+            auto binThis2 = passToBinning_replacer(centroids, addEmptyScans);
 
             double meanDQSC = 0;
             double meanCenErrorRel = 0;
@@ -216,9 +217,15 @@ int main(int argc, char *argv[])
             }
 
             timeStart = std::chrono::high_resolution_clock::now();
-            std::vector<EIC> binnedData = performQbinning(
-                &binThis, convertRT, 3, // set maxdist here - reasoned as likelihood of real trace being onverlooked being at worst 50%
+            std::vector<EIC> binnedData2 = performQbinning(
+                &binThis, convertRT, 3, // set maxdist here - reasoned as likelihood of real trace being overlooked being at worst 50%
                 userArgs.verboseProgress);
+
+            std::vector<EIC> binnedData = performQbinning_replace(
+                &binThis2, convertRT, 3, // set maxdist here - reasoned as likelihood of real trace being overlooked being at worst 50%
+                userArgs.verboseProgress);
+
+            assert(binnedData2.size() == binnedData.size()); // the two produce slightly different results, presumably if an empty scan was added
             timeEnd = std::chrono::high_resolution_clock::now();
 
             if (binnedData.size() == 0)
@@ -274,19 +281,13 @@ int main(int argc, char *argv[])
             {
                 int binIdx = peaks[i].idxBin;
                 auto massesBin = binnedData[binIdx].mz;
-                // auto rtsBin = binnedData[binIdx].rententionTimes;
                 auto scansBin = binnedData[binIdx].scanNumbers;
 
                 // idxPeakStart/End are the index referring to the bin in which a peak was found
                 if (!massTraceStable(massesBin, peaks[i].idxPeakStart, peaks[i].idxPeakEnd))
                 {
                     ++peaksWithMassGaps;
-                    // std::cerr << peaks[i][j].mz << ", " << peaks[i][j].retentionTime << ", "
-                    //           << peaks[i][j].area << ", " << peaks[i][j].dqsPeak << "\n";
-                    // problems do not only occur at very low masses or the edges of out chromoatography
-                    // recommendation: do not pass these peaks to result table
                     peaks[i].dqsPeak *= -1;
-
                     // @todo consider removing these or add a correction set somewhere later
                     // @todo add some documentation regarding the scores
                 }
@@ -295,8 +296,6 @@ int main(int argc, char *argv[])
                     meanDQSF += peaks[i].dqsPeak;
                 }
             }
-
-            // std::cout << testsPassedTotal << ", " << testsPassedPeak << ", " << testsFailedPeak << ", " << peaks.size() - testsPassedTotal << "\n";
 
             if (userArgs.verboseProgress)
             {
@@ -325,24 +324,8 @@ int main(int argc, char *argv[])
                 printFeatureList(peaks, userArgs.outputPath, filename, binnedData,
                                  userArgs.printExtended, userArgs.silent, userArgs.skipError, userArgs.noOverwrite);
             }
-            // if (printSubProfile)
-            // {
-            //     for (size_t i = 0; i < peaks.size(); i++)
-            //     {
-            //         if (!peaks[i].empty())
-            //         {
-            //             auto massesBin = binnedData[i].mz;
-            //             for (size_t j = 0; j < peaks[i].size(); j++)
-            //             {
-            //             }
-            //         }
-            //     }
-            // }
 
             // @todo add peak grouping here
-
-            // auto peakpointer = collapseFeaturelist(peaks);
-            // initialComponentBinner(peaks, 1);
         }
         counter++;
     }
