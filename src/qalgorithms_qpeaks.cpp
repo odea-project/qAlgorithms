@@ -1,6 +1,5 @@
 // qalgorithms_qpeaks.cpp
-//
-// internal
+
 #include "qalgorithms_qpeaks.h"
 #include "qalgorithms_utils.h"
 #include "qalgorithms_global_vars.h"
@@ -12,8 +11,6 @@
 #include <cmath>
 #include <array>
 
-// external
-
 namespace qAlgorithms
 {
 
@@ -21,7 +18,7 @@ namespace qAlgorithms
     CentroidedData passToBinning(std::vector<std::vector<CentroidPeak>> &allPeaks, std::vector<unsigned int> addEmpty)
     {
         // initialise empty vector with enough room for all scans - centroids[0] must remain empty
-        std::vector<std::vector<qCentroid>> centroids(allPeaks.size() + 1, std::vector<qCentroid>(0));
+        std::vector<std::vector<qCentroid>> centroids(allPeaks.size() + 1, std::vector<qCentroid>(0)); // @todo this is no longer required by the binning algorithm
         size_t totalCentroids = 0;
         unsigned int scanRelative = 0;
         size_t addTotal = 0;
@@ -29,8 +26,6 @@ namespace qAlgorithms
         {
             addTotal += addEmpty[i];
         }
-
-        // std::vector<qCentroid> scan(0);
         for (size_t i = 0; i < allPeaks.size(); ++i)
         {
             if (addEmpty[i] != 0)
@@ -78,10 +73,9 @@ namespace qAlgorithms
 #pragma endregion "pass to qBinning"
 
 #pragma region "initialize"
-    //  float INV_ARRAY[64][6]; // array to store the 6 unique values of the inverse matrix for each scale
 
     const std::array<float, 384> initialize()
-    {
+    { // array to store the 6 unique values of the inverse matrix for each scale
         std::array<float, 384> invArray;
         // init invArray
         // XtX = transposed(Matrix X ) * Matrix X
@@ -313,10 +307,6 @@ namespace qAlgorithms
         // It is equivalent to sum(y[i] * P[i][0]) for beta0, beta1 etc. Every element of result is one set of coefficients (b0, b1, b2, b3)
 
         size_t n_segments = n - 2 * scale;
-        // centerpoint is always == scale
-        // size_t k = 2 * scale + 1;
-        // size_t centerpoint = k / 2;
-
         __m128 products[n]; // holds the products of vec and the scale factor
         for (size_t i = 0; i < n; ++i)
         {
@@ -496,6 +486,7 @@ namespace qAlgorithms
           multiple peaks, the peak with the lowest MSE is selected as the representative of the group
           and pushed to the valid regressions.
         */
+        // @todo use a "ridges" approach here (gaussian mixture model)
         for (size_t groupIdx = 0; groupIdx < startEndGroups.size(); groupIdx += 2)
         {
             if (startEndGroups[groupIdx] == startEndGroups[groupIdx + 1])
@@ -712,7 +703,7 @@ namespace qAlgorithms
                         (
                             validRegressions[i].apex_position > validRegressions[j].left_limit && // new peak matches the left limit
                             validRegressions[i].apex_position < validRegressions[j].right_limit)) // new peak matches the right limit
-                    {                                                                             // @todo how often is this the case?
+                    {
                         if (validRegressions[j].mse == 0.0)
                         { // calculate the mse of the ref peak
                             validRegressions[j].mse = calcSSE_exp(
@@ -930,8 +921,6 @@ namespace qAlgorithms
                 coeff.b2 /= delta_rt * delta_rt;
                 coeff.b3 /= delta_rt * delta_rt;
                 peak.coefficients = coeff;
-                peak.apexLeft = regression.apex_position < regression.index_x0;
-                // peak.rt_switch = regression.index_x0; // point at which the two halves intersect @todo not true, fix this
 
                 peaks->push_back(std::move(peak));
             }
