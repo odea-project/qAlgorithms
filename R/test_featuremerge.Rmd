@@ -48,12 +48,33 @@ points_B = points_B[clamp_l:clamp_r,]
 
 rts = (feature_A$highestRetentionTime - feature_A$lowestRetentionTime) / 100
 rts = feature_A$lowestRetentionTime + 1:100 * rts
-curve_A = peakShape(rts, feature_A$retentionTime + feature_A$rt_switch, feature_A$b0, feature_A$b1, feature_A$b2, feature_A$b3)
+curve_A = function(x){
+  rt = feature_A$retentionTime
+  switchpos = rt + feature_A$rt_switch
+  x = x - rt
+  sq1 = (as.numeric(x < switchpos) * feature_A$b2 * x^2) 
+  sq2 = (as.numeric(!(x < switchpos)) * feature_A$b3 * x^2)
+  return(exp((feature_A$b0 + x * feature_A$b1 + sq1 + sq2)))
+}
+
+curve_B = function(x){
+  rt = feature_B$retentionTime
+  switchpos = rt + feature_B$rt_switch
+  x = x - rt
+  sq1 = (as.numeric(x < switchpos) * feature_B$b2 * x^2) 
+  sq2 = (as.numeric(!(x < switchpos)) * feature_B$b3 * x^2)
+  return(exp((feature_B$b0 + x * feature_B$b1 + sq1 + sq2)))
+}
+  
 ```
 
 ```{r}
-ggplot(rbind(points_A, points_B))+
-  geom_point(aes(retentionTime, area, colour = as.factor(round(mz))))
+merge = rbind(points_A, points_B)
+ggplot(merge)+
+  geom_point(aes(retentionTime, area, colour = as.factor(round(mz))))+
+  stat_function(fun = curve_A)+
+  stat_function(fun = curve_B)
+  
 
 
 ```
@@ -70,12 +91,12 @@ rt_switch = function(feature){
   return(-feature$b1 / div)
 }
 
-peakShape = function(x, rt_switch, b0, b1, b2, b3){
-  squareCoeff = (as.numeric(x < rt_switch) * b2 * x^2) 
-  sq2 = (as.numeric(!(x < rt_switch)) * b3 * x^2)
-  # print(squareCoeff)
-  # print(sq2)
-  return(exp((b0 + x * b1 + squareCoeff + sq2)))
+peakShape = function(x, rt, rt_switch, b0, b1, b2, b3){
+  switchpos = rt + rt_switch
+  x = x - rt
+  sq1 = (as.numeric(x < switchpos) * b2 * x^2) 
+  sq2 = (as.numeric(!(x < switchpos)) * b3 * x^2)
+  return(exp((b0 + x * b1 + sq1 + sq2)))
 }
 ```
 
