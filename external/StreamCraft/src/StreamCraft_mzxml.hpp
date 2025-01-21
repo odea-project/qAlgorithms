@@ -20,100 +20,100 @@
 namespace sc
 {
 
-  inline namespace mzxml
-  {
-
-    class MZXML_BINARY_METADATA
+    inline namespace mzxml
     {
 
-    public:
-      int precision;
-      std::string compression;
-      bool compressed;
-      std::string byte_order;
+        class MZXML_BINARY_METADATA
+        {
 
-      void print()
-      {
-        std::cout << std::endl;
-        std::cout << "Precision:                 " << precision << std::endl;
-        std::cout << "Compression:               " << compression << std::endl;
-        std::cout << "Byte order:           " << byte_order << std::endl;
-        std::cout << std::endl;
-      };
-    };
+        public:
+            int precision;
+            std::string compression;
+            bool compressed;
+            std::string byte_order;
 
-    class MZXML
-    {
+            void print()
+            {
+                std::cout << std::endl;
+                std::cout << "Precision:                 " << precision << std::endl;
+                std::cout << "Compression:               " << compression << std::endl;
+                std::cout << "Byte order:           " << byte_order << std::endl;
+                std::cout << std::endl;
+            };
+        };
 
-    private:
-      MZXML_BINARY_METADATA binary_metadata;
+        class MZXML
+        {
 
-      void extract_binary_metadata(const pugi::xml_node &first_node);
+        private:
+            MZXML_BINARY_METADATA binary_metadata;
 
-      std::vector<pugi::xml_node> link_vector_spectra_nodes();
+            void extract_binary_metadata(const pugi::xml_node &first_node);
 
-      int extract_spec_index(const pugi::xml_node &spec);
-      std::string extract_spec_id(const pugi::xml_node &spec);
-      int extract_spec_scan(const pugi::xml_node &spec);
-      int extract_spec_array_length(const pugi::xml_node &spec);
-      int extract_spec_level(const pugi::xml_node &spec);
-      std::string extract_spec_mode(const pugi::xml_node &spec);
-      std::string extract_spec_polarity(const pugi::xml_node &spec);
-      double extract_spec_lowmz(const pugi::xml_node &spec);
-      double extract_spec_highmz(const pugi::xml_node &spec);
-      double extract_spec_bpmz(const pugi::xml_node &spec);
-      double extract_spec_bpint(const pugi::xml_node &spec);
-      double extract_spec_tic(const pugi::xml_node &spec);
-      double extract_scan_rt(const pugi::xml_node &spec);
-      double extract_ion_mz(const pugi::xml_node &spec);
-      double extract_activation_ce(const pugi::xml_node &spec);
+            std::vector<pugi::xml_node> link_vector_spectra_nodes();
 
-      MS_SPECTRA_HEADERS extract_spectra_headers(const std::vector<int> &idxs);
+            int extract_spec_index(const pugi::xml_node &spec);
+            std::string extract_spec_id(const pugi::xml_node &spec);
+            int extract_spec_scan(const pugi::xml_node &spec);
+            int extract_spec_array_length(const pugi::xml_node &spec);
+            int extract_spec_level(const pugi::xml_node &spec);
+            std::string extract_spec_mode(const pugi::xml_node &spec);
+            std::string extract_spec_polarity(const pugi::xml_node &spec);
+            double extract_spec_lowmz(const pugi::xml_node &spec);
+            double extract_spec_highmz(const pugi::xml_node &spec);
+            double extract_spec_bpmz(const pugi::xml_node &spec);
+            double extract_spec_bpint(const pugi::xml_node &spec);
+            double extract_spec_tic(const pugi::xml_node &spec);
+            double extract_scan_rt(const pugi::xml_node &spec);
+            double extract_ion_mz(const pugi::xml_node &spec);
+            double extract_activation_ce(const pugi::xml_node &spec);
 
-      std::vector<std::vector<double>> extract_spectrum(const pugi::xml_node &spectrum_node);
+            MS_SPECTRA_HEADERS extract_spectra_headers(const std::vector<int> &idxs);
 
-      std::vector<std::vector<std::vector<double>>> extract_spectra(const std::vector<int> &idxs);
+            std::vector<std::vector<double>> extract_spectrum(const pugi::xml_node &spectrum_node);
 
-    public:
-      std::string file_path;
+            std::vector<std::vector<std::vector<double>>> extract_spectra(const std::vector<int> &idxs);
 
-      std::string file_dir;
+        public:
+            std::string file_path;
 
-      std::string file_name;
+            std::string file_dir;
 
-      std::string file_extension;
+            std::string file_name;
 
-      pugi::xml_document doc;
+            std::string file_extension;
 
-      pugi::xml_parse_result loading_result;
+            pugi::xml_document doc;
 
-      pugi::xml_node root;
+            pugi::xml_parse_result loading_result;
 
-      std::string format;
+            pugi::xml_node root;
 
-      std::string name;
+            std::string format;
 
-      int number_spectra;
+            std::string name;
 
-      int number_chromatograms = 0;
+            int number_spectra;
 
-      int number_spectra_binary_arrays = 2;
+            int number_chromatograms = 0;
 
-      MS_SPECTRA_HEADERS first_spectra_headers;
+            int number_spectra_binary_arrays = 2;
 
-      MZXML(const std::string &file);
+            MS_SPECTRA_HEADERS first_spectra_headers;
 
-      MS_SPECTRA_HEADERS get_spectra_headers(std::vector<int> indices = {});
+            MZXML(const std::string &file);
 
-      std::vector<std::vector<std::vector<double>>> get_spectra(std::vector<int> indices = {});
+            MS_SPECTRA_HEADERS get_spectra_headers(std::vector<int> indices = {});
 
-      void print();
+            std::vector<std::vector<std::vector<double>>> get_spectra(std::vector<int> indices = {});
 
-      void print_binary_metadata() { binary_metadata.print(); };
+            void print();
 
-    }; // class MZXML
+            void print_binary_metadata() { binary_metadata.print(); };
 
-  }; // namespace mzxml
+        }; // class MZXML
+
+    }; // namespace mzxml
 
 }; // namespace sc
 
