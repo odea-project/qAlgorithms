@@ -170,9 +170,11 @@ int main(int argc, char *argv[])
             }
 
             // @todo remove diagnostics later
-
-            CentroidedData binThis = passToBinning(centroids, addEmptyScans);
             auto binThis2 = passToBinning_replacer(centroids, addEmptyScans);
+            CentroidedData binThis = passToBinning(centroids, addEmptyScans);
+
+            assert(binThis2.size() == binThis.lengthAllPoints);
+            assert(binThis.allDatapoints.size() - 1 == binThis2.back().scanNo);
 
             double meanDQSC = 0;
             double meanCenErrorRel = 0;
@@ -217,12 +219,14 @@ int main(int argc, char *argv[])
             }
 
             timeStart = std::chrono::high_resolution_clock::now();
-            std::vector<EIC> binnedData2 = performQbinning(
-                &binThis, convertRT, 3, // set maxdist here - reasoned as likelihood of real trace being overlooked being at worst 50%
+            std::vector<EIC> binnedData2 = performQbinning_replace(
+                &binThis2, convertRT, 3, // set maxdist here - reasoned as likelihood of real trace being overlooked being at worst 50%
                 userArgs.verboseProgress);
 
-            std::vector<EIC> binnedData = performQbinning_replace(
-                &binThis2, convertRT, 3, // set maxdist here - reasoned as likelihood of real trace being overlooked being at worst 50%
+            std::cout << "\n\n";
+
+            std::vector<EIC> binnedData = performQbinning(
+                &binThis, convertRT, 3, // set maxdist here - reasoned as likelihood of real trace being overlooked being at worst 50%
                 userArgs.verboseProgress);
 
             assert(binnedData2.size() == binnedData.size()); // the two produce slightly different results, presumably if an empty scan was added
