@@ -110,12 +110,6 @@ namespace qAlgorithms
     unsigned int df; // degrees of freedom
   };
 
-  struct CentroidedData
-  {
-    std::vector<std::vector<qCentroid>> allDatapoints;
-    size_t lengthAllPoints; // number of centroids in all scans
-  };
-
   struct EIC // Extracted Ion Chromatogram
   {
     // std::byte errorcode;

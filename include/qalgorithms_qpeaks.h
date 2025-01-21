@@ -21,9 +21,7 @@ namespace qAlgorithms
 
     void findPeaks(std::vector<FeaturePeak> &all_peaks, treatedData &treatedData);
 
-    CentroidedData passToBinning(std::vector<std::vector<CentroidPeak>> &allPeaks, std::vector<unsigned int> addEmpty);
-
-    std::vector<qCentroid> passToBinning_replacer(std::vector<std::vector<CentroidPeak>> &allPeaks, std::vector<unsigned int> addEmpty);
+    std::vector<qCentroid> passToBinning(std::vector<std::vector<CentroidPeak>> &allPeaks, std::vector<unsigned int> addEmpty);
 
     void runningRegression(
         const float *y_start,
