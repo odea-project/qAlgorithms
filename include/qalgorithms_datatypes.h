@@ -67,13 +67,13 @@ namespace qAlgorithms
 
   struct CentroidPeak
   {
+    double mz;
     float height;
     float area;
     float width;
     float heightUncertainty;
     float areaUncertainty;
     float dqsCen;
-    float mz;
     float mzUncertainty;
     unsigned int scanNumber;
     unsigned int df; // degrees of freedom
@@ -101,8 +101,8 @@ namespace qAlgorithms
 
   struct qCentroid
   {
+    double mz;
     float mzError = -1;
-    float mz;
     unsigned int scanNo;
     float int_area;   // the intensity is never used during binning @todo
     float int_height; // s.o.
