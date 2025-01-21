@@ -8,15 +8,10 @@
 
 namespace qAlgorithms
 {
-    struct treatedData
+    struct treatedData // @todo remove this struct
     {
         std::vector<dataPoint> dataPoints;
         std::vector<int> separators;
-
-        void addDataPoint(float x, float y, bool df, float dqsCentroid, float dqsBinning, int scanNumber, float mz)
-        {
-            dataPoints.emplace_back(x, y, df, dqsCentroid, dqsBinning, scanNumber, mz);
-        }
 
         void addSeparator(int index)
         {
@@ -26,6 +21,8 @@ namespace qAlgorithms
             }
         }
     };
+
+    float interpolateQadratic(float interpolate, const float *x, const float *y, float &b0, float &b1, float &b2);
 
     std::vector<std::vector<CentroidPeak>> transferCentroids( // @todo merge with findPeaks_mzml
         sc::MZML &data,

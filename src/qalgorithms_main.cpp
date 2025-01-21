@@ -147,7 +147,7 @@ int main(int argc, char *argv[])
             float diff_rt = 0;
             // @todo add check if set polarity is correct
             std::vector<std::vector<CentroidPeak>> centroids =
-                findCentroids_MZML(data, addEmptyScans, convertRT, diff_rt, true, polarity, 10); // read mzML file and find centroids via qPeaks
+                findCentroids_MZML(data, addEmptyScans, convertRT, diff_rt, true, polarity, 0); // read mzML file and find centroids via qPeaks
             if (centroids.empty())
             {
                 if (userArgs.verboseProgress)
