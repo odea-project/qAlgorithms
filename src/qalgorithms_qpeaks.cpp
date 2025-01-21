@@ -37,17 +37,16 @@ namespace qAlgorithms
                     scanRelative++;
                 }
             }
-
+            ++scanRelative; // scans start at 1
             if (!allPeaks[i].empty())
             {
-                ++scanRelative; // scans start at 1
                 // sort the peaks in ascending order of retention time
                 std::sort(allPeaks[i].begin(), allPeaks[i].end(), [](const CentroidPeak a, const CentroidPeak b)
                           { return a.scanNumber < b.scanNumber; });
                 for (size_t j = 0; j < allPeaks[i].size(); ++j)
                 {
                     auto &peak = allPeaks[i][j];
-                    qCentroid F = qCentroid{peak.mzUncertainty, peak.mz, scanRelative, peak.area, peak.height, peak.dqsCen, peak.df};
+                    qCentroid F = qCentroid{peak.mz, peak.mzUncertainty, scanRelative, peak.area, peak.height, peak.dqsCen, peak.df};
                     assert(F.scanNo > 0);
                     assert(F.scanNo <= (addTotal + allPeaks.size()));
                     centroids[scanRelative].push_back(F);
@@ -57,7 +56,6 @@ namespace qAlgorithms
             else
             {
                 centroids.push_back(std::vector<qCentroid>(0));
-                scanRelative++;
             }
         }
         // the first scan must be empty for compatibility with qBinning
@@ -103,7 +101,7 @@ namespace qAlgorithms
                 for (size_t j = 0; j < allPeaks[i].size(); ++j)
                 {
                     auto &peak = allPeaks[i][j];
-                    qCentroid F = qCentroid{peak.mzUncertainty, peak.mz, scanRelative, peak.area, peak.height, peak.dqsCen, peak.df};
+                    qCentroid F = qCentroid{peak.mz, peak.mzUncertainty, scanRelative, peak.area, peak.height, peak.dqsCen, peak.df};
                     assert(F.scanNo > 0);
                     assert(F.scanNo <= (addTotal + allPeaks.size()));
                     centroids.push_back(F);
@@ -883,8 +881,8 @@ namespace qAlgorithms
                 // peak height (exp(b0 - b1^2/4/b2)) with position being -b1/2/b2
                 peak.heightUncertainty = regression.uncertainty_height * peak.height;
 
-                float mz0 = *(mz_start + (int)std::floor(regression.apex_position));
-                float delta_mz = *(mz_start + (int)std::floor(regression.apex_position) + 1) - mz0;
+                double mz0 = *(mz_start + (int)std::floor(regression.apex_position));
+                double delta_mz = *(mz_start + (int)std::floor(regression.apex_position) + 1) - mz0;
 
                 // add scaled area
                 float exp_b0 = exp_approx_d(coeff.b0); // exp(b0)

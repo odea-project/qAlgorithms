@@ -78,6 +78,7 @@ namespace qAlgorithms
                 // tend to contain smaller bins which were not properly processed due to being
                 // at the borders of a cutting region
                 activeBins.processBinsF.back().pointsInBin = activeBins.notInBins;
+                std::cout << "| " << activeBins.notInBins.size() << "\n";
                 activeBins.notInBins.clear();
                 // re-binning during the initial loop would result in some bins being split prematurely
                 // @todo rebinning might be a very bad idea
@@ -209,7 +210,7 @@ namespace qAlgorithms
                                      0, processThis.activeOS.size() - 1, subsetCount);
             }
             // @todo logging
-
+            std::cout << bincontainer.targetBins->size() << ", ";
             switchTarget(&bincontainer);
 
             for (size_t j = 0; j < bincontainer.sourceBins->size(); j++)
@@ -217,6 +218,7 @@ namespace qAlgorithms
                 (*bincontainer.sourceBins)[j].subsetScan(bincontainer.targetBins, bincontainer.notInBins, maxdist, subsetCount);
             }
             // @todo logging
+            std::cout << bincontainer.targetBins->size() << ", ";
             switchTarget(&bincontainer);
 
             // if the "unchanged" property of a bin is true, all selected tests have passed
@@ -855,6 +857,7 @@ namespace qAlgorithms
                 // tend to contain smaller bins which were not properly processed due to being
                 // at the borders of a cutting region
                 activeBins.processBinsF.back().pointsInBin = activeBins.notInBins;
+                std::cout << "| " << activeBins.notInBins.size() << "\n";
                 activeBins.notInBins.clear();
                 // re-binning during the initial loop would result in some bins being split prematurely
                 // @todo rebinning might be a very bad idea

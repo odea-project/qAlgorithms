@@ -27,11 +27,12 @@ peaks = peaks[order(peaks$retentionTime),]
 // testStandards 1
 3945 + 3979 (suspected isotope)
 6498 + 9504
+9504 + 466 // regression curve plot does not fit
 7318 + 7372
 7644 + 7764 (probable coelution in both halves)
 ```{r}
-feature_A = 7644
-feature_B = 7764
+feature_A = 466
+feature_B = 9504
 
 feature_A = peaks[which(peaks$ID == feature_A),]
 feature_B = peaks[which(peaks$ID == feature_B),]
@@ -56,9 +57,7 @@ if (feature_B$binIdxStart - 3 > 0)
 if (feature_B$binIdxEnd + 3 < clamp_r)
 {clamp_r = feature_B$binIdxEnd + 3}#
 points_B = points_B[clamp_l:clamp_r,]
-
-rts = (feature_A$highestRetentionTime - feature_A$lowestRetentionTime) / 100
-rts = feature_A$lowestRetentionTime + 1:100 * rts
+ 
 curve_A = function(x){
   rt = feature_A$retentionTime
   switchpos = rt + feature_A$rt_switch
@@ -85,8 +84,8 @@ points_B$ID = feature_B$ID
 merge = rbind(points_A, points_B)
 ggplot(merge)+
   geom_point(aes(retentionTime, area, colour = as.factor(ID)))+
-  stat_function(fun = curve_A)+
-  stat_function(fun = curve_B)+
+  stat_function(fun = curve_A, colour = "red")+
+  stat_function(fun = curve_B, colour = "blue")+
   labs(caption = paste0("m/z values: ", feature_A$ID, ": ", feature_A$mz, " | ",feature_B$ID, ": ", feature_B$mz))
   
 
