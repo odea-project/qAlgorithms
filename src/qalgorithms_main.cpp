@@ -170,34 +170,22 @@ int main(int argc, char *argv[])
             }
 
             // @todo remove diagnostics later
-            auto binThis2 = passToBinning_replacer(centroids, addEmptyScans);
-            CentroidedData binThis = passToBinning(centroids, addEmptyScans);
-
-            assert(binThis2.size() == binThis.lengthAllPoints);
-            assert(binThis.allDatapoints.size() - 1 == binThis2.back().scanNo);
+            auto binThis = passToBinning(centroids, addEmptyScans);
 
             double meanDQSC = 0;
             double meanCenErrorRel = 0;
             double meanCenErrorAbs = 0;
 
             // index in allDatapoints corresponds to scan number!
-            for (size_t i = 1; i < binThis.allDatapoints.size() - 1; i++)
+            for (size_t i = 1; i < binThis.size() - 1; i++)
             {
-                if (binThis.allDatapoints[i].empty())
-                {
-                    continue;
-                }
-
-                for (size_t j = 0; j < binThis.allDatapoints[i].size() - 1; j++)
-                {
-                    // correlate centroid error with nearest neighbour distance in one scan somehow?
-                    meanCenErrorRel += binThis.allDatapoints[i][j].mzError / binThis.allDatapoints[i][j].mz;
-                    meanCenErrorAbs += binThis.allDatapoints[i][j].mzError;
-                    meanDQSC += binThis.allDatapoints[i][j].DQSCentroid;
-                }
+                // correlate centroid error with nearest neighbour distance in one scan somehow?
+                meanCenErrorRel += binThis[i].mzError / binThis[i].mz;
+                meanCenErrorAbs += binThis[i].mzError;
+                meanDQSC += binThis[i].DQSCentroid;
             }
-            meanCenErrorAbs /= binThis.lengthAllPoints;
-            meanCenErrorRel /= binThis.lengthAllPoints;
+            meanCenErrorAbs /= binThis.size();
+            meanCenErrorRel /= binThis.size();
             //
 
             if (userArgs.printSubProfile)
@@ -214,22 +202,16 @@ int main(int argc, char *argv[])
 
             if (!userArgs.silent)
             {
-                std::cout << "    produced " << binThis.lengthAllPoints << " centroids from " << centroids.size()
+                std::cout << "    produced " << binThis.size() << " centroids from " << centroids.size()
                           << " spectra in " << timePassed.count() << " s\n";
             }
 
             timeStart = std::chrono::high_resolution_clock::now();
-            std::vector<EIC> binnedData2 = performQbinning_replace(
-                &binThis2, convertRT, 3, // set maxdist here - reasoned as likelihood of real trace being overlooked being at worst 50%
-                userArgs.verboseProgress);
-
-            std::cout << "\n\n";
 
             std::vector<EIC> binnedData = performQbinning(
                 &binThis, convertRT, 3, // set maxdist here - reasoned as likelihood of real trace being overlooked being at worst 50%
                 userArgs.verboseProgress);
 
-            assert(binnedData2.size() == binnedData.size()); // the two produce slightly different results, presumably if an empty scan was added
             timeEnd = std::chrono::high_resolution_clock::now();
 
             if (binnedData.size() == 0)
@@ -318,8 +300,8 @@ int main(int argc, char *argv[])
             {
 
                 logWriter.open(pathLogging, std::ios::app);
-                logWriter << filename << ", " << centroids.size() << ", " << binThis.lengthAllPoints << ", "
-                          << meanDQSC / binThis.lengthAllPoints << ", " << binnedData.size() << ", " << badBinCount << ", " << meanDQSB
+                logWriter << filename << ", " << centroids.size() << ", " << binThis.size() << ", "
+                          << meanDQSC / binThis.size() << ", " << binnedData.size() << ", " << badBinCount << ", " << meanDQSB
                           << ", " << peaks.size() << ", " << peaksWithMassGaps << ", " << meanDQSF << "\n";
                 logWriter.close();
             }
