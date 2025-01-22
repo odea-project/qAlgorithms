@@ -9,12 +9,6 @@
 
 namespace qAlgorithms
 {
-    int sum(const std::vector<int> &vec);
-    size_t sum(const std::vector<size_t> &vec);
-    double sum(const std::vector<double> &vec);
-    int sum(const bool *vec, size_t n);
-    float sum8(const __m256 &vec);
-
     /**
      * @brief Fast exponential approximation base on Bit Manipulation.
      * @details This function is a fast approximation of the exponential
@@ -27,7 +21,6 @@ namespace qAlgorithms
      * @return double
      */
     double exp_approx_d(const double x);
-    __m256 exp_approx_vf(const __m256 x);
 
     /**
      * @brief Fast approximation of the error function erf(x) using Abramowitz and Stegun approach.
@@ -58,31 +51,6 @@ namespace qAlgorithms
      * @return double
      */
     double experfc(double x, double sign = -1.0);
-
-    template <typename T>
-    std::vector<bool> operator<(
-        const std::vector<T> &vec,
-        T scalar);
-
-    template <typename T>
-    std::vector<bool> operator>(
-        const std::vector<T> &vec,
-        T scalar);
-
-    template <typename T>
-    std::vector<T> operator*(
-        const std::vector<T> &A,
-        const std::vector<T> &B);
-
-    std::vector<bool> operator&&(
-        const std::vector<bool> &A,
-        const std::vector<bool> &B);
-
-    std::vector<bool> operator!(const std::vector<bool> &A);
-
-    void operator|=(
-        std::vector<bool> &A,
-        const std::vector<bool> &B);
 
     double erfi(const double x);
 }

@@ -11,56 +11,7 @@
 
 namespace qAlgorithms
 {
-    int sum(const std::vector<int> &vec)
-    {
-        double sum = 0.0;
-        for (const auto &elem : vec)
-        {
-            sum += elem;
-        }
-        return sum;
-    }
-
-    size_t
-    sum(const std::vector<size_t> &vec)
-    {
-        double sum = 0.0;
-        for (const auto &elem : vec)
-        {
-            sum += elem;
-        }
-        return sum;
-    }
-
-    double
-    sum(const std::vector<double> &vec)
-    {
-        double sum = 0.0;
-        for (const auto &elem : vec)
-        {
-            sum += elem;
-        }
-        return sum;
-    }
-
-    int sum(const bool *vec, size_t n)
-    {
-        int sum = 0;
-        for (size_t i = 0; i < n; i++)
-        {
-            sum += vec[i];
-        }
-        return sum;
-    }
-
-    float sum8(const __m256 &vec) // why does this break when inlined?
-    {
-        float sum = vec[0] + vec[1] + vec[2] + vec[3] + vec[4] + vec[5] + vec[6] + vec[7];
-        return sum;
-    }
-
-    double
-    exp_approx_d(const double x)
+    double exp_approx_d(const double x)
     {
         constexpr double LOG2E = 1.44269504088896340736;
         constexpr double OFFSET = 1022.9329329329329;
@@ -71,25 +22,6 @@ namespace qAlgorithms
             double d;
         } v = {(uint64_t)((x * LOG2E + OFFSET) * EXP_OFFSET)};
         return v.d;
-    }
-
-    __m256 exp_approx_vf(const __m256 x)
-    {
-        constexpr float LOG2E = 1.44269504f;
-        constexpr float OFFSET = 126.94269504f;
-        constexpr uint32_t EXP_OFFSET = 1 << 23;
-
-        // calc (x * LOG2E + OFFSET)
-        __m256 t = _mm256_fmadd_ps(x, _mm256_set1_ps(LOG2E), _mm256_set1_ps(OFFSET));
-
-        // multiply with EXP_OFFSET
-        t = _mm256_mul_ps(t, _mm256_set1_ps(static_cast<float>(EXP_OFFSET)));
-
-        // convert to integer and shift right by 23 bits to get the result
-        __m256i vi = _mm256_cvttps_epi32(t);
-        __m256 result = _mm256_castsi256_ps(vi);
-
-        return result;
     }
 
     float erf_approx_f(const float x)
@@ -120,82 +52,6 @@ namespace qAlgorithms
         constexpr double b = 1.25731022692317;  // empirically determined
         double t = -x * x;
         return SQRTPI_2 * exp_approx_d(t) + sign * a * x * exp_approx_d(t * b);
-    }
-
-    template <typename T>
-    std::vector<bool> operator<(const std::vector<T> &vec, T scalar)
-    {
-        std::vector<bool> result(vec.size());
-        int u = 0;
-        for (const auto &elem : vec)
-        {
-            result[u] = elem < scalar;
-            u++;
-        }
-        return result;
-    }
-
-    template <typename T>
-    std::vector<bool> operator>(
-        const std::vector<T> &vec,
-        T scalar)
-    {
-        std::vector<bool> result(vec.size());
-        int u = 0;
-        for (const auto &elem : vec)
-        {
-            result[u] = elem > scalar;
-            u++;
-        }
-        return result;
-    }
-
-    template <typename T>
-    std::vector<T> operator*(
-        const std::vector<T> &A,
-        const std::vector<T> &B)
-    {
-        std::vector<T> product(A.size());
-        for (size_t i = 0; i < A.size(); i++)
-        {
-            product[i] = A[i] * B[i];
-        }
-        return product;
-    }
-
-    std::vector<bool> operator&&(
-        const std::vector<bool> &A,
-        const std::vector<bool> &B)
-    {
-        std::vector<bool> result(A.size());
-        for (size_t i = 0; i < A.size(); i++)
-        {
-            result[i] = A[i] && B[i];
-        }
-        return result;
-    }
-
-    std::vector<bool> operator!(const std::vector<bool> &A)
-    {
-        std::vector<bool> result(A.size());
-        for (size_t i = 0; i < A.size(); i++)
-        {
-            result[i] = !A[i];
-        }
-        return result;
-    }
-
-    void operator|=(
-        std::vector<bool> &A,
-        const std::vector<bool> &B)
-    {
-        for (size_t i = 0; i < A.size(); i++)
-        {
-            bool tempA = A[i];
-            bool tempB = B[i];
-            tempA |= tempB;
-            A[i] = tempA;
-        }
     }
 
     double erfi(const double x)
