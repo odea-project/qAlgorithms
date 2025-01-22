@@ -755,7 +755,7 @@ namespace qAlgorithms
 
         output << "ID,binID,binIdxStart,binIdxEnd,mz,mzUncertainty,retentionTime,retentionTimeUncertainty,"
                << "lowestRetentionTime,highestRetentionTime,area,areaUncertainty,height,heightUncertainty,"
-               << "dqsCen,dqsBin,dqsPeak,b0,b1,b2,b3\n";
+               << "dqsCen,dqsBin,apexLeft,dqsPeak,b0,b1,b2,b3\n";
 
         unsigned int counter = 1;
         for (size_t i = 0; i < peaktable.size(); i++)
@@ -765,13 +765,13 @@ namespace qAlgorithms
             std::vector<float> RTs = originalBins[binID].rententionTimes;
 
             char buffer[256];
-            sprintf(buffer, "%d,%d,%d,%d,%0.6f,%0.6f,%0.4f,%0.4f,%0.4f,%0.4f,%0.3f,%0.3f,%0.3f,%0.3f,%0.5f,%0.5f,%0.5f,%0.8f,%0.8f,%0.8f,%0.8f\n",
+            sprintf(buffer, "%d,%d,%d,%d,%0.6f,%0.6f,%0.4f,%0.4f,%0.4f,%0.4f,%0.3f,%0.3f,%0.3f,%0.3f,%0.5f,%0.5f,%0.5f,%s,%0.8f,%0.8f,%0.8f,%0.8f\n",
                     counter, binID, peak.idxPeakStart, peak.idxPeakEnd, peak.mz, peak.mzUncertainty,
                     peak.retentionTime, peak.retentionTimeUncertainty, RTs[peak.idxPeakStart], RTs[peak.idxPeakEnd],
                     peak.area, peak.areaUncertainty, peak.height, peak.heightUncertainty,
                     peak.dqsCen, peak.dqsBin, peak.dqsPeak,
                     // properties relevant for componentisation, remove this later
-                    peak.coefficients.b0, peak.coefficients.b1, peak.coefficients.b2, peak.coefficients.b3);
+                    peak.apexLeft ? "T" : "F", peak.coefficients.b0, peak.coefficients.b1, peak.coefficients.b2, peak.coefficients.b3);
             output << buffer;
             ++counter;
         }

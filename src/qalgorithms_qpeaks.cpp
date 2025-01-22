@@ -872,10 +872,6 @@ namespace qAlgorithms
             if (regression.isValid)
             {
                 FeaturePeak peak;
-
-                // add mse
-                // peak.mse = regression.mse;
-
                 // add height
                 RegCoeffs coeff = regression.newCoeffs;
                 peak.height = exp_approx_d(coeff.b0 + (regression.apex_position - regression.index_x0) * coeff.b1 * 0.5); // peak height (exp(b0 - b1^2/4/b2)) with position being -b1/2/b2
@@ -904,6 +900,7 @@ namespace qAlgorithms
                 peak.idxPeakEnd = regression.right_limit - 1;
 
                 // params needed to merge two peaks
+                peak.apexLeft = regression.apex_position < regression.index_x0;
                 coeff.b1 /= delta_rt;
                 coeff.b2 /= delta_rt * delta_rt;
                 coeff.b3 /= delta_rt * delta_rt;

@@ -30,6 +30,7 @@ peaks = peaks[order(peaks$retentionTime),]
 9504 + 466 // regression curve plot does not fit
 7318 + 7372
 7644 + 7764 (probable coelution in both halves)
+466 + 9504
 ```{r}
 feature_A = 466
 feature_B = 9504
@@ -60,8 +61,8 @@ points_B = points_B[clamp_l:clamp_r,]
  
 curve_A = function(x){
   rt = feature_A$retentionTime
-  switchpos = rt + feature_A$rt_switch
-  x = x - rt
+  switchpos = rt - feature_A$rt_switch
+  x = x - switchpos
   sq1 = (as.numeric(x < switchpos) * feature_A$b2 * x^2) 
   sq2 = (as.numeric(!(x < switchpos)) * feature_A$b3 * x^2)
   return(exp((feature_A$b0 + x * feature_A$b1 + sq1 + sq2)))
@@ -69,8 +70,8 @@ curve_A = function(x){
 
 curve_B = function(x){
   rt = feature_B$retentionTime
-  switchpos = rt + feature_B$rt_switch
-  x = x - rt
+  switchpos = rt - feature_B$rt_switch
+  x = x - switchpos
   sq1 = (as.numeric(x < switchpos) * feature_B$b2 * x^2) 
   sq2 = (as.numeric(!(x < switchpos)) * feature_B$b3 * x^2)
   return(exp((feature_B$b0 + x * feature_B$b1 + sq1 + sq2)))
