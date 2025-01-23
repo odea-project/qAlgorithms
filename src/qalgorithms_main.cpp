@@ -102,9 +102,6 @@ int main(int argc, char *argv[])
     std::string filename;
     const std::vector<std::string> polarities = {"positive", "negative"}; // @todo make bool
     int counter = 1;
-    // @todo add dedicated diagnostics function
-    // std::cout << "numCens,numBins,numPeaks,numLoadedBins,numNarrowBin,\n";
-    // #pragma omp parallel for // there is a memory leak in findCentroids_MZML
     for (std::filesystem::path pathSource : tasklist)
     {
         auto timeStart = std::chrono::high_resolution_clock::now();
@@ -134,20 +131,18 @@ int main(int argc, char *argv[])
         {
             std::cout << " file ok\n";
         }
-        // implement way to try out ppm values
+        // implement way to try out ppm values @todo
         // std::vector<float> ppmValues{0.01, 0.05, 0.1, 0.2, 0.25, 0.5, 1.0, 1.5, 2.0, 2.5, 3.0, 4.0, 5.0, 7.5, 10, 15, 20};
 
         // for (auto setPPM : ppmValues)
         for (auto polarity : polarities)
         {
-            // std::string polarity = "positive";
             filename = pathSource.stem().string();
-            std::vector<unsigned int> addEmptyScans; // make sure the retention time interpolation does not add unexpected points to bins
             std::vector<float> convertRT;
             float diff_rt = 0;
             // @todo add check if set polarity is correct
             std::vector<std::vector<CentroidPeak>> centroids =
-                findCentroids_MZML(data, addEmptyScans, convertRT, diff_rt, true, polarity, 0); // read mzML file and find centroids via qPeaks
+                findCentroids_MZML(data, convertRT, diff_rt, true, polarity, 0); // read mzML file and find centroids via qPeaks
             if (centroids.empty())
             {
                 if (userArgs.verboseProgress)
@@ -160,9 +155,6 @@ int main(int argc, char *argv[])
             {
                 std::cout << "Processing " << polarity << " peaks\n";
             }
-            // continue;
-            // adjust filename to include polarity here
-            // filename += ("_" + std::to_string(PPM_PRECENTROIDED) + "pos");
             filename = filename + "_" + polarity;
             if (userArgs.printCentroids)
             {
@@ -170,7 +162,7 @@ int main(int argc, char *argv[])
             }
 
             // @todo remove diagnostics later
-            auto binThis = passToBinning(centroids, addEmptyScans);
+            auto binThis = passToBinning(centroids);
 
             double meanDQSC = 0;
             double meanCenErrorRel = 0;
