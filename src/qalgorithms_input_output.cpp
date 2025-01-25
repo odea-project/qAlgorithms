@@ -593,7 +593,7 @@ namespace qAlgorithms
             return;
         }
         output << "ID,mz,mzUncertainty,scanNumber,retentionTime,area,areaUncertainty,"
-               << "height,heightUncertainty,degreesOfFreedom,dqsCen\n";
+               << "height,heightUncertainty,degreesOfFreedom,DQSC\n";
         unsigned int counter = 1;
         for (size_t i = 0; i < peaktable.size(); i++)
         {
@@ -755,7 +755,7 @@ namespace qAlgorithms
 
         output << "ID,binID,binIdxStart,binIdxEnd,mz,mzUncertainty,retentionTime,retentionTimeUncertainty,"
                << "lowestRetentionTime,highestRetentionTime,area,areaUncertainty,height,heightUncertainty,"
-               << "dqsCen,dqsBin,apexLeft,dqsPeak,b0,b1,b2,b3\n";
+               << "DQSC,DQSB,DQSF,apexLeft,b0,b1,b2,b3\n";
 
         unsigned int counter = 1;
         for (size_t i = 0; i < peaktable.size(); i++)
