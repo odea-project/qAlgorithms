@@ -123,10 +123,8 @@ namespace qAlgorithms
             b2 = a;
         };
 
-        treatedData treatedData = {std::vector<dataPoint>(), std::vector<int>()}; // treated data
-        treatedData.dataPoints.reserve(dataPoints.size() * 2);                    // reserve memory for the new data points
-                                                                                  // maximum of the block (y-axis)
-        int blockSize = 0;                                                        // size of the current block
+        treatedData treatedData = {std::vector<dataPoint>(), std::vector<int>()};
+        treatedData.dataPoints.reserve(dataPoints.size() * 2);
 
         binIdx.reserve(dataPoints.size() * 2);
 
@@ -138,14 +136,13 @@ namespace qAlgorithms
             binIdx.push_back(realIdx);
             assert(binIdx.size() == treatedData.dataPoints.size());
         }
-        treatedData.addSeparator(0); // add the first separator
+        treatedData.separators.push_back(0);
 
         // iterate over the data points
-        size_t pos = 0;
         size_t maxOfBlock = 0;
-        for (auto it_dataPoint = dataPoints.begin(); it_dataPoint != dataPoints.end() - 1; it_dataPoint++, pos++)
+        size_t blockSize = 0; // size of the current block
+        for (size_t pos = 0; pos < dataPoints.size() - 1; pos++)
         {
-            assert(it_dataPoint->x == dataPoints[pos].x);
             blockSize++;
             treatedData.dataPoints.push_back(dataPoints[pos]);
             binIdx.push_back(realIdx);
@@ -154,7 +151,6 @@ namespace qAlgorithms
             const float dx = dataPoints[pos + 1].x - dataPoints[pos].x;
             if (dx > 1.75 * expectedDifference)
             { // gap detected
-
                 const int gapSize = static_cast<int>(dx / expectedDifference) - 1;
                 if (gapSize < 4)
                 {
@@ -256,15 +252,15 @@ namespace qAlgorithms
                             binIdx.push_back(realIdx);
                             assert(binIdx.size() == treatedData.dataPoints.size());
                         }
-                        treatedData.addSeparator(treatedData.dataPoints.size() - 2); // add the separator
+                        treatedData.separators.push_back(treatedData.dataPoints.size() - 2); // add the separator
                         maxOfBlock = pos + 1;
                     }
                     blockSize = 0; // reset the block size
                 }
-            } //
-            else
+            }
+            else // no gap found
             {
-                if (dataPoints[maxOfBlock].y < it_dataPoint->y)
+                if (dataPoints[maxOfBlock].y < dataPoints[pos].y)
                 {
                     maxOfBlock = pos;
                 }
@@ -531,7 +527,7 @@ namespace qAlgorithms
             const int index = selectedIndices[i];                             // spectrum index
             std::vector<dataPoint> dataPoints = mzmlToDataPoint(data, index); // convert mzml to data points
             std::vector<unsigned int> dummy;
-            treatedData treatedData = pretreatData(dataPoints, dummy, expectedDifference); // inter/extrapolate data, and identify data blocks
+            treatedData treatedData = pretreatData(dataPoints, dummy, expectedDifference, true); // inter/extrapolate data, and identify data blocks
             assert(relativeIndex[i] != 0);
             centroids[i] = findCentroids(treatedData, relativeIndex[i]); // find peaks in data blocks of treated data
         }
