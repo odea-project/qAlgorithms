@@ -125,9 +125,7 @@ namespace qAlgorithms
 
         treatedData treatedData = {std::vector<dataPoint>(), std::vector<int>()}; // treated data
         treatedData.dataPoints.reserve(dataPoints.size() * 2);                    // reserve memory for the new data points
-        auto it_dataPoint = dataPoints.begin();                                   // iterator for the data points
-        const auto it_dataPoint_end = dataPoints.end() - 1;                       // end of the data points (last element is infinty point)
-        auto it_maxOfBlock = dataPoints.begin();                                  // maximum of the block (y-axis)
+                                                                                  // maximum of the block (y-axis)
         int blockSize = 0;                                                        // size of the current block
 
         binIdx.reserve(dataPoints.size() * 2);
@@ -143,14 +141,17 @@ namespace qAlgorithms
         treatedData.addSeparator(0); // add the first separator
 
         // iterate over the data points
-        for (; it_dataPoint != it_dataPoint_end; it_dataPoint++)
+        size_t pos = 0;
+        size_t maxOfBlock = 0;
+        for (auto it_dataPoint = dataPoints.begin(); it_dataPoint != dataPoints.end() - 1; it_dataPoint++, pos++)
         {
+            assert(it_dataPoint->x == dataPoints[pos].x);
             blockSize++;
-            treatedData.dataPoints.push_back(*it_dataPoint);
+            treatedData.dataPoints.push_back(dataPoints[pos]);
             binIdx.push_back(realIdx);
             assert(binIdx.size() == treatedData.dataPoints.size());
             ++realIdx;
-            const float dx = (it_dataPoint + 1)->x - it_dataPoint->x;
+            const float dx = dataPoints[pos + 1].x - dataPoints[pos].x;
             if (dx > 1.75 * expectedDifference)
             { // gap detected
 
@@ -158,18 +159,18 @@ namespace qAlgorithms
                 if (gapSize < 4)
                 {
                     // add gapSize interpolated datapoints
-                    const float dy = std::pow((it_dataPoint + 1)->y / it_dataPoint->y, 1.0 / (gapSize + 1)); // dy for log interpolation
+                    const float dy = std::pow(dataPoints[pos + 1].y / dataPoints[pos].y, 1.0 / float(gapSize + 1)); // dy for log interpolation
                     for (int i = 1; i <= gapSize; i++)
                     {
                         binIdx.push_back(realIdx);
                         treatedData.dataPoints.emplace_back(
-                            it_dataPoint->x + i * expectedDifference, // x-axis
-                            it_dataPoint->y * std::pow(dy, i),        // y-axis
-                            false,                                    // df
-                            0.f,                                      // dqsCentroid
-                            0.f,                                      // dqsBinning
-                            0,                                        // scanNumber
-                            0.f);                                     // mz
+                            dataPoints[pos].x + i * expectedDifference, // x-axis
+                            dataPoints[pos].y * std::pow(dy, i),        // y-axis
+                            false,                                      // df
+                            0.f,                                        // dqsCentroid
+                            0.f,                                        // dqsBinning
+                            0,                                          // scanNumber
+                            0.f);                                       // mz
                     }
                     assert(binIdx.size() == treatedData.dataPoints.size());
                 }
@@ -193,7 +194,7 @@ namespace qAlgorithms
                     {
                         const dataPoint dp_startOfBlock = treatedData.dataPoints[treatedData.separators.back() + 2];
                         // check if the maximum of the block is the first or last data point
-                        if (it_maxOfBlock == it_dataPoint || it_maxOfBlock->x == dp_startOfBlock.x)
+                        if (maxOfBlock == pos || dataPoints[maxOfBlock].x == dp_startOfBlock.x)
                         {
                             // extrapolate the left side using the first non-zero data point (i.e, the start of the block)
                             for (int i = 0; i < 2; i++)
@@ -205,13 +206,13 @@ namespace qAlgorithms
 
                                 // RIGHT SIDE
                                 treatedData.dataPoints.emplace_back(
-                                    it_dataPoint->x + (i + 1) * expectedDifference, // x-axis
-                                    it_dataPoint->y,                                // y-axis
-                                    false,                                          // df
-                                    0.f,                                            // dqsCentroid
-                                    0.f,                                            // dqsBinning
-                                    0,                                              // scanNumber
-                                    0.f);                                           // mz
+                                    dataPoints[pos].x + float(i + 1) * expectedDifference, // x-axis
+                                    dataPoints[pos].y,                                     // y-axis
+                                    false,                                                 // df
+                                    0.f,                                                   // dqsCentroid
+                                    0.f,                                                   // dqsBinning
+                                    0,                                                     // scanNumber
+                                    0.f);                                                  // mz
 
                                 binIdx.push_back(realIdx);
                                 assert(binIdx.size() == treatedData.dataPoints.size());
@@ -219,8 +220,8 @@ namespace qAlgorithms
                         }
                         else
                         {
-                            const float x[3] = {0.f, it_maxOfBlock->x - dp_startOfBlock.x, it_dataPoint->x - dp_startOfBlock.x};
-                            const float y[3] = {std::log(dp_startOfBlock.y), std::log(it_maxOfBlock->y), std::log(it_dataPoint->y)};
+                            const float x[3] = {0.f, dataPoints[maxOfBlock].x - dp_startOfBlock.x, dataPoints[pos].x - dp_startOfBlock.x};
+                            const float y[3] = {std::log(dp_startOfBlock.y), std::log(dataPoints[maxOfBlock].y), std::log(dataPoints[pos].y)};
                             float b0, b1, b2;
                             calculateCoefficients(x, y, b0, b1, b2);
                             // extrapolate the left side of the block
@@ -234,7 +235,7 @@ namespace qAlgorithms
                             // add the extrapolated data points to the right side of the block
                             for (int i = 0; i < 2; i++)
                             {
-                                const float dp_x = it_dataPoint->x + (i + 1) * expectedDifference;
+                                const float dp_x = dataPoints[pos].x + float(i + 1) * expectedDifference;
                                 const float x = dp_x - dp_startOfBlock.x;
                                 treatedData.dataPoints.emplace_back(
                                     dp_x,                             // x-axis
@@ -256,18 +257,16 @@ namespace qAlgorithms
                             assert(binIdx.size() == treatedData.dataPoints.size());
                         }
                         treatedData.addSeparator(treatedData.dataPoints.size() - 2); // add the separator
-                        it_maxOfBlock = it_dataPoint + 1;                            // update the maximum of the block
+                        maxOfBlock = pos + 1;
                     }
                     blockSize = 0; // reset the block size
                 }
             } //
             else
             {
-                // binIdx.push_back(realIdx);
-                // realIdx++;
-                if (it_maxOfBlock->y < it_dataPoint->y)
+                if (dataPoints[maxOfBlock].y < it_dataPoint->y)
                 {
-                    it_maxOfBlock = it_dataPoint; // update the maximum of the block
+                    maxOfBlock = pos;
                 }
                 if (updateExpectedDifference && dx > 0.8 * expectedDifference && dx < 1.2 * expectedDifference)
                 {
