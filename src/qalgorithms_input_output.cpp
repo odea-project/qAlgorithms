@@ -43,11 +43,6 @@ namespace qAlgorithms
                                   "                                  all binned centroids will be printed to the output location\n"
                                   "                                  in addition to the final peak table. The file ends in _bins.csv.\n"
                                   "      -pf, -printfeatures         print the feature list as csv.\n"
-                                  "      -e,  -extended:             print additional information into the final peak list. You do not\n"
-                                  "                                  have to also set the -pf flag. The extended output includes the\n"
-                                  "                                  ID of the bin a given peak was found in, its start and end\n"
-                                  "                                  position (by index) within the bin, the lowest and highest retenetion \n"
-                                  "                                  times in the peak and the intensity as apex height.\n"
                                   "      -sp, -subprofile:           (not implemented yet) instead of the peaks, print all proflie-mode data points which\n" // @todo
                                   "                                  were used to create the final peaks. This does not return any quality\n"
                                   "                                  scores. Only use this option when reading in prodile mode files.\n"
@@ -240,10 +235,6 @@ namespace qAlgorithms
             {
                 args.printFeatures = true;
             }
-            else if ((argument == "-e") || (argument == "-extended"))
-            {
-                args.printExtended = true;
-            }
             else if ((argument == "-sp") || (argument == "-subprofile"))
             {
                 args.printSubProfile = true;
@@ -252,7 +243,7 @@ namespace qAlgorithms
             {
                 args.printCentroids = true;
                 args.printBins = true;
-                args.printExtended = true;
+                args.printFeatures = true;
                 args.printSubProfile = true;
             }
             else if (argument == "-log")
@@ -275,7 +266,7 @@ namespace qAlgorithms
             }
             else
             {
-                std::cerr << "Warning: unknown argument " << argument << ".\n";
+                std::cerr << "Warning: unknown argument \"" << argument << "\".\n";
             }
         } // end of reading in command line arguments
         // assert(!args.outputPath.empty());
