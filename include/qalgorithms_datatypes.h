@@ -109,11 +109,11 @@ namespace qAlgorithms
         float int_height; // s.o.
         float DQSCentroid;
         unsigned int df; // degrees of freedom
+        unsigned int cenID;
     };
 
     struct EIC // Extracted Ion Chromatogram
     {
-        // std::byte errorcode;
         std::vector<unsigned int> scanNumbers;
         std::vector<float> rententionTimes;
         std::vector<float> mz;
@@ -123,6 +123,7 @@ namespace qAlgorithms
         std::vector<unsigned int> df;
         std::vector<float> DQSB;
         std::vector<float> DQSC;
+        std::vector<unsigned int> cenID;
     };
 }
 
