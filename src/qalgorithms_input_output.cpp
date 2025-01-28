@@ -47,6 +47,7 @@ namespace qAlgorithms
                                   "                                  were used to create the final peaks. This does not return any quality\n"
                                   "                                  scores. Only use this option when reading in prodile mode files.\n"
                                   "      -pa, -printall:             print all availvable resutlts. You will probably not need to do this.\n"
+                                  "      -px, -printfeatcen:         print all centroids that are a part of the final feature list, including debug data.\n"
                                   "    Program behaviour:\n"
                                   "      -s, -silent:    do not print progress reports to standard out.\n"
                                   "      -v, -verbose:   print a detailed progress report to standard out.\n"
@@ -246,6 +247,10 @@ namespace qAlgorithms
                 args.printFeatures = true;
                 args.printSubProfile = true;
             }
+            else if ((argument == "-px") || (argument == "-printfeatcen"))
+            {
+                args.printFeatCens = true;
+            }
             else if (argument == "-log")
             {
                 args.doLogging = true;
@@ -308,8 +313,8 @@ namespace qAlgorithms
             false,
             false,
             false,
-            false,
             true, // only print standard feature list
+            false,
             false,
             false,
             false,
@@ -401,7 +406,9 @@ namespace qAlgorithms
             std::cerr << "Warning: -verbose overrides -silent.\n";
             args.silent = false;
         }
-        if (!((args.printCentroids || args.printBins) || args.printFeatures) && !(args.outputPath.empty()))
+        if (!((args.printCentroids || args.printBins) ||
+              (args.printFeatures || args.printFeatCens)) &&
+            !(args.outputPath.empty()))
         {
             std::cerr << "Warning: no output files will be written.\n";
         }
@@ -553,7 +560,7 @@ namespace qAlgorithms
 
 #pragma region "print functions"
     /// @todo make universal print function, fix out-of-bounds access, chi squared test for binning
-    void printCentroids(std::vector<std::vector<CentroidPeak>> peaktable,
+    void printCentroids(const std::vector<std::vector<CentroidPeak>> peaktable,
                         std::vector<float> convertRT, std::filesystem::path pathOutput,
                         std::string filename, bool silent, bool skipError, bool noOverwrite)
     {
@@ -658,7 +665,7 @@ namespace qAlgorithms
         return;
     }
 
-    void printBins(std::vector<EIC> bins, std::filesystem::path pathOutput, std::string filename,
+    void printBins(const std::vector<EIC> bins, std::filesystem::path pathOutput, std::string filename,
                    bool silent, bool skipError, bool noOverwrite)
     {
         filename += "_bins.csv";
@@ -707,16 +714,11 @@ namespace qAlgorithms
         return;
     }
 
-    void printFeatureList(std::vector<FeaturePeak> peaktable,
+    void printFeatureList(const std::vector<FeaturePeak> peaktable,
                           std::filesystem::path pathOutput, std::string filename,
-                          std::vector<EIC> originalBins,
+                          const std::vector<EIC> originalBins,
                           bool verbose, bool silent, bool skipError, bool noOverwrite)
     {
-        if (false) // @todo
-        {
-            filename += "_ex";
-        }
-
         filename += "_features.csv";
         pathOutput /= filename;
 
@@ -764,6 +766,64 @@ namespace qAlgorithms
                     // properties relevant for componentisation, remove this later
                     peak.apexLeft ? "T" : "F", peak.coefficients.b0, peak.coefficients.b1, peak.coefficients.b2, peak.coefficients.b3);
             output << buffer;
+            ++counter;
+        }
+
+        file_out << output.str();
+        file_out.close();
+        return;
+    }
+
+    void printFeatureCentroids(const std::vector<FeaturePeak> peaktable,
+                               std::filesystem::path pathOutput, std::string filename,
+                               const std::vector<EIC> originalBins,
+                               bool verbose, bool silent, bool skipError, bool noOverwrite)
+    {
+        filename += "_featCen.csv";
+        pathOutput /= filename;
+
+        if (std::filesystem::exists(pathOutput))
+        {
+            if (noOverwrite)
+            {
+                std::cerr << "Warning: " << pathOutput << " already exists and will not be overwritten\n";
+                return;
+            }
+            std::filesystem::remove(pathOutput);
+        }
+        if (!silent)
+        {
+            std::cout << "writing peaks to: " << pathOutput << "\n";
+        }
+
+        std::ofstream file_out;
+        std::stringstream output;
+        file_out.open(pathOutput, std::ios::out);
+        if (!file_out.is_open())
+        {
+            std::cerr << "Error: could not open output path during featCen printing. No files have been written.\n"
+                      << "Filename: " << pathOutput << "\n";
+            return;
+        }
+
+        output << "featureID,binID,cenID,mz,mzUncertainty,retentionTime,"
+               << "area,height,DQSC,DQSB,DQSF,apexLeft,b0,b1,b2,b3\n";
+
+        unsigned int counter = 1;
+        for (size_t i = 0; i < peaktable.size(); i++)
+        {
+            auto peak = peaktable[i];
+            int binID = peak.idxBin;
+            auto bin = originalBins[binID];
+            char buffer[256];
+            for (size_t cen = peak.idxPeakStart; cen < peak.idxPeakEnd + 1; cen++)
+            {
+                sprintf(buffer, "%d,%d,%d,%0.6f,%0.6f,%0.4f,%0.3f,%0.3f,%0.5f,%0.5f,%0.5f,%s,%0.8f,%0.8f,%0.8f,%0.8f\n",
+                        counter, binID, bin.cenID[cen], bin.mz[cen], bin.predInterval[cen], bin.rententionTimes[cen],
+                        bin.ints_area[cen], bin.ints_height[cen], bin.DQSC[cen], bin.DQSB[cen], peak.dqsPeak,
+                        peak.apexLeft ? "T" : "F", peak.coefficients.b0, peak.coefficients.b1, peak.coefficients.b2, peak.coefficients.b3);
+                output << buffer;
+            }
             ++counter;
         }
 

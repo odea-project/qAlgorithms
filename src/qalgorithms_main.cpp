@@ -302,6 +302,11 @@ int main(int argc, char *argv[])
                 printFeatureList(peaks, userArgs.outputPath, filename, binnedData,
                                  userArgs.printExtended, userArgs.silent, userArgs.skipError, userArgs.noOverwrite);
             }
+            if (userArgs.printFeatCens)
+            {
+                printFeatureCentroids(peaks, userArgs.outputPath, filename, binnedData,
+                                      userArgs.printExtended, userArgs.silent, userArgs.skipError, userArgs.noOverwrite);
+            }
 
             // @todo add peak grouping here
         }

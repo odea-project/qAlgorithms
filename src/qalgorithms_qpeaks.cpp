@@ -188,7 +188,7 @@ namespace qAlgorithms
         const auto dqs_bin_start = dqs_bin;
 
         std::vector<RegressionGauss> validRegressions;
-
+        // @todo only execute this if n > 4
         for (auto it_separators = treatedData.separators.begin(); it_separators != treatedData.separators.end() - 1; it_separators++)
         {
             const int n = *(it_separators + 1) - *it_separators; // calculate the number of data points in the block
@@ -366,12 +366,12 @@ namespace qAlgorithms
 #pragma region validateRegressions
     void validateRegressions(
         const __m128 *beta,      // coefficients matrix
-        const size_t n_segments, // number of segments, i.e. regressions
+        size_t n_segments,       // number of segments, i.e. regressions
         const float *y_start,    // pointer to the start of the Y matrix
         const float *ylog_start, // pointer to the start of the Ylog matrix
         const bool *df_start,    // degree of freedom vector, 0: interpolated, 1: measured
-        const size_t arrayMaxLength,
-        const size_t scale, // scale, i.e., the number of data points in a half window excluding the center point
+        size_t arrayMaxLength,
+        size_t scale, // scale, i.e., the number of data points in a half window excluding the center point
         std::vector<RegressionGauss> &validRegressions)
     {
         std::vector<RegressionGauss> validRegsTmp; // temporary vector to store valid regressions <index, apex_position>
@@ -392,7 +392,7 @@ namespace qAlgorithms
                 validRegsTmp.back().newCoeffs.b2 = coeff[2];
                 validRegsTmp.back().newCoeffs.b3 = coeff[3];
 
-                makeValidRegression(&validRegsTmp.back(), i, scale, df_start, y_start, ylog_start);
+                makeValidRegression(&validRegsTmp.back(), arrayMaxLength, i, scale, df_start, y_start, ylog_start);
                 if (validRegsTmp.back().isValid)
                 {
                     validRegsTmp.push_back(RegressionGauss{});
@@ -480,7 +480,8 @@ namespace qAlgorithms
 
     void makeValidRegression(
         RegressionGauss *mutateReg,
-        const size_t i,
+        size_t arrayMaxLength,
+        const size_t regressionNumber,
         const size_t scale,
         const bool *df_start,
         const float *y_start,
@@ -515,21 +516,21 @@ namespace qAlgorithms
         if (valley_position == 0)
         {
             // no valley point exists
-            mutateReg->left_limit = i;
-            mutateReg->right_limit = i + 2 * scale;
+            mutateReg->left_limit = regressionNumber;
+            mutateReg->right_limit = regressionNumber + 2 * scale;
         }
         else if (valley_position < 0)
         {
             size_t substractor = static_cast<size_t>(abs(valley_position));
-            mutateReg->left_limit = substractor < scale ? i + scale - substractor : i; // std::max(i, static_cast<int>(valley_position) + i + scale);
-            mutateReg->right_limit = i + 2 * scale;
+            mutateReg->left_limit = substractor < scale ? regressionNumber + scale - substractor : regressionNumber; // std::max(i, static_cast<int>(valley_position) + i + scale);
+            mutateReg->right_limit = regressionNumber + 2 * scale;
         }
         else
         {
-            mutateReg->left_limit = i;
-            mutateReg->right_limit = std::min(i + 2 * scale, static_cast<int>(valley_position) + i + scale);
+            mutateReg->left_limit = regressionNumber;
+            mutateReg->right_limit = std::min(regressionNumber + 2 * scale, static_cast<int>(valley_position) + regressionNumber + scale);
         }
-
+        assert(mutateReg->right_limit < arrayMaxLength + 1);
         /*
           Degree of Freedom Filter:
           This block of code implements the degree of freedom filter. It calculates the
@@ -550,7 +551,7 @@ namespace qAlgorithms
           the exponential domain. If the chi-square value is less than the corresponding
           value in the CHI_SQUARES, the loop continues to the next iteration.
         */
-        float chiSquare = calcSSE_chisqared(mutateReg->newCoeffs, y_start + i, -scale, scale);
+        float chiSquare = calcSSE_chisqared(mutateReg->newCoeffs, y_start + regressionNumber, -scale, scale);
         if (chiSquare < CHI_SQUARES[df_sum - 5])
         {
             return; // statistical insignificance of the chi-square value
@@ -563,7 +564,7 @@ namespace qAlgorithms
           ratio is greater than 2. This is a pre-filter for later
           signal-to-noise ratio checkups. apexToEdge is also required in isValidPeakHeight further down
         */
-        float apexToEdge = calcApexToEdge(mutateReg->apex_position, scale, i, y_start);
+        float apexToEdge = calcApexToEdge(mutateReg->apex_position, scale, regressionNumber, y_start);
         if (!(apexToEdge > 2))
         {
             return; // invalid apex to edge ratio
@@ -578,7 +579,7 @@ namespace qAlgorithms
           term is considered statistically insignificant, and the loop continues
           to the next iteration.
         */
-        float mse = calcSSE_base(mutateReg->newCoeffs, ylog_start + i, -scale, scale);
+        float mse = calcSSE_base(mutateReg->newCoeffs, ylog_start + regressionNumber, -scale, scale);
         mse /= (df_sum - 4);
 
         if (!isValidQuadraticTerm(mutateReg->newCoeffs, scale, mse, df_sum))
@@ -629,9 +630,9 @@ namespace qAlgorithms
 
         mutateReg->uncertainty_pos = calcUncertaintyPos(mse, mutateReg->newCoeffs, mutateReg->apex_position, scale);
         mutateReg->df = df_sum - 4; // @todo add explanation for -4
-        mutateReg->apex_position += i + scale;
+        mutateReg->apex_position += regressionNumber + scale;
         mutateReg->scale = scale;
-        mutateReg->index_x0 = scale + i;
+        mutateReg->index_x0 = scale + regressionNumber;
         mutateReg->isValid = true;
         return;
     }
@@ -826,8 +827,7 @@ namespace qAlgorithms
 
                 /// @todo consider adding these properties so we can trace back everything completely
                 // peak.idxPeakStart = regression.left_limit;
-                // peak.idxPeakEnd = regression.right_limit - 1;
-
+                // peak.idxPeakEnd = regression.right_limit;
                 peaks->push_back(std::move(peak));
             }
         }
@@ -878,7 +878,7 @@ namespace qAlgorithms
                 peak.dqsPeak = 1 - erf_approx_f(regression.uncertainty_area / regression.area);
 
                 peak.idxPeakStart = regression.left_limit;
-                peak.idxPeakEnd = regression.right_limit - 1;
+                peak.idxPeakEnd = regression.right_limit;
 
                 // params needed to merge two peaks
                 peak.apexLeft = regression.apex_position < regression.index_x0;
