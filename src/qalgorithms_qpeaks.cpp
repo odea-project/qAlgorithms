@@ -192,25 +192,25 @@ namespace qAlgorithms
         for (auto it_separators = treatedData.separators.begin(); it_separators != treatedData.separators.end() - 1; it_separators++)
         {
             const int n = *(it_separators + 1) - *it_separators; // calculate the number of data points in the block
-            assert(n > 0);                                       // check if the number of data points is greater than 0
-
-            int i = 0;
+            assert(n > 4);                                       // data must contain at least five points
             assert(n == *(it_separators + 1) - *it_separators);
-            for (int idx = *it_separators; idx < *(it_separators + 1); idx++)
             {
-                Y[i] = treatedData.dataPoints[idx].y;
-                X[i] = treatedData.dataPoints[idx].x;
-                df[i] = treatedData.dataPoints[idx].df;
-                mz[i] = treatedData.dataPoints[idx].mz;
-                dqs_cen[i] = treatedData.dataPoints[idx].dqsCentroid;
-                dqs_bin[i] = treatedData.dataPoints[idx].dqsBinning;
-                i++;
+                int i = 0;
+                for (int idx = *it_separators; idx < *(it_separators + 1); idx++)
+                {
+                    Y[i] = treatedData.dataPoints[idx].y;
+                    X[i] = treatedData.dataPoints[idx].x;
+                    df[i] = treatedData.dataPoints[idx].df;
+                    mz[i] = treatedData.dataPoints[idx].mz;
+                    dqs_cen[i] = treatedData.dataPoints[idx].dqsCentroid;
+                    dqs_bin[i] = treatedData.dataPoints[idx].dqsBinning;
+                    i++;
+                }
             }
-
             // perform log-transform on Y
             std::transform(y_start, y_start + n, ylog_start, [](float y)
                            { return std::log(y); });
-            runningRegression(y_start, ylog_start, df_start, maxWindowSize, n, validRegressions);
+            runningRegression(y_start, ylog_start, df_start, n, n, validRegressions);
             if (validRegressions.empty())
             {
                 continue; // no valid peaks
@@ -253,7 +253,7 @@ namespace qAlgorithms
             const int n_segments = n - k + 1; // number of segments, i.e. regressions considering the array size
 
             convolve_SIMD(scale, ylog_start, n, beta); // beta past position n-1 contains initialized, but wrong values - make sure they cannot be accessed
-
+                                                       // n_segments must be smaller than the array
             validateRegressions(beta, n_segments, y_start, ylog_start, df_start, arrayMaxLength, scale, validRegressions);
         }
         if (validRegressions.size() > 1)
@@ -377,11 +377,11 @@ namespace qAlgorithms
         std::vector<RegressionGauss> validRegsTmp; // temporary vector to store valid regressions <index, apex_position>
         // iterate columwise over the coefficients matrix beta
         validRegsTmp.push_back(RegressionGauss{});
-        for (size_t i = 0; i < n_segments; i++)
+        for (size_t regressionNumber = 0; regressionNumber < n_segments; regressionNumber++)
         {
-            if (calcDF(df_start, i, 2 * scale + i) > 4)
+            if (calcDF(df_start, regressionNumber, 2 * scale + regressionNumber) > 4)
             {
-                const __m128 coeff = beta[i];
+                const __m128 coeff = beta[regressionNumber];
                 if ((coeff[1] == 0.0f) | (coeff[2] == 0.0f) | (coeff[3] == 0.0f))
                 {
                     // None of these are a valid regression with the asymmetric model
@@ -391,8 +391,8 @@ namespace qAlgorithms
                 validRegsTmp.back().newCoeffs.b1 = coeff[1];
                 validRegsTmp.back().newCoeffs.b2 = coeff[2];
                 validRegsTmp.back().newCoeffs.b3 = coeff[3];
-
-                makeValidRegression(&validRegsTmp.back(), arrayMaxLength, i, scale, df_start, y_start, ylog_start);
+                // regressionNumber must be smaller than the size of the checked region
+                makeValidRegression(&validRegsTmp.back(), arrayMaxLength, regressionNumber, scale, df_start, y_start, ylog_start);
                 if (validRegsTmp.back().isValid)
                 {
                     validRegsTmp.push_back(RegressionGauss{});
@@ -531,6 +531,7 @@ namespace qAlgorithms
             mutateReg->right_limit = std::min(regressionNumber + 2 * scale, static_cast<int>(valley_position) + regressionNumber + scale);
         }
         assert(mutateReg->right_limit < arrayMaxLength + 1);
+
         /*
           Degree of Freedom Filter:
           This block of code implements the degree of freedom filter. It calculates the
@@ -543,7 +544,7 @@ namespace qAlgorithms
         {
             return; // degree of freedom less than 5; i.e., less then 5 measured data points
         }
-
+        assert(mutateReg->right_limit - mutateReg->left_limit > 4);
         /*
           Chi-Square Filter:
           This block of code implements the chi-square filter. It calculates the chi-square
@@ -878,7 +879,8 @@ namespace qAlgorithms
                 peak.dqsPeak = 1 - erf_approx_f(regression.uncertainty_area / regression.area);
 
                 peak.idxPeakStart = regression.left_limit;
-                peak.idxPeakEnd = regression.right_limit;
+                peak.idxPeakEnd = regression.right_limit - 1;
+                assert(peak.idxPeakEnd - peak.idxPeakStart > 4);
 
                 // params needed to merge two peaks
                 peak.apexLeft = regression.apex_position < regression.index_x0;
@@ -1043,7 +1045,7 @@ namespace qAlgorithms
         unsigned int right_limit) // right limit
     {
         unsigned int degreesOfFreedom = 0;
-        for (size_t i = left_limit; i < right_limit + 1; i++)
+        for (size_t i = left_limit; i < right_limit; i++)
         {
             if (df_start[i])
             {
