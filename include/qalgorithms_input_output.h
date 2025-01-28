@@ -21,6 +21,7 @@ namespace qAlgorithms
         bool printExtended = false;
         bool printFeatures = false;
         bool printSubProfile = false;
+        bool printFeatCens = false;
         // progress reporting
         bool silent = false;
         bool verboseProgress = false;
@@ -71,7 +72,7 @@ namespace qAlgorithms
         float intensity;
     };
 
-    void printCentroids(std::vector<std::vector<CentroidPeak>> peaktable,
+    void printCentroids(const std::vector<std::vector<CentroidPeak>> peaktable,
                         std::vector<float> convertRT, std::filesystem::path pathOutput,
                         std::string filename, bool silent, bool skipError, bool noOverwrite);
 
@@ -79,13 +80,18 @@ namespace qAlgorithms
                             std::filesystem::path pathOutput, std::string filename,
                             bool silent, bool skipError, bool noOverwrite);
 
-    void printBins(std::vector<EIC> bins, std::filesystem::path pathOutput, std::string filename,
+    void printBins(const std::vector<EIC> bins, std::filesystem::path pathOutput, std::string filename,
                    bool silent, bool skipError, bool noOverwrite);
 
-    void printFeatureList(std::vector<FeaturePeak> peaktable,
+    void printFeatureList(const std::vector<FeaturePeak> peaktable,
                           std::filesystem::path pathOutput, std::string filename,
-                          std::vector<EIC> originalBins,
+                          const std::vector<EIC> originalBins,
                           bool verbose, bool silent, bool skipError, bool noOverwrite);
+
+    void printFeatureCentroids(const std::vector<FeaturePeak> peaktable,
+                               std::filesystem::path pathOutput, std::string filename,
+                               const std::vector<EIC> originalBins,
+                               bool verbose, bool silent, bool skipError, bool noOverwrite);
 
     void printLogfile(std::filesystem::path pathLogfile); // @todo
 

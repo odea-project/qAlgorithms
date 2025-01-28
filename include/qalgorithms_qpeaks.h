@@ -31,16 +31,17 @@ namespace qAlgorithms
 
     void validateRegressions(
         const __m128 *beta,
-        const size_t n_segments,
+        size_t n_segments,
         const float *y_start,
         const float *ylog_start,
         const bool *df_start,
-        const size_t arrayMaxLength,
-        const size_t scale,
+        size_t arrayMaxLength,
+        size_t scale,
         std::vector<RegressionGauss> &validRegressions);
 
     void makeValidRegression(
         RegressionGauss *mutateReg,
+        size_t arrayMaxLength,
         const size_t i,
         const size_t scale,
         const bool *df_start,
