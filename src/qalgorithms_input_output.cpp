@@ -246,6 +246,7 @@ namespace qAlgorithms
                 args.printBins = true;
                 args.printFeatures = true;
                 args.printSubProfile = true;
+                args.printFeatCens = true;
             }
             else if ((argument == "-px") || (argument == "-printfeatcen"))
             {
