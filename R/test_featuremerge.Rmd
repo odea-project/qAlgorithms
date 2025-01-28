@@ -35,8 +35,8 @@ peaks = peaks[order(peaks$retentionTime),]
 5264 + 5612 // these look similar, but inconsistent area distorts the peak
 4535 + 10511 // borderline case where i'm not sure myself
 ```{r}
-feature_A = 346
-feature_B = 458
+feature_A = 181
+feature_B = 370
 
 feature_A = peaks[which(peaks$ID == feature_A),]
 feature_B = peaks[which(peaks$ID == feature_B),]
@@ -106,28 +106,25 @@ ggplot(merge2)+
 ```
 
 ```{r merge regressions}
-scale_A = log(1 / curve_A(feature_A$retentionTime))
-scale_B = log(1 / curve_B(feature_B$retentionTime))
-
-regression_merge = function(x){
-  rt = mean(feature_B$retentionTime, feature_A$retentionTime)
-  switchpos = rt - mean(feature_B$rt_switch, feature_A$rt_switch)
-  x = x - switchpos
-  b0 = (feature_A$b0 + scale_A + feature_B$b0 + scale_B) / 2
-  b1 = mean(feature_A$b1, feature_B$b1)
-  b2 = mean(feature_A$b2, feature_B$b2)
-  b3 = mean(feature_A$b3, feature_B$b3)
-  sq1 = (as.numeric(x < switchpos) * b2 * x^2) 
-  sq2 = (as.numeric(!(x < switchpos)) * b3 * x^2)
-  return(exp((b0 + x * b1 + sq1 + sq2)))
+regression_merge_A = function(x){
+  height = (curve_A2(x) + curve_B2(x)) / 2
+  return(height * curve_A(feature_A$retentionTime))
 }
 
-ggplot(merge2)+
+regression_merge_B = function(x){
+  height = (curve_A2(x) + curve_B2(x)) / 2
+  return(height * curve_B(feature_B$retentionTime))
+}
+
+ggplot(points_A)+
   geom_point(aes(retentionTime, area, colour = as.factor(ID)))+
-  stat_function(fun = curve_A2, colour = "red")+
-  stat_function(fun = curve_B2, colour = "blue")+
-  stat_function(fun = regression_merge)+
-  labs(caption = paste0("m/z values: ", feature_A$ID, ": ", feature_A$mz, " | ",feature_B$ID, ": ", feature_B$mz))
+  stat_function(fun = regression_merge_A, colour = "green")+
+  stat_function(fun = curve_A, colour = "red")
+
+ggplot(points_B)+
+  geom_point(aes(retentionTime, area, colour = as.factor(ID)))+
+  stat_function(fun = regression_merge_B, colour = "green")+
+  stat_function(fun = curve_B, colour = "blue")
 ```
 
 

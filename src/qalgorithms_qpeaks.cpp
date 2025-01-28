@@ -21,8 +21,7 @@ namespace qAlgorithms
         // initialise empty vector with enough room for all scans - centroids[0] must remain empty
         std::vector<qCentroid> centroids;
         centroids.reserve(allPeaks.size() * 2);
-        size_t totalCentroids = 0;
-
+        unsigned int totalCentroids = 0;
         for (size_t i = 0; i < allPeaks.size(); ++i)
         {
             if (!allPeaks[i].empty())
@@ -30,7 +29,7 @@ namespace qAlgorithms
                 for (size_t j = 0; j < allPeaks[i].size(); ++j)
                 {
                     auto &peak = allPeaks[i][j];
-                    qCentroid F = qCentroid{peak.mz, peak.mzUncertainty, peak.scanNumber, peak.area, peak.height, peak.dqsCen, peak.df};
+                    qCentroid F = qCentroid{peak.mz, peak.mzUncertainty, peak.scanNumber, peak.area, peak.height, peak.dqsCen, peak.df, totalCentroids};
                     assert(F.scanNo > 0);
                     centroids.push_back(F);
                     ++totalCentroids;

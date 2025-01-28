@@ -705,6 +705,8 @@ namespace qAlgorithms
         tmp_df.reserve(eicsize);
         std::vector<float> tmp_DQSC;
         tmp_DQSC.reserve(eicsize);
+        std::vector<unsigned int> tmp_cenID;
+        tmp_cenID.reserve(eicsize);
 
         std::sort(pointsInBin.begin(), pointsInBin.end(), [](const qCentroid *lhs, const qCentroid *rhs)
                   { return lhs->scanNo < rhs->scanNo; });
@@ -721,6 +723,7 @@ namespace qAlgorithms
             tmp_ints_height.push_back(point->int_height);
             tmp_df.push_back(point->df);
             tmp_DQSC.push_back(point->DQSCentroid);
+            tmp_cenID.push_back(point->cenID);
         }
 
         EIC returnVal = {
@@ -732,7 +735,8 @@ namespace qAlgorithms
             tmp_ints_height,
             tmp_df,
             DQSB_base,
-            tmp_DQSC};
+            tmp_DQSC,
+            tmp_cenID};
 
         return returnVal;
     }

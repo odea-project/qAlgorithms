@@ -8,10 +8,8 @@
 
 // external
 #include <vector>
-
+#include <array>
 #include <immintrin.h> // AVX
-
-/* This file includes the q::qPeaks class*/
 
 namespace qAlgorithms
 {

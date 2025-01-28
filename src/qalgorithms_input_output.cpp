@@ -43,11 +43,6 @@ namespace qAlgorithms
                                   "                                  all binned centroids will be printed to the output location\n"
                                   "                                  in addition to the final peak table. The file ends in _bins.csv.\n"
                                   "      -pf, -printfeatures         print the feature list as csv.\n"
-                                  "      -e,  -extended:             print additional information into the final peak list. You do not\n"
-                                  "                                  have to also set the -pf flag. The extended output includes the\n"
-                                  "                                  ID of the bin a given peak was found in, its start and end\n"
-                                  "                                  position (by index) within the bin, the lowest and highest retenetion \n"
-                                  "                                  times in the peak and the intensity as apex height.\n"
                                   "      -sp, -subprofile:           (not implemented yet) instead of the peaks, print all proflie-mode data points which\n" // @todo
                                   "                                  were used to create the final peaks. This does not return any quality\n"
                                   "                                  scores. Only use this option when reading in prodile mode files.\n"
@@ -240,10 +235,6 @@ namespace qAlgorithms
             {
                 args.printFeatures = true;
             }
-            else if ((argument == "-e") || (argument == "-extended"))
-            {
-                args.printExtended = true;
-            }
             else if ((argument == "-sp") || (argument == "-subprofile"))
             {
                 args.printSubProfile = true;
@@ -252,7 +243,7 @@ namespace qAlgorithms
             {
                 args.printCentroids = true;
                 args.printBins = true;
-                args.printExtended = true;
+                args.printFeatures = true;
                 args.printSubProfile = true;
             }
             else if (argument == "-log")
@@ -275,7 +266,7 @@ namespace qAlgorithms
             }
             else
             {
-                std::cerr << "Warning: unknown argument " << argument << ".\n";
+                std::cerr << "Warning: unknown argument \"" << argument << "\".\n";
             }
         } // end of reading in command line arguments
         // assert(!args.outputPath.empty());
@@ -592,9 +583,9 @@ namespace qAlgorithms
                       << "Filename: " << pathOutput << "\n";
             return;
         }
-        output << "ID,mz,mzUncertainty,scanNumber,retentionTime,area,areaUncertainty,"
-               << "height,heightUncertainty,degreesOfFreedom,dqsCen\n";
-        unsigned int counter = 1;
+        output << "cenID,mz,mzUncertainty,scanNumber,retentionTime,area,areaUncertainty,"
+               << "height,heightUncertainty,degreesOfFreedom,DQSC\n";
+        unsigned int counter = 0;
         for (size_t i = 0; i < peaktable.size(); i++)
         {
             if (!peaktable[i].empty())
@@ -698,14 +689,14 @@ namespace qAlgorithms
             return;
         }
         // @todo consider if the mz error is relevant when checking individual bins
-        output << "binID,mz,mzError,retentionTime,scanNumber,area,height,degreesOfFreedom,DQSC,DQSB\n";
+        output << "binID,cenID,mz,mzError,retentionTime,scanNumber,area,height,degreesOfFreedom,DQSC,DQSB\n";
         for (size_t binID = 0; binID < bins.size(); binID++)
         {
             for (size_t i = 0; i < bins[binID].mz.size(); i++)
             {
                 char buffer[128];
-                sprintf(buffer, "%zu,%0.8f,%0.8f,%0.4f,%d,%0.6f,%0.6f,%u,%0.4f,%0.4f\n",
-                        binID, bins[binID].mz[i], bins[binID].predInterval[i],
+                sprintf(buffer, "%zu,%u,%0.8f,%0.8f,%0.4f,%d,%0.6f,%0.6f,%u,%0.4f,%0.4f\n",
+                        binID, bins[binID].cenID[i], bins[binID].mz[i], bins[binID].predInterval[i],
                         bins[binID].rententionTimes[i], bins[binID].scanNumbers[i], bins[binID].ints_area[i],
                         bins[binID].ints_height[i], bins[binID].df[i], bins[binID].DQSC[i], bins[binID].DQSB[i]);
                 output << buffer;
@@ -755,7 +746,7 @@ namespace qAlgorithms
 
         output << "ID,binID,binIdxStart,binIdxEnd,mz,mzUncertainty,retentionTime,retentionTimeUncertainty,"
                << "lowestRetentionTime,highestRetentionTime,area,areaUncertainty,height,heightUncertainty,"
-               << "dqsCen,dqsBin,apexLeft,dqsPeak,b0,b1,b2,b3\n";
+               << "DQSC,DQSB,DQSF,apexLeft,b0,b1,b2,b3\n";
 
         unsigned int counter = 1;
         for (size_t i = 0; i < peaktable.size(); i++)

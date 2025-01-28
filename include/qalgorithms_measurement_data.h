@@ -12,14 +12,6 @@ namespace qAlgorithms
     {
         std::vector<dataPoint> dataPoints;
         std::vector<int> separators;
-
-        void addSeparator(int index)
-        {
-            if (index < static_cast<int>(dataPoints.size()))
-            {
-                separators.push_back(index);
-            }
-        }
     };
 
     float interpolateQadratic(float interpolate, const float *x, const float *y, float &b0, float &b1, float &b2);
