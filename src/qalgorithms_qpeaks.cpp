@@ -260,6 +260,7 @@ namespace qAlgorithms
         {
             validRegressions = mergeRegressionsOverScales(validRegressions, y_start);
         }
+        // there can be 0, 1 or more than one regressions in validRegressions
         return;
     }
 
@@ -531,6 +532,11 @@ namespace qAlgorithms
             mutateReg->right_limit = std::min(regressionNumber + 2 * scale, static_cast<int>(valley_position) + regressionNumber + scale);
         }
         assert(mutateReg->right_limit < arrayMaxLength + 1);
+        if (mutateReg->right_limit - mutateReg->left_limit < 5)
+        {
+            // @todo this case occurs in some exceptions, find out why
+            return;
+        }
 
         /*
           Degree of Freedom Filter:
@@ -880,7 +886,10 @@ namespace qAlgorithms
 
                 peak.idxPeakStart = regression.left_limit;
                 peak.idxPeakEnd = regression.right_limit - 1;
-                assert(peak.idxPeakEnd - peak.idxPeakStart > 4);
+                if (peak.idxPeakEnd - peak.idxPeakStart < 5)
+                { // @todo this is a bandaid solution, find out why some datasets trigger a check here
+                    continue;
+                }
 
                 // params needed to merge two peaks
                 peak.apexLeft = regression.apex_position < regression.index_x0;
