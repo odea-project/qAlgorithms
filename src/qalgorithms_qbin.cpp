@@ -565,8 +565,15 @@ namespace qAlgorithms
         // assume that bins are separated well enough that any gap of this size is close to perfect
         // separation already, so score = 1
         assert(idx_lowerLimit < notInBins->size());
-        float mz_hardLimit = 0.1;
-        assert(this->mzMax - this->mzMin < mz_hardLimit);
+        float mz_hardLimit = std::max(0.1, this->mzMax * 10e-5);
+        if (this->mzMax - this->mzMin > mz_hardLimit)
+        {
+            // failsafe if a nonsense bin is produced, score zeroed
+            std::vector<float> scores(this->pointsInBin.size(), 0);
+            this->DQSB_base = scores;
+            this->DQSB_scaled = scores;
+            return idx_lowerLimit;
+        }
         // iterate over points and only consider mass region + 0.1. It is assumed that if a distance
         // of 0.1 mz is exceeded, the bin is perfectly separated. This is about 100 times more than
         // the maximum tolerated distance between points even for very low density bins
