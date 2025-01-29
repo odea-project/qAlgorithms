@@ -532,11 +532,6 @@ namespace qAlgorithms
             mutateReg->right_limit = std::min(regressionNumber + 2 * scale, static_cast<int>(valley_position) + regressionNumber + scale);
         }
         assert(mutateReg->right_limit < arrayMaxLength + 1);
-        if (mutateReg->right_limit - mutateReg->left_limit < 5)
-        {
-            // @todo this case occurs in some exceptions, find out why
-            return;
-        }
 
         /*
           Degree of Freedom Filter:
@@ -886,10 +881,6 @@ namespace qAlgorithms
 
                 peak.idxPeakStart = regression.left_limit;
                 peak.idxPeakEnd = regression.right_limit - 1;
-                if (peak.idxPeakEnd - peak.idxPeakStart < 5)
-                { // @todo this is a bandaid solution, find out why some datasets trigger a check here
-                    continue;
-                }
 
                 // params needed to merge two peaks
                 peak.apexLeft = regression.apex_position < regression.index_x0;
@@ -897,6 +888,8 @@ namespace qAlgorithms
                 coeff.b2 /= delta_rt * delta_rt;
                 coeff.b3 /= delta_rt * delta_rt;
                 peak.coefficients = coeff;
+
+                peak.interpolationCount = regression.right_limit - regression.left_limit - regression.df;
 
                 peaks->push_back(std::move(peak));
             }
