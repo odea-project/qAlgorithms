@@ -35,7 +35,7 @@ peaks = peaks[order(peaks$retentionTime),]
 5264 + 5612 // these look similar, but inconsistent area distorts the peak
 4535 + 10511 // borderline case where i'm not sure myself
 ```{r}
-feature_A = 181
+feature_A = 184
 feature_B = 370
 
 feature_A = peaks[which(peaks$ID == feature_A),]
@@ -116,6 +116,12 @@ regression_merge_B = function(x){
   return(height * curve_B(feature_B$retentionTime))
 }
 
+coeff_merge = function(x){
+  b0 = mean(feature_A$b0, feature_B$b0)
+  b1 = mean(feature_A$b1, feature_B$b1)
+  
+}
+
 ggplot(points_A)+
   geom_point(aes(retentionTime, area, colour = as.factor(ID)))+
   stat_function(fun = regression_merge_A, colour = "green")+
@@ -125,6 +131,22 @@ ggplot(points_B)+
   geom_point(aes(retentionTime, area, colour = as.factor(ID)))+
   stat_function(fun = regression_merge_B, colour = "green")+
   stat_function(fun = curve_B, colour = "blue")
+```
+```{r proper mean}
+RTS1 = -feature_A$retentionTime - feature_A$rt_switch
+RTS2 = -feature_B$retentionTime - feature_B$rt_switch
+B1 = feature_A$b2 - feature_A$b3
+B2 = feature_B$b2 - feature_B$b3
+
+rt_new = (feature_A$retentionTime + feature_B$retentionTime) / 2
+switch_root = 1 + (4 * (B1 * (RTS1 + RTS1 * RTS1)) + B2 * (RTS2 + RTS2 * RTS2)) / B1 + B2 # @todo this is not working
+switch_new = 1 + sqrt(switch_root)
+RTS_new = -rt_new + switch_new
+
+b0_new = (feature_A$b0 + feature_B$b0) / 2
+b1_new = (feature_A$b1 * (rt_new + RTS1) + feature_B$b1 * (rt_new + RTS2)) / (2 * (rt_new + RTS_new))
+b2_new = (feature_A$b2 * (rt_new + RTS1)^2 + feature_B$b2 * (rt_new + RTS2)^2) / (2 * (rt_new + RTS_new)^2)
+b3_new = (feature_A$b3 * (rt_new + RTS1)^2 + feature_B$b3 * (rt_new + RTS2)^2) / (2 * (rt_new + RTS_new)^2)
 ```
 
 
@@ -147,7 +169,7 @@ rt_switch = function(feature){
 }
 
 peakShape = function(x, rt, rt_switch, b0, b1, b2, b3){
-  switchpos = rt + rt_switch
+  switchpos = rt - rt_switch
   x = x - rt
   sq1 = (as.numeric(x < switchpos) * b2 * x^2) 
   sq2 = (as.numeric(!(x < switchpos)) * b3 * x^2)
