@@ -94,7 +94,7 @@ int main(int argc, char *argv[])
             std::cerr << "Warning: the processing log has been overwritten\n";
         }
         logWriter.open(pathLogging, std::ios::out);
-        logWriter << "filename, numSpectra, numCentroids, meanDQSC, numBins, binsTooLarge, meanDQSB, numFeatures, badFeatures, meanDQSF\n";
+        logWriter << "filename, numSpectra, numCentroids, meanDQSC, numBins, binsTooLarge, meanDQSB, numFeatures, badFeatures, meanInterpolations, meanDQSF\n";
         logWriter.close();
     }
 
@@ -255,6 +255,7 @@ int main(int argc, char *argv[])
             assert(peaks.size() < binnedData.size());
             int peaksWithMassGaps = 0;
             double meanDQSF = 0;
+            double meanInterpolations = 0;
             for (size_t i = 0; i < peaks.size(); i++)
             {
                 int binIdx = peaks[i].idxBin;
@@ -275,8 +276,10 @@ int main(int argc, char *argv[])
                 {
                     meanDQSF += peaks[i].dqsPeak;
                 }
+                meanInterpolations += peaks[i].interpolationCount - 4;
             }
-
+            meanDQSF /= peaks.size() - peaksWithMassGaps;
+            meanInterpolations /= peaks.size();
             if (userArgs.verboseProgress)
             {
                 std::cout << peaksWithMassGaps << " peaks were erroneously constructed from more than one mass trace\n";
@@ -284,7 +287,6 @@ int main(int argc, char *argv[])
 
             timeEnd = std::chrono::high_resolution_clock::now();
 
-            meanDQSF /= peaks.size() - peaksWithMassGaps;
             if (!userArgs.silent)
             {
                 timePassed = std::chrono::duration_cast<std::chrono::milliseconds>(timeEnd - timeStart);
@@ -296,7 +298,7 @@ int main(int argc, char *argv[])
                 logWriter.open(pathLogging, std::ios::app);
                 logWriter << filename << ", " << centroids.size() << ", " << binThis.size() << ", "
                           << meanDQSC / binThis.size() << ", " << binnedData.size() << ", " << badBinCount << ", " << meanDQSB
-                          << ", " << peaks.size() << ", " << peaksWithMassGaps << ", " << meanDQSF << "\n";
+                          << ", " << peaks.size() << ", " << peaksWithMassGaps << ", " << meanInterpolations << ", " << meanDQSF << "\n";
                 logWriter.close();
             }
             if (userArgs.printFeatures)
