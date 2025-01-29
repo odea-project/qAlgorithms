@@ -260,6 +260,8 @@ int main(int argc, char *argv[])
                 int binIdx = peaks[i].idxBin;
                 auto massesBin = binnedData[binIdx].mz;
                 auto scansBin = binnedData[binIdx].scanNumbers;
+                assert(peaks[i].idxPeakStart < massesBin.size() - 4);
+                assert(peaks[i].idxPeakEnd < massesBin.size());
 
                 // idxPeakStart/End are the index referring to the bin in which a peak was found
                 if (!massTraceStable(massesBin, peaks[i].idxPeakStart, peaks[i].idxPeakEnd))
@@ -301,6 +303,11 @@ int main(int argc, char *argv[])
             {
                 printFeatureList(peaks, userArgs.outputPath, filename, binnedData,
                                  userArgs.printExtended, userArgs.silent, userArgs.skipError, userArgs.noOverwrite);
+            }
+            if (userArgs.printFeatCens)
+            {
+                printFeatureCentroids(peaks, userArgs.outputPath, filename, binnedData,
+                                      userArgs.printExtended, userArgs.silent, userArgs.skipError, userArgs.noOverwrite);
             }
 
             // @todo add peak grouping here
