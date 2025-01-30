@@ -256,10 +256,12 @@ namespace qAlgorithms
                                                        // n_segments must be smaller than the array
             validateRegressions(beta, n_segments, y_start, ylog_start, df_start, arrayMaxLength, scale, validRegressions);
         }
+
         if (validRegressions.size() > 1)
         {
             validRegressions = mergeRegressionsOverScales(validRegressions, y_start);
         }
+        // number of competitors is intialised to 0, so no special case for size = 1 needed
         // there can be 0, 1 or more than one regressions in validRegressions
         return;
     }
@@ -422,7 +424,7 @@ namespace qAlgorithms
           - At least one apex of a pair of peaks is within the window of the other peak.
           (Overlap of two maxima)
         */
-
+        // @todo could this part be combined with merge over scales?
         // vector with the access pattern [2*i] for start and [2*i + 1] for end point of a regression group
         std::vector<int> startEndGroups;
         startEndGroups.reserve(validRegsTmp.size());
@@ -655,18 +657,20 @@ namespace qAlgorithms
         // iterate over the validRegressions vector
         for (size_t i = 0; i < validRegressions.size(); i++)
         {
-            const unsigned int left_limit = validRegressions[i].left_limit;   // left limit of the current peak regression window in the Y matrix
-            const unsigned int right_limit = validRegressions[i].right_limit; // right limit of the current peak regression window in the Y matrix
-            double grpMSE = 0;                                                // group mean squared error
-            int grpDF = 0;                                                    // group degree of freedom
-            std::vector<size_t> validRegressionsInGroup;                      // vector of indices
+            assert(validRegressions[i].isValid);
+            const unsigned int left_limit = validRegressions[i].left_limit;   // left limit of the current peak regression window in the Y array
+            const unsigned int right_limit = validRegressions[i].right_limit; // right limit of the current peak regression window in the Y array
+            double MSE_group = 0;
+            int DF_group = 0;
+            std::vector<size_t> validRegressionsInGroup; // vector of indices to validRegressions
+            size_t competitors = 0;                      // this variable keeps track of how many competitors a given regression has
 
             // iterate over the validRegressions vector till the new peak
             // first iteration always false
             for (size_t j = 0; j < i; j++)
             {
-                if (validRegressions[j].isValid)
-                {        // only check valid regressions @todo only pass valid peaks into this function
+                if (validRegressions[j].isValid) // check is needed because regressions are set to invalid in the outer loop
+                {
                     if ( // check for the overlap of the peaks
                         (
                             validRegressions[j].apex_position > left_limit &&   // ref peak matches the left limit
@@ -684,26 +688,23 @@ namespace qAlgorithms
                                 validRegressions[j].right_limit - validRegressions[j].index_x0);
                             validRegressions[j].mse /= validRegressions[j].df;
                         }
-                        else
-                        {
-                            // the mse was calculated previously
-                            assert(validRegressions[j].mse > 0);
-                        }
-                        grpDF += validRegressions[j].df;                            // add the degree of freedom
-                        grpMSE += validRegressions[j].mse * validRegressions[j].df; // add the sum of squared errors
+                        DF_group += validRegressions[j].df;                            // add the degree of freedom
+                        MSE_group += validRegressions[j].mse * validRegressions[j].df; // add the sum of squared errors
                         // add the iterator of the ref peak to a vector of iterators
                         validRegressionsInGroup.push_back(j);
+                        competitors += validRegressions[j].numCompetitors + 1; // a regression can have beaten a previous one
                     }
                 }
-
             } // end for loop, inner loop, it_ref_peak
 
-            if (grpDF < 1)
+            if (validRegressionsInGroup.empty()) // no competing regressions exist
             {
+                // assert(validRegressions[i].mse != 0); // not always the case
+                assert(DF_group < 1); // @todo should be redundant
                 continue;
             }
 
-            grpMSE /= grpDF;
+            MSE_group /= DF_group;
 
             if (validRegressions[i].mse == 0.0)
             { // calculate the mse of the current peak
@@ -714,19 +715,25 @@ namespace qAlgorithms
                     right_limit - validRegressions[i].index_x0);
                 validRegressions[i].mse /= validRegressions[i].df;
             }
-
-            if (validRegressions[i].mse < grpMSE)
+            // assert(validRegressionsInGroup.size() == 1); // not always the case
+            if (validRegressions[i].mse < MSE_group)
             {
                 // Set isValid to false for the candidates from the group
-                for (auto it_ref_peak : validRegressionsInGroup)
+                for (size_t it_ref_peak : validRegressionsInGroup)
                 {
                     validRegressions[it_ref_peak].isValid = false;
                 }
+                // std::cout << validRegressionsInGroup.size();
+                // assert(validRegressionsInGroup.size() == 1);
+                // only advance competitor count if regression is actually better
+                validRegressions[i].numCompetitors = competitors;
             }
             else
             { // Set isValid to false for the current peak
                 validRegressions[i].isValid = false;
             }
+            // validRegressions[i].numCompetitors = validRegressionsInGroup.size(); // this doesn't work because the group is reset every iteration
+            // assert(validRegressionsInGroup.size() == 1);
         } // end for loop, outer loop, it_current_peak
         std::vector<RegressionGauss> finalRegs;
         for (size_t i = 0; i < validRegressions.size(); i++)
@@ -827,6 +834,8 @@ namespace qAlgorithms
                 peak.dqsCen = 1 - erf_approx_f(regression.uncertainty_area / regression.area);
                 peak.df = regression.df;
 
+                peak.numCompetitors = regression.numCompetitors;
+
                 /// @todo consider adding these properties so we can trace back everything completely
                 // peak.idxPeakStart = regression.left_limit;
                 // peak.idxPeakEnd = regression.right_limit;
@@ -890,6 +899,7 @@ namespace qAlgorithms
                 peak.coefficients = coeff;
 
                 peak.interpolationCount = regression.right_limit - regression.left_limit - regression.df;
+                peak.competitorCount = regression.numCompetitors;
 
                 peaks->push_back(std::move(peak));
             }
