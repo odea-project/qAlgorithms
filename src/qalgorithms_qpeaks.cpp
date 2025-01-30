@@ -535,6 +535,12 @@ namespace qAlgorithms
         }
         assert(mutateReg->right_limit < arrayMaxLength + 1);
 
+        if (scale + regressionNumber == mutateReg->left_limit || scale + regressionNumber == mutateReg->right_limit)
+        {
+            // only one half of the regression applies to the data
+            return;
+        }
+
         /*
           Degree of Freedom Filter:
           This block of code implements the degree of freedom filter. It calculates the
