@@ -49,8 +49,7 @@ namespace qAlgorithms
 
     struct RegressionGauss
     {
-        RegCoeffs newCoeffs;
-        __m128 coeff;                 // regression coefficients
+        RegCoeffs newCoeffs;          // regression coefficients
         int index_x0 = 0;             // index of window center (x==0) in the Y matrix
         int scale = 0;                // scale of the regression window, i.e., 2*scale+1 = window size
         int df = 0;                   // degree of freedom, interpolated data points will not be considered
@@ -62,7 +61,8 @@ namespace qAlgorithms
         float uncertainty_area = 0;   // uncertainty of the area
         float uncertainty_pos = 0;    // uncertainty of the position
         float uncertainty_height = 0;
-        bool isValid = false; // flag to indicate if the regression is valid
+        int numCompetitors = 0; // number of points that were discarded in favour of this regression
+        bool isValid = false;   // flag to indicate if the regression is valid
     };
 
     struct CentroidPeak
@@ -77,6 +77,7 @@ namespace qAlgorithms
         float mzUncertainty;
         unsigned int scanNumber;
         unsigned int df; // degrees of freedom
+        int numCompetitors;
     };
 
     struct FeaturePeak
@@ -98,6 +99,7 @@ namespace qAlgorithms
         unsigned int idxPeakStart; // degrees of freedom = idxPeakEnd - idxPeakStart
         unsigned int idxPeakEnd;
         int interpolationCount;
+        int competitorCount;
         bool apexLeft;
     };
 
