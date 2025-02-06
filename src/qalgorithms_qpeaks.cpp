@@ -377,6 +377,7 @@ namespace qAlgorithms
         size_t scale, // scale, i.e., the number of data points in a half window excluding the center point
         std::vector<RegressionGauss> &validRegressions)
     {
+        assert(scale <= GLOBAL_MAXSCALE);
         std::vector<RegressionGauss> validRegsTmp; // temporary vector to store valid regressions <index, apex_position>
         // iterate columwise over the coefficients matrix beta
         validRegsTmp.push_back(RegressionGauss{});
@@ -534,6 +535,11 @@ namespace qAlgorithms
             mutateReg->right_limit = std::min(regressionNumber + 2 * scale, static_cast<int>(valley_position) + regressionNumber + scale);
         }
         assert(mutateReg->right_limit < arrayMaxLength + 1);
+
+        /*
+            Note: left and right limit are not the limits of the regression, but of the window the regression applies in.
+            When multiple regressions are combined, the window limits are combined by maximum.
+        */
 
         if (scale + regressionNumber == mutateReg->left_limit || scale + regressionNumber == mutateReg->right_limit)
         {
@@ -841,6 +847,7 @@ namespace qAlgorithms
                 peak.df = regression.df;
 
                 peak.numCompetitors = regression.numCompetitors;
+                peak.scale = regression.scale;
 
                 /// @todo consider adding these properties so we can trace back everything completely
                 // peak.idxPeakStart = regression.left_limit;
@@ -904,7 +911,8 @@ namespace qAlgorithms
                 coeff.b3 /= delta_rt * delta_rt;
                 peak.coefficients = coeff;
 
-                peak.interpolationCount = regression.right_limit - regression.left_limit - regression.df;
+                peak.scale = regression.scale;
+                peak.interpolationCount = regression.right_limit - regression.left_limit - regression.df - 4; // -4 since the degrees of freedom are reduced by 1 per coefficient
                 peak.competitorCount = regression.numCompetitors;
 
                 peaks->push_back(std::move(peak));
