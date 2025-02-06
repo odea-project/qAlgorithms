@@ -77,7 +77,8 @@ namespace qAlgorithms
         float mzUncertainty;
         unsigned int scanNumber;
         unsigned int df; // degrees of freedom
-        int numCompetitors;
+        unsigned int numCompetitors;
+        unsigned int scale;
     };
 
     struct FeaturePeak
@@ -95,11 +96,12 @@ namespace qAlgorithms
         float mz;
         float retentionTimeUncertainty;
         float mzUncertainty;
-        int idxBin;
+        unsigned int idxBin;
         unsigned int idxPeakStart; // degrees of freedom = idxPeakEnd - idxPeakStart
         unsigned int idxPeakEnd;
-        int interpolationCount;
-        int competitorCount;
+        unsigned int interpolationCount;
+        unsigned int competitorCount;
+        unsigned int scale;
         bool apexLeft;
     };
 
