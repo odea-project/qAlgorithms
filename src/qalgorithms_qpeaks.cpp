@@ -94,7 +94,7 @@ namespace qAlgorithms
     }
 #pragma endregion "initialize"
 
-#pragma region "find centroids"
+#pragma region "find peaks"
     std::vector<CentroidPeak> findCentroids(treatedData &treatedData, const size_t scanNumber)
     {
         std::vector<CentroidPeak> all_peaks;
@@ -134,7 +134,8 @@ namespace qAlgorithms
             // perform log-transform on Y
             std::transform(y_start, y_start + n, ylog_start, [](float y)
                            { return std::log(y); });
-            runningRegression(y_start, ylog_start, df_start, maxWindowSize, n, validRegressions);
+            size_t scale = std::min(GLOBAL_MAXSCALE_CENTROID, size_t((n - 1) / 2));
+            runningRegression(y_start, ylog_start, df_start, maxWindowSize, n, validRegressions, scale);
             if (validRegressions.empty())
             {
                 continue; // no valid peaks
@@ -159,10 +160,8 @@ namespace qAlgorithms
         delete[] df;
         return all_peaks;
     }
-#pragma endregion "find centroids"
 
-#pragma region "find peaks"
-    void findPeaks(std::vector<FeaturePeak> &all_peaks, treatedData &treatedData)
+    void findFeatures(std::vector<FeaturePeak> &all_peaks, treatedData &treatedData)
     {
         int maxWindowSize = 0;
         for (auto it_separators = treatedData.separators.begin(); it_separators != treatedData.separators.end() - 1; it_separators++)
@@ -210,7 +209,8 @@ namespace qAlgorithms
             // perform log-transform on Y
             std::transform(y_start, y_start + n, ylog_start, [](float y)
                            { return std::log(y); });
-            runningRegression(y_start, ylog_start, df_start, n, n, validRegressions);
+            size_t scale = std::min(GLOBAL_MAXSCALE_FEATURES, size_t((n - 1) / 2));
+            runningRegression(y_start, ylog_start, df_start, n, n, validRegressions, scale);
             if (validRegressions.empty())
             {
                 continue; // no valid peaks
@@ -236,10 +236,11 @@ namespace qAlgorithms
         const bool *df_start,
         const size_t arrayMaxLength,
         const size_t n, // number of data points
-        std::vector<RegressionGauss> &validRegressions)
+        std::vector<RegressionGauss> &validRegressions,
+        const size_t maxScale)
     {
         assert(n > 4); // five point minimum is guaranteed by previous functions
-        const size_t maxScale = std::min(GLOBAL_MAXSCALE, (n - 1) / 2);
+
         // maximum size of the coefficients array is known at time of function call
         size_t maxSize = n - 4; // max size is at scale = 2
         assert(maxScale <= arrayMaxLength);
@@ -357,11 +358,11 @@ namespace qAlgorithms
         // measuredPoints[i] * pseudoiverse[0] to measuredPoints[i + 2 * scale + 1] * pseudoiverse[i + 2 * scale + 1]
 
         // we use a vector array so that every coefficient can be calculated at once.
-        __m128 products[arraySize];
-        for (size_t i = 0; i < arraySize; ++i)
-        {
-            products[i] = _mm_setzero_ps();
-        }
+        // __m128 products[arraySize];
+        // for (size_t i = 0; i < arraySize; ++i)
+        // {
+        //     products[i] = _mm_setzero_ps();
+        // }
     }
 
 #pragma endregion "running regression"
@@ -377,7 +378,7 @@ namespace qAlgorithms
         size_t scale, // scale, i.e., the number of data points in a half window excluding the center point
         std::vector<RegressionGauss> &validRegressions)
     {
-        assert(scale <= GLOBAL_MAXSCALE);
+        // assert(scale <= GLOBAL_MAXSCALE);
         std::vector<RegressionGauss> validRegsTmp; // temporary vector to store valid regressions <index, apex_position>
         // iterate columwise over the coefficients matrix beta
         validRegsTmp.push_back(RegressionGauss{});
@@ -910,6 +911,11 @@ namespace qAlgorithms
                 coeff.b2 /= delta_rt * delta_rt;
                 coeff.b3 /= delta_rt * delta_rt;
                 peak.coefficients = coeff;
+
+                if (regression.scale < 3)
+                {
+                    std::cerr << "regression found at scale 2!\n";
+                }
 
                 peak.scale = regression.scale;
                 peak.interpolationCount = regression.right_limit - regression.left_limit - regression.df - 4; // -4 since the degrees of freedom are reduced by 1 per coefficient
