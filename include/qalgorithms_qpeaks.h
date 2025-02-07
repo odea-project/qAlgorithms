@@ -17,7 +17,7 @@ namespace qAlgorithms
 
     std::vector<CentroidPeak> findCentroids(treatedData &treatedData, const size_t scanNumber);
 
-    void findPeaks(std::vector<FeaturePeak> &all_peaks, treatedData &treatedData);
+    void findFeatures(std::vector<FeaturePeak> &all_peaks, treatedData &treatedData);
 
     std::vector<qCentroid> passToBinning(std::vector<std::vector<CentroidPeak>> &allPeaks);
 
@@ -27,7 +27,8 @@ namespace qAlgorithms
         const bool *df_start,
         const size_t arrayMaxLength,
         const size_t n,
-        std::vector<RegressionGauss> &validRegressions);
+        std::vector<RegressionGauss> &validRegressions,
+        const size_t maxScale);
 
     void validateRegressions(
         const __m128 *beta,
