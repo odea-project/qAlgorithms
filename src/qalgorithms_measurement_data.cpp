@@ -558,7 +558,7 @@ namespace qAlgorithms
             std::vector<unsigned int> binIndexConverter;
             treatedData treatedData = pretreatData(dataPoints, binIndexConverter, rt_diff, false); // inter/extrapolate data, and identify data blocks
 
-            findPeaks(tmpPeaks, treatedData);
+            findFeatures(tmpPeaks, treatedData);
             if (!tmpPeaks.empty())
             {
                 for (size_t j = 0; j < tmpPeaks.size(); j++)
