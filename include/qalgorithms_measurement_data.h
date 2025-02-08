@@ -8,12 +8,6 @@
 
 namespace qAlgorithms
 {
-    struct treatedData // @todo remove this struct
-    {
-        std::vector<dataPoint> dataPoints;
-        std::vector<size_t> separators;
-    };
-
     float interpolateQadratic(float interpolate, const float *x, const float *y, float &b0, float &b1, float &b2);
 
     std::vector<std::vector<CentroidPeak>> transferCentroids( // @todo merge with findPeaks_mzml
@@ -28,7 +22,7 @@ namespace qAlgorithms
 
     /**
      * @brief Inter/extrapolate gaps in data and define separation markers for data blocks.
-     * @param dataPoints : {x, y, df, dqsCentroid, dqsBinning, scanNumber}
+     * @param dataPoints : {x, y, df, DQSC, DQSB, scanNumber}
      * @return std::vector<std::vector<dataPoint>::iterator> : separation markers for data blocks
      */
     treatedData pretreatData(std::vector<dataPoint> &dataPoints,

@@ -122,6 +122,7 @@ namespace qAlgorithms
             b1 = b;
             b2 = a;
         };
+        static dataPoint zeroedPoint{0.f, 0.f, false, 0.f, 0.f, 0, 0.f};
 
         treatedData treatedData = {std::vector<dataPoint>(), std::vector<size_t>()};
         treatedData.dataPoints.reserve(dataPoints.size() * 2);
@@ -132,7 +133,7 @@ namespace qAlgorithms
         // add the first two zeros to the dataPoints_new vector @todo skip this by doing log interpolation during the log transform
         for (int i = 0; i < 2; i++)
         {
-            treatedData.dataPoints.emplace_back(0.f, 0.f, false, 0.f, 0.f, 0, 0.f);
+            treatedData.dataPoints.push_back(zeroedPoint);
             binIdx.push_back(realIdx);
             assert(binIdx.size() == treatedData.dataPoints.size());
         }
@@ -163,8 +164,8 @@ namespace qAlgorithms
                             dataPoints[pos].x + i * expectedDifference, // x-axis
                             dataPoints[pos].y * std::pow(dy, i),        // y-axis
                             false,                                      // df
-                            0.f,                                        // dqsCentroid
-                            0.f,                                        // dqsBinning
+                            0.f,                                        // DQSC
+                            0.f,                                        // DQSB
                             0,                                          // scanNumber
                             0.f);                                       // mz
                     }
@@ -205,8 +206,8 @@ namespace qAlgorithms
                                     dataPoints[pos].x + float(i + 1) * expectedDifference, // x-axis
                                     dataPoints[pos].y,                                     // y-axis
                                     false,                                                 // df
-                                    0.f,                                                   // dqsCentroid
-                                    0.f,                                                   // dqsBinning
+                                    0.f,                                                   // DQSC
+                                    0.f,                                                   // DQSB
                                     0,                                                     // scanNumber
                                     0.f);                                                  // mz
 
@@ -237,8 +238,8 @@ namespace qAlgorithms
                                     dp_x,                             // x-axis
                                     std::exp(b0 + x * (b1 + x * b2)), // y-axis
                                     false,                            // df
-                                    0.f,                              // dqsCentroid
-                                    0.f,                              // dqsBinning
+                                    0.f,                              // DQSC
+                                    0.f,                              // DQSB
                                     0,                                // scanNumber
                                     0.f);                             // mz
                                 binIdx.push_back(realIdx);
@@ -248,7 +249,7 @@ namespace qAlgorithms
                         // add the zeros to the treatedData.dataPoints vector to start the next block
                         for (int i = 0; i < 2; i++)
                         {
-                            treatedData.dataPoints.emplace_back(0.f, 0.f, false, 0.f, 0.f, 0, 0.f);
+                            treatedData.dataPoints.push_back(zeroedPoint);
                             binIdx.push_back(realIdx);
                             assert(binIdx.size() == treatedData.dataPoints.size());
                         }
