@@ -123,13 +123,13 @@ namespace qAlgorithms
             b2 = a;
         };
 
-        treatedData treatedData = {std::vector<dataPoint>(), std::vector<int>()};
+        treatedData treatedData = {std::vector<dataPoint>(), std::vector<size_t>()};
         treatedData.dataPoints.reserve(dataPoints.size() * 2);
 
         binIdx.reserve(dataPoints.size() * 2);
 
         unsigned int realIdx = 0;
-        // add the first to zeros to the dataPoints_new vector @todo skip this by doing log interpolation during the log transform
+        // add the first two zeros to the dataPoints_new vector @todo skip this by doing log interpolation during the log transform
         for (int i = 0; i < 2; i++)
         {
             treatedData.dataPoints.emplace_back(0.f, 0.f, false, 0.f, 0.f, 0, 0.f);
