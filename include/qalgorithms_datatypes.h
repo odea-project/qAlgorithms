@@ -81,30 +81,6 @@ namespace qAlgorithms
         unsigned int scale;
     };
 
-    struct FeaturePeak
-    {
-        RegCoeffs coefficients;
-        float height;
-        float area;
-        float width;
-        float heightUncertainty;
-        float areaUncertainty;
-        float dqsPeak;       // only relevant for features
-        float dqsBin;        // can be calculated when needed
-        float dqsCen;        // can be calculated when needed
-        float retentionTime; // only relevant for features
-        float mz;
-        float retentionTimeUncertainty;
-        float mzUncertainty;
-        unsigned int idxBin;
-        unsigned int idxPeakStart; // degrees of freedom = idxPeakEnd - idxPeakStart
-        unsigned int idxPeakEnd;
-        unsigned int interpolationCount;
-        unsigned int competitorCount;
-        unsigned int scale;
-        bool apexLeft;
-    };
-
     struct qCentroid
     {
         double mz;
@@ -129,6 +105,30 @@ namespace qAlgorithms
         std::vector<float> DQSB;
         std::vector<float> DQSC;
         std::vector<unsigned int> cenID;
+    };
+
+    struct FeaturePeak
+    {
+        RegCoeffs coefficients;
+        float height;
+        float area;
+        float width;
+        float heightUncertainty;
+        float areaUncertainty;
+        float dqsPeak;       // only relevant for features
+        float dqsBin;        // can be calculated when needed
+        float dqsCen;        // can be calculated when needed
+        float retentionTime; // only relevant for features
+        float mz;
+        float retentionTimeUncertainty;
+        float mzUncertainty;
+        unsigned int idxBin;
+        unsigned int idxPeakStart; // degrees of freedom = idxPeakEnd - idxPeakStart
+        unsigned int idxPeakEnd;
+        unsigned int interpolationCount;
+        unsigned int competitorCount;
+        unsigned int scale;
+        bool apexLeft;
     };
 }
 

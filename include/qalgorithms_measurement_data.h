@@ -11,7 +11,7 @@ namespace qAlgorithms
     struct treatedData // @todo remove this struct
     {
         std::vector<dataPoint> dataPoints;
-        std::vector<int> separators;
+        std::vector<size_t> separators;
     };
 
     float interpolateQadratic(float interpolate, const float *x, const float *y, float &b0, float &b1, float &b2);
