@@ -197,8 +197,8 @@ namespace qAlgorithms
                 X[position] = treatedData.dataPoints[idx].x;
                 df[position] = treatedData.dataPoints[idx].df;
                 mz[position] = treatedData.dataPoints[idx].mz;
-                dqs_cen[position] = treatedData.dataPoints[idx].dqsCentroid;
-                dqs_bin[position] = treatedData.dataPoints[idx].dqsBinning;
+                dqs_cen[position] = treatedData.dataPoints[idx].DQSC;
+                dqs_bin[position] = treatedData.dataPoints[idx].DQSB;
             }
 
             // perform log-transform on Y
@@ -895,7 +895,7 @@ namespace qAlgorithms
 
                 peak.dqsCen = weightedMeanAndVariance(dqs_cen, y_start, df_start, regression.left_limit, regression.right_limit).first;
                 peak.dqsBin = weightedMeanAndVariance(dqs_bin, y_start, df_start, regression.left_limit, regression.right_limit).first;
-                peak.dqsPeak = 1 - erf_approx_f(regression.uncertainty_area / regression.area);
+                peak.DQSF = 1 - erf_approx_f(regression.uncertainty_area / regression.area);
 
                 peak.idxPeakStart = regression.left_limit;
                 peak.idxPeakEnd = regression.right_limit - 1;
