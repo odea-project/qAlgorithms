@@ -98,11 +98,11 @@ namespace qAlgorithms
     std::vector<CentroidPeak> findCentroids(treatedData &treatedData, const size_t scanNumber)
     {
         std::vector<CentroidPeak> all_peaks;
-        int maxWindowSize = 0;
-
-        for (auto it_separators = treatedData.separators.begin(); it_separators != treatedData.separators.end() - 1; it_separators++)
+        size_t maxWindowSize = 0;
+        for (size_t i = 1; i < treatedData.separators.size(); i++)
         {
-            int length = *(it_separators + 1) - *it_separators; // calculate the number of data points in the block
+            size_t length = treatedData.separators[i] - treatedData.separators[i - 1];
+            assert(length > 4); // data must contain at least five points
             maxWindowSize = maxWindowSize < length ? length : maxWindowSize;
         }
         assert(maxWindowSize > 0);
@@ -119,23 +119,22 @@ namespace qAlgorithms
 
         std::vector<RegressionGauss> validRegressions;
 
-        for (auto it_separators = treatedData.separators.begin(); it_separators != treatedData.separators.end() - 1; it_separators++)
+        for (size_t sep = 1; sep < treatedData.separators.size(); sep++)
         {
-            const int n = *(it_separators + 1) - *it_separators;
-            int i = 0;
-            for (int idx = *it_separators; idx < *(it_separators + 1); idx++)
+            const size_t length = treatedData.separators[sep] - treatedData.separators[sep - 1]; // number of data points in the block
+            for (size_t position = 0; position < length; position++)
             {
-                Y[i] = treatedData.dataPoints[idx].y;
-                X[i] = treatedData.dataPoints[idx].x;
-                df[i] = treatedData.dataPoints[idx].df;
-                i++;
+                size_t idx = position + treatedData.separators[sep - 1];
+                Y[position] = treatedData.dataPoints[idx].y;
+                X[position] = treatedData.dataPoints[idx].x;
+                df[position] = treatedData.dataPoints[idx].df;
             }
 
             // perform log-transform on Y
-            std::transform(y_start, y_start + n, ylog_start, [](float y)
+            std::transform(y_start, y_start + length, ylog_start, [](float y)
                            { return std::log(y); });
-            size_t scale = std::min(GLOBAL_MAXSCALE_CENTROID, size_t((n - 1) / 2));
-            runningRegression(y_start, ylog_start, df_start, maxWindowSize, n, validRegressions, scale);
+            size_t scale = std::min(GLOBAL_MAXSCALE_CENTROID, size_t((length - 1) / 2));
+            runningRegression(y_start, ylog_start, df_start, maxWindowSize, length, validRegressions, scale);
             if (validRegressions.empty())
             {
                 continue; // no valid peaks
@@ -163,10 +162,11 @@ namespace qAlgorithms
 
     void findFeatures(std::vector<FeaturePeak> &all_peaks, treatedData &treatedData)
     {
-        int maxWindowSize = 0;
-        for (auto it_separators = treatedData.separators.begin(); it_separators != treatedData.separators.end() - 1; it_separators++)
+        size_t maxWindowSize = 0;
+        for (size_t i = 1; i < treatedData.separators.size(); i++)
         {
-            int length = *(it_separators + 1) - *it_separators; // calculate the number of data points in the block
+            size_t length = treatedData.separators[i] - treatedData.separators[i - 1];
+            assert(length > 4); // data must contain at least five points
             maxWindowSize = maxWindowSize < length ? length : maxWindowSize;
         }
         float *Y = new float[maxWindowSize];
@@ -187,30 +187,25 @@ namespace qAlgorithms
         const auto dqs_bin_start = dqs_bin;
 
         std::vector<RegressionGauss> validRegressions;
-        // @todo only execute this if n > 4
-        for (auto it_separators = treatedData.separators.begin(); it_separators != treatedData.separators.end() - 1; it_separators++)
+        for (size_t sep = 1; sep < treatedData.separators.size(); sep++)
         {
-            const int n = *(it_separators + 1) - *it_separators; // calculate the number of data points in the block
-            assert(n > 4);                                       // data must contain at least five points
-            assert(n == *(it_separators + 1) - *it_separators);
+            const size_t length = treatedData.separators[sep] - treatedData.separators[sep - 1]; // number of data points in the block
+            for (size_t position = 0; position < length; position++)
             {
-                int i = 0;
-                for (int idx = *it_separators; idx < *(it_separators + 1); idx++)
-                {
-                    Y[i] = treatedData.dataPoints[idx].y;
-                    X[i] = treatedData.dataPoints[idx].x;
-                    df[i] = treatedData.dataPoints[idx].df;
-                    mz[i] = treatedData.dataPoints[idx].mz;
-                    dqs_cen[i] = treatedData.dataPoints[idx].dqsCentroid;
-                    dqs_bin[i] = treatedData.dataPoints[idx].dqsBinning;
-                    i++;
-                }
+                size_t idx = position + treatedData.separators[sep - 1];
+                Y[position] = treatedData.dataPoints[idx].y;
+                X[position] = treatedData.dataPoints[idx].x;
+                df[position] = treatedData.dataPoints[idx].df;
+                mz[position] = treatedData.dataPoints[idx].mz;
+                dqs_cen[position] = treatedData.dataPoints[idx].dqsCentroid;
+                dqs_bin[position] = treatedData.dataPoints[idx].dqsBinning;
             }
+
             // perform log-transform on Y
-            std::transform(y_start, y_start + n, ylog_start, [](float y)
+            std::transform(y_start, y_start + length, ylog_start, [](float y)
                            { return std::log(y); });
-            size_t scale = std::min(GLOBAL_MAXSCALE_FEATURES, size_t((n - 1) / 2));
-            runningRegression(y_start, ylog_start, df_start, n, n, validRegressions, scale);
+            size_t scale = std::min(GLOBAL_MAXSCALE_FEATURES, size_t((length - 1) / 2));
+            runningRegression(y_start, ylog_start, df_start, length, length, validRegressions, scale);
             if (validRegressions.empty())
             {
                 continue; // no valid peaks
