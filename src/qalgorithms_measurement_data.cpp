@@ -135,6 +135,7 @@ namespace qAlgorithms
         {
             treatedData.dataPoints.push_back(zeroedPoint);
             binIdx.push_back(realIdx);
+            treatedData.intensity.push_back(0);
             assert(binIdx.size() == treatedData.dataPoints.size());
         }
         treatedData.separators.push_back(0);
@@ -142,17 +143,32 @@ namespace qAlgorithms
         // iterate over the data points
         size_t maxOfBlock = 0;
         size_t blockSize = 0; // size of the current block
+        size_t countSubOneGap = 0;
+        size_t countNoGap = 0;
         for (size_t pos = 0; pos < dataPoints.size() - 1; pos++)
         {
             blockSize++;
             treatedData.dataPoints.push_back(dataPoints[pos]);
+            treatedData.intensity.push_back(dataPoints[pos].y);
             binIdx.push_back(realIdx);
             assert(binIdx.size() == treatedData.dataPoints.size());
             ++realIdx;
-            const float dx = dataPoints[pos + 1].x - dataPoints[pos].x;
-            if (dx > 1.75 * expectedDifference)
+            const float delta_x = dataPoints[pos + 1].x - dataPoints[pos].x;
+
+            size_t gapSize2 = 0;
+            if (delta_x > 1.75 * expectedDifference)
+            {
+                gapSize2 = static_cast<int>(delta_x / expectedDifference) - 1;
+                if (gapSize2 == 0)
+                {
+                    countSubOneGap++;
+                }
+            }
+
+            if (delta_x > 1.75 * expectedDifference)
             { // gap detected
-                const int gapSize = static_cast<int>(dx / expectedDifference) - 1;
+                // assert(gapSize2 != 0);
+                const int gapSize = static_cast<int>(delta_x / expectedDifference) - 1;
                 if (gapSize < 4)
                 {
                     // add gapSize interpolated datapoints
@@ -162,12 +178,13 @@ namespace qAlgorithms
                         binIdx.push_back(realIdx);
                         treatedData.dataPoints.emplace_back(
                             dataPoints[pos].x + i * expectedDifference, // x-axis
-                            dataPoints[pos].y * std::pow(dy, i),        // y-axis
+                            dataPoints[pos].y * std::pow(dy, i),        // intensity
                             false,                                      // df
                             0.f,                                        // DQSC
                             0.f,                                        // DQSB
                             0,                                          // scanNumber
                             0.f);                                       // mz
+                        treatedData.intensity.push_back(dataPoints[pos].y * std::pow(dy, i));
                     }
                     assert(binIdx.size() == treatedData.dataPoints.size());
                 }
@@ -181,6 +198,7 @@ namespace qAlgorithms
                         // first two zeros marked by the separator.back()+2
                         auto it_startOfBlock = treatedData.dataPoints.begin() + treatedData.separators.back() + 2;
                         treatedData.dataPoints.erase(it_startOfBlock, treatedData.dataPoints.end());
+                        treatedData.intensity.erase(treatedData.intensity.begin() + treatedData.separators.back() + 2, treatedData.intensity.end());
                         while (binIdx.size() != treatedData.dataPoints.size())
                         {
                             binIdx.pop_back();
@@ -204,13 +222,13 @@ namespace qAlgorithms
                                 // RIGHT SIDE
                                 treatedData.dataPoints.emplace_back(
                                     dataPoints[pos].x + float(i + 1) * expectedDifference, // x-axis
-                                    dataPoints[pos].y,                                     // y-axis
+                                    dataPoints[pos].y,                                     // intensity
                                     false,                                                 // df
                                     0.f,                                                   // DQSC
                                     0.f,                                                   // DQSB
                                     0,                                                     // scanNumber
                                     0.f);                                                  // mz
-
+                                treatedData.intensity.push_back(dataPoints[pos].y);
                                 binIdx.push_back(realIdx);
                                 assert(binIdx.size() == treatedData.dataPoints.size());
                             }
@@ -236,12 +254,13 @@ namespace qAlgorithms
                                 const float x = dp_x - dp_startOfBlock.x;
                                 treatedData.dataPoints.emplace_back(
                                     dp_x,                             // x-axis
-                                    std::exp(b0 + x * (b1 + x * b2)), // y-axis
+                                    std::exp(b0 + x * (b1 + x * b2)), // intensity
                                     false,                            // df
                                     0.f,                              // DQSC
                                     0.f,                              // DQSB
                                     0,                                // scanNumber
                                     0.f);                             // mz
+                                treatedData.intensity.push_back(std::exp(b0 + x * (b1 + x * b2)));
                                 binIdx.push_back(realIdx);
                                 assert(binIdx.size() == treatedData.dataPoints.size());
                             }
@@ -250,6 +269,7 @@ namespace qAlgorithms
                         for (int i = 0; i < 2; i++)
                         {
                             treatedData.dataPoints.push_back(zeroedPoint);
+                            treatedData.intensity.push_back(0);
                             binIdx.push_back(realIdx);
                             assert(binIdx.size() == treatedData.dataPoints.size());
                         }
@@ -259,29 +279,35 @@ namespace qAlgorithms
                     blockSize = 0; // reset the block size
                 }
             }
-            else // no gap found
+            else if (gapSize2 == 0) // no gap found
             {
+                countNoGap++;
+                assert(gapSize2 == 0);
                 if (dataPoints[maxOfBlock].y < dataPoints[pos].y)
                 {
                     maxOfBlock = pos;
                 }
-                if (updateExpectedDifference && dx > 0.8 * expectedDifference && dx < 1.2 * expectedDifference)
+                if (updateExpectedDifference && delta_x > 0.8 * expectedDifference && delta_x < 1.2 * expectedDifference)
                 {
-                    expectedDifference = (expectedDifference + dx) * 0.5; // update the expected difference
+                    expectedDifference = (expectedDifference + delta_x) * 0.5; // update the expected difference
                 }
             }
         } // end of for loop
+
+        // std::cerr << countSubOneGap << ", -" << countNoGap << ", ";
+
         assert(binIdx.size() == treatedData.dataPoints.size());
-
-        binIdx.pop_back();
-        binIdx.pop_back();
-
+        assert(binIdx.size() == treatedData.intensity.size());
         // delete the last two zeros // @todo why?
+        binIdx.pop_back();
+        binIdx.pop_back();
         treatedData.dataPoints.pop_back();
         treatedData.dataPoints.pop_back();
+        treatedData.intensity.pop_back();
+        treatedData.intensity.pop_back();
+        assert(treatedData.dataPoints.back().y == treatedData.intensity.back()); // works
         // change the last separator to the end of the dataPoints vector
         treatedData.separators.back() = treatedData.dataPoints.size();
-        assert(binIdx.size() == treatedData.dataPoints.size());
 
         return treatedData;
     } // end of pretreatData
