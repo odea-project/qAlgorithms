@@ -133,6 +133,7 @@ namespace qAlgorithms
             // perform log-transform on Y
             std::transform(y_start, y_start + length, ylog_start, [](float y)
                            { return std::log(y); });
+            // @todo adjust the scale dynamically based on the number of valid regressions found, early terminate after x iterations
             size_t scale = std::min(GLOBAL_MAXSCALE_CENTROID, size_t((length - 1) / 2));
             runningRegression(y_start, ylog_start, df_start, maxWindowSize, length, validRegressions, scale);
             if (validRegressions.empty())

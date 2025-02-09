@@ -27,7 +27,7 @@ namespace qAlgorithms
         std::vector<size_t> separators;
         // points as individual vectors
         // std::vector<float> RT;
-        // std::vector<float> intensity;
+        std::vector<float> intensity;
         // std::vector<bool> df;
         // std::vector<float> DQSC;
         // std::vector<float> DQSB;
