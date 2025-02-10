@@ -531,7 +531,6 @@ namespace qAlgorithms
 
     treatedCens pretreatDataCentroids(std::vector<centroidPoint> &dataPoints, float expectedDifference)
     {
-        static centroidPoint zeroedPoint{0.f, 0.f, false};
         centroidPoint dp(
             std::numeric_limits<float>::infinity(), // mz
             0.0,                                    // intensity
@@ -539,12 +538,9 @@ namespace qAlgorithms
         dataPoints.push_back(dp);
 
         treatedCens cens;
-        cens.dataPoints.reserve(dataPoints.size() * 2);
-
         // add the first two zeros to the dataPoints_new vector @todo skip this by doing log interpolation during the log transform
         for (int i = 0; i < 2; i++)
         {
-            cens.dataPoints.push_back(zeroedPoint);
             cens.intensity.push_back(0);
             cens.mz.push_back(0);
             cens.df.push_back(false);
@@ -558,18 +554,11 @@ namespace qAlgorithms
         size_t countNoGap = 0;
         for (size_t pos = 0; pos < dataPoints.size() - 1; pos++)
         {
-            // if (cens.dataPoints.size() > 1089)
-            // {
-            //     std::cerr << "hit ";
-            // }
-
             blockSize++;
-            cens.dataPoints.push_back(dataPoints[pos]);
             cens.intensity.push_back(dataPoints[pos].intensity);
             cens.mz.push_back(dataPoints[pos].mz);
             cens.df.push_back(true);
             const float delta_x = dataPoints[pos + 1].mz - dataPoints[pos].mz;
-            assert(cens.mz.back() == cens.dataPoints.back().mz);
 
             size_t gapSize2 = 0;
             if (delta_x > 1.75 * expectedDifference)
@@ -591,14 +580,9 @@ namespace qAlgorithms
                     const float dy = std::pow(dataPoints[pos + 1].intensity / dataPoints[pos].intensity, 1.0 / float(gapSize + 1)); // dy for log interpolation
                     for (int i = 1; i <= gapSize; i++)
                     {
-                        cens.dataPoints.emplace_back(
-                            dataPoints[pos].mz + i * expectedDifference, // mz
-                            dataPoints[pos].intensity * std::pow(dy, i), // intensity
-                            false);                                      // df
                         cens.intensity.push_back(dataPoints[pos].intensity * std::pow(dy, i));
                         cens.mz.push_back(dataPoints[pos].mz + i * expectedDifference);
                         cens.df.push_back(false);
-                        assert(cens.mz.back() == cens.dataPoints.back().mz);
                     }
                 }
                 else
@@ -609,87 +593,67 @@ namespace qAlgorithms
                     if (blockSize < 5)
                     {
                         // delete all data points of the block in treatedData.dataPoints except the first two zeros
-                        cens.dataPoints.resize(currentStart + 2);
                         cens.intensity.resize(currentStart + 2);
                         cens.mz.resize(currentStart + 2);
                         cens.df.resize(currentStart + 2);
                     }
                     else
                     {
-                        const centroidPoint dp_startOfBlock = cens.dataPoints[currentStart + 2];
+                        float blockStartMZ = cens.mz[currentStart + 2];
+                        float blockStartIntensity = cens.intensity[currentStart + 2];
                         // check if the maximum of the block is the first or last data point
-                        if (maxOfBlock == pos || dataPoints[maxOfBlock].mz == dp_startOfBlock.mz)
+                        if (maxOfBlock == pos || dataPoints[maxOfBlock].mz == blockStartMZ)
                         {
                             // extrapolate the left side using the first non-zero data point (i.e, the start of the block)
                             // @todo is this a good idea?
                             for (int i = 0; i < 2; i++)
                             {
                                 // LEFT SIDE
-                                centroidPoint &dp_left = cens.dataPoints[currentStart + i];
-                                dp_left.mz = dp_startOfBlock.mz - (2 - i) * expectedDifference;
-                                dp_left.intensity = dp_startOfBlock.intensity;
                                 cens.intensity[currentStart + i] = cens.intensity[currentStart + 2];
-                                cens.mz[currentStart + i] = dp_startOfBlock.mz - (2 - i) * expectedDifference;
-                                assert(cens.mz.back() == cens.dataPoints.back().mz);
+                                cens.mz[currentStart + i] = blockStartMZ - (2 - i) * expectedDifference;
                                 // degrees of freedom is already false
                                 // RIGHT SIDE
-                                cens.dataPoints.emplace_back(
-                                    dataPoints[pos].mz + float(i + 1) * expectedDifference, // mz
-                                    dataPoints[pos].intensity,                              // intensity
-                                    false);                                                 // df
                                 cens.intensity.push_back(dataPoints[pos].intensity);
                                 cens.mz.push_back(dataPoints[pos].mz + float(i + 1) * expectedDifference);
                                 cens.df.push_back(false);
-                                assert(cens.mz.back() == cens.dataPoints.back().mz);
                             }
                         }
                         else
                         {
                             // this is the expected case
                             const float x[3] = {0.f,
-                                                dataPoints[maxOfBlock].mz - dp_startOfBlock.mz,
-                                                dataPoints[pos].mz - dp_startOfBlock.mz};
-                            const float y[3] = {std::log(dp_startOfBlock.intensity),
+                                                dataPoints[maxOfBlock].mz - blockStartMZ,
+                                                dataPoints[pos].mz - blockStartMZ};
+                            const float y[3] = {std::log(blockStartIntensity),
                                                 std::log(dataPoints[maxOfBlock].intensity),
                                                 std::log(dataPoints[pos].intensity)};
                             auto coeffs = interpolateQadratic(x, y);
 
                             for (int i = 0; i < 2; i++)
                             {
-                                centroidPoint &curr_dp = cens.dataPoints[currentStart + i];
-                                curr_dp.mz = dp_startOfBlock.mz - (2 - i) * expectedDifference;
-                                const float x = curr_dp.mz - dp_startOfBlock.mz;
-                                curr_dp.intensity = std::exp(coeffs[0] + x * (coeffs[1] + x * coeffs[2]));
+                                const float x = blockStartMZ - (2 - i) * expectedDifference - blockStartMZ;
                                 cens.intensity[currentStart + i] = std::exp(coeffs[0] + x * (coeffs[1] + x * coeffs[2]));
-                                cens.mz[currentStart + i] = dp_startOfBlock.mz - (2 - i) * expectedDifference;
-                                assert(cens.mz.back() == cens.dataPoints.back().mz);
+                                cens.mz[currentStart + i] = blockStartMZ - (2 - i) * expectedDifference;
                             }
                             // add the extrapolated data points to the right side of the block
                             for (int i = 0; i < 2; i++)
                             {
                                 const float dp_x = dataPoints[pos].mz + float(i + 1) * expectedDifference;
-                                const float x = dp_x - dp_startOfBlock.mz;
-                                cens.dataPoints.emplace_back(
-                                    dp_x,                                                  // mz
-                                    std::exp(coeffs[0] + x * (coeffs[1] + x * coeffs[2])), // intensity
-                                    false);                                                // df
+                                const float x = dp_x - blockStartMZ;
                                 cens.intensity.push_back(std::exp(coeffs[0] + x * (coeffs[1] + x * coeffs[2])));
                                 cens.mz.push_back(dp_x);
                                 cens.df.push_back(false);
-                                assert(cens.mz.back() == cens.dataPoints.back().mz);
                             }
                         }
                         // add the zeros to the treatedData.dataPoints vector to start the next block
                         // separator struct stores indices of first and last element
-                        cens.separators.back().end = cens.dataPoints.size() - 1;
-                        cens.separators.push_back({cens.dataPoints.size(), 0});
+                        cens.separators.back().end = cens.mz.size() - 1;
+                        cens.separators.push_back({cens.mz.size(), 0});
                         for (int i = 0; i < 2; i++)
                         {
-                            cens.dataPoints.push_back(zeroedPoint);
                             cens.intensity.push_back(0);
                             cens.mz.push_back(0);
                             cens.df.push_back(false);
-                            assert(cens.mz.back() == cens.dataPoints.back().mz);
                         }
                         maxOfBlock = pos + 1;
                     }
@@ -712,13 +676,7 @@ namespace qAlgorithms
         } // end of for loop
 
         // std::cerr << countSubOneGap << ", -" << countNoGap << ", ";
-
-        assert(cens.dataPoints.size() == cens.intensity.size());
-        assert(cens.dataPoints.size() == cens.mz.size());
-        assert(cens.dataPoints.size() == cens.mz.size());
         // delete the last two zeros // @todo why?
-        cens.dataPoints.pop_back();
-        cens.dataPoints.pop_back();
         cens.intensity.pop_back();
         cens.intensity.pop_back();
         cens.mz.pop_back();
@@ -727,21 +685,11 @@ namespace qAlgorithms
         cens.df.pop_back();
 
         cens.separators.pop_back(); // last element is constructed with a start index of datapoints.size()
-        if (cens.separators.back().end != cens.dataPoints.size() - 1)
+        if (cens.separators.back().end != cens.mz.size() - 1)
         {
             std::cerr << "measurement_data: incomplete block!\n"; // should never be the case
-            cens.separators.back().end = cens.dataPoints.size() - 1;
+            cens.separators.back().end = cens.mz.size() - 1;
         }
-
-        for (size_t i = 0; i < cens.intensity.size(); i++)
-        {
-            assert(cens.intensity[i] == cens.dataPoints[i].intensity);
-            if (cens.mz[i] != cens.dataPoints[i].mz)
-                std::cerr << cens.mz[i] << ", " << cens.dataPoints[i].mz << "\n";
-            assert(cens.df[i] == cens.dataPoints[i].df);
-            assert(cens.mz[i] == cens.dataPoints[i].mz);
-        }
-
         return cens;
     }
 #pragma endregion "find centroids"
