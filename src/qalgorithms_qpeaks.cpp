@@ -95,7 +95,7 @@ namespace qAlgorithms
 #pragma endregion "initialize"
 
 #pragma region "find peaks"
-    std::vector<CentroidPeak> findCentroids(treatedData &treatedData, const size_t scanNumber)
+    std::vector<CentroidPeak> findCentroids(treatedCens &treatedData, const size_t scanNumber)
     {
         std::vector<CentroidPeak> all_peaks;
         size_t maxWindowSize = 0;
@@ -119,8 +119,8 @@ namespace qAlgorithms
             for (size_t position = 0; position < length; position++)
             {
                 size_t idx = position + treatedData.separators[i].start;
-                intensity[position] = treatedData.dataPoints[idx].y;
-                mz[position] = treatedData.dataPoints[idx].x;
+                intensity[position] = treatedData.dataPoints[idx].intensity;
+                mz[position] = treatedData.dataPoints[idx].mz;
                 df[position] = treatedData.dataPoints[idx].df;
             }
 
