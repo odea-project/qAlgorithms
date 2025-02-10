@@ -17,8 +17,15 @@ namespace qAlgorithms
         bool df;
         float DQSC;
         float DQSB;
-        int scanNumber;
+        unsigned int scanNumber;
         float mz;
+    };
+
+    struct centroidPoint
+    {
+        float mz;
+        float intensity;
+        bool df;
     };
 
     struct separator
@@ -39,6 +46,13 @@ namespace qAlgorithms
         // std::vector<float> DQSB;
         // std::vector<int> scanNumber;
         // std::vector<float> mz;
+    };
+
+    struct treatedCens
+    {
+        std::vector<centroidPoint> dataPoints;
+        std::vector<separator> separators;
+        std::vector<float> intensity;
     };
 
     struct RegCoeffs
