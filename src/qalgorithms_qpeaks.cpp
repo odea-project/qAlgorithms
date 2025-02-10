@@ -120,8 +120,8 @@ namespace qAlgorithms
             {
                 size_t idx = position + treatedData.separators[i].start;
                 intensity[position] = treatedData.intensity[idx];
-                mz[position] = treatedData.dataPoints[idx].mz;
-                df[position] = treatedData.dataPoints[idx].df;
+                mz[position] = treatedData.mz[idx];
+                df[position] = treatedData.df[idx];
             }
 
             // perform log-transform on intensity
