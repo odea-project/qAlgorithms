@@ -53,6 +53,8 @@ namespace qAlgorithms
         std::vector<centroidPoint> dataPoints;
         std::vector<separator> separators;
         std::vector<float> intensity;
+        std::vector<float> mz;
+        std::vector<bool> df;
     };
 
     struct RegCoeffs
