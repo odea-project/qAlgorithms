@@ -40,8 +40,6 @@ namespace qAlgorithms
 
     float calcRTDiff(std::vector<double> &retention_times);
 
-    std::vector<centroidPoint> mzmlToDataPoint(sc::MZML &data, const int index);
-
     std::vector<dataPoint> qbinToDataPoint(EIC &eic);
 
     /**
