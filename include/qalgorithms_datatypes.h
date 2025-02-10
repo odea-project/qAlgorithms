@@ -30,8 +30,7 @@ namespace qAlgorithms
     struct treatedData // @todo remove this struct
     {
         std::vector<dataPoint> dataPoints;
-        std::vector<size_t> separators;
-        std::vector<separator> sep;
+        std::vector<separator> separators;
         // points as individual vectors
         // std::vector<float> RT;
         std::vector<float> intensity;
