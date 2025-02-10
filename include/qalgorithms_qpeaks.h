@@ -70,8 +70,8 @@ namespace qAlgorithms
         const float *mz_start,
         const float *rt_start,
         const bool *df_start,
-        const float *dqs_cen,
-        const float *dqs_bin);
+        const float *DQSC,
+        const float *DQSB);
 
     float calcSSE_base(RegCoeffs coeff, const float *y_start, int limit_L, int limit_R);
 

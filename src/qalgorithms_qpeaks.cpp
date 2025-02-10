@@ -106,16 +106,10 @@ namespace qAlgorithms
             maxWindowSize = maxWindowSize < length ? length : maxWindowSize;
         }
         assert(maxWindowSize > 0);
-        float *Y = new float[maxWindowSize];
-        float *Ylog = new float[maxWindowSize];
-        float *X = new float[maxWindowSize];
-        bool *df = new bool[maxWindowSize];
-
-        // iterator to the start
-        const auto y_start = Y;
-        const auto ylog_start = Ylog;
-        const auto mz_start = X;
-        const auto df_start = df;
+        float *intensity = new float[maxWindowSize];
+        float *logIntensity = new float[maxWindowSize];
+        float *mz = new float[maxWindowSize];
+        bool *df = new bool[maxWindowSize]; // degrees of freedom
 
         std::vector<RegressionGauss> validRegressions;
 
@@ -125,22 +119,22 @@ namespace qAlgorithms
             for (size_t position = 0; position < length; position++)
             {
                 size_t idx = position + treatedData.separators[sep - 1];
-                Y[position] = treatedData.dataPoints[idx].y;
-                X[position] = treatedData.dataPoints[idx].x;
+                intensity[position] = treatedData.dataPoints[idx].y;
+                mz[position] = treatedData.dataPoints[idx].x;
                 df[position] = treatedData.dataPoints[idx].df;
             }
 
-            // perform log-transform on Y
-            std::transform(y_start, y_start + length, ylog_start, [](float y)
+            // perform log-transform on intensity
+            std::transform(intensity, intensity + length, logIntensity, [](float y)
                            { return std::log(y); });
             // @todo adjust the scale dynamically based on the number of valid regressions found, early terminate after x iterations
             size_t scale = std::min(GLOBAL_MAXSCALE_CENTROID, size_t((length - 1) / 2));
-            runningRegression(y_start, ylog_start, df_start, maxWindowSize, length, validRegressions, scale);
+            runningRegression(intensity, logIntensity, df, maxWindowSize, length, validRegressions, scale);
             if (validRegressions.empty())
             {
                 continue; // no valid peaks
             }
-            createCentroidPeaks(&all_peaks, &validRegressions, validRegressions.size(), y_start, mz_start, df_start, scanNumber);
+            createCentroidPeaks(&all_peaks, &validRegressions, validRegressions.size(), intensity, mz, df, scanNumber);
             validRegressions.clear();
         }
         bool crash = false;
@@ -154,9 +148,9 @@ namespace qAlgorithms
             std::cout.flush();
             exit(1);
         }
-        delete[] Y;
-        delete[] Ylog;
-        delete[] X;
+        delete[] intensity;
+        delete[] logIntensity;
+        delete[] mz;
         delete[] df;
         return all_peaks;
     }
@@ -170,22 +164,13 @@ namespace qAlgorithms
             assert(length > 4); // data must contain at least five points
             maxWindowSize = maxWindowSize < length ? length : maxWindowSize;
         }
-        float *Y = new float[maxWindowSize];
-        float *Ylog = new float[maxWindowSize];
-        float *X = new float[maxWindowSize];
-        bool *df = new bool[maxWindowSize];
+        float *intensity = new float[maxWindowSize];
+        float *logIntensity = new float[maxWindowSize];
+        float *RT = new float[maxWindowSize];
+        bool *df = new bool[maxWindowSize]; // degrees of freedom
         float *mz = new float[maxWindowSize];
-        float *dqs_cen = new float[maxWindowSize];
-        float *dqs_bin = new float[maxWindowSize];
-
-        // iterator to the start
-        const auto y_start = Y;
-        const auto ylog_start = Ylog;
-        const auto rt_start = X;
-        const auto df_start = df;
-        const auto mz_start = mz;
-        const auto dqs_cen_start = dqs_cen;
-        const auto dqs_bin_start = dqs_bin;
+        float *DQSC = new float[maxWindowSize];
+        float *DQSB = new float[maxWindowSize]; // @todo only process these after feature construction
 
         std::vector<RegressionGauss> validRegressions;
         for (size_t sep = 1; sep < treatedData.separators.size(); sep++)
@@ -194,34 +179,34 @@ namespace qAlgorithms
             for (size_t position = 0; position < length; position++)
             {
                 size_t idx = position + treatedData.separators[sep - 1];
-                Y[position] = treatedData.dataPoints[idx].y;
-                X[position] = treatedData.dataPoints[idx].x;
+                intensity[position] = treatedData.dataPoints[idx].y;
+                RT[position] = treatedData.dataPoints[idx].x;
                 df[position] = treatedData.dataPoints[idx].df;
                 mz[position] = treatedData.dataPoints[idx].mz;
-                dqs_cen[position] = treatedData.dataPoints[idx].DQSC;
-                dqs_bin[position] = treatedData.dataPoints[idx].DQSB;
+                DQSC[position] = treatedData.dataPoints[idx].DQSC;
+                DQSB[position] = treatedData.dataPoints[idx].DQSB;
             }
 
             // perform log-transform on Y
-            std::transform(y_start, y_start + length, ylog_start, [](float y)
+            std::transform(intensity, intensity + length, logIntensity, [](float y)
                            { return std::log(y); });
             size_t scale = std::min(GLOBAL_MAXSCALE_FEATURES, size_t((length - 1) / 2));
-            runningRegression(y_start, ylog_start, df_start, length, length, validRegressions, scale);
+            runningRegression(intensity, logIntensity, df, length, length, validRegressions, scale);
             if (validRegressions.empty())
             {
                 continue; // no valid peaks
             }
-            createFeaturePeaks(&all_peaks, &validRegressions, validRegressions.size(), y_start,
-                               mz_start, rt_start, df_start, dqs_cen_start, dqs_bin_start);
+            createFeaturePeaks(&all_peaks, &validRegressions, validRegressions.size(), intensity,
+                               mz, RT, df, DQSC, DQSB);
             validRegressions.clear();
         }
-        delete[] Y;
-        delete[] Ylog;
-        delete[] X;
+        delete[] intensity;
+        delete[] logIntensity;
+        delete[] RT;
         delete[] df;
         delete[] mz;
-        delete[] dqs_cen;
-        delete[] dqs_bin;
+        delete[] DQSC;
+        delete[] DQSB;
     }
 #pragma endregion "find peaks"
 
@@ -862,8 +847,8 @@ namespace qAlgorithms
         const float *mz_start,
         const float *rt_start,
         const bool *df_start,
-        const float *dqs_cen,
-        const float *dqs_bin)
+        const float *DQSC,
+        const float *DQSB)
     {
         // iterate over the validRegressions vector
         for (size_t i = 0; i < validRegressionsIndex; i++)
@@ -894,8 +879,8 @@ namespace qAlgorithms
                 peak.mz = mz.first;
                 peak.mzUncertainty = mz.second;
 
-                peak.dqsCen = weightedMeanAndVariance(dqs_cen, y_start, df_start, regression.left_limit, regression.right_limit).first;
-                peak.dqsBin = weightedMeanAndVariance(dqs_bin, y_start, df_start, regression.left_limit, regression.right_limit).first;
+                peak.dqsCen = weightedMeanAndVariance(DQSC, y_start, df_start, regression.left_limit, regression.right_limit).first;
+                peak.dqsBin = weightedMeanAndVariance(DQSB, y_start, df_start, regression.left_limit, regression.right_limit).first;
                 peak.DQSF = 1 - erf_approx_f(regression.uncertainty_area / regression.area);
 
                 peak.idxPeakStart = regression.left_limit;
