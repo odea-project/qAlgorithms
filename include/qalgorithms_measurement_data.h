@@ -5,10 +5,11 @@
 #include "../external/StreamCraft/src/StreamCraft_mzml.hpp"
 
 #include <vector>
+#include <array>
 
 namespace qAlgorithms
 {
-    float interpolateQadratic(float interpolate, const float *x, const float *y, float &b0, float &b1, float &b2);
+    std::array<float, 3> interpolateQadratic(float interpolate, const float *x, const float *y);
 
     std::vector<std::vector<CentroidPeak>> transferCentroids( // @todo merge with findPeaks_mzml
         sc::MZML &data,
@@ -29,6 +30,16 @@ namespace qAlgorithms
                              std::vector<unsigned int> &binIdx,
                              float expectedDifference,
                              const bool updateExpectedDifference = true);
+
+    treatedData pretreatDataCentroids(std::vector<dataPoint> &dataPoints,
+                                      std::vector<unsigned int> &binIdx,
+                                      float expectedDifference,
+                                      const bool updateExpectedDifference = true);
+
+    treatedData pretreatDataFeatures(std::vector<dataPoint> &dataPoints,
+                                     std::vector<unsigned int> &binIdx,
+                                     float expectedDifference,
+                                     const bool updateExpectedDifference = true);
 
     float calcRTDiff(std::vector<double> &retention_times);
 

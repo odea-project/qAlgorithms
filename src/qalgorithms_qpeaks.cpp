@@ -99,9 +99,11 @@ namespace qAlgorithms
     {
         std::vector<CentroidPeak> all_peaks;
         size_t maxWindowSize = 0;
-        for (size_t i = 1; i < treatedData.separators.size(); i++)
+        for (size_t i = 0; i < treatedData.sep.size(); i++)
         {
-            size_t length = treatedData.separators[i] - treatedData.separators[i - 1];
+            // size_t length = treatedData.separators[i] - treatedData.separators[i - 1];
+            size_t length = treatedData.sep[i].end - treatedData.sep[i].start + 1;
+            // assert(length == length2);
             assert(length > 4); // data must contain at least five points
             maxWindowSize = maxWindowSize < length ? length : maxWindowSize;
         }
@@ -115,7 +117,9 @@ namespace qAlgorithms
 
         for (size_t sep = 1; sep < treatedData.separators.size(); sep++)
         {
+            size_t length2 = treatedData.sep[sep - 1].end - treatedData.sep[sep - 1].start + 1;
             const size_t length = treatedData.separators[sep] - treatedData.separators[sep - 1]; // number of data points in the block
+            assert(length2 == length);
             for (size_t position = 0; position < length; position++)
             {
                 size_t idx = position + treatedData.separators[sep - 1];
@@ -137,17 +141,7 @@ namespace qAlgorithms
             createCentroidPeaks(&all_peaks, &validRegressions, validRegressions.size(), intensity, mz, df, scanNumber);
             validRegressions.clear();
         }
-        bool crash = false;
-        if (treatedData.separators.size() < treatedData.dataPoints.size() / 100)
-            crash = true; // @todo check for validity
-        if (treatedData.separators.size() > treatedData.dataPoints.size() / 2)
-            crash = true;
-        if (crash)
-        {
-            std::cout << treatedData.separators.size() << ", " << treatedData.dataPoints.size();
-            std::cout.flush();
-            exit(1);
-        }
+
         delete[] intensity;
         delete[] logIntensity;
         delete[] mz;
