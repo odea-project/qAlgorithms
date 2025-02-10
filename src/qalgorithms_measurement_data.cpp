@@ -78,7 +78,7 @@ namespace qAlgorithms
         return expectedDifference;
     }
 
-    float interpolateQadratic(float interpolate, const float *x, const float *y, float &b0, float &b1, float &b2)
+    std::array<float, 3> interpolateQadratic(const float *x, const float *y)
     {
         float x1 = x[0], y1 = y[0];
         float x2 = x[1], y2 = y[1];
@@ -90,11 +90,7 @@ namespace qAlgorithms
         float b = (x3 * x3 * (y1 - y2) + x2 * x2 * (y3 - y1) + x1 * x1 * (y2 - y3)) / denom;
         float c = (x2 * x3 * (x2 - x3) * y1 + x3 * x1 * (x3 - x1) * y2 + x1 * x2 * (x1 - x2) * y3) / denom;
 
-        b0 = c;
-        b1 = b;
-        b2 = a;
-
-        return b0 + interpolate * b1 + interpolate * interpolate * b2;
+        return {c, b, a};
     }
 
     treatedData pretreatData(
@@ -103,25 +99,6 @@ namespace qAlgorithms
         float expectedDifference,
         const bool updateExpectedDifference)
     {
-
-        // lambda function to calculate the coefficients b0, b1, and b2 for the quadratic extrapolation
-        // @todo move this to where it is called
-        auto calculateCoefficients = [](const float *x, const float *y, float &b0, float &b1, float &b2)
-        {
-            float x1 = x[0], y1 = y[0];
-            float x2 = x[1], y2 = y[1];
-            float x3 = x[2], y3 = y[2];
-
-            float denom = (x1 - x2) * (x1 - x3) * (x2 - x3);
-
-            float a = (x3 * (y2 - y1) + x2 * (y1 - y3) + x1 * (y3 - y2)) / denom;
-            float b = (x3 * x3 * (y1 - y2) + x2 * x2 * (y3 - y1) + x1 * x1 * (y2 - y3)) / denom;
-            float c = (x2 * x3 * (x2 - x3) * y1 + x3 * x1 * (x3 - x1) * y2 + x1 * x2 * (x1 - x2) * y3) / denom;
-
-            b0 = c;
-            b1 = b;
-            b2 = a;
-        };
         static dataPoint zeroedPoint{0.f, 0.f, false, 0.f, 0.f, 0, 0.f};
 
         treatedData treatedData;
@@ -237,15 +214,17 @@ namespace qAlgorithms
                         {
                             const float x[3] = {0.f, dataPoints[maxOfBlock].x - dp_startOfBlock.x, dataPoints[pos].x - dp_startOfBlock.x};
                             const float y[3] = {std::log(dp_startOfBlock.y), std::log(dataPoints[maxOfBlock].y), std::log(dataPoints[pos].y)};
-                            float b0, b1, b2;
-                            calculateCoefficients(x, y, b0, b1, b2);
+                            // float b0, b1, b2;
+                            // calculateCoefficients(x, y, b0, b1, b2);
+                            auto coeffs = interpolateQadratic(x, y);
+                            // assert(coeffs[0] == b0);
                             // extrapolate the left side of the block
                             for (int i = 0; i < 2; i++)
                             {
                                 dataPoint &curr_dp = treatedData.dataPoints[treatedData.separators.back() + i];
                                 curr_dp.x = dp_startOfBlock.x - (2 - i) * expectedDifference;
                                 const float x = curr_dp.x - dp_startOfBlock.x;
-                                curr_dp.y = std::exp(b0 + x * (b1 + x * b2));
+                                curr_dp.y = std::exp(coeffs[0] + x * (coeffs[1] + x * coeffs[2]));
                             }
                             // add the extrapolated data points to the right side of the block
                             for (int i = 0; i < 2; i++)
@@ -253,14 +232,14 @@ namespace qAlgorithms
                                 const float dp_x = dataPoints[pos].x + float(i + 1) * expectedDifference;
                                 const float x = dp_x - dp_startOfBlock.x;
                                 treatedData.dataPoints.emplace_back(
-                                    dp_x,                             // x-axis
-                                    std::exp(b0 + x * (b1 + x * b2)), // intensity
-                                    false,                            // df
-                                    0.f,                              // DQSC
-                                    0.f,                              // DQSB
-                                    0,                                // scanNumber
-                                    0.f);                             // mz
-                                treatedData.intensity.push_back(std::exp(b0 + x * (b1 + x * b2)));
+                                    dp_x,                                                  // x-axis
+                                    std::exp(coeffs[0] + x * (coeffs[1] + x * coeffs[2])), // intensity
+                                    false,                                                 // df
+                                    0.f,                                                   // DQSC
+                                    0.f,                                                   // DQSB
+                                    0,                                                     // scanNumber
+                                    0.f);                                                  // mz
+                                treatedData.intensity.push_back(std::exp(coeffs[0] + x * (coeffs[1] + x * coeffs[2])));
                                 binIdx.push_back(realIdx);
                                 assert(binIdx.size() == treatedData.dataPoints.size());
                             }
@@ -311,6 +290,12 @@ namespace qAlgorithms
         assert(treatedData.dataPoints.back().y == treatedData.intensity.back()); // works
         // change the last separator to the end of the dataPoints vector
         treatedData.separators.back() = treatedData.dataPoints.size();
+        treatedData.sep.pop_back(); // last element is constructed with a start index of datapoints.size()
+        if (treatedData.sep.back().end != treatedData.dataPoints.size() - 1)
+        {
+            std::cerr << "measurement_data: incomplete block!\n"; // should never be the case
+            treatedData.sep.back().end = treatedData.dataPoints.size() - 1;
+        }
 
         return treatedData;
     } // end of pretreatData
