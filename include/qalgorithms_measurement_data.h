@@ -31,7 +31,7 @@ namespace qAlgorithms
                              float expectedDifference,
                              const bool updateExpectedDifference = true);
 
-    treatedData pretreatDataCentroids(std::vector<dataPoint> &dataPoints, float expectedDifference);
+    treatedCens pretreatDataCentroids(std::vector<centroidPoint> &dataPoints, float expectedDifference);
 
     treatedData pretreatDataFeatures(std::vector<dataPoint> &dataPoints,
                                      std::vector<unsigned int> &binIdx,
@@ -40,7 +40,7 @@ namespace qAlgorithms
 
     float calcRTDiff(std::vector<double> &retention_times);
 
-    std::vector<dataPoint> mzmlToDataPoint(sc::MZML &data, const int index);
+    std::vector<centroidPoint> mzmlToDataPoint(sc::MZML &data, const int index);
 
     std::vector<dataPoint> qbinToDataPoint(EIC &eic);
 

@@ -297,11 +297,11 @@ namespace qAlgorithms
         return treatedData;
     } // end of pretreatData
 
-    treatedData pretreatDataCentroids(std::vector<dataPoint> &dataPoints, float expectedDifference)
+    treatedCens pretreatDataCentroids(std::vector<centroidPoint> &dataPoints, float expectedDifference)
     {
-        static dataPoint zeroedPoint{0.f, 0.f, false, 0.f, 0.f, 0, 0.f};
+        static centroidPoint zeroedPoint{0.f, 0.f, false};
 
-        treatedData treatedData;
+        treatedCens treatedData;
         treatedData.dataPoints.reserve(dataPoints.size() * 2);
 
         // add the first two zeros to the dataPoints_new vector @todo skip this by doing log interpolation during the log transform
@@ -321,8 +321,8 @@ namespace qAlgorithms
         {
             blockSize++;
             treatedData.dataPoints.push_back(dataPoints[pos]);
-            treatedData.intensity.push_back(dataPoints[pos].y);
-            const float delta_x = dataPoints[pos + 1].x - dataPoints[pos].x;
+            treatedData.intensity.push_back(dataPoints[pos].intensity);
+            const float delta_x = dataPoints[pos + 1].mz - dataPoints[pos].mz;
 
             size_t gapSize2 = 0;
             if (delta_x > 1.75 * expectedDifference)
@@ -341,18 +341,14 @@ namespace qAlgorithms
                 if (gapSize < 4)
                 {
                     // add gapSize interpolated datapoints @todo this can be zero
-                    const float dy = std::pow(dataPoints[pos + 1].y / dataPoints[pos].y, 1.0 / float(gapSize + 1)); // dy for log interpolation
+                    const float dy = std::pow(dataPoints[pos + 1].intensity / dataPoints[pos].intensity, 1.0 / float(gapSize + 1)); // dy for log interpolation
                     for (int i = 1; i <= gapSize; i++)
                     {
                         treatedData.dataPoints.emplace_back(
-                            dataPoints[pos].x + i * expectedDifference, // x-axis
-                            dataPoints[pos].y * std::pow(dy, i),        // intensity
-                            false,                                      // df
-                            0.f,                                        // DQSC
-                            0.f,                                        // DQSB
-                            0,                                          // scanNumber
-                            0.f);                                       // mz
-                        treatedData.intensity.push_back(dataPoints[pos].y * std::pow(dy, i));
+                            dataPoints[pos].mz + i * expectedDifference, // x-axis
+                            dataPoints[pos].intensity * std::pow(dy, i), // intensity
+                            false);                                      // df
+                        treatedData.intensity.push_back(dataPoints[pos].intensity * std::pow(dy, i));
                     }
                 }
                 else
@@ -369,34 +365,34 @@ namespace qAlgorithms
                     }
                     else
                     {
-                        const dataPoint dp_startOfBlock = treatedData.dataPoints[treatedData.separators.back().start + 2];
+                        const centroidPoint dp_startOfBlock = treatedData.dataPoints[treatedData.separators.back().start + 2];
                         // check if the maximum of the block is the first or last data point
-                        if (maxOfBlock == pos || dataPoints[maxOfBlock].x == dp_startOfBlock.x)
+                        if (maxOfBlock == pos || dataPoints[maxOfBlock].mz == dp_startOfBlock.mz)
                         {
                             // extrapolate the left side using the first non-zero data point (i.e, the start of the block)
                             for (int i = 0; i < 2; i++)
                             {
                                 // LEFT SIDE
-                                dataPoint &dp_left = treatedData.dataPoints[treatedData.separators.back().start + i];
-                                dp_left.x = dp_startOfBlock.x - (2 - i) * expectedDifference;
-                                dp_left.y = dp_startOfBlock.y;
+                                centroidPoint &dp_left = treatedData.dataPoints[treatedData.separators.back().start + i];
+                                dp_left.mz = dp_startOfBlock.mz - (2 - i) * expectedDifference;
+                                dp_left.intensity = dp_startOfBlock.intensity;
 
                                 // RIGHT SIDE
                                 treatedData.dataPoints.emplace_back(
-                                    dataPoints[pos].x + float(i + 1) * expectedDifference, // x-axis
-                                    dataPoints[pos].y,                                     // intensity
-                                    false,                                                 // df
-                                    0.f,                                                   // DQSC
-                                    0.f,                                                   // DQSB
-                                    0,                                                     // scanNumber
-                                    0.f);                                                  // mz
-                                treatedData.intensity.push_back(dataPoints[pos].y);
+                                    dataPoints[pos].mz + float(i + 1) * expectedDifference, // x-axis
+                                    dataPoints[pos].intensity,                              // intensity
+                                    false);                                                 // df
+                                treatedData.intensity.push_back(dataPoints[pos].intensity);
                             }
                         }
                         else
                         {
-                            const float x[3] = {0.f, dataPoints[maxOfBlock].x - dp_startOfBlock.x, dataPoints[pos].x - dp_startOfBlock.x};
-                            const float y[3] = {std::log(dp_startOfBlock.y), std::log(dataPoints[maxOfBlock].y), std::log(dataPoints[pos].y)};
+                            const float x[3] = {0.f,
+                                                dataPoints[maxOfBlock].mz - dp_startOfBlock.mz,
+                                                dataPoints[pos].mz - dp_startOfBlock.mz};
+                            const float y[3] = {std::log(dp_startOfBlock.intensity),
+                                                std::log(dataPoints[maxOfBlock].intensity),
+                                                std::log(dataPoints[pos].intensity)};
                             // float b0, b1, b2;
                             // calculateCoefficients(x, y, b0, b1, b2);
                             auto coeffs = interpolateQadratic(x, y);
@@ -404,24 +400,20 @@ namespace qAlgorithms
                             // extrapolate the left side of the block
                             for (int i = 0; i < 2; i++)
                             {
-                                dataPoint &curr_dp = treatedData.dataPoints[treatedData.separators.back().start + i];
-                                curr_dp.x = dp_startOfBlock.x - (2 - i) * expectedDifference;
-                                const float x = curr_dp.x - dp_startOfBlock.x;
-                                curr_dp.y = std::exp(coeffs[0] + x * (coeffs[1] + x * coeffs[2]));
+                                centroidPoint &curr_dp = treatedData.dataPoints[treatedData.separators.back().start + i];
+                                curr_dp.mz = dp_startOfBlock.mz - (2 - i) * expectedDifference;
+                                const float x = curr_dp.mz - dp_startOfBlock.mz;
+                                curr_dp.intensity = std::exp(coeffs[0] + x * (coeffs[1] + x * coeffs[2]));
                             }
                             // add the extrapolated data points to the right side of the block
                             for (int i = 0; i < 2; i++)
                             {
-                                const float dp_x = dataPoints[pos].x + float(i + 1) * expectedDifference;
-                                const float x = dp_x - dp_startOfBlock.x;
+                                const float dp_x = dataPoints[pos].mz + float(i + 1) * expectedDifference;
+                                const float x = dp_x - dp_startOfBlock.mz;
                                 treatedData.dataPoints.emplace_back(
                                     dp_x,                                                  // x-axis
                                     std::exp(coeffs[0] + x * (coeffs[1] + x * coeffs[2])), // intensity
-                                    false,                                                 // df
-                                    0.f,                                                   // DQSC
-                                    0.f,                                                   // DQSB
-                                    0,                                                     // scanNumber
-                                    0.f);                                                  // mz
+                                    false);                                                // df
                                 treatedData.intensity.push_back(std::exp(coeffs[0] + x * (coeffs[1] + x * coeffs[2])));
                             }
                         }
@@ -443,7 +435,7 @@ namespace qAlgorithms
             {
                 countNoGap++;
                 assert(gapSize2 == 0);
-                if (dataPoints[maxOfBlock].y < dataPoints[pos].y)
+                if (dataPoints[maxOfBlock].intensity < dataPoints[pos].intensity)
                 {
                     maxOfBlock = pos;
                 }
@@ -462,7 +454,7 @@ namespace qAlgorithms
         treatedData.dataPoints.pop_back();
         treatedData.intensity.pop_back();
         treatedData.intensity.pop_back();
-        assert(treatedData.dataPoints.back().y == treatedData.intensity.back()); // works
+        assert(treatedData.dataPoints.back().intensity == treatedData.intensity.back()); // works
 
         treatedData.separators.pop_back(); // last element is constructed with a start index of datapoints.size()
         if (treatedData.separators.back().end != treatedData.dataPoints.size() - 1)
@@ -487,10 +479,10 @@ namespace qAlgorithms
         return sum / (retention_times.size() - 1);
     }
 
-    std::vector<dataPoint> mzmlToDataPoint(sc::MZML &data, const int index)
+    std::vector<centroidPoint> mzmlToDataPoint(sc::MZML &data, const int index)
     {
         std::vector<std::vector<double>> spectrum = data.get_spectrum(index); // get spectrum at index
-        std::vector<dataPoint> dataPoints;                                    // create vector of data points
+        std::vector<centroidPoint> dataPoints;                                // create vector of data points
         dataPoints.reserve(spectrum[0].size());                               // reserve memory for data points
         for (size_t i = 0; i < spectrum[0].size(); ++i)
         {
@@ -498,25 +490,17 @@ namespace qAlgorithms
             {
                 continue; // skip zero values
             }
-            dataPoint dp(             // create data point
+            centroidPoint dp(         // create data point
                 spectrum[0][i],       // x-axis value
                 spectrum[1][i],       // y-axis value
-                true,                 // df value
-                0.0,                  // dqs centroid value
-                0.0,                  // dqs binning value
-                0,                    // scan number
-                0.0);                 // mz ratio
+                true);                // real point
             dataPoints.push_back(dp); // add data point to vector
         }
         // add end point for later pretreatment
-        dataPoint dp(                               // create data point
+        centroidPoint dp(                           // create data point
             std::numeric_limits<float>::infinity(), // x-axis value
             0.0,                                    // y-axis value
-            false,                                  // df value
-            0.0,                                    // dqs centroid value
-            0.0,                                    // dqs binning value
-            0,                                      // scan number
-            0.0);                                   // mz ratio
+            false);                                 // interpolated point
         dataPoints.push_back(dp);
         return dataPoints;
     }
@@ -714,10 +698,10 @@ namespace qAlgorithms
 
         for (size_t i = 0; i < selectedIndices.size(); ++i)
         {
-            const int index = selectedIndices[i];                             // spectrum index
-            std::vector<dataPoint> dataPoints = mzmlToDataPoint(data, index); // convert mzml to data points
+            const int index = selectedIndices[i];                                 // spectrum index
+            std::vector<centroidPoint> dataPoints = mzmlToDataPoint(data, index); // convert mzml to data points
             std::vector<unsigned int> dummy;
-            treatedData treatedData = pretreatDataCentroids(dataPoints, expectedDifference); // inter/extrapolate data, and identify data blocks
+            treatedCens treatedData = pretreatDataCentroids(dataPoints, expectedDifference); // inter/extrapolate data, and identify data blocks
             assert(relativeIndex[i] != 0);
             centroids[i] = findCentroids(treatedData, relativeIndex[i]); // find peaks in data blocks of treated data
         }
