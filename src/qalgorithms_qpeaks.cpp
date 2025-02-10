@@ -119,7 +119,7 @@ namespace qAlgorithms
             for (size_t position = 0; position < length; position++)
             {
                 size_t idx = position + treatedData.separators[i].start;
-                intensity[position] = treatedData.dataPoints[idx].intensity;
+                intensity[position] = treatedData.intensity[idx];
                 mz[position] = treatedData.dataPoints[idx].mz;
                 df[position] = treatedData.dataPoints[idx].df;
             }
