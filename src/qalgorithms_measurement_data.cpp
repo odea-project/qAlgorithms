@@ -124,12 +124,12 @@ namespace qAlgorithms
         };
         static dataPoint zeroedPoint{0.f, 0.f, false, 0.f, 0.f, 0, 0.f};
 
-        treatedData treatedData = {std::vector<dataPoint>(), std::vector<size_t>()};
+        treatedData treatedData;
         treatedData.dataPoints.reserve(dataPoints.size() * 2);
 
         binIdx.reserve(dataPoints.size() * 2);
 
-        unsigned int realIdx = 0;
+        unsigned int realIdx = 0; // this should be handled outside of this function
         // add the first two zeros to the dataPoints_new vector @todo skip this by doing log interpolation during the log transform
         for (int i = 0; i < 2; i++)
         {
@@ -139,6 +139,7 @@ namespace qAlgorithms
             assert(binIdx.size() == treatedData.dataPoints.size());
         }
         treatedData.separators.push_back(0);
+        treatedData.sep.push_back({0, 0}); // correctness check: start != end
 
         // iterate over the data points
         size_t maxOfBlock = 0;
@@ -171,7 +172,7 @@ namespace qAlgorithms
                 const int gapSize = static_cast<int>(delta_x / expectedDifference) - 1;
                 if (gapSize < 4)
                 {
-                    // add gapSize interpolated datapoints
+                    // add gapSize interpolated datapoints @todo this can be zero
                     const float dy = std::pow(dataPoints[pos + 1].y / dataPoints[pos].y, 1.0 / float(gapSize + 1)); // dy for log interpolation
                     for (int i = 1; i <= gapSize; i++)
                     {
@@ -203,7 +204,6 @@ namespace qAlgorithms
                         {
                             binIdx.pop_back();
                         }
-                        assert(binIdx.size() == treatedData.dataPoints.size());
                     }
                     else
                     {
@@ -266,6 +266,9 @@ namespace qAlgorithms
                             }
                         }
                         // add the zeros to the treatedData.dataPoints vector to start the next block
+                        // separator struct stores indices of first and last element
+                        treatedData.sep.back().end = treatedData.dataPoints.size() - 1;
+                        treatedData.sep.push_back({treatedData.dataPoints.size(), 0});
                         for (int i = 0; i < 2; i++)
                         {
                             treatedData.dataPoints.push_back(zeroedPoint);
