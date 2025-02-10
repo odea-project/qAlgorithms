@@ -99,11 +99,9 @@ namespace qAlgorithms
     {
         std::vector<CentroidPeak> all_peaks;
         size_t maxWindowSize = 0;
-        for (size_t i = 0; i < treatedData.sep.size(); i++)
+        for (size_t i = 0; i < treatedData.separators.size(); i++)
         {
-            // size_t length = treatedData.separators[i] - treatedData.separators[i - 1];
-            size_t length = treatedData.sep[i].end - treatedData.sep[i].start + 1;
-            // assert(length == length2);
+            size_t length = treatedData.separators[i].end - treatedData.separators[i].start + 1;
             assert(length > 4); // data must contain at least five points
             maxWindowSize = maxWindowSize < length ? length : maxWindowSize;
         }
@@ -115,14 +113,12 @@ namespace qAlgorithms
 
         std::vector<RegressionGauss> validRegressions;
 
-        for (size_t sep = 1; sep < treatedData.separators.size(); sep++)
+        for (size_t i = 0; i < treatedData.separators.size(); i++)
         {
-            size_t length2 = treatedData.sep[sep - 1].end - treatedData.sep[sep - 1].start + 1;
-            const size_t length = treatedData.separators[sep] - treatedData.separators[sep - 1]; // number of data points in the block
-            assert(length2 == length);
+            size_t length = treatedData.separators[i].end - treatedData.separators[i].start + 1;
             for (size_t position = 0; position < length; position++)
             {
-                size_t idx = position + treatedData.separators[sep - 1];
+                size_t idx = position + treatedData.separators[i].start;
                 intensity[position] = treatedData.dataPoints[idx].y;
                 mz[position] = treatedData.dataPoints[idx].x;
                 df[position] = treatedData.dataPoints[idx].df;
@@ -152,9 +148,9 @@ namespace qAlgorithms
     void findFeatures(std::vector<FeaturePeak> &all_peaks, treatedData &treatedData)
     {
         size_t maxWindowSize = 0;
-        for (size_t i = 1; i < treatedData.separators.size(); i++)
+        for (size_t i = 0; i < treatedData.separators.size(); i++)
         {
-            size_t length = treatedData.separators[i] - treatedData.separators[i - 1];
+            size_t length = treatedData.separators[i].end - treatedData.separators[i].start + 1;
             assert(length > 4); // data must contain at least five points
             maxWindowSize = maxWindowSize < length ? length : maxWindowSize;
         }
@@ -167,12 +163,12 @@ namespace qAlgorithms
         float *DQSB = new float[maxWindowSize]; // @todo only process these after feature construction
 
         std::vector<RegressionGauss> validRegressions;
-        for (size_t sep = 1; sep < treatedData.separators.size(); sep++)
+        for (size_t i = 0; i < treatedData.separators.size(); i++)
         {
-            const size_t length = treatedData.separators[sep] - treatedData.separators[sep - 1]; // number of data points in the block
+            size_t length = treatedData.separators[i].end - treatedData.separators[i].start + 1;
             for (size_t position = 0; position < length; position++)
             {
-                size_t idx = position + treatedData.separators[sep - 1];
+                size_t idx = position + treatedData.separators[i].start;
                 intensity[position] = treatedData.dataPoints[idx].y;
                 RT[position] = treatedData.dataPoints[idx].x;
                 df[position] = treatedData.dataPoints[idx].df;
