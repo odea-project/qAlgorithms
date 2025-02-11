@@ -31,7 +31,7 @@ namespace qAlgorithms
                              float expectedDifference,
                              const bool updateExpectedDifference = true);
 
-    treatedCens pretreatDataCentroids(std::vector<centroidPoint> &dataPoints, float expectedDifference);
+    std::vector<ProfileBlock> pretreatDataCentroids(std::vector<centroidPoint> &dataPoints, float expectedDifference);
 
     treatedData pretreatDataFeatures(std::vector<dataPoint> &dataPoints,
                                      std::vector<unsigned int> &binIdx,
