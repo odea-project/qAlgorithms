@@ -116,7 +116,8 @@ namespace qAlgorithms
         for (size_t i = 0; i < treatedData.separators.size(); i++)
         {
             size_t startIdx = treatedData.separators[i].start;
-            size_t length = treatedData.separators[i].end - startIdx + 1;
+            size_t length = treatedData.block[i].df.size();
+            assert(length == treatedData.separators[i].end - startIdx + 1);
             for (size_t position = 0; position < length; position++)
             {
                 size_t idx = position + startIdx;
@@ -125,7 +126,7 @@ namespace qAlgorithms
             }
 
             // perform log-transform on intensity
-            std::transform(intensity, intensity + length, logIntensity, [](float y)
+            std::transform(treatedData.block[i].intensity.begin(), treatedData.block[i].intensity.end(), logIntensity, [](float y)
                            { return std::log(y); });
             // @todo adjust the scale dynamically based on the number of valid regressions found, early terminate after x iterations
             size_t maxScale = std::min(GLOBAL_MAXSCALE_CENTROID, size_t((length - 1) / 2));
@@ -134,7 +135,7 @@ namespace qAlgorithms
             {
                 continue; // no valid peaks
             }
-            createCentroidPeaks(&all_peaks, &validRegressions, treatedData.mz, validRegressions.size(), startIdx, intensity, df, scanNumber);
+            createCentroidPeaks(&all_peaks, &validRegressions, treatedData.block[i], validRegressions.size(), scanNumber);
             validRegressions.clear();
         }
 
@@ -778,11 +779,8 @@ namespace qAlgorithms
     void createCentroidPeaks(
         std::vector<CentroidPeak> *peaks,
         const std::vector<RegressionGauss> *validRegressionsVec,
-        const std::vector<float> mz,
+        ProfileBlock block,
         const size_t validRegressionsIndex,
-        size_t startIdx,
-        const float *y_start,
-        const bool *df_start,
         const size_t scanNumber)
     {
         assert(!validRegressionsVec->empty());
@@ -800,8 +798,8 @@ namespace qAlgorithms
             peak.heightUncertainty = regression.uncertainty_height * peak.height;
 
             size_t offset = (size_t)std::floor(regression.apex_position);
-            double mz0 = mz[startIdx + offset];
-            double delta_mz = mz[startIdx + offset + 1] - mz0;
+            double mz0 = block.mz[offset];
+            double delta_mz = block.mz[offset + 1] - mz0;
 
             // add scaled area
             float exp_b0 = exp_approx_d(coeff.b0); // exp(b0)

@@ -48,11 +48,18 @@ namespace qAlgorithms
         // std::vector<float> mz;
     };
 
-    struct treatedCens
+    struct ProfileBlock
     {
-        std::vector<separator> separators;
         std::vector<float> intensity;
         std::vector<float> mz;
+        std::vector<bool> df;
+    };
+
+    struct treatedCens
+    {
+        std::vector<ProfileBlock> block;
+        std::vector<separator> separators;
+        std::vector<float> intensity;
         std::vector<bool> df;
     };
 
