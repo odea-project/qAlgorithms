@@ -60,7 +60,6 @@ namespace qAlgorithms
         std::vector<ProfileBlock> block;
         std::vector<separator> separators;
         std::vector<float> intensity;
-        std::vector<bool> df;
     };
 
     struct RegCoeffs

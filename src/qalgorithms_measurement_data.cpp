@@ -567,7 +567,6 @@ namespace qAlgorithms
         for (int i = 0; i < 2; i++)
         {
             cens.intensity.push_back(0);
-            cens.df.push_back(false);
         }
         cens.separators.push_back({0, 0}); // correctness check: start != end
 
@@ -582,7 +581,6 @@ namespace qAlgorithms
             blockSize++;
 
             cens.intensity.push_back(dataPoints[pos].intensity);
-            cens.df.push_back(true);
 
             currentBlock.intensity.push_back(dataPoints[pos].intensity);
             currentBlock.mz.push_back(dataPoints[pos].mz);
@@ -621,7 +619,6 @@ namespace qAlgorithms
                     for (int i = 1; i <= gapSize; i++)
                     {
                         cens.intensity.push_back(dataPoints[pos].intensity * std::pow(dy, i));
-                        cens.df.push_back(false);
 
                         currentBlock.intensity.push_back(dataPoints[pos].intensity * std::pow(dy, i));
                         currentBlock.mz.push_back(dataPoints[pos].mz + i * expectedDifference);
@@ -659,7 +656,6 @@ namespace qAlgorithms
                                 // degrees of freedom is already false
                                 // RIGHT SIDE
                                 cens.intensity.push_back(dataPoints[pos].intensity);
-                                cens.df.push_back(false);
 
                                 currentBlock.intensity.push_back(dataPoints[pos].intensity);
                                 currentBlock.mz.push_back(dataPoints[pos].mz + float(i + 1) * expectedDifference);
@@ -691,7 +687,6 @@ namespace qAlgorithms
                                 const float dp_x = dataPoints[pos].mz + float(i + 1) * expectedDifference;
                                 const float x = dp_x - blockStartMZ;
                                 cens.intensity.push_back(std::exp(coeffs[0] + x * (coeffs[1] + x * coeffs[2])));
-                                cens.df.push_back(false);
 
                                 currentBlock.intensity.push_back(std::exp(coeffs[0] + x * (coeffs[1] + x * coeffs[2])));
                                 currentBlock.mz.push_back(dp_x);
@@ -700,12 +695,11 @@ namespace qAlgorithms
                         }
                         // add the zeros to the treatedData.dataPoints vector to start the next block
                         // separator struct stores indices of first and last element
-                        cens.separators.back().end = cens.df.size() - 1;
-                        cens.separators.push_back({cens.df.size(), 0});
+                        cens.separators.back().end = cens.intensity.size() - 1;
+                        cens.separators.push_back({cens.intensity.size(), 0});
                         for (int i = 0; i < 2; i++)
                         {
                             cens.intensity.push_back(0);
-                            cens.df.push_back(false);
                         }
                         maxOfBlock = pos + 1;
                         // block is finished, add currentBlock to storage vector
@@ -715,7 +709,6 @@ namespace qAlgorithms
                     {
                         // delete all data points of the block in treatedData.dataPoints except the first two zeros
                         cens.intensity.resize(currentStart + 2);
-                        cens.df.resize(currentStart + 2);
                     }
                     currentBlock = blockStart(); // reset bloack for next iteration
                     blockSize = 0;
@@ -740,8 +733,6 @@ namespace qAlgorithms
         // delete the last two zeros // @todo why?
         cens.intensity.pop_back();
         cens.intensity.pop_back();
-        cens.df.pop_back();
-        cens.df.pop_back();
 
         cens.separators.pop_back(); // last element is constructed with a start index of datapoints.size()
         assert(cens.separators.size() == subProfiles.size());
@@ -753,15 +744,14 @@ namespace qAlgorithms
             for (size_t i = 0; i < profile.mz.size(); i++)
             {
                 assert(profile.intensity[i] == cens.intensity[startIdx + i]);
-                assert(profile.df[i] == cens.df[startIdx + i]);
             }
         }
         cens.block = subProfiles;
 
-        if (cens.separators.back().end != cens.df.size() - 1)
+        if (cens.separators.back().end != cens.intensity.size() - 1)
         {
             std::cerr << "measurement_data: incomplete block!\n"; // should never be the case
-            cens.separators.back().end = cens.df.size() - 1;
+            cens.separators.back().end = cens.intensity.size() - 1;
         }
         return cens;
     }
