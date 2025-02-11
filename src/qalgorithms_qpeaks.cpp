@@ -111,9 +111,9 @@ namespace qAlgorithms
         float *mz = new float[maxWindowSize];
         bool *df = new bool[maxWindowSize]; // degrees of freedom
 
-        size_t GLOBAL_MAXSCALE_CENTROID = 8;
+        size_t GLOBAL_MAXSCALE_CENTROID = 8; // @todo this is a critical part of the algorithm and should not be hard-coded
         std::vector<RegressionGauss> validRegressions;
-
+        validRegressions.reserve(treatedData.separators.size() / 2); // probably too large, shouldn't matter
         for (size_t i = 0; i < treatedData.separators.size(); i++)
         {
             size_t length = treatedData.separators[i].end - treatedData.separators[i].start + 1;
@@ -129,8 +129,8 @@ namespace qAlgorithms
             std::transform(intensity, intensity + length, logIntensity, [](float y)
                            { return std::log(y); });
             // @todo adjust the scale dynamically based on the number of valid regressions found, early terminate after x iterations
-            size_t scale = std::min(GLOBAL_MAXSCALE_CENTROID, size_t((length - 1) / 2));
-            runningRegression(intensity, logIntensity, df, maxWindowSize, length, validRegressions, scale);
+            size_t maxScale = std::min(GLOBAL_MAXSCALE_CENTROID, size_t((length - 1) / 2));
+            runningRegression(intensity, logIntensity, df, maxWindowSize, length, validRegressions, maxScale);
             if (validRegressions.empty())
             {
                 continue; // no valid peaks
@@ -164,7 +164,8 @@ namespace qAlgorithms
         float *DQSB = new float[maxWindowSize]; // @todo only process these after feature construction
 
         std::vector<RegressionGauss> validRegressions;
-        static const size_t GLOBAL_MAXSCALE_FEATURES = 30;
+        validRegressions.reserve(treatedData.separators.size() / 5); // we expect ~ 20% of all bins to have a feature
+        static const size_t GLOBAL_MAXSCALE_FEATURES = 63;
         for (size_t i = 0; i < treatedData.separators.size(); i++)
         {
             size_t length = treatedData.separators[i].end - treatedData.separators[i].start + 1;
@@ -182,8 +183,8 @@ namespace qAlgorithms
             // perform log-transform on Y
             std::transform(intensity, intensity + length, logIntensity, [](float y)
                            { return std::log(y); });
-            size_t scale = std::min(GLOBAL_MAXSCALE_FEATURES, size_t((length - 1) / 2));
-            runningRegression(intensity, logIntensity, df, length, length, validRegressions, scale);
+            size_t maxScale = std::min(GLOBAL_MAXSCALE_FEATURES, size_t((length - 1) / 2));
+            runningRegression(intensity, logIntensity, df, length, length, validRegressions, maxScale);
             if (validRegressions.empty())
             {
                 continue; // no valid peaks
@@ -220,7 +221,6 @@ namespace qAlgorithms
         // re-use this array for all coefficients
         __m128 beta[maxSize];
 
-        validRegressions.reserve(200); // this is the highest result of a test run, should not be a performance concern anyway
         for (size_t scale = 2; scale <= maxScale; scale++)
         {
             const int k = 2 * scale + 1;      // window size
@@ -791,43 +791,38 @@ namespace qAlgorithms
         for (size_t i = 0; i < validRegressionsIndex; i++)
         {
             RegressionGauss regression = (*validRegressionsVec)[i];
+            assert(regression.isValid);
+            CentroidPeak peak;
+            peak.scanNumber = scanNumber;
+            // add height
+            RegCoeffs coeff = regression.newCoeffs;
+            peak.height = exp_approx_d(coeff.b0 + (regression.apex_position - regression.index_x0) * coeff.b1 * 0.5);
+            // peak height (exp(b0 - b1^2/4/b2)) with position being -b1/2/b2
+            peak.heightUncertainty = regression.uncertainty_height * peak.height;
 
-            if (regression.isValid)
-            {
-                CentroidPeak peak;
+            double mz0 = *(mz_start + (int)std::floor(regression.apex_position));
+            double delta_mz = *(mz_start + (int)std::floor(regression.apex_position) + 1) - mz0;
 
-                peak.scanNumber = scanNumber;
+            // add scaled area
+            float exp_b0 = exp_approx_d(coeff.b0); // exp(b0)
+            peak.area = regression.area * exp_b0 * delta_mz;
+            peak.areaUncertainty = regression.uncertainty_area * exp_b0 * delta_mz;
 
-                // add height
-                RegCoeffs coeff = regression.newCoeffs;
-                peak.height = exp_approx_d(coeff.b0 + (regression.apex_position - regression.index_x0) * coeff.b1 * 0.5);
-                // peak height (exp(b0 - b1^2/4/b2)) with position being -b1/2/b2
-                peak.heightUncertainty = regression.uncertainty_height * peak.height;
+            // add scaled apex position (mz)
+            peak.mz = mz0 + delta_mz * (regression.apex_position - std::floor(regression.apex_position));
+            peak.mzUncertainty = regression.uncertainty_pos * delta_mz * T_VALUES[regression.df + 1] * sqrt(1 + 1 / (regression.df + 4));
 
-                double mz0 = *(mz_start + (int)std::floor(regression.apex_position));
-                double delta_mz = *(mz_start + (int)std::floor(regression.apex_position) + 1) - mz0;
+            // quality params
+            peak.dqsCen = 1 - erf_approx_f(regression.uncertainty_area / regression.area);
+            peak.df = regression.df;
 
-                // add scaled area
-                float exp_b0 = exp_approx_d(coeff.b0); // exp(b0)
-                peak.area = regression.area * exp_b0 * delta_mz;
-                peak.areaUncertainty = regression.uncertainty_area * exp_b0 * delta_mz;
+            peak.numCompetitors = regression.numCompetitors;
+            peak.scale = regression.scale;
 
-                // add scaled apex position (mz)
-                peak.mz = mz0 + delta_mz * (regression.apex_position - std::floor(regression.apex_position));
-                peak.mzUncertainty = regression.uncertainty_pos * delta_mz * T_VALUES[regression.df + 1] * sqrt(1 + 1 / (regression.df + 4));
-
-                // quality params
-                peak.dqsCen = 1 - erf_approx_f(regression.uncertainty_area / regression.area);
-                peak.df = regression.df;
-
-                peak.numCompetitors = regression.numCompetitors;
-                peak.scale = regression.scale;
-
-                /// @todo consider adding these properties so we can trace back everything completely
-                // peak.idxPeakStart = regression.left_limit;
-                // peak.idxPeakEnd = regression.right_limit;
-                peaks->push_back(std::move(peak));
-            }
+            /// @todo consider adding these properties so we can trace back everything completely
+            // peak.idxPeakStart = regression.left_limit;
+            // peak.idxPeakEnd = regression.right_limit;
+            peaks->push_back(std::move(peak));
         }
     }
 
@@ -842,60 +837,57 @@ namespace qAlgorithms
         const float *DQSC,
         const float *DQSB)
     {
-        // iterate over the validRegressions vector
+        assert(!validRegressionsVec->empty());
         for (size_t i = 0; i < validRegressionsIndex; i++)
         {
-            assert(!validRegressionsVec->empty());
             RegressionGauss regression = (*validRegressionsVec)[i];
+            assert(regression.isValid);
 
-            if (regression.isValid)
+            FeaturePeak peak;
+            // add height
+            RegCoeffs coeff = regression.newCoeffs;
+            peak.height = exp_approx_d(coeff.b0 + (regression.apex_position - regression.index_x0) * coeff.b1 * 0.5); // peak height (exp(b0 - b1^2/4/b2)) with position being -b1/2/b2
+            peak.heightUncertainty = regression.uncertainty_height * peak.height;
+
+            const double rt_leftOfMax = *(rt_start + (int)std::floor(regression.apex_position)); // left of maximum
+            const double delta_rt = *(rt_start + (int)std::floor(regression.apex_position) + 1) - rt_leftOfMax;
+            const double apex_position = rt_leftOfMax + delta_rt * (regression.apex_position - std::floor(regression.apex_position));
+            peak.retentionTime = apex_position;
+            peak.retentionTimeUncertainty = regression.uncertainty_pos * delta_rt;
+
+            // add area
+            float exp_b0 = exp_approx_d(coeff.b0); // exp(b0)
+            peak.area = regression.area * exp_b0 * delta_rt;
+            peak.areaUncertainty = regression.uncertainty_area * exp_b0 * delta_rt;
+
+            std::pair<float, float> mz = weightedMeanAndVariance(mz_start, y_start, df_start, regression.left_limit, regression.right_limit);
+            peak.mz = mz.first;
+            peak.mzUncertainty = mz.second;
+
+            peak.dqsCen = weightedMeanAndVariance(DQSC, y_start, df_start, regression.left_limit, regression.right_limit).first;
+            peak.dqsBin = weightedMeanAndVariance(DQSB, y_start, df_start, regression.left_limit, regression.right_limit).first;
+            peak.DQSF = 1 - erf_approx_f(regression.uncertainty_area / regression.area);
+
+            peak.idxPeakStart = regression.left_limit;
+            peak.idxPeakEnd = regression.right_limit - 1;
+
+            // params needed to merge two peaks
+            peak.apexLeft = regression.apex_position < regression.index_x0;
+            coeff.b1 /= delta_rt;
+            coeff.b2 /= delta_rt * delta_rt;
+            coeff.b3 /= delta_rt * delta_rt;
+            peak.coefficients = coeff;
+
+            if (regression.scale < 3)
             {
-                FeaturePeak peak;
-                // add height
-                RegCoeffs coeff = regression.newCoeffs;
-                peak.height = exp_approx_d(coeff.b0 + (regression.apex_position - regression.index_x0) * coeff.b1 * 0.5); // peak height (exp(b0 - b1^2/4/b2)) with position being -b1/2/b2
-                peak.heightUncertainty = regression.uncertainty_height * peak.height;
-
-                const double rt_leftOfMax = *(rt_start + (int)std::floor(regression.apex_position)); // left of maximum
-                const double delta_rt = *(rt_start + (int)std::floor(regression.apex_position) + 1) - rt_leftOfMax;
-                const double apex_position = rt_leftOfMax + delta_rt * (regression.apex_position - std::floor(regression.apex_position));
-                peak.retentionTime = apex_position;
-                peak.retentionTimeUncertainty = regression.uncertainty_pos * delta_rt;
-
-                // add area
-                float exp_b0 = exp_approx_d(coeff.b0); // exp(b0)
-                peak.area = regression.area * exp_b0 * delta_rt;
-                peak.areaUncertainty = regression.uncertainty_area * exp_b0 * delta_rt;
-
-                std::pair<float, float> mz = weightedMeanAndVariance(mz_start, y_start, df_start, regression.left_limit, regression.right_limit);
-                peak.mz = mz.first;
-                peak.mzUncertainty = mz.second;
-
-                peak.dqsCen = weightedMeanAndVariance(DQSC, y_start, df_start, regression.left_limit, regression.right_limit).first;
-                peak.dqsBin = weightedMeanAndVariance(DQSB, y_start, df_start, regression.left_limit, regression.right_limit).first;
-                peak.DQSF = 1 - erf_approx_f(regression.uncertainty_area / regression.area);
-
-                peak.idxPeakStart = regression.left_limit;
-                peak.idxPeakEnd = regression.right_limit - 1;
-
-                // params needed to merge two peaks
-                peak.apexLeft = regression.apex_position < regression.index_x0;
-                coeff.b1 /= delta_rt;
-                coeff.b2 /= delta_rt * delta_rt;
-                coeff.b3 /= delta_rt * delta_rt;
-                peak.coefficients = coeff;
-
-                if (regression.scale < 3)
-                {
-                    std::cerr << "regression found at scale 2!\n";
-                }
-
-                peak.scale = regression.scale;
-                peak.interpolationCount = regression.right_limit - regression.left_limit - regression.df - 4; // -4 since the degrees of freedom are reduced by 1 per coefficient
-                peak.competitorCount = regression.numCompetitors;
-
-                peaks->push_back(std::move(peak));
+                std::cerr << "regression found at scale 2!\n";
             }
+
+            peak.scale = regression.scale;
+            peak.interpolationCount = regression.right_limit - regression.left_limit - regression.df - 4; // -4 since the degrees of freedom are reduced by 1 per coefficient
+            peak.competitorCount = regression.numCompetitors;
+
+            peaks->push_back(std::move(peak));
         }
     }
 #pragma endregion "create peaks"
