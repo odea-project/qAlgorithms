@@ -108,7 +108,6 @@ namespace qAlgorithms
         assert(maxWindowSize > 0);
         float *intensity = new float[maxWindowSize];
         float *logIntensity = new float[maxWindowSize];
-        float *mz = new float[maxWindowSize];
         bool *df = new bool[maxWindowSize]; // degrees of freedom
 
         size_t GLOBAL_MAXSCALE_CENTROID = 8; // @todo this is a critical part of the algorithm and should not be hard-coded
@@ -116,12 +115,12 @@ namespace qAlgorithms
         validRegressions.reserve(treatedData.separators.size() / 2); // probably too large, shouldn't matter
         for (size_t i = 0; i < treatedData.separators.size(); i++)
         {
-            size_t length = treatedData.separators[i].end - treatedData.separators[i].start + 1;
+            size_t startIdx = treatedData.separators[i].start;
+            size_t length = treatedData.separators[i].end - startIdx + 1;
             for (size_t position = 0; position < length; position++)
             {
-                size_t idx = position + treatedData.separators[i].start;
+                size_t idx = position + startIdx;
                 intensity[position] = treatedData.intensity[idx];
-                mz[position] = treatedData.mz[idx];
                 df[position] = treatedData.df[idx];
             }
 
@@ -135,13 +134,12 @@ namespace qAlgorithms
             {
                 continue; // no valid peaks
             }
-            createCentroidPeaks(&all_peaks, &validRegressions, validRegressions.size(), intensity, mz, df, scanNumber);
+            createCentroidPeaks(&all_peaks, &validRegressions, treatedData.mz, validRegressions.size(), startIdx, intensity, df, scanNumber);
             validRegressions.clear();
         }
 
         delete[] intensity;
         delete[] logIntensity;
-        delete[] mz;
         delete[] df;
         return all_peaks;
     }
@@ -780,9 +778,10 @@ namespace qAlgorithms
     void createCentroidPeaks(
         std::vector<CentroidPeak> *peaks,
         const std::vector<RegressionGauss> *validRegressionsVec,
+        const std::vector<float> mz,
         const size_t validRegressionsIndex,
+        size_t startIdx,
         const float *y_start,
-        const float *mz_start,
         const bool *df_start,
         const size_t scanNumber)
     {
@@ -800,8 +799,9 @@ namespace qAlgorithms
             // peak height (exp(b0 - b1^2/4/b2)) with position being -b1/2/b2
             peak.heightUncertainty = regression.uncertainty_height * peak.height;
 
-            double mz0 = *(mz_start + (int)std::floor(regression.apex_position));
-            double delta_mz = *(mz_start + (int)std::floor(regression.apex_position) + 1) - mz0;
+            size_t offset = (size_t)std::floor(regression.apex_position);
+            double mz0 = mz[startIdx + offset];
+            double delta_mz = mz[startIdx + offset + 1] - mz0;
 
             // add scaled area
             float exp_b0 = exp_approx_d(coeff.b0); // exp(b0)
