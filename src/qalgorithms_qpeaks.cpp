@@ -108,40 +108,38 @@ namespace qAlgorithms
         assert(maxWindowSize > 0);
         float *intensity = new float[maxWindowSize];
         float *logIntensity = new float[maxWindowSize];
-        bool *df = new bool[maxWindowSize]; // degrees of freedom
 
         size_t GLOBAL_MAXSCALE_CENTROID = 8; // @todo this is a critical part of the algorithm and should not be hard-coded
         std::vector<RegressionGauss> validRegressions;
         validRegressions.reserve(treatedData.separators.size() / 2); // probably too large, shouldn't matter
         for (size_t i = 0; i < treatedData.separators.size(); i++)
         {
+            auto block = treatedData.block[i];
             size_t startIdx = treatedData.separators[i].start;
-            size_t length = treatedData.block[i].df.size();
+            size_t length = block.df.size();
             assert(length == treatedData.separators[i].end - startIdx + 1);
             for (size_t position = 0; position < length; position++)
             {
                 size_t idx = position + startIdx;
                 intensity[position] = treatedData.intensity[idx];
-                df[position] = treatedData.df[idx];
             }
 
             // perform log-transform on intensity
-            std::transform(treatedData.block[i].intensity.begin(), treatedData.block[i].intensity.end(), logIntensity, [](float y)
+            std::transform(block.intensity.begin(), block.intensity.end(), logIntensity, [](float y)
                            { return std::log(y); });
             // @todo adjust the scale dynamically based on the number of valid regressions found, early terminate after x iterations
             size_t maxScale = std::min(GLOBAL_MAXSCALE_CENTROID, size_t((length - 1) / 2));
-            runningRegression(intensity, logIntensity, df, maxWindowSize, length, validRegressions, maxScale);
+            runningRegression(intensity, logIntensity, block.df, maxWindowSize, length, validRegressions, maxScale);
             if (validRegressions.empty())
             {
                 continue; // no valid peaks
             }
-            createCentroidPeaks(&all_peaks, &validRegressions, treatedData.block[i], validRegressions.size(), scanNumber);
+            createCentroidPeaks(&all_peaks, &validRegressions, block, validRegressions.size(), scanNumber);
             validRegressions.clear();
         }
 
         delete[] intensity;
         delete[] logIntensity;
-        delete[] df;
         return all_peaks;
     }
 
@@ -183,7 +181,10 @@ namespace qAlgorithms
             std::transform(intensity, intensity + length, logIntensity, [](float y)
                            { return std::log(y); });
             size_t maxScale = std::min(GLOBAL_MAXSCALE_FEATURES, size_t((length - 1) / 2));
-            runningRegression(intensity, logIntensity, df, length, length, validRegressions, maxScale);
+            std::cout << "abort!";
+            exit(1);
+            const std::vector<bool> dummy; // @todo this breaks the program
+            runningRegression(intensity, logIntensity, dummy, length, length, validRegressions, maxScale);
             if (validRegressions.empty())
             {
                 continue; // no valid peaks
@@ -206,7 +207,7 @@ namespace qAlgorithms
     void runningRegression(
         const float *y_start,
         const float *ylog_start,
-        const bool *df_start,
+        const std::vector<bool> degreesOfFreedom,
         const size_t arrayMaxLength,
         const size_t n, // number of data points
         std::vector<RegressionGauss> &validRegressions,
@@ -227,7 +228,7 @@ namespace qAlgorithms
 
             convolve_SIMD(scale, ylog_start, n, beta); // beta past position n-1 contains initialized, but wrong values - make sure they cannot be accessed
                                                        // n_segments must be smaller than the array
-            validateRegressions(beta, n_segments, y_start, ylog_start, df_start, arrayMaxLength, scale, validRegressions);
+            validateRegressions(beta, n_segments, y_start, ylog_start, degreesOfFreedom, arrayMaxLength, scale, validRegressions);
         }
 
         if (validRegressions.size() > 1)
@@ -345,7 +346,7 @@ namespace qAlgorithms
         size_t n_segments,       // number of segments, i.e. regressions
         const float *y_start,    // pointer to the start of the Y matrix
         const float *ylog_start, // pointer to the start of the Ylog matrix
-        const bool *df_start,    // degree of freedom vector, 0: interpolated, 1: measured
+        const std::vector<bool> degreesOfFreedom,
         size_t arrayMaxLength,
         size_t scale, // scale, i.e., the number of data points in a half window excluding the center point
         std::vector<RegressionGauss> &validRegressions)
@@ -356,24 +357,26 @@ namespace qAlgorithms
         validRegsTmp.push_back(RegressionGauss{});
         for (size_t regressionNumber = 0; regressionNumber < n_segments; regressionNumber++)
         {
-            if (calcDF(df_start, regressionNumber, 2 * scale + regressionNumber) > 4)
+            size_t df = calcDF(degreesOfFreedom, regressionNumber, 2 * scale + regressionNumber);
+            if (df < 5)
             {
-                const __m128 coeff = beta[regressionNumber];
-                if ((coeff[1] == 0.0f) | (coeff[2] == 0.0f) | (coeff[3] == 0.0f))
-                {
-                    // None of these are a valid regression with the asymmetric model
-                    continue;
-                }
-                validRegsTmp.back().newCoeffs.b0 = coeff[0];
-                validRegsTmp.back().newCoeffs.b1 = coeff[1];
-                validRegsTmp.back().newCoeffs.b2 = coeff[2];
-                validRegsTmp.back().newCoeffs.b3 = coeff[3];
-                // regressionNumber must be smaller than the size of the checked region
-                makeValidRegression(&validRegsTmp.back(), arrayMaxLength, regressionNumber, scale, df_start, y_start, ylog_start);
-                if (validRegsTmp.back().isValid)
-                {
-                    validRegsTmp.push_back(RegressionGauss{});
-                }
+                continue;
+            }
+            const __m128 coeff = beta[regressionNumber];
+            if ((coeff[1] == 0.0f) | (coeff[2] == 0.0f) | (coeff[3] == 0.0f))
+            {
+                // None of these are a valid regression with the asymmetric model
+                continue;
+            }
+            validRegsTmp.back().newCoeffs.b0 = coeff[0];
+            validRegsTmp.back().newCoeffs.b1 = coeff[1];
+            validRegsTmp.back().newCoeffs.b2 = coeff[2];
+            validRegsTmp.back().newCoeffs.b3 = coeff[3];
+            // regressionNumber must be smaller than the size of the checked region
+            makeValidRegression(&validRegsTmp.back(), arrayMaxLength, regressionNumber, scale, degreesOfFreedom, y_start, ylog_start);
+            if (validRegsTmp.back().isValid)
+            {
+                validRegsTmp.push_back(RegressionGauss{});
             }
         }
         if (validRegsTmp.size() == 1)
@@ -442,7 +445,7 @@ namespace qAlgorithms
             else
             { // survival of the fittest based on mse between original data and reconstructed (exp transform of regression)
                 assert(startEndGroups[groupIdx] != startEndGroups[groupIdx + 1]);
-                auto bestRegIdx = findBestRegression(y_start, validRegsTmp, df_start,
+                auto bestRegIdx = findBestRegression(y_start, validRegsTmp, degreesOfFreedom,
                                                      startEndGroups[groupIdx], startEndGroups[groupIdx + 1]);
 
                 RegressionGauss bestReg = validRegsTmp[bestRegIdx.first];
@@ -460,7 +463,7 @@ namespace qAlgorithms
         size_t arrayMaxLength,
         const size_t regressionNumber,
         const size_t scale,
-        const bool *df_start,
+        const std::vector<bool> df_start,
         const float *y_start,
         const float *ylog_start)
     { // @todo order by effort to calculate
@@ -997,7 +1000,7 @@ namespace qAlgorithms
     std::pair<size_t, float> findBestRegression( // index, mse
         const float *y_start,                    // start of the measured data
         std::vector<RegressionGauss> regressions,
-        const bool *df_start,
+        const std::vector<bool> df_start,
         size_t startIdx,
         size_t endIdx) // degrees of freedom
     {
@@ -1035,11 +1038,27 @@ namespace qAlgorithms
     }
 
     size_t calcDF(
-        const bool *df_start,     // start of the degrees of freedom
-        unsigned int left_limit,  // left limit
-        unsigned int right_limit) // right limit
+        const bool *df_start, // start of the degrees of freedom array
+        unsigned int left_limit,
+        unsigned int right_limit)
     {
-        unsigned int degreesOfFreedom = 0;
+        size_t degreesOfFreedom = 0;
+        for (size_t i = left_limit; i < right_limit; i++)
+        {
+            if (df_start[i])
+            {
+                ++degreesOfFreedom;
+            }
+        }
+        return degreesOfFreedom;
+    }
+
+    size_t calcDF(
+        const std::vector<bool> df_start,
+        unsigned int left_limit,
+        unsigned int right_limit)
+    {
+        size_t degreesOfFreedom = 0;
         for (size_t i = left_limit; i < right_limit; i++)
         {
             if (df_start[i])
