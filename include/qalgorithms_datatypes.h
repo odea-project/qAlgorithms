@@ -55,13 +55,6 @@ namespace qAlgorithms
         std::vector<bool> df;
     };
 
-    struct treatedCens
-    {
-        std::vector<ProfileBlock> block;
-        std::vector<separator> separators;
-        std::vector<float> intensity;
-    };
-
     struct RegCoeffs
     {
         float b0, b1, b2, b3 = 0;

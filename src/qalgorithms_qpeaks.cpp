@@ -95,13 +95,13 @@ namespace qAlgorithms
 #pragma endregion "initialize"
 
 #pragma region "find peaks"
-    std::vector<CentroidPeak> findCentroids(treatedCens &treatedData, const size_t scanNumber)
+    std::vector<CentroidPeak> findCentroids(const std::vector<ProfileBlock> treatedData, const size_t scanNumber)
     {
         std::vector<CentroidPeak> all_peaks;
         size_t maxWindowSize = 0;
-        for (size_t i = 0; i < treatedData.separators.size(); i++)
+        for (size_t i = 0; i < treatedData.size(); i++)
         {
-            size_t length = treatedData.separators[i].end - treatedData.separators[i].start + 1;
+            size_t length = treatedData[i].df.size();
             assert(length > 4); // data must contain at least five points
             maxWindowSize = maxWindowSize < length ? length : maxWindowSize;
         }
@@ -111,17 +111,14 @@ namespace qAlgorithms
 
         size_t GLOBAL_MAXSCALE_CENTROID = 8; // @todo this is a critical part of the algorithm and should not be hard-coded
         std::vector<RegressionGauss> validRegressions;
-        validRegressions.reserve(treatedData.separators.size() / 2); // probably too large, shouldn't matter
-        for (size_t i = 0; i < treatedData.separators.size(); i++)
+        validRegressions.reserve(treatedData.size() / 2); // probably too large, shouldn't matter
+        for (size_t i = 0; i < treatedData.size(); i++)
         {
-            auto block = treatedData.block[i];
-            size_t startIdx = treatedData.separators[i].start;
+            auto block = treatedData[i];
             size_t length = block.df.size();
-            assert(length == treatedData.separators[i].end - startIdx + 1);
             for (size_t position = 0; position < length; position++)
             {
-                size_t idx = position + startIdx;
-                intensity[position] = treatedData.intensity[idx];
+                intensity[position] = block.intensity[position];
             }
 
             // perform log-transform on intensity
