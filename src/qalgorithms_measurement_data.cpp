@@ -368,7 +368,11 @@ namespace qAlgorithms
         return sum / (retention_times.size() - 1);
     }
 
-    std::vector<std::vector<CentroidPeak>> findCentroids_MZML(
+    // global variable, this is a demporary solution
+    size_t NO_INTERPOLATE_COUNT = 0;
+    size_t UNCERTAIN_BLOCK_END = 0;
+
+    std::vector<std::vector<CentroidPeak>> findCentroids_MZML( // this function needs to be split @todo
         sc::MZML &data,
         std::vector<float> &convertRT,
         float &rt_diff,
@@ -526,6 +530,10 @@ namespace qAlgorithms
         {
             PPM_PRECENTROIDED = -INFINITY; // reset value before the next function call
         }
+        std::cerr << "    Gaps which could not be interpolated: " << NO_INTERPOLATE_COUNT << "\n"
+                  << "    Blocks with posssibly premature termination: " << UNCERTAIN_BLOCK_END << "\n";
+        NO_INTERPOLATE_COUNT = 0;
+        UNCERTAIN_BLOCK_END = 0;
         return centroids;
     }
 
@@ -559,6 +567,7 @@ namespace qAlgorithms
             cens.mz.push_back(dataPoints[pos].mz);
             cens.df.push_back(true);
             const float delta_x = dataPoints[pos + 1].mz - dataPoints[pos].mz;
+            assert(delta_x > 0);
 
             size_t gapSize2 = 0;
             if (delta_x > 1.75 * expectedDifference)
@@ -574,10 +583,19 @@ namespace qAlgorithms
             { // gap detected
                 // assert(gapSize2 != 0);
                 const int gapSize = static_cast<int>(delta_x / expectedDifference) - 1;
+                int interpolationCount = int(delta_x / (1.5 * expectedDifference)) + 1;
+
                 if (gapSize < 4)
                 {
+                    if (gapSize == 0)
+                    {
+                        NO_INTERPOLATE_COUNT++;
+                    }
+
+                    // std::cerr << interpolationCount - gapSize << ", "; // between 0 to 2 more interpolations
                     // add gapSize interpolated datapoints @todo this can be zero
-                    const float dy = std::pow(dataPoints[pos + 1].intensity / dataPoints[pos].intensity, 1.0 / float(gapSize + 1)); // dy for log interpolation
+                    const float dy = std::pow(dataPoints[pos + 1].intensity / dataPoints[pos].intensity,
+                                              1.0 / float(gapSize + 1)); // dy for log interpolation ; 1 if gapsize == 0
                     for (int i = 1; i <= gapSize; i++)
                     {
                         cens.intensity.push_back(dataPoints[pos].intensity * std::pow(dy, i));
@@ -587,6 +605,12 @@ namespace qAlgorithms
                 }
                 else
                 { // END OF BLOCK, EXTRAPOLATION STARTS @todo move this into its own function
+                    // assert(interpolationCount > 3);
+                    if (interpolationCount < 4)
+                    {
+                        UNCERTAIN_BLOCK_END++;
+                    }
+
                     // add 4 datapoints (two extrapolated [end of current block] and two zeros
                     // [start of next block]) extrapolate the first two datapoints of this block
                     size_t currentStart = cens.separators.back().start;
