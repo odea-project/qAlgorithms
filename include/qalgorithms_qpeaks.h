@@ -56,9 +56,10 @@ namespace qAlgorithms
     void createCentroidPeaks(
         std::vector<CentroidPeak> *peaks,
         const std::vector<RegressionGauss> *validRegressionsVec,
+        const std::vector<float> mz,
         const size_t validRegressionsIndex,
+        size_t startIdx,
         const float *y_start,
-        const float *mz_start,
         const bool *df_start,
         const size_t scanNumber);
 
