@@ -537,6 +537,21 @@ namespace qAlgorithms
         return centroids;
     }
 
+    constexpr ProfileBlock blockStart()
+    {
+        ProfileBlock p;
+        p.df.reserve(16);
+        p.intensity.reserve(16);
+        p.mz.reserve(16);
+        p.df.push_back(false);
+        p.df.push_back(false);
+        p.intensity.push_back(0);
+        p.intensity.push_back(0);
+        p.mz.push_back(0);
+        p.mz.push_back(0);
+        return p;
+    }
+
     treatedCens pretreatDataCentroids(std::vector<centroidPoint> &dataPoints, float expectedDifference)
     {
         centroidPoint dp(
@@ -545,12 +560,13 @@ namespace qAlgorithms
             false);                                 // interpolated point
         dataPoints.push_back(dp);
 
+        std::vector<ProfileBlock> subProfiles;
+
         treatedCens cens;
         // add the first two zeros to the dataPoints_new vector @todo skip this by doing log interpolation during the log transform
         for (int i = 0; i < 2; i++)
         {
             cens.intensity.push_back(0);
-            cens.mz.push_back(0);
             cens.df.push_back(false);
         }
         cens.separators.push_back({0, 0}); // correctness check: start != end
@@ -560,12 +576,18 @@ namespace qAlgorithms
         size_t blockSize = 0; // size of the current block
         size_t countSubOneGap = 0;
         size_t countNoGap = 0;
+        ProfileBlock currentBlock = blockStart(); // initialised with two zeroed values in each vector
         for (size_t pos = 0; pos < dataPoints.size() - 1; pos++)
         {
             blockSize++;
+
             cens.intensity.push_back(dataPoints[pos].intensity);
-            cens.mz.push_back(dataPoints[pos].mz);
             cens.df.push_back(true);
+
+            currentBlock.intensity.push_back(dataPoints[pos].intensity);
+            currentBlock.mz.push_back(dataPoints[pos].mz);
+            currentBlock.df.push_back(true);
+
             const float delta_x = dataPoints[pos + 1].mz - dataPoints[pos].mz;
             assert(delta_x > 0);
 
@@ -599,8 +621,11 @@ namespace qAlgorithms
                     for (int i = 1; i <= gapSize; i++)
                     {
                         cens.intensity.push_back(dataPoints[pos].intensity * std::pow(dy, i));
-                        cens.mz.push_back(dataPoints[pos].mz + i * expectedDifference);
                         cens.df.push_back(false);
+
+                        currentBlock.intensity.push_back(dataPoints[pos].intensity * std::pow(dy, i));
+                        currentBlock.mz.push_back(dataPoints[pos].mz + i * expectedDifference);
+                        currentBlock.df.push_back(false);
                     }
                 }
                 else
@@ -614,16 +639,10 @@ namespace qAlgorithms
                     // add 4 datapoints (two extrapolated [end of current block] and two zeros
                     // [start of next block]) extrapolate the first two datapoints of this block
                     size_t currentStart = cens.separators.back().start;
-                    if (blockSize < 5)
+
+                    if (blockSize > 4)
                     {
-                        // delete all data points of the block in treatedData.dataPoints except the first two zeros
-                        cens.intensity.resize(currentStart + 2);
-                        cens.mz.resize(currentStart + 2);
-                        cens.df.resize(currentStart + 2);
-                    }
-                    else
-                    {
-                        float blockStartMZ = cens.mz[currentStart + 2];
+                        float blockStartMZ = currentBlock.mz[2];
                         float blockStartIntensity = cens.intensity[currentStart + 2];
                         // check if the maximum of the block is the first or last data point
                         if (maxOfBlock == pos || dataPoints[maxOfBlock].mz == blockStartMZ)
@@ -634,12 +653,17 @@ namespace qAlgorithms
                             {
                                 // LEFT SIDE
                                 cens.intensity[currentStart + i] = cens.intensity[currentStart + 2];
-                                cens.mz[currentStart + i] = blockStartMZ - (2 - i) * expectedDifference;
+
+                                currentBlock.intensity[i] = currentBlock.intensity[2];
+                                currentBlock.mz[i] = blockStartMZ - (2 - i) * expectedDifference;
                                 // degrees of freedom is already false
                                 // RIGHT SIDE
                                 cens.intensity.push_back(dataPoints[pos].intensity);
-                                cens.mz.push_back(dataPoints[pos].mz + float(i + 1) * expectedDifference);
                                 cens.df.push_back(false);
+
+                                currentBlock.intensity.push_back(dataPoints[pos].intensity);
+                                currentBlock.mz.push_back(dataPoints[pos].mz + float(i + 1) * expectedDifference);
+                                currentBlock.df.push_back(false);
                             }
                         }
                         else
@@ -657,7 +681,9 @@ namespace qAlgorithms
                             {
                                 const float x = blockStartMZ - (2 - i) * expectedDifference - blockStartMZ;
                                 cens.intensity[currentStart + i] = std::exp(coeffs[0] + x * (coeffs[1] + x * coeffs[2]));
-                                cens.mz[currentStart + i] = blockStartMZ - (2 - i) * expectedDifference;
+
+                                currentBlock.intensity[i] = std::exp(coeffs[0] + x * (coeffs[1] + x * coeffs[2]));
+                                currentBlock.mz[i] = blockStartMZ - (2 - i) * expectedDifference;
                             }
                             // add the extrapolated data points to the right side of the block
                             for (int i = 0; i < 2; i++)
@@ -665,23 +691,34 @@ namespace qAlgorithms
                                 const float dp_x = dataPoints[pos].mz + float(i + 1) * expectedDifference;
                                 const float x = dp_x - blockStartMZ;
                                 cens.intensity.push_back(std::exp(coeffs[0] + x * (coeffs[1] + x * coeffs[2])));
-                                cens.mz.push_back(dp_x);
                                 cens.df.push_back(false);
+
+                                currentBlock.intensity.push_back(std::exp(coeffs[0] + x * (coeffs[1] + x * coeffs[2])));
+                                currentBlock.mz.push_back(dp_x);
+                                currentBlock.df.push_back(false);
                             }
                         }
                         // add the zeros to the treatedData.dataPoints vector to start the next block
                         // separator struct stores indices of first and last element
-                        cens.separators.back().end = cens.mz.size() - 1;
-                        cens.separators.push_back({cens.mz.size(), 0});
+                        cens.separators.back().end = cens.df.size() - 1;
+                        cens.separators.push_back({cens.df.size(), 0});
                         for (int i = 0; i < 2; i++)
                         {
                             cens.intensity.push_back(0);
-                            cens.mz.push_back(0);
                             cens.df.push_back(false);
                         }
                         maxOfBlock = pos + 1;
+                        // block is finished, add currentBlock to storage vector
+                        subProfiles.push_back(currentBlock);
                     }
-                    blockSize = 0; // reset the block size
+                    else
+                    {
+                        // delete all data points of the block in treatedData.dataPoints except the first two zeros
+                        cens.intensity.resize(currentStart + 2);
+                        cens.df.resize(currentStart + 2);
+                    }
+                    currentBlock = blockStart(); // reset bloack for next iteration
+                    blockSize = 0;
                 }
             }
             else if (gapSize2 == 0) // no gap found
@@ -703,16 +740,28 @@ namespace qAlgorithms
         // delete the last two zeros // @todo why?
         cens.intensity.pop_back();
         cens.intensity.pop_back();
-        cens.mz.pop_back();
-        cens.mz.pop_back();
         cens.df.pop_back();
         cens.df.pop_back();
 
         cens.separators.pop_back(); // last element is constructed with a start index of datapoints.size()
-        if (cens.separators.back().end != cens.mz.size() - 1)
+        assert(cens.separators.size() == subProfiles.size());
+        for (size_t j = 0; j < subProfiles.size(); j++)
+        {
+            auto profile = subProfiles[j];
+            size_t startIdx = cens.separators[j].start;
+            assert(profile.intensity.size() == cens.separators[j].end - startIdx + 1);
+            for (size_t i = 0; i < profile.mz.size(); i++)
+            {
+                assert(profile.intensity[i] == cens.intensity[startIdx + i]);
+                assert(profile.df[i] == cens.df[startIdx + i]);
+            }
+        }
+        cens.block = subProfiles;
+
+        if (cens.separators.back().end != cens.df.size() - 1)
         {
             std::cerr << "measurement_data: incomplete block!\n"; // should never be the case
-            cens.separators.back().end = cens.mz.size() - 1;
+            cens.separators.back().end = cens.df.size() - 1;
         }
         return cens;
     }
