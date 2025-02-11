@@ -111,6 +111,7 @@ namespace qAlgorithms
         float *mz = new float[maxWindowSize];
         bool *df = new bool[maxWindowSize]; // degrees of freedom
 
+        size_t GLOBAL_MAXSCALE_CENTROID = 8;
         std::vector<RegressionGauss> validRegressions;
 
         for (size_t i = 0; i < treatedData.separators.size(); i++)
@@ -163,6 +164,7 @@ namespace qAlgorithms
         float *DQSB = new float[maxWindowSize]; // @todo only process these after feature construction
 
         std::vector<RegressionGauss> validRegressions;
+        static const size_t GLOBAL_MAXSCALE_FEATURES = 30;
         for (size_t i = 0; i < treatedData.separators.size(); i++)
         {
             size_t length = treatedData.separators[i].end - treatedData.separators[i].start + 1;
