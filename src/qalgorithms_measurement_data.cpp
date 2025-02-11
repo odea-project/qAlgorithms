@@ -522,7 +522,7 @@ namespace qAlgorithms
                 dataPoints.push_back(dp);
             }
             // inter/extrapolate data, and identify data blocks @todo these should be two different functions
-            treatedCens treatedData = pretreatDataCentroids(dataPoints, expectedDifference);
+            auto treatedData = pretreatDataCentroids(dataPoints, expectedDifference);
             assert(relativeIndex[i] != 0);
             centroids[i] = findCentroids(treatedData, relativeIndex[i]); // find peaks in data blocks of treated data
         }
@@ -552,7 +552,7 @@ namespace qAlgorithms
         return p;
     }
 
-    treatedCens pretreatDataCentroids(std::vector<centroidPoint> &dataPoints, float expectedDifference)
+    std::vector<ProfileBlock> pretreatDataCentroids(std::vector<centroidPoint> &dataPoints, float expectedDifference)
     {
         centroidPoint dp(
             std::numeric_limits<float>::infinity(), // mz
@@ -561,14 +561,6 @@ namespace qAlgorithms
         dataPoints.push_back(dp);
 
         std::vector<ProfileBlock> subProfiles;
-
-        treatedCens cens;
-        // add the first two zeros to the dataPoints_new vector @todo skip this by doing log interpolation during the log transform
-        for (int i = 0; i < 2; i++)
-        {
-            cens.intensity.push_back(0);
-        }
-        cens.separators.push_back({0, 0}); // correctness check: start != end
 
         // iterate over the data points
         size_t maxOfBlock = 0;
@@ -579,8 +571,6 @@ namespace qAlgorithms
         for (size_t pos = 0; pos < dataPoints.size() - 1; pos++)
         {
             blockSize++;
-
-            cens.intensity.push_back(dataPoints[pos].intensity);
 
             currentBlock.intensity.push_back(dataPoints[pos].intensity);
             currentBlock.mz.push_back(dataPoints[pos].mz);
@@ -618,8 +608,6 @@ namespace qAlgorithms
                                               1.0 / float(gapSize + 1)); // dy for log interpolation ; 1 if gapsize == 0
                     for (int i = 1; i <= gapSize; i++)
                     {
-                        cens.intensity.push_back(dataPoints[pos].intensity * std::pow(dy, i));
-
                         currentBlock.intensity.push_back(dataPoints[pos].intensity * std::pow(dy, i));
                         currentBlock.mz.push_back(dataPoints[pos].mz + i * expectedDifference);
                         currentBlock.df.push_back(false);
@@ -632,15 +620,10 @@ namespace qAlgorithms
                     {
                         UNCERTAIN_BLOCK_END++;
                     }
-
-                    // add 4 datapoints (two extrapolated [end of current block] and two zeros
-                    // [start of next block]) extrapolate the first two datapoints of this block
-                    size_t currentStart = cens.separators.back().start;
-
                     if (blockSize > 4)
                     {
                         float blockStartMZ = currentBlock.mz[2];
-                        float blockStartIntensity = cens.intensity[currentStart + 2];
+                        float blockStartIntensity = currentBlock.intensity[2];
                         // check if the maximum of the block is the first or last data point
                         if (maxOfBlock == pos || dataPoints[maxOfBlock].mz == blockStartMZ)
                         {
@@ -649,14 +632,10 @@ namespace qAlgorithms
                             for (int i = 0; i < 2; i++)
                             {
                                 // LEFT SIDE
-                                cens.intensity[currentStart + i] = cens.intensity[currentStart + 2];
-
                                 currentBlock.intensity[i] = currentBlock.intensity[2];
                                 currentBlock.mz[i] = blockStartMZ - (2 - i) * expectedDifference;
                                 // degrees of freedom is already false
                                 // RIGHT SIDE
-                                cens.intensity.push_back(dataPoints[pos].intensity);
-
                                 currentBlock.intensity.push_back(dataPoints[pos].intensity);
                                 currentBlock.mz.push_back(dataPoints[pos].mz + float(i + 1) * expectedDifference);
                                 currentBlock.df.push_back(false);
@@ -676,7 +655,6 @@ namespace qAlgorithms
                             for (int i = 0; i < 2; i++)
                             {
                                 const float x = blockStartMZ - (2 - i) * expectedDifference - blockStartMZ;
-                                cens.intensity[currentStart + i] = std::exp(coeffs[0] + x * (coeffs[1] + x * coeffs[2]));
 
                                 currentBlock.intensity[i] = std::exp(coeffs[0] + x * (coeffs[1] + x * coeffs[2]));
                                 currentBlock.mz[i] = blockStartMZ - (2 - i) * expectedDifference;
@@ -686,29 +664,15 @@ namespace qAlgorithms
                             {
                                 const float dp_x = dataPoints[pos].mz + float(i + 1) * expectedDifference;
                                 const float x = dp_x - blockStartMZ;
-                                cens.intensity.push_back(std::exp(coeffs[0] + x * (coeffs[1] + x * coeffs[2])));
 
                                 currentBlock.intensity.push_back(std::exp(coeffs[0] + x * (coeffs[1] + x * coeffs[2])));
                                 currentBlock.mz.push_back(dp_x);
                                 currentBlock.df.push_back(false);
                             }
                         }
-                        // add the zeros to the treatedData.dataPoints vector to start the next block
-                        // separator struct stores indices of first and last element
-                        cens.separators.back().end = cens.intensity.size() - 1;
-                        cens.separators.push_back({cens.intensity.size(), 0});
-                        for (int i = 0; i < 2; i++)
-                        {
-                            cens.intensity.push_back(0);
-                        }
                         maxOfBlock = pos + 1;
                         // block is finished, add currentBlock to storage vector
                         subProfiles.push_back(currentBlock);
-                    }
-                    else
-                    {
-                        // delete all data points of the block in treatedData.dataPoints except the first two zeros
-                        cens.intensity.resize(currentStart + 2);
                     }
                     currentBlock = blockStart(); // reset bloack for next iteration
                     blockSize = 0;
@@ -730,30 +694,7 @@ namespace qAlgorithms
         } // end of for loop
 
         // std::cerr << countSubOneGap << ", -" << countNoGap << ", ";
-        // delete the last two zeros // @todo why?
-        cens.intensity.pop_back();
-        cens.intensity.pop_back();
-
-        cens.separators.pop_back(); // last element is constructed with a start index of datapoints.size()
-        assert(cens.separators.size() == subProfiles.size());
-        for (size_t j = 0; j < subProfiles.size(); j++)
-        {
-            auto profile = subProfiles[j];
-            size_t startIdx = cens.separators[j].start;
-            assert(profile.intensity.size() == cens.separators[j].end - startIdx + 1);
-            for (size_t i = 0; i < profile.mz.size(); i++)
-            {
-                assert(profile.intensity[i] == cens.intensity[startIdx + i]);
-            }
-        }
-        cens.block = subProfiles;
-
-        if (cens.separators.back().end != cens.intensity.size() - 1)
-        {
-            std::cerr << "measurement_data: incomplete block!\n"; // should never be the case
-            cens.separators.back().end = cens.intensity.size() - 1;
-        }
-        return cens;
+        return subProfiles;
     }
 #pragma endregion "find centroids"
 
