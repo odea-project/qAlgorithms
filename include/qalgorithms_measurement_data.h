@@ -9,7 +9,7 @@
 
 namespace qAlgorithms
 {
-    std::array<float, 3> interpolateQadratic(float interpolate, const float *x, const float *y);
+    inline std::array<double, 3> interpolateQuadratic(float interpolate, const float *x, const float *y);
 
     std::vector<std::vector<CentroidPeak>> transferCentroids( // @todo merge with findPeaks_mzml
         sc::MZML &data,
@@ -18,8 +18,7 @@ namespace qAlgorithms
         const int start_index,
         double PPMerror);
 
-    double
-    calcExpectedDiff(std::vector<double> &data);
+    double calcExpectedDiff(std::vector<double> &data);
 
     /**
      * @brief Inter/extrapolate gaps in data and define separation markers for data blocks.
@@ -31,7 +30,9 @@ namespace qAlgorithms
                              float expectedDifference,
                              const bool updateExpectedDifference = true);
 
-    std::vector<ProfileBlock> pretreatDataCentroids(std::vector<centroidPoint> &dataPoints, float expectedDifference);
+    std::vector<ProfileBlock> pretreatDataCentroids(std::vector<std::vector<double>> spectrum, float expectedDifference);
+
+    void interpolateEdges(const std::vector<float> x_axis, std::vector<float> *intensity);
 
     treatedData pretreatDataFeatures(std::vector<dataPoint> &dataPoints,
                                      std::vector<unsigned int> &binIdx,
