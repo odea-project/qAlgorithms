@@ -67,7 +67,6 @@ namespace qAlgorithms
         const float *y_start,
         const float *mz_start,
         const float *rt_start,
-        const bool *df_start,
         const float *DQSC,
         const float *DQSB);
 
@@ -250,7 +249,7 @@ namespace qAlgorithms
         const size_t n,
         __m128 *result);
 
-    std::pair<float, float> weightedMeanAndVariance(const float *x, const float *weight, const bool *df,
+    std::pair<float, float> weightedMeanAndVariance(const float *x, const float *weight,
                                                     int left_limit, int right_limit);
 }
 
