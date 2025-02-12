@@ -152,7 +152,6 @@ namespace qAlgorithms
         float *intensity = new float[maxWindowSize];
         float *logIntensity = new float[maxWindowSize];
         float *RT = new float[maxWindowSize];
-        bool *df = new bool[maxWindowSize]; // degrees of freedom
         float *mz = new float[maxWindowSize];
         float *DQSC = new float[maxWindowSize];
         float *DQSB = new float[maxWindowSize]; // @todo only process these after feature construction
@@ -163,12 +162,13 @@ namespace qAlgorithms
         for (size_t i = 0; i < treatedData.separators.size(); i++)
         {
             size_t length = treatedData.separators[i].end - treatedData.separators[i].start + 1;
+            std::vector<bool> degreesOfFreedom;
             for (size_t position = 0; position < length; position++)
             {
                 size_t idx = position + treatedData.separators[i].start;
                 intensity[position] = treatedData.dataPoints[idx].y;
                 RT[position] = treatedData.dataPoints[idx].x;
-                df[position] = treatedData.dataPoints[idx].df;
+                degreesOfFreedom.push_back(treatedData.dataPoints[idx].df);
                 mz[position] = treatedData.dataPoints[idx].mz;
                 DQSC[position] = treatedData.dataPoints[idx].DQSC;
                 DQSB[position] = treatedData.dataPoints[idx].DQSB;
@@ -178,22 +178,18 @@ namespace qAlgorithms
             std::transform(intensity, intensity + length, logIntensity, [](float y)
                            { return std::log(y); });
             size_t maxScale = std::min(GLOBAL_MAXSCALE_FEATURES, size_t((length - 1) / 2));
-            std::cout << "abort!";
-            exit(1);
-            const std::vector<bool> dummy; // @todo this breaks the program
-            runningRegression(intensity, logIntensity, dummy, length, length, validRegressions, maxScale);
+            runningRegression(intensity, logIntensity, degreesOfFreedom, length, length, validRegressions, maxScale);
             if (validRegressions.empty())
             {
                 continue; // no valid peaks
             }
-            createFeaturePeaks(&all_peaks, &validRegressions, validRegressions.size(), intensity,
-                               mz, RT, df, DQSC, DQSB);
+            createFeaturePeaks(&all_peaks, &validRegressions, validRegressions.size(),
+                               intensity, mz, RT, DQSC, DQSB);
             validRegressions.clear();
         }
         delete[] intensity;
         delete[] logIntensity;
         delete[] RT;
-        delete[] df;
         delete[] mz;
         delete[] DQSC;
         delete[] DQSB;
@@ -734,24 +730,21 @@ namespace qAlgorithms
 
 #pragma region "create peaks"
 
-    std::pair<float, float> weightedMeanAndVariance(const float *values, const float *weight, const bool *df,
+    std::pair<float, float> weightedMeanAndVariance(const float *values, const float *weight,
                                                     int left_limit, int right_limit)
     { // @todo rework this function to be more readable
-        // considering that all interpolated points are ignored during this function and afterwards, it might be a good idea to remove them again
-        // assert(right_limit > 0); // only holds for centroids
-        // assert(left_limit > 0);
-        // weighted mean using y_start as weighting factor and left_limit right_limit as range
+        // weighted mean using intensity as weighting factor and left_limit right_limit as range
         int realPoints = right_limit - left_limit + 1;
         float mean_wt = 0.0;                            // mean of weight
         float sum_xw = 0.0;                             // sum of values * weight
         float sum_weight = 0.0;                         // sum of weight
         for (int j = left_limit; j <= right_limit; j++) // why does this work? there should be an array access at less than 0 @todo
         {
-            if (df[j])
+            if (values[j] != 0)
             {
-                mean_wt += *(weight + j);
-                sum_xw += *(values + j) * *(weight + j);
-                sum_weight += *(weight + j);
+                mean_wt += weight[j];
+                sum_xw += values[j] * weight[j];
+                sum_weight += weight[j];
             }
             else
             {
@@ -766,11 +759,11 @@ namespace qAlgorithms
         float sum_Qxxw = 0.0; // sum of (values - mean)^2 * weight
         for (int j = left_limit; j <= right_limit; j++)
         {
-            if (*(values + j) <= 0.f)
+            if (values[j] <= 0.f)
             {
                 continue;
             }
-            sum_Qxxw += (*(values + j) - weighted_mean) * (*(values + j) - weighted_mean) * *(weight + j);
+            sum_Qxxw += (values[j] - weighted_mean) * (values[j] - weighted_mean) * weight[j];
         }
         float uncertaintiy = std::sqrt(sum_Qxxw / sum_weight / realPoints);
         return std::make_pair(weighted_mean, uncertaintiy);
@@ -828,10 +821,9 @@ namespace qAlgorithms
         std::vector<FeaturePeak> *peaks,
         const std::vector<RegressionGauss> *validRegressionsVec,
         const size_t validRegressionsIndex,
-        const float *y_start,
+        const float *intensity,
         const float *mz_start,
         const float *rt_start,
-        const bool *df_start,
         const float *DQSC,
         const float *DQSB)
     {
@@ -858,12 +850,12 @@ namespace qAlgorithms
             peak.area = regression.area * exp_b0 * delta_rt;
             peak.areaUncertainty = regression.uncertainty_area * exp_b0 * delta_rt;
 
-            std::pair<float, float> mz = weightedMeanAndVariance(mz_start, y_start, df_start, regression.left_limit, regression.right_limit);
+            std::pair<float, float> mz = weightedMeanAndVariance(mz_start, intensity, regression.left_limit, regression.right_limit);
             peak.mz = mz.first;
             peak.mzUncertainty = mz.second;
 
-            peak.dqsCen = weightedMeanAndVariance(DQSC, y_start, df_start, regression.left_limit, regression.right_limit).first;
-            peak.dqsBin = weightedMeanAndVariance(DQSB, y_start, df_start, regression.left_limit, regression.right_limit).first;
+            peak.dqsCen = weightedMeanAndVariance(DQSC, intensity, regression.left_limit, regression.right_limit).first;
+            peak.dqsBin = weightedMeanAndVariance(DQSB, intensity, regression.left_limit, regression.right_limit).first;
             peak.DQSF = 1 - erf_approx_f(regression.uncertainty_area / regression.area);
 
             peak.idxPeakStart = regression.left_limit;
