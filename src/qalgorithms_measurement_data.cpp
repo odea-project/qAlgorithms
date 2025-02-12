@@ -78,17 +78,17 @@ namespace qAlgorithms
         return expectedDifference;
     }
 
-    std::array<float, 3> interpolateQadratic(const float *x, const float *y)
+    inline std::array<double, 3> interpolateQuadratic(const float *x, const float *y)
     {
-        float x1 = x[0], y1 = y[0];
-        float x2 = x[1], y2 = y[1];
-        float x3 = x[2], y3 = y[2];
+        double x1 = x[0], y1 = y[0];
+        double x2 = x[1], y2 = y[1];
+        double x3 = x[2], y3 = y[2];
 
-        float denom = (x1 - x2) * (x1 - x3) * (x2 - x3);
+        double denom = (x1 - x2) * (x1 - x3) * (x2 - x3);
 
-        float a = (x3 * (y2 - y1) + x2 * (y1 - y3) + x1 * (y3 - y2)) / denom;
-        float b = (x3 * x3 * (y1 - y2) + x2 * x2 * (y3 - y1) + x1 * x1 * (y2 - y3)) / denom;
-        float c = (x2 * x3 * (x2 - x3) * y1 + x3 * x1 * (x3 - x1) * y2 + x1 * x2 * (x1 - x2) * y3) / denom;
+        double a = (x3 * (y2 - y1) + x2 * (y1 - y3) + x1 * (y3 - y2)) / denom;
+        double b = (x3 * x3 * (y1 - y2) + x2 * x2 * (y3 - y1) + x1 * x1 * (y2 - y3)) / denom;
+        double c = (x2 * x3 * (x2 - x3) * y1 + x3 * x1 * (x3 - x1) * y2 + x1 * x2 * (x1 - x2) * y3) / denom;
 
         return {c, b, a};
     }
@@ -215,7 +215,7 @@ namespace qAlgorithms
                             const float y[3] = {std::log(dp_startOfBlock.y), std::log(dataPoints[maxOfBlock].y), std::log(dataPoints[pos].y)};
                             // float b0, b1, b2;
                             // calculateCoefficients(x, y, b0, b1, b2);
-                            auto coeffs = interpolateQadratic(x, y);
+                            auto coeffs = interpolateQuadratic(x, y);
                             // assert(coeffs[0] == b0);
                             // extrapolate the left side of the block
                             for (int i = 0; i < 2; i++)
@@ -371,6 +371,7 @@ namespace qAlgorithms
     // global variable, this is a demporary solution
     size_t NO_INTERPOLATE_COUNT = 0;
     size_t UNCERTAIN_BLOCK_END = 0;
+    double AVERAGE_EXTRAPOLATION_DIFF = 0;
 
     std::vector<std::vector<CentroidPeak>> findCentroids_MZML( // this function needs to be split @todo
         sc::MZML &data,
@@ -507,22 +508,8 @@ namespace qAlgorithms
         for (size_t i = 0; i < selectedIndices.size(); ++i)
         {
             std::vector<std::vector<double>> spectrum = data.get_spectrum(selectedIndices[i]);
-            std::vector<centroidPoint> dataPoints;
-            dataPoints.reserve(spectrum[0].size());
-            for (size_t i = 0; i < spectrum[0].size(); ++i)
-            {
-                if (spectrum[1][i] == 0.0)
-                {
-                    continue; // skip values with no intensity @todo minimum intensity?
-                }
-                centroidPoint dp(
-                    spectrum[0][i], // mz
-                    spectrum[1][i], // intensity
-                    true);          // real point
-                dataPoints.push_back(dp);
-            }
             // inter/extrapolate data, and identify data blocks @todo these should be two different functions
-            auto treatedData = pretreatDataCentroids(dataPoints, expectedDifference);
+            auto treatedData = pretreatDataCentroids(spectrum, expectedDifference);
             assert(relativeIndex[i] != 0);
             centroids[i] = findCentroids(treatedData, relativeIndex[i]); // find peaks in data blocks of treated data
         }
@@ -531,9 +518,11 @@ namespace qAlgorithms
             PPM_PRECENTROIDED = -INFINITY; // reset value before the next function call
         }
         std::cerr << "    Gaps which could not be interpolated: " << NO_INTERPOLATE_COUNT << "\n"
-                  << "    Blocks with posssibly premature termination: " << UNCERTAIN_BLOCK_END << "\n";
+                  << "    Blocks with posssibly premature termination: " << UNCERTAIN_BLOCK_END << "\n"
+                  << "    Average difference between interpolation methods: " << AVERAGE_EXTRAPOLATION_DIFF << "\n";
         NO_INTERPOLATE_COUNT = 0;
         UNCERTAIN_BLOCK_END = 0;
+        AVERAGE_EXTRAPOLATION_DIFF = 0;
         return centroids;
     }
 
@@ -552,12 +541,27 @@ namespace qAlgorithms
         return p;
     }
 
-    std::vector<ProfileBlock> pretreatDataCentroids(std::vector<centroidPoint> &dataPoints, float expectedDifference)
+    std::vector<ProfileBlock> pretreatDataCentroids(std::vector<std::vector<double>> spectrum, float expectedDifference)
     {
+        std::vector<centroidPoint> dataPoints;
+        dataPoints.reserve(spectrum[0].size());
+        for (size_t i = 0; i < spectrum[0].size(); ++i)
+        {
+            if (spectrum[1][i] == 0.0)
+            {
+                continue; // skip values with no intensity @todo minimum intensity?
+            }
+            centroidPoint dp(
+                spectrum[0][i], // mz
+                spectrum[1][i], // intensity
+                true);          // real point
+            dataPoints.push_back(dp);
+        }
+        // a point with infinite mz is added to the end to ensure that the block end code is always executed
         centroidPoint dp(
-            std::numeric_limits<float>::infinity(), // mz
-            0.0,                                    // intensity
-            false);                                 // interpolated point
+            INFINITY, // mz
+            0.0,      // intensity
+            false);   // interpolated point
         dataPoints.push_back(dp);
 
         std::vector<ProfileBlock> subProfiles;
@@ -606,10 +610,10 @@ namespace qAlgorithms
                     // add gapSize interpolated datapoints @todo this can be zero
                     const float dy = std::pow(dataPoints[pos + 1].intensity / dataPoints[pos].intensity,
                                               1.0 / float(gapSize + 1)); // dy for log interpolation ; 1 if gapsize == 0
-                    for (int i = 1; i <= gapSize; i++)
+                    for (int i = 0; i < gapSize; i++)
                     {
-                        currentBlock.intensity.push_back(dataPoints[pos].intensity * std::pow(dy, i));
-                        currentBlock.mz.push_back(dataPoints[pos].mz + i * expectedDifference);
+                        currentBlock.intensity.push_back(dataPoints[pos].intensity * std::pow(dy, i + 1));
+                        currentBlock.mz.push_back(dataPoints[pos].mz + (i + 1) * expectedDifference);
                         currentBlock.df.push_back(false);
                     }
                 }
@@ -623,7 +627,6 @@ namespace qAlgorithms
                     if (blockSize > 4)
                     {
                         float blockStartMZ = currentBlock.mz[2];
-                        float blockStartIntensity = currentBlock.intensity[2];
                         // check if the maximum of the block is the first or last data point
                         if (maxOfBlock == pos || dataPoints[maxOfBlock].mz == blockStartMZ)
                         {
@@ -644,41 +647,51 @@ namespace qAlgorithms
                         else
                         {
                             // this is the expected case
-                            const float x[3] = {0.f,
-                                                dataPoints[maxOfBlock].mz - blockStartMZ,
-                                                dataPoints[pos].mz - blockStartMZ};
-                            const float y[3] = {std::log(blockStartIntensity),
+                            const float x_old[3] = {0.f,
+                                                    dataPoints[maxOfBlock].mz - blockStartMZ,
+                                                    dataPoints[pos].mz - blockStartMZ};
+                            const float x[3] = {blockStartMZ,
+                                                dataPoints[maxOfBlock].mz,
+                                                dataPoints[pos].mz};
+                            const float y[3] = {std::log(currentBlock.intensity[2]),
                                                 std::log(dataPoints[maxOfBlock].intensity),
                                                 std::log(dataPoints[pos].intensity)};
-                            auto coeffs = interpolateQadratic(x, y);
+                            auto coeffs_old = interpolateQuadratic(x_old, y);
+                            auto coeffs = interpolateQuadratic(x, y);
 
                             for (int i = 0; i < 2; i++)
                             {
-                                const float x = blockStartMZ - (2 - i) * expectedDifference - blockStartMZ;
-
+                                const float x = blockStartMZ - (2 - i) * expectedDifference;
                                 currentBlock.intensity[i] = std::exp(coeffs[0] + x * (coeffs[1] + x * coeffs[2]));
+                                float prev_x = -(2 - i) * expectedDifference;
+                                float prediff = (coeffs[0] + x * (coeffs[1] + x * coeffs[2])) - (coeffs_old[0] + prev_x * (coeffs_old[1] + prev_x * coeffs_old[2]));
+                                float test = currentBlock.intensity[i] - std::exp(coeffs_old[0] + prev_x * (coeffs_old[1] + prev_x * coeffs_old[2]));
                                 currentBlock.mz[i] = blockStartMZ - (2 - i) * expectedDifference;
+                                AVERAGE_EXTRAPOLATION_DIFF += test;
                             }
                             // add the extrapolated data points to the right side of the block
                             for (int i = 0; i < 2; i++)
                             {
                                 const float dp_x = dataPoints[pos].mz + float(i + 1) * expectedDifference;
-                                const float x = dp_x - blockStartMZ;
+                                const float prev_x = dp_x - blockStartMZ;
 
-                                currentBlock.intensity.push_back(std::exp(coeffs[0] + x * (coeffs[1] + x * coeffs[2])));
+                                currentBlock.intensity.push_back(std::exp(coeffs[0] + dp_x * (coeffs[1] + dp_x * coeffs[2])));
+                                auto test = currentBlock.intensity[i] - std::exp(coeffs_old[0] + prev_x * (coeffs_old[1] + prev_x * coeffs_old[2]));
                                 currentBlock.mz.push_back(dp_x);
                                 currentBlock.df.push_back(false);
+                                AVERAGE_EXTRAPOLATION_DIFF += test;
                             }
                         }
                         maxOfBlock = pos + 1;
                         // block is finished, add currentBlock to storage vector
+                        // interpolateEdges(currentBlock.mz, &currentBlock.intensity);
                         subProfiles.push_back(currentBlock);
                     }
-                    currentBlock = blockStart(); // reset bloack for next iteration
+                    currentBlock = blockStart(); // reset block for next iteration
                     blockSize = 0;
                 }
             }
-            else if (gapSize2 == 0) // no gap found
+            else // if (gapSize2 == 0) // no gap found
             {
                 countNoGap++;
                 assert(gapSize2 == 0);
@@ -692,10 +705,58 @@ namespace qAlgorithms
                 }
             }
         } // end of for loop
-
+        if (blockSize > 4)
+        {
+            subProfiles.push_back(currentBlock);
+        }
+        AVERAGE_EXTRAPOLATION_DIFF /= subProfiles.size() / 4;
         // std::cerr << countSubOneGap << ", -" << countNoGap << ", ";
         return subProfiles;
     }
+
+    void interpolateEdges(const std::vector<float> x_axis, std::vector<float> *intensity)
+    {
+        // x-axis can be either mz (for centroids) or RT (for features)
+        assert(x_axis.size() > 8); // at least 9; five real points and four edge points
+        assert(x_axis.size() == intensity->size());
+        size_t pos = x_axis.size() - 3; // index of last real point
+        // auto maxInt = std::max(intensity->begin(), intensity->end());
+        // size_t maxIdx = std::distance(intensity->begin(), maxInt);
+        size_t maxIdx = 0;
+        for (size_t i = 2; i < x_axis.size() - 2; i++)
+        {
+            maxIdx = (*intensity)[i] > (*intensity)[maxIdx] ? i : maxIdx;
+        }
+        // quadratic interpolation using outer two points and the maximum
+        const float x[3] = {x_axis[2], x_axis[maxIdx], x_axis[pos]};
+        const float y[3] = {std::log((*intensity)[2]), std::log((*intensity)[maxIdx]), std::log((*intensity)[pos])};
+        auto coeffs = interpolateQuadratic(x, y);
+#define INTERPOLATE(x) (std::exp(coeffs[0] + x * (coeffs[1] + x * coeffs[2])))
+        // left side
+        if ((*intensity)[maxIdx] == (*intensity)[2])
+        {
+            assert((*intensity)[0] == (*intensity)[2]);
+            assert((*intensity)[1] == (*intensity)[2]);
+        }
+        else
+        {
+            double tmp = std::exp(coeffs[0] + x_axis[0] * (coeffs[1] + x_axis[0] * coeffs[2]));
+            assert((*intensity)[0] == INTERPOLATE(x_axis[0]));
+            assert((*intensity)[1] == INTERPOLATE(x_axis[1]));
+        }
+        // right side
+        if ((*intensity)[maxIdx] == (*intensity)[2])
+        {
+            assert((*intensity)[pos + 1] == (*intensity)[pos]);
+            assert((*intensity)[pos + 2] == (*intensity)[pos]);
+        }
+        else
+        {
+            assert((*intensity)[pos + 1] == INTERPOLATE(x_axis[pos + 1]));
+            assert((*intensity)[pos + 2] == INTERPOLATE(x_axis[pos + 2]));
+        }
+    }
+
 #pragma endregion "find centroids"
 
 #pragma region "find peaks"
