@@ -131,7 +131,7 @@ namespace qAlgorithms
             {
                 continue; // no valid peaks
             }
-            createCentroidPeaks(&all_peaks, &validRegressions, block, validRegressions.size(), scanNumber);
+            createCentroidPeaks(&all_peaks, &validRegressions, block, scanNumber);
             validRegressions.clear();
         }
 
@@ -158,7 +158,7 @@ namespace qAlgorithms
 
         std::vector<RegressionGauss> validRegressions;
         validRegressions.reserve(treatedData.separators.size() / 5); // we expect ~ 20% of all bins to have a feature
-        static const size_t GLOBAL_MAXSCALE_FEATURES = 63;
+        static const size_t GLOBAL_MAXSCALE_FEATURES = 30;
         for (size_t i = 0; i < treatedData.separators.size(); i++)
         {
             size_t length = treatedData.separators[i].end - treatedData.separators[i].start + 1;
@@ -183,8 +183,7 @@ namespace qAlgorithms
             {
                 continue; // no valid peaks
             }
-            createFeaturePeaks(&all_peaks, &validRegressions, validRegressions.size(),
-                               intensity, mz, RT, DQSC, DQSB);
+            createFeaturePeaks(&all_peaks, &validRegressions, intensity, mz, RT, DQSC, DQSB);
             validRegressions.clear();
         }
         delete[] intensity;
@@ -773,12 +772,11 @@ namespace qAlgorithms
         std::vector<CentroidPeak> *peaks,
         const std::vector<RegressionGauss> *validRegressionsVec,
         ProfileBlock block,
-        const size_t validRegressionsIndex,
         const size_t scanNumber)
     {
         assert(!validRegressionsVec->empty());
         // iterate over the validRegressions vector
-        for (size_t i = 0; i < validRegressionsIndex; i++)
+        for (size_t i = 0; i < validRegressionsVec->size(); i++)
         {
             RegressionGauss regression = (*validRegressionsVec)[i];
             assert(regression.isValid);
@@ -810,6 +808,13 @@ namespace qAlgorithms
             peak.numCompetitors = regression.numCompetitors;
             peak.scale = regression.scale;
 
+            assert(regression.right_limit < block.mz.size());
+            peak.extrapolations = regression.left_limit < 3 ? 2 - regression.left_limit : 0;                                    // left side
+            peak.extrapolations += block.mz.size() - regression.right_limit < 3 ? block.mz.size() - regression.right_limit : 0; // right side
+            assert(peak.extrapolations == 0);
+            // points that do not contribute to the degrees of freedom and are not part of the extrapolated region
+            peak.interpolations = regression.right_limit - regression.left_limit + 1 - regression.df - peak.extrapolations - 4; // -4 since four coefficients take up degrees of freedom
+
             /// @todo consider adding these properties so we can trace back everything completely
             // peak.idxPeakStart = regression.left_limit;
             // peak.idxPeakEnd = regression.right_limit;
@@ -820,7 +825,6 @@ namespace qAlgorithms
     void createFeaturePeaks(
         std::vector<FeaturePeak> *peaks,
         const std::vector<RegressionGauss> *validRegressionsVec,
-        const size_t validRegressionsIndex,
         const float *intensity,
         const float *mz_start,
         const float *rt_start,
@@ -828,7 +832,7 @@ namespace qAlgorithms
         const float *DQSB)
     {
         assert(!validRegressionsVec->empty());
-        for (size_t i = 0; i < validRegressionsIndex; i++)
+        for (size_t i = 0; i < validRegressionsVec->size(); i++)
         {
             RegressionGauss regression = (*validRegressionsVec)[i];
             assert(regression.isValid);

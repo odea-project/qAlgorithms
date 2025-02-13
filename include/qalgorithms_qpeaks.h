@@ -57,13 +57,11 @@ namespace qAlgorithms
         std::vector<CentroidPeak> *peaks,
         const std::vector<RegressionGauss> *validRegressionsVec,
         ProfileBlock block,
-        const size_t validRegressionsIndex,
         const size_t scanNumber);
 
     void createFeaturePeaks(
         std::vector<FeaturePeak> *peaks,
         const std::vector<RegressionGauss> *validRegressionsVec,
-        const size_t validRegressionsIndex,
         const float *y_start,
         const float *mz_start,
         const float *rt_start,
