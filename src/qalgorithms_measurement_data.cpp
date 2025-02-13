@@ -150,17 +150,18 @@ namespace qAlgorithms
                 {
                     // add gapSize interpolated datapoints @todo this can be zero
                     const float dy = std::pow(dataPoints[pos + 1].y / dataPoints[pos].y, 1.0 / float(gapSize + 1)); // dy for log interpolation
+                    float interpolateDiff = delta_x / (gapSize + 1);
                     for (int i = 1; i <= gapSize; i++)
                     {
                         binIdx.push_back(realIdx);
                         treatedData.dataPoints.emplace_back(
-                            dataPoints[pos].x + i * expectedDifference, // x-axis
-                            dataPoints[pos].y * std::pow(dy, i),        // intensity
-                            false,                                      // df
-                            0.f,                                        // DQSC
-                            0.f,                                        // DQSB
-                            0,                                          // scanNumber
-                            0.f);                                       // mz
+                            dataPoints[pos].x + i * interpolateDiff, // retention time
+                            dataPoints[pos].y * std::pow(dy, i),     // intensity
+                            false,                                   // interpolated point
+                            0.f,                                     // DQSC
+                            0.f,                                     // DQSB
+                            0,                                       // scanNumber
+                            0.f);                                    // mz
                         treatedData.intensity.push_back(dataPoints[pos].y * std::pow(dy, i));
                     }
                     assert(binIdx.size() == treatedData.dataPoints.size());
@@ -601,12 +602,14 @@ namespace qAlgorithms
                     // interpolate
                     // round up the number of points starting at 0.75
                     const int gapSize = static_cast<int>(delta_x / expectedDifference + 0.25 * expectedDifference) - 1;
+                    assert(gapSize < 4);
+                    float interpolateDiff = delta_x / (gapSize + 1);
                     const float dy = std::pow(dataPoints[pos + 1].intensity / dataPoints[pos].intensity,
                                               1.0 / float(gapSize + 1)); // dy for log interpolation ; 1 if gapsize == 0
                     for (int i = 0; i < gapSize; i++)
                     {
                         currentBlock.intensity.push_back(dataPoints[pos].intensity * std::pow(dy, i + 1));
-                        currentBlock.mz.push_back(dataPoints[pos].mz + (i + 1) * expectedDifference);
+                        currentBlock.mz.push_back(dataPoints[pos].mz + (i + 1) * interpolateDiff);
                         currentBlock.df.push_back(false);
                     }
                 }
