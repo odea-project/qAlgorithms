@@ -198,14 +198,14 @@ curve_S_M = function(x){ # merged curve with apex at x = rt and height = 1
   b0_n2_B = feature_B$b0 - feature_B$b1 * offset_B + feature_B$b3 * offset_B * offset_B - log(height_B)
   b1_n2_B = feature_B$b1 - 2 * feature_B$b3 * offset_B                              
   # mean of coefficients
-  b0_n1 = mean(b0_n1_A, b0_n1_B)
-  b1_n1 = mean(b0_n1_A, b0_n1_B)
-  b0_n2 = mean(b0_n1_A, b0_n1_B)
-  b1_n2 = mean(b0_n1_A, b0_n1_B)
-  b2_m = mean(feature_A$b2, feature_B$b2)
-  b3_m = mean(feature_A$b3, feature_B$b3)
+  b0_n1 = (b0_n1_A + b0_n1_B) / 2
+  b1_n1 = (b1_n1_A + b1_n1_B) / 2
+  b0_n2 = (b0_n2_A + b0_n2_B) / 2
+  b1_n2 = (b1_n2_A + b1_n2_B) / 2
+  b2_m = (feature_A$b2 + feature_B$b2) / 2
+  b3_m = (feature_A$b3 + feature_B$b3) / 2
   # the new apex position is also the mean of both previous apex positions
-  offset = mean(offset_A, offset_B)
+  offset = (offset_A + offset_B) / 2
   side = x < offset
   sq_L = b0_n1 + b1_n1 * x + b2_m * x^2
   sq_R = b0_n2 + b1_n2 * x + b3_m * x^2
@@ -217,6 +217,46 @@ ggplot(merge)+
   stat_function(fun = curve_S_A, colour = "red3")+
   stat_function(fun = curve_S_B, colour = "blue")+
   stat_function(fun = curve_S_M, colour = "green2")
+
+# re-scale and move regression back to generic x axis (scale to feature a only for illustration)
+curve_0_M = function(x){ # merged curve with apex at x = rt and height = 1
+  # coefficients for feature A
+  offset_A = - feature_A$rt_switch + feature_A$retentionTime
+  height_A = curve_0_A(feature_A$rt_switch) 
+  b0_n1_A = feature_A$b0 - feature_A$b1 * offset_A + feature_A$b2 * offset_A * offset_A - log(height_A)
+  b1_n1_A = feature_A$b1 - 2 * feature_A$b2 * offset_A                              
+  b0_n2_A = feature_A$b0 - feature_A$b1 * offset_A + feature_A$b3 * offset_A * offset_A - log(height_A)
+  b1_n2_A = feature_A$b1 - 2 * feature_A$b3 * offset_A                              
+  # coefficients for feature B
+  offset_B = - feature_B$rt_switch + feature_B$retentionTime
+  height_B = curve_0_B(feature_B$rt_switch) 
+  b0_n1_B = feature_B$b0 - feature_B$b1 * offset_B + feature_B$b2 * offset_B * offset_B - log(height_B)
+  b1_n1_B = feature_B$b1 - 2 * feature_B$b2 * offset_B                             
+  b0_n2_B = feature_B$b0 - feature_B$b1 * offset_B + feature_B$b3 * offset_B * offset_B - log(height_B)
+  b1_n2_B = feature_B$b1 - 2 * feature_B$b3 * offset_B                              
+  # mean of coefficients (re-scaled)
+  b0_n1 = (b0_n1_A + b0_n1_B) / 2 
+  b1_n1 = (b1_n1_A + b1_n1_B) / 2
+  b0_n2 = (b0_n2_A + b0_n2_B) / 2
+  b1_n2 = (b1_n2_A + b1_n2_B) / 2
+  b2_m = (feature_A$b2 + feature_B$b2) / 2
+  b3_m = (feature_A$b3 + feature_B$b3) / 2
+  # the new apex position is also the mean of both previous apex positions
+  offset = (offset_A + offset_B) / 2
+  # move the curve back along the axis
+  
+  side = x < offset
+  x = x + feature_A$retentionTime
+  sq_L = b0_n1 + b1_n1 * x + b2_m * x^2
+  sq_R = b0_n2 + b1_n2 * x + b3_m * x^2
+  return(exp(sq_L * side + sq_R * !side))
+}
+
+ggplot(points_A)+
+  geom_point(aes(retentionTime - feature_A$retentionTime, area))+
+  stat_function(fun = curve_0_A, colour = "red2")+
+  stat_function(fun = curve_0_M, colour = "green2")
+
 ```
 
 ```{r}
