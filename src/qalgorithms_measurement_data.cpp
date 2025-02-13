@@ -145,7 +145,7 @@ namespace qAlgorithms
             if (delta_x > 1.75 * expectedDifference)
             { // gap detected
                 // assert(gapSize2 != 0);
-                const int gapSize = static_cast<int>(delta_x / expectedDifference) - 1;
+                const int gapSize = static_cast<int>(delta_x / expectedDifference + 0.25 * expectedDifference) - 1;
                 if (gapSize < 4)
                 {
                     // add gapSize interpolated datapoints @todo this can be zero
@@ -569,7 +569,7 @@ namespace qAlgorithms
         // iterate over the data points
         size_t maxOfBlock = 0;
         size_t blockSize = 0; // size of the current block
-        size_t countSubOneGap = 0;
+        // size_t countSubOneGap = 0;
         size_t countNoGap = 0;
         ProfileBlock currentBlock = blockStart(); // initialised with two zeroed values in each vector
         for (size_t pos = 0; pos < dataPoints.size() - 1; pos++)
@@ -589,25 +589,18 @@ namespace qAlgorithms
                 gapSize2 = static_cast<int>(delta_x / expectedDifference) - 1;
                 if (gapSize2 == 0)
                 {
-                    countSubOneGap++;
+                    NO_INTERPOLATE_COUNT++;
                 }
             }
 
-            if (delta_x > 1.75 * expectedDifference)
-            { // gap detected
-                // assert(gapSize2 != 0);
-                const int gapSize = static_cast<int>(delta_x / expectedDifference) - 1;
-                int interpolationCount = int(delta_x / (1.5 * expectedDifference)) + 1;
-
-                if (gapSize < 4)
+            if (delta_x > 1.75 * expectedDifference) // 1.75 is used to round up asymmetrically. This parameter should be defined in a dynamic manner @todo
+            {                                        // gap detected
+                // either interpolate or break the block up
+                if (delta_x < 4.25 * expectedDifference) // at most three points can be interpolated, tolerated increase is < 0.1 per point
                 {
-                    if (gapSize == 0)
-                    {
-                        NO_INTERPOLATE_COUNT++;
-                    }
-
-                    // std::cerr << interpolationCount - gapSize << ", "; // between 0 to 2 more interpolations
-                    // add gapSize interpolated datapoints @todo this can be zero
+                    // interpolate
+                    // round up the number of points starting at 0.75
+                    const int gapSize = static_cast<int>(delta_x / expectedDifference + 0.25 * expectedDifference) - 1;
                     const float dy = std::pow(dataPoints[pos + 1].intensity / dataPoints[pos].intensity,
                                               1.0 / float(gapSize + 1)); // dy for log interpolation ; 1 if gapsize == 0
                     for (int i = 0; i < gapSize; i++)
@@ -618,8 +611,8 @@ namespace qAlgorithms
                     }
                 }
                 else
-                { // END OF BLOCK, EXTRAPOLATION STARTS @todo move this into its own function
-                    // assert(interpolationCount > 3);
+                {                                                                        // END OF BLOCK, EXTRAPOLATION STARTS @todo move this into its own function
+                    int interpolationCount = int(delta_x / (1.75 * expectedDifference)); // alternative gap size
                     if (interpolationCount < 4)
                     {
                         UNCERTAIN_BLOCK_END++;
@@ -656,8 +649,8 @@ namespace qAlgorithms
                             const float y[3] = {std::log(currentBlock.intensity[2]),
                                                 std::log(dataPoints[maxOfBlock].intensity),
                                                 std::log(dataPoints[pos].intensity)};
-                            auto coeffs_old = interpolateQuadratic(x_old, y);
-                            auto coeffs = interpolateQuadratic(x, y);
+                            auto coeffs = interpolateQuadratic(x_old, y);
+                            auto coeffs_old = interpolateQuadratic(x, y);
 
                             for (int i = 0; i < 2; i++)
                             {
