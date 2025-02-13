@@ -5,16 +5,11 @@
 #include "../external/StreamCraft/src/StreamCraft_mzml.hpp"
 
 #include <vector>
+#include <array>
 
 namespace qAlgorithms
 {
-    struct treatedData // @todo remove this struct
-    {
-        std::vector<dataPoint> dataPoints;
-        std::vector<int> separators;
-    };
-
-    float interpolateQadratic(float interpolate, const float *x, const float *y, float &b0, float &b1, float &b2);
+    inline std::array<double, 3> interpolateQuadratic(float interpolate, const float *x, const float *y);
 
     std::vector<std::vector<CentroidPeak>> transferCentroids( // @todo merge with findPeaks_mzml
         sc::MZML &data,
@@ -23,12 +18,11 @@ namespace qAlgorithms
         const int start_index,
         double PPMerror);
 
-    double
-    calcExpectedDiff(std::vector<double> &data);
+    double calcExpectedDiff(std::vector<double> &data);
 
     /**
      * @brief Inter/extrapolate gaps in data and define separation markers for data blocks.
-     * @param dataPoints : {x, y, df, dqsCentroid, dqsBinning, scanNumber}
+     * @param dataPoints : {x, y, df, DQSC, DQSB, scanNumber}
      * @return std::vector<std::vector<dataPoint>::iterator> : separation markers for data blocks
      */
     treatedData pretreatData(std::vector<dataPoint> &dataPoints,
@@ -36,9 +30,16 @@ namespace qAlgorithms
                              float expectedDifference,
                              const bool updateExpectedDifference = true);
 
-    float calcRTDiff(std::vector<double> &retention_times);
+    std::vector<ProfileBlock> pretreatDataCentroids(std::vector<std::vector<double>> spectrum, float expectedDifference);
 
-    std::vector<dataPoint> mzmlToDataPoint(sc::MZML &data, const int index);
+    void interpolateEdges(const std::vector<float> x_axis, std::vector<float> *intensity);
+
+    treatedData pretreatDataFeatures(std::vector<dataPoint> &dataPoints,
+                                     std::vector<unsigned int> &binIdx,
+                                     float expectedDifference,
+                                     const bool updateExpectedDifference = true);
+
+    float calcRTDiff(std::vector<double> &retention_times);
 
     std::vector<dataPoint> qbinToDataPoint(EIC &eic);
 
