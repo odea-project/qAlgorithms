@@ -138,6 +138,7 @@ int main(int argc, char *argv[])
         for (auto polarity : polarities)
         {
             filename = pathSource.stem().string();
+#pragma region "centroiding"
             std::vector<float> convertRT;
             float diff_rt = 0;
             // @todo add check if set polarity is correct
@@ -160,7 +161,6 @@ int main(int argc, char *argv[])
             {
                 printCentroids(centroids, convertRT, userArgs.outputPath, filename, userArgs.silent, userArgs.skipError, userArgs.noOverwrite);
             }
-
             // @todo remove diagnostics later
             auto binThis = passToBinning(centroids);
 
@@ -178,16 +178,6 @@ int main(int argc, char *argv[])
             }
             meanCenErrorAbs /= binThis.size();
             meanCenErrorRel /= binThis.size();
-            //
-
-            if (userArgs.printSubProfile)
-            {
-                // create a subset of the profile data which only contains binned points
-                // organisation: bin ID -> vector<vector<profile point>>
-                // after peak finding, use the peak borders to annotate which profile
-                // points were part of which peak.
-                // @todo consider adding the option to also print surrounding profile points
-            }
 
             auto timeEnd = std::chrono::high_resolution_clock::now();
             std::chrono::duration<float> timePassed = std::chrono::duration_cast<std::chrono::milliseconds>(timeEnd - timeStart);
@@ -198,6 +188,7 @@ int main(int argc, char *argv[])
                           << " spectra in " << timePassed.count() << " s\n";
             }
 
+#pragma region "binning"
             timeStart = std::chrono::high_resolution_clock::now();
 
             std::vector<EIC> binnedData = performQbinning(
@@ -247,7 +238,7 @@ int main(int argc, char *argv[])
                 }
             }
             meanDQSB /= count;
-
+#pragma region "feature detection"
             timeStart = std::chrono::high_resolution_clock::now();
             // every subvector of peaks corresponds to the bin ID
             auto peaks = findPeaks_QBIN(binnedData, diff_rt);
@@ -268,13 +259,13 @@ int main(int argc, char *argv[])
                 if (!massTraceStable(massesBin, peaks[i].idxPeakStart, peaks[i].idxPeakEnd))
                 {
                     ++peaksWithMassGaps;
-                    peaks[i].dqsPeak *= -1;
+                    peaks[i].DQSF *= -1;
                     // @todo consider removing these or add a correction set somewhere later
                     // @todo add some documentation regarding the scores
                 }
                 else
                 {
-                    meanDQSF += peaks[i].dqsPeak;
+                    meanDQSF += peaks[i].DQSF;
                 }
                 meanInterpolations += peaks[i].interpolationCount - 4;
             }

@@ -15,32 +15,45 @@ namespace qAlgorithms
         float x;
         float y;
         bool df;
-        float dqsCentroid;
-        float dqsBinning;
-        int scanNumber;
+        float DQSC;
+        float DQSB;
+        unsigned int scanNumber;
         float mz;
     };
 
-    /**
-     * @brief A class to store peak data
-     * @details The Peak class is used to store peak data. It contains the position, height, width, and area of the peak. The class also contains the uncertainty of the peak position, height, width, and area, the data quality score of the peak, the regression coefficients, the valley position, the degrees of freedom, and the index of the regression window position.
-     * @param sampleID The sample ID
-     * @param height The height of the peak
-     * @param area The area of the peak
-     * @param width The width of the peak
-     * @param heightUncertainty The uncertainty of the peak height
-     * @param areaUncertainty The uncertainty of the peak area
-     * @param dqsPeak The data quality score of the peak
-     * @param dqsBin The data quality score of the bin
-     * @param dqsCen The data quality score of the centroid
-     * @param retentionTime The retention time of the peak
-     * @param mz The mass-to-charge ratio of the peak
-     * @param retentionTimeUncertainty The uncertainty of the retention time
-     * @param mzUncertainty The uncertainty of the mass-to-charge ratio
-     * @param idxBin bin in which the feature was found
-     * @param idxPeakStart index of first (if sorted by RT) point of the bin which is part of this peak
-     * @param idxPeakEnd index of last (if sorted by RT) point of the bin which is part of this peak
-     */
+    struct centroidPoint
+    {
+        float mz;
+        float intensity;
+        bool df;
+    };
+
+    struct separator
+    {
+        size_t start;
+        size_t end;
+    };
+
+    struct treatedData // @todo remove this struct
+    {
+        std::vector<dataPoint> dataPoints;
+        std::vector<separator> separators;
+        // points as individual vectors
+        // std::vector<float> RT;
+        std::vector<float> intensity;
+        // std::vector<bool> df;
+        // std::vector<float> DQSC;
+        // std::vector<float> DQSB;
+        // std::vector<int> scanNumber;
+        // std::vector<float> mz;
+    };
+
+    struct ProfileBlock
+    {
+        std::vector<float> intensity;
+        std::vector<float> mz;
+        std::vector<bool> df;
+    };
 
     struct RegCoeffs
     {
@@ -81,30 +94,6 @@ namespace qAlgorithms
         unsigned int scale;
     };
 
-    struct FeaturePeak
-    {
-        RegCoeffs coefficients;
-        float height;
-        float area;
-        float width;
-        float heightUncertainty;
-        float areaUncertainty;
-        float dqsPeak;       // only relevant for features
-        float dqsBin;        // can be calculated when needed
-        float dqsCen;        // can be calculated when needed
-        float retentionTime; // only relevant for features
-        float mz;
-        float retentionTimeUncertainty;
-        float mzUncertainty;
-        unsigned int idxBin;
-        unsigned int idxPeakStart; // degrees of freedom = idxPeakEnd - idxPeakStart
-        unsigned int idxPeakEnd;
-        unsigned int interpolationCount;
-        unsigned int competitorCount;
-        unsigned int scale;
-        bool apexLeft;
-    };
-
     struct qCentroid
     {
         double mz;
@@ -129,6 +118,30 @@ namespace qAlgorithms
         std::vector<float> DQSB;
         std::vector<float> DQSC;
         std::vector<unsigned int> cenID;
+    };
+
+    struct FeaturePeak
+    {
+        RegCoeffs coefficients;
+        float height;
+        float area;
+        float width;
+        float heightUncertainty;
+        float areaUncertainty;
+        float DQSF;          // only relevant for features
+        float dqsBin;        // can be calculated when needed
+        float dqsCen;        // can be calculated when needed
+        float retentionTime; // only relevant for features
+        float mz;
+        float retentionTimeUncertainty;
+        float mzUncertainty;
+        unsigned int idxBin;
+        unsigned int idxPeakStart; // degrees of freedom = idxPeakEnd - idxPeakStart
+        unsigned int idxPeakEnd;
+        unsigned int interpolationCount;
+        unsigned int competitorCount;
+        unsigned int scale;
+        bool apexLeft;
     };
 }
 

@@ -15,7 +15,7 @@ namespace qAlgorithms
 {
     const std::array<float, 384> initialize();
 
-    std::vector<CentroidPeak> findCentroids(treatedData &treatedData, const size_t scanNumber);
+    std::vector<CentroidPeak> findCentroids(const std::vector<ProfileBlock> treatedData, const size_t scanNumber);
 
     void findFeatures(std::vector<FeaturePeak> &all_peaks, treatedData &treatedData);
 
@@ -24,7 +24,7 @@ namespace qAlgorithms
     void runningRegression(
         const float *y_start,
         const float *ylog_start,
-        const bool *df_start,
+        const std::vector<bool> degreesOfFreedom,
         const size_t arrayMaxLength,
         const size_t n,
         std::vector<RegressionGauss> &validRegressions,
@@ -35,7 +35,7 @@ namespace qAlgorithms
         size_t n_segments,
         const float *y_start,
         const float *ylog_start,
-        const bool *df_start,
+        const std::vector<bool> degreesOfFreedom,
         size_t arrayMaxLength,
         size_t scale,
         std::vector<RegressionGauss> &validRegressions);
@@ -45,7 +45,7 @@ namespace qAlgorithms
         size_t arrayMaxLength,
         const size_t i,
         const size_t scale,
-        const bool *df_start,
+        const std::vector<bool> df_start,
         const float *y_start,
         const float *ylog_start);
 
@@ -56,10 +56,8 @@ namespace qAlgorithms
     void createCentroidPeaks(
         std::vector<CentroidPeak> *peaks,
         const std::vector<RegressionGauss> *validRegressionsVec,
+        ProfileBlock block,
         const size_t validRegressionsIndex,
-        const float *y_start,
-        const float *mz_start,
-        const bool *df_start,
         const size_t scanNumber);
 
     void createFeaturePeaks(
@@ -69,9 +67,8 @@ namespace qAlgorithms
         const float *y_start,
         const float *mz_start,
         const float *rt_start,
-        const bool *df_start,
-        const float *dqs_cen,
-        const float *dqs_bin);
+        const float *DQSC,
+        const float *DQSB);
 
     float calcSSE_base(RegCoeffs coeff, const float *y_start, int limit_L, int limit_R);
 
@@ -99,7 +96,7 @@ namespace qAlgorithms
     std::pair<size_t, float> findBestRegression(
         const float *y_start,
         std::vector<RegressionGauss> regressions,
-        const bool *df_start,
+        const std::vector<bool> df_start,
         size_t startIdx,
         size_t endIdx);
 
@@ -118,6 +115,11 @@ namespace qAlgorithms
      */
     size_t calcDF(
         const bool *df_start,
+        unsigned int left_limit,
+        unsigned int right_limit);
+
+    size_t calcDF(
+        const std::vector<bool> df_start,
         unsigned int left_limit,
         unsigned int right_limit);
 
@@ -247,7 +249,7 @@ namespace qAlgorithms
         const size_t n,
         __m128 *result);
 
-    std::pair<float, float> weightedMeanAndVariance(const float *x, const float *weight, const bool *df,
+    std::pair<float, float> weightedMeanAndVariance(const float *x, const float *weight,
                                                     int left_limit, int right_limit);
 }
 

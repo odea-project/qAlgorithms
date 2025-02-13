@@ -763,7 +763,7 @@ namespace qAlgorithms
                     counter, binID, peak.idxPeakStart, peak.idxPeakEnd, peak.mz, peak.mzUncertainty,
                     peak.retentionTime, peak.retentionTimeUncertainty, RTs[peak.idxPeakStart], RTs[peak.idxPeakEnd],
                     peak.area, peak.areaUncertainty, peak.height, peak.heightUncertainty, peak.scale,
-                    peak.interpolationCount, peak.competitorCount, peak.dqsCen, peak.dqsBin, peak.dqsPeak,
+                    peak.interpolationCount, peak.competitorCount, peak.dqsCen, peak.dqsBin, peak.DQSF,
                     // properties relevant for componentisation, remove this later
                     peak.apexLeft ? "T" : "F", peak.coefficients.b0, peak.coefficients.b1, peak.coefficients.b2, peak.coefficients.b3);
             output << buffer;
@@ -821,7 +821,7 @@ namespace qAlgorithms
             {
                 sprintf(buffer, "%d,%d,%d,%0.6f,%0.6f,%0.4f,%0.3f,%0.3f,%d,%0.5f,%0.5f,%0.5f,%s,%0.8f,%0.8f,%0.8f,%0.8f\n",
                         counter, binID, bin.cenID[cen], bin.mz[cen], bin.predInterval[cen], bin.rententionTimes[cen],
-                        bin.ints_area[cen], bin.ints_height[cen], bin.df[cen], bin.DQSC[cen], bin.DQSB[cen], peak.dqsPeak,
+                        bin.ints_area[cen], bin.ints_height[cen], bin.df[cen], bin.DQSC[cen], bin.DQSB[cen], peak.DQSF,
                         peak.apexLeft ? "T" : "F", peak.coefficients.b0, peak.coefficients.b1, peak.coefficients.b2, peak.coefficients.b3);
                 output << buffer;
             }
