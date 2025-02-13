@@ -592,7 +592,7 @@ namespace qAlgorithms
             return;
         }
         output << "cenID,mz,mzUncertainty,scanNumber,retentionTime,area,areaUncertainty,"
-               << "height,heightUncertainty,scale,degreesOfFreedom,DQSC\n";
+               << "height,heightUncertainty,scale,degreesOfFreedom,DQSC,interpolations,extrapolations,competitors\n";
         unsigned int counter = 0;
         for (size_t i = 0; i < peaktable.size(); i++)
         {
@@ -602,9 +602,10 @@ namespace qAlgorithms
                 {
                     auto peak = peaktable[i][j];
                     char buffer[256];
-                    sprintf(buffer, "%d,%0.6f,%0.6f,%d,%0.4f,%0.4f,%0.4f,%0.4f,%0.4f,%d,%u,%0.5f\n",
+                    sprintf(buffer, "%d,%0.6f,%0.6f,%d,%0.4f,%0.4f,%0.4f,%0.4f,%0.4f,%d,%u,%0.5f,%d,%d,%d\n",
                             counter, peak.mz, peak.mzUncertainty, peak.scanNumber, convertRT[peak.scanNumber],
-                            peak.area, peak.areaUncertainty, peak.height, peak.heightUncertainty, peak.scale, peak.df, peak.dqsCen);
+                            peak.area, peak.areaUncertainty, peak.height, peak.heightUncertainty, peak.scale, peak.df, peak.dqsCen,
+                            peak.interpolations, peak.extrapolations, peak.numCompetitors);
                     output << buffer;
                     ++counter;
                 }
