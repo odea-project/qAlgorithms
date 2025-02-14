@@ -92,7 +92,6 @@ namespace qAlgorithms
         unsigned int df; // degrees of freedom
         unsigned int numCompetitors;
         unsigned int scale;
-        unsigned int extrapolations;
         unsigned int interpolations;
     };
 
