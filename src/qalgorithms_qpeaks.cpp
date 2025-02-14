@@ -808,12 +808,7 @@ namespace qAlgorithms
             peak.numCompetitors = regression.numCompetitors;
             peak.scale = regression.scale;
 
-            assert(regression.right_limit < block.mz.size());
-            peak.extrapolations = regression.left_limit < 3 ? 2 - regression.left_limit : 0;                                    // left side
-            peak.extrapolations += block.mz.size() - regression.right_limit < 3 ? block.mz.size() - regression.right_limit : 0; // right side
-            assert(peak.extrapolations == 0);
-            // points that do not contribute to the degrees of freedom and are not part of the extrapolated region
-            peak.interpolations = regression.right_limit - regression.left_limit + 1 - regression.df - peak.extrapolations - 4; // -4 since four coefficients take up degrees of freedom
+            peak.interpolations = regression.right_limit - regression.left_limit + 1 - regression.df - 4; // -4 since four coefficients take up degrees of freedom
 
             /// @todo consider adding these properties so we can trace back everything completely
             // peak.idxPeakStart = regression.left_limit;

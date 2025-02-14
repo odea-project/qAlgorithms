@@ -372,7 +372,6 @@ namespace qAlgorithms
     // global variable, this is a demporary solution
     size_t NO_INTERPOLATE_COUNT = 0;
     size_t UNCERTAIN_BLOCK_END = 0;
-    double AVERAGE_EXTRAPOLATION_DIFF = 0;
 
     std::vector<std::vector<CentroidPeak>> findCentroids_MZML( // this function needs to be split @todo
         sc::MZML &data,
@@ -519,11 +518,9 @@ namespace qAlgorithms
             PPM_PRECENTROIDED = -INFINITY; // reset value before the next function call
         }
         std::cerr << "    Gaps which could not be interpolated: " << NO_INTERPOLATE_COUNT << "\n"
-                  << "    Blocks with posssibly premature termination: " << UNCERTAIN_BLOCK_END << "\n"
-                  << "    Average difference between interpolation methods: " << AVERAGE_EXTRAPOLATION_DIFF << "\n";
+                  << "    Blocks with posssibly premature termination: " << UNCERTAIN_BLOCK_END << "\n";
         NO_INTERPOLATE_COUNT = 0;
         UNCERTAIN_BLOCK_END = 0;
-        AVERAGE_EXTRAPOLATION_DIFF = 0;
         return centroids;
     }
 
@@ -533,12 +530,12 @@ namespace qAlgorithms
         p.df.reserve(16);
         p.intensity.reserve(16);
         p.mz.reserve(16);
-        p.df.push_back(false);
-        p.df.push_back(false);
-        p.intensity.push_back(0);
-        p.intensity.push_back(0);
-        p.mz.push_back(0);
-        p.mz.push_back(0);
+        // p.df.push_back(false);
+        // p.df.push_back(false);
+        // p.intensity.push_back(0);
+        // p.intensity.push_back(0);
+        // p.mz.push_back(0);
+        // p.mz.push_back(0);
         return p;
     }
 
@@ -622,62 +619,62 @@ namespace qAlgorithms
                     }
                     if (blockSize > 4)
                     {
-                        float blockStartMZ = currentBlock.mz[2];
-                        // check if the maximum of the block is the first or last data point
-                        if (maxOfBlock == pos || dataPoints[maxOfBlock].mz == blockStartMZ)
-                        {
-                            // extrapolate the left side using the first non-zero data point (i.e, the start of the block)
-                            // @todo is this a good idea?
-                            for (int i = 0; i < 2; i++)
-                            {
-                                // LEFT SIDE
-                                currentBlock.intensity[i] = currentBlock.intensity[2];
-                                currentBlock.mz[i] = blockStartMZ - (2 - i) * expectedDifference;
-                                // degrees of freedom is already false
-                                // RIGHT SIDE
-                                currentBlock.intensity.push_back(dataPoints[pos].intensity);
-                                currentBlock.mz.push_back(dataPoints[pos].mz + float(i + 1) * expectedDifference);
-                                currentBlock.df.push_back(false);
-                            }
-                        }
-                        else
-                        {
-                            // this is the expected case
-                            const float x_old[3] = {0.f,
-                                                    dataPoints[maxOfBlock].mz - blockStartMZ,
-                                                    dataPoints[pos].mz - blockStartMZ};
-                            const float x[3] = {blockStartMZ,
-                                                dataPoints[maxOfBlock].mz,
-                                                dataPoints[pos].mz};
-                            const float y[3] = {std::log(currentBlock.intensity[2]),
-                                                std::log(dataPoints[maxOfBlock].intensity),
-                                                std::log(dataPoints[pos].intensity)};
-                            auto coeffs = interpolateQuadratic(x_old, y);
-                            auto coeffs_old = interpolateQuadratic(x, y);
+                        // float blockStartMZ = currentBlock.mz[2];
+                        // // check if the maximum of the block is the first or last data point
+                        // if (maxOfBlock == pos || dataPoints[maxOfBlock].mz == blockStartMZ)
+                        // {
+                        //     // extrapolate the left side using the first non-zero data point (i.e, the start of the block)
+                        //     // @todo is this a good idea?
+                        //     for (int i = 0; i < 2; i++)
+                        //     {
+                        //         // LEFT SIDE
+                        //         currentBlock.intensity[i] = currentBlock.intensity[2];
+                        //         currentBlock.mz[i] = blockStartMZ - (2 - i) * expectedDifference;
+                        //         // degrees of freedom is already false
+                        //         // RIGHT SIDE
+                        //         currentBlock.intensity.push_back(dataPoints[pos].intensity);
+                        //         currentBlock.mz.push_back(dataPoints[pos].mz + float(i + 1) * expectedDifference);
+                        //         currentBlock.df.push_back(false);
+                        //     }
+                        // }
+                        // else
+                        // {
+                        //     // this is the expected case
+                        //     const float x_old[3] = {0.f,
+                        //                             dataPoints[maxOfBlock].mz - blockStartMZ,
+                        //                             dataPoints[pos].mz - blockStartMZ};
+                        //     const float x[3] = {blockStartMZ,
+                        //                         dataPoints[maxOfBlock].mz,
+                        //                         dataPoints[pos].mz};
+                        //     const float y[3] = {std::log(currentBlock.intensity[2]),
+                        //                         std::log(dataPoints[maxOfBlock].intensity),
+                        //                         std::log(dataPoints[pos].intensity)};
+                        //     auto coeffs = interpolateQuadratic(x_old, y);
+                        //     auto coeffs_old = interpolateQuadratic(x, y);
 
-                            for (int i = 0; i < 2; i++)
-                            {
-                                const float x = blockStartMZ - (2 - i) * expectedDifference;
-                                currentBlock.intensity[i] = std::exp(coeffs[0] + x * (coeffs[1] + x * coeffs[2]));
-                                float prev_x = -(2 - i) * expectedDifference;
-                                float prediff = (coeffs[0] + x * (coeffs[1] + x * coeffs[2])) - (coeffs_old[0] + prev_x * (coeffs_old[1] + prev_x * coeffs_old[2]));
-                                float test = currentBlock.intensity[i] - std::exp(coeffs_old[0] + prev_x * (coeffs_old[1] + prev_x * coeffs_old[2]));
-                                currentBlock.mz[i] = blockStartMZ - (2 - i) * expectedDifference;
-                                AVERAGE_EXTRAPOLATION_DIFF += test;
-                            }
-                            // add the extrapolated data points to the right side of the block
-                            for (int i = 0; i < 2; i++)
-                            {
-                                const float dp_x = dataPoints[pos].mz + float(i + 1) * expectedDifference;
-                                const float prev_x = dp_x - blockStartMZ;
+                        //     for (int i = 0; i < 2; i++)
+                        //     {
+                        //         const float x = blockStartMZ - (2 - i) * expectedDifference;
+                        //         currentBlock.intensity[i] = std::exp(coeffs[0] + x * (coeffs[1] + x * coeffs[2]));
+                        //         float prev_x = -(2 - i) * expectedDifference;
+                        //         float prediff = (coeffs[0] + x * (coeffs[1] + x * coeffs[2])) - (coeffs_old[0] + prev_x * (coeffs_old[1] + prev_x * coeffs_old[2]));
+                        //         float test = currentBlock.intensity[i] - std::exp(coeffs_old[0] + prev_x * (coeffs_old[1] + prev_x * coeffs_old[2]));
+                        //         currentBlock.mz[i] = blockStartMZ - (2 - i) * expectedDifference;
+                        //         AVERAGE_EXTRAPOLATION_DIFF += test;
+                        //     }
+                        //     // add the extrapolated data points to the right side of the block
+                        //     for (int i = 0; i < 2; i++)
+                        //     {
+                        //         const float dp_x = dataPoints[pos].mz + float(i + 1) * expectedDifference;
+                        //         const float prev_x = dp_x - blockStartMZ;
 
-                                currentBlock.intensity.push_back(std::exp(coeffs[0] + dp_x * (coeffs[1] + dp_x * coeffs[2])));
-                                auto test = currentBlock.intensity[i] - std::exp(coeffs_old[0] + prev_x * (coeffs_old[1] + prev_x * coeffs_old[2]));
-                                currentBlock.mz.push_back(dp_x);
-                                currentBlock.df.push_back(false);
-                                AVERAGE_EXTRAPOLATION_DIFF += test;
-                            }
-                        }
+                        //         currentBlock.intensity.push_back(std::exp(coeffs[0] + dp_x * (coeffs[1] + dp_x * coeffs[2])));
+                        //         auto test = currentBlock.intensity[i] - std::exp(coeffs_old[0] + prev_x * (coeffs_old[1] + prev_x * coeffs_old[2]));
+                        //         currentBlock.mz.push_back(dp_x);
+                        //         currentBlock.df.push_back(false);
+                        //         AVERAGE_EXTRAPOLATION_DIFF += test;
+                        //     }
+                        // }
                         maxOfBlock = pos + 1;
                         // block is finished, add currentBlock to storage vector
                         // interpolateEdges(currentBlock.mz, &currentBlock.intensity);
@@ -705,7 +702,6 @@ namespace qAlgorithms
         {
             subProfiles.push_back(currentBlock);
         }
-        AVERAGE_EXTRAPOLATION_DIFF /= subProfiles.size() / 4;
         // std::cerr << countSubOneGap << ", -" << countNoGap << ", ";
         return subProfiles;
     }
