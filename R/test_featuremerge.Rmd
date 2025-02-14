@@ -14,8 +14,8 @@ library(tidyverse)
 # peaks = read_csv("~/Work/ODEA/qAlgorithms/build/22090901_H2O_1_pos_positive_features.csv")
 bins = read_csv("C:/Users/unisys/Documents/Studium/qAlgorithms/build/20240805_AA_DK_02_Ibu_Kali_0_20240808125236_positive_bins.csv")
 peaks = read_csv("C:/Users/unisys/Documents/Studium/qAlgorithms/build/20240805_AA_DK_02_Ibu_Kali_0_20240808125236_positive_features.csv")
-# bins = read_csv("C:/Users/unisys/Documents/Studium/qAlgorithms/build/SP_DDA_P1_positive_bins.csv")
-# peaks = read_csv("C:/Users/unisys/Documents/Studium/qAlgorithms/build/SP_DDA_P1_positive_features.csv")
+# bins = read_csv(""C:/Users/unisys/Documents/paper_afints/SP_DDA_P1_positive_bins.csv"")
+# peaks = read_csv("C:/Users/unisys/Documents/paper_afints/SP_DDA_P1_positive_features.csv")
 peaks = peaks[order(peaks$retentionTime),]
 ```
 
