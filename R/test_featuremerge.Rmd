@@ -12,12 +12,18 @@ library(tidyverse)
 ```{r read features}
 # bins = read_csv("~/Work/ODEA/qAlgorithms/build/22090901_H2O_1_pos_positive_bins.csv")
 # peaks = read_csv("~/Work/ODEA/qAlgorithms/build/22090901_H2O_1_pos_positive_features.csv")
-bins = read_csv("C:/Users/unisys/Documents/Studium/qAlgorithms/build/20240805_AA_DK_02_Ibu_Kali_0_20240808125236_positive_bins.csv")
-peaks = read_csv("C:/Users/unisys/Documents/Studium/qAlgorithms/build/20240805_AA_DK_02_Ibu_Kali_0_20240808125236_positive_features.csv")
-# bins = read_csv(""C:/Users/unisys/Documents/paper_afints/SP_DDA_P1_positive_bins.csv"")
-# peaks = read_csv("C:/Users/unisys/Documents/paper_afints/SP_DDA_P1_positive_features.csv")
+# bins = read_csv("C:/Users/unisys/Documents/Studium/qAlgorithms/build/20240805_AA_DK_02_Ibu_Kali_0_20240808125236_positive_bins.csv")
+# peaks = read_csv("C:/Users/unisys/Documents/Studium/qAlgorithms/build/20240805_AA_DK_02_Ibu_Kali_0_20240808125236_positive_features.csv")
+bins = read_csv("C:/Users/unisys/Documents/paper_afints/SP_DDA_P1_positive_bins.csv")
+peaks = read_csv("C:/Users/unisys/Documents/paper_afints/SP_DDA_P1_positive_features.csv")
 peaks = peaks[order(peaks$retentionTime),]
 ```
+
+```{r suspected components}
+peaks$suspect = c(abs(diff(peaks$mz)) < 1.5, FALSE)
+sus = which(peaks$suspect)
+```
+
 
 ```{r functions}
 rt_switch = function(feature){
@@ -127,48 +133,38 @@ curve_0_M = function(x, scale_to_A, feature_A, feature_B){ # merged curve with a
   b1_n2 = (b1_n2_A + b1_n2_B) / 2
   b2_m = (feature_A$b2 + feature_B$b2) / 2
   b3_m = (feature_A$b3 + feature_B$b3) / 2
-  # the new apex position is also the mean of both previous apex positions
-  offset = (offset_A + offset_B) / 2
-  # move the curve back along the axis
+  
   # re-scale the height to feature A 
   b0_n1 = ifelse(scale_to_A, b0_n1 + log(height_A), b0_n1 + log(height_B))
   b0_n2 = ifelse(scale_to_A, b0_n2 + log(height_A), b0_n2 + log(height_B))
+  # calculate the new offset as the intersection of both quadratic functions
+  root = sqrt((b1_n1 - b1_n2)^2 - 4* (b2_m - b3_m) * (b0_n1 - b0_n2))
+  if(is.nan(root)) {return(0)} # invalid set of coefficients
+  offset = (b1_n2 - b1_n1 ) / (2 * (b2_m - b3_m)) + root / (2 * (b2_m - b3_m))
+  
   # the curve can be shifted by setting x = x + offset. This is integrated into the coefficients, just like the previous shift
   b0_m1 = b0_n1 + b1_n1 * offset + b2_m * offset * offset
   b0_m2 = b0_n2 + b1_n2 * offset + b3_m * offset * offset
   b1_m1 = b1_n1 + 2 * b2_m * offset
-  b1_m2 = b1_n2 + 2 * b3_m * offset
-  # with some tolerance for error, b0_m1 == b0_m2 and b1_m1 == b1_m2
+  b1_m2 = b1_n2 + 2 * b3_m * offset # @todo correct offset if b1_m1 == b1_m2
+  # with some tolerance for error, b0_m1 == b0_m2 and b1_m1 == b1_m2. Take the mean for uniformity
+  b0_m = (b0_m1 + b0_m2) / 2
+  b1_m = (b1_m1 + b1_m2) / 2
   # x = x + offset # x axis is not modified
   side = x < 0
 
-  sq_L = b0_m1 + b1_m1 * x + b2_m * x^2 
-  sq_R = b0_m2 + b1_m2 * x + b3_m * x^2 
+  sq_L = b0_m + b1_m * x + b2_m * x^2 # @todo make these in
+  sq_R = b0_m + b1_m * x + b3_m * x^2 
   return(exp(sq_L * side + sq_R * !side))
 }
 ```
 
 
-295 + 457
-333 + 462
-181 + 370 + 420 // might belong to one distribution, but seemingly distortion at the left end influences width heavily
-209 + 244
-346 + 458 // promising pair
-1634 + 1861
-
-// testStandards 1
-3945 + 3979 (suspected isotope)
-6498 + 9504
-9504 + 466 // regression curve plot does not fit
-7318 + 7372
-7644 + 7764 (probable coelution in both halves)
-466 + 9504
-5264 + 5612 // these look similar, but inconsistent area distorts the peak
-4535 + 10511 // borderline case where i'm not sure myself
 ```{r}
-feature_A = 160
-feature_B = 1019 
-if(feature_A > feature_B) {stop()}
+idx = sus[5]
+feature_A = peaks$ID[idx]
+feature_B = peaks$ID[idx + 1]
+if(feature_A > feature_B) {idx = feature_A; feature_A = feature_B; feature_B = idx}
 
 feature_A = peaks[which(peaks$ID == feature_A),]
 feature_B = peaks[which(peaks$ID == feature_B),]
@@ -194,10 +190,6 @@ if (feature_B$binIdxEnd + 3 < clamp_r)
 {clamp_r = feature_B$binIdxEnd + 3}#
 points_B = points_B[clamp_l:clamp_r,]
 
-```
-
-```{r new curve}
-
 points_A$ID = feature_A$ID
 points_B$ID = feature_B$ID
 merge = rbind(points_A, points_B)
@@ -222,12 +214,12 @@ ggplot(merge)+
 
 
 ggplot(points_A)+
-  geom_point(aes(retentionTime - feature_A$retentionTime, area))+
+  geom_point(aes(retentionTime - feature_A$retentionTime + feature_A$rt_switch, area))+
   stat_function(fun = curve_0, args = list(feature = feature_A), colour = "red2")+
   stat_function(aes(x = retentionTime - feature_A$retentionTime), fun = curve_0_M, args = list(scale_to_A = T, feature_A = feature_A, feature_B = feature_B), colour = "green2")
 
 ggplot(points_B)+
-  geom_point(aes(retentionTime - feature_B$retentionTime, area))+
+  geom_point(aes(retentionTime - feature_B$retentionTime + feature_B$rt_switch, area))+
   stat_function(fun = curve_0, args = list(feature = feature_B), colour = "blue")+
   stat_function(aes(x = retentionTime - feature_B$retentionTime), fun = curve_0_M, args = list(scale_to_A = F, feature_A = feature_A, feature_B = feature_B), colour = "green2")
 
