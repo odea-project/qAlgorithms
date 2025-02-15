@@ -21,13 +21,6 @@ namespace qAlgorithms
         float mz;
     };
 
-    struct centroidPoint
-    {
-        float mz;
-        float intensity;
-        bool df;
-    };
-
     struct separator
     {
         size_t start;
