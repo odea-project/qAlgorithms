@@ -10,6 +10,7 @@
 #include <cmath>
 #include <fstream>
 #include <algorithm>
+#include <sstream>
 
 namespace qAlgorithms
 {
@@ -74,7 +75,7 @@ namespace qAlgorithms
             expectedDifference += differences[i];
         }
         expectedDifference /= upperLimit;
-
+        assert(expectedDifference > 0);
         return expectedDifference;
     }
 
@@ -393,7 +394,7 @@ namespace qAlgorithms
         std::vector<int> indices = data.get_spectra_index();                      // get all indices
         std::vector<int> ms_levels = data.get_spectra_level();                    // get all MS levels
         std::vector<int> num_datapoints = data.get_spectra_array_length();        // get number of data points
-        double expectedDifference = 0.0;                                          // expected difference between two consecutive x-axis values
+        double expectedDifference = 0.0;                                          // expected difference between two consecutive mz values
         assert(!indices.empty() && num_datapoints[0] > 4);
 
         // CHECK IF CENTROIDED SPECTRA
@@ -531,8 +532,8 @@ namespace qAlgorithms
         // to cause different behaviour for interpolation and block termination. Doubles are
         // used here since the loss of precision during exponentiation etc. is not taken into
         // account otherwise. Around 1000 centroids less than otherwise are produced for test cases.
-        std::vector<float> intensities_profile;
-        std::vector<float> mz_profile;
+        std::vector<double> intensities_profile;
+        std::vector<double> mz_profile;
         intensities_profile.reserve(spectrum[0].size() / 2);
         mz_profile.reserve(spectrum[0].size() / 2);
         // Depending on the vendor, a profile contains a lot of points with intensity 0.
@@ -561,7 +562,7 @@ namespace qAlgorithms
             currentBlock.mz.push_back(mz_profile[pos]);
             currentBlock.df.push_back(true);
 
-            const float delta_mz = mz_profile[pos + 1] - mz_profile[pos];
+            const double delta_mz = mz_profile[pos + 1] - mz_profile[pos];
             assert(delta_mz > 0);
 
             // 1.75 is used to round up asymmetrically. This parameter should be defined in a dynamic manner @todo
@@ -574,9 +575,9 @@ namespace qAlgorithms
                     // round up the number of points starting at 0.75
                     const int gapSize = static_cast<int>(delta_mz / expectedDifference + 0.25 * expectedDifference) - 1;
                     assert(gapSize < 4);
-                    float interpolateDiff = delta_mz / (gapSize + 1);
-                    const float dy = std::pow(intensities_profile[pos + 1] / intensities_profile[pos],
-                                              1.0 / float(gapSize + 1)); // dy for log interpolation ; 1 if gapsize == 0
+                    double interpolateDiff = delta_mz / (gapSize + 1);
+                    const double dy = std::pow(intensities_profile[pos + 1] / intensities_profile[pos],
+                                               1.0 / double(gapSize + 1)); // dy for log interpolation ; 1 if gapsize == 0
                     for (int i = 0; i < gapSize; i++)
                     {
                         currentBlock.intensity.push_back(intensities_profile[pos] * std::pow(dy, i + 1));
