@@ -125,7 +125,7 @@ curve_0_M = function(x, scale_to_A, feature_A, feature_B){ # merged curve with a
   b0_n1_B = feature_B$b0 - feature_B$b1 * offset_B + feature_B$b2 * offset_B * offset_B - log(height_B)
   b1_n1_B = feature_B$b1 - 2 * feature_B$b2 * offset_B                             
   b0_n2_B = feature_B$b0 - feature_B$b1 * offset_B + feature_B$b3 * offset_B * offset_B - log(height_B)
-  b1_n2_B = feature_B$b1 - 2 * feature_B$b3 * offset_B                              
+  b1_n2_B = feature_B$b1 - 2 * feature_B$b3 * offset_B
   # mean of coefficients (re-scaled)
   b0_n1 = (b0_n1_A + b0_n1_B) / 2 
   b1_n1 = (b1_n1_A + b1_n1_B) / 2
@@ -133,18 +133,28 @@ curve_0_M = function(x, scale_to_A, feature_A, feature_B){ # merged curve with a
   b1_n2 = (b1_n2_A + b1_n2_B) / 2
   b2_m = (feature_A$b2 + feature_B$b2) / 2
   b3_m = (feature_A$b3 + feature_B$b3) / 2
+  # if no intersect exists, move the non-apex curve so t
+  # maxp = -b1_n1 / (2 * b2_m)
+  # b0_n1 = b0_n1 - (b0_n1 + b1_n1 * maxp + b2_m * maxp * maxp) 
+  root = sqrt((b1_n1 - b1_n2)^2 - 4* (b2_m - b3_m) * (b0_n1 - b0_n2))
+  if(is.nan(root)) {
+    # no intersect exists, adjust b0_n2 so that one intersect is made. @todo change for apex on the right
+    b0_n2_m = b0_n1 - (b1_n1 - b1_n2)^2 / (4* (b2_m - b3_m))
+    
+  } 
   
   # re-scale the height to feature A 
   b0_n1 = ifelse(scale_to_A, b0_n1 + log(height_A), b0_n1 + log(height_B))
   b0_n2 = ifelse(scale_to_A, b0_n2 + log(height_A), b0_n2 + log(height_B))
   # calculate the new offset as the intersection of both quadratic functions
-  root = sqrt((b1_n1 - b1_n2)^2 - 4* (b2_m - b3_m) * (b0_n1 - b0_n2))
-  if(is.nan(root)) {return(0)} # invalid set of coefficients
-  offset = (b1_n2 - b1_n1 ) / (2 * (b2_m - b3_m)) + root / (2 * (b2_m - b3_m))
-  
+  # root = sqrt((b1_n1 - b1_n2)^2 - 4* (b2_m - b3_m) * (b0_n1 - b0_n2))
+  # if(is.nan(root)) {return(0)} # invalid set of coefficients
+  # offset = (b1_n2 - b1_n1 ) / (2 * (b2_m - b3_m)) + root / (2 * (b2_m - b3_m))
+  offset = (feature_A$retentionTime + feature_B$retentionTime) / 2
   # the curve can be shifted by setting x = x + offset. This is integrated into the coefficients, just like the previous shift
   b0_m1 = b0_n1 + b1_n1 * offset + b2_m * offset * offset
   b0_m2 = b0_n2 + b1_n2 * offset + b3_m * offset * offset
+  b0_m2_s = b0_m1 -(b1_m1 - b1_m2) / (4 * (b2_m - b3_m))
   b1_m1 = b1_n1 + 2 * b2_m * offset
   b1_m2 = b1_n2 + 2 * b3_m * offset # @todo correct offset if b1_m1 == b1_m2
   # with some tolerance for error, b0_m1 == b0_m2 and b1_m1 == b1_m2. Take the mean for uniformity
@@ -157,6 +167,14 @@ curve_0_M = function(x, scale_to_A, feature_A, feature_B){ # merged curve with a
   sq_R = b0_m + b1_m * x + b3_m * x^2 
   return(exp(sq_L * side + sq_R * !side))
 }
+```
+
+```{r}
+## different approach: form the mean and perform a regression using the existing model
+# case 1: do not shift
+
+# case 2: shift to apex = 0
+
 ```
 
 
