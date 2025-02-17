@@ -10,6 +10,7 @@
 #include <cmath>
 #include <fstream>
 #include <algorithm>
+#include <sstream>
 
 namespace qAlgorithms
 {
@@ -80,7 +81,7 @@ namespace qAlgorithms
             expectedDifference += differences[i];
         }
         expectedDifference /= upperLimit;
-
+        assert(expectedDifference > 0);
         return expectedDifference;
     }
 
@@ -375,10 +376,6 @@ namespace qAlgorithms
         return sum / (retention_times.size() - 1);
     }
 
-    // global variable, this is a demporary solution
-    size_t NO_INTERPOLATE_COUNT = 0;
-    size_t UNCERTAIN_BLOCK_END = 0;
-
     std::vector<std::vector<CentroidPeak>> findCentroids_MZML( // this function needs to be split @todo
         sc::MZML &data,
         std::vector<float> &convertRT,
@@ -522,10 +519,6 @@ namespace qAlgorithms
         {
             PPM_PRECENTROIDED = -INFINITY; // reset value before the next function call
         }
-        std::cerr << "    Gaps which could not be interpolated: " << NO_INTERPOLATE_COUNT << "\n"
-                  << "    Blocks with posssibly premature termination: " << UNCERTAIN_BLOCK_END << "\n";
-        NO_INTERPOLATE_COUNT = 0;
-        UNCERTAIN_BLOCK_END = 0;
         return centroids;
     }
 
@@ -535,179 +528,95 @@ namespace qAlgorithms
         p.df.reserve(16);
         p.intensity.reserve(16);
         p.mz.reserve(16);
-        // p.df.push_back(false);
-        // p.df.push_back(false);
-        // p.intensity.push_back(0);
-        // p.intensity.push_back(0);
-        // p.mz.push_back(0);
-        // p.mz.push_back(0);
         return p;
     }
 
     std::vector<ProfileBlock> pretreatDataCentroids(std::vector<std::vector<double>> spectrum, float expectedDifference)
     {
-        std::vector<centroidPoint> dataPoints;
-        dataPoints.reserve(spectrum[0].size());
+        // note on double precision values: when using floats, results are different enough
+        // to cause different behaviour for interpolation and block termination. Doubles are
+        // used here since the loss of precision during exponentiation etc. is not taken into
+        // account otherwise. Around 1000 centroids less than otherwise are produced for test cases.
+        std::vector<double> intensities_profile;
+        std::vector<double> mz_profile;
+        intensities_profile.reserve(spectrum[0].size() / 2);
+        mz_profile.reserve(spectrum[0].size() / 2);
+        // Depending on the vendor, a profile contains a lot of points with intensity 0.
+        // These were added by the vendor software and must be removed prior to processing.
         for (size_t i = 0; i < spectrum[0].size(); ++i)
         {
             if (spectrum[1][i] == 0.0)
             {
                 continue; // skip values with no intensity @todo minimum intensity?
             }
-            centroidPoint dp(
-                spectrum[0][i], // mz
-                spectrum[1][i], // intensity
-                true);          // real point
-            dataPoints.push_back(dp);
+            intensities_profile.push_back(spectrum[1][i]);
+            mz_profile.push_back(spectrum[0][i]);
         }
-        // a point with infinite mz is added to the end to ensure that the block end code is always executed
-        centroidPoint dp(
-            INFINITY, // mz
-            0.0,      // intensity
-            false);   // interpolated point
-        dataPoints.push_back(dp);
+        assert(!intensities_profile.empty());
+        assert(!mz_profile.empty());
 
         std::vector<ProfileBlock> subProfiles;
 
-        // iterate over the data points
-        size_t maxOfBlock = 0;
-        size_t blockSize = 0; // size of the current block
-        // size_t countSubOneGap = 0;
-        size_t countNoGap = 0;
+        size_t blockSize = 0;
         ProfileBlock currentBlock = blockStart(); // initialised with two zeroed values in each vector
-        for (size_t pos = 0; pos < dataPoints.size() - 1; pos++)
+        for (size_t pos = 0; pos < mz_profile.size() - 1; pos++)
         {
             blockSize++;
 
-            currentBlock.intensity.push_back(dataPoints[pos].intensity);
-            currentBlock.mz.push_back(dataPoints[pos].mz);
+            currentBlock.intensity.push_back(intensities_profile[pos]);
+            currentBlock.mz.push_back(mz_profile[pos]);
             currentBlock.df.push_back(true);
 
-            const float delta_x = dataPoints[pos + 1].mz - dataPoints[pos].mz;
-            assert(delta_x > 0);
+            const double delta_mz = mz_profile[pos + 1] - mz_profile[pos];
+            assert(delta_mz > 0);
 
-            size_t gapSize2 = 0;
-            if (delta_x > 1.75 * expectedDifference)
-            {
-                gapSize2 = static_cast<int>(delta_x / expectedDifference) - 1;
-                if (gapSize2 == 0)
-                {
-                    NO_INTERPOLATE_COUNT++;
-                }
-            }
-
-            if (delta_x > 1.75 * expectedDifference) // 1.75 is used to round up asymmetrically. This parameter should be defined in a dynamic manner @todo
-            {                                        // gap detected
+            // 1.75 is used to round up asymmetrically. This parameter should be defined in a dynamic manner @todo
+            if (delta_mz > 1.75 * expectedDifference)
+            { // gap detected
                 // either interpolate or break the block up
-                if (delta_x < 4.25 * expectedDifference) // at most three points can be interpolated, tolerated increase is < 0.1 per point
+                if (delta_mz < 4.25 * expectedDifference) // at most three points can be interpolated, tolerated increase is < 0.1 per point
                 {
                     // interpolate
                     // round up the number of points starting at 0.75
-                    const int gapSize = static_cast<int>(delta_x / expectedDifference + 0.25 * expectedDifference) - 1;
+                    const int gapSize = static_cast<int>(delta_mz / expectedDifference + 0.25 * expectedDifference) - 1;
                     assert(gapSize < 4);
-                    float interpolateDiff = delta_x / (gapSize + 1);
-                    const float dy = std::pow(dataPoints[pos + 1].intensity / dataPoints[pos].intensity,
-                                              1.0 / float(gapSize + 1)); // dy for log interpolation ; 1 if gapsize == 0
+                    double interpolateDiff = delta_mz / (gapSize + 1);
+                    const double dy = std::pow(intensities_profile[pos + 1] / intensities_profile[pos],
+                                               1.0 / double(gapSize + 1)); // dy for log interpolation ; 1 if gapsize == 0
                     for (int i = 0; i < gapSize; i++)
                     {
-                        currentBlock.intensity.push_back(dataPoints[pos].intensity * std::pow(dy, i + 1));
-                        currentBlock.mz.push_back(dataPoints[pos].mz + (i + 1) * interpolateDiff);
+                        currentBlock.intensity.push_back(intensities_profile[pos] * std::pow(dy, i + 1));
+                        currentBlock.mz.push_back(mz_profile[pos] + (i + 1) * interpolateDiff);
                         currentBlock.df.push_back(false);
                     }
                 }
                 else
-                {                                                                        // END OF BLOCK, EXTRAPOLATION STARTS @todo move this into its own function
-                    int interpolationCount = int(delta_x / (1.75 * expectedDifference)); // alternative gap size
-                    if (interpolationCount < 4)
-                    {
-                        UNCERTAIN_BLOCK_END++;
-                    }
+                {
                     if (blockSize > 4)
                     {
-                        // float blockStartMZ = currentBlock.mz[2];
-                        // // check if the maximum of the block is the first or last data point
-                        // if (maxOfBlock == pos || dataPoints[maxOfBlock].mz == blockStartMZ)
-                        // {
-                        //     // extrapolate the left side using the first non-zero data point (i.e, the start of the block)
-                        //     // @todo is this a good idea?
-                        //     for (int i = 0; i < 2; i++)
-                        //     {
-                        //         // LEFT SIDE
-                        //         currentBlock.intensity[i] = currentBlock.intensity[2];
-                        //         currentBlock.mz[i] = blockStartMZ - (2 - i) * expectedDifference;
-                        //         // degrees of freedom is already false
-                        //         // RIGHT SIDE
-                        //         currentBlock.intensity.push_back(dataPoints[pos].intensity);
-                        //         currentBlock.mz.push_back(dataPoints[pos].mz + float(i + 1) * expectedDifference);
-                        //         currentBlock.df.push_back(false);
-                        //     }
-                        // }
-                        // else
-                        // {
-                        //     // this is the expected case
-                        //     const float x_old[3] = {0.f,
-                        //                             dataPoints[maxOfBlock].mz - blockStartMZ,
-                        //                             dataPoints[pos].mz - blockStartMZ};
-                        //     const float x[3] = {blockStartMZ,
-                        //                         dataPoints[maxOfBlock].mz,
-                        //                         dataPoints[pos].mz};
-                        //     const float y[3] = {std::log(currentBlock.intensity[2]),
-                        //                         std::log(dataPoints[maxOfBlock].intensity),
-                        //                         std::log(dataPoints[pos].intensity)};
-                        //     auto coeffs = interpolateQuadratic(x_old, y);
-                        //     auto coeffs_old = interpolateQuadratic(x, y);
-
-                        //     for (int i = 0; i < 2; i++)
-                        //     {
-                        //         const float x = blockStartMZ - (2 - i) * expectedDifference;
-                        //         currentBlock.intensity[i] = std::exp(coeffs[0] + x * (coeffs[1] + x * coeffs[2]));
-                        //         float prev_x = -(2 - i) * expectedDifference;
-                        //         float prediff = (coeffs[0] + x * (coeffs[1] + x * coeffs[2])) - (coeffs_old[0] + prev_x * (coeffs_old[1] + prev_x * coeffs_old[2]));
-                        //         float test = currentBlock.intensity[i] - std::exp(coeffs_old[0] + prev_x * (coeffs_old[1] + prev_x * coeffs_old[2]));
-                        //         currentBlock.mz[i] = blockStartMZ - (2 - i) * expectedDifference;
-                        //         AVERAGE_EXTRAPOLATION_DIFF += test;
-                        //     }
-                        //     // add the extrapolated data points to the right side of the block
-                        //     for (int i = 0; i < 2; i++)
-                        //     {
-                        //         const float dp_x = dataPoints[pos].mz + float(i + 1) * expectedDifference;
-                        //         const float prev_x = dp_x - blockStartMZ;
-
-                        //         currentBlock.intensity.push_back(std::exp(coeffs[0] + dp_x * (coeffs[1] + dp_x * coeffs[2])));
-                        //         auto test = currentBlock.intensity[i] - std::exp(coeffs_old[0] + prev_x * (coeffs_old[1] + prev_x * coeffs_old[2]));
-                        //         currentBlock.mz.push_back(dp_x);
-                        //         currentBlock.df.push_back(false);
-                        //         AVERAGE_EXTRAPOLATION_DIFF += test;
-                        //     }
-                        // }
-                        maxOfBlock = pos + 1;
-                        // block is finished, add currentBlock to storage vector
-                        // interpolateEdges(currentBlock.mz, &currentBlock.intensity);
                         subProfiles.push_back(currentBlock);
                     }
                     currentBlock = blockStart(); // reset block for next iteration
                     blockSize = 0;
                 }
             }
-            else // if (gapSize2 == 0) // no gap found
+            else
             {
-                countNoGap++;
-                assert(gapSize2 == 0);
-                if (dataPoints[maxOfBlock].intensity < dataPoints[pos].intensity)
+                // @todo reason about why these limit values are used, why take the mean for updating the expected diff?
+                if (delta_mz > 0.8 * expectedDifference && delta_mz < 1.2 * expectedDifference)
                 {
-                    maxOfBlock = pos;
-                }
-                if (delta_x > 0.8 * expectedDifference && delta_x < 1.2 * expectedDifference)
-                {
-                    expectedDifference = (expectedDifference + delta_x) * 0.5; // update the expected difference
+                    expectedDifference = (expectedDifference + delta_mz) * 0.5;
                 }
             }
         } // end of for loop
-        if (blockSize > 4)
+        if (blockSize > 3)
         {
+            // special case: last point. Add the last element for mz and intensity if the block did not terminate
+            currentBlock.intensity.push_back(intensities_profile.back());
+            currentBlock.mz.push_back(mz_profile.back());
+            currentBlock.df.push_back(true);
             subProfiles.push_back(currentBlock);
         }
-        // std::cerr << countSubOneGap << ", -" << countNoGap << ", ";
         return subProfiles;
     }
 
