@@ -131,10 +131,7 @@ int main(int argc, char *argv[])
         {
             std::cout << " file ok\n";
         }
-        // implement way to try out ppm values @todo
-        // std::vector<float> ppmValues{0.01, 0.05, 0.1, 0.2, 0.25, 0.5, 1.0, 1.5, 2.0, 2.5, 3.0, 4.0, 5.0, 7.5, 10, 15, 20};
-
-        // for (auto setPPM : ppmValues)
+        // @todo find a more elegant solution for polarity switching
         for (auto polarity : polarities)
         {
             filename = pathSource.stem().string();
@@ -142,8 +139,7 @@ int main(int argc, char *argv[])
             std::vector<float> convertRT;
             float diff_rt = 0;
             // @todo add check if set polarity is correct
-            std::vector<std::vector<CentroidPeak>> centroids =
-                findCentroids_MZML(data, convertRT, diff_rt, true, polarity, 0); // read mzML file and find centroids via qPeaks
+            std::vector<std::vector<CentroidPeak>> centroids = findCentroids_MZML(data, convertRT, diff_rt, polarity);
             if (centroids.empty())
             {
                 if (userArgs.verboseProgress)
