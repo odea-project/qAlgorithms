@@ -272,7 +272,8 @@ namespace qAlgorithms
             }
             else
             {
-                std::cerr << "Warning: unknown argument \"" << argument << "\".\n";
+                std::cerr << "Error: unknown argument \"" << argument << "\".\n";
+                exit(1);
             }
         } // end of reading in command line arguments
         // assert(!args.outputPath.empty());
@@ -288,8 +289,15 @@ namespace qAlgorithms
                   << "relative paths are not supported in this mode\n"
                   << "drag the folder or file you want to process into this window and press \"enter\" to continue:\n";
         std::string inputPath;
-        std::cin >> inputPath;
-
+        while (true)
+        {
+            std::cin >> inputPath;
+            if (std::filesystem::exists(inputPath))
+            {
+                break;
+            }
+            std::cout << "Error: The path does not exist.\n";
+        }
         std::cout << "drag the folder you want the output files written to into this window and press \"enter\" to continue.\n"
                   << "enter \"#\" to write to the input path.\n";
         std::string outputPath;
