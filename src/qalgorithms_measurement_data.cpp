@@ -57,19 +57,25 @@ namespace qAlgorithms
         return centroids;
     }
 
-    double calcExpectedDiff(std::vector<double> &data)
+    double calcExpectedDiff(const std::vector<std::vector<double>> spectrum)
     {
-        const int numPoints = data.size(); // number of data points
-        int upperLimit = numPoints * 0.05; // check lowest 5% for expected difference
+        const std::vector<double> mz = spectrum[0];
+        const std::vector<double> intensity = spectrum[1];
+        const size_t numPoints = mz.size();         // number of data points
+        const size_t upperLimit = numPoints * 0.05; // check lowest 5% for expected difference
         double expectedDifference = 0.0;
-        // static approach: mean of the 8 lowest distances @todo why 8?
-        std::vector<double> differences(numPoints - 1);
-        for (int i = 0; i < numPoints - 1; i++)
+        std::vector<double> differences;
+        differences.reserve(numPoints / 2);
+        for (size_t i = 0; i < numPoints - 1; i++)
         {
-            differences[i] = data[i + 1] - data[i];
+            if (intensity[i] == 0 || intensity[i] == 0)
+            {
+                continue;
+            }
+            differences.push_back(mz[i + 1] - mz[i]);
         }
         std::sort(differences.begin(), differences.end());
-        for (int i = 0; i < upperLimit; i++)
+        for (size_t i = 0; i < upperLimit; i++)
         {
             expectedDifference += differences[i];
         }
@@ -377,9 +383,8 @@ namespace qAlgorithms
         sc::MZML &data,
         std::vector<float> &convertRT,
         float &rt_diff,
-        const bool ms1only,
         const std::string polarity,
-        const int start_index)
+        const bool ms1only)
     {
         // this is only relevant when reading in pre-centroided data
         bool displayPPMwarning = false;
@@ -397,7 +402,7 @@ namespace qAlgorithms
         std::vector<int> indices = data.get_spectra_index();                      // get all indices
         std::vector<int> ms_levels = data.get_spectra_level();                    // get all MS levels
         std::vector<int> num_datapoints = data.get_spectra_array_length();        // get number of data points
-        double expectedDifference = 0.0;                                          // expected difference between two consecutive x-axis values
+        double expectedDifference_mz = 0.0;                                       // expected difference between two consecutive x-axis values
         assert(!indices.empty() && num_datapoints[0] > 4);
 
         // CHECK IF CENTROIDED SPECTRA
@@ -462,16 +467,16 @@ namespace qAlgorithms
             return empty;
         }
 
-        std::vector<double> retention_times = data.get_spectra_rt(selectedIndices); // get retention times
-        rt_diff = calcRTDiff(retention_times);                                      // retention time difference
+        std::vector<double> retention_times = data.get_spectra_rt(selectedIndices);
+        rt_diff = calcRTDiff(retention_times);
 
         selectedIndices.shrink_to_fit();
 
-        std::vector<std::vector<CentroidPeak>> centroids(selectedIndices.size()); // create vector of peaks
+        std::vector<std::vector<CentroidPeak>> centroids(selectedIndices.size());
 
-        // CALCULATE EXPECTED DIFFERENCE & CHECK FOR ZEROS
-        std::vector<std::vector<double>> data_vec = data.get_spectrum(selectedIndices[start_index]); // get first spectrum (x-axis)
-        expectedDifference = calcExpectedDiff(data_vec[0]);                                          // calculate expected difference & check if Orbitrap
+        // take spectrum at half length to avoid potential interference from quality control scans in the instrument
+        std::vector<std::vector<double>> data_vec = data.get_spectrum(selectedIndices[selectedIndices.size() / 2]);
+        expectedDifference_mz = calcExpectedDiff(data_vec);
 
         // determine where the peak finding will interpolate points and pass this information
         // to the binning step. addEmpty contains the number of empty scans to be added into
@@ -509,7 +514,7 @@ namespace qAlgorithms
         {
             std::vector<std::vector<double>> spectrum = data.get_spectrum(selectedIndices[i]);
             // inter/extrapolate data, and identify data blocks @todo these should be two different functions
-            auto treatedData = pretreatDataCentroids(spectrum, expectedDifference);
+            auto treatedData = pretreatDataCentroids(spectrum, expectedDifference_mz);
             assert(relativeIndex[i] != 0);
             centroids[i] = findCentroids(treatedData, relativeIndex[i]); // find peaks in data blocks of treated data
         }
@@ -732,7 +737,7 @@ namespace qAlgorithms
         }
         else
         {
-            double tmp = std::exp(coeffs[0] + x_axis[0] * (coeffs[1] + x_axis[0] * coeffs[2]));
+            // double tmp = std::exp(coeffs[0] + x_axis[0] * (coeffs[1] + x_axis[0] * coeffs[2]));
             assert((*intensity)[0] == INTERPOLATE(x_axis[0]));
             assert((*intensity)[1] == INTERPOLATE(x_axis[1]));
         }

@@ -18,7 +18,7 @@ namespace qAlgorithms
         const int start_index,
         double PPMerror);
 
-    double calcExpectedDiff(std::vector<double> &data);
+    double calcExpectedDiff(const std::vector<std::vector<double>> spectrum);
 
     /**
      * @brief Inter/extrapolate gaps in data and define separation markers for data blocks.
@@ -43,23 +43,12 @@ namespace qAlgorithms
 
     std::vector<dataPoint> qbinToDataPoint(EIC &eic);
 
-    /**
-     * @brief Read 3D tensor data from a StreamCraft mzML object
-     * @details The readStreamCraftMZML method reads 3D tensor data from a StreamCraft mzML object and stores
-     * it in the TensorData object. A StreamCraft mzML object is created by using sc::MZML z("path to mzML file").
-     *
-     * @param data : StreamCraft mzML object
-     * @param ms1only : boolean to indicate if only MS1 spectra should be read
-     * @param start_index : index of the first spectrum to be read
-     * @return std::vector<std::vector<DataType::Peak>> : list of peaks
-     */
     std::vector<std::vector<CentroidPeak>> findCentroids_MZML(
         sc::MZML &data,
         std::vector<float> &convertRT,
         float &rt_diff,
-        const bool ms1only = true,
-        const std::string polarity = "positive",
-        const int start_index = 0);
+        const std::string polarity,
+        const bool ms1only = true);
 
     std::vector<FeaturePeak> findPeaks_QBIN(
         std::vector<EIC> &data,
