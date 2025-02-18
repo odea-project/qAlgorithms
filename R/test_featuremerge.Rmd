@@ -59,6 +59,44 @@ curve_N = function(x, feature){ # curve with apex at x = rt
   return(exp(sq_L * side + sq_R * !side))
 }
 
+curve_mirror = function(x, feature){ # curve with apex at x = rt, but mirrored
+  # shift peak so that the apex is at 0
+  offset = - feature$rt_switch 
+  b2 = feature$b2
+  b3 = feature$b3
+  
+  b0_n1 = feature$b0 - feature$b1 * offset + b2 * offset * offset 
+  b1_n1 = - feature$b1 + 2 * b2 * offset
+  b0_n2 = feature$b0 - feature$b1 * offset + b3 * offset * offset 
+  b1_n2 = - feature$b1 + 2 * b3 * offset
+  
+  # the apex function is already symmetric. now, the non-apex function must be shifted 2* the distance between apexes
+  apex_L = -b1_n1 / 2 / b2
+  apex_R = -b1_n2 / 2 / b3
+  moveApex = (apex_L - apex_R )*2
+  b0_n2 = b0_n2 - b1_n2 * moveApex + b3 * moveApex * moveApex 
+  b1_n2 = b1_n2 - 2 * b3 * moveApex
+  # calculate the new offset
+  # swap order of the peak halves
+  tmp = b0_n2
+  b0_n2 = b0_n1
+  b0_n1 = tmp
+  tmp = b1_n2
+  b1_n2 = b1_n1
+  b1_n1 = tmp
+  b3 = b2
+  b2 = feature$b3
+  root = sqrt((b1_n1 - b1_n2)^2 - 4* (b2 - b3) * (b0_n1 - b0_n2))
+  offset = (b1_n2 - b1_n1 ) / (2 * (b2_m - b3_m)) + root / (2 * (b2_m - b3_m))
+
+  # the function is mirrored regarding the apex at this point
+  side = x - offset < 0
+
+  sq_L = b0_n1 + b1_n1 * x + b2 * x^2
+  sq_R = b0_n2 + b1_n2 * x + b3 * x^2
+  return(exp(sq_L * side + sq_R * !side))
+}
+
 # step 2: scale the coefficients to the maximum of the regression
 
 curve_S = function(x, feature){ # curve with apex at x = rt and height = 1
@@ -133,28 +171,26 @@ curve_0_M = function(x, scale_to_A, feature_A, feature_B){ # merged curve with a
   b1_n2 = (b1_n2_A + b1_n2_B) / 2
   b2_m = (feature_A$b2 + feature_B$b2) / 2
   b3_m = (feature_A$b3 + feature_B$b3) / 2
-  # if no intersect exists, move the non-apex curve so t
-  # maxp = -b1_n1 / (2 * b2_m)
-  # b0_n1 = b0_n1 - (b0_n1 + b1_n1 * maxp + b2_m * maxp * maxp) 
+
   root = sqrt((b1_n1 - b1_n2)^2 - 4* (b2_m - b3_m) * (b0_n1 - b0_n2))
   if(is.nan(root)) {
     # no intersect exists, adjust b0_n2 so that one intersect is made. @todo change for apex on the right
-    b0_n2_m = b0_n1 - (b1_n1 - b1_n2)^2 / (4* (b2_m - b3_m))
-    
+    # b0_n2_m = b0_n1 - (b1_n1 - b1_n2)^2 / (4* (b2_m - b3_m))
+    root = 0
+    b3_m = b2_m - (b1_n1 - b1_n2)^2 / (4* (b0_n1 - b0_n2))
   } 
   
   # re-scale the height to feature A 
   b0_n1 = ifelse(scale_to_A, b0_n1 + log(height_A), b0_n1 + log(height_B))
   b0_n2 = ifelse(scale_to_A, b0_n2 + log(height_A), b0_n2 + log(height_B))
+  
   # calculate the new offset as the intersection of both quadratic functions
-  # root = sqrt((b1_n1 - b1_n2)^2 - 4* (b2_m - b3_m) * (b0_n1 - b0_n2))
-  # if(is.nan(root)) {return(0)} # invalid set of coefficients
-  # offset = (b1_n2 - b1_n1 ) / (2 * (b2_m - b3_m)) + root / (2 * (b2_m - b3_m))
-  offset = (feature_A$retentionTime + feature_B$retentionTime) / 2
+  offset = (b1_n2 - b1_n1 ) / (2 * (b2_m - b3_m)) + root / (2 * (b2_m - b3_m))
+ 
   # the curve can be shifted by setting x = x + offset. This is integrated into the coefficients, just like the previous shift
   b0_m1 = b0_n1 + b1_n1 * offset + b2_m * offset * offset
   b0_m2 = b0_n2 + b1_n2 * offset + b3_m * offset * offset
-  b0_m2_s = b0_m1 -(b1_m1 - b1_m2) / (4 * (b2_m - b3_m))
+  # b0_m2_s = b0_m1 -(b1_m1 - b1_m2) / (4 * (b2_m - b3_m))
   b1_m1 = b1_n1 + 2 * b2_m * offset
   b1_m2 = b1_n2 + 2 * b3_m * offset # @todo correct offset if b1_m1 == b1_m2
   # with some tolerance for error, b0_m1 == b0_m2 and b1_m1 == b1_m2. Take the mean for uniformity
@@ -171,7 +207,16 @@ curve_0_M = function(x, scale_to_A, feature_A, feature_B){ # merged curve with a
 
 ```{r}
 ## different approach: form the mean and perform a regression using the existing model
-# case 1: do not shift
+# case 1: do not shift, scale
+height_A = curve_0(feature_A$rt_switch, feature_A)
+height_B = curve_0(feature_B$rt_switch, feature_B)
+
+points = (curve_0(-40:40, feature_A) / height_A + curve_0(-40:40, feature_B) / height_B) / 2
+
+ggplot(points_A)+
+  geom_point(aes(retentionTime, area, colour = as.factor(ID)))+
+  stat_function(fun = curve_N, args = list(feature = feature_A), colour = "red3")+
+  stat_function(fun = curve_mirror_S, args = list(feature = feature_A), colour = "green")
 
 # case 2: shift to apex = 0
 
@@ -179,7 +224,8 @@ curve_0_M = function(x, scale_to_A, feature_A, feature_B){ # merged curve with a
 
 
 ```{r}
-idx = sus[5]
+idx = sus[1]
+# idx = 27
 feature_A = peaks$ID[idx]
 feature_B = peaks$ID[idx + 1]
 if(feature_A > feature_B) {idx = feature_A; feature_A = feature_B; feature_B = idx}
