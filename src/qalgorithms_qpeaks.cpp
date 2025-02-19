@@ -547,7 +547,7 @@ namespace qAlgorithms
           ratio is greater than 2. This is a pre-filter for later
           signal-to-noise ratio checkups. apexToEdge is also required in isValidPeakHeight further down
         */
-        float apexToEdge = calcApexToEdge(mutateReg->apex_position, scale, idxStart, y_start);
+        float apexToEdge = apexToEdgeRatio(mutateReg->apex_position, scale, idxStart, y_start);
         if (!(apexToEdge > 2))
         {
             return; // invalid apex to edge ratio
@@ -662,9 +662,10 @@ namespace qAlgorithms
                         { // calculate the mse of the ref peak
                             validRegressions[j].mse = calcSSE_exp(
                                 validRegressions[j].newCoeffs,
-                                y_start + (int)validRegressions[j].left_limit,
-                                validRegressions[j].left_limit - validRegressions[j].index_x0,
-                                validRegressions[j].right_limit - validRegressions[j].index_x0);
+                                y_start,
+                                validRegressions[j].left_limit,
+                                validRegressions[j].right_limit,
+                                validRegressions[j].index_x0);
                             validRegressions[j].mse /= validRegressions[j].df;
                         }
                         DF_group += validRegressions[j].df;                            // add the degree of freedom
@@ -689,9 +690,10 @@ namespace qAlgorithms
             { // calculate the mse of the current peak
                 validRegressions[i].mse = calcSSE_exp(
                     validRegressions[i].newCoeffs,
-                    y_start + left_limit,
-                    left_limit - validRegressions[i].index_x0,
-                    right_limit - validRegressions[i].index_x0);
+                    y_start,
+                    left_limit,
+                    right_limit,
+                    validRegressions[i].index_x0);
                 validRegressions[i].mse /= validRegressions[i].df;
             }
             // assert(validRegressionsInGroup.size() == 1); // not always the case
@@ -910,36 +912,40 @@ namespace qAlgorithms
         return result;
     }
 
-    float calcSSE_exp(const RegCoeffs coeff, const float *y_start, int limit_L, int limit_R)
+    float calcSSE_exp(const RegCoeffs coeff, const float *y_start, size_t limit_L, size_t limit_R, size_t index_x0)
     {
-        // @todo should the normalisation be included as a function argument?
-        assert(limit_L < 0 && limit_R > 0);
-
         double result = 0.0;
-
+        // @todo error: the array is accessed at positions < 0
+        int limit_L2 = limit_L - index_x0;
+        int limit_R2 = limit_R - index_x0;
+        // std::cout << limit_L << ", " << limit_R << " " << index_x0 << "\n";
+        // assert(-limit_L2 == limit_R2);
         // left side
-        int lengthLeft = -limit_L;
+        int lengthLeft = -limit_L2;
         for (int iSegment = 0; iSegment < lengthLeft; iSegment++)
         {
-            double new_x = limit_L + iSegment;
+            double new_x = limit_L2 + iSegment;
             double y_base = exp_approx_d(coeff.b0 + (coeff.b1 + coeff.b2 * new_x) * new_x);
-            double y_current = y_start[iSegment];
+            double y_current = y_start[limit_L2 + iSegment];
             double newdiff = (y_base - y_current) * (y_base - y_current);
-
+            // std::cout << limit_L2 + iSegment << ", ";
+            assert(limit_L2 + iSegment >= 0);
             result += newdiff;
         }
         // center point
-        result += (exp_approx_d(coeff.b0) - y_start[lengthLeft]) * (exp_approx_d(coeff.b0) - y_start[lengthLeft]); // x = 0 -> (b0 - y)^2
-
-        int lengthRight = limit_R + 1;
+        result += (exp_approx_d(coeff.b0) - y_start[limit_L2 + lengthLeft]) * (exp_approx_d(coeff.b0) - y_start[limit_L2 + lengthLeft]); // x = 0 -> (b0 - y)^2
+        // std::cout << limit_L2 + lengthLeft << ", ";
+        int lengthRight = limit_R2 + 1;
         for (int iSegment = 1; iSegment < lengthRight; iSegment++) // iSegment = 0 is center point (calculated above)
         {
             double y_base = exp_approx_d(coeff.b0 + (coeff.b1 + coeff.b3 * iSegment) * iSegment); // b3 instead of b2
-            double y_current = y_start[iSegment + lengthLeft];                                    // y_start[0] is the leftmost y value
+            double y_current = y_start[limit_L2 + iSegment + lengthLeft];                         // y_start[0] is the leftmost y value
             double newdiff = (y_current - y_base) * (y_current - y_base);
-
+            // std::cout << limit_L2 + iSegment + lengthLeft << ", ";
             result += newdiff;
         }
+        // std::cout << "\n";
+        // exit(1);
         return result;
     }
 
@@ -1001,9 +1007,10 @@ namespace qAlgorithms
         {
             // step 2: calculate the mean squared error (MSE) between the predicted and actual values
             float mse = calcSSE_exp(regressions[i].newCoeffs,
-                                    y_start + left_limit,
-                                    left_limit - regressions[i].index_x0,
-                                    right_limit - regressions[i].index_x0);
+                                    y_start,
+                                    left_limit,
+                                    right_limit,
+                                    regressions[i].index_x0);
             mse /= (df_sum - 4);
 
             if (mse < best_mse)
@@ -1118,19 +1125,18 @@ namespace qAlgorithms
 
 #pragma region "isValidApexToEdge"
 
-    float calcApexToEdge(
+    inline float apexToEdgeRatio(
         const double apex_position,
         const size_t scale,
-        const size_t index_loop,
+        const size_t idxStart,
         const float *y_start)
     {
-        int idx_apex = (int)std::round(apex_position) + scale + index_loop; // index of the apex
-        int idx_left = index_loop;                                          // index of the left edge
-        int idx_right = 2 * scale + index_loop;                             // index of the right edge
-        float apex = *(y_start + idx_apex);                                 // apex value
-        float left = *(y_start + idx_left);                                 // left edge value
-        float right = *(y_start + idx_right);                               // right edge value
-        return (left < right) ? (apex / left) : (apex / right);             // difference between the apex and the edge
+        size_t idx_apex = (size_t)std::round(apex_position) + scale + idxStart;
+        int idx_right = 2 * scale + idxStart;
+        float apex = y_start[idx_apex];   // apex value
+        float left = y_start[idxStart];   // left edge value
+        float right = y_start[idx_right]; // right edge value
+        return (left < right) ? (apex / left) : (apex / right);
     }
 
 #pragma endregion "isValidApexToEdge"

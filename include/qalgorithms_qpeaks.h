@@ -70,7 +70,7 @@ namespace qAlgorithms
 
     float calcSSE_base(const RegCoeffs coeff, const float *y_start, size_t scale, size_t idxStart);
 
-    float calcSSE_exp(const RegCoeffs coeff, const float *y_start, int limit_L, int limit_R);
+    float calcSSE_exp(const RegCoeffs coeff, const float *y_start, size_t limit_L, size_t limit_R, size_t index_x0);
 
     float calcSSE_chisqared(const RegCoeffs coeff, const float *y_start, size_t scale, size_t idxStart);
 
@@ -157,17 +157,17 @@ namespace qAlgorithms
      *
      * @param apex_position
      * @param scale
-     * @param index_loop
+     * @param idxStart
      * @param Y
      * @param apexToEdge : The ratio of the peak maximum to the signal at the edge of
      * the regression window. This value is calculated by the function.
      * @return true
      * @return false
      */
-    float calcApexToEdge(
+    inline float apexToEdgeRatio(
         const double apex_position,
         const size_t scale,
-        const size_t index_loop,
+        const size_t idxStart,
         const float *y_start);
 
     /**
