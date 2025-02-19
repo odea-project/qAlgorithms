@@ -48,7 +48,7 @@ namespace qAlgorithms
         std::vector<bool> df;
     };
 
-    struct RegCoeffs
+    struct RegCoeffs // @todo make this a union with the intrinsic array
     {
         float b0, b1, b2, b3 = 0;
     };
@@ -129,6 +129,7 @@ namespace qAlgorithms
         float mz;
         float retentionTimeUncertainty;
         float mzUncertainty;
+        float mse; // mean squared error
         unsigned int idxBin;
         unsigned int idxPeakStart; // degrees of freedom = idxPeakEnd - idxPeakStart
         unsigned int idxPeakEnd;
