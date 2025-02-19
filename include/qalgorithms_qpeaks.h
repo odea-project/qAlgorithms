@@ -43,9 +43,9 @@ namespace qAlgorithms
     void makeValidRegression(
         RegressionGauss *mutateReg,
         size_t arrayMaxLength,
-        const size_t i,
+        const size_t idxStart,
         const size_t scale,
-        const std::vector<bool> df_start,
+        const std::vector<bool> degreesOfFreedom,
         const float *y_start,
         const float *ylog_start);
 
@@ -68,11 +68,11 @@ namespace qAlgorithms
         const float *DQSC,
         const float *DQSB);
 
-    float calcSSE_base(RegCoeffs coeff, const float *y_start, int limit_L, int limit_R);
+    float calcSSE_base(const RegCoeffs coeff, const float *y_start, size_t scale, size_t idxStart);
 
-    float calcSSE_exp(RegCoeffs coeff, const float *y_start, int limit_L, int limit_R);
+    float calcSSE_exp(const RegCoeffs coeff, const float *y_start, int limit_L, int limit_R);
 
-    float calcSSE_chisqared(RegCoeffs coeff, const float *y_start, int limit_L, int limit_R);
+    float calcSSE_chisqared(const RegCoeffs coeff, const float *y_start, size_t scale, size_t idxStart);
 
     /**
      * @brief Calculate the best mean squared error of the regression model
@@ -94,7 +94,7 @@ namespace qAlgorithms
     std::pair<size_t, float> findBestRegression(
         const float *y_start,
         std::vector<RegressionGauss> regressions,
-        const std::vector<bool> df_start,
+        const std::vector<bool> degreesOfFreedom,
         size_t startIdx,
         size_t endIdx);
 
@@ -112,12 +112,12 @@ namespace qAlgorithms
      * @return int : Degree of freedom
      */
     size_t calcDF(
-        const bool *df_start,
+        const bool *degreesOfFreedom,
         unsigned int left_limit,
         unsigned int right_limit);
 
     size_t calcDF(
-        const std::vector<bool> df_start,
+        const std::vector<bool> degreesOfFreedom,
         unsigned int left_limit,
         unsigned int right_limit);
 
