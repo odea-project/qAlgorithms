@@ -624,6 +624,7 @@ namespace qAlgorithms
 #pragma region mergeRegressionsOverScales
     std::vector<RegressionGauss> mergeRegressionsOverScales(std::vector<RegressionGauss> validRegressions, const float *y_start)
     {
+        // std::cout << y_start[-1];
         /*
           Grouping Over Scales:
           This block of code implements the grouping over scales. It groups the valid
@@ -916,32 +917,34 @@ namespace qAlgorithms
     {
         double result = 0.0;
         // @todo error: the array is accessed at positions < 0
-        int limit_L2 = limit_L - index_x0;
-        int limit_R2 = limit_R - index_x0;
+        // rework: operate over limit_L to limit_R
+        // int limit_L2 = limit_L - index_x0;
         // std::cout << limit_L << ", " << limit_R << " " << index_x0 << "\n";
         // assert(-limit_L2 == limit_R2);
         // left side
-        int lengthLeft = -limit_L2;
-        for (int iSegment = 0; iSegment < lengthLeft; iSegment++)
+        for (size_t iSegment = limit_L; iSegment < index_x0; iSegment++)
         {
-            double new_x = limit_L2 + iSegment;
+            double new_x = double(iSegment) - double(index_x0); // always negative
             double y_base = exp_approx_d(coeff.b0 + (coeff.b1 + coeff.b2 * new_x) * new_x);
-            double y_current = y_start[limit_L2 + iSegment];
+            double y_current = y_start[iSegment];
+            // std::cout << y_current << ", ";
             double newdiff = (y_base - y_current) * (y_base - y_current);
             // std::cout << limit_L2 + iSegment << ", ";
-            assert(limit_L2 + iSegment >= 0);
+            // assert(limit_L2 + iSegment >= 0);
             result += newdiff;
         }
         // center point
-        result += (exp_approx_d(coeff.b0) - y_start[limit_L2 + lengthLeft]) * (exp_approx_d(coeff.b0) - y_start[limit_L2 + lengthLeft]); // x = 0 -> (b0 - y)^2
-        // std::cout << limit_L2 + lengthLeft << ", ";
-        int lengthRight = limit_R2 + 1;
-        for (int iSegment = 1; iSegment < lengthRight; iSegment++) // iSegment = 0 is center point (calculated above)
+        result += (exp_approx_d(coeff.b0) - y_start[index_x0]) * (exp_approx_d(coeff.b0) - y_start[index_x0]); // x = 0 -> (b0 - y)^2
+        // std::cout << y_start[index_x0] << ", ";
+        // std::cout << limit_L2  -limit_L2 << ", ";
+        for (size_t iSegment = index_x0 + 1; iSegment < limit_R + 1; iSegment++) // start one past the center, include right limit index
         {
-            double y_base = exp_approx_d(coeff.b0 + (coeff.b1 + coeff.b3 * iSegment) * iSegment); // b3 instead of b2
-            double y_current = y_start[limit_L2 + iSegment + lengthLeft];                         // y_start[0] is the leftmost y value
+            double new_x = double(iSegment) - double(index_x0);                             // always positive
+            double y_base = exp_approx_d(coeff.b0 + (coeff.b1 + coeff.b3 * new_x) * new_x); // b3 instead of b2
+            double y_current = y_start[iSegment];                                           // y_start[0] is the leftmost y value
+            // std::cout << y_current << ", ";
             double newdiff = (y_current - y_base) * (y_current - y_base);
-            // std::cout << limit_L2 + iSegment + lengthLeft << ", ";
+            // std::cout << limit_L2 + iSegment  -limit_L2 << ", ";
             result += newdiff;
         }
         // std::cout << "\n";
