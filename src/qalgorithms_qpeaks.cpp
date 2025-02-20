@@ -564,7 +564,7 @@ namespace qAlgorithms
           term is considered statistically insignificant, and the loop continues
           to the next iteration.
         */
-        float mse = calcSSE_base(mutateReg->newCoeffs, intensities_log, scale, idxStart);
+        float mse = calcSSE_base(mutateReg->newCoeffs, intensities_log, mutateReg->left_limit, mutateReg->right_limit, scale + idxStart);
         mse /= (df_sum - 4);
 
         if (!isValidQuadraticTerm(mutateReg->newCoeffs, scale, mse, df_sum))
@@ -887,27 +887,28 @@ namespace qAlgorithms
 
 #pragma region calcSSE
 
-    float calcSSE_base(const RegCoeffs coeff, const float *y_start, size_t scale, size_t idxStart)
+    float calcSSE_base(const RegCoeffs coeff, const float *y_start, size_t limit_L, size_t limit_R, size_t index_x0)
     {
         double result = 0.0;
         // left side
-        for (size_t iSegment = 0; iSegment < scale; iSegment++)
+        for (size_t iSegment = limit_L; iSegment < index_x0; iSegment++)
         {
-            double new_x = double(iSegment) - double(scale);
+            double new_x = double(iSegment) - double(index_x0);
             double y_base = coeff.b0 + (coeff.b1 + coeff.b2 * new_x) * new_x;
-            double y_current = y_start[idxStart + iSegment];
+            double y_current = y_start[iSegment];
             double newdiff = (y_base - y_current) * (y_base - y_current);
 
             result += newdiff;
         }
         // center point
-        result += (coeff.b0 - y_start[idxStart + scale]) * (coeff.b0 - y_start[idxStart + scale]); // x = 0 -> (b0 - y)^2
+        result += (coeff.b0 - y_start[index_x0]) * (coeff.b0 - y_start[index_x0]); // x = 0 -> (b0 - y)^2
 
         // right side
-        for (size_t iSegment = 1; iSegment < scale + 1; iSegment++) // iSegment = 0 is center point calculated above
+        for (size_t iSegment = index_x0 + 1; iSegment < limit_R + 1; iSegment++) // iSegment = 0 is center point calculated above
         {
-            double y_base = coeff.b0 + (coeff.b1 + coeff.b3 * iSegment) * iSegment; // b3 instead of b2
-            double y_current = y_start[idxStart + iSegment + scale];                // y_start[0] is the leftmost y value
+            double new_x = double(iSegment) - double(index_x0);
+            double y_base = coeff.b0 + (coeff.b1 + coeff.b3 * new_x) * new_x; // b3 instead of b2
+            double y_current = y_start[iSegment];                             // y_start[0] is the leftmost y value
             double newdiff = (y_current - y_base) * (y_current - y_base);
 
             result += newdiff;
