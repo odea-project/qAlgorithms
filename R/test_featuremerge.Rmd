@@ -172,17 +172,13 @@ curve_0_M = function(x, scale_to_A, feature_A, feature_B){ # merged curve with a
   b2_m = (feature_A$b2 + feature_B$b2) / 2
   b3_m = (feature_A$b3 + feature_B$b3) / 2
 
-  root = (b1_n1 - b1_n2)^2 - 4* (b2_m - b3_m) * (b0_n1 - b0_n2)
-  if(root < 0) {
+  root = sqrt((b1_n1 - b1_n2)^2 - 4* (b2_m - b3_m) * (b0_n1 - b0_n2))
+  if(is.nan(root)) {
     # no intersect exists, adjust b0_n2 so that one intersect is made. @todo change for apex on the right
     # b0_n2_m = b0_n1 - (b1_n1 - b1_n2)^2 / (4* (b2_m - b3_m))
-    # return(T)
     root = 0
     b3_m = b2_m - (b1_n1 - b1_n2)^2 / (4* (b0_n1 - b0_n2))
-  } else {
-    # return(F)
-    root = sqrt(root)
-  }
+  } 
   
   # re-scale the height to feature A 
   b0_n1 = ifelse(scale_to_A, b0_n1 + log(height_A), b0_n1 + log(height_B))
