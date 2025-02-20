@@ -22,7 +22,7 @@ namespace qAlgorithms
     std::vector<qCentroid> passToBinning(std::vector<std::vector<CentroidPeak>> &allPeaks);
 
     void runningRegression(
-        const std::vector<float> intensities,
+        const float *y_start,
         const float *ylog_start,
         const std::vector<bool> degreesOfFreedom,
         const size_t arrayMaxLength,
@@ -33,7 +33,7 @@ namespace qAlgorithms
     void validateRegressions(
         const __m128 *beta,
         size_t n_segments,
-        const std::vector<float> intensities,
+        const float *y_start,
         const float *ylog_start,
         const std::vector<bool> degreesOfFreedom,
         size_t arrayMaxLength,
@@ -43,13 +43,15 @@ namespace qAlgorithms
     void makeValidRegression(
         RegressionGauss *mutateReg,
         size_t arrayMaxLength,
-        const size_t i,
+        const size_t idxStart,
         const size_t scale,
-        const std::vector<bool> df_start,
-        const std::vector<float> intensities,
+        const std::vector<bool> degreesOfFreedom,
+        const float *y_start,
         const float *ylog_start);
 
-    std::vector<RegressionGauss> mergeRegressionsOverScales(std::vector<RegressionGauss> validRegressions, const std::vector<float> intensities);
+    std::vector<RegressionGauss> mergeRegressionsOverScales(
+        std::vector<RegressionGauss> validRegressions,
+        const float *y_start);
 
     void createCentroidPeaks(
         std::vector<CentroidPeak> *peaks,
@@ -60,18 +62,17 @@ namespace qAlgorithms
     void createFeaturePeaks(
         std::vector<FeaturePeak> *peaks,
         const std::vector<RegressionGauss> *validRegressionsVec,
-        const std::vector<float> intensities,
+        const float *y_start,
         const float *mz_start,
         const float *rt_start,
         const float *DQSC,
         const float *DQSB);
 
-    // float calcSSE_base(RegCoeffs coeff, const std::vector<float> y_start, int limit_L, int limit_R);
-    float calcSSE_base(RegCoeffs coeff, const float *y_start, int limit_L, int limit_R);
+    float calcSSE_base(const RegCoeffs coeff, const float *y_start, size_t scale, size_t idxStart);
 
-    float calcSSE_exp(RegCoeffs coeff, const std::vector<float> y_start, int limit_L, int limit_R);
+    float calcSSE_exp(const RegCoeffs coeff, const float *y_start, size_t limit_L, size_t limit_R, size_t index_x0);
 
-    float calcSSE_chisqared(RegCoeffs coeff, const std::vector<float> y_start, int limit_L, int limit_R);
+    float calcSSE_chisqared(const RegCoeffs coeff, const float *y_start, size_t scale, size_t idxStart);
 
     /**
      * @brief Calculate the best mean squared error of the regression model
@@ -91,9 +92,9 @@ namespace qAlgorithms
      */
 
     std::pair<size_t, float> findBestRegression(
-        const std::vector<float> intensities,
+        const float *y_start,
         std::vector<RegressionGauss> regressions,
-        const std::vector<bool> df_start,
+        const std::vector<bool> degreesOfFreedom,
         size_t startIdx,
         size_t endIdx);
 
@@ -111,12 +112,12 @@ namespace qAlgorithms
      * @return int : Degree of freedom
      */
     size_t calcDF(
-        const bool *df_start,
+        const bool *degreesOfFreedom,
         unsigned int left_limit,
         unsigned int right_limit);
 
     size_t calcDF(
-        const std::vector<bool> df_start,
+        const std::vector<bool> degreesOfFreedom,
         unsigned int left_limit,
         unsigned int right_limit);
 
@@ -156,18 +157,18 @@ namespace qAlgorithms
      *
      * @param apex_position
      * @param scale
-     * @param index_loop
+     * @param idxStart
      * @param Y
      * @param apexToEdge : The ratio of the peak maximum to the signal at the edge of
      * the regression window. This value is calculated by the function.
      * @return true
      * @return false
      */
-    float calcApexToEdge(
+    inline float apexToEdgeRatio(
         const double apex_position,
         const size_t scale,
-        const size_t index_loop,
-        const std::vector<float> intensities);
+        const size_t idxStart,
+        const float *y_start);
 
     /**
      * @brief Check if the quadratic term of the regression model is valid using t-test.
@@ -246,7 +247,7 @@ namespace qAlgorithms
         const size_t n,
         __m128 *result);
 
-    std::pair<float, float> weightedMeanAndVariance(const float *x, const std::vector<float> weight,
+    std::pair<float, float> weightedMeanAndVariance(const float *x, const float *weight,
                                                     int left_limit, int right_limit);
 }
 
