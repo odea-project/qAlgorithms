@@ -72,7 +72,7 @@ namespace qAlgorithms
 
     float calcSSE_exp(const RegCoeffs coeff, const float *y_start, size_t limit_L, size_t limit_R, size_t index_x0);
 
-    float calcSSE_chisqared(const RegCoeffs coeff, const float *y_start, size_t scale, size_t idxStart);
+    float calcSSE_chisqared(const RegCoeffs coeff, const float *y_start, size_t limit_L, size_t limit_R, size_t index_x0);
 
     /**
      * @brief Calculate the best mean squared error of the regression model
