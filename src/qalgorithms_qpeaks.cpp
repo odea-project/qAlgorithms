@@ -532,9 +532,9 @@ namespace qAlgorithms
           This block of code implements the chi-square filter. It calculates the chi-square
           value based on the weighted chi squared sum of expected and measured y values in
           the exponential domain. If the chi-square value is less than the corresponding
-          value in the CHI_SQUARES, the loop continues to the next iteration.
+          value in the CHI_SQUARES, the regression is invalid.
         */
-        float chiSquare = calcSSE_chisqared(mutateReg->newCoeffs, intensities, scale, idxStart);
+        float chiSquare = calcSSE_chisqared(mutateReg->newCoeffs, intensities, mutateReg->left_limit, mutateReg->right_limit, scale + idxStart);
         if (chiSquare < CHI_SQUARES[df_sum - 5])
         {
             return; // statistical insignificance of the chi-square value
@@ -954,30 +954,29 @@ namespace qAlgorithms
         return result;
     }
 
-    float calcSSE_chisqared(const RegCoeffs coeff, const float *y_start, size_t scale, size_t idxStart)
+    float calcSSE_chisqared(const RegCoeffs coeff, const float *y_start, size_t limit_L, size_t limit_R, size_t index_x0)
     {
         double result = 0.0;
         // left side
-        for (size_t iSegment = 0; iSegment < scale; iSegment++)
+        for (size_t iSegment = limit_L; iSegment < index_x0; iSegment++)
         {
-            assert(iSegment >= 0);
-            double new_x = double(iSegment) - double(scale);
+            double new_x = double(iSegment) - double(index_x0);
             double y_base = exp_approx_d(coeff.b0 + (coeff.b1 + coeff.b2 * new_x) * new_x);
-            double y_current = y_start[iSegment + idxStart];
+            double y_current = y_start[iSegment];
             double newdiff = (y_base - y_current) * (y_base - y_current);
             result += newdiff / y_base;
             // double newdiff = y_current * y_current / y_base + 2 * y_current + y_base;
             // result += newdiff;
         }
         // center point, left and right term are identical
-        result += ((exp_approx_d(coeff.b0) - y_start[scale + idxStart]) *
-                   (exp_approx_d(coeff.b0) - y_start[scale + idxStart])) /
+        result += ((exp_approx_d(coeff.b0) - y_start[index_x0]) *
+                   (exp_approx_d(coeff.b0) - y_start[index_x0])) /
                   exp_approx_d(coeff.b0); // x = 0 -> (b0 - y)^2
 
-        for (size_t iSegment = 1; iSegment < scale + 1; iSegment++) // iSegment = 0 is center point (calculated above)
+        for (size_t iSegment = index_x0 + 1; iSegment < limit_R + 1; iSegment++) // iSegment = 0 is center point (calculated above)
         {
             double y_base = exp_approx_d(coeff.b0 + (coeff.b1 + coeff.b3 * iSegment) * iSegment); // b3 instead of b2
-            double y_current = y_start[iSegment + scale + idxStart];                              // y_start[0] is the leftmost y value
+            double y_current = y_start[iSegment];                                                 // y_start[0] is the leftmost y value
             double newdiff = (y_current - y_base) * (y_current - y_base);
             result += newdiff / y_base;
             // double newdiff = y_current * y_current / y_base + 2 * y_current + y_base;
