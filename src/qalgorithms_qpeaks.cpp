@@ -106,7 +106,6 @@ namespace qAlgorithms
             maxWindowSize = maxWindowSize < length ? length : maxWindowSize;
         }
         assert(maxWindowSize > 0);
-        float *intensity = new float[maxWindowSize];
         float *logIntensity = new float[maxWindowSize];
 
         size_t GLOBAL_MAXSCALE_CENTROID = 8; // @todo this is a critical part of the algorithm and should not be hard-coded
@@ -116,17 +115,13 @@ namespace qAlgorithms
         {
             auto block = treatedData[i];
             size_t length = block.df.size();
-            for (size_t position = 0; position < length; position++)
-            {
-                intensity[position] = block.intensity[position];
-            }
 
             // perform log-transform on intensity
             std::transform(block.intensity.begin(), block.intensity.end(), logIntensity, [](float y)
                            { return std::log(y); });
             // @todo adjust the scale dynamically based on the number of valid regressions found, early terminate after x iterations
             size_t maxScale = std::min(GLOBAL_MAXSCALE_CENTROID, size_t((length - 1) / 2));
-            runningRegression(intensity, logIntensity, block.df, maxWindowSize, length, validRegressions, maxScale);
+            runningRegression(block.intensity, logIntensity, block.df, length, validRegressions, maxScale);
             if (validRegressions.empty())
             {
                 continue; // no valid peaks
@@ -134,8 +129,6 @@ namespace qAlgorithms
             createCentroidPeaks(&all_peaks, &validRegressions, block, scanNumber);
             validRegressions.clear();
         }
-
-        delete[] intensity;
         delete[] logIntensity;
         return all_peaks;
     }
@@ -149,7 +142,7 @@ namespace qAlgorithms
             assert(length > 4); // data must contain at least five points
             maxWindowSize = maxWindowSize < length ? length : maxWindowSize;
         }
-        float *intensity = new float[maxWindowSize];
+        // float *intensity = new float[maxWindowSize];
         float *logIntensity = new float[maxWindowSize];
         float *RT = new float[maxWindowSize];
         float *mz = new float[maxWindowSize];
@@ -158,15 +151,17 @@ namespace qAlgorithms
 
         std::vector<RegressionGauss> validRegressions;
         validRegressions.reserve(treatedData.separators.size() / 5); // we expect ~ 20% of all bins to have a feature
-        static const size_t GLOBAL_MAXSCALE_FEATURES = 30;
+        static const size_t GLOBAL_MAXSCALE_FEATURES = 30;           // @todo this is not a sensible limit and only chosen for computational speed at the moment
         for (size_t i = 0; i < treatedData.separators.size(); i++)
         {
             size_t length = treatedData.separators[i].end - treatedData.separators[i].start + 1;
             std::vector<bool> degreesOfFreedom;
+            std::vector<float> intensity;
             for (size_t position = 0; position < length; position++)
             {
                 size_t idx = position + treatedData.separators[i].start;
-                intensity[position] = treatedData.dataPoints[idx].y;
+                // intensity[position] = treatedData.dataPoints[idx].y;
+                intensity.push_back(treatedData.dataPoints[idx].y);
                 RT[position] = treatedData.dataPoints[idx].x;
                 degreesOfFreedom.push_back(treatedData.dataPoints[idx].df);
                 mz[position] = treatedData.dataPoints[idx].mz;
@@ -175,10 +170,12 @@ namespace qAlgorithms
             }
 
             // perform log-transform on Y
-            std::transform(intensity, intensity + length, logIntensity, [](float y)
+            // std::transform(intensity, intensity + length, logIntensity, [](float y)
+            //                { return std::log(y); });
+            std::transform(intensity.begin(), intensity.end(), logIntensity, [](float y)
                            { return std::log(y); });
             size_t maxScale = std::min(GLOBAL_MAXSCALE_FEATURES, size_t((length - 1) / 2));
-            runningRegression(intensity, logIntensity, degreesOfFreedom, length, length, validRegressions, maxScale);
+            runningRegression(intensity, logIntensity, degreesOfFreedom, length, validRegressions, maxScale);
             if (validRegressions.empty())
             {
                 continue; // no valid peaks
@@ -186,7 +183,7 @@ namespace qAlgorithms
             createFeaturePeaks(&all_peaks, &validRegressions, intensity, mz, RT, DQSC, DQSB);
             validRegressions.clear();
         }
-        delete[] intensity;
+        // delete[] intensity;
         delete[] logIntensity;
         delete[] RT;
         delete[] mz;
@@ -197,10 +194,9 @@ namespace qAlgorithms
 
 #pragma region "running regression"
     void runningRegression(
-        const float *y_start,
-        const float *ylog_start,
+        std::vector<float> intensities,
+        const float *intensities_log,
         const std::vector<bool> degreesOfFreedom,
-        const size_t arrayMaxLength,
         const size_t n, // number of data points
         std::vector<RegressionGauss> &validRegressions,
         const size_t maxScale)
@@ -209,7 +205,6 @@ namespace qAlgorithms
 
         // maximum size of the coefficients array is known at time of function call
         size_t maxSize = n - 4; // max size is at scale = 2
-        assert(maxScale <= arrayMaxLength);
         // re-use this array for all coefficients
         __m128 beta[maxSize];
 
@@ -218,14 +213,14 @@ namespace qAlgorithms
             const int k = 2 * scale + 1;      // window size
             const int n_segments = n - k + 1; // number of segments, i.e. regressions considering the array size
 
-            convolve_SIMD(scale, ylog_start, n, beta); // beta past position n-1 contains initialized, but wrong values - make sure they cannot be accessed
-                                                       // n_segments must be smaller than the array
-            validateRegressions(beta, n_segments, y_start, ylog_start, degreesOfFreedom, arrayMaxLength, scale, validRegressions);
+            convolve_SIMD(scale, intensities_log, n, beta); // beta past position n-1 contains initialized, but wrong values - make sure they cannot be accessed
+                                                            // n_segments must be smaller than the array
+            validateRegressions(beta, n_segments, intensities, intensities_log, degreesOfFreedom, scale, validRegressions);
         }
 
         if (validRegressions.size() > 1)
         {
-            validRegressions = mergeRegressionsOverScales(validRegressions, y_start);
+            validRegressions = mergeRegressionsOverScales(validRegressions, intensities);
         }
         // number of competitors is intialised to 0, so no special case for size = 1 needed
         // there can be 0, 1 or more than one regressions in validRegressions
@@ -334,12 +329,11 @@ namespace qAlgorithms
 
 #pragma region validateRegressions
     void validateRegressions(
-        const __m128 *beta,      // coefficients matrix
-        size_t n_segments,       // number of segments, i.e. regressions
-        const float *y_start,    // pointer to the start of the Y matrix
-        const float *ylog_start, // pointer to the start of the Ylog matrix
+        const __m128 *beta,             // coefficients matrix
+        size_t n_segments,              // number of segments, i.e. regressions
+        std::vector<float> intensities, // pointer to the start of the Y matrix
+        const float *intensities_log,   // pointer to the start of the Ylog matrix
         const std::vector<bool> degreesOfFreedom,
-        size_t arrayMaxLength,
         size_t scale, // scale, i.e., the number of data points in a half window excluding the center point
         std::vector<RegressionGauss> &validRegressions)
     {
@@ -364,7 +358,7 @@ namespace qAlgorithms
             validRegsTmp.back().newCoeffs.b2 = coeff[2];
             validRegsTmp.back().newCoeffs.b3 = coeff[3];
             // idxStart must be smaller than the size of the checked region
-            makeValidRegression(&validRegsTmp.back(), arrayMaxLength, idxStart, scale, degreesOfFreedom, y_start, ylog_start);
+            makeValidRegression(&validRegsTmp.back(), idxStart, scale, degreesOfFreedom, intensities, intensities_log);
             if (validRegsTmp.back().isValid)
             {
                 validRegsTmp.push_back(RegressionGauss{});
@@ -436,7 +430,7 @@ namespace qAlgorithms
             else
             { // survival of the fittest based on mse between original data and reconstructed (exp transform of regression)
                 assert(startEndGroups[groupIdx] != startEndGroups[groupIdx + 1]);
-                auto bestRegIdx = findBestRegression(y_start, validRegsTmp, degreesOfFreedom,
+                auto bestRegIdx = findBestRegression(intensities, validRegsTmp, degreesOfFreedom,
                                                      startEndGroups[groupIdx], startEndGroups[groupIdx + 1]);
 
                 RegressionGauss bestReg = validRegsTmp[bestRegIdx.first];
@@ -451,11 +445,10 @@ namespace qAlgorithms
 
     void makeValidRegression(
         RegressionGauss *mutateReg,
-        size_t arrayMaxLength,
         const size_t idxStart,
         const size_t scale,
         const std::vector<bool> degreesOfFreedom,
-        const float *intensities,
+        std::vector<float> intensities,
         const float *intensities_log)
     { // @todo order by effort to calculate
         /*
@@ -501,7 +494,7 @@ namespace qAlgorithms
             mutateReg->left_limit = idxStart;
             mutateReg->right_limit = std::min(idxStart + 2 * scale, static_cast<int>(valley_position) + idxStart + scale);
         }
-        assert(mutateReg->right_limit < arrayMaxLength + 1);
+        assert(mutateReg->right_limit < intensities.size());
 
         /*
             Note: left and right limit are not the limits of the regression, but of the window the regression applies in.
@@ -624,9 +617,8 @@ namespace qAlgorithms
 #pragma endregion "validate regression test series"
 
 #pragma region mergeRegressionsOverScales
-    std::vector<RegressionGauss> mergeRegressionsOverScales(std::vector<RegressionGauss> validRegressions, const float *y_start)
+    std::vector<RegressionGauss> mergeRegressionsOverScales(std::vector<RegressionGauss> validRegressions, const std::vector<float> intensities)
     {
-        // std::cout << y_start[-1];
         /*
           Grouping Over Scales:
           This block of code implements the grouping over scales. It groups the valid
@@ -665,7 +657,7 @@ namespace qAlgorithms
                         { // calculate the mse of the ref peak
                             validRegressions[j].mse = calcSSE_exp(
                                 validRegressions[j].newCoeffs,
-                                y_start,
+                                intensities,
                                 validRegressions[j].left_limit,
                                 validRegressions[j].right_limit,
                                 validRegressions[j].index_x0);
@@ -693,7 +685,7 @@ namespace qAlgorithms
             { // calculate the mse of the current peak
                 validRegressions[i].mse = calcSSE_exp(
                     validRegressions[i].newCoeffs,
-                    y_start,
+                    intensities,
                     left_limit,
                     right_limit,
                     validRegressions[i].index_x0);
@@ -733,7 +725,7 @@ namespace qAlgorithms
 
 #pragma region "create peaks"
 
-    std::pair<float, float> weightedMeanAndVariance(const float *values, const float *weight,
+    std::pair<float, float> weightedMeanAndVariance(const float *values, const std::vector<float> weight,
                                                     int left_limit, int right_limit)
     { // @todo rework this function to be more readable
         // weighted mean using intensity as weighting factor and left_limit right_limit as range
@@ -824,7 +816,7 @@ namespace qAlgorithms
     void createFeaturePeaks(
         std::vector<FeaturePeak> *peaks,
         const std::vector<RegressionGauss> *validRegressionsVec,
-        const float *intensity,
+        const std::vector<float> intensity,
         const float *mz_start,
         const float *rt_start,
         const float *DQSC,
@@ -908,7 +900,7 @@ namespace qAlgorithms
         {
             double new_x = double(iSegment) - double(index_x0);
             double y_base = coeff.b0 + (coeff.b1 + coeff.b3 * new_x) * new_x; // b3 instead of b2
-            double y_current = y_start[iSegment];                             // y_start[0] is the leftmost y value
+            double y_current = y_start[iSegment];
             double newdiff = (y_current - y_base) * (y_current - y_base);
 
             result += newdiff;
@@ -916,7 +908,7 @@ namespace qAlgorithms
         return result;
     }
 
-    float calcSSE_exp(const RegCoeffs coeff, const float *y_start, size_t limit_L, size_t limit_R, size_t index_x0)
+    float calcSSE_exp(const RegCoeffs coeff, const std::vector<float> y_start, size_t limit_L, size_t limit_R, size_t index_x0)
     {
         double result = 0.0;
         // @todo error: the array is accessed at positions < 0
@@ -944,7 +936,7 @@ namespace qAlgorithms
         {
             double new_x = double(iSegment) - double(index_x0);                             // always positive
             double y_base = exp_approx_d(coeff.b0 + (coeff.b1 + coeff.b3 * new_x) * new_x); // b3 instead of b2
-            double y_current = y_start[iSegment];                                           // y_start[0] is the leftmost y value
+            double y_current = y_start[iSegment];
             // std::cout << y_current << ", ";
             double newdiff = (y_current - y_base) * (y_current - y_base);
             // std::cout << limit_L2 + iSegment  -limit_L2 << ", ";
@@ -955,7 +947,7 @@ namespace qAlgorithms
         return result;
     }
 
-    float calcSSE_chisqared(const RegCoeffs coeff, const float *y_start, size_t limit_L, size_t limit_R, size_t index_x0)
+    float calcSSE_chisqared(const RegCoeffs coeff, const std::vector<float> y_start, size_t limit_L, size_t limit_R, size_t index_x0)
     {
         double result = 0.0;
         // left side
@@ -977,7 +969,7 @@ namespace qAlgorithms
         for (size_t iSegment = index_x0 + 1; iSegment < limit_R + 1; iSegment++) // iSegment = 0 is center point (calculated above)
         {
             double y_base = exp_approx_d(coeff.b0 + (coeff.b1 + coeff.b3 * iSegment) * iSegment); // b3 instead of b2
-            double y_current = y_start[iSegment];                                                 // y_start[0] is the leftmost y value
+            double y_current = y_start[iSegment];
             double newdiff = (y_current - y_base) * (y_current - y_base);
             result += newdiff / y_base;
             // double newdiff = y_current * y_current / y_base + 2 * y_current + y_base;
@@ -989,7 +981,7 @@ namespace qAlgorithms
 #pragma endregion calcSSE
 
     std::pair<size_t, float> findBestRegression( // index, mse
-        const float *y_start,                    // start of the measured data
+        std::vector<float> intensities,          // start of the measured data
         std::vector<RegressionGauss> regressions,
         const std::vector<bool> degreesOfFreedom,
         size_t startIdx,
@@ -1014,7 +1006,7 @@ namespace qAlgorithms
         {
             // step 2: calculate the mean squared error (MSE) between the predicted and actual values
             float mse = calcSSE_exp(regressions[i].newCoeffs,
-                                    y_start,
+                                    intensities,
                                     left_limit,
                                     right_limit,
                                     regressions[i].index_x0);
@@ -1136,11 +1128,11 @@ namespace qAlgorithms
         const size_t idxStart,
         const size_t idxApex,
         const size_t idxEnd,
-        const float *y_start)
+        const std::vector<float> intensities)
     {
-        float apex = y_start[idxApex];
-        float left = y_start[idxStart];
-        float right = y_start[idxEnd];
+        float apex = intensities[idxApex];
+        float left = intensities[idxStart];
+        float right = intensities[idxEnd];
         return (left < right) ? (apex / left) : (apex / right);
     }
 
