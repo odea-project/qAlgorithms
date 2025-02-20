@@ -137,7 +137,7 @@ namespace qAlgorithms
      * @param scale
      * @return float
      */
-    inline float multiplyVecMatrixVecTranspose(const float vec[4], size_t scale);
+    inline double multiplyVecMatrixVecTranspose(const double vec[4], size_t scale);
 
     /**
      * @brief Checks if peak maximum is twice as high as the signal at the edge of the regression window.
