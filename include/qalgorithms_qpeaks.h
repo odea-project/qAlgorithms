@@ -46,8 +46,8 @@ namespace qAlgorithms
         const size_t idxStart,
         const size_t scale,
         const std::vector<bool> degreesOfFreedom,
-        const float *y_start,
-        const float *ylog_start);
+        const float *intensities,
+        const float *intensities_log);
 
     std::vector<RegressionGauss> mergeRegressionsOverScales(
         std::vector<RegressionGauss> validRegressions,
@@ -165,9 +165,9 @@ namespace qAlgorithms
      * @return false
      */
     inline float apexToEdgeRatio(
-        const double apex_position,
-        const size_t scale,
         const size_t idxStart,
+        const size_t idxApex,
+        const size_t idxEnd,
         const float *y_start);
 
     /**

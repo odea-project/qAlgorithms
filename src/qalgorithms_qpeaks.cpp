@@ -455,8 +455,8 @@ namespace qAlgorithms
         const size_t idxStart,
         const size_t scale,
         const std::vector<bool> degreesOfFreedom,
-        const float *y_start,
-        const float *ylog_start)
+        const float *intensities,
+        const float *intensities_log)
     { // @todo order by effort to calculate
         /*
           Apex and Valley Position Filter:
@@ -534,7 +534,7 @@ namespace qAlgorithms
           the exponential domain. If the chi-square value is less than the corresponding
           value in the CHI_SQUARES, the loop continues to the next iteration.
         */
-        float chiSquare = calcSSE_chisqared(mutateReg->newCoeffs, y_start, scale, idxStart);
+        float chiSquare = calcSSE_chisqared(mutateReg->newCoeffs, intensities, scale, idxStart);
         if (chiSquare < CHI_SQUARES[df_sum - 5])
         {
             return; // statistical insignificance of the chi-square value
@@ -547,7 +547,9 @@ namespace qAlgorithms
           ratio is greater than 2. This is a pre-filter for later
           signal-to-noise ratio checkups. apexToEdge is also required in isValidPeakHeight further down
         */
-        float apexToEdge = apexToEdgeRatio(mutateReg->apex_position, scale, idxStart, y_start);
+        //         size_t idx_apex = (size_t)std::round(apex_position) + scale + idxStart;
+        size_t idxApex = (size_t)std::round(mutateReg->apex_position) + scale + idxStart;
+        float apexToEdge = apexToEdgeRatio(mutateReg->left_limit, idxApex, mutateReg->right_limit, intensities);
         if (!(apexToEdge > 2))
         {
             return; // invalid apex to edge ratio
@@ -562,7 +564,7 @@ namespace qAlgorithms
           term is considered statistically insignificant, and the loop continues
           to the next iteration.
         */
-        float mse = calcSSE_base(mutateReg->newCoeffs, ylog_start, scale, idxStart);
+        float mse = calcSSE_base(mutateReg->newCoeffs, intensities_log, scale, idxStart);
         mse /= (df_sum - 4);
 
         if (!isValidQuadraticTerm(mutateReg->newCoeffs, scale, mse, df_sum))
@@ -963,8 +965,9 @@ namespace qAlgorithms
             double y_base = exp_approx_d(coeff.b0 + (coeff.b1 + coeff.b2 * new_x) * new_x);
             double y_current = y_start[iSegment + idxStart];
             double newdiff = (y_base - y_current) * (y_base - y_current);
-
             result += newdiff / y_base;
+            // double newdiff = y_current * y_current / y_base + 2 * y_current + y_base;
+            // result += newdiff;
         }
         // center point, left and right term are identical
         result += ((exp_approx_d(coeff.b0) - y_start[scale + idxStart]) *
@@ -976,8 +979,9 @@ namespace qAlgorithms
             double y_base = exp_approx_d(coeff.b0 + (coeff.b1 + coeff.b3 * iSegment) * iSegment); // b3 instead of b2
             double y_current = y_start[iSegment + scale + idxStart];                              // y_start[0] is the leftmost y value
             double newdiff = (y_current - y_base) * (y_current - y_base);
-
             result += newdiff / y_base;
+            // double newdiff = y_current * y_current / y_base + 2 * y_current + y_base;
+            // result += newdiff;
         }
         return result;
     }
@@ -1129,16 +1133,14 @@ namespace qAlgorithms
 #pragma region "isValidApexToEdge"
 
     inline float apexToEdgeRatio(
-        const double apex_position,
-        const size_t scale,
         const size_t idxStart,
+        const size_t idxApex,
+        const size_t idxEnd,
         const float *y_start)
     {
-        size_t idx_apex = (size_t)std::round(apex_position) + scale + idxStart;
-        int idx_right = 2 * scale + idxStart;
-        float apex = y_start[idx_apex];   // apex value
-        float left = y_start[idxStart];   // left edge value
-        float right = y_start[idx_right]; // right edge value
+        float apex = y_start[idxApex];
+        float left = y_start[idxStart];
+        float right = y_start[idxEnd];
         return (left < right) ? (apex / left) : (apex / right);
     }
 
