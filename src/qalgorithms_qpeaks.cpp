@@ -792,7 +792,7 @@ namespace qAlgorithms
             double delta_mz = block.mz[offset + 1] - mz0;
 
             // add scaled area
-            float exp_b0 = exp_approx_d(coeff.b0); // exp(b0)
+            double exp_b0 = exp_approx_d(coeff.b0); // exp(b0)
             peak.area = regression.area * exp_b0 * delta_mz;
             peak.areaUncertainty = regression.uncertainty_area * exp_b0 * delta_mz;
 
@@ -1133,7 +1133,7 @@ namespace qAlgorithms
         const float mse,
         const size_t scale)
     {
-        float Jacobian_height[4]{1, 0, 0, 0};          // Jacobian matrix for the height
+        double Jacobian_height[4]{1, 0, 0, 0};         // Jacobian matrix for the height
         Jacobian_height[1] = mutateReg->apex_position; // apex_position * height;
         if (mutateReg->apex_position < 0)
         {
@@ -1161,7 +1161,7 @@ namespace qAlgorithms
     {
         // check if the peak height is significantly greater than edge signal
 
-        float Jacobian_height2[4]{0, 0, 0, 0};
+        double Jacobian_height2[4]{0, 0, 0, 0};
         // Jacobian_height2[0] = 0.f; // adjust for uncertainty calculation of apex to edge ratio
 
         if (apex_position < 0)
@@ -1195,38 +1195,38 @@ namespace qAlgorithms
 
     void calcPeakAreaUncert(RegressionGauss *mutateReg, const float mse, const int scale)
     {
-        float b1 = mutateReg->newCoeffs.b1;
-        float b2 = mutateReg->newCoeffs.b2;
-        float b3 = mutateReg->newCoeffs.b3;
-        float _SQRTB2 = 1 / std::sqrt(std::abs(b2));
-        float _SQRTB3 = 1 / std::sqrt(std::abs(b3));
-        float B1_2_SQRTB2 = b1 / 2 * _SQRTB2;
-        float B1_2_SQRTB3 = b1 / 2 * _SQRTB3;
-        float B1_2_B2 = b1 / 2 / b2;
-        float B1_2_B3 = b1 / 2 / b3;
+        double b1 = mutateReg->newCoeffs.b1;
+        double b2 = mutateReg->newCoeffs.b2;
+        double b3 = mutateReg->newCoeffs.b3;
+        double _SQRTB2 = 1 / std::sqrt(std::abs(b2));
+        double _SQRTB3 = 1 / std::sqrt(std::abs(b3));
+        double B1_2_SQRTB2 = b1 / 2 * _SQRTB2;
+        double B1_2_SQRTB3 = b1 / 2 * _SQRTB3;
+        double B1_2_B2 = b1 / 2 / b2;
+        double B1_2_B3 = b1 / 2 / b3;
 
-        float J[4]; // Jacobian matrix
+        double J[4]; // Jacobian matrix
 
         // here we have to check if there is a valley point or not // @todo this can be simplified
-        const float err_L =
+        double err_L =
             (b2 < 0)
                 ? experfc(B1_2_SQRTB2, -1.0) // 1 - std::erf(b1 / 2 / SQRTB2) // ordinary peak
                 : dawson5(B1_2_SQRTB2);      // erfi(b1 / 2 / SQRTB2);        // peak with valley point;
 
-        float err_R =
+        double err_R =
             (b3 < 0)
                 ? experfc(B1_2_SQRTB3, 1.0) // 1 + std::erf(b1 / 2 / SQRTB3) // ordinary peak
                 : dawson5(-B1_2_SQRTB3);    // -erfi(b1 / 2 / SQRTB3);       // peak with valley point ;
 
         // calculate the Jacobian matrix terms
-        float J_1_common_L = _SQRTB2; // SQRTPI_2 * EXP_B12 / SQRTB2;
-        float J_1_common_R = _SQRTB3; // SQRTPI_2 * EXP_B13 / SQRTB3;
-        float J_2_common_L = B1_2_B2 / b1;
-        float J_2_common_R = B1_2_B3 / b1;
-        float J_1_L = J_1_common_L * err_L;
-        float J_1_R = J_1_common_R * err_R;
-        float J_2_L = J_2_common_L - J_1_L * B1_2_B2;
-        float J_2_R = -J_2_common_R - J_1_R * B1_2_B3;
+        double J_1_common_L = _SQRTB2; // SQRTPI_2 * EXP_B12 / SQRTB2;
+        double J_1_common_R = _SQRTB3; // SQRTPI_2 * EXP_B13 / SQRTB3;
+        double J_2_common_L = B1_2_B2 / b1;
+        double J_2_common_R = B1_2_B3 / b1;
+        double J_1_L = J_1_common_L * err_L;
+        double J_1_R = J_1_common_R * err_R;
+        double J_2_L = J_2_common_L - J_1_L * B1_2_B2;
+        double J_2_R = -J_2_common_R - J_1_R * B1_2_B3;
 
         J[0] = J_1_R + J_1_L;
         J[1] = J_2_R + J_2_L;
@@ -1246,35 +1246,35 @@ namespace qAlgorithms
         const int scale, // scale must be an int here
         const size_t df_sum)
     {
-        float b1 = coeff.b1;
-        float b2 = coeff.b2;
-        float b3 = coeff.b3;
+        double b1 = coeff.b1;
+        double b2 = coeff.b2;
+        double b3 = coeff.b3;
         assert(!(b2 > 0 && b3 > 0)); // there would be two valley points, so no maximum of the peak
         assert(scale > 0);
 
-        float _SQRTB2 = 1 / std::sqrt(std::abs(b2));
-        float _SQRTB3 = 1 / std::sqrt(std::abs(b3));
-        float B1_2_B2 = b1 / 2 / b2;
-        float EXP_B12 = exp_approx_d(-b1 * B1_2_B2 / 2);
-        float B1_2_B3 = b1 / 2 / b3;
-        float EXP_B13 = exp_approx_d(-b1 * B1_2_B3 / 2);
+        double _SQRTB2 = 1 / std::sqrt(std::abs(b2));
+        double _SQRTB3 = 1 / std::sqrt(std::abs(b3));
+        double B1_2_B2 = b1 / 2 / b2;
+        double EXP_B12 = exp_approx_d(-b1 * B1_2_B2 / 2);
+        double B1_2_B3 = b1 / 2 / b3;
+        double EXP_B13 = exp_approx_d(-b1 * B1_2_B3 / 2);
 
         // calculate the Jacobian matrix terms
-        float J_1_common_L = _SQRTB2; // SQRTPI_2 * EXP_B12 / SQRTB2;
-        float J_1_common_R = _SQRTB3; // SQRTPI_2 * EXP_B13 / SQRTB3;
-        float J_2_common_L = B1_2_B2 / b1;
-        float J_2_common_R = B1_2_B3 / b1;
+        double J_1_common_L = _SQRTB2; // SQRTPI_2 * EXP_B12 / SQRTB2;
+        double J_1_common_R = _SQRTB3; // SQRTPI_2 * EXP_B13 / SQRTB3;
+        double J_2_common_L = B1_2_B2 / b1;
+        double J_2_common_R = B1_2_B3 / b1;
 
-        float J_covered[4];    // Jacobian matrix for the covered peak area
-        float x_left = -scale; // left limit due to the window
-        float x_right = scale; // right limit due to the window
-        float y_left = 0;      // y value at the left limit
-        float y_right = 0;     // y value at the right limit
+        double J_covered[4];    // Jacobian matrix for the covered peak area
+        double x_left = -scale; // left limit due to the window
+        double x_right = scale; // right limit due to the window
+        double y_left = 0;      // y value at the left limit
+        double y_right = 0;     // y value at the right limit
 
         // here we have to check if there is a valley point or not
-        float err_L = 0;
-        float B1_2_SQRTB2 = b1 / 2 * _SQRTB2;
-        float err_L_covered = 0;
+        double err_L = 0;
+        double B1_2_SQRTB2 = b1 / 2 * _SQRTB2;
+        double err_L_covered = 0;
         if (b2 < 0)
         {
             // no valley point
@@ -1302,9 +1302,9 @@ namespace qAlgorithms
                 x_left = -B1_2_B2;
             }
         }
-        float err_R = 0;
-        float B1_2_SQRTB3 = b1 / 2 * _SQRTB3;
-        float err_R_covered = 0;
+        double err_R = 0;
+        double B1_2_SQRTB3 = b1 / 2 * _SQRTB3;
+        double err_R_covered = 0;
         if (b3 < 0)
         {
             // no valley point
@@ -1335,18 +1335,18 @@ namespace qAlgorithms
         // calculate the y values at the left and right limits
         y_left = exp_approx_d(b1 * x_left + b2 * x_left * x_left);
         y_right = exp_approx_d(b1 * x_right + b3 * x_right * x_right);
-        const float dX = x_right - x_left;
+        const double dX = x_right - x_left;
 
         // calculate the trapzoid correction terms for the jacobian matrix
-        const float trpzd_b0 = (y_right + y_left) * dX / 2;
-        const float trpzd_b1 = (x_right * y_right + x_left * y_left) * dX / 2;
-        const float trpzd_b2 = (x_left * x_left * y_left) * dX / 2;
-        const float trpzd_b3 = (x_right * x_right * y_right) * dX / 2;
+        const double trpzd_b0 = (y_right + y_left) * dX / 2;
+        const double trpzd_b1 = (x_right * y_right + x_left * y_left) * dX / 2;
+        const double trpzd_b2 = (x_left * x_left * y_left) * dX / 2;
+        const double trpzd_b3 = (x_right * x_right * y_right) * dX / 2;
 
-        const float J_1_L_covered = J_1_common_L * err_L_covered;
-        const float J_1_R_covered = J_1_common_R * err_R_covered;
-        const float J_2_L_covered = J_2_common_L - J_1_L_covered * B1_2_B2;
-        const float J_2_R_covered = -J_2_common_R - J_1_R_covered * B1_2_B3;
+        const double J_1_L_covered = J_1_common_L * err_L_covered;
+        const double J_1_R_covered = J_1_common_R * err_R_covered;
+        const double J_2_L_covered = J_2_common_L - J_1_L_covered * B1_2_B2;
+        const double J_2_R_covered = -J_2_common_R - J_1_R_covered * B1_2_B3;
 
         J_covered[0] = J_1_R_covered + J_1_L_covered - trpzd_b0;
         J_covered[1] = J_2_R_covered + J_2_L_covered - trpzd_b1;
@@ -1366,10 +1366,10 @@ namespace qAlgorithms
         const float apex_position,
         const size_t scale)
     {
-        float _b1 = 1 / coeff.b1;
-        float _b2 = 1 / coeff.b2;
-        float _b3 = 1 / coeff.b3;
-        float J[4]; // Jacobian matrix
+        double _b1 = 1 / coeff.b1;
+        double _b2 = 1 / coeff.b2;
+        double _b3 = 1 / coeff.b3;
+        double J[4]; // Jacobian matrix
         J[0] = 0.f;
         J[1] = apex_position * _b1;
         if (apex_position < 0)
@@ -1389,15 +1389,15 @@ namespace qAlgorithms
 #pragma region "convolve regression"
     // these chain to return beta for a regression
 
-    inline float multiplyVecMatrixVecTranspose(const float vec[4], size_t scale)
+    inline double multiplyVecMatrixVecTranspose(const double vec[4], size_t scale)
     {
         scale *= 6;
-        float result = vec[0] * vec[0] * INV_ARRAY[scale + 0] +
-                       vec[1] * vec[1] * INV_ARRAY[scale + 2] +
-                       (vec[2] * vec[2] + vec[3] * vec[3]) * INV_ARRAY[scale + 4] +
-                       2 * (vec[2] * vec[3] * INV_ARRAY[scale + 5] +
-                            vec[0] * (vec[1] + vec[3]) * INV_ARRAY[scale + 1] +
-                            vec[1] * (vec[2] - vec[3]) * INV_ARRAY[scale + 3]);
+        double result = vec[0] * vec[0] * INV_ARRAY[scale + 0] +
+                        vec[1] * vec[1] * INV_ARRAY[scale + 2] +
+                        (vec[2] * vec[2] + vec[3] * vec[3]) * INV_ARRAY[scale + 4] +
+                        2 * (vec[2] * vec[3] * INV_ARRAY[scale + 5] +
+                             vec[0] * (vec[1] + vec[3]) * INV_ARRAY[scale + 1] +
+                             vec[1] * (vec[2] - vec[3]) * INV_ARRAY[scale + 3]);
 
         return result;
     }
