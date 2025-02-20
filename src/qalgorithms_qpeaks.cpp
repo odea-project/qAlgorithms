@@ -40,11 +40,12 @@ namespace qAlgorithms
     }
 #pragma endregion "pass to qBinning"
 
+#define MAXSCALE 64
 #pragma region "initialize"
 
-    const std::array<float, 384> initialize()
+    const std::array<float, MAXSCALE * 6> initialize()
     { // array to store the 6 unique values of the inverse matrix for each scale
-        std::array<float, 384> invArray;
+        std::array<float, MAXSCALE * 6> invArray;
         // init invArray
         // XtX = transposed(Matrix X ) * Matrix X
         // XtX_xy: x = row number; y = column number
@@ -54,7 +55,7 @@ namespace qAlgorithms
         float XtX_12 = 0.f;
         float XtX_13 = 0.f;
         float XtX_22 = 0.f;
-        for (int i = 1; i < 64; ++i)
+        for (int i = 1; i < MAXSCALE; ++i)
         {
             XtX_00 += 2.f;
             XtX_02 += i * i;
@@ -109,6 +110,7 @@ namespace qAlgorithms
         float *logIntensity = new float[maxWindowSize];
 
         size_t GLOBAL_MAXSCALE_CENTROID = 8; // @todo this is a critical part of the algorithm and should not be hard-coded
+        assert(GLOBAL_MAXSCALE_CENTROID <= MAXSCALE);
         std::vector<RegressionGauss> validRegressions;
         validRegressions.reserve(treatedData.size() / 2); // probably too large, shouldn't matter
         for (size_t i = 0; i < treatedData.size(); i++)
@@ -152,6 +154,7 @@ namespace qAlgorithms
         std::vector<RegressionGauss> validRegressions;
         validRegressions.reserve(treatedData.separators.size() / 5); // we expect ~ 20% of all bins to have a feature
         static const size_t GLOBAL_MAXSCALE_FEATURES = 30;           // @todo this is not a sensible limit and only chosen for computational speed at the moment
+        assert(GLOBAL_MAXSCALE_FEATURES <= MAXSCALE);
         for (size_t i = 0; i < treatedData.separators.size(); i++)
         {
             size_t length = treatedData.separators[i].end - treatedData.separators[i].start + 1;
@@ -726,19 +729,19 @@ namespace qAlgorithms
 #pragma region "create peaks"
 
     std::pair<float, float> weightedMeanAndVariance(const float *values, const std::vector<float> weight,
-                                                    int left_limit, int right_limit)
-    { // @todo rework this function to be more readable
+                                                    size_t left_limit, size_t right_limit)
+    {
         // weighted mean using intensity as weighting factor and left_limit right_limit as range
-        int realPoints = right_limit - left_limit + 1;
-        float mean_wt = 0.0;                            // mean of weight
-        float sum_xw = 0.0;                             // sum of values * weight
-        float sum_weight = 0.0;                         // sum of weight
-        for (int j = left_limit; j <= right_limit; j++) // why does this work? there should be an array access at less than 0 @todo
+        size_t realPoints = right_limit - left_limit + 1;
+        double mean_weights = 0.0;   // mean of weight
+        double sum_weighted_x = 0.0; // sum of values * weight
+        double sum_weight = 0.0;     // sum of weight
+        for (size_t j = left_limit; j <= right_limit; j++)
         {
             if (values[j] != 0)
             {
-                mean_wt += weight[j];
-                sum_xw += values[j] * weight[j];
+                mean_weights += weight[j];
+                sum_weighted_x += values[j] * weight[j];
                 sum_weight += weight[j];
             }
             else
@@ -746,13 +749,13 @@ namespace qAlgorithms
                 realPoints--;
             }
         }
-        mean_wt /= realPoints;
-        sum_xw /= mean_wt;
-        sum_weight /= mean_wt;
+        mean_weights /= realPoints;
+        sum_weighted_x /= mean_weights;
+        sum_weight /= mean_weights;
 
-        float weighted_mean = sum_xw / sum_weight;
-        float sum_Qxxw = 0.0; // sum of (values - mean)^2 * weight
-        for (int j = left_limit; j <= right_limit; j++)
+        double weighted_mean = sum_weighted_x / sum_weight;
+        double sum_Qxxw = 0.0; // sum of (values - mean)^2 * weight
+        for (size_t j = left_limit; j <= right_limit; j++)
         {
             if (values[j] <= 0.f)
             {
@@ -911,39 +914,25 @@ namespace qAlgorithms
     float calcSSE_exp(const RegCoeffs coeff, const std::vector<float> y_start, size_t limit_L, size_t limit_R, size_t index_x0)
     {
         double result = 0.0;
-        // @todo error: the array is accessed at positions < 0
-        // rework: operate over limit_L to limit_R
-        // int limit_L2 = limit_L - index_x0;
-        // std::cout << limit_L << ", " << limit_R << " " << index_x0 << "\n";
-        // assert(-limit_L2 == limit_R2);
         // left side
         for (size_t iSegment = limit_L; iSegment < index_x0; iSegment++)
         {
             double new_x = double(iSegment) - double(index_x0); // always negative
             double y_base = exp_approx_d(coeff.b0 + (coeff.b1 + coeff.b2 * new_x) * new_x);
             double y_current = y_start[iSegment];
-            // std::cout << y_current << ", ";
             double newdiff = (y_base - y_current) * (y_base - y_current);
-            // std::cout << limit_L2 + iSegment << ", ";
-            // assert(limit_L2 + iSegment >= 0);
             result += newdiff;
         }
-        // center point
         result += (exp_approx_d(coeff.b0) - y_start[index_x0]) * (exp_approx_d(coeff.b0) - y_start[index_x0]); // x = 0 -> (b0 - y)^2
-        // std::cout << y_start[index_x0] << ", ";
-        // std::cout << limit_L2  -limit_L2 << ", ";
+        // right side
         for (size_t iSegment = index_x0 + 1; iSegment < limit_R + 1; iSegment++) // start one past the center, include right limit index
         {
             double new_x = double(iSegment) - double(index_x0);                             // always positive
             double y_base = exp_approx_d(coeff.b0 + (coeff.b1 + coeff.b3 * new_x) * new_x); // b3 instead of b2
             double y_current = y_start[iSegment];
-            // std::cout << y_current << ", ";
             double newdiff = (y_current - y_base) * (y_current - y_base);
-            // std::cout << limit_L2 + iSegment  -limit_L2 << ", ";
             result += newdiff;
         }
-        // std::cout << "\n";
-        // exit(1);
         return result;
     }
 
@@ -987,8 +976,7 @@ namespace qAlgorithms
         size_t startIdx,
         size_t endIdx) // degrees of freedom
     {
-        float best_mse = INFINITY;
-        // auto best_regression = regressions.begin();
+        double best_mse = INFINITY;
         size_t bestRegIdx = 0;
 
         // identify left (smallest) and right (largest) limit of the grouped regression windows
@@ -1005,11 +993,11 @@ namespace qAlgorithms
         for (size_t i = startIdx; i < endIdx + 1; i++)
         {
             // step 2: calculate the mean squared error (MSE) between the predicted and actual values
-            float mse = calcSSE_exp(regressions[i].newCoeffs,
-                                    intensities,
-                                    left_limit,
-                                    right_limit,
-                                    regressions[i].index_x0);
+            double mse = calcSSE_exp(regressions[i].newCoeffs,
+                                     intensities,
+                                     left_limit,
+                                     right_limit,
+                                     regressions[i].index_x0);
             mse /= (df_sum - 4);
 
             if (mse < best_mse)
@@ -1019,22 +1007,6 @@ namespace qAlgorithms
             }
         }
         return std::pair(bestRegIdx, best_mse);
-    }
-
-    size_t calcDF(
-        const bool *degreesOfFreedom, // start of the degrees of freedom array
-        unsigned int left_limit,
-        unsigned int right_limit)
-    {
-        size_t DF = 0;
-        for (size_t i = left_limit; i < right_limit; i++)
-        {
-            if (degreesOfFreedom[i])
-            {
-                ++DF;
-            }
-        }
-        return DF;
     }
 
     size_t calcDF(

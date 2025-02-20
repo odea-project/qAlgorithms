@@ -109,11 +109,6 @@ namespace qAlgorithms
      * @return int : Degree of freedom
      */
     size_t calcDF(
-        const bool *degreesOfFreedom,
-        unsigned int left_limit,
-        unsigned int right_limit);
-
-    size_t calcDF(
         const std::vector<bool> degreesOfFreedom,
         unsigned int left_limit,
         unsigned int right_limit);
@@ -245,7 +240,7 @@ namespace qAlgorithms
         __m128 *result);
 
     std::pair<float, float> weightedMeanAndVariance(const float *x, const std::vector<float> weight,
-                                                    int left_limit, int right_limit);
+                                                    size_t left_limit, size_t right_limit);
 }
 
 #endif
