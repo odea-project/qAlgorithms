@@ -683,9 +683,16 @@ namespace qAlgorithms
         std::sort(pointsInBin.begin(), pointsInBin.end(), [](const qCentroid *lhs, const qCentroid *rhs)
                   { return lhs->scanNo < rhs->scanNo; });
 
+        // number of points needed during feature detection, two on each side for extrapolation and one per scan between both ends
+        size_t firstScan = pointsInBin.front()->scanNo;
+        size_t binSpan = pointsInBin.back()->scanNo - firstScan + 5;
+        std::vector<size_t> interpolatedCens(binSpan, 0); // all points left at 0 are later interpolated since cenID = 0 doesn't exist
+        std::vector<float> interpolatedDQSB(binSpan, 0);
+        bool interpolations = !(interpolatedCens.size() == binSpan);
         for (size_t i = 0; i < pointsInBin.size(); i++)
         {
             const qCentroid *point = pointsInBin[i];
+            size_t resultIdx = point->scanNo - firstScan + 2; // first two elements are empty for extrapolation
 
             tmp_scanNumbers.push_back(point->scanNo);
             tmp_rt.push_back(convertRT[point->scanNo]);
@@ -696,7 +703,11 @@ namespace qAlgorithms
             tmp_df.push_back(point->df);
             tmp_DQSC.push_back(point->DQSCentroid);
             tmp_cenID.push_back(point->cenID);
+
+            interpolatedCens[resultIdx] = point->scanNo;
+            interpolatedDQSB[resultIdx] = DQSB_base[i]; // score = 0 suffices as sign of interpolation
         }
+        assert(interpolatedCens[binSpan - 2] == 0 && interpolatedCens[binSpan - 1] == 0); // back is empty for extrapolation
 
         EIC returnVal = {
             tmp_scanNumbers,
@@ -708,7 +719,10 @@ namespace qAlgorithms
             tmp_df,
             DQSB_base,
             tmp_DQSC,
-            tmp_cenID};
+            tmp_cenID,
+            interpolatedCens,
+            interpolatedDQSB,
+            interpolations};
 
         return returnVal;
     }
