@@ -187,9 +187,7 @@ int main(int argc, char *argv[])
 #pragma region "binning"
             timeStart = std::chrono::high_resolution_clock::now();
 
-            std::vector<EIC> binnedData = performQbinning(
-                &binThis, convertRT, 3, // set maxdist here - reasoned as likelihood of real trace being overlooked being at worst 50%
-                userArgs.verboseProgress);
+            std::vector<EIC> binnedData = performQbinning(&binThis, convertRT, userArgs.verboseProgress);
 
             timeEnd = std::chrono::high_resolution_clock::now();
 
