@@ -138,55 +138,46 @@ namespace qAlgorithms
 
     void findFeatures(std::vector<FeaturePeak> &all_peaks, treatedData &treatedData)
     {
-        size_t maxWindowSize = 0;
-        for (size_t i = 0; i < treatedData.separators.size(); i++)
-        {
-            size_t length = treatedData.separators[i].end - treatedData.separators[i].start + 1;
-            assert(length > 4); // data must contain at least five points
-            maxWindowSize = maxWindowSize < length ? length : maxWindowSize;
-        }
+        size_t length = treatedData.dataPoints.size();
+        assert(length > 4); // data must contain at least five points
         // float *intensity = new float[maxWindowSize];
-        float *logIntensity = new float[maxWindowSize];
-        float *RT = new float[maxWindowSize];
-        float *mz = new float[maxWindowSize];
-        float *DQSC = new float[maxWindowSize];
-        float *DQSB = new float[maxWindowSize]; // @todo only process these after feature construction
+        float *logIntensity = new float[length];
+        float *RT = new float[length];
+        float *mz = new float[length];
+        float *DQSC = new float[length];
+        float *DQSB = new float[length]; // @todo only process these after feature construction
 
         std::vector<RegressionGauss> validRegressions;
-        validRegressions.reserve(treatedData.separators.size() / 5); // we expect ~ 20% of all bins to have a feature
-        static const size_t GLOBAL_MAXSCALE_FEATURES = 30;           // @todo this is not a sensible limit and only chosen for computational speed at the moment
+        static const size_t GLOBAL_MAXSCALE_FEATURES = 30; // @todo this is not a sensible limit and only chosen for computational speed at the moment
         assert(GLOBAL_MAXSCALE_FEATURES <= MAXSCALE);
-        for (size_t i = 0; i < treatedData.separators.size(); i++)
-        {
-            size_t length = treatedData.separators[i].end - treatedData.separators[i].start + 1;
-            std::vector<bool> degreesOfFreedom;
-            std::vector<float> intensity;
-            for (size_t position = 0; position < length; position++)
-            {
-                size_t idx = position + treatedData.separators[i].start;
-                // intensity[position] = treatedData.dataPoints[idx].y;
-                intensity.push_back(treatedData.dataPoints[idx].y);
-                RT[position] = treatedData.dataPoints[idx].x;
-                degreesOfFreedom.push_back(treatedData.dataPoints[idx].df);
-                mz[position] = treatedData.dataPoints[idx].mz;
-                DQSC[position] = treatedData.dataPoints[idx].DQSC;
-                DQSB[position] = treatedData.dataPoints[idx].DQSB;
-            }
 
-            // perform log-transform on Y
-            // std::transform(intensity, intensity + length, logIntensity, [](float y)
-            //                { return std::log(y); });
-            std::transform(intensity.begin(), intensity.end(), logIntensity, [](float y)
-                           { return std::log(y); });
-            size_t maxScale = std::min(GLOBAL_MAXSCALE_FEATURES, size_t((length - 1) / 2));
-            runningRegression(intensity, logIntensity, degreesOfFreedom, length, validRegressions, maxScale);
-            if (validRegressions.empty())
-            {
-                continue; // no valid peaks
-            }
-            createFeaturePeaks(&all_peaks, &validRegressions, intensity, mz, RT, DQSC, DQSB);
-            validRegressions.clear();
+        std::vector<bool> degreesOfFreedom;
+        std::vector<float> intensity;
+        for (size_t position = 0; position < length; position++)
+        {
+            size_t idx = position;
+            // intensity[position] = treatedData.dataPoints[idx].y;
+            intensity.push_back(treatedData.dataPoints[idx].y);
+            RT[position] = treatedData.dataPoints[idx].x;
+            degreesOfFreedom.push_back(treatedData.dataPoints[idx].df);
+            mz[position] = treatedData.dataPoints[idx].mz;
+            DQSC[position] = treatedData.dataPoints[idx].DQSC;
+            DQSB[position] = treatedData.dataPoints[idx].DQSB;
         }
+
+        // perform log-transform on Y
+        // std::transform(intensity, intensity + length, logIntensity, [](float y)
+        //                { return std::log(y); });
+        std::transform(intensity.begin(), intensity.end(), logIntensity, [](float y)
+                       { return std::log(y); });
+        size_t maxScale = std::min(GLOBAL_MAXSCALE_FEATURES, size_t((length - 1) / 2));
+        runningRegression(intensity, logIntensity, degreesOfFreedom, length, validRegressions, maxScale);
+        if (validRegressions.empty())
+        {
+            return; // no valid peaks
+        }
+        createFeaturePeaks(&all_peaks, &validRegressions, intensity, mz, RT, DQSC, DQSB);
+
         // delete[] intensity;
         delete[] logIntensity;
         delete[] RT;
