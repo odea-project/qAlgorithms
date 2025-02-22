@@ -25,14 +25,13 @@ namespace qAlgorithms
      * @param dataPoints : {x, y, df, DQSC, DQSB, scanNumber}
      * @return std::vector<std::vector<dataPoint>::iterator> : separation markers for data blocks
      */
-    treatedData pretreatData(std::vector<dataPoint> &dataPoints,
-                             std::vector<unsigned int> &binIdx,
-                             float expectedDifference,
-                             const bool updateExpectedDifference = true);
+    treatedData pretreatEIC(EIC &dataPoints,
+                            std::vector<unsigned int> &binIdx,
+                            float expectedDifference);
 
     std::vector<ProfileBlock> pretreatDataCentroids(std::vector<std::vector<double>> spectrum, float expectedDifference);
 
-    void interpolateEdges(const std::vector<float> x_axis, std::vector<float> *intensity);
+    void extrapolateEIC(const std::vector<size_t> scanNums, std::vector<float> *intensity);
 
     treatedData pretreatDataFeatures(std::vector<dataPoint> &dataPoints,
                                      std::vector<unsigned int> &binIdx,
@@ -40,8 +39,6 @@ namespace qAlgorithms
                                      const bool updateExpectedDifference = true);
 
     float calcRTDiff(std::vector<double> &retention_times);
-
-    std::vector<dataPoint> qbinToDataPoint(EIC &eic);
 
     std::vector<std::vector<CentroidPeak>> findCentroids_MZML(
         sc::MZML &data,

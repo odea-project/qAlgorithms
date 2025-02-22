@@ -688,7 +688,7 @@ namespace qAlgorithms
         size_t binSpan = pointsInBin.back()->scanNo - firstScan + 5;
         std::vector<size_t> interpolatedCens(binSpan, 0); // all points left at 0 are later interpolated since cenID = 0 doesn't exist
         std::vector<float> interpolatedDQSB(binSpan, 0);
-        bool interpolations = !(interpolatedCens.size() == binSpan);
+        bool interpolations = !(pointsInBin.size() + 4 == binSpan);
         for (size_t i = 0; i < pointsInBin.size(); i++)
         {
             const qCentroid *point = pointsInBin[i];

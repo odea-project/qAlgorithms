@@ -100,13 +100,84 @@ namespace qAlgorithms
         return {c, b, a};
     }
 
-    treatedData pretreatData(
-        std::vector<dataPoint> &dataPoints,
+    void extrapolateEIC(const std::vector<size_t> scanNums, std::vector<float> *intensity)
+    {
+        // x-axis can be either mz (for centroids) or RT (for features)
+        assert(scanNums.size() > 8); // at least 9; five real points and four edge points
+        assert(scanNums.size() == intensity->size());
+        size_t pos = scanNums.size() - 3; // index of last real point
+        // auto maxInt = std::max(intensity->begin(), intensity->end());
+        // size_t maxIdx = std::distance(intensity->begin(), maxInt);
+        size_t maxIdx = 0;
+        for (size_t i = 2; i < scanNums.size() - 2; i++)
+        {
+            maxIdx = (*intensity)[i] > (*intensity)[maxIdx] ? i : maxIdx;
+        }
+        // quadratic interpolation using outer two points and the maximum
+        const float x[3] = {float(scanNums[2]), float(scanNums[maxIdx]), float(scanNums[pos])};
+        const float y[3] = {std::log((*intensity)[2]), std::log((*intensity)[maxIdx]), std::log((*intensity)[pos])};
+        auto coeffs = interpolateQuadratic(x, y);
+#define INTERPOLATE(x) (std::exp(coeffs[0] + x * (coeffs[1] + x * coeffs[2])))
+        // left side
+        if ((*intensity)[maxIdx] == (*intensity)[2])
+        {
+            (*intensity)[0] = (*intensity)[2];
+            (*intensity)[1] = (*intensity)[2];
+        }
+        else
+        {
+            // double tmp = std::exp(coeffs[0] + x_axis[0] * (coeffs[1] + x_axis[0] * coeffs[2]));
+            (*intensity)[0] = INTERPOLATE(scanNums[0]);
+            (*intensity)[1] = INTERPOLATE(scanNums[1]);
+        }
+        // right side
+        if ((*intensity)[maxIdx] == (*intensity)[2])
+        {
+            (*intensity)[pos + 1] = (*intensity)[pos];
+            (*intensity)[pos + 2] = (*intensity)[pos];
+        }
+        else
+        {
+            (*intensity)[pos + 1] = INTERPOLATE(scanNums[pos + 1]);
+            (*intensity)[pos + 2] = INTERPOLATE(scanNums[pos + 2]);
+        }
+    }
+
+    treatedData pretreatEIC(
+        EIC &eic,
         std::vector<unsigned int> &binIdx,
-        float expectedDifference,
-        const bool updateExpectedDifference)
+        float expectedDifference)
     {
         static dataPoint zeroedPoint{0.f, 0.f, false, 0.f, 0.f, 0, 0.f};
+        std::vector<dataPoint> dataPoints;              // create vector of data points
+        dataPoints.reserve(eic.scanNumbers.size() + 1); // reserve memory for data points
+
+        assert(is_sorted(eic.rententionTimes.begin(), eic.rententionTimes.end()));
+
+        for (size_t i = 0; i < eic.scanNumbers.size(); ++i)
+        {
+            dataPoint dp(               // create data point
+                eic.rententionTimes[i], // x-axis value
+                eic.ints_area[i],       // y-axis value
+                // eic.ints_height[i],
+                true,                 // df value
+                eic.DQSC[i],          // dqs centroid value
+                eic.DQSB[i],          // dqs binning value
+                eic.scanNumbers[i],   // scan number
+                eic.mz[i]);           // mz ratio
+            dataPoints.push_back(dp); // add data point to vector
+        }
+
+        // add end point for later pretreatment
+        dataPoint dp(                               // create data point
+            std::numeric_limits<float>::infinity(), // x-axis value
+            0.0,                                    // y-axis value
+            false,                                  // df value
+            0.0,                                    // dqs centroid value
+            0.0,                                    // dqs binning value
+            0,                                      // scan number
+            0.0);                                   // mz ratio
+        dataPoints.push_back(dp);
 
         treatedData treatedData;
         treatedData.dataPoints.reserve(dataPoints.size() * 2);
@@ -122,7 +193,6 @@ namespace qAlgorithms
             treatedData.intensity.push_back(0);
             assert(binIdx.size() == treatedData.dataPoints.size());
         }
-        treatedData.separators.push_back({0, 0}); // correctness check: start != end
 
         // iterate over the data points
         size_t maxOfBlock = 0;
@@ -181,9 +251,9 @@ namespace qAlgorithms
                     {
                         // delete all data points of the block in treatedData.dataPoints except the
                         // first two zeros marked by the separator.back()+2
-                        auto it_startOfBlock = treatedData.dataPoints.begin() + treatedData.separators.back().start + 2;
+                        auto it_startOfBlock = treatedData.dataPoints.begin() + 0 + 2;
                         treatedData.dataPoints.erase(it_startOfBlock, treatedData.dataPoints.end());
-                        treatedData.intensity.erase(treatedData.intensity.begin() + treatedData.separators.back().start + 2, treatedData.intensity.end());
+                        treatedData.intensity.erase(treatedData.intensity.begin() + 0 + 2, treatedData.intensity.end());
                         while (binIdx.size() != treatedData.dataPoints.size())
                         {
                             binIdx.pop_back();
@@ -191,7 +261,7 @@ namespace qAlgorithms
                     }
                     else
                     {
-                        const dataPoint dp_startOfBlock = treatedData.dataPoints[treatedData.separators.back().start + 2];
+                        const dataPoint dp_startOfBlock = treatedData.dataPoints[0 + 2];
                         // check if the maximum of the block is the first or last data point
                         if (maxOfBlock == pos || dataPoints[maxOfBlock].x == dp_startOfBlock.x)
                         {
@@ -199,7 +269,7 @@ namespace qAlgorithms
                             for (int i = 0; i < 2; i++)
                             {
                                 // LEFT SIDE
-                                dataPoint &dp_left = treatedData.dataPoints[treatedData.separators.back().start + i];
+                                dataPoint &dp_left = treatedData.dataPoints[0 + i];
                                 dp_left.x = dp_startOfBlock.x - (2 - i) * expectedDifference;
                                 dp_left.y = dp_startOfBlock.y;
 
@@ -228,7 +298,7 @@ namespace qAlgorithms
                             // extrapolate the left side of the block
                             for (int i = 0; i < 2; i++)
                             {
-                                dataPoint &curr_dp = treatedData.dataPoints[treatedData.separators.back().start + i];
+                                dataPoint &curr_dp = treatedData.dataPoints[0 + i];
                                 curr_dp.x = dp_startOfBlock.x - (2 - i) * expectedDifference;
                                 const float x = curr_dp.x - dp_startOfBlock.x;
                                 curr_dp.y = std::exp(coeffs[0] + x * (coeffs[1] + x * coeffs[2]));
@@ -253,8 +323,6 @@ namespace qAlgorithms
                         }
                         // add the zeros to the treatedData.dataPoints vector to start the next block
                         // separator struct stores indices of first and last element
-                        treatedData.separators.back().end = treatedData.dataPoints.size() - 1;
-                        treatedData.separators.push_back({treatedData.dataPoints.size(), 0});
                         for (int i = 0; i < 2; i++)
                         {
                             treatedData.dataPoints.push_back(zeroedPoint);
@@ -275,10 +343,6 @@ namespace qAlgorithms
                 {
                     maxOfBlock = pos;
                 }
-                if (updateExpectedDifference && delta_x > 0.8 * expectedDifference && delta_x < 1.2 * expectedDifference)
-                {
-                    expectedDifference = (expectedDifference + delta_x) * 0.5; // update the expected difference
-                }
             }
         } // end of for loop
 
@@ -294,75 +358,13 @@ namespace qAlgorithms
         treatedData.intensity.pop_back();
         treatedData.intensity.pop_back();
         assert(treatedData.dataPoints.back().y == treatedData.intensity.back()); // works
-
-        treatedData.separators.pop_back(); // last element is constructed with a start index of datapoints.size()
-        if (treatedData.separators.back().end != treatedData.dataPoints.size() - 1)
-        {
-            std::cerr << "measurement_data: incomplete block!\n"; // should never be the case
-            treatedData.separators.back().end = treatedData.dataPoints.size() - 1;
-        }
+        assert(treatedData.dataPoints.size() == eic.interpolatedDQSB.size());
 
         return treatedData;
-    } // end of pretreatData
+    } // end of pretreatEIC
 
 #pragma region "connective functions between centroiding and binning"
 
-    std::vector<dataPoint> qbinToDataPoint(EIC &eic)
-    {
-        std::vector<dataPoint> dataPoints;              // create vector of data points
-        dataPoints.reserve(eic.scanNumbers.size() + 1); // reserve memory for data points
-
-        if (!is_sorted(eic.rententionTimes.begin(), eic.rententionTimes.end())) // WILL BE DELETED IN THE FUTURE
-        {
-            auto compare = [&eic](size_t a, size_t b)
-            {
-                return eic.rententionTimes[a] < eic.rententionTimes[b];
-            };
-            std::vector<size_t> indices(eic.scanNumbers.size());
-            std::iota(indices.begin(), indices.end(), 0);
-            std::sort(indices.begin(), indices.end(), compare);
-            for (size_t i = 0; i < eic.scanNumbers.size(); ++i)
-            {
-                dataPoint dp(                        // create data point
-                    eic.rententionTimes[indices[i]], // x-axis value
-                    eic.ints_area[indices[i]],       // y-axis value
-                    // eic.ints_height[indices[i]],
-                    true,                        // df value
-                    eic.DQSC[indices[i]],        // dqs centroid value
-                    eic.DQSB[indices[i]],        // dqs binning value
-                    eic.scanNumbers[indices[i]], // scan number
-                    eic.mz[indices[i]]);         // mz ratio
-                dataPoints.push_back(dp);        // add data point to vector
-            }
-        }
-        else
-        {
-            for (size_t i = 0; i < eic.scanNumbers.size(); ++i)
-            {
-                dataPoint dp(               // create data point
-                    eic.rententionTimes[i], // x-axis value
-                    eic.ints_area[i],       // y-axis value
-                    // eic.ints_height[i],
-                    true,                 // df value
-                    eic.DQSC[i],          // dqs centroid value
-                    eic.DQSB[i],          // dqs binning value
-                    eic.scanNumbers[i],   // scan number
-                    eic.mz[i]);           // mz ratio
-                dataPoints.push_back(dp); // add data point to vector
-            }
-        }
-        // add end point for later pretreatment
-        dataPoint dp(                               // create data point
-            std::numeric_limits<float>::infinity(), // x-axis value
-            0.0,                                    // y-axis value
-            false,                                  // df value
-            0.0,                                    // dqs centroid value
-            0.0,                                    // dqs binning value
-            0,                                      // scan number
-            0.0);                                   // mz ratio
-        dataPoints.push_back(dp);
-        return dataPoints;
-    }
 #pragma endregion "connective functions between centroiding and binning"
 
 #pragma region "find centroids"
@@ -620,92 +622,55 @@ namespace qAlgorithms
         return subProfiles;
     }
 
-    void interpolateEdges(const std::vector<float> x_axis, std::vector<float> *intensity)
-    {
-        // x-axis can be either mz (for centroids) or RT (for features)
-        assert(x_axis.size() > 8); // at least 9; five real points and four edge points
-        assert(x_axis.size() == intensity->size());
-        size_t pos = x_axis.size() - 3; // index of last real point
-        // auto maxInt = std::max(intensity->begin(), intensity->end());
-        // size_t maxIdx = std::distance(intensity->begin(), maxInt);
-        size_t maxIdx = 0;
-        for (size_t i = 2; i < x_axis.size() - 2; i++)
-        {
-            maxIdx = (*intensity)[i] > (*intensity)[maxIdx] ? i : maxIdx;
-        }
-        // quadratic interpolation using outer two points and the maximum
-        const float x[3] = {x_axis[2], x_axis[maxIdx], x_axis[pos]};
-        const float y[3] = {std::log((*intensity)[2]), std::log((*intensity)[maxIdx]), std::log((*intensity)[pos])};
-        auto coeffs = interpolateQuadratic(x, y);
-#define INTERPOLATE(x) (std::exp(coeffs[0] + x * (coeffs[1] + x * coeffs[2])))
-        // left side
-        if ((*intensity)[maxIdx] == (*intensity)[2])
-        {
-            assert((*intensity)[0] == (*intensity)[2]);
-            assert((*intensity)[1] == (*intensity)[2]);
-        }
-        else
-        {
-            // double tmp = std::exp(coeffs[0] + x_axis[0] * (coeffs[1] + x_axis[0] * coeffs[2]));
-            assert((*intensity)[0] == INTERPOLATE(x_axis[0]));
-            assert((*intensity)[1] == INTERPOLATE(x_axis[1]));
-        }
-        // right side
-        if ((*intensity)[maxIdx] == (*intensity)[2])
-        {
-            assert((*intensity)[pos + 1] == (*intensity)[pos]);
-            assert((*intensity)[pos + 2] == (*intensity)[pos]);
-        }
-        else
-        {
-            assert((*intensity)[pos + 1] == INTERPOLATE(x_axis[pos + 1]));
-            assert((*intensity)[pos + 2] == INTERPOLATE(x_axis[pos + 2]));
-        }
-    }
-
 #pragma endregion "find centroids"
 
 #pragma region "find peaks"
     std::vector<FeaturePeak> findPeaks_QBIN(
-        std::vector<EIC> &data,
+        std::vector<EIC> &EICs,
         float rt_diff)
     {
         std::vector<FeaturePeak> peaks;    // return vector for feature list
-        peaks.reserve(data.size() / 4);    // should be enough to fit all features without reallocation
+        peaks.reserve(EICs.size() / 4);    // should be enough to fit all features without reallocation
         std::vector<FeaturePeak> tmpPeaks; // add features to this before pasting into FL
 
-        for (size_t i = 0; i < data.size(); ++i) // loop over all data
+        for (size_t i = 0; i < EICs.size(); ++i) // loop over all data
         {
-            if (data[i].scanNumbers.size() < 5)
+            auto currentEIC = EICs[i];
+            if (currentEIC.scanNumbers.size() < 5)
             {
                 continue; // skip due to lack of data, i.e., degree of freedom will be zero
             }
-            std::vector<dataPoint> dataPoints = qbinToDataPoint(data[i]); // convert qbin to data points
-            std::vector<unsigned int> binIndexConverter;
-            treatedData treatedData = pretreatData(dataPoints, binIndexConverter, rt_diff, false); // inter/extrapolate data, and identify data blocks
+            // if (currentEIC.interpolations)
+            // {
+            //     continue;
+            // }
 
+            std::vector<unsigned int> binIndexConverter;
+            treatedData treatedData = pretreatEIC(currentEIC, binIndexConverter, rt_diff); // inter/extrapolate data, and identify data blocks
             findFeatures(tmpPeaks, treatedData);
-            if (!tmpPeaks.empty())
+            if (tmpPeaks.empty())
             {
-                for (size_t j = 0; j < tmpPeaks.size(); j++)
-                {
-                    assert(tmpPeaks[j].idxPeakEnd < binIndexConverter.size());
-                    tmpPeaks[j].idxPeakStart = binIndexConverter[tmpPeaks[j].idxPeakStart];
-                    tmpPeaks[j].idxBin = i;
-                    // the end point is only correct if it is real. Check if the next point
-                    // has the same index - if yes, -1 to end index
-                    unsigned int tmpIdx = tmpPeaks[j].idxPeakEnd;
-                    tmpPeaks[j].idxPeakEnd = binIndexConverter[tmpPeaks[j].idxPeakEnd];
-                    if (tmpIdx + 1 != binIndexConverter.size())
-                    {
-                        if (binIndexConverter[tmpIdx] == binIndexConverter[tmpIdx + 1])
-                        {
-                            tmpPeaks[j].idxPeakEnd--;
-                        }
-                    }
-                    peaks.push_back(std::move(tmpPeaks[j])); // remove 2D structure of FL
-                }
+                continue;
             }
+            for (size_t j = 0; j < tmpPeaks.size(); j++)
+            {
+                assert(tmpPeaks[j].idxPeakEnd < binIndexConverter.size());
+                tmpPeaks[j].idxPeakStart = binIndexConverter[tmpPeaks[j].idxPeakStart];
+                tmpPeaks[j].idxBin = i;
+                // the end point is only correct if it is real. Check if the next point
+                // has the same index - if yes, -1 to end index
+                unsigned int tmpIdx = tmpPeaks[j].idxPeakEnd;
+                tmpPeaks[j].idxPeakEnd = binIndexConverter[tmpPeaks[j].idxPeakEnd];
+                if (tmpIdx + 1 != binIndexConverter.size())
+                {
+                    if (binIndexConverter[tmpIdx] == binIndexConverter[tmpIdx + 1])
+                    {
+                        tmpPeaks[j].idxPeakEnd--;
+                    }
+                }
+                peaks.push_back(std::move(tmpPeaks[j])); // remove 2D structure of FL
+            }
+
             tmpPeaks.clear();
         }
         return peaks;
