@@ -180,7 +180,7 @@ int main(int argc, char *argv[])
 
             if (!userArgs.silent)
             {
-                std::cout << "    produced " << binThis.size() << " centroids from " << centroids.size()
+                std::cout << "    produced " << binThis.size() - 1 << " centroids from " << centroids.size()
                           << " spectra in " << timePassed.count() << " s\n";
             }
 
@@ -211,7 +211,7 @@ int main(int argc, char *argv[])
             }
             if (userArgs.printBins)
             {
-                printBins(binnedData, userArgs.outputPath, filename, userArgs.silent, userArgs.skipError, userArgs.noOverwrite);
+                printBins(binThis, binnedData, userArgs.outputPath, filename, userArgs.silent, userArgs.skipError, userArgs.noOverwrite);
             }
 
             // @todo remove diagnostics

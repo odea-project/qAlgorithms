@@ -80,8 +80,9 @@ namespace qAlgorithms
                             std::filesystem::path pathOutput, std::string filename,
                             bool silent, bool skipError, bool noOverwrite);
 
-    void printBins(const std::vector<EIC> bins, std::filesystem::path pathOutput, std::string filename,
-                   bool silent, bool skipError, bool noOverwrite);
+    void printBins(const std::vector<qCentroid> centroids,
+                   const std::vector<EIC> bins, std::filesystem::path pathOutput,
+                   std::string filename, bool silent, bool skipError, bool noOverwrite);
 
     void printFeatureList(const std::vector<FeaturePeak> peaktable,
                           std::filesystem::path pathOutput, std::string filename,

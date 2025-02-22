@@ -17,6 +17,7 @@ namespace qAlgorithms
     std::vector<EIC> performQbinning(const std::vector<qCentroid> *centroidedData,
                                      const std::vector<float> convertRT, bool verbose)
     {
+        assert(centroidedData->front().mz == 0); // first value is dummy
         std::string logger = "";
 
         BinContainer activeBins;
