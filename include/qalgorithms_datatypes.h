@@ -30,7 +30,6 @@ namespace qAlgorithms
     struct treatedData // @todo remove this struct
     {
         std::vector<dataPoint> dataPoints;
-        std::vector<separator> separators;
         // points as individual vectors
         // std::vector<float> RT;
         std::vector<float> intensity;
@@ -39,6 +38,14 @@ namespace qAlgorithms
         // std::vector<float> DQSB;
         // std::vector<int> scanNumber;
         // std::vector<float> mz;
+        std::vector<size_t> cenIDs;
+    };
+
+    struct treatedEIC
+    {
+        std::vector<size_t> cenIDs; // doubles as degrees of freedom
+        std::vector<float> RT;
+        std::vector<float> intensity;
     };
 
     struct ProfileBlock
