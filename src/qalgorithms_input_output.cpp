@@ -568,8 +568,8 @@ namespace qAlgorithms
 #pragma endregion "file reading"
 
 #pragma region "print functions"
-    /// @todo make universal print function, fix out-of-bounds access, chi squared test for binning
-    void printCentroids(const std::vector<std::vector<CentroidPeak>> peaktable,
+
+    void printCentroids(const std::vector<std::vector<CentroidPeak>> peaktable, // @todo use 1D structure of centroids
                         std::vector<float> convertRT, std::filesystem::path pathOutput,
                         std::string filename, bool silent, bool skipError, bool noOverwrite)
     {
@@ -675,8 +675,9 @@ namespace qAlgorithms
         return;
     }
 
-    void printBins(const std::vector<EIC> bins, std::filesystem::path pathOutput, std::string filename,
-                   bool silent, bool skipError, bool noOverwrite)
+    void printBins(const std::vector<qCentroid> centroids,
+                   const std::vector<EIC> bins, std::filesystem::path pathOutput,
+                   std::string filename, bool silent, bool skipError, bool noOverwrite)
     {
         filename += "_bins.csv";
         pathOutput /= filename;
@@ -709,13 +710,15 @@ namespace qAlgorithms
         output << "binID,cenID,mz,mzUncertainty,retentionTime,scanNumber,area,height,degreesOfFreedom,DQSC,DQSB\n";
         for (size_t binID = 0; binID < bins.size(); binID++)
         {
-            for (size_t i = 0; i < bins[binID].mz.size(); i++)
+            const EIC bin = bins[binID];
+            for (size_t i = 0; i < bin.mz.size(); i++)
             {
+                const qCentroid cen = centroids[bin.cenID[i]];
                 char buffer[128];
                 sprintf(buffer, "%zu,%u,%0.8f,%0.8f,%0.4f,%d,%0.6f,%0.6f,%u,%0.4f,%0.4f\n",
-                        binID, bins[binID].cenID[i], bins[binID].mz[i], bins[binID].predInterval[i],
-                        bins[binID].rententionTimes[i], bins[binID].scanNumbers[i], bins[binID].ints_area[i],
-                        bins[binID].ints_height[i], bins[binID].df[i], bins[binID].DQSC[i], bins[binID].DQSB[i]);
+                        binID, cen.cenID, bin.mz[i], bin.predInterval[i],
+                        bin.rententionTimes[i], bin.scanNumbers[i], bin.ints_area[i],
+                        bin.ints_height[i], bin.df[i], bin.DQSC[i], bin.DQSB[i]);
                 output << buffer;
             }
         }
