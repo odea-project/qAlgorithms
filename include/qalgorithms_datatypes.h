@@ -112,6 +112,9 @@ namespace qAlgorithms
         std::vector<float> DQSB;
         std::vector<float> DQSC;
         std::vector<unsigned int> cenID;
+        std::vector<size_t> interpolatedIDs;
+        std::vector<float> interpolatedDQSB;
+        bool interpolations;
     };
 
     struct FeaturePeak

@@ -16,12 +16,13 @@ namespace qAlgorithms
 
 #pragma region "pass to qBinning"
 
-    std::vector<qCentroid> passToBinning(std::vector<std::vector<CentroidPeak>> &allPeaks) //, std::vector<unsigned int> addEmpty)
+    const std::vector<qCentroid> passToBinning(const std::vector<std::vector<CentroidPeak>> &allPeaks) //, std::vector<unsigned int> addEmpty)
     {
         // initialise empty vector with enough room for all scans - centroids[0] must remain empty
         std::vector<qCentroid> centroids;
-        centroids.reserve(allPeaks.size() * 2);
-        unsigned int totalCentroids = 0;
+        centroids.reserve(allPeaks.size() * 100);
+        unsigned int totalCentroids = 1;
+        centroids.push_back({0, 0, 0, 0, 0, 0, 0, 0}); // this centroid will be used for ever missing value
         for (size_t i = 0; i < allPeaks.size(); ++i)
         {
             if (!allPeaks[i].empty())
