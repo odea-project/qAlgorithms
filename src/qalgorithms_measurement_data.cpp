@@ -58,10 +58,10 @@ namespace qAlgorithms
         return centroids;
     }
 
-    double calcExpectedDiff(const std::vector<std::vector<double>> spectrum)
+    double calcExpectedDiff(const std::vector<std::vector<double>> *spectrum)
     {
-        const std::vector<double> mz = spectrum[0];
-        const std::vector<double> intensity = spectrum[1];
+        const std::vector<double> mz = (*spectrum)[0];
+        const std::vector<double> intensity = (*spectrum)[1];
         const size_t numPoints = mz.size();         // number of data points
         const size_t upperLimit = numPoints * 0.05; // check lowest 5% for expected difference
         double expectedDifference = 0.0;
@@ -326,14 +326,14 @@ namespace qAlgorithms
 #pragma endregion "connective functions between centroiding and binning"
 
 #pragma region "find centroids"
-    float calcRTDiff(std::vector<double> &retention_times)
+    inline float calcRTDiff(const std::vector<double> *retention_times)
     {
         float sum = 0.0;
-        for (size_t i = 1; i < retention_times.size(); ++i)
+        for (size_t i = 1; i < retention_times->size(); ++i)
         {
-            sum += retention_times[i] - retention_times[i - 1];
+            sum += (*retention_times)[i] - (*retention_times)[i - 1];
         }
-        return sum / (retention_times.size() - 1);
+        return sum / (retention_times->size() - 1);
     }
 
     std::vector<std::vector<CentroidPeak>> findCentroids_MZML( // this function needs to be split @todo
@@ -425,15 +425,15 @@ namespace qAlgorithms
         }
 
         std::vector<double> retention_times = data.get_spectra_rt(selectedIndices);
-        rt_diff = calcRTDiff(retention_times);
+        rt_diff = calcRTDiff(&retention_times);
 
         selectedIndices.shrink_to_fit();
 
         std::vector<std::vector<CentroidPeak>> centroids(selectedIndices.size());
 
         // take spectrum at half length to avoid potential interference from quality control scans in the instrument
-        std::vector<std::vector<double>> data_vec = data.get_spectrum(selectedIndices[selectedIndices.size() / 2]);
-        expectedDifference_mz = calcExpectedDiff(data_vec);
+        const std::vector<std::vector<double>> data_vec = data.get_spectrum(selectedIndices[selectedIndices.size() / 2]);
+        expectedDifference_mz = calcExpectedDiff(&data_vec);
 
         // determine where the peak finding will interpolate points and pass this information
         // to the binning step. addEmpty contains the number of empty scans to be added into
@@ -469,11 +469,11 @@ namespace qAlgorithms
 
         for (size_t i = 0; i < selectedIndices.size(); ++i)
         {
-            std::vector<std::vector<double>> spectrum = data.get_spectrum(selectedIndices[i]);
+            const std::vector<std::vector<double>> spectrum = data.get_spectrum(selectedIndices[i]);
             // inter/extrapolate data, and identify data blocks @todo these should be two different functions
-            const auto treatedData = pretreatDataCentroids(spectrum, expectedDifference_mz);
+            const auto treatedData = pretreatDataCentroids(&spectrum, expectedDifference_mz);
             assert(relativeIndex[i] != 0);
-            centroids[i] = findCentroids(treatedData, relativeIndex[i]); // find peaks in data blocks of treated data
+            centroids[i] = findCentroids(&treatedData, relativeIndex[i]); // find peaks in data blocks of treated data
         }
         if (!displayPPMwarning)
         {
@@ -491,7 +491,7 @@ namespace qAlgorithms
         return p;
     }
 
-    std::vector<ProfileBlock> pretreatDataCentroids(std::vector<std::vector<double>> spectrum, float expectedDifference)
+    std::vector<ProfileBlock> pretreatDataCentroids(const std::vector<std::vector<double>> *spectrum, float expectedDifference)
     {
         // note on double precision values: when using floats, results are different enough
         // to cause different behaviour for interpolation and block termination. Doubles are
@@ -499,18 +499,18 @@ namespace qAlgorithms
         // account otherwise. Around 1000 centroids less than otherwise are produced for test cases.
         std::vector<double> intensities_profile;
         std::vector<double> mz_profile;
-        intensities_profile.reserve(spectrum[0].size() / 2);
-        mz_profile.reserve(spectrum[0].size() / 2);
+        intensities_profile.reserve((*spectrum)[0].size() / 2);
+        mz_profile.reserve((*spectrum)[0].size() / 2);
         // Depending on the vendor, a profile contains a lot of points with intensity 0.
         // These were added by the vendor software and must be removed prior to processing.
-        for (size_t i = 0; i < spectrum[0].size(); ++i)
+        for (size_t i = 0; i < (*spectrum)[0].size(); ++i)
         {
-            if (spectrum[1][i] == 0.0)
+            if ((*spectrum)[1][i] == 0.0)
             {
                 continue; // skip values with no intensity @todo minimum intensity?
             }
-            intensities_profile.push_back(spectrum[1][i]);
-            mz_profile.push_back(spectrum[0][i]);
+            intensities_profile.push_back((*spectrum)[1][i]);
+            mz_profile.push_back((*spectrum)[0][i]);
         }
         assert(!intensities_profile.empty());
         assert(!mz_profile.empty());

@@ -16,7 +16,7 @@ namespace qAlgorithms
     /// @param verbose if this option is selected, additional progress report is written to standard out
     /// @return returns the centroids as a collection of vectors
     std::vector<EIC> performQbinning(const std::vector<qCentroid> *centroidedData,
-                                     const std::vector<float> convertRT, bool verbose);
+                                     const std::vector<float> *convertRT, bool verbose);
 
     // ###################################################################################################### //
 #pragma region "utility"
@@ -26,7 +26,7 @@ namespace qAlgorithms
     /// @brief calculate the mean distance in mz to all other close elements of a sorted vector for one element
     /// @param pointsInBin vector of data points sorted by scans
     /// @return vector of the mean inner distances for all elements in the same order as pointsInBin
-    std::vector<float> meanDistanceRegional(const std::vector<const qCentroid *> pointsInBin, size_t expandedDist);
+    std::vector<float> meanDistanceRegional(const std::vector<const qCentroid *> *pointsInBin, const size_t expandedDist);
 
     /// @brief calculate the data quality score as described by Reuschenbach et al. for one datapoint in a bin
     /// @param MID mean inner distance in mz to all other elements in the bin
@@ -107,9 +107,9 @@ namespace qAlgorithms
         void subsetScan(std::vector<Bin> *bincontainer, std::vector<const qCentroid *> &notInBins, int &counter);
 
         // returns the start index of where in the sorted not-binned points the minimum start position is
-        size_t makeDQSB(std::vector<const qCentroid *> *notInBins, size_t idx_lowerLimit);
+        size_t makeDQSB(const std::vector<const qCentroid *> *notInBins, size_t idx_lowerLimit);
 
-        EIC createEIC(std::vector<float> convertRT);
+        EIC createEIC(const std::vector<float> *convertRT);
     };
 
     bool binLimitsOK(Bin sourceBin, const std::vector<qCentroid> *rawdata);
@@ -134,8 +134,6 @@ namespace qAlgorithms
     };
 
     void switchTarget(BinContainer *bincontainer);
-
-    BinContainer initialiseBinning(std::vector<qCentroid> *rawdata);
 
     std::string subsetBins(BinContainer &bincontainer);
 

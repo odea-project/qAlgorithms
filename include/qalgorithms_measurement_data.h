@@ -18,7 +18,7 @@ namespace qAlgorithms
         const int start_index,
         double PPMerror);
 
-    double calcExpectedDiff(const std::vector<std::vector<double>> spectrum);
+    double calcExpectedDiff(const std::vector<std::vector<double>> *spectrum);
 
     /**
      * @brief Inter/extrapolate gaps in data and define separation markers for data blocks.
@@ -29,16 +29,11 @@ namespace qAlgorithms
                             std::vector<unsigned int> &binIdx,
                             float expectedDifference);
 
-    std::vector<ProfileBlock> pretreatDataCentroids(std::vector<std::vector<double>> spectrum, float expectedDifference);
+    std::vector<ProfileBlock> pretreatDataCentroids(const std::vector<std::vector<double>> *spectrum, float expectedDifference);
 
     void extrapolateEIC(const std::vector<size_t> scanNums, std::vector<float> *intensity);
 
-    treatedData pretreatDataFeatures(std::vector<dataPoint> &dataPoints,
-                                     std::vector<unsigned int> &binIdx,
-                                     float expectedDifference,
-                                     const bool updateExpectedDifference = true);
-
-    float calcRTDiff(std::vector<double> &retention_times);
+    inline float calcRTDiff(const std::vector<double> *retention_times);
 
     std::vector<std::vector<CentroidPeak>> findCentroids_MZML(
         sc::MZML &data,
