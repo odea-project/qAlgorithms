@@ -187,7 +187,7 @@ int main(int argc, char *argv[])
 #pragma region "binning"
             timeStart = std::chrono::high_resolution_clock::now();
 
-            std::vector<EIC> binnedData = performQbinning(&binThis, convertRT, userArgs.verboseProgress);
+            std::vector<EIC> binnedData = performQbinning(&binThis, &convertRT, userArgs.verboseProgress);
 
             timeEnd = std::chrono::high_resolution_clock::now();
 
