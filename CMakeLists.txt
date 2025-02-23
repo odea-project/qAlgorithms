@@ -38,7 +38,7 @@ endif()
 
 # Set compiler flags
 add_compile_options(-Wall -Wuninitialized -Wno-unknown-pragmas -Wformat -Wformat=2 -Wimplicit-fallthrough
-                    -fopenmp -mavx2 -march=native -O2
+                    -fopenmp -mavx2 -march=native -O2 # -flto
                     -U_FORTIFY_SOURCE -D_FORTIFY_SOURCE=3 -fstrict-flex-arrays=3 -fdiagnostics-color=always -fstack-clash-protection -D_GLIBCXX_ASSERTIONS # hardening flags
                     -fno-math-errno -g -ggdb3 ${OpenMP_CXX_FLAGS}) 
 
