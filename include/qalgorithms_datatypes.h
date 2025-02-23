@@ -17,7 +17,6 @@ namespace qAlgorithms
         bool df;
         float DQSC;
         float DQSB;
-        unsigned int scanNumber;
         float mz;
     };
 

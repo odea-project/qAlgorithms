@@ -148,9 +148,8 @@ namespace qAlgorithms
         std::vector<unsigned int> &binIdx,
         float expectedDifference)
     {
-        static dataPoint zeroedPoint{0.f, 0.f, false, 0.f, 0.f, 0, 0.f};
         std::vector<dataPoint> dataPoints;              // create vector of data points
-        dataPoints.reserve(eic.scanNumbers.size() + 1); // reserve memory for data points
+        dataPoints.reserve(eic.interpolatedIDs.size()); // reserve memory for data points
 
         assert(is_sorted(eic.rententionTimes.begin(), eic.rententionTimes.end()));
 
@@ -163,21 +162,9 @@ namespace qAlgorithms
                 true,                 // df value
                 eic.DQSC[i],          // dqs centroid value
                 eic.DQSB[i],          // dqs binning value
-                eic.scanNumbers[i],   // scan number
                 eic.mz[i]);           // mz ratio
             dataPoints.push_back(dp); // add data point to vector
         }
-
-        // add end point for later pretreatment
-        dataPoint dp(                               // create data point
-            std::numeric_limits<float>::infinity(), // x-axis value
-            0.0,                                    // y-axis value
-            false,                                  // df value
-            0.0,                                    // dqs centroid value
-            0.0,                                    // dqs binning value
-            0,                                      // scan number
-            0.0);                                   // mz ratio
-        dataPoints.push_back(dp);
 
         treatedData treatedData;
         treatedData.dataPoints.reserve(dataPoints.size() * 2);
@@ -185,6 +172,7 @@ namespace qAlgorithms
         binIdx.reserve(dataPoints.size() * 2);
 
         unsigned int realIdx = 0; // this should be handled outside of this function
+        static dataPoint zeroedPoint{0.f, 0.f, false, 0.f, 0.f, 0};
         // add the first two zeros to the dataPoints_new vector @todo skip this by doing log interpolation during the log transform
         for (int i = 0; i < 2; i++)
         {
@@ -237,102 +225,10 @@ namespace qAlgorithms
                             false,                                   // interpolated point
                             0.f,                                     // DQSC
                             0.f,                                     // DQSB
-                            0,                                       // scanNumber
                             0.f);                                    // mz
                         treatedData.intensity.push_back(dataPoints[pos].y * std::pow(dy, i));
                     }
                     assert(binIdx.size() == treatedData.dataPoints.size());
-                }
-                else
-                { // END OF BLOCK, EXTRAPOLATION STARTS @todo move this into its own function
-                    // add 4 datapoints (two extrapolated [end of current block] and two zeros
-                    // [start of next block]) extrapolate the first two datapoints of this block
-                    if (blockSize < 5)
-                    {
-                        // delete all data points of the block in treatedData.dataPoints except the
-                        // first two zeros marked by the separator.back()+2
-                        auto it_startOfBlock = treatedData.dataPoints.begin() + 0 + 2;
-                        treatedData.dataPoints.erase(it_startOfBlock, treatedData.dataPoints.end());
-                        treatedData.intensity.erase(treatedData.intensity.begin() + 0 + 2, treatedData.intensity.end());
-                        while (binIdx.size() != treatedData.dataPoints.size())
-                        {
-                            binIdx.pop_back();
-                        }
-                    }
-                    else
-                    {
-                        const dataPoint dp_startOfBlock = treatedData.dataPoints[0 + 2];
-                        // check if the maximum of the block is the first or last data point
-                        if (maxOfBlock == pos || dataPoints[maxOfBlock].x == dp_startOfBlock.x)
-                        {
-                            // extrapolate the left side using the first non-zero data point (i.e, the start of the block)
-                            for (int i = 0; i < 2; i++)
-                            {
-                                // LEFT SIDE
-                                dataPoint &dp_left = treatedData.dataPoints[0 + i];
-                                dp_left.x = dp_startOfBlock.x - (2 - i) * expectedDifference;
-                                dp_left.y = dp_startOfBlock.y;
-
-                                // RIGHT SIDE
-                                treatedData.dataPoints.emplace_back(
-                                    dataPoints[pos].x + float(i + 1) * expectedDifference, // x-axis
-                                    dataPoints[pos].y,                                     // intensity
-                                    false,                                                 // df
-                                    0.f,                                                   // DQSC
-                                    0.f,                                                   // DQSB
-                                    0,                                                     // scanNumber
-                                    0.f);                                                  // mz
-                                treatedData.intensity.push_back(dataPoints[pos].y);
-                                binIdx.push_back(realIdx);
-                                assert(binIdx.size() == treatedData.dataPoints.size());
-                            }
-                        }
-                        else
-                        {
-                            const float x[3] = {0.f, dataPoints[maxOfBlock].x - dp_startOfBlock.x, dataPoints[pos].x - dp_startOfBlock.x};
-                            const float y[3] = {std::log(dp_startOfBlock.y), std::log(dataPoints[maxOfBlock].y), std::log(dataPoints[pos].y)};
-                            // float b0, b1, b2;
-                            // calculateCoefficients(x, y, b0, b1, b2);
-                            auto coeffs = interpolateQuadratic(x, y);
-                            // assert(coeffs[0] == b0);
-                            // extrapolate the left side of the block
-                            for (int i = 0; i < 2; i++)
-                            {
-                                dataPoint &curr_dp = treatedData.dataPoints[0 + i];
-                                curr_dp.x = dp_startOfBlock.x - (2 - i) * expectedDifference;
-                                const float x = curr_dp.x - dp_startOfBlock.x;
-                                curr_dp.y = std::exp(coeffs[0] + x * (coeffs[1] + x * coeffs[2]));
-                            }
-                            // add the extrapolated data points to the right side of the block
-                            for (int i = 0; i < 2; i++)
-                            {
-                                const float dp_x = dataPoints[pos].x + float(i + 1) * expectedDifference;
-                                const float x = dp_x - dp_startOfBlock.x;
-                                treatedData.dataPoints.emplace_back(
-                                    dp_x,                                                  // x-axis
-                                    std::exp(coeffs[0] + x * (coeffs[1] + x * coeffs[2])), // intensity
-                                    false,                                                 // df
-                                    0.f,                                                   // DQSC
-                                    0.f,                                                   // DQSB
-                                    0,                                                     // scanNumber
-                                    0.f);                                                  // mz
-                                treatedData.intensity.push_back(std::exp(coeffs[0] + x * (coeffs[1] + x * coeffs[2])));
-                                binIdx.push_back(realIdx);
-                                assert(binIdx.size() == treatedData.dataPoints.size());
-                            }
-                        }
-                        // add the zeros to the treatedData.dataPoints vector to start the next block
-                        // separator struct stores indices of first and last element
-                        for (int i = 0; i < 2; i++)
-                        {
-                            treatedData.dataPoints.push_back(zeroedPoint);
-                            treatedData.intensity.push_back(0);
-                            binIdx.push_back(realIdx);
-                            assert(binIdx.size() == treatedData.dataPoints.size());
-                        }
-                        maxOfBlock = pos + 1;
-                    }
-                    blockSize = 0; // reset the block size
                 }
             }
             else if (gapSize2 == 0) // no gap found
@@ -345,21 +241,83 @@ namespace qAlgorithms
                 }
             }
         } // end of for loop
+        // last element
+        blockSize++;
+        treatedData.dataPoints.push_back(dataPoints.back());
+        treatedData.intensity.push_back(dataPoints.back().y);
+        binIdx.push_back(realIdx);
 
-        // std::cerr << countSubOneGap << ", -" << countNoGap << ", ";
+        // END OF BLOCK, EXTRAPOLATION STARTS @todo move this into its own function
+        assert(blockSize == eic.cenID.size());
+        // assert(pos == blockSize - 1);
+        // add 4 datapoints (two extrapolated [end of current block] and two zeros
+        // [start of next block]) extrapolate the first two datapoints of this block
+
+        const dataPoint dp_startOfBlock = treatedData.dataPoints[2];
+        // check if the maximum of the block is the first or last data point
+        if (maxOfBlock == blockSize - 1 || dataPoints[maxOfBlock].x == dp_startOfBlock.x)
+        {
+            // extrapolate the left side using the first non-zero data point (i.e, the start of the block)
+            for (int i = 0; i < 2; i++)
+            {
+                // LEFT SIDE
+                dataPoint &dp_left = treatedData.dataPoints[i];
+                dp_left.x = dp_startOfBlock.x - (2 - i) * expectedDifference;
+                dp_left.y = dp_startOfBlock.y;
+
+                // RIGHT SIDE
+                treatedData.dataPoints.emplace_back(
+                    dataPoints[blockSize - 1].x + float(i + 1) * expectedDifference, // x-axis
+                    dataPoints[blockSize - 1].y,                                     // intensity
+                    false,                                                           // df
+                    0.f,                                                             // DQSC
+                    0.f,                                                             // DQSB
+                    0.f);                                                            // mz
+                treatedData.intensity.push_back(dataPoints[blockSize - 1].y);
+                binIdx.push_back(realIdx);
+                assert(binIdx.size() == treatedData.dataPoints.size());
+            }
+        }
+        else
+        {
+            const float x[3] = {0.f, dataPoints[maxOfBlock].x - dp_startOfBlock.x, dataPoints[blockSize - 1].x - dp_startOfBlock.x};
+            const float y[3] = {std::log(dp_startOfBlock.y), std::log(dataPoints[maxOfBlock].y), std::log(dataPoints[blockSize - 1].y)};
+            // float b0, b1, b2;
+            // calculateCoefficients(x, y, b0, b1, b2);
+            auto coeffs = interpolateQuadratic(x, y);
+            // assert(coeffs[0] == b0);
+            // extrapolate the left side of the block
+            for (int i = 0; i < 2; i++)
+            {
+                dataPoint &curr_dp = treatedData.dataPoints[0 + i];
+                curr_dp.x = dp_startOfBlock.x - (2 - i) * expectedDifference;
+                const float x = curr_dp.x - dp_startOfBlock.x;
+                curr_dp.y = std::exp(coeffs[0] + x * (coeffs[1] + x * coeffs[2]));
+            }
+            // add the extrapolated data points to the right side of the block
+            for (int i = 0; i < 2; i++)
+            {
+                const float dp_x = dataPoints[blockSize - 1].x + float(i + 1) * expectedDifference;
+                const float x = dp_x - dp_startOfBlock.x;
+                treatedData.dataPoints.emplace_back(
+                    dp_x,                                                  // x-axis
+                    std::exp(coeffs[0] + x * (coeffs[1] + x * coeffs[2])), // intensity
+                    false,                                                 // df
+                    0.f,                                                   // DQSC
+                    0.f,                                                   // DQSB
+                    0.f);                                                  // mz
+                treatedData.intensity.push_back(std::exp(coeffs[0] + x * (coeffs[1] + x * coeffs[2])));
+                binIdx.push_back(realIdx);
+                assert(binIdx.size() == treatedData.dataPoints.size());
+            }
+        }
 
         assert(binIdx.size() == treatedData.dataPoints.size());
         assert(binIdx.size() == treatedData.intensity.size());
-        // delete the last two zeros // @todo why?
-        binIdx.pop_back();
-        binIdx.pop_back();
-        treatedData.dataPoints.pop_back();
-        treatedData.dataPoints.pop_back();
-        treatedData.intensity.pop_back();
-        treatedData.intensity.pop_back();
         assert(treatedData.dataPoints.back().y == treatedData.intensity.back()); // works
         assert(treatedData.dataPoints.size() == eic.interpolatedDQSB.size());
 
+        treatedData.cenIDs = eic.interpolatedIDs;
         return treatedData;
     } // end of pretreatEIC
 
@@ -513,7 +471,7 @@ namespace qAlgorithms
         {
             std::vector<std::vector<double>> spectrum = data.get_spectrum(selectedIndices[i]);
             // inter/extrapolate data, and identify data blocks @todo these should be two different functions
-            auto treatedData = pretreatDataCentroids(spectrum, expectedDifference_mz);
+            const auto treatedData = pretreatDataCentroids(spectrum, expectedDifference_mz);
             assert(relativeIndex[i] != 0);
             centroids[i] = findCentroids(treatedData, relativeIndex[i]); // find peaks in data blocks of treated data
         }
