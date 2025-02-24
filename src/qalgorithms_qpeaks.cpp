@@ -606,6 +606,7 @@ namespace qAlgorithms
         mutateReg->apex_position += idxStart + scale;
         mutateReg->scale = scale;
         mutateReg->index_x0 = scale + idxStart;
+        mutateReg->mse = mse; // the quadratic mse is used for the weighted mean of the coefficients later
         mutateReg->isValid = true;
         return;
     }
