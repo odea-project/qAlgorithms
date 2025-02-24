@@ -144,6 +144,7 @@ namespace qAlgorithms
         unsigned int interpolationCount;
         unsigned int competitorCount;
         unsigned int scale;
+        float mse_base;
         bool apexLeft;
     };
 }
