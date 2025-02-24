@@ -632,6 +632,8 @@ namespace qAlgorithms
             const unsigned int right_limit = validRegressions[i].right_limit; // right limit of the current peak regression window in the Y array
             double MSE_group = 0;
             int DF_group = 0;
+            // only calculate required MSEs since this is one of the performance-critical steps
+            std::vector<float> exponentialMSE(validRegressions.size(), 0);
             std::vector<size_t> validRegressionsInGroup; // vector of indices to validRegressions
             size_t competitors = 0;                      // this variable keeps track of how many competitors a given regression has
 
@@ -649,46 +651,45 @@ namespace qAlgorithms
                             validRegressions[i].apex_position > validRegressions[j].left_limit && // new peak matches the left limit
                             validRegressions[i].apex_position < validRegressions[j].right_limit)) // new peak matches the right limit
                     {
-                        if (validRegressions[j].mse == 0.0)
-                        { // calculate the mse of the ref peak
-                            validRegressions[j].mse = calcSSE_exp(
+                        if (exponentialMSE[j] == 0.0)
+                        { // calculate the mse of the reference peak
+                            exponentialMSE[j] = calcSSE_exp(
                                 validRegressions[j].newCoeffs,
                                 intensities,
                                 validRegressions[j].left_limit,
                                 validRegressions[j].right_limit,
                                 validRegressions[j].index_x0);
-                            validRegressions[j].mse /= validRegressions[j].df;
+                            exponentialMSE[j] /= validRegressions[j].df;
                         }
-                        DF_group += validRegressions[j].df;                            // add the degree of freedom
-                        MSE_group += validRegressions[j].mse * validRegressions[j].df; // add the sum of squared errors
+                        DF_group += validRegressions[j].df;                      // add the degree of freedom
+                        MSE_group += exponentialMSE[j] * validRegressions[j].df; // add the sum of squared errors
                         // add the iterator of the ref peak to a vector of iterators
                         validRegressionsInGroup.push_back(j);
                         competitors += validRegressions[j].numCompetitors + 1; // a regression can have beaten a previous one
                     }
                 }
-            } // end for loop, inner loop, it_ref_peak
+            } // after this loop, validRegressionsInGroup contains all regressions that are still valid and contend with the regression at position i
 
             if (validRegressionsInGroup.empty()) // no competing regressions exist
             {
-                // assert(validRegressions[i].mse != 0); // not always the case
-                assert(DF_group < 1); // @todo should be redundant
+                assert(DF_group < 1);
                 continue;
             }
 
             MSE_group /= DF_group;
 
-            if (validRegressions[i].mse == 0.0)
+            if (exponentialMSE[i] == 0.0)
             { // calculate the mse of the current peak
-                validRegressions[i].mse = calcSSE_exp(
+                exponentialMSE[i] = calcSSE_exp(
                     validRegressions[i].newCoeffs,
                     intensities,
                     left_limit,
                     right_limit,
                     validRegressions[i].index_x0);
-                validRegressions[i].mse /= validRegressions[i].df;
+                exponentialMSE[i] /= validRegressions[i].df;
             }
             // assert(validRegressionsInGroup.size() == 1); // not always the case
-            if (validRegressions[i].mse < MSE_group)
+            if (exponentialMSE[i] < MSE_group)
             {
                 // Set isValid to false for the candidates from the group
                 for (size_t it_ref_peak : validRegressionsInGroup)
@@ -858,6 +859,7 @@ namespace qAlgorithms
             coeff.b2 /= delta_rt * delta_rt;
             coeff.b3 /= delta_rt * delta_rt;
             peak.coefficients = coeff;
+            peak.mse_base = regression.mse;
 
             if (regression.scale < 3)
             {
