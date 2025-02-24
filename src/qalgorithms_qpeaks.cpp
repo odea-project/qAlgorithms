@@ -611,7 +611,7 @@ namespace qAlgorithms
         is the mean of all predicted values.
         */
         float mse_continuum = calcConstantMSE(intensities_pred);
-        if (mse_continuum / mse < F_table(df_sum, intensities_pred.size() - 1)) // H0 holds, the two distributions are not noticeably different
+        if (mse_continuum / mse < F_table(df_sum, 3)) // H0 holds, the two distributions are not noticeably different
         {
             return;
         }
@@ -938,7 +938,7 @@ namespace qAlgorithms
         {
             sumDiff += (intensities_pred[i] - sum) * (intensities_pred[i] - sum);
         }
-        return sumDiff /= intensities_pred.size() - 1; // @todo is this correct?
+        return sumDiff /= 3;
     }
 
     float calcSSE_exp(const RegCoeffs coeff, const std::vector<float> *y_start, size_t limit_L, size_t limit_R, size_t index_x0)
