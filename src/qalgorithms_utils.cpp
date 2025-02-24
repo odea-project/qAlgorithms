@@ -73,6 +73,7 @@ namespace qAlgorithms
 
     double F_table(size_t df1, size_t df2)
     {
+        // @todo: k df2 is always 3
         assert(df1 > 4 && df2 > 4);
         df1 -= 5;
         df2 -= 5;
