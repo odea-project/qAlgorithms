@@ -53,5 +53,7 @@ namespace qAlgorithms
     double experfc(double x, double sign = -1.0);
 
     double erfi(const double x);
+
+    double F_table(size_t df1, size_t df2);
 }
 #endif // QALGORITHMS_UTILS_H

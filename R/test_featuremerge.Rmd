@@ -230,7 +230,7 @@ sus2 = which(peaks$suspect & newSelection)
 
 
 ```{r}
-idx = sus2[13]
+idx = sus[4]
 # idx = 1
 feature_A = peaks$ID[idx]
 feature_B = peaks$ID[idx + 1]
@@ -283,15 +283,15 @@ ggplot(merge)+
   stat_function(fun = curve_S_M, args = list(feature_A = feature_A, feature_B = feature_B), colour = "green2")
 
 
-ggplot(points_A)+
-  geom_point(aes(retentionTime - feature_A$retentionTime + feature_A$rt_switch, area))+
-  stat_function(fun = curve_0, args = list(feature = feature_A), colour = "red2")+
-  stat_function(aes(x = retentionTime - feature_A$retentionTime), fun = curve_0_M, args = list(scale_to_A = T, feature_A = feature_A, feature_B = feature_B), colour = "green2")
-
-ggplot(points_B)+
-  geom_point(aes(retentionTime - feature_B$retentionTime + feature_B$rt_switch, area))+
-  stat_function(fun = curve_0, args = list(feature = feature_B), colour = "blue")+
-  stat_function(aes(x = retentionTime - feature_B$retentionTime), fun = curve_0_M, args = list(scale_to_A = F, feature_A = feature_A, feature_B = feature_B), colour = "green2")
+# ggplot(points_A)+
+#   geom_point(aes(retentionTime - feature_A$retentionTime + feature_A$rt_switch, area))+
+#   stat_function(fun = curve_0, args = list(feature = feature_A), colour = "red2")+
+#   stat_function(aes(x = retentionTime - feature_A$retentionTime), fun = curve_0_M, args = list(scale_to_A = T, feature_A = feature_A, feature_B = feature_B), colour = "green2")
+# 
+# ggplot(points_B)+
+#   geom_point(aes(retentionTime - feature_B$retentionTime + feature_B$rt_switch, area))+
+#   stat_function(fun = curve_0, args = list(feature = feature_B), colour = "blue")+
+#   stat_function(aes(x = retentionTime - feature_B$retentionTime), fun = curve_0_M, args = list(scale_to_A = F, feature_A = feature_A, feature_B = feature_B), colour = "green2")
 
 ```
 
@@ -312,5 +312,20 @@ mat_covar = solve(crossprod(X, X)) # (t(X) %*% X)^-1
 ```
 
 
+```{r}
+peaks$smallMSE = log(peaks$mse) < -1
 
+ hist(log(peaks$mse / peaks$height), breaks = 60)
+
+ggplot(peaks)+
+  geom_point(aes(retentionTime, competitors, colour = smallMSE)) # maybe relevant
+  # geom_point(aes(mzUncertainty, retentionTimeUncertainty, colour = smallMSE))
+```
+
+```{r}
+f_vals = qf(0.05, 5, 5:69)
+for (i in 6:69) {
+  f_vals = c(f_vals, qf(0.05, i, 5:69))
+}
+```
 
