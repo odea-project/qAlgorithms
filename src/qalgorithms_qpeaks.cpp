@@ -553,9 +553,26 @@ namespace qAlgorithms
           term is considered statistically insignificant, and the loop continues
           to the next iteration.
         */
-        std::vector<float> intensities_pred;
-        intensities_pred.reserve(mutateReg->right_limit - mutateReg->left_limit + 1);
-        float mse = calcSSE_base(mutateReg->newCoeffs, intensities_log, intensities_pred, mutateReg->left_limit, mutateReg->right_limit, scale + idxStart);
+        std::vector<float> selectLog; // both vetors are used to transfer relevant values to the F test later
+        std::vector<float> predictLog;
+        selectLog.reserve(mutateReg->right_limit - mutateReg->left_limit + 1);
+        predictLog.reserve(mutateReg->right_limit - mutateReg->left_limit + 1);
+        float mse = calcSSE_base(mutateReg->newCoeffs, intensities_log, &selectLog, &predictLog,
+                                 mutateReg->left_limit, mutateReg->right_limit, scale + idxStart);
+
+        /*
+        competing regressions filter:
+        If the real distribution of points could also be described as a continuum (i.e. only b0 is relevant),
+        the regression does not describe a peak. This is done through an F-test against a constant that
+        is the mean of all predicted values. @todo this is not working correctly!
+        */
+        // float regression_Fval = calcRegressionFvalue(&selectLog, &predictLog, mse, df_sum);
+        // if (regression_Fval < F_VALUES[df_sum - 5]) // - 5 since the minimum is five degrees of freedom
+        // {
+        //     // H0 holds, the two distributions are not noticeably different
+        //     return;
+        // }
+        // mse is only the correct mean square error after this division
         mse /= (df_sum - 4);
 
         if (!isValidQuadraticTerm(mutateReg->newCoeffs, scale, mse, df_sum))
@@ -602,18 +619,6 @@ namespace qAlgorithms
         if (mutateReg->area / mutateReg->uncertainty_area <= T_VALUES[df_sum - 5])
         {
             return; // statistical insignificance of the area
-        }
-
-        /*
-        competing regressions filter:
-        If the real distribution of points could also be described as a continuum (i.e. only b0 is relevant),
-        the regression does not describe a peak. This is done through an F-test against a constant that
-        is the mean of all predicted values.
-        */
-        float mse_continuum = calcConstantMSE(intensities_pred);
-        if (mse_continuum / mse < F_table(df_sum, 3)) // H0 holds, the two distributions are not noticeably different
-        {
-            return;
         }
 
         mutateReg->uncertainty_pos = calcUncertaintyPos(mse, mutateReg->newCoeffs, mutateReg->apex_position, scale);
@@ -893,7 +898,8 @@ namespace qAlgorithms
 
 #pragma region calcSSE
 
-    float calcSSE_base(const RegCoeffs coeff, const float *y_start, std::vector<float> intensities_pred, size_t limit_L, size_t limit_R, size_t index_x0)
+    float calcSSE_base(const RegCoeffs coeff, const float *y_start, std::vector<float> *selectLog, std::vector<float> *predictLog,
+                       size_t limit_L, size_t limit_R, size_t index_x0)
     {
         double result = 0.0;
         // left side
@@ -902,14 +908,16 @@ namespace qAlgorithms
             double new_x = double(iSegment) - double(index_x0);
             double y_base = coeff.b0 + (coeff.b1 + coeff.b2 * new_x) * new_x;
             double y_current = y_start[iSegment];
-            intensities_pred.push_back(y_current);
+            selectLog->push_back(y_current);
+            predictLog->push_back(y_base);
             double newdiff = (y_base - y_current) * (y_base - y_current);
 
             result += newdiff;
         }
         // center point
         result += (coeff.b0 - y_start[index_x0]) * (coeff.b0 - y_start[index_x0]); // x = 0 -> (b0 - y)^2
-        intensities_pred.push_back(coeff.b0);
+        selectLog->push_back(y_start[index_x0]);
+        predictLog->push_back(coeff.b0);
 
         // right side
         for (size_t iSegment = index_x0 + 1; iSegment < limit_R + 1; iSegment++) // iSegment = 0 is center point calculated above
@@ -917,7 +925,8 @@ namespace qAlgorithms
             double new_x = double(iSegment) - double(index_x0);
             double y_base = coeff.b0 + (coeff.b1 + coeff.b3 * new_x) * new_x; // b3 instead of b2
             double y_current = y_start[iSegment];
-            intensities_pred.push_back(y_current);
+            selectLog->push_back(y_current);
+            predictLog->push_back(y_base);
             double newdiff = (y_current - y_base) * (y_current - y_base);
 
             result += newdiff;
@@ -925,20 +934,33 @@ namespace qAlgorithms
         return result;
     }
 
-    float calcConstantMSE(const std::vector<float> intensities_pred)
+    float calcRegressionFvalue(const std::vector<float> *selectLog, const std::vector<float> *intensities, const float mse, const size_t df_sum)
     {
+        // note that the mse must not be divided by df - 4 yet when this function is called
+
+        // this function returns the F-value for significance of the regression. H0 is that only beta 0
+        // influences the result, meaning that the points that qualified for a regression are of a constant intensity.
+        // Compare https://link.springer.com/book/10.1007/978-3-662-67526-7 p. 501 ff.
+
+        size_t length = intensities->size();
+        assert(selectLog->size() == length);
         double sum = 0;
-        for (size_t i = 0; i < intensities_pred.size(); i++)
+        for (size_t i = 0; i < length; i++)
         {
-            sum += intensities_pred[i];
+            sum += (*intensities)[i];
         }
-        sum /= intensities_pred.size();
+        sum /= length;
         double sumDiff = 0;
-        for (size_t i = 0; i < intensities_pred.size(); i++)
+        for (size_t i = 0; i < length; i++)
         {
-            sumDiff += (intensities_pred[i] - sum) * (intensities_pred[i] - sum);
+            sumDiff += ((*selectLog)[i] - sum) * ((*selectLog)[i] - sum);
         }
-        return sumDiff /= 3;
+        const double R_sqared = sumDiff / mse;
+        // n - p - 1 / p, where p is always 3 because we have a four-coefficient system.
+        // df_sum is used since only non-interpolated points count towards the regression accuracy
+        const double factor = double(length - 3 - 1) / 3;
+
+        return R_sqared / (1 - R_sqared) * factor;
     }
 
     float calcSSE_exp(const RegCoeffs coeff, const std::vector<float> *y_start, size_t limit_L, size_t limit_R, size_t index_x0)
