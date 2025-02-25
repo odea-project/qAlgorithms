@@ -70,14 +70,4 @@ namespace qAlgorithms
 
         return D * exp_approx_d(x * x);
     }
-
-    double F_table(size_t df1, size_t df2)
-    {
-        // @todo: k df2 is always 3
-        assert(df1 > 4 && df2 > 4);
-        df1 -= 5;
-        df2 -= 5;
-        assert(df1 < 66 && df2 < 66); // @todo adjust this as necessary, only precompute degrees of freedom from 5 to 65 for each for now
-        return F_VALUES[df1 * 65 + df2];
-    }
 }

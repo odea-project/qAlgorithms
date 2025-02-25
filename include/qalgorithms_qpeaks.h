@@ -65,9 +65,10 @@ namespace qAlgorithms
         const float *DQSC,
         const float *DQSB);
 
-    float calcSSE_base(const RegCoeffs coeff, const float *y_start, std::vector<float> intensities_pred, size_t limit_L, size_t limit_R, size_t index_x0);
+    float calcSSE_base(const RegCoeffs coeff, const float *y_start, std::vector<float> *selectLog, std::vector<float> *predictLog,
+                       size_t limit_L, size_t limit_R, size_t index_x0);
 
-    float calcConstantMSE(const std::vector<float> intensities_pred);
+    float calcRegressionFvalue(const std::vector<float> *selectLog, const std::vector<float> *intensities, const float mse, const size_t df_sum);
 
     float calcSSE_exp(const RegCoeffs coeff, const std::vector<float> *y_start, size_t limit_L, size_t limit_R, size_t index_x0);
 
