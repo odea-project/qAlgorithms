@@ -176,7 +176,7 @@ namespace qAlgorithms
         {
             return; // no valid peaks
         }
-        assert(validRegressions.front().mse > 1);
+        assert(validRegressions.front().mse > 1); // this is strictly speaking possible
         createFeaturePeaks(&all_peaks, &validRegressions, &intensity, mz, RT, DQSC, DQSB);
 
         // delete[] intensity;
@@ -566,12 +566,12 @@ namespace qAlgorithms
         the regression does not describe a peak. This is done through an F-test against a constant that
         is the mean of all predicted values. @todo this is not working correctly!
         */
-        // float regression_Fval = calcRegressionFvalue(&selectLog, &predictLog, mse, df_sum);
-        // if (regression_Fval < F_VALUES[df_sum - 5]) // - 5 since the minimum is five degrees of freedom
-        // {
-        //     // H0 holds, the two distributions are not noticeably different
-        //     return;
-        // }
+        float regression_Fval = calcRegressionFvalue(&selectLog, &predictLog, mse, df_sum);
+        if (regression_Fval < F_VALUES[df_sum - 5]) // - 5 since the minimum is five degrees of freedom
+        {
+            // H0 holds, the two distributions are not noticeably different
+            return;
+        }
         // mse is only the correct mean square error after this division
         mse /= (df_sum - 4);
 
@@ -934,7 +934,7 @@ namespace qAlgorithms
         return result;
     }
 
-    float calcRegressionFvalue(const std::vector<float> *selectLog, const std::vector<float> *intensities, const float mse, const size_t df_sum)
+    float calcRegressionFvalue(const std::vector<float> *selectLog, const std::vector<float> *predictLog, const float sse, const size_t df_sum)
     {
         // note that the mse must not be divided by df - 4 yet when this function is called
 
@@ -942,25 +942,28 @@ namespace qAlgorithms
         // influences the result, meaning that the points that qualified for a regression are of a constant intensity.
         // Compare https://link.springer.com/book/10.1007/978-3-662-67526-7 p. 501 ff.
 
-        size_t length = intensities->size();
+        size_t length = predictLog->size();
         assert(selectLog->size() == length);
+        assert(sse > 0);
         double sum = 0;
         for (size_t i = 0; i < length; i++)
         {
-            sum += (*intensities)[i];
+            sum += (*predictLog)[i];
         }
         sum /= length;
-        double sumDiff = 0;
+        double squareSumModel = 0;
         for (size_t i = 0; i < length; i++)
         {
-            sumDiff += ((*selectLog)[i] - sum) * ((*selectLog)[i] - sum);
+            squareSumModel += ((*predictLog)[i] - sum) * ((*predictLog)[i] - sum);
         }
-        const double R_sqared = sumDiff / mse;
+        // const double R_sqared = 1 - sse / squareSumModel;
+        // assert(R_sqared > 0);
+        // assert(R_sqared < 1);
         // n - p - 1 / p, where p is always 3 because we have a four-coefficient system.
         // df_sum is used since only non-interpolated points count towards the regression accuracy
         const double factor = double(length - 3 - 1) / 3;
 
-        return R_sqared / (1 - R_sqared) * factor;
+        return squareSumModel / sse * factor;
     }
 
     float calcSSE_exp(const RegCoeffs coeff, const std::vector<float> *y_start, size_t limit_L, size_t limit_R, size_t index_x0)

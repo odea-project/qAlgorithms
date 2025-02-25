@@ -283,23 +283,23 @@ ggplot(merge)+
   stat_function(fun = curve_S_M, args = list(feature_A = feature_A, feature_B = feature_B), colour = "green2")
 
 
-# ggplot(points_A)+
-#   geom_point(aes(retentionTime - feature_A$retentionTime + feature_A$rt_switch, area))+
-#   stat_function(fun = curve_0, args = list(feature = feature_A), colour = "red2")+
-#   stat_function(aes(x = retentionTime - feature_A$retentionTime), fun = curve_0_M, args = list(scale_to_A = T, feature_A = feature_A, feature_B = feature_B), colour = "green2")
-# 
-# ggplot(points_B)+
-#   geom_point(aes(retentionTime - feature_B$retentionTime + feature_B$rt_switch, area))+
-#   stat_function(fun = curve_0, args = list(feature = feature_B), colour = "blue")+
-#   stat_function(aes(x = retentionTime - feature_B$retentionTime), fun = curve_0_M, args = list(scale_to_A = F, feature_A = feature_A, feature_B = feature_B), colour = "green2")
+ggplot(points_A)+
+  geom_point(aes(retentionTime - feature_A$retentionTime + feature_A$rt_switch, area))+
+  stat_function(fun = curve_0, args = list(feature = feature_A), colour = "red2")+
+  stat_function(aes(x = retentionTime - feature_A$retentionTime), fun = curve_0_M, args = list(scale_to_A = T, feature_A = feature_A, feature_B = feature_B), colour = "green2")
+
+ggplot(points_B)+
+  geom_point(aes(retentionTime - feature_B$retentionTime + feature_B$rt_switch, area))+
+  stat_function(fun = curve_0, args = list(feature = feature_B), colour = "blue")+
+  stat_function(aes(x = retentionTime - feature_B$retentionTime), fun = curve_0_M, args = list(scale_to_A = F, feature_A = feature_A, feature_B = feature_B), colour = "green2")
 
 ```
 
 ```{r}
 # sampling of the shifted and scaled curves
 diffs = c(0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1, 1.2, 1.4, 1.6, 1.8, 2, 2.5, 3, 3.5, 4, 5, 6, 7, 8, 9, 10, 15, 20)
-rtdiff = (feature_A$retentionTime + feature_B$retentionTime) / 2
-xvec = c(sort(rtdiff - diffs), rtdiff, rtdiff + diffs)
+# rtdiff = (feature_A$retentionTime + feature_B$retentionTime) / 2
+xvec = c(sort(feature_A$retentionTime - diffs), feature_A$retentionTime, feature_A$retentionTime + diffs)
 n = length(xvec)
 # vandermonde matrix X
 X = matrix(c(xvec^0, xvec^0, 
@@ -309,6 +309,8 @@ X = matrix(c(xvec^0, xvec^0,
            nrow = n * 2, ncol = 4)
 
 mat_covar = solve(crossprod(X, X)) # (t(X) %*% X)^-1
+
+
 ```
 
 
