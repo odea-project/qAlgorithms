@@ -564,7 +564,7 @@ namespace qAlgorithms
         is the mean of all predicted values. @todo this is not working correctly!
         */
         float regression_Fval = calcRegressionFvalue(&selectLog, &predictLog, mse, mutateReg->newCoeffs.b0);
-        if (regression_Fval < F_VALUES[df_sum - 5]) // - 5 since the minimum is five degrees of freedom
+        if (regression_Fval < F_VALUES[selectLog.size()]) // - 5 since the minimum is five degrees of freedom
         {
             // H0 holds, the two distributions are not noticeably different
             return;
