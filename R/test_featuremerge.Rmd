@@ -21,9 +21,11 @@ peaks = peaks[order(peaks$retentionTime),]
 
 ```{r suspected components}
 peaks$suspect = c(abs(diff(peaks$mz)) < 1.5, FALSE)
-sus = which(peaks$suspect)
+sus = which(peaks$suspect & peaks$height > 100) 
 ```
 
+The approach of forming the mean of two regressions has been discarded due to being too much of a headache for relatively common edge cases.
+Notably, the discontinuous function did not merge cleanly and the point of change for both halves was not always clearly defined.
 
 ```{r functions}
 rt_switch = function(feature){
@@ -228,9 +230,8 @@ sus2 = which(peaks$suspect & newSelection)
 # hypothesis: the case occurs if the moved curves have more than 2 (or 1?) intersectssss
 ```
 
-
 ```{r}
-idx = sus[4]
+idx = sus[18]
 # idx = 1
 feature_A = peaks$ID[idx]
 feature_B = peaks$ID[idx + 1]
@@ -310,14 +311,14 @@ X = matrix(c(xvec^0, xvec^0,
 
 mat_covar = solve(crossprod(X, X)) # (t(X) %*% X)^-1
 
-
+mat_covar_A = mat_covar * feature_A$mse
 ```
 
 
 ```{r}
 peaks$smallMSE = log(peaks$mse) < -1
 
- hist(log(peaks$mse / peaks$height), breaks = 60)
+ hist(log10(peaks$mse / peaks$height), breaks = 60)
 
 ggplot(peaks)+
   geom_point(aes(retentionTime, competitors, colour = smallMSE)) # maybe relevant
