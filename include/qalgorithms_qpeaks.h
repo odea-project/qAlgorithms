@@ -68,7 +68,7 @@ namespace qAlgorithms
     float calcSSE_base(const RegCoeffs coeff, const float *y_start, std::vector<float> *selectLog, std::vector<float> *predictLog,
                        size_t limit_L, size_t limit_R, size_t index_x0);
 
-    float calcRegressionFvalue(const std::vector<float> *selectLog, const std::vector<float> *intensities, const float mse, const size_t df_sum);
+    float calcRegressionFvalue(const std::vector<float> *selectLog, const std::vector<float> *intensities, const float mse, const float b0);
 
     float calcSSE_exp(const RegCoeffs coeff, const std::vector<float> *y_start, size_t limit_L, size_t limit_R, size_t index_x0);
 
