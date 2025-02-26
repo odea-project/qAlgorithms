@@ -176,7 +176,7 @@ namespace qAlgorithms
         {
             return; // no valid peaks
         }
-        assert(validRegressions.front().mse > 1); // this is strictly speaking possible
+        // assert(validRegressions.front().mse > 1); // this is strictly speaking possible
         createFeaturePeaks(&all_peaks, &validRegressions, &intensity, mz, RT, DQSC, DQSB);
 
         // delete[] intensity;
@@ -434,10 +434,7 @@ namespace qAlgorithms
                 validRegressions.push_back(std::move(bestReg));
             }
         } // end for loop (group in vector of groups)
-    } // end validateRegressions
-#pragma endregion validateRegressions
-
-#pragma region "validate regression test series"
+    }
 
     void makeValidRegression(
         RegressionGauss *mutateReg,
@@ -566,7 +563,7 @@ namespace qAlgorithms
         the regression does not describe a peak. This is done through an F-test against a constant that
         is the mean of all predicted values. @todo this is not working correctly!
         */
-        float regression_Fval = calcRegressionFvalue(&selectLog, &predictLog, mse, df_sum);
+        float regression_Fval = calcRegressionFvalue(&selectLog, &predictLog, mse, mutateReg->newCoeffs.b0);
         if (regression_Fval < F_VALUES[df_sum - 5]) // - 5 since the minimum is five degrees of freedom
         {
             // H0 holds, the two distributions are not noticeably different
@@ -630,7 +627,7 @@ namespace qAlgorithms
         mutateReg->isValid = true;
         return;
     }
-#pragma endregion "validate regression test series"
+#pragma endregion validateRegressions
 
 #pragma region mergeRegressionsOverScales
     std::vector<RegressionGauss> mergeRegressionsOverScales(std::vector<RegressionGauss> validRegressions,
@@ -709,7 +706,6 @@ namespace qAlgorithms
                     validRegressions[i].index_x0);
                 exponentialMSE[i] /= validRegressions[i].df;
             }
-            // assert(validRegressionsInGroup.size() == 1); // not always the case
             if (exponentialMSE[i] < MSE_group)
             {
                 // Set isValid to false for the candidates from the group
@@ -717,8 +713,6 @@ namespace qAlgorithms
                 {
                     validRegressions[it_ref_peak].isValid = false;
                 }
-                // std::cout << validRegressionsInGroup.size();
-                // assert(validRegressionsInGroup.size() == 1);
                 // only advance competitor count if regression is actually better
                 validRegressions[i].numCompetitors = competitors;
             }
@@ -726,8 +720,6 @@ namespace qAlgorithms
             { // Set isValid to false for the current peak
                 validRegressions[i].isValid = false;
             }
-            // validRegressions[i].numCompetitors = validRegressionsInGroup.size(); // this doesn't work because the group is reset every iteration
-            // assert(validRegressionsInGroup.size() == 1);
         } // end for loop, outer loop, it_current_peak
         std::vector<RegressionGauss> finalRegs;
         for (size_t i = 0; i < validRegressions.size(); i++)
@@ -738,7 +730,7 @@ namespace qAlgorithms
             }
         }
         return finalRegs;
-    } // end mergeRegressionsOverScales
+    }
 #pragma endregion mergeRegressionsOverScales
 
 #pragma region "create peaks"
@@ -934,7 +926,7 @@ namespace qAlgorithms
         return result;
     }
 
-    float calcRegressionFvalue(const std::vector<float> *selectLog, const std::vector<float> *predictLog, const float sse, const size_t df_sum)
+    float calcRegressionFvalue(const std::vector<float> *selectLog, const std::vector<float> *predictLog, const float sse, const float b0)
     {
         // note that the mse must not be divided by df - 4 yet when this function is called
 
@@ -948,20 +940,21 @@ namespace qAlgorithms
         double sum = 0;
         for (size_t i = 0; i < length; i++)
         {
-            sum += (*predictLog)[i];
+            sum += (*selectLog)[i];
         }
         sum /= length;
+        // assert(abs(sum - b0) < sse / length); // misunderstanding
         double squareSumModel = 0;
         for (size_t i = 0; i < length; i++)
         {
-            squareSumModel += ((*predictLog)[i] - sum) * ((*predictLog)[i] - sum);
+            squareSumModel += ((*selectLog)[i] - sum) * ((*selectLog)[i] - sum);
         }
         // const double R_sqared = 1 - sse / squareSumModel;
         // assert(R_sqared > 0);
         // assert(R_sqared < 1);
         // n - p - 1 / p, where p is always 3 because we have a four-coefficient system.
         // df_sum is used since only non-interpolated points count towards the regression accuracy
-        const double factor = double(length - 3 - 1) / 3;
+        const double factor = double(length - 3 - 1) / double(length - 1);
 
         return squareSumModel / sse * factor;
     }
