@@ -121,7 +121,7 @@ ggplot(merge)+
   # geom_point(aes(retentionTime, 0))+
   stat_function(fun = displayFeature, args = list(moveScale(feature_A, feature_A$retentionTime, 1)), colour = "red3")+
   stat_function(fun = displayFeature, args = list(moveScale(feature_B, feature_B$retentionTime, 1)), colour = "blue")+
-  geom_vline(xintercept = intersects)
+  geom_vline(xintercept = intersects)+
   labs(caption = paste0("Tanimoto = ", tanimoto(feature_A, feature_B),
     " ### m/z values: ", feature_A$ID, ": ", feature_A$mz, " | ", feature_B$ID, ": ", feature_B$mz))
 ```
@@ -154,9 +154,12 @@ approx_int = function(coeff, values){
   b0 = coeff[2 + righthalf]
   b1 = coeff[4 + righthalf]
   b2 = coeff[6 + righthalf]
+  step = values[2] - values[1]
   
   heights = exp(b0 + b1 * values + b2 * values^2)
-  area = sum(diff(heights))
+  upper = (heights[-1] + heights[-length(values)]) / 2
+  areas = upper * step
+  return(sum(areas))
 }
 
 inters_root = function(b0A, b0B, b1A, b1B, b23A, b23B){
@@ -242,21 +245,23 @@ tanimoto = function(feature_A, feature_B){
   AuB = 0
   AnB = 0
   for (i in 1:(repeats-1)) {
-    steps = seq(intersects[1], intersects[2], by = (intersects[2] - intersects[1]) / 10)
+    steps = seq(intersects[i], intersects[i + 1], by = (intersects[i + 1] - intersects[i]) / 10)
     int_approx_A = approx_int(coeff_A, steps)
     int_approx_B = approx_int(coeff_B, steps)
     union_AB = min(int_approx_B, int_approx_A)
+    if (union_AB < 0) {stop()}
     AuB = AuB - union_AB + int_approx_A + int_approx_B
     AnB = AnB + union_AB
   }
-  return(AnB / AuB)
+  score = AnB / AuB
+  if (score < 0 | score > 1) {stop()}
+  return(score)
 }
 
 
-showFeats = function(peaks, bins){
+showFeats = function(peaks, bins, i){
   go = T
-  i = 1
-  j = 2
+  j = i + 1
   while (go) {
     feature_A = peaks[i,]
     feature_B = peaks[j,]
@@ -280,6 +285,7 @@ showFeats = function(peaks, bins){
     print(plot)
     input = readline()
     if (input == "#"){
+      j = i + 2
       i = i + 1
     } else if (input == "+"){
       j = j + 1
@@ -288,3 +294,7 @@ showFeats = function(peaks, bins){
 }
 ```
 
+Consider making the score scale, so that the overlap at the maximum is more relevant than 
+distances between points at the peak borders. While the problem is alleviated somewhat by 
+restricting the area of comparison to the function limits, sensitivity of the test will be
+reduced when comparing two functions with different limits.
