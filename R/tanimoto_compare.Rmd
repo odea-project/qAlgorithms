@@ -8,7 +8,7 @@ output: html_document
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
-library(gsl) # required for dawson's integral
+library(pracma) # required for dawson's integral
 ```
 
 ```{r read features}
@@ -78,8 +78,8 @@ if(feature_A > feature_B) {idx = feature_A; feature_A = feature_B; feature_B = i
 
 feature_A = peaks[which(peaks$ID == feature_A),]
 feature_B = peaks[which(peaks$ID == feature_B),]
-feature_A$rt_switch = rt_switch(feature_A)
-feature_B$rt_switch = rt_switch(feature_B)
+# feature_A$rt_switch = rt_switch(feature_A)
+# feature_B$rt_switch = rt_switch(feature_B)
 
 points_A = bins[which(bins$binID == feature_A$binID),]
 points_B = bins[which(bins$binID == feature_B$binID),]
@@ -100,6 +100,16 @@ if (feature_B$binIdxEnd + 3 < clamp_r)
 {clamp_r = feature_B$binIdxEnd + 3}
 points_B = points_B[clamp_l:clamp_r,]
 
+clamp = function(points, binIdxStart, binIdxEnd){
+  clamp_l = 0
+  clamp_r = length(points$binID)
+  if (binIdxStart - 3 > 0)
+  {clamp_l = binIdxStart - 3}
+  if (binIdxEnd + 3 < clamp_r)
+  {clamp_r = binIdxEnd + 3}
+  return(points[clamp_l:clamp_r,])
+}
+
 points_A$ID = feature_A$ID
 points_B$ID = feature_B$ID
 points_A$area = points_A$area / feature_A$height
@@ -111,28 +121,42 @@ ggplot(merge)+
   # geom_point(aes(retentionTime, 0))+
   stat_function(fun = displayFeature, args = list(moveScale(feature_A, feature_A$retentionTime, 1)), colour = "red3")+
   stat_function(fun = displayFeature, args = list(moveScale(feature_B, feature_B$retentionTime, 1)), colour = "blue")+
-  labs(caption = paste0("m/z values: ", feature_A$ID, ": ", feature_A$mz, " | ", feature_B$ID, ": ", feature_B$mz))
+  geom_vline(xintercept = intersects)
+  labs(caption = paste0("Tanimoto = ", tanimoto(feature_A, feature_B),
+    " ### m/z values: ", feature_A$ID, ": ", feature_A$mz, " | ", feature_B$ID, ": ", feature_B$mz))
 ```
 
 ```{r tanimoto-score:}
 
-integral_exp = function(limit_L, limit_R, coeff){
+integral_exp = function(x, coeff){
   # calculate the integral of a function snippet
   # condition: both limits are greater or smaller than the switch point
-  righthalf = limit_L > coeff[1]
+  righthalf = x > coeff[1]
   b0 = coeff[2 + righthalf]
   b1 = coeff[4 + righthalf]
   b2 = coeff[6 + righthalf]
-  # add a branch for b2 > 0 @todo
   
-  base_l = exp(b0 + limit_L * b1 + limit_L^2 * b2)
-  base_r = exp(b0 + limit_R * b1 + limit_R^2 * b2)
-  daw_l = dawson((b1 + 2 * b2 * limit_L) / (2 * sqrt(b2)))
-  daw_r = dawson((b1 + 2 * b2 * limit_R) / (2 * sqrt(b2)))
-  total_l = base_l + daw_l / sqrt(b2)
-  total_r = base_r + daw_r / sqrt(b2)
+  term1 = sqrt(pi) * exp((b0 - b1^2) / (4 * b2)) 
+  term2 = 0
+  # if b2 is negative, the normal error function has to be used. If it is positive, the imaginary error function erfi is used instead
+  if (b2 < 0){
+    term2 = erf((2 * b2 * x + b1) / (2* sqrt(-b2))) * -1 / (2* sqrt(-b2))
+  } else {
+    term2 = erfi((2 * b2 * x + b1) / (2* sqrt(b2))) * 1 / (2* sqrt(b2))
+  }
+  # the exponential term gets extremely large, which is only compensated after substracting both 
+  # error terms. Due to limits of numerical approximation, an interpolated approach is used
+  return(term1 * term2)
+}
+
+approx_int = function(coeff, values){
+   righthalf = x > coeff[1]
+  b0 = coeff[2 + righthalf]
+  b1 = coeff[4 + righthalf]
+  b2 = coeff[6 + righthalf]
   
-  return(total_r - total_l)
+  heights = exp(b0 + b1 * values + b2 * values^2)
+  area = sum(diff(heights))
 }
 
 inters_root = function(b0A, b0B, b1A, b1B, b23A, b23B){
@@ -214,15 +238,53 @@ tanimoto = function(feature_A, feature_B){
  
   # with the intersects found, the integrals need to be calculated between every pair in the vector
   repeats = length(intersects)
-  total_overlap = 0
-  total_difference = 0
-  for (i in 1:repeats) {
-    integral_A = integral_exp(intersects[i], intersects[i + 1], coeff_A)
-    integral_B = integral_exp(intersects[i], intersects[i + 1], coeff_B)
-    total_overlap = total_overlap + min(integral_A, integral_B)
-    total_difference = abs(integral_A - integral_B)
-  }
   
+  AuB = 0
+  AnB = 0
+  for (i in 1:(repeats-1)) {
+    steps = seq(intersects[1], intersects[2], by = (intersects[2] - intersects[1]) / 10)
+    int_approx_A = approx_int(coeff_A, steps)
+    int_approx_B = approx_int(coeff_B, steps)
+    union_AB = min(int_approx_B, int_approx_A)
+    AuB = AuB - union_AB + int_approx_A + int_approx_B
+    AnB = AnB + union_AB
+  }
+  return(AnB / AuB)
+}
+
+
+showFeats = function(peaks, bins){
+  go = T
+  i = 1
+  j = 2
+  while (go) {
+    feature_A = peaks[i,]
+    feature_B = peaks[j,]
+    points_A = bins[which(bins$binID == feature_A$binID),]
+    points_B = bins[which(bins$binID == feature_B$binID),]
+    points_A = points_A[feature_A$binIdxStart:feature_A$binIdxEnd,]
+    points_B = points_B[feature_B$binIdxStart:feature_B$binIdxEnd,]
+    
+    points_A$ID = feature_A$ID
+    points_B$ID = feature_B$ID
+    points_A$area = points_A$area / feature_A$height
+    points_B$area = points_B$area / feature_B$height
+    merge = rbind(points_A, points_B)
+
+    plot = ggplot(merge)+
+      geom_point(aes(retentionTime, area, colour = as.factor(ID)))+
+      stat_function(fun = displayFeature, args = list(moveScale(feature_A, feature_A$retentionTime, 1)), colour = "red3")+
+      stat_function(fun = displayFeature, args = list(moveScale(feature_B, feature_B$retentionTime, 1)), colour = "blue")+
+      labs(caption = paste0("Tanimoto = ", tanimoto(feature_A, feature_B),
+           " ### m/z values: ", feature_A$ID, ": ", feature_A$mz, " | ", feature_B$ID, ": ", feature_B$mz))
+    print(plot)
+    input = readline()
+    if (input == "#"){
+      i = i + 1
+    } else if (input == "+"){
+      j = j + 1
+    }
+  }
 }
 ```
 
