@@ -1,13 +1,7 @@
-// qalgorithms_utils.cpp
 #include "qalgorithms_utils.h"
 #include "qalgorithms_global_vars.h"
-#include <cmath>
-#include <stdexcept>
-#include <numeric>
-#include <algorithm>
-#include <iostream>
-#include <cstdint>
-#include <assert.h>
+#include <cstdint> // uint64_t
+#include <cmath>   // std::abs()
 
 namespace qAlgorithms
 {

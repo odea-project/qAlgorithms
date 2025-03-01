@@ -1,12 +1,8 @@
-// qalgorithm_measurement_data.cpp
-
-// internal
 #include "qalgorithms_measurement_data.h"
 #include "qalgorithms_utils.h"
 #include "qalgorithms_global_vars.h"
 #include "qalgorithms_qpeaks.h"
 
-// external
 #include <cmath>
 #include <fstream>
 #include <algorithm>
