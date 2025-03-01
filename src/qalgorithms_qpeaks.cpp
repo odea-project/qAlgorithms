@@ -511,18 +511,6 @@ namespace qAlgorithms
             return; // degree of freedom less than 5; i.e., less then 5 measured data points
         }
         assert(mutateReg->right_limit - mutateReg->left_limit > 4);
-        /*
-          Chi-Square Filter:
-          This block of code implements the chi-square filter. It calculates the chi-square
-          value based on the weighted chi squared sum of expected and measured y values in
-          the exponential domain. If the chi-square value is less than the corresponding
-          value in the CHI_SQUARES, the regression is invalid.
-        */
-        float chiSquare = calcSSE_chisqared(mutateReg->newCoeffs, intensities, mutateReg->left_limit, mutateReg->right_limit, scale + idxStart);
-        if (chiSquare < CHI_SQUARES[df_sum - 5])
-        {
-            return; // statistical insignificance of the chi-square value
-        }
 
         /*
           Apex to Edge Filter:
@@ -614,6 +602,19 @@ namespace qAlgorithms
         if (mutateReg->area / mutateReg->uncertainty_area <= T_VALUES[df_sum - 5])
         {
             return; // statistical insignificance of the area
+        }
+
+        /*
+          Chi-Square Filter:
+          This block of code implements the chi-square filter. It calculates the chi-square
+          value based on the weighted chi squared sum of expected and measured y values in
+          the exponential domain. If the chi-square value is less than the corresponding
+          value in the CHI_SQUARES, the regression is invalid.
+        */
+        float chiSquare = calcSSE_chisqared(mutateReg->newCoeffs, intensities, mutateReg->left_limit, mutateReg->right_limit, scale + idxStart);
+        if (chiSquare < CHI_SQUARES[df_sum - 5])
+        {
+            return; // statistical insignificance of the chi-square value
         }
 
         mutateReg->uncertainty_pos = calcUncertaintyPos(mse, mutateReg->newCoeffs, mutateReg->apex_position, scale);
@@ -995,10 +996,9 @@ namespace qAlgorithms
             double newdiff = (y_base - y_current) * (y_base - y_current);
             result += newdiff / y_base;
         }
-        // center point, left and right term are identical
-        result += ((exp_approx_d(coeff.b0) - (*y_start)[index_x0]) *
-                   (exp_approx_d(coeff.b0) - (*y_start)[index_x0])) /
-                  exp_approx_d(coeff.b0); // x = 0 -> (b0 - y)^2
+        // center point, x = 0 -> (b0 - y)^2
+        double exp_b0 = exp_approx_d(coeff.b0);
+        result += ((exp_b0 - (*y_start)[index_x0]) * (exp_b0 - (*y_start)[index_x0])) / exp_b0;
 
         for (size_t iSegment = index_x0 + 1; iSegment < limit_R + 1; iSegment++) // iSegment = 0 is center point (calculated above)
         {
