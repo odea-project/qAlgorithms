@@ -2,11 +2,6 @@
 #ifndef QALGORITHMS_UTILS_H // Include guarde to prevent double inclusion
 #define QALGORITHMS_UTILS_H
 
-// external
-#include <vector>
-#include <string>
-#include <immintrin.h>
-
 namespace qAlgorithms
 {
     /**
