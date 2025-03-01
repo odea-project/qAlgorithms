@@ -8,7 +8,6 @@
 #include <math.h>
 #include <algorithm> // sort, maximum and iterator conversion
 #include <string>
-#include <ctime>
 
 namespace qAlgorithms
 {

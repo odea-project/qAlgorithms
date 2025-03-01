@@ -1,5 +1,3 @@
-// qalgorithms_qpeaks.cpp
-
 #include "qalgorithms_qpeaks.h"
 #include "qalgorithms_utils.h"
 #include "qalgorithms_global_vars.h"
@@ -7,9 +5,9 @@
 
 #include <algorithm>
 #include <cassert>
-#include <numeric>
 #include <cmath>
 #include <array>
+#include <vector>
 
 namespace qAlgorithms
 {

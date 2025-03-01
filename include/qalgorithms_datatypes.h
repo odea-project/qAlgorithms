@@ -3,7 +3,6 @@
 #define QALGORITHMS_DATATYPE_PEAK_H
 
 #include <immintrin.h> // AVX
-#include <cstddef>     // errorcode in EIC @todo just make this an int
 #include <vector>
 
 /* This file includes the structs used for data management in qAlgorithms*/
