@@ -113,7 +113,7 @@ bins_SFC_DoE_RO42_86 = read.csv("C:/Users/unisys/Documents/Studium/Messdaten/mzm
 ```
 
 ```{r}
-s_SFC_DoE_RO42_86 %>% group_by(errorcode) %>% summarise(bins = n(), centroids = sum(size), ratio = round(sum(size)/n(),digits = 3), dqsCen = mean(DQSC_min), meanDQS = mean(DQSB_scaled))
+s_SFC_DoE_RO42_86 %>% group_by(errorcode) %>% summarise(bins = n(), centroids = sum(size), ratio = round(sum(size)/n(),digits = 3), DQSC = mean(DQSC_min), meanDQS = mean(DQSB_scaled))
 select = s_SFC_DoE_RO42_86$ID[which(s_SFC_DoE_RO42_86$errorcode %% 20 != 0)]
 
 
