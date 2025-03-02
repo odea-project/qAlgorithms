@@ -207,6 +207,9 @@ namespace qAlgorithms
 
     std::pair<float, float> weightedMeanAndVariance(const float *x, const std::vector<float> *weight,
                                                     size_t left_limit, size_t right_limit);
+
+    std::pair<float, float> weightedMeanAndVariance_EIC(const std::vector<float> *weight, const std::vector<float> *values,
+                                                        size_t left_limit, size_t right_limit);
 }
 
 #endif
