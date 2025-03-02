@@ -47,7 +47,7 @@ namespace qAlgorithms
                 centroids[i].back().area = spectrum[1][j];
                 centroids[i].back().height = spectrum[1][j];
                 // centroids[i].back().retentionTime = retention_times[i]; // @todo fix this
-                centroids[i].back().dqsCen = -1.0;
+                centroids[i].back().DQSC = -1.0;
                 centroids[i].back().mzUncertainty = spectrum[0][j] * PPMerror * 10e-6; // 0.25 ppm default
             }
         }
@@ -608,21 +608,31 @@ namespace qAlgorithms
             }
             for (size_t j = 0; j < tmpPeaks.size(); j++)
             {
-                assert(tmpPeaks[j].idxPeakEnd < binIndexConverter.size());
-                tmpPeaks[j].idxPeakStart = binIndexConverter[tmpPeaks[j].idxPeakStart];
-                tmpPeaks[j].idxBin = i;
+                auto currentPeak = tmpPeaks[j];
+                assert(currentPeak.idxPeakEnd < binIndexConverter.size());
+                currentPeak.idxBin = i;
                 // the end point is only correct if it is real. Check if the next point
                 // has the same index - if yes, -1 to end index
-                unsigned int tmpIdx = tmpPeaks[j].idxPeakEnd;
-                tmpPeaks[j].idxPeakEnd = binIndexConverter[tmpPeaks[j].idxPeakEnd];
+                unsigned int tmpIdx = currentPeak.idxPeakEnd;
+                currentPeak.idxPeakEnd = binIndexConverter[currentPeak.idxPeakEnd];
                 if (tmpIdx + 1 != binIndexConverter.size())
                 {
                     if (binIndexConverter[tmpIdx] == binIndexConverter[tmpIdx + 1])
                     {
-                        tmpPeaks[j].idxPeakEnd--;
+                        currentPeak.idxPeakEnd--;
                     }
                 }
-                peaks.push_back(std::move(tmpPeaks[j])); // remove 2D structure of FL
+                auto tmp = weightedMeanAndVariance_EIC(&currentEIC.ints_area, &currentEIC.mz,
+                                                       currentPeak.idxPeakStart, currentPeak.idxPeakEnd);
+                currentPeak.mz = tmp.first;
+                currentPeak.mzUncertainty = tmp.second;
+                currentPeak.DQSC = weightedMeanAndVariance_EIC(&currentEIC.ints_area, &currentEIC.DQSC,
+                                                               currentPeak.idxPeakStart, currentPeak.idxPeakEnd)
+                                       .first;
+                currentPeak.DQSB = weightedMeanAndVariance_EIC(&currentEIC.ints_area, &currentEIC.DQSB,
+                                                               currentPeak.idxPeakStart, currentPeak.idxPeakEnd)
+                                       .first;
+                peaks.push_back(std::move(currentPeak)); // remove 2D structure of FL
             }
 
             tmpPeaks.clear();

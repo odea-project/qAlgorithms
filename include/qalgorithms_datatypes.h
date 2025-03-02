@@ -84,7 +84,7 @@ namespace qAlgorithms
         float width;
         float heightUncertainty;
         float areaUncertainty;
-        float dqsCen;
+        float DQSC;
         float mzUncertainty;
         unsigned int scanNumber;
         unsigned int df; // degrees of freedom
@@ -131,8 +131,8 @@ namespace qAlgorithms
         float heightUncertainty;
         float areaUncertainty;
         float DQSF;          // only relevant for features
-        float dqsBin;        // can be calculated when needed
-        float dqsCen;        // can be calculated when needed
+        float DQSB;          // can be calculated when needed
+        float DQSC;          // can be calculated when needed
         float retentionTime; // only relevant for features
         float mz;
         float retentionTimeUncertainty;

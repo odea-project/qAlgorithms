@@ -28,13 +28,14 @@ namespace qAlgorithms
                 for (size_t j = 0; j < allPeaks[i].size(); ++j)
                 {
                     auto &peak = allPeaks[i][j];
-                    qCentroid F = qCentroid{peak.mz, peak.mzUncertainty, peak.scanNumber, peak.area, peak.height, peak.dqsCen, peak.df, totalCentroids};
+                    qCentroid F = qCentroid{peak.mz, peak.mzUncertainty, peak.scanNumber, peak.area, peak.height, peak.DQSC, peak.df, totalCentroids};
                     assert(F.scanNo > 0);
                     centroids.push_back(F);
                     ++totalCentroids;
                 }
             }
         }
+        assert(centroids.size() > 4);
         return centroids;
     }
 #pragma endregion "pass to qBinning"
@@ -121,7 +122,7 @@ namespace qAlgorithms
             std::transform(block.intensity.begin(), block.intensity.end(), logIntensity, [](float y)
                            { return std::log(y); });
             // @todo adjust the scale dynamically based on the number of valid regressions found, early terminate after x iterations
-            const size_t maxScale = std::min(GLOBAL_MAXSCALE_CENTROID, size_t((length - 1) / 2));
+            const size_t maxScale = std::min(GLOBAL_MAXSCALE_CENTROID, size_t((length - 1) / 2)); // length - 1 because the center point is not part of the span
             runningRegression(&block.intensity, logIntensity, &block.df, length, validRegressions, maxScale);
             if (validRegressions.empty())
             {
@@ -177,7 +178,6 @@ namespace qAlgorithms
         // assert(validRegressions.front().mse > 1); // this is strictly speaking possible
         createFeaturePeaks(&all_peaks, &validRegressions, &intensity, mz, RT, DQSC, DQSB);
 
-        // delete[] intensity;
         delete[] logIntensity;
         delete[] RT;
         delete[] mz;
@@ -223,21 +223,16 @@ namespace qAlgorithms
 
     void convolve_SIMD(
         const size_t scale,
-        const float *vec, // ylog_start
-        const size_t n,   // sumber of data points in vec
+        const float *vec, // intensities
+        const size_t n,   // length of vec
         __m128 *result)
     {
-        assert(scale > 1);
         assert(n > 2 * scale);
         // this function calculates the regression coefficients from the pseudoinverse matrix P and the y-values supplied through vec.
         // It is equivalent to sum(y[i] * P[i][0]) for beta0, beta1 etc. Every element of result is one set of coefficients (b0, b1, b2, b3)
 
-        size_t n_segments = n - 2 * scale;
-        __m128 products[n]; // holds the products of vec and the scale factor
-        for (size_t i = 0; i < n; ++i)
-        {
-            products[i] = _mm_setzero_ps();
-        }
+        size_t n_segments = n - 2 * scale; // number of regression windows to be tested
+        __m128 products[n];                // holds the products of vec and the scale factor
         size_t scale6 = scale * 6;
         // activeKernel starts as the kernel offsets
         // this kernel is used to exploit symmetry in the pseudoinverse of the regression. It is constructed iteratively in the loop
@@ -284,9 +279,11 @@ namespace qAlgorithms
 
             for (size_t j = 0; j < n_segments; j++)
             {
-                __m128 products_temp = _mm_permute_ps(products[j], 0b10110100);              // swap places of b0 and b1(?)
-                __m128 sign_flip = _mm_set_ps(1.0f, 1.0f, -1.0f, 1.0f);                      // why only flip the sign of b2?
-                products_temp = _mm_fmadd_ps(products_temp, sign_flip, products[2 * i + j]); // why this access pattern? @todo
+                __m128 products_temp = _mm_permute_ps(products[j], 0b10110100); // swap places of b2 and b3
+                __m128 flipSign = _mm_set_ps(1.0f, 1.0f, -1.0f, 1.0f);          // why only flip the sign of b1?
+                // flip the sign of b1 and add products at 2 * (current scale) + (current regression)
+                products_temp = _mm_fmadd_ps(products_temp, flipSign, products[2 * i + j]); // why this access pattern? @todo
+                // add products to coeffs of the current regression
                 result[j] = _mm_add_ps(result[j], products_temp);
             }
         }
@@ -773,6 +770,34 @@ namespace qAlgorithms
         return std::make_pair(weighted_mean, uncertaintiy);
     };
 
+    std::pair<float, float> weightedMeanAndVariance_EIC(const std::vector<float> *weight, const std::vector<float> *values,
+                                                        size_t left_limit, size_t right_limit)
+    {
+        // weighted mean using intensity as weighting factor and left_limit right_limit as range
+        size_t realPoints = right_limit - left_limit + 1;
+        double mean_weights = 0.0;   // mean of weight
+        double sum_weighted_x = 0.0; // sum of values * weight
+        double sum_weight = 0.0;     // sum of weight
+        for (size_t j = left_limit; j <= right_limit; j++)
+        {
+            mean_weights += (*weight)[j];
+            sum_weighted_x += (*values)[j] * (*weight)[j];
+            sum_weight += (*weight)[j];
+        }
+        mean_weights /= realPoints;
+        sum_weighted_x /= mean_weights;
+        sum_weight /= mean_weights;
+
+        double weighted_mean = sum_weighted_x / sum_weight;
+        double sum_Qxxw = 0.0; // sum of (values - mean)^2 * weight
+        for (size_t j = left_limit; j <= right_limit; j++)
+        {
+            sum_Qxxw += ((*values)[j] - weighted_mean) * ((*values)[j] - weighted_mean) * (*weight)[j];
+        }
+        float uncertaintiy = std::sqrt(sum_Qxxw / sum_weight / realPoints);
+        return std::make_pair(weighted_mean, uncertaintiy);
+    };
+
     void createCentroidPeaks(
         std::vector<CentroidPeak> *peaks,
         const std::vector<RegressionGauss> *validRegressionsVec,
@@ -807,7 +832,7 @@ namespace qAlgorithms
             peak.mzUncertainty = regression.uncertainty_pos * delta_mz * T_VALUES[regression.df + 1] * sqrt(1 + 1 / (regression.df + 4));
 
             // quality params
-            peak.dqsCen = 1 - erf_approx_f(regression.uncertainty_area / regression.area);
+            peak.DQSC = 1 - erf_approx_f(regression.uncertainty_area / regression.area);
             peak.df = regression.df;
 
             peak.numCompetitors = regression.numCompetitors;
@@ -858,8 +883,8 @@ namespace qAlgorithms
             peak.mz = mz.first;
             peak.mzUncertainty = mz.second;
 
-            peak.dqsCen = weightedMeanAndVariance(DQSC, intensity, regression.left_limit, regression.right_limit).first;
-            peak.dqsBin = weightedMeanAndVariance(DQSB, intensity, regression.left_limit, regression.right_limit).first;
+            peak.DQSC = weightedMeanAndVariance(DQSC, intensity, regression.left_limit, regression.right_limit).first;
+            peak.DQSB = weightedMeanAndVariance(DQSB, intensity, regression.left_limit, regression.right_limit).first;
             peak.DQSF = 1 - erf_approx_f(regression.uncertainty_area / regression.area);
 
             peak.idxPeakStart = regression.left_limit;
@@ -1052,7 +1077,7 @@ namespace qAlgorithms
         return std::pair(bestRegIdx, best_mse);
     }
 
-    size_t calcDF(
+    size_t calcDF( // using unsigned int is multiple seconds faster than size_1 for ten files in a row - why? @todo
         const std::vector<bool> *degreesOfFreedom,
         unsigned int left_limit,
         unsigned int right_limit)

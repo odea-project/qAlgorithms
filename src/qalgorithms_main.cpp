@@ -24,8 +24,8 @@ namespace qAlgorithms
     float MZ_ABSOLUTE_PRECENTROIDED = -INFINITY;                                 // see above
     std::array<float, 384> INV_ARRAY = initialize();                             // @todo make constexpr
     bool massTraceStable(std::vector<float> massesBin, int idxStart, int idxEnd) // @todo do this in regression
-
     {
+        assert(idxEnd > idxStart);
         size_t peaksize = idxEnd - idxStart + 1;
         // std::cout << idxStart << ", " << idxEnd << ", " << peaksize << "\n";
         std::vector<float> massesPeak;
