@@ -79,6 +79,7 @@ namespace qAlgorithms
     struct CentroidPeak
     {
         double mz;
+        float RT;
         float height;
         float area;
         float width;
