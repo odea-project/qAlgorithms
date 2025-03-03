@@ -10,76 +10,6 @@
 
 namespace qAlgorithms
 {
-    std::vector<std::vector<CentroidPeak>> transferCentroids(
-        sc::MZML &data,
-        std::vector<int> &indices,
-        std::vector<double> &retention_times,
-        const int start_index,
-        double PPMerror)
-    {
-        std::vector<std::vector<CentroidPeak>> centroids(indices.size());
-        // #pragma omp parallel for
-        for (size_t i = 0; i < indices.size(); ++i) // loop over all indices
-        {
-            const int index = indices[i]; // spectrum index
-            if (index < start_index)
-            {
-                continue; // skip due to index
-            }
-            // get the spectrum
-            std::vector<std::vector<double>> spectrum = data.get_spectrum(index);
-            if (spectrum.empty())
-            {
-                std::cerr << "Error: spectrum decode at position " << index << " failed.\n";
-                continue;
-            }
-
-            for (size_t j = 0; j < spectrum[0].size(); j++)
-            {
-                if (spectrum[1][j] < 750)
-                {
-                    continue;
-                }
-
-                centroids[i].push_back(CentroidPeak());
-                centroids[i].back().scanNumber = index;
-                centroids[i].back().mz = spectrum[0][j];
-                centroids[i].back().area = spectrum[1][j];
-                centroids[i].back().height = spectrum[1][j];
-                // centroids[i].back().retentionTime = retention_times[i]; // @todo fix this
-                centroids[i].back().DQSC = -1.0;
-                centroids[i].back().mzUncertainty = spectrum[0][j] * PPMerror * 10e-6; // 0.25 ppm default
-            }
-        }
-        return centroids;
-    }
-
-    double calcExpectedDiff(const std::vector<std::vector<double>> *spectrum)
-    {
-        const std::vector<double> mz = (*spectrum)[0];
-        const std::vector<double> intensity = (*spectrum)[1];
-        const size_t numPoints = mz.size();         // number of data points
-        const size_t upperLimit = numPoints * 0.05; // check lowest 5% for expected difference
-        double expectedDifference = 0.0;
-        std::vector<double> differences;
-        differences.reserve(numPoints / 2);
-        for (size_t i = 0; i < numPoints - 1; i++)
-        {
-            if (intensity[i] == 0 || intensity[i] == 0)
-            {
-                continue;
-            }
-            differences.push_back(mz[i + 1] - mz[i]);
-        }
-        std::sort(differences.begin(), differences.end());
-        for (size_t i = 0; i < upperLimit; i++)
-        {
-            expectedDifference += differences[i];
-        }
-        expectedDifference /= upperLimit;
-        assert(expectedDifference > 0);
-        return expectedDifference;
-    }
 
     inline std::array<double, 3> interpolateQuadratic(const float *x, const float *y)
     {
@@ -96,6 +26,7 @@ namespace qAlgorithms
         return {c, b, a};
     }
 
+#pragma region "Feature Detection"
     void extrapolateEIC(const std::vector<size_t> scanNums, std::vector<float> *intensity)
     {
         // x-axis can be either mz (for centroids) or RT (for features)
@@ -181,8 +112,6 @@ namespace qAlgorithms
         // iterate over the data points
         size_t maxOfBlock = 0;
         size_t blockSize = 0; // size of the current block
-        size_t countSubOneGap = 0;
-        size_t countNoGap = 0;
         for (size_t pos = 0; pos < dataPoints.size() - 1; pos++)
         {
             blockSize++;
@@ -192,16 +121,6 @@ namespace qAlgorithms
             assert(binIdx.size() == treatedData.dataPoints.size());
             ++realIdx;
             const float delta_x = dataPoints[pos + 1].x - dataPoints[pos].x;
-
-            size_t gapSize2 = 0;
-            if (delta_x > 1.75 * expectedDifference)
-            {
-                gapSize2 = static_cast<int>(delta_x / expectedDifference) - 1;
-                if (gapSize2 == 0)
-                {
-                    countSubOneGap++;
-                }
-            }
 
             if (delta_x > 1.75 * expectedDifference)
             { // gap detected
@@ -227,10 +146,8 @@ namespace qAlgorithms
                     assert(binIdx.size() == treatedData.dataPoints.size());
                 }
             }
-            else if (gapSize2 == 0) // no gap found
+            else
             {
-                countNoGap++;
-                assert(gapSize2 == 0);
                 if (dataPoints[maxOfBlock].y < dataPoints[pos].y)
                 {
                     maxOfBlock = pos;
@@ -315,13 +232,142 @@ namespace qAlgorithms
 
         treatedData.cenIDs = eic.interpolatedIDs;
         return treatedData;
-    } // end of pretreatEIC
+    }
 
-#pragma region "connective functions between centroiding and binning"
+    std::vector<FeaturePeak> findPeaks_QBIN(
+        std::vector<EIC> &EICs,
+        float rt_diff)
+    {
+        std::vector<FeaturePeak> peaks;    // return vector for feature list
+        peaks.reserve(EICs.size() / 4);    // should be enough to fit all features without reallocation
+        std::vector<FeaturePeak> tmpPeaks; // add features to this before pasting into FL
 
-#pragma endregion "connective functions between centroiding and binning"
+        for (size_t i = 0; i < EICs.size(); ++i) // loop over all data
+        {
+            auto currentEIC = EICs[i];
+            if (currentEIC.scanNumbers.size() < 5)
+            {
+                continue; // skip due to lack of data, i.e., degree of freedom will be zero
+            }
+            // if (currentEIC.interpolations)
+            // {
+            //     continue;
+            // }
+
+            std::vector<unsigned int> binIndexConverter;
+            treatedData treatedData = pretreatEIC(currentEIC, binIndexConverter, rt_diff); // inter/extrapolate data, and identify data blocks
+            findFeatures(tmpPeaks, treatedData);
+            if (tmpPeaks.empty())
+            {
+                continue;
+            }
+            for (size_t j = 0; j < tmpPeaks.size(); j++)
+            {
+                auto currentPeak = tmpPeaks[j];
+                assert(currentPeak.idxPeakEnd < binIndexConverter.size());
+                currentPeak.idxBin = i;
+                // the end point is only correct if it is real. Check if the next point
+                // has the same index - if yes, -1 to end index
+                unsigned int tmpIdx = currentPeak.idxPeakEnd;
+                currentPeak.idxPeakEnd = binIndexConverter[currentPeak.idxPeakEnd];
+                if (tmpIdx + 1 != binIndexConverter.size())
+                {
+                    if (binIndexConverter[tmpIdx] == binIndexConverter[tmpIdx + 1])
+                    {
+                        currentPeak.idxPeakEnd--;
+                    }
+                }
+                auto tmp = weightedMeanAndVariance_EIC(&currentEIC.ints_area, &currentEIC.mz,
+                                                       currentPeak.idxPeakStart, currentPeak.idxPeakEnd);
+                currentPeak.mz = tmp.first;
+                currentPeak.mzUncertainty = tmp.second;
+                currentPeak.DQSC = weightedMeanAndVariance_EIC(&currentEIC.ints_area, &currentEIC.DQSC,
+                                                               currentPeak.idxPeakStart, currentPeak.idxPeakEnd)
+                                       .first;
+                currentPeak.DQSB = weightedMeanAndVariance_EIC(&currentEIC.ints_area, &currentEIC.DQSB,
+                                                               currentPeak.idxPeakStart, currentPeak.idxPeakEnd)
+                                       .first;
+                peaks.push_back(std::move(currentPeak)); // remove 2D structure of FL
+            }
+
+            tmpPeaks.clear();
+        }
+        return peaks;
+    }
 
 #pragma region "find centroids"
+
+    std::vector<std::vector<CentroidPeak>> transferCentroids(
+        sc::MZML &data,
+        std::vector<int> &indices,
+        std::vector<double> &retention_times,
+        const int start_index,
+        double PPMerror)
+    {
+        std::vector<std::vector<CentroidPeak>> centroids(indices.size());
+        // #pragma omp parallel for
+        for (size_t i = 0; i < indices.size(); ++i) // loop over all indices
+        {
+            const int index = indices[i]; // spectrum index
+            if (index < start_index)
+            {
+                continue; // skip due to index
+            }
+            // get the spectrum
+            std::vector<std::vector<double>> spectrum = data.get_spectrum(index);
+            if (spectrum.empty())
+            {
+                std::cerr << "Error: spectrum decode at position " << index << " failed.\n";
+                continue;
+            }
+
+            for (size_t j = 0; j < spectrum[0].size(); j++)
+            {
+                if (spectrum[1][j] < 750)
+                {
+                    continue;
+                }
+
+                centroids[i].push_back(CentroidPeak());
+                centroids[i].back().scanNumber = index;
+                centroids[i].back().mz = spectrum[0][j];
+                centroids[i].back().area = spectrum[1][j];
+                centroids[i].back().height = spectrum[1][j];
+                // centroids[i].back().retentionTime = retention_times[i]; // @todo fix this
+                centroids[i].back().DQSC = -1.0;
+                centroids[i].back().mzUncertainty = spectrum[0][j] * PPMerror * 10e-6; // 0.25 ppm default
+            }
+        }
+        return centroids;
+    }
+
+    double calcExpectedDiff(const std::vector<std::vector<double>> *spectrum)
+    {
+        const std::vector<double> mz = (*spectrum)[0];
+        const std::vector<double> intensity = (*spectrum)[1];
+        const size_t numPoints = mz.size();         // number of data points
+        const size_t upperLimit = numPoints * 0.05; // check lowest 5% for expected difference
+        double expectedDifference = 0.0;
+        std::vector<double> differences;
+        differences.reserve(numPoints / 2);
+        for (size_t i = 0; i < numPoints - 1; i++)
+        {
+            if (intensity[i] == 0 || intensity[i] == 0)
+            {
+                continue;
+            }
+            differences.push_back(mz[i + 1] - mz[i]);
+        }
+        std::sort(differences.begin(), differences.end());
+        for (size_t i = 0; i < upperLimit; i++)
+        {
+            expectedDifference += differences[i];
+        }
+        expectedDifference /= upperLimit;
+        assert(expectedDifference > 0);
+        return expectedDifference;
+    }
+
     inline float calcRTDiff(const std::vector<double> *retention_times)
     {
         float sum = 0.0;
@@ -436,16 +482,25 @@ namespace qAlgorithms
         // the qCentroids object at the given position. convertRT can later be used to look up
         // the retention time by the scan number, so that memory usage is reduced during binning
         // (note: doesn't have a significant effect, consider removal for readability @todo)
+        // note 2: since the regression operates over a fixed window anyway, it should not be a
+        // drastic change if the retention time is not actively adjusted. For the case of 1.75
+        // difference in RT an error of 1 - 0.875 = 0.225 relative distance is made. The largest
+        // issue occurs with 2.7499.... Here, the error is 0.75 / 3 = 0.25. We need to check how often
+        // such a problem arises and if it negatively affects result accuracy.
 
         assert(convertRT.empty());
         convertRT.reserve(selectedIndices.size());
         convertRT.push_back(NAN); // first scan is index 1
         std::vector<size_t> relativeIndex(selectedIndices.size(), 0);
+        std::vector<size_t> correctedIndex(selectedIndices.size(), 0);
         size_t newIndex = 1;
 
         for (size_t i = 0; i < selectedIndices.size() - 1; i++)
         {
-            assert(i >= 0);
+            float scandiff = retention_times[i + 1] - retention_times[i];
+            int gapSize = static_cast<int>(scandiff / rt_diff + 0.25 * rt_diff);
+            assert(gapSize > 0);
+            correctedIndex[i] = i + gapSize;
             if (retention_times[i + 1] - retention_times[i] > rt_diff * 1.75)
             {
                 retention_times[i] += rt_diff * 1.75;
@@ -574,69 +629,5 @@ namespace qAlgorithms
             subProfiles.push_back(currentBlock);
         }
         return subProfiles;
-    }
-
-#pragma endregion "find centroids"
-
-#pragma region "find peaks"
-    std::vector<FeaturePeak> findPeaks_QBIN(
-        std::vector<EIC> &EICs,
-        float rt_diff)
-    {
-        std::vector<FeaturePeak> peaks;    // return vector for feature list
-        peaks.reserve(EICs.size() / 4);    // should be enough to fit all features without reallocation
-        std::vector<FeaturePeak> tmpPeaks; // add features to this before pasting into FL
-
-        for (size_t i = 0; i < EICs.size(); ++i) // loop over all data
-        {
-            auto currentEIC = EICs[i];
-            if (currentEIC.scanNumbers.size() < 5)
-            {
-                continue; // skip due to lack of data, i.e., degree of freedom will be zero
-            }
-            // if (currentEIC.interpolations)
-            // {
-            //     continue;
-            // }
-
-            std::vector<unsigned int> binIndexConverter;
-            treatedData treatedData = pretreatEIC(currentEIC, binIndexConverter, rt_diff); // inter/extrapolate data, and identify data blocks
-            findFeatures(tmpPeaks, treatedData);
-            if (tmpPeaks.empty())
-            {
-                continue;
-            }
-            for (size_t j = 0; j < tmpPeaks.size(); j++)
-            {
-                auto currentPeak = tmpPeaks[j];
-                assert(currentPeak.idxPeakEnd < binIndexConverter.size());
-                currentPeak.idxBin = i;
-                // the end point is only correct if it is real. Check if the next point
-                // has the same index - if yes, -1 to end index
-                unsigned int tmpIdx = currentPeak.idxPeakEnd;
-                currentPeak.idxPeakEnd = binIndexConverter[currentPeak.idxPeakEnd];
-                if (tmpIdx + 1 != binIndexConverter.size())
-                {
-                    if (binIndexConverter[tmpIdx] == binIndexConverter[tmpIdx + 1])
-                    {
-                        currentPeak.idxPeakEnd--;
-                    }
-                }
-                auto tmp = weightedMeanAndVariance_EIC(&currentEIC.ints_area, &currentEIC.mz,
-                                                       currentPeak.idxPeakStart, currentPeak.idxPeakEnd);
-                currentPeak.mz = tmp.first;
-                currentPeak.mzUncertainty = tmp.second;
-                currentPeak.DQSC = weightedMeanAndVariance_EIC(&currentEIC.ints_area, &currentEIC.DQSC,
-                                                               currentPeak.idxPeakStart, currentPeak.idxPeakEnd)
-                                       .first;
-                currentPeak.DQSB = weightedMeanAndVariance_EIC(&currentEIC.ints_area, &currentEIC.DQSB,
-                                                               currentPeak.idxPeakStart, currentPeak.idxPeakEnd)
-                                       .first;
-                peaks.push_back(std::move(currentPeak)); // remove 2D structure of FL
-            }
-
-            tmpPeaks.clear();
-        }
-        return peaks;
     }
 }
