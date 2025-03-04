@@ -14,9 +14,9 @@ namespace qAlgorithms
         float x;
         float y;
         bool df;
-        float DQSC;
-        float DQSB;
-        float mz;
+        // float DQSC;
+        // float DQSB;
+        // float mz;
     };
 
     struct separator

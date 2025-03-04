@@ -142,9 +142,6 @@ namespace qAlgorithms
         // float *intensity = new float[maxWindowSize];
         float *logIntensity = new float[length];
         float *RT = new float[length];
-        float *mz = new float[length];
-        float *DQSC = new float[length];
-        float *DQSB = new float[length]; // @todo only process these after feature construction
 
         std::vector<RegressionGauss> validRegressions;
         static const size_t GLOBAL_MAXSCALE_FEATURES = 30; // @todo this is not a sensible limit and only chosen for computational speed at the moment
@@ -159,14 +156,9 @@ namespace qAlgorithms
             intensity.push_back(treatedData.dataPoints[idx].y);
             RT[position] = treatedData.dataPoints[idx].x;
             degreesOfFreedom.push_back(treatedData.dataPoints[idx].df);
-            mz[position] = treatedData.dataPoints[idx].mz;
-            DQSC[position] = treatedData.dataPoints[idx].DQSC;
-            DQSB[position] = treatedData.dataPoints[idx].DQSB;
         }
 
         // perform log-transform on Y
-        // std::transform(intensity, intensity + length, logIntensity, [](float y)
-        //                { return std::log(y); });
         std::transform(intensity.begin(), intensity.end(), logIntensity, [](float y)
                        { return std::log(y); });
         size_t maxScale = std::min(GLOBAL_MAXSCALE_FEATURES, size_t((length - 1) / 2));
@@ -175,14 +167,10 @@ namespace qAlgorithms
         {
             return; // no valid peaks
         }
-        // assert(validRegressions.front().mse > 1); // this is strictly speaking possible
-        createFeaturePeaks(&all_peaks, &validRegressions, &intensity, mz, RT, DQSC, DQSB);
+        createFeaturePeaks(&all_peaks, &validRegressions, RT); // there is no reason for this to be called here and not later @todo
 
         delete[] logIntensity;
         delete[] RT;
-        delete[] mz;
-        delete[] DQSC;
-        delete[] DQSB;
     }
 #pragma endregion "find peaks"
 
@@ -850,11 +838,11 @@ namespace qAlgorithms
     void createFeaturePeaks(
         std::vector<FeaturePeak> *peaks,
         const std::vector<RegressionGauss> *validRegressionsVec,
-        const std::vector<float> *intensity,
-        const float *mz_start,
-        const float *rt_start,
-        const float *DQSC,
-        const float *DQSB)
+        // const std::vector<float> *intensity,
+        // const float *mz_start,
+        const float *rt_start)
+    // const float *DQSC,
+    // const float *DQSB)
     {
         assert(!validRegressionsVec->empty());
         for (size_t i = 0; i < validRegressionsVec->size(); i++)
@@ -879,12 +867,12 @@ namespace qAlgorithms
             peak.area = regression.area * exp_b0 * delta_rt;
             peak.areaUncertainty = regression.uncertainty_area * exp_b0 * delta_rt;
 
-            std::pair<float, float> mz = weightedMeanAndVariance(mz_start, intensity, regression.left_limit, regression.right_limit);
-            peak.mz = mz.first;
-            peak.mzUncertainty = mz.second;
+            // std::pair<float, float> mz = weightedMeanAndVariance(mz_start, intensity, regression.left_limit, regression.right_limit);
+            // peak.mz = mz.first;
+            // peak.mzUncertainty = mz.second;
 
-            peak.DQSC = weightedMeanAndVariance(DQSC, intensity, regression.left_limit, regression.right_limit).first;
-            peak.DQSB = weightedMeanAndVariance(DQSB, intensity, regression.left_limit, regression.right_limit).first;
+            // peak.DQSC = weightedMeanAndVariance(DQSC, intensity, regression.left_limit, regression.right_limit).first;
+            // peak.DQSB = weightedMeanAndVariance(DQSB, intensity, regression.left_limit, regression.right_limit).first;
             peak.DQSF = 1 - erf_approx_f(regression.uncertainty_area / regression.area);
 
             peak.idxPeakStart = regression.left_limit;

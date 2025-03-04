@@ -59,11 +59,11 @@ namespace qAlgorithms
     void createFeaturePeaks(
         std::vector<FeaturePeak> *peaks,
         const std::vector<RegressionGauss> *validRegressionsVec,
-        const std::vector<float> *intensities,
-        const float *mz_start,
-        const float *rt_start,
-        const float *DQSC,
-        const float *DQSB);
+        // const std::vector<float> *intensities,
+        // const float *mz_start,
+        const float *rt_start);
+    // const float *DQSC,
+    // const float *DQSB);
 
     float calcSSE_base(const RegCoeffs coeff, const float *y_start, std::vector<float> *selectLog, std::vector<float> *predictLog,
                        size_t limit_L, size_t limit_R, size_t index_x0);

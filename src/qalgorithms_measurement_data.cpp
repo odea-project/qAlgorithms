@@ -86,10 +86,10 @@ namespace qAlgorithms
                 eic.rententionTimes[i], // x-axis value
                 eic.ints_area[i],       // y-axis value
                 // eic.ints_height[i],
-                true,                 // df value
-                eic.DQSC[i],          // dqs centroid value
-                eic.DQSB[i],          // dqs binning value
-                eic.mz[i]);           // mz ratio
+                true); // df value
+            // eic.DQSC[i],          // dqs centroid value
+            // eic.DQSB[i],          // dqs binning value
+            // eic.mz[i]);           // mz ratio
             dataPoints.push_back(dp); // add data point to vector
         }
 
@@ -99,7 +99,7 @@ namespace qAlgorithms
         binIdx.reserve(dataPoints.size() * 2);
 
         unsigned int realIdx = 0; // this should be handled outside of this function
-        static dataPoint zeroedPoint{0.f, 0.f, false, 0.f, 0.f, 0};
+        static dataPoint zeroedPoint{0, 0, false};
         // add the first two zeros to the dataPoints_new vector @todo skip this by doing log interpolation during the log transform
         for (int i = 0; i < 2; i++)
         {
@@ -137,10 +137,10 @@ namespace qAlgorithms
                         treatedData.dataPoints.emplace_back(
                             dataPoints[pos].x + i * interpolateDiff, // retention time
                             dataPoints[pos].y * std::pow(dy, i),     // intensity
-                            false,                                   // interpolated point
-                            0.f,                                     // DQSC
-                            0.f,                                     // DQSB
-                            0.f);                                    // mz
+                            false);                                  // interpolated point
+                        // 0.f,                                     // DQSC
+                        // 0.f,                                     // DQSB
+                        // 0.f); // mz
                         treatedData.intensity.push_back(dataPoints[pos].y * std::pow(dy, i));
                     }
                     assert(binIdx.size() == treatedData.dataPoints.size());
@@ -182,10 +182,10 @@ namespace qAlgorithms
                 treatedData.dataPoints.emplace_back(
                     dataPoints[blockSize - 1].x + float(i + 1) * expectedDifference, // x-axis
                     dataPoints[blockSize - 1].y,                                     // intensity
-                    false,                                                           // df
-                    0.f,                                                             // DQSC
-                    0.f,                                                             // DQSB
-                    0.f);                                                            // mz
+                    false);                                                          // df
+                // 0.f,                                                             // DQSC
+                // 0.f,                                                             // DQSB
+                // 0.f); // mz
                 treatedData.intensity.push_back(dataPoints[blockSize - 1].y);
                 binIdx.push_back(realIdx);
                 assert(binIdx.size() == treatedData.dataPoints.size());
@@ -215,10 +215,10 @@ namespace qAlgorithms
                 treatedData.dataPoints.emplace_back(
                     dp_x,                                                  // x-axis
                     std::exp(coeffs[0] + x * (coeffs[1] + x * coeffs[2])), // intensity
-                    false,                                                 // df
-                    0.f,                                                   // DQSC
-                    0.f,                                                   // DQSB
-                    0.f);                                                  // mz
+                    false);                                                // df
+                // 0.f,                                                   // DQSC
+                // 0.f,                                                   // DQSB
+                // 0.f); // mz
                 treatedData.intensity.push_back(std::exp(coeffs[0] + x * (coeffs[1] + x * coeffs[2])));
                 binIdx.push_back(realIdx);
                 assert(binIdx.size() == treatedData.dataPoints.size());
