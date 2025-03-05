@@ -151,17 +151,30 @@ integral_exp = function(x, coeff){
   return(term1 * term2)
 }
 
+full_height = function(x, coeff){
+   righthalf = x > coeff[1]
+   b0l = coeff[2] * (!righthalf)
+   b0r = coeff[3] * (righthalf)
+   b1l = coeff[4] * (!righthalf)
+   b1r = coeff[5] * (righthalf)
+   b2 = coeff[6] * (!righthalf)
+   b3 = coeff[7] * (righthalf)
+   
+   return(exp(b0l + b0r + b1l * x + b1r * x + b2 * x^2 + b3 * x^2))
+}
+
 approx_int = function(coeff, values){
   righthalf = values > coeff[1]
   b0 = coeff[2 + righthalf]
   b1 = coeff[4 + righthalf]
   b2 = coeff[6 + righthalf]
-  step = values[2] - values[1]
+  size = length(values)
+  step = values[-1] - values[-size]
   
   heights = exp(b0 + b1 * values + b2 * values^2)
-  upper = (heights[-1] + heights[-length(values)]) / 2
+  upper = (heights[-1] + heights[-size]) / 2
   areas = upper * step
-  return(sum(areas))
+  return(areas)
 }
 
 inters_root = function(b0A, b0B, b1A, b1B, b23A, b23B){
@@ -244,20 +257,40 @@ tanimoto = function(feature_A, feature_B){
   # with the intersects found, the integrals need to be calculated between every pair in the vector
   repeats = length(intersects)
   
-  AuB = 0
-  AnB = 0
+  steps = NULL
   for (i in 1:(repeats-1)) {
-    steps = seq(intersects[i], intersects[i + 1], by = (intersects[i + 1] - intersects[i]) / 10)
-    int_approx_A = approx_int(coeff_A, steps)
-    int_approx_B = approx_int(coeff_B, steps)
-    union_AB = min(int_approx_B, int_approx_A)
-    if (union_AB < 0) {stop()}
-    AuB = AuB - union_AB + int_approx_A + int_approx_B
-    AnB = AnB + union_AB
+    steps = c(steps, seq(intersects[i], intersects[i + 1], by = (intersects[i + 1] - intersects[i]) / 10))
   }
+  steps = unique(steps)
+  int_approx_A = approx_int(coeff_A, steps)
+  int_approx_B = approx_int(coeff_B, steps)
+   
+  # scale by intensity of the maximum function term
+  weightpoints = (steps[-1] + steps[-length(steps)]) / 2
+  weight = pmax(full_height(weightpoints, coeff_A), full_height(weightpoints, coeff_B))
+  w_iaA = int_approx_A * weight
+  w_iaB = int_approx_B * weight
+  w_uAB = pmin(w_iaA, w_iaB)
+  w_iaA = sum(w_iaA)
+  w_iaB = sum(w_iaB)
+  w_uAB = sum(w_uAB)
+  
+  union_AB = pmin(int_approx_A, int_approx_B)
+  int_approx_A = sum(int_approx_A)
+  int_approx_B = sum(int_approx_B)
+  union_AB = sum(union_AB)
+  if (union_AB < 0) {stop()}
+  AuB = int_approx_A + int_approx_B - union_AB
+  AnB = union_AB
+  
   score = AnB / AuB
-  if (score < 0 | score > 1) {stop()}
-  return(score)
+  score2 = w_uAB / (w_iaA + w_iaB - w_uAB)
+  
+  if (score < 0 | score > 1) {
+    print(score)
+    stop()
+  }
+  return(score - score2)
 }
 
 
