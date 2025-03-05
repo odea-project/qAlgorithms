@@ -42,15 +42,17 @@ moveScale = function(feature, apex, scaleTo){
   
   # re-scale the feature so that the height of the exponential form is equal to "scaleTo"
   height = b0 + b1 * apexDist + ifelse(AL, b2, b3) * apexDist^2
-  scaleTo = scaleTo / exp(height)
-  b0 = b0 + log(scaleTo) # division by the scalar in exponential form
+  # scaleTo = scaleTo / exp(height)
+  # b0 = b0 + log(scaleTo) # division by the scalar in exponential form
+  # equivalent to:
+  b0 = b0 + log(scaleTo) - height
   
   # move the feature so that the apex is at the desired x
-  offset = apex - apexDist
-  b0_n1 = b0 - b1 * offset + b2 * offset * offset 
-  b1_n1 = b1 - 2 * b2 * offset
-  b0_n2 = b0 - b1 * offset + b3 * offset * offset 
-  b1_n2 = b1 - 2 * b3 * offset
+  offset_x = apex - apexDist
+  b0_n1 = b0 - b1 * offset_x + b2 * offset_x * offset_x 
+  b1_n1 = b1 - 2 * b2 * offset_x
+  b0_n2 = b0 - b1 * offset_x + b3 * offset_x * offset_x 
+  b1_n2 = b1 - 2 * b3 * offset_x
   
   # the new switch is the apex minus the apex distance
   switchPos = ifelse(AL, -b1_n1 / (2 * b2), -b1_n2 / (2 * b3)) - apexDist
@@ -182,7 +184,11 @@ inters_root = function(b0A, b0B, b1A, b1B, b23A, b23B){
 }
 
 intersect = function(root, b1A, b1B, b23A, b23B){
-  (b1B - b1A ) / (2 * (b23A - b23B)) + root / (2 * (b23A - b23B))
+  position = (b1B - b1A ) / (2 * (b23A - b23B)) + root / (2 * (b23A - b23B))
+  if (is.nan(position)){
+    return(Inf)
+  }
+  return(position)
 }
 
 # basic idea: scale both regressions to height 1, then compare the overlap in the areas. 
@@ -206,12 +212,12 @@ tanimoto = function(feature_A, feature_B){
   if (root_ll >= 0){
     # there is at least one intersect between the curves. However, it might be past the point where they are valid
     int_ll = intersect(root_ll, coeff_A[4], coeff_B[4], coeff_A[6], coeff_B[6])
-    if (int_ll <= switchL) {
+    if (int_ll <= switchL & int_ll > -Inf) {
       intersects[num_intersects] = int_ll
       num_intersects = num_intersects + 1
     }
     int_ll = intersect(-root_ll, coeff_A[4], coeff_B[4], coeff_A[6], coeff_B[6])
-    if (int_ll <= switchL) {
+    if (int_ll <= switchL & int_ll > -Inf) {
       intersects[num_intersects] = int_ll
       num_intersects = num_intersects + 1
     }
@@ -240,12 +246,12 @@ tanimoto = function(feature_A, feature_B){
   if (root_rr >= 0){
     # there is at least one intersect between the curves. However, it might be past the point where they are valid
     int_rr = intersect(root_rr, coeff_A[5], coeff_B[5], coeff_A[7], coeff_B[7])
-    if (int_rr >= switchR) {
+    if (int_rr >= switchR & int_rr < Inf) {
       intersects[num_intersects] = int_rr
       num_intersects = num_intersects + 1
     }
     int_rr = intersect(-root_rr, coeff_A[5], coeff_B[5], coeff_A[7], coeff_B[7])
-    if (int_rr >= switchR) {
+    if (int_rr >= switchR & int_rr < Inf) {
       intersects[num_intersects] = int_rr
       num_intersects = num_intersects + 1
     }
@@ -290,7 +296,7 @@ tanimoto = function(feature_A, feature_B){
     print(score)
     stop()
   }
-  return(score - score2)
+  return(score2)
 }
 
 
@@ -333,3 +339,75 @@ Consider making the score scale, so that the overlap at the maximum is more rele
 distances between points at the peak borders. While the problem is alleviated somewhat by 
 restricting the area of comparison to the function limits, sensitivity of the test will be
 reduced when comparing two functions with different limits.
+
+```{r modification of feature}
+feature_base = peaks[300,]
+feature_mod = feature_base
+
+feature_mod$retentionTime = feature_mod$retentionTime + feature_mod$retentionTimeUncertainty
+
+tanimoto(feature_base, feature_mod)
+
+# adjust the position of the feature within the feature uncertainty
+moveTR = 0
+moveTL = 0
+for (i in 1:length(peaks$ID)) {
+  feature_base = peaks[i,]
+  feature_mod = feature_base
+
+  feature_mod$retentionTime = feature_base$retentionTime + feature_base$retentionTimeUncertainty
+  moveTR[i] = tanimoto(feature_base, feature_mod)
+  feature_mod$retentionTime = feature_base$retentionTime - feature_base$retentionTimeUncertainty
+  moveTL[i] = tanimoto(feature_base, feature_mod)
+}
+
+
+
+# adjust b0 so that the apex height varies within the height uncertainty
+# note: this doesn't work, since the peaks are scaled to be the same height again. Just varying the height does not change the peak!
+# height is peak at position -b1^2 / 2b2
+
+# adjust b1 or b2 instead, under the same constraint of the height uncertainty not being exceeded
+shrinkT = 0
+scaleT  = 0
+for (i in 1:length(peaks$ID)) {
+  feature_base = peaks[i,]
+  feature_mod = feature_base
+  
+  b23 = ifelse(feature_base$apexLeft, feature_base$b2, feature_base$b3)
+  # height = b0 - b1^2 / 4b2
+  # b0 - height = b1^2 / 4b2
+  # b2 = b1^2 / (4 * (b0 - height)) # additional problem: b2 and b3 need to be adjusted
+  # b1 = sqrt((b0 - height) * 4b2) # always positive
+  height = feature_base$height - feature_base$heightUncertainty
+  feature_mod$b1 = sqrt((feature_base$b0 - height) * 4 * b23) * sign(feature_base$b1)
+  feature_mod$height = height
+  shrinkT[i] = tanimoto(feature_base, feature_mod)
+  
+  height = feature_base$height + feature_base$heightUncertainty
+  feature_mod$b1 = sqrt((feature_base$b0 - height) * 4 * b23) * sign(feature_base$b1)
+  feature_mod$height = height
+  scaleT[i] = tanimoto(feature_base, feature_mod)
+}
+
+
+hist(moveTR, breaks = 40)
+hist(moveTL, breaks = 40)
+hist(shrinkT, breaks = 40)
+hist(scaleT, breaks = 40)
+```
+
+Question: how does the tanimoto score change as a function of moving the peak? Uncertainty = sigma
+```{r}
+# simulation process:
+feature_base = round(runif(1, 1, length(peaks$ID)))
+feature_base = peaks[feature_base,]
+movePoints = rnorm(1000, feature_base$retentionTime, feature_base$retentionTimeUncertainty)
+feature_mod = feature_base
+Tscores = 0
+for (i in 1:length(movePoints)) {
+  feature_mod$retentionTime = movePoints[i]
+  Tscores[i] = tanimoto(feature_base, feature_mod)
+}
+```
+
