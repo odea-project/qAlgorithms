@@ -411,3 +411,89 @@ for (i in 1:length(movePoints)) {
 }
 ```
 
+scores between nearest neighbours
+```{r}
+neighbour = 0
+neighbour2 = 0
+for (i in 1:length(peaks$ID[-1])) {
+  feature_A = peaks[i,]
+  feature_B = peaks[i+1,]
+  neighbour[i] = tanimoto(feature_A, feature_B)
+}
+
+for (i in 1:(length(peaks$ID) - 2)) {
+  feature_A = peaks[i,]
+  feature_B = peaks[i+2,]
+  neighbour2[i] = tanimoto(feature_A, feature_B)
+}
+hist(neighbour, breaks = 40)
+hist(neighbour2, breaks = 40)
+```
+
+
+scores between all features within the RT limits
+
+varying weighting - change AuB by the area uncertainty
+```{r tanimoto_weight}
+
+tanimoto_mod_area = function(feature_A){
+  # scale regressions to 1 and move them to the real axis
+  coeff_A = moveScale(feature_A, feature_A$retentionTime, 1)
+  
+  # since only the area is mutated, the intersects are known
+  intersects = c(feature_A$lowestRetentionTime, coeff_A[1], feature_A$highestRetentionTime) 
+
+  # with the intersects found, the integrals need to be calculated between every pair in the vector
+  repeats = length(intersects)
+  
+  steps = NULL
+  for (i in 1:(repeats-1)) {
+    steps = c(steps, seq(intersects[i], intersects[i + 1], by = (intersects[i + 1] - intersects[i]) / 10))
+  }
+  steps = unique(steps)
+  int_approx_A = approx_int(coeff_A, steps)
+  int_approx_B = 0
+   
+  # scale by intensity of the maximum function term
+  weightpoints = (steps[-1] + steps[-length(steps)]) / 2
+  weight = full_height(weightpoints, coeff_A) # slight distortion through the constant scaling, should be fine since the score in not affected by height
+  uncert = feature_A$areaUncertainty / feature_A$area
+    
+  score2 = 0
+  
+  for (i in 1:700) { # vary the modified regression at every position by the mean relative area uncertainty
+    modifiers = rnorm(length(int_approx_A), 0, uncert)
+    int_approx_B = int_approx_A + modifiers
+    
+    w_iaA = int_approx_A * weight
+    w_iaB = int_approx_B * weight
+    w_uAB = pmin(w_iaA, w_iaB)
+  
+    w_iaA = sum(w_iaA)
+    w_iaB = sum(w_iaB)
+    w_uAB = sum(w_uAB)
+  
+    score2[i] = w_uAB / (w_iaA + w_iaB - w_uAB)
+  }
+  return(sd(score2))
+  
+  return(score2)
+}
+
+# global_variation = 0
+# for (i in 1:length(peaks$ID)) {
+#   global_variation[i] = tanimoto_mod_area(peaks[i,])
+# }
+
+# this does not appear to be a reliable metric for the critical value
+```
+
+
+compare scores of relevant mass differences
+
+score between peak halves
+
+// change intensities of the regression points a bit
+
+Vortrag: camera und mzmine haben hartes Limit auf Clustergröße
+
