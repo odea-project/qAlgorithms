@@ -495,5 +495,22 @@ score between peak halves
 
 // change intensities of the regression points a bit
 
+```{r adjusted points}
+# for this test, a modified version of the program is used. All points in the EIC undergo a normally
+# distributed distortion, where the error of their area is the standard deviation and the original point
+# the mean. This is done 4000 times, then the regressions are formed normally.
+
+# modded_bins = read_csv("C:/Users/unisys/Documents/Studium/SP_DDA_P1_positive_bins.csv")
+modded_peaks = read_csv("C:/Users/unisys/Documents/Studium/SP_DDA_P1_positive_features.csv")
+moddedT = 0
+for (i in 2:length(modded_peaks$ID)) {
+  moddedT[i] = tanimoto(modded_peaks[1,], modded_peaks[i,])
+}
+
+```
+
+
+
+
 Vortrag: camera und mzmine haben hartes Limit auf Clustergröße
 
