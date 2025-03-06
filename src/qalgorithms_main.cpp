@@ -139,7 +139,7 @@ int main(int argc, char *argv[])
             std::vector<float> convertRT;
             float diff_rt = 0;
             // @todo add check if set polarity is correct
-            std::vector<std::vector<CentroidPeak>> centroids = findCentroids_MZML(data, convertRT, diff_rt, polarity);
+            std::vector<CentroidPeak> centroids = findCentroids_MZML(data, convertRT, diff_rt, polarity);
             if (centroids.empty())
             {
                 if (userArgs.verboseProgress)
@@ -155,7 +155,7 @@ int main(int argc, char *argv[])
             filename = filename + "_" + polarity;
             if (userArgs.printCentroids)
             {
-                printCentroids(centroids, convertRT, userArgs.outputPath, filename, userArgs.silent, userArgs.skipError, userArgs.noOverwrite);
+                // printCentroids(centroids, convertRT, userArgs.outputPath, filename, userArgs.silent, userArgs.skipError, userArgs.noOverwrite);
             }
             // @todo remove diagnostics later
             auto binThis = passToBinning(centroids);
@@ -237,7 +237,7 @@ int main(int argc, char *argv[])
             // every subvector of peaks corresponds to the bin ID
             auto peaks = findPeaks_QBIN(binnedData, diff_rt);
             // make sure that every peak contains only one mass trace
-            assert(peaks.size() < binnedData.size());
+            assert(peaks.size() <= binnedData.size());
             int peaksWithMassGaps = 0;
             double meanDQSF = 0;
             double meanInterpolations = 0;

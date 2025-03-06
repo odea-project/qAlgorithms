@@ -227,6 +227,7 @@ namespace qAlgorithms
 
         assert(binIdx.size() == treatedData.dataPoints.size());
         assert(binIdx.size() == treatedData.intensity.size());
+        assert(binIdx.back() == eic.mz.size() - 1);
         assert(treatedData.dataPoints.back().y == treatedData.intensity.back()); // works
         assert(treatedData.dataPoints.size() == eic.interpolatedDQSB.size());
 
@@ -236,11 +237,30 @@ namespace qAlgorithms
 
     std::vector<FeaturePeak> findPeaks_QBIN(
         std::vector<EIC> &EICs,
+        // const std::vector<
         float rt_diff)
     {
         std::vector<FeaturePeak> peaks;    // return vector for feature list
         peaks.reserve(EICs.size() / 4);    // should be enough to fit all features without reallocation
         std::vector<FeaturePeak> tmpPeaks; // add features to this before pasting into FL
+
+        if (false)
+        {
+            assert(false);
+            // this block mutates the points of the selected bin randomly to generate largely equivalent regressions (hopefully)
+            size_t binID = 21726; // this is set for SP_DDA_P1_positive. The selected peak is one of the best-shaped ones found here. Another advantage is the relatively small bin (92 points)
+            // do ~30000 repeats with random variation
+            auto testBin = EICs[binID];
+            for (size_t i = 0; i < EICs.size(); i++)
+            {
+                auto insert = testBin;
+                for (size_t i = 0; i < insert.cenID.size(); i++)
+                {
+                }
+
+                EICs[i] = testBin;
+            }
+        }
 
         for (size_t i = 0; i < EICs.size(); ++i) // loop over all data
         {
@@ -268,6 +288,7 @@ namespace qAlgorithms
                 currentPeak.idxBin = i;
                 // the end point is only correct if it is real. Check if the next point
                 // has the same index - if yes, -1 to end index
+                currentPeak.idxPeakStart = binIndexConverter[currentPeak.idxPeakStart];
                 unsigned int tmpIdx = currentPeak.idxPeakEnd;
                 currentPeak.idxPeakEnd = binIndexConverter[currentPeak.idxPeakEnd];
                 if (tmpIdx + 1 != binIndexConverter.size())
@@ -378,7 +399,7 @@ namespace qAlgorithms
         return sum / (retention_times->size() - 1);
     }
 
-    std::vector<std::vector<CentroidPeak>> findCentroids_MZML( // this function needs to be split @todo
+    std::vector<CentroidPeak> findCentroids_MZML( // this function needs to be split @todo
         sc::MZML &data,
         std::vector<float> &convertRT,
         float &rt_diff,
@@ -461,8 +482,7 @@ namespace qAlgorithms
         }
         if (selectedIndices.empty())
         {
-            std::vector<std::vector<CentroidPeak>> empty;
-            assert(empty.empty());
+            std::vector<CentroidPeak> empty;
             return empty;
         }
 
@@ -471,7 +491,8 @@ namespace qAlgorithms
 
         selectedIndices.shrink_to_fit();
 
-        std::vector<std::vector<CentroidPeak>> centroids(selectedIndices.size());
+        std::vector<CentroidPeak> centroids;
+        centroids.reserve(selectedIndices.size() * 1000);
 
         // take spectrum at half length to avoid potential interference from quality control scans in the instrument
         const std::vector<std::vector<double>> data_vec = data.get_spectrum(selectedIndices[selectedIndices.size() / 2]);
@@ -524,7 +545,8 @@ namespace qAlgorithms
             // inter/extrapolate data, and identify data blocks @todo these should be two different functions
             const auto treatedData = pretreatDataCentroids(&spectrum, expectedDifference_mz);
             assert(relativeIndex[i] != 0);
-            centroids[i] = findCentroids(&treatedData, relativeIndex[i]); // find peaks in data blocks of treated data
+            auto tmpCens = findCentroids(&treatedData, relativeIndex[i]); // find peaks in data blocks of treated data
+            centroids.insert(centroids.end(), tmpCens.begin(), tmpCens.end());
         }
         if (!displayPPMwarning)
         {
