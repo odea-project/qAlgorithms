@@ -502,15 +502,41 @@ score between peak halves
 
 # modded_bins = read_csv("C:/Users/unisys/Documents/Studium/SP_DDA_P1_positive_bins.csv")
 modded_peaks = read_csv("C:/Users/unisys/Documents/Studium/SP_DDA_P1_positive_features.csv")
+
+modded_peaks = modded_peaks[which(modded_peaks$retentionTime < 710),]
+
 moddedT = 0
 for (i in 2:length(modded_peaks$ID)) {
   moddedT[i] = tanimoto(modded_peaks[1,], modded_peaks[i,])
 }
 
+OG_ID = which(peaks$b0 == modded_peaks$b0[1])
+
+sourceBin = bins[which(bins$binID == 21726),]
+sourceBin$area = sourceBin$area / modded_peaks[1,]$height
+
+
+showVariants = function(modded_peaks){
+  feature_A = modded_peaks[1,]
+  points = seq(feature_A$lowestRetentionTime, feature_A$highestRetentionTime, 1)
+  for (i in 2:length(modded_peaks$ID)) {
+    feature_B = modded_peaks[i,]
+    plot = ggplot()+
+      geom_point(aes(points, 0))+
+      stat_function(fun = displayFeature, args = list(moveScale(feature_A, feature_A$retentionTime, 1)), colour = "red3")+
+      stat_function(fun = displayFeature, args = list(moveScale(feature_B, feature_B$retentionTime, 1)), colour = "blue")+
+      labs(caption = paste0("Tanimoto = ", tanimoto(feature_A, feature_B),
+           " ### m/z values: ", feature_A$ID, ": ", feature_A$mz, " | ", feature_B$ID, ": ", feature_B$mz))
+      print(plot)  
+      readline()
+    }
+}
 ```
 
+Relevant mass distances
+```{r}
+massDiffs = c(1,01, )
 
 
-
-Vortrag: camera und mzmine haben hartes Limit auf Clustergröße
+```
 
