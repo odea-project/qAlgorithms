@@ -35,7 +35,7 @@ namespace qAlgorithms
 
     inline float calcRTDiff(const std::vector<double> *retention_times);
 
-    std::vector<std::vector<CentroidPeak>> findCentroids_MZML(
+    std::vector<CentroidPeak> findCentroids_MZML(
         sc::MZML &data,
         std::vector<float> &convertRT,
         float &rt_diff,
