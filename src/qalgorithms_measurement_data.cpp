@@ -8,6 +8,8 @@
 #include <algorithm>
 #include <sstream>
 
+#include <random> // only temporarily needed
+
 namespace qAlgorithms
 {
 
@@ -237,7 +239,7 @@ namespace qAlgorithms
 
     std::vector<FeaturePeak> findPeaks_QBIN(
         std::vector<EIC> &EICs,
-        // const std::vector<
+        const std::vector<CentroidPeak> *centroids,
         float rt_diff)
     {
         std::vector<FeaturePeak> peaks;    // return vector for feature list
@@ -246,19 +248,28 @@ namespace qAlgorithms
 
         if (false)
         {
-            assert(false);
             // this block mutates the points of the selected bin randomly to generate largely equivalent regressions (hopefully)
             size_t binID = 21726; // this is set for SP_DDA_P1_positive. The selected peak is one of the best-shaped ones found here. Another advantage is the relatively small bin (92 points)
             // do ~30000 repeats with random variation
             auto testBin = EICs[binID];
-            for (size_t i = 0; i < EICs.size(); i++)
+            EICs.clear();
+            // always keep the mutated bin for comparison
+            EICs.push_back(testBin);
+            std::random_device rd{};
+            std::mt19937 gen{rd()};
+            size_t repeatDraws = 4000;
+            for (size_t i = 0; i < repeatDraws; i++)
             {
                 auto insert = testBin;
-                for (size_t i = 0; i < insert.cenID.size(); i++)
+                for (size_t j = 0; j < insert.cenID.size(); j++)
                 {
+                    CentroidPeak tmpCen = (*centroids)[insert.cenID[j]];
+                    // replace the area of the centroid with a value drawn from a normal distribution around
+                    std::normal_distribution<float> d{tmpCen.area, tmpCen.areaUncertainty};
+                    insert.ints_area[j] = d(gen);
                 }
 
-                EICs[i] = testBin;
+                EICs.push_back(insert);
             }
         }
 
