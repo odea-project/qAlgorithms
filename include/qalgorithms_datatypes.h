@@ -58,6 +58,16 @@ namespace qAlgorithms
         float b0, b1, b2, b3 = 0;
     };
 
+    struct MovedRegression
+    {
+        FeaturePeak *origin;
+        size_t binID;
+        float limit_L;
+        float limit_R;
+        float RT_switch;
+        float b0_L, b1_L, b2, b0_R, b1_R, b3;
+    };
+
     struct RegressionGauss
     {
         RegCoeffs newCoeffs;          // regression coefficients
