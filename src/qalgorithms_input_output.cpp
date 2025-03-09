@@ -569,7 +569,7 @@ namespace qAlgorithms
 
 #pragma region "print functions"
 
-    void printCentroids(const std::vector<std::vector<CentroidPeak>> peaktable, // @todo use 1D structure of centroids
+    void printCentroids(const std::vector<CentroidPeak> peaktable, // @todo use 1D structure of centroids
                         std::vector<float> convertRT, std::filesystem::path pathOutput,
                         std::string filename, bool silent, bool skipError, bool noOverwrite)
     {
@@ -604,19 +604,16 @@ namespace qAlgorithms
         unsigned int counter = 0;
         for (size_t i = 0; i < peaktable.size(); i++)
         {
-            if (!peaktable[i].empty())
+            for (size_t j = 0; j < peaktable.size(); ++j)
             {
-                for (size_t j = 0; j < peaktable[i].size(); ++j)
-                {
-                    auto peak = peaktable[i][j];
-                    char buffer[256];
-                    sprintf(buffer, "%d,%0.6f,%0.6f,%d,%0.4f,%0.4f,%0.4f,%0.4f,%0.4f,%d,%u,%0.5f,%d,%d\n",
-                            counter, peak.mz, peak.mzUncertainty, peak.scanNumber, convertRT[peak.scanNumber],
-                            peak.area, peak.areaUncertainty, peak.height, peak.heightUncertainty, peak.scale, peak.df, peak.DQSC,
-                            peak.interpolations, peak.numCompetitors);
-                    output << buffer;
-                    ++counter;
-                }
+                auto peak = peaktable[j];
+                char buffer[256];
+                sprintf(buffer, "%d,%0.6f,%0.6f,%d,%0.4f,%0.4f,%0.4f,%0.4f,%0.4f,%d,%u,%0.5f,%d,%d\n",
+                        counter, peak.mz, peak.mzUncertainty, peak.scanNumber, convertRT[peak.scanNumber],
+                        peak.area, peak.areaUncertainty, peak.height, peak.heightUncertainty, peak.scale, peak.df, peak.DQSC,
+                        peak.interpolations, peak.numCompetitors);
+                output << buffer;
+                ++counter;
             }
         }
 
