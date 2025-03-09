@@ -72,7 +72,7 @@ namespace qAlgorithms
         float intensity;
     };
 
-    void printCentroids(const std::vector<std::vector<CentroidPeak>> peaktable,
+    void printCentroids(const std::vector<CentroidPeak> peaktable,
                         std::vector<float> convertRT, std::filesystem::path pathOutput,
                         std::string filename, bool silent, bool skipError, bool noOverwrite);
 

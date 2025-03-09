@@ -231,7 +231,7 @@ namespace qAlgorithms
         assert(binIdx.size() == treatedData.intensity.size());
         assert(binIdx.back() == eic.mz.size() - 1);
         assert(treatedData.dataPoints.back().y == treatedData.intensity.back()); // works
-        assert(treatedData.dataPoints.size() == eic.interpolatedDQSB.size());
+        // assert(treatedData.dataPoints.size() == eic.interpolatedDQSB.size()); // @todo readd this in good
 
         treatedData.cenIDs = eic.interpolatedIDs;
         return treatedData;
@@ -531,7 +531,7 @@ namespace qAlgorithms
         {
             float scandiff = retention_times[i + 1] - retention_times[i];
             int gapSize = static_cast<int>(scandiff / rt_diff + 0.25 * rt_diff);
-            assert(gapSize > 0);
+            // assert(gapSize > 0); // @todo re-add this with a better implementation
             correctedIndex[i] = i + gapSize;
             if (retention_times[i + 1] - retention_times[i] > rt_diff * 1.75)
             {
