@@ -16,6 +16,8 @@ namespace qAlgorithms
     // calculate the shape tanimoto / jaccard index of two moved regressions. The score is weighted slightly.
     // Calculation is done by dividing the area covered by the overlap both regression curves by the area covered
     // by both regressions independently
+    // The antiderivative of our regression curve involves exp(6000) and greater numbers, so we use
+    // trapezoid integration instead.
     float calcTanimoto(MovedRegression *feature_A, MovedRegression *feature_B);
 }
 
