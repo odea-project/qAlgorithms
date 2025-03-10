@@ -268,7 +268,7 @@ StreamCraft::MS_SPECTRA_HEADERS StreamCraft::MZXML::extract_spectra_headers(cons
     for (int i = 0; i < n; i++)
     {
 
-        const int &index = idxs[i];
+        const int index = idxs[i];
 
         const pugi::xml_node &spec = spectra_nodes[index];
 
@@ -372,7 +372,7 @@ std::vector<std::vector<std::vector<double>>> StreamCraft::MZXML::extract_spectr
     for (int i = 0; i < n; i++)
     {
 
-        const int &index = idxs[i];
+        const int index = idxs[i];
 
         const pugi::xml_node &spectrum_node = spectra_nodes[index];
 
