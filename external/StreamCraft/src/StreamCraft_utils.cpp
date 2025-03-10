@@ -9,7 +9,7 @@
 /*!
  * Encodes to little endian binary a vector of doubles based on a precision integer.
  */
-std::string sc::utils::encode_little_endian(const std::vector<double> &input, const int &precision)
+std::string StreamCraft::encode_little_endian(const std::vector<double> &input, const int &precision)
 {
 
     if (precision == 8)
@@ -37,7 +37,7 @@ std::string sc::utils::encode_little_endian(const std::vector<double> &input, co
     }
 };
 
-std::string sc::utils::encode_big_endian(const std::vector<double> &input, const int &precision)
+std::string StreamCraft::encode_big_endian(const std::vector<double> &input, const int &precision)
 {
 
     if (precision == 8)
@@ -85,7 +85,7 @@ std::string sc::utils::encode_big_endian(const std::vector<double> &input, const
 /*!
  * Decodes from a little endian binary string to a vector of doubles according a precision integer.
  */
-std::vector<double> sc::utils::decode_little_endian(const std::string &str, const int &precision)
+std::vector<double> StreamCraft::decode_little_endian(const std::string &str, const int &precision)
 {
 
     std::vector<unsigned char> bytes(str.begin(), str.end());
@@ -120,7 +120,7 @@ std::vector<double> sc::utils::decode_little_endian(const std::string &str, cons
 /*!
  * Decodes from a big endian binary string to a vector of doubles according a precision integer.
  */
-std::vector<double> sc::utils::decode_big_endian(const std::string &str, const int &precision)
+std::vector<double> StreamCraft::decode_big_endian(const std::string &str, const int &precision)
 {
 
     std::vector<unsigned char> bytes(str.begin(), str.end());
@@ -169,7 +169,7 @@ std::vector<double> sc::utils::decode_big_endian(const std::string &str, const i
 /*!
  * Compresses a string using the zlib library (https://zlib.net/).
  */
-std::string sc::utils::compress_zlib(const std::string &str)
+std::string StreamCraft::compress_zlib(const std::string &str)
 {
 
     std::vector<char> compressed_data;
@@ -211,7 +211,7 @@ std::string sc::utils::compress_zlib(const std::string &str)
 /*!
  * Decompresses a string using the zlib library (https://zlib.net/).
  */
-std::string sc::utils::decompress_zlib(const std::string &compressed_string)
+std::string StreamCraft::decompress_zlib(const std::string &compressed_string)
 {
 
     z_stream zs;
@@ -254,7 +254,7 @@ std::string sc::utils::decompress_zlib(const std::string &compressed_string)
 /*!
  * Encodes a string with binary data to a Base64 string.
  */
-std::string sc::utils::encode_base64(const std::string &str)
+std::string StreamCraft::encode_base64(const std::string &str)
 {
 
     static const char *base64_chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
@@ -303,7 +303,7 @@ std::string sc::utils::encode_base64(const std::string &str)
 /*!
  * Decodes a Base64 string into a string with binary data.
  */
-std::string sc::utils::decode_base64(const std::string &encoded_string)
+std::string StreamCraft::decode_base64(const std::string &encoded_string)
 {
 
     std::string decoded_string;
@@ -358,7 +358,7 @@ std::string sc::utils::decode_base64(const std::string &encoded_string)
 /*!
  * Test function for encoding and decoding little endian binary data.
  */
-void sc::utils::test_encoding_decoding_little_endian(const std::vector<double> &input, const int &precision)
+void StreamCraft::test_encoding_decoding_little_endian(const std::vector<double> &input, const int &precision)
 {
 
     std::cout << std::endl;
@@ -397,7 +397,7 @@ void sc::utils::test_encoding_decoding_little_endian(const std::vector<double> &
 /*!
  * Test function for encoding and decoding big endian binary data.
  */
-void sc::utils::test_encoding_decoding_big_endian(const std::vector<double> &input, const int &precision)
+void StreamCraft::test_encoding_decoding_big_endian(const std::vector<double> &input, const int &precision)
 {
 
     std::cout << std::endl;
