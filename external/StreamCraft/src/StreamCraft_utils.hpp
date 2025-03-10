@@ -99,13 +99,13 @@ namespace StreamCraft
         };
     };
 
-    std::string encode_little_endian(const std::vector<double> &input, const int &precision);
+    std::string encode_little_endian(const std::vector<double> &input, const int precision);
 
-    std::vector<double> decode_little_endian(const std::string &str, const int &precision);
+    std::vector<double> decode_little_endian(const std::string &str, const int precision);
 
-    std::string encode_big_endian(const std::vector<double> &input, const int &precision);
+    std::string encode_big_endian(const std::vector<double> &input, const int precision);
 
-    std::vector<double> decode_big_endian(const std::string &str, const int &precision);
+    std::vector<double> decode_big_endian(const std::string &str, const int precision);
 
     std::string compress_zlib(const std::string &str);
 
@@ -115,9 +115,9 @@ namespace StreamCraft
 
     std::string decode_base64(const std::string &encoded_string);
 
-    void test_encoding_decoding_little_endian(const std::vector<double> &input, const int &precision);
+    void test_encoding_decoding_little_endian(const std::vector<double> &input, const int precision);
 
-    void test_encoding_decoding_big_endian(const std::vector<double> &input, const int &precision);
+    void test_encoding_decoding_big_endian(const std::vector<double> &input, const int precision);
 };
 
 #endif // STREAMCRAFT_UTILS_HPP

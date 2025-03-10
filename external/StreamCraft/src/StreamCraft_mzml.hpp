@@ -5,6 +5,7 @@
 #include <vector>
 #include <string>
 #include <numeric>
+#include <filesystem>
 
 #define PUGIXML_HEADER_ONLY
 
@@ -18,7 +19,7 @@
 
 namespace StreamCraft
 {
-    class MZML_BINARY_METADATA
+    class MZML_BINARY_METADATA // @todo there is no need for a file-specific metadata object
     {
 
     public:
@@ -29,10 +30,10 @@ namespace StreamCraft
         // std::string precision_type;
         std::string compression;
         bool compressed;
-        std::string data_name;
-        std::string data_accession;
+        // std::string data_name;
+        // std::string data_accession;
         std::string data_value;
-        std::string data_unit;
+        // std::string data_unit;
         std::string data_name_short;
 
         // void print()
@@ -53,7 +54,7 @@ namespace StreamCraft
         // };
     };
 
-    class MZML
+    class MZML // @todo this is just a complicated way of having a filetype specific accession struct and a generalised container
     {
 
     private:
@@ -84,32 +85,43 @@ namespace StreamCraft
         MS_SPECTRA_HEADERS extract_spectra_headers(const std::vector<int> &idxs);
         MS_CHROMATOGRAMS_HEADERS extract_chrom_headers(const std::vector<int> &idxs);
 
-        int extract_spec_index(const pugi::xml_node &spec);
-        std::string extract_spec_id(const pugi::xml_node &spec);
+        std::string extract_spec_id(const pugi::xml_node &spec); // never used, @todo check others
+        std::string extract_spec_mode(const pugi::xml_node &spec);
+        std::string extract_spec_polarity(const pugi::xml_node &spec);
+        std::string extract_spec_title(const pugi::xml_node &spec);
+
+        std::string extract_scan_filter_string(const pugi::xml_node &spec);
+
+        std::string extract_activation_type(const pugi::xml_node &spec);
+
         int extract_spec_scan(const pugi::xml_node &spec);
         int extract_spec_array_length(const pugi::xml_node &spec);
         int extract_spec_level(const pugi::xml_node &spec);
-        std::string extract_spec_mode(const pugi::xml_node &spec);
-        std::string extract_spec_polarity(const pugi::xml_node &spec);
+        int extract_spec_index(const pugi::xml_node &spec);
+
+        int extract_scan_config(const pugi::xml_node &spec);
+
+        int extract_ion_charge(const pugi::xml_node &spec);
+
+        int extract_precursor_scan(const pugi::xml_node &spec);
+
         double extract_spec_lowmz(const pugi::xml_node &spec);
         double extract_spec_highmz(const pugi::xml_node &spec);
         double extract_spec_bpmz(const pugi::xml_node &spec);
         double extract_spec_bpint(const pugi::xml_node &spec);
         double extract_spec_tic(const pugi::xml_node &spec);
-        std::string extract_spec_title(const pugi::xml_node &spec);
+
+        double extract_scan_injection_ion_time(const pugi::xml_node &spec);
         double extract_scan_rt(const pugi::xml_node &spec);
         double extract_scan_drift(const pugi::xml_node &spec);
-        std::string extract_scan_filter_string(const pugi::xml_node &spec);
-        int extract_scan_config(const pugi::xml_node &spec);
-        double extract_scan_injection_ion_time(const pugi::xml_node &spec);
-        int extract_precursor_scan(const pugi::xml_node &spec);
+
         double extract_window_mz(const pugi::xml_node &spec);
         double extract_window_mzlow(const pugi::xml_node &spec);
         double extract_window_mzhigh(const pugi::xml_node &spec);
+
         double extract_ion_mz(const pugi::xml_node &spec);
         double extract_ion_intensity(const pugi::xml_node &spec);
-        int extract_ion_charge(const pugi::xml_node &spec);
-        std::string extract_activation_type(const pugi::xml_node &spec);
+
         double extract_activation_ce(const pugi::xml_node &spec);
 
         std::vector<std::vector<double>> extract_spectrum(const pugi::xml_node &spectrum_node);
