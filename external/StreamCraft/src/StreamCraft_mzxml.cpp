@@ -313,22 +313,22 @@ std::vector<std::vector<double>> StreamCraft::MZXML::extract_spectrum(const pugi
 
     const char *encoded_string = spectrum_node.child("peaks").child_value();
 
-    std::string decoded_string = utils::decode_base64(encoded_string);
+    std::string decoded_string = decode_base64(encoded_string);
 
     if (binary_metadata.compressed)
     {
-        decoded_string = utils::decompress_zlib(decoded_string);
+        decoded_string = decompress_zlib(decoded_string);
     }
 
     std::vector<double> res(number_traces * 2);
 
     if (binary_metadata.byte_order == "big_endian")
     {
-        res = utils::decode_big_endian(decoded_string, binary_metadata.precision / 8);
+        res = decode_big_endian(decoded_string, binary_metadata.precision / 8);
     }
     else if (binary_metadata.byte_order == "little_endian")
     {
-        res = utils::decode_little_endian(decoded_string, binary_metadata.precision / 8);
+        res = decode_little_endian(decoded_string, binary_metadata.precision / 8);
     }
     else
     {
