@@ -37,9 +37,10 @@ endif()
 # endif()
 
 # Set compiler flags
-add_compile_options(-Wall -Wuninitialized -Wno-unknown-pragmas -fdiagnostics-color=always 
-                    -fopenmp -mavx2 -march=native -O2
-                    -fno-math-errno -ggdb3 ${OpenMP_CXX_FLAGS}) 
+add_compile_options(-Wall -Wuninitialized -Wno-unknown-pragmas -Wformat -Wformat=2 -Wimplicit-fallthrough
+                    -fopenmp -mavx2 -march=native -O2 # -flto
+                    -U_FORTIFY_SOURCE -D_FORTIFY_SOURCE=3 -fstrict-flex-arrays=3 -fdiagnostics-color=always -fstack-clash-protection -D_GLIBCXX_ASSERTIONS # hardening flags
+                    -fno-math-errno -g -ggdb3 ${OpenMP_CXX_FLAGS}) 
 
 if(CMAKE_BUILD_TYPE MATCHES "Debug-Linux")
   add_compile_options(-fsanitize=address)

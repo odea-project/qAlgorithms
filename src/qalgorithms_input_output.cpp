@@ -32,9 +32,9 @@ namespace qAlgorithms
                                   "                                  times within one execution.\n"
                                   "                                  Note that qAlgorithms is case-sensitive when searching for files recursively. Make\n"
                                   "                                  sure all your files have the correct extension (.mzML) and are not all lowercase (.mzml).\n"
-                                  "      -tl, -tasklist <PATH>:      pass a list of file paths to the function. A tasklist can also contain directories\n"
-                                  "                                  to search recursively and output directories for different blocks of the input files.\n"
-                                  "                                  You can comment out lines by starting them with a \"#\".\n" // @todo update
+                                  //   "      -tl, -tasklist <PATH>:      pass a list of file paths to the function. A tasklist can also contain directories\n"
+                                  //   "                                  to search recursively and output directories for different blocks of the input files.\n"
+                                  //   "                                  You can comment out lines by starting them with a \"#\".\n" // @todo update
                                   "    Single-file output settings:\n"
                                   "      The filename is always the original filename extended by the polarity and the processing step.\n"
                                   "      -o,  -output <DIRECTORY>:   directory into which all output files should be printed.\n"
@@ -43,38 +43,37 @@ namespace qAlgorithms
                                   "                                  all binned centroids will be printed to the output location\n"
                                   "                                  in addition to the final peak table. The file ends in _bins.csv.\n"
                                   "      -pf, -printfeatures         print the feature list as csv.\n"
-                                  "      -e,  -extended:             print additional information into the final peak list. You do not\n"
-                                  "                                  have to also set the -pf flag. The extended output includes the\n"
-                                  "                                  ID of the bin a given peak was found in, its start and end\n"
-                                  "                                  position (by index) within the bin, the lowest and highest retenetion \n"
-                                  "                                  times in the peak and the intensity as apex height.\n"
-                                  "      -sp, -subprofile:           (not implemented yet) instead of the peaks, print all proflie-mode data points which\n" // @todo
-                                  "                                  were used to create the final peaks. This does not return any quality\n"
-                                  "                                  scores. Only use this option when reading in prodile mode files.\n"
+                                  //   "      -sp, -subprofile:           (not implemented yet) instead of the peaks, print all proflie-mode data points which\n" // @todo
+                                  //   "                                  were used to create the final peaks. This does not return any quality\n"
+                                  //   "                                  scores. Only use this option when reading in prodile mode files.\n"
                                   "      -pa, -printall:             print all availvable resutlts. You will probably not need to do this.\n"
+                                  "      -px, -printfeatcen:         print all centroids that are a part of the final feature list, including debug data.\n"
                                   "    Program behaviour:\n"
-                                  "      -s, -silent:    do not print progress reports to standard out.\n"
-                                  "      -v, -verbose:   print a detailed progress report to standard out.\n"
+                                  //   "      -s, -silent:    do not print progress reports to standard out.\n"
+                                  //   "      -v, -verbose:   print a detailed progress report to standard out.\n"
                                   "      -skip-existing  do not write to files that already exist, even if an output option is set.\n"
                                   "      -skip-error:    if processing fails, the program will not exit and instead start processing\n"
                                   "                      the next file in the tasklist.\n"
                                   "      -log:           This option will create a detailed log file in the program directory.\n"
-                                  "                      A name can be supplied with a string following the argument. If this is not\n"
-                                  "                      done by the user, the default log will be written or overwritten.\n"
-                                  "    Analysis options:\n"
-                                  "      -MS2:               also process MS2 spectra (not implemented yet)\n" // @todo
-                                  "      -ppm <number>:      this sets the centroid error when reading in pre-centroided data\n"
-                                  "                          with qAlgorithms to <number> * 10^-6 * m/z of the centroid. We recommend\n"
-                                  "                          you always use the centroiding algorithm implemented in qAlgorithms.\n"
-                                  "                          This parameter is significantly different from an EIC standard deviation estimator (XCMS)!\n"
-                                  "                          By default, this value is set to 0.25.\n"
-                                  "      -mz-abs <number>:   (not implemented yet) add this absolute error (in Dalton) to the relative error specified by -ppm.\n"; //@todo
+                                  "                      It will provide an overview for every processed file which can help you find and\n"
+                                  "                      reason about anomalous behaviour in the results.";
+    //   "                      A name can be supplied with a string following the argument. If this is not\n"
+    //   "                      done by the user, the default log will be written or overwritten.\n"
+    //   "    Analysis options:\n"
+    //   "      -MS2:               also process MS2 spectra (not implemented yet)\n" // @todo
+    //   "      -ppm <number>:      this sets the centroid error when reading in pre-centroided data\n"
+    //   "                          with qAlgorithms to <number> * 10^-6 * m/z of the centroid. We recommend\n"
+    //   "                          you always use the centroiding algorithm implemented in qAlgorithms.\n"
+    //   "                          This parameter is significantly different from an EIC standard deviation estimator (XCMS)!\n"
+    //   "                          By default, this value is set to 0.25.\n"
+    //   "      -mz-abs <number>:   (not implemented yet) add this absolute error (in Dalton) to the relative error specified by -ppm.\n"; //@todo
 
 #pragma endregion helpstring
 
 #pragma region "command line arguments"
 
-    UserInputSettings passCliArgs(int argc, char *argv[])
+    UserInputSettings
+    passCliArgs(int argc, char *argv[])
     {
         volatile bool debug = false;
         // this function processes all cli arguments supplied by the user
@@ -240,10 +239,6 @@ namespace qAlgorithms
             {
                 args.printFeatures = true;
             }
-            else if ((argument == "-e") || (argument == "-extended"))
-            {
-                args.printExtended = true;
-            }
             else if ((argument == "-sp") || (argument == "-subprofile"))
             {
                 args.printSubProfile = true;
@@ -252,8 +247,13 @@ namespace qAlgorithms
             {
                 args.printCentroids = true;
                 args.printBins = true;
-                args.printExtended = true;
+                args.printFeatures = true;
                 args.printSubProfile = true;
+                args.printFeatCens = true;
+            }
+            else if ((argument == "-px") || (argument == "-printfeatcen"))
+            {
+                args.printFeatCens = true;
             }
             else if (argument == "-log")
             {
@@ -275,7 +275,8 @@ namespace qAlgorithms
             }
             else
             {
-                std::cerr << "Warning: unknown argument " << argument << ".\n";
+                std::cerr << "Error: unknown argument \"" << argument << "\".\n";
+                exit(1);
             }
         } // end of reading in command line arguments
         // assert(!args.outputPath.empty());
@@ -291,8 +292,15 @@ namespace qAlgorithms
                   << "relative paths are not supported in this mode\n"
                   << "drag the folder or file you want to process into this window and press \"enter\" to continue:\n";
         std::string inputPath;
-        std::cin >> inputPath;
-
+        while (true)
+        {
+            std::cin >> inputPath;
+            if (std::filesystem::exists(inputPath))
+            {
+                break;
+            }
+            std::cout << "Error: The path does not exist.\n";
+        }
         std::cout << "drag the folder you want the output files written to into this window and press \"enter\" to continue.\n"
                   << "enter \"#\" to write to the input path.\n";
         std::string outputPath;
@@ -317,8 +325,8 @@ namespace qAlgorithms
             false,
             false,
             false,
-            false,
             true, // only print standard feature list
+            false,
             false,
             false,
             false,
@@ -410,7 +418,9 @@ namespace qAlgorithms
             std::cerr << "Warning: -verbose overrides -silent.\n";
             args.silent = false;
         }
-        if (!((args.printCentroids || args.printBins) || args.printFeatures) && !(args.outputPath.empty()))
+        if (!((args.printCentroids || args.printBins) ||
+              (args.printFeatures || args.printFeatCens)) &&
+            !(args.outputPath.empty()))
         {
             std::cerr << "Warning: no output files will be written.\n";
         }
@@ -561,8 +571,8 @@ namespace qAlgorithms
 #pragma endregion "file reading"
 
 #pragma region "print functions"
-    /// @todo make universal print function, fix out-of-bounds access, chi squared test for binning
-    void printCentroids(std::vector<std::vector<CentroidPeak>> peaktable,
+
+    void printCentroids(const std::vector<CentroidPeak> peaktable, // @todo use 1D structure of centroids
                         std::vector<float> convertRT, std::filesystem::path pathOutput,
                         std::string filename, bool silent, bool skipError, bool noOverwrite)
     {
@@ -592,23 +602,21 @@ namespace qAlgorithms
                       << "Filename: " << pathOutput << "\n";
             return;
         }
-        output << "ID,mz,mzUncertainty,scanNumber,retentionTime,area,areaUncertainty,"
-               << "height,heightUncertainty,degreesOfFreedom,dqsCen\n";
-        unsigned int counter = 1;
+        output << "cenID,mz,mzUncertainty,scanNumber,retentionTime,area,areaUncertainty,"
+               << "height,heightUncertainty,scale,degreesOfFreedom,DQSC,interpolations,competitors\n";
+        unsigned int counter = 0;
         for (size_t i = 0; i < peaktable.size(); i++)
         {
-            if (!peaktable[i].empty())
+            for (size_t j = 0; j < peaktable.size(); ++j)
             {
-                for (size_t j = 0; j < peaktable[i].size(); ++j)
-                {
-                    auto peak = peaktable[i][j];
-                    char buffer[256];
-                    sprintf(buffer, "%d,%0.6f,%0.6f,%d,%0.4f,%0.4f,%0.4f,%0.4f,%0.4f,%u,%0.5f\n",
-                            counter, peak.mz, peak.mzUncertainty, peak.scanNumber, convertRT[peak.scanNumber],
-                            peak.area, peak.areaUncertainty, peak.height, peak.heightUncertainty, peak.df, peak.dqsCen);
-                    output << buffer;
-                    ++counter;
-                }
+                auto peak = peaktable[j];
+                char buffer[256];
+                sprintf(buffer, "%d,%0.6f,%0.6f,%d,%0.4f,%0.4f,%0.4f,%0.4f,%0.4f,%d,%u,%0.5f,%d,%d\n",
+                        counter, peak.mz, peak.mzUncertainty, peak.scanNumber, convertRT[peak.scanNumber],
+                        peak.area, peak.areaUncertainty, peak.height, peak.heightUncertainty, peak.scale, peak.df, peak.DQSC,
+                        peak.interpolations, peak.numCompetitors);
+                output << buffer;
+                ++counter;
             }
         }
 
@@ -667,8 +675,9 @@ namespace qAlgorithms
         return;
     }
 
-    void printBins(std::vector<EIC> bins, std::filesystem::path pathOutput, std::string filename,
-                   bool silent, bool skipError, bool noOverwrite)
+    void printBins(const std::vector<qCentroid> centroids,
+                   const std::vector<EIC> bins, std::filesystem::path pathOutput,
+                   std::string filename, bool silent, bool skipError, bool noOverwrite)
     {
         filename += "_bins.csv";
         pathOutput /= filename;
@@ -698,16 +707,18 @@ namespace qAlgorithms
             return;
         }
         // @todo consider if the mz error is relevant when checking individual bins
-        output << "binID,mz,mzError,retentionTime,scanNumber,area,height,degreesOfFreedom,DQSC,DQSB\n";
+        output << "binID,cenID,mz,mzUncertainty,retentionTime,scanNumber,area,height,degreesOfFreedom,DQSC,DQSB\n";
         for (size_t binID = 0; binID < bins.size(); binID++)
         {
-            for (size_t i = 0; i < bins[binID].mz.size(); i++)
+            const EIC bin = bins[binID];
+            for (size_t i = 0; i < bin.mz.size(); i++)
             {
+                const qCentroid cen = centroids[bin.cenID[i]];
                 char buffer[128];
-                sprintf(buffer, "%zu,%0.8f,%0.8f,%0.4f,%d,%0.6f,%0.6f,%u,%0.4f,%0.4f\n",
-                        binID, bins[binID].mz[i], bins[binID].predInterval[i],
-                        bins[binID].rententionTimes[i], bins[binID].scanNumbers[i], bins[binID].ints_area[i],
-                        bins[binID].ints_height[i], bins[binID].df[i], bins[binID].DQSC[i], bins[binID].DQSB[i]);
+                sprintf(buffer, "%zu,%u,%0.8f,%0.8f,%0.4f,%d,%0.6f,%0.6f,%u,%0.4f,%0.4f\n",
+                        binID, cen.cenID, bin.mz[i], bin.predInterval[i],
+                        bin.rententionTimes[i], bin.scanNumbers[i], bin.ints_area[i],
+                        bin.ints_height[i], bin.df[i], bin.DQSC[i], bin.DQSB[i]);
                 output << buffer;
             }
         }
@@ -716,16 +727,11 @@ namespace qAlgorithms
         return;
     }
 
-    void printFeatureList(std::vector<FeaturePeak> peaktable,
+    void printFeatureList(const std::vector<FeaturePeak> peaktable,
                           std::filesystem::path pathOutput, std::string filename,
-                          std::vector<EIC> originalBins,
+                          const std::vector<EIC> originalBins,
                           bool verbose, bool silent, bool skipError, bool noOverwrite)
     {
-        if (false) // @todo
-        {
-            filename += "_ex";
-        }
-
         filename += "_features.csv";
         pathOutput /= filename;
 
@@ -755,7 +761,7 @@ namespace qAlgorithms
 
         output << "ID,binID,binIdxStart,binIdxEnd,mz,mzUncertainty,retentionTime,retentionTimeUncertainty,"
                << "lowestRetentionTime,highestRetentionTime,area,areaUncertainty,height,heightUncertainty,"
-               << "dqsCen,dqsBin,apexLeft,dqsPeak,b0,b1,b2,b3\n";
+               << "scale,interpolations,competitors,DQSC,DQSB,DQSF,apexLeft,mse,b0,b1,b2,b3\n";
 
         unsigned int counter = 1;
         for (size_t i = 0; i < peaktable.size(); i++)
@@ -765,14 +771,72 @@ namespace qAlgorithms
             std::vector<float> RTs = originalBins[binID].rententionTimes;
 
             char buffer[256];
-            sprintf(buffer, "%d,%d,%d,%d,%0.6f,%0.6f,%0.4f,%0.4f,%0.4f,%0.4f,%0.3f,%0.3f,%0.3f,%0.3f,%0.5f,%0.5f,%0.5f,%s,%0.8f,%0.8f,%0.8f,%0.8f\n",
-                    counter, binID, peak.idxPeakStart, peak.idxPeakEnd, peak.mz, peak.mzUncertainty,
-                    peak.retentionTime, peak.retentionTimeUncertainty, RTs[peak.idxPeakStart], RTs[peak.idxPeakEnd],
-                    peak.area, peak.areaUncertainty, peak.height, peak.heightUncertainty,
-                    peak.dqsCen, peak.dqsBin, peak.dqsPeak,
-                    // properties relevant for componentisation, remove this later
-                    peak.apexLeft ? "T" : "F", peak.coefficients.b0, peak.coefficients.b1, peak.coefficients.b2, peak.coefficients.b3);
+            snprintf(buffer, 256, "%d,%d,%d,%d,%0.6f,%0.6f,%0.4f,%0.4f,%0.4f,%0.4f,%0.3f,%0.3f,%0.3f,%0.3f,%d,%d,%d,%0.5f,%0.5f,%0.5f,%s,%0.6f,%0.8f,%0.8f,%0.8f,%0.8f\n",
+                     counter, binID, peak.idxPeakStart, peak.idxPeakEnd, peak.mz, peak.mzUncertainty,
+                     peak.retentionTime, peak.retentionTimeUncertainty, RTs[peak.idxPeakStart], RTs[peak.idxPeakEnd],
+                     peak.area, peak.areaUncertainty, peak.height, peak.heightUncertainty, peak.scale,
+                     peak.interpolationCount, peak.competitorCount, peak.DQSC, peak.DQSB, peak.DQSF,
+                     // properties relevant for componentisation, remove this later
+                     peak.apexLeft ? "T" : "F", peak.mse_base, peak.coefficients.b0, peak.coefficients.b1, peak.coefficients.b2, peak.coefficients.b3);
             output << buffer;
+            ++counter;
+        }
+
+        file_out << output.str();
+        file_out.close();
+        return;
+    }
+
+    void printFeatureCentroids(const std::vector<FeaturePeak> peaktable,
+                               std::filesystem::path pathOutput, std::string filename,
+                               const std::vector<EIC> originalBins,
+                               bool verbose, bool silent, bool skipError, bool noOverwrite)
+    {
+        filename += "_featCen.csv";
+        pathOutput /= filename;
+
+        if (std::filesystem::exists(pathOutput))
+        {
+            if (noOverwrite)
+            {
+                std::cerr << "Warning: " << pathOutput << " already exists and will not be overwritten\n";
+                return;
+            }
+            std::filesystem::remove(pathOutput);
+        }
+        if (!silent)
+        {
+            std::cout << "writing peaks to: " << pathOutput << "\n";
+        }
+
+        std::ofstream file_out;
+        std::stringstream output;
+        file_out.open(pathOutput, std::ios::out);
+        if (!file_out.is_open())
+        {
+            std::cerr << "Error: could not open output path during featCen printing. No files have been written.\n"
+                      << "Filename: " << pathOutput << "\n";
+            return;
+        }
+
+        output << "featureID,binID,cenID,mz,mzUncertainty,retentionTime,"
+               << "area,height,degreesOfFreedom,DQSC,DQSB,DQSF,apexLeft,b0,b1,b2,b3\n";
+
+        unsigned int counter = 1;
+        for (size_t i = 0; i < peaktable.size(); i++)
+        {
+            auto peak = peaktable[i];
+            int binID = peak.idxBin;
+            auto bin = originalBins[binID];
+            char buffer[256];
+            for (size_t cen = peak.idxPeakStart; cen < peak.idxPeakEnd + 1; cen++)
+            {
+                sprintf(buffer, "%d,%d,%d,%0.6f,%0.6f,%0.4f,%0.3f,%0.3f,%d,%0.5f,%0.5f,%0.5f,%s,%0.8f,%0.8f,%0.8f,%0.8f\n",
+                        counter, binID, bin.cenID[cen], bin.mz[cen], bin.predInterval[cen], bin.rententionTimes[cen],
+                        bin.ints_area[cen], bin.ints_height[cen], bin.df[cen], bin.DQSC[cen], bin.DQSB[cen], peak.DQSF,
+                        peak.apexLeft ? "T" : "F", peak.coefficients.b0, peak.coefficients.b1, peak.coefficients.b2, peak.coefficients.b3);
+                output << buffer;
+            }
             ++counter;
         }
 

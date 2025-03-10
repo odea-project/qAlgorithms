@@ -24,8 +24,8 @@ namespace qAlgorithms
     float MZ_ABSOLUTE_PRECENTROIDED = -INFINITY;                                 // see above
     std::array<float, 384> INV_ARRAY = initialize();                             // @todo make constexpr
     bool massTraceStable(std::vector<float> massesBin, int idxStart, int idxEnd) // @todo do this in regression
-
     {
+        assert(idxEnd > idxStart);
         size_t peaksize = idxEnd - idxStart + 1;
         // std::cout << idxStart << ", " << idxEnd << ", " << peaksize << "\n";
         std::vector<float> massesPeak;
@@ -94,7 +94,7 @@ int main(int argc, char *argv[])
             std::cerr << "Warning: the processing log has been overwritten\n";
         }
         logWriter.open(pathLogging, std::ios::out);
-        logWriter << "filename, numSpectra, numCentroids, meanDQSC, numBins, binsTooLarge, meanDQSB, numFeatures, badFeatures, meanDQSF\n";
+        logWriter << "filename, numSpectra, numCentroids, meanDQSC, numBins, binsTooLarge, meanDQSB, numFeatures, badFeatures, meanInterpolations, meanDQSF\n";
         logWriter.close();
     }
 
@@ -131,18 +131,15 @@ int main(int argc, char *argv[])
         {
             std::cout << " file ok\n";
         }
-        // implement way to try out ppm values @todo
-        // std::vector<float> ppmValues{0.01, 0.05, 0.1, 0.2, 0.25, 0.5, 1.0, 1.5, 2.0, 2.5, 3.0, 4.0, 5.0, 7.5, 10, 15, 20};
-
-        // for (auto setPPM : ppmValues)
+        // @todo find a more elegant solution for polarity switching
         for (auto polarity : polarities)
         {
             filename = pathSource.stem().string();
+#pragma region "centroiding"
             std::vector<float> convertRT;
             float diff_rt = 0;
             // @todo add check if set polarity is correct
-            std::vector<std::vector<CentroidPeak>> centroids =
-                findCentroids_MZML(data, convertRT, diff_rt, true, polarity, 0); // read mzML file and find centroids via qPeaks
+            std::vector<CentroidPeak> centroids = findCentroids_MZML(data, convertRT, diff_rt, polarity);
             if (centroids.empty())
             {
                 if (userArgs.verboseProgress)
@@ -160,7 +157,6 @@ int main(int argc, char *argv[])
             {
                 printCentroids(centroids, convertRT, userArgs.outputPath, filename, userArgs.silent, userArgs.skipError, userArgs.noOverwrite);
             }
-
             // @todo remove diagnostics later
             auto binThis = passToBinning(centroids);
 
@@ -178,31 +174,20 @@ int main(int argc, char *argv[])
             }
             meanCenErrorAbs /= binThis.size();
             meanCenErrorRel /= binThis.size();
-            //
-
-            if (userArgs.printSubProfile)
-            {
-                // create a subset of the profile data which only contains binned points
-                // organisation: bin ID -> vector<vector<profile point>>
-                // after peak finding, use the peak borders to annotate which profile
-                // points were part of which peak.
-                // @todo consider adding the option to also print surrounding profile points
-            }
 
             auto timeEnd = std::chrono::high_resolution_clock::now();
             std::chrono::duration<float> timePassed = std::chrono::duration_cast<std::chrono::milliseconds>(timeEnd - timeStart);
 
             if (!userArgs.silent)
             {
-                std::cout << "    produced " << binThis.size() << " centroids from " << centroids.size()
+                std::cout << "    produced " << binThis.size() - 1 << " centroids from " << data.number_spectra
                           << " spectra in " << timePassed.count() << " s\n";
             }
 
+#pragma region "binning"
             timeStart = std::chrono::high_resolution_clock::now();
 
-            std::vector<EIC> binnedData = performQbinning(
-                &binThis, convertRT, 3, // set maxdist here - reasoned as likelihood of real trace being overlooked being at worst 50%
-                userArgs.verboseProgress);
+            std::vector<EIC> binnedData = performQbinning(&binThis, &convertRT, userArgs.verboseProgress);
 
             timeEnd = std::chrono::high_resolution_clock::now();
 
@@ -226,7 +211,7 @@ int main(int argc, char *argv[])
             }
             if (userArgs.printBins)
             {
-                printBins(binnedData, userArgs.outputPath, filename, userArgs.silent, userArgs.skipError, userArgs.noOverwrite);
+                printBins(binThis, binnedData, userArgs.outputPath, filename, userArgs.silent, userArgs.skipError, userArgs.noOverwrite);
             }
 
             // @todo remove diagnostics
@@ -247,34 +232,39 @@ int main(int argc, char *argv[])
                 }
             }
             meanDQSB /= count;
-
+#pragma region "feature detection"
             timeStart = std::chrono::high_resolution_clock::now();
             // every subvector of peaks corresponds to the bin ID
-            auto peaks = findPeaks_QBIN(binnedData, diff_rt);
+            auto peaks = findPeaks_QBIN(binnedData, &centroids, diff_rt);
             // make sure that every peak contains only one mass trace
-            assert(peaks.size() < binnedData.size());
+            assert(peaks.size() <= binnedData.size());
             int peaksWithMassGaps = 0;
             double meanDQSF = 0;
+            double meanInterpolations = 0;
             for (size_t i = 0; i < peaks.size(); i++)
             {
                 int binIdx = peaks[i].idxBin;
                 auto massesBin = binnedData[binIdx].mz;
                 auto scansBin = binnedData[binIdx].scanNumbers;
+                assert(peaks[i].idxPeakStart < massesBin.size() - 4);
+                assert(peaks[i].idxPeakEnd < massesBin.size());
 
                 // idxPeakStart/End are the index referring to the bin in which a peak was found
                 if (!massTraceStable(massesBin, peaks[i].idxPeakStart, peaks[i].idxPeakEnd))
                 {
                     ++peaksWithMassGaps;
-                    peaks[i].dqsPeak *= -1;
+                    peaks[i].DQSF *= -1;
                     // @todo consider removing these or add a correction set somewhere later
                     // @todo add some documentation regarding the scores
                 }
                 else
                 {
-                    meanDQSF += peaks[i].dqsPeak;
+                    meanDQSF += peaks[i].DQSF;
                 }
+                meanInterpolations += peaks[i].interpolationCount - 4;
             }
-
+            meanDQSF /= peaks.size() - peaksWithMassGaps;
+            meanInterpolations /= peaks.size();
             if (userArgs.verboseProgress)
             {
                 std::cout << peaksWithMassGaps << " peaks were erroneously constructed from more than one mass trace\n";
@@ -282,7 +272,6 @@ int main(int argc, char *argv[])
 
             timeEnd = std::chrono::high_resolution_clock::now();
 
-            meanDQSF /= peaks.size() - peaksWithMassGaps;
             if (!userArgs.silent)
             {
                 timePassed = std::chrono::duration_cast<std::chrono::milliseconds>(timeEnd - timeStart);
@@ -294,13 +283,18 @@ int main(int argc, char *argv[])
                 logWriter.open(pathLogging, std::ios::app);
                 logWriter << filename << ", " << centroids.size() << ", " << binThis.size() << ", "
                           << meanDQSC / binThis.size() << ", " << binnedData.size() << ", " << badBinCount << ", " << meanDQSB
-                          << ", " << peaks.size() << ", " << peaksWithMassGaps << ", " << meanDQSF << "\n";
+                          << ", " << peaks.size() << ", " << peaksWithMassGaps << ", " << meanInterpolations << ", " << meanDQSF << "\n";
                 logWriter.close();
             }
             if (userArgs.printFeatures)
             {
                 printFeatureList(peaks, userArgs.outputPath, filename, binnedData,
                                  userArgs.printExtended, userArgs.silent, userArgs.skipError, userArgs.noOverwrite);
+            }
+            if (userArgs.printFeatCens)
+            {
+                printFeatureCentroids(peaks, userArgs.outputPath, filename, binnedData,
+                                      userArgs.printExtended, userArgs.silent, userArgs.skipError, userArgs.noOverwrite);
             }
 
             // @todo add peak grouping here
