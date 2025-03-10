@@ -111,7 +111,7 @@ int main(int argc, char *argv[])
                       << pathSource << "\n... ";
         }
 
-        sc::MZML data(std::filesystem::canonical(pathSource).string()); // create mzML object @todo change to use filesystem::path
+        StreamCraft::MZML data(std::filesystem::canonical(pathSource).string()); // create mzML object @todo change to use filesystem::path
 
         if (!data.loading_result)
         {

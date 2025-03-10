@@ -330,7 +330,7 @@ namespace qAlgorithms
 #pragma region "find centroids"
 
     std::vector<std::vector<CentroidPeak>> transferCentroids(
-        sc::MZML &data,
+        StreamCraft::MZML &data,
         std::vector<int> &indices,
         std::vector<double> &retention_times,
         const int start_index,
@@ -411,7 +411,7 @@ namespace qAlgorithms
     }
 
     std::vector<CentroidPeak> findCentroids_MZML( // this function needs to be split @todo
-        sc::MZML &data,
+        StreamCraft::MZML &data,
         std::vector<float> &convertRT,
         float &rt_diff,
         const std::string polarity,

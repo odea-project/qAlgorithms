@@ -4,7 +4,7 @@
 #include <cstring>
 #include <algorithm>
 
-sc::mzxml::MZXML::MZXML(const std::string &file)
+StreamCraft::MZXML::MZXML(const std::string &file)
 {
 
     file_path = file;
@@ -71,7 +71,7 @@ sc::mzxml::MZXML::MZXML(const std::string &file)
     }
 };
 
-void sc::mzxml::MZXML::extract_binary_metadata(const pugi::xml_node &first_node)
+void StreamCraft::MZXML::extract_binary_metadata(const pugi::xml_node &first_node)
 {
 
     binary_metadata.precision = first_node.child("peaks").attribute("precision").as_int();
@@ -101,7 +101,7 @@ void sc::mzxml::MZXML::extract_binary_metadata(const pugi::xml_node &first_node)
     }
 };
 
-void sc::mzxml::MZXML::print()
+void StreamCraft::MZXML::print()
 {
     std::cout << name << std::endl;
     std::cout << std::endl;
@@ -112,7 +112,7 @@ void sc::mzxml::MZXML::print()
     std::cout << std::endl;
 };
 
-std::vector<pugi::xml_node> sc::mzxml::MZXML::link_vector_spectra_nodes()
+std::vector<pugi::xml_node> StreamCraft::MZXML::link_vector_spectra_nodes()
 {
 
     std::vector<pugi::xml_node> spectra;
@@ -134,32 +134,32 @@ std::vector<pugi::xml_node> sc::mzxml::MZXML::link_vector_spectra_nodes()
     return spectra;
 };
 
-int sc::mzxml::MZXML::extract_spec_index(const pugi::xml_node &spec)
+int StreamCraft::MZXML::extract_spec_index(const pugi::xml_node &spec)
 {
     return spec.attribute("num").as_int();
 };
 
-std::string sc::mzxml::MZXML::extract_spec_id(const pugi::xml_node &spec)
+std::string StreamCraft::MZXML::extract_spec_id(const pugi::xml_node &spec)
 {
     return spec.attribute("num").as_string();
 };
 
-int sc::mzxml::MZXML::extract_spec_scan(const pugi::xml_node &spec)
+int StreamCraft::MZXML::extract_spec_scan(const pugi::xml_node &spec)
 {
     return spec.attribute("num").as_int();
 };
 
-int sc::mzxml::MZXML::extract_spec_array_length(const pugi::xml_node &spec)
+int StreamCraft::MZXML::extract_spec_array_length(const pugi::xml_node &spec)
 {
     return spec.attribute("peaksCount").as_int();
 };
 
-int sc::mzxml::MZXML::extract_spec_level(const pugi::xml_node &spec)
+int StreamCraft::MZXML::extract_spec_level(const pugi::xml_node &spec)
 {
     return spec.attribute("msLevel").as_int();
 };
 
-std::string sc::mzxml::MZXML::extract_spec_mode(const pugi::xml_node &spec)
+std::string StreamCraft::MZXML::extract_spec_mode(const pugi::xml_node &spec)
 {
     int centroided = spec.attribute("centroided").as_int();
     if (centroided == 1)
@@ -176,7 +176,7 @@ std::string sc::mzxml::MZXML::extract_spec_mode(const pugi::xml_node &spec)
     }
 };
 
-std::string sc::mzxml::MZXML::extract_spec_polarity(const pugi::xml_node &spec)
+std::string StreamCraft::MZXML::extract_spec_polarity(const pugi::xml_node &spec)
 {
     std::string pol_sign = spec.attribute("polarity").as_string();
     if (pol_sign == "+")
@@ -193,32 +193,32 @@ std::string sc::mzxml::MZXML::extract_spec_polarity(const pugi::xml_node &spec)
     }
 };
 
-double sc::mzxml::MZXML::extract_spec_lowmz(const pugi::xml_node &spec)
+double StreamCraft::MZXML::extract_spec_lowmz(const pugi::xml_node &spec)
 {
     return spec.attribute("lowMz").as_double();
 };
 
-double sc::mzxml::MZXML::extract_spec_highmz(const pugi::xml_node &spec)
+double StreamCraft::MZXML::extract_spec_highmz(const pugi::xml_node &spec)
 {
     return spec.attribute("highMz").as_double();
 };
 
-double sc::mzxml::MZXML::extract_spec_bpmz(const pugi::xml_node &spec)
+double StreamCraft::MZXML::extract_spec_bpmz(const pugi::xml_node &spec)
 {
     return spec.attribute("basePeakMz").as_double();
 };
 
-double sc::mzxml::MZXML::extract_spec_bpint(const pugi::xml_node &spec)
+double StreamCraft::MZXML::extract_spec_bpint(const pugi::xml_node &spec)
 {
     return spec.attribute("basePeakIntensity").as_double();
 };
 
-double sc::mzxml::MZXML::extract_spec_tic(const pugi::xml_node &spec)
+double StreamCraft::MZXML::extract_spec_tic(const pugi::xml_node &spec)
 {
     return spec.attribute("totIonCurrent").as_double();
 };
 
-double sc::mzxml::MZXML::extract_scan_rt(const pugi::xml_node &spec)
+double StreamCraft::MZXML::extract_scan_rt(const pugi::xml_node &spec)
 {
     std::string rt = spec.attribute("retentionTime").as_string();
     double rt_n;
@@ -230,18 +230,18 @@ double sc::mzxml::MZXML::extract_scan_rt(const pugi::xml_node &spec)
     return rt_n;
 };
 
-double sc::mzxml::MZXML::extract_ion_mz(const pugi::xml_node &spec)
+double StreamCraft::MZXML::extract_ion_mz(const pugi::xml_node &spec)
 {
     pugi::xml_node precursor = spec.child("precursorMz");
     return precursor.text().as_double();
 };
 
-double sc::mzxml::MZXML::extract_activation_ce(const pugi::xml_node &spec)
+double StreamCraft::MZXML::extract_activation_ce(const pugi::xml_node &spec)
 {
     return spec.attribute("collisionEnergy").as_double();
 };
 
-sc::MS_SPECTRA_HEADERS sc::mzxml::MZXML::extract_spectra_headers(const std::vector<int> &idxs)
+StreamCraft::MS_SPECTRA_HEADERS StreamCraft::MZXML::extract_spectra_headers(const std::vector<int> &idxs)
 {
 
     MS_SPECTRA_HEADERS headers;
@@ -298,7 +298,7 @@ sc::MS_SPECTRA_HEADERS sc::mzxml::MZXML::extract_spectra_headers(const std::vect
     return headers;
 }
 
-std::vector<std::vector<double>> sc::mzxml::MZXML::extract_spectrum(const pugi::xml_node &spectrum_node)
+std::vector<std::vector<double>> StreamCraft::MZXML::extract_spectrum(const pugi::xml_node &spectrum_node)
 {
 
     std::vector<std::vector<double>> spectrum(2);
@@ -345,7 +345,7 @@ std::vector<std::vector<double>> sc::mzxml::MZXML::extract_spectrum(const pugi::
     return spectrum;
 };
 
-std::vector<std::vector<std::vector<double>>> sc::mzxml::MZXML::extract_spectra(const std::vector<int> &idxs)
+std::vector<std::vector<std::vector<double>>> StreamCraft::MZXML::extract_spectra(const std::vector<int> &idxs)
 {
 
     std::vector<std::vector<std::vector<double>>> sp;
@@ -382,7 +382,7 @@ std::vector<std::vector<std::vector<double>>> sc::mzxml::MZXML::extract_spectra(
     return sp;
 }
 
-sc::MS_SPECTRA_HEADERS sc::mzxml::MZXML::get_spectra_headers(std::vector<int> indices)
+StreamCraft::MS_SPECTRA_HEADERS StreamCraft::MZXML::get_spectra_headers(std::vector<int> indices)
 {
 
     MS_SPECTRA_HEADERS hd;
@@ -404,7 +404,7 @@ sc::MS_SPECTRA_HEADERS sc::mzxml::MZXML::get_spectra_headers(std::vector<int> in
     return hd;
 };
 
-std::vector<std::vector<std::vector<double>>> sc::mzxml::MZXML::get_spectra(std::vector<int> indices)
+std::vector<std::vector<std::vector<double>>> StreamCraft::MZXML::get_spectra(std::vector<int> indices)
 {
 
     std::vector<std::vector<std::vector<double>>> sp;
