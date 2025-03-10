@@ -32,9 +32,9 @@ namespace qAlgorithms
                                   "                                  times within one execution.\n"
                                   "                                  Note that qAlgorithms is case-sensitive when searching for files recursively. Make\n"
                                   "                                  sure all your files have the correct extension (.mzML) and are not all lowercase (.mzml).\n"
-                                  "      -tl, -tasklist <PATH>:      pass a list of file paths to the function. A tasklist can also contain directories\n"
-                                  "                                  to search recursively and output directories for different blocks of the input files.\n"
-                                  "                                  You can comment out lines by starting them with a \"#\".\n" // @todo update
+                                  //   "      -tl, -tasklist <PATH>:      pass a list of file paths to the function. A tasklist can also contain directories\n"
+                                  //   "                                  to search recursively and output directories for different blocks of the input files.\n"
+                                  //   "                                  You can comment out lines by starting them with a \"#\".\n" // @todo update
                                   "    Single-file output settings:\n"
                                   "      The filename is always the original filename extended by the polarity and the processing step.\n"
                                   "      -o,  -output <DIRECTORY>:   directory into which all output files should be printed.\n"
@@ -43,34 +43,37 @@ namespace qAlgorithms
                                   "                                  all binned centroids will be printed to the output location\n"
                                   "                                  in addition to the final peak table. The file ends in _bins.csv.\n"
                                   "      -pf, -printfeatures         print the feature list as csv.\n"
-                                  "      -sp, -subprofile:           (not implemented yet) instead of the peaks, print all proflie-mode data points which\n" // @todo
-                                  "                                  were used to create the final peaks. This does not return any quality\n"
-                                  "                                  scores. Only use this option when reading in prodile mode files.\n"
+                                  //   "      -sp, -subprofile:           (not implemented yet) instead of the peaks, print all proflie-mode data points which\n" // @todo
+                                  //   "                                  were used to create the final peaks. This does not return any quality\n"
+                                  //   "                                  scores. Only use this option when reading in prodile mode files.\n"
                                   "      -pa, -printall:             print all availvable resutlts. You will probably not need to do this.\n"
                                   "      -px, -printfeatcen:         print all centroids that are a part of the final feature list, including debug data.\n"
                                   "    Program behaviour:\n"
-                                  "      -s, -silent:    do not print progress reports to standard out.\n"
-                                  "      -v, -verbose:   print a detailed progress report to standard out.\n"
+                                  //   "      -s, -silent:    do not print progress reports to standard out.\n"
+                                  //   "      -v, -verbose:   print a detailed progress report to standard out.\n"
                                   "      -skip-existing  do not write to files that already exist, even if an output option is set.\n"
                                   "      -skip-error:    if processing fails, the program will not exit and instead start processing\n"
                                   "                      the next file in the tasklist.\n"
                                   "      -log:           This option will create a detailed log file in the program directory.\n"
-                                  "                      A name can be supplied with a string following the argument. If this is not\n"
-                                  "                      done by the user, the default log will be written or overwritten.\n"
-                                  "    Analysis options:\n"
-                                  "      -MS2:               also process MS2 spectra (not implemented yet)\n" // @todo
-                                  "      -ppm <number>:      this sets the centroid error when reading in pre-centroided data\n"
-                                  "                          with qAlgorithms to <number> * 10^-6 * m/z of the centroid. We recommend\n"
-                                  "                          you always use the centroiding algorithm implemented in qAlgorithms.\n"
-                                  "                          This parameter is significantly different from an EIC standard deviation estimator (XCMS)!\n"
-                                  "                          By default, this value is set to 0.25.\n"
-                                  "      -mz-abs <number>:   (not implemented yet) add this absolute error (in Dalton) to the relative error specified by -ppm.\n"; //@todo
+                                  "                      It will provide an overview for every processed file which can help you find and\n"
+                                  "                      reason about anomalous behaviour in the results.";
+    //   "                      A name can be supplied with a string following the argument. If this is not\n"
+    //   "                      done by the user, the default log will be written or overwritten.\n"
+    //   "    Analysis options:\n"
+    //   "      -MS2:               also process MS2 spectra (not implemented yet)\n" // @todo
+    //   "      -ppm <number>:      this sets the centroid error when reading in pre-centroided data\n"
+    //   "                          with qAlgorithms to <number> * 10^-6 * m/z of the centroid. We recommend\n"
+    //   "                          you always use the centroiding algorithm implemented in qAlgorithms.\n"
+    //   "                          This parameter is significantly different from an EIC standard deviation estimator (XCMS)!\n"
+    //   "                          By default, this value is set to 0.25.\n"
+    //   "      -mz-abs <number>:   (not implemented yet) add this absolute error (in Dalton) to the relative error specified by -ppm.\n"; //@todo
 
 #pragma endregion helpstring
 
 #pragma region "command line arguments"
 
-    UserInputSettings passCliArgs(int argc, char *argv[])
+    UserInputSettings
+    passCliArgs(int argc, char *argv[])
     {
         volatile bool debug = false;
         // this function processes all cli arguments supplied by the user
