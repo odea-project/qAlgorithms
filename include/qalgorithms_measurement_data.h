@@ -12,7 +12,7 @@ namespace qAlgorithms
     inline std::array<double, 3> interpolateQuadratic(float interpolate, const float *x, const float *y);
 
     std::vector<std::vector<CentroidPeak>> transferCentroids( // @todo merge with findPeaks_mzml
-        sc::MZML &data,
+        StreamCraft::MZML &data,
         std::vector<int> &indices,
         std::vector<double> &retention_times,
         const int start_index,
@@ -36,7 +36,7 @@ namespace qAlgorithms
     inline float calcRTDiff(const std::vector<double> *retention_times);
 
     std::vector<CentroidPeak> findCentroids_MZML(
-        sc::MZML &data,
+        StreamCraft::MZML &data,
         std::vector<float> &convertRT,
         float &rt_diff,
         const std::string polarity,
