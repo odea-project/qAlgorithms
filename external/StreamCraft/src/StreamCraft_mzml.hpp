@@ -81,8 +81,8 @@ namespace StreamCraft
         void extract_spectra_binary_metadata(const pugi::xml_node &first_node);
         MZML_BINARY_METADATA extract_binary_metadata(const pugi::xml_node &bin);
 
-        utils::MS_SPECTRA_HEADERS extract_spectra_headers(const std::vector<int> &idxs);
-        utils::MS_CHROMATOGRAMS_HEADERS extract_chrom_headers(const std::vector<int> &idxs);
+        MS_SPECTRA_HEADERS extract_spectra_headers(const std::vector<int> &idxs);
+        MS_CHROMATOGRAMS_HEADERS extract_chrom_headers(const std::vector<int> &idxs);
 
         int extract_spec_index(const pugi::xml_node &spec);
         std::string extract_spec_id(const pugi::xml_node &spec);
@@ -143,14 +143,14 @@ namespace StreamCraft
 
         int number_spectra_binary_arrays;
 
-        utils::MS_SPECTRA_HEADERS first_spectra_headers;
+        MS_SPECTRA_HEADERS first_spectra_headers;
 
         MZML(const std::string &file);
 
         std::vector<std::string> get_spectra_binary_short_names();
 
-        utils::MS_SPECTRA_HEADERS get_spectra_headers(std::vector<int> indices = {});
-        utils::MS_CHROMATOGRAMS_HEADERS get_chromatograms_headers(std::vector<int> indices = {});
+        MS_SPECTRA_HEADERS get_spectra_headers(std::vector<int> indices = {});
+        MS_CHROMATOGRAMS_HEADERS get_chromatograms_headers(std::vector<int> indices = {});
         std::vector<std::vector<std::vector<double>>> get_spectra(std::vector<int> indices = {});
         std::vector<std::vector<double>> get_spectrum(int index);
         std::vector<std::vector<std::vector<double>>> get_chromatograms(std::vector<int> indices = {});
