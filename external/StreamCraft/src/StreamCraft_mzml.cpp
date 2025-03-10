@@ -3,8 +3,9 @@
 #include <filesystem>
 #include <cstring>
 #include <algorithm>
+#include <filesystem>
 
-StreamCraft::MZML::MZML(const std::string &file)
+StreamCraft::MZML::MZML(const std::string &file) // @todo move to std::filesystem
 {
 
     file_path = file;
@@ -404,7 +405,7 @@ StreamCraft::MS_SPECTRA_HEADERS StreamCraft::MZML::extract_spectra_headers(const
     for (int i = 0; i < n; i++)
     {
 
-        const int &index = idxs[i];
+        const int index = idxs[i];
 
         const pugi::xml_node &spec = spectra_nodes[index];
 
@@ -500,8 +501,9 @@ StreamCraft::MZML_BINARY_METADATA StreamCraft::MZML::extract_binary_metadata(con
     }
     else
     {
+        assert(false);
         // @todo fix exceptions
-        throw("Encoding precision with accession MS:1000521, MS:1000522 or MS:1000523 not found!");
+        // throw("Encoding precision with accession MS:1000521, MS:1000522 or MS:1000523 not found!");
     }
 
     pugi::xml_node node_comp = bin.find_child_by_attribute("cvParam", "accession", "MS:1000574");
@@ -531,13 +533,13 @@ StreamCraft::MZML_BINARY_METADATA StreamCraft::MZML::extract_binary_metadata(con
 
             has_bin_data_type = true;
 
-            mtd.data_name = node_data_type.attribute("name").as_string();
+            // mtd.data_name = node_data_type.attribute("name").as_string();
 
-            mtd.data_accession = node_data_type.attribute("accession").as_string();
+            // mtd.data_accession = node_data_type.attribute("accession").as_string();
 
             mtd.data_value = node_data_type.attribute("value").as_string();
 
-            mtd.data_unit = node_data_type.attribute("unitName").as_string();
+            // mtd.data_unit = node_data_type.attribute("unitName").as_string();
 
             mtd.data_name_short = possible_short_name_binary_data[i];
 
@@ -545,13 +547,10 @@ StreamCraft::MZML_BINARY_METADATA StreamCraft::MZML::extract_binary_metadata(con
         }
     }
 
-    if (!has_bin_data_type)
-    {
-        // @todo fix exceptions
-        throw("Encoded data type could not be found matching the mzML official vocabolary!");
-    }
+    assert(has_bin_data_type);
+    // throw("Encoded data type could not be found matching the mzML official vocabolary!");
 
-    if (mtd.data_name_short == "other")
+    if (mtd.data_name_short == "other") // this should be separated into a check for null / termination condition @todo
     {
         mtd.data_name_short = mtd.data_value;
     }
@@ -597,11 +596,10 @@ std::vector<std::vector<double>> StreamCraft::MZML::extract_spectrum(const pugi:
 
     int number_bins = node_binary_list.attribute("count").as_int();
 
-    if (number_spectra_binary_arrays != number_bins)
-    {
-        // @todo fix exceptions
-        throw("Binary array length does not match binary array length of first spectrum!");
-    }
+    assert(number_spectra_binary_arrays == number_bins);
+
+    // @todo fix exceptions
+    // throw("Binary array length does not match binary array length of first spectrum!");
 
     spectrum.resize(number_bins);
 
@@ -629,9 +627,9 @@ std::vector<std::vector<double>> StreamCraft::MZML::extract_spectrum(const pugi:
 
         if (bin_array_size != number_traces)
         {
-            return std::vector<std::vector<double>>{0}; // this happens if an index is tried which does not exist in the data
-            // @todo fix exceptions
-            throw("Number of traces in binary array does not match the value of the spectrum header!");
+            // this happens if an index is tried which does not exist in the data
+            std::cerr << "Number of traces in binary array does not match the value of the spectrum header!\n";
+            return std::vector<std::vector<double>>{0};
         }
 
         if (spectra_binary_metadata[counter].data_name_short == "time")
@@ -681,7 +679,7 @@ std::vector<std::vector<std::vector<double>>> StreamCraft::MZML::extract_spectra
     for (int i = 0; i < n; i++)
     {
 
-        const int &index = idxs[i];
+        const int index = idxs[i];
 
         const pugi::xml_node &spectrum_node = spectra_nodes[index];
 
@@ -743,7 +741,7 @@ StreamCraft::MS_CHROMATOGRAMS_HEADERS StreamCraft::MZML::extract_chrom_headers(c
     for (int i = 0; i < n; i++)
     {
 
-        const int &index = idxs[i];
+        const int index = idxs[i];
 
         const pugi::xml_node &chrom = chrom_nodes[index];
 
@@ -849,9 +847,8 @@ std::vector<std::vector<double>> StreamCraft::MZML::extract_chromatogram(const p
 
         if (bin_array_size != number_traces)
         {
+            std::cerr << "Number of traces in binary array does not match the value of the chromatogram header!\n";
             return std::vector<std::vector<double>>{0};
-            // @todo fix exceptions
-            throw("Number of traces in binary array does not match the value of the chromatogram header!");
         }
 
         if (mtd.data_name_short == "time")
@@ -870,17 +867,11 @@ std::vector<std::vector<double>> StreamCraft::MZML::extract_chromatogram(const p
 
         counter++;
     }
+    assert(counter > 0);
 
-    if (counter > 0)
+    for (int i = 1; i < counter; i++)
     {
-        for (int i = 1; i < counter; i++)
-        {
-            if (chrom[0].size() != chrom[i].size())
-            {
-                // @todo fix exceptions
-                throw("Number of traces in binary arrays of the chromatogram does not match!");
-            }
-        }
+        assert(chrom[0].size() == chrom[i].size());
     }
 
     return chrom;
@@ -912,7 +903,7 @@ std::vector<std::vector<std::vector<double>>> StreamCraft::MZML::extract_chromat
     // # pragma omp parallel for
     for (int i = 0; i < n; i++)
     {
-        const int &index = idxs[i];
+        const int index = idxs[i];
 
         const pugi::xml_node &chrom_node = chrom_nodes[index];
 

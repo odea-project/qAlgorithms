@@ -5,13 +5,14 @@
 #include <cstdint>
 #include <stdexcept>
 #include <zlib.h>
+#include <cassert>
 
 /*!
  * Encodes to little endian binary a vector of doubles based on a precision integer.
  */
-std::string StreamCraft::encode_little_endian(const std::vector<double> &input, const int &precision)
+std::string StreamCraft::encode_little_endian(const std::vector<double> &input, const int precision)
 {
-
+    assert(precision == 4 || precision == 8);
     if (precision == 8)
     {
         std::vector<uint8_t> bytes(sizeof(double) * input.size());
@@ -19,7 +20,7 @@ std::string StreamCraft::encode_little_endian(const std::vector<double> &input, 
         std::string result(bytes.begin(), bytes.end());
         return result;
     }
-    else if (precision == 4)
+    else
     {
         std::vector<uint8_t> bytes(sizeof(float) * input.size());
         for (size_t i = 0; i < input.size(); ++i)
@@ -30,16 +31,11 @@ std::string StreamCraft::encode_little_endian(const std::vector<double> &input, 
         std::string result(bytes.begin(), bytes.end());
         return result;
     }
-    else
-    {
-        // @todo fix exceptions
-        throw("Precision must be 4 (32-bit) or 8 (64-bit)!");
-    }
 };
 
-std::string StreamCraft::encode_big_endian(const std::vector<double> &input, const int &precision)
+std::string StreamCraft::encode_big_endian(const std::vector<double> &input, const int precision)
 {
-
+    assert(precision == 4 || precision == 8);
     if (precision == 8)
     {
         std::vector<uint8_t> bytes(sizeof(double) * input.size());
@@ -57,14 +53,14 @@ std::string StreamCraft::encode_big_endian(const std::vector<double> &input, con
 
         return result;
     }
-    else if (precision == 4)
+    else
     {
         std::vector<uint8_t> bytes(sizeof(float) * input.size());
 
         for (size_t i = 0; i < input.size(); ++i)
         {
             float floatValue = static_cast<float>(input[i]);
-            uint32_t value = reinterpret_cast<uint32_t &>(const_cast<float &>(floatValue));
+            uint32_t value = reinterpret_cast<uint32_t &>(const_cast<float &>(floatValue)); // @todo compiler warning
             for (size_t j = 0; j < sizeof(float); ++j)
             {
                 bytes[i * sizeof(float) + j] = (value >> (8 * (sizeof(float) - 1 - j))) & 0xFF;
@@ -75,19 +71,14 @@ std::string StreamCraft::encode_big_endian(const std::vector<double> &input, con
 
         return result;
     }
-    else
-    {
-        // @todo fix exceptions
-        throw("Precision must be 4 (32-bit) or 8 (64-bit)!");
-    }
 }
 
 /*!
  * Decodes from a little endian binary string to a vector of doubles according a precision integer.
  */
-std::vector<double> StreamCraft::decode_little_endian(const std::string &str, const int &precision)
+std::vector<double> StreamCraft::decode_little_endian(const std::string &str, const int precision)
 {
-
+    assert(precision == 4 || precision == 8);
     std::vector<unsigned char> bytes(str.begin(), str.end());
 
     int bytes_size = (bytes.size() / precision);
@@ -101,28 +92,22 @@ std::vector<double> StreamCraft::decode_little_endian(const std::string &str, co
         {
             result[i] = reinterpret_cast<double &>(bytes[i * precision]);
         }
-        else if (precision == 4)
+        else
         {
             float floatValue;
             std::memcpy(&floatValue, &bytes[i * precision], sizeof(float));
             result[i] = static_cast<double>(floatValue);
         }
-        else
-        {
-            // @todo fix exceptions
-            throw("Precision must be 4 (32-bit) or 8 (64-bit)!");
-        }
     }
-
     return result;
 };
 
 /*!
  * Decodes from a big endian binary string to a vector of doubles according a precision integer.
  */
-std::vector<double> StreamCraft::decode_big_endian(const std::string &str, const int &precision)
+std::vector<double> StreamCraft::decode_big_endian(const std::string &str, const int precision)
 {
-
+    assert(precision == 4 || precision == 8);
     std::vector<unsigned char> bytes(str.begin(), str.end());
 
     int bytes_size = (bytes.size() / precision);
@@ -141,9 +126,9 @@ std::vector<double> StreamCraft::decode_big_endian(const std::string &str, const
                 value = (value << 8) | bytes[i * precision + j];
             }
 
-            result[i] = reinterpret_cast<double &>(value);
+            result[i] = reinterpret_cast<double &>(value); // @todo compiler warning
         }
-        else if (precision == 4)
+        else
         {
             uint32_t value = 0;
 
@@ -152,17 +137,11 @@ std::vector<double> StreamCraft::decode_big_endian(const std::string &str, const
                 value = (value << 8) | bytes[i * precision + j];
             }
 
-            float floatValue = reinterpret_cast<float &>(value);
+            float floatValue = reinterpret_cast<float &>(value); // @todo compiler warning
 
             result[i] = static_cast<double>(floatValue);
         }
-        else
-        {
-            // @todo fix exceptions
-            throw("Precision must be 4 (32-bit) or 8 (64-bit)!");
-        }
     }
-
     return result;
 };
 
@@ -358,7 +337,7 @@ std::string StreamCraft::decode_base64(const std::string &encoded_string)
 /*!
  * Test function for encoding and decoding little endian binary data.
  */
-void StreamCraft::test_encoding_decoding_little_endian(const std::vector<double> &input, const int &precision)
+void StreamCraft::test_encoding_decoding_little_endian(const std::vector<double> &input, const int precision)
 {
 
     std::cout << std::endl;
@@ -397,7 +376,7 @@ void StreamCraft::test_encoding_decoding_little_endian(const std::vector<double>
 /*!
  * Test function for encoding and decoding big endian binary data.
  */
-void StreamCraft::test_encoding_decoding_big_endian(const std::vector<double> &input, const int &precision)
+void StreamCraft::test_encoding_decoding_big_endian(const std::vector<double> &input, const int precision)
 {
 
     std::cout << std::endl;
