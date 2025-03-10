@@ -64,7 +64,7 @@ Currently, only MS1 data can be used, so you save some disk space if you filter 
 
 `qAlgorithms` is a command line utility which reads mzML files and outputs them
 as csv. You can select individual files or an entire directory to search for
-`.mzML` files recursively. All output is written into one directory, which you also
+.mzML files recursively. All output is written into one directory, which you also
 must specify. Below are some commands you will likely use (replace example paths with your system paths):
 
 `./qAlgorithms.exe -h` - Display the help menu, listing all availvable options.
@@ -79,22 +79,17 @@ All intermediate results, those being centroids, bins and peaks, are written to 
 file and saved to the "results" directory. 
 
 Some things to keep in mind:
-* currently, reading in data which contains MS2 spectra crashes the program.
-  We are working on resolving this issue at the moment.
-* `qAlgorithms` can process both profile data and centroided data. When using
-  centroided data, it is not possible to estimate an individual uncertainty
-  for centroids, which leads to less accurate results. Where possible, process
-  profile mode spectra instead.
-* **Expanding on the above point, current tests indicate that pre-centroided**
-  **data can not be processed with high reliability. If at all possible, use**
-  **only profile mode spectra. The centroid error is only marginally dependent on m/z, leading to inaccurate binning.**
+* `qAlgorithms` can only process profile mode data at this point. While we did implement functionality
+  for processing centroided data, the results are significantly less reliable. Additionally, we did not
+  yet find a good process for estimating the mass accuracy of a given centroid for input from different
+  mass spectrometers. As such, processing centroided data is only possible if you recompile the program
+  yourself at this point in time (which would still lead to inaccurate results).
 * Check out the [Wiki page](https://github.com/odea-project/qAlgorithms/wiki/Questions-regarding-the-use-of-qAlgorithms) for more details on using `qAlgorithms`.
-* If you do not specify which results you want, no output will be written.
+* If you do not specify which results you want, no output will be written when using the command line interface.
 * If the program crashes, check if your problem matches one of the known bugs on our
   [issues page](https://github.com/odea-project/qAlgorithms/issues). If a workaround exists,
   we will provide it there while a proper solution is being worked on.
-* If multiple copies of the same file are found during recursive search,
-  only one of them will be processed.
+* If multiple copies of the same file are found during recursive search, only one of them will be processed.
 * The different quality scores do not serve as a way to remove peaks from
   your results. They only indicate how well the data at every step fit our
   model assumptions regarding the mathematical properties of real peaks.
@@ -104,10 +99,12 @@ Some things to keep in mind:
 * A negative DQSpeak means that the m/z given for that feature is more uncertain than the DQSpeak 
   implies. This does not mean that the feature does not exist, or that the calculated
   mass is inaccurate. While we were able to revise the binning algorithm to eliminate a majority
-  of these cases, some remain. 
+  of these cases, some remain. Until we have decided on a sensible way to handle these cases, this is given
+  as a warning to not trust the mass of this peak. 
 * Contrary to the original publication (see below) the DQSbin now ranges from -1 to 1. This was
   chosen to put additional focus on the case where a point is more similar to the point outside of
-  the bin than the bin subset within a relevant number of scans. 
+  the bin than the bin subset within a relevant number of scans. Additionally, bin scores are now only
+  calculated from points that are not part of bins after the algorithm completes.
 
 
 ## Philosophy
@@ -143,7 +140,7 @@ We hope that by demonstrating the effectiveness of our approach, more software w
 for non-target questions will adopt or improve on these ideals. 
 
 ## Documentation
-No documentation beyond the commented source code exists to this point. Please refer to the
+No documentation beyond the commented source code exists at this point. Please refer to the
 publications linked below for details on how the algorithms function.
 
 We provide documentation on what the output parameter for the respective files mean on our
@@ -179,6 +176,11 @@ a statement about the confidence of your results. Like all parts of the `qAlgori
 project, `qPeaks` requires no user parameters.
 
 ## Development Roadmap
+The next step for `qAlgorithms` is an integrated componentisation workflow. By leveraging the power of
+our dynamic peak model, we can analyse features by shape similarity and adjust the regression to describe
+multiple features at once. Following a successful implementation, we aim to provide a fully automated
+strategy for combining replicate measurements.
+
 Our goal is to provide a specialised, high-precision tool for analytical data processing
 of HRMS data. All current and future additions to `qAlgorithms` are developed with the goal of reducing
 the potential for human error and increasing result reliability.

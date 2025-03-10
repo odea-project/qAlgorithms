@@ -13,7 +13,7 @@ peakViewer = function(summary, fullbins, peaks, IDvector){
   
   rateNext = T
   while (rateNext) {
-    binID = peaks$dqsBin[peakID]
+    binID = peaks$DQSB[peakID]
     centroids = fullbins[which(fullbins$ID == binID),]
     
     meanMZ = summary$mean_mz[which(summary$ID == binID)]

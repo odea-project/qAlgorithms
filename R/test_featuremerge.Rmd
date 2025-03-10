@@ -12,31 +12,230 @@ library(tidyverse)
 ```{r read features}
 # bins = read_csv("~/Work/ODEA/qAlgorithms/build/22090901_H2O_1_pos_positive_bins.csv")
 # peaks = read_csv("~/Work/ODEA/qAlgorithms/build/22090901_H2O_1_pos_positive_features.csv")
-bins = read_csv("C:/Users/unisys/Documents/Studium/qAlgorithms/build/22090901_H2O_1_pos_positive_bins.csv")
-peaks = read_csv("C:/Users/unisys/Documents/Studium/qAlgorithms/build/22090901_H2O_1_pos_positive_features.csv")
-# bins = read_csv("C:/Users/unisys/Documents/Studium/qAlgorithms/build/SP_DDA_P1_positive_bins.csv")
-# peaks = read_csv("C:/Users/unisys/Documents/Studium/qAlgorithms/build/SP_DDA_P1_positive_features.csv")
+# bins = read_csv("C:/Users/unisys/Documents/Studium/qAlgorithms/build/20240805_AA_DK_02_Ibu_Kali_0_20240808125236_positive_bins.csv")
+# peaks = read_csv("C:/Users/unisys/Documents/Studium/qAlgorithms/build/20240805_AA_DK_02_Ibu_Kali_0_20240808125236_positive_features.csv")
+bins = read_csv("C:/Users/unisys/Documents/paper_afints/SP_DDA_P1_positive_bins.csv")
+peaks = read_csv("C:/Users/unisys/Documents/paper_afints/SP_DDA_P1_positive_features.csv")
 peaks = peaks[order(peaks$retentionTime),]
 ```
 
-295 + 457
-333 + 462
-181 + 370 + 420 // might belong to one distribution, but seemingly distortion at the left end influences width heavily
-209 + 244
-346 + 458 // promising pair
+```{r suspected components}
+peaks$suspect = c(abs(diff(peaks$mz)) < 1.5, FALSE)
+sus = which(peaks$suspect & peaks$height > 100) 
+```
 
-// testStandards 1
-3945 + 3979 (suspected isotope)
-6498 + 9504
-9504 + 466 // regression curve plot does not fit
-7318 + 7372
-7644 + 7764 (probable coelution in both halves)
-466 + 9504
-5264 + 5612 // these look similar, but inconsistent area distorts the peak
-4535 + 10511 // borderline case where i'm not sure myself
+The approach of forming the mean of two regressions has been discarded due to being too much of a headache for relatively common edge cases.
+Notably, the discontinuous function did not merge cleanly and the point of change for both halves was not always clearly defined.
+
+```{r functions}
+rt_switch = function(feature){
+  div = 0
+  if (feature$apexLeft){
+    div = feature$b2 * 2
+  } else {
+    div = feature$b3 * 2
+  }
+  return(-feature$b1 / div)
+}
+# step 0: the two regressions that are to be compared
+
+curve_0 = function(x, feature){ # apex at rt_switch
+  sq1 = (as.numeric(x < 0) * feature$b2 * x^2) 
+  sq2 = (as.numeric(!(x < 0)) * feature$b3 * x^2)
+  return(exp(feature$b0 + feature$b1 * x + sq1 + sq2))
+}
+
+# step 1: move the regressions from the generic 4-coefficient form to the retention time specific six coefficient form
+
+curve_N = function(x, feature){ # curve with apex at x = rt
+  offset = - feature$rt_switch + feature$retentionTime
+  
+  b0_n1 = feature$b0 - feature$b1 * offset + feature$b2 * offset * offset 
+  b1_n1 = feature$b1 - 2 * feature$b2 * offset
+  b0_n2 = feature$b0 - feature$b1 * offset + feature$b3 * offset * offset 
+  b1_n2 = feature$b1 - 2 * feature$b3 * offset
+
+  side = x < offset
+  sq_L = b0_n1 + b1_n1 * x + feature$b2 * x^2
+  sq_R = b0_n2 + b1_n2 * x + feature$b3 * x^2
+  return(exp(sq_L * side + sq_R * !side))
+}
+
+curve_mirror = function(x, feature){ # curve with apex at x = rt, but mirrored
+  # shift peak so that the apex is at 0
+  offset = - feature$rt_switch 
+  b2 = feature$b2
+  b3 = feature$b3
+  
+  b0_n1 = feature$b0 - feature$b1 * offset + b2 * offset * offset 
+  b1_n1 = - feature$b1 + 2 * b2 * offset
+  b0_n2 = feature$b0 - feature$b1 * offset + b3 * offset * offset 
+  b1_n2 = - feature$b1 + 2 * b3 * offset
+  
+  # the apex function is already symmetric. now, the non-apex function must be shifted 2* the distance between apexes
+  apex_L = -b1_n1 / 2 / b2
+  apex_R = -b1_n2 / 2 / b3
+  moveApex = (apex_L - apex_R )*2
+  b0_n2 = b0_n2 - b1_n2 * moveApex + b3 * moveApex * moveApex 
+  b1_n2 = b1_n2 - 2 * b3 * moveApex
+  # calculate the new offset
+  # swap order of the peak halves
+  tmp = b0_n2
+  b0_n2 = b0_n1
+  b0_n1 = tmp
+  tmp = b1_n2
+  b1_n2 = b1_n1
+  b1_n1 = tmp
+  b3 = b2
+  b2 = feature$b3
+  root = sqrt((b1_n1 - b1_n2)^2 - 4* (b2 - b3) * (b0_n1 - b0_n2))
+  offset = (b1_n2 - b1_n1 ) / (2 * (b2_m - b3_m)) + root / (2 * (b2_m - b3_m))
+
+  # the function is mirrored regarding the apex at this point
+  side = x - offset < 0
+
+  sq_L = b0_n1 + b1_n1 * x + b2 * x^2
+  sq_R = b0_n2 + b1_n2 * x + b3 * x^2
+  return(exp(sq_L * side + sq_R * !side))
+}
+
+# step 2: scale the coefficients to the maximum of the regression
+
+curve_S = function(x, feature){ # curve with apex at x = rt and height = 1
+  # shift coefficients
+  offset = - feature$rt_switch + feature$retentionTime
+  b0_n1 = feature$b0 - feature$b1 * offset + feature$b2 * offset * offset # left
+  b1_n1 = feature$b1 - 2 * feature$b2 * offset                              # left
+  b0_n2 = feature$b0 - feature$b1 * offset + feature$b3 * offset * offset # right
+  b1_n2 = feature$b1 - 2 * feature$b3 * offset                              # right
+  # scale coefficients
+  height = curve_0(feature$rt_switch, feature) 
+  b0_n1 = b0_n1 - log(height)
+  b0_n2 = b0_n2 - log(height)
+
+  side = x < offset
+  sq_L = b0_n1 + b1_n1 * x + feature$b2 * x^2
+  sq_R = b0_n2 + b1_n2 * x + feature$b3 * x^2
+  return(exp(sq_L * side + sq_R * !side))
+}
+
+# create a combined regression by averaging the coefficients of both scaled functions
+curve_S_M = function(x, feature_A, feature_B){ # merged curve with apex at x = rt and height = 1
+  # coefficients for feature A
+  offset_A = - feature_A$rt_switch + feature_A$retentionTime
+  height_A = curve_0(feature_A$rt_switch, feature_A) 
+  b0_n1_A = feature_A$b0 - feature_A$b1 * offset_A + feature_A$b2 * offset_A * offset_A - log(height_A)
+  b1_n1_A = feature_A$b1 - 2 * feature_A$b2 * offset_A                              
+  b0_n2_A = feature_A$b0 - feature_A$b1 * offset_A + feature_A$b3 * offset_A * offset_A - log(height_A)
+  b1_n2_A = feature_A$b1 - 2 * feature_A$b3 * offset_A                              
+  # coefficients for feature B
+  offset_B = - feature_B$rt_switch + feature_B$retentionTime
+  height_B = curve_0(feature_B$rt_switch, feature_B) 
+  b0_n1_B = feature_B$b0 - feature_B$b1 * offset_B + feature_B$b2 * offset_B * offset_B - log(height_B)
+  b1_n1_B = feature_B$b1 - 2 * feature_B$b2 * offset_B                             
+  b0_n2_B = feature_B$b0 - feature_B$b1 * offset_B + feature_B$b3 * offset_B * offset_B - log(height_B)
+  b1_n2_B = feature_B$b1 - 2 * feature_B$b3 * offset_B                              
+  # mean of coefficients
+  b0_n1 = (b0_n1_A + b0_n1_B) / 2
+  b1_n1 = (b1_n1_A + b1_n1_B) / 2
+  b0_n2 = (b0_n2_A + b0_n2_B) / 2
+  b1_n2 = (b1_n2_A + b1_n2_B) / 2
+  b2_m = (feature_A$b2 + feature_B$b2) / 2
+  b3_m = (feature_A$b3 + feature_B$b3) / 2
+  # the new apex position is also the mean of both previous apex positions
+  offset = (offset_A + offset_B) / 2
+  side = x < offset
+  sq_L = b0_n1 + b1_n1 * x + b2_m * x^2
+  sq_R = b0_n2 + b1_n2 * x + b3_m * x^2
+  return(exp(sq_L * side + sq_R * !side))
+}
+
+# re-scale and move regression back to generic x axis (scale to feature a only for illustration)
+curve_0_M = function(x, scale_to_A, feature_A, feature_B){ # merged curve with apex at x = rt and height = 1
+  # coefficients for feature A
+  offset_A = - feature_A$rt_switch + feature_A$retentionTime
+  height_A = curve_0(feature_A$rt_switch, feature_A) 
+  b0_n1_A = feature_A$b0 - feature_A$b1 * offset_A + feature_A$b2 * offset_A * offset_A - log(height_A)
+  b1_n1_A = feature_A$b1 - 2 * feature_A$b2 * offset_A                              
+  b0_n2_A = feature_A$b0 - feature_A$b1 * offset_A + feature_A$b3 * offset_A * offset_A - log(height_A)
+  b1_n2_A = feature_A$b1 - 2 * feature_A$b3 * offset_A                              
+  # coefficients for feature B
+  offset_B = - feature_B$rt_switch + feature_B$retentionTime
+  height_B = curve_0(feature_B$rt_switch, feature_B) 
+  b0_n1_B = feature_B$b0 - feature_B$b1 * offset_B + feature_B$b2 * offset_B * offset_B - log(height_B)
+  b1_n1_B = feature_B$b1 - 2 * feature_B$b2 * offset_B                             
+  b0_n2_B = feature_B$b0 - feature_B$b1 * offset_B + feature_B$b3 * offset_B * offset_B - log(height_B)
+  b1_n2_B = feature_B$b1 - 2 * feature_B$b3 * offset_B
+  # mean of coefficients (re-scaled)
+  b0_n1 = (b0_n1_A + b0_n1_B) / 2 
+  b1_n1 = (b1_n1_A + b1_n1_B) / 2
+  b0_n2 = (b0_n2_A + b0_n2_B) / 2
+  b1_n2 = (b1_n2_A + b1_n2_B) / 2
+  b2_m = (feature_A$b2 + feature_B$b2) / 2
+  b3_m = (feature_A$b3 + feature_B$b3) / 2
+
+  root = (b1_n1 - b1_n2)^2 - 4* (b2_m - b3_m) * (b0_n1 - b0_n2)
+  if(root < 0) {
+    # no intersect exists, adjust b0_n2 so that one intersect is made. @todo change for apex on the right
+    # b0_n2_m = b0_n1 - (b1_n1 - b1_n2)^2 / (4* (b2_m - b3_m))
+    # return(T)
+    root = 0
+    b3_m = b2_m - (b1_n1 - b1_n2)^2 / (4* (b0_n1 - b0_n2))
+  } else {
+    # return(F)
+    root = sqrt(root)
+  }
+  
+  # re-scale the height to feature A 
+  b0_n1 = ifelse(scale_to_A, b0_n1 + log(height_A), b0_n1 + log(height_B))
+  b0_n2 = ifelse(scale_to_A, b0_n2 + log(height_A), b0_n2 + log(height_B))
+  
+  # calculate the new offset as the intersection of both quadratic functions
+  offset = (b1_n2 - b1_n1 ) / (2 * (b2_m - b3_m)) + root / (2 * (b2_m - b3_m))
+ 
+  # the curve can be shifted by setting x = x + offset. This is integrated into the coefficients, just like the previous shift
+  b0_m1 = b0_n1 + b1_n1 * offset + b2_m * offset * offset
+  b0_m2 = b0_n2 + b1_n2 * offset + b3_m * offset * offset
+  # b0_m2_s = b0_m1 -(b1_m1 - b1_m2) / (4 * (b2_m - b3_m))
+  b1_m1 = b1_n1 + 2 * b2_m * offset
+  b1_m2 = b1_n2 + 2 * b3_m * offset # @todo correct offset if b1_m1 == b1_m2
+  # with some tolerance for error, b0_m1 == b0_m2 and b1_m1 == b1_m2. Take the mean for uniformity
+  b0_m = (b0_m1 + b0_m2) / 2
+  b1_m = (b1_m1 + b1_m2) / 2
+  # x = x + offset # x axis is not modified
+  side = x < 0
+
+  sq_L = b0_m + b1_m * x + b2_m * x^2 # @todo make these in
+  sq_R = b0_m + b1_m * x + b3_m * x^2 
+  return(exp(sq_L * side + sq_R * !side))
+}
+```
+
 ```{r}
-feature_A = 346
-feature_B = 458
+##question: how must a curve be mutated until the root term is negative relative to itself?
+# only a system where ((b2 < b3) & (b0_n1 < b0_n2)) | ((b2 > b3) & (b0_n1 > b0_n2)) can be incomplete
+# => the curve that is "on top" must also be wider than the lower curve so no intersects can form
+# absolute distance between b1_n1 and b1_n2 is relevant => curves must have a very similar position
+newSelection = F
+for (i in 1:(length(peaks$ID) - 1)) {
+  peak_A = peaks[i,]
+  peak_B = peaks[i + 1,]
+  peak_A$rt_switch = rt_switch(peak_A)
+  peak_B$rt_switch = rt_switch(peak_B)
+  newSelection[i] = curve_0_M(0, T, peak_A, peak_B)
+}
+newSelection = c(newSelection, T)
+sus2 = which(peaks$suspect & newSelection)
+
+# hypothesis: the case occurs if the moved curves have more than 2 (or 1?) intersectssss
+```
+
+```{r}
+idx = sus[18]
+# idx = 1
+feature_A = peaks$ID[idx]
+feature_B = peaks$ID[idx + 1]
+if(feature_A > feature_B) {idx = feature_A; feature_A = feature_B; feature_B = idx}
 
 feature_A = peaks[which(peaks$ID == feature_A),]
 feature_B = peaks[which(peaks$ID == feature_B),]
@@ -61,100 +260,75 @@ if (feature_B$binIdxStart - 3 > 0)
 if (feature_B$binIdxEnd + 3 < clamp_r)
 {clamp_r = feature_B$binIdxEnd + 3}#
 points_B = points_B[clamp_l:clamp_r,]
- 
-curve_A = function(x){
-  rt = feature_A$retentionTime
-  switchpos = rt - feature_A$rt_switch
-  x = x - switchpos
-  sq1 = (as.numeric(x < switchpos) * feature_A$b2 * x^2) 
-  sq2 = (as.numeric(!(x < switchpos)) * feature_A$b3 * x^2)
-  return(exp((feature_A$b0 + x * feature_A$b1 + sq1 + sq2)))
-}
 
-curve_B = function(x){
-  rt = feature_B$retentionTime
-  switchpos = rt - feature_B$rt_switch
-  x = x - switchpos
-  sq1 = (as.numeric(x < switchpos) * feature_B$b2 * x^2) 
-  sq2 = (as.numeric(!(x < switchpos)) * feature_B$b3 * x^2)
-  return(exp((feature_B$b0 + x * feature_B$b1 + sq1 + sq2)))
-}
-
-curve_A2 = function(x){return(curve_A(x) / curve_A(feature_A$retentionTime))}
-curve_B2 = function(x){return(curve_B(x) / curve_B(feature_B$retentionTime))}
-```
-
-```{r}
 points_A$ID = feature_A$ID
 points_B$ID = feature_B$ID
 merge = rbind(points_A, points_B)
 ggplot(merge)+
   geom_point(aes(retentionTime, area, colour = as.factor(ID)))+
-  stat_function(fun = curve_A, colour = "red")+
-  stat_function(fun = curve_B, colour = "blue")+
-  labs(caption = paste0("m/z values: ", feature_A$ID, ": ", feature_A$mz, " | ",feature_B$ID, ": ", feature_B$mz))
-  
-# after scaling to same height
-merge2 = rbind(points_A %>% mutate(area = area / curve_A(feature_A$retentionTime)),
-               points_B %>% mutate(area = area / curve_B(feature_B$retentionTime)))
+  stat_function(fun = curve_N, args = list(feature = feature_A), colour = "red3")+
+  stat_function(fun = curve_N, args = list(feature = feature_B), colour = "blue")+
+  labs(caption = paste0("m/z values: ", feature_A$ID, ": ", feature_A$mz, " | ", feature_B$ID, ": ", feature_B$mz))
 
-ggplot(merge2)+
-  geom_point(aes(retentionTime, area, colour = as.factor(ID)))+
-  stat_function(fun = curve_A2, colour = "red")+
-  stat_function(fun = curve_B2, colour = "blue")+
-  labs(caption = paste0("m/z values: ", feature_A$ID, ": ", feature_A$mz, " | ",feature_B$ID, ": ", feature_B$mz))
-```
-
-```{r merge regressions}
-scale_A = log(1 / curve_A(feature_A$retentionTime))
-scale_B = log(1 / curve_B(feature_B$retentionTime))
-
-regression_merge = function(x){
-  rt = mean(feature_B$retentionTime, feature_A$retentionTime)
-  switchpos = rt - mean(feature_B$rt_switch, feature_A$rt_switch)
-  x = x - switchpos
-  b0 = (feature_A$b0 + scale_A + feature_B$b0 + scale_B) / 2
-  b1 = mean(feature_A$b1, feature_B$b1)
-  b2 = mean(feature_A$b2, feature_B$b2)
-  b3 = mean(feature_A$b3, feature_B$b3)
-  sq1 = (as.numeric(x < switchpos) * b2 * x^2) 
-  sq2 = (as.numeric(!(x < switchpos)) * b3 * x^2)
-  return(exp((b0 + x * b1 + sq1 + sq2)))
-}
-
-ggplot(merge2)+
-  geom_point(aes(retentionTime, area, colour = as.factor(ID)))+
-  stat_function(fun = curve_A2, colour = "red")+
-  stat_function(fun = curve_B2, colour = "blue")+
-  stat_function(fun = regression_merge)+
-  labs(caption = paste0("m/z values: ", feature_A$ID, ": ", feature_A$mz, " | ",feature_B$ID, ": ", feature_B$mz))
-```
-
-
-```{r height variation plots}
+merge$area[which(merge$ID == feature_A$ID)] = merge$area[which(merge$ID == feature_A$ID)] / curve_0(feature_A$rt_switch, feature_A) 
+merge$area[which(merge$ID == feature_B$ID)] = merge$area[which(merge$ID == feature_B$ID)] / curve_0(feature_B$rt_switch, feature_B) 
 ggplot(merge)+
-  geom_point(aes(height, area, colour = as.factor(degreesOfFreedom), shape = as.factor(ID)))
-# isolated peaks seem to have a characteristic area/height ratio after centroiding
+  geom_point(aes(retentionTime, area, colour = as.factor(ID)))+
+  stat_function(fun = curve_S, args = list(feature = feature_A), colour = "red3")+
+  stat_function(fun = curve_S, args = list(feature = feature_B), colour = "blue")
+
+ggplot(merge)+
+  geom_point(aes(retentionTime, area, colour = as.factor(ID)))+
+  stat_function(fun = curve_S, args = list(feature = feature_A), colour = "red3")+
+  stat_function(fun = curve_S, args = list(feature = feature_B), colour = "blue")+
+  stat_function(fun = curve_S_M, args = list(feature_A = feature_A, feature_B = feature_B), colour = "green2")
+
+
+ggplot(points_A)+
+  geom_point(aes(retentionTime - feature_A$retentionTime + feature_A$rt_switch, area))+
+  stat_function(fun = curve_0, args = list(feature = feature_A), colour = "red2")+
+  stat_function(aes(x = retentionTime - feature_A$retentionTime), fun = curve_0_M, args = list(scale_to_A = T, feature_A = feature_A, feature_B = feature_B), colour = "green2")
+
+ggplot(points_B)+
+  geom_point(aes(retentionTime - feature_B$retentionTime + feature_B$rt_switch, area))+
+  stat_function(fun = curve_0, args = list(feature = feature_B), colour = "blue")+
+  stat_function(aes(x = retentionTime - feature_B$retentionTime), fun = curve_0_M, args = list(scale_to_A = F, feature_A = feature_A, feature_B = feature_B), colour = "green2")
+
+```
+
+```{r}
+# sampling of the shifted and scaled curves
+diffs = c(0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1, 1.2, 1.4, 1.6, 1.8, 2, 2.5, 3, 3.5, 4, 5, 6, 7, 8, 9, 10, 15, 20)
+# rtdiff = (feature_A$retentionTime + feature_B$retentionTime) / 2
+xvec = c(sort(feature_A$retentionTime - diffs), feature_A$retentionTime, feature_A$retentionTime + diffs)
+n = length(xvec)
+# vandermonde matrix X
+X = matrix(c(xvec^0, xvec^0, 
+             xvec^1, xvec^1, 
+             (xvec * (xvec <= rtdiff))^2, (xvec * (xvec <= rtdiff))^2, 
+             (xvec * (xvec >= rtdiff))^2, (xvec * (xvec >= rtdiff))^2), 
+           nrow = n * 2, ncol = 4)
+
+mat_covar = solve(crossprod(X, X)) # (t(X) %*% X)^-1
+
+mat_covar_A = mat_covar * feature_A$mse
 ```
 
 
 ```{r}
-rt_switch = function(feature){
-  div = 0
-  if (feature$apexLeft){
-    div = feature$b2 * 2
-  } else {
-    div = feature$b3 * 2
-  }
-  return(-feature$b1 / div)
-}
+peaks$smallMSE = log(peaks$mse) < -1
 
-peakShape = function(x, rt, rt_switch, b0, b1, b2, b3){
-  switchpos = rt + rt_switch
-  x = x - rt
-  sq1 = (as.numeric(x < switchpos) * b2 * x^2) 
-  sq2 = (as.numeric(!(x < switchpos)) * b3 * x^2)
-  return(exp((b0 + x * b1 + sq1 + sq2)))
+ hist(log10(peaks$mse / peaks$height), breaks = 60)
+
+ggplot(peaks)+
+  geom_point(aes(retentionTime, competitors, colour = smallMSE)) # maybe relevant
+  # geom_point(aes(mzUncertainty, retentionTimeUncertainty, colour = smallMSE))
+```
+
+```{r}
+f_vals = qf(0.05, 5, 5:69)
+for (i in 6:69) {
+  f_vals = c(f_vals, qf(0.05, i, 5:69))
 }
 ```
 

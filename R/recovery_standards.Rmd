@@ -9,25 +9,27 @@ library(tidyverse)
 ```
 
 ```{r}
-targetCompounds = read_tsv("./standards_samuel.csv", comment = "#", col_types = "cddl")
-targetCompounds$rt_s = 60 * targetCompounds$rt_min
-suspectCompounds = read_tsv("./suspects_samuel.tsv", comment = "#", col_types = "cddd")
-suspectCompounds$internal_std = FALSE
+targetCompounds = read_csv("C:/Users/unisys/Documents/Studium/Messdaten/TOF_ricardo/ms_data_profile_AgilentQTOF_qc_and_wastewater/internal_standards.csv", comment = "#")
+# targetCompounds$rt_s = 60 * targetCompounds$rt_min
+# suspectCompounds = read_tsv("./suspects_samuel.tsv", comment = "#", col_types = "cddd")
+# suspectCompounds$internal_std = FALSE
 
-files = read.csv("./filenames.csv")
-tolerances = list(tol_mz_ppm = 10, tol_rt_s = 1.65 * 60)
+# files = read.csv("./filenames.csv")
+# tolerances = list(tol_mz_ppm = 10, tol_rt_s = 1.65 * 60)
+files = "../build/03_QC-r001_positive_features.csv"
 ```
 
 
 ```{r}
-processPeak = function(filename, targetCompounds, tolerances) {
+processPeak = function(filename, targetCompounds) {
   lenMass = length(targetCompounds$name)
-  tmpFeaturelist = read.csv(filename$path)
-  ppm_tol = 10 ^ -6 * tolerances$tol_mz_ppm
-  MZlimit_lower = tmpFeaturelist$mz - ppm_tol * tmpFeaturelist$mz
-  MZlimit_upper = tmpFeaturelist$mz + ppm_tol * tmpFeaturelist$mz
-  RTlimit_lower = tmpFeaturelist$retentionTime - tolerances$tol_rt_s
-  RTlimit_upper = tmpFeaturelist$retentionTime + tolerances$tol_rt_s
+  # tmpFeaturelist = read.csv(filename$path)
+  tmpFeaturelist = read.csv(filename)
+  # ppm_tol = 10 ^ -6 * tolerances$tol_mz_ppm
+  MZlimit_lower = tmpFeaturelist$mz - tmpFeaturelist$mzUncertainty
+  MZlimit_upper = tmpFeaturelist$mz + tmpFeaturelist$mzUncertainty
+  # RTlimit_lower = tmpFeaturelist$retentionTime - tolerances$tol_rt_s
+  # RTlimit_upper = tmpFeaturelist$retentionTime + tolerances$tol_rt_s
   returnVec = data.frame(
     name = "null",
     mz = 0,
@@ -43,16 +45,17 @@ processPeak = function(filename, targetCompounds, tolerances) {
   
   for (i in 1:lenMass) {
     targetMass = targetCompounds[i, ]
+    targetMass$internal_std = T
     in_tolerance = MZlimit_lower < targetMass$mz
     in_tolerance = ((MZlimit_upper > targetMass$mz) & in_tolerance)
-    in_tolerance = ((RTlimit_lower < targetMass$rt_s) &
-                      in_tolerance)
-    in_tolerance = ((RTlimit_upper > targetMass$rt_s) &
-                      in_tolerance)
+    # in_tolerance = ((RTlimit_lower < targetMass$rt_s) &
+    #                   in_tolerance)
+    # in_tolerance = ((RTlimit_upper > targetMass$rt_s) &
+    #                   in_tolerance)
     if (sum(in_tolerance) == 0) {
       # the compound was not found
       returnVec[i, ] = c(name = targetMass$name, 0, 0, targetMass$internal_std, 
-                         type = filename$type, 0, 0, 0, 0, 0)
+                         type = "none", 0, 0, 0, 0, 0)
     } else {
       viableFeatures = tmpFeaturelist[in_tolerance, ]
       viableFeatures$numFeat = which(in_tolerance)
@@ -64,14 +67,15 @@ processPeak = function(filename, targetCompounds, tolerances) {
       returnVec[i, ] = c(
         name = targetMass$name,
         viableFeatures$mz,
-        viableFeatures$retentionTime / 60,
+        viableFeatures$retentionTime,
         targetMass$internal_std,
-        type = filename$type,
+        # type = filename$type,
+        type = "none",
         viableFeatures$retentionTime,
         viableFeatures$area,
         viableFeatures$height,
-        viableFeatures$dqsBin,
-        viableFeatures$dqsPeak
+        viableFeatures$DQSB,
+        viableFeatures$DQSF
       )
     }
   }
@@ -94,10 +98,11 @@ resultVector = data.frame(
     DQSF = 0
   )
 
-for (index in 1:length(files$path)) {
-   resultVector = rbind(resultVector, processPeak(files[index,], suspectCompounds, tolerances))
-  # resultVector = rbind(resultVector, processPeak(files[index,], targetCompounds, tolerances))
-}
+# for (index in 1:length(files$path)) {
+#    # resultVector = rbind(resultVector, processPeak(files[index,], suspectCompounds, tolerances))
+#   resultVector = rbind(resultVector, processPeak(files[index,], targetCompounds, tolerances))
+# }
+ resultVector = rbind(resultVector, processPeak(files, targetCompounds))
 resultVector = resultVector[-1,]
 ```
 

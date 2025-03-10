@@ -115,7 +115,7 @@ bins_Kali__H2O_3_pos = read.csv("C:/Users/unisys/Documents/Studium/Messdaten/LCM
 bins_Kali__H2O_4_pos = read.csv("C:/Users/unisys/Documents/Studium/Messdaten/LCMS_pressure_error/22090935_H2O_4_pos_bins.csv")
 
 allpoints = sum(s_Kali__H2O_4_pos$size)
-s_Kali__H2O_4_pos %>% group_by(errorcode) %>% summarise(bin_count = n(), perc_dataset = round(sum(size) / allpoints * 100, digits = 2), ratio = round(sum(size)/n(), digits = 2), dqsCen = mean(DQSC_min), meanDQS = mean(DQSB_scaled)) 
+s_Kali__H2O_4_pos %>% group_by(errorcode) %>% summarise(bin_count = n(), perc_dataset = round(sum(size) / allpoints * 100, digits = 2), ratio = round(sum(size)/n(), digits = 2), DQSC = mean(DQSC_min), meanDQS = mean(DQSB_scaled)) 
 
 
 ```

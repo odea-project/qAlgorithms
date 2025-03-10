@@ -74,7 +74,7 @@ binSelectionViewer = function(peaks, summary, fullbins, IDvector){
           geom_vline(xintercept = interceptStart - 0.5, linewidth = 0.35, color = "red")+
           geom_vline(xintercept = interceptEnd + 0.5, linewidth = 0.35, color = "red")+
           theme_bw()+
-          labs(caption = sprintf("DQSF: %f | PeakID: %d | Errorcode: %d", peaks$dqsPeak[peakID], peakID, summary$errorcode[binID])))
+          labs(caption = sprintf("DQSF: %f | PeakID: %d | Errorcode: %d", peaks$DQSF[peakID], peakID, summary$errorcode[binID])))
         readline()
         IDpos = IDpos + 1
         peakID = IDvector[IDpos]
@@ -97,7 +97,7 @@ peaks = read.csv("C:/Users/unisys/Documents/Studium/Messdaten/SP_DDA_P1_positive
 summary = read.csv("C:/Users/unisys/Documents/Studium/Messdaten/SP_DDA_P1_positive_summary.csv")
 bins = read.csv("C:/Users/unisys/Documents/Studium/Messdaten/SP_DDA_P1_positive_bins.csv")
   
-IDs = unique(peaks$binID[which(peaks$dqsPeak < 0)])
+IDs = unique(peaks$binID[which(peaks$DQSF < 0)])
 
 binSelectionViewer(summary, bins, IDs)
 ```

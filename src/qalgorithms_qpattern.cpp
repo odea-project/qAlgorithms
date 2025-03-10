@@ -17,225 +17,213 @@
 
 namespace qAlgorithms
 {
-    // function no longer needed
-    // std::vector<Peak *> collapseFeaturelist(std::vector<std::vector<Peak>> &peaks, std::vector<size_t> binIndices)
-    // {
-    //     std::vector<Peak *> returnVec;
-    //     returnVec.reserve(peaks.size() / 2);
-    //     for (size_t i = 0; i < peaks.size(); i++)
-    //     {
-    //         if (!peaks[i].empty())
-    //         {
-    //             for (size_t j = 0; j < peaks[i].size(); j++)
-    //             {
-    //                 returnVec.push_back(&peaks[i][j]);
-    //             }
-    //         }
-    //     }
-    //     returnVec.shrink_to_fit();
-    //     return returnVec;
-    // }
-
-    void binningRT(std::vector<std::vector<int>> &componentStartEnd, std::vector<FeaturePeak> &featureList,
-                   std::vector<float> &OS, std::vector<float> &error, int startBin, int endBin)
+    MovedRegression moveAndScaleReg(FeaturePeak *feature)
     {
-        /// adapted generic binning function @todo add into qBinning
-        unsigned int size = endBin - startBin + 1;
-        // float vcrit = 3.05037165842070 * pow(log(size), (TOLERANCE_BINNING)) * (error[endBin + 1] - error[startBin]); // cumError starts with 0
-        // double vcrit = binningCritVal(size, (error[endBin + 1] - error[startBin]) / size);
-        double vcrit = 0;
-        /// @todo check for correct calculation in qBinning
-        assert(vcrit > 0);
-        auto pmax = std::max_element(OS.begin() + startBin, OS.begin() + endBin);
-        float max = *pmax;
+        float b0 = feature->coefficients.b0;
+        float b1 = feature->coefficients.b1;
+        float b2 = feature->coefficients.b2;
+        float b3 = feature->coefficients.b3;
 
-        if (max < vcrit)
-        {
-            // grouping OK
-            std::vector<int> component;
-            component.reserve(size);
-
-            for (size_t i = 0; i < size; i++)
-            {
-                component.push_back(startBin + i);
-            }
-
-            componentStartEnd.push_back(component);
-            return;
-        }
-        else
-        {
-            // invoke recursive function
-            int cutIdx = std::distance(OS.begin(), pmax); // end of the first half
-            if (cutIdx == startBin)
-            {
-                componentStartEnd.push_back(std::vector<int>{startBin});
-            }
-            else
-            {
-                binningRT(componentStartEnd, featureList, OS, error, startBin, cutIdx);
-            }
-            if (cutIdx + 1 == endBin)
-            {
-                componentStartEnd.push_back(std::vector<int>{endBin});
-            }
-            else
-            {
-                binningRT(componentStartEnd, featureList, OS, error, cutIdx + 1, endBin);
-            }
-        }
-        return;
+        const bool apexLeft = feature->apexLeft;
+        float b23 = apexLeft ? b2 : b3;
+        float apexDist = -b1 / (2 * b23);
+        float height = feature->height;
+        b0 += log(1) - height; // scale to height 1
+        // move regression to RT of feature
+        float offset = feature->retentionTime - apexDist;
+        MovedRegression movedReg;
+        movedReg.origin = feature;
+        movedReg.binID = 0;   // @todo
+        movedReg.limit_L = 0; // @todo
+        movedReg.limit_R = 0; // @todo
+        movedReg.b0_L = b0 - b1 * offset + b2 * offset * offset;
+        movedReg.b0_R = b0 - b1 * offset + b3 * offset * offset;
+        movedReg.b1_L = b1 - 2 * b2 * offset;
+        movedReg.b1_R = b1 - 2 * b3 * offset;
+        movedReg.b2 = b2;
+        movedReg.b3 = b3;
+        movedReg.RT_switch = apexLeft ? movedReg.b1_L : movedReg.b1_R / (2 * b23) - apexDist;
+        return movedReg;
     }
 
-    int absoluteNearest(const unsigned int sourceFeature, std::vector<FeaturePeak> &featureList,
-                        std::vector<float> limits_L, std::vector<float> limits_R, std::vector<bool> validPositions)
+    // small functions for calcTanimoto
+    inline std::vector<float> areas(std::vector<float> *borders, MovedRegression *feature)
     {
-        // assumes feature list is sorted by RT.
-        // limits are defined as RT +- RT uncertiainty
-        unsigned int minRT = sourceFeature;
-        while ((limits_R[minRT] > limits_L[sourceFeature]) && (minRT > 0))
-        {
-            minRT--;
+        std::vector<float> areas;
+        areas.reserve(borders->size() - 1);
+        std::vector<float> heights;
+        heights.reserve(borders->size());
+        { // calcualte the relevant heights for both peak halves
+            size_t i = 0;
+            for (; i < borders->size(); i++)
+            {
+                float x = (*borders)[i];
+                if (x > feature->RT_switch)
+                {
+                    break;
+                }
+                heights.push_back(exp(feature->b0_L + feature->b1_L * x + feature->b2 * x * x));
+            }
+            for (; i < borders->size(); i++)
+            {
+                float x = (*borders)[i];
+                heights.push_back(exp(feature->b0_R + feature->b1_R * x + feature->b3 * x * x));
+            }
         }
-        if (limits_R[minRT] < limits_L[sourceFeature])
+        for (size_t i = 1; i < borders->size(); i++)
         {
-            minRT++;
+            areas.push_back((heights[i] + heights[i - 1]) / 2 *
+                            ((*borders)[i] - (*borders)[i - 1]));
         }
-
-        unsigned int maxRT = sourceFeature;
-        while ((limits_L[maxRT] < limits_R[sourceFeature]) && (maxRT < limits_L.size()))
-        {
-            maxRT++;
-        }
-        if (limits_L[maxRT] > limits_R[sourceFeature])
-        {
-            maxRT++;
-        }
-        // the range minRT : maxRT contains all features which are relevant for the pairwise comparison
-        // find feature with the least dissimilar regression (excluding height information)
-        return 0;
+        return areas;
     }
 
-    void initialComponentGrouping(std::vector<FeaturePeak> &featureList, unsigned int replicateID)
+    float calcTanimoto(MovedRegression *feature_A, MovedRegression *feature_B)
     {
-        // this function creates pairs of similar features. A pair is only formed if for neither
-        // feature there is another feature which is more similar than the pair member, i.e.
-        // both features form a reliable group.
-        int featureCount = featureList.size();
-        std::vector<FeaturePeak *> featurePointers(featureCount, nullptr);
-        std::vector<float> orderSpace(featureCount, 0);
-        std::vector<float> cumError;
-        cumError.reserve(featureCount);
+        assert(feature_A->RT_switch != feature_B->RT_switch);
+        MovedRegression *feature_L = feature_A->RT_switch < feature_B->RT_switch ? feature_A : feature_B;
+        MovedRegression *feature_R = feature_A->RT_switch > feature_B->RT_switch ? feature_A : feature_B;
+        // naming: first  L / R : feature_L or _R; second L / R : left or right half of the regression
+        float b0_L_L = feature_L->b0_L;
+        float b0_L_R = feature_L->b0_R;
+        float b0_R_L = feature_R->b0_L;
+        float b0_R_R = feature_R->b0_R;
+        float b1_L_L = feature_L->b1_L;
+        float b1_L_R = feature_L->b1_R;
+        float b1_R_L = feature_R->b1_L;
+        float b1_R_R = feature_R->b1_R;
+        float b2_L = feature_L->b2;
+        float b2_R = feature_R->b2;
+        float b3_L = feature_L->b3;
+        float b3_R = feature_R->b3;
+        float switch_L = feature_L->RT_switch;
+        float switch_R = feature_R->RT_switch;
+        float limit_L = std::max(feature_L->limit_L, feature_R->limit_L);
+        float limit_R = std::max(feature_L->limit_R, feature_R->limit_R);
 
-        for (int i = 0; i < featureCount; i++)
-        {
-            featurePointers[i] = &(featureList[i]);
+        // find intersects of both regressions
+        std::vector<float> intersects; // @todo this can have a fixed size
+        intersects.push_back(limit_L);
+
+        // term under the root separate to check for 0 == ((b1A - b1B)^2 - 4* (b23A - b23B) * (b0A - b0B))
+        { // both left halves of the regressions
+            float root_LL = (b1_R_L - b1_L_L) * (b1_R_L - b1_L_L) - 4 * (b2_L - b2_R) * (b0_L_L - b0_R_L);
+            if (root_LL > 0)
+            {
+                // if the term is negative, there are no intersects between the two curves
+                float intersect_pos = (b1_R_L - b1_L_L) * (b1_R_L - b1_L_L) / (2 * (b2_L - b2_R)) + root_LL / (2 * (b2_L - b2_R));
+                if (intersect_pos > limit_L && intersect_pos < switch_L)
+                {
+                    intersects.push_back(intersect_pos);
+                }
+                float intersect_neg = (b1_R_L - b1_L_L) * (b1_R_L - b1_L_L) / (2 * (b2_L - b2_R)) - root_LL / (2 * (b2_L - b2_R));
+                if (intersect_neg > limit_L && intersect_neg < switch_L)
+                {
+                    intersects.push_back(intersect_neg);
+                }
+            }
         }
 
-        // @todo features should be returned sorted by RT already
-        std::sort(featurePointers.begin(), featurePointers.end(), [](FeaturePeak *lhs, FeaturePeak *rhs)
-                  { return lhs->retentionTime < rhs->retentionTime; });
-
-        // create a vector of all regression coefficients modified to use RT as the x-axis @todo no need to be dynamic
-        std::vector<RegCoeffs> movedCoefficients(featureCount, RegCoeffs{0, 0, 0, 0});
-
-        for (int i = 0; i < featureCount; i++)
-        {
-            // coefficients shift
-            RegCoeffs newCoeffs = featurePointers[i]->coefficients;
+        intersects.push_back(switch_L);
+        { // in the middle part, take the right half of feature_L and the left half of feature_R
+            float root_LR = (b1_R_L - b1_L_R) * (b1_R_L - b1_L_R) - 4 * (b3_L - b2_R) * (b0_L_R - b0_R_L);
+            if (root_LR > 0)
+            {
+                // if the term is negative, there are no intersects between the two curves
+                float intersect_pos = (b1_R_L - b1_L_R) * (b1_R_L - b1_L_R) / (2 * (b3_L - b2_R)) + root_LR / (2 * (b3_L - b2_R));
+                if (intersect_pos > switch_L && intersect_pos < switch_R)
+                {
+                    intersects.push_back(intersect_pos);
+                }
+                float intersect_neg = (b1_R_L - b1_L_R) * (b1_R_L - b1_L_R) / (2 * (b3_L - b2_R)) - root_LR / (2 * (b3_L - b2_R));
+                if (intersect_neg > switch_L && intersect_neg < switch_R)
+                {
+                    intersects.push_back(intersect_neg);
+                }
+            }
         }
 
-        // create order space
-        cumError.push_back(0); // always substract the sum of everything before the current range
-        for (int i = 0; i < featureCount; i++)
+        intersects.push_back(switch_R);
         {
-            cumError.push_back(featurePointers[i]->retentionTimeUncertainty);
+            float root_RR = (b1_R_R - b1_L_R) * (b1_R_R - b1_L_R) - 4 * (b3_L - b3_R) * (b0_L_L - b0_R_L);
+            if (root_RR > 0)
+            {
+                // if the term is negative, there are no intersects between the two curves
+                float intersect_pos = (b1_R_R - b1_L_R) * (b1_R_R - b1_L_R) / (2 * (b3_L - b3_R)) + root_RR / (2 * (b3_L - b3_R));
+                if (intersect_pos > switch_R && intersect_pos < limit_R)
+                {
+                    intersects.push_back(intersect_pos);
+                }
+                float intersect_neg = (b1_R_R - b1_L_R) * (b1_R_R - b1_L_R) / (2 * (b3_L - b3_R)) - root_RR / (2 * (b3_L - b3_R));
+                if (intersect_neg > switch_R && intersect_neg < limit_R)
+                {
+                    intersects.push_back(intersect_neg);
+                }
+            }
         }
-        std::partial_sum(cumError.begin(), cumError.end(), cumError.begin()); // cumulative sum
-
-        for (int i = 0; i < featureCount - 1; i++)
+        intersects.push_back(limit_R);
+        std::sort(intersects.begin(), intersects.end());
+        // subdivide the regions further in order for the score to be accurate
+        size_t subdivisions = 10;
+        size_t e = intersects.size();
+        for (size_t i = 1; i < e; i++)
         {
-            orderSpace[i] = featurePointers[i + 1]->retentionTime - featurePointers[i]->retentionTime;
+            float distance = intersects[i] - intersects[i - 1];
+            for (size_t i = 1; i < subdivisions; i++)
+            {
+                float step = distance * i;
+                intersects.push_back(intersects[i - 1] + step);
+            }
         }
-        // orderSpace contains all differences of the ordered data and a 0 at the last position
+        std::sort(intersects.begin(), intersects.end());
+        // trapezoid integral for both features independently
+        std::vector<float> areas_L = areas(&intersects, feature_L);
+        std::vector<float> areas_R = areas(&intersects, feature_R);
 
-        // for (size_t i = 0; i < featureCount - 1; i++)
-        // {
-        //     if (featureList[i]->retentionTimeUncertainty < orderSpace[i + 1])
-        //     {
-        //         std::cout << i << ",";
-        //     }
-        // }
-
-        std::vector<std::vector<int>> preComponents; // every vector contains the indices of component members
-        binningRT(preComponents, featureList, orderSpace, cumError, 0, featureCount - 1);
-        // all components will be constructed within the thusly defined groups
-        /// @todo make sure to control for adherence to binning when finalising components
-
-        // groups of size one are always valid components?
-
-        /// @todo process parameter: groups of size 1 after component decay
-        int overlapCount = 0;
-        for (size_t i = 1; i < preComponents.size(); i++) // @todo change back to i = 1
+        // scale by the maximum of either L or R at any given point
+        std::vector<float> weights;
+        weights.reserve(intersects.size() - 1);
+        size_t position = 1;
+        for (; position < weights.size(); position++)
         {
-            std::vector<int> tmpComp = preComponents[i];
-            float bridge = featureList[tmpComp[0]].retentionTime - featureList[preComponents[i - 1].back()].retentionTime;
-            float tol1 = featureList[tmpComp[0]].retentionTimeUncertainty;
-            float tol2 = featureList[preComponents[i - 1].back()].retentionTimeUncertainty;
-
-            if (0.6 < std::min(tol1, tol2))
+            // both left halves
+            if (weights[position] > switch_L)
             {
-                std::cout << "-";
+                break;
             }
-
-            if (bridge < std::min(tol1, tol2))
-            {
-                std::cout << "H";
-                ++overlapCount;
-            }
-            else if (bridge < std::max(tol1, tol2))
-            {
-                std::cout << "X";
-                ++overlapCount;
-            }
-            else if (bridge < tol1 + tol2)
-            {
-                std::cout << "O";
-                ++overlapCount;
-            }
-
-            // std::cout << tmpComp.size() << "\n\n";
-            if (preComponents[i].size() == 1)
-            {
-                continue;
-            }
-            // std::cout << tmpComp.size() << "; ";
-            for (size_t j = 1; j < tmpComp.size(); j++)
-            {
-                // std::cout << featureList[tmpComp[j]].retentionTime << ",";
-                // float diff = featureList[tmpComp[j]].retentionTime - featureList[tmpComp[j - 1]].retentionTime;
-                // float err1 = featureList[tmpComp[j - 1]].retentionTimeUncertainty;
-                // float err2 = featureList[tmpComp[j]].retentionTimeUncertainty;
-                // if (diff > (err1 + err2))
-                // {
-                //     std::cout << "H";
-                // }
-                // else if (diff > std::max(err1, err2))
-                // {
-                //     std::cout << "X";
-                // }
-                // else if (diff > std::min(err1, err2))
-                // {
-                //     std::cout << "O";
-                // }
-            }
-            // std::cout << "b\n";
-            // for (size_t j = 0; j < tmpComp.size(); j++)
-            // {
-            //     std::cout << featureList[tmpComp[j]].mz << ",";
-            // }
-            // std::cout << "\n";
+            float xval = (weights[position] + weights[position - 1]) / 2;
+            weights.push_back(std::max(exp(b0_L_L + b1_L_L * xval + b2_L * xval * xval),
+                                       exp(b0_R_L + b1_R_L * xval + b2_R * xval * xval)));
         }
-        std::cout << "\noverlap: " << overlapCount << "; percent: " << float(overlapCount) / preComponents.size() << "\n";
+        for (; position < weights.size(); position++)
+        {
+            // middle region
+            if (weights[position] > switch_R)
+            {
+                break;
+            }
+            float xval = (weights[position] + weights[position - 1]) / 2;
+            weights.push_back(std::max(exp(b0_L_R + b1_L_R * xval + b3_L * xval * xval),
+                                       exp(b0_R_L + b1_R_L * xval + b2_R * xval * xval)));
+        }
+        for (; position < weights.size(); position++)
+        {
+            // both right halves
+            float xval = (weights[position] + weights[position - 1]) / 2;
+            weights.push_back(std::max(exp(b0_L_R + b1_L_R * xval + b3_L * xval * xval),
+                                       exp(b0_R_R + b1_R_R * xval + b3_R * xval * xval)));
+        }
+        // multiply every area with the weight, then sum up and divide for the coefficent
+        assert(areas_L.size() == weights.size());
+        float AuB = 0; // area only covered by either A or B
+        float AnB = 0; // area covered by both A and B
+        for (size_t i = 0; i < weights.size(); i++)
+        {
+            areas_L[i] *= weights[i];
+            areas_R[i] *= weights[i];
+            AnB += std::min(areas_L[i], areas_R[i]);
+            AuB += abs(areas_L[i] - areas_R[i]);
+        }
+        return AuB / AnB;
     }
 }
