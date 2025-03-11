@@ -150,11 +150,13 @@ namespace StreamCraft
 
         // std::string file_extension;
 
-        pugi::xml_document doc;
+        pugi::xml_document mzml_base_document;
 
         pugi::xml_parse_result loading_result;
 
-        pugi::xml_node root;
+        pugi::xml_node mzml_root_node;
+
+        std::vector<pugi::xml_node> spectra;
 
         std::string format;
 
