@@ -22,20 +22,24 @@ StreamCraft::MZML::MZML(const std::filesystem::path &file) // @todo move to std:
     // file_name = file_name.substr(0, file_name.find_last_of("."));
 
     // const char *path = file.;
+    pugi::xml_document doc; // @todo why does this need to persist beyond the constructor? check access to class member variable
 
-    loading_result = doc.load_file(file.c_str(), pugi::parse_default | pugi::parse_declaration | pugi::parse_pi);
+    loading_result = mzml_base_document.load_file(file.c_str(), pugi::parse_default | pugi::parse_declaration | pugi::parse_pi);
+    auto loading2 = doc.load_file(file.c_str(), pugi::parse_default | pugi::parse_declaration | pugi::parse_pi);
+
+    assert(loading2.status == loading_result.status);
 
     if (loading_result)
     {
-        root = doc.document_element();
+        mzml_root_node = mzml_base_document.document_element();
 
-        if (!root)
+        if (!mzml_root_node)
         {
             std::cerr << "Root element is empty!" << std::endl; // @todo change this function to something that can return null if it fails
         }
         else
         {
-            format = root.name();
+            format = mzml_root_node.name();
 
             if ("indexedmzML" == format)
             {
@@ -55,14 +59,14 @@ StreamCraft::MZML::MZML(const std::filesystem::path &file) // @todo move to std:
 
     if (format == "mzML")
     {
-        root = root.first_child();
+        mzml_root_node = mzml_root_node.first_child();
     }
 
-    name = root.name();
+    name = mzml_root_node.name();
 
     std::string search_run = "//run";
 
-    pugi::xpath_node xps_run = root.select_node(search_run.c_str());
+    pugi::xpath_node xps_run = mzml_root_node.select_node(search_run.c_str());
 
     pugi::xml_node spec_list = xps_run.node().child("spectrumList");
 
@@ -120,14 +124,14 @@ StreamCraft::MZML::MZML(const std::filesystem::path &file) // @todo move to std:
 //     }
 // };
 
-std::vector<pugi::xml_node> StreamCraft::MZML::link_vector_spectra_nodes()
+std::vector<pugi::xml_node> StreamCraft::MZML::link_vector_spectra_nodes() // @todo this does not need to be called more than once
 {
 
-    std::vector<pugi::xml_node> spectra;
+    // std::vector<pugi::xml_node> spectra;
 
     std::string search_run = "//run";
 
-    pugi::xpath_node xps_run = root.select_node(search_run.c_str());
+    pugi::xpath_node xps_run = mzml_root_node.select_node(search_run.c_str());
 
     pugi::xml_node spec_list = xps_run.node().child("spectrumList");
 
@@ -135,7 +139,7 @@ std::vector<pugi::xml_node> StreamCraft::MZML::link_vector_spectra_nodes()
     {
         for (pugi::xml_node child = spec_list.first_child(); child; child = child.next_sibling())
         {
-            spectra.push_back(child);
+            this->spectra.push_back(child);
         }
     }
     else
@@ -143,7 +147,8 @@ std::vector<pugi::xml_node> StreamCraft::MZML::link_vector_spectra_nodes()
         std::cerr << "Spectra list not found in the mzML file!" << std::endl;
     }
 
-    return spectra;
+    assert(this->spectra.size() > 0);
+    return this->spectra;
 };
 
 int StreamCraft::MZML::extract_spec_index(const pugi::xml_node &spec)
@@ -697,7 +702,7 @@ std::vector<pugi::xml_node> StreamCraft::MZML::link_vector_chrom_nodes()
 
     std::string search_run = "//run";
 
-    pugi::xpath_node xps_run = root.select_node(search_run.c_str());
+    pugi::xpath_node xps_run = mzml_root_node.select_node(search_run.c_str());
 
     pugi::xml_node chrom_list = xps_run.node().child("chromatogramList");
 
@@ -933,7 +938,7 @@ void StreamCraft::MZML::write_spectra(
 
     std::string search_run = "//run";
 
-    pugi::xml_node run_node = root.select_node(search_run.c_str()).node();
+    pugi::xml_node run_node = mzml_root_node.select_node(search_run.c_str()).node();
 
     pugi::xml_node spec_list_node = run_node.child("spectrumList");
 
