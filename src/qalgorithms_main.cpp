@@ -16,6 +16,7 @@
 #include <string>
 #include <sstream>   // write peaks to file
 #include <algorithm> // remove duplicates from task list
+#include <numeric>   // infinity macro, sqrt
 
 namespace qAlgorithms
 {
