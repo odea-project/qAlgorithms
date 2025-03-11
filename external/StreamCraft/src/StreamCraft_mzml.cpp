@@ -5,25 +5,25 @@
 #include <algorithm>
 #include <filesystem>
 
-StreamCraft::MZML::MZML(const std::string &file) // @todo move to std::filesystem
+StreamCraft::MZML::MZML(const std::filesystem::path &file) // @todo move to std::filesystem
 {
 
-    file_path = file;
+    // file_path = file;
 
-    file_dir = file.substr(0, file.find_last_of("/\\") + 1);
+    // file_dir = file.substr(0, file.find_last_of("/\\") + 1);
 
-    if (file_dir.back() == '/')
-        file_dir.pop_back();
+    // if (file_dir.back() == '/')
+    //     file_dir.pop_back();
 
-    file_name = file.substr(file.find_last_of("/\\") + 1);
+    // file_name = file.substr(file.find_last_of("/\\") + 1);
 
-    file_extension = file_name.substr(file_name.find_last_of(".") + 1);
+    // file_extension = file_name.substr(file_name.find_last_of(".") + 1);
 
-    file_name = file_name.substr(0, file_name.find_last_of("."));
+    // file_name = file_name.substr(0, file_name.find_last_of("."));
 
-    const char *path = file.c_str();
+    // const char *path = file.;
 
-    loading_result = doc.load_file(path, pugi::parse_default | pugi::parse_declaration | pugi::parse_pi);
+    loading_result = doc.load_file(file.c_str(), pugi::parse_default | pugi::parse_declaration | pugi::parse_pi);
 
     if (loading_result)
     {
@@ -31,7 +31,7 @@ StreamCraft::MZML::MZML(const std::string &file) // @todo move to std::filesyste
 
         if (!root)
         {
-            std::cerr << "Root element is empty!" << std::endl;
+            std::cerr << "Root element is empty!" << std::endl; // @todo change this function to something that can return null if it fails
         }
         else
         {
@@ -82,32 +82,32 @@ StreamCraft::MZML::MZML(const std::string &file) // @todo move to std::filesyste
     number_chromatograms = chrom_list.attribute("count").as_int();
 };
 
-void StreamCraft::MZML::print()
-{
-    std::cout << name << std::endl;
-    std::cout << std::endl;
-    std::cout << " File:                      " << file_path << std::endl;
-    std::cout << std::endl;
-    std::cout << " Number of spectra:         " << number_spectra << std::endl;
-    std::cout << " Spectra mode (first):      " << first_spectra_headers.mode[0] << std::endl;
-    std::cout << " Number of binnary arrays:  " << number_spectra_binary_arrays << std::endl;
-    std::cout << " Name of binary arrays:     ";
-    if (number_spectra_binary_arrays > 0)
-    {
-        for (int i = 0; i < number_spectra_binary_arrays; ++i)
-        {
-            std::cout << spectra_binary_metadata[i].data_name_short;
-            if (i < (number_spectra_binary_arrays - 1))
-            {
-                std::cout << ", ";
-            }
-        }
-    }
-    std::cout << std::endl;
-    std::cout << std::endl;
-    std::cout << " Number of chromatograms:   " << number_chromatograms << std::endl;
-    std::cout << std::endl;
-};
+// void StreamCraft::MZML::print()
+// {
+//     std::cout << name << std::endl;
+//     std::cout << std::endl;
+//     std::cout << " File:                      " << file_path << std::endl;
+//     std::cout << std::endl;
+//     std::cout << " Number of spectra:         " << number_spectra << std::endl;
+//     std::cout << " Spectra mode (first):      " << first_spectra_headers.mode[0] << std::endl;
+//     std::cout << " Number of binnary arrays:  " << number_spectra_binary_arrays << std::endl;
+//     std::cout << " Name of binary arrays:     ";
+//     if (number_spectra_binary_arrays > 0)
+//     {
+//         for (int i = 0; i < number_spectra_binary_arrays; ++i)
+//         {
+//             std::cout << spectra_binary_metadata[i].data_name_short;
+//             if (i < (number_spectra_binary_arrays - 1))
+//             {
+//                 std::cout << ", ";
+//             }
+//         }
+//     }
+//     std::cout << std::endl;
+//     std::cout << std::endl;
+//     std::cout << " Number of chromatograms:   " << number_chromatograms << std::endl;
+//     std::cout << std::endl;
+// };
 
 // void StreamCraft::MZML::print_spectra_binary_metadata()
 // {
@@ -151,10 +151,10 @@ int StreamCraft::MZML::extract_spec_index(const pugi::xml_node &spec)
     return spec.attribute("index").as_int();
 };
 
-std::string StreamCraft::MZML::extract_spec_id(const pugi::xml_node &spec)
-{
-    return spec.attribute("id").as_string();
-};
+// std::string StreamCraft::MZML::extract_spec_id(const pugi::xml_node &spec)
+// {
+//     return spec.attribute("id").as_string();
+// };
 
 int StreamCraft::MZML::extract_spec_scan(const pugi::xml_node &spec)
 {
@@ -178,6 +178,7 @@ std::string StreamCraft::MZML::extract_spec_mode(const pugi::xml_node &spec)
 {
     pugi::xml_node centroid_node = spec.find_child_by_attribute("cvParam", "accession", "MS:1000127");
     pugi::xml_node profile_node = spec.find_child_by_attribute("cvParam", "accession", "MS:1000128");
+    // @todo what if both applies?
     if (centroid_node)
     {
         return "centroid";
@@ -327,24 +328,24 @@ double StreamCraft::MZML::extract_window_mzhigh(const pugi::xml_node &spec)
 double StreamCraft::MZML::extract_ion_mz(const pugi::xml_node &spec)
 {
     pugi::xml_node precursor = spec.child("precursorList").child("precursor");
-    pugi::xml_node slected_ion = precursor.child("selectedIonList").first_child();
-    pugi::xml_node ion_mz_node = slected_ion.find_child_by_attribute("cvParam", "name", "selected ion m/z");
+    pugi::xml_node selected_ion = precursor.child("selectedIonList").first_child();
+    pugi::xml_node ion_mz_node = selected_ion.find_child_by_attribute("cvParam", "name", "selected ion m/z");
     return ion_mz_node.attribute("value").as_double();
 };
 
 double StreamCraft::MZML::extract_ion_intensity(const pugi::xml_node &spec)
 {
     pugi::xml_node precursor = spec.child("precursorList").child("precursor");
-    pugi::xml_node slected_ion = precursor.child("selectedIonList").first_child();
-    pugi::xml_node ion_intensity_node = slected_ion.find_child_by_attribute("cvParam", "name", "peak intensity");
+    pugi::xml_node selected_ion = precursor.child("selectedIonList").first_child();
+    pugi::xml_node ion_intensity_node = selected_ion.find_child_by_attribute("cvParam", "name", "peak intensity");
     return ion_intensity_node.attribute("value").as_double();
 };
 
 int StreamCraft::MZML::extract_ion_charge(const pugi::xml_node &spec)
 {
     pugi::xml_node precursor = spec.child("precursorList").child("precursor");
-    pugi::xml_node slected_ion = precursor.child("selectedIonList").first_child();
-    pugi::xml_node ion_charge_node = slected_ion.find_child_by_attribute("cvParam", "name", "charge state");
+    pugi::xml_node selected_ion = precursor.child("selectedIonList").first_child();
+    pugi::xml_node ion_charge_node = selected_ion.find_child_by_attribute("cvParam", "name", "charge state");
     return ion_charge_node.attribute("value").as_int();
 };
 
@@ -436,9 +437,9 @@ StreamCraft::MS_SPECTRA_HEADERS StreamCraft::MZML::extract_spectra_headers(const
             headers.window_mzlow[i] = extract_window_mzlow(spec);
             headers.window_mzhigh[i] = extract_window_mzhigh(spec);
 
-            pugi::xml_node slected_ion = precursor.child("selectedIonList").first_child();
+            pugi::xml_node selected_ion = precursor.child("selectedIonList").first_child();
 
-            if (slected_ion)
+            if (selected_ion)
             {
                 headers.precursor_mz[i] = extract_ion_mz(spec);
                 headers.precursor_intensity[i] = extract_ion_intensity(spec);
@@ -1100,26 +1101,26 @@ void StreamCraft::MZML::write_spectra(
         }
     }
 
-    if (save)
-    {
+    // if (save)
+    // {
 
-        if (save_suffix == "")
-            save_suffix = "_modified";
+    //     if (save_suffix == "")
+    //         save_suffix = "_modified";
 
-        std::string new_file_path = file_dir + "/" + file_name + save_suffix + "." + file_extension;
+    //     std::string new_file_path = file_dir + "/" + file_name + save_suffix + "." + file_extension;
 
-        if (new_file_path == file_path)
-        {
-            std::cerr << "The new file path is the same as the original file path!" << std::endl;
-            return;
-        }
+    //     if (new_file_path == file_path)
+    //     {
+    //         std::cerr << "The new file path is the same as the original file path!" << std::endl;
+    //         return;
+    //     }
 
-        if (std::filesystem::exists(new_file_path))
-            std::filesystem::remove(new_file_path);
+    //     if (std::filesystem::exists(new_file_path))
+    //         std::filesystem::remove(new_file_path);
 
-        if (!doc.save_file(new_file_path.c_str()))
-            std::cerr << "Error saving the file!" << std::endl;
-    }
+    //     if (!doc.save_file(new_file_path.c_str()))
+    //         std::cerr << "Error saving the file!" << std::endl;
+    // }
 };
 
 std::vector<int> StreamCraft::MZML::get_spectra_index(std::vector<int> indices)
