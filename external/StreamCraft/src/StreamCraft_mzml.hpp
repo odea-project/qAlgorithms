@@ -85,9 +85,9 @@ namespace StreamCraft
         MS_SPECTRA_HEADERS extract_spectra_headers(const std::vector<int> &idxs);
         MS_CHROMATOGRAMS_HEADERS extract_chrom_headers(const std::vector<int> &idxs);
 
-        std::string extract_spec_id(const pugi::xml_node &spec); // never used, @todo check others
+        // std::string extract_spec_id(const pugi::xml_node &spec); // never used, @todo check others
         std::string extract_spec_mode(const pugi::xml_node &spec);
-        std::string extract_spec_polarity(const pugi::xml_node &spec);
+        std::string extract_spec_polarity(const pugi::xml_node &spec); // @todo make bool
         std::string extract_spec_title(const pugi::xml_node &spec);
 
         std::string extract_scan_filter_string(const pugi::xml_node &spec);
@@ -131,13 +131,15 @@ namespace StreamCraft
         std::vector<std::vector<std::vector<double>>> extract_chromatograms(const std::vector<int> &idxs);
 
     public:
-        std::string file_path;
+        std::filesystem::path path;
 
-        std::string file_dir;
+        // std::string file_path;
 
-        std::string file_name;
+        // std::string file_dir;
 
-        std::string file_extension;
+        // std::string file_name;
+
+        // std::string file_extension;
 
         pugi::xml_document doc;
 
@@ -157,7 +159,7 @@ namespace StreamCraft
 
         MS_SPECTRA_HEADERS first_spectra_headers;
 
-        MZML(const std::string &file);
+        MZML(const std::filesystem::path &file);
 
         std::vector<std::string> get_spectra_binary_short_names();
 
@@ -187,7 +189,7 @@ namespace StreamCraft
         std::vector<double> get_spectra_precursor_window_mzhigh(std::vector<int> indices = {});
         std::vector<double> get_spectra_collision_energy(std::vector<int> indices = {});
 
-        void print();
+        // void print();
         // void print_spectra_binary_metadata();
 
         void write_spectra(const std::vector<std::vector<std::vector<double>>> &spectra,
@@ -200,8 +202,3 @@ namespace StreamCraft
 }; // namespace StreamCraft
 
 #endif // STREAMCRAFT_MZML_HPP
-
-// #if defined(STREAMCRAFT_HEADER_ONLY) && !defined(STREAMCRAFT_MZML_SOURCE)
-// #	define STREAMCRAFT_MZML_SOURCE "StreamCraft_mzml.cpp"
-// #	include STREAMCRAFT_MZML_SOURCE
-// #endif
