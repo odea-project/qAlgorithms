@@ -54,6 +54,15 @@ namespace StreamCraft
         // };
     };
 
+    struct SpectrumData // this information is required by qAlgorithms to function
+    {
+        size_t spectrum_index = 0;     // start at 1
+        size_t spectrum_numPoints = 0; // profile points or centroids in this spectrum
+        int mode = 0;                  // 1 = profile, 2 = centroid
+        int MS_level = 0;
+        bool polarity; // 0 = negative, 1 = positive
+    };
+
     class MZML // @todo this is just a complicated way of having a filetype specific accession struct and a generalised container
     {
 
