@@ -1,5 +1,4 @@
 #include "StreamCraft_mzml.hpp"
-#include <omp.h>
 #include <filesystem>
 #include <cstring>
 #include <algorithm>
@@ -46,7 +45,7 @@ StreamCraft::MZML::MZML(const std::filesystem::path &file) // @todo move to std:
         auto first_node = spec_list.first_child();
         pugi::xml_node binary_list = first_node.child("binaryDataArrayList");
 
-        int counter = 0;
+        size_t counter = 0;
 
         for (const pugi::xml_node &bin : binary_list.children("binaryDataArray"))
         {
@@ -163,14 +162,16 @@ std::vector<std::vector<double>> StreamCraft::MZML::get_spectrum(int index)
     return spectrum;
 }
 
-std::vector<double> StreamCraft::MZML::get_spectra_rt(std::vector<int> indices)
+std::vector<double> StreamCraft::MZML::get_spectra_RT(std::vector<int> indices)
 {
-    std::vector<double> rts;
+    assert(indices.size() > 0);
+
+    std::vector<double> retention_times;
 
     if (number_spectra == 0)
     {
         std::cerr << "There are no spectra in the mzML file!" << std::endl;
-        return rts;
+        return retention_times;
     }
 
     if (indices.size() == 0)
@@ -179,19 +180,17 @@ std::vector<double> StreamCraft::MZML::get_spectra_rt(std::vector<int> indices)
         std::iota(indices.begin(), indices.end(), 0);
     }
 
-    int n = indices.size();
-
     std::vector<pugi::xml_node> spectra_nodes = link_vector_spectra_nodes();
 
-    for (int i = 0; i < n; ++i)
+    for (size_t i = 0; i < indices.size(); ++i)
     {
-        int idx = indices[i];
+        size_t idx = indices[i];
         pugi::xml_node spec = spectra_nodes[idx];
-        double rt = extract_scan_rt(spec);
-        rts.push_back(rt);
+        double RT = extract_scan_RT(spec);
+        retention_times.push_back(RT);
     }
 
-    return rts;
+    return retention_times;
 };
 
 bool StreamCraft::MZML::extract_spec_polarity(const pugi::xml_node &spec)
@@ -269,7 +268,7 @@ std::vector<pugi::xml_node> StreamCraft::MZML::link_vector_spectra_nodes() // @t
     return spectra;
 };
 
-double StreamCraft::MZML::extract_scan_rt(const pugi::xml_node &spec)
+double StreamCraft::MZML::extract_scan_RT(const pugi::xml_node &spec)
 {
     pugi::xml_node node_scan = spec.child("scanList").child("scan");
     pugi::xml_node rt_node = node_scan.find_child_by_attribute("cvParam", "name", "scan start time");
