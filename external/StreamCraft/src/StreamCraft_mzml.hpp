@@ -19,6 +19,12 @@
 
 namespace StreamCraft
 {
+    // enum SpectrumMode
+    // {
+    //     centroid;
+    //     profile;
+    // };
+
     class MZML_BINARY_METADATA // @todo there is no need for a file-specific metadata object
     {
 
@@ -91,11 +97,11 @@ namespace StreamCraft
         void extract_spectra_binary_metadata(const pugi::xml_node &first_node);
         MZML_BINARY_METADATA extract_binary_metadata(const pugi::xml_node &bin);
 
-        MS_SPECTRA_HEADERS extract_spectra_headers(const std::vector<int> &idxs);
+        // MS_SPECTRA_HEADERS extract_spectra_headers(const std::vector<int> &idxs);
         MS_CHROMATOGRAMS_HEADERS extract_chrom_headers(const std::vector<int> &idxs);
 
         // std::string extract_spec_id(const pugi::xml_node &spec); // never used, @todo check others
-        std::string extract_spec_mode(const pugi::xml_node &spec);
+        bool extract_spec_mode(const pugi::xml_node &spec);
         std::string extract_spec_polarity(const pugi::xml_node &spec); // @todo make bool
         std::string extract_spec_title(const pugi::xml_node &spec);
 
@@ -168,7 +174,7 @@ namespace StreamCraft
 
         int number_spectra_binary_arrays;
 
-        MS_SPECTRA_HEADERS first_spectra_headers;
+        // MS_SPECTRA_HEADERS first_spectra_headers;
 
         MZML(const std::filesystem::path &file);
 
@@ -181,24 +187,24 @@ namespace StreamCraft
         // std::vector<std::vector<std::vector<double>>> get_chromatograms(std::vector<int> indices = {});
 
         std::vector<int> get_spectra_index(std::vector<int> indices = {});
-        std::vector<int> get_spectra_scan_number(std::vector<int> indices = {});
+        // std::vector<int> get_spectra_scan_number(std::vector<int> indices = {});
         std::vector<int> get_spectra_array_length(std::vector<int> indices = {});
         std::vector<int> get_spectra_level(std::vector<int> indices = {});
-        std::vector<std::string> get_spectra_mode(std::vector<int> indices = {});
+        std::vector<bool> get_spectra_mode(std::vector<int> indices = {});
         std::vector<std::string> get_spectra_polarity(std::vector<int> indices = {});
-        std::vector<double> get_spectra_lowmz(std::vector<int> indices = {});
-        std::vector<double> get_spectra_highmz(std::vector<int> indices = {});
-        std::vector<double> get_spectra_bpmz(std::vector<int> indices = {});
-        std::vector<double> get_spectra_bpint(std::vector<int> indices = {});
-        std::vector<double> get_spectra_tic(std::vector<int> indices = {});
+        // std::vector<double> get_spectra_lowmz(std::vector<int> indices = {});
+        // std::vector<double> get_spectra_highmz(std::vector<int> indices = {});
+        // std::vector<double> get_spectra_bpmz(std::vector<int> indices = {});
+        // std::vector<double> get_spectra_bpint(std::vector<int> indices = {});
+        // std::vector<double> get_spectra_tic(std::vector<int> indices = {});
         std::vector<double> get_spectra_rt(std::vector<int> indices = {});
-        std::vector<double> get_spectra_drift(std::vector<int> indices = {});
-        std::vector<int> get_spectra_precursor_scan(std::vector<int> indices = {});
-        std::vector<double> get_spectra_precursor_mz(std::vector<int> indices = {});
-        std::vector<double> get_spectra_precursor_window_mz(std::vector<int> indices = {});
-        std::vector<double> get_spectra_precursor_window_mzlow(std::vector<int> indices = {});
-        std::vector<double> get_spectra_precursor_window_mzhigh(std::vector<int> indices = {});
-        std::vector<double> get_spectra_collision_energy(std::vector<int> indices = {});
+        // std::vector<double> get_spectra_drift(std::vector<int> indices = {});
+        // std::vector<int> get_spectra_precursor_scan(std::vector<int> indices = {});
+        // std::vector<double> get_spectra_precursor_mz(std::vector<int> indices = {});
+        // std::vector<double> get_spectra_precursor_window_mz(std::vector<int> indices = {});
+        // std::vector<double> get_spectra_precursor_window_mzlow(std::vector<int> indices = {});
+        // std::vector<double> get_spectra_precursor_window_mzhigh(std::vector<int> indices = {});
+        // std::vector<double> get_spectra_collision_energy(std::vector<int> indices = {});
 
         // void print();
         // void print_spectra_binary_metadata();
