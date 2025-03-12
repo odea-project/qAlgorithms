@@ -497,7 +497,7 @@ namespace qAlgorithms
             return empty;
         }
 
-        std::vector<double> retention_times = data.get_spectra_rt(selectedIndices);
+        std::vector<double> retention_times = data.get_spectra_RT(selectedIndices);
         rt_diff = calcRTDiff(&retention_times);
 
         selectedIndices.shrink_to_fit();
