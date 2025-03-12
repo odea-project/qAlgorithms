@@ -51,7 +51,7 @@ namespace StreamCraft
     private:
         std::vector<MZML_BINARY_METADATA> spectra_binary_metadata;
 
-        std::vector<std::string> possible_accessions_binary_data = {
+        const std::vector<std::string> possible_accessions_binary_data = {
             "MS:1000514", "MS:1000515", "MS:1000516", "MS:1000517",
             "MS:1000595", "MS:1000617", "MS:1000786", "MS:1000820",
             "MS:1000821", "MS:1000822", "MS:1002478", "MS:1002529",
@@ -59,7 +59,7 @@ namespace StreamCraft
             "MS:1002745", "MS:1002893", "MS:1003143", "MS:1003157",
             "MS:1003158"};
 
-        std::vector<std::string> possible_short_name_binary_data = {
+        const std::vector<std::string> possible_short_name_binary_data = {
             "mz", "intensity", "charge", "sn",
             "time", "wavelength", "other", "flowrate",
             "pressure", "temperature", "mean_charge", "resolution",
@@ -90,24 +90,19 @@ namespace StreamCraft
 
         // std::vector<pugi::xml_node> spectra; // making this a class member makes the code unbelieveably slow
 
-        int number_spectra;
+        unsigned int number_spectra;
 
-        int number_chromatograms;
-
-        int number_spectra_binary_arrays;
-
-        // MS_SPECTRA_HEADERS first_spectra_headers;
+        unsigned int number_spectra_binary_arrays;
 
         MZML(const std::filesystem::path &file);
 
         std::vector<std::vector<double>> get_spectrum(int index); // this is the actually important function
 
-        std::vector<int> get_spectra_index(std::vector<int> indices = {});
-        std::vector<int> get_spectra_array_length(std::vector<int> indices = {});
-        std::vector<int> get_spectra_level(std::vector<int> indices = {});
-        std::vector<bool> get_spectra_mode(std::vector<int> indices = {});
-        std::vector<bool> get_spectra_polarity(std::vector<int> indices = {});
-        std::vector<double> get_spectra_RT(std::vector<int> indices = {});
+        std::vector<size_t> get_spectra_index(const std::vector<unsigned int> *indices);
+        std::vector<int> get_spectra_level(const std::vector<unsigned int> *indices);
+        std::vector<bool> get_spectra_mode(const std::vector<unsigned int> *indices);
+        std::vector<bool> get_spectra_polarity(const std::vector<unsigned int> *indices);
+        std::vector<double> get_spectra_RT(const std::vector<unsigned int> *indices);
     }; // class MZML
 }; // namespace StreamCraft
 
