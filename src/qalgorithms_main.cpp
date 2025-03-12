@@ -101,7 +101,7 @@ int main(int argc, char *argv[])
 
 #pragma region file processing
     std::string filename;
-    const std::vector<std::string> polarities = {"positive", "negative"}; // @todo make bool
+    const bool polarities{true, false}; // @todo make bool
     int counter = 1;
     for (std::filesystem::path pathSource : tasklist)
     {
@@ -133,7 +133,7 @@ int main(int argc, char *argv[])
             std::cout << " file ok\n";
         }
         // @todo find a more elegant solution for polarity switching
-        for (auto polarity : polarities)
+        for (bool polarity : polarities)
         {
             filename = pathSource.stem().string();
 #pragma region "centroiding"

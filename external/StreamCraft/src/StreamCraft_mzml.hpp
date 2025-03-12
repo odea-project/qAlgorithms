@@ -102,7 +102,7 @@ namespace StreamCraft
 
         // std::string extract_spec_id(const pugi::xml_node &spec); // never used, @todo check others
         bool extract_spec_mode(const pugi::xml_node &spec);
-        std::string extract_spec_polarity(const pugi::xml_node &spec); // @todo make bool
+        bool extract_spec_polarity(const pugi::xml_node &spec); // @todo make bool
         std::string extract_spec_title(const pugi::xml_node &spec);
 
         std::string extract_scan_filter_string(const pugi::xml_node &spec);
@@ -191,7 +191,7 @@ namespace StreamCraft
         std::vector<int> get_spectra_array_length(std::vector<int> indices = {});
         std::vector<int> get_spectra_level(std::vector<int> indices = {});
         std::vector<bool> get_spectra_mode(std::vector<int> indices = {});
-        std::vector<std::string> get_spectra_polarity(std::vector<int> indices = {});
+        std::vector<bool> get_spectra_polarity(std::vector<int> indices = {});
         // std::vector<double> get_spectra_lowmz(std::vector<int> indices = {});
         // std::vector<double> get_spectra_highmz(std::vector<int> indices = {});
         // std::vector<double> get_spectra_bpmz(std::vector<int> indices = {});
