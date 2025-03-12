@@ -414,7 +414,7 @@ namespace qAlgorithms
         StreamCraft::MZML &data,
         std::vector<float> &convertRT,
         float &rt_diff,
-        const std::string polarity,
+        const bool polarity,
         const bool ms1only)
     {
         // this is only relevant when reading in pre-centroided data
@@ -428,12 +428,12 @@ namespace qAlgorithms
             displayPPMwarning = true;
         }
 
-        std::vector<bool> spectrum_mode = data.get_spectra_mode();                // get spectrum mode (centroid or profile)
-        std::vector<std::string> spectrum_polarity = data.get_spectra_polarity(); // get spectrum polarity (positive or negative)
-        std::vector<int> indices = data.get_spectra_index();                      // get all indices
-        std::vector<int> ms_levels = data.get_spectra_level();                    // get all MS levels
-        std::vector<int> num_datapoints = data.get_spectra_array_length();        // get number of data points
-        double expectedDifference_mz = 0.0;                                       // expected difference between two consecutive x-axis values
+        std::vector<bool> spectrum_mode = data.get_spectra_mode();         // get spectrum mode (centroid or profile)
+        std::vector<bool> spectrum_polarity = data.get_spectra_polarity(); // get spectrum polarity (positive or negative)
+        std::vector<int> indices = data.get_spectra_index();               // get all indices
+        std::vector<int> ms_levels = data.get_spectra_level();             // get all MS levels
+        std::vector<int> num_datapoints = data.get_spectra_array_length(); // get number of data points
+        double expectedDifference_mz = 0.0;                                // expected difference between two consecutive x-axis values
         assert(!indices.empty() && num_datapoints[0] > 4);
 
         // CHECK IF CENTROIDED SPECTRA

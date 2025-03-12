@@ -39,7 +39,7 @@ namespace qAlgorithms
         StreamCraft::MZML &data,
         std::vector<float> &convertRT,
         float &rt_diff,
-        const std::string polarity,
+        const bool polarity,
         const bool ms1only = true);
 
     std::vector<FeaturePeak> findPeaks_QBIN(
