@@ -428,7 +428,7 @@ namespace qAlgorithms
             displayPPMwarning = true;
         }
 
-        std::vector<std::string> spectrum_mode = data.get_spectra_mode();         // get spectrum mode (centroid or profile)
+        std::vector<bool> spectrum_mode = data.get_spectra_mode();                // get spectrum mode (centroid or profile)
         std::vector<std::string> spectrum_polarity = data.get_spectra_polarity(); // get spectrum polarity (positive or negative)
         std::vector<int> indices = data.get_spectra_index();                      // get all indices
         std::vector<int> ms_levels = data.get_spectra_level();                    // get all MS levels
@@ -437,7 +437,7 @@ namespace qAlgorithms
         assert(!indices.empty() && num_datapoints[0] > 4);
 
         // CHECK IF CENTROIDED SPECTRA
-        size_t num_centroided_spectra = std::count(spectrum_mode.begin(), spectrum_mode.end(), "centroid");
+        size_t num_centroided_spectra = std::count(spectrum_mode.begin(), spectrum_mode.end(), false);
         if (num_centroided_spectra > spectrum_mode.size() / 2) // in profile mode sometimes centroided spectra appear as well @todo is 2 a good idea?
         {
             std::cerr << "Centroided data is not supported in this version of qAlgorithms!\n"
@@ -477,7 +477,7 @@ namespace qAlgorithms
             {
                 continue;
             }
-            if (spectrum_mode[i] != "profile")
+            if (!spectrum_mode[i])
             {
                 centroidCount++;
                 continue;

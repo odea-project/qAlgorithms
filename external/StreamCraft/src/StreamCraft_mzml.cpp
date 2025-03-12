@@ -72,8 +72,6 @@ StreamCraft::MZML::MZML(const std::filesystem::path &file) // @todo move to std:
 
     std::vector<int> sp0 = {0};
 
-    first_spectra_headers = extract_spectra_headers(sp0);
-
     number_spectra = spec_list.attribute("count").as_int();
 
     if (number_spectra > 0)
@@ -102,6 +100,70 @@ std::vector<std::vector<double>> StreamCraft::MZML::get_spectrum(int index)
 
     return spectrum;
 }
+
+std::vector<double> StreamCraft::MZML::get_spectra_rt(std::vector<int> indices)
+{
+
+    std::vector<double> rts;
+
+    if (number_spectra == 0)
+    {
+        std::cerr << "There are no spectra in the mzML file!" << std::endl;
+        return rts;
+    }
+
+    if (indices.size() == 0)
+    {
+        indices.resize(number_spectra);
+        std::iota(indices.begin(), indices.end(), 0);
+    }
+
+    int n = indices.size();
+
+    std::vector<pugi::xml_node> spectra_nodes = link_vector_spectra_nodes();
+
+    for (int i = 0; i < n; ++i)
+    {
+        int idx = indices[i];
+        pugi::xml_node spec = spectra_nodes[idx];
+        double rt = extract_scan_rt(spec);
+        rts.push_back(rt);
+    }
+
+    return rts;
+};
+
+std::vector<std::string> StreamCraft::MZML::get_spectra_polarity(std::vector<int> indices)
+{
+
+    std::vector<std::string> polarities;
+
+    if (number_spectra == 0)
+    {
+        std::cerr << "There are no spectra in the mzML file!" << std::endl;
+        return polarities;
+    }
+
+    if (indices.size() == 0)
+    {
+        indices.resize(number_spectra);
+        std::iota(indices.begin(), indices.end(), 0);
+    }
+
+    int n = indices.size();
+
+    std::vector<pugi::xml_node> spectra_nodes = link_vector_spectra_nodes();
+
+    for (int i = 0; i < n; ++i)
+    {
+        int idx = indices[i];
+        pugi::xml_node spec = spectra_nodes[idx];
+        std::string polarity = extract_spec_polarity(spec);
+        polarities.push_back(polarity);
+    }
+
+    return polarities;
+};
 
 // void StreamCraft::MZML::print()
 // {
@@ -194,25 +256,6 @@ int StreamCraft::MZML::extract_spec_level(const pugi::xml_node &spec)
 {
     pugi::xml_node level_node = spec.find_child_by_attribute("cvParam", "name", "ms level");
     return level_node.attribute("value").as_int();
-};
-
-std::string StreamCraft::MZML::extract_spec_mode(const pugi::xml_node &spec)
-{
-    pugi::xml_node centroid_node = spec.find_child_by_attribute("cvParam", "accession", "MS:1000127");
-    pugi::xml_node profile_node = spec.find_child_by_attribute("cvParam", "accession", "MS:1000128");
-    // @todo what if both applies?
-    if (centroid_node)
-    {
-        return "centroid";
-    }
-    else if (profile_node)
-    {
-        return "profile";
-    }
-    else
-    {
-        return "";
-    }
 };
 
 std::string StreamCraft::MZML::extract_spec_polarity(const pugi::xml_node &spec)
@@ -400,88 +443,6 @@ double StreamCraft::MZML::extract_activation_ce(const pugi::xml_node &spec)
         return 0;
     }
 };
-
-StreamCraft::MS_SPECTRA_HEADERS StreamCraft::MZML::extract_spectra_headers(const std::vector<int> &idxs)
-{
-
-    StreamCraft::MS_SPECTRA_HEADERS headers;
-
-    std::vector<pugi::xml_node> spectra_nodes = link_vector_spectra_nodes();
-
-    // spectra_nodes = this->spectra;
-
-    int n = idxs.size();
-
-    if (n == 0)
-    {
-        std::cerr << "No indices given!" << std::endl;
-        return headers;
-    }
-
-    if (spectra_nodes.size() == 0)
-    {
-        std::cerr << "No spectra found!" << std::endl;
-        return headers;
-    }
-
-    headers.resize_all(n);
-
-    // # pragma omp parallel for
-    for (int i = 0; i < n; i++)
-    {
-
-        const int index = idxs[i];
-
-        const pugi::xml_node &spec = spectra_nodes[index];
-
-        headers.index[i] = extract_spec_index(spec);
-        headers.scan[i] = extract_spec_scan(spec);
-        headers.array_length[i] = extract_spec_array_length(spec);
-        headers.level[i] = extract_spec_level(spec);
-        headers.mode[i] = extract_spec_mode(spec);
-        headers.polarity[i] = extract_spec_polarity(spec);
-        headers.lowmz[i] = extract_spec_lowmz(spec);
-        headers.highmz[i] = extract_spec_highmz(spec);
-        headers.bpmz[i] = extract_spec_bpmz(spec);
-        headers.bpint[i] = extract_spec_bpint(spec);
-        headers.tic[i] = extract_spec_tic(spec);
-        headers.title[i] = extract_spec_title(spec);
-        headers.rt[i] = extract_scan_rt(spec);
-        headers.drift[i] = extract_scan_drift(spec);
-        headers.filter_string[i] = extract_scan_filter_string(spec);
-        headers.config[i] = extract_scan_config(spec);
-        headers.injection_ion_time[i] = extract_scan_injection_ion_time(spec);
-
-        pugi::xml_node precursor = spec.child("precursorList").child("precursor");
-
-        if (precursor)
-        {
-            headers.precursor_scan[i] = extract_precursor_scan(spec);
-            headers.window_mz[i] = extract_window_mz(spec);
-            headers.window_mzlow[i] = extract_window_mzlow(spec);
-            headers.window_mzhigh[i] = extract_window_mzhigh(spec);
-
-            pugi::xml_node selected_ion = precursor.child("selectedIonList").first_child();
-
-            if (selected_ion)
-            {
-                headers.precursor_mz[i] = extract_ion_mz(spec);
-                headers.precursor_intensity[i] = extract_ion_intensity(spec);
-                headers.precursor_charge[i] = extract_ion_charge(spec);
-            }
-
-            pugi::xml_node activation = precursor.child("activation");
-
-            if (activation)
-            {
-                headers.activation_type[i] = extract_activation_type(spec);
-                headers.activation_ce[i] = extract_activation_ce(spec);
-            }
-        }
-    } // end of i loop
-
-    return headers;
-}
 
 StreamCraft::MZML_BINARY_METADATA StreamCraft::MZML::extract_binary_metadata(const pugi::xml_node &bin)
 {
@@ -1179,38 +1140,6 @@ std::vector<int> StreamCraft::MZML::get_spectra_index(std::vector<int> indices)
     return idxs;
 };
 
-std::vector<int> StreamCraft::MZML::get_spectra_scan_number(std::vector<int> indices)
-{
-
-    std::vector<int> scans;
-
-    if (number_spectra == 0)
-    {
-        std::cerr << "There are no spectra in the mzML file!" << std::endl;
-        return scans;
-    }
-
-    if (indices.size() == 0)
-    {
-        indices.resize(number_spectra);
-        std::iota(indices.begin(), indices.end(), 0);
-    }
-
-    int n = indices.size();
-
-    std::vector<pugi::xml_node> spectra_nodes = link_vector_spectra_nodes();
-
-    for (int i = 0; i < n; ++i)
-    {
-        int idx = indices[i];
-        pugi::xml_node spec = spectra_nodes[idx];
-        int scan = extract_spec_scan(spec);
-        scans.push_back(scan);
-    }
-
-    return scans;
-};
-
 std::vector<int> StreamCraft::MZML::get_spectra_array_length(std::vector<int> indices)
 {
 
@@ -1275,10 +1204,29 @@ std::vector<int> StreamCraft::MZML::get_spectra_level(std::vector<int> indices)
     return levels;
 };
 
-std::vector<std::string> StreamCraft::MZML::get_spectra_mode(std::vector<int> indices) // centroid or profile
+bool StreamCraft::MZML::extract_spec_mode(const pugi::xml_node &spec)
+{
+    pugi::xml_node centroid_node = spec.find_child_by_attribute("cvParam", "accession", "MS:1000127");
+    pugi::xml_node profile_node = spec.find_child_by_attribute("cvParam", "accession", "MS:1000128");
+    // @todo what if both applies?
+    if (centroid_node)
+    {
+        return false;
+    }
+    else if (profile_node)
+    {
+        return true;
+    }
+    else
+    {
+        assert(false);
+    }
+};
+
+std::vector<bool> StreamCraft::MZML::get_spectra_mode(std::vector<int> indices) // centroid or profile
 {
 
-    std::vector<std::string> modes;
+    std::vector<bool> modes;
 
     if (number_spectra == 0)
     {
@@ -1300,457 +1248,9 @@ std::vector<std::string> StreamCraft::MZML::get_spectra_mode(std::vector<int> in
     {
         int idx = indices[i];
         pugi::xml_node spec = spectra_nodes[idx];
-        std::string mode = extract_spec_mode(spec);
+        bool mode = extract_spec_mode(spec);
         modes.push_back(mode);
     }
 
     return modes;
-};
-
-std::vector<std::string> StreamCraft::MZML::get_spectra_polarity(std::vector<int> indices)
-{
-
-    std::vector<std::string> polarities;
-
-    if (number_spectra == 0)
-    {
-        std::cerr << "There are no spectra in the mzML file!" << std::endl;
-        return polarities;
-    }
-
-    if (indices.size() == 0)
-    {
-        indices.resize(number_spectra);
-        std::iota(indices.begin(), indices.end(), 0);
-    }
-
-    int n = indices.size();
-
-    std::vector<pugi::xml_node> spectra_nodes = link_vector_spectra_nodes();
-
-    for (int i = 0; i < n; ++i)
-    {
-        int idx = indices[i];
-        pugi::xml_node spec = spectra_nodes[idx];
-        std::string polarity = extract_spec_polarity(spec);
-        polarities.push_back(polarity);
-    }
-
-    return polarities;
-};
-
-std::vector<double> StreamCraft::MZML::get_spectra_lowmz(std::vector<int> indices)
-{
-
-    std::vector<double> lowmzs;
-
-    if (number_spectra == 0)
-    {
-        std::cerr << "There are no spectra in the mzML file!" << std::endl;
-        return lowmzs;
-    }
-
-    if (indices.size() == 0)
-    {
-        indices.resize(number_spectra);
-        std::iota(indices.begin(), indices.end(), 0);
-    }
-
-    int n = indices.size();
-
-    std::vector<pugi::xml_node> spectra_nodes = link_vector_spectra_nodes();
-
-    for (int i = 0; i < n; ++i)
-    {
-        int idx = indices[i];
-        pugi::xml_node spec = spectra_nodes[idx];
-        double lowmz = extract_spec_lowmz(spec);
-        lowmzs.push_back(lowmz);
-    }
-
-    return lowmzs;
-};
-
-std::vector<double> StreamCraft::MZML::get_spectra_highmz(std::vector<int> indices)
-{
-
-    std::vector<double> highmzs;
-
-    if (number_spectra == 0)
-    {
-        std::cerr << "There are no spectra in the mzML file!" << std::endl;
-        return highmzs;
-    }
-
-    if (indices.size() == 0)
-    {
-        indices.resize(number_spectra);
-        std::iota(indices.begin(), indices.end(), 0);
-    }
-
-    int n = indices.size();
-
-    std::vector<pugi::xml_node> spectra_nodes = link_vector_spectra_nodes();
-
-    for (int i = 0; i < n; ++i)
-    {
-        int idx = indices[i];
-        pugi::xml_node spec = spectra_nodes[idx];
-        double highmz = extract_spec_highmz(spec);
-        highmzs.push_back(highmz);
-    }
-
-    return highmzs;
-};
-
-std::vector<double> StreamCraft::MZML::get_spectra_bpmz(std::vector<int> indices)
-{
-
-    std::vector<double> bpmzs;
-
-    if (number_spectra == 0)
-    {
-        std::cerr << "There are no spectra in the mzML file!" << std::endl;
-        return bpmzs;
-    }
-
-    if (indices.size() == 0)
-    {
-        indices.resize(number_spectra);
-        std::iota(indices.begin(), indices.end(), 0);
-    }
-
-    int n = indices.size();
-
-    std::vector<pugi::xml_node> spectra_nodes = link_vector_spectra_nodes();
-
-    for (int i = 0; i < n; ++i)
-    {
-        int idx = indices[i];
-        pugi::xml_node spec = spectra_nodes[idx];
-        double bpmz = extract_spec_bpmz(spec);
-        bpmzs.push_back(bpmz);
-    }
-
-    return bpmzs;
-};
-
-std::vector<double> StreamCraft::MZML::get_spectra_bpint(std::vector<int> indices)
-{
-
-    std::vector<double> bpints;
-
-    if (number_spectra == 0)
-    {
-        std::cerr << "There are no spectra in the mzML file!" << std::endl;
-        return bpints;
-    }
-
-    if (indices.size() == 0)
-    {
-        indices.resize(number_spectra);
-        std::iota(indices.begin(), indices.end(), 0);
-    }
-
-    int n = indices.size();
-
-    std::vector<pugi::xml_node> spectra_nodes = link_vector_spectra_nodes();
-
-    for (int i = 0; i < n; ++i)
-    {
-        int idx = indices[i];
-        pugi::xml_node spec = spectra_nodes[idx];
-        double bpint = extract_spec_bpint(spec);
-        bpints.push_back(bpint);
-    }
-
-    return bpints;
-};
-
-std::vector<double> StreamCraft::MZML::get_spectra_tic(std::vector<int> indices)
-{
-
-    std::vector<double> tics;
-
-    if (number_spectra == 0)
-    {
-        std::cerr << "There are no spectra in the mzML file!" << std::endl;
-        return tics;
-    }
-
-    if (indices.size() == 0)
-    {
-        indices.resize(number_spectra);
-        std::iota(indices.begin(), indices.end(), 0);
-    }
-
-    int n = indices.size();
-
-    std::vector<pugi::xml_node> spectra_nodes = link_vector_spectra_nodes();
-
-    for (int i = 0; i < n; ++i)
-    {
-        int idx = indices[i];
-        pugi::xml_node spec = spectra_nodes[idx];
-        double tic = extract_spec_tic(spec);
-        tics.push_back(tic);
-    }
-
-    return tics;
-};
-
-std::vector<double> StreamCraft::MZML::get_spectra_rt(std::vector<int> indices)
-{
-
-    std::vector<double> rts;
-
-    if (number_spectra == 0)
-    {
-        std::cerr << "There are no spectra in the mzML file!" << std::endl;
-        return rts;
-    }
-
-    if (indices.size() == 0)
-    {
-        indices.resize(number_spectra);
-        std::iota(indices.begin(), indices.end(), 0);
-    }
-
-    int n = indices.size();
-
-    std::vector<pugi::xml_node> spectra_nodes = link_vector_spectra_nodes();
-
-    for (int i = 0; i < n; ++i)
-    {
-        int idx = indices[i];
-        pugi::xml_node spec = spectra_nodes[idx];
-        double rt = extract_scan_rt(spec);
-        rts.push_back(rt);
-    }
-
-    return rts;
-};
-
-std::vector<double> StreamCraft::MZML::get_spectra_drift(std::vector<int> indices)
-{
-
-    std::vector<double> drifts;
-
-    if (number_spectra == 0)
-    {
-        std::cerr << "There are no spectra in the mzML file!" << std::endl;
-        return drifts;
-    }
-
-    if (indices.size() == 0)
-    {
-        indices.resize(number_spectra);
-        std::iota(indices.begin(), indices.end(), 0);
-    }
-
-    int n = indices.size();
-
-    std::vector<pugi::xml_node> spectra_nodes = link_vector_spectra_nodes();
-
-    for (int i = 0; i < n; ++i)
-    {
-        int idx = indices[i];
-        pugi::xml_node spec = spectra_nodes[idx];
-        double drift = extract_scan_drift(spec);
-        drifts.push_back(drift);
-    }
-
-    return drifts;
-};
-
-std::vector<int> StreamCraft::MZML::get_spectra_precursor_scan(std::vector<int> indices)
-{
-
-    std::vector<int> prec_scans;
-
-    if (number_spectra == 0)
-    {
-        std::cerr << "There are no spectra in the mzML file!" << std::endl;
-        return prec_scans;
-    }
-
-    if (indices.size() == 0)
-    {
-        indices.resize(number_spectra);
-        std::iota(indices.begin(), indices.end(), 0);
-    }
-
-    int n = indices.size();
-
-    std::vector<pugi::xml_node> spectra_nodes = link_vector_spectra_nodes();
-
-    for (int i = 0; i < n; ++i)
-    {
-        int idx = indices[i];
-        pugi::xml_node spec = spectra_nodes[idx];
-        int prec_scan = extract_precursor_scan(spec);
-        prec_scans.push_back(prec_scan);
-    }
-
-    return prec_scans;
-};
-
-std::vector<double> StreamCraft::MZML::get_spectra_precursor_mz(std::vector<int> indices)
-{
-
-    std::vector<double> prec_mzs;
-
-    if (number_spectra == 0)
-    {
-        std::cerr << "There are no spectra in the mzML file!" << std::endl;
-        return prec_mzs;
-    }
-
-    if (indices.size() == 0)
-    {
-        indices.resize(number_spectra);
-        std::iota(indices.begin(), indices.end(), 0);
-    }
-
-    int n = indices.size();
-
-    std::vector<pugi::xml_node> spectra_nodes = link_vector_spectra_nodes();
-
-    for (int i = 0; i < n; ++i)
-    {
-        int idx = indices[i];
-        pugi::xml_node spec = spectra_nodes[idx];
-        double prec_mz = extract_ion_mz(spec);
-        prec_mzs.push_back(prec_mz);
-    }
-
-    return prec_mzs;
-};
-
-std::vector<double> StreamCraft::MZML::get_spectra_precursor_window_mz(std::vector<int> indices)
-{
-
-    std::vector<double> prec_w_mzs;
-
-    if (number_spectra == 0)
-    {
-        std::cerr << "There are no spectra in the mzML file!" << std::endl;
-        return prec_w_mzs;
-    }
-
-    if (indices.size() == 0)
-    {
-        indices.resize(number_spectra);
-        std::iota(indices.begin(), indices.end(), 0);
-    }
-
-    int n = indices.size();
-
-    std::vector<pugi::xml_node> spectra_nodes = link_vector_spectra_nodes();
-
-    for (int i = 0; i < n; ++i)
-    {
-        int idx = indices[i];
-        pugi::xml_node spec = spectra_nodes[idx];
-        double prec_w_mz = extract_window_mz(spec);
-        prec_w_mzs.push_back(prec_w_mz);
-    }
-
-    return prec_w_mzs;
-};
-
-std::vector<double> StreamCraft::MZML::get_spectra_precursor_window_mzlow(std::vector<int> indices)
-{
-
-    std::vector<double> prec_w_mzlows;
-
-    if (number_spectra == 0)
-    {
-        std::cerr << "There are no spectra in the mzML file!" << std::endl;
-        return prec_w_mzlows;
-    }
-
-    if (indices.size() == 0)
-    {
-        indices.resize(number_spectra);
-        std::iota(indices.begin(), indices.end(), 0);
-    }
-
-    int n = indices.size();
-
-    std::vector<pugi::xml_node> spectra_nodes = link_vector_spectra_nodes();
-
-    for (int i = 0; i < n; ++i)
-    {
-        int idx = indices[i];
-        pugi::xml_node spec = spectra_nodes[idx];
-        double prec_w_mzlow = extract_window_mzlow(spec);
-        prec_w_mzlows.push_back(prec_w_mzlow);
-    }
-
-    return prec_w_mzlows;
-};
-
-std::vector<double> StreamCraft::MZML::get_spectra_precursor_window_mzhigh(std::vector<int> indices)
-{
-
-    std::vector<double> prec_w_mzhighs;
-
-    if (number_spectra == 0)
-    {
-        std::cerr << "There are no spectra in the mzML file!" << std::endl;
-        return prec_w_mzhighs;
-    }
-
-    if (indices.size() == 0)
-    {
-        indices.resize(number_spectra);
-        std::iota(indices.begin(), indices.end(), 0);
-    }
-
-    int n = indices.size();
-
-    std::vector<pugi::xml_node> spectra_nodes = link_vector_spectra_nodes();
-
-    for (int i = 0; i < n; ++i)
-    {
-        int idx = indices[i];
-        pugi::xml_node spec = spectra_nodes[idx];
-        double prec_w_mzhigh = extract_window_mzhigh(spec);
-        prec_w_mzhighs.push_back(prec_w_mzhigh);
-    }
-
-    return prec_w_mzhighs;
-};
-
-std::vector<double> StreamCraft::MZML::get_spectra_collision_energy(std::vector<int> indices)
-{
-
-    std::vector<double> ces;
-
-    if (number_spectra == 0)
-    {
-        std::cerr << "There are no spectra in the mzML file!" << std::endl;
-        return ces;
-    }
-
-    if (indices.size() == 0)
-    {
-        indices.resize(number_spectra);
-        std::iota(indices.begin(), indices.end(), 0);
-    }
-
-    int n = indices.size();
-
-    std::vector<pugi::xml_node> spectra_nodes = link_vector_spectra_nodes();
-
-    for (int i = 0; i < n; ++i)
-    {
-        int idx = indices[i];
-        pugi::xml_node spec = spectra_nodes[idx];
-        double ce = extract_activation_ce(spec);
-        ces.push_back(ce);
-    }
-
-    return ces;
 };
