@@ -86,6 +86,23 @@ StreamCraft::MZML::MZML(const std::filesystem::path &file) // @todo move to std:
     number_chromatograms = chrom_list.attribute("count").as_int();
 };
 
+std::vector<std::vector<double>> StreamCraft::MZML::get_spectrum(int index)
+{
+    std::vector<std::vector<double>> spectrum;
+    std::vector<pugi::xml_node> spectra_nodes = link_vector_spectra_nodes();
+
+    if (spectra_nodes.size() == 0)
+    {
+        std::cerr << "No spectra found!" << std::endl;
+        return spectrum;
+    }
+
+    const pugi::xml_node &spectrum_node = spectra_nodes[index];
+    spectrum = extract_spectrum(spectrum_node);
+
+    return spectrum;
+}
+
 // void StreamCraft::MZML::print()
 // {
 //     std::cout << name << std::endl;
@@ -127,7 +144,7 @@ StreamCraft::MZML::MZML(const std::filesystem::path &file) // @todo move to std:
 std::vector<pugi::xml_node> StreamCraft::MZML::link_vector_spectra_nodes() // @todo this does not need to be called more than once
 {
 
-    // std::vector<pugi::xml_node> spectra;
+    std::vector<pugi::xml_node> spectra;
 
     std::string search_run = "//run";
 
@@ -139,7 +156,7 @@ std::vector<pugi::xml_node> StreamCraft::MZML::link_vector_spectra_nodes() // @t
     {
         for (pugi::xml_node child = spec_list.first_child(); child; child = child.next_sibling())
         {
-            this->spectra.push_back(child);
+            spectra.push_back(child);
         }
     }
     else
@@ -147,8 +164,8 @@ std::vector<pugi::xml_node> StreamCraft::MZML::link_vector_spectra_nodes() // @t
         std::cerr << "Spectra list not found in the mzML file!" << std::endl;
     }
 
-    assert(this->spectra.size() > 0);
-    return this->spectra;
+    assert(spectra.size() > 0);
+    return spectra;
 };
 
 int StreamCraft::MZML::extract_spec_index(const pugi::xml_node &spec)
@@ -212,7 +229,7 @@ std::string StreamCraft::MZML::extract_spec_polarity(const pugi::xml_node &spec)
     }
     else
     {
-        return "";
+        assert(false);
     }
 };
 
@@ -390,6 +407,8 @@ StreamCraft::MS_SPECTRA_HEADERS StreamCraft::MZML::extract_spectra_headers(const
     StreamCraft::MS_SPECTRA_HEADERS headers;
 
     std::vector<pugi::xml_node> spectra_nodes = link_vector_spectra_nodes();
+
+    // spectra_nodes = this->spectra;
 
     int n = idxs.size();
 
@@ -1256,7 +1275,7 @@ std::vector<int> StreamCraft::MZML::get_spectra_level(std::vector<int> indices)
     return levels;
 };
 
-std::vector<std::string> StreamCraft::MZML::get_spectra_mode(std::vector<int> indices)
+std::vector<std::string> StreamCraft::MZML::get_spectra_mode(std::vector<int> indices) // centroid or profile
 {
 
     std::vector<std::string> modes;
@@ -1734,202 +1753,4 @@ std::vector<double> StreamCraft::MZML::get_spectra_collision_energy(std::vector<
     }
 
     return ces;
-};
-
-StreamCraft::MS_SPECTRA_HEADERS StreamCraft::MZML::get_spectra_headers(std::vector<int> indices)
-{
-
-    StreamCraft::MS_SPECTRA_HEADERS hd;
-
-    if (number_spectra == 0)
-    {
-        std::cerr << "There are no spectra in the mzML file!" << std::endl;
-        return hd;
-    }
-
-    if (indices.size() == 0)
-    {
-        indices.resize(number_spectra);
-        std::iota(indices.begin(), indices.end(), 0);
-    }
-
-    hd = extract_spectra_headers(indices);
-
-    return hd;
-};
-
-std::vector<std::string> StreamCraft::MZML::get_spectra_binary_short_names()
-{
-    std::vector<std::string> names(number_spectra_binary_arrays);
-    if (number_spectra_binary_arrays > 0)
-    {
-        for (int i = 0; i < number_spectra_binary_arrays; ++i)
-        {
-            names[i] = spectra_binary_metadata[i].data_name_short;
-        }
-    }
-
-    return names;
-};
-
-std::vector<std::vector<std::vector<double>>> StreamCraft::MZML::get_spectra(std::vector<int> indices)
-{
-
-    std::vector<std::vector<std::vector<double>>> sp;
-
-    if (number_spectra == 0)
-    {
-        std::cerr << "There are no spectra in the mzML file!" << std::endl;
-        return sp;
-    }
-
-    if (indices.size() == 0)
-    {
-        indices.resize(number_spectra);
-        std::iota(indices.begin(), indices.end(), 0);
-    }
-
-    sp = extract_spectra(indices);
-
-    return sp;
-};
-
-std::vector<std::vector<double>>
-StreamCraft::MZML::get_spectrum(int index)
-{
-    std::vector<std::vector<double>> spectrum;
-    std::vector<pugi::xml_node> spectra_nodes = link_vector_spectra_nodes();
-
-    if (spectra_nodes.size() == 0)
-    {
-        std::cerr << "No spectra found!" << std::endl;
-        return spectrum;
-    }
-
-    const pugi::xml_node &spectrum_node = spectra_nodes[index];
-    spectrum = extract_spectrum(spectrum_node);
-
-    return spectrum;
-}
-
-std::vector<std::vector<std::vector<double>>> StreamCraft::MZML::get_chromatograms(std::vector<int> indices)
-{
-
-    std::vector<std::vector<std::vector<double>>> chr;
-
-    if (number_chromatograms == 0)
-    {
-        std::cerr << "There are no chromatograms in the mzML file!" << std::endl;
-        return chr;
-    }
-
-    if (indices.size() == 0)
-    {
-        indices.resize(number_chromatograms);
-        std::iota(indices.begin(), indices.end(), 0);
-    }
-
-    chr = extract_chromatograms(indices);
-
-    return chr;
-};
-
-StreamCraft::MS_CHROMATOGRAMS_HEADERS StreamCraft::MZML::get_chromatograms_headers(std::vector<int> indices)
-{
-
-    StreamCraft::MS_CHROMATOGRAMS_HEADERS ch;
-
-    if (number_chromatograms == 0)
-    {
-        std::cerr << "There are no chromatograms in the mzML file!" << std::endl;
-        return ch;
-    }
-
-    if (indices.size() == 0)
-    {
-        indices.resize(number_chromatograms);
-        std::iota(indices.begin(), indices.end(), 0);
-    }
-
-    ch = extract_chrom_headers(indices);
-
-    return ch;
-};
-
-void StreamCraft::test_extract_spectra_mzml(const std::string &file)
-{
-    std::cout << std::endl;
-    std::cout << std::endl;
-    std::cout << "Test Extract Spectra mzML file:" << std::endl;
-    std::cout << std::endl;
-
-    MZML mzml(file);
-
-    std::cout << "Root name: " << mzml.name << std::endl;
-
-    std::cout << "Number of spectra: " << mzml.number_spectra << std::endl;
-
-    MS_SPECTRA_HEADERS hd;
-
-    hd = mzml.get_spectra_headers();
-
-    int number = hd.index.size();
-
-    std::cout << "Size of vector in headers struct: " << number << std::endl;
-
-    std::cout << "Retention time of 10th spectrum: " << hd.rt[10] << std::endl;
-
-    std::cout << "Number of binary arrays: " << mzml.number_spectra_binary_arrays << std::endl;
-
-    std::vector<std::vector<std::vector<double>>> spectra;
-
-    std::vector<int> indices = {10, 15};
-
-    spectra = mzml.get_spectra(indices);
-
-    std::cout << "Number of extracted spectra: " << spectra.size() << std::endl;
-
-    std::cout << "Number of traces in the first extracted spectrum: " << spectra[0][0].size() << std::endl;
-
-    std::cout << std::endl;
-};
-
-void StreamCraft::test_extract_chromatograms_mzml(const std::string &file)
-{
-    std::cout << std::endl;
-    std::cout << std::endl;
-    std::cout << "Test Chromatograms mzML file:" << std::endl;
-    std::cout << std::endl;
-
-    MZML mzml(file);
-
-    std::cout << "Root name: " << mzml.name << std::endl;
-
-    std::cout << "Number of chromatograms: " << mzml.number_chromatograms << std::endl;
-
-    MS_CHROMATOGRAMS_HEADERS ch;
-
-    ch = mzml.get_chromatograms_headers();
-
-    int number_chroms = ch.index.size();
-
-    std::cout << "Size of vector in headers chroms struct: " << number_chroms << std::endl;
-
-    std::cout << "Polarity of 5th chrom: " << ch.polarity[5] << std::endl;
-
-    std::vector<std::vector<std::vector<double>>> chroms;
-
-    std::vector<int> indices = {1, 5, 6};
-
-    chroms = mzml.get_chromatograms(indices);
-
-    std::cout << "Number of extracted chroms: " << chroms.size() << std::endl;
-
-    std::cout << "Number of variables in 1st chromatogram: " << chroms[0].size() << std::endl;
-
-    std::cout << "Number of variables in 6th chromatogram: " << chroms[2].size() << std::endl;
-
-    std::cout << "Number of traces in the first extracted chrom: " << chroms[0][0].size() << std::endl;
-
-    std::cout << std::endl;
 };

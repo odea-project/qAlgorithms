@@ -156,7 +156,7 @@ namespace StreamCraft
 
         pugi::xml_node mzml_root_node;
 
-        std::vector<pugi::xml_node> spectra;
+        // std::vector<pugi::xml_node> spectra; // making this a class member makes the code unbelieveably slow
 
         std::string format;
 
@@ -172,13 +172,13 @@ namespace StreamCraft
 
         MZML(const std::filesystem::path &file);
 
-        std::vector<std::string> get_spectra_binary_short_names();
+        // std::vector<std::string> get_spectra_binary_short_names();
 
-        MS_SPECTRA_HEADERS get_spectra_headers(std::vector<int> indices = {});
-        MS_CHROMATOGRAMS_HEADERS get_chromatograms_headers(std::vector<int> indices = {});
-        std::vector<std::vector<std::vector<double>>> get_spectra(std::vector<int> indices = {});
-        std::vector<std::vector<double>> get_spectrum(int index);
-        std::vector<std::vector<std::vector<double>>> get_chromatograms(std::vector<int> indices = {});
+        // MS_SPECTRA_HEADERS get_spectra_headers(std::vector<int> indices = {});
+        // MS_CHROMATOGRAMS_HEADERS get_chromatograms_headers(std::vector<int> indices = {});
+        // std::vector<std::vector<std::vector<double>>> get_spectra(std::vector<int> indices = {});
+        std::vector<std::vector<double>> get_spectrum(int index); // this is the actually important function
+        // std::vector<std::vector<std::vector<double>>> get_chromatograms(std::vector<int> indices = {});
 
         std::vector<int> get_spectra_index(std::vector<int> indices = {});
         std::vector<int> get_spectra_scan_number(std::vector<int> indices = {});
@@ -207,9 +207,6 @@ namespace StreamCraft
                            const std::vector<std::string> &names, MS_SPECTRA_MODE mode, bool compress, bool save, std::string save_suffix);
 
     }; // class MZML
-
-    void test_extract_spectra_mzml(const std::string &file);
-    void test_extract_chromatograms_mzml(const std::string &file);
 }; // namespace StreamCraft
 
 #endif // STREAMCRAFT_MZML_HPP
