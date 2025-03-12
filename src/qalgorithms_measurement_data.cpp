@@ -428,16 +428,18 @@ namespace qAlgorithms
             displayPPMwarning = true;
         }
 
-        std::vector<bool> spectrum_mode = data.get_spectra_mode();         // get spectrum mode (centroid or profile)
-        std::vector<bool> spectrum_polarity = data.get_spectra_polarity(); // get spectrum polarity (positive or negative)
-        std::vector<int> indices = data.get_spectra_index();               // get all indices
-        std::vector<int> ms_levels = data.get_spectra_level();             // get all MS levels
-        std::vector<int> num_datapoints = data.get_spectra_array_length(); // get number of data points
-        double expectedDifference_mz = 0.0;                                // expected difference between two consecutive x-axis values
-        assert(!indices.empty() && num_datapoints[0] > 4);
+        // accessor contains the indices of all spectra that should be fetched
+        std::vector<unsigned int> accessor(data.number_spectra, 0);
+        std::iota(accessor.begin(), accessor.end(), 0);
+
+        std::vector<bool> spectrum_mode = data.get_spectra_mode(&accessor); // get spectrum mode (centroid or profile)
 
         // CHECK IF CENTROIDED SPECTRA
         size_t num_centroided_spectra = std::count(spectrum_mode.begin(), spectrum_mode.end(), false);
+        if (num_centroided_spectra != 0)
+        {
+            std::cerr << "Warning: removed " << num_centroided_spectra << " centroided spectra from measurement.\n";
+        }
         if (num_centroided_spectra > spectrum_mode.size() / 2) // in profile mode sometimes centroided spectra appear as well @todo is 2 a good idea?
         {
             std::cerr << "Centroided data is not supported in this version of qAlgorithms!\n"
@@ -463,10 +465,14 @@ namespace qAlgorithms
             // return transferCentroids(data, indices, retention_times, start_index, PPM_PRECENTROIDED); // this should be on a per-spectrum basis
         }
 
-        std::vector<int> selectedIndices;
-        selectedIndices.reserve(indices.size());
-        size_t centroidCount = 0;
+        std::vector<size_t> indices = data.get_spectra_index(&accessor); // get all indices
+        std::vector<int> ms_levels = data.get_spectra_level(&accessor);  // get all MS levels
+        assert(!indices.empty());
 
+        std::vector<unsigned int> selectedIndices;
+        selectedIndices.reserve(indices.size());
+
+        std::vector<bool> spectrum_polarity = data.get_spectra_polarity(&accessor); // get spectrum polarity (positive or negative)
         for (size_t i = 0; i < indices.size(); i++)
         {
             if (ms1only && ms_levels[i] != 1)
@@ -477,19 +483,7 @@ namespace qAlgorithms
             {
                 continue;
             }
-            if (!spectrum_mode[i])
-            {
-                centroidCount++;
-                continue;
-            }
-
-            // if begin and end indices are to be suppported, this is the place.
-            // it's probably better to use retention times for that, anyway
             selectedIndices.push_back(indices[i]);
-        }
-        if (centroidCount != 0)
-        {
-            std::cerr << "Warning: removed " << centroidCount << " centroided spectra from measurement.\n";
         }
         if (selectedIndices.empty())
         {
@@ -497,7 +491,7 @@ namespace qAlgorithms
             return empty;
         }
 
-        std::vector<double> retention_times = data.get_spectra_RT(selectedIndices);
+        std::vector<double> retention_times = data.get_spectra_RT(&selectedIndices);
         rt_diff = calcRTDiff(&retention_times);
 
         selectedIndices.shrink_to_fit();
@@ -507,7 +501,6 @@ namespace qAlgorithms
 
         // take spectrum at half length to avoid potential interference from quality control scans in the instrument
         const std::vector<std::vector<double>> data_vec = data.get_spectrum(selectedIndices[selectedIndices.size() / 2]);
-        expectedDifference_mz = calcExpectedDiff(&data_vec);
 
         // determine where the peak finding will interpolate points and pass this information
         // to the binning step. addEmpty contains the number of empty scans to be added into
@@ -550,6 +543,8 @@ namespace qAlgorithms
         convertRT.push_back(retention_times.back());
         assert(convertRT.size() == newIndex + 1); // ensure that every index has an assigned RT
 
+        // expected difference between two consecutive x-axis values
+        double expectedDifference_mz = calcExpectedDiff(&data_vec);
         for (size_t i = 0; i < selectedIndices.size(); ++i)
         {
             const std::vector<std::vector<double>> spectrum = data.get_spectrum(selectedIndices[i]);
