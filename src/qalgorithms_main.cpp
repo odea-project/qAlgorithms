@@ -101,7 +101,7 @@ int main(int argc, char *argv[])
 
 #pragma region file processing
     std::string filename;
-    const bool polarities{true, false}; // @todo make bool
+    bool polarities[2] = {true, false}; // @todo make bool
     int counter = 1;
     for (std::filesystem::path pathSource : tasklist)
     {
@@ -151,9 +151,11 @@ int main(int argc, char *argv[])
             }
             if (!userArgs.silent)
             {
-                std::cout << "Processing " << polarity << " peaks\n";
+                std::cout << "Processing " << (polarity ? "positive" : "negative") << " peaks\n";
             }
-            filename = filename + "_" + polarity;
+
+            filename = filename + (polarity ? "_positive" : "_negative");
+
             if (userArgs.printCentroids)
             {
                 printCentroids(centroids, convertRT, userArgs.outputPath, filename, userArgs.silent, userArgs.skipError, userArgs.noOverwrite);

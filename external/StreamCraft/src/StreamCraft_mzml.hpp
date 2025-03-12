@@ -41,23 +41,6 @@ namespace StreamCraft
         std::string data_value;
         // std::string data_unit;
         std::string data_name_short;
-
-        // void print()
-        // {
-        //     std::cout << std::endl;
-        //     std::cout << "Index:                     " << index << std::endl;
-        //     std::cout << "Precision original string: " << precision_name << std::endl;
-        //     std::cout << "Precision accession:       " << precision_accession << std::endl;
-        //     std::cout << "Precision:                 " << precision_int << std::endl;
-        //     std::cout << "Precision type:            " << precision_type << std::endl;
-        //     std::cout << "Compression:               " << compression << std::endl;
-        //     std::cout << "Data name:                 " << data_name << std::endl;
-        //     std::cout << "Data accession:            " << data_accession << std::endl;
-        //     std::cout << "Data value:                " << data_value << std::endl;
-        //     std::cout << "Data unit:                 " << data_unit << std::endl;
-        //     std::cout << "Data short name:           " << data_name_short << std::endl;
-        //     std::cout << std::endl;
-        // };
     };
 
     struct SpectrumData // this information is required by qAlgorithms to function
@@ -71,7 +54,6 @@ namespace StreamCraft
 
     class MZML // @todo this is just a complicated way of having a filetype specific accession struct and a generalised container
     {
-
     private:
         std::vector<MZML_BINARY_METADATA> spectra_binary_metadata;
 
@@ -92,69 +74,19 @@ namespace StreamCraft
             "quadrupole_position_upper_bound_mz"};
 
         std::vector<pugi::xml_node> link_vector_spectra_nodes();
-        std::vector<pugi::xml_node> link_vector_chrom_nodes();
 
-        void extract_spectra_binary_metadata(const pugi::xml_node &first_node);
         MZML_BINARY_METADATA extract_binary_metadata(const pugi::xml_node &bin);
 
-        // MS_SPECTRA_HEADERS extract_spectra_headers(const std::vector<int> &idxs);
-        MS_CHROMATOGRAMS_HEADERS extract_chrom_headers(const std::vector<int> &idxs);
-
-        // std::string extract_spec_id(const pugi::xml_node &spec); // never used, @todo check others
         bool extract_spec_mode(const pugi::xml_node &spec);
         bool extract_spec_polarity(const pugi::xml_node &spec); // @todo make bool
-        std::string extract_spec_title(const pugi::xml_node &spec);
 
-        std::string extract_scan_filter_string(const pugi::xml_node &spec);
-
-        std::string extract_activation_type(const pugi::xml_node &spec);
-
-        int extract_spec_scan(const pugi::xml_node &spec);
-        int extract_spec_array_length(const pugi::xml_node &spec);
-        int extract_spec_level(const pugi::xml_node &spec);
-        int extract_spec_index(const pugi::xml_node &spec);
-
-        int extract_scan_config(const pugi::xml_node &spec);
-
-        int extract_ion_charge(const pugi::xml_node &spec);
-
-        int extract_precursor_scan(const pugi::xml_node &spec);
-
-        double extract_spec_lowmz(const pugi::xml_node &spec);
-        double extract_spec_highmz(const pugi::xml_node &spec);
-        double extract_spec_bpmz(const pugi::xml_node &spec);
-        double extract_spec_bpint(const pugi::xml_node &spec);
-        double extract_spec_tic(const pugi::xml_node &spec);
-
-        double extract_scan_injection_ion_time(const pugi::xml_node &spec);
         double extract_scan_rt(const pugi::xml_node &spec);
-        double extract_scan_drift(const pugi::xml_node &spec);
-
-        double extract_window_mz(const pugi::xml_node &spec);
-        double extract_window_mzlow(const pugi::xml_node &spec);
-        double extract_window_mzhigh(const pugi::xml_node &spec);
-
-        double extract_ion_mz(const pugi::xml_node &spec);
-        double extract_ion_intensity(const pugi::xml_node &spec);
-
-        double extract_activation_ce(const pugi::xml_node &spec);
 
         std::vector<std::vector<double>> extract_spectrum(const pugi::xml_node &spectrum_node);
         std::vector<std::vector<std::vector<double>>> extract_spectra(const std::vector<int> &idxs);
 
-        std::vector<std::vector<double>> extract_chromatogram(const pugi::xml_node &chrom_node);
-        std::vector<std::vector<std::vector<double>>> extract_chromatograms(const std::vector<int> &idxs);
-
     public:
         std::filesystem::path path;
-
-        // std::string file_path;
-
-        // std::string file_dir;
-
-        // std::string file_name;
-
-        // std::string file_extension;
 
         pugi::xml_document mzml_base_document;
 
@@ -163,10 +95,6 @@ namespace StreamCraft
         pugi::xml_node mzml_root_node;
 
         // std::vector<pugi::xml_node> spectra; // making this a class member makes the code unbelieveably slow
-
-        std::string format;
-
-        std::string name;
 
         int number_spectra;
 
@@ -178,40 +106,14 @@ namespace StreamCraft
 
         MZML(const std::filesystem::path &file);
 
-        // std::vector<std::string> get_spectra_binary_short_names();
-
-        // MS_SPECTRA_HEADERS get_spectra_headers(std::vector<int> indices = {});
-        // MS_CHROMATOGRAMS_HEADERS get_chromatograms_headers(std::vector<int> indices = {});
-        // std::vector<std::vector<std::vector<double>>> get_spectra(std::vector<int> indices = {});
         std::vector<std::vector<double>> get_spectrum(int index); // this is the actually important function
-        // std::vector<std::vector<std::vector<double>>> get_chromatograms(std::vector<int> indices = {});
 
         std::vector<int> get_spectra_index(std::vector<int> indices = {});
-        // std::vector<int> get_spectra_scan_number(std::vector<int> indices = {});
         std::vector<int> get_spectra_array_length(std::vector<int> indices = {});
         std::vector<int> get_spectra_level(std::vector<int> indices = {});
         std::vector<bool> get_spectra_mode(std::vector<int> indices = {});
         std::vector<bool> get_spectra_polarity(std::vector<int> indices = {});
-        // std::vector<double> get_spectra_lowmz(std::vector<int> indices = {});
-        // std::vector<double> get_spectra_highmz(std::vector<int> indices = {});
-        // std::vector<double> get_spectra_bpmz(std::vector<int> indices = {});
-        // std::vector<double> get_spectra_bpint(std::vector<int> indices = {});
-        // std::vector<double> get_spectra_tic(std::vector<int> indices = {});
         std::vector<double> get_spectra_rt(std::vector<int> indices = {});
-        // std::vector<double> get_spectra_drift(std::vector<int> indices = {});
-        // std::vector<int> get_spectra_precursor_scan(std::vector<int> indices = {});
-        // std::vector<double> get_spectra_precursor_mz(std::vector<int> indices = {});
-        // std::vector<double> get_spectra_precursor_window_mz(std::vector<int> indices = {});
-        // std::vector<double> get_spectra_precursor_window_mzlow(std::vector<int> indices = {});
-        // std::vector<double> get_spectra_precursor_window_mzhigh(std::vector<int> indices = {});
-        // std::vector<double> get_spectra_collision_energy(std::vector<int> indices = {});
-
-        // void print();
-        // void print_spectra_binary_metadata();
-
-        void write_spectra(const std::vector<std::vector<std::vector<double>>> &spectra,
-                           const std::vector<std::string> &names, MS_SPECTRA_MODE mode, bool compress, bool save, std::string save_suffix);
-
     }; // class MZML
 }; // namespace StreamCraft
 
