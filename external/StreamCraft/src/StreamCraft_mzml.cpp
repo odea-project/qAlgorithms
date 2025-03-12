@@ -133,10 +133,28 @@ std::vector<double> StreamCraft::MZML::get_spectra_rt(std::vector<int> indices)
     return rts;
 };
 
-std::vector<std::string> StreamCraft::MZML::get_spectra_polarity(std::vector<int> indices)
+bool StreamCraft::MZML::extract_spec_polarity(const pugi::xml_node &spec)
+{
+    pugi::xml_node pol_pos_node = spec.find_child_by_attribute("cvParam", "accession", "MS:1000130");
+    pugi::xml_node pol_neg_node = spec.find_child_by_attribute("cvParam", "accession", "MS:1000129");
+    if (pol_pos_node)
+    {
+        return true;
+    }
+    else if (pol_neg_node)
+    {
+        return false;
+    }
+    else
+    {
+        assert(false);
+    }
+};
+
+std::vector<bool> StreamCraft::MZML::get_spectra_polarity(std::vector<int> indices)
 {
 
-    std::vector<std::string> polarities;
+    std::vector<bool> polarities;
 
     if (number_spectra == 0)
     {
@@ -158,7 +176,7 @@ std::vector<std::string> StreamCraft::MZML::get_spectra_polarity(std::vector<int
     {
         int idx = indices[i];
         pugi::xml_node spec = spectra_nodes[idx];
-        std::string polarity = extract_spec_polarity(spec);
+        bool polarity = extract_spec_polarity(spec);
         polarities.push_back(polarity);
     }
 
@@ -256,24 +274,6 @@ int StreamCraft::MZML::extract_spec_level(const pugi::xml_node &spec)
 {
     pugi::xml_node level_node = spec.find_child_by_attribute("cvParam", "name", "ms level");
     return level_node.attribute("value").as_int();
-};
-
-std::string StreamCraft::MZML::extract_spec_polarity(const pugi::xml_node &spec)
-{
-    pugi::xml_node pol_pos_node = spec.find_child_by_attribute("cvParam", "accession", "MS:1000130");
-    pugi::xml_node pol_neg_node = spec.find_child_by_attribute("cvParam", "accession", "MS:1000129");
-    if (pol_pos_node)
-    {
-        return "positive";
-    }
-    else if (pol_neg_node)
-    {
-        return "negative";
-    }
-    else
-    {
-        assert(false);
-    }
 };
 
 double StreamCraft::MZML::extract_spec_lowmz(const pugi::xml_node &spec)
