@@ -83,7 +83,7 @@ namespace StreamCraft
         std::vector<std::string> polarity;
         std::vector<double> precursor_mz;
         std::vector<std::string> activation_type;
-        std::vector<double> activation_ce;
+        // std::vector<double> activation_ce;
         std::vector<double> product_mz;
 
         void resize_all(int n)
@@ -94,7 +94,7 @@ namespace StreamCraft
             polarity.resize(n);
             precursor_mz.resize(n);
             activation_type.resize(n);
-            activation_ce.resize(n);
+            // activation_ce.resize(n);
             product_mz.resize(n);
         };
     };
@@ -114,15 +114,6 @@ namespace StreamCraft
     std::string encode_base64(const std::string &str);
 
     std::string decode_base64(const std::string &encoded_string);
-
-    void test_encoding_decoding_little_endian(const std::vector<double> &input, const int precision);
-
-    void test_encoding_decoding_big_endian(const std::vector<double> &input, const int precision);
 };
 
 #endif // STREAMCRAFT_UTILS_HPP
-
-// #if defined(STREAMCRAFT_HEADER_ONLY) && !defined(STREAMCRAFT_UTILS_SOURCE)
-// #	define STREAMCRAFT_UTILS_SOURCE "StreamCraft_utils.cpp"
-// #	include STREAMCRAFT_UTILS_SOURCE
-// #endif

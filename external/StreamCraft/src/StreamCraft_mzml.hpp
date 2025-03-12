@@ -19,12 +19,6 @@
 
 namespace StreamCraft
 {
-    // enum SpectrumMode
-    // {
-    //     centroid;
-    //     profile;
-    // };
-
     class MZML_BINARY_METADATA // @todo there is no need for a file-specific metadata object
     {
 
@@ -80,7 +74,7 @@ namespace StreamCraft
         bool extract_spec_mode(const pugi::xml_node &spec);
         bool extract_spec_polarity(const pugi::xml_node &spec); // @todo make bool
 
-        double extract_scan_rt(const pugi::xml_node &spec);
+        double extract_scan_RT(const pugi::xml_node &spec);
 
         std::vector<std::vector<double>> extract_spectrum(const pugi::xml_node &spectrum_node);
         std::vector<std::vector<std::vector<double>>> extract_spectra(const std::vector<int> &idxs);
@@ -113,7 +107,7 @@ namespace StreamCraft
         std::vector<int> get_spectra_level(std::vector<int> indices = {});
         std::vector<bool> get_spectra_mode(std::vector<int> indices = {});
         std::vector<bool> get_spectra_polarity(std::vector<int> indices = {});
-        std::vector<double> get_spectra_rt(std::vector<int> indices = {});
+        std::vector<double> get_spectra_RT(std::vector<int> indices = {});
     }; // class MZML
 }; // namespace StreamCraft
 
