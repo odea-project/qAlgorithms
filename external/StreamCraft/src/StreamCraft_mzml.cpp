@@ -176,24 +176,6 @@ std::vector<double> StreamCraft::MZML::get_spectra_RT(const std::vector<unsigned
     return retention_times;
 };
 
-bool StreamCraft::MZML::extract_spec_polarity(const pugi::xml_node &spec)
-{
-    pugi::xml_node pol_pos_node = spec.find_child_by_attribute("cvParam", "accession", "MS:1000130");
-    pugi::xml_node pol_neg_node = spec.find_child_by_attribute("cvParam", "accession", "MS:1000129");
-    if (pol_pos_node)
-    {
-        return true;
-    }
-    else if (pol_neg_node)
-    {
-        return false;
-    }
-    else
-    {
-        assert(false);
-    }
-};
-
 std::vector<bool> StreamCraft::MZML::get_spectra_polarity(const std::vector<unsigned int> *indices)
 {
     assert(indices->size() > 0);
@@ -205,8 +187,15 @@ std::vector<bool> StreamCraft::MZML::get_spectra_polarity(const std::vector<unsi
     {
         int idx = (*indices)[i];
         pugi::xml_node spec = spectra_nodes[idx];
-        bool polarity = extract_spec_polarity(spec);
-        polarities.push_back(polarity);
+        if (spec.find_child_by_attribute("cvParam", "accession", "MS:1000130"))
+        {
+            polarities.push_back(true);
+        }
+        else
+        {
+            assert(spec.find_child_by_attribute("cvParam", "accession", "MS:1000129"));
+            polarities.push_back(false);
+        }
     }
 
     return polarities;
@@ -379,25 +368,6 @@ std::vector<int> StreamCraft::MZML::get_spectra_level(const std::vector<unsigned
     return levels;
 };
 
-bool StreamCraft::MZML::extract_spec_mode(const pugi::xml_node &spec)
-{
-    pugi::xml_node centroid_node = spec.find_child_by_attribute("cvParam", "accession", "MS:1000127");
-    pugi::xml_node profile_node = spec.find_child_by_attribute("cvParam", "accession", "MS:1000128");
-    // @todo what if both applies?
-    if (centroid_node)
-    {
-        return false;
-    }
-    else if (profile_node)
-    {
-        return true;
-    }
-    else
-    {
-        assert(false);
-    }
-};
-
 std::vector<bool> StreamCraft::MZML::get_spectra_mode(const std::vector<unsigned int> *indices) // centroid or profile
 {
     assert(indices->size() > 0);
@@ -409,8 +379,15 @@ std::vector<bool> StreamCraft::MZML::get_spectra_mode(const std::vector<unsigned
     {
         size_t idx = (*indices)[i];
         pugi::xml_node spec = spectra_nodes[idx];
-        bool mode = extract_spec_mode(spec);
-        modes.push_back(mode);
+        if (spec.find_child_by_attribute("cvParam", "accession", "MS:1000128"))
+        {
+            modes.push_back(true);
+        }
+        else
+        {
+            assert(spec.find_child_by_attribute("cvParam", "accession", "MS:1000127")); // @todo is there any case where the mode is neither profile nor centroid?
+            modes.push_back(false);
+        }
     }
     return modes;
 };

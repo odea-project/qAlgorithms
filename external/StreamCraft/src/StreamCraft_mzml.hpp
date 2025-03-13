@@ -24,16 +24,10 @@ namespace StreamCraft
 
     public:
         int index;
-        // std::string precision_name;
-        // std::string precision_accession;
         int precision_int;
-        // std::string precision_type;
         std::string compression;
         bool compressed;
-        // std::string data_name;
-        // std::string data_accession;
         std::string data_value;
-        // std::string data_unit;
         std::string data_name_short;
     };
 
@@ -70,9 +64,6 @@ namespace StreamCraft
         std::vector<pugi::xml_node> link_vector_spectra_nodes();
 
         MZML_BINARY_METADATA extract_binary_metadata(const pugi::xml_node &bin);
-
-        bool extract_spec_mode(const pugi::xml_node &spec);
-        bool extract_spec_polarity(const pugi::xml_node &spec); // @todo make bool
 
         double extract_scan_RT(const pugi::xml_node &spec);
 

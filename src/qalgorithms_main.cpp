@@ -156,7 +156,7 @@ int main(int argc, char *argv[])
 
             filename = filename + (polarity ? "_positive" : "_negative");
 
-            if (userArgs.printCentroids)
+            // if (userArgs.printCentroids)
             {
                 printCentroids(centroids, convertRT, userArgs.outputPath, filename, userArgs.silent, userArgs.skipError, userArgs.noOverwrite);
             }
