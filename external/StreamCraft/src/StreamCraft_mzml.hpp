@@ -1,10 +1,8 @@
 #ifndef STREAMCRAFT_MZML_HPP
 #define STREAMCRAFT_MZML_HPP
 
-#include <iostream>
 #include <vector>
 #include <string>
-#include <numeric>
 #include <filesystem>
 
 #define PUGIXML_HEADER_ONLY
@@ -15,8 +13,6 @@
 
 #include PUGIXML_PATH
 
-#include "StreamCraft_utils.hpp"
-
 namespace StreamCraft
 {
     class MZML_BINARY_METADATA // @todo there is no need for a file-specific metadata object
@@ -25,7 +21,6 @@ namespace StreamCraft
     public:
         int index;
         int precision_int;
-        std::string compression;
         bool compressed;
         std::string data_value;
         std::string data_name_short;

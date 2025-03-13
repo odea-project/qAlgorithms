@@ -2,76 +2,8 @@
 #include <vector>
 #include <string>
 #include <cstring>
-#include <cstdint>
-#include <stdexcept>
 #include <zlib.h>
 #include <cassert>
-
-/*!
- * Encodes to little endian binary a vector of doubles based on a precision integer.
- */
-std::string StreamCraft::encode_little_endian(const std::vector<double> &input, const int precision)
-{
-    assert(precision == 4 || precision == 8);
-    if (precision == 8)
-    {
-        std::vector<uint8_t> bytes(sizeof(double) * input.size());
-        std::memcpy(bytes.data(), input.data(), bytes.size());
-        std::string result(bytes.begin(), bytes.end());
-        return result;
-    }
-    else
-    {
-        std::vector<uint8_t> bytes(sizeof(float) * input.size());
-        for (size_t i = 0; i < input.size(); ++i)
-        {
-            float floatValue = static_cast<float>(input[i]);
-            std::memcpy(bytes.data() + i * sizeof(float), &floatValue, sizeof(float));
-        }
-        std::string result(bytes.begin(), bytes.end());
-        return result;
-    }
-};
-
-std::string StreamCraft::encode_big_endian(const std::vector<double> &input, const int precision)
-{
-    assert(precision == 4 || precision == 8);
-    if (precision == 8)
-    {
-        std::vector<uint8_t> bytes(sizeof(double) * input.size());
-
-        for (size_t i = 0; i < input.size(); ++i)
-        {
-            uint64_t value = reinterpret_cast<uint64_t &>(const_cast<double &>(input[i]));
-            for (size_t j = 0; j < sizeof(double); ++j)
-            {
-                bytes[i * sizeof(double) + j] = (value >> (8 * (sizeof(double) - 1 - j))) & 0xFF;
-            }
-        }
-
-        std::string result(bytes.begin(), bytes.end());
-
-        return result;
-    }
-    else
-    {
-        std::vector<uint8_t> bytes(sizeof(float) * input.size());
-
-        for (size_t i = 0; i < input.size(); ++i)
-        {
-            float floatValue = static_cast<float>(input[i]);
-            uint32_t value = reinterpret_cast<uint32_t &>(const_cast<float &>(floatValue)); // @todo compiler warning
-            for (size_t j = 0; j < sizeof(float); ++j)
-            {
-                bytes[i * sizeof(float) + j] = (value >> (8 * (sizeof(float) - 1 - j))) & 0xFF;
-            }
-        }
-
-        std::string result(bytes.begin(), bytes.end());
-
-        return result;
-    }
-}
 
 /*!
  * Decodes from a little endian binary string to a vector of doubles according a precision integer.
@@ -103,96 +35,10 @@ std::vector<double> StreamCraft::decode_little_endian(const std::string &str, co
 };
 
 /*!
- * Decodes from a big endian binary string to a vector of doubles according a precision integer.
- */
-std::vector<double> StreamCraft::decode_big_endian(const std::string &str, const int precision)
-{
-    assert(precision == 4 || precision == 8);
-    std::vector<unsigned char> bytes(str.begin(), str.end());
-
-    int bytes_size = (bytes.size() / precision);
-
-    std::vector<double> result(bytes_size);
-
-    for (int i = 0; i < bytes_size; ++i)
-    {
-
-        if (precision == 8)
-        {
-            uint64_t value = 0;
-
-            for (int j = 0; j < precision; ++j)
-            {
-                value = (value << 8) | bytes[i * precision + j];
-            }
-
-            result[i] = reinterpret_cast<double &>(value); // @todo compiler warning
-        }
-        else
-        {
-            uint32_t value = 0;
-
-            for (int j = 0; j < precision; ++j)
-            {
-                value = (value << 8) | bytes[i * precision + j];
-            }
-
-            float floatValue = reinterpret_cast<float &>(value); // @todo compiler warning
-
-            result[i] = static_cast<double>(floatValue);
-        }
-    }
-    return result;
-};
-
-/*!
- * Compresses a string using the zlib library (https://zlib.net/).
- */
-std::string StreamCraft::compress_zlib(const std::string &str)
-{
-
-    std::vector<char> compressed_data;
-
-    z_stream zs;
-
-    memset(&zs, 0, sizeof(zs));
-
-    if (deflateInit(&zs, Z_DEFAULT_COMPRESSION) != Z_OK)
-    {
-        throw std::runtime_error("deflateInit failed while initializing zlib for compression");
-    }
-
-    zs.next_in = reinterpret_cast<Bytef *>(const_cast<char *>(str.data()));
-    zs.avail_in = str.size();
-
-    int ret;
-    char outbuffer[32768];
-
-    do
-    {
-        zs.next_out = reinterpret_cast<Bytef *>(outbuffer);
-        zs.avail_out = sizeof(outbuffer);
-
-        ret = deflate(&zs, Z_FINISH);
-
-        if (compressed_data.size() < zs.total_out)
-        {
-            compressed_data.insert(compressed_data.end(), outbuffer, outbuffer + (zs.total_out - compressed_data.size()));
-        }
-
-    } while (ret == Z_OK);
-
-    deflateEnd(&zs);
-
-    return std::string(compressed_data.begin(), compressed_data.end());
-};
-
-/*!
  * Decompresses a string using the zlib library (https://zlib.net/).
  */
 std::string StreamCraft::decompress_zlib(const std::string &compressed_string)
 {
-
     z_stream zs;
 
     memset(&zs, 0, sizeof(zs));
@@ -203,13 +49,12 @@ std::string StreamCraft::decompress_zlib(const std::string &compressed_string)
 
     zs.avail_in = compressed_string.size();
 
-    int ret;
-
-    char outbuffer[32768];
+    char outbuffer[32768]; // @todo why this size?
 
     std::string outstring;
 
-    do
+    int ret = Z_OK;
+    while (ret == Z_OK)
     {
         zs.next_out = reinterpret_cast<Bytef *>(outbuffer);
 
@@ -222,61 +67,9 @@ std::string StreamCraft::decompress_zlib(const std::string &compressed_string)
             outstring.append(outbuffer, zs.total_out - outstring.size());
         }
     }
-
-    while (ret == Z_OK);
-
     inflateEnd(&zs);
 
     return outstring;
-};
-
-/*!
- * Encodes a string with binary data to a Base64 string.
- */
-std::string StreamCraft::encode_base64(const std::string &str)
-{
-
-    static const char *base64_chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-
-    std::string encoded_data;
-
-    encoded_data.reserve(((str.size() + 2) / 3) * 4);
-
-    for (size_t i = 0; i < str.size(); i += 3)
-    {
-
-        int b = (str[i] & 0xFC) >> 2;
-        encoded_data.push_back(base64_chars[b]);
-
-        if (i + 1 < str.size())
-        {
-            b = ((str[i] & 0x03) << 4) | ((str[i + 1] & 0xF0) >> 4);
-            encoded_data.push_back(base64_chars[b]);
-
-            if (i + 2 < str.size())
-            {
-                b = ((str[i + 1] & 0x0F) << 2) | ((str[i + 2] & 0xC0) >> 6);
-                encoded_data.push_back(base64_chars[b]);
-                b = str[i + 2] & 0x3F;
-                encoded_data.push_back(base64_chars[b]);
-            }
-            else
-            {
-                b = (str[i + 1] & 0x0F) << 2;
-                encoded_data.push_back(base64_chars[b]);
-                encoded_data.push_back('=');
-            }
-        }
-        else
-        {
-            b = (str[i] & 0x03) << 4;
-            encoded_data.push_back(base64_chars[b]);
-            encoded_data.push_back('=');
-            encoded_data.push_back('=');
-        }
-    }
-
-    return encoded_data;
 };
 
 /*!
