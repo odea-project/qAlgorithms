@@ -1,7 +1,7 @@
+#include "StreamCraft_utils.hpp"
+
 #include "StreamCraft_mzml.hpp"
-#include <filesystem>
-#include <cstring>
-#include <algorithm>
+#include <iostream>
 #include <filesystem>
 
 StreamCraft::MZML::MZML(const std::filesystem::path &file) // @todo move to std::filesystem
@@ -35,8 +35,6 @@ StreamCraft::MZML::MZML(const std::filesystem::path &file) // @todo move to std:
     pugi::xpath_node xps_run = mzml_root_node.select_node(search_run.c_str());
 
     pugi::xml_node spec_list = xps_run.node().child("spectrumList");
-
-    std::vector<int> sp0 = {0};
 
     number_spectra = spec_list.attribute("count").as_int();
 
@@ -99,18 +97,17 @@ StreamCraft::MZML_BINARY_METADATA StreamCraft::MZML::extract_binary_metadata(con
     }
 
     pugi::xml_node node_comp = bin.find_child_by_attribute("cvParam", "accession", "MS:1000574");
-
     if (node_comp)
     {
-        mtd.compression = node_comp.attribute("name").as_string();
+        const std::string compression = node_comp.attribute("name").as_string();
 
-        if (mtd.compression == "zlib" || mtd.compression == "zlib compression")
+        if (compression == "zlib" || compression == "zlib compression")
         {
             mtd.compressed = true;
         }
         else
         {
-            mtd.compressed = false;
+            mtd.compressed = false; // @todo what if it isn't zlib compressed?
         }
     }
 
@@ -156,6 +153,23 @@ std::vector<std::vector<double>> StreamCraft::MZML::get_spectrum(int index)
 
     return spectrum;
 }
+
+double StreamCraft::MZML::extract_scan_RT(const pugi::xml_node &spec)
+{
+    pugi::xml_node node_scan = spec.child("scanList").child("scan");
+    pugi::xml_node rt_node = node_scan.find_child_by_attribute("cvParam", "name", "scan start time");
+    const std::string rt_unit = rt_node.attribute("unitName").as_string();
+    double rt_val = rt_node.attribute("value").as_double();
+    if (rt_unit == "second")
+    {
+        return rt_val;
+    }
+    if (rt_unit == "minute")
+    {
+        return rt_val * 60;
+    }
+    assert(false);
+};
 
 std::vector<double> StreamCraft::MZML::get_spectra_RT(const std::vector<unsigned int> *indices)
 {
@@ -225,17 +239,6 @@ std::vector<pugi::xml_node> StreamCraft::MZML::link_vector_spectra_nodes() // @t
 
     assert(spectra.size() > 0);
     return spectra;
-};
-
-double StreamCraft::MZML::extract_scan_RT(const pugi::xml_node &spec)
-{
-    pugi::xml_node node_scan = spec.child("scanList").child("scan");
-    pugi::xml_node rt_node = node_scan.find_child_by_attribute("cvParam", "name", "scan start time");
-    std::string rt_unit = rt_node.attribute("unitName").as_string();
-    double rt_val = rt_node.attribute("value").as_double();
-    if (rt_unit == "minute")
-        rt_val = rt_val * 60;
-    return rt_val;
 };
 
 std::vector<std::vector<double>> StreamCraft::MZML::extract_spectrum(const pugi::xml_node &spectrum_node)
