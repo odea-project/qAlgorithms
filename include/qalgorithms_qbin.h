@@ -38,20 +38,14 @@ namespace qAlgorithms
 
 #pragma region "Bin"
 
-    // Bin Class @todo get under size 128
+    // Bin Class
     class Bin
     {
-    private:
-        std::vector<double> cumError; // cumulative error in mz
-        // float medianMZ;
-
     public:
-        std::vector<const qCentroid *> pointsInBin; // @todo does not change after bin creation, check for performance improvement when using cast const
-        std::vector<double> activeOS;               // Order Space
-        std::vector<float> DQSB_base;               // DQSB when all distances are considered equal
-        std::vector<float> DQSB_scaled;             // DQSB if a gaussian falloff is assumed
+        std::vector<const qCentroid *> pointsInBin;
+        std::vector<float> DQSB_base;   // DQSB when all distances are considered equal @todo remove this eventually
+        std::vector<float> DQSB_scaled; // DQSB if a gaussian falloff is assumed
 
-        // @todo get mz and scan min/max at the earliest opportunity
         float mzMin = -1;
         float mzMax = -1;
         unsigned int scanMin = -1;
@@ -72,13 +66,6 @@ namespace qAlgorithms
 
         Bin();
 
-        /// @brief generate the activeOS vector containing the difference to the next greatest mz for every point
-        void makeOS();
-
-        /// @brief generate the cumError vector for this bin
-        void makeCumError();
-        // void makeCumError(const double ppm); // if no centroid error exists @todo remove
-
         /// @brief divide a bin sorted by mz the difference in mz of its members and return the new bins to the bin deque. Recursive function.
         /// @details this function iterates over the order space of a previously generated bin by searching for the maximum
         /// of the order space between startBin and endBin. If the maximum is smaller than the critical value, all data points
@@ -93,9 +80,9 @@ namespace qAlgorithms
         /// @param OS the order space generated for the bin using makeOS()
         /// @param startBin index relating to the order space at which the bin starts
         /// @param endBin index relating to the order space at which the bin ends
-        /// @param counter counter shared between all calls of the recursive function, used to count number of function calls
-        void subsetMZ(std::vector<Bin> *bincontainer, std::vector<double> &OS, std::vector<const qCentroid *> &notInBins,
-                      const int startBin, const int endBin, int &counter);
+        void subsetMZ(std::vector<Bin> *bincontainer, std::vector<const qCentroid *> &notInBins,
+                      const std::vector<double> &OS, const std::vector<double> &cumError,
+                      const unsigned int binStartInOS, const unsigned int binEndInOS);
 
         /// @brief divide a bin sorted by scans if there are gaps greater than maxdist in it. Bins that cannot be divided are closed.
         /// @details this function sorts all members of a bin by scans and iterates over them. If a gap greater than maxdist exists,
@@ -103,14 +90,17 @@ namespace qAlgorithms
         /// it is added to the finishedBins vector and no further subsets will be performed on it. As such, subsetScan() must be the last
         /// subset function and cannot be used in combination with any other subsetting function that decides if a bin is completed or not.
         /// @param bincontainer if the input bin was split, the newly created bins will be added to this
-        /// @param counter counter shared between all calls of the recursive function, used to count number of function calls
-        void subsetScan(std::vector<Bin> *bincontainer, std::vector<const qCentroid *> &notInBins, int &counter);
+        void subsetScan(std::vector<Bin> *bincontainer, std::vector<const qCentroid *> &notInBins);
 
         // returns the start index of where in the sorted not-binned points the minimum start position is
         size_t makeDQSB(const std::vector<const qCentroid *> *notInBins, size_t idx_lowerLimit);
 
         EIC createEIC(const std::vector<float> *convertRT);
     };
+
+    const std::vector<double> makeOrderSpace(const Bin *bin);
+
+    const std::vector<double> makeCumError(const std::vector<const qAlgorithms::qCentroid *> *bin);
 
     bool binLimitsOK(Bin sourceBin, const std::vector<qCentroid> *rawdata);
 
@@ -125,8 +115,6 @@ namespace qAlgorithms
         std::vector<Bin> viableBins;              // only includes bins which cannot be further subdivided
         std::vector<Bin> finalBins;               // bins which have been confirmed to not include incorrect binning
         std::vector<const qCentroid *> notInBins; // this vector contains all points which are not included in bins
-        int subsetCount;                          // @todo necessary?
-        int inputBinCount;                        // number of bins that were rebinned in the last iteration
         bool readFrom = false;
         // pointers for use during subsetting loop
         std::vector<Bin> *sourceBins;
