@@ -4,7 +4,7 @@
 #include <iostream>
 #include <filesystem>
 
-StreamCraft::MZML::MZML(const std::filesystem::path &file) // @todo move to std::filesystem
+StreamCraft::MZML::MZML(const std::filesystem::path &file)
 {
     pugi::xml_document doc; // @todo why does this need to persist beyond the constructor? check access to class member variable
 
@@ -49,18 +49,12 @@ StreamCraft::MZML::MZML(const std::filesystem::path &file) // @todo move to std:
         {
             MZML_BINARY_METADATA mtd = extract_binary_metadata(bin);
 
-            if (mtd.data_name_short == "") // @todo does this make any sense? If we do not know what a field is in advance, we cannot process it properly
-            {
-                mtd.data_name_short = "val_" + std::to_string(counter);
-            }
-
             mtd.index = counter;
 
             spectra_binary_metadata.push_back(mtd);
 
             counter++;
         }
-
         number_spectra_binary_arrays = counter;
     }
 };
@@ -125,7 +119,6 @@ StreamCraft::MZML_BINARY_METADATA StreamCraft::MZML::extract_binary_metadata(con
             break;
         }
     }
-
     assert(has_bin_data_type);
     // throw("Encoded data type could not be found matching the mzML official vocabulary!");
 
@@ -207,7 +200,7 @@ std::vector<bool> StreamCraft::MZML::get_spectra_polarity(const std::vector<unsi
         }
         else
         {
-            assert(spec.find_child_by_attribute("cvParam", "accession", "MS:1000129"));
+            assert(spec.find_child_by_attribute("cvParam", "accession", "MS:1000129")); // @todo a single check should be enough
             polarities.push_back(false);
         }
     }
@@ -225,16 +218,11 @@ std::vector<pugi::xml_node> StreamCraft::MZML::link_vector_spectra_nodes() // @t
 
     pugi::xml_node spec_list = xps_run.node().child("spectrumList");
 
-    if (spec_list)
+    assert(spec_list);
+
+    for (pugi::xml_node child = spec_list.first_child(); child; child = child.next_sibling())
     {
-        for (pugi::xml_node child = spec_list.first_child(); child; child = child.next_sibling())
-        {
-            spectra.push_back(child);
-        }
-    }
-    else
-    {
-        std::cerr << "Spectra list not found in the mzML file!" << std::endl;
+        spectra.push_back(child);
     }
 
     assert(spectra.size() > 0);
@@ -249,7 +237,7 @@ std::vector<std::vector<double>> StreamCraft::MZML::extract_spectrum(const pugi:
     assert(number_spectra_binary_arrays == number_bins);
 
     std::vector<std::vector<double>> spectrum;
-    int number_traces = spectrum_node.attribute("defaultArrayLength").as_int();
+    unsigned int number_traces = spectrum_node.attribute("defaultArrayLength").as_int();
 
     spectrum.resize(number_bins);
 
@@ -265,18 +253,12 @@ std::vector<std::vector<double>> StreamCraft::MZML::extract_spectrum(const pugi:
 
         if (spectra_binary_metadata[counter].compressed)
         {
-            decoded_string = StreamCraft::decompress_zlib(decoded_string);
+            decoded_string = StreamCraft::decompress_zlib(decoded_string); // @todo is there a case where this doesn't apply for all spectra?
         }
 
         spectrum[counter] = StreamCraft::decode_little_endian(decoded_string, spectra_binary_metadata[counter].precision_int / 8);
-        int bin_array_size = spectrum[counter].size();
 
-        if (bin_array_size != number_traces)
-        {
-            // this happens if an index is tried which does not exist in the data
-            std::cerr << "Number of traces in binary array does not match the value of the spectrum header!\n";
-            return std::vector<std::vector<double>>{0};
-        }
+        assert(spectrum[counter].size() == number_traces); // this happens if an index is tried which does not exist in the data
 
         if (spectra_binary_metadata[counter].data_name_short == "time")
         {

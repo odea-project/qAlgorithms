@@ -16,6 +16,7 @@ namespace qAlgorithms
     std::vector<EIC> performQbinning(const std::vector<qCentroid> *centroidedData,
                                      const std::vector<float> *convertRT, bool verbose)
     {
+        // std::cout << sizeof(Bin) << std::endl;
         assert(centroidedData->front().mz == 0); // first value is dummy
         std::string logger = "";
 
@@ -176,15 +177,16 @@ namespace qAlgorithms
             // loop until all bins have been moved into finsihedBins or discarded
             // the target array is supplied via pointer, facilitates reuse
 
-            int subsetCount = 0;
-
             for (size_t j = 0; j < bincontainer.sourceBins->size(); j++) // for every element in the deque before writing new bins
             {
                 Bin processThis = (*bincontainer.sourceBins)[j];
-                processThis.makeOS();
-                processThis.makeCumError();
-                processThis.subsetMZ(bincontainer.targetBins, processThis.activeOS, bincontainer.notInBins,
-                                     0, processThis.activeOS.size() - 1, subsetCount);
+                std::sort(processThis.pointsInBin.begin(), processThis.pointsInBin.end(), [](const qCentroid *lhs, const qCentroid *rhs)
+                          { return lhs->mz < rhs->mz; });
+                auto activeOS = makeOrderSpace(&processThis);
+                auto cumError = makeCumError(&processThis.pointsInBin);
+                processThis.subsetMZ(bincontainer.targetBins, bincontainer.notInBins,
+                                     activeOS, cumError,
+                                     0, activeOS.size() - 1);
             }
             // @todo logging
             logOutput += std::to_string(bincontainer.targetBins->size()) + ", ";
@@ -192,7 +194,7 @@ namespace qAlgorithms
 
             for (size_t j = 0; j < bincontainer.sourceBins->size(); j++)
             {
-                (*bincontainer.sourceBins)[j].subsetScan(bincontainer.targetBins, bincontainer.notInBins, subsetCount);
+                (*bincontainer.sourceBins)[j].subsetScan(bincontainer.targetBins, bincontainer.notInBins);
             }
             // @todo logging
             logOutput += std::to_string(bincontainer.targetBins->size()) + ", ";
@@ -373,49 +375,46 @@ namespace qAlgorithms
         pointsInBin = std::vector<const qCentroid *>(binStartInOS, binEndInOS);
     }
 
-    void Bin::makeOS()
+    const std::vector<double> makeOrderSpace(const Bin *bin)
     {
-        assert(pointsInBin.size() > 4);
-        std::sort(pointsInBin.begin(), pointsInBin.end(), [](const qCentroid *lhs, const qCentroid *rhs)
-                  { return lhs->mz < rhs->mz; });
-
-        this->activeOS.reserve(pointsInBin.size());         // OS = Order Space
-        for (size_t i = 0; i < pointsInBin.size() - 1; i++) // -1 to prevent accessing outside of vector
+        // this function assumes that the centroids are sorted by mz
+        auto points = bin->pointsInBin;
+        std::vector<double> OS;
+        OS.reserve(points.size());
+        for (size_t i = 0; i < points.size() - 1; i++)
         {
-            activeOS.push_back((pointsInBin[i + 1]->mz - pointsInBin[i]->mz));
+            OS.push_back((points[i + 1]->mz - points[i]->mz));
         }
-
-        activeOS.push_back(NAN); // last element of OS is never checked, dummy value due to recursive function
-        return;
+        OS.push_back(NAN);
+        return OS;
     }
 
-    void Bin::makeCumError()
+    const std::vector<double> makeCumError(const std::vector<const qAlgorithms::qCentroid *> *bin)
     {
-        this->cumError.reserve(pointsInBin.size());
-        cumError.push_back(0); // the first element has a precursor error of 0
-        std::transform(pointsInBin.begin(), pointsInBin.end(), back_inserter(cumError), [](const qCentroid *F)
-                       { return F->mzError; });
+        std::vector<double> cumError;
+        cumError.reserve(bin->size());
+        for (size_t i = 0; i < bin->size(); i++)
+        {
+            cumError.push_back((*bin)[i]->mzError);
+        }
         std::partial_sum(cumError.begin(), cumError.end(), cumError.begin()); // cumulative sum
+        return cumError;
     }
 
-    void Bin::subsetMZ(std::vector<Bin> *bincontainer, std::vector<double> &OS, std::vector<const qCentroid *> &notInBins,
-                       const int binStartInOS, const int binEndInOS, int &counter) // bincontainer is binDeque of BinContainer_old // OS cannot be solved with pointers since index has to be transferred to frature list
+    void Bin::subsetMZ(std::vector<Bin> *bincontainer, std::vector<const qCentroid *> &notInBins,
+                       const std::vector<double> &OS, const std::vector<double> &cumError,
+                       const unsigned int binStartInOS, const unsigned int binEndInOS)
     {
-        assert(binStartInOS >= 0);
         assert(binEndInOS >= binStartInOS);
 
         const int binsizeInOS = binEndInOS - binStartInOS + 1; // +1 to avoid length zero
 
         assert(binsizeInOS > 4);
 
-        ++counter;
         auto pmax = std::max_element(OS.begin() + binStartInOS, OS.begin() + binEndInOS);
-
-        // double vcrit = 3.05037165842070 * pow(log(binsizeInOS), (TOLERANCE_BINNING)) *  // critical value for alpha = 0.01 @todo add functionality for custom alpha?
-        //                (this->cumError[binEndInOS + 1] - this->cumError[binStartInOS]); // + 1 to binEnd since cumerror starts at 0
-        // double max = *pmax * binsizeInOS;                                               // moved binsize here since multiplication is faster than division
-        double vcrit = binningCritVal(binsizeInOS, (this->cumError[binEndInOS + 1] - this->cumError[binStartInOS]) / binsizeInOS);
         double max = *pmax;
+
+        double vcrit = binningCritVal(binsizeInOS, (cumError[binEndInOS] - cumError[binStartInOS]) / binsizeInOS);
 
         if (max < vcrit) // all values in range are part of one mz bin
         {
@@ -434,7 +433,7 @@ namespace qAlgorithms
             // only continue if binsize is greater five
             if (cutpos + 1 > 4)
             {
-                subsetMZ(bincontainer, OS, notInBins, binStartInOS, binStartInOS + cutpos, counter);
+                subsetMZ(bincontainer, notInBins, OS, cumError, binStartInOS, binStartInOS + cutpos);
             }
             else
             {
@@ -445,7 +444,7 @@ namespace qAlgorithms
             }
             if (binEndInOS - binStartInOS - cutpos - 1 > 4)
             {
-                subsetMZ(bincontainer, OS, notInBins, binStartInOS + cutpos + 1, binEndInOS, counter);
+                subsetMZ(bincontainer, notInBins, OS, cumError, binStartInOS + cutpos + 1, binEndInOS);
             }
             else
             {
@@ -458,7 +457,7 @@ namespace qAlgorithms
         }
     }
 
-    void Bin::subsetScan(std::vector<Bin> *bincontainer, std::vector<const qCentroid *> &notInBins, int &counter)
+    void Bin::subsetScan(std::vector<Bin> *bincontainer, std::vector<const qCentroid *> &notInBins)
     {
         assert(!pointsInBin.empty());
         // function is called on a bin sorted by mz
@@ -469,19 +468,10 @@ namespace qAlgorithms
         int lastpos = 0;
         for (size_t i = 0; i < binSize - 1; i++) // -1 since difference to next data point is checked
         {
-            assert(pointsInBin[i]->scanNo > 0);
-            if (pointsInBin[i + 1]->scanNo < pointsInBin[i]->scanNo)
-            {
-                // @todo probably undefined behaviour, since taking this print out causes
-                // the assert to fail despite the sorting earlier
-                std::cerr << pointsInBin[i + 1]->scanNo << ", " << pointsInBin[i]->scanNo << ", " << i << "\n";
-            }
-
             assert(pointsInBin[i + 1]->scanNo >= pointsInBin[i]->scanNo);
             size_t distanceScan = pointsInBin[i + 1]->scanNo - pointsInBin[i]->scanNo;
             if (distanceScan > maxdist) // bin needs to be split
             {
-                ++counter;
                 // less than five points in bin
                 if (i - lastpos + 1 < 5) // +1 since i starts at 0
                 {
@@ -563,7 +553,7 @@ namespace qAlgorithms
             return idx_lowerLimit;
         }
 
-        // binary search
+        // @todo we can use SIMD here with relatively little effort
         for (; idx_lowerLimit < notInBins->size(); idx_lowerLimit++)
         {
             if ((*notInBins)[idx_lowerLimit]->mz > this->mzMin - mz_hardLimit)
@@ -609,7 +599,7 @@ namespace qAlgorithms
             float currentMin = INFINITY;
             size_t readVal = 0;
             // advance until first point within maxdist + 1 of scan
-            // binary search
+            // @todo replace with binary search
             for (; readVal < scoreRegion.size(); readVal++)
             {
                 if (scoreRegion[readVal]->scanNo > activeScan - expandedDist)
@@ -761,20 +751,16 @@ namespace qAlgorithms
         return output;
     }
 
-    inline float calcDQS(float MID, float MOD) // mean inner distance, minimum outer distance
+    inline float calcDQS(float meanInnerDist, float minOuterDist)
     {
-        float maxInVal = MOD; // MID should generally be much smaller than MOD
-        if (maxInVal < MID)
-        {
-            maxInVal = MID;
-        }
+        float maxInVal = std::max(minOuterDist, meanInnerDist); // meanInnerDist should generally be much smaller than minOuterDist
         if (maxInVal == INFINITY)
         {
             return 1;
         }
 
-        // dqs = (MOD - MID) * (1 / (1 + MID)) / maxInVal
-        return (MOD - MID) / fmal(MID, maxInVal, maxInVal);
+        // dqs = (minOuterDist - meanInnerDist) * (1 / (1 + meanInnerDist)) / maxInVal
+        return (minOuterDist - meanInnerDist) / fmal(meanInnerDist, maxInVal, maxInVal);
     }
 #pragma endregion "Functions"
 }
