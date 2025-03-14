@@ -56,7 +56,6 @@ namespace qAlgorithms
         {
             [[unlikely]] if (massesPeak[i] - massesPeak[i - 1] > vcrit)
             {
-                // std::cerr << "Bad mass trace found\n"; // @todo remove error message
                 return false;
             }
         }
@@ -101,8 +100,9 @@ int main(int argc, char *argv[])
 
 #pragma region file processing
     std::string filename;
-    bool polarities[2] = {true, false}; // @todo make bool
-    int counter = 1;
+    bool polarities[2] = {true, false};
+    size_t counter = 1;
+    size_t errorCount = 0;
     for (std::filesystem::path pathSource : tasklist)
     {
         auto timeStart = std::chrono::high_resolution_clock::now();
@@ -112,7 +112,7 @@ int main(int argc, char *argv[])
                       << pathSource << "\n... ";
         }
 
-        StreamCraft::MZML data(std::filesystem::canonical(pathSource)); // create mzML object @todo change to use filesystem::path
+        StreamCraft::MZML data(std::filesystem::canonical(pathSource));
 
         if (!data.loading_result)
         {
@@ -120,6 +120,7 @@ int main(int argc, char *argv[])
             if (userArgs.skipError)
             {
                 ++counter;
+                ++errorCount;
                 continue;
             }
             else
@@ -133,6 +134,7 @@ int main(int argc, char *argv[])
             std::cout << " file ok\n";
         }
         // @todo find a more elegant solution for polarity switching
+        bool oneProcessed = true;
         for (bool polarity : polarities)
         {
             filename = pathSource.stem().string();
@@ -149,6 +151,27 @@ int main(int argc, char *argv[])
                 }
                 continue;
             }
+            else
+            {
+                oneProcessed = true;
+            }
+            // oneProcessed is true if this is the first loop iteration or if centroids were found in the previous iteration
+            if (!oneProcessed)
+            {
+                if (userArgs.skipError)
+                {
+                    ++counter;
+                    ++errorCount;
+                    continue;
+                }
+                else
+                {
+                    exit(101);
+                }
+                std::cerr << "error: no centroids were found in the file";
+            }
+            oneProcessed = false;
+
             if (!userArgs.silent)
             {
                 std::cout << "Processing " << (polarity ? "positive" : "negative") << " peaks\n";
@@ -156,7 +179,7 @@ int main(int argc, char *argv[])
 
             filename = filename + (polarity ? "_positive" : "_negative");
 
-            // if (userArgs.printCentroids)
+            if (userArgs.printCentroids)
             {
                 printCentroids(centroids, convertRT, userArgs.outputPath, filename, userArgs.silent, userArgs.skipError, userArgs.noOverwrite);
             }
@@ -203,6 +226,8 @@ int main(int argc, char *argv[])
                 }
                 else
                 {
+                    ++counter;
+                    ++errorCount;
                     continue;
                 }
             }
@@ -280,6 +305,7 @@ int main(int argc, char *argv[])
                 timePassed = std::chrono::duration_cast<std::chrono::milliseconds>(timeEnd - timeStart);
                 std::cout << "    found " << peaks.size() << " peaks in " << timePassed.count() << " s\n";
             }
+            // no fail condition here, since this case can occur with real data
             if (userArgs.doLogging)
             {
 
@@ -306,9 +332,14 @@ int main(int argc, char *argv[])
     }
     auto absoluteEnd = std::chrono::high_resolution_clock::now();
     if (!userArgs.silent)
-    { // @todo add number of errors
+    {
         std::chrono::duration<float> timePassed = std::chrono::duration_cast<std::chrono::milliseconds>(absoluteEnd - absoluteStart);
-        std::cout << "Completed data processing on " << tasklist.size() << " files in " << timePassed.count() << " s.\n\n";
+        std::cout << "Completed data processing on " << tasklist.size() << " files in " << timePassed.count() << " s.\n";
+        if (errorCount > 0)
+        {
+            std::cout << "Skipped " << errorCount << " files which could not be processed.\n";
+        }
+        std::cout << std::endl;
     }
     if (userArgs.interactive)
     {
