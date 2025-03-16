@@ -150,7 +150,7 @@ namespace qAlgorithms
 
     struct MovedRegression
     {
-        FeaturePeak *origin;
+        const FeaturePeak *origin;
         size_t binID;
         float limit_L;
         float limit_R;

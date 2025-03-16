@@ -327,6 +327,7 @@ int main(int argc, char *argv[])
             }
 
             // @todo add peak grouping here
+            findComponents(&peaks);
         }
         counter++;
     }

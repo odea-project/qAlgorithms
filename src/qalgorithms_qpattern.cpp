@@ -17,7 +17,48 @@
 
 namespace qAlgorithms
 {
-    MovedRegression moveAndScaleReg(FeaturePeak *feature)
+    void findComponents(const std::vector<FeaturePeak> *peaks)
+    {
+        for (size_t i = 0; i < peaks->size() - 10; i++)
+        {
+            // only test if the matrix thing works for now
+            ComponentGroup newComponent;
+            for (size_t j = 0; j < 10; j++)
+            {
+                auto test = &((*peaks)[i + j]);
+                auto movedTest = moveAndScaleReg(test);
+                newComponent.features.push_back(movedTest);
+            }
+        }
+    }
+
+    float ComponentGroup::score(size_t idx1, size_t idx2)
+    { // @todo we could use a more complex structure here to save space, but with how small these groups should be it is probably pointless
+        size_t size = shapeScores.size();
+        assert(idx1 < size && idx2 < size);
+
+        if (idx1 == idx2)
+        {
+            return 1;
+        }
+        size_t idx = size * idx1 + idx2;
+        return shapeScores[idx];
+    }
+
+    void ComponentGroup::calcScores()
+    {
+        shapeScores.reserve(features.size() * features.size());
+        for (size_t i = 0; i < features.size(); i++)
+        {
+            for (size_t j = 0; j < features.size(); j++)
+            {
+                float tanimoto = calcTanimoto(&features[i], &features[j]);
+                shapeScores.push_back(tanimoto);
+            }
+        }
+    }
+
+    MovedRegression moveAndScaleReg(const FeaturePeak *feature)
     {
         float b0 = feature->coefficients.b0;
         float b1 = feature->coefficients.b1;
