@@ -315,10 +315,10 @@ int main(int argc, char *argv[])
                           << ", " << peaks.size() << ", " << peaksWithMassGaps << ", " << meanInterpolations << ", " << meanDQSF << "\n";
                 logWriter.close();
             }
-            if (userArgs.printFeatures)
+            if (userArgs.printFeatures) // @todo revert
             {
-                printFeatureList(peaks, userArgs.outputPath, filename, binnedData,
-                                 userArgs.printExtended, userArgs.silent, userArgs.skipError, userArgs.noOverwrite);
+                // printFeatureList(peaks, userArgs.outputPath, filename, binnedData,
+                //                  userArgs.printExtended, userArgs.silent, userArgs.skipError, userArgs.noOverwrite);
             }
             if (userArgs.printFeatCens)
             {
@@ -326,11 +326,14 @@ int main(int argc, char *argv[])
                                       userArgs.printExtended, userArgs.silent, userArgs.skipError, userArgs.noOverwrite);
             }
 
-            // @todo add peak grouping here
-            findComponents(&peaks);
+#pragma region "Componentisation"
+
+            findComponents(&peaks, &binnedData);
         }
         counter++;
     }
+
+#pragma region "Logging and similar"
     auto absoluteEnd = std::chrono::high_resolution_clock::now();
     if (!userArgs.silent)
     {

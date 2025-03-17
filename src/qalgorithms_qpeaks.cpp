@@ -526,7 +526,7 @@ namespace qAlgorithms
         /*
         competing regressions filter:
         If the real distribution of points could also be described as a continuum (i.e. only b0 is relevant),
-        the regression does not describe a peak. This is done through an F-test against a constant that
+        the regression does not describe a peak. This is done through a nested F-test against a constant that
         is the mean of all predicted values. @todo this is not working correctly!
         */
         float regression_Fval = calcRegressionFvalue(&selectLog, &predictLog, mse, mutateReg->newCoeffs.b0);
