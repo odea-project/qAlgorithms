@@ -17,7 +17,7 @@
 
 namespace qAlgorithms
 {
-    void findComponents(const std::vector<FeaturePeak> *peaks)
+    void findComponents(const std::vector<FeaturePeak> *peaks, const std::vector<EIC> *bins)
     {
         for (size_t i = 0; i < peaks->size() - 10; i++)
         {
@@ -27,8 +27,13 @@ namespace qAlgorithms
             {
                 auto test = &((*peaks)[i + j]);
                 auto movedTest = moveAndScaleReg(test);
+                auto binRTs = (*bins)[test->idxBin].rententionTimes;
+                movedTest.limit_L = binRTs[test->idxPeakStart];
+                movedTest.limit_R = binRTs[test->idxPeakEnd];
                 newComponent.features.push_back(movedTest);
             }
+            newComponent.calcScores();
+            auto test = getCompareOrder(&newComponent);
         }
     }
 
@@ -74,7 +79,7 @@ namespace qAlgorithms
         float offset = feature->retentionTime - apexDist;
         MovedRegression movedReg;
         movedReg.origin = feature;
-        movedReg.binID = 0;   // @todo
+        movedReg.binID = feature->idxBin;
         movedReg.limit_L = 0; // @todo
         movedReg.limit_R = 0; // @todo
         movedReg.b0_L = b0 - b1 * offset + b2 * offset * offset;
@@ -83,7 +88,7 @@ namespace qAlgorithms
         movedReg.b1_R = b1 - 2 * b3 * offset;
         movedReg.b2 = b2;
         movedReg.b3 = b3;
-        movedReg.RT_switch = apexLeft ? movedReg.b1_L : movedReg.b1_R / (2 * b23) - apexDist;
+        movedReg.RT_switch = (apexLeft ? movedReg.b1_L : movedReg.b1_R) / (-2 * b23); // -1 would be in front of the b1, switched for readability
         return movedReg;
     }
 
@@ -115,13 +120,14 @@ namespace qAlgorithms
         {
             areas.push_back((heights[i] + heights[i - 1]) / 2 *
                             ((*borders)[i] - (*borders)[i - 1]));
+            assert(areas[i] != 0);
         }
         return areas;
     }
 
     float calcTanimoto(MovedRegression *feature_A, MovedRegression *feature_B)
     {
-        assert(feature_A->RT_switch != feature_B->RT_switch);
+        // assert(feature_A->RT_switch != feature_B->RT_switch); // @todo turn on once we need a more elegant access pattern
         MovedRegression *feature_L = feature_A->RT_switch < feature_B->RT_switch ? feature_A : feature_B;
         MovedRegression *feature_R = feature_A->RT_switch > feature_B->RT_switch ? feature_A : feature_B;
         // naming: first  L / R : feature_L or _R; second L / R : left or right half of the regression
@@ -203,7 +209,12 @@ namespace qAlgorithms
             }
         }
         intersects.push_back(limit_R);
+
+        // remove duplicate entries from vector
         std::sort(intersects.begin(), intersects.end());
+        const auto &it = std::unique(intersects.begin(), intersects.end());
+        intersects.resize(std::distance(intersects.begin(), it));
+
         // subdivide the regions further in order for the score to be accurate
         size_t subdivisions = 10;
         size_t e = intersects.size();
@@ -255,6 +266,7 @@ namespace qAlgorithms
                                        exp(b0_R_R + b1_R_R * xval + b3_R * xval * xval)));
         }
         // multiply every area with the weight, then sum up and divide for the coefficent
+        // @todo check for squre sum score
         assert(areas_L.size() == weights.size());
         float AuB = 0; // area only covered by either A or B
         float AnB = 0; // area covered by both A and B
@@ -266,5 +278,25 @@ namespace qAlgorithms
             AuB += abs(areas_L[i] - areas_R[i]);
         }
         return AuB / AnB;
+    }
+
+    std::vector<size_t> getCompareOrder(const ComponentGroup *group)
+    {
+        assert(group->shapeScores.size() > 0);
+        std::vector<size_t> indices(group->shapeScores.size());
+        std::iota(indices.begin(), indices.end(), 0);
+        {
+            auto ref = &(group->shapeScores);
+            std::stable_sort(indices.begin(), indices.end(),
+                             [ref](size_t lhs, size_t rhs)
+                             { return ref[lhs] > ref[rhs]; });
+        }
+        for (size_t i = 0; i < indices.size(); i++)
+        {
+            std::cout << indices[i] << ", ";
+        }
+        std::cout << std::endl;
+        exit(1);
+        return indices;
     }
 }
