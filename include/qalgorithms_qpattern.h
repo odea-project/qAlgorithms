@@ -9,7 +9,7 @@
 
 namespace qAlgorithms
 {
-    void findComponents(const std::vector<FeaturePeak> *peaks);
+    void findComponents(const std::vector<FeaturePeak> *peaks, const std::vector<EIC> *bins);
 
     struct ComponentGroup
     {
@@ -20,6 +20,9 @@ namespace qAlgorithms
         float score(size_t idx1, size_t idx2);
         void calcScores();
     };
+
+    // determine the order of comparisons based on the tanimoto score
+    std::vector<size_t> getCompareOrder(const ComponentGroup *group);
 
     // This function modifies the coefficients of a regression so that it describes a peak with the apex at
     // x = RT of the feature and the height 1. Features are manipulated this way to allow a shape comparison
