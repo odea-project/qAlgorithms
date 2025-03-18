@@ -6,11 +6,8 @@
 #include <algorithm> // sorting
 #include <cmath>     // pow and log
 #include <numeric>   // partial sum (cumError)
-// #include <string>
 #include <vector>
 #include <iostream>
-// #include <fstream>
-// #include <sstream>
 #include <cassert>
 
 // group peaks identified from bins by their relation within a scan region
@@ -154,8 +151,20 @@ namespace qAlgorithms
         float b3_R = feature_R->b3;
         float switch_L = feature_L->RT_switch;
         float switch_R = feature_R->RT_switch;
+
         float limit_L = std::max(feature_L->limit_L, feature_R->limit_L);
         float limit_R = std::max(feature_L->limit_R, feature_R->limit_R);
+
+        // this is a stopgap solution for the case of a positive quadratic exponent when the regression window extends past the local minimum
+        // use signbit of -b2 / -b3 to still select the max if both are positive (signbit returns true for set)
+        if ((b2_L > 0) | (b2_R > 0))
+        {
+            limit_L = std::max(std::signbit(-b2_L) * feature_L->limit_L, std::signbit(-b2_R) * feature_R->limit_L);
+        }
+        if ((b3_L > 0) | (b3_R > 0))
+        {
+            limit_R = std::max(std::signbit(-b2_R) * feature_L->limit_R, std::signbit(-b3_R) * feature_R->limit_R);
+        }
 
         // find intersects of both regressions
         std::vector<float> intersects; // @todo this can have a fixed size
@@ -291,23 +300,52 @@ namespace qAlgorithms
         return score;
     }
 
+    std::pair<unsigned int, unsigned int> featNums(size_t idx, const ComponentGroup *group)
+    {
+        // the original two indices of a pair:
+        // idx = size * idx1 + idx2
+        unsigned int idx2 = idx % group->features.size();
+        unsigned int idx1 = (idx - idx2) / group->features.size();
+        return std::make_pair(idx1, idx2);
+    }
+
     std::vector<size_t> getCompareOrder(const ComponentGroup *group)
     {
         assert(group->shapeScores.size() > 0);
         std::vector<size_t> indices(group->shapeScores.size());
         std::iota(indices.begin(), indices.end(), 0);
         {
-            auto ref = &(group->shapeScores);
-            std::stable_sort(indices.begin(), indices.end(),
-                             [ref](size_t lhs, size_t rhs)
-                             { return ref[lhs] > ref[rhs]; });
+            std::sort(indices.begin(), indices.end(),
+                      [group](size_t lhs, size_t rhs)
+                      { return (group->shapeScores)[lhs] > (group->shapeScores)[rhs]; });
+            // remove indices where the score is smaller than sensible
+            float lowestScore = 0.01;
+            size_t breakpoint = 0;
+            for (; group->shapeScores[indices[breakpoint]] > lowestScore; breakpoint++)
+                ;
+            indices.resize(breakpoint + 1);
         }
-        for (size_t i = 0; i < indices.size(); i++)
+
+        // vector to count how many other regressions the one at this index has been combined with
+        std::vector<unsigned int> taken(group->features.size(), 0);
+
+        for (size_t i = 0; i < indices.size() / 2; i++)
         {
-            std::cout << indices[i] << ", ";
+            auto pair = featNums(indices[2 * i], group); // at this point, two neighbours always have the same score.
+            bool left_is_left = group->features[pair.first].origin->retentionTime < group->features[pair.second].origin->retentionTime;
+            if (!left_is_left)
+            {
+                std::swap(pair.first, pair.second);
+            }
+            // @todo do the regression comparison here
+            bool mergeSuccess = true;
+            if (mergeSuccess)
+            {
+                taken[pair.first]++;
+                taken[pair.second]++;
+            }
         }
-        std::cout << std::endl;
-        exit(1);
-        return indices;
+
+                return indices;
     }
 }
