@@ -133,6 +133,12 @@ namespace qAlgorithms
         // assert(feature_A->RT_switch != feature_B->RT_switch); // @todo turn on once we need a more elegant access pattern
         MovedRegression *feature_L = feature_A->RT_switch < feature_B->RT_switch ? feature_A : feature_B;
         MovedRegression *feature_R = feature_A->RT_switch > feature_B->RT_switch ? feature_A : feature_B;
+        if (feature_L->limit_R < feature_R->limit_L) [[unlikely]]
+        {
+            // the features have no overlap, exclude this case for better correctness checing in the function
+            return 0;
+        }
+
         // naming: first  L / R : feature_L or _R; second L / R : left or right half of the regression
         float b0_L_L = feature_L->b0_L;
         float b0_L_R = feature_L->b0_R;
@@ -281,7 +287,7 @@ namespace qAlgorithms
             AuB += abs(areas_L[i] - areas_R[i]);
         }
         auto score = AuB / AnB;
-        assert(0 < score && score < 1);
+        assert(0 <= score && score <= 1);
         return score;
     }
 
