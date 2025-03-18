@@ -9,6 +9,7 @@
 
 namespace qAlgorithms
 {
+    // main function to execute a componentiation step on data
     void findComponents(const std::vector<FeaturePeak> *peaks, const std::vector<EIC> *bins);
 
     struct ComponentGroup
@@ -20,6 +21,15 @@ namespace qAlgorithms
         float score(size_t idx1, size_t idx2);
         void calcScores();
     };
+
+    struct GroupLims
+    {
+        size_t start;
+        size_t end;
+    };
+
+    // pre-group the region relevant to componentisation based on retention time uncertainty
+    std::vector<GroupLims> preGroup(const std::vector<FeaturePeak> *peaks);
 
     // determine the order of comparisons based on the tanimoto score
     std::vector<size_t> getCompareOrder(const ComponentGroup *group);
@@ -33,7 +43,8 @@ namespace qAlgorithms
     // by both regressions independently
     // The antiderivative of our regression curve involves exp(6000) and greater numbers, so we use
     // trapezoid integration instead.
-    float calcTanimoto(MovedRegression *feature_A, MovedRegression *feature_B);
+    // @todo this runs into problems when applying scaling, check if removal is a good idea
+    float calcTanimoto_reg(MovedRegression *feature_A, MovedRegression *feature_B);
 }
 
 #endif

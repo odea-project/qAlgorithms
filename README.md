@@ -32,7 +32,7 @@ cannot be guaranteed at this stage.
 ### Windows
 The entire `qAlgorithms` workflow is provided as an executable under ["Releases"](https://github.com/odea-project/qAlgorithms/releases) 
 on our github repository. Note that `qAlgorithms` requires the libraries 
-[`libgcc_s_seh-1.dll`](https://github.com/odea-project/qAlgorithms/releases/download/v0.1.1.beta/libgcc_s_seh-1.dll), [`libgomp-1.dll`](https://github.com/odea-project/qAlgorithms/releases/download/v0.1.1.beta/libgomp-1.dll) 
+[`libgcc_s_seh-1.dll`](https://github.com/odea-project/qAlgorithms/releases/download/v0.1.1.beta/libgcc_s_seh-1.dll)
 and [`libwinpthread-1.dll`](https://github.com/odea-project/qAlgorithms/releases/download/v0.1.1.beta/libwinpthread-1.dll). If they are not present on your system already, you can also download them under "Releases" 
 or by clicking on the filenames above. There is no need to download the source code.
 

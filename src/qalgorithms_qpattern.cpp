@@ -16,6 +16,7 @@ namespace qAlgorithms
 {
     void findComponents(const std::vector<FeaturePeak> *peaks, const std::vector<EIC> *bins)
     {
+        std::vector<GroupLims> limits = preGroup(peaks);
         for (size_t i = 0; i < peaks->size() - 10; i++)
         {
             // only test if the matrix thing works for now
@@ -54,10 +55,32 @@ namespace qAlgorithms
         {
             for (size_t j = 0; j < features.size(); j++)
             {
-                float tanimoto = calcTanimoto(&features[i], &features[j]);
+                float tanimoto = calcTanimoto_reg(&features[i], &features[j]);
                 shapeScores.push_back(tanimoto);
             }
         }
+    }
+
+    std::vector<GroupLims> preGroup(const std::vector<FeaturePeak> *peaks)
+    {
+        // base assumption: for all peaks that constitute a component, the two apexes
+        // are no further apart than the smallest uncertainty of the pair
+        // This assumes that peaks is sorted by retention time!
+        std::vector<GroupLims> initialGroups;
+        initialGroups.push_back({0, 0});
+        for (size_t i = 1; i < peaks->size(); i++)
+        {
+            float apex_L = (*peaks)[i - 1].retentionTime;
+            float apex_R = (*peaks)[i].retentionTime;
+            float uncert = std::min((*peaks)[i - 1].retentionTimeUncertainty, (*peaks)[i].retentionTimeUncertainty);
+            if (apex_R - apex_L > uncert)
+            {
+                initialGroups.back().end = i - 1;
+                initialGroups.push_back({i, 0});
+            }
+        }
+        initialGroups.back().end = peaks->size() - 1;
+        return initialGroups;
     }
 
     MovedRegression moveAndScaleReg(const FeaturePeak *feature)
@@ -90,7 +113,7 @@ namespace qAlgorithms
         return movedReg;
     }
 
-    // small functions for calcTanimoto
+    // small functions for calcTanimoto_reg
     inline std::vector<float> areas(std::vector<float> *borders, MovedRegression *feature)
     {
         std::vector<float> areas;
@@ -125,7 +148,7 @@ namespace qAlgorithms
         return areas;
     }
 
-    float calcTanimoto(MovedRegression *feature_A, MovedRegression *feature_B)
+    float calcTanimoto_reg(MovedRegression *feature_A, MovedRegression *feature_B)
     {
         // assert(feature_A->RT_switch != feature_B->RT_switch); // @todo turn on once we need a more elegant access pattern
         MovedRegression *feature_L = feature_A->RT_switch < feature_B->RT_switch ? feature_A : feature_B;
@@ -346,6 +369,6 @@ namespace qAlgorithms
             }
         }
 
-                return indices;
+        return indices;
     }
 }

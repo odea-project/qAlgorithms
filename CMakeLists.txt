@@ -10,8 +10,8 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
 # required libraries
-find_package(OpenMP REQUIRED)
-message(STATUS "OpenMP_CXX_LIBRARIES: ${OpenMP_CXX_LIBRARIES}")
+# find_package(OpenMP REQUIRED)
+# message(STATUS "OpenMP_CXX_LIBRARIES: ${OpenMP_CXX_LIBRARIES}")
 # find_package(ZLIB REQUIRED)
 # message(STATUS "zlib found: ${ZLIB_INCLUDE_DIRS}, ${ZLIB_LIBRARIES}")
 
@@ -38,7 +38,7 @@ endif()
 
 # Set compiler flags
 add_compile_options(-Wall -Wuninitialized -Wno-unknown-pragmas -Wformat -Wformat=2 -Wimplicit-fallthrough
-                    -fopenmp -mavx2 -march=native -O2 # -flto
+                    -mavx2 -march=native -O2 # -flto
                     -U_FORTIFY_SOURCE -D_FORTIFY_SOURCE=3 -fstrict-flex-arrays=3 -fdiagnostics-color=always -fstack-clash-protection -D_GLIBCXX_ASSERTIONS # hardening flags
                     -fno-math-errno -g -ggdb3 ${OpenMP_CXX_FLAGS}) 
 
@@ -66,11 +66,12 @@ file(GLOB_RECURSE SOURCES "src/*.cpp" "external/StreamCraft/src/*.cpp")
 add_executable(${PROJECT_NAME} ${SOURCES})
 
 # Linker flags
-if(OpenMP_CXX_FOUND)
-    target_link_libraries(${PROJECT_NAME} PUBLIC ${OpenMP_CXX_LIBRARIES} z) # "z" is the linker flag for zlib, which is included as a header file
-else()
-    message(FATAL_ERROR "OpenMP not found")
-endif()
+target_link_libraries(${PROJECT_NAME} PUBLIC z) # "z" is the linker flag for zlib, which is included as a header file
+# if(OpenMP_CXX_FOUND)
+#     target_link_libraries(${PROJECT_NAME} PUBLIC ${OpenMP_CXX_LIBRARIES} z) # "z" is the linker flag for zlib, which is included as a header file
+# else()
+#     message(FATAL_ERROR "OpenMP not found")
+# endif()
 
 if(CMAKE_BUILD_TYPE MATCHES "Debug-Linux")
   set(
