@@ -73,8 +73,9 @@ namespace qAlgorithms
         const bool apexLeft = feature->apexLeft;
         float b23 = apexLeft ? b2 : b3;
         float apexDist = -b1 / (2 * b23);
-        float height = feature->height;
-        b0 += log(1) - height; // scale to height 1
+        float height = b0 + b1 * apexDist + b23 * apexDist * apexDist;
+        const float scaleTo = 1;
+        b0 += log(scaleTo) - height; // scale to height 1. The log is 0 for case height = 1, but we might have to adjust later
         // move regression to RT of feature
         float offset = feature->retentionTime - apexDist;
         MovedRegression movedReg;
