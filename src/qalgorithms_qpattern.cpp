@@ -119,9 +119,11 @@ namespace qAlgorithms
         }
         for (size_t i = 1; i < borders->size(); i++)
         {
-            areas.push_back((heights[i] + heights[i - 1]) / 2 *
-                            ((*borders)[i] - (*borders)[i - 1]));
-            assert(areas[i] != 0);
+            auto meanHeight = (heights[i] + heights[i - 1]) / 2;
+            auto dist = (*borders)[i] - (*borders)[i - 1];
+            auto area = meanHeight * dist;
+            assert(area > 0);
+            areas.push_back(area);
         }
         return areas;
     }
@@ -222,9 +224,9 @@ namespace qAlgorithms
         for (size_t i = 1; i < e; i++)
         {
             float distance = intersects[i] - intersects[i - 1];
-            for (size_t i = 1; i < subdivisions; i++)
+            for (size_t j = 1; j < subdivisions; j++)
             {
-                float step = distance * i;
+                float step = distance * j / subdivisions;
                 intersects.push_back(intersects[i - 1] + step);
             }
         }
@@ -237,32 +239,32 @@ namespace qAlgorithms
         std::vector<float> weights;
         weights.reserve(intersects.size() - 1);
         size_t position = 1;
-        for (; position < weights.size(); position++)
+        for (; position < intersects.size(); position++)
         {
             // both left halves
-            if (weights[position] > switch_L)
+            if (intersects[position] > switch_L)
             {
                 break;
             }
-            float xval = (weights[position] + weights[position - 1]) / 2;
+            float xval = (intersects[position] + intersects[position - 1]) / 2;
             weights.push_back(std::max(exp(b0_L_L + b1_L_L * xval + b2_L * xval * xval),
                                        exp(b0_R_L + b1_R_L * xval + b2_R * xval * xval)));
         }
-        for (; position < weights.size(); position++)
+        for (; position < intersects.size(); position++)
         {
             // middle region
-            if (weights[position] > switch_R)
+            if (intersects[position] > switch_R)
             {
                 break;
             }
-            float xval = (weights[position] + weights[position - 1]) / 2;
+            float xval = (intersects[position] + intersects[position - 1]) / 2;
             weights.push_back(std::max(exp(b0_L_R + b1_L_R * xval + b3_L * xval * xval),
                                        exp(b0_R_L + b1_R_L * xval + b2_R * xval * xval)));
         }
-        for (; position < weights.size(); position++)
+        for (; position < intersects.size(); position++)
         {
             // both right halves
-            float xval = (weights[position] + weights[position - 1]) / 2;
+            float xval = (intersects[position] + intersects[position - 1]) / 2;
             weights.push_back(std::max(exp(b0_L_R + b1_L_R * xval + b3_L * xval * xval),
                                        exp(b0_R_R + b1_R_R * xval + b3_R * xval * xval)));
         }
@@ -278,7 +280,9 @@ namespace qAlgorithms
             AnB += std::min(areas_L[i], areas_R[i]);
             AuB += abs(areas_L[i] - areas_R[i]);
         }
-        return AuB / AnB;
+        auto score = AuB / AnB;
+        assert(0 < score && score < 1);
+        return score;
     }
 
     std::vector<size_t> getCompareOrder(const ComponentGroup *group)
