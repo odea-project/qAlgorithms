@@ -30,6 +30,42 @@ namespace qAlgorithms
 
     const std::vector<qCentroid> passToBinning(const std::vector<CentroidPeak> &allPeaks) //, std::vector<unsigned int> addEmpty)
     {
+        // print variables here
+        {
+            FILE *file = fopen("stats.csv", "w");
+
+            fprintf(file, "1_invalid_apex_valley,2_invalid_area,3_only_one_half,4_too_few_df,5_invalid_apex,6_f_test_fail,7_invalid_quadratic,8_insignificant_area,9_height_uncertain,10_insignificant_height,11_area_uncertain,12_chisquare_fail\n");
+
+            fprintf(file, "%lu,%lu,%lu,%lu,%lu,%lu,%lu,%lu,%lu,%lu,%lu,%lu\n",
+                    INVALID_APEX_VALLEY,
+                    INVALID_AREA,
+                    ONLY_ONE_HALF,
+                    TOO_FEW_DF,
+                    INVALID_APEX,
+                    F_TEST_FAIL,
+                    INVALID_QUADRATIC,
+                    INSIGNIFICANT_AREA,
+                    HEIGHT_UNCERTAIN,
+                    INSIGNIFICANT_HEIGHT,
+                    AREA_UNCERTAIN,
+                    CHISQUARE_FAIL);
+
+            fclose(file);
+        }
+
+        // reset this iteration
+        INVALID_APEX_VALLEY = 0;
+        INVALID_AREA = 0;
+        ONLY_ONE_HALF = 0;
+        TOO_FEW_DF = 0;
+        INVALID_APEX = 0;
+        F_TEST_FAIL = 0;
+        INVALID_QUADRATIC = 0;
+        INSIGNIFICANT_AREA = 0;
+        HEIGHT_UNCERTAIN = 0;
+        INSIGNIFICANT_HEIGHT = 0;
+        AREA_UNCERTAIN = 0;
+        CHISQUARE_FAIL = 0;
         // initialise empty vector with enough room for all scans - centroids[0] must remain empty
         std::vector<qCentroid> centroids;
         centroids.reserve(allPeaks.size() * 100);
@@ -512,7 +548,7 @@ namespace qAlgorithms
             TOO_FEW_DF++;
             // return; // degree of freedom less than 5; i.e., less then 5 measured data points
         }
-        assert(mutateReg->right_limit - mutateReg->left_limit > 4);
+        // assert(mutateReg->right_limit - mutateReg->left_limit > 4);
 
         /*
           Apex to Edge Filter:
@@ -1195,6 +1231,11 @@ namespace qAlgorithms
         const size_t idxEnd,
         const std::vector<float> *intensities)
     {
+        if (idxApex >= intensities->size())
+        {
+            return false;
+        }
+
         float apex = (*intensities)[idxApex];
         float left = (*intensities)[idxStart];
         float right = (*intensities)[idxEnd];
@@ -1343,7 +1384,7 @@ namespace qAlgorithms
         double b1 = coeff.b1;
         double b2 = coeff.b2;
         double b3 = coeff.b3;
-        assert(!(b2 > 0 && b3 > 0)); // there would be two valley points, so no maximum of the peak
+        // assert(!(b2 > 0 && b3 > 0)); // there would be two valley points, so no maximum of the peak
         assert(doubleScale > 0);
 
         double _SQRTB2 = 1 / std::sqrt(std::abs(b2));

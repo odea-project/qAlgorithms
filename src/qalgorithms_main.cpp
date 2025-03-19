@@ -100,7 +100,6 @@ int main(int argc, char *argv[])
 
 #pragma region file processing
     std::string filename;
-    bool polarities[2] = {true, false};
     size_t counter = 1;
     size_t errorCount = 0;
     for (std::filesystem::path pathSource : tasklist)
@@ -135,6 +134,7 @@ int main(int argc, char *argv[])
         }
         // @todo find a more elegant solution for polarity switching
         bool oneProcessed = true;
+        static bool polarities[2] = {true, false};
         for (bool polarity : polarities)
         {
             filename = pathSource.stem().string();
@@ -186,7 +186,7 @@ int main(int argc, char *argv[])
             // @todo remove diagnostics later
             auto binThis = passToBinning(centroids);
 
-            continue;
+            exit(1);
 
             double meanDQSC = 0;
             double meanCenErrorRel = 0;
