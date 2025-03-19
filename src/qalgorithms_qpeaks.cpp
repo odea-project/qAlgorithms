@@ -12,6 +12,19 @@
 
 namespace qAlgorithms
 {
+    // test variables to see how often each exclusion criterion would hit
+    size_t INVALID_APEX_VALLEY = 0;
+    size_t INVALID_AREA = 0;
+    size_t ONLY_ONE_HALF = 0;
+    size_t TOO_FEW_DF = 0;
+    size_t INVALID_APEX = 0;
+    size_t F_TEST_FAIL = 0;
+    size_t INVALID_QUADRATIC = 0;
+    size_t INSIGNIFICANT_AREA = 0;
+    size_t HEIGHT_UNCERTAIN = 0;
+    size_t INSIGNIFICANT_HEIGHT = 0;
+    size_t AREA_UNCERTAIN = 0;
+    size_t CHISQUARE_FAIL = 0;
 
 #pragma region "pass to qBinning"
 
@@ -430,11 +443,14 @@ namespace qAlgorithms
           to the next iteration. If the apex and valley positions are too close
           to each other, the loop continues to the next iteration.
         */
+        bool fail = false;
         float valley_position = 0;
         // no easy replace
         if (!calcApexAndValleyPos(mutateReg, scale, valley_position))
         {
-            return; // invalid apex and valley positions
+            fail = true;
+            INVALID_APEX_VALLEY++;
+            // return; // invalid apex and valley positions
         }
         /*
           Area Pre-Filter:
@@ -445,7 +461,9 @@ namespace qAlgorithms
         */
         if (mutateReg->apex_position * mutateReg->newCoeffs.b1 > 50 || valley_position * mutateReg->newCoeffs.b1 < -50)
         {
-            return; // invalid area pre-filter
+            fail = true;
+            INVALID_AREA++;
+            // return; // invalid area pre-filter
         }
 
         if (valley_position == 0)
@@ -474,8 +492,10 @@ namespace qAlgorithms
 
         if (scale + idxStart == mutateReg->left_limit || scale + idxStart == mutateReg->right_limit)
         {
+            fail = true;
             // only one half of the regression applies to the data
-            return;
+            ONLY_ONE_HALF++;
+            // return;
         }
 
         /*
@@ -488,7 +508,9 @@ namespace qAlgorithms
         size_t df_sum = calcDF(degreesOfFreedom, mutateReg->left_limit, mutateReg->right_limit); // degrees of freedom considering the left and right limits
         if (df_sum < 5)
         {
-            return; // degree of freedom less than 5; i.e., less then 5 measured data points
+            fail = true;
+            TOO_FEW_DF++;
+            // return; // degree of freedom less than 5; i.e., less then 5 measured data points
         }
         assert(mutateReg->right_limit - mutateReg->left_limit > 4);
 
@@ -504,7 +526,9 @@ namespace qAlgorithms
         float apexToEdge = apexToEdgeRatio(mutateReg->left_limit, idxApex, mutateReg->right_limit, intensities);
         if (!(apexToEdge > 2))
         {
-            return; // invalid apex to edge ratio
+            fail = true;
+            INVALID_APEX++;
+            // return; // invalid apex to edge ratio
         }
 
         /*
@@ -532,19 +556,25 @@ namespace qAlgorithms
         float regression_Fval = calcRegressionFvalue(&selectLog, &predictLog, mse, mutateReg->newCoeffs.b0);
         if (regression_Fval < F_VALUES[selectLog.size()]) // - 5 since the minimum is five degrees of freedom
         {
+            fail = true;
             // H0 holds, the two distributions are not noticeably different
-            return;
+            F_TEST_FAIL++;
+            // return;
         }
         // mse is only the correct mean square error after this division
         mse /= (df_sum - 4);
 
         if (!isValidQuadraticTerm(mutateReg->newCoeffs, scale, mse, df_sum))
         {
-            return; // statistical insignificance of the quadratic term
+            fail = true;
+            INVALID_QUADRATIC++;
+            // return; // statistical insignificance of the quadratic term
         }
         if (!isValidPeakArea(mutateReg->newCoeffs, mse, scale, df_sum))
         {
-            return; // statistical insignificance of the area
+            fail = true;
+            INSIGNIFICANT_AREA++;
+            // return; // statistical insignificance of the area
         }
         /*
           Height Filter:
@@ -558,13 +588,17 @@ namespace qAlgorithms
         calcPeakHeightUncert(mutateReg, mse, scale);
         if (1 / mutateReg->uncertainty_height <= T_VALUES[df_sum - 5]) // statistical significance of the peak height
         {
-            return;
+            fail = true;
+            HEIGHT_UNCERTAIN++;
+            // return;
         }
         // at this point without height, i.e., to get the real uncertainty
         // multiply with height later. This is done to avoid exp function at this point
         if (!isValidPeakHeight(mse, scale, mutateReg->apex_position, valley_position, df_sum, apexToEdge))
         {
-            return; // statistical insignificance of the height
+            fail = true;
+            INSIGNIFICANT_HEIGHT++;
+            // return; // statistical insignificance of the height
         }
 
         /*
@@ -581,7 +615,9 @@ namespace qAlgorithms
 
         if (mutateReg->area / mutateReg->uncertainty_area <= T_VALUES[df_sum - 5])
         {
-            return; // statistical insignificance of the area
+            fail = true;
+            AREA_UNCERTAIN++;
+            // return; // statistical insignificance of the area
         }
 
         /*
@@ -594,8 +630,12 @@ namespace qAlgorithms
         float chiSquare = calcSSE_chisqared(mutateReg->newCoeffs, intensities, mutateReg->left_limit, mutateReg->right_limit, scale + idxStart);
         if (chiSquare < CHI_SQUARES[df_sum - 5])
         {
-            return; // statistical insignificance of the chi-square value
+            fail = true;
+            CHISQUARE_FAIL++;
+            // return; // statistical insignificance of the chi-square value
         }
+        if (fail)
+            return;
 
         mutateReg->uncertainty_pos = calcUncertaintyPos(mse, mutateReg->newCoeffs, mutateReg->apex_position, scale);
         mutateReg->df = df_sum - 4; // @todo add explanation for -4
