@@ -186,6 +186,8 @@ int main(int argc, char *argv[])
             // @todo remove diagnostics later
             auto binThis = passToBinning(centroids);
 
+            continue;
+
             double meanDQSC = 0;
             double meanCenErrorRel = 0;
             double meanCenErrorAbs = 0;
