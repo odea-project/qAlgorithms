@@ -28,6 +28,13 @@ namespace qAlgorithms
         size_t end;
     };
 
+    struct MultiMatrix
+    {
+        std::vector<float> designMatrix;
+        size_t n_rows;
+        size_t n_cols;
+    };
+
     // pre-group the region relevant to componentisation based on retention time uncertainty
     std::vector<GroupLims> preGroup(const std::vector<FeaturePeak> *peaks);
 
@@ -45,6 +52,8 @@ namespace qAlgorithms
     // trapezoid integration instead.
     // @todo this runs into problems when applying scaling, check if removal is a good idea
     float calcTanimoto_reg(MovedRegression *feature_A, MovedRegression *feature_B);
+
+    MultiMatrix combinedMatrix(std::vector<std::vector<float>> *intensities);
 }
 
 #endif

@@ -371,4 +371,18 @@ namespace qAlgorithms
 
         return indices;
     }
+
+    MultiMatrix combinedMatrix(std::vector<std::vector<float>> *intensities)
+    {
+        MultiMatrix matrix;
+        matrix.n_cols = 3 + intensities->size(); // three for b1, b2, b3 and one b0 for every other member
+        // omit the last value to ensure uneven number of points - this is a bad solution @todo
+        for (size_t i = 0; i < intensities->size(); i++)
+        {
+            if (!(intensities[i].size() % 2))
+            {
+                intensities[i].pop_back();
+            }
+        }
+    }
 }
