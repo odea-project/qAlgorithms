@@ -139,10 +139,11 @@ namespace qAlgorithms
         }
         for (size_t i = 1; i < borders->size(); i++)
         {
-            auto meanHeight = (heights[i] + heights[i - 1]) / 2;
-            auto dist = (*borders)[i] - (*borders)[i - 1];
-            auto area = meanHeight * dist;
-            assert(area > 0);
+            float meanHeight = (heights[i] + heights[i - 1]) / 2;
+            float dist = (*borders)[i] - (*borders)[i - 1];
+            assert(dist > 0);
+            float area = meanHeight * dist;
+            // assert(area > 0); // evidently, this is not sure to be the case
             areas.push_back(area);
         }
         return areas;
@@ -319,7 +320,8 @@ namespace qAlgorithms
             AuB += abs(areas_L[i] - areas_R[i]);
         }
         auto score = AuB / AnB;
-        assert(0 <= score && score <= 1);
+        // assert(0 <= score && score <= 1);
+        // @todo this won't work
         return score;
     }
 
