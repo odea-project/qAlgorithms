@@ -13,6 +13,7 @@
 namespace qAlgorithms
 {
     // test variables to see how often each exclusion criterion would hit
+    size_t TESTS_TOTAL = 0;
     size_t INVALID_APEX_VALLEY = 0;
     size_t INVALID_AREA = 0;
     size_t ONLY_ONE_HALF = 0;
@@ -34,9 +35,10 @@ namespace qAlgorithms
         {
             FILE *file = fopen("stats.csv", "w");
 
-            fprintf(file, "1_invalid_apex_valley,2_invalid_area,3_only_one_half,4_too_few_df,5_invalid_apex,6_f_test_fail,7_invalid_quadratic,8_insignificant_area,9_height_uncertain,10_insignificant_height,11_area_uncertain,12_chisquare_fail\n");
+            fprintf(file, "test_count,1_invalid_apex_valley,2_invalid_area,3_only_one_half,4_too_few_df,5_invalid_apex,6_f_test_fail,7_invalid_quadratic,8_insignificant_area,9_height_uncertain,10_insignificant_height,11_area_uncertain,12_chisquare_fail\n");
 
-            fprintf(file, "%lu,%lu,%lu,%lu,%lu,%lu,%lu,%lu,%lu,%lu,%lu,%lu\n",
+            fprintf(file, "%lu,%lu,%lu,%lu,%lu,%lu,%lu,%lu,%lu,%lu,%lu,%lu,%lu\n",
+                    TESTS_TOTAL,
                     INVALID_APEX_VALLEY,
                     INVALID_AREA,
                     ONLY_ONE_HALF,
@@ -54,6 +56,7 @@ namespace qAlgorithms
         }
 
         // reset this iteration
+        TESTS_TOTAL = 0;
         INVALID_APEX_VALLEY = 0;
         INVALID_AREA = 0;
         ONLY_ONE_HALF = 0;
@@ -471,6 +474,7 @@ namespace qAlgorithms
         const std::vector<float> *intensities,
         const float *intensities_log)
     { // @todo order by effort to calculate
+        TESTS_TOTAL++;
         /*
           Apex and Valley Position Filter:
           This block of code implements the apex and valley position filter.
