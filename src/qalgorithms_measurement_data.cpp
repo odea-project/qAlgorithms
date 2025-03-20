@@ -446,7 +446,7 @@ namespace qAlgorithms
             std::cerr << "Centroided data is not supported in this version of qAlgorithms!\n"
                       << "Warning: qAlgorithms is intended for profile spectra. A base uncertainty of "
                       << PPM_PRECENTROIDED << " ppm is assumed for all supplied centroids\n";
-            exit(1);
+            return std::vector<CentroidPeak>{};
             // for (size_t i = 1; i < indices.size(); i++) // i can be 0 briefly if there is a scan missing between 1. and 2. element
             // {
             //   if (retention_times[i] - retention_times[i - 1] > rt_diff * 1.75)
@@ -488,8 +488,7 @@ namespace qAlgorithms
         }
         if (selectedIndices.empty())
         {
-            std::vector<CentroidPeak> empty;
-            return empty;
+            return std::vector<CentroidPeak>{};
         }
 
         std::vector<double> retention_times = data.get_spectra_RT(&selectedIndices);
