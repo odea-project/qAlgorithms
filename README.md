@@ -67,16 +67,21 @@ as csv. You can select individual files or an entire directory to search for
 .mzML files recursively. All output is written into one directory, which you also
 must specify. Below are some commands you will likely use (replace example paths with your system paths):
 
-`./qAlgorithms.exe -h` - Display the help menu, listing all availvable options.
-
-`./qAlgorithms.exe -i C:/example/path/measurement.mzML -o ../my/results -printfeatures` - 
+Display the help menu, listing all availvable options:
+```sh
+  ./qAlgorithms.exe -h
+```
 Process the file measurement.mzML and write a feature list with every detected peak
-into the directory "results".
-
-`./qAlgorithms.exe -i ./allMeasurements -o ./results -printall` - searches the directory
-"allMeasurements" and all subdirectories for files ending in .mzML and process them.
+into the directory "results":
+```sh
+  ./qAlgorithms.exe -i C:/example/path/measurement.mzML -o ../my/results -printfeatures
+```
+searches the directory "allMeasurements" and all subdirectories for files ending in .mzML and process them.
 All intermediate results, those being centroids, bins and peaks, are written to a .csv 
-file and saved to the "results" directory. 
+file and saved to the "results" directory:
+```sh
+  ./qAlgorithms.exe -i ./allMeasurements -o ./results -printall
+```
 
 Some things to keep in mind:
 * `qAlgorithms` can only process profile mode data at this point. While we did implement functionality
