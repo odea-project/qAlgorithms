@@ -387,4 +387,65 @@ namespace qAlgorithms
             }
         }
     }
+
+    struct IntensityMatrix
+    {
+        std::vector<std::vector<float>> intensities;
+        std::vector<size_t> scanNo;
+    };
+
+    IntensityMatrix combineIntensities(const ComponentGroup *group, const std::vector<EIC> *bins)
+    {
+        // combine all features in the group such that their intensities are all
+        // accessible in a per-scan setting
+
+        // get the lowest and highest scan number of all component candidates
+        size_t lowerBound = INFINITY;
+        size_t upperBound = 0;
+        for (size_t i = 0; i < group->features.size(); i++)
+        {
+            size_t binID = group->features[i].binID;
+            auto bin = (*bins)[binID];
+            size_t lowEnd = bin.scanNumbers[group->features[i].origin->idxPeakStart];
+            size_t highEnd = bin.scanNumbers[group->features[i].origin->idxPeakEnd];
+            lowerBound = std::min(lowerBound, lowEnd);
+            upperBound = std::max(upperBound, highEnd);
+        }
+        // this vector holds the scan numbers per regression
+        size_t totalEntries = upperBound - lowerBound + 1;
+        std::vector<size_t> scanNo(totalEntries);
+        std::iota(scanNo.begin(), scanNo.end(), lowerBound);
+
+        // add a vector of size = number of groups for every relevant scan
+        std::vector<float> insert(group->features.size(), 0);
+        std::vector<std::vector<float>> elements;
+        elements.reserve(totalEntries);
+        for (size_t i = 0; i < totalEntries; i++)
+        {
+            elements.push_back(insert);
+        }
+
+        // fill the sub-vectors with relevant intensities, intensity 0 being equivalent to "not found"
+        for (size_t i = 0; i < group->features.size(); i++)
+        {
+            size_t binID = group->features[i].binID;
+            auto bin = (*bins)[binID];
+            auto scan = bin.scanNumbers;
+            auto area = bin.ints_area;
+            for (size_t j = 0; j < scan.size(); j++)
+            {
+                // iterate through the bin and add only those intensities with relevant scans
+                if (scan[j] < lowerBound)
+                {
+                    continue;
+                }
+                if (scan[j] > upperBound)
+                {
+                    break;
+                }
+                size_t scanIdx = scan[j] - lowerBound;
+                elements[scanIdx][i] = area[j];
+            }
+        }
+    }
 }
