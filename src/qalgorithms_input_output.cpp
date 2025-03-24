@@ -325,7 +325,7 @@ namespace qAlgorithms
             false,
             false,
             false,
-            true, // only print standard feature list
+            false, // true, // only print standard feature list @todo revert!
             false,
             false,
             false,

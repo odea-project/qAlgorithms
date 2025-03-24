@@ -306,15 +306,7 @@ int main(int argc, char *argv[])
                 std::cout << "    found " << peaks.size() << " peaks in " << timePassed.count() << " s\n";
             }
             // no fail condition here, since this case can occur with real data
-            if (userArgs.doLogging)
-            {
 
-                logWriter.open(pathLogging, std::ios::app);
-                logWriter << filename << ", " << centroids.size() << ", " << binThis.size() << ", "
-                          << meanDQSC / binThis.size() << ", " << binnedData.size() << ", " << badBinCount << ", " << meanDQSB
-                          << ", " << peaks.size() << ", " << peaksWithMassGaps << ", " << meanInterpolations << ", " << meanDQSF << "\n";
-                logWriter.close();
-            }
             if (userArgs.printFeatures)
             {
                 printFeatureList(peaks, userArgs.outputPath, filename, binnedData,
@@ -327,8 +319,27 @@ int main(int argc, char *argv[])
             }
 
 #pragma region "Componentisation"
+            timeStart = std::chrono::high_resolution_clock::now();
 
             findComponents(&peaks, &binnedData);
+            size_t numComponents = 0;
+
+            timeEnd = std::chrono::high_resolution_clock::now();
+            if (!userArgs.silent)
+            {
+                timePassed = std::chrono::duration_cast<std::chrono::milliseconds>(timeEnd - timeStart);
+                std::cout << "    grouped " << peaks.size() << " peaks into " << numComponents << " components in " << timePassed.count() << " s\n";
+            }
+
+            if (userArgs.doLogging)
+            {
+
+                logWriter.open(pathLogging, std::ios::app);
+                logWriter << filename << ", " << centroids.size() << ", " << binThis.size() << ", "
+                          << meanDQSC / binThis.size() << ", " << binnedData.size() << ", " << badBinCount << ", " << meanDQSB
+                          << ", " << peaks.size() << ", " << peaksWithMassGaps << ", " << meanInterpolations << ", " << meanDQSF << "\n";
+                logWriter.close();
+            }
         }
         counter++;
     }
