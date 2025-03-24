@@ -18,13 +18,16 @@ namespace qAlgorithms
     void findComponents(const std::vector<FeaturePeak> *peaks, const std::vector<EIC> *bins)
     {
         std::vector<GroupLims> limits = preGroup(peaks);
+        std::vector<ComponentGroup> components;
+        components.reserve(limits.size() / 2);
         for (size_t i = 0; i < limits.size(); i++)
         {
             // only test if the matrix thing works for now
             ComponentGroup newComponent;
             size_t groupsize = limits[i].end - limits[i].start + 1;
+            std::cout << groupsize << ", ";
             // @todo skip for groups with size 1?
-            if (groupsize == 1)
+            if (groupsize != 2)
             {
                 continue;
             }
@@ -43,7 +46,10 @@ namespace qAlgorithms
             newComponent.calcScores();
             auto test = getCompareOrder(&newComponent);
             // at this point, the group must be subdivided such that the total RSS is minimal
+            // special case for groupsize 2 might be a good idea, since it seems to occur very often with the
+            // current pre-gruping strategy
         }
+        std::cout << std::endl;
     }
 
     float ComponentGroup::score(size_t idx1, size_t idx2)
@@ -528,5 +534,14 @@ namespace qAlgorithms
         }
         int scale = logIntensity->size() / 2;
         auto design = designMat(scale);
+    }
+
+    bool preferMerge(float rss_complex, float rss_simple, size_t n_complex, size_t p_complex, size_t p_simple)
+    {
+        float alpha = 0.05; // @todo is a set alpha reall the best possible solution?
+        // problem: pre-calculation of all relevant f values could result in a very large array
+        // possible max size of 20 seems reasonable, maximum observed is 6
+        float Fstat = F_VALUES[];
+        float p_val = 1 - ;
     }
 }
