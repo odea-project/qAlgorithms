@@ -156,6 +156,7 @@ namespace qAlgorithms
         float limit_R;
         float RT_switch;
         float b0_L, b1_L, b2, b0_R, b1_R, b3;
+        float RSS; // residual sum of squares
     };
 }
 
