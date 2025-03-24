@@ -42,6 +42,7 @@ namespace qAlgorithms
             }
             newComponent.calcScores();
             auto test = getCompareOrder(&newComponent);
+            // at this point, the group must be subdivided such that the total RSS is minimal
         }
     }
 
