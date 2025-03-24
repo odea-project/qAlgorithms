@@ -56,6 +56,8 @@ namespace qAlgorithms
     MultiMatrix combinedMatrix(std::vector<std::vector<float>> *intensities);
 
     void calcRSS(MovedRegression *reg, const EIC *bin);
+
+    bool preferMerge(float rss_complex, float rss_simple, size_t n_complex, size_t p_complex, size_t p_simple);
 }
 
 #endif
