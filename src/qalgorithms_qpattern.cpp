@@ -1,4 +1,5 @@
 // #include <../include/qalgorithms_qbin.h>
+#include "qalgorithms_qpeaks.h"
 #include "qalgorithms_qpattern.h"
 #include "qalgorithms_datatypes.h"
 #include "qalgorithms_global_vars.h"
@@ -17,14 +18,23 @@ namespace qAlgorithms
     void findComponents(const std::vector<FeaturePeak> *peaks, const std::vector<EIC> *bins)
     {
         std::vector<GroupLims> limits = preGroup(peaks);
-        for (size_t i = 0; i < peaks->size() - 10; i++)
+        for (size_t i = 0; i < limits.size(); i++)
         {
             // only test if the matrix thing works for now
             ComponentGroup newComponent;
-            for (size_t j = 0; j < 10; j++)
+            size_t groupsize = limits[i].end - limits[i].start + 1;
+            // @todo skip for groups with size 1?
+            if (groupsize == 1)
             {
-                auto test = &((*peaks)[i + j]);
+                continue;
+            }
+            newComponent.features.reserve(groupsize);
+            for (size_t j = limits[i].start; j < limits[i].end + 1; j++)
+            {
+                auto test = &((*peaks)[j]);
                 auto movedTest = moveAndScaleReg(test);
+                const qAlgorithms::EIC *bin = &(*bins)[test->idxBin];
+                calcRSS(&movedTest, bin);
                 auto binRTs = (*bins)[test->idxBin].rententionTimes;
                 movedTest.limit_L = binRTs[test->idxPeakStart];
                 movedTest.limit_R = binRTs[test->idxPeakEnd];
@@ -374,19 +384,56 @@ namespace qAlgorithms
         return indices;
     }
 
-    MultiMatrix combinedMatrix(std::vector<std::vector<float>> *intensities)
+    void calcRSS(MovedRegression *reg, const EIC *bin)
     {
-        MultiMatrix matrix;
-        matrix.n_cols = 3 + intensities->size(); // three for b1, b2, b3 and one b0 for every other member
-        // omit the last value to ensure uneven number of points - this is a bad solution @todo
-        for (size_t i = 0; i < intensities->size(); i++)
+        // mutates the RSS field in MovedRegression
+#define PREDICT_L(x) (std::exp(reg->b0_L + x * reg->b1_L + x * x * reg->b2))
+#define PREDICT_R(x) (std::exp(reg->b0_R + x * reg->b1_R + x * x * reg->b3))
+        const auto RTs = bin->rententionTimes;
+        const auto areas = bin->ints_area;
+        size_t idx = 0;
+        for (; idx < RTs.size(); idx++)
         {
-            if (!(intensities[i].size() % 2))
+            if (RTs[idx] >= reg->limit_L)
             {
-                intensities[i].pop_back();
+                break;
             }
         }
+        float RSS = 0;
+        for (; idx < RTs.size(); idx++)
+        {
+            if (RTs[idx] >= reg->RT_switch)
+            {
+                break;
+            }
+            float diff = PREDICT_L(RTs[idx]) - areas[idx];
+            RSS += diff * diff;
+        }
+        for (; idx < RTs.size(); idx++)
+        {
+            if (RTs[idx] >= reg->limit_R)
+            {
+                break;
+            }
+            float diff = PREDICT_R(RTs[idx]) - areas[idx];
+            RSS += diff * diff;
+        }
+        reg->RSS = RSS;
     }
+
+    // MultiMatrix combinedMatrix(std::vector<std::vector<float>> *intensities)
+    // {
+    //     MultiMatrix matrix;
+    //     matrix.n_cols = 3 + intensities->size(); // three for b1, b2, b3 and one b0 for every other member
+    //     // omit the last value to ensure uneven number of points - this is a bad solution @todo
+    //     for (size_t i = 0; i < intensities->size(); i++)
+    //     {
+    //         if (!(intensities[i].size() % 2))
+    //         {
+    //             intensities[i].pop_back();
+    //         }
+    //     }
+    // }
 
     struct IntensityMatrix
     {
@@ -400,7 +447,7 @@ namespace qAlgorithms
         // accessible in a per-scan setting
 
         // get the lowest and highest scan number of all component candidates
-        size_t lowerBound = INFINITY;
+        size_t lowerBound = INT64_MAX;
         size_t upperBound = 0;
         for (size_t i = 0; i < group->features.size(); i++)
         {
@@ -447,5 +494,38 @@ namespace qAlgorithms
                 elements[scanIdx][i] = area[j];
             }
         }
+    }
+
+    std::vector<std::vector<int>> designMat(int scale) // @todo this is superfluous when working with the existing convolution
+    {
+        assert(scale > 0);
+        size_t colLenght = 2 * scale + 1;
+        std::vector b0(colLenght, 1); // @todo optimisation target
+        std::vector b1(colLenght, 0);
+        std::iota(b1.begin(), b1.end(), -scale);
+        std::vector b2(colLenght, 0);
+        for (int i = 0; i < scale + 1; i++)
+        {
+            b2[i] = b1[i] * b1[i];
+        }
+        std::vector b3(colLenght, 0);
+        for (size_t i = scale + 2; i < b3.size() + 1; i++)
+        {
+            b3[i] = b1[i] * b1[i];
+        }
+        return std::vector<std::vector<int>>{b0, b1, b2, b3};
+    }
+
+    void singleFit(std::vector<float> *logIntensity) // this was only included for the residuals, replace
+    {
+        // the model requires an uneven number of points, this is a suboptimal solution
+        // int scale = bool(logIntensity->size() % 2) ? logIntensity->size() / 2 : logIntensity->size() / 2 - 1;
+
+        if (!logIntensity->size() % 2)
+        {
+            logIntensity->resize(logIntensity->size() - 1);
+        }
+        int scale = logIntensity->size() / 2;
+        auto design = designMat(scale);
     }
 }
