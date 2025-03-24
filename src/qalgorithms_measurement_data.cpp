@@ -437,16 +437,12 @@ namespace qAlgorithms
 
         // CHECK IF CENTROIDED SPECTRA
         size_t num_centroided_spectra = std::count(spectrum_mode.begin(), spectrum_mode.end(), false);
-        if (num_centroided_spectra != 0)
-        {
-            std::cerr << "Warning: removed " << num_centroided_spectra << " centroided spectra from measurement.\n";
-        }
         if (num_centroided_spectra > spectrum_mode.size() / 2) // in profile mode sometimes centroided spectra appear as well @todo is 2 a good idea?
         {
-            std::cerr << "Centroided data is not supported in this version of qAlgorithms!\n"
-                      << "Warning: qAlgorithms is intended for profile spectra. A base uncertainty of "
-                      << PPM_PRECENTROIDED << " ppm is assumed for all supplied centroids\n";
-            exit(1);
+            std::cerr << "Centroided data is not supported in this version of qAlgorithms!\n";
+            //   << "Warning: qAlgorithms is intended for profile spectra. A base uncertainty of "
+            //   << PPM_PRECENTROIDED << " ppm is assumed for all supplied centroids\n";
+            return std::vector<CentroidPeak>{};
             // for (size_t i = 1; i < indices.size(); i++) // i can be 0 briefly if there is a scan missing between 1. and 2. element
             // {
             //   if (retention_times[i] - retention_times[i - 1] > rt_diff * 1.75)
@@ -464,6 +460,10 @@ namespace qAlgorithms
             // convertRT.push_back(retention_times[indices.size() - 1]);
             // assert(addEmpty.size() == indices.size() + 1);
             // return transferCentroids(data, indices, retention_times, start_index, PPM_PRECENTROIDED); // this should be on a per-spectrum basis
+        }
+        if (num_centroided_spectra != 0)
+        {
+            std::cerr << "Warning: removed " << num_centroided_spectra << " centroided spectra from measurement.\n";
         }
 
         std::vector<size_t> indices = data.get_spectra_index(&accessor); // get all indices
@@ -488,8 +488,7 @@ namespace qAlgorithms
         }
         if (selectedIndices.empty())
         {
-            std::vector<CentroidPeak> empty;
-            return empty;
+            return std::vector<CentroidPeak>{};
         }
 
         std::vector<double> retention_times = data.get_spectra_RT(&selectedIndices);

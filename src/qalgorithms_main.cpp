@@ -317,10 +317,10 @@ int main(int argc, char *argv[])
                           << ", " << peaks.size() << ", " << peaksWithMassGaps << ", " << meanInterpolations << ", " << meanDQSF << "\n";
                 logWriter.close();
             }
-            if (userArgs.printFeatures) // @todo revert
+            if (userArgs.printFeatures)
             {
-                // printFeatureList(peaks, userArgs.outputPath, filename, binnedData,
-                //                  userArgs.printExtended, userArgs.silent, userArgs.skipError, userArgs.noOverwrite);
+                printFeatureList(peaks, userArgs.outputPath, filename, binnedData,
+                                 userArgs.printExtended, userArgs.silent, userArgs.skipError, userArgs.noOverwrite);
             }
             if (userArgs.printFeatCens)
             {
