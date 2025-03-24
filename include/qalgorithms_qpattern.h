@@ -54,6 +54,8 @@ namespace qAlgorithms
     float calcTanimoto_reg(MovedRegression *feature_A, MovedRegression *feature_B);
 
     MultiMatrix combinedMatrix(std::vector<std::vector<float>> *intensities);
+
+    void calcRSS(MovedRegression *reg, const EIC *bin);
 }
 
 #endif
