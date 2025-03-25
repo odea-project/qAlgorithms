@@ -9,6 +9,7 @@
 #include <array>
 #include <vector>
 #include <iostream>
+#include <immintrin.h> // AVX
 
 namespace qAlgorithms
 {
