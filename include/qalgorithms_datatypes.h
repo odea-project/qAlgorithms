@@ -2,7 +2,6 @@
 #ifndef QALGORITHMS_DATATYPE_PEAK_H
 #define QALGORITHMS_DATATYPE_PEAK_H
 
-#include <immintrin.h> // AVX
 #include <vector>
 
 /* This file includes the structs used for data management in qAlgorithms*/
@@ -14,9 +13,6 @@ namespace qAlgorithms
         float x;
         float y;
         bool df;
-        // float DQSC;
-        // float DQSB;
-        // float mz;
     };
 
     struct separator
@@ -28,14 +24,7 @@ namespace qAlgorithms
     struct treatedData // @todo remove this struct
     {
         std::vector<dataPoint> dataPoints;
-        // points as individual vectors
-        // std::vector<float> RT;
         std::vector<float> intensity;
-        // std::vector<bool> df;
-        // std::vector<float> DQSC;
-        // std::vector<float> DQSB;
-        // std::vector<int> scanNumber;
-        // std::vector<float> mz;
         std::vector<size_t> cenIDs;
     };
 
