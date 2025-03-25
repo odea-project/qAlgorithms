@@ -4,6 +4,8 @@
 #include "qalgorithms_datatypes.h"
 #include "qalgorithms_global_vars.h"
 
+#include "./../external/CDFlib/cdflib.hpp"
+
 #include <algorithm> // sorting
 #include <cmath>     // pow and log
 #include <numeric>   // partial sum (cumError)
@@ -503,13 +505,31 @@ namespace qAlgorithms
         }
     }
 
-    std::vector<std::vector<int>> designMat(int scale) // @todo this is superfluous when working with the existing convolution
+    std::vector<std::vector<int>> designMat(int scale, size_t k)
     {
-        assert(scale > 0);
+        // k is the number of features combined, left as k due to similar naming in adapted code
+        assert(scale > 1);
+        assert(k > 1);
         size_t colLenght = 2 * scale + 1;
-        std::vector b0(colLenght, 1); // @todo optimisation target
-        std::vector b1(colLenght, 0);
-        std::iota(b1.begin(), b1.end(), -scale);
+        std::vector<std::vector<int>> resultMat;
+        // add one vector b0 for every feature. b0 is 0 everywhere except for the region that contains the feature
+        for (size_t i = 0; i < k; i++)
+        {
+            std::vector<int> b0(colLenght * k);
+            for (size_t j = i; j < colLenght; j++)
+            {
+                b0[j] = 1;
+            }
+            resultMat.push_back(b0);
+        }
+
+        std::vector b1(colLenght * k, 0);
+        for (size_t i = 0; i < k; i++)
+        {
+            size_t offset = i * colLenght;
+            std::iota(b1.begin() + offset, b1.begin() + offset + colLenght, -scale);
+        }
+        resultMat.push_back(b1);
         std::vector b2(colLenght, 0);
         for (int i = 0; i < scale + 1; i++)
         {
@@ -520,7 +540,9 @@ namespace qAlgorithms
         {
             b3[i] = b1[i] * b1[i];
         }
-        return std::vector<std::vector<int>>{b0, b1, b2, b3};
+        resultMat.push_back(b2);
+        resultMat.push_back(b3);
+        return resultMat;
     }
 
     void singleFit(std::vector<float> *logIntensity) // this was only included for the residuals, replace
@@ -533,7 +555,14 @@ namespace qAlgorithms
             logIntensity->resize(logIntensity->size() - 1);
         }
         int scale = logIntensity->size() / 2;
-        auto design = designMat(scale);
+        // auto design = designMat(scale);
+    }
+
+    void multiFit(const std::vector<float> *logIntensity, const size_t setChange)
+    {
+        // fit one model with variable b0 over multiple traces
+        // logIntensity contains the (padded) logarithmic intensities to fit over. Intensities are centered to the apex
+        // setChange: number of points after which a different mass trace is considered.
     }
 
     bool preferMerge(float rss_complex, float rss_simple, size_t n_complex, size_t p_complex, size_t p_simple)

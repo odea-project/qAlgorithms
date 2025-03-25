@@ -20,8 +20,6 @@ Je später die Diskrepanzen auftreten, desto weniger unterschiedlich sind sich d
     Diese Unterscheidung funktioniert auch für Gruppen, die nur durch den verglichenen Algorithmus
     noch weiter getrennt wurden.
 
-Konstantin / Jonas (AAC) haben Koelutionsreihen von Citraten?
-
 Offenes Problem: 
 Abschätzung des Zentroidfehlers für vorzentroidierte Daten. Mögliche Lösung über neuen Binning-Algo.
 Gibt es lineare Zshg nach einem Denoising?
@@ -37,8 +35,6 @@ suche nach nicht kovertierten dateien wenn ein leeres Verzeichnis gelesen wurde
 
 DQSB MID nur innerhalb von maxdist scans, MOD nich gauss, sondern -50% skalieren
 
-Konstruktor/Destruktor prüfen 
-
 https://massive.ucsd.edu/ProteoSAFe/datasets.jsp#%7B%22full_search_input%22%3A%22TOF%22%2C%22table_sort_history%22%3A%22createdMillis_dsc%22%2C%22query%22%3A%7B%7D%7D
 
 Qualitätsparameter Komponentisierung: Innerhalb einer Komponente, erweitere erst so, dass alle 
@@ -52,16 +48,10 @@ Zusätzliches Kriterium fürs Binning: Wahrscheinlichkeit, dass in einem Bin zwe
 Verteilungen vorliegen (bestimme über Umstellen von vcrit)
     Nicht linear lösbares Problem
 
-Dedizierte Exportfunktion für Bilder
-
 Kann der Anteil, den der Peak am EIC hat, auch für Korellation zwischen 
 Datensätzen verwendet werden?
 
-Ordne Fehlercodes so, dass eine größere Zahl schlechter ist
-
 Test: Können die Intensitäten im Bin unterschieden werden?
-
-https://gpufit.readthedocs.io/en/latest/introduction.html
 
 Wo schlägt vcrit an, wenn ich den Datensatz nach Intensität sortiere?
 
@@ -85,8 +75,6 @@ das Intensitätsprofil nach dem höchsten Wert abbricht, mit einzubeziehen
 
 https://www.agner.org/optimize/optimizing_cpp.pdf
 
-prüfen, wie das Programm skaliert -> subdatensätze
-
 https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0125108
 
 https://link.springer.com/article/10.1007/s41060-021-00275-z#Sec2
@@ -96,3 +84,103 @@ großen Multistandard-Datensatz anfragen (bfg - Datenbank)
 Bin Reassembly sollte erst nach Aufreinigung der zu großen Bins passieren, diese müssen aber 
     von der Rekonstruktion ausgeschlossen werden
 
+def multi_fit(Y):
+
+    """
+
+    Fits the piecewise quadratic model to multiple signal traces.
+
+    Parameters:
+
+        Y (array): Log-transformed intensity data.
+
+    Returns:
+
+        beta (array): Regression coefficients.
+
+        Y_hat (array): Predicted values.
+
+        rss (float): Residual sum of squares.
+
+        n (integer): Number of data points.
+
+    """  
+
+    k, n = Y.shape // k = number of cols, n = number of rows
+
+    # check if y is odd
+
+    if n % 2 == 0:
+
+        #drop the last element
+
+        Y = Y[:, :-1]
+
+        n -= 1
+
+ 
+    scale = (n - 1)//2
+
+    X_base, _ = piecewise_design_matrix(scale)
+
+
+    # Build combined design matrix
+
+    X_combined = np.zeros((k * n, k + 3)) // k*n rows and k + 3 columns
+
+    for i in range(k):
+
+        X_combined[i*n:(i+1)*n, i] = 1
+
+        X_combined[i*n:(i+1)*n, k:] = X_base[:, 1:]
+
+ 
+    # chop if y contains zeros
+
+    y_is_flattened = False
+
+    # if 0 in Y:
+
+    Ycopy = Y.copy()
+
+    Y = Y.flatten() // converts Y to a flat array by adding all rows together in order
+
+    X_combined = X_combined[Y != 0, :]  
+
+    Y = Y[Y != 0]
+
+    y_is_flattened = True
+
+ // at this point, both X_combined and Y only contain non-zero values.
+
+    beta, _, _, _ = np.linalg.lstsq(X_combined, Y, rcond=None)
+
+    # Re-Fit first k columns of beta while fixing the other coefficients and use exp(Y) as data
+
+    shared_part = X_combined[:, k:] @ beta[k:]
+	
+	// this does matrix multiplication with the vector 
+
+    A = np.exp(shared_part)  # shared part of the model
+
+    beta_new = beta.copy()
+
+    for i in range(k):
+
+        idx = X_combined[:, i] == 1
+
+        A_i = A[idx]
+
+        Y_i_exp = np.exp(Y[idx]) - 1
+
+        c_i = np.sum(A_i * Y_i_exp) / np.sum(A_i**2)
+
+        beta_new[i] = np.log(c_i)
+
+    beta = beta_new
+
+    Y_hat = (X_combined @ beta)
+
+    rss = np.sum((np.exp(Y) - np.exp(Y_hat)) ** 2)
+
+    return beta, Y_hat, rss, len(Y)
