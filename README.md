@@ -51,7 +51,9 @@ You can also drag a directory into the powershell window to copy its path into t
 
 ### Linux / Mac
 Currently, no Linux releases are provided. We recommend you to clone the repository
-and compile from source using cmake and GCC.
+and compile from source using CMake and GCC.
+
+We require CMake 3.25 or later and GCC 14 or later.
 
 On linux, you can use special characters like "µ" in filenames, provided your terminal supports
 them. We use the [std::filesystem library](https://en.cppreference.com/w/cpp/filesystem), so you are limited by that.

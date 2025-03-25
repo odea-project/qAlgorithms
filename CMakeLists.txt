@@ -6,8 +6,8 @@ cmake_minimum_required(VERSION 3.12)
 project(qAlgorithms VERSION 0.2 LANGUAGES CXX)
 
 # Set C++ standard
-set(CMAKE_CXX_STANDARD 20)
-set(CMAKE_CXX_STANDARD_REQUIRED True)
+set(CMAKE_CXX_STANDARD 26)
+# set(CMAKE_CXX_STANDARD_REQUIRED True)
 
 # required libraries
 # find_package(OpenMP REQUIRED)
@@ -37,7 +37,7 @@ endif()
 # endif()
 
 # Set compiler flags
-add_compile_options(-Wall -Wuninitialized -Wno-unknown-pragmas -Wformat -Wformat=2 -Wimplicit-fallthrough
+add_compile_options(-Wall -Wuninitialized -Wno-unknown-pragmas -Wformat -Wformat=2 -Wimplicit-fallthrough -std=c++2c # c++26 standard used
                     -mavx2 -march=native -O2 # -flto
                     -U_FORTIFY_SOURCE -D_FORTIFY_SOURCE=3 -fstrict-flex-arrays=3 -fdiagnostics-color=always -fstack-clash-protection -D_GLIBCXX_ASSERTIONS # hardening flags
                     -fno-math-errno -g -ggdb3 ${OpenMP_CXX_FLAGS}) 

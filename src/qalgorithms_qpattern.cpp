@@ -541,7 +541,9 @@ namespace qAlgorithms
         float alpha = 0.05; // @todo is a set alpha reall the best possible solution?
         // problem: pre-calculation of all relevant f values could result in a very large array
         // possible max size of 20 seems reasonable, maximum observed is 6
-        float Fstat = F_VALUES[];
-        float p_val = 1 - ;
+        float Fstat = F_VALUES[0];
+        float p_val = 1 - 0;
+
+        return false;
     }
 }
