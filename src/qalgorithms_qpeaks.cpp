@@ -39,7 +39,7 @@ namespace qAlgorithms
 #define MAXSCALE 64
 #pragma region "initialize"
 
-    const std::array<float, MAXSCALE * 6> initialize()
+    constexpr std::array<float, MAXSCALE * 6> initialize()
     { // array to store the 6 unique values of the inverse matrix for each scale
         std::array<float, MAXSCALE * 6> invArray;
         // init invArray
@@ -89,6 +89,8 @@ namespace qAlgorithms
         }
         return invArray;
     }
+
+    constexpr std::array<float, 384> INV_ARRAY = initialize();
 #pragma endregion "initialize"
 
 #pragma region "find peaks"
