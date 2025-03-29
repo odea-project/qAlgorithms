@@ -13,8 +13,6 @@
 
 namespace qAlgorithms
 {
-    const std::array<float, 384> initialize();
-
     std::vector<CentroidPeak> findCentroids(const std::vector<ProfileBlock> *treatedData, const size_t scanNumber);
 
     void findFeatures(std::vector<FeaturePeak> &all_peaks, treatedData &treatedData);
