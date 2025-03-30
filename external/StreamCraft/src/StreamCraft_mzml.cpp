@@ -250,10 +250,28 @@ StreamCraft::MZML_BINARY_METADATA StreamCraft::MZML::extract_binary_metadata(con
     return mtd;
 }
 
+std::vector<pugi::xml_node> link_vector_spectra_nodes(pugi::xml_node mzml_root_node) // @todo this does not need to be called more than once
+{
+    std::vector<pugi::xml_node> spectra;
+
+    std::string search_run = "//run";
+    pugi::xpath_node xps_run = mzml_root_node.select_node(search_run.c_str());
+    pugi::xml_node spec_list = xps_run.node().child("spectrumList");
+    assert(spec_list);
+
+    for (pugi::xml_node child = spec_list.first_child(); child; child = child.next_sibling())
+    {
+        spectra.push_back(child);
+    }
+
+    assert(spectra.size() > 0);
+    return spectra;
+};
+
 std::vector<std::vector<double>> StreamCraft::MZML::get_spectrum(int index)
 {
     std::vector<std::vector<double>> spectrum;
-    std::vector<pugi::xml_node> spectra_nodes = link_vector_spectra_nodes();
+    std::vector<pugi::xml_node> spectra_nodes = link_vector_spectra_nodes(mzml_root_node);
 
     if (spectra_nodes.size() == 0)
     {
@@ -290,7 +308,7 @@ std::vector<double> StreamCraft::MZML::get_spectra_RT(const std::vector<unsigned
 
     std::vector<double> retention_times;
 
-    std::vector<pugi::xml_node> spectra_nodes = link_vector_spectra_nodes();
+    std::vector<pugi::xml_node> spectra_nodes = link_vector_spectra_nodes(mzml_root_node);
 
     for (size_t i = 0; i < indices->size(); ++i)
     {
@@ -308,7 +326,7 @@ std::vector<bool> StreamCraft::MZML::get_spectra_polarity(const std::vector<unsi
     assert(indices->size() > 0);
     std::vector<bool> polarities;
 
-    std::vector<pugi::xml_node> spectra_nodes = link_vector_spectra_nodes();
+    std::vector<pugi::xml_node> spectra_nodes = link_vector_spectra_nodes(mzml_root_node);
 
     for (size_t i = 0; i < indices->size(); ++i)
     {
@@ -326,27 +344,6 @@ std::vector<bool> StreamCraft::MZML::get_spectra_polarity(const std::vector<unsi
     }
 
     return polarities;
-};
-
-std::vector<pugi::xml_node> StreamCraft::MZML::link_vector_spectra_nodes() // @todo this does not need to be called more than once
-{
-    std::vector<pugi::xml_node> spectra;
-
-    std::string search_run = "//run";
-
-    pugi::xpath_node xps_run = mzml_root_node.select_node(search_run.c_str());
-
-    pugi::xml_node spec_list = xps_run.node().child("spectrumList");
-
-    assert(spec_list);
-
-    for (pugi::xml_node child = spec_list.first_child(); child; child = child.next_sibling())
-    {
-        spectra.push_back(child);
-    }
-
-    assert(spectra.size() > 0);
-    return spectra;
 };
 
 std::vector<std::vector<double>> StreamCraft::MZML::extract_spectrum(const pugi::xml_node &spectrum_node)
@@ -405,7 +402,7 @@ std::vector<std::vector<double>> StreamCraft::MZML::extract_spectrum(const pugi:
 std::vector<std::vector<std::vector<double>>> StreamCraft::MZML::extract_spectra(const std::vector<int> &idxs)
 {
     std::vector<std::vector<std::vector<double>>> all_spectra;
-    std::vector<pugi::xml_node> spectra_nodes = link_vector_spectra_nodes();
+    std::vector<pugi::xml_node> spectra_nodes = link_vector_spectra_nodes(mzml_root_node);
 
     int n = idxs.size();
 
@@ -441,7 +438,7 @@ std::vector<size_t> StreamCraft::MZML::get_spectra_index(const std::vector<unsig
     assert(indices->size() > 0);
     std::vector<size_t> spec_indices;
 
-    std::vector<pugi::xml_node> spectra_nodes = link_vector_spectra_nodes();
+    std::vector<pugi::xml_node> spectra_nodes = link_vector_spectra_nodes(mzml_root_node);
 
     for (size_t i = 0; i < indices->size(); ++i)
     {
@@ -459,7 +456,7 @@ std::vector<int> StreamCraft::MZML::get_spectra_level(const std::vector<unsigned
     assert(indices->size() > 0);
     std::vector<int> levels;
 
-    std::vector<pugi::xml_node> spectra_nodes = link_vector_spectra_nodes();
+    std::vector<pugi::xml_node> spectra_nodes = link_vector_spectra_nodes(mzml_root_node);
 
     for (size_t i = 0; i < indices->size(); ++i)
     {
@@ -478,7 +475,7 @@ std::vector<bool> StreamCraft::MZML::get_spectra_mode(const std::vector<unsigned
     assert(indices->size() > 0);
     std::vector<bool> modes;
 
-    std::vector<pugi::xml_node> spectra_nodes = link_vector_spectra_nodes();
+    std::vector<pugi::xml_node> spectra_nodes = link_vector_spectra_nodes(mzml_root_node);
 
     for (size_t i = 0; i < indices->size(); ++i)
     {
