@@ -56,8 +56,6 @@ namespace StreamCraft
             "sampled_noise_baseline", "ion_mobility", "mass", "quadrupole_position_lower_bound_mz",
             "quadrupole_position_upper_bound_mz"};
 
-        std::vector<pugi::xml_node> link_vector_spectra_nodes();
-
         MZML_BINARY_METADATA extract_binary_metadata(const pugi::xml_node &bin);
 
         double extract_scan_RT(const pugi::xml_node &spec);
@@ -66,8 +64,6 @@ namespace StreamCraft
         std::vector<std::vector<std::vector<double>>> extract_spectra(const std::vector<int> &idxs);
 
     public:
-        std::filesystem::path path;
-
         pugi::xml_document mzml_base_document;
 
         pugi::xml_parse_result loading_result;
