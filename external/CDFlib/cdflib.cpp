@@ -9,6 +9,16 @@ using namespace std;
 
 #include "cdflib.hpp"
 
+// static functions have been moved here since the compiler complained
+static void E0000(int IENTRY, int *status, double *x, double *fx,
+                  unsigned long *qleft, unsigned long *qhi, double *zabsst,
+                  double *zabsto, double *zbig, double *zrelst,
+                  double *zrelto, double *zsmall, double *zstpmu);
+static void E0001(int IENTRY, int *status, double *x, double *fx,
+                  double *xlo, double *xhi, unsigned long *qleft,
+                  unsigned long *qhi, double *zabstl, double *zreltl,
+                  double *zxhi, double *zxlo);
+
 //****************************************************************************80
 
 double algdiv(double *a, double *b)

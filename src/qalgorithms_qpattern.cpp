@@ -34,6 +34,8 @@ namespace qAlgorithms
                 continue;
             }
             newComponent.features.reserve(groupsize);
+            unsigned int maxScan = 0;
+            unsigned int minScan = 4294967295; // max value of unsigned int
             for (size_t j = limits[i].start; j < limits[i].end + 1; j++)
             {
                 auto test = &((*peaks)[j]);
@@ -41,17 +43,71 @@ namespace qAlgorithms
                 const qAlgorithms::EIC *bin = &(*bins)[test->idxBin];
                 calcRSS(&movedTest, bin);
                 auto binRTs = (*bins)[test->idxBin].rententionTimes;
+                movedTest.binIdxStart = test->idxPeakStart;
+                movedTest.binIdxEnd = test->idxPeakEnd;
                 movedTest.limit_L = binRTs[test->idxPeakStart];
                 movedTest.limit_R = binRTs[test->idxPeakEnd];
+                maxScan = std::max(maxScan, test->idxPeakEnd);
+                minScan = std::min(minScan, test->idxPeakStart);
                 newComponent.features.push_back(movedTest);
             }
+
+            std::vector<ReducedEIC> eics;
+            for (size_t i = 0; i < groupsize; i++)
+            {
+                const auto feature = newComponent.features[i];
+                const qAlgorithms::EIC *bin = &(*bins)[feature.binID];
+                eics.push_back(harmoniseEICs(bin, minScan, maxScan, feature.binIdxStart, feature.binIdxEnd));
+                assert(eics[i].intensity.size() == eics[0].intensity.size());
+            }
+
             newComponent.calcScores();
-            auto test = getCompareOrder(&newComponent);
+            // produce a subset of bins with uniform RT axis for this component
+
+            // auto test = getCompareOrder(&newComponent); // not the best way to go about this
+
+            // first, calculate the pairwise RSS in a sparse matrix. The RSS is set to INFINITY if it is worse
+            // than the sum of both individual RSS values.
+
+            // if two features are not improved by being combined individually, they may never be part of the same group
+
+            // assign features to groups by forming the best-fit pairs
+
             // at this point, the group must be subdivided such that the total RSS is minimal
             // special case for groupsize 2 might be a good idea, since it seems to occur very often with the
             // current pre-gruping strategy
         }
         std::cout << std::endl;
+    }
+
+    ReducedEIC harmoniseEICs(const EIC *bin, const size_t minScan, const size_t maxScan, const size_t minIdx, const size_t maxIdx)
+    {
+        assert(maxIdx < bin->ints_area.size());
+
+        int length = maxScan - minScan + 1;
+        assert(length > 4);
+        ReducedEIC reduced{
+            std::vector<float>(length, 0),
+            std::vector<float>(length, 0),
+            std::vector<float>(length, 0),
+            std::vector<size_t>(length, 0)};
+
+        std::iota(reduced.scanNo.begin(), reduced.scanNo.end(), minScan);
+        for (size_t i = 0; i < bin->ints_area.size(); i++) // indices in relation to bin without interpolations
+        {
+            size_t scan = bin->scanNumbers[i];
+            if (scan < minScan | scan > maxScan)
+            {
+                continue;
+            }
+            assert(scan >= minScan);
+            size_t relIdx = scan - minScan;
+            reduced.intensity[relIdx] = bin->ints_area[i];
+            reduced.intensity_log[relIdx] = log(bin->ints_area[i]);
+            reduced.RTs[relIdx] = bin->rententionTimes[i];
+        }
+
+        return reduced;
     }
 
     float ComponentGroup::score(size_t idx1, size_t idx2)

@@ -141,6 +141,8 @@ namespace qAlgorithms
     {
         const FeaturePeak *origin;
         size_t binID;
+        size_t binIdxStart;
+        size_t binIdxEnd;
         float limit_L;
         float limit_R;
         float RT_switch;

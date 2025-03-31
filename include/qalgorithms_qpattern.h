@@ -22,6 +22,16 @@ namespace qAlgorithms
         void calcScores();
     };
 
+    struct ReducedEIC
+    {
+        // the reduced EIC only contains those centroids relevant for a feature (equivalent to featCens result file)
+        std::vector<float> RTs;
+        std::vector<float> intensity;
+        std::vector<float> intensity_log;
+        std::vector<size_t> scanNo;
+        // consider recalculating mz @todo
+    };
+
     struct GroupLims
     {
         size_t start;
@@ -56,6 +66,10 @@ namespace qAlgorithms
     MultiMatrix combinedMatrix(std::vector<std::vector<float>> *intensities);
 
     void calcRSS(MovedRegression *reg, const EIC *bin);
+
+    ReducedEIC harmoniseEICs(const EIC *bin, const size_t minScan, const size_t maxScan, const size_t minIdx, const size_t maxIdx);
+
+    std::vector<float> pairwiseRSS(const ComponentGroup *group, const std::vector<ReducedEIC> *points);
 
     bool preferMerge(float rss_complex, float rss_simple, size_t n_complex, size_t p_complex, size_t p_simple);
 }
