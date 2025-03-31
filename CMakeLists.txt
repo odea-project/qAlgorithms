@@ -55,7 +55,7 @@ endif()
 include_directories(include external/StreamCraft/src)
 
 # Source files
-file(GLOB_RECURSE SOURCES "src/*.cpp" "external/StreamCraft/src/*.cpp")
+file(GLOB_RECURSE SOURCES "src/*.cpp" "external/StreamCraft/src/*.cpp" "external/CDFlib/cdflib.cpp")
 
 # flags for static compile 
 # set(CMAKE_FIND_LIBRARY_SUFFIXES ".a")

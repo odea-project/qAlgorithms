@@ -10692,7 +10692,12 @@ void negative_binomial_cdf_values(int *n_data, int *f, int *s, double *p,
         1, 2, 3,
         0, 1, 2};
 
-    if (n_data < 0)
+    // this block no longer compiles, refer to https://medium.com/@jj1bdx/c-c-ordered-comparison-between-pointer-and-zero-actually-with-null-581374036431
+    // if (n_data < 0)
+    // {
+    //     *n_data = 0;
+    // }
+    if (n_data == (void *)NULL)
     {
         *n_data = 0;
     }
