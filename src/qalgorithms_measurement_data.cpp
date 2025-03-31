@@ -303,6 +303,7 @@ namespace qAlgorithms
                 currentPeak.idxPeakStart = binIndexConverter[currentPeak.idxPeakStart];
                 unsigned int tmpIdx = currentPeak.idxPeakEnd;
                 currentPeak.idxPeakEnd = binIndexConverter[currentPeak.idxPeakEnd];
+                assert(currentPeak.idxPeakEnd < currentEIC.ints_area.size());
                 if (tmpIdx + 1 != binIndexConverter.size())
                 {
                     if (binIndexConverter[tmpIdx] == binIndexConverter[tmpIdx + 1])
