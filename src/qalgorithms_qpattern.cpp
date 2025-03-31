@@ -570,9 +570,18 @@ namespace qAlgorithms
         float alpha = 0.05; // @todo is a set alpha reall the best possible solution?
         // problem: pre-calculation of all relevant f values could result in a very large array
         // possible max size of 20 seems reasonable, maximum observed is 6
-        float Fstat = F_VALUES[0];
-        float p_val = 1 - 0;
+        int which = 1; // select mode of library function and check computation result
+        double p = 0;  // not required
+        double q = 0;  // return value, equals p - 1
+        double F = ((rss_simple - rss_complex) / float(p_complex - p_simple)) / (rss_complex / float(n_complex - p_complex));
+        double dfn = p_complex - p_simple;  // numerator degrees of freedom
+        double dfd = n_complex - p_complex; // denominator degrees of freedom
+        int status = 1;                     // result invalid if this is not 0
+        double bound = 0;                   // allows recovery from non-0 status
 
-        return false;
+        cdff(&which, &p, &q, &F, &dfn, &dfd, &status, &bound); // library function, see https://people.math.sc.edu/Burkardt/cpp_src/cdflib/cdflib.html
+        assert(status == 0);
+
+        return q > alpha; // the merged model is not worse than the complex version, both can be merged
     }
 }
