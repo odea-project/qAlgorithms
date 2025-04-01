@@ -68,6 +68,17 @@ namespace qAlgorithms
 
             // first, calculate the pairwise RSS in a sparse matrix. The RSS is set to INFINITY if it is worse
             // than the sum of both individual RSS values.
+            // size: (x^2 -x) / 2 ; access: x * smaller Idx + larger Idx
+            std::vector<float> pairRSS(groupsize * groupsize - groupsize, -1);
+            // multi match all pairs
+            for (size_t i = 0; i < groupsize - 1; i++)
+            {
+                for (size_t j = i + 1; j < groupsize; j++)
+                {
+                    size_t access = i * groupsize + j; // position in pairRSS
+                }
+            }
+            multiFit(&eics);
 
             // if two features are not improved by being combined individually, they may never be part of the same group
 
@@ -96,7 +107,7 @@ namespace qAlgorithms
         for (size_t i = 0; i < bin->ints_area.size(); i++) // indices in relation to bin without interpolations
         {
             size_t scan = bin->scanNumbers[i];
-            if (scan < minScan | scan > maxScan)
+            if ((scan < minScan) || (scan > maxScan))
             {
                 continue;
             }
@@ -586,12 +597,12 @@ namespace qAlgorithms
             std::iota(b1.begin() + offset, b1.begin() + offset + colLenght, -scale);
         }
         resultMat.push_back(b1);
-        std::vector b2(colLenght, 0);
+        std::vector b2(colLenght + 1, 0);
         for (int i = 0; i < scale + 1; i++)
         {
             b2[i] = b1[i] * b1[i];
         }
-        std::vector b3(colLenght, 0);
+        std::vector b3(+1, 0);
         for (size_t i = scale + 2; i < b3.size() + 1; i++)
         {
             b3[i] = b1[i] * b1[i];
@@ -601,24 +612,83 @@ namespace qAlgorithms
         return resultMat;
     }
 
-    void singleFit(std::vector<float> *logIntensity) // this was only included for the residuals, replace
-    {
-        // the model requires an uneven number of points, this is a suboptimal solution
-        // int scale = bool(logIntensity->size() % 2) ? logIntensity->size() / 2 : logIntensity->size() / 2 - 1;
+    // void singleFit(std::vector<float> *logIntensity) // this was only included for the residuals, replace
+    // {
+    //     // the model requires an uneven number of points, this is a suboptimal solution
+    //     // int scale = bool(logIntensity->size() % 2) ? logIntensity->size() / 2 : logIntensity->size() / 2 - 1;
 
-        if (!logIntensity->size() % 2)
-        {
-            logIntensity->resize(logIntensity->size() - 1);
-        }
-        int scale = logIntensity->size() / 2;
-        // auto design = designMat(scale);
-    }
+    //     if (!logIntensity->size() % 2)
+    //     {
+    //         logIntensity->resize(logIntensity->size() - 1);
+    //     }
+    //     int scale = logIntensity->size() / 2;
+    //     // auto design = designMat(scale);
+    // }
 
-    void multiFit(const std::vector<float> *logIntensity, const size_t setChange)
+    void multiFit(const std::vector<ReducedEIC> *fitRegion)
     {
         // fit one model with variable b0 over multiple traces
-        // logIntensity contains the (padded) logarithmic intensities to fit over. Intensities are centered to the apex
-        // setChange: number of points after which a different mass trace is considered.
+        // fitRegion contains all mass traces over which a fit should be performed, including zero padding
+        // find the scale that fits the non-0 intensity region, -1 at the lowest intensity if an even number is found
+        size_t limit_L = 0;
+        bool L_found = false;
+        size_t limit_R = fitRegion->front().intensity.size();
+        // to decide in the case of an uneven region, keep track of the total intensities at the two outer points
+        float sumInts_L = -1;
+        float sumInts_R = -1;
+        float sumInts;
+        for (size_t i = 0; i < fitRegion->front().intensity.size(); i++)
+        {
+            sumInts = 0;
+            for (size_t j = 0; j < fitRegion->size(); j++)
+            {
+                sumInts += fitRegion->at(j).intensity_log[i];
+            }
+            if (sumInts == 0)
+            {
+                if (!L_found)
+                {
+                    sumInts_L = sumInts;
+                    limit_L = i + 1;
+                }
+                else
+                {
+                    limit_R = i - 1;
+                    assert(limit_L != limit_R);
+                    break;
+                }
+            }
+            else
+            {
+                if (!L_found)
+                {
+                    L_found = true;
+                    sumInts_L = sumInts;
+                }
+                sumInts_R = sumInts;
+            }
+        }
+        assert(sumInts_L > 0);
+        if (sumInts_R == -1)
+        {
+            sumInts_R = sumInts; // the last scan does not contain all zeroes
+        }
+        // if there is an even number of points, the difference of the limits is uneven
+        if ((limit_R - limit_L % 2) == 1)
+        {
+            // adjust the window while minimising the intensity loss
+            if (sumInts_L > sumInts_R)
+            {
+                limit_R -= 1;
+            }
+            else
+            {
+                limit_L += 1;
+            }
+        }
+        const size_t scale = (limit_R - limit_L) / 2;
+        // produce the intensity matrix
+        auto matrix = designMat(scale, fitRegion->size());
     }
 
     bool preferMerge(float rss_complex, float rss_simple, size_t n_complex, size_t p_complex, size_t p_simple)
