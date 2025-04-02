@@ -53,12 +53,12 @@ namespace qAlgorithms
             }
 
             std::vector<ReducedEIC> eics;
-            for (size_t i = 0; i < groupsize; i++)
+            for (size_t j = 0; j < groupsize; j++)
             {
-                const auto feature = newComponent.features[i];
+                const auto feature = newComponent.features[j];
                 const qAlgorithms::EIC *bin = &(*bins)[feature.binID];
                 eics.push_back(harmoniseEICs(bin, minScan, maxScan, feature.binIdxStart, feature.binIdxEnd));
-                assert(eics[i].intensity.size() == eics[0].intensity.size());
+                assert(eics[j].intensity.size() == eics[0].intensity.size());
             }
 
             newComponent.calcScores();
@@ -71,11 +71,11 @@ namespace qAlgorithms
             // size: (x^2 -x) / 2 ; access: x * smaller Idx + larger Idx
             std::vector<float> pairRSS(groupsize * groupsize - groupsize, -1);
             // multi match all pairs
-            for (size_t i = 0; i < groupsize - 1; i++)
+            for (size_t idx_L = 0; idx_L < groupsize - 1; idx_L++)
             {
-                for (size_t j = i + 1; j < groupsize; j++)
+                for (size_t idx_S = idx_L + 1; idx_S < groupsize; idx_S++)
                 {
-                    size_t access = i * groupsize + j; // position in pairRSS
+                    size_t access = idx_L * groupsize + idx_S; // position in pairRSS
                 }
             }
             multiFit(&eics);
@@ -94,8 +94,13 @@ namespace qAlgorithms
     ReducedEIC harmoniseEICs(const EIC *bin, const size_t minScan, const size_t maxScan, const size_t minIdx, const size_t maxIdx)
     {
         assert(maxIdx < bin->ints_area.size());
-
+        assert(minScan < bin->scanNumbers.back());
+        assert(maxScan > bin->scanNumbers.front());
+        // scan relates to the complete measurement and idx to the position within the bin
         int length = maxScan - minScan + 1;
+        assert(bin->ints_area[minIdx] != 0);
+        assert(bin->ints_area[maxIdx] != 0);
+
         assert(length > 4);
         ReducedEIC reduced{
             std::vector<float>(length, 0),
@@ -107,7 +112,7 @@ namespace qAlgorithms
         for (size_t i = 0; i < bin->ints_area.size(); i++) // indices in relation to bin without interpolations
         {
             size_t scan = bin->scanNumbers[i];
-            if ((scan < minScan) || (scan > maxScan))
+            if ((scan < minScan) || (scan > maxScan)) // @todo switch to break condition
             {
                 continue;
             }
@@ -117,7 +122,17 @@ namespace qAlgorithms
             reduced.intensity_log[relIdx] = log(bin->ints_area[i]);
             reduced.RTs[relIdx] = bin->rententionTimes[i];
         }
+        // due to the selected window, it is possible for the first and last point to be 0
 
+        size_t nonZero = 0;
+        for (size_t i = 0; i < reduced.intensity.size(); i++)
+        {
+            if (reduced.intensity[i] > 0)
+            {
+                nonZero++;
+            }
+        }
+        assert(nonZero > 4);
         return reduced; // @todo can result in eics with only zeroes
     }
 
