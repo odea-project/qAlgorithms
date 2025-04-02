@@ -118,7 +118,7 @@ namespace qAlgorithms
             reduced.RTs[relIdx] = bin->rententionTimes[i];
         }
 
-        return reduced;
+        return reduced; // @todo can result in eics with only zeroes
     }
 
     float ComponentGroup::score(size_t idx1, size_t idx2)
@@ -630,6 +630,7 @@ namespace qAlgorithms
         // fit one model with variable b0 over multiple traces
         // fitRegion contains all mass traces over which a fit should be performed, including zero padding
         // find the scale that fits the non-0 intensity region, -1 at the lowest intensity if an even number is found
+        size_t k = fitRegion->size();
         size_t limit_L = 0;
         size_t limit_R = fitRegion->front().intensity.size();
         // to decide in the case of an uneven region, keep track of the total intensities at the two outer points
@@ -639,7 +640,7 @@ namespace qAlgorithms
         {
             // left half
             float sumInts = 0;
-            for (size_t j = 0; j < fitRegion->size(); j++)
+            for (size_t j = 0; j < k; j++)
             {
                 sumInts += fitRegion->at(j).intensity_log[i];
             }
@@ -654,7 +655,7 @@ namespace qAlgorithms
         {
             // left half
             float sumInts = 0;
-            for (size_t j = 0; j < fitRegion->size(); j++)
+            for (size_t j = 0; j < k; j++)
             {
                 sumInts += fitRegion->at(j).intensity_log[i];
             }
@@ -668,7 +669,7 @@ namespace qAlgorithms
         assert(limit_R - limit_L > 5);
 
         // if there is an even number of points, the difference of the limits is uneven
-        if ((limit_R - limit_L % 2) == 1)
+        if (((limit_R - limit_L) % 2) == 1)
         {
             // adjust the window while minimising the intensity loss
             if (sumInts_L > sumInts_R)
@@ -680,9 +681,29 @@ namespace qAlgorithms
                 limit_L += 1;
             }
         }
-        const size_t scale = (limit_R - limit_L) / 2;
-        // produce the intensity matrix
-        auto matrix = designMat(scale, fitRegion->size());
+        const size_t scale = (limit_R - limit_L + 1) / 2; // +1 since limits are indices
+        // produce the intensity vector (without zeroes) while keeping track of which rows to eliminate
+        std::vector<size_t> eliminate;
+        std::vector<float> combined_logInt((2 * scale + 1) * k, 0);
+        // combined_logInt.reserve((2 * scale + 1) * k);
+        eliminate.reserve(combined_logInt.size() / 10);
+        size_t logIdx = 0;
+        for (size_t i = 0; i < k; i++)
+        {
+            ReducedEIC current = (*fitRegion)[i];
+            for (size_t j = limit_L; j < limit_R + 1; j++)
+            {
+                combined_logInt[logIdx] = current.intensity_log[j];
+                if (current.intensity_log[j] == 0)
+                {
+                    eliminate.push_back(logIdx);
+                }
+                logIdx++;
+            }
+        }
+        // assert(combined_logInt.back() != 0); // this is possible, although hopefully unlikely
+        auto matrix = designMat(scale, k);
+        assert(matrix[0].size() == combined_logInt.size());
     }
 
     bool preferMerge(float rss_complex, float rss_simple, size_t n_complex, size_t p_complex, size_t p_simple)
