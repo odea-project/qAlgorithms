@@ -631,48 +631,42 @@ namespace qAlgorithms
         // fitRegion contains all mass traces over which a fit should be performed, including zero padding
         // find the scale that fits the non-0 intensity region, -1 at the lowest intensity if an even number is found
         size_t limit_L = 0;
-        bool L_found = false;
         size_t limit_R = fitRegion->front().intensity.size();
         // to decide in the case of an uneven region, keep track of the total intensities at the two outer points
         float sumInts_L = -1;
         float sumInts_R = -1;
-        float sumInts;
         for (size_t i = 0; i < fitRegion->front().intensity.size(); i++)
         {
-            sumInts = 0;
+            // left half
+            float sumInts = 0;
             for (size_t j = 0; j < fitRegion->size(); j++)
             {
                 sumInts += fitRegion->at(j).intensity_log[i];
             }
-            if (sumInts == 0)
+            if (sumInts != 0)
             {
-                if (!L_found)
-                {
-                    sumInts_L = sumInts;
-                    limit_L = i + 1;
-                }
-                else
-                {
-                    limit_R = i - 1;
-                    assert(limit_L != limit_R);
-                    break;
-                }
-            }
-            else
-            {
-                if (!L_found)
-                {
-                    L_found = true;
-                    sumInts_L = sumInts;
-                }
-                sumInts_R = sumInts;
+                sumInts_L = sumInts;
+                limit_L = i;
+                break;
             }
         }
-        assert(sumInts_L > 0);
-        if (sumInts_R == -1)
+        for (size_t i = fitRegion->front().intensity.size() - 1; i > limit_L; i--)
         {
-            sumInts_R = sumInts; // the last scan does not contain all zeroes
+            // left half
+            float sumInts = 0;
+            for (size_t j = 0; j < fitRegion->size(); j++)
+            {
+                sumInts += fitRegion->at(j).intensity_log[i];
+            }
+            if (sumInts != 0)
+            {
+                sumInts_R = sumInts;
+                limit_R = i;
+                break;
+            }
         }
+        assert(limit_R - limit_L > 5);
+
         // if there is an even number of points, the difference of the limits is uneven
         if ((limit_R - limit_L % 2) == 1)
         {
