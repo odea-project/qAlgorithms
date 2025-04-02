@@ -19,6 +19,8 @@ namespace qAlgorithms
 {
     void findComponents(const std::vector<FeaturePeak> *peaks, const std::vector<EIC> *bins)
     {
+        // peaks must be sorted here since they arrive out of order
+
         std::vector<GroupLims> limits = preGroup(peaks);
         std::vector<ComponentGroup> components;
         components.reserve(limits.size() / 2);
@@ -71,11 +73,11 @@ namespace qAlgorithms
             // size: (x^2 -x) / 2 ; access: x * smaller Idx + larger Idx
             std::vector<float> pairRSS(groupsize * groupsize - groupsize, -1);
             // multi match all pairs
-            for (size_t idx_L = 0; idx_L < groupsize - 1; idx_L++)
+            for (size_t idx_S = 0; idx_S < groupsize - 1; idx_S++)
             {
-                for (size_t idx_S = idx_L + 1; idx_S < groupsize; idx_S++)
+                for (size_t idx_L = idx_S + 1; idx_L < groupsize; idx_L++)
                 {
-                    size_t access = idx_L * groupsize + idx_S; // position in pairRSS
+                    size_t access = idx_S * groupsize + idx_L; // position in pairRSS
                 }
             }
             multiFit(&eics);
@@ -173,6 +175,7 @@ namespace qAlgorithms
         {
             float apex_L = (*peaks)[i - 1].retentionTime;
             float apex_R = (*peaks)[i].retentionTime;
+            assert(apex_L < apex_R);
             float uncert = std::min((*peaks)[i - 1].retentionTimeUncertainty, (*peaks)[i].retentionTimeUncertainty);
             if (apex_R - apex_L > uncert)
             {

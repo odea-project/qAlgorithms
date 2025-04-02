@@ -281,7 +281,7 @@ int main(int argc, char *argv[])
                 if (!massTraceStable(massesBin, peaks[i].idxPeakStart, peaks[i].idxPeakEnd))
                 {
                     ++peaksWithMassGaps;
-                    peaks[i].DQSF *= -1;
+                    // peaks[i].DQSF *= -1;
                     // @todo consider removing these or add a correction set somewhere later
                     // @todo add some documentation regarding the scores
                 }
