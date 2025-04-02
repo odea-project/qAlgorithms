@@ -238,7 +238,7 @@ namespace qAlgorithms
         return treatedData;
     }
 
-    std::vector<FeaturePeak> findPeaks_QBIN(
+    const std::vector<FeaturePeak> findPeaks_QBIN(
         std::vector<EIC> &EICs,
         const std::vector<CentroidPeak> *centroids,
         float rt_diff)
@@ -326,6 +326,9 @@ namespace qAlgorithms
 
             tmpPeaks.clear();
         }
+        // peaks are sorted here so they can be treated as const throughout the rest of the program
+        std::sort(peaks.begin(), peaks.end(), [](FeaturePeak lhs, FeaturePeak rhs)
+                  { return lhs.retentionTime < rhs.retentionTime; });
         return peaks;
     }
 
