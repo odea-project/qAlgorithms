@@ -35,6 +35,10 @@ namespace qAlgorithms
             {
                 continue;
             }
+            if (groupsize > 10) // this is only to speed up testing - @todo remove!
+            {
+                continue;
+            }
             newComponent.features.reserve(groupsize);
             unsigned int maxScan = 0;
             unsigned int minScan = 4294967295; // max value of unsigned int
@@ -591,9 +595,10 @@ namespace qAlgorithms
         }
     }
 
-    std::vector<std::vector<int>> designMat(int scale, size_t k)
+    std::vector<std::vector<int>> designMat(int scale, size_t k) // , const std::vector<size_t> *eliminate
     {
         // k is the number of features combined, left as k due to similar naming in adapted code
+        // eliminate skips all rows whose indices are included.
         assert(scale > 1);
         assert(k > 1);
         size_t colLenght = 2 * scale + 1;
@@ -723,6 +728,7 @@ namespace qAlgorithms
         // assert(combined_logInt.back() != 0); // this is possible, although hopefully unlikely
         auto matrix = designMat(scale, k);
         assert(matrix[0].size() == combined_logInt.size());
+        // skip all entries with y = 0 during matrix multiplication
     }
 
     bool preferMerge(float rss_complex, float rss_simple, size_t n_complex, size_t p_complex, size_t p_simple)
