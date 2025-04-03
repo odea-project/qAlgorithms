@@ -31,12 +31,7 @@ cannot be guaranteed at this stage.
 
 ### Windows
 The entire `qAlgorithms` workflow is provided as an executable under ["Releases"](https://github.com/odea-project/qAlgorithms/releases) 
-on our github repository. Note that `qAlgorithms` requires the libraries 
-[`libgcc_s_seh-1.dll`](https://github.com/odea-project/qAlgorithms/releases/download/v0.1.1.beta/libgcc_s_seh-1.dll)
-and [`libwinpthread-1.dll`](https://github.com/odea-project/qAlgorithms/releases/download/v0.1.1.beta/libwinpthread-1.dll). If they are not present on your system already, you can also download them under "Releases" 
-or by clicking on the filenames above. There is no need to download the source code.
-
-To run `qAlgorithms`, the three .dll files and `qAlgorithms.exe` must be in the same directory.
+on our github repository. There is no need to download the source code.
 
 On windows, double-clicking the .exe will open `qAlgorithms` in interactive mode. Follow the prompts
 in the terminal window to produce a feature list for the file or directory of .mzML files.
@@ -63,6 +58,8 @@ them. We use the [std::filesystem library](https://en.cppreference.com/w/cpp/fil
 To use `qAlgorithms` for processing mass spectrometry data, you need to convert your
 measurements into .mzML files, for example with [msconvert](https://proteowizard.sourceforge.io/) or [ThermoRawFileParser](https://github.com/compomics/ThermoRawFileParser). 
 Currently, only MS1 data can be used, so you save some disk space if you filter them out at this stage.
+
+You can find pre-converted files which are confirmed to be processed correctly [here](https://zenodo.org/records/14046512).
 
 `qAlgorithms` is a command line utility which reads mzML files and outputs them
 as csv. You can select individual files or an entire directory to search for
