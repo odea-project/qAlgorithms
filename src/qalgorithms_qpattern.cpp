@@ -45,12 +45,13 @@ namespace qAlgorithms
                 const qAlgorithms::EIC *bin = &(*bins)[test->idxBin];
                 calcRSS(&movedTest, bin);
                 auto binRTs = (*bins)[test->idxBin].rententionTimes;
+                auto scans = (*bins)[test->idxBin].scanNumbers;
                 movedTest.binIdxStart = test->idxPeakStart;
                 movedTest.binIdxEnd = test->idxPeakEnd;
                 movedTest.limit_L = binRTs[test->idxPeakStart];
                 movedTest.limit_R = binRTs[test->idxPeakEnd];
-                maxScan = std::max(maxScan, test->idxPeakEnd);
-                minScan = std::min(minScan, test->idxPeakStart);
+                maxScan = std::max(maxScan, scans[test->idxPeakEnd]); // @todo scans should be their own type, same with indices
+                minScan = std::min(minScan, scans[test->idxPeakStart]);
                 newComponent.features.push_back(movedTest);
             }
 
