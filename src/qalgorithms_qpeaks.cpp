@@ -90,13 +90,15 @@ namespace qAlgorithms
         return invArray;
     }
 
-    constexpr std::array<float, 384> INV_ARRAY = initialize();
+    constexpr std::array<float, 384> INV_ARRAY = initialize(); // this only works with constexpr square roots, which are part of C++26
 #pragma endregion "initialize"
 
 #pragma region "find peaks"
     std::vector<CentroidPeak> findCentroids(const std::vector<ProfileBlock> *treatedData, const size_t scanNumber)
     {
+        assert(!treatedData->empty());
         std::vector<CentroidPeak> all_peaks;
+        all_peaks.reserve(treatedData->size() / 32);
         size_t maxWindowSize = 0;
         for (size_t i = 0; i < treatedData->size(); i++)
         {
@@ -107,7 +109,7 @@ namespace qAlgorithms
         assert(maxWindowSize > 0);
         float *logIntensity = new float[maxWindowSize];
 
-        size_t GLOBAL_MAXSCALE_CENTROID = 8; // @todo this is a critical part of the algorithm and should not be hard-coded
+        const size_t GLOBAL_MAXSCALE_CENTROID = 8; // @todo this is a critical part of the algorithm and should not be hard-coded
         assert(GLOBAL_MAXSCALE_CENTROID <= MAXSCALE);
         std::vector<RegressionGauss> validRegressions;
         validRegressions.reserve(treatedData->size() / 2); // probably too large, shouldn't matter
@@ -410,8 +412,8 @@ namespace qAlgorithms
                 auto bestRegIdx = findBestRegression(intensities, &validRegsTmp, degreesOfFreedom,
                                                      startEndGroups[groupIdx], startEndGroups[groupIdx + 1]);
 
-                RegressionGauss bestReg = validRegsTmp[bestRegIdx.first];
-                bestReg.mse = bestRegIdx.second;
+                RegressionGauss bestReg = validRegsTmp[bestRegIdx.idx];
+                bestReg.mse = bestRegIdx.mse;
                 validRegressions.push_back(std::move(bestReg));
             }
         } // end for loop (group in vector of groups)
@@ -715,8 +717,8 @@ namespace qAlgorithms
 
 #pragma region "create peaks"
 
-    std::pair<float, float> weightedMeanAndVariance(const float *values, const std::vector<float> *weight,
-                                                    size_t left_limit, size_t right_limit)
+    MeanVar weightedMeanAndVariance(const float *values, const std::vector<float> *weight,
+                                    size_t left_limit, size_t right_limit)
     {
         // weighted mean using intensity as weighting factor and left_limit right_limit as range
         size_t realPoints = right_limit - left_limit + 1;
@@ -751,11 +753,11 @@ namespace qAlgorithms
             sum_Qxxw += (values[j] - weighted_mean) * (values[j] - weighted_mean) * (*weight)[j];
         }
         float uncertaintiy = std::sqrt(sum_Qxxw / sum_weight / realPoints);
-        return std::make_pair(weighted_mean, uncertaintiy);
+        return {weighted_mean, uncertaintiy};
     };
 
-    std::pair<float, float> weightedMeanAndVariance_EIC(const std::vector<float> *weight, const std::vector<float> *values,
-                                                        size_t left_limit, size_t right_limit)
+    MeanVar weightedMeanAndVariance_EIC(const std::vector<float> *weight, const std::vector<float> *values,
+                                        size_t left_limit, size_t right_limit)
     {
         // weighted mean using intensity as weighting factor and left_limit right_limit as range
         size_t realPoints = right_limit - left_limit + 1;
@@ -779,7 +781,7 @@ namespace qAlgorithms
             sum_Qxxw += ((*values)[j] - weighted_mean) * ((*values)[j] - weighted_mean) * (*weight)[j];
         }
         float uncertaintiy = std::sqrt(sum_Qxxw / sum_weight / realPoints);
-        return std::make_pair(weighted_mean, uncertaintiy);
+        return {weighted_mean, uncertaintiy};
     };
 
     void createCentroidPeaks(
@@ -1022,7 +1024,7 @@ namespace qAlgorithms
 
 #pragma endregion calcSSE
 
-    std::pair<size_t, float> findBestRegression(
+    RegPair findBestRegression(
         const std::vector<float> *intensities,
         const std::vector<RegressionGauss> *regressions,
         const std::vector<bool> *degreesOfFreedom,
@@ -1059,7 +1061,7 @@ namespace qAlgorithms
                 bestRegIdx = i;
             }
         }
-        return std::pair(bestRegIdx, best_mse);
+        return {bestRegIdx, best_mse};
     }
 
     size_t calcDF( // using unsigned int is multiple seconds faster than size_1 for ten files in a row - why? @todo

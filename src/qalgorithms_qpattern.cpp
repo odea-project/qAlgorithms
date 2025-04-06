@@ -595,18 +595,19 @@ namespace qAlgorithms
         }
     }
 
-    std::vector<std::vector<int>> designMat(int scale, size_t k) // , const std::vector<size_t> *eliminate
+    std::vector<std::vector<float>> designMat(int scale, size_t k) // , const std::vector<size_t> *eliminate
     {
         // k is the number of features combined, left as k due to similar naming in adapted code
         // eliminate skips all rows whose indices are included.
         assert(scale > 1);
         assert(k > 1);
         size_t colLenght = 2 * scale + 1;
-        std::vector<std::vector<int>> resultMat;
+        size_t vecSize = colLenght * k;
+        std::vector<std::vector<float>> resultMat;
         // add one vector b0 for every feature. b0 is 0 everywhere except for the region that contains the feature
         for (size_t i = 0; i < k; i++)
         {
-            std::vector<int> b0(colLenght * k);
+            std::vector<float> b0(vecSize);
             for (size_t j = i; j < colLenght; j++)
             {
                 b0[j] = 1;
@@ -614,25 +615,34 @@ namespace qAlgorithms
             resultMat.push_back(b0);
         }
 
-        std::vector b1(colLenght * k, 0);
+        std::vector<float> b1(vecSize, 0);
         for (size_t i = 0; i < k; i++)
         {
             size_t offset = i * colLenght;
             std::iota(b1.begin() + offset, b1.begin() + offset + colLenght, -scale);
         }
         resultMat.push_back(b1);
-        std::vector b2(colLenght + 1, 0);
-        for (int i = 0; i < scale + 1; i++)
+        std::vector<float> b2(vecSize, 0);
+        for (size_t j = 0; j < k; j++)
         {
-            b2[i] = b1[i] * b1[i];
+            for (int i = 0; i < scale + 1; i++)
+            {
+                size_t offset = j * colLenght;
+                b2[i + offset] = b1[i + offset] * b1[i + offset];
+            }
         }
-        std::vector b3(+1, 0);
-        for (size_t i = scale + 2; i < b3.size() + 1; i++)
+        std::vector<float> b3(vecSize, 0);
+        for (size_t j = 0; j < k; j++)
         {
-            b3[i] = b1[i] * b1[i];
+            for (size_t i = scale + 1; i < colLenght; i++)
+            {
+                size_t offset = j * (colLenght - 1);
+                b3[i + offset] = b1[i + offset] * b1[i + offset];
+            }
         }
         resultMat.push_back(b2);
         resultMat.push_back(b3);
+        // @todo add a correctness check
         return resultMat;
     }
 
@@ -728,7 +738,14 @@ namespace qAlgorithms
         // assert(combined_logInt.back() != 0); // this is possible, although hopefully unlikely
         auto matrix = designMat(scale, k);
         assert(matrix[0].size() == combined_logInt.size());
-        // skip all entries with y = 0 during matrix multiplication
+        // set all entries of the matrix were no intensity values exist to 0
+        for (size_t i = 0; i < matrix.size(); i++)
+        {
+            for (size_t j = 0; j < eliminate.size(); j++)
+            {
+                matrix[i][j] = 0;
+            }
+        }
     }
 
     bool preferMerge(float rss_complex, float rss_simple, size_t n_complex, size_t p_complex, size_t p_simple)

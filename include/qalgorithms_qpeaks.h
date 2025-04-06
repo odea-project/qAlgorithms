@@ -86,10 +86,16 @@ namespace qAlgorithms
      * @param B : Matrix of regression coefficients
      * @param groupIndices : Indices of the regression windows
      * @param scale : Window size scale, e.g., 5 means the window size is 11 (2*5+1)
-     * @return std::pair<double,int> : MSE and index of the best regression window
+     * @return MSE and index of the best regression window
      */
 
-    std::pair<size_t, float> findBestRegression(
+    struct RegPair
+    {
+        unsigned int idx;
+        float mse;
+    };
+
+    RegPair findBestRegression(
         const std::vector<float> *intensities,
         const std::vector<RegressionGauss> *regressions,
         const std::vector<bool> *degreesOfFreedom,
@@ -203,11 +209,17 @@ namespace qAlgorithms
         const size_t n,
         __m128 *result);
 
-    std::pair<float, float> weightedMeanAndVariance(const float *x, const std::vector<float> *weight,
-                                                    size_t left_limit, size_t right_limit);
+    struct MeanVar
+    {
+        float mean;
+        float var;
+    };
 
-    std::pair<float, float> weightedMeanAndVariance_EIC(const std::vector<float> *weight, const std::vector<float> *values,
-                                                        size_t left_limit, size_t right_limit);
+    MeanVar weightedMeanAndVariance(const float *x, const std::vector<float> *weight,
+                                    size_t left_limit, size_t right_limit);
+
+    MeanVar weightedMeanAndVariance_EIC(const std::vector<float> *weight, const std::vector<float> *values,
+                                        size_t left_limit, size_t right_limit);
 }
 
 #endif
