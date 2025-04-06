@@ -78,22 +78,20 @@ namespace qAlgorithms
         std::vector<unsigned int> &binIdx,
         float expectedDifference)
     {
-        std::vector<dataPoint> dataPoints;              // create vector of data points
-        dataPoints.reserve(eic.interpolatedIDs.size()); // reserve memory for data points
+        // @todo this function just copies data from the eic output, the respective parts of the binning
+        // and feature detection module should be reworked such that it doesn't need to exist
+        std::vector<dataPoint> dataPoints;
+        dataPoints.reserve(eic.interpolatedIDs.size());
 
         assert(is_sorted(eic.rententionTimes.begin(), eic.rententionTimes.end()));
 
         for (size_t i = 0; i < eic.scanNumbers.size(); ++i)
         {
-            dataPoint dp(               // create data point
-                eic.rententionTimes[i], // x-axis value
-                eic.ints_area[i],       // y-axis value
-                // eic.ints_height[i],
-                true); // df value
-            // eic.DQSC[i],          // dqs centroid value
-            // eic.DQSB[i],          // dqs binning value
-            // eic.mz[i]);           // mz ratio
-            dataPoints.push_back(dp); // add data point to vector
+            dataPoint dp(
+                eic.rententionTimes[i],
+                eic.ints_area[i], // y-axis value
+                true);            // the point is not interpolated
+            dataPoints.push_back(dp);
         }
 
         treatedData treatedData;
@@ -101,7 +99,7 @@ namespace qAlgorithms
 
         binIdx.reserve(dataPoints.size() * 2);
 
-        unsigned int realIdx = 0; // this should be handled outside of this function
+        unsigned int realIdx = 0; // this should be handled outside of this function @todo
         static dataPoint zeroedPoint{0, 0, false};
         // add the first two zeros to the dataPoints_new vector @todo skip this by doing log interpolation during the log transform
         for (int i = 0; i < 2; i++)
@@ -112,7 +110,6 @@ namespace qAlgorithms
             assert(binIdx.size() == treatedData.dataPoints.size());
         }
 
-        // iterate over the data points
         size_t maxOfBlock = 0;
         size_t blockSize = 0; // size of the current block
         for (size_t pos = 0; pos < dataPoints.size() - 1; pos++)
@@ -141,9 +138,6 @@ namespace qAlgorithms
                             dataPoints[pos].x + i * interpolateDiff, // retention time
                             dataPoints[pos].y * std::pow(dy, i),     // intensity
                             false);                                  // interpolated point
-                        // 0.f,                                     // DQSC
-                        // 0.f,                                     // DQSB
-                        // 0.f); // mz
                         treatedData.intensity.push_back(dataPoints[pos].y * std::pow(dy, i));
                     }
                     assert(binIdx.size() == treatedData.dataPoints.size());
@@ -247,39 +241,12 @@ namespace qAlgorithms
         peaks.reserve(EICs.size() / 4);    // should be enough to fit all features without reallocation
         std::vector<FeaturePeak> tmpPeaks; // add features to this before pasting into FL
 
-        if (false)
-        {
-            // this block mutates the points of the selected bin randomly to generate largely equivalent regressions (hopefully)
-            size_t binID = 21726; // this is set for SP_DDA_P1_positive. The selected peak is one of the best-shaped ones found here. Another advantage is the relatively small bin (92 points)
-            // do ~30000 repeats with random variation
-            auto testBin = EICs[binID];
-            EICs.clear();
-            // always keep the mutated bin for comparison
-            EICs.push_back(testBin);
-            std::random_device rd{};
-            std::mt19937 gen{rd()};
-            size_t repeatDraws = 4000;
-            for (size_t i = 0; i < repeatDraws; i++)
-            {
-                auto insert = testBin;
-                for (size_t j = 0; j < insert.cenID.size(); j++)
-                {
-                    CentroidPeak tmpCen = (*centroids)[insert.cenID[j]];
-                    // replace the area of the centroid with a value drawn from a normal distribution around
-                    std::normal_distribution<float> d{tmpCen.area, tmpCen.areaUncertainty};
-                    insert.ints_area[j] = d(gen);
-                }
-
-                EICs.push_back(insert);
-            }
-        }
-
-        for (size_t i = 0; i < EICs.size(); ++i) // loop over all data
+        for (size_t i = 0; i < EICs.size(); ++i)
         {
             auto currentEIC = EICs[i];
             if (currentEIC.scanNumbers.size() < 5)
             {
-                continue; // skip due to lack of data, i.e., degree of freedom will be zero
+                continue; // skip due to lack of data, i.e., degrees of freedom will be zero
             }
             // if (currentEIC.interpolations)
             // {
@@ -313,14 +280,14 @@ namespace qAlgorithms
                 }
                 auto tmp = weightedMeanAndVariance_EIC(&currentEIC.ints_area, &currentEIC.mz,
                                                        currentPeak.idxPeakStart, currentPeak.idxPeakEnd);
-                currentPeak.mz = tmp.first;
-                currentPeak.mzUncertainty = tmp.second;
+                currentPeak.mz = tmp.mean;
+                currentPeak.mzUncertainty = tmp.var;
                 currentPeak.DQSC = weightedMeanAndVariance_EIC(&currentEIC.ints_area, &currentEIC.DQSC,
                                                                currentPeak.idxPeakStart, currentPeak.idxPeakEnd)
-                                       .first;
+                                       .mean;
                 currentPeak.DQSB = weightedMeanAndVariance_EIC(&currentEIC.ints_area, &currentEIC.DQSB,
                                                                currentPeak.idxPeakStart, currentPeak.idxPeakEnd)
-                                       .first;
+                                       .mean;
                 peaks.push_back(std::move(currentPeak)); // remove 2D structure of FL
             }
 
@@ -660,6 +627,7 @@ namespace qAlgorithms
             currentBlock.df.push_back(true);
             subProfiles.push_back(currentBlock);
         }
+        assert(subProfiles.size() > 1); // @todo this triggers https://github.com/odea-project/qAlgorithms/issues/25#issuecomment-2777788944
         return subProfiles;
     }
 }
