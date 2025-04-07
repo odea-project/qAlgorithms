@@ -15,6 +15,9 @@
 
 // group peaks identified from bins by their relation within a scan region
 
+int VALLEYS_1 = 0;
+int VALLEYS_other = 0;
+
 namespace qAlgorithms
 {
     void findComponents(const std::vector<FeaturePeak> *peaks, const std::vector<EIC> *bins)
@@ -33,8 +36,21 @@ namespace qAlgorithms
             // @todo skip for groups with size 1?
             if (groupsize == 1)
             {
+                if ((peaks->at(limits[i].end).coefficients.b2 > 0) || (peaks->at(limits[i].end).coefficients.b3 > 0))
+                {
+                    VALLEYS_1++;
+                }
+
                 continue;
             }
+            for (size_t j = limits[i].start; j < limits[i].end + 1; j++)
+            {
+                if ((peaks->at(j).coefficients.b2 > 0) || (peaks->at(j).coefficients.b3 > 0))
+                {
+                    VALLEYS_other++;
+                }
+            }
+
             if (groupsize > 10) // this is only to speed up testing - @todo remove!
             {
                 continue;
@@ -44,9 +60,9 @@ namespace qAlgorithms
             unsigned int minScan = 4294967295; // max value of unsigned int
             for (size_t j = limits[i].start; j < limits[i].end + 1; j++)
             {
-                auto test = &((*peaks)[j]);
+                auto test = &peaks->at(j);
                 auto movedTest = moveAndScaleReg(test);
-                const qAlgorithms::EIC *bin = &(*bins)[test->idxBin];
+                const qAlgorithms::EIC *bin = &bins->at(test->idxBin);
                 calcRSS(&movedTest, bin);
                 auto binRTs = (*bins)[test->idxBin].rententionTimes;
                 auto scans = (*bins)[test->idxBin].scanNumbers;
@@ -63,7 +79,7 @@ namespace qAlgorithms
             for (size_t j = 0; j < groupsize; j++)
             {
                 const auto feature = newComponent.features[j];
-                const qAlgorithms::EIC *bin = &(*bins)[feature.binID];
+                const qAlgorithms::EIC *bin = &bins->at(feature.binID);
                 eics.push_back(harmoniseEICs(bin, minScan, maxScan, feature.binIdxStart, feature.binIdxEnd));
                 assert(eics[j].intensity.size() == eics[0].intensity.size());
             }
@@ -85,7 +101,7 @@ namespace qAlgorithms
                     size_t access = idx_S * groupsize + idx_L; // position in pairRSS
                 }
             }
-            multiFit(&eics);
+            multiFit(&eics, peaks);
 
             // if two features are not improved by being combined individually, they may never be part of the same group
 
@@ -96,6 +112,8 @@ namespace qAlgorithms
             // current pre-gruping strategy
         }
         std::cout << std::endl;
+        std::cout << "1: " << VALLEYS_1 << " ; other: " << VALLEYS_other << "\n"; // at least for one dataset, features with a valley point are much more likely
+        // to be groups of size 1 than to be included in larger groups (ca. twice as likely)
     }
 
     ReducedEIC harmoniseEICs(const EIC *bin, const size_t minScan, const size_t maxScan, const size_t minIdx, const size_t maxIdx)
@@ -233,7 +251,7 @@ namespace qAlgorithms
             size_t i = 0;
             for (; i < borders->size(); i++)
             {
-                float x = (*borders)[i];
+                float x = borders->at(i);
                 if (x > feature->RT_switch)
                 {
                     break;
@@ -242,14 +260,14 @@ namespace qAlgorithms
             }
             for (; i < borders->size(); i++)
             {
-                float x = (*borders)[i];
+                float x = borders->at(i);
                 heights.push_back(exp(feature->b0_R + feature->b1_R * x + feature->b3 * x * x));
             }
         }
         for (size_t i = 1; i < borders->size(); i++)
         {
             float meanHeight = (heights[i] + heights[i - 1]) / 2;
-            float dist = (*borders)[i] - (*borders)[i - 1];
+            float dist = borders->at(i) - borders->at(i - 1);
             // assert(dist > 0); // unsure why this fails, should be fine?
             float area = meanHeight * dist;
             // assert(area > 0); // evidently, this is not sure to be the case
@@ -659,8 +677,9 @@ namespace qAlgorithms
     //     // auto design = designMat(scale);
     // }
 
-    void multiFit(const std::vector<ReducedEIC> *fitRegion)
+    void multiFit(const std::vector<ReducedEIC> *fitRegion, const std::vector<FeaturePeak> *peaks)
     {
+        assert(fitRegion->size() == peaks->size());
         // fit one model with variable b0 over multiple traces
         // fitRegion contains all mass traces over which a fit should be performed, including zero padding
         // find the scale that fits the non-0 intensity region, -1 at the lowest intensity if an even number is found
@@ -700,7 +719,6 @@ namespace qAlgorithms
                 break;
             }
         }
-        assert(limit_R - limit_L > 4);
 
         // if there is an even number of points, the difference of the limits is uneven
         if (((limit_R - limit_L) % 2) == 1)
@@ -715,22 +733,24 @@ namespace qAlgorithms
                 limit_L += 1;
             }
         }
+        assert(limit_R - limit_L > 4);
+
         const size_t scale = (limit_R - limit_L + 1) / 2; // +1 since limits are indices
-        // produce the intensity vector (without zeroes) while keeping track of which rows to eliminate
-        std::vector<size_t> eliminate;
+        // produce the intensity vector (without zeroes) while keeping track of which rows to interpolate
+        std::vector<size_t> interpolate;
         std::vector<float> combined_logInt((2 * scale + 1) * k, 0);
-        // combined_logInt.reserve((2 * scale + 1) * k);
-        eliminate.reserve(combined_logInt.size() / 10);
+        interpolate.reserve(combined_logInt.size() / 10);
         size_t logIdx = 0;
         for (size_t i = 0; i < k; i++)
         {
             ReducedEIC current = (*fitRegion)[i];
+            auto coeffs = peaks->at(i).coefficients;
             for (size_t j = limit_L; j < limit_R + 1; j++)
             {
                 combined_logInt[logIdx] = current.intensity_log[j];
                 if (current.intensity_log[j] == 0)
                 {
-                    eliminate.push_back(logIdx);
+                    interpolate.push_back(logIdx);
                 }
                 logIdx++;
             }
@@ -741,7 +761,7 @@ namespace qAlgorithms
         // set all entries of the matrix were no intensity values exist to 0
         for (size_t i = 0; i < matrix.size(); i++)
         {
-            for (size_t j = 0; j < eliminate.size(); j++)
+            for (size_t j = 0; j < interpolate.size(); j++)
             {
                 matrix[i][j] = 0;
             }

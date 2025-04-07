@@ -41,35 +41,35 @@ namespace qAlgorithms
         size_t maxIdx = 0;
         for (size_t i = 2; i < scanNums.size() - 2; i++)
         {
-            maxIdx = (*intensity)[i] > (*intensity)[maxIdx] ? i : maxIdx;
+            maxIdx = intensity->at(i) > intensity->at(maxIdx) ? i : maxIdx;
         }
         // quadratic interpolation using outer two points and the maximum
         const float x[3] = {float(scanNums[2]), float(scanNums[maxIdx]), float(scanNums[pos])};
-        const float y[3] = {std::log((*intensity)[2]), std::log((*intensity)[maxIdx]), std::log((*intensity)[pos])};
+        const float y[3] = {std::log(intensity->at(2)), std::log(intensity->at(maxIdx)), std::log(intensity->at(pos))};
         auto coeffs = interpolateQuadratic(x, y);
 #define INTERPOLATE(x) (std::exp(coeffs[0] + x * (coeffs[1] + x * coeffs[2])))
         // left side
-        if ((*intensity)[maxIdx] == (*intensity)[2])
+        if (intensity->at(maxIdx) == intensity->at(2))
         {
-            (*intensity)[0] = (*intensity)[2];
-            (*intensity)[1] = (*intensity)[2];
+            intensity->at(0) = intensity->at(2);
+            intensity->at(1) = intensity->at(2);
         }
         else
         {
             // double tmp = std::exp(coeffs[0] + x_axis[0] * (coeffs[1] + x_axis[0] * coeffs[2]));
-            (*intensity)[0] = INTERPOLATE(scanNums[0]);
-            (*intensity)[1] = INTERPOLATE(scanNums[1]);
+            intensity->at(0) = INTERPOLATE(scanNums[0]);
+            intensity->at(1) = INTERPOLATE(scanNums[1]);
         }
         // right side
-        if ((*intensity)[maxIdx] == (*intensity)[2])
+        if (intensity->at(maxIdx) == intensity->at(2))
         {
-            (*intensity)[pos + 1] = (*intensity)[pos];
-            (*intensity)[pos + 2] = (*intensity)[pos];
+            intensity->at(pos + 1) = intensity->at(pos);
+            intensity->at(pos + 2) = intensity->at(pos);
         }
         else
         {
-            (*intensity)[pos + 1] = INTERPOLATE(scanNums[pos + 1]);
-            (*intensity)[pos + 2] = INTERPOLATE(scanNums[pos + 2]);
+            intensity->at(pos + 1) = INTERPOLATE(scanNums[pos + 1]);
+            intensity->at(pos + 2) = INTERPOLATE(scanNums[pos + 2]);
         }
     }
 
@@ -347,8 +347,8 @@ namespace qAlgorithms
 
     double calcExpectedDiff(const std::vector<std::vector<double>> *spectrum)
     {
-        const std::vector<double> mz = (*spectrum)[0];
-        const std::vector<double> intensity = (*spectrum)[1];
+        const std::vector<double> mz = spectrum->at(0); // @todo make this a named struct
+        const std::vector<double> intensity = spectrum->at(1);
         const size_t numPoints = mz.size();         // number of data points
         const size_t upperLimit = numPoints * 0.05; // check lowest 5% for expected difference
         double expectedDifference = 0.0;
@@ -377,7 +377,7 @@ namespace qAlgorithms
         float sum = 0.0;
         for (size_t i = 1; i < retention_times->size(); ++i)
         {
-            sum += (*retention_times)[i] - (*retention_times)[i - 1];
+            sum += retention_times->at(i) - retention_times->at(i - 1);
         }
         return sum / (retention_times->size() - 1);
     }
@@ -549,18 +549,19 @@ namespace qAlgorithms
         // account otherwise. Around 1000 centroids less than otherwise are produced for test cases.
         std::vector<double> intensities_profile;
         std::vector<double> mz_profile;
-        intensities_profile.reserve((*spectrum)[0].size() / 2);
-        mz_profile.reserve((*spectrum)[0].size() / 2);
+        const auto mz = spectrum->at(0);
+        intensities_profile.reserve(mz.size() / 2);
+        mz_profile.reserve(mz.size() / 2);
         // Depending on the vendor, a profile contains a lot of points with intensity 0.
         // These were added by the vendor software and must be removed prior to processing.
-        for (size_t i = 0; i < (*spectrum)[0].size(); ++i)
+        for (size_t i = 0; i < mz.size(); ++i)
         {
-            if ((*spectrum)[1][i] == 0.0)
+            if (spectrum->at(1)[i] == 0.0)
             {
                 continue; // skip values with no intensity @todo minimum intensity?
             }
-            intensities_profile.push_back((*spectrum)[1][i]);
-            mz_profile.push_back((*spectrum)[0][i]);
+            intensities_profile.push_back(spectrum->at(1)[i]);
+            mz_profile.push_back(mz[i]);
         }
         assert(!intensities_profile.empty());
         assert(!mz_profile.empty());

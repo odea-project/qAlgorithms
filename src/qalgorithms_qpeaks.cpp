@@ -60,6 +60,7 @@ namespace qAlgorithms
             XtX_12 = -XtX_13;
             XtX_22 += i * i * i * i;
 
+            // decomposition matrix L, see https://en.wikipedia.org/wiki/Cholesky_decomposition
             float L_00 = std::sqrt(XtX_00);
             float L_11 = std::sqrt(XtX_11);
             float L_20 = XtX_02 / L_00;
@@ -70,6 +71,7 @@ namespace qAlgorithms
             float L_32 = 1 / L_22 * (-L_20sq + L_21sq);
             float L_33 = std::sqrt(XtX_22 - L_20sq - L_21sq - L_32 * L_32);
 
+            // inverse of L
             float inv_00 = 1.f / L_00;
             float inv_11 = 1.f / L_11;
             float inv_22 = 1.f / L_22;
@@ -490,7 +492,7 @@ namespace qAlgorithms
           the loop continues to the next iteration. The value 5 is chosen as the
           minimum number of data points required to fit a quadratic regression model.
         */
-        size_t df_sum = calcDF(degreesOfFreedom, mutateReg->left_limit, mutateReg->right_limit); // degrees of freedom considering the left and right limits
+        size_t df_sum = calcDF(degreesOfFreedom, mutateReg->left_limit, mutateReg->right_limit); // degrees of freedom considering the left and right limits @todo cumulative array
         if (df_sum < 5)
         {
             return; // degree of freedom less than 5; i.e., less then 5 measured data points

@@ -73,7 +73,7 @@ namespace qAlgorithms
 
     bool preferMerge(float rss_complex, float rss_simple, size_t n_complex, size_t p_complex, size_t p_simple);
 
-    void multiFit(const std::vector<ReducedEIC> *fitRegion);
+    void multiFit(const std::vector<ReducedEIC> *fitRegion, const std::vector<FeaturePeak> *peaks);
 }
 
 #endif
