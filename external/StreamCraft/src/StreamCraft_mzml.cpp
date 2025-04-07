@@ -312,7 +312,7 @@ std::vector<double> StreamCraft::MZML::get_spectra_RT(const std::vector<unsigned
 
     for (size_t i = 0; i < indices->size(); ++i)
     {
-        size_t idx = (*indices)[i];
+        size_t idx = indices->at(i);
         pugi::xml_node spec = spectra_nodes[idx];
         double RT = extract_scan_RT(spec);
         retention_times.push_back(RT);
@@ -330,7 +330,7 @@ std::vector<bool> StreamCraft::MZML::get_spectra_polarity(const std::vector<unsi
 
     for (size_t i = 0; i < indices->size(); ++i)
     {
-        int idx = (*indices)[i];
+        int idx = indices->at(i);
         pugi::xml_node spec = spectra_nodes[idx];
         if (spec.find_child_by_attribute("cvParam", "accession", "MS:1000130"))
         {
@@ -442,7 +442,7 @@ std::vector<size_t> StreamCraft::MZML::get_spectra_index(const std::vector<unsig
 
     for (size_t i = 0; i < indices->size(); ++i)
     {
-        int idx = (*indices)[i];
+        int idx = indices->at(i);
         pugi::xml_node spec = spectra_nodes[idx];
         int index = spec.attribute("index").as_int();
         spec_indices.push_back(index);
@@ -460,7 +460,7 @@ std::vector<int> StreamCraft::MZML::get_spectra_level(const std::vector<unsigned
 
     for (size_t i = 0; i < indices->size(); ++i)
     {
-        size_t idx = (*indices)[i];
+        size_t idx = indices->at(i);
         pugi::xml_node spec = spectra_nodes[idx];
         pugi::xml_node level_node = spec.find_child_by_attribute("cvParam", "name", "ms level");
         int level = level_node.attribute("value").as_int();
@@ -479,7 +479,7 @@ std::vector<bool> StreamCraft::MZML::get_spectra_mode(const std::vector<unsigned
 
     for (size_t i = 0; i < indices->size(); ++i)
     {
-        size_t idx = (*indices)[i];
+        size_t idx = indices->at(i);
         pugi::xml_node spec = spectra_nodes[idx];
         if (spec.find_child_by_attribute("cvParam", "accession", "MS:1000128"))
         {

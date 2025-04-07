@@ -179,7 +179,7 @@ namespace qAlgorithms
 
             for (size_t j = 0; j < bincontainer.sourceBins->size(); j++) // for every element in the deque before writing new bins
             {
-                Bin processThis = (*bincontainer.sourceBins)[j];
+                Bin processThis = bincontainer.sourceBins->at(j);
                 std::sort(processThis.pointsInBin.begin(), processThis.pointsInBin.end(), [](const qCentroid *lhs, const qCentroid *rhs)
                           { return lhs->mz < rhs->mz; });
                 auto activeOS = makeOrderSpace(&processThis);
@@ -194,7 +194,7 @@ namespace qAlgorithms
 
             for (size_t j = 0; j < bincontainer.sourceBins->size(); j++)
             {
-                (*bincontainer.sourceBins)[j].subsetScan(bincontainer.targetBins, bincontainer.notInBins);
+                bincontainer.sourceBins->at(j).subsetScan(bincontainer.targetBins, bincontainer.notInBins);
             }
             // @todo logging
             logOutput += std::to_string(bincontainer.targetBins->size()) + ", ";
@@ -203,13 +203,13 @@ namespace qAlgorithms
             // if the "unchanged" property of a bin is true, all selected tests have passed
             for (size_t j = 0; j < bincontainer.sourceBins->size(); j++)
             {
-                if ((*bincontainer.sourceBins)[j].unchanged)
+                if (bincontainer.sourceBins->at(j).unchanged)
                 {
-                    bincontainer.viableBins.push_back((*bincontainer.sourceBins)[j]);
+                    bincontainer.viableBins.push_back(bincontainer.sourceBins->at(j));
                 }
                 else
                 {
-                    bincontainer.targetBins->push_back((*bincontainer.sourceBins)[j]);
+                    bincontainer.targetBins->push_back(bincontainer.sourceBins->at(j));
                 }
             }
             switchTarget(&bincontainer);
@@ -283,86 +283,32 @@ namespace qAlgorithms
         // should be removed.
     }
 
-    bool binLimitsOK(Bin sourceBin, const std::vector<qCentroid> *rawdata)
-    { // @todo this needs to be rewritten to account for different data structure if it is going to be used
-        // check if a point within maxdist is closer than the critical value
-        // in every scan, the relevant points are outside of the bin limits but inside
-        // the limits + the critical distance of a bin with n+1 members
-        // size_t binsize = sourceBin.pointsInBin.size();
-        // double binError = 0;
-        // for (size_t i = 0; i < binsize; i++)
-        // {
-        //     binError += sourceBin.pointsInBin[i]->mzError;
-        // }
-        // binError /= binsize;
-        // double vcrit = binningCritVal(binsize + 1, binError);
-        // double lowerLimitMZ = sourceBin.mzMin - vcrit;
-        // double upperLimitMZ = sourceBin.mzMax + vcrit;
+    // int selectRebin(BinContainer *bins, const std::vector<qCentroid> *rawdata)
+    // {
+    //     // move all bins without binning artefacts into finishedBins vector
+    //     assert(bins->processBinsF.size() > 0);
+    //     assert(!bins->readFrom);
+    //     int dissolvedCount = 0;
+    //     for (size_t i = 0; i < bins->viableBins.size(); i++)
+    //     {
+    //         Bin currentBin = bins->viableBins[i];
 
-        // for (unsigned int scan = sourceBin.scanMin; scan < sourceBin.scanMax + 1; scan++)
-        // {
-        //     auto currentScans = &rawdata->allDatapoints[scan];
-        //     size_t position = 0;
-        //     // check the entire array up to the bin region for possible missed inclusions
-        //     while ((*currentScans)[position].mz < sourceBin.mzMin)
-        //     {
-        //         if ((*currentScans)[position].mz > lowerLimitMZ)
-        //         {
-        //             return false;
-        //         }
-        //         position++;
-        //         // stop access outside of array
-        //         if (position == currentScans->size())
-        //         {
-        //             position--;
-        //             break;
-        //         }
-        //     }
-        //     // conditions switch, now the points of interest are smaller than the limit and greater than the bin border
-        //     while ((*currentScans)[position].mz < upperLimitMZ)
-        //     {
-        //         if ((*currentScans)[position].mz > sourceBin.mzMax)
-        //         {
-        //             return false;
-        //         }
-        //         position++;
-        //         // stop access outside of array
-        //         if (position == currentScans->size())
-        //         {
-        //             break;
-        //         }
-        //     }
-        //     // there are no points which should be part of the bin, but are not
-        // }
-        return true;
-    }
-
-    int selectRebin(BinContainer *bins, const std::vector<qCentroid> *rawdata)
-    {
-        // move all bins without binning artefacts into finishedBins vector
-        assert(bins->processBinsF.size() > 0);
-        assert(!bins->readFrom);
-        int dissolvedCount = 0;
-        for (size_t i = 0; i < bins->viableBins.size(); i++)
-        {
-            Bin currentBin = bins->viableBins[i];
-
-            if (binLimitsOK(currentBin, rawdata))
-            {
-                bins->finalBins.push_back(currentBin);
-            }
-            else
-            {
-                dissolvedCount++;
-                for (const qCentroid *cen : currentBin.pointsInBin)
-                {
-                    bins->processBinsF.front().pointsInBin.push_back(cen);
-                }
-            }
-        }
-        bins->viableBins.clear();
-        return dissolvedCount;
-    }
+    //         if (binLimitsOK(currentBin, rawdata))
+    //         {
+    //             bins->finalBins.push_back(currentBin);
+    //         }
+    //         else
+    //         {
+    //             dissolvedCount++;
+    //             for (const qCentroid *cen : currentBin.pointsInBin)
+    //             {
+    //                 bins->processBinsF.front().pointsInBin.push_back(cen);
+    //             }
+    //         }
+    //     }
+    //     bins->viableBins.clear();
+    //     return dissolvedCount;
+    // }
 
 #pragma endregion "BinContainer"
 
@@ -395,7 +341,7 @@ namespace qAlgorithms
         cumError.reserve(bin->size());
         for (size_t i = 0; i < bin->size(); i++)
         {
-            cumError.push_back((*bin)[i]->mzError);
+            cumError.push_back(bin->at(i)->mzError);
         }
         std::partial_sum(cumError.begin(), cumError.end(), cumError.begin()); // cumulative sum
         return cumError;
@@ -581,8 +527,6 @@ namespace qAlgorithms
             {
                 // centroid is within maxdist and relevant mz region. However,
                 // one past maxdist is considered for better representativeness
-                // const qCentroid *test = (*notInBins)[i];
-                // std::cout << test->df;
                 scoreRegion.push_back((*notInBins)[i]);
             }
         }
@@ -684,7 +628,7 @@ namespace qAlgorithms
             size_t resultIdx = point->scanNo - firstScan + 2; // first two elements are empty for extrapolation
 
             tmp_scanNumbers.push_back(point->scanNo);
-            tmp_rt.push_back((*convertRT)[point->scanNo]);
+            tmp_rt.push_back(convertRT->at(point->scanNo));
             tmp_mz.push_back(point->mz);
             tmp_predInterval.push_back(point->mzError);
             tmp_ints_area.push_back(point->int_area);
