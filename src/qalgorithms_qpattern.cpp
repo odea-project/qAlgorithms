@@ -76,6 +76,7 @@ namespace qAlgorithms
             }
 
             std::vector<ReducedEIC> eics;
+            std::vector<MovedRegression> *selectPeaks;
             for (size_t j = 0; j < groupsize; j++)
             {
                 const auto feature = newComponent.features[j];
@@ -101,7 +102,7 @@ namespace qAlgorithms
                     size_t access = idx_S * groupsize + idx_L; // position in pairRSS
                 }
             }
-            multiFit(&eics, peaks);
+            multiFit(&eics, &newComponent.features);
 
             // if two features are not improved by being combined individually, they may never be part of the same group
 
@@ -677,7 +678,7 @@ namespace qAlgorithms
     //     // auto design = designMat(scale);
     // }
 
-    void multiFit(const std::vector<ReducedEIC> *fitRegion, const std::vector<FeaturePeak> *peaks)
+    void multiFit(const std::vector<ReducedEIC> *fitRegion, const std::vector<MovedRegression> *peaks)
     {
         assert(fitRegion->size() == peaks->size());
         // fit one model with variable b0 over multiple traces
@@ -737,35 +738,41 @@ namespace qAlgorithms
 
         const size_t scale = (limit_R - limit_L + 1) / 2; // +1 since limits are indices
         // produce the intensity vector (without zeroes) while keeping track of which rows to interpolate
-        std::vector<size_t> interpolate;
+        // std::vector<size_t> interpolate;
         std::vector<float> combined_logInt((2 * scale + 1) * k, 0);
-        interpolate.reserve(combined_logInt.size() / 10);
+        // interpolate.reserve(combined_logInt.size() / 10);
         size_t logIdx = 0;
         for (size_t i = 0; i < k; i++)
         {
             ReducedEIC current = (*fitRegion)[i];
-            auto coeffs = peaks->at(i).coefficients;
+            auto coeffs = peaks->at(i);
+#define INTERPOLATE_L(x) (coeffs.b0_L + coeffs.b1_L * x + coeffs.b2 * x * x) // no need for exp since we work with the log for regressions anyway
+#define INTERPOLATE_R(x) (coeffs.b0_R + coeffs.b1_R * x + coeffs.b3 * x * x)
             for (size_t j = limit_L; j < limit_R + 1; j++)
             {
                 combined_logInt[logIdx] = current.intensity_log[j];
                 if (current.intensity_log[j] == 0)
                 {
-                    interpolate.push_back(logIdx);
+                    float rt = current.RTs[j];
+                    combined_logInt[logIdx] = rt < coeffs.RT_switch ? INTERPOLATE_L(rt) : INTERPOLATE_R(rt);
+                    // interpolate.push_back(logIdx);
                 }
                 logIdx++;
             }
+#undef INTERPOLATE_L
+#undef INTERPOLATE_R
         }
         // assert(combined_logInt.back() != 0); // this is possible, although hopefully unlikely
         auto matrix = designMat(scale, k);
         assert(matrix[0].size() == combined_logInt.size());
         // set all entries of the matrix were no intensity values exist to 0
-        for (size_t i = 0; i < matrix.size(); i++)
-        {
-            for (size_t j = 0; j < interpolate.size(); j++)
-            {
-                matrix[i][j] = 0;
-            }
-        }
+        // for (size_t i = 0; i < matrix.size(); i++)
+        // {
+        //     for (size_t j = 0; j < interpolate.size(); j++)
+        //     {
+        //         matrix[i][j] = 0;
+        //     }
+        // }
     }
 
     bool preferMerge(float rss_complex, float rss_simple, size_t n_complex, size_t p_complex, size_t p_simple)
