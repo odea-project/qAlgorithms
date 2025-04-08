@@ -324,6 +324,19 @@ namespace qAlgorithms
         for (size_t idxStart = 0; idxStart < n_segments; idxStart++)
         {
             size_t df = calcDF(degreesOfFreedom, idxStart, 2 * scale + idxStart);
+            // size_t df_alt = 0;
+            // std::vector<size_t> cumDF;
+            // for (size_t i = 0; i < degreesOfFreedom->size(); i++)
+            // {
+            //     if (degreesOfFreedom->at(i) == 1)
+            //     {
+            //         df_alt++;
+            //     }
+            //     cumDF.push_back(df_alt);
+            // }
+            // volatile size_t newDF = cumDF[idxStart + 2 * scale] - (idxStart == 0 ? 0 : cumDF[idxStart - 1]);
+            // assert(newDF == df);
+
             if (df < 5)
             {
                 continue;
@@ -887,10 +900,10 @@ namespace qAlgorithms
             peak.coefficients = coeff;
             peak.mse_base = regression.mse;
 
-            if (regression.scale < 3)
-            {
-                std::cerr << "regression found at scale 2!\n";
-            }
+            // if (regression.scale < 3)
+            // {
+            //     std::cerr << "regression found at scale 2!\n";
+            // }
 
             peak.scale = regression.scale;
             peak.interpolationCount = regression.right_limit - regression.left_limit - regression.df - 4; // -4 since the degrees of freedom are reduced by 1 per coefficient
@@ -1072,7 +1085,7 @@ namespace qAlgorithms
         unsigned int right_limit)
     {
         size_t DF = 0;
-        for (size_t i = left_limit; i < right_limit; i++)
+        for (size_t i = left_limit; i < right_limit + 1; i++)
         {
             if ((*degreesOfFreedom)[i])
             {
