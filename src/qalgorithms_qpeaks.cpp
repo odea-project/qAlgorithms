@@ -900,11 +900,6 @@ namespace qAlgorithms
             peak.coefficients = coeff;
             peak.mse_base = regression.mse;
 
-            // if (regression.scale < 3)
-            // {
-            //     std::cerr << "regression found at scale 2!\n";
-            // }
-
             peak.scale = regression.scale;
             peak.interpolationCount = regression.right_limit - regression.left_limit - regression.df - 4; // -4 since the degrees of freedom are reduced by 1 per coefficient
             peak.competitorCount = regression.numCompetitors;
