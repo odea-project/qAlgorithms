@@ -72,6 +72,8 @@ namespace qAlgorithms
                 movedTest.limit_R = binRTs[test->idxPeakEnd];
                 maxScan = std::max(maxScan, scans[test->idxPeakEnd]); // @todo scans should be their own type, same with indices
                 minScan = std::min(minScan, scans[test->idxPeakStart]);
+                assert(scans[test->idxPeakEnd] - scans[test->idxPeakStart] >= 4);
+                assert(maxScan - minScan >= 4);
                 newComponent.features.push_back(movedTest);
             }
 
@@ -720,7 +722,7 @@ namespace qAlgorithms
                 break;
             }
         }
-
+        assert(limit_R - limit_L >= 4);
         // if there is an even number of points, the difference of the limits is uneven
         if (((limit_R - limit_L) % 2) == 1)
         {
@@ -734,7 +736,7 @@ namespace qAlgorithms
                 limit_L += 1;
             }
         }
-        assert(limit_R - limit_L > 4);
+        assert(limit_R - limit_L >= 4);
 
         const size_t scale = (limit_R - limit_L + 1) / 2; // +1 since limits are indices
         // produce the intensity vector (without zeroes) while keeping track of which rows to interpolate
