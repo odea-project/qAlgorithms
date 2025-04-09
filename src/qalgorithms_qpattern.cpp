@@ -99,9 +99,27 @@ namespace qAlgorithms
             // multi match all pairs
             for (size_t idx_S = 0; idx_S < groupsize - 1; idx_S++)
             {
+                auto feature_A = newComponent.features[idx_S];
+                auto EIC_A = eics[idx_S];
                 for (size_t idx_L = idx_S + 1; idx_L < groupsize; idx_L++)
                 {
+                    auto feature_B = newComponent.features[idx_L];
+                    auto EIC_B = eics[idx_L];
+                    // pairwise merge to check if two features can be part of the same component
+                    float rss_complex = feature_A.RSS + feature_B.RSS;
+                    float rss_simple = rss_complex * 1.05; // this is just a standin, perform a regression here
+                    // we can be certain that the absolute rss is at most identical (for the case where feature_A == feature_B).
+                    // this check is also needed since the function we use for the f distribution later exits with error if a
+                    // negative  value is supplied
+                    assert(rss_simple > rss_complex);
+                    // F-test to check if the merge is a good idea
+                    size_t numPoints = feature_A.binIdxEnd - feature_A.binIdxStart + feature_B.binIdxEnd - feature_B.binIdxStart + 2;
+                    size_t params_both = 8;  // four coefficients each
+                    size_t params_combo = 5; // shared b1, b2, b3, two b0
+
+                    bool merge = preferMerge(rss_complex, rss_simple, numPoints, params_both, params_combo);
                     size_t access = idx_S * groupsize + idx_L; // position in pairRSS
+                    pairRSS[access] = merge ? rss_simple : INFINITY;
                 }
             }
             multiFit(&eics, &newComponent.features);
@@ -777,19 +795,20 @@ namespace qAlgorithms
         // }
     }
 
-    bool preferMerge(float rss_complex, float rss_simple, size_t n_complex, size_t p_complex, size_t p_simple)
+    bool preferMerge(float rss_complex, float rss_simple, size_t n_total, size_t p_complex, size_t p_simple)
     {
-        float alpha = 0.05; // @todo is a set alpha reall the best possible solution?
+        // @todo consider if this part of the code can be sped up by hashing the computations dependent on dfn and dfd
+        float alpha = 0.05; // @todo is a set alpha really the best possible solution?
         // problem: pre-calculation of all relevant f values could result in a very large array
         // possible max size of 20 seems reasonable, maximum observed is 6
         int which = 1; // select mode of library function and check computation result
         double p = 0;  // not required
         double q = 0;  // return value, equals p - 1
-        double F = ((rss_simple - rss_complex) / float(p_complex - p_simple)) / (rss_complex / float(n_complex - p_complex));
-        double dfn = p_complex - p_simple;  // numerator degrees of freedom
-        double dfd = n_complex - p_complex; // denominator degrees of freedom
-        int status = 1;                     // result invalid if this is not 0
-        double bound = 0;                   // allows recovery from non-0 status
+        double F = ((rss_simple - rss_complex) / float(p_complex - p_simple)) / (rss_complex / float(n_total - p_complex));
+        double dfn = p_complex - p_simple; // numerator degrees of freedom
+        double dfd = n_total - p_complex;  // denominator degrees of freedom
+        int status = 1;                    // result invalid if this is not 0
+        double bound = 0;                  // allows recovery from non-0 status
 
         cdff(&which, &p, &q, &F, &dfn, &dfd, &status, &bound); // library function, see https://people.math.sc.edu/Burkardt/cpp_src/cdflib/cdflib.html
         assert(status == 0);
