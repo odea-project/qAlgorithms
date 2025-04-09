@@ -71,7 +71,14 @@ namespace qAlgorithms
 
     std::vector<float> pairwiseRSS(const ComponentGroup *group, const std::vector<ReducedEIC> *points);
 
-    bool preferMerge(float rss_complex, float rss_simple, size_t n_complex, size_t p_complex, size_t p_simple);
+    /// @brief Does the combined regression apply to both input regressions?
+    /// @param rss_complex sum of the residual sums of squares for the individual models
+    /// @param rss_simple residual sum of squares for the combined model
+    /// @param n_total number of data points (is identical for both cases)
+    /// @param p_complex parameters (coefficients) of the two individual models
+    /// @param p_simple parameters (coefficients) of the combined model
+    /// @return returns true if the combined model is not significantly (alpha = 0.05) worse than the combination of the individual models
+    bool preferMerge(float rss_complex, float rss_simple, size_t n_total, size_t p_complex, size_t p_simple);
 
     void multiFit(const std::vector<ReducedEIC> *fitRegion, const std::vector<MovedRegression> *regressions);
 }
