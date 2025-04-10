@@ -122,6 +122,17 @@ namespace qAlgorithms
                     pairRSS[access] = merge ? rss_simple : INFINITY;
                 }
             }
+            // pairRSS serves as an exclusion matrix and priorisation tool. The component assignment is handled through
+            // a group vector and stored assignment information
+
+            int componentGroup = -1; // the ID is incremented before assignment
+            std::vector<CompAssignment> groupings;
+            groupings.reserve(groupsize);
+            for (size_t idx = 0; idx < groupsize; idx++)
+            {
+                groupings.push_back({idx, -1});
+            }
+
             multiFit(&eics, &newComponent.features);
 
             // if two features are not improved by being combined individually, they may never be part of the same group
@@ -131,10 +142,76 @@ namespace qAlgorithms
             // at this point, the group must be subdivided such that the total RSS is minimal
             // special case for groupsize 2 might be a good idea, since it seems to occur very often with the
             // current pre-gruping strategy
+
+            // all ungrouped features are -1 at this point, loop over them and add a correct component number
+            for (size_t ID = 0; ID < groupsize; ID++)
+            {
+                if (groupings[ID].component == -1;)
+                {
+                    componentGroup++;
+                    groupings[ID].component = componentGroup;
+                }
+            }
+            assert(componentGroup > -1);
+            assert(componentGroup <= groupsize)
         }
         std::cout << std::endl;
         std::cout << "1: " << VALLEYS_1 << " ; other: " << VALLEYS_other << "\n"; // at least for one dataset, features with a valley point are much more likely
         // to be groups of size 1 than to be included in larger groups (ca. twice as likely)
+    }
+
+    void mergeComponents(std::vector<CompAssignment> *groupings, size_t *compCount, int ID_A, int ID_B)
+    {
+        assert(ID_A != ID_B);
+        assert(compCount >= ID_A && compCount >= ID_B);
+        int ID_new = std::min(ID_A, ID_B);
+        int ID_max = std::max(ID_A, ID_B);
+        compCount -= 1;
+        for (size_t i = 0; i < groupings->size(); i++)
+        {
+            int ID_curr = groupings->at(i).component;
+            assert(compCount >= ID_curr - 1);
+            if ((ID_curr == ID_A) || (ID_curr == ID_B))
+            {
+                groupings->at(i).component == ID_new;
+            }
+            else if (ID_curr > ID_max)
+            {
+                groupings->at(i).component -= 1;
+            }
+        }
+    }
+
+    void newComponent(std::vector<CompAssignment> *groupings, size_t *compCount, size_t member_A, size_t member_B)
+    {
+        // a new component is only ever made from two unassigned features
+        compCount++;
+        bool exit = false;
+        for (size_t i = 0; i < groupings->size(); i++)
+        {
+            if ((groupings->at(i).feature == member_A) || (groupings->at(i).feature == member_B))
+            {
+                groupings->at(i).component = compCount;
+                if (exit)
+                {
+                    break;
+                }
+                exit = true;
+            }
+        }
+    }
+
+    void addToComponent(std::vector<CompAssignment> *groupings, const size_t compCount, int ID_add, size_t member)
+    {
+        // only update assignment of member
+        for (size_t i = 0; i < groupings->size(); i++)
+        {
+            if (groupings->at(i).feature == member)
+            {
+                groupings->at(i).component = ID_add;
+                break;
+            }
+        }
     }
 
     ReducedEIC harmoniseEICs(const EIC *bin, const size_t minScan, const size_t maxScan, const size_t minIdx, const size_t maxIdx)

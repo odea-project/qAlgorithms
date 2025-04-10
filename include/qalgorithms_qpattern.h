@@ -45,6 +45,12 @@ namespace qAlgorithms
         size_t n_cols;
     };
 
+    struct CompAssignment
+    {
+        const size_t feature;
+        int component = -1; // -1 means unassigned, groups start at 0
+    };
+
     // pre-group the region relevant to componentisation based on retention time uncertainty
     std::vector<GroupLims> preGroup(const std::vector<FeaturePeak> *peaks);
 
