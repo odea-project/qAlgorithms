@@ -77,7 +77,7 @@ namespace qAlgorithms
                 newComponent.features.push_back(movedTest);
             }
 
-            std::vector<ReducedEIC> eics;
+            std::vector<ReducedEIC> eics; // @todo the maximum size of a reduced EIC is the global maxscale + 1!
             std::vector<MovedRegression> *selectPeaks;
             for (size_t j = 0; j < groupsize; j++)
             {
@@ -158,6 +158,38 @@ namespace qAlgorithms
         std::cout << std::endl;
         std::cout << "1: " << VALLEYS_1 << " ; other: " << VALLEYS_other << "\n"; // at least for one dataset, features with a valley point are much more likely
         // to be groups of size 1 than to be included in larger groups (ca. twice as likely)
+    }
+
+    void compDecision()
+    {
+        bool incompatible = preferMerge();
+        if (incompatible)
+        {
+            return;
+        }
+        // add the signs of comp assignments
+        int signs = -4;
+        switch (signs)
+        {
+        case signs == -2:
+            // both are individual points
+            newComponent();
+            break;
+
+        case signs == 0;
+            // one component, one loose point
+            addToComponent();
+            break;
+
+            case signs == 2;
+            // merge both components
+
+            break;
+
+            default:
+            assert(false);
+            break;
+        }
     }
 
     void mergeComponents(std::vector<CompAssignment> *groupings, size_t *compCount, int ID_A, int ID_B)
