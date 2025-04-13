@@ -146,14 +146,14 @@ namespace qAlgorithms
             // all ungrouped features are -1 at this point, loop over them and add a correct component number
             for (size_t ID = 0; ID < groupsize; ID++)
             {
-                if (groupings[ID].component == -1;)
+                if (groupings[ID].component == -1)
                 {
                     componentGroup++;
                     groupings[ID].component = componentGroup;
                 }
             }
             assert(componentGroup > -1);
-            assert(componentGroup <= groupsize)
+            assert(componentGroup <= groupsize);
         }
         std::cout << std::endl;
         std::cout << "1: " << VALLEYS_1 << " ; other: " << VALLEYS_other << "\n"; // at least for one dataset, features with a valley point are much more likely
@@ -162,31 +162,32 @@ namespace qAlgorithms
 
     void compDecision()
     {
-        bool incompatible = preferMerge();
+        // bool incompatible = preferMerge();
+        bool incompatible = true;
         if (incompatible)
         {
             return;
         }
         // add the signs of comp assignments
-        int signs = -4;
+        const int signs = -4;
         switch (signs)
         {
-        case signs == -2:
+        case -2:
             // both are individual points
-            newComponent();
+            // newComponent();
             break;
 
-        case signs == 0;
+        case 0:
             // one component, one loose point
-            addToComponent();
+            // addToComponent();
             break;
 
-            case signs == 2;
+        case 2:
             // merge both components
 
             break;
 
-            default:
+        default:
             assert(false);
             break;
         }
@@ -195,14 +196,14 @@ namespace qAlgorithms
     void mergeComponents(std::vector<CompAssignment> *groupings, size_t *compCount, int ID_A, int ID_B)
     {
         assert(ID_A != ID_B);
-        assert(compCount >= ID_A && compCount >= ID_B);
+        assert(*compCount >= ID_A && *compCount >= ID_B);
         int ID_new = std::min(ID_A, ID_B);
         int ID_max = std::max(ID_A, ID_B);
         compCount -= 1;
         for (size_t i = 0; i < groupings->size(); i++)
         {
             int ID_curr = groupings->at(i).component;
-            assert(compCount >= ID_curr - 1);
+            assert(*compCount >= ID_curr - 1);
             if ((ID_curr == ID_A) || (ID_curr == ID_B))
             {
                 groupings->at(i).component == ID_new;
@@ -223,7 +224,7 @@ namespace qAlgorithms
         {
             if ((groupings->at(i).feature == member_A) || (groupings->at(i).feature == member_B))
             {
-                groupings->at(i).component = compCount;
+                groupings->at(i).component = int(compCount);
                 if (exit)
                 {
                     break;
