@@ -10,6 +10,7 @@
 #include <vector>
 #include <iostream>
 #include <immintrin.h> // AVX
+#include <numeric>     // accumulate, this is temporary @todo
 
 namespace qAlgorithms
 {
@@ -92,7 +93,10 @@ namespace qAlgorithms
         return invArray;
     }
 
+#pragma warning(push)
+#pragma warning(disable : 28)
     constexpr std::array<float, 384> INV_ARRAY = initialize(); // this only works with constexpr square roots, which are part of C++26
+#pragma warning(pop)
 #pragma endregion "initialize"
 
 #pragma region "find peaks"
@@ -284,26 +288,170 @@ namespace qAlgorithms
         }
     }
 
-    void convolve_details(
-        const size_t scale,
-        const float *measuredPoints, // ylog_start
-        const size_t arraySize,      // number of data points in vec
-        __m128 *result)              // coefficients b0, b1, b2, b3 for the points supplied through measuredPoints
+    void findCoefficients(
+        const std::vector<float> intensity_log,
+        const size_t scale,     // maximum scale that will be checked. Should generally be limited by peakFrame
+        const size_t numPeaks,  // only > 1 during componentisation (for now? @todo)
+        const size_t peakFrame) // how many points are covered per peak? For single-peak data, this is the length of intensity_log
     {
-        // this function calculates the four regression coefficients needed to describe a peak
-        // normally, the pseudoinverse would need to be calculated. An equivalent is pre-computed with the
-        // INV_ARRAY global constant.
+        /*
+  This function performs a convolution with the kernel: (xTx)^-1 xT and the data array: intensity_log.
+  (xTx)^-1 is pre_calculated and stored in the inv_array and contains 7 unique values per scale.
+  xT is the transpose of the design matrix X that looks like this:
+  for scale = 2:
+  xT = | 1  1  1  1  1 |    : all ones
+       |-2 -1  0  1  2 |    : from -scale to scale
+       | 4  1  0  0  0 |    : x^2 values for x < 0
+       | 0  0  0  1  4 |    : x^2 values for x > 0
 
-        // for every element of measuredPoints, the sum of measuredPoints[i] * the pseudoinverse is calculated
-        // per coefficient. The pseudoinverse is an array of size 2 * scale + 1. producs[i] is the sum of
-        // measuredPoints[i] * pseudoiverse[0] to measuredPoints[i + 2 * scale + 1] * pseudoiverse[i + 2 * scale + 1]
+  While adding multiple peaks to the regression model, we need to adjust the inverse values.
+  This will change the number of unique values in the inv_values array from 6 to 7.
+  Here we use the inv_array[1] position and shift all values from that point onwards to the right.
+  example for num_peaks = 2:
+  original matrix with the unique values [a, b, c, d, e, f] (six unique values)
+  | a  0  b  b |
+  | 0  c  d -d |
+  | b  d  e  f |
+  | b -d  f  e |
 
-        // we use a vector array so that every coefficient can be calculated at once.
-        // __m128 products[arraySize];
-        // for (size_t i = 0; i < arraySize; ++i)
-        // {
-        //     products[i] = _mm_setzero_ps();
-        // }
+  new matrix with the unique values [A1, A2, B, C, D, E, F] (seven unique values)
+  | A1  A2  0  B  B |
+  | A2  A1  0  B  B |
+  | 0   0   C  D -D |
+  | B   B   D  E  F |
+  | B   B  -D  F  E |
+
+  for num_peaks = 3:
+  new matrix with the unique values [A1, A2, B, C, D, E, F] (seven unique values)
+  | A1  A2  A2  0  B  B |
+  | A2  A1  A2  0  B  B |
+  | A2  A2  A1  0  B  B |
+  | 0   0   0   C  D -D |
+  | B   B   B   D  E  F |
+  | B   B   B  -D  F  E |
+
+  In general, we have to moving actions:
+  1) step right through the intensity_log and calculate the convolution with the kernel
+  2) expand the kernel to the left and right of the intensity_log (higher scale)
+
+  The workflow is organized in nested loops:
+  1) outer loop: move along the intensity_log AND calculate the convolution with the scale=2 kernel
+  2) inner loop: expand the kernel to the left and right of the intensity_log (higher scale)
+
+  The pattern used for both loops looks like:
+  e.g. for n(y) = 16
+  outer loop: i = 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11
+  inner loop: range from:
+   for i=0: 3 to 3 => i.e. loop is not executed
+   for i=1: 3 to 4 => i.e. loop is executed once for scale=3
+   for i=2: 3 to 5 => i.e. loop is executed twice for scale=3,4
+   for i=3: 3 to 6 => i.e. loop is executed three times for scale=3,4,5
+   for i=4: 3 to 7 => i.e. loop is executed four times for scale=3,4,5,6
+   for i=5: 3 to 8 => i.e. loop is executed five times for scale=3,4,5,6,7
+   for i=6: 3 to 8 => i.e. loop is executed five times for scale=3,4,5,6,7
+   for i=7: 3 to 7 => i.e. loop is executed four times for scale=3,4,5,6
+   for i=8: 3 to 6 => i.e. loop is executed three times for scale=3,4,5
+   for i=9: 3 to 5 => i.e. loop is executed twice for scale=3,4
+   for i=10: 3 to 4 => i.e. loop is executed once for scale=3
+   for i=11: 3 to 3 => i.e. loop is not executed
+   */
+        assert(scale > 1);
+        // if num_peaks > 1:
+        // tmp_inv_array: np.ndarray = inv_array.copy() / num_peaks # adjust the inv_array for multiple peaks
+        // tmp_inv_array[1::7] = - inv_array[0::7] * 2              # redefine the inv_array[1] position (A2)
+        // tmp_inv_array[0::7] -= tmp_inv_array[1::7] * num_peaks   # adjust the inv_array[0] position (A1)
+        // else:
+        // tmp_inv_array: np.ndarray = inv_array.copy()
+        // num_steps: int = len(intensity_log) - 2 * scale_min # number of steps in the intensity_log
+        const size_t minScale = 2;
+        const size_t steps = intensity_log.size() - 2 * minScale; // iteration number at scale 2
+
+        std::vector<float> y_array_sum = intensity_log; // sum of each index across multiple dimensions of intensity_log
+        // only relevant for more than one peak
+
+        //   this vector is for the inner loop and looks like:
+        //   [scale_min, scale_min +1 , .... scale_max, ... scale_min +1, scale_min]
+        //   length of vector: num_steps
+        // the vector starts and ends with minScale and increases by one towards the middle until it reaches the scale value
+        std::vector<size_t> maxInnerLoop(steps, scale);
+        size_t substract = 0;
+        for (size_t i = 0; i + 2 < scale; i++) // +2 since smallest scale is 2
+        {
+            // @todo somewhat inefficient, design better iteration scheme
+            size_t newVal = i + 2;
+            maxInnerLoop[i] = newVal;
+            size_t backIdx = maxInnerLoop.size() - i - 1;
+            maxInnerLoop[backIdx] = newVal;
+            substract += 2 * newVal;
+        }
+        // num_productsums: int = (scale_max_while_loop - 1).sum() # number of productsums
+        // sum of all iterations that will be performed
+        size_t iterationCount = steps * (scale - 1) - substract;
+
+        // the product sums are row of design matrix (xT) * intensity_log[i:i+4] (dot product)
+        std::vector<float> tmp_product_sum_b0(numPeaks, 0); // number of elements = number of peaks, always 0 for now
+        float tmp_product_sum_b1 = 0;
+        float tmp_product_sum_b2 = 0;
+        float tmp_product_sum_b3 = 0;
+        float sum_tmp_product_sum_b0 = 0;
+
+        // these arrays contain all coefficients for every loop iteration
+        std::vector<float> beta_0(iterationCount, NAN);
+        std::vector<float> beta_1(iterationCount, NAN);
+        std::vector<float> beta_2(iterationCount, NAN);
+        std::vector<float> beta_3(iterationCount, NAN);
+
+        size_t k = 0;
+        for (size_t i = 0; i < steps; i++)
+        {
+            // move along the intensity_log (outer loop)
+            // calculate the convolution with the kernel of the lowest scale (= 2), i.e. xT * intensity_log[i:i+4]
+            // tmp_product_sum_b0 = intensity_log[i:i+5].sum(axis=0) // numPeaks rows of xT * intensity_log[i:i+4]
+            for (size_t b0_elems = 0; b0_elems < numPeaks; b0_elems++)
+            {
+                tmp_product_sum_b0[b0_elems] = std::accumulate(y_array_sum.begin(), y_array_sum.begin() + 4, 0); // = 1 for all elements
+            }
+
+            tmp_product_sum_b1 = 2 * (y_array_sum[i + 4] - y_array_sum[i]) + y_array_sum[i + 3] - y_array_sum[i + 1];
+            tmp_product_sum_b2 = 4 * y_array_sum[i] + y_array_sum[i + 1];
+            tmp_product_sum_b3 = 4 * y_array_sum[i + 4] + y_array_sum[i + 3];
+
+            sum_tmp_product_sum_b0 = std::accumulate(tmp_product_sum_b0.begin(), tmp_product_sum_b0.end(), 0);
+
+            // this line is: a*t_i + b * sum(t without i)
+            // beta_0[k] += tmp_inv_array[1] * sum_tmp_product_sum_b0 + (tmp_inv_array[0] - tmp_inv_array[1]) * tmp_product_sum_b0
+            // // this line adds b2 b3 information to the beta_0[k] value
+            // beta_0[k] += tmp_inv_array[2] * (tmp_product_sum_b2 + tmp_product_sum_b3)
+
+            // beta_1[k] += tmp_inv_array[3] * tmp_product_sum_b1 + tmp_inv_array[4] * (tmp_product_sum_b2 - tmp_product_sum_b3)
+            // beta_2[k] += tmp_inv_array[2] * sum_tmp_product_sum_b0 + tmp_inv_array[4] * tmp_product_sum_b1 + tmp_inv_array[5] * tmp_product_sum_b2 + tmp_inv_array[6] * tmp_product_sum_b3
+            // beta_3[k] += tmp_inv_array[2] * sum_tmp_product_sum_b0 - tmp_inv_array[4] * tmp_product_sum_b1 + tmp_inv_array[6] * tmp_product_sum_b2 + tmp_inv_array[5] * tmp_product_sum_b3
+            // print(beta_0[k], beta_1[k], beta_2[k], beta_3[k])
+            size_t k += 1; // update index for the productsums array
+            size_t u = 1;  // u is the expansion increment
+            // for scale in range(3, scale_max_while_loop[i] + 1)
+            for (size_t scale = 3; scale < maxInnerLoop[i] + 1; scale++)
+            { // minimum scale was set to 2 and in the inner loop we start with scale +1 = 3
+                scale_sqr = scale * scale;
+                // expand the kernel to the left and right of the intensity_log (inner loop)
+                tmp_product_sum_b0 += intensity_log[i - u] + intensity_log[i + 4 + u];
+                tmp_product_sum_b1 += scale * (y_array_sum[i + 4 + u] - y_array_sum[i - u]);
+                tmp_product_sum_b2 += scale_sqr * y_array_sum[i - u];
+                tmp_product_sum_b3 += scale_sqr * y_array_sum[i + 4 + u];
+
+                sum_tmp_product_sum_b0 = tmp_product_sum_b0.sum();
+
+                //   beta_0[k] += tmp_inv_array[1+u*7] * sum_tmp_product_sum_b0 + (tmp_inv_array[0+u*7] - tmp_inv_array[1+u*7]) * tmp_product_sum_b0
+                //   beta_0[k] += tmp_inv_array[2+u*7] * (tmp_product_sum_b2 + tmp_product_sum_b3)
+
+                //   beta_1[k] += tmp_inv_array[3+u*7] * tmp_product_sum_b1 + tmp_inv_array[4+u*7] * (tmp_product_sum_b2 - tmp_product_sum_b3)
+                //   beta_2[k] += tmp_inv_array[2+u*7] * sum_tmp_product_sum_b0 + tmp_inv_array[4+u*7] * tmp_product_sum_b1 + tmp_inv_array[5+u*7] * tmp_product_sum_b2 + tmp_inv_array[6+u*7] * tmp_product_sum_b3
+                //   beta_3[k] += tmp_inv_array[2+u*7] * sum_tmp_product_sum_b0 - tmp_inv_array[4+u*7] * tmp_product_sum_b1 + tmp_inv_array[6+u*7] * tmp_product_sum_b2 + tmp_inv_array[5+u*7] * tmp_product_sum_b3
+
+                u += 1; // update expansion increment
+                k += 1; // update index for the productsums array
+            }
+        }
     }
 
 #pragma endregion "running regression"
