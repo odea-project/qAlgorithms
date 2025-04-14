@@ -304,7 +304,9 @@ namespace qAlgorithms
        | 4  1  0  0  0 |    : x^2 values for x < 0
        | 0  0  0  1  4 |    : x^2 values for x > 0
 
-  While adding multiple peaks to the regression model, we need to adjust the inverse values.
+  It contains one additional row of all ones for every additional peak that is added into the model
+
+  When adding multiple peaks to the regression model, we need to adjust the inverse values.
   This will change the number of unique values in the inv_values array from 6 to 7.
   Here we use the inv_array[1] position and shift all values from that point onwards to the right.
   example for num_peaks = 2:
@@ -322,7 +324,7 @@ namespace qAlgorithms
   | B   B  -D  F  E |
 
   for num_peaks = 3:
-  new matrix with the unique values [A1, A2, B, C, D, E, F] (seven unique values)
+  new matrix with the unique values [A1, A2, B, C, D, E, F] (the same seven unique values)
   | A1  A2  A2  0  B  B |
   | A2  A1  A2  0  B  B |
   | A2  A2  A1  0  B  B |
@@ -330,7 +332,9 @@ namespace qAlgorithms
   | B   B   B   D  E  F |
   | B   B   B  -D  F  E |
 
-  In general, we have to moving actions:
+  Note that no more than seven different values are needed per scale.
+
+  In general, we have two moving actions:
   1) step right through the intensity_log and calculate the convolution with the kernel
   2) expand the kernel to the left and right of the intensity_log (higher scale)
 
@@ -356,12 +360,6 @@ namespace qAlgorithms
    for i=11: 3 to 3 => i.e. loop is not executed
    */
         assert(scale > 1);
-        // if num_peaks > 1:
-        // tmp_inv_array: np.ndarray = inv_array.copy() / num_peaks # adjust the inv_array for multiple peaks
-        // tmp_inv_array[1::7] = - inv_array[0::7] * 2              # redefine the inv_array[1] position (A2)
-        // tmp_inv_array[0::7] -= tmp_inv_array[1::7] * num_peaks   # adjust the inv_array[0] position (A1)
-        // else:
-        // tmp_inv_array: np.ndarray = inv_array.copy()
         // num_steps: int = len(intensity_log) - 2 * scale_min # number of steps in the intensity_log
         const size_t minScale = 2;
         const size_t steps = intensity_log.size() - 2 * minScale; // iteration number at scale 2
@@ -388,19 +386,38 @@ namespace qAlgorithms
         // sum of all iterations that will be performed
         size_t iterationCount = steps * (scale - 1) - substract;
 
-        // the product sums are row of design matrix (xT) * intensity_log[i:i+4] (dot product)
+        // the product sums are the rows of the design matrix (xT) * intensity_log[i:i+4] (dot product)
+        // The first n entries are contained in the b0 vector, one for each peak the regression is performed
+        // over.
         std::vector<float> tmp_product_sum_b0(numPeaks, 0); // number of elements = number of peaks, always 0 for now
         float tmp_product_sum_b1 = 0;
         float tmp_product_sum_b2 = 0;
         float tmp_product_sum_b3 = 0;
-        float sum_tmp_product_sum_b0 = 0;
+
+        float sum_tmp_product_sum_b0 = 0; // sum of all elements in the tmp_product_sum_b0 vector
 
         // these arrays contain all coefficients for every loop iteration
-        std::vector<float> beta_0(iterationCount, NAN);
+        std::vector<float> beta_0(iterationCount * numPeaks, NAN); // one per iteration per peak
+
+        // one per iteration
         std::vector<float> beta_1(iterationCount, NAN);
         std::vector<float> beta_2(iterationCount, NAN);
         std::vector<float> beta_3(iterationCount, NAN);
 
+        // inv_array_new = {A1, A2, B, C, D, E, F}
+        // tmp_inv_array: np.ndarray = inv_array.copy() / num_peaks # adjust the inv_array for multiple peaks
+        // 1) divide all elements of the inv array by the number of peaks (A2 is 0 initially)
+        // NOT A1
+        // tmp_inv_array[1::7] = - inv_array[2::7] * 2              # redefine the inv_array[1] position (A2)
+        // A2(scale) = -2 * A1(scale) / numPeaks
+        // tmp_inv_array[0::7] -= tmp_inv_array[1::7] * num_peaks   # adjust the inv_array[0] position (A1)
+        // A1(scale) = A1(scale) / numPeaks - (-2 * A1(scale) / numPeaks * numPeaks)
+        // A1(scale) = A1(scale) / numPeaks + 2 * A1(scale)
+        // tmp_inv_array: np.ndarray = inv_array.copy()
+        // construct the complex inverse array from the precalculated values at function call.
+        // @todo replace the array with a struct and an accessor function
+        // A1 bei numpeaks = 1: nicht transformiert, da auch von B abhängig
+        // A1 = A1* - 2 * B* / numPeaks == A2
         size_t k = 0;
         for (size_t i = 0; i < steps; i++)
         {
@@ -418,39 +435,75 @@ namespace qAlgorithms
 
             sum_tmp_product_sum_b0 = std::accumulate(tmp_product_sum_b0.begin(), tmp_product_sum_b0.end(), 0);
 
-            // this line is: a*t_i + b * sum(t without i)
-            // beta_0[k] += tmp_inv_array[1] * sum_tmp_product_sum_b0 + (tmp_inv_array[0] - tmp_inv_array[1]) * tmp_product_sum_b0
-            // // this line adds b2 b3 information to the beta_0[k] value
-            // beta_0[k] += tmp_inv_array[2] * (tmp_product_sum_b2 + tmp_product_sum_b3)
+            // A1 is not modified if numPeaks is 1. It is, however, modified by -2 * b / numPeaks and not just /numPeaks if numPeaks > 1
+            const float S2_A1 = numPeaks == 1 ? INV_ARRAY[0] : INV_ARRAY[0] - 2 * INV_ARRAY[1] / numPeaks;
+            // A2 is only defined for numPeaks > 1, set it to 0 to avoid conditional in loops
+            const float S2_A2 = numPeaks == 1 ? 0 : -2 * INV_ARRAY[1] / numPeaks;
+            const float S2_B = INV_ARRAY[1] / numPeaks;
+            const float S2_C = INV_ARRAY[2] / numPeaks;
+            const float S2_D = INV_ARRAY[3] / numPeaks;
+            const float S2_E = INV_ARRAY[4] / numPeaks;
+            const float S2_F = INV_ARRAY[5] / numPeaks;
 
-            // beta_1[k] += tmp_inv_array[3] * tmp_product_sum_b1 + tmp_inv_array[4] * (tmp_product_sum_b2 - tmp_product_sum_b3)
-            // beta_2[k] += tmp_inv_array[2] * sum_tmp_product_sum_b0 + tmp_inv_array[4] * tmp_product_sum_b1 + tmp_inv_array[5] * tmp_product_sum_b2 + tmp_inv_array[6] * tmp_product_sum_b3
-            // beta_3[k] += tmp_inv_array[2] * sum_tmp_product_sum_b0 - tmp_inv_array[4] * tmp_product_sum_b1 + tmp_inv_array[6] * tmp_product_sum_b2 + tmp_inv_array[5] * tmp_product_sum_b3
-            // print(beta_0[k], beta_1[k], beta_2[k], beta_3[k])
-            size_t k += 1; // update index for the productsums array
-            size_t u = 1;  // u is the expansion increment
+            // this line is: a*t_i + b * sum(t without i)
+            // inv_array starts at scale = 2
+            for (size_t peak = 0; peak < numPeaks; peak++)
+            {
+                beta_0[k * (peak + 1)] += S2_A2 * sum_tmp_product_sum_b0 + (S2_A1 - S2_A2) * tmp_product_sum_b0[peak];
+                // // this line adds b2 b3 information to the beta_0[k] value
+                beta_0[k * (peak + 1)] += S2_B * (tmp_product_sum_b2 + tmp_product_sum_b3);
+            }
+
+            beta_1[k] += S2_D * tmp_product_sum_b1 + S2_E * (tmp_product_sum_b2 - tmp_product_sum_b3);
+            beta_2[k] += S2_B * sum_tmp_product_sum_b0 + S2_D * tmp_product_sum_b1 + S2_E * tmp_product_sum_b2 + S2_F * tmp_product_sum_b3;
+            beta_3[k] += S2_B * sum_tmp_product_sum_b0 - S2_D * tmp_product_sum_b1 + S2_F * tmp_product_sum_b2 + S2_E * tmp_product_sum_b3;
+            // print(beta_0[k], beta_1[k], beta_2[k], beta_3[k]);
+            k += 1;       // update index for the productsums array
+            size_t u = 1; // u is the expansion increment
             // for scale in range(3, scale_max_while_loop[i] + 1)
             for (size_t scale = 3; scale < maxInnerLoop[i] + 1; scale++)
-            { // minimum scale was set to 2 and in the inner loop we start with scale +1 = 3
-                scale_sqr = scale * scale;
-                // expand the kernel to the left and right of the intensity_log (inner loop)
-                tmp_product_sum_b0 += intensity_log[i - u] + intensity_log[i + 4 + u];
+            { // minimum scale is 2. so we start with scale + 1 = 3 in the inner loop
+                size_t scale_sqr = scale * scale;
+                // expand the kernel to the left and right of the intensity_log.
+                sum_tmp_product_sum_b0 = 0;
+                for (size_t peak = 0; peak < numPeaks; peak++)
+                {
+                    tmp_product_sum_b0[peak] += intensity_log[i - u] + intensity_log[i + 4 + u];
+                    sum_tmp_product_sum_b0 += tmp_product_sum_b0[peak];
+                }
+
                 tmp_product_sum_b1 += scale * (y_array_sum[i + 4 + u] - y_array_sum[i - u]);
                 tmp_product_sum_b2 += scale_sqr * y_array_sum[i - u];
                 tmp_product_sum_b3 += scale_sqr * y_array_sum[i + 4 + u];
 
-                sum_tmp_product_sum_b0 = tmp_product_sum_b0.sum();
+                // A1 is not modified if numPeaks is 1. It is, however, modified by -2 * b / numPeaks and not just /numPeaks if numPeaks > 1
+                const float inv_A1 = numPeaks == 1 ? INV_ARRAY[u * 6 + 0] : INV_ARRAY[u * 6 + 0] - 2 * INV_ARRAY[u * 6 + 1] / numPeaks;
+                // A2 is only defined for numPeaks > 1, set it to 0 to avoid conditional in loops
+                const float inv_A2 = numPeaks == 1 ? 0 : -2 * INV_ARRAY[u * 6 + 1] / numPeaks;
+                const float inv_B = INV_ARRAY[u * 6 + 1] / numPeaks;
+                const float inv_C = INV_ARRAY[u * 6 + 2] / numPeaks;
+                const float inv_D = INV_ARRAY[u * 6 + 3] / numPeaks;
+                const float inv_E = INV_ARRAY[u * 6 + 4] / numPeaks;
+                const float inv_F = INV_ARRAY[u * 6 + 5] / numPeaks;
 
-                //   beta_0[k] += tmp_inv_array[1+u*7] * sum_tmp_product_sum_b0 + (tmp_inv_array[0+u*7] - tmp_inv_array[1+u*7]) * tmp_product_sum_b0
-                //   beta_0[k] += tmp_inv_array[2+u*7] * (tmp_product_sum_b2 + tmp_product_sum_b3)
+                for (size_t peak = 0; peak < numPeaks; peak++)
+                {
+                    beta_0[k * (peak + 1)] += inv_A2 * sum_tmp_product_sum_b0 + (inv_A1 - inv_A2) * tmp_product_sum_b0[peak];
+                    // // this line adds b2 b3 information to the beta_0[k] value
+                    beta_0[k * (peak + 1)] += inv_B * (tmp_product_sum_b2 + tmp_product_sum_b3);
+                }
 
-                //   beta_1[k] += tmp_inv_array[3+u*7] * tmp_product_sum_b1 + tmp_inv_array[4+u*7] * (tmp_product_sum_b2 - tmp_product_sum_b3)
-                //   beta_2[k] += tmp_inv_array[2+u*7] * sum_tmp_product_sum_b0 + tmp_inv_array[4+u*7] * tmp_product_sum_b1 + tmp_inv_array[5+u*7] * tmp_product_sum_b2 + tmp_inv_array[6+u*7] * tmp_product_sum_b3
-                //   beta_3[k] += tmp_inv_array[2+u*7] * sum_tmp_product_sum_b0 - tmp_inv_array[4+u*7] * tmp_product_sum_b1 + tmp_inv_array[6+u*7] * tmp_product_sum_b2 + tmp_inv_array[5+u*7] * tmp_product_sum_b3
+                beta_1[k] += inv_C * tmp_product_sum_b1 + inv_D * (tmp_product_sum_b2 - tmp_product_sum_b3);
+                beta_2[k] += inv_B * sum_tmp_product_sum_b0 + inv_D * tmp_product_sum_b1 + inv_E * tmp_product_sum_b2 + inv_F * tmp_product_sum_b3;
+                beta_3[k] += inv_B * sum_tmp_product_sum_b0 - inv_D * tmp_product_sum_b1 + inv_F * tmp_product_sum_b2 + inv_E * tmp_product_sum_b3;
 
                 u += 1; // update expansion increment
                 k += 1; // update index for the productsums array
             }
+        }
+        if (numPeaks == 1)
+        {
+            assert(beta_0.size() == beta_1.size());
         }
     }
 
