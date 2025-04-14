@@ -215,7 +215,7 @@ namespace qAlgorithms
         }
     }
 
-    void newComponent(std::vector<CompAssignment> *groupings, size_t *compCount, size_t member_A, size_t member_B)
+    void newComponent(std::vector<CompAssignment> *groupings, int *compCount, size_t member_A, size_t member_B)
     {
         // a new component is only ever made from two unassigned features
         compCount++;
@@ -224,7 +224,7 @@ namespace qAlgorithms
         {
             if ((groupings->at(i).feature == member_A) || (groupings->at(i).feature == member_B))
             {
-                groupings->at(i).component = int(compCount);
+                groupings->at(i).component = *compCount;
                 if (exit)
                 {
                     break;

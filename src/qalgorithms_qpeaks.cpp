@@ -206,6 +206,12 @@ namespace qAlgorithms
             validateRegressions(beta, n_segments, intensities, intensities_log, degreesOfFreedom, scale, validRegressions);
         }
 
+        std::vector<float> int_log = *intensities;
+        std::transform(int_log.begin(), int_log.end(), int_log.begin(), [](float y)
+                       { return std::log(y); });
+
+        std::vector<RegCoeffs> regressions = findCoefficients(int_log, maxScale, 1, int_log.size());
+
         if (validRegressions.size() > 1)
         {
             validRegressions = mergeRegressionsOverScales(validRegressions, intensities);
@@ -288,7 +294,7 @@ namespace qAlgorithms
         }
     }
 
-    void findCoefficients(
+    std::vector<RegCoeffs> findCoefficients(
         const std::vector<float> intensity_log,
         const size_t scale,     // maximum scale that will be checked. Should generally be limited by peakFrame
         const size_t numPeaks,  // only > 1 during componentisation (for now? @todo)
@@ -384,7 +390,15 @@ namespace qAlgorithms
         }
         // num_productsums: int = (scale_max_while_loop - 1).sum() # number of productsums
         // sum of all iterations that will be performed
-        size_t iterationCount = steps * (scale - 1) - substract;
+        // iteration follows the scheme of the triangular number: I = 1 + 2 + 3 + 4 + 5 etc. = n * (n + 1) / 2
+        size_t iterationCount = peakFrame * (peakFrame + 1) / 2;
+        // We have to limit the iterations so that the maximum scale is not exceeded.
+        if (peakFrame > scale)
+        {
+            //
+        }
+
+        // size_t iterationCount = steps * (scale - 1) - substract + 1;
 
         // the product sums are the rows of the design matrix (xT) * intensity_log[i:i+4] (dot product)
         // The first n entries are contained in the b0 vector, one for each peak the regression is performed
@@ -436,27 +450,28 @@ namespace qAlgorithms
             sum_tmp_product_sum_b0 = std::accumulate(tmp_product_sum_b0.begin(), tmp_product_sum_b0.end(), 0);
 
             // A1 is not modified if numPeaks is 1. It is, however, modified by -2 * b / numPeaks and not just /numPeaks if numPeaks > 1
-            const float S2_A1 = numPeaks == 1 ? INV_ARRAY[0] : INV_ARRAY[0] - 2 * INV_ARRAY[1] / numPeaks;
+            // use [12 + ...] since the array is constructed for the accession arry[scale * 6 + (0:5)]
+            const float S2_A1 = numPeaks == 1 ? INV_ARRAY[12 + 0] : INV_ARRAY[12 + 0] - 2 * INV_ARRAY[12 + 1] / numPeaks;
             // A2 is only defined for numPeaks > 1, set it to 0 to avoid conditional in loops
-            const float S2_A2 = numPeaks == 1 ? 0 : -2 * INV_ARRAY[1] / numPeaks;
-            const float S2_B = INV_ARRAY[1] / numPeaks;
-            const float S2_C = INV_ARRAY[2] / numPeaks;
-            const float S2_D = INV_ARRAY[3] / numPeaks;
-            const float S2_E = INV_ARRAY[4] / numPeaks;
-            const float S2_F = INV_ARRAY[5] / numPeaks;
+            const float S2_A2 = numPeaks == 1 ? 0 : -2 * INV_ARRAY[12 + 1] / numPeaks;
+            const float S2_B = INV_ARRAY[12 + 1] / numPeaks;
+            const float S2_C = INV_ARRAY[12 + 2] / numPeaks;
+            const float S2_D = INV_ARRAY[12 + 3] / numPeaks;
+            const float S2_E = INV_ARRAY[12 + 4] / numPeaks;
+            const float S2_F = INV_ARRAY[12 + 5] / numPeaks;
 
             // this line is: a*t_i + b * sum(t without i)
             // inv_array starts at scale = 2
             for (size_t peak = 0; peak < numPeaks; peak++)
             {
-                beta_0[k * (peak + 1)] += S2_A2 * sum_tmp_product_sum_b0 + (S2_A1 - S2_A2) * tmp_product_sum_b0[peak];
+                beta_0[k + peak * peakFrame] = S2_A2 * sum_tmp_product_sum_b0 + (S2_A1 - S2_A2) * tmp_product_sum_b0[peak];
                 // // this line adds b2 b3 information to the beta_0[k] value
-                beta_0[k * (peak + 1)] += S2_B * (tmp_product_sum_b2 + tmp_product_sum_b3);
+                beta_0[k + peak * peakFrame] += S2_B * (tmp_product_sum_b2 + tmp_product_sum_b3);
             }
 
-            beta_1[k] += S2_D * tmp_product_sum_b1 + S2_E * (tmp_product_sum_b2 - tmp_product_sum_b3);
-            beta_2[k] += S2_B * sum_tmp_product_sum_b0 + S2_D * tmp_product_sum_b1 + S2_E * tmp_product_sum_b2 + S2_F * tmp_product_sum_b3;
-            beta_3[k] += S2_B * sum_tmp_product_sum_b0 - S2_D * tmp_product_sum_b1 + S2_F * tmp_product_sum_b2 + S2_E * tmp_product_sum_b3;
+            beta_1[k] = S2_C * tmp_product_sum_b1 + S2_D * (tmp_product_sum_b2 - tmp_product_sum_b3);
+            beta_2[k] = S2_B * sum_tmp_product_sum_b0 + S2_D * tmp_product_sum_b1 + S2_E * tmp_product_sum_b2 + S2_F * tmp_product_sum_b3;
+            beta_3[k] = S2_B * sum_tmp_product_sum_b0 - S2_D * tmp_product_sum_b1 + S2_F * tmp_product_sum_b2 + S2_E * tmp_product_sum_b3;
             // print(beta_0[k], beta_1[k], beta_2[k], beta_3[k]);
             k += 1;       // update index for the productsums array
             size_t u = 1; // u is the expansion increment
@@ -477,34 +492,42 @@ namespace qAlgorithms
                 tmp_product_sum_b3 += scale_sqr * y_array_sum[i + 4 + u];
 
                 // A1 is not modified if numPeaks is 1. It is, however, modified by -2 * b / numPeaks and not just /numPeaks if numPeaks > 1
-                const float inv_A1 = numPeaks == 1 ? INV_ARRAY[u * 6 + 0] : INV_ARRAY[u * 6 + 0] - 2 * INV_ARRAY[u * 6 + 1] / numPeaks;
+                const float inv_A1 = numPeaks == 1 ? INV_ARRAY[12 + u * 6 + 0] : INV_ARRAY[12 + u * 6 + 0] - 2 * INV_ARRAY[12 + u * 6 + 1] / numPeaks;
                 // A2 is only defined for numPeaks > 1, set it to 0 to avoid conditional in loops
-                const float inv_A2 = numPeaks == 1 ? 0 : -2 * INV_ARRAY[u * 6 + 1] / numPeaks;
-                const float inv_B = INV_ARRAY[u * 6 + 1] / numPeaks;
-                const float inv_C = INV_ARRAY[u * 6 + 2] / numPeaks;
-                const float inv_D = INV_ARRAY[u * 6 + 3] / numPeaks;
-                const float inv_E = INV_ARRAY[u * 6 + 4] / numPeaks;
-                const float inv_F = INV_ARRAY[u * 6 + 5] / numPeaks;
+                const float inv_A2 = numPeaks == 1 ? 0 : -2 * INV_ARRAY[12 + u * 6 + 1] / numPeaks;
+                const float inv_B = INV_ARRAY[12 + u * 6 + 1] / numPeaks;
+                const float inv_C = INV_ARRAY[12 + u * 6 + 2] / numPeaks;
+                const float inv_D = INV_ARRAY[12 + u * 6 + 3] / numPeaks;
+                const float inv_E = INV_ARRAY[12 + u * 6 + 4] / numPeaks;
+                const float inv_F = INV_ARRAY[12 + u * 6 + 5] / numPeaks;
 
                 for (size_t peak = 0; peak < numPeaks; peak++)
                 {
-                    beta_0[k * (peak + 1)] += inv_A2 * sum_tmp_product_sum_b0 + (inv_A1 - inv_A2) * tmp_product_sum_b0[peak];
+                    beta_0[k + peak * peakFrame] = inv_A2 * sum_tmp_product_sum_b0 + (inv_A1 - inv_A2) * tmp_product_sum_b0[peak];
                     // // this line adds b2 b3 information to the beta_0[k] value
-                    beta_0[k * (peak + 1)] += inv_B * (tmp_product_sum_b2 + tmp_product_sum_b3);
+                    beta_0[k + peak * peakFrame] += inv_B * (tmp_product_sum_b2 + tmp_product_sum_b3);
                 }
 
-                beta_1[k] += inv_C * tmp_product_sum_b1 + inv_D * (tmp_product_sum_b2 - tmp_product_sum_b3);
-                beta_2[k] += inv_B * sum_tmp_product_sum_b0 + inv_D * tmp_product_sum_b1 + inv_E * tmp_product_sum_b2 + inv_F * tmp_product_sum_b3;
-                beta_3[k] += inv_B * sum_tmp_product_sum_b0 - inv_D * tmp_product_sum_b1 + inv_F * tmp_product_sum_b2 + inv_E * tmp_product_sum_b3;
+                beta_1[k] = inv_C * tmp_product_sum_b1 + inv_D * (tmp_product_sum_b2 - tmp_product_sum_b3);
+                beta_2[k] = inv_B * sum_tmp_product_sum_b0 + inv_D * tmp_product_sum_b1 + inv_E * tmp_product_sum_b2 + inv_F * tmp_product_sum_b3;
+                beta_3[k] = inv_B * sum_tmp_product_sum_b0 - inv_D * tmp_product_sum_b1 + inv_F * tmp_product_sum_b2 + inv_E * tmp_product_sum_b3;
 
                 u += 1; // update expansion increment
                 k += 1; // update index for the productsums array
             }
         }
+        assert(numPeaks == 1);
         if (numPeaks == 1)
         {
             assert(beta_0.size() == beta_1.size());
         }
+        std::vector<RegCoeffs> coeffs;
+        coeffs.reserve(beta_1.size());
+        for (size_t i = 0; i < beta_1.size(); i++)
+        {
+            coeffs.push_back({beta_0[i], beta_1[i], beta_2[i], beta_3[i]});
+        }
+        return coeffs;
     }
 
 #pragma endregion "running regression"
