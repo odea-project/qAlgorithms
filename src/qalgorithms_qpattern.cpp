@@ -635,7 +635,7 @@ namespace qAlgorithms
     void calcRSS(MovedRegression *reg, const EIC *bin)
     {
         // mutates the RSS field in MovedRegression
-#define PREDICT_L(x) (std::exp(reg->b0_L + x * reg->b1_L + x * x * reg->b2))
+#define PREDICT_L(x) (std::exp(reg->b0_L + x * reg->b1_L + x * x * reg->b2)) // @todo there is an error here
 #define PREDICT_R(x) (std::exp(reg->b0_R + x * reg->b1_R + x * x * reg->b3))
         const auto RTs = bin->rententionTimes;
         const auto areas = bin->ints_area;
@@ -656,6 +656,7 @@ namespace qAlgorithms
             }
             float diff = PREDICT_L(RTs[idx]) - areas[idx];
             RSS += diff * diff;
+            assert(RSS != INFINITY);
         }
         for (; idx < RTs.size(); idx++)
         {
@@ -665,7 +666,9 @@ namespace qAlgorithms
             }
             float diff = PREDICT_R(RTs[idx]) - areas[idx];
             RSS += diff * diff;
+            assert(RSS != INFINITY);
         }
+        assert(RSS != INFINITY);
         reg->RSS = RSS;
     }
 
@@ -907,6 +910,7 @@ namespace qAlgorithms
 
     bool preferMerge(float rss_complex, float rss_simple, size_t n_total, size_t p_complex, size_t p_simple)
     {
+        assert(rss_complex < rss_simple);
         // @todo consider if this part of the code can be sped up by hashing the computations dependent on dfn and dfd
         float alpha = 0.05; // @todo is a set alpha really the best possible solution?
         // problem: pre-calculation of all relevant f values could result in a very large array
