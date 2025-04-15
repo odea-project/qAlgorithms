@@ -129,6 +129,11 @@ namespace qAlgorithms
                            { return std::log(y); });
             // @todo adjust the scale dynamically based on the number of valid regressions found, early terminate after x iterations
             const size_t maxScale = std::min(GLOBAL_MAXSCALE_CENTROID, size_t((length - 1) / 2)); // length - 1 because the center point is not part of the span
+            if (block.intensity.size() != 5)
+            {
+                continue;
+            }
+
             runningRegression(&block.intensity, logIntensity, &block.df, length, validRegressions, maxScale);
             if (validRegressions.empty())
             {
@@ -171,6 +176,8 @@ namespace qAlgorithms
         runningRegression(&intensity, logIntensity, &degreesOfFreedom, length, validRegressions, maxScale);
         if (validRegressions.empty())
         {
+            delete[] logIntensity;
+            delete[] RT;
             return; // no valid peaks
         }
         createFeaturePeaks(&all_peaks, &validRegressions, RT); // there is no reason for this to be called here and not later @todo
@@ -196,6 +203,11 @@ namespace qAlgorithms
         // re-use this array for all coefficients
         __m128 beta[maxSize];
 
+        float cmp_first_b0 = 0;
+        float cmp_first_b1 = 0;
+        float cmp_first_b2 = 0;
+        float cmp_first_b3 = 0;
+
         for (size_t scale = 2; scale <= maxScale; scale++)
         {
             const int k = 2 * scale + 1;      // window size
@@ -203,14 +215,36 @@ namespace qAlgorithms
 
             convolve_SIMD(scale, intensities_log, n, beta); // beta past position n-1 contains initialized, but wrong values - make sure they cannot be accessed
                                                             // n_segments must be smaller than the array
+            cmp_first_b0 = beta[0][0];
+            cmp_first_b1 = beta[0][1];
+            cmp_first_b2 = beta[0][2];
+            cmp_first_b3 = beta[0][3];
+
             validateRegressions(beta, n_segments, intensities, intensities_log, degreesOfFreedom, scale, validRegressions);
+        } // only check blocks of size 5
+
+        std::vector<double> int_log(intensities->size(), NAN);
+        for (size_t i = 0; i < int_log.size(); i++)
+        {
+            int_log[i] = std::log(intensities->at(i));
         }
 
-        std::vector<float> int_log = *intensities;
-        std::transform(int_log.begin(), int_log.end(), int_log.begin(), [](float y)
-                       { return std::log(y); });
+        for (size_t i = 0; i < int_log.size(); i++)
+        {
+            assert(int_log[i] == intensities_log[i]);
+        }
 
         std::vector<RegCoeffs> regressions = findCoefficients(int_log, maxScale, 1, int_log.size());
+
+        float n_first_b0 = regressions.front().b0;
+        float n_first_b1 = regressions.front().b1;
+        float n_first_b2 = regressions.front().b2;
+        float n_first_b3 = regressions.front().b3;
+
+        assert(n_first_b0 == cmp_first_b0);
+        assert(n_first_b1 == cmp_first_b1);
+        assert(n_first_b2 == cmp_first_b2);
+        assert(n_first_b3 == cmp_first_b3);
 
         if (validRegressions.size() > 1)
         {
@@ -295,7 +329,7 @@ namespace qAlgorithms
     }
 
     std::vector<RegCoeffs> findCoefficients(
-        const std::vector<float> intensity_log,
+        const std::vector<double> intensity_log,
         const size_t scale,     // maximum scale that will be checked. Should generally be limited by peakFrame
         const size_t numPeaks,  // only > 1 during componentisation (for now? @todo)
         const size_t peakFrame) // how many points are covered per peak? For single-peak data, this is the length of intensity_log
@@ -370,7 +404,7 @@ namespace qAlgorithms
         const size_t minScale = 2;
         const size_t steps = intensity_log.size() - 2 * minScale; // iteration number at scale 2
 
-        std::vector<float> y_array_sum = intensity_log; // sum of each index across multiple dimensions of intensity_log
+        std::vector<double> y_array_sum = intensity_log; // sum of each index across multiple dimensions of intensity_log
         // only relevant for more than one peak
 
         //   this vector is for the inner loop and looks like:
@@ -403,20 +437,20 @@ namespace qAlgorithms
         // the product sums are the rows of the design matrix (xT) * intensity_log[i:i+4] (dot product)
         // The first n entries are contained in the b0 vector, one for each peak the regression is performed
         // over.
-        std::vector<float> tmp_product_sum_b0(numPeaks, 0); // number of elements = number of peaks, always 0 for now
-        float tmp_product_sum_b1 = 0;
-        float tmp_product_sum_b2 = 0;
-        float tmp_product_sum_b3 = 0;
+        std::vector<double> tmp_product_sum_b0(numPeaks, 0); // number of elements = number of peaks, always 0 for now
+        double tmp_product_sum_b1 = 0;
+        double tmp_product_sum_b2 = 0;
+        double tmp_product_sum_b3 = 0;
 
-        float sum_tmp_product_sum_b0 = 0; // sum of all elements in the tmp_product_sum_b0 vector
+        double sum_tmp_product_sum_b0 = 0; // sum of all elements in the tmp_product_sum_b0 vector
 
         // these arrays contain all coefficients for every loop iteration
-        std::vector<float> beta_0(iterationCount * numPeaks, NAN); // one per iteration per peak
+        std::vector<double> beta_0(iterationCount * numPeaks, NAN); // one per iteration per peak
 
         // one per iteration
-        std::vector<float> beta_1(iterationCount, NAN);
-        std::vector<float> beta_2(iterationCount, NAN);
-        std::vector<float> beta_3(iterationCount, NAN);
+        std::vector<double> beta_1(iterationCount, NAN);
+        std::vector<double> beta_2(iterationCount, NAN);
+        std::vector<double> beta_3(iterationCount, NAN);
 
         // inv_array_new = {A1, A2, B, C, D, E, F}
         // tmp_inv_array: np.ndarray = inv_array.copy() / num_peaks # adjust the inv_array for multiple peaks
@@ -440,7 +474,7 @@ namespace qAlgorithms
             // tmp_product_sum_b0 = intensity_log[i:i+5].sum(axis=0) // numPeaks rows of xT * intensity_log[i:i+4]
             for (size_t b0_elems = 0; b0_elems < numPeaks; b0_elems++)
             {
-                tmp_product_sum_b0[b0_elems] = std::accumulate(y_array_sum.begin(), y_array_sum.begin() + 4, 0); // = 1 for all elements
+                tmp_product_sum_b0[b0_elems] = std::accumulate(y_array_sum.begin(), y_array_sum.begin() + 5, 0.0); // b0 = 1 for all elements
             }
 
             tmp_product_sum_b1 = 2 * (y_array_sum[i + 4] - y_array_sum[i]) + y_array_sum[i + 3] - y_array_sum[i + 1];
@@ -451,14 +485,14 @@ namespace qAlgorithms
 
             // A1 is not modified if numPeaks is 1. It is, however, modified by -2 * b / numPeaks and not just /numPeaks if numPeaks > 1
             // use [12 + ...] since the array is constructed for the accession arry[scale * 6 + (0:5)]
-            const float S2_A1 = numPeaks == 1 ? INV_ARRAY[12 + 0] : INV_ARRAY[12 + 0] - 2 * INV_ARRAY[12 + 1] / numPeaks;
+            const double S2_A1 = numPeaks == 1 ? INV_ARRAY[12 + 0] : INV_ARRAY[12 + 0] - 2 * INV_ARRAY[12 + 1] / numPeaks;
             // A2 is only defined for numPeaks > 1, set it to 0 to avoid conditional in loops
-            const float S2_A2 = numPeaks == 1 ? 0 : -2 * INV_ARRAY[12 + 1] / numPeaks;
-            const float S2_B = INV_ARRAY[12 + 1] / numPeaks;
-            const float S2_C = INV_ARRAY[12 + 2] / numPeaks;
-            const float S2_D = INV_ARRAY[12 + 3] / numPeaks;
-            const float S2_E = INV_ARRAY[12 + 4] / numPeaks;
-            const float S2_F = INV_ARRAY[12 + 5] / numPeaks;
+            const double S2_A2 = numPeaks == 1 ? 0 : -2 * INV_ARRAY[12 + 1] / numPeaks;
+            const double S2_B = INV_ARRAY[12 + 1] / numPeaks;
+            const double S2_C = INV_ARRAY[12 + 2] / numPeaks;
+            const double S2_D = INV_ARRAY[12 + 3] / numPeaks;
+            const double S2_E = INV_ARRAY[12 + 4] / numPeaks;
+            const double S2_F = INV_ARRAY[12 + 5] / numPeaks;
 
             // this line is: a*t_i + b * sum(t without i)
             // inv_array starts at scale = 2
@@ -492,14 +526,14 @@ namespace qAlgorithms
                 tmp_product_sum_b3 += scale_sqr * y_array_sum[i + 4 + u];
 
                 // A1 is not modified if numPeaks is 1. It is, however, modified by -2 * b / numPeaks and not just /numPeaks if numPeaks > 1
-                const float inv_A1 = numPeaks == 1 ? INV_ARRAY[12 + u * 6 + 0] : INV_ARRAY[12 + u * 6 + 0] - 2 * INV_ARRAY[12 + u * 6 + 1] / numPeaks;
+                const double inv_A1 = numPeaks == 1 ? INV_ARRAY[12 + u * 6 + 0] : INV_ARRAY[12 + u * 6 + 0] - 2 * INV_ARRAY[12 + u * 6 + 1] / numPeaks;
                 // A2 is only defined for numPeaks > 1, set it to 0 to avoid conditional in loops
-                const float inv_A2 = numPeaks == 1 ? 0 : -2 * INV_ARRAY[12 + u * 6 + 1] / numPeaks;
-                const float inv_B = INV_ARRAY[12 + u * 6 + 1] / numPeaks;
-                const float inv_C = INV_ARRAY[12 + u * 6 + 2] / numPeaks;
-                const float inv_D = INV_ARRAY[12 + u * 6 + 3] / numPeaks;
-                const float inv_E = INV_ARRAY[12 + u * 6 + 4] / numPeaks;
-                const float inv_F = INV_ARRAY[12 + u * 6 + 5] / numPeaks;
+                const double inv_A2 = numPeaks == 1 ? 0 : -2 * INV_ARRAY[12 + u * 6 + 1] / numPeaks;
+                const double inv_B = INV_ARRAY[12 + u * 6 + 1] / numPeaks;
+                const double inv_C = INV_ARRAY[12 + u * 6 + 2] / numPeaks;
+                const double inv_D = INV_ARRAY[12 + u * 6 + 3] / numPeaks;
+                const double inv_E = INV_ARRAY[12 + u * 6 + 4] / numPeaks;
+                const double inv_F = INV_ARRAY[12 + u * 6 + 5] / numPeaks;
 
                 for (size_t peak = 0; peak < numPeaks; peak++)
                 {
@@ -525,7 +559,7 @@ namespace qAlgorithms
         coeffs.reserve(beta_1.size());
         for (size_t i = 0; i < beta_1.size(); i++)
         {
-            coeffs.push_back({beta_0[i], beta_1[i], beta_2[i], beta_3[i]});
+            coeffs.push_back({float(beta_0[i]), float(beta_1[i]), float(beta_2[i]), float(beta_3[i])});
         }
         return coeffs;
     }
@@ -992,7 +1026,7 @@ namespace qAlgorithms
             sum_Qxxw += (values[j] - weighted_mean) * (values[j] - weighted_mean) * (*weight)[j];
         }
         float uncertaintiy = std::sqrt(sum_Qxxw / sum_weight / realPoints);
-        return {weighted_mean, uncertaintiy};
+        return {float(weighted_mean), float(uncertaintiy)};
     };
 
     MeanVar weightedMeanAndVariance_EIC(const std::vector<float> *weight, const std::vector<float> *values,
@@ -1020,7 +1054,7 @@ namespace qAlgorithms
             sum_Qxxw += ((*values)[j] - weighted_mean) * ((*values)[j] - weighted_mean) * (*weight)[j];
         }
         float uncertaintiy = std::sqrt(sum_Qxxw / sum_weight / realPoints);
-        return {weighted_mean, uncertaintiy};
+        return {float(weighted_mean), float(uncertaintiy)};
     };
 
     void createCentroidPeaks(
@@ -1266,7 +1300,7 @@ namespace qAlgorithms
         const size_t endIdx) // degrees of freedom
     {
         double best_mse = INFINITY;
-        size_t bestRegIdx = 0;
+        unsigned int bestRegIdx = 0;
 
         // identify left (smallest) and right (largest) limit of the grouped regression windows
         unsigned int left_limit = (*regressions)[startIdx].left_limit;
@@ -1279,7 +1313,7 @@ namespace qAlgorithms
 
         const size_t df_sum = calcDF(degreesOfFreedom, left_limit, right_limit);
 
-        for (size_t i = startIdx; i < endIdx + 1; i++)
+        for (unsigned int i = startIdx; i < endIdx + 1; i++)
         {
             // step 2: calculate the mean squared error (MSE) between the predicted and actual values
             double mse = calcSSE_exp((*regressions)[i].newCoeffs,
@@ -1295,7 +1329,7 @@ namespace qAlgorithms
                 bestRegIdx = i;
             }
         }
-        return {bestRegIdx, best_mse};
+        return {bestRegIdx, float(best_mse)};
     }
 
     size_t calcDF( // using unsigned int is multiple seconds faster than size_1 for ten files in a row - why? @todo
