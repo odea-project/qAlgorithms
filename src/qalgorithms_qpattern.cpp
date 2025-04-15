@@ -655,7 +655,7 @@ namespace qAlgorithms
                 break;
             }
             float diff = PREDICT_L(RTs[idx]) - areas[idx];
-            RSS += diff * diff;
+            RSS += diff * diff; // triggers for positive b2 / b3 and large frame, @todo: rework limits
             assert(RSS != INFINITY);
         }
         for (; idx < RTs.size(); idx++)

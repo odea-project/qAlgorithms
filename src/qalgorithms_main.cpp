@@ -317,7 +317,7 @@ int main(int argc, char *argv[])
                 printFeatureCentroids(peaks, userArgs.outputPath, filename, binnedData,
                                       userArgs.printExtended, userArgs.silent, userArgs.skipError, userArgs.noOverwrite);
             }
-
+            continue;
 #pragma region "Componentisation"
             timeStart = std::chrono::high_resolution_clock::now();
 
