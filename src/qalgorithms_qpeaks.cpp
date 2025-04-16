@@ -203,11 +203,6 @@ namespace qAlgorithms
         // re-use this array for all coefficients, meaning it is refilled from 0 at every scale
         __m128 beta[maxSize];
 
-        float cmp_first_b0 = 0;
-        float cmp_first_b1 = 0;
-        float cmp_first_b2 = 0;
-        float cmp_first_b3 = 0;
-
         for (size_t scale = 2; scale <= maxScale; scale++)
         {
             const int k = 2 * scale + 1;      // window size
@@ -215,37 +210,18 @@ namespace qAlgorithms
 
             convolve_SIMD(scale, intensities_log, n, beta); // beta past position n-1 contains initialized, but wrong values - make sure they cannot be accessed
                                                             // n_segments must be smaller than the array
-            cmp_first_b0 = beta[0][0];
-            cmp_first_b1 = beta[0][1];
-            cmp_first_b2 = beta[0][2];
-            cmp_first_b3 = beta[0][3];
-
             validateRegressions(beta, n_segments, intensities, intensities_log, degreesOfFreedom, scale, validRegressions);
         } // only check blocks of size 5
 
-        std::vector<double> int_log(intensities->size(), NAN);
+        std::vector<float> int_log(intensities->size(), NAN);
         for (size_t i = 0; i < int_log.size(); i++)
         {
             int_log[i] = std::log(intensities->at(i));
         }
 
-        for (size_t i = 0; i < int_log.size(); i++)
-        {
-            assert(int_log[i] == intensities_log[i]);
-        }
-
         std::vector<RegCoeffs> regressions = findCoefficients(int_log, maxScale, 1, int_log.size());
-
-        float n_first_b0 = regressions.front().b0;
-        float n_first_b1 = regressions.front().b1;
-        float n_first_b2 = regressions.front().b2;
-        float n_first_b3 = regressions.front().b3;
-
-        // coefficients are similar enough
-        // assert(n_first_b0 == cmp_first_b0);
-        // assert(n_first_b1 == cmp_first_b1);
-        // assert(n_first_b2 == cmp_first_b2);
-        // assert(n_first_b3 == cmp_first_b3);
+        std::vector<RegressionGauss> validRegressions2;
+        validateRegressions_new(&regressions, intensities, intensities_log, degreesOfFreedom, maxScale, validRegressions2);
 
         if (validRegressions.size() > 1)
         {
@@ -370,7 +346,7 @@ namespace qAlgorithms
     }
 
     std::vector<RegCoeffs> findCoefficients(
-        const std::vector<double> intensity_log,
+        const std::vector<float> intensity_log,
         const size_t max_scale, // maximum scale that will be checked. Should generally be limited by peakFrame
         const size_t numPeaks,  // only > 1 during componentisation (for now? @todo)
         const size_t peakFrame) // how many points are covered per peak? For single-peak data, this is the length of intensity_log
@@ -445,7 +421,7 @@ namespace qAlgorithms
         const size_t minScale = 2;
         const size_t steps = intensity_log.size() - 2 * minScale; // iteration number at scale 2
 
-        std::vector<double> y_array_sum = intensity_log; // sum of each index across multiple dimensions of intensity_log
+        std::vector<float> y_array_sum = intensity_log; // sum of each index across multiple dimensions of intensity_log
         // only relevant for more than one peak
 
         //   this vector is for the inner loop and looks like:
@@ -453,7 +429,6 @@ namespace qAlgorithms
         //   length of vector: num_steps
         // the vector starts and ends with minScale and increases by one towards the middle until it reaches the scale value
         std::vector<size_t> maxInnerLoop(steps, max_scale);
-        size_t substract = 0;
         for (size_t i = 0; i + 2 < max_scale; i++) // +2 since smallest scale is 2
         {
             // @todo somewhat inefficient, design better iteration scheme
@@ -461,7 +436,6 @@ namespace qAlgorithms
             maxInnerLoop[i] = newVal;
             size_t backIdx = maxInnerLoop.size() - i - 1;
             maxInnerLoop[backIdx] = newVal;
-            substract += 2 * newVal;
         }
 
         size_t iterationCount = std::accumulate(maxInnerLoop.begin(), maxInnerLoop.end(), 0) - maxInnerLoop.size(); // no range check necessary since every entry > 1
@@ -591,6 +565,138 @@ namespace qAlgorithms
 #pragma endregion "running regression"
 
 #pragma region validateRegressions
+    void validateRegressions_new(
+        const std::vector<RegCoeffs> *coeffs, // coefficients for single-b0 peaks, spans all regressions over a peak window
+        const std::vector<float> *intensities,
+        const float *intensities_log, // pointer to the start of the Ylog array
+        const std::vector<bool> *degreesOfFreedom,
+        const size_t maxScale, // scale, i.e., the number of data points in a half window excluding the center point
+        std::vector<RegressionGauss> &validRegressions)
+    {
+        // @todo code duplication!
+        // const size_t steps = intensities->size() - 2 * 2; // iteration number at scale 2
+        std::vector<size_t> maxInnerLoop(maxScale - 1, 0);
+        for (size_t i = 0; i + 1 < maxScale; i++) // +2 since smallest scale is 2
+        {
+            maxInnerLoop[i] = intensities->size() - (i + 2) * 2;
+        }
+
+        std::vector<RegressionGauss> validRegsTmp; // temporary vector to store valid regressions
+        // the start index of the regression is the same as the index in beta. The end index is at 2*scale + index in beta.
+        validRegsTmp.push_back(RegressionGauss{});
+
+        int currentScale = 2;
+        size_t idxStart = 0;
+        for (size_t range = 0; range < coeffs->size(); range++)
+        {
+            size_t df = calcDF(degreesOfFreedom, idxStart, 2 * currentScale + idxStart);
+
+            if (df < 5) // @todo cumsum
+            {
+                continue;
+            }
+            auto coeff = coeffs->at(range);
+            if ((coeff.b1 == 0.0f) | (coeff.b2 == 0.0f) | (coeff.b3 == 0.0f))
+            {
+                // None of these are a valid regression with the asymmetric model
+                continue;
+            }
+            validRegsTmp.back().newCoeffs = coeff;
+            // idxStart must be smaller than the size of the checked region
+            makeValidRegression(&validRegsTmp.back(), idxStart, currentScale, degreesOfFreedom, intensities, intensities_log);
+            if (validRegsTmp.back().isValid)
+            {
+                validRegsTmp.push_back(RegressionGauss{});
+            }
+
+            // for every set of scales, execute the validation + in-scale merge operation
+            if (idxStart == maxInnerLoop[currentScale - 2])
+            {
+                // no valid peaks if the size of validRegsTemp is 1
+                if (validRegsTmp.size() == 2)
+                {
+                    // only one valid peak, no fitering necessary
+                    validRegressions.push_back(std::move(validRegsTmp[0]));
+                    return;
+                }
+                else if (validRegsTmp.size() > 2)
+                {
+                    // @todo both of these blocks could be grouped into their own function here
+                    // remove the last regression, since it is always empty
+                    validRegsTmp.pop_back();
+                    /*
+                      Grouping:
+                      This block of code implements the grouping. It groups the valid peaks based
+                      on the apex positions. Peaks are defined as similar, i.e., members of the
+                      same group, if they fullfill at least one of the following conditions:
+                      - The difference between two peak apexes is less than 4. (Nyquist Shannon
+                      Sampling Theorem, separation of two maxima)
+                      - At least one apex of a pair of peaks is within the window of the other peak.
+                      (Overlap of two maxima)
+                    */
+                    // @todo could this part be combined with merge over scales?
+                    // vector with the access pattern [2*i] for start and [2*i + 1] for end point of a regression group
+                    std::vector<int> startEndGroups;
+                    startEndGroups.reserve(validRegsTmp.size());
+
+                    size_t prev_i = 0;
+
+                    for (size_t i = 0; i < validRegsTmp.size() - 1; i++)
+                    {
+                        // check if the difference between two peak apexes is less than 4 (Nyquist Shannon
+                        // Sampling Theorem, separation of two maxima), or if the apex of a peak is within
+                        // the window of the other peak (Overlap of two maxima)
+                        if (std::abs(validRegsTmp[i].apex_position - validRegsTmp[i + 1].apex_position) > 4 &&
+                            validRegsTmp[i].apex_position < validRegsTmp[i + 1].left_limit &&
+                            validRegsTmp[i + 1].apex_position > validRegsTmp[i].right_limit)
+                        {
+                            // the two regressions differ, i.e. create a new group
+                            startEndGroups.push_back(prev_i);
+                            startEndGroups.push_back(i);
+                            prev_i = i + 1;
+                        }
+                    }
+                    startEndGroups.push_back(prev_i);
+                    startEndGroups.push_back(validRegsTmp.size() - 1); // last group ends with index of the last element
+
+                    /*
+                      Survival of the Fittest Filter:
+                      This block of code implements the survival of the fittest filter. It selects the peak with
+                      the lowest mean squared error (MSE) as the representative of the group. If the group contains
+                      only one peak, the peak is directly pushed to the valid regressions. If the group contains
+                      multiple peaks, the peak with the lowest MSE is selected as the representative of the group
+                      and pushed to the valid regressions.
+                    */
+                    // @todo use a "ridges" approach here (gaussian mixture model)
+                    for (size_t groupIdx = 0; groupIdx < startEndGroups.size(); groupIdx += 2)
+                    {
+                        if (startEndGroups[groupIdx] == startEndGroups[groupIdx + 1])
+                        { // already isolated peak => push to valid regressions
+                            int regIdx = startEndGroups[groupIdx];
+                            validRegressions.push_back(std::move(validRegsTmp[regIdx]));
+                        }
+                        else
+                        { // survival of the fittest based on mse between original data and reconstructed (exp transform of regression)
+                            assert(startEndGroups[groupIdx] != startEndGroups[groupIdx + 1]);
+                            auto bestRegIdx = findBestRegression(intensities, &validRegsTmp, degreesOfFreedom,
+                                                                 startEndGroups[groupIdx], startEndGroups[groupIdx + 1]);
+
+                            RegressionGauss bestReg = validRegsTmp[bestRegIdx.idx];
+                            bestReg.mse = bestRegIdx.mse;
+                            validRegressions.push_back(std::move(bestReg));
+                        }
+                    } // end for loop (group in vector of groups)
+                }
+
+                // reset loop
+                currentScale++;
+                idxStart = 0;
+                validRegsTmp.clear();
+                validRegsTmp.push_back(RegressionGauss{});
+            }
+        }
+    }
+
     void validateRegressions(
         const __m128 *beta,      // coefficients matrix
         const size_t n_segments, // number of segments, i.e. regressions
