@@ -14,7 +14,7 @@
 namespace qAlgorithms
 {
     std::vector<RegCoeffs> findCoefficients(
-        const std::vector<double> intensity_log,
+        const std::vector<float> intensity_log,
         const size_t scale,      // maximum scale that will be checked. Should generally be limited by peakFrame
         const size_t numPeaks,   // only > 1 during componentisation (for now? @todo)
         const size_t peakFrame); // how many points are covered per peak? For single-peak data, this is the length of intensity_log
@@ -40,6 +40,14 @@ namespace qAlgorithms
         const float *ylog_start,
         const std::vector<bool> *degreesOfFreedom,
         const size_t scale,
+        std::vector<RegressionGauss> &validRegressions);
+
+    void validateRegressions_new(
+        const std::vector<RegCoeffs> *coeffs, // coefficients for single-b0 peaks, spans all regressions over a peak window
+        const std::vector<float> *intensities,
+        const float *intensities_log, // pointer to the start of the Ylog array
+        const std::vector<bool> *degreesOfFreedom,
+        const size_t maxScale, // scale, i.e., the number of data points in a half window excluding the center point
         std::vector<RegressionGauss> &validRegressions);
 
     void makeValidRegression(
