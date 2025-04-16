@@ -117,6 +117,7 @@ namespace qAlgorithms
 
         const size_t GLOBAL_MAXSCALE_CENTROID = 8; // @todo this is a critical part of the algorithm and should not be hard-coded
         assert(GLOBAL_MAXSCALE_CENTROID <= MAXSCALE);
+
         std::vector<RegressionGauss> validRegressions;
         validRegressions.reserve(treatedData->size() / 2); // probably too large, shouldn't matter
         for (size_t i = 0; i < treatedData->size(); i++)
@@ -154,7 +155,6 @@ namespace qAlgorithms
         float *logIntensity = new float[length];
         float *RT = new float[length];
 
-        std::vector<RegressionGauss> validRegressions;
         static const size_t GLOBAL_MAXSCALE_FEATURES = 30; // @todo this is not a sensible limit and only chosen for computational speed at the moment
         assert(GLOBAL_MAXSCALE_FEATURES <= MAXSCALE);
 
@@ -172,6 +172,8 @@ namespace qAlgorithms
         // perform log-transform on Y
         std::transform(intensity.begin(), intensity.end(), logIntensity, [](float y)
                        { return std::log(y); });
+
+        std::vector<RegressionGauss> validRegressions;
         size_t maxScale = std::min(GLOBAL_MAXSCALE_FEATURES, size_t((length - 1) / 2));
         runningRegression(&intensity, logIntensity, &degreesOfFreedom, length, validRegressions, maxScale);
         if (validRegressions.empty())
@@ -197,6 +199,7 @@ namespace qAlgorithms
         const size_t maxScale)
     {
         assert(n > 4); // five point minimum is guaranteed by previous functions
+        assert(validRegressions.empty());
 
         // maximum size of the coefficients array is known at time of function call
         size_t maxSize = n - 4; // max size is at scale = 2
@@ -222,6 +225,8 @@ namespace qAlgorithms
         std::vector<RegCoeffs> regressions = findCoefficients(int_log, maxScale, 1, int_log.size());
         std::vector<RegressionGauss> validRegressions2;
         validateRegressions_new(&regressions, intensities, intensities_log, degreesOfFreedom, maxScale, validRegressions2);
+
+        assert(validRegressions2.size() == validRegressions.size());
 
         if (validRegressions.size() > 1)
         {
@@ -575,10 +580,10 @@ namespace qAlgorithms
     {
         // @todo code duplication!
         // const size_t steps = intensities->size() - 2 * 2; // iteration number at scale 2
-        std::vector<size_t> maxInnerLoop(maxScale - 1, 0);
+        std::vector<size_t> iterationCount(maxScale - 1, 0);
         for (size_t i = 0; i + 1 < maxScale; i++) // +2 since smallest scale is 2
         {
-            maxInnerLoop[i] = intensities->size() - (i + 2) * 2;
+            iterationCount[i] = intensities->size() - (i + 2) * 2 - 1;
         }
 
         std::vector<RegressionGauss> validRegsTmp; // temporary vector to store valid regressions
@@ -603,14 +608,16 @@ namespace qAlgorithms
             }
             validRegsTmp.back().newCoeffs = coeff;
             // idxStart must be smaller than the size of the checked region
+            assert(idxStart + 2 * currentScale < intensities->size());
             makeValidRegression(&validRegsTmp.back(), idxStart, currentScale, degreesOfFreedom, intensities, intensities_log);
             if (validRegsTmp.back().isValid)
             {
                 validRegsTmp.push_back(RegressionGauss{});
             }
 
+            idxStart++;
             // for every set of scales, execute the validation + in-scale merge operation
-            if (idxStart == maxInnerLoop[currentScale - 2])
+            if (idxStart == iterationCount[currentScale - 2])
             {
                 // no valid peaks if the size of validRegsTemp is 1
                 if (validRegsTmp.size() == 2)
