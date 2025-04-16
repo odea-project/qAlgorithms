@@ -222,6 +222,11 @@ namespace qAlgorithms
             int_log[i] = std::log(intensities->at(i));
         }
 
+        if (abs(int_log[0] - 10.0996218) < 10e-6)
+        {
+            volatile bool a = true;
+        }
+
         std::vector<RegCoeffs> regressions = findCoefficients(int_log, maxScale, 1, int_log.size());
         std::vector<RegressionGauss> validRegressions2;
         validateRegressions_new(&regressions, intensities, intensities_log, degreesOfFreedom, maxScale, validRegressions2);
@@ -578,12 +583,18 @@ namespace qAlgorithms
         const size_t maxScale, // scale, i.e., the number of data points in a half window excluding the center point
         std::vector<RegressionGauss> &validRegressions)
     {
+        if (coeffs->size() == 25)
+        {
+            volatile bool a = true;
+        }
+
         // @todo code duplication!
         // const size_t steps = intensities->size() - 2 * 2; // iteration number at scale 2
         std::vector<size_t> iterationCount(maxScale - 1, 0);
+        size_t numPoints = intensities->size();
         for (size_t i = 0; i + 1 < maxScale; i++) // +2 since smallest scale is 2
         {
-            iterationCount[i] = intensities->size() - (i + 2) * 2 - 1;
+            iterationCount[i] = numPoints - (i + 2) * 2;
         }
 
         std::vector<RegressionGauss> validRegsTmp; // temporary vector to store valid regressions
@@ -592,39 +603,43 @@ namespace qAlgorithms
 
         int currentScale = 2;
         size_t idxStart = 0;
+        bool stillValid = true;
         for (size_t range = 0; range < coeffs->size(); range++)
         {
             size_t df = calcDF(degreesOfFreedom, idxStart, 2 * currentScale + idxStart);
 
             if (df < 5) // @todo cumsum
             {
-                continue;
+                stillValid = false;
             }
             auto coeff = coeffs->at(range);
             if ((coeff.b1 == 0.0f) | (coeff.b2 == 0.0f) | (coeff.b3 == 0.0f))
             {
                 // None of these are a valid regression with the asymmetric model
-                continue;
+                stillValid = false;
             }
-            validRegsTmp.back().newCoeffs = coeff;
-            // idxStart must be smaller than the size of the checked region
-            assert(idxStart + 2 * currentScale < intensities->size());
-            makeValidRegression(&validRegsTmp.back(), idxStart, currentScale, degreesOfFreedom, intensities, intensities_log);
-            if (validRegsTmp.back().isValid)
+            if (stillValid)
             {
-                validRegsTmp.push_back(RegressionGauss{});
+                validRegsTmp.back().newCoeffs = coeff;
+                // the total span of the regression may not exceed the number of points
+                assert(idxStart + 2 * currentScale < numPoints);
+                makeValidRegression(&validRegsTmp.back(), idxStart, currentScale, degreesOfFreedom, intensities, intensities_log);
+                if (validRegsTmp.back().isValid)
+                {
+                    validRegsTmp.push_back(RegressionGauss{});
+                }
             }
-
+            stillValid = true;
             idxStart++;
             // for every set of scales, execute the validation + in-scale merge operation
-            if (idxStart == iterationCount[currentScale - 2])
+            // early termination needed if maxscale is reached, since here idxStart is 1 and the compared value 0
+            if ((idxStart == numPoints - 2 * currentScale)) //|| (currentScale == maxScale))
             {
                 // no valid peaks if the size of validRegsTemp is 1
                 if (validRegsTmp.size() == 2)
                 {
                     // only one valid peak, no fitering necessary
                     validRegressions.push_back(std::move(validRegsTmp[0]));
-                    return;
                 }
                 else if (validRegsTmp.size() > 2)
                 {
