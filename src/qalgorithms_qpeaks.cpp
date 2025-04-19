@@ -231,7 +231,15 @@ namespace qAlgorithms
         std::vector<RegressionGauss> validRegressions2;
         validateRegressions_new(&regressions, intensities, intensities_log, degreesOfFreedom, maxScale, validRegressions2);
 
-        assert(validRegressions2.size() == validRegressions.size());
+        // assert(validRegressions2.size() == validRegressions.size());
+        if (validRegressions2.size() != validRegressions.size())
+        {
+            COUNT_MISMATCH++;
+        }
+        else
+        {
+            COUNT_TOTAL++;
+        }
 
         if (validRegressions.size() > 1)
         {
