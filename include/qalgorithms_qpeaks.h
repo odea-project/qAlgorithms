@@ -13,6 +13,9 @@
 
 namespace qAlgorithms
 {
+    extern size_t COUNT_MISMATCH;
+    extern size_t COUNT_TOTAL;
+
     std::vector<RegCoeffs> findCoefficients(
         const std::vector<float> intensity_log,
         const size_t scale,      // maximum scale that will be checked. Should generally be limited by peakFrame
