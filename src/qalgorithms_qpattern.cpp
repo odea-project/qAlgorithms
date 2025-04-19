@@ -23,7 +23,7 @@ namespace qAlgorithms
     void findComponents(const std::vector<FeaturePeak> *peaks, const std::vector<EIC> *bins)
     {
         // peaks must be sorted here since they arrive out of order
-
+#pragma region "Pre-Group"
         std::vector<GroupLims> limits = preGroup(peaks);
         std::vector<ComponentGroup> components;
         components.reserve(limits.size() / 2);
@@ -86,12 +86,13 @@ namespace qAlgorithms
                 eics.push_back(harmoniseEICs(bin, minScan, maxScan, feature.binIdxStart, feature.binIdxEnd));
                 assert(eics[j].intensity.size() == eics[0].intensity.size());
             }
-
+#pragma endregion "Pre-Group"
             newComponent.calcScores();
             // produce a subset of bins with uniform RT axis for this component
 
             // auto test = getCompareOrder(&newComponent); // not the best way to go about this
 
+#pragma region "Compare Pairs"
             // first, calculate the pairwise RSS in a sparse matrix. The RSS is set to INFINITY if it is worse
             // than the sum of both individual RSS values.
             // size: (x^2 -x) / 2 ; access: x * smaller Idx + larger Idx
@@ -351,9 +352,9 @@ namespace qAlgorithms
         const bool apexLeft = feature->apexLeft;
         float b23 = apexLeft ? b2 : b3;
         float apexDist = -b1 / (2 * b23);
-        float height = b0 + b1 * apexDist + b23 * apexDist * apexDist;
-        const float scaleTo = 1;
-        b0 += log(scaleTo) - height; // scale to height 1. The log is 0 for case height = 1, but we might have to adjust later
+        // float height = b0 + b1 * apexDist + b23 * apexDist * apexDist;
+        // const float scaleTo = 1;
+        // b0 += log(scaleTo) - height; // scale to height 1. The log is 0 for case height = 1, but we might have to adjust later
         // move regression to RT of feature
         float offset = feature->retentionTime - apexDist;
         MovedRegression movedReg;
