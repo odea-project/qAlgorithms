@@ -61,8 +61,6 @@ namespace qAlgorithms
         }
         return true;
     }
-    size_t COUNT_MISMATCH = 0;
-    size_t COUNT_TOTAL = 0;
 }
 
 int main(int argc, char *argv[])
@@ -366,6 +364,5 @@ int main(int argc, char *argv[])
             std::cin >> userInput;
         }
     }
-    std::cout << "\n differences between old/new regressions: " << COUNT_MISMATCH << " of " << COUNT_TOTAL << std::endl;
     return 0;
 }
