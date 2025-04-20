@@ -97,7 +97,8 @@ namespace qAlgorithms
 #pragma endregion "initialize"
 
 #pragma region "find peaks"
-    std::vector<CentroidPeak> findCentroids(const std::vector<ProfileBlock> *treatedData, const size_t scanNumber)
+    std::vector<CentroidPeak> findCentroids(const std::vector<ProfileBlock> *treatedData,
+                                            const size_t scanNumber)
     {
         assert(!treatedData->empty());
         std::vector<CentroidPeak> all_peaks;
@@ -112,8 +113,6 @@ namespace qAlgorithms
         assert(maxWindowSize > 0);
         std::vector<float> logIntensity(maxWindowSize, NAN);
 
-        // float *logIntensity2 = new float[maxWindowSize];
-
         const size_t GLOBAL_MAXSCALE_CENTROID = 8; // @todo this is a critical part of the algorithm and should not be hard-coded
         assert(GLOBAL_MAXSCALE_CENTROID <= MAXSCALE);
 
@@ -124,10 +123,6 @@ namespace qAlgorithms
             const auto block = (*treatedData)[i];
             const size_t length = block.df.size();
             assert(length > 4);
-
-            // perform log-transform on intensity
-            // std::transform(block.intensity.begin(), block.intensity.end(), logIntensity2, [](float y)
-            //                { return std::log(y); });
 
             logIntensity.resize(length); // this way, no new allocations will be made in the loop
             for (size_t blockPos = 0; blockPos < length; blockPos++)
@@ -146,22 +141,22 @@ namespace qAlgorithms
             createCentroidPeaks(&all_peaks, &validRegressions, &block, scanNumber);
             validRegressions.clear();
         }
-        // delete[] logIntensity2;
         return all_peaks;
     }
 
-    void findFeatures(std::vector<FeaturePeak> &all_peaks, treatedData &treatedData)
+    void findFeatures(std::vector<FeaturePeak> &all_peaks,
+                      treatedData &treatedData)
     {
         size_t length = treatedData.dataPoints.size();
         assert(length > 4); // data must contain at least five points
-        // float *intensity = new float[maxWindowSize];
 
         std::vector<float> logIntensity(length, NAN);
 
-        // float *logIntensity2 = new float[length];
         float *RT = new float[length];
 
-        static const size_t GLOBAL_MAXSCALE_FEATURES = 30; // @todo this is not a sensible limit and only chosen for computational speed at the moment
+        static const size_t GLOBAL_MAXSCALE_FEATURES = 30;
+        // @todo this is not a universal limit and only chosen for computational speed at the moment
+        // with an estimated scan difference of 0.6 s this means the maximum peak width is 61 * 0.6 = 36.6 s
         assert(GLOBAL_MAXSCALE_FEATURES <= MAXSCALE);
 
         std::vector<bool> degreesOfFreedom;
@@ -169,15 +164,10 @@ namespace qAlgorithms
         for (size_t position = 0; position < length; position++)
         {
             size_t idx = position;
-            // intensity[position] = treatedData.dataPoints[idx].y;
             intensity.push_back(treatedData.dataPoints[idx].y);
             RT[position] = treatedData.dataPoints[idx].x;
             degreesOfFreedom.push_back(treatedData.dataPoints[idx].df);
         }
-
-        // perform log-transform on Y
-        // std::transform(intensity.begin(), intensity.end(), logIntensity2, [](float y)
-        //                { return std::log(y); });
 
         logIntensity.resize(intensity.size());
         for (size_t blockPos = 0; blockPos < intensity.size(); blockPos++)
@@ -193,8 +183,6 @@ namespace qAlgorithms
             createFeaturePeaks(&all_peaks, &validRegressions, RT);
             // there is no reason for this to be called here and not later @todo
         }
-
-        // delete[] logIntensity2;
         delete[] RT;
     }
 #pragma endregion "find peaks"
@@ -207,18 +195,8 @@ namespace qAlgorithms
         std::vector<RegressionGauss> &validRegressions,
         const size_t maxScale)
     {
+        //@todo move more of the generic stuff into this function
         assert(validRegressions.empty());
-
-        // std::vector<float> int_log(intensities->size(), NAN);
-        // for (size_t i = 0; i < int_log.size(); i++)
-        // {
-        //     int_log[i] = std::log(intensities->at(i));
-        // }
-
-        // if (abs(int_log[0] - 10.0996218) < 10e-6)
-        // {
-        //     volatile bool a = true;
-        // }
 
         const std::vector<RegCoeffs> regressions = findCoefficients(intensities_log, maxScale, 1, intensities_log->size());
 
@@ -233,81 +211,10 @@ namespace qAlgorithms
         return;
     }
 
-    void convolve_SIMD(
-        const size_t scale,
-        const float *vec, // intensities
-        const size_t n,   // length of vec
-        __m128 *result)
-    {
-        assert(n > 2 * scale);
-        // this function calculates the regression coefficients from the pseudoinverse matrix P and the y-values supplied through vec.
-        // It is equivalent to sum(y[i] * P[i][0]) for beta0, beta1 etc. Every element of result is one set of coefficients (b0, b1, b2, b3)
-
-        size_t n_segments = n - 2 * scale; // number of regression windows to be tested
-        __m128 products[n];                // holds the products of vec and the scale factor
-        size_t scale6 = scale * 6;
-        // activeKernel starts as the kernel offsets
-        // this kernel is used to exploit symmetry in the pseudoinverse of the regression. It is constructed iteratively in the loop
-        __m128 activeKernel = _mm_set_ps(INV_ARRAY[scale6 + 1],  // coeff b3
-                                         INV_ARRAY[scale6 + 1],  // coeff b2
-                                         0.0f,                   // coeff b1
-                                         INV_ARRAY[scale6 + 0]); // coeff b0
-        // this kernel is used to calculate the next active kernel
-        __m128 updateKernel = _mm_set_ps(INV_ARRAY[scale6 + 3] - INV_ARRAY[scale6 + 5],
-                                         -INV_ARRAY[scale6 + 3] - INV_ARRAY[scale6 + 4],
-                                         -INV_ARRAY[scale6 + 2] - INV_ARRAY[scale6 + 3],
-                                         -INV_ARRAY[scale6 + 1]);
-        // this kernel updates the updateKernel. Since the funciton is non-linear, this must be done iteratively
-        const __m128 delayedKernel = _mm_set_ps(2.f * INV_ARRAY[scale6 + 5],
-                                                2.f * INV_ARRAY[scale6 + 4],
-                                                2.f * INV_ARRAY[scale6 + 3],
-                                                2.f * INV_ARRAY[scale6 + 1]);
-
-        for (size_t i = 0; i < n_segments; i++)
-        {
-            // calculate the center point of the regression window for all applicable vec
-            // max index of vec: vec[n - (2 * scale + 1) + 1 + (2 * scale + 1) / 2]
-            // = n + 1 - (2 * scale + 1) / 2
-            // = n + 1 - scale // scale is always > 1, so vec is not accessed past n - 1
-            __m128 vec_values = _mm_set1_ps(vec[i + scale]);
-            // result[i][2] is always 0
-            result[i] = _mm_mul_ps(vec_values, activeKernel);
-        }
-
-        for (size_t i = 1; i < scale + 1; i++)
-        {
-            // updateKernel = updateKernel original + i * delayedKernel
-            updateKernel = _mm_add_ps(updateKernel, delayedKernel);
-            // activeKernel = activeKernel original + i * updateKernel
-            activeKernel = _mm_add_ps(activeKernel, updateKernel);
-
-            size_t u = 0;
-            for (size_t j = scale - i; j < (n - scale + i); j++) // j_start = scale - 1 : 0; j_end = n - scale + 1 : n - scale + scale
-            {
-                __m128 vec_values = _mm_set1_ps(vec[j]);
-                products[u] = _mm_mul_ps(vec_values, activeKernel); // contains the four coefficient products for vec[j]
-                u++;
-            }
-
-            for (size_t j = 0; j < n_segments; j++)
-            {
-                __m128 products_temp = _mm_permute_ps(products[j], 0b10110100); // swap places of b2 and b3
-                __m128 flipSign = _mm_set_ps(1.0f, 1.0f, -1.0f, 1.0f);          // why only flip the sign of b1?
-                // flip the sign of b1 and add products at 2 * (current scale) + (current regression)
-                products_temp = _mm_fmadd_ps(products_temp, flipSign, products[2 * i + j]); // why this access pattern? @todo
-                // add products to coeffs of the current regression
-                result[j] = _mm_add_ps(result[j], products_temp);
-            }
-        }
-        const __m128 flipSign = _mm_set_ps(1.0f, 1.0f, -1.0f, 1.0f);
-        for (size_t i = 0; i < n_segments; i++)
-        { // swap beta2 and beta3 and flip the sign of beta1 // @todo: this is a temporary solution
-            result[i] = _mm_mul_ps(_mm_shuffle_ps(result[i], result[i], 0b10110100), flipSign);
-        }
-    }
-
-    std::vector<RegCoeffs> restoreShape(const std::vector<RegCoeffs> *input, const std::vector<size_t> *scaleCount,
-                                        const size_t numPoints, const size_t maxScale)
+    std::vector<RegCoeffs> restoreShape(const std::vector<RegCoeffs> *input,
+                                        const std::vector<size_t> *scaleCount,
+                                        const size_t numPoints,
+                                        const size_t maxScale)
     {
         // this function is required since during convolution, the result array is constructed in this order:
         /*
@@ -575,13 +482,7 @@ namespace qAlgorithms
         const size_t maxScale, // scale, i.e., the number of data points in a half window excluding the center point
         std::vector<RegressionGauss> &validRegressions)
     {
-        if (coeffs->size() == 25)
-        {
-            volatile bool a = true;
-        }
-
         // @todo code duplication!
-        // const size_t steps = intensities->size() - 2 * 2; // iteration number at scale 2
         std::vector<size_t> iterationCount(maxScale - 1, 0);
         size_t numPoints = intensities->size();
         for (size_t i = 0; i + 1 < maxScale; i++) // +2 since smallest scale is 2
@@ -710,137 +611,6 @@ namespace qAlgorithms
                 validRegsTmp.push_back(RegressionGauss{});
             }
         }
-    }
-
-    void validateRegressions_old(
-        const __m128 *beta,      // coefficients matrix
-        const size_t n_segments, // number of segments, i.e. regressions
-        const std::vector<float> *intensities,
-        const float *intensities_log, // pointer to the start of the Ylog array
-        const std::vector<bool> *degreesOfFreedom,
-        const size_t scale, // scale, i.e., the number of data points in a half window excluding the center point
-        std::vector<RegressionGauss> &validRegressions)
-    {
-        std::vector<RegressionGauss> validRegsTmp; // temporary vector to store valid regressions <index, apex_position>
-        // the start index of the regression is the same as the index in beta. The end index is at 2*scale + index in beta.
-        validRegsTmp.push_back(RegressionGauss{});
-        for (size_t idxStart = 0; idxStart < n_segments; idxStart++)
-        {
-            size_t df = calcDF(degreesOfFreedom, idxStart, 2 * scale + idxStart);
-            // size_t df_alt = 0;
-            // std::vector<size_t> cumDF;
-            // for (size_t i = 0; i < degreesOfFreedom->size(); i++)
-            // {
-            //     if (degreesOfFreedom->at(i) == 1)
-            //     {
-            //         df_alt++;
-            //     }
-            //     cumDF.push_back(df_alt);
-            // }
-            // volatile size_t newDF = cumDF[idxStart + 2 * scale] - (idxStart == 0 ? 0 : cumDF[idxStart - 1]);
-            // assert(newDF == df);
-
-            if (df < 5)
-            {
-                continue;
-            }
-            const __m128 coeff = beta[idxStart];
-            if ((coeff[1] == 0.0f) | (coeff[2] == 0.0f) | (coeff[3] == 0.0f))
-            {
-                // None of these are a valid regression with the asymmetric model
-                continue;
-            }
-            validRegsTmp.back().newCoeffs.b0 = coeff[0];
-            validRegsTmp.back().newCoeffs.b1 = coeff[1];
-            validRegsTmp.back().newCoeffs.b2 = coeff[2];
-            validRegsTmp.back().newCoeffs.b3 = coeff[3];
-
-            std::vector<float> int_log(intensities->size(), NAN);
-            for (size_t i = 0; i < int_log.size(); i++)
-            {
-                int_log[i] = std::log(intensities->at(i));
-            }
-            // idxStart must be smaller than the size of the checked region
-            makeValidRegression(&validRegsTmp.back(), idxStart, scale, degreesOfFreedom, intensities, &int_log);
-            if (validRegsTmp.back().isValid)
-            {
-                validRegsTmp.push_back(RegressionGauss{});
-            }
-        }
-        if (validRegsTmp.size() == 1)
-        {
-            return; // no valid peaks
-        }
-        // early return if only one valid peak, so no grouping possible
-        if (validRegsTmp.size() == 2)
-        {
-            validRegressions.push_back(std::move(validRegsTmp[0]));
-            return;
-        }
-        // remove the last regression, since it is always empty
-        validRegsTmp.pop_back();
-        /*
-          Grouping:
-          This block of code implements the grouping. It groups the valid peaks based
-          on the apex positions. Peaks are defined as similar, i.e., members of the
-          same group, if they fullfill at least one of the following conditions:
-          - The difference between two peak apexes is less than 4. (Nyquist Shannon
-          Sampling Theorem, separation of two maxima)
-          - At least one apex of a pair of peaks is within the window of the other peak.
-          (Overlap of two maxima)
-        */
-        // @todo could this part be combined with merge over scales?
-        // vector with the access pattern [2*i] for start and [2*i + 1] for end point of a regression group
-        std::vector<int> startEndGroups;
-        startEndGroups.reserve(validRegsTmp.size());
-
-        size_t prev_i = 0;
-
-        for (size_t i = 0; i < validRegsTmp.size() - 1; i++)
-        {
-            // check if the difference between two peak apexes is less than 4 (Nyquist Shannon
-            // Sampling Theorem, separation of two maxima), or if the apex of a peak is within
-            // the window of the other peak (Overlap of two maxima)
-            if (std::abs(validRegsTmp[i].apex_position - validRegsTmp[i + 1].apex_position) > 4 &&
-                validRegsTmp[i].apex_position < validRegsTmp[i + 1].left_limit &&
-                validRegsTmp[i + 1].apex_position > validRegsTmp[i].right_limit)
-            {
-                // the two regressions differ, i.e. create a new group
-                startEndGroups.push_back(prev_i);
-                startEndGroups.push_back(i);
-                prev_i = i + 1;
-            }
-        }
-        startEndGroups.push_back(prev_i);
-        startEndGroups.push_back(validRegsTmp.size() - 1); // last group ends with index of the last element
-
-        /*
-          Survival of the Fittest Filter:
-          This block of code implements the survival of the fittest filter. It selects the peak with
-          the lowest mean squared error (MSE) as the representative of the group. If the group contains
-          only one peak, the peak is directly pushed to the valid regressions. If the group contains
-          multiple peaks, the peak with the lowest MSE is selected as the representative of the group
-          and pushed to the valid regressions.
-        */
-        // @todo use a "ridges" approach here (gaussian mixture model)
-        for (size_t groupIdx = 0; groupIdx < startEndGroups.size(); groupIdx += 2)
-        {
-            if (startEndGroups[groupIdx] == startEndGroups[groupIdx + 1])
-            { // already isolated peak => push to valid regressions
-                int regIdx = startEndGroups[groupIdx];
-                validRegressions.push_back(std::move(validRegsTmp[regIdx]));
-            }
-            else
-            { // survival of the fittest based on mse between original data and reconstructed (exp transform of regression)
-                assert(startEndGroups[groupIdx] != startEndGroups[groupIdx + 1]);
-                auto bestRegIdx = findBestRegression(intensities, &validRegsTmp, degreesOfFreedom,
-                                                     startEndGroups[groupIdx], startEndGroups[groupIdx + 1]);
-
-                RegressionGauss bestReg = validRegsTmp[bestRegIdx.idx];
-                bestReg.mse = bestRegIdx.mse;
-                validRegressions.push_back(std::move(bestReg));
-            }
-        } // end for loop (group in vector of groups)
     }
 
     void makeValidRegression(
@@ -1037,6 +807,7 @@ namespace qAlgorithms
         return;
     }
 #pragma endregion validateRegressions
+
     std::vector<RegressionGauss> mergeRegressionsOverScales(std::vector<RegressionGauss> validRegressions,
                                                             const std::vector<float> *intensities)
     {
@@ -1142,8 +913,10 @@ namespace qAlgorithms
 
 #pragma region "create peaks"
 
-    MeanVar weightedMeanAndVariance(const float *values, const std::vector<float> *weight,
-                                    size_t left_limit, size_t right_limit)
+    MeanVar weightedMeanAndVariance(const float *values,
+                                    const std::vector<float> *weight,
+                                    size_t left_limit,
+                                    size_t right_limit)
     {
         // weighted mean using intensity as weighting factor and left_limit right_limit as range
         size_t realPoints = right_limit - left_limit + 1;
@@ -1181,8 +954,10 @@ namespace qAlgorithms
         return {float(weighted_mean), float(uncertaintiy)};
     };
 
-    MeanVar weightedMeanAndVariance_EIC(const std::vector<float> *weight, const std::vector<float> *values,
-                                        size_t left_limit, size_t right_limit)
+    MeanVar weightedMeanAndVariance_EIC(const std::vector<float> *weight,
+                                        const std::vector<float> *values,
+                                        size_t left_limit,
+                                        size_t right_limit)
     {
         // weighted mean using intensity as weighting factor and left_limit right_limit as range
         size_t realPoints = right_limit - left_limit + 1;
@@ -1261,11 +1036,7 @@ namespace qAlgorithms
     void createFeaturePeaks(
         std::vector<FeaturePeak> *peaks,
         const std::vector<RegressionGauss> *validRegressionsVec,
-        // const std::vector<float> *intensity,
-        // const float *mz_start,
         const float *rt_start)
-    // const float *DQSC,
-    // const float *DQSB)
     {
         assert(!validRegressionsVec->empty());
         for (size_t i = 0; i < validRegressionsVec->size(); i++)
@@ -1276,7 +1047,8 @@ namespace qAlgorithms
             FeaturePeak peak;
             // add height
             RegCoeffs coeff = regression.newCoeffs;
-            peak.height = exp_approx_d(coeff.b0 + (regression.apex_position - regression.index_x0) * coeff.b1 * 0.5); // peak height (exp(b0 - b1^2/4/b2)) with position being -b1/2/b2
+            // peak height (exp(b0 - b1^2/4/b2)) with position being -b1/2/b2
+            peak.height = exp_approx_d(coeff.b0 + (regression.apex_position - regression.index_x0) * coeff.b1 * 0.5);
             peak.heightUncertainty = regression.uncertainty_height * peak.height;
 
             const double rt_leftOfMax = *(rt_start + (int)std::floor(regression.apex_position)); // left of maximum
@@ -1290,12 +1062,7 @@ namespace qAlgorithms
             peak.area = regression.area * exp_b0 * delta_rt;
             peak.areaUncertainty = regression.uncertainty_area * exp_b0 * delta_rt;
 
-            // std::pair<float, float> mz = weightedMeanAndVariance(mz_start, intensity, regression.left_limit, regression.right_limit);
-            // peak.mz = mz.first;
-            // peak.mzUncertainty = mz.second;
-
-            // peak.DQSC = weightedMeanAndVariance(DQSC, intensity, regression.left_limit, regression.right_limit).first;
-            // peak.DQSB = weightedMeanAndVariance(DQSB, intensity, regression.left_limit, regression.right_limit).first;
+            // mz, mzUncertainty, mean DQSC and meanDQSF are all calculated in after this function is called in measurement_data
             peak.DQSF = 1 - erf_approx_f(regression.uncertainty_area / regression.area);
 
             peak.idxPeakStart = regression.left_limit;
@@ -1516,8 +1283,6 @@ namespace qAlgorithms
         assert(mutateReg->newCoeffs.b1 != 0);
         assert(mutateReg->newCoeffs.b2 != 0 && mutateReg->newCoeffs.b3 != 0);
         // calculate key by checking the signs of coeff
-        // _mm_movemask_ps returns the sign bits of the input array
-        // int key = _mm_movemask_ps(coeff);
         const float floatScale = float(scale);
         int key = 0;
         if (mutateReg->newCoeffs.b1 < 0)
@@ -1533,10 +1298,10 @@ namespace qAlgorithms
             key += 5;
         }
 
-        // b1, b2, b3 are negative            ; 1110 = 14 ; 1 + 3 + 5 = 9
-        // b2, b3 are negative, b1 is positive; 1100 = 12 ; 0 + 3 + 5 = 8
-        // b1, b2 are negative, b3 is positive; 0110 = 6  ; 1 + 3 + 0 = 4
-        // b1, b2 are positive, b3 is negative; 1000 = 8  ; 0 + 0 + 5 = 5
+        // b1, b2, b3 are negative            ; 1 + 3 + 5 = 9
+        // b2, b3 are negative, b1 is positive; 0 + 3 + 5 = 8
+        // b1, b2 are negative, b3 is positive; 1 + 3 + 0 = 4
+        // b1, b2 are positive, b3 is negative; 0 + 0 + 5 = 5
         enum keyCase
         {
             apexLeft_valleyNone = 9,
@@ -1647,9 +1412,7 @@ namespace qAlgorithms
         const float apexToEdge)
     {
         // check if the peak height is significantly greater than edge signal
-
         double Jacobian_height2[4]{0, 0, 0, 0};
-        // Jacobian_height2[0] = 0.f; // adjust for uncertainty calculation of apex to edge ratio
 
         if (apex_position < 0)
         {
@@ -1661,7 +1424,6 @@ namespace qAlgorithms
 
             Jacobian_height2[1] = apex_position - valley_position;
             Jacobian_height2[2] = apex_position * apex_position - valley_position * valley_position; // adjust for uncertainty calculation of apex to edge ratio
-            // Jacobian_height2[3] = 0;
         }
         else
         {
@@ -1670,7 +1432,6 @@ namespace qAlgorithms
                 valley_position = static_cast<float>(scale);
             }
             Jacobian_height2[1] = apex_position - valley_position;
-            // Jacobian_height2[2] = 0;
             Jacobian_height2[3] = apex_position * apex_position - valley_position * valley_position; // adjust for uncertainty calculation of apex to edge ratio
         }
         float uncertainty_apexToEdge = std::sqrt(mse * multiplyVecMatrixVecTranspose(Jacobian_height2, scale));
@@ -1875,7 +1636,6 @@ namespace qAlgorithms
 #pragma endregion "calcUncertaintyPosition"
 
 #pragma region "convolve regression"
-    // these chain to return beta for a regression
 
     inline double multiplyVecMatrixVecTranspose(const double vec[4], size_t scale)
     {
@@ -1886,7 +1646,6 @@ namespace qAlgorithms
                         2 * (vec[2] * vec[3] * INV_ARRAY[scale + 5] +
                              vec[0] * (vec[1] + vec[3]) * INV_ARRAY[scale + 1] +
                              vec[1] * (vec[2] - vec[3]) * INV_ARRAY[scale + 3]);
-
         return result;
     }
 #pragma endregion "convolve regression"
