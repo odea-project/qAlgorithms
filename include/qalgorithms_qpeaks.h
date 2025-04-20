@@ -19,9 +19,11 @@ namespace qAlgorithms
         const size_t numPeaks,   // only > 1 during componentisation (for now? @todo)
         const size_t peakFrame); // how many points are covered per peak? For single-peak data, this is the length of intensity_log
 
-    std::vector<CentroidPeak> findCentroids(const std::vector<ProfileBlock> *treatedData, const size_t scanNumber);
+    std::vector<CentroidPeak> findCentroids(const std::vector<ProfileBlock> *treatedData,
+                                            const size_t scanNumber);
 
-    void findFeatures(std::vector<FeaturePeak> &all_peaks, treatedData &treatedData);
+    void findFeatures(std::vector<FeaturePeak> &all_peaks,
+                      treatedData &treatedData);
 
     const std::vector<qCentroid> passToBinning(const std::vector<CentroidPeak> &allPeaks);
 
@@ -31,15 +33,6 @@ namespace qAlgorithms
         const std::vector<bool> *degreesOfFreedom,
         std::vector<RegressionGauss> &validRegressions,
         const size_t maxScale);
-
-    // void validateRegressions_old(
-    //     const __m128 *beta,
-    //     const size_t n_segments,
-    //     const std::vector<float> *intensities,
-    //     const float *ylog_start,
-    //     const std::vector<bool> *degreesOfFreedom,
-    //     const size_t scale,
-    //     std::vector<RegressionGauss> &validRegressions);
 
     void validateRegressions(
         const std::vector<RegCoeffs> *coeffs, // coefficients for single-b0 peaks, spans all regressions over a peak window
@@ -70,11 +63,7 @@ namespace qAlgorithms
     void createFeaturePeaks(
         std::vector<FeaturePeak> *peaks,
         const std::vector<RegressionGauss> *validRegressionsVec,
-        // const std::vector<float> *intensities,
-        // const float *mz_start,
         const float *rt_start);
-    // const float *DQSC,
-    // const float *DQSB);
 
     float calcSSE_base(const RegCoeffs coeff,
                        const std::vector<float> *y_start,
@@ -171,7 +160,8 @@ namespace qAlgorithms
      * @param scale
      * @return float
      */
-    inline double multiplyVecMatrixVecTranspose(const double vec[4], size_t scale);
+    inline double multiplyVecMatrixVecTranspose(const double vec[4],
+                                                size_t scale);
 
     inline float apexToEdgeRatio(
         const size_t idxStart,
@@ -217,7 +207,9 @@ namespace qAlgorithms
      * @return false : if the peak area is not valid
      */
 
-    void calcPeakAreaUncert(RegressionGauss *mutateReg, const float mse, const size_t scale);
+    void calcPeakAreaUncert(RegressionGauss *mutateReg,
+                            const float mse,
+                            const size_t scale);
 
     bool isValidPeakArea(
         const RegCoeffs coeff,
@@ -231,23 +223,21 @@ namespace qAlgorithms
         const float apex_position,
         const size_t scale);
 
-    void convolve_SIMD(
-        const size_t scale,
-        const float *vec,
-        const size_t n,
-        __m128 *result);
-
     struct MeanVar
     {
         float mean;
         float var;
     };
 
-    MeanVar weightedMeanAndVariance(const float *x, const std::vector<float> *weight,
-                                    size_t left_limit, size_t right_limit);
+    MeanVar weightedMeanAndVariance(const float *x,
+                                    const std::vector<float> *weight,
+                                    size_t left_limit,
+                                    size_t right_limit);
 
-    MeanVar weightedMeanAndVariance_EIC(const std::vector<float> *weight, const std::vector<float> *values,
-                                        size_t left_limit, size_t right_limit);
+    MeanVar weightedMeanAndVariance_EIC(const std::vector<float> *weight,
+                                        const std::vector<float> *values,
+                                        size_t left_limit,
+                                        size_t right_limit);
 }
 
 #endif
