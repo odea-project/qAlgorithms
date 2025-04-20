@@ -93,10 +93,7 @@ namespace qAlgorithms
         return invArray;
     }
 
-#pragma warning(push)
-#pragma warning(disable : 28)
     constexpr std::array<float, 384> INV_ARRAY = initialize(); // this only works with constexpr square roots, which are part of C++26
-#pragma warning(pop)
 #pragma endregion "initialize"
 
 #pragma region "find peaks"
@@ -113,7 +110,9 @@ namespace qAlgorithms
             maxWindowSize = maxWindowSize < length ? length : maxWindowSize;
         }
         assert(maxWindowSize > 0);
-        float *logIntensity = new float[maxWindowSize];
+        std::vector<float> logIntensity(maxWindowSize, NAN);
+
+        // float *logIntensity2 = new float[maxWindowSize];
 
         const size_t GLOBAL_MAXSCALE_CENTROID = 8; // @todo this is a critical part of the algorithm and should not be hard-coded
         assert(GLOBAL_MAXSCALE_CENTROID <= MAXSCALE);
@@ -124,18 +123,22 @@ namespace qAlgorithms
         {
             const auto block = (*treatedData)[i];
             const size_t length = block.df.size();
+            assert(length > 4);
 
             // perform log-transform on intensity
-            std::transform(block.intensity.begin(), block.intensity.end(), logIntensity, [](float y)
-                           { return std::log(y); });
+            // std::transform(block.intensity.begin(), block.intensity.end(), logIntensity2, [](float y)
+            //                { return std::log(y); });
+
+            logIntensity.resize(length); // this way, no new allocations will be made in the loop
+            for (size_t blockPos = 0; blockPos < length; blockPos++)
+            {
+                logIntensity[blockPos] = std::log(block.intensity[blockPos]);
+            }
+
             // @todo adjust the scale dynamically based on the number of valid regressions found, early terminate after x iterations
             const size_t maxScale = std::min(GLOBAL_MAXSCALE_CENTROID, size_t((length - 1) / 2)); // length - 1 because the center point is not part of the span
-            // if (block.intensity.size() != 7)
-            // {
-            //     continue;
-            // }
 
-            runningRegression(&block.intensity, logIntensity, &block.df, length, validRegressions, maxScale);
+            runningRegression(&block.intensity, &logIntensity, &block.df, validRegressions, maxScale);
             if (validRegressions.empty())
             {
                 continue; // no valid peaks
@@ -143,7 +146,7 @@ namespace qAlgorithms
             createCentroidPeaks(&all_peaks, &validRegressions, &block, scanNumber);
             validRegressions.clear();
         }
-        delete[] logIntensity;
+        // delete[] logIntensity2;
         return all_peaks;
     }
 
@@ -152,7 +155,10 @@ namespace qAlgorithms
         size_t length = treatedData.dataPoints.size();
         assert(length > 4); // data must contain at least five points
         // float *intensity = new float[maxWindowSize];
-        float *logIntensity = new float[length];
+
+        std::vector<float> logIntensity(length, NAN);
+
+        // float *logIntensity2 = new float[length];
         float *RT = new float[length];
 
         static const size_t GLOBAL_MAXSCALE_FEATURES = 30; // @todo this is not a sensible limit and only chosen for computational speed at the moment
@@ -170,21 +176,25 @@ namespace qAlgorithms
         }
 
         // perform log-transform on Y
-        std::transform(intensity.begin(), intensity.end(), logIntensity, [](float y)
-                       { return std::log(y); });
+        // std::transform(intensity.begin(), intensity.end(), logIntensity2, [](float y)
+        //                { return std::log(y); });
+
+        logIntensity.resize(intensity.size());
+        for (size_t blockPos = 0; blockPos < intensity.size(); blockPos++)
+        {
+            logIntensity[blockPos] = std::log(intensity[blockPos]);
+        }
 
         std::vector<RegressionGauss> validRegressions;
         size_t maxScale = std::min(GLOBAL_MAXSCALE_FEATURES, size_t((length - 1) / 2));
-        runningRegression(&intensity, logIntensity, &degreesOfFreedom, length, validRegressions, maxScale);
-        if (validRegressions.empty())
+        runningRegression(&intensity, &logIntensity, &degreesOfFreedom, validRegressions, maxScale);
+        if (!validRegressions.empty())
         {
-            delete[] logIntensity;
-            delete[] RT;
-            return; // no valid peaks
+            createFeaturePeaks(&all_peaks, &validRegressions, RT);
+            // there is no reason for this to be called here and not later @todo
         }
-        createFeaturePeaks(&all_peaks, &validRegressions, RT); // there is no reason for this to be called here and not later @todo
 
-        delete[] logIntensity;
+        // delete[] logIntensity2;
         delete[] RT;
     }
 #pragma endregion "find peaks"
@@ -192,61 +202,34 @@ namespace qAlgorithms
 #pragma region "running regression"
     void runningRegression(
         const std::vector<float> *intensities,
-        const float *intensities_log,
+        const std::vector<float> *intensities_log,
         const std::vector<bool> *degreesOfFreedom,
-        const size_t n, // number of data points
         std::vector<RegressionGauss> &validRegressions,
         const size_t maxScale)
     {
-        assert(n > 4); // five point minimum is guaranteed by previous functions
         assert(validRegressions.empty());
 
-        // maximum size of the coefficients array is known at time of function call
-        size_t maxSize = n - 4; // max size is at scale = 2
-        // re-use this array for all coefficients, meaning it is refilled from 0 at every scale
-        __m128 beta[maxSize];
+        // std::vector<float> int_log(intensities->size(), NAN);
+        // for (size_t i = 0; i < int_log.size(); i++)
+        // {
+        //     int_log[i] = std::log(intensities->at(i));
+        // }
 
-        for (size_t scale = 2; scale <= maxScale; scale++)
+        // if (abs(int_log[0] - 10.0996218) < 10e-6)
+        // {
+        //     volatile bool a = true;
+        // }
+
+        const std::vector<RegCoeffs> regressions = findCoefficients(intensities_log, maxScale, 1, intensities_log->size());
+
+        validateRegressions(&regressions, intensities, intensities_log, degreesOfFreedom, maxScale, validRegressions);
+
+        if (validRegressions.size() > 1) // @todo we can probably filter regressions based on MSE at this stage already
         {
-            const int k = 2 * scale + 1;      // window size
-            const int n_segments = n - k + 1; // number of segments, i.e. regressions considering the array size
-
-            convolve_SIMD(scale, intensities_log, n, beta); // beta past position n-1 contains initialized, but wrong values - make sure they cannot be accessed
-                                                            // n_segments must be smaller than the array
-            validateRegressions(beta, n_segments, intensities, intensities_log, degreesOfFreedom, scale, validRegressions);
-        } // only check blocks of size 5
-
-        std::vector<float> int_log(intensities->size(), NAN);
-        for (size_t i = 0; i < int_log.size(); i++)
-        {
-            int_log[i] = std::log(intensities->at(i));
-        }
-
-        if (abs(int_log[0] - 10.0996218) < 10e-6)
-        {
-            volatile bool a = true;
-        }
-
-        std::vector<RegCoeffs> regressions = findCoefficients(int_log, maxScale, 1, int_log.size());
-        std::vector<RegressionGauss> validRegressions2;
-        validateRegressions_new(&regressions, intensities, intensities_log, degreesOfFreedom, maxScale, validRegressions2);
-
-        // assert(validRegressions2.size() == validRegressions.size());
-        if (validRegressions2.size() != validRegressions.size())
-        {
-            COUNT_MISMATCH++;
-        }
-        else
-        {
-            COUNT_TOTAL++;
-        }
-
-        if (validRegressions.size() > 1)
-        {
+            // number of competitors is intialised to 0, so no special case for size = 1 needed
+            // there can be 0, 1 or more than one regressions in validRegressions
             validRegressions = mergeRegressionsOverScales(validRegressions, intensities);
         }
-        // number of competitors is intialised to 0, so no special case for size = 1 needed
-        // there can be 0, 1 or more than one regressions in validRegressions
         return;
     }
 
@@ -364,7 +347,7 @@ namespace qAlgorithms
     }
 
     std::vector<RegCoeffs> findCoefficients(
-        const std::vector<float> intensity_log,
+        const std::vector<float> *intensity_log,
         const size_t max_scale, // maximum scale that will be checked. Should generally be limited by peakFrame
         const size_t numPeaks,  // only > 1 during componentisation (for now? @todo)
         const size_t peakFrame) // how many points are covered per peak? For single-peak data, this is the length of intensity_log
@@ -437,9 +420,9 @@ namespace qAlgorithms
         assert(max_scale > 1);
         // num_steps: int = len(intensity_log) - 2 * scale_min # number of steps in the intensity_log
         const size_t minScale = 2;
-        const size_t steps = intensity_log.size() - 2 * minScale; // iteration number at scale 2
+        const size_t steps = intensity_log->size() - 2 * minScale; // iteration number at scale 2
 
-        std::vector<float> y_array_sum = intensity_log; // sum of each index across multiple dimensions of intensity_log
+        std::vector<float> y_array_sum = *intensity_log; // sum of each index across multiple dimensions of intensity_log
         // only relevant for more than one peak
 
         //   this vector is for the inner loop and looks like:
@@ -486,7 +469,9 @@ namespace qAlgorithms
             for (size_t b0_elems = 0; b0_elems < numPeaks; b0_elems++)
             {
                 size_t x = b0_elems * peakFrame + i;
-                tmp_product_sum_b0[b0_elems] = intensity_log[x] + intensity_log[x + 1] + intensity_log[x + 2] + intensity_log[x + 3] + intensity_log[x + 4]; // b0 = 1 for all elements
+                tmp_product_sum_b0[b0_elems] = intensity_log->at(x) + intensity_log->at(x + 1) +
+                                               intensity_log->at(x + 2) + intensity_log->at(x + 3) +
+                                               intensity_log->at(x + 4); // b0 = 1 for all elements
             }
 
             tmp_product_sum_b1 = 2 * (y_array_sum[i + 4] - y_array_sum[i]) + y_array_sum[i + 3] - y_array_sum[i + 1];
@@ -519,10 +504,9 @@ namespace qAlgorithms
             beta_1[k] = S2_C * tmp_product_sum_b1 + S2_D * (tmp_product_sum_b2 - tmp_product_sum_b3);
             beta_2[k] = S2_B * sum_tmp_product_sum_b0 + S2_D * tmp_product_sum_b1 + S2_E * tmp_product_sum_b2 + S2_F * tmp_product_sum_b3;
             beta_3[k] = S2_B * sum_tmp_product_sum_b0 - S2_D * tmp_product_sum_b1 + S2_F * tmp_product_sum_b2 + S2_E * tmp_product_sum_b3;
-            // print(beta_0[k], beta_1[k], beta_2[k], beta_3[k]);
+
             k += 1;       // update index for the productsums array
             size_t u = 1; // u is the expansion increment
-            // for scale in range(3, scale_max_while_loop[i] + 1)
             for (size_t scale = 3; scale < maxInnerLoop[i] + 1; scale++)
             { // minimum scale is 2. so we start with scale + 1 = 3 in the inner loop
                 size_t scale_sqr = scale * scale;
@@ -530,7 +514,7 @@ namespace qAlgorithms
                 sum_tmp_product_sum_b0 = 0;
                 for (size_t peak = 0; peak < numPeaks; peak++)
                 {
-                    tmp_product_sum_b0[peak] += intensity_log[i - u] + intensity_log[i + 4 + u];
+                    tmp_product_sum_b0[peak] += intensity_log->at(i - u) + intensity_log->at(i + 4 + u);
                     sum_tmp_product_sum_b0 += tmp_product_sum_b0[peak];
                 }
 
@@ -575,7 +559,7 @@ namespace qAlgorithms
             coeffs.push_back({float(beta_0[i]), float(beta_1[i]), float(beta_2[i]), float(beta_3[i])});
         }
 
-        coeffs = restoreShape(&coeffs, &maxInnerLoop, intensity_log.size(), max_scale);
+        coeffs = restoreShape(&coeffs, &maxInnerLoop, intensity_log->size(), max_scale);
 
         return coeffs;
     }
@@ -583,10 +567,10 @@ namespace qAlgorithms
 #pragma endregion "running regression"
 
 #pragma region validateRegressions
-    void validateRegressions_new(
+    void validateRegressions(
         const std::vector<RegCoeffs> *coeffs, // coefficients for single-b0 peaks, spans all regressions over a peak window
         const std::vector<float> *intensities,
-        const float *intensities_log, // pointer to the start of the Ylog array
+        const std::vector<float> *intensities_log,
         const std::vector<bool> *degreesOfFreedom,
         const size_t maxScale, // scale, i.e., the number of data points in a half window excluding the center point
         std::vector<RegressionGauss> &validRegressions)
@@ -631,6 +615,7 @@ namespace qAlgorithms
                 validRegsTmp.back().newCoeffs = coeff;
                 // the total span of the regression may not exceed the number of points
                 assert(idxStart + 2 * currentScale < numPoints);
+
                 makeValidRegression(&validRegsTmp.back(), idxStart, currentScale, degreesOfFreedom, intensities, intensities_log);
                 if (validRegsTmp.back().isValid)
                 {
@@ -727,7 +712,7 @@ namespace qAlgorithms
         }
     }
 
-    void validateRegressions(
+    void validateRegressions_old(
         const __m128 *beta,      // coefficients matrix
         const size_t n_segments, // number of segments, i.e. regressions
         const std::vector<float> *intensities,
@@ -769,8 +754,14 @@ namespace qAlgorithms
             validRegsTmp.back().newCoeffs.b1 = coeff[1];
             validRegsTmp.back().newCoeffs.b2 = coeff[2];
             validRegsTmp.back().newCoeffs.b3 = coeff[3];
+
+            std::vector<float> int_log(intensities->size(), NAN);
+            for (size_t i = 0; i < int_log.size(); i++)
+            {
+                int_log[i] = std::log(intensities->at(i));
+            }
             // idxStart must be smaller than the size of the checked region
-            makeValidRegression(&validRegsTmp.back(), idxStart, scale, degreesOfFreedom, intensities, intensities_log);
+            makeValidRegression(&validRegsTmp.back(), idxStart, scale, degreesOfFreedom, intensities, &int_log);
             if (validRegsTmp.back().isValid)
             {
                 validRegsTmp.push_back(RegressionGauss{});
@@ -858,7 +849,7 @@ namespace qAlgorithms
         const size_t scale,
         const std::vector<bool> *degreesOfFreedom,
         const std::vector<float> *intensities,
-        const float *intensities_log)
+        const std::vector<float> *intensities_log)
     { // @todo order by effort to calculate
         /*
           Apex and Valley Position Filter:
@@ -954,6 +945,7 @@ namespace qAlgorithms
           term is considered statistically insignificant, and the loop continues
           to the next iteration.
         */
+
         std::vector<float> selectLog; // both vetors are used to transfer relevant values to the F test later
         std::vector<float> predictLog;
         selectLog.reserve(mutateReg->right_limit - mutateReg->left_limit + 1);
@@ -1329,16 +1321,22 @@ namespace qAlgorithms
 
 #pragma region calcSSE
 
-    float calcSSE_base(const RegCoeffs coeff, const float *y_start, std::vector<float> *selectLog, std::vector<float> *predictLog,
-                       size_t limit_L, size_t limit_R, size_t index_x0)
+    float calcSSE_base(const RegCoeffs coeff,
+                       const std::vector<float> *y_start,
+                       std::vector<float> *selectLog,
+                       std::vector<float> *predictLog,
+                       size_t limit_L,
+                       size_t limit_R,
+                       size_t index_x0)
     {
+        // this function also populates some variables for the F test later in the validation
         double result = 0.0;
         // left side
         for (size_t iSegment = limit_L; iSegment < index_x0; iSegment++)
         {
             double new_x = double(iSegment) - double(index_x0);
             double y_base = coeff.b0 + (coeff.b1 + coeff.b2 * new_x) * new_x;
-            double y_current = y_start[iSegment];
+            double y_current = y_start->at(iSegment);
             selectLog->push_back(y_current);
             predictLog->push_back(y_base);
             double newdiff = (y_base - y_current) * (y_base - y_current);
@@ -1346,8 +1344,8 @@ namespace qAlgorithms
             result += newdiff;
         }
         // center point
-        result += (coeff.b0 - y_start[index_x0]) * (coeff.b0 - y_start[index_x0]); // x = 0 -> (b0 - y)^2
-        selectLog->push_back(y_start[index_x0]);
+        result += (coeff.b0 - y_start->at(index_x0)) * (coeff.b0 - y_start->at(index_x0)); // x = 0 -> (b0 - y)^2
+        selectLog->push_back(y_start->at(index_x0));
         predictLog->push_back(coeff.b0);
 
         // right side
@@ -1355,7 +1353,7 @@ namespace qAlgorithms
         {
             double new_x = double(iSegment) - double(index_x0);
             double y_base = coeff.b0 + (coeff.b1 + coeff.b3 * new_x) * new_x; // b3 instead of b2
-            double y_current = y_start[iSegment];
+            double y_current = y_start->at(iSegment);
             selectLog->push_back(y_current);
             predictLog->push_back(y_base);
             double newdiff = (y_current - y_base) * (y_current - y_base);

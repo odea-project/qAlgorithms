@@ -13,11 +13,8 @@
 
 namespace qAlgorithms
 {
-    extern size_t COUNT_MISMATCH;
-    extern size_t COUNT_TOTAL;
-
     std::vector<RegCoeffs> findCoefficients(
-        const std::vector<float> intensity_log,
+        const std::vector<float> *intensity_log,
         const size_t scale,      // maximum scale that will be checked. Should generally be limited by peakFrame
         const size_t numPeaks,   // only > 1 during componentisation (for now? @todo)
         const size_t peakFrame); // how many points are covered per peak? For single-peak data, this is the length of intensity_log
@@ -30,25 +27,24 @@ namespace qAlgorithms
 
     void runningRegression(
         const std::vector<float> *intensities,
-        const float *ylog_start,
+        const std::vector<float> *ylog_start,
         const std::vector<bool> *degreesOfFreedom,
-        const size_t n,
         std::vector<RegressionGauss> &validRegressions,
         const size_t maxScale);
 
-    void validateRegressions(
-        const __m128 *beta,
-        const size_t n_segments,
-        const std::vector<float> *intensities,
-        const float *ylog_start,
-        const std::vector<bool> *degreesOfFreedom,
-        const size_t scale,
-        std::vector<RegressionGauss> &validRegressions);
+    // void validateRegressions_old(
+    //     const __m128 *beta,
+    //     const size_t n_segments,
+    //     const std::vector<float> *intensities,
+    //     const float *ylog_start,
+    //     const std::vector<bool> *degreesOfFreedom,
+    //     const size_t scale,
+    //     std::vector<RegressionGauss> &validRegressions);
 
-    void validateRegressions_new(
+    void validateRegressions(
         const std::vector<RegCoeffs> *coeffs, // coefficients for single-b0 peaks, spans all regressions over a peak window
         const std::vector<float> *intensities,
-        const float *intensities_log, // pointer to the start of the Ylog array
+        const std::vector<float> *intensities_log,
         const std::vector<bool> *degreesOfFreedom,
         const size_t maxScale, // scale, i.e., the number of data points in a half window excluding the center point
         std::vector<RegressionGauss> &validRegressions);
@@ -59,7 +55,7 @@ namespace qAlgorithms
         const size_t scale,
         const std::vector<bool> *degreesOfFreedom,
         const std::vector<float> *intensities,
-        const float *intensities_log);
+        const std::vector<float> *intensities_log);
 
     std::vector<RegressionGauss> mergeRegressionsOverScales(
         std::vector<RegressionGauss> validRegressions,
@@ -80,14 +76,29 @@ namespace qAlgorithms
     // const float *DQSC,
     // const float *DQSB);
 
-    float calcSSE_base(const RegCoeffs coeff, const float *y_start, std::vector<float> *selectLog, std::vector<float> *predictLog,
-                       size_t limit_L, size_t limit_R, size_t index_x0);
+    float calcSSE_base(const RegCoeffs coeff,
+                       const std::vector<float> *y_start,
+                       std::vector<float> *selectLog,
+                       std::vector<float> *predictLog,
+                       size_t limit_L,
+                       size_t limit_R,
+                       size_t index_x0);
 
-    float calcRegressionFvalue(const std::vector<float> *selectLog, const std::vector<float> *intensities, const float mse, const float b0);
+    float calcRegressionFvalue(const std::vector<float> *selectLog,
+                               const std::vector<float> *intensities,
+                               const float mse,
+                               const float b0);
 
-    float calcSSE_exp(const RegCoeffs coeff, const std::vector<float> *y_start, size_t limit_L, size_t limit_R, size_t index_x0);
+    float calcSSE_exp(const RegCoeffs coeff,
+                      const std::vector<float> *y_start,
+                      size_t limit_L, size_t limit_R,
+                      size_t index_x0);
 
-    float calcSSE_chisqared(const RegCoeffs coeff, const std::vector<float> *y_start, size_t limit_L, size_t limit_R, size_t index_x0);
+    float calcSSE_chisqared(const RegCoeffs coeff,
+                            const std::vector<float> *y_start,
+                            size_t limit_L,
+                            size_t limit_R,
+                            size_t index_x0);
 
     /**
      * @brief Calculate the best mean squared error of the regression model
