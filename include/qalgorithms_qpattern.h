@@ -75,6 +75,7 @@ namespace qAlgorithms
         std::vector<float> intensity_log;
         std::vector<size_t> scanNo;
         std::vector<float> RSS_cum; // cumulative RSS - this also serves as the indicator for interpolated / not interpolated
+        std::vector<bool> df;       // @todo get rid of this somehow
         size_t feature_ID;
         size_t bin_ID;
         // these two are the limits of the feature the given EIC belonged to
@@ -91,6 +92,42 @@ namespace qAlgorithms
                             const size_t maxIdx);
 
     float logIntAt(const MovedRegression *feature, float RT);
+
+    struct MultiRegression
+    {
+        // this regression is used internally to compare components
+        std::vector<float> b0_vec;
+        size_t idxStart;
+        size_t scale;
+        float b1;
+        float b2;
+        float b3;
+        float RT_apex;
+    };
+
+    struct MovedMultiRegression
+    {
+        // this regression is used only to calculate the RSS
+        std::vector<float> b0_L_vec;
+        std::vector<float> b0_R_vec;
+        float b1_L;
+        float b1_R;
+        float b2;
+        float b3;
+        float RT_switch;
+    };
+
+    // @todo this one should differ from the one in qPeaks
+    std::vector<MultiRegression> findCoefficients_multi(
+        const std::vector<float> *intensity_log,
+        const size_t scale,      // maximum scale that will be checked. Should generally be limited by peakFrame
+        const size_t numPeaks,   // only > 1 during componentisation (for now? @todo)
+        const size_t peakFrame); // how many points are covered per peak? For single-peak data, this is the length of intensity_log
+
+    void runningRegression_multi(
+        ReducedEIC *eic,
+        std::vector<MultiRegression> &validRegressions,
+        const size_t maxScale);
 
     std::vector<float> pairwiseRSS(const PreGrouping *group, const std::vector<ReducedEIC> *points);
 

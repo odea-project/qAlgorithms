@@ -427,12 +427,13 @@ namespace qAlgorithms
             coeffs.push_back({float(beta_0[i]), float(beta_1[i]), float(beta_2[i]), float(beta_3[i])});
         }
 
+        // @todo why not save the scale information as part of the coefficient struct and then use that for the whole merging?
         coeffs = restoreShape(&coeffs, &maxInnerLoop, intensity_log->size(), max_scale);
 
         return coeffs;
     }
 
-    std::vector<RegCoeffs> findCoefficients_multi(
+    std::vector<RegCoeffs> findCoefficients_multi_obsolete(
         const std::vector<float> *intensity_log,
         const size_t max_scale, // maximum scale that will be checked. Should generally be limited by peakFrame
         const size_t numPeaks,  // only > 1 during componentisation (for now? @todo)
@@ -661,13 +662,7 @@ namespace qAlgorithms
         const size_t maxScale, // scale, i.e., the number of data points in a half window excluding the center point
         std::vector<RegressionGauss> &validRegressions)
     {
-        // @todo code duplication!
-        std::vector<size_t> iterationCount(maxScale - 1, 0);
-        size_t numPoints = intensities->size();
-        for (size_t i = 0; i + 1 < maxScale; i++) // +2 since smallest scale is 2
-        {
-            iterationCount[i] = numPoints - (i + 2) * 2;
-        }
+        const size_t numPoints = intensities->size();
 
         std::vector<RegressionGauss> validRegsTmp; // temporary vector to store valid regressions
         // the start index of the regression is the same as the index in beta. The end index is at 2*scale + index in beta.

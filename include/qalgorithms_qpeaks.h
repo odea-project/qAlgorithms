@@ -13,7 +13,9 @@
 
 namespace qAlgorithms
 {
-    std::vector<RegCoeffs> findCoefficients_multi(
+    constexpr std::array<float, MAXSCALE * 6> initialize();
+
+    std::vector<RegCoeffs> findCoefficients_multi_obsolete(
         const std::vector<float> *intensity_log,
         const size_t scale,      // maximum scale that will be checked. Should generally be limited by peakFrame
         const size_t numPeaks,   // only > 1 during componentisation (for now? @todo)
