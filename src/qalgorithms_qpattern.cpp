@@ -20,30 +20,33 @@ int VALLEYS_other = 0;
 
 namespace qAlgorithms
 {
-    void findComponents(const std::vector<FeaturePeak> *peaks, const std::vector<EIC> *bins)
+    void findComponents(const std::vector<FeaturePeak> *peaks,
+                        const std::vector<EIC> *bins,
+                        const std::vector<float> *convertRT)
     {
         // peaks must be sorted here since they arrive out of order
 #pragma region "Pre-Group"
         std::vector<GroupLims> limits = preGroup(peaks);
-        std::vector<ComponentGroup> components;
-        components.reserve(limits.size() / 2);
-        for (size_t i = 0; i < limits.size(); i++)
+        std::vector<PreGrouping> components;
+        components.reserve(limits.size());
+        for (size_t groupIdx = 0; groupIdx < limits.size(); groupIdx++)
         {
             // only test if the matrix thing works for now
-            ComponentGroup newComponent;
-            size_t groupsize = limits[i].end - limits[i].start + 1;
+            PreGrouping newComponent;
+            size_t groupsize = limits[groupIdx].end - limits[groupIdx].start + 1;
             std::cout << groupsize << ", ";
             // @todo skip for groups with size 1?
             if (groupsize == 1)
             {
-                if ((peaks->at(limits[i].end).coefficients.b2 > 0) || (peaks->at(limits[i].end).coefficients.b3 > 0))
+                if ((peaks->at(limits[groupIdx].end).coefficients.b2 > 0) ||
+                    (peaks->at(limits[groupIdx].end).coefficients.b3 > 0))
                 {
                     VALLEYS_1++;
                 }
 
                 continue;
             }
-            for (size_t j = limits[i].start; j < limits[i].end + 1; j++)
+            for (size_t j = limits[groupIdx].start; j < limits[groupIdx].end + 1; j++)
             {
                 if ((peaks->at(j).coefficients.b2 > 0) || (peaks->at(j).coefficients.b3 > 0))
                 {
@@ -58,8 +61,8 @@ namespace qAlgorithms
             newComponent.features.reserve(groupsize);
             unsigned int maxScan = 0;
             unsigned int minScan = 4294967295; // max value of unsigned int
-            for (size_t j = limits[i].start; j < limits[i].end + 1; j++)
-            {
+            for (size_t j = limits[groupIdx].start; j < limits[groupIdx].end + 1; j++)
+            { // @todo this block can probably be discarded
                 auto test = &peaks->at(j);
                 auto movedTest = moveAndScaleReg(test);
                 const qAlgorithms::EIC *bin = &bins->at(test->idxBin);
@@ -77,15 +80,23 @@ namespace qAlgorithms
                 newComponent.features.push_back(movedTest);
             }
 
+            // create a vector of unified RTs for interpolation in the harmonised EICs
+            std::vector<float> unifiedRT(maxScan - minScan + 1, 0);
+            for (size_t i = 0; i < unifiedRT.size(); i++)
+            {
+                unifiedRT[i] = convertRT->at(minScan + i);
+            }
+
             std::vector<ReducedEIC> eics; // @todo the maximum size of a reduced EIC is the global maxscale + 1!
             std::vector<MovedRegression> *selectPeaks;
             for (size_t j = 0; j < groupsize; j++)
             {
                 const auto feature = newComponent.features[j];
                 const qAlgorithms::EIC *bin = &bins->at(feature.binID);
-                eics.push_back(harmoniseEICs(bin, minScan, maxScan, feature.binIdxStart, feature.binIdxEnd));
+                eics.push_back(harmoniseEIC(&feature, bin, &unifiedRT, minScan, maxScan, feature.binIdxStart, feature.binIdxEnd));
                 assert(eics[j].intensity.size() == eics[0].intensity.size());
             }
+            // at this stage, the EICs are in the correct shape for performing a multi-regression
 #pragma endregion "Pre-Group"
             newComponent.calcScores();
             // produce a subset of bins with uniform RT axis for this component
@@ -134,7 +145,7 @@ namespace qAlgorithms
                 groupings.push_back({idx, -1});
             }
 
-            multiFit(&eics, &newComponent.features);
+            // multiFit(&eics, &newComponent.features);
 
             // if two features are not improved by being combined individually, they may never be part of the same group
 
@@ -207,7 +218,7 @@ namespace qAlgorithms
             assert(*compCount >= ID_curr - 1);
             if ((ID_curr == ID_A) || (ID_curr == ID_B))
             {
-                groupings->at(i).component == ID_new;
+                groupings->at(i).component = ID_new;
             }
             else if (ID_curr > ID_max)
             {
@@ -248,52 +259,131 @@ namespace qAlgorithms
         }
     }
 
-    ReducedEIC harmoniseEICs(const EIC *bin, const size_t minScan, const size_t maxScan, const size_t minIdx, const size_t maxIdx)
+    ReducedEIC harmoniseEIC(const MovedRegression *feature,
+                            const EIC *bin,
+                            const std::vector<float> *RTs,
+                            const unsigned int minScan, // minimum overall scan in the subgroup
+                            const unsigned int maxScan, // maximum overall scan in the subgroup
+                            const size_t minIdx,
+                            const size_t maxIdx)
     {
         assert(maxIdx < bin->ints_area.size());
         assert(minScan < bin->scanNumbers.back());
         assert(maxScan > bin->scanNumbers.front());
-        // scan relates to the complete measurement and idx to the position within the bin
-        int length = maxScan - minScan + 1;
+        // assert(minScan >= bin->scanNumbers.front());
+        // assert(maxScan <= bin->scanNumbers.back());
+        // this function creates harmonised EICs, meaning that it can be used for the running regression
+        // within a component subgroup without further modification. The process is as follows:
+        // 1) create a results vector for every element which is of the size known at the time of function
+        //    call
+        unsigned int length = maxScan - minScan + 1;
+        assert(length > 4);
+        assert(RTs->size() == length);
         assert(bin->ints_area[minIdx] != 0);
         assert(bin->ints_area[maxIdx] != 0);
 
-        assert(length > 4);
+        // scan relates to the complete measurement and idx to the position within the bin
+
         ReducedEIC reduced{
-            std::vector<float>(length, 0),
-            std::vector<float>(length, 0),
-            std::vector<float>(length, 0),
-            std::vector<size_t>(length, 0)};
+            // std::vector<float>(length, 0),  // RT
+            std::vector<float>(length, 0),  // intensity
+            std::vector<float>(length, 0),  // log intensity
+            std::vector<size_t>(length, 0), // scan number
+            std::vector<float>(length, 0),  // RSS_cum
+            0,                              // feature ID
+            0,                              // bin ID
+            // these limits are relating to the fully interpolated EIC
+            bin->scanNumbers[minIdx] - minScan,
+            bin->scanNumbers[maxIdx] - minScan};
 
         std::iota(reduced.scanNo.begin(), reduced.scanNo.end(), minScan);
+
+        // 2) transfer all points that will not be interpolated. At this stage, the log values are used already to
+        //    minimise the big number problems with RSS and avoid all the exp() functions. Note that points outside
+        //    the regression window will only be transferred if they do not increase again seen from the feature
+        //    region outwards. This is chosen to account for cases where the initial regression window was chosen too
+        //    small. @todo this will only be integrated in the future since i am unsure as to how good of an idea that
+        //    is at the moment
+
         for (size_t i = 0; i < bin->ints_area.size(); i++) // indices in relation to bin without interpolations
         {
             size_t scan = bin->scanNumbers[i];
-            if ((scan < minScan) || (scan > maxScan)) // @todo switch to break condition
+            if (scan < minScan)
             {
                 continue;
             }
-            assert(scan >= minScan);
+            else if (scan > maxScan)
+            {
+                break;
+            }
+
             size_t relIdx = scan - minScan;
+            // outerLeft = std::min(relIdx, outerLeft);
+            // outerRight = std::max(relIdx, outerRight);
             reduced.intensity[relIdx] = bin->ints_area[i];
             reduced.intensity_log[relIdx] = log(bin->ints_area[i]);
-            reduced.RTs[relIdx] = bin->rententionTimes[i];
         }
-        // due to the selected window, it is possible for the first and last point to be 0
+        // add points from outside the window?
 
-        size_t nonZero = 0;
-        for (size_t i = 0; i < reduced.intensity.size(); i++)
+        // 3) interpolate all intensities at 0 (log only for now)
+        // this is combined with the RSS calculation
+        // 4) calculate the RSS (log) for all transferred points against the moved regression and write them into
+        //    the 0-filled vector for cumRSS. Then, take the cumsum over the vector.
+        for (unsigned int i = 0; i < length; i++)
         {
-            if (reduced.intensity[i] > 0)
+            float predictedInt = logIntAt(feature, RTs->at(i));
+            // special case positive coefficient in b2 or b3: Here, the model will lead to very high results
+            // (10e500) relatively quickly. As such, the prediction past the outer limit is corrected to be
+            // always the last real value.
+            // this will lead to a very high improvement if a positive b23 is part of a double negative component
+            if (feature->b2 > 0) [[unlikely]] // @todo this is a really slow loop to execute, remove branching
             {
-                nonZero++;
+                if (i < reduced.featLim_L)
+                {
+                    predictedInt = reduced.intensity_log[reduced.featLim_L];
+                }
+            }
+            if (feature->b3 > 0) [[unlikely]]
+            {
+                if (i > reduced.featLim_R)
+                {
+                    predictedInt = reduced.intensity_log[reduced.featLim_R];
+                }
+            }
+
+            if (reduced.intensity_log[i] == 0)
+            { // value needs to be interpolated
+                reduced.intensity_log[i] = predictedInt;
+            }
+            else
+            {
+                float diff = reduced.intensity_log[i] - predictedInt;
+                reduced.RSS_cum[i] = diff * diff;
             }
         }
-        assert(nonZero > 4);
-        return reduced; // @todo can result in eics with only zeroes
+
+        // form the cumulative sum over RSS
+        for (unsigned int i = 1; i < length; i++)
+        {
+            reduced.RSS_cum[i] += reduced.RSS_cum[i - 1];
+            assert(reduced.RSS_cum[i] != INFINITY); // @todo this should not happen in the log case
+        }
+
+        return reduced;
     }
 
-    float ComponentGroup::score(size_t idx1, size_t idx2)
+    float logIntAt(const MovedRegression *feature, float RT)
+    {
+        // this function interpolates the logarithmic intensity of a given regression at the retention time RT.
+        assert(RT >= 0);
+        bool leftHalf = RT < feature->RT_switch;
+        float b0 = leftHalf ? feature->b0_L : feature->b0_R;
+        float b1 = leftHalf ? feature->b1_L : feature->b1_R;
+        float b23 = leftHalf ? feature->b2 : feature->b3;
+        return b0 + RT * b1 + RT * RT * b23;
+    }
+
+    float PreGrouping::score(size_t idx1, size_t idx2)
     { // @todo we could use a more complex structure here to save space, but with how small these groups should be it is probably pointless
         size_t size = shapeScores.size();
         assert(idx1 < size && idx2 < size);
@@ -306,7 +396,7 @@ namespace qAlgorithms
         return shapeScores[idx];
     }
 
-    void ComponentGroup::calcScores()
+    void PreGrouping::calcScores()
     {
         shapeScores.reserve(features.size() * features.size());
         for (size_t i = 0; i < features.size(); i++)
@@ -584,7 +674,7 @@ namespace qAlgorithms
         return score;
     }
 
-    std::pair<unsigned int, unsigned int> featNums(size_t idx, const ComponentGroup *group)
+    std::pair<unsigned int, unsigned int> featNums(size_t idx, const PreGrouping *group)
     {
         // the original two indices of a pair:
         // idx = size * idx1 + idx2
@@ -593,7 +683,7 @@ namespace qAlgorithms
         return std::make_pair(idx1, idx2);
     }
 
-    std::vector<size_t> getCompareOrder(const ComponentGroup *group)
+    std::vector<size_t> getCompareOrder(const PreGrouping *group)
     {
         assert(group->shapeScores.size() > 0);
         std::vector<size_t> indices(group->shapeScores.size());
@@ -693,7 +783,7 @@ namespace qAlgorithms
         std::vector<size_t> scanNo;
     };
 
-    IntensityMatrix combineIntensities(const ComponentGroup *group, const std::vector<EIC> *bins)
+    IntensityMatrix combineIntensities(const PreGrouping *group, const std::vector<EIC> *bins)
     {
         // combine all features in the group such that their intensities are all
         // accessible in a per-scan setting
@@ -812,102 +902,102 @@ namespace qAlgorithms
     //     // auto design = designMat(scale);
     // }
 
-    void multiFit(const std::vector<ReducedEIC> *fitRegion, const std::vector<MovedRegression> *peaks)
-    {
-        assert(fitRegion->size() == peaks->size());
-        // fit one model with variable b0 over multiple traces
-        // fitRegion contains all mass traces over which a fit should be performed, including zero padding
-        // find the scale that fits the non-0 intensity region, -1 at the lowest intensity if an even number is found
-        size_t k = fitRegion->size();
-        size_t limit_L = 0;
-        size_t limit_R = fitRegion->front().intensity.size();
-        // to decide in the case of an uneven region, keep track of the total intensities at the two outer points
-        float sumInts_L = -1;
-        float sumInts_R = -1;
-        for (size_t i = 0; i < fitRegion->front().intensity.size(); i++)
-        {
-            // left half
-            float sumInts = 0;
-            for (size_t j = 0; j < k; j++)
-            {
-                sumInts += fitRegion->at(j).intensity_log[i];
-            }
-            if (sumInts != 0)
-            {
-                sumInts_L = sumInts;
-                limit_L = i;
-                break;
-            }
-        }
-        for (size_t i = fitRegion->front().intensity.size() - 1; i > limit_L; i--)
-        {
-            // left half
-            float sumInts = 0;
-            for (size_t j = 0; j < k; j++)
-            {
-                sumInts += fitRegion->at(j).intensity_log[i];
-            }
-            if (sumInts != 0)
-            {
-                sumInts_R = sumInts;
-                limit_R = i;
-                break;
-            }
-        }
-        assert(limit_R - limit_L >= 4);
-        // if there is an even number of points, the difference of the limits is uneven
-        if (((limit_R - limit_L) % 2) == 1)
-        {
-            // adjust the window while minimising the intensity loss
-            if (sumInts_L > sumInts_R)
-            {
-                limit_R -= 1;
-            }
-            else
-            {
-                limit_L += 1;
-            }
-        }
-        assert(limit_R - limit_L >= 4);
+    //     void multiFit(const std::vector<ReducedEIC> *fitRegion, const std::vector<MovedRegression> *peaks)
+    //     {
+    //         assert(fitRegion->size() == peaks->size());
+    //         // fit one model with variable b0 over multiple traces
+    //         // fitRegion contains all mass traces over which a fit should be performed, including zero padding
+    //         // find the scale that fits the non-0 intensity region, -1 at the lowest intensity if an even number is found
+    //         size_t k = fitRegion->size();
+    //         size_t limit_L = 0;
+    //         size_t limit_R = fitRegion->front().intensity.size();
+    //         // to decide in the case of an uneven region, keep track of the total intensities at the two outer points
+    //         float sumInts_L = -1;
+    //         float sumInts_R = -1;
+    //         for (size_t i = 0; i < fitRegion->front().intensity.size(); i++)
+    //         {
+    //             // left half
+    //             float sumInts = 0;
+    //             for (size_t j = 0; j < k; j++)
+    //             {
+    //                 sumInts += fitRegion->at(j).intensity_log[i];
+    //             }
+    //             if (sumInts != 0)
+    //             {
+    //                 sumInts_L = sumInts;
+    //                 limit_L = i;
+    //                 break;
+    //             }
+    //         }
+    //         for (size_t i = fitRegion->front().intensity.size() - 1; i > limit_L; i--)
+    //         {
+    //             // left half
+    //             float sumInts = 0;
+    //             for (size_t j = 0; j < k; j++)
+    //             {
+    //                 sumInts += fitRegion->at(j).intensity_log[i];
+    //             }
+    //             if (sumInts != 0)
+    //             {
+    //                 sumInts_R = sumInts;
+    //                 limit_R = i;
+    //                 break;
+    //             }
+    //         }
+    //         assert(limit_R - limit_L >= 4);
+    //         // if there is an even number of points, the difference of the limits is uneven
+    //         if (((limit_R - limit_L) % 2) == 1)
+    //         {
+    //             // adjust the window while minimising the intensity loss
+    //             if (sumInts_L > sumInts_R)
+    //             {
+    //                 limit_R -= 1;
+    //             }
+    //             else
+    //             {
+    //                 limit_L += 1;
+    //             }
+    //         }
+    //         assert(limit_R - limit_L >= 4);
 
-        const size_t scale = (limit_R - limit_L + 1) / 2; // +1 since limits are indices
-        // produce the intensity vector (without zeroes) while keeping track of which rows to interpolate
-        // std::vector<size_t> interpolate;
-        std::vector<float> combined_logInt((2 * scale + 1) * k, 0);
-        // interpolate.reserve(combined_logInt.size() / 10);
-        size_t logIdx = 0;
-        for (size_t i = 0; i < k; i++)
-        {
-            ReducedEIC current = (*fitRegion)[i];
-            auto coeffs = peaks->at(i);
-#define INTERPOLATE_L(x) (coeffs.b0_L + coeffs.b1_L * x + coeffs.b2 * x * x) // no need for exp since we work with the log for regressions anyway
-#define INTERPOLATE_R(x) (coeffs.b0_R + coeffs.b1_R * x + coeffs.b3 * x * x)
-            for (size_t j = limit_L; j < limit_R + 1; j++)
-            {
-                combined_logInt[logIdx] = current.intensity_log[j];
-                if (current.intensity_log[j] == 0)
-                {
-                    float rt = current.RTs[j];
-                    combined_logInt[logIdx] = rt < coeffs.RT_switch ? INTERPOLATE_L(rt) : INTERPOLATE_R(rt);
-                    // interpolate.push_back(logIdx);
-                }
-                logIdx++;
-            }
-#undef INTERPOLATE_L
-#undef INTERPOLATE_R
-        }
-        // assert(combined_logInt.back() != 0); // this is possible, although hopefully unlikely
-        auto matrix = designMat(scale, k);
-        assert(matrix[0].size() == combined_logInt.size());
-        // set all entries of the matrix were no intensity values exist to 0
-        // for (size_t i = 0; i < matrix.size(); i++)
-        // {
-        //     for (size_t j = 0; j < interpolate.size(); j++)
-        //     {
-        //         matrix[i][j] = 0;
-        //     }
-        // }
-    }
+    //         const size_t scale = (limit_R - limit_L + 1) / 2; // +1 since limits are indices
+    //         // produce the intensity vector (without zeroes) while keeping track of which rows to interpolate
+    //         // std::vector<size_t> interpolate;
+    //         std::vector<float> combined_logInt((2 * scale + 1) * k, 0);
+    //         // interpolate.reserve(combined_logInt.size() / 10);
+    //         size_t logIdx = 0;
+    //         for (size_t i = 0; i < k; i++)
+    //         {
+    //             ReducedEIC current = (*fitRegion)[i];
+    //             auto coeffs = peaks->at(i);
+    // #define INTERPOLATE_L(x) (coeffs.b0_L + coeffs.b1_L * x + coeffs.b2 * x * x) // no need for exp since we work with the log for regressions anyway
+    // #define INTERPOLATE_R(x) (coeffs.b0_R + coeffs.b1_R * x + coeffs.b3 * x * x)
+    //             for (size_t j = limit_L; j < limit_R + 1; j++)
+    //             {
+    //                 combined_logInt[logIdx] = current.intensity_log[j];
+    //                 if (current.intensity_log[j] == 0)
+    //                 {
+    //                     float rt = current.RTs[j];
+    //                     combined_logInt[logIdx] = rt < coeffs.RT_switch ? INTERPOLATE_L(rt) : INTERPOLATE_R(rt);
+    //                     // interpolate.push_back(logIdx);
+    //                 }
+    //                 logIdx++;
+    //             }
+    // #undef INTERPOLATE_L
+    // #undef INTERPOLATE_R
+    //         }
+    //         // assert(combined_logInt.back() != 0); // this is possible, although hopefully unlikely
+    //         auto matrix = designMat(scale, k);
+    //         assert(matrix[0].size() == combined_logInt.size());
+    //         // set all entries of the matrix were no intensity values exist to 0
+    //         // for (size_t i = 0; i < matrix.size(); i++)
+    //         // {
+    //         //     for (size_t j = 0; j < interpolate.size(); j++)
+    //         //     {
+    //         //         matrix[i][j] = 0;
+    //         //     }
+    //         // }
+    //     }
 
     bool preferMerge(float rss_complex, float rss_simple, size_t n_total, size_t p_complex, size_t p_simple)
     {

@@ -10,26 +10,19 @@
 namespace qAlgorithms
 {
     // main function to execute a componentiation step on data
-    void findComponents(const std::vector<FeaturePeak> *peaks, const std::vector<EIC> *bins);
+    void findComponents(const std::vector<FeaturePeak> *peaks,
+                        const std::vector<EIC> *bins,
+                        const std::vector<float> *convertRT); // this is needed to perform interpolation at the same RT as in qPeaks
 
-    struct ComponentGroup
+    struct PreGrouping
     {
         std::vector<MovedRegression> features; // keep this sorted by intensity
         std::vector<float> shapeScores;        // tanimoto scores on a per-feature basis. Access pattern [idx1] * number of features + [idx2]
+        std::vector<EIC *> EICs;
 
         // add a sample ID thing here eventually
         float score(size_t idx1, size_t idx2);
         void calcScores();
-    };
-
-    struct ReducedEIC
-    {
-        // the reduced EIC only contains those centroids relevant for a feature (equivalent to featCens result file)
-        std::vector<float> RTs;
-        std::vector<float> intensity;
-        std::vector<float> intensity_log;
-        std::vector<size_t> scanNo;
-        // consider recalculating mz @todo
     };
 
     struct GroupLims
@@ -55,7 +48,7 @@ namespace qAlgorithms
     std::vector<GroupLims> preGroup(const std::vector<FeaturePeak> *peaks);
 
     // determine the order of comparisons based on the tanimoto score
-    std::vector<size_t> getCompareOrder(const ComponentGroup *group);
+    std::vector<size_t> getCompareOrder(const PreGrouping *group);
 
     // This function modifies the coefficients of a regression so that it describes a peak with the apex at
     // x = RT of the feature and the height 1. Features are manipulated this way to allow a shape comparison
@@ -73,9 +66,33 @@ namespace qAlgorithms
 
     void calcRSS(MovedRegression *reg, const EIC *bin);
 
-    ReducedEIC harmoniseEICs(const EIC *bin, const size_t minScan, const size_t maxScan, const size_t minIdx, const size_t maxIdx);
+    struct ReducedEIC
+    {
+        // the reduced EIC only contains those centroids relevant for a feature (equivalent to featCens result file)
+        // points in the EIC are already interpolated using the origin feature
+        // std::vector<float> RTs; // retention times are determined first so all points are equal
+        std::vector<float> intensity;
+        std::vector<float> intensity_log;
+        std::vector<size_t> scanNo;
+        std::vector<float> RSS_cum; // cumulative RSS - this also serves as the indicator for interpolated / not interpolated
+        size_t feature_ID;
+        size_t bin_ID;
+        // these two are the limits of the feature the given EIC belonged to
+        unsigned int featLim_L;
+        unsigned int featLim_R;
+    };
 
-    std::vector<float> pairwiseRSS(const ComponentGroup *group, const std::vector<ReducedEIC> *points);
+    ReducedEIC harmoniseEIC(const MovedRegression *feature,
+                            const EIC *bin,
+                            const std::vector<float> *RTs,
+                            const unsigned int minScan,
+                            const unsigned int maxScan,
+                            const size_t minIdx,
+                            const size_t maxIdx);
+
+    float logIntAt(const MovedRegression *feature, float RT);
+
+    std::vector<float> pairwiseRSS(const PreGrouping *group, const std::vector<ReducedEIC> *points);
 
     /// @brief Does the combined regression apply to both input regressions?
     /// @param rss_complex sum of the residual sums of squares for the individual models
