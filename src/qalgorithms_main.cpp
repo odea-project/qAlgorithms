@@ -320,7 +320,7 @@ int main(int argc, char *argv[])
 #pragma region "Componentisation"
             timeStart = std::chrono::high_resolution_clock::now();
 
-            findComponents(&peaks, &binnedData);
+            findComponents(&peaks, &binnedData, &convertRT);
             size_t numComponents = 0;
 
             timeEnd = std::chrono::high_resolution_clock::now();
