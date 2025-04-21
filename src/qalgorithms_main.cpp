@@ -131,7 +131,7 @@ int main(int argc, char *argv[])
         {
             std::cout << " file ok\n";
         }
-        // @todo find a more elegant solution for polarity switching
+        // @todo find a more elegant solution for polarity switching, this one trips up clang-tidy
         bool oneProcessed = true;
         static bool polarities[2] = {true, false};
         for (bool polarity : polarities)
@@ -165,9 +165,9 @@ int main(int argc, char *argv[])
                 }
                 else
                 {
+                    std::cerr << "error: no centroids were found in the file" << std::endl;
                     exit(101);
                 }
-                std::cerr << "error: no centroids were found in the file";
             }
             oneProcessed = false;
 
