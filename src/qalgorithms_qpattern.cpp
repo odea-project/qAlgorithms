@@ -107,7 +107,7 @@ namespace qAlgorithms
             // first, calculate the pairwise RSS in a sparse matrix. The RSS is set to INFINITY if it is worse
             // than the sum of both individual RSS values.
             // size: (x^2 -x) / 2 ; access: x * smaller Idx + larger Idx
-            std::vector<float> pairRSS(groupsize * groupsize - groupsize, -1);
+            std::vector<float> pairRSS((groupsize * groupsize - groupsize) / 2, -1);
             // multi match all pairs
             for (size_t idx_S = 0; idx_S < groupsize - 1; idx_S++)
             {
@@ -119,6 +119,7 @@ namespace qAlgorithms
                     auto EIC_B = eics[idx_L];
                     // pairwise merge to check if two features can be part of the same component
                     float rss_complex = feature_A.RSS + feature_B.RSS;
+                    // @todo consider adding a special case function for
                     float rss_simple = rss_complex * 1.05; // this is just a standin, perform a regression here
                     // we can be certain that the absolute rss is at most identical (for the case where feature_A == feature_B).
                     // this check is also needed since the function we use for the f distribution later exits with error if a
@@ -259,6 +260,308 @@ namespace qAlgorithms
         }
     }
 
+    MultiRegression runningRegression_multi(
+        ReducedEIC *eic,
+        std::vector<MultiRegression> &validRegressions,
+        const size_t maxScale,
+        const size_t numPeaks,
+        const size_t peakFrame)
+    {
+        // regressions for every possible scale and window position
+        const std::vector<MultiRegression> regressions = findCoefficients_multi(&(eic->intensity_log), maxScale, numPeaks, peakFrame);
+        // bookkeeping: which regressions are viable?
+        std::vector<bool> regressionOK(regressions.size(), true);
+
+        // for every multi-regression, reconstruct the normal regression and validate. If any derived regression
+        // is invalid, the multi-regression is also invalid.
+        // we know that the correct interpretation of the component always involves only one regression.
+        // since the merge over scales is required to isolate multiple peaks within the same block from
+        // each other, it would always apply to the special case of all regressions being in the same window here.
+        // this allows us to simplify the program such that the best regression regardless of scale is chosen.
+        // the validateRegressions function does not account for that special case, but only the validation step
+        // is actually required here. as such, this code has been adapted from the implementation in qPeaks.
+
+        // the validation function expects the intensity and degree of freedom data to arrive as a vector
+        // for every singular peak.
+        std::vector<std::vector<bool>> DF_vecs;
+        DF_vecs.reserve(numPeaks);
+        std::vector<std::vector<float>> intensity_vecs;
+        intensity_vecs.reserve(numPeaks);
+        std::vector<std::vector<float>> logInt_vecs;
+        logInt_vecs.reserve(numPeaks);
+
+        for (size_t i = 0; i < numPeaks; i++)
+        {
+            size_t idxBegin = i * peakFrame;
+            size_t idxEnd = (i + 1) * peakFrame;
+            logInt_vecs[i] = std::vector<float>(eic->intensity_log.begin() + idxBegin, eic->intensity_log.begin() + idxEnd);
+            intensity_vecs[i] = std::vector<float>(eic->intensity.begin() + idxBegin, eic->intensity.begin() + idxEnd);
+            DF_vecs[i] = std::vector<bool>(eic->df.begin() + idxBegin, eic->df.begin() + idxEnd);
+        }
+
+        for (size_t multiReg = 0; multiReg < regressions.size(); multiReg++)
+        {
+            // create the set of individual regressions (only one b0 each) and provide the individual
+            // vectors for EIC data, then test the regression for validity
+            bool regValid = true;
+            auto reg = regressions[multiReg];
+            size_t idxRegStart = reg.idxStart;
+            size_t scale = reg.scale;
+            for (size_t i = 0; i < numPeaks; i++)
+            {
+                RegCoeffs coeff{reg.b0_vec[i], reg.b1, reg.b2, reg.b3};
+                size_t idxBegin = i * peakFrame;
+                size_t idxEnd = (i + 1) * peakFrame;
+                RegressionGauss testCase;
+                testCase.newCoeffs = coeff; // @todo do this during initialisation
+
+                size_t df = calcDF(&(DF_vecs[i]), idxRegStart, 2 * scale + idxRegStart);
+                if (df < 5)
+                {
+                    regressionOK[multiReg] = false;
+                    break;
+                }
+                makeValidRegression(&testCase, idxRegStart, scale, &(DF_vecs[i]), &(intensity_vecs[i]), &(logInt_vecs[i]));
+                if (!testCase.isValid)
+                {
+                    regressionOK[multiReg] = false;
+                }
+            }
+        }
+        // now that only regressions which are logically sensible are present, pick the best one
+
+        // validateRegressions(&regressions, intensities, intensities_log, degreesOfFreedom, maxScale, validRegressions);
+
+        // if (validRegressions.size() > 1) // @todo we can probably filter regressions based on MSE at this stage already
+        // {
+        //     // number of competitors is intialised to 0, so no special case for size = 1 needed
+        //     // there can be 0, 1 or more than one regressions in validRegressions
+        //     validRegressions = mergeRegressionsOverScales(validRegressions, intensities);
+        // }
+        return;
+    }
+
+    const auto INV_ARRAY = initialize();
+
+    std::vector<MultiRegression> findCoefficients_multi( // @todo add option for a minimum scale
+        const std::vector<float> *intensity_log,
+        const size_t max_scale, // maximum scale that will be checked. Should generally be limited by peakFrame
+        const size_t numPeaks,  // only > 1 during componentisation (for now? @todo)
+        const size_t peakFrame) // how many points are covered per peak? For single-peak data, this is the length of intensity_log
+    {
+        /*
+  This function performs a convolution with the kernel: (xTx)^-1 xT and the data array: intensity_log.
+  (xTx)^-1 is pre_calculated and stored in the inv_array and contains 7 unique values per scale.
+  xT is the transpose of the design matrix X that looks like this:
+  for scale = 2:
+  xT = | 1  1  1  1  1 |    : all ones
+       |-2 -1  0  1  2 |    : from -scale to scale
+       | 4  1  0  0  0 |    : x^2 values for x < 0
+       | 0  0  0  1  4 |    : x^2 values for x > 0
+
+  It contains one additional row of all ones for every additional peak that is added into the model
+
+  When adding multiple peaks to the regression model, we need to adjust the inverse values.
+  This will change the number of unique values in the inv_values array from 6 to 7.
+  Here we use the inv_array[1] position and shift all values from that point onwards to the right.
+  example for num_peaks = 2:
+  original matrix with the unique values [a, b, c, d, e, f] (six unique values)
+  | a  0  b  b |
+  | 0  c  d -d |
+  | b  d  e  f |
+  | b -d  f  e |
+
+  new matrix with the unique values [A1, A2, B, C, D, E, F] (seven unique values)
+  | A1  A2  0  B  B |
+  | A2  A1  0  B  B |
+  | 0   0   C  D -D |
+  | B   B   D  E  F |
+  | B   B  -D  F  E |
+
+  for num_peaks = 3:
+  new matrix with the unique values [A1, A2, B, C, D, E, F] (the same seven unique values)
+  | A1  A2  A2  0  B  B |
+  | A2  A1  A2  0  B  B |
+  | A2  A2  A1  0  B  B |
+  | 0   0   0   C  D -D |
+  | B   B   B   D  E  F |
+  | B   B   B  -D  F  E |
+
+  Note that no more than seven different values are needed per scale.
+
+  In general, we have two moving actions:
+  1) step right through the intensity_log and calculate the convolution with the kernel
+  2) expand the kernel to the left and right of the intensity_log (higher scale)
+
+  The workflow is organized in nested loops:
+  1) outer loop: move along the intensity_log AND calculate the convolution with the scale=2 kernel
+  2) inner loop: expand the kernel to the left and right of the intensity_log (higher scale)
+
+  The pattern used for both loops looks like:
+  e.g. for n(y) = 16
+  outer loop: i = 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11
+  inner loop: range from:
+   for i=0: 3 to 3 => i.e. loop is not executed
+   for i=1: 3 to 4 => i.e. loop is executed once for scale=3
+   for i=2: 3 to 5 => i.e. loop is executed twice for scale=3,4
+   for i=3: 3 to 6 => i.e. loop is executed three times for scale=3,4,5
+   for i=4: 3 to 7 => i.e. loop is executed four times for scale=3,4,5,6
+   for i=5: 3 to 8 => i.e. loop is executed five times for scale=3,4,5,6,7
+   for i=6: 3 to 8 => i.e. loop is executed five times for scale=3,4,5,6,7
+   for i=7: 3 to 7 => i.e. loop is executed four times for scale=3,4,5,6
+   for i=8: 3 to 6 => i.e. loop is executed three times for scale=3,4,5
+   for i=9: 3 to 5 => i.e. loop is executed twice for scale=3,4
+   for i=10: 3 to 4 => i.e. loop is executed once for scale=3
+   for i=11: 3 to 3 => i.e. loop is not executed
+   */
+        assert(max_scale > 1);
+        // num_steps: int = len(intensity_log) - 2 * scale_min # number of steps in the intensity_log
+        const size_t minScale = 2;
+        const size_t steps = intensity_log->size() - 2 * minScale; // iteration number at scale 2
+
+        std::vector<float> y_array_sum = *intensity_log; // sum of each index across multiple dimensions of intensity_log
+        // only relevant for more than one peak
+
+        //   this vector is for the inner loop and looks like:
+        //   [scale_min, scale_min +1 , .... scale_max, ... scale_min +1, scale_min]
+        //   length of vector: num_steps
+        // the vector starts and ends with minScale and increases by one towards the middle until it reaches the scale value
+        std::vector<size_t> maxInnerLoop(steps, max_scale);
+        for (size_t i = 0; i + 2 < max_scale; i++) // +2 since smallest scale is 2
+        {
+            // @todo somewhat inefficient, design better iteration scheme
+            size_t newVal = i + 2;
+            maxInnerLoop[i] = newVal;
+            size_t backIdx = maxInnerLoop.size() - i - 1;
+            maxInnerLoop[backIdx] = newVal;
+        }
+
+        size_t iterationCount = std::accumulate(maxInnerLoop.begin(), maxInnerLoop.end(), 0) - maxInnerLoop.size(); // no range check necessary since every entry > 1
+
+        // these arrays contain all coefficients for every loop iteration
+        std::vector<long double> beta_0(iterationCount * numPeaks, NAN); // one per iteration per peak
+
+        // one per iteration
+        std::vector<long double> beta_1(iterationCount, NAN);
+        std::vector<long double> beta_2(iterationCount, NAN);
+        std::vector<long double> beta_3(iterationCount, NAN);
+
+        // the product sums are the rows of the design matrix (xT) * intensity_log[i:i+4] (dot product)
+        // The first n entries are contained in the b0 vector, one for each peak the regression is performed
+        // over.
+        std::vector<long double> tmp_product_sum_b0(numPeaks, NAN); // number of elements = number of peaks, always 0 for now
+        long double tmp_product_sum_b1;
+        long double tmp_product_sum_b2;
+        long double tmp_product_sum_b3;
+
+        long double sum_tmp_product_sum_b0 = 0; // sum of all elements in the tmp_product_sum_b0 vector
+
+        size_t k = 0;
+        for (size_t i = 0; i < steps; i++)
+        {
+
+            // move along the intensity_log (outer loop)
+            // calculate the convolution with the kernel of the lowest scale (= 2), i.e. xT * intensity_log[i:i+4]
+            // tmp_product_sum_b0 = intensity_log[i:i+5].sum(axis=0) // numPeaks rows of xT * intensity_log[i:i+4]
+            for (size_t b0_elems = 0; b0_elems < numPeaks; b0_elems++)
+            {
+                size_t x = b0_elems * peakFrame + i;
+                tmp_product_sum_b0[b0_elems] = intensity_log->at(x) + intensity_log->at(x + 1) +
+                                               intensity_log->at(x + 2) + intensity_log->at(x + 3) +
+                                               intensity_log->at(x + 4); // b0 = 1 for all elements
+            }
+
+            tmp_product_sum_b1 = 2 * (y_array_sum[i + 4] - y_array_sum[i]) + y_array_sum[i + 3] - y_array_sum[i + 1];
+            tmp_product_sum_b2 = 4 * y_array_sum[i] + y_array_sum[i + 1];
+            tmp_product_sum_b3 = 4 * y_array_sum[i + 4] + y_array_sum[i + 3];
+
+            sum_tmp_product_sum_b0 = std::accumulate(tmp_product_sum_b0.begin(), tmp_product_sum_b0.end(), 0.0);
+
+            // A1 is not modified if numPeaks is 1. It is, however, modified by -2 * b / numPeaks and not just /numPeaks if numPeaks > 1
+            // use [12 + ...] since the array is constructed for the accession arry[scale * 6 + (0:5)]
+            const long double S2_A1 = numPeaks == 1 ? INV_ARRAY[12 + 0] : INV_ARRAY[12 + 0] - 2 * INV_ARRAY[12 + 1] / numPeaks;
+            // A2 is only defined for numPeaks > 1, set it to 0 to avoid conditional in loops
+            // @todo replace the array with a struct and an accessor function
+            const long double S2_A2 = numPeaks == 1 ? 0 : -2 * INV_ARRAY[12 + 1] / numPeaks;
+            const long double S2_B = INV_ARRAY[12 + 1] / numPeaks;
+            const long double S2_C = INV_ARRAY[12 + 2] / numPeaks;
+            const long double S2_D = INV_ARRAY[12 + 3] / numPeaks;
+            const long double S2_E = INV_ARRAY[12 + 4] / numPeaks;
+            const long double S2_F = INV_ARRAY[12 + 5] / numPeaks;
+
+            // this line is: a*t_i + b * sum(t without i)
+            // inv_array starts at scale = 2
+            for (size_t peak = 0; peak < numPeaks; peak++)
+            {
+                beta_0[k + peak * peakFrame] = S2_A2 * sum_tmp_product_sum_b0 + (S2_A1 - S2_A2) * tmp_product_sum_b0[peak];
+                // // this line adds b2 b3 information to the beta_0[k] value
+                beta_0[k + peak * peakFrame] += S2_B * (tmp_product_sum_b2 + tmp_product_sum_b3);
+            }
+
+            beta_1[k] = S2_C * tmp_product_sum_b1 + S2_D * (tmp_product_sum_b2 - tmp_product_sum_b3);
+            beta_2[k] = S2_B * sum_tmp_product_sum_b0 + S2_D * tmp_product_sum_b1 + S2_E * tmp_product_sum_b2 + S2_F * tmp_product_sum_b3;
+            beta_3[k] = S2_B * sum_tmp_product_sum_b0 - S2_D * tmp_product_sum_b1 + S2_F * tmp_product_sum_b2 + S2_E * tmp_product_sum_b3;
+
+            k += 1;       // update index for the productsums array
+            size_t u = 1; // u is the expansion increment
+            for (size_t scale = 3; scale < maxInnerLoop[i] + 1; scale++)
+            { // minimum scale is 2. so we start with scale + 1 = 3 in the inner loop
+                size_t scale_sqr = scale * scale;
+                // expand the kernel to the left and right of the intensity_log.
+                sum_tmp_product_sum_b0 = 0;
+                for (size_t peak = 0; peak < numPeaks; peak++)
+                {
+                    tmp_product_sum_b0[peak] += intensity_log->at(i - u) + intensity_log->at(i + 4 + u);
+                    sum_tmp_product_sum_b0 += tmp_product_sum_b0[peak];
+                }
+
+                tmp_product_sum_b1 += scale * (y_array_sum[i + 4 + u] - y_array_sum[i - u]);
+                tmp_product_sum_b2 += scale_sqr * y_array_sum[i - u];
+                tmp_product_sum_b3 += scale_sqr * y_array_sum[i + 4 + u];
+
+                // A1 is not modified if numPeaks is 1. It is, however, modified by -2 * b / numPeaks and not just /numPeaks if numPeaks > 1
+                const long double inv_A1 = numPeaks == 1 ? INV_ARRAY[12 + u * 6 + 0] : INV_ARRAY[12 + u * 6 + 0] - 2 * INV_ARRAY[12 + u * 6 + 1] / numPeaks;
+                // A2 is only defined for numPeaks > 1, set it to 0 to avoid conditional in loops
+                const long double inv_A2 = numPeaks == 1 ? 0 : -2 * INV_ARRAY[12 + u * 6 + 1] / numPeaks;
+                const long double inv_B = INV_ARRAY[12 + u * 6 + 1] / numPeaks;
+                const long double inv_C = INV_ARRAY[12 + u * 6 + 2] / numPeaks;
+                const long double inv_D = INV_ARRAY[12 + u * 6 + 3] / numPeaks;
+                const long double inv_E = INV_ARRAY[12 + u * 6 + 4] / numPeaks;
+                const long double inv_F = INV_ARRAY[12 + u * 6 + 5] / numPeaks;
+
+                for (size_t peak = 0; peak < numPeaks; peak++)
+                {
+                    beta_0[k + peak * peakFrame] = inv_A2 * sum_tmp_product_sum_b0 + (inv_A1 - inv_A2) * tmp_product_sum_b0[peak];
+                    // // this line adds b2 b3 information to the beta_0[k] value
+                    beta_0[k + peak * peakFrame] += inv_B * (tmp_product_sum_b2 + tmp_product_sum_b3);
+                }
+
+                beta_1[k] = inv_C * tmp_product_sum_b1 + inv_D * (tmp_product_sum_b2 - tmp_product_sum_b3);
+                beta_2[k] = inv_B * sum_tmp_product_sum_b0 + inv_D * tmp_product_sum_b1 + inv_E * tmp_product_sum_b2 + inv_F * tmp_product_sum_b3;
+                beta_3[k] = inv_B * sum_tmp_product_sum_b0 - inv_D * tmp_product_sum_b1 + inv_F * tmp_product_sum_b2 + inv_E * tmp_product_sum_b3;
+
+                u += 1; // update expansion increment
+                k += 1; // update index for the productsums array
+            }
+        }
+        assert(numPeaks == 1);
+        if (numPeaks == 1)
+        {
+            assert(beta_0.size() == beta_1.size());
+        }
+        std::vector<RegCoeffs> coeffs;
+        coeffs.reserve(beta_1.size());
+        for (size_t i = 0; i < beta_1.size(); i++)
+        {
+            coeffs.push_back({float(beta_0[i]), float(beta_1[i]), float(beta_2[i]), float(beta_3[i])});
+        }
+
+        // this is not needed since we do not need to distinguish between regressions at the same / different scales anymore
+        // coeffs = restoreShape(&coeffs, &maxInnerLoop, intensity_log->size(), max_scale);
+
+        return coeffs;
+    }
+
     ReducedEIC harmoniseEIC(const MovedRegression *feature,
                             const EIC *bin,
                             const std::vector<float> *RTs,
@@ -286,12 +589,13 @@ namespace qAlgorithms
 
         ReducedEIC reduced{
             // std::vector<float>(length, 0),  // RT
-            std::vector<float>(length, 0),  // intensity
-            std::vector<float>(length, 0),  // log intensity
-            std::vector<size_t>(length, 0), // scan number
-            std::vector<float>(length, 0),  // RSS_cum
-            0,                              // feature ID
-            0,                              // bin ID
+            std::vector<float>(length, 0),   // intensity
+            std::vector<float>(length, 0),   // log intensity
+            std::vector<size_t>(length, 0),  // scan number
+            std::vector<float>(length, 0),   // RSS_cum
+            std::vector<bool>(length, true), // degrees of freedom
+            0,                               // feature ID
+            0,                               // bin ID
             // these limits are relating to the fully interpolated EIC
             bin->scanNumbers[minIdx] - minScan,
             bin->scanNumbers[maxIdx] - minScan};
@@ -354,6 +658,7 @@ namespace qAlgorithms
             if (reduced.intensity_log[i] == 0)
             { // value needs to be interpolated
                 reduced.intensity_log[i] = predictedInt;
+                reduced.df[i] = false;
             }
             else
             {
