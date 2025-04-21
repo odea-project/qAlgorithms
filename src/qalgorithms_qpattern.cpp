@@ -88,7 +88,7 @@ namespace qAlgorithms
             }
 
             std::vector<ReducedEIC> eics; // @todo the maximum size of a reduced EIC is the global maxscale + 1!
-            std::vector<MovedRegression> *selectPeaks;
+            // std::vector<MovedRegression> *selectPeaks;
             for (size_t j = 0; j < groupsize; j++)
             {
                 const auto feature = newComponent.features[j];
@@ -131,7 +131,7 @@ namespace qAlgorithms
                     size_t params_combo = 5; // shared b1, b2, b3, two b0
 
                     bool merge = preferMerge(rss_complex, rss_simple, numPoints, params_both, params_combo);
-                    size_t access = idx_S * groupsize + idx_L; // position in pairRSS
+                    size_t access = idx_S * groupsize + idx_L; // position in pairRSS @todo wrong access pattern!
                     pairRSS[access] = merge ? rss_simple : INFINITY;
                 }
             }
@@ -166,7 +166,7 @@ namespace qAlgorithms
                 }
             }
             assert(componentGroup > -1);
-            assert(componentGroup <= groupsize);
+            assert((size_t(componentGroup)) <= groupsize);
         }
         std::cout << std::endl;
         std::cout << "1: " << VALLEYS_1 << " ; other: " << VALLEYS_other << "\n"; // at least for one dataset, features with a valley point are much more likely
@@ -209,14 +209,14 @@ namespace qAlgorithms
     void mergeComponents(std::vector<CompAssignment> *groupings, size_t *compCount, int ID_A, int ID_B)
     {
         assert(ID_A != ID_B);
-        assert(*compCount >= ID_A && *compCount >= ID_B);
+        assert(*compCount >= size_t(ID_A) && *compCount >= size_t(ID_B));
         int ID_new = std::min(ID_A, ID_B);
         int ID_max = std::max(ID_A, ID_B);
         compCount -= 1;
         for (size_t i = 0; i < groupings->size(); i++)
         {
             int ID_curr = groupings->at(i).component;
-            assert(*compCount >= ID_curr - 1);
+            assert(int(*compCount) >= ID_curr - 1);
             if ((ID_curr == ID_A) || (ID_curr == ID_B))
             {
                 groupings->at(i).component = ID_new;
@@ -271,6 +271,8 @@ namespace qAlgorithms
         const std::vector<MultiRegression> regressions = findCoefficients_multi(&(eic->intensity_log), maxScale, numPeaks, peakFrame);
         // bookkeeping: which regressions are viable?
         std::vector<bool> regressionOK(regressions.size(), true);
+        // used to decide on the best overall regression
+        std::vector<double> sum_MSE(regressions.size(), 0);
 
         // for every multi-regression, reconstruct the normal regression and validate. If any derived regression
         // is invalid, the multi-regression is also invalid.
@@ -303,15 +305,14 @@ namespace qAlgorithms
         {
             // create the set of individual regressions (only one b0 each) and provide the individual
             // vectors for EIC data, then test the regression for validity
-            bool regValid = true;
             auto reg = regressions[multiReg];
             size_t idxRegStart = reg.idxStart;
             size_t scale = reg.scale;
             for (size_t i = 0; i < numPeaks; i++)
             {
                 RegCoeffs coeff{reg.b0_vec[i], reg.b1, reg.b2, reg.b3};
-                size_t idxBegin = i * peakFrame;
-                size_t idxEnd = (i + 1) * peakFrame;
+                // size_t idxBegin = i * peakFrame;
+                // size_t idxEnd = (i + 1) * peakFrame;
                 RegressionGauss testCase;
                 testCase.newCoeffs = coeff; // @todo do this during initialisation
 
@@ -325,10 +326,32 @@ namespace qAlgorithms
                 if (!testCase.isValid)
                 {
                     regressionOK[multiReg] = false;
+                    break;
                 }
+                // now that only regressions which are logically sensible are present, pick the best one. This uses the sum
+                // of all mse values for the given regression, similar to qPeaks. @todo should we also adjust the limits to
+                // cover the entire array here?
+                double mse = calcSSE_exp(coeff,
+                                         &(intensity_vecs[i]),
+                                         testCase.left_limit,
+                                         testCase.right_limit,
+                                         testCase.index_x0);
+                sum_MSE[multiReg] += mse / (testCase.df - 4);
             }
         }
-        // now that only regressions which are logically sensible are present, pick the best one
+        // decide on the best regression @todo do some statistics regarding how different mse values actually are, then remove
+        // the storage vector and replace it with a current minimum + index tracker
+        double min_MSE = INFINITY;
+        int minIdx = -1;
+        for (size_t i = 0; i < regressions.size(); i++)
+        {
+            if (min_MSE > sum_MSE[i])
+            {
+                min_MSE = sum_MSE[i];
+                minIdx = i;
+            }
+        }
+        assert(minIdx >= 0);
 
         // validateRegressions(&regressions, intensities, intensities_log, degreesOfFreedom, maxScale, validRegressions);
 
@@ -338,10 +361,10 @@ namespace qAlgorithms
         //     // there can be 0, 1 or more than one regressions in validRegressions
         //     validRegressions = mergeRegressionsOverScales(validRegressions, intensities);
         // }
-        return;
+        return regressions[minIdx];
     }
 
-    const auto INV_ARRAY = initialize();
+    constexpr auto INV_ARRAY = initialize();
 
     std::vector<MultiRegression> findCoefficients_multi( // @todo add option for a minimum scale
         const std::vector<float> *intensity_log,
@@ -415,7 +438,7 @@ namespace qAlgorithms
    for i=11: 3 to 3 => i.e. loop is not executed
    */
         assert(max_scale > 1);
-        // num_steps: int = len(intensity_log) - 2 * scale_min # number of steps in the intensity_log
+        assert(numPeaks > 1); // this is necessary since the A1 INV_ARRAY value is
         const size_t minScale = 2;
         const size_t steps = intensity_log->size() - 2 * minScale; // iteration number at scale 2
 
@@ -438,18 +461,23 @@ namespace qAlgorithms
 
         size_t iterationCount = std::accumulate(maxInnerLoop.begin(), maxInnerLoop.end(), 0) - maxInnerLoop.size(); // no range check necessary since every entry > 1
 
+        constexpr MultiRegression empty{std::vector<float>{}, 0, 0, NAN, NAN, NAN, NAN};
+        MultiRegression localEmpty = empty;
+        localEmpty.b0_vec.reserve(numPeaks);
+        std::vector<MultiRegression> coeffs(iterationCount, localEmpty);
+
         // these arrays contain all coefficients for every loop iteration
         std::vector<long double> beta_0(iterationCount * numPeaks, NAN); // one per iteration per peak
 
         // one per iteration
-        std::vector<long double> beta_1(iterationCount, NAN);
-        std::vector<long double> beta_2(iterationCount, NAN);
-        std::vector<long double> beta_3(iterationCount, NAN);
+        // std::vector<long double> beta_1(iterationCount, NAN);
+        // std::vector<long double> beta_2(iterationCount, NAN);
+        // std::vector<long double> beta_3(iterationCount, NAN);
 
         // the product sums are the rows of the design matrix (xT) * intensity_log[i:i+4] (dot product)
         // The first n entries are contained in the b0 vector, one for each peak the regression is performed
         // over.
-        std::vector<long double> tmp_product_sum_b0(numPeaks, NAN); // number of elements = number of peaks, always 0 for now
+        std::vector<long double> tmp_product_sum_b0(numPeaks, NAN); // one fully separate b0 per peak
         long double tmp_product_sum_b1;
         long double tmp_product_sum_b2;
         long double tmp_product_sum_b3;
@@ -479,10 +507,10 @@ namespace qAlgorithms
 
             // A1 is not modified if numPeaks is 1. It is, however, modified by -2 * b / numPeaks and not just /numPeaks if numPeaks > 1
             // use [12 + ...] since the array is constructed for the accession arry[scale * 6 + (0:5)]
-            const long double S2_A1 = numPeaks == 1 ? INV_ARRAY[12 + 0] : INV_ARRAY[12 + 0] - 2 * INV_ARRAY[12 + 1] / numPeaks;
+            const long double S2_A1 = INV_ARRAY[12 + 0] - 2 * INV_ARRAY[12 + 1] / numPeaks;
             // A2 is only defined for numPeaks > 1, set it to 0 to avoid conditional in loops
             // @todo replace the array with a struct and an accessor function
-            const long double S2_A2 = numPeaks == 1 ? 0 : -2 * INV_ARRAY[12 + 1] / numPeaks;
+            const long double S2_A2 = -2 * INV_ARRAY[12 + 1] / numPeaks;
             const long double S2_B = INV_ARRAY[12 + 1] / numPeaks;
             const long double S2_C = INV_ARRAY[12 + 2] / numPeaks;
             const long double S2_D = INV_ARRAY[12 + 3] / numPeaks;
@@ -493,14 +521,13 @@ namespace qAlgorithms
             // inv_array starts at scale = 2
             for (size_t peak = 0; peak < numPeaks; peak++)
             {
-                beta_0[k + peak * peakFrame] = S2_A2 * sum_tmp_product_sum_b0 + (S2_A1 - S2_A2) * tmp_product_sum_b0[peak];
-                // // this line adds b2 b3 information to the beta_0[k] value
-                beta_0[k + peak * peakFrame] += S2_B * (tmp_product_sum_b2 + tmp_product_sum_b3);
+                coeffs[k].b0_vec[peak] = S2_A2 * sum_tmp_product_sum_b0 + (S2_A1 - S2_A2) * tmp_product_sum_b0[peak] +
+                                         S2_B * (tmp_product_sum_b2 + tmp_product_sum_b3);
             }
 
-            beta_1[k] = S2_C * tmp_product_sum_b1 + S2_D * (tmp_product_sum_b2 - tmp_product_sum_b3);
-            beta_2[k] = S2_B * sum_tmp_product_sum_b0 + S2_D * tmp_product_sum_b1 + S2_E * tmp_product_sum_b2 + S2_F * tmp_product_sum_b3;
-            beta_3[k] = S2_B * sum_tmp_product_sum_b0 - S2_D * tmp_product_sum_b1 + S2_F * tmp_product_sum_b2 + S2_E * tmp_product_sum_b3;
+            coeffs[k].b1 = S2_C * tmp_product_sum_b1 + S2_D * (tmp_product_sum_b2 - tmp_product_sum_b3);
+            coeffs[k].b2 = S2_B * sum_tmp_product_sum_b0 + S2_D * tmp_product_sum_b1 + S2_E * tmp_product_sum_b2 + S2_F * tmp_product_sum_b3;
+            coeffs[k].b3 = S2_B * sum_tmp_product_sum_b0 - S2_D * tmp_product_sum_b1 + S2_F * tmp_product_sum_b2 + S2_E * tmp_product_sum_b3;
 
             k += 1;       // update index for the productsums array
             size_t u = 1; // u is the expansion increment
@@ -531,33 +558,18 @@ namespace qAlgorithms
 
                 for (size_t peak = 0; peak < numPeaks; peak++)
                 {
-                    beta_0[k + peak * peakFrame] = inv_A2 * sum_tmp_product_sum_b0 + (inv_A1 - inv_A2) * tmp_product_sum_b0[peak];
-                    // // this line adds b2 b3 information to the beta_0[k] value
-                    beta_0[k + peak * peakFrame] += inv_B * (tmp_product_sum_b2 + tmp_product_sum_b3);
+                    coeffs[k].b0_vec[peak] = inv_A2 * sum_tmp_product_sum_b0 + (inv_A1 - inv_A2) * tmp_product_sum_b0[peak] +
+                                             inv_B * (tmp_product_sum_b2 + tmp_product_sum_b3);
                 }
 
-                beta_1[k] = inv_C * tmp_product_sum_b1 + inv_D * (tmp_product_sum_b2 - tmp_product_sum_b3);
-                beta_2[k] = inv_B * sum_tmp_product_sum_b0 + inv_D * tmp_product_sum_b1 + inv_E * tmp_product_sum_b2 + inv_F * tmp_product_sum_b3;
-                beta_3[k] = inv_B * sum_tmp_product_sum_b0 - inv_D * tmp_product_sum_b1 + inv_F * tmp_product_sum_b2 + inv_E * tmp_product_sum_b3;
+                coeffs[k].b1 = inv_C * tmp_product_sum_b1 + inv_D * (tmp_product_sum_b2 - tmp_product_sum_b3);
+                coeffs[k].b2 = inv_B * sum_tmp_product_sum_b0 + inv_D * tmp_product_sum_b1 + inv_E * tmp_product_sum_b2 + inv_F * tmp_product_sum_b3;
+                coeffs[k].b3 = inv_B * sum_tmp_product_sum_b0 - inv_D * tmp_product_sum_b1 + inv_F * tmp_product_sum_b2 + inv_E * tmp_product_sum_b3;
 
                 u += 1; // update expansion increment
                 k += 1; // update index for the productsums array
             }
         }
-        assert(numPeaks == 1);
-        if (numPeaks == 1)
-        {
-            assert(beta_0.size() == beta_1.size());
-        }
-        std::vector<RegCoeffs> coeffs;
-        coeffs.reserve(beta_1.size());
-        for (size_t i = 0; i < beta_1.size(); i++)
-        {
-            coeffs.push_back({float(beta_0[i]), float(beta_1[i]), float(beta_2[i]), float(beta_3[i])});
-        }
-
-        // this is not needed since we do not need to distinguish between regressions at the same / different scales anymore
-        // coeffs = restoreShape(&coeffs, &maxInnerLoop, intensity_log->size(), max_scale);
 
         return coeffs;
     }
@@ -658,6 +670,7 @@ namespace qAlgorithms
             if (reduced.intensity_log[i] == 0)
             { // value needs to be interpolated
                 reduced.intensity_log[i] = predictedInt;
+                reduced.intensity[i] = std::exp(predictedInt);
                 reduced.df[i] = false;
             }
             else
@@ -1141,6 +1154,7 @@ namespace qAlgorithms
                 elements[scanIdx][i] = area[j];
             }
         }
+        return IntensityMatrix{}; // @todo remove this entire function
     }
 
     std::vector<std::vector<float>> designMat(int scale, size_t k) // , const std::vector<size_t> *eliminate

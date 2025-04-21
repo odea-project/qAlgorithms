@@ -13,7 +13,6 @@
 
 namespace qAlgorithms
 {
-    constexpr std::array<float, MAXSCALE * 6> initialize();
 
     std::vector<RegCoeffs> findCoefficients_multi_obsolete(
         const std::vector<float> *intensity_log,
@@ -244,6 +243,61 @@ namespace qAlgorithms
                                         const std::vector<float> *values,
                                         size_t left_limit,
                                         size_t right_limit);
+
+#define MAXSCALE 64
+
+    constexpr std::array<float, MAXSCALE * 6> initialize()
+    { // array to store the 6 unique values of the inverse matrix for each scale
+        std::array<float, MAXSCALE * 6> invArray;
+        // init invArray
+        // XtX = transposed(Matrix X ) * Matrix X
+        // XtX_xy: x = row number; y = column number
+        float XtX_00 = 1.f;
+        float XtX_02 = 0.f;
+        float XtX_11 = 0.f;
+        float XtX_12 = 0.f;
+        float XtX_13 = 0.f;
+        float XtX_22 = 0.f;
+        for (int i = 1; i < MAXSCALE; ++i)
+        {
+            XtX_00 += 2.f;
+            XtX_02 += i * i;
+            XtX_11 = XtX_02 * 2.f;
+            XtX_13 += i * i * i;
+            XtX_12 = -XtX_13;
+            XtX_22 += i * i * i * i;
+
+            // decomposition matrix L, see https://en.wikipedia.org/wiki/Cholesky_decomposition
+            float L_00 = std::sqrt(XtX_00);
+            float L_11 = std::sqrt(XtX_11);
+            float L_20 = XtX_02 / L_00;
+            float L_21 = XtX_12 / L_11;
+            float L_20sq = L_20 * L_20;
+            float L_21sq = L_21 * L_21;
+            float L_22 = std::sqrt(XtX_22 - L_20sq - L_21sq);
+            float L_32 = 1 / L_22 * (-L_20sq + L_21sq);
+            float L_33 = std::sqrt(XtX_22 - L_20sq - L_21sq - L_32 * L_32);
+
+            // inverse of L
+            float inv_00 = 1.f / L_00;
+            float inv_11 = 1.f / L_11;
+            float inv_22 = 1.f / L_22;
+            float inv_33 = 1.f / L_33;
+            float inv_20 = -L_20 * inv_00 / L_22;
+            float inv_30 = -(L_20 * inv_00 + L_32 * inv_20) / L_33;
+            float inv_21 = -L_21 * inv_11 / L_22;
+            float inv_31 = -(-L_21 * inv_11 + L_32 * inv_21) / L_33;
+            float inv_32 = -L_32 * inv_22 / L_33;
+
+            invArray[i * 6 + 0] = inv_00 * inv_00 + inv_20 * inv_20 + inv_30 * inv_30; // cell: 0,0
+            invArray[i * 6 + 1] = inv_22 * inv_20 + inv_32 * inv_30;                   // cell: 0,2
+            invArray[i * 6 + 2] = inv_11 * inv_11 + inv_21 * inv_21 + inv_31 * inv_31; // cell: 1,1
+            invArray[i * 6 + 3] = -inv_31 * inv_33;                                    // cell: 1,2
+            invArray[i * 6 + 4] = inv_33 * inv_33;                                     // cell: 2,2
+            invArray[i * 6 + 5] = inv_32 * inv_33;                                     // cell: 2,3
+        }
+        return invArray;
+    }
 }
 
 #endif
