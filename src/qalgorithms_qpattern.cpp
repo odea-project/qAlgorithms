@@ -20,6 +20,8 @@ int VALLEYS_other = 0;
 
 namespace qAlgorithms
 {
+    size_t realRegressions = 0;
+    size_t failRegressions = 0;
     void findComponents(const std::vector<FeaturePeak> *peaks,
                         const std::vector<EIC> *bins,
                         const std::vector<float> *convertRT)
@@ -109,6 +111,7 @@ namespace qAlgorithms
             // size: (x^2 -x) / 2 ; access: smaller Idx + (larger Idx * (larger Idx - 1)) / 2
             std::vector<float> pairRSS((groupsize * groupsize - groupsize) / 2, -1);
             // multi match all pairs
+
             for (size_t idx_S = 0; idx_S < groupsize - 1; idx_S++)
             {
                 auto feature_A = newComponent.features[idx_S];
@@ -127,6 +130,17 @@ namespace qAlgorithms
                     size_t idxEnd = std::min(EIC_A.featLim_R, EIC_B.featLim_R);
                     std::vector<ReducedEIC> eics{EIC_A, EIC_B};
                     auto mergedEIC = mergeEICs(&eics, &select, idxStart, idxEnd);
+                    size_t span = (idxEnd - idxStart + 1);
+                    size_t maxscale = (span - 1) / 2 > MAXSCALE ? MAXSCALE : (span - 1) / 2;
+                    auto regression = runningRegression_multi(&mergedEIC, maxscale, 2, span);
+                    if (regression.b0_vec.empty())
+                    {
+                        failRegressions++;
+                    }
+                    else
+                    {
+                        realRegressions++;
+                    }
 
                     // @todo consider adding a special case function for a combination of two regressions
                     float rss_simple = rss_complex * 1.05; // this is just a standin, perform a regression here
@@ -180,6 +194,9 @@ namespace qAlgorithms
         std::cout << std::endl;
         std::cout << "1: " << VALLEYS_1 << " ; other: " << VALLEYS_other << "\n"; // at least for one dataset, features with a valley point are much more likely
         // to be groups of size 1 than to be included in larger groups (ca. twice as likely)
+        std::cout << "fails: " << failRegressions << ", real ones: " << realRegressions << "\n";
+        failRegressions = 0;
+        realRegressions = 0;
     }
 
     void compDecision()
@@ -300,7 +317,7 @@ namespace qAlgorithms
     }
 
     MultiRegression runningRegression_multi( // add function that combines multiplr eics and updates the peak count
-        const ReducedEIC *eic,
+        const MergedEIC *eic,
         const size_t maxScale,
         const size_t numPeaks,
         const size_t peakFrame)
@@ -323,12 +340,12 @@ namespace qAlgorithms
 
         // the validation function expects the intensity and degree of freedom data to arrive as a vector
         // for every singular peak.
-        std::vector<std::vector<bool>> DF_vecs;
-        DF_vecs.reserve(numPeaks);
-        std::vector<std::vector<float>> intensity_vecs;
-        intensity_vecs.reserve(numPeaks);
-        std::vector<std::vector<float>> logInt_vecs;
-        logInt_vecs.reserve(numPeaks);
+        std::vector<std::vector<bool>> DF_vecs(numPeaks);
+        // DF_vecs.reserve(numPeaks);
+        std::vector<std::vector<float>> intensity_vecs(numPeaks);
+        // intensity_vecs.reserve(numPeaks);
+        std::vector<std::vector<float>> logInt_vecs(numPeaks);
+        // logInt_vecs.reserve(numPeaks);
 
         for (size_t i = 0; i < numPeaks; i++)
         {
@@ -389,7 +406,12 @@ namespace qAlgorithms
                 minIdx = i;
             }
         }
-        assert(minIdx >= 0);
+        // assert(minIdx >= 0);
+        if (minIdx == -1)
+        {
+            return MultiRegression{}; // this will lead to problems further down @todo
+        }
+
         // @todo calculate the RSS at this point?
         return regressions[minIdx];
     }
@@ -470,10 +492,14 @@ namespace qAlgorithms
         assert(max_scale > 1);
         assert(numPeaks > 1); // this is necessary since the A1 INV_ARRAY value is
         const size_t minScale = 2;
-        const size_t steps = intensity_log->size() - 2 * minScale; // iteration number at scale 2
+        const size_t steps = peakFrame - 2 * minScale; // iteration number at scale 2
 
-        std::vector<float> y_array_sum = *intensity_log; // sum of each index across multiple dimensions of intensity_log
-        // only relevant for more than one peak
+        std::vector<float> y_array_sum(peakFrame, 0);
+        for (size_t i = 0; i < intensity_log->size(); i++)
+        {
+            size_t sumIdx = i % peakFrame;               // modulo means that i = peakframe -> sumIdx = 0
+            y_array_sum[sumIdx] += intensity_log->at(i); // total intensity for the combined regression at each RT step
+        }
 
         //   this vector is for the inner loop and looks like:
         //   [scale_min, scale_min +1 , .... scale_max, ... scale_min +1, scale_min]
@@ -491,9 +517,8 @@ namespace qAlgorithms
 
         size_t iterationCount = std::accumulate(maxInnerLoop.begin(), maxInnerLoop.end(), 0) - maxInnerLoop.size(); // no range check necessary since every entry > 1
 
-        constexpr MultiRegression empty{std::vector<float>{}, 0, 0, NAN, NAN, NAN, NAN};
-        MultiRegression localEmpty = empty;
-        localEmpty.b0_vec.reserve(numPeaks);
+        const std::vector<float> b0_reserve(numPeaks, NAN);
+        MultiRegression localEmpty = {b0_reserve, 0, 0, NAN, NAN, NAN, NAN};
         std::vector<MultiRegression> coeffs(iterationCount, localEmpty);
 
         // these arrays contain all coefficients for every loop iteration
