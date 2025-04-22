@@ -106,7 +106,7 @@ namespace qAlgorithms
 #pragma region "Compare Pairs"
             // first, calculate the pairwise RSS in a sparse matrix. The RSS is set to INFINITY if it is worse
             // than the sum of both individual RSS values.
-            // size: (x^2 -x) / 2 ; access: x * smaller Idx + larger Idx
+            // size: (x^2 -x) / 2 ; access: smaller Idx + (larger Idx * (larger Idx - 1)) / 2
             std::vector<float> pairRSS((groupsize * groupsize - groupsize) / 2, -1);
             // multi match all pairs
             for (size_t idx_S = 0; idx_S < groupsize - 1; idx_S++)
@@ -123,7 +123,10 @@ namespace qAlgorithms
                     // merge the EICs that are relevant to both
                     static const std::vector<size_t> select{0, 1};
                     // uses an anonymous vector to skip the additional variable, this may be a bad idea
-                    auto merge = mergeEICs(&std::vector<ReducedEIC>{EIC_A, EIC_B}, &select);
+                    size_t idxStart = std::min(EIC_A.featLim_L, EIC_B.featLim_L);
+                    size_t idxEnd = std::min(EIC_A.featLim_R, EIC_B.featLim_R);
+                    std::vector<ReducedEIC> eics{EIC_A, EIC_B};
+                    auto mergedEIC = mergeEICs(&eics, &select, idxStart, idxEnd);
 
                     // @todo consider adding a special case function for a combination of two regressions
                     float rss_simple = rss_complex * 1.05; // this is just a standin, perform a regression here
@@ -137,7 +140,7 @@ namespace qAlgorithms
                     size_t params_combo = 5; // shared b1, b2, b3, two b0
 
                     bool merge = preferMerge(rss_complex, rss_simple, numPoints, params_both, params_combo);
-                    size_t access = idx_S * groupsize + idx_L - 1; // -1 since identical indices are never compared
+                    size_t access = idx_S + (idx_L * (idx_L - 1)) / 2;
                     pairRSS[access] = merge ? rss_simple : INFINITY;
                 }
             }
