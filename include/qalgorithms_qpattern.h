@@ -142,7 +142,7 @@ namespace qAlgorithms
         const size_t peakFrame); // how many points are covered per peak? For single-peak data, this is the length of intensity_log
 
     MultiRegression runningRegression_multi(
-        const ReducedEIC *eic,
+        const MergedEIC *eic,
         const size_t maxScale,
         const size_t numPeaks,
         const size_t peakFrame);
