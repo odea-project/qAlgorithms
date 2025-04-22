@@ -83,6 +83,19 @@ namespace qAlgorithms
         unsigned int featLim_R;
     };
 
+    struct MergedEIC
+    {
+        // combined EICs have only one axis for RT / scans, but combine multiple intensity values. This means that the vectors now
+        // differ in size. Since a new merged EIC is not used for further combinations, its limits are automatically that of the
+        // RT dimension. The related bins and features no longer provide anything for the analysis, and are only sensible to include
+        // for traceability if needed @todo check for use case
+        std::vector<float> intensity;
+        std::vector<float> intensity_log;
+        std::vector<size_t> scanNo;
+        std::vector<float> RSS_cum; // cumulative RSS - this also serves as the indicator for interpolated / not interpolated
+        std::vector<bool> df;       // @todo get rid of this somehow
+    };
+
     ReducedEIC harmoniseEIC(const MovedRegression *feature,
                             const EIC *bin,
                             const std::vector<float> *RTs,
@@ -107,7 +120,7 @@ namespace qAlgorithms
 
     struct MovedMultiRegression
     {
-        // this regression is used only to calculate the RSS
+        // this regression is used only to calculate the RSS, make function-local? @todo
         std::vector<float> b0_L_vec;
         std::vector<float> b0_R_vec;
         float b1_L;
@@ -117,17 +130,22 @@ namespace qAlgorithms
         float RT_switch;
     };
 
-    // @todo this one should differ from the one in qPeaks
+    MergedEIC mergeEICs(const std::vector<ReducedEIC> *eics,
+                        const std::vector<size_t> *selection,
+                        size_t idxStart,
+                        size_t idxEnd);
+
     std::vector<MultiRegression> findCoefficients_multi(
         const std::vector<float> *intensity_log,
         const size_t scale,      // maximum scale that will be checked. Should generally be limited by peakFrame
         const size_t numPeaks,   // only > 1 during componentisation (for now? @todo)
         const size_t peakFrame); // how many points are covered per peak? For single-peak data, this is the length of intensity_log
 
-    void runningRegression_multi(
-        ReducedEIC *eic,
-        std::vector<MultiRegression> &validRegressions,
-        const size_t maxScale);
+    MultiRegression runningRegression_multi(
+        const ReducedEIC *eic,
+        const size_t maxScale,
+        const size_t numPeaks,
+        const size_t peakFrame);
 
     std::vector<float> pairwiseRSS(const PreGrouping *group, const std::vector<ReducedEIC> *points);
 

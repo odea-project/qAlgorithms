@@ -119,7 +119,13 @@ namespace qAlgorithms
                     auto EIC_B = eics[idx_L];
                     // pairwise merge to check if two features can be part of the same component
                     float rss_complex = feature_A.RSS + feature_B.RSS;
-                    // @todo consider adding a special case function for
+
+                    // merge the EICs that are relevant to both
+                    static const std::vector<size_t> select{0, 1};
+                    // uses an anonymous vector to skip the additional variable, this may be a bad idea
+                    auto merge = mergeEICs(&std::vector<ReducedEIC>{EIC_A, EIC_B}, &select);
+
+                    // @todo consider adding a special case function for a combination of two regressions
                     float rss_simple = rss_complex * 1.05; // this is just a standin, perform a regression here
                     // we can be certain that the absolute rss is at most identical (for the case where feature_A == feature_B).
                     // this check is also needed since the function we use for the f distribution later exits with error if a
@@ -131,7 +137,7 @@ namespace qAlgorithms
                     size_t params_combo = 5; // shared b1, b2, b3, two b0
 
                     bool merge = preferMerge(rss_complex, rss_simple, numPoints, params_both, params_combo);
-                    size_t access = idx_S * groupsize + idx_L; // position in pairRSS @todo wrong access pattern!
+                    size_t access = idx_S * groupsize + idx_L - 1; // -1 since identical indices are never compared
                     pairRSS[access] = merge ? rss_simple : INFINITY;
                 }
             }
@@ -260,9 +266,38 @@ namespace qAlgorithms
         }
     }
 
-    MultiRegression runningRegression_multi(
-        ReducedEIC *eic,
-        std::vector<MultiRegression> &validRegressions,
+    MergedEIC mergeEICs(const std::vector<ReducedEIC> *eics,
+                        const std::vector<size_t> *selection,
+                        size_t idxStart,
+                        size_t idxEnd)
+    {
+        assert(selection->size() <= eics->size());
+        assert(idxEnd > idxStart);
+        size_t eicSize = eics->front().intensity.size();
+        assert(idxEnd < eicSize);
+        size_t span = idxEnd - idxStart + 1;
+        MergedEIC result;
+        result.intensity.reserve(span);
+        result.intensity_log.reserve(span);
+        result.RSS_cum.reserve(span); // remember to overwrite this! It is no longer accurate after the regression completes
+        result.df.reserve(span);
+        for (size_t i = 0; i < selection->size(); i++)
+        {
+            const ReducedEIC *subEIC = &(eics->at(i));
+            assert(subEIC->intensity.size() == eicSize);
+            for (size_t idx = idxStart; idx <= idxEnd; idx++)
+            {
+                result.intensity.push_back(subEIC->intensity[idx]);
+                result.intensity_log.push_back(subEIC->intensity_log[idx]);
+                result.df.push_back(subEIC->df[idx]);
+            }
+        }
+
+        return result;
+    }
+
+    MultiRegression runningRegression_multi( // add function that combines multiplr eics and updates the peak count
+        const ReducedEIC *eic,
         const size_t maxScale,
         const size_t numPeaks,
         const size_t peakFrame)
@@ -345,22 +380,14 @@ namespace qAlgorithms
         int minIdx = -1;
         for (size_t i = 0; i < regressions.size(); i++)
         {
-            if (min_MSE > sum_MSE[i])
+            if (regressionOK[i] && min_MSE > sum_MSE[i])
             {
                 min_MSE = sum_MSE[i];
                 minIdx = i;
             }
         }
         assert(minIdx >= 0);
-
-        // validateRegressions(&regressions, intensities, intensities_log, degreesOfFreedom, maxScale, validRegressions);
-
-        // if (validRegressions.size() > 1) // @todo we can probably filter regressions based on MSE at this stage already
-        // {
-        //     // number of competitors is intialised to 0, so no special case for size = 1 needed
-        //     // there can be 0, 1 or more than one regressions in validRegressions
-        //     validRegressions = mergeRegressionsOverScales(validRegressions, intensities);
-        // }
+        // @todo calculate the RSS at this point?
         return regressions[minIdx];
     }
 
