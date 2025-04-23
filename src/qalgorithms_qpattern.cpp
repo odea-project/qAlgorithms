@@ -12,6 +12,7 @@
 #include <vector>
 #include <iostream>
 #include <cassert>
+#include <iterator> // std::distance @todo this needs to be reworked massively
 
 // group peaks identified from bins by their relation within a scan region
 
@@ -33,11 +34,10 @@ namespace qAlgorithms
         components.reserve(limits.size());
         for (size_t groupIdx = 0; groupIdx < limits.size(); groupIdx++)
         {
-            // only test if the matrix thing works for now
-            PreGrouping newComponent;
+            PreGrouping pregroup;
             size_t groupsize = limits[groupIdx].end - limits[groupIdx].start + 1;
             std::cout << groupsize << ", ";
-            // @todo skip for groups with size 1?
+
             if (groupsize == 1)
             {
                 if ((peaks->at(limits[groupIdx].end).coefficients.b2 > 0) ||
@@ -45,7 +45,6 @@ namespace qAlgorithms
                 {
                     VALLEYS_1++;
                 }
-
                 continue;
             }
             for (size_t j = limits[groupIdx].start; j < limits[groupIdx].end + 1; j++)
@@ -56,33 +55,36 @@ namespace qAlgorithms
                 }
             }
 
-            if (groupsize > 10) // this is only to speed up testing - @todo remove!
-            {
-                continue;
-            }
-            newComponent.features.reserve(groupsize);
+            // if (groupsize > 10) // this is only to speed up testing - @todo remove!
+            // {
+            //     continue;
+            // }
+
+            // every pre-group describes a varying-size region of data in the entire mass spectrum.
+            // this loop determines where the limits are and
+            pregroup.features.reserve(groupsize);
             unsigned int maxScan = 0;
             unsigned int minScan = 4294967295; // max value of unsigned int
             for (size_t j = limits[groupIdx].start; j < limits[groupIdx].end + 1; j++)
-            { // @todo this block can probably be discarded
-                auto test = &peaks->at(j);
-                auto movedTest = moveAndScaleReg(test);
-                // const qAlgorithms::EIC *bin = &bins->at(test->idxBin);
-                // calcRSS(&movedTest, bin);
+            {
+                const FeaturePeak *test = &(peaks->at(j));
+                // auto movedTest = moveAndScaleReg(test);
+                // calcRSS(&movedTest, bin); !! remember that the RSS needs to be calculated PER BLOCK, not per feature
                 auto binRTs = (*bins)[test->idxBin].rententionTimes;
                 auto scans = (*bins)[test->idxBin].scanNumbers;
-                movedTest.binIdxStart = test->idxPeakStart;
-                movedTest.binIdxEnd = test->idxPeakEnd;
-                movedTest.limit_L = binRTs[test->idxPeakStart];
-                movedTest.limit_R = binRTs[test->idxPeakEnd];
+                // movedTest.binIdxStart = test->idxPeakStart;
+                // movedTest.binIdxEnd = test->idxPeakEnd;
+                // movedTest.limit_L = binRTs[test->idxPeakStart];
+                // movedTest.limit_R = binRTs[test->idxPeakEnd];
                 maxScan = std::max(maxScan, scans[test->idxPeakEnd]); // @todo scans should be their own type, same with indices
                 minScan = std::min(minScan, scans[test->idxPeakStart]);
                 assert(scans[test->idxPeakEnd] - scans[test->idxPeakStart] >= 4);
                 assert(maxScan - minScan >= 4);
-                newComponent.features.push_back(movedTest);
+                pregroup.features.push_back(test);
             }
 
             // create a vector of unified RTs for interpolation in the harmonised EICs
+            // this uses the same scan -> time conversion as the feature construction
             std::vector<float> unifiedRT(maxScan - minScan + 1, 0);
             for (size_t i = 0; i < unifiedRT.size(); i++)
             {
@@ -93,14 +95,14 @@ namespace qAlgorithms
             // std::vector<MovedRegression> *selectPeaks;
             for (size_t j = 0; j < groupsize; j++)
             {
-                const auto feature = newComponent.features[j];
-                const qAlgorithms::EIC *bin = &bins->at(feature.binID);
-                eics.push_back(harmoniseEIC(&feature, bin, &unifiedRT, minScan, maxScan, feature.binIdxStart, feature.binIdxEnd));
+                const auto feature = pregroup.features[j];
+                const qAlgorithms::EIC *bin = &bins->at(feature->idxBin);
+                eics.push_back(harmoniseEIC(&feature, bin, &unifiedRT, minScan, maxScan));
                 assert(eics[j].intensity.size() == eics[0].intensity.size());
             }
             // at this stage, the EICs are in the correct shape for performing a multi-regression
 #pragma endregion "Pre-Group"
-            newComponent.calcScores();
+            pregroup.calcScores();
             // produce a subset of bins with uniform RT axis for this component
 
             // auto test = getCompareOrder(&newComponent); // not the best way to go about this
@@ -114,11 +116,11 @@ namespace qAlgorithms
 
             for (size_t idx_S = 0; idx_S < groupsize - 1; idx_S++)
             {
-                auto feature_A = newComponent.features[idx_S];
+                auto feature_A = pregroup.features[idx_S];
                 auto EIC_A = eics[idx_S];
                 for (size_t idx_L = idx_S + 1; idx_L < groupsize; idx_L++)
                 {
-                    auto feature_B = newComponent.features[idx_L];
+                    auto feature_B = pregroup.features[idx_L];
                     auto EIC_B = eics[idx_L];
                     // pairwise merge to check if two features can be part of the same component
 
@@ -908,14 +910,14 @@ namespace qAlgorithms
         return coeffs;
     }
 
-    ReducedEIC harmoniseEIC(const MovedRegression *feature,
+    ReducedEIC harmoniseEIC(const FeaturePeak *feature,
                             const EIC *bin,
                             const std::vector<float> *RTs,
                             const unsigned int minScan, // minimum overall scan in the subgroup
-                            const unsigned int maxScan, // maximum overall scan in the subgroup
-                            const size_t minIdx,
-                            const size_t maxIdx)
+                            const unsigned int maxScan) // maximum overall scan in the subgroup
     {
+        size_t minIdx = feature->idxPeakStart;
+        size_t maxIdx = feature->idxPeakEnd;
         assert(maxIdx < bin->ints_area.size());
         assert(minScan < bin->scanNumbers.back());
         assert(maxScan > bin->scanNumbers.front());
@@ -933,6 +935,11 @@ namespace qAlgorithms
 
         // scan relates to the complete measurement and idx to the position within the bin
 
+        // find index_x0 by finding the corresponding retention time
+        unsigned int featLim_L = bin->scanNumbers[minIdx] - minScan;
+        unsigned int featLim_R = bin->scanNumbers[maxIdx] - minScan;
+        unsigned int index_x0 = feature->index_x0_offset + featLim_L;
+
         ReducedEIC reduced{
             // std::vector<float>(length, 0),  // RT
             std::vector<float>(length, 0),   // intensity
@@ -940,11 +947,12 @@ namespace qAlgorithms
             std::vector<size_t>(length, 0),  // scan number
             std::vector<float>(length, 0),   // RSS_cum
             std::vector<bool>(length, true), // degrees of freedom
-            0,                               // feature ID
-            0,                               // bin ID
-            // these limits are relating to the fully interpolated EIC
-            bin->scanNumbers[minIdx] - minScan,
-            bin->scanNumbers[maxIdx] - minScan};
+            0,                               // feature ID @todo
+            0,                               // bin ID @todo
+
+            featLim_L, // these limits are relating to the fully interpolated EIC
+            featLim_R,
+            index_x0};
 
         std::iota(reduced.scanNo.begin(), reduced.scanNo.end(), minScan);
 
@@ -1046,19 +1054,6 @@ namespace qAlgorithms
         }
         size_t idx = size * idx1 + idx2;
         return shapeScores[idx];
-    }
-
-    void PreGrouping::calcScores()
-    {
-        shapeScores.reserve(features.size() * features.size());
-        for (size_t i = 0; i < features.size(); i++)
-        {
-            for (size_t j = 0; j < features.size(); j++)
-            {
-                float tanimoto = calcTanimoto_reg(&features[i], &features[j]);
-                shapeScores.push_back(tanimoto);
-            }
-        }
     }
 
     std::vector<GroupLims> preGroup(const std::vector<FeaturePeak> *peaks)
