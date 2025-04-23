@@ -49,7 +49,7 @@ namespace qAlgorithms
 
     struct RegressionGauss
     {
-        RegCoeffs newCoeffs;          // regression coefficients
+        RegCoeffs coeffs;             // regression coefficients
         int index_x0 = 0;             // index of window center (x==0) in the Y matrix
         int scale = 0;                // scale of the regression window, i.e., 2*scale+1 = window size
         int df = 0;                   // degree of freedom, interpolated data points will not be considered
