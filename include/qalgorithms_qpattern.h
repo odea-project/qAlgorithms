@@ -94,6 +94,8 @@ namespace qAlgorithms
         std::vector<size_t> scanNo;
         std::vector<float> RSS_cum; // cumulative RSS - this also serves as the indicator for interpolated / not interpolated
         std::vector<bool> df;       // @todo get rid of this somehow
+        size_t numPeaks;
+        size_t peakFrame;
     };
 
     ReducedEIC harmoniseEIC(const MovedRegression *feature,
@@ -111,11 +113,13 @@ namespace qAlgorithms
         // this regression is used internally to compare components
         std::vector<float> b0_vec;
         size_t idxStart;
+        size_t idxEnd;
         size_t scale;
         float b1;
         float b2;
         float b3;
         float RT_apex;
+        float RSS;
     };
 
     struct MovedMultiRegression
@@ -146,6 +150,14 @@ namespace qAlgorithms
         const size_t maxScale,
         const size_t numPeaks,
         const size_t peakFrame);
+
+    void makeValidRegression_multi(
+        RegressionGauss *mutateReg,
+        const size_t idxStart,
+        const size_t scale,
+        const std::vector<unsigned int> *degreesOfFreedom,
+        const std::vector<float> *intensities,
+        const std::vector<float> *intensities_log);
 
     std::vector<float> pairwiseRSS(const PreGrouping *group, const std::vector<ReducedEIC> *points);
 

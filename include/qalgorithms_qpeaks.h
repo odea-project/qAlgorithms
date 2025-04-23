@@ -39,7 +39,7 @@ namespace qAlgorithms
         std::vector<RegressionGauss> &validRegressions,
         const size_t maxScale);
 
-    void validateRegressions(
+    void validateRegression(
         const std::vector<RegCoeffs> *coeffs, // coefficients for single-b0 peaks, spans all regressions over a peak window
         const std::vector<float> *intensities,
         const std::vector<float> *intensities_log,
@@ -168,7 +168,7 @@ namespace qAlgorithms
     inline double multiplyVecMatrixVecTranspose(const double vec[4],
                                                 size_t scale);
 
-    inline float apexToEdgeRatio(
+    float apexToEdgeRatio(
         const size_t idxStart,
         const size_t idxApex,
         const size_t idxEnd,
