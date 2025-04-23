@@ -1186,6 +1186,7 @@ namespace qAlgorithms
 
             peak.idxPeakStart = regression.left_limit;
             peak.idxPeakEnd = regression.right_limit - 1;
+            peak.index_x0_offset = regression.index_x0 - regression.left_limit;
             assert(peak.idxPeakEnd > peak.idxPeakStart);
 
             // params needed to merge two peaks

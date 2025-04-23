@@ -16,13 +16,12 @@ namespace qAlgorithms
 
     struct PreGrouping
     {
-        std::vector<MovedRegression> features; // keep this sorted by intensity
-        std::vector<float> shapeScores;        // tanimoto scores on a per-feature basis. Access pattern [idx1] * number of features + [idx2]
+        std::vector<const FeaturePeak *> features; // keep this sorted by intensity
+        std::vector<float> shapeScores;            // tanimoto scores on a per-feature basis. Access pattern [idx1] * number of features + [idx2]
         std::vector<EIC *> EICs;
 
         // add a sample ID thing here eventually
         float score(size_t idx1, size_t idx2);
-        void calcScores();
     };
 
     struct GroupLims
@@ -78,9 +77,10 @@ namespace qAlgorithms
         std::vector<bool> df;       // @todo get rid of this somehow
         size_t feature_ID;
         size_t bin_ID;
-        // these two are the limits of the feature the given EIC belonged to
+        // these are the limits of the original feature and the index where the abstract x-axis is 0
         unsigned int featLim_L;
         unsigned int featLim_R;
+        unsigned int index_x0;
     };
 
     struct MergedEIC
@@ -102,9 +102,7 @@ namespace qAlgorithms
                             const EIC *bin,
                             const std::vector<float> *RTs,
                             const unsigned int minScan,
-                            const unsigned int maxScan,
-                            const size_t minIdx,
-                            const size_t maxIdx);
+                            const unsigned int maxScan);
 
     float logIntAt(const MovedRegression *feature, float RT);
 
