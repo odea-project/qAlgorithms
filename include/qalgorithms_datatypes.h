@@ -130,6 +130,7 @@ namespace qAlgorithms
         unsigned int idxBin;
         unsigned int idxPeakStart; // degrees of freedom = idxPeakEnd - idxPeakStart
         unsigned int idxPeakEnd;
+        unsigned int index_x0_offset;
         unsigned int interpolationCount;
         unsigned int competitorCount;
         unsigned int scale;
