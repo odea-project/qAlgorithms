@@ -67,8 +67,8 @@ namespace qAlgorithms
             { // @todo this block can probably be discarded
                 auto test = &peaks->at(j);
                 auto movedTest = moveAndScaleReg(test);
-                const qAlgorithms::EIC *bin = &bins->at(test->idxBin);
-                calcRSS(&movedTest, bin);
+                // const qAlgorithms::EIC *bin = &bins->at(test->idxBin);
+                // calcRSS(&movedTest, bin);
                 auto binRTs = (*bins)[test->idxBin].rententionTimes;
                 auto scans = (*bins)[test->idxBin].scanNumbers;
                 movedTest.binIdxStart = test->idxPeakStart;
@@ -121,6 +121,8 @@ namespace qAlgorithms
                     auto feature_B = newComponent.features[idx_L];
                     auto EIC_B = eics[idx_L];
                     // pairwise merge to check if two features can be part of the same component
+
+                    // calculate the rss of the individual features for the relevant region
                     float rss_complex = feature_A.RSS + feature_B.RSS;
 
                     // merge the EICs that are relevant to both
@@ -143,19 +145,19 @@ namespace qAlgorithms
                     }
 
                     // @todo consider adding a special case function for a combination of two regressions
-                    float rss_simple = rss_complex * 1.05; // this is just a standin, perform a regression here
-                    // we can be certain that the absolute rss is at most identical (for the case where feature_A == feature_B).
-                    // this check is also needed since the function we use for the f distribution later exits with error if a
-                    // negative  value is supplied
-                    assert(rss_simple > rss_complex);
-                    // F-test to check if the merge is a good idea
-                    size_t numPoints = feature_A.binIdxEnd - feature_A.binIdxStart + feature_B.binIdxEnd - feature_B.binIdxStart + 2;
-                    size_t params_both = 8;  // four coefficients each
-                    size_t params_combo = 5; // shared b1, b2, b3, two b0
+                    // float rss_simple = rss_complex * 1.05; // this is just a standin, perform a regression here
+                    // // we can be certain that the absolute rss is at most identical (for the case where feature_A == feature_B).
+                    // // this check is also needed since the function we use for the f distribution later exits with error if a
+                    // // negative  value is supplied
+                    // assert(rss_simple > rss_complex);
+                    // // F-test to check if the merge is a good idea
+                    // size_t numPoints = feature_A.binIdxEnd - feature_A.binIdxStart + feature_B.binIdxEnd - feature_B.binIdxStart + 2;
+                    // size_t params_both = 8;  // four coefficients each
+                    // size_t params_combo = 5; // shared b1, b2, b3, two b0
 
-                    bool merge = preferMerge(rss_complex, rss_simple, numPoints, params_both, params_combo);
-                    size_t access = idx_S + (idx_L * (idx_L - 1)) / 2;
-                    pairRSS[access] = merge ? rss_simple : INFINITY;
+                    // bool merge = preferMerge(rss_complex, rss_simple, numPoints, params_both, params_combo);
+                    // size_t access = idx_S + (idx_L * (idx_L - 1)) / 2;
+                    // pairRSS[access] = merge ? rss_simple : INFINITY;
                 }
             }
             // pairRSS serves as an exclusion matrix and priorisation tool. The component assignment is handled through
@@ -286,6 +288,68 @@ namespace qAlgorithms
         }
     }
 
+    double complexRSS(const MergedEIC *eic,
+                      const std::vector<RegressionGauss> *features,
+                      const std::vector<size_t> *selection,
+                      const size_t idxStart,
+                      const size_t idxEnd)
+    {
+        assert(eic->numPeaks == selection->size());
+        assert(idxEnd > idxStart);
+        assert(idxEnd < eic->peakFrame);
+
+        double RSS_total = 0;
+
+        for (size_t i = 0; i < selection->size(); i++)
+        {
+            auto coeffs = features->at(selection->at(i)).coeffs;
+            unsigned int localStart = idxStart + i * eic->peakFrame;
+            unsigned int localEnd = idxEnd + i * eic->peakFrame;
+            size_t index_x0 = features->at(selection->at(i)).index_x0 + i * eic->peakFrame; // @todo these are not correctly aligned! there might be padding on the sides
+
+            // we need to make adjustments if the limits would exceed the local function limits
+            // for the case of a positive b2 or b3
+            if (coeffs.b2 > 0)
+            {
+                size_t leftLim = features->at(selection->at(i)).left_limit + i * eic->peakFrame;
+                if (leftLim > localStart)
+                {
+                    // set the regression to its value at x = leftLim for the range before the valley point
+                    double new_x = double(leftLim) - double(index_x0); // always negative
+                    double y_base = std::exp(coeffs.b0 + (coeffs.b1 + coeffs.b2 * new_x) * new_x);
+                    for (size_t i = localStart; i < leftLim; i++)
+                    {
+                        double y_current = eic->intensity[i];
+                        double newdiff = (y_base - y_current) * (y_base - y_current);
+                        RSS_total += newdiff;
+                    }
+                }
+                localStart = leftLim;
+            }
+            else if (coeffs.b3 > 0) // only one of the two can be positive
+            {
+                size_t rightLim = features->at(selection->at(i)).right_limit + i * eic->peakFrame;
+                if (rightLim > localEnd)
+                {
+                    // set the regression to its value at x = leftLim for the range before the valley point
+                    double new_x = double(rightLim) - double(index_x0); // always positve
+                    double y_base = std::exp(coeffs.b0 + (coeffs.b1 + coeffs.b3 * new_x) * new_x);
+                    for (size_t i = localStart; i < rightLim; i++)
+                    {
+                        double y_current = eic->intensity[i];
+                        double newdiff = (y_base - y_current) * (y_base - y_current);
+                        RSS_total += newdiff;
+                    }
+                }
+
+                localEnd = rightLim;
+            }
+            RSS_total += calcSSE_exp(coeffs, &eic->intensity, localStart, localEnd, index_x0);
+        }
+
+        return RSS_total;
+    }
+
     MergedEIC mergeEICs(const std::vector<ReducedEIC> *eics,
                         const std::vector<size_t> *selection,
                         size_t idxStart,
@@ -303,7 +367,7 @@ namespace qAlgorithms
         result.df.reserve(span);
         for (size_t i = 0; i < selection->size(); i++)
         {
-            const ReducedEIC *subEIC = &(eics->at(i));
+            const ReducedEIC *subEIC = &(eics->at(selection->at(i)));
             assert(subEIC->intensity.size() == eicSize);
             for (size_t idx = idxStart; idx <= idxEnd; idx++)
             {
@@ -312,8 +376,207 @@ namespace qAlgorithms
                 result.df.push_back(subEIC->df[idx]);
             }
         }
-
+        result.numPeaks = selection->size();
+        result.peakFrame = span;
         return result;
+    }
+
+    void makeValidRegression_multi(
+        RegressionGauss *mutateReg,
+        const size_t idxStart,
+        const size_t scale,
+        const std::vector<unsigned int> *degreesOfFreedom,
+        const std::vector<float> *intensities,
+        const std::vector<float> *intensities_log)
+    {
+        assert(scale > 1);
+        assert(idxStart + 4 < degreesOfFreedom->size());
+        /*
+          Apex and Valley Position Filter:
+          This block of code implements the apex and valley position filter.
+          It calculates the apex and valley positions based on the coefficients
+          matrix B. If the apex is outside the data range, the loop continues
+          to the next iteration. If the apex and valley positions are too close
+          to each other, the loop continues to the next iteration.
+        */
+        float valley_position = 0;
+        // no easy replace
+        if (!calcApexAndValleyPos(mutateReg, scale, valley_position))
+        {
+            return; // invalid apex and valley positions
+        }
+        /*
+          Area Pre-Filter:
+          This test is used to check if the later-used arguments for exp and erf
+          functions are within the valid range, i.e., |x^2| < 25. If the test fails,
+          the loop continues to the next iteration. @todo why 25?
+          x is in this case -apex_position * b1 / 2 and -valley_position * b1 / 2.
+        */
+        if (mutateReg->apex_position * mutateReg->coeffs.b1 > 50 || valley_position * mutateReg->coeffs.b1 < -50)
+        {
+            return; // invalid area pre-filter
+        }
+
+        if (valley_position == 0)
+        {
+            // no valley point exists
+            mutateReg->left_limit = idxStart;
+            mutateReg->right_limit = idxStart + 2 * scale;
+        }
+        else if (valley_position < 0)
+        {
+            size_t substractor = static_cast<size_t>(abs(valley_position));
+            mutateReg->left_limit = substractor < scale ? idxStart + scale - substractor : idxStart; // std::max(i, static_cast<int>(valley_position) + i + scale);
+            mutateReg->right_limit = idxStart + 2 * scale;
+        }
+        else
+        {
+            mutateReg->left_limit = idxStart;
+            mutateReg->right_limit = std::min(idxStart + 2 * scale, static_cast<int>(valley_position) + idxStart + scale);
+        }
+        assert(mutateReg->right_limit < intensities->size());
+
+        /*
+            Note: left and right limit are not the limits of the regression, but of the window the regression applies in.
+            When multiple regressions are combined, the window limits are combined by maximum.
+        */
+
+        if (scale + idxStart == mutateReg->left_limit || scale + idxStart == mutateReg->right_limit)
+        {
+            // only one half of the regression applies to the data
+            return;
+        }
+
+        /*
+          Degree of Freedom Filter:
+          This block of code implements the degree of freedom filter. It calculates the
+          degree of freedom based df vector. If the degree of freedom is less than 5,
+          the loop continues to the next iteration. The value 5 is chosen as the
+          minimum number of data points required to fit a quadratic regression model.
+        */
+        size_t df_sum = 0;
+        for (size_t i = mutateReg->left_limit; i < mutateReg->right_limit; i++)
+        {
+            df_sum += degreesOfFreedom->at(i);
+        }
+        if (df_sum < 5)
+        {
+            return; // degree of freedom less than 5; i.e., less then 5 measured data points
+        }
+
+        /*
+          Apex to Edge Filter:
+          This block of code implements the apex to edge filter. It calculates
+          the ratio of the apex signal to the edge signal and ensures that the
+          ratio is greater than 2. This is a pre-filter for later
+          signal-to-noise ratio checkups. apexToEdge is also required in isValidPeakHeight further down
+        */
+        size_t idxApex = (size_t)std::round(mutateReg->apex_position) + scale + idxStart;
+        float apexToEdge = apexToEdgeRatio(mutateReg->left_limit, idxApex, mutateReg->right_limit, intensities);
+        if (!(apexToEdge > 2))
+        {
+            return; // invalid apex to edge ratio
+        }
+
+        /*
+          Quadratic Term Filter:
+          This block of code implements the quadratic term filter. It calculates
+          the mean squared error (MSE) between the predicted and actual values.
+          Then it calculates the t-value for the quadratic term. If the t-value
+          is less than the corresponding value in the T_VALUES, the quadratic
+          term is considered statistically insignificant, and the loop continues
+          to the next iteration.
+        */
+
+        std::vector<float> selectLog; // both vetors are used to transfer relevant values to the F test later
+        std::vector<float> predictLog;
+        selectLog.reserve(mutateReg->right_limit - mutateReg->left_limit + 1);
+        predictLog.reserve(mutateReg->right_limit - mutateReg->left_limit + 1);
+        float mse = calcSSE_base(mutateReg->coeffs, intensities_log, &selectLog, &predictLog,
+                                 mutateReg->left_limit, mutateReg->right_limit, scale + idxStart);
+
+        /*
+        competing regressions filter:
+        If the real distribution of points could also be described as a continuum (i.e. only b0 is relevant),
+        the regression does not describe a peak. This is done through a nested F-test against a constant that
+        is the mean of all predicted values. @todo this is not working correctly!
+        */
+        float regression_Fval = calcRegressionFvalue(&selectLog, &predictLog, mse, mutateReg->coeffs.b0);
+        if (regression_Fval < F_VALUES[selectLog.size()]) // - 5 since the minimum is five degrees of freedom
+        {
+            // H0 holds, the two distributions are not noticeably different
+            return;
+        }
+        // mse is only the correct mean square error after this division
+        mse /= (df_sum - 4);
+
+        if (!isValidQuadraticTerm(mutateReg->coeffs, scale, mse, df_sum))
+        {
+            return; // statistical insignificance of the quadratic term
+        }
+        if (!isValidPeakArea(mutateReg->coeffs, mse, scale, df_sum))
+        {
+            return; // statistical insignificance of the area
+        }
+        /*
+          Height Filter:
+          This block of code implements the height filter. It calculates the height
+          of the peak based on the coefficients matrix B. Then it calculates the
+          uncertainty of the height based on the Jacobian matrix and the variance-covariance
+          matrix of the coefficients. If the height is statistically insignificant,
+          the loop continues to the next iteration.
+        */
+
+        calcPeakHeightUncert(mutateReg, mse, scale);
+        if (1 / mutateReg->uncertainty_height <= T_VALUES[df_sum - 5]) // statistical significance of the peak height
+        {
+            return;
+        }
+        // at this point without height, i.e., to get the real uncertainty
+        // multiply with height later. This is done to avoid exp function at this point
+        if (!isValidPeakHeight(mse, scale, mutateReg->apex_position, valley_position, df_sum, apexToEdge))
+        {
+            return; // statistical insignificance of the height
+        }
+
+        /*
+          Area Filter:
+          This block of code implements the area filter. It calculates the Jacobian
+          matrix for the peak area based on the coefficients matrix B. Then it calculates
+          the uncertainty of the peak area based on the Jacobian matrix. If the peak
+          area is statistically insignificant, the loop continues to the next iteration.
+          NOTE: this function does not consider b0: i.e. to get the real uncertainty and
+          area multiply both with Exp(b0) later. This is done to avoid exp function at this point
+        */
+        // it might be preferential to combine both functions again or store the common matrix somewhere
+        calcPeakAreaUncert(mutateReg, mse, scale);
+
+        if (mutateReg->area / mutateReg->uncertainty_area <= T_VALUES[df_sum - 5])
+        {
+            return; // statistical insignificance of the area
+        }
+
+        /*
+          Chi-Square Filter:
+          This block of code implements the chi-square filter. It calculates the chi-square
+          value based on the weighted chi squared sum of expected and measured y values in
+          the exponential domain. If the chi-square value is less than the corresponding
+          value in the CHI_SQUARES, the regression is invalid.
+        */
+        float chiSquare = calcSSE_chisqared(mutateReg->coeffs, intensities, mutateReg->left_limit, mutateReg->right_limit, scale + idxStart);
+        if (chiSquare < CHI_SQUARES[df_sum - 5])
+        {
+            return; // statistical insignificance of the chi-square value
+        }
+
+        mutateReg->uncertainty_pos = calcUncertaintyPos(mse, mutateReg->coeffs, mutateReg->apex_position, scale);
+        mutateReg->df = df_sum - 4; // @todo add explanation for -4
+        mutateReg->apex_position += idxStart + scale;
+        mutateReg->scale = scale;
+        mutateReg->index_x0 = scale + idxStart;
+        mutateReg->mse = mse; // the quadratic mse is used for the weighted mean of the coefficients later
+        mutateReg->isValid = true;
+        return;
     }
 
     MultiRegression runningRegression_multi( // add function that combines multiplr eics and updates the peak count
@@ -329,23 +592,29 @@ namespace qAlgorithms
         // used to decide on the best overall regression
         std::vector<double> sum_MSE(regressions.size(), 0);
 
+        std::vector<size_t> validHits(regressions.size(), 0);
+
         // for every multi-regression, reconstruct the normal regression and validate. If any derived regression
         // is invalid, the multi-regression is also invalid.
         // we know that the correct interpretation of the component always involves only one regression.
         // since the merge over scales is required to isolate multiple peaks within the same block from
         // each other, it would always apply to the special case of all regressions being in the same window here.
         // this allows us to simplify the program such that the best regression regardless of scale is chosen.
-        // the validateRegressions function does not account for that special case, but only the validation step
+        // the validateRegression function does not account for that special case, but only the validation step
         // is actually required here. as such, this code has been adapted from the implementation in qPeaks.
 
         // the validation function expects the intensity and degree of freedom data to arrive as a vector
         // for every singular peak.
         std::vector<std::vector<bool>> DF_vecs(numPeaks);
-        // DF_vecs.reserve(numPeaks);
         std::vector<std::vector<float>> intensity_vecs(numPeaks);
-        // intensity_vecs.reserve(numPeaks);
         std::vector<std::vector<float>> logInt_vecs(numPeaks);
-        // logInt_vecs.reserve(numPeaks);
+
+        std::vector<unsigned int> DF_cum(peakFrame, 0);
+        for (size_t i = 0; i < eic->df.size(); i++)
+        {
+            size_t access = i % peakFrame;
+            DF_cum[access] += eic->df[i];
+        }
 
         for (size_t i = 0; i < numPeaks; i++)
         {
@@ -369,20 +638,30 @@ namespace qAlgorithms
                 // size_t idxBegin = i * peakFrame;
                 // size_t idxEnd = (i + 1) * peakFrame;
                 RegressionGauss testCase;
-                testCase.newCoeffs = coeff; // @todo do this during initialisation
+                testCase.coeffs = coeff; // @todo do this during initialisation
 
                 size_t df = calcDF(&(DF_vecs[i]), idxRegStart, 2 * scale + idxRegStart);
                 if (df < 5)
                 {
                     regressionOK[multiReg] = false;
-                    break;
+                    // break;
+                    continue;
                 }
-                makeValidRegression(&testCase, idxRegStart, scale, &(DF_vecs[i]), &(intensity_vecs[i]), &(logInt_vecs[i]));
+                makeValidRegression_multi(&testCase, idxRegStart, scale, &DF_cum, &(intensity_vecs[i]), &(logInt_vecs[i]));
+                // @todo adjust the regression limits if positive coefficients are relevant
                 if (!testCase.isValid)
                 {
                     regressionOK[multiReg] = false;
-                    break;
+                    // break;
+                    continue;
                 }
+                validHits[multiReg]++;
+                if (validHits[multiReg] > 1)
+                {
+                    // volatile bool a = true;
+                    std::cout << "HIT-" << multiReg << ", ";
+                }
+
                 // now that only regressions which are logically sensible are present, pick the best one. This uses the sum
                 // of all mse values for the given regression, similar to qPeaks. @todo should we also adjust the limits to
                 // cover the entire array here?
@@ -518,16 +797,11 @@ namespace qAlgorithms
         size_t iterationCount = std::accumulate(maxInnerLoop.begin(), maxInnerLoop.end(), 0) - maxInnerLoop.size(); // no range check necessary since every entry > 1
 
         const std::vector<float> b0_reserve(numPeaks, NAN);
-        MultiRegression localEmpty = {b0_reserve, 0, 0, NAN, NAN, NAN, NAN};
+        MultiRegression localEmpty = {b0_reserve, 0, 0, 0, NAN, NAN, NAN, NAN, NAN};
         std::vector<MultiRegression> coeffs(iterationCount, localEmpty);
 
         // these arrays contain all coefficients for every loop iteration
         std::vector<long double> beta_0(iterationCount * numPeaks, NAN); // one per iteration per peak
-
-        // one per iteration
-        // std::vector<long double> beta_1(iterationCount, NAN);
-        // std::vector<long double> beta_2(iterationCount, NAN);
-        // std::vector<long double> beta_3(iterationCount, NAN);
 
         // the product sums are the rows of the design matrix (xT) * intensity_log[i:i+4] (dot product)
         // The first n entries are contained in the b0 vector, one for each peak the regression is performed
@@ -584,10 +858,15 @@ namespace qAlgorithms
             coeffs[k].b2 = S2_B * sum_tmp_product_sum_b0 + S2_D * tmp_product_sum_b1 + S2_E * tmp_product_sum_b2 + S2_F * tmp_product_sum_b3;
             coeffs[k].b3 = S2_B * sum_tmp_product_sum_b0 - S2_D * tmp_product_sum_b1 + S2_F * tmp_product_sum_b2 + S2_E * tmp_product_sum_b3;
 
+            coeffs[k].scale = 2;
+            coeffs[k].idxStart = i;
+
             k += 1;       // update index for the productsums array
             size_t u = 1; // u is the expansion increment
             for (size_t scale = 3; scale < maxInnerLoop[i] + 1; scale++)
             { // minimum scale is 2. so we start with scale + 1 = 3 in the inner loop
+                coeffs[k].scale = scale;
+                coeffs[k].idxStart = i - u;
                 size_t scale_sqr = scale * scale;
                 // expand the kernel to the left and right of the intensity_log.
                 sum_tmp_product_sum_b0 = 0;
