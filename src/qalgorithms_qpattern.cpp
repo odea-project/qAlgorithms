@@ -68,14 +68,8 @@ namespace qAlgorithms
             for (size_t j = limits[groupIdx].start; j < limits[groupIdx].end + 1; j++)
             {
                 const FeaturePeak *test = &(peaks->at(j));
-                // auto movedTest = moveAndScaleReg(test);
-                // calcRSS(&movedTest, bin); !! remember that the RSS needs to be calculated PER BLOCK, not per feature
                 auto binRTs = (*bins)[test->idxBin].rententionTimes;
                 auto scans = (*bins)[test->idxBin].scanNumbers;
-                // movedTest.binIdxStart = test->idxPeakStart;
-                // movedTest.binIdxEnd = test->idxPeakEnd;
-                // movedTest.limit_L = binRTs[test->idxPeakStart];
-                // movedTest.limit_R = binRTs[test->idxPeakEnd];
                 maxScan = std::max(maxScan, scans[test->idxPeakEnd]); // @todo scans should be their own type, same with indices
                 minScan = std::min(minScan, scans[test->idxPeakStart]);
                 assert(scans[test->idxPeakEnd] - scans[test->idxPeakStart] >= 4);
@@ -95,17 +89,19 @@ namespace qAlgorithms
             // std::vector<MovedRegression> *selectPeaks;
             for (size_t j = 0; j < groupsize; j++)
             {
-                const auto feature = pregroup.features[j];
-                const qAlgorithms::EIC *bin = &bins->at(feature->idxBin);
-                eics.push_back(harmoniseEIC(&feature, bin, &unifiedRT, minScan, maxScan));
+                const FeaturePeak *feature = pregroup.features[j];
+                const EIC *bin = &bins->at(feature->idxBin);
+                eics.push_back(harmoniseEIC(feature, bin, &unifiedRT, minScan, maxScan));
                 assert(eics[j].intensity.size() == eics[0].intensity.size());
             }
-            // at this stage, the EICs are in the correct shape for performing a multi-regression
+            // At this stage, the EICs are in the correct shape for performing a multi-regression.
+            // To make comparisons faster, the RSS is calculated per feature at every point in the block.
+            // This means that the total RSS for a given sub-block is always calculated as the sum of RSS
+            // in that region. It is important to note that the sub-block changes with the considered members,
+            // as it only consists of the smallest region that contains all real points of the underlying features.
+            // The RSS for all individual features over the current range has been calculated as part of harmoniseEIC().
 #pragma endregion "Pre-Group"
-            pregroup.calcScores();
             // produce a subset of bins with uniform RT axis for this component
-
-            // auto test = getCompareOrder(&newComponent); // not the best way to go about this
 
 #pragma region "Compare Pairs"
             // first, calculate the pairwise RSS in a sparse matrix. The RSS is set to INFINITY if it is worse
@@ -116,16 +112,15 @@ namespace qAlgorithms
 
             for (size_t idx_S = 0; idx_S < groupsize - 1; idx_S++)
             {
-                auto feature_A = pregroup.features[idx_S];
+                // auto feature_A = pregroup.features[idx_S];
                 auto EIC_A = eics[idx_S];
                 for (size_t idx_L = idx_S + 1; idx_L < groupsize; idx_L++)
                 {
-                    auto feature_B = pregroup.features[idx_L];
+                    // auto feature_B = pregroup.features[idx_L];
                     auto EIC_B = eics[idx_L];
                     // pairwise merge to check if two features can be part of the same component
 
                     // calculate the rss of the individual features for the relevant region
-                    float rss_complex = feature_A.RSS + feature_B.RSS;
 
                     // merge the EICs that are relevant to both
                     static const std::vector<size_t> select{0, 1};
@@ -136,7 +131,7 @@ namespace qAlgorithms
                     auto mergedEIC = mergeEICs(&eics, &select, idxStart, idxEnd);
                     size_t span = (idxEnd - idxStart + 1);
                     size_t maxscale = (span - 1) / 2 > MAXSCALE ? MAXSCALE : (span - 1) / 2;
-                    auto regression = runningRegression_multi(&mergedEIC, maxscale, 2, span);
+                    auto regression = runningRegression_multi(&mergedEIC, &eics, &select, idxStart, idxEnd, maxscale, 2, span);
                     if (regression.b0_vec.empty())
                     {
                         failRegressions++;
@@ -380,6 +375,7 @@ namespace qAlgorithms
         }
         result.numPeaks = selection->size();
         result.peakFrame = span;
+        result.groupIdxStart = idxStart;
         return result;
     }
 
@@ -581,14 +577,29 @@ namespace qAlgorithms
         return;
     }
 
+    void vecSum(std::vector<float> *base, const std::vector<float> *add)
+    {
+        assert(base->size() == add->size());
+        for (size_t i = 0; i < base->size(); i++)
+        {
+            base->at(i) += add->at(i);
+        }
+    }
+
     MultiRegression runningRegression_multi( // add function that combines multiplr eics and updates the peak count
         const MergedEIC *eic,
+        const std::vector<ReducedEIC> *eics,
+        const std::vector<size_t> *selection,
+        const size_t idxStart,
+        const size_t idxEnd,
         const size_t maxScale,
         const size_t numPeaks,
         const size_t peakFrame)
     {
+        assert(selection->size() == eic->numPeaks);
+        assert(eic->numPeaks == numPeaks);
         // regressions for every possible scale and window position
-        const std::vector<MultiRegression> regressions = findCoefficients_multi(&(eic->intensity_log), maxScale, numPeaks, peakFrame);
+        std::vector<MultiRegression> regressions = findCoefficients_multi(&(eic->intensity_log), maxScale, numPeaks, peakFrame);
         // bookkeeping: which regressions are viable?
         std::vector<bool> regressionOK(regressions.size(), true);
         // used to decide on the best overall regression
@@ -637,8 +648,6 @@ namespace qAlgorithms
             for (size_t i = 0; i < numPeaks; i++)
             {
                 RegCoeffs coeff{reg.b0_vec[i], reg.b1, reg.b2, reg.b3};
-                // size_t idxBegin = i * peakFrame;
-                // size_t idxEnd = (i + 1) * peakFrame;
                 RegressionGauss testCase;
                 testCase.coeffs = coeff; // @todo do this during initialisation
 
@@ -665,14 +674,15 @@ namespace qAlgorithms
                 }
 
                 // now that only regressions which are logically sensible are present, pick the best one. This uses the sum
-                // of all mse values for the given regression, similar to qPeaks. @todo should we also adjust the limits to
-                // cover the entire array here?
+                // of all mse values for the given regression, similar to qPeaks. Different from the previous validation,
+                // the RSS is calculated cumulatively over the entire possible region
                 double mse = calcSSE_exp(coeff,
                                          &(intensity_vecs[i]),
-                                         testCase.left_limit,
-                                         testCase.right_limit,
+                                         0,
+                                         intensity_vecs[i].size() - 1,
                                          testCase.index_x0);
                 sum_MSE[multiReg] += mse / (testCase.df - 4);
+                regressions[multiReg].idx_x0 = testCase.index_x0 + idxStart; // this is always in relation to the complete regression window
             }
         }
         // decide on the best regression @todo do some statistics regarding how different mse values actually are, then remove
@@ -692,9 +702,21 @@ namespace qAlgorithms
         {
             return MultiRegression{}; // this will lead to problems further down @todo
         }
+        // calculate the cumulative RSS for the entire block @todo this could lead to very large values and problems, make a test
+        auto bestReg = regressions[minIdx];
+        bestReg.cum_RSS = std::vector<float>(eics->front().intensity.size(), 0); // @todo this is ugly
 
-        // @todo calculate the RSS at this point?
-        return regressions[minIdx];
+        for (size_t i = 0; i < numPeaks; i++)
+        {
+            RegCoeffs coeff{bestReg.b0_vec[i], bestReg.b1, bestReg.b2, bestReg.b3};
+            auto intensity = eics->at(selection->at(i)).intensity;
+            std::vector<float> cumRSS_local = cumulativeRSS(&intensity, &coeff, bestReg.idx_x0);
+            // the RSS for one mass trace is not useful for comparing multi-regressions, which is why the sum
+            // over all different regressions is used. Sum of cumsums == cumsum of the sums
+            vecSum(&bestReg.cum_RSS, &cumRSS_local);
+        }
+
+        return bestReg;
     }
 
     constexpr auto INV_ARRAY = initialize();
@@ -799,7 +821,7 @@ namespace qAlgorithms
         size_t iterationCount = std::accumulate(maxInnerLoop.begin(), maxInnerLoop.end(), 0) - maxInnerLoop.size(); // no range check necessary since every entry > 1
 
         const std::vector<float> b0_reserve(numPeaks, NAN);
-        MultiRegression localEmpty = {b0_reserve, 0, 0, 0, NAN, NAN, NAN, NAN, NAN};
+        MultiRegression localEmpty = {{}, b0_reserve, 0, 0, 0, 0, NAN, NAN, NAN, NAN};
         std::vector<MultiRegression> coeffs(iterationCount, localEmpty);
 
         // these arrays contain all coefficients for every loop iteration
@@ -910,6 +932,57 @@ namespace qAlgorithms
         return coeffs;
     }
 
+    // @todo this funtion should be generalised to qPeaks also
+    double residual(const RegCoeffs *coeff, float realInt, size_t index_x0, size_t index, bool left)
+    {
+        float b23 = left ? coeff->b2 : coeff->b3;
+        double new_x = double(index) - double(index_x0);
+        double y_base = std::exp(coeff->b0 + (coeff->b1 + b23 * new_x) * new_x);
+        double y_current = realInt;
+        return (y_base - y_current) * (y_base - y_current); // residual square
+    }
+
+    std::vector<float> cumulativeRSS(const std::vector<float> *intensities,
+                                     const RegCoeffs *coeff,
+                                     size_t index_x0)
+    {
+        assert(index_x0 <= intensities->size());
+        std::vector<float> result(intensities->size(), 0);
+
+        { // for i = 0, no previous value exists
+            // double new_x = double(index_x0);
+            // double y_base = std::exp(coeff->b0 + (coeff->b1 + coeff->b2 * new_x) * new_x);
+            // double y_current = intensities->front();
+            // double rs = (y_base - y_current) * (y_base - y_current); // residual square
+            // result[0] = rs;
+            result[0] = residual(coeff, intensities->front(), index_x0, 0, true) + 0;
+        }
+        // left half - 1
+        for (size_t i = 1; i < index_x0; i++)
+        {
+            // double new_x = double(i) - double(index_x0); // always negative
+            // double y_base = std::exp(coeff->b0 + (coeff->b1 + coeff->b2 * new_x) * new_x);
+            // double y_current = intensities->at(i);
+            // double rs = (y_base - y_current) * (y_base - y_current); // residual square
+            // result[i] = rs + result[i - 1];
+            result[i] = residual(coeff, intensities->at(i), index_x0, i, true) + result[i - 1];
+        }
+        // center point
+        float diff = std::exp((coeff->b0) - intensities->at(index_x0));
+        result[index_x0] = diff * diff + result[index_x0 - 1];
+        // right half
+        for (size_t i = index_x0 + 1; i < intensities->size(); i++)
+        {
+            // double new_x = double(i) - double(index_x0); // always negative
+            // double y_base = std::exp(coeff->b0 + (coeff->b1 + coeff->b2 * new_x) * new_x);
+            // double y_current = intensities->at(i);
+            // double rs = (y_base - y_current) * (y_base - y_current); // residual square
+            result[i] = residual(coeff, intensities->at(i), index_x0, i, false) + result[i - 1];
+        }
+        assert(result.back() < INFINITY);
+        return result;
+    }
+
     ReducedEIC harmoniseEIC(const FeaturePeak *feature,
                             const EIC *bin,
                             const std::vector<float> *RTs,
@@ -925,8 +998,8 @@ namespace qAlgorithms
         // assert(maxScan <= bin->scanNumbers.back());
         // this function creates harmonised EICs, meaning that it can be used for the running regression
         // within a component subgroup without further modification. The process is as follows:
-        // 1) create a results vector for every element which is of the size known at the time of function
-        //    call
+        // 1) create a results vector for every element which is of a size known at the time of function call
+
         unsigned int length = maxScan - minScan + 1;
         assert(length > 4);
         assert(RTs->size() == length);
@@ -985,48 +1058,32 @@ namespace qAlgorithms
 
         // 3) interpolate all intensities at 0 (log only for now)
         // this is combined with the RSS calculation
-        // 4) calculate the RSS (log) for all transferred points against the moved regression and write them into
-        //    the 0-filled vector for cumRSS. Then, take the cumsum over the vector.
-        for (unsigned int i = 0; i < length; i++)
+        for (size_t i = 0; i < length; i++)
         {
-            float predictedInt = logIntAt(feature, RTs->at(i));
-            // special case positive coefficient in b2 or b3: Here, the model will lead to very high results
-            // (10e500) relatively quickly. As such, the prediction past the outer limit is corrected to be
-            // always the last real value.
-            // this will lead to a very high improvement if a positive b23 is part of a double negative component
-            if (feature->b2 > 0) [[unlikely]] // @todo this is a really slow loop to execute, remove branching
-            {
-                if (i < reduced.featLim_L)
-                {
-                    predictedInt = reduced.intensity_log[reduced.featLim_L];
-                }
-            }
-            if (feature->b3 > 0) [[unlikely]]
-            {
-                if (i > reduced.featLim_R)
-                {
-                    predictedInt = reduced.intensity_log[reduced.featLim_R];
-                }
-            }
-
             if (reduced.intensity_log[i] == 0)
             { // value needs to be interpolated
+                float b23 = i > index_x0 ? feature->coefficients.b2 : feature->coefficients.b3;
+                double xval = double(i) - double(index_x0);
+                float predictedInt = feature->coefficients.b0 + xval * feature->coefficients.b1 + xval * xval * b23;
+                if (b23 > 0) [[unlikely]]
+                {
+                    // stopgap solution for positive coefficients, this is very likely a suboptimal idea @todo
+                    predictedInt = reduced.intensity_log[i > index_x0 ? reduced.featLim_L : reduced.featLim_R];
+                }
                 reduced.intensity_log[i] = predictedInt;
                 reduced.intensity[i] = std::exp(predictedInt);
                 reduced.df[i] = false;
             }
-            else
-            {
-                float diff = reduced.intensity_log[i] - predictedInt;
-                reduced.RSS_cum[i] = diff * diff;
-            }
         }
+        // 4) calculate the RSS for all transferred points against the moved regression and write them into
+        //    the 0-filled vector for cumRSS. Then, take the cumsum over the vector.
+        reduced.RSS_cum = cumulativeRSS(&reduced.intensity, &feature->coefficients, index_x0);
+        assert(reduced.RSS_cum.back() != INFINITY); // @todo this should not happen
 
         // form the cumulative sum over RSS
         for (unsigned int i = 1; i < length; i++)
         {
             reduced.RSS_cum[i] += reduced.RSS_cum[i - 1];
-            assert(reduced.RSS_cum[i] != INFINITY); // @todo this should not happen in the log case
         }
 
         return reduced;
@@ -1330,46 +1387,6 @@ namespace qAlgorithms
         return std::make_pair(idx1, idx2);
     }
 
-    std::vector<size_t> getCompareOrder(const PreGrouping *group)
-    {
-        assert(group->shapeScores.size() > 0);
-        std::vector<size_t> indices(group->shapeScores.size());
-        std::iota(indices.begin(), indices.end(), 0);
-        {
-            std::sort(indices.begin(), indices.end(),
-                      [group](size_t lhs, size_t rhs)
-                      { return (group->shapeScores)[lhs] > (group->shapeScores)[rhs]; });
-            // remove indices where the score is smaller than sensible
-            float lowestScore = 0.01;
-            size_t breakpoint = 0;
-            for (; group->shapeScores[indices[breakpoint]] > lowestScore; breakpoint++)
-                ;
-            indices.resize(breakpoint + 1);
-        }
-
-        // vector to count how many other regressions the one at this index has been combined with
-        std::vector<unsigned int> taken(group->features.size(), 0);
-
-        for (size_t i = 0; i < indices.size() / 2; i++)
-        {
-            auto pair = featNums(indices[2 * i], group); // at this point, two neighbours always have the same score.
-            bool left_is_left = group->features[pair.first].origin->retentionTime < group->features[pair.second].origin->retentionTime;
-            if (!left_is_left)
-            {
-                std::swap(pair.first, pair.second);
-            }
-            // @todo do the regression comparison here
-            bool mergeSuccess = true;
-            if (mergeSuccess)
-            {
-                taken[pair.first]++;
-                taken[pair.second]++;
-            }
-        }
-
-        return indices;
-    }
-
     void calcRSS(MovedRegression *reg, const EIC *bin)
     {
         // mutates the RSS field in MovedRegression
@@ -1429,62 +1446,6 @@ namespace qAlgorithms
         std::vector<std::vector<float>> intensities;
         std::vector<size_t> scanNo;
     };
-
-    IntensityMatrix combineIntensities(const PreGrouping *group, const std::vector<EIC> *bins)
-    {
-        // combine all features in the group such that their intensities are all
-        // accessible in a per-scan setting
-
-        // get the lowest and highest scan number of all component candidates
-        size_t lowerBound = INT64_MAX;
-        size_t upperBound = 0;
-        for (size_t i = 0; i < group->features.size(); i++)
-        {
-            size_t binID = group->features[i].binID;
-            auto bin = (*bins)[binID];
-            size_t lowEnd = bin.scanNumbers[group->features[i].origin->idxPeakStart];
-            size_t highEnd = bin.scanNumbers[group->features[i].origin->idxPeakEnd];
-            lowerBound = std::min(lowerBound, lowEnd);
-            upperBound = std::max(upperBound, highEnd);
-        }
-        // this vector holds the scan numbers per regression
-        size_t totalEntries = upperBound - lowerBound + 1;
-        std::vector<size_t> scanNo(totalEntries);
-        std::iota(scanNo.begin(), scanNo.end(), lowerBound);
-
-        // add a vector of size = number of groups for every relevant scan
-        std::vector<float> insert(group->features.size(), 0);
-        std::vector<std::vector<float>> elements;
-        elements.reserve(totalEntries);
-        for (size_t i = 0; i < totalEntries; i++)
-        {
-            elements.push_back(insert);
-        }
-
-        // fill the sub-vectors with relevant intensities, intensity 0 being equivalent to "not found"
-        for (size_t i = 0; i < group->features.size(); i++)
-        {
-            size_t binID = group->features[i].binID;
-            auto bin = (*bins)[binID];
-            auto scan = bin.scanNumbers;
-            auto area = bin.ints_area;
-            for (size_t j = 0; j < scan.size(); j++)
-            {
-                // iterate through the bin and add only those intensities with relevant scans
-                if (scan[j] < lowerBound)
-                {
-                    continue;
-                }
-                if (scan[j] > upperBound)
-                {
-                    break;
-                }
-                size_t scanIdx = scan[j] - lowerBound;
-                elements[scanIdx][i] = area[j];
-            }
-        }
-        return IntensityMatrix{}; // @todo remove this entire function
-    }
 
     std::vector<std::vector<float>> designMat(int scale, size_t k) // , const std::vector<size_t> *eliminate
     {
