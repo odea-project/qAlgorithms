@@ -46,9 +46,6 @@ namespace qAlgorithms
     // pre-group the region relevant to componentisation based on retention time uncertainty
     std::vector<GroupLims> preGroup(const std::vector<FeaturePeak> *peaks);
 
-    // determine the order of comparisons based on the tanimoto score
-    std::vector<size_t> getCompareOrder(const PreGrouping *group);
-
     // This function modifies the coefficients of a regression so that it describes a peak with the apex at
     // x = RT of the feature and the height 1. Features are manipulated this way to allow a shape comparison
     MovedRegression moveAndScaleReg(const FeaturePeak *feature);
@@ -63,17 +60,16 @@ namespace qAlgorithms
 
     MultiMatrix combinedMatrix(std::vector<std::vector<float>> *intensities);
 
-    void calcRSS(MovedRegression *reg, const EIC *bin);
+    // void calcRSS(MovedRegression *reg, const EIC *bin);
 
     struct ReducedEIC
     {
         // the reduced EIC only contains those centroids relevant for a feature (equivalent to featCens result file)
         // points in the EIC are already interpolated using the origin feature
-        // std::vector<float> RTs; // retention times are determined first so all points are equal
         std::vector<float> intensity;
         std::vector<float> intensity_log;
         std::vector<size_t> scanNo;
-        std::vector<float> RSS_cum; // cumulative RSS - this also serves as the indicator for interpolated / not interpolated
+        std::vector<float> RSS_cum; // cumulative RSS - considers the entire possible block
         std::vector<bool> df;       // @todo get rid of this somehow
         size_t feature_ID;
         size_t bin_ID;
@@ -91,33 +87,40 @@ namespace qAlgorithms
         // for traceability if needed @todo check for use case
         std::vector<float> intensity;
         std::vector<float> intensity_log;
-        std::vector<size_t> scanNo;
         std::vector<float> RSS_cum; // cumulative RSS - this also serves as the indicator for interpolated / not interpolated
         std::vector<bool> df;       // @todo get rid of this somehow
         size_t numPeaks;
         size_t peakFrame;
+        size_t groupIdxStart; // this is equal to the offset within the group for later
     };
 
-    ReducedEIC harmoniseEIC(const MovedRegression *feature,
+    ReducedEIC harmoniseEIC(const FeaturePeak *feature,
                             const EIC *bin,
                             const std::vector<float> *RTs,
                             const unsigned int minScan,
                             const unsigned int maxScan);
 
+    // always calculate the RSS over the entire region of intensities. Since the regression is always
+    // centered, only the index where x is 0 must be known in advance
+    std::vector<float> cumulativeRSS(const std::vector<float> *intensities,
+                                     const RegCoeffs *coeff,
+                                     size_t index_x0);
+
     float logIntAt(const MovedRegression *feature, float RT);
 
     struct MultiRegression
     {
-        // this regression is used internally to compare components
+        std::vector<float> cum_RSS; // one element per scan of the subgroup
         std::vector<float> b0_vec;
+        // all indices relate to the full subgroup!
         size_t idxStart;
         size_t idxEnd;
+        size_t idx_x0;
         size_t scale;
         float b1;
         float b2;
         float b3;
         float RT_apex;
-        float RSS;
     };
 
     struct MovedMultiRegression
@@ -145,6 +148,10 @@ namespace qAlgorithms
 
     MultiRegression runningRegression_multi(
         const MergedEIC *eic,
+        const std::vector<ReducedEIC> *eics,
+        const std::vector<size_t> *selection,
+        const size_t idxStart,
+        const size_t idxEnd,
         const size_t maxScale,
         const size_t numPeaks,
         const size_t peakFrame);
