@@ -135,26 +135,34 @@ namespace qAlgorithms
                     if (regression.b0_vec.empty())
                     {
                         failRegressions++;
+                        continue;
                     }
                     else
                     {
                         realRegressions++;
                     }
+                    // RSS of the complex model is the sum of both individual RSS over the range
+                    float substract = idxStart == 0 ? 0 : EIC_A.RSS_cum[idxStart - 1];
+                    float RSS_complex = EIC_A.RSS_cum[idxEnd] - substract;
+                    substract = idxStart == 0 ? 0 : EIC_A.RSS_cum[idxStart - 1];
+                    RSS_complex += EIC_A.RSS_cum[idxEnd] - substract;
+                    assert(RSS_complex < INFINITY);
 
-                    // @todo consider adding a special case function for a combination of two regressions
-                    // float rss_simple = rss_complex * 1.05; // this is just a standin, perform a regression here
+                    float RSS_simple = regression.cum_RSS.back(); // @todo correct range
+
                     // // we can be certain that the absolute rss is at most identical (for the case where feature_A == feature_B).
                     // // this check is also needed since the function we use for the f distribution later exits with error if a
                     // // negative  value is supplied
-                    // assert(rss_simple > rss_complex);
+                    // assert(RSS_simple > RSS_complex); // not always true, since feature RSS is initially only for the feature span
                     // // F-test to check if the merge is a good idea
-                    // size_t numPoints = feature_A.binIdxEnd - feature_A.binIdxStart + feature_B.binIdxEnd - feature_B.binIdxStart + 2;
-                    // size_t params_both = 8;  // four coefficients each
-                    // size_t params_combo = 5; // shared b1, b2, b3, two b0
+                    size_t numPoints = 2 * (idxEnd - idxStart + 1);
+                    size_t params_both = 8;  // four coefficients each
+                    size_t params_combo = 5; // shared b1, b2, b3, two b0
 
-                    // bool merge = preferMerge(rss_complex, rss_simple, numPoints, params_both, params_combo);
-                    // size_t access = idx_S + (idx_L * (idx_L - 1)) / 2;
-                    // pairRSS[access] = merge ? rss_simple : INFINITY;
+                    // only test if the complex RSS is lower
+                    bool merge = preferMerge(RSS_complex, RSS_simple, numPoints, params_both, params_combo);
+                    size_t access = idx_S + (idx_L * (idx_L - 1)) / 2;
+                    pairRSS[access] = merge ? RSS_simple : INFINITY;
                 }
             }
             // pairRSS serves as an exclusion matrix and priorisation tool. The component assignment is handled through
@@ -681,7 +689,7 @@ namespace qAlgorithms
                                          0,
                                          intensity_vecs[i].size() - 1,
                                          testCase.index_x0);
-                sum_MSE[multiReg] += mse / (testCase.df - 4);
+                sum_MSE[multiReg] += mse / (testCase.df - numPeaks - 3);
                 regressions[multiReg].idx_x0 = testCase.index_x0 + idxStart; // this is always in relation to the complete regression window
             }
         }
@@ -1079,12 +1087,6 @@ namespace qAlgorithms
         //    the 0-filled vector for cumRSS. Then, take the cumsum over the vector.
         reduced.RSS_cum = cumulativeRSS(&reduced.intensity, &feature->coefficients, index_x0);
         assert(reduced.RSS_cum.back() != INFINITY); // @todo this should not happen
-
-        // form the cumulative sum over RSS
-        for (unsigned int i = 1; i < length; i++)
-        {
-            reduced.RSS_cum[i] += reduced.RSS_cum[i - 1];
-        }
 
         return reduced;
     }
