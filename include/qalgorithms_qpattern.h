@@ -14,6 +14,14 @@ namespace qAlgorithms
                         const std::vector<EIC> *bins,
                         const std::vector<float> *convertRT); // this is needed to perform interpolation at the same RT as in qPeaks
 
+    struct RSS_pair
+    {
+        size_t idx_S;
+        size_t idx_L;
+        float RSS;
+        int component = -1; // no pair is assigned by default
+    };
+
     struct PreGrouping
     {
         std::vector<const FeaturePeak *> features; // keep this sorted by intensity
