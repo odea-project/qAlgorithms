@@ -108,6 +108,8 @@ namespace qAlgorithms
             // than the sum of both individual RSS values.
             // size: (x^2 -x) / 2 ; access: smaller Idx + (larger Idx * (larger Idx - 1)) / 2
             std::vector<float> pairRSS((groupsize * groupsize - groupsize) / 2, -1);
+
+            std::vector<RSS_pair> pairs((groupsize * groupsize - groupsize) / 2);
             // multi match all pairs
 
             for (size_t idx_S = 0; idx_S < groupsize - 1; idx_S++)
@@ -177,13 +179,15 @@ namespace qAlgorithms
                     size_t params_combo = 5; // shared b1, b2, b3, two b0
 
                     bool merge = preferMerge(RSS_complex, RSS_simple, numPoints, params_both, params_combo);
-                    size_t access = idx_S + (idx_L * (idx_L - 1)) / 2;
+                    // size_t access = idx_S + (idx_L * (idx_L - 1)) / 2;
                     pairRSS[access] = merge ? RSS_simple : INFINITY;
                 }
             }
             // pairRSS serves as an exclusion matrix and priorisation tool. The component assignment is handled through
             // a group vector and stored assignment information
+#pragma endregion "Compare Pairs"
 
+#pragma region "Iterative Assign"
             int componentGroup = -1; // the ID is incremented before assignment
             std::vector<CompAssignment> groupings;
             groupings.reserve(groupsize);
@@ -480,10 +484,6 @@ namespace qAlgorithms
         for (size_t i = mutateReg->left_limit; i < mutateReg->right_limit; i++)
         {
             df_sum += degreesOfFreedom->at(i);
-        }
-        if (df_sum < 5)
-        {
-            return; // degree of freedom less than 5; i.e., less then 5 measured data points
         }
 
         /*
