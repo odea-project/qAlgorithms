@@ -142,24 +142,40 @@ namespace qAlgorithms
                         realRegressions++;
                     }
                     // RSS of the complex model is the sum of both individual RSS over the range
-                    float substract = idxStart == 0 ? 0 : EIC_A.RSS_cum[idxStart - 1];
+                    assert(EIC_A.RSS_cum.size() == regression.cum_RSS.size());
+                    bool zero = idxStart == 0;
+                    float substract = zero ? 0 : EIC_A.RSS_cum[idxStart - 1];
                     float RSS_complex = EIC_A.RSS_cum[idxEnd] - substract;
-                    substract = idxStart == 0 ? 0 : EIC_A.RSS_cum[idxStart - 1];
+                    substract = zero ? 0 : EIC_A.RSS_cum[idxStart - 1];
                     RSS_complex += EIC_A.RSS_cum[idxEnd] - substract;
                     assert(RSS_complex < INFINITY);
 
-                    float RSS_simple = regression.cum_RSS.back(); // @todo correct range
+                    // same range for simple model
+                    substract = zero ? 0 : regression.cum_RSS[idxStart - 1];
+                    float RSS_simple = regression.cum_RSS[idxEnd] - substract;
 
-                    // // we can be certain that the absolute rss is at most identical (for the case where feature_A == feature_B).
-                    // // this check is also needed since the function we use for the f distribution later exits with error if a
-                    // // negative  value is supplied
-                    // assert(RSS_simple > RSS_complex); // not always true, since feature RSS is initially only for the feature span
+                    // it is possible for the simple model to have a lower RSS since the feature
+                    // applies to a smaller area than it and has worse performance outside its original
+                    // region than the combined one. @todo consider if it makes sense to propose an alternative
+                    // set of simple models that all share the larger region
+                    size_t access = idx_S + (idx_L * (idx_L - 1)) / 2;
+                    if (RSS_simple < RSS_complex)
+                    {
+                        // the simple model is inherently better, no F-test needed
+
+                        // @todo make this the information criterion
+                        pairRSS[access] = RSS_simple;
+                        continue;
+                    }
+
+                    // if the simple model performs worse, we must perform an F-test to see if it performs worse
+                    // than the complex one. We use the simple model if we accept H0
+
                     // // F-test to check if the merge is a good idea
                     size_t numPoints = 2 * (idxEnd - idxStart + 1);
                     size_t params_both = 8;  // four coefficients each
                     size_t params_combo = 5; // shared b1, b2, b3, two b0
 
-                    // only test if the complex RSS is lower
                     bool merge = preferMerge(RSS_complex, RSS_simple, numPoints, params_both, params_combo);
                     size_t access = idx_S + (idx_L * (idx_L - 1)) / 2;
                     pairRSS[access] = merge ? RSS_simple : INFINITY;
@@ -1500,116 +1516,6 @@ namespace qAlgorithms
         return resultMat;
     }
 
-    // void singleFit(std::vector<float> *logIntensity) // this was only included for the residuals, replace
-    // {
-    //     // the model requires an uneven number of points, this is a suboptimal solution
-    //     // int scale = bool(logIntensity->size() % 2) ? logIntensity->size() / 2 : logIntensity->size() / 2 - 1;
-
-    //     if (!logIntensity->size() % 2)
-    //     {
-    //         logIntensity->resize(logIntensity->size() - 1);
-    //     }
-    //     int scale = logIntensity->size() / 2;
-    //     // auto design = designMat(scale);
-    // }
-
-    //     void multiFit(const std::vector<ReducedEIC> *fitRegion, const std::vector<MovedRegression> *peaks)
-    //     {
-    //         assert(fitRegion->size() == peaks->size());
-    //         // fit one model with variable b0 over multiple traces
-    //         // fitRegion contains all mass traces over which a fit should be performed, including zero padding
-    //         // find the scale that fits the non-0 intensity region, -1 at the lowest intensity if an even number is found
-    //         size_t k = fitRegion->size();
-    //         size_t limit_L = 0;
-    //         size_t limit_R = fitRegion->front().intensity.size();
-    //         // to decide in the case of an uneven region, keep track of the total intensities at the two outer points
-    //         float sumInts_L = -1;
-    //         float sumInts_R = -1;
-    //         for (size_t i = 0; i < fitRegion->front().intensity.size(); i++)
-    //         {
-    //             // left half
-    //             float sumInts = 0;
-    //             for (size_t j = 0; j < k; j++)
-    //             {
-    //                 sumInts += fitRegion->at(j).intensity_log[i];
-    //             }
-    //             if (sumInts != 0)
-    //             {
-    //                 sumInts_L = sumInts;
-    //                 limit_L = i;
-    //                 break;
-    //             }
-    //         }
-    //         for (size_t i = fitRegion->front().intensity.size() - 1; i > limit_L; i--)
-    //         {
-    //             // left half
-    //             float sumInts = 0;
-    //             for (size_t j = 0; j < k; j++)
-    //             {
-    //                 sumInts += fitRegion->at(j).intensity_log[i];
-    //             }
-    //             if (sumInts != 0)
-    //             {
-    //                 sumInts_R = sumInts;
-    //                 limit_R = i;
-    //                 break;
-    //             }
-    //         }
-    //         assert(limit_R - limit_L >= 4);
-    //         // if there is an even number of points, the difference of the limits is uneven
-    //         if (((limit_R - limit_L) % 2) == 1)
-    //         {
-    //             // adjust the window while minimising the intensity loss
-    //             if (sumInts_L > sumInts_R)
-    //             {
-    //                 limit_R -= 1;
-    //             }
-    //             else
-    //             {
-    //                 limit_L += 1;
-    //             }
-    //         }
-    //         assert(limit_R - limit_L >= 4);
-
-    //         const size_t scale = (limit_R - limit_L + 1) / 2; // +1 since limits are indices
-    //         // produce the intensity vector (without zeroes) while keeping track of which rows to interpolate
-    //         // std::vector<size_t> interpolate;
-    //         std::vector<float> combined_logInt((2 * scale + 1) * k, 0);
-    //         // interpolate.reserve(combined_logInt.size() / 10);
-    //         size_t logIdx = 0;
-    //         for (size_t i = 0; i < k; i++)
-    //         {
-    //             ReducedEIC current = (*fitRegion)[i];
-    //             auto coeffs = peaks->at(i);
-    // #define INTERPOLATE_L(x) (coeffs.b0_L + coeffs.b1_L * x + coeffs.b2 * x * x) // no need for exp since we work with the log for regressions anyway
-    // #define INTERPOLATE_R(x) (coeffs.b0_R + coeffs.b1_R * x + coeffs.b3 * x * x)
-    //             for (size_t j = limit_L; j < limit_R + 1; j++)
-    //             {
-    //                 combined_logInt[logIdx] = current.intensity_log[j];
-    //                 if (current.intensity_log[j] == 0)
-    //                 {
-    //                     float rt = current.RTs[j];
-    //                     combined_logInt[logIdx] = rt < coeffs.RT_switch ? INTERPOLATE_L(rt) : INTERPOLATE_R(rt);
-    //                     // interpolate.push_back(logIdx);
-    //                 }
-    //                 logIdx++;
-    //             }
-    // #undef INTERPOLATE_L
-    // #undef INTERPOLATE_R
-    //         }
-    //         // assert(combined_logInt.back() != 0); // this is possible, although hopefully unlikely
-    //         auto matrix = designMat(scale, k);
-    //         assert(matrix[0].size() == combined_logInt.size());
-    //         // set all entries of the matrix were no intensity values exist to 0
-    //         // for (size_t i = 0; i < matrix.size(); i++)
-    //         // {
-    //         //     for (size_t j = 0; j < interpolate.size(); j++)
-    //         //     {
-    //         //         matrix[i][j] = 0;
-    //         //     }
-    //         // }
-    //     }
-
     bool preferMerge(float rss_complex, float rss_simple, size_t n_total, size_t p_complex, size_t p_simple)
     {
         assert(rss_complex < rss_simple);
@@ -1626,6 +1532,7 @@ namespace qAlgorithms
         int status = 1;                    // result invalid if this is not 0
         double bound = 0;                  // allows recovery from non-0 status
 
+        // @todo replace with lookup table
         cdff(&which, &p, &q, &F, &dfn, &dfd, &status, &bound); // library function, see https://people.math.sc.edu/Burkardt/cpp_src/cdflib/cdflib.html
         assert(status == 0);
 
