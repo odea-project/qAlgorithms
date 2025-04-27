@@ -14,14 +14,6 @@ namespace qAlgorithms
                         const std::vector<EIC> *bins,
                         const std::vector<float> *convertRT); // this is needed to perform interpolation at the same RT as in qPeaks
 
-    struct RSS_pair
-    {
-        size_t idx_S;
-        size_t idx_L;
-        float RSS;
-        int component = -1; // no pair is assigned by default
-    };
-
     struct PreGrouping
     {
         std::vector<const FeaturePeak *> features; // keep this sorted by intensity
@@ -45,9 +37,24 @@ namespace qAlgorithms
         size_t n_cols;
     };
 
+    struct RSS_pair
+    {
+        std::vector<float> cumRSS;
+        size_t idx_S;          // relates to half matrix
+        size_t idx_L;          // relates to half matrix
+        unsigned int idxStart; // relates to harmonised EIC space
+        unsigned int idxEnd;   // relates to harmonised EIC space
+        float RSS;             // residual sum of squares
+        int component = -1;    // no pair is assigned by default
+    };
+
     struct CompAssignment
     {
-        const size_t feature;
+        std::vector<float> cumRSS;
+        unsigned int limit_L; // refers to harmonised EIC space
+        unsigned int limit_R; // refers to harmonised EIC space
+        unsigned int members; // number of peaks included in this component
+        float RSS = INFINITY;
         int component = -1; // -1 means unassigned, groups start at 0
     };
 
@@ -160,9 +167,7 @@ namespace qAlgorithms
         const std::vector<size_t> *selection,
         const size_t idxStart,
         const size_t idxEnd,
-        const size_t maxScale,
-        const size_t numPeaks,
-        const size_t peakFrame);
+        const size_t numPeaks);
 
     void makeValidRegression_multi(
         RegressionGauss *mutateReg,
