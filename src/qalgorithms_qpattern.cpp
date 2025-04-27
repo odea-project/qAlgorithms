@@ -133,9 +133,11 @@ namespace qAlgorithms
                     size_t idxEnd = std::min(EIC_A.featLim_R, EIC_B.featLim_R);
                     std::vector<ReducedEIC> eics{EIC_A, EIC_B};
                     auto mergedEIC = mergeEICs(&eics, &select, idxStart, idxEnd);
-                    size_t span = (idxEnd - idxStart + 1);
-                    size_t maxscale = (span - 1) / 2 > MAXSCALE ? MAXSCALE : (span - 1) / 2;
-                    auto regression = runningRegression_multi(&mergedEIC, &eics, &select, idxStart, idxEnd, maxscale, 2, span);
+                    auto regression = runningRegression_multi(&mergedEIC, &eics, &select, idxStart, idxEnd, 2);
+
+                    pairs[access].idxStart = regression.idxStart;
+                    pairs[access].idxEnd = regression.idxEnd;
+
                     if (regression.b0_vec.empty())
                     {
                         pairs[access].RSS = INFINITY;
@@ -146,7 +148,7 @@ namespace qAlgorithms
                     {
                         realRegressions++;
                     }
-
+                    pairs[access].cumRSS = regression.cum_RSS;
                     // return infinity if the regression does not work
                     pairs[access].RSS = simpleRSS(&regression.cum_RSS, &EIC_A.RSS_cum, &EIC_B.RSS_cum,
                                                   idxStart, idxEnd, 2, 8);
@@ -158,8 +160,8 @@ namespace qAlgorithms
 
 #pragma region "Iterative Assign"
             int componentGroup = 0;
-            std::vector<int> assignment(groupsize, -1);   // -1 == unassigned
-            std::vector<float> componentRSS(1, INFINITY); // index-based access of component RSS
+            std::vector<int> assignment(groupsize, -1); // -1 == unassigned
+            std::vector<CompAssignment> components;     // index-based access of component RSS
 
             // all pairs are iterated through in ascending order of RSS (best -> worst)
             std::sort(pairs.begin(), pairs.end(), [](const RSS_pair lhs, const RSS_pair rhs)
@@ -179,13 +181,19 @@ namespace qAlgorithms
                         // form a new component from the two features
                         *ass_L = componentGroup;
                         *ass_S = componentGroup;
-                        componentRSS[componentGroup] = p.RSS;
-                        componentRSS.push_back(INFINITY);
+                        CompAssignment insert{
+                            p.cumRSS, // @todo this is a major design flaw
+                            p.idxStart,
+                            p.idxEnd,
+                            2, // number of peaks in this component
+                            p.RSS,
+                            componentGroup};
+                        components.push_back(insert);
                         componentGroup++;
                     }
                 }
                 else
-                {
+                { // @todo this can be condensed by merging the selection assignment and other stuff
                     if ((*ass_L == -1) || (*ass_S == -1))
                     {
                         // one feature is assigned, the other is not
@@ -205,17 +213,98 @@ namespace qAlgorithms
                                 selection.push_back(idx); // @todo this is pretty inefficient
                             }
                         }
-                        // 2) check if there is a better RSS when combining the regressions, then merge if yes
+
+                        size_t idxStart = std::min(components[existingComponent].limit_L, eics[unassignedFeature].featLim_L);
+                        size_t idxEnd = std::max(components[existingComponent].limit_R, eics[unassignedFeature].featLim_R);
+                        // 2) perform the multi-regression over the combined EIC for the selection
+                        auto mergedEIC = mergeEICs(&eics, &selection, idxStart, idxEnd);
+                        const size_t n = components[existingComponent].members;
+                        auto regression = runningRegression_multi(&mergedEIC, &eics, &selection,
+                                                                  idxStart, idxEnd, n + 1);
+
+                        // 3) check if there is a better RSS when combining the regressions, then merge if yes
+                        // This is already handled in the simpleRSS function, so we just check for infinity (= no merge)
+                        float newRSS = simpleRSS(&regression.cum_RSS,
+                                                 &eics[unassignedFeature].RSS_cum,
+                                                 &components[existingComponent].cumRSS,
+                                                 idxStart, idxEnd, n + 1, n + 3 + 4);
+
+                        if (newRSS < INFINITY)
+                        {
+                            // do nothing if the single feature doesn't fit
+                            components[existingComponent].cumRSS = regression.cum_RSS;
+                            components[existingComponent].members++;
+                            components[existingComponent].limit_L = regression.idxStart;
+                            components[existingComponent].limit_R = regression.idxEnd;
+                            components[existingComponent].RSS = newRSS;
+                            *unAss = components[existingComponent].component;
+                        }
+                    }
+                    else
+                    {
+                        // both features are assigned to different components
+                        // the only relevant check here is for the combination of both into one new component
+                        assert((*ass_L != -1) && (*ass_S != -1));
+                        assert(*ass_L != *ass_S);
+
+                        const size_t n = components[*ass_L].members + components[*ass_S].members;
+                        size_t idxStart = std::min(components[*ass_L].limit_L, eics[*ass_S].featLim_L);
+                        size_t idxEnd = std::max(components[*ass_L].limit_R, eics[*ass_S].featLim_R);
+
+                        // add all feature IDs from both components
+                        std::vector<size_t> selection;
+                        for (size_t idx = 0; idx < groupsize; idx++)
+                        {
+                            if ((assignment[idx] == *ass_L) || (assignment[idx] == *ass_S))
+                            {
+                                selection.push_back(idx); // @todo this is pretty inefficient
+                            }
+                        }
+                        // 2) perform the multi-regression over the combined EIC for the selection
+                        auto mergedEIC = mergeEICs(&eics, &selection, idxStart, idxEnd);
+                        auto regression = runningRegression_multi(&mergedEIC, &eics, &selection,
+                                                                  idxStart, idxEnd, n);
+
+                        // 3) check if there is a better RSS when combining the regressions, then merge if yes
+                        // This is already handled in the simpleRSS function, so we just check for infinity (= no merge)
+                        float newRSS = simpleRSS(&regression.cum_RSS,
+                                                 &components[*ass_L].cumRSS,
+                                                 &components[*ass_S].cumRSS,
+                                                 idxStart, idxEnd, n + 1, n + 3 + 4);
+
+                        if (newRSS < INFINITY)
+                        {
+                            // do nothing if the two components cannot be merged
+                            // always prefer the smaller indexed feature when assigning components.
+                            // this does not have an effect on any comparisons, so not a relevant implementation detail
+
+                            components[*ass_S].cumRSS = regression.cum_RSS;
+                            components[*ass_S].members = n;
+                            components[*ass_S].limit_L = regression.idxStart;
+                            components[*ass_S].limit_R = regression.idxEnd;
+                            components[*ass_S].RSS = newRSS;
+                            // invalidate the merged component
+                            components[*ass_L].members = 0;
+                            components[*ass_L].RSS = INFINITY;
+                            for (size_t idx = 0; idx < groupsize; idx++)
+                            {
+                                if ((assignment[idx] == *ass_L))
+                                {
+                                    assignment[idx] = *ass_S;
+                                }
+                            }
+                            // *ass_L = *ass_S; // both go out of scope after this point anyway
+                        }
                     }
                 }
             }
 
-            std::vector<CompAssignment> groupings;
-            groupings.reserve(groupsize);
-            for (size_t idx = 0; idx < groupsize; idx++)
-            {
-                groupings.push_back({idx, -1});
-            }
+            // std::vector<CompAssignment> groupings;
+            // groupings.reserve(groupsize);
+            // for (size_t idx = 0; idx < groupsize; idx++)
+            // {
+            //     // groupings.push_back({idx, -1});
+            // }
 
             // multiFit(&eics, &newComponent.features);
 
@@ -228,14 +317,14 @@ namespace qAlgorithms
             // current pre-gruping strategy
 
             // all ungrouped features are -1 at this point, loop over them and add a correct component number
-            for (size_t ID = 0; ID < groupsize; ID++)
-            {
-                if (groupings[ID].component == -1)
-                {
-                    componentGroup++;
-                    groupings[ID].component = componentGroup;
-                }
-            }
+            // for (size_t ID = 0; ID < groupsize; ID++)
+            // {
+            //     if (groupings[ID].component == -1)
+            //     {
+            //         componentGroup++;
+            //         groupings[ID].component = componentGroup;
+            //     }
+            // }
             assert(componentGroup > -1);
             assert((size_t(componentGroup)) <= groupsize);
         }
@@ -302,37 +391,37 @@ namespace qAlgorithms
         }
     }
 
-    void newComponent(std::vector<CompAssignment> *groupings, int *compCount, size_t member_A, size_t member_B)
-    {
-        // a new component is only ever made from two unassigned features
-        compCount++;
-        bool exit = false;
-        for (size_t i = 0; i < groupings->size(); i++)
-        {
-            if ((groupings->at(i).feature == member_A) || (groupings->at(i).feature == member_B))
-            {
-                groupings->at(i).component = *compCount;
-                if (exit)
-                {
-                    break;
-                }
-                exit = true;
-            }
-        }
-    }
+    // void newComponent(std::vector<CompAssignment> *groupings, int *compCount, size_t member_A, size_t member_B)
+    // {
+    //     // a new component is only ever made from two unassigned features
+    //     compCount++;
+    //     bool exit = false;
+    //     for (size_t i = 0; i < groupings->size(); i++)
+    //     {
+    //         if ((groupings->at(i).feature == member_A) || (groupings->at(i).feature == member_B))
+    //         {
+    //             groupings->at(i).component = *compCount;
+    //             if (exit)
+    //             {
+    //                 break;
+    //             }
+    //             exit = true;
+    //         }
+    //     }
+    // }
 
-    void addToComponent(std::vector<CompAssignment> *groupings, const size_t compCount, int ID_add, size_t member)
-    {
-        // only update assignment of member
-        for (size_t i = 0; i < groupings->size(); i++)
-        {
-            if (groupings->at(i).feature == member)
-            {
-                groupings->at(i).component = ID_add;
-                break;
-            }
-        }
-    }
+    // void addToComponent(std::vector<CompAssignment> *groupings, const size_t compCount, int ID_add, size_t member)
+    // {
+    //     // only update assignment of member
+    //     for (size_t i = 0; i < groupings->size(); i++)
+    //     {
+    //         if (groupings->at(i).feature == member)
+    //         {
+    //             groupings->at(i).component = ID_add;
+    //             break;
+    //         }
+    //     }
+    // }
 
     double complexRSS(const MergedEIC *eic,
                       const std::vector<RegressionGauss> *features,
@@ -638,10 +727,13 @@ namespace qAlgorithms
         const std::vector<size_t> *selection,
         const size_t idxStart,
         const size_t idxEnd,
-        const size_t maxScale,
-        const size_t numPeaks,
-        const size_t peakFrame)
+        // const size_t maxScale,
+        const size_t numPeaks)
+    // const size_t peakFrame)
     {
+        size_t peakFrame = (idxEnd - idxStart + 1);
+        size_t maxScale = (peakFrame - 1) / 2 > MAXSCALE ? MAXSCALE : (peakFrame - 1) / 2;
+
         assert(selection->size() == eic->numPeaks);
         assert(eic->numPeaks == numPeaks);
         // regressions for every possible scale and window position
@@ -743,9 +835,10 @@ namespace qAlgorithms
                 minIdx = i;
             }
         }
-        // assert(minIdx >= 0);
+
         if (minIdx == -1)
         {
+            // scale is 0 by default, use that to check
             return MultiRegression{}; // this will lead to problems further down @todo
         }
         // calculate the cumulative RSS for the entire block @todo this could lead to very large values and problems, make a test
@@ -761,7 +854,7 @@ namespace qAlgorithms
             // over all different regressions is used. Sum of cumsums == cumsum of the sums
             vecSum(&bestReg.cum_RSS, &cumRSS_local);
         }
-
+        assert(bestReg.idxEnd != bestReg.idxStart);
         return bestReg;
     }
 
@@ -1569,6 +1662,11 @@ namespace qAlgorithms
                     size_t peakCount,
                     size_t p_complex)
     {
+        if (RSS_simple_cum->empty())
+        {
+            return INFINITY; // @todo this is a bad idea
+        }
+
         assert(RSS_simple_cum->size() == RSS_complex_cum_A->size());
         assert(RSS_simple_cum->size() == RSS_complex_cum_B->size());
         assert(idxStart < idxEnd);
