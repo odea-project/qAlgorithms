@@ -181,7 +181,18 @@ namespace qAlgorithms
     /// @param p_complex parameters (coefficients) of the two individual models
     /// @param p_simple parameters (coefficients) of the combined model
     /// @return returns true if the combined model is not significantly (alpha = 0.05) worse than the combination of the individual models
-    bool preferMerge(float rss_complex, float rss_simple, size_t n_total, size_t p_complex, size_t p_simple);
+    bool preferMerge(float rss_complex,
+                     float rss_simple,
+                     size_t n_total,
+                     size_t p_complex);
+
+    float simpleRSS(std::vector<float> *RSS_simple_cum,
+                    std::vector<float> *RSS_complex_cum_A,
+                    std::vector<float> *RSS_complex_cum_B,
+                    size_t idxStart,
+                    size_t idxEnd,
+                    size_t peakCount,
+                    size_t p_complex); // needed for the F-test, should be replaced by a better solution sometime
 
     void multiFit(const std::vector<ReducedEIC> *fitRegion, const std::vector<MovedRegression> *regressions);
 }

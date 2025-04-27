@@ -34,6 +34,7 @@ namespace qAlgorithms
         components.reserve(limits.size());
         for (size_t groupIdx = 0; groupIdx < limits.size(); groupIdx++)
         {
+            // @todo factor the loop internals into at least one function
             PreGrouping pregroup;
             size_t groupsize = limits[groupIdx].end - limits[groupIdx].start + 1;
             std::cout << groupsize << ", ";
@@ -92,6 +93,7 @@ namespace qAlgorithms
                 const FeaturePeak *feature = pregroup.features[j];
                 const EIC *bin = &bins->at(feature->idxBin);
                 eics.push_back(harmoniseEIC(feature, bin, &unifiedRT, minScan, maxScan));
+                eics.back().feature_ID = j;
                 assert(eics[j].intensity.size() == eics[0].intensity.size());
             }
             // At this stage, the EICs are in the correct shape for performing a multi-regression.
@@ -107,10 +109,7 @@ namespace qAlgorithms
             // first, calculate the pairwise RSS in a sparse matrix. The RSS is set to INFINITY if it is worse
             // than the sum of both individual RSS values.
             // size: (x^2 -x) / 2 ; access: smaller Idx + (larger Idx * (larger Idx - 1)) / 2
-            std::vector<float> pairRSS((groupsize * groupsize - groupsize) / 2, -1);
-
             std::vector<RSS_pair> pairs((groupsize * groupsize - groupsize) / 2);
-            // multi match all pairs
 
             for (size_t idx_S = 0; idx_S < groupsize - 1; idx_S++)
             {
@@ -118,6 +117,9 @@ namespace qAlgorithms
                 auto EIC_A = eics[idx_S];
                 for (size_t idx_L = idx_S + 1; idx_L < groupsize; idx_L++)
                 {
+                    size_t access = idx_S + (idx_L * (idx_L - 1)) / 2; // index of the half matrix where the pair sits
+                    pairs[access].idx_S = idx_S;
+                    pairs[access].idx_L = idx_L;
                     // auto feature_B = pregroup.features[idx_L];
                     auto EIC_B = eics[idx_L];
                     // pairwise merge to check if two features can be part of the same component
@@ -136,6 +138,7 @@ namespace qAlgorithms
                     auto regression = runningRegression_multi(&mergedEIC, &eics, &select, idxStart, idxEnd, maxscale, 2, span);
                     if (regression.b0_vec.empty())
                     {
+                        pairs[access].RSS = INFINITY;
                         failRegressions++;
                         continue;
                     }
@@ -143,44 +146,10 @@ namespace qAlgorithms
                     {
                         realRegressions++;
                     }
-                    // RSS of the complex model is the sum of both individual RSS over the range
-                    assert(EIC_A.RSS_cum.size() == regression.cum_RSS.size());
-                    bool zero = idxStart == 0;
-                    float substract = zero ? 0 : EIC_A.RSS_cum[idxStart - 1];
-                    float RSS_complex = EIC_A.RSS_cum[idxEnd] - substract;
-                    substract = zero ? 0 : EIC_A.RSS_cum[idxStart - 1];
-                    RSS_complex += EIC_A.RSS_cum[idxEnd] - substract;
-                    assert(RSS_complex < INFINITY);
 
-                    // same range for simple model
-                    substract = zero ? 0 : regression.cum_RSS[idxStart - 1];
-                    float RSS_simple = regression.cum_RSS[idxEnd] - substract;
-
-                    // it is possible for the simple model to have a lower RSS since the feature
-                    // applies to a smaller area than it and has worse performance outside its original
-                    // region than the combined one. @todo consider if it makes sense to propose an alternative
-                    // set of simple models that all share the larger region
-                    size_t access = idx_S + (idx_L * (idx_L - 1)) / 2;
-                    if (RSS_simple < RSS_complex)
-                    {
-                        // the simple model is inherently better, no F-test needed
-
-                        // @todo make this the information criterion
-                        pairRSS[access] = RSS_simple;
-                        continue;
-                    }
-
-                    // if the simple model performs worse, we must perform an F-test to see if it performs worse
-                    // than the complex one. We use the simple model if we accept H0
-
-                    // // F-test to check if the merge is a good idea
-                    size_t numPoints = 2 * (idxEnd - idxStart + 1);
-                    size_t params_both = 8;  // four coefficients each
-                    size_t params_combo = 5; // shared b1, b2, b3, two b0
-
-                    bool merge = preferMerge(RSS_complex, RSS_simple, numPoints, params_both, params_combo);
-                    // size_t access = idx_S + (idx_L * (idx_L - 1)) / 2;
-                    pairRSS[access] = merge ? RSS_simple : INFINITY;
+                    // return infinity if the regression does not work
+                    pairs[access].RSS = simpleRSS(&regression.cum_RSS, &EIC_A.RSS_cum, &EIC_B.RSS_cum,
+                                                  idxStart, idxEnd, 2, 8);
                 }
             }
             // pairRSS serves as an exclusion matrix and priorisation tool. The component assignment is handled through
@@ -188,7 +157,59 @@ namespace qAlgorithms
 #pragma endregion "Compare Pairs"
 
 #pragma region "Iterative Assign"
-            int componentGroup = -1; // the ID is incremented before assignment
+            int componentGroup = 0;
+            std::vector<int> assignment(groupsize, -1);   // -1 == unassigned
+            std::vector<float> componentRSS(1, INFINITY); // index-based access of component RSS
+
+            // all pairs are iterated through in ascending order of RSS (best -> worst)
+            std::sort(pairs.begin(), pairs.end(), [](const RSS_pair lhs, const RSS_pair rhs)
+                      { return lhs.RSS < rhs.RSS; });
+
+            for (size_t i = 0; i < pairs.size(); i++) // @todo length of pairs = the number of RSS - infinity
+            {
+                auto p = pairs[i];
+                int *ass_L = &assignment[p.idx_L];
+                int *ass_S = &assignment[p.idx_S];
+
+                if (*ass_L == *ass_S)
+                {
+                    // if the component ID is not -1, both are assigned to the same component -> do nothing
+                    if (*ass_L == -1)
+                    {
+                        // form a new component from the two features
+                        *ass_L = componentGroup;
+                        *ass_S = componentGroup;
+                        componentRSS[componentGroup] = p.RSS;
+                        componentRSS.push_back(INFINITY);
+                        componentGroup++;
+                    }
+                }
+                else
+                {
+                    if ((*ass_L == -1) || (*ass_S == -1))
+                    {
+                        // one feature is assigned, the other is not
+                        bool singleLarge = *ass_L == -1;
+                        int *unAss = singleLarge ? ass_L : ass_S;
+                        // check if the unassigned feature can be assigned to a component.
+                        // this will not lead to the creation of a new component!
+
+                        // 1) create a selection vector that holds the feature IDs for merge
+                        int existingComponent = singleLarge ? *ass_S : *ass_L;      // component ID of the assigned feature
+                        size_t unassignedFeature = singleLarge ? p.idx_L : p.idx_S; // index of the unassigned feature
+                        std::vector<size_t> selection(1, unassignedFeature);
+                        for (size_t idx = 0; idx < groupsize; idx++)
+                        {
+                            if (assignment[idx] == existingComponent)
+                            {
+                                selection.push_back(idx); // @todo this is pretty inefficient
+                            }
+                        }
+                        // 2) check if there is a better RSS when combining the regressions, then merge if yes
+                    }
+                }
+            }
+
             std::vector<CompAssignment> groupings;
             groupings.reserve(groupsize);
             for (size_t idx = 0; idx < groupsize; idx++)
@@ -380,6 +401,7 @@ namespace qAlgorithms
                         size_t idxStart,
                         size_t idxEnd)
     {
+        // the values in selection must be unique! This isn't tested here @todo
         assert(selection->size() <= eics->size());
         assert(idxEnd > idxStart);
         size_t eicSize = eics->front().intensity.size();
@@ -1044,8 +1066,8 @@ namespace qAlgorithms
             std::vector<size_t>(length, 0),  // scan number
             std::vector<float>(length, 0),   // RSS_cum
             std::vector<bool>(length, true), // degrees of freedom
-            0,                               // feature ID @todo
-            0,                               // bin ID @todo
+            0,                               // feature ID is only initialised after function execution
+            feature->idxBin,                 // bin ID
 
             featLim_L, // these limits are relating to the fully interpolated EIC
             featLim_R,
@@ -1516,7 +1538,7 @@ namespace qAlgorithms
         return resultMat;
     }
 
-    bool preferMerge(float rss_complex, float rss_simple, size_t n_total, size_t p_complex, size_t p_simple)
+    bool preferMerge(float rss_complex, float rss_simple, size_t n_total, size_t p_complex)
     {
         assert(rss_complex < rss_simple);
         // @todo consider if this part of the code can be sped up by hashing the computations dependent on dfn and dfd
@@ -1526,16 +1548,64 @@ namespace qAlgorithms
         int which = 1; // select mode of library function and check computation result
         double p = 0;  // not required
         double q = 0;  // return value, equals p - 1
-        double F = ((rss_simple - rss_complex) / float(p_complex - p_simple)) / (rss_complex / float(n_total - p_complex));
-        double dfn = p_complex - p_simple; // numerator degrees of freedom
-        double dfd = n_total - p_complex;  // denominator degrees of freedom
-        int status = 1;                    // result invalid if this is not 0
-        double bound = 0;                  // allows recovery from non-0 status
+        double F = ((rss_simple - rss_complex) / 3) / (rss_complex / float(n_total - p_complex));
+        double dfn = 3;                   // numerator degrees of freedom is always 3, since the simple model has three coeffs less
+        double dfd = n_total - p_complex; // denominator degrees of freedom
+        int status = 1;                   // result invalid if this is not 0
+        double bound = 0;                 // allows recovery from non-0 status
 
         // @todo replace with lookup table
         cdff(&which, &p, &q, &F, &dfn, &dfd, &status, &bound); // library function, see https://people.math.sc.edu/Burkardt/cpp_src/cdflib/cdflib.html
         assert(status == 0);
 
         return q > alpha; // the merged model is not worse than the complex version, both can be merged
+    }
+
+    float simpleRSS(std::vector<float> *RSS_simple_cum,
+                    std::vector<float> *RSS_complex_cum_A,
+                    std::vector<float> *RSS_complex_cum_B,
+                    size_t idxStart,
+                    size_t idxEnd,
+                    size_t peakCount,
+                    size_t p_complex)
+    {
+        assert(RSS_simple_cum->size() == RSS_complex_cum_A->size());
+        assert(RSS_simple_cum->size() == RSS_complex_cum_B->size());
+        assert(idxStart < idxEnd);
+
+        bool zero = idxStart == 0;
+
+        float substract_S = zero ? 0 : RSS_simple_cum->at(idxStart - 1);
+        float substract_cA = zero ? 0 : RSS_complex_cum_A->at(idxStart - 1);
+        float substract_cB = zero ? 0 : RSS_complex_cum_B->at(idxStart - 1);
+
+        float RSS_simple = RSS_simple_cum->at(idxEnd) - substract_S;
+        float RSS_complex = RSS_complex_cum_A->at(idxEnd) - substract_cA +
+                            RSS_complex_cum_B->at(idxEnd) - substract_cB;
+
+        assert(RSS_complex < INFINITY);
+
+        // it is possible for the simple model to have a lower RSS since the feature
+        // applies to a smaller area than it and has worse performance outside its original
+        // region than the combined one. @todo consider if it makes sense to propose an alternative
+        // set of simple models that all share the larger region
+
+        if (RSS_simple < RSS_complex)
+        {
+            // the simple model is inherently better, no F-test needed
+            // @todo make this the information criterion
+            return RSS_simple;
+        }
+        // F-test
+        size_t numPoints = (idxEnd - idxStart + 1) * peakCount;
+        bool merge = preferMerge(RSS_complex, RSS_simple, numPoints, p_complex);
+        if (merge)
+        {
+            return RSS_simple;
+        }
+        else
+        {
+            return INFINITY;
+        }
     }
 }
