@@ -766,7 +766,7 @@ namespace qAlgorithms
             return; // invalid area pre-filter
         }
 
-        if (valley_position == 0)
+        if (valley_position == 0) [[likely]]
         {
             // no valley point exists
             mutateReg->left_limit = idxStart;
@@ -784,15 +784,16 @@ namespace qAlgorithms
             mutateReg->right_limit = std::min(idxStart + 2 * scale, static_cast<int>(valley_position) + idxStart + scale);
         }
         assert(mutateReg->right_limit < intensities->size());
+        const size_t idx_x0 = idxStart + scale;
 
         /*
             Note: left and right limit are not the limits of the regression, but of the window the regression applies in.
             When multiple regressions are combined, the window limits are combined by maximum.
         */
-
-        if (scale + idxStart == mutateReg->left_limit || scale + idxStart == mutateReg->right_limit)
+        if (idx_x0 - mutateReg->left_limit < 2 || (mutateReg->right_limit - idx_x0 < 2))
         {
-            // only one half of the regression applies to the data
+            // only one half of the regression applies to the data, since the
+            // degrees of freedom for the "squished" half results in an invalid regression
             return;
         }
 
@@ -817,8 +818,8 @@ namespace qAlgorithms
           ratio is greater than 2. This is a pre-filter for later
           signal-to-noise ratio checkups. apexToEdge is also required in isValidPeakHeight further down
         */
-        //         size_t idx_apex = (size_t)std::round(apex_position) + scale + idxStart;
-        size_t idxApex = (size_t)std::round(mutateReg->apex_position) + scale + idxStart;
+        //         size_t idx_apex = (size_t)std::round(apex_position) + idx_x0;
+        size_t idxApex = (size_t)std::round(mutateReg->apex_position) + idx_x0;
         float apexToEdge = apexToEdgeRatio(mutateReg->left_limit, idxApex, mutateReg->right_limit, intensities);
         if (!(apexToEdge > 2))
         {
@@ -840,7 +841,7 @@ namespace qAlgorithms
         selectLog.reserve(mutateReg->right_limit - mutateReg->left_limit + 1);
         predictLog.reserve(mutateReg->right_limit - mutateReg->left_limit + 1);
         float mse = calcSSE_base(mutateReg->coeffs, intensities_log, &selectLog, &predictLog,
-                                 mutateReg->left_limit, mutateReg->right_limit, scale + idxStart);
+                                 mutateReg->left_limit, mutateReg->right_limit, idx_x0);
 
         /*
         competing regressions filter:
@@ -910,7 +911,7 @@ namespace qAlgorithms
           the exponential domain. If the chi-square value is less than the corresponding
           value in the CHI_SQUARES, the regression is invalid.
         */
-        float chiSquare = calcSSE_chisqared(mutateReg->coeffs, intensities, mutateReg->left_limit, mutateReg->right_limit, scale + idxStart);
+        float chiSquare = calcSSE_chisqared(mutateReg->coeffs, intensities, mutateReg->left_limit, mutateReg->right_limit, idx_x0);
         if (chiSquare < CHI_SQUARES[df_sum - 5])
         {
             return; // statistical insignificance of the chi-square value
@@ -920,7 +921,7 @@ namespace qAlgorithms
         mutateReg->df = df_sum - 4; // @todo add explanation for -4
         mutateReg->apex_position += idxStart + scale;
         mutateReg->scale = scale;
-        mutateReg->index_x0 = scale + idxStart;
+        mutateReg->index_x0 = idx_x0;
         mutateReg->mse = mse; // the quadratic mse is used for the weighted mean of the coefficients later
         mutateReg->isValid = true;
         return;
@@ -1184,10 +1185,12 @@ namespace qAlgorithms
             // mz, mzUncertainty, mean DQSC and meanDQSF are all calculated in after this function is called in measurement_data
             peak.DQSF = 1 - erf_approx_f(regression.uncertainty_area / regression.area);
 
+            assert(regression.right_limit - regression.index_x0 > 1);
             peak.idxPeakStart = regression.left_limit;
             peak.idxPeakEnd = regression.right_limit - 1;
             peak.index_x0_offset = regression.index_x0 - regression.left_limit;
             assert(peak.idxPeakEnd > peak.idxPeakStart);
+            assert(peak.idxPeakEnd > peak.index_x0_offset);
 
             // params needed to merge two peaks
             peak.apexLeft = regression.apex_position < regression.index_x0;
