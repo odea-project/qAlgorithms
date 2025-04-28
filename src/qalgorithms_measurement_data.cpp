@@ -282,6 +282,14 @@ namespace qAlgorithms
                 {
                     continue;
                 }
+                // @todo URGENT this kicks out a massive amount of features, check if it makes sense for
+                // centroids / replace the whole three-fold interpolation nonsense with one source of truth
+                if ((currentPeak.index_x0_offset - currentPeak.idxPeakStart < 2) ||
+                    (currentPeak.idxPeakEnd - currentPeak.index_x0_offset < 2))
+                {
+                    continue;
+                }
+
                 auto tmp = weightedMeanAndVariance_EIC(&currentEIC.ints_area, &currentEIC.mz,
                                                        currentPeak.idxPeakStart, currentPeak.idxPeakEnd);
                 currentPeak.mz = tmp.mean;
