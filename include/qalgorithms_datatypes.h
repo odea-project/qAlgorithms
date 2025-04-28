@@ -127,6 +127,7 @@ namespace qAlgorithms
         float mz;
         float retentionTimeUncertainty;
         float mzUncertainty;
+        unsigned int componentID = 0; // this is only set during execution of qPattern / qComponent / whatever better name i think of. Zero means uninitialised -> components start at 1!
         unsigned int idxBin;
         unsigned int idxPeakStart; // degrees of freedom = idxPeakEnd - idxPeakStart
         unsigned int idxPeakEnd;

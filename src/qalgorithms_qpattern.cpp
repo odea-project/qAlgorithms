@@ -23,11 +23,14 @@ namespace qAlgorithms
 {
     size_t realRegressions = 0;
     size_t failRegressions = 0;
-    void findComponents(const std::vector<FeaturePeak> *peaks,
+    void findComponents(std::vector<FeaturePeak> *peaks, // the peaks are updated as part of componentisation
                         const std::vector<EIC> *bins,
                         const std::vector<float> *convertRT)
     {
-        // peaks must be sorted here since they arrive out of order
+        assert(peaks->begin()->componentID == 0);
+
+        unsigned int globalCompID = 1; // this is the component ID later used on a feature level.
+
 #pragma region "Pre-Group"
         std::vector<GroupLims> limits = preGroup(peaks);
         for (size_t groupIdx = 0; groupIdx < limits.size(); groupIdx++)
@@ -66,7 +69,7 @@ namespace qAlgorithms
             unsigned int minScan = 4294967295; // max value of unsigned int
             for (size_t j = limits[groupIdx].start; j < limits[groupIdx].end + 1; j++)
             {
-                const FeaturePeak *test = &(peaks->at(j));
+                FeaturePeak *test = &(peaks->at(j));
                 auto binRTs = (*bins)[test->idxBin].rententionTimes;
                 auto scans = (*bins)[test->idxBin].scanNumbers;
                 maxScan = std::max(maxScan, scans[test->idxPeakEnd]); // @todo scans should be their own type, same with indices
@@ -166,6 +169,11 @@ namespace qAlgorithms
             for (size_t i = 0; i < pairs.size(); i++) // @todo length of pairs = the number of RSS - infinity
             {
                 auto p = pairs[i];
+                if (p.RSS == INFINITY) // the pair cannot form a component by itself, so these features may never be assigned to the same component
+                {
+                    continue;
+                }
+
                 int *ass_L = &assignment[p.idx_L];
                 int *ass_S = &assignment[p.idx_S];
 
@@ -266,7 +274,7 @@ namespace qAlgorithms
                         float newRSS = simpleRSS(&regression.cum_RSS,
                                                  &components[*ass_L].cumRSS,
                                                  &components[*ass_S].cumRSS,
-                                                 idxStart, idxEnd, n + 1, n + 3 + 4);
+                                                 idxStart, idxEnd, n, n + 6);
 
                         if (newRSS < INFINITY)
                         {
@@ -280,16 +288,20 @@ namespace qAlgorithms
                             components[*ass_S].limit_R = regression.idxEnd;
                             components[*ass_S].RSS = newRSS;
                             // invalidate the merged component
-                            components[*ass_L].members = 0;
-                            components[*ass_L].RSS = INFINITY;
+                            int removedID = *ass_L;
+                            unsigned int counter = 0;
                             for (size_t idx = 0; idx < groupsize; idx++)
                             {
-                                if ((assignment[idx] == *ass_L))
+                                if ((assignment[idx] == removedID))
                                 {
+                                    counter++;
                                     assignment[idx] = *ass_S;
                                 }
                             }
-                            // *ass_L = *ass_S; // both go out of scope after this point anyway
+                            assert(counter == components[removedID].members);
+                            components[removedID].members = 0;
+                            components[removedID].RSS = INFINITY;
+                            assert(*ass_L == *ass_S);
                         }
                     }
                 }
@@ -297,6 +309,31 @@ namespace qAlgorithms
 
             assert(componentGroup > -1);
             assert((size_t(componentGroup)) <= groupsize);
+#pragma endregion "Iterative Assign"
+
+#pragma region "cleanup"
+            // At this stage, some components could be invalid. Additionally, the component ID is local to the inner loop.
+            // To produce user-facing data, the component ID is moved to a global level and added to the features themselves
+
+            for (size_t comp = 0; comp < components.size(); comp++)
+            {
+                if (components[comp].members == 0)
+                {
+                    continue;
+                }
+                int compID = components[comp].component;
+                for (size_t feat = 0; feat < assignment.size(); feat++)
+                {
+                    if (assignment[feat] == compID)
+                    {
+                        // update the feature that was passed by reference
+                        pregroup.features[feat]->componentID = globalCompID;
+                    }
+                }
+                globalCompID++;
+            }
+
+#pragma endregion "cleanup"
         }
         std::cout << std::endl;
         std::cout << "1: " << VALLEYS_1 << " ; other: " << VALLEYS_other << "\n"; // at least for one dataset, features with a valley point are much more likely
@@ -391,6 +428,7 @@ namespace qAlgorithms
             mutateReg->left_limit = idxStart;
             mutateReg->right_limit = std::min(idxStart + 2 * scale, static_cast<int>(valley_position) + idxStart + scale);
         }
+        assert(mutateReg->right_limit > mutateReg->left_limit);
         assert(mutateReg->right_limit < intensities->size());
 
         /*
@@ -626,11 +664,11 @@ namespace qAlgorithms
                     continue;
                 }
                 validHits[multiReg]++;
-                if (validHits[multiReg] > 1)
-                {
-                    // volatile bool a = true;
-                    std::cout << "HIT-" << multiReg << ", ";
-                }
+                // if (validHits[multiReg] > 1)
+                // {
+                //     // volatile bool a = true;
+                //     std::cout << "HIT-" << multiReg << ", ";
+                // }
 
                 // now that only regressions which are logically sensible are present, pick the best one. This uses the sum
                 // of all mse values for the given regression, similar to qPeaks. Different from the previous validation,
@@ -641,6 +679,9 @@ namespace qAlgorithms
                                          intensity_vecs[i].size() - 1,
                                          testCase.index_x0);
                 sum_MSE[multiReg] += mse / (testCase.df - numPeaks - 3);
+
+                regressions[multiReg].idxStart = testCase.left_limit;
+                regressions[multiReg].idxEnd = testCase.right_limit;
                 regressions[multiReg].idx_x0 = testCase.index_x0 + idxStart; // this is always in relation to the complete regression window
             }
         }
@@ -907,39 +948,28 @@ namespace qAlgorithms
                                      size_t index_x0)
     {
         assert(index_x0 <= intensities->size());
+        float replaceInterpol = (intensities->front() + intensities->back()) / 2;
         std::vector<float> result(intensities->size(), 0);
 
-        { // for i = 0, no previous value exists
-            // double new_x = double(index_x0);
-            // double y_base = std::exp(coeff->b0 + (coeff->b1 + coeff->b2 * new_x) * new_x);
-            // double y_current = intensities->front();
-            // double rs = (y_base - y_current) * (y_base - y_current); // residual square
-            // result[0] = rs;
-            result[0] = residual(coeff, intensities->front(), index_x0, 0, true) + 0;
-        }
+        float tmp = residual(coeff, intensities->front(), index_x0, 0, true) + 0;
+        result[0] = tmp == INFINITY ? (replaceInterpol - intensities->front()) * (replaceInterpol - intensities->front()) : tmp;
+
         // left half - 1
         for (size_t i = 1; i < index_x0; i++)
         {
-            // double new_x = double(i) - double(index_x0); // always negative
-            // double y_base = std::exp(coeff->b0 + (coeff->b1 + coeff->b2 * new_x) * new_x);
-            // double y_current = intensities->at(i);
-            // double rs = (y_base - y_current) * (y_base - y_current); // residual square
-            // result[i] = rs + result[i - 1];
-            result[i] = residual(coeff, intensities->at(i), index_x0, i, true) + result[i - 1];
+            tmp = residual(coeff, intensities->at(i), index_x0, i, true) + result[i - 1];
+            result[i] = tmp == INFINITY ? (replaceInterpol - intensities->at(i)) * (replaceInterpol - intensities->at(i)) : tmp;
         }
         // center point
-        float diff = std::exp((coeff->b0) - intensities->at(index_x0));
+        float diff = std::exp((coeff->b0) - intensities->at(index_x0)); // this will never be infinity
         result[index_x0] = diff * diff + result[index_x0 - 1];
         // right half
         for (size_t i = index_x0 + 1; i < intensities->size(); i++)
         {
-            // double new_x = double(i) - double(index_x0); // always negative
-            // double y_base = std::exp(coeff->b0 + (coeff->b1 + coeff->b2 * new_x) * new_x);
-            // double y_current = intensities->at(i);
-            // double rs = (y_base - y_current) * (y_base - y_current); // residual square
-            result[i] = residual(coeff, intensities->at(i), index_x0, i, false) + result[i - 1];
+            tmp = residual(coeff, intensities->at(i), index_x0, i, false) + result[i - 1];
+            result[i] = tmp == INFINITY ? (replaceInterpol - intensities->at(i)) * (replaceInterpol - intensities->at(i)) : tmp;
         }
-        assert(result.back() < INFINITY);
+        assert(result.back() < INFINITY); // this is accepted for the time being. Note that this way, there is a major bias for negative b23
         return result;
     }
 
@@ -954,8 +984,6 @@ namespace qAlgorithms
         assert(maxIdx < bin->ints_area.size());
         assert(minScan < bin->scanNumbers.back());
         assert(maxScan > bin->scanNumbers.front());
-        // assert(minScan >= bin->scanNumbers.front());
-        // assert(maxScan <= bin->scanNumbers.back());
         // this function creates harmonised EICs, meaning that it can be used for the running regression
         // within a component subgroup without further modification. The process is as follows:
         // 1) create a results vector for every element which is of a size known at the time of function call
@@ -989,12 +1017,7 @@ namespace qAlgorithms
 
         std::iota(reduced.scanNo.begin(), reduced.scanNo.end(), minScan);
 
-        // 2) transfer all points that will not be interpolated. At this stage, the log values are used already to
-        //    minimise the big number problems with RSS and avoid all the exp() functions. Note that points outside
-        //    the regression window will only be transferred if they do not increase again seen from the feature
-        //    region outwards. This is chosen to account for cases where the initial regression window was chosen too
-        //    small. @todo this will only be integrated in the future since i am unsure as to how good of an idea that
-        //    is at the moment
+        // 2) transfer all points that will not be interpolated.
 
         for (size_t i = 0; i < bin->ints_area.size(); i++) // indices in relation to bin without interpolations
         {
@@ -1009,8 +1032,6 @@ namespace qAlgorithms
             }
 
             size_t relIdx = scan - minScan;
-            // outerLeft = std::min(relIdx, outerLeft);
-            // outerRight = std::max(relIdx, outerRight);
             reduced.intensity[relIdx] = bin->ints_area[i];
             reduced.intensity_log[relIdx] = log(bin->ints_area[i]);
         }
@@ -1052,6 +1073,7 @@ namespace qAlgorithms
         initialGroups.push_back({0, 0});
         for (size_t i = 1; i < peaks->size(); i++)
         {
+            assert((*peaks)[i].componentID == 0);
             float apex_L = (*peaks)[i - 1].retentionTime;
             float apex_R = (*peaks)[i].retentionTime;
             assert(apex_L <= apex_R);
@@ -1068,6 +1090,7 @@ namespace qAlgorithms
 
     bool preferMerge(float rss_complex, float rss_simple, size_t n_total, size_t p_complex)
     {
+        // @todo there is a failure here despite the simple
         assert(rss_complex < rss_simple);
         // @todo consider if this part of the code can be sped up by hashing the computations dependent on dfn and dfd
         float alpha = 0.05; // @todo is a set alpha really the best possible solution?
@@ -1077,7 +1100,7 @@ namespace qAlgorithms
         double p = 0;  // not required
         double q = 0;  // return value, equals p - 1
         double F = ((rss_simple - rss_complex) / 3) / (rss_complex / float(n_total - p_complex));
-        double dfn = 3;                   // numerator degrees of freedom is always 3, since the simple model has three coeffs less
+        double dfn = 3;                   // numerator degrees of freedom is always 3, since the simple model has three coeffs less (simplification due to pairwise comparison)
         double dfd = n_total - p_complex; // denominator degrees of freedom
         int status = 1;                   // result invalid if this is not 0
         double bound = 0;                 // allows recovery from non-0 status
@@ -1116,7 +1139,7 @@ namespace qAlgorithms
         float RSS_complex = RSS_complex_cum_A->at(idxEnd) - substract_cA +
                             RSS_complex_cum_B->at(idxEnd) - substract_cB;
 
-        assert(RSS_complex < INFINITY);
+        assert(RSS_complex < INFINITY); // @todo this is not a good solution to the positive coefficient problem
 
         // it is possible for the simple model to have a lower RSS since the feature
         // applies to a smaller area than it and has worse performance outside its original
