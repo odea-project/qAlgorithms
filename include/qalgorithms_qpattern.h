@@ -17,24 +17,15 @@ namespace qAlgorithms
     struct PreGrouping
     {
         std::vector<const FeaturePeak *> features; // keep this sorted by intensity
-        std::vector<float> shapeScores;            // tanimoto scores on a per-feature basis. Access pattern [idx1] * number of features + [idx2]
         std::vector<EIC *> EICs;
 
         // add a sample ID thing here eventually
-        float score(size_t idx1, size_t idx2);
     };
 
     struct GroupLims
     {
         size_t start;
         size_t end;
-    };
-
-    struct MultiMatrix
-    {
-        std::vector<float> designMatrix;
-        size_t n_rows;
-        size_t n_cols;
     };
 
     struct RSS_pair
@@ -61,10 +52,6 @@ namespace qAlgorithms
     // pre-group the region relevant to componentisation based on retention time uncertainty
     std::vector<GroupLims> preGroup(const std::vector<FeaturePeak> *peaks);
 
-    // This function modifies the coefficients of a regression so that it describes a peak with the apex at
-    // x = RT of the feature and the height 1. Features are manipulated this way to allow a shape comparison
-    MovedRegression moveAndScaleReg(const FeaturePeak *feature);
-
     // calculate the shape tanimoto / jaccard index of two moved regressions. The score is weighted slightly.
     // Calculation is done by dividing the area covered by the overlap both regression curves by the area covered
     // by both regressions independently
@@ -72,10 +59,6 @@ namespace qAlgorithms
     // trapezoid integration instead.
     // @todo this runs into problems when applying scaling, check if removal is a good idea
     float calcTanimoto_reg(MovedRegression *feature_A, MovedRegression *feature_B);
-
-    MultiMatrix combinedMatrix(std::vector<std::vector<float>> *intensities);
-
-    // void calcRSS(MovedRegression *reg, const EIC *bin);
 
     struct ReducedEIC
     {
@@ -121,8 +104,6 @@ namespace qAlgorithms
                                      const RegCoeffs *coeff,
                                      size_t index_x0);
 
-    float logIntAt(const MovedRegression *feature, float RT);
-
     struct MultiRegression
     {
         std::vector<float> cum_RSS; // one element per scan of the subgroup
@@ -136,18 +117,6 @@ namespace qAlgorithms
         float b2;
         float b3;
         float RT_apex;
-    };
-
-    struct MovedMultiRegression
-    {
-        // this regression is used only to calculate the RSS, make function-local? @todo
-        std::vector<float> b0_L_vec;
-        std::vector<float> b0_R_vec;
-        float b1_L;
-        float b1_R;
-        float b2;
-        float b3;
-        float RT_switch;
     };
 
     MergedEIC mergeEICs(const std::vector<ReducedEIC> *eics,
@@ -177,8 +146,6 @@ namespace qAlgorithms
         const std::vector<float> *intensities,
         const std::vector<float> *intensities_log);
 
-    std::vector<float> pairwiseRSS(const PreGrouping *group, const std::vector<ReducedEIC> *points);
-
     /// @brief Does the combined regression apply to both input regressions?
     /// @param rss_complex sum of the residual sums of squares for the individual models
     /// @param rss_simple residual sum of squares for the combined model
@@ -198,8 +165,6 @@ namespace qAlgorithms
                     size_t idxEnd,
                     size_t peakCount,
                     size_t p_complex); // needed for the F-test, should be replaced by a better solution sometime
-
-    void multiFit(const std::vector<ReducedEIC> *fitRegion, const std::vector<MovedRegression> *regressions);
 }
 
 #endif
