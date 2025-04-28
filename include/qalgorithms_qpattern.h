@@ -10,13 +10,13 @@
 namespace qAlgorithms
 {
     // main function to execute a componentiation step on data
-    void findComponents(const std::vector<FeaturePeak> *peaks,
+    void findComponents(std::vector<FeaturePeak> *peaks,
                         const std::vector<EIC> *bins,
                         const std::vector<float> *convertRT); // this is needed to perform interpolation at the same RT as in qPeaks
 
     struct PreGrouping
     {
-        std::vector<const FeaturePeak *> features; // keep this sorted by intensity
+        std::vector<FeaturePeak *> features; // this reference is used to modify the original feature
         std::vector<EIC *> EICs;
 
         // add a sample ID thing here eventually
@@ -104,7 +104,7 @@ namespace qAlgorithms
                                      const RegCoeffs *coeff,
                                      size_t index_x0);
 
-    struct MultiRegression
+    struct MultiRegression // @todo this will need to contain all the uncertainties of the original features and find a better solution to the whole bin window output
     {
         std::vector<float> cum_RSS; // one element per scan of the subgroup
         std::vector<float> b0_vec;
