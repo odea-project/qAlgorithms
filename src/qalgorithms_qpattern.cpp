@@ -30,8 +30,6 @@ namespace qAlgorithms
         // peaks must be sorted here since they arrive out of order
 #pragma region "Pre-Group"
         std::vector<GroupLims> limits = preGroup(peaks);
-        std::vector<PreGrouping> components;
-        components.reserve(limits.size());
         for (size_t groupIdx = 0; groupIdx < limits.size(); groupIdx++)
         {
             // @todo factor the loop internals into at least one function
@@ -113,14 +111,12 @@ namespace qAlgorithms
 
             for (size_t idx_S = 0; idx_S < groupsize - 1; idx_S++)
             {
-                // auto feature_A = pregroup.features[idx_S];
                 auto EIC_A = eics[idx_S];
                 for (size_t idx_L = idx_S + 1; idx_L < groupsize; idx_L++)
                 {
                     size_t access = idx_S + (idx_L * (idx_L - 1)) / 2; // index of the half matrix where the pair sits
                     pairs[access].idx_S = idx_S;
                     pairs[access].idx_L = idx_L;
-                    // auto feature_B = pregroup.features[idx_L];
                     auto EIC_B = eics[idx_L];
                     // pairwise merge to check if two features can be part of the same component
 
@@ -297,34 +293,8 @@ namespace qAlgorithms
                         }
                     }
                 }
-            }
+            } // outer if statement
 
-            // std::vector<CompAssignment> groupings;
-            // groupings.reserve(groupsize);
-            // for (size_t idx = 0; idx < groupsize; idx++)
-            // {
-            //     // groupings.push_back({idx, -1});
-            // }
-
-            // multiFit(&eics, &newComponent.features);
-
-            // if two features are not improved by being combined individually, they may never be part of the same group
-
-            // assign features to groups by forming the best-fit pairs
-
-            // at this point, the group must be subdivided such that the total RSS is minimal
-            // special case for groupsize 2 might be a good idea, since it seems to occur very often with the
-            // current pre-gruping strategy
-
-            // all ungrouped features are -1 at this point, loop over them and add a correct component number
-            // for (size_t ID = 0; ID < groupsize; ID++)
-            // {
-            //     if (groupings[ID].component == -1)
-            //     {
-            //         componentGroup++;
-            //         groupings[ID].component = componentGroup;
-            //     }
-            // }
             assert(componentGroup > -1);
             assert((size_t(componentGroup)) <= groupsize);
         }
@@ -334,155 +304,6 @@ namespace qAlgorithms
         std::cout << "fails: " << failRegressions << ", real ones: " << realRegressions << "\n";
         failRegressions = 0;
         realRegressions = 0;
-    }
-
-    void compDecision()
-    {
-        // bool incompatible = preferMerge();
-        bool incompatible = true;
-        if (incompatible)
-        {
-            return;
-        }
-        // add the signs of comp assignments
-        const int signs = -4;
-        switch (signs)
-        {
-        case -2:
-            // both are individual points
-            // newComponent();
-            break;
-
-        case 0:
-            // one component, one loose point
-            // addToComponent();
-            break;
-
-        case 2:
-            // merge both components
-
-            break;
-
-        default:
-            assert(false);
-            break;
-        }
-    }
-
-    void mergeComponents(std::vector<CompAssignment> *groupings, size_t *compCount, int ID_A, int ID_B)
-    {
-        assert(ID_A != ID_B);
-        assert(*compCount >= size_t(ID_A) && *compCount >= size_t(ID_B));
-        int ID_new = std::min(ID_A, ID_B);
-        int ID_max = std::max(ID_A, ID_B);
-        compCount -= 1;
-        for (size_t i = 0; i < groupings->size(); i++)
-        {
-            int ID_curr = groupings->at(i).component;
-            assert(int(*compCount) >= ID_curr - 1);
-            if ((ID_curr == ID_A) || (ID_curr == ID_B))
-            {
-                groupings->at(i).component = ID_new;
-            }
-            else if (ID_curr > ID_max)
-            {
-                groupings->at(i).component -= 1;
-            }
-        }
-    }
-
-    // void newComponent(std::vector<CompAssignment> *groupings, int *compCount, size_t member_A, size_t member_B)
-    // {
-    //     // a new component is only ever made from two unassigned features
-    //     compCount++;
-    //     bool exit = false;
-    //     for (size_t i = 0; i < groupings->size(); i++)
-    //     {
-    //         if ((groupings->at(i).feature == member_A) || (groupings->at(i).feature == member_B))
-    //         {
-    //             groupings->at(i).component = *compCount;
-    //             if (exit)
-    //             {
-    //                 break;
-    //             }
-    //             exit = true;
-    //         }
-    //     }
-    // }
-
-    // void addToComponent(std::vector<CompAssignment> *groupings, const size_t compCount, int ID_add, size_t member)
-    // {
-    //     // only update assignment of member
-    //     for (size_t i = 0; i < groupings->size(); i++)
-    //     {
-    //         if (groupings->at(i).feature == member)
-    //         {
-    //             groupings->at(i).component = ID_add;
-    //             break;
-    //         }
-    //     }
-    // }
-
-    double complexRSS(const MergedEIC *eic,
-                      const std::vector<RegressionGauss> *features,
-                      const std::vector<size_t> *selection,
-                      const size_t idxStart,
-                      const size_t idxEnd)
-    {
-        assert(eic->numPeaks == selection->size());
-        assert(idxEnd > idxStart);
-        assert(idxEnd < eic->peakFrame);
-
-        double RSS_total = 0;
-
-        for (size_t i = 0; i < selection->size(); i++)
-        {
-            auto coeffs = features->at(selection->at(i)).coeffs;
-            unsigned int localStart = idxStart + i * eic->peakFrame;
-            unsigned int localEnd = idxEnd + i * eic->peakFrame;
-            size_t index_x0 = features->at(selection->at(i)).index_x0 + i * eic->peakFrame; // @todo these are not correctly aligned! there might be padding on the sides
-
-            // we need to make adjustments if the limits would exceed the local function limits
-            // for the case of a positive b2 or b3
-            if (coeffs.b2 > 0)
-            {
-                size_t leftLim = features->at(selection->at(i)).left_limit + i * eic->peakFrame;
-                if (leftLim > localStart)
-                {
-                    // set the regression to its value at x = leftLim for the range before the valley point
-                    double new_x = double(leftLim) - double(index_x0); // always negative
-                    double y_base = std::exp(coeffs.b0 + (coeffs.b1 + coeffs.b2 * new_x) * new_x);
-                    for (size_t i = localStart; i < leftLim; i++)
-                    {
-                        double y_current = eic->intensity[i];
-                        double newdiff = (y_base - y_current) * (y_base - y_current);
-                        RSS_total += newdiff;
-                    }
-                }
-                localStart = leftLim;
-            }
-            else if (coeffs.b3 > 0) // only one of the two can be positive
-            {
-                size_t rightLim = features->at(selection->at(i)).right_limit + i * eic->peakFrame;
-                if (rightLim > localEnd)
-                {
-                    // set the regression to its value at x = leftLim for the range before the valley point
-                    double new_x = double(rightLim) - double(index_x0); // always positve
-                    double y_base = std::exp(coeffs.b0 + (coeffs.b1 + coeffs.b3 * new_x) * new_x);
-                    for (size_t i = localStart; i < rightLim; i++)
-                    {
-                        double y_current = eic->intensity[i];
-                        double newdiff = (y_base - y_current) * (y_base - y_current);
-                        RSS_total += newdiff;
-                    }
-                }
-
-                localEnd = rightLim;
-            }
-            RSS_total += calcSSE_exp(coeffs, &eic->intensity, localStart, localEnd, index_x0);
-        }
-
-        return RSS_total;
     }
 
     MergedEIC mergeEICs(const std::vector<ReducedEIC> *eics,
@@ -537,7 +358,6 @@ namespace qAlgorithms
           to each other, the loop continues to the next iteration.
         */
         float valley_position = 0;
-        // no easy replace
         if (!calcApexAndValleyPos(mutateReg, scale, valley_position))
         {
             return; // invalid apex and valley positions
@@ -606,10 +426,11 @@ namespace qAlgorithms
         */
         size_t idxApex = (size_t)std::round(mutateReg->apex_position) + scale + idxStart;
         float apexToEdge = apexToEdgeRatio(mutateReg->left_limit, idxApex, mutateReg->right_limit, intensities);
-        if (!(apexToEdge > 2))
-        {
-            return; // invalid apex to edge ratio
-        }
+        // this check has been removed because it didn't account for adequate signal in parallel traces
+        // if (!(apexToEdge > 2))
+        // {
+        //     return; // invalid apex to edge ratio
+        // }
 
         /*
           Quadratic Term Filter:
@@ -1222,30 +1043,6 @@ namespace qAlgorithms
         return reduced;
     }
 
-    float logIntAt(const MovedRegression *feature, float RT)
-    {
-        // this function interpolates the logarithmic intensity of a given regression at the retention time RT.
-        assert(RT >= 0);
-        bool leftHalf = RT < feature->RT_switch;
-        float b0 = leftHalf ? feature->b0_L : feature->b0_R;
-        float b1 = leftHalf ? feature->b1_L : feature->b1_R;
-        float b23 = leftHalf ? feature->b2 : feature->b3;
-        return b0 + RT * b1 + RT * RT * b23;
-    }
-
-    float PreGrouping::score(size_t idx1, size_t idx2)
-    { // @todo we could use a more complex structure here to save space, but with how small these groups should be it is probably pointless
-        size_t size = shapeScores.size();
-        assert(idx1 < size && idx2 < size);
-
-        if (idx1 == idx2)
-        {
-            return 1;
-        }
-        size_t idx = size * idx1 + idx2;
-        return shapeScores[idx];
-    }
-
     std::vector<GroupLims> preGroup(const std::vector<FeaturePeak> *peaks)
     {
         // base assumption: for all peaks that constitute a component, the two apexes
@@ -1269,6 +1066,83 @@ namespace qAlgorithms
         return initialGroups;
     }
 
+    bool preferMerge(float rss_complex, float rss_simple, size_t n_total, size_t p_complex)
+    {
+        assert(rss_complex < rss_simple);
+        // @todo consider if this part of the code can be sped up by hashing the computations dependent on dfn and dfd
+        float alpha = 0.05; // @todo is a set alpha really the best possible solution?
+        // problem: pre-calculation of all relevant f values could result in a very large array
+        // possible max size of 20 seems reasonable, maximum observed is 6
+        int which = 1; // select mode of library function and check computation result
+        double p = 0;  // not required
+        double q = 0;  // return value, equals p - 1
+        double F = ((rss_simple - rss_complex) / 3) / (rss_complex / float(n_total - p_complex));
+        double dfn = 3;                   // numerator degrees of freedom is always 3, since the simple model has three coeffs less
+        double dfd = n_total - p_complex; // denominator degrees of freedom
+        int status = 1;                   // result invalid if this is not 0
+        double bound = 0;                 // allows recovery from non-0 status
+
+        // @todo replace with lookup table
+        cdff(&which, &p, &q, &F, &dfn, &dfd, &status, &bound); // library function, see https://people.math.sc.edu/Burkardt/cpp_src/cdflib/cdflib.html
+        assert(status == 0);
+
+        return q > alpha; // the merged model is not worse than the complex version, both can be merged
+    }
+
+    float simpleRSS(std::vector<float> *RSS_simple_cum,
+                    std::vector<float> *RSS_complex_cum_A,
+                    std::vector<float> *RSS_complex_cum_B,
+                    size_t idxStart,
+                    size_t idxEnd,
+                    size_t peakCount,
+                    size_t p_complex)
+    {
+        if (RSS_simple_cum->empty())
+        {
+            return INFINITY; // @todo this is a bad idea
+        }
+
+        assert(RSS_simple_cum->size() == RSS_complex_cum_A->size());
+        assert(RSS_simple_cum->size() == RSS_complex_cum_B->size());
+        assert(idxStart < idxEnd);
+
+        bool zero = idxStart == 0;
+
+        float substract_S = zero ? 0 : RSS_simple_cum->at(idxStart - 1);
+        float substract_cA = zero ? 0 : RSS_complex_cum_A->at(idxStart - 1);
+        float substract_cB = zero ? 0 : RSS_complex_cum_B->at(idxStart - 1);
+
+        float RSS_simple = RSS_simple_cum->at(idxEnd) - substract_S;
+        float RSS_complex = RSS_complex_cum_A->at(idxEnd) - substract_cA +
+                            RSS_complex_cum_B->at(idxEnd) - substract_cB;
+
+        assert(RSS_complex < INFINITY);
+
+        // it is possible for the simple model to have a lower RSS since the feature
+        // applies to a smaller area than it and has worse performance outside its original
+        // region than the combined one. @todo consider if it makes sense to propose an alternative
+        // set of simple models that all share the larger region
+
+        if (RSS_simple < RSS_complex)
+        {
+            // the simple model is inherently better, no F-test needed
+            // @todo make this the information criterion
+            return RSS_simple;
+        }
+        // F-test
+        size_t numPoints = (idxEnd - idxStart + 1) * peakCount;
+        bool merge = preferMerge(RSS_complex, RSS_simple, numPoints, p_complex);
+        if (merge)
+        {
+            return RSS_simple;
+        }
+        else
+        {
+            return INFINITY;
+        }
+    }
+
+    // currently not used
     MovedRegression moveAndScaleReg(const FeaturePeak *feature)
     {
         float b0 = feature->coefficients.b0;
@@ -1509,201 +1383,5 @@ namespace qAlgorithms
         // assert(0 <= score && score <= 1);
         // @todo this won't work
         return score;
-    }
-
-    std::pair<unsigned int, unsigned int> featNums(size_t idx, const PreGrouping *group)
-    {
-        // the original two indices of a pair:
-        // idx = size * idx1 + idx2
-        unsigned int idx2 = idx % group->features.size();
-        unsigned int idx1 = (idx - idx2) / group->features.size();
-        return std::make_pair(idx1, idx2);
-    }
-
-    void calcRSS(MovedRegression *reg, const EIC *bin)
-    {
-        // mutates the RSS field in MovedRegression
-#define PREDICT_L(x) (std::exp(reg->b0_L + x * reg->b1_L + x * x * reg->b2)) // @todo there is an error here
-#define PREDICT_R(x) (std::exp(reg->b0_R + x * reg->b1_R + x * x * reg->b3))
-        const auto RTs = bin->rententionTimes;
-        const auto areas = bin->ints_area;
-        size_t idx = 0;
-        for (; idx < RTs.size(); idx++)
-        {
-            if (RTs[idx] >= reg->limit_L)
-            {
-                break;
-            }
-        }
-        float RSS = 0;
-        for (; idx < RTs.size(); idx++)
-        {
-            if (RTs[idx] >= reg->RT_switch)
-            {
-                break;
-            }
-            float diff = PREDICT_L(RTs[idx]) - areas[idx];
-            RSS += diff * diff; // triggers for positive b2 / b3 and large frame, @todo: rework limits
-            assert(RSS != INFINITY);
-        }
-        for (; idx < RTs.size(); idx++)
-        {
-            if (RTs[idx] >= reg->limit_R)
-            {
-                break;
-            }
-            float diff = PREDICT_R(RTs[idx]) - areas[idx];
-            RSS += diff * diff;
-            assert(RSS != INFINITY);
-        }
-        assert(RSS != INFINITY);
-        reg->RSS = RSS;
-    }
-
-    // MultiMatrix combinedMatrix(std::vector<std::vector<float>> *intensities)
-    // {
-    //     MultiMatrix matrix;
-    //     matrix.n_cols = 3 + intensities->size(); // three for b1, b2, b3 and one b0 for every other member
-    //     // omit the last value to ensure uneven number of points - this is a bad solution @todo
-    //     for (size_t i = 0; i < intensities->size(); i++)
-    //     {
-    //         if (!(intensities[i].size() % 2))
-    //         {
-    //             intensities[i].pop_back();
-    //         }
-    //     }
-    // }
-
-    struct IntensityMatrix
-    {
-        std::vector<std::vector<float>> intensities;
-        std::vector<size_t> scanNo;
-    };
-
-    std::vector<std::vector<float>> designMat(int scale, size_t k) // , const std::vector<size_t> *eliminate
-    {
-        // k is the number of features combined, left as k due to similar naming in adapted code
-        // eliminate skips all rows whose indices are included.
-        assert(scale > 1);
-        assert(k > 1);
-        size_t colLenght = 2 * scale + 1;
-        size_t vecSize = colLenght * k;
-        std::vector<std::vector<float>> resultMat;
-        // add one vector b0 for every feature. b0 is 0 everywhere except for the region that contains the feature
-        for (size_t i = 0; i < k; i++)
-        {
-            std::vector<float> b0(vecSize);
-            for (size_t j = i; j < colLenght; j++)
-            {
-                b0[j] = 1;
-            }
-            resultMat.push_back(b0);
-        }
-
-        std::vector<float> b1(vecSize, 0);
-        for (size_t i = 0; i < k; i++)
-        {
-            size_t offset = i * colLenght;
-            std::iota(b1.begin() + offset, b1.begin() + offset + colLenght, -scale);
-        }
-        resultMat.push_back(b1);
-        std::vector<float> b2(vecSize, 0);
-        for (size_t j = 0; j < k; j++)
-        {
-            for (int i = 0; i < scale + 1; i++)
-            {
-                size_t offset = j * colLenght;
-                b2[i + offset] = b1[i + offset] * b1[i + offset];
-            }
-        }
-        std::vector<float> b3(vecSize, 0);
-        for (size_t j = 0; j < k; j++)
-        {
-            for (size_t i = scale + 1; i < colLenght; i++)
-            {
-                size_t offset = j * (colLenght - 1);
-                b3[i + offset] = b1[i + offset] * b1[i + offset];
-            }
-        }
-        resultMat.push_back(b2);
-        resultMat.push_back(b3);
-        // @todo add a correctness check
-        return resultMat;
-    }
-
-    bool preferMerge(float rss_complex, float rss_simple, size_t n_total, size_t p_complex)
-    {
-        assert(rss_complex < rss_simple);
-        // @todo consider if this part of the code can be sped up by hashing the computations dependent on dfn and dfd
-        float alpha = 0.05; // @todo is a set alpha really the best possible solution?
-        // problem: pre-calculation of all relevant f values could result in a very large array
-        // possible max size of 20 seems reasonable, maximum observed is 6
-        int which = 1; // select mode of library function and check computation result
-        double p = 0;  // not required
-        double q = 0;  // return value, equals p - 1
-        double F = ((rss_simple - rss_complex) / 3) / (rss_complex / float(n_total - p_complex));
-        double dfn = 3;                   // numerator degrees of freedom is always 3, since the simple model has three coeffs less
-        double dfd = n_total - p_complex; // denominator degrees of freedom
-        int status = 1;                   // result invalid if this is not 0
-        double bound = 0;                 // allows recovery from non-0 status
-
-        // @todo replace with lookup table
-        cdff(&which, &p, &q, &F, &dfn, &dfd, &status, &bound); // library function, see https://people.math.sc.edu/Burkardt/cpp_src/cdflib/cdflib.html
-        assert(status == 0);
-
-        return q > alpha; // the merged model is not worse than the complex version, both can be merged
-    }
-
-    float simpleRSS(std::vector<float> *RSS_simple_cum,
-                    std::vector<float> *RSS_complex_cum_A,
-                    std::vector<float> *RSS_complex_cum_B,
-                    size_t idxStart,
-                    size_t idxEnd,
-                    size_t peakCount,
-                    size_t p_complex)
-    {
-        if (RSS_simple_cum->empty())
-        {
-            return INFINITY; // @todo this is a bad idea
-        }
-
-        assert(RSS_simple_cum->size() == RSS_complex_cum_A->size());
-        assert(RSS_simple_cum->size() == RSS_complex_cum_B->size());
-        assert(idxStart < idxEnd);
-
-        bool zero = idxStart == 0;
-
-        float substract_S = zero ? 0 : RSS_simple_cum->at(idxStart - 1);
-        float substract_cA = zero ? 0 : RSS_complex_cum_A->at(idxStart - 1);
-        float substract_cB = zero ? 0 : RSS_complex_cum_B->at(idxStart - 1);
-
-        float RSS_simple = RSS_simple_cum->at(idxEnd) - substract_S;
-        float RSS_complex = RSS_complex_cum_A->at(idxEnd) - substract_cA +
-                            RSS_complex_cum_B->at(idxEnd) - substract_cB;
-
-        assert(RSS_complex < INFINITY);
-
-        // it is possible for the simple model to have a lower RSS since the feature
-        // applies to a smaller area than it and has worse performance outside its original
-        // region than the combined one. @todo consider if it makes sense to propose an alternative
-        // set of simple models that all share the larger region
-
-        if (RSS_simple < RSS_complex)
-        {
-            // the simple model is inherently better, no F-test needed
-            // @todo make this the information criterion
-            return RSS_simple;
-        }
-        // F-test
-        size_t numPoints = (idxEnd - idxStart + 1) * peakCount;
-        bool merge = preferMerge(RSS_complex, RSS_simple, numPoints, p_complex);
-        if (merge)
-        {
-            return RSS_simple;
-        }
-        else
-        {
-            return INFINITY;
-        }
     }
 }
