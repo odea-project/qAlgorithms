@@ -289,6 +289,10 @@ namespace qAlgorithms
                 {
                     continue;
                 }
+                if (currentPeak.idxPeakEnd - currentPeak.idxPeakStart + 2 < currentPeak.index_x0_offset)
+                {
+                    continue;
+                }
 
                 auto tmp = weightedMeanAndVariance_EIC(&currentEIC.ints_area, &currentEIC.mz,
                                                        currentPeak.idxPeakStart, currentPeak.idxPeakEnd);
