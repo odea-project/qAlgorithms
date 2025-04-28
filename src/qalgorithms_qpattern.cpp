@@ -430,13 +430,13 @@ namespace qAlgorithms
         }
         assert(mutateReg->right_limit > mutateReg->left_limit);
         assert(mutateReg->right_limit < intensities->size());
-
+        const size_t idx_x0 = idxStart + scale;
         /*
             Note: left and right limit are not the limits of the regression, but of the window the regression applies in.
             When multiple regressions are combined, the window limits are combined by maximum.
         */
 
-        if (scale + idxStart == mutateReg->left_limit || scale + idxStart == mutateReg->right_limit)
+        if (idx_x0 - mutateReg->left_limit < 2 || (mutateReg->right_limit - idx_x0 < 2))
         {
             // only one half of the regression applies to the data
             return;
@@ -462,7 +462,7 @@ namespace qAlgorithms
           ratio is greater than 2. This is a pre-filter for later
           signal-to-noise ratio checkups. apexToEdge is also required in isValidPeakHeight further down
         */
-        size_t idxApex = (size_t)std::round(mutateReg->apex_position) + scale + idxStart;
+        size_t idxApex = (size_t)std::round(mutateReg->apex_position) + idx_x0;
         float apexToEdge = apexToEdgeRatio(mutateReg->left_limit, idxApex, mutateReg->right_limit, intensities);
         // this check has been removed because it didn't account for adequate signal in parallel traces
         // if (!(apexToEdge > 2))
@@ -485,7 +485,7 @@ namespace qAlgorithms
         selectLog.reserve(mutateReg->right_limit - mutateReg->left_limit + 1);
         predictLog.reserve(mutateReg->right_limit - mutateReg->left_limit + 1);
         float mse = calcSSE_base(mutateReg->coeffs, intensities_log, &selectLog, &predictLog,
-                                 mutateReg->left_limit, mutateReg->right_limit, scale + idxStart);
+                                 mutateReg->left_limit, mutateReg->right_limit, idx_x0);
 
         /*
         competing regressions filter:
@@ -555,7 +555,7 @@ namespace qAlgorithms
           the exponential domain. If the chi-square value is less than the corresponding
           value in the CHI_SQUARES, the regression is invalid.
         */
-        float chiSquare = calcSSE_chisqared(mutateReg->coeffs, intensities, mutateReg->left_limit, mutateReg->right_limit, scale + idxStart);
+        float chiSquare = calcSSE_chisqared(mutateReg->coeffs, intensities, mutateReg->left_limit, mutateReg->right_limit, idx_x0);
         if (chiSquare < CHI_SQUARES[df_sum - 5])
         {
             return; // statistical insignificance of the chi-square value
@@ -563,9 +563,9 @@ namespace qAlgorithms
 
         mutateReg->uncertainty_pos = calcUncertaintyPos(mse, mutateReg->coeffs, mutateReg->apex_position, scale);
         mutateReg->df = df_sum - 4; // @todo add explanation for -4
-        mutateReg->apex_position += idxStart + scale;
+        mutateReg->apex_position += idx_x0;
         mutateReg->scale = scale;
-        mutateReg->index_x0 = scale + idxStart;
+        mutateReg->index_x0 = idx_x0;
         mutateReg->mse = mse; // the quadratic mse is used for the weighted mean of the coefficients later
         mutateReg->isValid = true;
         return;
@@ -937,10 +937,21 @@ namespace qAlgorithms
     double residual(const RegCoeffs *coeff, float realInt, size_t index_x0, size_t index, bool left)
     {
         float b23 = left ? coeff->b2 : coeff->b3;
+        float maxHeight = INFINITY;
+        if (b23 > 0) [[unlikely]]
+        {
+            // use the other peak half for the maximum
+            float maxPos = -coeff->b1 / (2 * (left ? coeff->b3 : coeff->b3));
+            maxHeight = std::exp(coeff->b0 + (coeff->b1 + maxPos * b23) * maxPos); // correct for positive exponential
+        }
+
         double new_x = double(index) - double(index_x0);
         double y_base = std::exp(coeff->b0 + (coeff->b1 + b23 * new_x) * new_x);
-        double y_current = realInt;
-        return (y_base - y_current) * (y_base - y_current); // residual square
+        // in case a positive exponent half is in the new window, we need to prevent excessive distrotion from the exponential part
+        y_base = y_base <= maxHeight ? y_base : maxHeight / (new_x + 1); // halve with the first step from index_x0
+        double RS = (y_base - realInt) * (y_base - realInt);             // residual square
+        assert(RS < INFINITY);
+        return (RS);
     }
 
     std::vector<float> cumulativeRSS(const std::vector<float> *intensities,
@@ -948,28 +959,24 @@ namespace qAlgorithms
                                      size_t index_x0)
     {
         assert(index_x0 <= intensities->size());
-        float replaceInterpol = (intensities->front() + intensities->back()) / 2;
         std::vector<float> result(intensities->size(), 0);
 
-        float tmp = residual(coeff, intensities->front(), index_x0, 0, true) + 0;
-        result[0] = tmp == INFINITY ? (replaceInterpol - intensities->front()) * (replaceInterpol - intensities->front()) : tmp;
+        result[0] = residual(coeff, intensities->front(), index_x0, 0, true) + 0;
 
         // left half - 1
         for (size_t i = 1; i < index_x0; i++)
         {
-            tmp = residual(coeff, intensities->at(i), index_x0, i, true) + result[i - 1];
-            result[i] = tmp == INFINITY ? (replaceInterpol - intensities->at(i)) * (replaceInterpol - intensities->at(i)) : tmp;
+            result[i] = residual(coeff, intensities->at(i), index_x0, i, true) + result[i - 1];
         }
         // center point
-        float diff = std::exp((coeff->b0) - intensities->at(index_x0)); // this will never be infinity
+        float diff = std::exp((coeff->b0)) - intensities->at(index_x0); // this will never be infinity
         result[index_x0] = diff * diff + result[index_x0 - 1];
         // right half
         for (size_t i = index_x0 + 1; i < intensities->size(); i++)
         {
-            tmp = residual(coeff, intensities->at(i), index_x0, i, false) + result[i - 1];
-            result[i] = tmp == INFINITY ? (replaceInterpol - intensities->at(i)) * (replaceInterpol - intensities->at(i)) : tmp;
+            result[i] = residual(coeff, intensities->at(i), index_x0, i, false) + result[i - 1];
         }
-        assert(result.back() < INFINITY); // this is accepted for the time being. Note that this way, there is a major bias for negative b23
+        assert(result.back() < INFINITY);
         return result;
     }
 
