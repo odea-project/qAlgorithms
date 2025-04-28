@@ -958,7 +958,7 @@ namespace qAlgorithms
                                      const RegCoeffs *coeff,
                                      size_t index_x0)
     {
-        assert(index_x0 <= intensities->size());
+        assert(index_x0 < intensities->size() - 1);
         std::vector<float> result(intensities->size(), 0);
 
         result[0] = residual(coeff, intensities->front(), index_x0, 0, true) + 0;
@@ -1007,6 +1007,7 @@ namespace qAlgorithms
         unsigned int featLim_L = bin->scanNumbers[minIdx] - minScan;
         unsigned int featLim_R = bin->scanNumbers[maxIdx] - minScan;
         unsigned int index_x0 = feature->index_x0_offset + featLim_L;
+        assert(index_x0 < length - 1);
 
         ReducedEIC reduced{
             // std::vector<float>(length, 0),  // RT
