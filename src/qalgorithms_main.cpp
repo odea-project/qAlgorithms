@@ -75,7 +75,7 @@ int main(int argc, char *argv[])
     }
 
     // the final task list contains only unique files, sorted by filesize
-    auto tasklist = controlInput(userArgs.inputPaths, userArgs.skipError);
+    auto tasklist = controlInput(&userArgs.inputPaths, userArgs.skipError);
 
     auto absoluteStart = std::chrono::high_resolution_clock::now();
 
@@ -180,7 +180,7 @@ int main(int argc, char *argv[])
 
             if (userArgs.printCentroids)
             {
-                printCentroids(centroids, convertRT, userArgs.outputPath, filename, userArgs.silent, userArgs.skipError, userArgs.noOverwrite);
+                printCentroids(&centroids, &convertRT, userArgs.outputPath, filename, userArgs.silent, userArgs.skipError, userArgs.noOverwrite);
             }
             // @todo remove diagnostics later
             auto binThis = passToBinning(centroids);
@@ -238,7 +238,7 @@ int main(int argc, char *argv[])
             }
             if (userArgs.printBins)
             {
-                printBins(binThis, binnedData, userArgs.outputPath, filename, userArgs.silent, userArgs.skipError, userArgs.noOverwrite);
+                printBins(&binThis, &binnedData, userArgs.outputPath, filename, userArgs.silent, userArgs.skipError, userArgs.noOverwrite);
             }
 
             // @todo remove diagnostics
@@ -313,7 +313,7 @@ int main(int argc, char *argv[])
             // }
             if (userArgs.printFeatCens)
             {
-                printFeatureCentroids(peaks, userArgs.outputPath, filename, binnedData,
+                printFeatureCentroids(&peaks, userArgs.outputPath, filename, &binnedData,
                                       userArgs.printExtended, userArgs.silent, userArgs.skipError, userArgs.noOverwrite);
             }
 
@@ -326,12 +326,12 @@ int main(int argc, char *argv[])
             if (!userArgs.silent)
             {
                 timePassed = std::chrono::duration_cast<std::chrono::milliseconds>(timeEnd - timeStart);
-                std::cout << "    grouped " << peaks.size() << " peaks into " << numComponents << " components in " << timePassed.count() << " s\n";
+                std::cout << "    grouped " << peaks.size() << " features into " << numComponents << " components in " << timePassed.count() << " s\n";
             }
 
             if (userArgs.printFeatures)
             {
-                printFeatureList(peaks, userArgs.outputPath, filename, binnedData,
+                printFeatureList(&peaks, userArgs.outputPath, filename, &binnedData,
                                  userArgs.printExtended, userArgs.silent, userArgs.skipError, userArgs.noOverwrite);
             }
 

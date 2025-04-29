@@ -452,21 +452,21 @@ namespace qAlgorithms
 
 #pragma region "file reading"
 
-    std::vector<std::filesystem::path> controlInput(const std::vector<std::string> inputTasks, const bool skipError)
+    std::vector<std::filesystem::path> controlInput(const std::vector<std::string> *inputTasks, const bool skipError)
     {
         const std::string filetype = ".mzML"; // @todo change this if other filetpes should be supported
         namespace fs = std::filesystem;
         std::vector<fs::path> outputTasks;
-        outputTasks.reserve(inputTasks.size());
+        outputTasks.reserve(inputTasks->size());
         struct TaskEntry
         {
             fs::path path;
             uintmax_t filesize;
         };
         std::vector<TaskEntry> tasklist;
-        tasklist.reserve(inputTasks.size());
+        tasklist.reserve(inputTasks->size());
         // find all valid inputs and add them to the task list
-        for (std::string inputPath : inputTasks)
+        for (std::string inputPath : *inputTasks)
         {
             fs::path currentPath{inputPath};
             if (!fs::exists(currentPath))
@@ -572,9 +572,11 @@ namespace qAlgorithms
 
 #pragma region "print functions"
 
-    void printCentroids(const std::vector<CentroidPeak> peaktable, // @todo use 1D structure of centroids
-                        std::vector<float> convertRT, std::filesystem::path pathOutput,
-                        std::string filename, bool silent, bool skipError, bool noOverwrite)
+    void printCentroids(const std::vector<CentroidPeak> *peaktable,
+                        std::vector<float> *convertRT,
+                        std::filesystem::path pathOutput,
+                        std::string filename,
+                        bool silent, bool skipError, bool noOverwrite)
     {
         filename += "_centroids.csv";
         pathOutput /= filename;
@@ -605,14 +607,14 @@ namespace qAlgorithms
         output << "cenID,mz,mzUncertainty,scanNumber,retentionTime,area,areaUncertainty,"
                << "height,heightUncertainty,scale,degreesOfFreedom,DQSC,interpolations,competitors\n";
         unsigned int counter = 0;
-        for (size_t j = 0; j < peaktable.size(); ++j)
+        for (size_t j = 0; j < peaktable->size(); ++j)
         {
-            auto peak = peaktable[j];
+            const CentroidPeak peak = peaktable->at(j);
             char buffer[256];
-            sprintf(buffer, "%d,%0.6f,%0.6f,%d,%0.4f,%0.4f,%0.4f,%0.4f,%0.4f,%d,%u,%0.5f,%d,%d\n",
-                    counter, peak.mz, peak.mzUncertainty, peak.scanNumber, convertRT[peak.scanNumber],
-                    peak.area, peak.areaUncertainty, peak.height, peak.heightUncertainty, peak.scale, peak.df, peak.DQSC,
-                    peak.interpolations, peak.numCompetitors);
+            snprintf(buffer, 256, "%d,%0.6f,%0.6f,%d,%0.4f,%0.4f,%0.4f,%0.4f,%0.4f,%d,%u,%0.5f,%d,%d\n",
+                     counter, peak.mz, peak.mzUncertainty, peak.scanNumber, convertRT->at(peak.scanNumber),
+                     peak.area, peak.areaUncertainty, peak.height, peak.heightUncertainty, peak.scale, peak.df, peak.DQSC,
+                     peak.interpolations, peak.numCompetitors);
             output << buffer;
             ++counter;
         }
@@ -622,59 +624,11 @@ namespace qAlgorithms
         return;
     }
 
-    void printProfilePoints(std::vector<std::vector<ProfilePoint>> peakComponents,
-                            std::filesystem::path pathOutput, std::string filename,
-                            bool silent, bool skipError, bool noOverwrite)
-    {
-        // @todo should this be added to the program?
-        std::cout << "subprofiles might not be a valid concept, exiting.\n";
-        exit(1);
-        filename += "_subprofiles.csv";
-        pathOutput /= filename;
-
-        if (std::filesystem::exists(pathOutput))
-        {
-            if (noOverwrite)
-            {
-                std::cerr << "Warning: " << pathOutput << " already exists and will not be overwritten\n";
-                return;
-            }
-            std::filesystem::remove(pathOutput);
-        }
-
-        if (!silent)
-        {
-            std::cout << "writing profile information of peaks to: " << pathOutput << "\n";
-        }
-
-        std::ofstream file_out;
-        std::stringstream output;
-        file_out.open(pathOutput, std::ios::out);
-        if (!file_out.is_open())
-        {
-            std::cerr << "Error: could not open output path during peaklist printing. No files have been written.\n"
-                      << "Filename: " << pathOutput << "\n";
-            return;
-        }
-        output << "peakID,mz,retentionTime,scanNumber,intensity\n";
-        for (size_t i = 0; i < peakComponents.size(); i++)
-        {
-            for (auto point : peakComponents[i])
-            {
-                char buffer[64];
-                sprintf(buffer, "%zu,%0.8f,%0.8f,%d,%0.8f\n",
-                        i, point.mz, point.rt, point.scan, point.intensity);
-                output << buffer;
-            }
-        }
-        file_out << output.str();
-        file_out.close();
-        return;
-    }
-
-    void printBins(const std::vector<qCentroid> centroids,
-                   const std::vector<EIC> bins, std::filesystem::path pathOutput,
-                   std::string filename, bool silent, bool skipError, bool noOverwrite)
+    void printBins(const std::vector<qCentroid> *centroids,
+                   const std::vector<EIC> *bins,
+                   std::filesystem::path pathOutput,
+                   std::string filename,
+                   bool silent, bool skipError, bool noOverwrite)
     {
         filename += "_bins.csv";
         pathOutput /= filename;
@@ -705,12 +659,12 @@ namespace qAlgorithms
         }
         // @todo consider if the mz error is relevant when checking individual bins
         output << "binID,cenID,mz,mzUncertainty,retentionTime,scanNumber,area,height,degreesOfFreedom,DQSC,DQSB\n";
-        for (size_t binID = 0; binID < bins.size(); binID++)
+        for (size_t binID = 0; binID < bins->size(); binID++)
         {
-            const EIC bin = bins[binID];
+            const EIC bin = bins->at(binID);
             for (size_t i = 0; i < bin.mz.size(); i++)
             {
-                const qCentroid cen = centroids[bin.cenID[i]];
+                const qCentroid cen = centroids->at(bin.cenID[i]);
                 char buffer[128];
                 sprintf(buffer, "%zu,%u,%0.8f,%0.8f,%0.4f,%d,%0.6f,%0.6f,%u,%0.4f,%0.4f\n",
                         binID, cen.cenID, bin.mz[i], bin.predInterval[i],
@@ -724,9 +678,10 @@ namespace qAlgorithms
         return;
     }
 
-    void printFeatureList(const std::vector<FeaturePeak> peaktable,
-                          std::filesystem::path pathOutput, std::string filename,
-                          const std::vector<EIC> originalBins,
+    void printFeatureList(const std::vector<FeaturePeak> *peaktable,
+                          std::filesystem::path pathOutput,
+                          std::string filename,
+                          const std::vector<EIC> *originalBins,
                           bool verbose, bool silent, bool skipError, bool noOverwrite)
     {
         filename += "_features.csv";
@@ -762,11 +717,11 @@ namespace qAlgorithms
         output << header;
 
         unsigned int counter = 1;
-        for (size_t i = 0; i < peaktable.size(); i++)
+        for (size_t i = 0; i < peaktable->size(); i++)
         {
-            auto peak = peaktable[i];
+            const FeaturePeak peak = peaktable->at(i);
             int binID = peak.idxBin;
-            std::vector<float> RTs = originalBins[binID].rententionTimes;
+            const std::vector<float> RTs = originalBins->at(binID).rententionTimes;
 
             char buffer[256];
             snprintf(buffer, 256, "%d,%d,%d,%d,%d,%0.6f,%0.6f,%0.4f,%0.4f,%0.4f,%0.4f,%0.3f,%0.3f,%0.3f,%0.3f,%d,%d,%d,%0.5f,%0.5f,%0.5f,%s,%0.6f,%0.8f,%0.8f,%0.8f,%0.8f\n",
@@ -785,9 +740,10 @@ namespace qAlgorithms
         return;
     }
 
-    void printFeatureCentroids(const std::vector<FeaturePeak> peaktable,
-                               std::filesystem::path pathOutput, std::string filename,
-                               const std::vector<EIC> originalBins,
+    void printFeatureCentroids(const std::vector<FeaturePeak> *peaktable,
+                               std::filesystem::path pathOutput,
+                               std::string filename,
+                               const std::vector<EIC> *originalBins,
                                bool verbose, bool silent, bool skipError, bool noOverwrite)
     {
         filename += "_featCen.csv";
@@ -821,11 +777,11 @@ namespace qAlgorithms
                << "area,height,degreesOfFreedom,DQSC,DQSB,DQSF,apexLeft,b0,b1,b2,b3\n";
 
         unsigned int counter = 1;
-        for (size_t i = 0; i < peaktable.size(); i++)
+        for (size_t i = 0; i < peaktable->size(); i++)
         {
-            auto peak = peaktable[i];
+            const FeaturePeak peak = peaktable->at(i);
             int binID = peak.idxBin;
-            auto bin = originalBins[binID];
+            const EIC bin = originalBins->at(binID);
             char buffer[256];
             for (size_t cen = peak.idxPeakStart; cen < peak.idxPeakEnd + 1; cen++)
             {
