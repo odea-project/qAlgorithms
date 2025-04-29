@@ -38,7 +38,7 @@ namespace qAlgorithms
             // @todo factor the loop internals into at least one function
             PreGrouping pregroup;
             size_t groupsize = limits[groupIdx].end - limits[groupIdx].start + 1;
-            std::cout << groupsize << ", ";
+            // std::cout << groupsize << ", ";
 
             if (groupsize == 1)
             {
@@ -77,7 +77,16 @@ namespace qAlgorithms
                 minScan = std::min(minScan, scans[test->idxPeakStart]);
                 assert(scans[test->idxPeakEnd] - scans[test->idxPeakStart] >= 4);
                 assert(maxScan - minScan >= 4);
+                if (test->idxPeakStart + test->index_x0_offset >= test->idxPeakEnd - 1)
+                {
+                    groupsize--;
+                    continue;
+                }
                 pregroup.features.push_back(test);
+            }
+            if (groupsize < 2)
+            {
+                continue;
             }
 
             // create a vector of unified RTs for interpolation in the harmonised EICs
@@ -346,6 +355,8 @@ namespace qAlgorithms
         std::cout << "fails: " << failRegressions << ", real ones: " << realRegressions << "\n";
         failRegressions = 0;
         realRegressions = 0;
+        VALLEYS_1 = 0;
+        VALLEYS_other = 0;
 
         return globalCompID; // number of final components + 1
     }
@@ -387,12 +398,14 @@ namespace qAlgorithms
         RegressionGauss *mutateReg,
         const size_t idxStart,
         const size_t scale,
-        const std::vector<unsigned int> *degreesOfFreedom,
+        const std::vector<unsigned int> *cum_DF, // DF is cumulative over all combined harmonised EICs (between 0 and n DF per RT)
         const std::vector<float> *intensities,
         const std::vector<float> *intensities_log)
     {
         assert(scale > 1);
-        assert(idxStart + 4 < degreesOfFreedom->size());
+        assert(idxStart + 4 < cum_DF->size());
+        assert(cum_DF->front() == 0);
+        assert(cum_DF->size() == intensities->size() + 1);
         /*
           Apex and Valley Position Filter:
           This block of code implements the apex and valley position filter.
@@ -449,18 +462,11 @@ namespace qAlgorithms
             return;
         }
 
-        /*
-          Degree of Freedom Filter:
-          This block of code implements the degree of freedom filter. It calculates the
-          degree of freedom based df vector. If the degree of freedom is less than 5,
-          the loop continues to the next iteration. The value 5 is chosen as the
-          minimum number of data points required to fit a quadratic regression model.
-        */
-        size_t df_sum = 0;
-        for (size_t i = mutateReg->left_limit; i < mutateReg->right_limit; i++)
-        {
-            df_sum += degreesOfFreedom->at(i);
-        }
+        // the degrees of freedom must exceed five for a valid fit. In the multi-model, this is
+        // almost always true (change to 5 * num of peaks?)
+        // the index in DF is the index of the feature limits + 1. Since cum_DF starts at 0, only the
+        // right limit is increased by one for the DF check
+        size_t df_sum = cum_DF->at(mutateReg->right_limit + 1) - cum_DF->at(mutateReg->left_limit);
 
         /*
           Apex to Edge Filter:
@@ -626,11 +632,16 @@ namespace qAlgorithms
         std::vector<std::vector<float>> intensity_vecs(numPeaks);
         std::vector<std::vector<float>> logInt_vecs(numPeaks);
 
-        std::vector<unsigned int> DF_cum(peakFrame, 0);
+        std::vector<unsigned int> DF_cum(peakFrame + 1, 0);
         for (size_t i = 0; i < eic->df.size(); i++)
         {
             size_t access = i % peakFrame;
-            DF_cum[access] += eic->df[i];
+            DF_cum[access + 1] += eic->df[i];
+        }
+        // cumulative dfs start at 0 to avoid conditional later
+        for (size_t i = 1; i < DF_cum.size(); i++)
+        {
+            DF_cum[i] += DF_cum[i - 1];
         }
 
         for (size_t i = 0; i < numPeaks; i++)
@@ -1002,7 +1013,7 @@ namespace qAlgorithms
         // within a component subgroup without further modification. The process is as follows:
         // 1) create a results vector for every element which is of a size known at the time of function call
 
-        unsigned int length = maxScan - minScan + 1;
+        const unsigned int length = maxScan - minScan + 1;
         assert(length > 4);
         assert(RTs->size() == length);
         assert(bin->ints_area[minIdx] != 0);
@@ -1197,7 +1208,7 @@ namespace qAlgorithms
                 size_t b = selection->at(inner);
                 const ReducedEIC EIC_B = eics->at(a);
                 // score of pair
-                accum += pairScore(&EIC_A, &EIC_B.intensity);
+                // accum += pairScore(&EIC_A, &EIC_B.intensity);
             }
         }
     }
