@@ -590,7 +590,7 @@ namespace qAlgorithms
         }
         if (!silent)
         {
-            std::cout << "writing peaks to: " << pathOutput << "\n";
+            std::cout << "writing centroids to: " << pathOutput << "\n";
         }
 
         std::ofstream file_out;
@@ -743,7 +743,7 @@ namespace qAlgorithms
         }
         if (!silent)
         {
-            std::cout << "writing peaks to: " << pathOutput << "\n";
+            std::cout << "writing features to: " << pathOutput << "\n";
         }
 
         std::ofstream file_out;
@@ -756,9 +756,10 @@ namespace qAlgorithms
             return;
         }
 
-        output << "ID,binID,binIdxStart,binIdxEnd,mz,mzUncertainty,retentionTime,retentionTimeUncertainty,"
-               << "lowestRetentionTime,highestRetentionTime,area,areaUncertainty,height,heightUncertainty,"
-               << "scale,interpolations,competitors,DQSC,DQSB,DQSF,apexLeft,mse,b0,b1,b2,b3\n";
+        constexpr std::string_view header = "CompID,ID,binID,binIdxStart,binIdxEnd,mz,mzUncertainty,retentionTime,retentionTimeUncertainty,"
+                                            "lowestRetentionTime,highestRetentionTime,area,areaUncertainty,height,heightUncertainty,"
+                                            "scale,interpolations,competitors,DQSC,DQSB,DQSF,apexLeft,mse,b0,b1,b2,b3\n";
+        output << header;
 
         unsigned int counter = 1;
         for (size_t i = 0; i < peaktable.size(); i++)
@@ -768,8 +769,8 @@ namespace qAlgorithms
             std::vector<float> RTs = originalBins[binID].rententionTimes;
 
             char buffer[256];
-            snprintf(buffer, 256, "%d,%d,%d,%d,%0.6f,%0.6f,%0.4f,%0.4f,%0.4f,%0.4f,%0.3f,%0.3f,%0.3f,%0.3f,%d,%d,%d,%0.5f,%0.5f,%0.5f,%s,%0.6f,%0.8f,%0.8f,%0.8f,%0.8f\n",
-                     counter, binID, peak.idxPeakStart, peak.idxPeakEnd, peak.mz, peak.mzUncertainty,
+            snprintf(buffer, 256, "%d,%d,%d,%d,%d,%0.6f,%0.6f,%0.4f,%0.4f,%0.4f,%0.4f,%0.3f,%0.3f,%0.3f,%0.3f,%d,%d,%d,%0.5f,%0.5f,%0.5f,%s,%0.6f,%0.8f,%0.8f,%0.8f,%0.8f\n",
+                     peak.componentID, counter, binID, peak.idxPeakStart, peak.idxPeakEnd, peak.mz, peak.mzUncertainty,
                      peak.retentionTime, peak.retentionTimeUncertainty, RTs[peak.idxPeakStart], RTs[peak.idxPeakEnd],
                      peak.area, peak.areaUncertainty, peak.height, peak.heightUncertainty, peak.scale,
                      peak.interpolationCount, peak.competitorCount, peak.DQSC, peak.DQSB, peak.DQSF,
@@ -803,7 +804,7 @@ namespace qAlgorithms
         }
         if (!silent)
         {
-            std::cout << "writing peaks to: " << pathOutput << "\n";
+            std::cout << "writing feature centroids to: " << pathOutput << "\n";
         }
 
         std::ofstream file_out;
