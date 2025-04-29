@@ -59,7 +59,7 @@ namespace qAlgorithms
         unsigned int fileID;         // count upwards after reading everything in @todo produce a unique identifier
     };
 
-    std::vector<std::filesystem::path> controlInput(const std::vector<std::string> inputTasks, const bool skipError);
+    std::vector<std::filesystem::path> controlInput(const std::vector<std::string> *inputTasks, const bool skipError);
 
 #pragma endregion "file reading"
 
@@ -72,26 +72,28 @@ namespace qAlgorithms
         float intensity;
     };
 
-    void printCentroids(const std::vector<CentroidPeak> peaktable,
-                        std::vector<float> convertRT, std::filesystem::path pathOutput,
-                        std::string filename, bool silent, bool skipError, bool noOverwrite);
+    void printCentroids(const std::vector<CentroidPeak> *peaktable,
+                        std::vector<float> *convertRT,
+                        std::filesystem::path pathOutput,
+                        std::string filename,
+                        bool silent, bool skipError, bool noOverwrite);
 
-    void printProfilePoints(std::vector<std::vector<ProfilePoint>> peakComponents,
-                            std::filesystem::path pathOutput, std::string filename,
-                            bool silent, bool skipError, bool noOverwrite);
+    void printBins(const std::vector<qCentroid> *centroids,
+                   const std::vector<EIC> *bins,
+                   std::filesystem::path pathOutput,
+                   std::string filename,
+                   bool silent, bool skipError, bool noOverwrite);
 
-    void printBins(const std::vector<qCentroid> centroids,
-                   const std::vector<EIC> bins, std::filesystem::path pathOutput,
-                   std::string filename, bool silent, bool skipError, bool noOverwrite);
-
-    void printFeatureList(const std::vector<FeaturePeak> peaktable,
-                          std::filesystem::path pathOutput, std::string filename,
-                          const std::vector<EIC> originalBins,
+    void printFeatureList(const std::vector<FeaturePeak> *peaktable,
+                          std::filesystem::path pathOutput,
+                          std::string filename,
+                          const std::vector<EIC> *originalBins,
                           bool verbose, bool silent, bool skipError, bool noOverwrite);
 
-    void printFeatureCentroids(const std::vector<FeaturePeak> peaktable,
-                               std::filesystem::path pathOutput, std::string filename,
-                               const std::vector<EIC> originalBins,
+    void printFeatureCentroids(const std::vector<FeaturePeak> *peaktable,
+                               std::filesystem::path pathOutput,
+                               std::string filename,
+                               const std::vector<EIC> *originalBins,
                                bool verbose, bool silent, bool skipError, bool noOverwrite);
 
     void printLogfile(std::filesystem::path pathLogfile); // @todo
