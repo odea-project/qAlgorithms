@@ -1,0 +1,46 @@
+---
+title: "Untitled"
+author: "Daniel Höhn"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+```
+
+```{r load data}
+dir = "C:/Users/unisys/Documents/Studium/qAlgorithms/build/"
+polarity = "_positive_"
+name = "210229_C1_S1_W_MI_2_pos"
+# name = "20240805_AA_DK_02_Ibu_Kali_0_20240808125236"
+file = str_c(dir, name, polarity)
+file_feat = str_c(file, "features.csv")
+file_bins = str_c(file, "bins.csv")
+file_featCens = str_c(file, "featCen.csv")
+
+features = read_csv(file_feat)
+featCens = read_csv(file_featCens)
+```
+
+```{r}
+compID = 1
+plots = NULL
+
+for (compID in 1:max(features$CompID)) {
+  feat = features[which(features$CompID == compID),]
+  points = featCens[which(featCens$featureID == feat$ID),]
+  for (i in 1:length(feat$ID)) {
+    points$mz[which(points$featureID == feat$ID[i])] = feat$mz[i]
+  }
+  
+  print(
+  ggplot(points)+
+    geom_point(aes(retentionTime, height, colour = as.factor(mz)))+
+    labs(caption = paste0("compID: ", compID))
+  )
+}
+
+```
+
