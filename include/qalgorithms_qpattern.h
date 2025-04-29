@@ -10,9 +10,9 @@
 namespace qAlgorithms
 {
     // main function to execute a componentiation step on data
-    void findComponents(std::vector<FeaturePeak> *peaks,
-                        const std::vector<EIC> *bins,
-                        const std::vector<float> *convertRT); // this is needed to perform interpolation at the same RT as in qPeaks
+    size_t findComponents(std::vector<FeaturePeak> *peaks,
+                          const std::vector<EIC> *bins,
+                          const std::vector<float> *convertRT); // this is needed to perform interpolation at the same RT as in qPeaks
 
     struct PreGrouping
     {
