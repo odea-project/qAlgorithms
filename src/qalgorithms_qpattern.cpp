@@ -323,14 +323,18 @@ namespace qAlgorithms
                     continue;
                 }
                 int compID = components[comp].component;
-                for (size_t feat = 0; feat < assignment.size(); feat++)
+                std::vector<size_t> selection; // used for tanimoto later on
+                for (size_t feat = 0; feat < groupsize; feat++)
                 {
                     if (assignment[feat] == compID)
                     {
                         // update the feature that was passed by reference
                         pregroup.features[feat]->componentID = globalCompID;
+                        selection.push_back(feat);
                     }
                 }
+                // the tanimoto-score is calculated using the uniformly scaled intensity vectors of all data points in the region
+                // use the mean score of a pairwise comparison of all raw EICs
                 globalCompID++;
             }
 
@@ -343,7 +347,7 @@ namespace qAlgorithms
         failRegressions = 0;
         realRegressions = 0;
 
-        return globalCompID;
+        return globalCompID; // number of final components + 1
     }
 
     MergedEIC mergeEICs(const std::vector<ReducedEIC> *eics,
@@ -1174,6 +1178,33 @@ namespace qAlgorithms
         {
             return INFINITY;
         }
+    }
+
+    float pairScore(const std::vector<float> *ints_A, const std::vector<float> *ints_B);
+
+    float multiTanimoto(const std::vector<ReducedEIC> *eics, const std::vector<size_t> *selection)
+    {
+        float accum = 0;
+        // calculate the pairwise Tanimoto for all selected EICs and take the mean
+        size_t size = selection->size();
+        for (size_t outer = 0; outer < size - 1; outer++)
+        {
+            size_t a = selection->at(outer);
+            std::vector<float> EIC_A = eics->at(a).intensity;
+
+            for (size_t inner = outer + 1; inner < size; inner++)
+            {
+                size_t b = selection->at(inner);
+                const ReducedEIC EIC_B = eics->at(a);
+                // score of pair
+                accum += pairScore(&EIC_A, &EIC_B.intensity);
+            }
+        }
+    }
+
+    float pairScore(const std::vector<float> *ints_A, const std::vector<float> *ints_B)
+    {
+        assert(ints_A->size() == ints_B->size());
     }
 
     // currently not used
