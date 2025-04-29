@@ -306,11 +306,11 @@ int main(int argc, char *argv[])
             }
             // no fail condition here, since this case can occur with real data
 
-            if (userArgs.printFeatures)
-            {
-                printFeatureList(peaks, userArgs.outputPath, filename, binnedData,
-                                 userArgs.printExtended, userArgs.silent, userArgs.skipError, userArgs.noOverwrite);
-            }
+            // if (userArgs.printFeatures)
+            // {
+            //     printFeatureList(peaks, userArgs.outputPath, filename, binnedData,
+            //                      userArgs.printExtended, userArgs.silent, userArgs.skipError, userArgs.noOverwrite);
+            // }
             if (userArgs.printFeatCens)
             {
                 printFeatureCentroids(peaks, userArgs.outputPath, filename, binnedData,
@@ -320,14 +320,19 @@ int main(int argc, char *argv[])
 #pragma region "Componentisation"
             timeStart = std::chrono::high_resolution_clock::now();
 
-            findComponents(&peaks, &binnedData, &convertRT);
-            size_t numComponents = 0;
+            size_t numComponents = findComponents(&peaks, &binnedData, &convertRT) - 1; // -1 since the ID starts at 1 and is incremented after a component is found
 
             timeEnd = std::chrono::high_resolution_clock::now();
             if (!userArgs.silent)
             {
                 timePassed = std::chrono::duration_cast<std::chrono::milliseconds>(timeEnd - timeStart);
                 std::cout << "    grouped " << peaks.size() << " peaks into " << numComponents << " components in " << timePassed.count() << " s\n";
+            }
+
+            if (userArgs.printFeatures)
+            {
+                printFeatureList(peaks, userArgs.outputPath, filename, binnedData,
+                                 userArgs.printExtended, userArgs.silent, userArgs.skipError, userArgs.noOverwrite);
             }
 
             if (userArgs.doLogging)

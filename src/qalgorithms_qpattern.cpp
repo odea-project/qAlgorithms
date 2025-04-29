@@ -23,13 +23,13 @@ namespace qAlgorithms
 {
     size_t realRegressions = 0;
     size_t failRegressions = 0;
-    void findComponents(std::vector<FeaturePeak> *peaks, // the peaks are updated as part of componentisation
-                        const std::vector<EIC> *bins,
-                        const std::vector<float> *convertRT)
+    size_t findComponents(std::vector<FeaturePeak> *peaks, // the peaks are updated as part of componentisation
+                          const std::vector<EIC> *bins,
+                          const std::vector<float> *convertRT)
     {
         assert(peaks->begin()->componentID == 0);
 
-        unsigned int globalCompID = 1; // this is the component ID later used on a feature level.
+        unsigned int globalCompID = 1; // this is the component ID later used on a feature level. 0 means not part of a component
 
 #pragma region "Pre-Group"
         std::vector<GroupLims> limits = preGroup(peaks);
@@ -56,6 +56,7 @@ namespace qAlgorithms
                     VALLEYS_other++;
                 }
             }
+            assert(VALLEYS_other < peaks->size());
 
             // if (groupsize > 10) // this is only to speed up testing - @todo remove!
             // {
@@ -341,6 +342,8 @@ namespace qAlgorithms
         std::cout << "fails: " << failRegressions << ", real ones: " << realRegressions << "\n";
         failRegressions = 0;
         realRegressions = 0;
+
+        return globalCompID;
     }
 
     MergedEIC mergeEICs(const std::vector<ReducedEIC> *eics,
