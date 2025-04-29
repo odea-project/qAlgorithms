@@ -13,13 +13,6 @@
 
 namespace qAlgorithms
 {
-
-    std::vector<RegCoeffs> findCoefficients_multi_obsolete(
-        const std::vector<float> *intensity_log,
-        const size_t scale,      // maximum scale that will be checked. Should generally be limited by peakFrame
-        const size_t numPeaks,   // only > 1 during componentisation (for now? @todo)
-        const size_t peakFrame); // how many points are covered per peak? For single-peak data, this is the length of intensity_log
-
     std::vector<RegCoeffs> findCoefficients(
         const std::vector<float> *intensity_log,
         const size_t scale); // maximum scale that will be checked. Should generally be limited by peakFrame

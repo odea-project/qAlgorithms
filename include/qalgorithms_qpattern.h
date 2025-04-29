@@ -142,7 +142,7 @@ namespace qAlgorithms
         RegressionGauss *mutateReg,
         const size_t idxStart,
         const size_t scale,
-        const std::vector<unsigned int> *degreesOfFreedom,
+        const std::vector<unsigned int> *cum_DF,
         const std::vector<float> *intensities,
         const std::vector<float> *intensities_log);
 
