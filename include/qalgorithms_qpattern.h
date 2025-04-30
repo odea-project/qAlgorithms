@@ -107,8 +107,9 @@ namespace qAlgorithms
 
     struct MultiRegression // @todo this will need to contain all the uncertainties of the original features and find a better solution to the whole bin window output
     {
+        float b0_vec[32];
         std::vector<float> cum_RSS; // one element per scan of the subgroup
-        std::vector<float> b0_vec;
+        // std::vector<float> b0_vec;
         // all indices relate to the full subgroup!
         size_t idxStart;
         size_t idxEnd;
