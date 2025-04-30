@@ -320,7 +320,7 @@ int main(int argc, char *argv[])
 #pragma region "Componentisation"
             timeStart = std::chrono::high_resolution_clock::now();
 
-            size_t numComponents = findComponents(&peaks, &binnedData, &convertRT) - 1; // -1 since the ID starts at 1 and is incremented after a component is found
+            size_t numComponents = findComponents(&peaks, &binnedData, &convertRT, false) - 1; // -1 since the ID starts at 1 and is incremented after a component is found
 
             timeEnd = std::chrono::high_resolution_clock::now();
             if (!userArgs.silent)

@@ -36,16 +36,16 @@ intensityDiffGreaterTwo = 0
 
 for (compID in 1:max(features$CompID)) {
   feat = features[which(features$CompID == compID),]
-  # points = featCens[which(featCens$featureID == feat$ID),]
-  # for (i in 1:length(feat$ID)) {
-  #   points$mz[which(points$featureID == feat$ID[i])] = feat$mz[i]
-  # }
-  
-  # print(
-  # ggplot(points)+
-  #   geom_point(aes(retentionTime, height, colour = as.factor(mz)))+
-  #   labs(caption = paste0("compID: ", compID))
-  # )
+   points = featCens[which(featCens$featureID %in% feat$ID),]
+  for (i in 1:length(feat$ID)) {
+     points$mz[which(points$featureID == feat$ID[i])] = feat$mz[i]
+  }
+  # 
+   print(
+   ggplot(points)+
+     geom_point(aes(retentionTime, height, colour = as.factor(mz)))+
+     labs(caption = paste0("compID: ", compID))
+   )
   MZdiffs = c(outer(feat$mz, feat$mz, `-`))
   IntDiffs = c(outer(feat$area, feat$area, `-`))
   mzDiffCount[compID] = sum(abs(MZdiffs - 1.003355) < mean(feat$mzUncertainty))
@@ -56,7 +56,7 @@ sum(intensityDiffGreaterTwo != 0)
 sel = which(mzDiffCount != 0)
 for (compID in sel) {
   feat = features[which(features$CompID == compID),]
-   points = featCens[which(featCens$featureID == feat$ID),]
+   points = featCens[which(featCens$featureID %in% feat$ID),]
    for (i in 1:length(feat$ID)) {
      points$mz[which(points$featureID == feat$ID[i])] = feat$mz[i]
    }
@@ -68,15 +68,53 @@ for (compID in sel) {
    )
 }
 
-
+# check number of true duplicate retention times
+RTmatch = 0
+for (compID in 1:max(features$CompID)) {
+  feat = features[which(features$CompID == compID),]
+  points = featCens[which(featCens$featureID %in% feat$ID),]
+  RTmatch[compID] = (length(points$mz) - length(unique(points$retentionTime))) / length(points$mz)
+}
 ```
+
+
 ```{r}
 # the tanimoto index might not be a good idea to use here, how should scaling be handled?
 
 test_a = points[which(points$featureID == 23376),]
 test_b = points[which(points$featureID == 23378),][-1,]
 
-test_b = test_a + rnorm(17, 5000, 10)
+feat_a = features[23376,]
+feat_b = features[23378,]
+# test_b = test_a + rnorm(17, 5000, 10)
+
+test_a = test_a$area / feat_a$area
+test_b = test_b$area / feat_b$area
+
+asq_real = 0
+bsq_real = 0
+ab_real = 0
+for (i in 1:17) {
+  asq_real = asq_real + test_a[i]^2
+  bsq_real = bsq_real + test_b[i]^2
+  ab_real = ab_real + test_a[i] * test_b[i]
+}
+score_real_sqs = ab_real / (asq_real + bsq_real - ab_real)
+
+exclude = 0
+asum = 0
+bsum = 0
+for (i in 1:17) {
+  asum = asum + test_a[i]
+  bsum = bsum + test_b[i]
+  exclude = exclude + min(test_a[i], test_b[i])
+}
+
+score_real_jc = exclude / (asum + bsum - exclude)
+
+score_real_sqs
+score_real_jc
+################################################################################
 
 diff_a = 0
 diff_b = 0
@@ -106,11 +144,11 @@ bsq_fake = 0
 ab_fake = 0
 for (i in 1:16) {
   asq_real = asq_real + diff_a[i]^2
-bsq_real = bsq_real + diff_b[i]^2
-ab_real = ab_real + diff_a[i] * diff_b[i]
-asq_fake = asq_fake + con_a[i]^2
-bsq_fake = bsq_fake + con_b[i]^2
-ab_fake = ab_fake + con_a[i] * con_b[i]
+  bsq_real = bsq_real + diff_b[i]^2
+  ab_real = ab_real + diff_a[i] * diff_b[i]
+  asq_fake = asq_fake + con_a[i]^2
+  bsq_fake = bsq_fake + con_b[i]^2
+  ab_fake = ab_fake + con_a[i] * con_b[i]
 }
 
 score_real = ab_real / (asq_real + bsq_real - ab_real)

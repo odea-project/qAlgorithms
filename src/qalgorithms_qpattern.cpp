@@ -23,9 +23,11 @@ namespace qAlgorithms
 {
     size_t realRegressions = 0;
     size_t failRegressions = 0;
+    size_t ERRORCOUNTER = 0;
     size_t findComponents(std::vector<FeaturePeak> *peaks, // the peaks are updated as part of componentisation
                           const std::vector<EIC> *bins,
-                          const std::vector<float> *convertRT)
+                          const std::vector<float> *convertRT,
+                          bool printRegs)
     {
         assert(peaks->begin()->componentID == 0);
 
@@ -33,6 +35,7 @@ namespace qAlgorithms
 
 #pragma region "Pre-Group"
         std::vector<GroupLims> limits = preGroup(peaks);
+        std::vector<MultiRegression> finalComponents;
         for (size_t groupIdx = 0; groupIdx < limits.size(); groupIdx++)
         {
             // @todo factor the loop internals into at least one function
@@ -79,6 +82,7 @@ namespace qAlgorithms
                 assert(maxScan - minScan >= 4);
                 if (test->idxPeakStart + test->index_x0_offset >= test->idxPeakEnd - 1)
                 {
+                    ERRORCOUNTER++;
                     groupsize--;
                     continue;
                 }
@@ -98,7 +102,6 @@ namespace qAlgorithms
             }
 
             std::vector<ReducedEIC> eics; // @todo the maximum size of a reduced EIC is the global maxscale + 1!
-            // std::vector<MovedRegression> *selectPeaks;
             for (size_t j = 0; j < groupsize; j++)
             {
                 const FeaturePeak *feature = pregroup.features[j];
@@ -313,6 +316,7 @@ namespace qAlgorithms
                             components[removedID].RSS = INFINITY;
                             assert(*ass_L == *ass_S);
                         }
+                        // @todo the regression goes out of scope here, add function-level storage for coefficients
                     }
                 }
             } // outer if statement
@@ -342,6 +346,7 @@ namespace qAlgorithms
                         selection.push_back(feat);
                     }
                 }
+                // finalComponents.push_back(components[comp])
                 // the tanimoto-score is calculated using the uniformly scaled intensity vectors of all data points in the region
                 // use the mean score of a pairwise comparison of all raw EICs
                 globalCompID++;
@@ -352,11 +357,18 @@ namespace qAlgorithms
         std::cout << std::endl;
         std::cout << "1: " << VALLEYS_1 << " ; other: " << VALLEYS_other << "\n"; // at least for one dataset, features with a valley point are much more likely
         // to be groups of size 1 than to be included in larger groups (ca. twice as likely)
-        std::cout << "fails: " << failRegressions << ", real ones: " << realRegressions << "\n";
+        std::cout << "fails: " << failRegressions << ", real ones: " << realRegressions << ", Errors: " << ERRORCOUNTER << "\n";
         failRegressions = 0;
         realRegressions = 0;
         VALLEYS_1 = 0;
         VALLEYS_other = 0;
+        ERRORCOUNTER = 0;
+
+        // print the coefficients to draw new regression curves into plots
+        // @todo this should be moved into a separate function
+        if (printRegs)
+        {
+        }
 
         return globalCompID; // number of final components + 1
     }
@@ -1191,32 +1203,32 @@ namespace qAlgorithms
         }
     }
 
-    float pairScore(const std::vector<float> *ints_A, const std::vector<float> *ints_B);
+    // float pairScore(const std::vector<float> *ints_A, const std::vector<float> *ints_B);
 
-    float multiTanimoto(const std::vector<ReducedEIC> *eics, const std::vector<size_t> *selection)
-    {
-        float accum = 0;
-        // calculate the pairwise Tanimoto for all selected EICs and take the mean
-        size_t size = selection->size();
-        for (size_t outer = 0; outer < size - 1; outer++)
-        {
-            size_t a = selection->at(outer);
-            std::vector<float> EIC_A = eics->at(a).intensity;
+    // float multiTanimoto(const std::vector<ReducedEIC> *eics, const std::vector<size_t> *selection)
+    // {
+    //     float accum = 0;
+    //     // calculate the pairwise Tanimoto for all selected EICs and take the mean
+    //     size_t size = selection->size();
+    //     for (size_t outer = 0; outer < size - 1; outer++)
+    //     {
+    //         size_t a = selection->at(outer);
+    //         std::vector<float> EIC_A = eics->at(a).intensity;
 
-            for (size_t inner = outer + 1; inner < size; inner++)
-            {
-                size_t b = selection->at(inner);
-                const ReducedEIC EIC_B = eics->at(a);
-                // score of pair
-                // accum += pairScore(&EIC_A, &EIC_B.intensity);
-            }
-        }
-    }
+    //         for (size_t inner = outer + 1; inner < size; inner++)
+    //         {
+    //             size_t b = selection->at(inner);
+    //             const ReducedEIC EIC_B = eics->at(a);
+    //             // score of pair
+    //             // accum += pairScore(&EIC_A, &EIC_B.intensity);
+    //         }
+    //     }
+    // }
 
-    float pairScore(const std::vector<float> *ints_A, const std::vector<float> *ints_B)
-    {
-        assert(ints_A->size() == ints_B->size());
-    }
+    // float pairScore(const std::vector<float> *ints_A, const std::vector<float> *ints_B)
+    // {
+    //     assert(ints_A->size() == ints_B->size());
+    // }
 
     // currently not used
     MovedRegression moveAndScaleReg(const FeaturePeak *feature)
