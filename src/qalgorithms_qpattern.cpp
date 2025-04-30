@@ -150,7 +150,7 @@ namespace qAlgorithms
                     pairs[access].idxStart = regression.idxStart;
                     pairs[access].idxEnd = regression.idxEnd;
 
-                    if (regression.b0_vec.empty())
+                    if (regression.b0_vec[0] == 0)
                     {
                         pairs[access].RSS = INFINITY;
                         failRegressions++;
@@ -731,7 +731,9 @@ namespace qAlgorithms
         if (minIdx == -1)
         {
             // scale is 0 by default, use that to check
-            return MultiRegression{}; // this will lead to problems further down @todo
+            MultiRegression a;
+            a.b0_vec[0] = 0;
+            return a; // this will lead to problems further down @todo
         }
         // calculate the cumulative RSS for the entire block @todo this could lead to very large values and problems, make a test
         auto bestReg = regressions[minIdx];
@@ -758,6 +760,7 @@ namespace qAlgorithms
         const size_t numPeaks,  // only > 1 during componentisation (for now? @todo)
         const size_t peakFrame) // how many points are covered per peak? For single-peak data, this is the length of intensity_log
     {
+        assert(numPeaks < 32); // this is the maximum size of the b0 array
         /*
   This function performs a convolution with the kernel: (xTx)^-1 xT and the data array: intensity_log.
   (xTx)^-1 is pre_calculated and stored in the inv_array and contains 7 unique values per scale.
@@ -851,8 +854,8 @@ namespace qAlgorithms
 
         size_t iterationCount = std::accumulate(maxInnerLoop.begin(), maxInnerLoop.end(), 0) - maxInnerLoop.size(); // no range check necessary since every entry > 1
 
-        const std::vector<float> b0_reserve(numPeaks, NAN);
-        MultiRegression localEmpty = {{}, b0_reserve, 0, 0, 0, 0, NAN, NAN, NAN, NAN};
+        std::vector<float> emptyRSS(numPeaks, NAN);
+        MultiRegression localEmpty = {{0}, emptyRSS, 0, 0, 0, 0, NAN, NAN, NAN, NAN};
         std::vector<MultiRegression> coeffs(iterationCount, localEmpty);
 
         // these arrays contain all coefficients for every loop iteration
