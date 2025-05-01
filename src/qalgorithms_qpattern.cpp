@@ -140,7 +140,7 @@ namespace qAlgorithms
                         const float uncert_B = peaks->at(EIC_B.feature_ID).retentionTimeUncertainty;
                         const float apex_B = peaks->at(EIC_B.feature_ID).retentionTime;
 
-                        if (std::abs(apex_A - apex_B) > std::min(uncert_A, uncert_B))
+                        if (std::abs(apex_A - apex_B) > (uncert_A + uncert_B) / 2)
                         {
                             pairs[access].RSS = INFINITY;
                             failRegressions++;
@@ -1127,7 +1127,8 @@ namespace qAlgorithms
             float apex_L = (*peaks)[i - 1].retentionTime;
             float apex_R = (*peaks)[i].retentionTime;
             assert(apex_L <= apex_R);
-            float uncert = std::min((*peaks)[i - 1].retentionTimeUncertainty, (*peaks)[i].retentionTimeUncertainty);
+            // float uncert = std::min((*peaks)[i - 1].retentionTimeUncertainty, (*peaks)[i].retentionTimeUncertainty);
+            float uncert = ((*peaks)[i - 1].retentionTimeUncertainty + (*peaks)[i].retentionTimeUncertainty) / 2;
             if (apex_R - apex_L > uncert)
             {
                 initialGroups.back().end = i - 1;
