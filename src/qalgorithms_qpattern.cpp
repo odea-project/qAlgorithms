@@ -6,13 +6,11 @@
 
 #include "./../external/CDFlib/cdflib.hpp"
 
-#include <algorithm> // sorting
-#include <cmath>     // pow and log
-#include <numeric>   // partial sum (cumError)
+#include <cmath>   // pow and log
+#include <numeric> // iota and accumulate
 #include <vector>
 #include <iostream>
 #include <cassert>
-#include <iterator> // std::distance @todo this needs to be reworked massively
 
 // group peaks identified from bins by their relation within a scan region
 
@@ -134,9 +132,21 @@ namespace qAlgorithms
                     pairs[access].idx_S = idx_S;
                     pairs[access].idx_L = idx_L;
                     auto EIC_B = eics[idx_L];
-                    // pairwise merge to check if two features can be part of the same component
+                    {
+                        // before performing the computationally expensive check by regression, we can exclude features
+                        // that don't overlap. This will massively reduce the time spent on large pregroups
+                        const float uncert_A = peaks->at(EIC_A.feature_ID).retentionTimeUncertainty;
+                        const float apex_A = peaks->at(EIC_A.feature_ID).retentionTime;
+                        const float uncert_B = peaks->at(EIC_B.feature_ID).retentionTimeUncertainty;
+                        const float apex_B = peaks->at(EIC_B.feature_ID).retentionTime;
 
-                    // calculate the rss of the individual features for the relevant region
+                        if (std::abs(apex_A - apex_B) > std::min(uncert_A, uncert_B))
+                        {
+                            pairs[access].RSS = INFINITY;
+                            failRegressions++;
+                            continue;
+                        }
+                    }
 
                     // merge the EICs that are relevant to both
                     static const std::vector<size_t> select{0, 1};
@@ -760,7 +770,6 @@ namespace qAlgorithms
         const size_t numPeaks,  // only > 1 during componentisation (for now? @todo)
         const size_t peakFrame) // how many points are covered per peak? For single-peak data, this is the length of intensity_log
     {
-        assert(numPeaks < 32); // this is the maximum size of the b0 array
         /*
   This function performs a convolution with the kernel: (xTx)^-1 xT and the data array: intensity_log.
   (xTx)^-1 is pre_calculated and stored in the inv_array and contains 7 unique values per scale.
@@ -826,8 +835,10 @@ namespace qAlgorithms
    for i=10: 3 to 4 => i.e. loop is executed once for scale=3
    for i=11: 3 to 3 => i.e. loop is not executed
    */
+        assert(numPeaks <= 32); // this is the maximum size of the b0 array
         assert(max_scale > 1);
         assert(numPeaks > 1); // this is necessary since the A1 INV_ARRAY value is
+
         const size_t minScale = 2;
         const size_t steps = peakFrame - 2 * minScale; // iteration number at scale 2
 
@@ -858,18 +869,15 @@ namespace qAlgorithms
         MultiRegression localEmpty = {{0}, emptyRSS, 0, 0, 0, 0, NAN, NAN, NAN, NAN};
         std::vector<MultiRegression> coeffs(iterationCount, localEmpty);
 
-        // these arrays contain all coefficients for every loop iteration
-        std::vector<long double> beta_0(iterationCount * numPeaks, NAN); // one per iteration per peak
-
         // the product sums are the rows of the design matrix (xT) * intensity_log[i:i+4] (dot product)
         // The first n entries are contained in the b0 vector, one for each peak the regression is performed
         // over.
-        std::vector<long double> tmp_product_sum_b0(numPeaks, NAN); // one fully separate b0 per peak
-        long double tmp_product_sum_b1;
-        long double tmp_product_sum_b2;
-        long double tmp_product_sum_b3;
+        double tmp_product_sum_b0[32]{NAN}; // one fully separate b0 per peak
+        double tmp_product_sum_b1;
+        double tmp_product_sum_b2;
+        double tmp_product_sum_b3;
 
-        long double sum_tmp_product_sum_b0 = 0; // sum of all elements in the tmp_product_sum_b0 vector
+        double sum_tmp_product_sum_b0 = 0; // sum of all elements in the tmp_product_sum_b0 vector
 
         size_t k = 0;
         for (size_t i = 0; i < steps; i++)
@@ -881,28 +889,29 @@ namespace qAlgorithms
             for (size_t b0_elems = 0; b0_elems < numPeaks; b0_elems++)
             {
                 size_t x = b0_elems * peakFrame + i;
-                tmp_product_sum_b0[b0_elems] = intensity_log->at(x) + intensity_log->at(x + 1) +
-                                               intensity_log->at(x + 2) + intensity_log->at(x + 3) +
-                                               intensity_log->at(x + 4); // b0 = 1 for all elements
+                double tmpval = intensity_log->at(x) + intensity_log->at(x + 1) +
+                                intensity_log->at(x + 2) + intensity_log->at(x + 3) +
+                                intensity_log->at(x + 4); // b0 = 1 for all elements
+                tmp_product_sum_b0[b0_elems] = tmpval;
+                sum_tmp_product_sum_b0 += tmpval;
             }
+            // sum_tmp_product_sum_b0 = std::accumulate(tmp_product_sum_b0.begin(), tmp_product_sum_b0.end(), 0.0);
 
             tmp_product_sum_b1 = 2 * (y_array_sum[i + 4] - y_array_sum[i]) + y_array_sum[i + 3] - y_array_sum[i + 1];
             tmp_product_sum_b2 = 4 * y_array_sum[i] + y_array_sum[i + 1];
             tmp_product_sum_b3 = 4 * y_array_sum[i + 4] + y_array_sum[i + 3];
 
-            sum_tmp_product_sum_b0 = std::accumulate(tmp_product_sum_b0.begin(), tmp_product_sum_b0.end(), 0.0);
-
             // A1 is not modified if numPeaks is 1. It is, however, modified by -2 * b / numPeaks and not just /numPeaks if numPeaks > 1
             // use [12 + ...] since the array is constructed for the accession arry[scale * 6 + (0:5)]
-            const long double S2_A1 = INV_ARRAY[12 + 0] - 2 * INV_ARRAY[12 + 1] / numPeaks;
+            const double S2_A1 = INV_ARRAY[12 + 0] - 2 * INV_ARRAY[12 + 1] / numPeaks;
             // A2 is only defined for numPeaks > 1, set it to 0 to avoid conditional in loops
             // @todo replace the array with a struct and an accessor function
-            const long double S2_A2 = -2 * INV_ARRAY[12 + 1] / numPeaks;
-            const long double S2_B = INV_ARRAY[12 + 1] / numPeaks;
-            const long double S2_C = INV_ARRAY[12 + 2] / numPeaks;
-            const long double S2_D = INV_ARRAY[12 + 3] / numPeaks;
-            const long double S2_E = INV_ARRAY[12 + 4] / numPeaks;
-            const long double S2_F = INV_ARRAY[12 + 5] / numPeaks;
+            const double S2_A2 = -2 * INV_ARRAY[12 + 1] / numPeaks;
+            const double S2_B = INV_ARRAY[12 + 1] / numPeaks;
+            const double S2_C = INV_ARRAY[12 + 2] / numPeaks;
+            const double S2_D = INV_ARRAY[12 + 3] / numPeaks;
+            const double S2_E = INV_ARRAY[12 + 4] / numPeaks;
+            const double S2_F = INV_ARRAY[12 + 5] / numPeaks;
 
             // this line is: a*t_i + b * sum(t without i)
             // inv_array starts at scale = 2
@@ -939,14 +948,14 @@ namespace qAlgorithms
                 tmp_product_sum_b3 += scale_sqr * y_array_sum[i + 4 + u];
 
                 // A1 is not modified if numPeaks is 1. It is, however, modified by -2 * b / numPeaks and not just /numPeaks if numPeaks > 1
-                const long double inv_A1 = numPeaks == 1 ? INV_ARRAY[12 + u * 6 + 0] : INV_ARRAY[12 + u * 6 + 0] - 2 * INV_ARRAY[12 + u * 6 + 1] / numPeaks;
+                const double inv_A1 = numPeaks == 1 ? INV_ARRAY[12 + u * 6 + 0] : INV_ARRAY[12 + u * 6 + 0] - 2 * INV_ARRAY[12 + u * 6 + 1] / numPeaks;
                 // A2 is only defined for numPeaks > 1, set it to 0 to avoid conditional in loops
-                const long double inv_A2 = numPeaks == 1 ? 0 : -2 * INV_ARRAY[12 + u * 6 + 1] / numPeaks;
-                const long double inv_B = INV_ARRAY[12 + u * 6 + 1] / numPeaks;
-                const long double inv_C = INV_ARRAY[12 + u * 6 + 2] / numPeaks;
-                const long double inv_D = INV_ARRAY[12 + u * 6 + 3] / numPeaks;
-                const long double inv_E = INV_ARRAY[12 + u * 6 + 4] / numPeaks;
-                const long double inv_F = INV_ARRAY[12 + u * 6 + 5] / numPeaks;
+                const double inv_A2 = numPeaks == 1 ? 0 : -2 * INV_ARRAY[12 + u * 6 + 1] / numPeaks;
+                const double inv_B = INV_ARRAY[12 + u * 6 + 1] / numPeaks;
+                const double inv_C = INV_ARRAY[12 + u * 6 + 2] / numPeaks;
+                const double inv_D = INV_ARRAY[12 + u * 6 + 3] / numPeaks;
+                const double inv_E = INV_ARRAY[12 + u * 6 + 4] / numPeaks;
+                const double inv_F = INV_ARRAY[12 + u * 6 + 5] / numPeaks;
 
                 for (size_t peak = 0; peak < numPeaks; peak++)
                 {
