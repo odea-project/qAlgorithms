@@ -3,8 +3,9 @@
 #include "qalgorithms_qpattern.h"
 #include "qalgorithms_datatypes.h"
 #include "qalgorithms_global_vars.h"
-
+// temporary dependencies
 #include "./../external/CDFlib/cdflib.hpp"
+#include <fstream> // write peaks to file
 
 #include <cmath>   // pow and log
 #include <numeric> // iota and accumulate
@@ -22,10 +23,12 @@ namespace qAlgorithms
     size_t realRegressions = 0;
     size_t failRegressions = 0;
     size_t ERRORCOUNTER = 0;
-    size_t findComponents(std::vector<FeaturePeak> *peaks, // the peaks are updated as part of componentisation
-                          const std::vector<EIC> *bins,
-                          const std::vector<float> *convertRT,
-                          bool printRegs)
+
+    std::vector<MultiRegression> findComponents(
+        std::vector<FeaturePeak> *peaks, // the peaks are updated as part of componentisation
+        const std::vector<EIC> *bins,
+        const std::vector<float> *convertRT,
+        bool printRegs)
     {
         assert(peaks->begin()->componentID == 0);
 
@@ -34,6 +37,7 @@ namespace qAlgorithms
 #pragma region "Pre-Group"
         std::vector<GroupLims> limits = preGroup(peaks);
         std::vector<MultiRegression> finalComponents;
+
         for (size_t groupIdx = 0; groupIdx < limits.size(); groupIdx++)
         {
             // @todo factor the loop internals into at least one function
@@ -157,6 +161,7 @@ namespace qAlgorithms
                     auto mergedEIC = mergeEICs(&eics, &select, idxStart, idxEnd);
                     auto regression = runningRegression_multi(&mergedEIC, &eics, &select, idxStart, idxEnd, 2);
 
+                    pairs[access].regression = regression; // this introduces some redundancy
                     pairs[access].idxStart = regression.idxStart;
                     pairs[access].idxEnd = regression.idxEnd;
 
@@ -209,7 +214,8 @@ namespace qAlgorithms
                         *ass_L = componentGroup;
                         *ass_S = componentGroup;
                         CompAssignment insert{
-                            p.cumRSS, // @todo this is a major design flaw
+                            p.regression,
+                            p.cumRSS, // @todo this is a major design flaw (also see above)
                             p.idxStart,
                             p.idxEnd,
                             2, // number of peaks in this component
@@ -259,6 +265,7 @@ namespace qAlgorithms
                         if (newRSS < INFINITY)
                         {
                             // do nothing if the single feature doesn't fit
+                            components[existingComponent].regression = regression;
                             components[existingComponent].cumRSS = regression.cum_RSS;
                             components[existingComponent].members++;
                             components[existingComponent].limit_L = regression.idxStart;
@@ -304,7 +311,7 @@ namespace qAlgorithms
                             // do nothing if the two components cannot be merged
                             // always prefer the smaller indexed feature when assigning components.
                             // this does not have an effect on any comparisons, so not a relevant implementation detail
-
+                            components[*ass_S].regression = regression;
                             components[*ass_S].cumRSS = regression.cum_RSS;
                             components[*ass_S].members = n;
                             components[*ass_S].limit_L = regression.idxStart;
@@ -356,9 +363,10 @@ namespace qAlgorithms
                         selection.push_back(feat);
                     }
                 }
-                // finalComponents.push_back(components[comp])
+                finalComponents.push_back(components[comp].regression);
                 // the tanimoto-score is calculated using the uniformly scaled intensity vectors of all data points in the region
                 // use the mean score of a pairwise comparison of all raw EICs
+                // note: tanimoto will require a sensible answer to scaling issues
                 globalCompID++;
             }
 
@@ -374,13 +382,7 @@ namespace qAlgorithms
         VALLEYS_other = 0;
         ERRORCOUNTER = 0;
 
-        // print the coefficients to draw new regression curves into plots
-        // @todo this should be moved into a separate function
-        if (printRegs)
-        {
-        }
-
-        return globalCompID; // number of final components + 1
+        return finalComponents;
     }
 
     MergedEIC mergeEICs(const std::vector<ReducedEIC> *eics,

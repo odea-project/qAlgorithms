@@ -1,19 +1,35 @@
 #ifndef _QALGORITHMS_QPATTERN_INCLUDED
 #define _QALGORITHMS_QPATTERN_INCLUDED
 
-// #include <../include/qalgorithms_qbin.h>
 #include "qalgorithms_datatypes.h"
-// #include <map>
 
 #include <vector>
 
 namespace qAlgorithms
 {
+    struct MultiRegression // @todo this will need to contain all the uncertainties of the original features and find a better solution to the whole bin window output
+    {
+        float b0_vec[32];
+        std::vector<float> cum_RSS; // one element per scan of the subgroup
+        // std::vector<float> b0_vec;
+        // all indices relate to the full subgroup!
+        size_t idxStart;
+        size_t idxEnd;
+        size_t idx_x0;
+        size_t scale;
+        unsigned int numPeaks; // @todo track this
+        float b1;
+        float b2;
+        float b3;
+        float RT_apex;
+    };
+
     // main function to execute a componentiation step on data
-    size_t findComponents(std::vector<FeaturePeak> *peaks,
-                          const std::vector<EIC> *bins,
-                          const std::vector<float> *convertRT, // this is needed to perform interpolation at the same RT as in qPeaks
-                          bool printRegs);
+    std::vector<MultiRegression> findComponents(
+        std::vector<FeaturePeak> *peaks,
+        const std::vector<EIC> *bins,
+        const std::vector<float> *convertRT, // this is needed to perform interpolation at the same RT as in qPeaks
+        bool printRegs);
 
     struct PreGrouping
     {
@@ -31,6 +47,7 @@ namespace qAlgorithms
 
     struct RSS_pair
     {
+        MultiRegression regression;
         std::vector<float> cumRSS;
         size_t idx_S;          // relates to half matrix
         size_t idx_L;          // relates to half matrix
@@ -42,6 +59,7 @@ namespace qAlgorithms
 
     struct CompAssignment
     {
+        MultiRegression regression;
         std::vector<float> cumRSS;
         unsigned int limit_L; // refers to harmonised EIC space
         unsigned int limit_R; // refers to harmonised EIC space
@@ -104,22 +122,6 @@ namespace qAlgorithms
     std::vector<float> cumulativeRSS(const std::vector<float> *intensities,
                                      const RegCoeffs *coeff,
                                      size_t index_x0);
-
-    struct MultiRegression // @todo this will need to contain all the uncertainties of the original features and find a better solution to the whole bin window output
-    {
-        float b0_vec[32];
-        std::vector<float> cum_RSS; // one element per scan of the subgroup
-        // std::vector<float> b0_vec;
-        // all indices relate to the full subgroup!
-        size_t idxStart;
-        size_t idxEnd;
-        size_t idx_x0;
-        size_t scale;
-        float b1;
-        float b2;
-        float b3;
-        float RT_apex;
-    };
 
     MergedEIC mergeEICs(const std::vector<ReducedEIC> *eics,
                         const std::vector<size_t> *selection,

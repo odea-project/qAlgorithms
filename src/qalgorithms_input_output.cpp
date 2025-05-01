@@ -1,11 +1,8 @@
 #include <vector>
 #include <iostream>
-#include <fstream> // write peaks to file
-#include <cstdlib>
-// #include <iomanip>
+#include <fstream>    // write peaks to file
 #include <filesystem> // printing absolute path in case read fails
 #include <string>
-// #include <sstream>   // write peaks to file
 #include <algorithm> // remove duplicates from task list
 #include <assert.h>
 #include <cmath> // isnan()
@@ -13,6 +10,8 @@
 #include "qalgorithms_datatypes.h"
 #include "qalgorithms_input_output.h"
 #include "qalgorithms_global_vars.h"
+
+#include "qalgorithms_qpattern.h" // @todo move the multiregression struct into datatypes once it no longer changes regularly
 
 namespace qAlgorithms
 {
@@ -571,6 +570,7 @@ namespace qAlgorithms
 #pragma endregion "file reading"
 
 #pragma region "print functions"
+    // @todo use macros to move the boilderplate out of the function body
 
     void printCentroids(const std::vector<CentroidPeak> *peaktable,
                         std::vector<float> *convertRT,
@@ -792,6 +792,54 @@ namespace qAlgorithms
                 output << buffer;
             }
             ++counter;
+        }
+
+        file_out << output.str();
+        file_out.close();
+        return;
+    }
+
+    void printComponentRegressions(const std::vector<MovedRegression> *compRegs,
+                                   std::filesystem::path pathOutput,
+                                   std::string filename,
+                                   bool verbose, bool silent, bool skipError, bool noOverwrite)
+    {
+        filename += "_components.csv";
+        pathOutput /= filename;
+
+        if (std::filesystem::exists(pathOutput))
+        {
+            if (noOverwrite)
+            {
+                std::cerr << "Warning: " << pathOutput << " already exists and will not be overwritten\n";
+                return;
+            }
+            std::filesystem::remove(pathOutput);
+        }
+        if (!silent)
+        {
+            std::cout << "writing component regression parameters to: " << pathOutput << "\n";
+        }
+
+        std::ofstream file_out;
+        std::stringstream output;
+        file_out.open(pathOutput, std::ios::out);
+        if (!file_out.is_open())
+        {
+            std::cerr << "Error: could not open output path during component printing. No files have been written.\n"
+                      << "Filename: " << pathOutput << "\n";
+            return;
+        }
+
+        output << "compID, numPeaks, vals_b0, \n";
+
+        for (size_t i = 0; i < compRegs->size(); i++)
+        {
+            const MovedRegression reg = compRegs->at(i);
+            char buffer[128];
+            snprintf(buffer, 128, "%d,%0.8f\n",
+                     i + 1, ); // @todo remember to iterate over b0
+            output << buffer;
         }
 
         file_out << output.str();

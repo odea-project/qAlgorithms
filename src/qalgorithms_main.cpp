@@ -320,13 +320,13 @@ int main(int argc, char *argv[])
 #pragma region "Componentisation"
             timeStart = std::chrono::high_resolution_clock::now();
 
-            size_t numComponents = findComponents(&peaks, &binnedData, &convertRT, false) - 1; // -1 since the ID starts at 1 and is incremented after a component is found
+            const auto components = findComponents(&peaks, &binnedData, &convertRT, false);
 
             timeEnd = std::chrono::high_resolution_clock::now();
             if (!userArgs.silent)
             {
                 timePassed = std::chrono::duration_cast<std::chrono::milliseconds>(timeEnd - timeStart);
-                std::cout << "    grouped " << peaks.size() << " features into " << numComponents << " components in " << timePassed.count() << " s\n";
+                std::cout << "    grouped " << peaks.size() << " features into " << components.size() << " components in " << timePassed.count() << " s\n";
             }
 
             if (userArgs.printFeatures)
