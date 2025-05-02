@@ -20,12 +20,12 @@ namespace qAlgorithms
     static std::string helpinfo = " help information:\n\n" // @todo std::format
                                   "    qAlgorithms is a software project for non-target screening using mass spectrometry.\n"
                                   "    For more information, visit our github page: https://github.com/odea-project/qAlgorithms.\n"
-                                  "    As of now (2024-10-31), only mzML files are supported. This program accepts the following command-line arguments:\n\n"
-                                  "      -h, -help:  open this help menu\n\n"
+                                  "    As of now (2025-05-02), only mzML files are supported. This program accepts the following command-line arguments:\n\n"
+                                  "      -h, -help:  Open this help menu\n\n"
                                   "    Note that filenames may never start with a \"-\".\n"
                                   "    Input settings:\n"
                                   "      Note that duplicate input files are removed by default, even when they have a different name.\n"
-                                  "      -i,  -input <PATH> [PATH]   input files or directories in which to recursively search for .mzML files.\n"
+                                  "      -i,  -input <PATH> [PATH]   Input files or directories in which to recursively search for .mzML files.\n"
                                   "                                  you can enter any number of targets, as long as no file starts with a \"-\"\n"
                                   "                                  or contains two dots in a row. It is possible to use the -i flag multiple\n"
                                   "                                  times within one execution.\n"
@@ -36,22 +36,25 @@ namespace qAlgorithms
                                   //   "                                  You can comment out lines by starting them with a \"#\".\n" // @todo update
                                   "    Single-file output settings:\n"
                                   "      The filename is always the original filename extended by the polarity and the processing step.\n"
-                                  "      -o,  -output <DIRECTORY>:   directory into which all output files should be printed.\n"
-                                  "      -pc, -printcentroids:       print all centroids produced after the first run of qcentroids.\n"
+                                  "      -o,  -output <DIRECTORY>:   Directory into which all output files should be printed.\n"
+                                  "      -pc, -printcentroids:       Print all centroids produced after the first run of qcentroids.\n"
                                   "      -pb, -printbins:            If this flag is set, both bin summary information and\n"
                                   "                                  all binned centroids will be printed to the output location\n"
                                   "                                  in addition to the final peak table. The file ends in _bins.csv.\n"
-                                  "      -pf, -printfeatures         print the feature list as csv.\n"
+                                  "      -pf, -printfeatures         Print the feature list as csv.\n"
                                   //   "      -sp, -subprofile:           (not implemented yet) instead of the peaks, print all proflie-mode data points which\n" // @todo
                                   //   "                                  were used to create the final peaks. This does not return any quality\n"
                                   //   "                                  scores. Only use this option when reading in prodile mode files.\n"
-                                  "      -pa, -printall:             print all availvable resutlts. You will probably not need to do this.\n"
-                                  "      -px, -printfeatcen:         print all centroids that are a part of the final feature list, including debug data.\n"
+                                  "      -px, -printfeatcen:         Print all centroids that are a part of the final feature list, including debug data.\n"
+                                  "      -pp, -printcomponents       Print the component regressions that belong to the generated feature list. The values for\n"
+                                  "                                  beta 0 are printed in order of the retention time of the associated features (check the feature\n"
+                                  "                                  list for this) and separated by a semicolon. The feature list is always printend if this is set.\n"
+                                  "      -pa, -printall:             Print all availvable resutlts. You will probably not need to do this.\n"
                                   "    Program behaviour:\n"
-                                  //   "      -s, -silent:    do not print progress reports to standard out.\n"
+                                  //   "      -s, -silent:    do not print progress reports to standard out.\n" // @todo add an option for printing all process stats without timing and explanations for use with CLI toolchains
                                   //   "      -v, -verbose:   print a detailed progress report to standard out.\n"
-                                  "      -skip-existing  do not write to files that already exist, even if an output option is set.\n"
-                                  "      -skip-error:    if processing fails, the program will not exit and instead start processing\n"
+                                  "      -skip-existing  Do not write to files that already exist, even if an output option is set.\n"
+                                  "      -skip-error:    If processing fails, the program will not exit and instead start processing\n"
                                   "                      the next file in the tasklist.\n"
                                   "      -log:           This option will create a detailed log file in the program directory.\n"
                                   "                      It will provide an overview for every processed file which can help you find and\n"
@@ -242,16 +245,21 @@ namespace qAlgorithms
             {
                 args.printSubProfile = true;
             }
+            else if ((argument == "-pp") || (argument == "-printcomponents"))
+            {
+                args.printComponents = true;
+                args.printFeatures = true;
+            }
+            else if ((argument == "-px") || (argument == "-printfeatcen"))
+            {
+                args.printFeatCens = true;
+            }
             else if ((argument == "-pa") || (argument == "-printall"))
             {
                 args.printCentroids = true;
                 args.printBins = true;
                 args.printFeatures = true;
                 args.printSubProfile = true;
-                args.printFeatCens = true;
-            }
-            else if ((argument == "-px") || (argument == "-printfeatcen"))
-            {
                 args.printFeatCens = true;
             }
             else if (argument == "-log")
@@ -325,6 +333,7 @@ namespace qAlgorithms
             false,
             false,
             false, // true, // only print standard feature list @todo revert!
+            false,
             false,
             false,
             false,
@@ -666,10 +675,10 @@ namespace qAlgorithms
             {
                 const qCentroid cen = centroids->at(bin.cenID[i]);
                 char buffer[128];
-                sprintf(buffer, "%zu,%u,%0.8f,%0.8f,%0.4f,%d,%0.6f,%0.6f,%u,%0.4f,%0.4f\n",
-                        binID, cen.cenID, bin.mz[i], bin.predInterval[i],
-                        bin.rententionTimes[i], bin.scanNumbers[i], bin.ints_area[i],
-                        bin.ints_height[i], bin.df[i], bin.DQSC[i], bin.DQSB[i]);
+                snprintf(buffer, 128, "%zu,%u,%0.8f,%0.8f,%0.4f,%d,%0.6f,%0.6f,%u,%0.4f,%0.4f\n",
+                         binID, cen.cenID, bin.mz[i], bin.predInterval[i],
+                         bin.rententionTimes[i], bin.scanNumbers[i], bin.ints_area[i],
+                         bin.ints_height[i], bin.df[i], bin.DQSC[i], bin.DQSB[i]);
                 output << buffer;
             }
         }
@@ -785,10 +794,10 @@ namespace qAlgorithms
             char buffer[256];
             for (size_t cen = peak.idxPeakStart; cen < peak.idxPeakEnd + 1; cen++)
             {
-                sprintf(buffer, "%d,%d,%d,%0.6f,%0.6f,%0.4f,%0.3f,%0.3f,%d,%0.5f,%0.5f,%0.5f,%s,%0.8f,%0.8f,%0.8f,%0.8f\n",
-                        counter, binID, bin.cenID[cen], bin.mz[cen], bin.predInterval[cen], bin.rententionTimes[cen],
-                        bin.ints_area[cen], bin.ints_height[cen], bin.df[cen], bin.DQSC[cen], bin.DQSB[cen], peak.DQSF,
-                        peak.apexLeft ? "T" : "F", peak.coefficients.b0, peak.coefficients.b1, peak.coefficients.b2, peak.coefficients.b3);
+                snprintf(buffer, 256, "%d,%d,%d,%0.6f,%0.6f,%0.4f,%0.3f,%0.3f,%d,%0.5f,%0.5f,%0.5f,%s,%0.8f,%0.8f,%0.8f,%0.8f\n",
+                         counter, binID, bin.cenID[cen], bin.mz[cen], bin.predInterval[cen], bin.rententionTimes[cen],
+                         bin.ints_area[cen], bin.ints_height[cen], bin.df[cen], bin.DQSC[cen], bin.DQSB[cen], peak.DQSF,
+                         peak.apexLeft ? "T" : "F", peak.coefficients.b0, peak.coefficients.b1, peak.coefficients.b2, peak.coefficients.b3);
                 output << buffer;
             }
             ++counter;
@@ -799,7 +808,7 @@ namespace qAlgorithms
         return;
     }
 
-    void printComponentRegressions(const std::vector<MovedRegression> *compRegs,
+    void printComponentRegressions(const std::vector<MultiRegression> *compRegs,
                                    std::filesystem::path pathOutput,
                                    std::string filename,
                                    bool verbose, bool silent, bool skipError, bool noOverwrite)
@@ -831,14 +840,25 @@ namespace qAlgorithms
             return;
         }
 
-        output << "compID, numPeaks, vals_b0, \n";
+        output << "compID,numPeaks,scanStart,idx0,b1,b2,b3,vals_b0\n"; // @todo make sure the features in a component are in order
 
-        for (size_t i = 0; i < compRegs->size(); i++)
+        for (unsigned int i = 0; i < compRegs->size(); i++)
         {
-            const MovedRegression reg = compRegs->at(i);
-            char buffer[128];
-            snprintf(buffer, 128, "%d,%0.8f\n",
-                     i + 1, ); // @todo remember to iterate over b0
+
+            const MultiRegression reg = compRegs->at(i);
+            char buffer[256];
+            char *b0_buf = buffer; // print b0 to the end
+            int writtenChars = snprintf(buffer, 128, "%u,%u,%u,%u,%0.8f,%0.8f,%0.8f,b0",
+                                        i + 1, reg.numPeaks, reg.scanStart, reg.idx_x0, reg.b1, reg.b2, reg.b3);
+            b0_buf += writtenChars;
+            // write at position b0 + x, where x is the number of characters that were already written
+            for (size_t b0 = 0; b0 < reg.numPeaks; i++)
+            {
+                int printed = snprintf(b0_buf, 256 - writtenChars, "%0.8f;", reg.b0_vec[b0]);
+                writtenChars += printed;
+                b0_buf += printed;
+            }
+            snprintf(b0_buf, 256 - writtenChars, "\n");
             output << buffer;
         }
 

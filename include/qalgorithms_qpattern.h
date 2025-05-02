@@ -15,8 +15,9 @@ namespace qAlgorithms
         // all indices relate to the full subgroup!
         size_t idxStart;
         size_t idxEnd;
-        size_t idx_x0;
-        size_t scale;
+        unsigned int scanStart; // this is the smallest scan still included in the regression
+        unsigned int idx_x0;
+        unsigned int scale;
         unsigned int numPeaks; // @todo track this
         float b1;
         float b2;
@@ -61,9 +62,9 @@ namespace qAlgorithms
     {
         MultiRegression regression;
         std::vector<float> cumRSS;
-        unsigned int limit_L; // refers to harmonised EIC space
-        unsigned int limit_R; // refers to harmonised EIC space
-        unsigned int members; // number of peaks included in this component
+        unsigned int limit_L;  // refers to harmonised EIC space
+        unsigned int limit_R;  // refers to harmonised EIC space
+        unsigned int numPeaks; // number of peaks included in this component
         float RSS = INFINITY;
         int component = -1; // -1 means unassigned, groups start at 0
     };
@@ -85,11 +86,12 @@ namespace qAlgorithms
         // points in the EIC are already interpolated using the origin feature
         std::vector<float> intensity;
         std::vector<float> intensity_log;
-        std::vector<size_t> scanNo;
+        std::vector<unsigned int> scanNo;
         std::vector<float> RSS_cum; // cumulative RSS - considers the entire possible block
         std::vector<bool> df;       // @todo get rid of this somehow
-        size_t feature_ID;
-        size_t bin_ID;
+        unsigned int feature_ID;
+        unsigned int bin_ID;
+        unsigned int minScan;
         // these are the limits of the original feature and the index where the abstract x-axis is 0
         unsigned int featLim_L;
         unsigned int featLim_R;
@@ -105,10 +107,11 @@ namespace qAlgorithms
         std::vector<float> intensity;
         std::vector<float> intensity_log;
         std::vector<float> RSS_cum; // cumulative RSS - this also serves as the indicator for interpolated / not interpolated
-        std::vector<bool> df;       // @todo get rid of this somehow
-        size_t numPeaks;
-        size_t peakFrame;
-        size_t groupIdxStart; // this is equal to the offset within the group for later
+        std::vector<bool> df;       // @todo make this cumulative
+        unsigned int numPeaks;
+        unsigned int peakFrame;
+        unsigned int groupIdxStart; // this is equal to the offset within the group for later
+        unsigned int minScan;       // needed for one-axis position of regression at the end
     };
 
     ReducedEIC harmoniseEIC(const FeaturePeak *feature,
@@ -130,9 +133,9 @@ namespace qAlgorithms
 
     std::vector<MultiRegression> findCoefficients_multi(
         const std::vector<float> *intensity_log,
-        const size_t scale,      // maximum scale that will be checked. Should generally be limited by peakFrame
-        const size_t numPeaks,   // only > 1 during componentisation (for now? @todo)
-        const size_t peakFrame); // how many points are covered per peak? For single-peak data, this is the length of intensity_log
+        const size_t scale,          // maximum scale that will be checked. Should generally be limited by peakFrame
+        const unsigned int numPeaks, // only > 1 during componentisation (for now? @todo)
+        const size_t peakFrame);     // how many points are covered per peak? For single-peak data, this is the length of intensity_log
 
     MultiRegression runningRegression_multi(
         const MergedEIC *eic,
@@ -140,7 +143,7 @@ namespace qAlgorithms
         const std::vector<size_t> *selection,
         const size_t idxStart,
         const size_t idxEnd,
-        const size_t numPeaks);
+        const unsigned int numPeaks);
 
     void makeValidRegression_multi(
         RegressionGauss *mutateReg,
