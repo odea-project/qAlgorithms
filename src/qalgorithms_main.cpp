@@ -306,11 +306,11 @@ int main(int argc, char *argv[])
             }
             // no fail condition here, since this case can occur with real data
 
-            // if (userArgs.printFeatures)
-            // {
-            //     printFeatureList(peaks, userArgs.outputPath, filename, binnedData,
-            //                      userArgs.printExtended, userArgs.silent, userArgs.skipError, userArgs.noOverwrite);
-            // }
+            if (userArgs.printFeatures)
+            {
+                printFeatureList(&peaks, userArgs.outputPath, filename, &binnedData,
+                                 userArgs.printExtended, userArgs.silent, userArgs.skipError, userArgs.noOverwrite);
+            }
             if (userArgs.printFeatCens)
             {
                 printFeatureCentroids(&peaks, userArgs.outputPath, filename, &binnedData,
@@ -329,10 +329,10 @@ int main(int argc, char *argv[])
                 std::cout << "    grouped " << peaks.size() << " features into " << components.size() << " components in " << timePassed.count() << " s\n";
             }
 
-            if (userArgs.printFeatures)
+            // if (userArgs.printComponents)
             {
-                printFeatureList(&peaks, userArgs.outputPath, filename, &binnedData,
-                                 userArgs.printExtended, userArgs.silent, userArgs.skipError, userArgs.noOverwrite);
+                printComponentRegressions(&components, userArgs.outputPath, filename,
+                                          userArgs.printExtended, userArgs.silent, userArgs.skipError, userArgs.noOverwrite);
             }
 
             if (userArgs.doLogging)

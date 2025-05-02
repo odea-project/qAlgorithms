@@ -5,7 +5,6 @@
 #include "qalgorithms_global_vars.h"
 // temporary dependencies
 #include "./../external/CDFlib/cdflib.hpp"
-#include <fstream> // write peaks to file
 
 #include <cmath>   // pow and log
 #include <numeric> // iota and accumulate
@@ -15,8 +14,8 @@
 
 // group peaks identified from bins by their relation within a scan region
 
-int VALLEYS_1 = 0;
-int VALLEYS_other = 0;
+size_t VALLEYS_1 = 0;
+size_t VALLEYS_other = 0;
 
 namespace qAlgorithms
 {
@@ -69,7 +68,7 @@ namespace qAlgorithms
             // }
 
             // every pre-group describes a varying-size region of data in the entire mass spectrum.
-            // this loop determines where the limits are and
+            // this loop determines the range (in scans) that is relevant to this grouping
             pregroup.features.reserve(groupsize);
             unsigned int maxScan = 0;
             unsigned int minScan = 4294967295; // max value of unsigned int
@@ -119,7 +118,6 @@ namespace qAlgorithms
             // as it only consists of the smallest region that contains all real points of the underlying features.
             // The RSS for all individual features over the current range has been calculated as part of harmoniseEIC().
 #pragma endregion "Pre-Group"
-            // produce a subset of bins with uniform RT axis for this component
 
 #pragma region "Compare Pairs"
             // first, calculate the pairwise RSS in a sparse matrix. The RSS is set to INFINITY if it is worse
@@ -153,13 +151,12 @@ namespace qAlgorithms
                     }
 
                     // merge the EICs that are relevant to both
-                    static const std::vector<size_t> select{0, 1};
-                    // uses an anonymous vector to skip the additional variable, this may be a bad idea
+                    static const std::vector<size_t> select{0, 1}; // smallest RT is always left
                     size_t idxStart = std::min(EIC_A.featLim_L, EIC_B.featLim_L);
                     size_t idxEnd = std::min(EIC_A.featLim_R, EIC_B.featLim_R);
-                    std::vector<ReducedEIC> eics{EIC_A, EIC_B};
-                    auto mergedEIC = mergeEICs(&eics, &select, idxStart, idxEnd);
-                    auto regression = runningRegression_multi(&mergedEIC, &eics, &select, idxStart, idxEnd, 2);
+                    std::vector<ReducedEIC> eics_pair{EIC_A, EIC_B};
+                    auto mergedEIC = mergeEICs(&eics_pair, &select, idxStart, idxEnd);
+                    auto regression = runningRegression_multi(&mergedEIC, &eics_pair, &select, idxStart, idxEnd, 2);
 
                     pairs[access].regression = regression; // this introduces some redundancy
                     pairs[access].idxStart = regression.idxStart;
@@ -246,12 +243,15 @@ namespace qAlgorithms
                                 selection.push_back(idx); // @todo this is pretty inefficient
                             }
                         }
+                        // this is necessary because otherwise, the values of b0 cannot be assigned to members. This way,
+                        // they are always sorted by RT of the original feature
+                        std::sort(selection.begin(), selection.end());
 
                         size_t idxStart = std::min(components[existingComponent].limit_L, eics[unassignedFeature].featLim_L);
                         size_t idxEnd = std::max(components[existingComponent].limit_R, eics[unassignedFeature].featLim_R);
                         // 2) perform the multi-regression over the combined EIC for the selection
                         auto mergedEIC = mergeEICs(&eics, &selection, idxStart, idxEnd);
-                        const size_t n = components[existingComponent].members;
+                        const size_t n = components[existingComponent].numPeaks;
                         auto regression = runningRegression_multi(&mergedEIC, &eics, &selection,
                                                                   idxStart, idxEnd, n + 1);
 
@@ -267,7 +267,7 @@ namespace qAlgorithms
                             // do nothing if the single feature doesn't fit
                             components[existingComponent].regression = regression;
                             components[existingComponent].cumRSS = regression.cum_RSS;
-                            components[existingComponent].members++;
+                            components[existingComponent].numPeaks++;
                             components[existingComponent].limit_L = regression.idxStart;
                             components[existingComponent].limit_R = regression.idxEnd;
                             components[existingComponent].RSS = newRSS;
@@ -281,7 +281,7 @@ namespace qAlgorithms
                         assert((*ass_L != -1) && (*ass_S != -1));
                         assert(*ass_L != *ass_S);
 
-                        const size_t n = components[*ass_L].members + components[*ass_S].members;
+                        const size_t n = components[*ass_L].numPeaks + components[*ass_S].numPeaks;
                         size_t idxStart = std::min(components[*ass_L].limit_L, eics[*ass_S].featLim_L);
                         size_t idxEnd = std::max(components[*ass_L].limit_R, eics[*ass_S].featLim_R);
 
@@ -313,7 +313,7 @@ namespace qAlgorithms
                             // this does not have an effect on any comparisons, so not a relevant implementation detail
                             components[*ass_S].regression = regression;
                             components[*ass_S].cumRSS = regression.cum_RSS;
-                            components[*ass_S].members = n;
+                            components[*ass_S].numPeaks = n;
                             components[*ass_S].limit_L = regression.idxStart;
                             components[*ass_S].limit_R = regression.idxEnd;
                             components[*ass_S].RSS = newRSS;
@@ -328,8 +328,8 @@ namespace qAlgorithms
                                     assignment[idx] = *ass_S;
                                 }
                             }
-                            assert(counter == components[removedID].members);
-                            components[removedID].members = 0;
+                            assert(counter == components[removedID].numPeaks);
+                            components[removedID].numPeaks = 0;
                             components[removedID].RSS = INFINITY;
                             assert(*ass_L == *ass_S);
                         }
@@ -348,7 +348,7 @@ namespace qAlgorithms
 
             for (size_t comp = 0; comp < components.size(); comp++)
             {
-                if (components[comp].members == 0)
+                if (components[comp].numPeaks == 0)
                 {
                     continue;
                 }
@@ -415,6 +415,7 @@ namespace qAlgorithms
         result.numPeaks = selection->size();
         result.peakFrame = span;
         result.groupIdxStart = idxStart;
+        result.minScan = eics->front().minScan + idxStart;
         return result;
     }
 
@@ -624,7 +625,7 @@ namespace qAlgorithms
         const size_t idxStart,
         const size_t idxEnd,
         // const size_t maxScale,
-        const size_t numPeaks)
+        const unsigned int numPeaks)
     // const size_t peakFrame)
     {
         size_t peakFrame = (idxEnd - idxStart + 1);
@@ -761,6 +762,7 @@ namespace qAlgorithms
             vecSum(&bestReg.cum_RSS, &cumRSS_local);
         }
         assert(bestReg.idxEnd != bestReg.idxStart);
+        bestReg.scanStart = eic->minScan + bestReg.idxStart;
         return bestReg;
     }
 
@@ -768,9 +770,9 @@ namespace qAlgorithms
 
     std::vector<MultiRegression> findCoefficients_multi( // @todo add option for a minimum scale
         const std::vector<float> *intensity_log,
-        const size_t max_scale, // maximum scale that will be checked. Should generally be limited by peakFrame
-        const size_t numPeaks,  // only > 1 during componentisation (for now? @todo)
-        const size_t peakFrame) // how many points are covered per peak? For single-peak data, this is the length of intensity_log
+        const size_t max_scale,      // maximum scale that will be checked. Should generally be limited by peakFrame
+        const unsigned int numPeaks, // only > 1 during componentisation (for now? @todo)
+        const size_t peakFrame)      // how many points are covered per peak? For single-peak data, this is the length of intensity_log
     {
         /*
   This function performs a convolution with the kernel: (xTx)^-1 xT and the data array: intensity_log.
@@ -868,12 +870,11 @@ namespace qAlgorithms
         size_t iterationCount = std::accumulate(maxInnerLoop.begin(), maxInnerLoop.end(), 0) - maxInnerLoop.size(); // no range check necessary since every entry > 1
 
         std::vector<float> emptyRSS(numPeaks, NAN);
-        MultiRegression localEmpty = {{0}, emptyRSS, 0, 0, 0, 0, NAN, NAN, NAN, NAN};
+        MultiRegression localEmpty = {{0}, emptyRSS, 0, 0, 0, 0, 0, numPeaks, NAN, NAN, NAN, NAN};
         std::vector<MultiRegression> coeffs(iterationCount, localEmpty);
 
         // the product sums are the rows of the design matrix (xT) * intensity_log[i:i+4] (dot product)
-        // The first n entries are contained in the b0 vector, one for each peak the regression is performed
-        // over.
+        // The first n entries are contained in the b0 vector, one for each peak the regression is performed over.
         double tmp_product_sum_b0[32]{NAN}; // one fully separate b0 per peak
         double tmp_product_sum_b1;
         double tmp_product_sum_b2;
@@ -903,10 +904,9 @@ namespace qAlgorithms
             tmp_product_sum_b2 = 4 * y_array_sum[i] + y_array_sum[i + 1];
             tmp_product_sum_b3 = 4 * y_array_sum[i + 4] + y_array_sum[i + 3];
 
-            // A1 is not modified if numPeaks is 1. It is, however, modified by -2 * b / numPeaks and not just /numPeaks if numPeaks > 1
+            // A1 is modified  by -2 * b / numPeaks and not just /numPeaks
             // use [12 + ...] since the array is constructed for the accession arry[scale * 6 + (0:5)]
             const double S2_A1 = INV_ARRAY[12 + 0] - 2 * INV_ARRAY[12 + 1] / numPeaks;
-            // A2 is only defined for numPeaks > 1, set it to 0 to avoid conditional in loops
             // @todo replace the array with a struct and an accessor function
             const double S2_A2 = -2 * INV_ARRAY[12 + 1] / numPeaks;
             const double S2_B = INV_ARRAY[12 + 1] / numPeaks;
@@ -1054,14 +1054,14 @@ namespace qAlgorithms
         assert(index_x0 < length - 1);
 
         ReducedEIC reduced{
-            // std::vector<float>(length, 0),  // RT
-            std::vector<float>(length, 0),   // intensity
-            std::vector<float>(length, 0),   // log intensity
-            std::vector<size_t>(length, 0),  // scan number
-            std::vector<float>(length, 0),   // RSS_cum
-            std::vector<bool>(length, true), // degrees of freedom
-            0,                               // feature ID is only initialised after function execution
-            feature->idxBin,                 // bin ID
+            std::vector<float>(length, 0),        // intensity
+            std::vector<float>(length, 0),        // log intensity
+            std::vector<unsigned int>(length, 0), // scan number
+            std::vector<float>(length, 0),        // RSS_cum
+            std::vector<bool>(length, true),      // degrees of freedom
+            0,                                    // feature ID is only initialised after function execution
+            feature->idxBin,                      // bin ID
+            minScan,
 
             featLim_L, // these limits are relating to the fully interpolated EIC
             featLim_R,
