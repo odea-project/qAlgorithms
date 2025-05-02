@@ -660,7 +660,7 @@ namespace qAlgorithms
           the loop continues to the next iteration.
         */
 
-        calcPeakHeightUncert(mutateReg, mse, scale);
+        calcPeakHeightUncert(mutateReg, mse, scale);                   // @todo independent of b0
         if (1 / mutateReg->uncertainty_height <= T_VALUES[df_sum - 5]) // statistical significance of the peak height
         {
             return;
@@ -706,11 +706,11 @@ namespace qAlgorithms
           Smearing Correction:
           The coefficient beta_0 is corrected by the smearing approach from Naihua Duan.
           The new cofficient is then b0* = b0 + logC, where C is the correction factor.
+          first: logC; second: variance of logC
         */
         std::pair<float, float> smearing = smearingCorrection(&predictLog, &selectLog, scale);
         mutateReg->coeffs.b0 += smearing.first; // b0* = b0 + logC
         // @todo: implement smearing.second for the uncertainty of b0
-        
 
         mutateReg->uncertainty_pos = calcUncertaintyPos(mse, mutateReg->coeffs, mutateReg->apex_position, scale);
         mutateReg->df = df_sum - 4; // @todo add explanation for -4
@@ -1141,6 +1141,7 @@ namespace qAlgorithms
         const std::vector<float> *selectLog,
         const size_t scale)
     {
+        assert(predictLog->size() == selectLog->size());
         // This function calculates the smearing correction factor logC and the
         // corresponding variance var(logC) which will be used to correct the
         // beta_0 coefficient of the regression. The idea is to correct the
@@ -1154,31 +1155,30 @@ namespace qAlgorithms
         // Var(logC) = Var(C) / C^2
         //
         // reference:
-        // Duan, N. (1983). Smearing Estimate: A Nonparametric Retransformation Method. 
-        // Journal of the American Statistical Association, 78(383), 605–610. 
+        // Duan, N. (1983). Smearing Estimate: A Nonparametric Retransformation Method.
+        // Journal of the American Statistical Association, 78(383), 605–610.
         // https://doi.org/10.1080/01621459.1983.10478017
 
-        const auto& pred = *predictLog;
-        const auto& obs  = *selectLog;
-        const size_t n   = 2*scale + 1;
+        size_t n = predictLog->size();
 
-        double sumR  = 0.0; // sum of exp(ε̂_i), i.e., exponential of the residuals
+        double sumR = 0.0;  // sum of exp(ε̂_i), i.e., exponential of the residuals
         double sumR2 = 0.0; // sum of (exp(ε̂_i))^2, i.e., square of the exponential of the residuals
         // loop to calculate sum of exp(ε̂_i) and sum of (exp(ε̂_i))^2
-        for (size_t i = 0; i < n; ++i) {
-            // ri = exp(ε̂_i) = exp(log y_i - log ŷ_i)
-            double ri = exp_approx_d(obs[i] - pred[i]);
-            sumR  += ri;
-            sumR2 += ri*ri;
+        for (size_t i = 0; i < n; ++i)
+        {
+            // ri = exp(ε̂_i) = exp(log y_i - log ŷ_i) residuals
+            double ri = exp_approx_d(selectLog->at(i) - predictLog->at(i));
+            sumR += ri;
+            sumR2 += ri * ri;
         }
 
         // calculate the smearing correction factor C and its variance varC
-        double C      = sumR / double(n);                               // C = mean(exp(ε̂_i)) = mean(r_i)
-        double s2     = (sumR2 - sumR*sumR/double(n)) / double(n - 1);  // s² = Var(r_i)
-        double varC   = s2 / double(n);                                 // Var(C) = s²/n
-        double varLogC = varC / (C*C);                                   // Var(log C) via Delta-Method
+        double C = sumR / double(n);                                   // C = mean(exp(ε̂_i)) = mean(r_i)
+        double s2 = (sumR2 - sumR * sumR / double(n)) / double(n - 1); // s² = Var(r_i)
+        double varC = s2 / double(n);                                  // Var(C) = s²/n
+        double varLogC = varC / (C * C);                               // Var(log C) via Delta-Method
 
-        return { float(std::log(C)), float(varLogC) };
+        return {float(std::log(C)), float(varLogC)};
     }
 #pragma endregion "smearing correction"
 
