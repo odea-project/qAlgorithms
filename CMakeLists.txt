@@ -12,7 +12,7 @@ option(V_ASAN "Enable AddressSanitizer" OFF)
 
 # Set compiler flags
 add_compile_options(-Wall -Wpedantic -Wuninitialized -Wno-unknown-pragmas -Wformat -Wformat=2 -Wimplicit-fallthrough 
-                    -mavx2 -march=native -O0 -std=c++2c # c++26 standard used
+                    -mavx2 -march=native -O2 -std=c++2c # c++26 standard used
                     -U_FORTIFY_SOURCE -D_FORTIFY_SOURCE=3 -fstrict-flex-arrays=3 -fdiagnostics-color=always -fstack-clash-protection -D_GLIBCXX_ASSERTIONS # hardening flags
                     -fno-math-errno -g -ggdb3 ${OpenMP_CXX_FLAGS}) 
 
