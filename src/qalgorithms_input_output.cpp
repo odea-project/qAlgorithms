@@ -848,7 +848,7 @@ namespace qAlgorithms
             const MultiRegression reg = compRegs->at(i);
             char buffer[256];
             char *b0_buf = buffer; // print b0 to the end
-            int writtenChars = snprintf(buffer, 128, "%u,%u,%u,%u,%0.8f,%0.8f,%0.8f,b0",
+            int writtenChars = snprintf(b0_buf, 128, "%u,%u,%u,%u,%0.8f,%0.8f,%0.8f,b0",
                                         i + 1, reg.numPeaks, reg.scanStart, reg.idx_x0, reg.b1, reg.b2, reg.b3);
             b0_buf += writtenChars;
             // write at position b0 + x, where x is the number of characters that were already written
@@ -859,7 +859,7 @@ namespace qAlgorithms
                 b0_buf += printed;
             }
             snprintf(b0_buf, 256 - writtenChars, "\n");
-            output << buffer;
+            output << b0_buf;
         }
 
         file_out << output.str();

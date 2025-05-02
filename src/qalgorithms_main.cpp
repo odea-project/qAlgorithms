@@ -329,7 +329,7 @@ int main(int argc, char *argv[])
                 std::cout << "    grouped " << peaks.size() << " features into " << components.size() << " components in " << timePassed.count() << " s\n";
             }
 
-            // if (userArgs.printComponents)
+            if (userArgs.printComponents)
             {
                 printComponentRegressions(&components, userArgs.outputPath, filename,
                                           userArgs.printExtended, userArgs.silent, userArgs.skipError, userArgs.noOverwrite);
