@@ -5,6 +5,7 @@
 #include <filesystem>
 #include <string>
 #include "qalgorithms_datatypes.h"
+#include "qalgorithms_qpattern.h" // @todo remove this once MultiRegression is a global type
 
 namespace qAlgorithms
 {
@@ -22,6 +23,7 @@ namespace qAlgorithms
         bool printFeatures = false;
         bool printSubProfile = false;
         bool printFeatCens = false;
+        bool printComponents = false;
         // progress reporting
         bool silent = false;
         bool verboseProgress = false;
@@ -95,6 +97,11 @@ namespace qAlgorithms
                                std::string filename,
                                const std::vector<EIC> *originalBins,
                                bool verbose, bool silent, bool skipError, bool noOverwrite);
+
+    void printComponentRegressions(const std::vector<MultiRegression> *compRegs,
+                                   std::filesystem::path pathOutput,
+                                   std::string filename,
+                                   bool verbose, bool silent, bool skipError, bool noOverwrite);
 
     void printLogfile(std::filesystem::path pathLogfile); // @todo
 
