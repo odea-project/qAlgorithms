@@ -86,6 +86,11 @@ namespace qAlgorithms
                             size_t limit_L,
                             size_t limit_R,
                             size_t index_x0);
+    
+    std::pair<float,float> smearingCorrection(
+        const std::vector<float> *predictLog,
+        const std::vector<float> *selectLog,
+        const size_t scale);
 
     /**
      * @brief Calculate the best mean squared error of the regression model
