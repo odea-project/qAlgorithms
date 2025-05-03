@@ -840,8 +840,9 @@ namespace qAlgorithms
    for i=11: 3 to 3 => i.e. loop is not executed
    */
         assert(numPeaks <= 32); // this is the maximum size of the b0 array
+        assert(numPeaks > 1);   // this is necessary since the A1 INV_ARRAY value is
         assert(max_scale > 1);
-        assert(numPeaks > 1); // this is necessary since the A1 INV_ARRAY value is
+        assert(max_scale <= MAXSCALE);
 
         const size_t minScale = 2;
         const size_t steps = peakFrame - 2 * minScale; // iteration number at scale 2
