@@ -37,7 +37,7 @@ namespace qAlgorithms
     }
 #pragma endregion "pass to qBinning"
 
-    constexpr std::array<float, 384> INV_ARRAY = initialize(); // this only works with constexpr square roots, which are part of C++26
+    constexpr auto INV_ARRAY = initialize(); // this only works with constexpr square roots, which are part of C++26
 
 #pragma region "find peaks"
     std::vector<CentroidPeak> findCentroids(const std::vector<ProfileBlock> *treatedData,
@@ -266,6 +266,7 @@ namespace qAlgorithms
    for i=11: 3 to 3 => i.e. loop is not executed
    */
         assert(max_scale > 1);
+        assert(max_scale <= MAXSCALE);
         const size_t minScale = 2;
         const size_t steps = intensity_log->size() - 2 * minScale; // iteration number at scale 2
 

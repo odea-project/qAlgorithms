@@ -244,9 +244,9 @@ namespace qAlgorithms
 
 #define MAXSCALE 63
 
-    constexpr std::array<float, MAXSCALE * 6> initialize()
+    constexpr std::array<float, (MAXSCALE + 1) * 6> initialize()
     { // array to store the 6 unique values of the inverse matrix for each scale
-        std::array<float, MAXSCALE * 6> invArray;
+        std::array<float, (MAXSCALE + 1) * 6> invArray;
         // init invArray
         // XtX = transposed(Matrix X ) * Matrix X
         // XtX_xy: x = row number; y = column number
