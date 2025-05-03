@@ -842,23 +842,23 @@ namespace qAlgorithms
 
         output << "compID,numPeaks,scanStart,idx0,b1,b2,b3,vals_b0\n"; // @todo make sure the features in a component are in order
 
-        for (unsigned int i = 0; i < compRegs->size(); i++)
+        for (unsigned int regIdx = 0; regIdx < compRegs->size(); regIdx++)
         {
-
-            const MultiRegression reg = compRegs->at(i);
-            char buffer[256];
+            // @todo this will fail if an unrealistically large number of components exist - should be fine
+            const MultiRegression reg = compRegs->at(regIdx);
+            const unsigned int bufsize = 2048;
+            char buffer[bufsize];
             char *b0_buf = buffer; // print b0 to the end
-            int writtenChars = snprintf(b0_buf, 128, "%u,%u,%u,%u,%0.8f,%0.8f,%0.8f,b0",
-                                        i + 1, reg.numPeaks, reg.scanStart, reg.idx_x0, reg.b1, reg.b2, reg.b3);
-            b0_buf += writtenChars;
-            // write at position b0 + x, where x is the number of characters that were already written
-            for (size_t b0 = 0; b0 < reg.numPeaks; i++)
+            unsigned int writtenChars = snprintf(&buffer[0], bufsize, "%u,%u,%u,%u,%0.8f,%0.8f,%0.8f,b0",
+                                                 regIdx + 1, reg.numPeaks, reg.scanStart, reg.idx_x0, reg.b1, reg.b2, reg.b3);
+            assert(writtenChars < bufsize);
+            for (size_t b0 = 0; b0 < reg.numPeaks; b0++)
             {
-                int printed = snprintf(b0_buf, 256 - writtenChars, "%0.8f;", reg.b0_vec[b0]);
-                writtenChars += printed;
-                b0_buf += printed;
+                assert(writtenChars < bufsize);
+                writtenChars += snprintf(&buffer[writtenChars], bufsize - writtenChars, "%0.8f;", reg.b0_vec[b0]);
             }
-            snprintf(b0_buf, 256 - writtenChars, "\n");
+            assert(writtenChars < bufsize);
+            snprintf(&buffer[writtenChars], bufsize - writtenChars, "\n");
             output << b0_buf;
         }
 
