@@ -685,9 +685,17 @@ namespace qAlgorithms
             auto reg = regressions[multiReg];
             size_t idxRegStart = reg.idxStart;
             size_t scale = reg.scale;
+
+            RegCoeffs coeff{0, reg.b1, reg.b2, reg.b3};
+            if ((coeff.b1 == 0) || (coeff.b2 == 0) || (coeff.b3 == 0))
+            {
+                regressionOK[multiReg] = false;
+                continue;
+            }
+
             for (size_t i = 0; i < numPeaks; i++)
             {
-                RegCoeffs coeff{reg.b0_vec[i], reg.b1, reg.b2, reg.b3};
+                coeff.b0 = reg.b0_vec[i];
                 RegressionGauss testCase;
                 testCase.coeffs = coeff; // @todo do this during initialisation
 
@@ -695,16 +703,16 @@ namespace qAlgorithms
                 if (df < 5)
                 {
                     regressionOK[multiReg] = false;
-                    // break;
-                    continue;
+                    break;
+                    // continue;
                 }
                 makeValidRegression_multi(&testCase, idxRegStart, scale, &DF_cum, &(intensity_vecs[i]), &(logInt_vecs[i]));
                 // @todo adjust the regression limits if positive coefficients are relevant
                 if (!testCase.isValid)
                 {
                     regressionOK[multiReg] = false;
-                    // break;
-                    continue;
+                    break;
+                    // continue;
                 }
                 validHits[multiReg]++;
                 // if (validHits[multiReg] > 1)
