@@ -86,8 +86,8 @@ namespace qAlgorithms
                             size_t limit_L,
                             size_t limit_R,
                             size_t index_x0);
-    
-    std::pair<float,float> smearingCorrection(
+
+    std::pair<float, float> smearingCorrection(
         const std::vector<float> *predictLog,
         const std::vector<float> *selectLog,
         const size_t scale);
@@ -242,7 +242,7 @@ namespace qAlgorithms
                                         size_t left_limit,
                                         size_t right_limit);
 
-#define MAXSCALE 64
+#define MAXSCALE 63
 
     constexpr std::array<float, MAXSCALE * 6> initialize()
     { // array to store the 6 unique values of the inverse matrix for each scale
