@@ -950,9 +950,9 @@ namespace qAlgorithms
                 tmp_product_sum_b3 += scale_sqr * y_array_sum[i + 4 + u];
 
                 // A1 is not modified if numPeaks is 1. It is, however, modified by -2 * b / numPeaks and not just /numPeaks if numPeaks > 1
-                const double inv_A1 = numPeaks == 1 ? INV_ARRAY[12 + u * 6 + 0] : INV_ARRAY[12 + u * 6 + 0] - 2 * INV_ARRAY[12 + u * 6 + 1] / numPeaks;
+                const double inv_A1 = INV_ARRAY[12 + u * 6 + 0] - 2 * INV_ARRAY[12 + u * 6 + 1] / numPeaks;
                 // A2 is only defined for numPeaks > 1, set it to 0 to avoid conditional in loops
-                const double inv_A2 = numPeaks == 1 ? 0 : -2 * INV_ARRAY[12 + u * 6 + 1] / numPeaks;
+                const double inv_A2 = -2 * INV_ARRAY[12 + u * 6 + 1] / numPeaks;
                 const double inv_B = INV_ARRAY[12 + u * 6 + 1] / numPeaks;
                 const double inv_C = INV_ARRAY[12 + u * 6 + 2] / numPeaks;
                 const double inv_D = INV_ARRAY[12 + u * 6 + 3] / numPeaks;
