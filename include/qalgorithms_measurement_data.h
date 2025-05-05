@@ -44,7 +44,7 @@ namespace qAlgorithms
 
     const std::vector<FeaturePeak> findPeaks_QBIN(
         std::vector<EIC> &data,
-        const std::vector<CentroidPeak> *centroids,
+        // const std::vector<CentroidPeak> *centroids,
         float rt_diff);
 }
 

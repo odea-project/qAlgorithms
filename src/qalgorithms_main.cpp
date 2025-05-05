@@ -24,6 +24,25 @@ namespace qAlgorithms
     float PPM_PRECENTROIDED = -INFINITY;         // -Infinity sets it to the default value if no user input changes it
     float MZ_ABSOLUTE_PRECENTROIDED = -INFINITY; // see above
 
+    struct logger
+    {
+        std::string name;
+        std::string series;
+        unsigned int centroidCount;
+        float meanDQSC;
+        unsigned int binCount;
+        unsigned int binCentroidCount;
+        float meanDQSB;
+        unsigned int featureCount;
+        unsigned int positive_b23;
+        unsigned int massGapsTotal;
+        unsigned int meanINterpolations;
+        float meanDQSF;
+        unsigned int numComponents;
+        unsigned int componentMembers;
+        float meanDQSG;
+    };
+
     bool massTraceStable(std::vector<float> massesBin, int idxStart, int idxEnd) // @todo do this in regression
     {
         assert(idxEnd > idxStart);
@@ -141,8 +160,9 @@ int main(int argc, char *argv[])
             std::vector<float> convertRT;
             float diff_rt = 0;
             // @todo add check if set polarity is correct
-            std::vector<CentroidPeak> centroids = findCentroids_MZML(data, convertRT, diff_rt, polarity);
-            if (centroids.empty())
+            std::vector<CentroidPeak> *centroids = new std::vector<CentroidPeak>;
+            *centroids = findCentroids_MZML(data, convertRT, diff_rt, polarity);
+            if (centroids->empty())
             {
                 if (userArgs.verboseProgress)
                 {
@@ -180,10 +200,12 @@ int main(int argc, char *argv[])
 
             if (userArgs.printCentroids)
             {
-                printCentroids(&centroids, &convertRT, userArgs.outputPath, filename, userArgs.silent, userArgs.skipError, userArgs.noOverwrite);
+                printCentroids(centroids, &convertRT, userArgs.outputPath, filename, userArgs.silent, userArgs.skipError, userArgs.noOverwrite);
             }
+            size_t centroidCount = centroids->size();
             // @todo remove diagnostics later
             auto binThis = passToBinning(centroids);
+            delete centroids;
 
             double meanDQSC = 0;
             double meanCenErrorRel = 0;
@@ -262,7 +284,8 @@ int main(int argc, char *argv[])
 #pragma region "feature detection"
             timeStart = std::chrono::high_resolution_clock::now();
             // every subvector of peaks corresponds to the bin ID
-            auto peaks = findPeaks_QBIN(binnedData, &centroids, diff_rt);
+            // auto peaks = findPeaks_QBIN(binnedData, &centroids, diff_rt);
+            auto peaks = findPeaks_QBIN(binnedData, diff_rt);
             // make sure that every peak contains only one mass trace
             assert(peaks.size() <= binnedData.size());
             int peaksWithMassGaps = 0;
@@ -339,7 +362,7 @@ int main(int argc, char *argv[])
             {
 
                 logWriter.open(pathLogging, std::ios::app);
-                logWriter << filename << ", " << centroids.size() << ", " << binThis.size() << ", "
+                logWriter << filename << ", " << centroidCount << ", " << binThis.size() << ", "
                           << meanDQSC / binThis.size() << ", " << binnedData.size() << ", " << badBinCount << ", " << meanDQSB
                           << ", " << peaks.size() << ", " << peaksWithMassGaps << ", " << meanInterpolations << ", " << meanDQSF << "\n";
                 logWriter.close();

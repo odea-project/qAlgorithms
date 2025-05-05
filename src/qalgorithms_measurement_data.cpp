@@ -234,7 +234,7 @@ namespace qAlgorithms
 
     const std::vector<FeaturePeak> findPeaks_QBIN(
         std::vector<EIC> &EICs,
-        const std::vector<CentroidPeak> *centroids,
+        // const std::vector<CentroidPeak> *centroids,
         float rt_diff)
     {
         std::vector<FeaturePeak> peaks;    // return vector for feature list
