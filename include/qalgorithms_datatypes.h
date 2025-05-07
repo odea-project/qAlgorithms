@@ -21,18 +21,14 @@ namespace qAlgorithms
         size_t end;
     };
 
-    struct treatedData // @todo remove this struct
+    struct treatedData // @todo remove this struct / maybe not?
     {
         std::vector<dataPoint> dataPoints;
         std::vector<float> intensity;
         std::vector<size_t> cenIDs;
-    };
-
-    struct treatedEIC
-    {
-        std::vector<size_t> cenIDs; // doubles as degrees of freedom
-        std::vector<float> RT;
-        std::vector<float> intensity;
+        std::vector<size_t> cumulativeDF; // degrees of freedom
+        unsigned int lowestScan;
+        unsigned int largestScan;
     };
 
     struct ProfileBlock
@@ -120,10 +116,10 @@ namespace qAlgorithms
         float width;
         float heightUncertainty;
         float areaUncertainty;
-        float DQSF;          // only relevant for features
-        float DQSB;          // can be calculated when needed
-        float DQSC;          // can be calculated when needed
-        float retentionTime; // only relevant for features
+        float DQSF;
+        float DQSB;
+        float DQSC;
+        float retentionTime;
         float mz;
         float retentionTimeUncertainty;
         float mzUncertainty;
@@ -132,24 +128,14 @@ namespace qAlgorithms
         unsigned int idxPeakStart; // degrees of freedom = idxPeakEnd - idxPeakStart
         unsigned int idxPeakEnd;
         unsigned int index_x0_offset;
+        unsigned int scanPeakStart;
+        unsigned int scanPeakEnd;
+        // temporary values, @todo remove?
         unsigned int interpolationCount;
         unsigned int competitorCount;
         unsigned int scale;
         float mse_base;
         bool apexLeft;
-    };
-
-    struct MovedRegression
-    {
-        const FeaturePeak *origin;
-        size_t binID;
-        size_t binIdxStart;
-        size_t binIdxEnd;
-        float limit_L;
-        float limit_R;
-        float RT_switch;
-        float b0_L, b1_L, b2, b0_R, b1_R, b3;
-        float RSS; // residual sum of squares
     };
 }
 
