@@ -42,10 +42,7 @@ namespace qAlgorithms
         const bool polarity,
         const bool ms1only = true);
 
-    const std::vector<FeaturePeak> findPeaks_QBIN(
-        std::vector<EIC> &data,
-        // const std::vector<CentroidPeak> *centroids,
-        float rt_diff);
+    std::vector<FeaturePeak> findPeaks_QBIN(std::vector<EIC> &data, float rt_diff);
 }
 
 #endif

@@ -89,8 +89,8 @@ namespace qAlgorithms
         {
             dataPoint dp(
                 eic.rententionTimes[i],
-                eic.ints_area[i], // y-axis value
-                true);            // the point is not interpolated
+                eic.ints_area[i],
+                true); // the point is not interpolated
             dataPoints.push_back(dp);
         }
 
@@ -123,8 +123,8 @@ namespace qAlgorithms
             const float delta_x = dataPoints[pos + 1].x - dataPoints[pos].x;
 
             if (delta_x > 1.75 * expectedDifference)
-            { // gap detected
-                // assert(gapSize2 != 0);
+            {
+                // gap detected
                 const int gapSize = static_cast<int>(delta_x / expectedDifference + 0.25 * expectedDifference) - 1;
                 if (gapSize < 4)
                 {
@@ -159,7 +159,6 @@ namespace qAlgorithms
 
         // END OF BLOCK, EXTRAPOLATION STARTS @todo move this into its own function
         assert(blockSize == eic.cenID.size());
-        // assert(pos == blockSize - 1);
         // add 4 datapoints (two extrapolated [end of current block] and two zeros
         // [start of next block]) extrapolate the first two datapoints of this block
 
@@ -177,12 +176,9 @@ namespace qAlgorithms
 
                 // RIGHT SIDE
                 treatedData.dataPoints.emplace_back(
-                    dataPoints[blockSize - 1].x + float(i + 1) * expectedDifference, // x-axis
+                    dataPoints[blockSize - 1].x + float(i + 1) * expectedDifference, // retention time
                     dataPoints[blockSize - 1].y,                                     // intensity
                     false);                                                          // df
-                // 0.f,                                                             // DQSC
-                // 0.f,                                                             // DQSB
-                // 0.f); // mz
                 treatedData.intensity.push_back(dataPoints[blockSize - 1].y);
                 binIdx.push_back(realIdx);
                 assert(binIdx.size() == treatedData.dataPoints.size());
@@ -192,10 +188,8 @@ namespace qAlgorithms
         {
             const float x[3] = {0.f, dataPoints[maxOfBlock].x - dp_startOfBlock.x, dataPoints[blockSize - 1].x - dp_startOfBlock.x};
             const float y[3] = {std::log(dp_startOfBlock.y), std::log(dataPoints[maxOfBlock].y), std::log(dataPoints[blockSize - 1].y)};
-            // float b0, b1, b2;
-            // calculateCoefficients(x, y, b0, b1, b2);
+
             auto coeffs = interpolateQuadratic(x, y);
-            // assert(coeffs[0] == b0);
             // extrapolate the left side of the block
             for (int i = 0; i < 2; i++)
             {
@@ -213,9 +207,6 @@ namespace qAlgorithms
                     dp_x,                                                  // x-axis
                     std::exp(coeffs[0] + x * (coeffs[1] + x * coeffs[2])), // intensity
                     false);                                                // df
-                // 0.f,                                                   // DQSC
-                // 0.f,                                                   // DQSB
-                // 0.f); // mz
                 treatedData.intensity.push_back(std::exp(coeffs[0] + x * (coeffs[1] + x * coeffs[2])));
                 binIdx.push_back(realIdx);
                 assert(binIdx.size() == treatedData.dataPoints.size());
@@ -226,16 +217,13 @@ namespace qAlgorithms
         assert(binIdx.size() == treatedData.intensity.size());
         assert(binIdx.back() == eic.mz.size() - 1);
         assert(treatedData.dataPoints.back().y == treatedData.intensity.back()); // works
-        // assert(treatedData.dataPoints.size() == eic.interpolatedDQSB.size()); // @todo readd this in good
+        // assert(treatedData.dataPoints.size() == eic.interpolatedDQSB.size()); // @todo redo this in good
 
         treatedData.cenIDs = eic.interpolatedIDs;
         return treatedData;
     }
 
-    const std::vector<FeaturePeak> findPeaks_QBIN(
-        std::vector<EIC> &EICs,
-        // const std::vector<CentroidPeak> *centroids,
-        float rt_diff)
+    std::vector<FeaturePeak> findPeaks_QBIN(std::vector<EIC> &EICs, float rt_diff)
     {
         std::vector<FeaturePeak> peaks;    // return vector for feature list
         peaks.reserve(EICs.size() / 4);    // should be enough to fit all features without reallocation
@@ -410,15 +398,15 @@ namespace qAlgorithms
         const bool ms1only)
     {
         // this is only relevant when reading in pre-centroided data
-        bool displayPPMwarning = false;
-        if (PPM_PRECENTROIDED == -INFINITY)
-        {
-            PPM_PRECENTROIDED = 0.25; // global variable, this is a bad solution @todo
-        }
-        else
-        {
-            displayPPMwarning = true;
-        }
+        // bool displayPPMwarning = false;
+        // if (PPM_PRECENTROIDED == -INFINITY)
+        // {
+        //     PPM_PRECENTROIDED = 0.25; // global variable, this is a bad solution @todo
+        // }
+        // else
+        // {
+        //     displayPPMwarning = true;
+        // }
 
         // accessor contains the indices of all spectra that should be fetched
         std::vector<unsigned int> accessor(data.number_spectra, 0);
@@ -541,14 +529,18 @@ namespace qAlgorithms
             const std::vector<std::vector<double>> spectrum = data.get_spectrum(selectedIndices[i]);
             // inter/extrapolate data, and identify data blocks @todo these should be two different functions
             const auto treatedData = pretreatDataCentroids(&spectrum, expectedDifference_mz);
+            // if (treatedData.empty())
+            // {
+            //     std::cout << "Warning: no centroids found in spectrum " << i << ".\n";
+            // }
             assert(relativeIndex[i] != 0);
             auto tmpCens = findCentroids(&treatedData, relativeIndex[i]); // find peaks in data blocks of treated data
             centroids.insert(centroids.end(), tmpCens.begin(), tmpCens.end());
         }
-        if (!displayPPMwarning)
-        {
-            PPM_PRECENTROIDED = -INFINITY; // reset value before the next function call
-        }
+        // if (!displayPPMwarning)
+        // {
+        //     PPM_PRECENTROIDED = -INFINITY; // reset value before the next function call
+        // }
         return centroids;
     }
 
