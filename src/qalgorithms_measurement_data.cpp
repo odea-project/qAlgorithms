@@ -75,13 +75,13 @@ namespace qAlgorithms
 
     treatedData pretreatEIC(
         EIC &eic,
-        std::vector<unsigned int> &binIdx,
+        std::vector<unsigned int> &binIdx, // @todo remove
         float expectedDifference)
     {
         // @todo this function just copies data from the eic output, the respective parts of the binning
         // and feature detection module should be reworked such that it doesn't need to exist
-        std::vector<dataPoint> dataPoints;
-        dataPoints.reserve(eic.interpolatedIDs.size());
+        std::vector<dataPoint> dataPoints_internal;
+        dataPoints_internal.reserve(eic.interpolatedIDs.size());
 
         assert(is_sorted(eic.rententionTimes.begin(), eic.rententionTimes.end()));
 
@@ -91,13 +91,13 @@ namespace qAlgorithms
                 eic.rententionTimes[i],
                 eic.ints_area[i],
                 true); // the point is not interpolated
-            dataPoints.push_back(dp);
+            dataPoints_internal.push_back(dp);
         }
 
+        size_t maxSize = dataPoints_internal.size() * 2; // we do not know how many gaps there are beforehand
         treatedData treatedData;
-        treatedData.dataPoints.reserve(dataPoints.size() * 2);
-
-        binIdx.reserve(dataPoints.size() * 2);
+        treatedData.dataPoints.reserve(maxSize);
+        binIdx.reserve(maxSize);
 
         unsigned int realIdx = 0; // this should be handled outside of this function @todo
         static dataPoint zeroedPoint{0, 0, false};
@@ -112,15 +112,15 @@ namespace qAlgorithms
 
         size_t maxOfBlock = 0;
         size_t blockSize = 0; // size of the current block
-        for (size_t pos = 0; pos < dataPoints.size() - 1; pos++)
+        for (size_t pos = 0; pos < dataPoints_internal.size() - 1; pos++)
         {
             blockSize++;
-            treatedData.dataPoints.push_back(dataPoints[pos]);
-            treatedData.intensity.push_back(dataPoints[pos].y);
+            treatedData.dataPoints.push_back(dataPoints_internal[pos]);
+            treatedData.intensity.push_back(dataPoints_internal[pos].y);
             binIdx.push_back(realIdx);
             assert(binIdx.size() == treatedData.dataPoints.size());
             ++realIdx;
-            const float delta_x = dataPoints[pos + 1].x - dataPoints[pos].x;
+            const float delta_x = dataPoints_internal[pos + 1].x - dataPoints_internal[pos].x;
 
             if (delta_x > 1.75 * expectedDifference)
             {
@@ -129,23 +129,23 @@ namespace qAlgorithms
                 if (gapSize < 4)
                 {
                     // add gapSize interpolated datapoints @todo this can be zero
-                    const float dy = std::pow(dataPoints[pos + 1].y / dataPoints[pos].y, 1.0 / float(gapSize + 1)); // dy for log interpolation
+                    const float dy = std::pow(dataPoints_internal[pos + 1].y / dataPoints_internal[pos].y, 1.0 / float(gapSize + 1)); // dy for log interpolation
                     float interpolateDiff = delta_x / (gapSize + 1);
                     for (int i = 1; i <= gapSize; i++)
                     {
                         binIdx.push_back(realIdx);
                         treatedData.dataPoints.emplace_back(
-                            dataPoints[pos].x + i * interpolateDiff, // retention time
-                            dataPoints[pos].y * std::pow(dy, i),     // intensity
-                            false);                                  // interpolated point
-                        treatedData.intensity.push_back(dataPoints[pos].y * std::pow(dy, i));
+                            dataPoints_internal[pos].x + i * interpolateDiff, // retention time
+                            dataPoints_internal[pos].y * std::pow(dy, i),     // intensity
+                            false);                                           // interpolated point
+                        treatedData.intensity.push_back(dataPoints_internal[pos].y * std::pow(dy, i));
                     }
                     assert(binIdx.size() == treatedData.dataPoints.size());
                 }
             }
             else
             {
-                if (dataPoints[maxOfBlock].y < dataPoints[pos].y)
+                if (dataPoints_internal[maxOfBlock].y < dataPoints_internal[pos].y)
                 {
                     maxOfBlock = pos;
                 }
@@ -153,8 +153,8 @@ namespace qAlgorithms
         } // end of for loop
         // last element
         blockSize++;
-        treatedData.dataPoints.push_back(dataPoints.back());
-        treatedData.intensity.push_back(dataPoints.back().y);
+        treatedData.dataPoints.push_back(dataPoints_internal.back());
+        treatedData.intensity.push_back(dataPoints_internal.back().y);
         binIdx.push_back(realIdx);
 
         // END OF BLOCK, EXTRAPOLATION STARTS @todo move this into its own function
@@ -164,7 +164,7 @@ namespace qAlgorithms
 
         const dataPoint dp_startOfBlock = treatedData.dataPoints[2];
         // check if the maximum of the block is the first or last data point
-        if (maxOfBlock == blockSize - 1 || dataPoints[maxOfBlock].x == dp_startOfBlock.x)
+        if (maxOfBlock == blockSize - 1 || dataPoints_internal[maxOfBlock].x == dp_startOfBlock.x)
         {
             // extrapolate the left side using the first non-zero data point (i.e, the start of the block)
             for (int i = 0; i < 2; i++)
@@ -176,18 +176,18 @@ namespace qAlgorithms
 
                 // RIGHT SIDE
                 treatedData.dataPoints.emplace_back(
-                    dataPoints[blockSize - 1].x + float(i + 1) * expectedDifference, // retention time
-                    dataPoints[blockSize - 1].y,                                     // intensity
-                    false);                                                          // df
-                treatedData.intensity.push_back(dataPoints[blockSize - 1].y);
+                    dataPoints_internal[blockSize - 1].x + float(i + 1) * expectedDifference, // retention time
+                    dataPoints_internal[blockSize - 1].y,                                     // intensity
+                    false);                                                                   // df
+                treatedData.intensity.push_back(dataPoints_internal[blockSize - 1].y);
                 binIdx.push_back(realIdx);
                 assert(binIdx.size() == treatedData.dataPoints.size());
             }
         }
         else
         {
-            const float x[3] = {0.f, dataPoints[maxOfBlock].x - dp_startOfBlock.x, dataPoints[blockSize - 1].x - dp_startOfBlock.x};
-            const float y[3] = {std::log(dp_startOfBlock.y), std::log(dataPoints[maxOfBlock].y), std::log(dataPoints[blockSize - 1].y)};
+            const float x[3] = {0.f, dataPoints_internal[maxOfBlock].x - dp_startOfBlock.x, dataPoints_internal[blockSize - 1].x - dp_startOfBlock.x};
+            const float y[3] = {std::log(dp_startOfBlock.y), std::log(dataPoints_internal[maxOfBlock].y), std::log(dataPoints_internal[blockSize - 1].y)};
 
             auto coeffs = interpolateQuadratic(x, y);
             // extrapolate the left side of the block
@@ -201,10 +201,10 @@ namespace qAlgorithms
             // add the extrapolated data points to the right side of the block
             for (int i = 0; i < 2; i++)
             {
-                const float dp_x = dataPoints[blockSize - 1].x + float(i + 1) * expectedDifference;
+                const float dp_x = dataPoints_internal[blockSize - 1].x + float(i + 1) * expectedDifference;
                 const float x = dp_x - dp_startOfBlock.x;
                 treatedData.dataPoints.emplace_back(
-                    dp_x,                                                  // x-axis
+                    dp_x,                                                  // retention time
                     std::exp(coeffs[0] + x * (coeffs[1] + x * coeffs[2])), // intensity
                     false);                                                // df
                 treatedData.intensity.push_back(std::exp(coeffs[0] + x * (coeffs[1] + x * coeffs[2])));
@@ -220,6 +220,19 @@ namespace qAlgorithms
         // assert(treatedData.dataPoints.size() == eic.interpolatedDQSB.size()); // @todo redo this in good
 
         treatedData.cenIDs = eic.interpolatedIDs;
+        treatedData.lowestScan = eic.scanNumbers.front(); // underflow is very large number
+        treatedData.largestScan = eic.scanNumbers.back();
+        assert(binIdx.size() == treatedData.largestScan - treatedData.lowestScan + 1 + 4); // extrapolations
+        treatedData.cumulativeDF.reserve(treatedData.dataPoints.size());
+        treatedData.cumulativeDF.push_back(0);
+        size_t accum = 0;
+        for (size_t i = 1; i < treatedData.dataPoints.size(); i++)
+        {
+            // i starts at 1 since the first element is always 0
+            accum += treatedData.dataPoints[i].df ? 1 : 0;
+            treatedData.cumulativeDF.push_back(accum); // @todo this is not vectorised!
+        }
+
         return treatedData;
     }
 
@@ -250,24 +263,28 @@ namespace qAlgorithms
             }
             for (size_t j = 0; j < tmpPeaks.size(); j++)
             {
-                auto currentPeak = tmpPeaks[j];
+                FeaturePeak currentPeak = tmpPeaks[j];
+                currentPeak.scanPeakStart = treatedData.lowestScan + currentPeak.idxPeakStart;
+                currentPeak.scanPeakEnd = treatedData.lowestScan + currentPeak.idxPeakEnd;
+
                 assert(currentPeak.idxPeakEnd < binIndexConverter.size());
                 currentPeak.idxBin = i;
                 // the end point is only correct if it is real. Check if the next point
                 // has the same index - if yes, -1 to end index
-                currentPeak.idxPeakStart = binIndexConverter[currentPeak.idxPeakStart];
-                unsigned int tmpIdx = currentPeak.idxPeakEnd;
-                currentPeak.idxPeakEnd = binIndexConverter[currentPeak.idxPeakEnd];
-                assert(currentPeak.idxPeakEnd < currentEIC.ints_area.size());
-                if (tmpIdx + 1 != binIndexConverter.size())
-                {
-                    if (binIndexConverter[tmpIdx] == binIndexConverter[tmpIdx + 1])
-                    {
-                        currentPeak.idxPeakEnd--;
-                    }
-                }
+                // currentPeak.idxPeakStart = binIndexConverter[currentPeak.idxPeakStart];
+                // unsigned int tmpIdx = currentPeak.idxPeakEnd;
+                // currentPeak.idxPeakEnd = binIndexConverter[currentPeak.idxPeakEnd];
+                // assert(currentPeak.idxPeakEnd < currentEIC.ints_area.size());
+                // if (tmpIdx + 1 != binIndexConverter.size())
+                // {
+                //     if (binIndexConverter[tmpIdx] == binIndexConverter[tmpIdx + 1])
+                //     {
+                //         currentPeak.idxPeakEnd--;
+                //     }
+                // }
                 if (currentPeak.idxPeakEnd - currentPeak.idxPeakStart < 4)
                 {
+                    // @todo this should be caught in the regression function, control
                     continue;
                 }
                 if (currentPeak.idxPeakEnd - currentPeak.idxPeakStart + currentPeak.index_x0_offset < 2)
@@ -497,7 +514,13 @@ namespace qAlgorithms
         convertRT.push_back(NAN); // first scan is index 1
         std::vector<size_t> relativeIndex(selectedIndices.size(), 0);
         std::vector<size_t> correctedIndex(selectedIndices.size(), 0);
-        size_t newIndex = 1;
+
+        // this is the scan counting only MS1 spectra. It starts at two so we don't run into
+        // problems with our front extrapolation during feature construction. It shouldn't matter
+        // anyway since the first two scans should not contain relevant information, but this is
+        // less questionable than cutting out the first two mass spectra entirely - consider the
+        // possibility that they were trimmed of void time beforehand!
+        size_t abstractScanNumber = 2;
 
         for (size_t i = 0; i < selectedIndices.size() - 1; i++)
         {
@@ -514,13 +537,13 @@ namespace qAlgorithms
             else
             {
                 convertRT.push_back(retention_times[i]); // convertRT[scan] = retention time of centroid
-                relativeIndex[i] = newIndex;
+                relativeIndex[i] = abstractScanNumber;
             }
-            newIndex++;
+            abstractScanNumber++;
         }
-        relativeIndex.back() = newIndex;
+        relativeIndex.back() = abstractScanNumber;
         convertRT.push_back(retention_times.back());
-        assert(convertRT.size() == newIndex + 1); // ensure that every index has an assigned RT
+        assert(convertRT.size() == abstractScanNumber); // ensure that every index has an assigned RT
 
         // expected difference between two consecutive x-axis values
         double expectedDifference_mz = calcExpectedDiff(&data_vec);

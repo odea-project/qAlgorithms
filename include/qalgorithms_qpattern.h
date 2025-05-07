@@ -10,7 +10,7 @@ namespace qAlgorithms
     struct MultiRegression // @todo this will need to contain all the uncertainties of the original features and find a better solution to the whole bin window output
     {
         float b0_vec[32];
-        std::vector<float> cum_RSS; // one element per scan of the subgroup
+        std::vector<float> cum_RSS; // one element per scan of the subgroup @todo this should is limited by 2*maxscale + 1
         // std::vector<float> b0_vec;
         // all indices relate to the full subgroup!
         size_t idxStart;
@@ -71,14 +71,6 @@ namespace qAlgorithms
 
     // pre-group the region relevant to componentisation based on retention time uncertainty
     std::vector<GroupLims> preGroup(const std::vector<FeaturePeak> *peaks);
-
-    // calculate the shape tanimoto / jaccard index of two moved regressions. The score is weighted slightly.
-    // Calculation is done by dividing the area covered by the overlap both regression curves by the area covered
-    // by both regressions independently
-    // The antiderivative of our regression curve involves exp(6000) and greater numbers, so we use
-    // trapezoid integration instead.
-    // @todo this runs into problems when applying scaling, check if removal is a good idea
-    float calcTanimoto_reg(MovedRegression *feature_A, MovedRegression *feature_B);
 
     struct ReducedEIC
     {
@@ -172,6 +164,27 @@ namespace qAlgorithms
                     size_t idxEnd,
                     size_t peakCount,
                     size_t p_complex); // needed for the F-test, should be replaced by a better solution sometime
+
+    // unused functions
+    struct MovedRegression
+    {
+        const FeaturePeak *origin;
+        size_t binID;
+        size_t binIdxStart;
+        size_t binIdxEnd;
+        float limit_L;
+        float limit_R;
+        float RT_switch;
+        float b0_L, b1_L, b2, b0_R, b1_R, b3;
+        float RSS; // residual sum of squares
+    };
+    // calculate the shape tanimoto / jaccard index of two moved regressions. The score is weighted slightly.
+    // Calculation is done by dividing the area covered by the overlap both regression curves by the area covered
+    // by both regressions independently
+    // The antiderivative of our regression curve involves exp(6000) and greater numbers, so we use
+    // trapezoid integration instead.
+    // @todo this runs into problems when applying scaling, check if removal is a good idea
+    float calcTanimoto_reg(MovedRegression *feature_A, MovedRegression *feature_B);
 }
 
 #endif
