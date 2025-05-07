@@ -284,7 +284,6 @@ int main(int argc, char *argv[])
 #pragma region "feature detection"
             timeStart = std::chrono::high_resolution_clock::now();
             // every subvector of peaks corresponds to the bin ID
-            // auto peaks = findPeaks_QBIN(binnedData, &centroids, diff_rt);
             auto peaks = findPeaks_QBIN(binnedData, diff_rt);
             // make sure that every peak contains only one mass trace
             assert(peaks.size() <= binnedData.size());
