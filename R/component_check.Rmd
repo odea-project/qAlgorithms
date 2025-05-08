@@ -11,18 +11,22 @@ library(tidyverse)
 ```
 
 ```{r load data}
-dir = "C:/Users/unisys/Documents/Studium/qAlgorithms/build/"
+# dir = "C:/Users/unisys/Documents/Studium/qAlgorithms/build/"
+dir = "C:/Users/unisys/Documents/Studium/Masterarbeit/"
 polarity = "_positive_"
-name = "warburg_testdata"
+name = "SP_DDA_P7"
+# name = "warburg_testdata"
 # name = "210229_C1_S1_W_MI_2_pos"
 # name = "20240805_AA_DK_02_Ibu_Kali_0_20240808125236"
 file = str_c(dir, name, polarity)
 file_feat = str_c(file, "features.csv")
 file_bins = str_c(file, "bins.csv")
 file_featCens = str_c(file, "featCen.csv")
+file_compRegs = str_c(file, "components.csv")
 
 features = read_csv(file_feat)
 featCens = read_csv(file_featCens)
+compRegs = read_csv(file_compRegs)
 ```
 
 I am relatively certain that the previous efforts with the normalised intensity profiles only seemed promising due to
@@ -41,16 +45,20 @@ for (compID in 1:max(features$CompID)) {
      points$mz[which(points$featureID == feat$ID[i])] = feat$mz[i]
   }
   # 
-   print(
-   ggplot(points)+
-     geom_point(aes(retentionTime, height, colour = as.factor(mz)))+
-     labs(caption = paste0("compID: ", compID))
-   )
+  # print(
+  #  ggplot(points)+
+  #    geom_point(aes(retentionTime, height, colour = as.factor(mz)))+
+  #    labs(caption = paste0("compID: ", compID))
+  #  )
   MZdiffs = c(outer(feat$mz, feat$mz, `-`))
   IntDiffs = c(outer(feat$area, feat$area, `-`))
   mzDiffCount[compID] = sum(abs(MZdiffs - 1.003355) < mean(feat$mzUncertainty))
   intensityDiffGreaterTwo[compID] = sum(IntDiffs > max(feat$area) / 2)
 }
+```
+
+
+```{r}
 sum(mzDiffCount != 0)
 sum(intensityDiffGreaterTwo != 0)
 sel = which(mzDiffCount != 0)

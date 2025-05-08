@@ -261,6 +261,7 @@ namespace qAlgorithms
                 args.printFeatures = true;
                 args.printSubProfile = true;
                 args.printFeatCens = true;
+                args.printComponents = true;
             }
             else if (argument == "-log")
             {
