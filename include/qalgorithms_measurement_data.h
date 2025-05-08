@@ -27,7 +27,8 @@ namespace qAlgorithms
      */
     treatedData pretreatEIC(EIC &dataPoints,
                             // std::vector<unsigned int> &binIdx,
-                            float expectedDifference);
+                            float expectedDifference,
+                            size_t maxScan);
 
     std::vector<ProfileBlock> pretreatDataCentroids(const std::vector<std::vector<double>> *spectrum, float expectedDifference);
 
@@ -42,7 +43,7 @@ namespace qAlgorithms
         const bool polarity,
         const bool ms1only = true);
 
-    std::vector<FeaturePeak> findPeaks_QBIN(std::vector<EIC> &data, float rt_diff);
+    std::vector<FeaturePeak> findPeaks_QBIN(std::vector<EIC> &data, float rt_diff, size_t maxScan);
 }
 
 #endif

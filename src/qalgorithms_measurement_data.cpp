@@ -75,7 +75,8 @@ namespace qAlgorithms
 
     treatedData pretreatEIC(
         EIC &eic,
-        float expectedDifference)
+        float expectedDifference,
+        size_t maxScan)
     {
         // @todo this function just copies data from the eic output, the respective parts of the binning
         // and feature detection module should be reworked such that it doesn't need to exist
@@ -205,8 +206,8 @@ namespace qAlgorithms
         // assert(treatedData.dataPoints.size() == eic.interpolatedDQSB.size()); // @todo redo this in good
 
         treatedData.cenIDs = eic.interpolatedIDs;
-        treatedData.lowestScan = eic.scanNumbers.front(); // underflow is very large number
-        treatedData.largestScan = eic.scanNumbers.back();
+        treatedData.lowestScan = eic.scanNumbers.front() - 2;
+        treatedData.largestScan = eic.scanNumbers.back() + 2;
         // assert(binIdx.size() == treatedData.largestScan - treatedData.lowestScan + 1 + 4); // extrapolations
         treatedData.cumulativeDF.reserve(treatedData.dataPoints.size());
         treatedData.cumulativeDF.push_back(0);
@@ -217,11 +218,11 @@ namespace qAlgorithms
             accum += treatedData.dataPoints[i].df ? 1 : 0;
             treatedData.cumulativeDF.push_back(accum); // @todo this is not vectorised!
         }
-
+        assert(treatedData.largestScan < maxScan);
         return treatedData;
     }
 
-    std::vector<FeaturePeak> findPeaks_QBIN(std::vector<EIC> &EICs, float rt_diff)
+    std::vector<FeaturePeak> findPeaks_QBIN(std::vector<EIC> &EICs, float rt_diff, size_t maxScan)
     {
         std::vector<FeaturePeak> peaks;    // return vector for feature list
         peaks.reserve(EICs.size() / 4);    // should be enough to fit all features without reallocation
@@ -239,7 +240,7 @@ namespace qAlgorithms
             //     continue;
             // }
 
-            treatedData treatedData = pretreatEIC(currentEIC, rt_diff); // inter/extrapolate data, and identify data blocks
+            treatedData treatedData = pretreatEIC(currentEIC, rt_diff, maxScan); // inter/extrapolate data, and identify data blocks
             findFeatures(tmpPeaks, treatedData);
             if (tmpPeaks.empty())
             {
@@ -248,9 +249,10 @@ namespace qAlgorithms
             for (size_t j = 0; j < tmpPeaks.size(); j++)
             {
                 FeaturePeak currentPeak = tmpPeaks[j];
+
                 currentPeak.scanPeakStart = treatedData.lowestScan + currentPeak.idxPeakStart;
                 currentPeak.scanPeakEnd = treatedData.lowestScan + currentPeak.idxPeakEnd;
-
+                assert(currentPeak.scanPeakEnd < maxScan);
                 // assert(currentPeak.idxPeakEnd < binIndexConverter.size());
                 currentPeak.idxBin = i;
                 // the end point is only correct if it is real. Check if the next point
@@ -271,14 +273,10 @@ namespace qAlgorithms
                     // @todo this should be caught in the regression function, control
                     continue;
                 }
-                if (currentPeak.idxPeakEnd - currentPeak.idxPeakStart + currentPeak.index_x0_offset < 2)
-                {
-                    continue;
-                }
-                // @todo URGENT this kicks out a massive amount of features, check if it makes sense for
+                // @todo URGENT (resolved) this kicks out a massive amount of features, check if it makes sense for
                 // centroids / replace the whole three-fold interpolation nonsense with one source of truth
-                if ((currentPeak.index_x0_offset - currentPeak.idxPeakStart < 2) ||
-                    (currentPeak.idxPeakEnd - currentPeak.index_x0_offset < 2))
+                if ((currentPeak.index_x0_offset < 2) ||
+                    (currentPeak.idxPeakEnd - currentPeak.idxPeakStart - currentPeak.index_x0_offset < 2))
                 {
                     continue;
                 }
