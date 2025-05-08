@@ -332,11 +332,6 @@ int main(int argc, char *argv[])
             }
             // no fail condition here, since this case can occur with real data
 
-            if (userArgs.printFeatures)
-            {
-                printFeatureList(&features, userArgs.outputPath, filename, &binnedData,
-                                 userArgs.printExtended, userArgs.silent, userArgs.skipError, userArgs.noOverwrite);
-            }
             if (userArgs.printFeatCens)
             {
                 printFeatureCentroids(&features, userArgs.outputPath, filename, &binnedData,
@@ -353,6 +348,12 @@ int main(int argc, char *argv[])
             {
                 timePassed = std::chrono::duration_cast<std::chrono::milliseconds>(timeEnd - timeStart);
                 std::cout << "    grouped " << features.size() << " features into " << components.size() << " components in " << timePassed.count() << " s\n";
+            }
+
+            if (userArgs.printFeatures) // this is here so we can incorporate the component ID into the output
+            {
+                printFeatureList(&features, userArgs.outputPath, filename, &binnedData,
+                                 userArgs.printExtended, userArgs.silent, userArgs.skipError, userArgs.noOverwrite);
             }
 
             if (userArgs.printComponents)
