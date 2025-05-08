@@ -269,6 +269,7 @@ int main(int argc, char *argv[])
             double meanDQSB = 0;
             for (auto EIC : binnedData)
             {
+                assert(EIC.scanNumbers.back() < convertRT.size() - 2);
                 for (double dqsb : EIC.DQSB)
                 {
                     if (dqsb == -1)
@@ -284,7 +285,7 @@ int main(int argc, char *argv[])
 #pragma region "feature construction"
             timeStart = std::chrono::high_resolution_clock::now();
             // every subvector of peaks corresponds to the bin ID
-            auto features = findPeaks_QBIN(binnedData, diff_rt);
+            auto features = findPeaks_QBIN(binnedData, diff_rt, convertRT.size());
             // make sure that every peak contains only one mass trace
             assert(features.size() <= binnedData.size());
             int peaksWithMassGaps = 0;
@@ -292,6 +293,7 @@ int main(int argc, char *argv[])
             double meanInterpolations = 0;
             for (size_t i = 0; i < features.size(); i++)
             {
+                assert(features[i].scanPeakEnd < convertRT.size());
                 int binIdx = features[i].idxBin;
                 auto massesBin = binnedData[binIdx].mz;
                 auto scansBin = binnedData[binIdx].scanNumbers;
@@ -361,7 +363,6 @@ int main(int argc, char *argv[])
 
             if (userArgs.doLogging)
             {
-
                 logWriter.open(pathLogging, std::ios::app);
                 logWriter << filename << ", " << centroidCount << ", " << binThis.size() << ", "
                           << meanDQSC / binThis.size() << ", " << binnedData.size() << ", " << badBinCount << ", " << meanDQSB

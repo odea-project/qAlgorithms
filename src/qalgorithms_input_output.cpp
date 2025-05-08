@@ -734,8 +734,8 @@ namespace qAlgorithms
 
             char buffer[256];
             snprintf(buffer, 256, "%d,%d,%d,%d,%d,%0.6f,%0.6f,%0.4f,%0.4f,%0.4f,%0.4f,%0.3f,%0.3f,%0.3f,%0.3f,%d,%d,%d,%0.5f,%0.5f,%0.5f,%s,%0.6f,%0.8f,%0.8f,%0.8f,%0.8f\n",
-                     peak.componentID, counter, binID, peak.idxPeakStart, peak.idxPeakEnd, peak.mz, peak.mzUncertainty,
-                     peak.retentionTime, peak.retentionTimeUncertainty, RTs[peak.idxPeakStart], RTs[peak.idxPeakEnd],
+                     peak.componentID, counter, binID, peak.idxBinStart, peak.idxBinEnd, peak.mz, peak.mzUncertainty,
+                     peak.retentionTime, peak.retentionTimeUncertainty, RTs[peak.idxBinStart], RTs[peak.idxBinEnd],
                      peak.area, peak.areaUncertainty, peak.height, peak.heightUncertainty, peak.scale,
                      peak.interpolationCount, peak.competitorCount, peak.DQSC, peak.DQSB, peak.DQSF,
                      // properties relevant for componentisation, remove this later
@@ -792,7 +792,7 @@ namespace qAlgorithms
             int binID = peak.idxBin;
             const EIC bin = originalBins->at(binID);
             char buffer[256];
-            for (size_t cen = peak.idxPeakStart; cen < peak.idxPeakEnd + 1; cen++)
+            for (size_t cen = peak.idxBinStart; cen < peak.idxBinEnd + 1; cen++)
             {
                 snprintf(buffer, 256, "%d,%d,%d,%0.6f,%0.6f,%0.4f,%0.3f,%0.3f,%d,%0.5f,%0.5f,%0.5f,%s,%0.8f,%0.8f,%0.8f,%0.8f\n",
                          counter, binID, bin.cenID[cen], bin.mz[cen], bin.predInterval[cen], bin.rententionTimes[cen],

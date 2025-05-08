@@ -75,21 +75,22 @@ namespace qAlgorithms
             for (size_t j = limits[groupIdx].start; j < limits[groupIdx].end + 1; j++)
             {
                 FeaturePeak *test = &(peaks->at(j));
-                assert(test->scanPeakEnd - test->idxPeakStart >= 4);
+                assert(test->scanPeakEnd - test->scanPeakStart >= 4);
                 auto binRTs = (*bins)[test->idxBin].rententionTimes;
                 auto scans = (*bins)[test->idxBin].scanNumbers;
                 maxScan = std::max(maxScan, test->scanPeakEnd); // @todo scans should be their own type, same with indices
                 minScan = std::min(minScan, test->scanPeakStart);
 
                 assert(maxScan - minScan >= 4);
-                if (test->idxPeakStart + test->index_x0_offset >= test->scanPeakEnd - 1)
+                if (test->scanPeakStart + test->index_x0_offset >= test->scanPeakEnd - 1)
                 {
-                    ERRORCOUNTER++;
+                    ERRORCOUNTER++; // @todo this is something that should be prevented during feature construction, why isn't it?
                     groupsize--;
                     continue;
                 }
                 pregroup.features.push_back(test);
             }
+            assert(maxScan < convertRT->size());
             if (groupsize < 2)
             {
                 continue;
@@ -97,7 +98,7 @@ namespace qAlgorithms
 
             // create a vector of unified RTs for interpolation in the harmonised EICs
             // this uses the same scan -> time conversion as the feature construction
-            assert(minScan != 0);
+            // assert(minScan != 0);
             std::vector<float> unifiedRT(maxScan - minScan + 1, 0);
             for (size_t i = 0; i < unifiedRT.size(); i++)
             {
