@@ -170,27 +170,6 @@ namespace qAlgorithms
                         const std::vector<size_t> *selection,
                         size_t idxStart,
                         size_t idxEnd);
-
-    // unused functions
-    struct MovedRegression
-    {
-        const FeaturePeak *origin;
-        size_t binID;
-        size_t binIdxStart;
-        size_t binIdxEnd;
-        float limit_L;
-        float limit_R;
-        float RT_switch;
-        float b0_L, b1_L, b2, b0_R, b1_R, b3;
-        float RSS; // residual sum of squares
-    };
-    // calculate the shape tanimoto / jaccard index of two moved regressions. The score is weighted slightly.
-    // Calculation is done by dividing the area covered by the overlap both regression curves by the area covered
-    // by both regressions independently
-    // The antiderivative of our regression curve involves exp(6000) and greater numbers, so we use
-    // trapezoid integration instead.
-    // @todo this runs into problems when applying scaling, check if removal is a good idea
-    float calcTanimoto_reg(MovedRegression *feature_A, MovedRegression *feature_B);
 }
 
 #endif
