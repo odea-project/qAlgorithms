@@ -44,12 +44,12 @@ for (compID in 1:max(features$CompID)) {
   for (i in 1:length(feat$ID)) {
      points$mz[which(points$featureID == feat$ID[i])] = feat$mz[i]
   }
-  # 
-  # print(
-  #  ggplot(points)+
-  #    geom_point(aes(retentionTime, height, colour = as.factor(mz)))+
-  #    labs(caption = paste0("compID: ", compID))
-  #  )
+
+  print(
+   ggplot(points)+
+     geom_point(aes(retentionTime, height, colour = as.factor(mz)))+
+     labs(caption = paste0("compID: ", compID))
+   )
   MZdiffs = c(outer(feat$mz, feat$mz, `-`))
   IntDiffs = c(outer(feat$area, feat$area, `-`))
   mzDiffCount[compID] = sum(abs(MZdiffs - 1.003355) < mean(feat$mzUncertainty))
@@ -83,6 +83,15 @@ for (compID in 1:max(features$CompID)) {
   points = featCens[which(featCens$featureID %in% feat$ID),]
   RTmatch[compID] = (length(points$mz) - length(unique(points$retentionTime))) / length(points$mz)
 }
+```
+
+```{r plot distribution of components}
+ggplot(features)+
+  geom_boxplot(aes(retentionTime, CompID != 0))
+
+# a very high portion of features in the last few minutes is in components
+cdplot(as.factor(CompID != 0) ~ retentionTime, data = features)
+plot(density(features$retentionTime))
 ```
 
 
