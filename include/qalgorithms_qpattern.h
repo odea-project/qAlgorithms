@@ -23,6 +23,7 @@ namespace qAlgorithms
         float b2;
         float b3;
         float RT_apex;
+        float DQS;
     };
 
     // main function to execute a componentiation step on data
@@ -125,9 +126,9 @@ namespace qAlgorithms
 
     std::vector<MultiRegression> findCoefficients_multi(
         const std::vector<float> *intensity_log,
-        const size_t scale,          // maximum scale that will be checked. Should generally be limited by peakFrame
-        const unsigned int numPeaks, // only > 1 during componentisation (for now? @todo)
-        const size_t peakFrame);     // how many points are covered per peak? For single-peak data, this is the length of intensity_log
+        const unsigned int scale,      // maximum scale that will be checked. Should generally be limited by peakFrame
+        const unsigned int numPeaks,   // only > 1 during componentisation (for now? @todo)
+        const unsigned int peakFrame); // how many points are covered per peak? For single-peak data, this is the length of intensity_log
 
     MultiRegression runningRegression_multi(
         const MergedEIC *eic,
@@ -164,6 +165,11 @@ namespace qAlgorithms
                     size_t idxEnd,
                     size_t peakCount,
                     size_t p_complex); // needed for the F-test, should be replaced by a better solution sometime
+
+    float tanimotoScore(const std::vector<ReducedEIC> *eics,
+                        const std::vector<size_t> *selection,
+                        size_t idxStart,
+                        size_t idxEnd);
 
     // unused functions
     struct MovedRegression
