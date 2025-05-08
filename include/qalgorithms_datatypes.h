@@ -125,11 +125,16 @@ namespace qAlgorithms
         float mzUncertainty;
         unsigned int componentID = 0; // this is only set during execution of qPattern / qComponent / whatever better name i think of. Zero means uninitialised -> components start at 1!
         unsigned int idxBin;
-        unsigned int idxPeakStart; // degrees of freedom = idxPeakEnd - idxPeakStart
+        // these refer to the interpolated EIC!
+        unsigned int idxPeakStart;
         unsigned int idxPeakEnd;
         unsigned int index_x0_offset;
+        // relates to abstracted MS1 scan counts, starts at 2 for real points
         unsigned int scanPeakStart;
         unsigned int scanPeakEnd;
+        // indices into the non-interpolated bin; degrees of freedom = idxBinEnd - idxBinStart + 1
+        unsigned int idxBinStart;
+        unsigned int idxBinEnd;
         // temporary values, @todo remove?
         unsigned int interpolationCount;
         unsigned int competitorCount;
