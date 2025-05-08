@@ -1236,6 +1236,39 @@ namespace qAlgorithms
         }
     }
 
+    // helper function: produce scaled intensity vector within the limits
+    inline std::vector<float> euclidianNorm(const std::vector<float> *intensity,
+                                            size_t idxStart,
+                                            size_t idxEnd)
+    {
+        // the vector is normed by dividing every element by the length
+        size_t numElements = idxEnd - idxStart + 1;
+
+        float length = 0;
+        for (size_t i = 0; i < numElements; i++)
+        {
+            length += intensity->at(i + idxStart) * intensity->at(i + idxStart);
+        }
+        length = sqrt(length);
+
+        std::vector<float> result(numElements, 0);
+        for (size_t i = 0; i < numElements; i++)
+        {
+            result[i] = intensity->at(i + idxStart) / length;
+        }
+        return result;
+    }
+
+    float tanimotoScore(const std::vector<ReducedEIC> *eics,
+                        const std::vector<size_t> *selection,
+                        size_t idxStart,
+                        size_t idxEnd)
+    {
+        // first, the interpolated vectors must be scaled for the tanimoto score to make sense.
+        // to this end, the euclidean norms of the vectors are compared. The total score is the
+        // combination of individual scores, but how?
+    }
+
     // float pairScore(const std::vector<float> *ints_A, const std::vector<float> *ints_B);
 
     // float multiTanimoto(const std::vector<ReducedEIC> *eics, const std::vector<size_t> *selection)
