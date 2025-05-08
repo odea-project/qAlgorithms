@@ -281,25 +281,27 @@ int main(int argc, char *argv[])
                 }
             }
             meanDQSB /= count;
-#pragma region "feature detection"
+#pragma region "feature construction"
             timeStart = std::chrono::high_resolution_clock::now();
             // every subvector of peaks corresponds to the bin ID
-            auto peaks = findPeaks_QBIN(binnedData, diff_rt);
+            auto features = findPeaks_QBIN(binnedData, diff_rt);
             // make sure that every peak contains only one mass trace
-            assert(peaks.size() <= binnedData.size());
+            assert(features.size() <= binnedData.size());
             int peaksWithMassGaps = 0;
             double meanDQSF = 0;
             double meanInterpolations = 0;
-            for (size_t i = 0; i < peaks.size(); i++)
+            for (size_t i = 0; i < features.size(); i++)
             {
-                int binIdx = peaks[i].idxBin;
+                int binIdx = features[i].idxBin;
                 auto massesBin = binnedData[binIdx].mz;
                 auto scansBin = binnedData[binIdx].scanNumbers;
-                assert(peaks[i].idxPeakStart < massesBin.size() - 4);
-                assert(peaks[i].idxPeakEnd < massesBin.size());
+                unsigned int binStart = features[i].idxBinStart;
+                unsigned int binEnd = features[i].idxBinEnd;
+                assert(binStart < massesBin.size() - 4);
+                assert(binEnd < massesBin.size());
 
                 // idxPeakStart/End are the index referring to the bin in which a peak was found
-                if (!massTraceStable(massesBin, peaks[i].idxPeakStart, peaks[i].idxPeakEnd))
+                if (!massTraceStable(massesBin, binStart, binEnd))
                 {
                     ++peaksWithMassGaps;
                     // peaks[i].DQSF *= -1;
@@ -308,12 +310,12 @@ int main(int argc, char *argv[])
                 }
                 else
                 {
-                    meanDQSF += peaks[i].DQSF;
+                    meanDQSF += features[i].DQSF;
                 }
-                meanInterpolations += peaks[i].interpolationCount - 4;
+                meanInterpolations += features[i].interpolationCount - 4;
             }
-            meanDQSF /= peaks.size() - peaksWithMassGaps;
-            meanInterpolations /= peaks.size();
+            meanDQSF /= features.size() - peaksWithMassGaps;
+            meanInterpolations /= features.size();
             if (userArgs.verboseProgress)
             {
                 std::cout << peaksWithMassGaps << " peaks were erroneously constructed from more than one mass trace\n";
@@ -324,31 +326,31 @@ int main(int argc, char *argv[])
             if (!userArgs.silent)
             {
                 timePassed = std::chrono::duration_cast<std::chrono::milliseconds>(timeEnd - timeStart);
-                std::cout << "    found " << peaks.size() << " peaks in " << timePassed.count() << " s\n";
+                std::cout << "    constructed " << features.size() << " features in " << timePassed.count() << " s\n";
             }
             // no fail condition here, since this case can occur with real data
 
             if (userArgs.printFeatures)
             {
-                printFeatureList(&peaks, userArgs.outputPath, filename, &binnedData,
+                printFeatureList(&features, userArgs.outputPath, filename, &binnedData,
                                  userArgs.printExtended, userArgs.silent, userArgs.skipError, userArgs.noOverwrite);
             }
             if (userArgs.printFeatCens)
             {
-                printFeatureCentroids(&peaks, userArgs.outputPath, filename, &binnedData,
+                printFeatureCentroids(&features, userArgs.outputPath, filename, &binnedData,
                                       userArgs.printExtended, userArgs.silent, userArgs.skipError, userArgs.noOverwrite);
             }
 
 #pragma region "Componentisation"
             timeStart = std::chrono::high_resolution_clock::now();
 
-            const auto components = findComponents(&peaks, &binnedData, &convertRT, false);
+            const auto components = findComponents(&features, &binnedData, &convertRT, false);
 
             timeEnd = std::chrono::high_resolution_clock::now();
             if (!userArgs.silent)
             {
                 timePassed = std::chrono::duration_cast<std::chrono::milliseconds>(timeEnd - timeStart);
-                std::cout << "    grouped " << peaks.size() << " features into " << components.size() << " components in " << timePassed.count() << " s\n";
+                std::cout << "    grouped " << features.size() << " features into " << components.size() << " components in " << timePassed.count() << " s\n";
             }
 
             if (userArgs.printComponents)
@@ -363,7 +365,7 @@ int main(int argc, char *argv[])
                 logWriter.open(pathLogging, std::ios::app);
                 logWriter << filename << ", " << centroidCount << ", " << binThis.size() << ", "
                           << meanDQSC / binThis.size() << ", " << binnedData.size() << ", " << badBinCount << ", " << meanDQSB
-                          << ", " << peaks.size() << ", " << peaksWithMassGaps << ", " << meanInterpolations << ", " << meanDQSF << "\n";
+                          << ", " << features.size() << ", " << peaksWithMassGaps << ", " << meanInterpolations << ", " << meanDQSF << "\n";
                 logWriter.close();
             }
         }

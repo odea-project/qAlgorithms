@@ -75,7 +75,6 @@ namespace qAlgorithms
 
     treatedData pretreatEIC(
         EIC &eic,
-        std::vector<unsigned int> &binIdx, // @todo remove
         float expectedDifference)
     {
         // @todo this function just copies data from the eic output, the respective parts of the binning
@@ -97,7 +96,6 @@ namespace qAlgorithms
         size_t maxSize = dataPoints_internal.size() * 2; // we do not know how many gaps there are beforehand
         treatedData treatedData;
         treatedData.dataPoints.reserve(maxSize);
-        binIdx.reserve(maxSize);
 
         unsigned int realIdx = 0; // this should be handled outside of this function @todo
         static dataPoint zeroedPoint{0, 0, false};
@@ -105,9 +103,7 @@ namespace qAlgorithms
         for (int i = 0; i < 2; i++)
         {
             treatedData.dataPoints.push_back(zeroedPoint);
-            binIdx.push_back(realIdx);
             treatedData.intensity.push_back(0);
-            assert(binIdx.size() == treatedData.dataPoints.size());
         }
 
         size_t maxOfBlock = 0;
@@ -117,8 +113,6 @@ namespace qAlgorithms
             blockSize++;
             treatedData.dataPoints.push_back(dataPoints_internal[pos]);
             treatedData.intensity.push_back(dataPoints_internal[pos].y);
-            binIdx.push_back(realIdx);
-            assert(binIdx.size() == treatedData.dataPoints.size());
             ++realIdx;
             const float delta_x = dataPoints_internal[pos + 1].x - dataPoints_internal[pos].x;
 
@@ -133,14 +127,12 @@ namespace qAlgorithms
                     float interpolateDiff = delta_x / (gapSize + 1);
                     for (int i = 1; i <= gapSize; i++)
                     {
-                        binIdx.push_back(realIdx);
                         treatedData.dataPoints.emplace_back(
                             dataPoints_internal[pos].x + i * interpolateDiff, // retention time
                             dataPoints_internal[pos].y * std::pow(dy, i),     // intensity
                             false);                                           // interpolated point
                         treatedData.intensity.push_back(dataPoints_internal[pos].y * std::pow(dy, i));
                     }
-                    assert(binIdx.size() == treatedData.dataPoints.size());
                 }
             }
             else
@@ -155,7 +147,6 @@ namespace qAlgorithms
         blockSize++;
         treatedData.dataPoints.push_back(dataPoints_internal.back());
         treatedData.intensity.push_back(dataPoints_internal.back().y);
-        binIdx.push_back(realIdx);
 
         // END OF BLOCK, EXTRAPOLATION STARTS @todo move this into its own function
         assert(blockSize == eic.cenID.size());
@@ -180,8 +171,6 @@ namespace qAlgorithms
                     dataPoints_internal[blockSize - 1].y,                                     // intensity
                     false);                                                                   // df
                 treatedData.intensity.push_back(dataPoints_internal[blockSize - 1].y);
-                binIdx.push_back(realIdx);
-                assert(binIdx.size() == treatedData.dataPoints.size());
             }
         }
         else
@@ -208,21 +197,17 @@ namespace qAlgorithms
                     std::exp(coeffs[0] + x * (coeffs[1] + x * coeffs[2])), // intensity
                     false);                                                // df
                 treatedData.intensity.push_back(std::exp(coeffs[0] + x * (coeffs[1] + x * coeffs[2])));
-                binIdx.push_back(realIdx);
-                assert(binIdx.size() == treatedData.dataPoints.size());
             }
         }
 
-        assert(binIdx.size() == treatedData.dataPoints.size());
-        assert(binIdx.size() == treatedData.intensity.size());
-        assert(binIdx.back() == eic.mz.size() - 1);
+        assert(treatedData.dataPoints.size() == treatedData.intensity.size());
         assert(treatedData.dataPoints.back().y == treatedData.intensity.back()); // works
         // assert(treatedData.dataPoints.size() == eic.interpolatedDQSB.size()); // @todo redo this in good
 
         treatedData.cenIDs = eic.interpolatedIDs;
         treatedData.lowestScan = eic.scanNumbers.front(); // underflow is very large number
         treatedData.largestScan = eic.scanNumbers.back();
-        assert(binIdx.size() == treatedData.largestScan - treatedData.lowestScan + 1 + 4); // extrapolations
+        // assert(binIdx.size() == treatedData.largestScan - treatedData.lowestScan + 1 + 4); // extrapolations
         treatedData.cumulativeDF.reserve(treatedData.dataPoints.size());
         treatedData.cumulativeDF.push_back(0);
         size_t accum = 0;
@@ -254,8 +239,7 @@ namespace qAlgorithms
             //     continue;
             // }
 
-            std::vector<unsigned int> binIndexConverter;
-            treatedData treatedData = pretreatEIC(currentEIC, binIndexConverter, rt_diff); // inter/extrapolate data, and identify data blocks
+            treatedData treatedData = pretreatEIC(currentEIC, rt_diff); // inter/extrapolate data, and identify data blocks
             findFeatures(tmpPeaks, treatedData);
             if (tmpPeaks.empty())
             {
@@ -267,7 +251,7 @@ namespace qAlgorithms
                 currentPeak.scanPeakStart = treatedData.lowestScan + currentPeak.idxPeakStart;
                 currentPeak.scanPeakEnd = treatedData.lowestScan + currentPeak.idxPeakEnd;
 
-                assert(currentPeak.idxPeakEnd < binIndexConverter.size());
+                // assert(currentPeak.idxPeakEnd < binIndexConverter.size());
                 currentPeak.idxBin = i;
                 // the end point is only correct if it is real. Check if the next point
                 // has the same index - if yes, -1 to end index
@@ -302,16 +286,28 @@ namespace qAlgorithms
                 {
                     continue;
                 }
+                // the correct limits in the non-interpolated EIC need to be determined. They are already included
+                // in the cumulative degrees of freedom, but since there, df 0 is outside the EIC, we need to
+                // use the index df[limit] - 1 into the original, non-interpolated vector
+
+                unsigned int limit_L = treatedData.cumulativeDF[currentPeak.idxPeakStart];
+                limit_L = std::min(limit_L, limit_L - 1); // uint underflows, so no issues.
+                unsigned int limit_R = treatedData.cumulativeDF[currentPeak.idxPeakEnd] - 1;
+                assert(limit_L < limit_R);
+
+                // @todo these are a temporary solution, rework bins to already contain interpolations
+                currentPeak.idxBinStart = limit_L;
+                currentPeak.idxBinEnd = limit_R;
 
                 auto tmp = weightedMeanAndVariance_EIC(&currentEIC.ints_area, &currentEIC.mz,
-                                                       currentPeak.idxPeakStart, currentPeak.idxPeakEnd);
+                                                       limit_L, limit_R);
                 currentPeak.mz = tmp.mean;
                 currentPeak.mzUncertainty = tmp.var;
                 currentPeak.DQSC = weightedMeanAndVariance_EIC(&currentEIC.ints_area, &currentEIC.DQSC,
-                                                               currentPeak.idxPeakStart, currentPeak.idxPeakEnd)
+                                                               limit_L, limit_R)
                                        .mean;
                 currentPeak.DQSB = weightedMeanAndVariance_EIC(&currentEIC.ints_area, &currentEIC.DQSB,
-                                                               currentPeak.idxPeakStart, currentPeak.idxPeakEnd)
+                                                               limit_L, limit_R)
                                        .mean;
                 peaks.push_back(std::move(currentPeak)); // remove 2D structure of FL
             }
@@ -491,12 +487,13 @@ namespace qAlgorithms
         rt_diff = calcRTDiff(&retention_times);
 
         selectedIndices.shrink_to_fit();
+        const size_t countSelected = selectedIndices.size();
 
         std::vector<CentroidPeak> centroids;
-        centroids.reserve(selectedIndices.size() * 1000);
+        centroids.reserve(countSelected * 1000);
 
         // take spectrum at half length to avoid potential interference from quality control scans in the instrument
-        const std::vector<std::vector<double>> data_vec = data.get_spectrum(selectedIndices[selectedIndices.size() / 2]);
+        const std::vector<std::vector<double>> data_vec = data.get_spectrum(selectedIndices[countSelected / 2]);
 
         // determine where the peak finding will interpolate points and pass this information
         // to the binning step. addEmpty contains the number of empty scans to be added into
@@ -510,10 +507,11 @@ namespace qAlgorithms
         // such a problem arises and if it negatively affects result accuracy.
 
         assert(convertRT.empty());
-        convertRT.reserve(selectedIndices.size());
-        convertRT.push_back(NAN); // first scan is index 1
-        std::vector<size_t> relativeIndex(selectedIndices.size(), 0);
-        std::vector<size_t> correctedIndex(selectedIndices.size(), 0);
+        convertRT.reserve(countSelected + 4);
+        convertRT.push_back(0); // first two scans do not have retention times @todo this will lead to slightly wrong results, should be fine due to void time
+        convertRT.push_back(0);
+        std::vector<size_t> relativeIndex(countSelected, 0);
+        std::vector<size_t> correctedIndex(countSelected, 0);
 
         // this is the scan counting only MS1 spectra. It starts at two so we don't run into
         // problems with our front extrapolation during feature construction. It shouldn't matter
@@ -522,7 +520,7 @@ namespace qAlgorithms
         // possibility that they were trimmed of void time beforehand!
         size_t abstractScanNumber = 2;
 
-        for (size_t i = 0; i < selectedIndices.size() - 1; i++)
+        for (size_t i = 0; i < countSelected - 1; i++)
         {
             float scandiff = retention_times[i + 1] - retention_times[i];
             int gapSize = static_cast<int>(scandiff / rt_diff + 0.25 * rt_diff);
@@ -543,11 +541,15 @@ namespace qAlgorithms
         }
         relativeIndex.back() = abstractScanNumber;
         convertRT.push_back(retention_times.back());
-        assert(convertRT.size() == abstractScanNumber); // ensure that every index has an assigned RT
+        // account for extrapolations at the back @todo the extrapolations should probably be a copile-time variable
+        abstractScanNumber += 2;
+        convertRT.push_back(retention_times.back() + rt_diff);
+        convertRT.push_back(retention_times.back() + rt_diff + rt_diff);
+        assert(convertRT.size() == abstractScanNumber + 1); // ensure that every index has an assigned RT
 
         // expected difference between two consecutive x-axis values
         double expectedDifference_mz = calcExpectedDiff(&data_vec);
-        for (size_t i = 0; i < selectedIndices.size(); ++i)
+        for (size_t i = 0; i < countSelected; ++i)
         {
             const std::vector<std::vector<double>> spectrum = data.get_spectrum(selectedIndices[i]);
             // inter/extrapolate data, and identify data blocks @todo these should be two different functions

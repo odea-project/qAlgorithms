@@ -26,7 +26,7 @@ namespace qAlgorithms
      * @return std::vector<std::vector<dataPoint>::iterator> : separation markers for data blocks
      */
     treatedData pretreatEIC(EIC &dataPoints,
-                            std::vector<unsigned int> &binIdx,
+                            // std::vector<unsigned int> &binIdx,
                             float expectedDifference);
 
     std::vector<ProfileBlock> pretreatDataCentroids(const std::vector<std::vector<double>> *spectrum, float expectedDifference);
