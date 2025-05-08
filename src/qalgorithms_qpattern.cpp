@@ -75,13 +75,14 @@ namespace qAlgorithms
             for (size_t j = limits[groupIdx].start; j < limits[groupIdx].end + 1; j++)
             {
                 FeaturePeak *test = &(peaks->at(j));
+                assert(test->scanPeakEnd - test->idxPeakStart >= 4);
                 auto binRTs = (*bins)[test->idxBin].rententionTimes;
                 auto scans = (*bins)[test->idxBin].scanNumbers;
-                maxScan = std::max(maxScan, scans[test->idxPeakEnd]); // @todo scans should be their own type, same with indices
-                minScan = std::min(minScan, scans[test->idxPeakStart]);
-                assert(scans[test->idxPeakEnd] - scans[test->idxPeakStart] >= 4);
+                maxScan = std::max(maxScan, test->scanPeakEnd); // @todo scans should be their own type, same with indices
+                minScan = std::min(minScan, test->scanPeakStart);
+
                 assert(maxScan - minScan >= 4);
-                if (test->idxPeakStart + test->index_x0_offset >= test->idxPeakEnd - 1)
+                if (test->idxPeakStart + test->index_x0_offset >= test->scanPeakEnd - 1)
                 {
                     ERRORCOUNTER++;
                     groupsize--;
@@ -96,6 +97,7 @@ namespace qAlgorithms
 
             // create a vector of unified RTs for interpolation in the harmonised EICs
             // this uses the same scan -> time conversion as the feature construction
+            assert(minScan != 0);
             std::vector<float> unifiedRT(maxScan - minScan + 1, 0);
             for (size_t i = 0; i < unifiedRT.size(); i++)
             {
@@ -154,6 +156,7 @@ namespace qAlgorithms
                     static const std::vector<size_t> select{0, 1}; // smallest RT is always left
                     size_t idxStart = std::min(EIC_A.featLim_L, EIC_B.featLim_L);
                     size_t idxEnd = std::min(EIC_A.featLim_R, EIC_B.featLim_R);
+                    assert(idxEnd > idxStart);
                     std::vector<ReducedEIC> eics_pair{EIC_A, EIC_B};
                     auto mergedEIC = mergeEICs(&eics_pair, &select, idxStart, idxEnd);
                     auto regression = runningRegression_multi(&mergedEIC, &eics_pair, &select, idxStart, idxEnd, 2);
@@ -249,6 +252,7 @@ namespace qAlgorithms
 
                         size_t idxStart = std::min(components[existingComponent].limit_L, eics[unassignedFeature].featLim_L);
                         size_t idxEnd = std::max(components[existingComponent].limit_R, eics[unassignedFeature].featLim_R);
+                        assert(idxEnd > idxStart);
                         // 2) perform the multi-regression over the combined EIC for the selection
                         auto mergedEIC = mergeEICs(&eics, &selection, idxStart, idxEnd);
                         const size_t n = components[existingComponent].numPeaks;
@@ -284,6 +288,7 @@ namespace qAlgorithms
                         const size_t n = components[*ass_L].numPeaks + components[*ass_S].numPeaks;
                         size_t idxStart = std::min(components[*ass_L].limit_L, eics[*ass_S].featLim_L);
                         size_t idxEnd = std::max(components[*ass_L].limit_R, eics[*ass_S].featLim_R);
+                        assert(idxEnd > idxStart);
 
                         // add all feature IDs from both components
                         std::vector<size_t> selection;
@@ -1039,8 +1044,9 @@ namespace qAlgorithms
                             const unsigned int minScan, // minimum overall scan in the subgroup
                             const unsigned int maxScan) // maximum overall scan in the subgroup
     {
-        size_t minIdx = feature->idxPeakStart;
-        size_t maxIdx = feature->idxPeakEnd;
+        size_t minIdx = feature->idxBinStart;
+        size_t maxIdx = feature->idxBinEnd;
+        assert(feature->scanPeakStart >= minScan);
         assert(maxIdx < bin->ints_area.size());
         assert(minScan < bin->scanNumbers.back());
         assert(maxScan > bin->scanNumbers.front());
@@ -1057,10 +1063,12 @@ namespace qAlgorithms
         // scan relates to the complete measurement and idx to the position within the bin
 
         // find index_x0 by finding the corresponding retention time
-        unsigned int featLim_L = bin->scanNumbers[minIdx] - minScan;
-        unsigned int featLim_R = bin->scanNumbers[maxIdx] - minScan;
-        unsigned int index_x0 = feature->index_x0_offset + featLim_L;
-        assert(index_x0 < length - 1);
+        // unsigned int featLim_L = bin->scanNumbers[minIdx] - minScan;
+        // unsigned int featLim_R = bin->scanNumbers[maxIdx] - minScan;
+        // assert(featLim_L < featLim_R);
+        const unsigned int scanShift = feature->scanPeakStart - minScan; // offset of feature limits relating to the first element of the harmonised EIC
+        unsigned int index_x0 = feature->index_x0_offset + scanShift;    // absolute scan of x0 - begin of scan region
+        assert(index_x0 < length - 2);
 
         ReducedEIC reduced{
             std::vector<float>(length, 0),        // intensity
@@ -1072,8 +1080,8 @@ namespace qAlgorithms
             feature->idxBin,                      // bin ID
             minScan,
 
-            featLim_L, // these limits are relating to the fully interpolated EIC
-            featLim_R,
+            scanShift, // these limits are relating to the fully interpolated EIC
+            feature->scanPeakEnd - minScan,
             index_x0};
 
         std::iota(reduced.scanNo.begin(), reduced.scanNo.end(), minScan);
