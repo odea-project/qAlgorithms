@@ -44,21 +44,32 @@ for (compID in 1:max(features$CompID)) {
   for (i in 1:length(feat$ID)) {
      points$mz[which(points$featureID == feat$ID[i])] = feat$mz[i]
   }
-
   print(
    ggplot(points)+
-     geom_point(aes(retentionTime, height, colour = as.factor(mz)))+
+     geom_point(aes(retentionTime, area, colour = as.factor(mz)))+
      labs(caption = paste0("compID: ", compID))
    )
-  MZdiffs = c(outer(feat$mz, feat$mz, `-`))
-  IntDiffs = c(outer(feat$area, feat$area, `-`))
-  mzDiffCount[compID] = sum(abs(MZdiffs - 1.003355) < mean(feat$mzUncertainty))
-  intensityDiffGreaterTwo[compID] = sum(IntDiffs > max(feat$area) / 2)
+
 }
 ```
 
 
 ```{r}
+compID = 1
+mzDiffCount = 0
+intensityDiffGreaterTwo = 0
+
+for (compID in 1:max(features$CompID)) {
+  feat = features[which(features$CompID == compID),]
+   points = featCens[which(featCens$featureID %in% feat$ID),]
+  for (i in 1:length(feat$ID)) {
+     points$mz[which(points$featureID == feat$ID[i])] = feat$mz[i]
+  }
+  MZdiffs = c(outer(feat$mz, feat$mz, `-`))
+  IntDiffs = c(outer(feat$area, feat$area, `-`))
+  mzDiffCount[compID] = sum(abs(MZdiffs - 1.003355) < mean(feat$mzUncertainty))
+  intensityDiffGreaterTwo[compID] = sum(IntDiffs > max(feat$area) / 2)
+}
 sum(mzDiffCount != 0)
 sum(intensityDiffGreaterTwo != 0)
 sel = which(mzDiffCount != 0)
@@ -92,6 +103,102 @@ ggplot(features)+
 # a very high portion of features in the last few minutes is in components
 cdplot(as.factor(CompID != 0) ~ retentionTime, data = features)
 plot(density(features$retentionTime))
+
+feat = features[which(features$CompID == 343),]
+   points = featCens[which(featCens$featureID %in% feat$ID),]
+   for (i in 1:length(feat$ID)) {
+     points$mz[which(points$featureID == feat$ID[i])] = feat$mz[i]
+   }
+
+   print(
+   ggplot(points)+
+     geom_point(aes(retentionTime, height, colour = as.factor(mz)))+
+     labs(caption = paste0("compID: ", compID))
+   )
+```
+
+```{r gini coeff}
+# basic idea: take all points in the two or more same-length, interpolated vectors and normalise them to
+# a vector length of 1. Then, take the standard deviation for every discrete x value. If all vectors follow
+# the same profile with a normally distributed difference, the contribution of every point to the total error
+# should be roughly equivalent. This corresponds to the cumulative error function x = y. The area of the 
+# empirical cumulative error (triangle) divided by the ideal area yields a measure of equivalence that does
+# not heavily weight the intensity uncertainty
+
+features_sel = features[which(features$CompID == 343),]
+comp_sel = compRegs[703,] # this must be -1 for 0-indexed arrays
+points_A = featCens[which(featCens$featureID == features_sel$ID[1]),]
+points_B = featCens[which(featCens$featureID == features_sel$ID[2]),]
+
+points_A = points_A[which(points_A$retentionTime %in% points_B$retentionTime),]
+points_B = points_B[which(points_B$retentionTime %in% points_A$retentionTime),]
+
+ggplot()+
+  geom_point(aes(points_A$retentionTime, points_A$area), colour = "red2")+
+  geom_point(aes(points_B$retentionTime, points_B$area), colour = "lightblue3")
+
+# scale vectors
+points_A$area = points_A$area / sqrt(sum(points_A$area^2))
+points_B$area = points_B$area / sqrt(sum(points_B$area^2))
+
+ggplot()+
+  geom_point(aes(points_A$retentionTime, points_A$area), colour = "red2")+
+  geom_point(aes(points_B$retentionTime, points_B$area), colour = "lightblue3")
+
+cumSD = 0
+for (i in 1:length(points_A$retentionTime)) {
+  cumSD[i] = sd(c(points_A$area[i], points_B$area[i]))
+}
+
+cumSD = sort(cumSD)
+cumSD = cumsum(cumSD)
+cumSD = cumSD / cumSD[length(cumSD)]
+
+ggplot()+
+  geom_point(aes(x = points_A$retentionTime, y = cumSD), colour = "red2")+
+  geom_abline(slope = 1, intercept = 0, linewidth = 2)
+
+# this process will not work for components of size two, which are the majority of all components
+```
+
+```{r}
+scaleScore = function() {}
+
+# calculate the tanimoto over multiple regressions by taking the minimum and maximum values for a given x
+comp_sel = compRegs[149,] # this must be -1 for 0-indexed arrays
+features_sel = features[which(features$CompID == comp_sel$compID),]
+points = featCens[which(featCens$featureID %in% features_sel$ID),]
+
+# find min and max for every RT
+minima = 0
+maxima = 0
+rts = 0
+for (index in 1:length(points$retentionTime)) {
+  rt = points$retentionTime[index]
+  if (rt %in% rts){
+    next
+  }
+  rts[index] = rt
+  tmpPoints = points[which(points$retentionTime == rt),]
+  tmp_min = min(tmpPoints$area)
+  tmp_max = max(tmpPoints$area)
+  if (tmp_min == tmp_max){
+    minima[index] = NA
+    maxima[index] = NA
+  } else {
+    minima[index] = tmp_min
+    maxima[index] = tmp_max
+  }
+}
+
+minima = na.omit(minima)
+maxima = na.omit(maxima)
+
+squares_ab = minima * maxima
+minima = minima ^2
+maxima = maxima ^2
+
+score = sum(squares_ab) / (sum(minima) + sum(maxima) - sum(squares_ab))
 ```
 
 
@@ -171,5 +278,7 @@ for (i in 1:16) {
 score_real = ab_real / (asq_real + bsq_real - ab_real)
 score_fake = ab_fake / (asq_fake + bsq_fake - ab_fake)
 
+
+ tibble(features[11806,])
 ```
 

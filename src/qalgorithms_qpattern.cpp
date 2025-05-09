@@ -257,6 +257,13 @@ namespace qAlgorithms
                         // 2) perform the multi-regression over the combined EIC for the selection
                         auto mergedEIC = mergeEICs(&eics, &selection, idxStart, idxEnd);
                         const size_t n = components[existingComponent].numPeaks;
+                        if (n + 1 >= 32) [[unlikely]]
+                        {
+                            // @todo this is a hard limit due to the max amount of b0 coeffs we can store. It is only ever triggered by the pump error dataset
+                            // note: the error only ever occurred with the data measured at the moment the pump broke
+                            std::cout << "Warning: the number of component members exceeds the maximum number of features (32)";
+                            continue;
+                        }
                         auto regression = runningRegression_multi(&mergedEIC, &eics, &selection,
                                                                   idxStart, idxEnd, n + 1);
 
@@ -287,6 +294,14 @@ namespace qAlgorithms
                         assert(*ass_L != *ass_S);
 
                         const size_t n = components[*ass_L].numPeaks + components[*ass_S].numPeaks;
+                        if (n >= 32) [[unlikely]]
+                        {
+                            // @todo this is a hard limit due to the max amount of b0 coeffs we can store. It is only ever triggered by the pump error dataset
+                            std::cout << "Warning: the number of component members exceeds the maximum number of features (32)\n";
+                            // note: the error only ever occurred with the data measured at the moment the pump broke
+                            continue;
+                        }
+
                         size_t idxStart = std::min(components[*ass_L].limit_L, eics[*ass_S].featLim_L);
                         size_t idxEnd = std::max(components[*ass_L].limit_R, eics[*ass_S].featLim_R);
                         assert(idxEnd > idxStart);
@@ -371,6 +386,9 @@ namespace qAlgorithms
                 }
                 finalComponents.push_back(components[comp].regression);
                 // the tanimoto-score is calculated using the uniformly scaled intensity vectors of all data points in the region
+                finalComponents.back().DQS = tanimotoScore(&eics, &selection,
+                                                           finalComponents.back().idxStart,
+                                                           finalComponents.back().idxEnd);
                 // use the mean score of a pairwise comparison of all raw EICs
                 // note: tanimoto will require a sensible answer to scaling issues
                 globalCompID++;
@@ -634,6 +652,7 @@ namespace qAlgorithms
         const unsigned int numPeaks)
     // const size_t peakFrame)
     {
+        assert(numPeaks < 32);
         size_t peakFrame = (idxEnd - idxStart + 1);
         size_t maxScale = (peakFrame - 1) / 2 > MAXSCALE ? MAXSCALE : (peakFrame - 1) / 2;
 
@@ -784,9 +803,9 @@ namespace qAlgorithms
 
     std::vector<MultiRegression> findCoefficients_multi( // @todo add option for a minimum scale
         const std::vector<float> *intensity_log,
-        const size_t max_scale,      // maximum scale that will be checked. Should generally be limited by peakFrame
-        const unsigned int numPeaks, // only > 1 during componentisation (for now? @todo)
-        const size_t peakFrame)      // how many points are covered per peak? For single-peak data, this is the length of intensity_log
+        const unsigned int max_scale, // maximum scale that will be checked. Should generally be limited by peakFrame
+        const unsigned int numPeaks,
+        const unsigned int peakFrame) // how many points are covered per peak? For single-peak data, this is the length of intensity_log
     {
         /*
   This function performs a convolution with the kernel: (xTx)^-1 xT and the data array: intensity_log.
@@ -1256,7 +1275,7 @@ namespace qAlgorithms
         {
             result[i] = intensity->at(i + idxStart) / length;
         }
-        return result;
+        return result; // @todo no reason to not mutate the reference / another reference
     }
 
     float tanimotoScore(const std::vector<ReducedEIC> *eics,
@@ -1268,6 +1287,70 @@ namespace qAlgorithms
         // to this end, the euclidean norms of the vectors are compared. The total score is the
         // combination of individual scores, but how?
 
-        // https://arxiv.org/pdf/2411.07983
+        // new score: gini coeff of the standard deviation of normalised intensity at every point
+        // This should be more sensitive to outliers than the tanimoto and less sensitive to the absolute error
+
+        // https://arxiv.org/pdf/2411.07983 // this was decided against since it will not work for components with two elements
+
+        // solution to the multi-reg problem: Always take minimum and maximum of all points at a given RT / scan number
+
+        // 1) scale all regressions to vector length 1
+        // this function discards all non-intensity information since no gaps exist in reduced EICs
+        assert(idxEnd > idxStart);
+        size_t numFeats = selection->size();
+        assert(numFeats > 1);
+        assert(numFeats <= eics->size());
+        size_t length = idxEnd - idxStart + 1;
+        std::vector<std::vector<float>> scaledIntensities(numFeats, std::vector<float>(length, 0));
+
+        for (size_t i = 0; i < numFeats; i++)
+        {
+            size_t id = selection->at(i);
+            scaledIntensities[i] = euclidianNorm(&(eics->at(id).intensity), idxStart, idxEnd);
+        }
+
+        // first attempt: use the square sums || comclusion: not really functional
+        double minSQ = 0;
+        double maxSQ = 0;
+        double minXmax = 0;
+        for (size_t element = 0; element < length; element++)
+        {
+            // min and max of the scaled intensities @todo cache inefficient, consider storing the data differently
+            double min = INFINITY;
+            double max = 0;
+            for (size_t feat = 0; feat < numFeats; feat++)
+            {
+                double val = scaledIntensities[feat][element];
+                min = min < val ? min : val;
+                max = max > val ? max : val;
+            }
+            minSQ += min * min;
+            maxSQ += max * max;
+            minXmax = min * max;
+        }
+
+        // second attempt: use the unmodified area
+        double area_min = 0;
+        double area_max = 0;
+        for (size_t element = 0; element < length; element++)
+        {
+            // min and max of the scaled intensities @todo cache inefficient, consider storing the data differently
+            double min = INFINITY;
+            double max = 0;
+            for (size_t feat = 0; feat < numFeats; feat++)
+            {
+                double val = scaledIntensities[feat][element];
+                min = min < val ? min : val;
+                max = max > val ? max : val;
+            }
+            area_min += min;
+            area_max += max;
+        }
+
+        double DQS_new = area_min / area_max;
+        double DQS = minXmax / (minSQ + maxSQ - minXmax);
+        // @todo control why extremely small values occur here
+        std::cout << DQS << ", " << DQS_new << "   ||   ";
+        return DQS;
     }
 }
