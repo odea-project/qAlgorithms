@@ -783,7 +783,7 @@ namespace qAlgorithms
             return;
         }
 
-        output << "featureID,binID,cenID,mz,mzUncertainty,retentionTime,"
+        output << "featureID,binID,cenID,mz,mzUncertainty,retentionTime,scan"
                << "area,height,degreesOfFreedom,DQSC,DQSB,DQSF,apexLeft,b0,b1,b2,b3\n";
 
         unsigned int counter = 1;
@@ -795,8 +795,8 @@ namespace qAlgorithms
             char buffer[256];
             for (size_t cen = peak.idxBinStart; cen < peak.idxBinEnd + 1; cen++)
             {
-                snprintf(buffer, 256, "%d,%d,%d,%0.6f,%0.6f,%0.4f,%0.3f,%0.3f,%d,%0.5f,%0.5f,%0.5f,%s,%0.8f,%0.8f,%0.8f,%0.8f\n",
-                         counter, binID, bin.cenID[cen], bin.mz[cen], bin.predInterval[cen], bin.rententionTimes[cen],
+                snprintf(buffer, 256, "%d,%d,%d,%0.6f,%0.6f,%0.4f,%d,%0.3f,%0.3f,%d,%0.5f,%0.5f,%0.5f,%s,%0.8f,%0.8f,%0.8f,%0.8f\n",
+                         counter, binID, bin.cenID[cen], bin.mz[cen], bin.predInterval[cen], bin.rententionTimes[cen], bin.scanNumbers[cen],
                          bin.ints_area[cen], bin.ints_height[cen], bin.df[cen], bin.DQSC[cen], bin.DQSB[cen], peak.DQSF,
                          peak.apexLeft ? "T" : "F", peak.coefficients.b0, peak.coefficients.b1, peak.coefficients.b2, peak.coefficients.b3);
                 output << buffer;
@@ -841,7 +841,7 @@ namespace qAlgorithms
             return;
         }
 
-        output << "compID,numPeaks,scanStart,idx0,b1,b2,b3,vals_b0\n"; // @todo make sure the features in a component are in order
+        output << "compID,numPeaks,scanStart,idx0,dqsp,b1,b2,b3,vals_b0\n"; // @todo make sure the features in a component are in order
 
         for (unsigned int regIdx = 0; regIdx < compRegs->size(); regIdx++)
         {
@@ -850,8 +850,8 @@ namespace qAlgorithms
             const unsigned int bufsize = 2048;
             char buffer[bufsize];
             char *b0_buf = buffer; // print b0 to the end
-            unsigned int writtenChars = snprintf(&buffer[0], bufsize, "%u,%u,%u,%u,%0.8f,%0.8f,%0.8f,b0",
-                                                 regIdx + 1, reg.numPeaks, reg.scanStart, reg.idx_x0, reg.b1, reg.b2, reg.b3);
+            unsigned int writtenChars = snprintf(&buffer[0], bufsize, "%u,%u,%u,%u,%0.6f,%0.8f,%0.8f,%0.8f,b0",
+                                                 regIdx + 1, reg.numPeaks, reg.scanStart, reg.idx_x0, reg.DQS, reg.b1, reg.b2, reg.b3);
             assert(writtenChars < bufsize);
             for (size_t b0 = 0; b0 < reg.numPeaks; b0++)
             {
