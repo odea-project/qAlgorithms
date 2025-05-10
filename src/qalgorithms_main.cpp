@@ -94,7 +94,17 @@ int main(int argc, char *argv[])
     }
 
     // the final task list contains only unique files, sorted by filesize
-    auto tasklist = controlInput(&userArgs.inputPaths, userArgs.skipError);
+    std::vector<std::filesystem::__cxx11::path> tasklist = controlInput(&userArgs.inputPaths, userArgs.skipError);
+    if (tasklist.size() <= userArgs.skipAhead)
+    {
+        std::cerr << "Error: skipped more entries than were in taks list (" << tasklist.size() << ").\n";
+        exit(1);
+    }
+    if (userArgs.skipAhead != 0)
+    {
+        std::cerr << "Warning: removing the first " << userArgs.skipAhead << " elements from the tasklist.\n";
+        tasklist.erase(tasklist.begin(), tasklist.begin() + userArgs.skipAhead);
+    }
 
     auto absoluteStart = std::chrono::high_resolution_clock::now();
 

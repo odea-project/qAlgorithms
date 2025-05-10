@@ -16,6 +16,7 @@ namespace qAlgorithms
         // user input for input and output
         std::vector<std::string> inputPaths;
         std::string outputPath = "";
+        size_t skipAhead = 0; // this is intended to make testing over many files more time efficient
         // output options
         bool printCentroids = false;
         bool printBins = false;
