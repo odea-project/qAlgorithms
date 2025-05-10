@@ -143,11 +143,6 @@ namespace qAlgorithms
                     pairs[access].idx_S = idx_S;
                     pairs[access].idx_L = idx_L;
 
-                    if (idx_L == 67 && idx_S == 40)
-                    {
-                        std::cout << "HIT" << idx_S;
-                    }
-
                     auto EIC_B = eics[idx_L];
                     {
                         // before performing the computationally expensive check by regression, we can exclude features
@@ -215,11 +210,6 @@ namespace qAlgorithms
                 if (p.RSS == INFINITY) // the pair cannot form a component by itself, so these features may never be assigned to the same component
                 {
                     continue;
-                }
-
-                if (p.idx_L == 405)
-                {
-                    std::cout << "HIT" << p.idx_S;
                 }
 
                 int *ass_L = &assignment[p.idx_L];
@@ -1304,7 +1294,7 @@ namespace qAlgorithms
         // region than the combined one. @todo consider if it makes sense to propose an alternative
         // set of simple models that all share the larger region
 
-        if (RSS_simple < RSS_complex)
+        if (RSS_simple <= RSS_complex) // there is one recorded case where this was equal
         {
             // the simple model is inherently better, no F-test needed
             // @todo make this the information criterion
@@ -1438,9 +1428,9 @@ namespace qAlgorithms
 
         double DQS_new = area_min / area_max;
         assert(DQS_new < 1);
-        double DQS = minXmax / (minSQ + maxSQ - minXmax);
+        // double DQS = minXmax / (minSQ + maxSQ - minXmax);
         // @todo control why extremely small values occur here
-        std::cout << DQS << ", " << DQS_new << "   ||   ";
-        return DQS;
+        // std::cout << DQS << ", " << DQS_new << "   ||   ";
+        return DQS_new;
     }
 }
