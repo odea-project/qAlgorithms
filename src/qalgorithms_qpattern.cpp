@@ -24,7 +24,7 @@ namespace qAlgorithms
     size_t ERRORCOUNTER = 0;
 
     // this module-local variable is used to prevent negative intensities from occurring
-    float lowestCenArea = 0;
+    float lowestAreaLog = 0;
 
     std::vector<MultiRegression> findComponents(
         std::vector<FeaturePeak> *peaks, // the peaks are updated as part of componentisation
@@ -35,7 +35,7 @@ namespace qAlgorithms
     {
         assert(peaks->begin()->componentID == 0);
 
-        lowestCenArea = lowestArea;
+        lowestAreaLog = log(lowestArea);
 
         unsigned int globalCompID = 1; // this is the component ID later used on a feature level. 0 means not part of a component
 
@@ -142,6 +142,12 @@ namespace qAlgorithms
                     size_t access = idx_S + (idx_L * (idx_L - 1)) / 2; // index of the half matrix where the pair sits
                     pairs[access].idx_S = idx_S;
                     pairs[access].idx_L = idx_L;
+
+                    if (idx_L == 405 && idx_S == 396)
+                    {
+                        std::cout << "HIT" << idx_S;
+                    }
+
                     auto EIC_B = eics[idx_L];
                     {
                         // before performing the computationally expensive check by regression, we can exclude features
@@ -162,7 +168,7 @@ namespace qAlgorithms
                     // merge the EICs that are relevant to both
                     static const std::vector<size_t> select{0, 1}; // smallest RT is always left
                     size_t idxStart = std::min(EIC_A.featLim_L, EIC_B.featLim_L);
-                    size_t idxEnd = std::min(EIC_A.featLim_R, EIC_B.featLim_R);
+                    size_t idxEnd = std::max(EIC_A.featLim_R, EIC_B.featLim_R);
                     assert(idxEnd > idxStart);
                     std::vector<ReducedEIC> eics_pair{EIC_A, EIC_B};
                     auto mergedEIC = mergeEICs(&eics_pair, &select, idxStart, idxEnd);
@@ -207,6 +213,11 @@ namespace qAlgorithms
                 if (p.RSS == INFINITY) // the pair cannot form a component by itself, so these features may never be assigned to the same component
                 {
                     continue;
+                }
+
+                if (p.idx_L == 405)
+                {
+                    std::cout << "HIT" << p.idx_S;
                 }
 
                 int *ass_L = &assignment[p.idx_L];
@@ -322,6 +333,7 @@ namespace qAlgorithms
                             }
                         }
                         // 2) perform the multi-regression over the combined EIC for the selection
+                        // start and end indices need to be adjusted so that
                         auto mergedEIC = mergeEICs(&eics, &selection, idxStart, idxEnd);
                         auto regression = runningRegression_multi(&mergedEIC, &eics, &selection,
                                                                   idxStart, idxEnd, n);
@@ -431,6 +443,7 @@ namespace qAlgorithms
         result.intensity_log.reserve(span);
         result.RSS_cum.reserve(span); // remember to overwrite this! It is no longer accurate after the regression completes
         result.df.reserve(span);
+        result.DF_cum = std::vector<int>(span, 0);
         for (size_t i = 0; i < selection->size(); i++)
         {
             const ReducedEIC *subEIC = &(eics->at(selection->at(i)));
@@ -440,8 +453,11 @@ namespace qAlgorithms
                 result.intensity.push_back(subEIC->intensity[idx]);
                 result.intensity_log.push_back(subEIC->intensity_log[idx]);
                 result.df.push_back(subEIC->df[idx]);
+                result.DF_cum[idx - idxStart]++;
             }
         }
+        assert(result.DF_cum.front() != 0);
+        assert(result.DF_cum.back() != 0);
         result.numPeaks = selection->size();
         result.peakFrame = span;
         result.groupIdxStart = idxStart;
@@ -1160,8 +1176,8 @@ namespace qAlgorithms
                     }
                 }
                 // @todo this is a poor solution, but probably better than having a baseline at zero
-                // predictedInt = predictedInt > lowestCenArea ? predictedInt : lowestCenArea;
-                // assert(predictedInt > 0);
+                predictedInt = predictedInt > lowestAreaLog ? predictedInt : lowestAreaLog;
+                // assert(predictedInt > 0); // this does not apply to real data!
                 // note:
                 reduced.intensity_log[i] = predictedInt;
                 reduced.intensity[i] = std::exp(predictedInt);
@@ -1196,7 +1212,7 @@ namespace qAlgorithms
             float apex_L = (*peaks)[i - 1].retentionTime;
             float apex_R = (*peaks)[i].retentionTime;
             assert(apex_L <= apex_R);
-            // float uncert = std::min((*peaks)[i - 1].retentionTimeUncertainty, (*peaks)[i].retentionTimeUncertainty);
+
             float uncert = ((*peaks)[i - 1].retentionTimeUncertainty + (*peaks)[i].retentionTimeUncertainty) / 2;
             if (apex_R - apex_L > uncert)
             {
@@ -1358,7 +1374,7 @@ namespace qAlgorithms
             }
             minSQ += min * min;
             maxSQ += max * max;
-            minXmax = min * max;
+            minXmax += min * max;
         }
 
         // second attempt: use the unmodified area (harmonised scale means every x is 1, so the area is the mean of i and i+1.
