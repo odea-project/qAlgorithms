@@ -31,6 +31,7 @@ namespace qAlgorithms
         std::vector<FeaturePeak> *peaks,
         const std::vector<EIC> *bins,
         const std::vector<float> *convertRT, // this is needed to perform interpolation at the same RT as in qPeaks
+        float lowestArea,
         bool printRegs);
 
     struct PreGrouping
@@ -82,6 +83,7 @@ namespace qAlgorithms
         std::vector<unsigned int> scanNo;
         std::vector<float> RSS_cum; // cumulative RSS - considers the entire possible block
         std::vector<bool> df;       // @todo get rid of this somehow
+        // std::vector<int> DF_cum;    // cumulative degrees of freedom, @todo use this to ensure at least five points overlap
         unsigned int feature_ID;
         unsigned int bin_ID;
         unsigned int minScan;
