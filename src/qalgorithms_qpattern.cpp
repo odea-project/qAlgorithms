@@ -143,7 +143,7 @@ namespace qAlgorithms
                     pairs[access].idx_S = idx_S;
                     pairs[access].idx_L = idx_L;
 
-                    if (idx_L == 405 && idx_S == 396)
+                    if (idx_L == 67 && idx_S == 40)
                     {
                         std::cout << "HIT" << idx_S;
                     }
@@ -174,24 +174,26 @@ namespace qAlgorithms
                     auto mergedEIC = mergeEICs(&eics_pair, &select, idxStart, idxEnd);
                     auto regression = runningRegression_multi(&mergedEIC, &eics_pair, &select, idxStart, idxEnd, 2);
 
-                    pairs[access].regression = regression; // this introduces some redundancy
-                    pairs[access].idxStart = regression.idxStart;
-                    pairs[access].idxEnd = regression.idxEnd;
-
                     if (regression.b0_vec[0] == 0)
                     {
                         pairs[access].RSS = INFINITY;
                         failRegressions++;
-                        continue;
                     }
                     else
                     {
                         realRegressions++;
+
+                        assert(regression.scale <= MAXSCALE);
+
+                        pairs[access].regression = regression; // this introduces some redundancy
+                        pairs[access].idxStart = regression.idxStart;
+                        pairs[access].idxEnd = regression.idxEnd;
+
+                        pairs[access].cumRSS = regression.cum_RSS;
+                        // return infinity if the regression does not work
+                        pairs[access].RSS = simpleRSS(&regression.cum_RSS, &EIC_A.RSS_cum, &EIC_B.RSS_cum,
+                                                      idxStart, idxEnd, 2, 8);
                     }
-                    pairs[access].cumRSS = regression.cum_RSS;
-                    // return infinity if the regression does not work
-                    pairs[access].RSS = simpleRSS(&regression.cum_RSS, &EIC_A.RSS_cum, &EIC_B.RSS_cum,
-                                                  idxStart, idxEnd, 2, 8);
                 }
             }
             // pairRSS serves as an exclusion matrix and priorisation tool. The component assignment is handled through
@@ -687,7 +689,7 @@ namespace qAlgorithms
         // regressions for every possible scale and window position
         std::vector<MultiRegression> regressions = findCoefficients_multi(&(eic->intensity_log), maxScale, numPeaks, peakFrame);
         // bookkeeping: which regressions are viable?
-        std::vector<bool> regressionOK(regressions.size(), true);
+        std::vector<bool> regressionOK(regressions.size(), false);
         // used to decide on the best overall regression
         std::vector<double> sum_MSE(regressions.size(), 0);
 
@@ -724,7 +726,7 @@ namespace qAlgorithms
             size_t idxEnd = (i + 1) * peakFrame;
             logInt_vecs[i] = std::vector<float>(eic->intensity_log.begin() + idxBegin, eic->intensity_log.begin() + idxEnd);
             intensity_vecs[i] = std::vector<float>(eic->intensity.begin() + idxBegin, eic->intensity.begin() + idxEnd);
-            DF_vecs[i] = std::vector<bool>(eic->df.begin() + idxBegin, eic->df.begin() + idxEnd);
+            DF_vecs[i] = std::vector<bool>(eic->df.begin() + idxBegin, eic->df.begin() + idxEnd); // @todo this does not serve a purpose
         }
 
         for (size_t multiReg = 0; multiReg < regressions.size(); multiReg++)
@@ -734,6 +736,7 @@ namespace qAlgorithms
             auto reg = regressions[multiReg];
             size_t idxRegStart = reg.idxStart;
             size_t scale = reg.scale;
+            assert(scale <= maxScale);
 
             RegCoeffs coeff{0, reg.b1, reg.b2, reg.b3};
             if ((coeff.b1 == 0) || (coeff.b2 == 0) || (coeff.b3 == 0))
@@ -765,12 +768,13 @@ namespace qAlgorithms
                 }
 
                 // check degrees of fredom again with updated limits
-                df = calcDF(&(DF_vecs[i]), testCase.left_limit, testCase.right_limit);
+                df = calcDF(&(eics->at(i).df), testCase.left_limit, testCase.right_limit);
                 if (df < 5)
                 {
                     regressionOK[multiReg] = false;
                     break;
                 }
+                assert(regressions[multiReg].scale <= MAXSCALE);
 
                 // now that only regressions which are logically sensible are present, pick the best one. This uses the sum
                 // of all mse values for the given regression, similar to qPeaks. Different from the previous validation,
@@ -785,6 +789,7 @@ namespace qAlgorithms
                 regressions[multiReg].idxStart = testCase.left_limit;
                 regressions[multiReg].idxEnd = testCase.right_limit;
                 regressions[multiReg].idx_x0 = testCase.index_x0 + idxStart; // this is always in relation to the complete regression window
+                regressionOK[multiReg] = true;
             }
         }
         // decide on the best regression @todo do some statistics regarding how different mse values actually are, then remove
@@ -804,11 +809,15 @@ namespace qAlgorithms
         {
             // scale is 0 by default, use that to check
             MultiRegression a;
+            a.numPeaks = 0;
             a.b0_vec[0] = 0;
             return a; // this will lead to problems further down @todo
         }
         // calculate the cumulative RSS for the entire block @todo this could lead to very large values and problems, make a test
         auto bestReg = regressions[minIdx];
+
+        assert(bestReg.scale <= MAXSCALE);
+
         bestReg.cum_RSS = std::vector<float>(eics->front().intensity.size(), 0); // @todo this is ugly
 
         for (size_t i = 0; i < numPeaks; i++)
@@ -822,6 +831,19 @@ namespace qAlgorithms
         }
         assert(bestReg.idxEnd != bestReg.idxStart);
         bestReg.scanStart = eic->minScan + bestReg.idxStart;
+
+        // @todo remove diagnostics, add conditions: at least one DF per side of x0, at least five df in total per feature
+        for (size_t i = 0; i < selection->size(); i++)
+        {
+            auto selEIC = eics->at(i);
+            int countHits = 0;
+            for (size_t idx = bestReg.idxStart; idx < bestReg.idxEnd + 1; idx++)
+            {
+                countHits += selEIC.df[idx] ? 1 : 0;
+            }
+            assert(countHits > 4);
+        }
+
         return bestReg;
     }
 
