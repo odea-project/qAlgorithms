@@ -396,6 +396,18 @@ namespace qAlgorithms
                 }
                 finalComponents.push_back(components[comp].regression);
                 // the tanimoto-score is calculated using the uniformly scaled intensity vectors of all data points in the region
+
+                // this is just for debugging, remove later @todo
+                for (size_t i = 0; i < selection.size(); i++)
+                {
+                    size_t dfCount = 0;
+                    for (size_t idx = finalComponents.back().idxStart; idx < finalComponents.back().idxEnd + 1; idx++)
+                    {
+                        dfCount += eics[selection[i]].df[idx] ? 1 : 0;
+                    }
+                    assert(dfCount > 4);
+                }
+
                 finalComponents.back().DQS = tanimotoScore(&eics, &selection,
                                                            finalComponents.back().idxStart,
                                                            finalComponents.back().idxEnd);
@@ -758,7 +770,7 @@ namespace qAlgorithms
                 }
 
                 // check degrees of fredom again with updated limits
-                df = calcDF(&(eics->at(i).df), testCase.left_limit, testCase.right_limit);
+                df = calcDF(&(eics->at(selection->at(i)).df), testCase.left_limit, testCase.right_limit);
                 if (df < 5)
                 {
                     regressionOK[multiReg] = false;
@@ -808,6 +820,17 @@ namespace qAlgorithms
 
         assert(bestReg.scale <= MAXSCALE);
 
+        for (size_t i = 0; i < selection->size(); i++)
+        {
+            size_t dfCount = 0;
+            std::vector<bool> df = eics->at(selection->at(i)).df;
+            for (size_t idx = bestReg.idxStart; idx < bestReg.idxEnd + 1; idx++)
+            {
+                dfCount += df[idx] ? 1 : 0;
+            }
+            assert(dfCount > 4);
+        }
+
         bestReg.cum_RSS = std::vector<float>(eics->front().intensity.size(), 0); // @todo this is ugly
 
         for (size_t i = 0; i < numPeaks; i++)
@@ -825,7 +848,7 @@ namespace qAlgorithms
         // @todo remove diagnostics, add conditions: at least one DF per side of x0, at least five df in total per feature
         for (size_t i = 0; i < selection->size(); i++)
         {
-            auto selEIC = eics->at(i);
+            auto selEIC = eics->at(selection->at(i));
             int countHits = 0;
             for (size_t idx = bestReg.idxStart; idx < bestReg.idxEnd + 1; idx++)
             {
@@ -1361,6 +1384,7 @@ namespace qAlgorithms
         assert(numFeats > 1);
         assert(numFeats <= eics->size());
         size_t length = idxEnd - idxStart + 1;
+
         std::vector<std::vector<float>> scaledIntensities(numFeats, std::vector<float>(length, 0));
 
         for (size_t i = 0; i < numFeats; i++)
