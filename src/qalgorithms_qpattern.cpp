@@ -23,13 +23,19 @@ namespace qAlgorithms
     size_t failRegressions = 0;
     size_t ERRORCOUNTER = 0;
 
+    // this module-local variable is used to prevent negative intensities from occurring
+    float lowestCenArea = 0;
+
     std::vector<MultiRegression> findComponents(
         std::vector<FeaturePeak> *peaks, // the peaks are updated as part of componentisation
         const std::vector<EIC> *bins,
         const std::vector<float> *convertRT,
+        float lowestArea,
         bool printRegs)
     {
         assert(peaks->begin()->componentID == 0);
+
+        lowestCenArea = lowestArea;
 
         unsigned int globalCompID = 1; // this is the component ID later used on a feature level. 0 means not part of a component
 
@@ -455,6 +461,10 @@ namespace qAlgorithms
         assert(idxStart + 4 < cum_DF->size());
         assert(cum_DF->front() == 0);
         assert(cum_DF->size() == intensities->size() + 1);
+
+        // there must be at least five real points of each feature within the region
+        // of the regression
+
         /*
           Apex and Valley Position Filter:
           This block of code implements the apex and valley position filter.
@@ -665,8 +675,6 @@ namespace qAlgorithms
         // used to decide on the best overall regression
         std::vector<double> sum_MSE(regressions.size(), 0);
 
-        std::vector<size_t> validHits(regressions.size(), 0);
-
         // for every multi-regression, reconstruct the normal regression and validate. If any derived regression
         // is invalid, the multi-regression is also invalid.
         // we know that the correct interpretation of the component always involves only one regression.
@@ -739,12 +747,14 @@ namespace qAlgorithms
                     break;
                     // continue;
                 }
-                validHits[multiReg]++;
-                // if (validHits[multiReg] > 1)
-                // {
-                //     // volatile bool a = true;
-                //     std::cout << "HIT-" << multiReg << ", ";
-                // }
+
+                // check degrees of fredom again with updated limits
+                df = calcDF(&(DF_vecs[i]), testCase.left_limit, testCase.right_limit);
+                if (df < 5)
+                {
+                    regressionOK[multiReg] = false;
+                    break;
+                }
 
                 // now that only regressions which are logically sensible are present, pick the best one. This uses the sum
                 // of all mse values for the given regression, similar to qPeaks. Different from the previous validation,
@@ -1096,8 +1106,9 @@ namespace qAlgorithms
             std::vector<unsigned int>(length, 0), // scan number
             std::vector<float>(length, 0),        // RSS_cum
             std::vector<bool>(length, true),      // degrees of freedom
-            0,                                    // feature ID is only initialised after function execution
-            feature->idxBin,                      // bin ID
+            // std::vector<int>(length, 0),
+            0,               // feature ID is only initialised after function execution
+            feature->idxBin, // bin ID
             minScan,
 
             scanShift, // these limits are relating to the fully interpolated EIC
@@ -1121,6 +1132,7 @@ namespace qAlgorithms
             }
 
             size_t relIdx = scan - minScan;
+            assert(bin->ints_area[i] > 0);
             reduced.intensity[relIdx] = bin->ints_area[i];
             reduced.intensity_log[relIdx] = log(bin->ints_area[i]);
         }
@@ -1132,18 +1144,36 @@ namespace qAlgorithms
         {
             if (reduced.intensity_log[i] == 0)
             { // value needs to be interpolated
-                float b23 = i > index_x0 ? feature->coefficients.b2 : feature->coefficients.b3;
+                float b23 = i < index_x0 ? feature->coefficients.b2 : feature->coefficients.b3;
                 double xval = double(i) - double(index_x0);
                 float predictedInt = feature->coefficients.b0 + xval * feature->coefficients.b1 + xval * xval * b23;
                 if (b23 > 0) [[unlikely]]
                 {
                     // stopgap solution for positive coefficients, this is very likely a suboptimal idea @todo
-                    predictedInt = reduced.intensity_log[i > index_x0 ? reduced.featLim_L : reduced.featLim_R];
+                    if (i + minScan < feature->scanPeakStart)
+                    {
+                        predictedInt = reduced.intensity_log[reduced.featLim_L];
+                    }
+                    else if (i + minScan > feature->scanPeakEnd)
+                    {
+                        predictedInt = reduced.intensity_log[reduced.featLim_R];
+                    }
                 }
+                // @todo this is a poor solution, but probably better than having a baseline at zero
+                // predictedInt = predictedInt > lowestCenArea ? predictedInt : lowestCenArea;
+                // assert(predictedInt > 0);
+                // note:
                 reduced.intensity_log[i] = predictedInt;
                 reduced.intensity[i] = std::exp(predictedInt);
+                assert(reduced.intensity[i] > 0);
                 reduced.df[i] = false;
+
+                // reduced.DF_cum[i] = i == 0 ? 0 : reduced.DF_cum[i - 1];
             }
+            // else
+            // {
+            //     reduced.DF_cum[i] = i == 0 ? 0 : reduced.DF_cum[i - 1] + 1; // @todo find a better overall solution
+            // }
         }
         // 4) calculate the RSS for all transferred points against the moved regression and write them into
         //    the 0-filled vector for cumRSS. Then, take the cumsum over the vector.
@@ -1266,7 +1296,9 @@ namespace qAlgorithms
         float length = 0;
         for (size_t i = 0; i < numElements; i++)
         {
-            length += intensity->at(i + idxStart) * intensity->at(i + idxStart);
+            float int_i = intensity->at(i + idxStart);
+            assert(int_i > 0);
+            length += int_i * int_i;
         }
         length = sqrt(length);
 
@@ -1329,7 +1361,8 @@ namespace qAlgorithms
             minXmax = min * max;
         }
 
-        // second attempt: use the unmodified area
+        // second attempt: use the unmodified area (harmonised scale means every x is 1, so the area is the mean of i and i+1.
+        // since every i is accessed twice, the sum of all minima / maxima - the outermost two values is the final area)
         double area_min = 0;
         double area_max = 0;
         for (size_t element = 0; element < length; element++)
@@ -1346,8 +1379,27 @@ namespace qAlgorithms
             area_min += min;
             area_max += max;
         }
+        {
+            // outer vals
+            double min_L = INFINITY;
+            double max_L = 0;
+            double min_R = INFINITY;
+            double max_R = 0;
+            for (size_t feat = 0; feat < numFeats; feat++)
+            {
+                double val_L = scaledIntensities[feat].front();
+                double val_R = scaledIntensities[feat].back();
+                min_L = min_L < val_L ? min_L : val_L;
+                max_L = max_L > val_L ? max_L : val_L;
+                min_R = min_R < val_R ? min_R : val_R;
+                max_R = max_R > val_R ? max_R : val_R;
+            }
+            area_min += (min_L + min_R) / 2;
+            area_max += (max_L + max_R) / 2;
+        }
 
         double DQS_new = area_min / area_max;
+        assert(DQS_new < 1);
         double DQS = minXmax / (minSQ + maxSQ - minXmax);
         // @todo control why extremely small values occur here
         std::cout << DQS << ", " << DQS_new << "   ||   ";

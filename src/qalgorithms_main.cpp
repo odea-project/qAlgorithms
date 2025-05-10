@@ -205,6 +205,15 @@ int main(int argc, char *argv[])
             size_t centroidCount = centroids->size();
             // @todo remove diagnostics later
             auto binThis = passToBinning(centroids);
+
+            // find lowest intensity among all centroids to use as baseline during componentisation
+            float minCenArea = INFINITY;
+            for (size_t cenID = 0; cenID < centroidCount; cenID++)
+            {
+                float currentInt = centroids->at(cenID).area;
+                minCenArea = minCenArea < currentInt ? minCenArea : currentInt;
+            }
+
             delete centroids;
 
             double meanDQSC = 0;
@@ -341,7 +350,7 @@ int main(int argc, char *argv[])
 #pragma region "Componentisation"
             timeStart = std::chrono::high_resolution_clock::now();
 
-            const auto components = findComponents(&features, &binnedData, &convertRT, false);
+            const auto components = findComponents(&features, &binnedData, &convertRT, minCenArea, false);
 
             timeEnd = std::chrono::high_resolution_clock::now();
             if (!userArgs.silent)
