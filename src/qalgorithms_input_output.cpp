@@ -56,6 +56,7 @@ namespace qAlgorithms
                                   "      -skip-existing  Do not write to files that already exist, even if an output option is set.\n"
                                   "      -skip-error:    If processing fails, the program will not exit and instead start processing\n"
                                   "                      the next file in the tasklist.\n"
+                                  "      -skipAhead <n>  Skip the first n entries in the tasklist when starting processing \n"
                                   "      -log:           This option will create a detailed log file in the program directory.\n"
                                   "                      It will provide an overview for every processed file which can help you find and\n"
                                   "                      reason about anomalous behaviour in the results.";
@@ -280,6 +281,26 @@ namespace qAlgorithms
             {
                 std::cerr << "Warning: processing will ignore defective files.\n";
                 args.skipError = true;
+            }
+            else if (argument == "-skipAhead")
+            {
+                ++i;
+                if (i == argc)
+                {
+                    std::cerr << "Error: no value to skip ahead specified.\n";
+                    return args;
+                }
+                size_t skipNum = 0;
+                try
+                {
+                    skipNum = std::stoi(argv[i]);
+                }
+                catch (std::invalid_argument const &)
+                {
+                    std::cerr << "Error: you cannot skip ahead by \"" << argv[i] << "\" entries.\n";
+                    return args;
+                }
+                args.skipAhead = skipNum;
             }
             else
             {
