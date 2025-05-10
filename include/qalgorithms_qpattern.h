@@ -22,7 +22,7 @@ namespace qAlgorithms
         float b1;
         float b2;
         float b3;
-        float RT_apex;
+        // float RT_apex;
         float DQS;
     };
 
@@ -102,7 +102,8 @@ namespace qAlgorithms
         std::vector<float> intensity;
         std::vector<float> intensity_log;
         std::vector<float> RSS_cum; // cumulative RSS - this also serves as the indicator for interpolated / not interpolated
-        std::vector<bool> df;       // @todo make this cumulative
+        std::vector<int> DF_cum;
+        std::vector<bool> df; // @todo make this cumulative
         unsigned int numPeaks;
         unsigned int peakFrame;
         unsigned int groupIdxStart; // this is equal to the offset within the group for later
