@@ -172,6 +172,7 @@ int main(int argc, char *argv[])
             // @todo add check if set polarity is correct
             std::vector<CentroidPeak> *centroids = new std::vector<CentroidPeak>;
             *centroids = findCentroids_MZML(data, convertRT, diff_rt, polarity);
+
             if (centroids->empty())
             {
                 if (userArgs.verboseProgress)
@@ -186,7 +187,7 @@ int main(int argc, char *argv[])
             }
             // oneProcessed is true if this is the first loop iteration or if centroids were found in the previous iteration
             if (!oneProcessed)
-            {
+            { // @todo this is really hard to follow, change it
                 if (userArgs.skipError)
                 {
                     ++counter;
@@ -200,6 +201,11 @@ int main(int argc, char *argv[])
                 }
             }
             oneProcessed = false;
+
+            for (size_t i = 1; i < convertRT.size() - 1; i++)
+            {
+                assert(convertRT[i] < convertRT[i + 1]);
+            }
 
             if (!userArgs.silent)
             {

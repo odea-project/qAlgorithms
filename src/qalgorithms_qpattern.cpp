@@ -270,7 +270,8 @@ namespace qAlgorithms
                         {
                             // @todo this is a hard limit due to the max amount of b0 coeffs we can store. It is only ever triggered by the pump error dataset
                             // note: the error only ever occurred with the data measured at the moment the pump broke
-                            std::cout << "Warning: the number of component members exceeds the maximum number of features (32)";
+                            std::cout << "Warning: the number of component members exceeds the maximum number of features (32).\n";
+                            ERRORCOUNTER++;
                             continue;
                         }
                         auto regression = runningRegression_multi(&mergedEIC, &eics, &selection,
@@ -307,7 +308,8 @@ namespace qAlgorithms
                         {
                             // @todo this is a hard limit due to the max amount of b0 coeffs we can store. It is only ever triggered by the pump error dataset
                             std::cout << "Warning: the number of component members exceeds the maximum number of features (32)\n";
-                            // note: the error only ever occurred with the data measured at the moment the pump broke
+                            ERRORCOUNTER++;
+                            // note: occurs during pump error and frequently with SFC data
                             continue;
                         }
 

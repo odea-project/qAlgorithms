@@ -155,51 +155,64 @@ namespace qAlgorithms
         // [start of next block]) extrapolate the first two datapoints of this block
 
         const dataPoint dp_startOfBlock = treatedData.dataPoints[2];
-        // check if the maximum of the block is the first or last data point
-        if (maxOfBlock == blockSize - 1 || dataPoints_internal[maxOfBlock].x == dp_startOfBlock.x)
-        {
-            // extrapolate the left side using the first non-zero data point (i.e, the start of the block)
-            for (int i = 0; i < 2; i++)
-            {
-                // LEFT SIDE
-                dataPoint &dp_left = treatedData.dataPoints[i];
-                dp_left.x = dp_startOfBlock.x - (2 - i) * expectedDifference;
-                dp_left.y = dp_startOfBlock.y;
+        // check if the maximum of the block is the first or last data point.
+        // in this case, it is not possible to extrapolate using the quadratic form
+        // @todo is it sensible to use quadratic extrapolation in the first place? This
+        // could introduce a bias towards phantom signals and only makes sense from the
+        // instrumentation side of things with centroids in a FT-HRMS setup
+        // if (maxOfBlock == blockSize - 1 || maxOfBlock == 0)
+        // {
+        // extrapolate the left side using the first non-zero data point (i.e, the start of the block)
+        treatedData.dataPoints[0].x = dp_startOfBlock.x - 2 * expectedDifference;
+        treatedData.dataPoints[1].x = dp_startOfBlock.x - expectedDifference;
+        treatedData.dataPoints[0].y = dp_startOfBlock.y / 4;
+        treatedData.dataPoints[1].y = dp_startOfBlock.y / 2;
 
-                // RIGHT SIDE
-                treatedData.dataPoints.emplace_back(
-                    dataPoints_internal[blockSize - 1].x + float(i + 1) * expectedDifference, // retention time
-                    dataPoints_internal[blockSize - 1].y,                                     // intensity
-                    false);                                                                   // df
-                treatedData.intensity.push_back(dataPoints_internal[blockSize - 1].y);
-            }
-        }
-        else
-        {
-            const float x[3] = {0.f, dataPoints_internal[maxOfBlock].x - dp_startOfBlock.x, dataPoints_internal[blockSize - 1].x - dp_startOfBlock.x};
-            const float y[3] = {std::log(dp_startOfBlock.y), std::log(dataPoints_internal[maxOfBlock].y), std::log(dataPoints_internal[blockSize - 1].y)};
+        treatedData.intensity[0] = dp_startOfBlock.y / 4;
+        treatedData.intensity[1] = dp_startOfBlock.y / 2;
 
-            auto coeffs = interpolateQuadratic(x, y);
-            // extrapolate the left side of the block
-            for (int i = 0; i < 2; i++)
-            {
-                dataPoint &curr_dp = treatedData.dataPoints[0 + i];
-                curr_dp.x = dp_startOfBlock.x - (2 - i) * expectedDifference;
-                const float x = curr_dp.x - dp_startOfBlock.x;
-                curr_dp.y = std::exp(coeffs[0] + x * (coeffs[1] + x * coeffs[2]));
-            }
-            // add the extrapolated data points to the right side of the block
-            for (int i = 0; i < 2; i++)
-            {
-                const float dp_x = dataPoints_internal[blockSize - 1].x + float(i + 1) * expectedDifference;
-                const float x = dp_x - dp_startOfBlock.x;
-                treatedData.dataPoints.emplace_back(
-                    dp_x,                                                  // retention time
-                    std::exp(coeffs[0] + x * (coeffs[1] + x * coeffs[2])), // intensity
-                    false);                                                // df
-                treatedData.intensity.push_back(std::exp(coeffs[0] + x * (coeffs[1] + x * coeffs[2])));
-            }
-        }
+        size_t l = treatedData.dataPoints.size() - 2;
+        auto endPoint = treatedData.dataPoints[l];
+
+        treatedData.dataPoints[l + 1].x = endPoint.x + 2 * expectedDifference;
+        treatedData.dataPoints[l].x = endPoint.x + expectedDifference;
+        treatedData.dataPoints[l + 1].y = endPoint.y / 4;
+        treatedData.dataPoints[l].y = endPoint.y / 2;
+
+        treatedData.intensity[l + 1] = endPoint.y / 4;
+        treatedData.intensity[l] = endPoint.y / 2;
+
+        assert(treatedData.intensity[0] > 0);
+        assert(!isnanf(treatedData.intensity.back()));
+        // }
+        // else
+        // {
+        //     const float x[3] = {0.f, dataPoints_internal[maxOfBlock].x - dp_startOfBlock.x, dataPoints_internal[blockSize - 1].x - dp_startOfBlock.x};
+        //     const float y[3] = {std::log(dp_startOfBlock.y), std::log(dataPoints_internal[maxOfBlock].y), std::log(dataPoints_internal[blockSize - 1].y)};
+
+        //     auto coeffs = interpolateQuadratic(x, y);
+        //     // extrapolate the left side of the block
+        //     for (int i = 0; i < 2; i++)
+        //     {
+        //         dataPoint &curr_dp = treatedData.dataPoints[0 + i];
+        //         curr_dp.x = dp_startOfBlock.x - (2 - i) * expectedDifference;
+        //         const float x = curr_dp.x - dp_startOfBlock.x;
+        //         curr_dp.y = std::exp(coeffs[0] + x * (coeffs[1] + x * coeffs[2]));
+        //     }
+        //     // add the extrapolated data points to the right side of the block
+        //     for (int i = 0; i < 2; i++)
+        //     {
+        //         const float dp_x = dataPoints_internal[blockSize - 1].x + float(i + 1) * expectedDifference;
+        //         const float x = dp_x - dp_startOfBlock.x;
+        //         treatedData.dataPoints.emplace_back(
+        //             dp_x,                                                  // retention time
+        //             std::exp(coeffs[0] + x * (coeffs[1] + x * coeffs[2])), // intensity
+        //             false);                                                // df
+        //         treatedData.intensity.push_back(std::exp(coeffs[0] + x * (coeffs[1] + x * coeffs[2])));
+        //     }
+        //     assert(treatedData.intensity[0] > 0);
+        //     assert(!isnanf(treatedData.intensity.back()));
+        // }
 
         assert(treatedData.dataPoints.size() == treatedData.intensity.size());
         assert(treatedData.dataPoints.back().y == treatedData.intensity.back()); // works
@@ -506,10 +519,11 @@ namespace qAlgorithms
 
         assert(convertRT.empty());
         convertRT.reserve(countSelected + 4);
-        convertRT.push_back(0); // first two scans do not have retention times @todo this will lead to slightly wrong results, should be fine due to void time
-        convertRT.push_back(0);
+        // first two scans do not have retention times @todo this will lead to slightly wrong results, should be fine due to void time
+        convertRT.push_back(std::max(float(retention_times[0]) - 2 * rt_diff, float(0)));
+        convertRT.push_back(std::max(float(retention_times[0] - 0.999 * rt_diff), float(0)));
         std::vector<size_t> relativeIndex(countSelected, 0);
-        std::vector<size_t> correctedIndex(countSelected, 0);
+        // std::vector<size_t> correctedIndex(countSelected, 0);
 
         // this is the scan counting only MS1 spectra. It starts at two so we don't run into
         // problems with our front extrapolation during feature construction. It shouldn't matter
@@ -518,32 +532,43 @@ namespace qAlgorithms
         // possibility that they were trimmed of void time beforehand!
         size_t abstractScanNumber = 2;
 
-        for (size_t i = 0; i < countSelected - 1; i++)
+        for (size_t i = 0; i < countSelected; i++)
         {
-            float scandiff = retention_times[i + 1] - retention_times[i];
-            int gapSize = static_cast<int>(scandiff / rt_diff + 0.25 * rt_diff);
-            // assert(gapSize > 0); // @todo re-add this with a better implementation
-            correctedIndex[i] = i + gapSize;
-            if (retention_times[i + 1] - retention_times[i] > rt_diff * 1.75)
+            float scandiff = retention_times[i] - convertRT.back(); // avoids problem of iterating n - 1!
+            assert(scandiff > 0);
+            int gapSize = int((scandiff / rt_diff) + 0.25 * rt_diff); // round up at 0.75
+
+            // correctedIndex[i] = i + gapSize;
+            if (gapSize > 1)
             {
-                retention_times[i] += rt_diff * 1.75;
-                convertRT.push_back(retention_times[i]);
-                i--;
+                float gapStep = scandiff / float(gapSize);
+                for (int gap = 1; gap < gapSize + 1; gap++)
+                {
+                    assert(convertRT.back() + gap * gapStep > convertRT.back());
+                    convertRT.push_back(convertRT.back() + gap * gapStep);
+                }
+                abstractScanNumber += gapSize;
             }
-            else
+            if (convertRT.back() >= retention_times[i]) [[unlikely]]
             {
-                convertRT.push_back(retention_times[i]); // convertRT[scan] = retention time of centroid
-                relativeIndex[i] = abstractScanNumber;
+                // workaround for slightly misaligned scans, will need to be fixed with a full rework
+                std::cerr << "Warning: bad estimation of scan no. " << abstractScanNumber << "\n";
+                convertRT.pop_back();
+                abstractScanNumber--;
             }
+
+            assert(convertRT.back() < retention_times[i]);
+            convertRT.push_back(retention_times[i]); // convertRT[scan] = retention time of centroid
+            relativeIndex[i] = abstractScanNumber;   // abstract scan with same index as the input data
             abstractScanNumber++;
         }
-        relativeIndex.back() = abstractScanNumber;
-        convertRT.push_back(retention_times.back());
+        // relativeIndex.back() = abstractScanNumber;
+        // convertRT.push_back(retention_times.back());
         // account for extrapolations at the back @todo the extrapolations should probably be a copile-time variable
         abstractScanNumber += 2;
         convertRT.push_back(retention_times.back() + rt_diff);
         convertRT.push_back(retention_times.back() + rt_diff + rt_diff);
-        assert(convertRT.size() == abstractScanNumber + 1); // ensure that every index has an assigned RT
+        assert(convertRT.size() == abstractScanNumber); // ensure that every index has an assigned RT
 
         // expected difference between two consecutive x-axis values
         double expectedDifference_mz = calcExpectedDiff(&data_vec);
