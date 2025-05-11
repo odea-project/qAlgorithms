@@ -91,6 +91,10 @@ namespace qAlgorithms
         unsigned int featLim_L;
         unsigned int featLim_R;
         unsigned int index_x0;
+        // these limits are the first and last point in the EIC which need to be included in a region
+        // if that region is to be valid. They are set to the fifth real point from every direction
+        unsigned int minIncludedIndex;
+        unsigned int maxIncludedIndex;
     };
 
     struct MergedEIC
