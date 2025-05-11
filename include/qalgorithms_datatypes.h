@@ -113,7 +113,7 @@ namespace qAlgorithms
         RegCoeffs coefficients;
         float height;
         float area;
-        float width;
+        // float width;
         float heightUncertainty;
         float areaUncertainty;
         float DQSF;

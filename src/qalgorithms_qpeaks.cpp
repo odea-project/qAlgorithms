@@ -103,12 +103,17 @@ namespace qAlgorithms
         assert(GLOBAL_MAXSCALE_FEATURES <= MAXSCALE);
 
         std::vector<bool> degreesOfFreedom;
+        degreesOfFreedom.reserve(length);
         std::vector<float> intensity;
+        intensity.reserve(length);
+        std::vector<float> RT_new;
+        RT_new.reserve(length);
         for (size_t position = 0; position < length; position++)
         {
             size_t idx = position;
             intensity.push_back(treatedData.dataPoints[idx].y);
             RT[position] = treatedData.dataPoints[idx].x;
+            RT_new.push_back(treatedData.dataPoints[idx].x);
             degreesOfFreedom.push_back(treatedData.dataPoints[idx].df);
         }
 
@@ -123,7 +128,7 @@ namespace qAlgorithms
         runningRegression(&intensity, &logIntensity, &degreesOfFreedom, validRegressions, maxScale);
         if (!validRegressions.empty())
         {
-            createFeaturePeaks(&all_peaks, &validRegressions, RT);
+            createFeaturePeaks(&all_peaks, &validRegressions, &RT_new, RT);
             // there is no reason for this to be called here and not later @todo
         }
         delete[] RT;
@@ -526,6 +531,10 @@ namespace qAlgorithms
     {
         assert(scale > 1);
         assert(idxStart + 4 < degreesOfFreedom->size());
+        assert(mutateReg->coeffs.b0 < 100 && mutateReg->coeffs.b0 > -100);
+        assert(mutateReg->coeffs.b1 < 100 && mutateReg->coeffs.b1 > -100);
+        assert(mutateReg->coeffs.b2 < 100 && mutateReg->coeffs.b2 > -100);
+        assert(mutateReg->coeffs.b3 < 100 && mutateReg->coeffs.b3 > -100);
         /*
           Apex and Valley Position Filter:
           This block of code implements the apex and valley position filter.
@@ -952,6 +961,7 @@ namespace qAlgorithms
     void createFeaturePeaks(
         std::vector<FeaturePeak> *peaks,
         const std::vector<RegressionGauss> *validRegressionsVec,
+        const std::vector<float> *RT,
         const float *rt_start)
     {
         assert(!validRegressionsVec->empty());
@@ -967,11 +977,14 @@ namespace qAlgorithms
             peak.height = exp_approx_d(coeff.b0 + (regression.apex_position - regression.index_x0) * coeff.b1 * 0.5);
             peak.heightUncertainty = regression.uncertainty_height * peak.height;
 
+            // size_t apexIdx = (size_t)std::floor(regression.apex_position);
             const double rt_leftOfMax = *(rt_start + (int)std::floor(regression.apex_position)); // left of maximum
             const double delta_rt = *(rt_start + (int)std::floor(regression.apex_position) + 1) - rt_leftOfMax;
+            assert(delta_rt > 0);
             const double apex_position = rt_leftOfMax + delta_rt * (regression.apex_position - std::floor(regression.apex_position));
             peak.retentionTime = apex_position;
             peak.retentionTimeUncertainty = regression.uncertainty_pos * delta_rt;
+            assert(peak.retentionTimeUncertainty > 0);
 
             // add area
             float exp_b0 = exp_approx_d(coeff.b0); // exp(b0)
