@@ -28,7 +28,7 @@ namespace qAlgorithms
 
     std::vector<MultiRegression> findComponents(
         std::vector<FeaturePeak> *peaks, // the peaks are updated as part of componentisation
-        const std::vector<EIC> *bins,
+        std::vector<EIC> *bins,
         const std::vector<float> *convertRT,
         float lowestArea,
         bool printRegs)
@@ -393,6 +393,7 @@ namespace qAlgorithms
                     {
                         // update the feature that was passed by reference
                         pregroup.features[feat]->componentID = globalCompID;
+                        pregroup.EICs[feat]->componentID = globalCompID;
                         selection.push_back(feat);
                     }
                 }
@@ -413,8 +414,14 @@ namespace qAlgorithms
                 finalComponents.back().DQS = tanimotoScore(&eics, &selection,
                                                            finalComponents.back().idxStart,
                                                            finalComponents.back().idxEnd);
-                // use the mean score of a pairwise comparison of all raw EICs
-                // note: tanimoto will require a sensible answer to scaling issues
+
+                if (finalComponents.back().DQS == -1)
+                {
+                    // globalCompID--; // @todo decide if this should happen
+                    // finalComponents.pop_back();
+                    std::cerr << "Warning: in group " << groupIdx << ", the EICs associated with component "
+                              << globalCompID << " are identical\n";
+                }
                 globalCompID++;
             }
 
@@ -933,6 +940,7 @@ namespace qAlgorithms
         }
         assert(bestReg.idxEnd != bestReg.idxStart);
         bestReg.scanStart = eic->minScan + bestReg.idxStart;
+        bestReg.scanEnd = eic->minScan + bestReg.idxEnd;
 
         // @todo remove diagnostics, add conditions: at least one DF per side of x0, at least five df in total per feature
         for (size_t i = 0; i < selection->size(); i++)
@@ -1054,7 +1062,7 @@ namespace qAlgorithms
         size_t iterationCount = std::accumulate(maxInnerLoop.begin(), maxInnerLoop.end(), 0) - maxInnerLoop.size(); // no range check necessary since every entry > 1
 
         std::vector<float> emptyRSS(numPeaks, NAN);
-        MultiRegression localEmpty = {{0}, emptyRSS, 0, 0, 0, 0, 0, numPeaks, NAN, NAN, NAN, NAN};
+        MultiRegression localEmpty = {{0}, emptyRSS, 0, 0, 0, 0, 0, 0, numPeaks, NAN, NAN, NAN, NAN};
         std::vector<MultiRegression> coeffs(iterationCount, localEmpty);
 
         // the product sums are the rows of the design matrix (xT) * intensity_log[i:i+4] (dot product)
@@ -1564,7 +1572,13 @@ namespace qAlgorithms
         }
 
         double DQS_new = area_min / area_max;
-        assert(DQS_new < 1);
+        // assert(DQS_new < 1);
+        if (DQS_new >= 1)
+        {
+            ERRORCOUNTER++;
+            return -1;
+        }
+
         // double DQS = minXmax / (minSQ + maxSQ - minXmax);
         // @todo control why extremely small values occur here
         // std::cout << DQS << ", " << DQS_new << "   ||   ";
