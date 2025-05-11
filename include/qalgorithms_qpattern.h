@@ -16,6 +16,7 @@ namespace qAlgorithms
         size_t idxStart;
         size_t idxEnd;
         unsigned int scanStart; // this is the smallest scan still included in the regression
+        unsigned int scanEnd;
         unsigned int idx_x0;
         unsigned int scale;
         unsigned int numPeaks; // @todo track this
@@ -28,8 +29,10 @@ namespace qAlgorithms
 
     // main function to execute a componentiation step on data
     std::vector<MultiRegression> findComponents(
-        std::vector<FeaturePeak> *peaks,
-        const std::vector<EIC> *bins,
+        // note: both features and bins contain a "componentID" field that is 0 by default.
+        // the componentisation function updates these fields in addition to returning the component regressions
+        std::vector<FeaturePeak> *features,
+        std::vector<EIC> *bins,
         const std::vector<float> *convertRT, // this is needed to perform interpolation at the same RT as in qPeaks
         float lowestArea,
         bool printRegs);
@@ -37,7 +40,7 @@ namespace qAlgorithms
     struct PreGrouping
     {
         std::vector<FeaturePeak *> features; // this reference is used to modify the original feature
-        std::vector<EIC *> EICs;
+        std::vector<EIC *> EICs;             // update component ID in bin
 
         // add a sample ID thing here eventually
     };

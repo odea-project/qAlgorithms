@@ -888,5 +888,82 @@ namespace qAlgorithms
         file_out.close();
         return;
     }
+
+    void printComponentCentroids(const std::vector<MultiRegression> *compRegs,
+                                 const std::vector<EIC> *bins,
+                                 std::filesystem::path pathOutput,
+                                 std::string filename,
+                                 bool verbose, bool silent, bool skipError, bool noOverwrite)
+    {
+        filename += "_compCens.csv";
+        pathOutput /= filename;
+
+        if (std::filesystem::exists(pathOutput))
+        {
+            if (noOverwrite)
+            {
+                std::cerr << "Warning: " << pathOutput << " already exists and will not be overwritten\n";
+                return;
+            }
+            std::filesystem::remove(pathOutput);
+        }
+        if (!silent)
+        {
+            std::cout << "writing component regression parameters to: " << pathOutput << "\n";
+        }
+
+        std::ofstream file_out;
+        std::stringstream output;
+        file_out.open(pathOutput, std::ios::out);
+        if (!file_out.is_open())
+        {
+            std::cerr << "Error: could not open output path during component printing. No files have been written.\n"
+                      << "Filename: " << pathOutput << "\n";
+            return;
+        }
+
+        output << "compID,binID,cenID,mz,mzUncertainty,retentionTime,scanNumber,area,height,DQSC\n";
+
+        for (unsigned int binID = 0; binID < bins->size(); binID++)
+        {
+            const EIC bin = bins->at(binID);
+            unsigned int compID = bin.componentID;
+            if (compID == 0)
+            {
+                continue;
+            }
+            size_t scanStart = std::max(compRegs->at(compID - 1).scanStart, bin.scanNumbers[0]);
+            size_t scanEnd = std::min(compRegs->at(compID - 1).scanEnd, bin.scanNumbers.back());
+            size_t idxStart = 0;
+            size_t idxEnd_1 = bin.scanNumbers.size(); // index one past the end
+            // find limits
+            for (size_t i = 0; i < bin.scanNumbers.size(); i++)
+            {
+                if (bin.scanNumbers[i] <= scanStart)
+                {
+                    idxStart = i;
+                }
+                else if (bin.scanNumbers[i] > scanEnd)
+                {
+                    idxEnd_1 = i;
+                    break;
+                }
+            }
+
+            for (size_t i = idxStart; i < idxEnd_1; i++)
+            {
+                char buffer[128];
+                snprintf(buffer, 128, "%u,%u,%u,%0.8f,%0.8f,%0.4f,%d,%0.6f,%0.6f,%0.6f\n",
+                         bin.componentID, binID, bin.cenID[i], bin.mz[i], bin.predInterval[i],
+                         bin.rententionTimes[i], bin.scanNumbers[i], bin.ints_area[i],
+                         bin.ints_height[i], bin.DQSC[i]);
+                output << buffer;
+            }
+        }
+
+        file_out << output.str();
+        file_out.close();
+        return;
+    }
 #pragma endregion "print functions"
 }

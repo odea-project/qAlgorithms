@@ -105,7 +105,8 @@ namespace qAlgorithms
         std::vector<unsigned int> cenID;
         std::vector<size_t> interpolatedIDs;
         std::vector<float> interpolatedDQSB;
-        bool interpolations;
+        size_t componentID = 0; // this is only set during componentisation
+        bool interpolations;    // @todo probably redundant
     };
 
     struct FeaturePeak
