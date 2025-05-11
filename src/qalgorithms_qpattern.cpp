@@ -441,6 +441,37 @@ namespace qAlgorithms
         assert(idxEnd > idxStart);
         size_t eicSize = eics->front().intensity.size();
         assert(idxEnd < eicSize);
+
+        // {
+        //     // this section ensures that no more tha the outermost two points on each end have no degrees of freedom
+        //     // @todo a fundamental error with the way regression limits are passed into functions exists here
+        //     size_t firstRealValFront = idxEnd;
+        //     size_t lastRealValEnd = idxStart;
+        //     for (size_t i = 0; i < selection->size(); i++)
+        //     {
+        //         const ReducedEIC *subEIC = &(eics->at(selection->at(i)));
+        //         assert(subEIC->intensity.size() == eicSize);
+        //         for (size_t idx = idxStart; idx < idxEnd; idx++)
+        //         {
+        //             if (subEIC->df[idx])
+        //             {
+        //                 firstRealValFront = firstRealValFront > idx ? idx : firstRealValFront;
+        //             }
+        //             break;
+        //         }
+        //         for (size_t idx = idxEnd; idx > idxStart; idx--)
+        //         {
+        //             if (subEIC->df[idx])
+        //             {
+        //                 lastRealValEnd = lastRealValEnd < idx ? idx : lastRealValEnd;
+        //             }
+        //             break;
+        //         }
+        //     }
+        //     idxStart = std::max(idxStart, firstRealValFront);
+        //     idxEnd = std::min(idxEnd, lastRealValEnd);
+        // }
+
         size_t span = idxEnd - idxStart + 1;
         MergedEIC result;
         result.intensity.reserve(span);
@@ -529,6 +560,7 @@ namespace qAlgorithms
         }
         assert(mutateReg->right_limit > mutateReg->left_limit);
         assert(mutateReg->right_limit < intensities->size());
+        // @todo this should be passed as a parameter for the sake of clarity
         const size_t idx_x0 = idxStart + scale;
         /*
             Note: left and right limit are not the limits of the regression, but of the window the regression applies in.
@@ -541,11 +573,32 @@ namespace qAlgorithms
             return;
         }
 
+        // since the region within which the regression is formed has no preceding limit checks,
+        // this step ensures that a regression is only valid if it does not require more than
+        // three fully interpolated points to either side. Otherwise, a frequently occurring problem
+        // is regressions preferring the baseline due to perfectly predictable intensities.
+        // the number three is chosen since this is the maximum gap size in a bin. If the degrees
+        // of freedom three points after the regression limit do not change, the regression has
+        // a guaranteed incorrect range. Similarly, the degrees of freedom three points from the end of
+        // the regression must differ from the last df value.
+        if (cum_DF->at(mutateReg->left_limit) == cum_DF->at(mutateReg->left_limit + 3))
+        {
+            return;
+        }
+        if (cum_DF->at(mutateReg->right_limit) == cum_DF->at(mutateReg->right_limit - 3))
+        {
+            return;
+        }
+
         // the degrees of freedom must exceed five for a valid fit. In the multi-model, this is
         // almost always true (change to 5 * num of peaks?)
         // the index in DF is the index of the feature limits + 1. Since cum_DF starts at 0, only the
         // right limit is increased by one for the DF check
         size_t df_sum = cum_DF->at(mutateReg->right_limit + 1) - cum_DF->at(mutateReg->left_limit);
+        if (df_sum < 5)
+        {
+            return;
+        }
 
         /*
           Apex to Edge Filter:
@@ -746,6 +799,10 @@ namespace qAlgorithms
                 regressionOK[multiReg] = false;
                 continue;
             }
+            // limits are adjusted when assigning validity
+            regressions[multiReg].idxStart = idxStart;
+            regressions[multiReg].idxEnd = idxEnd;
+            regressions[multiReg].idx_x0 = idxRegStart + scale; // this is always in relation to the complete regression window
 
             for (size_t i = 0; i < numPeaks; i++)
             {
@@ -778,6 +835,21 @@ namespace qAlgorithms
                 }
                 assert(regressions[multiReg].scale <= MAXSCALE);
 
+                regressions[multiReg].idxStart = std::max(size_t(testCase.left_limit), regressions[multiReg].idxStart);
+                regressions[multiReg].idxEnd = std::min(size_t(testCase.right_limit), regressions[multiReg].idxEnd);
+
+                auto selDF = eics->at(selection->at(i)).df;
+                int countHits = 0;
+                for (size_t idx = regressions[multiReg].idxStart; idx < regressions[multiReg].idxEnd + 1; idx++)
+                {
+                    countHits += selDF[idx] ? 1 : 0;
+                }
+                if (countHits < 5)
+                {
+                    regressionOK[multiReg] = false;
+                    break;
+                }
+
                 // now that only regressions which are logically sensible are present, pick the best one. This uses the sum
                 // of all mse values for the given regression, similar to qPeaks. Different from the previous validation,
                 // the RSS is calculated cumulatively over the entire possible region
@@ -788,9 +860,6 @@ namespace qAlgorithms
                                          testCase.index_x0);
                 sum_MSE[multiReg] += mse / (testCase.df - numPeaks - 3);
 
-                regressions[multiReg].idxStart = testCase.left_limit;
-                regressions[multiReg].idxEnd = testCase.right_limit;
-                regressions[multiReg].idx_x0 = testCase.index_x0 + idxStart; // this is always in relation to the complete regression window
                 regressionOK[multiReg] = true;
             }
         }
@@ -802,8 +871,26 @@ namespace qAlgorithms
         {
             if (regressionOK[i] && min_MSE > sum_MSE[i])
             {
-                min_MSE = sum_MSE[i];
-                minIdx = i;
+                bool regOK = true;
+                for (size_t i = 0; i < selection->size(); i++)
+                {
+                    size_t dfCount = 0;
+                    std::vector<bool> df = eics->at(selection->at(i)).df;
+                    for (size_t idx = regressions[i].idxStart; idx < regressions[i].idxEnd + 1; idx++)
+                    {
+                        dfCount += df[idx] ? 1 : 0;
+                    }
+                    if (dfCount < 5)
+                    {
+                        regOK = false;
+                        break;
+                    }
+                }
+                if (regOK)
+                {
+                    min_MSE = sum_MSE[i];
+                    minIdx = i;
+                }
             }
         }
 
@@ -848,11 +935,11 @@ namespace qAlgorithms
         // @todo remove diagnostics, add conditions: at least one DF per side of x0, at least five df in total per feature
         for (size_t i = 0; i < selection->size(); i++)
         {
-            auto selEIC = eics->at(selection->at(i));
+            auto selDF = eics->at(selection->at(i)).df;
             int countHits = 0;
             for (size_t idx = bestReg.idxStart; idx < bestReg.idxEnd + 1; idx++)
             {
-                countHits += selEIC.df[idx] ? 1 : 0;
+                countHits += selDF[idx] ? 1 : 0;
             }
             assert(countHits > 4);
         }
@@ -1164,7 +1251,10 @@ namespace qAlgorithms
 
             scanShift, // these limits are relating to the fully interpolated EIC
             feature->scanPeakEnd - minScan,
-            index_x0};
+            index_x0,
+            // these limits will lead to nonsense behaviour if not set
+            length - 1,
+            0};
 
         std::iota(reduced.scanNo.begin(), reduced.scanNo.end(), minScan);
 
@@ -1189,8 +1279,7 @@ namespace qAlgorithms
         }
         // add points from outside the window?
 
-        // 3) interpolate all intensities at 0 (log only for now)
-        // this is combined with the RSS calculation
+        // 3) interpolate all intensities at 0
         for (size_t i = 0; i < length; i++)
         {
             if (reduced.intensity_log[i] == 0)
@@ -1212,25 +1301,47 @@ namespace qAlgorithms
                 }
                 // @todo this is a poor solution, but probably better than having a baseline at zero
                 predictedInt = predictedInt > lowestAreaLog ? predictedInt : lowestAreaLog;
-                // assert(predictedInt > 0); // this does not apply to real data!
-                // note:
+
                 reduced.intensity_log[i] = predictedInt;
                 reduced.intensity[i] = std::exp(predictedInt);
                 assert(reduced.intensity[i] > 0);
                 reduced.df[i] = false;
-
-                // reduced.DF_cum[i] = i == 0 ? 0 : reduced.DF_cum[i - 1];
             }
-            // else
-            // {
-            //     reduced.DF_cum[i] = i == 0 ? 0 : reduced.DF_cum[i - 1] + 1; // @todo find a better overall solution
-            // }
         }
         // 4) calculate the RSS for all transferred points against the moved regression and write them into
         //    the 0-filled vector for cumRSS. Then, take the cumsum over the vector.
         reduced.RSS_cum = cumulativeRSS(&reduced.intensity, &feature->coefficients, index_x0);
-        assert(reduced.RSS_cum.back() != INFINITY); // @todo this should not happen
+        assert(reduced.RSS_cum.back() != INFINITY);
 
+        // set the inclusion limits by finding the fifth point from either side that is not interpolated
+        {
+            size_t realCountL = 0;
+            for (size_t i = 0; i < length; i++)
+            {
+                if (reduced.df[i])
+                {
+                    realCountL++;
+                }
+                if (realCountL == 5)
+                {
+                    reduced.minIncludedIndex = i;
+                    break;
+                }
+            }
+            size_t realCountR = 0;
+            for (size_t i = length - 1; i > 0; i--)
+            {
+                if (reduced.df[i])
+                {
+                    realCountR++;
+                }
+                if (realCountR == 5)
+                {
+                    reduced.maxIncludedIndex = i;
+                    break;
+                }
+            }
+        }
         return reduced;
     }
 
