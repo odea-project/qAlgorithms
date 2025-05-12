@@ -76,6 +76,7 @@ namespace qAlgorithms
             // every pre-group describes a varying-size region of data in the entire mass spectrum.
             // this loop determines the range (in scans) that is relevant to this grouping
             pregroup.features.reserve(groupsize);
+            pregroup.EICs.reserve(groupsize);
             unsigned int maxScan = 0;
             unsigned int minScan = 4294967295; // max value of unsigned int
             for (size_t j = limits[groupIdx].start; j < limits[groupIdx].end + 1; j++)
@@ -95,6 +96,7 @@ namespace qAlgorithms
                     continue;
                 }
                 pregroup.features.push_back(test);
+                pregroup.EICs.push_back(&(bins->at(test->idxBin)));
             }
             assert(maxScan < convertRT->size());
             if (groupsize < 2)
@@ -116,6 +118,7 @@ namespace qAlgorithms
             {
                 const FeaturePeak *feature = pregroup.features[j];
                 const EIC *bin = &bins->at(feature->idxBin);
+                assert(bin == pregroup.EICs[j]); // @todo clean this up
                 eics.push_back(harmoniseEIC(feature, bin, &unifiedRT, minScan, maxScan));
                 eics.back().feature_ID = j;
                 assert(eics[j].intensity.size() == eics[0].intensity.size());
