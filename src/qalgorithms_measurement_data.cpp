@@ -183,7 +183,7 @@ namespace qAlgorithms
         treatedData.intensity[l] = endPoint.y / 2;
 
         assert(treatedData.intensity[0] > 0);
-        assert(!isnanf(treatedData.intensity.back()));
+        // assert(!isnanf(treatedData.intensity.back())); // @todo this is os-specific, windows does not have access to isnanf
         // }
         // else
         // {

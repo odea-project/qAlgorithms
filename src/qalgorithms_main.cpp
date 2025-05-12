@@ -387,6 +387,12 @@ int main(int argc, char *argv[])
                                           userArgs.printExtended, userArgs.silent, userArgs.skipError, userArgs.noOverwrite);
             }
 
+            if (userArgs.printComponentBins)
+            {
+                printComponentCentroids(&components, &binnedData, userArgs.outputPath, filename,
+                                        userArgs.printExtended, userArgs.silent, userArgs.skipError, userArgs.noOverwrite);
+            }
+
             if (userArgs.doLogging)
             {
                 logWriter.open(pathLogging, std::ios::app);
