@@ -46,9 +46,11 @@ namespace qAlgorithms
                                   //   "                                  were used to create the final peaks. This does not return any quality\n"
                                   //   "                                  scores. Only use this option when reading in prodile mode files.\n"
                                   "      -px, -printfeatcen:         Print all centroids that are a part of the final feature list, including debug data.\n"
-                                  "      -pp, -printcomponents       Print the component regressions that belong to the generated feature list. The values for\n"
+                                  "      -ppf, -printcomponentsF     Print the component regressions that belong to the generated feature list. The values for\n"
                                   "                                  beta 0 are printed in order of the retention time of the associated features (check the feature\n"
                                   "                                  list for this) and separated by a semicolon. The feature list is always printend if this is set.\n"
+                                  "      -ppb, -printcomponentsB     Print all centroids that are part of components. Similar to -ppf, but considers the range of the\n"
+                                  "                                  newly constructed regression for which centroids are relevant. Also prints the components themselves.\n"
                                   "      -pa, -printall:             Print all availvable resutlts. You will probably not need to do this.\n"
                                   "    Program behaviour:\n"
                                   //   "      -s, -silent:    do not print progress reports to standard out.\n" // @todo add an option for printing all process stats without timing and explanations for use with CLI toolchains
@@ -246,10 +248,15 @@ namespace qAlgorithms
             {
                 args.printSubProfile = true;
             }
-            else if ((argument == "-pp") || (argument == "-printcomponents"))
+            else if ((argument == "-ppf") || (argument == "-printcomponentsF"))
             {
                 args.printComponents = true;
                 args.printFeatures = true;
+            }
+            else if ((argument == "-ppb") || (argument == "-printcomponentsB"))
+            {
+                args.printComponents = true;
+                args.printComponentBins = true;
             }
             else if ((argument == "-px") || (argument == "-printfeatcen"))
             {
@@ -954,7 +961,7 @@ namespace qAlgorithms
             {
                 char buffer[128];
                 snprintf(buffer, 128, "%u,%u,%u,%0.8f,%0.8f,%0.4f,%d,%0.6f,%0.6f,%0.6f\n",
-                         bin.componentID, binID, bin.cenID[i], bin.mz[i], bin.predInterval[i],
+                         compID, binID, bin.cenID[i], bin.mz[i], bin.predInterval[i],
                          bin.rententionTimes[i], bin.scanNumbers[i], bin.ints_area[i],
                          bin.ints_height[i], bin.DQSC[i]);
                 output << buffer;
