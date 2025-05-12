@@ -25,6 +25,7 @@ namespace qAlgorithms
         bool printSubProfile = false;
         bool printFeatCens = false;
         bool printComponents = false;
+        bool printComponentBins = false;
         // progress reporting
         bool silent = false;
         bool verboseProgress = false;
@@ -103,6 +104,12 @@ namespace qAlgorithms
                                    std::filesystem::path pathOutput,
                                    std::string filename,
                                    bool verbose, bool silent, bool skipError, bool noOverwrite);
+
+    void printComponentCentroids(const std::vector<MultiRegression> *compRegs,
+                                 const std::vector<EIC> *bins,
+                                 std::filesystem::path pathOutput,
+                                 std::string filename,
+                                 bool verbose, bool silent, bool skipError, bool noOverwrite);
 
     void printLogfile(std::filesystem::path pathLogfile); // @todo
 
