@@ -250,12 +250,12 @@ namespace qAlgorithms
             }
             else if ((argument == "-ppf") || (argument == "-printcomponentsF"))
             {
-                args.printComponents = true;
+                args.printComponentRegs = true;
                 args.printFeatures = true;
             }
             else if ((argument == "-ppb") || (argument == "-printcomponentsB"))
             {
-                args.printComponents = true;
+                args.printComponentRegs = true;
                 args.printComponentBins = true;
             }
             else if ((argument == "-px") || (argument == "-printfeatcen"))
@@ -269,7 +269,8 @@ namespace qAlgorithms
                 args.printFeatures = true;
                 args.printSubProfile = true;
                 args.printFeatCens = true;
-                args.printComponents = true;
+                args.printComponentRegs = true;
+                args.printComponentBins = true;
             }
             else if (argument == "-log")
             {
@@ -916,7 +917,7 @@ namespace qAlgorithms
         }
         if (!silent)
         {
-            std::cout << "writing component regression parameters to: " << pathOutput << "\n";
+            std::cout << "writing centroids in non-feature components to: " << pathOutput << "\n";
         }
 
         std::ofstream file_out;

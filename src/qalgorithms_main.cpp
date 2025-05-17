@@ -381,7 +381,7 @@ int main(int argc, char *argv[])
                                  userArgs.printExtended, userArgs.silent, userArgs.skipError, userArgs.noOverwrite);
             }
 
-            if (userArgs.printComponents)
+            if (userArgs.printComponentRegs)
             {
                 printComponentRegressions(&components, userArgs.outputPath, filename,
                                           userArgs.printExtended, userArgs.silent, userArgs.skipError, userArgs.noOverwrite);
