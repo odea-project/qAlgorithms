@@ -24,7 +24,7 @@ namespace qAlgorithms
         bool printFeatures = false;
         bool printSubProfile = false;
         bool printFeatCens = false;
-        bool printComponents = false;
+        bool printComponentRegs = false;
         bool printComponentBins = false;
         // progress reporting
         bool silent = false;
