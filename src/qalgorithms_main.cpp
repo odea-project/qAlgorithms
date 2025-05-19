@@ -314,6 +314,13 @@ int main(int argc, char *argv[])
             timeStart = std::chrono::high_resolution_clock::now();
             // every subvector of peaks corresponds to the bin ID
             auto features = findPeaks_QBIN(binnedData, diff_rt, convertRT.size());
+
+            if (features.size() == 0)
+            {
+                std::cout << "Warning: no features were constructed, continuing...\n";
+                continue;
+            }
+
             // make sure that every peak contains only one mass trace
             assert(features.size() <= binnedData.size());
             int peaksWithMassGaps = 0;
