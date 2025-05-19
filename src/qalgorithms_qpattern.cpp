@@ -31,10 +31,10 @@ namespace qAlgorithms
         std::vector<EIC> *bins,
         const std::vector<float> *convertRT,
         float lowestArea,
-        bool printRegs)
+        size_t *featuresInComponents)
     {
         assert(peaks->begin()->componentID == 0);
-
+        assert(featuresInComponents == 0);
         lowestAreaLog = log(lowestArea);
 
         unsigned int globalCompID = 1; // this is the component ID later used on a feature level. 0 means not part of a component
@@ -398,6 +398,7 @@ namespace qAlgorithms
                         pregroup.features[feat]->componentID = globalCompID;
                         pregroup.EICs[feat]->componentID = globalCompID;
                         selection.push_back(feat);
+                        featuresInComponents++;
                     }
                 }
                 finalComponents.push_back(components[comp].regression);
