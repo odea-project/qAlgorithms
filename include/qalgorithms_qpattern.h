@@ -35,7 +35,7 @@ namespace qAlgorithms
         std::vector<EIC> *bins,
         const std::vector<float> *convertRT, // this is needed to perform interpolation at the same RT as in qPeaks
         float lowestArea,
-        bool printRegs);
+        size_t *featuresInComponents);
 
     struct PreGrouping
     {

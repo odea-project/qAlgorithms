@@ -110,9 +110,12 @@ int main(int argc, char *argv[])
 
     // Temporary diagnostics file creation, rework this into the log function?
     std::filesystem::path pathLogging{argv[0]};
-    std::string logfileName = "log_qAlgorithms.csv";
-    pathLogging = std::filesystem::canonical(pathLogging.parent_path());
-    pathLogging /= logfileName;
+    // std::string logfileName = "log_qAlgorithms.csv";
+    // pathLogging = std::filesystem::canonical(pathLogging.parent_path());
+    // pathLogging = logfileName;
+    std::string logfileName = "_log.csv";
+    pathLogging = std::filesystem::canonical(pathLogging);
+    pathLogging += logfileName;
     std::fstream logWriter;
     if (userArgs.doLogging)
     /// @todo make a separate logging object
@@ -122,7 +125,7 @@ int main(int argc, char *argv[])
             std::cerr << "Warning: the processing log has been overwritten\n";
         }
         logWriter.open(pathLogging, std::ios::out);
-        logWriter << "filename, numSpectra, numCentroids, meanDQSC, numBins, binsTooLarge, meanDQSB, numFeatures, badFeatures, meanInterpolations, meanDQSF\n";
+        logWriter << "filename, numSpectra, numCentroids, meanDQSC, numBins, binsTooLarge, meanDQSB, numFeatures, badFeatures, meanInterpolations, meanDQSF, numComponentRegs, numComponentFeatures\n";
         logWriter.close();
     }
 
@@ -366,13 +369,14 @@ int main(int argc, char *argv[])
 #pragma region "Componentisation"
             timeStart = std::chrono::high_resolution_clock::now();
 
-            const auto components = findComponents(&features, &binnedData, &convertRT, minCenArea, false);
+            size_t featuresInComponents = 0; // only used as a count statistic
+            const auto components = findComponents(&features, &binnedData, &convertRT, minCenArea, &featuresInComponents);
 
             timeEnd = std::chrono::high_resolution_clock::now();
             if (!userArgs.silent)
             {
                 timePassed = std::chrono::duration_cast<std::chrono::milliseconds>(timeEnd - timeStart);
-                std::cout << "    grouped " << features.size() << " features into " << components.size() << " components in " << timePassed.count() << " s\n";
+                std::cout << "    grouped " << featuresInComponents << " features into " << components.size() << " components in " << timePassed.count() << " s\n";
             }
 
             if (userArgs.printFeatures) // this is here so we can incorporate the component ID into the output
@@ -398,7 +402,8 @@ int main(int argc, char *argv[])
                 logWriter.open(pathLogging, std::ios::app);
                 logWriter << filename << ", " << centroidCount << ", " << binThis.size() << ", "
                           << meanDQSC / binThis.size() << ", " << binnedData.size() << ", " << badBinCount << ", " << meanDQSB
-                          << ", " << features.size() << ", " << peaksWithMassGaps << ", " << meanInterpolations << ", " << meanDQSF << "\n";
+                          << ", " << features.size() << ", " << peaksWithMassGaps << ", " << meanInterpolations << ", " << meanDQSF
+                          << components.size() << ", " << featuresInComponents << "\n";
                 logWriter.close();
             }
         }
