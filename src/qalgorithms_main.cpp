@@ -407,7 +407,7 @@ int main(int argc, char *argv[])
             if (userArgs.doLogging)
             {
                 logWriter.open(pathLogging, std::ios::app);
-                logWriter << filename << ", " << centroidCount << ", " << binThis.size() << ", "
+                logWriter << filename << ", " << data.number_spectra << ", " << centroidCount << ", "
                           << meanDQSC / binThis.size() << ", " << binnedData.size() << ", " << badBinCount << ", " << meanDQSB
                           << ", " << features.size() << ", " << peaksWithMassGaps << ", " << meanInterpolations << ", " << meanDQSF
                           << components.size() << ", " << featuresInComponents << "\n";
@@ -417,7 +417,7 @@ int main(int argc, char *argv[])
         counter++;
     }
 
-#pragma region "Logging and similar"
+#pragma region "Logging and similar" // @todo add an option for custom logfile names
     auto absoluteEnd = std::chrono::high_resolution_clock::now();
     if (!userArgs.silent)
     {
