@@ -55,7 +55,7 @@ for (compID in 1:max(features$CompID)) {
 
 
 ```{r}
-compID = 1
+compID = 247
 mzDiffCount = 0
 intensityDiffGreaterTwo = 0
 
@@ -125,25 +125,35 @@ feat = features[which(features$CompID == 343),]
 # empirical cumulative error (triangle) divided by the ideal area yields a measure of equivalence that does
 # not heavily weight the intensity uncertainty
 
-features_sel = features[which(features$CompID == 343),]
-comp_sel = compRegs[703,] # this must be -1 for 0-indexed arrays
+features_sel = features[which(features$CompID == 247),]
+comp_sel = compRegs[247,] # this must be -1 for 0-indexed arrays
 points_A = featCens[which(featCens$featureID == features_sel$ID[1]),]
 points_B = featCens[which(featCens$featureID == features_sel$ID[2]),]
+points_C = featCens[which(featCens$featureID == features_sel$ID[3]),]
+points_D = featCens[which(featCens$featureID == features_sel$ID[4]),]
 
-points_A = points_A[which(points_A$retentionTime %in% points_B$retentionTime),]
-points_B = points_B[which(points_B$retentionTime %in% points_A$retentionTime),]
+# points_A = points_A[which(points_A$retentionTime %in% points_B$retentionTime),]
+# points_B = points_B[which(points_B$retentionTime %in% points_A$retentionTime),]
+# points_A = points_A[which(points_A$retentionTime %in% points_B$retentionTime),]
+# points_B = points_B[which(points_B$retentionTime %in% points_A$retentionTime),]
 
 ggplot()+
   geom_point(aes(points_A$retentionTime, points_A$area), colour = "red2")+
-  geom_point(aes(points_B$retentionTime, points_B$area), colour = "lightblue3")
+  geom_point(aes(points_B$retentionTime, points_B$area), colour = "lightblue")+
+  geom_point(aes(points_C$retentionTime, points_C$area), colour = "green")+
+  geom_point(aes(points_D$retentionTime, points_D$area), colour = "orange")
 
 # scale vectors
 points_A$area = points_A$area / sqrt(sum(points_A$area^2))
 points_B$area = points_B$area / sqrt(sum(points_B$area^2))
+points_C$area = points_C$area / sqrt(sum(points_C$area^2))
+points_D$area = points_D$area / sqrt(sum(points_D$area^2))
 
 ggplot()+
   geom_point(aes(points_A$retentionTime, points_A$area), colour = "red2")+
-  geom_point(aes(points_B$retentionTime, points_B$area), colour = "lightblue3")
+  geom_point(aes(points_B$retentionTime, points_B$area), colour = "lightblue")+
+  geom_point(aes(points_C$retentionTime, points_C$area), colour = "green")+
+  geom_point(aes(points_D$retentionTime, points_D$area), colour = "orange")
 
 cumSD = 0
 for (i in 1:length(points_A$retentionTime)) {
