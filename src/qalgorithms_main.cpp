@@ -317,7 +317,7 @@ int main(int argc, char *argv[])
 
             if (features.size() == 0)
             {
-                std::cout << "Warning: no features were constructed, continuing...\n";
+                std::cerr << "Warning: no features were constructed, continuing...\n";
                 continue;
             }
 
