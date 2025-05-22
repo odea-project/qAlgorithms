@@ -33,6 +33,8 @@ namespace qAlgorithms
         float lowestArea,
         size_t *featuresInComponents)
     {
+        std::cout << "pregroup,pairs,excludes,totalComps\n";
+
         assert(peaks->begin()->componentID == 0);
         assert(*featuresInComponents == 0);
         lowestAreaLog = log(lowestArea);
@@ -48,7 +50,6 @@ namespace qAlgorithms
             // @todo factor the loop internals into at least one function
             PreGrouping pregroup;
             size_t groupsize = limits[groupIdx].end - limits[groupIdx].start + 1;
-            // std::cout << groupsize << ", ";
 
             if (groupsize == 1)
             {
@@ -57,6 +58,7 @@ namespace qAlgorithms
                 {
                     VALLEYS_1++;
                 }
+                std::cout << 0 << ", " << 0 << "\n";
                 continue;
             }
             for (size_t j = limits[groupIdx].start; j < limits[groupIdx].end + 1; j++)
@@ -67,11 +69,6 @@ namespace qAlgorithms
                 }
             }
             assert(VALLEYS_other < peaks->size());
-
-            // if (groupsize > 10) // this is only to speed up testing - @todo remove!
-            // {
-            //     continue;
-            // }
 
             // every pre-group describes a varying-size region of data in the entire mass spectrum.
             // this loop determines the range (in scans) that is relevant to this grouping
@@ -207,12 +204,16 @@ namespace qAlgorithms
             std::sort(pairs.begin(), pairs.end(), [](const RSS_pair lhs, const RSS_pair rhs)
                       { return lhs.RSS < rhs.RSS; });
 
+            size_t excludes = 0;
+            size_t finalCompares = 0; // todo: this is often 0 or 1, check if it is too strict a criterium
+
             for (size_t i = 0; i < pairs.size(); i++) // @todo length of pairs = the number of RSS - infinity
             {
                 auto p = pairs[i];
                 if (p.RSS == INFINITY) // the pair cannot form a component by itself, so these features may never be assigned to the same component
                 {
-                    continue;
+                    excludes = pairs.size() - i;
+                    break;
                 }
 
                 int *ass_L = &assignment[p.idx_L];
@@ -223,6 +224,7 @@ namespace qAlgorithms
                     // if the component ID is not -1, both are assigned to the same component -> do nothing
                     if (*ass_L == -1)
                     {
+                        finalCompares++;
                         // form a new component from the two features
                         *ass_L = componentGroup;
                         *ass_S = componentGroup;
@@ -240,6 +242,7 @@ namespace qAlgorithms
                 }
                 else
                 { // @todo this can be condensed by merging the selection assignment and other stuff
+                    finalCompares++;
                     if ((*ass_L == -1) || (*ass_S == -1))
                     {
                         // one feature is assigned, the other is not
@@ -374,6 +377,8 @@ namespace qAlgorithms
                 }
             } // outer if statement
 
+            std::cout << groupsize << "," << pairs.size() << "," << excludes << "," << finalCompares << "\n";
+
             assert(componentGroup > -1);
             assert((size_t(componentGroup)) <= groupsize);
 #pragma endregion "Iterative Assign"
@@ -431,10 +436,10 @@ namespace qAlgorithms
 
 #pragma endregion "cleanup"
         }
-        std::cout << std::endl;
-        std::cout << "1: " << VALLEYS_1 << " ; other: " << VALLEYS_other << "\n"; // at least for one dataset, features with a valley point are much more likely
-        // to be groups of size 1 than to be included in larger groups (ca. twice as likely)
-        std::cout << "fails: " << failRegressions << ", real ones: " << realRegressions << ", Errors: " << ERRORCOUNTER << "\n";
+        // std::cout << std::endl;
+        // std::cout << "1: " << VALLEYS_1 << " ; other: " << VALLEYS_other << "\n"; // at least for one dataset, features with a valley point are much more likely
+        // // to be groups of size 1 than to be included in larger groups (ca. twice as likely)
+        // std::cout << "fails: " << failRegressions << ", real ones: " << realRegressions << ", Errors: " << ERRORCOUNTER << "\n";
         failRegressions = 0;
         realRegressions = 0;
         VALLEYS_1 = 0;
