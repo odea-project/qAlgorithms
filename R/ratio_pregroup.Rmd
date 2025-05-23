@@ -1,0 +1,126 @@
+---
+title: "Untitled"
+author: "Daniel Höhn"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(numbers)
+```
+
+```{r}
+DAA7 = read_csv("C:/Users/unisys/Downloads/compares_SP_DDA_P7.csv", col_types = "iiii")
+DAA7$type = "DAA7"
+rats_p = read_csv("C:/Users/unisys/Downloads/compares_rat_stool_100_p.csv", col_types = "iiii")
+rats_p$type = "rats_p"
+rats_n = read_csv("C:/Users/unisys/Downloads/compares_rat_stool_100_n.csv", col_types = "iiii")
+rats_n$type = "rats_n"
+WWTP = read_csv("C:/Users/unisys/Downloads/compares_aquaflow_C3_S5_I_1.csv", col_types = "iiii")
+WWTP$type = "WWTP"
+merge = rbind(DAA7,rats_p,rats_n,WWTP)
+merge$totalComps[which(is.na(merge$totalComps))] = 0
+merge$validPairs = merge$pairs - merge$excludes
+
+merge$bruteF = 0
+
+for (i in 1:length(merge$pregroup)) {
+  if(merge$pregroup[i] > 125)
+  {merge$bruteF[i] = Inf}
+  else
+  {merge$bruteF[i] = bell(merge$pairs[i])}
+}
+
+
+merge$hardComp = log10(merge$bruteF)
+
+bellNum = 0
+for (i in 1:125) {
+ bellNum[i] = bell(i)
+}
+
+bellLog = log10(bellNum)
+
+merge$hardLog = bellLog[merge$pregroup]
+
+```
+
+```{r}
+sum(merge$pairs != merge$excludes) / length(merge$pregroup)
+
+counts = tabulate(merge$pregroup)
+counts = counts[1:125]
+
+bruteF = log10(counts * bellNum)
+
+reverseExMat = function(m){
+  return(0.5 + sqrt(1 + 8*m)/2)
+}
+
+merge$afterEx = ceiling(reverseExMat(merge$validPairs) - 1)
+merge$bellAfter = 0
+
+for (i in 1:length(merge$afterEx)) {
+  if (merge$afterEx[i] > 0){
+    merge$bellAfter[i] = bellNum[merge$afterEx[i]]
+  }
+}
+
+countsScale = tabulate(merge$afterEx)
+bruteA = log10(countsScale * bellNum[1:18])
+```
+
+```{r}
+ggplot(merge[which(merge$pregroup < 126),])+
+  geom_histogram(aes(x = pregroup), 
+                 bins = 30,             
+                 fill = "skyblue",        
+                 color = "black",          
+                 alpha = 0.7)+             
+  labs(x = "Groupsize",                       
+       y = "Frequency")+
+  theme_minimal()+                               
+  theme(text = element_text(size = 12),
+        axis.title.x = element_text(face = "bold"),
+        axis.title.y = element_text(face = "bold")) 
+
+ggplot()+
+  geom_col(aes(x=1:125, y = bruteF),             
+                 fill = "skyblue",        
+                 color = "skyblue",          
+                 alpha = 1)+  
+  labs(x = "Groupsize",                       
+       y = "Total Comparisons Needed (log10)")+
+  theme_minimal()+                               
+  theme(text = element_text(size = 12),
+        axis.title.x = element_text(face = "bold"),
+        axis.title.y = element_text(face = "bold")) 
+
+ggplot(merge)+
+  geom_histogram(aes(x = afterEx), 
+                 bins = 19,             
+                 fill = "skyblue",        
+                 color = "black",          
+                 alpha = 0.7)+             
+  labs(x = "Groupsize",                       
+       y = "Frequency")+
+  theme_minimal()+                               
+  theme(text = element_text(size = 12),
+        axis.title.x = element_text(face = "bold"),
+        axis.title.y = element_text(face = "bold")) 
+
+ggplot()+
+  geom_col(aes(x=1:18, y = bruteA),             
+                 fill = "skyblue",        
+                 color = "skyblue",          
+                 alpha = 1)+  
+  labs(x = "Groupsize",                       
+       y = "Total Comparisons Needed (log10)")+
+  theme_minimal()+                               
+  theme(text = element_text(size = 12),
+        axis.title.x = element_text(face = "bold"),
+        axis.title.y = element_text(face = "bold")) 
+```
+
