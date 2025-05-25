@@ -377,7 +377,7 @@ namespace qAlgorithms
                 }
             } // outer if statement
 
-            std::cout << groupsize << "," << pairs.size() << "," << excludes << "," << finalCompares << "\n";
+            // std::cout << groupsize << "," << pairs.size() << "," << excludes << "," << finalCompares << "\n";
 
             assert(componentGroup > -1);
             assert((size_t(componentGroup)) <= groupsize);
