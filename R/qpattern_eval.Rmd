@@ -10,7 +10,7 @@ knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
 ```
 
-```{r load ten stds}
+```{r load ten stds, echo = FALSE}
 SP01_f = read_csv("../../../master/SP_DDA_P1_positive_features.csv")
 SP02_f = read_csv("../../../master/SP_DDA_P2_positive_features.csv")
 SP03_f = read_csv("../../../master/SP_DDA_P3_positive_features.csv")
@@ -123,5 +123,16 @@ Only two of the found features are part of a component
 ```{r}
 comp_anabasine_d4 = SP03_f[which(SP03_f$CompID == 91),]
 comp_anabasine = SP10_f[which(SP10_f$CompID == 75),]
+```
+
+```{r effect intensity}
+frame = rbind(SP01_f,SP02_f,SP03_f,SP04_f,SP05_f,SP06_f,SP07_f,SP08_f,SP09_f,SP10_f)
+frame$comp = frame$CompID > 0
+ggplot(frame)+
+  geom_boxplot(aes(x = area, y = as.factor(comp)), outliers = FALSE)
+
+ggplot(frame)+
+  geom_boxplot(aes(x = log10(area), y = as.factor(comp)))
+
 ```
 
