@@ -112,7 +112,7 @@ combo = rbind(repli1, repli2, repli3, repli4, repli5, repli6, repli7, repli8, re
   tmp = tmp / c(1:max(combo$groupsize))
  barplot(tmp)
  
- combo$groupsize[which(combo$groupsize > 13)] = 13
+ combo$groupsize[which(combo$groupsize > 13)] = 14
  
  ggplot(combo)+
    geom_bar(aes(x = as.factor(groupsize), fill = type), position = "fill")+
@@ -173,6 +173,8 @@ ggplot(combo)+ # this is interesting, quantiles for groups of size four are much
         axis.text.x = element_text(size = 15),
         axis.text.y = element_text(size = 15))
 
+combo = combo %>% ungroup()
+
 ggplot(combo[which(combo$isComp),])+ # this is interesting, quantiles for groups of size four are much greater regarding area
   geom_boxplot(aes(x = as.factor(groupsize), y = area), outliers = F)+
    scale_x_discrete(name = "Replicates Found")+
@@ -181,8 +183,72 @@ ggplot(combo[which(combo$isComp),])+ # this is interesting, quantiles for groups
         axis.title.y = element_text(size = 18),
         axis.text.x = element_text(size = 15),
         axis.text.y = element_text(size = 15))
+
+ggplot(combo[which(combo$isComp),])+
+   geom_bar(aes(x = as.factor(groupsize)), fill = "skyblue")+             
+  labs(x = "Replicates Found",                       
+       y = "Component Features")+
+  theme_minimal()+                               
+  theme(text = element_text(size = 12),
+        axis.title.x = element_text(face = "bold"),
+        axis.title.y = element_text(face = "bold")) 
 ```
 
+
+for every component, find how many mass differences are around 1.003355
+```{r}
+feats = repli1
+diff = 1.005533
+diff = 22.9898 - 1.0078
+
+carbCount = function(feats, diff){
+  feats = feats[order(feats$retentionTime),] # remove the first 300 seconds to prevent influences from void time
+  feats = feats[which(feats$retentionTime > 300),]
+  feats2 = feats[which(feats$CompID > 0),]
+  comps = unique(feats$CompID)[-1]
+  returnval = c(0,length(comps))
+  for (cs in comps) {
+    temp = feats2[which(feats2$CompID == cs),]
+    mzDiffs = abs(dist(temp$mz))
+    # tolerance of 20 ppm of mean mass
+    tol = mean(temp$mz) * 0.00002
+    count = sum(mzDiffs > diff - tol & mzDiffs < diff + tol)
+    returnval[1] = returnval[1] + count
+  }
+  return(returnval)
+}
+
+
+```
+
+```{r}
+carbCount(repli1, diff)
+carbCount(repli2, diff)
+carbCount(repli3, diff)
+carbCount(repli4, diff)
+carbCount(repli5, diff)
+carbCount(repli6, diff)
+carbCount(repli7, diff)
+carbCount(repli8, diff)
+carbCount(repli9, diff)
+carbCount(repli10, diff)
+carbCount(repli11, diff)
+carbCount(repli12, diff)
+carbCount(repli13, diff)
+
+carbCount(SP10_f, diff)
+carbCount(SP01_f, diff)
+carbCount(SP02_f, diff)
+carbCount(SP03_f, diff)
+carbCount(SP04_f, diff)
+carbCount(SP05_f, diff)
+carbCount(SP06_f, diff)
+carbCount(SP07_f, diff)
+carbCount(SP08_f, diff)
+carbCount(SP09_f, diff)
+
+149+ 138+ 103+ 96+ 95+ 136+ 138+  91+ 78+ 72+ 136+ 100+ 94+ 289+ 270+ 284+ 278+ 250+ 278+ 259+ 330+ 270+ 344
+```
 
 
 ```{r visualise}
