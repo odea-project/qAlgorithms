@@ -135,4 +135,9 @@ ggplot(frame)+
   geom_boxplot(aes(x = log10(area), y = as.factor(comp)))
 
 ```
+```{r}
+total %>% group_by(standard) %>% summarise(repli = sum(component != -1))
+total2 = total[which(total$component != -1),]
+total2 %>% group_by(standard) %>% summarise(sd_mz = sd(mz_real), sd_rt = sd(rt_observed), area = mean(area))
+```
 
