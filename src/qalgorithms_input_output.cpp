@@ -812,7 +812,7 @@ namespace qAlgorithms
             return;
         }
 
-        output << "featureID,binID,cenID,mz,mzUncertainty,retentionTime,scan"
+        output << "featureID,binID,cenID,mz,mzUncertainty,retentionTime,scan,"
                << "area,height,degreesOfFreedom,DQSC,DQSB,DQSF,apexLeft,b0,b1,b2,b3\n";
 
         unsigned int counter = 1;
