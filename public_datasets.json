@@ -1,3 +1,26 @@
+[
+{
+    "name": "   ",
+    "doi": "    ",
+    "weblink": "    " ,
+    "domain": " ",
+    "mass_spec": "  ",
+    "mode": "   ",
+    "fragmentation":T/F,
+    "separation": [
+        {"dim_1": " "},
+        {"dim_2": null},
+        {"dim_3": null},
+        {"dim_4": null}
+    ],
+    "matrix": " ",
+    "sample_prep": "    ",
+    "author": " ",
+    "publication": null,
+    "standards": null,
+    "suspects": null
+},
+
 {
     "name": "Small HRMS (Orbitrap) .raw Files in Profile Mode for Fast Testruns of Processing Software",
     "doi": "https://doi.org/10.5281/zenodo.15477094",
@@ -18,7 +41,7 @@
     "publication": null,
     "standards": null,
     "suspects": null
-}
+},
 
 {
     "name": "RmTBI and Microbiome Depletion / LCMS untargeted metabolomics",
@@ -41,3 +64,4 @@
     "standards": "15N, 13C-Amino Acid mixture in Methanol (1060351000, Sigma-Aldrich)",
     "suspects": null
 }
+]
