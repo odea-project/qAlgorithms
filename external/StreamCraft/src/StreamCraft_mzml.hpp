@@ -35,6 +35,13 @@ namespace StreamCraft
         bool polarity; // 0 = negative, 1 = positive
     };
 
+    enum polarity_MZML
+    {
+        positive,
+        negative,
+        mixed
+    };
+
     class MZML // @todo this is just a complicated way of having a filetype specific accession struct and a generalised container
     {
     private:
@@ -84,6 +91,7 @@ namespace StreamCraft
         std::vector<int> get_spectra_level(const std::vector<unsigned int> *indices);
         std::vector<bool> get_spectra_mode(const std::vector<unsigned int> *indices);
         std::vector<bool> get_spectra_polarity(const std::vector<unsigned int> *indices);
+        polarity_MZML get_polarity_mode(const size_t count);
         std::vector<double> get_spectra_RT(const std::vector<unsigned int> *indices);
     }; // class MZML
 }; // namespace StreamCraft

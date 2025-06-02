@@ -163,6 +163,27 @@ int main(int argc, char *argv[])
         {
             std::cout << " file ok\n";
         }
+
+        // enum polarity
+        // {
+        //     positive,
+        //     negative,
+        //     both
+        // };
+
+        auto polarity_file = data.get_polarity_mode(100); // checks first 100 spectra
+
+        // @todo single access function into qAlgorithms
+
+        if (polarity_file == StreamCraft::polarity_MZML::positive || polarity_file == StreamCraft::polarity_MZML::mixed)
+        {
+            /* this does the processing for positive files - keep it to the function call and handle logging / output through master function arguments */
+        }
+        if (polarity_file == StreamCraft::polarity_MZML::negative || polarity_file == StreamCraft::polarity_MZML::mixed)
+        {
+            // see above
+        }
+
         // @todo find a more elegant solution for polarity switching, this one trips up clang-tidy
         bool oneProcessed = true;
         static bool polarities[2] = {true, false};
