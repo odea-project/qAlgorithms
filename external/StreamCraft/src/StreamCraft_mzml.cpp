@@ -346,6 +346,42 @@ std::vector<bool> StreamCraft::MZML::get_spectra_polarity(const std::vector<unsi
     return polarities;
 };
 
+StreamCraft::polarity_MZML StreamCraft::MZML::get_polarity_mode(const size_t count)
+{
+    // @todo this should check if count is in bounds
+
+    std::vector<pugi::xml_node> spectra_nodes = link_vector_spectra_nodes(mzml_root_node);
+
+    bool positive = false;
+    bool negative = false;
+    for (size_t i = 0; i < count; ++i)
+    {
+        pugi::xml_node spec = spectra_nodes[i];
+        if (spec.find_child_by_attribute("cvParam", "accession", "MS:1000130"))
+        {
+            positive = true;
+        }
+        else
+        {
+            assert(spec.find_child_by_attribute("cvParam", "accession", "MS:1000129")); // @todo a single check should be enough
+            negative = true;
+        }
+
+        if (positive && negative)
+        {
+            return mixed;
+        }
+    }
+    if (positive)
+    {
+        return polarity_MZML::positive;
+    }
+    else
+    {
+        return polarity_MZML::negative;
+    }
+};
+
 std::vector<std::vector<double>> StreamCraft::MZML::extract_spectrum(const pugi::xml_node &spectrum_node)
 {
 
