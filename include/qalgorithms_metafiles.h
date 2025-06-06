@@ -68,6 +68,11 @@ namespace qAlgorithms
         bool nextIsData;
     };
 
+    // reads the file and does minimal error handling. If the return vector is empty,
+    // file read in failed. Otherwise, it is input for taskListSetup. taskfiles are
+    // supplied by the user directly or some other interface program
+    std::vector<std::string> readTaskList_txt(std::filesystem::path taskfile_txt);
+
     // this fills the two empty vectors actions and data with the user input taken from the tasklist
     // the tasks are linked to each other, but all other structure such as tagging is handled only
     // when validating the input
