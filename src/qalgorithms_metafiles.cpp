@@ -3,9 +3,38 @@
 #include <vector>
 #include <iostream>
 #include <cassert>
+#include <string.h>
+#include <errno.h>
 
 namespace qAlgorithms
 {
+    std::vector<std::string> readTaskList_txt(std::filesystem::path taskfile_txt)
+    {
+        std::vector<std::string> tasklist_parsed;
+        if (!std::filesystem::exists(taskfile_txt))
+        {
+            std::cerr << "Error: the file " << taskfile_txt << " does not exist.\n";
+            return {};
+        }
+        auto taskfile = fopen(taskfile_txt.c_str(), "rt"); // rt = read text
+        if (taskfile == NULL)
+        {
+            std::cerr << "Error: readTaskList_txt() can not open " << taskfile_txt << ": " << strerror(errno) << "\n";
+            return {};
+        }
+        char buf[260]; // 260 is the maximum path length in windows by default, so this should be fine @note
+        while (fgets(buf, sizeof buf, taskfile) != NULL)
+        {
+            tasklist_parsed.push_back(buf);
+        }
+        assert(feof(taskfile));
+        fclose(taskfile);
+
+        tasklist_parsed.push_back("TERMINATION_SEQUENCE_REACHED!"); // this prevents errors during parsing
+
+        return (tasklist_parsed);
+    }
+
     /*
     incomplete task list syntax:
     # // the hashtag comments a line out
@@ -17,6 +46,7 @@ namespace qAlgorithms
     STANDARD // all data until the next data action are standards
     BLANK // all data until the next data action are blanks
     QC // all data until the next data action are quality control samples
+    END // stop processing, optional
     */
 
     void taskListSetup(std::vector<TaskItem_action> *actions,
@@ -58,6 +88,28 @@ namespace qAlgorithms
             previousWasData = newIsData;
         };
 
+#define addTask(act)                            \
+    {                                           \
+        actions->push_back({"",                 \
+                            act,                \
+                            0,                  \
+                            false});            \
+        updateLink(actions->size() - 1, false); \
+    }
+
+        // the file is always in the next line after a command
+#define addTask_file(act)                       \
+    {                                           \
+        i += 1;                                 \
+        actions->push_back({input->at(i),       \
+                            act,                \
+                            0,                  \
+                            false});            \
+        updateLink(actions->size() - 1, false); \
+    }
+
+        bool endDefined = false;
+
         for (size_t i = 0; i < input->size(); i++)
         {
             auto entry = input->at(i);
@@ -81,66 +133,47 @@ namespace qAlgorithms
                                     initalisation,
                                     0,
                                     false});
+                // there is nothing to update, this is the first element
+            }
+            else if (entry == "END")
+            {
+                // All entries after this one are ignored
+                addTask(end)
             }
             else if (entry == "LOGFILE")
             {
                 // @todo add a logging option that actually makes sense from a user perspective.
                 // this is not equivalent to the processing stats we will use for quality control -
                 // those should not be optional to begin with
-                actions->push_back({"", // @todo this is the path!
-                                    logging,
-                                    0,
-                                    false});
-                updateLink(actions->size() - 1, false);
+                addTask_file(logging);
             }
             else if (entry == "REPLICATE")
             {
                 // @todo add a check using method name and vial position, consider adding another option for non repeat injections
-                actions->push_back({"",
-                                    new_replicate,
-                                    0,
-                                    false});
-                updateLink(actions->size() - 1, false);
+                addTask(new_replicate);
             }
             else if (entry == "STANDARD")
             {
                 // the table of standards is given in an unspecified format in the next line
-                i += 1;
-                actions->push_back({input->at(i),
-                                    new_standard,
-                                    0,
-                                    false});
-                updateLink(actions->size() - 1, false);
+                addTask(new_standard);
             }
             else if (entry == "BLANK")
             {
-                actions->push_back({"",
-                                    new_blank,
-                                    0,
-                                    false});
-                updateLink(actions->size() - 1, false);
+                addTask(new_blank);
             }
             else if (entry == "QC")
             {
-                actions->push_back({"",
-                                    new_QC,
-                                    0,
-                                    false});
-                updateLink(actions->size() - 1, false);
+                addTask(new_QC);
             }
             else if (entry == "OUT")
             {
-                i += 1;
-                actions->push_back({input->at(i),
-                                    new_QC,
-                                    data->size(),
-                                    true});
-                updateLink(actions->size() - 1, false);
+                addTask_file(output);
             }
             else
             {
                 // if a line is none of the known commands, it must be a file. If it is not,
                 // it can only be a mistyped command or path.
+                // error handling is now only performed on the data evaluation part
                 i += 1;
                 data->push_back({"", // the path is added only when it was confirmed to exist
                                  input->at(i),
@@ -149,7 +182,9 @@ namespace qAlgorithms
                                  undefined,
                                  false,
                                  false});
+                updateLink(data->size() - 1, true);
             }
         }
+        // the end block is added automatically if it was not set initially
     }
 }
