@@ -3,6 +3,7 @@
 #define QALGORITHMS_META_H
 
 #include <vector>
+#include <string>
 #include <filesystem>
 
 namespace qAlgorithms
@@ -68,6 +69,16 @@ namespace qAlgorithms
         bool nextIsData;
     };
 
+    // @todo rework the two into a single struct where data read-in is also a task
+    // further requirements to the task list setup, discuss
+    struct TaskItem2
+    {
+        std::filesystem::path path;
+
+        bool measurement;
+        bool polarity;
+    };
+
     // reads the file and does minimal error handling. If the return vector is empty,
     // file read in failed. Otherwise, it is input for taskListSetup. taskfiles are
     // supplied by the user directly or some other interface program
@@ -76,9 +87,13 @@ namespace qAlgorithms
     // this fills the two empty vectors actions and data with the user input taken from the tasklist
     // the tasks are linked to each other, but all other structure such as tagging is handled only
     // when validating the input
-    void taskListSetup(std::vector<TaskItem_action> *actions,
-                       std::vector<TaskItem_data> *data,
+    void taskListSetup(std::vector<TaskItem_action> *const actions,
+                       std::vector<TaskItem_data> *const data,
                        const std::vector<std::string> *input);
+
+    // check if all paths are valid, moved into its own function so the setup is more flexible
+    // this function also adds polarity checks; possibly assures only profile data is used?
+    void fillTasks(std::vector<TaskItem_data> *data);
 
     // @todo check for necessity
     void runTaskAction(const TaskItem_action item);
