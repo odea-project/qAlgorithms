@@ -49,9 +49,9 @@ namespace qAlgorithms
     END // stop processing, optional
     */
 
-    void taskListSetup(std::vector<TaskItem_action> *actions,
-                       std::vector<TaskItem_data> *data,
-                       const std::vector<std::string> *input) // @todo always push a terminator to the back of input to prevent bad access
+    void taskListSetup(std::vector<TaskItem_action> *const actions,
+                       std::vector<TaskItem_data> *const data,
+                       const std::vector<std::string> *input)
     {
         if (!actions->empty())
         {
@@ -88,14 +88,14 @@ namespace qAlgorithms
             previousWasData = newIsData;
         };
 
-#define addTask(act)                            \
-    {                                           \
-        actions->push_back({"",                 \
-                            act,                \
-                            0,                  \
-                            false});            \
-        updateLink(actions->size() - 1, false); \
-    }
+        auto addTask = [actions, updateLink](actionType act)
+        {
+            actions->push_back({"",
+                                act,
+                                0,
+                                false});
+            updateLink(actions->size() - 1, false);
+        };
 
         // the file is always in the next line after a command
 #define addTask_file(act)                       \
@@ -138,7 +138,9 @@ namespace qAlgorithms
             else if (entry == "END")
             {
                 // All entries after this one are ignored
-                addTask(end)
+                addTask(end);
+                endDefined = true;
+                break;
             }
             else if (entry == "LOGFILE")
             {
@@ -186,5 +188,12 @@ namespace qAlgorithms
             }
         }
         // the end block is added automatically if it was not set initially
+        if (!endDefined)
+        {
+            addTask(end);
+        }
+#undef addTask
+#undef addTask_file
     }
+
 }
