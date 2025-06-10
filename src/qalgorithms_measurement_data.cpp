@@ -2,6 +2,7 @@
 #include "qalgorithms_utils.h"
 #include "qalgorithms_global_vars.h"
 #include "qalgorithms_qpeaks.h"
+#include "qalgorithms_qbin.h"
 
 #include <cmath>
 #include <fstream>
@@ -604,6 +605,58 @@ namespace qAlgorithms
         return p;
     }
 
+    struct Block
+    {
+        size_t start;
+        size_t end;
+    };
+
+    void binProfileSpec(std::vector<Block> *result,
+                        const std::vector<double> *diffs,
+                        const std::vector<double> *cumDiffs, // indices into cumDiffs must be right-shifted by one!
+                        size_t start, size_t end)
+    {
+        // perform the recursive split introduced during binning to find gaps in mz
+        // CritVal uses the standard deviation, which is estimated as the mean centroid error during binning.
+        // here, we can use the real SD of the point-to-point differences.
+        assert(start <= end); // <= since one point at the end could get removed, see below
+        assert(!diffs->empty());
+        assert(cumDiffs->size() == diffs->size() + 1);
+        assert(cumDiffs->at(0) == 0); // this is important so there are no special cases when forming the difference
+
+        size_t length = end - start + 1;
+        if (length < 5)
+        {
+            return;
+        }
+
+        // calculate standard deviation for the given region
+        double meanDiff = (cumDiffs->at(end + 1) - cumDiffs->at(start)) / length;
+        double sd = 0;
+        for (size_t i = start; i < end + 1; i++)
+        {
+            sd += (diffs->at(i) - meanDiff) * (diffs->at(i) - meanDiff);
+        }
+        sd /= (length - 1);
+
+        double critVal = binningCritVal(length, sd);
+
+        // max of difference // @todo extract to inline function to use in binning
+        auto pmax = std::max_element(diffs->begin() + start, diffs->end() + end);
+        double max = *pmax;
+
+        if (max < critVal)
+        {
+            // block is complete, add limits to result vector
+            result->push_back({start, end + 1}); // end + 1 since difference has one point less
+            return;
+        }
+
+        // recursive split at max - different calling convention since we work with differences
+        binProfileSpec(result, diffs, cumDiffs, start, max - 1); // when setting the block, 1 is added to end
+        binProfileSpec(result, diffs, cumDiffs, max + 1, end);   // one past the max to avoid large value
+    }
+
     std::vector<ProfileBlock> pretreatDataCentroids(const std::vector<std::vector<double>> *spectrum, float expectedDifference)
     {
 
@@ -614,7 +667,8 @@ namespace qAlgorithms
         2.3) extrapolation by a further zeroed point
         3.1) overhaul interpolation to not use the whole block of data
         3.2) change from a constant difference to dynamic decision systems !! idea: check for linear relation
-             -> linear regression with y = (mz[1] - mz[0]) x + mz[0]
+             -> linear regression with y = (mz[1] - mz[0]) x + mz[0] // discarded, since the difference is never significant for large blocks
+             -> use modified version of binning
         */
 
         std::vector<double> intensities_profile;
@@ -636,7 +690,13 @@ namespace qAlgorithms
         assert(!intensities_profile.empty());
         assert(!mz_profile.empty());
 
-        double meanDiff;
+        std::vector<Block> result;
+        std::vector<double> diffs;
+        diffs.reserve(mz.size() - 1);
+        std::vector<double> cumDiffs;
+        cumDiffs.reserve(mz.size());
+        cumDiffs.push_back(0);
+
         std::cout << mz_profile[0];
         for (size_t i = 1; i < mz_profile.size(); i++)
         {
@@ -645,7 +705,8 @@ namespace qAlgorithms
         }
         std::cout << "\n";
         meanDiff /= mz_profile.size();
-        // std::cout << meanDiff << ", " << expectedDifference << "\n";
+
+        binProfileSpec(&result, &diffs, &cumDiffs, 0, diffs.size());
 
         const std::vector<double> *mz2 = &(*spectrum)[0];
         const std::vector<double> *intensity2 = &(*spectrum)[1];
@@ -657,7 +718,6 @@ namespace qAlgorithms
         size_t blockSize2 = 0;
         ProfileBlock currentBlock = blockStart(); // initialised with 16 reserved elements
         currentBlock.intensity.push_back(0);
-        currentBlock.cumdf.push_back(0);
 
         for (size_t idx = 0; idx < mz2->size(); idx++)
         {
