@@ -104,6 +104,8 @@ int main2(int argc, char *argv[])
 
     std::vector<TaskItem_action> actions;
     std::vector<TaskItem_data> data;
+
+    return 0;
 }
 
 int main(int argc, char *argv[])

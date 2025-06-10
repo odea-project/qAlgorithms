@@ -33,7 +33,7 @@ namespace qAlgorithms
         float lowestArea,
         size_t *featuresInComponents)
     {
-        std::cout << "pregroup,pairs,excludes,totalComps\n";
+        // std::cout << "pregroup,pairs,excludes,totalComps\n";
 
         assert(peaks->begin()->componentID == 0);
         assert(*featuresInComponents == 0);
@@ -58,7 +58,7 @@ namespace qAlgorithms
                 {
                     VALLEYS_1++;
                 }
-                std::cout << 0 << ", " << 0 << "\n";
+                // std::cout << 0 << ", " << 0 << "\n";
                 continue;
             }
             for (size_t j = limits[groupIdx].start; j < limits[groupIdx].end + 1; j++)

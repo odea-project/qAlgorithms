@@ -35,6 +35,7 @@ namespace qAlgorithms
     {
         std::vector<float> intensity;
         std::vector<float> mz;
+        std::vector<unsigned int> cumdf; // cumulative df
         std::vector<bool> df;
     };
 

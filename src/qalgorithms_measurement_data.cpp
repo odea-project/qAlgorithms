@@ -598,15 +598,25 @@ namespace qAlgorithms
         p.df.reserve(16);
         p.intensity.reserve(16);
         p.mz.reserve(16);
+        p.cumdf.reserve(16);
+        p.cumdf.push_back(0);
+        p.cumdf.push_back(0);
         return p;
     }
 
     std::vector<ProfileBlock> pretreatDataCentroids(const std::vector<std::vector<double>> *spectrum, float expectedDifference)
     {
-        // note on double precision values: when using floats, results are different enough
-        // to cause different behaviour for interpolation and block termination. Doubles are
-        // used here since the loss of precision during exponentiation etc. is not taken into
-        // account otherwise. Around 1000 centroids less than otherwise are produced for test cases.
+
+        /* @todo PLANNED UPDATES TO THIS FUNCTION:
+        1) implement cumulative degrees of freedom
+        2.1) zero filter in main loop
+        2.2) extrapolation by one point to make my life easier when checking total degrees of freedom
+        2.3) extrapolation by a further zeroed point
+        3.1) overhaul interpolation to not use the whole block of data
+        3.2) change from a constant difference to dynamic decision systems !! idea: check for linear relation
+             -> linear regression with y = (mz[1] - mz[0]) x + mz[0]
+        */
+
         std::vector<double> intensities_profile;
         std::vector<double> mz_profile;
         const auto mz = spectrum->at(0);
@@ -626,11 +636,41 @@ namespace qAlgorithms
         assert(!intensities_profile.empty());
         assert(!mz_profile.empty());
 
-        std::vector<ProfileBlock> subProfiles;
+        double meanDiff;
+        std::cout << mz_profile[0];
+        for (size_t i = 1; i < mz_profile.size(); i++)
+        {
+            meanDiff += mz_profile[i] - mz_profile[i - 1];
+            std::cout << "," << mz_profile[i];
+        }
+        std::cout << "\n";
+        meanDiff /= mz_profile.size();
+        // std::cout << meanDiff << ", " << expectedDifference << "\n";
 
+        const std::vector<double> *mz2 = &(*spectrum)[0];
+        const std::vector<double> *intensity2 = &(*spectrum)[1];
+
+        std::vector<ProfileBlock> subProfiles;
+        std::vector<ProfileBlock> subProfiles2;
+        subProfiles2.reserve(512); // 500 - 600 centroids per spectrum for real data
         size_t blockSize = 0;
-        ProfileBlock currentBlock = blockStart(); // initialised with two zeroed values in each vector
-        for (size_t pos = 0; pos < mz_profile.size() - 1; pos++)
+        size_t blockSize2 = 0;
+        ProfileBlock currentBlock = blockStart(); // initialised with 16 reserved elements
+        currentBlock.intensity.push_back(0);
+        currentBlock.cumdf.push_back(0);
+
+        for (size_t idx = 0; idx < mz2->size(); idx++)
+        {
+            // maybe it is a bad idea to ignore zeroed elements @todo
+            if ((*intensity2)[idx] == 0)
+            {
+                continue;
+            }
+        }
+
+        currentBlock = blockStart();
+
+        for (size_t pos = 0; pos < mz_profile.size() - 1; pos++) // old loop
         {
             blockSize++;
 
@@ -676,7 +716,9 @@ namespace qAlgorithms
                 // @todo reason about why these limit values are used, why take the mean for updating the expected diff?
                 if (delta_mz > 0.8 * expectedDifference && delta_mz < 1.2 * expectedDifference)
                 {
+                    // std::cout << expectedDifference << ", ";
                     expectedDifference = (expectedDifference + delta_mz) * 0.5;
+                    // std::cout << expectedDifference << "\n";
                 }
             }
         } // end of for loop
