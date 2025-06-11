@@ -16,7 +16,7 @@ namespace qAlgorithms
             std::cerr << "Error: the file " << taskfile_txt << " does not exist.\n";
             return {};
         }
-        auto taskfile = fopen(taskfile_txt.c_str(), "rt"); // rt = read text
+        auto taskfile = fopen(taskfile_txt.string().c_str(), "rt"); // rt = read text
         if (taskfile == NULL)
         {
             std::cerr << "Error: readTaskList_txt() can not open " << taskfile_txt << ": " << strerror(errno) << "\n";

@@ -633,7 +633,7 @@ namespace qAlgorithms
         // calculate standard deviation for the given region
         double meanDiff = (cumDiffs->at(end + 1) - cumDiffs->at(start)) / length;
         double sd = 0;
-        for (size_t i = start; i < end + 1; i++)
+        for (size_t i = start; i < end; i++) // diff[0] is same position as cumDiff[1], so no end + 1
         {
             sd += (diffs->at(i) - meanDiff) * (diffs->at(i) - meanDiff);
         }
@@ -642,13 +642,13 @@ namespace qAlgorithms
         double critVal = binningCritVal(length, sd);
 
         // max of difference // @todo extract to inline function to use in binning
-        auto pmax = std::max_element(diffs->begin() + start, diffs->end() + end);
+        auto pmax = std::max_element(diffs->begin() + start, diffs->begin() + end);
         double max = *pmax;
 
         if (max < critVal)
         {
             // block is complete, add limits to result vector
-            result->push_back({start, end + 1}); // end + 1 since difference has one point less
+            result->push_back({start, end}); // end + 1 since difference has one point less
             return;
         }
 
@@ -696,17 +696,18 @@ namespace qAlgorithms
         std::vector<double> cumDiffs;
         cumDiffs.reserve(mz.size());
         cumDiffs.push_back(0);
+        double totalDiff = 0;
 
         std::cout << mz_profile[0];
         for (size_t i = 1; i < mz_profile.size(); i++)
         {
-            meanDiff += mz_profile[i] - mz_profile[i - 1];
-            std::cout << "," << mz_profile[i];
+            double diff = mz_profile[i] - mz_profile[i - 1];
+            diffs.push_back(diff);
+            totalDiff += diff;
+            cumDiffs.push_back(totalDiff);
         }
-        std::cout << "\n";
-        meanDiff /= mz_profile.size();
 
-        binProfileSpec(&result, &diffs, &cumDiffs, 0, diffs.size());
+        binProfileSpec(&result, &diffs, &cumDiffs, 1, diffs.size() - 1);
 
         const std::vector<double> *mz2 = &(*spectrum)[0];
         const std::vector<double> *intensity2 = &(*spectrum)[1];
