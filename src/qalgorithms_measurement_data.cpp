@@ -558,7 +558,7 @@ namespace qAlgorithms
                 abstractScanNumber--;
             }
 
-            assert(convertRT.back() < retention_times[i]);
+            // assert(convertRT.back() < retention_times[i]);
             convertRT.push_back(retention_times[i]); // convertRT[scan] = retention time of centroid
             relativeIndex[i] = abstractScanNumber;   // abstract scan with same index as the input data
             abstractScanNumber++;
@@ -609,6 +609,7 @@ namespace qAlgorithms
     {
         size_t start;
         size_t end;
+        bool insertCandidate = false;
     };
 
     void binProfileSpec(std::vector<Block> *result,
@@ -625,8 +626,11 @@ namespace qAlgorithms
         assert(cumDiffs->at(0) == 0); // this is important so there are no special cases when forming the difference
 
         size_t length = end - start + 1;
-        if (length < 5)
+        if (length < 4) // one point less due to differences being used
         {
+            // @todo there should be a check for interpolation here. Proceed by checking if the real distance
+            // div. by two or three would pass the test and then insert these values later
+
             return;
         }
 
@@ -639,22 +643,37 @@ namespace qAlgorithms
         }
         sd /= (length - 1);
 
-        double critVal = binningCritVal(length, sd);
+        // double critVal = binningCritVal(length, sd);
+        // we use the mean difference here since the differences should follow a flat distribution. The basic assumption
+        // is that every point has an error of half the distance to its neighbours, since all points are evenly spaced.
+        double critVal = binningCritVal(length, meanDiff / 2);
 
         // max of difference // @todo extract to inline function to use in binning
         auto pmax = std::max_element(diffs->begin() + start, diffs->begin() + end);
         double max = *pmax;
+        size_t maxPos = std::distance(diffs->begin(), pmax);
 
         if (max < critVal)
         {
+            bool interpolate = false;
+            if (max / 3 > critVal)
+            {
+                interpolate = true; // there could be points inserted here to bridge the difference
+                std::cout << "Possible interpolation of profile data\n";
+            }
+
             // block is complete, add limits to result vector
-            result->push_back({start, end}); // end + 1 since difference has one point less
+            result->push_back({start, end + 1, interpolate}); // end + 1 since difference has one point less
+            return;
+        }
+        if (maxPos == start || maxPos == end)
+        {
             return;
         }
 
         // recursive split at max - different calling convention since we work with differences
-        binProfileSpec(result, diffs, cumDiffs, start, max - 1); // when setting the block, 1 is added to end
-        binProfileSpec(result, diffs, cumDiffs, max + 1, end);   // one past the max to avoid large value
+        binProfileSpec(result, diffs, cumDiffs, start, maxPos - 1); // when setting the block, 1 is added to end
+        binProfileSpec(result, diffs, cumDiffs, maxPos + 1, end);   // one past the max to avoid large value
     }
 
     std::vector<ProfileBlock> pretreatDataCentroids(const std::vector<std::vector<double>> *spectrum, float expectedDifference)
@@ -698,7 +717,7 @@ namespace qAlgorithms
         cumDiffs.push_back(0);
         double totalDiff = 0;
 
-        std::cout << mz_profile[0];
+        // std::cout << mz_profile[0];
         for (size_t i = 1; i < mz_profile.size(); i++)
         {
             double diff = mz_profile[i] - mz_profile[i - 1];
@@ -707,7 +726,7 @@ namespace qAlgorithms
             cumDiffs.push_back(totalDiff);
         }
 
-        binProfileSpec(&result, &diffs, &cumDiffs, 1, diffs.size() - 1);
+        binProfileSpec(&result, &diffs, &cumDiffs, 0, diffs.size() - 1);
 
         const std::vector<double> *mz2 = &(*spectrum)[0];
         const std::vector<double> *intensity2 = &(*spectrum)[1];
