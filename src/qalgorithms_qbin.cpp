@@ -355,7 +355,7 @@ namespace qAlgorithms
 
         const int binsizeInOS = binEndInOS - binStartInOS + 1; // +1 to avoid length zero
 
-        assert(binsizeInOS > 4);
+        assert(binsizeInOS > 4); // @todo this is wrong, it should check for five real points == four differences
 
         auto pmax = std::max_element(OS.begin() + binStartInOS, OS.begin() + binEndInOS);
         double max = *pmax;
