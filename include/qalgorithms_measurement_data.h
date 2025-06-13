@@ -32,6 +32,8 @@ namespace qAlgorithms
 
     std::vector<ProfileBlock> pretreatDataCentroids(const std::vector<std::vector<double>> *spectrum, float expectedDifference);
 
+    std::vector<ProfileBlock> pretreatDataCentroids2(const std::vector<std::vector<double>> *spectrum);
+
     void extrapolateEIC(const std::vector<size_t> scanNums, std::vector<float> *intensity);
 
     inline float calcRTDiff(const std::vector<double> *retention_times);

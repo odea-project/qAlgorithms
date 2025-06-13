@@ -504,9 +504,6 @@ namespace qAlgorithms
         std::vector<CentroidPeak> centroids;
         centroids.reserve(countSelected * 1000);
 
-        // take spectrum at half length to avoid potential interference from quality control scans in the instrument
-        const std::vector<std::vector<double>> data_vec = data.get_spectrum(selectedIndices[countSelected / 2]);
-
         // determine where the peak finding will interpolate points and pass this information
         // to the binning step. addEmpty contains the number of empty scans to be added into
         // the qCentroids object at the given position. convertRT can later be used to look up
@@ -571,6 +568,8 @@ namespace qAlgorithms
         convertRT.push_back(retention_times.back() + rt_diff + rt_diff);
         assert(convertRT.size() == abstractScanNumber); // ensure that every index has an assigned RT
 
+        // take spectrum at half length to avoid potential interference from quality control scans in the instrument
+        const std::vector<std::vector<double>> data_vec = data.get_spectrum(selectedIndices[10]); // note: this is dysfunctional
         // expected difference between two consecutive x-axis values
         double expectedDifference_mz = calcExpectedDiff(&data_vec);
         for (size_t i = 0; i < countSelected; ++i)
@@ -578,6 +577,7 @@ namespace qAlgorithms
             const std::vector<std::vector<double>> spectrum = data.get_spectrum(selectedIndices[i]);
             // inter/extrapolate data, and identify data blocks @todo these should be two different functions
             const auto treatedData = pretreatDataCentroids(&spectrum, expectedDifference_mz);
+            auto testdata = pretreatDataCentroids2(&spectrum);
             // if (treatedData.empty())
             // {
             //     std::cout << "Warning: no centroids found in spectrum " << i << ".\n";
@@ -636,12 +636,12 @@ namespace qAlgorithms
 
         // calculate standard deviation for the given region
         double meanDiff = (cumDiffs->at(end + 1) - cumDiffs->at(start)) / length;
-        double sd = 0;
-        for (size_t i = start; i < end; i++) // diff[0] is same position as cumDiff[1], so no end + 1
-        {
-            sd += (diffs->at(i) - meanDiff) * (diffs->at(i) - meanDiff);
-        }
-        sd /= (length - 1);
+        // double sd = 0;
+        // for (size_t i = start; i < end; i++) // diff[0] is same position as cumDiff[1], so no end + 1
+        // {
+        //     sd += (diffs->at(i) - meanDiff) * (diffs->at(i) - meanDiff);
+        // }
+        // sd /= (length - 1);
 
         // double critVal = binningCritVal(length, sd);
         // we use the mean difference here since the differences should follow a flat distribution. The basic assumption
@@ -658,6 +658,7 @@ namespace qAlgorithms
             bool interpolate = false;
             if (max / 3 > critVal)
             {
+                // @todo orbitrap data should never need interpolation, add a check for this
                 interpolate = true; // there could be points inserted here to bridge the difference
                 std::cout << "Possible interpolation of profile data\n";
             }
@@ -674,6 +675,111 @@ namespace qAlgorithms
         // recursive split at max - different calling convention since we work with differences
         binProfileSpec(result, diffs, cumDiffs, start, maxPos - 1); // when setting the block, 1 is added to end
         binProfileSpec(result, diffs, cumDiffs, maxPos + 1, end);   // one past the max to avoid large value
+    }
+
+    std::vector<ProfileBlock> pretreatDataCentroids2(const std::vector<std::vector<double>> *spectrum)
+    {
+        std::vector<double> intensities_profile;
+        std::vector<double> mz_profile;
+        const auto mz = spectrum->at(0);
+        intensities_profile.reserve(mz.size() / 2);
+        mz_profile.reserve(mz.size() / 2);
+        // Depending on the vendor, a profile contains a lot of points with intensity 0.
+        // These were added by the vendor software and must be removed prior to processing.
+        for (size_t i = 0; i < mz.size(); ++i)
+        {
+            if (spectrum->at(1)[i] == 0.0)
+            {
+                continue; // skip values with no intensity @todo minimum intensity?
+            }
+            intensities_profile.push_back(spectrum->at(1)[i]);
+            mz_profile.push_back(mz[i]);
+        }
+        assert(!intensities_profile.empty());
+        assert(!mz_profile.empty());
+
+        std::vector<double> diffs;
+        diffs.reserve(mz.size() - 1);
+        std::vector<double> cumDiffs;
+        cumDiffs.reserve(mz.size());
+        cumDiffs.push_back(0);
+        double totalDiff = 0;
+
+        for (size_t i = 1; i < mz_profile.size(); i++)
+        {
+            double diff = mz_profile[i] - mz_profile[i - 1];
+            diffs.push_back(diff);
+            totalDiff += diff;
+            cumDiffs.push_back(totalDiff);
+        }
+
+        std::vector<Block> result; // result contains the start- and end indices of all relevant blocks in the data.
+        binProfileSpec(&result, &diffs, &cumDiffs, 0, diffs.size() - 1);
+
+        std::vector<ProfileBlock> groupedData;
+        groupedData.reserve(result.size());
+
+        for (size_t j = 0; j < result.size(); j++)
+        {
+            Block res = result[j];
+            ProfileBlock entry;
+            size_t entrySize = res.end + 1 - res.start + 4;
+
+            // @todo move this bookkeeping to a separate function which initialises the block
+            entry.intensity.reserve(entrySize);
+            entry.intensity.push_back(0); // @todo consider if extrapolation makes sense, and if so, how much
+            entry.intensity.push_back(0);
+
+            entry.mz.reserve(entrySize);
+            entry.mz.push_back(0);
+            entry.mz.push_back(0);
+
+            entry.df.reserve(entrySize);
+            entry.df.push_back(0);
+            entry.df.push_back(0);
+
+            entry.cumdf.reserve(entrySize);
+            entry.cumdf.push_back(0);
+            entry.cumdf.push_back(0);
+            for (size_t i = res.start; i < res.end + 1; i++)
+            {
+                entry.intensity.push_back(intensities_profile[i]);
+            }
+            for (size_t i = res.start; i < res.end + 1; i++)
+            {
+                entry.mz.push_back(mz_profile[i]);
+            }
+            for (size_t i = res.start; i < res.end + 1; i++)
+            {
+                entry.df.push_back(1);
+                entry.cumdf.push_back(entry.cumdf.back() + 1);
+            }
+            entry.intensity.push_back(0);
+            entry.intensity.push_back(0);
+            entry.mz.push_back(0);
+            entry.mz.push_back(0);
+            entry.df.push_back(0);
+            entry.df.push_back(0);
+            entry.cumdf.push_back(entry.cumdf.back());
+            entry.cumdf.push_back(entry.cumdf.back());
+
+            // extrapolate two points to each size of the entry
+            entry.intensity[1] = entry.intensity[2] / 2;
+            entry.intensity[0] = entry.intensity[2] / 4;
+            entry.intensity[entrySize - 2] = entry.intensity[entrySize - 3] / 2;
+            entry.intensity[entrySize - 1] = entry.intensity[entrySize - 3] / 4;
+
+            double mzDiffFront = entry.mz[3] - entry.mz[2]; // @todo should there be two different distances?
+            entry.mz[1] = entry.mz[2] - mzDiffFront;
+            entry.mz[0] = entry.mz[2] - mzDiffFront * 2;
+
+            double mzDiffBack = entry.mz[entrySize - 3] - entry.mz[entrySize - 4];
+            entry.mz[entrySize - 2] = entry.mz[entrySize - 3] + mzDiffBack;
+            entry.mz[entrySize - 1] = entry.mz[entrySize - 3] + mzDiffBack * 2;
+
+            groupedData.push_back(entry);
+        }
+        return groupedData;
     }
 
     std::vector<ProfileBlock> pretreatDataCentroids(const std::vector<std::vector<double>> *spectrum, float expectedDifference)
