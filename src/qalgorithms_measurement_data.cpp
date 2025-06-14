@@ -577,13 +577,9 @@ namespace qAlgorithms
             const std::vector<std::vector<double>> spectrum = data.get_spectrum(selectedIndices[i]);
             // inter/extrapolate data, and identify data blocks @todo these should be two different functions
             const auto treatedData = pretreatDataCentroids(&spectrum, expectedDifference_mz);
-            auto testdata = pretreatDataCentroids2(&spectrum);
-            // if (treatedData.empty())
-            // {
-            //     std::cout << "Warning: no centroids found in spectrum " << i << ".\n";
-            // }
-            assert(relativeIndex[i] != 0);
-            auto tmpCens = findCentroids(&treatedData, relativeIndex[i]); // find peaks in data blocks of treated data
+            const auto profileGroups = pretreatDataCentroids2(&spectrum);
+            // auto tmpCens = findCentroids(&treatedData, relativeIndex[i]); // find peaks in data blocks of treated data
+            auto tmpCens = findCentroids(&profileGroups, relativeIndex[i]);
             centroids.insert(centroids.end(), tmpCens.begin(), tmpCens.end());
         }
         // if (!displayPPMwarning)
@@ -770,6 +766,7 @@ namespace qAlgorithms
 
             groupedData.push_back(entry);
         }
+        assert(!groupedData.empty());
         return groupedData;
     }
 
@@ -832,7 +829,6 @@ namespace qAlgorithms
         std::vector<ProfileBlock> subProfiles2;
         subProfiles2.reserve(512); // 500 - 600 centroids per spectrum for real data
         size_t blockSize = 0;
-        size_t blockSize2 = 0;
         ProfileBlock currentBlock = blockStart(); // initialised with 16 reserved elements
         currentBlock.intensity.push_back(0);
 
