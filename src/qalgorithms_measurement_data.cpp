@@ -422,17 +422,6 @@ namespace qAlgorithms
         const bool polarity,
         const bool ms1only)
     {
-        // this is only relevant when reading in pre-centroided data
-        // bool displayPPMwarning = false;
-        // if (PPM_PRECENTROIDED == -INFINITY)
-        // {
-        //     PPM_PRECENTROIDED = 0.25; // global variable, this is a bad solution @todo
-        // }
-        // else
-        // {
-        //     displayPPMwarning = true;
-        // }
-
         // accessor contains the indices of all spectra that should be fetched
         std::vector<unsigned int> accessor(data.number_spectra, 0);
         std::iota(accessor.begin(), accessor.end(), 0);
@@ -444,26 +433,7 @@ namespace qAlgorithms
         if (num_centroided_spectra > spectrum_mode.size() / 2) // in profile mode sometimes centroided spectra appear as well @todo is 2 a good idea?
         {
             std::cerr << "Centroided data is not supported in this version of qAlgorithms!\n";
-            //   << "Warning: qAlgorithms is intended for profile spectra. A base uncertainty of "
-            //   << PPM_PRECENTROIDED << " ppm is assumed for all supplied centroids\n";
             return std::vector<CentroidPeak>{};
-            // for (size_t i = 1; i < indices.size(); i++) // i can be 0 briefly if there is a scan missing between 1. and 2. element
-            // {
-            //   if (retention_times[i] - retention_times[i - 1] > rt_diff * 1.75)
-            //   {
-            //     addEmpty[i - 1]++;
-            //     retention_times[i - 1] += rt_diff * 1.75;
-            //     convertRT.push_back(retention_times[i - 1]); // convertRT[scan] = retention time of centroid
-            //     i--;
-            //   }
-            //   else
-            //   {
-            //     convertRT.push_back(retention_times[i - 1]); // convertRT[scan] = retention time of centroid
-            //   }
-            // }
-            // convertRT.push_back(retention_times[indices.size() - 1]);
-            // assert(addEmpty.size() == indices.size() + 1);
-            // return transferCentroids(data, indices, retention_times, start_index, PPM_PRECENTROIDED); // this should be on a per-spectrum basis
         }
         if (num_centroided_spectra != 0)
         {
@@ -521,7 +491,6 @@ namespace qAlgorithms
         convertRT.push_back(std::max(float(retention_times[0]) - 2 * rt_diff, float(0)));
         convertRT.push_back(std::max(float(retention_times[0] - 0.999 * rt_diff), float(0)));
         std::vector<size_t> relativeIndex(countSelected, 0);
-        // std::vector<size_t> correctedIndex(countSelected, 0);
 
         // this is the scan counting only MS1 spectra. It starts at two so we don't run into
         // problems with our front extrapolation during feature construction. It shouldn't matter
@@ -560,45 +529,20 @@ namespace qAlgorithms
             relativeIndex[i] = abstractScanNumber;   // abstract scan with same index as the input data
             abstractScanNumber++;
         }
-        // relativeIndex.back() = abstractScanNumber;
-        // convertRT.push_back(retention_times.back());
         // account for extrapolations at the back @todo the extrapolations should probably be a copile-time variable
         abstractScanNumber += 2;
         convertRT.push_back(retention_times.back() + rt_diff);
         convertRT.push_back(retention_times.back() + rt_diff + rt_diff);
         assert(convertRT.size() == abstractScanNumber); // ensure that every index has an assigned RT
 
-        // take spectrum at half length to avoid potential interference from quality control scans in the instrument
-        const std::vector<std::vector<double>> data_vec = data.get_spectrum(selectedIndices[10]); // note: this is dysfunctional
-        // expected difference between two consecutive x-axis values
-        double expectedDifference_mz = calcExpectedDiff(&data_vec);
         for (size_t i = 0; i < countSelected; ++i)
         {
             const std::vector<std::vector<double>> spectrum = data.get_spectrum(selectedIndices[i]);
-            // inter/extrapolate data, and identify data blocks @todo these should be two different functions
-            const auto treatedData = pretreatDataCentroids(&spectrum, expectedDifference_mz);
-            const auto profileGroups = pretreatDataCentroids2(&spectrum);
-            // auto tmpCens = findCentroids(&treatedData, relativeIndex[i]); // find peaks in data blocks of treated data
+            const auto profileGroups = pretreatDataCentroids(&spectrum);
             auto tmpCens = findCentroids(&profileGroups, relativeIndex[i]);
             centroids.insert(centroids.end(), tmpCens.begin(), tmpCens.end());
         }
-        // if (!displayPPMwarning)
-        // {
-        //     PPM_PRECENTROIDED = -INFINITY; // reset value before the next function call
-        // }
         return centroids;
-    }
-
-    constexpr ProfileBlock blockStart()
-    {
-        ProfileBlock p;
-        p.df.reserve(16);
-        p.intensity.reserve(16);
-        p.mz.reserve(16);
-        p.cumdf.reserve(16);
-        p.cumdf.push_back(0);
-        p.cumdf.push_back(0);
-        return p;
     }
 
     struct Block
@@ -673,7 +617,7 @@ namespace qAlgorithms
         return ret;
     }
 
-    std::vector<ProfileBlock> pretreatDataCentroids2(const std::vector<std::vector<double>> *spectrum)
+    std::vector<ProfileBlock> pretreatDataCentroids(const std::vector<std::vector<double>> *spectrum)
     {
         std::vector<double> intensities_profile;
         std::vector<double> mz_profile;
@@ -768,142 +712,5 @@ namespace qAlgorithms
         }
         assert(!groupedData.empty());
         return groupedData;
-    }
-
-    std::vector<ProfileBlock> pretreatDataCentroids(const std::vector<std::vector<double>> *spectrum, float expectedDifference)
-    {
-
-        /* @todo PLANNED UPDATES TO THIS FUNCTION:
-        1) implement cumulative degrees of freedom
-        2.1) zero filter in main loop
-        2.2) extrapolation by one point to make my life easier when checking total degrees of freedom
-        2.3) extrapolation by a further zeroed point
-        3.1) overhaul interpolation to not use the whole block of data
-        3.2) change from a constant difference to dynamic decision systems !! idea: check for linear relation
-             -> linear regression with y = (mz[1] - mz[0]) x + mz[0] // discarded, since the difference is never significant for large blocks
-             -> use modified version of binning
-        */
-
-        std::vector<double> intensities_profile;
-        std::vector<double> mz_profile;
-        const auto mz = spectrum->at(0);
-        intensities_profile.reserve(mz.size() / 2);
-        mz_profile.reserve(mz.size() / 2);
-        // Depending on the vendor, a profile contains a lot of points with intensity 0.
-        // These were added by the vendor software and must be removed prior to processing.
-        for (size_t i = 0; i < mz.size(); ++i)
-        {
-            if (spectrum->at(1)[i] == 0.0)
-            {
-                continue; // skip values with no intensity @todo minimum intensity?
-            }
-            intensities_profile.push_back(spectrum->at(1)[i]);
-            mz_profile.push_back(mz[i]);
-        }
-        assert(!intensities_profile.empty());
-        assert(!mz_profile.empty());
-
-        std::vector<Block> result;
-        std::vector<double> diffs;
-        diffs.reserve(mz.size() - 1);
-        std::vector<double> cumDiffs;
-        cumDiffs.reserve(mz.size());
-        cumDiffs.push_back(0);
-        double totalDiff = 0;
-
-        // std::cout << mz_profile[0];
-        for (size_t i = 1; i < mz_profile.size(); i++)
-        {
-            double diff = mz_profile[i] - mz_profile[i - 1];
-            diffs.push_back(diff);
-            totalDiff += diff;
-            cumDiffs.push_back(totalDiff);
-        }
-
-        binProfileSpec(&result, &diffs, &cumDiffs, 0, diffs.size() - 1);
-
-        const std::vector<double> *mz2 = &(*spectrum)[0];
-        const std::vector<double> *intensity2 = &(*spectrum)[1];
-
-        std::vector<ProfileBlock> subProfiles;
-        std::vector<ProfileBlock> subProfiles2;
-        subProfiles2.reserve(512); // 500 - 600 centroids per spectrum for real data
-        size_t blockSize = 0;
-        ProfileBlock currentBlock = blockStart(); // initialised with 16 reserved elements
-        currentBlock.intensity.push_back(0);
-
-        for (size_t idx = 0; idx < mz2->size(); idx++)
-        {
-            // maybe it is a bad idea to ignore zeroed elements @todo
-            if ((*intensity2)[idx] == 0)
-            {
-                continue;
-            }
-        }
-
-        currentBlock = blockStart();
-
-        for (size_t pos = 0; pos < mz_profile.size() - 1; pos++) // old loop
-        {
-            blockSize++;
-
-            currentBlock.intensity.push_back(intensities_profile[pos]);
-            currentBlock.mz.push_back(mz_profile[pos]);
-            currentBlock.df.push_back(true);
-
-            const double delta_mz = mz_profile[pos + 1] - mz_profile[pos];
-            assert(delta_mz > 0);
-
-            // 1.75 is used to round up asymmetrically. This parameter should be defined in a dynamic manner @todo
-            if (delta_mz > 1.75 * expectedDifference)
-            { // gap detected
-                // either interpolate or break the block up
-                if (delta_mz < 4.25 * expectedDifference) // at most three points can be interpolated, tolerated increase is < 0.1 per point
-                {
-                    // interpolate
-                    // round up the number of points starting at 0.75
-                    const int gapSize = static_cast<int>(delta_mz / expectedDifference + 0.25 * expectedDifference) - 1;
-                    assert(gapSize < 4);
-                    double interpolateDiff = delta_mz / (gapSize + 1);
-                    const double dy = std::pow(intensities_profile[pos + 1] / intensities_profile[pos],
-                                               1.0 / double(gapSize + 1)); // dy for log interpolation ; 1 if gapsize == 0
-                    for (int i = 0; i < gapSize; i++)
-                    {
-                        currentBlock.intensity.push_back(intensities_profile[pos] * std::pow(dy, i + 1));
-                        currentBlock.mz.push_back(mz_profile[pos] + (i + 1) * interpolateDiff);
-                        currentBlock.df.push_back(false);
-                    }
-                }
-                else
-                {
-                    if (blockSize > 4)
-                    {
-                        subProfiles.push_back(currentBlock);
-                    }
-                    currentBlock = blockStart(); // reset block for next iteration
-                    blockSize = 0;
-                }
-            }
-            else
-            {
-                // @todo reason about why these limit values are used, why take the mean for updating the expected diff?
-                if (delta_mz > 0.8 * expectedDifference && delta_mz < 1.2 * expectedDifference)
-                {
-                    // std::cout << expectedDifference << ", ";
-                    expectedDifference = (expectedDifference + delta_mz) * 0.5;
-                    // std::cout << expectedDifference << "\n";
-                }
-            }
-        } // end of for loop
-        if (blockSize > 3)
-        {
-            // special case: last point. Add the last element for mz and intensity if the block did not terminate
-            currentBlock.intensity.push_back(intensities_profile.back());
-            currentBlock.mz.push_back(mz_profile.back());
-            currentBlock.df.push_back(true);
-            subProfiles.push_back(currentBlock);
-        }
-        assert(subProfiles.size() > 1); // @todo this triggers https://github.com/odea-project/qAlgorithms/issues/25#issuecomment-2777788944
-        return subProfiles;
     }
 }
