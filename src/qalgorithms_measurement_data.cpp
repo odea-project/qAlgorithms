@@ -628,24 +628,12 @@ namespace qAlgorithms
         size_t length = end - start + 1;
         if (length < 4) // one point less due to differences being used
         {
-            // @todo there should be a check for interpolation here. Proceed by checking if the real distance
-            // div. by two or three would pass the test and then insert these values later
-
             return;
         }
 
-        // calculate standard deviation for the given region
-        double meanDiff = (cumDiffs->at(end + 1) - cumDiffs->at(start)) / length;
-        // double sd = 0;
-        // for (size_t i = start; i < end; i++) // diff[0] is same position as cumDiff[1], so no end + 1
-        // {
-        //     sd += (diffs->at(i) - meanDiff) * (diffs->at(i) - meanDiff);
-        // }
-        // sd /= (length - 1);
-
-        // double critVal = binningCritVal(length, sd);
         // we use the mean difference here since the differences should follow a flat distribution. The basic assumption
         // is that every point has an error of half the distance to its neighbours, since all points are evenly spaced.
+        double meanDiff = (cumDiffs->at(end + 1) - cumDiffs->at(start)) / length;
         double critVal = binningCritVal(length, meanDiff / 2);
 
         // max of difference // @todo extract to inline function to use in binning
@@ -677,91 +665,94 @@ namespace qAlgorithms
         binProfileSpec(result, diffs, cumDiffs, maxPos + 1, end);   // one past the max to avoid large value
     }
 
+    inline ProfileBlock initBlock(size_t blocksize)
+    {
+        std::vector<float> mz_int(blocksize, 0);
+        std::vector<unsigned int> cumdf(blocksize, 0);
+        std::vector<bool> df(blocksize, false);
+        ProfileBlock ret = {mz_int,
+                            mz_int,
+                            cumdf,
+                            df};
+        return ret;
+    }
+
     std::vector<ProfileBlock> pretreatDataCentroids2(const std::vector<std::vector<double>> *spectrum)
     {
         std::vector<double> intensities_profile;
         std::vector<double> mz_profile;
-        const auto mz = spectrum->at(0);
-        intensities_profile.reserve(mz.size() / 2);
-        mz_profile.reserve(mz.size() / 2);
-        // Depending on the vendor, a profile contains a lot of points with intensity 0.
-        // These were added by the vendor software and must be removed prior to processing.
-        for (size_t i = 0; i < mz.size(); ++i)
-        {
-            if (spectrum->at(1)[i] == 0.0)
+        { // remove zeroes
+            const auto mz = spectrum->at(0);
+            intensities_profile.reserve(mz.size() / 2);
+            mz_profile.reserve(mz.size() / 2);
+            // Depending on the vendor, a profile contains a lot of points with intensity 0.
+            // These were added by the vendor software and must be removed prior to processing.
+            for (size_t i = 0; i < mz.size(); ++i)
             {
-                continue; // skip values with no intensity @todo minimum intensity?
+                if (spectrum->at(1)[i] == 0.0)
+                {
+                    continue; // skip values with no intensity @todo minimum intensity?
+                }
+                intensities_profile.push_back(spectrum->at(1)[i]);
+                mz_profile.push_back(mz[i]);
             }
-            intensities_profile.push_back(spectrum->at(1)[i]);
-            mz_profile.push_back(mz[i]);
+            assert(!intensities_profile.empty());
+            assert(!mz_profile.empty());
         }
-        assert(!intensities_profile.empty());
-        assert(!mz_profile.empty());
 
         std::vector<double> diffs;
-        diffs.reserve(mz.size() - 1);
         std::vector<double> cumDiffs;
-        cumDiffs.reserve(mz.size());
-        cumDiffs.push_back(0);
-        double totalDiff = 0;
+        { // calculate mz differences
+            diffs.reserve(mz_profile.size() - 1);
+            cumDiffs.reserve(mz_profile.size());
+            cumDiffs.push_back(0);
+            double totalDiff = 0;
 
-        for (size_t i = 1; i < mz_profile.size(); i++)
-        {
-            double diff = mz_profile[i] - mz_profile[i - 1];
-            diffs.push_back(diff);
-            totalDiff += diff;
-            cumDiffs.push_back(totalDiff);
+            for (size_t i = 1; i < mz_profile.size(); i++)
+            {
+                double diff = mz_profile[i] - mz_profile[i - 1];
+                diffs.push_back(diff);
+                totalDiff += diff;
+                cumDiffs.push_back(totalDiff);
+            }
         }
 
         std::vector<Block> result; // result contains the start- and end indices of all relevant blocks in the data.
+        result.reserve(128);
         binProfileSpec(&result, &diffs, &cumDiffs, 0, diffs.size() - 1);
 
         std::vector<ProfileBlock> groupedData;
         groupedData.reserve(result.size());
 
+        // transfer the found groups into a representation accepted by the peak model fit
         for (size_t j = 0; j < result.size(); j++)
         {
             Block res = result[j];
-            ProfileBlock entry;
+
             size_t entrySize = res.end + 1 - res.start + 4;
+            ProfileBlock entry = initBlock(entrySize);
 
-            // @todo move this bookkeeping to a separate function which initialises the block
-            entry.intensity.reserve(entrySize);
-            entry.intensity.push_back(0); // @todo consider if extrapolation makes sense, and if so, how much
-            entry.intensity.push_back(0);
-
-            entry.mz.reserve(entrySize);
-            entry.mz.push_back(0);
-            entry.mz.push_back(0);
-
-            entry.df.reserve(entrySize);
-            entry.df.push_back(0);
-            entry.df.push_back(0);
-
-            entry.cumdf.reserve(entrySize);
-            entry.cumdf.push_back(0);
-            entry.cumdf.push_back(0);
-            for (size_t i = res.start; i < res.end + 1; i++)
+            for (size_t i = 0; i < entrySize - 4; i++)
             {
-                entry.intensity.push_back(intensities_profile[i]);
+                size_t epos = i + res.start; // element position
+                size_t rpos = i + 2;         // result vector position
+                entry.intensity[rpos] = intensities_profile[epos];
             }
-            for (size_t i = res.start; i < res.end + 1; i++)
+            for (size_t i = 0; i < entrySize - 4; i++)
             {
-                entry.mz.push_back(mz_profile[i]);
+                size_t epos = i + res.start; // element position
+                size_t rpos = i + 2;         // result vector position
+                entry.mz[rpos] = mz_profile[epos];
             }
-            for (size_t i = res.start; i < res.end + 1; i++)
+            for (size_t i = 0; i < entrySize - 4; i++)
             {
-                entry.df.push_back(1);
-                entry.cumdf.push_back(entry.cumdf.back() + 1);
+                size_t rpos = i + 2;
+                entry.df[rpos] = true;
+                entry.cumdf[rpos] = i + 1;
             }
-            entry.intensity.push_back(0);
-            entry.intensity.push_back(0);
-            entry.mz.push_back(0);
-            entry.mz.push_back(0);
-            entry.df.push_back(0);
-            entry.df.push_back(0);
-            entry.cumdf.push_back(entry.cumdf.back());
-            entry.cumdf.push_back(entry.cumdf.back());
+
+            entry.cumdf[entrySize - 2] = entry.cumdf[entrySize - 3];
+            entry.cumdf[entrySize - 1] = entry.cumdf[entrySize - 3];
 
             // extrapolate two points to each size of the entry
             entry.intensity[1] = entry.intensity[2] / 2;
