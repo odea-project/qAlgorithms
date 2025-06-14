@@ -33,7 +33,6 @@ namespace qAlgorithms
         // extended functionality
         bool skipError = false;
         bool noOverwrite = false;
-        float newPPM = 0;               // @todo not a good idea
         bool tasklistSpecified = false; // @todo implement
         bool interactive = false;
     };

@@ -53,7 +53,7 @@ namespace qAlgorithms
                                   "                                  newly constructed regression for which centroids are relevant. Also prints the components themselves.\n"
                                   "      -pa, -printall:             Print all availvable resutlts. You will probably not need to do this.\n"
                                   "    Program behaviour:\n"
-                                  //   "      -s, -silent:    do not print progress reports to standard out.\n" // @todo add an option for printing all process stats without timing and explanations for use with CLI toolchains
+                                  "      -s, -silent:    do not print progress reports to standard out.\n" // @todo add an option for printing all process stats without timing and explanations for use with CLI toolchains
                                   //   "      -v, -verbose:   print a detailed progress report to standard out.\n"
                                   "      -skip-existing  Do not write to files that already exist, even if an output option is set.\n"
                                   "      -skip-error:    If processing fails, the program will not exit and instead start processing\n"
@@ -66,12 +66,6 @@ namespace qAlgorithms
     //   "                      done by the user, the default log will be written or overwritten.\n"
     //   "    Analysis options:\n"
     //   "      -MS2:               also process MS2 spectra (not implemented yet)\n" // @todo
-    //   "      -ppm <number>:      this sets the centroid error when reading in pre-centroided data\n"
-    //   "                          with qAlgorithms to <number> * 10^-6 * m/z of the centroid. We recommend\n"
-    //   "                          you always use the centroiding algorithm implemented in qAlgorithms.\n"
-    //   "                          This parameter is significantly different from an EIC standard deviation estimator (XCMS)!\n"
-    //   "                          By default, this value is set to 0.25.\n"
-    //   "      -mz-abs <number>:   (not implemented yet) add this absolute error (in Dalton) to the relative error specified by -ppm.\n"; //@todo
 
 #pragma endregion helpstring
 
@@ -190,47 +184,6 @@ namespace qAlgorithms
                     return args;
                 }
                 args.outputPath = argv[i];
-            }
-            else if (argument == "-ppm") // @todo remove
-            {
-                ++i;
-                if (i == argc)
-                {
-                    std::cerr << "Error: -ppm set, but no centroid error specified.\n";
-                    return args;
-                }
-
-                try
-                {
-                    args.newPPM = std::stod(argv[i]);
-                }
-                catch (std::invalid_argument const &)
-                {
-                    std::cerr << "Error: the centroid error cannot be set to \"" << argv[i] << "\" ppm.\n";
-                    return args;
-                }
-                // @todo move to control function or remove entirely
-                if (args.newPPM <= 0)
-                {
-                    std::cerr << "Error: the assumed centroid error must be greater than 0.\n";
-                    return args;
-                }
-                if (std::isnan(args.newPPM))
-                {
-                    std::cerr << "Error: the assumed centroid error must be a number, but was set to NaN.\n";
-                    return args;
-                }
-                if (args.newPPM > 1000000)
-                {
-                    std::cerr << "Error: the assumed centroid error is set to 100% or greater (\"" << argv[i] << "\").\n";
-                    return args;
-                }
-                if (args.newPPM > 0.5 || args.newPPM < 0.05)
-                {
-                    std::cerr << "Warning: you have set the centroid error to \"" << argv[i] << "\", with the expected range \n"
-                              << "being between 0.05 and 0.5 ppm. Are you sure this is what you want?\n"
-                              << "The centroid error is not the mz tolerance from ROI-type approaches.\n";
-                }
             }
             else if ((argument == "-pc") || (argument == "-printcentroids"))
             {
@@ -461,17 +414,6 @@ namespace qAlgorithms
             !(args.outputPath.empty()))
         {
             std::cerr << "Warning: no output files will be written.\n";
-        }
-
-        if (args.newPPM < 0)
-        {
-            std::cerr << "Error: invalid value for ppm error supplied.\n";
-            goodInputs = false;
-        }
-        if (args.newPPM > 0)
-        {
-            std::cerr << "Notice: the changed centroid certainty will only affect pre-centroided data.\n";
-            PPM_PRECENTROIDED = args.newPPM;
         }
         if (!goodInputs && args.interactive)
         {
