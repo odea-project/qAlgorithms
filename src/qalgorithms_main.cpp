@@ -21,10 +21,6 @@
 
 namespace qAlgorithms
 {
-    /// ### set global variables ###
-    float PPM_PRECENTROIDED = -INFINITY;         // -Infinity sets it to the default value if no user input changes it
-    float MZ_ABSOLUTE_PRECENTROIDED = -INFINITY; // see above
-
     struct logger
     {
         std::string name;
