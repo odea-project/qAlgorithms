@@ -44,6 +44,7 @@ namespace qAlgorithms
                                             const size_t scanNumber)
     {
         assert(!treatedData->empty());
+        assert(scanNumber != 0);
         std::vector<CentroidPeak> all_peaks;
         all_peaks.reserve(treatedData->size() / 32);
         size_t maxWindowSize = 0;
