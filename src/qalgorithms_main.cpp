@@ -180,10 +180,24 @@ int main(int argc, char *argv[])
                 exit(101);
             }
         }
+        // the check for centroided data is set here, will likely require different approach down the line
+        // accessor contains the indices of all spectra that should be fetched
+        std::vector<unsigned int> accessor(data.number_spectra, 0);
+        std::iota(accessor.begin(), accessor.end(), 0);
 
+        std::vector<bool> spectrum_mode = data.get_spectra_mode(&accessor); // get spectrum mode (centroid or profile)
+
+        // CHECK IF CENTROIDED SPECTRA
+        size_t num_centroided_spectra = std::count(spectrum_mode.begin(), spectrum_mode.end(), false);
+        if (num_centroided_spectra > spectrum_mode.size() / 2) // in profile mode sometimes centroided spectra appear as well @todo is 2 a good idea?
+        {
+            std::cout << " file centroided, error\n";
+            std::cerr << "Error: centroided data is not supported by qAlgorithms for the time being.\n";
+            continue;
+        }
         if (!userArgs.silent)
         {
-            std::cout << " file ok\n";
+            std::cout << " file profile mode, ok\n";
         }
 
         // enum polarity
@@ -217,7 +231,7 @@ int main(int argc, char *argv[])
             float diff_rt = 0;
             // @todo add check if set polarity is correct
             std::vector<CentroidPeak> *centroids = new std::vector<CentroidPeak>;
-            *centroids = findCentroids_MZML(data, convertRT, diff_rt, polarity);
+            *centroids = findCentroids(data, convertRT, diff_rt, polarity); // it is guaranteed that only profile mode data is used
 
             if (centroids->empty())
             {
