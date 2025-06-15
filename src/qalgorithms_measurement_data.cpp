@@ -415,33 +415,77 @@ namespace qAlgorithms
         return sum / (retention_times->size() - 1);
     }
 
-    std::vector<CentroidPeak> findCentroids_MZML( // this function needs to be split @todo
-        StreamCraft::MZML &data,
-        std::vector<float> &convertRT,
-        float &rt_diff,
-        const bool polarity,
-        const bool ms1only)
+    std::vector<size_t> makeRelativeIndex(std::vector<double> *retention_times,
+                                          std::vector<float> &convertRT, // @todo merge into struct with actual RTs
+                                          size_t countSelected,
+                                          float *rt_diff) // this gets mutated, when it should probably not exist at all
+    {
+        *rt_diff = calcRTDiff(retention_times); // this is the wrong approach - the scan interval is not static
+        assert(convertRT.empty());
+        convertRT.reserve(countSelected + 4);
+        // first two scans do not have retention times @todo this will lead to slightly wrong results, should be fine due to void time
+        convertRT.push_back(std::max(float(retention_times->front()) - 2 * *rt_diff, float(0)));
+        convertRT.push_back(std::max(float(retention_times->front() - 0.999 * *rt_diff), float(0)));
+
+        // this is the scan counting only MS1 spectra. It starts at two so we don't run into
+        // problems with our front extrapolation during feature construction. It shouldn't matter
+        // anyway since the first two scans should not contain relevant information, but this is
+        // less questionable than cutting out the first two mass spectra entirely - consider the
+        // possibility that they were trimmed of void time beforehand!
+        size_t abstractScanNumber = 2;
+
+        std::vector<size_t> relativeIndex(countSelected, 0);
+
+        for (size_t i = 0; i < countSelected; i++)
+        {
+            float scandiff = retention_times->at(i) - convertRT.back(); // avoids problem of iterating n - 1!
+            assert(scandiff > 0);
+            int gapSize = int((scandiff / *rt_diff) + 0.25 * *rt_diff); // round up at 0.75
+
+            // correctedIndex[i] = i + gapSize;
+            if (gapSize > 1)
+            {
+                std::cerr << "."; // @todo this is probably useless at best and probably does more harm than good
+                float gapStep = scandiff / float(gapSize);
+                for (int gap = 1; gap < gapSize + 1; gap++)
+                {
+                    assert(convertRT.back() + gap * gapStep > convertRT.back());
+                    convertRT.push_back(convertRT.back() + gap * gapStep);
+                }
+                abstractScanNumber += gapSize;
+            }
+            if (convertRT.back() >= retention_times->at(i)) [[unlikely]]
+            {
+                // workaround for slightly misaligned scans, will need to be fixed with a full rework
+                std::cerr << "Warning: bad estimation of scan no. " << abstractScanNumber << "\n";
+                convertRT.pop_back();
+                abstractScanNumber--;
+            }
+
+            // assert(convertRT.back() < retention_times[i]);
+            convertRT.push_back(retention_times->at(i)); // convertRT[scan] = retention time of centroid
+            relativeIndex[i] = abstractScanNumber;       // abstract scan with same index as the input data
+            abstractScanNumber++;
+        }
+        // account for extrapolations at the back @todo the extrapolations should probably be a copile-time variable
+        abstractScanNumber += 2;
+        convertRT.push_back(retention_times->back() + *rt_diff);
+        convertRT.push_back(retention_times->back() + *rt_diff + *rt_diff);
+        assert(convertRT.size() == abstractScanNumber); // ensure that every index has an assigned RT
+        return relativeIndex;
+    }
+
+    std::vector<unsigned int> getRelevantSpectra(StreamCraft::MZML &data,
+                                                 const bool polarity,
+                                                 const bool ms1only)
     {
         // accessor contains the indices of all spectra that should be fetched
         std::vector<unsigned int> accessor(data.number_spectra, 0);
         std::iota(accessor.begin(), accessor.end(), 0);
 
         std::vector<bool> spectrum_mode = data.get_spectra_mode(&accessor); // get spectrum mode (centroid or profile)
-
-        // CHECK IF CENTROIDED SPECTRA
-        size_t num_centroided_spectra = std::count(spectrum_mode.begin(), spectrum_mode.end(), false);
-        if (num_centroided_spectra > spectrum_mode.size() / 2) // in profile mode sometimes centroided spectra appear as well @todo is 2 a good idea?
-        {
-            std::cerr << "Centroided data is not supported in this version of qAlgorithms!\n";
-            return std::vector<CentroidPeak>{};
-        }
-        if (num_centroided_spectra != 0)
-        {
-            std::cerr << "Warning: removed " << num_centroided_spectra << " centroided spectra from measurement.\n";
-        }
-
-        std::vector<size_t> indices = data.get_spectra_index(&accessor); // get all indices
-        std::vector<int> ms_levels = data.get_spectra_level(&accessor);  // get all MS levels
+        std::vector<size_t> indices = data.get_spectra_index(&accessor);    // get all indices
+        std::vector<int> ms_levels = data.get_spectra_level(&accessor);     // get all MS levels
         assert(!indices.empty());
 
         std::vector<unsigned int> selectedIndices;
@@ -458,21 +502,39 @@ namespace qAlgorithms
             {
                 continue;
             }
+            if (!spectrum_mode[i])
+            {
+                continue;
+            }
+
             selectedIndices.push_back(indices[i]);
         }
+        return selectedIndices;
+    }
+
+    std::vector<CentroidPeak> findCentroids( // this function needs to be reworked further @todo
+        StreamCraft::MZML &data,
+        std::vector<float> &convertRT,
+        float &rt_diff,
+        const bool polarity,
+        const bool ms1only)
+    {
+        std::vector<unsigned int> selectedIndices = getRelevantSpectra(data, polarity, ms1only);
         if (selectedIndices.empty())
         {
             return std::vector<CentroidPeak>{};
         }
 
         std::vector<double> retention_times = data.get_spectra_RT(&selectedIndices);
-        rt_diff = calcRTDiff(&retention_times);
+        // for (size_t i = 0; i < retention_times.size() - 1; i++)
+        // {
+        //     std::cout << retention_times[i] << ",";
+        // }
+        // std::cout << retention_times.back();
+        // exit(1);
 
         selectedIndices.shrink_to_fit();
         const size_t countSelected = selectedIndices.size();
-
-        std::vector<CentroidPeak> centroids;
-        centroids.reserve(countSelected * 1000);
 
         // determine where the peak finding will interpolate points and pass this information
         // to the binning step. addEmpty contains the number of empty scans to be added into
@@ -485,56 +547,10 @@ namespace qAlgorithms
         // issue occurs with 2.7499.... Here, the error is 0.75 / 3 = 0.25. We need to check how often
         // such a problem arises and if it negatively affects result accuracy.
 
-        assert(convertRT.empty());
-        convertRT.reserve(countSelected + 4);
-        // first two scans do not have retention times @todo this will lead to slightly wrong results, should be fine due to void time
-        convertRT.push_back(std::max(float(retention_times[0]) - 2 * rt_diff, float(0)));
-        convertRT.push_back(std::max(float(retention_times[0] - 0.999 * rt_diff), float(0)));
-        std::vector<size_t> relativeIndex(countSelected, 0);
+        std::vector<size_t> relativeIndex = makeRelativeIndex(&retention_times, convertRT, countSelected, &rt_diff);
 
-        // this is the scan counting only MS1 spectra. It starts at two so we don't run into
-        // problems with our front extrapolation during feature construction. It shouldn't matter
-        // anyway since the first two scans should not contain relevant information, but this is
-        // less questionable than cutting out the first two mass spectra entirely - consider the
-        // possibility that they were trimmed of void time beforehand!
-        size_t abstractScanNumber = 2;
-
-        for (size_t i = 0; i < countSelected; i++)
-        {
-            float scandiff = retention_times[i] - convertRT.back(); // avoids problem of iterating n - 1!
-            assert(scandiff > 0);
-            int gapSize = int((scandiff / rt_diff) + 0.25 * rt_diff); // round up at 0.75
-
-            // correctedIndex[i] = i + gapSize;
-            if (gapSize > 1)
-            {
-                float gapStep = scandiff / float(gapSize);
-                for (int gap = 1; gap < gapSize + 1; gap++)
-                {
-                    assert(convertRT.back() + gap * gapStep > convertRT.back());
-                    convertRT.push_back(convertRT.back() + gap * gapStep);
-                }
-                abstractScanNumber += gapSize;
-            }
-            if (convertRT.back() >= retention_times[i]) [[unlikely]]
-            {
-                // workaround for slightly misaligned scans, will need to be fixed with a full rework
-                std::cerr << "Warning: bad estimation of scan no. " << abstractScanNumber << "\n";
-                convertRT.pop_back();
-                abstractScanNumber--;
-            }
-
-            // assert(convertRT.back() < retention_times[i]);
-            convertRT.push_back(retention_times[i]); // convertRT[scan] = retention time of centroid
-            relativeIndex[i] = abstractScanNumber;   // abstract scan with same index as the input data
-            abstractScanNumber++;
-        }
-        // account for extrapolations at the back @todo the extrapolations should probably be a copile-time variable
-        abstractScanNumber += 2;
-        convertRT.push_back(retention_times.back() + rt_diff);
-        convertRT.push_back(retention_times.back() + rt_diff + rt_diff);
-        assert(convertRT.size() == abstractScanNumber); // ensure that every index has an assigned RT
-
+        std::vector<CentroidPeak> centroids;
+        centroids.reserve(countSelected * 1000);
         for (size_t i = 0; i < countSelected; ++i)
         {
             const std::vector<std::vector<double>> spectrum = data.get_spectrum(selectedIndices[i]);

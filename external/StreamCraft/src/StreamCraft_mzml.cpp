@@ -519,12 +519,13 @@ std::vector<bool> StreamCraft::MZML::get_spectra_mode(const std::vector<unsigned
         pugi::xml_node spec = spectra_nodes[idx];
         if (spec.find_child_by_attribute("cvParam", "accession", "MS:1000128"))
         {
-            modes.push_back(true);
+            modes.push_back(true); // profile mode
         }
         else
         {
-            assert(spec.find_child_by_attribute("cvParam", "accession", "MS:1000127")); // @todo is there any case where the mode is neither profile nor centroid?
-            modes.push_back(false);
+            // @todo is there any case where the mode is neither profile nor centroid?
+            assert(spec.find_child_by_attribute("cvParam", "accession", "MS:1000127"));
+            modes.push_back(false); // centroided
         }
     }
     return modes;
