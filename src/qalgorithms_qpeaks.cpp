@@ -15,28 +15,6 @@
 namespace qAlgorithms
 {
 
-#pragma region "pass to qBinning"
-
-    const std::vector<qCentroid> passToBinning(const std::vector<CentroidPeak> *allPeaks) //, std::vector<unsigned int> addEmpty)
-    {
-        // initialise empty vector with enough room for all scans - centroids[0] must remain empty
-        std::vector<qCentroid> centroids;
-        centroids.reserve(allPeaks->size() * 100);
-        unsigned int totalCentroids = 1;
-        centroids.push_back({0, 0, 0, 0, 0, 0, 0, 0}); // this centroid will be used for ever missing value
-        for (size_t i = 0; i < allPeaks->size(); ++i)
-        {
-            CentroidPeak peak = allPeaks->at(i);
-            qCentroid F = qCentroid{peak.mz, peak.mzUncertainty, peak.scanNumber, peak.area, peak.height, peak.DQSC, peak.df, totalCentroids};
-            assert(F.scanNo > 0);
-            centroids.push_back(F);
-            ++totalCentroids;
-        }
-        assert(centroids.size() > 4);
-        return centroids;
-    }
-#pragma endregion "pass to qBinning"
-
     constexpr auto INV_ARRAY = initialize(); // this only works with constexpr square roots, which are part of C++26
 
 #pragma region "find peaks"

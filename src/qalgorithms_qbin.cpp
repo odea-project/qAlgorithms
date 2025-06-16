@@ -13,7 +13,7 @@ namespace qAlgorithms
 {
     const size_t maxdist = 3; // this is the maximum distance in scans which can later be interpolated during feature detection
 
-    std::vector<EIC> performQbinning(const std::vector<qCentroid> *centroidedData,
+    std::vector<EIC> performQbinning(const std::vector<CentroidPeak> *centroidedData,
                                      const std::vector<float> *convertRT, bool verbose)
     {
         // std::cout << sizeof(Bin) << std::endl;
@@ -24,6 +24,7 @@ namespace qAlgorithms
         Bin firstBin;
         for (size_t i = 0; i < centroidedData->size(); i++)
         {
+            // firstBin.pointsInBin.push_back(&(centroidedData->at(i)));
             firstBin.pointsInBin.push_back(&(centroidedData->at(i)));
         }
         activeBins.processBinsF.push_back(firstBin);
@@ -73,6 +74,7 @@ namespace qAlgorithms
                 // tend to contain smaller bins which were not properly processed due to being
                 // at the borders of a cutting region
                 activeBins.processBinsF.back().pointsInBin = activeBins.notInBins;
+                activeBins.processBinsF.back().pointsInBin = activeBins.notInBins;
                 logger += "| " + std::to_string(activeBins.notInBins.size()) + "\n";
                 activeBins.notInBins.clear();
                 // re-binning during the initial loop would result in some bins being split prematurely
@@ -86,6 +88,10 @@ namespace qAlgorithms
         {
             for (Bin bin : activeBins.processBinsF)
             {
+                // for (size_t i = 0; i < bin.pointsInBin.size(); i++)
+                // {
+                //     activeBins.notInBins.push_back(bin.pointsInBin[i]);
+                // }
                 for (size_t i = 0; i < bin.pointsInBin.size(); i++)
                 {
                     activeBins.notInBins.push_back(bin.pointsInBin[i]);
@@ -107,7 +113,7 @@ namespace qAlgorithms
         }
 
         // calculate the DQSB as the silhouette score, considering only non-separated points
-        std::sort(activeBins.notInBins.begin(), activeBins.notInBins.end(), [](const qCentroid *lhs, const qCentroid *rhs)
+        std::sort(activeBins.notInBins.begin(), activeBins.notInBins.end(), [](const CentroidPeak *lhs, const CentroidPeak *rhs)
                   { return lhs->mz < rhs->mz; });
 
         // setting start position to 0 at this point means that it can be reused, since it is incremented in makeDQSB
@@ -128,6 +134,7 @@ namespace qAlgorithms
             finalBins.push_back(activeBins.finalBins[i].createEIC(convertRT));
             countPointsInBins += finalBins[i].scanNumbers.size();
         }
+        // assert(countPointsInBins + activeBins.notInBins.size() == centroidedData->size());
         assert(countPointsInBins + activeBins.notInBins.size() == centroidedData->size());
         return finalBins;
     }
@@ -180,7 +187,8 @@ namespace qAlgorithms
             for (size_t j = 0; j < bincontainer.sourceBins->size(); j++) // for every element in the deque before writing new bins
             {
                 Bin processThis = bincontainer.sourceBins->at(j);
-                std::sort(processThis.pointsInBin.begin(), processThis.pointsInBin.end(), [](const qCentroid *lhs, const qCentroid *rhs)
+                // std::sort(processThis.pointsInBin.begin(), processThis.pointsInBin.end(), [](const CentroidPeak *lhs, const CentroidPeak *rhs)
+                std::sort(processThis.pointsInBin.begin(), processThis.pointsInBin.end(), [](const CentroidPeak *lhs, const CentroidPeak *rhs)
                           { return lhs->mz < rhs->mz; });
                 auto activeOS = makeOrderSpace(&processThis);
                 auto cumError = makeCumError(&processThis.pointsInBin);
@@ -194,7 +202,7 @@ namespace qAlgorithms
 
             for (size_t j = 0; j < bincontainer.sourceBins->size(); j++)
             {
-                bincontainer.sourceBins->at(j).subsetScan(bincontainer.targetBins, bincontainer.notInBins);
+                bincontainer.sourceBins->at(j).subsetScan(bincontainer.targetBins, &bincontainer.notInBins);
             }
             // @todo logging
             logOutput += std::to_string(bincontainer.targetBins->size()) + ", ";
@@ -221,23 +229,25 @@ namespace qAlgorithms
         return logOutput;
     }
 
-    void deduplicateBin(std::vector<Bin> *target, std::vector<const qCentroid *> *notInBins, Bin bin)
+    // void deduplicateBin(std::vector<Bin> *target, std::vector<const CentroidPeak *> *notInBins, Bin bin)
+    void deduplicateBin(std::vector<Bin> *target, std::vector<const CentroidPeak *> *notInBins, Bin bin)
     {
         assert(bin.duplicateScan);
         assert(bin.medianMZ > 1);
-        std::sort(bin.pointsInBin.begin(), bin.pointsInBin.end(), [](const qCentroid *lhs, const qCentroid *rhs)
-                  { return lhs->scanNo < rhs->scanNo; });
+        // std::sort(bin.pointsInBin.begin(), bin.pointsInBin.end(), [](const CentroidPeak *lhs, const CentroidPeak *rhs)
+        std::sort(bin.pointsInBin.begin(), bin.pointsInBin.end(), [](const CentroidPeak *lhs, const CentroidPeak *rhs)
+                  { return lhs->scanNumber < rhs->scanNumber; });
         Bin returnBin;
         returnBin.pointsInBin.reserve(bin.pointsInBin.size());
         size_t duplicateRemovedCount = 0;
         // add dummy centroid to the end of the bin
-        qCentroid dummy;
+        CentroidPeak dummy;
         dummy.mz = 0;
-        dummy.scanNo = 0;
+        dummy.scanNumber = 0;
         bin.pointsInBin.push_back(&dummy); // pointer will be not be invalidated since bin is copied
         for (size_t i = 1; i < bin.pointsInBin.size(); i++)
         {
-            if (bin.pointsInBin[i]->scanNo == bin.pointsInBin[i - 1]->scanNo)
+            if (bin.pointsInBin[i]->scanNumber == bin.pointsInBin[i - 1]->scanNumber)
             {
                 double left = abs(bin.medianMZ - bin.pointsInBin[i - 1]->mz);
                 double right = abs(bin.medianMZ - bin.pointsInBin[i]->mz);
@@ -277,13 +287,13 @@ namespace qAlgorithms
         target->push_back(returnBin);
     }
 
-    void removeMassJumps(std::vector<Bin> *target, std::vector<const qCentroid *> *notInBins, Bin bin)
+    void removeMassJumps(std::vector<Bin> *target, std::vector<const CentroidPeak *> *notInBins, Bin bin)
     {
         // if the distance in mz between two points is too great, the violating point
         // should be removed.
     }
 
-    // int selectRebin(BinContainer *bins, const std::vector<qCentroid> *rawdata)
+    // int selectRebin(BinContainer *bins, const std::vector<CentroidPeak> *rawdata)
     // {
     //     // move all bins without binning artefacts into finishedBins vector
     //     assert(bins->processBinsF.size() > 0);
@@ -300,7 +310,7 @@ namespace qAlgorithms
     //         else
     //         {
     //             dissolvedCount++;
-    //             for (const qCentroid *cen : currentBin.pointsInBin)
+    //             for (const CentroidPeak *cen : currentBin.pointsInBin)
     //             {
     //                 bins->processBinsF.front().pointsInBin.push_back(cen);
     //             }
@@ -316,9 +326,14 @@ namespace qAlgorithms
 
     Bin::Bin() {};
 
-    Bin::Bin(const std::vector<const qCentroid *>::iterator &binStartInOS, const std::vector<const qCentroid *>::iterator &binEndInOS)
+    // Bin::Bin(const std::vector<const CentroidPeak *>::iterator &binStartInOS, const std::vector<const CentroidPeak *>::iterator &binEndInOS)
+    // {
+    //     pointsInBin = std::vector<const CentroidPeak *>(binStartInOS, binEndInOS);
+    // }
+
+    Bin::Bin(const std::vector<const CentroidPeak *>::iterator &binStartInOS, const std::vector<const CentroidPeak *>::iterator &binEndInOS)
     {
-        pointsInBin = std::vector<const qCentroid *>(binStartInOS, binEndInOS);
+        pointsInBin = std::vector<const CentroidPeak *>(binStartInOS, binEndInOS);
     }
 
     const std::vector<double> makeOrderSpace(const Bin *bin)
@@ -335,19 +350,20 @@ namespace qAlgorithms
         return OS;
     }
 
-    const std::vector<double> makeCumError(const std::vector<const qAlgorithms::qCentroid *> *bin)
+    const std::vector<double> makeCumError(const std::vector<const qAlgorithms::CentroidPeak *> *bin)
     {
         std::vector<double> cumError;
         cumError.reserve(bin->size());
         for (size_t i = 0; i < bin->size(); i++)
         {
-            cumError.push_back(bin->at(i)->mzError);
+            cumError.push_back(bin->at(i)->mzUncertainty);
         }
         std::partial_sum(cumError.begin(), cumError.end(), cumError.begin()); // cumulative sum
         return cumError;
     }
 
-    void Bin::subsetMZ(std::vector<Bin> *bincontainer, std::vector<const qCentroid *> &notInBins,
+    // void Bin::subsetMZ(std::vector<Bin> *bincontainer, std::vector<const CentroidPeak *> &notInBins,
+    void Bin::subsetMZ(std::vector<Bin> *bincontainer, std::vector<const CentroidPeak *> &notInBins,
                        const std::vector<double> &OS, const std::vector<double> &cumError,
                        const unsigned int binStartInOS, const unsigned int binEndInOS)
     {
@@ -403,19 +419,19 @@ namespace qAlgorithms
         }
     }
 
-    void Bin::subsetScan(std::vector<Bin> *bincontainer, std::vector<const qCentroid *> &notInBins)
+    void Bin::subsetScan(std::vector<Bin> *bincontainer, std::vector<const CentroidPeak *> *notInBins)
     {
         assert(!pointsInBin.empty());
         // function is called on a bin sorted by mz
         const size_t binSize = pointsInBin.size();
-        std::sort(pointsInBin.begin(), pointsInBin.end(), [](const qCentroid *lhs, const qCentroid *rhs)
-                  { return lhs->scanNo < rhs->scanNo; });
-        std::vector<const qCentroid *>::iterator newstart = pointsInBin.begin();
+        std::sort(pointsInBin.begin(), pointsInBin.end(), [](const CentroidPeak *lhs, const CentroidPeak *rhs)
+                  { return lhs->scanNumber < rhs->scanNumber; });
+        std::vector<const CentroidPeak *>::iterator newstart = pointsInBin.begin();
         int lastpos = 0;
         for (size_t i = 0; i < binSize - 1; i++) // -1 since difference to next data point is checked
         {
-            assert(pointsInBin[i + 1]->scanNo >= pointsInBin[i]->scanNo);
-            size_t distanceScan = pointsInBin[i + 1]->scanNo - pointsInBin[i]->scanNo;
+            assert(pointsInBin[i + 1]->scanNumber >= pointsInBin[i]->scanNumber);
+            size_t distanceScan = pointsInBin[i + 1]->scanNumber - pointsInBin[i]->scanNumber;
             if (distanceScan > maxdist) // bin needs to be split
             {
                 // less than five points in bin
@@ -423,8 +439,8 @@ namespace qAlgorithms
                 {
                     for (size_t j = lastpos; j <= i; j++)
                     {
-                        const qCentroid *F = *(pointsInBin.begin() + j);
-                        notInBins.push_back(F);
+                        const CentroidPeak *F = *(pointsInBin.begin() + j);
+                        notInBins->push_back(F);
                     }
                 }
                 else
@@ -447,8 +463,8 @@ namespace qAlgorithms
         if (lastpos == 0)
         {
             // no cut has occurred, the bin is viable
-            this->scanMin = pointsInBin.front()->scanNo;
-            this->scanMax = pointsInBin.back()->scanNo;
+            this->scanMin = pointsInBin.front()->scanNumber;
+            this->scanMax = pointsInBin.back()->scanNumber;
             this->unchanged = true;
             bincontainer->push_back(*this);
         }
@@ -463,13 +479,13 @@ namespace qAlgorithms
         {
             for (size_t j = lastpos; j < pointsInBin.size(); j++)
             {
-                const qCentroid *F = *(pointsInBin.begin() + j);
-                notInBins.push_back(F);
+                const CentroidPeak *F = *(pointsInBin.begin() + j);
+                notInBins->push_back(F);
             }
         }
     }
 
-    size_t Bin::makeDQSB(const std::vector<const qCentroid *> *notInBins, size_t idx_lowerLimit)
+    size_t Bin::makeDQSB(const std::vector<const CentroidPeak *> *notInBins, size_t idx_lowerLimit)
     {
         // assume that bins are separated well enough that any gap of this size is close to perfect
         // separation already, so score = 1
@@ -517,28 +533,28 @@ namespace qAlgorithms
         }
         // all points with a sensible mass distance are between the two indices
         // continue by moving all points within a relevant scan region into a separate vector
-        std::vector<const qCentroid *> scoreRegion;
+        std::vector<const CentroidPeak *> scoreRegion;
         scoreRegion.reserve((idx_upperLimit - idx_lowerLimit) / 2);
         size_t lowestPossibleScan = this->scanMin > expandedDist ? this->scanMin - expandedDist : 0;
         for (size_t i = idx_lowerLimit; i < idx_upperLimit; i++)
         {
-            if ((*notInBins)[i]->scanNo > lowestPossibleScan && // cast to int due to negative being possible
-                (*notInBins)[i]->scanNo < this->scanMax + expandedDist)
+            if ((*notInBins)[i]->scanNumber > lowestPossibleScan && // cast to int due to negative being possible
+                (*notInBins)[i]->scanNumber < this->scanMax + expandedDist)
             {
                 // centroid is within maxdist and relevant mz region. However,
                 // one past maxdist is considered for better representativeness
                 scoreRegion.push_back((*notInBins)[i]);
             }
         }
-        std::sort(scoreRegion.begin(), scoreRegion.end(), [](const qCentroid *lhs, const qCentroid *rhs)
-                  { return lhs->scanNo < rhs->scanNo; });
+        std::sort(scoreRegion.begin(), scoreRegion.end(), [](const CentroidPeak *lhs, const CentroidPeak *rhs)
+                  { return lhs->scanNumber < rhs->scanNumber; });
 
         // calculate minimum outer distance
         std::vector<float> minOuterDistances(this->pointsInBin.size());
         // calc distance for every possible scan number to simplify algorithm
         for (size_t i = 0; i < this->pointsInBin.size(); i++)
         {
-            int activeScan = this->pointsInBin[i]->scanNo;
+            int activeScan = this->pointsInBin[i]->scanNumber;
             float activeMZ = this->pointsInBin[i]->mz;
             float currentMin = INFINITY;
             size_t readVal = 0;
@@ -546,14 +562,14 @@ namespace qAlgorithms
             // @todo replace with binary search
             for (; readVal < scoreRegion.size(); readVal++)
             {
-                if (scoreRegion[readVal]->scanNo > activeScan - expandedDist)
+                if (scoreRegion[readVal]->scanNumber > activeScan - expandedDist)
                 {
                     break;
                 }
             }
             for (; readVal < scoreRegion.size(); readVal++)
             {
-                if (scoreRegion[readVal]->scanNo > activeScan + expandedDist)
+                if (scoreRegion[readVal]->scanNumber > activeScan + expandedDist)
                 {
                     break;
                 }
@@ -613,31 +629,31 @@ namespace qAlgorithms
         std::vector<unsigned int> tmp_cenID;
         tmp_cenID.reserve(eicsize);
 
-        std::sort(pointsInBin.begin(), pointsInBin.end(), [](const qCentroid *lhs, const qCentroid *rhs)
-                  { return lhs->scanNo < rhs->scanNo; });
+        std::sort(pointsInBin.begin(), pointsInBin.end(), [](const CentroidPeak *lhs, const CentroidPeak *rhs)
+                  { return lhs->scanNumber < rhs->scanNumber; });
 
         // number of points needed during feature detection, two on each side for extrapolation and one per scan between both ends
-        size_t firstScan = pointsInBin.front()->scanNo;
-        size_t binSpan = pointsInBin.back()->scanNo - firstScan + 5;
+        size_t firstScan = pointsInBin.front()->scanNumber;
+        size_t binSpan = pointsInBin.back()->scanNumber - firstScan + 5;
         std::vector<size_t> interpolatedCens(binSpan, 0); // all points left at 0 are later interpolated since cenID = 0 doesn't exist
         std::vector<float> interpolatedDQSB(binSpan, 0);
         bool interpolations = !(pointsInBin.size() + 4 == binSpan);
         for (size_t i = 0; i < pointsInBin.size(); i++)
         {
-            const qCentroid *point = pointsInBin[i];
-            size_t resultIdx = point->scanNo - firstScan + 2; // first two elements are empty for extrapolation
+            const CentroidPeak *point = pointsInBin[i];
+            size_t resultIdx = point->scanNumber - firstScan + 2; // first two elements are empty for extrapolation
 
-            tmp_scanNumbers.push_back(point->scanNo);
-            tmp_rt.push_back(convertRT->at(point->scanNo - 1)); // -1 since the abstract scan numbers start at 2
+            tmp_scanNumbers.push_back(point->scanNumber);
+            tmp_rt.push_back(convertRT->at(point->scanNumber - 1)); // -1 since the abstract scan numbers start at 2
             tmp_mz.push_back(point->mz);
-            tmp_predInterval.push_back(point->mzError);
-            tmp_ints_area.push_back(point->int_area);
-            tmp_ints_height.push_back(point->int_height);
+            tmp_predInterval.push_back(point->mzUncertainty);
+            tmp_ints_area.push_back(point->area);
+            tmp_ints_height.push_back(point->height);
             tmp_df.push_back(point->df);
-            tmp_DQSC.push_back(point->DQSCentroid);
-            tmp_cenID.push_back(point->cenID);
+            tmp_DQSC.push_back(point->DQSC);
+            tmp_cenID.push_back(point->ID);
 
-            interpolatedCens[resultIdx] = point->scanNo;
+            interpolatedCens[resultIdx] = point->scanNumber;
             interpolatedDQSB[resultIdx] = DQSB_base[i]; // score = 0 suffices as sign of interpolation
         }
         assert(interpolatedCens[binSpan - 2] == 0 && interpolatedCens[binSpan - 1] == 0); // back is empty for extrapolation
@@ -664,7 +680,7 @@ namespace qAlgorithms
 
 #pragma region "Functions"
 
-    std::vector<float> meanDistanceRegional(const std::vector<const qCentroid *> *pointsInBin, const size_t expandedDist)
+    std::vector<float> meanDistanceRegional(const std::vector<const CentroidPeak *> *pointsInBin, const size_t expandedDist)
     {
         // the other mean distance considers all points in the Bin.
         // It is sensible to only use the mean distance of all points within maxdist scans
@@ -675,13 +691,13 @@ namespace qAlgorithms
         for (size_t i = 0; i < binsize; i++)
         {
             const auto cen = (*pointsInBin)[i];
-            size_t scanRegionStart = cen->scanNo < expandedDist + 1 ? 0 : cen->scanNo - expandedDist - 1;
-            size_t scanRegionEnd = cen->scanNo + expandedDist + 1;
+            size_t scanRegionStart = cen->scanNumber < expandedDist + 1 ? 0 : cen->scanNumber - expandedDist - 1;
+            size_t scanRegionEnd = cen->scanNumber + expandedDist + 1;
             float accum = 0;
-            for (; (*pointsInBin)[position]->scanNo < scanRegionStart; position++) // increase position until a relevant point is found
+            for (; (*pointsInBin)[position]->scanNumber < scanRegionStart; position++) // increase position until a relevant point is found
                 ;
             size_t readPos = position;
-            for (; (*pointsInBin)[readPos]->scanNo < scanRegionEnd;)
+            for (; (*pointsInBin)[readPos]->scanNumber < scanRegionEnd;)
             {
                 accum += abs((*pointsInBin)[readPos]->mz - cen->mz);
                 readPos++;

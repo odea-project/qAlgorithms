@@ -607,58 +607,58 @@ namespace qAlgorithms
         return;
     }
 
-    void printBins(const std::vector<qCentroid> *centroids,
+    void printBins(const std::vector<CentroidPeak> *centroids,
                    const std::vector<EIC> *bins,
                    std::filesystem::path pathOutput,
                    std::string filename,
                    bool silent, bool skipError, bool noOverwrite)
     {
-        filename += "_bins.csv";
-        pathOutput /= filename;
+        //     filename += "_bins.csv";
+        //     pathOutput /= filename;
 
-        if (std::filesystem::exists(pathOutput))
-        {
-            if (noOverwrite)
-            {
-                std::cerr << "Warning: " << pathOutput << " already exists and will not be overwritten\n";
-                return;
-            }
-            std::filesystem::remove(pathOutput);
-        }
+        //     if (std::filesystem::exists(pathOutput))
+        //     {
+        //         if (noOverwrite)
+        //         {
+        //             std::cerr << "Warning: " << pathOutput << " already exists and will not be overwritten\n";
+        //             return;
+        //         }
+        //         std::filesystem::remove(pathOutput);
+        //     }
 
-        if (!silent)
-        {
-            std::cout << "writing bins to: " << pathOutput << "\n";
-        }
+        //     if (!silent)
+        //     {
+        //         std::cout << "writing bins to: " << pathOutput << "\n";
+        //     }
 
-        std::ofstream file_out;
-        std::stringstream output;
-        file_out.open(pathOutput, std::ios::out);
-        if (!file_out.is_open())
-        {
-            std::cerr << "Error: could not open output path during bin printing. No files have been written.\n"
-                      << "Filename: " << pathOutput << "\n";
-            return;
-        }
-        // @todo consider if the mz error is relevant when checking individual bins
-        output << "binID,cenID,mz,mzUncertainty,retentionTime,scanNumber,area,height,degreesOfFreedom,DQSC,DQSB\n";
-        for (size_t binID = 0; binID < bins->size(); binID++)
-        {
-            const EIC bin = bins->at(binID);
-            for (size_t i = 0; i < bin.mz.size(); i++)
-            {
-                const qCentroid cen = centroids->at(bin.cenID[i]);
-                char buffer[128];
-                snprintf(buffer, 128, "%zu,%u,%0.8f,%0.8f,%0.4f,%d,%0.6f,%0.6f,%u,%0.4f,%0.4f\n",
-                         binID, cen.cenID, bin.mz[i], bin.predInterval[i],
-                         bin.rententionTimes[i], bin.scanNumbers[i], bin.ints_area[i],
-                         bin.ints_height[i], bin.df[i], bin.DQSC[i], bin.DQSB[i]);
-                output << buffer;
-            }
-        }
-        file_out << output.str();
-        file_out.close();
-        return;
+        //     std::ofstream file_out;
+        //     std::stringstream output;
+        //     file_out.open(pathOutput, std::ios::out);
+        //     if (!file_out.is_open())
+        //     {
+        //         std::cerr << "Error: could not open output path during bin printing. No files have been written.\n"
+        //                   << "Filename: " << pathOutput << "\n";
+        //         return;
+        //     }
+        //     // @todo consider if the mz error is relevant when checking individual bins
+        //     output << "binID,cenID,mz,mzUncertainty,retentionTime,scanNumber,area,height,degreesOfFreedom,DQSC,DQSB\n";
+        //     for (size_t binID = 0; binID < bins->size(); binID++)
+        //     {
+        //         const EIC bin = bins->at(binID);
+        //         for (size_t i = 0; i < bin.mz.size(); i++)
+        //         {
+        //             const qCentroid cen = centroids->at(bin.cenID[i]);
+        //             char buffer[128];
+        //             snprintf(buffer, 128, "%zu,%u,%0.8f,%0.8f,%0.4f,%d,%0.6f,%0.6f,%u,%0.4f,%0.4f\n",
+        //                      binID, cen.cenID, bin.mz[i], bin.predInterval[i],
+        //                      bin.rententionTimes[i], bin.scanNumbers[i], bin.ints_area[i],
+        //                      bin.ints_height[i], bin.df[i], bin.DQSC[i], bin.DQSB[i]);
+        //             output << buffer;
+        //         }
+        //     }
+        //     file_out << output.str();
+        //     file_out.close();
+        //     return;
     }
 
     void printFeatureList(const std::vector<FeaturePeak> *peaktable,

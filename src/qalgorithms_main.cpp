@@ -278,49 +278,44 @@ int main(int argc, char *argv[])
             {
                 printCentroids(centroids, &convertRT, userArgs.outputPath, filename, userArgs.silent, userArgs.skipError, userArgs.noOverwrite);
             }
-            size_t centroidCount = centroids->size();
+            size_t centroidCount = centroids->size() - 1; // added noise value
             // @todo remove diagnostics later
-            auto binThis = passToBinning(centroids);
+            // auto binThis = passToBinning(centroids);
 
             // find lowest intensity among all centroids to use as baseline during componentisation
             float minCenArea = INFINITY;
-            for (size_t cenID = 0; cenID < centroidCount; cenID++)
+            for (size_t cenID = 1; cenID < centroids->size(); cenID++)
             {
                 float currentInt = centroids->at(cenID).area;
                 minCenArea = minCenArea < currentInt ? minCenArea : currentInt;
             }
             size_t totalScans = centroids->back().scanNumber;
 
-            delete centroids;
-
             double meanDQSC = 0;
-            double meanCenErrorRel = 0;
-            double meanCenErrorAbs = 0;
 
             // index in allDatapoints corresponds to scan number!
-            for (size_t i = 1; i < binThis.size() - 1; i++)
+            for (size_t i = 1; i < centroids->size() - 1; i++)
             {
                 // correlate centroid error with nearest neighbour distance in one scan somehow?
-                meanCenErrorRel += binThis[i].mzError / binThis[i].mz;
-                meanCenErrorAbs += binThis[i].mzError;
-                meanDQSC += binThis[i].DQSCentroid;
+                meanDQSC += centroids->at(i).DQSC;
             }
-            meanCenErrorAbs /= binThis.size();
-            meanCenErrorRel /= binThis.size();
+            meanDQSC /= centroidCount;
 
             auto timeEnd = std::chrono::high_resolution_clock::now();
             std::chrono::duration<float> timePassed = std::chrono::duration_cast<std::chrono::milliseconds>(timeEnd - timeStart);
 
             if (!userArgs.silent)
             {
-                std::cout << "    produced " << binThis.size() - 1 << " centroids from " << totalScans
+                std::cout << "    produced " << centroidCount - 1 << " centroids from " << totalScans
                           << " spectra in " << timePassed.count() << " s\n";
             }
 
 #pragma region "binning"
             timeStart = std::chrono::high_resolution_clock::now();
 
-            std::vector<EIC> binnedData = performQbinning(&binThis, &convertRT, userArgs.verboseProgress);
+            std::vector<EIC> binnedData = performQbinning(centroids, &convertRT, userArgs.verboseProgress);
+
+            delete centroids;
 
             timeEnd = std::chrono::high_resolution_clock::now();
 
@@ -346,7 +341,7 @@ int main(int argc, char *argv[])
             }
             if (userArgs.printBins)
             {
-                printBins(&binThis, &binnedData, userArgs.outputPath, filename, userArgs.silent, userArgs.skipError, userArgs.noOverwrite);
+                // printBins(&binThis, &binnedData, userArgs.outputPath, filename, userArgs.silent, userArgs.skipError, userArgs.noOverwrite);
             }
 
             // @todo remove diagnostics
@@ -466,7 +461,7 @@ int main(int argc, char *argv[])
             {
                 logWriter.open(pathLogging, std::ios::app);
                 logWriter << filename << ", " << data.number_spectra << ", " << centroidCount << ", "
-                          << meanDQSC / binThis.size() << ", " << binnedData.size() << ", " << badBinCount << ", " << meanDQSB
+                          << meanDQSC << ", " << binnedData.size() << ", " << badBinCount << ", " << meanDQSB
                           << ", " << features.size() << ", " << peaksWithMassGaps << ", " << meanInterpolations << ", " << meanDQSF
                           << components.size() << ", " << featuresInComponents << "\n";
                 logWriter.close();
