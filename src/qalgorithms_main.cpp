@@ -289,6 +289,7 @@ int main(int argc, char *argv[])
                 float currentInt = centroids->at(cenID).area;
                 minCenArea = minCenArea < currentInt ? minCenArea : currentInt;
             }
+            size_t totalScans = centroids->back().scanNumber;
 
             delete centroids;
 
@@ -312,7 +313,7 @@ int main(int argc, char *argv[])
 
             if (!userArgs.silent)
             {
-                std::cout << "    produced " << binThis.size() - 1 << " centroids from " << data.number_spectra
+                std::cout << "    produced " << binThis.size() - 1 << " centroids from " << totalScans
                           << " spectra in " << timePassed.count() << " s\n";
             }
 
