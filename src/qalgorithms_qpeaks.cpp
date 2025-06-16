@@ -40,8 +40,9 @@ namespace qAlgorithms
     constexpr auto INV_ARRAY = initialize(); // this only works with constexpr square roots, which are part of C++26
 
 #pragma region "find peaks"
-    std::vector<CentroidPeak> findCentroids(const std::vector<ProfileBlock> *treatedData,
-                                            const size_t scanNumber)
+    std::vector<CentroidPeak> findCentroidPeaks(const std::vector<ProfileBlock> *treatedData,
+                                                const size_t scanNumber,
+                                                const size_t accessor)
     {
         assert(!treatedData->empty());
         assert(scanNumber != 0);
@@ -82,7 +83,7 @@ namespace qAlgorithms
             {
                 continue; // no valid peaks
             }
-            createCentroidPeaks(&all_peaks, &validRegressions, &block, scanNumber);
+            createCentroidPeaks(&all_peaks, &validRegressions, &block, scanNumber, accessor);
             validRegressions.clear();
         }
         return all_peaks;
@@ -914,7 +915,8 @@ namespace qAlgorithms
         std::vector<CentroidPeak> *peaks,
         const std::vector<RegressionGauss> *validRegressionsVec,
         const ProfileBlock *block,
-        const size_t scanNumber)
+        const size_t scanNumber,
+        const size_t accessor)
     {
         assert(!validRegressionsVec->empty());
         // iterate over the validRegressions vector
@@ -950,7 +952,12 @@ namespace qAlgorithms
             peak.numCompetitors = regression.numCompetitors;
             peak.scale = regression.scale;
 
-            peak.interpolations = regression.right_limit - regression.left_limit + 1 - regression.df - 4; // -4 since four coefficients take up degrees of freedom
+            // traceability information
+            peak.trace.access = accessor;
+            peak.trace.start = block->startPos;
+            peak.trace.end = block->endPos;
+
+            // peak.interpolations = regression.right_limit - regression.left_limit + 1 - regression.df - 4; // -4 since four coefficients take up degrees of freedom
 
             /// @todo consider adding these properties so we can trace back everything completely
             // peak.idxPeakStart = regression.left_limit;

@@ -586,16 +586,18 @@ namespace qAlgorithms
             return;
         }
         output << "cenID,mz,mzUncertainty,scanNumber,retentionTime,area,areaUncertainty,"
-               << "height,heightUncertainty,scale,degreesOfFreedom,DQSC,interpolations,competitors\n";
+               //    << "height,heightUncertainty,scale,degreesOfFreedom,DQSC,interpolations,competitors\n";
+               << "height,heightUncertainty,scale,degreesOfFreedom,DQSC,competitors\n";
         unsigned int counter = 0;
         for (size_t j = 0; j < peaktable->size(); ++j)
         {
             const CentroidPeak peak = peaktable->at(j);
             char buffer[256];
-            snprintf(buffer, 256, "%d,%0.6f,%0.6f,%d,%0.4f,%0.4f,%0.4f,%0.4f,%0.4f,%d,%u,%0.5f,%d,%d\n",
+            snprintf(buffer, 256, "%d,%0.6f,%0.6f,%d,%0.4f,%0.4f,%0.4f,%0.4f,%0.4f,%d,%u,%0.5f,%d\n",
                      counter, peak.mz, peak.mzUncertainty, peak.scanNumber, convertRT->at(peak.scanNumber),
                      peak.area, peak.areaUncertainty, peak.height, peak.heightUncertainty, peak.scale, peak.df, peak.DQSC,
-                     peak.interpolations, peak.numCompetitors);
+                     //  peak.interpolations,
+                     peak.numCompetitors);
             output << buffer;
             ++counter;
         }

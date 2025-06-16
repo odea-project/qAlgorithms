@@ -13,12 +13,15 @@
 
 namespace qAlgorithms
 {
+    // @todo rework this module so all centroiding / feature construction parts are in a separate block and qPeaks can be used as a library header
+
     std::vector<RegCoeffs> findCoefficients(
         const std::vector<float> *intensity_log,
         const size_t scale); // maximum scale that will be checked. Should generally be limited by peakFrame
 
-    std::vector<CentroidPeak> findCentroids(const std::vector<ProfileBlock> *treatedData,
-                                            const size_t scanNumber);
+    std::vector<CentroidPeak> findCentroidPeaks(const std::vector<ProfileBlock> *treatedData,
+                                                const size_t scanNumber,
+                                                const size_t accessor);
 
     void findFeatures(std::vector<FeaturePeak> &all_peaks,
                       treatedData &treatedData);
@@ -56,7 +59,8 @@ namespace qAlgorithms
         std::vector<CentroidPeak> *peaks,
         const std::vector<RegressionGauss> *validRegressionsVec,
         const ProfileBlock *block,
-        const size_t scanNumber);
+        const size_t scanNumber,
+        const size_t accessor);
 
     void createFeaturePeaks(
         std::vector<FeaturePeak> *peaks,
