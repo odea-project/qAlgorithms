@@ -87,19 +87,8 @@ namespace qAlgorithms
         ProfilePos trace;
         unsigned int numCompetitors;
         unsigned int scale;
+        unsigned int ID;
         // unsigned int interpolations;
-    };
-
-    struct qCentroid
-    {
-        double mz;
-        float mzError = -1;
-        unsigned int scanNo;
-        float int_area;   // the intensity is never used during binning @todo
-        float int_height; // s.o.
-        float DQSCentroid;
-        unsigned int df; // degrees of freedom
-        unsigned int cenID;
     };
 
     struct EIC // Extracted Ion Chromatogram

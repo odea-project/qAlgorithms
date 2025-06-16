@@ -81,7 +81,7 @@ namespace qAlgorithms
                         std::string filename,
                         bool silent, bool skipError, bool noOverwrite);
 
-    void printBins(const std::vector<qCentroid> *centroids,
+    void printBins(const std::vector<CentroidPeak> *centroids,
                    const std::vector<EIC> *bins,
                    std::filesystem::path pathOutput,
                    std::string filename,

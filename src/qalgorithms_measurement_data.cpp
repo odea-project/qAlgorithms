@@ -551,6 +551,7 @@ namespace qAlgorithms
 
         std::vector<CentroidPeak> centroids;
         centroids.reserve(countSelected * 1000);
+        centroids.push_back({0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}); // dummy value used for binning
         for (size_t i = 0; i < countSelected; ++i)
         {
             const std::vector<std::vector<double>> spectrum = data.get_spectrum(selectedIndices[i]);
@@ -558,6 +559,11 @@ namespace qAlgorithms
             auto tmpCens = findCentroidPeaks(&profileGroups, relativeIndex[i], selectedIndices[i]);
             centroids.insert(centroids.end(), tmpCens.begin(), tmpCens.end());
         }
+        for (unsigned int i = 0; i < centroids.size(); i++)
+        {
+            centroids[i].ID = i + 1;
+        }
+
         return centroids;
     }
 
