@@ -555,7 +555,7 @@ namespace qAlgorithms
         {
             const std::vector<std::vector<double>> spectrum = data.get_spectrum(selectedIndices[i]);
             const auto profileGroups = pretreatDataCentroids(&spectrum);
-            auto tmpCens = findCentroids(&profileGroups, relativeIndex[i]);
+            auto tmpCens = findCentroidPeaks(&profileGroups, relativeIndex[i], selectedIndices[i]);
             centroids.insert(centroids.end(), tmpCens.begin(), tmpCens.end());
         }
         return centroids;
@@ -637,13 +637,15 @@ namespace qAlgorithms
     {
         std::vector<double> intensities_profile;
         std::vector<double> mz_profile;
+        std::vector<unsigned int> idxConvert; // used to trace back processing steps to untreated data
+
         { // remove zeroes
             const auto mz = spectrum->at(0);
             intensities_profile.reserve(mz.size() / 2);
             mz_profile.reserve(mz.size() / 2);
             // Depending on the vendor, a profile contains a lot of points with intensity 0.
             // These were added by the vendor software and must be removed prior to processing.
-            for (size_t i = 0; i < mz.size(); ++i)
+            for (unsigned int i = 0; i < mz.size(); ++i)
             {
                 if (spectrum->at(1)[i] == 0.0)
                 {
@@ -651,6 +653,7 @@ namespace qAlgorithms
                 }
                 intensities_profile.push_back(spectrum->at(1)[i]);
                 mz_profile.push_back(mz[i]);
+                idxConvert.push_back(i);
             }
             assert(!intensities_profile.empty());
             assert(!mz_profile.empty());
@@ -723,6 +726,10 @@ namespace qAlgorithms
             double mzDiffBack = entry.mz[entrySize - 3] - entry.mz[entrySize - 4];
             entry.mz[entrySize - 2] = entry.mz[entrySize - 3] + mzDiffBack;
             entry.mz[entrySize - 1] = entry.mz[entrySize - 3] + mzDiffBack * 2;
+
+            // add traceability information from untreated spectrum
+            entry.startPos = idxConvert[res.start];
+            entry.endPos = idxConvert[res.end];
 
             groupedData.push_back(entry);
         }
