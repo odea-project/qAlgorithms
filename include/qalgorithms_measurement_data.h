@@ -11,7 +11,7 @@ namespace qAlgorithms
 {
     inline std::array<double, 3> interpolateQuadratic(float interpolate, const float *x, const float *y);
 
-    std::vector<std::vector<CentroidPeak>> transferCentroids( // @todo merge with findPeaks_mzml
+    std::vector<std::vector<CentroidPeak>> transferCentroids(
         StreamCraft::MZML &data,
         std::vector<int> &indices,
         std::vector<double> &retention_times,

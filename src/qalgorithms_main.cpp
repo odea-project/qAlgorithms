@@ -197,7 +197,7 @@ int main(int argc, char *argv[])
         }
         if (!userArgs.silent)
         {
-            std::cout << " file profile mode, ok\n";
+            std::cout << " file in profile mode, ok\n";
         }
 
         // enum polarity

@@ -37,6 +37,8 @@ namespace qAlgorithms
         std::vector<float> mz;
         std::vector<unsigned int> cumdf; // cumulative df
         std::vector<bool> df;
+        unsigned int startPos;
+        unsigned int endPos;
     };
 
     struct RegCoeffs
@@ -62,6 +64,13 @@ namespace qAlgorithms
         bool isValid = false;   // flag to indicate if the regression is valid
     };
 
+    struct ProfilePos // gives the range of points covered by a centroid and the access index for streamfind
+    {
+        unsigned int access;
+        unsigned int start;
+        unsigned int end;
+    };
+
     struct CentroidPeak
     {
         double mz;
@@ -75,9 +84,10 @@ namespace qAlgorithms
         float mzUncertainty;
         unsigned int scanNumber;
         unsigned int df; // degrees of freedom
+        ProfilePos trace;
         unsigned int numCompetitors;
         unsigned int scale;
-        unsigned int interpolations;
+        // unsigned int interpolations;
     };
 
     struct qCentroid
