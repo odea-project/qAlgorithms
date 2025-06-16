@@ -561,7 +561,7 @@ namespace qAlgorithms
         }
         for (unsigned int i = 0; i < centroids.size(); i++)
         {
-            centroids[i].ID = i + 1;
+            centroids[i].ID = i;
         }
 
         return centroids;

@@ -279,8 +279,6 @@ int main(int argc, char *argv[])
                 printCentroids(centroids, &convertRT, userArgs.outputPath, filename, userArgs.silent, userArgs.skipError, userArgs.noOverwrite);
             }
             size_t centroidCount = centroids->size() - 1; // added noise value
-            // @todo remove diagnostics later
-            // auto binThis = passToBinning(centroids);
 
             // find lowest intensity among all centroids to use as baseline during componentisation
             float minCenArea = INFINITY;
@@ -293,7 +291,6 @@ int main(int argc, char *argv[])
 
             double meanDQSC = 0;
 
-            // index in allDatapoints corresponds to scan number!
             for (size_t i = 1; i < centroids->size() - 1; i++)
             {
                 // correlate centroid error with nearest neighbour distance in one scan somehow?
@@ -314,8 +311,6 @@ int main(int argc, char *argv[])
             timeStart = std::chrono::high_resolution_clock::now();
 
             std::vector<EIC> binnedData = performQbinning(centroids, &convertRT, userArgs.verboseProgress);
-
-            delete centroids;
 
             timeEnd = std::chrono::high_resolution_clock::now();
 
@@ -341,8 +336,9 @@ int main(int argc, char *argv[])
             }
             if (userArgs.printBins)
             {
-                // printBins(&binThis, &binnedData, userArgs.outputPath, filename, userArgs.silent, userArgs.skipError, userArgs.noOverwrite);
+                printBins(centroids, &binnedData, userArgs.outputPath, filename, userArgs.silent, userArgs.skipError, userArgs.noOverwrite);
             }
+            delete centroids;
 
             // @todo remove diagnostics
             int count = 0;
