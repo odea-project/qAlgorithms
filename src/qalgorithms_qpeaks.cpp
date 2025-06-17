@@ -18,14 +18,13 @@ namespace qAlgorithms
     constexpr auto INV_ARRAY = initialize(); // this only works with constexpr square roots, which are part of C++26
 
 #pragma region "find peaks"
-    std::vector<CentroidPeak> findCentroidPeaks(const std::vector<ProfileBlock> *treatedData,
-                                                const size_t scanNumber,
-                                                const size_t accessor)
+    void findCentroidPeaks(std::vector<CentroidPeak> *retPeaks, // results are appended to this vector
+                           const std::vector<ProfileBlock> *treatedData,
+                           const size_t scanNumber,
+                           const size_t accessor)
     {
         assert(!treatedData->empty());
         assert(scanNumber != 0);
-        std::vector<CentroidPeak> all_peaks;
-        all_peaks.reserve(treatedData->size() / 32);
         size_t maxWindowSize = 0;
         for (size_t i = 0; i < treatedData->size(); i++)
         {
@@ -61,10 +60,9 @@ namespace qAlgorithms
             {
                 continue; // no valid peaks
             }
-            createCentroidPeaks(&all_peaks, &validRegressions, &block, scanNumber, accessor);
+            createCentroidPeaks(retPeaks, &validRegressions, &block, scanNumber, accessor);
             validRegressions.clear();
         }
-        return all_peaks;
     }
 
     void findFeatures(std::vector<FeaturePeak> &all_peaks,
