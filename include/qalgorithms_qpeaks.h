@@ -19,9 +19,10 @@ namespace qAlgorithms
         const std::vector<float> *intensity_log,
         const size_t scale); // maximum scale that will be checked. Should generally be limited by peakFrame
 
-    std::vector<CentroidPeak> findCentroidPeaks(const std::vector<ProfileBlock> *treatedData,
-                                                const size_t scanNumber,
-                                                const size_t accessor);
+    void findCentroidPeaks(std::vector<CentroidPeak> *retPeaks, // results are appended to this vector
+                           const std::vector<ProfileBlock> *treatedData,
+                           const size_t scanNumber,
+                           const size_t accessor);
 
     void findFeatures(std::vector<FeaturePeak> &all_peaks,
                       treatedData &treatedData);

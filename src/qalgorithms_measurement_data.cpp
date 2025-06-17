@@ -556,8 +556,7 @@ namespace qAlgorithms
         {
             const std::vector<std::vector<double>> spectrum = data.get_spectrum(selectedIndices[i]);
             const auto profileGroups = pretreatDataCentroids(&spectrum);
-            auto tmpCens = findCentroidPeaks(&profileGroups, relativeIndex[i], selectedIndices[i]);
-            centroids.insert(centroids.end(), tmpCens.begin(), tmpCens.end());
+            findCentroidPeaks(&centroids, &profileGroups, relativeIndex[i], selectedIndices[i]);
         }
         for (unsigned int i = 0; i < centroids.size(); i++)
         {
