@@ -59,6 +59,7 @@ namespace qAlgorithms
                                   "      -skip-error:    If processing fails, the program will not exit and instead start processing\n"
                                   "                      the next file in the tasklist.\n"
                                   "      -skipAhead <n>  Skip the first n entries in the tasklist when starting processing \n"
+                                  "      -fullLoop       Override default behaviour and always perform all possible processing steps, even if the results are not printed.\n"
                                   "      -log:           This option will create a detailed log file in the program directory.\n"
                                   "                      It will provide an overview for every processed file which can help you find and\n"
                                   "                      reason about anomalous behaviour in the results.";
@@ -188,32 +189,39 @@ namespace qAlgorithms
             else if ((argument == "-pc") || (argument == "-printcentroids"))
             {
                 args.printCentroids = true;
+                args.term = std::max(args.term, centroids);
             }
             else if ((argument == "-pb") || (argument == "-printbins"))
             {
                 args.printBins = true;
+                args.term = std::max(args.term, binning);
             }
             else if ((argument == "-pf") || (argument == "-printfeatures"))
             {
                 args.printFeatures = true;
+                args.term = std::max(args.term, features);
             }
             else if ((argument == "-sp") || (argument == "-subprofile"))
             {
                 args.printSubProfile = true;
+                args.term = std::max(args.term, features);
             }
             else if ((argument == "-ppf") || (argument == "-printcomponentsF"))
             {
                 args.printComponentRegs = true;
                 args.printFeatures = true;
+                args.term = std::max(args.term, components);
             }
             else if ((argument == "-ppb") || (argument == "-printcomponentsB"))
             {
                 args.printComponentRegs = true;
                 args.printComponentBins = true;
+                args.term = std::max(args.term, components);
             }
             else if ((argument == "-px") || (argument == "-printfeatcen"))
             {
                 args.printFeatCens = true;
+                args.term = std::max(args.term, features);
             }
             else if ((argument == "-pa") || (argument == "-printall"))
             {
@@ -224,6 +232,11 @@ namespace qAlgorithms
                 args.printFeatCens = true;
                 args.printComponentRegs = true;
                 args.printComponentBins = true;
+                args.term = never_override;
+            }
+            else if (argument == "fullLoop")
+            {
+                args.term = never_override;
             }
             else if (argument == "-log")
             {
@@ -275,7 +288,7 @@ namespace qAlgorithms
         return args;
     }
 
-    UserInputSettings interactiveMode(char *argv[])
+    UserInputSettings interactiveMode(char *argv[]) // @todo this should be replaced by a better debug interface
     {
         // this function is called if qAlgorithms is executed without arguments
         std::cout << "    ### qAlgorithms interactive terminal interface ###\n"
@@ -312,6 +325,8 @@ namespace qAlgorithms
             // user input for input and output
             std::vector<std::string>{inputPath},
             outputPath,
+            0,
+            never,
             false,
             false,
             false,
@@ -399,11 +414,6 @@ namespace qAlgorithms
             std::cerr << "Error: the output location must be a directory.\n";
             goodInputs = false;
         }
-        // if (inSpecified && tasklistSpecified)
-        // {
-        //     std::cerr << "Warning: Both an input file and a tasklist were specified. The file has been added to the tasklist.\n";
-        //     // @todo
-        // }
         if (args.silent && args.verboseProgress)
         {
             std::cerr << "Warning: -verbose overrides -silent.\n";
