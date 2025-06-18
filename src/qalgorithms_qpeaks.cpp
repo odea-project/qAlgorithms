@@ -55,7 +55,7 @@ namespace qAlgorithms
             // @todo adjust the scale dynamically based on the number of valid regressions found, early terminate after x iterations
             const size_t maxScale = std::min(GLOBAL_MAXSCALE_CENTROID, size_t((length - 1) / 2)); // length - 1 because the center point is not part of the span
 
-            runningRegression(&block.intensity, &logIntensity, &block.df, &block.cumdf, validRegressions, maxScale);
+            runningRegression(&block.intensity, &logIntensity, &block.cumdf, validRegressions, maxScale);
             if (validRegressions.empty())
             {
                 continue; // no valid peaks
@@ -80,8 +80,6 @@ namespace qAlgorithms
         // with an estimated scan difference of 0.6 s this means the maximum peak width is 61 * 0.6 = 36.6 s
         assert(GLOBAL_MAXSCALE_FEATURES <= MAXSCALE);
 
-        std::vector<bool> degreesOfFreedom;
-        degreesOfFreedom.reserve(length);
         std::vector<unsigned int> degreesOfFreedom_cum;
         unsigned int totalDF = 0;
         degreesOfFreedom_cum.reserve(length);
@@ -95,8 +93,8 @@ namespace qAlgorithms
             intensity.push_back(treatedData.dataPoints[idx].y);
             RT[position] = treatedData.dataPoints[idx].x;
             RT_new.push_back(treatedData.dataPoints[idx].x);
-            degreesOfFreedom.push_back(treatedData.dataPoints[idx].df);
-            degreesOfFreedom_cum.push_back(totalDF + degreesOfFreedom.back());
+            totalDF += treatedData.dataPoints[idx].df;
+            degreesOfFreedom_cum.push_back(totalDF);
         }
 
         logIntensity.resize(intensity.size());
@@ -107,7 +105,7 @@ namespace qAlgorithms
 
         std::vector<RegressionGauss> validRegressions;
         size_t maxScale = std::min(GLOBAL_MAXSCALE_FEATURES, size_t((length - 1) / 2));
-        runningRegression(&intensity, &logIntensity, &degreesOfFreedom, &degreesOfFreedom_cum, validRegressions, maxScale);
+        runningRegression(&intensity, &logIntensity, &degreesOfFreedom_cum, validRegressions, maxScale);
         if (!validRegressions.empty())
         {
             createFeaturePeaks(&all_peaks, &validRegressions, &RT_new, RT);
@@ -121,7 +119,6 @@ namespace qAlgorithms
     void runningRegression(
         const std::vector<float> *intensities,
         const std::vector<float> *intensities_log,
-        const std::vector<bool> *degreesOfFreedom,
         const std::vector<unsigned int> *degreesOfFreedom_cum,
         std::vector<RegressionGauss> &validRegressions,
         const size_t maxScale)
@@ -131,7 +128,7 @@ namespace qAlgorithms
 
         const std::vector<RegCoeffs> regressions = findCoefficients(intensities_log, maxScale);
 
-        validateRegression(&regressions, intensities, intensities_log, degreesOfFreedom, degreesOfFreedom_cum, maxScale, validRegressions);
+        validateRegression(&regressions, intensities, intensities_log, degreesOfFreedom_cum, maxScale, validRegressions);
 
         if (validRegressions.size() > 1) // @todo we can probably filter regressions based on MSE at this stage already
         {
@@ -375,7 +372,6 @@ namespace qAlgorithms
         const std::vector<RegCoeffs> *coeffs, // coefficients for single-b0 peaks, spans all regressions over a peak window
         const std::vector<float> *intensities,
         const std::vector<float> *intensities_log,
-        const std::vector<bool> *degreesOfFreedom,
         const std::vector<unsigned int> *degreesOfFreedom_cum,
         const size_t maxScale, // scale, i.e., the number of data points in a half window excluding the center point
         std::vector<RegressionGauss> &validRegressions)
@@ -391,8 +387,7 @@ namespace qAlgorithms
         bool stillValid = true;
         for (size_t range = 0; range < coeffs->size(); range++)
         {
-            size_t df = calcDF(degreesOfFreedom, idxStart, 2 * currentScale + idxStart);
-            size_t cumdf = calcDF_cum(degreesOfFreedom_cum, idxStart, 2 * currentScale + idxStart);
+            size_t df = calcDF_cum(degreesOfFreedom_cum, idxStart, 2 * currentScale + idxStart);
 
             if (df < 5) // @todo cumsum
             {
@@ -410,7 +405,7 @@ namespace qAlgorithms
                 // the total span of the regression may not exceed the number of points
                 assert(idxStart + 2 * currentScale < numPoints);
 
-                makeValidRegression(&validRegsTmp.back(), idxStart, currentScale, degreesOfFreedom, degreesOfFreedom_cum, intensities, intensities_log);
+                makeValidRegression(&validRegsTmp.back(), idxStart, currentScale, degreesOfFreedom_cum, intensities, intensities_log);
                 if (validRegsTmp.back().isValid)
                 {
                     validRegsTmp.push_back(RegressionGauss{});
@@ -487,7 +482,7 @@ namespace qAlgorithms
                         else
                         { // survival of the fittest based on mse between original data and reconstructed (exp transform of regression)
                             assert(startEndGroups[groupIdx] != startEndGroups[groupIdx + 1]);
-                            auto bestRegIdx = findBestRegression(intensities, &validRegsTmp, degreesOfFreedom, degreesOfFreedom_cum,
+                            auto bestRegIdx = findBestRegression(intensities, &validRegsTmp, degreesOfFreedom_cum,
                                                                  startEndGroups[groupIdx], startEndGroups[groupIdx + 1]);
 
                             RegressionGauss bestReg = validRegsTmp[bestRegIdx.idx];
@@ -510,13 +505,12 @@ namespace qAlgorithms
         RegressionGauss *mutateReg,
         const size_t idxStart,
         const size_t scale,
-        const std::vector<bool> *degreesOfFreedom,
         const std::vector<unsigned int> *degreesOfFreedom_cum,
         const std::vector<float> *intensities,
         const std::vector<float> *intensities_log)
     {
         assert(scale > 1);
-        assert(idxStart + 4 < degreesOfFreedom->size());
+        assert(idxStart + 4 < degreesOfFreedom_cum->size());
         assert(mutateReg->coeffs.b0 < 100 && mutateReg->coeffs.b0 > -100);
         assert(mutateReg->coeffs.b1 < 100 && mutateReg->coeffs.b1 > -100);
         assert(mutateReg->coeffs.b2 < 100 && mutateReg->coeffs.b2 > -100);
@@ -585,7 +579,7 @@ namespace qAlgorithms
           the loop continues to the next iteration. The value 5 is chosen as the
           minimum number of data points required to fit a quadratic regression model.
         */
-        size_t df_sum = calcDF(degreesOfFreedom, mutateReg->left_limit, mutateReg->right_limit); // degrees of freedom considering the left and right limits @todo cumulative array
+        size_t df_sum = calcDF_cum(degreesOfFreedom_cum, mutateReg->left_limit, mutateReg->right_limit);
         if (df_sum < 5)
         {
             return; // degree of freedom less than 5; i.e., less then 5 measured data points
@@ -1191,7 +1185,6 @@ namespace qAlgorithms
     RegPair findBestRegression(
         const std::vector<float> *intensities,
         const std::vector<RegressionGauss> *regressions,
-        const std::vector<bool> *degreesOfFreedom,
         const std::vector<unsigned int> *degreesOfFreedom_cum,
         const size_t startIdx,
         const size_t endIdx)
@@ -1208,8 +1201,7 @@ namespace qAlgorithms
             right_limit = std::max(right_limit, (*regressions)[i].right_limit);
         }
         // the new df_sum is only needed since the function limits are adjusted above, correct that?
-        const size_t df_sum = calcDF(degreesOfFreedom, left_limit, right_limit); // @todo make cumulative array
-        size_t df_sum_cum = calcDF_cum(degreesOfFreedom_cum, left_limit, right_limit);
+        size_t df_sum = calcDF_cum(degreesOfFreedom_cum, left_limit, right_limit);
 
         for (unsigned int i = startIdx; i < endIdx + 1; i++)
         {

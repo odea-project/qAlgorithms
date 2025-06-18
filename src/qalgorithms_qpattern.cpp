@@ -828,7 +828,7 @@ namespace qAlgorithms
                 RegressionGauss testCase;
                 testCase.coeffs = coeff; // @todo do this during initialisation
 
-                size_t df = calcDF(&(DF_vecs[i]), idxRegStart, 2 * scale + idxRegStart);
+                size_t df = calcDF(&(DF_vecs[i]), idxRegStart, 2 * scale + idxRegStart); // @todo switch to cumulative array
                 if (df < 5)
                 {
                     regressionOK[multiReg] = false;
