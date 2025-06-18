@@ -262,7 +262,7 @@ int main(int argc, char *argv[])
             }
             oneProcessed = false;
 
-                        if (!userArgs.silent)
+            if (!userArgs.silent)
             {
                 std::cout << "Processing " << (polarity ? "positive" : "negative") << " peaks\n";
             }
@@ -272,6 +272,11 @@ int main(int argc, char *argv[])
             if (userArgs.printCentroids)
             {
                 printCentroids(centroids, &convertRT, userArgs.outputPath, filename, userArgs.silent, userArgs.skipError, userArgs.noOverwrite);
+
+                if (userArgs.term == TerminateAfter::centroids)
+                {
+                    continue;
+                }
             }
             size_t centroidCount = centroids->size() - 1; // added noise value
 
@@ -332,6 +337,11 @@ int main(int argc, char *argv[])
             if (userArgs.printBins)
             {
                 printBins(centroids, &binnedData, userArgs.outputPath, filename, userArgs.silent, userArgs.skipError, userArgs.noOverwrite);
+
+                if (userArgs.term == TerminateAfter::binning)
+                {
+                    continue;
+                }
             }
             delete centroids;
 
@@ -417,6 +427,16 @@ int main(int argc, char *argv[])
                                       userArgs.printExtended, userArgs.silent, userArgs.skipError, userArgs.noOverwrite);
             }
 
+            if (userArgs.term == TerminateAfter::features)
+            {
+                if (userArgs.printFeatures) // this is here so we can incorporate the component ID into the output
+                {
+                    printFeatureList(&features, userArgs.outputPath, filename, &binnedData,
+                                     userArgs.printExtended, userArgs.silent, userArgs.skipError, userArgs.noOverwrite);
+                }
+                continue;
+            }
+
 #pragma region "Componentisation"
             timeStart = std::chrono::high_resolution_clock::now();
 
@@ -448,7 +468,12 @@ int main(int argc, char *argv[])
                                         userArgs.printExtended, userArgs.silent, userArgs.skipError, userArgs.noOverwrite);
             }
 
-            if (userArgs.doLogging)
+            if (userArgs.term == TerminateAfter::components)
+            {
+                continue;
+            }
+
+            if (userArgs.doLogging) // @todo logging should account for early terminate
             {
                 logWriter.open(pathLogging, std::ios::app);
                 logWriter << filename << ", " << data.number_spectra << ", " << centroidCount << ", "

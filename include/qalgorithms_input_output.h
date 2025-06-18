@@ -11,12 +11,24 @@ namespace qAlgorithms
 {
 
 #pragma region "command line arguments"
+
+    enum TerminateAfter
+    {
+        never,
+        centroids,
+        binning,
+        features,
+        components,
+        never_override
+    };
+
     struct UserInputSettings
     {
         // user input for input and output
         std::vector<std::string> inputPaths;
         std::string outputPath = "";
-        size_t skipAhead = 0; // this is intended to make testing over many files more time efficient
+        size_t skipAhead = 0;        // this is intended to make testing over many files more time efficient
+        TerminateAfter term = never; // continue loop execution after the desired result has been printed
         // output options
         bool printCentroids = false;
         bool printBins = false;
