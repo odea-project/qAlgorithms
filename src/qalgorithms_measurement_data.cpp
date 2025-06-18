@@ -472,6 +472,10 @@ namespace qAlgorithms
         convertRT.push_back(retention_times->back() + *rt_diff);
         convertRT.push_back(retention_times->back() + *rt_diff + *rt_diff);
         assert(convertRT.size() == abstractScanNumber); // ensure that every index has an assigned RT
+        for (size_t i = 1; i < convertRT.size() - 1; i++)
+        {
+            assert(convertRT[i] < convertRT[i + 1]);
+        }
         return relativeIndex;
     }
 
@@ -556,6 +560,7 @@ namespace qAlgorithms
         {
             const std::vector<std::vector<double>> spectrum = data.get_spectrum(selectedIndices[i]);
             const auto profileGroups = pretreatDataCentroids(&spectrum);
+            std::cout << relativeIndex[i] << "," << selectedIndices[i] << " | ";
             findCentroidPeaks(&centroids, &profileGroups, relativeIndex[i], selectedIndices[i]);
         }
         for (unsigned int i = 0; i < centroids.size(); i++)

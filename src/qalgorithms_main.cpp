@@ -262,12 +262,7 @@ int main(int argc, char *argv[])
             }
             oneProcessed = false;
 
-            for (size_t i = 1; i < convertRT.size() - 1; i++)
-            {
-                assert(convertRT[i] < convertRT[i + 1]);
-            }
-
-            if (!userArgs.silent)
+                        if (!userArgs.silent)
             {
                 std::cout << "Processing " << (polarity ? "positive" : "negative") << " peaks\n";
             }
