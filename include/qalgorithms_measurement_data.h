@@ -18,8 +18,6 @@ namespace qAlgorithms
         const int start_index,
         double PPMerror);
 
-    double calcExpectedDiff(const std::vector<std::vector<double>> *spectrum);
-
     /**
      * @brief Inter/extrapolate gaps in data and define separation markers for data blocks.
      * @param dataPoints : {x, y, df, DQSC, DQSB, scanNumber}
