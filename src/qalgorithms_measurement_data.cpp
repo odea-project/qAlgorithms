@@ -378,33 +378,6 @@ namespace qAlgorithms
         return centroids;
     }
 
-    double calcExpectedDiff(const std::vector<std::vector<double>> *spectrum)
-    {
-        const std::vector<double> mz = spectrum->at(0); // @todo make this a named struct
-        const std::vector<double> intensity = spectrum->at(1);
-        const size_t numPoints = mz.size();         // number of data points
-        const size_t upperLimit = numPoints * 0.05; // check lowest 5% for expected difference
-        double expectedDifference = 0.0;
-        std::vector<double> differences;
-        differences.reserve(numPoints / 2);
-        for (size_t i = 0; i < numPoints - 1; i++)
-        {
-            if (intensity[i] == 0 || intensity[i] == 0)
-            {
-                continue;
-            }
-            differences.push_back(mz[i + 1] - mz[i]);
-        }
-        std::sort(differences.begin(), differences.end());
-        for (size_t i = 0; i < upperLimit; i++)
-        {
-            expectedDifference += differences[i];
-        }
-        expectedDifference /= upperLimit;
-        assert(expectedDifference > 0);
-        return expectedDifference;
-    }
-
     inline float calcRTDiff(const std::vector<double> *retention_times)
     {
         float sum = 0.0;
@@ -575,7 +548,6 @@ namespace qAlgorithms
     {
         size_t start;
         size_t end;
-        bool insertCandidate = false;
     };
 
     void binProfileSpec(std::vector<Block> *result,
@@ -609,16 +581,8 @@ namespace qAlgorithms
 
         if (max < critVal)
         {
-            bool interpolate = false;
-            if (max / 3 > critVal)
-            {
-                // @todo orbitrap data should never need interpolation, add a check for this
-                interpolate = true; // there could be points inserted here to bridge the difference
-                std::cout << "Possible interpolation of profile data\n";
-            }
-
             // block is complete, add limits to result vector
-            result->push_back({start, end + 1, interpolate}); // end + 1 since difference has one point less
+            result->push_back({start, end + 1}); // end + 1 since difference has one point less
             return;
         }
         if (maxPos == start || maxPos == end)
