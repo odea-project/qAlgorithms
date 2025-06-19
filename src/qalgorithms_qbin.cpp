@@ -373,7 +373,7 @@ namespace qAlgorithms
 
         assert(binsizeInOS > 4); // @todo this is wrong, it should check for five real points == four differences
 
-        auto pmax = std::max_element(OS.begin() + binStartInOS, OS.begin() + binEndInOS);
+        auto pmax = std::max_element(OS.begin() + binStartInOS, OS.begin() + binEndInOS); // @todo this is wrong if binEnd is the index
         double max = *pmax;
 
         double vcrit = binningCritVal(binsizeInOS, (cumError[binEndInOS] - cumError[binStartInOS]) / binsizeInOS);
