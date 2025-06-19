@@ -28,6 +28,19 @@ namespace qAlgorithms
                             float expectedDifference,
                             size_t maxScan);
 
+    struct Block
+    {
+        size_t start;
+        size_t end;
+    };
+
+    void binProfileSpec(std::vector<Block> *result,
+                        const std::vector<double> *diffs,
+                        // const std::vector<unsigned int> *diffOrder,
+                        const std::vector<double> *cumDiffs, // indices into cumDiffs must be right-shifted by one!
+                        // size_t previousDiffPos,              // skip this many points in the diffOrder vector
+                        size_t start, size_t end);
+
     std::vector<ProfileBlock> pretreatDataCentroids(const std::vector<std::vector<double>> *spectrum);
 
     void extrapolateEIC(const std::vector<size_t> scanNums, std::vector<float> *intensity);
