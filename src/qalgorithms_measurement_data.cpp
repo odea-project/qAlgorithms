@@ -544,15 +544,11 @@ namespace qAlgorithms
         return centroids;
     }
 
-    struct Block
-    {
-        size_t start;
-        size_t end;
-    };
-
     void binProfileSpec(std::vector<Block> *result,
                         const std::vector<double> *diffs,
+                        // const std::vector<unsigned int> *diffOrder,
                         const std::vector<double> *cumDiffs, // indices into cumDiffs must be right-shifted by one!
+                        // size_t previousDiffPos,              // skip this many points in the diffOrder vector
                         size_t start, size_t end)
     {
         // perform the recursive split introduced during binning to find gaps in mz
@@ -575,9 +571,29 @@ namespace qAlgorithms
         double critVal = binningCritVal(length, meanDiff / 2);
 
         // max of difference // @todo extract to inline function to use in binning
-        auto pmax = std::max_element(diffs->begin() + start, diffs->begin() + end);
+        auto pmax = std::max_element(diffs->begin() + start, diffs->begin() + end + 1);
         double max = *pmax;
         size_t maxPos = std::distance(diffs->begin(), pmax);
+
+        // size_t maxPos2 = 0;
+        // size_t nextDiffPos = 0;
+        // // @todo is there a difference too small to matter known ahead of time?
+        // for (size_t i = previousDiffPos; i < diffOrder->size(); i++)
+        // {
+        //     unsigned int pos = diffOrder->at(i);
+        //     if (start <= pos && pos <= end)
+        //     {
+        //         // pos is the index of the largest difference in the relevant region
+        //         nextDiffPos = i;
+        //         maxPos2 = pos;
+        //         break;
+        //     }
+        // }
+        // assert(maxPos2 == maxPos);
+        // size_t nextDiffPos = 0;
+
+        // size_t maxPos = maxPos2;
+        // double max = diffs->at(maxPos2);
 
         if (max < critVal)
         {
@@ -652,6 +668,14 @@ namespace qAlgorithms
 
         std::vector<Block> result; // result contains the start- and end indices of all relevant blocks in the data.
         result.reserve(128);
+
+        // index vector into diffs, making diff itself obsolete // @todo this can be solved without recursion
+        // std::vector<unsigned int> diffOrder(diffs.size());
+        // std::iota(diffOrder.begin(), diffOrder.end(), 0);
+        // std::sort(diffOrder.begin(), diffOrder.end(),
+        //           [&](int a, int b)
+        //           { return diffs[a] > diffs[b]; });
+
         binProfileSpec(&result, &diffs, &cumDiffs, 0, diffs.size() - 1);
 
         std::vector<ProfileBlock> groupedData;
