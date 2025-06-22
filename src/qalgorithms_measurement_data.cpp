@@ -676,7 +676,42 @@ namespace qAlgorithms
         //           [&](int a, int b)
         //           { return diffs[a] > diffs[b]; });
 
-        binProfileSpec(&result, &diffs, &cumDiffs, 0, diffs.size() - 1);
+        double meanDiff = 0;
+        for (size_t i = 0; i < diffs.size(); i++)
+        {
+            meanDiff += diffs[i];
+        }
+        meanDiff /= diffs.size();
+
+        unsigned int knownStart = 0;
+        unsigned int knownEnd = diffs.size() - 1;
+
+        if (meanDiff > 0.01) [[likely]]
+        {
+            // in a real mass spectrum, this should always be a given. If not, the noise level is so
+            // high that it might be impossible to find actually useful data here. Either way, since
+            // we search for centroids in these regions, 0.01 is too large if anything. There will never
+            // be a useable centroid with this large a m/z difference in a high res mass spectrum
+            for (size_t i = 0; i < diffs.size(); i++)
+            {
+                if (diffs[i] > meanDiff)
+                {
+                    knownEnd = i - 1;
+                    binProfileSpec(&result, &diffs, &cumDiffs, knownStart, knownEnd);
+                    knownStart = i + 1;
+                }
+            }
+        }
+        else
+        {
+            std::cerr << "Warning: a spectrum has no clear breaks.\n";
+        }
+
+        if (knownStart == 0 && knownEnd == diffs.size() - 1)
+        {
+            std::cerr << "Warning: a spectrum has no clear breaks.\n";
+            binProfileSpec(&result, &diffs, &cumDiffs, knownStart, knownEnd);
+        }
 
         std::vector<ProfileBlock> groupedData;
         groupedData.reserve(result.size());
