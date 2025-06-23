@@ -23,10 +23,10 @@ namespace qAlgorithms
 
     struct treatedData // @todo remove this struct / maybe not?
     {
-        std::vector<dataPoint> dataPoints;
+        std::vector<float> RT;
         std::vector<float> intensity;
         std::vector<size_t> cenIDs;
-        std::vector<size_t> cumulativeDF; // degrees of freedom
+        std::vector<unsigned int> cumulativeDF; // degrees of freedom
         unsigned int lowestScan;
         unsigned int largestScan;
     };
