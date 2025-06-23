@@ -1,0 +1,355 @@
+---
+title: "Blank Triplicate Test"
+author: "Daniel Höhn"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+
+harmonicMean = function(vec){
+  return(length(vec) / sum(vec^-1))
+}
+```
+
+```{r triplicate 2, include=FALSE}
+### feature lists ###
+repli1 = read_csv("~/Work/master/QC_1_positive_features.csv")
+repli1$type = "rep01"
+repli2 = read_csv("~/Work/master/QC_2_positive_features.csv")
+repli2$type = "rep02"
+repli3 = read_csv("~/Work/master/QC_3_positive_features.csv")
+repli3$type = "rep03"
+repli4 = read_csv("~/Work/master/QC_4_positive_features.csv")
+repli4$type = "rep04"
+repli5 = read_csv("~/Work/master/QC_5_positive_features.csv")
+repli5$type = "rep05"
+repli6 = read_csv("~/Work/master/QC_6_positive_features.csv")
+repli6$type = "rep06"
+repli7 = read_csv("~/Work/master/QC_7_positive_features.csv")
+repli7$type = "rep07"
+repli8 = read_csv("~/Work/master/QC_8_positive_features.csv")
+repli8$type = "rep08"
+repli9 = read_csv("~/Work/master/QC_9_positive_features.csv")
+repli9$type = "rep09"
+repli10 = read_csv("~/Work/master/QC_10_positive_features.csv")
+repli10$type = "rep10"
+repli11 = read_csv("~/Work/master/QC_11_positive_features.csv")
+repli11$type = "rep11"
+repli12 = read_csv("~/Work/master/QC_12_positive_features.csv")
+repli12$type = "rep12"
+repli13 = read_csv("~/Work/master/QC_13_positive_features.csv")
+repli13$type = "rep13"
+
+### component regressions ###
+comp1 = read_csv("~/Work/master/QC_1_positive_components.csv")
+comp1$type = "rep01"
+comp2 = read_csv("~/Work/master/QC_2_positive_components.csv")
+comp2$type = "rep02"
+comp3 = read_csv("~/Work/master/QC_3_positive_components.csv")
+comp3$type = "rep03"
+comp4 = read_csv("~/Work/master/QC_4_positive_components.csv")
+comp4$type = "rep04"
+comp5 = read_csv("~/Work/master/QC_5_positive_components.csv")
+comp5$type = "rep05"
+comp6 = read_csv("~/Work/master/QC_6_positive_components.csv")
+comp6$type = "rep06"
+comp7 = read_csv("~/Work/master/QC_7_positive_components.csv")
+comp7$type = "rep07"
+comp8 = read_csv("~/Work/master/QC_8_positive_components.csv")
+comp8$type = "rep08"
+comp9 = read_csv("~/Work/master/QC_9_positive_components.csv")
+comp9$type = "rep09"
+comp10 = read_csv("~/Work/master/QC_10_positive_components.csv")
+comp10$type = "rep10"
+comp11 = read_csv("~/Work/master/QC_11_positive_components.csv")
+comp11$type = "rep11"
+comp12 = read_csv("~/Work/master/QC_12_positive_components.csv")
+comp12$type = "rep12"
+comp13 = read_csv("~/Work/master/QC_13_positive_components.csv")
+comp13$type = "rep13"
+```
+
+
+
+## Feature Grouping of ten replicate measurements
+Data: Ten replicate measurements of standard compounds in water
+Hypothesis: Features that can be replicated will differ in characteristic properties from those that can not be replicated
+at all. 
+Groups were formed by first sorting by mz and separating the groups every time that the difference between two adjacent
+features exceeded the mz uncertainty. Within these groups, features were sorted by RT. The RT tolerance was set by taking a 
+sample of groups of size ten with all replicates represented and taking approximately the largest differences between
+RTS in those groups (four seconds). All groups were then split if that distance was exceeded. Between adjacent members
+In total, 1675 of 89517 Features were in groups with more than ten members. These were removed from the dataset, along
+with all other groups that contained more than one feature from each replicate.
+```{r ten reps}
+combo = rbind(repli1, repli2, repli3, repli4, repli5, repli6, repli7, repli8, repli9, repli10, repli11, repli12, repli13)
+
+# combo = combo[which(combo$retentionTime > )]
+
+  size = length(combo$ID)
+  combo = combo[order(combo$mz), ]
+  combo$mzdiff = c(combo$mz[-1], 0) - combo$mz
+  combo$mzdiff[length(combo$mz)] = 0
+  
+  limitbreak = combo$mzdiff > combo$mzUncertainty # * 10e-6 * 2
+  limitbreak = c(F, limitbreak[1:(length(limitbreak) - 1)])
+  
+  combo$group = cumsum(limitbreak) + 1
+  combo = combo[order(combo$group, combo$retentionTime), ]
+  
+  limitbreak = limitbreak |
+    (c(F, (
+      c(combo$retentionTime[-1], 0) - combo$retentionTime
+    ) > 4)[-length(limitbreak)])
+  combo$group = cumsum(limitbreak) + 1
+  
+  combo = combo %>% group_by(group) %>% mutate(groupsize = n(), U_members = length(unique(type)))
+  
+  tmp = tabulate(combo$groupsize)
+  tmp = tmp / c(1:max(combo$groupsize))
+ barplot(tmp)
+ 
+ combo$groupsize[which(combo$groupsize > 13)] = 14
+ 
+ ggplot(combo)+
+   geom_bar(aes(x = as.factor(groupsize), fill = type), position = "fill")+
+   scale_x_discrete(name = "Replicates Found")+
+   scale_y_continuous(name = "Percentage of Group Members")+
+   labs(fill = "Replicate ID")
+ 
+ 
+ # combo = combo[which(combo$groupsize == combo$U_members | combo$groupsize == 100), ]
+ combo$points = combo$binIdxEnd - combo$binIdxStart + 1
+ 
+ combo$isComp = combo$CompID > 0
+```
+Observations:
+The majority of all features could be replicated, but a large portion was only found in one measurement.
+There is no observable bias towards one group in any of the replicate groups, including those that contained
+more than ten points.
+
+```{r component replicability}
+# how likely is it that a feature with an assigned component is found in all replicates?
+ggplot(combo[which(combo$isComp),])+
+   geom_bar(aes(x = as.factor(groupsize), fill = type))+
+   scale_x_discrete(name = "Replicates Found")+
+   scale_y_continuous(name = "Features Assigned to Components")+
+   labs(fill = "Replicate ID")+
+  theme(axis.title.x = element_text(size = 18),
+        axis.title.y = element_text(size = 18),
+        axis.text.x = element_text(size = 15),
+        axis.text.y = element_text(size = 15))
+
+ggplot(combo[which(combo$isComp),])+
+  geom_boxplot(aes(x = log10(area), y = as.factor(groupsize)))+
+   scale_y_discrete(name = "Replicates Found")+
+   scale_x_continuous(name = "Feature Intensity (Log10)")+
+  theme(axis.title.x = element_text(size = 18),
+        axis.title.y = element_text(size = 18),
+        axis.text.x = element_text(size = 15),
+        axis.text.y = element_text(size = 15))
+
+compCounts = combo %>% group_by(groupsize) %>% summarise(sum_y = sum(isComp), sum_n = sum(!isComp))
+
+ggplot()+
+  geom_point(aes(x = as.factor(1:max(compCounts$groupsize)), y = 100 * compCounts$sum_y / (compCounts$sum_n + compCounts$sum_y)), size = 4)+
+   scale_x_discrete(name = "Replicates Found")+
+   scale_y_continuous(name = "% of Component Features")+
+   labs(fill = "Replicate ID")+
+  theme(axis.title.x = element_text(size = 18),
+        axis.title.y = element_text(size = 18),
+        axis.text.x = element_text(size = 15),
+        axis.text.y = element_text(size = 15))
+
+ggplot(combo)+ # this is interesting, quantiles for groups of size four are much greater regarding area
+  geom_boxplot(aes(x = as.factor(groupsize), y = area), outliers = F)+
+   scale_x_discrete(name = "Replicates Found")+
+   scale_y_continuous(name = "Area")+
+  theme(axis.title.x = element_text(size = 18),
+        axis.title.y = element_text(size = 18),
+        axis.text.x = element_text(size = 15),
+        axis.text.y = element_text(size = 15))
+
+combo = combo %>% ungroup()
+
+ggplot(combo[which(combo$isComp),])+ # this is interesting, quantiles for groups of size four are much greater regarding area
+  geom_boxplot(aes(x = as.factor(groupsize), y = area), outliers = F)+
+   scale_x_discrete(name = "Replicates Found")+
+   scale_y_continuous(name = "Area")+
+  theme(axis.title.x = element_text(size = 18),
+        axis.title.y = element_text(size = 18),
+        axis.text.x = element_text(size = 15),
+        axis.text.y = element_text(size = 15))
+
+ggplot(combo[which(combo$isComp),])+
+   geom_bar(aes(x = as.factor(groupsize)), fill = "skyblue")+             
+  labs(x = "Replicates Found",                       
+       y = "Component Features")+
+  theme_minimal()+                               
+  theme(text = element_text(size = 12),
+        axis.title.x = element_text(face = "bold"),
+        axis.title.y = element_text(face = "bold")) 
+```
+
+
+for every component, find how many mass differences are around 1.003355
+```{r}
+feats = repli1
+diff = 1.005533
+diff = 22.9898 - 1.0078
+
+carbCount = function(feats, diff){
+  feats = feats[order(feats$retentionTime),] # remove the first 300 seconds to prevent influences from void time
+  feats = feats[which(feats$retentionTime > 300),]
+  feats2 = feats[which(feats$CompID > 0),]
+  comps = unique(feats$CompID)[-1]
+  returnval = c(0,length(comps))
+  for (cs in comps) {
+    temp = feats2[which(feats2$CompID == cs),]
+    mzDiffs = abs(dist(temp$mz))
+    # tolerance of 20 ppm of mean mass
+    tol = mean(temp$mz) * 0.00002
+    count = sum(mzDiffs > diff - tol & mzDiffs < diff + tol)
+    returnval[1] = returnval[1] + count
+  }
+  return(returnval)
+}
+
+
+```
+
+```{r}
+carbCount(repli1, diff)
+carbCount(repli2, diff)
+carbCount(repli3, diff)
+carbCount(repli4, diff)
+carbCount(repli5, diff)
+carbCount(repli6, diff)
+carbCount(repli7, diff)
+carbCount(repli8, diff)
+carbCount(repli9, diff)
+carbCount(repli10, diff)
+carbCount(repli11, diff)
+carbCount(repli12, diff)
+carbCount(repli13, diff)
+
+carbCount(SP10_f, diff)
+carbCount(SP01_f, diff)
+carbCount(SP02_f, diff)
+carbCount(SP03_f, diff)
+carbCount(SP04_f, diff)
+carbCount(SP05_f, diff)
+carbCount(SP06_f, diff)
+carbCount(SP07_f, diff)
+carbCount(SP08_f, diff)
+carbCount(SP09_f, diff)
+
+149+ 138+ 103+ 96+ 95+ 136+ 138+  91+ 78+ 72+ 136+ 100+ 94+ 289+ 270+ 284+ 278+ 250+ 278+ 259+ 330+ 270+ 344
+```
+
+
+```{r visualise}
+options(dplyr.summarise.inform = FALSE)
+# uncertainty is higher for group 4
+ggplot(combo)+
+  geom_boxplot(aes(x = as.factor(groupsize), y = mzUncertainty / mz), outliers = F)
+
+ggplot(combo)+
+  geom_boxplot(aes(x = as.factor(groupsize), y = mz))
+
+ggplot(combo)+
+  geom_boxplot(aes(x = as.factor(groupsize), y = retentionTime))
+
+ggplot(combo)+
+  geom_boxplot(aes(x = as.factor(groupsize), y = DQSC))
+
+ggplot(combo)+
+  geom_boxplot(aes(x = as.factor(groupsize), y = abs(DQSF)))
+
+ggplot(combo)+ # this is interesting, quantiles for groups of size four are much greater regarding area
+  geom_boxplot(aes(x = as.factor(groupsize), y = area), outliers = F)
+
+ggplot(combo)+
+   geom_bar(aes(x = as.factor(groupsize), fill = as.factor(competitors)), position = "fill")
+
+ggplot(combo)+
+   geom_bar(aes(x = as.factor(groupsize), fill = as.factor(scale)), position = "fill")
+
+combo = combo[which(combo$groupsize == combo$U_members), ]
+groupsizes = tabulate(combo$groupsize)
+# counts_DF_c = as.data.frame(table(combo[,c(15,31)]))
+# counts_DF_c = counts_DF_c[which(counts_DF_c$Freq != 0),]
+# ggplot(counts_DF_c)+
+#   geom_point(aes(y = (scale), x = (points), size = Freq))
+
+# group_inter = as.data.frame(table(combo[,c(29, 16)]))
+# group_inter$relative = group_inter$Freq / rep(groupsizes, length(unique(combo$interpolations))) # starts at 0
+group_compete = as.data.frame(table(combo[,c(29, 17)]))
+group_compete$relative = group_compete$Freq / rep(groupsizes, max(combo$competitors) + 1) # starts at 0
+group_c = combo %>% group_by(groupsize, competitors) %>% 
+  summarise(mean_width = mean(area / height), meanDQSF = mean(abs(DQSF)), meanMZ = mean(mz), 
+            meanRT = mean(retentionTime), meanPoints = mean(binIdxEnd - binIdxStart + 1), meanArea = mean(area))
+group_i = combo %>% group_by(groupsize, interpolations) %>% 
+  summarise(mean_width = mean(area / height), meanDQSF = mean(abs(DQSF)), meanMZ = harmonicMean(mz), 
+            meanRT = mean(retentionTime), meanPoints = mean(binIdxEnd - binIdxStart + 1), meanArea = harmonicMean(area))
+group_s = combo %>% group_by(groupsize, scale) %>% 
+  summarise(mean_width = mean(area / height), meanDQSF = mean(abs(DQSF)), meanMZ = harmonicMean(mz), 
+            meanRT = mean(retentionTime), meanPoints = mean(binIdxEnd - binIdxStart + 1), meanArea = harmonicMean(area))
+
+# not being replicable means higher likelihood of having interpolations
+# ggplot(group_inter)+
+#  geom_point(aes(x = interpolations, y = relative, colour = groupsize))
+
+# features with no competitors are overrepresented in no_replicate
+ggplot(group_compete)+
+  geom_point(aes(x = competitors, y = relative, colour = as.factor(groupsize)))
+
+ggplot(group_c)+
+  geom_point(aes(x = as.factor(competitors), y = mean_width, colour = as.factor(groupsize)))
+
+ggplot(group_s)+
+  geom_point(aes(x = as.factor(scale), y = mean_width, colour = as.factor(groupsize)))
+
+ggplot(group_c)+
+  geom_point(aes(x = as.factor(competitors), y = meanDQSF, colour = as.factor(groupsize)))
+
+ggplot(group_s)+
+  geom_point(aes(x = as.factor(scale), y = meanDQSF, colour = as.factor(groupsize)))
+
+ggplot(group_c)+
+  geom_point(aes(x = as.factor(competitors), y = meanMZ, colour = as.factor(groupsize)))
+
+ggplot(group_s)+
+  geom_point(aes(x = as.factor(scale), y = meanMZ, colour = as.factor(groupsize)))
+
+# ggplot(group_c)+ # effects only start showing for low point numbers
+#   geom_point(aes(x = as.factor(competitors), y = meanRT, colour = as.factor(groupsize)))
+
+ggplot(group_s)+
+  geom_point(aes(x = as.factor(scale), y = meanRT, colour = as.factor(groupsize)))
+
+ggplot(group_c)+ # no real information gain
+  geom_point(aes(x = as.factor(competitors), y = meanPoints, colour = as.factor(groupsize)))
+
+# ggplot(group_s)+
+#   geom_point(aes(x = as.factor(scale), y = meanPoints, colour = as.factor(groupsize))) # just a straight line
+
+ggplot(group_c)+ 
+  geom_point(aes(x = as.factor(competitors), y = log(meanArea), colour = as.factor(groupsize)))
+
+ggplot(group_s)+
+  geom_point(aes(x = as.factor(scale), y = meanArea, colour = as.factor(groupsize)))
+
+```
+
+Discuss: Why are regressions with an even number of points favoured? 
+Observation: When an even number of points is found in the regression, it is less likely for a point to be interpolated.
+             When the regression covers an uneven number of real points, it is very likely that one point is interpolated.
+Probably related to fixed uneven size of regression window, but that doesn't explain why even numbers are favoured
+
+
+
+  

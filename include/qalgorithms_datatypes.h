@@ -23,10 +23,10 @@ namespace qAlgorithms
 
     struct treatedData // @todo remove this struct / maybe not?
     {
-        std::vector<dataPoint> dataPoints;
+        std::vector<float> RT;
         std::vector<float> intensity;
         std::vector<size_t> cenIDs;
-        std::vector<size_t> cumulativeDF; // degrees of freedom
+        std::vector<unsigned int> cumulativeDF; // degrees of freedom
         unsigned int lowestScan;
         unsigned int largestScan;
     };
@@ -35,7 +35,12 @@ namespace qAlgorithms
     {
         std::vector<float> intensity;
         std::vector<float> mz;
-        std::vector<bool> df;
+        // the degrees of freedom are redundant because there are never interpolated points within a centroid
+        // we still use them because this way there is no largely redundant second peak fitting function
+        std::vector<unsigned int> cumdf; // cumulative df
+        // std::vector<bool> df;
+        unsigned int startPos;
+        unsigned int endPos;
     };
 
     struct RegCoeffs
@@ -61,6 +66,13 @@ namespace qAlgorithms
         bool isValid = false;   // flag to indicate if the regression is valid
     };
 
+    struct ProfilePos // gives the range of points covered by a centroid and the access index for streamfind
+    {
+        unsigned int access;
+        unsigned int start;
+        unsigned int end;
+    };
+
     struct CentroidPeak
     {
         double mz;
@@ -74,21 +86,11 @@ namespace qAlgorithms
         float mzUncertainty;
         unsigned int scanNumber;
         unsigned int df; // degrees of freedom
+        ProfilePos trace;
         unsigned int numCompetitors;
         unsigned int scale;
-        unsigned int interpolations;
-    };
-
-    struct qCentroid
-    {
-        double mz;
-        float mzError = -1;
-        unsigned int scanNo;
-        float int_area;   // the intensity is never used during binning @todo
-        float int_height; // s.o.
-        float DQSCentroid;
-        unsigned int df; // degrees of freedom
-        unsigned int cenID;
+        unsigned int ID;
+        // unsigned int interpolations;
     };
 
     struct EIC // Extracted Ion Chromatogram
