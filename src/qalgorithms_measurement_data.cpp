@@ -2,6 +2,7 @@
 #include "qalgorithms_utils.h"
 #include "qalgorithms_global_vars.h"
 #include "qalgorithms_qpeaks.h"
+#include "qalgorithms_qbin.h"
 
 #include <cmath>
 #include <fstream>
@@ -96,24 +97,36 @@ namespace qAlgorithms
 
         size_t maxSize = dataPoints_internal.size() * 2; // we do not know how many gaps there are beforehand
         treatedData treatedData;
-        treatedData.dataPoints.reserve(maxSize);
+        // treatedData.dataPoints.reserve(maxSize);
+        treatedData.RT.reserve(maxSize);
+        treatedData.intensity.reserve(maxSize);
+        treatedData.cumulativeDF.reserve(maxSize);
+        treatedData.cenIDs.reserve(maxSize);
 
         unsigned int realIdx = 0; // this should be handled outside of this function @todo
-        static dataPoint zeroedPoint{0, 0, false};
+        // static dataPoint zeroedPoint{0, 0, false};
         // add the first two zeros to the dataPoints_new vector @todo skip this by doing log interpolation during the log transform
         for (int i = 0; i < 2; i++)
         {
-            treatedData.dataPoints.push_back(zeroedPoint);
+            // treatedData.dataPoints.push_back(zeroedPoint);
+            treatedData.RT.push_back(0);
             treatedData.intensity.push_back(0);
+            treatedData.cumulativeDF.push_back(0);
+            treatedData.cenIDs.push_back(0);
         }
 
         size_t maxOfBlock = 0;
         size_t blockSize = 0; // size of the current block
+        size_t cumdf = 0;
         for (size_t pos = 0; pos < dataPoints_internal.size() - 1; pos++)
         {
             blockSize++;
-            treatedData.dataPoints.push_back(dataPoints_internal[pos]);
+            // treatedData.dataPoints.push_back(dataPoints_internal[pos]);
+            treatedData.RT.push_back(dataPoints_internal[pos].x);
             treatedData.intensity.push_back(dataPoints_internal[pos].y);
+            cumdf += dataPoints_internal[pos].df;
+            treatedData.cumulativeDF.push_back(cumdf);
+
             ++realIdx;
             const float delta_x = dataPoints_internal[pos + 1].x - dataPoints_internal[pos].x;
 
@@ -128,11 +141,14 @@ namespace qAlgorithms
                     float interpolateDiff = delta_x / (gapSize + 1);
                     for (int i = 1; i <= gapSize; i++)
                     {
-                        treatedData.dataPoints.emplace_back(
-                            dataPoints_internal[pos].x + i * interpolateDiff, // retention time
-                            dataPoints_internal[pos].y * std::pow(dy, i),     // intensity
-                            false);                                           // interpolated point
+                        // treatedData.dataPoints.emplace_back(
+                        //     dataPoints_internal[pos].x + i * interpolateDiff, // retention time
+                        //     dataPoints_internal[pos].y * std::pow(dy, i),     // intensity
+                        //     false);                                           // interpolated point
+
+                        treatedData.RT.push_back(dataPoints_internal[pos].x + i * interpolateDiff);
                         treatedData.intensity.push_back(dataPoints_internal[pos].y * std::pow(dy, i));
+                        treatedData.cumulativeDF.push_back(cumdf);
                     }
                 }
             }
@@ -146,15 +162,19 @@ namespace qAlgorithms
         } // end of for loop
         // last element
         blockSize++;
-        treatedData.dataPoints.push_back(dataPoints_internal.back());
+        // treatedData.dataPoints.push_back(dataPoints_internal.back());
+        // treatedData.intensity.push_back(dataPoints_internal.back().y);
+        treatedData.RT.push_back(dataPoints_internal.back().x);
         treatedData.intensity.push_back(dataPoints_internal.back().y);
+        cumdf += dataPoints_internal.back().df;
+        treatedData.cumulativeDF.push_back(cumdf);
 
         // END OF BLOCK, EXTRAPOLATION STARTS @todo move this into its own function
         assert(blockSize == eic.cenID.size());
         // add 4 datapoints (two extrapolated [end of current block] and two zeros
         // [start of next block]) extrapolate the first two datapoints of this block
 
-        const dataPoint dp_startOfBlock = treatedData.dataPoints[2];
+        // const dataPoint dp_startOfBlock = treatedData.dataPoints[2];
         // check if the maximum of the block is the first or last data point.
         // in this case, it is not possible to extrapolate using the quadratic form
         // @todo is it sensible to use quadratic extrapolation in the first place? This
@@ -163,74 +183,46 @@ namespace qAlgorithms
         // if (maxOfBlock == blockSize - 1 || maxOfBlock == 0)
         // {
         // extrapolate the left side using the first non-zero data point (i.e, the start of the block)
-        treatedData.dataPoints[0].x = dp_startOfBlock.x - 2 * expectedDifference;
-        treatedData.dataPoints[1].x = dp_startOfBlock.x - expectedDifference;
-        treatedData.dataPoints[0].y = dp_startOfBlock.y / 4;
-        treatedData.dataPoints[1].y = dp_startOfBlock.y / 2;
+        float baseRT_start = treatedData.RT[2];
+        float baseInt_start = treatedData.intensity[2];
+        // treatedData.dataPoints[0].x = baseRT_start - 2 * expectedDifference;
+        // treatedData.dataPoints[1].x = baseRT_start - expectedDifference;
+        // treatedData.dataPoints[0].y = baseInt_start / 4;
+        // treatedData.dataPoints[1].y = baseInt_start / 2;
 
-        treatedData.intensity[0] = dp_startOfBlock.y / 4;
-        treatedData.intensity[1] = dp_startOfBlock.y / 2;
+        treatedData.RT[0] = baseRT_start - 2 * expectedDifference;
+        treatedData.RT[1] = baseRT_start - expectedDifference;
+        treatedData.intensity[0] = baseInt_start / 4;
+        treatedData.intensity[1] = baseInt_start / 2;
 
-        size_t l = treatedData.dataPoints.size() - 2;
-        auto endPoint = treatedData.dataPoints[l];
+        size_t l = treatedData.RT.size() - 2;
+        // auto endPoint = treatedData.dataPoints[l];
+        float baseRT_end = treatedData.RT[l];
+        float baseInt_end = treatedData.intensity[l];
 
-        treatedData.dataPoints[l + 1].x = endPoint.x + 2 * expectedDifference;
-        treatedData.dataPoints[l].x = endPoint.x + expectedDifference;
-        treatedData.dataPoints[l + 1].y = endPoint.y / 4;
-        treatedData.dataPoints[l].y = endPoint.y / 2;
-
-        treatedData.intensity[l + 1] = endPoint.y / 4;
-        treatedData.intensity[l] = endPoint.y / 2;
+        treatedData.RT[l + 1] = baseRT_end + 2 * expectedDifference;
+        treatedData.RT[l] = baseRT_end + expectedDifference;
+        treatedData.intensity[l + 1] = baseInt_end / 4;
+        treatedData.intensity[l] = baseInt_end / 2;
 
         assert(treatedData.intensity[0] > 0);
-        // assert(!isnanf(treatedData.intensity.back())); // @todo this is os-specific, windows does not have access to isnanf
-        // }
-        // else
-        // {
-        //     const float x[3] = {0.f, dataPoints_internal[maxOfBlock].x - dp_startOfBlock.x, dataPoints_internal[blockSize - 1].x - dp_startOfBlock.x};
-        //     const float y[3] = {std::log(dp_startOfBlock.y), std::log(dataPoints_internal[maxOfBlock].y), std::log(dataPoints_internal[blockSize - 1].y)};
 
-        //     auto coeffs = interpolateQuadratic(x, y);
-        //     // extrapolate the left side of the block
-        //     for (int i = 0; i < 2; i++)
-        //     {
-        //         dataPoint &curr_dp = treatedData.dataPoints[0 + i];
-        //         curr_dp.x = dp_startOfBlock.x - (2 - i) * expectedDifference;
-        //         const float x = curr_dp.x - dp_startOfBlock.x;
-        //         curr_dp.y = std::exp(coeffs[0] + x * (coeffs[1] + x * coeffs[2]));
-        //     }
-        //     // add the extrapolated data points to the right side of the block
-        //     for (int i = 0; i < 2; i++)
-        //     {
-        //         const float dp_x = dataPoints_internal[blockSize - 1].x + float(i + 1) * expectedDifference;
-        //         const float x = dp_x - dp_startOfBlock.x;
-        //         treatedData.dataPoints.emplace_back(
-        //             dp_x,                                                  // retention time
-        //             std::exp(coeffs[0] + x * (coeffs[1] + x * coeffs[2])), // intensity
-        //             false);                                                // df
-        //         treatedData.intensity.push_back(std::exp(coeffs[0] + x * (coeffs[1] + x * coeffs[2])));
-        //     }
-        //     assert(treatedData.intensity[0] > 0);
-        //     assert(!isnanf(treatedData.intensity.back()));
-        // }
-
-        assert(treatedData.dataPoints.size() == treatedData.intensity.size());
-        assert(treatedData.dataPoints.back().y == treatedData.intensity.back()); // works
+        assert(treatedData.RT.size() == treatedData.intensity.size());
         // assert(treatedData.dataPoints.size() == eic.interpolatedDQSB.size()); // @todo redo this in good
 
         treatedData.cenIDs = eic.interpolatedIDs;
         treatedData.lowestScan = eic.scanNumbers.front() - 2;
         treatedData.largestScan = eic.scanNumbers.back() + 2;
         // assert(binIdx.size() == treatedData.largestScan - treatedData.lowestScan + 1 + 4); // extrapolations
-        treatedData.cumulativeDF.reserve(treatedData.dataPoints.size());
+        treatedData.cumulativeDF.reserve(treatedData.RT.size());
         treatedData.cumulativeDF.push_back(0);
-        size_t accum = 0;
-        for (size_t i = 1; i < treatedData.dataPoints.size(); i++)
-        {
-            // i starts at 1 since the first element is always 0
-            accum += treatedData.dataPoints[i].df ? 1 : 0;
-            treatedData.cumulativeDF.push_back(accum); // @todo this is not vectorised!
-        }
+        // size_t accum = 0;
+        // for (size_t i = 1; i < treatedData.RT.size(); i++)
+        // {
+        //     // i starts at 1 since the first element is always 0
+        //     accum += treatedData.dataPoints[i].df ? 1 : 0;
+        //     treatedData.cumulativeDF.push_back(accum); // @todo this is not vectorised!
+        // }
         assert(treatedData.largestScan < maxScan);
         return treatedData;
     }
@@ -377,33 +369,6 @@ namespace qAlgorithms
         return centroids;
     }
 
-    double calcExpectedDiff(const std::vector<std::vector<double>> *spectrum)
-    {
-        const std::vector<double> mz = spectrum->at(0); // @todo make this a named struct
-        const std::vector<double> intensity = spectrum->at(1);
-        const size_t numPoints = mz.size();         // number of data points
-        const size_t upperLimit = numPoints * 0.05; // check lowest 5% for expected difference
-        double expectedDifference = 0.0;
-        std::vector<double> differences;
-        differences.reserve(numPoints / 2);
-        for (size_t i = 0; i < numPoints - 1; i++)
-        {
-            if (intensity[i] == 0 || intensity[i] == 0)
-            {
-                continue;
-            }
-            differences.push_back(mz[i + 1] - mz[i]);
-        }
-        std::sort(differences.begin(), differences.end());
-        for (size_t i = 0; i < upperLimit; i++)
-        {
-            expectedDifference += differences[i];
-        }
-        expectedDifference /= upperLimit;
-        assert(expectedDifference > 0);
-        return expectedDifference;
-    }
-
     inline float calcRTDiff(const std::vector<double> *retention_times)
     {
         float sum = 0.0;
@@ -414,63 +379,81 @@ namespace qAlgorithms
         return sum / (retention_times->size() - 1);
     }
 
-    std::vector<CentroidPeak> findCentroids_MZML( // this function needs to be split @todo
-        StreamCraft::MZML &data,
-        std::vector<float> &convertRT,
-        float &rt_diff,
-        const bool polarity,
-        const bool ms1only)
+    std::vector<size_t> makeRelativeIndex(std::vector<double> *retention_times,
+                                          std::vector<float> &convertRT, // @todo merge into struct with actual RTs
+                                          size_t countSelected,
+                                          float *rt_diff) // this gets mutated, when it should probably not exist at all
     {
-        // this is only relevant when reading in pre-centroided data
-        // bool displayPPMwarning = false;
-        // if (PPM_PRECENTROIDED == -INFINITY)
-        // {
-        //     PPM_PRECENTROIDED = 0.25; // global variable, this is a bad solution @todo
-        // }
-        // else
-        // {
-        //     displayPPMwarning = true;
-        // }
+        *rt_diff = calcRTDiff(retention_times); // this is the wrong approach - the scan interval is not static
+        assert(convertRT.empty());
+        convertRT.reserve(countSelected + 4);
+        // first two scans do not have retention times @todo this will lead to slightly wrong results, should be fine due to void time
+        convertRT.push_back(std::max(float(retention_times->front()) - 2 * *rt_diff, float(0)));
+        convertRT.push_back(std::max(float(retention_times->front() - 0.999 * *rt_diff), float(0)));
 
+        // this is the scan counting only MS1 spectra. It starts at two so we don't run into
+        // problems with our front extrapolation during feature construction. It shouldn't matter
+        // anyway since the first two scans should not contain relevant information, but this is
+        // less questionable than cutting out the first two mass spectra entirely - consider the
+        // possibility that they were trimmed of void time beforehand!
+        size_t abstractScanNumber = 2;
+
+        std::vector<size_t> relativeIndex(countSelected, 0);
+
+        for (size_t i = 0; i < countSelected; i++)
+        {
+            float scandiff = retention_times->at(i) - convertRT.back(); // avoids problem of iterating n - 1!
+            assert(scandiff > 0);
+            int gapSize = int((scandiff / *rt_diff) + 0.25 * *rt_diff); // round up at 0.75
+
+            // correctedIndex[i] = i + gapSize;
+            if (gapSize > 1)
+            {
+                std::cerr << "."; // @todo this is probably useless at best and probably does more harm than good
+                float gapStep = scandiff / float(gapSize);
+                for (int gap = 1; gap < gapSize + 1; gap++)
+                {
+                    assert(convertRT.back() + gap * gapStep > convertRT.back());
+                    convertRT.push_back(convertRT.back() + gap * gapStep);
+                }
+                abstractScanNumber += gapSize;
+            }
+            if (convertRT.back() >= retention_times->at(i)) [[unlikely]]
+            {
+                // workaround for slightly misaligned scans, will need to be fixed with a full rework
+                std::cerr << "Warning: bad estimation of scan no. " << abstractScanNumber << "\n";
+                convertRT.pop_back();
+                abstractScanNumber--;
+            }
+
+            // assert(convertRT.back() < retention_times[i]);
+            convertRT.push_back(retention_times->at(i)); // convertRT[scan] = retention time of centroid
+            relativeIndex[i] = abstractScanNumber;       // abstract scan with same index as the input data
+            abstractScanNumber++;
+        }
+        // account for extrapolations at the back @todo the extrapolations should probably be a copile-time variable
+        abstractScanNumber += 2;
+        convertRT.push_back(retention_times->back() + *rt_diff);
+        convertRT.push_back(retention_times->back() + *rt_diff + *rt_diff);
+        assert(convertRT.size() == abstractScanNumber); // ensure that every index has an assigned RT
+        for (size_t i = 1; i < convertRT.size() - 1; i++)
+        {
+            assert(convertRT[i] < convertRT[i + 1]);
+        }
+        return relativeIndex;
+    }
+
+    std::vector<unsigned int> getRelevantSpectra(StreamCraft::MZML &data,
+                                                 const bool polarity,
+                                                 const bool ms1only)
+    {
         // accessor contains the indices of all spectra that should be fetched
         std::vector<unsigned int> accessor(data.number_spectra, 0);
         std::iota(accessor.begin(), accessor.end(), 0);
 
         std::vector<bool> spectrum_mode = data.get_spectra_mode(&accessor); // get spectrum mode (centroid or profile)
-
-        // CHECK IF CENTROIDED SPECTRA
-        size_t num_centroided_spectra = std::count(spectrum_mode.begin(), spectrum_mode.end(), false);
-        if (num_centroided_spectra > spectrum_mode.size() / 2) // in profile mode sometimes centroided spectra appear as well @todo is 2 a good idea?
-        {
-            std::cerr << "Centroided data is not supported in this version of qAlgorithms!\n";
-            //   << "Warning: qAlgorithms is intended for profile spectra. A base uncertainty of "
-            //   << PPM_PRECENTROIDED << " ppm is assumed for all supplied centroids\n";
-            return std::vector<CentroidPeak>{};
-            // for (size_t i = 1; i < indices.size(); i++) // i can be 0 briefly if there is a scan missing between 1. and 2. element
-            // {
-            //   if (retention_times[i] - retention_times[i - 1] > rt_diff * 1.75)
-            //   {
-            //     addEmpty[i - 1]++;
-            //     retention_times[i - 1] += rt_diff * 1.75;
-            //     convertRT.push_back(retention_times[i - 1]); // convertRT[scan] = retention time of centroid
-            //     i--;
-            //   }
-            //   else
-            //   {
-            //     convertRT.push_back(retention_times[i - 1]); // convertRT[scan] = retention time of centroid
-            //   }
-            // }
-            // convertRT.push_back(retention_times[indices.size() - 1]);
-            // assert(addEmpty.size() == indices.size() + 1);
-            // return transferCentroids(data, indices, retention_times, start_index, PPM_PRECENTROIDED); // this should be on a per-spectrum basis
-        }
-        if (num_centroided_spectra != 0)
-        {
-            std::cerr << "Warning: removed " << num_centroided_spectra << " centroided spectra from measurement.\n";
-        }
-
-        std::vector<size_t> indices = data.get_spectra_index(&accessor); // get all indices
-        std::vector<int> ms_levels = data.get_spectra_level(&accessor);  // get all MS levels
+        std::vector<size_t> indices = data.get_spectra_index(&accessor);    // get all indices
+        std::vector<int> ms_levels = data.get_spectra_level(&accessor);     // get all MS levels
         assert(!indices.empty());
 
         std::vector<unsigned int> selectedIndices;
@@ -487,24 +470,39 @@ namespace qAlgorithms
             {
                 continue;
             }
+            if (!spectrum_mode[i])
+            {
+                continue;
+            }
+
             selectedIndices.push_back(indices[i]);
         }
+        return selectedIndices;
+    }
+
+    std::vector<CentroidPeak> findCentroids( // this function needs to be reworked further @todo
+        StreamCraft::MZML &data,
+        std::vector<float> &convertRT,
+        float &rt_diff,
+        const bool polarity,
+        const bool ms1only)
+    {
+        std::vector<unsigned int> selectedIndices = getRelevantSpectra(data, polarity, ms1only);
         if (selectedIndices.empty())
         {
             return std::vector<CentroidPeak>{};
         }
 
         std::vector<double> retention_times = data.get_spectra_RT(&selectedIndices);
-        rt_diff = calcRTDiff(&retention_times);
+        // for (size_t i = 0; i < retention_times.size() - 1; i++)
+        // {
+        //     std::cout << retention_times[i] << ",";
+        // }
+        // std::cout << retention_times.back();
+        // exit(1);
 
         selectedIndices.shrink_to_fit();
         const size_t countSelected = selectedIndices.size();
-
-        std::vector<CentroidPeak> centroids;
-        centroids.reserve(countSelected * 1000);
-
-        // take spectrum at half length to avoid potential interference from quality control scans in the instrument
-        const std::vector<std::vector<double>> data_vec = data.get_spectrum(selectedIndices[countSelected / 2]);
 
         // determine where the peak finding will interpolate points and pass this information
         // to the binning step. addEmpty contains the number of empty scans to be added into
@@ -517,178 +515,252 @@ namespace qAlgorithms
         // issue occurs with 2.7499.... Here, the error is 0.75 / 3 = 0.25. We need to check how often
         // such a problem arises and if it negatively affects result accuracy.
 
-        assert(convertRT.empty());
-        convertRT.reserve(countSelected + 4);
-        // first two scans do not have retention times @todo this will lead to slightly wrong results, should be fine due to void time
-        convertRT.push_back(std::max(float(retention_times[0]) - 2 * rt_diff, float(0)));
-        convertRT.push_back(std::max(float(retention_times[0] - 0.999 * rt_diff), float(0)));
-        std::vector<size_t> relativeIndex(countSelected, 0);
-        // std::vector<size_t> correctedIndex(countSelected, 0);
+        std::vector<size_t> relativeIndex = makeRelativeIndex(&retention_times, convertRT, countSelected, &rt_diff);
 
-        // this is the scan counting only MS1 spectra. It starts at two so we don't run into
-        // problems with our front extrapolation during feature construction. It shouldn't matter
-        // anyway since the first two scans should not contain relevant information, but this is
-        // less questionable than cutting out the first two mass spectra entirely - consider the
-        // possibility that they were trimmed of void time beforehand!
-        size_t abstractScanNumber = 2;
-
-        for (size_t i = 0; i < countSelected; i++)
-        {
-            float scandiff = retention_times[i] - convertRT.back(); // avoids problem of iterating n - 1!
-            assert(scandiff > 0);
-            int gapSize = int((scandiff / rt_diff) + 0.25 * rt_diff); // round up at 0.75
-
-            // correctedIndex[i] = i + gapSize;
-            if (gapSize > 1)
-            {
-                float gapStep = scandiff / float(gapSize);
-                for (int gap = 1; gap < gapSize + 1; gap++)
-                {
-                    assert(convertRT.back() + gap * gapStep > convertRT.back());
-                    convertRT.push_back(convertRT.back() + gap * gapStep);
-                }
-                abstractScanNumber += gapSize;
-            }
-            if (convertRT.back() >= retention_times[i]) [[unlikely]]
-            {
-                // workaround for slightly misaligned scans, will need to be fixed with a full rework
-                std::cerr << "Warning: bad estimation of scan no. " << abstractScanNumber << "\n";
-                convertRT.pop_back();
-                abstractScanNumber--;
-            }
-
-            assert(convertRT.back() < retention_times[i]);
-            convertRT.push_back(retention_times[i]); // convertRT[scan] = retention time of centroid
-            relativeIndex[i] = abstractScanNumber;   // abstract scan with same index as the input data
-            abstractScanNumber++;
-        }
-        // relativeIndex.back() = abstractScanNumber;
-        // convertRT.push_back(retention_times.back());
-        // account for extrapolations at the back @todo the extrapolations should probably be a copile-time variable
-        abstractScanNumber += 2;
-        convertRT.push_back(retention_times.back() + rt_diff);
-        convertRT.push_back(retention_times.back() + rt_diff + rt_diff);
-        assert(convertRT.size() == abstractScanNumber); // ensure that every index has an assigned RT
-
-        // expected difference between two consecutive x-axis values
-        double expectedDifference_mz = calcExpectedDiff(&data_vec);
+        std::vector<CentroidPeak> centroids;
+        centroids.reserve(countSelected * 1000);
+        centroids.push_back({0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}); // dummy value used for binning
         for (size_t i = 0; i < countSelected; ++i)
         {
             const std::vector<std::vector<double>> spectrum = data.get_spectrum(selectedIndices[i]);
-            // inter/extrapolate data, and identify data blocks @todo these should be two different functions
-            const auto treatedData = pretreatDataCentroids(&spectrum, expectedDifference_mz);
-            // if (treatedData.empty())
-            // {
-            //     std::cout << "Warning: no centroids found in spectrum " << i << ".\n";
-            // }
-            assert(relativeIndex[i] != 0);
-            auto tmpCens = findCentroids(&treatedData, relativeIndex[i]); // find peaks in data blocks of treated data
-            centroids.insert(centroids.end(), tmpCens.begin(), tmpCens.end());
+            const auto profileGroups = pretreatDataCentroids(&spectrum);
+            // std::cout << relativeIndex[i] << "," << selectedIndices[i] << " | ";
+            findCentroidPeaks(&centroids, &profileGroups, relativeIndex[i], selectedIndices[i]);
         }
-        // if (!displayPPMwarning)
-        // {
-        //     PPM_PRECENTROIDED = -INFINITY; // reset value before the next function call
-        // }
+        for (unsigned int i = 0; i < centroids.size(); i++)
+        {
+            centroids[i].ID = i;
+        }
+
         return centroids;
     }
 
-    constexpr ProfileBlock blockStart()
+    void binProfileSpec(std::vector<Block> *result,
+                        const std::vector<double> *diffs,
+                        // const std::vector<unsigned int> *diffOrder,
+                        const std::vector<double> *cumDiffs, // indices into cumDiffs must be right-shifted by one!
+                        // size_t previousDiffPos,              // skip this many points in the diffOrder vector
+                        size_t start, size_t end)
     {
-        ProfileBlock p;
-        p.df.reserve(16);
-        p.intensity.reserve(16);
-        p.mz.reserve(16);
-        return p;
+        // perform the recursive split introduced during binning to find gaps in mz
+        // CritVal uses the standard deviation, which is estimated as the mean centroid error during binning.
+        // here, we can use the real SD of the point-to-point differences.
+        assert(start <= end); // <= since one point at the end could get removed, see below
+        assert(!diffs->empty());
+        assert(cumDiffs->size() == diffs->size() + 1);
+        assert(cumDiffs->at(0) == 0); // this is important so there are no special cases when forming the difference
+
+        size_t length = end - start + 1;
+        if (length < 4) // one point less due to differences being used
+        {
+            return;
+        }
+
+        // we use the mean difference here since the differences should follow a flat distribution. The basic assumption
+        // is that every point has an error of half the distance to its neighbours, since all points are evenly spaced.
+        double meanDiff = (cumDiffs->at(end + 1) - cumDiffs->at(start)) / length;
+        double critVal = binningCritVal(length, meanDiff / 2);
+
+        // max of difference // @todo extract to inline function to use in binning
+        auto pmax = std::max_element(diffs->begin() + start, diffs->begin() + end + 1);
+        double max = *pmax;
+        size_t maxPos = std::distance(diffs->begin(), pmax);
+
+        // size_t maxPos2 = 0;
+        // size_t nextDiffPos = 0;
+        // // @todo is there a difference too small to matter known ahead of time?
+        // for (size_t i = previousDiffPos; i < diffOrder->size(); i++)
+        // {
+        //     unsigned int pos = diffOrder->at(i);
+        //     if (start <= pos && pos <= end)
+        //     {
+        //         // pos is the index of the largest difference in the relevant region
+        //         nextDiffPos = i;
+        //         maxPos2 = pos;
+        //         break;
+        //     }
+        // }
+        // assert(maxPos2 == maxPos);
+        // size_t nextDiffPos = 0;
+
+        // size_t maxPos = maxPos2;
+        // double max = diffs->at(maxPos2);
+
+        if (max < critVal)
+        {
+            // block is complete, add limits to result vector
+            result->push_back({start, end + 1}); // end + 1 since difference has one point less
+            return;
+        }
+        if (maxPos == start || maxPos == end)
+        {
+            return;
+        }
+
+        // recursive split at max - different calling convention since we work with differences
+        binProfileSpec(result, diffs, cumDiffs, start, maxPos - 1); // when setting the block, 1 is added to end
+        binProfileSpec(result, diffs, cumDiffs, maxPos + 1, end);   // one past the max to avoid large value
     }
 
-    std::vector<ProfileBlock> pretreatDataCentroids(const std::vector<std::vector<double>> *spectrum, float expectedDifference)
+    inline ProfileBlock initBlock(size_t blocksize)
     {
-        // note on double precision values: when using floats, results are different enough
-        // to cause different behaviour for interpolation and block termination. Doubles are
-        // used here since the loss of precision during exponentiation etc. is not taken into
-        // account otherwise. Around 1000 centroids less than otherwise are produced for test cases.
+        std::vector<float> mz_int(blocksize, 0);
+        std::vector<unsigned int> cumdf(blocksize, 0);
+        std::iota(cumdf.begin() + 2, cumdf.end(), 1);
+        cumdf[blocksize - 1] = blocksize - 4;
+        cumdf[blocksize - 2] = blocksize - 4;
+
+        ProfileBlock ret = {mz_int,
+                            mz_int,
+                            cumdf,
+                            0, 0};
+        return ret;
+    }
+
+    std::vector<ProfileBlock> pretreatDataCentroids(const std::vector<std::vector<double>> *spectrum)
+    {
         std::vector<double> intensities_profile;
         std::vector<double> mz_profile;
-        const auto mz = spectrum->at(0);
-        intensities_profile.reserve(mz.size() / 2);
-        mz_profile.reserve(mz.size() / 2);
-        // Depending on the vendor, a profile contains a lot of points with intensity 0.
-        // These were added by the vendor software and must be removed prior to processing.
-        for (size_t i = 0; i < mz.size(); ++i)
-        {
-            if (spectrum->at(1)[i] == 0.0)
+        std::vector<unsigned int> idxConvert; // used to trace back processing steps to untreated data
+
+        { // remove zeroes
+            const auto mz = spectrum->at(0);
+            intensities_profile.reserve(mz.size() / 2);
+            mz_profile.reserve(mz.size() / 2);
+            // Depending on the vendor, a profile contains a lot of points with intensity 0.
+            // These were added by the vendor software and must be removed prior to processing.
+            for (unsigned int i = 0; i < mz.size(); ++i)
             {
-                continue; // skip values with no intensity @todo minimum intensity?
+                if (spectrum->at(1)[i] == 0.0)
+                {
+                    continue; // skip values with no intensity @todo minimum intensity?
+                }
+                intensities_profile.push_back(spectrum->at(1)[i]);
+                mz_profile.push_back(mz[i]);
+                idxConvert.push_back(i);
             }
-            intensities_profile.push_back(spectrum->at(1)[i]);
-            mz_profile.push_back(mz[i]);
+            assert(!intensities_profile.empty());
+            assert(!mz_profile.empty());
         }
-        assert(!intensities_profile.empty());
-        assert(!mz_profile.empty());
 
-        std::vector<ProfileBlock> subProfiles;
+        std::vector<double> diffs;
+        std::vector<double> cumDiffs;
+        { // calculate mz differences
+            diffs.reserve(mz_profile.size() - 1);
+            cumDiffs.reserve(mz_profile.size());
+            cumDiffs.push_back(0);
+            double totalDiff = 0;
 
-        size_t blockSize = 0;
-        ProfileBlock currentBlock = blockStart(); // initialised with two zeroed values in each vector
-        for (size_t pos = 0; pos < mz_profile.size() - 1; pos++)
-        {
-            blockSize++;
-
-            currentBlock.intensity.push_back(intensities_profile[pos]);
-            currentBlock.mz.push_back(mz_profile[pos]);
-            currentBlock.df.push_back(true);
-
-            const double delta_mz = mz_profile[pos + 1] - mz_profile[pos];
-            assert(delta_mz > 0);
-
-            // 1.75 is used to round up asymmetrically. This parameter should be defined in a dynamic manner @todo
-            if (delta_mz > 1.75 * expectedDifference)
-            { // gap detected
-                // either interpolate or break the block up
-                if (delta_mz < 4.25 * expectedDifference) // at most three points can be interpolated, tolerated increase is < 0.1 per point
-                {
-                    // interpolate
-                    // round up the number of points starting at 0.75
-                    const int gapSize = static_cast<int>(delta_mz / expectedDifference + 0.25 * expectedDifference) - 1;
-                    assert(gapSize < 4);
-                    double interpolateDiff = delta_mz / (gapSize + 1);
-                    const double dy = std::pow(intensities_profile[pos + 1] / intensities_profile[pos],
-                                               1.0 / double(gapSize + 1)); // dy for log interpolation ; 1 if gapsize == 0
-                    for (int i = 0; i < gapSize; i++)
-                    {
-                        currentBlock.intensity.push_back(intensities_profile[pos] * std::pow(dy, i + 1));
-                        currentBlock.mz.push_back(mz_profile[pos] + (i + 1) * interpolateDiff);
-                        currentBlock.df.push_back(false);
-                    }
-                }
-                else
-                {
-                    if (blockSize > 4)
-                    {
-                        subProfiles.push_back(currentBlock);
-                    }
-                    currentBlock = blockStart(); // reset block for next iteration
-                    blockSize = 0;
-                }
-            }
-            else
+            for (size_t i = 1; i < mz_profile.size(); i++)
             {
-                // @todo reason about why these limit values are used, why take the mean for updating the expected diff?
-                if (delta_mz > 0.8 * expectedDifference && delta_mz < 1.2 * expectedDifference)
+                double diff = mz_profile[i] - mz_profile[i - 1];
+                diffs.push_back(diff);
+                totalDiff += diff;
+                cumDiffs.push_back(totalDiff);
+            }
+        }
+
+        std::vector<Block> result; // result contains the start- and end indices of all relevant blocks in the data.
+        result.reserve(128);
+
+        // index vector into diffs, making diff itself obsolete // @todo this can be solved without recursion
+        // std::vector<unsigned int> diffOrder(diffs.size());
+        // std::iota(diffOrder.begin(), diffOrder.end(), 0);
+        // std::sort(diffOrder.begin(), diffOrder.end(),
+        //           [&](int a, int b)
+        //           { return diffs[a] > diffs[b]; });
+
+        double meanDiff = 0;
+        for (size_t i = 0; i < diffs.size(); i++)
+        {
+            meanDiff += diffs[i];
+        }
+        meanDiff /= diffs.size();
+
+        unsigned int knownStart = 0;
+        unsigned int knownEnd = diffs.size() - 1;
+
+        if (meanDiff > 0.01) [[likely]]
+        {
+            // in a real mass spectrum, this should always be a given. If not, the noise level is so
+            // high that it might be impossible to find actually useful data here. Either way, since
+            // we search for centroids in these regions, 0.01 is too large if anything. There will never
+            // be a useable centroid with this large a m/z difference in a high res mass spectrum
+            for (size_t i = 0; i < diffs.size(); i++)
+            {
+                if (diffs[i] > meanDiff)
                 {
-                    expectedDifference = (expectedDifference + delta_mz) * 0.5;
+                    knownEnd = i - 1;
+                    binProfileSpec(&result, &diffs, &cumDiffs, knownStart, knownEnd);
+                    knownStart = i + 1;
                 }
             }
-        } // end of for loop
-        if (blockSize > 3)
-        {
-            // special case: last point. Add the last element for mz and intensity if the block did not terminate
-            currentBlock.intensity.push_back(intensities_profile.back());
-            currentBlock.mz.push_back(mz_profile.back());
-            currentBlock.df.push_back(true);
-            subProfiles.push_back(currentBlock);
         }
-        assert(subProfiles.size() > 1); // @todo this triggers https://github.com/odea-project/qAlgorithms/issues/25#issuecomment-2777788944
-        return subProfiles;
+        else
+        {
+            std::cerr << "Warning: a spectrum has no clear breaks.\n";
+        }
+
+        if (knownStart == 0 && knownEnd == diffs.size() - 1)
+        {
+            std::cerr << "Warning: a spectrum has no clear breaks.\n";
+            binProfileSpec(&result, &diffs, &cumDiffs, knownStart, knownEnd);
+        }
+
+        std::vector<ProfileBlock> groupedData;
+        groupedData.reserve(result.size());
+
+        // transfer the found groups into a representation accepted by the peak model fit
+        for (size_t j = 0; j < result.size(); j++)
+        {
+            Block res = result[j];
+
+            size_t entrySize = res.end + 1 - res.start + 4;
+            ProfileBlock entry = initBlock(entrySize);
+
+            for (size_t i = 0; i < entrySize - 4; i++)
+            {
+                size_t epos = i + res.start; // element position
+                size_t rpos = i + 2;         // result vector position
+                entry.intensity[rpos] = intensities_profile[epos];
+            }
+            for (size_t i = 0; i < entrySize - 4; i++)
+            {
+                size_t epos = i + res.start; // element position
+                size_t rpos = i + 2;         // result vector position
+                entry.mz[rpos] = mz_profile[epos];
+            }
+            // for (size_t i = 0; i < entrySize - 4; i++)
+            // {
+            //     size_t rpos = i + 2;
+            //     entry.df[rpos] = true;
+            //     entry.cumdf[rpos] = i + 1;
+            // }
+
+            // entry.cumdf[entrySize - 2] = entry.cumdf[entrySize - 3];
+            // entry.cumdf[entrySize - 1] = entry.cumdf[entrySize - 3];
+
+            // extrapolate two points to each size of the entry
+            entry.intensity[1] = entry.intensity[2] / 2;
+            entry.intensity[0] = entry.intensity[2] / 4;
+            entry.intensity[entrySize - 2] = entry.intensity[entrySize - 3] / 2;
+            entry.intensity[entrySize - 1] = entry.intensity[entrySize - 3] / 4;
+
+            double mzDiffFront = entry.mz[3] - entry.mz[2]; // @todo should there be two different distances?
+            entry.mz[1] = entry.mz[2] - mzDiffFront;
+            entry.mz[0] = entry.mz[2] - mzDiffFront * 2;
+
+            double mzDiffBack = entry.mz[entrySize - 3] - entry.mz[entrySize - 4];
+            entry.mz[entrySize - 2] = entry.mz[entrySize - 3] + mzDiffBack;
+            entry.mz[entrySize - 1] = entry.mz[entrySize - 3] + mzDiffBack * 2;
+
+            // add traceability information from untreated spectrum
+            entry.startPos = idxConvert[res.start];
+            entry.endPos = idxConvert[res.end];
+
+            groupedData.push_back(entry);
+        }
+        assert(!groupedData.empty());
+        return groupedData;
     }
 }

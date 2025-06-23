@@ -4,6 +4,7 @@
 #include "qalgorithms_qpattern.h"
 #include "qalgorithms_global_vars.h"
 #include "qalgorithms_input_output.h"
+#include "qalgorithms_metafiles.h" // new organisation of program - this and the library header should be the only two qalgo includes!
 
 // external
 #include "../external/StreamCraft/src/StreamCraft_mzml.hpp"
@@ -20,10 +21,6 @@
 
 namespace qAlgorithms
 {
-    /// ### set global variables ###
-    float PPM_PRECENTROIDED = -INFINITY;         // -Infinity sets it to the default value if no user input changes it
-    float MZ_ABSOLUTE_PRECENTROIDED = -INFINITY; // see above
-
     struct logger
     {
         std::string name;
@@ -80,6 +77,31 @@ namespace qAlgorithms
         }
         return true;
     }
+}
+
+int main2(int argc, char *argv[])
+{
+    using namespace qAlgorithms; // considered bad practice from what i see online, but i believe it is acceptable for this program
+
+    UserInputSettings userArgs = passCliArgs(argc, argv);
+
+    if (!inputsAreSensible(userArgs))
+    {
+        exit(1);
+    }
+
+    bool argument_for_making_a_tasklist = false;
+    if (argument_for_making_a_tasklist)
+    {
+        // make the tasklist
+        std::cout << "### qAlgorithms successfully created a tasklist at " << "TASKLIST PATH HERE!" << " ###\n";
+        exit(0);
+    }
+
+    std::vector<TaskItem_action> actions;
+    std::vector<TaskItem_data> data;
+
+    return 0;
 }
 
 int main(int argc, char *argv[])
@@ -158,11 +180,46 @@ int main(int argc, char *argv[])
                 exit(101);
             }
         }
+        // the check for centroided data is set here, will likely require different approach down the line
+        // accessor contains the indices of all spectra that should be fetched
+        std::vector<unsigned int> accessor(data.number_spectra, 0);
+        std::iota(accessor.begin(), accessor.end(), 0);
 
+        std::vector<bool> spectrum_mode = data.get_spectra_mode(&accessor); // get spectrum mode (centroid or profile)
+
+        // CHECK IF CENTROIDED SPECTRA
+        size_t num_centroided_spectra = std::count(spectrum_mode.begin(), spectrum_mode.end(), false);
+        if (num_centroided_spectra > spectrum_mode.size() / 2) // in profile mode sometimes centroided spectra appear as well @todo is 2 a good idea?
+        {
+            std::cout << " file centroided, error\n";
+            std::cerr << "Error: centroided data is not supported by qAlgorithms for the time being.\n";
+            continue;
+        }
         if (!userArgs.silent)
         {
-            std::cout << " file ok\n";
+            std::cout << " file in profile mode, ok\n";
         }
+
+        // enum polarity
+        // {
+        //     positive,
+        //     negative,
+        //     both
+        // };
+
+        auto polarity_file = data.get_polarity_mode(100); // checks first 100 spectra
+
+        // @todo single access function into qAlgorithms
+
+        if (polarity_file == StreamCraft::polarity_MZML::positive || polarity_file == StreamCraft::polarity_MZML::mixed)
+        {
+            /* this does the processing for positive files - keep it to the function call and handle logging / output through master function arguments */
+        }
+        if (polarity_file == StreamCraft::polarity_MZML::negative || polarity_file == StreamCraft::polarity_MZML::mixed)
+        {
+            // see above
+        }
+
         // @todo find a more elegant solution for polarity switching, this one trips up clang-tidy
         bool oneProcessed = true;
         static bool polarities[2] = {true, false};
@@ -174,7 +231,7 @@ int main(int argc, char *argv[])
             float diff_rt = 0;
             // @todo add check if set polarity is correct
             std::vector<CentroidPeak> *centroids = new std::vector<CentroidPeak>;
-            *centroids = findCentroids_MZML(data, convertRT, diff_rt, polarity);
+            *centroids = findCentroids(data, convertRT, diff_rt, polarity); // it is guaranteed that only profile mode data is used
 
             if (centroids->empty())
             {
@@ -205,11 +262,6 @@ int main(int argc, char *argv[])
             }
             oneProcessed = false;
 
-            for (size_t i = 1; i < convertRT.size() - 1; i++)
-            {
-                assert(convertRT[i] < convertRT[i + 1]);
-            }
-
             if (!userArgs.silent)
             {
                 std::cout << "Processing " << (polarity ? "positive" : "negative") << " peaks\n";
@@ -220,49 +272,46 @@ int main(int argc, char *argv[])
             if (userArgs.printCentroids)
             {
                 printCentroids(centroids, &convertRT, userArgs.outputPath, filename, userArgs.silent, userArgs.skipError, userArgs.noOverwrite);
+
+                if (userArgs.term == TerminateAfter::centroids)
+                {
+                    continue;
+                }
             }
-            size_t centroidCount = centroids->size();
-            // @todo remove diagnostics later
-            auto binThis = passToBinning(centroids);
+
+            size_t centroidCount = centroids->size() - 1; // added noise value
 
             // find lowest intensity among all centroids to use as baseline during componentisation
             float minCenArea = INFINITY;
-            for (size_t cenID = 0; cenID < centroidCount; cenID++)
+            for (size_t cenID = 1; cenID < centroids->size(); cenID++)
             {
                 float currentInt = centroids->at(cenID).area;
                 minCenArea = minCenArea < currentInt ? minCenArea : currentInt;
             }
-
-            delete centroids;
+            size_t totalScans = centroids->back().scanNumber;
 
             double meanDQSC = 0;
-            double meanCenErrorRel = 0;
-            double meanCenErrorAbs = 0;
 
-            // index in allDatapoints corresponds to scan number!
-            for (size_t i = 1; i < binThis.size() - 1; i++)
+            for (size_t i = 1; i < centroids->size() - 1; i++)
             {
                 // correlate centroid error with nearest neighbour distance in one scan somehow?
-                meanCenErrorRel += binThis[i].mzError / binThis[i].mz;
-                meanCenErrorAbs += binThis[i].mzError;
-                meanDQSC += binThis[i].DQSCentroid;
+                meanDQSC += centroids->at(i).DQSC;
             }
-            meanCenErrorAbs /= binThis.size();
-            meanCenErrorRel /= binThis.size();
+            meanDQSC /= centroidCount;
 
             auto timeEnd = std::chrono::high_resolution_clock::now();
             std::chrono::duration<float> timePassed = std::chrono::duration_cast<std::chrono::milliseconds>(timeEnd - timeStart);
 
             if (!userArgs.silent)
             {
-                std::cout << "    produced " << binThis.size() - 1 << " centroids from " << data.number_spectra
+                std::cout << "    produced " << centroidCount - 1 << " centroids from " << totalScans
                           << " spectra in " << timePassed.count() << " s\n";
             }
 
 #pragma region "binning"
             timeStart = std::chrono::high_resolution_clock::now();
 
-            std::vector<EIC> binnedData = performQbinning(&binThis, &convertRT, userArgs.verboseProgress);
+            std::vector<EIC> binnedData = performQbinning(centroids, &convertRT, userArgs.verboseProgress);
 
             timeEnd = std::chrono::high_resolution_clock::now();
 
@@ -288,8 +337,14 @@ int main(int argc, char *argv[])
             }
             if (userArgs.printBins)
             {
-                printBins(&binThis, &binnedData, userArgs.outputPath, filename, userArgs.silent, userArgs.skipError, userArgs.noOverwrite);
+                printBins(centroids, &binnedData, userArgs.outputPath, filename, userArgs.silent, userArgs.skipError, userArgs.noOverwrite);
+
+                if (userArgs.term == TerminateAfter::binning)
+                {
+                    continue;
+                }
             }
+            delete centroids;
 
             // @todo remove diagnostics
             int count = 0;
@@ -317,7 +372,7 @@ int main(int argc, char *argv[])
 
             if (features.size() == 0)
             {
-                std::cout << "Warning: no features were constructed, continuing...\n";
+                std::cerr << "Warning: no features were constructed, continuing...\n";
                 continue;
             }
 
@@ -373,6 +428,16 @@ int main(int argc, char *argv[])
                                       userArgs.printExtended, userArgs.silent, userArgs.skipError, userArgs.noOverwrite);
             }
 
+            if (userArgs.term == TerminateAfter::features)
+            {
+                if (userArgs.printFeatures) // this is here so we can incorporate the component ID into the output
+                {
+                    printFeatureList(&features, userArgs.outputPath, filename, &binnedData,
+                                     userArgs.printExtended, userArgs.silent, userArgs.skipError, userArgs.noOverwrite);
+                }
+                continue;
+            }
+
 #pragma region "Componentisation"
             timeStart = std::chrono::high_resolution_clock::now();
 
@@ -404,11 +469,16 @@ int main(int argc, char *argv[])
                                         userArgs.printExtended, userArgs.silent, userArgs.skipError, userArgs.noOverwrite);
             }
 
-            if (userArgs.doLogging)
+            if (userArgs.term == TerminateAfter::components)
+            {
+                continue;
+            }
+
+            if (userArgs.doLogging) // @todo logging should account for early terminate
             {
                 logWriter.open(pathLogging, std::ios::app);
                 logWriter << filename << ", " << data.number_spectra << ", " << centroidCount << ", "
-                          << meanDQSC / binThis.size() << ", " << binnedData.size() << ", " << badBinCount << ", " << meanDQSB
+                          << meanDQSC << ", " << binnedData.size() << ", " << badBinCount << ", " << meanDQSB
                           << ", " << features.size() << ", " << peaksWithMassGaps << ", " << meanInterpolations << ", " << meanDQSF
                           << components.size() << ", " << featuresInComponents << "\n";
                 logWriter.close();

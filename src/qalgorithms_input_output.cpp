@@ -53,12 +53,13 @@ namespace qAlgorithms
                                   "                                  newly constructed regression for which centroids are relevant. Also prints the components themselves.\n"
                                   "      -pa, -printall:             Print all availvable resutlts. You will probably not need to do this.\n"
                                   "    Program behaviour:\n"
-                                  //   "      -s, -silent:    do not print progress reports to standard out.\n" // @todo add an option for printing all process stats without timing and explanations for use with CLI toolchains
+                                  "      -s, -silent:    do not print progress reports to standard out.\n" // @todo add an option for printing all process stats without timing and explanations for use with CLI toolchains
                                   //   "      -v, -verbose:   print a detailed progress report to standard out.\n"
                                   "      -skip-existing  Do not write to files that already exist, even if an output option is set.\n"
                                   "      -skip-error:    If processing fails, the program will not exit and instead start processing\n"
                                   "                      the next file in the tasklist.\n"
                                   "      -skipAhead <n>  Skip the first n entries in the tasklist when starting processing \n"
+                                  "      -fullLoop       Override default behaviour and always perform all possible processing steps, even if the results are not printed.\n"
                                   "      -log:           This option will create a detailed log file in the program directory.\n"
                                   "                      It will provide an overview for every processed file which can help you find and\n"
                                   "                      reason about anomalous behaviour in the results.";
@@ -66,12 +67,6 @@ namespace qAlgorithms
     //   "                      done by the user, the default log will be written or overwritten.\n"
     //   "    Analysis options:\n"
     //   "      -MS2:               also process MS2 spectra (not implemented yet)\n" // @todo
-    //   "      -ppm <number>:      this sets the centroid error when reading in pre-centroided data\n"
-    //   "                          with qAlgorithms to <number> * 10^-6 * m/z of the centroid. We recommend\n"
-    //   "                          you always use the centroiding algorithm implemented in qAlgorithms.\n"
-    //   "                          This parameter is significantly different from an EIC standard deviation estimator (XCMS)!\n"
-    //   "                          By default, this value is set to 0.25.\n"
-    //   "      -mz-abs <number>:   (not implemented yet) add this absolute error (in Dalton) to the relative error specified by -ppm.\n"; //@todo
 
 #pragma endregion helpstring
 
@@ -191,76 +186,42 @@ namespace qAlgorithms
                 }
                 args.outputPath = argv[i];
             }
-            else if (argument == "-ppm") // @todo remove
-            {
-                ++i;
-                if (i == argc)
-                {
-                    std::cerr << "Error: -ppm set, but no centroid error specified.\n";
-                    return args;
-                }
-
-                try
-                {
-                    args.newPPM = std::stod(argv[i]);
-                }
-                catch (std::invalid_argument const &)
-                {
-                    std::cerr << "Error: the centroid error cannot be set to \"" << argv[i] << "\" ppm.\n";
-                    return args;
-                }
-                // @todo move to control function or remove entirely
-                if (args.newPPM <= 0)
-                {
-                    std::cerr << "Error: the assumed centroid error must be greater than 0.\n";
-                    return args;
-                }
-                if (std::isnan(args.newPPM))
-                {
-                    std::cerr << "Error: the assumed centroid error must be a number, but was set to NaN.\n";
-                    return args;
-                }
-                if (args.newPPM > 1000000)
-                {
-                    std::cerr << "Error: the assumed centroid error is set to 100% or greater (\"" << argv[i] << "\").\n";
-                    return args;
-                }
-                if (args.newPPM > 0.5 || args.newPPM < 0.05)
-                {
-                    std::cerr << "Warning: you have set the centroid error to \"" << argv[i] << "\", with the expected range \n"
-                              << "being between 0.05 and 0.5 ppm. Are you sure this is what you want?\n"
-                              << "The centroid error is not the mz tolerance from ROI-type approaches.\n";
-                }
-            }
             else if ((argument == "-pc") || (argument == "-printcentroids"))
             {
                 args.printCentroids = true;
+                args.term = std::max(args.term, centroids);
             }
             else if ((argument == "-pb") || (argument == "-printbins"))
             {
                 args.printBins = true;
+                args.term = std::max(args.term, binning);
             }
             else if ((argument == "-pf") || (argument == "-printfeatures"))
             {
                 args.printFeatures = true;
+                args.term = std::max(args.term, features);
             }
             else if ((argument == "-sp") || (argument == "-subprofile"))
             {
                 args.printSubProfile = true;
+                args.term = std::max(args.term, features);
             }
             else if ((argument == "-ppf") || (argument == "-printcomponentsF"))
             {
                 args.printComponentRegs = true;
                 args.printFeatures = true;
+                args.term = std::max(args.term, components);
             }
             else if ((argument == "-ppb") || (argument == "-printcomponentsB"))
             {
                 args.printComponentRegs = true;
                 args.printComponentBins = true;
+                args.term = std::max(args.term, components);
             }
             else if ((argument == "-px") || (argument == "-printfeatcen"))
             {
                 args.printFeatCens = true;
+                args.term = std::max(args.term, features);
             }
             else if ((argument == "-pa") || (argument == "-printall"))
             {
@@ -271,6 +232,11 @@ namespace qAlgorithms
                 args.printFeatCens = true;
                 args.printComponentRegs = true;
                 args.printComponentBins = true;
+                args.term = never_override;
+            }
+            else if (argument == "fullLoop")
+            {
+                args.term = never_override;
             }
             else if (argument == "-log")
             {
@@ -322,7 +288,7 @@ namespace qAlgorithms
         return args;
     }
 
-    UserInputSettings interactiveMode(char *argv[])
+    UserInputSettings interactiveMode(char *argv[]) // @todo this should be replaced by a better debug interface
     {
         // this function is called if qAlgorithms is executed without arguments
         std::cout << "    ### qAlgorithms interactive terminal interface ###\n"
@@ -359,6 +325,8 @@ namespace qAlgorithms
             // user input for input and output
             std::vector<std::string>{inputPath},
             outputPath,
+            0,
+            never,
             false,
             false,
             false,
@@ -446,11 +414,6 @@ namespace qAlgorithms
             std::cerr << "Error: the output location must be a directory.\n";
             goodInputs = false;
         }
-        // if (inSpecified && tasklistSpecified)
-        // {
-        //     std::cerr << "Warning: Both an input file and a tasklist were specified. The file has been added to the tasklist.\n";
-        //     // @todo
-        // }
         if (args.silent && args.verboseProgress)
         {
             std::cerr << "Warning: -verbose overrides -silent.\n";
@@ -461,17 +424,6 @@ namespace qAlgorithms
             !(args.outputPath.empty()))
         {
             std::cerr << "Warning: no output files will be written.\n";
-        }
-
-        if (args.newPPM < 0)
-        {
-            std::cerr << "Error: invalid value for ppm error supplied.\n";
-            goodInputs = false;
-        }
-        if (args.newPPM > 0)
-        {
-            std::cerr << "Notice: the changed centroid certainty will only affect pre-centroided data.\n";
-            PPM_PRECENTROIDED = args.newPPM;
         }
         if (!goodInputs && args.interactive)
         {
@@ -644,16 +596,18 @@ namespace qAlgorithms
             return;
         }
         output << "cenID,mz,mzUncertainty,scanNumber,retentionTime,area,areaUncertainty,"
-               << "height,heightUncertainty,scale,degreesOfFreedom,DQSC,interpolations,competitors\n";
+               //    << "height,heightUncertainty,scale,degreesOfFreedom,DQSC,interpolations,competitors\n";
+               << "height,heightUncertainty,scale,degreesOfFreedom,DQSC,competitors\n";
         unsigned int counter = 0;
         for (size_t j = 0; j < peaktable->size(); ++j)
         {
             const CentroidPeak peak = peaktable->at(j);
             char buffer[256];
-            snprintf(buffer, 256, "%d,%0.6f,%0.6f,%d,%0.4f,%0.4f,%0.4f,%0.4f,%0.4f,%d,%u,%0.5f,%d,%d\n",
+            snprintf(buffer, 256, "%d,%0.6f,%0.6f,%d,%0.4f,%0.4f,%0.4f,%0.4f,%0.4f,%d,%u,%0.5f,%d\n",
                      counter, peak.mz, peak.mzUncertainty, peak.scanNumber, convertRT->at(peak.scanNumber),
                      peak.area, peak.areaUncertainty, peak.height, peak.heightUncertainty, peak.scale, peak.df, peak.DQSC,
-                     peak.interpolations, peak.numCompetitors);
+                     //  peak.interpolations,
+                     peak.numCompetitors);
             output << buffer;
             ++counter;
         }
@@ -663,7 +617,7 @@ namespace qAlgorithms
         return;
     }
 
-    void printBins(const std::vector<qCentroid> *centroids,
+    void printBins(const std::vector<CentroidPeak> *centroids,
                    const std::vector<EIC> *bins,
                    std::filesystem::path pathOutput,
                    std::string filename,
@@ -703,10 +657,10 @@ namespace qAlgorithms
             const EIC bin = bins->at(binID);
             for (size_t i = 0; i < bin.mz.size(); i++)
             {
-                const qCentroid cen = centroids->at(bin.cenID[i]);
+                const CentroidPeak cen = centroids->at(bin.cenID[i]);
                 char buffer[128];
                 snprintf(buffer, 128, "%zu,%u,%0.8f,%0.8f,%0.4f,%d,%0.6f,%0.6f,%u,%0.4f,%0.4f\n",
-                         binID, cen.cenID, bin.mz[i], bin.predInterval[i],
+                         binID, cen.ID, bin.mz[i], bin.predInterval[i],
                          bin.rententionTimes[i], bin.scanNumbers[i], bin.ints_area[i],
                          bin.ints_height[i], bin.df[i], bin.DQSC[i], bin.DQSB[i]);
                 output << buffer;
@@ -812,7 +766,7 @@ namespace qAlgorithms
             return;
         }
 
-        output << "featureID,binID,cenID,mz,mzUncertainty,retentionTime,scan"
+        output << "featureID,binID,cenID,mz,mzUncertainty,retentionTime,scan,"
                << "area,height,degreesOfFreedom,DQSC,DQSB,DQSF,apexLeft,b0,b1,b2,b3\n";
 
         unsigned int counter = 1;

@@ -13,22 +13,24 @@
 
 namespace qAlgorithms
 {
+    // @todo rework this module so all centroiding / feature construction parts are in a separate block and qPeaks can be used as a library header
+
     std::vector<RegCoeffs> findCoefficients(
         const std::vector<float> *intensity_log,
         const size_t scale); // maximum scale that will be checked. Should generally be limited by peakFrame
 
-    std::vector<CentroidPeak> findCentroids(const std::vector<ProfileBlock> *treatedData,
-                                            const size_t scanNumber);
+    void findCentroidPeaks(std::vector<CentroidPeak> *retPeaks, // results are appended to this vector
+                           const std::vector<ProfileBlock> *treatedData,
+                           const size_t scanNumber,
+                           const size_t accessor);
 
     void findFeatures(std::vector<FeaturePeak> &all_peaks,
                       treatedData &treatedData);
 
-    const std::vector<qCentroid> passToBinning(const std::vector<CentroidPeak> *allPeaks);
-
     void runningRegression(
         const std::vector<float> *intensities,
         const std::vector<float> *ylog_start,
-        const std::vector<bool> *degreesOfFreedom,
+        const std::vector<unsigned int> *degreesOfFreedom_cum,
         std::vector<RegressionGauss> &validRegressions,
         const size_t maxScale);
 
@@ -36,7 +38,7 @@ namespace qAlgorithms
         const std::vector<RegCoeffs> *coeffs, // coefficients for single-b0 peaks, spans all regressions over a peak window
         const std::vector<float> *intensities,
         const std::vector<float> *intensities_log,
-        const std::vector<bool> *degreesOfFreedom,
+        const std::vector<unsigned int> *degreesOfFreedom_cum,
         const size_t maxScale, // scale, i.e., the number of data points in a half window excluding the center point
         std::vector<RegressionGauss> &validRegressions);
 
@@ -44,7 +46,7 @@ namespace qAlgorithms
         RegressionGauss *mutateReg,
         const size_t idxStart,
         const size_t scale,
-        const std::vector<bool> *degreesOfFreedom,
+        const std::vector<unsigned int> *degreesOfFreedom_cum,
         const std::vector<float> *intensities,
         const std::vector<float> *intensities_log);
 
@@ -56,13 +58,13 @@ namespace qAlgorithms
         std::vector<CentroidPeak> *peaks,
         const std::vector<RegressionGauss> *validRegressionsVec,
         const ProfileBlock *block,
-        const size_t scanNumber);
+        const size_t scanNumber,
+        const size_t accessor);
 
     void createFeaturePeaks(
         std::vector<FeaturePeak> *peaks,
         const std::vector<RegressionGauss> *validRegressionsVec,
-        const std::vector<float> *RT,
-        const float *rt_start);
+        const std::vector<float> *RT);
 
     float calcSSE_base(const RegCoeffs coeff,
                        const std::vector<float> *y_start,
@@ -119,7 +121,7 @@ namespace qAlgorithms
     RegPair findBestRegression(
         const std::vector<float> *intensities,
         const std::vector<RegressionGauss> *regressions,
-        const std::vector<bool> *degreesOfFreedom,
+        const std::vector<unsigned int> *degreesOfFreedom_cum,
         const size_t startIdx,
         const size_t endIdx);
 
@@ -138,6 +140,11 @@ namespace qAlgorithms
      */
     size_t calcDF(
         const std::vector<bool> *degreesOfFreedom,
+        unsigned int left_limit,
+        unsigned int right_limit);
+
+    size_t calcDF_cum(
+        const std::vector<unsigned int> *degreesOfFreedom,
         unsigned int left_limit,
         unsigned int right_limit);
 

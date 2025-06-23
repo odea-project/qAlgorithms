@@ -15,41 +15,20 @@
 namespace qAlgorithms
 {
 
-#pragma region "pass to qBinning"
-
-    const std::vector<qCentroid> passToBinning(const std::vector<CentroidPeak> *allPeaks) //, std::vector<unsigned int> addEmpty)
-    {
-        // initialise empty vector with enough room for all scans - centroids[0] must remain empty
-        std::vector<qCentroid> centroids;
-        centroids.reserve(allPeaks->size() * 100);
-        unsigned int totalCentroids = 1;
-        centroids.push_back({0, 0, 0, 0, 0, 0, 0, 0}); // this centroid will be used for ever missing value
-        for (size_t i = 0; i < allPeaks->size(); ++i)
-        {
-            CentroidPeak peak = allPeaks->at(i);
-            qCentroid F = qCentroid{peak.mz, peak.mzUncertainty, peak.scanNumber, peak.area, peak.height, peak.DQSC, peak.df, totalCentroids};
-            assert(F.scanNo > 0);
-            centroids.push_back(F);
-            ++totalCentroids;
-        }
-        assert(centroids.size() > 4);
-        return centroids;
-    }
-#pragma endregion "pass to qBinning"
-
     constexpr auto INV_ARRAY = initialize(); // this only works with constexpr square roots, which are part of C++26
 
 #pragma region "find peaks"
-    std::vector<CentroidPeak> findCentroids(const std::vector<ProfileBlock> *treatedData,
-                                            const size_t scanNumber)
+    void findCentroidPeaks(std::vector<CentroidPeak> *retPeaks, // results are appended to this vector
+                           const std::vector<ProfileBlock> *treatedData,
+                           const size_t scanNumber,
+                           const size_t accessor)
     {
         assert(!treatedData->empty());
-        std::vector<CentroidPeak> all_peaks;
-        all_peaks.reserve(treatedData->size() / 32);
+        assert(scanNumber != 0);
         size_t maxWindowSize = 0;
         for (size_t i = 0; i < treatedData->size(); i++)
         {
-            size_t length = (*treatedData)[i].df.size();
+            size_t length = (*treatedData)[i].mz.size();
             assert(length > 4); // data must contain at least five points
             maxWindowSize = maxWindowSize < length ? length : maxWindowSize;
         }
@@ -64,7 +43,7 @@ namespace qAlgorithms
         for (size_t i = 0; i < treatedData->size(); i++)
         {
             const auto block = (*treatedData)[i];
-            const size_t length = block.df.size();
+            const size_t length = block.mz.size();
             assert(length > 4);
 
             logIntensity.resize(length); // this way, no new allocations will be made in the loop
@@ -76,62 +55,46 @@ namespace qAlgorithms
             // @todo adjust the scale dynamically based on the number of valid regressions found, early terminate after x iterations
             const size_t maxScale = std::min(GLOBAL_MAXSCALE_CENTROID, size_t((length - 1) / 2)); // length - 1 because the center point is not part of the span
 
-            runningRegression(&block.intensity, &logIntensity, &block.df, validRegressions, maxScale);
+            runningRegression(&block.intensity, &logIntensity, &block.cumdf, validRegressions, maxScale);
             if (validRegressions.empty())
             {
                 continue; // no valid peaks
             }
-            createCentroidPeaks(&all_peaks, &validRegressions, &block, scanNumber);
+            createCentroidPeaks(retPeaks, &validRegressions, &block, scanNumber, accessor);
             validRegressions.clear();
         }
-        return all_peaks;
     }
 
     void findFeatures(std::vector<FeaturePeak> &all_peaks,
                       treatedData &treatedData)
     {
-        size_t length = treatedData.dataPoints.size();
+        size_t length = treatedData.RT.size();
         assert(length > 4); // data must contain at least five points
 
         std::vector<float> logIntensity(length, NAN);
-
-        float *RT = new float[length];
-
-        static const size_t GLOBAL_MAXSCALE_FEATURES = 30;
-        // @todo this is not a universal limit and only chosen for computational speed at the moment
-        // with an estimated scan difference of 0.6 s this means the maximum peak width is 61 * 0.6 = 36.6 s
-        assert(GLOBAL_MAXSCALE_FEATURES <= MAXSCALE);
-
-        std::vector<bool> degreesOfFreedom;
-        degreesOfFreedom.reserve(length);
-        std::vector<float> intensity;
-        intensity.reserve(length);
-        std::vector<float> RT_new;
-        RT_new.reserve(length);
-        for (size_t position = 0; position < length; position++)
+        for (size_t blockPos = 0; blockPos < length; blockPos++)
         {
-            size_t idx = position;
-            intensity.push_back(treatedData.dataPoints[idx].y);
-            RT[position] = treatedData.dataPoints[idx].x;
-            RT_new.push_back(treatedData.dataPoints[idx].x);
-            degreesOfFreedom.push_back(treatedData.dataPoints[idx].df);
-        }
-
-        logIntensity.resize(intensity.size());
-        for (size_t blockPos = 0; blockPos < intensity.size(); blockPos++)
-        {
-            logIntensity[blockPos] = std::log(intensity[blockPos]);
+            logIntensity[blockPos] = std::log(treatedData.intensity[blockPos]);
         }
 
         std::vector<RegressionGauss> validRegressions;
+
+        // @todo this is not a universal limit and only chosen for computational speed at the moment
+        // with an estimated scan difference of 0.6 s this means the maximum peak width is 61 * 0.6 = 36.6 s
+        static const size_t GLOBAL_MAXSCALE_FEATURES = 30;
+        assert(GLOBAL_MAXSCALE_FEATURES <= MAXSCALE);
         size_t maxScale = std::min(GLOBAL_MAXSCALE_FEATURES, size_t((length - 1) / 2));
-        runningRegression(&intensity, &logIntensity, &degreesOfFreedom, validRegressions, maxScale);
+
+        runningRegression(&treatedData.intensity,
+                          &logIntensity,
+                          &treatedData.cumulativeDF,
+                          validRegressions,
+                          maxScale);
         if (!validRegressions.empty())
         {
-            createFeaturePeaks(&all_peaks, &validRegressions, &RT_new, RT);
+            createFeaturePeaks(&all_peaks, &validRegressions, &treatedData.RT);
             // there is no reason for this to be called here and not later @todo
         }
-        delete[] RT;
     }
 #pragma endregion "find peaks"
 
@@ -139,7 +102,7 @@ namespace qAlgorithms
     void runningRegression(
         const std::vector<float> *intensities,
         const std::vector<float> *intensities_log,
-        const std::vector<bool> *degreesOfFreedom,
+        const std::vector<unsigned int> *degreesOfFreedom_cum,
         std::vector<RegressionGauss> &validRegressions,
         const size_t maxScale)
     {
@@ -148,7 +111,7 @@ namespace qAlgorithms
 
         const std::vector<RegCoeffs> regressions = findCoefficients(intensities_log, maxScale);
 
-        validateRegression(&regressions, intensities, intensities_log, degreesOfFreedom, maxScale, validRegressions);
+        validateRegression(&regressions, intensities, intensities_log, degreesOfFreedom_cum, maxScale, validRegressions);
 
         if (validRegressions.size() > 1) // @todo we can probably filter regressions based on MSE at this stage already
         {
@@ -388,11 +351,81 @@ namespace qAlgorithms
 #pragma endregion "running regression"
 
 #pragma region "validate Regression"
+
+    void findBestScales(std::vector<RegressionGauss> *validRegressions,
+                        std::vector<RegressionGauss> *validRegsTmp,
+                        const std::vector<float> *intensities,
+                        const std::vector<unsigned int> *degreesOfFreedom_cum)
+    {
+        /*
+            Grouping:
+            This block of code implements the grouping. It groups the valid peaks based
+            on the apex positions. Peaks are defined as similar, i.e., members of the
+            same group, if they fullfill at least one of the following conditions:
+            - The difference between two peak apexes is less than 4. (Nyquist Shannon
+            Sampling Theorem, separation of two maxima)
+            - At least one apex of a pair of peaks is within the window of the other peak.
+            (Overlap of two maxima)
+        */
+        // @todo could this part be combined with merge over scales?
+        // vector with the access pattern [2*i] for start and [2*i + 1] for end point of a regression group
+        std::vector<int> startEndGroups;
+        startEndGroups.reserve(validRegsTmp->size());
+
+        size_t prev_i = 0;
+
+        for (size_t i = 0; i < validRegsTmp->size() - 1; i++)
+        {
+            // check if the difference between two peak apexes is less than 4 (Nyquist Shannon
+            // Sampling Theorem, separation of two maxima), or if the apex of a peak is within
+            // the window of the other peak (Overlap of two maxima)
+            if (std::abs(validRegsTmp->at(i).apex_position - validRegsTmp->at(i + 1).apex_position) > 4 &&
+                validRegsTmp->at(i).apex_position < validRegsTmp->at(i + 1).left_limit &&
+                validRegsTmp->at(i + 1).apex_position > validRegsTmp->at(i).right_limit)
+            {
+                // the two regressions differ, i.e. create a new group
+                startEndGroups.push_back(prev_i);
+                startEndGroups.push_back(i);
+                prev_i = i + 1;
+            }
+        }
+        startEndGroups.push_back(prev_i);
+        startEndGroups.push_back(validRegsTmp->size() - 1); // last group ends with index of the last element
+
+        /*
+          Survival of the Fittest Filter:
+          This block of code implements the survival of the fittest filter. It selects the peak with
+          the lowest mean squared error (MSE) as the representative of the group. If the group contains
+          only one peak, the peak is directly pushed to the valid regressions. If the group contains
+          multiple peaks, the peak with the lowest MSE is selected as the representative of the group
+          and pushed to the valid regressions.
+        */
+        // @todo use a "ridges" approach here (gaussian mixture model)
+        for (size_t groupIdx = 0; groupIdx < startEndGroups.size(); groupIdx += 2)
+        {
+            if (startEndGroups[groupIdx] == startEndGroups[groupIdx + 1])
+            { // already isolated peak => push to valid regressions
+                int regIdx = startEndGroups[groupIdx];
+                validRegressions->push_back(std::move(validRegsTmp->at(regIdx)));
+            }
+            else
+            { // survival of the fittest based on mse between original data and reconstructed (exp transform of regression)
+                assert(startEndGroups[groupIdx] != startEndGroups[groupIdx + 1]);
+                auto bestRegIdx = findBestRegression(intensities, validRegsTmp, degreesOfFreedom_cum,
+                                                     startEndGroups[groupIdx], startEndGroups[groupIdx + 1]);
+
+                RegressionGauss bestReg = validRegsTmp->at(bestRegIdx.idx);
+                bestReg.mse = bestRegIdx.mse;
+                validRegressions->push_back(bestReg);
+            }
+        }
+    }
+
     void validateRegression(
         const std::vector<RegCoeffs> *coeffs, // coefficients for single-b0 peaks, spans all regressions over a peak window
         const std::vector<float> *intensities,
         const std::vector<float> *intensities_log,
-        const std::vector<bool> *degreesOfFreedom,
+        const std::vector<unsigned int> *degreesOfFreedom_cum,
         const size_t maxScale, // scale, i.e., the number of data points in a half window excluding the center point
         std::vector<RegressionGauss> &validRegressions)
     {
@@ -404,12 +437,13 @@ namespace qAlgorithms
 
         int currentScale = 2;
         size_t idxStart = 0;
-        bool stillValid = true;
+
         for (size_t range = 0; range < coeffs->size(); range++)
         {
-            size_t df = calcDF(degreesOfFreedom, idxStart, 2 * currentScale + idxStart);
+            bool stillValid = true;
+            size_t df = calcDF_cum(degreesOfFreedom_cum, idxStart, 2 * currentScale + idxStart);
 
-            if (df < 5) // @todo cumsum
+            if (df < 5)
             {
                 stillValid = false;
             }
@@ -425,91 +459,28 @@ namespace qAlgorithms
                 // the total span of the regression may not exceed the number of points
                 assert(idxStart + 2 * currentScale < numPoints);
 
-                makeValidRegression(&validRegsTmp.back(), idxStart, currentScale, degreesOfFreedom, intensities, intensities_log);
+                makeValidRegression(&validRegsTmp.back(), idxStart, currentScale, degreesOfFreedom_cum, intensities, intensities_log);
                 if (validRegsTmp.back().isValid)
                 {
                     validRegsTmp.push_back(RegressionGauss{});
                 }
             }
-            stillValid = true;
             idxStart++;
             // for every set of scales, execute the validation + in-scale merge operation
             // early termination needed if maxscale is reached, since here idxStart is 1 and the compared value 0
             if ((idxStart == numPoints - 2 * currentScale)) //|| (currentScale == maxScale))
             {
-                // no valid peaks if the size of validRegsTemp is 1
-                if (validRegsTmp.size() == 2)
+                // remove the last regression, since it is always empty
+                validRegsTmp.pop_back();
+                // no valid peaks if the size of validRegsTemp is 0
+                if (validRegsTmp.size() == 1)
                 {
                     // only one valid peak, no fitering necessary
                     validRegressions.push_back(std::move(validRegsTmp[0]));
                 }
-                else if (validRegsTmp.size() > 2)
+                else if (validRegsTmp.size() > 1)
                 {
-                    // @todo both of these blocks could be grouped into their own function here
-                    // remove the last regression, since it is always empty
-                    validRegsTmp.pop_back();
-                    /*
-                      Grouping:
-                      This block of code implements the grouping. It groups the valid peaks based
-                      on the apex positions. Peaks are defined as similar, i.e., members of the
-                      same group, if they fullfill at least one of the following conditions:
-                      - The difference between two peak apexes is less than 4. (Nyquist Shannon
-                      Sampling Theorem, separation of two maxima)
-                      - At least one apex of a pair of peaks is within the window of the other peak.
-                      (Overlap of two maxima)
-                    */
-                    // @todo could this part be combined with merge over scales?
-                    // vector with the access pattern [2*i] for start and [2*i + 1] for end point of a regression group
-                    std::vector<int> startEndGroups;
-                    startEndGroups.reserve(validRegsTmp.size());
-
-                    size_t prev_i = 0;
-
-                    for (size_t i = 0; i < validRegsTmp.size() - 1; i++)
-                    {
-                        // check if the difference between two peak apexes is less than 4 (Nyquist Shannon
-                        // Sampling Theorem, separation of two maxima), or if the apex of a peak is within
-                        // the window of the other peak (Overlap of two maxima)
-                        if (std::abs(validRegsTmp[i].apex_position - validRegsTmp[i + 1].apex_position) > 4 &&
-                            validRegsTmp[i].apex_position < validRegsTmp[i + 1].left_limit &&
-                            validRegsTmp[i + 1].apex_position > validRegsTmp[i].right_limit)
-                        {
-                            // the two regressions differ, i.e. create a new group
-                            startEndGroups.push_back(prev_i);
-                            startEndGroups.push_back(i);
-                            prev_i = i + 1;
-                        }
-                    }
-                    startEndGroups.push_back(prev_i);
-                    startEndGroups.push_back(validRegsTmp.size() - 1); // last group ends with index of the last element
-
-                    /*
-                      Survival of the Fittest Filter:
-                      This block of code implements the survival of the fittest filter. It selects the peak with
-                      the lowest mean squared error (MSE) as the representative of the group. If the group contains
-                      only one peak, the peak is directly pushed to the valid regressions. If the group contains
-                      multiple peaks, the peak with the lowest MSE is selected as the representative of the group
-                      and pushed to the valid regressions.
-                    */
-                    // @todo use a "ridges" approach here (gaussian mixture model)
-                    for (size_t groupIdx = 0; groupIdx < startEndGroups.size(); groupIdx += 2)
-                    {
-                        if (startEndGroups[groupIdx] == startEndGroups[groupIdx + 1])
-                        { // already isolated peak => push to valid regressions
-                            int regIdx = startEndGroups[groupIdx];
-                            validRegressions.push_back(std::move(validRegsTmp[regIdx]));
-                        }
-                        else
-                        { // survival of the fittest based on mse between original data and reconstructed (exp transform of regression)
-                            assert(startEndGroups[groupIdx] != startEndGroups[groupIdx + 1]);
-                            auto bestRegIdx = findBestRegression(intensities, &validRegsTmp, degreesOfFreedom,
-                                                                 startEndGroups[groupIdx], startEndGroups[groupIdx + 1]);
-
-                            RegressionGauss bestReg = validRegsTmp[bestRegIdx.idx];
-                            bestReg.mse = bestRegIdx.mse;
-                            validRegressions.push_back(std::move(bestReg));
-                        }
-                    } // end for loop (group in vector of groups)
+                    findBestScales(&validRegressions, &validRegsTmp, intensities, degreesOfFreedom_cum);
                 }
 
                 // reset loop
@@ -525,12 +496,12 @@ namespace qAlgorithms
         RegressionGauss *mutateReg,
         const size_t idxStart,
         const size_t scale,
-        const std::vector<bool> *degreesOfFreedom,
+        const std::vector<unsigned int> *degreesOfFreedom_cum,
         const std::vector<float> *intensities,
         const std::vector<float> *intensities_log)
     {
         assert(scale > 1);
-        assert(idxStart + 4 < degreesOfFreedom->size());
+        assert(idxStart + 4 < degreesOfFreedom_cum->size());
         assert(mutateReg->coeffs.b0 < 100 && mutateReg->coeffs.b0 > -100);
         assert(mutateReg->coeffs.b1 < 100 && mutateReg->coeffs.b1 > -100);
         assert(mutateReg->coeffs.b2 < 100 && mutateReg->coeffs.b2 > -100);
@@ -599,7 +570,7 @@ namespace qAlgorithms
           the loop continues to the next iteration. The value 5 is chosen as the
           minimum number of data points required to fit a quadratic regression model.
         */
-        size_t df_sum = calcDF(degreesOfFreedom, mutateReg->left_limit, mutateReg->right_limit); // degrees of freedom considering the left and right limits @todo cumulative array
+        size_t df_sum = calcDF_cum(degreesOfFreedom_cum, mutateReg->left_limit, mutateReg->right_limit);
         if (df_sum < 5)
         {
             return; // degree of freedom less than 5; i.e., less then 5 measured data points
@@ -913,7 +884,8 @@ namespace qAlgorithms
         std::vector<CentroidPeak> *peaks,
         const std::vector<RegressionGauss> *validRegressionsVec,
         const ProfileBlock *block,
-        const size_t scanNumber)
+        const size_t scanNumber,
+        const size_t accessor)
     {
         assert(!validRegressionsVec->empty());
         // iterate over the validRegressions vector
@@ -949,7 +921,12 @@ namespace qAlgorithms
             peak.numCompetitors = regression.numCompetitors;
             peak.scale = regression.scale;
 
-            peak.interpolations = regression.right_limit - regression.left_limit + 1 - regression.df - 4; // -4 since four coefficients take up degrees of freedom
+            // traceability information
+            peak.trace.access = accessor;
+            peak.trace.start = block->startPos;
+            peak.trace.end = block->endPos;
+
+            // peak.interpolations = regression.right_limit - regression.left_limit + 1 - regression.df - 4; // -4 since four coefficients take up degrees of freedom
 
             /// @todo consider adding these properties so we can trace back everything completely
             // peak.idxPeakStart = regression.left_limit;
@@ -961,8 +938,7 @@ namespace qAlgorithms
     void createFeaturePeaks(
         std::vector<FeaturePeak> *peaks,
         const std::vector<RegressionGauss> *validRegressionsVec,
-        const std::vector<float> *RT,
-        const float *rt_start)
+        const std::vector<float> *RT)
     {
         assert(!validRegressionsVec->empty());
         for (size_t i = 0; i < validRegressionsVec->size(); i++)
@@ -978,8 +954,8 @@ namespace qAlgorithms
             peak.heightUncertainty = regression.uncertainty_height * peak.height;
 
             // size_t apexIdx = (size_t)std::floor(regression.apex_position);
-            const double rt_leftOfMax = *(rt_start + (int)std::floor(regression.apex_position)); // left of maximum
-            const double delta_rt = *(rt_start + (int)std::floor(regression.apex_position) + 1) - rt_leftOfMax;
+            const double rt_leftOfMax = RT->at((int)std::floor(regression.apex_position)); // left of maximum
+            const double delta_rt = RT->at((int)std::floor(regression.apex_position) + 1) - rt_leftOfMax;
             assert(delta_rt > 0);
             const double apex_position = rt_leftOfMax + delta_rt * (regression.apex_position - std::floor(regression.apex_position));
             peak.retentionTime = apex_position;
@@ -1199,7 +1175,7 @@ namespace qAlgorithms
     RegPair findBestRegression(
         const std::vector<float> *intensities,
         const std::vector<RegressionGauss> *regressions,
-        const std::vector<bool> *degreesOfFreedom,
+        const std::vector<unsigned int> *degreesOfFreedom_cum,
         const size_t startIdx,
         const size_t endIdx)
     {
@@ -1215,7 +1191,7 @@ namespace qAlgorithms
             right_limit = std::max(right_limit, (*regressions)[i].right_limit);
         }
         // the new df_sum is only needed since the function limits are adjusted above, correct that?
-        const size_t df_sum = calcDF(degreesOfFreedom, left_limit, right_limit); // @todo make cumulative array
+        size_t df_sum = calcDF_cum(degreesOfFreedom_cum, left_limit, right_limit);
 
         for (unsigned int i = startIdx; i < endIdx + 1; i++)
         {
@@ -1250,6 +1226,15 @@ namespace qAlgorithms
             }
         }
         return DF;
+    }
+
+    inline size_t calcDF_cum(
+        const std::vector<unsigned int> *degreesOfFreedom_cum,
+        unsigned int left_limit,
+        unsigned int right_limit)
+    {
+        unsigned int substract = left_limit == 0 ? 0 : degreesOfFreedom_cum->at(left_limit - 1);
+        return degreesOfFreedom_cum->at(right_limit) - substract;
     }
 
 #pragma region calcApexAndValleyPos

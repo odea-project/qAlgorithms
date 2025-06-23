@@ -24,9 +24,131 @@ file_bins = str_c(file, "bins.csv")
 file_featCens = str_c(file, "featCen.csv")
 file_compRegs = str_c(file, "components.csv")
 
-features = read_csv(file_feat)
+SPP10 = read_csv(file_feat)
 featCens = read_csv(file_featCens)
 compRegs = read_csv(file_compRegs)
+bins = read_csv(file_bins)
+```
+
+```{r included standards}
+SPP = features
+M_H = 1.0078
+
+standards <- data.frame(
+  standard = c("Hydroxycotinine", "Hydroxycotinine-d3", "Anatabine", "Cotinine", 
+               "Cotinine-d3", "Anabasine", "Anabasine-d4", "Vanillylmandelic acid", 
+               "Homovanillic acid", "Atrazine desisopropyl", "Bisphenol A", 
+               "Bisphenol A-d16", "3-phenoxybenzoic acid"),
+  rt_expect = c(2.43, 2.45, 4.24, 5.39, 5.38, 5.61, 
+                      5.61, 6.14, 7.67, 7.77, 11.69, 11.55, 13.55),
+  mz = c(192.089877630, 195.108707868, 160.100048391, 176.094963011, 179.113793248, 
+           162.115698455, 166.140805439, 198.05282342, 182.05790880, 173.0468230, 
+           228.115029749, 244.215457684, 214.062994177),
+  stringsAsFactors = FALSE
+)
+standards$mz = standards$mz + M_H
+standards$rt_expect = standards$rt_expect * 60
+
+standards$rt_expect[1] = 151.5
+standards$rt_expect[1] = 149
+
+candidates_rt = function(standards, SPP){
+  # reduce the feature list to relevant RTs
+  rts = standards$rt_expect
+  retFrame = SPP[1,]
+  for (rt in rts) {
+    lower = SPP$retentionTime > rt - 30
+    upper = SPP$retentionTime < rt + 30
+    retFrame = rbind(retFrame, SPP[which(lower & upper),])
+  }
+  retFrame = retFrame[-1,]
+  retFrame = retFrame[!duplicated(retFrame$ID), ]
+  # same for mass
+  retFrame2 = SPP[1,]
+  for (mz in standards$mz) {
+    tolerance = mz * 2 * 0.00001 # 20 ppm
+    lower = retFrame$mz > mz - tolerance
+    upper = retFrame$mz < mz + tolerance
+    retFrame2 = rbind(retFrame2, retFrame[which(lower & upper),])
+  }
+  retFrame2 = retFrame2[-1,]
+  retFrame2 = retFrame2[!duplicated(retFrame2$ID), ]
+  return(retFrame2)
+}
+
+closestMass = function(standards, SPP){
+  # return the standards dataframe with a feature ID added and the observed values for RT and mz
+  standards$ID = 0
+  standards$rt_observed = 0
+  standards$mz_real = 0
+  standards$area = 0
+  standards$component = -1
+  standards$ID = 0
+  for (comp in 1:length(standards$mz)) {
+    mz = standards$mz[comp]
+    rt = standards$rt_expect[comp]
+    # rt tolerance of 40 seconds
+    rmv = !(SPP$retentionTime > rt - 3 & SPP$retentionTime < rt + 3)
+    add = 10^100 * rmv
+    lowestMZ = (SPP$mz - mz)^2 + add
+    minPos = which(lowestMZ == min(lowestMZ))[1] # this is a bad error solution, rework for paper
+    tolerance = mz * 2 * 0.00001 # 20 ppm
+    
+    standards$ID[comp] = SPP$ID[minPos]
+    if(SPP$mz[minPos] > mz - tolerance & SPP$mz[minPos] < mz + tolerance){
+      standards$rt_observed[comp] = SPP$retentionTime[minPos]
+      standards$mz_real[comp] = SPP$mz[minPos]
+      standards$component[comp] = SPP$CompID[minPos]
+      standards$area[comp] = SPP$area[minPos]
+    }
+  }
+  return(standards)
+}
+
+all1 = test[1,]
+all2 = test[1,]
+
+for(i in 1:10){
+  name = paste0("SPP",i)
+  SPP = get(name)
+test = closestMass(standards,SPP)
+selection = c(0,0)
+selection[1] = test$ID[1]
+selection[2] = test$ID[2]
+
+all1 = rbind(all1, test[1,])
+all2 = rbind(all2, test[2,])
+
+feat = features[which(features$ID %in% selection),]
+   points = featCens[which(featCens$featureID %in% feat$ID),]
+   for (i in 1:length(feat$ID)) {
+     points$mz[which(points$featureID == feat$ID[i])] = round(feat$mz[i], 4)
+   }
+
+ 
+print(ggplot(test)+
+     geom_point(aes(retentionTime, area, colour = as.factor(round(mz,2))))+             
+  labs(x = "Retention Time [s]",                       
+       y = "Area",
+       colour = "m/z")+                  
+    theme_minimal()+ 
+  theme(text = element_text(size = 12),
+        axis.title.x = element_text(face = "bold"),
+        axis.title.y = element_text(face = "bold")) 
+     
+)
+}
+all1 = all1[-1,]
+all2 = all2[-1,]
+
+ggplot(compDIffs)+
+  geom_point(aes(log10(range), dqsp), colour = "blue", size = 2)+
+  labs(x = "Intensity Difference (log10)",                       
+       y = "DQS")+ 
+  theme_minimal()+ 
+  theme(text = element_text(size = 12),
+        axis.title.x = element_text(face = "bold"),
+        axis.title.y = element_text(face = "bold")) 
 ```
 
 I am relatively certain that the previous efforts with the normalised intensity profiles only seemed promising due to
@@ -46,7 +168,7 @@ for (compID in 1:max(features$CompID)) {
   }
   print(
    ggplot(points)+
-     geom_point(aes(retentionTime, area, colour = as.factor(mz)))+
+     geom_point(aes(retentionTime, height, colour = as.factor(mz)))+
      labs(caption = paste0("compID: ", compID))
    )
 
@@ -61,7 +183,7 @@ intensityDiffGreaterTwo = 0
 
 for (compID in 1:max(features$CompID)) {
   feat = features[which(features$CompID == compID),]
-   points = featCens[which(featCens$featureID %in% feat$ID),]
+  points = featCens[which(featCens$featureID %in% feat$ID),]
   for (i in 1:length(feat$ID)) {
      points$mz[which(points$featureID == feat$ID[i])] = feat$mz[i]
   }
@@ -125,8 +247,8 @@ feat = features[which(features$CompID == 343),]
 # empirical cumulative error (triangle) divided by the ideal area yields a measure of equivalence that does
 # not heavily weight the intensity uncertainty
 
-features_sel = features[which(features$CompID == 247),]
-comp_sel = compRegs[247,] # this must be -1 for 0-indexed arrays
+features_sel = features[which(features$CompID == 702),]
+comp_sel = compRegs[702,] # this must be -1 for 0-indexed arrays
 points_A = featCens[which(featCens$featureID == features_sel$ID[1]),]
 points_B = featCens[which(featCens$featureID == features_sel$ID[2]),]
 points_C = featCens[which(featCens$featureID == features_sel$ID[3]),]
@@ -137,7 +259,7 @@ points_D = featCens[which(featCens$featureID == features_sel$ID[4]),]
 # points_A = points_A[which(points_A$retentionTime %in% points_B$retentionTime),]
 # points_B = points_B[which(points_B$retentionTime %in% points_A$retentionTime),]
 
-ggplot()+
+plot_base = ggplot()+
   geom_point(aes(points_A$retentionTime, points_A$area), colour = "red2")+
   geom_point(aes(points_B$retentionTime, points_B$area), colour = "lightblue")+
   geom_point(aes(points_C$retentionTime, points_C$area), colour = "green")+
@@ -149,7 +271,7 @@ points_B$area = points_B$area / sqrt(sum(points_B$area^2))
 points_C$area = points_C$area / sqrt(sum(points_C$area^2))
 points_D$area = points_D$area / sqrt(sum(points_D$area^2))
 
-ggplot()+
+plot_scaled = ggplot()+
   geom_point(aes(points_A$retentionTime, points_A$area), colour = "red2")+
   geom_point(aes(points_B$retentionTime, points_B$area), colour = "lightblue")+
   geom_point(aes(points_C$retentionTime, points_C$area), colour = "green")+
