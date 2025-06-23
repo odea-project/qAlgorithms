@@ -204,7 +204,7 @@ namespace qAlgorithms
             std::sort(pairs.begin(), pairs.end(), [](const RSS_pair lhs, const RSS_pair rhs)
                       { return lhs.RSS < rhs.RSS; });
 
-            size_t excludes = 0;
+            // size_t excludes = 0;
             size_t finalCompares = 0; // todo: this is often 0 or 1, check if it is too strict a criterium
 
             for (size_t i = 0; i < pairs.size(); i++) // @todo length of pairs = the number of RSS - infinity
@@ -212,7 +212,7 @@ namespace qAlgorithms
                 auto p = pairs[i];
                 if (p.RSS == INFINITY) // the pair cannot form a component by itself, so these features may never be assigned to the same component
                 {
-                    excludes = pairs.size() - i;
+                    // excludes = pairs.size() - i;
                     break;
                 }
 
