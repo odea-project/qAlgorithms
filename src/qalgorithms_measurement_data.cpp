@@ -615,11 +615,14 @@ namespace qAlgorithms
     {
         std::vector<float> mz_int(blocksize, 0);
         std::vector<unsigned int> cumdf(blocksize, 0);
-        std::vector<bool> df(blocksize, false);
+        std::iota(cumdf.begin() + 2, cumdf.end(), 1);
+        cumdf[blocksize - 1] = blocksize - 4;
+        cumdf[blocksize - 2] = blocksize - 4;
+
         ProfileBlock ret = {mz_int,
                             mz_int,
                             cumdf,
-                            df};
+                            0, 0};
         return ret;
     }
 
@@ -736,15 +739,15 @@ namespace qAlgorithms
                 size_t rpos = i + 2;         // result vector position
                 entry.mz[rpos] = mz_profile[epos];
             }
-            for (size_t i = 0; i < entrySize - 4; i++)
-            {
-                size_t rpos = i + 2;
-                entry.df[rpos] = true;
-                entry.cumdf[rpos] = i + 1;
-            }
+            // for (size_t i = 0; i < entrySize - 4; i++)
+            // {
+            //     size_t rpos = i + 2;
+            //     entry.df[rpos] = true;
+            //     entry.cumdf[rpos] = i + 1;
+            // }
 
-            entry.cumdf[entrySize - 2] = entry.cumdf[entrySize - 3];
-            entry.cumdf[entrySize - 1] = entry.cumdf[entrySize - 3];
+            // entry.cumdf[entrySize - 2] = entry.cumdf[entrySize - 3];
+            // entry.cumdf[entrySize - 1] = entry.cumdf[entrySize - 3];
 
             // extrapolate two points to each size of the entry
             entry.intensity[1] = entry.intensity[2] / 2;
