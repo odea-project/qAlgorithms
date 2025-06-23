@@ -351,6 +351,76 @@ namespace qAlgorithms
 #pragma endregion "running regression"
 
 #pragma region "validate Regression"
+
+    void findBestScales(std::vector<RegressionGauss> *validRegressions,
+                        std::vector<RegressionGauss> *validRegsTmp,
+                        const std::vector<float> *intensities,
+                        const std::vector<unsigned int> *degreesOfFreedom_cum)
+    {
+        /*
+            Grouping:
+            This block of code implements the grouping. It groups the valid peaks based
+            on the apex positions. Peaks are defined as similar, i.e., members of the
+            same group, if they fullfill at least one of the following conditions:
+            - The difference between two peak apexes is less than 4. (Nyquist Shannon
+            Sampling Theorem, separation of two maxima)
+            - At least one apex of a pair of peaks is within the window of the other peak.
+            (Overlap of two maxima)
+        */
+        // @todo could this part be combined with merge over scales?
+        // vector with the access pattern [2*i] for start and [2*i + 1] for end point of a regression group
+        std::vector<int> startEndGroups;
+        startEndGroups.reserve(validRegsTmp->size());
+
+        size_t prev_i = 0;
+
+        for (size_t i = 0; i < validRegsTmp->size() - 1; i++)
+        {
+            // check if the difference between two peak apexes is less than 4 (Nyquist Shannon
+            // Sampling Theorem, separation of two maxima), or if the apex of a peak is within
+            // the window of the other peak (Overlap of two maxima)
+            if (std::abs(validRegsTmp->at(i).apex_position - validRegsTmp->at(i + 1).apex_position) > 4 &&
+                validRegsTmp->at(i).apex_position < validRegsTmp->at(i + 1).left_limit &&
+                validRegsTmp->at(i + 1).apex_position > validRegsTmp->at(i).right_limit)
+            {
+                // the two regressions differ, i.e. create a new group
+                startEndGroups.push_back(prev_i);
+                startEndGroups.push_back(i);
+                prev_i = i + 1;
+            }
+        }
+        startEndGroups.push_back(prev_i);
+        startEndGroups.push_back(validRegsTmp->size() - 1); // last group ends with index of the last element
+
+        /*
+          Survival of the Fittest Filter:
+          This block of code implements the survival of the fittest filter. It selects the peak with
+          the lowest mean squared error (MSE) as the representative of the group. If the group contains
+          only one peak, the peak is directly pushed to the valid regressions. If the group contains
+          multiple peaks, the peak with the lowest MSE is selected as the representative of the group
+          and pushed to the valid regressions.
+        */
+        // @todo use a "ridges" approach here (gaussian mixture model)
+        for (size_t groupIdx = 0; groupIdx < startEndGroups.size(); groupIdx += 2)
+        {
+            if (startEndGroups[groupIdx] == startEndGroups[groupIdx + 1])
+            { // already isolated peak => push to valid regressions
+                int regIdx = startEndGroups[groupIdx];
+                validRegressions->push_back(std::move(validRegsTmp->at(regIdx)));
+            }
+            else
+            { // survival of the fittest based on mse between original data and reconstructed (exp transform of regression)
+                assert(startEndGroups[groupIdx] != startEndGroups[groupIdx + 1]);
+                auto bestRegIdx = findBestRegression(intensities, validRegsTmp, degreesOfFreedom_cum,
+                                                     startEndGroups[groupIdx], startEndGroups[groupIdx + 1]);
+
+                RegressionGauss bestReg = validRegsTmp->at(bestRegIdx.idx);
+                bestReg.mse = bestRegIdx.mse;
+                validRegressions->push_back(bestReg);
+            }
+        }
+    }
+
     void validateRegression(
         const std::vector<RegCoeffs> *coeffs, // coefficients for single-b0 peaks, spans all regressions over a peak window
         const std::vector<float> *intensities,
@@ -367,12 +437,13 @@ namespace qAlgorithms
 
         int currentScale = 2;
         size_t idxStart = 0;
-        bool stillValid = true;
+
         for (size_t range = 0; range < coeffs->size(); range++)
         {
+            bool stillValid = true;
             size_t df = calcDF_cum(degreesOfFreedom_cum, idxStart, 2 * currentScale + idxStart);
 
-            if (df < 5) // @todo cumsum
+            if (df < 5)
             {
                 stillValid = false;
             }
@@ -394,85 +465,22 @@ namespace qAlgorithms
                     validRegsTmp.push_back(RegressionGauss{});
                 }
             }
-            stillValid = true;
             idxStart++;
             // for every set of scales, execute the validation + in-scale merge operation
             // early termination needed if maxscale is reached, since here idxStart is 1 and the compared value 0
             if ((idxStart == numPoints - 2 * currentScale)) //|| (currentScale == maxScale))
             {
-                // no valid peaks if the size of validRegsTemp is 1
-                if (validRegsTmp.size() == 2)
+                // remove the last regression, since it is always empty
+                validRegsTmp.pop_back();
+                // no valid peaks if the size of validRegsTemp is 0
+                if (validRegsTmp.size() == 1)
                 {
                     // only one valid peak, no fitering necessary
                     validRegressions.push_back(std::move(validRegsTmp[0]));
                 }
-                else if (validRegsTmp.size() > 2)
+                else if (validRegsTmp.size() > 1)
                 {
-                    // @todo both of these blocks could be grouped into their own function here
-                    // remove the last regression, since it is always empty
-                    validRegsTmp.pop_back();
-                    /*
-                      Grouping:
-                      This block of code implements the grouping. It groups the valid peaks based
-                      on the apex positions. Peaks are defined as similar, i.e., members of the
-                      same group, if they fullfill at least one of the following conditions:
-                      - The difference between two peak apexes is less than 4. (Nyquist Shannon
-                      Sampling Theorem, separation of two maxima)
-                      - At least one apex of a pair of peaks is within the window of the other peak.
-                      (Overlap of two maxima)
-                    */
-                    // @todo could this part be combined with merge over scales?
-                    // vector with the access pattern [2*i] for start and [2*i + 1] for end point of a regression group
-                    std::vector<int> startEndGroups;
-                    startEndGroups.reserve(validRegsTmp.size());
-
-                    size_t prev_i = 0;
-
-                    for (size_t i = 0; i < validRegsTmp.size() - 1; i++)
-                    {
-                        // check if the difference between two peak apexes is less than 4 (Nyquist Shannon
-                        // Sampling Theorem, separation of two maxima), or if the apex of a peak is within
-                        // the window of the other peak (Overlap of two maxima)
-                        if (std::abs(validRegsTmp[i].apex_position - validRegsTmp[i + 1].apex_position) > 4 &&
-                            validRegsTmp[i].apex_position < validRegsTmp[i + 1].left_limit &&
-                            validRegsTmp[i + 1].apex_position > validRegsTmp[i].right_limit)
-                        {
-                            // the two regressions differ, i.e. create a new group
-                            startEndGroups.push_back(prev_i);
-                            startEndGroups.push_back(i);
-                            prev_i = i + 1;
-                        }
-                    }
-                    startEndGroups.push_back(prev_i);
-                    startEndGroups.push_back(validRegsTmp.size() - 1); // last group ends with index of the last element
-
-                    /*
-                      Survival of the Fittest Filter:
-                      This block of code implements the survival of the fittest filter. It selects the peak with
-                      the lowest mean squared error (MSE) as the representative of the group. If the group contains
-                      only one peak, the peak is directly pushed to the valid regressions. If the group contains
-                      multiple peaks, the peak with the lowest MSE is selected as the representative of the group
-                      and pushed to the valid regressions.
-                    */
-                    // @todo use a "ridges" approach here (gaussian mixture model)
-                    for (size_t groupIdx = 0; groupIdx < startEndGroups.size(); groupIdx += 2)
-                    {
-                        if (startEndGroups[groupIdx] == startEndGroups[groupIdx + 1])
-                        { // already isolated peak => push to valid regressions
-                            int regIdx = startEndGroups[groupIdx];
-                            validRegressions.push_back(std::move(validRegsTmp[regIdx]));
-                        }
-                        else
-                        { // survival of the fittest based on mse between original data and reconstructed (exp transform of regression)
-                            assert(startEndGroups[groupIdx] != startEndGroups[groupIdx + 1]);
-                            auto bestRegIdx = findBestRegression(intensities, &validRegsTmp, degreesOfFreedom_cum,
-                                                                 startEndGroups[groupIdx], startEndGroups[groupIdx + 1]);
-
-                            RegressionGauss bestReg = validRegsTmp[bestRegIdx.idx];
-                            bestReg.mse = bestRegIdx.mse;
-                            validRegressions.push_back(std::move(bestReg));
-                        }
-                    } // end for loop (group in vector of groups)
+                    findBestScales(&validRegressions, &validRegsTmp, intensities, degreesOfFreedom_cum);
                 }
 
                 // reset loop
