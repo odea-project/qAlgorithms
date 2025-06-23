@@ -71,17 +71,6 @@ namespace qAlgorithms
         size_t length = treatedData.RT.size();
         assert(length > 4); // data must contain at least five points
 
-        static const size_t GLOBAL_MAXSCALE_FEATURES = 30;
-        // @todo this is not a universal limit and only chosen for computational speed at the moment
-        // with an estimated scan difference of 0.6 s this means the maximum peak width is 61 * 0.6 = 36.6 s
-        assert(GLOBAL_MAXSCALE_FEATURES <= MAXSCALE);
-
-        float *RT = new float[length];
-        for (size_t position = 0; position < length; position++)
-        {
-            RT[position] = treatedData.RT[position];
-        }
-
         std::vector<float> logIntensity(length, NAN);
         for (size_t blockPos = 0; blockPos < length; blockPos++)
         {
@@ -89,7 +78,13 @@ namespace qAlgorithms
         }
 
         std::vector<RegressionGauss> validRegressions;
+
+        // @todo this is not a universal limit and only chosen for computational speed at the moment
+        // with an estimated scan difference of 0.6 s this means the maximum peak width is 61 * 0.6 = 36.6 s
+        static const size_t GLOBAL_MAXSCALE_FEATURES = 30;
+        assert(GLOBAL_MAXSCALE_FEATURES <= MAXSCALE);
         size_t maxScale = std::min(GLOBAL_MAXSCALE_FEATURES, size_t((length - 1) / 2));
+
         runningRegression(&treatedData.intensity,
                           &logIntensity,
                           &treatedData.cumulativeDF,
@@ -97,10 +92,9 @@ namespace qAlgorithms
                           maxScale);
         if (!validRegressions.empty())
         {
-            createFeaturePeaks(&all_peaks, &validRegressions, &treatedData.RT, RT);
+            createFeaturePeaks(&all_peaks, &validRegressions, &treatedData.RT);
             // there is no reason for this to be called here and not later @todo
         }
-        delete[] RT;
     }
 #pragma endregion "find peaks"
 
@@ -936,8 +930,7 @@ namespace qAlgorithms
     void createFeaturePeaks(
         std::vector<FeaturePeak> *peaks,
         const std::vector<RegressionGauss> *validRegressionsVec,
-        const std::vector<float> *RT,
-        const float *rt_start)
+        const std::vector<float> *RT)
     {
         assert(!validRegressionsVec->empty());
         for (size_t i = 0; i < validRegressionsVec->size(); i++)
@@ -953,8 +946,8 @@ namespace qAlgorithms
             peak.heightUncertainty = regression.uncertainty_height * peak.height;
 
             // size_t apexIdx = (size_t)std::floor(regression.apex_position);
-            const double rt_leftOfMax = *(rt_start + (int)std::floor(regression.apex_position)); // left of maximum
-            const double delta_rt = *(rt_start + (int)std::floor(regression.apex_position) + 1) - rt_leftOfMax;
+            const double rt_leftOfMax = RT->at((int)std::floor(regression.apex_position)); // left of maximum
+            const double delta_rt = RT->at((int)std::floor(regression.apex_position) + 1) - rt_leftOfMax;
             assert(delta_rt > 0);
             const double apex_position = rt_leftOfMax + delta_rt * (regression.apex_position - std::floor(regression.apex_position));
             peak.retentionTime = apex_position;
