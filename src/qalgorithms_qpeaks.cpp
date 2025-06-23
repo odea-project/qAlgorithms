@@ -28,7 +28,7 @@ namespace qAlgorithms
         size_t maxWindowSize = 0;
         for (size_t i = 0; i < treatedData->size(); i++)
         {
-            size_t length = (*treatedData)[i].df.size();
+            size_t length = (*treatedData)[i].mz.size();
             assert(length > 4); // data must contain at least five points
             maxWindowSize = maxWindowSize < length ? length : maxWindowSize;
         }
@@ -43,7 +43,7 @@ namespace qAlgorithms
         for (size_t i = 0; i < treatedData->size(); i++)
         {
             const auto block = (*treatedData)[i];
-            const size_t length = block.df.size();
+            const size_t length = block.mz.size();
             assert(length > 4);
 
             logIntensity.resize(length); // this way, no new allocations will be made in the loop
