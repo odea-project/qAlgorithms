@@ -97,24 +97,36 @@ namespace qAlgorithms
 
         size_t maxSize = dataPoints_internal.size() * 2; // we do not know how many gaps there are beforehand
         treatedData treatedData;
-        treatedData.dataPoints.reserve(maxSize);
+        // treatedData.dataPoints.reserve(maxSize);
+        treatedData.RT.reserve(maxSize);
+        treatedData.intensity.reserve(maxSize);
+        treatedData.cumulativeDF.reserve(maxSize);
+        treatedData.cenIDs.reserve(maxSize);
 
         unsigned int realIdx = 0; // this should be handled outside of this function @todo
-        static dataPoint zeroedPoint{0, 0, false};
+        // static dataPoint zeroedPoint{0, 0, false};
         // add the first two zeros to the dataPoints_new vector @todo skip this by doing log interpolation during the log transform
         for (int i = 0; i < 2; i++)
         {
-            treatedData.dataPoints.push_back(zeroedPoint);
+            // treatedData.dataPoints.push_back(zeroedPoint);
+            treatedData.RT.push_back(0);
             treatedData.intensity.push_back(0);
+            treatedData.cumulativeDF.push_back(0);
+            treatedData.cenIDs.push_back(0);
         }
 
         size_t maxOfBlock = 0;
         size_t blockSize = 0; // size of the current block
+        size_t cumdf = 0;
         for (size_t pos = 0; pos < dataPoints_internal.size() - 1; pos++)
         {
             blockSize++;
-            treatedData.dataPoints.push_back(dataPoints_internal[pos]);
+            // treatedData.dataPoints.push_back(dataPoints_internal[pos]);
+            treatedData.RT.push_back(dataPoints_internal[pos].x);
             treatedData.intensity.push_back(dataPoints_internal[pos].y);
+            cumdf += dataPoints_internal[pos].df;
+            treatedData.cumulativeDF.push_back(cumdf);
+
             ++realIdx;
             const float delta_x = dataPoints_internal[pos + 1].x - dataPoints_internal[pos].x;
 
@@ -129,11 +141,14 @@ namespace qAlgorithms
                     float interpolateDiff = delta_x / (gapSize + 1);
                     for (int i = 1; i <= gapSize; i++)
                     {
-                        treatedData.dataPoints.emplace_back(
-                            dataPoints_internal[pos].x + i * interpolateDiff, // retention time
-                            dataPoints_internal[pos].y * std::pow(dy, i),     // intensity
-                            false);                                           // interpolated point
+                        // treatedData.dataPoints.emplace_back(
+                        //     dataPoints_internal[pos].x + i * interpolateDiff, // retention time
+                        //     dataPoints_internal[pos].y * std::pow(dy, i),     // intensity
+                        //     false);                                           // interpolated point
+
+                        treatedData.RT.push_back(dataPoints_internal[pos].x + i * interpolateDiff);
                         treatedData.intensity.push_back(dataPoints_internal[pos].y * std::pow(dy, i));
+                        treatedData.cumulativeDF.push_back(cumdf);
                     }
                 }
             }
@@ -147,15 +162,19 @@ namespace qAlgorithms
         } // end of for loop
         // last element
         blockSize++;
-        treatedData.dataPoints.push_back(dataPoints_internal.back());
+        // treatedData.dataPoints.push_back(dataPoints_internal.back());
+        // treatedData.intensity.push_back(dataPoints_internal.back().y);
+        treatedData.RT.push_back(dataPoints_internal.back().x);
         treatedData.intensity.push_back(dataPoints_internal.back().y);
+        cumdf += dataPoints_internal.back().df;
+        treatedData.cumulativeDF.push_back(cumdf);
 
         // END OF BLOCK, EXTRAPOLATION STARTS @todo move this into its own function
         assert(blockSize == eic.cenID.size());
         // add 4 datapoints (two extrapolated [end of current block] and two zeros
         // [start of next block]) extrapolate the first two datapoints of this block
 
-        const dataPoint dp_startOfBlock = treatedData.dataPoints[2];
+        // const dataPoint dp_startOfBlock = treatedData.dataPoints[2];
         // check if the maximum of the block is the first or last data point.
         // in this case, it is not possible to extrapolate using the quadratic form
         // @todo is it sensible to use quadratic extrapolation in the first place? This
@@ -164,74 +183,46 @@ namespace qAlgorithms
         // if (maxOfBlock == blockSize - 1 || maxOfBlock == 0)
         // {
         // extrapolate the left side using the first non-zero data point (i.e, the start of the block)
-        treatedData.dataPoints[0].x = dp_startOfBlock.x - 2 * expectedDifference;
-        treatedData.dataPoints[1].x = dp_startOfBlock.x - expectedDifference;
-        treatedData.dataPoints[0].y = dp_startOfBlock.y / 4;
-        treatedData.dataPoints[1].y = dp_startOfBlock.y / 2;
+        float baseRT_start = treatedData.RT[2];
+        float baseInt_start = treatedData.intensity[2];
+        // treatedData.dataPoints[0].x = baseRT_start - 2 * expectedDifference;
+        // treatedData.dataPoints[1].x = baseRT_start - expectedDifference;
+        // treatedData.dataPoints[0].y = baseInt_start / 4;
+        // treatedData.dataPoints[1].y = baseInt_start / 2;
 
-        treatedData.intensity[0] = dp_startOfBlock.y / 4;
-        treatedData.intensity[1] = dp_startOfBlock.y / 2;
+        treatedData.RT[0] = baseRT_start - 2 * expectedDifference;
+        treatedData.RT[1] = baseRT_start - expectedDifference;
+        treatedData.intensity[0] = baseInt_start / 4;
+        treatedData.intensity[1] = baseInt_start / 2;
 
-        size_t l = treatedData.dataPoints.size() - 2;
-        auto endPoint = treatedData.dataPoints[l];
+        size_t l = treatedData.RT.size() - 2;
+        // auto endPoint = treatedData.dataPoints[l];
+        float baseRT_end = treatedData.RT[l];
+        float baseInt_end = treatedData.intensity[l];
 
-        treatedData.dataPoints[l + 1].x = endPoint.x + 2 * expectedDifference;
-        treatedData.dataPoints[l].x = endPoint.x + expectedDifference;
-        treatedData.dataPoints[l + 1].y = endPoint.y / 4;
-        treatedData.dataPoints[l].y = endPoint.y / 2;
-
-        treatedData.intensity[l + 1] = endPoint.y / 4;
-        treatedData.intensity[l] = endPoint.y / 2;
+        treatedData.RT[l + 1] = baseRT_end + 2 * expectedDifference;
+        treatedData.RT[l] = baseRT_end + expectedDifference;
+        treatedData.intensity[l + 1] = baseInt_end / 4;
+        treatedData.intensity[l] = baseInt_end / 2;
 
         assert(treatedData.intensity[0] > 0);
-        // assert(!isnanf(treatedData.intensity.back())); // @todo this is os-specific, windows does not have access to isnanf
-        // }
-        // else
-        // {
-        //     const float x[3] = {0.f, dataPoints_internal[maxOfBlock].x - dp_startOfBlock.x, dataPoints_internal[blockSize - 1].x - dp_startOfBlock.x};
-        //     const float y[3] = {std::log(dp_startOfBlock.y), std::log(dataPoints_internal[maxOfBlock].y), std::log(dataPoints_internal[blockSize - 1].y)};
 
-        //     auto coeffs = interpolateQuadratic(x, y);
-        //     // extrapolate the left side of the block
-        //     for (int i = 0; i < 2; i++)
-        //     {
-        //         dataPoint &curr_dp = treatedData.dataPoints[0 + i];
-        //         curr_dp.x = dp_startOfBlock.x - (2 - i) * expectedDifference;
-        //         const float x = curr_dp.x - dp_startOfBlock.x;
-        //         curr_dp.y = std::exp(coeffs[0] + x * (coeffs[1] + x * coeffs[2]));
-        //     }
-        //     // add the extrapolated data points to the right side of the block
-        //     for (int i = 0; i < 2; i++)
-        //     {
-        //         const float dp_x = dataPoints_internal[blockSize - 1].x + float(i + 1) * expectedDifference;
-        //         const float x = dp_x - dp_startOfBlock.x;
-        //         treatedData.dataPoints.emplace_back(
-        //             dp_x,                                                  // retention time
-        //             std::exp(coeffs[0] + x * (coeffs[1] + x * coeffs[2])), // intensity
-        //             false);                                                // df
-        //         treatedData.intensity.push_back(std::exp(coeffs[0] + x * (coeffs[1] + x * coeffs[2])));
-        //     }
-        //     assert(treatedData.intensity[0] > 0);
-        //     assert(!isnanf(treatedData.intensity.back()));
-        // }
-
-        assert(treatedData.dataPoints.size() == treatedData.intensity.size());
-        assert(treatedData.dataPoints.back().y == treatedData.intensity.back()); // works
+        assert(treatedData.RT.size() == treatedData.intensity.size());
         // assert(treatedData.dataPoints.size() == eic.interpolatedDQSB.size()); // @todo redo this in good
 
         treatedData.cenIDs = eic.interpolatedIDs;
         treatedData.lowestScan = eic.scanNumbers.front() - 2;
         treatedData.largestScan = eic.scanNumbers.back() + 2;
         // assert(binIdx.size() == treatedData.largestScan - treatedData.lowestScan + 1 + 4); // extrapolations
-        treatedData.cumulativeDF.reserve(treatedData.dataPoints.size());
+        treatedData.cumulativeDF.reserve(treatedData.RT.size());
         treatedData.cumulativeDF.push_back(0);
-        size_t accum = 0;
-        for (size_t i = 1; i < treatedData.dataPoints.size(); i++)
-        {
-            // i starts at 1 since the first element is always 0
-            accum += treatedData.dataPoints[i].df ? 1 : 0;
-            treatedData.cumulativeDF.push_back(accum); // @todo this is not vectorised!
-        }
+        // size_t accum = 0;
+        // for (size_t i = 1; i < treatedData.RT.size(); i++)
+        // {
+        //     // i starts at 1 since the first element is always 0
+        //     accum += treatedData.dataPoints[i].df ? 1 : 0;
+        //     treatedData.cumulativeDF.push_back(accum); // @todo this is not vectorised!
+        // }
         assert(treatedData.largestScan < maxScan);
         return treatedData;
     }

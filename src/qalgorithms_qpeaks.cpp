@@ -68,47 +68,36 @@ namespace qAlgorithms
     void findFeatures(std::vector<FeaturePeak> &all_peaks,
                       treatedData &treatedData)
     {
-        size_t length = treatedData.dataPoints.size();
+        size_t length = treatedData.RT.size();
         assert(length > 4); // data must contain at least five points
-
-        std::vector<float> logIntensity(length, NAN);
-
-        float *RT = new float[length];
 
         static const size_t GLOBAL_MAXSCALE_FEATURES = 30;
         // @todo this is not a universal limit and only chosen for computational speed at the moment
         // with an estimated scan difference of 0.6 s this means the maximum peak width is 61 * 0.6 = 36.6 s
         assert(GLOBAL_MAXSCALE_FEATURES <= MAXSCALE);
 
-        std::vector<unsigned int> degreesOfFreedom_cum;
-        unsigned int totalDF = 0;
-        degreesOfFreedom_cum.reserve(length);
-        std::vector<float> intensity;
-        intensity.reserve(length);
-        std::vector<float> RT_new;
-        RT_new.reserve(length);
+        float *RT = new float[length];
         for (size_t position = 0; position < length; position++)
         {
-            size_t idx = position;
-            intensity.push_back(treatedData.dataPoints[idx].y);
-            RT[position] = treatedData.dataPoints[idx].x;
-            RT_new.push_back(treatedData.dataPoints[idx].x);
-            totalDF += treatedData.dataPoints[idx].df;
-            degreesOfFreedom_cum.push_back(totalDF);
+            RT[position] = treatedData.RT[position];
         }
 
-        logIntensity.resize(intensity.size());
-        for (size_t blockPos = 0; blockPos < intensity.size(); blockPos++)
+        std::vector<float> logIntensity(length, NAN);
+        for (size_t blockPos = 0; blockPos < length; blockPos++)
         {
-            logIntensity[blockPos] = std::log(intensity[blockPos]);
+            logIntensity[blockPos] = std::log(treatedData.intensity[blockPos]);
         }
 
         std::vector<RegressionGauss> validRegressions;
         size_t maxScale = std::min(GLOBAL_MAXSCALE_FEATURES, size_t((length - 1) / 2));
-        runningRegression(&intensity, &logIntensity, &degreesOfFreedom_cum, validRegressions, maxScale);
+        runningRegression(&treatedData.intensity,
+                          &logIntensity,
+                          &treatedData.cumulativeDF,
+                          validRegressions,
+                          maxScale);
         if (!validRegressions.empty())
         {
-            createFeaturePeaks(&all_peaks, &validRegressions, &RT_new, RT);
+            createFeaturePeaks(&all_peaks, &validRegressions, &treatedData.RT, RT);
             // there is no reason for this to be called here and not later @todo
         }
         delete[] RT;
