@@ -246,7 +246,10 @@ namespace qAlgorithms
             // }
 
             treatedData treatedData = pretreatEIC(currentEIC, rt_diff, maxScan); // inter/extrapolate data, and identify data blocks
+
             findFeatures(tmpPeaks, treatedData);
+            // @todo extract the peak construction here and possibly extract findFeatures into a generic function
+
             if (tmpPeaks.empty())
             {
                 continue;

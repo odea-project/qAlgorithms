@@ -117,7 +117,7 @@ namespace qAlgorithms
         {
             // number of competitors is intialised to 0, so no special case for size = 1 needed
             // there can be 0, 1 or more than one regressions in validRegressions
-            validRegressions = mergeRegressionsOverScales(validRegressions, intensities);
+            validRegressions = mergeRegressionsOverScales(&validRegressions, intensities);
         }
         return;
     }
@@ -430,6 +430,7 @@ namespace qAlgorithms
         std::vector<RegressionGauss> &validRegressions)
     {
         const size_t numPoints = intensities->size();
+        // all entries in coeff are sorted by scale - this is not checked!
 
         std::vector<RegressionGauss> validRegsTmp; // temporary vector to store valid regressions
         // the start index of the regression is the same as the index in beta. The end index is at 2*scale + index in beta.
@@ -704,7 +705,7 @@ namespace qAlgorithms
     }
 #pragma endregion "validate Regression"
 
-    std::vector<RegressionGauss> mergeRegressionsOverScales(std::vector<RegressionGauss> validRegressions,
+    std::vector<RegressionGauss> mergeRegressionsOverScales(std::vector<RegressionGauss> *validRegressions,
                                                             const std::vector<float> *intensities)
     {
         /*
@@ -717,15 +718,14 @@ namespace qAlgorithms
         */
 
         // iterate over the validRegressions vector
-        for (size_t i = 0; i < validRegressions.size(); i++)
+        for (size_t i = 0; i < validRegressions->size(); i++)
         {
-            assert(validRegressions[i].isValid);
-            const unsigned int left_limit = validRegressions[i].left_limit;   // left limit of the current peak regression window in the Y array
-            const unsigned int right_limit = validRegressions[i].right_limit; // right limit of the current peak regression window in the Y array
+            auto activeReg = (*validRegressions)[i];
+            assert(activeReg.isValid);
             double MSE_group = 0;
             int DF_group = 0;
             // only calculate required MSEs since this is one of the performance-critical steps
-            std::vector<float> exponentialMSE(validRegressions.size(), 0);
+            std::vector<float> exponentialMSE(validRegressions->size(), 0);
             std::vector<size_t> validRegressionsInGroup; // vector of indices to validRegressions
             size_t competitors = 0;                      // this variable keeps track of how many competitors a given regression has
 
@@ -733,31 +733,32 @@ namespace qAlgorithms
             // first iteration always false
             for (size_t j = 0; j < i; j++)
             {
-                if (validRegressions[j].isValid) // check is needed because regressions are set to invalid in the outer loop
+                auto secondReg = (*validRegressions)[j];
+                if (secondReg.isValid) // check is needed because regressions are set to invalid in the outer loop
                 {
                     if ( // check for the overlap of the peaks
                         (
-                            validRegressions[j].apex_position > left_limit &&   // ref peak matches the left limit
-                            validRegressions[j].apex_position < right_limit) || // ref peak matches the right limit
+                            secondReg.apex_position > activeReg.left_limit &&   // ref peak matches the left limit
+                            secondReg.apex_position < activeReg.right_limit) || // ref peak matches the right limit
                         (
-                            validRegressions[i].apex_position > validRegressions[j].left_limit && // new peak matches the left limit
-                            validRegressions[i].apex_position < validRegressions[j].right_limit)) // new peak matches the right limit
+                            activeReg.apex_position > secondReg.left_limit && // new peak matches the left limit
+                            activeReg.apex_position < secondReg.right_limit)) // new peak matches the right limit
                     {
                         if (exponentialMSE[j] == 0.0)
                         { // calculate the mse of the reference peak
                             exponentialMSE[j] = calcSSE_exp(
-                                validRegressions[j].coeffs,
+                                secondReg.coeffs,
                                 intensities,
-                                validRegressions[j].left_limit,
-                                validRegressions[j].right_limit,
-                                validRegressions[j].index_x0);
-                            exponentialMSE[j] /= validRegressions[j].df;
+                                secondReg.left_limit,
+                                secondReg.right_limit,
+                                secondReg.index_x0);
+                            exponentialMSE[j] /= secondReg.df;
                         }
-                        DF_group += validRegressions[j].df;                      // add the degree of freedom
-                        MSE_group += exponentialMSE[j] * validRegressions[j].df; // add the sum of squared errors
+                        DF_group += secondReg.df;                      // add the degree of freedom
+                        MSE_group += exponentialMSE[j] * secondReg.df; // add the sum of squared errors
                         // add the iterator of the ref peak to a vector of iterators
                         validRegressionsInGroup.push_back(j);
-                        competitors += validRegressions[j].numCompetitors + 1; // a regression can have beaten a previous one
+                        competitors += secondReg.numCompetitors + 1; // a regression can have beaten a previous one
                     }
                 }
             } // after this loop, validRegressionsInGroup contains all regressions that are still valid and contend with the regression at position i
@@ -773,34 +774,35 @@ namespace qAlgorithms
             if (exponentialMSE[i] == 0.0)
             { // calculate the mse of the current peak
                 exponentialMSE[i] = calcSSE_exp(
-                    validRegressions[i].coeffs,
+                    activeReg.coeffs,
                     intensities,
-                    left_limit,
-                    right_limit,
-                    validRegressions[i].index_x0);
-                exponentialMSE[i] /= validRegressions[i].df;
+                    activeReg.left_limit,
+                    activeReg.right_limit,
+                    activeReg.index_x0);
+                exponentialMSE[i] /= activeReg.df;
             }
             if (exponentialMSE[i] < MSE_group)
             {
                 // Set isValid to false for the candidates from the group
                 for (size_t it_ref_peak : validRegressionsInGroup)
                 {
-                    validRegressions[it_ref_peak].isValid = false;
+                    (*validRegressions)[it_ref_peak].isValid = false;
                 }
                 // only advance competitor count if regression is actually better
-                validRegressions[i].numCompetitors = competitors;
+                activeReg.numCompetitors = competitors;
             }
             else
             { // Set isValid to false for the current peak
-                validRegressions[i].isValid = false;
+                activeReg.isValid = false;
             }
-        } // end for loop, outer loop, it_current_peak
+        }
+
         std::vector<RegressionGauss> finalRegs;
-        for (size_t i = 0; i < validRegressions.size(); i++)
+        for (size_t i = 0; i < validRegressions->size(); i++)
         {
-            if (validRegressions[i].isValid)
+            if ((*validRegressions)[i].isValid)
             {
-                finalRegs.push_back(validRegressions[i]);
+                finalRegs.push_back((*validRegressions)[i]);
             }
         }
         return finalRegs;

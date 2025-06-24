@@ -1,3 +1,7 @@
+Todo: add automation for peak selection on our triple quad routine measurements
+https://github.com/vdemichev/DiaNN/blob/master/WiffReader/WiffReader.cpp
+https://github.com/dmadea/Wiff-Converter/blob/main/Wiff%20Converter/Reader.cs
+
 Für cogniflow interessant:
 https://www.inkandswitch.com/project/jacquard/
 
@@ -89,104 +93,3 @@ großen Multistandard-Datensatz anfragen (bfg - Datenbank)
 
 Bin Reassembly sollte erst nach Aufreinigung der zu großen Bins passieren, diese müssen aber 
     von der Rekonstruktion ausgeschlossen werden
-
-def multi_fit(Y):
-
-    """
-
-    Fits the piecewise quadratic model to multiple signal traces.
-
-    Parameters:
-
-        Y (array): Log-transformed intensity data.
-
-    Returns:
-
-        beta (array): Regression coefficients.
-
-        Y_hat (array): Predicted values.
-
-        rss (float): Residual sum of squares.
-
-        n (integer): Number of data points.
-
-    """  
-
-    k, n = Y.shape // k = number of cols, n = number of rows
-
-    # check if y is odd
-
-    if n % 2 == 0:
-
-        #drop the last element
-
-        Y = Y[:, :-1]
-
-        n -= 1
-
- 
-    scale = (n - 1)//2
-
-    X_base, _ = piecewise_design_matrix(scale)
-
-
-    # Build combined design matrix
-
-    X_combined = np.zeros((k * n, k + 3)) // k*n rows and k + 3 columns
-
-    for i in range(k):
-
-        X_combined[i*n:(i+1)*n, i] = 1
-
-        X_combined[i*n:(i+1)*n, k:] = X_base[:, 1:]
-
- 
-    # chop if y contains zeros
-
-    y_is_flattened = False
-
-    # if 0 in Y:
-
-    Ycopy = Y.copy()
-
-    Y = Y.flatten() // converts Y to a flat array by adding all rows together in order
-
-    X_combined = X_combined[Y != 0, :]  
-
-    Y = Y[Y != 0]
-
-    y_is_flattened = True
-
- // at this point, both X_combined and Y only contain non-zero values.
-
-    beta, _, _, _ = np.linalg.lstsq(X_combined, Y, rcond=None)
-
-    # Re-Fit first k columns of beta while fixing the other coefficients and use exp(Y) as data
-
-    shared_part = X_combined[:, k:] @ beta[k:]
-	
-	// this does matrix multiplication with the vector 
-
-    A = np.exp(shared_part)  # shared part of the model
-
-    beta_new = beta.copy()
-
-    for i in range(k):
-
-        idx = X_combined[:, i] == 1
-
-        A_i = A[idx]
-
-        Y_i_exp = np.exp(Y[idx]) - 1
-
-        c_i = np.sum(A_i * Y_i_exp) / np.sum(A_i**2)
-
-        beta_new[i] = np.log(c_i)
-
-    beta = beta_new
-
-    Y_hat = (X_combined @ beta)
-
-    rss = np.sum((np.exp(Y) - np.exp(Y_hat)) ** 2)
-
-    return beta, Y_hat, rss, len(Y)

@@ -50,9 +50,8 @@ namespace qAlgorithms
         const std::vector<float> *intensities,
         const std::vector<float> *intensities_log);
 
-    std::vector<RegressionGauss> mergeRegressionsOverScales(
-        std::vector<RegressionGauss> validRegressions,
-        const std::vector<float> *intensities);
+    std::vector<RegressionGauss> mergeRegressionsOverScales(std::vector<RegressionGauss> *validRegressions,
+                                                            const std::vector<float> *intensities);
 
     void createCentroidPeaks(
         std::vector<CentroidPeak> *peaks,
@@ -94,23 +93,6 @@ namespace qAlgorithms
         const std::vector<float> *predictLog,
         const std::vector<float> *selectLog,
         const size_t scale);
-
-    /**
-     * @brief Calculate the best mean squared error of the regression model
-     * with different regression windows BUT same window size.
-     * @details The function extends the regression windows that all the windows
-     * cover the range from the lowest x value to the highest x value. I.e., if
-     * window A is [4,5,6,7,8,9,10] and window B is [6,7,8,9,10,11,12], the extended
-     * window is [4,5,6,7,8,9,10,11,12]. The function calculates the mean squared
-     * error of the regression model with the extended window and returns the
-     * mean squared error and the index of the best regression.
-     *
-     * @param Y : Measurement data (not log transformed)
-     * @param B : Matrix of regression coefficients
-     * @param groupIndices : Indices of the regression windows
-     * @param scale : Window size scale, e.g., 5 means the window size is 11 (2*5+1)
-     * @return MSE and index of the best regression window
-     */
 
     struct RegPair
     {
