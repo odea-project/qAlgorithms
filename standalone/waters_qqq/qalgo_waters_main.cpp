@@ -9,6 +9,7 @@
 #include <errno.h>
 
 #include "../../external/StreamCraft/src/StreamCraft_mzml.hpp"
+#include "../../include/qalgorithms_input_output.h"
 
 namespace qalgo_waters
 {
@@ -222,15 +223,41 @@ namespace qalgo_waters
         }
         return res;
     }
+}
 
-    int main(int argc, char const *argv[]) // single-file process, @todo change
+int main(int argc, char const *argv[]) // single-file process, @todo change
+{
+    // read user input (relevant masses and RTs)
+    std::vector<std::string> paths;
+    std::string pathTargets;
+    bool targetsSet = false;
+    for (size_t i = 1; i < argc; i++)
     {
-        // read user input (relevant masses and RTs)
-
-        // read file using streamcraft
-        StreamCraft::MZML data(path);
-
-        return 0;
+        std::string str = argv[i];
+        size_t len = str.size();
+        if (len > 8 && str.substr(len - 8) == ".targets") // string ends in ".targets"
+        {
+            if (targetsSet)
+            {
+                std::cerr << "Error: you can only have one .targets file per analysis.\n";
+            }
+            pathTargets = str;
+            targetsSet = true;
+        }
+        else
+        {
+            paths.push_back(str);
+        }
     }
 
+    auto targets = qalgo_waters::getSearchConfig(pathTargets);
+
+    auto tasks = qAlgorithms::controlInput(&paths, false);
+
+    // read file using streamcraft @todo correctness check here?
+    StreamCraft::MZML data(tasks[0]);
+
+    // extract relevant
+    std::cout << "hello world\n";
+    return 0;
 }
