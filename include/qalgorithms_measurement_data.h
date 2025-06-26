@@ -2,7 +2,7 @@
 #define QALGORITHMS_MEASUREMENT_DATA_H
 
 #include "qalgorithms_datatypes.h"
-#include "../external/StreamCraft/src/StreamCraft_mzml.hpp"
+#include "StreamCraft_mzml.h"
 
 #include <vector>
 #include <array>

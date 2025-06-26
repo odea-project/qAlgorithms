@@ -8,7 +8,7 @@
 #define PUGIXML_HEADER_ONLY
 
 #ifndef PUGIXML_PATH
-#define PUGIXML_PATH "../../pugixml-1.14/src/pugixml.h"
+#define PUGIXML_PATH "../external/pugixml-1.14/src/pugixml.h"
 #endif
 
 #include PUGIXML_PATH

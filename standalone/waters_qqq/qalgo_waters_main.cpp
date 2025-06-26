@@ -8,7 +8,7 @@
 #include <iostream>
 #include <errno.h>
 
-#include "../../external/StreamCraft/src/StreamCraft_mzml.hpp"
+#include "../../include//StreamCraft_mzml.h"
 #include "../../include/qalgorithms_input_output.h"
 
 namespace qalgo_waters

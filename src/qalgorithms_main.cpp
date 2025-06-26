@@ -5,9 +5,9 @@
 #include "qalgorithms_global_vars.h"
 #include "qalgorithms_input_output.h"
 #include "qalgorithms_metafiles.h" // new organisation of program - this and the library header should be the only two qalgo includes!
+#include "StreamCraft_mzml.h"
 
 // external
-#include "../external/StreamCraft/src/StreamCraft_mzml.hpp"
 #include <iostream>
 #include <chrono>
 #include <fstream> // write peaks to file
