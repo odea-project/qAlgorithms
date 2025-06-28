@@ -15,15 +15,12 @@
 
 namespace StreamCraft
 {
-    class MZML_BINARY_METADATA // @todo there is no need for a file-specific metadata object
+    struct BinaryMetadata // @todo there is no need for a file-specific metadata object
     {
-
-    public:
-        int index;
-        int precision_int;
-        bool compressed;
-        std::string data_value;
         std::string data_name_short;
+        int index;
+        bool compressed;
+        bool isDouble;
     };
 
     struct SpectrumData // this information is required by qAlgorithms to function
@@ -42,35 +39,32 @@ namespace StreamCraft
         mixed
     };
 
+    static std::vector<std::string> possible_accessions_binary_data_mzML = {
+        "MS:1000514", "MS:1000515", "MS:1000516", "MS:1000517",
+        "MS:1000595", "MS:1000617", "MS:1000786", "MS:1000820",
+        "MS:1000821", "MS:1000822", "MS:1002478", "MS:1002529",
+        "MS:1002530", "MS:1002742", "MS:1002743", "MS:1002744",
+        "MS:1002745", "MS:1002893", "MS:1003143", "MS:1003157",
+        "MS:1003158"};
+
+    static std::vector<std::string> possible_short_name_binary_data_mzML = {
+        "mz", "intensity", "charge", "sn",
+        "time", "wavelength", "other", "flowrate",
+        "pressure", "temperature", "mean_charge", "resolution",
+        "baseline", "noise", "sampled_noise_mz", "sampled_noise_intensity",
+        "sampled_noise_baseline", "ion_mobility", "mass", "quadrupole_position_lower_bound_mz",
+        "quadrupole_position_upper_bound_mz"};
+
     class MZML // @todo this is just a complicated way of having a filetype specific accession struct and a generalised container
     {
+        // @todo change this to a generalised XML class which includes cases for mzML, mzXML and others
     private:
-        std::vector<MZML_BINARY_METADATA> spectra_binary_metadata;
+        std::vector<BinaryMetadata> spectra_binary_metadata;
 
-        const std::vector<std::string> possible_accessions_binary_data = {
-            "MS:1000514", "MS:1000515", "MS:1000516", "MS:1000517",
-            "MS:1000595", "MS:1000617", "MS:1000786", "MS:1000820",
-            "MS:1000821", "MS:1000822", "MS:1002478", "MS:1002529",
-            "MS:1002530", "MS:1002742", "MS:1002743", "MS:1002744",
-            "MS:1002745", "MS:1002893", "MS:1003143", "MS:1003157",
-            "MS:1003158"};
-
-        const std::vector<std::string> possible_short_name_binary_data = {
-            "mz", "intensity", "charge", "sn",
-            "time", "wavelength", "other", "flowrate",
-            "pressure", "temperature", "mean_charge", "resolution",
-            "baseline", "noise", "sampled_noise_mz", "sampled_noise_intensity",
-            "sampled_noise_baseline", "ion_mobility", "mass", "quadrupole_position_lower_bound_mz",
-            "quadrupole_position_upper_bound_mz"};
-
-        MZML_BINARY_METADATA extract_binary_metadata(const pugi::xml_node &bin);
+        BinaryMetadata extract_binary_metadata(const pugi::xml_node &bin);
 
         double extract_scan_RT(const pugi::xml_node &spec);
 
-        std::vector<std::vector<double>> extract_spectrum(const pugi::xml_node &spectrum_node);
-        std::vector<std::vector<std::vector<double>>> extract_spectra(const std::vector<int> &idxs);
-
-    public:
         pugi::xml_document mzml_base_document;
 
         pugi::xml_parse_result loading_result;
@@ -79,22 +73,19 @@ namespace StreamCraft
 
         // std::vector<pugi::xml_node> spectra; // making this a class member makes the code unbelieveably slow
 
+    public:
         unsigned int number_spectra;
 
         unsigned int number_spectra_binary_arrays;
 
+        bool defective = false;
+
         MZML(const std::filesystem::path &file);
 
-        std::vector<std::vector<double>> get_spectrum(int index); // this is the actually important function
-        void get_spectrum2(
+        void get_spectrum(
             std::vector<double> *const spectrum_mz,
             std::vector<double> *const spectrum_RT,
             size_t index);
-
-        void extract_spectrum2(
-            const pugi::xml_node &spectrum_node,
-            std::vector<double> *const spectrum_mz,
-            std::vector<double> *const spectrum_RT);
 
         std::vector<size_t> get_spectra_index(const std::vector<unsigned int> *indices);
         std::vector<int> get_spectra_level(const std::vector<unsigned int> *indices);
@@ -102,7 +93,7 @@ namespace StreamCraft
         std::vector<bool> get_spectra_polarity(const std::vector<unsigned int> *indices);
         polarity_MZML get_polarity_mode(const size_t count);
         std::vector<double> get_spectra_RT(const std::vector<unsigned int> *indices);
-    }; // class MZML
-}; // namespace StreamCraft
+    };
+};
 
 #endif // STREAMCRAFT_MZML_HPP
