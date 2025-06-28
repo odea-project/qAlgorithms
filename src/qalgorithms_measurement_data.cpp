@@ -14,7 +14,7 @@
 
 namespace qAlgorithms
 {
-
+#pragma region "Feature Detection"
     inline std::array<double, 3> interpolateQuadratic(const float *x, const float *y)
     {
         double x1 = x[0], y1 = y[0];
@@ -30,7 +30,6 @@ namespace qAlgorithms
         return {c, b, a};
     }
 
-#pragma region "Feature Detection"
     void extrapolateEIC(const std::vector<size_t> scanNums, std::vector<float> *intensity)
     {
         // x-axis can be either mz (for centroids) or RT (for features)
@@ -326,6 +325,8 @@ namespace qAlgorithms
         return peaks;
     }
 
+#pragma endregion "Feature Detection"
+
 #pragma region "find centroids"
 
     std::vector<std::vector<CentroidPeak>> transferCentroids(
@@ -525,7 +526,8 @@ namespace qAlgorithms
         centroids.push_back({0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}); // dummy value used for binning
         for (size_t i = 0; i < countSelected; ++i)
         {
-            const std::vector<std::vector<double>> spectrum = data.get_spectrum(selectedIndices[i]);
+            const std::vector<std::vector<double>> spectrum = data.get_spectrum(selectedIndices[i]); // @todo optimisation target
+            assert(spectrum.size() == 2);
             const auto profileGroups = pretreatDataCentroids(&spectrum);
             // std::cout << relativeIndex[i] << "," << selectedIndices[i] << " | ";
             findCentroidPeaks(&centroids, &profileGroups, relativeIndex[i], selectedIndices[i]);

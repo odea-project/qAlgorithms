@@ -275,7 +275,7 @@ std::vector<std::vector<double>> StreamCraft::MZML::get_spectrum(int index)
 
     if (spectra_nodes.size() == 0)
     {
-        std::cerr << "No spectra found!" << std::endl;
+        std::cerr << "Error: no spectra found for index" << index << "\n";
         return spectrum;
     }
 
@@ -284,6 +284,82 @@ std::vector<std::vector<double>> StreamCraft::MZML::get_spectrum(int index)
 
     return spectrum;
 }
+
+std::vector<std::vector<double>> StreamCraft::MZML::get_spectrum2(int index)
+{
+    std::vector<pugi::xml_node> spectra_nodes = link_vector_spectra_nodes(mzml_root_node);
+
+    if (spectra_nodes.size() == 0)
+    {
+        std::cerr << "Error: no spectra found for index" << index << "\n";
+        return {};
+    }
+
+    const pugi::xml_node &spectrum_node = spectra_nodes[index];
+
+    std::vector<std::vector<double>> spectrum;
+    std::vector<double> spectrum_mz;
+    std::vector<double> spectrum_RT;
+    spectrum = extract_spectrum2(spectrum_node, &spectrum_mz, &spectrum_RT);
+
+    return spectrum;
+}
+
+std::vector<std::vector<double>> StreamCraft::MZML::extract_spectrum2(
+    const pugi::xml_node &spectrum_node,
+    std::vector<double> *const spectrum_mz,
+    std::vector<double> *const spectrum_RT)
+{
+
+    pugi::xml_node node_binary_list = spectrum_node.child("binaryDataArrayList");
+    unsigned int number_bins = node_binary_list.attribute("count").as_int();
+    assert(number_spectra_binary_arrays == number_bins);
+
+    unsigned int number_traces = spectrum_node.attribute("defaultArrayLength").as_int();
+
+    std::vector<std::vector<double>> spectrum;
+    spectrum.resize(number_bins);
+
+    int counter = 0;
+
+    for (auto i = node_binary_list.children("binaryDataArray").begin(); i != node_binary_list.children("binaryDataArray").end(); ++i)
+    {
+        const pugi::xml_node &bin = *i;
+
+        { // decode string
+            pugi::xml_node node_binary = bin.child("binary");
+            std::string encoded_string = node_binary.child_value();
+            std::string decoded_string = decode_base64(encoded_string);
+
+            if (spectra_binary_metadata[counter].compressed)
+            {
+                decoded_string = decompress_zlib(decoded_string); // @todo is there a case where this doesn't apply for all spectra?
+            }
+            spectrum[counter] = decode_little_endian(decoded_string, spectra_binary_metadata[counter].precision_int / 8);
+            assert(spectrum[counter].size() == number_traces); // this happens if an index is tried which does not exist in the data
+        }
+
+        if (spectra_binary_metadata[counter].data_name_short == "time")
+        {
+            pugi::xml_node node_unit = bin.find_child_by_attribute("cvParam", "unitCvRef", "UO");
+            std::string unit = node_unit.attribute("unitName").as_string();
+
+            if (unit == "minute")
+            {
+                for (double &j : spectrum[counter])
+                {
+                    j *= 60;
+                }
+            }
+            else
+            {
+                assert(unit == "second");
+            }
+        }
+        counter++;
+    }
+    return spectrum;
+};
 
 double StreamCraft::MZML::extract_scan_RT(const pugi::xml_node &spec)
 {
@@ -387,6 +463,7 @@ std::vector<std::vector<double>> StreamCraft::MZML::extract_spectrum(const pugi:
 
     pugi::xml_node node_binary_list = spectrum_node.child("binaryDataArrayList");
     unsigned int number_bins = node_binary_list.attribute("count").as_int();
+    assert(number_bins == 2);
     assert(number_spectra_binary_arrays == number_bins);
 
     std::vector<std::vector<double>> spectrum;
@@ -394,44 +471,42 @@ std::vector<std::vector<double>> StreamCraft::MZML::extract_spectrum(const pugi:
 
     spectrum.resize(number_bins);
 
-    int counter = 0;
-
-    for (auto i = node_binary_list.children("binaryDataArray").begin(); i != node_binary_list.children("binaryDataArray").end(); ++i)
-    {
-        const pugi::xml_node &bin = *i;
-
-        pugi::xml_node node_binary = bin.child("binary");
+    auto bin = node_binary_list.children("binaryDataArray").begin();
+    assert(bin != node_binary_list.children("binaryDataArray").end());
+    { // extract mz values
+        pugi::xml_node node_binary = bin->child("binary");
         std::string encoded_string = node_binary.child_value();
         std::string decoded_string = decode_base64(encoded_string);
 
-        if (spectra_binary_metadata[counter].compressed)
+        if (spectra_binary_metadata[0].compressed)
         {
             decoded_string = decompress_zlib(decoded_string); // @todo is there a case where this doesn't apply for all spectra?
         }
 
-        spectrum[counter] = decode_little_endian(decoded_string, spectra_binary_metadata[counter].precision_int / 8);
+        spectrum[0] = decode_little_endian(decoded_string, spectra_binary_metadata[0].precision_int / 8);
 
-        assert(spectrum[counter].size() == number_traces); // this happens if an index is tried which does not exist in the data
-
-        if (spectra_binary_metadata[counter].data_name_short == "time")
-        {
-            pugi::xml_node node_unit = bin.find_child_by_attribute("cvParam", "unitCvRef", "UO");
-            std::string unit = node_unit.attribute("unitName").as_string();
-
-            if (unit == "minute")
-            {
-                for (double &j : spectrum[counter])
-                {
-                    j *= 60;
-                }
-            }
-            else
-            {
-                assert(unit == "second");
-            }
-        }
-        counter++;
+        assert(spectrum[0].size() == number_traces); // this happens if an index is tried which does not exist in the data
     }
+
+    // bin = node_binary_list.children("binaryDataArray").end();
+    // the above line will not work, even if bin only has two elements, because the ++ operator modifies more internal
+    // state than a simple index. @todo replace with an explicit access to the first and second element
+    bin++;
+    { // extract intensity values
+        pugi::xml_node node_binary = bin->child("binary");
+        std::string encoded_string = node_binary.child_value();
+        std::string decoded_string = decode_base64(encoded_string);
+
+        if (spectra_binary_metadata[1].compressed)
+        {
+            decoded_string = decompress_zlib(decoded_string); // @todo is there a case where this doesn't apply for all spectra?
+        }
+
+        spectrum[1] = decode_little_endian(decoded_string, spectra_binary_metadata[1].precision_int / 8);
+
+        assert(spectrum[1].size() == number_traces); // this happens if an index is tried which does not exist in the data
+        assert(spectra_binary_metadata[1].data_name_short == "intensity");
+    } // 4800874
     return spectrum;
 };
 
