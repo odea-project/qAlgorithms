@@ -166,7 +166,7 @@ int main(int argc, char *argv[])
 
         StreamCraft::MZML data(std::filesystem::canonical(pathSource));
 
-        if (!data.loading_result)
+        if (data.defective)
         {
             std::cerr << "Error: the file is defective.\n";
             if (userArgs.skipError)

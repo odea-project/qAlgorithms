@@ -329,49 +329,49 @@ namespace qAlgorithms
 
 #pragma region "find centroids"
 
-    std::vector<std::vector<CentroidPeak>> transferCentroids(
-        StreamCraft::MZML &data,
-        std::vector<int> &indices,
-        std::vector<double> &retention_times,
-        const int start_index,
-        double PPMerror)
-    {
-        std::vector<std::vector<CentroidPeak>> centroids(indices.size());
-        // #pragma omp parallel for
-        for (size_t i = 0; i < indices.size(); ++i) // loop over all indices
-        {
-            const int index = indices[i]; // spectrum index
-            if (index < start_index)
-            {
-                continue; // skip due to index
-            }
-            // get the spectrum
-            std::vector<std::vector<double>> spectrum = data.get_spectrum(index);
-            if (spectrum.empty())
-            {
-                std::cerr << "Error: spectrum decode at position " << index << " failed.\n";
-                continue;
-            }
+    // std::vector<std::vector<CentroidPeak>> transferCentroids(
+    //     StreamCraft::MZML &data,
+    //     std::vector<int> &indices,
+    //     std::vector<double> &retention_times,
+    //     const int start_index,
+    //     double PPMerror)
+    // {
+    //     std::vector<std::vector<CentroidPeak>> centroids(indices.size());
+    //     // #pragma omp parallel for
+    //     for (size_t i = 0; i < indices.size(); ++i) // loop over all indices
+    //     {
+    //         const int index = indices[i]; // spectrum index
+    //         if (index < start_index)
+    //         {
+    //             continue; // skip due to index
+    //         }
+    //         // get the spectrum
+    //         std::vector<std::vector<double>> spectrum = data.get_spectrum(index);
+    //         if (spectrum.empty())
+    //         {
+    //             std::cerr << "Error: spectrum decode at position " << index << " failed.\n";
+    //             continue;
+    //         }
 
-            for (size_t j = 0; j < spectrum[0].size(); j++)
-            {
-                if (spectrum[1][j] < 750)
-                {
-                    continue;
-                }
+    //         for (size_t j = 0; j < spectrum[0].size(); j++)
+    //         {
+    //             if (spectrum[1][j] < 750)
+    //             {
+    //                 continue;
+    //             }
 
-                centroids[i].push_back(CentroidPeak());
-                centroids[i].back().scanNumber = index;
-                centroids[i].back().mz = spectrum[0][j];
-                centroids[i].back().area = spectrum[1][j];
-                centroids[i].back().height = spectrum[1][j];
-                // centroids[i].back().retentionTime = retention_times[i]; // @todo fix this
-                centroids[i].back().DQSC = -1.0;
-                centroids[i].back().mzUncertainty = spectrum[0][j] * PPMerror * 10e-6; // 0.25 ppm default
-            }
-        }
-        return centroids;
-    }
+    //             centroids[i].push_back(CentroidPeak());
+    //             centroids[i].back().scanNumber = index;
+    //             centroids[i].back().mz = spectrum[0][j];
+    //             centroids[i].back().area = spectrum[1][j];
+    //             centroids[i].back().height = spectrum[1][j];
+    //             // centroids[i].back().retentionTime = retention_times[i]; // @todo fix this
+    //             centroids[i].back().DQSC = -1.0;
+    //             centroids[i].back().mzUncertainty = spectrum[0][j] * PPMerror * 10e-6; // 0.25 ppm default
+    //         }
+    //     }
+    //     return centroids;
+    // }
 
     inline float calcRTDiff(const std::vector<double> *retention_times)
     {
@@ -524,21 +524,20 @@ namespace qAlgorithms
         std::vector<CentroidPeak> centroids;
         centroids.reserve(countSelected * 1000);
         centroids.push_back({0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}); // dummy value used for binning
+
+        // avoid needless allocation / deallocation
+        std::vector<double> spectrum_mz(1000);
+        std::vector<double> spectrum_int(1000);
         for (size_t i = 0; i < countSelected; ++i)
         {
-            std::vector<double> spectrum_mz;
-            std::vector<double> spectrum_int;
+            size_t ID_spectrum = selectedIndices[i];
+            spectrum_mz.clear();
+            spectrum_int.clear();
+            data.get_spectrum(&spectrum_mz, &spectrum_int, ID_spectrum);
 
-            data.get_spectrum2(&spectrum_mz, &spectrum_int, selectedIndices[i]);
-
-            // std::vector<std::vector<double>> spectrum(2);
-            // spectrum[0] = spectrum_mz;
-            // spectrum[1] = spectrum_int;
-
-            // assert(spectrum.size() == 2);
             const auto profileGroups = pretreatDataCentroids(&spectrum_mz, &spectrum_int);
-            // std::cout << relativeIndex[i] << "," << selectedIndices[i] << " | ";
-            findCentroidPeaks(&centroids, &profileGroups, relativeIndex[i], selectedIndices[i]);
+
+            findCentroidPeaks(&centroids, &profileGroups, relativeIndex[i], ID_spectrum);
         }
         for (unsigned int i = 0; i < centroids.size(); i++)
         {

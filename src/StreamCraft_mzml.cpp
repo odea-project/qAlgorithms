@@ -9,26 +9,27 @@
 #include <cassert>
 
 // Decodes from a little endian binary string to a vector of doubles according to a precision integer.
-std::vector<double> decode_little_endian(const std::string &str, const int precision)
+std::vector<double> decode_little_endian(const std::string &str, bool isDouble)
 {
-    assert(precision == 4 || precision == 8);
+    // assert(precision == 4 || precision == 8);
     std::vector<unsigned char> bytes(str.begin(), str.end());
 
-    int bytes_size = (bytes.size() / precision);
+    int bytes_size = bytes.size() / (isDouble ? 8 : 4);
 
     std::vector<double> result(bytes_size);
 
     for (int i = 0; i < bytes_size; ++i)
     {
 
-        if (precision == 8)
+        if (isDouble)
         {
-            result[i] = reinterpret_cast<double &>(bytes[i * precision]);
+            result[i] = reinterpret_cast<double &>(bytes[i * 8]);
         }
         else
         {
+            assert(false); // this branch should generally never be taken, why was it included initially?
             float floatValue;
-            std::memcpy(&floatValue, &bytes[i * precision], sizeof(float));
+            std::memcpy(&floatValue, &bytes[i * 4], sizeof(float)); // @todo float is not 32 bit everywhere
             result[i] = static_cast<double>(floatValue);
         }
     }
@@ -126,12 +127,7 @@ std::string decode_base64(const std::string &encoded_string)
 
 StreamCraft::MZML::MZML(const std::filesystem::path &file)
 {
-    pugi::xml_document doc; // @todo why does this need to persist beyond the constructor? check access to class member variable
-
     loading_result = mzml_base_document.load_file(file.c_str(), pugi::parse_default | pugi::parse_declaration | pugi::parse_pi);
-    auto loading2 = doc.load_file(file.c_str(), pugi::parse_default | pugi::parse_declaration | pugi::parse_pi);
-
-    assert(loading2.status == loading_result.status);
 
     if (loading_result)
     {
@@ -140,8 +136,9 @@ StreamCraft::MZML::MZML(const std::filesystem::path &file)
     }
     else
     {
-        std::cerr << "mzML file could not be opened!" << std::endl
-                  << loading_result.description() << std::endl;
+        std::cerr << "Error: .mzML file could not be opened. Error description:\n"
+                  << loading_result.description() << "\n";
+        defective = true;
         return;
     }
 
@@ -150,9 +147,7 @@ StreamCraft::MZML::MZML(const std::filesystem::path &file)
 
     mzml_root_node = mzml_root_node.first_child();
 
-    std::string search_run = "//run";
-
-    pugi::xpath_node xps_run = mzml_root_node.select_node(search_run.c_str());
+    pugi::xpath_node xps_run = mzml_root_node.select_node("//run");
 
     pugi::xml_node spec_list = xps_run.node().child("spectrumList");
 
@@ -167,7 +162,7 @@ StreamCraft::MZML::MZML(const std::filesystem::path &file)
 
         for (const pugi::xml_node &bin : binary_list.children("binaryDataArray"))
         {
-            MZML_BINARY_METADATA mtd = extract_binary_metadata(bin);
+            BinaryMetadata mtd = extract_binary_metadata(bin);
 
             mtd.index = counter;
 
@@ -179,9 +174,9 @@ StreamCraft::MZML::MZML(const std::filesystem::path &file)
     }
 };
 
-StreamCraft::MZML_BINARY_METADATA StreamCraft::MZML::extract_binary_metadata(const pugi::xml_node &bin)
+StreamCraft::BinaryMetadata StreamCraft::MZML::extract_binary_metadata(const pugi::xml_node &bin)
 {
-    MZML_BINARY_METADATA mtd;
+    BinaryMetadata mtd;
 
     pugi::xml_node node_integer_32 = bin.find_child_by_attribute("cvParam", "accession", "MS:1000519");
     pugi::xml_node node_float_32 = bin.find_child_by_attribute("cvParam", "accession", "MS:1000521");
@@ -190,19 +185,23 @@ StreamCraft::MZML_BINARY_METADATA StreamCraft::MZML::extract_binary_metadata(con
 
     if (node_float_64)
     {
-        mtd.precision_int = 64;
+        // mtd.precision_int = 64;
+        mtd.isDouble = true;
     }
     else if (node_float_32)
     {
-        mtd.precision_int = 32;
+        // mtd.precision_int = 32;
+        mtd.isDouble = false;
     }
     else if (node_integer_64)
     {
-        mtd.precision_int = 64;
+        // mtd.precision_int = 64;
+        mtd.isDouble = true;
     }
     else if (node_integer_32)
     {
-        mtd.precision_int = 32;
+        // mtd.precision_int = 32;
+        mtd.isDouble = false;
     }
     else
     {
@@ -227,15 +226,16 @@ StreamCraft::MZML_BINARY_METADATA StreamCraft::MZML::extract_binary_metadata(con
 
     bool has_bin_data_type = false;
 
-    for (size_t i = 0; 1 < possible_accessions_binary_data.size(); ++i)
+    std::string tmp;
+    for (size_t i = 0; 1 < possible_accessions_binary_data_mzML.size(); ++i)
     {
-        pugi::xml_node node_data_type = bin.find_child_by_attribute("cvParam", "accession", possible_accessions_binary_data[i].c_str());
+        pugi::xml_node node_data_type = bin.find_child_by_attribute("cvParam", "accession", possible_accessions_binary_data_mzML[i].c_str());
 
         if (node_data_type)
         {
             has_bin_data_type = true;
-            mtd.data_value = node_data_type.attribute("value").as_string();
-            mtd.data_name_short = possible_short_name_binary_data[i];
+            tmp = node_data_type.attribute("value").as_string();
+            mtd.data_name_short = possible_short_name_binary_data_mzML[i];
             break;
         }
     }
@@ -244,7 +244,7 @@ StreamCraft::MZML_BINARY_METADATA StreamCraft::MZML::extract_binary_metadata(con
 
     if (mtd.data_name_short == "other") // this should be separated into a check for null / termination condition @todo
     {
-        mtd.data_name_short = mtd.data_value;
+        mtd.data_name_short += ": " + tmp;
     }
 
     return mtd;
@@ -268,28 +268,13 @@ std::vector<pugi::xml_node> link_vector_spectra_nodes(pugi::xml_node mzml_root_n
     return spectra;
 };
 
-std::vector<std::vector<double>> StreamCraft::MZML::get_spectrum(int index)
-{
-    std::vector<std::vector<double>> spectrum;
-    std::vector<pugi::xml_node> spectra_nodes = link_vector_spectra_nodes(mzml_root_node);
-
-    if (spectra_nodes.size() == 0)
-    {
-        std::cerr << "Error: no spectra found for index" << index << "\n";
-        return spectrum;
-    }
-
-    const pugi::xml_node &spectrum_node = spectra_nodes[index];
-    spectrum = extract_spectrum(spectrum_node);
-
-    return spectrum;
-}
-
-void StreamCraft::MZML::get_spectrum2(
+void StreamCraft::MZML::get_spectrum( // this obviously only extracts data that is in profile mode.
     std::vector<double> *const spectrum_mz,
     std::vector<double> *const spectrum_RT,
     size_t index)
 {
+    assert(spectrum_mz->empty() && spectrum_RT->empty());
+
     std::vector<pugi::xml_node> spectra_nodes = link_vector_spectra_nodes(mzml_root_node);
 
     if (spectra_nodes.size() == 0)
@@ -300,14 +285,6 @@ void StreamCraft::MZML::get_spectrum2(
 
     const pugi::xml_node &spectrum_node = spectra_nodes[index];
 
-    extract_spectrum2(spectrum_node, spectrum_mz, spectrum_RT);
-}
-
-void StreamCraft::MZML::extract_spectrum2(
-    const pugi::xml_node &spectrum_node,
-    std::vector<double> *const spectrum_mz,
-    std::vector<double> *const spectrum_RT)
-{
     pugi::xml_node node_binary_list = spectrum_node.child("binaryDataArrayList");
     assert(number_spectra_binary_arrays == 2);
 
@@ -325,7 +302,7 @@ void StreamCraft::MZML::extract_spectrum2(
             decoded_string = decompress_zlib(decoded_string); // @todo is there a case where this doesn't apply for all spectra?
         }
 
-        *spectrum_mz = decode_little_endian(decoded_string, spectra_binary_metadata[0].precision_int / 8);
+        *spectrum_mz = decode_little_endian(decoded_string, spectra_binary_metadata[0].isDouble);
 
         assert(spectrum_mz->size() == number_traces); // this happens if an index is tried which does not exist in the data
     }
@@ -344,7 +321,7 @@ void StreamCraft::MZML::extract_spectrum2(
             decoded_string = decompress_zlib(decoded_string); // @todo is there a case where this doesn't apply for all spectra?
         }
 
-        *spectrum_RT = decode_little_endian(decoded_string, spectra_binary_metadata[1].precision_int / 8);
+        *spectrum_RT = decode_little_endian(decoded_string, spectra_binary_metadata[1].isDouble);
 
         assert(spectrum_RT->size() == number_traces); // this happens if an index is tried which does not exist in the data
         assert(spectra_binary_metadata[1].data_name_short == "intensity");
@@ -447,92 +424,6 @@ StreamCraft::polarity_MZML StreamCraft::MZML::get_polarity_mode(const size_t cou
         return polarity_MZML::negative;
     }
 };
-
-std::vector<std::vector<double>> StreamCraft::MZML::extract_spectrum(const pugi::xml_node &spectrum_node)
-{
-
-    pugi::xml_node node_binary_list = spectrum_node.child("binaryDataArrayList");
-    unsigned int number_bins = node_binary_list.attribute("count").as_int();
-    assert(number_bins == 2);
-    assert(number_spectra_binary_arrays == number_bins);
-
-    std::vector<std::vector<double>> spectrum;
-    unsigned int number_traces = spectrum_node.attribute("defaultArrayLength").as_int();
-
-    spectrum.resize(number_bins);
-
-    auto bin = node_binary_list.children("binaryDataArray").begin();
-    assert(bin != node_binary_list.children("binaryDataArray").end());
-    { // extract mz values
-        pugi::xml_node node_binary = bin->child("binary");
-        std::string encoded_string = node_binary.child_value();
-        std::string decoded_string = decode_base64(encoded_string);
-
-        if (spectra_binary_metadata[0].compressed)
-        {
-            decoded_string = decompress_zlib(decoded_string); // @todo is there a case where this doesn't apply for all spectra?
-        }
-
-        spectrum[0] = decode_little_endian(decoded_string, spectra_binary_metadata[0].precision_int / 8);
-
-        assert(spectrum[0].size() == number_traces); // this happens if an index is tried which does not exist in the data
-    }
-
-    // bin = node_binary_list.children("binaryDataArray").end();
-    // the above line will not work, even if bin only has two elements, because the ++ operator modifies more internal
-    // state than a simple index. @todo replace with an explicit access to the first and second element
-    bin++;
-    { // extract intensity values
-        pugi::xml_node node_binary = bin->child("binary");
-        std::string encoded_string = node_binary.child_value();
-        std::string decoded_string = decode_base64(encoded_string);
-
-        if (spectra_binary_metadata[1].compressed)
-        {
-            decoded_string = decompress_zlib(decoded_string); // @todo is there a case where this doesn't apply for all spectra?
-        }
-
-        spectrum[1] = decode_little_endian(decoded_string, spectra_binary_metadata[1].precision_int / 8);
-
-        assert(spectrum[1].size() == number_traces); // this happens if an index is tried which does not exist in the data
-        assert(spectra_binary_metadata[1].data_name_short == "intensity");
-    } // 4800874
-    return spectrum;
-};
-
-std::vector<std::vector<std::vector<double>>> StreamCraft::MZML::extract_spectra(const std::vector<int> &idxs)
-{
-    std::vector<std::vector<std::vector<double>>> all_spectra;
-    std::vector<pugi::xml_node> spectra_nodes = link_vector_spectra_nodes(mzml_root_node);
-
-    int n = idxs.size();
-
-    if (n == 0)
-    {
-        std::cerr << "No indices given!" << std::endl;
-        return all_spectra;
-    }
-
-    if (spectra_nodes.size() == 0)
-    {
-        std::cerr << "No spectra found!" << std::endl;
-        return all_spectra;
-    }
-
-    all_spectra.resize(n);
-
-    // # pragma omp parallel for
-    for (int i = 0; i < n; i++)
-    {
-        const int index = idxs[i];
-
-        const pugi::xml_node &spectrum_node = spectra_nodes[index];
-
-        all_spectra[i] = extract_spectrum(spectrum_node);
-    }
-
-    return all_spectra;
-}
 
 std::vector<size_t> StreamCraft::MZML::get_spectra_index(const std::vector<unsigned int> *indices)
 {
