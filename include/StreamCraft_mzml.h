@@ -86,8 +86,12 @@ namespace StreamCraft
         MZML(const std::filesystem::path &file);
 
         std::vector<std::vector<double>> get_spectrum(int index); // this is the actually important function
-        std::vector<std::vector<double>> get_spectrum2(int index);
-        std::vector<std::vector<double>> extract_spectrum2(
+        void get_spectrum2(
+            std::vector<double> *const spectrum_mz,
+            std::vector<double> *const spectrum_RT,
+            size_t index);
+
+        void extract_spectrum2(
             const pugi::xml_node &spectrum_node,
             std::vector<double> *const spectrum_mz,
             std::vector<double> *const spectrum_RT);

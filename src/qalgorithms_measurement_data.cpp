@@ -526,9 +526,17 @@ namespace qAlgorithms
         centroids.push_back({0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}); // dummy value used for binning
         for (size_t i = 0; i < countSelected; ++i)
         {
-            const std::vector<std::vector<double>> spectrum = data.get_spectrum(selectedIndices[i]); // @todo optimisation target
-            assert(spectrum.size() == 2);
-            const auto profileGroups = pretreatDataCentroids(&spectrum);
+            std::vector<double> spectrum_mz;
+            std::vector<double> spectrum_int;
+
+            data.get_spectrum2(&spectrum_mz, &spectrum_int, selectedIndices[i]);
+
+            // std::vector<std::vector<double>> spectrum(2);
+            // spectrum[0] = spectrum_mz;
+            // spectrum[1] = spectrum_int;
+
+            // assert(spectrum.size() == 2);
+            const auto profileGroups = pretreatDataCentroids(&spectrum_mz, &spectrum_int);
             // std::cout << relativeIndex[i] << "," << selectedIndices[i] << " | ";
             findCentroidPeaks(&centroids, &profileGroups, relativeIndex[i], selectedIndices[i]);
         }
@@ -622,26 +630,29 @@ namespace qAlgorithms
         return ret;
     }
 
-    std::vector<ProfileBlock> pretreatDataCentroids(const std::vector<std::vector<double>> *spectrum)
+    std::vector<ProfileBlock> pretreatDataCentroids(
+        const std::vector<double> *spectrum_mz,
+        const std::vector<double> *spectrum_int)
     {
         std::vector<double> intensities_profile;
         std::vector<double> mz_profile;
         std::vector<unsigned int> idxConvert; // used to trace back processing steps to untreated data
 
         { // remove zeroes
-            const auto mz = spectrum->at(0);
-            intensities_profile.reserve(mz.size() / 2);
-            mz_profile.reserve(mz.size() / 2);
+            size_t size = spectrum_mz->size();
+            assert(spectrum_int->size() == size);
+            intensities_profile.reserve(size);
+            mz_profile.reserve(size);
             // Depending on the vendor, a profile contains a lot of points with intensity 0.
             // These were added by the vendor software and must be removed prior to processing.
-            for (unsigned int i = 0; i < mz.size(); ++i)
+            for (unsigned int i = 0; i < size; ++i)
             {
-                if (spectrum->at(1)[i] == 0.0)
+                if (spectrum_int->at(i) == 0.0)
                 {
                     continue; // skip values with no intensity @todo minimum intensity?
                 }
-                intensities_profile.push_back(spectrum->at(1)[i]);
-                mz_profile.push_back(mz[i]);
+                intensities_profile.push_back(spectrum_int->at(i));
+                mz_profile.push_back(spectrum_mz->at(i));
                 idxConvert.push_back(i);
             }
             assert(!intensities_profile.empty());
