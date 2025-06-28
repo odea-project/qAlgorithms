@@ -41,7 +41,9 @@ namespace qAlgorithms
                         // size_t previousDiffPos,              // skip this many points in the diffOrder vector
                         size_t start, size_t end);
 
-    std::vector<ProfileBlock> pretreatDataCentroids(const std::vector<std::vector<double>> *spectrum);
+    std::vector<ProfileBlock> pretreatDataCentroids(
+        const std::vector<double> *spectrum_mz,
+        const std::vector<double> *spectrum_int);
 
     void extrapolateEIC(const std::vector<size_t> scanNums, std::vector<float> *intensity);
 
