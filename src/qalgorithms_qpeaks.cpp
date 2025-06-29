@@ -122,10 +122,14 @@ namespace qAlgorithms
         return;
     }
 
-    std::vector<RegCoeffs> restoreShape(const std::vector<RegCoeffs> *input,
-                                        const std::vector<size_t> *scaleCount,
-                                        const size_t numPoints,
-                                        const size_t maxScale)
+    std::vector<RegCoeffs> restoreShape(
+        const std::vector<size_t> *scaleCount,
+        std::vector<double> *const beta_0,
+        std::vector<double> *const beta_1,
+        std::vector<double> *const beta_2,
+        std::vector<double> *const beta_3,
+        const size_t numPoints,
+        const size_t maxScale)
     {
         // this function is required since during convolution, the result array is constructed in this order:
         /*
@@ -140,7 +144,7 @@ namespace qAlgorithms
         // for the following tests, we need it to follow a column-first order. Since the outermost scale contains two
         // entries if the checked block has an even number of points, we must retrace our steps from the convolution
 
-        std::vector<RegCoeffs> results(input->size(), {0, 0, 0, 0}); // checks for coefficients != 0 exist in the rest of the code
+        std::vector<RegCoeffs> results(beta_0->size(), {0, 0, 0, 0}); // checks for coefficients != 0 exist in the rest of the code
         size_t counter = 0;
         size_t maxIdx = numPoints - 5;
         assert(maxIdx == scaleCount->size() - 1);
@@ -152,7 +156,12 @@ namespace qAlgorithms
             size_t offset = 0;
             for (size_t scale_i = 2; scale_i <= inner; scale_i++)
             {
-                auto current = input->at(counter);
+                RegCoeffs current = {
+                    beta_0->at(counter),
+                    beta_1->at(counter),
+                    beta_2->at(counter),
+                    beta_3->at(counter),
+                };
 
                 results[idx + offset] = current;
 
@@ -335,15 +344,10 @@ namespace qAlgorithms
 
         assert(beta_0.size() == beta_1.size());
 
-        std::vector<RegCoeffs> coeffs;
-        coeffs.reserve(beta_1.size());
-        for (size_t i = 0; i < beta_1.size(); i++)
-        {
-            coeffs.push_back({float(beta_0[i]), float(beta_1[i]), float(beta_2[i]), float(beta_3[i])});
-        }
-
         // @todo why not save the scale information as part of the coefficient struct and then use that for the whole merging?
-        coeffs = restoreShape(&coeffs, &maxInnerLoop, intensity_log->size(), max_scale);
+        auto coeffs = restoreShape(&maxInnerLoop,
+                                   &beta_0, &beta_1, &beta_2, &beta_3,
+                                   intensity_log->size(), max_scale);
 
         return coeffs;
     }
@@ -690,8 +694,8 @@ namespace qAlgorithms
           The new cofficient is then b0* = b0 + logC, where C is the correction factor.
           first: logC; second: variance of logC
         */
-        std::pair<float, float> smearing = smearingCorrection(&predictLog, &selectLog, scale);
-        mutateReg->coeffs.b0 += smearing.first; // b0* = b0 + logC
+        auto smearing = smearingCorrection(&predictLog, &selectLog, scale);
+        mutateReg->coeffs.b0 += smearing.log_C; // b0* = b0 + logC
         // @todo: implement smearing.second for the uncertainty of b0
 
         mutateReg->uncertainty_pos = calcUncertaintyPos(mse, mutateReg->coeffs, mutateReg->apex_position, scale);
@@ -1128,7 +1132,8 @@ namespace qAlgorithms
 #pragma endregion calcSSE
 
 #pragma region "smearing correction"
-    std::pair<float, float> smearingCorrection(
+    // @todo implement this
+    CorrectionFactors smearingCorrection(
         const std::vector<float> *predictLog,
         const std::vector<float> *selectLog,
         const size_t scale)
@@ -1170,7 +1175,7 @@ namespace qAlgorithms
         double varC = s2 / double(n);                                  // Var(C) = s²/n
         double varLogC = varC / (C * C);                               // Var(log C) via Delta-Method
 
-        return {float(std::log(C)), float(varLogC)};
+        return {std::log(C), varLogC};
     }
 #pragma endregion "smearing correction"
 
