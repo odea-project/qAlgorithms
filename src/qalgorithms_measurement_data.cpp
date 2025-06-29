@@ -756,18 +756,20 @@ namespace qAlgorithms
             // entry.cumdf[entrySize - 1] = entry.cumdf[entrySize - 3];
 
             // extrapolate two points to each size of the entry
-            entry.intensity[1] = entry.intensity[2] / 2;
-            entry.intensity[0] = entry.intensity[2] / 4;
-            entry.intensity[entrySize - 2] = entry.intensity[entrySize - 3] / 2;
-            entry.intensity[entrySize - 1] = entry.intensity[entrySize - 3] / 4;
+            {
+                entry.intensity[1] = entry.intensity[2] / 2;
+                entry.intensity[0] = entry.intensity[2] / 4;
+                entry.intensity[entrySize - 2] = entry.intensity[entrySize - 3] / 2;
+                entry.intensity[entrySize - 1] = entry.intensity[entrySize - 3] / 4;
 
-            double mzDiffFront = entry.mz[3] - entry.mz[2]; // @todo should there be two different distances?
-            entry.mz[1] = entry.mz[2] - mzDiffFront;
-            entry.mz[0] = entry.mz[2] - mzDiffFront * 2;
+                double mzDiffFront = entry.mz[3] - entry.mz[2]; // @todo should there be two different distances?
+                entry.mz[1] = entry.mz[2] - mzDiffFront;
+                entry.mz[0] = entry.mz[2] - mzDiffFront * 2;
 
-            double mzDiffBack = entry.mz[entrySize - 3] - entry.mz[entrySize - 4];
-            entry.mz[entrySize - 2] = entry.mz[entrySize - 3] + mzDiffBack;
-            entry.mz[entrySize - 1] = entry.mz[entrySize - 3] + mzDiffBack * 2;
+                double mzDiffBack = entry.mz[entrySize - 3] - entry.mz[entrySize - 4];
+                entry.mz[entrySize - 2] = entry.mz[entrySize - 3] + mzDiffBack;
+                entry.mz[entrySize - 1] = entry.mz[entrySize - 3] + mzDiffBack * 2;
+            }
 
             // add traceability information from untreated spectrum
             entry.startPos = idxConvert[res.start];

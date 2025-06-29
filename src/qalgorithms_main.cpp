@@ -200,13 +200,6 @@ int main(int argc, char *argv[])
             std::cout << " file in profile mode, ok\n";
         }
 
-        // enum polarity
-        // {
-        //     positive,
-        //     negative,
-        //     both
-        // };
-
         auto polarity_file = data.get_polarity_mode(100); // checks first 100 spectra
 
         // @todo single access function into qAlgorithms
@@ -365,6 +358,9 @@ int main(int argc, char *argv[])
                 }
             }
             meanDQSB /= count;
+
+            continue; // @todo ensure centroiding and binning work as best they can first
+
 #pragma region "feature construction"
             timeStart = std::chrono::high_resolution_clock::now();
             // every subvector of peaks corresponds to the bin ID

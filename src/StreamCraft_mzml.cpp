@@ -18,16 +18,19 @@ std::vector<double> decode_little_endian(const std::string &str, bool isDouble)
 
     std::vector<double> result(bytes_size);
 
-    for (int i = 0; i < bytes_size; ++i)
+    if (isDouble)
     {
-
-        if (isDouble)
+        for (int i = 0; i < bytes_size; ++i)
         {
             result[i] = reinterpret_cast<double &>(bytes[i * 8]);
         }
-        else
+    }
+    else
+    {
+        // this branch should generally never be taken, why was it included initially?
+        std::cerr << "Warning: it is unexpected that data is stored as 32-bit float.\n";
+        for (int i = 0; i < bytes_size; ++i)
         {
-            assert(false); // this branch should generally never be taken, why was it included initially?
             float floatValue;
             std::memcpy(&floatValue, &bytes[i * 4], sizeof(float)); // @todo float is not 32 bit everywhere
             result[i] = static_cast<double>(floatValue);

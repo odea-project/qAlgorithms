@@ -89,7 +89,13 @@ namespace qAlgorithms
                             size_t limit_R,
                             size_t index_x0);
 
-    std::pair<float, float> smearingCorrection(
+    struct CorrectionFactors
+    {
+        double log_C;
+        double varLog_C;
+    };
+
+    CorrectionFactors smearingCorrection(
         const std::vector<float> *predictLog,
         const std::vector<float> *selectLog,
         const size_t scale);
