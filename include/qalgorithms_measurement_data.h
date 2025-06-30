@@ -2,7 +2,7 @@
 #define QALGORITHMS_MEASUREMENT_DATA_H
 
 #include "qalgorithms_datatypes.h"
-#include "StreamCraft_mzml.h"
+#include "qalgorithms_read_file.h"
 
 #include <vector>
 #include <array>
@@ -12,7 +12,7 @@ namespace qAlgorithms
     inline std::array<double, 3> interpolateQuadratic(float interpolate, const float *x, const float *y);
 
     std::vector<std::vector<CentroidPeak>> transferCentroids(
-        StreamCraft::MZML &data,
+        MZML &data,
         std::vector<int> &indices,
         std::vector<double> &retention_times,
         const int start_index,
@@ -50,7 +50,7 @@ namespace qAlgorithms
     inline float calcRTDiff(const std::vector<double> *retention_times);
 
     std::vector<CentroidPeak> findCentroids(
-        StreamCraft::MZML &data,
+        MZML &data,
         std::vector<float> &convertRT,
         float &rt_diff,
         const bool polarity,

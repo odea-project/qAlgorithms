@@ -4,16 +4,12 @@
 #include <vector>
 #include <string>
 #include <filesystem>
+#include "qalgorithms_datatypes.h"
 
 #define PUGIXML_HEADER_ONLY
+#include "../external/pugixml-1.14/src/pugixml.h"
 
-#ifndef PUGIXML_PATH
-#define PUGIXML_PATH "../external/pugixml-1.14/src/pugixml.h"
-#endif
-
-#include PUGIXML_PATH
-
-namespace StreamCraft
+namespace qAlgorithms
 {
     struct BinaryMetadata // @todo there is no need for a file-specific metadata object
     {
@@ -30,13 +26,6 @@ namespace StreamCraft
         int mode = 0;                  // 1 = profile, 2 = centroid
         int MS_level = 0;
         bool polarity; // 0 = negative, 1 = positive
-    };
-
-    enum polarity_MZML
-    {
-        positive,
-        negative,
-        mixed
     };
 
     static std::vector<std::string> possible_accessions_binary_data_mzML = {
@@ -95,7 +84,7 @@ namespace StreamCraft
         // return all indices of spectra that match the required criteria
         std::vector<unsigned int> filter_spectra(bool ms1, bool polarity, bool centroided); // @todo this is only useable to select MS1 or MS2
 
-        polarity_MZML get_polarity_mode(const size_t count);
+        Polarities get_polarity_mode(const size_t count);
         std::vector<double> get_spectra_RT(const std::vector<unsigned int> *indices);
     };
 };

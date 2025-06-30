@@ -8,6 +8,15 @@
 
 namespace qAlgorithms
 {
+    // handle polarity switching
+    enum Polarities
+    {
+        positive,
+        negative,
+        mixed,
+        unknown
+    };
+
     struct DataPoint_deprecated // @todo remove this (again)
     {
         float x;

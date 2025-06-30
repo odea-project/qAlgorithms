@@ -8,7 +8,7 @@
 #include <iostream>
 #include <errno.h>
 
-#include "../../include//StreamCraft_mzml.h"
+#include "../../include/qalgorithms_read_file.h"
 #include "../../include/qalgorithms_input_output.h"
 
 namespace qalgo_waters
@@ -255,7 +255,7 @@ int main(int argc, char const *argv[]) // single-file process, @todo change
     auto tasks = qAlgorithms::controlInput(&paths, false);
 
     // read file using streamcraft @todo correctness check here?
-    StreamCraft::MZML data(tasks[0]);
+    qAlgorithms::MZML data(tasks[0]);
 
     // extract relevant
     std::cout << "hello world\n";

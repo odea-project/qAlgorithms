@@ -3,7 +3,7 @@
 #include "qalgorithms_global_vars.h"
 #include "qalgorithms_qpeaks.h"
 #include "qalgorithms_qbin.h"
-#include "StreamCraft_mzml.h"
+#include "qalgorithms_read_file.h"
 
 #include <cmath>
 #include <fstream>
@@ -331,7 +331,7 @@ namespace qAlgorithms
 #pragma region "find centroids"
 
     // std::vector<std::vector<CentroidPeak>> transferCentroids(
-    //     StreamCraft::MZML &data,
+    //     MZML &data,
     //     std::vector<int> &indices,
     //     std::vector<double> &retention_times,
     //     const int start_index,
@@ -449,7 +449,7 @@ namespace qAlgorithms
     }
 
     std::vector<CentroidPeak> findCentroids( // this function needs to be reworked further @todo
-        StreamCraft::MZML &data,
+        MZML &data,
         std::vector<float> &convertRT,
         float &rt_diff,
         const bool polarity,

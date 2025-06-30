@@ -2,6 +2,7 @@
 #include "qalgorithms_utils.h"
 #include "qalgorithms_global_vars.h"
 #include "qalgorithms_datatypes.h"
+#include "qalgorithms_read_file.h"
 
 #include <algorithm>
 #include <cassert>

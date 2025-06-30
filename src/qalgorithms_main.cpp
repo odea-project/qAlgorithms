@@ -5,9 +5,12 @@
 #include "qalgorithms_global_vars.h"
 #include "qalgorithms_input_output.h"
 #include "qalgorithms_metafiles.h" // new organisation of program - this and the library header should be the only two qalgo includes!
-#include "StreamCraft_mzml.h"
+#include "qalgorithms_read_file.h"
+#include "qalgorithms_measurement_data.h"
 
 // external
+#include <cassert>
+#include <cmath>
 #include <iostream>
 #include <chrono>
 #include <fstream> // write peaks to file
@@ -164,7 +167,7 @@ int main(int argc, char *argv[])
                       << pathSource << "\n... ";
         }
 
-        StreamCraft::MZML data(std::filesystem::canonical(pathSource));
+        MZML data(std::filesystem::canonical(pathSource));
 
         if (data.defective)
         {
@@ -204,11 +207,11 @@ int main(int argc, char *argv[])
 
         // @todo single access function into qAlgorithms
 
-        if (polarity_file == StreamCraft::polarity_MZML::positive || polarity_file == StreamCraft::polarity_MZML::mixed)
+        if (polarity_file == Polarities::positive || polarity_file == Polarities::mixed)
         {
             /* this does the processing for positive files - keep it to the function call and handle logging / output through master function arguments */
         }
-        if (polarity_file == StreamCraft::polarity_MZML::negative || polarity_file == StreamCraft::polarity_MZML::mixed)
+        if (polarity_file == Polarities::negative || polarity_file == Polarities::mixed)
         {
             // see above
         }

@@ -58,14 +58,6 @@ namespace qAlgorithms
 #pragma endregion "command line arguments"
 
 #pragma region "file reading"
-    // handle polarity switching
-    enum Polarities
-    {
-        positive = 1,
-        negative = -1,
-        unknown = 0
-    };
-
     struct TaskItem
     {
         std::filesystem::path path;
