@@ -91,6 +91,10 @@ namespace StreamCraft
         std::vector<int> get_spectra_level(const std::vector<unsigned int> *indices);
         std::vector<bool> get_spectra_mode(const std::vector<unsigned int> *indices);
         std::vector<bool> get_spectra_polarity(const std::vector<unsigned int> *indices);
+
+        // return all indices of spectra that match the required criteria
+        std::vector<unsigned int> filter_spectra(bool ms1, bool polarity, bool centroided); // @todo this is only useable to select MS1 or MS2
+
         polarity_MZML get_polarity_mode(const size_t count);
         std::vector<double> get_spectra_RT(const std::vector<unsigned int> *indices);
     };

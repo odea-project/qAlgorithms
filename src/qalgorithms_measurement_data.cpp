@@ -3,6 +3,7 @@
 #include "qalgorithms_global_vars.h"
 #include "qalgorithms_qpeaks.h"
 #include "qalgorithms_qbin.h"
+#include "StreamCraft_mzml.h"
 
 #include <cmath>
 #include <fstream>
@@ -447,43 +448,6 @@ namespace qAlgorithms
         return relativeIndex;
     }
 
-    std::vector<unsigned int> getRelevantSpectra(StreamCraft::MZML &data,
-                                                 const bool polarity,
-                                                 const bool ms1only)
-    {
-        // accessor contains the indices of all spectra that should be fetched
-        std::vector<unsigned int> accessor(data.number_spectra, 0);
-        std::iota(accessor.begin(), accessor.end(), 0);
-
-        std::vector<bool> spectrum_mode = data.get_spectra_mode(&accessor); // get spectrum mode (centroid or profile)
-        std::vector<size_t> indices = data.get_spectra_index(&accessor);    // get all indices
-        std::vector<int> ms_levels = data.get_spectra_level(&accessor);     // get all MS levels
-        assert(!indices.empty());
-
-        std::vector<unsigned int> selectedIndices;
-        selectedIndices.reserve(indices.size());
-
-        std::vector<bool> spectrum_polarity = data.get_spectra_polarity(&accessor); // get spectrum polarity (positive or negative)
-        for (size_t i = 0; i < indices.size(); i++)
-        {
-            if (ms1only && ms_levels[i] != 1)
-            {
-                continue;
-            }
-            if (spectrum_polarity[i] != polarity)
-            {
-                continue;
-            }
-            if (!spectrum_mode[i])
-            {
-                continue;
-            }
-
-            selectedIndices.push_back(indices[i]);
-        }
-        return selectedIndices;
-    }
-
     std::vector<CentroidPeak> findCentroids( // this function needs to be reworked further @todo
         StreamCraft::MZML &data,
         std::vector<float> &convertRT,
@@ -491,10 +455,10 @@ namespace qAlgorithms
         const bool polarity,
         const bool ms1only)
     {
-        std::vector<unsigned int> selectedIndices = getRelevantSpectra(data, polarity, ms1only);
+        std::vector<unsigned int> selectedIndices = data.filter_spectra(ms1only, polarity, false);
         if (selectedIndices.empty())
         {
-            return std::vector<CentroidPeak>{};
+            return std::vector<CentroidPeak>{}; // this currently only serves to eliminate spectra of the wrong polarity, @todo better solution?
         }
 
         std::vector<double> retention_times = data.get_spectra_RT(&selectedIndices);

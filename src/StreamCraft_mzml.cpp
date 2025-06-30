@@ -489,3 +489,36 @@ std::vector<bool> StreamCraft::MZML::get_spectra_mode(const std::vector<unsigned
     }
     return modes;
 };
+
+std::vector<unsigned int> StreamCraft::MZML::filter_spectra(bool ms1, bool polarity, bool centroided)
+{
+    // return a vector of all indices that are relevant to the query. Properties are checked in order of regularity.
+    assert(number_spectra > 0);
+    std::vector<unsigned int> indices;
+    indices.reserve(number_spectra);
+
+    std::vector<pugi::xml_node> spectra_nodes = link_vector_spectra_nodes(mzml_root_node);
+
+    for (unsigned int i = 0; i < number_spectra; i++)
+    {
+        pugi::xml_node spec = spectra_nodes[i];
+
+        bool isCentroid = spec.find_child_by_attribute("cvParam", "accession", "MS:1000127");
+        if (isCentroid != centroided)
+            continue; // this does not allow for processing of partially centroided data
+
+        bool polarityPos = spec.find_child_by_attribute("cvParam", "accession", "MS:1000130");
+        if (polarityPos != polarity)
+            continue;
+
+        pugi::xml_node level_node = spec.find_child_by_attribute("cvParam", "name", "ms level");
+        int level = level_node.attribute("value").as_int();
+        bool isMS1 = 1 == level;
+        if (isMS1 != ms1)
+            continue; // only ms1 or msn data can be retrieved at once.
+
+        indices.push_back(i);
+    }
+    indices.shrink_to_fit();
+    return indices;
+}
