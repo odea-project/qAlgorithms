@@ -1,5 +1,7 @@
 #include "StreamCraft_mzml.h"
 
+#include "../external/simdutf/simdutf.h" // use a fast base64 decode function that makes proper use of SIMD
+
 #include <iostream>
 #include <filesystem>
 #include <vector>
@@ -75,57 +77,21 @@ std::string decompress_zlib(const std::string &compressed_string)
     return outstring;
 };
 
-// Decodes a Base64 string into a string with binary data.
-// @todo performance critical. Replace with highly optimised library
+// Decodes a Base64 string into a string with binary data using the simdutf library subset chosen by '--with-base64'
+// (https://github.com/simdutf/simdutf/tree/master?tab=readme-ov-file#single-header-version-with-limited-features).
 std::string decode_base64(const std::string &encoded_string)
 {
-    std::string decoded_string;
+    size_t length = encoded_string.size() / 4 * 3;
+    std::vector<char> output(length);
+    auto simd_res = simdutf::base64_to_binary(encoded_string.c_str(), encoded_string.size(), output.data());
 
-    decoded_string.reserve((encoded_string.size() * 3) / 4);
-
-    int val = 0;
-    int valb = -8;
-    for (char c : encoded_string)
+    if (simd_res.error != 0) [[unlikely]]
     {
-        if (c == '=')
-        {
-            valb -= 6;
-            continue;
-        }
-        if (c >= 'A' && c <= 'Z')
-        {
-            c -= 'A';
-        }
-        else if (c >= 'a' && c <= 'z')
-        {
-            c -= 'a' - 26;
-        }
-        else if (c >= '0' && c <= '9')
-        {
-            c -= '0' - 52;
-        }
-        else if (c == '+')
-        {
-            c = 62;
-        }
-        else if (c == '/')
-        {
-            c = 63;
-        }
-        else
-        {
-            continue;
-        }
-        val = (val << 6) + c;
-        valb += 6;
-        if (valb >= 0)
-        {
-            decoded_string.push_back(char((val >> valb) & 0xFF));
-            valb -= 8;
-        }
+        return {std::to_string(simd_res.count)}; // error message is handled one function above
     }
 
-    return decoded_string;
+    auto simd_string = std::string(output.data(), simd_res.count);
+    return simd_string;
 };
 
 StreamCraft::MZML::MZML(const std::filesystem::path &file)
@@ -299,6 +265,14 @@ void StreamCraft::MZML::get_spectrum( // this obviously only extracts data that 
         pugi::xml_node node_binary = bin->child("binary");
         std::string encoded_string = node_binary.child_value();
         std::string decoded_string = decode_base64(encoded_string);
+
+        // error handling
+        if (decoded_string.size() < 40)
+        {
+            std::cerr << "Error: spectrum " << index << " could not be decoded as base64 correctly. Please ensure your input file is not corrupted.\n"
+                      << "The error occured at character " << decoded_string << " as reported by the \"simdutf\" library.\n";
+            return; // implement a defined way to skip the current file? @todo
+        }
 
         if (spectra_binary_metadata[0].compressed)
         {

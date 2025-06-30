@@ -19,10 +19,10 @@ add_compile_options(-Wall -Wpedantic -Wuninitialized -Wno-unknown-pragmas -Wform
 # add_compile_options(-fsanitize=address)
 
 # Set include directories
-include_directories(include)
+include_directories(include "external/simdutf/")
 
 # Source files
-file(GLOB_RECURSE SOURCES "src/*.cpp" "external/CDFlib/cdflib.cpp")
+file(GLOB_RECURSE SOURCES "src/*.cpp" "external/CDFlib/cdflib.cpp" "external/simdutf/simdutf.cpp")
 
 # flags for static compile 
 # set(BUILD_SHARED_LIBS OFF)
@@ -32,4 +32,4 @@ file(GLOB_RECURSE SOURCES "src/*.cpp" "external/CDFlib/cdflib.cpp")
 add_executable(${PROJECT_NAME} ${SOURCES})
 
 # Linker flags
-target_link_libraries(${PROJECT_NAME} PUBLIC z) # "z" is the linker flag for zlib, which is included as a header file
+target_link_libraries(${PROJECT_NAME} PUBLIC z) # "z" is the linker flag for zlib
