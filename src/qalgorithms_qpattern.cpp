@@ -743,6 +743,22 @@ namespace qAlgorithms
         }
     }
 
+    size_t calcDF_single( // @todo change this so that cumulative degrees of freedom are used
+        const std::vector<bool> *degreesOfFreedom,
+        unsigned int left_limit,
+        unsigned int right_limit)
+    {
+        size_t DF = 0;
+        for (size_t i = left_limit; i < right_limit + 1; i++)
+        {
+            if ((*degreesOfFreedom)[i])
+            {
+                ++DF;
+            }
+        }
+        return DF;
+    }
+
     MultiRegression runningRegression_multi( // add function that combines multiplr eics and updates the peak count
         const MergedEIC *eic,
         const std::vector<ReducedEIC> *eics,
@@ -828,7 +844,7 @@ namespace qAlgorithms
                 RegressionGauss testCase;
                 testCase.coeffs = coeff; // @todo do this during initialisation
 
-                size_t df = calcDF(&(DF_vecs[i]), idxRegStart, 2 * scale + idxRegStart); // @todo switch to cumulative array
+                size_t df = calcDF_single(&(DF_vecs[i]), idxRegStart, 2 * scale + idxRegStart); // @todo switch to cumulative array
                 if (df < 5)
                 {
                     regressionOK[multiReg] = false;
@@ -845,7 +861,7 @@ namespace qAlgorithms
                 }
 
                 // check degrees of fredom again with updated limits
-                df = calcDF(&(eics->at(selection->at(i)).df), testCase.left_limit, testCase.right_limit);
+                df = calcDF_single(&(eics->at(selection->at(i)).df), testCase.left_limit, testCase.right_limit);
                 if (df < 5)
                 {
                     regressionOK[multiReg] = false;

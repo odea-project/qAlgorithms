@@ -8,20 +8,14 @@
 
 namespace qAlgorithms
 {
-    struct dataPoint // @todo remove this (again)
+    struct DataPoint_deprecated // @todo remove this (again)
     {
         float x;
         float y;
         bool df;
     };
 
-    struct separator
-    {
-        size_t start;
-        size_t end;
-    };
-
-    struct treatedData // @todo remove this struct / maybe not?
+    struct TreatedData // @todo remove this struct / maybe not?
     {
         std::vector<float> RT;
         std::vector<float> intensity;
@@ -37,15 +31,14 @@ namespace qAlgorithms
         std::vector<float> mz;
         // the degrees of freedom are redundant because there are never interpolated points within a centroid
         // we still use them because this way there is no largely redundant second peak fitting function
-        std::vector<unsigned int> cumdf; // cumulative df
-        // std::vector<bool> df;
+        std::vector<unsigned int> cumdf; // cumulative df @todo find a better solution for the general case
         unsigned int startPos;
         unsigned int endPos;
     };
 
     struct RegCoeffs
     {
-        float b0, b1, b2, b3 = 0;
+        double b0, b1, b2, b3 = 0;
     };
 
     struct RegressionGauss

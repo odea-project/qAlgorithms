@@ -66,7 +66,7 @@ namespace qAlgorithms
     }
 
     void findFeatures(std::vector<FeaturePeak> &all_peaks,
-                      treatedData &treatedData)
+                      TreatedData &treatedData)
     {
         size_t length = treatedData.RT.size();
         assert(length > 4); // data must contain at least five points
@@ -1217,22 +1217,6 @@ namespace qAlgorithms
             }
         }
         return {bestRegIdx, float(best_mse)};
-    }
-
-    size_t calcDF( // using unsigned int is multiple seconds faster than size_1 for ten files in a row - why? @todo
-        const std::vector<bool> *degreesOfFreedom,
-        unsigned int left_limit,
-        unsigned int right_limit)
-    {
-        size_t DF = 0;
-        for (size_t i = left_limit; i < right_limit + 1; i++)
-        {
-            if ((*degreesOfFreedom)[i])
-            {
-                ++DF;
-            }
-        }
-        return DF;
     }
 
     inline size_t calcDF_cum(

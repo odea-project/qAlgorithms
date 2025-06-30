@@ -21,9 +21,9 @@ namespace qAlgorithms
     /**
      * @brief Inter/extrapolate gaps in data and define separation markers for data blocks.
      * @param dataPoints : {x, y, df, DQSC, DQSB, scanNumber}
-     * @return std::vector<std::vector<dataPoint>::iterator> : separation markers for data blocks
+     * @return std::vector<std::vector<DataPoint_deprecated>::iterator> : separation markers for data blocks
      */
-    treatedData pretreatEIC(EIC &dataPoints,
+    TreatedData pretreatEIC(EIC &dataPoints,
                             // std::vector<unsigned int> &binIdx,
                             float expectedDifference,
                             size_t maxScan);

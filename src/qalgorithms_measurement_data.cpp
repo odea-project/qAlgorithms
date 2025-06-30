@@ -73,21 +73,21 @@ namespace qAlgorithms
         }
     }
 
-    treatedData pretreatEIC(
+    TreatedData pretreatEIC(
         EIC &eic,
         float expectedDifference,
         size_t maxScan)
     {
         // @todo this function just copies data from the eic output, the respective parts of the binning
         // and feature detection module should be reworked such that it doesn't need to exist
-        std::vector<dataPoint> dataPoints_internal;
+        std::vector<DataPoint_deprecated> dataPoints_internal;
         dataPoints_internal.reserve(eic.interpolatedIDs.size());
 
         assert(is_sorted(eic.rententionTimes.begin(), eic.rententionTimes.end()));
 
         for (size_t i = 0; i < eic.scanNumbers.size(); ++i)
         {
-            dataPoint dp(
+            DataPoint_deprecated dp(
                 eic.rententionTimes[i],
                 eic.ints_area[i],
                 true); // the point is not interpolated
@@ -95,7 +95,7 @@ namespace qAlgorithms
         }
 
         size_t maxSize = dataPoints_internal.size() * 2; // we do not know how many gaps there are beforehand
-        treatedData treatedData;
+        TreatedData treatedData;
         // treatedData.dataPoints.reserve(maxSize);
         treatedData.RT.reserve(maxSize);
         treatedData.intensity.reserve(maxSize);
@@ -103,7 +103,7 @@ namespace qAlgorithms
         treatedData.cenIDs.reserve(maxSize);
 
         unsigned int realIdx = 0; // this should be handled outside of this function @todo
-        // static dataPoint zeroedPoint{0, 0, false};
+        // static DataPoint_deprecated zeroedPoint{0, 0, false};
         // add the first two zeros to the dataPoints_new vector @todo skip this by doing log interpolation during the log transform
         for (int i = 0; i < 2; i++)
         {
@@ -173,7 +173,7 @@ namespace qAlgorithms
         // add 4 datapoints (two extrapolated [end of current block] and two zeros
         // [start of next block]) extrapolate the first two datapoints of this block
 
-        // const dataPoint dp_startOfBlock = treatedData.dataPoints[2];
+        // const DataPoint_deprecated dp_startOfBlock = treatedData.dataPoints[2];
         // check if the maximum of the block is the first or last data point.
         // in this case, it is not possible to extrapolate using the quadratic form
         // @todo is it sensible to use quadratic extrapolation in the first place? This
@@ -244,7 +244,7 @@ namespace qAlgorithms
             //     continue;
             // }
 
-            treatedData treatedData = pretreatEIC(currentEIC, rt_diff, maxScan); // inter/extrapolate data, and identify data blocks
+            TreatedData treatedData = pretreatEIC(currentEIC, rt_diff, maxScan); // inter/extrapolate data, and identify data blocks
 
             findFeatures(tmpPeaks, treatedData);
             // @todo extract the peak construction here and possibly extract findFeatures into a generic function

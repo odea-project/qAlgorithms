@@ -25,7 +25,7 @@ namespace qAlgorithms
                            const size_t accessor);
 
     void findFeatures(std::vector<FeaturePeak> &all_peaks,
-                      treatedData &treatedData);
+                      TreatedData &treatedData);
 
     void runningRegression(
         const std::vector<float> *intensities,
@@ -126,10 +126,6 @@ namespace qAlgorithms
      * @param right_limit : End index of the regression window
      * @return size_t : Degree of freedom
      */
-    size_t calcDF(
-        const std::vector<bool> *degreesOfFreedom,
-        unsigned int left_limit,
-        unsigned int right_limit);
 
     size_t calcDF_cum(
         const std::vector<unsigned int> *degreesOfFreedom,
