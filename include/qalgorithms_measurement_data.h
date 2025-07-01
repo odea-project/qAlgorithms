@@ -52,6 +52,7 @@ namespace qAlgorithms
     std::vector<CentroidPeak> findCentroids(
         XML_File &data,
         std::vector<float> &convertRT,
+        const std::vector<pugi::xml_node> *spectra_nodes_ex,
         float &rt_diff,
         const bool polarity,
         const bool ms1only = true);

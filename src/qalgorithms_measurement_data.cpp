@@ -451,17 +451,19 @@ namespace qAlgorithms
     std::vector<CentroidPeak> findCentroids( // this function needs to be reworked further @todo
         XML_File &data,
         std::vector<float> &convertRT,
+        const std::vector<pugi::xml_node> *linkNodes,
         float &rt_diff,
         const bool polarity,
         const bool ms1only)
     {
-        std::vector<unsigned int> selectedIndices = data.filter_spectra(ms1only, polarity, false);
+        std::vector<unsigned int> selectedIndices = data.filter_spectra(linkNodes, ms1only, polarity, false);
         if (selectedIndices.empty())
         {
-            return std::vector<CentroidPeak>{}; // this currently only serves to eliminate spectra of the wrong polarity, @todo better solution?
+            // this currently only serves to eliminate spectra of the wrong polarity, @todo better solution?
+            return std::vector<CentroidPeak>{};
         }
 
-        std::vector<double> retention_times = data.get_spectra_RT(&selectedIndices);
+        std::vector<double> retention_times = data.get_spectra_RT(&selectedIndices, linkNodes);
         // for (size_t i = 0; i < retention_times.size() - 1; i++)
         // {
         //     std::cout << retention_times[i] << ",";
@@ -497,7 +499,7 @@ namespace qAlgorithms
             size_t ID_spectrum = selectedIndices[i];
             spectrum_mz.clear();
             spectrum_int.clear();
-            data.get_spectrum(&spectrum_mz, &spectrum_int, ID_spectrum);
+            data.get_spectrum(linkNodes, &spectrum_mz, &spectrum_int, ID_spectrum);
 
             const auto profileGroups = pretreatDataCentroids(&spectrum_mz, &spectrum_int);
 

@@ -188,7 +188,8 @@ int main(int argc, char *argv[])
         std::vector<unsigned int> accessor(data.number_spectra, 0);
         std::iota(accessor.begin(), accessor.end(), 0);
 
-        std::vector<bool> spectrum_mode = data.get_spectra_mode(&accessor); // get spectrum mode (centroid or profile)
+        const auto linkNodes = link_vector_spectra_nodes(data.mzml_root_node);
+        std::vector<bool> spectrum_mode = data.get_spectra_mode(&accessor, &linkNodes); // get spectrum mode (centroid or profile)
 
         // CHECK IF CENTROIDED SPECTRA
         size_t num_centroided_spectra = std::count(spectrum_mode.begin(), spectrum_mode.end(), false);
@@ -203,7 +204,7 @@ int main(int argc, char *argv[])
             std::cout << " file in profile mode, ok\n";
         }
 
-        auto polarity_file = data.get_polarity_mode(100); // checks first 100 spectra
+        auto polarity_file = data.get_polarity_mode(100, &linkNodes); // checks first 100 spectra
 
         // @todo single access function into qAlgorithms
 
@@ -227,7 +228,7 @@ int main(int argc, char *argv[])
             float diff_rt = 0;
             // @todo add check if set polarity is correct
             std::vector<CentroidPeak> *centroids = new std::vector<CentroidPeak>;
-            *centroids = findCentroids(data, convertRT, diff_rt, polarity); // it is guaranteed that only profile mode data is used
+            *centroids = findCentroids(data, convertRT, &linkNodes, diff_rt, polarity); // it is guaranteed that only profile mode data is used
 
             if (centroids->empty())
             {
