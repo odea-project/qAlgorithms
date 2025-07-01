@@ -331,7 +331,7 @@ namespace qAlgorithms
 #pragma region "find centroids"
 
     // std::vector<std::vector<CentroidPeak>> transferCentroids(
-    //     MZML &data,
+    //     XML_File &data,
     //     std::vector<int> &indices,
     //     std::vector<double> &retention_times,
     //     const int start_index,
@@ -449,7 +449,7 @@ namespace qAlgorithms
     }
 
     std::vector<CentroidPeak> findCentroids( // this function needs to be reworked further @todo
-        MZML &data,
+        XML_File &data,
         std::vector<float> &convertRT,
         float &rt_diff,
         const bool polarity,

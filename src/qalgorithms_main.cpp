@@ -167,7 +167,7 @@ int main(int argc, char *argv[])
                       << pathSource << "\n... ";
         }
 
-        MZML data(std::filesystem::canonical(pathSource));
+        XML_File data(std::filesystem::canonical(pathSource));
 
         if (data.defective)
         {

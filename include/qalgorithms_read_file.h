@@ -1,5 +1,5 @@
-#ifndef STREAMCRAFT_MZML_HPP
-#define STREAMCRAFT_MZML_HPP
+#ifndef QALGORITHMS_READ_FILE_H
+#define QALGORITHMS_READ_FILE_H
 
 #include <vector>
 #include <string>
@@ -44,7 +44,21 @@ namespace qAlgorithms
         "sampled_noise_baseline", "ion_mobility", "mass", "quadrupole_position_lower_bound_mz",
         "quadrupole_position_upper_bound_mz"};
 
-    class MZML // @todo this is just a complicated way of having a filetype specific accession struct and a generalised container
+    enum Filetype
+    {
+        mzML,
+        mzXML,
+        other
+    };
+
+    struct XML_Attribute
+    {
+        char *name;
+        char *attr_name;
+        char *attr_value;
+    };
+
+    class XML_File // @todo this is just a complicated way of having a filetype specific accession struct and a generalised container
     {
         // @todo change this to a generalised XML class which includes cases for mzML, mzXML and others
     private:
@@ -63,13 +77,15 @@ namespace qAlgorithms
         // std::vector<pugi::xml_node> spectra; // making this a class member makes the code unbelieveably slow
 
     public:
+        Filetype filetype = other;
+
         unsigned int number_spectra;
 
         unsigned int number_spectra_binary_arrays;
 
         bool defective = false;
 
-        MZML(const std::filesystem::path &file);
+        XML_File(const std::filesystem::path &file);
 
         void get_spectrum(
             std::vector<double> *const spectrum_mz,
@@ -89,4 +105,4 @@ namespace qAlgorithms
     };
 };
 
-#endif // STREAMCRAFT_MZML_HPP
+#endif // QALGORITHMS_READ_FILE_H

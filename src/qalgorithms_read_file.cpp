@@ -46,7 +46,7 @@ namespace qAlgorithms
     };
 
     // Decompresses a string using the zlib library (https://zlib.net/).
-    std::string decompress_zlib(const std::string &compressed_string)
+    std::string decompress_zlib(const char *compressed_string, size_t stringsize)
     {
         z_stream zs;
 
@@ -54,9 +54,9 @@ namespace qAlgorithms
 
         inflateInit(&zs);
 
-        zs.next_in = (Bytef *)compressed_string.data();
+        zs.next_in = (Bytef *)compressed_string;
 
-        zs.avail_in = compressed_string.size();
+        zs.avail_in = stringsize;
 
         char outbuffer[32768]; // @todo why this size?
 
@@ -83,7 +83,7 @@ namespace qAlgorithms
 
     // Decodes a Base64 string into a string with binary data using the simdutf library subset chosen by '--with-base64'
     // (https://github.com/simdutf/simdutf/tree/master?tab=readme-ov-file#single-header-version-with-limited-features).
-    std::string decode_base64(const std::string &encoded_string)
+    std::vector<char> decode_base64(const std::string &encoded_string)
     {
         size_t length = encoded_string.size() / 4 * 3;
         std::vector<char> output(length);
@@ -91,15 +91,23 @@ namespace qAlgorithms
 
         if (simd_res.error != 0) [[unlikely]]
         {
-            return {std::to_string(simd_res.count)}; // error message is handled one function above
+            return {char(simd_res.count)}; // error message is handled one function above
         }
-
-        auto simd_string = std::string(output.data(), simd_res.count);
-        return simd_string;
+        output.resize(simd_res.count);
+        return output;
     };
 
-    MZML::MZML(const std::filesystem::path &file)
+    XML_File::XML_File(const std::filesystem::path &file)
     {
+        if (file.extension() == ".mzML")
+        {
+            filetype = mzML;
+        }
+        else if (file.extension() == ".mzXML")
+        {
+            assert(false); // @todo support mzXML and other xml based formats
+        }
+
         loading_result = mzml_base_document.load_file(file.c_str(), pugi::parse_default | pugi::parse_declaration | pugi::parse_pi);
 
         if (loading_result)
@@ -147,7 +155,7 @@ namespace qAlgorithms
         }
     };
 
-    BinaryMetadata MZML::extract_binary_metadata(const pugi::xml_node &bin)
+    BinaryMetadata XML_File::extract_binary_metadata(const pugi::xml_node &bin)
     {
         BinaryMetadata mtd;
 
@@ -241,7 +249,7 @@ namespace qAlgorithms
         return spectra;
     };
 
-    void MZML::get_spectrum( // this obviously only extracts data that is in profile mode.
+    void XML_File::get_spectrum( // this obviously only extracts data that is in profile mode.
         std::vector<double> *const spectrum_mz,
         std::vector<double> *const spectrum_RT,
         size_t index)
@@ -268,22 +276,24 @@ namespace qAlgorithms
         { // extract mz values
             pugi::xml_node node_binary = bin->child("binary");
             std::string encoded_string = node_binary.child_value();
-            std::string decoded_string = decode_base64(encoded_string);
+            std::vector<char> decoded_string = decode_base64(encoded_string);
 
             // error handling
-            if (decoded_string.size() < 40)
+            if (decoded_string.size() == 1)
             {
                 std::cerr << "Error: spectrum " << index << " could not be decoded as base64 correctly. Please ensure your input file is not corrupted.\n"
-                          << "The error occured at character " << decoded_string << " as reported by the \"simdutf\" library.\n";
+                          << "The error occured at character " << decoded_string[0] << " as reported by the \"simdutf\" library.\n";
                 return; // implement a defined way to skip the current file? @todo
             }
 
+            std::string decoded_string1;
             if (spectra_binary_metadata[0].compressed)
             {
-                decoded_string = decompress_zlib(decoded_string); // @todo is there a case where this doesn't apply for all spectra?
+                // @todo is there a case where this doesn't apply for all spectra?
+                decoded_string1 = decompress_zlib(decoded_string.data(), decoded_string.size());
             }
 
-            *spectrum_mz = decode_little_endian(decoded_string, spectra_binary_metadata[0].isDouble);
+            *spectrum_mz = decode_little_endian(decoded_string1, spectra_binary_metadata[0].isDouble);
 
             assert(spectrum_mz->size() == number_traces); // this happens if an index is tried which does not exist in the data
         }
@@ -295,21 +305,30 @@ namespace qAlgorithms
         { // extract intensity values
             pugi::xml_node node_binary = bin->child("binary");
             std::string encoded_string = node_binary.child_value();
-            std::string decoded_string = decode_base64(encoded_string);
+            std::vector<char> decoded_string = decode_base64(encoded_string);
 
-            if (spectra_binary_metadata[1].compressed)
+            // error handling
+            if (decoded_string.size() == 1)
             {
-                decoded_string = decompress_zlib(decoded_string); // @todo is there a case where this doesn't apply for all spectra?
+                std::cerr << "Error: spectrum " << index << " could not be decoded as base64 correctly. Please ensure your input file is not corrupted.\n"
+                          << "The error occured at character " << decoded_string[0] << " as reported by the \"simdutf\" library.\n";
+                return; // implement a defined way to skip the current file? @todo
             }
 
-            *spectrum_RT = decode_little_endian(decoded_string, spectra_binary_metadata[1].isDouble);
+            std::string decompressedString;
+            if (spectra_binary_metadata[1].compressed)
+            {
+                decompressedString = decompress_zlib(decoded_string.data(), decoded_string.size()); // @todo is there a case where this doesn't apply for all spectra?
+            }
+
+            *spectrum_RT = decode_little_endian(decompressedString, spectra_binary_metadata[1].isDouble);
 
             assert(spectrum_RT->size() == number_traces); // this happens if an index is tried which does not exist in the data
             assert(spectra_binary_metadata[1].data_name_short == "intensity");
         }
     };
 
-    double MZML::extract_scan_RT(const pugi::xml_node &spec)
+    double XML_File::extract_scan_RT(const pugi::xml_node &spec)
     {
         pugi::xml_node node_scan = spec.child("scanList").child("scan");
         pugi::xml_node rt_node = node_scan.find_child_by_attribute("cvParam", "name", "scan start time");
@@ -326,7 +345,7 @@ namespace qAlgorithms
         assert(false);
     };
 
-    std::vector<double> MZML::get_spectra_RT(const std::vector<unsigned int> *indices)
+    std::vector<double> XML_File::get_spectra_RT(const std::vector<unsigned int> *indices)
     {
         assert(indices->size() > 0);
 
@@ -345,7 +364,7 @@ namespace qAlgorithms
         return retention_times;
     };
 
-    std::vector<bool> MZML::get_spectra_polarity(const std::vector<unsigned int> *indices)
+    std::vector<bool> XML_File::get_spectra_polarity(const std::vector<unsigned int> *indices)
     {
         assert(indices->size() > 0);
         std::vector<bool> polarities;
@@ -370,7 +389,7 @@ namespace qAlgorithms
         return polarities;
     };
 
-    Polarities MZML::get_polarity_mode(const size_t count)
+    Polarities XML_File::get_polarity_mode(const size_t count)
     {
         // @todo this should check if count is in bounds
 
@@ -406,7 +425,7 @@ namespace qAlgorithms
         }
     };
 
-    std::vector<size_t> MZML::get_spectra_index(const std::vector<unsigned int> *indices)
+    std::vector<size_t> XML_File::get_spectra_index(const std::vector<unsigned int> *indices)
     {
         assert(indices->size() > 0);
         std::vector<size_t> spec_indices;
@@ -424,7 +443,7 @@ namespace qAlgorithms
         return spec_indices;
     };
 
-    std::vector<int> MZML::get_spectra_level(const std::vector<unsigned int> *indices)
+    std::vector<int> XML_File::get_spectra_level(const std::vector<unsigned int> *indices)
     {
         assert(indices->size() > 0);
         std::vector<int> levels;
@@ -443,7 +462,7 @@ namespace qAlgorithms
         return levels;
     };
 
-    std::vector<bool> MZML::get_spectra_mode(const std::vector<unsigned int> *indices) // centroid or profile
+    std::vector<bool> XML_File::get_spectra_mode(const std::vector<unsigned int> *indices) // centroid or profile
     {
         assert(indices->size() > 0);
         std::vector<bool> modes;
@@ -468,14 +487,29 @@ namespace qAlgorithms
         return modes;
     };
 
-    std::vector<unsigned int> MZML::filter_spectra(bool ms1, bool polarity, bool centroided)
+    std::vector<unsigned int> XML_File::filter_spectra(bool ms1, bool polarity, bool centroided)
     {
+        // extract relevant properties out of the function call @todo make all relevant fields part of a
+        // context struct the class holds
+        // XML_Attribute centroidsXMLA;
+        // XML_Attribute polarityXMLA;
+        // XML_Attribute msLevelXMLA;
+
+        // if (filetype == mzML)
+        // {
+        //     *centroidsXMLA.name = 'cvParam';
+        //     *centroidsXMLA.attr_name = 'accession';
+        //     *centroidsXMLA.attr_value = 'MS:1000127';
+        // }
+
         // return a vector of all indices that are relevant to the query. Properties are checked in order of regularity.
         assert(number_spectra > 0);
         std::vector<unsigned int> indices;
         indices.reserve(number_spectra);
 
         std::vector<pugi::xml_node> spectra_nodes = link_vector_spectra_nodes(mzml_root_node);
+
+        // pugi::char_t *cv = "cvParam"; // @todo this does not work, abstract accessor fields somehow
 
         for (unsigned int i = 0; i < number_spectra; i++)
         {

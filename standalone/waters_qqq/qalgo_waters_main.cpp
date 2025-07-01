@@ -255,7 +255,7 @@ int main(int argc, char const *argv[]) // single-file process, @todo change
     auto tasks = qAlgorithms::controlInput(&paths, false);
 
     // read file using streamcraft @todo correctness check here?
-    qAlgorithms::MZML data(tasks[0]);
+    qAlgorithms::XML_File data(tasks[0]);
 
     // extract relevant
     std::cout << "hello world\n";
