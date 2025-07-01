@@ -281,8 +281,9 @@ namespace qAlgorithms
             // error handling
             if (decoded_string.size() == 1)
             {
-                std::cerr << "Error: spectrum " << index << " could not be decoded as base64 correctly. Please ensure your input file is not corrupted.\n"
-                          << "The error occured at character " << decoded_string[0] << " as reported by the \"simdutf\" library.\n";
+                std::cerr << "Error: spectrum " << index << " could not be decoded as base64 correctly. Please ensure your input file is not corrupted.\n";
+                // this does not work @todo
+                //   << "The error occured at character " << decoded_string[0] << " as reported by the \"simdutf\" library.\n";
                 return; // implement a defined way to skip the current file? @todo
             }
 
@@ -310,8 +311,8 @@ namespace qAlgorithms
             // error handling
             if (decoded_string.size() == 1)
             {
-                std::cerr << "Error: spectrum " << index << " could not be decoded as base64 correctly. Please ensure your input file is not corrupted.\n"
-                          << "The error occured at character " << decoded_string[0] << " as reported by the \"simdutf\" library.\n";
+                std::cerr << "Error: spectrum " << index << " could not be decoded as base64 correctly. Please ensure your input file is not corrupted.\n";
+                //   << "The error occured at character " << decoded_string[0] << " as reported by the \"simdutf\" library.\n";
                 return; // implement a defined way to skip the current file? @todo
             }
 
