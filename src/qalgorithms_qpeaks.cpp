@@ -438,6 +438,7 @@ namespace qAlgorithms
         // all entries in coeff are sorted by scale - this is not checked!
 
         std::vector<RegressionGauss> validRegsTmp; // temporary vector to store valid regressions
+        validRegsTmp.reserve(numPoints);
         // the start index of the regression is the same as the index in beta. The end index is at 2*scale + index in beta.
         validRegsTmp.push_back(RegressionGauss{});
 
@@ -453,22 +454,26 @@ namespace qAlgorithms
             {
                 stillValid = false;
             }
-            auto coeff = coeffs->at(range);
-            if ((coeff.b1 == 0.0f) | (coeff.b2 == 0.0f) | (coeff.b3 == 0.0f))
+            else
             {
-                // None of these are a valid regression with the asymmetric model
-                stillValid = false;
-            }
-            if (stillValid)
-            {
-                validRegsTmp.back().coeffs = coeff;
-                // the total span of the regression may not exceed the number of points
-                assert(idxStart + 2 * currentScale < numPoints);
-
-                makeValidRegression(&validRegsTmp.back(), idxStart, currentScale, degreesOfFreedom_cum, intensities, intensities_log);
-                if (validRegsTmp.back().isValid)
+                auto coeff = coeffs->at(range);
+                if ((coeff.b1 == 0.0f) || (coeff.b2 == 0.0f) || (coeff.b3 == 0.0f)) // @todo this should be guaranteed by the regression
                 {
-                    validRegsTmp.push_back(RegressionGauss{});
+                    // None of these are a valid regression with the asymmetric model
+                    stillValid = false;
+                }
+
+                if (stillValid)
+                {
+                    validRegsTmp.back().coeffs = coeff;
+                    // the total span of the regression may not exceed the number of points
+                    assert(idxStart + 2 * currentScale < numPoints);
+
+                    makeValidRegression(&validRegsTmp.back(), idxStart, currentScale, degreesOfFreedom_cum, intensities, intensities_log);
+                    if (validRegsTmp.back().isValid)
+                    {
+                        validRegsTmp.push_back(RegressionGauss{});
+                    }
                 }
             }
             idxStart++;
