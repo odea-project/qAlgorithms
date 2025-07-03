@@ -86,7 +86,10 @@ namespace qAlgorithms
         float areaUncertainty;
         float DQSC;
         float mzUncertainty;
-        unsigned int scanNumber;
+        // the binning tolerates at most three non-occurrences of a mass in order, but should not include interpolated spectra for this.
+        // for conversion, MS1num is also the index into a vector that stores the "corrected" scan numbers after interpolation
+        unsigned int number_MS1;
+        unsigned int MS1num;
         unsigned int df; // degrees of freedom
         ProfilePos trace;
         unsigned int numCompetitors;

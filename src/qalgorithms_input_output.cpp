@@ -595,7 +595,7 @@ namespace qAlgorithms
                       << "Filename: " << pathOutput << "\n";
             return;
         }
-        output << "cenID,mz,mzUncertainty,scanNumber,retentionTime,area,areaUncertainty,"
+        output << "cenID,mz,mzUncertainty,number_MS1,retentionTime,area,areaUncertainty,"
                //    << "height,heightUncertainty,scale,degreesOfFreedom,DQSC,interpolations,competitors\n";
                << "height,heightUncertainty,scale,degreesOfFreedom,DQSC,competitors\n";
         unsigned int counter = 0;
@@ -604,7 +604,7 @@ namespace qAlgorithms
             const CentroidPeak peak = peaktable->at(j);
             char buffer[256];
             snprintf(buffer, 256, "%d,%0.6f,%0.6f,%d,%0.4f,%0.4f,%0.4f,%0.4f,%0.4f,%d,%u,%0.5f,%d\n",
-                     counter, peak.mz, peak.mzUncertainty, peak.scanNumber, convertRT->at(peak.scanNumber),
+                     counter, peak.mz, peak.mzUncertainty, peak.number_MS1, convertRT->at(peak.number_MS1),
                      peak.area, peak.areaUncertainty, peak.height, peak.heightUncertainty, peak.scale, peak.df, peak.DQSC,
                      //  peak.interpolations,
                      peak.numCompetitors);
@@ -651,7 +651,7 @@ namespace qAlgorithms
             return;
         }
         // @todo consider if the mz error is relevant when checking individual bins
-        output << "binID,cenID,mz,mzUncertainty,retentionTime,scanNumber,area,height,degreesOfFreedom,DQSC,DQSB\n";
+        output << "binID,cenID,mz,mzUncertainty,retentionTime,number_MS1,area,height,degreesOfFreedom,DQSC,DQSB\n";
         for (size_t binID = 0; binID < bins->size(); binID++)
         {
             const EIC bin = bins->at(binID);
@@ -884,7 +884,7 @@ namespace qAlgorithms
             return;
         }
 
-        output << "compID,binID,cenID,mz,mzUncertainty,retentionTime,scanNumber,area,height,DQSC\n";
+        output << "compID,binID,cenID,mz,mzUncertainty,retentionTime,number_MS1,area,height,DQSC\n";
 
         for (unsigned int binID = 0; binID < bins->size(); binID++)
         {

@@ -236,18 +236,18 @@ namespace qAlgorithms
         assert(bin.medianMZ > 1);
         // std::sort(bin.pointsInBin.begin(), bin.pointsInBin.end(), [](const CentroidPeak *lhs, const CentroidPeak *rhs)
         std::sort(bin.pointsInBin.begin(), bin.pointsInBin.end(), [](const CentroidPeak *lhs, const CentroidPeak *rhs)
-                  { return lhs->scanNumber < rhs->scanNumber; });
+                  { return lhs->number_MS1 < rhs->number_MS1; });
         Bin returnBin;
         returnBin.pointsInBin.reserve(bin.pointsInBin.size());
         size_t duplicateRemovedCount = 0;
         // add dummy centroid to the end of the bin
         CentroidPeak dummy;
         dummy.mz = 0;
-        dummy.scanNumber = 0;
+        dummy.number_MS1 = 0;
         bin.pointsInBin.push_back(&dummy); // pointer will be not be invalidated since bin is copied
         for (size_t i = 1; i < bin.pointsInBin.size(); i++)
         {
-            if (bin.pointsInBin[i]->scanNumber == bin.pointsInBin[i - 1]->scanNumber)
+            if (bin.pointsInBin[i]->number_MS1 == bin.pointsInBin[i - 1]->number_MS1)
             {
                 double left = abs(bin.medianMZ - bin.pointsInBin[i - 1]->mz);
                 double right = abs(bin.medianMZ - bin.pointsInBin[i]->mz);
@@ -425,13 +425,13 @@ namespace qAlgorithms
         // function is called on a bin sorted by mz
         const size_t binSize = pointsInBin.size();
         std::sort(pointsInBin.begin(), pointsInBin.end(), [](const CentroidPeak *lhs, const CentroidPeak *rhs)
-                  { return lhs->scanNumber < rhs->scanNumber; });
+                  { return lhs->number_MS1 < rhs->number_MS1; });
         std::vector<const CentroidPeak *>::iterator newstart = pointsInBin.begin();
         int lastpos = 0;
         for (size_t i = 0; i < binSize - 1; i++) // -1 since difference to next data point is checked
         {
-            assert(pointsInBin[i + 1]->scanNumber >= pointsInBin[i]->scanNumber);
-            size_t distanceScan = pointsInBin[i + 1]->scanNumber - pointsInBin[i]->scanNumber;
+            assert(pointsInBin[i + 1]->number_MS1 >= pointsInBin[i]->number_MS1);
+            size_t distanceScan = pointsInBin[i + 1]->number_MS1 - pointsInBin[i]->number_MS1;
             if (distanceScan > maxdist) // bin needs to be split
             {
                 // less than five points in bin
@@ -463,8 +463,8 @@ namespace qAlgorithms
         if (lastpos == 0)
         {
             // no cut has occurred, the bin is viable
-            this->scanMin = pointsInBin.front()->scanNumber;
-            this->scanMax = pointsInBin.back()->scanNumber;
+            this->scanMin = pointsInBin.front()->number_MS1;
+            this->scanMax = pointsInBin.back()->number_MS1;
             this->unchanged = true;
             bincontainer->push_back(*this);
         }
@@ -538,8 +538,8 @@ namespace qAlgorithms
         size_t lowestPossibleScan = this->scanMin > expandedDist ? this->scanMin - expandedDist : 0;
         for (size_t i = idx_lowerLimit; i < idx_upperLimit; i++)
         {
-            if ((*notInBins)[i]->scanNumber > lowestPossibleScan && // cast to int due to negative being possible
-                (*notInBins)[i]->scanNumber < this->scanMax + expandedDist)
+            if ((*notInBins)[i]->number_MS1 > lowestPossibleScan && // cast to int due to negative being possible
+                (*notInBins)[i]->number_MS1 < this->scanMax + expandedDist)
             {
                 // centroid is within maxdist and relevant mz region. However,
                 // one past maxdist is considered for better representativeness
@@ -547,14 +547,14 @@ namespace qAlgorithms
             }
         }
         std::sort(scoreRegion.begin(), scoreRegion.end(), [](const CentroidPeak *lhs, const CentroidPeak *rhs)
-                  { return lhs->scanNumber < rhs->scanNumber; });
+                  { return lhs->number_MS1 < rhs->number_MS1; });
 
         // calculate minimum outer distance
         std::vector<float> minOuterDistances(this->pointsInBin.size());
         // calc distance for every possible scan number to simplify algorithm
         for (size_t i = 0; i < this->pointsInBin.size(); i++)
         {
-            int activeScan = this->pointsInBin[i]->scanNumber;
+            int activeScan = this->pointsInBin[i]->number_MS1;
             float activeMZ = this->pointsInBin[i]->mz;
             float currentMin = INFINITY;
             size_t readVal = 0;
@@ -562,14 +562,14 @@ namespace qAlgorithms
             // @todo replace with binary search
             for (; readVal < scoreRegion.size(); readVal++)
             {
-                if (scoreRegion[readVal]->scanNumber > activeScan - expandedDist)
+                if (scoreRegion[readVal]->number_MS1 > activeScan - expandedDist)
                 {
                     break;
                 }
             }
             for (; readVal < scoreRegion.size(); readVal++)
             {
-                if (scoreRegion[readVal]->scanNumber > activeScan + expandedDist)
+                if (scoreRegion[readVal]->number_MS1 > activeScan + expandedDist)
                 {
                     break;
                 }
@@ -630,21 +630,21 @@ namespace qAlgorithms
         tmp_cenID.reserve(eicsize);
 
         std::sort(pointsInBin.begin(), pointsInBin.end(), [](const CentroidPeak *lhs, const CentroidPeak *rhs)
-                  { return lhs->scanNumber < rhs->scanNumber; });
+                  { return lhs->number_MS1 < rhs->number_MS1; });
 
         // number of points needed during feature detection, two on each side for extrapolation and one per scan between both ends
-        size_t firstScan = pointsInBin.front()->scanNumber;
-        size_t binSpan = pointsInBin.back()->scanNumber - firstScan + 5;
+        size_t firstScan = pointsInBin.front()->number_MS1;
+        size_t binSpan = pointsInBin.back()->number_MS1 - firstScan + 5;
         std::vector<size_t> interpolatedCens(binSpan, 0); // all points left at 0 are later interpolated since cenID = 0 doesn't exist
         std::vector<float> interpolatedDQSB(binSpan, 0);
         bool interpolations = !(pointsInBin.size() + 4 == binSpan);
         for (size_t i = 0; i < pointsInBin.size(); i++)
         {
             const CentroidPeak *point = pointsInBin[i];
-            size_t resultIdx = point->scanNumber - firstScan + 2; // first two elements are empty for extrapolation
+            size_t resultIdx = point->number_MS1 - firstScan + 2; // first two elements are empty for extrapolation
 
-            tmp_scanNumbers.push_back(point->scanNumber);
-            tmp_rt.push_back(convertRT->at(point->scanNumber - 1)); // -1 since the abstract scan numbers start at 2
+            tmp_scanNumbers.push_back(point->number_MS1);
+            tmp_rt.push_back(convertRT->at(point->number_MS1 - 1)); // -1 since the abstract scan numbers start at 2
             tmp_mz.push_back(point->mz);
             tmp_predInterval.push_back(point->mzUncertainty);
             tmp_ints_area.push_back(point->area);
@@ -653,7 +653,7 @@ namespace qAlgorithms
             tmp_DQSC.push_back(point->DQSC);
             tmp_cenID.push_back(point->ID);
 
-            interpolatedCens[resultIdx] = point->scanNumber;
+            interpolatedCens[resultIdx] = point->number_MS1;
             interpolatedDQSB[resultIdx] = DQSB_base[i]; // score = 0 suffices as sign of interpolation
         }
         assert(interpolatedCens[binSpan - 2] == 0 && interpolatedCens[binSpan - 1] == 0); // back is empty for extrapolation
@@ -691,13 +691,13 @@ namespace qAlgorithms
         for (size_t i = 0; i < binsize; i++)
         {
             const auto cen = (*pointsInBin)[i];
-            size_t scanRegionStart = cen->scanNumber < expandedDist + 1 ? 0 : cen->scanNumber - expandedDist - 1;
-            size_t scanRegionEnd = cen->scanNumber + expandedDist + 1;
+            size_t scanRegionStart = cen->number_MS1 < expandedDist + 1 ? 0 : cen->number_MS1 - expandedDist - 1;
+            size_t scanRegionEnd = cen->number_MS1 + expandedDist + 1;
             float accum = 0;
-            for (; (*pointsInBin)[position]->scanNumber < scanRegionStart; position++) // increase position until a relevant point is found
+            for (; (*pointsInBin)[position]->number_MS1 < scanRegionStart; position++) // increase position until a relevant point is found
                 ;
             size_t readPos = position;
-            for (; (*pointsInBin)[readPos]->scanNumber < scanRegionEnd;)
+            for (; (*pointsInBin)[readPos]->number_MS1 < scanRegionEnd;)
             {
                 accum += abs((*pointsInBin)[readPos]->mz - cen->mz);
                 readPos++;

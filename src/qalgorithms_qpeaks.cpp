@@ -906,7 +906,7 @@ namespace qAlgorithms
             RegressionGauss regression = (*validRegressionsVec)[i];
             assert(regression.isValid);
             CentroidPeak peak;
-            peak.scanNumber = scanNumber;
+            peak.number_MS1 = scanNumber;
             // add height
             RegCoeffs coeff = regression.coeffs;
             peak.height = exp_approx_d(coeff.b0 + (regression.apex_position - regression.index_x0) * coeff.b1 * 0.5);

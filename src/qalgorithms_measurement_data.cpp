@@ -362,7 +362,7 @@ namespace qAlgorithms
     //             }
 
     //             centroids[i].push_back(CentroidPeak());
-    //             centroids[i].back().scanNumber = index;
+    //             centroids[i].back().number_MS1 = index;
     //             centroids[i].back().mz = spectrum[0][j];
     //             centroids[i].back().area = spectrum[1][j];
     //             centroids[i].back().height = spectrum[1][j];
@@ -485,7 +485,7 @@ namespace qAlgorithms
         // issue occurs with 2.7499.... Here, the error is 0.75 / 3 = 0.25. We need to check how often
         // such a problem arises and if it negatively affects result accuracy.
 
-        std::vector<size_t> relativeIndex = makeRelativeIndex(&retention_times, convertRT, countSelected, &rt_diff);
+        std::vector<size_t> relativeIndex = makeRelativeIndex(&retention_times, convertRT, countSelected, &rt_diff); // @todo use distance ms1 to ms1
 
         std::vector<CentroidPeak> centroids;
         centroids.reserve(countSelected * 1000);
@@ -503,7 +503,8 @@ namespace qAlgorithms
 
             const auto profileGroups = pretreatDataCentroids(&spectrum_mz, &spectrum_int);
 
-            findCentroidPeaks(&centroids, &profileGroups, relativeIndex[i], ID_spectrum);
+            // findCentroidPeaks(&centroids, &profileGroups, relativeIndex[i], ID_spectrum);
+            findCentroidPeaks(&centroids, &profileGroups, i + 1, ID_spectrum);
         }
         for (unsigned int i = 0; i < centroids.size(); i++)
         {

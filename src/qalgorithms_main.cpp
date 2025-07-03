@@ -285,7 +285,7 @@ int main(int argc, char *argv[])
                 float currentInt = centroids->at(cenID).area;
                 minCenArea = minCenArea < currentInt ? minCenArea : currentInt;
             }
-            size_t totalScans = centroids->back().scanNumber;
+            size_t totalScans = centroids->back().number_MS1;
 
             double meanDQSC = 0;
 
