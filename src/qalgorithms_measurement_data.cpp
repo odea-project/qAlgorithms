@@ -485,7 +485,8 @@ namespace qAlgorithms
         // issue occurs with 2.7499.... Here, the error is 0.75 / 3 = 0.25. We need to check how often
         // such a problem arises and if it negatively affects result accuracy.
 
-        std::vector<size_t> relativeIndex = makeRelativeIndex(&retention_times, convertRT, countSelected, &rt_diff); // @todo use distance ms1 to ms1
+        std::vector<size_t> relativeIndex(countSelected); // = makeRelativeIndex(&retention_times, convertRT, countSelected, &rt_diff); // @todo use distance ms1 to ms1
+        std::iota(relativeIndex.begin(), relativeIndex.end(), 1);
 
         std::vector<CentroidPeak> centroids;
         centroids.reserve(countSelected * 1000);
@@ -571,14 +572,15 @@ namespace qAlgorithms
             result->push_back({start, end + 1}); // end + 1 since difference has one point less
             return;
         }
-        if (maxPos == start || maxPos == end)
-        {
-            return;
-        }
-
         // recursive split at max - different calling convention since we work with differences
-        binProfileSpec(result, diffs, cumDiffs, start, maxPos - 1); // when setting the block, 1 is added to end
-        binProfileSpec(result, diffs, cumDiffs, maxPos + 1, end);   // one past the max to avoid large value
+        if (maxPos != start)
+        {
+            binProfileSpec(result, diffs, cumDiffs, start, maxPos - 1); // when setting the block, 1 is added to end
+        }
+        if (maxPos != end)
+        {
+            binProfileSpec(result, diffs, cumDiffs, maxPos + 1, end); // one past the max to avoid large value
+        }
     }
 
     inline ProfileBlock initBlock(size_t blocksize)
@@ -662,30 +664,34 @@ namespace qAlgorithms
         unsigned int knownStart = 0;
         unsigned int knownEnd = diffs.size() - 1;
 
-        if (meanDiff > 0.01) [[likely]]
+        if (meanDiff > 0.1) [[likely]]
         {
             // in a real mass spectrum, this should always be a given. If not, the noise level is so
             // high that it might be impossible to find actually useful data here. Either way, since
-            // we search for centroids in these regions, 0.01 is too large if anything. There will never
+            // we search for centroids in these regions, 0.1 is too large if anything. There will never
             // be a useable centroid with this large a m/z difference in a high res mass spectrum
             for (size_t i = 0; i < diffs.size(); i++)
             {
                 if (diffs[i] > meanDiff)
                 {
                     knownEnd = i - 1;
-                    binProfileSpec(&result, &diffs, &cumDiffs, knownStart, knownEnd);
+                    if (knownEnd > knownStart)
+                    {
+                        binProfileSpec(&result, &diffs, &cumDiffs, knownStart, knownEnd);
+                    }
                     knownStart = i + 1;
                 }
             }
         }
         else
         {
-            std::cerr << "Warning: a spectrum has no clear breaks.\n";
+            // this is expected for ToF data (?) @todo
+            // std::cerr << "Warning: a spectrum has no clear breaks.\n";
         }
 
         if (knownStart == 0 && knownEnd == diffs.size() - 1)
         {
-            std::cerr << "Warning: a spectrum has no clear breaks.\n";
+            // std::cerr << "Warning: a spectrum has no clear breaks.\n";
             binProfileSpec(&result, &diffs, &cumDiffs, knownStart, knownEnd);
         }
 
