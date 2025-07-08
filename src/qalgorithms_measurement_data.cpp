@@ -84,6 +84,9 @@ namespace qAlgorithms
         std::vector<DataPoint_deprecated> dataPoints_internal;
         dataPoints_internal.reserve(eic.interpolatedIDs.size());
 
+        std::vector<float> base_area = eic.rententionTimes;
+        std::vector<float> base_rt = eic.rententionTimes;
+
         assert(is_sorted(eic.rententionTimes.begin(), eic.rententionTimes.end()));
 
         for (size_t i = 0; i < eic.scanNumbers.size(); ++i)
@@ -95,7 +98,7 @@ namespace qAlgorithms
             dataPoints_internal.push_back(dp);
         }
 
-        size_t maxSize = dataPoints_internal.size() * 2; // we do not know how many gaps there are beforehand
+        size_t maxSize = eic.scanNumbers.size() * 2; // we do not know how many gaps there are beforehand
         TreatedData treatedData;
         // treatedData.dataPoints.reserve(maxSize);
         treatedData.RT.reserve(maxSize);
@@ -118,17 +121,19 @@ namespace qAlgorithms
         size_t maxOfBlock = 0;
         size_t blockSize = 0; // size of the current block
         size_t cumdf = 0;
-        for (size_t pos = 0; pos < dataPoints_internal.size() - 1; pos++)
+        for (size_t pos = 0; pos < eic.scanNumbers.size() - 1; pos++)
         {
             blockSize++;
-            // treatedData.dataPoints.push_back(dataPoints_internal[pos]);
-            treatedData.RT.push_back(dataPoints_internal[pos].x);
-            treatedData.intensity.push_back(dataPoints_internal[pos].y);
+            treatedData.RT.push_back(dataPoints_internal[pos].RT);
+            assert(treatedData.RT.back() == base_rt[pos]);
+            treatedData.intensity.push_back(dataPoints_internal[pos].area);
+            assert(treatedData.intensity.back() == base_area[pos]);
             cumdf += dataPoints_internal[pos].df;
+            assert(dataPoints_internal[pos].df == 1);
             treatedData.cumulativeDF.push_back(cumdf);
 
             ++realIdx;
-            const float delta_x = dataPoints_internal[pos + 1].x - dataPoints_internal[pos].x;
+            const float delta_x = base_rt[pos + 1] - base_rt[pos];
 
             if (delta_x > 1.75 * expectedDifference)
             {
@@ -137,24 +142,23 @@ namespace qAlgorithms
                 if (gapSize < 4)
                 {
                     // add gapSize interpolated datapoints @todo this can be zero
-                    const float dy = std::pow(dataPoints_internal[pos + 1].y / dataPoints_internal[pos].y, 1.0 / float(gapSize + 1)); // dy for log interpolation
+                    const float dy = std::pow(dataPoints_internal[pos + 1].area / dataPoints_internal[pos].area, 1.0 / float(gapSize + 1));
+                    float d_area = std::pow(base_area[pos + 1] / base_area[pos], 1.0 / float(gapSize + 1)); // dy for log interpolation
+                    assert(d_area == dy);
                     float interpolateDiff = delta_x / (gapSize + 1);
                     for (int i = 1; i <= gapSize; i++)
                     {
-                        // treatedData.dataPoints.emplace_back(
-                        //     dataPoints_internal[pos].x + i * interpolateDiff, // retention time
-                        //     dataPoints_internal[pos].y * std::pow(dy, i),     // intensity
-                        //     false);                                           // interpolated point
-
-                        treatedData.RT.push_back(dataPoints_internal[pos].x + i * interpolateDiff);
-                        treatedData.intensity.push_back(dataPoints_internal[pos].y * std::pow(dy, i));
+                        treatedData.RT.push_back(dataPoints_internal[pos].RT + i * interpolateDiff);
+                        assert(treatedData.RT.back() == base_rt[pos] + i * interpolateDiff);
+                        treatedData.intensity.push_back(dataPoints_internal[pos].area * std::pow(dy, i));
+                        assert(treatedData.intensity.back() == base_area[pos] * std::pow(d_area, i));
                         treatedData.cumulativeDF.push_back(cumdf);
                     }
                 }
             }
             else
             {
-                if (dataPoints_internal[maxOfBlock].y < dataPoints_internal[pos].y)
+                if (dataPoints_internal[maxOfBlock].area < dataPoints_internal[pos].area)
                 {
                     maxOfBlock = pos;
                 }
@@ -162,11 +166,12 @@ namespace qAlgorithms
         } // end of for loop
         // last element
         blockSize++;
-        // treatedData.dataPoints.push_back(dataPoints_internal.back());
-        // treatedData.intensity.push_back(dataPoints_internal.back().y);
-        treatedData.RT.push_back(dataPoints_internal.back().x);
-        treatedData.intensity.push_back(dataPoints_internal.back().y);
+        treatedData.RT.push_back(dataPoints_internal.back().RT);
+        assert(treatedData.RT.back() == base_rt.back());
+        treatedData.intensity.push_back(dataPoints_internal.back().area);
+        assert(treatedData.intensity.back() == base_area.back());
         cumdf += dataPoints_internal.back().df;
+        assert(dataPoints_internal.back().df == 1);
         treatedData.cumulativeDF.push_back(cumdf);
 
         // END OF BLOCK, EXTRAPOLATION STARTS @todo move this into its own function
@@ -227,7 +232,7 @@ namespace qAlgorithms
         return treatedData;
     }
 
-    std::vector<FeaturePeak> findPeaks_QBIN(std::vector<EIC> &EICs, float rt_diff, size_t maxScan)
+    std::vector<FeaturePeak> findFeatures(std::vector<EIC> &EICs, float rt_diff, size_t maxScan)
     {
         std::vector<FeaturePeak> peaks;    // return vector for feature list
         peaks.reserve(EICs.size() / 4);    // should be enough to fit all features without reallocation
@@ -463,7 +468,7 @@ namespace qAlgorithms
             return std::vector<CentroidPeak>{};
         }
 
-        std::vector<double> retention_times = data.get_spectra_RT(&selectedIndices, linkNodes);
+        std::vector<float> retention_times = data.get_spectra_RT(&selectedIndices, linkNodes);
         // for (size_t i = 0; i < retention_times.size() - 1; i++)
         // {
         //     std::cout << retention_times[i] << ",";

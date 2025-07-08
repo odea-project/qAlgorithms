@@ -345,13 +345,13 @@ namespace qAlgorithms
         assert(false);
     };
 
-    std::vector<double> XML_File::get_spectra_RT(
+    std::vector<float> XML_File::get_spectra_RT(
         const std::vector<unsigned int> *indices,
         const std::vector<pugi::xml_node> *spectra_nodes_ex)
     {
         assert(indices->size() > 0);
 
-        std::vector<double> retention_times;
+        std::vector<float> retention_times;
 
         for (size_t i = 0; i < indices->size(); ++i)
         {

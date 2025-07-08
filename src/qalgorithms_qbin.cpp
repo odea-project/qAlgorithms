@@ -644,7 +644,7 @@ namespace qAlgorithms
             size_t resultIdx = point->number_MS1 - firstScan + 2; // first two elements are empty for extrapolation
 
             tmp_scanNumbers.push_back(point->number_MS1);
-            // tmp_rt.push_back(convertRT->at(point->number_MS1 - 1)); // -1 since the abstract scan numbers start at 2
+            tmp_rt.push_back(convertRT->at(point->number_MS1 - 1)); // -1 since the abstract scan numbers start at 2
             tmp_mz.push_back(point->mz);
             tmp_predInterval.push_back(point->mzUncertainty);
             tmp_ints_area.push_back(point->area);

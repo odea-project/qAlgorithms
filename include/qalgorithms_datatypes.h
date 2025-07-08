@@ -19,8 +19,8 @@ namespace qAlgorithms
 
     struct DataPoint_deprecated // @todo remove this (again)
     {
-        float x;
-        float y;
+        float RT;
+        float area;
         bool df;
     };
 
@@ -30,8 +30,7 @@ namespace qAlgorithms
         std::vector<float> intensity;
         std::vector<size_t> cenIDs;
         std::vector<unsigned int> cumulativeDF; // degrees of freedom
-        unsigned int lowestScan;
-        unsigned int largestScan;
+        unsigned int lowestScan, largestScan;
     };
 
     struct ProfileBlock
@@ -41,8 +40,7 @@ namespace qAlgorithms
         // the degrees of freedom are redundant because there are never interpolated points within a centroid
         // we still use them because this way there is no largely redundant second peak fitting function
         std::vector<unsigned int> cumdf; // cumulative df @todo find a better solution for the general case
-        unsigned int startPos;
-        unsigned int endPos;
+        unsigned int startPos, endPos;
     };
 
     struct RegCoeffs
@@ -52,18 +50,15 @@ namespace qAlgorithms
 
     struct RegressionGauss
     {
-        RegCoeffs coeffs;             // regression coefficients
-        int index_x0 = 0;             // index of window center (x==0) in the Y matrix
-        int scale = 0;                // scale of the regression window, i.e., 2*scale+1 = window size
-        int df = 0;                   // degree of freedom, interpolated data points will not be considered
-        float apex_position = 0;      // position of the apex of the peak
-        float mse = 0;                // mean squared error; this is not always used and should not be a part of the regression struct @todo
-        unsigned int left_limit = 0;  // left limit of the peak regression window
-        unsigned int right_limit = 0; // right limit of the peak regression window
-        float area = 0;               // area of the peak
-        float uncertainty_area = 0;   // uncertainty of the area
-        float uncertainty_pos = 0;    // uncertainty of the position
-        float uncertainty_height = 0;
+        RegCoeffs coeffs;                         // regression coefficients
+        int index_x0 = 0;                         // index of window center (x==0) in the Y matrix
+        int scale = 0;                            // scale of the regression window, i.e., 2*scale+1 = window size
+        int df = 0;                               // degrees of freedom, interpolated data points will not be considered
+        float apex_position = 0;                  // position of the apex of the peak
+        float mse = 0;                            // @todo mean squared error; this is not always used and should not be a part of the regression struct
+        unsigned int left_limit, right_limit = 0; // limits of the peak regression window
+        float area = 0;                           // area of the peak
+        float uncertainty_area, uncertainty_pos, uncertainty_height = 0;
         int numCompetitors = 0; // number of points that were discarded in favour of this regression
         bool isValid = false;   // flag to indicate if the regression is valid
     };
@@ -71,8 +66,7 @@ namespace qAlgorithms
     struct ProfilePos // gives the range of points covered by a centroid and the access index for streamfind
     {
         unsigned int access;
-        unsigned int start;
-        unsigned int end;
+        unsigned int start, end;
     };
 
     struct CentroidPeak
@@ -82,10 +76,8 @@ namespace qAlgorithms
         float height;
         float area;
         float width;
-        float heightUncertainty;
-        float areaUncertainty;
+        float heightUncertainty, areaUncertainty, mzUncertainty;
         float DQSC;
-        float mzUncertainty;
         // the binning tolerates at most three non-occurrences of a mass in order, but should not include interpolated spectra for this.
         // for conversion, MS1num is also the index into a vector that stores the "corrected" scan numbers after interpolation
         unsigned int number_MS1;
@@ -124,25 +116,19 @@ namespace qAlgorithms
         // float width;
         float heightUncertainty;
         float areaUncertainty;
-        float DQSF;
-        float DQSB;
-        float DQSC;
+        float DQSF, DQSB, DQSC;
         float retentionTime;
         float mz;
-        float retentionTimeUncertainty;
+        float RT_Uncertainty;
         float mzUncertainty;
         unsigned int componentID = 0; // this is only set during execution of qPattern / qComponent / whatever better name i think of. Zero means uninitialised -> components start at 1!
         unsigned int idxBin;
         // these refer to the interpolated EIC!
-        unsigned int idxPeakStart;
-        unsigned int idxPeakEnd;
-        unsigned int index_x0_offset;
+        unsigned int idxPeakStart, idxPeakEnd, index_x0_offset;
         // relates to abstracted MS1 scan counts, starts at 2 for real points
-        unsigned int scanPeakStart;
-        unsigned int scanPeakEnd;
+        unsigned int scanPeakStart, scanPeakEnd;
         // indices into the non-interpolated bin; degrees of freedom = idxBinEnd - idxBinStart + 1
-        unsigned int idxBinStart;
-        unsigned int idxBinEnd;
+        unsigned int idxBinStart, idxBinEnd;
         // temporary values, @todo remove?
         unsigned int interpolationCount;
         unsigned int competitorCount;

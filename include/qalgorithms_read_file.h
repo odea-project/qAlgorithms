@@ -111,8 +111,8 @@ namespace qAlgorithms
 
         Polarities get_polarity_mode(const size_t count,
                                      const std::vector<pugi::xml_node> *spectra_nodes_ex);
-        std::vector<double> get_spectra_RT(const std::vector<unsigned int> *indices,
-                                           const std::vector<pugi::xml_node> *spectra_nodes_ex);
+        std::vector<float> get_spectra_RT(const std::vector<unsigned int> *indices,
+                                          const std::vector<pugi::xml_node> *spectra_nodes_ex);
     };
     const std::vector<pugi::xml_node> link_vector_spectra_nodes(pugi::xml_node mzml_root_node);
 };

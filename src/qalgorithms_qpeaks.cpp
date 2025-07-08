@@ -971,8 +971,8 @@ namespace qAlgorithms
             assert(delta_rt > 0);
             const double apex_position = rt_leftOfMax + delta_rt * (regression.apex_position - std::floor(regression.apex_position));
             peak.retentionTime = apex_position;
-            peak.retentionTimeUncertainty = regression.uncertainty_pos * delta_rt;
-            assert(peak.retentionTimeUncertainty > 0);
+            peak.RT_Uncertainty = regression.uncertainty_pos * delta_rt;
+            assert(peak.RT_Uncertainty > 0);
 
             // add area
             float exp_b0 = exp_approx_d(coeff.b0); // exp(b0)

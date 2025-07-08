@@ -147,9 +147,9 @@ namespace qAlgorithms
                     {
                         // before performing the computationally expensive check by regression, we can exclude features
                         // that don't overlap. This will massively reduce the time spent on large pregroups
-                        const float uncert_A = peaks->at(EIC_A.feature_ID).retentionTimeUncertainty;
+                        const float uncert_A = peaks->at(EIC_A.feature_ID).RT_Uncertainty;
                         const float apex_A = peaks->at(EIC_A.feature_ID).retentionTime;
-                        const float uncert_B = peaks->at(EIC_B.feature_ID).retentionTimeUncertainty;
+                        const float uncert_B = peaks->at(EIC_B.feature_ID).RT_Uncertainty;
                         const float apex_B = peaks->at(EIC_B.feature_ID).retentionTime;
 
                         if (std::abs(apex_A - apex_B) > (uncert_A + uncert_B) / 2)
@@ -1394,7 +1394,7 @@ namespace qAlgorithms
             float apex_R = (*peaks)[i].retentionTime;
             assert(apex_L <= apex_R);
 
-            float uncert = ((*peaks)[i - 1].retentionTimeUncertainty + (*peaks)[i].retentionTimeUncertainty) / 2;
+            float uncert = ((*peaks)[i - 1].RT_Uncertainty + (*peaks)[i].RT_Uncertainty) / 2;
             if (apex_R - apex_L > uncert)
             {
                 initialGroups.back().end = i - 1;

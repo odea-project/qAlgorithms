@@ -704,7 +704,7 @@ namespace qAlgorithms
             return;
         }
 
-        constexpr std::string_view header = "CompID,ID,binID,binIdxStart,binIdxEnd,mz,mzUncertainty,retentionTime,retentionTimeUncertainty,"
+        constexpr std::string_view header = "CompID,ID,binID,binIdxStart,binIdxEnd,mz,mzUncertainty,retentionTime,RT_Uncertainty,"
                                             "lowestRetentionTime,highestRetentionTime,area,areaUncertainty,height,heightUncertainty,"
                                             "scale,interpolations,competitors,DQSC,DQSB,DQSF,apexLeft,mse,b0,b1,b2,b3\n";
         output << header;
@@ -719,7 +719,7 @@ namespace qAlgorithms
             char buffer[256];
             snprintf(buffer, 256, "%d,%d,%d,%d,%d,%0.6f,%0.6f,%0.4f,%0.4f,%0.4f,%0.4f,%0.3f,%0.3f,%0.3f,%0.3f,%d,%d,%d,%0.5f,%0.5f,%0.5f,%s,%0.6f,%0.8f,%0.8f,%0.8f,%0.8f\n",
                      peak.componentID, counter, binID, peak.idxBinStart, peak.idxBinEnd, peak.mz, peak.mzUncertainty,
-                     peak.retentionTime, peak.retentionTimeUncertainty, RTs[peak.idxBinStart], RTs[peak.idxBinEnd],
+                     peak.retentionTime, peak.RT_Uncertainty, RTs[peak.idxBinStart], RTs[peak.idxBinEnd],
                      peak.area, peak.areaUncertainty, peak.height, peak.heightUncertainty, peak.scale,
                      peak.interpolationCount, peak.competitorCount, peak.DQSC, peak.DQSB, peak.DQSF,
                      // properties relevant for componentisation, remove this later

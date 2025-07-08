@@ -230,6 +230,8 @@ int main(int argc, char *argv[])
             std::vector<CentroidPeak> *centroids = new std::vector<CentroidPeak>;
             *centroids = findCentroids(data, convertRT, &linkNodes, diff_rt, polarity); // it is guaranteed that only profile mode data is used
 
+            convertRT = data.get_spectra_RT(&accessor, &linkNodes);
+
             if (centroids->empty())
             {
                 if (userArgs.verboseProgress)
@@ -363,12 +365,12 @@ int main(int argc, char *argv[])
             }
             meanDQSB /= count;
 
-            continue; // @todo ensure centroiding and binning work as best they can first
+            // continue; // @todo ensure centroiding and binning work as best they can first
 
 #pragma region "feature construction"
             timeStart = std::chrono::high_resolution_clock::now();
             // every subvector of peaks corresponds to the bin ID
-            auto features = findPeaks_QBIN(binnedData, diff_rt, convertRT.size());
+            auto features = findFeatures(binnedData, diff_rt, convertRT.size());
 
             if (features.size() == 0)
             {

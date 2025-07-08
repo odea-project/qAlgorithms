@@ -18,11 +18,6 @@ namespace qAlgorithms
         const int start_index,
         double PPMerror);
 
-    /**
-     * @brief Inter/extrapolate gaps in data and define separation markers for data blocks.
-     * @param dataPoints : {x, y, df, DQSC, DQSB, scanNumber}
-     * @return std::vector<std::vector<DataPoint_deprecated>::iterator> : separation markers for data blocks
-     */
     TreatedData pretreatEIC(EIC &dataPoints,
                             // std::vector<unsigned int> &binIdx,
                             float expectedDifference,
@@ -57,7 +52,7 @@ namespace qAlgorithms
         const bool polarity,
         const bool ms1only = true);
 
-    std::vector<FeaturePeak> findPeaks_QBIN(std::vector<EIC> &data, float rt_diff, size_t maxScan);
+    std::vector<FeaturePeak> findFeatures(std::vector<EIC> &data, float rt_diff, size_t maxScan);
 }
 
 #endif
