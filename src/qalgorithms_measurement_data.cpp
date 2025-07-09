@@ -74,29 +74,15 @@ namespace qAlgorithms
         }
     }
 
-    TreatedData pretreatEIC(
-        EIC &eic,
-        float expectedDifference,
-        size_t maxScan)
+    TreatedData pretreatEIC(EIC &eic, float expectedDifference)
     {
         // @todo this function just copies data from the eic output, the respective parts of the binning
         // and feature detection module should be reworked such that it doesn't need to exist
-        std::vector<DataPoint_deprecated> dataPoints_internal;
-        dataPoints_internal.reserve(eic.interpolatedIDs.size());
 
-        std::vector<float> base_area = eic.rententionTimes;
+        std::vector<float> base_area = eic.ints_area;
         std::vector<float> base_rt = eic.rententionTimes;
 
         assert(is_sorted(eic.rententionTimes.begin(), eic.rententionTimes.end()));
-
-        for (size_t i = 0; i < eic.scanNumbers.size(); ++i)
-        {
-            DataPoint_deprecated dp(
-                eic.rententionTimes[i],
-                eic.ints_area[i],
-                true); // the point is not interpolated
-            dataPoints_internal.push_back(dp);
-        }
 
         size_t maxSize = eic.scanNumbers.size() * 2; // we do not know how many gaps there are beforehand
         TreatedData treatedData;
@@ -107,7 +93,6 @@ namespace qAlgorithms
         treatedData.cenIDs.reserve(maxSize);
 
         unsigned int realIdx = 0; // this should be handled outside of this function @todo
-        // static DataPoint_deprecated zeroedPoint{0, 0, false};
         // add the first two zeros to the dataPoints_new vector @todo skip this by doing log interpolation during the log transform
         for (int i = 0; i < 2; i++)
         {
@@ -124,12 +109,9 @@ namespace qAlgorithms
         for (size_t pos = 0; pos < eic.scanNumbers.size() - 1; pos++)
         {
             blockSize++;
-            treatedData.RT.push_back(dataPoints_internal[pos].RT);
-            assert(treatedData.RT.back() == base_rt[pos]);
-            treatedData.intensity.push_back(dataPoints_internal[pos].area);
-            assert(treatedData.intensity.back() == base_area[pos]);
-            cumdf += dataPoints_internal[pos].df;
-            assert(dataPoints_internal[pos].df == 1);
+            treatedData.RT.push_back(base_rt[pos]);
+            treatedData.intensity.push_back(base_area[pos]);
+            cumdf += 1; // @todo change this once interpolation is added to binning
             treatedData.cumulativeDF.push_back(cumdf);
 
             ++realIdx;
@@ -142,23 +124,19 @@ namespace qAlgorithms
                 if (gapSize < 4)
                 {
                     // add gapSize interpolated datapoints @todo this can be zero
-                    const float dy = std::pow(dataPoints_internal[pos + 1].area / dataPoints_internal[pos].area, 1.0 / float(gapSize + 1));
                     float d_area = std::pow(base_area[pos + 1] / base_area[pos], 1.0 / float(gapSize + 1)); // dy for log interpolation
-                    assert(d_area == dy);
                     float interpolateDiff = delta_x / (gapSize + 1);
                     for (int i = 1; i <= gapSize; i++)
                     {
-                        treatedData.RT.push_back(dataPoints_internal[pos].RT + i * interpolateDiff);
-                        assert(treatedData.RT.back() == base_rt[pos] + i * interpolateDiff);
-                        treatedData.intensity.push_back(dataPoints_internal[pos].area * std::pow(dy, i));
-                        assert(treatedData.intensity.back() == base_area[pos] * std::pow(d_area, i));
+                        treatedData.RT.push_back(base_rt[pos] + i * interpolateDiff);
+                        treatedData.intensity.push_back(base_area[pos] * std::pow(d_area, i));
                         treatedData.cumulativeDF.push_back(cumdf);
                     }
                 }
             }
             else
             {
-                if (dataPoints_internal[maxOfBlock].area < dataPoints_internal[pos].area)
+                if (base_area[maxOfBlock] < base_area[pos])
                 {
                     maxOfBlock = pos;
                 }
@@ -166,69 +144,52 @@ namespace qAlgorithms
         } // end of for loop
         // last element
         blockSize++;
-        treatedData.RT.push_back(dataPoints_internal.back().RT);
-        assert(treatedData.RT.back() == base_rt.back());
-        treatedData.intensity.push_back(dataPoints_internal.back().area);
-        assert(treatedData.intensity.back() == base_area.back());
-        cumdf += dataPoints_internal.back().df;
-        assert(dataPoints_internal.back().df == 1);
+        treatedData.RT.push_back(base_rt.back());
+        treatedData.intensity.push_back(base_area.back());
+        cumdf += 1;
         treatedData.cumulativeDF.push_back(cumdf);
 
-        // END OF BLOCK, EXTRAPOLATION STARTS @todo move this into its own function
-        assert(blockSize == eic.cenID.size());
-        // add 4 datapoints (two extrapolated [end of current block] and two zeros
-        // [start of next block]) extrapolate the first two datapoints of this block
+        {
+            // END OF BLOCK, EXTRAPOLATION STARTS @todo move this into its own function
+            assert(blockSize == eic.cenID.size());
+            // add 4 datapoints (two extrapolated [end of current block] and two zeros
+            // [start of next block]) extrapolate the first two datapoints of this block
 
-        // const DataPoint_deprecated dp_startOfBlock = treatedData.dataPoints[2];
-        // check if the maximum of the block is the first or last data point.
-        // in this case, it is not possible to extrapolate using the quadratic form
-        // @todo is it sensible to use quadratic extrapolation in the first place? This
-        // could introduce a bias towards phantom signals and only makes sense from the
-        // instrumentation side of things with centroids in a FT-HRMS setup
-        // if (maxOfBlock == blockSize - 1 || maxOfBlock == 0)
-        // {
-        // extrapolate the left side using the first non-zero data point (i.e, the start of the block)
-        float baseRT_start = treatedData.RT[2];
-        float baseInt_start = treatedData.intensity[2];
-        // treatedData.dataPoints[0].x = baseRT_start - 2 * expectedDifference;
-        // treatedData.dataPoints[1].x = baseRT_start - expectedDifference;
-        // treatedData.dataPoints[0].y = baseInt_start / 4;
-        // treatedData.dataPoints[1].y = baseInt_start / 2;
+            // check if the maximum of the block is the first or last data point.
+            // in this case, it is not possible to extrapolate using the quadratic form
+            // @todo is it sensible to use quadratic extrapolation in the first place? This
+            // could introduce a bias towards phantom signals and only makes sense from the
+            // instrumentation side of things with centroids in a FT-HRMS setup
+            // extrapolate the left side using the first non-zero data point (i.e, the start of the block)
+            float baseRT_start = treatedData.RT[2];
+            float baseInt_start = treatedData.intensity[2];
 
-        treatedData.RT[0] = baseRT_start - 2 * expectedDifference;
-        treatedData.RT[1] = baseRT_start - expectedDifference;
-        treatedData.intensity[0] = baseInt_start / 4;
-        treatedData.intensity[1] = baseInt_start / 2;
+            treatedData.RT[0] = baseRT_start - 2 * expectedDifference;
+            treatedData.RT[1] = baseRT_start - expectedDifference;
+            treatedData.intensity[0] = baseInt_start / 4;
+            treatedData.intensity[1] = baseInt_start / 2;
 
-        size_t l = treatedData.RT.size() - 2;
-        // auto endPoint = treatedData.dataPoints[l];
-        float baseRT_end = treatedData.RT[l];
-        float baseInt_end = treatedData.intensity[l];
+            size_t l = treatedData.RT.size() - 2;
+            float baseRT_end = treatedData.RT[l];
+            float baseInt_end = treatedData.intensity[l];
 
-        treatedData.RT[l + 1] = baseRT_end + 2 * expectedDifference;
-        treatedData.RT[l] = baseRT_end + expectedDifference;
-        treatedData.intensity[l + 1] = baseInt_end / 4;
-        treatedData.intensity[l] = baseInt_end / 2;
+            treatedData.RT[l + 1] = baseRT_end + 2 * expectedDifference;
+            treatedData.RT[l] = baseRT_end + expectedDifference;
+            treatedData.intensity[l + 1] = baseInt_end / 4;
+            treatedData.intensity[l] = baseInt_end / 2;
 
-        assert(treatedData.intensity[0] > 0);
+            assert(treatedData.intensity[0] > 0);
 
-        assert(treatedData.RT.size() == treatedData.intensity.size());
-        // assert(treatedData.dataPoints.size() == eic.interpolatedDQSB.size()); // @todo redo this in good
+            assert(treatedData.RT.size() == treatedData.intensity.size());
+            // assert(treatedData.dataPoints.size() == eic.interpolatedDQSB.size()); // @todo redo this in good
 
-        treatedData.cenIDs = eic.interpolatedIDs;
-        treatedData.lowestScan = eic.scanNumbers.front() - 2;
-        treatedData.largestScan = eic.scanNumbers.back() + 2;
-        // assert(binIdx.size() == treatedData.largestScan - treatedData.lowestScan + 1 + 4); // extrapolations
-        treatedData.cumulativeDF.reserve(treatedData.RT.size());
-        treatedData.cumulativeDF.push_back(0);
-        // size_t accum = 0;
-        // for (size_t i = 1; i < treatedData.RT.size(); i++)
-        // {
-        //     // i starts at 1 since the first element is always 0
-        //     accum += treatedData.dataPoints[i].df ? 1 : 0;
-        //     treatedData.cumulativeDF.push_back(accum); // @todo this is not vectorised!
-        // }
-        assert(treatedData.largestScan < maxScan);
+            treatedData.cenIDs = eic.interpolatedIDs;
+            treatedData.lowestScan = eic.scanNumbers.front() - 2;
+            treatedData.largestScan = eic.scanNumbers.back() + 2;
+            treatedData.cumulativeDF.reserve(treatedData.RT.size());
+            treatedData.cumulativeDF.push_back(0);
+        }
+
         return treatedData;
     }
 
@@ -250,7 +211,7 @@ namespace qAlgorithms
             //     continue;
             // }
 
-            TreatedData treatedData = pretreatEIC(currentEIC, rt_diff, maxScan); // inter/extrapolate data, and identify data blocks
+            TreatedData treatedData = pretreatEIC(currentEIC, rt_diff); // inter/extrapolate data, and identify data blocks
 
             findFeatures(tmpPeaks, treatedData);
             // @todo extract the peak construction here and possibly extract findFeatures into a generic function

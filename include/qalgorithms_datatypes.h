@@ -17,13 +17,6 @@ namespace qAlgorithms
         unknown
     };
 
-    struct DataPoint_deprecated // @todo remove this (again)
-    {
-        float RT;
-        float area;
-        bool df;
-    };
-
     struct TreatedData // @todo remove this struct / maybe not?
     {
         std::vector<float> RT;

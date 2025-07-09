@@ -351,7 +351,7 @@ int main(int argc, char *argv[])
             double meanDQSB = 0;
             for (auto EIC : binnedData)
             {
-                assert(EIC.scanNumbers.back() < convertRT.size() - 2);
+                assert(EIC.scanNumbers.back() <= convertRT.size());
                 for (double dqsb : EIC.DQSB)
                 {
                     if (dqsb == -1)
@@ -439,6 +439,8 @@ int main(int argc, char *argv[])
                 }
                 continue;
             }
+
+            continue; // @todo ensure feature constrction works correctly before redoing componentisation
 
 #pragma region "Componentisation"
             timeStart = std::chrono::high_resolution_clock::now();

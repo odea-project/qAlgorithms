@@ -18,10 +18,7 @@ namespace qAlgorithms
         const int start_index,
         double PPMerror);
 
-    TreatedData pretreatEIC(EIC &dataPoints,
-                            // std::vector<unsigned int> &binIdx,
-                            float expectedDifference,
-                            size_t maxScan);
+    TreatedData pretreatEIC(EIC &dataPoints, float expectedDifference);
 
     struct Block
     {
