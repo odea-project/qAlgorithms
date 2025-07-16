@@ -224,13 +224,14 @@ int main(int argc, char *argv[])
         {
             filename = pathSource.stem().string();
 #pragma region "centroiding"
-            std::vector<float> convertRT;
+
             float diff_rt = 0;
             // @todo add check if set polarity is correct
-            std::vector<CentroidPeak> *centroids = new std::vector<CentroidPeak>;
-            *centroids = findCentroids(data, convertRT, &linkNodes, diff_rt, polarity); // it is guaranteed that only profile mode data is used
+            std::vector<float> convertRT = data.get_spectra_RT(&accessor, &linkNodes);
+            auto relIndex = interpolateScanNumbers(&convertRT);
 
-            convertRT = data.get_spectra_RT(&accessor, &linkNodes);
+            std::vector<CentroidPeak> *centroids = new std::vector<CentroidPeak>;
+            *centroids = findCentroids(data, &linkNodes, diff_rt, polarity); // it is guaranteed that only profile mode data is used
 
             if (centroids->empty())
             {

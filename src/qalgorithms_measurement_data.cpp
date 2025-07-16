@@ -16,6 +16,63 @@
 namespace qAlgorithms
 {
 #pragma region "Feature Detection"
+
+    std::vector<unsigned int> interpolateScanNumbers(const std::vector<float> *retentionTimes)
+    {
+        // This function interpolates the existing RTs of MS1 spectra and produces a vector that contains,
+        // for the index of every real MS1 spectrum, the scan number with interpolations for that spectrum.
+        // Since we work with an integer scale, interpolations are rounded at 0.5.
+        // It is assumed that the RT vector is sorted.
+
+        assert(!retentionTimes->empty());
+        std::vector<float> diffs(retentionTimes->size() - 1, 0);
+        for (size_t i = 0; i < diffs.size(); i++)
+        {
+            diffs[i] = retentionTimes->at(i + 1) - retentionTimes->at(i);
+        }
+        assert(!diffs.empty());
+
+        // the expected difference is the median of all differences
+        float expectedDiff;
+        { // @todo solve this via quickselect instead
+            std::vector<float> tmpDiffs = diffs;
+            std::sort(tmpDiffs.begin(), tmpDiffs.end());
+
+            size_t size = tmpDiffs.size();
+            assert(size > 0);
+            if (size % 2 == 0)
+            {
+                expectedDiff = (tmpDiffs[size / 2 - 1] + tmpDiffs[size / 2]) / 2;
+            }
+            else
+            {
+                expectedDiff = tmpDiffs[size / 2];
+            }
+            assert(tmpDiffs[0] > expectedDiff / 2); // if this is not given, there are severe distortions at some point in the data
+        }
+
+        std::vector<unsigned int> res(retentionTimes->size(), 1);
+
+        float critDiff = expectedDiff * 1.5; // if the difference is greater than the critDiff, there should be at least one interpolation
+        unsigned int currentScan = 1;
+        for (size_t i = 0; i < diffs.size(); i++)
+        {
+            if (diffs[i] < critDiff)
+            {
+                currentScan += 1;
+            }
+            else
+            {
+                // interpolate at least one point
+                size_t numInterpolations = size_t(diffs[i] / expectedDiff + 0.5); // + 0.5 since value is truncated
+                currentScan += numInterpolations;
+            }
+            res[i + 1] = currentScan;
+        }
+        assert(res.back() >= res.size());
+        return res;
+    }
+
     inline std::array<double, 3> interpolateQuadratic(const float *x, const float *y)
     {
         double x1 = x[0], y1 = y[0];
@@ -416,61 +473,36 @@ namespace qAlgorithms
 
     std::vector<CentroidPeak> findCentroids( // this function needs to be reworked further @todo
         XML_File &data,
-        std::vector<float> &convertRT,
         const std::vector<pugi::xml_node> *linkNodes,
         float &rt_diff,
         const bool polarity,
         const bool ms1only)
     {
-        std::vector<unsigned int> selectedIndices = data.filter_spectra(linkNodes, ms1only, polarity, false);
+        const std::vector<unsigned int> selectedIndices = data.filter_spectra(linkNodes, ms1only, polarity, false);
         if (selectedIndices.empty())
         {
             // this currently only serves to eliminate spectra of the wrong polarity, @todo better solution?
             return std::vector<CentroidPeak>{};
         }
-
-        std::vector<float> retention_times = data.get_spectra_RT(&selectedIndices, linkNodes);
-        // for (size_t i = 0; i < retention_times.size() - 1; i++)
-        // {
-        //     std::cout << retention_times[i] << ",";
-        // }
-        // std::cout << retention_times.back();
-        // exit(1);
-
-        selectedIndices.shrink_to_fit();
         const size_t countSelected = selectedIndices.size();
-
-        // determine where the peak finding will interpolate points and pass this information
-        // to the binning step. addEmpty contains the number of empty scans to be added into
-        // the qCentroids object at the given position. convertRT can later be used to look up
-        // the retention time by the scan number, so that memory usage is reduced during binning
-        // (note: doesn't have a significant effect, consider removal for readability @todo)
-        // note 2: since the regression operates over a fixed window anyway, it should not be a
-        // drastic change if the retention time is not actively adjusted. For the case of 1.75
-        // difference in RT an error of 1 - 0.875 = 0.225 relative distance is made. The largest
-        // issue occurs with 2.7499.... Here, the error is 0.75 / 3 = 0.25. We need to check how often
-        // such a problem arises and if it negatively affects result accuracy.
-
-        std::vector<size_t> relativeIndex(countSelected); // = makeRelativeIndex(&retention_times, convertRT, countSelected, &rt_diff); // @todo use distance ms1 to ms1
-        std::iota(relativeIndex.begin(), relativeIndex.end(), 1);
 
         std::vector<CentroidPeak> centroids;
         centroids.reserve(countSelected * 1000);
         centroids.push_back({0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}); // dummy value used for binning
 
-        // avoid needless allocation / deallocation
         std::vector<double> spectrum_mz(1000);
         std::vector<double> spectrum_int(1000);
         for (size_t i = 0; i < countSelected; ++i)
         {
-            size_t ID_spectrum = selectedIndices[i];
+            // avoid needless allocation / deallocation
             spectrum_mz.clear();
             spectrum_int.clear();
+
+            size_t ID_spectrum = selectedIndices[i];
             data.get_spectrum(linkNodes, &spectrum_mz, &spectrum_int, ID_spectrum);
 
             const auto profileGroups = pretreatDataCentroids(&spectrum_mz, &spectrum_int);
 
-            // findCentroidPeaks(&centroids, &profileGroups, relativeIndex[i], ID_spectrum);
             findCentroidPeaks(&centroids, &profileGroups, i + 1, ID_spectrum);
         }
         for (unsigned int i = 0; i < centroids.size(); i++)

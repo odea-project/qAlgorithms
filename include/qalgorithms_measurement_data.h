@@ -11,6 +11,8 @@ namespace qAlgorithms
 {
     inline std::array<double, 3> interpolateQuadratic(float interpolate, const float *x, const float *y);
 
+    std::vector<unsigned int> interpolateScanNumbers(const std::vector<float> *retentionTimes);
+
     std::vector<std::vector<CentroidPeak>> transferCentroids(
         XML_File &data,
         std::vector<int> &indices,
@@ -43,7 +45,6 @@ namespace qAlgorithms
 
     std::vector<CentroidPeak> findCentroids(
         XML_File &data,
-        std::vector<float> &convertRT,
         const std::vector<pugi::xml_node> *spectra_nodes_ex,
         float &rt_diff,
         const bool polarity,
