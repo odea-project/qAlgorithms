@@ -80,7 +80,7 @@ namespace qAlgorithms
             {
                 FeaturePeak *test = &(peaks->at(j));
                 assert(test->scanPeakEnd - test->scanPeakStart >= 4);
-                auto binRTs = (*bins)[test->idxBin].rententionTimes;
+                // auto binRTs = (*bins)[test->idxBin].rententionTimes;
                 auto scans = (*bins)[test->idxBin].scanNumbers;
                 maxScan = std::max(maxScan, test->scanPeakEnd); // @todo scans should be their own type, same with indices
                 minScan = std::min(minScan, test->scanPeakStart);
@@ -161,7 +161,7 @@ namespace qAlgorithms
                     }
 
                     // merge the EICs that are relevant to both
-                    static const std::vector<size_t> select{0, 1}; // smallest RT is always left
+                    static const std::vector<unsigned int> select{0, 1}; // smallest RT is always left
                     size_t idxStart = std::min(EIC_A.featLim_L, EIC_B.featLim_L);
                     size_t idxEnd = std::max(EIC_A.featLim_R, EIC_B.featLim_R);
                     assert(idxEnd > idxStart);
@@ -254,7 +254,7 @@ namespace qAlgorithms
                         // 1) create a selection vector that holds the feature IDs for merge
                         int existingComponent = singleLarge ? *ass_S : *ass_L;      // component ID of the assigned feature
                         size_t unassignedFeature = singleLarge ? p.idx_L : p.idx_S; // index of the unassigned feature
-                        std::vector<size_t> selection(1, unassignedFeature);
+                        std::vector<unsigned int> selection(1, unassignedFeature);
                         for (size_t idx = 0; idx < groupsize; idx++)
                         {
                             if (assignment[idx] == existingComponent)
@@ -324,7 +324,7 @@ namespace qAlgorithms
                         assert(idxEnd > idxStart);
 
                         // add all feature IDs from both components
-                        std::vector<size_t> selection;
+                        std::vector<unsigned int> selection;
                         for (size_t idx = 0; idx < groupsize; idx++)
                         {
                             if ((assignment[idx] == *ass_L) || (assignment[idx] == *ass_S))
@@ -394,7 +394,7 @@ namespace qAlgorithms
                     continue;
                 }
                 int compID = components[comp].component;
-                std::vector<size_t> selection; // used for tanimoto later on
+                std::vector<unsigned int> selection; // used for tanimoto later on
                 for (size_t feat = 0; feat < groupsize; feat++)
                 {
                     if (assignment[feat] == compID)
@@ -450,7 +450,7 @@ namespace qAlgorithms
     }
 
     MergedEIC mergeEICs(const std::vector<ReducedEIC> *eics,
-                        const std::vector<size_t> *selection,
+                        const std::vector<unsigned int> *selection,
                         size_t idxStart,
                         size_t idxEnd)
     {
@@ -762,7 +762,7 @@ namespace qAlgorithms
     MultiRegression runningRegression_multi( // add function that combines multiplr eics and updates the peak count
         const MergedEIC *eic,
         const std::vector<ReducedEIC> *eics,
-        const std::vector<size_t> *selection,
+        const std::vector<unsigned int> *selection,
         const size_t idxStart,
         const size_t idxEnd,
         // const size_t maxScale,
@@ -1074,7 +1074,7 @@ namespace qAlgorithms
         //   [scale_min, scale_min +1 , .... scale_max, ... scale_min +1, scale_min]
         //   length of vector: num_steps
         // the vector starts and ends with minScale and increases by one towards the middle until it reaches the scale value
-        std::vector<size_t> maxInnerLoop(steps, max_scale);
+        std::vector<unsigned int> maxInnerLoop(steps, max_scale);
         for (size_t i = 0; i + 2 < max_scale; i++) // +2 since smallest scale is 2
         {
             // @todo somewhat inefficient, design better iteration scheme
@@ -1508,7 +1508,7 @@ namespace qAlgorithms
     }
 
     float tanimotoScore(const std::vector<ReducedEIC> *eics,
-                        const std::vector<size_t> *selection,
+                        const std::vector<unsigned int> *selection,
                         size_t idxStart,
                         size_t idxEnd)
     {

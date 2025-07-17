@@ -88,7 +88,7 @@ namespace qAlgorithms
         return {c, b, a};
     }
 
-    void extrapolateEIC(const std::vector<size_t> scanNums, std::vector<float> *intensity)
+    void extrapolateEIC(const std::vector<unsigned int> scanNums, std::vector<float> *intensity)
     {
         // x-axis can be either mz (for centroids) or RT (for features)
         assert(scanNums.size() > 8); // at least 9; five real points and four edge points
@@ -133,121 +133,122 @@ namespace qAlgorithms
 
     TreatedData pretreatEIC(EIC &eic, float expectedDifference)
     {
-        // @todo this function just copies data from the eic output, the respective parts of the binning
-        // and feature detection module should be reworked such that it doesn't need to exist
+        assert(false);
+        //     // @todo this function just copies data from the eic output, the respective parts of the binning
+        //     // and feature detection module should be reworked such that it doesn't need to exist
 
-        std::vector<float> base_area = eic.ints_area;
-        std::vector<float> base_rt = eic.rententionTimes;
+        //     std::vector<float> base_area = eic.ints_area;
+        //     std::vector<float> base_rt = eic.rententionTimes;
 
-        assert(is_sorted(eic.rententionTimes.begin(), eic.rententionTimes.end()));
+        //     assert(is_sorted(eic.rententionTimes.begin(), eic.rententionTimes.end()));
 
-        size_t maxSize = eic.scanNumbers.size() * 2; // we do not know how many gaps there are beforehand
-        TreatedData treatedData;
-        // treatedData.dataPoints.reserve(maxSize);
-        treatedData.RT.reserve(maxSize);
-        treatedData.intensity.reserve(maxSize);
-        treatedData.cumulativeDF.reserve(maxSize);
-        treatedData.cenIDs.reserve(maxSize);
+        //     size_t maxSize = eic.scanNumbers.size() * 2; // we do not know how many gaps there are beforehand
+        //     TreatedData treatedData;
+        //     // treatedData.dataPoints.reserve(maxSize);
+        //     treatedData.RT.reserve(maxSize);
+        //     treatedData.intensity.reserve(maxSize);
+        //     treatedData.cumulativeDF.reserve(maxSize);
+        //     treatedData.cenIDs.reserve(maxSize);
 
-        unsigned int realIdx = 0; // this should be handled outside of this function @todo
-        // add the first two zeros to the dataPoints_new vector @todo skip this by doing log interpolation during the log transform
-        for (int i = 0; i < 2; i++)
-        {
-            // treatedData.dataPoints.push_back(zeroedPoint);
-            treatedData.RT.push_back(0);
-            treatedData.intensity.push_back(0);
-            treatedData.cumulativeDF.push_back(0);
-            treatedData.cenIDs.push_back(0);
-        }
+        //     unsigned int realIdx = 0; // this should be handled outside of this function @todo
+        //     // add the first two zeros to the dataPoints_new vector @todo skip this by doing log interpolation during the log transform
+        //     for (int i = 0; i < 2; i++)
+        //     {
+        //         // treatedData.dataPoints.push_back(zeroedPoint);
+        //         treatedData.RT.push_back(0);
+        //         treatedData.intensity.push_back(0);
+        //         treatedData.cumulativeDF.push_back(0);
+        //         treatedData.cenIDs.push_back(0);
+        //     }
 
-        size_t maxOfBlock = 0;
-        size_t blockSize = 0; // size of the current block
-        size_t cumdf = 0;
-        for (size_t pos = 0; pos < eic.scanNumbers.size() - 1; pos++)
-        {
-            blockSize++;
-            treatedData.RT.push_back(base_rt[pos]);
-            treatedData.intensity.push_back(base_area[pos]);
-            cumdf += 1; // @todo change this once interpolation is added to binning
-            treatedData.cumulativeDF.push_back(cumdf);
+        //     size_t maxOfBlock = 0;
+        //     size_t blockSize = 0; // size of the current block
+        //     size_t cumdf = 0;
+        //     for (size_t pos = 0; pos < eic.scanNumbers.size() - 1; pos++)
+        //     {
+        //         blockSize++;
+        //         treatedData.RT.push_back(base_rt[pos]);
+        //         treatedData.intensity.push_back(base_area[pos]);
+        //         cumdf += 1; // @todo change this once interpolation is added to binning
+        //         treatedData.cumulativeDF.push_back(cumdf);
 
-            ++realIdx;
-            const float delta_x = base_rt[pos + 1] - base_rt[pos];
+        //         ++realIdx;
+        //         const float delta_x = base_rt[pos + 1] - base_rt[pos];
 
-            if (delta_x > 1.75 * expectedDifference)
-            {
-                // gap detected
-                const int gapSize = static_cast<int>(delta_x / expectedDifference + 0.25 * expectedDifference) - 1;
-                if (gapSize < 4)
-                {
-                    // add gapSize interpolated datapoints @todo this can be zero
-                    float d_area = std::pow(base_area[pos + 1] / base_area[pos], 1.0 / float(gapSize + 1)); // dy for log interpolation
-                    float interpolateDiff = delta_x / (gapSize + 1);
-                    for (int i = 1; i <= gapSize; i++)
-                    {
-                        treatedData.RT.push_back(base_rt[pos] + i * interpolateDiff);
-                        treatedData.intensity.push_back(base_area[pos] * std::pow(d_area, i));
-                        treatedData.cumulativeDF.push_back(cumdf);
-                    }
-                }
-            }
-            else
-            {
-                if (base_area[maxOfBlock] < base_area[pos])
-                {
-                    maxOfBlock = pos;
-                }
-            }
-        } // end of for loop
-        // last element
-        blockSize++;
-        treatedData.RT.push_back(base_rt.back());
-        treatedData.intensity.push_back(base_area.back());
-        cumdf += 1;
-        treatedData.cumulativeDF.push_back(cumdf);
+        //         if (delta_x > 1.75 * expectedDifference)
+        //         {
+        //             // gap detected
+        //             const int gapSize = static_cast<int>(delta_x / expectedDifference + 0.25 * expectedDifference) - 1;
+        //             if (gapSize < 4)
+        //             {
+        //                 // add gapSize interpolated datapoints @todo this can be zero
+        //                 float d_area = std::pow(base_area[pos + 1] / base_area[pos], 1.0 / float(gapSize + 1)); // dy for log interpolation
+        //                 float interpolateDiff = delta_x / (gapSize + 1);
+        //                 for (int i = 1; i <= gapSize; i++)
+        //                 {
+        //                     treatedData.RT.push_back(base_rt[pos] + i * interpolateDiff);
+        //                     treatedData.intensity.push_back(base_area[pos] * std::pow(d_area, i));
+        //                     treatedData.cumulativeDF.push_back(cumdf);
+        //                 }
+        //             }
+        //         }
+        //         else
+        //         {
+        //             if (base_area[maxOfBlock] < base_area[pos])
+        //             {
+        //                 maxOfBlock = pos;
+        //             }
+        //         }
+        //     } // end of for loop
+        //     // last element
+        //     blockSize++;
+        //     treatedData.RT.push_back(base_rt.back());
+        //     treatedData.intensity.push_back(base_area.back());
+        //     cumdf += 1;
+        //     treatedData.cumulativeDF.push_back(cumdf);
 
-        {
-            // END OF BLOCK, EXTRAPOLATION STARTS @todo move this into its own function
-            assert(blockSize == eic.cenID.size());
-            // add 4 datapoints (two extrapolated [end of current block] and two zeros
-            // [start of next block]) extrapolate the first two datapoints of this block
+        //     {
+        //         // END OF BLOCK, EXTRAPOLATION STARTS @todo move this into its own function
+        //         assert(blockSize == eic.cenID.size());
+        //         // add 4 datapoints (two extrapolated [end of current block] and two zeros
+        //         // [start of next block]) extrapolate the first two datapoints of this block
 
-            // check if the maximum of the block is the first or last data point.
-            // in this case, it is not possible to extrapolate using the quadratic form
-            // @todo is it sensible to use quadratic extrapolation in the first place? This
-            // could introduce a bias towards phantom signals and only makes sense from the
-            // instrumentation side of things with centroids in a FT-HRMS setup
-            // extrapolate the left side using the first non-zero data point (i.e, the start of the block)
-            float baseRT_start = treatedData.RT[2];
-            float baseInt_start = treatedData.intensity[2];
+        //         // check if the maximum of the block is the first or last data point.
+        //         // in this case, it is not possible to extrapolate using the quadratic form
+        //         // @todo is it sensible to use quadratic extrapolation in the first place? This
+        //         // could introduce a bias towards phantom signals and only makes sense from the
+        //         // instrumentation side of things with centroids in a FT-HRMS setup
+        //         // extrapolate the left side using the first non-zero data point (i.e, the start of the block)
+        //         float baseRT_start = treatedData.RT[2];
+        //         float baseInt_start = treatedData.intensity[2];
 
-            treatedData.RT[0] = baseRT_start - 2 * expectedDifference;
-            treatedData.RT[1] = baseRT_start - expectedDifference;
-            treatedData.intensity[0] = baseInt_start / 4;
-            treatedData.intensity[1] = baseInt_start / 2;
+        //         treatedData.RT[0] = baseRT_start - 2 * expectedDifference;
+        //         treatedData.RT[1] = baseRT_start - expectedDifference;
+        //         treatedData.intensity[0] = baseInt_start / 4;
+        //         treatedData.intensity[1] = baseInt_start / 2;
 
-            size_t l = treatedData.RT.size() - 2;
-            float baseRT_end = treatedData.RT[l];
-            float baseInt_end = treatedData.intensity[l];
+        //         size_t l = treatedData.RT.size() - 2;
+        //         float baseRT_end = treatedData.RT[l];
+        //         float baseInt_end = treatedData.intensity[l];
 
-            treatedData.RT[l + 1] = baseRT_end + 2 * expectedDifference;
-            treatedData.RT[l] = baseRT_end + expectedDifference;
-            treatedData.intensity[l + 1] = baseInt_end / 4;
-            treatedData.intensity[l] = baseInt_end / 2;
+        //         treatedData.RT[l + 1] = baseRT_end + 2 * expectedDifference;
+        //         treatedData.RT[l] = baseRT_end + expectedDifference;
+        //         treatedData.intensity[l + 1] = baseInt_end / 4;
+        //         treatedData.intensity[l] = baseInt_end / 2;
 
-            assert(treatedData.intensity[0] > 0);
+        //         assert(treatedData.intensity[0] > 0);
 
-            assert(treatedData.RT.size() == treatedData.intensity.size());
-            // assert(treatedData.dataPoints.size() == eic.interpolatedDQSB.size()); // @todo redo this in good
+        //         assert(treatedData.RT.size() == treatedData.intensity.size());
+        //         // assert(treatedData.dataPoints.size() == eic.interpolatedDQSB.size()); // @todo redo this in good
 
-            treatedData.cenIDs = eic.interpolatedIDs;
-            treatedData.lowestScan = eic.scanNumbers.front() - 2;
-            treatedData.largestScan = eic.scanNumbers.back() + 2;
-            treatedData.cumulativeDF.reserve(treatedData.RT.size());
-            treatedData.cumulativeDF.push_back(0);
-        }
+        //         treatedData.cenIDs = eic.interpolatedIDs;
+        //         treatedData.lowestScan = eic.scanNumbers.front() - 2;
+        //         treatedData.largestScan = eic.scanNumbers.back() + 2;
+        //         treatedData.cumulativeDF.reserve(treatedData.RT.size());
+        //         treatedData.cumulativeDF.push_back(0);
+        //     }
 
-        return treatedData;
+        //     return treatedData;
     }
 
     std::vector<FeaturePeak> findFeatures(std::vector<EIC> &EICs, float rt_diff, size_t maxScan)
@@ -407,10 +408,10 @@ namespace qAlgorithms
         return sum / (retention_times->size() - 1);
     }
 
-    std::vector<size_t> makeRelativeIndex(std::vector<double> *retention_times,
-                                          std::vector<float> &convertRT, // @todo merge into struct with actual RTs
-                                          size_t countSelected,
-                                          float *rt_diff) // this gets mutated, when it should probably not exist at all
+    std::vector<unsigned int> makeRelativeIndex(std::vector<double> *retention_times,
+                                                std::vector<float> &convertRT, // @todo merge into struct with actual RTs
+                                                size_t countSelected,
+                                                float *rt_diff) // this gets mutated, when it should probably not exist at all
     {
         *rt_diff = calcRTDiff(retention_times); // this is the wrong approach - the scan interval is not static
         assert(convertRT.empty());
@@ -426,7 +427,7 @@ namespace qAlgorithms
         // possibility that they were trimmed of void time beforehand!
         size_t abstractScanNumber = 2;
 
-        std::vector<size_t> relativeIndex(countSelected, 0);
+        std::vector<unsigned int> relativeIndex(countSelected, 0);
 
         for (size_t i = 0; i < countSelected; i++)
         {

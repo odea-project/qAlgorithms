@@ -130,7 +130,7 @@ namespace qAlgorithms
                                      size_t index_x0);
 
     MergedEIC mergeEICs(const std::vector<ReducedEIC> *eics,
-                        const std::vector<size_t> *selection,
+                        const std::vector<unsigned int> *selection,
                         size_t idxStart,
                         size_t idxEnd);
 
@@ -143,7 +143,7 @@ namespace qAlgorithms
     MultiRegression runningRegression_multi(
         const MergedEIC *eic,
         const std::vector<ReducedEIC> *eics,
-        const std::vector<size_t> *selection,
+        const std::vector<unsigned int> *selection,
         const size_t idxStart,
         const size_t idxEnd,
         const unsigned int numPeaks);
@@ -177,7 +177,7 @@ namespace qAlgorithms
                     size_t p_complex); // needed for the F-test, should be replaced by a better solution sometime
 
     float tanimotoScore(const std::vector<ReducedEIC> *eics,
-                        const std::vector<size_t> *selection,
+                        const std::vector<unsigned int> *selection,
                         size_t idxStart,
                         size_t idxEnd);
 }

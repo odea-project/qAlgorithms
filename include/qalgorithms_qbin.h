@@ -16,7 +16,7 @@ namespace qAlgorithms
     /// @param verbose if this option is selected, additional progress report is written to standard out
     /// @return returns the centroids as a collection of vectors
     std::vector<EIC> performQbinning(const std::vector<CentroidPeak> *centroidedData,
-                                     const std::vector<float> *convertRT, bool verbose);
+                                     const std::vector<unsigned int> *convertRT, bool verbose);
 
     // ###################################################################################################### //
 #pragma region "utility"
@@ -96,7 +96,7 @@ namespace qAlgorithms
         // returns the start index of where in the sorted not-binned points the minimum start position is
         size_t makeDQSB(const std::vector<const CentroidPeak *> *notInBins, size_t idx_lowerLimit);
 
-        EIC createEIC(const std::vector<float> *convertRT);
+        EIC createEIC(const std::vector<unsigned int> *convertRT);
     };
 
     const std::vector<double> makeOrderSpace(const Bin *bin);
@@ -104,6 +104,8 @@ namespace qAlgorithms
     const std::vector<double> makeCumError(const std::vector<const CentroidPeak *> *bin);
 
     bool binLimitsOK(Bin sourceBin, const std::vector<CentroidPeak> *rawdata);
+
+    void interpolateEIC(EIC *eic);
 
 #pragma endregion "Bin"
 

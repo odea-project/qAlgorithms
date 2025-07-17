@@ -619,6 +619,7 @@ namespace qAlgorithms
 
     void printBins(const std::vector<CentroidPeak> *centroids,
                    const std::vector<EIC> *bins,
+                   const std::vector<float> *convertRT,
                    std::filesystem::path pathOutput,
                    std::string filename,
                    bool silent, bool skipError, bool noOverwrite)
@@ -661,7 +662,7 @@ namespace qAlgorithms
                 char buffer[128];
                 snprintf(buffer, 128, "%zu,%u,%0.8f,%0.8f,%0.4f,%d,%0.6f,%0.6f,%u,%0.4f,%0.4f\n",
                          binID, cen.ID, bin.mz[i], bin.predInterval[i],
-                         bin.rententionTimes[i], bin.scanNumbers[i], bin.ints_area[i],
+                         convertRT->at(bin.scanNumbers[i] - 1), bin.scanNumbers[i], bin.ints_area[i],
                          bin.ints_height[i], bin.df[i], bin.DQSC[i], bin.DQSB[i]);
                 output << buffer;
             }
@@ -675,6 +676,7 @@ namespace qAlgorithms
                           std::filesystem::path pathOutput,
                           std::string filename,
                           const std::vector<EIC> *originalBins,
+                          const std::vector<float> *convertRT,
                           bool verbose, bool silent, bool skipError, bool noOverwrite)
     {
         filename += "_features.csv";
@@ -714,12 +716,13 @@ namespace qAlgorithms
         {
             const FeaturePeak peak = peaktable->at(i);
             int binID = peak.idxBin;
-            const std::vector<float> RTs = originalBins->at(binID).rententionTimes;
+            float RT_start = convertRT->at(originalBins->at(binID).scanNumbers.at(peak.idxBinStart) - 1);
+            float RT_end = convertRT->at(originalBins->at(binID).scanNumbers.at(peak.idxBinEnd) - 1);
 
             char buffer[256];
             snprintf(buffer, 256, "%d,%d,%d,%d,%d,%0.6f,%0.6f,%0.4f,%0.4f,%0.4f,%0.4f,%0.3f,%0.3f,%0.3f,%0.3f,%d,%d,%d,%0.5f,%0.5f,%0.5f,%s,%0.6f,%0.8f,%0.8f,%0.8f,%0.8f\n",
                      peak.componentID, counter, binID, peak.idxBinStart, peak.idxBinEnd, peak.mz, peak.mzUncertainty,
-                     peak.retentionTime, peak.RT_Uncertainty, RTs[peak.idxBinStart], RTs[peak.idxBinEnd],
+                     peak.retentionTime, peak.RT_Uncertainty, RT_start, RT_end,
                      peak.area, peak.areaUncertainty, peak.height, peak.heightUncertainty, peak.scale,
                      peak.interpolationCount, peak.competitorCount, peak.DQSC, peak.DQSB, peak.DQSF,
                      // properties relevant for componentisation, remove this later
@@ -737,6 +740,7 @@ namespace qAlgorithms
                                std::filesystem::path pathOutput,
                                std::string filename,
                                const std::vector<EIC> *originalBins,
+                               const std::vector<float> *convertRT,
                                bool verbose, bool silent, bool skipError, bool noOverwrite)
     {
         filename += "_featCen.csv";
@@ -778,10 +782,11 @@ namespace qAlgorithms
             char buffer[256];
             for (size_t cen = peak.idxBinStart; cen < peak.idxBinEnd + 1; cen++)
             {
-                snprintf(buffer, 256, "%d,%d,%d,%0.6f,%0.6f,%0.4f,%d,%0.3f,%0.3f,%d,%0.5f,%0.5f,%0.5f,%s,%0.8f,%0.8f,%0.8f,%0.8f\n",
-                         counter, binID, bin.cenID[cen], bin.mz[cen], bin.predInterval[cen], bin.rententionTimes[cen], bin.scanNumbers[cen],
-                         bin.ints_area[cen], bin.ints_height[cen], bin.df[cen], bin.DQSC[cen], bin.DQSB[cen], peak.DQSF,
-                         peak.apexLeft ? "T" : "F", peak.coefficients.b0, peak.coefficients.b1, peak.coefficients.b2, peak.coefficients.b3);
+                assert(false);
+                // snprintf(buffer, 256, "%d,%d,%d,%0.6f,%0.6f,%0.4f,%d,%0.3f,%0.3f,%d,%0.5f,%0.5f,%0.5f,%s,%0.8f,%0.8f,%0.8f,%0.8f\n",
+                //          counter, binID, bin.cenID[cen], bin.mz[cen], bin.predInterval[cen], bin.rententionTimes[cen], bin.scanNumbers[cen],
+                //          bin.ints_area[cen], bin.ints_height[cen], bin.df[cen], bin.DQSC[cen], bin.DQSB[cen], peak.DQSF,
+                //          peak.apexLeft ? "T" : "F", peak.coefficients.b0, peak.coefficients.b1, peak.coefficients.b2, peak.coefficients.b3);
                 output << buffer;
             }
             ++counter;
@@ -915,10 +920,11 @@ namespace qAlgorithms
             for (size_t i = idxStart; i < idxEnd_1; i++)
             {
                 char buffer[128];
-                snprintf(buffer, 128, "%u,%u,%u,%0.8f,%0.8f,%0.4f,%d,%0.6f,%0.6f,%0.6f\n",
-                         compID, binID, bin.cenID[i], bin.mz[i], bin.predInterval[i],
-                         bin.rententionTimes[i], bin.scanNumbers[i], bin.ints_area[i],
-                         bin.ints_height[i], bin.DQSC[i]);
+                assert(false);
+                // snprintf(buffer, 128, "%u,%u,%u,%0.8f,%0.8f,%0.4f,%d,%0.6f,%0.6f,%0.6f\n",
+                //          compID, binID, bin.cenID[i], bin.mz[i], bin.predInterval[i],
+                //          bin.rententionTimes[i], bin.scanNumbers[i], bin.ints_area[i],
+                //          bin.ints_height[i], bin.DQSC[i]);
                 output << buffer;
             }
         }

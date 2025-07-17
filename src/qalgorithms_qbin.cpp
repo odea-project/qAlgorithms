@@ -14,7 +14,7 @@ namespace qAlgorithms
     const size_t maxdist = 3; // this is the maximum distance in scans which can later be interpolated during feature detection
 
     std::vector<EIC> performQbinning(const std::vector<CentroidPeak> *centroidedData,
-                                     const std::vector<float> *convertRT, bool verbose)
+                                     const std::vector<unsigned int> *convertRT, bool verbose) // @todo split out subfunctions so the structure is subset -> score -> format
     {
         // std::cout << sizeof(Bin) << std::endl;
         assert(centroidedData->front().mz == 0); // first value is dummy
@@ -131,8 +131,10 @@ namespace qAlgorithms
         size_t countPointsInBins = 0;
         for (size_t i = 0; i < binCount; i++)
         {
-            finalBins.push_back(activeBins.finalBins[i].createEIC(convertRT));
-            countPointsInBins += finalBins[i].scanNumbers.size();
+            auto eic = activeBins.finalBins[i].createEIC(convertRT);
+            interpolateEIC(&eic);
+            finalBins.push_back(eic);
+            countPointsInBins += eic.df.back(); // interpolated points are already included in the size
         }
         // assert(countPointsInBins + activeBins.notInBins.size() == centroidedData->size());
         assert(countPointsInBins + activeBins.notInBins.size() == centroidedData->size());
@@ -606,74 +608,118 @@ namespace qAlgorithms
         return idx_lowerLimit;
     }
 
-    EIC Bin::createEIC(const std::vector<float> *convertRT)
+    EIC Bin::createEIC(const std::vector<unsigned int> *convertRT)
     {
+        // using the knowledge of where points should be interpolated, transfer centroids into
+        // arrays with gaps for later processing
+
         size_t eicsize = pointsInBin.size();
+        unsigned int firstScan = convertRT->at(pointsInBin.front()->number_MS1 - 1);
+        unsigned int lastScan = convertRT->at(pointsInBin.back()->number_MS1 - 1);
+        size_t interpolatedSize = lastScan - firstScan + 1 + 4; // +4 since we extrapolate two points to each side later
+        std::vector<unsigned int> tmp_interpScans(interpolatedSize, 0);
+        std::iota(tmp_interpScans.begin(), tmp_interpScans.end(), firstScan - 2);
 
-        std::vector<unsigned int> tmp_scanNumbers;
-        tmp_scanNumbers.reserve(eicsize);
-        std::vector<float> tmp_rt;
-        tmp_rt.reserve(eicsize);
-        std::vector<float> tmp_mz;
-        tmp_mz.reserve(eicsize);
-        std::vector<float> tmp_predInterval;
-        tmp_predInterval.reserve(eicsize);
-        std::vector<float> tmp_ints_area;
-        tmp_ints_area.reserve(eicsize);
-        std::vector<float> tmp_ints_height;
-        tmp_ints_height.reserve(eicsize);
-        std::vector<unsigned int> tmp_df;
-        tmp_df.reserve(eicsize);
-        std::vector<float> tmp_DQSC;
-        tmp_DQSC.reserve(eicsize);
-        std::vector<unsigned int> tmp_cenID;
-        tmp_cenID.reserve(eicsize);
+        std::vector<unsigned int> tmp_scanNumbers(interpolatedSize, 0);
+        std::vector<float> tmp_mz(interpolatedSize, 0);
+        std::vector<float> tmp_mzUncert(interpolatedSize, 0);
+        std::vector<float> tmp_ints_area(interpolatedSize, 0);
+        std::vector<float> tmp_ints_height(interpolatedSize, 0);
+        std::vector<float> tmp_DQSC(interpolatedSize, 0);
+        std::vector<unsigned int> tmp_cenID(interpolatedSize, 0);
 
+        // sorting should be done beforehand @todo
         std::sort(pointsInBin.begin(), pointsInBin.end(), [](const CentroidPeak *lhs, const CentroidPeak *rhs)
                   { return lhs->number_MS1 < rhs->number_MS1; });
 
-        // number of points needed during feature detection, two on each side for extrapolation and one per scan between both ends
-        size_t firstScan = pointsInBin.front()->number_MS1;
-        size_t binSpan = pointsInBin.back()->number_MS1 - firstScan + 5;
-        std::vector<size_t> interpolatedCens(binSpan, 0); // all points left at 0 are later interpolated since cenID = 0 doesn't exist
-        std::vector<float> interpolatedDQSB(binSpan, 0);
-        bool interpolations = !(pointsInBin.size() + 4 == binSpan);
-        for (size_t i = 0; i < pointsInBin.size(); i++)
+        for (size_t i = 0; i < eicsize; i++)
         {
+            unsigned int access = convertRT->at(pointsInBin.at(i)->number_MS1 - 1) - firstScan + 2; // two scans at the front are extrapolated later
             const CentroidPeak *point = pointsInBin[i];
-            size_t resultIdx = point->number_MS1 - firstScan + 2; // first two elements are empty for extrapolation
 
-            tmp_scanNumbers.push_back(point->number_MS1);
-            tmp_rt.push_back(convertRT->at(point->number_MS1 - 1)); // -1 since the abstract scan numbers start at 2
-            tmp_mz.push_back(point->mz);
-            tmp_predInterval.push_back(point->mzUncertainty);
-            tmp_ints_area.push_back(point->area);
-            tmp_ints_height.push_back(point->height);
-            tmp_df.push_back(point->df);
-            tmp_DQSC.push_back(point->DQSC);
-            tmp_cenID.push_back(point->ID);
-
-            interpolatedCens[resultIdx] = point->number_MS1;
-            interpolatedDQSB[resultIdx] = DQSB_base[i]; // score = 0 suffices as sign of interpolation
+            tmp_scanNumbers[access] = i;
+            tmp_mz[access] = point->mz;
+            tmp_mzUncert[access] = point->mzUncertainty;
+            tmp_ints_area[access] = point->area;
+            tmp_ints_height[access] = point->height;
+            tmp_DQSC[access] = point->DQSC;
+            tmp_cenID[access] = point->ID;
         }
-        assert(interpolatedCens[binSpan - 2] == 0 && interpolatedCens[binSpan - 1] == 0); // back is empty for extrapolation
 
+        // cumulative degrees of freedom
+        std::vector<unsigned int> tmp_df(interpolatedSize, 0);
+        unsigned int df_total = 0;
+
+        for (size_t i = 2; i < tmp_scanNumbers.size(); i++)
+        {
+            if (tmp_scanNumbers[i] != 0) // interpolated scan
+                df_total += 1;
+
+            tmp_df[i] = df_total;
+        }
+        assert(df_total == eicsize);
+
+        bool interpolations = lastScan - firstScan + 1 != eicsize;
         EIC returnVal = {
             tmp_scanNumbers,
-            tmp_rt,
             tmp_mz,
-            tmp_predInterval,
+            tmp_mzUncert,
             tmp_ints_area,
             tmp_ints_height,
             tmp_df,
             DQSB_base,
             tmp_DQSC,
             tmp_cenID,
-            interpolatedCens,
-            interpolatedDQSB,
+            tmp_interpScans,
             interpolations};
 
         return returnVal;
+    }
+
+    void interpolateEIC(EIC *eic)
+    {
+        // given the processed EICs from the above function, fill in gaps by performing quadratic inter- and extrapolation
+        std::vector<float> *areas = &eic->ints_area;
+
+        // extrapolate start
+        float firstVal = areas->at(2);
+        areas->at(0) = firstVal / 4;
+        areas->at(1) = firstVal / 2;
+
+        // extrapolate end
+        float lastVal = areas->at(areas->size() - 3);
+        areas->at(areas->size() - 2) = lastVal / 2;
+        areas->at(areas->size() - 1) = lastVal / 4;
+
+        if (!eic->interpolations) // no empty values
+            return;
+
+        // interpolate empty values
+        bool openBlock = false;
+        size_t startPos = 2;
+        for (size_t i = 3; i < areas->size() - 2; i++)
+        {
+            if (areas->at(i) == 0)
+            {
+                openBlock = true;
+            }
+            else if (!openBlock)
+            {
+                firstVal = areas->at(i);
+                startPos = i;
+            }
+            else
+            {
+                // close the block
+                lastVal = areas->at(i);
+                size_t numInterpolations = i - startPos;
+                float d_area = std::pow(lastVal / firstVal, 1.0 / float(numInterpolations + 1)); // dy for log interpolation
+                for (size_t pos = startPos; pos < i; pos++)
+                {
+                    areas->at(pos) = firstVal * std::pow(d_area, pos - startPos + 1); // @todo is this the best possible approach?
+                }
+            }
+        }
     }
 
 #pragma endregion "Bin"

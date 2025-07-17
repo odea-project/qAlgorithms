@@ -424,11 +424,11 @@ namespace qAlgorithms
         }
     };
 
-    std::vector<size_t> XML_File::get_spectra_index(const std::vector<unsigned int> *indices,
-                                                    const std::vector<pugi::xml_node> *spectra_nodes_ex)
+    std::vector<unsigned int> XML_File::get_spectra_index(const std::vector<unsigned int> *indices,
+                                                          const std::vector<pugi::xml_node> *spectra_nodes_ex)
     {
         assert(indices->size() > 0);
-        std::vector<size_t> spec_indices;
+        std::vector<unsigned int> spec_indices;
 
         for (size_t i = 0; i < indices->size(); ++i)
         {

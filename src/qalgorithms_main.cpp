@@ -227,8 +227,6 @@ int main(int argc, char *argv[])
 
             float diff_rt = 0;
             // @todo add check if set polarity is correct
-            std::vector<float> convertRT = data.get_spectra_RT(&accessor, &linkNodes);
-            auto relIndex = interpolateScanNumbers(&convertRT);
 
             std::vector<CentroidPeak> *centroids = new std::vector<CentroidPeak>;
             *centroids = findCentroids(data, &linkNodes, diff_rt, polarity); // it is guaranteed that only profile mode data is used
@@ -268,6 +266,9 @@ int main(int argc, char *argv[])
             }
 
             filename = filename + (polarity ? "_positive" : "_negative");
+
+            // calculate scan number after performing interpolation
+            std::vector<float> convertRT = data.get_spectra_RT(&accessor, &linkNodes);
 
             if (userArgs.printCentroids)
             {
@@ -311,7 +312,8 @@ int main(int argc, char *argv[])
 #pragma region "binning"
             timeStart = std::chrono::high_resolution_clock::now();
 
-            std::vector<EIC> binnedData = performQbinning(centroids, &convertRT, userArgs.verboseProgress);
+            auto relIndex = interpolateScanNumbers(&convertRT);
+            std::vector<EIC> binnedData = performQbinning(centroids, &relIndex, userArgs.verboseProgress);
 
             timeEnd = std::chrono::high_resolution_clock::now();
 
@@ -337,7 +339,7 @@ int main(int argc, char *argv[])
             }
             if (userArgs.printBins)
             {
-                printBins(centroids, &binnedData, userArgs.outputPath, filename, userArgs.silent, userArgs.skipError, userArgs.noOverwrite);
+                printBins(centroids, &binnedData, &convertRT, userArgs.outputPath, filename, userArgs.silent, userArgs.skipError, userArgs.noOverwrite);
 
                 if (userArgs.term == TerminateAfter::binning)
                 {
@@ -427,7 +429,7 @@ int main(int argc, char *argv[])
 
             if (userArgs.printFeatCens)
             {
-                printFeatureCentroids(&features, userArgs.outputPath, filename, &binnedData,
+                printFeatureCentroids(&features, userArgs.outputPath, filename, &binnedData, &convertRT,
                                       userArgs.printExtended, userArgs.silent, userArgs.skipError, userArgs.noOverwrite);
             }
 
@@ -435,7 +437,7 @@ int main(int argc, char *argv[])
             {
                 if (userArgs.printFeatures) // this is here so we can incorporate the component ID into the output
                 {
-                    printFeatureList(&features, userArgs.outputPath, filename, &binnedData,
+                    printFeatureList(&features, userArgs.outputPath, filename, &binnedData, &convertRT,
                                      userArgs.printExtended, userArgs.silent, userArgs.skipError, userArgs.noOverwrite);
                 }
                 continue;
@@ -458,7 +460,7 @@ int main(int argc, char *argv[])
 
             if (userArgs.printFeatures) // this is here so we can incorporate the component ID into the output
             {
-                printFeatureList(&features, userArgs.outputPath, filename, &binnedData,
+                printFeatureList(&features, userArgs.outputPath, filename, &binnedData, &convertRT,
                                  userArgs.printExtended, userArgs.silent, userArgs.skipError, userArgs.noOverwrite);
             }
 

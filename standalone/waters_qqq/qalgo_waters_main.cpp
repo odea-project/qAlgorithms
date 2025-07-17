@@ -30,7 +30,7 @@ namespace qalgo_waters
 
     struct SpectraRegion
     {
-        std::vector<size_t> relevantSpectra; // these are individual scans
+        std::vector<unsigned int> relevantSpectra; // these are individual scans
         Region_mz mzLimits;
         Region_RT rtLimits;
     };

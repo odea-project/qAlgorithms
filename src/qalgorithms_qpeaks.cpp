@@ -124,7 +124,7 @@ namespace qAlgorithms
     }
 
     std::vector<RegCoeffs> restoreShape(
-        const std::vector<size_t> *scaleCount,
+        const std::vector<unsigned int> *scaleCount,
         std::vector<double> *const beta_0,
         std::vector<double> *const beta_1,
         std::vector<double> *const beta_2,
@@ -255,7 +255,7 @@ namespace qAlgorithms
         //   [scale_min, scale_min +1 , .... scale_max, ... scale_min +1, scale_min]
         //   length of vector: num_steps
         // the vector starts and ends with minScale and increases by one towards the middle until it reaches the scale value
-        std::vector<size_t> maxInnerLoop(steps, max_scale);
+        std::vector<unsigned int> maxInnerLoop(steps, max_scale);
         for (size_t i = 0; i + 2 < max_scale; i++) // +2 since smallest scale is 2
         {
             // @todo somewhat inefficient, design better iteration scheme
@@ -736,8 +736,8 @@ namespace qAlgorithms
             int DF_group = 0;
             // only calculate required MSEs since this is one of the performance-critical steps
             std::vector<float> exponentialMSE(validRegressions->size(), 0);
-            std::vector<size_t> validRegressionsInGroup; // vector of indices to validRegressions
-            size_t competitors = 0;                      // this variable keeps track of how many competitors a given regression has
+            std::vector<unsigned int> validRegressionsInGroup; // vector of indices to validRegressions
+            size_t competitors = 0;                            // this variable keeps track of how many competitors a given regression has
 
             // iterate over the validRegressions vector till the new peak
             // first iteration always false

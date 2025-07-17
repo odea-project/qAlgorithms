@@ -39,7 +39,7 @@ namespace qAlgorithms
         const std::vector<double> *spectrum_mz,
         const std::vector<double> *spectrum_int);
 
-    void extrapolateEIC(const std::vector<size_t> scanNums, std::vector<float> *intensity);
+    void extrapolateEIC(const std::vector<unsigned int> scanNums, std::vector<float> *intensity);
 
     inline float calcRTDiff(const std::vector<double> *retention_times);
 

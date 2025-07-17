@@ -87,6 +87,7 @@ namespace qAlgorithms
 
     void printBins(const std::vector<CentroidPeak> *centroids,
                    const std::vector<EIC> *bins,
+                   const std::vector<float> *convertRT,
                    std::filesystem::path pathOutput,
                    std::string filename,
                    bool silent, bool skipError, bool noOverwrite);
@@ -95,12 +96,14 @@ namespace qAlgorithms
                           std::filesystem::path pathOutput,
                           std::string filename,
                           const std::vector<EIC> *originalBins,
+                          const std::vector<float> *convertRT,
                           bool verbose, bool silent, bool skipError, bool noOverwrite);
 
     void printFeatureCentroids(const std::vector<FeaturePeak> *peaktable,
                                std::filesystem::path pathOutput,
                                std::string filename,
                                const std::vector<EIC> *originalBins,
+                               const std::vector<float> *convertRT,
                                bool verbose, bool silent, bool skipError, bool noOverwrite);
 
     void printComponentRegressions(const std::vector<MultiRegression> *compRegs,

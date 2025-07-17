@@ -21,7 +21,7 @@ namespace qAlgorithms
     {
         std::vector<float> RT;
         std::vector<float> intensity;
-        std::vector<size_t> cenIDs;
+        std::vector<unsigned int> cenIDs;
         std::vector<unsigned int> cumulativeDF; // degrees of freedom
         unsigned int lowestScan, largestScan;
     };
@@ -74,7 +74,6 @@ namespace qAlgorithms
         // the binning tolerates at most three non-occurrences of a mass in order, but should not include interpolated spectra for this.
         // for conversion, number_MS1 is also the index into a vector that stores the "corrected" scan numbers after interpolation
         unsigned int number_MS1;
-        unsigned int scan_interpolate;
         unsigned int df; // degrees of freedom
         ProfilePos trace;
         unsigned int numCompetitors;
@@ -86,7 +85,6 @@ namespace qAlgorithms
     struct EIC // Extracted Ion Chromatogram
     {
         std::vector<unsigned int> scanNumbers;
-        std::vector<float> rententionTimes;
         std::vector<float> mz;
         std::vector<float> predInterval;
         std::vector<float> ints_area;
@@ -95,10 +93,10 @@ namespace qAlgorithms
         std::vector<float> DQSB;
         std::vector<float> DQSC;
         std::vector<unsigned int> cenID;
-        std::vector<size_t> interpolatedIDs;
-        std::vector<float> interpolatedDQSB;
-        size_t componentID = 0; // this is only set during componentisation
-        bool interpolations;    // @todo probably redundant
+        std::vector<unsigned int> interpolatedScans;
+        // std::vector<float> interpolatedDQSB;
+        unsigned int componentID = 0; // this is only set during componentisation
+        bool interpolations;          // are there interpolated values?
     };
 
     struct FeaturePeak
