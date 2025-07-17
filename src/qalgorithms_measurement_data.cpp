@@ -264,16 +264,12 @@ namespace qAlgorithms
             {
                 continue; // skip due to lack of data, i.e., degrees of freedom will be zero
             }
-            // if (currentEIC.interpolations)
-            // {
-            //     continue;
-            // }
 
-            TreatedData treatedData = pretreatEIC(currentEIC, rt_diff); // inter/extrapolate data, and identify data blocks
-
-            findFeatures(tmpPeaks, treatedData);
+            // findFeatures_old(tmpPeaks, treatedData);
+            findFeaturePeaks(&tmpPeaks, &currentEIC);
             // @todo extract the peak construction here and possibly extract findFeatures into a generic function
 
+            TreatedData treatedData = pretreatEIC(currentEIC, rt_diff); // inter/extrapolate data, and identify data blocks
             if (tmpPeaks.empty())
             {
                 continue;

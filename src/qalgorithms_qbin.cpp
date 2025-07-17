@@ -637,7 +637,7 @@ namespace qAlgorithms
             unsigned int access = convertRT->at(pointsInBin.at(i)->number_MS1 - 1) - firstScan + 2; // two scans at the front are extrapolated later
             const CentroidPeak *point = pointsInBin[i];
 
-            tmp_scanNumbers[access] = i;
+            tmp_scanNumbers[access] = i + firstScan;
             tmp_mz[access] = point->mz;
             tmp_mzUncert[access] = point->mzUncertainty;
             tmp_ints_area[access] = point->area;
@@ -659,7 +659,6 @@ namespace qAlgorithms
         }
         assert(df_total == eicsize);
 
-        bool interpolations = lastScan - firstScan + 1 != eicsize;
         EIC returnVal = {
             tmp_scanNumbers,
             tmp_mz,
@@ -670,8 +669,7 @@ namespace qAlgorithms
             DQSB_base,
             tmp_DQSC,
             tmp_cenID,
-            tmp_interpScans,
-            interpolations};
+            tmp_interpScans};
 
         return returnVal;
     }
@@ -691,7 +689,10 @@ namespace qAlgorithms
         areas->at(areas->size() - 2) = lastVal / 2;
         areas->at(areas->size() - 1) = lastVal / 4;
 
-        if (!eic->interpolations) // no empty values
+        size_t scanDiff = eic->interpolatedScans[areas->size() - 3] - eic->interpolatedScans[2];
+        bool noInterpolations = scanDiff == eic->df.back();
+
+        if (noInterpolations) // no empty values
             return;
 
         // interpolate empty values
@@ -712,12 +713,17 @@ namespace qAlgorithms
             {
                 // close the block
                 lastVal = areas->at(i);
-                size_t numInterpolations = i - startPos;
+                size_t numInterpolations = i - startPos - 1;
+                // @todo this must be changed so that it accounts for maxima towards both directions, right?
+                assert(false);
                 float d_area = std::pow(lastVal / firstVal, 1.0 / float(numInterpolations + 1)); // dy for log interpolation
-                for (size_t pos = startPos; pos < i; pos++)
+                for (size_t pos = startPos + 1; pos < i; pos++)
                 {
-                    areas->at(pos) = firstVal * std::pow(d_area, pos - startPos + 1); // @todo is this the best possible approach?
+                    areas->at(pos) = firstVal * std::pow(d_area, pos - startPos); // @todo is this the best possible approach?
                 }
+                openBlock = false;
+                firstVal = areas->at(i);
+                startPos = i;
             }
         }
     }

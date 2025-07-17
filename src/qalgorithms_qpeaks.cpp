@@ -66,8 +66,8 @@ namespace qAlgorithms
         }
     }
 
-    void findFeatures(std::vector<FeaturePeak> &all_peaks,
-                      TreatedData &treatedData)
+    void findFeatures_old(std::vector<FeaturePeak> &all_peaks,
+                          TreatedData &treatedData)
     {
         size_t length = treatedData.RT.size();
         assert(length > 4); // data must contain at least five points
@@ -97,6 +97,39 @@ namespace qAlgorithms
             // there is no reason for this to be called here and not later @todo
         }
     }
+
+    void findFeaturePeaks(std::vector<FeaturePeak> *all_peaks, const EIC *eic)
+    {
+        size_t length = eic->df.size();
+        assert(length > 4); // data must contain at least five points
+
+        std::vector<float> logIntensity(length, NAN);
+        for (size_t blockPos = 0; blockPos < length; blockPos++)
+        {
+            logIntensity[blockPos] = std::log(eic->ints_area[blockPos]);
+        }
+
+        std::vector<RegressionGauss> validRegressions;
+
+        // @todo this is not a universal limit and only chosen for computational speed at the moment
+        // with an estimated scan difference of 0.6 s this means the maximum peak width is 61 * 0.6 = 36.6 s
+        static const size_t GLOBAL_MAXSCALE_FEATURES = 30;
+        assert(GLOBAL_MAXSCALE_FEATURES <= MAXSCALE);
+        size_t maxScale = std::min(GLOBAL_MAXSCALE_FEATURES, size_t((length - 1) / 2));
+
+        runningRegression(&eic->ints_area,
+                          &logIntensity,
+                          &eic->df,
+                          validRegressions,
+                          maxScale);
+        if (!validRegressions.empty())
+        {
+            exit(1);
+            // createFeaturePeaks(all_peaks, &validRegressions, &treatedData.RT);
+            // there is no reason for this to be called here and not later @todo
+        }
+    }
+
 #pragma endregion "find peaks"
 
 #pragma region "running regression"

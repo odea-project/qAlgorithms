@@ -96,7 +96,7 @@ namespace qAlgorithms
         std::vector<unsigned int> interpolatedScans;
         // std::vector<float> interpolatedDQSB;
         unsigned int componentID = 0; // this is only set during componentisation
-        bool interpolations;          // are there interpolated values?
+        // bool interpolations;          // are there interpolated values?
     };
 
     struct FeaturePeak
