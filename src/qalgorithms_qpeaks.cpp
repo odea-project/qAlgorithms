@@ -66,7 +66,7 @@ namespace qAlgorithms
         }
     }
 
-    void findFeaturePeaks(std::vector<FeaturePeak> *all_peaks, const EIC *eic)
+    void findFeaturePeaks(std::vector<FeaturePeak> *all_peaks, std::vector<float> *RT, const EIC *eic)
     {
         size_t length = eic->df.size();
         assert(length > 4); // data must contain at least five points
@@ -91,11 +91,10 @@ namespace qAlgorithms
                           &eic->df,
                           validRegressions,
                           maxScale);
+
         if (!validRegressions.empty())
         {
-            exit(1);
-            // createFeaturePeaks(all_peaks, &validRegressions, &treatedData.RT);
-            // there is no reason for this to be called here and not later @todo
+            createFeaturePeaks(all_peaks, &validRegressions, RT);
         }
     }
 

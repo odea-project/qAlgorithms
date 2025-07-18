@@ -225,11 +225,10 @@ int main(int argc, char *argv[])
             filename = pathSource.stem().string();
 #pragma region "centroiding"
 
-            float diff_rt = 0;
             // @todo add check if set polarity is correct
 
             std::vector<CentroidPeak> *centroids = new std::vector<CentroidPeak>;
-            *centroids = findCentroids(data, &linkNodes, diff_rt, polarity); // it is guaranteed that only profile mode data is used
+            *centroids = findCentroids(data, &linkNodes, polarity); // it is guaranteed that only profile mode data is used
 
             if (centroids->empty())
             {
@@ -373,7 +372,7 @@ int main(int argc, char *argv[])
 #pragma region "feature construction"
             timeStart = std::chrono::high_resolution_clock::now();
             // every subvector of peaks corresponds to the bin ID
-            auto features = findFeatures(binnedData, diff_rt, convertRT.size());
+            auto features = findFeatures(binnedData, &convertRT);
 
             if (features.size() == 0)
             {
