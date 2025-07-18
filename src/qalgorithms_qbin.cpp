@@ -713,13 +713,22 @@ namespace qAlgorithms
             {
                 // close the block
                 lastVal = areas->at(i);
-                size_t numInterpolations = i - startPos - 1;
-                // @todo this must be changed so that it accounts for maxima towards both directions, right?
-                assert(false);
-                float d_area = std::pow(lastVal / firstVal, 1.0 / float(numInterpolations + 1)); // dy for log interpolation
+                size_t gapsize = i - startPos - 1;
+
+                // @todo is this the best possible approach?
+                // assuming there is no baseline, two points suffice for determining y = a * b^x
+                // we set the first real point as x = 0, so y1 = a. The second point is at gapsize + 1 (x = gap). It follows
+                // y2 = y1 * b^gap
+                // b^gap = y2 / y1
+                // b = gap-th root of y2 / y1
+                // b = (y2 / y1)^(1 / gap)
+
+                float a = firstVal;
+                float b = std::pow(lastVal / firstVal, 1.0 / float(gapsize + 1));
                 for (size_t pos = startPos + 1; pos < i; pos++)
                 {
-                    areas->at(pos) = firstVal * std::pow(d_area, pos - startPos); // @todo is this the best possible approach?
+                    int x = pos - startPos;
+                    areas->at(pos) = a * std::pow(b, x);
                 }
                 openBlock = false;
                 firstVal = areas->at(i);
