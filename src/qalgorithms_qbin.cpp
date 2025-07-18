@@ -689,9 +689,7 @@ namespace qAlgorithms
         areas->at(areas->size() - 2) = lastVal / 2;
         areas->at(areas->size() - 1) = lastVal / 4;
 
-        size_t scanDiff = eic->interpolatedScans[areas->size() - 3] - eic->interpolatedScans[2];
-        bool noInterpolations = scanDiff == eic->df.back();
-
+        bool noInterpolations = areas->size() - 4 == eic->df.back();
         if (noInterpolations) // no empty values
             return;
 

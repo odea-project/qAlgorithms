@@ -20,8 +20,6 @@ namespace qAlgorithms
         const int start_index,
         double PPMerror);
 
-    TreatedData pretreatEIC(EIC &dataPoints, float expectedDifference);
-
     struct Block
     {
         size_t start;

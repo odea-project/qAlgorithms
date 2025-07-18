@@ -17,15 +17,6 @@ namespace qAlgorithms
         unknown
     };
 
-    struct TreatedData // @todo remove this struct / maybe not?
-    {
-        std::vector<float> RT;
-        std::vector<float> intensity;
-        std::vector<unsigned int> cenIDs;
-        std::vector<unsigned int> cumulativeDF; // degrees of freedom
-        unsigned int lowestScan, largestScan;
-    };
-
     struct ProfileBlock
     {
         std::vector<float> intensity;
