@@ -267,11 +267,11 @@ int main(int argc, char *argv[])
             filename = filename + (polarity ? "_positive" : "_negative");
 
             // calculate scan number after performing interpolation
-            std::vector<float> convertRT = data.get_spectra_RT(&accessor, &linkNodes);
+            std::vector<float> retentionTimes = data.get_spectra_RT(&accessor, &linkNodes);
 
             if (userArgs.printCentroids)
             {
-                printCentroids(centroids, &convertRT, userArgs.outputPath, filename, userArgs.silent, userArgs.skipError, userArgs.noOverwrite);
+                printCentroids(centroids, &retentionTimes, userArgs.outputPath, filename, userArgs.silent, userArgs.skipError, userArgs.noOverwrite);
 
                 if (userArgs.term == TerminateAfter::centroids)
                 {
@@ -311,8 +311,8 @@ int main(int argc, char *argv[])
 #pragma region "binning"
             timeStart = std::chrono::high_resolution_clock::now();
 
-            auto relIndex = interpolateScanNumbers(&convertRT);
-            std::vector<EIC> binnedData = performQbinning(centroids, &relIndex, userArgs.verboseProgress);
+            RT_Converter rt_index = interpolateScanNumbers(&retentionTimes);
+            std::vector<EIC> binnedData = performQbinning(centroids, &rt_index.countToInterp, userArgs.verboseProgress);
 
             timeEnd = std::chrono::high_resolution_clock::now();
 
@@ -338,7 +338,7 @@ int main(int argc, char *argv[])
             }
             if (userArgs.printBins)
             {
-                printBins(centroids, &binnedData, &convertRT, userArgs.outputPath, filename, userArgs.silent, userArgs.skipError, userArgs.noOverwrite);
+                printBins(centroids, &binnedData, &retentionTimes, userArgs.outputPath, filename, userArgs.silent, userArgs.skipError, userArgs.noOverwrite);
 
                 if (userArgs.term == TerminateAfter::binning)
                 {
@@ -353,7 +353,7 @@ int main(int argc, char *argv[])
             double meanDQSB = 0;
             for (auto EIC : binnedData)
             {
-                assert(EIC.scanNumbers.back() <= convertRT.size());
+                assert(EIC.scanNumbers.back() <= retentionTimes.size());
                 for (double dqsb : EIC.DQSB)
                 {
                     if (dqsb == -1)
@@ -372,7 +372,7 @@ int main(int argc, char *argv[])
 #pragma region "feature construction"
             timeStart = std::chrono::high_resolution_clock::now();
             // every subvector of peaks corresponds to the bin ID
-            auto features = findFeatures(binnedData, &convertRT);
+            auto features = findFeatures(binnedData, &rt_index.interpToCount, &retentionTimes);
 
             if (features.size() == 0)
             {
@@ -387,7 +387,7 @@ int main(int argc, char *argv[])
             double meanInterpolations = 0;
             for (size_t i = 0; i < features.size(); i++)
             {
-                assert(features[i].scanPeakEnd < convertRT.size());
+                assert(features[i].scanPeakEnd < retentionTimes.size());
                 int binIdx = features[i].idxBin;
                 auto massesBin = binnedData[binIdx].mz;
                 auto scansBin = binnedData[binIdx].scanNumbers;
@@ -428,7 +428,7 @@ int main(int argc, char *argv[])
 
             if (userArgs.printFeatCens)
             {
-                printFeatureCentroids(&features, userArgs.outputPath, filename, &binnedData, &convertRT,
+                printFeatureCentroids(&features, userArgs.outputPath, filename, &binnedData, &retentionTimes,
                                       userArgs.printExtended, userArgs.silent, userArgs.skipError, userArgs.noOverwrite);
             }
 
@@ -436,7 +436,7 @@ int main(int argc, char *argv[])
             {
                 if (userArgs.printFeatures) // this is here so we can incorporate the component ID into the output
                 {
-                    printFeatureList(&features, userArgs.outputPath, filename, &binnedData, &convertRT,
+                    printFeatureList(&features, userArgs.outputPath, filename, &binnedData, &retentionTimes,
                                      userArgs.printExtended, userArgs.silent, userArgs.skipError, userArgs.noOverwrite);
                 }
                 continue;
@@ -448,7 +448,7 @@ int main(int argc, char *argv[])
             timeStart = std::chrono::high_resolution_clock::now();
 
             size_t featuresInComponents = 0; // only used as a count statistic
-            const auto components = findComponents(&features, &binnedData, &convertRT, minCenArea, &featuresInComponents);
+            const auto components = findComponents(&features, &binnedData, &retentionTimes, minCenArea, &featuresInComponents);
 
             timeEnd = std::chrono::high_resolution_clock::now();
             if (!userArgs.silent)
@@ -459,7 +459,7 @@ int main(int argc, char *argv[])
 
             if (userArgs.printFeatures) // this is here so we can incorporate the component ID into the output
             {
-                printFeatureList(&features, userArgs.outputPath, filename, &binnedData, &convertRT,
+                printFeatureList(&features, userArgs.outputPath, filename, &binnedData, &retentionTimes,
                                  userArgs.printExtended, userArgs.silent, userArgs.skipError, userArgs.noOverwrite);
             }
 

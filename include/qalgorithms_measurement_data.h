@@ -9,16 +9,14 @@
 
 namespace qAlgorithms
 {
-    inline std::array<double, 3> interpolateQuadratic(float interpolate, const float *x, const float *y);
+    struct RT_Converter
+    {
+        // find the spectrum index after interpolation from MS1 spectrum number and vice versa
+        std::vector<unsigned int> countToInterp;
+        std::vector<unsigned int> interpToCount;
+    };
 
-    std::vector<unsigned int> interpolateScanNumbers(const std::vector<float> *retentionTimes);
-
-    std::vector<std::vector<CentroidPeak>> transferCentroids(
-        XML_File &data,
-        std::vector<int> &indices,
-        std::vector<double> &retention_times,
-        const int start_index,
-        double PPMerror);
+    RT_Converter interpolateScanNumbers(const std::vector<float> *retentionTimes);
 
     struct Block
     {
@@ -37,8 +35,6 @@ namespace qAlgorithms
         const std::vector<double> *spectrum_mz,
         const std::vector<double> *spectrum_int);
 
-    void extrapolateEIC(const std::vector<unsigned int> scanNums, std::vector<float> *intensity);
-
     inline float calcRTDiff(const std::vector<double> *retention_times);
 
     std::vector<CentroidPeak> findCentroids(
@@ -47,7 +43,9 @@ namespace qAlgorithms
         const bool polarity,
         const bool ms1only = true);
 
-    std::vector<FeaturePeak> findFeatures(std::vector<EIC> &data, std::vector<float> *RT);
+    std::vector<FeaturePeak> findFeatures(std::vector<EIC> &data,
+                                          std::vector<unsigned int> *backConvert,
+                                          std::vector<float> *RT);
 }
 
 #endif

@@ -66,7 +66,7 @@ namespace qAlgorithms
         }
     }
 
-    void findFeaturePeaks(std::vector<FeaturePeak> *all_peaks, std::vector<float> *RT, const EIC *eic)
+    std::vector<RegressionGauss> findFeaturePeaks(std::vector<FeaturePeak> *all_peaks, const EIC *eic)
     {
         size_t length = eic->df.size();
         assert(length > 4); // data must contain at least five points
@@ -92,10 +92,7 @@ namespace qAlgorithms
                           validRegressions,
                           maxScale);
 
-        if (!validRegressions.empty())
-        {
-            createFeaturePeaks(all_peaks, &validRegressions, RT);
-        }
+        return validRegressions;
     }
 
 #pragma endregion "find peaks"
@@ -966,14 +963,19 @@ namespace qAlgorithms
             peak.height = exp_approx_d(coeff.b0 + (regression.apex_position - regression.index_x0) * coeff.b1 * 0.5);
             peak.heightUncertainty = regression.uncertainty_height * peak.height;
 
-            // size_t apexIdx = (size_t)std::floor(regression.apex_position);
-            const double rt_leftOfMax = RT->at((int)std::floor(regression.apex_position)); // left of maximum
-            const double delta_rt = RT->at((int)std::floor(regression.apex_position) + 1) - rt_leftOfMax;
-            assert(delta_rt > 0);
-            const double apex_position = rt_leftOfMax + delta_rt * (regression.apex_position - std::floor(regression.apex_position));
-            peak.retentionTime = apex_position;
+            // calculate the apex position in RT
+            size_t idx_leftOfApex = (size_t)regression.apex_position;
+            size_t idx_rightOfApex = idx_leftOfApex + 1;
+            assert(idx_rightOfApex < RT->size());
+            float rt_leftOfApex = RT->at(idx_leftOfApex);
+            float rt_rightOfApex = RT->at(idx_rightOfApex);
+            assert(rt_leftOfApex < rt_rightOfApex);
+            float delta_rt = rt_rightOfApex - rt_leftOfApex;
+            float rt_fraction = (regression.apex_position - floor(regression.apex_position));
+            assert(rt_fraction > 0 && rt_fraction < 1);
+            float rt_apex = rt_leftOfApex + delta_rt * rt_fraction;
+            peak.retentionTime = rt_apex;
             peak.RT_Uncertainty = regression.uncertainty_pos * delta_rt;
-            assert(peak.RT_Uncertainty > 0);
 
             // add area
             float exp_b0 = exp_approx_d(coeff.b0); // exp(b0)

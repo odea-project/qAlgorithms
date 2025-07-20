@@ -17,7 +17,7 @@ namespace qAlgorithms
 {
 #pragma region "Feature Detection"
 
-    std::vector<unsigned int> interpolateScanNumbers(const std::vector<float> *retentionTimes)
+    RT_Converter interpolateScanNumbers(const std::vector<float> *retentionTimes)
     {
         // This function interpolates the existing RTs of MS1 spectra and produces a vector that contains,
         // for the index of every real MS1 spectrum, the scan number with interpolations for that spectrum.
@@ -51,7 +51,8 @@ namespace qAlgorithms
             assert(tmpDiffs[0] > expectedDiff / 2); // if this is not given, there are severe distortions at some point in the data
         }
 
-        std::vector<unsigned int> res(retentionTimes->size(), 1);
+        size_t scanCount = retentionTimes->size() + 1;
+        std::vector<unsigned int> forwardConv(scanCount, 1);
 
         float critDiff = expectedDiff * 1.5; // if the difference is greater than the critDiff, there should be at least one interpolation
         unsigned int currentScan = 1;
@@ -67,13 +68,23 @@ namespace qAlgorithms
                 size_t numInterpolations = size_t(diffs[i] / expectedDiff + 0.5); // + 0.5 since value is truncated
                 currentScan += numInterpolations;
             }
-            res[i + 1] = currentScan;
+            forwardConv[i + 2] = currentScan;
         }
-        assert(res.back() >= res.size());
-        return res;
+        forwardConv[0] = 0; // this is a dummy value since the scan 0 is a dummy value used for communicating absence
+        assert(forwardConv.back() + 1 >= scanCount);
+
+        std::vector<unsigned int> backwardConv(scanCount, 0);
+        for (size_t i = 0; i < scanCount; i++)
+        {
+            backwardConv[forwardConv[i]] = i;
+        }
+
+        return {forwardConv, backwardConv};
     }
 
-    std::vector<FeaturePeak> findFeatures(std::vector<EIC> &EICs, std::vector<float> *RT)
+    std::vector<FeaturePeak> findFeatures(std::vector<EIC> &EICs,
+                                          std::vector<unsigned int> *backConvert,
+                                          std::vector<float> *RT)
     {
         std::vector<FeaturePeak> peaks;    // return vector for feature list
         peaks.reserve(EICs.size() / 4);    // should be enough to fit all features without reallocation
@@ -87,7 +98,12 @@ namespace qAlgorithms
                 continue; // skip due to lack of data, i.e., degrees of freedom will be zero
             }
 
-            findFeaturePeaks(&tmpPeaks, RT, &currentEIC);
+            auto validRegressions = findFeaturePeaks(&tmpPeaks, &currentEIC);
+
+            if (!validRegressions.empty())
+            {
+                createFeaturePeaks(&tmpPeaks, &validRegressions, RT); // @todo can this be moved outside of the loop?
+            }
             // @todo extract the peak construction here and possibly extract findFeatures into a generic function
 
             if (tmpPeaks.empty())

@@ -614,8 +614,8 @@ namespace qAlgorithms
         // arrays with gaps for later processing
 
         size_t eicsize = pointsInBin.size();
-        unsigned int firstScan = convertRT->at(pointsInBin.front()->number_MS1 - 1);
-        unsigned int lastScan = convertRT->at(pointsInBin.back()->number_MS1 - 1);
+        unsigned int firstScan = convertRT->at(pointsInBin.front()->number_MS1);
+        unsigned int lastScan = convertRT->at(pointsInBin.back()->number_MS1);
         size_t interpolatedSize = lastScan - firstScan + 1 + 4; // +4 since we extrapolate two points to each side later
         std::vector<unsigned int> tmp_interpScans(interpolatedSize, 0);
         std::iota(tmp_interpScans.begin(), tmp_interpScans.end(), firstScan - 2);
@@ -634,10 +634,10 @@ namespace qAlgorithms
 
         for (size_t i = 0; i < eicsize; i++)
         {
-            unsigned int access = convertRT->at(pointsInBin.at(i)->number_MS1 - 1) - firstScan + 2; // two scans at the front are extrapolated later
+            unsigned int access = convertRT->at(pointsInBin.at(i)->number_MS1) - firstScan + 2; // two scans at the front are extrapolated later
             const CentroidPeak *point = pointsInBin[i];
 
-            tmp_scanNumbers[access] = i + firstScan;
+            tmp_scanNumbers[access] = point->number_MS1;
             tmp_mz[access] = point->mz;
             tmp_mzUncert[access] = point->mzUncertainty;
             tmp_ints_area[access] = point->area;

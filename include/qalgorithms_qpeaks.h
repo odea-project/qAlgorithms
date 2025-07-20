@@ -24,7 +24,7 @@ namespace qAlgorithms
                            const size_t scanNumber,
                            const size_t accessor);
 
-    void findFeaturePeaks(std::vector<FeaturePeak> *all_peaks, std::vector<float> *RT, const EIC *eic);
+    std::vector<RegressionGauss> findFeaturePeaks(std::vector<FeaturePeak> *all_peaks, const EIC *eic);
 
     void runningRegression(
         const std::vector<float> *intensities,
