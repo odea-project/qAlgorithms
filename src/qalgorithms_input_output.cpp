@@ -563,15 +563,8 @@ namespace qAlgorithms
 #pragma region "print functions"
     // @todo use macros to move the boilderplate out of the function body
 
-    void printCentroids(const std::vector<CentroidPeak> *peaktable,
-                        std::vector<float> *convertRT,
-                        std::filesystem::path pathOutput,
-                        std::string filename,
-                        bool silent, bool skipError, bool noOverwrite)
+    void errorMsg(std::filesystem::path pathOutput, bool noOverwrite)
     {
-        filename += "_centroids.csv";
-        pathOutput /= filename;
-
         if (std::filesystem::exists(pathOutput))
         {
             if (noOverwrite)
@@ -581,6 +574,26 @@ namespace qAlgorithms
             }
             std::filesystem::remove(pathOutput);
         }
+    }
+
+    void printSpectrumAndCens(const std::vector<CentroidPeak> *peaktable,
+                              std::filesystem::path pathOutput,
+                              std::string filename,
+                              size_t spectrumNo)
+    {
+        assert(false);
+    }
+
+    void printCentroids(const std::vector<CentroidPeak> *peaktable,
+                        std::vector<float> *convertRT,
+                        std::filesystem::path pathOutput,
+                        std::string filename,
+                        bool silent, bool skipError, bool noOverwrite)
+    {
+        filename += "_centroids.csv";
+        pathOutput /= filename;
+        errorMsg(pathOutput, noOverwrite);
+
         if (!silent)
         {
             std::cout << "writing centroids to: " << pathOutput << "\n";

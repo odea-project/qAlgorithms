@@ -525,7 +525,7 @@ namespace qAlgorithms
         */
         float valley_position = 0;
         // no easy replace
-        if (!calcApexAndValleyPos(mutateReg, scale, valley_position))
+        if (!calcApexAndValleyPos(mutateReg, scale, valley_position)) // no allocations
         {
             return; // invalid apex and valley positions
         }
@@ -593,8 +593,7 @@ namespace qAlgorithms
           ratio is greater than 2. This is a pre-filter for later
           signal-to-noise ratio checkups. apexToEdge is also required in isValidPeakHeight further down
         */
-        //         size_t idx_apex = (size_t)std::round(apex_position) + idx_x0;
-        size_t idxApex = (size_t)std::round(mutateReg->apex_position) + idx_x0;
+        size_t idxApex = (size_t)mutateReg->apex_position + idx_x0;
         float apexToEdge = apexToEdgeRatio(mutateReg->left_limit, idxApex, mutateReg->right_limit, intensities);
         if (!(apexToEdge > 2))
         {
@@ -1806,6 +1805,7 @@ namespace qAlgorithms
 
         std::vector<double> spectrum_mz(1000);
         std::vector<double> spectrum_int(1000);
+        std::vector<ProfileBlock> groupedData(500);
         for (size_t i = 0; i < countSelected; ++i)
         {
             // avoid needless allocation / deallocation
@@ -1815,9 +1815,9 @@ namespace qAlgorithms
             size_t ID_spectrum = selectedIndices[i];
             data.get_spectrum(linkNodes, &spectrum_mz, &spectrum_int, ID_spectrum);
 
-            const auto profileGroups = pretreatDataCentroids(&spectrum_mz, &spectrum_int);
+            pretreatDataCentroids(&groupedData, &spectrum_mz, &spectrum_int);
 
-            findCentroidPeaks(&centroids, &profileGroups, i + 1, ID_spectrum);
+            findCentroidPeaks(&centroids, &groupedData, i + 1, ID_spectrum);
         }
         for (unsigned int i = 0; i < centroids.size(); i++)
         {
@@ -1910,7 +1910,8 @@ namespace qAlgorithms
         return ret;
     }
 
-    std::vector<ProfileBlock> pretreatDataCentroids(
+    void pretreatDataCentroids(
+        std::vector<ProfileBlock> *groupedData,
         const std::vector<double> *spectrum_mz,
         const std::vector<double> *spectrum_int)
     {
@@ -1949,7 +1950,8 @@ namespace qAlgorithms
 
             for (size_t i = 1; i < mz_profile.size(); i++)
             {
-                double diff = mz_profile[i] - mz_profile[i - 1];
+                float diff = mz_profile[i] - mz_profile[i - 1];
+                assert(diff != 0);
                 diffs.push_back(diff);
                 totalDiff += diff;
                 cumDiffs.push_back(totalDiff);
@@ -2007,8 +2009,7 @@ namespace qAlgorithms
             binProfileSpec(&result, &diffs, &cumDiffs, knownStart, knownEnd);
         }
 
-        std::vector<ProfileBlock> groupedData;
-        groupedData.reserve(result.size());
+        groupedData->clear();
 
         // transfer the found groups into a representation accepted by the peak model fit
         for (size_t j = 0; j < result.size(); j++)
@@ -2030,15 +2031,6 @@ namespace qAlgorithms
                 size_t rpos = i + 2;         // result vector position
                 entry.mz[rpos] = mz_profile[epos];
             }
-            // for (size_t i = 0; i < entrySize - 4; i++)
-            // {
-            //     size_t rpos = i + 2;
-            //     entry.df[rpos] = true;
-            //     entry.cumdf[rpos] = i + 1;
-            // }
-
-            // entry.cumdf[entrySize - 2] = entry.cumdf[entrySize - 3];
-            // entry.cumdf[entrySize - 1] = entry.cumdf[entrySize - 3];
 
             // extrapolate two points to each size of the entry
             {
@@ -2060,9 +2052,8 @@ namespace qAlgorithms
             entry.startPos = idxConvert[res.start];
             entry.endPos = idxConvert[res.end];
 
-            groupedData.push_back(entry);
+            groupedData->push_back(entry);
         }
-        assert(!groupedData.empty());
-        return groupedData;
+        assert(!groupedData->empty());
     }
 }

@@ -37,7 +37,8 @@ namespace qAlgorithms
                         // size_t previousDiffPos,              // skip this many points in the diffOrder vector
                         size_t start, size_t end);
 
-    std::vector<ProfileBlock> pretreatDataCentroids(
+    void pretreatDataCentroids(
+        std::vector<ProfileBlock> *groupedData,
         const std::vector<double> *spectrum_mz,
         const std::vector<double> *spectrum_int);
 

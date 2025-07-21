@@ -79,6 +79,11 @@ namespace qAlgorithms
         float intensity;
     };
 
+    void printSpectrumAndCens(const std::vector<CentroidPeak> *peaktable,
+                              std::filesystem::path pathOutput,
+                              std::string filename,
+                              size_t spectrumNo);
+
     void printCentroids(const std::vector<CentroidPeak> *peaktable,
                         std::vector<float> *convertRT,
                         std::filesystem::path pathOutput,
