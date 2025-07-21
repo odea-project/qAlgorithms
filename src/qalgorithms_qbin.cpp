@@ -1,5 +1,6 @@
 #include "qalgorithms_qbin.h"
 #include "qalgorithms_global_vars.h"
+#include "qalgorithms_utils.h"
 
 #include <cassert>
 #include <iostream> // error printing
@@ -140,15 +141,6 @@ namespace qAlgorithms
         assert(countPointsInBins + activeBins.notInBins.size() == centroidedData->size());
         return finalBins;
     }
-
-#pragma region "misc"
-
-    const double binningCritVal(size_t n, double stdDev)
-    {
-        return (OS_CRIT_A + (OS_CRIT_B / std::sqrt(std::log(n + 1)))) * stdDev;
-    }
-
-#pragma endregion "misc"
 
 #pragma region "BinContainer"
 
@@ -782,4 +774,42 @@ namespace qAlgorithms
         return (minOuterDist - meanInnerDist) / fmal(meanInnerDist, maxInVal, maxInVal);
     }
 #pragma endregion "Functions"
+
+    bool massTraceStable(std::vector<float> massesBin, int idxStart, int idxEnd) // @todo do this in regression
+    {
+        assert(idxEnd > idxStart);
+        size_t peaksize = idxEnd - idxStart + 1;
+        // std::cout << idxStart << ", " << idxEnd << ", " << peaksize << "\n";
+        std::vector<float> massesPeak;
+        for (size_t i = 0; i < peaksize; i++)
+        {
+            massesPeak.push_back(massesBin[idxStart + i]);
+        }
+        std::sort(massesPeak.begin(), massesPeak.end());
+
+        // critval @todo make this one function
+        float mean = 0;
+        float stddev = 0;
+        for (size_t i = 0; i < peaksize; i++)
+        {
+            mean += massesPeak[i];
+        }
+        mean /= peaksize;
+        for (size_t i = 0; i < peaksize; i++)
+        {
+            stddev += (massesPeak[i] - mean) * (massesPeak[i] - mean);
+        }
+        stddev = sqrt(stddev / (peaksize - 1));
+
+        // float vcrit = 3.05037165842070 * pow(log(peaksize), (TOLERANCE_BINNING)) * stddev;
+        float vcrit = binningCritVal(peaksize, stddev);
+        for (size_t i = 1; i < peaksize; i++)
+        {
+            [[unlikely]] if (massesPeak[i] - massesPeak[i - 1] > vcrit)
+            {
+                return false;
+            }
+        }
+        return true;
+    }
 }

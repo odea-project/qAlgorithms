@@ -6,7 +6,7 @@
 #include "qalgorithms_input_output.h"
 #include "qalgorithms_metafiles.h" // new organisation of program - this and the library header should be the only two qalgo includes!
 #include "qalgorithms_read_file.h"
-#include "qalgorithms_measurement_data.h"
+// #include "qalgorithms_measurement_data.h"
 
 // external
 #include <cassert>
@@ -43,43 +43,6 @@ namespace qAlgorithms
         float meanDQSG;
     };
 
-    bool massTraceStable(std::vector<float> massesBin, int idxStart, int idxEnd) // @todo do this in regression
-    {
-        assert(idxEnd > idxStart);
-        size_t peaksize = idxEnd - idxStart + 1;
-        // std::cout << idxStart << ", " << idxEnd << ", " << peaksize << "\n";
-        std::vector<float> massesPeak;
-        for (size_t i = 0; i < peaksize; i++)
-        {
-            massesPeak.push_back(massesBin[idxStart + i]);
-        }
-        std::sort(massesPeak.begin(), massesPeak.end());
-
-        // critval @todo make this one function
-        float mean = 0;
-        float stddev = 0;
-        for (size_t i = 0; i < peaksize; i++)
-        {
-            mean += massesPeak[i];
-        }
-        mean /= peaksize;
-        for (size_t i = 0; i < peaksize; i++)
-        {
-            stddev += (massesPeak[i] - mean) * (massesPeak[i] - mean);
-        }
-        stddev = sqrt(stddev / (peaksize - 1));
-
-        // float vcrit = 3.05037165842070 * pow(log(peaksize), (TOLERANCE_BINNING)) * stddev;
-        float vcrit = binningCritVal(peaksize, stddev);
-        for (size_t i = 1; i < peaksize; i++)
-        {
-            [[unlikely]] if (massesPeak[i] - massesPeak[i - 1] > vcrit)
-            {
-                return false;
-            }
-        }
-        return true;
-    }
 }
 
 int main2(int argc, char *argv[])

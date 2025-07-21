@@ -48,5 +48,7 @@ namespace qAlgorithms
     double experfc(double x, double sign = -1.0);
 
     double erfi(const double x);
+
+    const double binningCritVal(unsigned int n, double uncertainty); // critical value for deciding if a bin exists or not
 }
 #endif // QALGORITHMS_UTILS_H

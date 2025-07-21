@@ -21,8 +21,6 @@ namespace qAlgorithms
     // ###################################################################################################### //
 #pragma region "utility"
 
-    const double binningCritVal(size_t n, double uncertainty); // critical value for deciding if a bin exists or not
-
     /// @brief calculate the mean distance in mz to all other close elements of a sorted vector for one element
     /// @param pointsInBin vector of data points sorted by scans
     /// @return vector of the mean inner distances for all elements in the same order as pointsInBin
@@ -137,6 +135,8 @@ namespace qAlgorithms
     void removeMassJumps(std::vector<Bin> *target, std::vector<const CentroidPeak *> *notInBins, Bin bin);
 
 #pragma endregion "Bin Container"
+
+    bool massTraceStable(std::vector<float> massesBin, int idxStart, int idxEnd);
 }
 
 #endif

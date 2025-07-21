@@ -64,4 +64,10 @@ namespace qAlgorithms
 
         return D * exp_approx_d(x * x);
     }
+
+    // critical order space of two normally distributed populations
+    const double binningCritVal(unsigned int n, double stdDev)
+    {
+        return (OS_CRIT_A + (OS_CRIT_B / std::sqrt(std::log(n + 1)))) * stdDev;
+    }
 }
