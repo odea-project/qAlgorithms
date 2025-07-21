@@ -61,6 +61,7 @@ namespace qAlgorithms
 
     void createFeaturePeaks(
         std::vector<FeaturePeak> *peaks,
+        std::vector<unsigned int> *backConvert,
         const std::vector<RegressionGauss> *validRegressionsVec,
         const std::vector<float> *RT);
 

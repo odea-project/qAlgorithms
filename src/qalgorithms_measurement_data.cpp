@@ -52,7 +52,7 @@ namespace qAlgorithms
         }
 
         size_t scanCount = retentionTimes->size() + 1;
-        std::vector<unsigned int> forwardConv(scanCount, 1);
+        std::vector<unsigned int> forwardConv(scanCount, 0);
 
         float critDiff = expectedDiff * 1.5; // if the difference is greater than the critDiff, there should be at least one interpolation
         unsigned int currentScan = 1;
@@ -71,13 +71,15 @@ namespace qAlgorithms
             forwardConv[i + 2] = currentScan;
         }
         forwardConv[0] = 0; // this is a dummy value since the scan 0 is a dummy value used for communicating absence
+        assert(forwardConv.back() == currentScan);
         assert(forwardConv.back() + 1 >= scanCount);
 
-        std::vector<unsigned int> backwardConv(scanCount, 0);
+        std::vector<unsigned int> backwardConv(currentScan + 1, 0);
         for (size_t i = 0; i < scanCount; i++)
         {
             backwardConv[forwardConv[i]] = i;
         }
+        assert(backwardConv.back() == forwardConv.size() - 1);
 
         return {forwardConv, backwardConv};
     }
@@ -102,7 +104,7 @@ namespace qAlgorithms
 
             if (!validRegressions.empty())
             {
-                createFeaturePeaks(&tmpPeaks, &validRegressions, RT); // @todo can this be moved outside of the loop?
+                createFeaturePeaks(&tmpPeaks, backConvert, &validRegressions, RT); // @todo can this be moved outside of the loop?
             }
             // @todo extract the peak construction here and possibly extract findFeatures into a generic function
 

@@ -947,6 +947,7 @@ namespace qAlgorithms
 
     void createFeaturePeaks(
         std::vector<FeaturePeak> *peaks,
+        std::vector<unsigned int> *backConvert,
         const std::vector<RegressionGauss> *validRegressionsVec,
         const std::vector<float> *RT)
     {
@@ -964,7 +965,7 @@ namespace qAlgorithms
             peak.heightUncertainty = regression.uncertainty_height * peak.height;
 
             // calculate the apex position in RT
-            size_t idx_leftOfApex = (size_t)regression.apex_position;
+            size_t idx_leftOfApex = backConvert->at((size_t)regression.apex_position);
             size_t idx_rightOfApex = idx_leftOfApex + 1;
             assert(idx_rightOfApex < RT->size());
             float rt_leftOfApex = RT->at(idx_leftOfApex);

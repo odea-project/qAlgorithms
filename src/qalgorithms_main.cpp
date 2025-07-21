@@ -226,6 +226,8 @@ int main(int argc, char *argv[])
 #pragma region "centroiding"
 
             // @todo add check if set polarity is correct
+            std::vector<float> retentionTimes = data.get_spectra_RT(&accessor, &linkNodes);
+            RT_Converter rt_index = interpolateScanNumbers(&retentionTimes);
 
             std::vector<CentroidPeak> *centroids = new std::vector<CentroidPeak>;
             *centroids = findCentroids(data, &linkNodes, polarity); // it is guaranteed that only profile mode data is used
@@ -267,7 +269,7 @@ int main(int argc, char *argv[])
             filename = filename + (polarity ? "_positive" : "_negative");
 
             // calculate scan number after performing interpolation
-            std::vector<float> retentionTimes = data.get_spectra_RT(&accessor, &linkNodes);
+            // std::vector<float> retentionTimes = data.get_spectra_RT(&accessor, &linkNodes);
 
             if (userArgs.printCentroids)
             {
@@ -311,7 +313,7 @@ int main(int argc, char *argv[])
 #pragma region "binning"
             timeStart = std::chrono::high_resolution_clock::now();
 
-            RT_Converter rt_index = interpolateScanNumbers(&retentionTimes);
+            // RT_Converter rt_index = interpolateScanNumbers(&retentionTimes);
             std::vector<EIC> binnedData = performQbinning(centroids, &rt_index.countToInterp, userArgs.verboseProgress);
 
             timeEnd = std::chrono::high_resolution_clock::now();
