@@ -23,6 +23,14 @@ namespace qAlgorithms
                            const std::vector<ProfileBlock> *treatedData,
                            const size_t scanNumber,
                            const size_t accessor)
+    /* ### allocations ###
+        logIntensity: maxWindowSize * f32
+        validRegressions: UNKNOWN * RegressionGauss (large!)
+
+       ### called functions ###
+        runningRegression
+        createCentroidPeaks
+    */
     {
         assert(!treatedData->empty());
         assert(scanNumber != 0);
@@ -43,30 +51,38 @@ namespace qAlgorithms
         validRegressions.reserve(treatedData->size() / 2); // probably too large, shouldn't matter
         for (size_t i = 0; i < treatedData->size(); i++)
         {
-            const auto block = (*treatedData)[i];
-            const size_t length = block.mz.size();
+            const auto block = &((*treatedData)[i]);
+            const size_t length = block->mz.size();
+            assert(length == block->mz.size());
             assert(length > 4);
 
             logIntensity.resize(length); // this way, no new allocations will be made in the loop
             for (size_t blockPos = 0; blockPos < length; blockPos++)
             {
-                logIntensity[blockPos] = std::log(block.intensity[blockPos]);
+                logIntensity[blockPos] = std::log(block->intensity[blockPos]);
             }
 
             // @todo adjust the scale dynamically based on the number of valid regressions found, early terminate after x iterations
             const size_t maxScale = std::min(GLOBAL_MAXSCALE_CENTROID, size_t((length - 1) / 2)); // length - 1 because the center point is not part of the span
 
-            runningRegression(&block.intensity, &logIntensity, &block.cumdf, validRegressions, maxScale);
+            runningRegression(&block->intensity, &logIntensity, &block->cumdf, &validRegressions, maxScale);
             if (validRegressions.empty())
             {
                 continue; // no valid peaks
             }
-            createCentroidPeaks(retPeaks, &validRegressions, &block, scanNumber, accessor);
+            createCentroidPeaks(retPeaks, &validRegressions, block, scanNumber, accessor);
             validRegressions.clear();
         }
     }
 
     std::vector<RegressionGauss> findFeaturePeaks(std::vector<FeaturePeak> *all_peaks, const EIC *eic)
+    /* ### allocations ###
+        logIntensity: size of EIC * f32 // known at call time
+        validRegressions: UNKNOWN * RegressionGauss (large!)
+
+       ### called functions ###
+        runningRegression
+    */
     {
         size_t length = eic->df.size();
         assert(length > 4); // data must contain at least five points
@@ -79,6 +95,7 @@ namespace qAlgorithms
         }
 
         std::vector<RegressionGauss> validRegressions;
+        validRegressions.reserve(8); // @todo check which size is actually needed
 
         // @todo this is not a universal limit and only chosen for computational speed at the moment
         // with an estimated scan difference of 0.6 s this means the maximum peak width is 61 * 0.6 = 36.6 s
@@ -89,7 +106,7 @@ namespace qAlgorithms
         runningRegression(&eic->ints_area,
                           &logIntensity,
                           &eic->df,
-                          validRegressions,
+                          &validRegressions,
                           maxScale);
 
         return validRegressions;
@@ -102,23 +119,30 @@ namespace qAlgorithms
         const std::vector<float> *intensities,
         const std::vector<float> *intensities_log,
         const std::vector<unsigned int> *degreesOfFreedom_cum,
-        std::vector<RegressionGauss> &validRegressions,
+        std::vector<RegressionGauss> *validRegressions,
         const size_t maxScale)
+    /* ### allocations ###
+        regressions: size determined by function
+
+       ### called functions ###
+        findCoefficients
+        validateRegression
+        mergeRegressionsOverScales
+    */
     {
         //@todo move more of the generic stuff into this function
-        assert(validRegressions.empty());
+        assert(validRegressions->empty());
 
         const std::vector<RegCoeffs> regressions = findCoefficients(intensities_log, maxScale);
 
-        validateRegression(&regressions, intensities, intensities_log, degreesOfFreedom_cum, maxScale, validRegressions);
+        validateRegression(&regressions, intensities, intensities_log, degreesOfFreedom_cum, maxScale, *validRegressions);
 
-        if (validRegressions.size() > 1) // @todo we can probably filter regressions based on MSE at this stage already
+        if (validRegressions->size() > 1) // @todo we can probably filter regressions based on MSE at this stage already
         {
             // number of competitors is intialised to 0, so no special case for size = 1 needed
             // there can be 0, 1 or more than one regressions in validRegressions
-            validRegressions = mergeRegressionsOverScales(&validRegressions, intensities);
+            mergeRegressionsOverScales(validRegressions, intensities); // @todo move check into function?
         }
-        return;
     }
 
     std::vector<RegCoeffs> restoreShape(
@@ -129,6 +153,12 @@ namespace qAlgorithms
         std::vector<double> *const beta_3,
         const size_t numPoints,
         const size_t maxScale)
+    /* ### allocations ###
+        results: size known at function call, 5 * f32 * length
+
+       ### called functions ###
+        none
+    */
     {
         // this function is required since during convolution, the result array is constructed in this order:
         /*
@@ -175,6 +205,14 @@ namespace qAlgorithms
     std::vector<RegCoeffs> findCoefficients(
         const std::vector<float> *intensity_log,
         const size_t max_scale) // maximum scale that will be checked. Should generally be limited by peakFrame
+    /* ### allocations ###
+        maxInnerLoop: size known at function call
+        beta_0 etc.: size calculated in function *4 * f32
+
+       ### called functions ###
+        std::accumulate
+        restoreShape
+    */
     {
         /*
   This function performs a convolution with the kernel: (xTx)^-1 xT and the data array: intensity_log.
@@ -359,6 +397,13 @@ namespace qAlgorithms
                         std::vector<RegressionGauss> *validRegsTmp,
                         const std::vector<float> *intensities,
                         const std::vector<unsigned int> *degreesOfFreedom_cum)
+    /* ### allocations ###
+        startEndGroups: known at function call
+
+       ### called functions ###
+        std::abs
+        findBestRegression
+    */
     {
         /*
             Grouping:
@@ -431,6 +476,14 @@ namespace qAlgorithms
         const std::vector<unsigned int> *degreesOfFreedom_cum,
         const size_t maxScale, // scale, i.e., the number of data points in a half window excluding the center point
         std::vector<RegressionGauss> &validRegressions)
+    /* ### allocations ###
+        validRegsTmp: known at function call
+
+       ### called functions ###
+        calcDF_cum
+        makeValidRegression
+        findBestScales
+    */
     {
         const size_t numPoints = intensities->size();
         // all entries in coeff are sorted by scale - this is not checked!
@@ -508,6 +561,26 @@ namespace qAlgorithms
         const std::vector<unsigned int> *degreesOfFreedom_cum,
         const std::vector<float> *intensities,
         const std::vector<float> *intensities_log)
+    /* ### allocations ###
+        selectLog: size calculated in function, max size known
+        predictLog: s.o.
+
+       ### called functions ###
+        calcApexAndValleyPos
+        abs
+        std::min
+        calcDF_cum (2x)
+        apexToEdgeRatio
+        calcSSE_base
+        calcRegressionFvalue
+        isValidQuadraticTerm
+        isValidPeakArea
+        calcPeakHeightUncert
+        isValidPeakHeight
+        calcSSE_chisqared
+        smearingCorrection
+        calcUncertaintyPos
+    */
     {
         assert(scale > 1);
         assert(idxStart + 4 < degreesOfFreedom_cum->size());
@@ -712,8 +785,16 @@ namespace qAlgorithms
     }
 #pragma endregion "validate Regression"
 
-    std::vector<RegressionGauss> mergeRegressionsOverScales(std::vector<RegressionGauss> *validRegressions,
-                                                            const std::vector<float> *intensities)
+    void mergeRegressionsOverScales(std::vector<RegressionGauss> *validRegressions,
+                                    const std::vector<float> *intensities)
+    /* ### allocations ###
+        exponentialMSE: known at function call
+        validRegressionsInGroup: size unknown
+
+       ### called functions ###
+        calcSSE_exp
+        shrink_to_fit
+    */
     {
         /*
           Grouping Over Scales:
@@ -734,6 +815,7 @@ namespace qAlgorithms
             // only calculate required MSEs since this is one of the performance-critical steps
             std::vector<float> exponentialMSE(validRegressions->size(), 0);
             std::vector<unsigned int> validRegressionsInGroup; // vector of indices to validRegressions
+            validRegressionsInGroup.reserve(64);               // @todo empirical value?
             size_t competitors = 0;                            // this variable keeps track of how many competitors a given regression has
 
             // iterate over the validRegressions vector till the new peak
@@ -804,65 +886,33 @@ namespace qAlgorithms
             }
         }
 
-        std::vector<RegressionGauss> finalRegs;
+        // remove invalid regressions
+        size_t accessID = 0;
         for (size_t i = 0; i < validRegressions->size(); i++)
         {
-            if ((*validRegressions)[i].isValid)
+            if (validRegressions->at(i).isValid)
             {
-                finalRegs.push_back((*validRegressions)[i]);
+                validRegressions->at(accessID) = validRegressions->at(i);
+                accessID += 1;
             }
         }
-        return finalRegs;
+        validRegressions->resize(accessID);
+        validRegressions->shrink_to_fit();
     }
 #pragma endregion "validate regression"
 
 #pragma region "create peaks"
 
-    MeanVar weightedMeanAndVariance(const float *values,
-                                    const std::vector<float> *weight,
-                                    size_t left_limit,
-                                    size_t right_limit)
-    {
-        // weighted mean using intensity as weighting factor and left_limit right_limit as range
-        size_t realPoints = right_limit - left_limit + 1;
-        double mean_weights = 0.0;   // mean of weight
-        double sum_weighted_x = 0.0; // sum of values * weight
-        double sum_weight = 0.0;     // sum of weight
-        for (size_t j = left_limit; j <= right_limit; j++)
-        {
-            if (values[j] != 0)
-            {
-                mean_weights += (*weight)[j];
-                sum_weighted_x += values[j] * (*weight)[j];
-                sum_weight += (*weight)[j];
-            }
-            else
-            {
-                realPoints--;
-            }
-        }
-        mean_weights /= realPoints;
-        sum_weighted_x /= mean_weights;
-        sum_weight /= mean_weights;
-
-        double weighted_mean = sum_weighted_x / sum_weight;
-        double sum_Qxxw = 0.0; // sum of (values - mean)^2 * weight
-        for (size_t j = left_limit; j <= right_limit; j++)
-        {
-            if (values[j] <= 0.f)
-            {
-                continue;
-            }
-            sum_Qxxw += (values[j] - weighted_mean) * (values[j] - weighted_mean) * (*weight)[j];
-        }
-        float uncertaintiy = std::sqrt(sum_Qxxw / sum_weight / realPoints);
-        return {float(weighted_mean), float(uncertaintiy)};
-    };
-
     MeanVar weightedMeanAndVariance_EIC(const std::vector<float> *weight,
                                         const std::vector<float> *values,
                                         size_t left_limit,
                                         size_t right_limit)
+    /* ### allocations ###
+        none!
+
+       ### called functions ###
+        std::sqrt
+    */
     {
         // weighted mean using intensity as weighting factor and left_limit right_limit as range
         size_t realPoints = right_limit - left_limit + 1;
@@ -895,6 +945,14 @@ namespace qAlgorithms
         const ProfileBlock *block,
         const size_t scanNumber,
         const size_t accessor)
+    /* ### allocations ###
+        none, if peaks has the correct number of elements reserved
+
+       ### called functions ###
+        exp_approx_d
+        erf_approx_f
+        std::floor
+    */
     {
         assert(!validRegressionsVec->empty());
         // iterate over the validRegressions vector
@@ -1234,7 +1292,9 @@ namespace qAlgorithms
         unsigned int right_limit)
     {
         unsigned int substract = left_limit == 0 ? 0 : degreesOfFreedom_cum->at(left_limit - 1);
-        return degreesOfFreedom_cum->at(right_limit) - substract;
+        size_t df = degreesOfFreedom_cum->at(right_limit) - substract;
+        assert(df <= degreesOfFreedom_cum->size());
+        return df;
     }
 
 #pragma region calcApexAndValleyPos
@@ -1619,6 +1679,7 @@ namespace qAlgorithms
 #pragma region "Feature Detection"
 
     RT_Converter interpolateScanNumbers(const std::vector<float> *retentionTimes)
+    // runs once per file, performance doesn't really matter here
     {
         // This function interpolates the existing RTs of MS1 spectra and produces a vector that contains,
         // for the index of every real MS1 spectrum, the scan number with interpolations for that spectrum.
@@ -1688,6 +1749,12 @@ namespace qAlgorithms
     std::vector<FeaturePeak> findFeatures(std::vector<EIC> &EICs,
                                           std::vector<unsigned int> *backConvert,
                                           std::vector<float> *RT)
+    /* ### allocations ###
+        @todo
+
+       ### called functions ###
+
+    */
     {
         std::vector<FeaturePeak> peaks;    // return vector for feature list
         peaks.reserve(EICs.size() / 4);    // should be enough to fit all features without reallocation
@@ -1790,6 +1857,12 @@ namespace qAlgorithms
         const std::vector<pugi::xml_node> *linkNodes,
         const bool polarity,
         const bool ms1only)
+    /* ### allocations ###
+        @todo
+
+       ### called functions ###
+
+    */
     {
         const std::vector<unsigned int> selectedIndices = data.filter_spectra(linkNodes, ms1only, polarity, false);
         if (selectedIndices.empty())
@@ -1833,6 +1906,12 @@ namespace qAlgorithms
                         const std::vector<double> *cumDiffs, // indices into cumDiffs must be right-shifted by one!
                         // size_t previousDiffPos,              // skip this many points in the diffOrder vector
                         size_t start, size_t end)
+    /* ### allocations ###
+        @todo
+
+       ### called functions ###
+
+    */
     {
         // perform the recursive split introduced during binning to find gaps in mz
         // CritVal uses the standard deviation, which is estimated as the mean centroid error during binning.
@@ -1910,10 +1989,39 @@ namespace qAlgorithms
         return ret;
     }
 
+    void clearBlock(ProfileBlock *block, size_t blocksize)
+    {
+        assert(blocksize > 1);
+
+        block->startPos = 0;
+        block->endPos = 0;
+
+        bool expand = block->cumdf.size() < blocksize;
+        size_t addition = block->cumdf.size();
+
+        block->mz.resize(blocksize);
+        assert(block->mz.size() == blocksize);
+
+        block->intensity.resize(blocksize);
+
+        block->cumdf.resize(blocksize);
+        assert(block->cumdf[1] == 0);
+        if (expand)
+        {
+            std::iota(block->cumdf.begin() + addition, block->cumdf.end(), block->cumdf[addition - 1]);
+        }
+    }
+
     void pretreatDataCentroids(
         std::vector<ProfileBlock> *groupedData,
         const std::vector<double> *spectrum_mz,
         const std::vector<double> *spectrum_int)
+    /* ### allocations ###
+        @todo
+
+       ### called functions ###
+
+    */
     {
         std::vector<double> intensities_profile;
         std::vector<double> mz_profile;
@@ -2011,12 +2119,15 @@ namespace qAlgorithms
 
         groupedData->clear();
 
+        // ProfileBlock entry = initBlock(64);
+
         // transfer the found groups into a representation accepted by the peak model fit
         for (size_t j = 0; j < result.size(); j++)
         {
             Block res = result[j];
 
             size_t entrySize = res.end + 1 - res.start + 4;
+            // clearBlock(&entry, entrySize); // @todo prevent a new block from being created every time
             ProfileBlock entry = initBlock(entrySize);
 
             for (size_t i = 0; i < entrySize - 4; i++)

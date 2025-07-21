@@ -69,7 +69,7 @@ namespace qAlgorithms
         const std::vector<float> *intensities,
         const std::vector<float> *ylog_start,
         const std::vector<unsigned int> *degreesOfFreedom_cum,
-        std::vector<RegressionGauss> &validRegressions,
+        std::vector<RegressionGauss> *validRegressions,
         const size_t maxScale);
 
     void validateRegression(
@@ -88,8 +88,8 @@ namespace qAlgorithms
         const std::vector<float> *intensities,
         const std::vector<float> *intensities_log);
 
-    std::vector<RegressionGauss> mergeRegressionsOverScales(std::vector<RegressionGauss> *validRegressions,
-                                                            const std::vector<float> *intensities);
+    void mergeRegressionsOverScales(std::vector<RegressionGauss> *validRegressions,
+                                    const std::vector<float> *intensities);
 
     void createCentroidPeaks(
         std::vector<CentroidPeak> *peaks,
@@ -262,11 +262,6 @@ namespace qAlgorithms
         float mean;
         float var;
     };
-
-    MeanVar weightedMeanAndVariance(const float *x,
-                                    const std::vector<float> *weight,
-                                    size_t left_limit,
-                                    size_t right_limit);
 
     MeanVar weightedMeanAndVariance_EIC(const std::vector<float> *weight,
                                         const std::vector<float> *values,
