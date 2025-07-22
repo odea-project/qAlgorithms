@@ -11,6 +11,7 @@
 #include <cstring>
 #include <zlib.h>
 #include <cassert>
+#include <numeric> // iota
 
 namespace qAlgorithms
 {
@@ -459,15 +460,19 @@ namespace qAlgorithms
         return levels;
     };
 
-    std::vector<bool> XML_File::get_spectra_mode(const std::vector<unsigned int> *indices,
-                                                 const std::vector<pugi::xml_node> *spectra_nodes_ex) // centroid or profile
+    std::vector<bool> XML_File::get_spectra_mode(const std::vector<pugi::xml_node> *spectra_nodes_ex) // centroid or profile
     {
-        assert(indices->size() > 0);
-        std::vector<bool> modes;
+        assert(this->number_spectra > 0);
 
-        for (size_t i = 0; i < indices->size(); ++i)
+        // the check for centroided data is made here, will likely require different approach down the line
+        std::vector<unsigned int> accessor(this->number_spectra, 0);
+        std::iota(accessor.begin(), accessor.end(), 0);
+
+        std::vector<bool> modes; // @todo now this can be initialised without an accessor
+
+        for (size_t i = 0; i < accessor.size(); ++i)
         {
-            size_t idx = indices->at(i);
+            size_t idx = accessor[i];
             pugi::xml_node spec = (*spectra_nodes_ex)[idx];
             if (spec.find_child_by_attribute("cvParam", "accession", "MS:1000128"))
             {

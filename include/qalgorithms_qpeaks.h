@@ -47,8 +47,7 @@ namespace qAlgorithms
     std::vector<CentroidPeak> findCentroids(
         XML_File &data,
         const std::vector<pugi::xml_node> *spectra_nodes_ex,
-        const bool polarity,
-        const bool ms1only = true);
+        const std::vector<unsigned int> *selectedIndices);
 
     std::vector<FeaturePeak> findFeatures(std::vector<EIC> &data,
                                           std::vector<unsigned int> *backConvert,

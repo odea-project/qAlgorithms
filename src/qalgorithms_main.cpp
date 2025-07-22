@@ -146,13 +146,9 @@ int main(int argc, char *argv[])
                 exit(101);
             }
         }
-        // the check for centroided data is set here, will likely require different approach down the line
-        // accessor contains the indices of all spectra that should be fetched
-        std::vector<unsigned int> accessor(data.number_spectra, 0);
-        std::iota(accessor.begin(), accessor.end(), 0);
 
         const auto linkNodes = link_vector_spectra_nodes(data.mzml_root_node);
-        std::vector<bool> spectrum_mode = data.get_spectra_mode(&accessor, &linkNodes); // get spectrum mode (centroid or profile)
+        std::vector<bool> spectrum_mode = data.get_spectra_mode(&linkNodes); // get spectrum mode (centroid or profile)
 
         // CHECK IF CENTROIDED SPECTRA
         size_t num_centroided_spectra = std::count(spectrum_mode.begin(), spectrum_mode.end(), false);
@@ -189,11 +185,17 @@ int main(int argc, char *argv[])
 #pragma region "centroiding"
 
             // @todo add check if set polarity is correct
-            std::vector<float> retentionTimes = data.get_spectra_RT(&accessor, &linkNodes);
+            const std::vector<unsigned int> selectedIndices = data.filter_spectra(&linkNodes, true, polarity, false); // @todo MS2 support here!
+            if (selectedIndices.empty())
+            {
+                std::cerr << "Error: No valid spectra exist in the source file " << filename << "\n";
+                continue;
+            }
+            std::vector<float> retentionTimes = data.get_spectra_RT(&selectedIndices, &linkNodes);
             RT_Converter rt_index = interpolateScanNumbers(&retentionTimes);
 
             std::vector<CentroidPeak> *centroids = new std::vector<CentroidPeak>;
-            *centroids = findCentroids(data, &linkNodes, polarity); // it is guaranteed that only profile mode data is used
+            *centroids = findCentroids(data, &linkNodes, &selectedIndices); // it is guaranteed that only profile mode data is used
 
             if (centroids->empty())
             {
@@ -230,9 +232,6 @@ int main(int argc, char *argv[])
             }
 
             filename = filename + (polarity ? "_positive" : "_negative");
-
-            // calculate scan number after performing interpolation
-            // std::vector<float> retentionTimes = data.get_spectra_RT(&accessor, &linkNodes);
 
             if (userArgs.printCentroids)
             {

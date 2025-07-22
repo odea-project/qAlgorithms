@@ -99,8 +99,7 @@ namespace qAlgorithms
                                                     const std::vector<pugi::xml_node> *spectra_nodes_ex);
         std::vector<int> get_spectra_level(const std::vector<unsigned int> *indices,
                                            const std::vector<pugi::xml_node> *spectra_nodes_ex);
-        std::vector<bool> get_spectra_mode(const std::vector<unsigned int> *indices,
-                                           const std::vector<pugi::xml_node> *spectra_nodes_ex);
+        std::vector<bool> get_spectra_mode(const std::vector<pugi::xml_node> *spectra_nodes_ex);
         std::vector<bool> get_spectra_polarity(const std::vector<unsigned int> *indices,
                                                const std::vector<pugi::xml_node> *spectra_nodes_ex);
 

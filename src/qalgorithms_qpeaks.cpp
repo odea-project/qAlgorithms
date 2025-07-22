@@ -1947,11 +1947,11 @@ namespace qAlgorithms
     std::vector<CentroidPeak> findCentroids( // this function needs to be reworked further @todo
         XML_File &data,
         const std::vector<pugi::xml_node> *linkNodes,
-        const bool polarity,
-        const bool ms1only)
+        const std::vector<unsigned int> *selectedIndices)
     /* ### allocations ###
         spectrum_mz: size unknown at time of function call
         spectrum_int: s.o.
+        groupedData: size unknown
 
        ### called functions ###
         data.get_spectrum
@@ -1960,13 +1960,7 @@ namespace qAlgorithms
 
     */
     {
-        const std::vector<unsigned int> selectedIndices = data.filter_spectra(linkNodes, ms1only, polarity, false);
-        if (selectedIndices.empty())
-        {
-            // this currently only serves to eliminate spectra of the wrong polarity, @todo better solution?
-            return std::vector<CentroidPeak>{};
-        }
-        const size_t countSelected = selectedIndices.size();
+        const size_t countSelected = selectedIndices->size();
 
         std::vector<CentroidPeak> centroids;
         centroids.reserve(countSelected * 1000);
@@ -1981,7 +1975,7 @@ namespace qAlgorithms
             spectrum_mz.clear();
             spectrum_int.clear();
 
-            size_t ID_spectrum = selectedIndices[i];
+            size_t ID_spectrum = selectedIndices->at(i);
             data.get_spectrum(linkNodes, &spectrum_mz, &spectrum_int, ID_spectrum);
 
             pretreatDataCentroids(&groupedData, &spectrum_mz, &spectrum_int);
