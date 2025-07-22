@@ -75,7 +75,7 @@ namespace qAlgorithms
         }
     }
 
-    std::vector<RegressionGauss> findFeaturePeaks(std::vector<FeaturePeak> *all_peaks, const EIC *eic)
+    void findFeaturePeaks(std::vector<RegressionGauss> *validRegressions, const EIC *eic)
     /* ### allocations ###
         logIntensity: size of EIC * f32 // known at call time
 
@@ -83,6 +83,7 @@ namespace qAlgorithms
         runningRegression
     */
     {
+        validRegressions->clear();
         size_t length = eic->df.size();
         assert(length > 4); // data must contain at least five points
 
@@ -93,9 +94,6 @@ namespace qAlgorithms
             logIntensity[blockPos] = std::log(eic->ints_area[blockPos]);
         }
 
-        std::vector<RegressionGauss> validRegressions;
-        validRegressions.reserve(8); // @todo remove this
-
         // @todo this is not a universal limit and only chosen for computational speed at the moment
         // with an estimated scan difference of 0.6 s this means the maximum peak width is 61 * 0.6 = 36.6 s
         static const size_t GLOBAL_MAXSCALE_FEATURES = 30;
@@ -105,10 +103,8 @@ namespace qAlgorithms
         runningRegression(&eic->ints_area,
                           &logIntensity,
                           &eic->df,
-                          &validRegressions,
+                          validRegressions,
                           maxScale);
-
-        return validRegressions;
     }
 
 #pragma endregion "find peaks"
@@ -453,7 +449,10 @@ namespace qAlgorithms
             if (startEndGroups[groupIdx] == startEndGroups[groupIdx + 1])
             { // already isolated peak => push to valid regressions
                 int regIdx = startEndGroups[groupIdx];
-                validRegressions->push_back(std::move(validRegsTmp->at(regIdx)));
+                auto onlyReg = validRegsTmp->at(regIdx);
+                assert(onlyReg.right_limit > onlyReg.left_limit);
+                assert(onlyReg.right_limit - onlyReg.left_limit >= 4);
+                validRegressions->push_back(onlyReg);
             }
             else
             { // survival of the fittest based on mse between original data and reconstructed (exp transform of regression)
@@ -463,6 +462,8 @@ namespace qAlgorithms
 
                 RegressionGauss bestReg = validRegsTmp->at(bestRegIdx.idx);
                 bestReg.mse = bestRegIdx.mse;
+                assert(bestReg.right_limit > bestReg.left_limit);
+                assert(bestReg.right_limit - bestReg.left_limit >= 4);
                 validRegressions->push_back(bestReg);
             }
         }
@@ -780,6 +781,8 @@ namespace qAlgorithms
         mutateReg->index_x0 = idx_x0;
         mutateReg->mse = mse; // the quadratic mse is used for the weighted mean of the coefficients later
         mutateReg->isValid = true;
+        assert(mutateReg->right_limit > mutateReg->left_limit);
+        assert(mutateReg->right_limit - mutateReg->left_limit >= 4);
         return;
     }
 #pragma endregion "validate Regression"
@@ -1037,7 +1040,8 @@ namespace qAlgorithms
             assert(rt_leftOfApex < rt_rightOfApex);
             float delta_rt = rt_rightOfApex - rt_leftOfApex;
             float rt_fraction = (regression.apex_position - floor(regression.apex_position));
-            assert(rt_fraction > 0 && rt_fraction < 1);
+            assert(rt_fraction >= 0);
+            assert(rt_fraction < 1);
             float rt_apex = rt_leftOfApex + delta_rt * rt_fraction;
             peak.retentionTime = rt_apex;
             peak.RT_Uncertainty = regression.uncertainty_pos * delta_rt;
@@ -1052,10 +1056,11 @@ namespace qAlgorithms
 
             assert(regression.right_limit - regression.index_x0 > 1);
             peak.idxPeakStart = regression.left_limit;
-            peak.idxPeakEnd = regression.right_limit - 1;
+            peak.idxPeakEnd = regression.right_limit;
             peak.index_x0_offset = regression.index_x0 - regression.left_limit;
             assert(peak.idxPeakEnd > peak.idxPeakStart);
             assert(peak.idxPeakEnd > peak.index_x0_offset);
+            assert(peak.idxPeakEnd - peak.idxPeakStart >= 4); // at least five points
 
             // params needed to merge two peaks
             peak.apexLeft = regression.apex_position < regression.index_x0;
@@ -1818,34 +1823,33 @@ namespace qAlgorithms
         return {forwardConv, backwardConv};
     }
 
-    FeaturePeak fillPeakVals(EIC *eic, FeaturePeak currentPeak)
+    void fillPeakVals(EIC *eic, FeaturePeak *currentPeak)
     {
-        currentPeak.scanPeakStart = eic->scanNumbers.front();
-        currentPeak.scanPeakEnd = eic->scanNumbers.back();
+        currentPeak->scanPeakStart = eic->scanNumbers.front();
+        currentPeak->scanPeakEnd = eic->scanNumbers.back();
 
         // the correct limits in the non-interpolated EIC need to be determined. They are already included
         // in the cumulative degrees of freedom, but since there, df 0 is outside the EIC, we need to
         // use the index df[limit] - 1 into the original, non-interpolated vector
 
-        unsigned int limit_L = eic->df[currentPeak.idxPeakStart];
+        unsigned int limit_L = eic->df[currentPeak->idxPeakStart];
         limit_L = std::min(limit_L, limit_L - 1); // uint underflows, so no issues.
-        unsigned int limit_R = eic->df[currentPeak.idxPeakEnd] - 1;
+        unsigned int limit_R = eic->df[currentPeak->idxPeakEnd] - 1;
         assert(limit_L < limit_R);
 
-        currentPeak.idxBinStart = limit_L;
-        currentPeak.idxBinEnd = limit_R;
+        currentPeak->idxBinStart = limit_L;
+        currentPeak->idxBinEnd = limit_R;
 
         auto tmp = weightedMeanAndVariance_EIC(&eic->ints_area, &eic->mz,
                                                limit_L, limit_R);
-        currentPeak.mz = tmp.mean;
-        currentPeak.mzUncertainty = tmp.var;
-        currentPeak.DQSC = weightedMeanAndVariance_EIC(&eic->ints_area, &eic->DQSC,
-                                                       limit_L, limit_R)
-                               .mean;
-        currentPeak.DQSB = weightedMeanAndVariance_EIC(&eic->ints_area, &eic->DQSB,
-                                                       limit_L, limit_R)
-                               .mean;
-        return (currentPeak); // remove 2D structure of FL
+        currentPeak->mz = tmp.mean;
+        currentPeak->mzUncertainty = tmp.var;
+        currentPeak->DQSC = weightedMeanAndVariance_EIC(&eic->ints_area, &eic->DQSC,
+                                                        limit_L, limit_R)
+                                .mean;
+        currentPeak->DQSB = weightedMeanAndVariance_EIC(&eic->ints_area, &eic->DQSB,
+                                                        limit_L, limit_R)
+                                .mean;
     }
 
     std::vector<FeaturePeak> findFeatures(std::vector<EIC> &EICs,
@@ -1854,6 +1858,7 @@ namespace qAlgorithms
     /* ### allocations ###
         peaks
         tmpPeaks
+        validRegressions
 
        ### called functions ###
 
@@ -1863,8 +1868,8 @@ namespace qAlgorithms
         peaks.reserve(EICs.size() / 4);    // should be enough to fit all features without reallocation
         std::vector<FeaturePeak> tmpPeaks; // add features to this before pasting into FL
 
-        // std::vector<RegressionGauss> validRegressions;
-        // validRegressions.reserve(8); // @todo find better size estimation
+        std::vector<RegressionGauss> validRegressions;
+        validRegressions.reserve(8); // @todo find better size estimation
 
         for (size_t i = 0; i < EICs.size(); ++i)
         {
@@ -1874,7 +1879,7 @@ namespace qAlgorithms
                 continue; // skip due to lack of data, i.e., degrees of freedom will be zero
             }
 
-            auto validRegressions = findFeaturePeaks(&tmpPeaks, &currentEIC);
+            findFeaturePeaks(&validRegressions, &currentEIC);
 
             if (!validRegressions.empty())
             {
@@ -1890,21 +1895,15 @@ namespace qAlgorithms
             {
                 FeaturePeak currentPeak = tmpPeaks[j];
 
-                currentPeak.scanPeakStart = currentEIC.scanNumbers.front(); // @todo move below continue brackets
-                currentPeak.scanPeakEnd = currentEIC.scanNumbers.back();
-                assert(currentPeak.scanPeakEnd < RT->size());
-                currentPeak.idxBin = i;
-
-                if (currentPeak.idxPeakEnd - currentPeak.idxPeakStart < 4)
-                {
-                    // @todo this should be caught in the regression function, control
-                    continue;
-                }
                 // @todo URGENT (resolved) this kicks out a massive amount of features, check if it makes sense for
                 // centroids / replace the whole three-fold interpolation nonsense with one source of truth
-                if ((currentPeak.index_x0_offset < 2) ||
-                    (currentPeak.idxPeakEnd - currentPeak.idxPeakStart - currentPeak.index_x0_offset < 2))
+                if (currentPeak.index_x0_offset < 2)
                 {
+                    assert(false);
+                }
+                if (currentPeak.idxPeakEnd - currentPeak.idxPeakStart - currentPeak.index_x0_offset < 2)
+                {
+                    assert(false);
                     continue;
                 }
                 if (currentPeak.idxPeakEnd - currentPeak.idxPeakStart + 2 < currentPeak.index_x0_offset)
@@ -1914,32 +1913,13 @@ namespace qAlgorithms
                 // the correct limits in the non-interpolated EIC need to be determined. They are already included
                 // in the cumulative degrees of freedom, but since there, df 0 is outside the EIC, we need to
                 // use the index df[limit] - 1 into the original, non-interpolated vector
+
                 currentPeak.idxBin = i;
 
-                // currentPeak.scanPeakStart = currentEIC.scanNumbers.front();
-                // currentPeak.scanPeakEnd = currentEIC.scanNumbers.back();
-
-                unsigned int limit_L = currentEIC.df[currentPeak.idxPeakStart];
-                limit_L = std::min(limit_L, limit_L - 1); // uint underflows, so no issues.
-                unsigned int limit_R = currentEIC.df[currentPeak.idxPeakEnd] - 1;
-                assert(limit_L < limit_R);
-
-                currentPeak.idxBinStart = limit_L;
-                currentPeak.idxBinEnd = limit_R;
-
-                auto tmp = weightedMeanAndVariance_EIC(&currentEIC.ints_area, &currentEIC.mz, // @todo only calculate the weights once?
-                                                       limit_L, limit_R);
-                currentPeak.mz = tmp.mean;
-                currentPeak.mzUncertainty = tmp.var;
-                currentPeak.DQSC = weightedMeanAndVariance_EIC(&currentEIC.ints_area, &currentEIC.DQSC,
-                                                               limit_L, limit_R)
-                                       .mean;
-                currentPeak.DQSB = weightedMeanAndVariance_EIC(&currentEIC.ints_area, &currentEIC.DQSB,
-                                                               limit_L, limit_R)
-                                       .mean;
-
+                fillPeakVals(&currentEIC, &currentPeak);
                 assert(currentPeak.scanPeakEnd < RT->size());
-                peaks.push_back(std::move(currentPeak)); // remove 2D structure of FL
+
+                peaks.push_back(currentPeak);
             }
 
             tmpPeaks.clear();
