@@ -78,7 +78,6 @@ namespace qAlgorithms
     std::vector<RegressionGauss> findFeaturePeaks(std::vector<FeaturePeak> *all_peaks, const EIC *eic)
     /* ### allocations ###
         logIntensity: size of EIC * f32 // known at call time
-        validRegressions: UNKNOWN * RegressionGauss (large!)
 
        ### called functions ###
         runningRegression
@@ -95,7 +94,7 @@ namespace qAlgorithms
         }
 
         std::vector<RegressionGauss> validRegressions;
-        validRegressions.reserve(8); // @todo check which size is actually needed
+        validRegressions.reserve(8); // @todo remove this
 
         // @todo this is not a universal limit and only chosen for computational speed at the moment
         // with an estimated scan difference of 0.6 s this means the maximum peak width is 61 * 0.6 = 36.6 s
@@ -1007,6 +1006,14 @@ namespace qAlgorithms
         std::vector<unsigned int> *backConvert,
         const std::vector<RegressionGauss> *validRegressionsVec,
         const std::vector<float> *RT)
+    /* ### allocations ###
+        none!
+
+       ### called functions ###
+        floor
+        erf_approx_d
+        erf_approx_f
+    */
     {
         assert(!validRegressionsVec->empty());
         for (size_t i = 0; i < validRegressionsVec->size(); i++)
@@ -1076,6 +1083,12 @@ namespace qAlgorithms
                        size_t limit_L,
                        size_t limit_R,
                        size_t index_x0)
+    /* ### allocations ###
+        none!
+
+       ### called functions ###
+        none!
+    */
     {
         // this function also populates some variables for the F test later in the validation
         double result = 0.0;
@@ -1112,6 +1125,12 @@ namespace qAlgorithms
     }
 
     float calcRegressionFvalue(const std::vector<float> *selectLog, const std::vector<float> *predictLog, const float sse, const float b0)
+    /* ### allocations ###
+        none!
+
+       ### called functions ###
+        none!
+    */
     {
         // note that the mse must not be divided by df - 4 yet when this function is called
 
@@ -1145,6 +1164,12 @@ namespace qAlgorithms
     }
 
     float calcSSE_exp(const RegCoeffs coeff, const std::vector<float> *y_start, size_t limit_L, size_t limit_R, size_t index_x0)
+    /* ### allocations ###
+        none!
+
+       ### called functions ###
+        exp_approx_d
+    */
     { // @todo this does not account for asymmetric RT distances, will that be a problem?
         double result = 0.0;
         // left side
@@ -1171,6 +1196,12 @@ namespace qAlgorithms
 
     float calcSSE_chisqared(const RegCoeffs coeff, const std::vector<float> *y_start,
                             size_t limit_L, size_t limit_R, size_t index_x0)
+    /* ### allocations ###
+        none!
+
+       ### called functions ###
+        exp_approx_d
+    */
     {
         double result = 0.0;
         // left side
@@ -1204,6 +1235,13 @@ namespace qAlgorithms
         const std::vector<float> *predictLog,
         const std::vector<float> *selectLog,
         const size_t scale)
+    /* ### allocations ###
+        none!
+
+       ### called functions ###
+        exp_approx_d
+        std::log
+    */
     {
         assert(predictLog->size() == selectLog->size());
         // This function calculates the smearing correction factor logC and the
@@ -1252,6 +1290,15 @@ namespace qAlgorithms
         const std::vector<unsigned int> *degreesOfFreedom_cum,
         const size_t startIdx,
         const size_t endIdx)
+    /* ### allocations ###
+        none!
+
+       ### called functions ###
+        std::min
+        std::max
+        calcDF_cum
+        calcSSE_exp
+    */
     {
         double best_mse = INFINITY;
         unsigned int bestRegIdx = 0;
@@ -1302,6 +1349,12 @@ namespace qAlgorithms
         RegressionGauss *mutateReg,
         const size_t scale,
         float &valley_position)
+    /* ### allocations ###
+        none!
+
+       ### called functions ###
+        none!
+    */
     {
         // symmetric model should apply, this is not possible with the current peak model @todo
         assert(mutateReg->coeffs.b1 != 0);
@@ -1519,6 +1572,18 @@ namespace qAlgorithms
         const float mse,
         const size_t scale,
         const size_t df_sum)
+    /* ### allocations ###
+        none!
+
+       ### called functions ###
+        std::sqrt
+        exp_approx_d
+        experfc
+        dawson5
+        erfi
+        experfc
+        multiplyVecMatrixTranspose
+    */
     {
         double doubleScale = scale;
         double b1 = coeff.b1;
@@ -1679,7 +1744,14 @@ namespace qAlgorithms
 #pragma region "Feature Detection"
 
     RT_Converter interpolateScanNumbers(const std::vector<float> *retentionTimes)
-    // runs once per file, performance doesn't really matter here
+    /* ### allocations ###
+        diffs: known at time of function call
+        forwardConv: s.o.
+        backwardConv: size calculated in function
+
+       ### called functions ###
+        std::sort // could be replaced by median search
+    */
     {
         // This function interpolates the existing RTs of MS1 spectra and produces a vector that contains,
         // for the index of every real MS1 spectrum, the scan number with interpolations for that spectrum.
@@ -1746,11 +1818,42 @@ namespace qAlgorithms
         return {forwardConv, backwardConv};
     }
 
+    FeaturePeak fillPeakVals(EIC *eic, FeaturePeak currentPeak)
+    {
+        currentPeak.scanPeakStart = eic->scanNumbers.front();
+        currentPeak.scanPeakEnd = eic->scanNumbers.back();
+
+        // the correct limits in the non-interpolated EIC need to be determined. They are already included
+        // in the cumulative degrees of freedom, but since there, df 0 is outside the EIC, we need to
+        // use the index df[limit] - 1 into the original, non-interpolated vector
+
+        unsigned int limit_L = eic->df[currentPeak.idxPeakStart];
+        limit_L = std::min(limit_L, limit_L - 1); // uint underflows, so no issues.
+        unsigned int limit_R = eic->df[currentPeak.idxPeakEnd] - 1;
+        assert(limit_L < limit_R);
+
+        currentPeak.idxBinStart = limit_L;
+        currentPeak.idxBinEnd = limit_R;
+
+        auto tmp = weightedMeanAndVariance_EIC(&eic->ints_area, &eic->mz,
+                                               limit_L, limit_R);
+        currentPeak.mz = tmp.mean;
+        currentPeak.mzUncertainty = tmp.var;
+        currentPeak.DQSC = weightedMeanAndVariance_EIC(&eic->ints_area, &eic->DQSC,
+                                                       limit_L, limit_R)
+                               .mean;
+        currentPeak.DQSB = weightedMeanAndVariance_EIC(&eic->ints_area, &eic->DQSB,
+                                                       limit_L, limit_R)
+                               .mean;
+        return (currentPeak); // remove 2D structure of FL
+    }
+
     std::vector<FeaturePeak> findFeatures(std::vector<EIC> &EICs,
                                           std::vector<unsigned int> *backConvert,
                                           std::vector<float> *RT)
     /* ### allocations ###
-        @todo
+        peaks
+        tmpPeaks
 
        ### called functions ###
 
@@ -1759,6 +1862,9 @@ namespace qAlgorithms
         std::vector<FeaturePeak> peaks;    // return vector for feature list
         peaks.reserve(EICs.size() / 4);    // should be enough to fit all features without reallocation
         std::vector<FeaturePeak> tmpPeaks; // add features to this before pasting into FL
+
+        // std::vector<RegressionGauss> validRegressions;
+        // validRegressions.reserve(8); // @todo find better size estimation
 
         for (size_t i = 0; i < EICs.size(); ++i)
         {
@@ -1784,7 +1890,7 @@ namespace qAlgorithms
             {
                 FeaturePeak currentPeak = tmpPeaks[j];
 
-                currentPeak.scanPeakStart = currentEIC.scanNumbers.front();
+                currentPeak.scanPeakStart = currentEIC.scanNumbers.front(); // @todo move below continue brackets
                 currentPeak.scanPeakEnd = currentEIC.scanNumbers.back();
                 assert(currentPeak.scanPeakEnd < RT->size());
                 currentPeak.idxBin = i;
@@ -1808,6 +1914,10 @@ namespace qAlgorithms
                 // the correct limits in the non-interpolated EIC need to be determined. They are already included
                 // in the cumulative degrees of freedom, but since there, df 0 is outside the EIC, we need to
                 // use the index df[limit] - 1 into the original, non-interpolated vector
+                currentPeak.idxBin = i;
+
+                // currentPeak.scanPeakStart = currentEIC.scanNumbers.front();
+                // currentPeak.scanPeakEnd = currentEIC.scanNumbers.back();
 
                 unsigned int limit_L = currentEIC.df[currentPeak.idxPeakStart];
                 limit_L = std::min(limit_L, limit_L - 1); // uint underflows, so no issues.
@@ -1817,7 +1927,7 @@ namespace qAlgorithms
                 currentPeak.idxBinStart = limit_L;
                 currentPeak.idxBinEnd = limit_R;
 
-                auto tmp = weightedMeanAndVariance_EIC(&currentEIC.ints_area, &currentEIC.mz,
+                auto tmp = weightedMeanAndVariance_EIC(&currentEIC.ints_area, &currentEIC.mz, // @todo only calculate the weights once?
                                                        limit_L, limit_R);
                 currentPeak.mz = tmp.mean;
                 currentPeak.mzUncertainty = tmp.var;
@@ -1827,6 +1937,8 @@ namespace qAlgorithms
                 currentPeak.DQSB = weightedMeanAndVariance_EIC(&currentEIC.ints_area, &currentEIC.DQSB,
                                                                limit_L, limit_R)
                                        .mean;
+
+                assert(currentPeak.scanPeakEnd < RT->size());
                 peaks.push_back(std::move(currentPeak)); // remove 2D structure of FL
             }
 
@@ -1858,9 +1970,13 @@ namespace qAlgorithms
         const bool polarity,
         const bool ms1only)
     /* ### allocations ###
-        @todo
+        spectrum_mz: size unknown at time of function call
+        spectrum_int: s.o.
 
        ### called functions ###
+        data.get_spectrum
+        pretreatDataCentroids
+        findCentroidPeaks
 
     */
     {
@@ -1907,9 +2023,13 @@ namespace qAlgorithms
                         // size_t previousDiffPos,              // skip this many points in the diffOrder vector
                         size_t start, size_t end)
     /* ### allocations ###
-        @todo
+        none!
 
        ### called functions ###
+        binningCritVal
+        std::max_element
+        std::distance
+        binProfileSpec
 
     */
     {
@@ -2017,10 +2137,17 @@ namespace qAlgorithms
         const std::vector<double> *spectrum_mz,
         const std::vector<double> *spectrum_int)
     /* ### allocations ###
-        @todo
+        intensities_profile: all known at function call
+        mz_profile: s.o.
+        idxConvert: s.o.
+
+        diffs: size calculated in function
+        cumDiffs: s.o.
+
+        result: size unknown
 
        ### called functions ###
-
+        binProfileSpec
     */
     {
         std::vector<double> intensities_profile;
