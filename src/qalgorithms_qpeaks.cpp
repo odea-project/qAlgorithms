@@ -1787,14 +1787,16 @@ namespace qAlgorithms
             {
                 expectedDiff = tmpDiffs[size / 2];
             }
-            assert(tmpDiffs[0] > expectedDiff / 2); // if this is not given, there are severe distortions at some point in the data
+            // if this is not given, there are severe distortions at some point in the data. We accept one non-compliance,
+            // which is generally one of the first recorded scans (fragmentation / vendor-specific instrument checkup procedure)
+            assert(tmpDiffs[1] > expectedDiff / 2);
         }
 
-        size_t scanCount = retentionTimes->size() + 1;
-        std::vector<unsigned int> forwardConv(scanCount, 0);
+        size_t scanCount = retentionTimes->size();
+        std::vector<unsigned int> forwardConv(scanCount + 1, 0);
 
         float critDiff = expectedDiff * 1.5; // if the difference is greater than the critDiff, there should be at least one interpolation
-        unsigned int currentScan = 1;
+        unsigned int currentScan = 0;
         for (size_t i = 0; i < diffs.size(); i++)
         {
             if (diffs[i] < critDiff)
@@ -1807,18 +1809,32 @@ namespace qAlgorithms
                 size_t numInterpolations = size_t(diffs[i] / expectedDiff + 0.5); // + 0.5 since value is truncated
                 currentScan += numInterpolations;
             }
-            forwardConv[i + 2] = currentScan;
+            forwardConv[i + 1] = currentScan;
         }
-        forwardConv[0] = 0; // this is a dummy value since the scan 0 is a dummy value used for communicating absence
-        assert(forwardConv.back() == currentScan);
-        assert(forwardConv.back() + 1 >= scanCount);
+        forwardConv[0] = INT32_MAX; // this is a dummy value since the scan 0 is a dummy value used for communicating absence
+        assert(forwardConv[1] == 1);
+        // assert(forwardConv.back() == currentScan);
+        // assert(forwardConv.back() >= scanCount); // values at least match the index
+        assert(currentScan >= scanCount - 1);
+        assert(forwardConv.back() == 0);
+        forwardConv.back() = currentScan + 1; // not included in diff
 
-        std::vector<unsigned int> backwardConv(currentScan + 1, 0);
-        for (size_t i = 0; i < scanCount; i++)
+        // forwardConv[MS1_num] = index after interpolation. Note that MS1_num and the index start at 1, since 0 is reserved for an empty scan.
+
+        std::vector<unsigned int> backwardConv(currentScan + 2, 0);
+        for (size_t i = 1; i < forwardConv.size(); i++)
         {
             backwardConv[forwardConv[i]] = i;
         }
+        backwardConv[0] = INT32_MAX;
         assert(backwardConv.back() == forwardConv.size() - 1);
+        // backwardConv[interpolated index] = MS1_num
+
+        std::vector<float> RTconv(currentScan + 2, NAN);
+        for (size_t i = 1; i < forwardConv.size(); i++)
+        {
+            RTconv[forwardConv[i]] = retentionTimes->at(i - 1);
+        }
 
         return {forwardConv, backwardConv};
     }

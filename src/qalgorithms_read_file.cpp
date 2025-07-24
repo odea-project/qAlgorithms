@@ -16,10 +16,10 @@
 namespace qAlgorithms
 {
     // Decodes from a little endian binary string to a vector of doubles according to a precision integer.
-    std::vector<double> decode_little_endian(const std::string &str, bool isDouble)
+    std::vector<double> decode_little_endian(std::vector<char> bytes, bool isDouble)
     {
         // assert(precision == 4 || precision == 8);
-        std::vector<unsigned char> bytes(str.begin(), str.end());
+        // std::vector<unsigned char> bytes(str.begin(), str.end());
 
         int bytes_size = bytes.size() / (isDouble ? 8 : 4);
 
@@ -35,7 +35,7 @@ namespace qAlgorithms
         else
         {
             // this branch should generally never be taken, why was it included initially?
-            std::cerr << "Warning: it is unexpected that data is stored as 32-bit float.\n";
+            // encountered one relevant file "in the wild", keep option for uncompressed mzML
             for (int i = 0; i < bytes_size; ++i)
             {
                 float floatValue;
@@ -47,7 +47,7 @@ namespace qAlgorithms
     };
 
     // Decompresses a string using the zlib library (https://zlib.net/).
-    std::string decompress_zlib(const char *compressed_string, size_t stringsize)
+    void decompress_zlib(std::vector<char> *compressed_string)
     {
         z_stream zs;
 
@@ -55,13 +55,13 @@ namespace qAlgorithms
 
         inflateInit(&zs);
 
-        zs.next_in = (Bytef *)compressed_string;
+        zs.next_in = (Bytef *)compressed_string->data();
 
-        zs.avail_in = stringsize;
+        zs.avail_in = compressed_string->size();
 
         char outbuffer[32768]; // @todo why this size?
 
-        std::string outstring;
+        std::string outstring; // @todo get rid of the string here
 
         int ret = Z_OK;
         while (ret == Z_OK)
@@ -77,9 +77,9 @@ namespace qAlgorithms
                 outstring.append(outbuffer, zs.total_out - outstring.size());
             }
         }
-        inflateEnd(&zs);
+        assert(inflateEnd(&zs) == Z_OK);
 
-        return outstring;
+        *compressed_string = std::vector<char>(outstring.begin(), outstring.end());
     };
 
     // Decodes a Base64 string into a string with binary data using the simdutf library subset chosen by '--with-base64'
@@ -167,22 +167,20 @@ namespace qAlgorithms
 
         if (node_float_64)
         {
-            // mtd.precision_int = 64;
             mtd.isDouble = true;
         }
         else if (node_float_32)
         {
-            // mtd.precision_int = 32;
+            std::cerr << "Warning: it is unexpected that data is stored as 32-bit float.\n";
             mtd.isDouble = false;
         }
         else if (node_integer_64)
         {
-            // mtd.precision_int = 64;
             mtd.isDouble = true;
         }
         else if (node_integer_32)
         {
-            // mtd.precision_int = 32;
+            // std::cerr << "Warning: it is unexpected that data is stored as 32-bit float.\n";
             mtd.isDouble = false;
         }
         else
@@ -291,10 +289,10 @@ namespace qAlgorithms
             if (spectra_binary_metadata[0].compressed)
             {
                 // @todo is there a case where this doesn't apply for all spectra?
-                decoded_string1 = decompress_zlib(decoded_string.data(), decoded_string.size());
+                decompress_zlib(&decoded_string);
             }
 
-            *spectrum_mz = decode_little_endian(decoded_string1, spectra_binary_metadata[0].isDouble);
+            *spectrum_mz = decode_little_endian(decoded_string, spectra_binary_metadata[0].isDouble);
 
             assert(spectrum_mz->size() == number_traces); // this happens if an index is tried which does not exist in the data
         }
@@ -316,13 +314,12 @@ namespace qAlgorithms
                 return; // implement a defined way to skip the current file? @todo
             }
 
-            std::string decompressedString;
             if (spectra_binary_metadata[1].compressed)
             {
-                decompressedString = decompress_zlib(decoded_string.data(), decoded_string.size()); // @todo is there a case where this doesn't apply for all spectra?
+                decompress_zlib(&decoded_string); // @todo is there a case where this doesn't apply for all spectra?
             }
 
-            *spectrum_RT = decode_little_endian(decompressedString, spectra_binary_metadata[1].isDouble);
+            *spectrum_RT = decode_little_endian(decoded_string, spectra_binary_metadata[1].isDouble);
 
             assert(spectrum_RT->size() == number_traces); // this happens if an index is tried which does not exist in the data
             assert(spectra_binary_metadata[1].data_name_short == "intensity");
@@ -390,10 +387,10 @@ namespace qAlgorithms
         return polarities;
     };
 
-    Polarities XML_File::get_polarity_mode(const size_t count,
-                                           const std::vector<pugi::xml_node> *spectra_nodes_ex)
+    Polarities XML_File::get_polarity_mode(const std::vector<pugi::xml_node> *spectra_nodes_ex, size_t count)
     {
-        // @todo this should check if count is in bounds
+        assert(spectra_nodes_ex->size() > 1);
+        count = count < spectra_nodes_ex->size() ? count : spectra_nodes_ex->size() - 1;
 
         bool positive = false;
         bool negative = false;

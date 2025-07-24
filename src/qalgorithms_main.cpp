@@ -156,6 +156,7 @@ int main(int argc, char *argv[])
         {
             std::cout << " file centroided, error\n";
             std::cerr << "Error: centroided data is not supported by qAlgorithms for the time being.\n";
+            counter++;
             continue;
         }
         if (!userArgs.silent)
@@ -163,7 +164,7 @@ int main(int argc, char *argv[])
             std::cout << " file in profile mode, ok\n";
         }
 
-        auto polarity_file = data.get_polarity_mode(100, &linkNodes); // checks first 100 spectra
+        auto polarity_file = data.get_polarity_mode(&linkNodes, 100); // checks first 100 spectra
 
         // @todo single access function into qAlgorithms
 
@@ -188,7 +189,8 @@ int main(int argc, char *argv[])
             const std::vector<unsigned int> selectedIndices = data.filter_spectra(&linkNodes, true, polarity, false); // @todo MS2 support here!
             if (selectedIndices.empty())
             {
-                std::cerr << "Error: No valid spectra exist in the source file " << filename << "\n";
+                // std::cerr << "Error: No valid spectra exist in the source file " << filename << "\n";
+                // @todo better error reporting
                 continue;
             }
             std::vector<float> retentionTimes = data.get_spectra_RT(&selectedIndices, &linkNodes);
@@ -345,7 +347,9 @@ int main(int argc, char *argv[])
             }
 
             // make sure that every peak contains only one mass trace
-            assert(features.size() <= binnedData.size());
+            // assert(features.size() <= binnedData.size());
+            // @todo this is not intrinsically true, a very crowded spectrum might contain multiple features per Bin
+
             int peaksWithMassGaps = 0;
             double meanDQSF = 0;
             double meanInterpolations = 0;

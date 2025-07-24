@@ -20,6 +20,8 @@ namespace qAlgorithms
         // find the spectrum index after interpolation from MS1 spectrum number and vice versa
         std::vector<unsigned int> countToInterp;
         std::vector<unsigned int> interpToCount;
+        // retention time at the interpolated index
+        std::vector<float> interpToRT;
     };
 
     RT_Converter interpolateScanNumbers(const std::vector<float> *retentionTimes);

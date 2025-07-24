@@ -108,8 +108,7 @@ namespace qAlgorithms
             const std::vector<pugi::xml_node> *spectra_nodes_ex,
             bool ms1, bool polarity, bool centroided); // @todo this is only useable to select MS1 or MS2
 
-        Polarities get_polarity_mode(const size_t count,
-                                     const std::vector<pugi::xml_node> *spectra_nodes_ex);
+        Polarities get_polarity_mode(const std::vector<pugi::xml_node> *spectra_nodes_ex, size_t count);
         std::vector<float> get_spectra_RT(const std::vector<unsigned int> *indices,
                                           const std::vector<pugi::xml_node> *spectra_nodes_ex);
     };
