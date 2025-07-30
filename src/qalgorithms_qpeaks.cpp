@@ -769,9 +769,11 @@ namespace qAlgorithms
           The coefficient beta_0 is corrected by the smearing approach from Naihua Duan.
           The new cofficient is then b0* = b0 + logC, where C is the correction factor.
           first: logC; second: variance of logC
+
+          NOTE: Results can be distorted for the worse when applying smearing correction
         */
-        auto smearing = smearingCorrection(&predictLog, &selectLog, scale);
-        mutateReg->coeffs.b0 += smearing.log_C; // b0* = b0 + logC
+        // auto smearing = smearingCorrection(&predictLog, &selectLog, scale);
+        // mutateReg->coeffs.b0 += smearing.log_C; // b0* = b0 + logC
         // @todo: implement smearing.second for the uncertainty of b0
 
         mutateReg->uncertainty_pos = calcUncertaintyPos(mse, mutateReg->coeffs, mutateReg->apex_position, scale);
