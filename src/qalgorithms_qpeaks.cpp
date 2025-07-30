@@ -2120,8 +2120,14 @@ namespace qAlgorithms
         assert(block->cumdf[1] == 0);
         if (expand)
         {
-            std::iota(block->cumdf.begin() + addition, block->cumdf.end(), block->cumdf[addition - 1]);
+            for (size_t i = addition - 2; i < blocksize - 2; i++)
+            {
+                // starts at -2 since we used dummy values there
+                block->cumdf[i] = block->cumdf[i - 1];
+            }
         }
+        block->cumdf[blocksize - 2] = blocksize - 4;
+        block->cumdf[blocksize - 1] = blocksize - 4;
     }
 
     void pretreatDataCentroids(
@@ -2140,6 +2146,7 @@ namespace qAlgorithms
 
        ### called functions ###
         binProfileSpec
+        initBlock (inline)
     */
     {
         std::vector<double> intensities_profile;
