@@ -17,7 +17,8 @@ namespace qAlgorithms
     void findCentroidPeaks(std::vector<CentroidPeak> *retPeaks, // results are appended to this vector
                            const std::vector<ProfileBlock> *treatedData,
                            const size_t scanNumber,
-                           const size_t accessor)
+                           const size_t accessor,
+                           const size_t maxWindowSize)
     /* ### allocations ###
         logIntensity: maxWindowSize * f32
         validRegressions: UNKNOWN * RegressionGauss (large!)
@@ -29,14 +30,7 @@ namespace qAlgorithms
     {
         assert(!treatedData->empty());
         assert(scanNumber != 0);
-        size_t maxWindowSize = 0;
-        for (size_t i = 0; i < treatedData->size(); i++)
-        {
-            size_t length = (*treatedData)[i].mz.size();
-            assert(length > 4); // data must contain at least five points
-            maxWindowSize = maxWindowSize < length ? length : maxWindowSize;
-        }
-        assert(maxWindowSize > 0);
+
         std::vector<float> logIntensity(maxWindowSize, NAN);
 
         const size_t GLOBAL_MAXSCALE_CENTROID = 8; // @todo this is a critical part of the algorithm and should not be hard-coded
@@ -51,14 +45,16 @@ namespace qAlgorithms
             assert(length == block->mz.size());
             assert(length > 4);
 
-            logIntensity.resize(length); // this way, no new allocations will be made in the loop
-            for (size_t blockPos = 0; blockPos < length; blockPos++)
-            {
-                logIntensity[blockPos] = std::log(block->intensity[blockPos]);
-            }
-
             // @todo adjust the scale dynamically based on the number of valid regressions found, early terminate after x iterations
             const size_t maxScale = std::min(GLOBAL_MAXSCALE_CENTROID, size_t((length - 1) / 2)); // length - 1 because the center point is not part of the span
+
+            // logIntensity.resize(length); // this way, no new allocations will be made in the loop
+            //             for (size_t blockPos = 0; blockPos < length; blockPos++)
+            //             {
+            //                 logIntensity[blockPos] = std::log(block->intensity[blockPos]);
+            //             }
+
+            logIntensity.clear(); // this is now filled inside the function, the vector only reserves space
 
             runningRegression(&block->intensity, &logIntensity, &block->cumdf, &validRegressions, maxScale, length - 2);
             if (validRegressions.empty())
@@ -82,11 +78,13 @@ namespace qAlgorithms
         size_t length = eic->df.size();
         assert(length > 4); // data must contain at least five points
 
-        std::vector<float> logIntensity(length, NAN);
-        for (size_t blockPos = 0; blockPos < length; blockPos++)
-        {
-            logIntensity[blockPos] = std::log(eic->ints_area[blockPos]);
-        }
+        // std::vector<float> logIntensity(length, NAN);
+        // for (size_t blockPos = 0; blockPos < length; blockPos++)
+        // {
+        //     logIntensity[blockPos] = std::log(eic->ints_area[blockPos]);
+        // }
+        std::vector<float> logIntensity;
+        logIntensity.reserve(length);
 
         // @todo this is not a universal limit and only chosen for computational speed at the moment
         // with an estimated scan difference of 0.6 s this means the maximum peak width is 61 * 0.6 = 36.6 s
@@ -107,7 +105,7 @@ namespace qAlgorithms
 #pragma region "running regression"
     void runningRegression(
         const std::vector<float> *intensities,
-        const std::vector<float> *intensities_log,
+        std::vector<float> *intensities_log,
         const std::vector<unsigned int> *degreesOfFreedom_cum,
         std::vector<RegressionGauss> *validRegressions,
         const size_t maxScale,
@@ -123,6 +121,13 @@ namespace qAlgorithms
     {
         //@todo move more of the generic stuff into this function
         assert(validRegressions->empty());
+        assert(intensities_log->empty());
+        assert(intensities_log->capacity() >= intensities->size());
+
+        for (size_t i = 0; i < intensities->size(); i++)
+        {
+            intensities_log->push_back(std::log(intensities->at(i)));
+        }
 
         const std::vector<RegCoeffs> regressions = findCoefficients(intensities_log, maxScale);
 
@@ -1818,8 +1823,10 @@ namespace qAlgorithms
         std::vector<unsigned int> forwardConv(scanCount + 1, 0);
 
         float critDiff = expectedDiff * 1.5; // if the difference is greater than the critDiff, there should be at least one interpolation
-        unsigned int currentScan = 0;
-        for (size_t i = 0; i < diffs.size(); i++)
+
+        forwardConv[1] = 1;
+        unsigned int currentScan = 1; // the first scan is always index 1
+        for (size_t i = 1; i < diffs.size(); i++)
         {
             if (diffs[i] < critDiff)
             {
@@ -1834,7 +1841,7 @@ namespace qAlgorithms
             forwardConv[i + 1] = currentScan;
         }
         forwardConv[0] = INT32_MAX; // this is a dummy value since the scan 0 is a dummy value used for communicating absence
-        assert(forwardConv[1] == 1);
+        assert(forwardConv[2] > 1); // @todo this is not a real sanity check
         // assert(forwardConv.back() == currentScan);
         // assert(forwardConv.back() >= scanCount); // values at least match the index
         assert(currentScan >= scanCount - 1);
@@ -1933,8 +1940,7 @@ namespace qAlgorithms
             {
                 FeaturePeak currentPeak = tmpPeaks[j];
 
-                // @todo URGENT (resolved) this kicks out a massive amount of features, check if it makes sense for
-                // centroids / replace the whole three-fold interpolation nonsense with one source of truth
+                // @todo make sure these hold true somewhere else
                 if (currentPeak.index_x0_offset < 2)
                 {
                     assert(false);
@@ -1942,11 +1948,10 @@ namespace qAlgorithms
                 if (currentPeak.idxPeakEnd - currentPeak.idxPeakStart - currentPeak.index_x0_offset < 2)
                 {
                     assert(false);
-                    continue;
                 }
                 if (currentPeak.idxPeakEnd - currentPeak.idxPeakStart + 2 < currentPeak.index_x0_offset)
                 {
-                    continue;
+                    assert(false);
                 }
                 // the correct limits in the non-interpolated EIC need to be determined. They are already included
                 // in the cumulative degrees of freedom, but since there, df 0 is outside the EIC, we need to
@@ -1984,11 +1989,11 @@ namespace qAlgorithms
 
     std::vector<CentroidPeak> findCentroids( // this function needs to be reworked further @todo
         XML_File &data,
-        const std::vector<pugi::xml_node> *linkNodes,
+        const std::vector<pugi::xml_node> *linkNodes, // @todo get rid of the direct coupling to pugixml
         const std::vector<unsigned int> *selectedIndices)
     /* ### allocations ###
         spectrum_mz: size unknown at time of function call
-        spectrum_int: s.o.
+        spectrum_int: same as spectrum_mz
         groupedData: size unknown
 
        ### called functions ###
@@ -2009,16 +2014,17 @@ namespace qAlgorithms
         std::vector<ProfileBlock> groupedData(500);
         for (size_t i = 0; i < countSelected; ++i)
         {
-            // avoid needless allocation / deallocation
+            // avoid needless allocation / deallocation of otherwise scope-local vectors
             spectrum_mz.clear();
             spectrum_int.clear();
+            groupedData.clear();
 
             size_t ID_spectrum = selectedIndices->at(i);
             data.get_spectrum(linkNodes, &spectrum_mz, &spectrum_int, ID_spectrum);
 
-            pretreatDataCentroids(&groupedData, &spectrum_mz, &spectrum_int);
+            size_t maxWindowSize = pretreatDataCentroids(&groupedData, &spectrum_mz, &spectrum_int);
 
-            findCentroidPeaks(&centroids, &groupedData, i + 1, ID_spectrum);
+            findCentroidPeaks(&centroids, &groupedData, i + 1, ID_spectrum, maxWindowSize);
         }
         for (unsigned int i = 0; i < centroids.size(); i++)
         {
@@ -2153,7 +2159,7 @@ namespace qAlgorithms
         block->cumdf[blocksize - 1] = blocksize - 4;
     }
 
-    void pretreatDataCentroids(
+    size_t pretreatDataCentroids(
         std::vector<ProfileBlock> *groupedData,
         const std::vector<double> *spectrum_mz,
         const std::vector<double> *spectrum_int)
@@ -2172,6 +2178,7 @@ namespace qAlgorithms
         initBlock (inline)
     */
     {
+        assert(groupedData->empty());
         std::vector<double> intensities_profile;
         std::vector<double> mz_profile;
         std::vector<unsigned int> idxConvert; // used to trace back processing steps to untreated data
@@ -2181,6 +2188,8 @@ namespace qAlgorithms
             assert(spectrum_int->size() == size);
             intensities_profile.reserve(size);
             mz_profile.reserve(size);
+            idxConvert.reserve(size);
+
             // Depending on the vendor, a profile contains a lot of points with intensity 0.
             // These were added by the vendor software and must be removed prior to processing.
             for (unsigned int i = 0; i < size; ++i)
@@ -2266,7 +2275,7 @@ namespace qAlgorithms
             binProfileSpec(&result, &diffs, &cumDiffs, knownStart, knownEnd);
         }
 
-        groupedData->clear();
+        size_t maxEntry = 0; // this is the maximum size of all blocks
 
         // ProfileBlock entry = initBlock(64);
 
@@ -2276,6 +2285,8 @@ namespace qAlgorithms
             Block res = result[j];
 
             size_t entrySize = res.end + 1 - res.start + 4;
+            maxEntry = maxEntry > entrySize ? maxEntry : entrySize;
+
             // clearBlock(&entry, entrySize); // @todo prevent a new block from being created every time
             ProfileBlock entry = initBlock(entrySize);
 
@@ -2315,5 +2326,7 @@ namespace qAlgorithms
             groupedData->push_back(entry);
         }
         assert(!groupedData->empty());
+
+        return maxEntry;
     }
 }

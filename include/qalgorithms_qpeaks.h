@@ -21,7 +21,7 @@ namespace qAlgorithms
 
     void runningRegression(
         const std::vector<float> *intensities,
-        const std::vector<float> *ylog_start,
+        std::vector<float> *intensities_log,
         const std::vector<unsigned int> *degreesOfFreedom_cum,
         std::vector<RegressionGauss> *validRegressions,
         const size_t maxScale,
@@ -55,7 +55,7 @@ namespace qAlgorithms
         const std::vector<pugi::xml_node> *spectra_nodes_ex,
         const std::vector<unsigned int> *selectedIndices);
 
-    void pretreatDataCentroids(
+    size_t pretreatDataCentroids(
         std::vector<ProfileBlock> *groupedData,
         const std::vector<double> *spectrum_mz,
         const std::vector<double> *spectrum_int);
@@ -63,7 +63,8 @@ namespace qAlgorithms
     void findCentroidPeaks(std::vector<CentroidPeak> *retPeaks, // results are appended to this vector
                            const std::vector<ProfileBlock> *treatedData,
                            const size_t scanNumber,
-                           const size_t accessor);
+                           const size_t accessor,
+                           const size_t maxWindowSize);
 
     void createCentroidPeaks(
         std::vector<CentroidPeak> *peaks,
