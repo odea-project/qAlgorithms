@@ -45,7 +45,7 @@ namespace qAlgorithms
 
     struct RegCoeffs
     {
-        float b0, b1, b2, b3 = 0;
+        float b0, b1, b2, b3, Sy = 0;
     };
 
     struct RegressionGauss

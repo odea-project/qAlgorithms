@@ -570,11 +570,21 @@ namespace qAlgorithms
             size_t substractor = static_cast<size_t>(abs(valley_position));
             mutateReg->left_limit = substractor < scale ? idxStart + scale - substractor : idxStart; // std::max(i, static_cast<int>(valley_position) + i + scale);
             mutateReg->right_limit = idxStart + 2 * scale;
+            // correct coeffs.Sy
+            for (size_t i = idxStart; i < mutateReg->left_limit; i++)
+            {
+                mutateReg->coeffs.Sy -= (*intensities_log)[i];
+            }
         }
         else
         {
             mutateReg->left_limit = idxStart;
             mutateReg->right_limit = std::min(idxStart + 2 * scale, static_cast<int>(valley_position) + idxStart + scale);
+            // correct coeffs.Sy
+            for (size_t i = mutateReg->right_limit + 1; i <= idxStart + 2 * scale; i++)
+            {
+                mutateReg->coeffs.Sy -= (*intensities_log)[i];
+            }
         }
         assert(mutateReg->right_limit > mutateReg->left_limit);
         assert(mutateReg->right_limit < intensities->size());
@@ -656,7 +666,7 @@ namespace qAlgorithms
         the regression does not describe a peak. This is done through a nested F-test against a constant that
         is the mean of all predicted values. @todo this is not working correctly!
         */
-        float regression_Fval = calcRegressionFvalue(&selectLog, &predictLog, mse, mutateReg->coeffs.b0);
+        float regression_Fval = calcRegressionFvalue(mutateReg->coeffs, &predictLog, mse, mutateReg->coeffs.b0);
         if (regression_Fval < F_VALUES[selectLog.size()]) // - 5 since the minimum is five degrees of freedom
         {
             // H0 holds, the two distributions are not noticeably different

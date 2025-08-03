@@ -238,7 +238,6 @@ namespace qAlgorithms
         const size_t minScale = 2;
         const size_t steps = intensity_log->size() - 2 * minScale; // iteration number at scale 2
 
-        auto y_array_sum_rm = intensity_log; // sum of each index across multiple dimensions of intensity_log
         // only relevant for more than one peak
 
         //   this vector is for the inner loop and looks like:
@@ -258,18 +257,19 @@ namespace qAlgorithms
         size_t iterationCount = std::accumulate(maxInnerLoop.begin(), maxInnerLoop.end(), 0) - maxInnerLoop.size(); // no range check necessary since every entry > 1
 
         // these arrays contain all coefficients for every loop iteration
-        std::vector<double> beta_0(iterationCount, NAN);
-        std::vector<double> beta_1(iterationCount, NAN);
-        std::vector<double> beta_2(iterationCount, NAN);
-        std::vector<double> beta_3(iterationCount, NAN);
+        std::vector<float> beta_0(iterationCount, NAN);
+        std::vector<float> beta_1(iterationCount, NAN);
+        std::vector<float> beta_2(iterationCount, NAN);
+        std::vector<float> beta_3(iterationCount, NAN);
+        std::vector<float> Sy(iterationCount, NAN);
 
         // the product sums are the rows of the design matrix (xT) * intensity_log[i:i+4] (dot product)
         // The first n entries are contained in the b0 vector, one for each peak the regression is performed
         // over.
-        double tmp_product_sum_b0;
-        double tmp_product_sum_b1;
-        double tmp_product_sum_b2;
-        double tmp_product_sum_b3;
+        float tmp_product_sum_b0;
+        float tmp_product_sum_b1;
+        float tmp_product_sum_b2;
+        float tmp_product_sum_b3;
 
         size_t k = 0;
         for (size_t i = 0; i < steps; i++)
@@ -278,22 +278,22 @@ namespace qAlgorithms
             // calculate the convolution with the kernel of the lowest scale (= 2), i.e. xT * intensity_log[i:i+4]
             // tmp_product_sum_b0_vec = intensity_log[i:i+5].sum(axis=0) // numPeaks rows of xT * intensity_log[i:i+4]
 
-            tmp_product_sum_b0 = intensity_log->at(i) + intensity_log->at(i + 1) +
-                                 intensity_log->at(i + 2) + intensity_log->at(i + 3) +
-                                 intensity_log->at(i + 4); // b0 = 1 for all elements
-            tmp_product_sum_b1 = 2 * (y_array_sum_rm->at(i + 4) - y_array_sum_rm->at(i)) +
-                                 y_array_sum_rm->at(i + 3) - y_array_sum_rm->at(i + 1);
-            tmp_product_sum_b2 = 4 * y_array_sum_rm->at(i) + y_array_sum_rm->at(i + 1);
-            tmp_product_sum_b3 = 4 * y_array_sum_rm->at(i + 4) + y_array_sum_rm->at(i + 3);
+            tmp_product_sum_b0 = (*intensity_log)[i] + (*intensity_log)[i + 1] +
+                                 (*intensity_log)[i + 2] + (*intensity_log)[i + 3] +
+                                 (*intensity_log)[i + 4]; // b0 = 1 for all elements
+            tmp_product_sum_b1 = 2 * ((*intensity_log)[i + 4] - (*intensity_log)[i]) +
+                                 (*intensity_log)[i + 3] - (*intensity_log)[i + 1];
+            tmp_product_sum_b2 = 4 * ((*intensity_log)[i]) + ((*intensity_log)[i + 1]);
+            tmp_product_sum_b3 = 4 * ((*intensity_log)[i + 4]) + ((*intensity_log)[i + 3]);
 
             // use [12 + ...] since the array is constructed for the accession arry[scale * 6 + (0:5)]
             // @todo replace the array with a struct and an accessor function
-            const double S2_A = INV_ARRAY[12 + 0];
-            const double S2_B = INV_ARRAY[12 + 1];
-            const double S2_C = INV_ARRAY[12 + 2];
-            const double S2_D = INV_ARRAY[12 + 3];
-            const double S2_E = INV_ARRAY[12 + 4];
-            const double S2_F = INV_ARRAY[12 + 5];
+            const float S2_A = INV_ARRAY[12 + 0];
+            const float S2_B = INV_ARRAY[12 + 1];
+            const float S2_C = INV_ARRAY[12 + 2];
+            const float S2_D = INV_ARRAY[12 + 3];
+            const float S2_E = INV_ARRAY[12 + 4];
+            const float S2_F = INV_ARRAY[12 + 5];
 
             // this line is: a*t_i + b * sum(t without i)
             // inv_array starts at scale = 2
@@ -301,33 +301,33 @@ namespace qAlgorithms
             beta_1[k] = S2_C * tmp_product_sum_b1 + S2_D * (tmp_product_sum_b2 - tmp_product_sum_b3);
             beta_2[k] = S2_B * tmp_product_sum_b0 + S2_D * tmp_product_sum_b1 + S2_E * tmp_product_sum_b2 + S2_F * tmp_product_sum_b3;
             beta_3[k] = S2_B * tmp_product_sum_b0 - S2_D * tmp_product_sum_b1 + S2_F * tmp_product_sum_b2 + S2_E * tmp_product_sum_b3;
-
+            Sy[k] = tmp_product_sum_b0;
             k += 1;       // update index for the productsums array
             size_t u = 1; // u is the expansion increment
             for (size_t scale = 3; scale < maxInnerLoop[i] + 1; scale++)
             { // minimum scale is 2. so we start with scale + 1 = 3 in the inner loop
                 size_t scale_sqr = scale * scale;
                 // expand the kernel to the left and right of the intensity_log.
-                tmp_product_sum_b0 += intensity_log->at(i - u) + intensity_log->at(i + 4 + u);
-                tmp_product_sum_b1 += scale * (y_array_sum_rm->at(i + 4 + u) - y_array_sum_rm->at(i - u));
-                tmp_product_sum_b2 += scale_sqr * y_array_sum_rm->at(i - u);
-                tmp_product_sum_b3 += scale_sqr * y_array_sum_rm->at(i + 4 + u);
+                tmp_product_sum_b0 += (*intensity_log)[i - u] + (*intensity_log)[i + 4 + u];
+                tmp_product_sum_b1 += scale * ((*intensity_log)[i + 4 + u] - (*intensity_log)[i - u]);
+                tmp_product_sum_b2 += scale_sqr * (*intensity_log)[i - u];
+                tmp_product_sum_b3 += scale_sqr * (*intensity_log)[i + 4 + u];
 
-                const double inv_A = INV_ARRAY[12 + u * 6 + 0];
-                const double inv_B = INV_ARRAY[12 + u * 6 + 1];
-                const double inv_C = INV_ARRAY[12 + u * 6 + 2];
-                const double inv_D = INV_ARRAY[12 + u * 6 + 3];
-                const double inv_E = INV_ARRAY[12 + u * 6 + 4];
-                const double inv_F = INV_ARRAY[12 + u * 6 + 5];
+                const float inv_A = INV_ARRAY[12 + u * 6 + 0];
+                const float inv_B = INV_ARRAY[12 + u * 6 + 1];
+                const float inv_C = INV_ARRAY[12 + u * 6 + 2];
+                const float inv_D = INV_ARRAY[12 + u * 6 + 3];
+                const float inv_E = INV_ARRAY[12 + u * 6 + 4];
+                const float inv_F = INV_ARRAY[12 + u * 6 + 5];
 
-                const double inv_B_b0 = inv_B * tmp_product_sum_b0;
-                const double inv_D_b1 = inv_D * tmp_product_sum_b1;
+                const float inv_B_b0 = inv_B * tmp_product_sum_b0;
+                const float inv_D_b1 = inv_D * tmp_product_sum_b1;
 
                 beta_0[k] = inv_A * tmp_product_sum_b0 + inv_B * (tmp_product_sum_b2 + tmp_product_sum_b3);
                 beta_1[k] = inv_C * tmp_product_sum_b1 + inv_D * (tmp_product_sum_b2 - tmp_product_sum_b3);
                 beta_2[k] = inv_B_b0 + inv_D_b1 + inv_E * tmp_product_sum_b2 + inv_F * tmp_product_sum_b3;
                 beta_3[k] = inv_B_b0 - inv_D_b1 + inv_F * tmp_product_sum_b2 + inv_E * tmp_product_sum_b3;
-
+                Sy[k] = tmp_product_sum_b0;
                 u += 1; // update expansion increment
                 k += 1; // update index for the productsums array
             }
@@ -339,7 +339,9 @@ namespace qAlgorithms
         coeffs.reserve(beta_1.size());
         for (size_t i = 0; i < beta_1.size(); i++)
         {
-            coeffs.push_back({float(beta_0[i]), float(beta_1[i]), float(beta_2[i]), float(beta_3[i])});
+            coeffs.push_back({
+                beta_0[i], beta_1[i],
+                beta_2[i], beta_3[i], Sy[i]});
         }
 
         // @todo why not save the scale information as part of the coefficient struct and then use that for the whole merging?
@@ -438,6 +440,11 @@ namespace qAlgorithms
         int currentScale = 2;
         size_t idxStart = 0;
 
+        std::vector<float> yLogInWindow; // both vetors are used to transfer relevant values to the F test later
+        std::vector<float> yLogHatInWindow;
+        yLogInWindow.reserve(MAXSCALE * 2 + 1); // log(y) observed in the regression window
+        yLogHatInWindow.reserve(MAXSCALE * 2 + 1); //log(y) predicted in the regression window
+
         for (size_t range = 0; range < coeffs->size(); range++)
         {
             bool stillValid = true;
@@ -458,8 +465,11 @@ namespace qAlgorithms
                 validRegsTmp.back().coeffs = coeff;
                 // the total span of the regression may not exceed the number of points
                 assert(idxStart + 2 * currentScale < numPoints);
-
-                makeValidRegression(&validRegsTmp.back(), idxStart, currentScale, degreesOfFreedom_cum, intensities, intensities_log);
+                yLogInWindow.clear();
+                yLogHatInWindow.clear();
+                makeValidRegression(&validRegsTmp.back(), idxStart, currentScale,
+                                     degreesOfFreedom_cum, intensities, intensities_log,
+                                     &yLogInWindow, &yLogHatInWindow);
                 if (validRegsTmp.back().isValid)
                 {
                     validRegsTmp.push_back(RegressionGauss{});
@@ -498,7 +508,9 @@ namespace qAlgorithms
         const size_t scale,
         const std::vector<unsigned int> *degreesOfFreedom_cum,
         const std::vector<float> *intensities,
-        const std::vector<float> *intensities_log)
+        const std::vector<float> *intensities_log,
+        std::vector<float> *yLogInWindow,
+        std::vector<float> *yLogHatInWindow)
     {
         assert(scale > 1);
         assert(idxStart + 4 < degreesOfFreedom_cum->size());
@@ -543,11 +555,21 @@ namespace qAlgorithms
             size_t substractor = static_cast<size_t>(abs(valley_position));
             mutateReg->left_limit = substractor < scale ? idxStart + scale - substractor : idxStart; // std::max(i, static_cast<int>(valley_position) + i + scale);
             mutateReg->right_limit = idxStart + 2 * scale;
+            // correct coeffs.Sy
+            for (size_t i = idxStart; i < mutateReg->left_limit; i++)
+            {
+                mutateReg->coeffs.Sy -= (*intensities_log)[i];
+            }
         }
         else
         {
             mutateReg->left_limit = idxStart;
             mutateReg->right_limit = std::min(idxStart + 2 * scale, static_cast<int>(valley_position) + idxStart + scale);
+            // correct coeffs.Sy
+            for (size_t i = mutateReg->right_limit + 1; i <= idxStart + 2 * scale; i++)
+            {
+                mutateReg->coeffs.Sy -= (*intensities_log)[i];
+            }
         }
         assert(mutateReg->right_limit < intensities->size());
         const size_t idx_x0 = idxStart + scale;
@@ -601,12 +623,8 @@ namespace qAlgorithms
           term is considered statistically insignificant, and the loop continues
           to the next iteration.
         */
-
-        std::vector<float> selectLog; // both vetors are used to transfer relevant values to the F test later
-        std::vector<float> predictLog;
-        selectLog.reserve(mutateReg->right_limit - mutateReg->left_limit + 1);
-        predictLog.reserve(mutateReg->right_limit - mutateReg->left_limit + 1);
-        float mse = calcSSE_base(mutateReg->coeffs, intensities_log, &selectLog, &predictLog,
+        
+        float mse = calcSSE_base(mutateReg->coeffs, intensities_log, yLogInWindow, yLogHatInWindow,
                                  mutateReg->left_limit, mutateReg->right_limit, idx_x0);
 
         /*
@@ -615,8 +633,8 @@ namespace qAlgorithms
         the regression does not describe a peak. This is done through a nested F-test against a constant that
         is the mean of all predicted values. @todo this is not working correctly!
         */
-        float regression_Fval = calcRegressionFvalue(&selectLog, &predictLog, mse, mutateReg->coeffs.b0);
-        if (regression_Fval < F_VALUES[selectLog.size()]) // - 5 since the minimum is five degrees of freedom
+        float regression_Fval = calcRegressionFvalue(mutateReg->coeffs, yLogHatInWindow, mse, mutateReg->coeffs.b0);
+        if (regression_Fval < F_VALUES[yLogInWindow->size()]) // - 5 since the minimum is five degrees of freedom
         {
             // H0 holds, the two distributions are not noticeably different
             return;
@@ -689,7 +707,7 @@ namespace qAlgorithms
           The new cofficient is then b0* = b0 + logC, where C is the correction factor.
           first: logC; second: variance of logC
         */
-        std::pair<float, float> smearing = smearingCorrection(&predictLog, &selectLog, scale);
+        std::pair<float, float> smearing = smearingCorrection(yLogHatInWindow, yLogInWindow, scale);
         mutateReg->coeffs.b0 += smearing.first; // b0* = b0 + logC
         // @todo: implement smearing.second for the uncertainty of b0
 
@@ -998,47 +1016,54 @@ namespace qAlgorithms
 
     float calcSSE_base(const RegCoeffs coeff,
                        const std::vector<float> *y_start,
-                       std::vector<float> *selectLog,
-                       std::vector<float> *predictLog,
+                       std::vector<float> *yLogInWindow,
+                       std::vector<float> *yLogHatInWindow,
                        size_t limit_L,
                        size_t limit_R,
                        size_t index_x0)
     {
-        // this function also populates some variables for the F test later in the validation
-        double result = 0.0;
-        // left side
-        for (size_t iSegment = limit_L; iSegment < index_x0; iSegment++)
+        float result = 0.0f;
+        size_t n = limit_R - limit_L + 1;
+        size_t n_left = (index_x0 > limit_L) ? (index_x0 - limit_L) : 0;
+        float x = float(limit_L - index_x0);
+
+        // Left side (before center)
+        for (size_t i = 0; i < n_left; ++i, ++x)
         {
-            double new_x = double(iSegment) - double(index_x0);
-            double y_base = coeff.b0 + (coeff.b1 + coeff.b2 * new_x) * new_x;
-            double y_current = y_start->at(iSegment);
-            selectLog->push_back(y_current);
-            predictLog->push_back(y_base);
-            double newdiff = (y_current - y_base) * (y_current - y_base);
-
-            result += newdiff;
+            float yhat = coeff.b0 + x * (coeff.b1 + coeff.b2 * x);
+            float y = (*y_start)[limit_L + i];
+            yLogInWindow->push_back(y);
+            yLogHatInWindow->push_back(yhat);
+            float diff = y - yhat;
+            result += diff * diff;
         }
-        // center point
-        result += (y_start->at(index_x0) - coeff.b0) * (y_start->at(index_x0) - coeff.b0); // x = 0 -> (b0 - y)^2
-        selectLog->push_back(y_start->at(index_x0));
-        predictLog->push_back(coeff.b0);
 
-        // right side
-        for (size_t iSegment = index_x0 + 1; iSegment < limit_R + 1; iSegment++) // iSegment = 0 is center point calculated above
+        // Center point (x == 0)
         {
-            double new_x = double(iSegment) - double(index_x0);
-            double y_base = coeff.b0 + (coeff.b1 + coeff.b3 * new_x) * new_x; // b3 instead of b2
-            double y_current = y_start->at(iSegment);
-            selectLog->push_back(y_current);
-            predictLog->push_back(y_base);
-            double newdiff = (y_current - y_base) * (y_current - y_base);
-
-            result += newdiff;
+            float yhat = coeff.b0;
+            float y = (*y_start)[index_x0];
+            yLogInWindow->push_back(y);
+            yLogHatInWindow->push_back(yhat);
+            float diff = y - yhat;
+            result += diff * diff;
+            x += 1; // x was 0 for center, now increment to start right side
         }
+
+        // Right side (after center)
+        for (size_t i = n_left + 1; i < n; ++i, ++x)
+        {
+            float yhat = coeff.b0 + x * (coeff.b1 + coeff.b3 * x);
+            float y = (*y_start)[limit_L + i];
+            yLogInWindow->push_back(y);
+            yLogHatInWindow->push_back(yhat);
+            float diff = y - yhat;
+            result += diff * diff;
+        }
+
         return result;
     }
 
-    float calcRegressionFvalue(const std::vector<float> *selectLog, const std::vector<float> *predictLog, const float sse, const float b0)
+    float calcRegressionFvalue(const RegCoeffs coeff, const std::vector<float> *yLogHatInWindow, const float sse, const float b0)
     {
         // note that the mse must not be divided by df - 4 yet when this function is called
 
@@ -1046,29 +1071,18 @@ namespace qAlgorithms
         // influences the result, meaning that the points that qualified for a regression are of a constant intensity.
         // Compare https://link.springer.com/book/10.1007/978-3-662-67526-7 p. 501 ff.
 
-        size_t length = predictLog->size();
-        assert(selectLog->size() == length);
+        size_t length = yLogHatInWindow->size();
         assert(sse > 0);
-        double sum = 0;
-        for (size_t i = 0; i < length; i++)
-        {
-            sum += (*selectLog)[i];
-        }
-        sum /= length;
+        float ymean = coeff.Sy / length;
         // assert(abs(sum - b0) < sse / length); // misunderstanding
-        double squareSumModel = 0;
+        float explainedVariance = 0.0f;
         for (size_t i = 0; i < length; i++)
         {
-            squareSumModel += ((*selectLog)[i] - sum) * ((*selectLog)[i] - sum);
+            explainedVariance += ((*yLogHatInWindow)[i] - ymean) * ((*yLogHatInWindow)[i] - ymean);
         }
-        // const double R_sqared = 1 - sse / squareSumModel;
-        // assert(R_sqared > 0);
-        // assert(R_sqared < 1);
-        // n - p - 1 / p, where p is always 3 because we have a four-coefficient system.
-        // df_sum is used since only non-interpolated points count towards the regression accuracy
-        const double factor = double(length - 3 - 1) / double(length - 1);
+        const float factor = float(length - 4) / 3.0f;;
 
-        return squareSumModel / sse * factor;
+        return explainedVariance / sse * factor;
     }
 
     float calcSSE_exp(const RegCoeffs coeff, const std::vector<float> *y_start, size_t limit_L, size_t limit_R, size_t index_x0)
@@ -1127,11 +1141,11 @@ namespace qAlgorithms
 
 #pragma region "smearing correction"
     std::pair<float, float> smearingCorrection(
-        const std::vector<float> *predictLog,
-        const std::vector<float> *selectLog,
+        const std::vector<float> *yLogHatInWindow,
+        const std::vector<float> *yLogInWindow,
         const size_t scale)
     {
-        assert(predictLog->size() == selectLog->size());
+        assert(yLogHatInWindow->size() == yLogInWindow->size());
         // This function calculates the smearing correction factor logC and the
         // corresponding variance var(logC) which will be used to correct the
         // beta_0 coefficient of the regression. The idea is to correct the
@@ -1149,7 +1163,7 @@ namespace qAlgorithms
         // Journal of the American Statistical Association, 78(383), 605–610.
         // https://doi.org/10.1080/01621459.1983.10478017
 
-        size_t n = predictLog->size();
+        size_t n = yLogHatInWindow->size();
 
         double sumR = 0.0;  // sum of exp(ε̂_i), i.e., exponential of the residuals
         double sumR2 = 0.0; // sum of (exp(ε̂_i))^2, i.e., square of the exponential of the residuals
@@ -1157,7 +1171,7 @@ namespace qAlgorithms
         for (size_t i = 0; i < n; ++i)
         {
             // ri = exp(ε̂_i) = exp(log y_i - log ŷ_i) residuals
-            double ri = exp_approx_d(selectLog->at(i) - predictLog->at(i));
+            double ri = exp_approx_d(yLogInWindow->at(i) - yLogHatInWindow->at(i));
             sumR += ri;
             sumR2 += ri * ri;
         }
