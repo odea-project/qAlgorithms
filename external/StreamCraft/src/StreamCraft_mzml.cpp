@@ -73,56 +73,47 @@ std::string decompress_zlib(const std::string &compressed_string)
 
 // Decodes a Base64 string into a string with binary data.
 // @todo performance critical. Replace with highly optimised library
-std::string decode_base64(const std::string &encoded_string)
+
+// Lookup-Table für Base64-Decoding: ASCII -> 0..63 oder -1 für ungültig
+static constexpr int8_t base64_table[256] = {
+    -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1, //   0- 15
+    -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1, //  16- 31
+    -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,62,-1,-1,-1,63, //  32- 47  + (43), / (47)
+    52,53,54,55,56,57,58,59,60,61,-1,-1,-1,-1,-1,-1, //  48- 63  0-9
+    -1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9,10,11,12,13,14, //  64- 79  A-Z
+    15,16,17,18,19,20,21,22,23,24,25,-1,-1,-1,-1,-1, //  80- 95
+    -1,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40, //  96-111  a-z
+    41,42,43,44,45,46,47,48,49,50,51,-1,-1,-1,-1,-1, // 112-127
+    -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1, // 128-143
+    -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1, // 144-159
+    -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1, // 160-175
+    -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1, // 176-191
+    -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1, // 192-207
+    -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1, // 208-223
+    -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1, // 224-239
+    -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1  // 240-255
+};
+
+std::string decode_base64(const std::string& input)
 {
-    std::string decoded_string;
-
-    decoded_string.reserve((encoded_string.size() * 3) / 4);
-
+    std::string out;
     int val = 0;
     int valb = -8;
-    for (char c : encoded_string)
+    for (unsigned char c : input)
     {
-        if (c == '=')
-        {
-            valb -= 6;
-            continue;
-        }
-        if (c >= 'A' && c <= 'Z')
-        {
-            c -= 'A';
-        }
-        else if (c >= 'a' && c <= 'z')
-        {
-            c -= 'a' - 26;
-        }
-        else if (c >= '0' && c <= '9')
-        {
-            c -= '0' - 52;
-        }
-        else if (c == '+')
-        {
-            c = 62;
-        }
-        else if (c == '/')
-        {
-            c = 63;
-        }
-        else
-        {
-            continue;
-        }
-        val = (val << 6) + c;
+        if (c == '=') break; // Padding ignorieren
+        int8_t d = base64_table[c];
+        if (d == -1) continue; // ungültiges Zeichen skippen
+        val = (val << 6) | d;
         valb += 6;
         if (valb >= 0)
         {
-            decoded_string.push_back(char((val >> valb) & 0xFF));
+            out.push_back(char((val >> valb) & 0xFF));
             valb -= 8;
         }
     }
-
-    return decoded_string;
-};
+    return out;
+}
 
 StreamCraft::MZML::MZML(const std::filesystem::path &file)
 {
