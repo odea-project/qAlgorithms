@@ -60,7 +60,7 @@ namespace qAlgorithms
             // @todo adjust the scale dynamically based on the number of valid regressions found, early terminate after x iterations
             const size_t maxScale = std::min(GLOBAL_MAXSCALE_CENTROID, size_t((length - 1) / 2)); // length - 1 because the center point is not part of the span
 
-            runningRegression(&block->intensity, &logIntensity, &block->cumdf, &validRegressions, maxScale);
+            runningRegression(&block->intensity, &logIntensity, &block->cumdf, &validRegressions, maxScale, length - 2);
             if (validRegressions.empty())
             {
                 continue; // no valid peaks
@@ -70,7 +70,7 @@ namespace qAlgorithms
         }
     }
 
-    void findFeaturePeaks(std::vector<RegressionGauss> *validRegressions, const EIC *eic)
+    void findFeaturePeaks(std::vector<RegressionGauss> *validRegressions, const EIC *eic, const size_t maxApexIdx)
     /* ### allocations ###
         logIntensity: size of EIC * f32 // known at call time
 
@@ -85,7 +85,6 @@ namespace qAlgorithms
         std::vector<float> logIntensity(length, NAN);
         for (size_t blockPos = 0; blockPos < length; blockPos++)
         {
-            assert(eic->ints_area[blockPos] > 0);
             logIntensity[blockPos] = std::log(eic->ints_area[blockPos]);
         }
 
@@ -99,7 +98,8 @@ namespace qAlgorithms
                           &logIntensity,
                           &eic->df,
                           validRegressions,
-                          maxScale);
+                          maxScale,
+                          maxApexIdx);
     }
 
 #pragma endregion "find peaks"
@@ -110,7 +110,8 @@ namespace qAlgorithms
         const std::vector<float> *intensities_log,
         const std::vector<unsigned int> *degreesOfFreedom_cum,
         std::vector<RegressionGauss> *validRegressions,
-        const size_t maxScale)
+        const size_t maxScale,
+        const size_t maxApexIdx)
     /* ### allocations ###
         regressions: size determined by function
 
@@ -125,7 +126,7 @@ namespace qAlgorithms
 
         const std::vector<RegCoeffs> regressions = findCoefficients(intensities_log, maxScale);
 
-        validateRegression(&regressions, intensities, intensities_log, degreesOfFreedom_cum, maxScale, *validRegressions);
+        validateRegression(*validRegressions, &regressions, intensities, intensities_log, degreesOfFreedom_cum, maxScale, maxApexIdx);
 
         if (validRegressions->size() > 1) // @todo we can probably filter regressions based on MSE at this stage already
         {
@@ -472,12 +473,13 @@ namespace qAlgorithms
     }
 
     void validateRegression(
+        std::vector<RegressionGauss> &validRegressions,
         const std::vector<RegCoeffs> *coeffs, // coefficients for single-b0 peaks, spans all regressions over a peak window
         const std::vector<float> *intensities,
         const std::vector<float> *intensities_log,
         const std::vector<unsigned int> *degreesOfFreedom_cum,
         const size_t maxScale, // scale, i.e., the number of data points in a half window excluding the center point
-        std::vector<RegressionGauss> &validRegressions)
+        const size_t maxApexIdx)
     /* ### allocations ###
         validRegsTmp: known at function call
 
@@ -522,7 +524,14 @@ namespace qAlgorithms
                     // the total span of the regression may not exceed the number of points
                     assert(idxStart + 2 * currentScale < numPoints);
 
-                    makeValidRegression(&validRegsTmp.back(), idxStart, currentScale, degreesOfFreedom_cum, intensities, intensities_log);
+                    makeValidRegression(degreesOfFreedom_cum,
+                                        intensities,
+                                        intensities_log,
+                                        &validRegsTmp.back(),
+                                        idxStart,
+                                        currentScale,
+                                        maxApexIdx);
+
                     if (validRegsTmp.back().isValid)
                     {
                         validRegsTmp.push_back(RegressionGauss{});
@@ -557,12 +566,13 @@ namespace qAlgorithms
     }
 
     void makeValidRegression(
+        const std::vector<unsigned int> *degreesOfFreedom_cum,
+        const std::vector<float> *intensities,
+        const std::vector<float> *intensities_log,
         RegressionGauss *mutateReg,
         const size_t idxStart,
         const size_t scale,
-        const std::vector<unsigned int> *degreesOfFreedom_cum,
-        const std::vector<float> *intensities,
-        const std::vector<float> *intensities_log)
+        const size_t maxApexPos)
     /* ### allocations ###
         selectLog: size calculated in function, max size known
         predictLog: s.o.
@@ -781,6 +791,13 @@ namespace qAlgorithms
         mutateReg->uncertainty_pos = calcUncertaintyPos(mse, mutateReg->coeffs, mutateReg->apex_position, scale);
         mutateReg->df = df_sum - 4; // @todo add explanation for -4
         mutateReg->apex_position += idxStart + scale;
+
+        // @todo this should be part of a more structured test
+        if (mutateReg->apex_position < 2 || mutateReg->apex_position > maxApexPos)
+        { // this situation implies that only one half of the peak has the minimum data points for a gaussian
+            return;
+        }
+
         mutateReg->scale = scale;
         mutateReg->index_x0 = idx_x0;
         mutateReg->mse = mse; // the quadratic mse is used for the weighted mean of the coefficients later
@@ -1037,8 +1054,9 @@ namespace qAlgorithms
 
             // calculate the apex position in RT
             size_t idx_leftOfApex = backConvert->at((size_t)regression.apex_position);
+            assert(idx_leftOfApex > 1); // at least two points to the left
             size_t idx_rightOfApex = idx_leftOfApex + 1;
-            assert(idx_rightOfApex < RT->size());
+            assert(idx_rightOfApex < RT->size() - 1); // at least two points to the right
             float rt_leftOfApex = RT->at(idx_leftOfApex);
             float rt_rightOfApex = RT->at(idx_rightOfApex);
             assert(rt_leftOfApex < rt_rightOfApex);
@@ -1899,7 +1917,7 @@ namespace qAlgorithms
                 continue; // skip due to lack of data, i.e., degrees of freedom will be zero
             }
 
-            findFeaturePeaks(&validRegressions, &currentEIC);
+            findFeaturePeaks(&validRegressions, &currentEIC, RT->size() - 2); // hard-coded minScale @todo
 
             if (!validRegressions.empty())
             {

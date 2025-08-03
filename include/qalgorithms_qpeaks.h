@@ -13,16 +13,66 @@ namespace qAlgorithms
 {
     // @todo rework this module so all centroiding / feature construction parts are in a separate block and qPeaks can be used as a library header
 
-    struct RT_Converter
-    {
-        // find the spectrum index after interpolation from MS1 spectrum number and vice versa
-        std::vector<unsigned int> countToInterp;
-        std::vector<unsigned int> interpToCount;
-        // retention time at the interpolated index
-        std::vector<float> interpToRT;
-    };
+    // ### General Implementation ### //
 
-    RT_Converter interpolateScanNumbers(const std::vector<float> *retentionTimes);
+    std::vector<RegCoeffs> findCoefficients(
+        const std::vector<float> *intensity_log,
+        const size_t scale); // maximum scale that will be checked. Should generally be limited by peakFrame
+
+    void runningRegression(
+        const std::vector<float> *intensities,
+        const std::vector<float> *ylog_start,
+        const std::vector<unsigned int> *degreesOfFreedom_cum,
+        std::vector<RegressionGauss> *validRegressions,
+        const size_t maxScale,
+        const size_t maxApexIdx);
+
+    void validateRegression(
+        std::vector<RegressionGauss> &validRegressions,
+        const std::vector<RegCoeffs> *coeffs, // coefficients for single-b0 peaks, spans all regressions over a peak window
+        const std::vector<float> *intensities,
+        const std::vector<float> *intensities_log,
+        const std::vector<unsigned int> *degreesOfFreedom_cum,
+        const size_t maxScale,
+        const size_t maxApexIdx);
+
+    void makeValidRegression(
+        const std::vector<unsigned int> *degreesOfFreedom_cum,
+        const std::vector<float> *intensities,
+        const std::vector<float> *intensities_log,
+        RegressionGauss *mutateReg,
+        const size_t idxStart,
+        const size_t scale,
+        const size_t maxApexPos);
+
+    void mergeRegressionsOverScales(std::vector<RegressionGauss> *validRegressions,
+                                    const std::vector<float> *intensities);
+
+    // ### Centroiding-specific Code ### //
+
+    std::vector<CentroidPeak> findCentroids(
+        XML_File &data,
+        const std::vector<pugi::xml_node> *spectra_nodes_ex,
+        const std::vector<unsigned int> *selectedIndices);
+
+    void pretreatDataCentroids(
+        std::vector<ProfileBlock> *groupedData,
+        const std::vector<double> *spectrum_mz,
+        const std::vector<double> *spectrum_int);
+
+    void findCentroidPeaks(std::vector<CentroidPeak> *retPeaks, // results are appended to this vector
+                           const std::vector<ProfileBlock> *treatedData,
+                           const size_t scanNumber,
+                           const size_t accessor);
+
+    void createCentroidPeaks(
+        std::vector<CentroidPeak> *peaks,
+        const std::vector<RegressionGauss> *validRegressionsVec,
+        const ProfileBlock *block,
+        const size_t scanNumber,
+        const size_t accessor);
+
+    // ### Feature-specific Code ### //
 
     struct Block
     {
@@ -37,65 +87,26 @@ namespace qAlgorithms
                         // size_t previousDiffPos,              // skip this many points in the diffOrder vector
                         size_t start, size_t end);
 
-    void pretreatDataCentroids(
-        std::vector<ProfileBlock> *groupedData,
-        const std::vector<double> *spectrum_mz,
-        const std::vector<double> *spectrum_int);
-
-    inline float calcRTDiff(const std::vector<double> *retention_times);
-
-    std::vector<CentroidPeak> findCentroids(
-        XML_File &data,
-        const std::vector<pugi::xml_node> *spectra_nodes_ex,
-        const std::vector<unsigned int> *selectedIndices);
-
     std::vector<FeaturePeak> findFeatures(std::vector<EIC> &data,
                                           std::vector<unsigned int> *backConvert,
                                           std::vector<float> *RT);
 
-    std::vector<RegCoeffs> findCoefficients(
-        const std::vector<float> *intensity_log,
-        const size_t scale); // maximum scale that will be checked. Should generally be limited by peakFrame
+    void findFeaturePeaks(std::vector<RegressionGauss> *validRegressions, const EIC *eic, const size_t maxApexIdx);
 
-    void findCentroidPeaks(std::vector<CentroidPeak> *retPeaks, // results are appended to this vector
-                           const std::vector<ProfileBlock> *treatedData,
-                           const size_t scanNumber,
-                           const size_t accessor);
+    // ### Retention Time Conversion @todo make less annoying ### //
 
-    void findFeaturePeaks(std::vector<RegressionGauss> *validRegressions, const EIC *eic);
+    struct RT_Converter
+    {
+        // find the spectrum index after interpolation from MS1 spectrum number and vice versa
+        std::vector<unsigned int> countToInterp;
+        std::vector<unsigned int> interpToCount;
+        // retention time at the interpolated index
+        std::vector<float> interpToRT;
+    };
 
-    void runningRegression(
-        const std::vector<float> *intensities,
-        const std::vector<float> *ylog_start,
-        const std::vector<unsigned int> *degreesOfFreedom_cum,
-        std::vector<RegressionGauss> *validRegressions,
-        const size_t maxScale);
+    RT_Converter interpolateScanNumbers(const std::vector<float> *retentionTimes);
 
-    void validateRegression(
-        const std::vector<RegCoeffs> *coeffs, // coefficients for single-b0 peaks, spans all regressions over a peak window
-        const std::vector<float> *intensities,
-        const std::vector<float> *intensities_log,
-        const std::vector<unsigned int> *degreesOfFreedom_cum,
-        const size_t maxScale, // scale, i.e., the number of data points in a half window excluding the center point
-        std::vector<RegressionGauss> &validRegressions);
-
-    void makeValidRegression(
-        RegressionGauss *mutateReg,
-        const size_t idxStart,
-        const size_t scale,
-        const std::vector<unsigned int> *degreesOfFreedom_cum,
-        const std::vector<float> *intensities,
-        const std::vector<float> *intensities_log);
-
-    void mergeRegressionsOverScales(std::vector<RegressionGauss> *validRegressions,
-                                    const std::vector<float> *intensities);
-
-    void createCentroidPeaks(
-        std::vector<CentroidPeak> *peaks,
-        const std::vector<RegressionGauss> *validRegressionsVec,
-        const ProfileBlock *block,
-        const size_t scanNumber,
-        const size_t accessor);
+    inline float calcRTDiff(const std::vector<double> *retention_times);
 
     void createFeaturePeaks(
         std::vector<FeaturePeak> *peaks,
@@ -151,20 +162,7 @@ namespace qAlgorithms
         const size_t startIdx,
         const size_t endIdx);
 
-    /**
-     * @brief Calculate the degree of freedom of the regression model with the given regression window.
-     * @details The degree of freedom is the number of data points minus the
-     * number of regression coefficients. Moreover, the degree of freedom is
-     * reduced by the number of interpolated data points. For calculating
-     * the degree of freedom, the function uses the df vector that contains a
-     * value of 1 if the data point is not interpolated and 0 if the data point is interpolated.
-     *
-     * @param df : true = real point, false = interpolated
-     * @param left_limit : Start index of the regression window
-     * @param right_limit : End index of the regression window
-     * @return size_t : Degree of freedom
-     */
-
+    // this just substracts the two relevant values from a cumsum vector
     size_t calcDF_cum(
         const std::vector<unsigned int> *degreesOfFreedom,
         unsigned int left_limit,
@@ -193,8 +191,7 @@ namespace qAlgorithms
      * @param scale
      * @return float
      */
-    inline double multiplyVecMatrixVecTranspose(const double vec[4],
-                                                size_t scale);
+    inline double multiplyVecMatrixVecTranspose(const double vec[4], size_t scale);
 
     float apexToEdgeRatio(
         const size_t idxStart,
@@ -267,6 +264,7 @@ namespace qAlgorithms
                                         size_t left_limit,
                                         size_t right_limit);
 
+    // ### pre-calculate the regression matrix ### //
 #define MAXSCALE 63
 
     constexpr std::array<float, (MAXSCALE + 1) * 6> initialize()
