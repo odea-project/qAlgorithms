@@ -2,16 +2,11 @@
 #include "qalgorithms_utils.h"
 #include "qalgorithms_global_vars.h"
 #include "qalgorithms_datatypes.h"
-#include "qalgorithms_read_file.h"
+#include "qalgorithms_read_file.h" // @todo remove coupling
 
-#include <algorithm>
 #include <cassert>
 #include <cmath>
-#include <array>
 #include <vector>
-#include <iostream>
-#include <immintrin.h> // AVX
-#include <numeric>     // accumulate, this is temporary @todo
 
 namespace qAlgorithms
 {
@@ -199,7 +194,7 @@ namespace qAlgorithms
 
     std::vector<RegCoeffs> findCoefficients(
         const std::vector<float> *intensity_log,
-        const size_t max_scale) // maximum scale that will be checked. Should generally be limited by peakFrame
+        const size_t maxScale) // maximum scale that will be checked. Should generally be limited by peakFrame
     /* ### allocations ###
         maxInnerLoop: size known at function call
         beta_0 etc.: size calculated in function *4 * f32
@@ -210,95 +205,102 @@ namespace qAlgorithms
     */
     {
         /*
-  This function performs a convolution with the kernel: (xTx)^-1 xT and the data array: intensity_log.
-  (xTx)^-1 is pre_calculated and stored in the inv_array and contains 7 unique values per scale.
-  xT is the transpose of the design matrix X that looks like this:
-  for scale = 2:
-  xT = | 1  1  1  1  1 |    : all ones
-       |-2 -1  0  1  2 |    : from -scale to scale
-       | 4  1  0  0  0 |    : x^2 values for x < 0
-       | 0  0  0  1  4 |    : x^2 values for x > 0
+        This function performs a convolution with the kernel: (xTx)^-1 xT and the data array: intensity_log.
+        (xTx)^-1 is pre-calculated and stored in the vector INV_ARRAY (calculated in the header file).
+        Only six values of the final matrix are required for the simple case, see below:
 
-  It contains one additional row of all ones for every additional peak that is added into the model
+        xT is the transpose of the design matrix X that looks like this:
+        for scale = 2:
+        xT = | 1  1  1  1  1 |    : all ones
+             |-2 -1  0  1  2 |    : from -scale to scale
+             | 4  1  0  0  0 |    : x^2 values for x < 0
+             | 0  0  0  1  4 |    : x^2 values for x > 0
 
-  When adding multiple peaks to the regression model, we need to adjust the inverse values.
-  This will change the number of unique values in the inv_values array from 6 to 7.
-  Here we use the inv_array[1] position and shift all values from that point onwards to the right.
-  example for num_peaks = 2:
-  original matrix with the unique values [a, b, c, d, e, f] (six unique values)
-  | a  0  b  b |
-  | 0  c  d -d |
-  | b  d  e  f |
-  | b -d  f  e |
+        It contains one additional row of all ones for every additional peak that is added into the model
 
-  new matrix with the unique values [A1, A2, B, C, D, E, F] (seven unique values)
-  | A1  A2  0  B  B |
-  | A2  A1  0  B  B |
-  | 0   0   C  D -D |
-  | B   B   D  E  F |
-  | B   B  -D  F  E |
+        When adding multiple peaks to the regression model, we need to adjust the inverse values.
+        This will change the number of unique values in the inv_values array from 6 to 7.
+        Here we use the inv_array[1] position and shift all values from that point onwards to the right.
+        example for num_peaks = 2:
+        original matrix with the unique values [a, b, c, d, e, f] (six unique values)
+        | a  0  b  b |
+        | 0  c  d -d |
+        | b  d  e  f |
+        | b -d  f  e |
 
-  for num_peaks = 3:
-  new matrix with the unique values [A1, A2, B, C, D, E, F] (the same seven unique values)
-  | A1  A2  A2  0  B  B |
-  | A2  A1  A2  0  B  B |
-  | A2  A2  A1  0  B  B |
-  | 0   0   0   C  D -D |
-  | B   B   B   D  E  F |
-  | B   B   B  -D  F  E |
+        new matrix with the unique values [A1, A2, B, C, D, E, F] (seven unique values)
+        | A1  A2  0  B  B |
+        | A2  A1  0  B  B |
+        | 0   0   C  D -D |
+        | B   B   D  E  F |
+        | B   B  -D  F  E |
 
-  Note that no more than seven different values are needed per scale.
+        for num_peaks = 3:
+        new matrix with the unique values [A1, A2, B, C, D, E, F] (the same seven unique values)
+        | A1  A2  A2  0  B  B |
+        | A2  A1  A2  0  B  B |
+        | A2  A2  A1  0  B  B |
+        | 0   0   0   C  D -D |
+        | B   B   B   D  E  F |
+        | B   B   B  -D  F  E |
 
-  In general, we have two moving actions:
-  1) step right through the intensity_log and calculate the convolution with the kernel
-  2) expand the kernel to the left and right of the intensity_log (higher scale)
+        Note that no more than seven different values are needed per scale, even for a multidimensional approach.
 
-  The workflow is organized in nested loops:
-  1) outer loop: move along the intensity_log AND calculate the convolution with the scale=2 kernel
-  2) inner loop: expand the kernel to the left and right of the intensity_log (higher scale)
+        In general, we have two moving actions:
+        1) step right through the intensity_log and calculate the convolution with the kernel
+        2) expand the kernel to the left and right of the intensity_log (higher scale)
 
-  The pattern used for both loops looks like:
-  e.g. for n(y) = 16
-  outer loop: i = 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11
-  inner loop: range from:
-   for i=0: 3 to 3 => i.e. loop is not executed
-   for i=1: 3 to 4 => i.e. loop is executed once for scale=3
-   for i=2: 3 to 5 => i.e. loop is executed twice for scale=3,4
-   for i=3: 3 to 6 => i.e. loop is executed three times for scale=3,4,5
-   for i=4: 3 to 7 => i.e. loop is executed four times for scale=3,4,5,6
-   for i=5: 3 to 8 => i.e. loop is executed five times for scale=3,4,5,6,7
-   for i=6: 3 to 8 => i.e. loop is executed five times for scale=3,4,5,6,7
-   for i=7: 3 to 7 => i.e. loop is executed four times for scale=3,4,5,6
-   for i=8: 3 to 6 => i.e. loop is executed three times for scale=3,4,5
-   for i=9: 3 to 5 => i.e. loop is executed twice for scale=3,4
-   for i=10: 3 to 4 => i.e. loop is executed once for scale=3
-   for i=11: 3 to 3 => i.e. loop is not executed
-   */
-        assert(max_scale > 1);
-        assert(max_scale <= MAXSCALE);
+        The workflow is organized in nested loops:
+        1) outer loop: move along the intensity_log AND calculate the convolution with the scale=2 kernel
+        2) inner loop: expand the kernel to the left and right of the intensity_log (higher scale)
+
+        The pattern used for both loops looks like:
+        e.g. for n(y) = 16
+        outer loop: i = 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11
+        inner loop: range from:
+        for i=0: 3 to 3 => loop is not executed
+        for i=1: 3 to 4 =>  once for  scale = 3
+        for i=2: 3 to 5 =>  twice for  scale = 3,4
+        for i=3: 3 to 6 =>  three times for  scale = 3,4,5
+        for i=4: 3 to 7 =>  four times for  scale = 3,4,5,6
+        for i=5: 3 to 8 =>  five times for  scale = 3,4,5,6,7
+        for i=6: 3 to 8 =>  five times for  scale = 3,4,5,6,7
+        for i=7: 3 to 7 =>  four times for  scale = 3,4,5,6
+        for i=8: 3 to 6 =>  three times for  scale = 3,4,5
+        for i=9: 3 to 5 =>  twice for  scale = 3,4
+        for i=10: 3 to 4 =>  once for  scale = 3
+        for i=11: 3 to 3 => loop is not executed
+        */
+        assert(maxScale > 1);
+        assert(maxScale <= MAXSCALE);
         const size_t minScale = 2;
+        assert(minScale <= maxScale);
         const size_t steps = intensity_log->size() - 2 * minScale; // iteration number at scale 2
 
-        auto y_array_sum_rm = intensity_log; // sum of each index across multiple dimensions of intensity_log
-        // only relevant for more than one peak
-
-        //   this vector is for the inner loop and looks like:
-        //   [scale_min, scale_min +1 , .... scale_max, ... scale_min +1, scale_min]
-        //   length of vector: num_steps
-        // the vector starts and ends with minScale and increases by one towards the middle until it reaches the scale value
-        std::vector<unsigned int> maxInnerLoop(steps, max_scale);
-        for (size_t i = 0; i + 2 < max_scale; i++) // +2 since smallest scale is 2
+        // the vector starts and ends with minScale and increases by one towards the middle until it reaches the maxScale value
+        std::vector<unsigned int> maxInnerLoop(steps, maxScale); // @todo the vector is not necessary, get rid of it
+        size_t numScales = maxScale - minScale;
         {
-            // @todo somewhat inefficient, design better iteration scheme
-            size_t newVal = i + 2;
-            maxInnerLoop[i] = newVal;
-            size_t backIdx = maxInnerLoop.size() - i - 1;
-            maxInnerLoop[backIdx] = newVal;
+            for (size_t i = 0; i < numScales; i++)
+            {
+                maxInnerLoop[i] = i + minScale;
+            }
+            size_t startIdx = maxInnerLoop.size() - numScales;
+            unsigned int currentVal = maxScale - 1;
+            for (size_t i = startIdx; i < maxInnerLoop.size(); i++)
+            {
+                maxInnerLoop[i] = currentVal;
+                currentVal -= 1;
+            }
+            assert(currentVal + 1 == minScale); // last iteration substracts one
         }
 
-        size_t iterationCount = std::accumulate(maxInnerLoop.begin(), maxInnerLoop.end(), 0) - maxInnerLoop.size(); // no range check necessary since every entry > 1
+        // the number of "missing" regressions covering each index is -1 -2 -3 etc., expressed by the triangular number
+        // triangular(n) = n * (n + 1) / 2. the / 2 is omitted, since we multiply by 2 anyway. n is the iteration count from above.
+        // since minScale is included in numScales, (minScale - 1) * steps is subtracted
+        size_t iterationCount = steps * maxScale - numScales * (numScales + 1) - (minScale - 1) * steps;
 
-        // these arrays contain all coefficients for every loop iteration
+        // these arrays contain all coefficients for every loop iteration @todo arena allocator here
         std::vector<double> beta_0(iterationCount, NAN);
         std::vector<double> beta_1(iterationCount, NAN);
         std::vector<double> beta_2(iterationCount, NAN);
@@ -322,10 +324,10 @@ namespace qAlgorithms
             tmp_product_sum_b0 = intensity_log->at(i) + intensity_log->at(i + 1) +
                                  intensity_log->at(i + 2) + intensity_log->at(i + 3) +
                                  intensity_log->at(i + 4); // b0 = 1 for all elements
-            tmp_product_sum_b1 = 2 * (y_array_sum_rm->at(i + 4) - y_array_sum_rm->at(i)) +
-                                 y_array_sum_rm->at(i + 3) - y_array_sum_rm->at(i + 1);
-            tmp_product_sum_b2 = 4 * y_array_sum_rm->at(i) + y_array_sum_rm->at(i + 1);
-            tmp_product_sum_b3 = 4 * y_array_sum_rm->at(i + 4) + y_array_sum_rm->at(i + 3);
+            tmp_product_sum_b1 = 2 * (intensity_log->at(i + 4) - intensity_log->at(i)) +
+                                 intensity_log->at(i + 3) - intensity_log->at(i + 1);
+            tmp_product_sum_b2 = 4 * intensity_log->at(i) + intensity_log->at(i + 1);
+            tmp_product_sum_b3 = 4 * intensity_log->at(i + 4) + intensity_log->at(i + 3);
 
             // use [12 + ...] since the array is constructed for the accession arry[scale * 6 + (0:5)]
             // @todo replace the array with a struct and an accessor function
@@ -350,9 +352,9 @@ namespace qAlgorithms
                 size_t scale_sqr = scale * scale;
                 // expand the kernel to the left and right of the intensity_log.
                 tmp_product_sum_b0 += intensity_log->at(i - u) + intensity_log->at(i + 4 + u);
-                tmp_product_sum_b1 += scale * (y_array_sum_rm->at(i + 4 + u) - y_array_sum_rm->at(i - u));
-                tmp_product_sum_b2 += scale_sqr * y_array_sum_rm->at(i - u);
-                tmp_product_sum_b3 += scale_sqr * y_array_sum_rm->at(i + 4 + u);
+                tmp_product_sum_b1 += scale * (intensity_log->at(i + 4 + u) - intensity_log->at(i - u));
+                tmp_product_sum_b2 += scale_sqr * intensity_log->at(i - u);
+                tmp_product_sum_b3 += scale_sqr * intensity_log->at(i + 4 + u);
 
                 const double inv_A = INV_ARRAY[12 + u * 6 + 0];
                 const double inv_B = INV_ARRAY[12 + u * 6 + 1];
@@ -379,7 +381,7 @@ namespace qAlgorithms
         // @todo why not save the scale information as part of the coefficient struct and then use that for the whole merging?
         auto coeffs = restoreShape(&maxInnerLoop,
                                    &beta_0, &beta_1, &beta_2, &beta_3,
-                                   intensity_log->size(), max_scale);
+                                   intensity_log->size(), maxScale);
 
         return coeffs;
     }
@@ -2090,7 +2092,10 @@ namespace qAlgorithms
     {
         std::vector<float> mz_int(blocksize, 0);
         std::vector<unsigned int> cumdf(blocksize, 0);
-        std::iota(cumdf.begin() + 2, cumdf.end(), 1);
+        for (size_t i = 2; i < blocksize - 2; i++)
+        {
+            cumdf[i] = i - 1;
+        }
         cumdf[blocksize - 1] = blocksize - 4;
         cumdf[blocksize - 2] = blocksize - 4;
 
@@ -2234,12 +2239,12 @@ namespace qAlgorithms
         else
         {
             // this is expected for ToF data (?) @todo
-            // std::cerr << "Warning: a spectrum has no clear breaks.\n";
+            // fprintf(stderr, "Warning: a spectrum has no clear breaks.\n");
         }
 
         if (knownStart == 0 && knownEnd == diffs.size() - 1)
         {
-            // std::cerr << "Warning: a spectrum has no clear breaks.\n";
+            // fprintf(stderr, "Warning: a spectrum has no clear breaks.\n");
             binProfileSpec(&result, &diffs, &cumDiffs, knownStart, knownEnd);
         }
 
