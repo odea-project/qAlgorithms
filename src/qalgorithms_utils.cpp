@@ -55,12 +55,21 @@ namespace qAlgorithms
         return x * (p / q);
     }
 
-    double experfc(double x, double sign)
+    double experfc(double x)
     {
-        constexpr double a = 0.978795604954049; // empirically determined
-        constexpr double b = 1.25731022692317;  // empirically determined
-        double t = -x * x;
-        return SQRTPI_2 * exp_approx_d(t) + sign * a * x * exp_approx_d(t * b);
+        double z = fabs(x);
+        double t = 1.0 / (1.0 + 0.5 * z);
+        double ans = t * exp_approx_d(-z*z - 1.26551223 +
+            t * ( 1.00002368 +
+            t * ( 0.37409196 +
+            t * ( 0.09678418 +
+            t * (-0.18628806 +
+            t * ( 0.27886807 +
+            t * (-1.13520398 +
+            t * ( 1.48851587 +
+            t * (-0.82215223 +
+            t * ( 0.17087277))))))))));
+    return (x >= 0.0) ? ans : 2.0 - ans;
     }
 
     double erfi(const double x)

@@ -181,7 +181,7 @@ namespace qAlgorithms
      * @param scale
      * @return float
      */
-    inline double multiplyVecMatrixVecTranspose(const double vec[4],
+    inline float multiplyVecMatrixVecTranspose(const float vec[4],
                                                 size_t scale);
 
     float apexToEdgeRatio(

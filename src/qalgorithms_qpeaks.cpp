@@ -14,11 +14,12 @@
 
 namespace qAlgorithms
 {
-
-    constexpr auto INV_ARRAY = initialize(); // this only works with constexpr square roots, which are part of C++26
+    constexpr auto INV_ARRAY = initialize();  // initialize the inverse matrix array for regression
+                                              // every scale has its own set of six unique values
+                                              // this only works with constexpr square roots, which are part of C++26
 
 #pragma region "find peaks"
-    void findCentroidPeaks(std::vector<CentroidPeak> *retPeaks, // results are appended to this vector
+    void findCentroidPeaks(std::vector<CentroidPeak> *retPeaks,           // results are appended to this vector
                            const std::vector<ProfileBlock> *treatedData,
                            const size_t scanNumber,
                            const size_t accessor)
@@ -33,9 +34,9 @@ namespace qAlgorithms
             maxWindowSize = maxWindowSize < length ? length : maxWindowSize;
         }
         assert(maxWindowSize > 0);
-        std::vector<float> logIntensity(maxWindowSize, NAN);
+        std::vector<float> logIntensity(maxWindowSize);
 
-        const size_t GLOBAL_MAXSCALE_CENTROID = 8; // @todo this is a critical part of the algorithm and should not be hard-coded
+        constexpr size_t GLOBAL_MAXSCALE_CENTROID = 8; // @todo this is a critical part of the algorithm and should not be hard-coded
         assert(GLOBAL_MAXSCALE_CENTROID <= MAXSCALE);
 
         std::vector<RegressionGauss> validRegressions;
@@ -1144,6 +1145,7 @@ namespace qAlgorithms
 #pragma endregion calcSSE
 
 #pragma region "smearing correction"
+    /// THIS WILL BE DEPRECATED IN THE FUTURE
     std::pair<float, float> smearingCorrection(
         const std::vector<float>& yLogHatInWindow,
         const std::vector<float>& yLogInWindow,
@@ -1404,7 +1406,7 @@ float updateB0Scaling(
         const float mse,
         const size_t scale)
     {
-        double Jacobian_height[4]{1, 0, 0, 0};         // Jacobian matrix for the height
+        float Jacobian_height[4]{1, 0, 0, 0};         // Jacobian matrix for the height
         Jacobian_height[1] = mutateReg->apex_position; // apex_position * height;
         if (mutateReg->apex_position < 0)
         {
@@ -1431,7 +1433,7 @@ float updateB0Scaling(
         const float apexToEdge)
     {
         // check if the peak height is significantly greater than edge signal
-        double Jacobian_height2[4]{0, 0, 0, 0};
+        float Jacobian_height2[4]{0, 0, 0, 0};
 
         if (apex_position < 0)
         {
@@ -1462,38 +1464,38 @@ float updateB0Scaling(
 
     void calcPeakAreaUncert(RegressionGauss *mutateReg, const float mse, const size_t scale)
     {
-        double b1 = mutateReg->coeffs.b1;
-        double b2 = mutateReg->coeffs.b2;
-        double b3 = mutateReg->coeffs.b3;
-        double _SQRTB2 = 1 / std::sqrt(std::abs(b2));
-        double _SQRTB3 = 1 / std::sqrt(std::abs(b3));
-        double B1_2_SQRTB2 = b1 / 2 * _SQRTB2;
-        double B1_2_SQRTB3 = b1 / 2 * _SQRTB3;
-        double B1_2_B2 = b1 / 2 / b2;
-        double B1_2_B3 = b1 / 2 / b3;
+        const float b1 = mutateReg->coeffs.b1;
+        const float b2 = mutateReg->coeffs.b2;
+        const float b3 = mutateReg->coeffs.b3;
+        const float _SQRTB2 = 1 / std::sqrt(std::abs(b2));
+        const float _SQRTB3 = 1 / std::sqrt(std::abs(b3));
+        const float B1_2_SQRTB2 = b1 / 2 * _SQRTB2;
+        const float B1_2_SQRTB3 = b1 / 2 * _SQRTB3;
+        const float B1_2_B2 = b1 / 2 / b2;
+        const float B1_2_B3 = b1 / 2 / b3;
 
-        double J[4]; // Jacobian matrix
+        float J[4]; // Jacobian matrix
 
         // here we have to check if there is a valley point or not // @todo this can be simplified
-        double err_L =
+        float err_L =
             (b2 < 0)
-                ? experfc(B1_2_SQRTB2, -1.0) // 1 - std::erf(b1 / 2 / SQRTB2) // ordinary peak
+                ? experfc(B1_2_SQRTB2) // 1 - std::erf(b1 / 2 / SQRTB2) // ordinary peak
                 : dawson5(B1_2_SQRTB2);      // erfi(b1 / 2 / SQRTB2);        // peak with valley point;
 
-        double err_R =
+        float err_R =
             (b3 < 0)
-                ? experfc(B1_2_SQRTB3, 1.0) // 1 + std::erf(b1 / 2 / SQRTB3) // ordinary peak
+                ? experfc(B1_2_SQRTB3) // 1 + std::erf(b1 / 2 / SQRTB3) // ordinary peak
                 : dawson5(-B1_2_SQRTB3);    // -erfi(b1 / 2 / SQRTB3);       // peak with valley point ;
 
         // calculate the Jacobian matrix terms
-        double J_1_common_L = _SQRTB2; // SQRTPI_2 * EXP_B12 / SQRTB2;
-        double J_1_common_R = _SQRTB3; // SQRTPI_2 * EXP_B13 / SQRTB3;
-        double J_2_common_L = B1_2_B2 / b1;
-        double J_2_common_R = B1_2_B3 / b1;
-        double J_1_L = J_1_common_L * err_L;
-        double J_1_R = J_1_common_R * err_R;
-        double J_2_L = J_2_common_L - J_1_L * B1_2_B2;
-        double J_2_R = -J_2_common_R - J_1_R * B1_2_B3;
+        float J_1_common_L = _SQRTB2; // SQRTPI_2 * EXP_B12 / SQRTB2;
+        float J_1_common_R = _SQRTB3; // SQRTPI_2 * EXP_B13 / SQRTB3;
+        float J_2_common_L = B1_2_B2 / b1;
+        float J_2_common_R = B1_2_B3 / b1;
+        float J_1_L = J_1_common_L * err_L;
+        float J_1_R = J_1_common_R * err_R;
+        float J_2_L = J_2_common_L - J_1_L * B1_2_B2;
+        float J_2_R = -J_2_common_R - J_1_R * B1_2_B3;
 
         J[0] = J_1_R + J_1_L;
         J[1] = J_2_R + J_2_L;
@@ -1513,41 +1515,41 @@ float updateB0Scaling(
         const size_t scale,
         const size_t df_sum)
     {
-        double doubleScale = scale;
-        double b1 = coeff.b1;
-        double b2 = coeff.b2;
-        double b3 = coeff.b3;
+        float doubleScale = scale;
+        float b1 = coeff.b1;
+        float b2 = coeff.b2;
+        float b3 = coeff.b3;
         // assert(!(b2 > 0 && b3 > 0)); // there would be two valley points, so no maximum of the peak
         assert(doubleScale > 0);
 
-        double _SQRTB2 = 1 / std::sqrt(std::abs(b2));
-        double _SQRTB3 = 1 / std::sqrt(std::abs(b3));
-        double B1_2_B2 = b1 / 2 / b2;
-        double EXP_B12 = exp_approx_d(-b1 * B1_2_B2 / 2);
-        double B1_2_B3 = b1 / 2 / b3;
-        double EXP_B13 = exp_approx_d(-b1 * B1_2_B3 / 2);
+        float _SQRTB2 = 1 / std::sqrt(std::abs(b2));
+        float _SQRTB3 = 1 / std::sqrt(std::abs(b3));
+        float B1_2_B2 = b1 / 2 / b2;
+        float EXP_B12 = exp_approx_d(-b1 * B1_2_B2 / 2);
+        float B1_2_B3 = b1 / 2 / b3;
+        float EXP_B13 = exp_approx_d(-b1 * B1_2_B3 / 2);
 
         // calculate the Jacobian matrix terms
-        double J_1_common_L = _SQRTB2; // SQRTPI_2 * EXP_B12 / SQRTB2;
-        double J_1_common_R = _SQRTB3; // SQRTPI_2 * EXP_B13 / SQRTB3;
-        double J_2_common_L = B1_2_B2 / b1;
-        double J_2_common_R = B1_2_B3 / b1;
+        float J_1_common_L = _SQRTB2; // SQRTPI_2 * EXP_B12 / SQRTB2;
+        float J_1_common_R = _SQRTB3; // SQRTPI_2 * EXP_B13 / SQRTB3;
+        float J_2_common_L = B1_2_B2 / b1;
+        float J_2_common_R = B1_2_B3 / b1;
 
-        double J_covered[4];          // Jacobian matrix for the covered peak area
-        double x_left = -doubleScale; // left limit due to the window
-        double x_right = doubleScale; // right limit due to the window
-        double y_left = 0;            // y value at the left limit
-        double y_right = 0;           // y value at the right limit
+        float J_covered[4];          // Jacobian matrix for the covered peak area
+        float x_left = -doubleScale; // left limit due to the window
+        float x_right = doubleScale; // right limit due to the window
+        float y_left = 0;            // y value at the left limit
+        float y_right = 0;           // y value at the right limit
 
         // here we have to check if there is a valley point or not
-        double err_L = 0;
-        double B1_2_SQRTB2 = b1 / 2 * _SQRTB2;
-        double err_L_covered = 0;
+        float err_L = 0;
+        float B1_2_SQRTB2 = b1 / 2 * _SQRTB2;
+        float err_L_covered = 0;
         if (b2 < 0)
         {
             // no valley point
             // error = 1 - std::erf(b1 / 2 / SQRTB2)
-            err_L = experfc(B1_2_SQRTB2, -1.0);
+            err_L = experfc(B1_2_SQRTB2);
             // ordinary peak half, take always scale as integration limit; we use erf instead of erfi due to the sqrt of absoulte value
             // std::erf((b1 - 2 * b2 * scale) / 2 / SQRTB2) + err_L - 1
             err_L_covered = erf_approx_f((b1 - 2 * b2 * doubleScale) / 2 * _SQRTB2) * EXP_B12 * SQRTPI_2 + err_L - SQRTPI_2 * EXP_B12;
@@ -1570,14 +1572,14 @@ float updateB0Scaling(
                 x_left = -B1_2_B2;
             }
         }
-        double err_R = 0;
-        double B1_2_SQRTB3 = b1 / 2 * _SQRTB3;
-        double err_R_covered = 0;
+        float err_R = 0;
+        float B1_2_SQRTB3 = b1 / 2 * _SQRTB3;
+        float err_R_covered = 0;
         if (b3 < 0)
         {
             // no valley point
             // error = 1 + std::erf(b1 / 2 / SQRTB3)
-            err_R = experfc(B1_2_SQRTB3, 1.0);
+            err_R = experfc(B1_2_SQRTB3);
             // ordinary peak half, take always scale as integration limit; we use erf instead of erfi due to the sqrt of absoulte value
             // err_R - 1 - std::erf((b1 + 2 * b3 * scale) / 2 / SQRTB3)
             err_R_covered = err_R - SQRTPI_2 * EXP_B13 - erf_approx_f((b1 + 2 * b3 * doubleScale) / 2 * _SQRTB3) * SQRTPI_2 * EXP_B13;
@@ -1603,18 +1605,18 @@ float updateB0Scaling(
         // calculate the y values at the left and right limits
         y_left = exp_approx_d(b1 * x_left + b2 * x_left * x_left);
         y_right = exp_approx_d(b1 * x_right + b3 * x_right * x_right);
-        const double dX = x_right - x_left;
+        const float dX = x_right - x_left;
 
         // calculate the trapzoid correction terms for the jacobian matrix
-        const double trpzd_b0 = (y_right + y_left) * dX / 2;
-        const double trpzd_b1 = (x_right * y_right + x_left * y_left) * dX / 2;
-        const double trpzd_b2 = (x_left * x_left * y_left) * dX / 2;
-        const double trpzd_b3 = (x_right * x_right * y_right) * dX / 2;
+        const float trpzd_b0 = (y_right + y_left) * dX / 2;
+        const float trpzd_b1 = (x_right * y_right + x_left * y_left) * dX / 2;
+        const float trpzd_b2 = (x_left * x_left * y_left) * dX / 2;
+        const float trpzd_b3 = (x_right * x_right * y_right) * dX / 2;
 
-        const double J_1_L_covered = J_1_common_L * err_L_covered;
-        const double J_1_R_covered = J_1_common_R * err_R_covered;
-        const double J_2_L_covered = J_2_common_L - J_1_L_covered * B1_2_B2;
-        const double J_2_R_covered = -J_2_common_R - J_1_R_covered * B1_2_B3;
+        const float J_1_L_covered = J_1_common_L * err_L_covered;
+        const float J_1_R_covered = J_1_common_R * err_R_covered;
+        const float J_2_L_covered = J_2_common_L - J_1_L_covered * B1_2_B2;
+        const float J_2_R_covered = -J_2_common_R - J_1_R_covered * B1_2_B3;
 
         J_covered[0] = J_1_R_covered + J_1_L_covered - trpzd_b0;
         J_covered[1] = J_2_R_covered + J_2_L_covered - trpzd_b1;
@@ -1634,10 +1636,10 @@ float updateB0Scaling(
         const float apex_position,
         const size_t scale)
     {
-        double _b1 = 1 / coeff.b1;
-        double _b2 = 1 / coeff.b2;
-        double _b3 = 1 / coeff.b3;
-        double J[4]; // Jacobian matrix
+        float _b1 = 1 / coeff.b1;
+        float _b2 = 1 / coeff.b2;
+        float _b3 = 1 / coeff.b3;
+        float J[4]; // Jacobian matrix
         J[0] = 0.f;
         J[1] = apex_position * _b1;
         if (apex_position < 0)
@@ -1656,12 +1658,12 @@ float updateB0Scaling(
 
 #pragma region "convolve regression"
 
-    inline double multiplyVecMatrixVecTranspose(const double vec[4], size_t scale)
+    inline float multiplyVecMatrixVecTranspose(const float vec[4], size_t scale)
     {
         scale *= 6;
-        double result = vec[0] * vec[0] * INV_ARRAY[scale + 0] +
-                        vec[1] * vec[1] * INV_ARRAY[scale + 2] +
-                        (vec[2] * vec[2] + vec[3] * vec[3]) * INV_ARRAY[scale + 4] +
+        float result = vec[0] * vec[0] * INV_ARRAY[scale + 0] +
+                       vec[1] * vec[1] * INV_ARRAY[scale + 2] +
+                       (vec[2] * vec[2] + vec[3] * vec[3]) * INV_ARRAY[scale + 4] +
                         2 * (vec[2] * vec[3] * INV_ARRAY[scale + 5] +
                              vec[0] * (vec[1] + vec[3]) * INV_ARRAY[scale + 1] +
                              vec[1] * (vec[2] - vec[3]) * INV_ARRAY[scale + 3]);
