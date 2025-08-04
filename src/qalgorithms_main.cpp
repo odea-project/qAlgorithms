@@ -245,6 +245,7 @@ int main(int argc, char *argv[])
                 }
             }
 
+            assert(!centroids->empty());
             size_t centroidCount = centroids->size() - 1; // added noise value
 
             // find lowest intensity among all centroids to use as baseline during componentisation
