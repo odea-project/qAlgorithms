@@ -16,6 +16,7 @@ namespace qAlgorithms
      * @return double
      */
     double exp_approx_d(const double x);
+    float exp_approx_f(const float x);
 
     /**
      * @brief Fast approximation of the error function erf(x) using Abramowitz and Stegun approach.

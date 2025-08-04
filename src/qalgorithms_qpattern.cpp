@@ -655,9 +655,11 @@ namespace qAlgorithms
 
         std::vector<float> selectLog; // both vetors are used to transfer relevant values to the F test later
         std::vector<float> predictLog;
+        std::vector<float> selectI;
         selectLog.reserve(mutateReg->right_limit - mutateReg->left_limit + 1);
         predictLog.reserve(mutateReg->right_limit - mutateReg->left_limit + 1);
-        float mse = calcSSE_base(mutateReg->coeffs, intensities_log, selectLog, predictLog,
+        selectI.reserve(mutateReg->right_limit - mutateReg->left_limit + 1);
+        float mse = calcSSE_base(mutateReg->coeffs, intensities, intensities_log, selectLog, selectI, predictLog,
                                  mutateReg->left_limit, mutateReg->right_limit, idx_x0);
 
         /*

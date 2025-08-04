@@ -437,10 +437,12 @@ namespace qAlgorithms
         int currentScale = 2;
         size_t idxStart = 0;
 
-        std::vector<float> yLogInWindow; // both vetors are used to transfer relevant values to the F test later
-        std::vector<float> yLogHatInWindow;
-        yLogInWindow.reserve(MAXSCALE * 2 + 1); // log(y) observed in the regression window
-        yLogHatInWindow.reserve(MAXSCALE * 2 + 1); //log(y) predicted in the regression window
+        std::vector<float> yLogInWindow;        // log(y) observed in the regression window
+        std::vector<float> yInWindow;           // y observed in the regression window
+        std::vector<float> yLogHatInWindow;     // log(y) predicted in the regression window
+        yLogInWindow.reserve(MAXSCALE * 2 + 1);
+        yInWindow.reserve(MAXSCALE * 2 + 1);
+        yLogHatInWindow.reserve(MAXSCALE * 2 + 1);  
 
         for (size_t range = 0; range < coeffs->size(); range++)
         {   
@@ -461,11 +463,12 @@ namespace qAlgorithms
                 validRegsTmp.back().coeffs = coeff;
                 // the total span of the regression may not exceed the number of points
                 assert(idxStart + 2 * currentScale < numPoints);
+                yInWindow.clear();
                 yLogInWindow.clear();
                 yLogHatInWindow.clear();
                 makeValidRegression(&validRegsTmp.back(), idxStart, currentScale,
                                      degreesOfFreedom_cum, intensities, intensities_log,
-                                     yLogInWindow, yLogHatInWindow);
+                                     yLogInWindow, yInWindow, yLogHatInWindow);
                 if (validRegsTmp.back().isValid)
                 {
                     validRegsTmp.push_back(RegressionGauss{});
@@ -506,6 +509,7 @@ namespace qAlgorithms
         const std::vector<float> *intensities,
         const std::vector<float> *intensities_log,
         std::vector<float>& yLogInWindow,
+        std::vector<float>& yInWindow,
         std::vector<float>& yLogHatInWindow)
     {
         assert(scale > 1);
@@ -619,10 +623,9 @@ namespace qAlgorithms
           term is considered statistically insignificant, and the loop continues
           to the next iteration.
         */
-        
-        float mse = calcSSE_base(mutateReg->coeffs, intensities_log, yLogInWindow, yLogHatInWindow,
-                                 mutateReg->left_limit, mutateReg->right_limit, idx_x0);
 
+        float mse = calcSSE_base(mutateReg->coeffs, intensities, intensities_log, yLogInWindow, yInWindow, yLogHatInWindow,
+                                 mutateReg->left_limit, mutateReg->right_limit, idx_x0);
         /*
         competing regressions filter:
         If the real distribution of points could also be described as a continuum (i.e. only b0 is relevant),
@@ -703,8 +706,8 @@ namespace qAlgorithms
           The new cofficient is then b0* = b0 + logC, where C is the correction factor.
           first: logC; second: variance of logC
         */
-        std::pair<float, float> smearing = smearingCorrection(yLogHatInWindow, yLogInWindow, scale);
-        mutateReg->coeffs.b0 += smearing.first; // b0* = b0 + logC
+        // std::pair<float, float> smearing = smearingCorrection(yLogHatInWindow, yLogInWindow, scale);
+        mutateReg->coeffs.b0 = updateB0Scaling(yLogHatInWindow, yInWindow, mutateReg->coeffs.b0);
         // @todo: implement smearing.second for the uncertainty of b0
 
         mutateReg->uncertainty_pos = calcUncertaintyPos(mse, mutateReg->coeffs, mutateReg->apex_position, scale);
@@ -1012,7 +1015,9 @@ namespace qAlgorithms
 
     float calcSSE_base(const RegCoeffs coeff,
                        const std::vector<float> *y_start,
+                       const std::vector<float> *yLog_start,
                        std::vector<float>& yLogInWindow,
+                       std::vector<float>& yInWindow,
                        std::vector<float>& yLogHatInWindow,
                        size_t limit_L,
                        size_t limit_R,
@@ -1026,19 +1031,23 @@ namespace qAlgorithms
         for (size_t i = 0; i < n_left; ++i, ++x)
         {   
             float yhat = coeff.b0 + x * (coeff.b1 + coeff.b2 * x);
-            float y = (*y_start)[limit_L + i];
-            yLogInWindow.push_back(y);
+            float yLog = (*yLog_start)[limit_L + i];
+            float y  = (*y_start)[limit_L + i];
+            yLogInWindow.push_back(yLog);
+            yInWindow.push_back(y);
             yLogHatInWindow.push_back(yhat);
-            float diff = y - yhat;
+            float diff = yLog - yhat;
             result += diff * diff;
         }
         // Center point (x == 0)
         {
             float yhat = coeff.b0;
+            float yLog = (*yLog_start)[index_x0];
             float y = (*y_start)[index_x0];
-            yLogInWindow.push_back(y);
+            yLogInWindow.push_back(yLog);
+            yInWindow.push_back(y);
             yLogHatInWindow.push_back(yhat);
-            float diff = y - yhat;
+            float diff = yLog - yhat;
             result += diff * diff;
             x += 1; // x was 0 for center, now increment to start right side
         }
@@ -1046,10 +1055,12 @@ namespace qAlgorithms
         for (size_t i = n_left + 1; i < n; ++i, ++x)
         {
             float yhat = coeff.b0 + x * (coeff.b1 + coeff.b3 * x);
+            float yLog = (*yLog_start)[limit_L + i];
             float y = (*y_start)[limit_L + i];
-            yLogInWindow.push_back(y);
+            yLogInWindow.push_back(yLog);
+            yInWindow.push_back(y);
             yLogHatInWindow.push_back(yhat);
-            float diff = y - yhat;
+            float diff = yLog - yhat;
             result += diff * diff;
         }
 
@@ -1178,6 +1189,41 @@ namespace qAlgorithms
         return {float(std::log(C)), float(varLogC)};
     }
 #pragma endregion "smearing correction"
+
+#pragma region "b0 correction"
+
+/// @brief Updates the intercept (b0) for log-linear regression models after back-transformation,
+///        by calculating the optimal scaling correction. Returns the new b0 (to be used in exp(new_b0 + ...)).
+///        This replaces the old b0 in your model for unbiased prediction after exp-transformation.
+/// @param yLogHatInWindow Vector of predicted log(y) (including b0!).
+/// @param yInWindow       Vector of original (not log-transformed) y values.
+/// @param b0              The old intercept (from log regression).
+/// @return                The updated b0 (corrected).
+float updateB0Scaling(
+    const std::vector<float>& yLogHatInWindow,
+    const std::vector<float>& yInWindow,
+    const float b0)
+{
+    assert(yLogHatInWindow.size() == yInWindow.size());
+    size_t n = yInWindow.size();
+
+    float sum_y_yhat = 0.0f;
+    float sum_yhat2 = 0.0f;
+
+    // Use yLogHat[i] - b0 to get the prediction without intercept
+    for (size_t i = 0; i < n; ++i)
+    {
+        float yhat_wo_b0 = exp_approx_f(yLogHatInWindow[i] - b0);
+        sum_y_yhat += yInWindow[i] * yhat_wo_b0;
+        sum_yhat2  += yhat_wo_b0 * yhat_wo_b0;
+    }
+
+    return std::log(sum_y_yhat / sum_yhat2);
+}
+
+
+
+#pragma endregion "b0 correction"
 
     RegPair findBestRegression(
         const std::vector<float> *intensities,

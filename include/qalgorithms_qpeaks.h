@@ -50,6 +50,7 @@ namespace qAlgorithms
         const std::vector<float> *intensities,
         const std::vector<float> *intensities_log,
         std::vector<float>& yLogInWindow,
+        std::vector<float>& yInWindow,
         std::vector<float>& yLogHatInWindow);
 
     std::vector<RegressionGauss> mergeRegressionsOverScales(
@@ -70,7 +71,9 @@ namespace qAlgorithms
 
     float calcSSE_base(const RegCoeffs coeff,
                        const std::vector<float> *y_start,
+                       const std::vector<float> *yLog_start,
                        std::vector<float>& yLogInWindow,
+                       std::vector<float>& yInWindow,
                        std::vector<float>& yLogHatInWindow,
                        size_t limit_L,
                        size_t limit_R,
@@ -96,6 +99,11 @@ namespace qAlgorithms
         const std::vector<float>& yLogHatInWindow,
         const std::vector<float>& yLogInWindow,
         const size_t scale);
+    
+    float updateB0Scaling(
+        const std::vector<float>& yLogHatInWindow,
+        const std::vector<float>& yInWindow,
+        const float b0);
 
     /**
      * @brief Calculate the best mean squared error of the regression model

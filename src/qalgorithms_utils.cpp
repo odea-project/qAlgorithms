@@ -18,6 +18,21 @@ namespace qAlgorithms
         return v.d;
     }
 
+    float exp_approx_f(const float x)
+    {
+        // Entsprechende Konstanten für float
+        constexpr float LOG2E  = 1.4426950408889634f;
+        constexpr float OFFSET = 126.94269504f; // Siehe Erklärung unten
+        constexpr uint32_t EXP_OFFSET = 1UL << 23; // 23 Bit Mantisse bei float
+
+        union
+        {
+            uint32_t i;
+            float f;
+        } v = { (uint32_t)((x * LOG2E + OFFSET) * EXP_OFFSET) };
+        return v.f;
+    }
+
     float erf_approx_f(const float x)
     {
         float sign = x < 0 ? -1.0f : 1.0f; // get sign as the approximation is only valid for positive x
