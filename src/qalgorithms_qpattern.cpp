@@ -657,7 +657,7 @@ namespace qAlgorithms
         std::vector<float> predictLog;
         selectLog.reserve(mutateReg->right_limit - mutateReg->left_limit + 1);
         predictLog.reserve(mutateReg->right_limit - mutateReg->left_limit + 1);
-        float mse = calcSSE_base(mutateReg->coeffs, intensities_log, &selectLog, &predictLog,
+        float mse = calcSSE_base(mutateReg->coeffs, intensities_log, selectLog, predictLog,
                                  mutateReg->left_limit, mutateReg->right_limit, idx_x0);
 
         /*
@@ -666,7 +666,7 @@ namespace qAlgorithms
         the regression does not describe a peak. This is done through a nested F-test against a constant that
         is the mean of all predicted values. @todo this is not working correctly!
         */
-        float regression_Fval = calcRegressionFvalue(mutateReg->coeffs, &predictLog, mse, mutateReg->coeffs.b0);
+        float regression_Fval = calcRegressionFvalue(mutateReg->coeffs, predictLog, mse, mutateReg->coeffs.b0);
         if (regression_Fval < F_VALUES[selectLog.size()]) // - 5 since the minimum is five degrees of freedom
         {
             // H0 holds, the two distributions are not noticeably different

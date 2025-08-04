@@ -49,8 +49,8 @@ namespace qAlgorithms
         const std::vector<unsigned int> *degreesOfFreedom_cum,
         const std::vector<float> *intensities,
         const std::vector<float> *intensities_log,
-        std::vector<float> *yLogInWindow,
-        std::vector<float> *yLogHatInWindow);
+        std::vector<float>& yLogInWindow,
+        std::vector<float>& yLogHatInWindow);
 
     std::vector<RegressionGauss> mergeRegressionsOverScales(
         std::vector<RegressionGauss> validRegressions,
@@ -70,14 +70,14 @@ namespace qAlgorithms
 
     float calcSSE_base(const RegCoeffs coeff,
                        const std::vector<float> *y_start,
-                       std::vector<float> *yLogInWindow,
-                       std::vector<float> *yLogHatInWindow,
+                       std::vector<float>& yLogInWindow,
+                       std::vector<float>& yLogHatInWindow,
                        size_t limit_L,
                        size_t limit_R,
                        size_t index_x0);
 
     float calcRegressionFvalue(const RegCoeffs coeff,
-                               const std::vector<float> *yLogInWindow,
+                               const std::vector<float>& yLogInWindow,
                                const float mse,
                                const float b0);
 
@@ -93,8 +93,8 @@ namespace qAlgorithms
                             size_t index_x0);
 
     std::pair<float, float> smearingCorrection(
-        const std::vector<float> *yLogHatInWindow,
-        const std::vector<float> *yLogInWindow,
+        const std::vector<float>& yLogHatInWindow,
+        const std::vector<float>& yLogInWindow,
         const size_t scale);
 
     /**

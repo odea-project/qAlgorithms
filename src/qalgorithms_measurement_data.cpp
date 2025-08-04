@@ -494,12 +494,6 @@ namespace qAlgorithms
         }
 
         std::vector<double> retention_times = data.get_spectra_RT(&selectedIndices);
-        // for (size_t i = 0; i < retention_times.size() - 1; i++)
-        // {
-        //     std::cout << retention_times[i] << ",";
-        // }
-        // std::cout << retention_times.back();
-        // exit(1);
 
         selectedIndices.shrink_to_fit();
         const size_t countSelected = selectedIndices.size();

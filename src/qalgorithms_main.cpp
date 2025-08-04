@@ -197,7 +197,7 @@ int main(int argc, char *argv[])
         }
         if (!userArgs.silent)
         {
-            std::cout << " file in profile mode, ok\n";
+            std::cout << " file in profile mode, ok (num spectra: " << data.number_spectra << ")\n";
         }
 
         // enum polarity
@@ -307,8 +307,6 @@ int main(int argc, char *argv[])
                 std::cout << "    produced " << centroidCount - 1 << " centroids from " << totalScans
                           << " spectra in " << timePassed.count() << " s\n";
             }
-            exit(0);
-
 #pragma region "binning"
             timeStart = std::chrono::high_resolution_clock::now();
 
