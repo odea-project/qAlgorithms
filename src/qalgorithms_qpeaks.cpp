@@ -729,7 +729,10 @@ namespace qAlgorithms
           - The difference between two peak apexes is less than 4. (Nyquist Shannon Sampling Theorem, separation of two maxima)
           - At least one apex of a pair of peaks is within the window of the other peak. (Overlap of two maxima)
         */
-
+        constexpr size_t MAX_REGS = 512;
+        float exponentialMSE[MAX_REGS] = {0.0f}; // vector of mean squared errors for the regressions
+        float validRegressionsInGroup[MAX_REGS];
+        assert(validRegressions.size() < MAX_REGS);
         // iterate over the validRegressions vector
         for (size_t i = 0; i < validRegressions.size(); i++)
         {
@@ -739,10 +742,8 @@ namespace qAlgorithms
             double MSE_group = 0;
             int DF_group = 0;
             // only calculate required MSEs since this is one of the performance-critical steps
-            std::vector<float> exponentialMSE(validRegressions.size(), 0);
-            std::vector<size_t> validRegressionsInGroup; // vector of indices to validRegressions
             size_t competitors = 0;                      // this variable keeps track of how many competitors a given regression has
-
+            size_t u = 0; // iterator for the validRegressionsInGroup vector
             // iterate over the validRegressions vector till the new peak
             // first iteration always false
             for (size_t j = 0; j < i; j++)
@@ -770,13 +771,13 @@ namespace qAlgorithms
                         DF_group += validRegressions[j].df;                      // add the degree of freedom
                         MSE_group += exponentialMSE[j] * validRegressions[j].df; // add the sum of squared errors
                         // add the iterator of the ref peak to a vector of iterators
-                        validRegressionsInGroup.push_back(j);
+                        validRegressionsInGroup[u++] = j;
                         competitors += validRegressions[j].numCompetitors + 1; // a regression can have beaten a previous one
                     }
                 }
             } // after this loop, validRegressionsInGroup contains all regressions that are still valid and contend with the regression at position i
 
-            if (validRegressionsInGroup.empty()) // no competing regressions exist
+            if (u == 0) // no competing regressions exist
             {
                 assert(DF_group < 1);
                 continue;
@@ -797,8 +798,9 @@ namespace qAlgorithms
             if (exponentialMSE[i] < MSE_group)
             {
                 // Set isValid to false for the candidates from the group
-                for (size_t it_ref_peak : validRegressionsInGroup)
+                for (size_t k = 0; k < u; ++k) 
                 {
+                    size_t it_ref_peak = static_cast<size_t>(validRegressionsInGroup[k]);
                     validRegressions[it_ref_peak].isValid = false;
                 }
                 // only advance competitor count if regression is actually better
