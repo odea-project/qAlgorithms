@@ -49,9 +49,9 @@ namespace qAlgorithms
         const std::vector<unsigned int> *degreesOfFreedom_cum,
         const std::vector<float> *intensities,
         const std::vector<float> *intensities_log,
-        std::vector<float>& yLogInWindow,
-        std::vector<float>& yInWindow,
-        std::vector<float>& yLogHatInWindow);
+        float *yLogInWindow,
+        float *yInWindow,
+        float *yLogHatInWindow);
 
     std::vector<RegressionGauss> mergeRegressionsOverScales(
         std::vector<RegressionGauss> validRegressions,
@@ -72,17 +72,18 @@ namespace qAlgorithms
     float calcSSE_base(const RegCoeffs coeff,
                        const std::vector<float> *y_start,
                        const std::vector<float> *yLog_start,
-                       std::vector<float>& yLogInWindow,
-                       std::vector<float>& yInWindow,
-                       std::vector<float>& yLogHatInWindow,
+                       float *yLogInWindow,
+                       float *yInWindow,
+                       float *yLogHatInWindow,
                        size_t limit_L,
                        size_t limit_R,
                        size_t index_x0);
 
     float calcRegressionFvalue(const RegCoeffs coeff,
-                               const std::vector<float>& yLogInWindow,
+                               const float *yLogInWindow,
                                const float mse,
-                               const float b0);
+                               const float b0,
+                               const size_t winLen);
 
     float calcSSE_exp(const RegCoeffs coeff,
                       const std::vector<float> *y_start,
@@ -101,9 +102,10 @@ namespace qAlgorithms
         const size_t scale);
     
     float updateB0Scaling(
-        const std::vector<float>& yLogHatInWindow,
-        const std::vector<float>& yInWindow,
-        const float b0);
+        const float *yLogHatInWindow,
+        const float  *yInWindow,
+        const float b0,
+        const size_t winLen);
 
     /**
      * @brief Calculate the best mean squared error of the regression model

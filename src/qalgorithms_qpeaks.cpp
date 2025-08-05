@@ -47,10 +47,10 @@ namespace qAlgorithms
             const size_t length = block.mz.size();
             assert(length > 4);
 
-            logIntensity.resize(length); // this way, no new allocations will be made in the loop
+            logIntensity.clear();
             for (size_t blockPos = 0; blockPos < length; blockPos++)
             {
-                logIntensity[blockPos] = std::log(block.intensity[blockPos]);
+                logIntensity.push_back(std::log(block.intensity[blockPos]));
             }
             // @todo adjust the scale dynamically based on the number of valid regressions found, early terminate after x iterations
             const size_t maxScale = std::min(GLOBAL_MAXSCALE_CENTROID, size_t((length - 1) / 2)); // length - 1 because the center point is not part of the span
@@ -438,12 +438,10 @@ namespace qAlgorithms
         int currentScale = 2;
         size_t idxStart = 0;
 
-        std::vector<float> yLogInWindow;        // log(y) observed in the regression window
-        std::vector<float> yInWindow;           // y observed in the regression window
-        std::vector<float> yLogHatInWindow;     // log(y) predicted in the regression window
-        yLogInWindow.reserve(MAXSCALE * 2 + 1);
-        yInWindow.reserve(MAXSCALE * 2 + 1);
-        yLogHatInWindow.reserve(MAXSCALE * 2 + 1);  
+        constexpr size_t maxWindow = MAXSCALE * 2 + 1;
+        float yLogInWindow[maxWindow]; // log(y) observed in the regression window
+        float yInWindow[maxWindow];    // y observed in the regression window
+        float yLogHatInWindow[maxWindow]; // log(y) predicted in the regression window
 
         for (size_t range = 0; range < coeffs->size(); range++)
         {   
@@ -464,9 +462,6 @@ namespace qAlgorithms
                 validRegsTmp.back().coeffs = coeff;
                 // the total span of the regression may not exceed the number of points
                 assert(idxStart + 2 * currentScale < numPoints);
-                yInWindow.clear();
-                yLogInWindow.clear();
-                yLogHatInWindow.clear();
                 makeValidRegression(&validRegsTmp.back(), idxStart, currentScale,
                                      degreesOfFreedom_cum, intensities, intensities_log,
                                      yLogInWindow, yInWindow, yLogHatInWindow);
@@ -509,9 +504,9 @@ namespace qAlgorithms
         const std::vector<unsigned int> *degreesOfFreedom_cum,
         const std::vector<float> *intensities,
         const std::vector<float> *intensities_log,
-        std::vector<float>& yLogInWindow,
-        std::vector<float>& yInWindow,
-        std::vector<float>& yLogHatInWindow)
+        float *yLogInWindow,
+        float *yInWindow,
+        float *yLogHatInWindow)
     {
         assert(scale > 1);
         assert(idxStart + 4 < degreesOfFreedom_cum->size());
@@ -519,6 +514,7 @@ namespace qAlgorithms
         assert(mutateReg->coeffs.b1 < 100 && mutateReg->coeffs.b1 > -100);
         assert(mutateReg->coeffs.b2 < 100 && mutateReg->coeffs.b2 > -100);
         assert(mutateReg->coeffs.b3 < 100 && mutateReg->coeffs.b3 > -100);
+        const size_t winLen = 2 * scale + 1; // length of the regression window, i.e., 2*scale+1
         /*
           Apex and Valley Position Filter:
           This block of code implements the apex and valley position filter.
@@ -633,8 +629,8 @@ namespace qAlgorithms
         the regression does not describe a peak. This is done through a nested F-test against a constant that
         is the mean of all predicted values. @todo this is not working correctly!
         */
-        float regression_Fval = calcRegressionFvalue(mutateReg->coeffs, yLogHatInWindow, mse, mutateReg->coeffs.b0);
-        if (regression_Fval < F_VALUES[yLogInWindow.size()]) // - 5 since the minimum is five degrees of freedom
+        float regression_Fval = calcRegressionFvalue(mutateReg->coeffs, yLogHatInWindow, mse, mutateReg->coeffs.b0, winLen);
+        if (regression_Fval < F_VALUES[winLen - 5]) // - 5 since df2 = winLen - 4 and we start at index 0 with df2 = 1
         {
             // H0 holds, the two distributions are not noticeably different
             return;
@@ -708,7 +704,7 @@ namespace qAlgorithms
           first: logC; second: variance of logC
         */
         // std::pair<float, float> smearing = smearingCorrection(yLogHatInWindow, yLogInWindow, scale);
-        mutateReg->coeffs.b0 = updateB0Scaling(yLogHatInWindow, yInWindow, mutateReg->coeffs.b0);
+        mutateReg->coeffs.b0 = updateB0Scaling(yLogHatInWindow, yInWindow, mutateReg->coeffs.b0, winLen);
         // @todo: implement smearing.second for the uncertainty of b0
 
         mutateReg->uncertainty_pos = calcUncertaintyPos(mse, mutateReg->coeffs, mutateReg->apex_position, scale);
@@ -1017,9 +1013,9 @@ namespace qAlgorithms
     float calcSSE_base(const RegCoeffs coeff,
                        const std::vector<float> *y_start,
                        const std::vector<float> *yLog_start,
-                       std::vector<float>& yLogInWindow,
-                       std::vector<float>& yInWindow,
-                       std::vector<float>& yLogHatInWindow,
+                       float *yLogInWindow,
+                       float *yInWindow,
+                       float *yLogHatInWindow,
                        size_t limit_L,
                        size_t limit_R,
                        size_t index_x0)
@@ -1034,9 +1030,9 @@ namespace qAlgorithms
             float yhat = coeff.b0 + x * (coeff.b1 + coeff.b2 * x);
             float yLog = (*yLog_start)[limit_L + i];
             float y  = (*y_start)[limit_L + i];
-            yLogInWindow.push_back(yLog);
-            yInWindow.push_back(y);
-            yLogHatInWindow.push_back(yhat);
+            yLogInWindow[i] = yLog;
+            yInWindow[i] = y;
+            yLogHatInWindow[i] = yhat;
             float diff = yLog - yhat;
             result += diff * diff;
         }
@@ -1045,9 +1041,9 @@ namespace qAlgorithms
             float yhat = coeff.b0;
             float yLog = (*yLog_start)[index_x0];
             float y = (*y_start)[index_x0];
-            yLogInWindow.push_back(yLog);
-            yInWindow.push_back(y);
-            yLogHatInWindow.push_back(yhat);
+            yLogInWindow[n_left] = yLog;
+            yInWindow[n_left] = y;
+            yLogHatInWindow[n_left] = yhat;
             float diff = yLog - yhat;
             result += diff * diff;
             x += 1; // x was 0 for center, now increment to start right side
@@ -1058,9 +1054,9 @@ namespace qAlgorithms
             float yhat = coeff.b0 + x * (coeff.b1 + coeff.b3 * x);
             float yLog = (*yLog_start)[limit_L + i];
             float y = (*y_start)[limit_L + i];
-            yLogInWindow.push_back(yLog);
-            yInWindow.push_back(y);
-            yLogHatInWindow.push_back(yhat);
+            yLogInWindow[i] = yLog;
+            yInWindow[i] = y;
+            yLogHatInWindow[i] = yhat;
             float diff = yLog - yhat;
             result += diff * diff;
         }
@@ -1068,7 +1064,7 @@ namespace qAlgorithms
         return result;
     }
 
-    float calcRegressionFvalue(const RegCoeffs coeff, const std::vector<float>& yLogHatInWindow, const float sse, const float b0)
+    float calcRegressionFvalue(const RegCoeffs coeff, const float *yLogHatInWindow, const float sse, const float b0, const size_t winLen)
     {
         // note that the mse must not be divided by df - 4 yet when this function is called
 
@@ -1076,16 +1072,15 @@ namespace qAlgorithms
         // influences the result, meaning that the points that qualified for a regression are of a constant intensity.
         // Compare https://link.springer.com/book/10.1007/978-3-662-67526-7 p. 501 ff.
 
-        size_t length = yLogHatInWindow.size();
         assert(sse > 0);
-        float ymean = coeff.Sy / length;
+        float ymean = coeff.Sy / winLen;
         // assert(abs(sum - b0) < sse / length); // misunderstanding
         float explainedVariance = 0.0f;
-        for (size_t i = 0; i < length; i++)
+        for (size_t i = 0; i < winLen; i++)
         {
             explainedVariance += (yLogHatInWindow[i] - ymean) * (yLogHatInWindow[i] - ymean);
         }
-        const float factor = float(length - 4) / 3.0f;
+        const float factor = float(winLen - 4) / 3.0f;
 
         return explainedVariance / sse * factor;
     }
@@ -1202,18 +1197,17 @@ namespace qAlgorithms
 /// @param b0              The old intercept (from log regression).
 /// @return                The updated b0 (corrected).
 float updateB0Scaling(
-    const std::vector<float>& yLogHatInWindow,
-    const std::vector<float>& yInWindow,
-    const float b0)
+    const float *yLogHatInWindow,
+    const float *yInWindow,
+    const float b0,
+    const size_t winLen)
 {
-    assert(yLogHatInWindow.size() == yInWindow.size());
-    size_t n = yInWindow.size();
 
     float sum_y_yhat = 0.0f;
     float sum_yhat2 = 0.0f;
 
     // Use yLogHat[i] - b0 to get the prediction without intercept
-    for (size_t i = 0; i < n; ++i)
+    for (size_t i = 0; i < winLen; ++i)
     {
         float yhat_wo_b0 = exp_approx_f(yLogHatInWindow[i] - b0);
         sum_y_yhat += yInWindow[i] * yhat_wo_b0;

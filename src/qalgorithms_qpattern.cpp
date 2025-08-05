@@ -652,15 +652,15 @@ namespace qAlgorithms
           term is considered statistically insignificant, and the loop continues
           to the next iteration.
         */
-
-        std::vector<float> selectLog; // both vetors are used to transfer relevant values to the F test later
-        std::vector<float> predictLog;
-        std::vector<float> selectI;
-        selectLog.reserve(mutateReg->right_limit - mutateReg->left_limit + 1);
-        predictLog.reserve(mutateReg->right_limit - mutateReg->left_limit + 1);
-        selectI.reserve(mutateReg->right_limit - mutateReg->left_limit + 1);
-        float mse = calcSSE_base(mutateReg->coeffs, intensities, intensities_log, selectLog, selectI, predictLog,
-                                 mutateReg->left_limit, mutateReg->right_limit, idx_x0);
+        // @TODO repair this one: Vectors should be defined as float[n] before the function call
+        // std::vector<float> selectLog; // both vetors are used to transfer relevant values to the F test later
+        // std::vector<float> predictLog;
+        // std::vector<float> selectI;
+        // selectLog.reserve(mutateReg->right_limit - mutateReg->left_limit + 1);
+        // predictLog.reserve(mutateReg->right_limit - mutateReg->left_limit + 1);
+        // selectI.reserve(mutateReg->right_limit - mutateReg->left_limit + 1);
+        // float mse = calcSSE_base(mutateReg->coeffs, intensities, intensities_log, selectLog, selectI, predictLog,
+        //                          mutateReg->left_limit, mutateReg->right_limit, idx_x0);
 
         /*
         competing regressions filter:
@@ -668,23 +668,23 @@ namespace qAlgorithms
         the regression does not describe a peak. This is done through a nested F-test against a constant that
         is the mean of all predicted values. @todo this is not working correctly!
         */
-        float regression_Fval = calcRegressionFvalue(mutateReg->coeffs, predictLog, mse, mutateReg->coeffs.b0);
-        if (regression_Fval < F_VALUES[selectLog.size()]) // - 5 since the minimum is five degrees of freedom
-        {
-            // H0 holds, the two distributions are not noticeably different
-            return;
-        }
+        // float regression_Fval = calcRegressionFvalue(mutateReg->coeffs, predictLog, mse, mutateReg->coeffs.b0);
+        // if (regression_Fval < F_VALUES[selectLog.size()]) // - 5 since the minimum is five degrees of freedom
+        // {
+        //     // H0 holds, the two distributions are not noticeably different
+        //     return;
+        // }
         // mse is only the correct mean square error after this division
-        mse /= (df_sum - 4);
+        // mse /= (df_sum - 4);
 
-        if (!isValidQuadraticTerm(mutateReg->coeffs, scale, mse, df_sum))
-        {
-            return; // statistical insignificance of the quadratic term
-        }
-        if (!isValidPeakArea(mutateReg->coeffs, mse, scale, df_sum))
-        {
-            return; // statistical insignificance of the area
-        }
+        // if (!isValidQuadraticTerm(mutateReg->coeffs, scale, mse, df_sum))
+        // {
+        //     return; // statistical insignificance of the quadratic term
+        // }
+        // if (!isValidPeakArea(mutateReg->coeffs, mse, scale, df_sum))
+        // {
+        //     return; // statistical insignificance of the area
+        // }
         /*
           Height Filter:
           This block of code implements the height filter. It calculates the height
@@ -694,55 +694,55 @@ namespace qAlgorithms
           the loop continues to the next iteration.
         */
 
-        calcPeakHeightUncert(mutateReg, mse, scale);
-        if (1 / mutateReg->uncertainty_height <= T_VALUES[df_sum - 5]) // statistical significance of the peak height
-        {
-            return;
-        }
-        // at this point without height, i.e., to get the real uncertainty
-        // multiply with height later. This is done to avoid exp function at this point
-        if (!isValidPeakHeight(mse, scale, mutateReg->apex_position, valley_position, df_sum, apexToEdge))
-        {
-            return; // statistical insignificance of the height
-        }
+        // calcPeakHeightUncert(mutateReg, mse, scale);
+        // if (1 / mutateReg->uncertainty_height <= T_VALUES[df_sum - 5]) // statistical significance of the peak height
+        // {
+        //     return;
+        // }
+        // // at this point without height, i.e., to get the real uncertainty
+        // // multiply with height later. This is done to avoid exp function at this point
+        // if (!isValidPeakHeight(mse, scale, mutateReg->apex_position, valley_position, df_sum, apexToEdge))
+        // {
+        //     return; // statistical insignificance of the height
+        // }
 
-        /*
-          Area Filter:
-          This block of code implements the area filter. It calculates the Jacobian
-          matrix for the peak area based on the coefficients matrix B. Then it calculates
-          the uncertainty of the peak area based on the Jacobian matrix. If the peak
-          area is statistically insignificant, the loop continues to the next iteration.
-          NOTE: this function does not consider b0: i.e. to get the real uncertainty and
-          area multiply both with Exp(b0) later. This is done to avoid exp function at this point
-        */
-        // it might be preferential to combine both functions again or store the common matrix somewhere
-        calcPeakAreaUncert(mutateReg, mse, scale);
+        // /*
+        //   Area Filter:
+        //   This block of code implements the area filter. It calculates the Jacobian
+        //   matrix for the peak area based on the coefficients matrix B. Then it calculates
+        //   the uncertainty of the peak area based on the Jacobian matrix. If the peak
+        //   area is statistically insignificant, the loop continues to the next iteration.
+        //   NOTE: this function does not consider b0: i.e. to get the real uncertainty and
+        //   area multiply both with Exp(b0) later. This is done to avoid exp function at this point
+        // */
+        // // it might be preferential to combine both functions again or store the common matrix somewhere
+        // calcPeakAreaUncert(mutateReg, mse, scale);
 
-        if (mutateReg->area / mutateReg->uncertainty_area <= T_VALUES[df_sum - 5])
-        {
-            return; // statistical insignificance of the area
-        }
+        // if (mutateReg->area / mutateReg->uncertainty_area <= T_VALUES[df_sum - 5])
+        // {
+        //     return; // statistical insignificance of the area
+        // }
 
-        /*
-          Chi-Square Filter:
-          This block of code implements the chi-square filter. It calculates the chi-square
-          value based on the weighted chi squared sum of expected and measured y values in
-          the exponential domain. If the chi-square value is less than the corresponding
-          value in the CHI_SQUARES, the regression is invalid.
-        */
-        float chiSquare = calcSSE_chisqared(mutateReg->coeffs, intensities, mutateReg->left_limit, mutateReg->right_limit, idx_x0);
-        if (chiSquare < CHI_SQUARES[df_sum - 5])
-        {
-            return; // statistical insignificance of the chi-square value
-        }
+        // /*
+        //   Chi-Square Filter:
+        //   This block of code implements the chi-square filter. It calculates the chi-square
+        //   value based on the weighted chi squared sum of expected and measured y values in
+        //   the exponential domain. If the chi-square value is less than the corresponding
+        //   value in the CHI_SQUARES, the regression is invalid.
+        // */
+        // float chiSquare = calcSSE_chisqared(mutateReg->coeffs, intensities, mutateReg->left_limit, mutateReg->right_limit, idx_x0);
+        // if (chiSquare < CHI_SQUARES[df_sum - 5])
+        // {
+        //     return; // statistical insignificance of the chi-square value
+        // }
 
-        mutateReg->uncertainty_pos = calcUncertaintyPos(mse, mutateReg->coeffs, mutateReg->apex_position, scale);
-        mutateReg->df = df_sum - 4; // @todo add explanation for -4
-        mutateReg->apex_position += idx_x0;
-        mutateReg->scale = scale;
-        mutateReg->index_x0 = idx_x0;
-        mutateReg->mse = mse; // the quadratic mse is used for the weighted mean of the coefficients later
-        mutateReg->isValid = true;
+        // mutateReg->uncertainty_pos = calcUncertaintyPos(mse, mutateReg->coeffs, mutateReg->apex_position, scale);
+        // mutateReg->df = df_sum - 4; // @todo add explanation for -4
+        // mutateReg->apex_position += idx_x0;
+        // mutateReg->scale = scale;
+        // mutateReg->index_x0 = idx_x0;
+        // mutateReg->mse = mse; // the quadratic mse is used for the weighted mean of the coefficients later
+        // mutateReg->isValid = true;
         return;
     }
 
