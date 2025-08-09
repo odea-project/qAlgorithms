@@ -307,7 +307,7 @@ int main(int argc, char *argv[])
                 std::cout << "    produced " << centroidCount - 1 << " centroids from " << totalScans
                           << " spectra in " << timePassed.count() << " s\n";
             }
-            exit(0);
+            // exit(0);
 #pragma region "binning"
             timeStart = std::chrono::high_resolution_clock::now();
 
@@ -437,52 +437,52 @@ int main(int argc, char *argv[])
                 }
                 continue;
             }
-
+            
 #pragma region "Componentisation"
-            timeStart = std::chrono::high_resolution_clock::now();
+            // timeStart = std::chrono::high_resolution_clock::now();
 
-            size_t featuresInComponents = 0; // only used as a count statistic
-            const auto components = findComponents(&features, &binnedData, &convertRT, minCenArea, &featuresInComponents);
+            // size_t featuresInComponents = 0; // only used as a count statistic
+            // const auto components = findComponents(&features, &binnedData, &convertRT, minCenArea, &featuresInComponents);
 
-            timeEnd = std::chrono::high_resolution_clock::now();
-            if (!userArgs.silent)
-            {
-                timePassed = std::chrono::duration_cast<std::chrono::milliseconds>(timeEnd - timeStart);
-                std::cout << "    grouped " << featuresInComponents << " features into " << components.size() << " components in " << timePassed.count() << " s\n";
-            }
+            // timeEnd = std::chrono::high_resolution_clock::now();
+            // if (!userArgs.silent)
+            // {
+            //     timePassed = std::chrono::duration_cast<std::chrono::milliseconds>(timeEnd - timeStart);
+            //     std::cout << "    grouped " << featuresInComponents << " features into " << components.size() << " components in " << timePassed.count() << " s\n";
+            // }
 
-            if (userArgs.printFeatures) // this is here so we can incorporate the component ID into the output
-            {
-                printFeatureList(&features, userArgs.outputPath, filename, &binnedData,
-                                 userArgs.printExtended, userArgs.silent, userArgs.skipError, userArgs.noOverwrite);
-            }
+            // if (userArgs.printFeatures) // this is here so we can incorporate the component ID into the output
+            // {
+            //     printFeatureList(&features, userArgs.outputPath, filename, &binnedData,
+            //                      userArgs.printExtended, userArgs.silent, userArgs.skipError, userArgs.noOverwrite);
+            // }
 
-            if (userArgs.printComponentRegs)
-            {
-                printComponentRegressions(&components, userArgs.outputPath, filename,
-                                          userArgs.printExtended, userArgs.silent, userArgs.skipError, userArgs.noOverwrite);
-            }
+            // if (userArgs.printComponentRegs)
+            // {
+            //     printComponentRegressions(&components, userArgs.outputPath, filename,
+            //                               userArgs.printExtended, userArgs.silent, userArgs.skipError, userArgs.noOverwrite);
+            // }
 
-            if (userArgs.printComponentBins)
-            {
-                printComponentCentroids(&components, &binnedData, userArgs.outputPath, filename,
-                                        userArgs.printExtended, userArgs.silent, userArgs.skipError, userArgs.noOverwrite);
-            }
+            // if (userArgs.printComponentBins)
+            // {
+            //     printComponentCentroids(&components, &binnedData, userArgs.outputPath, filename,
+            //                             userArgs.printExtended, userArgs.silent, userArgs.skipError, userArgs.noOverwrite);
+            // }
 
-            if (userArgs.term == TerminateAfter::components)
-            {
-                continue;
-            }
+            // if (userArgs.term == TerminateAfter::components)
+            // {
+            //     continue;
+            // }
 
-            if (userArgs.doLogging) // @todo logging should account for early terminate
-            {
-                logWriter.open(pathLogging, std::ios::app);
-                logWriter << filename << ", " << data.number_spectra << ", " << centroidCount << ", "
-                          << meanDQSC << ", " << binnedData.size() << ", " << badBinCount << ", " << meanDQSB
-                          << ", " << features.size() << ", " << peaksWithMassGaps << ", " << meanInterpolations << ", " << meanDQSF
-                          << components.size() << ", " << featuresInComponents << "\n";
-                logWriter.close();
-            }
+            // if (userArgs.doLogging) // @todo logging should account for early terminate
+            // {
+            //     logWriter.open(pathLogging, std::ios::app);
+            //     logWriter << filename << ", " << data.number_spectra << ", " << centroidCount << ", "
+            //               << meanDQSC << ", " << binnedData.size() << ", " << badBinCount << ", " << meanDQSB
+            //               << ", " << features.size() << ", " << peaksWithMassGaps << ", " << meanInterpolations << ", " << meanDQSF
+            //               << components.size() << ", " << featuresInComponents << "\n";
+            //     logWriter.close();
+            // }
         }
         counter++;
     }

@@ -246,6 +246,8 @@ namespace qAlgorithms
             // }
 
             treatedData treatedData = pretreatEIC(currentEIC, rt_diff, maxScan); // inter/extrapolate data, and identify data blocks
+            // @todo we need further splitting of EICs to avoid too large regression objects later. At the moment 50.000 regression
+            //       objects are handled in one go.
             findFeatures(tmpPeaks, treatedData);
             if (tmpPeaks.empty())
             {
