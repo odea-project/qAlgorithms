@@ -391,16 +391,7 @@ namespace qAlgorithms
 
         for (size_t range = 0; range < coeffs->size(); range++)
         {   
-            bool stillValid = true;
-            size_t df = calcDF_cum(degreesOfFreedom_cum, idxStart, 2 * currentScale + idxStart);
-            if (df < 5)
-            {
-                stillValid = false;
-            }
-            auto coeff = coeffs->at(range);
-            if (stillValid)
-            {
-                validRegsTmp.back().coeffs = coeff;
+                validRegsTmp.back().coeffs = (*coeffs)[range];
                 // the total span of the regression may not exceed the number of points
                 assert(idxStart + 2 * currentScale < numPoints);
                 makeValidRegression(&validRegsTmp.back(), idxStart, currentScale,
@@ -410,7 +401,6 @@ namespace qAlgorithms
                 {
                     validRegsTmp.push_back(RegressionGauss{});
                 }
-            }
             idxStart++;
             // for every set of scales, execute the validation + in-scale merge operation
             // early termination needed if maxscale is reached, since here idxStart is 1 and the compared value 0
