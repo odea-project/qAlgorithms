@@ -386,32 +386,45 @@ namespace qAlgorithms
         float yInWindow[maxWindow];       // y observed in the regression window
         float yLogHatInWindow[maxWindow]; // log(y) predicted in the regression window
 
-        size_t coeffOffset = 0;
+        size_t valid_indices[1024];    // NOT YET USED // stores valid indices from coeffs
+        size_t valid_groupSizes[1024]; // NOT YET USED // stores sizes of valid regression groups
+                                       // NOT YET USED // this will replace validRegsTmp in the future
+
+        size_t numValids{}, numGroups{}, countdown{}, countdownMax{}, coeffOffset{}, roundedApexPosition{};
         for (size_t scale = 2; scale <= maxScale; scale++)
         {
-            const size_t steps = numPoints - 2 * scale; // number of steps for the current scale
+            numValids = 0, numGroups = 0, countdown = 0, valid_groupSizes[0] = 0; // reset for every scale
+            const size_t steps = numPoints - 2 * scale;                           // number of steps for the current scale
             for (size_t idxY = 0; idxY < steps; idxY++)
             {
+                countdown -= (countdown > 0);
                 validRegsTmp.back().coeffs = (*coeffs)[coeffOffset + idxY];
                 makeValidRegression(&validRegsTmp.back(), idxY, scale,
                                      degreesOfFreedom_cum, intensities, intensities_log, // @todo use spans here
-                                     yLogInWindow, yInWindow, yLogHatInWindow);
-                if (validRegsTmp.back().isValid)
+                                     yLogInWindow, yInWindow, yLogHatInWindow, roundedApexPosition);
+                if (!validRegsTmp.back().isValid)
                 {
-                    validRegsTmp.push_back(RegressionGauss{});
+                    continue;
                 }
+                numGroups += (countdown == 0); // increase the number of groups if countdown is expired
+                countdownMax = roundedApexPosition - idxY; // update countdownMax
+                countdown = countdownMax;      // reset countdown to the maximum value
+                valid_indices[numValids++] = coeffOffset + idxY; // stores valid index from coeffs
+                valid_groupSizes[numGroups-1] ++;
+                valid_groupSizes[numGroups] = 0;
+                validRegsTmp.push_back(RegressionGauss{});
             }
             // for every set of scales, execute the validation + in-scale merge operation
             // early termination needed if maxscale is reached, since here idxStart is 1 and the compared value 0
             // remove the last regression, since it is always empty
             validRegsTmp.pop_back();
             // no valid peaks if the size of validRegsTemp is 0
-            if (validRegsTmp.size() == 1)
+            if (numValids == 1)
             {
                 // only one valid peak, no fitering necessary
                 validRegressions.push_back(std::move(validRegsTmp[0]));
             }
-            else if (validRegsTmp.size() > 1)
+            else if (numValids > 1)
             {
                 findBestScales(&validRegressions, &validRegsTmp, intensities, degreesOfFreedom_cum);
             }
@@ -430,7 +443,8 @@ namespace qAlgorithms
         const std::vector<float> *intensities_log,
         float *yLogInWindow,
         float *yInWindow,
-        float *yLogHatInWindow)
+        float *yLogHatInWindow,
+        size_t &roundedApexPosition)
     {
         assert(scale > 1);
         assert(idxStart + 4 < degreesOfFreedom_cum->size());
@@ -638,6 +652,7 @@ namespace qAlgorithms
         mutateReg->index_x0 = idx_x0;
         mutateReg->mse = mse; // the quadratic mse is used for the weighted mean of the coefficients later
         mutateReg->isValid = true;
+        roundedApexPosition = idxApex;
         return;
     }
 #pragma endregion "validate Regression"

@@ -51,7 +51,8 @@ namespace qAlgorithms
         const std::vector<float> *intensities_log,
         float *yLogInWindow,
         float *yInWindow,
-        float *yLogHatInWindow);
+        float *yLogHatInWindow,
+        size_t &roundedApexPosition);
 
     std::vector<RegressionGauss> mergeRegressionsOverScales(
         std::vector<RegressionGauss> validRegressions,
