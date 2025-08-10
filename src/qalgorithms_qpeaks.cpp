@@ -381,50 +381,43 @@ namespace qAlgorithms
         // the start index of the regression is the same as the index in beta. The end index is at 2*scale + index in beta.
         validRegsTmp.push_back(RegressionGauss{});
 
-        int currentScale = 2;
-        size_t idxStart = 0;
-
         constexpr size_t maxWindow = MAXSCALE * 2 + 1;
-        float yLogInWindow[maxWindow]; // log(y) observed in the regression window
-        float yInWindow[maxWindow];    // y observed in the regression window
+        float yLogInWindow[maxWindow];    // log(y) observed in the regression window
+        float yInWindow[maxWindow];       // y observed in the regression window
         float yLogHatInWindow[maxWindow]; // log(y) predicted in the regression window
 
-        for (size_t range = 0; range < coeffs->size(); range++)
-        {   
-                validRegsTmp.back().coeffs = (*coeffs)[range];
-                // the total span of the regression may not exceed the number of points
-                assert(idxStart + 2 * currentScale < numPoints);
-                makeValidRegression(&validRegsTmp.back(), idxStart, currentScale,
-                                     degreesOfFreedom_cum, intensities, intensities_log,
+        size_t coeffOffset = 0;
+        for (size_t scale = 2; scale <= maxScale; scale++)
+        {
+            const size_t steps = numPoints - 2 * scale; // number of steps for the current scale
+            for (size_t idxY = 0; idxY < steps; idxY++)
+            {
+                validRegsTmp.back().coeffs = (*coeffs)[coeffOffset + idxY];
+                makeValidRegression(&validRegsTmp.back(), idxY, scale,
+                                     degreesOfFreedom_cum, intensities, intensities_log, // @todo use spans here
                                      yLogInWindow, yInWindow, yLogHatInWindow);
                 if (validRegsTmp.back().isValid)
                 {
                     validRegsTmp.push_back(RegressionGauss{});
                 }
-            idxStart++;
+            }
             // for every set of scales, execute the validation + in-scale merge operation
             // early termination needed if maxscale is reached, since here idxStart is 1 and the compared value 0
-            if ((idxStart == numPoints - 2 * currentScale)) //|| (currentScale == maxScale))
+            // remove the last regression, since it is always empty
+            validRegsTmp.pop_back();
+            // no valid peaks if the size of validRegsTemp is 0
+            if (validRegsTmp.size() == 1)
             {
-                // remove the last regression, since it is always empty
-                validRegsTmp.pop_back();
-                // no valid peaks if the size of validRegsTemp is 0
-                if (validRegsTmp.size() == 1)
-                {
-                    // only one valid peak, no fitering necessary
-                    validRegressions.push_back(std::move(validRegsTmp[0]));
-                }
-                else if (validRegsTmp.size() > 1)
-                {
-                    findBestScales(&validRegressions, &validRegsTmp, intensities, degreesOfFreedom_cum);
-                }
-
-                // reset loop
-                currentScale++;
-                idxStart = 0;
-                validRegsTmp.clear();
-                validRegsTmp.push_back(RegressionGauss{});
+                // only one valid peak, no fitering necessary
+                validRegressions.push_back(std::move(validRegsTmp[0]));
             }
+            else if (validRegsTmp.size() > 1)
+            {
+                findBestScales(&validRegressions, &validRegsTmp, intensities, degreesOfFreedom_cum);
+            }
+            validRegsTmp.clear();
+            validRegsTmp.push_back(RegressionGauss{});
+            coeffOffset += steps; // move to the next set of coefficients for the next scale
         }
     }
 
