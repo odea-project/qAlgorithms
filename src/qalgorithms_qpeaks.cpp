@@ -704,8 +704,8 @@ namespace qAlgorithms
         std::vector<float> predictLog;
         selectLog.reserve(mutateReg->right_limit - mutateReg->left_limit + 1);
         predictLog.reserve(mutateReg->right_limit - mutateReg->left_limit + 1);
-        float mse = calcSSE_base(mutateReg->coeffs, intensities_log, &selectLog, &predictLog,
-                                 mutateReg->left_limit, mutateReg->right_limit, idx_x0);
+        double RSS_reg = calcSSE_base(mutateReg->coeffs, intensities_log,
+                                      mutateReg->left_limit, mutateReg->right_limit, idx_x0);
 
         /*
         competing regressions filter:
@@ -713,14 +713,15 @@ namespace qAlgorithms
         the regression does not describe a peak. This is done through a nested F-test against a constant that
         is the mean of all predicted values. @todo this is not working correctly!
         */
-        float regression_Fval = calcRegressionFvalue(&selectLog, &predictLog, mse, mutateReg->coeffs.b0);
-        if (regression_Fval < F_VALUES[selectLog.size()]) // - 5 since the minimum is five degrees of freedom
+        // float regression_Fval = calcRegressionFvalue(&selectLog, &predictLog, mse, mutateReg->coeffs.b0);
+        // if (regression_Fval < F_VALUES[selectLog.size()]) // - 5 since the minimum is five degrees of freedom
+
         {
             // H0 holds, the two distributions are not noticeably different
             return;
         }
         // mse is only the correct mean square error after this division
-        mse /= (df_sum - 4);
+        double mse = RSS_reg / double(df_sum - 4);
 
         if (!isValidQuadraticTerm(mutateReg->coeffs, scale, mse, df_sum))
         {
@@ -1108,13 +1109,11 @@ namespace qAlgorithms
 
 #pragma region calcSSE
 
-    float calcSSE_base(const RegCoeffs coeff,
-                       const std::vector<float> *y_start,
-                       std::vector<float> *selectLog,
-                       std::vector<float> *predictLog,
-                       size_t limit_L,
-                       size_t limit_R,
-                       size_t index_x0)
+    double calcSSE_base(const RegCoeffs coeff,
+                        const std::vector<float> *y_start,
+                        size_t limit_L,
+                        size_t limit_R,
+                        size_t index_x0)
     /* ### allocations ###
         none!
 
@@ -1122,38 +1121,70 @@ namespace qAlgorithms
         none!
     */
     {
-        // this function also populates some variables for the F test later in the validation
-        double result = 0.0;
+        double RSS = 0.0;
         // left side
         for (size_t iSegment = limit_L; iSegment < index_x0; iSegment++)
         {
-            double new_x = double(iSegment) - double(index_x0);
-            double y_base = coeff.b0 + (coeff.b1 + coeff.b2 * new_x) * new_x;
-            double y_current = y_start->at(iSegment);
-            selectLog->push_back(y_current);
-            predictLog->push_back(y_base);
-            double newdiff = (y_current - y_base) * (y_current - y_base);
+            // @todo the cast to double / float is not vectorised automatically
+            double new_x = double(iSegment - index_x0);
+            double y_predict = coeff.b0 + (coeff.b1 + coeff.b2 * new_x) * new_x; // y = b0 + x * b1 + x^2 * b23
+            double difference = y_start->at(iSegment) - y_predict;
 
-            result += newdiff;
+            RSS += difference * difference;
         }
         // center point
-        result += (y_start->at(index_x0) - coeff.b0) * (y_start->at(index_x0) - coeff.b0); // x = 0 -> (b0 - y)^2
-        selectLog->push_back(y_start->at(index_x0));
-        predictLog->push_back(coeff.b0);
+        RSS += (y_start->at(index_x0) - coeff.b0) * (y_start->at(index_x0) - coeff.b0); // x = 0 -> (b0 - y)^2
 
         // right side
         for (size_t iSegment = index_x0 + 1; iSegment < limit_R + 1; iSegment++) // iSegment = 0 is center point calculated above
         {
-            double new_x = double(iSegment) - double(index_x0);
-            double y_base = coeff.b0 + (coeff.b1 + coeff.b3 * new_x) * new_x; // b3 instead of b2
-            double y_current = y_start->at(iSegment);
-            selectLog->push_back(y_current);
-            predictLog->push_back(y_base);
-            double newdiff = (y_current - y_base) * (y_current - y_base);
+            double new_x = double(iSegment - index_x0);
+            double y_predict = coeff.b0 + (coeff.b1 + coeff.b3 * new_x) * new_x; // b3 instead of b2
+            double difference = y_start->at(iSegment) - y_predict;
 
-            result += newdiff;
+            RSS += difference * difference;
         }
-        return result;
+        return RSS;
+    }
+
+    double calcRSS_H0(const std::vector<float> *observed, size_t limit_L, size_t limit_R)
+    {
+        // this function calculates the RSS for H0: y = b0 (a constant value)
+
+        assert(limit_L < limit_R);
+        assert(limit_R < observed->size());
+
+        double mean = 0;
+        for (size_t i = limit_L; i <= limit_R; i++)
+        {
+            mean += (*observed)[i];
+        }
+        mean /= limit_R - limit_L + 1;
+
+        double RSS = 0;
+        for (size_t i = limit_L; i <= limit_R; i++)
+        {
+            double difference = (*observed)[i] - mean;
+            RSS += difference * difference;
+        }
+
+        return RSS;
+    }
+
+    bool f_testRegression(const std::vector<float> *observed, double RSS_reg, size_t limit_L, size_t limit_R)
+    {
+        // during the tests, the RSS for the regression has already been calculated in calcSSE_base
+        assert(RSS_reg > 0);
+        assert(limit_L < limit_R);          // @todo this type of assertion comes up frequently, replace these region vectors
+        assert(limit_R < observed->size()); // with a struct that contains a start pointer and the length
+
+        double RSS_H0 = calcRSS_H0(observed, limit_L, limit_R);
+
+        double fval = f_value(RSS_reg, RSS_H0, 4, 1, observed->size());
+
+        double refval = F_VALUES[limit_R - limit_L + 1]; // pre-calculated for alpha = 0.05
+
+        return fval > refval;
     }
 
     float calcRegressionFvalue(const std::vector<float> *selectLog, const std::vector<float> *predictLog, const float sse, const float b0)
@@ -1207,20 +1238,20 @@ namespace qAlgorithms
         // left side
         for (size_t iSegment = limit_L; iSegment < index_x0; iSegment++) // @todo factor this loop into a function
         {
-            double new_x = double(iSegment) - double(index_x0); // always negative
-            double y_base = exp_approx_d(coeff.b0 + (coeff.b1 + coeff.b2 * new_x) * new_x);
+            double new_x = double(iSegment - index_x0); // always negative
+            double y_predict = exp_approx_d(coeff.b0 + (coeff.b1 + coeff.b2 * new_x) * new_x);
             double y_current = (*y_start)[iSegment];
-            double newdiff = (y_current - y_base) * (y_current - y_base);
+            double newdiff = (y_current - y_predict) * (y_current - y_predict);
             result += newdiff;
         }
         result += ((*y_start)[index_x0] - exp_approx_d(coeff.b0)) * ((*y_start)[index_x0] - exp_approx_d(coeff.b0)); // x = 0 -> (b0 - y)^2
         // right side
         for (size_t iSegment = index_x0 + 1; iSegment < limit_R + 1; iSegment++) // start one past the center, include right limit index
         {
-            double new_x = double(iSegment) - double(index_x0);                             // always positive
-            double y_base = exp_approx_d(coeff.b0 + (coeff.b1 + coeff.b3 * new_x) * new_x); // b3 instead of b2
+            double new_x = double(iSegment - index_x0);                                        // always positive
+            double y_predict = exp_approx_d(coeff.b0 + (coeff.b1 + coeff.b3 * new_x) * new_x); // b3 instead of b2
             double y_current = (*y_start)[iSegment];
-            double newdiff = (y_current - y_base) * (y_current - y_base);
+            double newdiff = (y_current - y_predict) * (y_current - y_predict);
             result += newdiff;
         }
         return result;
@@ -1239,11 +1270,11 @@ namespace qAlgorithms
         // left side
         for (size_t iSegment = limit_L; iSegment < index_x0; iSegment++)
         {
-            double new_x = double(iSegment) - double(index_x0);
-            double y_base = exp_approx_d(coeff.b0 + (coeff.b1 + coeff.b2 * new_x) * new_x);
+            double new_x = double(iSegment - index_x0);
+            double y_predict = exp_approx_d(coeff.b0 + (coeff.b1 + coeff.b2 * new_x) * new_x);
             double y_current = (*y_start)[iSegment];
-            double newdiff = (y_current - y_base) * (y_current - y_base);
-            result += newdiff / y_base;
+            double newdiff = (y_current - y_predict) * (y_current - y_predict);
+            result += newdiff / y_predict;
         }
         // center point, x = 0 -> (b0 - y)^2
         double exp_b0 = exp_approx_d(coeff.b0);
@@ -1251,10 +1282,10 @@ namespace qAlgorithms
 
         for (size_t iSegment = index_x0 + 1; iSegment < limit_R + 1; iSegment++) // iSegment = 0 is center point (calculated above)
         {
-            double y_base = exp_approx_d(coeff.b0 + (coeff.b1 + coeff.b3 * iSegment) * iSegment); // b3 instead of b2
+            double y_predict = exp_approx_d(coeff.b0 + (coeff.b1 + coeff.b3 * iSegment) * iSegment); // b3 instead of b2
             double y_current = (*y_start)[iSegment];
-            double newdiff = (y_current - y_base) * (y_current - y_base);
-            result += newdiff / y_base;
+            double newdiff = (y_current - y_predict) * (y_current - y_predict);
+            result += newdiff / y_predict;
         }
         return result;
     }

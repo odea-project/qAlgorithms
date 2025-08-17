@@ -115,13 +115,13 @@ namespace qAlgorithms
         const std::vector<RegressionGauss> *validRegressionsVec,
         const std::vector<float> *RT);
 
-    float calcSSE_base(const RegCoeffs coeff,
-                       const std::vector<float> *y_start,
-                       std::vector<float> *selectLog,
-                       std::vector<float> *predictLog,
-                       size_t limit_L,
-                       size_t limit_R,
-                       size_t index_x0);
+    double calcSSE_base(const RegCoeffs coeff,
+                        const std::vector<float> *y_start,
+                        size_t limit_L,
+                        size_t limit_R,
+                        size_t index_x0);
+
+    bool f_testRegression(const std::vector<float> *observed, double RSS_reg, size_t limit_L, size_t limit_R);
 
     float calcRegressionFvalue(const std::vector<float> *selectLog,
                                const std::vector<float> *intensities,

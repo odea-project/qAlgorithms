@@ -2,11 +2,57 @@
 #include "qalgorithms_global_vars.h"
 #include <cstdint> // uint64_t
 #include <cmath>   // std::abs()
+#include <cassert>
+#include "../external/CDFlib/cdflib.hpp"
 
 namespace qAlgorithms
 {
+    // @todo separate out the library functions into something better readable with less flexible error checking
+    double cdflib_F_stat(double alpha, size_t params_complex, size_t params_simple, size_t numPoints)
+    {
+        // wrapper around the cdflib library function cdff with the correct presets
+        // for calculating the area of F from 0 to 1 - alpha.
+        assert(params_complex > params_simple);
+        assert(alpha > 0);
+        assert(alpha < 1);
+
+        double F = 0; // return value
+
+        int which = 2;
+
+        double p = 1 - alpha; // area of the covered distribution
+        double q = alpha;
+        double dfn = params_complex - params_simple; // numerator degrees of freedom
+        double dfd = numPoints - params_complex;     // denominator degrees of freedom
+
+        int status = 1;   // result invalid if this is not 0
+        double bound = 0; // allows recovery from non-0 status @todo
+
+        cdff(&which, &p, &q, &F, &dfn, &dfd, &status, &bound); // library function, see https://people.math.sc.edu/Burkardt/cpp_src/cdflib/cdflib.html
+        assert(status == 0);
+
+        return F;
+    }
+
+    double f_value(const double RSS_model, const double RSS_H0,
+                   const size_t params_model, const size_t params_H0,
+                   const size_t n)
+    {
+        // Calculate F value of two models by their residual sum of squares (RSS) and number of regression
+        // parameters (params). H0 is the model being compared against. n is the number of real points
+        // both regressions are applied to. Refer to https://en.wikipedia.org/wiki/F-test#Regression_problems
+        assert(params_model < params_H0);
+        assert(RSS_model > 0);
+        assert(RSS_H0 > 0);
+        double RSS_ratio = (RSS_H0 - RSS_model) / RSS_model;
+        double params_ratio = double(n - params_model) / double(params_model - params_H0);
+        return RSS_ratio * params_ratio;
+    }
+
     double exp_approx_d(const double x)
     {
+        assert(x > 0);
+        assert(x < 26);
         constexpr double LOG2E = 1.44269504088896340736;
         constexpr double OFFSET = 1022.9329329329329;
         constexpr uint64_t EXP_OFFSET = 1LL << 52;
