@@ -29,12 +29,12 @@ namespace qAlgorithms
 
     struct RegCoeffs
     {
-        double b0, b1, b2, b3 = 0;
+        double b0 = 0, b1 = 0, b2 = 0, b3 = 0;
     };
 
     struct RegressionGauss
     {
-        RegCoeffs coeffs;                         // regression coefficients
+        RegCoeffs coeffs = {0};                   // regression coefficients
         int index_x0 = 0;                         // index of window center (x==0) in the Y matrix
         int scale = 0;                            // scale of the regression window, i.e., 2*scale+1 = window size
         int df = 0;                               // degrees of freedom, interpolated data points will not be considered
@@ -42,49 +42,49 @@ namespace qAlgorithms
         float mse = 0;                            // @todo mean squared error; this is not always used and should not be a part of the regression struct
         unsigned int left_limit, right_limit = 0; // limits of the peak regression window
         float area = 0;                           // area of the peak
-        float uncertainty_area, uncertainty_pos, uncertainty_height = 0;
+        float uncertainty_area = 0, uncertainty_pos = 0, uncertainty_height = 0;
         int numCompetitors = 0; // number of points that were discarded in favour of this regression
         bool isValid = false;   // flag to indicate if the regression is valid
     };
 
     struct ProfilePos // gives the range of points covered by a centroid and the access index for streamfind
     {
-        unsigned int access;
-        unsigned int start, end;
+        unsigned int access = 0;
+        unsigned int start = 0, end = 0;
     };
 
     struct CentroidPeak
     {
-        double mz;
-        float RT;
-        float height;
-        float area;
-        float width;
-        float heightUncertainty, areaUncertainty, mzUncertainty;
-        float DQSC;
+        double mz = 0;
+        float RT = 0;
+        float height = 0;
+        float area = 0;
+        float width = 0;
+        float heightUncertainty = 0, areaUncertainty = 0, mzUncertainty = 0;
+        float DQSC = 0;
         // the binning tolerates at most three non-occurrences of a mass in order, but should not include interpolated spectra for this.
         // for conversion, number_MS1 is also the index into a vector that stores the "corrected" scan numbers after interpolation
-        unsigned int number_MS1;
-        unsigned int df; // degrees of freedom
-        ProfilePos trace;
-        unsigned int numCompetitors;
-        unsigned int scale;
-        unsigned int ID;
+        unsigned int number_MS1 = 0;
+        unsigned int df = 0; // degrees of freedom
+        ProfilePos trace = {0};
+        unsigned int numCompetitors = 0;
+        unsigned int scale = 0;
+        unsigned int ID = 0;
         // unsigned int interpolations;
     };
 
     struct EIC // Extracted Ion Chromatogram
     {
-        std::vector<unsigned int> scanNumbers;
-        std::vector<float> mz;
-        std::vector<float> predInterval;
-        std::vector<float> ints_area;
-        std::vector<float> ints_height;
-        std::vector<unsigned int> df;
-        std::vector<float> DQSB;
-        std::vector<float> DQSC;
-        std::vector<unsigned int> cenID;
-        std::vector<unsigned int> interpolatedScans;
+        std::vector<unsigned int> scanNumbers = {0};
+        std::vector<float> mz = {0};
+        std::vector<float> predInterval{0};
+        std::vector<float> ints_area{0};
+        std::vector<float> ints_height{0};
+        std::vector<unsigned int> df{0};
+        std::vector<float> DQSB{0};
+        std::vector<float> DQSC{0};
+        std::vector<unsigned int> cenID{0};
+        std::vector<unsigned int> interpolatedScans{0};
         // std::vector<float> interpolatedDQSB;
         unsigned int componentID = 0; // this is only set during componentisation
         // bool interpolations;          // are there interpolated values?
@@ -92,31 +92,31 @@ namespace qAlgorithms
 
     struct FeaturePeak
     {
-        RegCoeffs coefficients;
-        float height;
-        float area;
+        RegCoeffs coefficients{0};
+        float height = 0;
+        float area = 0;
         // float width;
-        float heightUncertainty;
-        float areaUncertainty;
-        float DQSF, DQSB, DQSC;
-        float retentionTime;
-        float mz;
-        float RT_Uncertainty;
-        float mzUncertainty;
+        float heightUncertainty = 0;
+        float areaUncertainty = 0;
+        float DQSF = 0, DQSB = 0, DQSC = 0;
+        float retentionTime = 0;
+        float mz = 0;
+        float RT_Uncertainty = 0;
+        float mzUncertainty = 0;
         unsigned int componentID = 0; // this is only set during execution of qPattern / qComponent / whatever better name i think of. Zero means uninitialised -> components start at 1!
-        unsigned int idxBin;
+        unsigned int idxBin = 0;
         // these refer to the interpolated EIC!
-        unsigned int idxPeakStart, idxPeakEnd, index_x0_offset;
+        unsigned int idxPeakStart = 0, idxPeakEnd = 0, index_x0_offset = 0;
         // relates to abstracted MS1 scan counts, starts at 2 for real points
-        unsigned int scanPeakStart, scanPeakEnd;
+        unsigned int scanPeakStart = 0, scanPeakEnd = 0;
         // indices into the non-interpolated bin; degrees of freedom = idxBinEnd - idxBinStart + 1
-        unsigned int idxBinStart, idxBinEnd;
+        unsigned int idxBinStart = 0, idxBinEnd = 0;
         // temporary values, @todo remove?
-        unsigned int interpolationCount;
-        unsigned int competitorCount;
-        unsigned int scale;
-        float mse_base;
-        bool apexLeft;
+        unsigned int interpolationCount = 0;
+        unsigned int competitorCount = 0;
+        unsigned int scale = 0;
+        float mse_base = 0;
+        bool apexLeft = false;
     };
 }
 

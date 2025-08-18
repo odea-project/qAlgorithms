@@ -1,3 +1,5 @@
+Git branch was not detected / git fetch did nothing: git checkout --track origin/<branch name>
+
 
     █▀▀▀▀▀█ █ ▀▄▀  ▄█ ▄█ █▄▀█▀▀▄█▀▄▀▄██▀▀▀▀▀██▀█▄▄▀█  █▀▀▀▀▀█    
     █ ███ █ ▀▄▀██▄▀▄ ██   █▀▀ ▀█ █▀▀ ▄█  ▄ ▄ █▀█▀ ▀█  █ ███ █    
