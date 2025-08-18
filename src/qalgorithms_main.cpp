@@ -82,7 +82,7 @@ int main(int argc, char *argv[])
     }
 
     // the final task list contains only unique files, sorted by filesize
-    std::vector<std::filesystem::__cxx11::path> tasklist = controlInput(&userArgs.inputPaths, userArgs.skipError);
+    std::vector<std::filesystem::__cxx11::path> tasklist = controlInput(&userArgs.inputPaths);
     if (tasklist.size() <= userArgs.skipAhead)
     {
         std::cerr << "Error: skipped more entries than were in taks list (" << tasklist.size() << ").\n";
@@ -237,7 +237,7 @@ int main(int argc, char *argv[])
 
             if (userArgs.printCentroids)
             {
-                printCentroids(centroids, &retentionTimes, userArgs.outputPath, filename, userArgs.silent, userArgs.skipError, userArgs.noOverwrite);
+                printCentroids(centroids, &retentionTimes, userArgs.outputPath, filename, userArgs.silent, userArgs.noOverwrite);
 
                 if (userArgs.term == TerminateAfter::centroids)
                 {
@@ -279,7 +279,7 @@ int main(int argc, char *argv[])
             timeStart = std::chrono::high_resolution_clock::now();
 
             // RT_Converter rt_index = interpolateScanNumbers(&retentionTimes);
-            std::vector<EIC> binnedData = performQbinning(centroids, &rt_index.countToInterp, userArgs.verboseProgress);
+            std::vector<EIC> binnedData = performQbinning(centroids, &rt_index.countToInterp);
 
             timeEnd = std::chrono::high_resolution_clock::now();
 
@@ -305,7 +305,7 @@ int main(int argc, char *argv[])
             }
             if (userArgs.printBins)
             {
-                printBins(centroids, &binnedData, &retentionTimes, userArgs.outputPath, filename, userArgs.silent, userArgs.skipError, userArgs.noOverwrite);
+                printBins(centroids, &binnedData, &retentionTimes, userArgs.outputPath, filename, userArgs.silent, userArgs.noOverwrite);
 
                 if (userArgs.term == TerminateAfter::binning)
                 {
@@ -397,8 +397,8 @@ int main(int argc, char *argv[])
 
             if (userArgs.printFeatCens)
             {
-                printFeatureCentroids(&features, userArgs.outputPath, filename, &binnedData, &retentionTimes,
-                                      userArgs.printExtended, userArgs.silent, userArgs.skipError, userArgs.noOverwrite);
+                // printFeatureCentroids(&features, userArgs.outputPath, filename, &binnedData, // &retentionTimes, // @todo this is incomplete
+                //                       userArgs.silent, userArgs.noOverwrite);
             }
 
             if (userArgs.term == TerminateAfter::features)
@@ -406,7 +406,7 @@ int main(int argc, char *argv[])
                 if (userArgs.printFeatures) // this is here so we can incorporate the component ID into the output
                 {
                     printFeatureList(&features, userArgs.outputPath, filename, &binnedData, &retentionTimes,
-                                     userArgs.printExtended, userArgs.silent, userArgs.skipError, userArgs.noOverwrite);
+                                     userArgs.silent, userArgs.noOverwrite);
                 }
                 continue;
             }
@@ -429,19 +429,19 @@ int main(int argc, char *argv[])
             if (userArgs.printFeatures) // this is here so we can incorporate the component ID into the output
             {
                 printFeatureList(&features, userArgs.outputPath, filename, &binnedData, &retentionTimes,
-                                 userArgs.printExtended, userArgs.silent, userArgs.skipError, userArgs.noOverwrite);
+                                 userArgs.silent, userArgs.noOverwrite);
             }
 
             if (userArgs.printComponentRegs)
             {
                 printComponentRegressions(&components, userArgs.outputPath, filename,
-                                          userArgs.printExtended, userArgs.silent, userArgs.skipError, userArgs.noOverwrite);
+                                          userArgs.silent, userArgs.noOverwrite);
             }
 
             if (userArgs.printComponentBins)
             {
                 printComponentCentroids(&components, &binnedData, userArgs.outputPath, filename,
-                                        userArgs.printExtended, userArgs.silent, userArgs.skipError, userArgs.noOverwrite);
+                                        userArgs.silent, userArgs.noOverwrite);
             }
 
             if (userArgs.term == TerminateAfter::components)

@@ -15,7 +15,7 @@ namespace qAlgorithms
     const size_t maxdist = 3; // this is the maximum distance in scans which can later be interpolated during feature detection
 
     std::vector<EIC> performQbinning(const std::vector<CentroidPeak> *centroidedData,
-                                     const std::vector<unsigned int> *convertRT, bool verbose) // @todo split out subfunctions so the structure is subset -> score -> format
+                                     const std::vector<unsigned int> *convertRT) // @todo split out subfunctions so the structure is subset -> score -> format
     {
         // std::cout << sizeof(Bin) << std::endl;
         assert(centroidedData->front().mz == 0); // first value is dummy
@@ -281,11 +281,11 @@ namespace qAlgorithms
         target->push_back(returnBin);
     }
 
-    void removeMassJumps(std::vector<Bin> *target, std::vector<const CentroidPeak *> *notInBins, Bin bin)
-    {
-        // if the distance in mz between two points is too great, the violating point
-        // should be removed.
-    }
+    // void removeMassJumps(std::vector<Bin> *target, std::vector<const CentroidPeak *> *notInBins, Bin bin)
+    // {
+    //     // if the distance in mz between two points is too great, the violating point
+    //     // should be removed. @todo
+    // }
 
     // int selectRebin(BinContainer *bins, const std::vector<CentroidPeak> *rawdata)
     // {

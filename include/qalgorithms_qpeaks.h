@@ -33,7 +33,6 @@ namespace qAlgorithms
         const std::vector<float> *intensities,
         const std::vector<float> *intensities_log,
         const std::vector<unsigned int> *degreesOfFreedom_cum,
-        const size_t maxScale,
         const size_t maxApexIdx);
 
     void makeValidRegression(
@@ -125,8 +124,7 @@ namespace qAlgorithms
 
     float calcRegressionFvalue(const std::vector<float> *selectLog,
                                const std::vector<float> *intensities,
-                               const float mse,
-                               const float b0);
+                               const float mse);
 
     float calcSSE_exp(const RegCoeffs coeff,
                       const std::vector<float> *y_start,
@@ -147,8 +145,7 @@ namespace qAlgorithms
 
     CorrectionFactors smearingCorrection(
         const std::vector<float> *predictLog,
-        const std::vector<float> *selectLog,
-        const size_t scale);
+        const std::vector<float> *selectLog);
 
     struct RegPair
     {
@@ -274,42 +271,42 @@ namespace qAlgorithms
         // init invArray
         // XtX = transposed(Matrix X ) * Matrix X
         // XtX_xy: x = row number; y = column number
-        float XtX_00 = 1.f;
-        float XtX_02 = 0.f;
-        float XtX_11 = 0.f;
-        float XtX_12 = 0.f;
-        float XtX_13 = 0.f;
-        float XtX_22 = 0.f;
+        double XtX_00 = 1;
+        double XtX_02 = 0;
+        double XtX_11 = 0;
+        double XtX_12 = 0;
+        double XtX_13 = 0;
+        double XtX_22 = 0;
         for (int i = 1; i < MAXSCALE; ++i)
         {
-            XtX_00 += 2.f;
-            XtX_02 += i * i;
-            XtX_11 = XtX_02 * 2.f;
-            XtX_13 += i * i * i;
+            XtX_00 += 2;
+            XtX_02 += double(i * i);
+            XtX_11 = XtX_02 * 2;
+            XtX_13 += double(i * i * i);
             XtX_12 = -XtX_13;
-            XtX_22 += i * i * i * i;
+            XtX_22 += double(i * i * i * i);
 
             // decomposition matrix L, see https://en.wikipedia.org/wiki/Cholesky_decomposition
-            float L_00 = std::sqrt(XtX_00);
-            float L_11 = std::sqrt(XtX_11);
-            float L_20 = XtX_02 / L_00;
-            float L_21 = XtX_12 / L_11;
-            float L_20sq = L_20 * L_20;
-            float L_21sq = L_21 * L_21;
-            float L_22 = std::sqrt(XtX_22 - L_20sq - L_21sq);
-            float L_32 = 1 / L_22 * (-L_20sq + L_21sq);
-            float L_33 = std::sqrt(XtX_22 - L_20sq - L_21sq - L_32 * L_32);
+            double L_00 = std::sqrt(XtX_00);
+            double L_11 = std::sqrt(XtX_11);
+            double L_20 = XtX_02 / L_00;
+            double L_21 = XtX_12 / L_11;
+            double L_20sq = L_20 * L_20;
+            double L_21sq = L_21 * L_21;
+            double L_22 = std::sqrt(XtX_22 - L_20sq - L_21sq);
+            double L_32 = 1 / L_22 * (-L_20sq + L_21sq);
+            double L_33 = std::sqrt(XtX_22 - L_20sq - L_21sq - L_32 * L_32);
 
             // inverse of L
-            float inv_00 = 1.f / L_00;
-            float inv_11 = 1.f / L_11;
-            float inv_22 = 1.f / L_22;
-            float inv_33 = 1.f / L_33;
-            float inv_20 = -L_20 * inv_00 / L_22;
-            float inv_30 = -(L_20 * inv_00 + L_32 * inv_20) / L_33;
-            float inv_21 = -L_21 * inv_11 / L_22;
-            float inv_31 = -(-L_21 * inv_11 + L_32 * inv_21) / L_33;
-            float inv_32 = -L_32 * inv_22 / L_33;
+            double inv_00 = 1 / L_00;
+            double inv_11 = 1 / L_11;
+            double inv_22 = 1 / L_22;
+            double inv_33 = 1 / L_33;
+            double inv_20 = -L_20 * inv_00 / L_22;
+            double inv_30 = -(L_20 * inv_00 + L_32 * inv_20) / L_33;
+            double inv_21 = -L_21 * inv_11 / L_22;
+            double inv_31 = -(-L_21 * inv_11 + L_32 * inv_21) / L_33;
+            double inv_32 = -L_32 * inv_22 / L_33;
 
             invArray[i * 6 + 0] = inv_00 * inv_00 + inv_20 * inv_20 + inv_30 * inv_30; // cell: 0,0
             invArray[i * 6 + 1] = inv_22 * inv_20 + inv_32 * inv_30;                   // cell: 0,2

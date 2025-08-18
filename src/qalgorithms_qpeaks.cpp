@@ -46,7 +46,7 @@ namespace qAlgorithms
             assert(length > 4);
 
             // @todo adjust the scale dynamically based on the number of valid regressions found, early terminate after x iterations
-            const size_t maxScale = std::min(GLOBAL_MAXSCALE_CENTROID, size_t((length - 1) / 2)); // length - 1 because the center point is not part of the span
+            const size_t maxScale = std::min(GLOBAL_MAXSCALE_CENTROID, (length - 1) / 2); // length - 1 because the center point is not part of the span
 
             // logIntensity.resize(length); // this way, no new allocations will be made in the loop
             //             for (size_t blockPos = 0; blockPos < length; blockPos++)
@@ -90,7 +90,7 @@ namespace qAlgorithms
         // with an estimated scan difference of 0.6 s this means the maximum peak width is 61 * 0.6 = 36.6 s
         static const size_t GLOBAL_MAXSCALE_FEATURES = 30;
         assert(GLOBAL_MAXSCALE_FEATURES <= MAXSCALE);
-        size_t maxScale = std::min(GLOBAL_MAXSCALE_FEATURES, size_t((length - 1) / 2));
+        size_t maxScale = std::min(GLOBAL_MAXSCALE_FEATURES, (length - 1) / 2); // @todo code duplication
 
         runningRegression(&eic->ints_area,
                           &logIntensity,
@@ -131,7 +131,7 @@ namespace qAlgorithms
 
         const std::vector<RegCoeffs> regressions = findCoefficients(intensities_log, maxScale);
 
-        validateRegression(*validRegressions, &regressions, intensities, intensities_log, degreesOfFreedom_cum, maxScale, maxApexIdx);
+        validateRegression(*validRegressions, &regressions, intensities, intensities_log, degreesOfFreedom_cum, maxApexIdx);
 
         if (validRegressions->size() > 1) // @todo we can probably filter regressions based on MSE at this stage already
         {
@@ -147,8 +147,7 @@ namespace qAlgorithms
         std::vector<double> *const beta_1,
         std::vector<double> *const beta_2,
         std::vector<double> *const beta_3,
-        const size_t numPoints,
-        const size_t maxScale)
+        const size_t numPoints)
     /* ### allocations ###
         results: size known at function call, 5 * f32 * length
 
@@ -279,7 +278,7 @@ namespace qAlgorithms
         */
         assert(maxScale > 1);
         assert(maxScale <= MAXSCALE);
-        const size_t minScale = 2;
+        const unsigned int minScale = 2;
         assert(minScale <= maxScale);
         const size_t steps = intensity_log->size() - 2 * minScale; // iteration number at scale 2
 
@@ -387,7 +386,7 @@ namespace qAlgorithms
         // @todo why not save the scale information as part of the coefficient struct and then use that for the whole merging?
         auto coeffs = restoreShape(&maxInnerLoop,
                                    &beta_0, &beta_1, &beta_2, &beta_3,
-                                   intensity_log->size(), maxScale);
+                                   intensity_log->size());
 
         return coeffs;
     }
@@ -483,7 +482,6 @@ namespace qAlgorithms
         const std::vector<float> *intensities,
         const std::vector<float> *intensities_log,
         const std::vector<unsigned int> *degreesOfFreedom_cum,
-        const size_t maxScale, // scale, i.e., the number of data points in a half window excluding the center point
         const size_t maxApexIdx)
     /* ### allocations ###
         validRegsTmp: known at function call
@@ -1187,7 +1185,7 @@ namespace qAlgorithms
         return fval > refval;
     }
 
-    float calcRegressionFvalue(const std::vector<float> *selectLog, const std::vector<float> *predictLog, const float sse, const float b0)
+    float calcRegressionFvalue(const std::vector<float> *selectLog, const std::vector<float> *predictLog, const float sse)
     /* ### allocations ###
         none!
 
@@ -1296,8 +1294,7 @@ namespace qAlgorithms
     // @todo implement this
     CorrectionFactors smearingCorrection(
         const std::vector<float> *predictLog,
-        const std::vector<float> *selectLog,
-        const size_t scale)
+        const std::vector<float> *selectLog)
     /* ### allocations ###
         none!
 
@@ -1896,7 +1893,7 @@ namespace qAlgorithms
             RTconv[forwardConv[i]] = retentionTimes->at(i - 1);
         }
 
-        return {forwardConv, backwardConv};
+        return {forwardConv, backwardConv, {0}}; // @todo add interpToRT
     }
 
     void fillPeakVals(EIC *eic, FeaturePeak *currentPeak)

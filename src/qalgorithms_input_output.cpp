@@ -442,7 +442,7 @@ namespace qAlgorithms
 
 #pragma region "file reading"
 
-    std::vector<std::filesystem::path> controlInput(const std::vector<std::string> *inputTasks, const bool skipError)
+    std::vector<std::filesystem::path> controlInput(const std::vector<std::string> *inputTasks)
     {
         const std::string filetype = ".mzML"; // @todo change this if other filetpes should be supported
         namespace fs = std::filesystem;
@@ -576,19 +576,19 @@ namespace qAlgorithms
         }
     }
 
-    void printSpectrumAndCens(const std::vector<CentroidPeak> *peaktable,
-                              std::filesystem::path pathOutput,
-                              std::string filename,
-                              size_t spectrumNo)
-    {
-        assert(false);
-    }
+    // void printSpectrumAndCens(const std::vector<CentroidPeak> *peaktable,
+    //                           std::filesystem::path pathOutput,
+    //                           std::string filename,
+    //                           size_t spectrumNo)
+    // {
+    //     assert(false);
+    // }
 
     void printCentroids(const std::vector<CentroidPeak> *peaktable,
                         std::vector<float> *convertRT,
                         std::filesystem::path pathOutput,
                         std::string filename,
-                        bool silent, bool skipError, bool noOverwrite)
+                        bool silent, bool noOverwrite)
     {
         filename += "_centroids.csv";
         pathOutput /= filename;
@@ -635,7 +635,7 @@ namespace qAlgorithms
                    const std::vector<float> *convertRT,
                    std::filesystem::path pathOutput,
                    std::string filename,
-                   bool silent, bool skipError, bool noOverwrite)
+                   bool silent, bool noOverwrite)
     {
         filename += "_bins.csv";
         pathOutput /= filename;
@@ -690,7 +690,7 @@ namespace qAlgorithms
                           std::string filename,
                           const std::vector<EIC> *originalBins,
                           const std::vector<float> *convertRT,
-                          bool verbose, bool silent, bool skipError, bool noOverwrite)
+                          bool silent, bool noOverwrite)
     {
         filename += "_features.csv";
         pathOutput /= filename;
@@ -753,8 +753,8 @@ namespace qAlgorithms
                                std::filesystem::path pathOutput,
                                std::string filename,
                                const std::vector<EIC> *originalBins,
-                               const std::vector<float> *convertRT,
-                               bool verbose, bool silent, bool skipError, bool noOverwrite)
+                               //    const std::vector<float> *convertRT, // @todo
+                               bool silent, bool noOverwrite)
     {
         filename += "_featCen.csv";
         pathOutput /= filename;
@@ -813,7 +813,7 @@ namespace qAlgorithms
     void printComponentRegressions(const std::vector<MultiRegression> *compRegs,
                                    std::filesystem::path pathOutput,
                                    std::string filename,
-                                   bool verbose, bool silent, bool skipError, bool noOverwrite)
+                                   bool silent, bool noOverwrite)
     {
         filename += "_components.csv";
         pathOutput /= filename;
@@ -873,7 +873,7 @@ namespace qAlgorithms
                                  const std::vector<EIC> *bins,
                                  std::filesystem::path pathOutput,
                                  std::string filename,
-                                 bool verbose, bool silent, bool skipError, bool noOverwrite)
+                                 bool silent, bool noOverwrite)
     {
         filename += "_compCens.csv";
         pathOutput /= filename;

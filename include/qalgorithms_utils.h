@@ -1,6 +1,8 @@
 #ifndef QALGORITHMS_UTILS_H
 #define QALGORITHMS_UTILS_H
 
+#include <stddef.h>
+
 // ### functions in this file should never call malloc! ###
 
 namespace qAlgorithms
@@ -77,6 +79,6 @@ namespace qAlgorithms
     double erfi(const double x);
 
     // @todo better documentation
-    const double binningCritVal(unsigned int n, double uncertainty); // critical value for deciding if a bin exists or not
+    double binningCritVal(unsigned int n, double uncertainty); // critical value for deciding if a bin exists or not
 }
 #endif // QALGORITHMS_UTILS_H

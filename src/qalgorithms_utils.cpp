@@ -22,8 +22,8 @@ namespace qAlgorithms
 
         double p = 1 - alpha; // area of the covered distribution
         double q = alpha;
-        double dfn = params_complex - params_simple; // numerator degrees of freedom
-        double dfd = numPoints - params_complex;     // denominator degrees of freedom
+        double dfn = double(params_complex - params_simple); // numerator degrees of freedom
+        double dfd = double(numPoints - params_complex);     // denominator degrees of freedom
 
         int status = 1;   // result invalid if this is not 0
         double bound = 0; // allows recovery from non-0 status @todo
@@ -112,7 +112,7 @@ namespace qAlgorithms
     }
 
     // critical order space of two normally distributed populations
-    const double binningCritVal(unsigned int n, double stdDev)
+    double binningCritVal(unsigned int n, double stdDev)
     {
         return (OS_CRIT_A + (OS_CRIT_B / std::sqrt(std::log(n + 1)))) * stdDev;
     }

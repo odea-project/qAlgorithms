@@ -2306,7 +2306,7 @@ void cdfbin(int *which, double *p, double *q, double *s, double *xn,
     //
     //     Check arguments
     //
-    if (!(*which < 1 && *which > 4))
+    if (!(*which < 1 && *which > 4)) // @todo this is always !(false), probably error in the implementation
         goto S30;
     if (!(*which < 1))
         goto S10;
@@ -10707,7 +10707,12 @@ void negative_binomial_cdf_values(int *n_data, int *f, int *s, double *p,
     // {
     //     *n_data = 0;
     // }
-    if (n_data == (void *)NULL)
+    // if (n_data == (void *)NULL)
+    // {
+    //     *n_data = 0;
+    // }
+    // additional correction: this is a suspected logic error, since n is always 0 or positive
+    if (*n_data < 0)
     {
         *n_data = 0;
     }

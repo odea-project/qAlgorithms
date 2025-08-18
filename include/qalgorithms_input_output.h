@@ -66,7 +66,7 @@ namespace qAlgorithms
         unsigned int fileID;         // count upwards after reading everything in @todo produce a unique identifier
     };
 
-    std::vector<std::filesystem::path> controlInput(const std::vector<std::string> *inputTasks, const bool skipError);
+    std::vector<std::filesystem::path> controlInput(const std::vector<std::string> *inputTasks);
 
 #pragma endregion "file reading"
 
@@ -88,39 +88,39 @@ namespace qAlgorithms
                         std::vector<float> *convertRT,
                         std::filesystem::path pathOutput,
                         std::string filename,
-                        bool silent, bool skipError, bool noOverwrite);
+                        bool silent, bool noOverwrite);
 
     void printBins(const std::vector<CentroidPeak> *centroids,
                    const std::vector<EIC> *bins,
                    const std::vector<float> *convertRT,
                    std::filesystem::path pathOutput,
                    std::string filename,
-                   bool silent, bool skipError, bool noOverwrite);
+                   bool silent, bool noOverwrite);
 
     void printFeatureList(const std::vector<FeaturePeak> *peaktable,
                           std::filesystem::path pathOutput,
                           std::string filename,
                           const std::vector<EIC> *originalBins,
                           const std::vector<float> *convertRT,
-                          bool verbose, bool silent, bool skipError, bool noOverwrite);
+                          bool silent, bool noOverwrite);
 
     void printFeatureCentroids(const std::vector<FeaturePeak> *peaktable,
                                std::filesystem::path pathOutput,
                                std::string filename,
                                const std::vector<EIC> *originalBins,
-                               const std::vector<float> *convertRT,
-                               bool verbose, bool silent, bool skipError, bool noOverwrite);
+                               //    const std::vector<float> *convertRT,
+                               bool silent, bool noOverwrite);
 
     void printComponentRegressions(const std::vector<MultiRegression> *compRegs,
                                    std::filesystem::path pathOutput,
                                    std::string filename,
-                                   bool verbose, bool silent, bool skipError, bool noOverwrite);
+                                   bool silent, bool noOverwrite);
 
     void printComponentCentroids(const std::vector<MultiRegression> *compRegs,
                                  const std::vector<EIC> *bins,
                                  std::filesystem::path pathOutput,
                                  std::string filename,
-                                 bool verbose, bool silent, bool skipError, bool noOverwrite);
+                                 bool silent, bool noOverwrite);
 
     void printLogfile(std::filesystem::path pathLogfile); // @todo
 

@@ -643,11 +643,11 @@ namespace qAlgorithms
           to the next iteration.
         */
 
-        std::vector<float> selectLog; // both vetors are used to transfer relevant values to the F test later
-        std::vector<float> predictLog;
-        selectLog.reserve(mutateReg->right_limit - mutateReg->left_limit + 1);
-        predictLog.reserve(mutateReg->right_limit - mutateReg->left_limit + 1);
-        float mse = calcSSE_base(mutateReg->coeffs, intensities_log, &selectLog, &predictLog,
+        // std::vector<float> selectLog; // both vetors are used to transfer relevant values to the F test later
+        // std::vector<float> predictLog;
+        // selectLog.reserve(mutateReg->right_limit - mutateReg->left_limit + 1);
+        // predictLog.reserve(mutateReg->right_limit - mutateReg->left_limit + 1);
+        float mse = calcSSE_base(mutateReg->coeffs, intensities_log,
                                  mutateReg->left_limit, mutateReg->right_limit, idx_x0);
 
         /*
@@ -656,12 +656,12 @@ namespace qAlgorithms
         the regression does not describe a peak. This is done through a nested F-test against a constant that
         is the mean of all predicted values. @todo this is not working correctly!
         */
-        float regression_Fval = calcRegressionFvalue(&selectLog, &predictLog, mse, mutateReg->coeffs.b0);
-        if (regression_Fval < F_VALUES[selectLog.size()]) // - 5 since the minimum is five degrees of freedom
-        {
-            // H0 holds, the two distributions are not noticeably different
-            return;
-        }
+        // float regression_Fval = calcRegressionFvalue(&selectLog, &predictLog, mse, mutateReg->coeffs.b0);
+        // if (regression_Fval < F_VALUES[selectLog.size()]) // - 5 since the minimum is five degrees of freedom
+        // {
+        //     // H0 holds, the two distributions are not noticeably different
+        //     return;
+        // }
         // mse is only the correct mean square error after this division
         mse /= (df_sum - 4);
 
@@ -812,10 +812,10 @@ namespace qAlgorithms
         for (size_t i = 0; i < numPeaks; i++)
         {
             size_t idxBegin = i * peakFrame;
-            size_t idxEnd = (i + 1) * peakFrame;
-            logInt_vecs[i] = std::vector<float>(eic->intensity_log.begin() + idxBegin, eic->intensity_log.begin() + idxEnd);
-            intensity_vecs[i] = std::vector<float>(eic->intensity.begin() + idxBegin, eic->intensity.begin() + idxEnd);
-            DF_vecs[i] = std::vector<bool>(eic->df.begin() + idxBegin, eic->df.begin() + idxEnd); // @todo this does not serve a purpose
+            size_t idxEnd_inner = (i + 1) * peakFrame;
+            logInt_vecs[i] = std::vector<float>(eic->intensity_log.begin() + idxBegin, eic->intensity_log.begin() + idxEnd_inner);
+            intensity_vecs[i] = std::vector<float>(eic->intensity.begin() + idxBegin, eic->intensity.begin() + idxEnd_inner);
+            DF_vecs[i] = std::vector<bool>(eic->df.begin() + idxBegin, eic->df.begin() + idxEnd_inner); // @todo this does not serve a purpose
         }
 
         for (size_t multiReg = 0; multiReg < regressions.size(); multiReg++)
@@ -901,9 +901,9 @@ namespace qAlgorithms
         // the storage vector and replace it with a current minimum + index tracker
         double min_MSE = INFINITY;
         int minIdx = -1;
-        for (size_t i = 0; i < regressions.size(); i++)
+        for (size_t j = 0; j < regressions.size(); j++)
         {
-            if (regressionOK[i] && min_MSE > sum_MSE[i])
+            if (regressionOK[j] && min_MSE > sum_MSE[j])
             {
                 bool regOK = true;
                 for (size_t i = 0; i < selection->size(); i++)
@@ -922,8 +922,8 @@ namespace qAlgorithms
                 }
                 if (regOK)
                 {
-                    min_MSE = sum_MSE[i];
-                    minIdx = i;
+                    min_MSE = sum_MSE[j];
+                    minIdx = j;
                 }
             }
         }
@@ -1202,7 +1202,7 @@ namespace qAlgorithms
         if (b23 > 0) [[unlikely]]
         {
             // use the other peak half for the maximum
-            float maxPos = -coeff->b1 / (2 * (left ? coeff->b3 : coeff->b3));
+            float maxPos = -coeff->b1 / (2 * b23);
             maxHeight = std::exp(coeff->b0 + (coeff->b1 + maxPos * b23) * maxPos); // correct for positive exponential
         }
 
