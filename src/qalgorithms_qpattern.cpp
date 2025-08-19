@@ -39,7 +39,7 @@ namespace qAlgorithms
         assert(*featuresInComponents == 0);
         lowestAreaLog = log(lowestArea);
 
-        unsigned int globalCompID = 1; // this is the component ID later used on a feature level. 0 means not part of a component
+        size_t globalCompID = 1; // this is the component ID later used on a feature level. 0 means not part of a component
 
 #pragma region "Pre-Group"
         std::vector<GroupLims> limits = preGroup(peaks);
@@ -74,8 +74,8 @@ namespace qAlgorithms
             // this loop determines the range (in scans) that is relevant to this grouping
             pregroup.features.reserve(groupsize);
             pregroup.EICs.reserve(groupsize);
-            unsigned int maxScan = 0;
-            unsigned int minScan = 4294967295; // max value of unsigned int
+            size_t maxScan = 0;
+            size_t minScan = 4294967295; // max value of size_t
             for (size_t j = limits[groupIdx].start; j < limits[groupIdx].end + 1; j++)
             {
                 FeaturePeak *test = &(peaks->at(j));
@@ -161,7 +161,7 @@ namespace qAlgorithms
                     }
 
                     // merge the EICs that are relevant to both
-                    static const std::vector<unsigned int> select{0, 1}; // smallest RT is always left
+                    static const std::vector<size_t> select{0, 1}; // smallest RT is always left
                     size_t idxStart = std::min(EIC_A.featLim_L, EIC_B.featLim_L);
                     size_t idxEnd = std::max(EIC_A.featLim_R, EIC_B.featLim_R);
                     assert(idxEnd > idxStart);
@@ -254,7 +254,7 @@ namespace qAlgorithms
                         // 1) create a selection vector that holds the feature IDs for merge
                         int existingComponent = singleLarge ? *ass_S : *ass_L;      // component ID of the assigned feature
                         size_t unassignedFeature = singleLarge ? p.idx_L : p.idx_S; // index of the unassigned feature
-                        std::vector<unsigned int> selection(1, unassignedFeature);
+                        std::vector<size_t> selection(1, unassignedFeature);
                         for (size_t idx = 0; idx < groupsize; idx++)
                         {
                             if (assignment[idx] == existingComponent)
@@ -324,7 +324,7 @@ namespace qAlgorithms
                         assert(idxEnd > idxStart);
 
                         // add all feature IDs from both components
-                        std::vector<unsigned int> selection;
+                        std::vector<size_t> selection;
                         for (size_t idx = 0; idx < groupsize; idx++)
                         {
                             if ((assignment[idx] == *ass_L) || (assignment[idx] == *ass_S))
@@ -358,7 +358,7 @@ namespace qAlgorithms
                             components[*ass_S].RSS = newRSS;
                             // invalidate the merged component
                             int removedID = *ass_L;
-                            unsigned int counter = 0;
+                            size_t counter = 0;
                             for (size_t idx = 0; idx < groupsize; idx++)
                             {
                                 if ((assignment[idx] == removedID))
@@ -394,7 +394,7 @@ namespace qAlgorithms
                     continue;
                 }
                 int compID = components[comp].component;
-                std::vector<unsigned int> selection; // used for tanimoto later on
+                std::vector<size_t> selection; // used for tanimoto later on
                 for (size_t feat = 0; feat < groupsize; feat++)
                 {
                     if (assignment[feat] == compID)
@@ -450,7 +450,7 @@ namespace qAlgorithms
     }
 
     MergedEIC mergeEICs(const std::vector<ReducedEIC> *eics,
-                        const std::vector<unsigned int> *selection,
+                        const std::vector<size_t> *selection,
                         size_t idxStart,
                         size_t idxEnd)
     {
@@ -522,7 +522,7 @@ namespace qAlgorithms
         RegressionGauss *mutateReg,
         const size_t idxStart,
         const size_t scale,
-        const std::vector<unsigned int> *cum_DF, // DF is cumulative over all combined harmonised EICs (between 0 and n DF per RT)
+        const std::vector<size_t> *cum_DF, // DF is cumulative over all combined harmonised EICs (between 0 and n DF per RT)
         const std::vector<float> *intensities,
         const std::vector<float> *intensities_log)
     {
@@ -726,9 +726,9 @@ namespace qAlgorithms
 
         mutateReg->uncertainty_pos = calcUncertaintyPos(mse, mutateReg->coeffs, mutateReg->apex_position, scale);
         mutateReg->df = df_sum - 4; // @todo add explanation for -4
-        mutateReg->apex_position += idx_x0;
-        mutateReg->scale = scale;
-        mutateReg->index_x0 = idx_x0;
+        mutateReg->apex_position += float(idx_x0);
+        mutateReg->scale = int(scale);
+        mutateReg->index_x0 = int(idx_x0);
         mutateReg->mse = mse; // the quadratic mse is used for the weighted mean of the coefficients later
         mutateReg->isValid = true;
         return;
@@ -745,8 +745,8 @@ namespace qAlgorithms
 
     size_t calcDF_single( // @todo change this so that cumulative degrees of freedom are used
         const std::vector<bool> *degreesOfFreedom,
-        unsigned int left_limit,
-        unsigned int right_limit)
+        size_t left_limit,
+        size_t right_limit)
     {
         size_t DF = 0;
         for (size_t i = left_limit; i < right_limit + 1; i++)
@@ -762,11 +762,11 @@ namespace qAlgorithms
     MultiRegression runningRegression_multi( // add function that combines multiplr eics and updates the peak count
         const MergedEIC *eic,
         const std::vector<ReducedEIC> *eics,
-        const std::vector<unsigned int> *selection,
+        const std::vector<size_t> *selection,
         const size_t idxStart,
         const size_t idxEnd,
         // const size_t maxScale,
-        const unsigned int numPeaks)
+        const size_t numPeaks)
     // const size_t peakFrame)
     {
         assert(numPeaks < 32);
@@ -797,7 +797,7 @@ namespace qAlgorithms
         std::vector<std::vector<float>> intensity_vecs(numPeaks);
         std::vector<std::vector<float>> logInt_vecs(numPeaks);
 
-        std::vector<unsigned int> DF_cum(peakFrame + 1, 0);
+        std::vector<size_t> DF_cum(peakFrame + 1, 0);
         for (size_t i = 0; i < eic->df.size(); i++)
         {
             size_t access = i % peakFrame;
@@ -986,9 +986,9 @@ namespace qAlgorithms
 
     std::vector<MultiRegression> findCoefficients_multi( // @todo add option for a minimum scale
         const std::vector<float> *intensity_log,
-        const unsigned int max_scale, // maximum scale that will be checked. Should generally be limited by peakFrame
-        const unsigned int numPeaks,
-        const unsigned int peakFrame) // how many points are covered per peak? For single-peak data, this is the length of intensity_log
+        const size_t max_scale, // maximum scale that will be checked. Should generally be limited by peakFrame
+        const size_t numPeaks,
+        const size_t peakFrame) // how many points are covered per peak? For single-peak data, this is the length of intensity_log
     {
         /*
   This function performs a convolution with the kernel: (xTx)^-1 xT and the data array: intensity_log.
@@ -1074,7 +1074,7 @@ namespace qAlgorithms
         //   [scale_min, scale_min +1 , .... scale_max, ... scale_min +1, scale_min]
         //   length of vector: num_steps
         // the vector starts and ends with minScale and increases by one towards the middle until it reaches the scale value
-        std::vector<unsigned int> maxInnerLoop(steps, max_scale);
+        std::vector<size_t> maxInnerLoop(steps, max_scale);
         for (size_t i = 0; i + 2 < max_scale; i++) // +2 since smallest scale is 2
         {
             // @todo somewhat inefficient, design better iteration scheme
@@ -1244,8 +1244,8 @@ namespace qAlgorithms
     ReducedEIC harmoniseEIC(const FeaturePeak *feature,
                             const EIC *bin,
                             const std::vector<float> *RTs,
-                            const unsigned int minScan, // minimum overall scan in the subgroup
-                            const unsigned int maxScan) // maximum overall scan in the subgroup
+                            const size_t minScan, // minimum overall scan in the subgroup
+                            const size_t maxScan) // maximum overall scan in the subgroup
     {
         size_t minIdx = feature->idxBinStart;
         size_t maxIdx = feature->idxBinEnd;
@@ -1257,7 +1257,7 @@ namespace qAlgorithms
         // within a component subgroup without further modification. The process is as follows:
         // 1) create a results vector for every element which is of a size known at the time of function call
 
-        const unsigned int length = maxScan - minScan + 1;
+        const size_t length = maxScan - minScan + 1;
         assert(length > 4);
         assert(RTs->size() == length);
         assert(bin->ints_area[minIdx] != 0);
@@ -1266,19 +1266,19 @@ namespace qAlgorithms
         // scan relates to the complete measurement and idx to the position within the bin
 
         // find index_x0 by finding the corresponding retention time
-        // unsigned int featLim_L = bin->scanNumbers[minIdx] - minScan;
-        // unsigned int featLim_R = bin->scanNumbers[maxIdx] - minScan;
+        // size_t featLim_L = bin->scanNumbers[minIdx] - minScan;
+        // size_t featLim_R = bin->scanNumbers[maxIdx] - minScan;
         // assert(featLim_L < featLim_R);
-        const unsigned int scanShift = feature->scanPeakStart - minScan; // offset of feature limits relating to the first element of the harmonised EIC
-        unsigned int index_x0 = feature->index_x0_offset + scanShift;    // absolute scan of x0 - begin of scan region
+        const size_t scanShift = feature->scanPeakStart - minScan; // offset of feature limits relating to the first element of the harmonised EIC
+        size_t index_x0 = feature->index_x0_offset + scanShift;    // absolute scan of x0 - begin of scan region
         assert(index_x0 < length - 2);
 
         ReducedEIC reduced{
-            std::vector<float>(length, 0),        // intensity
-            std::vector<float>(length, 0),        // log intensity
-            std::vector<unsigned int>(length, 0), // scan number
-            std::vector<float>(length, 0),        // RSS_cum
-            std::vector<bool>(length, true),      // degrees of freedom
+            std::vector<float>(length, 0),   // intensity
+            std::vector<float>(length, 0),   // log intensity
+            std::vector<size_t>(length, 0),  // scan number
+            std::vector<float>(length, 0),   // RSS_cum
+            std::vector<bool>(length, true), // degrees of freedom
             // std::vector<int>(length, 0),
             0,               // feature ID is only initialised after function execution
             feature->idxBin, // bin ID
@@ -1508,7 +1508,7 @@ namespace qAlgorithms
     }
 
     float tanimotoScore(const std::vector<ReducedEIC> *eics,
-                        const std::vector<unsigned int> *selection,
+                        const std::vector<size_t> *selection,
                         size_t idxStart,
                         size_t idxEnd)
     {

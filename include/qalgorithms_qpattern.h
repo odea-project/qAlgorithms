@@ -15,11 +15,11 @@ namespace qAlgorithms
         // all indices relate to the full subgroup!
         size_t idxStart;
         size_t idxEnd;
-        unsigned int scanStart; // this is the smallest scan still included in the regression
-        unsigned int scanEnd;
-        unsigned int idx_x0;
-        unsigned int scale;
-        unsigned int numPeaks; // @todo track this
+        size_t scanStart; // this is the smallest scan still included in the regression
+        size_t scanEnd;
+        size_t idx_x0;
+        size_t scale;
+        size_t numPeaks; // @todo track this
         float b1;
         float b2;
         float b3;
@@ -55,21 +55,21 @@ namespace qAlgorithms
     {
         MultiRegression regression;
         std::vector<float> cumRSS;
-        size_t idx_S;          // relates to half matrix
-        size_t idx_L;          // relates to half matrix
-        unsigned int idxStart; // relates to harmonised EIC space
-        unsigned int idxEnd;   // relates to harmonised EIC space
-        float RSS;             // residual sum of squares
-        int component = -1;    // no pair is assigned by default
+        size_t idx_S;       // relates to half matrix
+        size_t idx_L;       // relates to half matrix
+        size_t idxStart;    // relates to harmonised EIC space
+        size_t idxEnd;      // relates to harmonised EIC space
+        float RSS;          // residual sum of squares
+        int component = -1; // no pair is assigned by default
     };
 
     struct CompAssignment
     {
         MultiRegression regression;
         std::vector<float> cumRSS;
-        unsigned int limit_L;  // refers to harmonised EIC space
-        unsigned int limit_R;  // refers to harmonised EIC space
-        unsigned int numPeaks; // number of peaks included in this component
+        size_t limit_L;  // refers to harmonised EIC space
+        size_t limit_R;  // refers to harmonised EIC space
+        size_t numPeaks; // number of peaks included in this component
         float RSS = INFINITY;
         int component = -1; // -1 means unassigned, groups start at 0
     };
@@ -83,21 +83,21 @@ namespace qAlgorithms
         // points in the EIC are already interpolated using the origin feature
         std::vector<float> intensity;
         std::vector<float> intensity_log;
-        std::vector<unsigned int> scanNo;
+        std::vector<size_t> scanNo;
         std::vector<float> RSS_cum; // cumulative RSS - considers the entire possible block
         std::vector<bool> df;       // @todo get rid of this somehow
         // std::vector<int> DF_cum;    // cumulative degrees of freedom, @todo use this to ensure at least five points overlap
-        unsigned int feature_ID;
-        unsigned int bin_ID;
-        unsigned int minScan;
+        size_t feature_ID;
+        size_t bin_ID;
+        size_t minScan;
         // these are the limits of the original feature and the index where the abstract x-axis is 0
-        unsigned int featLim_L;
-        unsigned int featLim_R;
-        unsigned int index_x0;
+        size_t featLim_L;
+        size_t featLim_R;
+        size_t index_x0;
         // these limits are the first and last point in the EIC which need to be included in a region
         // if that region is to be valid. They are set to the fifth real point from every direction
-        unsigned int minIncludedIndex;
-        unsigned int maxIncludedIndex;
+        size_t minIncludedIndex;
+        size_t maxIncludedIndex;
     };
 
     struct MergedEIC
@@ -111,17 +111,17 @@ namespace qAlgorithms
         std::vector<float> RSS_cum; // cumulative RSS - this also serves as the indicator for interpolated / not interpolated
         std::vector<int> DF_cum;
         std::vector<bool> df; // @todo make this cumulative
-        unsigned int numPeaks;
-        unsigned int peakFrame;
-        unsigned int groupIdxStart; // this is equal to the offset within the group for later
-        unsigned int minScan;       // needed for one-axis position of regression at the end
+        size_t numPeaks;
+        size_t peakFrame;
+        size_t groupIdxStart; // this is equal to the offset within the group for later
+        size_t minScan;       // needed for one-axis position of regression at the end
     };
 
     ReducedEIC harmoniseEIC(const FeaturePeak *feature,
                             const EIC *bin,
                             const std::vector<float> *RTs,
-                            const unsigned int minScan,
-                            const unsigned int maxScan);
+                            const size_t minScan,
+                            const size_t maxScan);
 
     // always calculate the RSS over the entire region of intensities. Since the regression is always
     // centered, only the index where x is 0 must be known in advance
@@ -130,29 +130,29 @@ namespace qAlgorithms
                                      size_t index_x0);
 
     MergedEIC mergeEICs(const std::vector<ReducedEIC> *eics,
-                        const std::vector<unsigned int> *selection,
+                        const std::vector<size_t> *selection,
                         size_t idxStart,
                         size_t idxEnd);
 
     std::vector<MultiRegression> findCoefficients_multi(
         const std::vector<float> *intensity_log,
-        const unsigned int scale,      // maximum scale that will be checked. Should generally be limited by peakFrame
-        const unsigned int numPeaks,   // only > 1 during componentisation (for now? @todo)
-        const unsigned int peakFrame); // how many points are covered per peak? For single-peak data, this is the length of intensity_log
+        const size_t scale,      // maximum scale that will be checked. Should generally be limited by peakFrame
+        const size_t numPeaks,   // only > 1 during componentisation (for now? @todo)
+        const size_t peakFrame); // how many points are covered per peak? For single-peak data, this is the length of intensity_log
 
     MultiRegression runningRegression_multi(
         const MergedEIC *eic,
         const std::vector<ReducedEIC> *eics,
-        const std::vector<unsigned int> *selection,
+        const std::vector<size_t> *selection,
         const size_t idxStart,
         const size_t idxEnd,
-        const unsigned int numPeaks);
+        const size_t numPeaks);
 
     void makeValidRegression_multi(
         RegressionGauss *mutateReg,
         const size_t idxStart,
         const size_t scale,
-        const std::vector<unsigned int> *cum_DF,
+        const std::vector<size_t> *cum_DF,
         const std::vector<float> *intensities,
         const std::vector<float> *intensities_log);
 
@@ -177,7 +177,7 @@ namespace qAlgorithms
                     size_t p_complex); // needed for the F-test, should be replaced by a better solution sometime
 
     float tanimotoScore(const std::vector<ReducedEIC> *eics,
-                        const std::vector<unsigned int> *selection,
+                        const std::vector<size_t> *selection,
                         size_t idxStart,
                         size_t idxEnd);
 }

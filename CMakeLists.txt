@@ -13,7 +13,7 @@ option(V_ASAN "Enable AddressSanitizer" OFF)
 ## Set compiler flags
 
 # compile options - optimisation / required
-add_compile_options(-std=c++2c -fno-math-errno -mavx2 -march=native -O0)
+add_compile_options(-std=c++2c -fno-math-errno -mavx2 -march=native -O2)
 
 # debug-related flags
 add_compile_options(-g -ggdb3)
@@ -28,8 +28,10 @@ add_compile_options(-Wall -Wpedantic -Wuninitialized -Wno-unknown-pragmas -Wform
 
 # warnings that produce too much noise when building - @todo add these in eventually
 # add_compile_options(-Wdouble-promotion -Wconversion -Weffc++)
+add_compile_options(-Wconversion)
 
-# add_compile_options(-fsanitize=address) # @todo find a way to use this
+# add_compile_options(-fsanitize=address) # @todo find a way to use this (not supported under mingw)
+# add_link_options($<$<CONFIG:Debug>:-fsanitize=address>)
 
 # Set include directories
 include_directories(include "external/simdutf/")
