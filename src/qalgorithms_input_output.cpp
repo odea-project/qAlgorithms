@@ -851,7 +851,7 @@ namespace qAlgorithms
             const unsigned int bufsize = 2048;
             char buffer[bufsize];
             char *b0_buf = buffer; // print b0 to the end
-            unsigned int writtenChars = snprintf(&buffer[0], bufsize, "%u,%u,%u,%u,%0.6f,%0.8f,%0.8f,%0.8f,b0",
+            unsigned int writtenChars = snprintf(&buffer[0], bufsize, "%u,%lu,%lu,%lu,%0.6f,%0.8f,%0.8f,%0.8f,b0",
                                                  regIdx + 1, reg.numPeaks, reg.scanStart, reg.idx_x0, reg.DQS, reg.b1, reg.b2, reg.b3);
             assert(writtenChars < bufsize);
             for (size_t b0 = 0; b0 < reg.numPeaks; b0++)
@@ -912,8 +912,8 @@ namespace qAlgorithms
             {
                 continue;
             }
-            size_t scanStart = std::max(compRegs->at(compID - 1).scanStart, bin.scanNumbers[0]);
-            size_t scanEnd = std::min(compRegs->at(compID - 1).scanEnd, bin.scanNumbers.back());
+            size_t scanStart = std::max(compRegs->at(compID - 1).scanStart, size_t(bin.scanNumbers[0]));
+            size_t scanEnd = std::min(compRegs->at(compID - 1).scanEnd, size_t(bin.scanNumbers.back()));
             size_t idxStart = 0;
             size_t idxEnd_1 = bin.scanNumbers.size(); // index one past the end
             // find limits

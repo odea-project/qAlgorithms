@@ -264,7 +264,7 @@ int main(int argc, char *argv[])
                 // correlate centroid error with nearest neighbour distance in one scan somehow?
                 meanDQSC += centroids->at(i).DQSC;
             }
-            meanDQSC /= centroidCount;
+            meanDQSC /= double(centroidCount);
 
             auto timeEnd = std::chrono::high_resolution_clock::now();
             std::chrono::duration<float> timePassed = std::chrono::duration_cast<std::chrono::milliseconds>(timeEnd - timeStart);
@@ -379,8 +379,8 @@ int main(int argc, char *argv[])
                 }
                 meanInterpolations += features[i].interpolationCount - 4;
             }
-            meanDQSF /= features.size() - peaksWithMassGaps;
-            meanInterpolations /= features.size();
+            meanDQSF /= double(features.size() - peaksWithMassGaps);
+            meanInterpolations /= double(features.size());
             if (userArgs.verboseProgress)
             {
                 std::cout << peaksWithMassGaps << " peaks were erroneously constructed from more than one mass trace\n";

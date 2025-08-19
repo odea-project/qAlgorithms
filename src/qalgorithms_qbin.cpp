@@ -7,7 +7,7 @@
 #include <vector>
 #include <numeric> // used for std::partial_sum during order space construction
 #include <math.h>
-#include <algorithm> // sort, maximum and iterator conversion
+#include <algorithm> // sorting
 #include <string>
 
 namespace qAlgorithms
@@ -187,7 +187,7 @@ namespace qAlgorithms
                 auto activeOS = makeOrderSpace(&processThis);
                 auto cumError = makeCumError(&processThis.pointsInBin);
                 processThis.subsetMZ(bincontainer.targetBins, bincontainer.notInBins,
-                                     activeOS, cumError,
+                                     &activeOS, cumError,
                                      0, activeOS.size() - 1);
             }
             // @todo logging
@@ -358,7 +358,7 @@ namespace qAlgorithms
 
     // void Bin::subsetMZ(std::vector<Bin> *bincontainer, std::vector<const CentroidPeak *> &notInBins,
     void Bin::subsetMZ(std::vector<Bin> *bincontainer, std::vector<const CentroidPeak *> &notInBins,
-                       const std::vector<double> &OS, const std::vector<double> &cumError,
+                       const std::vector<double> *OS, const std::vector<double> &cumError,
                        const unsigned int binStartInOS, const unsigned int binEndInOS)
     {
         assert(binEndInOS >= binStartInOS);
@@ -367,7 +367,12 @@ namespace qAlgorithms
 
         assert(binsizeInOS > 4); // @todo this is wrong, it should check for five real points == four differences
 
-        auto pmax = std::max_element(OS.begin() + binStartInOS, OS.begin() + binEndInOS); // @todo this is wrong if binEnd is the index
+        const double *pmax = &(*OS)[0];
+        for (size_t i = binStartInOS; i <= binEndInOS; i++)
+        {
+            const double *d = &(*OS)[i];
+            pmax = *pmax < *d ? d : pmax;
+        }
         double max = *pmax;
 
         double vcrit = binningCritVal(binsizeInOS, (cumError[binEndInOS] - cumError[binStartInOS]) / binsizeInOS);
@@ -385,7 +390,7 @@ namespace qAlgorithms
         else
         {
             // the centroid at cutpos is included in the left fragment
-            const int cutpos = std::distance(OS.begin() + binStartInOS, pmax);
+            const size_t cutpos = pmax - &(*OS)[0]; // @todo this would just be OS if OS were a c array
             // only continue if binsize is greater five
             if (cutpos + 1 > 4)
             {
@@ -393,7 +398,7 @@ namespace qAlgorithms
             }
             else
             {
-                for (int i = 0; i < cutpos + 1; i++)
+                for (size_t i = 0; i < cutpos + 1; i++)
                 {
                     notInBins.push_back(pointsInBin[binStartInOS + i]);
                 }

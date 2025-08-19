@@ -82,8 +82,8 @@ namespace qAlgorithms
                 assert(test->scanPeakEnd - test->scanPeakStart >= 4);
                 // auto binRTs = (*bins)[test->idxBin].rententionTimes;
                 auto scans = (*bins)[test->idxBin].scanNumbers;
-                maxScan = std::max(maxScan, test->scanPeakEnd); // @todo scans should be their own type, same with indices
-                minScan = std::min(minScan, test->scanPeakStart);
+                maxScan = std::max(maxScan, size_t(test->scanPeakEnd)); // @todo scans should be their own type, same with indices
+                minScan = std::min(minScan, size_t(test->scanPeakStart));
 
                 assert(maxScan - minScan >= 4);
                 if (test->scanPeakStart + test->index_x0_offset >= test->scanPeakEnd - 1)

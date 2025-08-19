@@ -80,7 +80,7 @@ namespace qAlgorithms
         /// @param startBin index relating to the order space at which the bin starts
         /// @param endBin index relating to the order space at which the bin ends
         void subsetMZ(std::vector<Bin> *bincontainer, std::vector<const CentroidPeak *> &notInBins,
-                      const std::vector<double> &OS, const std::vector<double> &cumError,
+                      const std::vector<double> *OS, const std::vector<double> &cumError,
                       const unsigned int binStartInOS, const unsigned int binEndInOS);
 
         /// @brief divide a bin sorted by scans if there are gaps greater than maxdist in it. Bins that cannot be divided are closed.
