@@ -199,7 +199,7 @@ int main(int argc, char *argv[])
             std::vector<CentroidPeak> *centroids = new std::vector<CentroidPeak>;
             *centroids = findCentroids(data, &linkNodes, &selectedIndices); // it is guaranteed that only profile mode data is used
 
-            if (centroids->empty())
+            if (centroids->size() == 1) // one empty element is always pushed back.
             {
                 if (userArgs.verboseProgress)
                 {

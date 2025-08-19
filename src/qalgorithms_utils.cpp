@@ -86,12 +86,12 @@ namespace qAlgorithms
         return x * (p / q);
     }
 
-    double experfc(double x, double sign)
+    double experfc(double x, double sign) // @todo this was updated in dev_G - understand, change and sync it
     {
         constexpr double a = 0.978795604954049; // empirically determined
         constexpr double b = 1.25731022692317;  // empirically determined
         double t = -x * x;
-        return SQRTPI_2 * exp_approx_d(t) + sign * a * x * exp_approx_d(t * b);
+        return SQRTPI_2 * exp_approx_d(t) + sign * a * x * exp_approx_d(t * b); // @todo t is always negative, which goes against the definition given in exp_approx_d
     }
 
     double erfi(const double x)

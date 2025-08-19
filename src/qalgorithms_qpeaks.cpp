@@ -31,7 +31,7 @@ namespace qAlgorithms
         assert(!treatedData->empty());
         assert(scanNumber != 0);
 
-        std::vector<float> logIntensity(maxWindowSize, NAN);
+        std::vector<float> logIntensity(maxWindowSize, NAN); // @todo calculate the log of all intensities once when reading in the spectrum
 
         const size_t GLOBAL_MAXSCALE_CENTROID = 8; // @todo this is a critical part of the algorithm and should not be hard-coded
         assert(GLOBAL_MAXSCALE_CENTROID <= MAXSCALE);
@@ -64,6 +64,7 @@ namespace qAlgorithms
             createCentroidPeaks(retPeaks, &validRegressions, block, scanNumber, accessor);
             validRegressions.clear();
         }
+        assert(retPeaks->size() > 1); // one dummy value is always present
     }
 
     void findFeaturePeaks(std::vector<RegressionGauss> *validRegressions, const EIC *eic, const size_t maxApexIdx)
@@ -383,7 +384,7 @@ namespace qAlgorithms
 
         assert(beta_0.size() == beta_1.size());
 
-        // @todo why not save the scale information as part of the coefficient struct and then use that for the whole merging?
+        // @todo how does the restructure in dev_G work?
         auto coeffs = restoreShape(&maxInnerLoop,
                                    &beta_0, &beta_1, &beta_2, &beta_3,
                                    intensity_log->size());
@@ -492,8 +493,12 @@ namespace qAlgorithms
         findBestScales
     */
     {
+        // @todo this function has fairly confusing logic: in the loop, first a potential regression is validated individually.
+        // If the current regression had the largest possible start index and if there are at least two valid regressions, the
+        // the merge over scales function is called.
+
         const size_t numPoints = intensities->size();
-        // all entries in coeff are sorted by scale - this is not checked!
+        // all entries in coeff are sorted by scale in ascending order - this is not checked!
 
         std::vector<RegressionGauss> validRegsTmp; // temporary vector to store valid regressions
         validRegsTmp.reserve(numPoints);
@@ -506,8 +511,8 @@ namespace qAlgorithms
         for (size_t range = 0; range < coeffs->size(); range++)
         {
             bool stillValid = true;
-            size_t df = calcDF_cum(degreesOfFreedom_cum, idxStart, 2 * currentScale + idxStart);
 
+            size_t df = calcDF_cum(degreesOfFreedom_cum, idxStart, 2 * currentScale + idxStart);
             if (df < 5)
             {
                 stillValid = false;
@@ -713,13 +718,12 @@ namespace qAlgorithms
         */
         // float regression_Fval = calcRegressionFvalue(&selectLog, &predictLog, mse, mutateReg->coeffs.b0);
         // if (regression_Fval < F_VALUES[selectLog.size()]) // - 5 since the minimum is five degrees of freedom
+        // {
+        //     // H0 holds, the two distributions are not noticeably different
+        //     return;
+        // }
 
-        {
-            // H0 holds, the two distributions are not noticeably different
-            return;
-        }
-        // mse is only the correct mean square error after this division
-        double mse = RSS_reg / double(df_sum - 4);
+        double mse = RSS_reg / double(df_sum - 4); // mean squared error with respect to the degrees of freedom - @todo is the -4 correct?
 
         if (!isValidQuadraticTerm(mutateReg->coeffs, scale, mse, df_sum))
         {
@@ -1123,8 +1127,8 @@ namespace qAlgorithms
         // left side
         for (size_t iSegment = limit_L; iSegment < index_x0; iSegment++)
         {
-            // @todo the cast to double / float is not vectorised automatically
-            double new_x = double(iSegment - index_x0);
+            // @todo the cast to double / float is not vectorised automatically - replace with calc absolute difference -> set sign based on b2 / b3
+            double new_x = double(iSegment) - double(index_x0);
             double y_predict = coeff.b0 + (coeff.b1 + coeff.b2 * new_x) * new_x; // y = b0 + x * b1 + x^2 * b23
             double difference = y_start->at(iSegment) - y_predict;
 
@@ -1136,7 +1140,7 @@ namespace qAlgorithms
         // right side
         for (size_t iSegment = index_x0 + 1; iSegment < limit_R + 1; iSegment++) // iSegment = 0 is center point calculated above
         {
-            double new_x = double(iSegment - index_x0);
+            double new_x = double(iSegment) - double(index_x0);
             double y_predict = coeff.b0 + (coeff.b1 + coeff.b3 * new_x) * new_x; // b3 instead of b2
             double difference = y_start->at(iSegment) - y_predict;
 
@@ -1236,7 +1240,7 @@ namespace qAlgorithms
         // left side
         for (size_t iSegment = limit_L; iSegment < index_x0; iSegment++) // @todo factor this loop into a function
         {
-            double new_x = double(iSegment - index_x0); // always negative
+            double new_x = double(iSegment) - double(index_x0); // always negative
             double y_predict = exp_approx_d(coeff.b0 + (coeff.b1 + coeff.b2 * new_x) * new_x);
             double y_current = (*y_start)[iSegment];
             double newdiff = (y_current - y_predict) * (y_current - y_predict);
@@ -1246,7 +1250,7 @@ namespace qAlgorithms
         // right side
         for (size_t iSegment = index_x0 + 1; iSegment < limit_R + 1; iSegment++) // start one past the center, include right limit index
         {
-            double new_x = double(iSegment - index_x0);                                        // always positive
+            double new_x = double(iSegment) - double(index_x0);                                // always positive
             double y_predict = exp_approx_d(coeff.b0 + (coeff.b1 + coeff.b3 * new_x) * new_x); // b3 instead of b2
             double y_current = (*y_start)[iSegment];
             double newdiff = (y_current - y_predict) * (y_current - y_predict);
@@ -1268,7 +1272,7 @@ namespace qAlgorithms
         // left side
         for (size_t iSegment = limit_L; iSegment < index_x0; iSegment++)
         {
-            double new_x = double(iSegment - index_x0);
+            double new_x = double(iSegment) - double(index_x0);
             double y_predict = exp_approx_d(coeff.b0 + (coeff.b1 + coeff.b2 * new_x) * new_x);
             double y_current = (*y_start)[iSegment];
             double newdiff = (y_current - y_predict) * (y_current - y_predict);
@@ -1291,6 +1295,37 @@ namespace qAlgorithms
 #pragma endregion calcSSE
 
 #pragma region "smearing correction"
+
+    /// @brief Updates the intercept (b0) for log-linear regression models after back-transformation,
+    ///        by calculating the optimal scaling correction. Returns the new b0 (to be used in exp(new_b0 + ...)).
+    ///        This replaces the old b0 in your model for unbiased prediction after exp-transformation.
+    /// @param yLogHatInWindow Vector of predicted log(y) (including b0!).
+    /// @param yInWindow       Vector of original (not log-transformed) y values.
+    /// @param b0              The old intercept (from log regression).
+    /// @return                The updated b0 (corrected).
+
+    float updateB0Scaling( // @todo how and why does this work?
+        const std::vector<float> &yLogHatInWindow,
+        const std::vector<float> &yInWindow,
+        const float b0)
+    {
+        assert(yLogHatInWindow.size() == yInWindow.size());
+
+        size_t n = yInWindow.size();
+
+        double sum_y_yhat = 0.0f;
+        double sum_yhat2 = 0.0f;
+
+        // Use yLogHat[i] - b0 to get the prediction without intercept
+        for (size_t i = 0; i < n; ++i)
+        {
+            double yhat_wo_b0 = exp_approx_d(yLogHatInWindow[i] - b0);
+            sum_y_yhat += yInWindow[i] * yhat_wo_b0;
+            sum_yhat2 += yhat_wo_b0 * yhat_wo_b0;
+        }
+        return std::log(sum_y_yhat / sum_yhat2);
+    }
+
     // @todo implement this
     CorrectionFactors smearingCorrection(
         const std::vector<float> *predictLog,
@@ -2034,7 +2069,7 @@ namespace qAlgorithms
         const size_t countSelected = selectedIndices->size();
 
         std::vector<CentroidPeak> centroids;
-        centroids.reserve(countSelected * 1000);
+        centroids.reserve(countSelected * 100);
         centroids.push_back({0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}); // dummy value used for binning
 
         std::vector<double> spectrum_mz(1000);
@@ -2050,7 +2085,7 @@ namespace qAlgorithms
             size_t ID_spectrum = selectedIndices->at(i);
             data.get_spectrum(linkNodes, &spectrum_mz, &spectrum_int, ID_spectrum);
 
-            size_t maxWindowSize = pretreatDataCentroids(&groupedData, &spectrum_mz, &spectrum_int);
+            size_t maxWindowSize = pretreatDataCentroids(&groupedData, &spectrum_mz, &spectrum_int); // @todo every group is just a range into three same-length vectors
 
             findCentroidPeaks(&centroids, &groupedData, i + 1, ID_spectrum, maxWindowSize);
         }
@@ -2059,7 +2094,7 @@ namespace qAlgorithms
             centroids[i].ID = i;
         }
 
-        return centroids;
+        return centroids; // @todo mutate centroids and return success / failure
     }
 
     void binProfileSpec(std::vector<Block> *result,
