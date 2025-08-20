@@ -74,7 +74,7 @@ namespace qAlgorithms
 
         // pugi::xml_node mzml_root_node;
 
-        // std::vector<pugi::xml_node> spectra; // making this a class member makes the code unbelieveably slow
+        const std::vector<pugi::xml_node> *linknodes; // allocation during initialisation, has to be deallocated manually with the supplied function
 
     public:
         pugi::xml_node mzml_root_node;
@@ -111,8 +111,10 @@ namespace qAlgorithms
         Polarities get_polarity_mode(const std::vector<pugi::xml_node> *spectra_nodes_ex, size_t count);
         std::vector<float> get_spectra_RT(const std::vector<unsigned int> *indices,
                                           const std::vector<pugi::xml_node> *spectra_nodes_ex);
+
+        void freeLinknodes();
     };
-    const std::vector<pugi::xml_node> link_vector_spectra_nodes(pugi::xml_node mzml_root_node);
+    const std::vector<pugi::xml_node> *link_vector_spectra_nodes(pugi::xml_node mzml_root_node); // this function allocates with new!
 };
 
 #endif // QALGORITHMS_READ_FILE_H

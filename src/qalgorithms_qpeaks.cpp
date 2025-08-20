@@ -2,11 +2,13 @@
 #include "qalgorithms_utils.h"
 #include "qalgorithms_global_vars.h"
 #include "qalgorithms_datatypes.h"
-#include "qalgorithms_read_file.h" // @todo remove coupling
+// #include "qalgorithms_read_file.h" // @todo remove coupling
 
 #include <cassert>
 #include <cmath>
 #include <vector>
+#include <algorithm> // sorting
+#include <stdint.h>  // max numeric vals
 
 namespace qAlgorithms
 {
@@ -2074,6 +2076,7 @@ namespace qAlgorithms
 
         std::vector<double> spectrum_mz(1000);
         std::vector<double> spectrum_int(1000);
+
         std::vector<ProfileBlock> groupedData(500);
         for (size_t i = 0; i < countSelected; ++i)
         {

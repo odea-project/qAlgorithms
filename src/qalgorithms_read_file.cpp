@@ -154,6 +154,8 @@ namespace qAlgorithms
             }
             number_spectra_binary_arrays = counter;
         }
+
+        linknodes = link_vector_spectra_nodes(mzml_root_node);
     };
 
     BinaryMetadata XML_File::extract_binary_metadata(const pugi::xml_node &bin)
@@ -230,9 +232,9 @@ namespace qAlgorithms
         return mtd;
     }
 
-    const std::vector<pugi::xml_node> link_vector_spectra_nodes(pugi::xml_node mzml_root_node) // @todo this does not need to be called more than once
+    const std::vector<pugi::xml_node> *link_vector_spectra_nodes(pugi::xml_node mzml_root_node) // @todo this does not need to be called more than once
     {
-        std::vector<pugi::xml_node> spectra;
+        std::vector<pugi::xml_node> *spectra = new std::vector<pugi::xml_node>;
 
         std::string search_run = "//run";
         pugi::xpath_node xps_run = mzml_root_node.select_node(search_run.c_str());
@@ -241,11 +243,18 @@ namespace qAlgorithms
 
         for (pugi::xml_node child = spec_list.first_child(); child; child = child.next_sibling())
         {
-            spectra.push_back(child);
+            spectra->push_back(child);
         }
 
-        assert(spectra.size() > 0);
+        assert(spectra->size() > 0);
         return spectra;
+    };
+
+    void XML_File::freeLinknodes()
+    {
+        if (linknodes != nullptr)
+            delete linknodes;
+        defective = true;
     };
 
     void XML_File::get_spectrum( // this obviously only extracts data that is in profile mode.
