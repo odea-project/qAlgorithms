@@ -51,6 +51,7 @@ namespace qAlgorithms
         char *attr_value;
     };
 
+    /* ### WARNING: THIS CONSTRUCTOR ALLOCATES A SEPARATE ARRAY ### */
     class XML_File // @todo this is just a complicated way of having a filetype specific accession struct and a generalised container
     {
         // @todo change this to a generalised XML class which includes cases for mzML, mzXML and others
@@ -99,7 +100,6 @@ namespace qAlgorithms
         Polarities get_polarity_mode(size_t count);
         std::vector<float> get_spectra_RT(const std::vector<unsigned int> *indices);
 
-        const std::vector<pugi::xml_node> *link_vector_spectra_nodes(); // this function allocates with new!
         void freeLinknodes();
     };
 };

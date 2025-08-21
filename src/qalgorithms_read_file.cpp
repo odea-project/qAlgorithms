@@ -128,10 +128,9 @@ namespace qAlgorithms
         assert(format == "indexedmzML");
 
         mzml_root_node = mzml_root_node.first_child();
-
         pugi::xpath_node xps_run = mzml_root_node.select_node("//run");
-
         pugi::xml_node spec_list = xps_run.node().child("spectrumList");
+        assert(spec_list);
 
         number_spectra = spec_list.attribute("count").as_int();
 
@@ -155,7 +154,14 @@ namespace qAlgorithms
             number_spectra_binary_arrays = counter;
         }
 
-        linknodes = link_vector_spectra_nodes();
+        std::vector<pugi::xml_node> *spectra = new std::vector<pugi::xml_node>; // intermediate necessary since linknodes is const
+        for (pugi::xml_node child = spec_list.first_child(); child; child = child.next_sibling())
+        {
+            spectra->push_back(child);
+        }
+        assert(spectra->size() > 0);
+
+        linknodes = spectra;
     };
 
     BinaryMetadata XML_File::extract_binary_metadata(const pugi::xml_node &bin)
@@ -231,24 +237,6 @@ namespace qAlgorithms
 
         return mtd;
     }
-
-    const std::vector<pugi::xml_node> *XML_File::link_vector_spectra_nodes() // @todo this does not need to be called more than once
-    {
-        std::vector<pugi::xml_node> *spectra = new std::vector<pugi::xml_node>;
-
-        std::string search_run = "//run";
-        pugi::xpath_node xps_run = mzml_root_node.select_node(search_run.c_str());
-        pugi::xml_node spec_list = xps_run.node().child("spectrumList");
-        assert(spec_list);
-
-        for (pugi::xml_node child = spec_list.first_child(); child; child = child.next_sibling())
-        {
-            spectra->push_back(child);
-        }
-
-        assert(spectra->size() > 0);
-        return spectra;
-    };
 
     void XML_File::freeLinknodes()
     {
