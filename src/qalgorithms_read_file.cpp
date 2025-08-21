@@ -155,7 +155,7 @@ namespace qAlgorithms
             number_spectra_binary_arrays = counter;
         }
 
-        linknodes = link_vector_spectra_nodes(mzml_root_node);
+        linknodes = link_vector_spectra_nodes();
     };
 
     BinaryMetadata XML_File::extract_binary_metadata(const pugi::xml_node &bin)
@@ -232,7 +232,7 @@ namespace qAlgorithms
         return mtd;
     }
 
-    const std::vector<pugi::xml_node> *link_vector_spectra_nodes(pugi::xml_node mzml_root_node) // @todo this does not need to be called more than once
+    const std::vector<pugi::xml_node> *XML_File::link_vector_spectra_nodes() // @todo this does not need to be called more than once
     {
         std::vector<pugi::xml_node> *spectra = new std::vector<pugi::xml_node>;
 
@@ -258,20 +258,20 @@ namespace qAlgorithms
     };
 
     void XML_File::get_spectrum( // this obviously only extracts data that is in profile mode.
-        const std::vector<pugi::xml_node> *spectra_nodes_ex,
         std::vector<double> *const spectrum_mz,
         std::vector<double> *const spectrum_RT,
         size_t index)
     {
         assert(spectrum_mz->empty() && spectrum_RT->empty());
+        assert(!this->defective);
 
-        if (spectra_nodes_ex->size() == 0)
+        if (linknodes->size() == 0)
         {
             std::cerr << "Error: no spectra found for index" << index << "\n";
             return;
         }
 
-        const pugi::xml_node &spectrum_node = (*spectra_nodes_ex)[index];
+        const pugi::xml_node &spectrum_node = (*linknodes)[index];
 
         pugi::xml_node node_binary_list = spectrum_node.child("binaryDataArrayList");
         assert(number_spectra_binary_arrays == 2);
@@ -353,17 +353,17 @@ namespace qAlgorithms
     };
 
     std::vector<float> XML_File::get_spectra_RT(
-        const std::vector<unsigned int> *indices,
-        const std::vector<pugi::xml_node> *spectra_nodes_ex)
+        const std::vector<unsigned int> *indices)
     {
         assert(indices->size() > 0);
+        assert(!this->defective);
 
         std::vector<float> retention_times;
 
         for (size_t i = 0; i < indices->size(); ++i)
         {
             size_t idx = indices->at(i);
-            pugi::xml_node spec = (*spectra_nodes_ex)[idx];
+            pugi::xml_node spec = (*linknodes)[idx];
             double RT = extract_scan_RT(spec);
             retention_times.push_back(RT);
         }
@@ -372,8 +372,7 @@ namespace qAlgorithms
     };
 
     std::vector<bool> XML_File::get_spectra_polarity(
-        const std::vector<unsigned int> *indices,
-        const std::vector<pugi::xml_node> *spectra_nodes_ex)
+        const std::vector<unsigned int> *indices)
     {
         assert(indices->size() > 0);
         std::vector<bool> polarities;
@@ -381,7 +380,7 @@ namespace qAlgorithms
         for (size_t i = 0; i < indices->size(); ++i)
         {
             int idx = indices->at(i);
-            pugi::xml_node spec = (*spectra_nodes_ex)[idx];
+            pugi::xml_node spec = (*linknodes)[idx];
             if (spec.find_child_by_attribute("cvParam", "accession", "MS:1000130"))
             {
                 polarities.push_back(true);
@@ -396,16 +395,17 @@ namespace qAlgorithms
         return polarities;
     };
 
-    Polarities XML_File::get_polarity_mode(const std::vector<pugi::xml_node> *spectra_nodes_ex, size_t count)
+    Polarities XML_File::get_polarity_mode(
+        size_t count)
     {
-        assert(spectra_nodes_ex->size() > 1);
-        count = count < spectra_nodes_ex->size() ? count : spectra_nodes_ex->size() - 1;
+        assert(linknodes->size() > 1);
+        count = count < linknodes->size() ? count : linknodes->size() - 1;
 
         bool positive = false;
         bool negative = false;
         for (size_t i = 0; i < count; ++i)
         {
-            pugi::xml_node spec = (*spectra_nodes_ex)[i];
+            pugi::xml_node spec = (*linknodes)[i];
             if (spec.find_child_by_attribute("cvParam", "accession", "MS:1000130"))
             {
                 positive = true;
@@ -448,8 +448,7 @@ namespace qAlgorithms
         return spec_indices;
     };
 
-    std::vector<int> XML_File::get_spectra_level(const std::vector<unsigned int> *indices,
-                                                 const std::vector<pugi::xml_node> *spectra_nodes_ex)
+    std::vector<int> XML_File::get_spectra_level(const std::vector<unsigned int> *indices)
     {
         assert(indices->size() > 0);
         std::vector<int> levels;
@@ -457,7 +456,7 @@ namespace qAlgorithms
         for (size_t i = 0; i < indices->size(); ++i)
         {
             size_t idx = indices->at(i);
-            pugi::xml_node spec = (*spectra_nodes_ex)[idx];
+            pugi::xml_node spec = (*linknodes)[idx];
             pugi::xml_node level_node = spec.find_child_by_attribute("cvParam", "name", "ms level");
             int level = level_node.attribute("value").as_int();
             levels.push_back(level);
@@ -466,7 +465,7 @@ namespace qAlgorithms
         return levels;
     };
 
-    std::vector<bool> XML_File::get_spectra_mode(const std::vector<pugi::xml_node> *spectra_nodes_ex) // centroid or profile
+    std::vector<bool> XML_File::get_spectra_mode() // centroid or profile
     {
         assert(this->number_spectra > 0);
 
@@ -479,7 +478,7 @@ namespace qAlgorithms
         for (size_t i = 0; i < accessor.size(); ++i)
         {
             size_t idx = accessor[i];
-            pugi::xml_node spec = (*spectra_nodes_ex)[idx];
+            pugi::xml_node spec = (*linknodes)[idx];
             if (spec.find_child_by_attribute("cvParam", "accession", "MS:1000128"))
             {
                 modes.push_back(true); // profile mode
@@ -495,7 +494,6 @@ namespace qAlgorithms
     };
 
     std::vector<unsigned int> XML_File::filter_spectra(
-        const std::vector<pugi::xml_node> *spectra_nodes_ex,
         bool ms1, bool polarity, bool centroided)
     {
         // extract relevant properties out of the function call @todo make all relevant fields part of a
@@ -512,6 +510,7 @@ namespace qAlgorithms
         // }
 
         // return a vector of all indices that are relevant to the query. Properties are checked in order of regularity.
+        assert(!this->defective);
         assert(number_spectra > 0);
         std::vector<unsigned int> indices;
         indices.reserve(number_spectra);
@@ -520,7 +519,7 @@ namespace qAlgorithms
 
         for (unsigned int i = 0; i < number_spectra; i++)
         {
-            pugi::xml_node spec = (*spectra_nodes_ex)[i];
+            pugi::xml_node spec = (*linknodes)[i];
 
             bool isCentroid = spec.find_child_by_attribute("cvParam", "accession", "MS:1000127");
             if (isCentroid != centroided)

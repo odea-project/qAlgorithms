@@ -851,7 +851,7 @@ namespace qAlgorithms
             const unsigned int bufsize = 2048;
             char buffer[bufsize];
             char *b0_buf = buffer; // print b0 to the end
-            unsigned int writtenChars = snprintf(&buffer[0], bufsize, "%u,%lu,%lu,%lu,%0.6f,%0.8f,%0.8f,%0.8f,b0",
+            unsigned int writtenChars = snprintf(&buffer[0], bufsize, "%u,%zu,%zu,%zu,%0.6f,%0.8f,%0.8f,%0.8f,b0",
                                                  regIdx + 1, reg.numPeaks, reg.scanStart, reg.idx_x0, reg.DQS, reg.b1, reg.b2, reg.b3);
             assert(writtenChars < bufsize);
             for (size_t b0 = 0; b0 < reg.numPeaks; b0++)

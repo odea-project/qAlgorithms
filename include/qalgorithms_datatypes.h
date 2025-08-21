@@ -4,17 +4,41 @@
 
 #include <vector>
 
-/* This file includes the structs used for data management in qAlgorithms*/
+/*  This file includes the structs used for data management in qAlgorithms.
+    Anything required by multiple parts of the full program should be listed here.
+*/
 
 namespace qAlgorithms
 {
     // handle polarity switching
     enum Polarities
     {
+        unknown_polarity,
         positive,
         negative,
         mixed,
-        unknown
+    };
+
+    enum SourceFileType
+    {
+        unknown_filetype,
+        mzML,
+        mzxML,
+        hdf5,
+        json,
+    };
+
+    struct ParsedProfileData
+    {
+        char sourceFilePath[256] = {0}; // @todo while a dynamic solution is possible, it is probably not sensible. Potential fix: only return the last 256 chars of path
+        // array keeping offset of start pointers to mz and intensity array - all are allocated to the same arena
+        SourceFileType type;
+        size_t *accessOffset;
+        size_t *arrayLength;
+        float *mz;
+        float *intensity;
+
+        size_t numSpectra = 0;
     };
 
     struct ProfileBlock

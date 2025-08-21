@@ -2053,8 +2053,7 @@ namespace qAlgorithms
     }
 
     std::vector<CentroidPeak> findCentroids( // this function needs to be reworked further @todo
-        XML_File &data,
-        const std::vector<pugi::xml_node> *linkNodes, // @todo get rid of the direct coupling to pugixml
+        XML_File &data,                      // @todo get rid of the direct coupling to pugixml
         const std::vector<unsigned int> *selectedIndices)
     /* ### allocations ###
         spectrum_mz: size unknown at time of function call
@@ -2086,7 +2085,7 @@ namespace qAlgorithms
             groupedData.clear();
 
             size_t ID_spectrum = selectedIndices->at(i);
-            data.get_spectrum(linkNodes, &spectrum_mz, &spectrum_int, ID_spectrum);
+            data.get_spectrum(&spectrum_mz, &spectrum_int, ID_spectrum);
 
             size_t maxWindowSize = pretreatDataCentroids(&groupedData, &spectrum_mz, &spectrum_int); // @todo every group is just a range into three same-length vectors
 

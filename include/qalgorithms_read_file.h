@@ -44,13 +44,6 @@ namespace qAlgorithms
         "sampled_noise_baseline", "ion_mobility", "mass", "quadrupole_position_lower_bound_mz",
         "quadrupole_position_upper_bound_mz"};
 
-    enum Filetype
-    {
-        mzML,
-        mzXML,
-        other
-    };
-
     struct XML_Attribute
     {
         char *name;
@@ -79,7 +72,7 @@ namespace qAlgorithms
     public:
         pugi::xml_node mzml_root_node;
 
-        Filetype filetype = other;
+        SourceFileType filetype = unknown_filetype;
 
         unsigned int number_spectra;
 
@@ -90,31 +83,25 @@ namespace qAlgorithms
         XML_File(const std::filesystem::path &file);
 
         void get_spectrum(
-            const std::vector<pugi::xml_node> *spectra_nodes_ex,
             std::vector<double> *const spectrum_mz,
             std::vector<double> *const spectrum_RT,
             size_t index);
 
         std::vector<unsigned int> get_spectra_index(const std::vector<unsigned int> *indices,
                                                     const std::vector<pugi::xml_node> *spectra_nodes_ex);
-        std::vector<int> get_spectra_level(const std::vector<unsigned int> *indices,
-                                           const std::vector<pugi::xml_node> *spectra_nodes_ex);
-        std::vector<bool> get_spectra_mode(const std::vector<pugi::xml_node> *spectra_nodes_ex);
-        std::vector<bool> get_spectra_polarity(const std::vector<unsigned int> *indices,
-                                               const std::vector<pugi::xml_node> *spectra_nodes_ex);
+        std::vector<int> get_spectra_level(const std::vector<unsigned int> *indices);
+        std::vector<bool> get_spectra_mode();
+        std::vector<bool> get_spectra_polarity(const std::vector<unsigned int> *indices);
 
         // return all indices of spectra that match the required criteria
-        std::vector<unsigned int> filter_spectra(
-            const std::vector<pugi::xml_node> *spectra_nodes_ex,
-            bool ms1, bool polarity, bool centroided); // @todo this is only useable to select MS1 or MS2
+        std::vector<unsigned int> filter_spectra(bool ms1, bool polarity, bool centroided); // @todo this is only useable to select MS1 or MS2
 
-        Polarities get_polarity_mode(const std::vector<pugi::xml_node> *spectra_nodes_ex, size_t count);
-        std::vector<float> get_spectra_RT(const std::vector<unsigned int> *indices,
-                                          const std::vector<pugi::xml_node> *spectra_nodes_ex);
+        Polarities get_polarity_mode(size_t count);
+        std::vector<float> get_spectra_RT(const std::vector<unsigned int> *indices);
 
+        const std::vector<pugi::xml_node> *link_vector_spectra_nodes(); // this function allocates with new!
         void freeLinknodes();
     };
-    const std::vector<pugi::xml_node> *link_vector_spectra_nodes(pugi::xml_node mzml_root_node); // this function allocates with new!
 };
 
 #endif // QALGORITHMS_READ_FILE_H

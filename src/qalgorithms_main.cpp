@@ -130,9 +130,9 @@ int main(int argc, char *argv[])
                       << pathSource << "\n... ";
         }
 
-        XML_File data(std::filesystem::canonical(pathSource));
+        XML_File inputFile(std::filesystem::canonical(pathSource));
 
-        if (data.defective)
+        if (inputFile.defective)
         {
             std::cerr << "Error: the file is defective.\n";
             if (userArgs.skipError)
@@ -147,8 +147,7 @@ int main(int argc, char *argv[])
             }
         }
 
-        const auto linkNodes = link_vector_spectra_nodes(data.mzml_root_node);
-        std::vector<bool> spectrum_mode = data.get_spectra_mode(&linkNodes); // get spectrum mode (centroid or profile)
+        std::vector<bool> spectrum_mode = inputFile.get_spectra_mode(); // get spectrum mode (centroid or profile)
 
         // CHECK IF CENTROIDED SPECTRA
         size_t num_centroided_spectra = std::count(spectrum_mode.begin(), spectrum_mode.end(), false);
@@ -164,7 +163,7 @@ int main(int argc, char *argv[])
             std::cout << " file in profile mode, ok\n";
         }
 
-        auto polarity_file = data.get_polarity_mode(&linkNodes, 100); // checks first 100 spectra
+        auto polarity_file = inputFile.get_polarity_mode(100); // checks first 100 spectra
 
         // @todo single access function into qAlgorithms
 
@@ -186,18 +185,18 @@ int main(int argc, char *argv[])
 #pragma region "centroiding"
 
             // @todo add check if set polarity is correct
-            const std::vector<unsigned int> selectedIndices = data.filter_spectra(&linkNodes, true, polarity, false); // @todo MS2 support here!
+            const std::vector<unsigned int> selectedIndices = inputFile.filter_spectra(true, polarity, false); // @todo MS2 support here!
             if (selectedIndices.empty())
             {
                 // std::cerr << "Error: No valid spectra exist in the source file " << filename << "\n";
                 // @todo better error reporting
                 continue;
             }
-            std::vector<float> retentionTimes = data.get_spectra_RT(&selectedIndices, &linkNodes);
+            std::vector<float> retentionTimes = inputFile.get_spectra_RT(&selectedIndices);
             RT_Converter rt_index = interpolateScanNumbers(&retentionTimes);
 
             std::vector<CentroidPeak> *centroids = new std::vector<CentroidPeak>;
-            *centroids = findCentroids(data, &linkNodes, &selectedIndices); // it is guaranteed that only profile mode data is used
+            *centroids = findCentroids(inputFile, &selectedIndices); // it is guaranteed that only profile mode data is used
 
             if (centroids->size() == 1) // one empty element is always pushed back.
             {
@@ -452,13 +451,15 @@ int main(int argc, char *argv[])
             if (userArgs.doLogging) // @todo logging should account for early terminate
             {
                 logWriter.open(pathLogging, std::ios::app);
-                logWriter << filename << ", " << data.number_spectra << ", " << centroidCount << ", "
+                logWriter << filename << ", " << inputFile.number_spectra << ", " << centroidCount << ", "
                           << meanDQSC << ", " << binnedData.size() << ", " << badBinCount << ", " << meanDQSB
                           << ", " << features.size() << ", " << peaksWithMassGaps << ", " << meanInterpolations << ", " << meanDQSF
                           << components.size() << ", " << featuresInComponents << "\n";
                 logWriter.close();
             }
         }
+        // @todo this function really needs to be shortened
+        inputFile.freeLinknodes();
         counter++;
     }
 

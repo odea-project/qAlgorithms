@@ -28,7 +28,7 @@ add_compile_options(-Wall -Wpedantic -Wuninitialized -Wno-unknown-pragmas -Wform
 
 # warnings that produce too much noise when building - @todo add these in eventually
 # add_compile_options(-Wdouble-promotion -Wconversion -Weffc++)
-add_compile_options(-Wconversion)
+# add_compile_options(-Wconversion)
 
 # add_compile_options(-fsanitize=address) # @todo find a way to use this (not supported under mingw)
 # add_link_options($<$<CONFIG:Debug>:-fsanitize=address>)

@@ -4,10 +4,11 @@
 
 // internal
 #include "qalgorithms_datatypes.h"
-// #include "qalgorithms_read_file.h" // @todo get rid of this coupling!
+#include "qalgorithms_read_file.h" // @todo get rid of this coupling!
 
-// external
 #include <vector>
+#include <array>
+#include <math.h>
 
 namespace qAlgorithms
 {
@@ -50,8 +51,7 @@ namespace qAlgorithms
     // ### Centroiding-specific Code ### //
 
     std::vector<CentroidPeak> findCentroids(
-        XML_File &data,
-        const std::vector<pugi::xml_node> *spectra_nodes_ex,
+        XML_File &data, // @todo replace with custom struct for a generic parsed file
         const std::vector<unsigned int> *selectedIndices);
 
     size_t pretreatDataCentroids(
