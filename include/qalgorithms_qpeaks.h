@@ -18,7 +18,7 @@ namespace qAlgorithms
 
     std::vector<RegCoeffs> findCoefficients(
         const std::vector<float> *intensity_log,
-        const size_t scale); // maximum scale that will be checked. Should generally be limited by peakFrame
+        const size_t maxscale); // maximum scale that will be checked. Should generally be limited by peakFrame
 
     void runningRegression(
         const std::vector<float> *intensities,
@@ -29,12 +29,12 @@ namespace qAlgorithms
         const size_t maxApexIdx);
 
     void validateRegression(
-        std::vector<RegressionGauss> &validRegressions,
-        const std::vector<RegCoeffs> *coeffs, // coefficients for single-b0 peaks, spans all regressions over a peak window
+        std::vector<RegressionGauss> *validRegressions,
         const std::vector<float> *intensities,
         const std::vector<float> *intensities_log,
         const std::vector<unsigned int> *degreesOfFreedom_cum,
-        const size_t maxApexIdx);
+        const size_t maxApexIdx,
+        const size_t maxScale);
 
     void makeValidRegression(
         const std::vector<unsigned int> *degreesOfFreedom_cum,
@@ -90,8 +90,6 @@ namespace qAlgorithms
     std::vector<FeaturePeak> findFeatures(std::vector<EIC> &data,
                                           std::vector<unsigned int> *backConvert,
                                           std::vector<float> *RT);
-
-    void findFeaturePeaks(std::vector<RegressionGauss> *validRegressions, const EIC *eic, const size_t maxApexIdx);
 
     // ### Retention Time Conversion @todo make less annoying ### //
 

@@ -69,40 +69,6 @@ namespace qAlgorithms
         assert(retPeaks->size() > 1); // one dummy value is always present
     }
 
-    void findFeaturePeaks(std::vector<RegressionGauss> *validRegressions, const EIC *eic, const size_t maxApexIdx)
-    /* ### allocations ###
-        logIntensity: size of EIC * f32 // known at call time
-
-       ### called functions ###
-        runningRegression
-    */
-    {
-        validRegressions->clear();
-        size_t length = eic->df.size();
-        assert(length > 4); // data must contain at least five points
-
-        // std::vector<float> logIntensity(length, NAN);
-        // for (size_t blockPos = 0; blockPos < length; blockPos++)
-        // {
-        //     logIntensity[blockPos] = std::log(eic->ints_area[blockPos]);
-        // }
-        std::vector<float> logIntensity;
-        logIntensity.reserve(length);
-
-        // @todo this is not a universal limit and only chosen for computational speed at the moment
-        // with an estimated scan difference of 0.6 s this means the maximum peak width is 61 * 0.6 = 36.6 s
-        static const size_t GLOBAL_MAXSCALE_FEATURES = 30;
-        assert(GLOBAL_MAXSCALE_FEATURES <= MAXSCALE);
-        size_t maxScale = std::min(GLOBAL_MAXSCALE_FEATURES, (length - 1) / 2); // @todo code duplication
-
-        runningRegression(&eic->ints_area,
-                          &logIntensity,
-                          &eic->df,
-                          validRegressions,
-                          maxScale,
-                          maxApexIdx);
-    }
-
 #pragma endregion "find peaks"
 
 #pragma region "running regression"
@@ -123,7 +89,7 @@ namespace qAlgorithms
     */
     {
         //@todo move more of the generic stuff into this function
-        assert(validRegressions->empty());
+
         assert(intensities_log->empty());
         assert(intensities_log->capacity() >= intensities->size());
 
@@ -132,9 +98,7 @@ namespace qAlgorithms
             intensities_log->push_back(std::log(intensities->at(i)));
         }
 
-        const std::vector<RegCoeffs> regressions = findCoefficients(intensities_log, maxScale);
-
-        validateRegression(*validRegressions, &regressions, intensities, intensities_log, degreesOfFreedom_cum, maxApexIdx);
+        validateRegression(validRegressions, intensities, intensities_log, degreesOfFreedom_cum, maxApexIdx, maxScale);
 
         if (validRegressions->size() > 1) // @todo we can probably filter regressions based on MSE at this stage already
         {
@@ -317,10 +281,10 @@ namespace qAlgorithms
         // the product sums are the rows of the design matrix (xT) * intensity_log[i:i+4] (dot product)
         // The first n entries are contained in the b0 vector, one for each peak the regression is performed
         // over.
-        double tmp_product_sum_b0;
-        double tmp_product_sum_b1;
-        double tmp_product_sum_b2;
-        double tmp_product_sum_b3;
+        double tmp_product_sum_b0 = 0;
+        double tmp_product_sum_b1 = 0;
+        double tmp_product_sum_b2 = 0;
+        double tmp_product_sum_b3 = 0;
 
         size_t k = 0;
         for (size_t i = 0; i < steps; i++)
@@ -357,7 +321,7 @@ namespace qAlgorithms
             size_t u = 1; // u is the expansion increment
             for (size_t scale = 3; scale < maxInnerLoop[i] + 1; scale++)
             { // minimum scale is 2. so we start with scale + 1 = 3 in the inner loop
-                size_t scale_sqr = scale * scale;
+                double scale_sqr = double(scale * scale);
                 // expand the kernel to the left and right of the intensity_log.
                 tmp_product_sum_b0 += intensity_log->at(i - u) + intensity_log->at(i + 4 + u);
                 tmp_product_sum_b1 += scale * (intensity_log->at(i + 4 + u) - intensity_log->at(i - u));
@@ -480,12 +444,12 @@ namespace qAlgorithms
     }
 
     void validateRegression(
-        std::vector<RegressionGauss> &validRegressions,
-        const std::vector<RegCoeffs> *coeffs, // coefficients for single-b0 peaks, spans all regressions over a peak window
+        std::vector<RegressionGauss> *validRegressions, // this is the return value
         const std::vector<float> *intensities,
         const std::vector<float> *intensities_log,
         const std::vector<unsigned int> *degreesOfFreedom_cum,
-        const size_t maxApexIdx)
+        const size_t maxApexIdx,
+        const size_t maxScale)
     /* ### allocations ###
         validRegsTmp: known at function call
 
@@ -499,6 +463,11 @@ namespace qAlgorithms
         // If the current regression had the largest possible start index and if there are at least two valid regressions, the
         // the merge over scales function is called.
 
+        assert(validRegressions->empty());
+
+        // coefficients for single-b0 peaks, spans all regressions over a peak window
+        const std::vector<RegCoeffs> regressions = findCoefficients(intensities_log, maxScale);
+
         const size_t numPoints = intensities->size();
         // all entries in coeff are sorted by scale in ascending order - this is not checked!
 
@@ -510,7 +479,7 @@ namespace qAlgorithms
         int currentScale = 2;
         size_t idxStart = 0;
 
-        for (size_t range = 0; range < coeffs->size(); range++)
+        for (size_t range = 0; range < regressions.size(); range++)
         {
             bool stillValid = true;
 
@@ -521,7 +490,7 @@ namespace qAlgorithms
             }
             else
             {
-                auto coeff = coeffs->at(range);
+                auto coeff = regressions[range];
                 if ((coeff.b1 == 0.0f) || (coeff.b2 == 0.0f) || (coeff.b3 == 0.0f)) // @todo this should be guaranteed by the regression
                 {
                     // None of these are a valid regression with the asymmetric model
@@ -559,11 +528,11 @@ namespace qAlgorithms
                 if (validRegsTmp.size() == 1)
                 {
                     // only one valid peak, no fitering necessary
-                    validRegressions.push_back(std::move(validRegsTmp[0]));
+                    validRegressions->push_back(std::move(validRegsTmp[0]));
                 }
                 else if (validRegsTmp.size() > 1)
                 {
-                    findBestScales(&validRegressions, &validRegsTmp, intensities, degreesOfFreedom_cum);
+                    findBestScales(validRegressions, &validRegsTmp, intensities, degreesOfFreedom_cum);
                 }
 
                 // reset loop
@@ -1050,6 +1019,8 @@ namespace qAlgorithms
     */
     {
         assert(!validRegressionsVec->empty());
+        assert(peaks->empty());
+
         for (size_t i = 0; i < validRegressionsVec->size(); i++)
         {
             RegressionGauss regression = (*validRegressionsVec)[i];
@@ -1974,12 +1945,19 @@ namespace qAlgorithms
 
     */
     {
+        // @todo this is not a universal limit and only chosen for computational speed at the moment
+        // with an estimated scan difference of 0.6 s this means the maximum peak width is 61 * 0.6 = 36.6 s
+        static const size_t GLOBAL_MAXSCALE_FEATURES = 30;
+        assert(GLOBAL_MAXSCALE_FEATURES <= MAXSCALE);
+
         std::vector<FeaturePeak> peaks;    // return vector for feature list
         peaks.reserve(EICs.size() / 4);    // should be enough to fit all features without reallocation
         std::vector<FeaturePeak> tmpPeaks; // add features to this before pasting into FL
 
         std::vector<RegressionGauss> validRegressions;
-        validRegressions.reserve(8); // @todo find better size estimation
+        validRegressions.reserve(8); // @todo find better size
+
+        std::vector<float> logIntensity;
 
         for (size_t i = 0; i < EICs.size(); ++i)
         {
@@ -1989,7 +1967,23 @@ namespace qAlgorithms
                 continue; // skip due to lack of data, i.e., degrees of freedom will be zero
             }
 
-            findFeaturePeaks(&validRegressions, &currentEIC, RT->size() - 2); // hard-coded minScale @todo
+            const size_t maxApexIdx = RT->size() - 2;
+
+            validRegressions.clear();
+            size_t length = currentEIC.df.size();
+            assert(length > 4); // data must contain at least five points
+
+            logIntensity.resize(length);
+            logIntensity.clear();
+
+            size_t maxScale = std::min(GLOBAL_MAXSCALE_FEATURES, (length - 1) / 2); // @todo code duplication
+
+            runningRegression(&currentEIC.ints_area,
+                              &logIntensity,
+                              &currentEIC.df,
+                              &validRegressions,
+                              maxScale,
+                              maxApexIdx);
 
             if (!validRegressions.empty())
             {
