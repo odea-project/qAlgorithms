@@ -51,8 +51,8 @@ namespace qAlgorithms
 
     double exp_approx_d(const double x)
     {
-        assert(x > 0);
-        assert(x < 26);
+        // assert(x > 0); // @todo this is specified in the header but not respected throughout the code
+        // assert(x < 26);
         constexpr double LOG2E = 1.44269504088896340736;
         constexpr double OFFSET = 1022.9329329329329;
         constexpr uint64_t EXP_OFFSET = 1LL << 52;

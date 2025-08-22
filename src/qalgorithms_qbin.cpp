@@ -367,13 +367,18 @@ namespace qAlgorithms
 
         assert(binsizeInOS > 4); // @todo this is wrong, it should check for five real points == four differences
 
-        const double *pmax = &(*OS)[0];
+        const double *pmax = &(*OS)[binStartInOS];
         for (size_t i = binStartInOS; i <= binEndInOS; i++)
         {
             const double *d = &(*OS)[i];
             pmax = *pmax < *d ? d : pmax;
         }
         double max = *pmax;
+
+        auto pmax2 = std::max_element(OS->begin() + binStartInOS, OS->begin() + binEndInOS); // @todo this is wrong if binEnd is the index
+        volatile double max2 = *pmax2;
+
+        assert(max == max2);
 
         double vcrit = binningCritVal(binsizeInOS, (cumError[binEndInOS] - cumError[binStartInOS]) / binsizeInOS);
 
@@ -391,6 +396,9 @@ namespace qAlgorithms
         {
             // the centroid at cutpos is included in the left fragment
             const size_t cutpos = pmax - &(*OS)[0]; // @todo this would just be OS if OS were a c array
+            volatile const size_t cutpos2 = std::distance(OS->begin() + binStartInOS, pmax2);
+            assert(cutpos == cutpos2);
+
             // only continue if binsize is greater five
             if (cutpos + 1 > 4)
             {
