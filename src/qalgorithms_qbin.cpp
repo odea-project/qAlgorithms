@@ -186,9 +186,10 @@ namespace qAlgorithms
                           { return lhs->mz < rhs->mz; });
                 auto activeOS = makeOrderSpace(&processThis);
                 auto cumError = makeCumError(&processThis.pointsInBin);
+
                 processThis.subsetMZ(bincontainer.targetBins, bincontainer.notInBins,
                                      &activeOS, cumError,
-                                     0, activeOS.size() - 1);
+                                     0, activeOS.size() - 2); // -2 since the last index is occupied by a NAN
             }
             // @todo logging
             logOutput += std::to_string(bincontainer.targetBins->size()) + ", ";
@@ -330,6 +331,19 @@ namespace qAlgorithms
         pointsInBin = std::vector<const CentroidPeak *>(binStartInOS, binEndInOS);
     }
 
+    Bin makeBin(const std::vector<const CentroidPeak *> *centroids, const size_t binStartPos, const size_t binEndPos)
+    {
+        assert(binStartPos < binEndPos);
+        Bin res;
+        res.pointsInBin.reserve(binEndPos - binStartPos + 1);
+        for (size_t i = binStartPos; i <= binEndPos; i++)
+        {
+            res.pointsInBin.push_back((*centroids)[i]);
+        }
+        assert(res.pointsInBin.size() > 4);
+        return res;
+    }
+
     const std::vector<double> makeOrderSpace(const Bin *bin)
     {
         // this function assumes that the centroids are sorted by mz
@@ -356,35 +370,44 @@ namespace qAlgorithms
         return cumError;
     }
 
-    // void Bin::subsetMZ(std::vector<Bin> *bincontainer, std::vector<const CentroidPeak *> &notInBins,
+    double previousBinMax = 0;
+
     void Bin::subsetMZ(std::vector<Bin> *bincontainer, std::vector<const CentroidPeak *> &notInBins,
                        const std::vector<double> *OS, const std::vector<double> &cumError,
                        const unsigned int binStartInOS, const unsigned int binEndInOS)
     {
         assert(binEndInOS >= binStartInOS);
+        assert(OS->size() == cumError.size());
 
         const int binsizeInOS = binEndInOS - binStartInOS + 1; // +1 to avoid length zero
 
-        assert(binsizeInOS > 4); // @todo this is wrong, it should check for five real points == four differences
+        assert(binsizeInOS > 3);
 
-        const double *pmax = &(*OS)[binStartInOS];
+        const double *pointerToStartpos = &(*OS)[binStartInOS];
+        const double *pmax = pointerToStartpos;
         for (size_t i = binStartInOS; i <= binEndInOS; i++)
         {
             const double *d = &(*OS)[i];
             pmax = *pmax < *d ? d : pmax;
         }
-        double max = *pmax;
+        volatile double max = *pmax;
 
-        auto pmax2 = std::max_element(OS->begin() + binStartInOS, OS->begin() + binEndInOS); // @todo this is wrong if binEnd is the index
+        auto pmax2 = std::max_element(OS->begin() + binStartInOS, OS->begin() + binEndInOS + 1); // @todo this is wrong if binEnd is the index
         volatile double max2 = *pmax2;
 
         assert(max == max2);
+        assert(max != previousBinMax);
+        previousBinMax = max;
 
-        double vcrit = binningCritVal(binsizeInOS, (cumError[binEndInOS] - cumError[binStartInOS]) / binsizeInOS);
+        const double meanError = (cumError[binEndInOS + 1] - cumError[binStartInOS]) / binsizeInOS;
+        const double vcrit = binningCritVal(binsizeInOS, meanError);
 
         if (max < vcrit) // all values in range are part of one mz bin
         {
-            Bin output(pointsInBin.begin() + binStartInOS, pointsInBin.begin() + binEndInOS + 1); // binEndInOS+1 since the iterator has to point behind the last element to put into the vector
+            // the difference is calculated for the position n, and is accordingly excluded from the
+            // next recursive call at every step. Since position n is still part of the bin (the distance
+            // to n was not critical), one past the limit has to be included in the new bin
+            Bin output = makeBin(&pointsInBin, binStartInOS, binEndInOS + 1);
             output.mzMin = output.pointsInBin.front()->mz;
             output.mzMax = output.pointsInBin.back()->mz;
             output.unchanged = true;
@@ -395,31 +418,33 @@ namespace qAlgorithms
         else
         {
             // the centroid at cutpos is included in the left fragment
-            const size_t cutpos = pmax - &(*OS)[0]; // @todo this would just be OS if OS were a c array
-            volatile const size_t cutpos2 = std::distance(OS->begin() + binStartInOS, pmax2);
+            const size_t cutpos = pmax - pointerToStartpos + binStartInOS;
+            volatile const size_t cutpos2 = std::distance(OS->begin() + binStartInOS, pmax2) + binStartInOS;
             assert(cutpos == cutpos2);
+            assert(cutpos <= binEndInOS);
 
-            // only continue if binsize is greater five
-            if (cutpos + 1 > 4)
+            // only continue if binsize is greater five, so at least four differences exist
+            if (cutpos > binStartInOS + 3)
             {
-                subsetMZ(bincontainer, notInBins, OS, cumError, binStartInOS, binStartInOS + cutpos);
+                subsetMZ(bincontainer, notInBins, OS, cumError, binStartInOS, cutpos - 1);
             }
             else
             {
-                for (size_t i = 0; i < cutpos + 1; i++)
+                for (size_t i = binStartInOS; i < cutpos + 1; i++)
                 {
-                    notInBins.push_back(pointsInBin[binStartInOS + i]);
+                    notInBins.push_back(pointsInBin[i]);
                 }
             }
-            if (binEndInOS - binStartInOS - cutpos - 1 > 4)
+
+            if (binEndInOS - cutpos > 3)
             {
-                subsetMZ(bincontainer, notInBins, OS, cumError, binStartInOS + cutpos + 1, binEndInOS);
+                subsetMZ(bincontainer, notInBins, OS, cumError, cutpos + 1, binEndInOS);
             }
             else
             {
-                for (int i = cutpos + 1; i < binsizeInOS; i++)
+                for (size_t i = cutpos + 1; i < binEndInOS + 1; i++) // one past the limit due to taking the difference
                 {
-                    notInBins.push_back(pointsInBin[binStartInOS + i]);
+                    notInBins.push_back(pointsInBin[i]);
                 }
             }
             return;

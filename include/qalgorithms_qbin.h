@@ -96,6 +96,7 @@ namespace qAlgorithms
 
         EIC createEIC(const std::vector<unsigned int> *convertRT);
     };
+    Bin makeBin(const std::vector<const CentroidPeak *> *centroids, const size_t binStartPos, const size_t binEndPos);
 
     const std::vector<double> makeOrderSpace(const Bin *bin);
 
