@@ -56,5 +56,3 @@ qAlgorithms
 .cache
 .clang-format
 .vscode
-
-./Makefile

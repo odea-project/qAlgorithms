@@ -288,7 +288,7 @@ namespace qAlgorithms
         return args;
     }
 
-    UserInputSettings interactiveMode(char *argv[]) // @todo this should be replaced by a better debug interface
+    UserInputSettings interactiveMode() // @todo this should be replaced by a better debug interface
     {
         // this function is called if qAlgorithms is executed without arguments
         std::cout << "    ### qAlgorithms interactive terminal interface ###\n"

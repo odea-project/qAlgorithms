@@ -1,0 +1,53 @@
+#include "../include/qalgorithms_datatypes.h"
+#include "../include/qalgorithms_global_vars.h"
+#include "../include/qalgorithms_input_output.h"
+#include "../include/qalgorithms_qbin.h"
+#include "../include/qalgorithms_qpattern.h"
+#include "../include/qalgorithms_qpeaks.h"
+#include "../include/qalgorithms_read_file.h"
+#include "../include/qalgorithms_utils.h"
+
+#include "../external/CDFlib/cdflib.hpp"
+#include "../external/pugixml-1.14/src/pugixml.h"
+#include "../external/simdutf/simdutf.h"
+
+#include <cstdio> // printing
+
+void qassert(bool condition, size_t line, const char *message)
+{
+    if (condition)
+        return;
+
+    printf("Error in line %u: %s\n", line, message);
+    exit(1);
+}
+#define qass(boolean, message) qassert(boolean, __LINE__, message)
+
+int main(int argc, char const *argv[])
+{
+    using namespace qAlgorithms;
+
+    // test: execute binning function on five identical centroids with increasing scan numbers
+    {
+        CentroidPeak centroid = {0};
+        centroid.mz = 100;
+        centroid.mzUncertainty = 2 * 10e-6;
+
+        size_t vecLen = 5;
+        std::vector<CentroidPeak> inputCens(vecLen, centroid);
+        std::vector<size_t> convertRT(vecLen, 0);
+        for (size_t i = 0; i < vecLen; i++)
+        {
+            inputCens[i].number_MS1 = i + 1;
+        }
+
+        // expected output: one EIC with five points
+        std::vector<qAlgorithms::EIC> testEIC = performQbinning(&inputCens, &convertRT);
+        qass(testEIC.size() != 0, "No EIC constructed");
+        qass(testEIC.size() < 2, "More than one EIC found");
+        qass(testEIC[0].mz.size() > vecLen - 1, "Some points were excluded from the EIC");
+        qass(testEIC.size() < vecLen + 1, "Centroids added to EIC");
+    }
+
+    return 0;
+}

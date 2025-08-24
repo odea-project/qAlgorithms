@@ -372,6 +372,7 @@ namespace qAlgorithms
 
     double previousBinMax = 0;
 
+    // @todo write a test for correct subsetting: one good region with < 5 points to each side and two correct bins separated by 1-2 points
     void Bin::subsetMZ(std::vector<Bin> *bincontainer, std::vector<const CentroidPeak *> &notInBins,
                        const std::vector<double> *OS, const std::vector<double> &cumError,
                        const unsigned int binStartInOS, const unsigned int binEndInOS)
@@ -407,7 +408,12 @@ namespace qAlgorithms
             // the difference is calculated for the position n, and is accordingly excluded from the
             // next recursive call at every step. Since position n is still part of the bin (the distance
             // to n was not critical), one past the limit has to be included in the new bin
+            Bin bin2(pointsInBin.begin() + binStartInOS, pointsInBin.begin() + binEndInOS + 1);
+
             Bin output = makeBin(&pointsInBin, binStartInOS, binEndInOS + 1);
+
+            assert(bin2.pointsInBin.size() == output.pointsInBin.size());
+
             output.mzMin = output.pointsInBin.front()->mz;
             output.mzMax = output.pointsInBin.back()->mz;
             output.unchanged = true;
