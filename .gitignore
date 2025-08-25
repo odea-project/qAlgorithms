@@ -52,7 +52,9 @@ qAlgorithms
 # Other
 *.html
 .Rhistory
-.pdf
+*.pdf
 .cache
 .clang-format
 .vscode
+*.mzML
+./obj
