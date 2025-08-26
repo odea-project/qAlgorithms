@@ -161,14 +161,19 @@ namespace qAlgorithms
         }
     }
 
-    std::string subsetBins(BinContainer &bincontainer)
+    std::string subsetBins(BinContainer &bincontainer) // @todo string return values are stupid
     {
         // auto timeStart = std::chrono::high_resolution_clock::now();
         // auto timeEnd = std::chrono::high_resolution_clock::now();
         std::string logOutput = "Binning Start:\n";
         bincontainer.readFrom = false; // starting bin is in processBinsF
         assert(bincontainer.processBinsT.empty());
-        assert(!bincontainer.processBinsF.empty());
+        // assert(!bincontainer.processBinsF.empty());
+        if (bincontainer.processBinsF.empty())
+        {
+            // there are no centroids to process left after the first iteration
+            return "No Bins left to process\n";
+        }
 
         bincontainer.sourceBins = &bincontainer.processBinsF;
         bincontainer.targetBins = &bincontainer.processBinsT;
@@ -189,7 +194,7 @@ namespace qAlgorithms
 
                 processThis.subsetMZ(bincontainer.targetBins, bincontainer.notInBins,
                                      &activeOS, cumError,
-                                     0, activeOS.size() - 2); // -2 since the last index is occupied by a NAN
+                                     0, activeOS.size() - 1); // -1 since the last index is occupied by a NAN
             }
             // @todo logging
             logOutput += std::to_string(bincontainer.targetBins->size()) + ", ";
@@ -383,18 +388,21 @@ namespace qAlgorithms
         const int binsizeInOS = binEndInOS - binStartInOS + 1; // +1 to avoid length zero
 
         assert(binsizeInOS > 3);
+        assert(binsizeInOS <= pointsInBin.size());
 
         const double *pointerToStartpos = &(*OS)[binStartInOS];
         const double *pmax = pointerToStartpos;
-        for (size_t i = binStartInOS; i <= binEndInOS; i++)
+        assert(binEndInOS - 1 < OS->size());
+        for (size_t i = binStartInOS; i < binEndInOS; i++) // OS[binEndInOS] = NAN
         {
-            const double *d = &(*OS)[i];
+            assert(i < OS->size());
+            const double *d = &((*OS)[i]);
             pmax = *pmax < *d ? d : pmax;
         }
         volatile double max = *pmax;
 
         auto pmax2 = std::max_element(OS->begin() + binStartInOS, OS->begin() + binEndInOS + 1); // @todo this is wrong if binEnd is the index
-        volatile double max2 = *pmax2;
+        double max2 = *pmax2;
 
         assert(max == max2);
         assert(max != previousBinMax);
@@ -436,6 +444,7 @@ namespace qAlgorithms
             }
             else
             {
+                assert(binStartInOS < cutpos + 1);
                 for (size_t i = binStartInOS; i < cutpos + 1; i++)
                 {
                     notInBins.push_back(pointsInBin[i]);
@@ -448,6 +457,7 @@ namespace qAlgorithms
             }
             else
             {
+                assert(cutpos < binEndInOS);
                 for (size_t i = cutpos + 1; i < binEndInOS + 1; i++) // one past the limit due to taking the difference
                 {
                     notInBins.push_back(pointsInBin[i]);
@@ -646,12 +656,20 @@ namespace qAlgorithms
 
     EIC Bin::createEIC(const std::vector<unsigned int> *convertRT)
     {
+        size_t eicsize = pointsInBin.size();
+        assert(eicsize > 4);
+        // sorting should be done beforehand @todo
+        std::sort(pointsInBin.begin(), pointsInBin.end(), [](const CentroidPeak *lhs, const CentroidPeak *rhs)
+                  { return lhs->number_MS1 < rhs->number_MS1; });
+
         // using the knowledge of where points should be interpolated, transfer centroids into
         // arrays with gaps for later processing
 
-        size_t eicsize = pointsInBin.size();
-        unsigned int firstScan = convertRT->at(pointsInBin.front()->number_MS1);
-        unsigned int lastScan = convertRT->at(pointsInBin.back()->number_MS1);
+        volatile size_t frontTime = pointsInBin.front()->number_MS1;
+        volatile size_t backTime = pointsInBin.back()->number_MS1;
+
+        unsigned int firstScan = convertRT->at(frontTime);
+        unsigned int lastScan = convertRT->at(backTime);
         size_t interpolatedSize = lastScan - firstScan + 1 + 4; // +4 since we extrapolate two points to each side later
         std::vector<unsigned int> tmp_interpScans(interpolatedSize, 0);
         std::iota(tmp_interpScans.begin(), tmp_interpScans.end(), firstScan - 2);
@@ -663,10 +681,6 @@ namespace qAlgorithms
         std::vector<float> tmp_ints_height(interpolatedSize, 0);
         std::vector<float> tmp_DQSC(interpolatedSize, 0);
         std::vector<unsigned int> tmp_cenID(interpolatedSize, 0);
-
-        // sorting should be done beforehand @todo
-        std::sort(pointsInBin.begin(), pointsInBin.end(), [](const CentroidPeak *lhs, const CentroidPeak *rhs)
-                  { return lhs->number_MS1 < rhs->number_MS1; });
 
         for (size_t i = 0; i < eicsize; i++)
         {
