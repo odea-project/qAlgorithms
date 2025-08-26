@@ -194,7 +194,7 @@ namespace qAlgorithms
 
                 processThis.subsetMZ(bincontainer.targetBins, bincontainer.notInBins,
                                      &activeOS, cumError,
-                                     0, activeOS.size() - 1); // -1 since the last index is occupied by a NAN
+                                     0, activeOS.size() - 2); // -1 since the last index is occupied by a NAN
             }
             // @todo logging
             logOutput += std::to_string(bincontainer.targetBins->size()) + ", ";
@@ -385,7 +385,7 @@ namespace qAlgorithms
         assert(binEndInOS >= binStartInOS);
         assert(OS->size() == cumError.size());
 
-        const int binsizeInOS = binEndInOS - binStartInOS + 1; // +1 to avoid length zero
+        const size_t binsizeInOS = binEndInOS - binStartInOS + 1; // +1 to avoid length zero
 
         assert(binsizeInOS > 3);
         assert(binsizeInOS <= pointsInBin.size());
@@ -393,7 +393,7 @@ namespace qAlgorithms
         const double *pointerToStartpos = &(*OS)[binStartInOS];
         const double *pmax = pointerToStartpos;
         assert(binEndInOS - 1 < OS->size());
-        for (size_t i = binStartInOS; i < binEndInOS; i++) // OS[binEndInOS] = NAN
+        for (size_t i = binStartInOS; i < binEndInOS + 1; i++) // binStartInOS : binEndInOS is always an inclusive range of indices
         {
             assert(i < OS->size());
             const double *d = &((*OS)[i]);
@@ -404,12 +404,23 @@ namespace qAlgorithms
         auto pmax2 = std::max_element(OS->begin() + binStartInOS, OS->begin() + binEndInOS + 1); // @todo this is wrong if binEnd is the index
         double max2 = *pmax2;
 
+        while (max != max2)
+        {
+            volatile const size_t cutpos = pmax - pointerToStartpos + binStartInOS;
+            volatile const size_t cutpos2 = std::distance(OS->begin() + binStartInOS, pmax2) + binStartInOS;
+        }
+
         assert(max == max2);
         assert(max != previousBinMax);
         previousBinMax = max;
 
-        const double meanError = (cumError[binEndInOS + 1] - cumError[binStartInOS]) / binsizeInOS;
+        // this is necessary since otherwise, the error would be underestimated by one
+        // @todo make a mini library that manages operations on cumulative stuff
+        const double cumErrorStart = binStartInOS == 0 ? 0 : cumError[binStartInOS - 1];
+        const double meanError = (cumError[binEndInOS] - cumErrorStart) / binsizeInOS;
         const double vcrit = binningCritVal(binsizeInOS, meanError);
+
+        volatile size_t processedPoints = 0;
 
         if (max < vcrit) // all values in range are part of one mz bin
         {
@@ -427,7 +438,10 @@ namespace qAlgorithms
             output.unchanged = true;
             output.medianMZ = output.pointsInBin[output.pointsInBin.size() / 2]->mz;
             bincontainer->push_back(output);
-            return;
+
+            processedPoints += output.pointsInBin.size();
+
+            // return;
         }
         else
         {
@@ -448,6 +462,7 @@ namespace qAlgorithms
                 for (size_t i = binStartInOS; i < cutpos + 1; i++)
                 {
                     notInBins.push_back(pointsInBin[i]);
+                    processedPoints += 1;
                 }
             }
 
@@ -457,14 +472,18 @@ namespace qAlgorithms
             }
             else
             {
-                assert(cutpos < binEndInOS);
+                // note: in the event that the last point of a bin is the position of the maximum, and that
+                // the bin cannot be formed, all points of the bin have been added to notInBins in the preceding loop.
+                assert(cutpos < binEndInOS + 1);
                 for (size_t i = cutpos + 1; i < binEndInOS + 1; i++) // one past the limit due to taking the difference
                 {
                     notInBins.push_back(pointsInBin[i]);
+                    processedPoints += 1;
                 }
             }
-            return;
         }
+        // assert(processedPoints == binsizeInOS);
+        return;
     }
 
     void Bin::subsetScan(std::vector<Bin> *bincontainer, std::vector<const CentroidPeak *> *notInBins)
