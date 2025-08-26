@@ -44,7 +44,10 @@ file(GLOB_RECURSE SOURCES "src/*.cpp" "external/CDFlib/cdflib.cpp" "external/sim
 # set(CMAKE_EXE_LINKER_FLAGS "-static")
 
 # Add executable target
-add_executable(${PROJECT_NAME} ${SOURCES})
+add_executable(${PROJECT_NAME} ${SOURCES} "tools/qalgorithms_main.cpp")
+
+add_executable(tests ${SOURCES} "tools/tests.cpp")
 
 # Linker flags
 target_link_libraries(${PROJECT_NAME} PUBLIC z) # "z" is the linker flag for zlib
+target_link_libraries(tests PUBLIC z) 

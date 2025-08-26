@@ -3,6 +3,7 @@
 #define QALGORITHMS_DATATYPE_PEAK_H
 
 #include <vector>
+#include <cmath> // INFINITY and other number macros
 
 /*  This file includes the structs used for data management in qAlgorithms.
     Anything required by multiple parts of the full program should be listed here.

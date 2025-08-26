@@ -7,7 +7,7 @@ SRC_DIR = ../src
 INC_DIR = ../include
 OBJ_DIR = ../obj
 
-SOURCES = $(wildcard $(SRC_DIR)/*.cpp)
+SOURCES = $(wildcard $(SRC_DIR)/*.cpp) ../external/CDFlib/cdflib.cpp ../external/pugixml-1.14/src/pugixml.cpp -I../external/simdutf/simdutf.cpp
 OBJECTS = $(patsubst $(SRC_DIR)/%.cpp,$(OBJ_DIR)/%.o,$(SOURCES))
 
 # OBJECTS = tests.o \
@@ -33,8 +33,8 @@ testrun: $(OBJECTS)
 	$(CXX) -o testrun $(OBJECTS)
 
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp
-	@mkdir -p $(OBJ_DIR)
-	@echo "Compiling $<"
+# 	@mkdir -p $(OBJ_DIR)
+# 	@echo "Compiling $<"
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 # @todo: add choice of main function (move main outside of src? and add linking to libs)

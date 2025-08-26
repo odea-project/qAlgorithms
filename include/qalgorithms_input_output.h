@@ -51,7 +51,7 @@ namespace qAlgorithms
 
     UserInputSettings passCliArgs(int argc, char *argv[]);
 
-    UserInputSettings interactiveMode(char *argv[]);
+    UserInputSettings interactiveMode();
 
     bool inputsAreSensible(UserInputSettings &args);
 

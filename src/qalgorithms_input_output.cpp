@@ -86,7 +86,7 @@ namespace qAlgorithms
         if (argc == 1 && !debug)
         {
             // run in interactive mode
-            args = interactiveMode(argv);
+            args = interactiveMode();
         }
         else if (debug)
         {

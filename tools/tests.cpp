@@ -18,7 +18,7 @@ void qassert(bool condition, size_t line, const char *message)
     if (condition)
         return;
 
-    printf("Error in line %u: %s\n", line, message);
+    printf("Error in line %zu: %s\n", line, message);
     exit(1);
 }
 #define qass(boolean, message) qassert(boolean, __LINE__, message)
@@ -33,13 +33,18 @@ int main(int argc, char const *argv[])
         centroid.mz = 100;
         centroid.mzUncertainty = 2 * 10e-6;
 
-        size_t vecLen = 5;
+        size_t vecLen = 6;
         std::vector<CentroidPeak> inputCens(vecLen, centroid);
-        std::vector<size_t> convertRT(vecLen, 0);
-        for (size_t i = 0; i < vecLen; i++)
+        // the first centroid is a dummy value
+        inputCens[0].mz = 0;
+
+        const std::vector<unsigned int> convertRT(vecLen, 0);
+        for (size_t i = 1; i < vecLen; i++)
         {
             inputCens[i].number_MS1 = i + 1;
         }
+
+        vecLen -= 1;
 
         // expected output: one EIC with five points
         std::vector<qAlgorithms::EIC> testEIC = performQbinning(&inputCens, &convertRT);

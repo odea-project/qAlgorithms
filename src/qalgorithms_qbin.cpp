@@ -412,7 +412,7 @@ namespace qAlgorithms
 
             Bin output = makeBin(&pointsInBin, binStartInOS, binEndInOS + 1);
 
-            assert(bin2.pointsInBin.size() == output.pointsInBin.size());
+            assert(bin2.pointsInBin.size() + 1 == output.pointsInBin.size());
 
             output.mzMin = output.pointsInBin.front()->mz;
             output.mzMax = output.pointsInBin.back()->mz;
