@@ -25,7 +25,7 @@ void qassert(bool condition, size_t line, const char *message)
 
 float ran0(long *idum)
 {
-    // function taken from numerical recepies
+    // function taken from numerical recepies, second edition, page 279
 #define IA 16807
 #define IM 2147483647
 #define AM (1.0 / IM)
@@ -45,17 +45,20 @@ float ran0(long *idum)
     return ans;
 }
 
-int nanorand(void)
+int nanoseconds(void)
 {
     struct timespec p[1];
     clock_gettime(CLOCK_MONOTONIC, p);
     return p->tv_nsec % 1000;
 }
 
-double randRange_d(double lower, double upper)
+// produce a random double value in the range (lower, upper). If no seed is supplied, the seed is also random
+double randRange_d(double lower, double upper, long seed = 0)
 {
     assert(lower < upper);
-    long randint = nanorand();
+    long randint = seed;
+    if (seed == 0)
+        randint = nanoseconds();
     double randDouble = ran0(&randint); // random number between 0 and 1
     double span = upper - lower;
 
@@ -92,10 +95,11 @@ int main()
 
         // expected output: one EIC with five points
         std::vector<qAlgorithms::EIC> testEIC = performQbinning(&inputCens, &convertRT);
+        volatile qAlgorithms::EIC copy = testEIC[0];
         qass(testEIC.size() != 0, "No EIC constructed");
         qass(testEIC.size() < 2, "More than one EIC found");
-        qass(testEIC[0].mz.size() > vecLen - 1, "Some points were excluded from the EIC");
-        qass(testEIC.size() < vecLen + 1, "Centroids added to EIC");
+        qass(testEIC[0].mz.size() > vecLen - 1 + 4, "Some points were excluded from the EIC");
+        qass(testEIC[0].mz.size() < vecLen + 1 + 4, "Centroids added to EIC");
         printf("EIC processing with one EIC and no interference works\n");
 
         convertRT.push_back(vecLen);
@@ -109,8 +113,27 @@ int main()
         testEIC = performQbinning(&inputCens, &convertRT);
         qass(testEIC.size() != 0, "No EIC constructed");
         qass(testEIC.size() < 2, "More than one EIC found");
-        qass(testEIC[0].mz.size() > vecLen - 1, "Some points were excluded from the EIC");
-        qass(testEIC.size() < vecLen + 1, "Centroids added to EIC");
+        // correct length is 9 since two points are added to each side. This is very confusing, change it @todo
+        qass(testEIC[0].mz.size() > 8, "Some points were excluded from the EIC");
+        qass(testEIC[0].mz.size() < 10, "Centroids added to EIC");
+        printf("EIC processing with one EIC and one noise point past the end works\n");
+
+        // test for two bins separated in mz and RT with some noise and the second bin having no other points
+        vecLen += 6;
+        for (size_t i = 0; i < vecLen; i++)
+        {
+            CentroidPeak centroid2 = {0};
+            centroid2.mz = 400;
+            centroid2.mzUncertainty = 5 * 10e-6;
+            centroid2.number_MS1 = i;
+            inputCens.push_back(centroid2);
+            convertRT.push_back(i);
+        }
+        testEIC = performQbinning(&inputCens, &convertRT);
+        qass(testEIC.size() != 0, "No EIC constructed");
+        qass(testEIC.size() == 2, "Incorrect number of EICs");
+        qass(testEIC[1].mz.size() == 10, "Incorrect EIC size");
+        printf("EIC processing with two EICs and noise inbetween works\n");
     }
 
     return 0;

@@ -441,7 +441,10 @@ namespace qAlgorithms
 
             processedPoints += output.pointsInBin.size();
 
-            // return;
+            volatile Bin copyBin = output;
+
+            assert(output.pointsInBin.size() == binsizeInOS + 1); // one past the limit included
+            return;
         }
         else
         {
@@ -475,7 +478,7 @@ namespace qAlgorithms
                 // note: in the event that the last point of a bin is the position of the maximum, and that
                 // the bin cannot be formed, all points of the bin have been added to notInBins in the preceding loop.
                 assert(cutpos < binEndInOS + 1);
-                for (size_t i = cutpos + 1; i < binEndInOS + 1; i++) // one past the limit due to taking the difference
+                for (size_t i = cutpos + 1; i < binEndInOS + 2; i++) // one past the limit due to taking the difference, one more past since we are taking the inclusive range
                 {
                     notInBins.push_back(pointsInBin[i]);
                     processedPoints += 1;
