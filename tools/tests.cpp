@@ -116,7 +116,7 @@ int main()
         vecLen -= 1;
 
         // expected output: one EIC with five points
-        std::vector<qAlgorithms::EIC> testEIC = performQbinning(&inputCens, &convertRT);
+        std::vector<qAlgorithms::EIC> testEIC = performQbinning_old(&inputCens, &convertRT);
         volatile qAlgorithms::EIC copy = testEIC[0];
         qass(testEIC.size() != 0, "No EIC constructed");
         qass(testEIC.size() < 2, "More than one EIC found");
@@ -132,7 +132,7 @@ int main()
 
         vecLen++;
         // expected output: one EIC with five points and one trailing centroid
-        testEIC = performQbinning(&inputCens, &convertRT);
+        testEIC = performQbinning_old(&inputCens, &convertRT);
         qass(testEIC.size() != 0, "No EIC constructed");
         qass(testEIC.size() < 2, "More than one EIC found");
         // correct length is 9 since two points are added to each side. This is very confusing, change it @todo
@@ -156,7 +156,7 @@ int main()
         for (size_t RT : convertRT)
             printf("%zu ", RT);
 
-        testEIC = performQbinning(&inputCens, &convertRT);
+        testEIC = performQbinning_old(&inputCens, &convertRT);
         qass(testEIC.size() != 0, "No EIC constructed");
         qass(testEIC.size() == 2, "Incorrect number of EICs");
         qass(testEIC[1].mz.size() == 10, "Incorrect EIC size");

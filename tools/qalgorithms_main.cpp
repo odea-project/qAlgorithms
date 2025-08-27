@@ -278,7 +278,7 @@ int main(int argc, char *argv[])
             timeStart = std::chrono::high_resolution_clock::now();
 
             // RT_Converter rt_index = interpolateScanNumbers(&retentionTimes);
-            std::vector<EIC> binnedData = performQbinning(centroids, &rt_index.countToInterp);
+            std::vector<EIC> binnedData = performQbinning_old(centroids, &rt_index.countToInterp);
 
             timeEnd = std::chrono::high_resolution_clock::now();
 

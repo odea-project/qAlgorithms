@@ -80,5 +80,7 @@ namespace qAlgorithms
 
     // @todo better documentation
     double binningCritVal(unsigned int n, double uncertainty); // critical value for deciding if a bin exists or not
+
+    double *maxVal(const double *arrayStart, const size_t length);
 }
 #endif // QALGORITHMS_UTILS_H

@@ -116,4 +116,15 @@ namespace qAlgorithms
     {
         return (OS_CRIT_A + (OS_CRIT_B / std::sqrt(std::log(n + 1)))) * stdDev;
     }
+
+    double *maxVal(double *const arrayStart, const size_t length)
+    {
+        assert(length > 0);
+        double *ret = arrayStart;
+        for (size_t i = 1; i < length; i++) // no need to check the first element
+        {
+            ret = *ret > *(arrayStart + i) ? ret : arrayStart + i;
+        }
+        return ret;
+    }
 }

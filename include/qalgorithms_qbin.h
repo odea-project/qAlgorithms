@@ -15,8 +15,8 @@ namespace qAlgorithms
     /// @param convertRT vector containing the retention time for every scan number
     /// @param verbose if this option is selected, additional progress report is written to standard out
     /// @return returns the centroids as a collection of vectors
-    std::vector<EIC> performQbinning(const std::vector<CentroidPeak> *centroidedData,
-                                     const std::vector<unsigned int> *convertRT);
+    std::vector<EIC> performQbinning_old(const std::vector<CentroidPeak> *centroidedData,
+                                         const std::vector<unsigned int> *convertRT);
 
     // ###################################################################################################### //
 #pragma region "utility"
@@ -79,9 +79,9 @@ namespace qAlgorithms
         /// @param OS the order space generated for the bin using makeOS()
         /// @param startBin index relating to the order space at which the bin starts
         /// @param endBin index relating to the order space at which the bin ends
-        void subsetMZ(std::vector<Bin> *bincontainer, std::vector<const CentroidPeak *> &notInBins,
-                      const std::vector<double> *OS, const std::vector<double> &cumError,
-                      const unsigned int binStartInOS, const unsigned int binEndInOS);
+        void subsetMZ_recursive(std::vector<Bin> *bincontainer, std::vector<const CentroidPeak *> &notInBins,
+                                const std::vector<double> *OS, const std::vector<double> &cumError,
+                                const unsigned int binStartInOS, const unsigned int binEndInOS);
 
         /// @brief divide a bin sorted by scans if there are gaps greater than maxdist in it. Bins that cannot be divided are closed.
         /// @details this function sorts all members of a bin by scans and iterates over them. If a gap greater than maxdist exists,
@@ -96,13 +96,29 @@ namespace qAlgorithms
 
         EIC createEIC(const std::vector<unsigned int> *convertRT);
     };
+
+    std::vector<Bin> performQbinning(const std::vector<CentroidPeak> *centroids);
+
     Bin makeBin(const std::vector<const CentroidPeak *> *centroids, const size_t binStartPos, const size_t binEndPos);
 
     const std::vector<double> makeOrderSpace(const Bin *bin);
 
     const std::vector<double> makeCumError(const std::vector<const CentroidPeak *> *bin);
 
+    // returns number of elements added to the stack?
+    int subsetMZ_stack(std::vector<Range_i> *stack,
+                       std::vector<Bin> *bincontainer,
+                       std::vector<const CentroidPeak *> *notInBins,
+                       const std::vector<const qAlgorithms::CentroidPeak *> pointsInBin,
+                       const std::vector<double> *OS,
+                       const std::vector<double> *cumError);
+
     bool binLimitsOK(Bin sourceBin, const std::vector<CentroidPeak> *rawdata);
+
+    // every index at bin stage is the "original" index of the MS1 spectrum.
+    // they need to be converted to the corrected scan index which accounts for
+    // interpolation.
+    EIC binToEIC(const Bin *sourceBin, const std::vector<unsigned int> *convertIndex);
 
     void interpolateEIC(EIC *eic);
 
@@ -125,7 +141,7 @@ namespace qAlgorithms
 
     void switchTarget(BinContainer *bincontainer);
 
-    std::string subsetBins(BinContainer &bincontainer);
+    void subsetBins(BinContainer &bincontainer);
 
     // int selectRebin(BinContainer *bins, const std::vector<CentroidPeak> *rawdata);
     int selectRebin(BinContainer *bins, const std::vector<CentroidPeak> *rawdata);

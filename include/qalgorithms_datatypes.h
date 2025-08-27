@@ -11,6 +11,18 @@
 
 namespace qAlgorithms
 {
+    // inclusive range in an array @todo replace all start / end index cases with this
+    // always assert start and end correctness when writing to such a struct!
+    struct Range_i
+    {
+        size_t startIdx;
+        size_t endIdx;
+    };
+    inline size_t rangeLen(const Range_i *range)
+    {
+        return range->endIdx - range->startIdx + 1;
+    }
+
     // handle polarity switching
     enum Polarities
     {
