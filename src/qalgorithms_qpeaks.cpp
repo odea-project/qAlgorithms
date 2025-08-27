@@ -59,7 +59,7 @@ namespace qAlgorithms
         {
             RegCoeffs *current = &(regressions[reg]);
             // we can only process regressions with at least one
-            bool regOK = (current->b2 < 0) || (current->b3 < 0);
+            bool regOK = (current->b2 < 0) || (current->b3 < 0) && current->b1 != 0;
 
             current->b0 = regOK ? current->b0 : 0;
         }

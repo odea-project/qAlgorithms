@@ -729,8 +729,12 @@ namespace qAlgorithms
         {
             const FeaturePeak peak = peaktable->at(i);
             int binID = peak.idxBin;
-            float RT_start = convertRT->at(originalBins->at(binID).scanNumbers.at(peak.idxBinStart) - 1);
-            float RT_end = convertRT->at(originalBins->at(binID).scanNumbers.at(peak.idxBinEnd) - 1);
+            assert(binID < originalBins->size());
+            const std::vector<unsigned int> *scanNums = &(originalBins->at(binID).scanNumbers);
+            assert(peak.idxBinStart < peak.idxBinEnd);
+            assert(peak.idxBinEnd < scanNums->size());
+            float RT_start = convertRT->at(scanNums->at(peak.idxBinStart));
+            float RT_end = convertRT->at(scanNums->at(peak.idxBinEnd));
 
             char buffer[256];
             snprintf(buffer, 256, "%d,%d,%d,%d,%d,%0.6f,%0.6f,%0.4f,%0.4f,%0.4f,%0.4f,%0.3f,%0.3f,%0.3f,%0.3f,%d,%d,%d,%0.5f,%0.5f,%0.5f,%s,%0.6f,%0.8f,%0.8f,%0.8f,%0.8f\n",

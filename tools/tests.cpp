@@ -68,6 +68,28 @@ double randRange_d(double lower, double upper, long seed = 0)
     return res;
 }
 
+// round a number x to a given number of digits
+double roundTo_d(double x, size_t digits)
+{
+    if (digits == 0)
+        return 0;
+    // this is a naive implementation and overall not robust enough to use uncritically with very large numbers
+    const size_t maxPrec = 17;
+    assert(digits < maxPrec);
+
+    static const double powers[maxPrec]{1e0, 1e1, 1e2, 1e3, 1e4, 1e5, 1e6, 1e7, 1e8, 1e9,
+                                        1e10, 1e11, 1e12, 1e13, 1e14, 1e15, 1e16};
+
+    double pow = powers[digits];
+
+    assert(double(INT64_MAX) / pow > x); // prevent overflow
+    assert(double(INT64_MIN) / pow < x); // prevent underflow
+
+    int rounded = int(x * pow + 0.5); // @todo this does not incorporate the even-odd switch for a remainder of 1/2, but does that matter here?
+
+    return (double(rounded) / pow);
+}
+
 int main()
 {
     using namespace qAlgorithms;
@@ -140,6 +162,8 @@ int main()
         qass(testEIC[1].mz.size() == 10, "Incorrect EIC size");
         printf("EIC processing with two EICs and noise inbetween works\n");
     }
+
+    //@todo add a test for correct peak identification using a subset of real data (centroids and features)
 
     return 0;
 }
