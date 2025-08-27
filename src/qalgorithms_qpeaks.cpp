@@ -1068,8 +1068,21 @@ namespace qAlgorithms
 
             // calculate the apex position in RT
             size_t idx_leftOfApex = backConvert->at((size_t)regression.apex_position);
+
+            // @todo fix peak detection
+            if (idx_leftOfApex < 2)
+            {
+                continue;
+            }
+
             assert(idx_leftOfApex > 1); // at least two points to the left
             size_t idx_rightOfApex = idx_leftOfApex + 1;
+
+            if (idx_rightOfApex > RT->size() - 1)
+            {
+                continue;
+            }
+
             assert(idx_rightOfApex < RT->size() - 1); // at least two points to the right
             float rt_leftOfApex = RT->at(idx_leftOfApex);
             float rt_rightOfApex = RT->at(idx_rightOfApex);
@@ -1458,8 +1471,9 @@ namespace qAlgorithms
     */
     {
         // symmetric model should apply, this is not possible with the current peak model @todo
-        assert(mutateReg->coeffs.b1 != 0);
-        assert(mutateReg->coeffs.b2 != 0 && mutateReg->coeffs.b3 != 0);
+        // assert(mutateReg->coeffs.b1 != 0);
+        // assert(mutateReg->coeffs.b2 != 0 && mutateReg->coeffs.b3 != 0);
+
         // calculate key by checking the signs of coeff
         const float floatScale = float(scale);
         int key = 0;

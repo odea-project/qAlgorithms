@@ -102,7 +102,7 @@ int main()
         qass(testEIC[0].mz.size() < vecLen + 1 + 4, "Centroids added to EIC");
         printf("EIC processing with one EIC and no interference works\n");
 
-        convertRT.push_back(vecLen);
+        convertRT.push_back(vecLen + 1);
         inputCens.push_back(centroid);
         inputCens.back().mz = 200;
         inputCens.back().mzUncertainty = 4 * 10e-6;
@@ -120,15 +120,20 @@ int main()
 
         // test for two bins separated in mz and RT with some noise and the second bin having no other points
         vecLen += 6;
-        for (size_t i = 0; i < vecLen; i++)
+        for (size_t i = 0; i < 6; i++)
         {
             CentroidPeak centroid2 = {0};
             centroid2.mz = 400;
             centroid2.mzUncertainty = 5 * 10e-6;
             centroid2.number_MS1 = i;
             inputCens.push_back(centroid2);
-            convertRT.push_back(i);
+            size_t prevRT = convertRT.back();
+            convertRT.push_back(prevRT + 1);
         }
+
+        for (size_t RT : convertRT)
+            printf("%zu ", RT);
+
         testEIC = performQbinning(&inputCens, &convertRT);
         qass(testEIC.size() != 0, "No EIC constructed");
         qass(testEIC.size() == 2, "Incorrect number of EICs");

@@ -256,7 +256,7 @@ namespace qAlgorithms
                 std::cerr << "Warning: processing will ignore defective files.\n";
                 args.skipError = true;
             }
-            else if (argument == "-skipAhead")
+            else if (argument == "-skipAhead" || argument == "-skip-ahead")
             {
                 ++i;
                 if (i == argc)

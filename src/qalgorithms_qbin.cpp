@@ -161,6 +161,8 @@ namespace qAlgorithms
         }
     }
 
+    double previousBinMax = 0; // @todo this is a very bad idea
+
     std::string subsetBins(BinContainer &bincontainer) // @todo string return values are stupid
     {
         // auto timeStart = std::chrono::high_resolution_clock::now();
@@ -195,6 +197,8 @@ namespace qAlgorithms
                 processThis.subsetMZ(bincontainer.targetBins, bincontainer.notInBins,
                                      &activeOS, cumError,
                                      0, activeOS.size() - 2); // -1 since the last index is occupied by a NAN
+
+                previousBinMax = 0; // @todo get rid of this without sacrificing validity
             }
             // @todo logging
             logOutput += std::to_string(bincontainer.targetBins->size()) + ", ";
@@ -375,8 +379,6 @@ namespace qAlgorithms
         return cumError;
     }
 
-    double previousBinMax = 0;
-
     // @todo write a test for correct subsetting: one good region with < 5 points to each side and two correct bins separated by 1-2 points
     void Bin::subsetMZ(std::vector<Bin> *bincontainer, std::vector<const CentroidPeak *> &notInBins,
                        const std::vector<double> *OS, const std::vector<double> &cumError,
@@ -404,14 +406,14 @@ namespace qAlgorithms
         auto pmax2 = std::max_element(OS->begin() + binStartInOS, OS->begin() + binEndInOS + 1); // @todo this is wrong if binEnd is the index
         double max2 = *pmax2;
 
-        while (max != max2)
-        {
-            volatile const size_t cutpos = pmax - pointerToStartpos + binStartInOS;
-            volatile const size_t cutpos2 = std::distance(OS->begin() + binStartInOS, pmax2) + binStartInOS;
-        }
+        // while (max != max2)
+        // {
+        //     volatile const size_t cutpos = pmax - pointerToStartpos + binStartInOS;
+        //     volatile const size_t cutpos2 = std::distance(OS->begin() + binStartInOS, pmax2) + binStartInOS;
+        // }
 
         assert(max == max2);
-        assert(max != previousBinMax);
+        assert(max != previousBinMax); //@todo check if this fails for bad reasons
         previousBinMax = max;
 
         // this is necessary since otherwise, the error would be underestimated by one
@@ -704,9 +706,11 @@ namespace qAlgorithms
         std::vector<float> tmp_DQSC(interpolatedSize, 0);
         std::vector<unsigned int> tmp_cenID(interpolatedSize, 0);
 
+        unsigned int prevaccess = -1; // max of uint
         for (size_t i = 0; i < eicsize; i++)
         {
             unsigned int access = convertRT->at(pointsInBin.at(i)->number_MS1) - firstScan + 2; // two scans at the front are extrapolated later
+            assert(access != prevaccess);
             const CentroidPeak *point = pointsInBin[i];
 
             tmp_scanNumbers[access] = point->number_MS1;
@@ -729,7 +733,7 @@ namespace qAlgorithms
 
             tmp_df[i] = df_total;
         }
-        assert(df_total == eicsize);
+        assert(df_total == eicsize); // @todo this can be disturbed by supplying incorrectly formatted data as RT converter
 
         EIC returnVal = {
             tmp_scanNumbers,
