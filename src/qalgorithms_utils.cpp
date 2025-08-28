@@ -127,4 +127,30 @@ namespace qAlgorithms
         }
         return ret;
     }
+    const double *maxVal(const double *const arrayStart, const size_t length)
+    {
+        assert(length > 0);
+        const double *ret = arrayStart;
+        for (size_t i = 1; i < length; i++) // no need to check the first element
+        {
+            ret = *ret > *(arrayStart + i) ? ret : arrayStart + i;
+        }
+        return ret;
+    }
+
+    double meanOfCumulative(double *const cumArray, const size_t startIdx, const size_t endIdx)
+    {
+        assert(startIdx <= endIdx);
+        double subtractor = startIdx == 0 ? 0 : cumArray[startIdx - 1]; // account for index 0
+        double totalSum = cumArray[endIdx] - subtractor;
+        return totalSum / (endIdx - startIdx + 1);
+    }
+    double meanOfCumulative(const double *const cumArray, const size_t startIdx, const size_t endIdx)
+    {
+        assert(startIdx <= endIdx);
+        double subtractor = startIdx == 0 ? 0 : cumArray[startIdx - 1]; // account for index 0
+        double totalSum = cumArray[endIdx] - subtractor;
+        return totalSum / (endIdx - startIdx + 1);
+    }
+
 }

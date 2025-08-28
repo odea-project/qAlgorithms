@@ -101,6 +101,8 @@ namespace qAlgorithms
 
     Bin makeBin(const std::vector<const CentroidPeak *> *centroids, const size_t binStartPos, const size_t binEndPos);
 
+    Bin makeBin_range(const std::vector<const CentroidPeak *> *const centroids, const Range_i *range);
+
     const std::vector<double> makeOrderSpace(const Bin *bin);
 
     const std::vector<double> makeCumError(const std::vector<const CentroidPeak *> *bin);
@@ -109,7 +111,7 @@ namespace qAlgorithms
     int subsetMZ_stack(std::vector<Range_i> *stack,
                        std::vector<Bin> *bincontainer,
                        std::vector<const CentroidPeak *> *notInBins,
-                       const std::vector<const qAlgorithms::CentroidPeak *> pointsInBin,
+                       const std::vector<const qAlgorithms::CentroidPeak *> *pointsInSourceBin,
                        const std::vector<double> *OS,
                        const std::vector<double> *cumError);
 

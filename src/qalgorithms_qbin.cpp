@@ -308,9 +308,18 @@ namespace qAlgorithms
                 auto activeOS = makeOrderSpace(&processThis);
                 auto cumError = makeCumError(&processThis.pointsInBin);
 
-                processThis.subsetMZ_recursive(bincontainer.targetBins, bincontainer.notInBins,
-                                               &activeOS, cumError,
-                                               0, activeOS.size() - 2); // -1 since the last index is occupied by a NAN
+                // processThis.subsetMZ_recursive(bincontainer.targetBins, bincontainer.notInBins,
+                //                                &activeOS, cumError,
+                //                                0, activeOS.size() - 2); // -1 since the last index is occupied by a NAN
+
+                // replacement section for new subsetting
+                std::vector<Range_i> rangeStack(1, {0, activeOS.size() - 2});
+                subsetMZ_stack(&rangeStack,
+                               bincontainer.targetBins,
+                               &bincontainer.notInBins,
+                               &processThis.pointsInBin,
+                               &activeOS,
+                               &cumError);
 
                 previousBinMax = 0; // @todo get rid of this without sacrificing validity
             }
@@ -452,6 +461,24 @@ namespace qAlgorithms
         pointsInBin = std::vector<const CentroidPeak *>(binStartInOS, binEndInOS);
     }
 
+    Bin makeBin_range(const std::vector<const CentroidPeak *> *const centroids, const Range_i *range)
+    {
+        Bin res;
+        res.pointsInBin.reserve(range->endIdx - range->startIdx + 1);
+        for (size_t i = range->startIdx; i < range->endIdx + 2; i++)
+        { // +2 since the range is inclusive and the bin always ends one point past the differences
+            res.pointsInBin.push_back((*centroids)[i]);
+        }
+        assert(res.pointsInBin.size() > 4);
+
+        res.mzMin = res.pointsInBin.front()->mz;
+        res.mzMax = res.pointsInBin.back()->mz;
+        res.unchanged = true;
+        res.medianMZ = res.pointsInBin[res.pointsInBin.size() / 2]->mz;
+
+        return res;
+    }
+
     Bin makeBin(const std::vector<const CentroidPeak *> *centroids, const size_t binStartPos, const size_t binEndPos)
     {
         assert(binStartPos < binEndPos);
@@ -494,20 +521,85 @@ namespace qAlgorithms
     int subsetMZ_stack(std::vector<Range_i> *stack,
                        std::vector<Bin> *bincontainer,
                        std::vector<const CentroidPeak *> *notInBins,
-                       const std::vector<const qAlgorithms::CentroidPeak *> pointsInBin,
+                       const std::vector<const qAlgorithms::CentroidPeak *> *pointsInSourceBin,
                        const std::vector<double> *OS,
                        const std::vector<double> *cumError)
     {
-        if (stack->empty())
-            return 0;
-
         assert(OS->size() == cumError->size());
+        assert(pointsInSourceBin->size() == OS->size());
+        assert(stack->size() == 1); // @todo this is not generally necessary, remove eventually
 
-        const Range_i range = stack->back();
-        const size_t binsizeInOS = rangeLen(&range);
+        const double *pointerToStart = OS->data();
 
-        assert(binsizeInOS > 3);
-        assert(binsizeInOS <= pointsInBin.size());
+        size_t pointsProcessed = 0;
+
+        while (!stack->empty())
+        {
+            const Range_i range = stack->back();
+            stack->pop_back();
+
+            const size_t binsizeInOS = rangeLen(&range);
+            assert(binsizeInOS <= pointsInSourceBin->size());
+
+            if (binsizeInOS < 4)
+            {
+                // termination condition: less than four differences == less than five points
+                // one point past the end is removed due to the cuts always resulting in one
+                // orpahaned centroid which does not have an associated difference
+                for (size_t i = range.startIdx; i < range.endIdx + 2; i++)
+                {
+                    notInBins->push_back(pointsInSourceBin->at(i));
+                    pointsProcessed += 1;
+                }
+                continue;
+            }
+
+            const double *pointerToMax = maxVal(pointerToStart + range.startIdx, binsizeInOS);
+            const double max = *pointerToMax;
+            assert(max != previousBinMax); //@todo check if this fails for bad reasons
+            previousBinMax = max;
+
+            const double meanError = meanOfCumulative(cumError->data(), range.startIdx, range.endIdx);
+
+            const double vcrit = binningCritVal(binsizeInOS, meanError);
+
+            if (max < vcrit) // all values in range are part of one mz bin
+            {
+                // the difference is calculated for the position n, and is accordingly excluded from the
+                // next recursive call at every step. Since position n is still part of the bin (the distance
+                // to n was not critical), one past the limit has to be included in the new bin
+
+                Bin output = makeBin_range(pointsInSourceBin, &range);
+                pointsProcessed += output.pointsInBin.size();
+                bincontainer->push_back(output);
+
+                continue;
+            }
+
+            const size_t cutpos = pointerToMax - pointerToStart;
+
+            if (cutpos == range.startIdx)
+            {
+                notInBins->push_back(pointsInSourceBin->at(cutpos));
+                pointsProcessed += 1;
+            }
+            else
+            {
+                assert(cutpos > range.startIdx);
+                stack->push_back({range.startIdx, cutpos - 1});
+            }
+            if (cutpos == range.endIdx)
+            {
+                notInBins->push_back(pointsInSourceBin->at(cutpos));
+                pointsProcessed += 1;
+            }
+            else
+            {
+                assert(cutpos < range.endIdx);
+                stack->push_back({cutpos + 1, range.endIdx});
+            }
+            assert(pointsProcessed < pointsInSourceBin->size());
+        }
 
         return 0;
     }
@@ -526,7 +618,7 @@ namespace qAlgorithms
         assert(binsizeInOS <= pointsInBin.size());
 
         const double *pointerToStartpos = &(*OS)[binStartInOS];
-        auto data = OS->data();
+        auto data = OS->data() + binStartInOS;
         assert(data == pointerToStartpos);
 
         const double *pmax = pointerToStartpos;

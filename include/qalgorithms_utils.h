@@ -81,6 +81,10 @@ namespace qAlgorithms
     // @todo better documentation
     double binningCritVal(unsigned int n, double uncertainty); // critical value for deciding if a bin exists or not
 
-    double *maxVal(const double *arrayStart, const size_t length);
+    double *maxVal(double *const arrayStart, const size_t length);
+    const double *maxVal(const double *const arrayStart, const size_t length);
+
+    double meanOfCumulative(double *const cumArray, const size_t startIdx, const size_t endIdx);
+    double meanOfCumulative(const double *const cumArray, const size_t startIdx, const size_t endIdx);
 }
 #endif // QALGORITHMS_UTILS_H
