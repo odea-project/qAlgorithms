@@ -150,6 +150,8 @@ namespace qAlgorithms
         // rebinning is not separated into a function
         // binning is repeated until the input length is constant
         size_t prevFinal = 0;
+
+        size_t itCount = 0;
         while (true) // @todo prove that this loop always terminates
         {
             subsetBins(activeBins);
@@ -179,6 +181,7 @@ namespace qAlgorithms
 
             if (prevFinal == activeBins.finalBins.size())
             {
+                itCount += 1;
                 break;
             }
             prevFinal = activeBins.finalBins.size();
@@ -191,13 +194,14 @@ namespace qAlgorithms
                 // tend to contain smaller bins which were not properly processed due to being
                 // at the borders of a cutting region
                 activeBins.processBinsF.back().pointsInBin = activeBins.notInBins;
-                activeBins.processBinsF.back().pointsInBin = activeBins.notInBins;
                 activeBins.notInBins.clear();
                 // re-binning during the initial loop would result in some bins being split prematurely
                 // @todo rebinning might be a very bad idea
                 // int rebinCount = selectRebin(&activeBins, centroidedData, maxdist);
                 // @todo logging
             }
+
+            itCount += 1;
         }
         // no change in bin result, so all remaining bins cannot be coerced into a valid state
         if (!activeBins.processBinsF.empty())
@@ -294,6 +298,7 @@ namespace qAlgorithms
         bincontainer.sourceBins = &bincontainer.processBinsF;
         bincontainer.targetBins = &bincontainer.processBinsT;
 
+        size_t itCount = 0;
         while (!(bincontainer.processBinsF.empty() && bincontainer.processBinsT.empty()))
         {
             // loop until all bins have been moved into finsihedBins or discarded
@@ -346,6 +351,7 @@ namespace qAlgorithms
                 }
             }
             switchTarget(&bincontainer);
+            itCount += 1;
         }
         bincontainer.processBinsF.clear();
         bincontainer.processBinsT.clear();
@@ -354,7 +360,7 @@ namespace qAlgorithms
         return;
     }
 
-    // void deduplicateBin(std::vector<Bin> *target, std::vector<const CentroidPeak *> *notInBins, Bin bin)
+    // @todo rework this function
     void deduplicateBin(std::vector<Bin> *target, std::vector<const CentroidPeak *> *notInBins, Bin bin)
     {
         assert(bin.duplicateScan);
@@ -372,6 +378,7 @@ namespace qAlgorithms
         bin.pointsInBin.push_back(&dummy); // pointer will be not be invalidated since bin is copied
         for (size_t i = 1; i < bin.pointsInBin.size(); i++)
         {
+            assert(bin.pointsInBin[i]->ID != bin.pointsInBin[i - 1]->ID);
             if (bin.pointsInBin[i]->number_MS1 == bin.pointsInBin[i - 1]->number_MS1)
             {
                 double left = abs(bin.medianMZ - bin.pointsInBin[i - 1]->mz);
@@ -465,11 +472,19 @@ namespace qAlgorithms
     {
         Bin res;
         res.pointsInBin.reserve(range->endIdx - range->startIdx + 1);
-        for (size_t i = range->startIdx; i < range->endIdx + 2; i++)
-        { // +2 since the range is inclusive and the bin always ends one point past the differences
-            res.pointsInBin.push_back((*centroids)[i]);
+
+        res.pointsInBin.push_back(centroids->at(range->startIdx));
+        assert(res.pointsInBin.front()->ID != 0);
+
+        for (size_t i = range->startIdx + 1; i < range->endIdx + 2; i++) // @todo remove +1
+        {                                                                // +2 since the range is inclusive and the bin always ends one point past the differences
+            auto point = (*centroids)[i];
+            assert(point->ID != 0);
+            assert(point->ID != res.pointsInBin.back()->ID);
+            res.pointsInBin.push_back(point);
         }
         assert(res.pointsInBin.size() > 4);
+        assert(res.pointsInBin.front()->mz != res.pointsInBin.back()->mz);
 
         res.mzMin = res.pointsInBin.front()->mz;
         res.mzMax = res.pointsInBin.back()->mz;
@@ -500,7 +515,9 @@ namespace qAlgorithms
         OS.reserve(points.size());
         for (size_t i = 0; i < points.size() - 1; i++)
         {
+            assert(points[i + 1]->ID != points[i]->ID);
             OS.push_back((points[i + 1]->mz - points[i]->mz));
+            // assert(OS.back() > 0);
         }
         OS.push_back(NAN);
         return OS;
@@ -532,6 +549,7 @@ namespace qAlgorithms
         const double *pointerToStart = OS->data();
 
         size_t pointsProcessed = 0;
+        size_t previousID = -1;
 
         while (!stack->empty())
         {
@@ -556,8 +574,10 @@ namespace qAlgorithms
 
             const double *pointerToMax = maxVal(pointerToStart + range.startIdx, binsizeInOS);
             const double max = *pointerToMax;
-            assert(max != previousBinMax); //@todo check if this fails for bad reasons
-            previousBinMax = max;
+
+            size_t cenID = pointsInSourceBin->at(pointerToMax - pointerToStart)->ID;
+            assert(cenID != previousID);
+            previousID = cenID;
 
             const double meanError = meanOfCumulative(cumError->data(), range.startIdx, range.endIdx);
 
@@ -572,6 +592,11 @@ namespace qAlgorithms
                 Bin output = makeBin_range(pointsInSourceBin, &range);
                 pointsProcessed += output.pointsInBin.size();
                 bincontainer->push_back(output);
+
+                for (size_t i = 0; i < output.pointsInBin.size(); i++)
+                {
+                    assert(output.pointsInBin[i]->ID != 0);
+                }
 
                 continue;
             }
@@ -598,6 +623,7 @@ namespace qAlgorithms
                 assert(cutpos < range.endIdx);
                 stack->push_back({cutpos + 1, range.endIdx});
             }
+            // assert(bincontainer->size() == 0);
             assert(pointsProcessed < pointsInSourceBin->size());
         }
 
@@ -719,6 +745,7 @@ namespace qAlgorithms
         for (size_t i = 0; i < binSize - 1; i++) // -1 since difference to next data point is checked
         {
             assert(pointsInBin[i + 1]->number_MS1 >= pointsInBin[i]->number_MS1);
+            assert(pointsInBin[i]->ID != 0);
             size_t distanceScan = pointsInBin[i + 1]->number_MS1 - pointsInBin[i]->number_MS1;
             if (distanceScan > maxdist) // bin needs to be split
             {
