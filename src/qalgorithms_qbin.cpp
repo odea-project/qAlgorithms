@@ -132,6 +132,21 @@ namespace qAlgorithms
         return activeBins.finalBins;
     }
 
+    bool binCheck(Bin *bin)
+    {
+        auto points = &bin->pointsInBin;
+
+        std::sort(points->begin(), points->end(), [](const CentroidPeak *lhs, const CentroidPeak *rhs)
+                  { return lhs->ID < rhs->ID; });
+
+        for (size_t i = 1; i < points->size(); i++)
+        {
+            if (points->at(i)->ID == points->at(i - 1)->ID)
+                return false;
+        }
+        return true;
+    }
+
     std::vector<EIC> performQbinning_old(const std::vector<CentroidPeak> *centroidedData,
                                          const std::vector<unsigned int> *convertRT) // @todo split out subfunctions so the structure is subset -> score -> format
     {
@@ -194,6 +209,7 @@ namespace qAlgorithms
                 // tend to contain smaller bins which were not properly processed due to being
                 // at the borders of a cutting region
                 activeBins.processBinsF.back().pointsInBin = activeBins.notInBins;
+                assert(binCheck(&activeBins.processBinsF.back()));
                 activeBins.notInBins.clear();
                 // re-binning during the initial loop would result in some bins being split prematurely
                 // @todo rebinning might be a very bad idea
@@ -306,8 +322,9 @@ namespace qAlgorithms
 
             for (size_t j = 0; j < bincontainer.sourceBins->size(); j++) // for every element in the deque before writing new bins
             {
-                Bin processThis = bincontainer.sourceBins->at(j);
-                // std::sort(processThis.pointsInBin.begin(), processThis.pointsInBin.end(), [](const CentroidPeak *lhs, const CentroidPeak *rhs)
+                Bin processThis = bincontainer.sourceBins->at(j); // @todo do not allocate for every iteration here, also point to pointsInBin
+                assert(binCheck(&processThis));
+
                 std::sort(processThis.pointsInBin.begin(), processThis.pointsInBin.end(), [](const CentroidPeak *lhs, const CentroidPeak *rhs)
                           { return lhs->mz < rhs->mz; });
                 auto activeOS = makeOrderSpace(&processThis);
@@ -333,6 +350,7 @@ namespace qAlgorithms
 
             for (size_t j = 0; j < bincontainer.sourceBins->size(); j++)
             {
+                assert(binCheck(&bincontainer.sourceBins->at(j)));
                 bincontainer.sourceBins->at(j).subsetScan(bincontainer.targetBins, &bincontainer.notInBins);
             }
             // @todo logging
@@ -416,6 +434,9 @@ namespace qAlgorithms
             return;
         }
         assert(returnBin.pointsInBin.size() + duplicateRemovedCount == bin.pointsInBin.size() - 1);
+
+        assert(binCheck(&returnBin));
+
         target->push_back(returnBin);
     }
 
@@ -564,8 +585,14 @@ namespace qAlgorithms
                 // termination condition: less than four differences == less than five points
                 // one point past the end is removed due to the cuts always resulting in one
                 // orpahaned centroid which does not have an associated difference
-                for (size_t i = range.startIdx; i < range.endIdx + 2; i++)
+                for (size_t i = range.startIdx; i < range.endIdx + 1; i++)
                 {
+                    size_t checkID = pointsInSourceBin->at(i)->ID;
+                    for (size_t j = 0; j < notInBins->size(); j++)
+                    {
+                        assert(notInBins->at(j)->ID != checkID);
+                    }
+
                     notInBins->push_back(pointsInSourceBin->at(i));
                     pointsProcessed += 1;
                 }
@@ -626,6 +653,7 @@ namespace qAlgorithms
             // assert(bincontainer->size() == 0);
             assert(pointsProcessed < pointsInSourceBin->size());
         }
+        assert(pointsProcessed == pointsInSourceBin->size());
 
         return 0;
     }

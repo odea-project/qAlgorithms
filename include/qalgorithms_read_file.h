@@ -11,6 +11,8 @@
 
 namespace qAlgorithms
 {
+    // @todo split off into "read file" and "read mzml", where the mzml reader just prepares an intermediate struct, processing of which is handled separately
+
     struct BinaryMetadata // @todo there is no need for a file-specific metadata object
     {
         std::string data_name_short;
@@ -26,6 +28,21 @@ namespace qAlgorithms
         int mode = 0;                  // 1 = profile, 2 = centroid
         int MS_level = 0;
         bool polarity; // 0 = negative, 1 = positive
+    };
+
+    struct CompoundFilter
+    {
+        // this struct is used to limit the amount of operations performed by the program to
+        // a selection of masses and RTs that is relevant to the analysis at hand.
+        double mz_expected[16] = {0}; // @todo reasonable amount of points?
+        double mz_tolerance_ppm = 0;  // @todo is ppm the only relevant choice?
+
+        double RT = -1;
+        double RT_tol = -1; // tolerance to either side, assumes symmetrical peaks
+
+        std::string *compoundName = nullptr;
+        std::string *methodName = nullptr;
+        Polarities polarity = Polarities::unknown_polarity;
     };
 
     static std::vector<std::string> possible_accessions_binary_data_mzML = {
@@ -95,7 +112,7 @@ namespace qAlgorithms
         std::vector<bool> get_spectra_polarity(const std::vector<unsigned int> *indices);
 
         // return all indices of spectra that match the required criteria
-        std::vector<unsigned int> filter_spectra(bool ms1, bool polarity, bool centroided); // @todo this is only useable to select MS1 or MS2
+        std::vector<unsigned int> filter_spectra(const bool ms1, bool polarity, bool centroided); // @todo this is only useable to select MS1 or MS2
 
         Polarities get_polarity_mode(size_t count);
         std::vector<float> get_spectra_RT(const std::vector<unsigned int> *indices);
