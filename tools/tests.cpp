@@ -109,6 +109,7 @@ int main()
         for (size_t i = 1; i < vecLen; i++)
         {
             inputCens[i].number_MS1 = i;
+            inputCens[i].ID = i;
             inputCens[i].mz = randRange_d(99.998, 100.002);
             convertRT[i] = i;
         }
@@ -129,6 +130,7 @@ int main()
         inputCens.back().mz = 200;
         inputCens.back().mzUncertainty = 4 * 10e-6;
         inputCens.back().number_MS1 = vecLen;
+        inputCens.back().ID = vecLen + 1;
 
         vecLen++;
         // expected output: one EIC with five points and one trailing centroid
@@ -148,6 +150,7 @@ int main()
             centroid2.mz = 400;
             centroid2.mzUncertainty = 5 * 10e-6;
             centroid2.number_MS1 = i;
+            centroid2.ID = vecLen + i;
             inputCens.push_back(centroid2);
             size_t prevRT = convertRT.back();
             convertRT.push_back(prevRT + 1);

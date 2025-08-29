@@ -728,7 +728,7 @@ namespace qAlgorithms
         for (size_t i = 0; i < peaktable->size(); i++)
         {
             const FeaturePeak peak = peaktable->at(i);
-            int binID = peak.idxBin;
+            size_t binID = peak.idxBin;
             assert(binID < originalBins->size());
             const std::vector<unsigned int> *scanNums = &(originalBins->at(binID).scanNumbers);
             assert(peak.idxBinStart < peak.idxBinEnd);

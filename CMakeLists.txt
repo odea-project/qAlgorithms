@@ -13,7 +13,7 @@ option(V_ASAN "Enable AddressSanitizer" OFF)
 ## Set compiler flags
 
 # compile options - optimisation / required
-add_compile_options(-std=c++2c -fno-math-errno -mavx2 -march=native -O2)
+add_compile_options(-std=c++2c -fno-math-errno -mavx2 -march=native -O0)
 
 # debug-related flags
 add_compile_options(-g -ggdb3)

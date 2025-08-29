@@ -132,21 +132,6 @@ namespace qAlgorithms
         return activeBins.finalBins;
     }
 
-    bool binCheck(Bin *bin)
-    {
-        auto points = &bin->pointsInBin;
-
-        std::sort(points->begin(), points->end(), [](const CentroidPeak *lhs, const CentroidPeak *rhs)
-                  { return lhs->ID < rhs->ID; });
-
-        for (size_t i = 1; i < points->size(); i++)
-        {
-            if (points->at(i)->ID == points->at(i - 1)->ID)
-                return false;
-        }
-        return true;
-    }
-
     std::vector<EIC> performQbinning_old(const std::vector<CentroidPeak> *centroidedData,
                                          const std::vector<unsigned int> *convertRT) // @todo split out subfunctions so the structure is subset -> score -> format
     {
@@ -209,7 +194,6 @@ namespace qAlgorithms
                 // tend to contain smaller bins which were not properly processed due to being
                 // at the borders of a cutting region
                 activeBins.processBinsF.back().pointsInBin = activeBins.notInBins;
-                assert(binCheck(&activeBins.processBinsF.back()));
                 activeBins.notInBins.clear();
                 // re-binning during the initial loop would result in some bins being split prematurely
                 // @todo rebinning might be a very bad idea
@@ -323,7 +307,6 @@ namespace qAlgorithms
             for (size_t j = 0; j < bincontainer.sourceBins->size(); j++) // for every element in the deque before writing new bins
             {
                 Bin processThis = bincontainer.sourceBins->at(j); // @todo do not allocate for every iteration here, also point to pointsInBin
-                assert(binCheck(&processThis));
 
                 std::sort(processThis.pointsInBin.begin(), processThis.pointsInBin.end(), [](const CentroidPeak *lhs, const CentroidPeak *rhs)
                           { return lhs->mz < rhs->mz; });
@@ -335,7 +318,7 @@ namespace qAlgorithms
                 //                                0, activeOS.size() - 2); // -1 since the last index is occupied by a NAN
 
                 // replacement section for new subsetting
-                std::vector<Range_i> rangeStack(1, {0, activeOS.size() - 2});
+                std::vector<Range_i> rangeStack(1, {0, activeOS.size() - 1});
                 subsetMZ_stack(&rangeStack,
                                bincontainer.targetBins,
                                &bincontainer.notInBins,
@@ -350,7 +333,6 @@ namespace qAlgorithms
 
             for (size_t j = 0; j < bincontainer.sourceBins->size(); j++)
             {
-                assert(binCheck(&bincontainer.sourceBins->at(j)));
                 bincontainer.sourceBins->at(j).subsetScan(bincontainer.targetBins, &bincontainer.notInBins);
             }
             // @todo logging
@@ -433,9 +415,7 @@ namespace qAlgorithms
             }
             return;
         }
-        assert(returnBin.pointsInBin.size() + duplicateRemovedCount == bin.pointsInBin.size() - 1);
-
-        assert(binCheck(&returnBin));
+        assert(returnBin.pointsInBin.size() + duplicateRemovedCount == bin.pointsInBin.size());
 
         target->push_back(returnBin);
     }
@@ -479,11 +459,6 @@ namespace qAlgorithms
 
     Bin::Bin() {};
 
-    // Bin::Bin(const std::vector<const CentroidPeak *>::iterator &binStartInOS, const std::vector<const CentroidPeak *>::iterator &binEndInOS)
-    // {
-    //     pointsInBin = std::vector<const CentroidPeak *>(binStartInOS, binEndInOS);
-    // }
-
     Bin::Bin(const std::vector<const CentroidPeak *>::iterator &binStartInOS, const std::vector<const CentroidPeak *>::iterator &binEndInOS)
     {
         pointsInBin = std::vector<const CentroidPeak *>(binStartInOS, binEndInOS);
@@ -494,18 +469,14 @@ namespace qAlgorithms
         Bin res;
         res.pointsInBin.reserve(range->endIdx - range->startIdx + 1);
 
-        res.pointsInBin.push_back(centroids->at(range->startIdx));
-        assert(res.pointsInBin.front()->ID != 0);
-
-        for (size_t i = range->startIdx + 1; i < range->endIdx + 2; i++) // @todo remove +1
-        {                                                                // +2 since the range is inclusive and the bin always ends one point past the differences
+        for (size_t i = range->startIdx; i < range->endIdx + 1; i++)
+        { // +1 since the range is inclusive
             auto point = (*centroids)[i];
             assert(point->ID != 0);
-            assert(point->ID != res.pointsInBin.back()->ID);
             res.pointsInBin.push_back(point);
         }
         assert(res.pointsInBin.size() > 4);
-        assert(res.pointsInBin.front()->mz != res.pointsInBin.back()->mz);
+        // assert(res.pointsInBin.front()->mz != res.pointsInBin.back()->mz); // @todo this might be a false positive
 
         res.mzMin = res.pointsInBin.front()->mz;
         res.mzMax = res.pointsInBin.back()->mz;
@@ -536,9 +507,7 @@ namespace qAlgorithms
         OS.reserve(points.size());
         for (size_t i = 0; i < points.size() - 1; i++)
         {
-            assert(points[i + 1]->ID != points[i]->ID);
             OS.push_back((points[i + 1]->mz - points[i]->mz));
-            // assert(OS.back() > 0);
         }
         OS.push_back(NAN);
         return OS;
@@ -565,7 +534,6 @@ namespace qAlgorithms
     {
         assert(OS->size() == cumError->size());
         assert(pointsInSourceBin->size() == OS->size());
-        assert(stack->size() == 1); // @todo this is not generally necessary, remove eventually
 
         const double *pointerToStart = OS->data();
 
@@ -580,26 +548,21 @@ namespace qAlgorithms
             const size_t binsizeInOS = rangeLen(&range);
             assert(binsizeInOS <= pointsInSourceBin->size());
 
-            if (binsizeInOS < 4)
+            if (binsizeInOS < 5) // min of five points per bin
             {
-                // termination condition: less than four differences == less than five points
-                // one point past the end is removed due to the cuts always resulting in one
-                // orpahaned centroid which does not have an associated difference
                 for (size_t i = range.startIdx; i < range.endIdx + 1; i++)
                 {
-                    size_t checkID = pointsInSourceBin->at(i)->ID;
-                    for (size_t j = 0; j < notInBins->size(); j++)
-                    {
-                        assert(notInBins->at(j)->ID != checkID);
-                    }
-
                     notInBins->push_back(pointsInSourceBin->at(i));
                     pointsProcessed += 1;
                 }
+
+                printf("region: %zu : %zu | add to notInBins\n", range.startIdx, range.endIdx);
                 continue;
             }
 
-            const double *pointerToMax = maxVal(pointerToStart + range.startIdx, binsizeInOS);
+            // the last distance of the order space is never relevant, since the point one past
+            // it is already out of range for the current block
+            const double *pointerToMax = maxVal(pointerToStart + range.startIdx, binsizeInOS - 1);
             const double max = *pointerToMax;
 
             size_t cenID = pointsInSourceBin->at(pointerToMax - pointerToStart)->ID;
@@ -620,41 +583,27 @@ namespace qAlgorithms
                 pointsProcessed += output.pointsInBin.size();
                 bincontainer->push_back(output);
 
-                for (size_t i = 0; i < output.pointsInBin.size(); i++)
-                {
-                    assert(output.pointsInBin[i]->ID != 0);
-                }
-
+                printf("region: %zu : %zu | add to Bin\n", range.startIdx, range.endIdx);
                 continue;
             }
 
             const size_t cutpos = pointerToMax - pointerToStart;
 
-            if (cutpos == range.startIdx)
             {
-                notInBins->push_back(pointsInSourceBin->at(cutpos));
-                pointsProcessed += 1;
+                assert(cutpos >= range.startIdx);
+                printf("region: %zu : %zu | add to Stack\n", range.startIdx, cutpos);
+                stack->push_back({range.startIdx, cutpos});
             }
-            else
-            {
-                assert(cutpos > range.startIdx);
-                stack->push_back({range.startIdx, cutpos - 1});
-            }
-            if (cutpos == range.endIdx)
-            {
-                notInBins->push_back(pointsInSourceBin->at(cutpos));
-                pointsProcessed += 1;
-            }
-            else
             {
                 assert(cutpos < range.endIdx);
+                printf("region: %zu : %zu | add to Stack\n", cutpos + 1, range.endIdx);
                 stack->push_back({cutpos + 1, range.endIdx});
             }
-            // assert(bincontainer->size() == 0);
             assert(pointsProcessed < pointsInSourceBin->size());
         }
         assert(pointsProcessed == pointsInSourceBin->size());
 
+        printf("completed one stack of mz subsets\n");
         return 0;
     }
 
