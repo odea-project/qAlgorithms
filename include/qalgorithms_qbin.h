@@ -56,15 +56,6 @@ namespace qAlgorithms
         bool l_maxdist_tooclose = false;
         bool r_maxdist_tooclose = false; // Check if there is a point within maxdist
 
-        /// @brief generate a bin that is a subset of an existing bin using two iterators.
-        /// @details since this extracts a continuous sequence, it is only a good idea
-        /// to construct a new bin like this after a completed subsetting step.
-        /// @param startBin left border of the new bin
-        /// @param endBin right border of the new bin
-        Bin(const std::vector<const CentroidPeak *>::iterator &binStartInOS, const std::vector<const CentroidPeak *>::iterator &binEndInOS);
-
-        Bin();
-
         void subsetScan(std::vector<Bin> *bincontainer, std::vector<const CentroidPeak *> *notInBins);
 
         // returns the start index of where in the sorted not-binned points the minimum start position is

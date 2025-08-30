@@ -411,13 +411,6 @@ namespace qAlgorithms
 
 #pragma region "Bin"
 
-    Bin::Bin() {};
-
-    Bin::Bin(const std::vector<const CentroidPeak *>::iterator &binStartInOS, const std::vector<const CentroidPeak *>::iterator &binEndInOS)
-    {
-        pointsInBin = std::vector<const CentroidPeak *>(binStartInOS, binEndInOS);
-    }
-
     Bin makeBin_mz(const std::vector<const CentroidPeak *> *const centroids, const Range_i *range)
     {
         // function assumes bin is sorted by mz
@@ -511,7 +504,7 @@ namespace qAlgorithms
                     pointsProcessed += 1;
                 }
 
-                printf("region: %zu : %zu | add to notInBins\n", range.startIdx, range.endIdx);
+                // printf("region: %zu : %zu | add to notInBins\n", range.startIdx, range.endIdx);
                 continue;
             }
 
@@ -538,7 +531,7 @@ namespace qAlgorithms
                 pointsProcessed += output.pointsInBin.size();
                 bincontainer->push_back(output);
 
-                printf("region: %zu : %zu | add to Bin\n", range.startIdx, range.endIdx);
+                // printf("region: %zu : %zu | add to Bin\n", range.startIdx, range.endIdx);
                 continue;
             }
 
@@ -546,19 +539,19 @@ namespace qAlgorithms
 
             {
                 assert(cutpos >= range.startIdx);
-                printf("region: %zu : %zu | add to Stack\n", range.startIdx, cutpos);
+                // printf("region: %zu : %zu | add to Stack\n", range.startIdx, cutpos);
                 stack->push_back({range.startIdx, cutpos});
             }
             {
                 assert(cutpos < range.endIdx);
-                printf("region: %zu : %zu | add to Stack\n", cutpos + 1, range.endIdx);
+                // printf("region: %zu : %zu | add to Stack\n", cutpos + 1, range.endIdx);
                 stack->push_back({cutpos + 1, range.endIdx});
             }
             assert(pointsProcessed < pointsInSourceBin->size());
         }
         assert(pointsProcessed == pointsInSourceBin->size());
 
-        printf("completed one stack of mz subsets\n");
+        // printf("completed one stack of mz subsets\n");
         return 0;
     }
 
@@ -591,7 +584,7 @@ namespace qAlgorithms
                 {
                     // viable bin, stable in scan dimension
                     // +1 since otherwise last element of the correct range is not included
-                    Bin output(newstart, pointsInBin.begin() + i + 1);
+                    Bin output = makeBin_scan(&pointsInBin, lastpos, i);
                     assert(output.pointsInBin.size() > 4);
                     bincontainer->push_back(output);
                 }
@@ -615,7 +608,7 @@ namespace qAlgorithms
         else if (binSize - lastpos > 4) // binsize starts at 1
         {
             // viable bin, stable in scan dimension
-            Bin output(newstart, pointsInBin.end());
+            Bin output = makeBin_scan(&pointsInBin, lastpos, pointsInBin.size() - 1);
             assert(output.pointsInBin.size() > 4);
             bincontainer->push_back(output);
         }
