@@ -65,30 +65,6 @@ namespace qAlgorithms
 
         Bin();
 
-        /// @brief divide a bin sorted by mz the difference in mz of its members and return the new bins to the bin deque. Recursive function.
-        /// @details this function iterates over the order space of a previously generated bin by searching for the maximum
-        /// of the order space between startBin and endBin. If the maximum is smaller than the critical value, all data points
-        /// between startBin and endBin are added to bincontainer as a new bin. The function terminates if it is called on less
-        /// than five datapoints. For details on the critical value, see: "qBinning: Data Quality-Based Algorithm for Automized Ion Chromatogram
-        /// Extraction from High-Resolution Mass Spectrometry. Max Reuschenbach, Felix Drees, Torsten C. Schmidt, and Gerrit Renner. Analytical
-        /// Chemistry 2023 95 (37), 13804-13812. DOI: 10.1021/acs.analchem.3c01079"
-        /// https://pubs.acs.org/doi/suppl/10.1021/acs.analchem.3c01079/suppl_file/ac3c01079_si_001.pdf page 26
-        /// Assuming an order space [1,1,1,1,1,1,1,5,1,1,1] and a critical value of 4 for n = 11 (this does not reflect the actual critical value),
-        /// the function would add a bin containing the datapoints 0 to 5 in the source bin to the bin deque
-        /// @param bincontainer the newly created bins will be added to the back of this deque
-        /// @param OS the order space generated for the bin using makeOS()
-        /// @param startBin index relating to the order space at which the bin starts
-        /// @param endBin index relating to the order space at which the bin ends
-        void subsetMZ_recursive(std::vector<Bin> *bincontainer, std::vector<const CentroidPeak *> &notInBins,
-                                const std::vector<double> *OS, const std::vector<double> &cumError,
-                                const unsigned int binStartInOS, const unsigned int binEndInOS);
-
-        /// @brief divide a bin sorted by scans if there are gaps greater than maxdist in it. Bins that cannot be divided are closed.
-        /// @details this function sorts all members of a bin by scans and iterates over them. If a gap greater than maxdist exists,
-        /// the bin is split at this point. Only subsets with more than five elements are added to the bin deque. If a bin is not split,
-        /// it is added to the finishedBins vector and no further subsets will be performed on it. As such, subsetScan() must be the last
-        /// subset function and cannot be used in combination with any other subsetting function that decides if a bin is completed or not.
-        /// @param bincontainer if the input bin was split, the newly created bins will be added to this
         void subsetScan(std::vector<Bin> *bincontainer, std::vector<const CentroidPeak *> *notInBins);
 
         // returns the start index of where in the sorted not-binned points the minimum start position is
@@ -99,9 +75,9 @@ namespace qAlgorithms
 
     std::vector<Bin> performQbinning(const std::vector<CentroidPeak> *centroids);
 
-    Bin makeBin(const std::vector<const CentroidPeak *> *centroids, const size_t binStartPos, const size_t binEndPos);
+    Bin makeBin_scan(const std::vector<const CentroidPeak *> *centroids, const size_t binStartPos, const size_t binEndPos);
 
-    Bin makeBin_range(const std::vector<const CentroidPeak *> *const centroids, const Range_i *range);
+    Bin makeBin_mz(const std::vector<const CentroidPeak *> *const centroids, const Range_i *range);
 
     const std::vector<double> makeOrderSpace(const Bin *bin);
 
@@ -145,13 +121,8 @@ namespace qAlgorithms
 
     void subsetBins(BinContainer &bincontainer);
 
-    // int selectRebin(BinContainer *bins, const std::vector<CentroidPeak> *rawdata);
-    int selectRebin(BinContainer *bins, const std::vector<CentroidPeak> *rawdata);
-
     // remove points with duplicate scans from a bin by choosing the one closest to the median
     void deduplicateBin(std::vector<Bin> *target, std::vector<const CentroidPeak *> *notInBins, Bin bin);
-
-    void removeMassJumps(std::vector<Bin> *target, std::vector<const CentroidPeak *> *notInBins, Bin bin);
 
 #pragma endregion "Bin Container"
 

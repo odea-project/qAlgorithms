@@ -76,10 +76,6 @@ namespace qAlgorithms
                 activeBins.processBinsF.back().pointsInBin = activeBins.notInBins;
                 activeBins.processBinsF.back().pointsInBin = activeBins.notInBins;
                 activeBins.notInBins.clear();
-                // re-binning during the initial loop would result in some bins being split prematurely
-                // @todo rebinning might be a very bad idea
-                // int rebinCount = selectRebin(&activeBins, centroidedData, maxdist);
-                // @todo logging
             }
         }
         // no change in bin result, so all remaining bins cannot be coerced into a valid state
@@ -87,10 +83,6 @@ namespace qAlgorithms
         {
             for (Bin bin : activeBins.processBinsF)
             {
-                // for (size_t i = 0; i < bin.pointsInBin.size(); i++)
-                // {
-                //     activeBins.notInBins.push_back(bin.pointsInBin[i]);
-                // }
                 for (size_t i = 0; i < bin.pointsInBin.size(); i++)
                 {
                     activeBins.notInBins.push_back(bin.pointsInBin[i]);
@@ -135,14 +127,12 @@ namespace qAlgorithms
     std::vector<EIC> performQbinning_old(const std::vector<CentroidPeak> *centroidedData,
                                          const std::vector<unsigned int> *convertRT) // @todo split out subfunctions so the structure is subset -> score -> format
     {
-        // std::cout << sizeof(Bin) << std::endl;
         assert(centroidedData->front().mz == 0); // first value is dummy
 
         BinContainer activeBins;
         Bin firstBin;
         for (size_t i = 0; i < centroidedData->size(); i++)
         {
-            // firstBin.pointsInBin.push_back(&(centroidedData->at(i)));
             firstBin.pointsInBin.push_back(&(centroidedData->at(i)));
         }
         activeBins.processBinsF.push_back(firstBin);
@@ -313,11 +303,6 @@ namespace qAlgorithms
                 auto activeOS = makeOrderSpace(&processThis);
                 auto cumError = makeCumError(&processThis.pointsInBin);
 
-                // processThis.subsetMZ_recursive(bincontainer.targetBins, bincontainer.notInBins,
-                //                                &activeOS, cumError,
-                //                                0, activeOS.size() - 2); // -1 since the last index is occupied by a NAN
-
-                // replacement section for new subsetting
                 std::vector<Range_i> rangeStack(1, {0, activeOS.size() - 1});
                 subsetMZ_stack(&rangeStack,
                                bincontainer.targetBins,
@@ -370,12 +355,14 @@ namespace qAlgorithms
                   { return lhs->number_MS1 < rhs->number_MS1; });
         Bin returnBin;
         returnBin.pointsInBin.reserve(bin.pointsInBin.size());
-        size_t duplicateRemovedCount = 0;
+
         // add dummy centroid to the end of the bin
         CentroidPeak dummy;
         dummy.mz = 0;
         dummy.number_MS1 = 0;
         bin.pointsInBin.push_back(&dummy); // pointer will be not be invalidated since bin is copied
+        size_t duplicateRemovedCount = 1;  // initialse to 1 so the check at function end is less confusing
+
         for (size_t i = 1; i < bin.pointsInBin.size(); i++)
         {
             assert(bin.pointsInBin[i]->ID != bin.pointsInBin[i - 1]->ID);
@@ -420,39 +407,6 @@ namespace qAlgorithms
         target->push_back(returnBin);
     }
 
-    // void removeMassJumps(std::vector<Bin> *target, std::vector<const CentroidPeak *> *notInBins, Bin bin)
-    // {
-    //     // if the distance in mz between two points is too great, the violating point
-    //     // should be removed. @todo
-    // }
-
-    // int selectRebin(BinContainer *bins, const std::vector<CentroidPeak> *rawdata)
-    // {
-    //     // move all bins without binning artefacts into finishedBins vector
-    //     assert(bins->processBinsF.size() > 0);
-    //     assert(!bins->readFrom);
-    //     int dissolvedCount = 0;
-    //     for (size_t i = 0; i < bins->viableBins.size(); i++)
-    //     {
-    //         Bin currentBin = bins->viableBins[i];
-
-    //         if (binLimitsOK(currentBin, rawdata))
-    //         {
-    //             bins->finalBins.push_back(currentBin);
-    //         }
-    //         else
-    //         {
-    //             dissolvedCount++;
-    //             for (const CentroidPeak *cen : currentBin.pointsInBin)
-    //             {
-    //                 bins->processBinsF.front().pointsInBin.push_back(cen);
-    //             }
-    //         }
-    //     }
-    //     bins->viableBins.clear();
-    //     return dissolvedCount;
-    // }
-
 #pragma endregion "BinContainer"
 
 #pragma region "Bin"
@@ -464,8 +418,10 @@ namespace qAlgorithms
         pointsInBin = std::vector<const CentroidPeak *>(binStartInOS, binEndInOS);
     }
 
-    Bin makeBin_range(const std::vector<const CentroidPeak *> *const centroids, const Range_i *range)
+    Bin makeBin_mz(const std::vector<const CentroidPeak *> *const centroids, const Range_i *range)
     {
+        // function assumes bin is sorted by mz
+
         Bin res;
         res.pointsInBin.reserve(range->endIdx - range->startIdx + 1);
 
@@ -476,7 +432,6 @@ namespace qAlgorithms
             res.pointsInBin.push_back(point);
         }
         assert(res.pointsInBin.size() > 4);
-        // assert(res.pointsInBin.front()->mz != res.pointsInBin.back()->mz); // @todo this might be a false positive
 
         res.mzMin = res.pointsInBin.front()->mz;
         res.mzMax = res.pointsInBin.back()->mz;
@@ -486,7 +441,7 @@ namespace qAlgorithms
         return res;
     }
 
-    Bin makeBin(const std::vector<const CentroidPeak *> *centroids, const size_t binStartPos, const size_t binEndPos)
+    Bin makeBin_scan(const std::vector<const CentroidPeak *> *centroids, const size_t binStartPos, const size_t binEndPos)
     {
         assert(binStartPos < binEndPos);
         Bin res;
@@ -579,7 +534,7 @@ namespace qAlgorithms
                 // next recursive call at every step. Since position n is still part of the bin (the distance
                 // to n was not critical), one past the limit has to be included in the new bin
 
-                Bin output = makeBin_range(pointsInSourceBin, &range);
+                Bin output = makeBin_mz(pointsInSourceBin, &range);
                 pointsProcessed += output.pointsInBin.size();
                 bincontainer->push_back(output);
 
@@ -605,109 +560,6 @@ namespace qAlgorithms
 
         printf("completed one stack of mz subsets\n");
         return 0;
-    }
-
-    // @todo write a test for correct subsetting: one good region with < 5 points to each side and two correct bins separated by 1-2 points
-    void Bin::subsetMZ_recursive(std::vector<Bin> *bincontainer, std::vector<const CentroidPeak *> &notInBins,
-                                 const std::vector<double> *OS, const std::vector<double> &cumError,
-                                 const unsigned int binStartInOS, const unsigned int binEndInOS)
-    {
-        assert(binEndInOS >= binStartInOS);
-        assert(OS->size() == cumError.size());
-
-        const size_t binsizeInOS = binEndInOS - binStartInOS + 1; // +1 to avoid length zero
-
-        assert(binsizeInOS > 3);
-        assert(binsizeInOS <= pointsInBin.size());
-
-        const double *pointerToStartpos = &(*OS)[binStartInOS];
-        auto data = OS->data() + binStartInOS;
-        assert(data == pointerToStartpos);
-
-        const double *pmax = pointerToStartpos;
-        assert(binEndInOS - 1 < OS->size());
-        for (size_t i = binStartInOS; i < binEndInOS + 1; i++) // binStartInOS : binEndInOS is always an inclusive range of indices
-        {
-            assert(i < OS->size());
-            const double *d = &((*OS)[i]);
-            pmax = *pmax < *d ? d : pmax;
-        }
-        double max = *pmax;
-
-        assert(max != previousBinMax); //@todo check if this fails for bad reasons
-        previousBinMax = max;
-
-        // this is necessary since otherwise, the error would be underestimated by one
-        // @todo make a mini library that manages operations on cumulative stuff
-        const double cumErrorStart = binStartInOS == 0 ? 0 : cumError[binStartInOS - 1];
-        const double meanError = (cumError[binEndInOS] - cumErrorStart) / binsizeInOS;
-        const double vcrit = binningCritVal(binsizeInOS, meanError);
-
-        volatile size_t processedPoints = 0;
-
-        if (max < vcrit) // all values in range are part of one mz bin
-        {
-            // the difference is calculated for the position n, and is accordingly excluded from the
-            // next recursive call at every step. Since position n is still part of the bin (the distance
-            // to n was not critical), one past the limit has to be included in the new bin
-            Bin bin2(pointsInBin.begin() + binStartInOS, pointsInBin.begin() + binEndInOS + 1);
-
-            Bin output = makeBin(&pointsInBin, binStartInOS, binEndInOS + 1);
-
-            assert(bin2.pointsInBin.size() + 1 == output.pointsInBin.size());
-
-            output.mzMin = output.pointsInBin.front()->mz;
-            output.mzMax = output.pointsInBin.back()->mz;
-            output.unchanged = true;
-            output.medianMZ = output.pointsInBin[output.pointsInBin.size() / 2]->mz;
-            bincontainer->push_back(output);
-
-            processedPoints += output.pointsInBin.size();
-
-            volatile Bin copyBin = output;
-
-            assert(output.pointsInBin.size() == binsizeInOS + 1); // one past the limit included
-            return;
-        }
-        else
-        {
-            // the centroid at cutpos is included in the left fragment
-            const size_t cutpos = pmax - pointerToStartpos + binStartInOS;
-            assert(cutpos <= binEndInOS);
-
-            // only continue if binsize is greater five, so at least four differences exist
-            if (cutpos > binStartInOS + 3)
-            {
-                subsetMZ_recursive(bincontainer, notInBins, OS, cumError, binStartInOS, cutpos - 1);
-            }
-            else
-            {
-                assert(binStartInOS < cutpos + 1);
-                for (size_t i = binStartInOS; i < cutpos + 1; i++)
-                {
-                    notInBins.push_back(pointsInBin[i]);
-                    processedPoints += 1;
-                }
-            }
-
-            if (binEndInOS - cutpos > 3)
-            {
-                subsetMZ_recursive(bincontainer, notInBins, OS, cumError, cutpos + 1, binEndInOS);
-            }
-            else
-            {
-                // note: in the event that the last point of a bin is the position of the maximum, and that
-                // the bin cannot be formed, all points of the bin have been added to notInBins in the preceding loop.
-                assert(cutpos < binEndInOS + 1);
-                for (size_t i = cutpos + 1; i < binEndInOS + 2; i++) // one past the limit due to taking the difference, one more past since we are taking the inclusive range
-                {
-                    notInBins.push_back(pointsInBin[i]);
-                    processedPoints += 1;
-                }
-            }
-        }
-        // assert(processedPoints == binsizeInOS);
-        return;
     }
 
     void Bin::subsetScan(std::vector<Bin> *bincontainer, std::vector<const CentroidPeak *> *notInBins)
