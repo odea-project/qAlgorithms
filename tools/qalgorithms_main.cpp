@@ -43,6 +43,161 @@ namespace qAlgorithms
         float meanDQSG;
     };
 
+    // {
+    //     // this struct is used to limit the amount of operations performed by the program to
+    //     // a selection of masses and RTs that is relevant to the analysis at hand.
+    //     double mz_expected[16] = {0};
+    //     double mz_tolerance_ppm = 0;
+
+    //     double RT = -1;
+    //     double RT_tol = -1; // tolerance to either side, assumes symmetrical peaks
+
+    //     std::string compoundName = "";
+    //     std::string methodName = "";
+    //     Polarities polarity = Polarities::unknown_polarity;
+    // };
+
+    // @todo this vector is a compiled-in version of the filter to skip file reading for now
+    CompoundFilter test{{-3, -2}, -2, -10, -10, "test", "test2", positive};
+    static std::vector<CompoundFilter> pfasFilter(1, test);
+
+    struct mzRange
+    {
+        double min = 0;
+        double max = 0;
+    };
+
+    std::vector<mzRange> mz_regions(std::vector<CompoundFilter> *filter_vec, double margain)
+    {
+        std::vector<mzRange> regions;
+        // problem: multiple ion masses (up to 16) per compound
+        for (CompoundFilter filter : *filter_vec)
+        {
+            size_t idx = 0;
+            while (*(filter.mz_expected + idx) > 0) // assume zero-terminated array
+            {
+                assert(idx < 16);
+                double mz = *(filter.mz_expected + idx);
+                double tol = mz * filter.mz_tolerance_ppm * 10e-6 * margain; // 20 is used as a safety margain, since features are also filtered
+                double minMZ = mz - tol;
+                double maxMZ = mz + tol;
+
+                bool novelRange = true;
+                // iterate through existing filters and check if two ranges can be merged
+                for (size_t i = 0; i < regions.size(); i++)
+                {
+                    if ((regions[i].min > minMZ) && (regions[i].min < maxMZ))
+                    {
+                        novelRange = false;
+                        if (regions[i].max < maxMZ)
+                            regions[i].max = maxMZ;
+                    }
+                    if ((regions[i].max > minMZ) && (regions[i].max < maxMZ))
+                    {
+                        novelRange = false;
+                        if (regions[i].min > minMZ)
+                            regions[i].min = minMZ;
+                    }
+                }
+
+                if (novelRange)
+                {
+                    regions.push_back({minMZ, maxMZ});
+                }
+                idx += 1;
+            }
+        }
+        return regions;
+    }
+
+    size_t filterCentroids_mz(
+        std::vector<CentroidPeak> *centroids,
+        std::vector<CompoundFilter> *filter_vec)
+    {
+        // modifies recieved centroids to only include relevant masses. Returns number of removed centroids
+
+        // make relevant regions for filter
+
+        std::vector<mzRange> regions = mz_regions(filter_vec, 20);
+
+        // at this point, overlapping mz regions should largely be merged.
+        // the filter block is extremely inefficient, but since it only runs
+        // once that should be fine performance wise
+
+        size_t removedCount = 0;
+        for (size_t i = 0; i < centroids->size(); i++)
+        {
+            bool filtered = true;
+            double mz = centroids->at(i).mz;
+
+            for (auto r : regions)
+            {
+                if ((r.min < mz) && (mz < r.max))
+                {
+                    filtered = false;
+                    break;
+                }
+            }
+
+            if (filtered)
+            {
+                centroids->at(i) = centroids->back();
+                centroids->pop_back();
+                removedCount += 1;
+
+                if (i + 1 < centroids->size())
+                    i -= 1; // this is necessary since the last element would otherwise be checked forever
+            }
+        }
+    }
+
+    size_t filterFeatures_mz_rt(
+        std::vector<FeaturePeak> *features,
+        std::vector<CompoundFilter> *filter_vec)
+    {
+        // restrict features to specified mz and rt
+        std::vector<mzRange> regions_mz = mz_regions(filter_vec, 0);
+
+        size_t removedCount = 0;
+        for (size_t i = 0; i < features->size(); i++)
+        {
+            bool filtered = true;
+            double mz = features->at(i).mz;
+
+            for (auto r : regions_mz)
+            {
+                if ((r.min < mz) && (mz < r.max))
+                {
+                    filtered = false;
+                    break;
+                }
+            }
+
+            for (auto filter : *filter_vec)
+            {
+                double rt_min = filter.RT - filter.RT_tol;
+                double rt_max = filter.RT + filter.RT_tol;
+                if ((rt_min < features->at(i).retentionTime) && (features->at(i).retentionTime < rt_max))
+                {
+                    filtered = false;
+                    break;
+                }
+            }
+
+            if (filtered)
+            {
+                features->at(i) = features->back();
+                features->pop_back();
+                removedCount += 1;
+
+                if (i + 1 < features->size())
+                    i -= 1; // this is necessary since the last element would otherwise be checked forever
+            }
+        }
+
+        return removedCount;
+    }
+
 }
 
 int main2(int argc, char *argv[])
@@ -186,6 +341,9 @@ int main(int argc, char *argv[])
 
             // @todo add check if set polarity is correct
             const std::vector<unsigned int> selectedIndices = inputFile.filter_spectra(true, polarity, false); // @todo MS2 support here!
+
+            // const std::vector<unsigned int> selectedIndices = inputFile.filter_spectra_suspects(&pfasFilter, true, polarity, false);
+
             if (selectedIndices.empty())
             {
                 // std::cerr << "Error: No valid spectra exist in the source file " << filename << "\n";
@@ -197,6 +355,8 @@ int main(int argc, char *argv[])
 
             std::vector<CentroidPeak> *centroids = new std::vector<CentroidPeak>;
             *centroids = findCentroids(inputFile, &selectedIndices); // it is guaranteed that only profile mode data is used
+
+            // filterCentroids_mz(centroids, &pfasFilter);
 
             if (centroids->size() == 1) // one empty element is always pushed back.
             {

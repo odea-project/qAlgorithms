@@ -40,8 +40,8 @@ namespace qAlgorithms
         double RT = -1;
         double RT_tol = -1; // tolerance to either side, assumes symmetrical peaks
 
-        std::string *compoundName = nullptr;
-        std::string *methodName = nullptr;
+        std::string compoundName = ""; // @todo better solution?
+        std::string methodName = "";
         Polarities polarity = Polarities::unknown_polarity;
     };
 
@@ -113,6 +113,10 @@ namespace qAlgorithms
 
         // return all indices of spectra that match the required criteria
         std::vector<unsigned int> filter_spectra(const bool ms1, bool polarity, bool centroided); // @todo this is only useable to select MS1 or MS2
+
+        std::vector<unsigned int> filter_spectra_suspects(
+            std::vector<CompoundFilter> *suspects,
+            bool ms1, bool polarity, bool centroided);
 
         Polarities get_polarity_mode(size_t count);
         std::vector<float> get_spectra_RT(const std::vector<unsigned int> *indices);

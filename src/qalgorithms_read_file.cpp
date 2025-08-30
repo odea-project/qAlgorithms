@@ -528,4 +528,55 @@ namespace qAlgorithms
         indices.shrink_to_fit();
         return indices;
     }
+
+    std::vector<unsigned int> XML_File::filter_spectra_suspects(
+        std::vector<CompoundFilter> *suspects, bool ms1, bool polarity, bool centroided)
+    {
+        // return a vector of all indices that are relevant to the query. Properties are checked in order of regularity.
+        assert(!this->defective);
+        assert(number_spectra > 0);
+        std::vector<unsigned int> indices;
+        indices.reserve(number_spectra);
+
+        // pugi::char_t *cv = "cvParam"; // @todo this does not work, abstract accessor fields somehow
+
+        for (unsigned int i = 0; i < number_spectra; i++)
+        {
+            pugi::xml_node spec = (*linknodes)[i];
+
+            bool isCentroid = spec.find_child_by_attribute("cvParam", "accession", "MS:1000127");
+            if (isCentroid != centroided)
+                continue; // this does not allow for processing of partially centroided data
+
+            bool polarityPos = spec.find_child_by_attribute("cvParam", "accession", "MS:1000130");
+            if (polarityPos != polarity)
+                continue;
+
+            pugi::xml_node level_node = spec.find_child_by_attribute("cvParam", "name", "ms level");
+            int level = level_node.attribute("value").as_int();
+            bool isMS1 = 1 == level;
+            if (isMS1 != ms1)
+                continue; // only ms1 or msn data can be retrieved at once.
+
+            double RT = extract_scan_RT(spec);
+            bool notFound = true;
+            for (auto suspect : *suspects)
+            {
+                double safetyPeakWidth = 30; // tolerated RT (in seconds) difference in addition to user-specified tolerance
+                double limit_low = suspect.RT - suspect.RT_tol + safetyPeakWidth;
+                double limit_up = suspect.RT + suspect.RT_tol + safetyPeakWidth;
+                if ((RT > limit_low) && (RT < limit_up))
+                {
+                    notFound = false;
+                    break;
+                }
+            }
+            if (notFound)
+                continue;
+
+            indices.push_back(i);
+        }
+        indices.shrink_to_fit();
+        return indices;
+    }
 }
