@@ -71,14 +71,14 @@ namespace qAlgorithms
 
     struct RegressionGauss
     {
-        RegCoeffs coeffs = {0};                   // regression coefficients
-        int index_x0 = 0;                         // index of window center (x==0) in the Y matrix
-        int scale = 0;                            // scale of the regression window, i.e., 2*scale+1 = window size
-        int df = 0;                               // degrees of freedom, interpolated data points will not be considered
-        float apex_position = 0;                  // position of the apex of the peak
-        float mse = 0;                            // @todo mean squared error; this is not always used and should not be a part of the regression struct
-        unsigned int left_limit, right_limit = 0; // limits of the peak regression window
-        float area = 0;                           // area of the peak
+        RegCoeffs coeffs = {0};   // regression coefficients
+        int index_x0 = 0;         // index of window center (x==0) in the Y matrix
+        int scale = 0;            // scale of the regression window, i.e., 2*scale+1 = window size
+        int df = 0;               // degrees of freedom, interpolated data points will not be considered
+        float apex_position = 0;  // position of the apex of the peak
+        float mse = 0;            // @todo mean squared error; this is not always used and should not be a part of the regression struct
+        Range_i regSpan = {0, 0}; // limits of the peak regression window
+        float area = 0;           // area of the peak
         float uncertainty_area = 0, uncertainty_pos = 0, uncertainty_height = 0;
         int numCompetitors = 0; // number of points that were discarded in favour of this regression
         bool isValid = false;   // flag to indicate if the regression is valid

@@ -512,8 +512,8 @@ namespace qAlgorithms
         */
         // @todo could this part be combined with merge over scales?
         // vector with the access pattern [2*i] for start and [2*i + 1] for end point of a regression group
-        std::vector<int> startEndGroups;
-        startEndGroups.reserve(validRegsTmp->size());
+        std::vector<Range_i> groups;
+        groups.reserve(validRegsTmp->size());
 
         size_t prev_i = 0;
 
@@ -522,18 +522,28 @@ namespace qAlgorithms
             // check if the difference between two peak apexes is less than 4 (Nyquist Shannon
             // Sampling Theorem, separation of two maxima), or if the apex of a peak is within
             // the window of the other peak (Overlap of two maxima)
-            if (std::abs(validRegsTmp->at(i).apex_position - validRegsTmp->at(i + 1).apex_position) > 4 &&
-                validRegsTmp->at(i).apex_position < validRegsTmp->at(i + 1).left_limit &&
-                validRegsTmp->at(i + 1).apex_position > validRegsTmp->at(i).right_limit)
-            {
-                // the two regressions differ, i.e. create a new group
-                startEndGroups.push_back(prev_i);
-                startEndGroups.push_back(i);
-                prev_i = i + 1;
-            }
+            RegressionGauss *reg1 = &(validRegsTmp->at(i));
+            RegressionGauss *reg2 = &(validRegsTmp->at(i + 1));
+
+            if (std::abs(reg1->apex_position - reg2->apex_position) < 4)
+                continue;
+
+            if (reg1->apex_position > reg2->regSpan.startIdx)
+                continue;
+
+            if (reg1->regSpan.endIdx > reg2->apex_position)
+                continue;
+
+            //@todo remove this check, but ensure the logic is sound
+            assert(std::abs(validRegsTmp->at(i).apex_position - validRegsTmp->at(i + 1).apex_position) > 4 &&
+                   validRegsTmp->at(i).apex_position < validRegsTmp->at(i + 1).regSpan.startIdx &&
+                   validRegsTmp->at(i + 1).apex_position > validRegsTmp->at(i).regSpan.endIdx);
+
+            // the two regressions differ, i.e. create a new group
+            groups.push_back({prev_i, i});
+            prev_i = i + 1;
         }
-        startEndGroups.push_back(prev_i);
-        startEndGroups.push_back(validRegsTmp->size() - 1); // last group ends with index of the last element
+        groups.push_back({prev_i, validRegsTmp->size() - 1}); // last group ends with index of the last element
 
         /*
           Survival of the Fittest Filter:
@@ -544,26 +554,21 @@ namespace qAlgorithms
           and pushed to the valid regressions.
         */
         // @todo use a "ridges" approach here (gaussian mixture model)
-        for (size_t groupIdx = 0; groupIdx < startEndGroups.size(); groupIdx += 2)
+        for (size_t groupIdx = 0; groupIdx < groups.size(); groupIdx += 2)
         {
-            if (startEndGroups[groupIdx] == startEndGroups[groupIdx + 1])
+            if (groups[groupIdx].startIdx == groups[groupIdx].endIdx)
             { // already isolated peak => push to valid regressions
-                int regIdx = startEndGroups[groupIdx];
+                size_t regIdx = groups[groupIdx].startIdx;
                 auto onlyReg = validRegsTmp->at(regIdx);
-                assert(onlyReg.right_limit > onlyReg.left_limit);
-                assert(onlyReg.right_limit - onlyReg.left_limit >= 4);
                 validRegressions->push_back(onlyReg);
             }
             else
             { // survival of the fittest based on mse between original data and reconstructed (exp transform of regression)
-                assert(startEndGroups[groupIdx] != startEndGroups[groupIdx + 1]);
-                auto bestRegIdx = findBestRegression(intensities, validRegsTmp, degreesOfFreedom_cum,
-                                                     startEndGroups[groupIdx], startEndGroups[groupIdx + 1]);
+                RegPair bestRegIdx = findBestRegression(intensities, validRegsTmp, degreesOfFreedom_cum,
+                                                        groups[groupIdx]);
 
                 RegressionGauss bestReg = validRegsTmp->at(bestRegIdx.idx);
                 bestReg.mse = bestRegIdx.mse;
-                assert(bestReg.right_limit > bestReg.left_limit);
-                assert(bestReg.right_limit - bestReg.left_limit >= 4);
                 validRegressions->push_back(bestReg);
             }
         }
@@ -641,28 +646,27 @@ namespace qAlgorithms
         if (valley_position == 0) [[likely]]
         {
             // no valley point exists
-            mutateReg->left_limit = idxStart;
-            mutateReg->right_limit = idxStart + 2 * scale;
+            mutateReg->regSpan = {idxStart, idxStart + 2 * scale}; // @todo shouldn't this be + 2 * scale + 1?
         }
         else if (valley_position < 0)
         {
-            size_t substractor = static_cast<size_t>(abs(valley_position));
-            mutateReg->left_limit = substractor < scale ? idxStart + scale - substractor : idxStart; // std::max(i, static_cast<int>(valley_position) + i + scale);
-            mutateReg->right_limit = idxStart + 2 * scale;
+            size_t substractor = size_t(abs(valley_position));
+            size_t newStart = substractor < scale ? idxStart + scale - substractor : idxStart;
+            mutateReg->regSpan = {newStart, idxStart + 2 * scale};
         }
         else
         {
-            mutateReg->left_limit = idxStart;
-            mutateReg->right_limit = std::min(idxStart + 2 * scale, static_cast<int>(valley_position) + idxStart + scale);
+            size_t newEnd = std::min(idxStart + 2 * scale, size_t(valley_position) + idxStart + scale);
+            mutateReg->regSpan = {idxStart, newEnd};
         }
-        assert(mutateReg->right_limit < intensities->size());
+        assert(mutateReg->regSpan.endIdx < intensities->size());
         const size_t idx_x0 = idxStart + scale;
 
         /*
             Note: left and right limit are not the limits of the regression, but of the window the regression applies in.
             When multiple regressions are combined, the window limits are combined by maximum.
         */
-        if (idx_x0 - mutateReg->left_limit < 2 || (mutateReg->right_limit - idx_x0 < 2))
+        if (idx_x0 - mutateReg->regSpan.startIdx < 2 || (mutateReg->regSpan.endIdx - idx_x0 < 2))
         {
             // only one half of the regression applies to the data, since the
             // degrees of freedom for the "squished" half results in an invalid regression
@@ -676,7 +680,7 @@ namespace qAlgorithms
           the loop continues to the next iteration. The value 5 is chosen as the
           minimum number of data points required to fit a quadratic regression model.
         */
-        size_t df_sum = calcDF_cum(degreesOfFreedom_cum, mutateReg->left_limit, mutateReg->right_limit);
+        size_t df_sum = calcDF_cum(degreesOfFreedom_cum, mutateReg->regSpan);
         if (df_sum < 5)
         {
             return false; // degree of freedom less than 5; i.e., less then 5 measured data points
@@ -691,7 +695,7 @@ namespace qAlgorithms
           signal-to-noise ratio checkups. apexToEdge is also required in isValidPeakHeight further down
         */
         size_t idxApex = (size_t)mutateReg->apex_position + idx_x0;
-        float apexToEdge = apexToEdgeRatio(mutateReg->left_limit, idxApex, mutateReg->right_limit, intensities);
+        float apexToEdge = apexToEdgeRatio(mutateReg->regSpan, idxApex, intensities);
         if (!(apexToEdge > 2))
         {
             return false; // invalid apex to edge ratio
@@ -707,12 +711,8 @@ namespace qAlgorithms
           to the next iteration.
         */
 
-        std::vector<float> selectLog; // both vetors are used to transfer relevant values to the F test later
-        std::vector<float> predictLog;
-        selectLog.reserve(mutateReg->right_limit - mutateReg->left_limit + 1);
-        predictLog.reserve(mutateReg->right_limit - mutateReg->left_limit + 1);
         double RSS_reg = calcSSE_base(mutateReg->coeffs, intensities_log,
-                                      mutateReg->left_limit, mutateReg->right_limit, idx_x0);
+                                      mutateReg->regSpan, idx_x0);
 
         /*
         competing regressions filter:
@@ -782,7 +782,7 @@ namespace qAlgorithms
           the exponential domain. If the chi-square value is less than the corresponding
           value in the CHI_SQUARES, the regression is invalid.
         */
-        float chiSquare = calcSSE_chisqared(mutateReg->coeffs, intensities, mutateReg->left_limit, mutateReg->right_limit, idx_x0);
+        float chiSquare = calcSSE_chisqared(mutateReg->coeffs, intensities, mutateReg->regSpan, idx_x0);
         if (chiSquare < CHI_SQUARES[df_sum - 5])
         {
             return false; // statistical insignificance of the chi-square value
@@ -814,8 +814,6 @@ namespace qAlgorithms
         mutateReg->index_x0 = idx_x0;
         mutateReg->mse = mse; // the quadratic mse is used for the weighted mean of the coefficients later
         mutateReg->isValid = true;
-        assert(mutateReg->right_limit > mutateReg->left_limit);
-        assert(mutateReg->right_limit - mutateReg->left_limit >= 4);
         return true;
     }
 #pragma endregion "validate Regression"
@@ -843,8 +841,8 @@ namespace qAlgorithms
         // iterate over the validRegressions vector
         for (size_t i = 0; i < validRegressions->size(); i++)
         {
-            auto activeReg = (*validRegressions)[i];
-            assert(activeReg.isValid);
+            RegressionGauss *activeReg = &(*validRegressions)[i];
+            assert(activeReg->isValid);
             double MSE_group = 0;
             int DF_group = 0;
             // only calculate required MSEs since this is one of the performance-critical steps
@@ -857,34 +855,45 @@ namespace qAlgorithms
             // first iteration always false
             for (size_t j = 0; j < i; j++)
             {
-                auto secondReg = (*validRegressions)[j];
-                if (secondReg.isValid) // check is needed because regressions are set to invalid in the outer loop
-                {
-                    if ( // check for the overlap of the peaks
-                        (
-                            secondReg.apex_position > activeReg.left_limit &&   // ref peak matches the left limit
-                            secondReg.apex_position < activeReg.right_limit) || // ref peak matches the right limit
-                        (
-                            activeReg.apex_position > secondReg.left_limit && // new peak matches the left limit
-                            activeReg.apex_position < secondReg.right_limit)) // new peak matches the right limit
-                    {
-                        if (exponentialMSE[j] == 0.0)
-                        { // calculate the mse of the reference peak
-                            exponentialMSE[j] = calcSSE_exp(
-                                secondReg.coeffs,
-                                intensities,
-                                secondReg.left_limit,
-                                secondReg.right_limit,
-                                secondReg.index_x0);
-                            exponentialMSE[j] /= secondReg.df;
-                        }
-                        DF_group += secondReg.df;                      // add the degree of freedom
-                        MSE_group += exponentialMSE[j] * secondReg.df; // add the sum of squared errors
-                        // add the iterator of the ref peak to a vector of iterators
-                        validRegressionsInGroup.push_back(j);
-                        competitors += secondReg.numCompetitors + 1; // a regression can have beaten a previous one
-                    }
+                RegressionGauss *secondReg = &(*validRegressions)[j];
+                if (!secondReg->isValid) // check is needed because regressions are set to invalid in the outer loop
+                    continue;
+
+                if (activeReg->apex_position < secondReg->regSpan.startIdx)
+                    continue;
+
+                if (activeReg->apex_position > secondReg->regSpan.endIdx)
+                    continue;
+
+                if (secondReg->apex_position < activeReg->regSpan.startIdx)
+                    continue;
+
+                if (secondReg->apex_position > activeReg->regSpan.endIdx)
+                    continue;
+
+                // if ( // check for the overlap of the peaks
+                //     (
+                //         secondReg->apex_position > activeReg->left_limit &&   // ref peak matches the left limit
+                //         secondReg->apex_position < activeReg->right_limit) || // ref peak matches the right limit
+                //     (
+                //         activeReg->apex_position > secondReg.left_limit && // new peak matches the left limit
+                //         activeReg->apex_position < secondReg.right_limit)) // new peak matches the right limit
+
+                if (exponentialMSE[j] == 0.0)
+                { // calculate the mse of the reference peak
+                    exponentialMSE[j] = calcSSE_exp(
+                        secondReg->coeffs,
+                        intensities,
+                        secondReg->regSpan,
+                        secondReg->index_x0);
+                    exponentialMSE[j] /= secondReg->df;
                 }
+                DF_group += secondReg->df;                      // add the degree of freedom
+                MSE_group += exponentialMSE[j] * secondReg->df; // add the sum of squared errors
+                // add the iterator of the ref peak to a vector of iterators
+                validRegressionsInGroup.push_back(j);
+                competitors += secondReg->numCompetitors + 1; // a regression can have beaten a previous one
+
             } // after this loop, validRegressionsInGroup contains all regressions that are still valid and contend with the regression at position i
 
             if (validRegressionsInGroup.empty()) // no competing regressions exist
@@ -898,12 +907,11 @@ namespace qAlgorithms
             if (exponentialMSE[i] == 0.0)
             { // calculate the mse of the current peak
                 exponentialMSE[i] = calcSSE_exp(
-                    activeReg.coeffs,
+                    activeReg->coeffs,
                     intensities,
-                    activeReg.left_limit,
-                    activeReg.right_limit,
-                    activeReg.index_x0);
-                exponentialMSE[i] /= activeReg.df;
+                    activeReg->regSpan,
+                    activeReg->index_x0);
+                exponentialMSE[i] /= activeReg->df;
             }
             if (exponentialMSE[i] < MSE_group)
             {
@@ -913,11 +921,11 @@ namespace qAlgorithms
                     (*validRegressions)[it_ref_peak].isValid = false;
                 }
                 // only advance competitor count if regression is actually better
-                activeReg.numCompetitors = competitors;
+                activeReg->numCompetitors = competitors;
             }
             else
             { // Set isValid to false for the current peak
-                activeReg.isValid = false;
+                activeReg->isValid = false;
             }
         }
 
@@ -940,8 +948,7 @@ namespace qAlgorithms
 
     MeanVar weightedMeanAndVariance_EIC(const std::vector<float> *weight,
                                         const std::vector<float> *values,
-                                        size_t left_limit,
-                                        size_t right_limit)
+                                        const Range_i regSpan)
     /* ### allocations ###
         none!
 
@@ -950,11 +957,11 @@ namespace qAlgorithms
     */
     {
         // weighted mean using intensity as weighting factor and left_limit right_limit as range
-        size_t realPoints = right_limit - left_limit + 1;
+        size_t realPoints = regSpan.endIdx - regSpan.startIdx + 1;
         double mean_weights = 0.0;   // mean of weight
         double sum_weighted_x = 0.0; // sum of values * weight
         double sum_weight = 0.0;     // sum of weight
-        for (size_t j = left_limit; j <= right_limit; j++)
+        for (size_t j = regSpan.endIdx; j <= regSpan.startIdx; j++)
         {
             mean_weights += (*weight)[j];
             sum_weighted_x += (*values)[j] * (*weight)[j];
@@ -966,7 +973,7 @@ namespace qAlgorithms
 
         double weighted_mean = sum_weighted_x / sum_weight;
         double sum_Qxxw = 0.0; // sum of (values - mean)^2 * weight
-        for (size_t j = left_limit; j <= right_limit; j++)
+        for (size_t j = regSpan.startIdx; j <= regSpan.endIdx; j++)
         {
             sum_Qxxw += ((*values)[j] - weighted_mean) * ((*values)[j] - weighted_mean) * (*weight)[j];
         }
@@ -1103,10 +1110,10 @@ namespace qAlgorithms
             // mz, mzUncertainty, mean DQSC and meanDQSF are all calculated in after this function is called in measurement_data
             peak.DQSF = 1 - erf_approx_f(regression.uncertainty_area / regression.area);
 
-            assert(regression.right_limit - regression.index_x0 > 1);
-            peak.idxPeakStart = regression.left_limit;
-            peak.idxPeakEnd = regression.right_limit;
-            peak.index_x0_offset = regression.index_x0 - regression.left_limit;
+            assert(regression.regSpan.endIdx - regression.index_x0 > 1);
+            peak.idxPeakStart = regression.regSpan.startIdx;
+            peak.idxPeakEnd = regression.regSpan.endIdx;
+            peak.index_x0_offset = regression.index_x0 - regression.regSpan.startIdx;
             assert(peak.idxPeakEnd > peak.idxPeakStart);
             assert(peak.idxPeakEnd > peak.index_x0_offset);
             assert(peak.idxPeakEnd - peak.idxPeakStart >= 4); // at least five points
@@ -1120,7 +1127,7 @@ namespace qAlgorithms
             peak.mse_base = regression.mse;
 
             peak.scale = regression.scale;
-            peak.interpolationCount = regression.right_limit - regression.left_limit - regression.df - 4; // -4 since the degrees of freedom are reduced by 1 per coefficient
+            peak.interpolationCount = rangeLen(&regression.regSpan) - regression.df - 4; // -4 since the degrees of freedom are reduced by 1 per coefficient
             peak.competitorCount = regression.numCompetitors;
 
             peaks->push_back(std::move(peak));
@@ -1132,8 +1139,7 @@ namespace qAlgorithms
 
     double calcSSE_base(const RegCoeffs coeff,
                         const std::vector<float> *y_start,
-                        size_t limit_L,
-                        size_t limit_R,
+                        Range_i range,
                         size_t index_x0)
     /* ### allocations ###
         none!
@@ -1144,7 +1150,7 @@ namespace qAlgorithms
     {
         double RSS = 0.0;
         // left side
-        for (size_t iSegment = limit_L; iSegment < index_x0; iSegment++)
+        for (size_t iSegment = range.startIdx; iSegment < index_x0; iSegment++)
         {
             // @todo the cast to double / float is not vectorised automatically - replace with calc absolute difference -> set sign based on b2 / b3
             double new_x = double(iSegment) - double(index_x0);
@@ -1157,7 +1163,7 @@ namespace qAlgorithms
         RSS += (y_start->at(index_x0) - coeff.b0) * (y_start->at(index_x0) - coeff.b0); // x = 0 -> (b0 - y)^2
 
         // right side
-        for (size_t iSegment = index_x0 + 1; iSegment < limit_R + 1; iSegment++) // iSegment = 0 is center point calculated above
+        for (size_t iSegment = index_x0 + 1; iSegment < range.endIdx + 1; iSegment++) // iSegment = 0 is center point calculated above
         {
             double new_x = double(iSegment) - double(index_x0);
             double y_predict = coeff.b0 + (coeff.b1 + coeff.b3 * new_x) * new_x; // b3 instead of b2
@@ -1247,7 +1253,7 @@ namespace qAlgorithms
         return squareSumModel / sse * factor;
     }
 
-    float calcSSE_exp(const RegCoeffs coeff, const std::vector<float> *y_start, size_t limit_L, size_t limit_R, size_t index_x0)
+    float calcSSE_exp(const RegCoeffs coeff, const std::vector<float> *y_start, const Range_i regSpan, size_t index_x0)
     /* ### allocations ###
         none!
 
@@ -1257,7 +1263,7 @@ namespace qAlgorithms
     { // @todo this does not account for asymmetric RT distances, will that be a problem?
         double result = 0.0;
         // left side
-        for (size_t iSegment = limit_L; iSegment < index_x0; iSegment++) // @todo factor this loop into a function
+        for (size_t iSegment = regSpan.startIdx; iSegment < index_x0; iSegment++) // @todo factor this loop into a function
         {
             double new_x = double(iSegment) - double(index_x0); // always negative
             double y_predict = exp_approx_d(coeff.b0 + (coeff.b1 + coeff.b2 * new_x) * new_x);
@@ -1267,7 +1273,7 @@ namespace qAlgorithms
         }
         result += ((*y_start)[index_x0] - exp_approx_d(coeff.b0)) * ((*y_start)[index_x0] - exp_approx_d(coeff.b0)); // x = 0 -> (b0 - y)^2
         // right side
-        for (size_t iSegment = index_x0 + 1; iSegment < limit_R + 1; iSegment++) // start one past the center, include right limit index
+        for (size_t iSegment = index_x0 + 1; iSegment < regSpan.endIdx + 1; iSegment++) // start one past the center, include right limit index
         {
             double new_x = double(iSegment) - double(index_x0);                                // always positive
             double y_predict = exp_approx_d(coeff.b0 + (coeff.b1 + coeff.b3 * new_x) * new_x); // b3 instead of b2
@@ -1279,7 +1285,7 @@ namespace qAlgorithms
     }
 
     float calcSSE_chisqared(const RegCoeffs coeff, const std::vector<float> *y_start,
-                            size_t limit_L, size_t limit_R, size_t index_x0)
+                            const Range_i regSpan, size_t index_x0)
     /* ### allocations ###
         none!
 
@@ -1289,7 +1295,7 @@ namespace qAlgorithms
     {
         double result = 0.0;
         // left side
-        for (size_t iSegment = limit_L; iSegment < index_x0; iSegment++)
+        for (size_t iSegment = regSpan.startIdx; iSegment < index_x0; iSegment++)
         {
             double new_x = double(iSegment) - double(index_x0);
             double y_predict = exp_approx_d(coeff.b0 + (coeff.b1 + coeff.b2 * new_x) * new_x);
@@ -1301,7 +1307,7 @@ namespace qAlgorithms
         double exp_b0 = exp_approx_d(coeff.b0);
         result += (((*y_start)[index_x0] - exp_b0) * ((*y_start)[index_x0] - exp_b0)) / exp_b0;
 
-        for (size_t iSegment = index_x0 + 1; iSegment < limit_R + 1; iSegment++) // iSegment = 0 is center point (calculated above)
+        for (size_t iSegment = index_x0 + 1; iSegment < regSpan.endIdx + 1; iSegment++) // iSegment = 0 is center point (calculated above)
         {
             double y_predict = exp_approx_d(coeff.b0 + (coeff.b1 + coeff.b3 * iSegment) * iSegment); // b3 instead of b2
             double y_current = (*y_start)[iSegment];
@@ -1402,8 +1408,7 @@ namespace qAlgorithms
         const std::vector<float> *intensities,
         const std::vector<RegressionGauss> *regressions,
         const std::vector<unsigned int> *degreesOfFreedom_cum,
-        const size_t startIdx,
-        const size_t endIdx)
+        const Range_i regSpan)
     /* ### allocations ###
         none!
 
@@ -1418,23 +1423,24 @@ namespace qAlgorithms
         unsigned int bestRegIdx = 0;
 
         // identify left (smallest) and right (largest) limit of the grouped regression windows
-        unsigned int left_limit = (*regressions)[startIdx].left_limit;
-        unsigned int right_limit = (*regressions)[startIdx].right_limit;
-        for (size_t i = startIdx + 1; i < endIdx + 1; i++)
+        size_t left_limit = -1;
+        size_t right_limit = 0;
+        for (size_t i = regSpan.startIdx; i < regSpan.endIdx + 1; i++)
         {
-            left_limit = std::min(left_limit, (*regressions)[i].left_limit);
-            right_limit = std::max(right_limit, (*regressions)[i].right_limit);
+
+            const RegressionGauss *reg = &(*regressions)[i];
+            left_limit = std::min(left_limit, reg->regSpan.startIdx);
+            right_limit = std::max(right_limit, reg->regSpan.endIdx);
         }
         // the new df_sum is only needed since the function limits are adjusted above, correct that?
-        size_t df_sum = calcDF_cum(degreesOfFreedom_cum, left_limit, right_limit);
+        size_t df_sum = calcDF_cum(degreesOfFreedom_cum, regSpan);
 
-        for (unsigned int i = startIdx; i < endIdx + 1; i++)
+        for (unsigned int i = regSpan.startIdx; i < regSpan.endIdx + 1; i++)
         {
             // step 2: calculate the mean squared error (MSE) between the predicted and actual values
             double mse = calcSSE_exp((*regressions)[i].coeffs,
                                      intensities,
-                                     left_limit,
-                                     right_limit,
+                                     {left_limit, right_limit},
                                      (*regressions)[i].index_x0);
             mse /= (df_sum - 4);
 
@@ -1449,12 +1455,11 @@ namespace qAlgorithms
 
     inline size_t calcDF_cum(
         const std::vector<unsigned int> *degreesOfFreedom_cum,
-        unsigned int left_limit,
-        unsigned int right_limit)
+        const Range_i regSpan)
     {
-        unsigned int substract = left_limit == 0 ? 0 : degreesOfFreedom_cum->at(left_limit - 1);
-        size_t df = degreesOfFreedom_cum->at(right_limit) - substract;
-        assert(df <= degreesOfFreedom_cum->size());
+        unsigned int substract = regSpan.startIdx == 0 ? 0 : degreesOfFreedom_cum->at(regSpan.startIdx - 1);
+        size_t df = degreesOfFreedom_cum->at(regSpan.endIdx) - substract;
+        assert(df <= degreesOfFreedom_cum->size()); // @todo not applicable for non-bool df vecs
         return df;
     }
 
@@ -1536,9 +1541,8 @@ namespace qAlgorithms
 #pragma region "isValidApexToEdge"
 
     float apexToEdgeRatio(
-        const size_t idxStart,
+        const Range_i regSpan,
         const size_t idxApex,
-        const size_t idxEnd,
         const std::vector<float> *intensities)
     {
         // is the apex at least twice as large as the outermost point?
@@ -1549,8 +1553,8 @@ namespace qAlgorithms
         }
 
         float apex = intensities->at(idxApex);
-        float left = intensities->at(idxStart);
-        float right = intensities->at(idxEnd);
+        float left = intensities->at(regSpan.startIdx);
+        float right = intensities->at(regSpan.endIdx);
         return (left < right) ? (apex / left) : (apex / right);
     }
 
@@ -1968,15 +1972,14 @@ namespace qAlgorithms
         currentPeak->idxBinStart = limit_L;
         currentPeak->idxBinEnd = limit_R;
 
-        auto tmp = weightedMeanAndVariance_EIC(&eic->ints_area, &eic->mz,
-                                               limit_L, limit_R);
+        Range_i regSpan = {limit_L, limit_R};
+
+        auto tmp = weightedMeanAndVariance_EIC(&eic->ints_area, &eic->mz, regSpan);
         currentPeak->mz = tmp.mean;
         currentPeak->mzUncertainty = tmp.var;
-        currentPeak->DQSC = weightedMeanAndVariance_EIC(&eic->ints_area, &eic->DQSC,
-                                                        limit_L, limit_R)
+        currentPeak->DQSC = weightedMeanAndVariance_EIC(&eic->ints_area, &eic->DQSC, regSpan)
                                 .mean;
-        currentPeak->DQSB = weightedMeanAndVariance_EIC(&eic->ints_area, &eic->DQSB,
-                                                        limit_L, limit_R)
+        currentPeak->DQSB = weightedMeanAndVariance_EIC(&eic->ints_area, &eic->DQSB, regSpan)
                                 .mean;
     }
 
@@ -2140,12 +2143,12 @@ namespace qAlgorithms
         return centroids; // @todo mutate centroids and return success / failure
     }
 
-    void binProfileSpec(std::vector<Block> *result,
+    void binProfileSpec(std::vector<Range_i> *result,
                         const std::vector<double> *diffs,
                         // const std::vector<unsigned int> *diffOrder,
                         const std::vector<double> *cumDiffs, // indices into cumDiffs must be right-shifted by one!
-                        // size_t previousDiffPos,              // skip this many points in the diffOrder vector
-                        size_t start, size_t end)
+                                                             // size_t previousDiffPos,              // skip this many points in the diffOrder vector
+                        const Range_i regSpan)
     /* ### allocations ###
         none!
 
@@ -2160,6 +2163,10 @@ namespace qAlgorithms
         // perform the recursive split introduced during binning to find gaps in mz
         // CritVal uses the standard deviation, which is estimated as the mean centroid error during binning.
         // here, we can use the real SD of the point-to-point differences.
+        // @todo use the work done for the binning algorithm
+
+        size_t start = regSpan.startIdx;
+        size_t end = regSpan.endIdx;
         assert(start <= end); // <= since one point at the end could get removed, see below
         assert(!diffs->empty());
         assert(cumDiffs->size() == diffs->size() + 1);
@@ -2210,11 +2217,11 @@ namespace qAlgorithms
         // recursive split at max - different calling convention since we work with differences
         if (maxPos != start)
         {
-            binProfileSpec(result, diffs, cumDiffs, start, maxPos - 1); // when setting the block, 1 is added to end
+            binProfileSpec(result, diffs, cumDiffs, {start, maxPos - 1}); // when setting the block, 1 is added to end
         }
         if (maxPos != end)
         {
-            binProfileSpec(result, diffs, cumDiffs, maxPos + 1, end); // one past the max to avoid large value
+            binProfileSpec(result, diffs, cumDiffs, {maxPos + 1, end}); // one past the max to avoid large value
         }
     }
 
@@ -2330,7 +2337,7 @@ namespace qAlgorithms
             }
         }
 
-        std::vector<Block> result; // result contains the start- and end indices of all relevant blocks in the data.
+        std::vector<Range_i> result; // result contains the start- and end indices of all relevant blocks in the data.
         result.reserve(128);
 
         // index vector into diffs, making diff itself obsolete // @todo this can be solved without recursion
@@ -2363,7 +2370,7 @@ namespace qAlgorithms
                     knownEnd = i - 1;
                     if (knownEnd > knownStart)
                     {
-                        binProfileSpec(&result, &diffs, &cumDiffs, knownStart, knownEnd);
+                        binProfileSpec(&result, &diffs, &cumDiffs, {knownStart, knownEnd});
                     }
                     knownStart = i + 1;
                 }
@@ -2378,7 +2385,7 @@ namespace qAlgorithms
         if (knownStart == 0 && knownEnd == diffs.size() - 1)
         {
             // fprintf(stderr, "Warning: a spectrum has no clear breaks.\n");
-            binProfileSpec(&result, &diffs, &cumDiffs, knownStart, knownEnd);
+            binProfileSpec(&result, &diffs, &cumDiffs, {knownStart, knownEnd});
         }
 
         size_t maxEntry = 0; // this is the maximum size of all blocks
@@ -2388,9 +2395,9 @@ namespace qAlgorithms
         // transfer the found groups into a representation accepted by the peak model fit
         for (size_t j = 0; j < result.size(); j++)
         {
-            Block res = result[j];
+            Range_i res = result[j];
 
-            size_t entrySize = res.end + 1 - res.start + 4;
+            size_t entrySize = res.endIdx + 1 - res.startIdx + 4;
             maxEntry = maxEntry > entrySize ? maxEntry : entrySize;
 
             // clearBlock(&entry, entrySize); // @todo prevent a new block from being created every time
@@ -2398,14 +2405,14 @@ namespace qAlgorithms
 
             for (size_t i = 0; i < entrySize - 4; i++)
             {
-                size_t epos = i + res.start; // element position
-                size_t rpos = i + 2;         // result vector position
+                size_t epos = i + res.startIdx; // element position
+                size_t rpos = i + 2;            // result vector position
                 entry.intensity[rpos] = intensities_profile[epos];
             }
             for (size_t i = 0; i < entrySize - 4; i++)
             {
-                size_t epos = i + res.start; // element position
-                size_t rpos = i + 2;         // result vector position
+                size_t epos = i + res.startIdx; // element position
+                size_t rpos = i + 2;            // result vector position
                 entry.mz[rpos] = mz_profile[epos];
             }
 
@@ -2426,8 +2433,8 @@ namespace qAlgorithms
             }
 
             // add traceability information from untreated spectrum
-            entry.startPos = idxConvert[res.start];
-            entry.endPos = idxConvert[res.end];
+            entry.startPos = idxConvert[res.startIdx];
+            entry.endPos = idxConvert[res.endIdx];
 
             groupedData->push_back(entry);
         }

@@ -561,23 +561,23 @@ namespace qAlgorithms
 
         if (valley_position == 0)
         {
-            // no valley point exists
-            mutateReg->left_limit = idxStart;
-            mutateReg->right_limit = idxStart + 2 * scale;
+            // // no valley point exists
+            // mutateReg->left_limit = idxStart;
+            // mutateReg->right_limit = idxStart + 2 * scale;
         }
         else if (valley_position < 0)
         {
             size_t substractor = static_cast<size_t>(abs(valley_position));
-            mutateReg->left_limit = substractor < scale ? idxStart + scale - substractor : idxStart; // std::max(i, static_cast<int>(valley_position) + i + scale);
-            mutateReg->right_limit = idxStart + 2 * scale;
+            // mutateReg->left_limit = substractor < scale ? idxStart + scale - substractor : idxStart; // std::max(i, static_cast<int>(valley_position) + i + scale);
+            // mutateReg->right_limit = idxStart + 2 * scale;
         }
         else
         {
-            mutateReg->left_limit = idxStart;
-            mutateReg->right_limit = std::min(idxStart + 2 * scale, static_cast<int>(valley_position) + idxStart + scale);
+            // mutateReg->left_limit = idxStart;
+            // mutateReg->right_limit = std::min(idxStart + 2 * scale, static_cast<int>(valley_position) + idxStart + scale);
         }
-        assert(mutateReg->right_limit > mutateReg->left_limit);
-        assert(mutateReg->right_limit < intensities->size());
+        // assert(mutateReg->right_limit > mutateReg->left_limit);
+        // assert(mutateReg->right_limit < intensities->size());
         // @todo this should be passed as a parameter for the sake of clarity
         const size_t idx_x0 = idxStart + scale;
         /*
@@ -585,7 +585,7 @@ namespace qAlgorithms
             When multiple regressions are combined, the window limits are combined by maximum.
         */
 
-        if (idx_x0 - mutateReg->left_limit < 2 || (mutateReg->right_limit - idx_x0 < 2))
+        // if (idx_x0 - mutateReg->left_limit < 2 || (mutateReg->right_limit - idx_x0 < 2))
         {
             // only one half of the regression applies to the data
             return;
@@ -599,24 +599,24 @@ namespace qAlgorithms
         // of freedom three points after the regression limit do not change, the regression has
         // a guaranteed incorrect range. Similarly, the degrees of freedom three points from the end of
         // the regression must differ from the last df value.
-        if (cum_DF->at(mutateReg->left_limit) == cum_DF->at(mutateReg->left_limit + 3))
-        {
-            return;
-        }
-        if (cum_DF->at(mutateReg->right_limit) == cum_DF->at(mutateReg->right_limit - 3))
-        {
-            return;
-        }
+        // if (cum_DF->at(mutateReg->left_limit) == cum_DF->at(mutateReg->left_limit + 3))
+        // {
+        //     return;
+        // }
+        // if (cum_DF->at(mutateReg->right_limit) == cum_DF->at(mutateReg->right_limit - 3))
+        // {
+        //     return;
+        // }
 
         // the degrees of freedom must exceed five for a valid fit. In the multi-model, this is
         // almost always true (change to 5 * num of peaks?)
         // the index in DF is the index of the feature limits + 1. Since cum_DF starts at 0, only the
         // right limit is increased by one for the DF check
-        size_t df_sum = cum_DF->at(mutateReg->right_limit + 1) - cum_DF->at(mutateReg->left_limit);
-        if (df_sum < 5)
-        {
-            return;
-        }
+        // size_t df_sum = cum_DF->at(mutateReg->right_limit + 1) - cum_DF->at(mutateReg->left_limit);
+        // if (df_sum < 5)
+        // {
+        //     return;
+        // }
 
         /*
           Apex to Edge Filter:
@@ -626,7 +626,7 @@ namespace qAlgorithms
           signal-to-noise ratio checkups. apexToEdge is also required in isValidPeakHeight further down
         */
         size_t idxApex = (size_t)std::round(mutateReg->apex_position) + idx_x0;
-        float apexToEdge = apexToEdgeRatio(mutateReg->left_limit, idxApex, mutateReg->right_limit, intensities);
+        // float apexToEdge = apexToEdgeRatio(mutateReg->left_limit, idxApex, mutateReg->right_limit, intensities);
         // this check has been removed because it didn't account for adequate signal in parallel traces
         // if (!(apexToEdge > 2))
         // {
@@ -647,8 +647,8 @@ namespace qAlgorithms
         // std::vector<float> predictLog;
         // selectLog.reserve(mutateReg->right_limit - mutateReg->left_limit + 1);
         // predictLog.reserve(mutateReg->right_limit - mutateReg->left_limit + 1);
-        float mse = calcSSE_base(mutateReg->coeffs, intensities_log,
-                                 mutateReg->left_limit, mutateReg->right_limit, idx_x0);
+        // float mse = calcSSE_base(mutateReg->coeffs, intensities_log,
+        //                          mutateReg->left_limit, mutateReg->right_limit, idx_x0);
 
         /*
         competing regressions filter:
@@ -663,16 +663,16 @@ namespace qAlgorithms
         //     return;
         // }
         // mse is only the correct mean square error after this division
-        mse /= (df_sum - 4);
+        // mse /= (df_sum - 4);
 
-        if (!isValidQuadraticTerm(mutateReg->coeffs, scale, mse, df_sum))
-        {
-            return; // statistical insignificance of the quadratic term
-        }
-        if (!isValidPeakArea(mutateReg->coeffs, mse, scale, df_sum))
-        {
-            return; // statistical insignificance of the area
-        }
+        // if (!isValidQuadraticTerm(mutateReg->coeffs, scale, mse, df_sum))
+        // {
+        //     return; // statistical insignificance of the quadratic term
+        // }
+        // if (!isValidPeakArea(mutateReg->coeffs, mse, scale, df_sum))
+        // {
+        //     return; // statistical insignificance of the area
+        // }
         /*
           Height Filter:
           This block of code implements the height filter. It calculates the height
@@ -682,14 +682,14 @@ namespace qAlgorithms
           the loop continues to the next iteration.
         */
 
-        calcPeakHeightUncert(mutateReg, mse, scale);
-        if (1 / mutateReg->uncertainty_height <= T_VALUES[df_sum - 5]) // statistical significance of the peak height
-        {
-            return;
-        }
+        // calcPeakHeightUncert(mutateReg, mse, scale);
+        // if (1 / mutateReg->uncertainty_height <= T_VALUES[df_sum - 5]) // statistical significance of the peak height
+        // {
+        //     return;
+        // }
         // at this point without height, i.e., to get the real uncertainty
         // multiply with height later. This is done to avoid exp function at this point
-        if (!isValidPeakHeight(mse, scale, mutateReg->apex_position, valley_position, df_sum, apexToEdge))
+        // if (!isValidPeakHeight(mse, scale, mutateReg->apex_position, valley_position, df_sum, apexToEdge))
         {
             return; // statistical insignificance of the height
         }
@@ -704,9 +704,9 @@ namespace qAlgorithms
           area multiply both with Exp(b0) later. This is done to avoid exp function at this point
         */
         // it might be preferential to combine both functions again or store the common matrix somewhere
-        calcPeakAreaUncert(mutateReg, mse, scale);
+        // calcPeakAreaUncert(mutateReg, mse, scale);
 
-        if (mutateReg->area / mutateReg->uncertainty_area <= T_VALUES[df_sum - 5])
+        // if (mutateReg->area / mutateReg->uncertainty_area <= T_VALUES[df_sum - 5])
         {
             return; // statistical insignificance of the area
         }
@@ -718,18 +718,18 @@ namespace qAlgorithms
           the exponential domain. If the chi-square value is less than the corresponding
           value in the CHI_SQUARES, the regression is invalid.
         */
-        float chiSquare = calcSSE_chisqared(mutateReg->coeffs, intensities, mutateReg->left_limit, mutateReg->right_limit, idx_x0);
-        if (chiSquare < CHI_SQUARES[df_sum - 5])
+        // float chiSquare = calcSSE_chisqared(mutateReg->coeffs, intensities, mutateReg->left_limit, mutateReg->right_limit, idx_x0);
+        // if (chiSquare < CHI_SQUARES[df_sum - 5])
         {
             return; // statistical insignificance of the chi-square value
         }
 
-        mutateReg->uncertainty_pos = calcUncertaintyPos(mse, mutateReg->coeffs, mutateReg->apex_position, scale);
-        mutateReg->df = df_sum - 4; // @todo add explanation for -4
+        // mutateReg->uncertainty_pos = calcUncertaintyPos(mse, mutateReg->coeffs, mutateReg->apex_position, scale);
+        // mutateReg->df = df_sum - 4; // @todo add explanation for -4
         mutateReg->apex_position += float(idx_x0);
         mutateReg->scale = int(scale);
         mutateReg->index_x0 = int(idx_x0);
-        mutateReg->mse = mse; // the quadratic mse is used for the weighted mean of the coefficients later
+        // mutateReg->mse = mse; // the quadratic mse is used for the weighted mean of the coefficients later
         mutateReg->isValid = true;
         return;
     }
@@ -861,7 +861,7 @@ namespace qAlgorithms
                 }
 
                 // check degrees of fredom again with updated limits
-                df = calcDF_single(&(eics->at(selection->at(i)).df), testCase.left_limit, testCase.right_limit);
+                // df = calcDF_single(&(eics->at(selection->at(i)).df), testCase.left_limit, testCase.right_limit);
                 if (df < 5)
                 {
                     regressionOK[multiReg] = false;
@@ -869,8 +869,8 @@ namespace qAlgorithms
                 }
                 assert(regressions[multiReg].scale <= MAXSCALE);
 
-                regressions[multiReg].idxStart = std::max(size_t(testCase.left_limit), regressions[multiReg].idxStart);
-                regressions[multiReg].idxEnd = std::min(size_t(testCase.right_limit), regressions[multiReg].idxEnd);
+                // regressions[multiReg].idxStart = std::max(size_t(testCase.left_limit), regressions[multiReg].idxStart);
+                // regressions[multiReg].idxEnd = std::min(size_t(testCase.right_limit), regressions[multiReg].idxEnd);
 
                 auto selDF = eics->at(selection->at(i)).df;
                 int countHits = 0;
@@ -887,12 +887,12 @@ namespace qAlgorithms
                 // now that only regressions which are logically sensible are present, pick the best one. This uses the sum
                 // of all mse values for the given regression, similar to qPeaks. Different from the previous validation,
                 // the RSS is calculated cumulatively over the entire possible region
-                double mse = calcSSE_exp(coeff,
-                                         &(intensity_vecs[i]),
-                                         0,
-                                         intensity_vecs[i].size() - 1,
-                                         testCase.index_x0);
-                sum_MSE[multiReg] += mse / (testCase.df - numPeaks - 3);
+                // double mse = calcSSE_exp(coeff,
+                //                          &(intensity_vecs[i]),
+                //                          0,
+                //                          intensity_vecs[i].size() - 1,
+                //                          testCase.index_x0);
+                // sum_MSE[multiReg] += mse / (testCase.df - numPeaks - 3);
 
                 regressionOK[multiReg] = true;
             }

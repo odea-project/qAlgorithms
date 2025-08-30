@@ -97,18 +97,12 @@ namespace qAlgorithms
 
     // ### Feature-specific Code ### //
 
-    struct Block
-    {
-        size_t start;
-        size_t end;
-    };
-
-    void binProfileSpec(std::vector<Block> *result,
+    void binProfileSpec(std::vector<Range_i> *result,
                         const std::vector<double> *diffs,
                         // const std::vector<unsigned int> *diffOrder,
                         const std::vector<double> *cumDiffs, // indices into cumDiffs must be right-shifted by one!
                         // size_t previousDiffPos,              // skip this many points in the diffOrder vector
-                        size_t start, size_t end);
+                        const Range_i regSpan);
 
     std::vector<FeaturePeak> findFeatures(std::vector<EIC> &data,
                                           std::vector<unsigned int> *backConvert,
@@ -137,9 +131,8 @@ namespace qAlgorithms
 
     double calcSSE_base(const RegCoeffs coeff,
                         const std::vector<float> *y_start,
-                        size_t limit_L,
-                        size_t limit_R,
-                        size_t index_x0);
+                        const Range_i range,
+                        const size_t index_x0);
 
     bool f_testRegression(const std::vector<float> *observed, double RSS_reg, size_t limit_L, size_t limit_R);
 
@@ -149,13 +142,12 @@ namespace qAlgorithms
 
     float calcSSE_exp(const RegCoeffs coeff,
                       const std::vector<float> *y_start,
-                      size_t limit_L, size_t limit_R,
+                      const Range_i regSpan,
                       size_t index_x0);
 
     float calcSSE_chisqared(const RegCoeffs coeff,
                             const std::vector<float> *y_start,
-                            size_t limit_L,
-                            size_t limit_R,
+                            const Range_i regSpan,
                             size_t index_x0);
 
     struct CorrectionFactors
@@ -178,14 +170,12 @@ namespace qAlgorithms
         const std::vector<float> *intensities,
         const std::vector<RegressionGauss> *regressions,
         const std::vector<unsigned int> *degreesOfFreedom_cum,
-        const size_t startIdx,
-        const size_t endIdx);
+        const Range_i regSpan);
 
     // this just substracts the two relevant values from a cumsum vector
     size_t calcDF_cum(
         const std::vector<unsigned int> *degreesOfFreedom,
-        unsigned int left_limit,
-        unsigned int right_limit);
+        const Range_i regSpan);
 
     /**
      * @brief Calculate the apex (and if possible the valley) position of the peak. Returns true
@@ -213,8 +203,7 @@ namespace qAlgorithms
     inline double multiplyVecMatrixVecTranspose(const double vec[4], size_t scale);
 
     float apexToEdgeRatio(
-        const size_t idxStart,
-        const size_t idxApex,
+        const Range_i regSpan,
         const size_t idxEnd,
         const std::vector<float> *intensities);
 
@@ -228,7 +217,7 @@ namespace qAlgorithms
         const float mse,
         const size_t scale,
         const float apex_position,
-        float valley_position,
+        float valley_position, // this value gets mutated in the function
         const size_t df_sum,
         const float apexToEdge);
 
@@ -280,8 +269,7 @@ namespace qAlgorithms
 
     MeanVar weightedMeanAndVariance_EIC(const std::vector<float> *weight,
                                         const std::vector<float> *values,
-                                        size_t left_limit,
-                                        size_t right_limit);
+                                        const Range_i regSpan);
 
     // ### pre-calculate the regression matrix ### //
 #define MAXSCALE 63
