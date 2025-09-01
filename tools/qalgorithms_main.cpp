@@ -58,8 +58,14 @@ namespace qAlgorithms
     // };
 
     // @todo this vector is a compiled-in version of the filter to skip file reading for now
-    CompoundFilter test{{-3, -2}, -2, -10, -10, "test", "test2", positive};
-    static std::vector<CompoundFilter> pfasFilter(1, test);
+    CompoundFilter PFPeA{{262.9760, 218.9856, 0}, 10, 11.92 * 60, 20, "PFPeA", "M1", negative}; //
+    CompoundFilter PFOA{{412.9664, 368.9760, 0}, 10, 17.51 * 60, 20, "PFPeA", "M1", negative};
+    CompoundFilter PFHxA{{312.9728, 268.9824, 0}, 10, 14.22 * 60, 20, "PFPeA", "M1", negative};
+    CompoundFilter PFBS{{298.9429, 0}, 10, 12.36 * 60, 20, "PFPeA", "M1", negative};
+    CompoundFilter PFBA{{212.9792, 168.9888, 0}, 10, 8.3 * 60, 20, "PFPeA", "M1", negative};
+    CompoundFilter PFOS{{498.9302, 0}, 10, 19.98 * 60, 20, "PFPeA", "M1", negative};
+
+    static std::vector<CompoundFilter> pfasFilter = {PFPeA, PFOA, PFHxA, PFBS, PFBA, PFOS};
 
     struct mzRange
     {
@@ -149,6 +155,7 @@ namespace qAlgorithms
                     i -= 1; // this is necessary since the last element would otherwise be checked forever
             }
         }
+        return removedCount;
     }
 
     size_t filterFeatures_mz_rt(
@@ -340,9 +347,9 @@ int main(int argc, char *argv[])
 #pragma region "centroiding"
 
             // @todo add check if set polarity is correct
-            const std::vector<unsigned int> selectedIndices = inputFile.filter_spectra(true, polarity, false); // @todo MS2 support here!
+            // const std::vector<unsigned int> selectedIndices = inputFile.filter_spectra(true, polarity, false); // @todo MS2 support here!
 
-            // const std::vector<unsigned int> selectedIndices = inputFile.filter_spectra_suspects(&pfasFilter, true, polarity, false);
+            const std::vector<unsigned int> selectedIndices = inputFile.filter_spectra_suspects(&pfasFilter, true, polarity, false);
 
             if (selectedIndices.empty())
             {
@@ -356,7 +363,7 @@ int main(int argc, char *argv[])
             std::vector<CentroidPeak> *centroids = new std::vector<CentroidPeak>;
             *centroids = findCentroids(inputFile, &selectedIndices); // it is guaranteed that only profile mode data is used
 
-            // filterCentroids_mz(centroids, &pfasFilter);
+            filterCentroids_mz(centroids, &pfasFilter);
 
             if (centroids->size() == 1) // one empty element is always pushed back.
             {
@@ -499,6 +506,8 @@ int main(int argc, char *argv[])
             timeStart = std::chrono::high_resolution_clock::now();
             // every subvector of peaks corresponds to the bin ID
             auto features = findFeatures(binnedData, &rt_index.interpToCount, &retentionTimes);
+
+            filterFeatures_mz_rt(&features, &pfasFilter);
 
             if (features.size() == 0)
             {

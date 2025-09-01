@@ -567,6 +567,7 @@ namespace qAlgorithms
                 double limit_up = suspect.RT + suspect.RT_tol + safetyPeakWidth;
                 if ((RT > limit_low) && (RT < limit_up))
                 {
+                    printf("accepted RT: %f | ", RT);
                     notFound = false;
                     break;
                 }
