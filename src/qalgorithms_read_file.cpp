@@ -532,6 +532,15 @@ namespace qAlgorithms
     std::vector<unsigned int> XML_File::filter_spectra_suspects(
         std::vector<CompoundFilter> *suspects, bool ms1, bool polarity, bool centroided)
     {
+        for (auto suspect : *suspects)
+        {
+            double safetyPeakWidth = 30; // tolerated RT (in seconds) difference in addition to user-specified tolerance
+            double limit_low = suspect.RT - suspect.RT_tol - safetyPeakWidth;
+            double limit_up = suspect.RT + suspect.RT_tol + safetyPeakWidth;
+            printf("%s: %f, %f | ", suspect.compoundName.c_str(), limit_low, limit_up);
+        }
+        pugi::xml_node spec2 = (*linknodes)[number_spectra - 1];
+        printf("\nmaxRT: %f\n", extract_scan_RT(spec2));
         // return a vector of all indices that are relevant to the query. Properties are checked in order of regularity.
         assert(!this->defective);
         assert(number_spectra > 0);
@@ -563,11 +572,11 @@ namespace qAlgorithms
             for (auto suspect : *suspects)
             {
                 double safetyPeakWidth = 30; // tolerated RT (in seconds) difference in addition to user-specified tolerance
-                double limit_low = suspect.RT - suspect.RT_tol + safetyPeakWidth;
+                double limit_low = suspect.RT - suspect.RT_tol - safetyPeakWidth;
                 double limit_up = suspect.RT + suspect.RT_tol + safetyPeakWidth;
                 if ((RT > limit_low) && (RT < limit_up))
                 {
-                    printf("accepted RT: %f | ", RT);
+                    // printf("accepted RT: %f | ", RT);
                     notFound = false;
                     break;
                 }

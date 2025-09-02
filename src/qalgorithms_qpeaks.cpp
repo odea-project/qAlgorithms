@@ -961,7 +961,7 @@ namespace qAlgorithms
         double mean_weights = 0.0;   // mean of weight
         double sum_weighted_x = 0.0; // sum of values * weight
         double sum_weight = 0.0;     // sum of weight
-        for (size_t j = regSpan.endIdx; j <= regSpan.startIdx; j++)
+        for (size_t j = regSpan.startIdx; j <= regSpan.endIdx; j++)
         {
             mean_weights += (*weight)[j];
             sum_weighted_x += (*values)[j] * (*weight)[j];

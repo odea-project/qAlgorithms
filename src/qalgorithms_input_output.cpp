@@ -675,7 +675,7 @@ namespace qAlgorithms
                 char buffer[128];
                 snprintf(buffer, 128, "%zu,%u,%0.8f,%0.8f,%0.4f,%d,%0.6f,%0.6f,%u,%0.4f,%0.4f\n",
                          binID, cen.ID, bin.mz[i], bin.predInterval[i],
-                         convertRT->at(bin.scanNumbers[i] - 1), bin.scanNumbers[i], bin.ints_area[i],
+                         convertRT->at(bin.scanNumbers[i]), bin.scanNumbers[i], bin.ints_area[i],
                          bin.ints_height[i], bin.df[i], bin.DQSC[i], bin.DQSB[i]);
                 output << buffer;
             }

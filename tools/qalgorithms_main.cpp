@@ -58,14 +58,15 @@ namespace qAlgorithms
     // };
 
     // @todo this vector is a compiled-in version of the filter to skip file reading for now
-    CompoundFilter PFPeA{{262.9760, 218.9856, 0}, 10, 11.92 * 60, 20, "PFPeA", "M1", negative}; //
-    CompoundFilter PFOA{{412.9664, 368.9760, 0}, 10, 17.51 * 60, 20, "PFPeA", "M1", negative};
-    CompoundFilter PFHxA{{312.9728, 268.9824, 0}, 10, 14.22 * 60, 20, "PFPeA", "M1", negative};
-    CompoundFilter PFBS{{298.9429, 0}, 10, 12.36 * 60, 20, "PFPeA", "M1", negative};
-    CompoundFilter PFBA{{212.9792, 168.9888, 0}, 10, 8.3 * 60, 20, "PFPeA", "M1", negative};
-    CompoundFilter PFOS{{498.9302, 0}, 10, 19.98 * 60, 20, "PFPeA", "M1", negative};
+    // CompoundFilter PFPeA{{262.9760, 218.9856, 0}, 10, 11.92 * 60, 20, "PFPeA", "M1", negative}; //
+    // CompoundFilter PFOA{{412.9664, 368.9760, 0}, 10, 17.51 * 60, 20, "PFOA", "M1", negative};
+    // CompoundFilter PFHxA{{312.9728, 268.9824, 0}, 10, 14.22 * 60, 20, "PFHxA", "M1", negative};
+    CompoundFilter PFBS{{298.9429, 0}, 10, 12.36 * 60, 10, "PFBS", "M1", negative};
+    // CompoundFilter PFBA{{212.9792, 168.9888, 0}, 10, 8.3 * 60, 20, "PFBA", "M1", negative};
+    // CompoundFilter PFOS{{498.9302, 0}, 10, 19.98 * 60, 20, "PFOS", "M1", negative};
 
-    static std::vector<CompoundFilter> pfasFilter = {PFPeA, PFOA, PFHxA, PFBS, PFBA, PFOS};
+    // static std::vector<CompoundFilter> pfasFilter = {PFPeA, PFOA, PFHxA, PFBS, PFBA, PFOS};
+    static std::vector<CompoundFilter> pfasFilter = {PFBS};
 
     struct mzRange
     {
@@ -84,9 +85,11 @@ namespace qAlgorithms
             {
                 assert(idx < 16);
                 double mz = *(filter.mz_expected + idx);
-                double tol = mz * filter.mz_tolerance_ppm * 10e-6 * margain; // 20 is used as a safety margain, since features are also filtered
+                double tol = mz * filter.mz_tolerance_ppm * 10e-6 + margain; // 20 is used as a safety margain, since features are also filtered
                 double minMZ = mz - tol;
                 double maxMZ = mz + tol;
+
+                printf("%s %zu: min: %f, max: %f | ", filter.compoundName.c_str(), idx, minMZ, maxMZ);
 
                 bool novelRange = true;
                 // iterate through existing filters and check if two ranges can be merged
@@ -124,14 +127,14 @@ namespace qAlgorithms
 
         // make relevant regions for filter
 
-        std::vector<mzRange> regions = mz_regions(filter_vec, 20);
+        std::vector<mzRange> regions = mz_regions(filter_vec, 1);
 
         // at this point, overlapping mz regions should largely be merged.
         // the filter block is extremely inefficient, but since it only runs
         // once that should be fine performance wise
 
         size_t removedCount = 0;
-        for (size_t i = 0; i < centroids->size(); i++)
+        for (size_t i = 1; i < centroids->size(); i++)
         {
             bool filtered = true;
             double mz = centroids->at(i).mz;
@@ -163,7 +166,7 @@ namespace qAlgorithms
         std::vector<CompoundFilter> *filter_vec)
     {
         // restrict features to specified mz and rt
-        std::vector<mzRange> regions_mz = mz_regions(filter_vec, 0);
+        std::vector<mzRange> regions_mz = mz_regions(filter_vec, 0.5);
 
         size_t removedCount = 0;
         for (size_t i = 0; i < features->size(); i++)
