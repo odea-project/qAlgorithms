@@ -957,15 +957,16 @@ namespace qAlgorithms
     */
     {
         // weighted mean using intensity as weighting factor and left_limit right_limit as range
-        size_t realPoints = regSpan.endIdx - regSpan.startIdx + 1;
-        double mean_weights = 0.0;   // mean of weight
-        double sum_weighted_x = 0.0; // sum of values * weight
-        double sum_weight = 0.0;     // sum of weight
+        size_t realPoints = 0;
+        double mean_weights = 0;
+        double sum_weighted_x = 0; // sum of values * weight
+        double sum_weight = 0;
         for (size_t j = regSpan.startIdx; j <= regSpan.endIdx; j++)
         {
             mean_weights += (*weight)[j];
             sum_weighted_x += (*values)[j] * (*weight)[j];
             sum_weight += (*weight)[j];
+            realPoints += (*values)[j] == 0 ? 0 : 1; // interpolated points do not count!
         }
         mean_weights /= realPoints;
         sum_weighted_x /= mean_weights;
@@ -975,7 +976,9 @@ namespace qAlgorithms
         double sum_Qxxw = 0.0; // sum of (values - mean)^2 * weight
         for (size_t j = regSpan.startIdx; j <= regSpan.endIdx; j++)
         {
-            sum_Qxxw += ((*values)[j] - weighted_mean) * ((*values)[j] - weighted_mean) * (*weight)[j];
+            double difference = (*values)[j] - weighted_mean;
+            double interpolated = (*values)[j] == 0 ? 0 : 1; // see above, add 0 if value is not real
+            sum_Qxxw += interpolated * difference * difference * (*weight)[j];
         }
         float uncertaintiy = std::sqrt(sum_Qxxw / sum_weight / realPoints);
         return {float(weighted_mean), float(uncertaintiy)};

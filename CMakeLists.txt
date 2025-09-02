@@ -8,18 +8,22 @@ set(CMAKE_CXX_STANDARD 26)
 # set(CMAKE_CXX_STANDARD_REQUIRED True)
 set(CMAKE_CXX_COMPILER "g++") # clang does not work<
 
-option(V_ASAN "Enable AddressSanitizer" OFF)
-
 ## Set compiler flags
+option(OPTIMISE "turn on optimisations" OFF)
 
+if (OPTIMISE)
+    add_compile_options(-std=c++2c -fno-math-errno -mavx2 -march=native -O2) 
+    # hardening flags 
+    add_compile_options(-U_FORTIFY_SOURCE -D_FORTIFY_SOURCE=3 -fstrict-flex-arrays=3 -fdiagnostics-color=always -fstack-clash-protection -D_GLIBCXX_ASSERTIONS)
 # compile options - optimisation / required
+
+else()
+
 add_compile_options(-std=c++2c -fno-math-errno -mavx2 -march=native -O0)
 
+endif()
 # debug-related flags
 add_compile_options(-g -ggdb3)
-
-# hardening flags
-add_compile_options(-U_FORTIFY_SOURCE -D_FORTIFY_SOURCE=3 -fstrict-flex-arrays=3 -fdiagnostics-color=always -fstack-clash-protection -D_GLIBCXX_ASSERTIONS)
 
 # enabled warnings
 add_compile_options(-Wall -Wpedantic -Wuninitialized -Wno-unknown-pragmas -Wformat=2 -Wformat-truncation -Wimplicit-fallthrough 

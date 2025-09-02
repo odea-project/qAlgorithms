@@ -780,6 +780,7 @@ namespace qAlgorithms
 
             tmp_scanNumbers[access] = point->number_MS1;
             tmp_mz[access] = point->mz;
+            assert(point->mz > 0);
             tmp_mzUncert[access] = point->mzUncertainty;
             tmp_ints_area[access] = point->area;
             tmp_ints_height[access] = point->height;

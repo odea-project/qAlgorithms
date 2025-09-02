@@ -74,8 +74,10 @@ namespace qAlgorithms
         double max = 0;
     };
 
-    std::vector<mzRange> mz_regions(std::vector<CompoundFilter> *filter_vec, double margain)
+    // isotope option controls if first 13C isotopologue is also searched for
+    std::vector<mzRange> mz_regions(std::vector<CompoundFilter> *filter_vec, double margain, bool isotopes)
     {
+#define MASS_13C 1.003354835
         std::vector<mzRange> regions;
         // problem: multiple ion masses (up to 16) per compound
         for (CompoundFilter filter : *filter_vec)
@@ -91,31 +93,50 @@ namespace qAlgorithms
 
                 printf("%s %zu: min: %f, max: %f | ", filter.compoundName.c_str(), idx, minMZ, maxMZ);
 
-                bool novelRange = true;
-                // iterate through existing filters and check if two ranges can be merged
-                for (size_t i = 0; i < regions.size(); i++)
-                {
-                    if ((regions[i].min > minMZ) && (regions[i].min < maxMZ))
-                    {
-                        novelRange = false;
-                        if (regions[i].max < maxMZ)
-                            regions[i].max = maxMZ;
-                    }
-                    if ((regions[i].max > minMZ) && (regions[i].max < maxMZ))
-                    {
-                        novelRange = false;
-                        if (regions[i].min > minMZ)
-                            regions[i].min = minMZ;
-                    }
-                }
+                regions.push_back({minMZ, maxMZ});
 
-                if (novelRange)
-                {
-                    regions.push_back({minMZ, maxMZ});
-                }
+                if (isotopes)
+                    regions.push_back({minMZ + MASS_13C, maxMZ + MASS_13C});
+
                 idx += 1;
             }
         }
+        return regions;
+    }
+#undef MASS_13C
+
+    std::vector<mzRange> mergeRegions_mz(std::vector<mzRange> *toBeMerged)
+    {
+        std::vector<mzRange> regions;
+        // problem: multiple ion masses (up to 16) per compound
+        for (mzRange range : *toBeMerged)
+        {
+            size_t idx = 0;
+            bool novelRange = true;
+            // iterate through existing filters and check if two ranges can be merged
+            for (size_t i = 0; i < regions.size(); i++)
+            {
+                if ((regions[i].min > range.min) && (regions[i].min < range.max))
+                {
+                    novelRange = false;
+                    if (regions[i].max < range.max)
+                        regions[i].max = range.max;
+                }
+                if ((regions[i].max > range.min) && (regions[i].max < range.max))
+                {
+                    novelRange = false;
+                    if (regions[i].min > range.min)
+                        regions[i].min = range.min;
+                }
+            }
+
+            if (novelRange)
+            {
+                regions.push_back(range);
+            }
+            idx += 1;
+        }
+
         return regions;
     }
 
@@ -127,7 +148,8 @@ namespace qAlgorithms
 
         // make relevant regions for filter
 
-        std::vector<mzRange> regions = mz_regions(filter_vec, 1);
+        std::vector<mzRange> regions = mz_regions(filter_vec, 1, true);
+        // regions = mergeRegions_mz(&regions);
 
         // at this point, overlapping mz regions should largely be merged.
         // the filter block is extremely inefficient, but since it only runs
@@ -153,11 +175,18 @@ namespace qAlgorithms
                 centroids->at(i) = centroids->back();
                 centroids->pop_back();
                 removedCount += 1;
+                assert(centroids->at(i).mz > 1);
 
                 if (i + 1 < centroids->size())
                     i -= 1; // this is necessary since the last element would otherwise be checked forever
             }
         }
+
+        for (size_t i = 0; i < centroids->size(); i++)
+        {
+            centroids->at(i).ID = i + 1;
+        }
+
         return removedCount;
     }
 
@@ -166,7 +195,8 @@ namespace qAlgorithms
         std::vector<CompoundFilter> *filter_vec)
     {
         // restrict features to specified mz and rt
-        std::vector<mzRange> regions_mz = mz_regions(filter_vec, 0.5);
+        std::vector<mzRange> regions_mz = mz_regions(filter_vec, 0.5, true);
+        // regions_mz = mergeRegions_mz(&regions_mz);
 
         size_t removedCount = 0;
         for (size_t i = 0; i < features->size(); i++)
@@ -207,7 +237,6 @@ namespace qAlgorithms
 
         return removedCount;
     }
-
 }
 
 int main2(int argc, char *argv[])
