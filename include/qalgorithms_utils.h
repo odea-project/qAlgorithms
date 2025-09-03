@@ -81,6 +81,13 @@ namespace qAlgorithms
     // @todo better documentation
     double binningCritVal(unsigned int n, double uncertainty); // critical value for deciding if a bin exists or not
 
+    float *minVal(float *const arrayStart, const size_t length);
+    const float *minVal(const float *const arrayStart, const size_t length);
+    double *minVal(double *const arrayStart, const size_t length);
+    const double *minVal(const double *const arrayStart, const size_t length);
+
+    float *maxVal(float *const arrayStart, const size_t length);
+    const float *maxVal(const float *const arrayStart, const size_t length);
     double *maxVal(double *const arrayStart, const size_t length);
     const double *maxVal(const double *const arrayStart, const size_t length);
 

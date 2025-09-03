@@ -117,6 +117,67 @@ namespace qAlgorithms
         return (OS_CRIT_A + (OS_CRIT_B / std::sqrt(std::log(n + 1)))) * stdDev;
     }
 
+    float *minVal(float *const arrayStart, const size_t length)
+    {
+        assert(length > 0);
+        float *ret = arrayStart;
+        for (size_t i = 1; i < length; i++) // no need to check the first element
+        {
+            ret = *ret < *(arrayStart + i) ? ret : arrayStart + i;
+        }
+        return ret;
+    }
+    const float *minVal(const float *const arrayStart, const size_t length)
+    {
+        assert(length > 0);
+        const float *ret = arrayStart;
+        for (size_t i = 1; i < length; i++) // no need to check the first element
+        {
+            ret = *ret < *(arrayStart + i) ? ret : arrayStart + i;
+        }
+        return ret;
+    }
+    double *minVal(double *const arrayStart, const size_t length)
+    {
+        assert(length > 0);
+        double *ret = arrayStart;
+        for (size_t i = 1; i < length; i++) // no need to check the first element
+        {
+            ret = *ret < *(arrayStart + i) ? ret : arrayStart + i;
+        }
+        return ret;
+    }
+    const double *minVal(const double *const arrayStart, const size_t length)
+    {
+        assert(length > 0);
+        const double *ret = arrayStart;
+        for (size_t i = 1; i < length; i++) // no need to check the first element
+        {
+            ret = *ret < *(arrayStart + i) ? ret : arrayStart + i;
+        }
+        return ret;
+    }
+
+    float *maxVal(float *const arrayStart, const size_t length)
+    {
+        assert(length > 0);
+        float *ret = arrayStart;
+        for (size_t i = 1; i < length; i++) // no need to check the first element
+        {
+            ret = *ret > *(arrayStart + i) ? ret : arrayStart + i;
+        }
+        return ret;
+    }
+    const float *maxVal(const float *const arrayStart, const size_t length)
+    {
+        assert(length > 0);
+        const float *ret = arrayStart;
+        for (size_t i = 1; i < length; i++) // no need to check the first element
+        {
+            ret = *ret > *(arrayStart + i) ? ret : arrayStart + i;
+        }
+        return ret;
+    }
     double *maxVal(double *const arrayStart, const size_t length)
     {
         assert(length > 0);

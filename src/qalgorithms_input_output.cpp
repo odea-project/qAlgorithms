@@ -669,13 +669,16 @@ namespace qAlgorithms
         for (size_t binID = 0; binID < bins->size(); binID++)
         {
             const EIC bin = bins->at(binID);
+            if (bin.scanNumbers.empty())
+                continue;
+
             for (size_t i = 0; i < bin.mz.size(); i++)
             {
                 const CentroidPeak cen = centroids->at(bin.cenID[i]);
                 char buffer[128];
                 snprintf(buffer, 128, "%zu,%u,%0.8f,%0.8f,%0.4f,%d,%0.6f,%0.6f,%u,%0.4f\n", // @todo re-add the dqsb once that works
                          binID, cen.ID, bin.mz[i], bin.predInterval[i],
-                         convertRT->at(bin.scanNumbers[i]), bin.scanNumbers[i], bin.ints_area[i],
+                         bin.RT[i], bin.scanNumbers[i], bin.ints_area[i],
                          bin.ints_height[i], bin.df[i], bin.DQSC[i]);
                 output << buffer;
             }

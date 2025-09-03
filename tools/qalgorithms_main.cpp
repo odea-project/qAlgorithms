@@ -1,4 +1,5 @@
 // internal
+#include "qalgorithms_utils.h"
 #include "qalgorithms_qpeaks.h"
 #include "qalgorithms_qbin.h"
 #include "qalgorithms_qpattern.h"
@@ -58,21 +59,67 @@ namespace qAlgorithms
     // };
 
     // @todo this vector is a compiled-in version of the filter to skip file reading for now
-    CompoundFilter PFPeA{{262.9760, 218.9856, 0}, 10, 11.92 * 60, 20, "PFPeA", "M1", negative};
+    // CompoundFilter PFPeA{{262.9760, 218.9856, 0}, 10, 11.92 * 60, 20, "PFPeA", "M1", negative};
     // CompoundFilter PFOA{{412.9664, 368.9760, 0}, 10, 17.51 * 60, 20, "PFOA", "M1", negative};
-    // CompoundFilter PFHxA{{312.9728, 268.9824, 0}, 10, 14.22 * 60, 20, "PFHxA", "M1", negative};
+    CompoundFilter PFHxA{{312.9728, 268.9824, 0}, 10, 14.22 * 60, 20, "PFHxA", "M1", negative};
     CompoundFilter PFBS{{298.9429, 0}, 10, 12.36 * 60, 10, "PFBS", "M1", negative};
     // CompoundFilter PFBA{{212.9792, 168.9888, 0}, 10, 8.3 * 60, 20, "PFBA", "M1", negative};
     // CompoundFilter PFOS{{498.9302, 0}, 10, 19.98 * 60, 20, "PFOS", "M1", negative};
 
     // static std::vector<CompoundFilter> pfasFilter = {PFPeA, PFOA, PFHxA, PFBS, PFBA, PFOS};
-    static std::vector<CompoundFilter> pfasFilter = {PFPeA, PFBS};
+    static std::vector<CompoundFilter> pfasFilter = {PFHxA, PFBS};
 
     struct mzRange
     {
         double min = 0;
         double max = 0;
     };
+
+    struct RangeFilter
+    {
+        std::string name;
+        double minMZ = 0;
+        double maxMZ = 0;
+        double minRT = 0;
+        double maxRT = 0;
+    };
+
+    std::vector<RangeFilter> processFilters(std::vector<CompoundFilter> *filter_vec, bool isotopes)
+    {
+#define MASS_13C 1.003354835
+        std::vector<RangeFilter> ranges;
+
+        for (CompoundFilter filter : *filter_vec)
+        {
+            size_t idx = 0;
+
+            double rt_min = filter.RT - filter.RT_tol;
+            double rt_max = filter.RT + filter.RT_tol;
+
+            while (*(filter.mz_expected + idx) > 0) // assume zero-terminated array
+            {
+                assert(idx < 16);
+                double mz = *(filter.mz_expected + idx);
+                double tol = mz * filter.mz_tolerance_ppm * 10e-6 + 0.4; // 20 is used as a safety margain, since features are also filtered
+                double minMZ = mz - tol;
+                double maxMZ = mz + tol;
+
+                std::string filtername = filter.compoundName + " " + std::to_string(idx);
+                ranges.push_back({filtername, minMZ, maxMZ, rt_min, rt_max});
+
+                if (isotopes)
+                {
+                    filtername = filter.compoundName + " 13C " + std::to_string(idx);
+                    ranges.push_back({filtername, minMZ + MASS_13C, maxMZ + MASS_13C, rt_min, rt_max});
+                }
+
+                idx += 1;
+            }
+        }
+
+        return ranges;
+#undef MASS_13C
+    }
 
     // isotope option controls if first 13C isotopologue is also searched for
     std::vector<mzRange> mz_regions(std::vector<CompoundFilter> *filter_vec, double margain, bool isotopes)
@@ -190,6 +237,51 @@ namespace qAlgorithms
         return removedCount;
     }
 
+    size_t filterBins_mz_rt(
+        std::vector<EIC> *bins,
+        std::vector<RangeFilter> *filter_vec)
+    {
+        size_t removedCount = 0;
+
+        for (size_t i = 0; i < bins->size(); i++)
+        {
+            EIC *bin = &(bins->at(i));
+            size_t binLength = bin->mz.size();
+
+            auto mz = bin->mz.data();
+            float *minMZ_bin = minVal(mz, binLength);
+            float *maxMZ_bin = maxVal(mz, binLength);
+
+            auto rt = bin->RT.data();
+            float *minRT_bin = minVal(rt, binLength);
+            float *maxRT_bin = maxVal(rt, binLength);
+
+            bool binOK = false;
+
+            for (auto filter : *filter_vec)
+            {
+                if (filter.minMZ > *maxMZ_bin)
+                    continue;
+
+                if (filter.maxMZ < *minMZ_bin)
+                    continue;
+
+                if (filter.minRT > *maxRT_bin)
+                    continue;
+
+                if (filter.maxRT < *minRT_bin)
+                    continue;
+
+                binOK = true;
+                break;
+            }
+
+            if (!binOK)
+                bin->scanNumbers.clear();
+        }
+        return removedCount;
+    }
+
     size_t filterFeatures_mz_rt(
         std::vector<FeaturePeak> *features,
         std::vector<CompoundFilter> *filter_vec)
@@ -285,6 +377,8 @@ int main(int argc, char *argv[])
     {
         exit(1);
     }
+
+    auto filterRanges = processFilters(&pfasFilter, true); // @todo make optional
 
     // the final task list contains only unique files, sorted by filesize
     std::vector<std::filesystem::__cxx11::path> tasklist = controlInput(&userArgs.inputPaths);
@@ -486,6 +580,8 @@ int main(int argc, char *argv[])
             // RT_Converter rt_index = interpolateScanNumbers(&retentionTimes);
             std::vector<EIC> binnedData = performQbinning_old(centroids, &rt_index);
 
+            filterBins_mz_rt(&binnedData, &filterRanges);
+
             timeEnd = std::chrono::high_resolution_clock::now();
 
             if (binnedData.size() == 0)
@@ -520,30 +616,33 @@ int main(int argc, char *argv[])
             delete centroids;
 
             // @todo remove diagnostics
-            int count = 0;
-            int badBinCount = 0;
+            // int count = 0;
+            // int badBinCount = 0;
+            // double meanDQSB = 0;
+            // for (auto EIC : binnedData)
+            // {
+            //     assert(EIC.scanNumbers.back() <= retentionTimes.size());
+            //     for (double dqsb : EIC.DQSB)
+            //     {
+            //         if (dqsb == -1)
+            //         {
+            //             badBinCount++;
+            //             break;
+            //         }
+            //         ++count;
+            //         meanDQSB += dqsb;
+            //     }
+            // }
+            // meanDQSB /= count;
+            size_t badBinCount = 0;
             double meanDQSB = 0;
-            for (auto EIC : binnedData)
-            {
-                assert(EIC.scanNumbers.back() <= retentionTimes.size());
-                for (double dqsb : EIC.DQSB)
-                {
-                    if (dqsb == -1)
-                    {
-                        badBinCount++;
-                        break;
-                    }
-                    ++count;
-                    meanDQSB += dqsb;
-                }
-            }
-            meanDQSB /= count;
 
             // continue; // @todo ensure centroiding and binning work as best they can first
 
 #pragma region "feature construction"
             timeStart = std::chrono::high_resolution_clock::now();
             // every subvector of peaks corresponds to the bin ID
+
             auto features = findFeatures(binnedData, &rt_index);
 
             filterFeatures_mz_rt(&features, &pfasFilter);
@@ -553,6 +652,22 @@ int main(int argc, char *argv[])
                 std::cerr << "Warning: no features were constructed, continuing...\n";
                 continue;
             }
+
+            if (userArgs.printFeatures) // this is here so we can incorporate the component ID into the output
+            {
+                printFeatureList(&features, userArgs.outputPath, filename, &binnedData, &retentionTimes,
+                                 userArgs.silent, userArgs.noOverwrite);
+            }
+
+            timeEnd = std::chrono::high_resolution_clock::now();
+
+            if (!userArgs.silent)
+            {
+                timePassed = std::chrono::duration_cast<std::chrono::milliseconds>(timeEnd - timeStart);
+                std::cout << "    constructed " << features.size() << " features in " << timePassed.count() << " s\n";
+            }
+
+            continue;
 
             // make sure that every peak contains only one mass trace
             // assert(features.size() <= binnedData.size());
