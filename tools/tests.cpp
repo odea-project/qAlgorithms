@@ -90,9 +90,39 @@ double roundTo_d(double x, size_t digits)
     return (double(rounded) / pow);
 }
 
+void printVec_f(const std::vector<float> *vec, const char *vecName)
+{
+    assert(!vec->empty());
+    printf("Vector %s:  %f", vecName, (*vec)[0]);
+    for (size_t i = 1; i < vec->size(); i++)
+    {
+        printf(", %f", (*vec)[i]);
+    }
+    printf("  | length: %zu\n", vec->size());
+}
+
 int main()
 {
     using namespace qAlgorithms;
+
+    // does the RT conversion struct work correctly?
+    {
+        std::vector<float> RTs = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 18, 19, 20, 21, 27, 28, 29, 30};
+        std::vector<float> correctRTs = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30};
+        assert(correctRTs.size() == size_t(RTs.back()));
+        RT_Converter test = interpolateScanNumbers(&RTs);
+
+        for (size_t i = 0; i < RTs.size(); i++)
+        {
+            float correctRT = RTs[i];
+            size_t convertIdx = test.indexOfOriginalInInterpolated[i];
+            float assumedRT = test.groups[convertIdx].trueRT;
+            qass(correctRT == assumedRT, "RTs cannot be restored from the original index");
+        }
+
+        qass(test.groups.size() == 30, "Incorrect number of retention times");
+        printf("RTs are correctly interpolated\n");
+    }
 
     // test: execute binning function on five identical centroids with increasing scan numbers
     {

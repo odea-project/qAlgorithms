@@ -1905,31 +1905,53 @@ namespace qAlgorithms
                 expectedDiff = tmpDiffs[size / 2];
             }
             // if this is not given, there are severe distortions at some point in the data. We accept one non-compliance,
-            // which is generally one of the first recorded scans (fragmentation / vendor-specific instrument checkup procedure)
+            // at the first scan in the spectrum only, which is generally one of the first recorded scans
+            // incorrectness here could be due to a vendor-specific instrument checkup procedure, which has been observed once at least
             assert(tmpDiffs[1] > expectedDiff / 2);
         }
 
         size_t scanCount = retentionTimes->size();
         std::vector<unsigned int> forwardConv(scanCount + 1, 0);
+        std::vector<RT_Grouping> totalRTs;
+        totalRTs.reserve(scanCount * 2);
+        std::vector<size_t> idxToGrouping(scanCount, -1);
 
-        float critDiff = expectedDiff * 1.5; // if the difference is greater than the critDiff, there should be at least one interpolation
+        float critDiff = expectedDiff * 1.5; // if the difference is 1.5 times greater than the critDiff, there should be at least one interpolation
 
         forwardConv[1] = 1;
         unsigned int currentScan = 1; // the first scan is always index 1
-        for (size_t i = 1; i < diffs.size(); i++)
+        for (size_t i = 0; i < diffs.size(); i++)
         {
-            if (diffs[i] < critDiff)
-            {
-                currentScan += 1;
-            }
-            else
+
+            currentScan += 1;
+            size_t interpScan = totalRTs.size();
+            totalRTs.push_back({i, interpScan, (*retentionTimes)[i], false});
+            idxToGrouping[i] = interpScan;
+
+            if (diffs[i] >= critDiff)
             {
                 // interpolate at least one point
-                size_t numInterpolations = size_t(diffs[i] / expectedDiff + 0.5); // + 0.5 since value is truncated
-                currentScan += numInterpolations;
+                size_t numInterpolations = size_t(diffs[i] / expectedDiff + 0.5 - FLT_EPSILON); // + 0.5 since value is truncated (round up)
+                assert(numInterpolations > 1);
+
+                float RTstep = diffs[i] / (numInterpolations);
+                for (size_t j = 1; j < numInterpolations; j++) // +1 since the span is between two points
+                {
+                    currentScan += 1;
+                    interpScan = totalRTs.size();
+                    float newRT = (*retentionTimes)[i] + RTstep * j;
+                    totalRTs.push_back({size_t(-1), interpScan, newRT, true});
+                }
+
+                // currentScan += numInterpolations;
             }
             forwardConv[i + 1] = currentScan;
         }
+        // add in the last remaining point
+        size_t lastScan = totalRTs.size();
+        idxToGrouping.back() = lastScan;
+        totalRTs.push_back({diffs.size(), lastScan, retentionTimes->back(), false});
+
         forwardConv[0] = INT32_MAX; // this is a dummy value since the scan 0 is a dummy value used for communicating absence
         assert(forwardConv[2] > 1); // @todo this is not a real sanity check
         // assert(forwardConv.back() == currentScan);
@@ -1955,7 +1977,7 @@ namespace qAlgorithms
             RTconv[forwardConv[i]] = retentionTimes->at(i - 1);
         }
 
-        return {forwardConv, backwardConv, {0}}; // @todo add interpToRT
+        return {totalRTs, idxToGrouping, forwardConv, backwardConv, {0}}; // @todo add interpToRT
     }
 
     void fillPeakVals(EIC *eic, FeaturePeak *currentPeak)

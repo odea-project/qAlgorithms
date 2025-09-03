@@ -261,12 +261,27 @@ int main2(int argc, char *argv[])
     std::vector<TaskItem_action> actions;
     std::vector<TaskItem_data> data;
 
+    Polarities polarity_file = unknown_polarity;
+    if (polarity_file == Polarities::positive || polarity_file == Polarities::mixed)
+    {
+        /* this does the processing for positive files - keep it to the function call and handle logging / output through master function arguments */
+    }
+    if (polarity_file == Polarities::negative || polarity_file == Polarities::mixed)
+    {
+        // see above
+    }
+
     return 0;
 }
 
 int main(int argc, char *argv[])
 {
     using namespace qAlgorithms; // considered bad practice from what i see online, but i believe it is acceptable for this program
+
+    std::vector<float> RTs = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 18, 19, 20, 21, 27, 28, 29, 30};
+    std::vector<float> correctRTs = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30};
+    assert(correctRTs.size() == size_t(RTs.back()));
+    RT_Converter test = interpolateScanNumbers(&RTs);
 
     UserInputSettings userArgs = passCliArgs(argc, argv);
 
@@ -360,15 +375,6 @@ int main(int argc, char *argv[])
         auto polarity_file = inputFile.get_polarity_mode(100); // checks first 100 spectra
 
         // @todo single access function into qAlgorithms
-
-        if (polarity_file == Polarities::positive || polarity_file == Polarities::mixed)
-        {
-            /* this does the processing for positive files - keep it to the function call and handle logging / output through master function arguments */
-        }
-        if (polarity_file == Polarities::negative || polarity_file == Polarities::mixed)
-        {
-            // see above
-        }
 
         // @todo find a more elegant solution for polarity switching, this one trips up clang-tidy
         bool oneProcessed = true;
