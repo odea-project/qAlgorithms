@@ -774,10 +774,12 @@ namespace qAlgorithms
         unsigned int prevaccess = -1; // max of uint
         for (size_t i = 0; i < eicsize; i++)
         {
-            size_t interpolatedIdx = convertRT->indexOfOriginalInInterpolated[pointsInBin.at(i)->number_MS1];
+            const CentroidPeak *point = pointsInBin[i];
+
+            size_t interpolatedIdx = convertRT->indexOfOriginalInInterpolated[point->number_MS1];
             unsigned int access = interpolatedIdx - firstScan + 2; // two scans at the front are extrapolated later
             assert(access != prevaccess);
-            const CentroidPeak *point = pointsInBin[i];
+            assert(point->RT == convertRT->groups[interpolatedIdx].trueRT);
 
             tmp_scanNumbers[access] = point->number_MS1;
             tmp_mz[access] = point->mz;

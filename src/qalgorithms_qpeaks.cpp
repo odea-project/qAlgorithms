@@ -963,10 +963,11 @@ namespace qAlgorithms
         double sum_weight = 0;
         for (size_t j = regSpan.startIdx; j <= regSpan.endIdx; j++)
         {
-            mean_weights += (*weight)[j];
-            sum_weighted_x += (*values)[j] * (*weight)[j];
-            sum_weight += (*weight)[j];
-            realPoints += (*values)[j] == 0 ? 0 : 1; // interpolated points do not count!
+            int interpolated = (*values)[j] == 0 ? 0 : 1; // this is used instead of a continue so this can be vectorised. Skips a loop if value was interpolated
+            mean_weights += (*weight)[j] * interpolated;
+            sum_weighted_x += (*values)[j] * (*weight)[j] * interpolated;
+            sum_weight += (*weight)[j] * interpolated;
+            realPoints += 1 * interpolated; // interpolated points do not count!
         }
         mean_weights /= realPoints;
         sum_weighted_x /= mean_weights;
@@ -1911,19 +1912,14 @@ namespace qAlgorithms
         }
 
         size_t scanCount = retentionTimes->size();
-        std::vector<unsigned int> forwardConv(scanCount + 1, 0);
         std::vector<RT_Grouping> totalRTs;
         totalRTs.reserve(scanCount * 2);
         std::vector<size_t> idxToGrouping(scanCount, -1);
 
         float critDiff = expectedDiff * 1.5; // if the difference is 1.5 times greater than the critDiff, there should be at least one interpolation
 
-        forwardConv[1] = 1;
-        unsigned int currentScan = 1; // the first scan is always index 1
         for (size_t i = 0; i < diffs.size(); i++)
         {
-
-            currentScan += 1;
             size_t interpScan = totalRTs.size();
             totalRTs.push_back({i, interpScan, (*retentionTimes)[i], false});
             idxToGrouping[i] = interpScan;
@@ -1937,47 +1933,18 @@ namespace qAlgorithms
                 float RTstep = diffs[i] / (numInterpolations);
                 for (size_t j = 1; j < numInterpolations; j++) // +1 since the span is between two points
                 {
-                    currentScan += 1;
                     interpScan = totalRTs.size();
                     float newRT = (*retentionTimes)[i] + RTstep * j;
                     totalRTs.push_back({size_t(-1), interpScan, newRT, true});
                 }
-
-                // currentScan += numInterpolations;
             }
-            forwardConv[i + 1] = currentScan;
         }
         // add in the last remaining point
         size_t lastScan = totalRTs.size();
         idxToGrouping.back() = lastScan;
         totalRTs.push_back({diffs.size(), lastScan, retentionTimes->back(), false});
 
-        forwardConv[0] = INT32_MAX; // this is a dummy value since the scan 0 is a dummy value used for communicating absence
-        assert(forwardConv[2] > 1); // @todo this is not a real sanity check
-        // assert(forwardConv.back() == currentScan);
-        // assert(forwardConv.back() >= scanCount); // values at least match the index
-        assert(currentScan >= scanCount - 1);
-        assert(forwardConv.back() == 0);
-        forwardConv.back() = currentScan + 1; // not included in diff
-
-        // forwardConv[MS1_num] = index after interpolation. Note that MS1_num and the index start at 1, since 0 is reserved for an empty scan.
-
-        std::vector<unsigned int> backwardConv(currentScan + 2, 0);
-        for (size_t i = 1; i < forwardConv.size(); i++)
-        {
-            backwardConv[forwardConv[i]] = i;
-        }
-        backwardConv[0] = INT32_MAX;
-        assert(backwardConv.back() == forwardConv.size() - 1);
-        // backwardConv[interpolated index] = MS1_num
-
-        std::vector<float> RTconv(currentScan + 2, NAN);
-        for (size_t i = 1; i < forwardConv.size(); i++)
-        {
-            RTconv[forwardConv[i]] = retentionTimes->at(i - 1);
-        }
-
-        return {totalRTs, idxToGrouping}; // @todo add interpToRT
+        return {totalRTs, idxToGrouping};
     }
 
     void fillPeakVals(EIC *eic, FeaturePeak *currentPeak)
