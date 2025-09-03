@@ -433,6 +433,11 @@ namespace qAlgorithms
             beta_2[k] = S2_B * tmp_product_sum_b0 + S2_D * tmp_product_sum_b1 + S2_E * tmp_product_sum_b2 + S2_F * tmp_product_sum_b3;
             beta_3[k] = S2_B * tmp_product_sum_b0 - S2_D * tmp_product_sum_b1 + S2_F * tmp_product_sum_b2 + S2_E * tmp_product_sum_b3;
 
+            assert(!isnan(beta_0[k]));
+            assert(!isnan(beta_1[k]));
+            assert(!isnan(beta_2[k]));
+            assert(!isnan(beta_3[k]));
+
             k += 1;       // update index for the productsums array
             size_t u = 1; // u is the expansion increment
             for (size_t scale = 3; scale < maxInnerLoop[i] + 1; scale++)
@@ -459,7 +464,11 @@ namespace qAlgorithms
                 beta_2[k] = inv_B_b0 + inv_D_b1 + inv_E * tmp_product_sum_b2 + inv_F * tmp_product_sum_b3;
                 beta_3[k] = inv_B_b0 - inv_D_b1 + inv_F * tmp_product_sum_b2 + inv_E * tmp_product_sum_b3;
 
-                // assert((beta_2[k] < 0) || (beta_3[k] < 0));
+                assert(!isnan(beta_0[k]));
+                assert(!isnan(beta_1[k]));
+                assert(!isnan(beta_2[k]));
+                assert(!isnan(beta_3[k]));
+
                 bothNeg += (beta_2[k] < 0) && (beta_3[k] < 0);
                 bothPos += (beta_2[k] >= 0) && (beta_3[k] >= 0);
                 eitherPos += (beta_2[k] < 0) xor (beta_3[k] < 0);

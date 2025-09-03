@@ -758,10 +758,14 @@ namespace qAlgorithms
         size_t backTime = pointsInBin.back()->number_MS1 - 1;
 
         unsigned int firstScan = convertRT->indexOfOriginalInInterpolated[frontTime];
+        size_t shiftBackFront = firstScan < 2 ? firstScan : 2;
         unsigned int lastScan = convertRT->indexOfOriginalInInterpolated[backTime];
-        size_t interpolatedSize = lastScan - firstScan + 1 + 4; // +4 since we extrapolate two points to each side later
+        size_t shiftForwardBack = lastScan + 2 >= convertRT->groups.size() ? convertRT->groups.size() - lastScan - 1 : 2;
+        assert(shiftForwardBack <= 2);
+
+        size_t interpolatedSize = lastScan - firstScan + 1 + shiftBackFront + shiftForwardBack; // range is extended, but clamped to valid region
         std::vector<unsigned int> tmp_interpScans(interpolatedSize, 0);
-        std::iota(tmp_interpScans.begin(), tmp_interpScans.end(), firstScan - 2);
+        std::iota(tmp_interpScans.begin(), tmp_interpScans.end(), firstScan - shiftBackFront);
 
         std::vector<unsigned int> tmp_scanNumbers(interpolatedSize, 0);
         std::vector<float> tmp_mz(interpolatedSize, 0);
@@ -774,24 +778,19 @@ namespace qAlgorithms
 
         // RT (temporary)
         std::vector<float> tmp_rt;
-        tmp_rt.reserve(interpolatedSize);
-
-        if (firstScan < 2)
         {
-            interpolatedSize -= (2 - firstScan);
-            firstScan = 2;
+            tmp_rt.reserve(interpolatedSize);
+            size_t startIdx = firstScan - shiftBackFront;
+            size_t endIdx = lastScan + shiftForwardBack;
+            float oldRT = 0;
+            for (; startIdx <= endIdx; startIdx++)
+            {
+                tmp_rt.push_back(convertRT->groups[startIdx].trueRT);
+                assert(tmp_rt.back() > oldRT);
+                oldRT = convertRT->groups[startIdx].trueRT;
+            }
+            assert(tmp_rt.size() == interpolatedSize);
         }
-
-        assert(firstScan > 1);
-        size_t startIdx = firstScan - 2;
-        float oldRT = 0;
-        for (; startIdx < lastScan + 3; startIdx++)
-        {
-            tmp_rt.push_back(convertRT->groups[startIdx].trueRT);
-            assert(tmp_rt.back() > oldRT);
-            oldRT = convertRT->groups[startIdx].trueRT;
-        }
-        assert(tmp_rt.size() == interpolatedSize);
 
         unsigned int prevaccess = -1; // max of uint
         for (size_t i = 0; i < eicsize; i++)
@@ -799,8 +798,9 @@ namespace qAlgorithms
             const CentroidPeak *point = pointsInBin[i];
 
             size_t interpolatedIdx = convertRT->indexOfOriginalInInterpolated[point->number_MS1 - 1];
-            unsigned int access = interpolatedIdx - firstScan + 2; // two scans at the front are extrapolated later
+            unsigned int access = interpolatedIdx - firstScan + shiftBackFront; // two scans at the front are extrapolated later
             assert(access != prevaccess);
+            assert(access <= lastScan + shiftForwardBack);
             assert(point->RT == convertRT->groups[interpolatedIdx].trueRT);
             assert(point->RT == tmp_rt[access]);
 
@@ -918,24 +918,60 @@ namespace qAlgorithms
         // given the processed EICs from the above function, fill in gaps by performing quadratic inter- and extrapolation
         std::vector<float> *areas = &eic->ints_area;
 
-        // extrapolate start
-        float firstVal = areas->at(2);
-        areas->at(0) = firstVal / 4;
-        areas->at(1) = firstVal / 2;
+        { // extrapolate start
+            float firstVal = areas->at(2);
 
-        // extrapolate end
-        float lastVal = areas->at(areas->size() - 3);
-        areas->at(areas->size() - 2) = lastVal / 2;
-        areas->at(areas->size() - 1) = lastVal / 4;
+            if (firstVal != 0)
+            {
+                areas->at(0) = areas->at(0) == 0 ? firstVal / 4 : areas->at(0);
+                areas->at(1) = areas->at(1) == 0 ? firstVal / 2 : areas->at(1);
+            }
+            else
+            {
+                firstVal = areas->at(1);
 
-        bool noInterpolations = areas->size() - 4 == eic->df.back();
-        if (noInterpolations) // no empty values
-            return;
+                if (firstVal != 0)
+                {
+                    areas->at(0) = areas->at(0) == 0 ? firstVal / 2 : areas->at(0);
+                }
+                else
+                {
+                    assert(areas->front() != 0);
+                }
+            }
+        }
+
+        { // extrapolate end
+            float *lastVal = &(areas->at(areas->size() - 3));
+            if (*lastVal != 0)
+            {
+                *(lastVal + 1) = *(lastVal + 1) == 0 ? *lastVal / 2 : *(lastVal + 1);
+                *(lastVal + 2) = *(lastVal + 2) == 0 ? *lastVal / 4 : *(lastVal + 2);
+            }
+            else
+            {
+                lastVal += 1;
+                if (*lastVal != 0)
+                {
+                    *(lastVal + 1) = *(lastVal + 1) == 0 ? *lastVal / 2 : *(lastVal + 1);
+                }
+                else
+                {
+                    assert(areas->back() != 0);
+                }
+            }
+        }
+
+        // bool noInterpolations = areas->size() - 4 == eic->df.back();
+        // if (noInterpolations) // no empty values
+        //     return;
 
         // interpolate empty values
         bool openBlock = false;
-        size_t startPos = 2;
-        for (size_t i = 3; i < areas->size() - 2; i++)
+        size_t startPos = 0;
+        float firstVal = areas->front();
+
+        for (size_t i = 0; i < areas->size(); i++)
         {
             if (areas->at(i) == 0)
             {
@@ -949,7 +985,7 @@ namespace qAlgorithms
             else
             {
                 // close the block
-                lastVal = areas->at(i);
+                float lastVal = areas->at(i);
                 size_t gapsize = i - startPos - 1;
 
                 // @todo is this the best possible approach?
@@ -971,6 +1007,10 @@ namespace qAlgorithms
                 firstVal = areas->at(i);
                 startPos = i;
             }
+        }
+        for (size_t i = 0; i < areas->size(); i++) // @todo remove for final version
+        {
+            assert(areas->at(i) > 2);
         }
     }
 

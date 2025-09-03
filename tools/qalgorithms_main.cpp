@@ -261,6 +261,7 @@ int main2(int argc, char *argv[])
     std::vector<TaskItem_action> actions;
     std::vector<TaskItem_data> data;
 
+    // auto polarity_file = inputFile.get_polarity_mode(100); // checks first 100 spectra
     Polarities polarity_file = unknown_polarity;
     if (polarity_file == Polarities::positive || polarity_file == Polarities::mixed)
     {
@@ -366,8 +367,6 @@ int main(int argc, char *argv[])
         {
             std::cout << " file in profile mode, ok\n";
         }
-
-        auto polarity_file = inputFile.get_polarity_mode(100); // checks first 100 spectra
 
         // @todo single access function into qAlgorithms
 
