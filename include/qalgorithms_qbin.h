@@ -16,7 +16,7 @@ namespace qAlgorithms
     /// @param verbose if this option is selected, additional progress report is written to standard out
     /// @return returns the centroids as a collection of vectors
     std::vector<EIC> performQbinning_old(const std::vector<CentroidPeak> *centroidedData,
-                                         const std::vector<unsigned int> *convertRT);
+                                         const RT_Converter *convertRT);
 
     // ###################################################################################################### //
 #pragma region "utility"
@@ -61,7 +61,7 @@ namespace qAlgorithms
         // returns the start index of where in the sorted not-binned points the minimum start position is
         size_t makeDQSB(const std::vector<const CentroidPeak *> *notInBins, size_t idx_lowerLimit);
 
-        EIC createEIC(const std::vector<unsigned int> *convertRT);
+        EIC createEIC(const RT_Converter *convertRT);
     };
 
     std::vector<Bin> performQbinning(const std::vector<CentroidPeak> *centroids);
@@ -87,7 +87,7 @@ namespace qAlgorithms
     // every index at bin stage is the "original" index of the MS1 spectrum.
     // they need to be converted to the corrected scan index which accounts for
     // interpolation.
-    EIC binToEIC(const Bin *sourceBin, const std::vector<unsigned int> *convertIndex);
+    EIC binToEIC(const Bin *sourceBin, const RT_Converter *convertRT);
 
     void interpolateEIC(EIC *eic);
 

@@ -125,7 +125,7 @@ namespace qAlgorithms
     }
 
     std::vector<EIC> performQbinning_old(const std::vector<CentroidPeak> *centroidedData,
-                                         const std::vector<unsigned int> *convertRT) // @todo split out subfunctions so the structure is subset -> score -> format
+                                         const RT_Converter *convertRT) // @todo split out subfunctions so the structure is subset -> score -> format
     {
         assert(centroidedData->front().mz == 0); // first value is dummy
 
@@ -743,7 +743,7 @@ namespace qAlgorithms
         return idx_lowerLimit;
     }
 
-    EIC Bin::createEIC(const std::vector<unsigned int> *convertRT)
+    EIC Bin::createEIC(const RT_Converter *convertRT)
     {
         size_t eicsize = pointsInBin.size();
         assert(eicsize > 4);
@@ -757,8 +757,8 @@ namespace qAlgorithms
         volatile size_t frontTime = pointsInBin.front()->number_MS1;
         volatile size_t backTime = pointsInBin.back()->number_MS1;
 
-        unsigned int firstScan = convertRT->at(frontTime);
-        unsigned int lastScan = convertRT->at(backTime);
+        unsigned int firstScan = convertRT->indexOfOriginalInInterpolated[frontTime];
+        unsigned int lastScan = convertRT->indexOfOriginalInInterpolated[backTime];
         size_t interpolatedSize = lastScan - firstScan + 1 + 4; // +4 since we extrapolate two points to each side later
         std::vector<unsigned int> tmp_interpScans(interpolatedSize, 0);
         std::iota(tmp_interpScans.begin(), tmp_interpScans.end(), firstScan - 2);
@@ -774,7 +774,8 @@ namespace qAlgorithms
         unsigned int prevaccess = -1; // max of uint
         for (size_t i = 0; i < eicsize; i++)
         {
-            unsigned int access = convertRT->at(pointsInBin.at(i)->number_MS1) - firstScan + 2; // two scans at the front are extrapolated later
+            size_t interpolatedIdx = convertRT->indexOfOriginalInInterpolated[pointsInBin.at(i)->number_MS1];
+            unsigned int access = interpolatedIdx - firstScan + 2; // two scans at the front are extrapolated later
             assert(access != prevaccess);
             const CentroidPeak *point = pointsInBin[i];
 

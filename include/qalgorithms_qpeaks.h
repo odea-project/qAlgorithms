@@ -105,30 +105,9 @@ namespace qAlgorithms
                         const Range_i regSpan);
 
     std::vector<FeaturePeak> findFeatures(std::vector<EIC> &data,
-                                          std::vector<unsigned int> *backConvert,
-                                          std::vector<float> *RT);
+                                          const RT_Converter *convertRT);
 
     // ### Retention Time Conversion @todo make less annoying ### //
-
-    struct RT_Grouping
-    {
-        size_t originalIndex = -1;
-        size_t interpolatedIndex = -1;
-        float trueRT = -1;
-        bool interpolated = true;
-    };
-
-    struct RT_Converter
-    {
-        std::vector<RT_Grouping> groups;
-        // index into the groups vector. The "originalIndex" field ind the RT_Grouping struct is the index into this vector
-        std::vector<size_t> indexOfOriginalInInterpolated = {0};
-        // find the spectrum index after interpolation from MS1 spectrum number and vice versa
-        std::vector<unsigned int> countToInterp;
-        std::vector<unsigned int> interpToCount;
-        // retention time at the interpolated index
-        std::vector<float> interpToRT;
-    };
 
     RT_Converter interpolateScanNumbers(const std::vector<float> *retentionTimes);
 
@@ -136,9 +115,8 @@ namespace qAlgorithms
 
     void createFeaturePeaks(
         std::vector<FeaturePeak> *peaks,
-        std::vector<unsigned int> *backConvert,
         const std::vector<RegressionGauss> *validRegressionsVec,
-        const std::vector<float> *RT);
+        const RT_Converter *convertRT);
 
     double calcSSE_base(const RegCoeffs coeff,
                         const std::vector<float> *y_start,

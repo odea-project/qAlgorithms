@@ -1049,9 +1049,8 @@ namespace qAlgorithms
 
     void createFeaturePeaks(
         std::vector<FeaturePeak> *peaks,
-        std::vector<unsigned int> *backConvert,
         const std::vector<RegressionGauss> *validRegressionsVec,
-        const std::vector<float> *RT)
+        const RT_Converter *convertRT)
     /* ### allocations ###
         none!
 
@@ -1077,7 +1076,8 @@ namespace qAlgorithms
             peak.heightUncertainty = regression.uncertainty_height * peak.height;
 
             // calculate the apex position in RT
-            size_t idx_leftOfApex = backConvert->at((size_t)regression.apex_position);
+            size_t idx_leftOfApex = (size_t)regression.apex_position;
+            size_t idx_leftOfApex_absolute = convertRT->indexOfOriginalInInterpolated[idx_leftOfApex];
 
             // @todo fix peak detection
             if (idx_leftOfApex < 2)
@@ -1086,16 +1086,16 @@ namespace qAlgorithms
             }
 
             assert(idx_leftOfApex > 1); // at least two points to the left
-            size_t idx_rightOfApex = idx_leftOfApex + 1;
+            size_t idx_rightOfApex_absolute = idx_leftOfApex_absolute + 1;
 
-            if (idx_rightOfApex > RT->size() - 1)
+            if (idx_rightOfApex_absolute > convertRT->groups.size() - 1)
             {
                 continue;
             }
 
-            assert(idx_rightOfApex < RT->size() - 1); // at least two points to the right
-            float rt_leftOfApex = RT->at(idx_leftOfApex);
-            float rt_rightOfApex = RT->at(idx_rightOfApex);
+            assert(idx_rightOfApex_absolute < convertRT->groups.size() - 1); // at least two points to the right
+            float rt_leftOfApex = convertRT->groups[idx_leftOfApex_absolute].trueRT;
+            float rt_rightOfApex = convertRT->groups[idx_rightOfApex_absolute].trueRT;
             assert(rt_leftOfApex < rt_rightOfApex);
             float delta_rt = rt_rightOfApex - rt_leftOfApex;
             float rt_fraction = (regression.apex_position - floor(regression.apex_position));
@@ -1977,7 +1977,7 @@ namespace qAlgorithms
             RTconv[forwardConv[i]] = retentionTimes->at(i - 1);
         }
 
-        return {totalRTs, idxToGrouping, forwardConv, backwardConv, {0}}; // @todo add interpToRT
+        return {totalRTs, idxToGrouping}; // @todo add interpToRT
     }
 
     void fillPeakVals(EIC *eic, FeaturePeak *currentPeak)
@@ -2009,8 +2009,7 @@ namespace qAlgorithms
     }
 
     std::vector<FeaturePeak> findFeatures(std::vector<EIC> &EICs,
-                                          std::vector<unsigned int> *backConvert,
-                                          std::vector<float> *RT)
+                                          const RT_Converter *convertRT)
     /* ### allocations ###
         peaks
         tmpPeaks
@@ -2042,7 +2041,7 @@ namespace qAlgorithms
                 continue; // skip due to lack of data, i.e., degrees of freedom will be zero
             }
 
-            const size_t maxApexIdx = RT->size() - 2;
+            const size_t maxApexIdx = convertRT->groups.size() - 2;
 
             validRegressions.clear();
             size_t length = currentEIC.df.size();
@@ -2062,7 +2061,7 @@ namespace qAlgorithms
 
             if (!validRegressions.empty())
             {
-                createFeaturePeaks(&tmpPeaks, backConvert, &validRegressions, RT); // @todo can this be moved outside of the loop?
+                createFeaturePeaks(&tmpPeaks, &validRegressions, convertRT); // @todo can this be moved outside of the loop?
             }
             // @todo extract the peak construction here and possibly extract findFeatures into a generic function
 
@@ -2094,7 +2093,7 @@ namespace qAlgorithms
                 currentPeak.idxBin = i;
 
                 fillPeakVals(&currentEIC, &currentPeak);
-                assert(currentPeak.scanPeakEnd < RT->size());
+                assert(currentPeak.scanPeakEnd < convertRT->groups.size());
 
                 peaks.push_back(currentPeak);
             }

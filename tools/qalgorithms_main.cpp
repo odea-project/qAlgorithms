@@ -278,11 +278,6 @@ int main(int argc, char *argv[])
 {
     using namespace qAlgorithms; // considered bad practice from what i see online, but i believe it is acceptable for this program
 
-    std::vector<float> RTs = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 18, 19, 20, 21, 27, 28, 29, 30};
-    std::vector<float> correctRTs = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30};
-    assert(correctRTs.size() == size_t(RTs.back()));
-    RT_Converter test = interpolateScanNumbers(&RTs);
-
     UserInputSettings userArgs = passCliArgs(argc, argv);
 
     if (!inputsAreSensible(userArgs))
@@ -483,7 +478,7 @@ int main(int argc, char *argv[])
             timeStart = std::chrono::high_resolution_clock::now();
 
             // RT_Converter rt_index = interpolateScanNumbers(&retentionTimes);
-            std::vector<EIC> binnedData = performQbinning_old(centroids, &rt_index.countToInterp);
+            std::vector<EIC> binnedData = performQbinning_old(centroids, &rt_index);
 
             timeEnd = std::chrono::high_resolution_clock::now();
 
@@ -543,7 +538,7 @@ int main(int argc, char *argv[])
 #pragma region "feature construction"
             timeStart = std::chrono::high_resolution_clock::now();
             // every subvector of peaks corresponds to the bin ID
-            auto features = findFeatures(binnedData, &rt_index.interpToCount, &retentionTimes);
+            auto features = findFeatures(binnedData, &rt_index);
 
             filterFeatures_mz_rt(&features, &pfasFilter);
 

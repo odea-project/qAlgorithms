@@ -106,23 +106,22 @@ int main()
     using namespace qAlgorithms;
 
     // does the RT conversion struct work correctly?
+
+    std::vector<float> RTs = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 18, 19, 20, 21, 27, 28, 29, 30};
+    std::vector<float> correctRTs = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30};
+    assert(correctRTs.size() == size_t(RTs.back()));
+    RT_Converter test = interpolateScanNumbers(&RTs);
+
+    for (size_t i = 0; i < RTs.size(); i++)
     {
-        std::vector<float> RTs = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 18, 19, 20, 21, 27, 28, 29, 30};
-        std::vector<float> correctRTs = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30};
-        assert(correctRTs.size() == size_t(RTs.back()));
-        RT_Converter test = interpolateScanNumbers(&RTs);
-
-        for (size_t i = 0; i < RTs.size(); i++)
-        {
-            float correctRT = RTs[i];
-            size_t convertIdx = test.indexOfOriginalInInterpolated[i];
-            float assumedRT = test.groups[convertIdx].trueRT;
-            qass(correctRT == assumedRT, "RTs cannot be restored from the original index");
-        }
-
-        qass(test.groups.size() == 30, "Incorrect number of retention times");
-        printf("RTs are correctly interpolated\n");
+        float correctRT = RTs[i];
+        size_t convertIdx = test.indexOfOriginalInInterpolated[i];
+        float assumedRT = test.groups[convertIdx].trueRT;
+        qass(correctRT == assumedRT, "RTs cannot be restored from the original index");
     }
+
+    qass(test.groups.size() == 30, "Incorrect number of retention times");
+    printf("RTs are correctly interpolated\n");
 
     // test: execute binning function on five identical centroids with increasing scan numbers
     {
@@ -147,7 +146,7 @@ int main()
         vecLen -= 1;
 
         // expected output: one EIC with five points
-        std::vector<qAlgorithms::EIC> testEIC = performQbinning_old(&inputCens, &convertRT);
+        std::vector<qAlgorithms::EIC> testEIC = performQbinning_old(&inputCens, &test);
         volatile qAlgorithms::EIC copy = testEIC[0];
         qass(testEIC.size() != 0, "No EIC constructed");
         qass(testEIC.size() < 2, "More than one EIC found");
@@ -164,7 +163,7 @@ int main()
 
         vecLen++;
         // expected output: one EIC with five points and one trailing centroid
-        testEIC = performQbinning_old(&inputCens, &convertRT);
+        testEIC = performQbinning_old(&inputCens, &test);
         qass(testEIC.size() != 0, "No EIC constructed");
         qass(testEIC.size() < 2, "More than one EIC found");
         // correct length is 9 since two points are added to each side. This is very confusing, change it @todo
@@ -189,7 +188,7 @@ int main()
         for (size_t RT : convertRT)
             printf("%zu ", RT);
 
-        testEIC = performQbinning_old(&inputCens, &convertRT);
+        testEIC = performQbinning_old(&inputCens, &test);
         qass(testEIC.size() != 0, "No EIC constructed");
         qass(testEIC.size() == 2, "Incorrect number of EICs");
         qass(testEIC[1].mz.size() == 10, "Incorrect EIC size");
