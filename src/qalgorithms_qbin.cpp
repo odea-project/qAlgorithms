@@ -754,8 +754,8 @@ namespace qAlgorithms
         // using the knowledge of where points should be interpolated, transfer centroids into
         // arrays with gaps for later processing
 
-        volatile size_t frontTime = pointsInBin.front()->number_MS1;
-        volatile size_t backTime = pointsInBin.back()->number_MS1;
+        size_t frontTime = pointsInBin.front()->number_MS1 - 1;
+        size_t backTime = pointsInBin.back()->number_MS1 - 1;
 
         unsigned int firstScan = convertRT->indexOfOriginalInInterpolated[frontTime];
         unsigned int lastScan = convertRT->indexOfOriginalInInterpolated[backTime];
@@ -770,16 +770,39 @@ namespace qAlgorithms
         std::vector<float> tmp_ints_height(interpolatedSize, 0);
         std::vector<float> tmp_DQSC(interpolatedSize, 0);
         std::vector<unsigned int> tmp_cenID(interpolatedSize, 0);
+        std::vector<unsigned int> tmp_df(interpolatedSize, 0);
+
+        // RT (temporary)
+        std::vector<float> tmp_rt;
+        tmp_rt.reserve(interpolatedSize);
+
+        if (firstScan < 2)
+        {
+            interpolatedSize -= (2 - firstScan);
+            firstScan = 2;
+        }
+
+        assert(firstScan > 1);
+        size_t startIdx = firstScan - 2;
+        float oldRT = 0;
+        for (; startIdx < lastScan + 3; startIdx++)
+        {
+            tmp_rt.push_back(convertRT->groups[startIdx].trueRT);
+            assert(tmp_rt.back() > oldRT);
+            oldRT = convertRT->groups[startIdx].trueRT;
+        }
+        assert(tmp_rt.size() == interpolatedSize);
 
         unsigned int prevaccess = -1; // max of uint
         for (size_t i = 0; i < eicsize; i++)
         {
             const CentroidPeak *point = pointsInBin[i];
 
-            size_t interpolatedIdx = convertRT->indexOfOriginalInInterpolated[point->number_MS1];
+            size_t interpolatedIdx = convertRT->indexOfOriginalInInterpolated[point->number_MS1 - 1];
             unsigned int access = interpolatedIdx - firstScan + 2; // two scans at the front are extrapolated later
             assert(access != prevaccess);
             assert(point->RT == convertRT->groups[interpolatedIdx].trueRT);
+            assert(point->RT == tmp_rt[access]);
 
             tmp_scanNumbers[access] = point->number_MS1;
             tmp_mz[access] = point->mz;
@@ -789,20 +812,16 @@ namespace qAlgorithms
             tmp_ints_height[access] = point->height;
             tmp_DQSC[access] = point->DQSC;
             tmp_cenID[access] = point->ID;
+
+            tmp_df[access] = point->df == 0 ? 0 : 1; // ignore the individual degrees of freedom for centroids (for now)
         }
 
         // cumulative degrees of freedom
-        std::vector<unsigned int> tmp_df(interpolatedSize, 0);
-        unsigned int df_total = 0;
-
-        for (size_t i = 2; i < tmp_scanNumbers.size(); i++)
+        for (size_t i = 1; i < tmp_df.size(); i++)
         {
-            if (tmp_scanNumbers[i] != 0) // interpolated scan
-                df_total += 1;
-
-            tmp_df[i] = df_total;
+            tmp_df[i] = tmp_df[i] + tmp_df[i - 1];
         }
-        assert(df_total == eicsize); // @todo this can be disturbed by supplying incorrectly formatted data as RT converter
+        assert(tmp_df.back() == eicsize); // @todo this can be disturbed by supplying incorrectly formatted data as RT converter
 
         EIC returnVal = {
             tmp_scanNumbers,
@@ -814,7 +833,8 @@ namespace qAlgorithms
             DQSB_base,
             tmp_DQSC,
             tmp_cenID,
-            tmp_interpScans};
+            tmp_interpScans,
+            tmp_rt};
 
         return returnVal;
     }

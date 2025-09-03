@@ -137,6 +137,7 @@ namespace qAlgorithms
         std::vector<float> DQSC{0};
         std::vector<unsigned int> cenID{0};
         std::vector<unsigned int> interpolatedScans{0};
+        std::vector<float> RT{0};
         // std::vector<float> interpolatedDQSB;
         unsigned int componentID = 0; // this is only set during componentisation
         // bool interpolations;          // are there interpolated values?

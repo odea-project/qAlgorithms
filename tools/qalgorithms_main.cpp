@@ -58,7 +58,7 @@ namespace qAlgorithms
     // };
 
     // @todo this vector is a compiled-in version of the filter to skip file reading for now
-    // CompoundFilter PFPeA{{262.9760, 218.9856, 0}, 10, 11.92 * 60, 20, "PFPeA", "M1", negative}; //
+    CompoundFilter PFPeA{{262.9760, 218.9856, 0}, 10, 11.92 * 60, 20, "PFPeA", "M1", negative};
     // CompoundFilter PFOA{{412.9664, 368.9760, 0}, 10, 17.51 * 60, 20, "PFOA", "M1", negative};
     // CompoundFilter PFHxA{{312.9728, 268.9824, 0}, 10, 14.22 * 60, 20, "PFHxA", "M1", negative};
     CompoundFilter PFBS{{298.9429, 0}, 10, 12.36 * 60, 10, "PFBS", "M1", negative};
@@ -66,7 +66,7 @@ namespace qAlgorithms
     // CompoundFilter PFOS{{498.9302, 0}, 10, 19.98 * 60, 20, "PFOS", "M1", negative};
 
     // static std::vector<CompoundFilter> pfasFilter = {PFPeA, PFOA, PFHxA, PFBS, PFBA, PFOS};
-    static std::vector<CompoundFilter> pfasFilter = {PFBS};
+    static std::vector<CompoundFilter> pfasFilter = {PFPeA, PFBS};
 
     struct mzRange
     {
@@ -395,6 +395,13 @@ int main(int argc, char *argv[])
 
             std::vector<CentroidPeak> *centroids = new std::vector<CentroidPeak>;
             *centroids = findCentroids(inputFile, &selectedIndices); // it is guaranteed that only profile mode data is used
+
+            for (size_t cenID = 1; cenID < centroids->size(); cenID++) // dummy value at idx 0 @todo
+            {
+                size_t scanNumber = centroids->at(cenID).number_MS1 - 1;
+                size_t realRT_idx = rt_index.indexOfOriginalInInterpolated[scanNumber];
+                centroids->at(cenID).RT = rt_index.groups[realRT_idx].trueRT;
+            }
 
             filterCentroids_mz(centroids, &pfasFilter);
 

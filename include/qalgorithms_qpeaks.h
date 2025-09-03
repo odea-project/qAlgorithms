@@ -116,7 +116,8 @@ namespace qAlgorithms
     void createFeaturePeaks(
         std::vector<FeaturePeak> *peaks,
         const std::vector<RegressionGauss> *validRegressionsVec,
-        const RT_Converter *convertRT);
+        const RT_Converter *convertRT,
+        const std::vector<float> *RTs);
 
     double calcSSE_base(const RegCoeffs coeff,
                         const std::vector<float> *y_start,

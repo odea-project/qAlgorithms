@@ -1051,7 +1051,8 @@ namespace qAlgorithms
     void createFeaturePeaks(
         std::vector<FeaturePeak> *peaks,
         const std::vector<RegressionGauss> *validRegressionsVec,
-        const RT_Converter *convertRT)
+        const RT_Converter *convertRT,
+        const std::vector<float> *RTs) // @todo this should be handled correctly through the converter
     /* ### allocations ###
         none!
 
@@ -1095,14 +1096,16 @@ namespace qAlgorithms
             }
 
             assert(idx_rightOfApex_absolute < convertRT->groups.size() - 1); // at least two points to the right
-            float rt_leftOfApex = convertRT->groups[idx_leftOfApex_absolute].trueRT;
-            float rt_rightOfApex = convertRT->groups[idx_rightOfApex_absolute].trueRT;
-            assert(rt_leftOfApex < rt_rightOfApex);
-            float delta_rt = rt_rightOfApex - rt_leftOfApex;
+            // float rt_leftOfApex = convertRT->groups[idx_leftOfApex_absolute].trueRT;
+            float rt_leftOfApex_true = RTs->at(idx_leftOfApex);
+            // float rt_rightOfApex = convertRT->groups[idx_rightOfApex_absolute].trueRT;
+            float rt_rightOfApex_true = RTs->at(idx_leftOfApex + 1);
+            assert(rt_leftOfApex_true < rt_rightOfApex_true);
+            float delta_rt = rt_rightOfApex_true - rt_leftOfApex_true;
             float rt_fraction = (regression.apex_position - floor(regression.apex_position));
             assert(rt_fraction >= 0);
             assert(rt_fraction < 1);
-            float rt_apex = rt_leftOfApex + delta_rt * rt_fraction;
+            float rt_apex = rt_leftOfApex_true + delta_rt * rt_fraction;
             peak.retentionTime = rt_apex;
             peak.RT_Uncertainty = regression.uncertainty_pos * delta_rt;
 
@@ -2028,7 +2031,13 @@ namespace qAlgorithms
 
             if (!validRegressions.empty())
             {
-                createFeaturePeaks(&tmpPeaks, &validRegressions, convertRT); // @todo can this be moved outside of the loop?
+                createFeaturePeaks(&tmpPeaks, &validRegressions, convertRT, &currentEIC.RT); // @todo can this be moved outside of the loop?
+
+                for (auto peak : tmpPeaks)
+                {
+                    assert(peak.retentionTime > currentEIC.RT.front());
+                    assert(peak.retentionTime < currentEIC.RT.back());
+                }
             }
             // @todo extract the peak construction here and possibly extract findFeatures into a generic function
 
