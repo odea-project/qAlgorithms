@@ -2374,7 +2374,7 @@ namespace qAlgorithms
             // be a useable centroid with this large a m/z difference in a high res mass spectrum
             for (size_t i = 0; i < diffs.size(); i++)
             {
-                if (diffs[i] > meanDiff)
+                if (diffs[i] > meanDiff) // @todo this does not work
                 {
                     knownEnd = i - 1;
                     if (knownEnd > knownStart)

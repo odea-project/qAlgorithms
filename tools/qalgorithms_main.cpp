@@ -44,20 +44,20 @@ namespace qAlgorithms
         float meanDQSG;
     };
 
-    struct CompoundFilter
-    {
-        // this struct is used to limit the amount of operations performed by the program to
-        // a selection of masses and RTs that is relevant to the analysis at hand.
-        double mz_expected[16] = {0};
-        double mz_tolerance_ppm = 0;
+    // struct CompoundFilter
+    // {
+    //     // this struct is used to limit the amount of operations performed by the program to
+    //     // a selection of masses and RTs that is relevant to the analysis at hand.
+    //     double mz_expected[16] = {0};
+    //     double mz_tolerance_ppm = 0;
 
-        double RT = -1;
-        double RT_tol = -1; // tolerance to either side, assumes symmetrical peaks
+    //     double RT = -1;
+    //     double RT_tol = -1; // tolerance to either side, assumes symmetrical peaks
 
-        std::string compoundName = "";
-        std::string methodName = "";
-        Polarities polarity = Polarities::unknown_polarity;
-    };
+    //     std::string compoundName = "";
+    //     std::string methodName = "";
+    //     Polarities polarity = Polarities::unknown_polarity;
+    // };
 
     // @todo this vector is a compiled-in version of the filter to skip file reading for now
     CompoundFilter PFPeA{{262.9760, 218.9856, 0}, 10, 11.92 * 60, 20, "PFPeA", "M1", negative};
