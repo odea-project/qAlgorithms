@@ -16,12 +16,17 @@ namespace qAlgorithms
 
     std::vector<Bin> performQbinning(std::vector<CentroidPeak> *centroids)
     {
-        centroids->erase(centroids->begin()); // @todo do not pass in dummy values, this is a confusing interface
+        // centroids->erase(centroids->begin()); // @todo do not pass in dummy values, this is a confusing interface
 
         BinContainer activeBins;
         Bin firstBin;
         for (size_t i = 0; i < centroids->size(); i++)
         {
+            if (centroids->at(i).mz == 0)
+            {
+                continue;
+            }
+
             firstBin.pointsInBin.push_back(&(centroids->at(i)));
         }
         activeBins.processBinsF.push_back(firstBin);
@@ -133,6 +138,9 @@ namespace qAlgorithms
         Bin firstBin;
         for (size_t i = 0; i < centroidedData->size(); i++)
         {
+            if (centroidedData->at(i).mz == 0)
+                continue;
+
             firstBin.pointsInBin.push_back(&(centroidedData->at(i)));
         }
         activeBins.processBinsF.push_back(firstBin);
@@ -247,7 +255,7 @@ namespace qAlgorithms
             countPointsInBins += eic.df.back(); // interpolated points are already included in the size
         }
         // assert(countPointsInBins + activeBins.notInBins.size() == centroidedData->size());
-        assert(countPointsInBins + activeBins.notInBins.size() == centroidedData->size());
+        assert(countPointsInBins + activeBins.notInBins.size() == firstBin.pointsInBin.size());
         return finalBins;
     }
 
@@ -1010,7 +1018,7 @@ namespace qAlgorithms
         }
         for (size_t i = 0; i < areas->size(); i++) // @todo remove for final version
         {
-            assert(areas->at(i) > 2);
+            assert(areas->at(i) > 1);
         }
     }
 

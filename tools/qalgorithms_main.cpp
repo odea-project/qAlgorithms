@@ -44,30 +44,31 @@ namespace qAlgorithms
         float meanDQSG;
     };
 
-    // {
-    //     // this struct is used to limit the amount of operations performed by the program to
-    //     // a selection of masses and RTs that is relevant to the analysis at hand.
-    //     double mz_expected[16] = {0};
-    //     double mz_tolerance_ppm = 0;
+    struct CompoundFilter
+    {
+        // this struct is used to limit the amount of operations performed by the program to
+        // a selection of masses and RTs that is relevant to the analysis at hand.
+        double mz_expected[16] = {0};
+        double mz_tolerance_ppm = 0;
 
-    //     double RT = -1;
-    //     double RT_tol = -1; // tolerance to either side, assumes symmetrical peaks
+        double RT = -1;
+        double RT_tol = -1; // tolerance to either side, assumes symmetrical peaks
 
-    //     std::string compoundName = "";
-    //     std::string methodName = "";
-    //     Polarities polarity = Polarities::unknown_polarity;
-    // };
+        std::string compoundName = "";
+        std::string methodName = "";
+        Polarities polarity = Polarities::unknown_polarity;
+    };
 
     // @todo this vector is a compiled-in version of the filter to skip file reading for now
-    // CompoundFilter PFPeA{{262.9760, 218.9856, 0}, 10, 11.92 * 60, 20, "PFPeA", "M1", negative};
-    // CompoundFilter PFOA{{412.9664, 368.9760, 0}, 10, 17.51 * 60, 20, "PFOA", "M1", negative};
+    CompoundFilter PFPeA{{262.9760, 218.9856, 0}, 10, 11.92 * 60, 20, "PFPeA", "M1", negative};
+    CompoundFilter PFOA{{412.9664, 368.9760, 0}, 10, 17.51 * 60, 20, "PFOA", "M1", negative};
     CompoundFilter PFHxA{{312.9728, 268.9824, 0}, 10, 14.22 * 60, 20, "PFHxA", "M1", negative};
-    CompoundFilter PFBS{{298.9429, 0}, 10, 12.36 * 60, 10, "PFBS", "M1", negative};
-    // CompoundFilter PFBA{{212.9792, 168.9888, 0}, 10, 8.3 * 60, 20, "PFBA", "M1", negative};
-    // CompoundFilter PFOS{{498.9302, 0}, 10, 19.98 * 60, 20, "PFOS", "M1", negative};
+    CompoundFilter PFBS{{298.9429, 0}, 10, 12.36 * 60, 20, "PFBS", "M1", negative};
+    CompoundFilter PFBA{{212.9792, 168.9888, 0}, 10, 8.3 * 60, 20, "PFBA", "M1", negative};
+    CompoundFilter PFOS{{498.9302, 0}, 10, 19.98 * 60, 20, "PFOS", "M1", negative};
 
-    // static std::vector<CompoundFilter> pfasFilter = {PFPeA, PFOA, PFHxA, PFBS, PFBA, PFOS};
-    static std::vector<CompoundFilter> pfasFilter = {PFHxA, PFBS};
+    static std::vector<CompoundFilter> pfasFilter = {PFPeA, PFOA, PFHxA, PFBS, PFBA, PFOS};
+    // static std::vector<CompoundFilter> pfasFilter = {PFOS};
 
     struct mzRange
     {
@@ -121,119 +122,47 @@ namespace qAlgorithms
 #undef MASS_13C
     }
 
-    // isotope option controls if first 13C isotopologue is also searched for
-    std::vector<mzRange> mz_regions(std::vector<CompoundFilter> *filter_vec, double margain, bool isotopes)
-    {
-#define MASS_13C 1.003354835
-        std::vector<mzRange> regions;
-        // problem: multiple ion masses (up to 16) per compound
-        for (CompoundFilter filter : *filter_vec)
-        {
-            size_t idx = 0;
-            while (*(filter.mz_expected + idx) > 0) // assume zero-terminated array
-            {
-                assert(idx < 16);
-                double mz = *(filter.mz_expected + idx);
-                double tol = mz * filter.mz_tolerance_ppm * 10e-6 + margain; // 20 is used as a safety margain, since features are also filtered
-                double minMZ = mz - tol;
-                double maxMZ = mz + tol;
-
-                printf("%s %zu: min: %f, max: %f | ", filter.compoundName.c_str(), idx, minMZ, maxMZ);
-
-                regions.push_back({minMZ, maxMZ});
-
-                if (isotopes)
-                    regions.push_back({minMZ + MASS_13C, maxMZ + MASS_13C});
-
-                idx += 1;
-            }
-        }
-        return regions;
-    }
-#undef MASS_13C
-
-    std::vector<mzRange> mergeRegions_mz(std::vector<mzRange> *toBeMerged)
-    {
-        std::vector<mzRange> regions;
-        // problem: multiple ion masses (up to 16) per compound
-        for (mzRange range : *toBeMerged)
-        {
-            size_t idx = 0;
-            bool novelRange = true;
-            // iterate through existing filters and check if two ranges can be merged
-            for (size_t i = 0; i < regions.size(); i++)
-            {
-                if ((regions[i].min > range.min) && (regions[i].min < range.max))
-                {
-                    novelRange = false;
-                    if (regions[i].max < range.max)
-                        regions[i].max = range.max;
-                }
-                if ((regions[i].max > range.min) && (regions[i].max < range.max))
-                {
-                    novelRange = false;
-                    if (regions[i].min > range.min)
-                        regions[i].min = range.min;
-                }
-            }
-
-            if (novelRange)
-            {
-                regions.push_back(range);
-            }
-            idx += 1;
-        }
-
-        return regions;
-    }
-
     size_t filterCentroids_mz(
         std::vector<CentroidPeak> *centroids,
-        std::vector<CompoundFilter> *filter_vec)
+        std::vector<RangeFilter> *filter_vec)
     {
-        // modifies recieved centroids to only include relevant masses. Returns number of removed centroids
-
-        // make relevant regions for filter
-
-        std::vector<mzRange> regions = mz_regions(filter_vec, 1, true);
-        // regions = mergeRegions_mz(&regions);
-
-        // at this point, overlapping mz regions should largely be merged.
-        // the filter block is extremely inefficient, but since it only runs
-        // once that should be fine performance wise
-
         size_t removedCount = 0;
-        for (size_t i = 1; i < centroids->size(); i++)
-        {
-            bool filtered = true;
-            double mz = centroids->at(i).mz;
 
-            for (auto r : regions)
+        for (size_t i = 1; i < centroids->size(); i++) // @todo remove dummy centroid
+        {
+            CentroidPeak *cen = &(centroids->at(i));
+
+            float minMZ_feat = cen->mz - cen->mzUncertainty - 0.25;
+            float maxMZ_feat = cen->mz + cen->mzUncertainty + 0.25;
+
+            float minRT_feat = cen->RT - 50; // @todo hard-coded window of 1:40
+            float maxRT_feat = cen->RT + 50;
+
+            bool featOK = false;
+
+            for (auto filter : *filter_vec)
             {
-                if ((r.min < mz) && (mz < r.max))
-                {
-                    filtered = false;
-                    break;
-                }
+                if (filter.minMZ > maxMZ_feat)
+                    continue;
+
+                if (filter.maxMZ < minMZ_feat)
+                    continue;
+
+                if (filter.minRT > maxRT_feat)
+                    continue;
+
+                if (filter.maxRT < minRT_feat)
+                    continue;
+
+                featOK = true;
+                break;
             }
 
-            if (filtered)
-            {
-                centroids->at(i) = centroids->back();
-                centroids->pop_back();
-                removedCount += 1;
-                assert(centroids->at(i).mz > 1);
-
-                if (i + 1 < centroids->size())
-                    i -= 1; // this is necessary since the last element would otherwise be checked forever
+            if (!featOK)
+            { // purge bad features, think about markers instead? @todo
+                centroids->at(i).mz = 0;
             }
         }
-
-        for (size_t i = 0; i < centroids->size(); i++)
-        {
-            centroids->at(i).ID = i + 1;
-        }
-
         return removedCount;
     }
 
@@ -284,49 +213,46 @@ namespace qAlgorithms
 
     size_t filterFeatures_mz_rt(
         std::vector<FeaturePeak> *features,
-        std::vector<CompoundFilter> *filter_vec)
+        std::vector<RangeFilter> *filter_vec)
     {
-        // restrict features to specified mz and rt
-        std::vector<mzRange> regions_mz = mz_regions(filter_vec, 0.5, true);
-        // regions_mz = mergeRegions_mz(&regions_mz);
-
         size_t removedCount = 0;
+
         for (size_t i = 0; i < features->size(); i++)
         {
-            bool filtered = true;
-            double mz = features->at(i).mz;
+            FeaturePeak *feat = &(features->at(i));
 
-            for (auto r : regions_mz)
-            {
-                if ((r.min < mz) && (mz < r.max))
-                {
-                    filtered = false;
-                    break;
-                }
-            }
+            float minMZ_feat = feat->mz - feat->mzUncertainty;
+            float maxMZ_feat = feat->mz + feat->mzUncertainty;
+
+            float minRT_feat = feat->retentionTime - feat->RT_Uncertainty;
+            float maxRT_feat = feat->retentionTime + feat->RT_Uncertainty;
+
+            bool featOK = false;
 
             for (auto filter : *filter_vec)
             {
-                double rt_min = filter.RT - filter.RT_tol;
-                double rt_max = filter.RT + filter.RT_tol;
-                if ((rt_min < features->at(i).retentionTime) && (features->at(i).retentionTime < rt_max))
-                {
-                    filtered = false;
-                    break;
-                }
+                if (filter.minMZ > maxMZ_feat)
+                    continue;
+
+                if (filter.maxMZ < minMZ_feat)
+                    continue;
+
+                if (filter.minRT > maxRT_feat)
+                    continue;
+
+                if (filter.maxRT < minRT_feat)
+                    continue;
+
+                featOK = true;
+                break;
             }
 
-            if (filtered)
-            {
-                features->at(i) = features->back();
-                features->pop_back();
-                removedCount += 1;
-
-                if (i + 1 < features->size())
-                    i -= 1; // this is necessary since the last element would otherwise be checked forever
+            if (!featOK)
+            { // purge bad features, think about markers instead? @todo
+                features->erase(features->begin() + i);
+                i -= 1;
             }
         }
-
         return removedCount;
     }
 }
@@ -496,7 +422,7 @@ int main(int argc, char *argv[])
                 centroids->at(cenID).RT = rt_index.groups[realRT_idx].trueRT;
             }
 
-            filterCentroids_mz(centroids, &pfasFilter);
+            filterCentroids_mz(centroids, &filterRanges);
 
             if (centroids->size() == 1) // one empty element is always pushed back.
             {
@@ -645,7 +571,7 @@ int main(int argc, char *argv[])
 
             auto features = findFeatures(binnedData, &rt_index);
 
-            filterFeatures_mz_rt(&features, &pfasFilter);
+            filterFeatures_mz_rt(&features, &filterRanges);
 
             if (features.size() == 0)
             {
