@@ -30,21 +30,6 @@ namespace qAlgorithms
         bool polarity; // 0 = negative, 1 = positive
     };
 
-    struct CompoundFilter
-    {
-        // this struct is used to limit the amount of operations performed by the program to
-        // a selection of masses and RTs that is relevant to the analysis at hand.
-        double mz_expected[16] = {0}; // @todo reasonable amount of points?
-        double mz_tolerance_ppm = 0;  // @todo is ppm the only relevant choice?
-
-        double RT = -1;
-        double RT_tol = -1; // tolerance to either side, assumes symmetrical peaks
-
-        std::string compoundName = ""; // @todo better solution?
-        std::string methodName = "";
-        Polarities polarity = Polarities::unknown_polarity;
-    };
-
     static std::vector<std::string> possible_accessions_binary_data_mzML = {
         "MS:1000514", "MS:1000515", "MS:1000516", "MS:1000517",
         "MS:1000595", "MS:1000617", "MS:1000786", "MS:1000820",

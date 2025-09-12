@@ -11,6 +11,21 @@
 
 namespace qAlgorithms
 {
+    struct CompoundFilter
+    {
+        // this struct is used to limit the amount of operations performed by the program to
+        // a selection of masses and RTs that is relevant to the analysis at hand.
+        double mz_expected[16] = {0}; // @todo reasonable amount of points?
+        double mz_tolerance_ppm = 0;  // @todo is ppm the only relevant choice?
+
+        double RT = -1;
+        double RT_tol = -1; // tolerance to either side, assumes symmetrical peaks
+
+        std::string compoundName = ""; // @todo better solution?
+        std::string methodName = "";
+        Polarities polarity = Polarities::unknown_polarity;
+    };
+
     // inclusive range in an array @todo replace all start / end index cases with this
     // always assert start and end correctness when writing to such a struct!
     struct Range_i

@@ -558,6 +558,57 @@ namespace qAlgorithms
         return (outputTasks);
     }
 
+    int parseFilter(std::vector<std::filesystem::path> *paths, std::vector<CompoundFilter> *resutltFilter)
+    {
+        // this function returns a vector of regions relevant to the supplied targets.
+        // the function also checks if all filters belong to the same method for ensuring
+        // a comparable RT axis over all queries.
+
+        // input organisation: separate blocks with normal brackets for blocks and square
+        // brackets for arrays. keep the structure as label: value, ignore newlines
+
+        // return codes:
+        //  > 0: number of added filters
+        //  0: no supplied paths (no filtering, normal operation)
+        //  -1: mismatching method names
+        //  -2: read error
+
+        size_t numPaths = paths->size();
+        if (numPaths == 0)
+            return 0;
+
+        resutltFilter->reserve(numPaths);
+
+        std::string parseResult;
+
+        for (size_t i = 0; i < numPaths; i++)
+        {
+            if (!std::filesystem::exists(paths->at(i)))
+            {
+                fprintf(stderr, "Error: supplied filter %s does not exist.\n", paths->at(i).string().c_str());
+                return -2;
+            }
+            FILE *openFile = fopen(paths->at(i).string().c_str(), "rt");
+            if (openFile == nullptr)
+            {
+                fprintf(stderr, "Error: supplied filter %s could not be read.\n", paths->at(i).string().c_str());
+                return -2;
+            }
+
+            // @todo: separate parser function, add simple other function that does file read / write in one line
+            const size_t bufsize = 1024;
+            char buffer[bufsize];
+            while (fgets(buffer, bufsize, openFile))
+            {
+                parseResult.push_back(*buffer);
+            }
+
+            fclose(openFile);
+        }
+
+        return resutltFilter->size();
+    }
+
 #pragma endregion "file reading"
 
 #pragma region "print functions"
