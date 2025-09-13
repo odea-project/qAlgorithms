@@ -649,8 +649,7 @@ namespace qAlgorithms
         std::min
         calcDF_cum (2x)
         apexToEdgeRatio
-        calcSSE_base
-        calcRegressionFvalue
+        calcRSS_reg
         isValidQuadraticTerm
         isValidPeakArea
         calcPeakHeightUncert
@@ -773,8 +772,8 @@ namespace qAlgorithms
           to the next iteration.
         */
 
-        double RSS_reg = calcSSE_base(mutateReg->coeffs, intensities_log,
-                                      mutateReg->regSpan, idx_x0);
+        double RSS_reg = calcRSS_reg(mutateReg->coeffs, intensities_log,
+                                     mutateReg->regSpan, idx_x0);
 
         /*
         competing regressions filter:
@@ -782,12 +781,11 @@ namespace qAlgorithms
         the regression does not describe a peak. This is done through a nested F-test against a constant that
         is the mean of all predicted values. @todo this is not working correctly!
         */
-        // float regression_Fval = calcRegressionFvalue(&selectLog, &predictLog, mse, mutateReg->coeffs.b0);
-        // if (regression_Fval < F_VALUES[selectLog.size()]) // - 5 since the minimum is five degrees of freedom
-        // {
-        //     // H0 holds, the two distributions are not noticeably different
-        //     return 7;
-        // }
+        bool f_ok = f_testRegression(intensities, RSS_reg, mutateReg->regSpan);
+        if (!f_ok)
+        {
+            return 7; // H0 holds, the two distributions are not noticeably different
+        }
 
         double mse = RSS_reg / double(df_sum - 4); // mean squared error with respect to the degrees of freedom - @todo is the -4 correct?
 
@@ -1206,10 +1204,10 @@ namespace qAlgorithms
 
 #pragma region calcSSE
 
-    double calcSSE_base(const RegCoeffs coeff,
-                        const std::vector<float> *y_start,
-                        Range_i range,
-                        size_t index_x0)
+    double calcRSS_reg(const RegCoeffs coeff,
+                       const std::vector<float> *y_start,
+                       Range_i range,
+                       size_t index_x0)
     /* ### allocations ###
         none!
 
@@ -1243,22 +1241,21 @@ namespace qAlgorithms
         return RSS;
     }
 
-    double calcRSS_H0(const std::vector<float> *observed, size_t limit_L, size_t limit_R)
+    double calcRSS_H0(const std::vector<float> *observed, const Range_i *range)
     {
         // this function calculates the RSS for H0: y = b0 (a constant value)
 
-        assert(limit_L < limit_R);
-        assert(limit_R < observed->size());
+        assert(range->endIdx < observed->size());
 
         double mean = 0;
-        for (size_t i = limit_L; i <= limit_R; i++)
+        for (size_t i = range->startIdx; i <= range->endIdx; i++)
         {
             mean += (*observed)[i];
         }
-        mean /= limit_R - limit_L + 1;
+        mean /= rangeLen(range);
 
         double RSS = 0;
-        for (size_t i = limit_L; i <= limit_R; i++)
+        for (size_t i = range->startIdx; i <= range->endIdx; i++)
         {
             double difference = (*observed)[i] - mean;
             RSS += difference * difference;
@@ -1267,20 +1264,21 @@ namespace qAlgorithms
         return RSS;
     }
 
-    bool f_testRegression(const std::vector<float> *observed, double RSS_reg, size_t limit_L, size_t limit_R)
+    bool f_testRegression(const std::vector<float> *observed, double RSS_reg, const Range_i *range)
     {
-        // during the tests, the RSS for the regression has already been calculated in calcSSE_base
+        // during the tests, the RSS for the regression has already been calculated in calcRSS_reg
         assert(RSS_reg > 0);
-        assert(limit_L < limit_R);          // @todo this type of assertion comes up frequently, replace these region vectors
-        assert(limit_R < observed->size()); // with a struct that contains a start pointer and the length
 
-        double RSS_H0 = calcRSS_H0(observed, limit_L, limit_R);
+        double RSS_H0 = calcRSS_H0(observed, range);
 
         double fval = f_value(RSS_reg, RSS_H0, 4, 1, observed->size());
 
-        double refval = F_VALUES[limit_R - limit_L + 1]; // pre-calculated for alpha = 0.05
+        const size_t length = rangeLen(range);
+        double refval = F_VALUES[length]; // pre-calculated for alpha = 0.05
 
-        return fval > refval;
+        return fval > refval; // reject H0, significant difference from y = b
+
+        // @todo add a section to also test for y = mx + b
     }
 
     float calcRegressionFvalue(const std::vector<float> *selectLog, const std::vector<float> *predictLog, const float sse)

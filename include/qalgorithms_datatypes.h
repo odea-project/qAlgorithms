@@ -38,6 +38,8 @@ namespace qAlgorithms
 
     // inclusive range in an array @todo replace all start / end index cases with this
     // always assert start and end correctness when writing to such a struct!
+    // addition: think about replacing this with a start pointer and length, sicne they
+    // are generally just used as ranged access pointers into a larger array
     struct Range_i
     {
         size_t startIdx;
@@ -47,6 +49,12 @@ namespace qAlgorithms
     {
         return range->endIdx - range->startIdx + 1;
     }
+
+    struct slice_d
+    {
+        double *const start;
+        size_t length;
+    };
 
     enum SourceFileType
     {

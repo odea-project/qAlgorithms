@@ -119,12 +119,12 @@ namespace qAlgorithms
         const RT_Converter *convertRT,
         const std::vector<float> *RTs);
 
-    double calcSSE_base(const RegCoeffs coeff,
+    double calcRSS_reg(const RegCoeffs coeff,
                         const std::vector<float> *y_start,
                         const Range_i range,
                         const size_t index_x0);
 
-    bool f_testRegression(const std::vector<float> *observed, double RSS_reg, size_t limit_L, size_t limit_R);
+    bool f_testRegression(const std::vector<float> *observed, double RSS_reg, const Range_i range);
 
     float calcRegressionFvalue(const std::vector<float> *selectLog,
                                const std::vector<float> *intensities,

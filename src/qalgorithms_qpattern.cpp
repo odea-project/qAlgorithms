@@ -647,7 +647,7 @@ namespace qAlgorithms
         // std::vector<float> predictLog;
         // selectLog.reserve(mutateReg->right_limit - mutateReg->left_limit + 1);
         // predictLog.reserve(mutateReg->right_limit - mutateReg->left_limit + 1);
-        // float mse = calcSSE_base(mutateReg->coeffs, intensities_log,
+        // float mse = calcRSS_reg(mutateReg->coeffs, intensities_log,
         //                          mutateReg->left_limit, mutateReg->right_limit, idx_x0);
 
         /*
