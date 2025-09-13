@@ -59,7 +59,7 @@ namespace qAlgorithms
         const size_t maxScale,
         const size_t maxApexIdx);
 
-    bool makeValidRegression(
+    int makeValidRegression(
         const std::vector<unsigned int> *degreesOfFreedom_cum,
         const std::vector<float> *intensities,
         const std::vector<float> *intensities_log,
@@ -176,10 +176,15 @@ namespace qAlgorithms
      * @return true : if the apex and valley positions are valid
      * @return false : if the apex and valley positions are not valid (e.g., the apex position is not in the regression window)
      */
-    bool calcApexAndValleyPos(
+    bool calcApexAndValleyPos_old(
         RegressionGauss *mutateReg,
         const size_t scale,
-        float &valley_position);
+        float *valley_position);
+
+    int calcApexAndValleyPos_new(
+        RegressionGauss *mutateReg,
+        const size_t scale,
+        float *valley_position);
 
     /**
      * @brief Calculate the Matrix Product of J * Xinv * J^T for uncertainty calculation.

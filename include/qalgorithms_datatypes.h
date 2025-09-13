@@ -4,6 +4,7 @@
 
 #include <vector>
 #include <cmath> // INFINITY and other number macros
+#include <string>
 
 /*  This file includes the structs used for data management in qAlgorithms.
     Anything required by multiple parts of the full program should be listed here.
@@ -11,6 +12,15 @@
 
 namespace qAlgorithms
 {
+    // handle polarity switching
+    enum Polarities
+    {
+        unknown_polarity,
+        positive,
+        negative,
+        mixed,
+    };
+
     struct CompoundFilter
     {
         // this struct is used to limit the amount of operations performed by the program to
@@ -37,15 +47,6 @@ namespace qAlgorithms
     {
         return range->endIdx - range->startIdx + 1;
     }
-
-    // handle polarity switching
-    enum Polarities
-    {
-        unknown_polarity,
-        positive,
-        negative,
-        mixed,
-    };
 
     enum SourceFileType
     {

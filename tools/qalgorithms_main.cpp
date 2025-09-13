@@ -304,7 +304,7 @@ int main(int argc, char *argv[])
         exit(1);
     }
 
-    auto filterRanges = processFilters(&pfasFilter, true); // @todo make optional
+    // auto filterRanges = processFilters(&pfasFilter, true); // @todo make optional
 
     // the final task list contains only unique files, sorted by filesize
     std::vector<std::filesystem::__cxx11::path> tasklist = controlInput(&userArgs.inputPaths);
@@ -399,9 +399,9 @@ int main(int argc, char *argv[])
 #pragma region "centroiding"
 
             // @todo add check if set polarity is correct
-            // const std::vector<unsigned int> selectedIndices = inputFile.filter_spectra(true, polarity, false); // @todo MS2 support here!
+            const std::vector<unsigned int> selectedIndices = inputFile.filter_spectra(true, polarity, false); // @todo MS2 support here!
 
-            const std::vector<unsigned int> selectedIndices = inputFile.filter_spectra_suspects(&pfasFilter, true, polarity, false);
+            // const std::vector<unsigned int> selectedIndices = inputFile.filter_spectra_suspects(&pfasFilter, true, polarity, false);
 
             if (selectedIndices.empty())
             {
@@ -422,7 +422,7 @@ int main(int argc, char *argv[])
                 centroids->at(cenID).RT = rt_index.groups[realRT_idx].trueRT;
             }
 
-            filterCentroids_mz(centroids, &filterRanges);
+            // filterCentroids_mz(centroids, &filterRanges);
 
             if (centroids->size() == 1) // one empty element is always pushed back.
             {
@@ -506,7 +506,7 @@ int main(int argc, char *argv[])
             // RT_Converter rt_index = interpolateScanNumbers(&retentionTimes);
             std::vector<EIC> binnedData = performQbinning_old(centroids, &rt_index);
 
-            filterBins_mz_rt(&binnedData, &filterRanges);
+            // filterBins_mz_rt(&binnedData, &filterRanges);
 
             timeEnd = std::chrono::high_resolution_clock::now();
 
@@ -532,7 +532,13 @@ int main(int argc, char *argv[])
             }
             if (userArgs.printBins)
             {
-                printBins(centroids, &binnedData, &retentionTimes, userArgs.outputPath, filename, userArgs.silent, userArgs.noOverwrite);
+                printBins(centroids,
+                          &binnedData,
+                          // &retentionTimes,
+                          userArgs.outputPath,
+                          filename,
+                          userArgs.silent,
+                          userArgs.noOverwrite);
 
                 if (userArgs.term == TerminateAfter::binning)
                 {
@@ -571,7 +577,7 @@ int main(int argc, char *argv[])
 
             auto features = findFeatures(binnedData, &rt_index);
 
-            filterFeatures_mz_rt(&features, &filterRanges);
+            // filterFeatures_mz_rt(&features, &filterRanges);
 
             if (features.size() == 0)
             {

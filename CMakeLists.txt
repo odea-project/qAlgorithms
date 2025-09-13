@@ -11,7 +11,7 @@ set(CMAKE_CXX_COMPILER "g++") # clang does not work<
 ## Set compiler flags
 option(OPTIMISE "turn on optimisations" OFF)
 
-if (OPTIMISE)
+if (false)
     add_compile_options(-std=c++2c -fno-math-errno -mavx2 -march=native -O2) 
     # hardening flags 
     add_compile_options(-U_FORTIFY_SOURCE -D_FORTIFY_SOURCE=3 -fstrict-flex-arrays=3 -fdiagnostics-color=always -fstack-clash-protection -D_GLIBCXX_ASSERTIONS)

@@ -683,7 +683,7 @@ namespace qAlgorithms
 
     void printBins(const std::vector<CentroidPeak> *centroids,
                    const std::vector<EIC> *bins,
-                   const std::vector<float> *convertRT,
+                   //    const std::vector<float> *convertRT,
                    std::filesystem::path pathOutput,
                    std::string filename,
                    bool silent, bool noOverwrite)

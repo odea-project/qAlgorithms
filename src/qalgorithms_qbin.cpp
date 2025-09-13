@@ -1016,9 +1016,10 @@ namespace qAlgorithms
                 startPos = i;
             }
         }
-        for (size_t i = 0; i < areas->size(); i++) // @todo remove for final version
+        for (size_t i = 0; i < areas->size(); i++) // @todo find better solution
         {
-            assert(areas->at(i) > 1);
+            // this is necessary to later function correctly with the log transform
+            areas->at(i) = areas->at(i) < 1 ? 1 : areas->at(i);
         }
     }
 

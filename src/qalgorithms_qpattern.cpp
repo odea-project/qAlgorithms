@@ -543,7 +543,7 @@ namespace qAlgorithms
           to each other, the loop continues to the next iteration.
         */
         float valley_position = 0;
-        if (!calcApexAndValleyPos(mutateReg, scale, valley_position))
+        if (!calcApexAndValleyPos_old(mutateReg, scale, &valley_position))
         {
             return; // invalid apex and valley positions
         }
