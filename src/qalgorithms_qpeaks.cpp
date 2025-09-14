@@ -1186,7 +1186,9 @@ namespace qAlgorithms
             assert(peak.idxPeakEnd - peak.idxPeakStart >= 4); // at least five points
 
             // params needed to merge two peaks
-            peak.apexLeft = regression.apex_position < regression.index_x0;
+            bool apexLeft = regression.apex_position < regression.index_x0;
+            assert(apexLeft == (coeff.b1 <= 0));
+
             coeff.b1 /= delta_rt;
             coeff.b2 /= delta_rt * delta_rt;
             coeff.b3 /= delta_rt * delta_rt;
@@ -1279,45 +1281,6 @@ namespace qAlgorithms
         return fval > refval; // reject H0, significant difference from y = b
 
         // @todo add a section to also test for y = mx + b
-    }
-
-    float calcRegressionFvalue(const std::vector<float> *selectLog, const std::vector<float> *predictLog, const float sse)
-    /* ### allocations ###
-        none!
-
-       ### called functions ###
-        none!
-    */
-    {
-        // note that the mse must not be divided by df - 4 yet when this function is called
-
-        // this function returns the F-value for significance of the regression. H0 is that only beta 0
-        // influences the result, meaning that the points that qualified for a regression are of a constant intensity.
-        // Compare https://link.springer.com/book/10.1007/978-3-662-67526-7 p. 501 ff.
-
-        size_t length = predictLog->size();
-        assert(selectLog->size() == length);
-        assert(sse > 0);
-        double sum = 0;
-        for (size_t i = 0; i < length; i++)
-        {
-            sum += (*selectLog)[i];
-        }
-        sum /= length;
-        // assert(abs(sum - b0) < sse / length); // misunderstanding
-        double squareSumModel = 0;
-        for (size_t i = 0; i < length; i++)
-        {
-            squareSumModel += ((*selectLog)[i] - sum) * ((*selectLog)[i] - sum);
-        }
-        // const double R_sqared = 1 - sse / squareSumModel;
-        // assert(R_sqared > 0);
-        // assert(R_sqared < 1);
-        // n - p - 1 / p, where p is always 3 because we have a four-coefficient system.
-        // df_sum is used since only non-interpolated points count towards the regression accuracy
-        const double factor = double(length - 3 - 1) / double(length - 1);
-
-        return squareSumModel / sse * factor;
     }
 
     float calcSSE_exp(const RegCoeffs coeff, const std::vector<float> *y_start, const Range_i regSpan, size_t index_x0)

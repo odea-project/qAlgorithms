@@ -775,7 +775,7 @@ namespace qAlgorithms
 
         constexpr std::string_view header = "CompID,ID,binID,binIdxStart,binIdxEnd,mz,mzUncertainty,retentionTime,RT_Uncertainty,"
                                             "lowestRetentionTime,highestRetentionTime,area,areaUncertainty,height,heightUncertainty,"
-                                            "scale,interpolations,competitors,DQSC,DQSB,DQSF,apexLeft,mse,b0,b1,b2,b3\n";
+                                            "scale,interpolations,competitors,DQSC,DQSB,DQSF,mse,b0,b1,b2,b3\n";
         output << header;
 
         unsigned int counter = 1;
@@ -797,7 +797,7 @@ namespace qAlgorithms
                      peak.area, peak.areaUncertainty, peak.height, peak.heightUncertainty, peak.scale,
                      peak.interpolationCount, peak.competitorCount, peak.DQSC, peak.DQSB, peak.DQSF,
                      // properties relevant for componentisation, remove this later
-                     peak.apexLeft ? "T" : "F", peak.mse_base, peak.coefficients.b0, peak.coefficients.b1, peak.coefficients.b2, peak.coefficients.b3);
+                     peak.mse_base, peak.coefficients.b0, peak.coefficients.b1, peak.coefficients.b2, peak.coefficients.b3);
             output << buffer;
             ++counter;
         }
@@ -842,7 +842,7 @@ namespace qAlgorithms
         }
 
         output << "featureID,binID,cenID,mz,mzUncertainty,retentionTime,scan,"
-               << "area,height,degreesOfFreedom,DQSC,DQSB,DQSF,apexLeft,b0,b1,b2,b3\n";
+               << "area,height,degreesOfFreedom,DQSC,DQSB,DQSF,b0,b1,b2,b3\n";
 
         unsigned int counter = 1;
         for (size_t i = 0; i < peaktable->size(); i++)
@@ -857,7 +857,7 @@ namespace qAlgorithms
                 // snprintf(buffer, 256, "%d,%d,%d,%0.6f,%0.6f,%0.4f,%d,%0.3f,%0.3f,%d,%0.5f,%0.5f,%0.5f,%s,%0.8f,%0.8f,%0.8f,%0.8f\n",
                 //          counter, binID, bin.cenID[cen], bin.mz[cen], bin.predInterval[cen], bin.rententionTimes[cen], bin.scanNumbers[cen],
                 //          bin.ints_area[cen], bin.ints_height[cen], bin.df[cen], bin.DQSC[cen], bin.DQSB[cen], peak.DQSF,
-                //          peak.apexLeft ? "T" : "F", peak.coefficients.b0, peak.coefficients.b1, peak.coefficients.b2, peak.coefficients.b3);
+                //          peak.coefficients.b0, peak.coefficients.b1, peak.coefficients.b2, peak.coefficients.b3);
                 output << buffer;
             }
             ++counter;
