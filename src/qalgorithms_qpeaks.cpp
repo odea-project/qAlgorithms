@@ -781,7 +781,7 @@ namespace qAlgorithms
         the regression does not describe a peak. This is done through a nested F-test against a constant that
         is the mean of all predicted values. @todo this is not working correctly!
         */
-        bool f_ok = f_testRegression(intensities, RSS_reg, mutateReg->regSpan);
+        bool f_ok = f_testRegression(intensities, RSS_reg, &mutateReg->regSpan);
         if (!f_ok)
         {
             return 7; // H0 holds, the two distributions are not noticeably different
@@ -1537,50 +1537,50 @@ namespace qAlgorithms
     {
         // assert(valley_position == 0); // @todo remove for final implementation?
 
-        const bool b2_neg = mutateReg->coeffs.b2 < 0;
-        const bool b3_neg = mutateReg->coeffs.b3 < 0;
-        const bool hasValley = b2_neg ^ b3_neg;
-        const bool apexLeft = mutateReg->coeffs.b1;
+        const bool valley_left = mutateReg->coeffs.b2 > 0;
+        const bool valley_right = mutateReg->coeffs.b3 > 0;
+        const bool apexLeft = mutateReg->coeffs.b1 < 0;
 
         // position maximum / minimum of b2 or b3. This is just the frst derivative of the peak half equation (b0 + b1 x + b23 x^2)
-        float position_2 = -mutateReg->coeffs.b1 / (2 * mutateReg->coeffs.b2);
-        bool farOut_2 = position_2 < -float(scale) + 1; // scale +1: prevent apex position to be at the edge of the data
-        float position_3 = -mutateReg->coeffs.b1 / (2 * mutateReg->coeffs.b3);
-        bool farOut_3 = position_3 > float(scale) - 1; // scale -1: prevent apex position to be at the edge of the data
+        float position_b2 = -mutateReg->coeffs.b1 / (2 * mutateReg->coeffs.b2);
+        float position_b3 = -mutateReg->coeffs.b1 / (2 * mutateReg->coeffs.b3);
+        // scale +1 / -1: prevent apex position to be at the edge of the data
+        bool farOut_b2 = position_b2 < -float(scale) + 1;
+        bool farOut_b3 = position_b3 > float(scale) - 1;
 
         // range check: The valley would be too close to the apex for a valid peak
-        if (hasValley && (position_3 - position_2 > 2))
+        if ((valley_left || valley_right) && (std::abs(position_b3 - position_b2) < 2))
             return 1;
 
         if (apexLeft)
         {
-            // if the apex is left, the left half cannot be a valley
-            if (!b2_neg)
+            // if the apex is left, the left half cannot have a valley
+            if (valley_left)
                 return 2;
 
             // the apex position is not at a distance of at least two to the edge of the scale
-            if (farOut_2)
+            if (farOut_b2)
                 return 3;
 
-            mutateReg->apex_position = position_2;
+            mutateReg->apex_position = position_b2;
 
-            if (hasValley)
-                *valley_position = position_3;
+            if (valley_right)
+                *valley_position = position_b3;
         }
         else
         {
-            // if the apex is left, the left half cannot be a valley
-            if (!b3_neg)
+            // if the apex is right, the right half cannot have a valley
+            if (valley_right)
                 return 4;
 
             // the apex position is not at a distance of at least two to the edge of the scale
-            if (farOut_3)
+            if (farOut_b3)
                 return 5;
 
-            mutateReg->apex_position = position_3;
+            mutateReg->apex_position = position_b3;
 
-            if (hasValley)
-                *valley_position = position_2;
+            if (valley_left)
+                *valley_position = position_b2;
         }
 
         return 0;

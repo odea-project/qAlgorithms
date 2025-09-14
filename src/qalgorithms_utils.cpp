@@ -41,7 +41,7 @@ namespace qAlgorithms
         // Calculate F value of two models by their residual sum of squares (RSS) and number of regression
         // parameters (params). H0 is the model being compared against. n is the number of real points
         // both regressions are applied to. Refer to https://en.wikipedia.org/wiki/F-test#Regression_problems
-        assert(params_model < params_H0);
+        assert(params_model > params_H0);
         assert(RSS_model > 0);
         assert(RSS_H0 > 0);
         double RSS_ratio = (RSS_H0 - RSS_model) / RSS_model;
