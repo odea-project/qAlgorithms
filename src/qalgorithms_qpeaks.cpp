@@ -195,16 +195,16 @@ namespace qAlgorithms
         x0s.reserve(regressions.size());
 
         {
-            FILE *f = fopen("failedRegs.csv", "w");
-            if (f == NULL)
-            {
-                printf("Error opening file!\n");
-                exit(1);
-            }
+            // FILE *f = fopen("failedRegs.csv", "w");
+            // if (f == NULL)
+            // {
+            //     printf("Error opening file!\n");
+            //     exit(1);
+            // }
 
-            fprintf(f, "#ID, x0, b0, b1, b2, b3, fail\n");
+            // fprintf(f, "#ID, x0, b0, b1, b2, b3, fail\n");
 
-            fclose(f);
+            // fclose(f);
         }
 
         for (size_t range = 0; range < regressions.size(); range++)
@@ -263,20 +263,20 @@ namespace qAlgorithms
         }
 
         {
-            FILE *f = fopen("failedRegs.csv", "a");
-            if (f == NULL)
-            {
-                printf("Error opening file!\n");
-                exit(1);
-            }
+            // FILE *f = fopen("failedRegs.csv", "a");
+            // if (f == NULL)
+            // {
+            //     printf("Error opening file!\n");
+            //     exit(1);
+            // }
 
-            for (size_t i = 0; i < regressions.size(); i++)
-            {
-                auto r = regressions.at(i);
-                fprintf(f, "%zu, %d, %f, %f, %f, %f, %d\n", globalCount, x0s[i], r.b0, r.b1, r.b2, r.b3, failures[i]);
-            }
+            // for (size_t i = 0; i < regressions.size(); i++)
+            // {
+            //     auto r = regressions.at(i);
+            //     fprintf(f, "%zu, %d, %f, %f, %f, %f, %d\n", globalCount, x0s[i], r.b0, r.b1, r.b2, r.b3, failures[i]);
+            // }
 
-            fclose(f);
+            // fclose(f);
         }
         globalCount += 1;
     }
@@ -682,10 +682,17 @@ namespace qAlgorithms
         assert(mutateReg->coeffs.b3 < 100 && mutateReg->coeffs.b3 > -100);
 
         // for a regression to be valid, at least one coefficient must be < 0
-        if (mutateReg->coeffs.b2 > 0 && mutateReg->coeffs.b3 > 0)
+        if (mutateReg->coeffs.b2 >= 0 && mutateReg->coeffs.b3 >= 0)
         {
             return 1;
         }
+
+        // the model parameters can only be calculated if the coefficients are significantly different from 0
+        // significance is determined as the precision of float as the intermediate storage representation here
+        // if (std::abs(mutateReg->coeffs.b2) < 10e-8 || std::abs(mutateReg->coeffs.b3) < 10e-8)
+        // {
+        //     return 1;
+        // }
 
         /*
           Apex and Valley Position Filter:
@@ -1514,8 +1521,8 @@ namespace qAlgorithms
     {
         // assert(valley_position == 0); // @todo remove for final implementation?
 
-        const bool valley_left = mutateReg->coeffs.b2 > 0;
-        const bool valley_right = mutateReg->coeffs.b3 > 0;
+        const bool valley_left = mutateReg->coeffs.b2 >= 0;
+        const bool valley_right = mutateReg->coeffs.b3 >= 0;
         const bool apexLeft = mutateReg->coeffs.b1 < 0;
 
         // position maximum / minimum of b2 or b3. This is just the frst derivative of the peak half equation (b0 + b1 x + b23 x^2)
@@ -1638,14 +1645,14 @@ namespace qAlgorithms
             return position_3 < floatScale - 1;    // scale -1: prevent apex position to be at the edge of the data
 
         case apexLeft_valleyRight:
-            mutateReg->apex_position = position_2;                                    //-B1 / 2 / B2;      // is negative
-            *valley_position = position_3;                                            //-B1 / 2 / B3;      // is positive
-            return position_2 > -floatScale + 1 && *valley_position - position_2 > 2; // scale +1: prevent apex position to be at the edge of the data
+            mutateReg->apex_position = position_2;                                      //-B1 / 2 / B2;      // is negative
+            *valley_position = position_3;                                              //-B1 / 2 / B3;      // is positive
+            return position_2 >= -floatScale + 1 && *valley_position - position_2 >= 2; // scale +1: prevent apex position to be at the edge of the data
 
         case apexRight_valleyLeft:
-            mutateReg->apex_position = position_3;                                   //-B1 / 2 / B3;       // is positive
-            *valley_position = position_2;                                           //-B1 / 2 / B2;       // is negative
-            return position_3 < floatScale - 1 && position_3 - *valley_position > 2; // scale -1: prevent apex position to be at the edge of the data
+            mutateReg->apex_position = position_3;                                     //-B1 / 2 / B3;       // is positive
+            *valley_position = position_2;                                             //-B1 / 2 / B2;       // is negative
+            return position_3 <= floatScale - 1 && position_3 - *valley_position >= 2; // scale -1: prevent apex position to be at the edge of the data
 
         default:
             return false; // invalid case
