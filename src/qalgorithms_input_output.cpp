@@ -304,27 +304,27 @@ namespace qAlgorithms
             }
             std::cout << "Error: The path does not exist.\n";
         }
-        std::cout << "drag the folder you want the output files written to into this window and press \"enter\" to continue.\n"
-                  << "enter \"#\" to write to the input path.\n";
-        std::string outputPath;
-        std::cin >> outputPath;
+        // std::cout << "drag the folder you want the output files written to into this window and press \"enter\" to continue.\n"
+        //           << "enter \"#\" to write to the input path.\n";
+        // std::string outputPath;
+        // std::cin >> outputPath;
 
-        if (outputPath[0] == '#')
-        {
-            if (std::filesystem::status(inputPath).type() != std::filesystem::file_type::directory)
-            {
-                outputPath = std::filesystem::path(inputPath).parent_path().string();
-            }
-            else
-            {
-                outputPath = inputPath;
-            }
-        }
-        std::cout << outputPath;
+        // if (outputPath[0] == '#')
+        // {
+        //     if (std::filesystem::status(inputPath).type() != std::filesystem::file_type::directory)
+        //     {
+        //         outputPath = std::filesystem::path(inputPath).parent_path().string();
+        //     }
+        //     else
+        //     {
+        //         outputPath = inputPath;
+        //     }
+        // }
+        // std::cout << outputPath;
         return UserInputSettings{
             // user input for input and output
             std::vector<std::string>{inputPath},
-            outputPath,
+            ".",
             0,
             never,
             false,
@@ -791,7 +791,7 @@ namespace qAlgorithms
             float RT_end = convertRT->at(scanNums->at(peak.idxBinEnd));
 
             char buffer[256];
-            snprintf(buffer, 256, "%d,%d,%zu,%d,%d,%0.6f,%0.6f,%0.4f,%0.4f,%0.4f,%0.4f,%0.3f,%0.3f,%0.3f,%0.3f,%d,%d,%d,%0.5f,%0.5f,%0.5f,%s,%0.6f,%0.8f,%0.8f,%0.8f,%0.8f\n",
+            snprintf(buffer, 256, "%d,%d,%zu,%d,%d,%0.6f,%0.6f,%0.4f,%0.4f,%0.4f,%0.4f,%0.3f,%0.3f,%0.3f,%0.3f,%d,%d,%d,%0.5f,%0.5f,%0.5f,%0.6f,%0.8f,%0.8f,%0.8f,%0.8f\n",
                      peak.componentID, counter, binID, peak.idxBinStart, peak.idxBinEnd, peak.mz, peak.mzUncertainty,
                      peak.retentionTime, peak.RT_Uncertainty, RT_start, RT_end,
                      peak.area, peak.areaUncertainty, peak.height, peak.heightUncertainty, peak.scale,

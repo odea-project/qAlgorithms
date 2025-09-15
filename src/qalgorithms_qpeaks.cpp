@@ -194,6 +194,19 @@ namespace qAlgorithms
         std::vector<int> x0s;
         x0s.reserve(regressions.size());
 
+        {
+            FILE *f = fopen("failedRegs.csv", "w");
+            if (f == NULL)
+            {
+                printf("Error opening file!\n");
+                exit(1);
+            }
+
+            fprintf(f, "#ID, x0, b0, b1, b2, b3, fail\n");
+
+            fclose(f);
+        }
+
         for (size_t range = 0; range < regressions.size(); range++)
         {
             validRegsTmp.back().coeffs = regressions[range];
@@ -249,21 +262,22 @@ namespace qAlgorithms
             mergeRegressionsOverScales(validRegressions, intensities); // @todo move check into function?
         }
 
-        FILE *f = fopen("failedRegs.csv", "a");
-        if (f == NULL)
         {
-            printf("Error opening file!\n");
-            exit(1);
-        }
+            FILE *f = fopen("failedRegs.csv", "a");
+            if (f == NULL)
+            {
+                printf("Error opening file!\n");
+                exit(1);
+            }
 
-        fprintf(f, "#ID, x0, b0, b1, b2, b3, fail\n");
-        for (size_t i = 0; i < regressions.size(); i++)
-        {
-            auto r = regressions.at(i);
-            fprintf(f, "%zu, %d, %f, %f, %f, %f, %d\n", globalCount, x0s[i], r.b0, r.b1, r.b2, r.b3, failures[i]);
-        }
+            for (size_t i = 0; i < regressions.size(); i++)
+            {
+                auto r = regressions.at(i);
+                fprintf(f, "%zu, %d, %f, %f, %f, %f, %d\n", globalCount, x0s[i], r.b0, r.b1, r.b2, r.b3, failures[i]);
+            }
 
-        fclose(f);
+            fclose(f);
+        }
         globalCount += 1;
     }
 
@@ -1525,6 +1539,7 @@ namespace qAlgorithms
             if (farOut_b2)
                 return 3;
 
+            assert(mutateReg->apex_position == position_b2);
             mutateReg->apex_position = position_b2;
 
             if (valley_right)
@@ -1540,6 +1555,7 @@ namespace qAlgorithms
             if (farOut_b3)
                 return 5;
 
+            assert(mutateReg->apex_position == position_b3);
             mutateReg->apex_position = position_b3;
 
             if (valley_left)
@@ -1593,6 +1609,8 @@ namespace qAlgorithms
         // b1 is positive, b2, b3 are negative; 0 + 3 + 5 = 8
         // b1, b2 are negative, b3 is positive; 1 + 3 + 0 = 4
         // b1, b2 are positive, b3 is negative; 0 + 0 + 5 = 5
+
+        // these two are the case where the apex position is also a valley, and as such invalid
         // b1, b3 are negative, b2 is positive; 1 + 0 + 5 = 6
         // b1, b3 are positive, b2 is negative; 0 + 3 + 0 = 3
         enum keyCase
@@ -2204,7 +2222,7 @@ namespace qAlgorithms
 
         std::vector<CentroidPeak> centroids;
         centroids.reserve(countSelected * 100);
-        centroids.push_back({0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}); // dummy value used for binning
+        centroids.push_back({0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}); // dummy value used for binning @todo remove
 
         std::vector<double> spectrum_mz(1000);
         std::vector<double> spectrum_int(1000);
