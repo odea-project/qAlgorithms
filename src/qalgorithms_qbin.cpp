@@ -16,8 +16,6 @@ namespace qAlgorithms
 
     std::vector<Bin> performQbinning(std::vector<CentroidPeak> *centroids)
     {
-        // centroids->erase(centroids->begin()); // @todo do not pass in dummy values, this is a confusing interface
-
         BinContainer activeBins;
         Bin firstBin;
         for (size_t i = 0; i < centroids->size(); i++)
@@ -132,7 +130,7 @@ namespace qAlgorithms
     std::vector<EIC> performQbinning_old(const std::vector<CentroidPeak> *centroidedData,
                                          const RT_Converter *convertRT) // @todo split out subfunctions so the structure is subset -> score -> format
     {
-        assert(centroidedData->front().mz == 0); // first value is dummy
+        // assert(centroidedData->front().mz == 0); // first value is dummy
 
         BinContainer activeBins;
         Bin firstBin;
@@ -429,7 +427,6 @@ namespace qAlgorithms
         for (size_t i = range->startIdx; i < range->endIdx + 1; i++)
         { // +1 since the range is inclusive
             auto point = (*centroids)[i];
-            assert(point->ID != 0);
             res.pointsInBin.push_back(point);
         }
         assert(res.pointsInBin.size() > 4);
@@ -575,7 +572,6 @@ namespace qAlgorithms
         for (size_t i = 0; i < binSize - 1; i++) // -1 since difference to next data point is checked
         {
             assert(pointsInBin[i + 1]->number_MS1 >= pointsInBin[i]->number_MS1);
-            assert(pointsInBin[i]->ID != 0);
             size_t distanceScan = pointsInBin[i + 1]->number_MS1 - pointsInBin[i]->number_MS1;
             if (distanceScan > maxdist) // bin needs to be split
             {

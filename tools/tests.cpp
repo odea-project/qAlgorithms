@@ -147,6 +147,7 @@ int main()
     printf("RTs are correctly interpolated\n");
 
     // test: execute binning function on five identical centroids with increasing scan numbers
+    // @todo the test is wrong
     {
         CentroidPeak centroid = {0};
         centroid.mz = 100;
@@ -158,7 +159,7 @@ int main()
         inputCens[0].mz = 0;
 
         std::vector<unsigned int> convertRT(vecLen, 0);
-        for (size_t i = 1; i < vecLen; i++)
+        for (size_t i = 0; i < vecLen; i++)
         {
             inputCens[i].number_MS1 = i;
             inputCens[i].ID = i;

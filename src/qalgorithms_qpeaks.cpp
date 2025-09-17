@@ -135,7 +135,7 @@ namespace qAlgorithms
             createCentroidPeaks(retPeaks, &validRegressions, block, scanNumber, accessor);
             validRegressions.clear();
         }
-        // if (retPeaks->size() == 1)
+        // if (retPeaks->size() == 0)
         // {
         //     // debug: print relevant data to file
         //     FILE *f = fopen("errorspec.csv", "w");
@@ -162,7 +162,7 @@ namespace qAlgorithms
         //     exit(1);
         // }
 
-        // assert(retPeaks->size() > 1); // one dummy value is always present
+        // assert(retPeaks->size() != 0); // at least one centroid per mass spectrum @todo not applicable to filtered regions
     }
 
 #pragma endregion "find peaks"
@@ -2251,7 +2251,6 @@ namespace qAlgorithms
 
         std::vector<CentroidPeak> centroids;
         centroids.reserve(countSelected * 100);
-        centroids.push_back({0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}); // dummy value used for binning @todo remove
 
         std::vector<double> spectrum_mz(1000);
         std::vector<double> spectrum_int(1000);
@@ -2269,8 +2268,15 @@ namespace qAlgorithms
 
             // ### @todo this is for development only, highly inefficient at scale! ###
             hardFilter(&spectrum_mz, &spectrum_int, 247.13, 247.24);
+            if (spectrum_mz.empty())
+                continue;
 
-            size_t maxWindowSize = pretreatDataCentroids(&groupedData, &spectrum_mz, &spectrum_int); // @todo every group is just a range into three same-length vectors
+            // @todo every group is just an index range into three same-length vectors if we do not
+            // perform interpolation. Should interpolation be necessary (includes extrapolation),
+            // add these values into the actual data(?)
+            size_t maxWindowSize = pretreatDataCentroids(&groupedData, &spectrum_mz, &spectrum_int);
+            if (maxWindowSize == 0) // this is also relevant to filtering, add a warning if no filter?
+                continue;
 
             findCentroidPeaks(&centroids, &groupedData, i + 1, ID_spectrum, maxWindowSize);
         }
@@ -2454,9 +2460,10 @@ namespace qAlgorithms
                 mz_profile.push_back(spectrum_mz->at(i));
                 idxConvert.push_back(i);
             }
-            assert(!intensities_profile.empty());
-            assert(!mz_profile.empty());
         }
+        if (intensities_profile.empty())
+            return 0;
+        assert(!mz_profile.empty());
 
         std::vector<double> diffs;
         std::vector<double> cumDiffs;
@@ -2584,7 +2591,8 @@ namespace qAlgorithms
 
             groupedData->push_back(entry);
         }
-        assert(!groupedData->empty());
+        if (groupedData->empty())
+            return 0;
 
         return maxEntry;
     }
