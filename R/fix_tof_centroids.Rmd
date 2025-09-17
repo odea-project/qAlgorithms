@@ -1,0 +1,41 @@
+---
+title: "Centroiding in ToF"
+author: "Daniel Höhn"
+date: "2025-09-12"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+```
+
+```{r}
+errorspec = read_csv("~/Promotion/qAlgorithms/build/errorspec.csv", col_types = "dddd")
+regs = read_csv("~/Promotion/qAlgorithms/build/failedRegs.csv", comment = "#", col_types = "iiddddi")
+```
+
+```{r}
+ggplot(data = regs, aes(x = ID, fill = as.factor(fail))) +
+  geom_histogram(position = "stack", bins = 17) +
+  labs(x = "Regression ID", y = "Count")
+
+for(i in 0:max(errorspec$ID)){
+  regi = regs[which(regs$ID == i),]
+  points = errorspec[which(errorspec$ID == i),]
+  interp = NULL
+  
+  for (j in 1:length(regi)) {
+    reg = regi[j,]
+    tmp = points[,c(2,3)]
+    
+  }
+  
+plot = ggplot(points)+
+  geom_point(aes(x = mz, y = int))
+  
+print(plot)
+  
+}
+```
+
