@@ -6,6 +6,7 @@
 #include <algorithm> // remove duplicates from task list
 #include <assert.h>
 #include <cmath> // isnan()
+#include <cstdlib>
 
 #include "qalgorithms_datatypes.h"
 #include "qalgorithms_input_output.h"
@@ -730,6 +731,28 @@ namespace qAlgorithms
 
         file_out << output.str();
         file_out.close();
+
+        // Create PINTS dabase file
+        std::string duckdb_filename = filename;
+        size_t pos = duckdb_filename.rfind(".csv");
+        if (pos != std::string::npos) {
+            duckdb_filename.replace(pos, 4, ".duckdb");
+        } else {
+            duckdb_filename += ".duckdb";
+        }
+        pathOutput /= duckdb_filename;
+        // Initialize the DuckDB database using pints
+        std::string command = "pints init --db \"" + pathOutput.string() + "\"";
+        int result = system(command.c_str());
+        if (result != 0) {
+            std::cerr << "Warning: Failed to initialize DuckDB database with pints. Command: " << command << "\n";
+        }
+        // Seed the DuckDB database using pints
+        command = "pints seed --db \"" + pathOutput.string() + "\"";
+        result = system(command.c_str());
+        if (result != 0) {
+            std::cerr << "Warning: Failed to seed DuckDB database with pints. Command: " << command << "\n";
+        }
         return;
     }
 
