@@ -15,6 +15,28 @@ namespace qAlgorithms
 
     constexpr auto INV_ARRAY = initialize(); // this only works with constexpr square roots, which are part of C++26
 
+    size_t hardFilter(std::vector<double> *mz, std::vector<double> *intensity, double minMZ, double maxMZ)
+    {
+        std::vector<double> mz_new;
+        std::vector<double> int_new;
+
+        size_t pos = 0;
+        while (pos < mz->size() && mz->at(pos) < minMZ)
+            pos += 1;
+
+        while (pos < mz->size() && mz->at(pos) < maxMZ)
+        {
+            mz_new.push_back(mz->at(pos));
+            int_new.push_back(intensity->at(pos));
+            pos += 1;
+        }
+
+        *mz = mz_new;
+        *intensity = int_new;
+
+        return pos;
+    }
+
     int qpeaks_find(
         const std::vector<float> *y_values,
         const std::vector<float> *x_values,
@@ -93,7 +115,7 @@ namespace qAlgorithms
 
         std::vector<RegressionGauss> validRegressions;
         validRegressions.reserve(treatedData->size() / 2); // probably too large, shouldn't matter
-        for (size_t i = 0; i < treatedData->size(); i++)
+        for (size_t i = 0; i < treatedData->size(); i++)   // 185
         {
             const auto block = &((*treatedData)[i]);
             const size_t length = block->mz.size();
@@ -113,34 +135,34 @@ namespace qAlgorithms
             createCentroidPeaks(retPeaks, &validRegressions, block, scanNumber, accessor);
             validRegressions.clear();
         }
-        if (retPeaks->size() == 1)
-        {
-            // debug: print relevant data to file
-            FILE *f = fopen("errorspec.csv", "w");
-            if (f == NULL)
-            {
-                printf("Error opening file!\n");
-                exit(1);
-            }
+        // if (retPeaks->size() == 1)
+        // {
+        //     // debug: print relevant data to file
+        //     FILE *f = fopen("errorspec.csv", "w");
+        //     if (f == NULL)
+        //     {
+        //         printf("Error opening file!\n");
+        //         exit(1);
+        //     }
 
-            fprintf(f, "ID, mz, int, df\n");
-            for (size_t i = 0; i < treatedData->size(); i++)
-            {
-                auto mz = treatedData->at(i).mz;
-                auto intensity = treatedData->at(i).intensity;
-                auto df = treatedData->at(i).cumdf;
-                assert(mz.size() == intensity.size());
-                for (size_t j = 0; j < mz.size(); j++)
-                {
-                    fprintf(f, "%zu, %f, %f, %u\n", i, mz[j], intensity[j], df[j]);
-                }
-            }
+        //     fprintf(f, "ID, mz, int, df\n");
+        //     for (size_t i = 0; i < treatedData->size(); i++)
+        //     {
+        //         auto mz = treatedData->at(i).mz;
+        //         auto intensity = treatedData->at(i).intensity;
+        //         auto df = treatedData->at(i).cumdf;
+        //         assert(mz.size() == intensity.size());
+        //         for (size_t j = 0; j < mz.size(); j++)
+        //         {
+        //             fprintf(f, "%zu, %f, %f, %u\n", i, mz[j], intensity[j], df[j]);
+        //         }
+        //     }
 
-            fclose(f);
-            exit(1);
-        }
+        //     fclose(f);
+        //     exit(1);
+        // }
 
-        assert(retPeaks->size() > 1); // one dummy value is always present
+        // assert(retPeaks->size() > 1); // one dummy value is always present
     }
 
 #pragma endregion "find peaks"
@@ -2244,6 +2266,9 @@ namespace qAlgorithms
 
             size_t ID_spectrum = selectedIndices->at(i);
             data.get_spectrum(&spectrum_mz, &spectrum_int, ID_spectrum);
+
+            // ### @todo this is for development only, highly inefficient at scale! ###
+            hardFilter(&spectrum_mz, &spectrum_int, 247.13, 247.24);
 
             size_t maxWindowSize = pretreatDataCentroids(&groupedData, &spectrum_mz, &spectrum_int); // @todo every group is just a range into three same-length vectors
 

@@ -85,7 +85,9 @@ double roundTo_d(double x, size_t digits)
     assert(double(INT64_MAX) / pow > x); // prevent overflow
     assert(double(INT64_MIN) / pow < x); // prevent underflow
 
-    int rounded = int(x * pow + 0.5); // @todo this does not incorporate the even-odd switch for a remainder of 1/2, but does that matter here?
+    int sign = signbit(x) ? -1 : 1;
+
+    int rounded = int(x * pow + 0.5 * sign); // @todo this does not incorporate the even-odd switch for a remainder of 1/2, but does that matter here?
 
     return (double(rounded) / pow);
 }
@@ -105,9 +107,30 @@ int main()
 {
     using namespace qAlgorithms;
 
+    // rounding is functional
+    assert(roundTo_d(145.136578244512, 3) == 145.137);
+    assert(roundTo_d(-145.136578244512, 3) == -145.137);
+
+    // check if a basic regression succeeds
+    {
+        std::vector<float> logInts = {6.40492535, 7.95729923, 8.44852829, 8.27999401, 7.23839712};
+        size_t scale = 2;
+        auto reg = findCoefficients(&logInts, scale);
+        auto c = reg.front();
+
+        printf("beta | expected | got\nb0 | %f | %f\nb0 | %f | %f\nb0 | %f | %f\nb0 | %f | %f\n",
+               8.5012159, c.b0, 0.1143269, c.b1, -0.4647133, c.b2, roundTo_d(-0.3706720, 5), c.b3); // @todo rounding does not work correctly
+
+        qass(roundTo_d(c.b0, 5) == roundTo_d(8.5012159, 5), "b0 is incorrect!");
+        qass(roundTo_d(c.b1, 5) == roundTo_d(0.1143269, 5), "b1 is incorrect!");
+        qass(roundTo_d(c.b2, 5) == roundTo_d(-0.4647133, 5), "b2 is incorrect!");
+        qass(roundTo_d(c.b3, 5) == roundTo_d(-0.3706720, 5), "b3 is incorrect!");
+    }
+
     // does the RT conversion struct work correctly?
 
-    std::vector<float> RTs = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 18, 19, 20, 21, 27, 28, 29, 30};
+    std::vector<float>
+        RTs = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 18, 19, 20, 21, 27, 28, 29, 30};
     std::vector<float> correctRTs = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30};
     assert(correctRTs.size() == size_t(RTs.back()));
     RT_Converter test = interpolateScanNumbers(&RTs);
