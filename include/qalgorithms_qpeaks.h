@@ -119,7 +119,7 @@ namespace qAlgorithms
         const RT_Converter *convertRT,
         const std::vector<float> *RTs);
 
-    double calcRSS_reg(const RegCoeffs coeff,
+    double calcRSS_reg(const RegCoeffs *coeff,
                        const std::vector<float> *y_start,
                        const Range_i range,
                        const size_t index_x0);
@@ -241,7 +241,7 @@ namespace qAlgorithms
                             const size_t scale);
 
     bool isValidPeakArea(
-        const RegCoeffs coeff,
+        const RegCoeffs *coeff,
         const float mse,
         const size_t scale,
         const size_t df_sum);
@@ -261,6 +261,14 @@ namespace qAlgorithms
     MeanVar weightedMeanAndVariance_EIC(const std::vector<float> *weight,
                                         const std::vector<float> *values,
                                         const Range_i regSpan);
+
+    // utility functions for calculating regression values
+    double regAt_L(const RegCoeffs *coeff, const double x);
+    double regAt_R(const RegCoeffs *coeff, const double x);
+    double regExpAt_L(const RegCoeffs *coeff, const double x);
+    double regExpAt_R(const RegCoeffs *coeff, const double x);
+
+    double medianVec(const std::vector<float> *vec);
 
     // ### pre-calculate the regression matrix ### //
 #define MAXSCALE 63

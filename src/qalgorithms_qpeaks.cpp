@@ -2,7 +2,7 @@
 #include "qalgorithms_utils.h"
 #include "qalgorithms_global_vars.h"
 #include "qalgorithms_datatypes.h"
-// #include "qalgorithms_read_file.h" // @todo remove coupling
+#include "qalgorithms_read_file.h" // @todo remove coupling
 
 #include <cassert>
 #include <cmath>
@@ -38,11 +38,12 @@ namespace qAlgorithms
     }
 
     int qpeaks_find(
+        // SOME_IMPLEMENTATION_OF_LINEAR_ALLOCATOR_HERE
         const std::vector<float> *y_values,
         const std::vector<float> *x_values,
         const std::vector<unsigned int> *degreesOfFreedom_cum,
         const size_t maxScale_in,
-        std::vector<RegressionGauss> *detectedPeaks) // @todo the function should also take an allocator as input
+        std::vector<RegressionGauss> *detectedPeaks)
     {
         // control input for nullpointers, mismatching x and y, and fitting maxScale
         if (y_values == nullptr || x_values == nullptr || detectedPeaks == nullptr)
@@ -58,7 +59,6 @@ namespace qAlgorithms
             return -3;
         }
 
-        // @todo this vector should be in a (threadsafe) module-global allocator
         const size_t length = y_values->size();
         const size_t halfLength = (length - 1) / 2;
         const size_t maxScale = maxScale_in > halfLength ? halfLength : maxScale_in;
@@ -107,7 +107,7 @@ namespace qAlgorithms
     {
         assert(!treatedData->empty());
 
-        std::vector<float> logIntensity(maxWindowSize, NAN); // @todo calculate the log of all intensities once when reading in the spectrum
+        std::vector<float> logIntensity(maxWindowSize, NAN);
 
         const size_t GLOBAL_MAXSCALE_CENTROID = 8; // @todo this is a critical part of the algorithm and should not be hard-coded
         assert(GLOBAL_MAXSCALE_CENTROID <= MAXSCALE);
@@ -184,8 +184,6 @@ namespace qAlgorithms
         mergeRegressionsOverScales
     */
     {
-        //@todo move more of the generic stuff into this function
-
         assert(intensities_log->empty());
         assert(intensities_log->capacity() >= intensities->size());
 
@@ -276,12 +274,8 @@ namespace qAlgorithms
             }
         }
 
-        if (validRegressions->size() > 1) // @todo we can probably filter regressions based on MSE at this stage already
-        {
-            // number of competitors is intialised to 0, so no special case for size = 1 needed
-            // there can be 0, 1 or more than one regressions in validRegressions
-            mergeRegressionsOverScales(validRegressions, intensities); // @todo move check into function?
-        }
+        // there can be 0, 1 or more than one regressions in validRegressions
+        mergeRegressionsOverScales(validRegressions, intensities);
 
         {
             FILE *f = fopen("failedRegs.csv", "a");
@@ -501,7 +495,6 @@ namespace qAlgorithms
             tmp_product_sum_b3 = 4 * intensity_log->at(i + 4) + intensity_log->at(i + 3);
 
             // use [12 + ...] since the array is constructed for the accession arry[scale * 6 + (0:5)]
-            // @todo replace the array with a struct and an accessor function
             const double S2_A = INV_ARRAY[12 + 0];
             const double S2_B = INV_ARRAY[12 + 1];
             const double S2_C = INV_ARRAY[12 + 2];
@@ -626,11 +619,6 @@ namespace qAlgorithms
             if (reg1->regSpan.endIdx > reg2->apex_position)
                 continue;
 
-            //@todo remove this check, but ensure the logic is sound
-            assert(std::abs(validRegsTmp->at(i).apex_position - validRegsTmp->at(i + 1).apex_position) > 4 &&
-                   validRegsTmp->at(i).apex_position < validRegsTmp->at(i + 1).regSpan.startIdx &&
-                   validRegsTmp->at(i + 1).apex_position > validRegsTmp->at(i).regSpan.endIdx);
-
             // the two regressions differ, i.e. create a new group
             groups.push_back({prev_i, i});
             prev_i = i + 1;
@@ -665,6 +653,8 @@ namespace qAlgorithms
             }
         }
     }
+
+    void updateRegRange(RegressionGauss *mutateReg, const size_t idxStart, const size_t scale, const float valleyPos);
 
     int makeValidRegression( // returns the number of the failed test
         const std::vector<unsigned int> *degreesOfFreedom_cum,
@@ -738,30 +728,17 @@ namespace qAlgorithms
           Area Pre-Filter:
           This test is used to check if the later-used arguments for exp and erf
           functions are within the valid range, i.e., |x^2| < 25. If the test fails,
-          the loop continues to the next iteration. @todo why 25?
+          the loop continues to the next iteration. @todo does this ever trigger, anyway? - remove the check
           x is in this case -apex_position * b1 / 2 and -valley_position * b1 / 2.
         */
         if (mutateReg->apex_position * mutateReg->coeffs.b1 > 50 || valley_position * mutateReg->coeffs.b1 < -50)
         {
+            printf("Area pre-filter triggered\n");
             return 3; // invalid area pre-filter
         }
 
-        if (valley_position == 0) [[likely]]
-        {
-            // no valley point exists
-            mutateReg->regSpan = {idxStart, idxStart + 2 * scale}; // @todo shouldn't this be + 2 * scale + 1?
-        }
-        else if (valley_position < 0)
-        {
-            size_t substractor = size_t(abs(valley_position));
-            size_t newStart = substractor < scale ? idxStart + scale - substractor : idxStart;
-            mutateReg->regSpan = {newStart, idxStart + 2 * scale};
-        }
-        else
-        {
-            size_t newEnd = std::min(idxStart + 2 * scale, size_t(valley_position) + idxStart + scale);
-            mutateReg->regSpan = {idxStart, newEnd};
-        }
+        updateRegRange(mutateReg, idxStart, scale, valley_position);
+
         assert(mutateReg->regSpan.endIdx < intensities->size());
         const size_t idx_x0 = idxStart + scale;
 
@@ -798,14 +775,14 @@ namespace qAlgorithms
             return 6; // invalid apex to edge ratio
         }
 
-        double RSS_reg = calcRSS_reg(mutateReg->coeffs, intensities_log,
+        double RSS_reg = calcRSS_reg(&mutateReg->coeffs, intensities_log,
                                      mutateReg->regSpan, idx_x0);
 
         /*
         competing regressions filter:
         If the real distribution of points could also be described as a continuum (i.e. only b0 is relevant),
         the regression does not describe a peak. This is done through a nested F-test against a constant that
-        is the mean of all predicted values. @todo this is not working correctly!
+        is the mean of all predicted values. @todo test this function
         */
         bool f_ok = f_testRegression(intensities, RSS_reg, &mutateReg->regSpan);
         if (!f_ok)
@@ -819,20 +796,19 @@ namespace qAlgorithms
         {
             return 8; // statistical insignificance of the quadratic term
         }
-        if (!isValidPeakArea(mutateReg->coeffs, mse, scale, df_sum))
+        if (!isValidPeakArea(&mutateReg->coeffs, mse, scale, df_sum))
         {
             return 9; // statistical insignificance of the area
         }
+
         /*
           Height Filter:
           This block of code implements the height filter. It calculates the height
           of the peak based on the coefficients matrix B. Then it calculates the
           uncertainty of the height based on the Jacobian matrix and the variance-covariance
-          matrix of the coefficients. If the height is statistically insignificant,
-          the loop continues to the next iteration.
+          matrix of the coefficients.
         */
-
-        calcPeakHeightUncert(mutateReg, mse, scale);                   // @todo independent of b0
+        calcPeakHeightUncert(mutateReg, mse, scale);
         if (1 / mutateReg->uncertainty_height <= T_VALUES[df_sum - 5]) // statistical significance of the peak height
         {
             return 10;
@@ -848,8 +824,7 @@ namespace qAlgorithms
           Area Filter:
           This block of code implements the area filter. It calculates the Jacobian
           matrix for the peak area based on the coefficients matrix B. Then it calculates
-          the uncertainty of the peak area based on the Jacobian matrix. If the peak
-          area is statistically insignificant, the loop continues to the next iteration.
+          the uncertainty of the peak area based on the Jacobian matrix.
           NOTE: this function does not consider b0: i.e. to get the real uncertainty and
           area multiply both with Exp(b0) later. This is done to avoid exp function at this point
         */
@@ -902,6 +877,31 @@ namespace qAlgorithms
         mutateReg->isValid = true;
         return 0;
     }
+
+    void updateRegRange(RegressionGauss *mutateReg, const size_t idxStart, const size_t scale, const float valleyPos)
+    {
+        size_t rangeEnd = idxStart + 2 * scale;
+        if (valleyPos == 0) [[likely]]
+        {
+            // no valley point exists
+            mutateReg->regSpan = {idxStart, rangeEnd};
+            return;
+        }
+        size_t absValley = size_t(valleyPos);
+        bool valleyLeft = valleyPos < 0;
+        if (valleyLeft)
+        {
+            size_t newStart = absValley < scale ? idxStart + scale - absValley : idxStart;
+            mutateReg->regSpan = {newStart, rangeEnd};
+        }
+        else
+        {
+            size_t newEnd = std::min(rangeEnd, absValley + idxStart + scale);
+            mutateReg->regSpan = {idxStart, newEnd};
+        }
+        assert(mutateReg->regSpan.endIdx - mutateReg->regSpan.startIdx > 3);
+    }
+
 #pragma endregion "validate Regression"
 
     void mergeRegressionsOverScales(std::vector<RegressionGauss> *validRegressions,
@@ -915,6 +915,11 @@ namespace qAlgorithms
         shrink_to_fit
     */
     {
+        if (validRegressions->size() < 2)
+        {
+            return;
+        }
+
         /*
           Grouping Over Scales:
           This block of code implements the grouping over scales. It groups the valid
@@ -934,8 +939,8 @@ namespace qAlgorithms
             // only calculate required MSEs since this is one of the performance-critical steps
             std::vector<float> exponentialMSE(validRegressions->size(), 0);
             std::vector<unsigned int> validRegressionsInGroup; // vector of indices to validRegressions
-            validRegressionsInGroup.reserve(64);               // @todo empirical value?
-            size_t competitors = 0;                            // this variable keeps track of how many competitors a given regression has
+            validRegressionsInGroup.reserve(64);
+            size_t competitors = 0; // a competitor is a mutually exclusive alternative regression
 
             // iterate over the validRegressions vector till the new peak
             // first iteration always false
@@ -1125,11 +1130,6 @@ namespace qAlgorithms
             peak.trace.start = block->startPos;
             peak.trace.end = block->endPos;
 
-            // peak.interpolations = regression.right_limit - regression.left_limit + 1 - regression.df - 4; // -4 since four coefficients take up degrees of freedom
-
-            /// @todo consider adding these properties so we can trace back everything completely
-            // peak.idxPeakStart = regression.left_limit;
-            // peak.idxPeakEnd = regression.right_limit;
             peaks->push_back(std::move(peak));
         }
     }
@@ -1232,36 +1232,30 @@ namespace qAlgorithms
 
 #pragma region calcSSE
 
-    double calcRSS_reg(const RegCoeffs coeff,
+    double calcRSS_reg(const RegCoeffs *coeff,
                        const std::vector<float> *y_start,
-                       Range_i range,
-                       size_t index_x0)
-    /* ### allocations ###
-        none!
-
-       ### called functions ###
-        none!
-    */
+                       const Range_i range,
+                       const size_t index_x0)
+    // no allocations
     {
         double RSS = 0.0;
         // left side
         for (size_t iSegment = range.startIdx; iSegment < index_x0; iSegment++)
         {
-            // @todo the cast to double / float is not vectorised automatically - replace with calc absolute difference -> set sign based on b2 / b3
-            double new_x = double(iSegment) - double(index_x0);
-            double y_predict = coeff.b0 + (coeff.b1 + coeff.b2 * new_x) * new_x; // y = b0 + x * b1 + x^2 * b23
+            double new_x = -1 * double(index_x0 - iSegment);
+            double y_predict = regAt_L(coeff, new_x);
             double difference = y_start->at(iSegment) - y_predict;
 
             RSS += difference * difference;
         }
         // center point
-        RSS += (y_start->at(index_x0) - coeff.b0) * (y_start->at(index_x0) - coeff.b0); // x = 0 -> (b0 - y)^2
+        RSS += (y_start->at(index_x0) - coeff->b0) * (y_start->at(index_x0) - coeff->b0); // x = 0 -> (b0 - y)^2
 
         // right side
         for (size_t iSegment = index_x0 + 1; iSegment < range.endIdx + 1; iSegment++) // iSegment = 0 is center point calculated above
         {
-            double new_x = double(iSegment) - double(index_x0);
-            double y_predict = coeff.b0 + (coeff.b1 + coeff.b3 * new_x) * new_x; // b3 instead of b2
+            double new_x = double(iSegment - index_x0);
+            double y_predict = regAt_R(coeff, new_x);
             double difference = y_start->at(iSegment) - y_predict;
 
             RSS += difference * difference;
@@ -1672,11 +1666,8 @@ namespace qAlgorithms
         const std::vector<float> *intensities)
     {
         // is the apex at least twice as large as the outermost point?
-        // assumption: outermost point is already noise
-        if (idxApex >= intensities->size())
-        {
-            return false;
-        }
+        // assumption: outermost point is already near base level
+        assert(idxApex < intensities->size());
 
         float apex = intensities->at(idxApex);
         float left = intensities->at(regSpan.startIdx);
@@ -1736,9 +1727,17 @@ namespace qAlgorithms
         const float apexToEdge)
     {
         // check if the peak height is significantly greater than edge signal
-        double Jacobian_height2[4]{0, 0, 0, 0};
+        double Jacobian_height[4]{0, 0, 0, 0};
+        const bool apexLeft = apex_position < 0;
+        const double altValley = double(scale) * apexLeft ? -1 : 1;
+        const double valley = valley_position == 0 ? altValley : valley_position;
+        const double j1 = apex_position - valley;
+        const double j23 = apex_position * apex_position - valley_position * valley_position;
+        const double j2 = apexLeft ? j23 : 0;
+        const double j3 = apexLeft ? 0 : j23;
+        const double jacobianHeight[4]{0, j1, j2, j3};
 
-        if (apex_position < 0)
+        if (apexLeft)
         {
             // float edge_position = (valley_position != 0) ? valley_position : static_cast<float>(-scale);
             if (valley_position == 0)
@@ -1746,8 +1745,8 @@ namespace qAlgorithms
                 valley_position = static_cast<float>(scale) * -1;
             }
 
-            Jacobian_height2[1] = apex_position - valley_position;
-            Jacobian_height2[2] = apex_position * apex_position - valley_position * valley_position; // adjust for uncertainty calculation of apex to edge ratio
+            Jacobian_height[1] = apex_position - valley_position;
+            Jacobian_height[2] = apex_position * apex_position - valley_position * valley_position; // adjust for uncertainty calculation of apex to edge ratio
         }
         else
         {
@@ -1755,10 +1754,15 @@ namespace qAlgorithms
             {
                 valley_position = static_cast<float>(scale);
             }
-            Jacobian_height2[1] = apex_position - valley_position;
-            Jacobian_height2[3] = apex_position * apex_position - valley_position * valley_position; // adjust for uncertainty calculation of apex to edge ratio
+            Jacobian_height[1] = apex_position - valley_position;
+            Jacobian_height[3] = apex_position * apex_position - valley_position * valley_position; // adjust for uncertainty calculation of apex to edge ratio
         }
-        float uncertainty_apexToEdge = std::sqrt(mse * multiplyVecMatrixVecTranspose(Jacobian_height2, scale));
+
+        assert(jacobianHeight[1] == Jacobian_height[1]);
+        assert(jacobianHeight[2] == Jacobian_height[2]);
+        assert(jacobianHeight[3] == Jacobian_height[3]);
+
+        float uncertainty_apexToEdge = std::sqrt(mse * multiplyVecMatrixVecTranspose(Jacobian_height, scale));
         return (apexToEdge - 2) / (apexToEdge * uncertainty_apexToEdge) > T_VALUES[df_sum - 5];
     }
 #pragma endregion isValidPeakHeight
@@ -1813,134 +1817,131 @@ namespace qAlgorithms
     }
 
     bool isValidPeakArea(
-        const RegCoeffs coeff,
+        const RegCoeffs *coeff,
         const float mse,
         const size_t scale,
         const size_t df_sum)
-    /* ### allocations ###
-        none!
-
-       ### called functions ###
-        std::sqrt
-        exp_approx_d
-        experfc
-        dawson5
-        erfi
-        experfc
-        multiplyVecMatrixTranspose
-    */
+    // no allocations
     {
-        double doubleScale = scale;
-        double b1 = coeff.b1;
-        double b2 = coeff.b2;
-        double b3 = coeff.b3;
-        // assert(!(b2 > 0 && b3 > 0)); // there would be two valley points, so no maximum of the peak
-        assert(doubleScale > 0);
+        double doubleScale = double(scale);
+        // double b0 = coeff->b0;
+        double b1 = coeff->b1;
+        double b2 = coeff->b2;
+        double b3 = coeff->b3;
 
         double _SQRTB2 = 1 / std::sqrt(std::abs(b2));
         double _SQRTB3 = 1 / std::sqrt(std::abs(b3));
         double B1_2_B2 = b1 / 2 / b2;
-        double EXP_B12 = exp_approx_d(-b1 * B1_2_B2 / 2);
         double B1_2_B3 = b1 / 2 / b3;
-        double EXP_B13 = exp_approx_d(-b1 * B1_2_B3 / 2);
 
-        // calculate the Jacobian matrix terms
-        double J_1_common_L = _SQRTB2; // SQRTPI_2 * EXP_B12 / SQRTB2;
-        double J_1_common_R = _SQRTB3; // SQRTPI_2 * EXP_B13 / SQRTB3;
-        double J_2_common_L = B1_2_B2 / b1;
-        double J_2_common_R = B1_2_B3 / b1;
-
-        double J_covered[4];          // Jacobian matrix for the covered peak area
-        double x_left = -doubleScale; // left limit due to the window
-        double x_right = doubleScale; // right limit due to the window
-        double y_left = 0;            // y value at the left limit
-        double y_right = 0;           // y value at the right limit
-
-        // here we have to check if there is a valley point or not
-        double err_L = 0;
-        double B1_2_SQRTB2 = b1 / 2 * _SQRTB2;
         double err_L_covered = 0;
-        if (b2 < 0)
+        double x_left = -doubleScale; // @todo we use the last point before the valley as limit later, keep this in?
         {
-            // no valley point
-            // error = 1 - std::erf(b1 / 2 / SQRTB2)
-            err_L = experfc(B1_2_SQRTB2, -1.0);
-            // ordinary peak half, take always scale as integration limit; we use erf instead of erfi due to the sqrt of absoulte value
-            // std::erf((b1 - 2 * b2 * scale) / 2 / SQRTB2) + err_L - 1
-            err_L_covered = erf_approx_f((b1 - 2 * b2 * doubleScale) / 2 * _SQRTB2) * EXP_B12 * SQRTPI_2 + err_L - SQRTPI_2 * EXP_B12;
-        }
-        else
-        {
-            // valley point on the left side of the apex
-            // error = erfi(b1 / 2 / SQRTB2)
-            err_L = dawson5(B1_2_SQRTB2);
-            // check if the valley point is inside the window for the regression and consider it if necessary
-            if (-B1_2_B2 < -doubleScale)
+            double B1_2_SQRTB2 = b1 / 2 * _SQRTB2;
+            double EXP_B12 = exp_approx_d(-b1 * B1_2_B2 / 2);
+
+            bool valley = b2 > 0;
+            if (valley)
             {
-                // valley point is outside the window, use scale as limit
-                err_L_covered = err_L - erfi((b1 - 2 * b2 * doubleScale) / 2 * _SQRTB2) * EXP_B12;
+                // valley point on the left side of the apex
+                // error = erfi(b1 / 2 / SQRTB2)
+                double err_L = dawson5(B1_2_SQRTB2);
+                // check if the valley point is inside the window for the regression and consider it if necessary
+                if (-B1_2_B2 < -doubleScale)
+                {
+                    // valley point is outside the window, use scale as limit
+                    err_L_covered = err_L - erfi((b1 - 2 * b2 * doubleScale) / 2 * _SQRTB2) * EXP_B12;
+                }
+                else
+                {
+                    // valley point is inside the window, use valley point as limit
+                    err_L_covered = err_L;
+                    x_left = -B1_2_B2;
+                }
             }
             else
             {
-                // valley point is inside the window, use valley point as limit
-                err_L_covered = err_L;
-                x_left = -B1_2_B2;
+                // no valley point
+                // error = 1 - std::erf(b1 / 2 / SQRTB2)
+                double err_L = experfc(B1_2_SQRTB2, -1.0);
+                // ordinary peak half, take always scale as integration limit; we use erf instead of erfi due to the sqrt of absoulte value
+                // std::erf((b1 - 2 * b2 * scale) / 2 / SQRTB2) + err_L - 1
+                err_L_covered = erf_approx_f((b1 - 2 * b2 * doubleScale) / 2 * _SQRTB2) * EXP_B12 * SQRTPI_2 + err_L - SQRTPI_2 * EXP_B12;
             }
         }
-        double err_R = 0;
-        double B1_2_SQRTB3 = b1 / 2 * _SQRTB3;
+
         double err_R_covered = 0;
-        if (b3 < 0)
+        double x_right = doubleScale; // right limit due to the window @todo this is already adjusted earlier
         {
-            // no valley point
-            // error = 1 + std::erf(b1 / 2 / SQRTB3)
-            err_R = experfc(B1_2_SQRTB3, 1.0);
-            // ordinary peak half, take always scale as integration limit; we use erf instead of erfi due to the sqrt of absoulte value
-            // err_R - 1 - std::erf((b1 + 2 * b3 * scale) / 2 / SQRTB3)
-            err_R_covered = err_R - SQRTPI_2 * EXP_B13 - erf_approx_f((b1 + 2 * b3 * doubleScale) / 2 * _SQRTB3) * SQRTPI_2 * EXP_B13;
-        }
-        else
-        {
-            // valley point is on the right side of the apex
-            // error = - erfi(b1 / 2 / SQRTB3)
-            err_R = dawson5(-B1_2_SQRTB3);
-            if (-B1_2_B3 > doubleScale)
+            double B1_2_SQRTB3 = b1 / 2 * _SQRTB3;
+            double EXP_B13 = exp_approx_d(-b1 * B1_2_B3 / 2);
+
+            bool valley = b3 > 0;
+            if (valley)
             {
-                // valley point is outside the window, use scale as limit
-                err_R_covered = erfi((b1 + 2 * b3 * doubleScale) / 2 * _SQRTB3) * EXP_B13 + err_R;
+                // valley point is on the right side of the apex
+                // error = - erfi(b1 / 2 / SQRTB3)
+                double err_R = dawson5(-B1_2_SQRTB3);
+                if (-B1_2_B3 > doubleScale)
+                {
+                    // valley point is outside the window, use scale as limit
+                    err_R_covered = erfi((b1 + 2 * b3 * doubleScale) / 2 * _SQRTB3) * EXP_B13 + err_R;
+                }
+                else
+                {
+                    // valley point is inside the window, use valley point as limit
+                    err_R_covered = err_R;
+                    x_right = -B1_2_B3;
+                }
             }
             else
             {
-                // valley point is inside the window, use valley point as limit
-                err_R_covered = err_R;
-                x_right = -B1_2_B3;
+                // no valley point
+                // error = 1 + std::erf(b1 / 2 / SQRTB3)
+                double err_R = experfc(B1_2_SQRTB3, 1.0);
+                // ordinary peak half, take always scale as integration limit; we use erf instead of erfi due to the sqrt of absoulte value
+                // err_R - 1 - std::erf((b1 + 2 * b3 * scale) / 2 / SQRTB3)
+                err_R_covered = err_R - SQRTPI_2 * EXP_B13 - erf_approx_f((b1 + 2 * b3 * doubleScale) / 2 * _SQRTB3) * SQRTPI_2 * EXP_B13;
             }
         }
+        double J_covered[4]; // Jacobian matrix for the covered peak area
+        {
+            // calculate the y values at the left and right limits @todo error here?
+            const double y_left = exp_approx_d(b1 * x_left + b2 * x_left * x_left);
+            const double y_right = exp_approx_d(b1 * x_right + b3 * x_right * x_right);
+            // const double y_left = regExpAt_L(coeff, x_left);
+            // const double y_right = regExpAt_R(coeff, x_right);
+            const double dX = x_right - x_left;
+            assert(dX > 0);
 
-        // calculate the y values at the left and right limits
-        y_left = exp_approx_d(b1 * x_left + b2 * x_left * x_left);
-        y_right = exp_approx_d(b1 * x_right + b3 * x_right * x_right);
-        const double dX = x_right - x_left;
+            // calculate the Jacobian matrix terms
+            const double J_1_common_L = _SQRTB2; // SQRTPI_2 * EXP_B12 / SQRTB2;
+            const double J_1_common_R = _SQRTB3; // SQRTPI_2 * EXP_B13 / SQRTB3;
+            const double J_2_common_L = B1_2_B2 / b1;
+            const double J_2_common_R = B1_2_B3 / b1;
 
-        // calculate the trapzoid correction terms for the jacobian matrix
-        const double trpzd_b0 = (y_right + y_left) * dX / 2;
-        const double trpzd_b1 = (x_right * y_right + x_left * y_left) * dX / 2;
-        const double trpzd_b2 = (x_left * x_left * y_left) * dX / 2;
-        const double trpzd_b3 = (x_right * x_right * y_right) * dX / 2;
+            // calculate the trapzoid correction terms for the jacobian matrix
+            const double trpzd_b0 = (y_right + y_left) * dX / 2;
+            const double trpzd_b1 = (x_right * y_right + x_left * y_left) * dX / 2;
+            const double trpzd_b2 = (x_left * x_left * y_left) * dX / 2;
+            const double trpzd_b3 = (x_right * x_right * y_right) * dX / 2;
 
-        const double J_1_L_covered = J_1_common_L * err_L_covered;
-        const double J_1_R_covered = J_1_common_R * err_R_covered;
-        const double J_2_L_covered = J_2_common_L - J_1_L_covered * B1_2_B2;
-        const double J_2_R_covered = -J_2_common_R - J_1_R_covered * B1_2_B3;
+            const double J_1_L_covered = J_1_common_L * err_L_covered;
+            const double J_1_R_covered = J_1_common_R * err_R_covered;
+            const double J_2_L_covered = J_2_common_L - J_1_L_covered * B1_2_B2;
+            const double J_2_R_covered = -J_2_common_R - J_1_R_covered * B1_2_B3;
 
-        J_covered[0] = J_1_R_covered + J_1_L_covered - trpzd_b0;
-        J_covered[1] = J_2_R_covered + J_2_L_covered - trpzd_b1;
-        J_covered[2] = -B1_2_B2 * (J_2_L_covered + J_1_L_covered / b1) - trpzd_b2;
-        J_covered[3] = -B1_2_B3 * (J_2_R_covered + J_1_R_covered / b1) - trpzd_b3;
+            J_covered[0] = J_1_R_covered + J_1_L_covered - trpzd_b0;
+            assert(J_covered[0] > 0); // not including b0 was probably correct, but why?
+            J_covered[1] = J_2_R_covered + J_2_L_covered - trpzd_b1;
+            J_covered[2] = -B1_2_B2 * (J_2_L_covered + J_1_L_covered / b1) - trpzd_b2;
+            J_covered[3] = -B1_2_B3 * (J_2_R_covered + J_1_R_covered / b1) - trpzd_b3;
+        }
 
         float area_uncertainty_covered = std::sqrt(mse * multiplyVecMatrixVecTranspose(J_covered, scale));
 
-        return J_covered[0] > T_VALUES[df_sum - 5] * area_uncertainty_covered; // statistical significance of the peak area (boolean) @todo potential source of error here
+        // statistical significance of the peak area @todo potential source of error here
+        return J_covered[0] > T_VALUES[df_sum - 5] * area_uncertainty_covered;
     }
 #pragma endregion isValidPeakArea
 
@@ -1988,6 +1989,23 @@ namespace qAlgorithms
 
 #pragma region "Feature Detection"
 
+    double medianVec(const std::vector<float> *vec)
+    {
+        std::vector<float> tmpDiffs = *vec;
+        std::sort(tmpDiffs.begin(), tmpDiffs.end());
+
+        size_t size = tmpDiffs.size();
+        assert(size > 0);
+        if (size % 2 == 0)
+        {
+            return (tmpDiffs[size / 2 - 1] + tmpDiffs[size / 2]) / 2;
+        }
+        else
+        {
+            return tmpDiffs[size / 2];
+        }
+    }
+
     RT_Converter interpolateScanNumbers(const std::vector<float> *retentionTimes)
     /* ### allocations ###
         diffs: known at time of function call
@@ -1995,7 +2013,7 @@ namespace qAlgorithms
         backwardConv: size calculated in function
 
        ### called functions ###
-        std::sort // could be replaced by median search
+        medianVec allocates a vector the size of diffs
     */
     {
         // This function interpolates the existing RTs of MS1 spectra and produces a vector that contains,
@@ -2011,27 +2029,11 @@ namespace qAlgorithms
         }
         assert(!diffs.empty());
 
-        // the expected difference is the median of all differences
-        float expectedDiff;
-        { // @todo solve this via quickselect instead
-            std::vector<float> tmpDiffs = diffs;
-            std::sort(tmpDiffs.begin(), tmpDiffs.end());
-
-            size_t size = tmpDiffs.size();
-            assert(size > 0);
-            if (size % 2 == 0)
-            {
-                expectedDiff = (tmpDiffs[size / 2 - 1] + tmpDiffs[size / 2]) / 2;
-            }
-            else
-            {
-                expectedDiff = tmpDiffs[size / 2];
-            }
-            // if this is not given, there are severe distortions at some point in the data. We accept one non-compliance,
-            // at the first scan in the spectrum only, which is generally one of the first recorded scans
-            // incorrectness here could be due to a vendor-specific instrument checkup procedure, which has been observed once at least
-            assert(tmpDiffs[1] > expectedDiff / 2);
-        }
+        float expectedDiff = medianVec(&diffs);
+        // if this is not given, there are severe distortions at some point in the data. We accept one non-compliance,
+        // at the first scan in the spectrum only, which is generally one of the first recorded scans
+        // incorrectness here could be due to a vendor-specific instrument checkup procedure, which has been observed once at least
+        // assert(tmpDiffs[1] > expectedDiff / 2);
 
         size_t scanCount = retentionTimes->size();
         std::vector<RT_Grouping> totalRTs;
@@ -2118,7 +2120,7 @@ namespace qAlgorithms
         std::vector<FeaturePeak> tmpPeaks; // add features to this before pasting into FL
 
         std::vector<RegressionGauss> validRegressions;
-        validRegressions.reserve(8); // @todo find better size
+        validRegressions.reserve(512);
 
         std::vector<float> logIntensity;
 
@@ -2139,7 +2141,7 @@ namespace qAlgorithms
             logIntensity.resize(length);
             logIntensity.clear();
 
-            size_t maxScale = std::min(GLOBAL_MAXSCALE_FEATURES, (length - 1) / 2); // @todo code duplication
+            size_t maxScale = std::min(GLOBAL_MAXSCALE_FEATURES, (length - 1) / 2);
 
             runningRegression(&currentEIC.ints_area,
                               &logIntensity,
@@ -2150,7 +2152,7 @@ namespace qAlgorithms
 
             if (!validRegressions.empty())
             {
-                createFeaturePeaks(&tmpPeaks, &validRegressions, convertRT, &currentEIC.RT); // @todo can this be moved outside of the loop?
+                createFeaturePeaks(&tmpPeaks, &validRegressions, convertRT, &currentEIC.RT);
 
                 for (auto peak : tmpPeaks)
                 {
@@ -2215,7 +2217,7 @@ namespace qAlgorithms
         return sum / (retention_times->size() - 1);
     }
 
-    std::vector<CentroidPeak> findCentroids( // this function needs to be reworked further @todo
+    std::vector<CentroidPeak> findCentroids( // this function needs to be reworked further
         XML_File &data,                      // @todo get rid of the direct coupling to pugixml
         const std::vector<unsigned int> *selectedIndices)
     /* ### allocations ###
@@ -2326,30 +2328,10 @@ namespace qAlgorithms
         double meanDiff = (cumDiffs->at(end + 1) - cumDiffs->at(start)) / length;
         double critVal = binningCritVal(length, meanDiff / 2);
 
-        // max of difference // @todo extract to inline function to use in binning
+        // max of difference
         auto pmax = std::max_element(diffs->begin() + start, diffs->begin() + end + 1);
         double max = *pmax;
         size_t maxPos = std::distance(diffs->begin(), pmax);
-
-        // size_t maxPos2 = 0;
-        // size_t nextDiffPos = 0;
-        // // @todo is there a difference too small to matter known ahead of time?
-        // for (size_t i = previousDiffPos; i < diffOrder->size(); i++)
-        // {
-        //     unsigned int pos = diffOrder->at(i);
-        //     if (start <= pos && pos <= end)
-        //     {
-        //         // pos is the index of the largest difference in the relevant region
-        //         nextDiffPos = i;
-        //         maxPos2 = pos;
-        //         break;
-        //     }
-        // }
-        // assert(maxPos2 == maxPos);
-        // size_t nextDiffPos = 0;
-
-        // size_t maxPos = maxPos2;
-        // double max = diffs->at(maxPos2);
 
         if (max < critVal)
         {
@@ -2484,13 +2466,6 @@ namespace qAlgorithms
         std::vector<Range_i> result; // result contains the start- and end indices of all relevant blocks in the data.
         result.reserve(128);
 
-        // index vector into diffs, making diff itself obsolete // @todo this can be solved without recursion
-        // std::vector<unsigned int> diffOrder(diffs.size());
-        // std::iota(diffOrder.begin(), diffOrder.end(), 0);
-        // std::sort(diffOrder.begin(), diffOrder.end(),
-        //           [&](int a, int b)
-        //           { return diffs[a] > diffs[b]; });
-
         double meanDiff = 0;
         for (size_t i = 0; i < diffs.size(); i++)
         {
@@ -2593,5 +2568,22 @@ namespace qAlgorithms
             return 0;
 
         return maxEntry;
+    }
+
+    double regAt_L(const RegCoeffs *coeff, const double x)
+    {
+        return coeff->b0 + (coeff->b1 + x * coeff->b2) * x;
+    }
+    double regAt_R(const RegCoeffs *coeff, const double x)
+    {
+        return coeff->b0 + (coeff->b1 + x * coeff->b3) * x;
+    }
+    double regExpAt_L(const RegCoeffs *coeff, const double x)
+    {
+        return exp_approx_d(coeff->b0 + (coeff->b1 + x * coeff->b2) * x);
+    }
+    double regExpAt_R(const RegCoeffs *coeff, const double x)
+    {
+        return exp_approx_d(coeff->b0 + (coeff->b1 + x * coeff->b3) * x);
     }
 }
