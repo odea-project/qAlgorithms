@@ -106,7 +106,6 @@ namespace qAlgorithms
     */
     {
         assert(!treatedData->empty());
-        assert(scanNumber != 0);
 
         std::vector<float> logIntensity(maxWindowSize, NAN); // @todo calculate the log of all intensities once when reading in the spectrum
 
@@ -217,16 +216,16 @@ namespace qAlgorithms
         x0s.reserve(regressions.size());
 
         {
-            // FILE *f = fopen("failedRegs.csv", "w");
-            // if (f == NULL)
-            // {
-            //     printf("Error opening file!\n");
-            //     exit(1);
-            // }
+            FILE *f = fopen("failedRegs.csv", "w");
+            if (f == NULL)
+            {
+                printf("Error opening file!\n");
+                exit(1);
+            }
 
-            // fprintf(f, "#ID, x0, b0, b1, b2, b3, fail\n");
+            fprintf(f, "ID, x0, b0, b1, b2, b3, fail\n");
 
-            // fclose(f);
+            fclose(f);
         }
 
         for (size_t range = 0; range < regressions.size(); range++)
@@ -285,20 +284,20 @@ namespace qAlgorithms
         }
 
         {
-            // FILE *f = fopen("failedRegs.csv", "a");
-            // if (f == NULL)
-            // {
-            //     printf("Error opening file!\n");
-            //     exit(1);
-            // }
+            FILE *f = fopen("failedRegs.csv", "a");
+            if (f == NULL)
+            {
+                printf("Error opening file!\n");
+                exit(1);
+            }
 
-            // for (size_t i = 0; i < regressions.size(); i++)
-            // {
-            //     auto r = regressions.at(i);
-            //     fprintf(f, "%zu, %d, %f, %f, %f, %f, %d\n", globalCount, x0s[i], r.b0, r.b1, r.b2, r.b3, failures[i]);
-            // }
+            for (size_t i = 0; i < regressions.size(); i++)
+            {
+                auto r = regressions.at(i);
+                fprintf(f, "%zu, %d, %f, %f, %f, %f, %d\n", globalCount, x0s[i], r.b0, r.b1, r.b2, r.b3, failures[i]);
+            }
 
-            // fclose(f);
+            fclose(f);
         }
         globalCount += 1;
     }
@@ -777,19 +776,13 @@ namespace qAlgorithms
             return 4;
         }
 
-        /*
-          Degree of Freedom Filter:
-          This block of code implements the degree of freedom filter. It calculates the
-          degree of freedom based df vector. If the degree of freedom is less than 5,
-          the loop continues to the next iteration. The value 5 is chosen as the
-          minimum number of data points required to fit a quadratic regression model.
-        */
         size_t df_sum = calcDF_cum(degreesOfFreedom_cum, mutateReg->regSpan);
         if (df_sum < 5)
         {
-            return 5; // degree of freedom less than 5; i.e., less then 5 measured data points
+            // degree of freedom less than 5; i.e., less than 5 measured data points.
+            // Four points or less are not enough to fit a regression with four coefficients
+            return 5;
         }
-        // assert(mutateReg->right_limit - mutateReg->left_limit > 4);
 
         /*
           Apex to Edge Filter:
@@ -804,16 +797,6 @@ namespace qAlgorithms
         {
             return 6; // invalid apex to edge ratio
         }
-
-        /*
-          Quadratic Term Filter:
-          This block of code implements the quadratic term filter. It calculates
-          the mean squared error (MSE) between the predicted and actual values.
-          Then it calculates the t-value for the quadratic term. If the t-value
-          is less than the corresponding value in the T_VALUES, the quadratic
-          term is considered statistically insignificant, and the loop continues
-          to the next iteration.
-        */
 
         double RSS_reg = calcRSS_reg(mutateReg->coeffs, intensities_log,
                                      mutateReg->regSpan, idx_x0);
@@ -1955,9 +1938,9 @@ namespace qAlgorithms
         J_covered[2] = -B1_2_B2 * (J_2_L_covered + J_1_L_covered / b1) - trpzd_b2;
         J_covered[3] = -B1_2_B3 * (J_2_R_covered + J_1_R_covered / b1) - trpzd_b3;
 
-        float area_uncertainty_covered = std::sqrt(mse * multiplyVecMatrixVecTranspose(J_covered, doubleScale));
+        float area_uncertainty_covered = std::sqrt(mse * multiplyVecMatrixVecTranspose(J_covered, scale));
 
-        return J_covered[0] > T_VALUES[df_sum - 5] * area_uncertainty_covered; // statistical significance of the peak area (boolean)
+        return J_covered[0] > T_VALUES[df_sum - 5] * area_uncertainty_covered; // statistical significance of the peak area (boolean) @todo potential source of error here
     }
 #pragma endregion isValidPeakArea
 
@@ -2263,13 +2246,28 @@ namespace qAlgorithms
             spectrum_int.clear();
             groupedData.clear();
 
+            i = 0;
+
             size_t ID_spectrum = selectedIndices->at(i);
             data.get_spectrum(&spectrum_mz, &spectrum_int, ID_spectrum);
 
+            // volatile bool printThis = false;
+            // if (printThis)
+            // {
+            //     FILE *f = fopen("./spectrum0.csv", "w");
+            //     fprintf(f, "mz,int\n");
+            //     for (size_t j = 0; j < spectrum_mz.size(); j++)
+            //     {
+            //         fprintf(f, "%f,%.1f\n", spectrum_mz[j], spectrum_int[j]);
+            //     }
+            // }
+
             // ### @todo this is for development only, highly inefficient at scale! ###
-            hardFilter(&spectrum_mz, &spectrum_int, 247.13, 247.24);
+            // hardFilter(&spectrum_mz, &spectrum_int, 247.1, 247.3);
             if (spectrum_mz.empty())
                 continue;
+
+            centroids.clear();
 
             // @todo every group is just an index range into three same-length vectors if we do not
             // perform interpolation. Should interpolation be necessary (includes extrapolation),
@@ -2278,7 +2276,7 @@ namespace qAlgorithms
             if (maxWindowSize == 0) // this is also relevant to filtering, add a warning if no filter?
                 continue;
 
-            findCentroidPeaks(&centroids, &groupedData, i + 1, ID_spectrum, maxWindowSize);
+            findCentroidPeaks(&centroids, &groupedData, i, ID_spectrum, maxWindowSize);
         }
         for (unsigned int i = 0; i < centroids.size(); i++)
         {

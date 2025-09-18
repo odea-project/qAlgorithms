@@ -127,6 +127,21 @@ int main()
         qass(roundTo_d(c.b3, 5) == roundTo_d(-0.3706720, 5), "b3 is incorrect!");
     }
 
+    // check if a difficult centroid is identified correctly
+    {
+        ProfileBlock block = {
+            {8, 16, 32, 475, 711, 472, 207, 57, 14, 9, 4, 2, 1},
+            {205.110107, 205.115082, 205.120056, 205.125031, 205.130005, 205.134979, 205.139954, 205.144928, 205.149902, 205.154877, 205.159851, 205.164825, 205.16980, 205.174774},
+            {0, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 10, 10},
+            329,
+            338};
+        std::vector<RegressionGauss> validRegressions;
+        const size_t length = block.mz.size();
+        const size_t maxScale = 8; // @todo not bound to centroid maxscale
+        std::vector<float> logIntensity(25, NAN);
+        runningRegression(&block.intensity, &logIntensity, &block.cumdf, &validRegressions, maxScale, length - 2);
+    }
+
     // does the RT conversion struct work correctly?
 
     std::vector<float>

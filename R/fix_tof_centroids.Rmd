@@ -39,3 +39,23 @@ print(plot)
 }
 ```
 
+makeReg = function(length, maxint, b0, b1, b2, b3, center){
+  # center is always original center + 1, adjust this during read-in
+  maxint = maxint * 1.5
+  y = rep(NA, length)
+  for(i in 1:(center-1)){
+    x = i - center
+    y[i] = exp(b0 + x * b1 + x * x * b2)
+  }
+  y[center] = exp(b0)
+  for(i in (center + 1):length){
+    x = i - center 
+    y[i] = exp(b0 + x * b1 + x * x * b3)
+  }
+  
+  for (i in 1:length) {
+    if (y[i] > maxint){
+      y[i] = NA}
+  }
+  return(y)
+}
