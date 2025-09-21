@@ -74,7 +74,7 @@ namespace qAlgorithms
         // basic structure: find cofficients, reduce them to valid regressions, resolve contradictions,
 
         // coefficients for single-b0 peaks, spans all regressions over a peak window
-        std::vector<RegCoeffs> regressions = findCoefficients(&y_log, maxScale);
+        std::vector<RegCoeffs> regressions = findCoefficients_new(&y_log, maxScale);
         assert(!regressions.empty());
 
         // filter the produced coefficients so that only correct ones remain (separate function?)
@@ -352,6 +352,115 @@ namespace qAlgorithms
         return results;
     }
 
+    std::vector<RegCoeffs> findCoefficients_new(
+        const std::vector<float> *intensity_log,
+        const size_t maxScale) // maximum scale that will be checked. Should generally be limited by peakFrame
+    /* ### allocations ###
+        beta_0 etc.: size calculated in function *4 * f32
+    */
+    {
+        assert(maxScale > 1);
+        assert(maxScale <= MAXSCALE);
+        const unsigned int minScale = 2;
+        assert(minScale <= maxScale);
+
+        // number of real points * number of scales
+        const size_t iterationCount = (intensity_log->size() - 2 * maxScale) * (maxScale - minScale + 1);
+        // these arrays contain all coefficients for every loop iteration @todo arena allocator here
+        std::vector<double> beta_0(iterationCount, NAN);
+        std::vector<double> beta_1(iterationCount, NAN);
+        std::vector<double> beta_2(iterationCount, NAN);
+        std::vector<double> beta_3(iterationCount, NAN);
+
+        // the product sums are the rows of the design matrix (xT) * intensity_log[i:i+4] (dot product)
+        // The first n entries are contained in the b0 vector, one for each peak the regression is performed
+        // over.
+        double tmp_product_sum_b0 = 0;
+        double tmp_product_sum_b1 = 0;
+        double tmp_product_sum_b2 = 0;
+        double tmp_product_sum_b3 = 0;
+
+        const size_t limit = intensity_log->size() - maxScale;
+
+        size_t k = 0;
+        for (size_t i = maxScale; i < limit; i++)
+        {
+            // move along the intensity_log (outer loop)
+            // calculate the convolution with the kernel of the lowest scale (= 2), i.e. xT * intensity_log[i:i+4]
+            // tmp_product_sum_b0_vec = intensity_log[i:i+5].sum(axis=0) // numPeaks rows of xT * intensity_log[i:i+4]
+
+            tmp_product_sum_b0 = intensity_log->at(i) + intensity_log->at(i + 1) +
+                                 intensity_log->at(i + 2) + intensity_log->at(i + 3) +
+                                 intensity_log->at(i + 4); // b0 = 1 for all elements
+            tmp_product_sum_b1 = 2 * (intensity_log->at(i + 4) - intensity_log->at(i)) +
+                                 intensity_log->at(i + 3) - intensity_log->at(i + 1);
+            tmp_product_sum_b2 = 4 * intensity_log->at(i) + intensity_log->at(i + 1);
+            tmp_product_sum_b3 = 4 * intensity_log->at(i + 4) + intensity_log->at(i + 3);
+
+            // use [12 + ...] since the array is constructed for the accession array[scale * 6 + (0:5)]
+            const double S2_A = INV_ARRAY[12 + 0];
+            const double S2_B = INV_ARRAY[12 + 1];
+            const double S2_C = INV_ARRAY[12 + 2];
+            const double S2_D = INV_ARRAY[12 + 3];
+            const double S2_E = INV_ARRAY[12 + 4];
+            const double S2_F = INV_ARRAY[12 + 5];
+
+            // this line is: a*t_i + b * sum(t without i)
+            // inv_array starts at scale = 2
+            beta_0[k] = S2_A * tmp_product_sum_b0 + S2_B * (tmp_product_sum_b2 + tmp_product_sum_b3);
+            beta_1[k] = S2_C * tmp_product_sum_b1 + S2_D * (tmp_product_sum_b2 - tmp_product_sum_b3);
+            beta_2[k] = S2_B * tmp_product_sum_b0 + S2_D * tmp_product_sum_b1 + S2_E * tmp_product_sum_b2 + S2_F * tmp_product_sum_b3;
+            beta_3[k] = S2_B * tmp_product_sum_b0 - S2_D * tmp_product_sum_b1 + S2_F * tmp_product_sum_b2 + S2_E * tmp_product_sum_b3;
+
+            k += 1;       // number of regression at scale 2
+            size_t u = 1; // number of the scale
+            for (size_t scale = 3; scale < maxScale + 1; scale++)
+            { // minimum scale is 2. so we start with scale + 1 = 3 in the inner loop
+                double scale_sqr = double(scale * scale);
+                // expand the kernel to the left and right of the intensity_log.
+                tmp_product_sum_b0 += intensity_log->at(i - u) + intensity_log->at(i + 4 + u);
+                tmp_product_sum_b1 += scale * (intensity_log->at(i + 4 + u) - intensity_log->at(i - u));
+                tmp_product_sum_b2 += scale_sqr * intensity_log->at(i - u);
+                tmp_product_sum_b3 += scale_sqr * intensity_log->at(i + 4 + u);
+
+                const double inv_A = INV_ARRAY[12 + u * 6 + 0];
+                const double inv_B = INV_ARRAY[12 + u * 6 + 1];
+                const double inv_C = INV_ARRAY[12 + u * 6 + 2];
+                const double inv_D = INV_ARRAY[12 + u * 6 + 3];
+                const double inv_E = INV_ARRAY[12 + u * 6 + 4];
+                const double inv_F = INV_ARRAY[12 + u * 6 + 5];
+
+                const double inv_B_b0 = inv_B * tmp_product_sum_b0;
+                const double inv_D_b1 = inv_D * tmp_product_sum_b1;
+
+                beta_0[k] = inv_A * tmp_product_sum_b0 + inv_B * (tmp_product_sum_b2 + tmp_product_sum_b3);
+                beta_1[k] = inv_C * tmp_product_sum_b1 + inv_D * (tmp_product_sum_b2 - tmp_product_sum_b3);
+                beta_2[k] = inv_B_b0 + inv_D_b1 + inv_E * tmp_product_sum_b2 + inv_F * tmp_product_sum_b3;
+                beta_3[k] = inv_B_b0 - inv_D_b1 + inv_F * tmp_product_sum_b2 + inv_E * tmp_product_sum_b3;
+
+                u += 1; // update expansion increment
+                k += 1; // update index for the productsums array
+            }
+        }
+
+        assert(beta_0.size() == beta_1.size());
+
+        //@todo could the ratio of positives / negatives serve as a criterion for data quality in that region?
+        // printf("Both positive: %zu, one negative: %zu, both negative: %zu\n", bothPos, eitherPos, bothNeg);
+        // std::vector<RegCoeffs> coeffs;
+        coeffs.reserve(beta_0.size());
+
+        for (size_t i = 0; i < beta_0.size(); i++)
+        {
+            coeffs.push_back({beta_0[i],
+                              beta_1[i],
+                              beta_2[i],
+                              beta_3[i]});
+        }
+
+        return coeffs;
+    }
+
     std::vector<RegCoeffs> findCoefficients(
         const std::vector<float> *intensity_log,
         const size_t maxScale) // maximum scale that will be checked. Should generally be limited by peakFrame
@@ -364,73 +473,6 @@ namespace qAlgorithms
         restoreShape
     */
     {
-        /*
-        This function performs a convolution with the kernel: (xTx)^-1 xT and the data array: intensity_log.
-        (xTx)^-1 is pre-calculated and stored in the vector INV_ARRAY (calculated in the header file).
-        Only six values of the final matrix are required for the simple case, see below:
-
-        xT is the transpose of the design matrix X that looks like this:
-        for scale = 2:
-        xT = | 1  1  1  1  1 |    : all ones
-             |-2 -1  0  1  2 |    : from -scale to scale
-             | 4  1  0  0  0 |    : x^2 values for x < 0
-             | 0  0  0  1  4 |    : x^2 values for x > 0
-
-        It contains one additional row of all ones for every additional peak that is added into the model
-
-        When adding multiple peaks to the regression model, we need to adjust the inverse values.
-        This will change the number of unique values in the inv_values array from 6 to 7.
-        Here we use the inv_array[1] position and shift all values from that point onwards to the right.
-        example for num_peaks = 2:
-        original matrix with the unique values [a, b, c, d, e, f] (six unique values)
-        | a  0  b  b |
-        | 0  c  d -d |
-        | b  d  e  f |
-        | b -d  f  e |
-
-        new matrix with the unique values [A1, A2, B, C, D, E, F] (seven unique values)
-        | A1  A2  0  B  B |
-        | A2  A1  0  B  B |
-        | 0   0   C  D -D |
-        | B   B   D  E  F |
-        | B   B  -D  F  E |
-
-        for num_peaks = 3:
-        new matrix with the unique values [A1, A2, B, C, D, E, F] (the same seven unique values)
-        | A1  A2  A2  0  B  B |
-        | A2  A1  A2  0  B  B |
-        | A2  A2  A1  0  B  B |
-        | 0   0   0   C  D -D |
-        | B   B   B   D  E  F |
-        | B   B   B  -D  F  E |
-
-        Note that no more than seven different values are needed per scale, even for a multidimensional approach.
-
-        In general, we have two moving actions:
-        1) step right through the intensity_log and calculate the convolution with the kernel
-        2) expand the kernel to the left and right of the intensity_log (higher scale)
-
-        The workflow is organized in nested loops:
-        1) outer loop: move along the intensity_log AND calculate the convolution with the scale=2 kernel
-        2) inner loop: expand the kernel to the left and right of the intensity_log (higher scale)
-
-        The pattern used for both loops looks like:
-        e.g. for n(y) = 16
-        outer loop: i = 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11
-        inner loop: range from:
-        for i=0: 3 to 3 => loop is not executed
-        for i=1: 3 to 4 =>  once for  scale = 3
-        for i=2: 3 to 5 =>  twice for  scale = 3,4
-        for i=3: 3 to 6 =>  three times for  scale = 3,4,5
-        for i=4: 3 to 7 =>  four times for  scale = 3,4,5,6
-        for i=5: 3 to 8 =>  five times for  scale = 3,4,5,6,7
-        for i=6: 3 to 8 =>  five times for  scale = 3,4,5,6,7
-        for i=7: 3 to 7 =>  four times for  scale = 3,4,5,6
-        for i=8: 3 to 6 =>  three times for  scale = 3,4,5
-        for i=9: 3 to 5 =>  twice for  scale = 3,4
-        for i=10: 3 to 4 =>  once for  scale = 3
-        for i=11: 3 to 3 => loop is not executed
-        */
         assert(maxScale > 1);
         assert(maxScale <= MAXSCALE);
         const unsigned int minScale = 2;
@@ -475,9 +517,9 @@ namespace qAlgorithms
         double tmp_product_sum_b3 = 0;
 
         // debug variables
-        size_t bothPos = 0;
-        size_t eitherPos = 0;
-        size_t bothNeg = 0;
+        // size_t bothPos = 0;
+        // size_t eitherPos = 0;
+        // size_t bothNeg = 0;
 
         size_t k = 0;
         for (size_t i = 0; i < steps; i++)
@@ -540,18 +582,17 @@ namespace qAlgorithms
                 beta_2[k] = inv_B_b0 + inv_D_b1 + inv_E * tmp_product_sum_b2 + inv_F * tmp_product_sum_b3;
                 beta_3[k] = inv_B_b0 - inv_D_b1 + inv_F * tmp_product_sum_b2 + inv_E * tmp_product_sum_b3;
 
-                assert(!isnan(beta_0[k]));
-                assert(!isnan(beta_1[k]));
-                assert(!isnan(beta_2[k]));
-                assert(!isnan(beta_3[k]));
+                // assert(!isnan(beta_0[k]));
+                // assert(!isnan(beta_1[k]));
+                // assert(!isnan(beta_2[k]));
+                // assert(!isnan(beta_3[k]));
 
-                bothNeg += (beta_2[k] < 0) && (beta_3[k] < 0);
-                bothPos += (beta_2[k] >= 0) && (beta_3[k] >= 0);
-                eitherPos += (beta_2[k] < 0) xor (beta_3[k] < 0);
+                // bothNeg += (beta_2[k] < 0) && (beta_3[k] < 0);
+                // bothPos += (beta_2[k] >= 0) && (beta_3[k] >= 0);
+                // eitherPos += (beta_2[k] < 0) xor (beta_3[k] < 0);
 
                 u += 1; // update expansion increment
 
-                // coeffs can be skipped if the scale information is preserved @todo
                 k += 1; // update index for the productsums array
             }
         }

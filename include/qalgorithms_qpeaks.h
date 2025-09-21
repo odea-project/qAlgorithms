@@ -42,7 +42,78 @@ namespace qAlgorithms
         const size_t maxScale,
         std::vector<RegressionGauss> *detectedPeaks);
 
+    /*
+        This function performs a convolution with the kernel (xTx)^-1 xT and the data array intensity_log.
+        (xTx)^-1 is pre-calculated and stored in the vector INV_ARRAY (calculated in the "initialise" function).
+        Only six values of the final matrix are required for the simple case, see below:
+
+        xT is the transpose of the design matrix X.
+        for scale = 2:
+        xT = | 1  1  1  1  1 |    : all ones
+             |-2 -1  0  1  2 |    : from -scale to scale
+             | 4  1  0  0  0 |    : x^2 values for x < 0
+             | 0  0  0  1  4 |    : x^2 values for x > 0
+
+        It contains one additional row of all ones for every additional peak that is added into the model
+
+        When adding multiple peaks to the regression model, we need to adjust the inverse values.
+        This will change the number of unique values in the inv_values array from 6 to 7.
+        Here we use the inv_array[1] position and shift all values from that point onwards to the right.
+        example for num_peaks = 2:
+        original matrix with the unique values [a, b, c, d, e, f] (six unique values)
+        | a  0  b  b |
+        | 0  c  d -d |
+        | b  d  e  f |
+        | b -d  f  e |
+
+        new matrix with the unique values [A1, A2, B, C, D, E, F] (seven unique values)
+        | A1  A2  0  B  B |
+        | A2  A1  0  B  B |
+        | 0   0   C  D -D |
+        | B   B   D  E  F |
+        | B   B  -D  F  E |
+
+        for num_peaks = 3:
+        new matrix with the unique values [A1, A2, B, C, D, E, F] (the same seven unique values)
+        | A1  A2  A2  0  B  B |
+        | A2  A1  A2  0  B  B |
+        | A2  A2  A1  0  B  B |
+        | 0   0   0   C  D -D |
+        | B   B   B   D  E  F |
+        | B   B   B  -D  F  E |
+
+        Note that no more than seven different values are needed per scale, even for a multidimensional approach.
+
+        In general, we have two moving actions:
+        1) step right through the intensity_log and calculate the convolution with the kernel
+        2) expand the kernel to the left and right of the intensity_log (higher scale)
+
+        The workflow is organized in nested loops:
+        1) outer loop: move along the intensity_log AND calculate the convolution with the scale=2 kernel
+        2) inner loop: expand the kernel to the left and right of the intensity_log (higher scale)
+
+        The pattern used for both loops looks like:
+        e.g. for n(y) = 16
+        outer loop: i = 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11
+        inner loop: range from:
+        for i=0: 3 to 3 => loop is not executed
+        for i=1: 3 to 4 =>  once for  scale = 3
+        for i=2: 3 to 5 =>  twice for  scale = 3,4
+        for i=3: 3 to 6 =>  three times for  scale = 3,4,5
+        for i=4: 3 to 7 =>  four times for  scale = 3,4,5,6
+        for i=5: 3 to 8 =>  five times for  scale = 3,4,5,6,7
+        for i=6: 3 to 8 =>  five times for  scale = 3,4,5,6,7
+        for i=7: 3 to 7 =>  four times for  scale = 3,4,5,6
+        for i=8: 3 to 6 =>  three times for  scale = 3,4,5
+        for i=9: 3 to 5 =>  twice for  scale = 3,4
+        for i=10: 3 to 4 =>  once for  scale = 3
+        for i=11: 3 to 3 => loop is not executed
+    */
     std::vector<RegCoeffs> findCoefficients(
+        const std::vector<float> *intensity_log,
+        const size_t maxscale); // maximum scale that will be checked. Should generally be limited by peakFrame
+
+    std::vector<RegCoeffs> findCoefficients_new(
         const std::vector<float> *intensity_log,
         const size_t maxscale); // maximum scale that will be checked. Should generally be limited by peakFrame
 
