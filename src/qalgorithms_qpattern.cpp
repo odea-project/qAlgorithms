@@ -542,7 +542,7 @@ namespace qAlgorithms
           to the next iteration. If the apex and valley positions are too close
           to each other, the loop continues to the next iteration.
         */
-        float valley_position = 0;
+        double valley_position = 0;
         if (!calcApexAndValleyPos_old(mutateReg, scale, &valley_position))
         {
             return; // invalid apex and valley positions

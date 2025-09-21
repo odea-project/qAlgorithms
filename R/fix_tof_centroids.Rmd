@@ -13,6 +13,39 @@ library(tidyverse)
 ```{r}
 errorspec = read_csv("~/Promotion/qAlgorithms/build/errorspec.csv", col_types = "dddd")
 regs = read_csv("~/Promotion/qAlgorithms/build/failedRegs.csv", comment = "#", col_types = "iiddddi")
+fullspec = read.csv("~/Promotion/qAlgorithms/build/spectrum0.csv")
+orbispec = read.csv("~/Promotion/qAlgorithms/build/spectrum1.csv")
+```
+
+```{r}
+fullspec$diff = c(diff(fullspec$mz), 0) 
+fullspec$int0 = fullspec$int == 0
+fullspec$double0 = c(fullspec$int0[-1], F) & fullspec$int0
+fullspec$largediff = fullspec$diff > c(fullspec$diff[-1], 0) * 1.2
+fullspec$unexpected = fullspec$largediff != fullspec$double0
+sum(fullspec$unexpected)
+
+fullspec$group = cumsum(fullspec$int0)
+fullspec$group[length(fullspec$mz)] = max(na.omit(fullspec$group))
+
+fullsum = fullspec %>% group_by(group) %>% summarise(size = n(), maxint = max(int), var = sd(mz), mindiff = min(diff), maxdiff = max(diff))
+fullsum = fullsum[which(fullsum$size > 4),]
+fullsum$error = fullsum$maxdiff - fullsum$mindiff
+```
+
+```{r}
+orbispec$diff = c(diff(orbispec$mz), 0) 
+orbispec$int0 = orbispec$int == 0
+orbispec$double0 = c(orbispec$int0[-1], F) & orbispec$int0
+orbispec$largediff = orbispec$diff > c(orbispec$diff[-1], 0) * 1.2
+orbispec$unexpected = orbispec$largediff != orbispec$double0
+
+orbispec$group = cumsum(orbispec$int0)
+orbispec$group[length(orbispec$mz)] = max(na.omit(orbispec$group))
+
+fullsum = orbispec %>% group_by(group) %>% summarise(size = n(), maxint = max(int), var = sd(mz), mindiff = min(diff), maxdiff = max(diff))
+fullsum = fullsum[which(fullsum$size > 4),]
+fullsum$error = fullsum$maxdiff - fullsum$mindiff
 ```
 
 ```{r}

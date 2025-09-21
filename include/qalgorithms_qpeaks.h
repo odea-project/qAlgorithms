@@ -77,6 +77,11 @@ namespace qAlgorithms
         XML_File &data, // @todo replace with custom struct for a generic parsed file
         const std::vector<unsigned int> *selectedIndices);
 
+    size_t pretreatDataCentroids_old(
+        std::vector<ProfileBlock> *groupedData,
+        const std::vector<double> *spectrum_mz,
+        const std::vector<double> *spectrum_int);
+
     size_t pretreatDataCentroids(
         std::vector<ProfileBlock> *groupedData,
         const std::vector<double> *spectrum_mz,
@@ -175,12 +180,12 @@ namespace qAlgorithms
     bool calcApexAndValleyPos_old(
         RegressionGauss *mutateReg,
         const size_t scale,
-        float *valley_position);
+        double *valley_position);
 
     int calcApexAndValleyPos_new(
         RegressionGauss *mutateReg,
         const size_t scale,
-        float *valley_position);
+        double *valley_position);
 
     /**
      * @brief Calculate the Matrix Product of J * Xinv * J^T for uncertainty calculation.
@@ -193,7 +198,7 @@ namespace qAlgorithms
      */
     inline double multiplyVecMatrixVecTranspose(const double vec[4], size_t scale);
 
-    float apexToEdgeRatio(
+    double apexToEdgeRatio(
         const Range_i regSpan,
         const size_t idxEnd,
         const std::vector<float> *intensities);
@@ -201,20 +206,20 @@ namespace qAlgorithms
     bool isValidQuadraticTerm(
         const RegCoeffs coeff,
         const size_t scale,
-        const float mse,
+        const double mse,
         const size_t df_sum);
 
     bool isValidPeakHeight(
-        const float mse,
+        const double mse,
         const size_t scale,
-        const float apex_position,
-        float valley_position, // this value gets mutated in the function
+        const double apex_position,
+        const double valley_position,
         const size_t df_sum,
-        const float apexToEdge);
+        const double apexToEdge);
 
     void calcPeakHeightUncert(
         RegressionGauss *mutateReg,
-        const float mse,
+        const double mse,
         const size_t scale);
 
     /**
@@ -237,19 +242,19 @@ namespace qAlgorithms
      */
 
     void calcPeakAreaUncert(RegressionGauss *mutateReg,
-                            const float mse,
+                            const double mse,
                             const size_t scale);
 
     bool isValidPeakArea(
         const RegCoeffs *coeff,
-        const float mse,
+        const double mse,
         const size_t scale,
         const size_t df_sum);
 
     float calcUncertaintyPos(
-        const float mse,
+        const double mse,
         const RegCoeffs coeff,
-        const float apex_position,
+        const double apex_position,
         const size_t scale);
 
     struct MeanVar

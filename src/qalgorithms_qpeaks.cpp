@@ -14,6 +14,7 @@ namespace qAlgorithms
 {
 
     constexpr auto INV_ARRAY = initialize(); // this only works with constexpr square roots, which are part of C++26
+#define GLOBAL_MAXSCALE_CENTROID 8           // @todo this is a critical part of the algorithm and should not be hard-coded
 
     size_t hardFilter(std::vector<double> *mz, std::vector<double> *intensity, double minMZ, double maxMZ)
     {
@@ -109,7 +110,6 @@ namespace qAlgorithms
 
         std::vector<float> logIntensity(maxWindowSize, NAN);
 
-        const size_t GLOBAL_MAXSCALE_CENTROID = 8; // @todo this is a critical part of the algorithm and should not be hard-coded
         assert(GLOBAL_MAXSCALE_CENTROID <= MAXSCALE);
 
         std::vector<RegressionGauss> validRegressions;
@@ -122,7 +122,7 @@ namespace qAlgorithms
             assert(length > 4);
 
             // @todo adjust the scale dynamically based on the number of valid regressions found, early terminate after x iterations
-            const size_t maxScale = std::min(GLOBAL_MAXSCALE_CENTROID, (length - 1) / 2); // length - 1 because the center point is not part of the span
+            const size_t maxScale = std::min(size_t(GLOBAL_MAXSCALE_CENTROID), (length - 1) / 2); // length - 1 because the center point is not part of the span
 
             logIntensity.clear(); // this is now filled inside the function, the vector only reserves space
 
@@ -214,16 +214,16 @@ namespace qAlgorithms
         x0s.reserve(regressions.size());
 
         {
-            FILE *f = fopen("failedRegs.csv", "w");
-            if (f == NULL)
-            {
-                printf("Error opening file!\n");
-                exit(1);
-            }
+            // FILE *f = fopen("failedRegs.csv", "w");
+            // if (f == NULL)
+            // {
+            //     printf("Error opening file!\n");
+            //     exit(1);
+            // }
 
-            fprintf(f, "ID, x0, b0, b1, b2, b3, fail\n");
+            // fprintf(f, "ID, x0, b0, b1, b2, b3, fail\n");
 
-            fclose(f);
+            // fclose(f);
         }
 
         for (size_t range = 0; range < regressions.size(); range++)
@@ -278,20 +278,20 @@ namespace qAlgorithms
         mergeRegressionsOverScales(validRegressions, intensities);
 
         {
-            FILE *f = fopen("failedRegs.csv", "a");
-            if (f == NULL)
-            {
-                printf("Error opening file!\n");
-                exit(1);
-            }
+            // FILE *f = fopen("failedRegs.csv", "a");
+            // if (f == NULL)
+            // {
+            //     printf("Error opening file!\n");
+            //     exit(1);
+            // }
 
-            for (size_t i = 0; i < regressions.size(); i++)
-            {
-                auto r = regressions.at(i);
-                fprintf(f, "%zu, %d, %f, %f, %f, %f, %d\n", globalCount, x0s[i], r.b0, r.b1, r.b2, r.b3, failures[i]);
-            }
+            // for (size_t i = 0; i < regressions.size(); i++)
+            // {
+            //     auto r = regressions.at(i);
+            //     fprintf(f, "%zu, %d, %f, %f, %f, %f, %d\n", globalCount, x0s[i], r.b0, r.b1, r.b2, r.b3, failures[i]);
+            // }
 
-            fclose(f);
+            // fclose(f);
         }
         globalCount += 1;
     }
@@ -677,7 +677,6 @@ namespace qAlgorithms
         calcRSS_reg
         isValidQuadraticTerm
         isValidPeakArea
-        calcPeakHeightUncert
         isValidPeakHeight
         calcSSE_chisqared
         smearingCorrection
@@ -709,31 +708,29 @@ namespace qAlgorithms
           Apex and Valley Position Filter:
           This block of code implements the apex and valley position filter.
           It calculates the apex and valley positions based on the coefficients
-          matrix B. If the apex is outside the data range, the loop continues
-          to the next iteration. If the apex and valley positions are too close
-          to each other, the loop continues to the next iteration.
+          matrix B.
         */
-        float valley_position = 0;
-        // no easy replace
-        bool first = calcApexAndValleyPos_old(mutateReg, scale, &valley_position);
-        int second = calcApexAndValleyPos_new(mutateReg, scale, &valley_position);
+        double valley_position = 0;
+        // bool first = calcApexAndValleyPos_old(mutateReg, scale, &valley_position);
+        int failure = calcApexAndValleyPos_new(mutateReg, scale, &valley_position);
 
-        assert(first == (second == 0)); // both succeed
+        // assert(first == (failure == 0)); // both succeed
 
-        if (!first) // no allocations
+        if (failure != 0) // something went wrong
         {
             return 2; // invalid apex and valley positions
         }
         /*
           Area Pre-Filter:
           This test is used to check if the later-used arguments for exp and erf
-          functions are within the valid range, i.e., |x^2| < 25. If the test fails,
-          the loop continues to the next iteration. @todo does this ever trigger, anyway? - remove the check
+          functions are within the valid range, i.e., |x^2| < 25.
+          @todo does this ever trigger, anyway? - remove the check
+            -> triggers for orbitrap - can we use this somehow?
           x is in this case -apex_position * b1 / 2 and -valley_position * b1 / 2.
         */
         if (mutateReg->apex_position * mutateReg->coeffs.b1 > 50 || valley_position * mutateReg->coeffs.b1 < -50)
         {
-            printf("Area pre-filter triggered\n");
+            // printf("Area pre-filter triggered\n");
             return 3; // invalid area pre-filter
         }
 
@@ -888,6 +885,8 @@ namespace qAlgorithms
             return;
         }
         size_t absValley = size_t(valleyPos);
+        assert(absValley >= 2);
+
         bool valleyLeft = valleyPos < 0;
         if (valleyLeft)
         {
@@ -1516,7 +1515,7 @@ namespace qAlgorithms
     int calcApexAndValleyPos_new(
         RegressionGauss *mutateReg,
         const size_t scale,
-        float *valley_position)
+        double *valley_position)
     {
         // assert(valley_position == 0); // @todo remove for final implementation?
 
@@ -1531,8 +1530,11 @@ namespace qAlgorithms
         bool farOut_b2 = position_b2 < -float(scale) + 1;
         bool farOut_b3 = position_b3 > float(scale) - 1;
 
-        // range check: The valley would be too close to the apex for a valid peak
-        if ((valley_left || valley_right) && (std::abs(position_b3 - position_b2) < 2))
+        // range check: There is at most one point in the left or right half of the peak
+        if (valley_left && position_b2 > -2)
+            return 1;
+
+        if (valley_right && position_b3 < 2)
             return 1;
 
         if (apexLeft)
@@ -1545,7 +1547,7 @@ namespace qAlgorithms
             if (farOut_b2)
                 return 3;
 
-            assert(mutateReg->apex_position == position_b2);
+            // assert(mutateReg->apex_position == position_b2);
             mutateReg->apex_position = position_b2;
 
             if (valley_right)
@@ -1561,7 +1563,7 @@ namespace qAlgorithms
             if (farOut_b3)
                 return 5;
 
-            assert(mutateReg->apex_position == position_b3);
+            // assert(mutateReg->apex_position == position_b3);
             mutateReg->apex_position = position_b3;
 
             if (valley_left)
@@ -1574,7 +1576,7 @@ namespace qAlgorithms
     bool calcApexAndValleyPos_old(
         RegressionGauss *mutateReg,
         const size_t scale,
-        float *valley_position)
+        double *valley_position)
     /* ### allocations ###
         none!
 
@@ -1658,9 +1660,7 @@ namespace qAlgorithms
         }
     }
 
-#pragma region "isValidApexToEdge"
-
-    float apexToEdgeRatio(
+    double apexToEdgeRatio(
         const Range_i regSpan,
         const size_t idxApex,
         const std::vector<float> *intensities)
@@ -1675,13 +1675,10 @@ namespace qAlgorithms
         return (left < right) ? (apex / left) : (apex / right);
     }
 
-#pragma endregion "isValidApexToEdge"
-
-#pragma region isValidQuadraticTerm
     bool isValidQuadraticTerm(
         const RegCoeffs coeff,
         const size_t scale,
-        const float mse,
+        const double mse,
         const size_t df_sum)
     {
         float divisor = std::sqrt(INV_ARRAY[scale * 6 + 4] * mse); // inverseMatrix_2_2 is at position 4 of initialize()
@@ -1691,13 +1688,10 @@ namespace qAlgorithms
         return tValue > T_VALUES[df_sum - 5] * divisor;            // statistical significance of the quadratic term
         // note that the tvalue would have to be divided by the divisor, but this is not always compiled to a multiplication
     }
-#pragma endregion isValidQuadraticTerm
-
-#pragma region isValidPeakHeight
 
     void calcPeakHeightUncert(
         RegressionGauss *mutateReg,
-        const float mse,
+        const double mse,
         const size_t scale)
     {
         double Jacobian_height[4]{1, 0, 0, 0};         // Jacobian matrix for the height
@@ -1719,57 +1713,59 @@ namespace qAlgorithms
     }
 
     bool isValidPeakHeight(
-        const float mse,
+        const double mse,
         const size_t scale,
-        const float apex_position,
-        float valley_position, // this value gets mutated in the function
+        const double apex_position,
+        const double valley_position,
         const size_t df_sum,
-        const float apexToEdge)
+        const double apexToEdge)
     {
         // check if the peak height is significantly greater than edge signal
         double Jacobian_height[4]{0, 0, 0, 0};
         const bool apexLeft = apex_position < 0;
-        const double altValley = double(scale) * apexLeft ? -1 : 1;
+        const double altValley = double(scale) * (apexLeft ? -1 : 1);
         const double valley = valley_position == 0 ? altValley : valley_position;
         const double j1 = apex_position - valley;
-        const double j23 = apex_position * apex_position - valley_position * valley_position;
+        const double j23 = apex_position * apex_position - valley * valley;
         const double j2 = apexLeft ? j23 : 0;
         const double j3 = apexLeft ? 0 : j23;
         const double jacobianHeight[4]{0, j1, j2, j3};
+
+        double valley_position2 = valley_position;
 
         if (apexLeft)
         {
             // float edge_position = (valley_position != 0) ? valley_position : static_cast<float>(-scale);
             if (valley_position == 0)
             {
-                valley_position = static_cast<float>(scale) * -1;
+                valley_position2 = static_cast<double>(scale) * -1;
             }
 
-            Jacobian_height[1] = apex_position - valley_position;
-            Jacobian_height[2] = apex_position * apex_position - valley_position * valley_position; // adjust for uncertainty calculation of apex to edge ratio
+            Jacobian_height[1] = apex_position - valley_position2;
+            Jacobian_height[2] = apex_position * apex_position - valley_position2 * valley_position2; // adjust for uncertainty calculation of apex to edge ratio
         }
         else
         {
             if (valley_position == 0)
             {
-                valley_position = static_cast<float>(scale);
+                valley_position2 = static_cast<double>(scale);
             }
-            Jacobian_height[1] = apex_position - valley_position;
-            Jacobian_height[3] = apex_position * apex_position - valley_position * valley_position; // adjust for uncertainty calculation of apex to edge ratio
+            Jacobian_height[1] = apex_position - valley_position2;
+            Jacobian_height[3] = apex_position * apex_position - valley_position2 * valley_position2; // adjust for uncertainty calculation of apex to edge ratio
         }
 
-        assert(jacobianHeight[1] == Jacobian_height[1]);
-        assert(jacobianHeight[2] == Jacobian_height[2]);
-        assert(jacobianHeight[3] == Jacobian_height[3]);
+        assert(float(jacobianHeight[1]) == float(Jacobian_height[1]));
+        assert(float(jacobianHeight[2]) == float(Jacobian_height[2]));
+        assert(float(jacobianHeight[3]) == float(Jacobian_height[3]));
 
         float uncertainty_apexToEdge = std::sqrt(mse * multiplyVecMatrixVecTranspose(Jacobian_height, scale));
-        return (apexToEdge - 2) / (apexToEdge * uncertainty_apexToEdge) > T_VALUES[df_sum - 5];
+
+        // @todo why -2? Just to account for position?
+        bool peakHeightSignificant = (apexToEdge - 2) > T_VALUES[df_sum - 5] * (apexToEdge * uncertainty_apexToEdge);
+        return peakHeightSignificant;
     }
-#pragma endregion isValidPeakHeight
 
-#pragma region isValidPeakArea
-
-    void calcPeakAreaUncert(RegressionGauss *mutateReg, const float mse, const size_t scale)
+    void calcPeakAreaUncert(RegressionGauss *mutateReg, const double mse, const size_t scale)
     {
         double b1 = mutateReg->coeffs.b1;
         double b2 = mutateReg->coeffs.b2;
@@ -1818,7 +1814,7 @@ namespace qAlgorithms
 
     bool isValidPeakArea(
         const RegCoeffs *coeff,
-        const float mse,
+        const double mse,
         const size_t scale,
         const size_t df_sum)
     // no allocations
@@ -1932,24 +1928,27 @@ namespace qAlgorithms
             const double J_2_R_covered = -J_2_common_R - J_1_R_covered * B1_2_B3;
 
             J_covered[0] = J_1_R_covered + J_1_L_covered - trpzd_b0;
-            assert(J_covered[0] > 0); // not including b0 was probably correct, but why?
             J_covered[1] = J_2_R_covered + J_2_L_covered - trpzd_b1;
             J_covered[2] = -B1_2_B2 * (J_2_L_covered + J_1_L_covered / b1) - trpzd_b2;
             J_covered[3] = -B1_2_B3 * (J_2_R_covered + J_1_R_covered / b1) - trpzd_b3;
         }
+        if (J_covered[0] < 0)
+            return false;
 
         float area_uncertainty_covered = std::sqrt(mse * multiplyVecMatrixVecTranspose(J_covered, scale));
 
-        // statistical significance of the peak area @todo potential source of error here
-        return J_covered[0] > T_VALUES[df_sum - 5] * area_uncertainty_covered;
+        // J[0] / uncertainty > Tval
+        bool J_is_significant = J_covered[0] > T_VALUES[df_sum - 5] * area_uncertainty_covered;
+
+        return J_is_significant;
     }
 #pragma endregion isValidPeakArea
 
 #pragma region "calcUncertaintyPosition"
     float calcUncertaintyPos(
-        const float mse,
+        const double mse,
         const RegCoeffs coeff,
-        const float apex_position,
+        const double apex_position,
         const size_t scale)
     {
         double _b1 = 1 / coeff.b1;
@@ -2248,21 +2247,21 @@ namespace qAlgorithms
             spectrum_int.clear();
             groupedData.clear();
 
-            i = 0;
+            // i = 0;
 
             size_t ID_spectrum = selectedIndices->at(i);
             data.get_spectrum(&spectrum_mz, &spectrum_int, ID_spectrum);
 
-            // volatile bool printThis = false;
-            // if (printThis)
-            // {
-            //     FILE *f = fopen("./spectrum0.csv", "w");
-            //     fprintf(f, "mz,int\n");
-            //     for (size_t j = 0; j < spectrum_mz.size(); j++)
-            //     {
-            //         fprintf(f, "%f,%.1f\n", spectrum_mz[j], spectrum_int[j]);
-            //     }
-            // }
+            volatile bool printThis = false;
+            if (printThis)
+            {
+                FILE *f = fopen("./spectrum1.csv", "w");
+                fprintf(f, "mz,int\n");
+                for (size_t j = 0; j < spectrum_mz.size(); j++)
+                {
+                    fprintf(f, "%f,%.1f\n", spectrum_mz[j], spectrum_int[j]);
+                }
+            }
 
             // ### @todo this is for development only, highly inefficient at scale! ###
             // hardFilter(&spectrum_mz, &spectrum_int, 247.1, 247.3);
@@ -2350,6 +2349,122 @@ namespace qAlgorithms
         }
     }
 
+    size_t pretreatDataCentroids(
+        std::vector<ProfileBlock> *groupedData,
+        const std::vector<double> *spectrum_mz,
+        const std::vector<double> *spectrum_int)
+    {
+        assert(groupedData->empty());
+        assert(spectrum_int->size() == spectrum_mz->size());
+        // this function walks through both spectra and fills a vector of blocks
+        // every block is a region which is searched for centroids. Further, the
+        // edges of the block are interpolated such that the third real point (which
+        // is the start of valid regressions) can be occupied with a symmetric regression
+        // of the maximum scale (currently 8)
+        // the function returns the largest created block.
+
+        // const float minIntensity = 10; // @todo bad solution?
+
+        std::vector<Range_i> ranges;
+        ranges.reserve(64);
+        size_t rangeStart = 0;
+        size_t maxRangeSpan = 0;
+
+        // fill the vec of ranges by iterating over mz and rt. all ranges are >5 points
+        for (size_t pos = 0; pos < spectrum_int->size(); pos++)
+        {
+            if (spectrum_int->at(pos) < 1) // this should generally be the same as == 0
+            {
+                size_t span = pos - rangeStart + 1;
+                if (span > 5)
+                {
+                    // at least five points, add block
+                    // pos - 1 is used since pos is 0
+                    ranges.push_back({rangeStart, pos - 1});
+                    maxRangeSpan = maxRangeSpan > span ? maxRangeSpan : span;
+                }
+                rangeStart = pos + 1;
+            }
+        }
+
+        assert(!ranges.empty());
+        assert(maxRangeSpan > 4);
+        groupedData->reserve(ranges.size());
+
+        const static size_t maxExtra = GLOBAL_MAXSCALE_CENTROID - 2; // at least two real points per half
+        maxRangeSpan += 2 * maxExtra;
+        std::vector<float> insert_ms(maxRangeSpan, NAN);
+        std::vector<float> insert_int(maxRangeSpan, NAN);
+        std::vector<unsigned int> cumdf(maxRangeSpan, NAN);
+
+        for (size_t i = 0; i < ranges.size(); i++)
+        {
+            // extrapolate every range. Intensities are extrapolated by halving, so the outermost real
+            // intensity * 2^n is used for the nth point of the extrapolation. This allows us to use
+            // bit shifts (+cast) to do the division as intensity / (1 << n)
+            insert_ms.clear();
+            insert_int.clear();
+            cumdf.clear();
+
+            const size_t idxL = ranges[i].startIdx;
+            const size_t idxR = ranges[i].endIdx;
+
+            // left extrapolate
+            {
+                const double mzDiff_L = spectrum_mz->at(idxL + 1) - spectrum_mz->at(idxL);
+                const double leftInt = spectrum_int->at(idxL);
+                assert(leftInt > 1);
+                for (size_t L = maxExtra; L > 0; L--)
+                {
+                    double newMZ = spectrum_mz->at(idxL) - mzDiff_L * L;
+                    insert_ms.push_back(newMZ);
+
+                    int divisor = 1 << L;
+                    double newInt = leftInt / double(divisor);
+                    insert_int.push_back(newInt);
+
+                    cumdf.push_back(0);
+                }
+            }
+
+            // copy real values
+            {
+                for (size_t M = idxL; M <= idxR; M++)
+                {
+                    insert_ms.push_back(spectrum_mz->at(M));
+                    insert_int.push_back(spectrum_int->at(M));
+                    size_t newdf = cumdf.back() + 1;
+                    cumdf.push_back(newdf);
+                }
+            }
+
+            // right extrapolate
+            {
+                const double mzDiff_R = spectrum_mz->at(idxR) - spectrum_mz->at(idxR - 1);
+                const double rightInt = spectrum_int->at(idxR);
+                assert(rightInt > 1);
+                size_t df = cumdf.back();
+                for (size_t R = 1; R <= maxExtra; R++)
+                {
+                    double newMZ = spectrum_mz->at(idxR) - mzDiff_R * R;
+                    insert_ms.push_back(newMZ);
+
+                    int divisor = 1 << R;
+                    double newInt = rightInt / double(divisor);
+                    insert_int.push_back(newInt);
+
+                    cumdf.push_back(df);
+                }
+            }
+            ProfileBlock b = {insert_int,
+                              insert_ms,
+                              cumdf,
+                              idxL, idxR};
+            groupedData->push_back(b);
+        }
+        return maxRangeSpan;
+    }
+
     inline ProfileBlock initBlock(size_t blocksize)
     {
         std::vector<float> mz_int(blocksize, 0);
@@ -2397,7 +2512,7 @@ namespace qAlgorithms
         block->cumdf[blocksize - 1] = blocksize - 4;
     }
 
-    size_t pretreatDataCentroids(
+    size_t pretreatDataCentroids_old(
         std::vector<ProfileBlock> *groupedData,
         const std::vector<double> *spectrum_mz,
         const std::vector<double> *spectrum_int)
