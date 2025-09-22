@@ -195,7 +195,7 @@ namespace qAlgorithms
         assert(validRegressions->empty());
 
         // coefficients for single-b0 peaks, spans all regressions over a peak window
-        const std::vector<RegCoeffs> regressions = findCoefficients(intensities_log, maxScale);
+        const std::vector<RegCoeffs> regressions = findCoefficients_new(intensities_log, maxScale);
 
         const size_t numPoints = intensities->size();
         // all entries in coeff are sorted by scale in ascending order - this is not checked!
@@ -356,7 +356,7 @@ namespace qAlgorithms
         const std::vector<float> *intensity_log,
         const size_t maxScale) // maximum scale that will be checked. Should generally be limited by peakFrame
     /* ### allocations ###
-        beta_0 etc.: size calculated in function *4 * f32
+       coeffs: allocation size known at function call
     */
     {
         assert(maxScale > 1);
@@ -364,98 +364,76 @@ namespace qAlgorithms
         const unsigned int minScale = 2;
         assert(minScale <= maxScale);
 
-        // number of real points * number of scales
-        const size_t iterationCount = (intensity_log->size() - 2 * maxScale) * (maxScale - minScale + 1);
-        // these arrays contain all coefficients for every loop iteration @todo arena allocator here
-        std::vector<double> beta_0(iterationCount, NAN);
-        std::vector<double> beta_1(iterationCount, NAN);
-        std::vector<double> beta_2(iterationCount, NAN);
-        std::vector<double> beta_3(iterationCount, NAN);
+        const size_t regsPerScale = intensity_log->size() - 2 * maxScale;
+        const size_t totalScales = maxScale - minScale + 1;
+        const size_t iterationCount = regsPerScale * totalScales;
 
-        // the product sums are the rows of the design matrix (xT) * intensity_log[i:i+4] (dot product)
-        // The first n entries are contained in the b0 vector, one for each peak the regression is performed
-        // over.
-        double tmp_product_sum_b0 = 0;
-        double tmp_product_sum_b1 = 0;
-        double tmp_product_sum_b2 = 0;
-        double tmp_product_sum_b3 = 0;
+        std::vector<RegCoeffs> coeffs(iterationCount, {NAN, NAN, NAN, NAN});
 
+        // the first n points of every region are extrapolated, where n is the maximum scale -2
         const size_t limit = intensity_log->size() - maxScale;
 
-        size_t k = 0;
-        for (size_t i = maxScale; i < limit; i++)
+        size_t scale5Count = 0;
+        for (size_t center = maxScale; center < limit; center++)
         {
+            const float *cen = intensity_log->data() + center; // this is initially the third real point
+
             // move along the intensity_log (outer loop)
             // calculate the convolution with the kernel of the lowest scale (= 2), i.e. xT * intensity_log[i:i+4]
-            // tmp_product_sum_b0_vec = intensity_log[i:i+5].sum(axis=0) // numPeaks rows of xT * intensity_log[i:i+4]
+            // the product sums are the rows of the design matrix (xT) * intensity_log[i:i+4] (dot product)
+            // b0 is 1, 1, 1, 1, 1
+            double product_sum_b0 = *(cen - 2) + *(cen - 1) + *(cen) + *(cen + 1) + *(cen + 2);
+            // b1 is -2, -1, 0, 1, 2
+            double product_sum_b1 = -2 * *(cen - 2) + -1 * *(cen - 1) + 1 * *(cen + 1) + 2 * *(cen + 2);
+            // b2 is 4, 1, 0, 0, 0
+            double product_sum_b2 = 4 * *(cen - 2) + 1 * *(cen - 1);
+            // b3 is 0, 0, 0, 1, 4
+            double product_sum_b3 = 1 * *(cen + 1) + 4 * *(cen + 2);
+            {
+                const double inv_A = INV_ARRAY[minScale * 6 + 0];
+                const double inv_B = INV_ARRAY[minScale * 6 + 1];
+                const double inv_C = INV_ARRAY[minScale * 6 + 2];
+                const double inv_D = INV_ARRAY[minScale * 6 + 3];
+                const double inv_E = INV_ARRAY[minScale * 6 + 4];
+                const double inv_F = INV_ARRAY[minScale * 6 + 5];
 
-            tmp_product_sum_b0 = intensity_log->at(i) + intensity_log->at(i + 1) +
-                                 intensity_log->at(i + 2) + intensity_log->at(i + 3) +
-                                 intensity_log->at(i + 4); // b0 = 1 for all elements
-            tmp_product_sum_b1 = 2 * (intensity_log->at(i + 4) - intensity_log->at(i)) +
-                                 intensity_log->at(i + 3) - intensity_log->at(i + 1);
-            tmp_product_sum_b2 = 4 * intensity_log->at(i) + intensity_log->at(i + 1);
-            tmp_product_sum_b3 = 4 * intensity_log->at(i + 4) + intensity_log->at(i + 3);
-
-            // use [12 + ...] since the array is constructed for the accession array[scale * 6 + (0:5)]
-            const double S2_A = INV_ARRAY[12 + 0];
-            const double S2_B = INV_ARRAY[12 + 1];
-            const double S2_C = INV_ARRAY[12 + 2];
-            const double S2_D = INV_ARRAY[12 + 3];
-            const double S2_E = INV_ARRAY[12 + 4];
-            const double S2_F = INV_ARRAY[12 + 5];
-
-            // this line is: a*t_i + b * sum(t without i)
-            // inv_array starts at scale = 2
-            beta_0[k] = S2_A * tmp_product_sum_b0 + S2_B * (tmp_product_sum_b2 + tmp_product_sum_b3);
-            beta_1[k] = S2_C * tmp_product_sum_b1 + S2_D * (tmp_product_sum_b2 - tmp_product_sum_b3);
-            beta_2[k] = S2_B * tmp_product_sum_b0 + S2_D * tmp_product_sum_b1 + S2_E * tmp_product_sum_b2 + S2_F * tmp_product_sum_b3;
-            beta_3[k] = S2_B * tmp_product_sum_b0 - S2_D * tmp_product_sum_b1 + S2_F * tmp_product_sum_b2 + S2_E * tmp_product_sum_b3;
-
-            k += 1;       // number of regression at scale 2
-            size_t u = 1; // number of the scale
-            for (size_t scale = 3; scale < maxScale + 1; scale++)
-            { // minimum scale is 2. so we start with scale + 1 = 3 in the inner loop
-                double scale_sqr = double(scale * scale);
-                // expand the kernel to the left and right of the intensity_log.
-                tmp_product_sum_b0 += intensity_log->at(i - u) + intensity_log->at(i + 4 + u);
-                tmp_product_sum_b1 += scale * (intensity_log->at(i + 4 + u) - intensity_log->at(i - u));
-                tmp_product_sum_b2 += scale_sqr * intensity_log->at(i - u);
-                tmp_product_sum_b3 += scale_sqr * intensity_log->at(i + 4 + u);
-
-                const double inv_A = INV_ARRAY[12 + u * 6 + 0];
-                const double inv_B = INV_ARRAY[12 + u * 6 + 1];
-                const double inv_C = INV_ARRAY[12 + u * 6 + 2];
-                const double inv_D = INV_ARRAY[12 + u * 6 + 3];
-                const double inv_E = INV_ARRAY[12 + u * 6 + 4];
-                const double inv_F = INV_ARRAY[12 + u * 6 + 5];
-
-                const double inv_B_b0 = inv_B * tmp_product_sum_b0;
-                const double inv_D_b1 = inv_D * tmp_product_sum_b1;
-
-                beta_0[k] = inv_A * tmp_product_sum_b0 + inv_B * (tmp_product_sum_b2 + tmp_product_sum_b3);
-                beta_1[k] = inv_C * tmp_product_sum_b1 + inv_D * (tmp_product_sum_b2 - tmp_product_sum_b3);
-                beta_2[k] = inv_B_b0 + inv_D_b1 + inv_E * tmp_product_sum_b2 + inv_F * tmp_product_sum_b3;
-                beta_3[k] = inv_B_b0 - inv_D_b1 + inv_F * tmp_product_sum_b2 + inv_E * tmp_product_sum_b3;
-
-                u += 1; // update expansion increment
-                k += 1; // update index for the productsums array
+                // this line is: a*t_i + b * sum(t without i)
+                // inv_array starts at scale = 2
+                coeffs[scale5Count].b0 = inv_A * product_sum_b0 + inv_B * (product_sum_b2 + product_sum_b3);
+                coeffs[scale5Count].b1 = inv_C * product_sum_b1 + inv_D * (product_sum_b2 - product_sum_b3);
+                coeffs[scale5Count].b2 = inv_B * product_sum_b0 + inv_D * product_sum_b1 + inv_E * product_sum_b2 + inv_F * product_sum_b3;
+                coeffs[scale5Count].b3 = inv_B * product_sum_b0 - inv_D * product_sum_b1 + inv_F * product_sum_b2 + inv_E * product_sum_b3;
             }
-        }
 
-        assert(beta_0.size() == beta_1.size());
+            scale5Count += 1;
+            for (size_t scale = minScale + 1; scale < maxScale + 1; scale++)
+            {
+                // expand the kernel to the left and right of the intensity_log.
+                // b0 is expanded by the two outer points * 1
+                product_sum_b0 += *(cen - scale) + *(cen + scale);
+                // b1 is expanded by the points * scale, negative to the left
+                product_sum_b1 += -double(scale) * *(cen - scale) + double(scale) * *(cen + scale);
+                // b2 and b3 are expanded by scale^2 the outermost point to the left or right
+                double scale_sqr = double(scale * scale);
+                product_sum_b2 += scale_sqr * *(cen - scale);
+                product_sum_b3 += scale_sqr * *(cen + scale);
 
-        //@todo could the ratio of positives / negatives serve as a criterion for data quality in that region?
-        // printf("Both positive: %zu, one negative: %zu, both negative: %zu\n", bothPos, eitherPos, bothNeg);
-        // std::vector<RegCoeffs> coeffs;
-        coeffs.reserve(beta_0.size());
+                const double inv_A = INV_ARRAY[scale * 6 + 0];
+                const double inv_B = INV_ARRAY[scale * 6 + 1];
+                const double inv_C = INV_ARRAY[scale * 6 + 2];
+                const double inv_D = INV_ARRAY[scale * 6 + 3];
+                const double inv_E = INV_ARRAY[scale * 6 + 4];
+                const double inv_F = INV_ARRAY[scale * 6 + 5];
 
-        for (size_t i = 0; i < beta_0.size(); i++)
-        {
-            coeffs.push_back({beta_0[i],
-                              beta_1[i],
-                              beta_2[i],
-                              beta_3[i]});
+                const double inv_B_b0 = inv_B * product_sum_b0;
+                const double inv_D_b1 = inv_D * product_sum_b1;
+
+                const size_t access = regsPerScale * (scale - minScale);
+                coeffs[access].b0 = inv_A * product_sum_b0 + inv_B * (product_sum_b2 + product_sum_b3);
+                coeffs[access].b1 = inv_C * product_sum_b1 + inv_D * (product_sum_b2 - product_sum_b3);
+                coeffs[access].b2 = inv_B_b0 + inv_D_b1 + inv_E * product_sum_b2 + inv_F * product_sum_b3;
+                coeffs[access].b3 = inv_B_b0 - inv_D_b1 + inv_F * product_sum_b2 + inv_E * product_sum_b3;
+            }
         }
 
         return coeffs;
@@ -764,14 +742,12 @@ namespace qAlgorithms
         /*
           Area Pre-Filter:
           This test is used to check if the later-used arguments for exp and erf
-          functions are within the valid range, i.e., |x^2| < 25.
-          @todo does this ever trigger, anyway? - remove the check
-            -> triggers for orbitrap - can we use this somehow?
-          x is in this case -apex_position * b1 / 2 and -valley_position * b1 / 2.
+          functions are within the range for which both are defined, i.e., |x^2| < 25. x is in this case
+          -apex_position * b1 / 2 and -valley_position * b1 / 2.
+          The test is moved here instead of isValidPeakArea to save computation time @todo is this measureable?
         */
         if (mutateReg->apex_position * mutateReg->coeffs.b1 > 50 || valley_position * mutateReg->coeffs.b1 < -50)
         {
-            // printf("Area pre-filter triggered\n");
             return 3; // invalid area pre-filter
         }
 
@@ -2404,7 +2380,7 @@ namespace qAlgorithms
         // of the maximum scale (currently 8)
         // the function returns the largest created block.
 
-        // const float minIntensity = 10; // @todo bad solution?
+        const float minIntensity = 10; // @todo bad solution?
 
         std::vector<Range_i> ranges;
         ranges.reserve(64);
@@ -2414,10 +2390,10 @@ namespace qAlgorithms
         // fill the vec of ranges by iterating over mz and rt. all ranges are >5 points
         for (size_t pos = 0; pos < spectrum_int->size(); pos++)
         {
-            if (spectrum_int->at(pos) < 1) // this should generally be the same as == 0
+            if (spectrum_int->at(pos) < minIntensity) // this should generally be the same as == 0
             {
                 size_t span = pos - rangeStart + 1;
-                if (span > 5)
+                if (span >= 5)
                 {
                     // at least five points, add block
                     // pos - 1 is used since pos is 0
@@ -2426,6 +2402,13 @@ namespace qAlgorithms
                 }
                 rangeStart = pos + 1;
             }
+        }
+
+        size_t span = spectrum_int->size() - rangeStart;
+        if (span >= 5)
+        {
+            ranges.push_back({rangeStart, spectrum_int->size() - 1});
+            maxRangeSpan = maxRangeSpan > span ? maxRangeSpan : span;
         }
 
         assert(!ranges.empty());
