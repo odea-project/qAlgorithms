@@ -195,7 +195,7 @@ namespace qAlgorithms
         assert(validRegressions->empty());
 
         // coefficients for single-b0 peaks, spans all regressions over a peak window
-        const std::vector<RegCoeffs> regressions = findCoefficients_new(intensities_log, maxScale);
+        const std::vector<RegCoeffs> regressions = findCoefficients_new(intensities_log, GLOBAL_MAXSCALE_CENTROID);
 
         const size_t numPoints = intensities->size();
         // all entries in coeff are sorted by scale in ascending order - this is not checked!
@@ -204,9 +204,6 @@ namespace qAlgorithms
         validRegsTmp.reserve(numPoints);
         // the start index of the regression is the same as the index in beta. The end index is at 2*scale + index in beta.
         validRegsTmp.push_back(RegressionGauss{});
-
-        size_t scale = 2;
-        size_t idxStart = 0;
 
         std::vector<int> failures;
         failures.reserve(regressions.size());
@@ -226,6 +223,9 @@ namespace qAlgorithms
             // fclose(f);
         }
 
+        size_t scale = 2;
+        size_t idxStart = 0;
+        size_t remainingAtScale = GLOBAL_MAXSCALE_CENTROID - 2;
         for (size_t range = 0; range < regressions.size(); range++)
         {
             validRegsTmp.back().coeffs = regressions[range];
@@ -242,6 +242,7 @@ namespace qAlgorithms
 
             failures.push_back(failpoint);
             x0s.push_back(idxStart + scale);
+            remainingAtScale -= 1; // @todo this could be solved in a more sane way
 
             if (validRegsTmp.back().isValid)
             {
@@ -251,7 +252,7 @@ namespace qAlgorithms
             idxStart++;
             // for every set of scales, execute the validation + in-scale merge operation
             // early termination needed if maxscale is reached, since here idxStart is 1 and the compared value 0
-            if ((idxStart == numPoints - 2 * scale)) //|| (currentScale == maxScale))
+            if (remainingAtScale == 0) //|| (currentScale == maxScale))
             {
                 // remove the last regression, since it is always empty
                 validRegsTmp.pop_back();
@@ -268,6 +269,7 @@ namespace qAlgorithms
 
                 // reset loop
                 scale++;
+                remainingAtScale = GLOBAL_MAXSCALE_CENTROID - 2;
                 idxStart = 0;
                 validRegsTmp.clear();
                 validRegsTmp.push_back(RegressionGauss{});
