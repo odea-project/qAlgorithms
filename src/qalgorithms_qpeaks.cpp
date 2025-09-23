@@ -117,16 +117,22 @@ namespace qAlgorithms
         for (size_t i = 0; i < treatedData->size(); i++)   // 185
         {
             const auto block = &((*treatedData)[i]);
+            const auto block2 = treatedData->data() + i;
+
+            assert(block2->mz[1] == block->mz[1]);
+
             const size_t length = block->mz.size();
             assert(length == block->mz.size());
             assert(length > 4);
 
-            // @todo adjust the scale dynamically based on the number of valid regressions found, early terminate after x iterations
-            const size_t maxScale = std::min(size_t(GLOBAL_MAXSCALE_CENTROID), (length - 1) / 2); // length - 1 because the center point is not part of the span
-
             logIntensity.clear(); // this is now filled inside the function, the vector only reserves space
 
-            runningRegression(&block->intensity, &logIntensity, &block->cumdf, &validRegressions, maxScale, length - 2);
+            runningRegression(&block->intensity, &logIntensity, &block->cumdf, &validRegressions, GLOBAL_MAXSCALE_CENTROID, length - 2);
+
+            volatile bool purge = false;
+            if (purge)
+                validRegressions.clear();
+
             if (validRegressions.empty())
             {
                 continue; // no valid peaks
@@ -160,8 +166,6 @@ namespace qAlgorithms
         //     fclose(f);
         //     exit(1);
         // }
-
-        // assert(retPeaks->size() != 0); // at least one centroid per mass spectrum @todo not applicable to filtered regions
     }
 
 #pragma endregion "find peaks"
@@ -195,15 +199,13 @@ namespace qAlgorithms
         assert(validRegressions->empty());
 
         // coefficients for single-b0 peaks, spans all regressions over a peak window
-        const std::vector<RegCoeffs> regressions = findCoefficients_new(intensities_log, GLOBAL_MAXSCALE_CENTROID);
+        const std::vector<RegCoeffs> regressions = findCoefficients_new(intensities_log, maxScale);
 
         const size_t numPoints = intensities->size();
         // all entries in coeff are sorted by scale in ascending order - this is not checked!
 
         std::vector<RegressionGauss> validRegsTmp; // temporary vector to store valid regressions
         validRegsTmp.reserve(numPoints);
-        // the start index of the regression is the same as the index in beta. The end index is at 2*scale + index in beta.
-        validRegsTmp.push_back(RegressionGauss{});
 
         std::vector<int> failures;
         failures.reserve(regressions.size());
@@ -223,58 +225,51 @@ namespace qAlgorithms
             // fclose(f);
         }
 
-        size_t scale = 2;
-        size_t idxStart = 0;
-        size_t remainingAtScale = GLOBAL_MAXSCALE_CENTROID - 2;
-        for (size_t range = 0; range < regressions.size(); range++)
+        size_t access = 0;
+
+        const size_t backLim = numPoints - GLOBAL_MAXSCALE_CENTROID;
+        for (size_t scale = 2; scale <= GLOBAL_MAXSCALE_CENTROID; scale++)
         {
-            validRegsTmp.back().coeffs = regressions[range];
-            // the total span of the regression may not exceed the number of points
-            assert(idxStart + 2 * scale < numPoints);
-
-            int failpoint = makeValidRegression(degreesOfFreedom_cum,
-                                                intensities,
-                                                intensities_log,
-                                                &validRegsTmp.back(),
-                                                idxStart,
-                                                scale,
-                                                maxApexIdx);
-
-            failures.push_back(failpoint);
-            x0s.push_back(idxStart + scale);
-            remainingAtScale -= 1; // @todo this could be solved in a more sane way
-
-            if (validRegsTmp.back().isValid)
+            validRegsTmp.push_back(RegressionGauss{});
+            for (size_t idxCenter = GLOBAL_MAXSCALE_CENTROID; idxCenter < backLim; idxCenter++)
             {
-                validRegsTmp.push_back(RegressionGauss{});
+                validRegsTmp.back().coeffs = regressions[access];
+                assert(idxCenter + scale < numPoints);
+                int failpoint = makeValidRegression(degreesOfFreedom_cum,
+                                                    intensities,
+                                                    intensities_log,
+                                                    &validRegsTmp.back(),
+                                                    idxCenter,
+                                                    scale,
+                                                    maxApexIdx);
+
+                failures.push_back(failpoint);
+                x0s.push_back(idxCenter);
+
+                if (validRegsTmp.back().isValid)
+                {
+                    validRegsTmp.push_back(RegressionGauss{});
+                }
+                access += 1;
             }
 
-            idxStart++;
-            // for every set of scales, execute the validation + in-scale merge operation
-            // early termination needed if maxscale is reached, since here idxStart is 1 and the compared value 0
-            if (remainingAtScale == 0) //|| (currentScale == maxScale))
+            // remove the last regression, since it is always empty or invalid
+            validRegsTmp.pop_back();
+            // no valid peaks if the size of validRegsTemp is 0
+            if (validRegsTmp.size() == 1)
             {
-                // remove the last regression, since it is always empty
-                validRegsTmp.pop_back();
-                // no valid peaks if the size of validRegsTemp is 0
-                if (validRegsTmp.size() == 1)
-                {
-                    // only one valid peak, no fitering necessary
-                    validRegressions->push_back(std::move(validRegsTmp[0]));
-                }
-                else if (validRegsTmp.size() > 1)
-                {
-                    findBestScales(validRegressions, &validRegsTmp, intensities, degreesOfFreedom_cum);
-                }
-
-                // reset loop
-                scale++;
-                remainingAtScale = GLOBAL_MAXSCALE_CENTROID - 2;
-                idxStart = 0;
-                validRegsTmp.clear();
-                validRegsTmp.push_back(RegressionGauss{});
+                // only one valid peak, no fitering necessary
+                validRegressions->push_back(std::move(validRegsTmp[0]));
             }
+            else if (validRegsTmp.size() > 1)
+            {
+                findBestScales(validRegressions, &validRegsTmp, intensities, degreesOfFreedom_cum);
+            }
+
+            // reset loop
+            validRegsTmp.clear();
         }
+        assert(access == regressions.size());
 
         // there can be 0, 1 or more than one regressions in validRegressions
         mergeRegressionsOverScales(validRegressions, intensities);
@@ -366,7 +361,7 @@ namespace qAlgorithms
         const unsigned int minScale = 2;
         assert(minScale <= maxScale);
 
-        const size_t regsPerScale = intensity_log->size() - 2 * maxScale;
+        const size_t regsPerScale = intensity_log->size() - 2 * maxScale; // number of points with at least two real neighbours
         const size_t totalScales = maxScale - minScale + 1;
         const size_t iterationCount = regsPerScale * totalScales;
 
@@ -407,7 +402,6 @@ namespace qAlgorithms
                 coeffs[scale5Count].b3 = inv_B * product_sum_b0 - inv_D * product_sum_b1 + inv_F * product_sum_b2 + inv_E * product_sum_b3;
             }
 
-            scale5Count += 1;
             for (size_t scale = minScale + 1; scale < maxScale + 1; scale++)
             {
                 // expand the kernel to the left and right of the intensity_log.
@@ -430,12 +424,13 @@ namespace qAlgorithms
                 const double inv_B_b0 = inv_B * product_sum_b0;
                 const double inv_D_b1 = inv_D * product_sum_b1;
 
-                const size_t access = regsPerScale * (scale - minScale);
+                const size_t access = regsPerScale * (scale - minScale) + scale5Count;
                 coeffs[access].b0 = inv_A * product_sum_b0 + inv_B * (product_sum_b2 + product_sum_b3);
                 coeffs[access].b1 = inv_C * product_sum_b1 + inv_D * (product_sum_b2 - product_sum_b3);
                 coeffs[access].b2 = inv_B_b0 + inv_D_b1 + inv_E * product_sum_b2 + inv_F * product_sum_b3;
                 coeffs[access].b3 = inv_B_b0 - inv_D_b1 + inv_F * product_sum_b2 + inv_E * product_sum_b3;
             }
+            scale5Count += 1;
         }
 
         return coeffs;
@@ -675,14 +670,14 @@ namespace qAlgorithms
         }
     }
 
-    void updateRegRange(RegressionGauss *mutateReg, const size_t idxStart, const size_t scale, const float valleyPos);
+    void updateRegRange(RegressionGauss *mutateReg, const size_t idxCenter, const size_t scale, const float valleyPos);
 
     int makeValidRegression( // returns the number of the failed test
         const std::vector<unsigned int> *degreesOfFreedom_cum,
         const std::vector<float> *intensities,
         const std::vector<float> *intensities_log,
         RegressionGauss *mutateReg,
-        const size_t idxStart,
+        const size_t idxCenter,
         const size_t scale,
         const size_t maxApexPos)
     /* ### allocations ###
@@ -706,7 +701,8 @@ namespace qAlgorithms
     {
         assert(!mutateReg->isValid);
         assert(scale > 1);
-        assert(idxStart + 4 < degreesOfFreedom_cum->size());
+        assert(idxCenter >= scale);
+        assert(idxCenter + scale < degreesOfFreedom_cum->size());
         assert(mutateReg->coeffs.b0 < 100 && mutateReg->coeffs.b0 > -100);
         assert(mutateReg->coeffs.b1 < 100 && mutateReg->coeffs.b1 > -100);
         assert(mutateReg->coeffs.b2 < 100 && mutateReg->coeffs.b2 > -100);
@@ -753,16 +749,11 @@ namespace qAlgorithms
             return 3; // invalid area pre-filter
         }
 
-        updateRegRange(mutateReg, idxStart, scale, valley_position);
+        updateRegRange(mutateReg, idxCenter, scale, valley_position);
 
         assert(mutateReg->regSpan.endIdx < intensities->size());
-        const size_t idx_x0 = idxStart + scale;
 
-        /*
-            Note: left and right limit are not the limits of the regression, but of the window the regression applies in.
-            When multiple regressions are combined, the window limits are combined by maximum.
-        */
-        if (idx_x0 - mutateReg->regSpan.startIdx < 2 || (mutateReg->regSpan.endIdx - idx_x0 < 2))
+        if (idxCenter - mutateReg->regSpan.startIdx < 2 || (mutateReg->regSpan.endIdx - idxCenter < 2))
         {
             // only one half of the regression applies to the data, since the
             // degrees of freedom for the "squished" half results in an invalid regression
@@ -784,7 +775,7 @@ namespace qAlgorithms
           ratio is greater than 2. This is a pre-filter for later
           signal-to-noise ratio checkups. apexToEdge is also required in isValidPeakHeight further down
         */
-        size_t idxApex = (size_t)mutateReg->apex_position + idx_x0;
+        size_t idxApex = (size_t)mutateReg->apex_position + idxCenter;
         float apexToEdge = apexToEdgeRatio(mutateReg->regSpan, idxApex, intensities);
         if (!(apexToEdge > 2))
         {
@@ -792,7 +783,7 @@ namespace qAlgorithms
         }
 
         double RSS_reg = calcRSS_reg(&mutateReg->coeffs, intensities_log,
-                                     mutateReg->regSpan, idx_x0);
+                                     mutateReg->regSpan, idxCenter);
 
         /*
         competing regressions filter:
@@ -859,7 +850,7 @@ namespace qAlgorithms
           the exponential domain. If the chi-square value is less than the corresponding
           value in the CHI_SQUARES, the regression is invalid.
         */
-        float chiSquare = calcSSE_chisqared(mutateReg->coeffs, intensities, mutateReg->regSpan, idx_x0);
+        float chiSquare = calcSSE_chisqared(mutateReg->coeffs, intensities, mutateReg->regSpan, idxCenter);
         if (chiSquare < CHI_SQUARES[df_sum - 5])
         {
             return 13; // statistical insignificance of the chi-square value
@@ -879,7 +870,7 @@ namespace qAlgorithms
 
         mutateReg->uncertainty_pos = calcUncertaintyPos(mse, mutateReg->coeffs, mutateReg->apex_position, scale);
         mutateReg->df = df_sum - 4; // @todo add explanation for -4
-        mutateReg->apex_position += idxStart + scale;
+        mutateReg->apex_position += idxCenter;
 
         // @todo this should be part of a more structured test
         if (mutateReg->apex_position < 2 || mutateReg->apex_position > maxApexPos)
@@ -888,35 +879,33 @@ namespace qAlgorithms
         }
 
         mutateReg->scale = scale;
-        mutateReg->index_x0 = idx_x0;
+        mutateReg->index_x0 = idxCenter;
         mutateReg->mse = mse; // the quadratic mse is used for the weighted mean of the coefficients later
         mutateReg->isValid = true;
         return 0;
     }
 
-    void updateRegRange(RegressionGauss *mutateReg, const size_t idxStart, const size_t scale, const float valleyPos)
+    void updateRegRange(RegressionGauss *mutateReg, const size_t idxCenter, const size_t scale, const float valleyPos)
     {
-        size_t rangeEnd = idxStart + 2 * scale;
+        size_t rangeStart = idxCenter - scale;
+        size_t rangeEnd = idxCenter + scale;
         if (valleyPos == 0) [[likely]]
         {
             // no valley point exists
-            mutateReg->regSpan = {idxStart, rangeEnd};
+            mutateReg->regSpan = {rangeStart, rangeEnd};
             return;
         }
-        size_t absValley = size_t(valleyPos);
+        size_t absValley = size_t(abs(valleyPos));
         assert(absValley >= 2);
 
+        // set start or end to the valley point if it is within the regression span
         bool valleyLeft = valleyPos < 0;
-        if (valleyLeft)
-        {
-            size_t newStart = absValley < scale ? idxStart + scale - absValley : idxStart;
-            mutateReg->regSpan = {newStart, rangeEnd};
-        }
-        else
-        {
-            size_t newEnd = std::min(rangeEnd, absValley + idxStart + scale);
-            mutateReg->regSpan = {idxStart, newEnd};
-        }
+        bool updateVal = absValley < scale;
+        size_t newStart = (valleyLeft && updateVal) ? idxCenter - absValley : rangeStart;
+        size_t newEnd = (valleyLeft && updateVal) ? idxCenter + absValley : rangeEnd;
+        mutateReg->regSpan = {newStart, newEnd};
+
+        assert(mutateReg->regSpan.endIdx > mutateReg->regSpan.startIdx);
         assert(mutateReg->regSpan.endIdx - mutateReg->regSpan.startIdx > 3);
     }
 
@@ -1097,7 +1086,7 @@ namespace qAlgorithms
     void createCentroidPeaks(
         std::vector<CentroidPeak> *peaks,
         const std::vector<RegressionGauss> *validRegressionsVec,
-        const ProfileBlock *block,
+        const ProfileBlock *block, // @todo replace with mz and trace range
         const size_t scanNumber,
         const size_t accessor)
     /* ### allocations ###
@@ -2472,7 +2461,7 @@ namespace qAlgorithms
                 size_t df = cumdf.back();
                 for (size_t R = 1; R <= maxExtra; R++)
                 {
-                    double newMZ = spectrum_mz->at(idxR) - mzDiff_R * R;
+                    double newMZ = spectrum_mz->at(idxR) + mzDiff_R * R;
                     insert_ms.push_back(newMZ);
 
                     int divisor = 1 << R;

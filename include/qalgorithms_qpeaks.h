@@ -135,7 +135,7 @@ namespace qAlgorithms
         const std::vector<float> *intensities,
         const std::vector<float> *intensities_log,
         RegressionGauss *mutateReg,
-        const size_t idxStart,
+        const size_t idxCenter,
         const size_t scale,
         const size_t maxApexPos);
 
