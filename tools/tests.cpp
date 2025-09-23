@@ -117,14 +117,18 @@ int main()
         size_t scale = 2;
         auto reg = findCoefficients(&logInts, scale);
         auto c = reg.front();
+        assert(reg.size() == 1);
+        auto reg2 = findCoefficients_new(&logInts, scale);
+        auto c2 = reg2.front();
 
-        printf("beta | expected | got\nb0 | %f | %f\nb0 | %f | %f\nb0 | %f | %f\nb0 | %f | %f\n",
-               8.5012159, c.b0, 0.1143269, c.b1, -0.4647133, c.b2, roundTo_d(-0.3706720, 5), c.b3); // @todo rounding does not work correctly
+        printf("beta | expected | got | new\nb0 | %f | %f| %f\nb0 | %f | %f| %f\nb0 | %f | %f| %f\nb0 | %f | %f| %f\n",
+               8.5012159, c.b0, c2.b0, 0.1143269, c.b1, c2.b1, -0.4647133, c.b2, c2.b2, roundTo_d(-0.3706720, 5), c.b3, c2.b3); // @todo rounding does not work correctly
 
         qass(roundTo_d(c.b0, 5) == roundTo_d(8.5012159, 5), "b0 is incorrect!");
         qass(roundTo_d(c.b1, 5) == roundTo_d(0.1143269, 5), "b1 is incorrect!");
         qass(roundTo_d(c.b2, 5) == roundTo_d(-0.4647133, 5), "b2 is incorrect!");
         qass(roundTo_d(c.b3, 5) == roundTo_d(-0.3706720, 5), "b3 is incorrect!");
+        printf("simple regression gives correct results");
     }
 
     // check if a difficult centroid is identified correctly
@@ -139,6 +143,7 @@ int main()
         const size_t length = block.mz.size();
         const size_t maxScale = 8; // @todo not bound to centroid maxscale
         std::vector<float> logIntensity(25, NAN);
+        logIntensity.clear();
         runningRegression(&block.intensity, &logIntensity, &block.cumdf, &validRegressions, maxScale, length - 2);
     }
 

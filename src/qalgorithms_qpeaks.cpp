@@ -200,6 +200,7 @@ namespace qAlgorithms
 
         // coefficients for single-b0 peaks, spans all regressions over a peak window
         const std::vector<RegCoeffs> regressions = findCoefficients_new(intensities_log, maxScale);
+        const std::vector<RegCoeffs> regressions_old = findCoefficients(intensities_log, maxScale);
 
         const size_t numPoints = intensities->size();
         // all entries in coeff are sorted by scale in ascending order - this is not checked!
@@ -1925,15 +1926,20 @@ namespace qAlgorithms
             const double J_2_common_R = B1_2_B3 / b1;
 
             // calculate the trapzoid correction terms for the jacobian matrix
-            const double trpzd_b0 = (y_right + y_left) * dX / 2;
-            const double trpzd_b1 = (x_right * y_right + x_left * y_left) * dX / 2;
-            const double trpzd_b2 = (x_left * x_left * y_left) * dX / 2;
-            const double trpzd_b3 = (x_right * x_right * y_right) * dX / 2;
+            double trpzd_b0 = (y_right + y_left) * dX / 2;
+            double trpzd_b1 = (x_right * y_right + x_left * y_left) * dX / 2;
+            double trpzd_b2 = (x_left * x_left * y_left) * dX / 2;
+            double trpzd_b3 = (x_right * x_right * y_right) * dX / 2;
 
             const double J_1_L_covered = J_1_common_L * err_L_covered;
             const double J_1_R_covered = J_1_common_R * err_R_covered;
             const double J_2_L_covered = J_2_common_L - J_1_L_covered * B1_2_B2;
             const double J_2_R_covered = -J_2_common_R - J_1_R_covered * B1_2_B3;
+
+            // trpzd_b0 = 0;
+            // trpzd_b1 = 0;
+            // trpzd_b2 = 0;
+            // trpzd_b3 = 0;
 
             J_covered[0] = J_1_R_covered + J_1_L_covered - trpzd_b0;
             J_covered[1] = J_2_R_covered + J_2_L_covered - trpzd_b1;
