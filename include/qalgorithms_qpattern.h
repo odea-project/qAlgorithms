@@ -7,9 +7,10 @@
 
 namespace qAlgorithms
 {
+#define MAX_COMPONENT_SIZE 16
     struct MultiRegression // @todo this will need to contain all the uncertainties of the original features and find a better solution to the whole bin window output
     {
-        float b0_vec[32];
+        float b0_vec[MAX_COMPONENT_SIZE];
         std::vector<float> cum_RSS; // one element per scan of the subgroup @todo this should is limited by 2*maxscale + 1
         // std::vector<float> b0_vec;
         // all indices relate to the full subgroup!
@@ -26,6 +27,23 @@ namespace qAlgorithms
         // float RT_apex;
         float DQS;
     };
+
+    std::vector<MultiRegression> findComponents_new(
+        // note: both features and bins contain a "componentID" field that is 0 by default.
+        // the componentisation function updates these fields in addition to returning the component regressions
+        std::vector<FeaturePeak> *features,
+        std::vector<EIC> *bins,
+        const std::vector<float> *convertRT, // this is needed to perform interpolation at the same RT as in qPeaks
+        size_t *featuresInComponents);
+
+    std::vector<Range_i> preGroup_new(const std::vector<FeaturePeak> *features);
+
+    // function to create the exclusion matrix
+    void pairwiseMatch(const Range_i *region, const std::vector<FeaturePeak> *features);
+
+    // calculate mse / some other regression param for the pair. Since a combined regression only makes sense
+    // if it has at least two points to each side for every regression, the EICs do not need to be expanded
+    double comparePair(const FeaturePeak *feat_A, const EIC *eic_A, const FeaturePeak *feat_B, const EIC *eic_B);
 
     // main function to execute a componentiation step on data
     std::vector<MultiRegression> findComponents(

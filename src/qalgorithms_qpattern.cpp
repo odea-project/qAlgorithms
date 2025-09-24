@@ -984,82 +984,98 @@ namespace qAlgorithms
 
     constexpr auto INV_ARRAY = initialize();
 
+    std::vector<RegCoeffs> findCoefficients_multi_new(
+        const std::vector<float> *intensity_log_b0,
+        const std::vector<float> *intensity_log_sum, // note: consider not just summing up the extrapolated values
+        const size_t numPeaks,
+        const size_t maxScale) // This must be the same maxscale as the one used during extrapolation!
+    /* ### allocations ###
+       coeffs: allocation size known at function call
+    */
+    {
+        assert(maxScale >= GLOBAL_MINSCALE);
+        assert(maxScale <= MAXSCALE);
+
+        const size_t length = intensity_log_sum->size();
+        assert(length > 2 * maxScale); // at least one valid point
+
+        const size_t regsPerScale = length - 2 * maxScale; // number of points with at least two real neighbours
+        const size_t totalScales = maxScale - GLOBAL_MINSCALE + 1;
+        const size_t iterationCount = regsPerScale * totalScales;
+
+        std::vector<RegCoeffs> coeffs(iterationCount, {NAN, NAN, NAN, NAN});
+        std::vector<float[MAX_COMPONENT_SIZE]> b0s(iterationCount);
+
+        // the first and last n points of every region are extrapolated, where n is the maximum scale -2.
+        // as such, the last point at which a regression is possible is maxscale points from the back.
+        const size_t limit = length - maxScale;
+
+        size_t scale5Count = 0;
+        for (size_t center = maxScale; center < limit; center++)
+        {
+            const float *cen_sum = intensity_log_sum->data() + center; // this is initially the third real point
+            double product_sum_b0 = cen_sum[-1] + cen_sum[0] + cen_sum[1];
+            double product_sum_b1 = -cen_sum[-1] + cen_sum[1];
+            double product_sum_b2 = cen_sum[-1];
+            double product_sum_b3 = cen_sum[1];
+
+            double single_sums_b0[MAX_COMPONENT_SIZE] = {0};
+            for (size_t i = 0; i < numPeaks; i++)
+            {
+                const float *cen_inner = intensity_log_b0->data() + i * length + center;
+                single_sums_b0[i] = cen_inner[-1] + cen_inner[0] + cen_inner[1];
+            }
+
+            // it is not possible to choose a different minscale since that would break the iterative sum
+            for (size_t scale = GLOBAL_MINSCALE; scale <= maxScale; scale++)
+            {
+                product_sum_b0 += cen_sum[-scale] + cen_sum[scale];
+                product_sum_b1 += -double(scale) * cen_sum[-scale] + double(scale) * cen_sum[scale];
+                double scale_sqr = double(scale * scale);
+                product_sum_b2 += scale_sqr * cen_sum[-scale];
+                product_sum_b3 += scale_sqr * cen_sum[scale];
+
+                for (size_t i = 0; i < numPeaks; i++)
+                {
+                    const float *cen_inner = intensity_log_b0->data() + i * length + center;
+                    single_sums_b0[i] += cen_inner[-scale] + cen_inner[scale];
+                }
+
+                const double *inv = INV_ARRAY.data() + scale * 6;
+                const double inv_A = inv[0];
+                const double inv_B = inv[1];
+                const double inv_C = inv[2];
+                const double inv_D = inv[3];
+                const double inv_E = inv[4];
+                const double inv_F = inv[5];
+
+                const double inv_B_b0 = inv_B * product_sum_b0;
+                const double inv_D_b1 = inv_D * product_sum_b1;
+
+                const size_t access = regsPerScale * (scale - GLOBAL_MINSCALE) + scale5Count;
+                // coeffs[access].b0 = inv_A * product_sum_b0 + inv_B * (product_sum_b2 + product_sum_b3);
+                coeffs[access].b1 = inv_C * product_sum_b1 + inv_D * (product_sum_b2 - product_sum_b3);
+                coeffs[access].b2 = inv_B_b0 + inv_D_b1 + inv_E * product_sum_b2 + inv_F * product_sum_b3;
+                coeffs[access].b3 = inv_B_b0 - inv_D_b1 + inv_F * product_sum_b2 + inv_E * product_sum_b3;
+
+                for (size_t i = 0; i < numPeaks; i++)
+                {
+                    b0s[access][i] = inv_A * single_sums_b0[i] + inv_B * (product_sum_b2 + product_sum_b3);
+                }
+            }
+            scale5Count += 1;
+        }
+
+        // @todo also return b0s
+        return coeffs;
+    }
+
     std::vector<MultiRegression> findCoefficients_multi( // @todo add option for a minimum scale
         const std::vector<float> *intensity_log,
         const size_t max_scale, // maximum scale that will be checked. Should generally be limited by peakFrame
         const size_t numPeaks,
         const size_t peakFrame) // how many points are covered per peak? For single-peak data, this is the length of intensity_log
     {
-        /*
-  This function performs a convolution with the kernel: (xTx)^-1 xT and the data array: intensity_log.
-  (xTx)^-1 is pre_calculated and stored in the inv_array and contains 7 unique values per scale.
-  xT is the transpose of the design matrix X that looks like this:
-  for scale = 2:
-  xT = | 1  1  1  1  1 |    : all ones
-       |-2 -1  0  1  2 |    : from -scale to scale
-       | 4  1  0  0  0 |    : x^2 values for x < 0
-       | 0  0  0  1  4 |    : x^2 values for x > 0
-
-  It contains one additional row of all ones for every additional peak that is added into the model
-
-  When adding multiple peaks to the regression model, we need to adjust the inverse values.
-  This will change the number of unique values in the inv_values array from 6 to 7.
-  Here we use the inv_array[1] position and shift all values from that point onwards to the right.
-  example for num_peaks = 2:
-  original matrix with the unique values [a, b, c, d, e, f] (six unique values)
-  | a  0  b  b |
-  | 0  c  d -d |
-  | b  d  e  f |
-  | b -d  f  e |
-
-  new matrix with the unique values [A1, A2, B, C, D, E, F] (seven unique values)
-  | A1  A2  0  B  B |
-  | A2  A1  0  B  B |
-  | 0   0   C  D -D |
-  | B   B   D  E  F |
-  | B   B  -D  F  E |
-
-  for num_peaks = 3:
-  new matrix with the unique values [A1, A2, B, C, D, E, F] (the same seven unique values)
-  | A1  A2  A2  0  B  B |
-  | A2  A1  A2  0  B  B |
-  | A2  A2  A1  0  B  B |
-  | 0   0   0   C  D -D |
-  | B   B   B   D  E  F |
-  | B   B   B  -D  F  E |
-
-  Note that no more than seven different values are needed per scale.
-
-  In general, we have two moving actions:
-  1) step right through the intensity_log and calculate the convolution with the kernel
-  2) expand the kernel to the left and right of the intensity_log (higher scale)
-
-  The workflow is organized in nested loops:
-  1) outer loop: move along the intensity_log AND calculate the convolution with the scale=2 kernel
-  2) inner loop: expand the kernel to the left and right of the intensity_log (higher scale)
-
-  The pattern used for both loops looks like:
-  e.g. for n(y) = 16
-  outer loop: i = 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11
-  inner loop: range from:
-   for i=0: 3 to 3 => i.e. loop is not executed
-   for i=1: 3 to 4 => i.e. loop is executed once for scale=3
-   for i=2: 3 to 5 => i.e. loop is executed twice for scale=3,4
-   for i=3: 3 to 6 => i.e. loop is executed three times for scale=3,4,5
-   for i=4: 3 to 7 => i.e. loop is executed four times for scale=3,4,5,6
-   for i=5: 3 to 8 => i.e. loop is executed five times for scale=3,4,5,6,7
-   for i=6: 3 to 8 => i.e. loop is executed five times for scale=3,4,5,6,7
-   for i=7: 3 to 7 => i.e. loop is executed four times for scale=3,4,5,6
-   for i=8: 3 to 6 => i.e. loop is executed three times for scale=3,4,5
-   for i=9: 3 to 5 => i.e. loop is executed twice for scale=3,4
-   for i=10: 3 to 4 => i.e. loop is executed once for scale=3
-   for i=11: 3 to 3 => i.e. loop is not executed
-   */
-        assert(numPeaks <= 32); // this is the maximum size of the b0 array
-        assert(numPeaks > 1);   // this is necessary since the A1 INV_ARRAY value is
-        assert(max_scale > 1);
-        assert(max_scale <= MAXSCALE);
-
         const size_t minScale = 2;
         const size_t steps = peakFrame - 2 * minScale; // iteration number at scale 2
 
