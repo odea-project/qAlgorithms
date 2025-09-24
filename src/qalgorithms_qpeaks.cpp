@@ -15,6 +15,7 @@ namespace qAlgorithms
 
     constexpr auto INV_ARRAY = initialize(); // this only works with constexpr square roots, which are part of C++26
 #define GLOBAL_MAXSCALE_CENTROID 8           // @todo this is a critical part of the algorithm and should not be hard-coded
+#define GLOBAL_MINSCALE 2
 
     size_t hardFilter(std::vector<double> *mz, std::vector<double> *intensity, double minMZ, double maxMZ)
     {
@@ -357,75 +358,64 @@ namespace qAlgorithms
        coeffs: allocation size known at function call
     */
     {
-        assert(maxScale > 1);
+        assert(maxScale >= GLOBAL_MINSCALE);
         assert(maxScale <= MAXSCALE);
-        const unsigned int minScale = 2;
-        assert(minScale <= maxScale);
 
-        const size_t regsPerScale = intensity_log->size() - 2 * maxScale; // number of points with at least two real neighbours
-        const size_t totalScales = maxScale - minScale + 1;
+        const size_t length = intensity_log->size();
+        assert(length > 2 * maxScale); // at least one valid point
+
+        const size_t regsPerScale = length - 2 * maxScale; // number of points with at least two real neighbours
+        const size_t totalScales = maxScale - GLOBAL_MINSCALE + 1;
         const size_t iterationCount = regsPerScale * totalScales;
 
         std::vector<RegCoeffs> coeffs(iterationCount, {NAN, NAN, NAN, NAN});
 
-        // the first n points of every region are extrapolated, where n is the maximum scale -2
-        const size_t limit = intensity_log->size() - maxScale;
+        // the first n points of every region are extrapolated, where n is the maximum scale -2.
+        // as such, the last point at which a regression is possible is the eighth element from the back.
+        const size_t limit = length - maxScale;
 
         size_t scale5Count = 0;
         for (size_t center = maxScale; center < limit; center++)
         {
             const float *cen = intensity_log->data() + center; // this is initially the third real point
 
-            // move along the intensity_log (outer loop)
-            // calculate the convolution with the kernel of the lowest scale (= 2), i.e. xT * intensity_log[i:i+4]
+            // calculate the convolution with the kernel of the lowest scale - 1 (= 1), i.e. xT * intensity_log[cen - 1 : cen + 1]
             // the product sums are the rows of the design matrix (xT) * intensity_log[i:i+4] (dot product)
+            // they are set to scale = 1 so the first value written is at scale = 2
             // b0 is 1, 1, 1, 1, 1
-            double product_sum_b0 = *(cen - 2) + *(cen - 1) + *(cen) + *(cen + 1) + *(cen + 2);
+            double product_sum_b0 = cen[-1] + cen[0] + cen[1];
             // b1 is -2, -1, 0, 1, 2
-            double product_sum_b1 = -2 * *(cen - 2) + -1 * *(cen - 1) + 1 * *(cen + 1) + 2 * *(cen + 2);
+            double product_sum_b1 = -cen[-1] + cen[1];
             // b2 is 4, 1, 0, 0, 0
-            double product_sum_b2 = 4 * *(cen - 2) + 1 * *(cen - 1);
+            double product_sum_b2 = cen[-1];
             // b3 is 0, 0, 0, 1, 4
-            double product_sum_b3 = 1 * *(cen + 1) + 4 * *(cen + 2);
-            {
-                const double inv_A = INV_ARRAY[minScale * 6 + 0];
-                const double inv_B = INV_ARRAY[minScale * 6 + 1];
-                const double inv_C = INV_ARRAY[minScale * 6 + 2];
-                const double inv_D = INV_ARRAY[minScale * 6 + 3];
-                const double inv_E = INV_ARRAY[minScale * 6 + 4];
-                const double inv_F = INV_ARRAY[minScale * 6 + 5];
+            double product_sum_b3 = cen[1];
 
-                // this line is: a*t_i + b * sum(t without i)
-                // inv_array starts at scale = 2
-                coeffs[scale5Count].b0 = inv_A * product_sum_b0 + inv_B * (product_sum_b2 + product_sum_b3);
-                coeffs[scale5Count].b1 = inv_C * product_sum_b1 + inv_D * (product_sum_b2 - product_sum_b3);
-                coeffs[scale5Count].b2 = inv_B * product_sum_b0 + inv_D * product_sum_b1 + inv_E * product_sum_b2 + inv_F * product_sum_b3;
-                coeffs[scale5Count].b3 = inv_B * product_sum_b0 - inv_D * product_sum_b1 + inv_F * product_sum_b2 + inv_E * product_sum_b3;
-            }
-
-            for (size_t scale = minScale + 1; scale < maxScale + 1; scale++)
+            // it is not possible to choose a different minscale since that would break the iterative sum
+            for (size_t scale = GLOBAL_MINSCALE; scale <= maxScale; scale++)
             {
                 // expand the kernel to the left and right of the intensity_log.
                 // b0 is expanded by the two outer points * 1
-                product_sum_b0 += *(cen - scale) + *(cen + scale);
+                product_sum_b0 += cen[-scale] + cen[scale];
                 // b1 is expanded by the points * scale, negative to the left
-                product_sum_b1 += -double(scale) * *(cen - scale) + double(scale) * *(cen + scale);
+                product_sum_b1 += -double(scale) * cen[-scale] + double(scale) * cen[scale];
                 // b2 and b3 are expanded by scale^2 the outermost point to the left or right
                 double scale_sqr = double(scale * scale);
-                product_sum_b2 += scale_sqr * *(cen - scale);
-                product_sum_b3 += scale_sqr * *(cen + scale);
+                product_sum_b2 += scale_sqr * cen[-scale];
+                product_sum_b3 += scale_sqr * cen[scale];
 
-                const double inv_A = INV_ARRAY[scale * 6 + 0];
-                const double inv_B = INV_ARRAY[scale * 6 + 1];
-                const double inv_C = INV_ARRAY[scale * 6 + 2];
-                const double inv_D = INV_ARRAY[scale * 6 + 3];
-                const double inv_E = INV_ARRAY[scale * 6 + 4];
-                const double inv_F = INV_ARRAY[scale * 6 + 5];
+                const double *inv = INV_ARRAY.data() + scale * 6;
+                const double inv_A = inv[0];
+                const double inv_B = inv[1];
+                const double inv_C = inv[2];
+                const double inv_D = inv[3];
+                const double inv_E = inv[4];
+                const double inv_F = inv[5];
 
                 const double inv_B_b0 = inv_B * product_sum_b0;
                 const double inv_D_b1 = inv_D * product_sum_b1;
 
-                const size_t access = regsPerScale * (scale - minScale) + scale5Count;
+                const size_t access = regsPerScale * (scale - GLOBAL_MINSCALE) + scale5Count;
                 coeffs[access].b0 = inv_A * product_sum_b0 + inv_B * (product_sum_b2 + product_sum_b3);
                 coeffs[access].b1 = inv_C * product_sum_b1 + inv_D * (product_sum_b2 - product_sum_b3);
                 coeffs[access].b2 = inv_B_b0 + inv_D_b1 + inv_E * product_sum_b2 + inv_F * product_sum_b3;
