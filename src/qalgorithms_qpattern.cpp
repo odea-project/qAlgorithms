@@ -86,7 +86,7 @@ namespace qAlgorithms
                 minScan = std::min(minScan, size_t(test->scanPeakStart));
 
                 assert(maxScan - minScan >= 4);
-                if (test->scanPeakStart + test->index_x0_offset >= test->scanPeakEnd - 1)
+                if (test->scanPeakStart + test->idxCenter_offset >= test->scanPeakEnd - 1)
                 {
                     ERRORCOUNTER++; // @todo this is something that should be prevented during feature construction, why isn't it?
                     groupsize--;
@@ -543,10 +543,10 @@ namespace qAlgorithms
           to each other, the loop continues to the next iteration.
         */
         double valley_position = 0;
-        if (!calcApexAndValleyPos_old(mutateReg, scale, &valley_position))
-        {
-            return; // invalid apex and valley positions
-        }
+        // if (!calcApexAndValleyPos_old(mutateReg, scale, &valley_position))
+        // {
+        //     return; // invalid apex and valley positions
+        // }
         /*
           Area Pre-Filter:
           This test is used to check if the later-used arguments for exp and erf
@@ -728,7 +728,7 @@ namespace qAlgorithms
         // mutateReg->df = df_sum - 4; // @todo add explanation for -4
         mutateReg->apex_position += float(idx_x0);
         mutateReg->scale = int(scale);
-        mutateReg->index_x0 = int(idx_x0);
+        mutateReg->idxCenter = int(idx_x0);
         // mutateReg->mse = mse; // the quadratic mse is used for the weighted mean of the coefficients later
         mutateReg->isValid = true;
         return;
@@ -891,7 +891,7 @@ namespace qAlgorithms
                 //                          &(intensity_vecs[i]),
                 //                          0,
                 //                          intensity_vecs[i].size() - 1,
-                //                          testCase.index_x0);
+                //                          testCase.idxCenter);
                 // sum_MSE[multiReg] += mse / (testCase.df - numPeaks - 3);
 
                 regressionOK[multiReg] = true;
@@ -1195,7 +1195,7 @@ namespace qAlgorithms
     }
 
     // @todo this funtion should be generalised to qPeaks also
-    double residual(const RegCoeffs *coeff, float realInt, size_t index_x0, size_t index, bool left)
+    double residual(const RegCoeffs *coeff, float realInt, size_t idxCenter, size_t index, bool left)
     {
         float b23 = left ? coeff->b2 : coeff->b3;
         float maxHeight = INFINITY;
@@ -1206,10 +1206,10 @@ namespace qAlgorithms
             maxHeight = std::exp(coeff->b0 + (coeff->b1 + maxPos * b23) * maxPos); // correct for positive exponential
         }
 
-        double new_x = double(index) - double(index_x0);
+        double new_x = double(index) - double(idxCenter);
         double y_base = std::exp(coeff->b0 + (coeff->b1 + b23 * new_x) * new_x);
         // in case a positive exponent half is in the new window, we need to prevent excessive distrotion from the exponential part
-        y_base = y_base <= maxHeight ? y_base : maxHeight / (new_x + 1); // halve with the first step from index_x0
+        y_base = y_base <= maxHeight ? y_base : maxHeight / (new_x + 1); // halve with the first step from idxCenter
         double RS = (y_base - realInt) * (y_base - realInt);             // residual square
         assert(RS < INFINITY);
         return (RS);
@@ -1217,25 +1217,25 @@ namespace qAlgorithms
 
     std::vector<float> cumulativeRSS(const std::vector<float> *intensities,
                                      const RegCoeffs *coeff,
-                                     size_t index_x0)
+                                     size_t idxCenter)
     {
-        assert(index_x0 < intensities->size() - 1);
+        assert(idxCenter < intensities->size() - 1);
         std::vector<float> result(intensities->size(), 0);
 
-        result[0] = residual(coeff, intensities->front(), index_x0, 0, true) + 0;
+        result[0] = residual(coeff, intensities->front(), idxCenter, 0, true) + 0;
 
         // left half - 1
-        for (size_t i = 1; i < index_x0; i++)
+        for (size_t i = 1; i < idxCenter; i++)
         {
-            result[i] = residual(coeff, intensities->at(i), index_x0, i, true) + result[i - 1];
+            result[i] = residual(coeff, intensities->at(i), idxCenter, i, true) + result[i - 1];
         }
         // center point
-        float diff = std::exp((coeff->b0)) - intensities->at(index_x0); // this will never be infinity
-        result[index_x0] = diff * diff + result[index_x0 - 1];
+        float diff = std::exp((coeff->b0)) - intensities->at(idxCenter); // this will never be infinity
+        result[idxCenter] = diff * diff + result[idxCenter - 1];
         // right half
-        for (size_t i = index_x0 + 1; i < intensities->size(); i++)
+        for (size_t i = idxCenter + 1; i < intensities->size(); i++)
         {
-            result[i] = residual(coeff, intensities->at(i), index_x0, i, false) + result[i - 1];
+            result[i] = residual(coeff, intensities->at(i), idxCenter, i, false) + result[i - 1];
         }
         assert(result.back() < INFINITY);
         return result;
@@ -1265,13 +1265,13 @@ namespace qAlgorithms
 
         // scan relates to the complete measurement and idx to the position within the bin
 
-        // find index_x0 by finding the corresponding retention time
+        // find idxCenter by finding the corresponding retention time
         // size_t featLim_L = bin->scanNumbers[minIdx] - minScan;
         // size_t featLim_R = bin->scanNumbers[maxIdx] - minScan;
         // assert(featLim_L < featLim_R);
         const size_t scanShift = feature->scanPeakStart - minScan; // offset of feature limits relating to the first element of the harmonised EIC
-        size_t index_x0 = feature->index_x0_offset + scanShift;    // absolute scan of x0 - begin of scan region
-        assert(index_x0 < length - 2);
+        size_t idxCenter = feature->idxCenter_offset + scanShift;  // absolute scan of x0 - begin of scan region
+        assert(idxCenter < length - 2);
 
         ReducedEIC reduced{
             std::vector<float>(length, 0),   // intensity
@@ -1286,7 +1286,7 @@ namespace qAlgorithms
 
             scanShift, // these limits are relating to the fully interpolated EIC
             feature->scanPeakEnd - minScan,
-            index_x0,
+            idxCenter,
             // these limits will lead to nonsense behaviour if not set
             length - 1,
             0};
@@ -1319,8 +1319,8 @@ namespace qAlgorithms
         {
             if (reduced.intensity_log[i] == 0)
             { // value needs to be interpolated
-                float b23 = i < index_x0 ? feature->coefficients.b2 : feature->coefficients.b3;
-                double xval = double(i) - double(index_x0);
+                float b23 = i < idxCenter ? feature->coefficients.b2 : feature->coefficients.b3;
+                double xval = double(i) - double(idxCenter);
                 float predictedInt = feature->coefficients.b0 + xval * feature->coefficients.b1 + xval * xval * b23;
                 if (b23 > 0) [[unlikely]]
                 {
@@ -1345,7 +1345,7 @@ namespace qAlgorithms
         }
         // 4) calculate the RSS for all transferred points against the moved regression and write them into
         //    the 0-filled vector for cumRSS. Then, take the cumsum over the vector.
-        reduced.RSS_cum = cumulativeRSS(&reduced.intensity, &feature->coefficients, index_x0);
+        reduced.RSS_cum = cumulativeRSS(&reduced.intensity, &feature->coefficients, idxCenter);
         assert(reduced.RSS_cum.back() != INFINITY);
 
         // set the inclusion limits by finding the fifth point from either side that is not interpolated

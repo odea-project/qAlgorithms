@@ -133,8 +133,6 @@ namespace qAlgorithms
         const std::vector<float> *intensities,
         const std::vector<float> *intensities_log,
         RegressionGauss *mutateReg,
-        const size_t idxCenter,
-        const size_t scale,
         const size_t maxApexPos);
 
     void mergeRegressionsOverScales(std::vector<RegressionGauss> *validRegressions,
@@ -181,22 +179,16 @@ namespace qAlgorithms
         const RT_Converter *convertRT,
         const std::vector<float> *RTs);
 
-    double calcRSS_reg(const RegCoeffs *coeff,
-                       const std::vector<float> *y_start,
-                       const Range_i range,
-                       const size_t index_x0);
+    double calcRSS_reg(const RegressionGauss *mutateReg, const std::vector<float> *y_start);
 
     bool f_testRegression(const std::vector<float> *observed, double RSS_reg, const Range_i *range);
 
-    float calcSSE_exp(const RegCoeffs coeff,
-                      const std::vector<float> *y_start,
-                      const Range_i regSpan,
-                      size_t index_x0);
+    double calcSSE_exp(const RegCoeffs coeff,
+                       const std::vector<float> *y_start,
+                       const Range_i regSpan,
+                       size_t idxCenter);
 
-    float calcSSE_chisqared(const RegCoeffs coeff,
-                            const std::vector<float> *y_start,
-                            const Range_i regSpan,
-                            size_t index_x0);
+    double calcSSE_chisqared(const RegressionGauss *mutateReg, const std::vector<float> *y_start);
 
     struct CorrectionFactors
     {
@@ -226,58 +218,27 @@ namespace qAlgorithms
         const Range_i regSpan);
 
     /**
-     * @brief Calculate the apex (and if possible the valley) position of the peak. Returns true
-     * if the positions are calculated are valid.
-     * @param mutateReg : regression whose position fields are manipulated in the function
-     * @param scale : Window size scale, e.g., 5 means the window size is 11 (2*5+1)
-     * @param valley_position : valley position
-     * @return true : if the apex and valley positions are valid
-     * @return false : if the apex and valley positions are not valid (e.g., the apex position is not in the regression window)
+     * @brief updates apex position field of mutateReg and the supplied valley_position
+     * @return 0 if positions could be calculated, otherwise the point of failure in the
+     * function is returned.
      */
-    bool calcApexAndValleyPos_old(
+    int calcApexAndValleyPos(
         RegressionGauss *mutateReg,
-        const size_t scale,
         double *valley_position);
 
-    int calcApexAndValleyPos_new(
-        RegressionGauss *mutateReg,
-        const size_t scale,
-        double *valley_position);
+    double calcUncertainty(const double J[4], const size_t scale, const double mse);
 
-    /**
-     * @brief Calculate the Matrix Product of J * Xinv * J^T for uncertainty calculation.
-     * @details The function calculates the matrix product of J * Xinv * J^T. The matrix J is
-     * the Jacobian matrix with an 1x4 size. The matrix Xinv is the inverse matrix of X^T * X,
-     * where X is the design matrix. The matrix J * Xinv * J^T is a 1x1 matrix, i.e., a scalar value.
-     * @param vec
-     * @param scale
-     * @return float
-     */
-    inline double multiplyVecMatrixVecTranspose(const double vec[4], size_t scale);
+    double apexToEdgeRatio(const RegressionGauss *mutateReg, const std::vector<float> *intensities);
 
-    double apexToEdgeRatio(
-        const Range_i regSpan,
-        const size_t idxEnd,
-        const std::vector<float> *intensities);
-
-    bool isValidQuadraticTerm(
-        const RegCoeffs coeff,
-        const size_t scale,
-        const double mse,
-        const size_t df_sum);
+    bool isValidQuadraticTerm(const RegressionGauss *mutateReg, const size_t df_sum);
 
     bool isValidPeakHeight(
-        const double mse,
-        const size_t scale,
-        const double apex_position,
+        const RegressionGauss *mutateReg,
         const double valley_position,
         const size_t df_sum,
         const double apexToEdge);
 
-    void calcPeakHeightUncert(
-        RegressionGauss *mutateReg,
-        const double mse,
-        const size_t scale);
+    void calcPeakHeightUncert(RegressionGauss *mutateReg);
 
     /**
      * @brief Check if the peak area and the covered peak area are valid using t-test.
@@ -298,21 +259,11 @@ namespace qAlgorithms
      * @return false : if the peak area is not valid
      */
 
-    void calcPeakAreaUncert(RegressionGauss *mutateReg,
-                            const double mse,
-                            const size_t scale);
+    void calcPeakAreaUncert(RegressionGauss *mutateReg);
 
-    bool isValidPeakArea(
-        const RegCoeffs *coeff,
-        const double mse,
-        const size_t scale,
-        const size_t df_sum);
+    bool isValidPeakArea(const RegressionGauss *mutateReg, const size_t df_sum);
 
-    float calcUncertaintyPos(
-        const double mse,
-        const RegCoeffs coeff,
-        const double apex_position,
-        const size_t scale);
+    void calcUncertaintyPos(RegressionGauss *mutateReg);
 
     struct MeanVar
     {

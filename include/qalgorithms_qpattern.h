@@ -93,7 +93,7 @@ namespace qAlgorithms
         // these are the limits of the original feature and the index where the abstract x-axis is 0
         size_t featLim_L;
         size_t featLim_R;
-        size_t index_x0;
+        size_t idxCenter;
         // these limits are the first and last point in the EIC which need to be included in a region
         // if that region is to be valid. They are set to the fifth real point from every direction
         size_t minIncludedIndex;
@@ -127,7 +127,7 @@ namespace qAlgorithms
     // centered, only the index where x is 0 must be known in advance
     std::vector<float> cumulativeRSS(const std::vector<float> *intensities,
                                      const RegCoeffs *coeff,
-                                     size_t index_x0);
+                                     size_t idxCenter);
 
     MergedEIC mergeEICs(const std::vector<ReducedEIC> *eics,
                         const std::vector<size_t> *selection,

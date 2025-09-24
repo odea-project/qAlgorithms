@@ -128,7 +128,7 @@ int main()
         qass(roundTo_d(c.b1, 5) == roundTo_d(0.1143269, 5), "b1 is incorrect!");
         qass(roundTo_d(c.b2, 5) == roundTo_d(-0.4647133, 5), "b2 is incorrect!");
         qass(roundTo_d(c.b3, 5) == roundTo_d(-0.3706720, 5), "b3 is incorrect!");
-        printf("simple regression gives correct results");
+        printf("simple regression gives correct results\n");
     }
 
     // check if a difficult centroid is identified correctly

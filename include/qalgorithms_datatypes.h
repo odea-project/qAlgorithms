@@ -96,11 +96,11 @@ namespace qAlgorithms
     struct RegressionGauss
     {
         RegCoeffs coeffs = {0};   // regression coefficients
-        int index_x0 = 0;         // index of window center (x==0) in the Y matrix
+        size_t idxCenter = 0;     // index of window center (x==0) in the Y matrix
         int scale = 0;            // scale of the regression window, i.e., 2*scale+1 = window size
         int df = 0;               // degrees of freedom, interpolated data points will not be considered
         float apex_position = 0;  // position of the apex of the peak
-        float mse = 0;            // @todo mean squared error; this is not always used and should not be a part of the regression struct
+        float mse = 0;            // mean squared error
         Range_i regSpan = {0, 0}; // limits of the peak regression window
         float area = 0;           // area of the peak
         float uncertainty_area = 0, uncertainty_pos = 0, uncertainty_height = 0;
@@ -183,7 +183,7 @@ namespace qAlgorithms
         unsigned int componentID = 0; // this is only set during execution of qPattern / qComponent / whatever better name i think of. Zero means uninitialised -> components start at 1!
         unsigned int idxBin = 0;
         // these refer to the interpolated EIC!
-        unsigned int idxPeakStart = 0, idxPeakEnd = 0, index_x0_offset = 0;
+        unsigned int idxPeakStart = 0, idxPeakEnd = 0, idxCenter_offset = 0;
         // relates to abstracted MS1 scan counts, starts at 2 for real points
         unsigned int scanPeakStart = 0, scanPeakEnd = 0;
         // indices into the non-interpolated bin; degrees of freedom = idxBinEnd - idxBinStart + 1
