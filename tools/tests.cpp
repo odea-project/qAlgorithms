@@ -115,10 +115,10 @@ int main()
     {
         std::vector<float> logInts = {6.40492535, 7.95729923, 8.44852829, 8.27999401, 7.23839712};
         size_t scale = 2;
-        auto reg = findCoefficients(&logInts, scale);
+        auto reg = findCoefficients_old(&logInts, scale);
         auto c = reg.front();
         assert(reg.size() == 1);
-        auto reg2 = findCoefficients_new(&logInts, scale);
+        auto reg2 = findCoefficients(&logInts, scale);
         auto c2 = reg2.front();
 
         printf("beta | expected | got | new\nb0 | %f | %f| %f\nb0 | %f | %f| %f\nb0 | %f | %f| %f\nb0 | %f | %f| %f\n",

@@ -7,8 +7,6 @@
 #include "qalgorithms_read_file.h" // @todo get rid of this coupling!
 
 #include <vector>
-#include <array>
-#include <math.h>
 
 namespace qAlgorithms
 {
@@ -109,11 +107,11 @@ namespace qAlgorithms
         for i=10: 3 to 4 =>  once for  scale = 3
         for i=11: 3 to 3 => loop is not executed
     */
-    std::vector<RegCoeffs> findCoefficients(
+    std::vector<RegCoeffs> findCoefficients_old(
         const std::vector<float> *intensity_log,
         const size_t maxscale); // maximum scale that will be checked. Should generally be limited by peakFrame
 
-    std::vector<RegCoeffs> findCoefficients_new(
+    std::vector<RegCoeffs> findCoefficients(
         const std::vector<float> *intensity_log,
         const size_t maxscale); // maximum scale that will be checked. Should generally be limited by peakFrame
 
@@ -148,11 +146,6 @@ namespace qAlgorithms
         XML_File &data, // @todo replace with custom struct for a generic parsed file
         const std::vector<unsigned int> *selectedIndices);
 
-    size_t pretreatDataCentroids_old(
-        std::vector<ProfileBlock> *groupedData,
-        const std::vector<double> *spectrum_mz,
-        const std::vector<double> *spectrum_int);
-
     size_t pretreatDataCentroids(
         std::vector<ProfileBlock> *groupedData,
         const std::vector<double> *spectrum_mz,
@@ -172,13 +165,6 @@ namespace qAlgorithms
         const size_t accessor);
 
     // ### Feature-specific Code ### //
-
-    void binProfileSpec(std::vector<Range_i> *result,
-                        const std::vector<double> *diffs,
-                        // const std::vector<unsigned int> *diffOrder,
-                        const std::vector<double> *cumDiffs, // indices into cumDiffs must be right-shifted by one!
-                        // size_t previousDiffPos,              // skip this many points in the diffOrder vector
-                        const Range_i regSpan);
 
     std::vector<FeaturePeak> findFeatures(std::vector<EIC> &data,
                                           const RT_Converter *convertRT);
@@ -348,6 +334,11 @@ namespace qAlgorithms
 
     // ### pre-calculate the regression matrix ### //
 #define MAXSCALE 63
+#define GLOBAL_MAXSCALE_CENTROID 8 // @todo this is a critical part of the algorithm and should not be hard-coded
+#define GLOBAL_MINSCALE 2
+
+#include <array>
+#include <math.h> // square root
 
     constexpr std::array<double, (MAXSCALE + 1) * 6> initialize()
     { // array to store the 6 unique values of the inverse matrix for each scale

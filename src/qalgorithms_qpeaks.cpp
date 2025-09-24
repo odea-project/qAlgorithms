@@ -7,15 +7,13 @@
 #include <cassert>
 #include <cmath>
 #include <vector>
-#include <algorithm> // sorting
-#include <stdint.h>  // max numeric vals
+// #include <algorithm> // sorting
+// #include <stdint.h> // max numeric vals
 
 namespace qAlgorithms
 {
 
     constexpr auto INV_ARRAY = initialize(); // this only works with constexpr square roots, which are part of C++26
-#define GLOBAL_MAXSCALE_CENTROID 8           // @todo this is a critical part of the algorithm and should not be hard-coded
-#define GLOBAL_MINSCALE 2
 
     size_t hardFilter(std::vector<double> *mz, std::vector<double> *intensity, double minMZ, double maxMZ)
     {
@@ -75,7 +73,7 @@ namespace qAlgorithms
         // basic structure: find cofficients, reduce them to valid regressions, resolve contradictions,
 
         // coefficients for single-b0 peaks, spans all regressions over a peak window
-        std::vector<RegCoeffs> regressions = findCoefficients_new(&y_log, maxScale);
+        std::vector<RegCoeffs> regressions = findCoefficients(&y_log, maxScale);
         assert(!regressions.empty());
 
         // filter the produced coefficients so that only correct ones remain (separate function?)
@@ -185,7 +183,7 @@ namespace qAlgorithms
         regressions: size determined by function
 
        ### called functions ###
-        findCoefficients
+        findCoefficients_old
         mergeRegressionsOverScales
     */
     {
@@ -200,8 +198,8 @@ namespace qAlgorithms
         assert(validRegressions->empty());
 
         // coefficients for single-b0 peaks, spans all regressions over a peak window
-        const std::vector<RegCoeffs> regressions = findCoefficients_new(intensities_log, maxScale);
-        const std::vector<RegCoeffs> regressions_old = findCoefficients(intensities_log, maxScale);
+        const std::vector<RegCoeffs> regressions = findCoefficients(intensities_log, maxScale);
+        const std::vector<RegCoeffs> regressions_old = findCoefficients_old(intensities_log, maxScale);
 
         const size_t numPoints = intensities->size();
         // all entries in coeff are sorted by scale in ascending order - this is not checked!
@@ -351,7 +349,7 @@ namespace qAlgorithms
         return results;
     }
 
-    std::vector<RegCoeffs> findCoefficients_new(
+    std::vector<RegCoeffs> findCoefficients(
         const std::vector<float> *intensity_log,
         const size_t maxScale) // maximum scale that will be checked. Should generally be limited by peakFrame
     /* ### allocations ###
@@ -427,7 +425,7 @@ namespace qAlgorithms
         return coeffs;
     }
 
-    std::vector<RegCoeffs> findCoefficients(
+    std::vector<RegCoeffs> findCoefficients_old(
         const std::vector<float> *intensity_log,
         const size_t maxScale) // maximum scale that will be checked. Should generally be limited by peakFrame
     /* ### allocations ###
@@ -2291,68 +2289,6 @@ namespace qAlgorithms
         return centroids; // @todo mutate centroids and return success / failure
     }
 
-    void binProfileSpec(std::vector<Range_i> *result,
-                        const std::vector<double> *diffs,
-                        // const std::vector<unsigned int> *diffOrder,
-                        const std::vector<double> *cumDiffs, // indices into cumDiffs must be right-shifted by one!
-                                                             // size_t previousDiffPos,              // skip this many points in the diffOrder vector
-                        const Range_i regSpan)
-    /* ### allocations ###
-        none!
-
-       ### called functions ###
-        binningCritVal
-        std::max_element
-        std::distance
-        binProfileSpec
-
-    */
-    {
-        // perform the recursive split introduced during binning to find gaps in mz
-        // CritVal uses the standard deviation, which is estimated as the mean centroid error during binning.
-        // here, we can use the real SD of the point-to-point differences.
-        // @todo use the work done for the binning algorithm
-
-        size_t start = regSpan.startIdx;
-        size_t end = regSpan.endIdx;
-        assert(start <= end); // <= since one point at the end could get removed, see below
-        assert(!diffs->empty());
-        assert(cumDiffs->size() == diffs->size() + 1);
-        assert(cumDiffs->at(0) == 0); // this is important so there are no special cases when forming the difference
-
-        size_t length = end - start + 1;
-        if (length < 4) // one point less due to differences being used
-        {
-            return;
-        }
-
-        // we use the mean difference here since the differences should follow a flat distribution. The basic assumption
-        // is that every point has an error of half the distance to its neighbours, since all points are evenly spaced.
-        double meanDiff = (cumDiffs->at(end + 1) - cumDiffs->at(start)) / length;
-        double critVal = binningCritVal(length, meanDiff / 2);
-
-        // max of difference
-        auto pmax = std::max_element(diffs->begin() + start, diffs->begin() + end + 1);
-        double max = *pmax;
-        size_t maxPos = std::distance(diffs->begin(), pmax);
-
-        if (max < critVal)
-        {
-            // block is complete, add limits to result vector
-            result->push_back({start, end + 1}); // end + 1 since difference has one point less
-            return;
-        }
-        // recursive split at max - different calling convention since we work with differences
-        if (maxPos != start)
-        {
-            binProfileSpec(result, diffs, cumDiffs, {start, maxPos - 1}); // when setting the block, 1 is added to end
-        }
-        if (maxPos != end)
-        {
-            binProfileSpec(result, diffs, cumDiffs, {maxPos + 1, end}); // one past the max to avoid large value
-        }
-    }
-
     size_t pretreatDataCentroids(
         std::vector<ProfileBlock> *groupedData,
         const std::vector<double> *spectrum_mz,
@@ -2474,226 +2410,6 @@ namespace qAlgorithms
             groupedData->push_back(b);
         }
         return maxRangeSpan;
-    }
-
-    inline ProfileBlock initBlock(size_t blocksize)
-    {
-        std::vector<float> mz_int(blocksize, 0);
-        std::vector<unsigned int> cumdf(blocksize, 0);
-        for (size_t i = 2; i < blocksize - 2; i++)
-        {
-            cumdf[i] = i - 1;
-        }
-        cumdf[blocksize - 1] = blocksize - 4;
-        cumdf[blocksize - 2] = blocksize - 4;
-
-        ProfileBlock ret = {mz_int,
-                            mz_int,
-                            cumdf,
-                            0, 0};
-        return ret;
-    }
-
-    void clearBlock(ProfileBlock *block, size_t blocksize)
-    {
-        assert(blocksize > 1);
-
-        block->startPos = 0;
-        block->endPos = 0;
-
-        bool expand = block->cumdf.size() < blocksize;
-        size_t addition = block->cumdf.size();
-
-        block->mz.resize(blocksize);
-        assert(block->mz.size() == blocksize);
-
-        block->intensity.resize(blocksize);
-
-        block->cumdf.resize(blocksize);
-        assert(block->cumdf[1] == 0);
-        if (expand)
-        {
-            for (size_t i = addition - 2; i < blocksize - 2; i++)
-            {
-                // starts at -2 since we used dummy values there
-                block->cumdf[i] = block->cumdf[i - 1];
-            }
-        }
-        block->cumdf[blocksize - 2] = blocksize - 4;
-        block->cumdf[blocksize - 1] = blocksize - 4;
-    }
-
-    size_t pretreatDataCentroids_old(
-        std::vector<ProfileBlock> *groupedData,
-        const std::vector<double> *spectrum_mz,
-        const std::vector<double> *spectrum_int)
-    /* ### allocations ###
-        intensities_profile: all known at function call
-        mz_profile: s.o.
-        idxConvert: s.o.
-
-        diffs: size calculated in function
-        cumDiffs: s.o.
-
-        result: size unknown
-
-       ### called functions ###
-        binProfileSpec
-        initBlock (inline)
-    */
-    {
-        assert(groupedData->empty());
-        std::vector<double> intensities_profile;
-        std::vector<double> mz_profile;
-        std::vector<unsigned int> idxConvert; // used to trace back processing steps to untreated data
-
-        { // remove zeroes
-            size_t size = spectrum_mz->size();
-            assert(spectrum_int->size() == size);
-            intensities_profile.reserve(size);
-            mz_profile.reserve(size);
-            idxConvert.reserve(size);
-
-            // Depending on the vendor, a profile contains a lot of points with intensity 0.
-            // These were added by the vendor software and must be removed prior to processing.
-            for (unsigned int i = 0; i < size; ++i)
-            {
-                if (spectrum_int->at(i) == 0.0)
-                {
-                    continue; // skip values with no intensity @todo minimum intensity?
-                }
-                intensities_profile.push_back(spectrum_int->at(i));
-                mz_profile.push_back(spectrum_mz->at(i));
-                idxConvert.push_back(i);
-            }
-        }
-        if (intensities_profile.empty())
-            return 0;
-        assert(!mz_profile.empty());
-
-        std::vector<double> diffs;
-        std::vector<double> cumDiffs;
-        { // calculate mz differences
-            diffs.reserve(mz_profile.size() - 1);
-            cumDiffs.reserve(mz_profile.size());
-            cumDiffs.push_back(0);
-            double totalDiff = 0;
-
-            for (size_t i = 1; i < mz_profile.size(); i++)
-            {
-                float diff = mz_profile[i] - mz_profile[i - 1];
-                assert(diff != 0);
-                diffs.push_back(diff);
-                totalDiff += diff;
-                cumDiffs.push_back(totalDiff);
-            }
-        }
-
-        std::vector<Range_i> result; // result contains the start- and end indices of all relevant blocks in the data.
-        result.reserve(128);
-
-        double meanDiff = 0;
-        for (size_t i = 0; i < diffs.size(); i++)
-        {
-            meanDiff += diffs[i];
-        }
-        meanDiff /= diffs.size();
-
-        unsigned int knownStart = 0;
-        unsigned int knownEnd = diffs.size() - 1;
-
-        if (meanDiff > 0.1) [[likely]]
-        {
-            // in a real mass spectrum, this should always be a given. If not, the noise level is so
-            // high that it might be impossible to find actually useful data here. Either way, since
-            // we search for centroids in these regions, 0.1 is too large if anything. There will never
-            // be a useable centroid with this large a m/z difference in a high res mass spectrum
-            for (size_t i = 0; i < diffs.size(); i++)
-            {
-                if (diffs[i] > meanDiff) // @todo this does not work
-                {
-                    knownEnd = i - 1;
-                    if (knownEnd > knownStart)
-                    {
-                        binProfileSpec(&result, &diffs, &cumDiffs, {knownStart, knownEnd});
-                    }
-                    knownStart = i + 1;
-                }
-            }
-        }
-        else
-        {
-            // this is expected for ToF data (?) @todo
-            // fprintf(stderr, "Warning: a spectrum has no clear breaks.\n");
-        }
-
-        if (knownStart == 0 && knownEnd == diffs.size() - 1)
-        {
-            // fprintf(stderr, "Warning: a spectrum has no clear breaks.\n");
-            binProfileSpec(&result, &diffs, &cumDiffs, {knownStart, knownEnd});
-        }
-
-        size_t maxEntry = 0; // this is the maximum size of all blocks
-
-        // ProfileBlock entry = initBlock(64);
-
-        // transfer the found groups into a representation accepted by the peak model fit
-        for (size_t j = 0; j < result.size(); j++)
-        {
-            Range_i res = result[j];
-
-            size_t entrySize = res.endIdx + 1 - res.startIdx + 4;
-            maxEntry = maxEntry > entrySize ? maxEntry : entrySize;
-
-            // clearBlock(&entry, entrySize); // @todo prevent a new block from being created every time
-            ProfileBlock entry = initBlock(entrySize);
-
-            for (size_t i = 0; i < entrySize - 4; i++)
-            {
-                size_t epos = i + res.startIdx; // element position
-                size_t rpos = i + 2;            // result vector position
-                entry.intensity[rpos] = intensities_profile[epos];
-            }
-            for (size_t i = 0; i < entrySize - 4; i++)
-            {
-                size_t epos = i + res.startIdx; // element position
-                size_t rpos = i + 2;            // result vector position
-                entry.mz[rpos] = mz_profile[epos];
-            }
-
-            // extrapolate two points to each size of the entry. The data has to be clamped to a minimum of 1 for log transform to work
-            {
-                entry.intensity[1] = entry.intensity[2] / 2;
-                // entry.intensity[1] = entry.intensity[1] < 1 ? 1 : entry.intensity[1];
-                entry.intensity[0] = entry.intensity[2] / 4;
-                // entry.intensity[0] = entry.intensity[0] < 1 ? 1 : entry.intensity[0];
-
-                size_t back1 = entrySize - 2;
-                size_t back2 = entrySize - 1;
-                entry.intensity[back1] = entry.intensity[entrySize - 3] / 2;
-                // entry.intensity[back1] = entry.intensity[back1] < 1 ? 1 : entry.intensity[back1];
-                entry.intensity[back2] = entry.intensity[entrySize - 3] / 4;
-                // entry.intensity[back2] = entry.intensity[back2] < 1 ? 1 : entry.intensity[back2];
-
-                double mzDiffFront = entry.mz[3] - entry.mz[2]; // @todo should there be two different distances?
-                entry.mz[1] = entry.mz[2] - mzDiffFront;
-                entry.mz[0] = entry.mz[2] - mzDiffFront * 2;
-
-                double mzDiffBack = entry.mz[entrySize - 3] - entry.mz[entrySize - 4];
-                entry.mz[entrySize - 2] = entry.mz[entrySize - 3] + mzDiffBack;
-                entry.mz[entrySize - 1] = entry.mz[entrySize - 3] + mzDiffBack * 2;
-            }
-
-            // add traceability information from untreated spectrum
-            entry.startPos = idxConvert[res.startIdx];
-            entry.endPos = idxConvert[res.endIdx];
-
-            groupedData->push_back(entry);
-        }
-        if (groupedData->empty())
-            return 0;
-
-        return maxEntry;
     }
 
     double regAt_L(const RegCoeffs *coeff, const double x)
