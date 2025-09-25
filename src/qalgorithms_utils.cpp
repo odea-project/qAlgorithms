@@ -7,6 +7,86 @@
 
 namespace qAlgorithms
 {
+
+    void calc_fval(double p, double dfn, double dfd,      // input
+                   double *f, int *status, double *bound) // output
+    {
+        //    Control Input
+        if (p < 0 || 1 < p)
+        {
+            *status = -2;
+            return;
+        }
+        if (dfn <= 0.0e0)
+        {
+            *bound = 0.0e0;
+            *status = -5;
+            return;
+        }
+        if (dfd <= 0.0e0)
+        {
+            *bound = 0.0e0;
+            *status = -6;
+            return;
+        }
+
+        //    Calculating F
+        static double T3 = 1.0e300;
+        static double T6 = 1.0e-50;
+        static double T7 = 1.0e-8;
+        static double K2 = 0.0e0;
+        static double K4 = 0.5e0;
+        static double K5 = 5.0e0;
+        dstinv(&K2, &T3, &K4, &K4, &K5, &T6, &T7);
+
+        static double fx, cum, ccum;
+        static unsigned long qhi, qleft;
+
+        *status = 0;
+        dinvr(status, f, &fx, &qleft, &qhi);
+
+        *f = 5.0e0;
+        double q = 1 - p;
+        printf("\n");
+
+        if (p <= q)
+        {
+            while (*status == 1)
+            {
+                cumf(f, &dfn, &dfd, &cum, &ccum);
+                fx = cum - p;
+                dinvr(status, f, &fx, &qleft, &qhi);
+            }
+        }
+        else
+        {
+            while (*status == 1)
+            {
+                cumf(f, &dfn, &dfd, &cum, &ccum);
+                fx = ccum - q;
+                dinvr(status, f, &fx, &qleft, &qhi);
+                printf("%f, ", *f);
+            }
+        }
+
+        if (*status != -1)
+            return;
+
+        if (qleft)
+        {
+            *status = 1;
+            *bound = 0.0e0;
+        }
+        else
+        {
+            *status = 2;
+            *bound = 1.0e300;
+        }
+        printf("\n");
+        printf("\n");
+        return;
+    }
+
     // @todo separate out the library functions into something better readable with less flexible error checking
     double cdflib_F_stat(double alpha, size_t params_complex, size_t params_simple, size_t numPoints)
     {
@@ -30,6 +110,10 @@ namespace qAlgorithms
 
         cdff(&which, &p, &q, &F, &dfn, &dfd, &status, &bound); // library function, see https://people.math.sc.edu/Burkardt/cpp_src/cdflib/cdflib.html
         assert(status == 0);
+
+        double f = 0;
+        calc_fval(p, dfn, dfd, &f, &status, &bound); // @todo does not work for all input params
+        assert(float(f) == float(F));
 
         return F;
     }

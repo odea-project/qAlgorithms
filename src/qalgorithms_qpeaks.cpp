@@ -1262,11 +1262,14 @@ namespace qAlgorithms
         double fval = f_value(RSS_reg, RSS_H0, 4, 1, observed->size());
 
         const size_t length = rangeLen(range);
-        double refval = F_VALUES[length]; // pre-calculated for alpha = 0.05
+        double F_refval = cdflib_F_stat(0.05, 4, 1, length);
 
-        return fval > refval; // reject H0, significant difference from y = b
+        // double refval = F_VALUES[length]; // pre-calculated for alpha = 0.05 @todo do this eventually
+
+        return fval > F_refval; // reject H0, significant difference from y = b
 
         // @todo add a section to also test for y = mx + b
+        // also check for normal quadratic, that should also fit a lot of observed noise
     }
 
     double calcSSE_exp(const RegCoeffs coeff, const std::vector<float> *y_start, const Range_i regSpan, size_t idxCenter)
@@ -1279,7 +1282,7 @@ namespace qAlgorithms
     { // @todo this does not account for asymmetric RT distances, will that be a problem?
         double result = 0.0;
         // left side
-        for (size_t iSegment = regSpan.startIdx; iSegment < idxCenter; iSegment++) // @todo factor this loop into a function
+        for (size_t iSegment = regSpan.startIdx; iSegment < idxCenter; iSegment++)
         {
             double new_x = double(iSegment) - double(idxCenter); // always negative
             double y_predict = regExpAt_L(&coeff, new_x);
@@ -2136,8 +2139,6 @@ namespace qAlgorithms
             if (spectrum_mz.empty())
                 continue;
 
-            centroids.clear();
-
             // @todo every group is just an index range into three same-length vectors if we do not
             // perform interpolation. Should interpolation be necessary (includes extrapolation),
             // add these values into the actual data(?)
@@ -2181,12 +2182,13 @@ namespace qAlgorithms
         {
             if (spectrum_int->at(pos) < minIntensity) // this should generally be the same as == 0
             {
-                size_t span = pos - rangeStart + 1;
+                size_t span = pos - rangeStart;
                 if (span >= 5)
                 {
                     // at least five points, add block
                     // pos - 1 is used since pos is 0
                     ranges.push_back({rangeStart, pos - 1});
+                    assert(rangeLen(&ranges.back()) > 4);
                     maxRangeSpan = maxRangeSpan > span ? maxRangeSpan : span;
                 }
                 rangeStart = pos + 1;
