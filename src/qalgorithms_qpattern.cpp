@@ -26,6 +26,181 @@ namespace qAlgorithms
     // this module-local variable is used to prevent negative intensities from occurring
     float lowestAreaLog = 0;
 
+    void findComponents_new(
+        // note: both features and bins contain a "componentID" field that is 0 by default.
+        // the componentisation function updates these fields in addition to returning the component regressions
+        std::vector<FeaturePeak> *features,
+        std::vector<EIC> *bins)
+    {
+        // sort features by RT
+
+        // find pre-groups by checking if apexes are further apart than the last smallest distance
+    }
+
+    // note: ranges are only returned for two or more points
+    std::vector<Range_i> preGroup_new(const std::vector<FeaturePeak> *features)
+    {
+        // assumes RT-sorted vector as input
+        std::vector<Range_i> ret;
+
+#define rightBound(x) features->at(x).upperRT
+#define leftBound(x) features->at(x).lowerRT
+#define position(x) features->at(x).retentionTime
+#define uncert(x) features->at(x).RT_Uncertainty
+
+        struct Point
+        {
+            size_t index = 0;
+            double position = 0;
+            double uncert = 0;
+
+            void upd(size_t idx, double pos, double un)
+            {
+                index = idx;
+                position = pos;
+                uncert = un;
+            }
+            double rb()
+            {
+                return position + uncert;
+            }
+        };
+
+        // rightmost is the highest RT in a range
+        double rightmost = rightBound(0);
+        size_t start = 0;
+        size_t end = 0;
+        size_t endUpdate = 0;
+
+        // a group is understood to be formed by features which fulfill the condition that
+        // every group member is in range of at least one other when considering the minimum of
+        // uncertainties. A point that is notable here is that a range also includes all points
+        // within such "chains" that are too narrow to bridge regions
+        // FIrst, the edge is expanded until the min difference is exceeded. This is what "end" is
+        // set to. Then, it is expanded until the max difference is exceeded. If an observed difference
+        // is greater than the current max difference, update the end position
+
+        // the group has the following relevant points:
+        // 1) the point which determines the right limit of the range by its position
+        // 2) the point which determines the right limit of the range by outermost point
+        //
+        // the grouping can only consider a point if it is within the range given by these two values.
+        // If the points are identical, all comparisons are trivial.
+        // If the outer limit is caused by a different point, it is necessary to check in reverse order
+        // (until point 2 is reached or the difference of the compared point is exceeded)
+        // all points that are elements of the group.
+
+        Point point1;
+        point1.position = position(0);
+        point1.uncert = uncert(0);
+        Point point2 = point1;
+
+        for (size_t i = 1; i < features->size(); i++)
+        {
+            double pos_n = position(i);
+            double uncert_n = uncert(i);
+            if (pos_n > point2.rb())
+            {
+                // the group is complete
+                point1.upd(i, pos_n, uncert_n);
+                point2 = point1;
+            }
+            else if (pos_n - uncert_n > point1.position)
+            {
+                // the group is complete
+                point1.upd(i, pos_n, uncert_n);
+                point2 = point1;
+            }
+
+            else if (point1.index == point2.index)
+            {
+                // only check if the point could be added once
+                double minUN = point1.uncert < uncert_n ? point1.uncert : uncert_n;
+                double diff = pos_n - point1.position;
+                if (diff < minUN)
+                {
+                    // the point belongs into the group
+                    point1.upd(i, pos_n, uncert_n);
+                    if (pos_n + uncert_n > point2.rb())
+                        point2.upd(i, pos_n, uncert_n);
+                }
+                else
+                {
+                    // the group is complete
+                    point1.upd(i, pos_n, uncert_n);
+                    point2 = point1;
+                }
+            }
+            else
+            {
+                // ?
+            }
+        }
+
+        //
+
+        //
+
+        double pos_right = position(0);
+        double UC_right = uncert(0);
+
+        for (size_t i = 1; i < features->size(); i++)
+        {
+            double pos = position(i);
+            double UC_i = uncert(i);
+            double UC_min = UC_i < UC_right ? UC_i : UC_right;
+
+            if (pos - pos_right > UC_min)
+            {
+                // potential group end - continue until rightmost is exceeded
+                end = i;
+
+                if (end == start)
+                {
+                    start = end + 1;
+                    continue;
+                }
+
+                i += 1;
+                bool groupContinues = false;
+                size_t j = i + 1;
+                for (; j < features->size(); j++)
+                {
+                    if (rightmost < position(j))
+                        break;
+
+                    bool relevant = pos < leftBound(j);
+                    groupContinues = groupContinues || relevant;
+                }
+
+                if (!groupContinues)
+                {
+                    // the group was found correctly, add it to the range vector
+                    ret.push_back({start, end});
+                    start = end + 1;
+                    continue;
+                }
+
+                // the region in which the point of separation is lies between i and j
+                // if the group should expand, then there must be an element in the group
+                // which has a right limit past i. For each of these elements, check all
+                // points within the uncertainty
+            }
+            else
+            {
+                // only update the center point
+                pos_right = rightmost > pos + UC_i ? pos_right : pos;
+                rightmost = rightmost > pos + UC_i ? rightmost : UC_i;
+            }
+        }
+        return ret;
+
+#undef rightBound(x)
+#undef leftbound(x)
+#undef position(x)
+#undef uncert(x)
+    }
+
     std::vector<MultiRegression> findComponents(
         std::vector<FeaturePeak> *peaks, // the peaks are updated as part of componentisation
         std::vector<EIC> *bins,

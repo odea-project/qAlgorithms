@@ -28,13 +28,11 @@ namespace qAlgorithms
         float DQS;
     };
 
-    std::vector<MultiRegression> findComponents_new(
+    void findComponents_new(
         // note: both features and bins contain a "componentID" field that is 0 by default.
         // the componentisation function updates these fields in addition to returning the component regressions
         std::vector<FeaturePeak> *features,
-        std::vector<EIC> *bins,
-        const std::vector<float> *convertRT, // this is needed to perform interpolation at the same RT as in qPeaks
-        size_t *featuresInComponents);
+        std::vector<EIC> *bins);
 
     std::vector<Range_i> preGroup_new(const std::vector<FeaturePeak> *features);
 
