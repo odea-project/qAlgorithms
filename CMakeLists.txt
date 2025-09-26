@@ -42,6 +42,10 @@ include_directories(include "external/simdutf/")
 
 # Source files
 file(GLOB_RECURSE SOURCES "src/*.cpp" "external/CDFlib/cdflib.cpp" "external/simdutf/simdutf.cpp")
+# Remove test/main file(s) from the library list
+message(SOURCES="${SOURCES}")
+list(FILTER SOURCES EXCLUDE REGEX "qalgorithms_main\\.cpp")
+message(TRUE_SOURCES="${SOURCES}")
 
 # flags for static compile 
 # set(BUILD_SHARED_LIBS OFF)
