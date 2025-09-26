@@ -48,7 +48,7 @@ file(GLOB_RECURSE SOURCES "src/*.cpp" "external/CDFlib/cdflib.cpp" "external/sim
 # set(CMAKE_EXE_LINKER_FLAGS "-static")
 
 # Add executable target
-add_executable(${PROJECT_NAME} ${SOURCES} "tools/qalgorithms_main.cpp")
+add_executable(${PROJECT_NAME} ${SOURCES} "src/qalgorithms_main.cpp")
 
 add_executable(tests ${SOURCES} "tools/tests.cpp")
 
