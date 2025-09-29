@@ -43,8 +43,6 @@ namespace qAlgorithms
         // assumes RT-sorted vector as input
         std::vector<Range_i> ret;
 
-#define rightBound(x) features->at(x).upperRT
-#define leftBound(x) features->at(x).lowerRT
 #define position(x) features->at(x).retentionTime
 #define uncert(x) features->at(x).RT_Uncertainty
 
@@ -60,29 +58,11 @@ namespace qAlgorithms
                 position = pos;
                 uncert = un;
             }
-            double lb()
-            {
-                return position - uncert;
-            }
             double rb()
             {
                 return position + uncert;
             }
         };
-
-        // rightmost is the highest RT in a range
-        double rightmost = rightBound(0);
-        size_t start = 0;
-        size_t end = 0;
-        size_t endUpdate = 0;
-
-        // a group is understood to be formed by features which fulfill the condition that
-        // every group member is in range of at least one other when considering the minimum of
-        // uncertainties. A point that is notable here is that a range also includes all points
-        // within such "chains" that are too narrow to bridge regions
-        // FIrst, the edge is expanded until the min difference is exceeded. This is what "end" is
-        // set to. Then, it is expanded until the max difference is exceeded. If an observed difference
-        // is greater than the current max difference, update the end position
 
         // the group has the following relevant points:
         // 1) the point which determines the right limit of the range by its position
@@ -93,6 +73,13 @@ namespace qAlgorithms
         // If the outer limit is caused by a different point, it is necessary to check in reverse order
         // (until point 2 is reached or the difference of the compared point is exceeded)
         // all points that are elements of the group.
+        //
+        // we can only be sure that a group is complete when the current position exceeds the limit
+        // as set by point 2. This is because any peak could just be very small and be placed
+        // inbetween two points with a very large span. Also note that the minimum reasonable uncertainty
+        // is one point to each side of the apex.
+
+        size_t groupStart = 0;
 
         Point point1;
         point1.position = position(0);
@@ -164,66 +151,91 @@ namespace qAlgorithms
             }
         }
 
-        //
-
-        double pos_right = position(0);
-        double UC_right = uncert(0);
-
-        for (size_t i = 1; i < features->size(); i++)
-        {
-            double pos = position(i);
-            double UC_i = uncert(i);
-            double UC_min = UC_i < UC_right ? UC_i : UC_right;
-
-            if (pos - pos_right > UC_min)
-            {
-                // potential group end - continue until rightmost is exceeded
-                end = i;
-
-                if (end == start)
-                {
-                    start = end + 1;
-                    continue;
-                }
-
-                i += 1;
-                bool groupContinues = false;
-                size_t j = i + 1;
-                for (; j < features->size(); j++)
-                {
-                    if (rightmost < position(j))
-                        break;
-
-                    bool relevant = pos < leftBound(j);
-                    groupContinues = groupContinues || relevant;
-                }
-
-                if (!groupContinues)
-                {
-                    // the group was found correctly, add it to the range vector
-                    ret.push_back({start, end});
-                    start = end + 1;
-                    continue;
-                }
-
-                // the region in which the point of separation is lies between i and j
-                // if the group should expand, then there must be an element in the group
-                // which has a right limit past i. For each of these elements, check all
-                // points within the uncertainty
-            }
-            else
-            {
-                // only update the center point
-                pos_right = rightmost > pos + UC_i ? pos_right : pos;
-                rightmost = rightmost > pos + UC_i ? rightmost : UC_i;
-            }
-        }
         return ret;
 
-#undef rightBound(x)
-#undef leftbound(x)
 #undef position(x)
 #undef uncert(x)
+    }
+
+    size_t ExcludeMatrix::indexOf(size_t first, size_t second)
+    {
+        // the structure of the matrix is triangular, so only half of it has to be stored.
+        // points cannot sensibly be compared with themselves
+        assert(first != second);
+        size_t smaller = first < second ? first : second;
+        size_t bigger = first > second ? first : second;
+        return bigger * (bigger - 1) / 2 + smaller;
+    }
+    void ExcludeMatrix::invalidate(size_t first, size_t second)
+    {
+        size_t access = indexOf(first, second);
+        storage[access] = 0;
+    }
+    bool ExcludeMatrix::isInvalid(size_t first, size_t second)
+    {
+        if (first == second)
+            return true;
+        size_t access = indexOf(first, second);
+        return storage[access] == 0;
+    }
+    double *ExcludeMatrix::at(size_t first, size_t second)
+    {
+        size_t access = indexOf(first, second);
+        return storage.data() + access;
+    }
+    void ExcludeMatrix::fill(size_t n)
+    {
+        featureCount = n;
+        size_t maxcount = n * (n - 1) / 2 + n;
+        storage.resize(maxcount);
+        for (size_t i = 0; i < maxcount; i++)
+            storage[i] = NAN;
+    }
+    size_t ExcludeMatrix::countMatches(size_t row)
+    {
+        size_t matches = 0;
+        for (size_t i = 0; i < featureCount; i++)
+        {
+            if (!isInvalid(i, row))
+                matches += 1;
+        }
+        return matches;
+    }
+
+    void pairwiseMatch(const Range_i *region, const std::vector<FeaturePeak> *features, ExcludeMatrix *excludeMatrix)
+    {
+#define position(x) features->at(x).retentionTime
+#define uncert(x) features->at(x).RT_Uncertainty
+        // in a first pass, establish if the two points fit in terms of position
+        for (size_t i = region->startIdx; i < region->endIdx; i++)
+        {
+            for (size_t j = i + 1; j < region->endIdx + 1; j++)
+            {
+                double pos_i = position(i);
+                double uncert_i = uncert(i);
+                double pos_j = position(j);
+                double uncert_j = uncert(j);
+                double minUncert = uncert_i < uncert_j ? uncert_i : uncert_j;
+                double posDiff = pos_j - pos_i;
+                if (posDiff > minUncert)
+                    excludeMatrix->invalidate(i, j);
+            }
+        }
+#undef position(x)
+#undef uncert(x)
+
+        // next, establish that the profile in a pairwise match is OK.
+        for (size_t i = region->startIdx; i < region->endIdx; i++)
+        {
+            for (size_t j = i + 1; j < region->endIdx + 1; j++)
+            {
+                if (excludeMatrix->isInvalid(i, j))
+                    continue;
+                // do the regression test up to the largest scale applicable to both points
+                *excludeMatrix->at(i, j) = comparePair();
+            }
+        }
+        // @todo consider including the number of not-invalid comparisons as return value
     }
 
     std::vector<MultiRegression> findComponents(

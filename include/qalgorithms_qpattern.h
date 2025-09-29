@@ -36,8 +36,26 @@ namespace qAlgorithms
 
     std::vector<Range_i> preGroup_new(const std::vector<FeaturePeak> *features);
 
+    struct ExcludeMatrix
+    {
+        // something to store the data, should probably not be a vector
+        std::vector<double> storage;
+        size_t featureCount = 0;
+
+        void fill(size_t n);
+
+        // mismatch is always maked by a field being 0
+        void invalidate(size_t first, size_t second);
+        bool isInvalid(size_t first, size_t second);
+        size_t indexOf(size_t first, size_t second);
+        double *at(size_t first, size_t second);
+        size_t countMatches(size_t row);
+    };
+
+    ExcludeMatrix makeExcludeMat(const size_t numFeatures);
+
     // function to create the exclusion matrix
-    void pairwiseMatch(const Range_i *region, const std::vector<FeaturePeak> *features);
+    void pairwiseMatch(const Range_i *region, const std::vector<FeaturePeak> *features, ExcludeMatrix *excludeMatrix);
 
     // calculate mse / some other regression param for the pair. Since a combined regression only makes sense
     // if it has at least two points to each side for every regression, the EICs do not need to be expanded
