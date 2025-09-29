@@ -60,6 +60,10 @@ namespace qAlgorithms
                 position = pos;
                 uncert = un;
             }
+            double lb()
+            {
+                return position - uncert;
+            }
             double rb()
             {
                 return position + uncert;
@@ -111,7 +115,6 @@ namespace qAlgorithms
                 point1.upd(i, pos_n, uncert_n);
                 point2 = point1;
             }
-
             else if (point1.index == point2.index)
             {
                 // only check if the point could be added once
@@ -133,11 +136,33 @@ namespace qAlgorithms
             }
             else
             {
-                // ?
+                // there are two limits relevant to the computation, and the point could be within the
+                // relevant region.
+                bool addToGroup = false;
+
+                // check if another point exists which could be within the relevant distance
+                for (size_t check = point1.index; check >= point2.index; check--)
+                {
+                    double pos_c = position(check);
+                    double uncert_c = uncert(check);
+                    double minUN = uncert_c < uncert_n ? uncert_c : uncert_n;
+                    double diff = pos_n - pos_c;
+                    if (diff < minUN)
+                    {
+                        addToGroup = true;
+                        break;
+                    }
+                }
+
+                if (addToGroup)
+                {
+                    // the point belongs into the group
+                    point1.upd(i, pos_n, uncert_n);
+                    if (pos_n + uncert_n > point2.rb())
+                        point2.upd(i, pos_n, uncert_n);
+                }
             }
         }
-
-        //
 
         //
 
