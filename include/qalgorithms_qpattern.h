@@ -55,11 +55,15 @@ namespace qAlgorithms
     ExcludeMatrix makeExcludeMat(const size_t numFeatures);
 
     // function to create the exclusion matrix
-    void pairwiseMatch(const Range_i *region, const std::vector<FeaturePeak> *features, ExcludeMatrix *excludeMatrix);
+    void pairwiseMatch(const Range_i *region,
+                       const std::vector<FeaturePeak> *features,
+                       const std::vector<EIC> *eics,
+                       ExcludeMatrix *excludeMatrix);
 
     // calculate mse / some other regression param for the pair. Since a combined regression only makes sense
     // if it has at least two points to each side for every regression, the EICs do not need to be expanded
-    double comparePair(const FeaturePeak *feat_A, const EIC *eic_A, const FeaturePeak *feat_B, const EIC *eic_B);
+    double comparePair(const FeaturePeak *feat_A, const EIC *eic_A,
+                       const FeaturePeak *feat_B, const EIC *eic_B);
 
     // main function to execute a componentiation step on data
     std::vector<MultiRegression> findComponents(

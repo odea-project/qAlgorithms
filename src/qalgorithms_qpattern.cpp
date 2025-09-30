@@ -153,8 +153,8 @@ namespace qAlgorithms
 
         return ret;
 
-#undef position(x)
-#undef uncert(x)
+#undef position
+#undef uncert
     }
 
     size_t ExcludeMatrix::indexOf(size_t first, size_t second)
@@ -202,11 +202,15 @@ namespace qAlgorithms
         return matches;
     }
 
-    void pairwiseMatch(const Range_i *region, const std::vector<FeaturePeak> *features, ExcludeMatrix *excludeMatrix)
+    void pairwiseMatch(const Range_i *region,
+                       const std::vector<FeaturePeak> *features,
+                       const std::vector<EIC> *eics,
+                       ExcludeMatrix *excludeMatrix)
     {
+        size_t nonExcludes = 0;
+// in a first pass, establish if the two points fit in terms of position
 #define position(x) features->at(x).retentionTime
 #define uncert(x) features->at(x).RT_Uncertainty
-        // in a first pass, establish if the two points fit in terms of position
         for (size_t i = region->startIdx; i < region->endIdx; i++)
         {
             for (size_t j = i + 1; j < region->endIdx + 1; j++)
@@ -221,8 +225,8 @@ namespace qAlgorithms
                     excludeMatrix->invalidate(i, j);
             }
         }
-#undef position(x)
-#undef uncert(x)
+#undef position
+#undef uncert
 
         // next, establish that the profile in a pairwise match is OK.
         for (size_t i = region->startIdx; i < region->endIdx; i++)
@@ -232,10 +236,22 @@ namespace qAlgorithms
                 if (excludeMatrix->isInvalid(i, j))
                     continue;
                 // do the regression test up to the largest scale applicable to both points
-                *excludeMatrix->at(i, j) = comparePair();
+                const FeaturePeak *feature_I = features->data() + i;
+                const FeaturePeak *feature_J = features->data() + j;
+                const EIC *eic_I = eics->data() + i;
+                const EIC *eic_J = eics->data() + j;
+                const double msePair = comparePair(feature_I, eic_I, feature_J, eic_J);
+                *excludeMatrix->at(i, j) = msePair;
+                nonExcludes += msePair > 0 ? 1 : 0;
             }
         }
         // @todo consider including the number of not-invalid comparisons as return value
+    }
+
+    double comparePair(const FeaturePeak *feat_A, const EIC *eic_A,
+                       const FeaturePeak *feat_B, const EIC *eic_B)
+    {
+        // this is a special case of the normal multiregression with only two b0 values.
     }
 
     std::vector<MultiRegression> findComponents(
@@ -1254,12 +1270,15 @@ namespace qAlgorithms
                 }
 
                 const double *inv = INV_ARRAY.data() + scale * 6;
-                const double inv_A = inv[0];
-                const double inv_B = inv[1];
-                const double inv_C = inv[2];
-                const double inv_D = inv[3];
-                const double inv_E = inv[4];
-                const double inv_F = inv[5];
+                const double inv_A1 = INV_ARRAY[0] - 2 * INV_ARRAY[1] / numPeaks;
+                // A2 is only defined for numPeaks > 1, set it to 0 to avoid conditional in loops
+                const double inv_A2 = -2 * INV_ARRAY[1] / numPeaks;
+                const double inv_B = INV_ARRAY[1] / numPeaks;
+                const double inv_B = inv[1] / numPeaks;
+                const double inv_C = inv[2] / numPeaks;
+                const double inv_D = inv[3] / numPeaks;
+                const double inv_E = inv[4] / numPeaks;
+                const double inv_F = inv[5] / numPeaks;
 
                 const double inv_B_b0 = inv_B * product_sum_b0;
                 const double inv_D_b1 = inv_D * product_sum_b1;
@@ -1272,7 +1291,8 @@ namespace qAlgorithms
 
                 for (size_t i = 0; i < numPeaks; i++)
                 {
-                    b0s[access][i] = inv_A * single_sums_b0[i] + inv_B * (product_sum_b2 + product_sum_b3);
+                    b0s[access][i] = inv_A2 * product_sum_b0 + (inv_A1 - inv_A2) * single_sums_b0[i] +
+                                     inv_B * (product_sum_b2 + product_sum_b3);
                 }
             }
             scale5Count += 1;
