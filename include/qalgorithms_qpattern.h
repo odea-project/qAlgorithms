@@ -65,6 +65,18 @@ namespace qAlgorithms
     double comparePair(const FeaturePeak *feat_A, const EIC *eic_A,
                        const FeaturePeak *feat_B, const EIC *eic_B);
 
+    Range_i scanRegion(const FeaturePeak **featArray, const size_t length);
+
+    struct MergeVectors
+    {
+        std::vector<float> logInt_sum;
+        std::vector<float> logInt_single;
+        std::vector<size_t> df_sum;
+        std::vector<size_t> df_single;
+        size_t numFeats = 0;
+        size_t lengthSingle = 0;
+    };
+
     // main function to execute a componentiation step on data
     std::vector<MultiRegression> findComponents(
         // note: both features and bins contain a "componentID" field that is 0 by default.

@@ -252,6 +252,80 @@ namespace qAlgorithms
                        const FeaturePeak *feat_B, const EIC *eic_B)
     {
         // this is a special case of the normal multiregression with only two b0 values.
+        const FeaturePeak *feats[2] = {feat_A, feat_B};
+        const size_t featCount = 2;
+        const EIC *eics[2] = {eic_A, eic_B};
+
+        // the range is defined as the largest left limit and smallest right limit of a feature
+        Range_i range = scanRegion(feats, featCount);
+
+        // construct the sum vector and individual vector of log intensities.
+        // this requires the maximum regression window to be known ahead of time.
+        // @todo performing the regression in log space intensifies the baseline significantly when
+        // summing up everything, consider a means of documenting the how much for every signal
+    }
+
+    Range_i scanRegion(const FeaturePeak **featArray, const size_t length)
+    {
+        size_t maxLowerScan = -1;
+        size_t minUpperScan = 0;
+
+        for (size_t i = 0; i < length; i++)
+        {
+            size_t lower = (*featArray)[i].scanPeakStart;
+            size_t upper = (*featArray)[i].scanPeakEnd;
+
+            maxLowerScan = lower > maxLowerScan ? lower : maxLowerScan;
+            minUpperScan = upper < minUpperScan ? upper : minUpperScan;
+        }
+        assert(maxLowerScan < minUpperScan);
+        return {maxLowerScan, minUpperScan};
+    }
+
+    MergeVectors logVectors_multireg(const EIC **eics, const size_t length, const Range_i *scanRange, const size_t maxscale)
+    {
+        // note: scan range describes the region in which the apex of the regression can be. Since there is no need
+        // to check for larger peaks than we previously found, the maxscale is limited to the maximum scale of compared
+        // features (+ the number of minimal degrees of freedom to account for potenial merges of two features distorted
+        // into different directions) This adjustment is made when calling this function. All this function does is
+        // extract a region of data that goes from scanrange.start - maxscale to scanrange.end + maxscale
+
+        size_t span = rangeLen(scanRange);
+        assert(span >= 5); // despite having more degrees of freedom, we still need five points for the individual peaks to make sense
+
+        std::vector<float> logInt_sum(span, 0);
+        std::vector<float> logInt_single(span * length, NAN);
+        std::vector<size_t> df_sum(span, 0);
+        std::vector<size_t> df_single(span * length, 0);
+
+        for (size_t elem = 0; elem < length; elem++)
+        {
+            const EIC *currentEIC = eics[elem];
+            size_t eicSize = currentEIC->mz.size();
+
+            // first, identify the start and end of the region in the given EIC.
+            size_t currentIdx = 0;
+            size_t endIdx = 0;
+            size_t startIdx = 0;
+            // All ends of EICs have already been extrapolated. The halving process is fairly
+            // aggessive, so there should be no need to add additional complexity to the system
+            // through some further extrapolation. All EICs are also fully interpolated, so no
+            // logic is needed for that either.
+            // As sich, this function really just copies data from the individual EICs into the
+            // less cluttered container struct
+
+            for (; currentIdx < eicSize; currentIdx++)
+            {
+                size_t scan = currentEIC->scanNumbers[currentIdx];
+                if (scan >= scanRange->startIdx - maxscale + 2)
+                    break;
+            }
+            // @todo solve case of the regression extending past the border
+            for (; currentIdx < eicSize; currentIdx++)
+            {
+                size_t scan = currentEIC->scanNumbers[currentIdx];
+            }
+        }
     }
 
     std::vector<MultiRegression> findComponents(
