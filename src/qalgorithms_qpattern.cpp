@@ -35,6 +35,17 @@ namespace qAlgorithms
         // sort features by RT
 
         // find pre-groups by checking if apexes are further apart than the last smallest distance
+
+        // for every pre group, construct an exclusion matrix
+        // -- ensure that the apex position is respected
+        // -- ? (efficiency) Do a second pass and find potential subgroups from exclusion info
+        // -- do the pairwise comparision
+        // -- -- maximum scale: determined by maximum present scale in features (+1 for saftey?)
+        // -- ? some additional prefilter based on exclusions
+        // -- add features to groups in order of match score
+        // produce group information based on matrix shape
+
+        // for every group, calculate shape score
     }
 
     // note: ranges are only returned for two or more points
@@ -98,9 +109,31 @@ namespace qAlgorithms
             }
             else if (pos_n - uncert_n > point1.position)
             {
-                // the group is complete
-                point1.upd(i, pos_n, uncert_n);
-                point2 = point1;
+                bool continueGroup = false;
+                for (size_t j = i + 1; j < features->size(); j++)
+                {
+                    pos_n = position(j);
+                    uncert_n = uncert(j);
+
+                    if (pos_n > point2.rb())
+                        break;
+
+                    if (pos_n - uncert_n > point1.position)
+                        continue;
+
+                    point1.upd(j, pos_n, uncert_n);
+                    if (pos_n + uncert_n > point2.rb())
+                        point2.upd(j, pos_n, uncert_n);
+                    continueGroup = true;
+                    i = j;
+                }
+
+                if (!continueGroup)
+                {
+                    // the group is complete
+                    point1.upd(i, pos_n, uncert_n);
+                    point2 = point1;
+                }
             }
             else if (point1.index == point2.index)
             {
@@ -150,6 +183,8 @@ namespace qAlgorithms
                 }
             }
         }
+
+        // @todo close last group
 
         return ret;
 
@@ -263,6 +298,21 @@ namespace qAlgorithms
         // this requires the maximum regression window to be known ahead of time.
         // @todo performing the regression in log space intensifies the baseline significantly when
         // summing up everything, consider a means of documenting the how much for every signal
+
+        auto regTarget = logVectors_multireg(eics, 2, &range);
+
+        // perform the multireg
+
+        // validate regressions
+
+        // select best possible regression
+
+        // calculate and return mse
+    }
+
+    double compareMulti(const FeaturePeak **featArray, const EIC **eics, size_t numFeats)
+    {
+        // same as above, just less explicit - merge functions eventually? @todo
     }
 
     Range_i scanRegion(const FeaturePeak **featArray, const size_t length)
@@ -282,7 +332,7 @@ namespace qAlgorithms
         return {maxLowerScan, minUpperScan};
     }
 
-    MergeVectors logVectors_multireg(const EIC **eics, const size_t length, const Range_i *scanRange, const size_t maxscale)
+    MergeVectors logVectors_multireg(const EIC **eics, const size_t length, const Range_i *scanRange)
     {
         // note: scan range describes the region in which the apex of the regression can be. Since there is no need
         // to check for larger peaks than we previously found, the maxscale is limited to the maximum scale of compared
@@ -311,21 +361,48 @@ namespace qAlgorithms
             // aggessive, so there should be no need to add additional complexity to the system
             // through some further extrapolation. All EICs are also fully interpolated, so no
             // logic is needed for that either.
-            // As sich, this function really just copies data from the individual EICs into the
+            // As such, this function really just copies data from the individual EICs into the
             // less cluttered container struct
 
             for (; currentIdx < eicSize; currentIdx++)
             {
                 size_t scan = currentEIC->scanNumbers[currentIdx];
-                if (scan >= scanRange->startIdx - maxscale + 2)
+                if (scan >= scanRange->startIdx)
                     break;
             }
             // @todo solve case of the regression extending past the border
+            // first relevant degree of freedom required to avoid re-addition
+            size_t df_start = currentEIC->df[currentIdx];
+            df_start -= currentIdx == 0 ? 0 : currentEIC->df[currentIdx - 1];
             for (; currentIdx < eicSize; currentIdx++)
             {
                 size_t scan = currentEIC->scanNumbers[currentIdx];
+                if (scan > scanRange->endIdx)
+                    break;
+
+                double logint = log(currentEIC->ints_area[currentIdx]);
+                size_t df = currentEIC->df[currentIdx] - df_start;
+
+                size_t access_sum = scan - scanRange->startIdx;
+                logInt_sum[access_sum] += logint;
+                df_sum[access_sum] += df;
+
+                size_t access_single = scan - scanRange->startIdx + span * elem;
+                logInt_single[access_single] = logint;
+                df_single[access_single] = df;
             }
         }
+        // the degrees of freedom should be cummulative
+
+        MergeVectors res;
+        res.numFeats = length;
+        res.lengthSingle = span;
+        res.df_single = df_single;
+        res.df_sum = df_sum;
+        res.logInt_single = logInt_single;
+        res.logInt_sum = logInt_sum;
+
+        return res;
     }
 
     std::vector<MultiRegression> findComponents(
@@ -1344,10 +1421,9 @@ namespace qAlgorithms
                 }
 
                 const double *inv = INV_ARRAY.data() + scale * 6;
-                const double inv_A1 = INV_ARRAY[0] - 2 * INV_ARRAY[1] / numPeaks;
+                const double inv_A1 = inv[0] - 2 * INV_ARRAY[1] / numPeaks;
                 // A2 is only defined for numPeaks > 1, set it to 0 to avoid conditional in loops
-                const double inv_A2 = -2 * INV_ARRAY[1] / numPeaks;
-                const double inv_B = INV_ARRAY[1] / numPeaks;
+                const double inv_A2 = -2 * inv[1] / numPeaks;
                 const double inv_B = inv[1] / numPeaks;
                 const double inv_C = inv[2] / numPeaks;
                 const double inv_D = inv[3] / numPeaks;

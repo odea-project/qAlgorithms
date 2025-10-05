@@ -77,6 +77,8 @@ namespace qAlgorithms
         size_t lengthSingle = 0;
     };
 
+    MergeVectors logVectors_multireg(const EIC **eics, const size_t length, const Range_i *scanRange);
+
     // main function to execute a componentiation step on data
     std::vector<MultiRegression> findComponents(
         // note: both features and bins contain a "componentID" field that is 0 by default.
