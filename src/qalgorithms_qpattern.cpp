@@ -275,7 +275,7 @@ namespace qAlgorithms
                 const FeaturePeak *feature_J = features->data() + j;
                 const EIC *eic_I = eics->data() + i;
                 const EIC *eic_J = eics->data() + j;
-                const double msePair = comparePair(feature_I, eic_I, feature_J, eic_J);
+                const double msePair = evalPair(feature_I, eic_I, feature_J, eic_J);
                 *excludeMatrix->at(i, j) = msePair;
                 nonExcludes += msePair > 0 ? 1 : 0;
             }
@@ -283,16 +283,19 @@ namespace qAlgorithms
         // @todo consider including the number of not-invalid comparisons as return value
     }
 
-    double comparePair(const FeaturePeak *feat_A, const EIC *eic_A,
-                       const FeaturePeak *feat_B, const EIC *eic_B)
+    double evalPair(const FeaturePeak *feat_A, const EIC *eic_A,
+                    const FeaturePeak *feat_B, const EIC *eic_B)
     {
         // this is a special case of the normal multiregression with only two b0 values.
         const FeaturePeak *feats[2] = {feat_A, feat_B};
         const size_t featCount = 2;
         const EIC *eics[2] = {eic_A, eic_B};
 
-        // the range is defined as the largest left limit and smallest right limit of a feature
-        Range_i range = scanRegion(feats, featCount);
+        // the range is the scan region within which regressions of size maxscale will be searched for
+        Range_i range;
+        size_t maxscale;
+        size_t minscale;
+        scanRegion(feats, featCount, &range, &maxscale, &minscale);
 
         // construct the sum vector and individual vector of log intensities.
         // this requires the maximum regression window to be known ahead of time.
@@ -302,12 +305,27 @@ namespace qAlgorithms
         auto regTarget = logVectors_multireg(eics, 2, &range);
 
         // perform the multireg
+        auto regs = findCoefficients_multi_new(&regTarget.logInt_single, &regTarget.logInt_sum, featCount, maxscale);
 
         // validate regressions
+        size_t pointsPerScale = rangeLen(&range) - 2 * maxscale;
+        size_t startidx = minscale * pointsPerScale;
+        double lowestMSE = INFINITY;
+        size_t bestRegIdx = 0;
+        std::vector<MultiRegression> validRegs;
+        for (size_t i = startidx; i < regs.size(); i++)
+        {
+            // modulus(position / first index at which scale == 2) + scale at which multireg starts
+            size_t scale = (i % (maxscale - 1)) + 2;
+            // minscale is imposed so that regressions are not narrowed too much compared to the input regressions
+            auto coeff = regs[i];
 
-        // select best possible regression
+            // validation
 
-        // calculate and return mse
+            // mse calculation and comparison
+            // Note: Since we know that at most one regression can be applied to the region, we only accept
+            // an answer with one single valid regression, that being the best by mse in exponential form.
+        }
     }
 
     double compareMulti(const FeaturePeak **featArray, const EIC **eics, size_t numFeats)
@@ -315,21 +333,31 @@ namespace qAlgorithms
         // same as above, just less explicit - merge functions eventually? @todo
     }
 
-    Range_i scanRegion(const FeaturePeak **featArray, const size_t length)
+    void scanRegion(const FeaturePeak **featArray, const size_t length, Range_i *scanRange, size_t *maxscale, size_t *minscale)
     {
         size_t maxLowerScan = -1;
         size_t minUpperScan = 0;
+        *maxscale = 0;
+        *minscale = INFINITY;
 
         for (size_t i = 0; i < length; i++)
         {
             size_t lower = (*featArray)[i].scanPeakStart;
             size_t upper = (*featArray)[i].scanPeakEnd;
+            size_t scale = (*featArray)[i].scale;
 
             maxLowerScan = lower > maxLowerScan ? lower : maxLowerScan;
             minUpperScan = upper < minUpperScan ? upper : minUpperScan;
+            *maxscale = scale > *maxscale ? scale : *maxscale;
+            *minscale = scale < *minscale ? scale : *minscale;
         }
+        *maxscale += 1; // safety margain, can this be reasoned about?
+
         assert(maxLowerScan < minUpperScan);
-        return {maxLowerScan, minUpperScan};
+        assert(maxLowerScan > *maxscale);
+        // in order for the range to account for the existing regressions, at least the
+        // largest observed scale must be possible for the multiregression
+        *scanRange = {maxLowerScan - *maxscale, minUpperScan + *maxscale};
     }
 
     MergeVectors logVectors_multireg(const EIC **eics, const size_t length, const Range_i *scanRange)

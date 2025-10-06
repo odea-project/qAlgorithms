@@ -62,10 +62,10 @@ namespace qAlgorithms
 
     // calculate mse / some other regression param for the pair. Since a combined regression only makes sense
     // if it has at least two points to each side for every regression, the EICs do not need to be expanded
-    double comparePair(const FeaturePeak *feat_A, const EIC *eic_A,
-                       const FeaturePeak *feat_B, const EIC *eic_B);
+    double evalPair(const FeaturePeak *feat_A, const EIC *eic_A,
+                    const FeaturePeak *feat_B, const EIC *eic_B);
 
-    Range_i scanRegion(const FeaturePeak **featArray, const size_t length);
+    void scanRegion(const FeaturePeak **featArray, const size_t length, Range_i *scanRange, size_t *maxscale, size_t *minscale);
 
     struct MergeVectors
     {
@@ -78,6 +78,12 @@ namespace qAlgorithms
     };
 
     MergeVectors logVectors_multireg(const EIC **eics, const size_t length, const Range_i *scanRange);
+
+    std::vector<RegCoeffs> findCoefficients_multi_new(
+        const std::vector<float> *intensity_log_b0,
+        const std::vector<float> *intensity_log_sum, // note: consider not just summing up the extrapolated values
+        const size_t numPeaks,
+        const size_t maxScale);
 
     // main function to execute a componentiation step on data
     std::vector<MultiRegression> findComponents(
