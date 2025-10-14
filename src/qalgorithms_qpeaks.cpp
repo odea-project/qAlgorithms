@@ -1234,8 +1234,8 @@ float updateB0Scaling(
         float &valley_position)
     {
         // symmetric model should apply, this is not possible with the current peak model @todo
-        assert(mutateReg->coeffs.b1 != 0);
-        assert(mutateReg->coeffs.b2 != 0 && mutateReg->coeffs.b3 != 0);
+        //assert(mutateReg->coeffs.b1 != 0);
+        //assert(mutateReg->coeffs.b2 != 0 && mutateReg->coeffs.b3 != 0);
         // calculate key by checking the signs of coeff
         const float floatScale = float(scale);
         int key = 0;

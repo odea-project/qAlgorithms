@@ -350,7 +350,7 @@ namespace qAlgorithms
 
         if (args.inputPaths.empty())
         {
-            std::cerr << "Error: no input file supplied. Specify a file or directorey using the -i or "
+            std::cerr << "Error: no input file supplied. Specify a file or directory using the -i or "
                       << "-tl flag. Execute qAlgorithms with the -h flag for more information.\n";
             goodInputs = false;
         }

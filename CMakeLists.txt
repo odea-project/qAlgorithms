@@ -3,11 +3,11 @@ cmake_minimum_required(VERSION 3.12)
 project(qAlgorithms VERSION 0.2 LANGUAGES CXX)
 
 # Set C++ standard (do not also pass -std in add_compile_options)
-set(CMAKE_CXX_STANDARD 26)
+set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # Optional: choose compiler externally via CMake or environment variable
-# set(CMAKE_CXX_COMPILER "g++")
+set(CMAKE_CXX_COMPILER "g++-14")
 
 # Option to enable AddressSanitizer in Debug builds
 option(V_ASAN "Enable AddressSanitizer" OFF)
