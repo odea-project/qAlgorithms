@@ -248,6 +248,7 @@ namespace qAlgorithms
         for (size_t i = 0; i < binCount; i++)
         {
             auto eic = activeBins.finalBins[i].createEIC(convertRT);
+            auto eic2 = binToEIC(&activeBins.finalBins[i], &convertRT->indexOfOriginalInInterpolated, 8); // @todo
             interpolateEIC(&eic);
             finalBins.push_back(eic);
             countPointsInBins += eic.df.back(); // interpolated points are already included in the size
@@ -843,25 +844,29 @@ namespace qAlgorithms
         return returnVal;
     }
 
-    EIC binToEIC(Bin *sourceBin, const std::vector<unsigned int> *convertIndex)
+    EIC binToEIC(Bin *sourceBin, const std::vector<size_t> *convertIndex, const size_t maxscale)
     {
-        size_t eicsize = sourceBin->pointsInBin.size();
+#define bin sourceBin->pointsInBin
+
+        assert(bin.front()->area > 0);
+        assert(bin.back()->area > 0);
+
+        size_t eicsize = bin.size();
         assert(eicsize > 4);
         // sorting should be done beforehand @todo
-        std::sort(sourceBin->pointsInBin.begin(), sourceBin->pointsInBin.end(), [](const CentroidPeak *lhs, const CentroidPeak *rhs)
+        std::sort(bin.begin(), bin.end(), [](const CentroidPeak *lhs, const CentroidPeak *rhs)
                   { return lhs->number_MS1 < rhs->number_MS1; });
 
         // using the knowledge of where points should be interpolated, transfer centroids into
         // arrays with gaps for later processing
 
-        volatile size_t frontTime = sourceBin->pointsInBin.front()->number_MS1;
-        volatile size_t backTime = sourceBin->pointsInBin.back()->number_MS1;
-
-        unsigned int firstScan = convertIndex->at(frontTime);
-        unsigned int lastScan = convertIndex->at(backTime);
-        size_t interpolatedSize = lastScan - firstScan + 1 + 4; // +4 since we extrapolate two points to each side later
+        size_t frontTime = bin.front()->number_MS1;
+        size_t backTime = bin.back()->number_MS1;
+        size_t firstScan = convertIndex->at(frontTime) - maxscale + 2;
+        size_t lastScan = convertIndex->at(backTime) + maxscale - 2;
+        size_t interpolatedSize = lastScan - firstScan + 1;
         std::vector<unsigned int> tmp_interpScans(interpolatedSize, 0);
-        std::iota(tmp_interpScans.begin(), tmp_interpScans.end(), firstScan - 2);
+        std::iota(tmp_interpScans.begin(), tmp_interpScans.end(), firstScan);
 
         std::vector<unsigned int> tmp_scanNumbers(interpolatedSize, 0);
         std::vector<float> tmp_mz(interpolatedSize, 0);
@@ -875,9 +880,9 @@ namespace qAlgorithms
         unsigned int prevaccess = -1; // max of uint
         for (size_t i = 0; i < eicsize; i++)
         {
-            unsigned int access = convertIndex->at(sourceBin->pointsInBin.at(i)->number_MS1) - firstScan + 2; // two scans at the front are extrapolated later
+            const CentroidPeak *point = bin[i];
+            size_t access = convertIndex->at(point->number_MS1) - firstScan;
             assert(access != prevaccess);
-            const CentroidPeak *point = sourceBin->pointsInBin[i];
 
             tmp_scanNumbers[access] = point->number_MS1;
             tmp_mz[access] = point->mz;
@@ -915,6 +920,7 @@ namespace qAlgorithms
             tmp_interpScans};
 
         return returnVal;
+#undef bin
     }
 
     void interpolateEIC(EIC *eic)
