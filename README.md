@@ -1,20 +1,21 @@
+## Usage Notice
+At this moment, `qAlgorithms` is provided purely for reasons of scientific transparency. There are
+still known flaws in the concrete implementation, and we are steadily working on finding a useful
+way to vaidate the rest in a sensible manner. For this reason, <b>you should not use `qAlgorithms`
+to answer your research questions<b> (yet). 
+
 ## Introduction
 
 `qAlgorithms` is a standalone non-target screening analysis workflow for processing Liquid Chromatography
-High-Resolution Mass Spectrometry (LC-HRMS) data. We focus on ensuring precise and reliable processing
-in this complex field, while providing fast processing without depending on user parameters.
+High-Resolution Mass Spectrometry (LC-HRMS) data. Our goal is to provide a solution to single-file 
+processing pipeline that does not require any additional user input, delivers error estimates for results
+and is very fast / computationally efficient.
 
 While `qAlgorithms` started as a library for processing, the high interdependency of every
 step from profile mode mass spectrum to feature means it requires extensive work from the
 end user to use only one "step" of the processing algorithm. As such, we decided to provide
-a pre-compiled executeable with a low-complexity user interface. It is an intermediate goal of
+a pre-compiled executeable with a low-complexity user interface. It is a low-priority goal of
 ours to provide library bindings to more widespread programming environments like R and python.
-
-In the spirit of open data evaluation, functions are written with the goal of communicating the entirety of
-their mathematical operations to the reader, provided he has some understanding of basic C++ syntax.
-This means data structures beyond simple structs with named fields and templates / macros are generally avoided.
-We encourage you, the end user, to read our source code when working with `qAlgorithms`. This
-increases the chance for errors to be found and keeps the project maintainable.
 
 We are always open for suggestions and feedback regarding your useage of our algorithms,
 so do not hesitate to open an issue on our github page. You can also find us on [Codeberg](https://codeberg.org/ODEA-Project/qAlgorithms).
@@ -27,32 +28,34 @@ support. You can contact us by opening an issue or sending a request to our [Zen
 Here, we have also provided example files for trying out `qAlgorithms`.
 
 ## Installation and Usage
-Please note that `qAlgorithms` is still in active development and result accuracy
-cannot be guaranteed at this stage. 
 
 ### Windows
 The entire `qAlgorithms` workflow is provided as an executable under ["Releases"](https://github.com/odea-project/qAlgorithms/releases) 
 on our github repository. There is no need to download the source code.
 
-On windows, double-clicking the .exe will open `qAlgorithms` in interactive mode. Follow the prompts
-in the terminal window to produce a feature list for the file or directory of .mzML files.
-Exclusively use [ASCII characters](https://en.wikipedia.org/wiki/ASCII) in 
-filenames. If a directory or filename has a space in it, you need to enter the absolute
-path with quotes or escape the space character with "\\" to read in everything correctly.
-
-However, we recommend all users to start `qAlgorithms.exe` using powershell, which is pre-installed on all windows PCs.
+On windows, double-clicking the .exe will open `qAlgorithms` in interactive mode. This mode
+is extremely primitive and not officially supported. 
+We recommend all users to start `qAlgorithms.exe` using powershell, which is pre-installed on all windows PCs.
 If you are unfamiliar with using the shell, refer to [the basic powershell demonstration for `qAlgorithms`](https://github.com/odea-project/qAlgorithms/wiki/Tutorial-for-Novice-Users).
 
-You can also drag a directory into the powershell window to copy its path into the command line. 
+To build from source, follow the instructions for linux after installing [mingw](). 
 
 ### Linux / Mac
 Currently, no Linux releases are provided. We recommend you to clone the repository
-and compile from source using CMake and GCC.
+and compile from source using CMake and GCC. Since we do not depend on anything besides
+zlib, GCC and cmake being installed, we consider this a reasonable policy.
 
-We require CMake 3.25 or later and GCC 14 or later.
+We require CMake 3.25 or later and GCC 15 or later.
 
-On linux, you can use special characters like "µ" in filenames, provided your terminal supports
-them. We use the [std::filesystem library](https://en.cppreference.com/w/cpp/filesystem), so you are limited by that.
+Build `qAlgorithms` by executing these commands:
+```sh
+git clone https://github.com/odea-project/qAlgorithms.git
+cd ./qAlgorithms
+mkdir build
+cmake -S . -B ./build
+cd ./build
+cmake --build . -j
+```
 
 ## Usage
 
@@ -72,29 +75,28 @@ Display the help menu, listing all availvable options:
 ```sh
   ./qAlgorithms.exe -h
 ```
-Process the file measurement.mzML and write a feature list with every detected peak
+Process the file measurement.mzML and write a complete feature list 
 into the directory "results":
 ```sh
   ./qAlgorithms.exe -i C:/example/path/measurement.mzML -o ../my/results -printfeatures
 ```
 searches the directory "allMeasurements" and all subdirectories for files ending in .mzML and process them.
-All intermediate results, those being centroids, bins and peaks, are written to a .csv 
+All intermediate results, those being centroids, bins and features, are written to a .csv 
 file and saved to the "results" directory:
 ```sh
   ./qAlgorithms.exe -i ./allMeasurements -o ./results -printall
 ```
 
 Some things to keep in mind:
-* `qAlgorithms` can only process profile mode data at this point. While we did implement functionality
-  for processing centroided data, the results are significantly less reliable. Additionally, we did not
-  yet find a good process for estimating the mass accuracy of a given centroid for input from different
-  mass spectrometers. As such, processing centroided data is only possible if you recompile the program
-  yourself at this point in time (which would still lead to inaccurate results).
+* `qAlgorithms` can only process profile mode data at this point. We rely on uncertainty data 
+  generated during centroiding for following steps and have not found a way to esitmate them so
+  far. The ability to process centroids will be added once that problem is solved
+  
 * Check out the [Wiki page](https://github.com/odea-project/qAlgorithms/wiki/Questions-regarding-the-use-of-qAlgorithms) for more details on using `qAlgorithms`.
 * If you do not specify which results you want, no output will be written when using the command line interface.
-* If the program crashes, check if your problem matches one of the known bugs on our
-  [issues page](https://github.com/odea-project/qAlgorithms/issues). If a workaround exists,
-  we will provide it there while a proper solution is being worked on.
+* If the program crashes, check if your problem matches one of the known program errors on our
+  [issues page](https://github.com/odea-project/qAlgorithms/issues). We will not fix known 
+  problems before the program is considered to be stable.
 * If multiple copies of the same file are found during recursive search, only one of them will be processed.
 * The different quality scores do not serve as a way to remove peaks from
   your results. They only indicate how well the data at every step fit our
@@ -103,34 +105,37 @@ Some things to keep in mind:
   The best current usage for quality scores is priorisation of peaks 
   during further analysis.
 
-## Philosophy
-Our core principles can be summarized as three "No"s: 
-* **No User Parameters**
-* **No Unclear Process**
-* **No Usage Restrictions**
-
-Unlike many traditional data processing tools, our algorithms do not rely on manual user input 
-parameters such as thresholds. Instead, they intelligently leverage the inherent properties of 
-the measurement data itself. This approach allows the algorithms to dynamically assess and 
-utilize the quality of the data, ensuring robust and reproducible results every time.
+## Design Philosophy
 
 The algorithms within `qAlgorithms` are rooted in well-established statistical 
-tests. Our primary goal is to deliver results that aren't just accurate but also 
-statistically significant, providing confidence in every analysis. 
+tests and employ standard linear regression as the main problem solving strategy.
+This allows us to be fully deterministic without requiring the user to supply 
+and optimise algorithm parameters, which is a time-consuming and error-prone
+process which requires domain experts.
 
-We provide insight into the individual steps that led to a feature throug the use of quality
-scores. Every score preserves information on one of the concrete steps that are necessary to
-transform a series of mass spectra into a feature list. Every step is programmed to be clearly
-separated in the source code, with the relevant procedures being as independent from each other as possible. This makes it
-more feasible for a C++ literate user to understand the specifics of how a result came to be.
+While this design allows users to treat processing as a "black box", we always
+provide additional data which communicates which points a feature actually covers
+and data quality scores, which summarise the confidence in a step as a number between
+zero and one.
+
+If you want to go one step further and read out code, it is organised such that almost
+all mathematical operations related to a procedure are localised within that procedure.
+Since code readability is only tested by a very limited number of individuals, we also
+appreciate questions and comments in that regard.
 
 We are licensed under GPL-3, which means that there is no risk of you being unable to use `qAlgorithms`
 even for commercial purposes. The current and all future versions are distributed with source code,
 and you are free to include our libraries in other projects (provided the terms of the license are fulfilled).
 
 Additionally, `qAlgorithms` is develped with computational performance as a core concern. With `qAlgorithms`,
-we aim for the fastest time-to-insight possible. As scientists, we are dedicated to provinding a smooth
-research experience with rich output data that fits even highly sophisticated questions in your non-target analysis.
+we aim for the fastest time-to-insight possible. If a long time is spent waiting for results, 
+the entire process is more prone to insufficient validation and more sensitive to potential
+hardware failures. 
+
+The choice of language being C++ is so for two reasons: Firstly the mentioned desire for fast
+processing, secondly the need to write software for NTS in a manner that does not need 
+maintainance besides occasional recompilation.
+The use of "exotic" language features is kept to a minimum and largely limited to precomputation.
 
 We hope that by demonstrating the effectiveness of our approach, more software written by researchers 
 for non-target questions will adopt or improve on these ideals. 
@@ -140,7 +145,7 @@ No documentation beyond the commented source code exists at this point. Please r
 publications linked below for details on how the algorithms function.
 
 We provide documentation on what the output parameter for the respective files mean on our
-(wiki page) [https://github.com/odea-project/qAlgorithms/wiki/Result-File-Guide]. (currently incomplete)
+[wiki page](https://github.com/odea-project/qAlgorithms/wiki/Result-File-Guide) (currently incomplete).
 
 ## Current Offerings
 
