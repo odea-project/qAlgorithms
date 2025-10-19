@@ -99,7 +99,8 @@ namespace qAlgorithms
             std::string argument = argv[i];
             if ((argument == "-h") || (argument == "-help"))
             {
-                std::cout << "\n    " << argv[0] << helpinfo;
+                printf("\n    %s%s", argv[0], helpinfo.c_str());
+                // std::cout << "\n    " << argv[0] << helpinfo;
                 exit(0);
                 // return args;
             }
@@ -304,25 +305,8 @@ namespace qAlgorithms
             }
             std::cout << "Error: The path does not exist.\n";
         }
-        // std::cout << "drag the folder you want the output files written to into this window and press \"enter\" to continue.\n"
-        //           << "enter \"#\" to write to the input path.\n";
-        // std::string outputPath;
-        // std::cin >> outputPath;
 
-        // if (outputPath[0] == '#')
-        // {
-        //     if (std::filesystem::status(inputPath).type() != std::filesystem::file_type::directory)
-        //     {
-        //         outputPath = std::filesystem::path(inputPath).parent_path().string();
-        //     }
-        //     else
-        //     {
-        //         outputPath = inputPath;
-        //     }
-        // }
-        // std::cout << outputPath;
-        return UserInputSettings{
-            // user input for input and output
+        UserInputSettings res = UserInputSettings{
             std::vector<std::string>{inputPath},
             ".",
             0,
@@ -330,7 +314,7 @@ namespace qAlgorithms
             false,
             false,
             false,
-            false, // true, // only print standard feature list @todo revert!
+            false,
             false,
             false,
             false,
@@ -341,6 +325,8 @@ namespace qAlgorithms
             0,
             false,
             true};
+
+        return res;
     }
 
     bool inputsAreSensible(UserInputSettings &args)
@@ -424,15 +410,6 @@ namespace qAlgorithms
             !(args.outputPath.empty()))
         {
             std::cerr << "Warning: no output files will be written.\n";
-        }
-        if (!goodInputs && args.interactive)
-        {
-            std::cout << "   inputs are incorrect - enter \"exit\" to close this program:\n";
-            std::string userInput;
-            while (userInput != "exit") // this loop should only terminate upon user input
-            {
-                std::cin >> userInput;
-            }
         }
 
         return goodInputs;

@@ -111,6 +111,18 @@ int main()
     assert(roundTo_d(145.136578244512, 3) == 145.137);
     assert(roundTo_d(-145.136578244512, 3) == -145.137);
 
+    // standard deviation - true values generated with wolfram alpha
+    {
+        double numbers[10] = {1, 2, 3, 4, 5, 5, 5, 6, 3, 2};
+        double sd = sdev(numbers, 10);
+        qass(roundTo_d(sd, 14) == roundTo_d(1.64654520469713, 14), "Standard deviation calculated wrong");
+
+        double numbers_L[10] = {300.021736801890, 299.997556193020, 299.996439273950, 300.003719530080, 299.993646472210, 299.990848954870, 299.989294329370, 299.998503324230, 300.008035381130, 300.004645938850};
+        sd = sdev(numbers_L, 10);
+        printf("%.16f\n", sd);
+        qass(roundTo_d(sd, 14) == roundTo_d(0.009603979272, 14), "Standard deviation inaccurate at larger numbers");
+    }
+
     // check if a basic regression succeeds
     {
         std::vector<float> logInts = {6.40492535, 7.95729923, 8.44852829, 8.27999401, 7.23839712};
@@ -121,7 +133,7 @@ int main()
         auto reg2 = findCoefficients(&logInts, scale);
         auto c2 = reg2.front();
 
-        printf("beta | expected | got | new\nb0 | %f | %f| %f\nb0 | %f | %f| %f\nb0 | %f | %f| %f\nb0 | %f | %f| %f\n",
+        printf("beta | expected | got | new\nb0 | %f | %f| %f\nb1 | %f | %f| %f\nb2 | %f | %f| %f\nb3 | %f | %f| %f\n",
                8.5012159, c.b0, c2.b0, 0.1143269, c.b1, c2.b1, -0.4647133, c.b2, c2.b2, roundTo_d(-0.3706720, 5), c.b3, c2.b3); // @todo rounding does not work correctly
 
         qass(roundTo_d(c.b0, 5) == roundTo_d(8.5012159, 5), "b0 is incorrect!");

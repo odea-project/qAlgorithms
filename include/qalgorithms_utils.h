@@ -93,5 +93,8 @@ namespace qAlgorithms
 
     double meanOfCumulative(double *const cumArray, const size_t startIdx, const size_t endIdx);
     double meanOfCumulative(const double *const cumArray, const size_t startIdx, const size_t endIdx);
+
+    double sdev(double *const array, const size_t n);
+    double sdev(const double *const array, const size_t n);
 }
 #endif // QALGORITHMS_UTILS_H

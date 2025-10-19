@@ -1077,29 +1077,15 @@ namespace qAlgorithms
     {
         assert(idxEnd > idxStart);
         size_t peaksize = idxEnd - idxStart + 1;
-        // std::cout << idxStart << ", " << idxEnd << ", " << peaksize << "\n";
-        std::vector<float> massesPeak;
+        std::vector<double> massesPeak;
         for (size_t i = 0; i < peaksize; i++)
         {
             massesPeak.push_back(massesBin[idxStart + i]);
         }
         std::sort(massesPeak.begin(), massesPeak.end());
 
-        // critval @todo make this one function
-        float mean = 0;
-        float stddev = 0;
-        for (size_t i = 0; i < peaksize; i++)
-        {
-            mean += massesPeak[i];
-        }
-        mean /= peaksize;
-        for (size_t i = 0; i < peaksize; i++)
-        {
-            stddev += (massesPeak[i] - mean) * (massesPeak[i] - mean);
-        }
-        stddev = sqrt(stddev / (peaksize - 1));
+        double stddev = sdev(massesPeak.data(), peaksize);
 
-        // float vcrit = 3.05037165842070 * pow(log(peaksize), (TOLERANCE_BINNING)) * stddev;
         float vcrit = binningCritVal(peaksize, stddev);
         for (size_t i = 1; i < peaksize; i++)
         {

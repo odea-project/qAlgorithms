@@ -298,4 +298,37 @@ namespace qAlgorithms
         return totalSum / (endIdx - startIdx + 1);
     }
 
+    double sdev(double *const array, const size_t n)
+    {
+        assert(n > 2); // while standard deviation of two numbers is possible, it makes no sense
+        double mean = 0;
+        double sdev = 0;
+        for (size_t i = 0; i < n; i++)
+        {
+            mean += array[i];
+        }
+        mean /= n;
+        for (size_t i = 0; i < n; i++)
+        {
+            sdev += (array[i] - mean) * (array[i] - mean);
+        }
+        return sqrt(sdev / (n - 1));
+    }
+
+    double sdev(const double *const array, const size_t n)
+    {
+        assert(n > 2); // while standard deviation of two numbers is possible, it makes no sense
+        double mean = 0;
+        double sdev = 0;
+        for (size_t i = 0; i < n; i++)
+        {
+            mean += array[i];
+        }
+        mean /= n;
+        for (size_t i = 0; i < n; i++)
+        {
+            sdev += (array[i] - mean) * (array[i] - mean);
+        }
+        return sqrt(sdev / (n - 1));
+    }
 }
