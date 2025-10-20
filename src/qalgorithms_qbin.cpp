@@ -12,22 +12,39 @@
 
 namespace qAlgorithms
 {
-    const size_t maxdist = 3; // this is the maximum distance in scans which can later be interpolated during feature detection
+    const size_t MAX_SCAN_GAP = 3; // this is the maximum distance in scans which can later be interpolated during feature detection
+
+    void initContainer(BinContainer *activeBins, std::vector<CentroidPeak> *centroids)
+    {
+        Bin firstBin;
+        for (size_t i = 0; i < centroids->size(); i++)
+        {
+            assert(centroids->at(i).mz > 0);
+
+            firstBin.pointsInBin.push_back(&(centroids->at(i)));
+        }
+        activeBins->processBinsF.push_back(firstBin);
+    }
+
+    void resetContainer(BinContainer *activeBins, bool which)
+    {
+        std::vector<Bin> *storage = which ? &activeBins->processBinsT : &activeBins->processBinsF;
+
+        for (size_t num = 0; num < storage->size(); num++)
+        {
+            Bin *bin = &storage->at(num);
+            for (size_t i = 0; i < bin->pointsInBin.size(); i++)
+            {
+                activeBins->notInBins.push_back(bin->pointsInBin[i]);
+            }
+        }
+        storage->clear();
+    }
 
     std::vector<Bin> performQbinning(std::vector<CentroidPeak> *centroids)
     {
         BinContainer activeBins;
-        Bin firstBin;
-        for (size_t i = 0; i < centroids->size(); i++)
-        {
-            if (centroids->at(i).mz == 0)
-            {
-                continue;
-            }
-
-            firstBin.pointsInBin.push_back(&(centroids->at(i)));
-        }
-        activeBins.processBinsF.push_back(firstBin);
+        initContainer(&activeBins, centroids);
 
         // rebinning is not separated into a function
         // binning is repeated until the input length is constant
@@ -82,39 +99,20 @@ namespace qAlgorithms
             }
         }
         // no change in bin result, so all remaining bins cannot be coerced into a valid state
-        if (!activeBins.processBinsF.empty())
-        {
-            for (Bin bin : activeBins.processBinsF)
-            {
-                for (size_t i = 0; i < bin.pointsInBin.size(); i++)
-                {
-                    activeBins.notInBins.push_back(bin.pointsInBin[i]);
-                }
-            }
-            activeBins.processBinsF.clear();
-        }
-
-        if (!activeBins.processBinsT.empty())
-        {
-            for (Bin bin : activeBins.processBinsT)
-            {
-                for (size_t i = 0; i < bin.pointsInBin.size(); i++)
-                {
-                    activeBins.notInBins.push_back(bin.pointsInBin[i]);
-                }
-            }
-            activeBins.processBinsT.clear();
-        }
+        resetContainer(&activeBins, false);
+        resetContainer(&activeBins, true);
 
         // calculate the DQSB as the silhouette score, considering only non-separated points
-        std::sort(activeBins.notInBins.begin(), activeBins.notInBins.end(), [](const CentroidPeak *lhs, const CentroidPeak *rhs)
-                  { return lhs->mz < rhs->mz; });
-
-        // setting start position to 0 at this point means that it can be reused, since it is incremented in makeDQSB
-        size_t shared_idxStart = 0;
-        for (size_t i = 0; i < activeBins.finalBins.size(); i++)
         {
-            shared_idxStart = activeBins.finalBins[i].makeDQSB(&activeBins.notInBins, shared_idxStart);
+            std::sort(activeBins.notInBins.begin(), activeBins.notInBins.end(), [](const CentroidPeak *lhs, const CentroidPeak *rhs)
+                      { return lhs->mz < rhs->mz; });
+
+            // setting start position to 0 at this point means that it can be reused, since it is incremented in makeDQSB
+            size_t shared_idxStart = 0;
+            for (size_t i = 0; i < activeBins.finalBins.size(); i++)
+            {
+                shared_idxStart = activeBins.finalBins[i].makeDQSB(&activeBins.notInBins, shared_idxStart);
+            }
         }
 
         size_t countPointsInBins = 0;
@@ -193,7 +191,7 @@ namespace qAlgorithms
                 activeBins.notInBins.clear();
                 // re-binning during the initial loop would result in some bins being split prematurely
                 // @todo rebinning might be a very bad idea
-                // int rebinCount = selectRebin(&activeBins, centroidedData, maxdist);
+                // int rebinCount = selectRebin(&activeBins, centroidedData, MAX_SCAN_GAP);
                 // @todo logging
             }
 
@@ -574,7 +572,7 @@ namespace qAlgorithms
         {
             assert(pointsInBin[i + 1]->number_MS1 >= pointsInBin[i]->number_MS1);
             size_t distanceScan = pointsInBin[i + 1]->number_MS1 - pointsInBin[i]->number_MS1;
-            if (distanceScan > maxdist) // bin needs to be split
+            if (distanceScan > MAX_SCAN_GAP) // bin needs to be split
             {
                 // less than five points in bin
                 if (i - lastpos + 1 < 5) // +1 since i starts at 0
@@ -637,23 +635,21 @@ namespace qAlgorithms
         {
             // failsafe if a nonsense bin is produced, score zeroed
             std::vector<float> scores(this->pointsInBin.size(), 0);
-            this->DQSB_base = scores;
-            this->DQSB_scaled = scores;
+            this->DQSB = scores;
             return idx_lowerLimit;
         }
         // iterate over points and only consider mass region + 0.1. It is assumed that if a distance
         // of 0.1 mz is exceeded, the bin is perfectly separated. This is about 100 times more than
         // the maximum tolerated distance between points even for very low density bins
-        size_t expandedDist = maxdist + 2; // always consider points one past the gap to account for potentially bad separation
-        this->DQSB_base.clear();
+        size_t expandedDist = MAX_SCAN_GAP + 2; // always consider points one past the gap to account for potentially bad separation
+        this->DQSB.clear();
 
         if (notInBins->back()->mz < this->mzMin - mz_hardLimit ||
             notInBins->front()->mz > this->mzMax + mz_hardLimit)
         {
             // no points are within range, perfect score
             std::vector<float> scores(this->pointsInBin.size(), 1.0);
-            this->DQSB_base = scores;
-            this->DQSB_scaled = scores;
+            this->DQSB = scores;
             return idx_lowerLimit;
         }
 
@@ -683,8 +679,8 @@ namespace qAlgorithms
             if ((*notInBins)[i]->number_MS1 > lowestPossibleScan && // cast to int due to negative being possible
                 (*notInBins)[i]->number_MS1 < this->scanMax + expandedDist)
             {
-                // centroid is within maxdist and relevant mz region. However,
-                // one past maxdist is considered for better representativeness
+                // centroid is within MAX_SCAN_GAP and relevant mz region. However,
+                // one past MAX_SCAN_GAP is considered for better representativeness
                 scoreRegion.push_back((*notInBins)[i]);
             }
         }
@@ -700,7 +696,7 @@ namespace qAlgorithms
             float activeMZ = this->pointsInBin[i]->mz;
             float currentMin = INFINITY;
             size_t readVal = 0;
-            // advance until first point within maxdist + 1 of scan
+            // advance until first point within MAX_SCAN_GAP + 1 of scan
             // @todo replace with binary search
             for (; readVal < scoreRegion.size(); readVal++)
             {
@@ -736,14 +732,14 @@ namespace qAlgorithms
         {
             if (meanInnerDistances[i] == minOuterDistances[i])
             {
-                this->DQSB_base.push_back(0);
+                this->DQSB.push_back(0);
                 continue;
             }
 
             float tmpDQS = calcDQS(meanInnerDistances[i], minOuterDistances[i]);
             assert(-1 < tmpDQS);
             assert(tmpDQS <= 1);
-            this->DQSB_base.push_back(tmpDQS);
+            this->DQSB.push_back(tmpDQS);
         }
         return idx_lowerLimit;
     }
@@ -835,7 +831,7 @@ namespace qAlgorithms
             tmp_ints_area,
             tmp_ints_height,
             tmp_df,
-            DQSB_base,
+            DQSB,
             tmp_DQSC,
             tmp_cenID,
             tmp_interpScans,
@@ -890,7 +886,7 @@ namespace qAlgorithms
             tmp_ints_area[access] = point->area;
             tmp_ints_height[access] = point->height;
             tmp_DQSC[access] = point->DQSC;
-            tmp_DQSB[access] = sourceBin->DQSB_base[i];
+            tmp_DQSB[access] = sourceBin->DQSB[i];
             tmp_cenID[access] = point->ID;
         }
 
@@ -1032,7 +1028,7 @@ namespace qAlgorithms
     std::vector<float> meanDistanceRegional(const std::vector<const CentroidPeak *> *pointsInBin, const size_t expandedDist)
     {
         // the other mean distance considers all points in the Bin.
-        // It is sensible to only use the mean distance of all points within maxdist scans
+        // It is sensible to only use the mean distance of all points within MAX_SCAN_GAP scans
         // this function assumes the bin to be sorted by scans
         const size_t binsize = pointsInBin->size();
         std::vector<float> output(binsize);
