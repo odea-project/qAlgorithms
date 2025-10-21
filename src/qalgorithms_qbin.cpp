@@ -26,7 +26,7 @@ namespace qAlgorithms
         activeBins->processBinsF.push_back(firstBin);
     }
 
-    void resetContainer(BinContainer *activeBins, bool which)
+    void resetContainer(BinContainer *activeBins, bool which) // move centroids from the bin container to the notInBins category
     {
         std::vector<Bin> *storage = which ? &activeBins->processBinsT : &activeBins->processBinsF;
 
@@ -41,62 +41,85 @@ namespace qAlgorithms
         storage->clear();
     }
 
+    size_t setFinalBins(BinContainer *activeBins)
+    {
+        size_t cenCountFinal = 0;
+        size_t producedBins = activeBins->viableBins.size();
+        for (size_t j = 0; j < producedBins; j++)
+        {
+            Bin *bin = &(activeBins->viableBins[j]);
+            if (activeBins->viableBins[j].duplicateScan)
+            {
+                deduplicateBin(&activeBins->processBinsF, &activeBins->notInBins, bin);
+            }
+            else
+            {
+                cenCountFinal += bin->pointsInBin.size();
+                activeBins->finalBins.push_back(*bin);
+            }
+        }
+        activeBins->viableBins.clear();
+        return cenCountFinal;
+    }
+
+    size_t resetUnbinned(BinContainer *activeBins)
+    {
+        // only perform rebinning if at least one new bin could be formed
+        size_t res = activeBins->notInBins.size();
+        assert(activeBins->processBinsT.empty());
+        if (res > 4)
+        {
+            // add all points that were not binned into the new bin, since these centroids
+            // tend to contain smaller bins which were not properly processed due to being
+            // at the borders of a cutting region
+            activeBins->processBinsF.push_back(Bin{});
+            activeBins->processBinsF.back().pointsInBin = activeBins->notInBins;
+            activeBins->notInBins.clear();
+        }
+        return res;
+    }
+
     std::vector<Bin> performQbinning(std::vector<CentroidPeak> *centroids)
     {
         BinContainer activeBins;
         initContainer(&activeBins, centroids);
 
-        // rebinning is not separated into a function
-        // binning is repeated until the input length is constant
-        size_t prevFinal = 0;
-        size_t prevDiscarded = 0;
+        // counting stats: if these stay the same throughout two iterations, terminate the loop
+        size_t censInBins = centroids->size();
+        bool censInBins_stable = false;
+        size_t censNotInBins = 0;
+        bool censNotInBins_stable = false;
+        bool binningInProgress = true;
 
-        while (true) // @todo prove that this loop always terminates
+        // overview of the loop:
+        // 1) Perform subsetting (single function)
+        // 2) Remove duplicate scans from complete bins and finalise those that were singleton
+        // 3) reset the initial bin
+        // 4) clear previously constructed bins
+        // 5) repeat until termination
+        // 6) calculate DQSB for all bins
+        while (binningInProgress) // @todo prove that this loop always terminates
         {
-            size_t producedBins = activeBins.viableBins.size();
-            // if the same amount of bins as in the previous operation was found,
-            // the process is considered complete
-            // in the current configuration, rebinning takes three times as long
-            // for two additional features, both of which are likely noise anyway
-            int duplicateCount = 0;
-            for (size_t j = 0; j < producedBins; j++)
-            {
-                if (activeBins.viableBins[j].duplicateScan)
-                {
-                    duplicateCount++;
-                    deduplicateBin(&activeBins.processBinsF, &activeBins.notInBins, activeBins.viableBins[j]);
-                }
-                else
-                {
-                    // @todo check for min and max intensity being on the borders here.
-                    // also consider if removing these points does affect the bin validity.
-                    // the score should be reworked to consider all unbinned points to compensate
-                    // for more aggressive culling anyhow.
-                    activeBins.finalBins.push_back(activeBins.viableBins[j]);
-                }
-            }
-            activeBins.viableBins.clear();
+            // produce bins
+            subsetBins(activeBins);
+            size_t currentFinal = setFinalBins(&activeBins);
+            size_t currentRemoved = resetUnbinned(&activeBins);
 
-            if (prevFinal == activeBins.finalBins.size())
+            if (currentFinal == censInBins)
             {
-                // no observed change in the produced bins - is it possible to get false positives here? @todo
-                assert(activeBins.notInBins.size() == prevDiscarded);
-                break;
+                censInBins_stable = true;
             }
-            prevFinal = activeBins.finalBins.size();
-            prevDiscarded = activeBins.notInBins.size();
-            // only perform rebinning if at least one new bin could be formed
-            if (activeBins.notInBins.size() > 4)
+            censInBins = currentFinal;
+
+            if (currentRemoved == censNotInBins)
             {
-                // add empty start bin for rebinner
-                activeBins.processBinsF.push_back(Bin{});
-                // add all points that were not binned into the new bin, since these centroids
-                // tend to contain smaller bins which were not properly processed due to being
-                // at the borders of a cutting region
-                activeBins.processBinsF.back().pointsInBin = activeBins.notInBins;
-                activeBins.processBinsF.back().pointsInBin = activeBins.notInBins;
-                activeBins.notInBins.clear();
+                censNotInBins_stable = true;
             }
+            censNotInBins = currentRemoved;
+
+            assert(censInBins + censNotInBins == centroids->size());
+
+            binningInProgress = !(censInBins_stable && censNotInBins_stable);
         }
         // no change in bin result, so all remaining bins cannot be coerced into a valid state
         resetContainer(&activeBins, false);
@@ -114,13 +137,6 @@ namespace qAlgorithms
                 shared_idxStart = activeBins.finalBins[i].makeDQSB(&activeBins.notInBins, shared_idxStart);
             }
         }
-
-        size_t countPointsInBins = 0;
-        for (size_t i = 0; i < activeBins.finalBins.size(); i++)
-        {
-            countPointsInBins += activeBins.finalBins[i].pointsInBin.size();
-        }
-        assert(countPointsInBins + activeBins.notInBins.size() == centroids->size());
 
         return activeBins.finalBins;
     }
@@ -160,7 +176,7 @@ namespace qAlgorithms
                 if (activeBins.viableBins[j].duplicateScan)
                 {
                     duplicateCount++;
-                    deduplicateBin(&activeBins.processBinsF, &activeBins.notInBins, activeBins.viableBins[j]);
+                    deduplicateBin(&activeBins.processBinsF, &activeBins.notInBins, &activeBins.viableBins[j]);
                 }
                 else
                 {
@@ -351,36 +367,36 @@ namespace qAlgorithms
     }
 
     // @todo rework this function
-    void deduplicateBin(std::vector<Bin> *target, std::vector<const CentroidPeak *> *notInBins, Bin bin)
+    void deduplicateBin(std::vector<Bin> *target, std::vector<const CentroidPeak *> *notInBins, Bin *bin)
     {
-        assert(bin.duplicateScan);
-        assert(bin.medianMZ > 1);
-        // std::sort(bin.pointsInBin.begin(), bin.pointsInBin.end(), [](const CentroidPeak *lhs, const CentroidPeak *rhs)
-        std::sort(bin.pointsInBin.begin(), bin.pointsInBin.end(), [](const CentroidPeak *lhs, const CentroidPeak *rhs)
+        assert(bin->duplicateScan);
+        assert(bin->medianMZ > 1);
+        // std::sort(bin->pointsInbin->begin(), bin->pointsInbin->end(), [](const CentroidPeak *lhs, const CentroidPeak *rhs)
+        std::sort(bin->pointsInBin.begin(), bin->pointsInBin.end(), [](const CentroidPeak *lhs, const CentroidPeak *rhs)
                   { return lhs->number_MS1 < rhs->number_MS1; });
         Bin returnBin;
-        returnBin.pointsInBin.reserve(bin.pointsInBin.size());
+        returnBin.pointsInBin.reserve(bin->pointsInBin.size());
 
         // add dummy centroid to the end of the bin
         CentroidPeak dummy;
         dummy.mz = 0;
         dummy.number_MS1 = 0;
-        bin.pointsInBin.push_back(&dummy); // pointer will be not be invalidated since bin is copied
-        size_t duplicateRemovedCount = 1;  // initialse to 1 so the check at function end is less confusing
+        bin->pointsInBin.push_back(&dummy); // pointer will be not be invalidated since bin is copied
+        size_t duplicateRemovedCount = 1;   // initialse to 1 so the check at function end is less confusing
 
-        for (size_t i = 1; i < bin.pointsInBin.size(); i++)
+        for (size_t i = 1; i < bin->pointsInBin.size(); i++)
         {
-            assert(bin.pointsInBin[i]->ID != bin.pointsInBin[i - 1]->ID);
-            if (bin.pointsInBin[i]->number_MS1 == bin.pointsInBin[i - 1]->number_MS1)
+            assert(bin->pointsInBin[i]->ID != bin->pointsInBin[i - 1]->ID);
+            if (bin->pointsInBin[i]->number_MS1 == bin->pointsInBin[i - 1]->number_MS1)
             {
-                double left = abs(bin.medianMZ - bin.pointsInBin[i - 1]->mz);
-                double right = abs(bin.medianMZ - bin.pointsInBin[i]->mz);
+                double left = abs(bin->medianMZ - bin->pointsInBin[i - 1]->mz);
+                double right = abs(bin->medianMZ - bin->pointsInBin[i]->mz);
                 if (left > right)
                 {
                     // if this is true, the value at position i should be selected
                     // since i-1 is always added to the bin in the default case,
                     // it suffices to move the removed centroid into notInBins
-                    notInBins->push_back(bin.pointsInBin[i - 1]);
+                    notInBins->push_back(bin->pointsInBin[i - 1]);
                 }
                 else
                 {
@@ -388,15 +404,15 @@ namespace qAlgorithms
                     // must be added to the vector of discarded points.
                     // i is advanced by onr so the next point that will be added to
                     // the bin is i + 1
-                    returnBin.pointsInBin.push_back(bin.pointsInBin[i - 1]);
-                    notInBins->push_back(bin.pointsInBin[i]);
+                    returnBin.pointsInBin.push_back(bin->pointsInBin[i - 1]);
+                    notInBins->push_back(bin->pointsInBin[i]);
                     i++;
                 }
                 duplicateRemovedCount++;
             }
             else
             {
-                returnBin.pointsInBin.push_back(bin.pointsInBin[i - 1]);
+                returnBin.pointsInBin.push_back(bin->pointsInBin[i - 1]);
             }
         }
         if (returnBin.pointsInBin.size() < 5)
@@ -407,7 +423,7 @@ namespace qAlgorithms
             }
             return;
         }
-        assert(returnBin.pointsInBin.size() + duplicateRemovedCount == bin.pointsInBin.size());
+        assert(returnBin.pointsInBin.size() + duplicateRemovedCount == bin->pointsInBin.size());
 
         target->push_back(returnBin);
     }

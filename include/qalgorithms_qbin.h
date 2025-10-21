@@ -115,7 +115,7 @@ namespace qAlgorithms
     void subsetBins(BinContainer &bincontainer);
 
     // remove points with duplicate scans from a bin by choosing the one closest to the median
-    void deduplicateBin(std::vector<Bin> *target, std::vector<const CentroidPeak *> *notInBins, Bin bin);
+    void deduplicateBin(std::vector<Bin> *target, std::vector<const CentroidPeak *> *notInBins, Bin *bin);
 
 #pragma endregion "Bin Container"
 
