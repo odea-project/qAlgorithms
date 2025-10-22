@@ -8,83 +8,65 @@
 namespace qAlgorithms
 {
 
-    void calc_fval(double p, double dfn, double dfd,      // input
-                   double *f, int *status, double *bound) // output
-    {
-        //    Control Input
-        if (p < 0 || 1 < p)
-        {
-            *status = -2;
-            return;
-        }
-        if (dfn <= 0.0e0)
-        {
-            *bound = 0.0e0;
-            *status = -5;
-            return;
-        }
-        if (dfd <= 0.0e0)
-        {
-            *bound = 0.0e0;
-            *status = -6;
-            return;
-        }
+    /*
+        Calculates the F-value for a given set of alpha, the numerator
+        degreees of freedom dfn and the denominator degrees of
+        freedom dfd.
 
-        //    Calculating F
-        static double T3 = 1.0e300;
-        static double T6 = 1.0e-50;
-        static double T7 = 1.0e-8;
-        static double K2 = 0.0e0;
-        static double K4 = 0.5e0;
-        static double K5 = 5.0e0;
-        dstinv(&K2, &T3, &K4, &K4, &K5, &T6, &T7);
+        returns an error code:
+        0: Successful execution
+        1: Search resulted in a value < 0
+        2: Search exceeded the limit of e^300
+
+        Function is adapted from CDFF, mostly removal of gotos and
+        unnecessary functionality.
+    */
+    int calc_fval(double alpha, double dfn, double dfd,
+                  double *f)
+    {
+        assert(alpha > 0 && alpha < 1);
+        assert(dfn > 0);
+        assert(dfd > 0);
+
+        { // @todo find out if this call is actually necessary. Documentation implies it is, but this also works
+            static double T3 = 1.0e300;
+            static double T6 = (1.0e-50);
+            static double T7 = (1.0e-8);
+            static double K2 = 0.0e0;
+            static double K4 = 0.5e0;
+            static double K5 = 5.0e0;
+            dstinv(&K2, &T3, &K4, &K4, &K5, &T6, &T7);
+        }
 
         static double fx, cum, ccum;
         static unsigned long qhi, qleft;
-
-        *status = 0;
-        dinvr(status, f, &fx, &qleft, &qhi);
-
+        int status = 0;
         *f = 5.0e0;
-        double q = 1 - p;
-        printf("\n");
+        dinvr(&status, f, &fx, &qleft, &qhi);
 
-        if (p <= q)
+        double p = 1 - alpha;
+
+        while (status == 1)
         {
-            while (*status == 1)
-            {
-                cumf(f, &dfn, &dfd, &cum, &ccum);
-                fx = cum - p;
-                dinvr(status, f, &fx, &qleft, &qhi);
-            }
-        }
-        else
-        {
-            while (*status == 1)
-            {
-                cumf(f, &dfn, &dfd, &cum, &ccum);
-                fx = ccum - q;
-                dinvr(status, f, &fx, &qleft, &qhi);
-                printf("%f, ", *f);
-            }
+            cumf(f, &dfn, &dfd, &cum, &ccum);
+
+            // select minimum of p or q
+            fx = p <= alpha ? cum - p : ccum - alpha;
+
+            dinvr(&status, f, &fx, &qleft, &qhi);
         }
 
-        if (*status != -1)
-            return;
+        if (status != -1)
+            return 0;
 
         if (qleft)
         {
-            *status = 1;
-            *bound = 0.0e0;
+            return 1;
         }
         else
         {
-            *status = 2;
-            *bound = 1.0e300;
+            return 2;
         }
-        printf("\n");
-        printf("\n");
-        return;
     }
 
     // @todo separate out the library functions into something better readable with less flexible error checking
@@ -112,7 +94,7 @@ namespace qAlgorithms
         assert(status == 0);
 
         double f = 0;
-        calc_fval(p, dfn, dfd, &f, &status, &bound); // @todo does not work for all input params
+        calc_fval(q, dfn, dfd, &f); // @todo does not work for all input params
         assert(float(f) == float(F));
 
         return F;
