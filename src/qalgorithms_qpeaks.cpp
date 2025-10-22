@@ -2122,6 +2122,10 @@ namespace qAlgorithms
 
             size_t ID_spectrum = selectedIndices->at(i);
             data.get_spectrum(&spectrum_mz, &spectrum_int, ID_spectrum);
+            // ### @todo this is for development only, highly inefficient at scale! ###
+            // hardFilter(&spectrum_mz, &spectrum_int, 247.1, 247.3);
+            if (spectrum_mz.empty())
+                continue;
 
             volatile bool printThis = false;
             if (printThis)
@@ -2134,10 +2138,9 @@ namespace qAlgorithms
                 }
             }
 
-            // ### @todo this is for development only, highly inefficient at scale! ###
-            // hardFilter(&spectrum_mz, &spectrum_int, 247.1, 247.3);
-            if (spectrum_mz.empty())
-                continue;
+            volatile bool debug = false;
+            if (debug)
+                centroids.clear();
 
             // @todo every group is just an index range into three same-length vectors if we do not
             // perform interpolation. Should interpolation be necessary (includes extrapolation),
@@ -2147,13 +2150,29 @@ namespace qAlgorithms
                 continue;
 
             findCentroidPeaks(&centroids, &groupedData, i, ID_spectrum, maxWindowSize);
+
+            if (debug)
+            {
+                // write a file with the processed spectrum and the assumed intensity
+                // profile of the finalised centroids
+                std::vector<double> predictedInt(spectrum_mz.size(), 0);
+                for (size_t db = 0; db < centroids.size(); db++)
+                {
+                    CentroidPeak cen = centroids[db];
+                    size_t idxStart = cen.trace.start;
+                    size_t idxEnd = cen.trace.end;
+                    assert(predictedInt[idxStart] == 0);
+                    assert(predictedInt[idxEnd] == 0);
+                    // new requirement: Fuction that evaluates centroid on real mz values
+                }
+            }
         }
         for (unsigned int i = 0; i < centroids.size(); i++)
         {
             centroids[i].ID = i;
         }
 
-        return centroids; // @todo mutate centroids and return success / failure
+        return centroids;
     }
 
     size_t pretreatDataCentroids(
