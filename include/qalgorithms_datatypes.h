@@ -108,7 +108,7 @@ namespace qAlgorithms
         bool isValid = false;   // flag to indicate if the regression is valid
     };
 
-    struct ProfilePos_ // gives the range of points covered by a centroid and the access index for streamfind
+    struct ProfilePos // gives the range of points covered by a centroid and the access index for streamfind
     {
         unsigned int access = 0;
         unsigned int start = 0, end = 0; // start and end into the original MS1 spectrum

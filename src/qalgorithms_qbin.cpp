@@ -14,6 +14,67 @@ namespace qAlgorithms
 {
     const size_t MAX_SCAN_GAP = 3; // this is the maximum distance in scans which can later be interpolated during feature detection
 
+    // helper functions for the main binning functions that are not part of the header
+    void initContainer(BinContainer *activeBins, std::vector<CentroidPeak> *centroids);
+    void resetContainer(BinContainer *activeBins, bool which); // move centroids from the bin container to the notInBins category
+    size_t setFinalBins(BinContainer *activeBins);
+    size_t resetUnbinned(BinContainer *activeBins);
+
+    std::vector<Bin> performQbinning(std::vector<CentroidPeak> *centroids)
+    {
+        BinContainer activeBins;
+        initContainer(&activeBins, centroids);
+
+        // counting stats: if these stay the same throughout two iterations, terminate the loop
+        size_t censInBins = centroids->size();
+        bool censInBins_stable = false;
+        size_t censNotInBins = 0;
+        bool censNotInBins_stable = false;
+
+        bool binningInProgress = true;
+        while (binningInProgress) // @todo prove that this loop always terminates
+        {
+            subsetBins(activeBins);
+            size_t currentFinal = setFinalBins(&activeBins);
+            size_t currentRemoved = resetUnbinned(&activeBins);
+            { // check if loop should continue
+                if (currentFinal == censInBins)
+                {
+                    censInBins_stable = true;
+                }
+                censInBins = currentFinal;
+
+                if (currentRemoved == censNotInBins)
+                {
+                    censNotInBins_stable = true;
+                }
+                censNotInBins = currentRemoved;
+
+                assert(censInBins + censNotInBins == centroids->size());
+
+                binningInProgress = !(censInBins_stable && censNotInBins_stable);
+            }
+        }
+        // no change in bin result, so all remaining bins cannot be coerced into a valid state
+        resetContainer(&activeBins, false);
+        assert(activeBins.processBinsT.empty());
+        // resetContainer(&activeBins, true);
+
+        { // calculate the DQSB as the silhouette score, considering only non-separated points
+            std::sort(activeBins.notInBins.begin(), activeBins.notInBins.end(), [](const CentroidPeak *lhs, const CentroidPeak *rhs)
+                      { return lhs->mz < rhs->mz; });
+
+            // setting start position to 0 at this point means that it can be reused, since it is incremented in makeDQSB
+            size_t shared_idxStart = 0;
+            for (size_t i = 0; i < activeBins.finalBins.size(); i++)
+            {
+                shared_idxStart = activeBins.finalBins[i].makeDQSB(&activeBins.notInBins, shared_idxStart);
+            }
+        }
+
+        return activeBins.finalBins;
+    }
+
     void initContainer(BinContainer *activeBins, std::vector<CentroidPeak> *centroids)
     {
         Bin firstBin;
@@ -26,7 +87,7 @@ namespace qAlgorithms
         activeBins->processBinsF.push_back(firstBin);
     }
 
-    void resetContainer(BinContainer *activeBins, bool which) // move centroids from the bin container to the notInBins category
+    void resetContainer(BinContainer *activeBins, bool which)
     {
         std::vector<Bin> *storage = which ? &activeBins->processBinsT : &activeBins->processBinsF;
 
@@ -77,68 +138,6 @@ namespace qAlgorithms
             activeBins->notInBins.clear();
         }
         return res;
-    }
-
-    std::vector<Bin> performQbinning(std::vector<CentroidPeak> *centroids)
-    {
-        BinContainer activeBins;
-        initContainer(&activeBins, centroids);
-
-        // counting stats: if these stay the same throughout two iterations, terminate the loop
-        size_t censInBins = centroids->size();
-        bool censInBins_stable = false;
-        size_t censNotInBins = 0;
-        bool censNotInBins_stable = false;
-        bool binningInProgress = true;
-
-        // overview of the loop:
-        // 1) Perform subsetting (single function)
-        // 2) Remove duplicate scans from complete bins and finalise those that were singleton
-        // 3) reset the initial bin
-        // 4) clear previously constructed bins
-        // 5) repeat until termination
-        // 6) calculate DQSB for all bins
-        while (binningInProgress) // @todo prove that this loop always terminates
-        {
-            // produce bins
-            subsetBins(activeBins);
-            size_t currentFinal = setFinalBins(&activeBins);
-            size_t currentRemoved = resetUnbinned(&activeBins);
-
-            if (currentFinal == censInBins)
-            {
-                censInBins_stable = true;
-            }
-            censInBins = currentFinal;
-
-            if (currentRemoved == censNotInBins)
-            {
-                censNotInBins_stable = true;
-            }
-            censNotInBins = currentRemoved;
-
-            assert(censInBins + censNotInBins == centroids->size());
-
-            binningInProgress = !(censInBins_stable && censNotInBins_stable);
-        }
-        // no change in bin result, so all remaining bins cannot be coerced into a valid state
-        resetContainer(&activeBins, false);
-        resetContainer(&activeBins, true);
-
-        // calculate the DQSB as the silhouette score, considering only non-separated points
-        {
-            std::sort(activeBins.notInBins.begin(), activeBins.notInBins.end(), [](const CentroidPeak *lhs, const CentroidPeak *rhs)
-                      { return lhs->mz < rhs->mz; });
-
-            // setting start position to 0 at this point means that it can be reused, since it is incremented in makeDQSB
-            size_t shared_idxStart = 0;
-            for (size_t i = 0; i < activeBins.finalBins.size(); i++)
-            {
-                shared_idxStart = activeBins.finalBins[i].makeDQSB(&activeBins.notInBins, shared_idxStart);
-            }
-        }
-
-        return activeBins.finalBins;
     }
 
     std::vector<EIC> performQbinning_old(const std::vector<CentroidPeak> *centroidedData,
