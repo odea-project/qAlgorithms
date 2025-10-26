@@ -130,7 +130,8 @@ int main()
         auto reg = findCoefficients_old(&logInts, scale);
         auto c = reg.front();
         assert(reg.size() == 1);
-        auto reg2 = findCoefficients(&logInts, scale);
+        std::vector<qAlgorithms::RegCoeffs> reg2;
+        findCoefficients(&logInts, scale, &reg2);
         auto c2 = reg2.front();
 
         printf("beta | expected | got | new\nb0 | %f | %f| %f\nb1 | %f | %f| %f\nb2 | %f | %f| %f\nb3 | %f | %f| %f\n",

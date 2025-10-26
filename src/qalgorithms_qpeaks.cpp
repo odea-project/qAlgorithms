@@ -73,7 +73,8 @@ namespace qAlgorithms
         // basic structure: find cofficients, reduce them to valid regressions, resolve contradictions,
 
         // coefficients for single-b0 peaks, spans all regressions over a peak window
-        std::vector<RegCoeffs> regressions = findCoefficients(&y_log, maxScale);
+        std::vector<RegCoeffs> regressions;
+        findCoefficients(&y_log, maxScale, &regressions);
         assert(!regressions.empty());
 
         // filter the produced coefficients so that only correct ones remain (separate function?)
@@ -198,14 +199,15 @@ namespace qAlgorithms
         assert(validRegressions->empty());
 
         // coefficients for single-b0 peaks, spans all regressions over a peak window
-        const std::vector<RegCoeffs> regressions = findCoefficients(intensities_log, maxScale);
-        const std::vector<RegCoeffs> regressions_old = findCoefficients_old(intensities_log, maxScale);
+        std::vector<RegCoeffs> regressions;
+        findCoefficients(intensities_log, maxScale, &regressions);
+        std::vector<RegCoeffs> regressions_old = findCoefficients_old(intensities_log, maxScale);
 
-        const size_t numPoints = intensities->size();
-        // all entries in coeff are sorted by scale in ascending order - this is not checked!
+        const size_t numPoints = regressions.size() / 2;
+        // all entries in coeff are sorted by scale and position in ascending order - this is not checked!
 
-        std::vector<RegressionGauss> validRegsTmp; // temporary vector to store valid regressions
-        validRegsTmp.reserve(numPoints);
+        std::vector<RegressionGauss> validRegsAtScale; // all regressions at the current scale only
+        validRegsAtScale.reserve(numPoints);
 
         std::vector<int> failures;
         failures.reserve(regressions.size());
@@ -227,47 +229,49 @@ namespace qAlgorithms
 
         size_t access = 0;
 
-        const size_t backLim = numPoints - GLOBAL_MAXSCALE_CENTROID;
-        for (size_t scale = 2; scale <= GLOBAL_MAXSCALE_CENTROID; scale++)
+        const size_t backLim = numPoints - maxScale;
+        for (size_t scale = 2; scale <= maxScale; scale++)
         {
-            validRegsTmp.push_back(RegressionGauss{});
-            for (size_t idxCenter = GLOBAL_MAXSCALE_CENTROID; idxCenter < backLim; idxCenter++)
+            // @todo: refactor this so that the regressions are all validated at once.
+            // preserve space by inserting an invalid regression after every scale is
+            // done so that following operations can just stop once the first with
+            // mz == 0 or something similar occurs
+            for (size_t idxCenter = maxScale; idxCenter < backLim; idxCenter++)
             {
-                validRegsTmp.back().coeffs = regressions[access];
-                validRegsTmp.back().scale = scale;
-                validRegsTmp.back().idxCenter = idxCenter;
+                RegressionGauss reg;
+                reg.coeffs = regressions[access];
+                reg.scale = scale;
+                reg.idxCenter = idxCenter;
                 assert(idxCenter + scale < numPoints);
                 int failpoint = makeValidRegression(degreesOfFreedom_cum,
                                                     intensities,
                                                     intensities_log,
-                                                    &validRegsTmp.back(),
+                                                    &reg,
                                                     maxApexIdx);
 
                 failures.push_back(failpoint);
                 x0s.push_back(idxCenter);
 
-                if (validRegsTmp.back().isValid)
+                if (reg.isValid)
                 {
-                    validRegsTmp.push_back(RegressionGauss{});
+                    validRegsAtScale.push_back(reg);
                 }
                 access += 1;
             }
 
-            // remove the last regression, since it is always empty or invalid
-            validRegsTmp.pop_back();
             // no valid peaks if the size of validRegsTemp is 0
-            if (validRegsTmp.size() == 1)
+            if (validRegsAtScale.size() == 1)
             {
                 // only one valid peak, no fitering necessary
-                validRegressions->push_back(std::move(validRegsTmp[0]));
+                validRegressions->push_back(std::move(validRegsAtScale[0]));
             }
-            else if (validRegsTmp.size() > 1)
+            else if (validRegsAtScale.size() > 1)
             {
-                findBestScales(validRegressions, &validRegsTmp, intensities, degreesOfFreedom_cum);
+                findBestScales(validRegressions, &validRegsAtScale, intensities, degreesOfFreedom_cum);
             }
 
             // reset loop
-            validRegsTmp.clear();
+            validRegsAtScale.clear();
         }
         assert(access == regressions.size());
 
@@ -349,9 +353,10 @@ namespace qAlgorithms
         return results;
     }
 
-    std::vector<RegCoeffs> findCoefficients(
+    void findCoefficients(
         const std::vector<float> *intensity_log,
-        const size_t maxScale) // This must be the same maxscale as the one used during extrapolation!
+        const size_t maxScale, // This must be the same maxscale as the one used during extrapolation!
+        std::vector<RegCoeffs> *coeffs)
     /* ### allocations ###
        coeffs: allocation size known at function call
     */
@@ -363,10 +368,13 @@ namespace qAlgorithms
         assert(length > 2 * maxScale); // at least one valid point
 
         const size_t regsPerScale = length - 2 * maxScale; // number of points with at least two real neighbours
-        const size_t totalScales = maxScale - GLOBAL_MINSCALE + 1;
-        const size_t iterationCount = regsPerScale * totalScales;
 
-        std::vector<RegCoeffs> coeffs(iterationCount, {NAN, NAN, NAN, NAN});
+        { // @todo move this out of the function eventually
+            const size_t totalScales = maxScale - GLOBAL_MINSCALE + 1;
+            const size_t iterationCount = regsPerScale * totalScales;
+            // assert(coeffs->size() == iterationCount);
+            coeffs->resize(iterationCount);
+        }
 
         // the first and last n points of every region are extrapolated, where n is the maximum scale -2.
         // as such, the last point at which a regression is possible is maxscale points from the back.
@@ -414,15 +422,15 @@ namespace qAlgorithms
                 const double inv_D_b1 = inv_D * product_sum_b1;
 
                 const size_t access = regsPerScale * (scale - GLOBAL_MINSCALE) + scale5Count;
-                coeffs[access].b0 = inv_A * product_sum_b0 + inv_B * (product_sum_b2 + product_sum_b3);
-                coeffs[access].b1 = inv_C * product_sum_b1 + inv_D * (product_sum_b2 - product_sum_b3);
-                coeffs[access].b2 = inv_B_b0 + inv_D_b1 + inv_E * product_sum_b2 + inv_F * product_sum_b3;
-                coeffs[access].b3 = inv_B_b0 - inv_D_b1 + inv_F * product_sum_b2 + inv_E * product_sum_b3;
+                (*coeffs)[access].b0 = inv_A * product_sum_b0 + inv_B * (product_sum_b2 + product_sum_b3);
+                (*coeffs)[access].b1 = inv_C * product_sum_b1 + inv_D * (product_sum_b2 - product_sum_b3);
+                (*coeffs)[access].b2 = inv_B_b0 + inv_D_b1 + inv_E * product_sum_b2 + inv_F * product_sum_b3;
+                (*coeffs)[access].b3 = inv_B_b0 - inv_D_b1 + inv_F * product_sum_b2 + inv_E * product_sum_b3;
             }
             scale5Count += 1;
         }
 
-        return coeffs;
+        return;
     }
 
     std::vector<RegCoeffs> findCoefficients_old(

@@ -111,9 +111,10 @@ namespace qAlgorithms
         const std::vector<float> *intensity_log,
         const size_t maxscale); // maximum scale that will be checked. Should generally be limited by peakFrame
 
-    std::vector<RegCoeffs> findCoefficients(
+    void findCoefficients(
         const std::vector<float> *intensity_log,
-        const size_t maxscale); // maximum scale that will be checked. Should generally be limited by peakFrame
+        const size_t maxscale,
+        std::vector<RegCoeffs> *coeffs);
 
     void findBestScales(std::vector<RegressionGauss> *validRegressions,
                         std::vector<RegressionGauss> *validRegsTmp,
