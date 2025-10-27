@@ -153,11 +153,10 @@ int main()
             329,
             338};
         std::vector<RegressionGauss> validRegressions;
-        const size_t length = block.mz.size();
         const size_t maxScale = 8; // @todo not bound to centroid maxscale
         std::vector<float> logIntensity(25, NAN);
         logIntensity.clear();
-        runningRegression(&block.intensity, &logIntensity, &block.cumdf, &validRegressions, maxScale, length - 2);
+        runningRegression(&block.intensity, &logIntensity, &block.cumdf, &validRegressions, maxScale);
     }
 
     // does the RT conversion struct work correctly?

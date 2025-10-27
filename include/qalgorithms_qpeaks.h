@@ -126,8 +126,7 @@ namespace qAlgorithms
         std::vector<float> *intensities_log,
         const std::vector<unsigned int> *degreesOfFreedom_cum,
         std::vector<RegressionGauss> *validRegressions,
-        const size_t maxScale,
-        const size_t maxApexIdx);
+        const size_t maxScale);
 
     int makeValidRegression(
         const std::vector<unsigned int> *degreesOfFreedom_cum,

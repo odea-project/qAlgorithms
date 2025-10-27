@@ -116,18 +116,15 @@ namespace qAlgorithms
         validRegressions.reserve(treatedData->size() / 2); // probably too large, shouldn't matter
         for (size_t i = 0; i < treatedData->size(); i++)   // 185
         {
-            const auto block = &((*treatedData)[i]);
-            const auto block2 = treatedData->data() + i;
+            const ProfileBlock *const block = treatedData->data() + i;
 
-            assert(block2->mz[1] == block->mz[1]);
+            assert(block->intensity.size() == block->mz.size());
 
-            const size_t length = block->mz.size();
-            assert(length == block->mz.size());
-            assert(length > 4);
-
-            logIntensity.clear(); // this is now filled inside the function, the vector only reserves space
-
-            runningRegression(&block->intensity, &logIntensity, &block->cumdf, &validRegressions, GLOBAL_MAXSCALE_CENTROID, length - 2);
+            // this is now filled inside the function, the vector only reserves space. We do not
+            // perform this step in the function so that it is explicitly empty. This should be
+            // replaced by a non-malloc calling scratch space eventually
+            logIntensity.clear();
+            runningRegression(&block->intensity, &logIntensity, &block->cumdf, &validRegressions, GLOBAL_MAXSCALE_CENTROID);
 
             volatile bool purge = false;
             if (purge)
@@ -182,8 +179,8 @@ namespace qAlgorithms
         std::vector<RegressionGauss> *validRegressions)
     {
         // @todo can peak overlap sensibly be modeled as the addition of two regressions?
-        const size_t numPoints = coefficients->size();
-        const size_t backLim = numPoints - maxScale;
+        const size_t length = intensities->size();
+        const size_t backLim = length - maxScale;
 
         size_t access = 0;
         for (size_t scale = 2; scale <= maxScale; scale++)
@@ -196,7 +193,7 @@ namespace qAlgorithms
                 reg.coeffs = coefficients->at(access);
                 reg.scale = scale;
                 reg.idxCenter = idxCenter;
-                assert(idxCenter + scale < numPoints);
+                assert(idxCenter + scale < length);
                 int failpoint = makeValidRegression(degreesOfFreedom_cum,
                                                     intensities,
                                                     intensities_log,
@@ -218,8 +215,7 @@ namespace qAlgorithms
         std::vector<float> *intensities_log,
         const std::vector<unsigned int> *degreesOfFreedom_cum,
         std::vector<RegressionGauss> *validRegressions,
-        const size_t maxScale,
-        const size_t maxApexIdx)
+        const size_t maxScale)
     /* ### allocations ###
         regressions: size determined by function
 
@@ -228,10 +224,11 @@ namespace qAlgorithms
         mergeRegressionsOverScales
     */
     {
+        const size_t length = intensities->size();
         assert(intensities_log->empty());
-        assert(intensities_log->capacity() >= intensities->size());
+        assert(intensities_log->capacity() == length);
 
-        for (size_t i = 0; i < intensities->size(); i++)
+        for (size_t i = 0; i < length; i++)
         {
             intensities_log->push_back(std::log(intensities->at(i)));
         }
@@ -243,11 +240,10 @@ namespace qAlgorithms
         findCoefficients(intensities_log, maxScale, &coefficients);
         std::vector<RegCoeffs> regressions_old = findCoefficients_old(intensities_log, maxScale);
 
-        const size_t numPoints = coefficients.size();
         // all entries in coeff are sorted by scale and position in ascending order - this is not checked!
 
         std::vector<RegressionGauss> validRegsAtScale; // all regressions at the current scale only
-        validRegsAtScale.reserve(numPoints);
+        validRegsAtScale.reserve(coefficients.size());
         // validateRegressions(intensities, intensities_log, degreesOfFreedom_cum, maxScale, maxApexIdx, &coefficients, &validRegsAtScale);
 
         std::vector<int> failures;
@@ -269,7 +265,7 @@ namespace qAlgorithms
         }
 
         size_t access = 0;
-        const size_t backLim = numPoints - maxScale;
+        const size_t backLim = length - maxScale;
         for (size_t scale = 2; scale <= maxScale; scale++)
         {
             // @todo: refactor this so that the regressions are all validated at once.
@@ -282,12 +278,12 @@ namespace qAlgorithms
                 reg.coeffs = coefficients[access];
                 reg.scale = scale;
                 reg.idxCenter = idxCenter;
-                assert(idxCenter + scale < numPoints);
+                assert(idxCenter + scale < length);
                 int failpoint = makeValidRegression(degreesOfFreedom_cum,
                                                     intensities,
                                                     intensities_log,
                                                     &reg,
-                                                    maxApexIdx);
+                                                    length - 2);
 
                 failures.push_back(failpoint);
                 x0s.push_back(idxCenter);
@@ -2038,8 +2034,6 @@ namespace qAlgorithms
                 continue; // skip due to lack of data, i.e., degrees of freedom will be zero
             }
 
-            const size_t maxApexIdx = convertRT->groups.size() - 2;
-
             validRegressions.clear();
             size_t length = currentEIC.df.size();
             assert(length > 4); // data must contain at least five points
@@ -2053,8 +2047,7 @@ namespace qAlgorithms
                               &logIntensity,
                               &currentEIC.df,
                               &validRegressions,
-                              maxScale,
-                              maxApexIdx);
+                              maxScale);
 
             if (!validRegressions.empty())
             {

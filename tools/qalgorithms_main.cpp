@@ -311,7 +311,7 @@ int main(int argc, char *argv[])
         const size_t maxScale = 8; // @todo not bound to centroid maxscale
         std::vector<float> logIntensity;
         logIntensity.reserve(length);
-        runningRegression(&block.intensity, &logIntensity, &block.cumdf, &validRegressions, maxScale, length - 2);
+        runningRegression(&block.intensity, &logIntensity, &block.cumdf, &validRegressions, maxScale);
     }
 
     UserInputSettings userArgs = passCliArgs(argc, argv);
