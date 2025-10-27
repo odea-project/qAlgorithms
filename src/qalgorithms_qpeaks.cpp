@@ -37,6 +37,27 @@ namespace qAlgorithms
         return pos;
     }
 
+    std::vector<double> predictedInt(const RegCoeffs *reg, const int startIdx, const int endIdx)
+    {
+        assert(startIdx < 0);
+        assert(endIdx > 0);
+
+        std::vector<double> res;
+
+        int idx = startIdx;
+        while (idx <= 0)
+        {
+            res.push_back(regExpAt_L(reg, idx));
+            idx += 1;
+        }
+        while (idx <= endIdx)
+        {
+            res.push_back(regExpAt_R(reg, idx));
+            idx += 1;
+        }
+        return res;
+    }
+
     int qpeaks_find(
         // SOME_IMPLEMENTATION_OF_LINEAR_ALLOCATOR_HERE
         const std::vector<float> *y_values,
@@ -251,17 +272,40 @@ namespace qAlgorithms
         std::vector<int> x0s;
         x0s.reserve(coefficients.size());
 
+        volatile bool printDebug = false;
+        if (printDebug)
         {
-            // FILE *f = fopen("failedRegs.csv", "w");
-            // if (f == NULL)
-            // {
-            //     printf("Error opening file!\n");
-            //     exit(1);
-            // }
+            FILE *f = fopen("failedRegs.csv", "w");
+            if (f == NULL)
+            {
+                printf("Error opening file!\n");
+                exit(1);
+            }
 
-            // fprintf(f, "ID, x0, b0, b1, b2, b3, fail\n");
+            fprintf(f, "ID, intensity\n");
+            for (float i : *intensities)
+            {
+                fprintf(f, "-1, %f\n", i);
+            }
+            size_t i = 0;
+            size_t numCenters = length - 2 * maxScale;
+            for (RegCoeffs reg : coefficients)
+            {
+                // index rotates as points are added by scale
+                int x0 = i % numCenters + maxScale;
+                int startIdx = -x0;
+                int endIdx = length - x0 - 1;
+                auto points = predictedInt(&reg, startIdx, endIdx);
 
-            // fclose(f);
+                for (size_t access = 0; access < length; access++)
+                {
+                    fprintf(f, "%u, %f\n", i, points[access]);
+                }
+
+                i += 1;
+            }
+
+            fclose(f);
         }
 
         size_t access = 0;
