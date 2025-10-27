@@ -171,7 +171,47 @@ namespace qAlgorithms
 #pragma endregion "find peaks"
 
 #pragma region "running regression"
-    size_t globalCount = 0;
+
+    void validateRegressions(
+        const std::vector<float> *intensities,
+        const std::vector<float> *intensities_log,
+        const std::vector<unsigned int> *degreesOfFreedom_cum,
+        const size_t maxScale,
+        const size_t maxApexIdx,
+        const std::vector<RegCoeffs> *coefficients,
+        std::vector<RegressionGauss> *validRegressions)
+    {
+        // @todo can peak overlap sensibly be modeled as the addition of two regressions?
+        const size_t numPoints = coefficients->size();
+        const size_t backLim = numPoints - maxScale;
+
+        size_t access = 0;
+        for (size_t scale = 2; scale <= maxScale; scale++)
+        {
+            // The input vector coefficients is ordered as n sets of size m, where n is the number
+            // of possible center points in intensities and m the number of scales (== maxscale - 2)
+            for (size_t idxCenter = maxScale; idxCenter < backLim; idxCenter++)
+            {
+                RegressionGauss reg;
+                reg.coeffs = coefficients->at(access);
+                reg.scale = scale;
+                reg.idxCenter = idxCenter;
+                assert(idxCenter + scale < numPoints);
+                int failpoint = makeValidRegression(degreesOfFreedom_cum,
+                                                    intensities,
+                                                    intensities_log,
+                                                    &reg,
+                                                    maxApexIdx);
+
+                if (reg.isValid)
+                {
+                    validRegressions->push_back(reg);
+                }
+                access += 1;
+            }
+        }
+        assert(access == coefficients->size());
+    }
 
     void runningRegression(
         const std::vector<float> *intensities,
@@ -199,20 +239,21 @@ namespace qAlgorithms
         assert(validRegressions->empty());
 
         // coefficients for single-b0 peaks, spans all regressions over a peak window
-        std::vector<RegCoeffs> regressions;
-        findCoefficients(intensities_log, maxScale, &regressions);
+        std::vector<RegCoeffs> coefficients;
+        findCoefficients(intensities_log, maxScale, &coefficients);
         std::vector<RegCoeffs> regressions_old = findCoefficients_old(intensities_log, maxScale);
 
-        const size_t numPoints = regressions.size() / 2;
+        const size_t numPoints = coefficients.size();
         // all entries in coeff are sorted by scale and position in ascending order - this is not checked!
 
         std::vector<RegressionGauss> validRegsAtScale; // all regressions at the current scale only
         validRegsAtScale.reserve(numPoints);
+        // validateRegressions(intensities, intensities_log, degreesOfFreedom_cum, maxScale, maxApexIdx, &coefficients, &validRegsAtScale);
 
         std::vector<int> failures;
-        failures.reserve(regressions.size());
+        failures.reserve(coefficients.size());
         std::vector<int> x0s;
-        x0s.reserve(regressions.size());
+        x0s.reserve(coefficients.size());
 
         {
             // FILE *f = fopen("failedRegs.csv", "w");
@@ -228,7 +269,6 @@ namespace qAlgorithms
         }
 
         size_t access = 0;
-
         const size_t backLim = numPoints - maxScale;
         for (size_t scale = 2; scale <= maxScale; scale++)
         {
@@ -239,7 +279,7 @@ namespace qAlgorithms
             for (size_t idxCenter = maxScale; idxCenter < backLim; idxCenter++)
             {
                 RegressionGauss reg;
-                reg.coeffs = regressions[access];
+                reg.coeffs = coefficients[access];
                 reg.scale = scale;
                 reg.idxCenter = idxCenter;
                 assert(idxCenter + scale < numPoints);
@@ -273,7 +313,7 @@ namespace qAlgorithms
             // reset loop
             validRegsAtScale.clear();
         }
-        assert(access == regressions.size());
+        assert(access == coefficients.size());
 
         // there can be 0, 1 or more than one regressions in validRegressions
         mergeRegressionsOverScales(validRegressions, intensities);
@@ -294,7 +334,6 @@ namespace qAlgorithms
 
             // fclose(f);
         }
-        globalCount += 1;
     }
 
     std::vector<RegCoeffs> restoreShape(
@@ -752,7 +791,7 @@ namespace qAlgorithms
             return 6; // invalid apex to edge ratio
         }
 
-        double RSS_reg = calcRSS_reg(mutateReg, intensities_log);
+        double RSS_reg = calcRSS_reg(mutateReg, intensities_log); // @todo we should use the exponential for this
 
         /*
         competing regressions filter:
@@ -1459,11 +1498,13 @@ namespace qAlgorithms
         for (unsigned int i = regSpan.startIdx; i < regSpan.endIdx + 1; i++)
         {
             // step 2: calculate the mean squared error (MSE) between the predicted and actual values
-            double mse = calcSSE_exp((*regressions)[i].coeffs,
+            const RegressionGauss *reg = &(*regressions)[i];
+            double mse = calcSSE_exp(reg->coeffs,
                                      intensities,
                                      {left_limit, right_limit},
-                                     (*regressions)[i].idxCenter);
+                                     reg->idxCenter);
             mse /= (df_sum - 4);
+            // assert(mse == reg->mse); // @todo harmonise this eventually
 
             if (mse < best_mse)
             {
@@ -1480,7 +1521,6 @@ namespace qAlgorithms
     {
         unsigned int substract = regSpan.startIdx == 0 ? 0 : degreesOfFreedom_cum->at(regSpan.startIdx - 1);
         size_t df = degreesOfFreedom_cum->at(regSpan.endIdx) - substract;
-        assert(df <= degreesOfFreedom_cum->size()); // @todo not applicable for non-bool df vecs
         return df;
     }
 
@@ -1488,8 +1528,6 @@ namespace qAlgorithms
         RegressionGauss *mutateReg,
         double *valley_position)
     {
-        // assert(valley_position == 0); // @todo remove for final implementation?
-
         const bool valley_left = mutateReg->coeffs.b2 >= 0;
         const bool valley_right = mutateReg->coeffs.b3 >= 0;
         const bool apexLeft = mutateReg->coeffs.b1 < 0;
@@ -1657,18 +1695,14 @@ namespace qAlgorithms
         double B1_2_B2 = b1 / 2 / b2;
         double B1_2_B3 = b1 / 2 / b3;
 
-        double J[4]; // Jacobian matrix
+        // error calculation uses imaginary part if coefficient is > 0
+        double err_L = (b2 < 0)
+                           ? experfc(B1_2_SQRTB2, -1.0) // 1 - std::erf(b1 / 2 / SQRTB2) // ordinary peak
+                           : dawson5(B1_2_SQRTB2);      // erfi(b1 / 2 / SQRTB2);        // peak with valley point;
 
-        // here we have to check if there is a valley point or not // @todo this can be simplified
-        double err_L =
-            (b2 < 0)
-                ? experfc(B1_2_SQRTB2, -1.0) // 1 - std::erf(b1 / 2 / SQRTB2) // ordinary peak
-                : dawson5(B1_2_SQRTB2);      // erfi(b1 / 2 / SQRTB2);        // peak with valley point;
-
-        double err_R =
-            (b3 < 0)
-                ? experfc(B1_2_SQRTB3, 1.0) // 1 + std::erf(b1 / 2 / SQRTB3) // ordinary peak
-                : dawson5(-B1_2_SQRTB3);    // -erfi(b1 / 2 / SQRTB3);       // peak with valley point ;
+        double err_R = (b3 < 0)
+                           ? experfc(B1_2_SQRTB3, 1.0) // 1 + std::erf(b1 / 2 / SQRTB3) // ordinary peak
+                           : dawson5(-B1_2_SQRTB3);    // -erfi(b1 / 2 / SQRTB3);       // peak with valley point ;
 
         // calculate the Jacobian matrix terms
         double J_1_common_L = _SQRTB2; // SQRTPI_2 * EXP_B12 / SQRTB2;
@@ -1680,6 +1714,7 @@ namespace qAlgorithms
         double J_2_L = J_2_common_L - J_1_L * B1_2_B2;
         double J_2_R = -J_2_common_R - J_1_R * B1_2_B3;
 
+        double J[4]; // Jacobian matrix
         J[0] = J_1_R + J_1_L;
         J[1] = J_2_R + J_2_L;
         J[2] = -B1_2_B2 * (J_2_L + J_1_L / b1);
@@ -1777,11 +1812,9 @@ namespace qAlgorithms
         }
         double J_covered[4]; // Jacobian matrix for the covered peak area
         {
-            // calculate the y values at the left and right limits @todo error here?
+            // b0 not used on purpose
             const double y_left = exp_approx_d(b1 * x_left + b2 * x_left * x_left);
             const double y_right = exp_approx_d(b1 * x_right + b3 * x_right * x_right);
-            // const double y_left = regExpAt_L(coeff, x_left);
-            // const double y_right = regExpAt_R(coeff, x_right);
             const double dX = x_right - x_left;
             assert(dX > 0);
 
@@ -1801,11 +1834,6 @@ namespace qAlgorithms
             const double J_1_R_covered = J_1_common_R * err_R_covered;
             const double J_2_L_covered = J_2_common_L - J_1_L_covered * B1_2_B2;
             const double J_2_R_covered = -J_2_common_R - J_1_R_covered * B1_2_B3;
-
-            // trpzd_b0 = 0;
-            // trpzd_b1 = 0;
-            // trpzd_b2 = 0;
-            // trpzd_b3 = 0;
 
             J_covered[0] = J_1_R_covered + J_1_L_covered - trpzd_b0;
             J_covered[1] = J_2_R_covered + J_2_L_covered - trpzd_b1;
