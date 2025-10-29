@@ -873,8 +873,8 @@ namespace qAlgorithms
 
         size_t frontTime = bin.front()->number_MS1;
         size_t backTime = bin.back()->number_MS1;
-        size_t firstScan = convertIndex->at(frontTime) - maxscale + 2;
-        size_t lastScan = convertIndex->at(backTime) + maxscale - 2;
+        size_t firstScan = convertIndex->at(frontTime);
+        size_t lastScan = convertIndex->at(backTime);
         size_t interpolatedSize = lastScan - firstScan + 1;
         std::vector<unsigned int> tmp_interpScans(interpolatedSize, 0);
         std::iota(tmp_interpScans.begin(), tmp_interpScans.end(), firstScan);

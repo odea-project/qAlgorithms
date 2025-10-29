@@ -129,7 +129,7 @@ namespace qAlgorithms
     {
         assert(!treatedData->empty());
 
-        std::vector<float> logIntensity(maxWindowSize, NAN);
+        std::vector<float> logIntensity(maxWindowSize + 2 * GLOBAL_MAXSCALE_CENTROID, NAN);
 
         assert(GLOBAL_MAXSCALE_CENTROID <= MAXSCALE);
 
@@ -247,11 +247,23 @@ namespace qAlgorithms
     {
         const size_t length = intensities->size();
         assert(intensities_log->empty());
-        assert(intensities_log->capacity() == length);
+        assert(intensities_log->capacity() == length + 2 * maxScale);
+
+        // extrapolation one comes later @todo
+        for (size_t i = 0; i < maxScale; i++)
+        {
+            intensities_log->push_back(0);
+        }
 
         for (size_t i = 0; i < length; i++)
         {
             intensities_log->push_back(std::log(intensities->at(i)));
+        }
+
+        // extrapolation two comes later
+        for (size_t i = 0; i < maxScale; i++)
+        {
+            intensities_log->push_back(0);
         }
 
         assert(validRegressions->empty());
@@ -2287,11 +2299,13 @@ namespace qAlgorithms
             }
         }
 
-        size_t span = spectrum_int->size() - rangeStart;
-        if (span >= 5)
-        {
-            ranges.push_back({rangeStart, spectrum_int->size() - 1});
-            maxRangeSpan = maxRangeSpan > span ? maxRangeSpan : span;
+        { // add last block if it is still open and correct
+            size_t span = spectrum_int->size() - rangeStart;
+            if (span >= 5)
+            {
+                ranges.push_back({rangeStart, spectrum_int->size() - 1});
+                maxRangeSpan = maxRangeSpan > span ? maxRangeSpan : span;
+            }
         }
 
         assert(!ranges.empty());
@@ -2306,9 +2320,6 @@ namespace qAlgorithms
 
         for (size_t i = 0; i < ranges.size(); i++)
         {
-            // extrapolate every range. Intensities are extrapolated by halving, so the outermost real
-            // intensity * 2^n is used for the nth point of the extrapolation. This allows us to use
-            // bit shifts (+cast) to do the division as intensity / (1 << n)
             insert_ms.clear();
             insert_int.clear();
             cumdf.clear();
@@ -2316,53 +2327,15 @@ namespace qAlgorithms
             const size_t idxL = ranges[i].startIdx;
             const size_t idxR = ranges[i].endIdx;
 
-            // left extrapolate
-            {
-                const double mzDiff_L = spectrum_mz->at(idxL + 1) - spectrum_mz->at(idxL);
-                const double leftInt = spectrum_int->at(idxL);
-                assert(leftInt > 1);
-                for (size_t L = maxExtra; L > 0; L--)
-                {
-                    double newMZ = spectrum_mz->at(idxL) - mzDiff_L * L;
-                    insert_ms.push_back(newMZ);
-
-                    int divisor = 1 << L;
-                    double newInt = leftInt / double(divisor);
-                    insert_int.push_back(newInt);
-
-                    cumdf.push_back(0);
-                }
-            }
-
             // copy real values
+            for (size_t M = idxL; M <= idxR; M++)
             {
-                for (size_t M = idxL; M <= idxR; M++)
-                {
-                    insert_ms.push_back(spectrum_mz->at(M));
-                    insert_int.push_back(spectrum_int->at(M));
-                    size_t newdf = cumdf.back() + 1;
-                    cumdf.push_back(newdf);
-                }
+                insert_ms.push_back(spectrum_mz->at(M));
+                insert_int.push_back(spectrum_int->at(M));
+                size_t newdf = cumdf.back() + 1;
+                cumdf.push_back(newdf);
             }
 
-            // right extrapolate
-            {
-                const double mzDiff_R = spectrum_mz->at(idxR) - spectrum_mz->at(idxR - 1);
-                const double rightInt = spectrum_int->at(idxR);
-                assert(rightInt > 1);
-                size_t df = cumdf.back();
-                for (size_t R = 1; R <= maxExtra; R++)
-                {
-                    double newMZ = spectrum_mz->at(idxR) + mzDiff_R * R;
-                    insert_ms.push_back(newMZ);
-
-                    int divisor = 1 << R;
-                    double newInt = rightInt / double(divisor);
-                    insert_int.push_back(newInt);
-
-                    cumdf.push_back(df);
-                }
-            }
             ProfileBlock b = {insert_int,
                               insert_ms,
                               cumdf,
@@ -2380,6 +2353,13 @@ namespace qAlgorithms
     {
         return coeff->b0 + (coeff->b1 + x * coeff->b3) * x;
     }
+    // @todo use the generic function
+    double regAt(const RegCoeffs *coeff, const double x)
+    {
+        double b23 = x < 0 ? coeff->b2 : coeff->b3;
+        return coeff->b0 + (coeff->b1 + x * b23) * x;
+    }
+
     double regExpAt_L(const RegCoeffs *coeff, const double x)
     {
         return exp_approx_d(coeff->b0 + (coeff->b1 + x * coeff->b2) * x);
@@ -2387,5 +2367,11 @@ namespace qAlgorithms
     double regExpAt_R(const RegCoeffs *coeff, const double x)
     {
         return exp_approx_d(coeff->b0 + (coeff->b1 + x * coeff->b3) * x);
+    }
+
+    double regExpAt(const RegCoeffs *coeff, const double x)
+    {
+        double b23 = x < 0 ? coeff->b2 : coeff->b3;
+        return exp_approx_d(coeff->b0 + (coeff->b1 + x * b23) * x);
     }
 }
