@@ -81,36 +81,7 @@ namespace qAlgorithms
         | B   B   B  -D  F  E |
 
         Note that no more than seven different values are needed per scale, even for a multidimensional approach.
-
-        In general, we have two moving actions:
-        1) step right through the intensity_log and calculate the convolution with the kernel
-        2) expand the kernel to the left and right of the intensity_log (higher scale)
-
-        The workflow is organized in nested loops:
-        1) outer loop: move along the intensity_log AND calculate the convolution with the scale=2 kernel
-        2) inner loop: expand the kernel to the left and right of the intensity_log (higher scale)
-
-        The pattern used for both loops looks like:
-        e.g. for n(y) = 16
-        outer loop: i = 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11
-        inner loop: range from:
-        for i=0: 3 to 3 => loop is not executed
-        for i=1: 3 to 4 =>  once for  scale = 3
-        for i=2: 3 to 5 =>  twice for  scale = 3,4
-        for i=3: 3 to 6 =>  three times for  scale = 3,4,5
-        for i=4: 3 to 7 =>  four times for  scale = 3,4,5,6
-        for i=5: 3 to 8 =>  five times for  scale = 3,4,5,6,7
-        for i=6: 3 to 8 =>  five times for  scale = 3,4,5,6,7
-        for i=7: 3 to 7 =>  four times for  scale = 3,4,5,6
-        for i=8: 3 to 6 =>  three times for  scale = 3,4,5
-        for i=9: 3 to 5 =>  twice for  scale = 3,4
-        for i=10: 3 to 4 =>  once for  scale = 3
-        for i=11: 3 to 3 => loop is not executed
     */
-    std::vector<RegCoeffs> findCoefficients_old(
-        const std::vector<float> *intensity_log,
-        const size_t maxscale); // maximum scale that will be checked. Should generally be limited by peakFrame
-
     void findCoefficients(
         const std::vector<float> *intensity_log,
         const size_t maxscale,

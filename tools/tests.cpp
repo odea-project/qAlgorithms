@@ -151,15 +151,9 @@ int main()
     {
         std::vector<float> logInts = {6.40492535, 7.95729923, 8.44852829, 8.27999401, 7.23839712};
         size_t scale = 2;
-        auto reg = findCoefficients_old(&logInts, scale);
+        std::vector<qAlgorithms::RegCoeffs> reg;
+        findCoefficients(&logInts, scale, &reg);
         auto c = reg.front();
-        assert(reg.size() == 1);
-        std::vector<qAlgorithms::RegCoeffs> reg2;
-        findCoefficients(&logInts, scale, &reg2);
-        auto c2 = reg2.front();
-
-        printf("beta | expected | got | new\nb0 | %f | %f| %f\nb1 | %f | %f| %f\nb2 | %f | %f| %f\nb3 | %f | %f| %f\n",
-               8.5012159, c.b0, c2.b0, 0.1143269, c.b1, c2.b1, -0.4647133, c.b2, c2.b2, roundTo_d(-0.3706720, 5), c.b3, c2.b3); // @todo rounding does not work correctly
 
         qass(roundTo_d(c.b0, 5) == roundTo_d(8.5012159, 5), "b0 is incorrect!");
         qass(roundTo_d(c.b1, 5) == roundTo_d(0.1143269, 5), "b1 is incorrect!");
