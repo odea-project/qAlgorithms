@@ -195,7 +195,6 @@ namespace qAlgorithms
         const std::vector<float> *intensities_log,
         const std::vector<unsigned int> *degreesOfFreedom_cum,
         const size_t maxScale,
-        const size_t maxApexIdx,
         const std::vector<RegCoeffs> *coefficients,
         std::vector<RegressionGauss> *validRegressions)
     {
@@ -218,8 +217,7 @@ namespace qAlgorithms
                 int failpoint = makeValidRegression(degreesOfFreedom_cum,
                                                     intensities,
                                                     intensities_log,
-                                                    &reg,
-                                                    maxApexIdx);
+                                                    &reg);
 
                 if (reg.isValid)
                 {
@@ -277,7 +275,7 @@ namespace qAlgorithms
 
         std::vector<RegressionGauss> validRegsAtScale; // all regressions at the current scale only
         validRegsAtScale.reserve(coefficients.size());
-        // validateRegressions(intensities, intensities_log, degreesOfFreedom_cum, maxScale, maxApexIdx, &coefficients, &validRegsAtScale);
+        // validateRegressions(intensities, intensities_log, degreesOfFreedom_cum, maxScale, &coefficients, &validRegsAtScale);
 
         std::vector<int> failures;
         failures.reserve(coefficients.size());
@@ -311,7 +309,7 @@ namespace qAlgorithms
 
                 for (size_t access = 0; access < length; access++)
                 {
-                    fprintf(f, "%u, %f\n", i, points[access]);
+                    fprintf(f, "%zu, %f\n", i, points[access]);
                 }
 
                 i += 1;
@@ -338,8 +336,7 @@ namespace qAlgorithms
                 int failpoint = makeValidRegression(degreesOfFreedom_cum,
                                                     intensities,
                                                     intensities_log,
-                                                    &reg,
-                                                    length - 2);
+                                                    &reg);
 
                 failures.push_back(failpoint);
                 x0s.push_back(idxCenter);
@@ -764,8 +761,7 @@ namespace qAlgorithms
         const std::vector<unsigned int> *degreesOfFreedom_cum,
         const std::vector<float> *intensities,
         const std::vector<float> *intensities_log,
-        RegressionGauss *mutateReg,
-        const size_t maxApexPos)
+        RegressionGauss *mutateReg)
     /* ### allocations ###
         selectLog: size calculated in function, max size known
         predictLog: s.o.

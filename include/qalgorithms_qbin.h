@@ -89,7 +89,7 @@ namespace qAlgorithms
     // every index at bin stage is the "original" index of the MS1 spectrum.
     // they need to be converted to the corrected scan index which accounts for
     // interpolation.
-    EIC binToEIC(Bin *sourceBin, const std::vector<size_t> *convertIndex, const size_t maxscale);
+    EIC binToEIC(Bin *sourceBin, const std::vector<size_t> *convertIndex);
 
     void interpolateEIC(EIC *eic);
 

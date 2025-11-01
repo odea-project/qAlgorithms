@@ -160,7 +160,6 @@ namespace qAlgorithms
         // binning is repeated until the input length is constant
         size_t prevFinal = 0;
 
-        size_t itCount = 0;
         while (true) // @todo prove that this loop always terminates
         {
             subsetBins(activeBins);
@@ -169,12 +168,10 @@ namespace qAlgorithms
             // the process is considered complete
             // in the current configuration, rebinning takes three times as long
             // for two additional features, both of which are likely noise anyway
-            int duplicateCount = 0;
             for (size_t j = 0; j < producedBins; j++)
             {
                 if (activeBins.viableBins[j].duplicateScan)
                 {
-                    duplicateCount++;
                     deduplicateBin(&activeBins.processBinsF, &activeBins.notInBins, &activeBins.viableBins[j]);
                 }
                 else
@@ -190,7 +187,6 @@ namespace qAlgorithms
 
             if (prevFinal == activeBins.finalBins.size())
             {
-                itCount += 1;
                 break;
             }
             prevFinal = activeBins.finalBins.size();
@@ -207,10 +203,7 @@ namespace qAlgorithms
                 // re-binning during the initial loop would result in some bins being split prematurely
                 // @todo rebinning might be a very bad idea
                 // int rebinCount = selectRebin(&activeBins, centroidedData, MAX_SCAN_GAP);
-                // @todo logging
             }
-
-            itCount += 1;
         }
         // no change in bin result, so all remaining bins cannot be coerced into a valid state
         if (!activeBins.processBinsF.empty())
@@ -261,7 +254,7 @@ namespace qAlgorithms
         for (size_t i = 0; i < binCount; i++)
         {
             auto eic = activeBins.finalBins[i].createEIC(convertRT);
-            auto eic2 = binToEIC(&activeBins.finalBins[i], &convertRT->indexOfOriginalInInterpolated, 8); // @todo
+            auto eic2 = binToEIC(&activeBins.finalBins[i], &convertRT->indexOfOriginalInInterpolated); // @todo
             interpolateEIC(&eic);
             finalBins.push_back(eic);
             countPointsInBins += eic.df.back(); // interpolated points are already included in the size
@@ -308,7 +301,6 @@ namespace qAlgorithms
         bincontainer.sourceBins = &bincontainer.processBinsF;
         bincontainer.targetBins = &bincontainer.processBinsT;
 
-        size_t itCount = 0;
         while (!(bincontainer.processBinsF.empty() && bincontainer.processBinsT.empty()))
         {
             // loop until all bins have been moved into finsihedBins or discarded
@@ -356,7 +348,6 @@ namespace qAlgorithms
                 }
             }
             switchTarget(&bincontainer);
-            itCount += 1;
         }
         bincontainer.processBinsF.clear();
         bincontainer.processBinsT.clear();
@@ -855,7 +846,7 @@ namespace qAlgorithms
         return returnVal;
     }
 
-    EIC binToEIC(Bin *sourceBin, const std::vector<size_t> *convertIndex, const size_t maxscale)
+    EIC binToEIC(Bin *sourceBin, const std::vector<size_t> *convertIndex)
     {
 #define bin sourceBin->pointsInBin
 

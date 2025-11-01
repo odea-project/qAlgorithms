@@ -132,8 +132,7 @@ namespace qAlgorithms
         const std::vector<unsigned int> *degreesOfFreedom_cum,
         const std::vector<float> *intensities,
         const std::vector<float> *intensities_log,
-        RegressionGauss *mutateReg,
-        const size_t maxApexPos);
+        RegressionGauss *mutateReg);
 
     void mergeRegressionsOverScales(std::vector<RegressionGauss> *validRegressions,
                                     const std::vector<float> *intensities);
