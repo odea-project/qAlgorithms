@@ -123,6 +123,30 @@ int main()
         qass(roundTo_d(sd, 14) == roundTo_d(0.009603979272, 14), "Standard deviation inaccurate at larger numbers");
     }
 
+    // exact solutuion to linear equation
+    {
+        double true_b0 = 2;
+        double true_b1 = 3;
+        double true_b2 = 1.5;
+
+        double x1 = 1;
+        double y1 = true_b0 + true_b1 * x1 + true_b2 * x1 * x1;
+        double y1_test = quadraticAt(true_b0, true_b1, true_b2, x1);
+        assert(y1_test == y1);
+        double x2 = 2;
+        double y2 = true_b0 + true_b1 * x2 + true_b2 * x2 * x2;
+        double x3 = 3;
+        double y3 = true_b0 + true_b1 * x3 + true_b2 * x3 * x3;
+
+        double b0 = 0, b1 = 0, b2 = 0;
+        coeffsQuadratic(x1, x2, x3,
+                        y1, y2, y3,
+                        &b0, &b1, &b2);
+        qass(b0 == true_b0, "b0 differs\n");
+        qass(b1 == true_b1, "b1 differs\n");
+        qass(b2 == true_b2, "b2 differs\n");
+    }
+
     // check if a basic regression succeeds
     {
         std::vector<float> logInts = {6.40492535, 7.95729923, 8.44852829, 8.27999401, 7.23839712};

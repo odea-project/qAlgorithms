@@ -115,6 +115,25 @@ namespace qAlgorithms
         return RSS_ratio * params_ratio;
     }
 
+    void coeffsQuadratic(const double x1, const double x2, const double x3,
+                         const double y1, const double y2, const double y3,
+                         double *b0, double *b1, double *b2)
+    {
+        // y1 = b2 x1^2 + b1 * x1 + b0 etc.
+        const double div_x_23 = 1 / (x2 - x3);
+        const double x22 = x2 * x2;
+        const double x33 = x3 * x3;
+        *b2 = ((y1 - y2) - (y2 - y3) * (x1 - x2) * div_x_23) / ((x1 * x1 - x22) - (x22 - x33) * (x1 - x2) * div_x_23);
+        *b1 = (y2 - y3 + *b2 * (x33 - x22)) * div_x_23;
+        *b0 = y3 - x33 * *b2 - x3 * *b1;
+    }
+
+    double quadraticAt(const double b0, const double b1, const double b2,
+                       const double x)
+    {
+        return b0 + (b1 + x * b2) * x;
+    }
+
     double exp_approx_d(const double x)
     {
         // assert(x > 0); // @todo this is specified in the header but not respected throughout the code

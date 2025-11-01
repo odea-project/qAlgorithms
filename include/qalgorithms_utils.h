@@ -33,6 +33,13 @@ namespace qAlgorithms
      */
     double cdflib_F_stat(double alpha, size_t params_complex, size_t params_simple, size_t numPoints);
 
+    // exact solution for quadratic equation with three points and thing to get the y for a given x
+    void coeffsQuadratic(const double x1, const double x2, const double x3,
+                         const double y1, const double y2, const double y3,
+                         double *b0, double *b1, double *b2);
+    double quadraticAt(const double b0, const double b1, const double b2,
+                       const double x);
+
     /**
      * @brief Fast exponential approximation base on Bit Manipulation.
      * @details This function is a fast approximation of the exponential
