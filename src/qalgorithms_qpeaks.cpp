@@ -229,6 +229,93 @@ namespace qAlgorithms
         assert(access == coefficients->size());
     }
 
+    void extrapolate_old(std::vector<float> *intensities_log, const size_t fillCount)
+    {
+        { // extrapolate left using the first point and dividing by two fillcount times
+            double baseInt = intensities_log->at(fillCount);
+            for (size_t i = fillCount - 1; i < fillCount; i--)
+            {
+                baseInt /= 2;
+                intensities_log->at(i) = baseInt;
+            }
+            assert(intensities_log->front() != 0);
+        }
+        { // extrapolate right using the last point and dividing by two fillcount times
+            size_t endpos = intensities_log->size() - fillCount - 1;
+            double baseInt = intensities_log->at(endpos);
+            for (size_t i = endpos + 1; i < intensities_log->size(); i++)
+            {
+                baseInt /= 2;
+                intensities_log->at(i) = baseInt;
+            }
+            assert(intensities_log->front() != 0);
+        }
+    }
+
+    void extrapolateLogInt(std::vector<float> *intensities_log, const size_t fillCount)
+    {
+        assert(intensities_log->front() == 0);
+        assert(intensities_log->back() == 0);
+        const size_t len = intensities_log->size();
+
+        { // extrapolate the left using the first point, the first local maximum and the point in the middle of both
+            double x_leftmost = fillCount;
+            double y_leftmost = intensities_log->at(x_leftmost);
+            double x_firstMax = x_leftmost + 2; // there must be at least one point here for this to work
+            double y_firstMax = 0;
+            for (; x_firstMax < len - fillCount; x_firstMax++)
+            {
+                double y_tmp = intensities_log->at(x_firstMax);
+                if (y_tmp < y_firstMax)
+                    break;
+
+                y_firstMax = y_tmp;
+            }
+            assert(y_firstMax > 0);
+            // for a non-even number of points, prefer the one closer to the first apex
+            double x_middle = trunc((x_leftmost + x_firstMax + 1) / 2);
+            double y_middle = intensities_log->at(x_middle);
+
+            // extrapolation on the left
+            double b0, b1, b2;
+            coeffsQuadratic(x_leftmost, x_middle, x_firstMax,
+                            y_leftmost, y_middle, y_firstMax,
+                            &b0, &b1, &b2);
+            for (size_t x = 0; x < fillCount; x++)
+            {
+                intensities_log->at(x) = quadraticAt(b0, b1, b2, x);
+            }
+        }
+        { // extrapolate the right using the last point, the last local maximum and the point in the middle of both
+            double x_rightmost = len - fillCount - 1;
+            double y_rightmost = intensities_log->at(x_rightmost);
+            double x_lastMax = x_rightmost - 2; // there must be at least one point here for this to work
+            double y_lastMax = 0;
+            for (; x_lastMax > fillCount; x_lastMax--)
+            {
+                double y_tmp = intensities_log->at(x_lastMax);
+                if (y_tmp < y_lastMax)
+                    break;
+
+                y_lastMax = y_tmp;
+            }
+            assert(y_lastMax > 0);
+            // for a non-even number of points, prefer the one closer to the last apex
+            double x_middle = trunc((x_rightmost + x_lastMax) / 2);
+            double y_middle = intensities_log->at(x_middle);
+
+            // extrapolation on the right
+            double b0, b1, b2;
+            coeffsQuadratic(x_lastMax, x_middle, x_rightmost,
+                            y_lastMax, y_middle, y_rightmost,
+                            &b0, &b1, &b2);
+            for (size_t x = len - fillCount; x < len; x++)
+            {
+                intensities_log->at(x) = quadraticAt(b0, b1, b2, x);
+            }
+        }
+    }
+
     void runningRegression(
         const std::vector<float> *intensities,
         std::vector<float> *intensities_log,
@@ -243,24 +330,27 @@ namespace qAlgorithms
     */
     {
         const size_t length = intensities->size();
-        assert(intensities_log->empty());
-        assert(intensities_log->capacity() == length + 2 * maxScale);
 
-        // extrapolation one comes later @todo
-        for (size_t i = 0; i < maxScale; i++)
-        {
-            intensities_log->push_back(0);
-        }
-
-        for (size_t i = 0; i < length; i++)
-        {
-            intensities_log->push_back(std::log(intensities->at(i)));
-        }
-
-        // extrapolation two comes later
-        for (size_t i = 0; i < maxScale; i++)
-        {
-            intensities_log->push_back(0);
+        { // prepare the log intensity vector, including extrapolation
+            assert(intensities_log->empty());
+            size_t fillCount = maxScale - 2; // -2 since maxscale - minscale (== 2) is used in regression
+            intensities_log->reserve(length + 2 * fillCount);
+            for (size_t i = 0; i < fillCount; i++)
+            {
+                intensities_log->push_back(0);
+            }
+            for (size_t i = 0; i < length; i++)
+            {
+                intensities_log->push_back(log(intensities->at(i)));
+            }
+            for (size_t i = 0; i < fillCount; i++)
+            {
+                intensities_log->push_back(0);
+            }
+            extrapolateLogInt(intensities_log, fillCount);
+            volatile bool swapInOld = false;
+            if (swapInOld)
+                extrapolate_old(intensities_log, fillCount);
         }
 
         assert(validRegressions->empty());
@@ -280,7 +370,7 @@ namespace qAlgorithms
         std::vector<int> x0s;
         x0s.reserve(coefficients.size());
 
-        volatile bool printDebug = false;
+        volatile bool printDebug = true;
         if (printDebug)
         {
             FILE *f = fopen("failedRegs.csv", "w");
@@ -296,11 +386,11 @@ namespace qAlgorithms
                 fprintf(f, "-1, %f\n", i);
             }
             size_t i = 0;
-            size_t numCenters = length - 2 * maxScale;
+            size_t numCenters = length - 4;
             for (RegCoeffs reg : coefficients)
             {
                 // index rotates as points are added by scale
-                int x0 = i % numCenters + maxScale;
+                int x0 = i % numCenters + 2;
                 int startIdx = -x0;
                 int endIdx = length - x0 - 1;
                 auto points = predictedInt(&reg, startIdx, endIdx);
