@@ -407,7 +407,7 @@ namespace qAlgorithms
         }
 
         size_t access = 0;
-        const size_t backLim = length - maxScale;
+        const size_t backLim = length + maxScale;
         for (size_t scale = 2; scale <= maxScale; scale++)
         {
             // @todo: refactor this so that the regressions are all validated at once.
@@ -420,7 +420,6 @@ namespace qAlgorithms
                 reg.coeffs = coefficients[access];
                 reg.scale = scale;
                 reg.idxCenter = idxCenter;
-                assert(idxCenter + scale < length);
                 int failpoint = makeValidRegression(degreesOfFreedom_cum,
                                                     intensities,
                                                     intensities_log,
@@ -652,7 +651,8 @@ namespace qAlgorithms
     {
         assert(!mutateReg->isValid);
         assert(mutateReg->scale > 1);
-        assert(mutateReg->idxCenter + mutateReg->scale < degreesOfFreedom_cum->size());
+        size_t length = intensities_log->size();
+        assert(mutateReg->idxCenter + mutateReg->scale < length);
 
         // for a regression to be valid, at least one coefficient must be < 0
         if (mutateReg->coeffs.b2 >= 0 && mutateReg->coeffs.b3 >= 0)
@@ -692,7 +692,7 @@ namespace qAlgorithms
         }
 
         updateRegRange(mutateReg, valley_position);
-        assert(mutateReg->regSpan.endIdx < intensities->size());
+        assert(mutateReg->regSpan.endIdx < length);
         if (mutateReg->idxCenter - mutateReg->regSpan.startIdx < 2 || (mutateReg->regSpan.endIdx - mutateReg->idxCenter < 2))
         {
             // only one half of the regression applies to the data, since the
@@ -700,7 +700,20 @@ namespace qAlgorithms
             return 4;
         }
 
-        size_t df_sum = calcDF_cum(degreesOfFreedom_cum, mutateReg->regSpan);
+        // internal reg span needed since mismatch between log intensity and normal intensity
+        // this is later used as the final regspan since the intensity_log vector is not
+        // used after the validation step @todo
+        Range_i span_norm = {0};
+        {
+            size_t lenDiff = (intensities_log->size() - intensities->size()) / 2;
+            int left = mutateReg->regSpan.startIdx - lenDiff;
+            int right = mutateReg->regSpan.endIdx - lenDiff;
+            span_norm.startIdx = left < 0 ? 0 : left;
+            assert(right > 4);
+            span_norm.endIdx = right;
+        }
+
+        size_t df_sum = calcDF_cum(degreesOfFreedom_cum, span_norm);
         if (df_sum < 5)
         {
             // degree of freedom less than 5; i.e., less than 5 measured data points.
@@ -1450,6 +1463,7 @@ namespace qAlgorithms
         const std::vector<unsigned int> *degreesOfFreedom_cum,
         const Range_i regSpan)
     {
+        assert(regSpan.endIdx < degreesOfFreedom_cum->size());
         unsigned int substract = regSpan.startIdx == 0 ? 0 : degreesOfFreedom_cum->at(regSpan.startIdx - 1);
         size_t df = degreesOfFreedom_cum->at(regSpan.endIdx) - substract;
         return df;
