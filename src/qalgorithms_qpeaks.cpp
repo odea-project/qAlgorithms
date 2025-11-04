@@ -552,6 +552,24 @@ namespace qAlgorithms
         return;
     }
 
+    RegCoeffs hardRegression(std::vector<float> *intensity_log, const size_t startIdx, const size_t endIdx)
+    {
+        // 1) find the position 0 - this should generally be the maximum of the region
+        float *intensityP = intensity_log->data() + startIdx;
+        size_t length = endIdx - startIdx + 1;
+        float *maxInt = maxVal(intensityP, length);
+        size_t x0 = maxInt - intensity_log->data();
+
+        // 2) design matrix covering the entire data region - assumes good cutoffs
+        /*todo: matrixtype*/ double *designMat = 0;
+        // length times 1
+        // from -x0 to length - x0: i++
+        // while i < x0: mat[i]^2
+        // start at i = x0, until i = length
+
+        return {0};
+    }
+
 #pragma endregion "running regression"
 
 #pragma region "validate Regression"
