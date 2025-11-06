@@ -1134,7 +1134,7 @@ namespace qAlgorithms
         // mutateReg->uncertainty_pos = calcUncertaintyPos(mse, mutateReg->coeffs, mutateReg->apex_position, scale);
         // mutateReg->df = df_sum - 4; // @todo add explanation for -4
         mutateReg->apex_position += float(idx_x0);
-        mutateReg->scale = int(scale);
+        mutateReg->coeffs.scale = scale;
         mutateReg->idxCenter = int(idx_x0);
         // mutateReg->mse = mse; // the quadratic mse is used for the weighted mean of the coefficients later
         mutateReg->isValid = true;

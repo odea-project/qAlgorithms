@@ -91,13 +91,14 @@ namespace qAlgorithms
     struct RegCoeffs
     {
         double b0 = 0, b1 = 0, b2 = 0, b3 = 0;
+        size_t scale = 0, x0 = 0;
     };
 
     struct RegressionGauss
     {
-        RegCoeffs coeffs = {0};   // regression coefficients
-        size_t idxCenter = 0;     // index of window center (x==0) in the Y matrix
-        int scale = 0;            // scale of the regression window, i.e., 2*scale+1 = window size
+        RegCoeffs coeffs = {0}; // regression coefficients
+        size_t idxCenter = 0;   // index of window center (x==0) in the Y matrix
+        // int scale = 0;            // scale of the regression window, i.e., 2*scale+1 = window size
         int df = 0;               // degrees of freedom, interpolated data points will not be considered
         float apex_position = 0;  // position of the apex of the peak
         float mse = 0;            // mean squared error
