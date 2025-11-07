@@ -202,6 +202,31 @@ namespace qAlgorithms
         return (OS_CRIT_A + (OS_CRIT_B / std::sqrt(std::log(n + 1)))) * stdDev;
     }
 
+    size_t min(size_t a, size_t b)
+    {
+        return a < b ? a : b;
+    }
+    size_t max(size_t a, size_t b)
+    {
+        return a > b ? a : b;
+    }
+    int min(int a, int b)
+    {
+        return a < b ? a : b;
+    }
+    int max(int a, int b)
+    {
+        return a > b ? a : b;
+    }
+    double min(double a, double b)
+    {
+        return a < b ? a : b;
+    }
+    double max(double a, double b)
+    {
+        return a > b ? a : b;
+    }
+
     float *minVal(float *const arrayStart, const size_t length)
     {
         assert(length > 0);

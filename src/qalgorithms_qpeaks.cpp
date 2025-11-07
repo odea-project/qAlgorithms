@@ -206,13 +206,13 @@ namespace qAlgorithms
         for (size_t scale = 2; scale <= maxScale; scale++)
         {
             // The input vector coefficients is ordered as n sets of size m, where n is the number
-            // of possible center points in intensities and m the number of scales (== maxscale - 2)
+            // of possible x0 points in intensities and m the number of scales (== maxscale - 2)
             for (size_t idxCenter = maxScale; idxCenter < backLim; idxCenter++)
             {
                 RegressionGauss reg;
                 reg.coeffs = coefficients->at(access);
-                // reg.scale = scale;
-                reg.idxCenter = idxCenter;
+                // reg.scale = scale; // this and x0 are now set during the regression
+                // reg.idxCenter = idxCenter;
                 assert(idxCenter + scale < length);
                 int failpoint = makeValidRegression(degreesOfFreedom_cum,
                                                     intensities,
@@ -331,6 +331,8 @@ namespace qAlgorithms
     {
         const size_t length = intensities->size();
 
+        volatile bool extrapolate = false;
+        if (extrapolate)
         { // prepare the log intensity vector, including extrapolation
             assert(intensities_log->empty());
             size_t fillCount = maxScale - 2; // -2 since maxscale - minscale (== 2) is used in regression
@@ -351,6 +353,14 @@ namespace qAlgorithms
             volatile bool swapInOld = false;
             if (swapInOld)
                 extrapolate_old(intensities_log, fillCount);
+        }
+        else
+        {
+            for (size_t i = 0; i < length; i++)
+            {
+                intensities_log->reserve(length);
+                intensities_log->push_back(log(intensities->at(i)));
+            }
         }
 
         assert(validRegressions->empty());
@@ -419,7 +429,7 @@ namespace qAlgorithms
                 RegressionGauss reg;
                 reg.coeffs = coefficients[access];
                 // reg.scale = scale;
-                reg.idxCenter = idxCenter;
+                // reg.idxCenter = idxCenter;
                 int failpoint = makeValidRegression(degreesOfFreedom_cum,
                                                     intensities,
                                                     intensities_log,
@@ -453,28 +463,11 @@ namespace qAlgorithms
 
         // there can be 0, 1 or more than one regressions in validRegressions
         mergeRegressionsOverScales(validRegressions, intensities);
-
-        {
-            // FILE *f = fopen("failedRegs.csv", "a");
-            // if (f == NULL)
-            // {
-            //     printf("Error opening file!\n");
-            //     exit(1);
-            // }
-
-            // for (size_t i = 0; i < regressions.size(); i++)
-            // {
-            //     auto r = regressions.at(i);
-            //     fprintf(f, "%zu, %d, %f, %f, %f, %f, %d\n", globalCount, x0s[i], r.b0, r.b1, r.b2, r.b3, failures[i]);
-            // }
-
-            // fclose(f);
-        }
     }
 
     void findCoefficients(
         const std::vector<float> *intensity_log,
-        const size_t maxScale, // This must be the same maxscale as the one used during extrapolation!
+        size_t maxScale,
         std::vector<RegCoeffs> *coeffs)
     /* ### allocations ###
        coeffs: allocation size known at function call
@@ -484,41 +477,45 @@ namespace qAlgorithms
         assert(maxScale <= MAXSCALE);
 
         const size_t length = intensity_log->size();
-        assert(length > 2 * maxScale); // at least one valid point
+        assert(length > 4);
+        maxScale = min(maxScale, (length - 1) / 2);
 
-        const size_t regsPerScale = length - 2 * maxScale; // number of points with at least two real neighbours
-
-        { // @todo move this out of the function eventually
-            const size_t totalScales = maxScale - GLOBAL_MINSCALE + 1;
-            const size_t iterationCount = regsPerScale * totalScales;
-            // assert(coeffs->size() == iterationCount);
-            coeffs->resize(iterationCount);
+        {
+            size_t totalRegs = 0;
+            for (size_t scale = 2; scale <= maxScale; scale++)
+            {
+                totalRegs += length - 2 * scale;
+            }
+            coeffs->resize(totalRegs);
         }
 
         // the first and last n points of every region are extrapolated, where n is the maximum scale -2.
         // as such, the last point at which a regression is possible is maxscale points from the back.
-        const size_t limit = length - maxScale;
+        const size_t limit = length - GLOBAL_MINSCALE;
 
-        size_t scale5Count = 0;
-        for (size_t center = maxScale; center < limit; center++)
+        for (size_t x0 = GLOBAL_MINSCALE; x0 < limit; x0++)
         {
-            const float *cen = intensity_log->data() + center; // this is initially the third real point
+            const float *cen = intensity_log->data() + x0; // this is initially the third real point
 
             // calculate the convolution with the kernel of the lowest scale - 1 (= 1), i.e. xT * intensity_log[cen - 1 : cen + 1]
             // the product sums are the rows of the design matrix (xT) * intensity_log[i:i+4] (dot product)
             // they are set to scale = 1 so the first value written is at scale = 2
-            // b0 is 1, 1, 1, 1, 1
+            // b0 is 1, 1, 1,
             double product_sum_b0 = cen[-1] + cen[0] + cen[1];
-            // b1 is -2, -1, 0, 1, 2
+            // b1 is -1, 0, 1
             double product_sum_b1 = -cen[-1] + cen[1];
-            // b2 is 4, 1, 0, 0, 0
+            // b2 is 1, 0, 0
             double product_sum_b2 = cen[-1];
-            // b3 is 0, 0, 0, 1, 4
+            // b3 is 0, 0, 1
             double product_sum_b3 = cen[1];
 
-            // it is not possible to choose a different minscale since that would break the iterative sum
+            // var for access in inner loop
+            size_t offset_prev = 0;
             for (size_t scale = GLOBAL_MINSCALE; scale <= maxScale; scale++)
             {
+                if (x0 + scale == length)
+                    break;
+
                 // expand the kernel to the left and right of the intensity_log.
                 // b0 is expanded by the two outer points * 1
                 product_sum_b0 += cen[-scale] + cen[scale];
@@ -540,13 +537,28 @@ namespace qAlgorithms
                 const double inv_B_b0 = inv_B * product_sum_b0;
                 const double inv_D_b1 = inv_D * product_sum_b1;
 
-                const size_t access = regsPerScale * (scale - GLOBAL_MINSCALE) + scale5Count;
-                (*coeffs)[access].b0 = inv_A * product_sum_b0 + inv_B * (product_sum_b2 + product_sum_b3);
-                (*coeffs)[access].b1 = inv_C * product_sum_b1 + inv_D * (product_sum_b2 - product_sum_b3);
-                (*coeffs)[access].b2 = inv_B_b0 + inv_D_b1 + inv_E * product_sum_b2 + inv_F * product_sum_b3;
-                (*coeffs)[access].b3 = inv_B_b0 - inv_D_b1 + inv_F * product_sum_b2 + inv_E * product_sum_b3;
+                // access is determined by scale and x0.
+                // scale 2: idx is x0 - scale
+                // scale 3: length - ((scale - 1) * 2) + x0 - scale
+                // scale 4: 2 * length - (scale - 1) * 2 - (scale - 2) * 2 + x0 - scale
+                //          2 * length - scale * 4 + 6 + x0 - scale
+                const size_t offset_front = x0 - scale;
+                const size_t access = offset_front + offset_prev;
+#define current (*coeffs)[access]
+                current.b0 = inv_A * product_sum_b0 + inv_B * (product_sum_b2 + product_sum_b3);
+                current.b1 = inv_C * product_sum_b1 + inv_D * (product_sum_b2 - product_sum_b3);
+                current.b2 = inv_B_b0 + inv_D_b1 + inv_E * product_sum_b2 + inv_F * product_sum_b3;
+                current.b3 = inv_B_b0 - inv_D_b1 + inv_F * product_sum_b2 + inv_E * product_sum_b3;
+                current.scale = scale;
+                current.x0 = x0;
+#undef current
+
+                // next scale would access front of vector
+                if (offset_front == 0)
+                    break;
+
+                offset_prev += length - 2 * scale;
             }
-            scale5Count += 1;
         }
 
         return;
@@ -671,7 +683,7 @@ namespace qAlgorithms
         const size_t scale = mutateReg->coeffs.scale;
         assert(scale > 1);
         size_t length = intensities_log->size();
-        assert(mutateReg->idxCenter + scale < length);
+        assert(mutateReg->coeffs.x0 + scale < length);
 
         // for a regression to be valid, at least one coefficient must be < 0
         if (mutateReg->coeffs.b2 >= 0 && mutateReg->coeffs.b3 >= 0)
@@ -712,27 +724,15 @@ namespace qAlgorithms
 
         updateRegRange(mutateReg, valley_position);
         assert(mutateReg->regSpan.endIdx < length);
-        if (mutateReg->idxCenter - mutateReg->regSpan.startIdx < 2 || (mutateReg->regSpan.endIdx - mutateReg->idxCenter < 2))
+        if (mutateReg->coeffs.x0 - mutateReg->regSpan.startIdx < 2 ||
+            (mutateReg->regSpan.endIdx - mutateReg->coeffs.x0 < 2))
         {
             // only one half of the regression applies to the data, since the
             // degrees of freedom for the "squished" half results in an invalid regression
             return 4;
         }
 
-        // internal reg span needed since mismatch between log intensity and normal intensity
-        // this is later used as the final regspan since the intensity_log vector is not
-        // used after the validation step @todo
-        Range_i span_norm = {0};
-        {
-            size_t lenDiff = (intensities_log->size() - intensities->size()) / 2;
-            int left = mutateReg->regSpan.startIdx - lenDiff;
-            int right = mutateReg->regSpan.endIdx - lenDiff;
-            span_norm.startIdx = left < 0 ? 0 : left;
-            assert(right > 4);
-            span_norm.endIdx = right;
-        }
-
-        size_t df_sum = calcDF_cum(degreesOfFreedom_cum, span_norm);
+        size_t df_sum = calcDF_cum(degreesOfFreedom_cum, mutateReg->regSpan);
         if (df_sum < 5)
         {
             // degree of freedom less than 5; i.e., less than 5 measured data points.
@@ -842,7 +842,7 @@ namespace qAlgorithms
 
         calcUncertaintyPos(mutateReg);
         mutateReg->df = df_sum - 4; // @todo add explanation for -4
-        mutateReg->apex_position += mutateReg->idxCenter;
+        mutateReg->apex_position += mutateReg->coeffs.x0;
 
         // @todo is it actually a problem if the apex is within a two-point region?
         // if (mutateReg->apex_position < 2 || mutateReg->apex_position > maxApexPos)
@@ -857,7 +857,7 @@ namespace qAlgorithms
     void updateRegRange(RegressionGauss *mutateReg, const double valleyPos)
     {
         const size_t scale = mutateReg->coeffs.scale;
-        const size_t idxCenter = mutateReg->idxCenter;
+        const size_t idxCenter = mutateReg->coeffs.x0;
         size_t rangeStart = idxCenter - scale;
         size_t rangeEnd = idxCenter + scale;
         if (valleyPos == 0) [[likely]]
@@ -953,8 +953,7 @@ namespace qAlgorithms
                     exponentialMSE[j] = calcSSE_exp(
                         secondReg->coeffs,
                         intensities,
-                        secondReg->regSpan,
-                        secondReg->idxCenter);
+                        secondReg->regSpan);
                     exponentialMSE[j] /= secondReg->df;
                 }
                 DF_group += secondReg->df;                      // add the degree of freedom
@@ -978,8 +977,7 @@ namespace qAlgorithms
                 exponentialMSE[i] = calcSSE_exp(
                     activeReg->coeffs,
                     intensities,
-                    activeReg->regSpan,
-                    activeReg->idxCenter);
+                    activeReg->regSpan);
                 exponentialMSE[i] /= activeReg->df;
             }
             if (exponentialMSE[i] < MSE_group)
@@ -1079,7 +1077,7 @@ namespace qAlgorithms
             peak.number_MS1 = scanNumber;
             // add height
             RegCoeffs coeff = regression->coeffs;
-            peak.height = exp_approx_d(coeff.b0 + (regression->apex_position - regression->idxCenter) * coeff.b1 * 0.5);
+            peak.height = exp_approx_d(coeff.b0 + (regression->apex_position - coeff.x0) * coeff.b1 * 0.5);
             // peak height (exp(b0 - b1^2/4/b2)) with position being -b1/2/b2
             peak.heightUncertainty = regression->uncertainty_height * peak.height;
 
@@ -1138,7 +1136,7 @@ namespace qAlgorithms
             // add height
             RegCoeffs coeff = regression->coeffs;
             // peak height (exp(b0 - b1^2/4/b2)) with position being -b1/2/b2
-            peak.height = exp_approx_d(coeff.b0 + (regression->apex_position - regression->idxCenter) * coeff.b1 * 0.5);
+            peak.height = exp_approx_d(coeff.b0 + (regression->apex_position - coeff.x0) * coeff.b1 * 0.5);
             peak.heightUncertainty = regression->uncertainty_height * peak.height;
 
             // calculate the apex position in RT
@@ -1181,16 +1179,16 @@ namespace qAlgorithms
             // mz, mzUncertainty, mean DQSC and meanDQSF are all calculated in after this function is called in measurement_data
             peak.DQSF = 1 - erf_approx_f(regression->uncertainty_area / regression->area);
 
-            assert(regression->regSpan.endIdx - regression->idxCenter > 1);
+            assert(regression->regSpan.endIdx - coeff.x0 > 1);
             peak.idxPeakStart = regression->regSpan.startIdx;
             peak.idxPeakEnd = regression->regSpan.endIdx;
-            peak.idxCenter_offset = regression->idxCenter - regression->regSpan.startIdx;
+            peak.idxCenter_offset = coeff.x0 - regression->regSpan.startIdx;
             assert(peak.idxPeakEnd > peak.idxPeakStart);
             assert(peak.idxPeakEnd > peak.idxCenter_offset);
             assert(peak.idxPeakEnd - peak.idxPeakStart >= 4); // at least five points
 
             // params needed to merge two peaks
-            bool apexLeft = regression->apex_position < regression->idxCenter;
+            bool apexLeft = regression->apex_position < coeff.x0;
             assert(apexLeft == (coeff.b1 <= 0));
 
             coeff.b1 /= delta_rt;
@@ -1213,7 +1211,7 @@ namespace qAlgorithms
     double calcRSS_reg(const RegressionGauss *mutateReg, const std::vector<float> *y_start)
     // no allocations
     {
-        const size_t idxCenter = mutateReg->idxCenter;
+        const size_t idxCenter = mutateReg->coeffs.x0;
         double RSS = 0.0;
         // left side
         for (size_t idx = mutateReg->regSpan.startIdx; idx < idxCenter; idx++)
@@ -1282,7 +1280,7 @@ namespace qAlgorithms
         // also check for normal quadratic, that should also fit a lot of observed noise
     }
 
-    double calcSSE_exp(const RegCoeffs coeff, const std::vector<float> *y_start, const Range_i regSpan, size_t idxCenter)
+    double calcSSE_exp(const RegCoeffs coeff, const std::vector<float> *y_start, const Range_i regSpan)
     /* ### allocations ###
         none!
 
@@ -1290,6 +1288,7 @@ namespace qAlgorithms
         exp_approx_d
     */
     { // @todo this does not account for asymmetric RT distances, will that be a problem?
+        size_t idxCenter = coeff.x0;
         double result = 0.0;
         // left side
         for (size_t iSegment = regSpan.startIdx; iSegment < idxCenter; iSegment++)
@@ -1316,10 +1315,11 @@ namespace qAlgorithms
     double calcSSE_chisqared(const RegressionGauss *mutateReg, const std::vector<float> *y_start)
     {
         double result = 0.0;
+        const size_t x0 = mutateReg->coeffs.x0;
         // left side
-        for (size_t iSegment = mutateReg->regSpan.startIdx; iSegment < mutateReg->idxCenter; iSegment++)
+        for (size_t iSegment = mutateReg->regSpan.startIdx; iSegment < x0; iSegment++)
         {
-            double new_x = double(iSegment) - double(mutateReg->idxCenter);
+            double new_x = double(iSegment) - double(x0);
             double y_predict = regExpAt_L(&mutateReg->coeffs, new_x);
             double y_current = (*y_start)[iSegment];
             double newdiff = (y_current - y_predict) * (y_current - y_predict);
@@ -1327,11 +1327,11 @@ namespace qAlgorithms
         }
         // center point, x = 0 -> (b0 - y)^2
         double exp_b0 = exp_approx_d(mutateReg->coeffs.b0);
-        result += (((*y_start)[mutateReg->idxCenter] - exp_b0) * ((*y_start)[mutateReg->idxCenter] - exp_b0)) / exp_b0;
+        result += (((*y_start)[x0] - exp_b0) * ((*y_start)[x0] - exp_b0)) / exp_b0;
 
-        for (size_t iSegment = mutateReg->idxCenter + 1; iSegment < mutateReg->regSpan.endIdx + 1; iSegment++) // iSegment = 0 is center point (calculated above)
+        for (size_t iSegment = x0 + 1; iSegment < mutateReg->regSpan.endIdx + 1; iSegment++) // iSegment = 0 is center point (calculated above)
         {
-            double new_x = double(iSegment) - double(mutateReg->idxCenter);
+            double new_x = double(iSegment) - double(x0);
             double y_predict = regExpAt_R(&mutateReg->coeffs, new_x);
             double y_current = (*y_start)[iSegment];
             double newdiff = (y_current - y_predict) * (y_current - y_predict);
@@ -1464,8 +1464,7 @@ namespace qAlgorithms
             const RegressionGauss *reg = &(*regressions)[i];
             double mse = calcSSE_exp(reg->coeffs,
                                      intensities,
-                                     {left_limit, right_limit},
-                                     reg->idxCenter);
+                                     {left_limit, right_limit});
             mse /= (df_sum - 4);
             // assert(mse == reg->mse); // @todo harmonise this eventually
 
@@ -1551,12 +1550,12 @@ namespace qAlgorithms
     {
         // is the apex at least twice as large as the outermost point?
         // assumption: outermost point is already near base level
-        const size_t idxApex = size_t(mutateReg->apex_position) + mutateReg->idxCenter;
+        const size_t idxApex = size_t(mutateReg->apex_position) + mutateReg->coeffs.x0;
         assert(idxApex < intensities->size());
 
         double left = intensities->at(mutateReg->regSpan.startIdx);
         double right = intensities->at(mutateReg->regSpan.endIdx);
-        double minIntensity = left < right ? left : right;
+        double minIntensity = min(left, right);
         double apex = intensities->at(idxApex);
         return apex / minIntensity;
     }

@@ -1135,7 +1135,7 @@ namespace qAlgorithms
         // mutateReg->df = df_sum - 4; // @todo add explanation for -4
         mutateReg->apex_position += float(idx_x0);
         mutateReg->coeffs.scale = scale;
-        mutateReg->idxCenter = int(idx_x0);
+        // mutateReg->idxCenter = int(idx_x0);
         // mutateReg->mse = mse; // the quadratic mse is used for the weighted mean of the coefficients later
         mutateReg->isValid = true;
         return;

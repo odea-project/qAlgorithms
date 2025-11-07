@@ -84,7 +84,7 @@ namespace qAlgorithms
     */
     void findCoefficients(
         const std::vector<float> *intensity_log,
-        const size_t maxscale,
+        size_t maxscale,
         std::vector<RegCoeffs> *coeffs);
 
     void findBestScales(std::vector<RegressionGauss> *validRegressions,
@@ -155,8 +155,7 @@ namespace qAlgorithms
 
     double calcSSE_exp(const RegCoeffs coeff,
                        const std::vector<float> *y_start,
-                       const Range_i regSpan,
-                       size_t idxCenter);
+                       const Range_i regSpan);
 
     double calcSSE_chisqared(const RegressionGauss *mutateReg, const std::vector<float> *y_start);
 
