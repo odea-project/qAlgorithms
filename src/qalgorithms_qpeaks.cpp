@@ -190,43 +190,30 @@ namespace qAlgorithms
 
 #pragma region "running regression"
 
-    void validateRegressions(
+    size_t validateRegressions(
         const std::vector<float> *intensities,
         const std::vector<float> *intensities_log,
         const std::vector<unsigned int> *degreesOfFreedom_cum,
-        const size_t maxScale,
         const std::vector<RegCoeffs> *coefficients,
         std::vector<RegressionGauss> *validRegressions)
     {
-        // @todo can peak overlap sensibly be modeled as the addition of two regressions?
-        const size_t length = intensities->size();
-        const size_t backLim = length - maxScale;
-
-        size_t access = 0;
-        for (size_t scale = 2; scale <= maxScale; scale++)
+        size_t validCount = 0;
+        for (size_t i = 0; i < coefficients->size(); i++)
         {
-            // The input vector coefficients is ordered as n sets of size m, where n is the number
-            // of possible x0 points in intensities and m the number of scales (== maxscale - 2)
-            for (size_t idxCenter = maxScale; idxCenter < backLim; idxCenter++)
-            {
-                RegressionGauss reg;
-                reg.coeffs = coefficients->at(access);
-                // reg.scale = scale; // this and x0 are now set during the regression
-                // reg.idxCenter = idxCenter;
-                assert(idxCenter + scale < length);
-                int failpoint = makeValidRegression(degreesOfFreedom_cum,
-                                                    intensities,
-                                                    intensities_log,
-                                                    &reg);
 
-                if (reg.isValid)
-                {
-                    validRegressions->push_back(reg);
-                }
-                access += 1;
+            RegressionGauss reg;
+            reg.coeffs = coefficients->at(i);
+            int failpoint = makeValidRegression(degreesOfFreedom_cum,
+                                                intensities,
+                                                intensities_log,
+                                                &reg);
+            validCount += failpoint == 0 ? 1 : 0;
+            if (reg.isValid)
+            {
+                validRegressions->push_back(reg);
             }
         }
-        assert(access == coefficients->size());
+        return validCount;
     }
 
     void extrapolate_old(std::vector<float> *intensities_log, const size_t fillCount)
@@ -366,14 +353,9 @@ namespace qAlgorithms
         assert(validRegressions->empty());
 
         // coefficients for single-b0 peaks, spans all regressions over a peak window
+        // all entries in coeff are sorted by scale and position in ascending order - this is not checked!
         std::vector<RegCoeffs> coefficients;
         findCoefficients(intensities_log, maxScale, &coefficients);
-
-        // all entries in coeff are sorted by scale and position in ascending order - this is not checked!
-
-        std::vector<RegressionGauss> validRegsAtScale; // all regressions at the current scale only
-        validRegsAtScale.reserve(coefficients.size());
-        // validateRegressions(intensities, intensities_log, degreesOfFreedom_cum, maxScale, &coefficients, &validRegsAtScale);
 
         std::vector<int> failures;
         failures.reserve(coefficients.size());
@@ -416,53 +398,100 @@ namespace qAlgorithms
             fclose(f);
         }
 
-        size_t access = 0;
-        const size_t backLim = length + maxScale;
-        for (size_t scale = 2; scale <= maxScale; scale++)
+        std::vector<RegressionGauss> validRegsTmp; // all independently valid regressions regressions
+        validRegsTmp.reserve(coefficients.size() / 2);
+        size_t validCount = validateRegressions(intensities,
+                                                intensities_log,
+                                                degreesOfFreedom_cum,
+                                                &coefficients,
+                                                &validRegsTmp);
+
+        // @todo find out how impactful the adjusted region where a regression holds true is
+        // potentially refactor the elimination such that it is one fucntion to handle within
+        // and between regs through invalidation only
+
+        std::vector<RegressionGauss> validRegsAtScale;
+        size_t currentScale = 2;
+        validRegsTmp.push_back({0});
+        validRegsTmp.back().coeffs.scale = 0;
+        RegressionGauss *currentReg = validRegsTmp.data();
+        while (currentReg->coeffs.scale != 0)
         {
-            // @todo: refactor this so that the regressions are all validated at once.
-            // preserve space by inserting an invalid regression after every scale is
-            // done so that following operations can just stop once the first with
-            // mz == 0 or something similar occurs
-            for (size_t idxCenter = maxScale; idxCenter < backLim; idxCenter++)
+            if (currentReg->coeffs.scale == currentScale)
             {
-                RegressionGauss reg;
-                reg.coeffs = coefficients[access];
-                // reg.scale = scale;
-                // reg.idxCenter = idxCenter;
-                int failpoint = makeValidRegression(degreesOfFreedom_cum,
-                                                    intensities,
-                                                    intensities_log,
-                                                    &reg);
-
-                failures.push_back(failpoint);
-                x0s.push_back(idxCenter);
-
-                if (reg.isValid)
-                {
-                    validRegsAtScale.push_back(reg);
-                }
-                access += 1;
+                validRegsAtScale.push_back(*currentReg);
+                currentReg += 1;
             }
-
-            // no valid peaks if the size of validRegsTemp is 0
-            if (validRegsAtScale.size() == 1)
+            else if (validRegsAtScale.empty())
             {
-                // only one valid peak, no fitering necessary
-                validRegressions->push_back(std::move(validRegsAtScale[0]));
+                // no viable regression at scale
+                currentScale += 1;
             }
-            else if (validRegsAtScale.size() > 1)
+            else if (validRegsAtScale.size() == 1)
+            {
+                // only one valid regression at scale
+                validRegressions->push_back(validRegsAtScale.front());
+                currentReg += 1;
+                currentScale += 1;
+                validRegsAtScale.clear();
+            }
+            else
             {
                 findBestScales(validRegressions, &validRegsAtScale, intensities, degreesOfFreedom_cum);
+                validRegsAtScale.clear();
             }
-
-            // reset loop
-            validRegsAtScale.clear();
         }
-        assert(access == coefficients.size());
 
         // there can be 0, 1 or more than one regressions in validRegressions
         mergeRegressionsOverScales(validRegressions, intensities);
+
+        // size_t access = 0;
+        // const size_t backLim = length - GLOBAL_MINSCALE;
+        // for (size_t scale = 2; scale <= maxScale; scale++)
+        // {
+        //     // @todo: refactor this so that the regressions are all validated at once.
+        //     // preserve space by inserting an invalid regression after every scale is
+        //     // done so that following operations can just stop once the first with
+        //     // mz == 0 or something similar occurs
+        //     for (size_t idxCenter = GLOBAL_MINSCALE; idxCenter < backLim; idxCenter++)
+        //     {
+        //         RegressionGauss reg;
+        //         reg.coeffs = coefficients[access];
+        //         // reg.scale = scale;
+        //         // reg.idxCenter = idxCenter;
+        //         int failpoint = makeValidRegression(degreesOfFreedom_cum,
+        //                                             intensities,
+        //                                             intensities_log,
+        //                                             &reg);
+
+        //         failures.push_back(failpoint);
+        //         x0s.push_back(idxCenter);
+
+        //         if (reg.isValid)
+        //         {
+        //             validRegsAtScale.push_back(reg);
+        //         }
+        //         access += 1;
+        //     }
+
+        //     // no valid peaks if the size of validRegsTemp is 0
+        //     if (validRegsAtScale.size() == 1)
+        //     {
+        //         // only one valid peak, no fitering necessary
+        //         validRegressions->push_back(std::move(validRegsAtScale[0]));
+        //     }
+        //     else if (validRegsAtScale.size() > 1)
+        //     {
+        //         findBestScales(validRegressions, &validRegsAtScale, intensities, degreesOfFreedom_cum);
+        //     }
+
+        //     // reset loop
+        //     validRegsAtScale.clear();
+        // }
+        // assert(access == coefficients.size());
+
+        // // there can be 0, 1 or more than one regressions in validRegressions
+        // mergeRegressionsOverScales(validRegressions, intensities);
     }
 
     void findCoefficients(
@@ -585,6 +614,116 @@ namespace qAlgorithms
 #pragma endregion "running regression"
 
 #pragma region "validate Regression"
+
+    size_t invalidateSuboptimal_inScale(
+        const std::vector<float> *intensities,
+        const std::vector<unsigned int> *degreesOfFreedom_cum,
+        std::vector<RegressionGauss> *validRegressions)
+    {
+        // goal: for every regression in the current scale, select the one with the
+        // best MSE and then mark all other ones as invalid.
+
+        assert(!validRegressions->empty());
+        assert(!intensities->empty());
+        assert(validRegressions->back().coeffs.scale < intensities->size() / 2);
+
+        size_t totalValid = 0;
+
+        RegressionGauss *conflictReg = nullptr;
+        size_t currentScale = 2;
+
+        for (size_t i = 0; i < validRegressions->size(); i++)
+        {
+            RegressionGauss *reg = validRegressions->data() + i;
+            if (!reg->isValid)
+                continue;
+
+            // the first round of comparisons is only concerned with peaks within one scale
+            // @todo is this the correct approach?
+            if (reg->coeffs.scale != currentScale)
+            {
+                // reset the comparison
+                conflictReg = nullptr;
+                assert(currentScale + 1 == reg->coeffs.scale);
+                currentScale += 1;
+            }
+
+            // no conflict -> this one needs to be tested against
+            if (conflictReg == nullptr)
+            {
+                conflictReg = reg;
+                continue;
+            }
+
+            // check if the regression is in range. A regression is in range if
+            // the difference between apexes is smaller than 4 or the scale,
+            // whichever one is larger
+            double critDiff = max(double(currentScale), 4.0);
+            // current position should alwasys be greater than old
+            double apexDiff = reg->apex_position - conflictReg->apex_position;
+            assert(apexDiff > 0);
+
+            if (apexDiff > critDiff)
+            {
+                // no conflict, test other reg
+                conflictReg = reg;
+                totalValid += 1;
+                continue;
+            }
+
+            // expand the range until no overlap between regressions exists @todo should this be updated in the chosen regression?
+            Range_i limits = conflictReg->regSpan;
+
+            size_t lookAhead = i;
+            for (; lookAhead < validRegressions->size(); lookAhead++)
+            {
+                // check how far the region can expand before it no longer makes sense to comapare regressions
+                RegressionGauss *forward = validRegressions->data() + lookAhead;
+
+                if (forward->coeffs.scale != currentScale)
+                    break;
+                if (!forward->isValid)
+                    continue;
+                if (forward->apex_position > float(limits.endIdx))
+                    break;
+
+                assert(limits.endIdx <= forward->regSpan.endIdx);
+                limits.endIdx = forward->regSpan.endIdx;
+            }
+
+            // within this range, find the best mse. conflictReg is always the
+            // better of the two.
+            size_t df_sum = calcDF_cum(degreesOfFreedom_cum, limits);
+            double bestMSE = calcSSE_exp(&conflictReg->coeffs,
+                                         intensities,
+                                         &limits);
+            bestMSE /= (df_sum - 4);
+
+            for (; i < lookAhead; i++) // at least one conflict needs to be resolved if the loop gets this far
+            {
+                reg = validRegressions->data() + i;
+
+                double mse = calcSSE_exp(&reg->coeffs,
+                                         intensities,
+                                         &limits);
+                mse /= (df_sum - 4);
+
+                bool replace = mse < bestMSE;
+                if (replace)
+                {
+                    conflictReg->isValid = false;
+                    conflictReg = reg;
+                    bestMSE = mse;
+                }
+            }
+
+            // at this point, only one regression in the conflict window remains
+            conflictReg = nullptr;
+            totalValid += 1;
+        }
+
+        return totalValid;
+    }
 
     void findBestScales(std::vector<RegressionGauss> *validRegressions,
                         std::vector<RegressionGauss> *validRegsTmp,
@@ -951,9 +1090,9 @@ namespace qAlgorithms
                 if (exponentialMSE[j] == 0.0)
                 { // calculate the mse of the reference peak
                     exponentialMSE[j] = calcSSE_exp(
-                        secondReg->coeffs,
+                        &secondReg->coeffs,
                         intensities,
-                        secondReg->regSpan);
+                        &secondReg->regSpan);
                     exponentialMSE[j] /= secondReg->df;
                 }
                 DF_group += secondReg->df;                      // add the degree of freedom
@@ -975,9 +1114,9 @@ namespace qAlgorithms
             if (exponentialMSE[i] == 0.0)
             { // calculate the mse of the current peak
                 exponentialMSE[i] = calcSSE_exp(
-                    activeReg->coeffs,
+                    &activeReg->coeffs,
                     intensities,
-                    activeReg->regSpan);
+                    &activeReg->regSpan);
                 exponentialMSE[i] /= activeReg->df;
             }
             if (exponentialMSE[i] < MSE_group)
@@ -1280,31 +1419,25 @@ namespace qAlgorithms
         // also check for normal quadratic, that should also fit a lot of observed noise
     }
 
-    double calcSSE_exp(const RegCoeffs coeff, const std::vector<float> *y_start, const Range_i regSpan)
-    /* ### allocations ###
-        none!
-
-       ### called functions ###
-        exp_approx_d
-    */
+    double calcSSE_exp(const RegCoeffs *coeff, const std::vector<float> *y_start, const Range_i *regSpan)
     { // @todo this does not account for asymmetric RT distances, will that be a problem?
-        size_t idxCenter = coeff.x0;
+        size_t idxCenter = coeff->x0;
         double result = 0.0;
         // left side
-        for (size_t iSegment = regSpan.startIdx; iSegment < idxCenter; iSegment++)
+        for (size_t iSegment = regSpan->startIdx; iSegment < idxCenter; iSegment++)
         {
             double new_x = double(iSegment) - double(idxCenter); // always negative
-            double y_predict = regExpAt_L(&coeff, new_x);
+            double y_predict = regExpAt_L(coeff, new_x);
             double y_current = (*y_start)[iSegment];
             double newdiff = (y_current - y_predict) * (y_current - y_predict);
             result += newdiff;
         }
-        result += ((*y_start)[idxCenter] - exp_approx_d(coeff.b0)) * ((*y_start)[idxCenter] - exp_approx_d(coeff.b0)); // x = 0 -> (b0 - y)^2
+        result += ((*y_start)[idxCenter] - exp_approx_d(coeff->b0)) * ((*y_start)[idxCenter] - exp_approx_d(coeff->b0)); // x = 0 -> (b0 - y)^2
         // right side
-        for (size_t iSegment = idxCenter + 1; iSegment < regSpan.endIdx + 1; iSegment++) // start one past the center, include right limit index
+        for (size_t iSegment = idxCenter + 1; iSegment < regSpan->endIdx + 1; iSegment++) // start one past the center, include right limit index
         {
             double new_x = double(iSegment) - double(idxCenter); // always positive
-            double y_predict = regExpAt_R(&coeff, new_x);
+            double y_predict = regExpAt_R(coeff, new_x);
             double y_current = (*y_start)[iSegment];
             double newdiff = (y_current - y_predict) * (y_current - y_predict);
             result += newdiff;
@@ -1432,15 +1565,6 @@ namespace qAlgorithms
         const std::vector<RegressionGauss> *regressions,
         const std::vector<unsigned int> *degreesOfFreedom_cum,
         const Range_i regSpan)
-    /* ### allocations ###
-        none!
-
-       ### called functions ###
-        std::min
-        std::max
-        calcDF_cum
-        calcSSE_exp
-    */
     {
         double best_mse = INFINITY;
         unsigned int bestRegIdx = 0;
@@ -1452,19 +1576,20 @@ namespace qAlgorithms
         {
 
             const RegressionGauss *reg = &(*regressions)[i];
-            left_limit = std::min(left_limit, reg->regSpan.startIdx);
-            right_limit = std::max(right_limit, reg->regSpan.endIdx);
+            left_limit = min(left_limit, reg->regSpan.startIdx);
+            right_limit = max(right_limit, reg->regSpan.endIdx);
         }
         // the new df_sum is only needed since the function limits are adjusted above, correct that?
         size_t df_sum = calcDF_cum(degreesOfFreedom_cum, regSpan);
 
-        for (unsigned int i = regSpan.startIdx; i < regSpan.endIdx + 1; i++)
+        for (size_t i = regSpan.startIdx; i < regSpan.endIdx + 1; i++)
         {
             // step 2: calculate the mean squared error (MSE) between the predicted and actual values
             const RegressionGauss *reg = &(*regressions)[i];
-            double mse = calcSSE_exp(reg->coeffs,
+            const Range_i range = {left_limit, right_limit};
+            double mse = calcSSE_exp(&reg->coeffs,
                                      intensities,
-                                     {left_limit, right_limit});
+                                     &range);
             mse /= (df_sum - 4);
             // assert(mse == reg->mse); // @todo harmonise this eventually
 

@@ -153,9 +153,9 @@ namespace qAlgorithms
 
     bool f_testRegression(const std::vector<float> *observed, double RSS_reg, const Range_i *range);
 
-    double calcSSE_exp(const RegCoeffs coeff,
+    double calcSSE_exp(const RegCoeffs *coeff,
                        const std::vector<float> *y_start,
-                       const Range_i regSpan);
+                       const Range_i *regSpan);
 
     double calcSSE_chisqared(const RegressionGauss *mutateReg, const std::vector<float> *y_start);
 
