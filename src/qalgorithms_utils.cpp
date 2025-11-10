@@ -115,6 +115,87 @@ namespace qAlgorithms
         return RSS_ratio * params_ratio;
     }
 
+    void linReg_intx(const float *yvals,
+                     const size_t length,
+                     double *slope, double *intercept)
+    {
+        assert(length > 2); // regression through two points is nonsensical;
+
+        double s = 0, s_x = 0, s_y = 0, s_xx = 0, s_xy = 0; // accumulators for the different sums
+
+        s = double(length);
+        for (size_t x = 0; x < length; x++)
+        {
+            double y = yvals[x];
+
+            s_x += double(x);
+            s_y += y;
+            s_xx += double(x * x);
+            s_xy += double(x) * y;
+        }
+
+        double delta = 1 / (s * s_xx - s_x * s_x);
+        *intercept = (s_xx * s_y - s_x * s_xy) * delta;
+        *slope = (s * s_xy - s_x * s_y) * delta;
+    }
+
+    void weightedLinReg(const double *xvals,
+                        const double *yvals,
+                        const double *variance,
+                        const size_t length,
+                        double *slope, double *intercept)
+    {
+        /*
+            The weighted linear regression as discussed in chapter 15.2 of numerical recepies (ISBN 0-521-43108-5).
+            Variable names are taken from the text, not the included code example. The control for significance
+            using the gamma function is skipped since there should always be a significant correlation. This could be
+            replaced by a check against the mse when just using the mean.
+        */
+        assert(length > 2); // regression through two points is nonsensical;
+
+        double s = 0, s_x = 0, s_y = 0, s_xx = 0, s_xy = 0; // accumulators for the different sums
+
+        if (variance == nullptr)
+        {
+            s = double(length);
+            for (size_t i = 0; i < length; i++)
+            {
+                double y = yvals[i];
+                double x = xvals[i];
+
+                s_x += x;
+                s_y += y;
+                s_xx += x * x;
+                s_xy += x * y;
+            }
+        }
+        else
+        {
+            for (size_t i = 0; i < length; i++)
+            {
+                double inverse = 1 / (variance[i] * variance[i]);
+
+                double y = yvals[i];
+                double x = xvals[i];
+
+                s += inverse;
+                s_x += x * inverse;
+                s_y += y * inverse;
+                s_xx += x * x * inverse;
+                s_xy += x * y * inverse;
+            }
+        }
+
+        // now, the two linear systems a * s + b * s_x = s_y and a * s_x + b * s_xx = s_xy can be solved for a and b
+        // a is the inclination and b the intercept
+
+        double delta = 1 / (s * s_xx - s_x * s_x);
+        *intercept = (s_xx * s_y - s_x * s_xy) * delta;
+        *slope = (s * s_xy - s_x * s_y) * delta;
+
+        // calculate the uncertainties of a and b @todo
+    }
+
     void coeffsQuadratic(const double x1, const double x2, const double x3,
                          const double y1, const double y2, const double y3,
                          double *b0, double *b1, double *b2)

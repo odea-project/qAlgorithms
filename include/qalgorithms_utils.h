@@ -33,6 +33,17 @@ namespace qAlgorithms
      */
     double cdflib_F_stat(double alpha, size_t params_complex, size_t params_simple, size_t numPoints);
 
+    // simplified linear regression using a positive integer axis for x
+    void linReg_intx(const float *yvals,
+                     const size_t length,
+                     double *slope, double *intercept);
+
+    void weightedLinReg(const double *xvals,
+                        const double *yvals,
+                        const double *variance,
+                        const size_t length,
+                        double *slope, double *intercept);
+
     // exact solution for quadratic equation with three points and thing to get the y for a given x
     void coeffsQuadratic(const double x1, const double x2, const double x3,
                          const double y1, const double y2, const double y3,

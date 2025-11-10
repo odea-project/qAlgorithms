@@ -213,6 +213,7 @@ namespace qAlgorithms
                 validRegressions->push_back(reg);
             }
         }
+        assert(validCount == validRegressions->size());
         return validCount;
     }
 
@@ -343,9 +344,9 @@ namespace qAlgorithms
         }
         else
         {
+            intensities_log->reserve(length);
             for (size_t i = 0; i < length; i++)
             {
-                intensities_log->reserve(length);
                 intensities_log->push_back(log(intensities->at(i)));
             }
         }
@@ -1375,7 +1376,7 @@ namespace qAlgorithms
         return RSS;
     }
 
-    double calcRSS_H0(const std::vector<float> *observed, const Range_i *range)
+    double calcRSS_H0_cf1(const std::vector<float> *observed, const Range_i *range)
     {
         // this function calculates the RSS for H0: y = b0 (a constant value)
 
@@ -1398,24 +1399,52 @@ namespace qAlgorithms
         return RSS;
     }
 
+    double calcRSS_H0_cf2(const std::vector<float> *observed, const Range_i *range)
+    {
+        // this function calculates the RSS for H0: y = b0 + x * b1 (no weights)
+
+        assert(range->endIdx < observed->size());
+
+        double slope, intercept;
+        size_t length = rangeLen(range);
+        const float *start = observed->data() + range->startIdx;
+        linReg_intx(start, length, &slope, &intercept);
+
+        double RSS = 0;
+        size_t x = 0;
+        for (size_t i = range->startIdx; i <= range->endIdx; i++)
+        {
+            double difference = (*observed)[i] - (intercept - slope * x);
+            RSS += difference * difference;
+            x += 1;
+        }
+        assert(x == length);
+
+        return RSS;
+    }
+
     bool f_testRegression(const std::vector<float> *observed, double RSS_reg, const Range_i *range)
     {
         // during the tests, the RSS for the regression has already been calculated in calcRSS_reg
         assert(RSS_reg > 0);
 
-        double RSS_H0 = calcRSS_H0(observed, range);
-
-        double fval = f_value(RSS_reg, RSS_H0, 4, 1, observed->size());
-
-        const size_t length = rangeLen(range);
-        double F_refval = cdflib_F_stat(0.05, 4, 1, length);
-
-        // double refval = F_VALUES[length]; // pre-calculated for alpha = 0.05 @todo do this eventually
-
-        return fval > F_refval; // reject H0, significant difference from y = b
-
-        // @todo add a section to also test for y = mx + b
-        // also check for normal quadratic, that should also fit a lot of observed noise
+        { // test against mean
+            double RSS_H0 = calcRSS_H0_cf1(observed, range);
+            double fval = f_value(RSS_reg, RSS_H0, 4, 1, observed->size());
+            const size_t length = rangeLen(range);
+            double F_refval = cdflib_F_stat(0.05, 4, 1, length);
+            bool f_ok = fval > F_refval; // reject H0, significant difference from y = b
+            if (!f_ok)
+                return false;
+        }
+        { // test against straight line
+            double RSS_H0 = calcRSS_H0_cf2(observed, range);
+            double fval = f_value(RSS_reg, RSS_H0, 4, 2, observed->size());
+            const size_t length = rangeLen(range);
+            double F_refval = cdflib_F_stat(0.05, 4, 2, length);
+            bool f_ok = fval > F_refval; // reject H0, significant difference from y = b0 + b1 * x
+            return f_ok;
+        }
     }
 
     double calcSSE_exp(const RegCoeffs *coeff, const std::vector<float> *y_start, const Range_i *regSpan)
@@ -1723,48 +1752,22 @@ namespace qAlgorithms
         const size_t df_sum,
         const double apexToEdge)
     {
-        // check if the peak height is significantly greater than edge signal
+        // check if the peak height is significantly greater than edge signal @todo this should be solved by the f test
         double apex = mutateReg->apex_position;
         assert(apex != 0);
-        double Jacobian_height[4]{0, 0, 0, 0};
         const bool apexLeft = apex < 0;
+        // determine left or right limit, based on apex position
         const double scale_d = double(mutateReg->coeffs.scale);
         const double altValley = scale_d * (apexLeft ? -1 : 1);
         const double valley = valley_position == 0 ? altValley : valley_position;
+        // construct matrix
         const double j1 = apex - valley;
         const double j23 = apex * apex - valley * valley;
         const double j2 = apexLeft ? j23 : 0;
         const double j3 = apexLeft ? 0 : j23;
         const double jacobianHeight[4]{0, j1, j2, j3};
 
-        double valley_position2 = valley_position;
-
-        if (apexLeft)
-        {
-            // float edge_position = (valley_position != 0) ? valley_position : static_cast<float>(-scale);
-            if (valley_position == 0)
-            {
-                valley_position2 = -scale_d;
-            }
-
-            Jacobian_height[1] = apex - valley_position2;
-            Jacobian_height[2] = apex * apex - valley_position2 * valley_position2; // adjust for uncertainty calculation of apex to edge ratio
-        }
-        else
-        {
-            if (valley_position == 0)
-            {
-                valley_position2 = scale_d;
-            }
-            Jacobian_height[1] = apex - valley_position2;
-            Jacobian_height[3] = apex * apex - valley_position2 * valley_position2; // adjust for uncertainty calculation of apex to edge ratio
-        }
-
-        assert(float(jacobianHeight[1]) == float(Jacobian_height[1]));
-        assert(float(jacobianHeight[2]) == float(Jacobian_height[2]));
-        assert(float(jacobianHeight[3]) == float(Jacobian_height[3]));
-
-        float uncertainty_apexToEdge = calcUncertainty(Jacobian_height, mutateReg->coeffs.scale, mutateReg->mse);
+        float uncertainty_apexToEdge = calcUncertainty(jacobianHeight, mutateReg->coeffs.scale, mutateReg->mse);
 
         // @todo why -2? Just to account for position?
         bool peakHeightSignificant = (apexToEdge - 2) > T_VALUES[df_sum - 5] * (apexToEdge * uncertainty_apexToEdge);
