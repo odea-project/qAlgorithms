@@ -415,32 +415,31 @@ namespace qAlgorithms
         validRegsTmp.push_back({0});
         validRegsTmp.back().coeffs.scale = 0;
         RegressionGauss *currentReg = validRegsTmp.data();
-        while (currentReg->coeffs.scale != 0)
+
+        do
         {
             if (currentReg->coeffs.scale == currentScale)
             {
                 validRegsAtScale.push_back(*currentReg);
                 currentReg += 1;
+                continue;
             }
-            else if (validRegsAtScale.empty())
-            {
-                // no viable regression at scale
-                currentScale += 1;
-            }
-            else if (validRegsAtScale.size() == 1)
+
+            // nothing happens if the per-scale vector is empty
+            if (validRegsAtScale.size() == 1)
             {
                 // only one valid regression at scale
                 validRegressions->push_back(validRegsAtScale.front());
-                currentReg += 1;
-                currentScale += 1;
-                validRegsAtScale.clear();
             }
-            else
+            else if (validRegsAtScale.size() > 1)
             {
+                // resolve conflicting regressions
                 findBestScales(validRegressions, &validRegsAtScale, intensities, degreesOfFreedom_cum);
-                validRegsAtScale.clear();
             }
-        }
+            // regression is not incremented because a toggle was triggered
+            currentScale += 1;
+            validRegsAtScale.clear();
+        } while (currentReg->coeffs.scale != 0);
 
         // there can be 0, 1 or more than one regressions in validRegressions
         mergeRegressionsOverScales(validRegressions, intensities);
