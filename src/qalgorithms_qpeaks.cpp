@@ -417,13 +417,14 @@ namespace qAlgorithms
         validRegsTmp.back().coeffs.scale = 0;
         RegressionGauss *currentReg = validRegsTmp.data();
 
-        do
+        while (currentReg->coeffs.scale != 0)
         {
+        repeat:
             if (currentReg->coeffs.scale == currentScale)
             {
                 validRegsAtScale.push_back(*currentReg);
                 currentReg += 1;
-                continue;
+                goto repeat;
             }
 
             // nothing happens if the per-scale vector is empty
@@ -440,7 +441,7 @@ namespace qAlgorithms
             // regression is not incremented because a toggle was triggered
             currentScale += 1;
             validRegsAtScale.clear();
-        } while (currentReg->coeffs.scale != 0);
+        }
 
         // there can be 0, 1 or more than one regressions in validRegressions
         mergeRegressionsOverScales(validRegressions, intensities);
@@ -934,10 +935,10 @@ namespace qAlgorithms
         }
         // at this point without height, i.e., to get the real uncertainty
         // multiply with height later. This is done to avoid exp function at this point
-        if (!isValidPeakHeight(mutateReg, valley_position, df_sum, apexToEdge))
-        {
-            return 11; // statistical insignificance of the height
-        }
+        // if (!isValidPeakHeight(mutateReg, valley_position, df_sum, apexToEdge))
+        // {
+        //     return 11; // statistical insignificance of the height
+        // }
 
         /*
           Area Filter:
