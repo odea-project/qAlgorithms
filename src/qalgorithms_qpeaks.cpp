@@ -1649,53 +1649,32 @@ namespace qAlgorithms
         const bool valley_right = mutateReg->coeffs.b3 >= 0;
         const bool apexLeft = mutateReg->coeffs.b1 < 0;
 
+        // the apex cannot be on the same side as the valley point
+        if (valley_left && apexLeft)
+            return 1;
+        if (valley_right && (!apexLeft))
+            return 1;
+
         // position maximum / minimum of b2 or b3. This is just the frst derivative of the peak half equation (b0 + b1 x + b23 x^2)
         double position_b2 = -mutateReg->coeffs.b1 / (2 * mutateReg->coeffs.b2);
         double position_b3 = -mutateReg->coeffs.b1 / (2 * mutateReg->coeffs.b3);
-        // scale +1 / -1: prevent apex position to be at the edge of the data
-        double scale_d = double(mutateReg->coeffs.scale);
-        bool farOut_b2 = position_b2 < -scale_d + 1;
-        bool farOut_b3 = position_b3 > scale_d - 1;
 
-        // range check: There is at most one point in the left or right half of the peak
-        if (valley_left && position_b2 > -2)
-            return 1;
-
-        if (valley_right && position_b3 < 2)
-            return 1;
-
-        if (apexLeft)
+        // the apex must be at least minscale different from the valley, if it exists
+        if (valley_left || valley_right)
         {
-            // if the apex is left, the left half cannot have a valley
-            if (valley_left)
+            if ((position_b3 - position_b2) < GLOBAL_MINSCALE)
                 return 2;
 
-            // the apex position is not at a distance of at least two to the edge of the scale
-            if (farOut_b2)
-                return 3;
-
-            // assert(mutateReg->apex_position == position_b2);
-            mutateReg->apex_position = position_b2;
-
-            if (valley_right)
-                *valley_position = position_b3;
+            *valley_position = apexLeft ? position_b3 : position_b2;
         }
-        else
-        {
-            // if the apex is right, the right half cannot have a valley
-            if (valley_right)
-                return 4;
+        mutateReg->apex_position = apexLeft ? position_b2 : position_b3;
 
-            // the apex position is not at a distance of at least two to the edge of the scale
-            if (farOut_b3)
-                return 5;
-
-            // assert(mutateReg->apex_position == position_b3);
-            mutateReg->apex_position = position_b3;
-
-            if (valley_left)
-                *valley_position = position_b2;
-        }
+        // if this difference from 0 (rounded down) is exceeded by the apex position,
+        // there are not enough points to validate the peak half left
+        // example: at a scale of 2, the apex position must always be smaller than 1
+        double maxApexDist = double(mutateReg->coeffs.scale - GLOBAL_MINSCALE + 1);
+        if (abs(mutateReg->apex_position) > maxApexDist)
+            return 3;
 
         return 0;
     }
