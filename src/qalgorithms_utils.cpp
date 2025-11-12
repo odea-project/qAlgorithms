@@ -8,8 +8,9 @@
 namespace qAlgorithms
 {
 
-    void beta_inc_2(double *a, double *b, double *x, double *y, double *w,
-                    double *w1)
+    void beta_inc_2(const double a, const double b,
+                    const double x, const double y,
+                    double *w, double *w1)
 
     //****************************************************************************80
     //
@@ -25,7 +26,7 @@ namespace qAlgorithms
     //
     //  Parameters:
     //
-    //    Input, double *A, *B, the parameters of the function.
+    //    Input, double a, *B, the parameters of the function.
     //    A and B should be nonnegative.
     //
     //    Input, double *X, *Y.  X is the argument of the
@@ -35,119 +36,130 @@ namespace qAlgorithms
     //    1-IX(A,B).
     //
     {
-        assert(*a > 0);
-        assert(*b > 0);
-        assert((0 < *x) && (*x < 1));
-        assert((0 < *y) && (*y < 1));
-        *w = *w1 = 0.0e0;
+        assert(a > 0);
+        assert(b > 0);
+        assert((0 < x) && (x <= 1));
+        assert((0 < y) && (y <= 1));
+        *w = *w1 = 0;
 
-        static double a0, b0, eps, lambda, t, x0, y0, z;
-        static int ierr1, n;
-        static double T2, T3, T4, T5;
-        //
         //  EPS IS A MACHINE DEPENDENT CONSTANT. EPS IS THE SMALLEST
         //  NUMBER FOR WHICH 1.0 + EPS .GT. 1.0
-        //
-        static int K1 = 1;
-        eps = dpmpar(&K1);
-
-        eps = max(eps, 1.e-15);
-        if (max(*a, *b) < 1.e-3 * eps)
+        double eps = 1.e-15;
+        if (max(a, b) < 1.e-3 * eps)
         {
             //
             //  PROCEDURE FOR A AND B .LT. 1.E-3*EPS
             //
-            *w = *b / (*a + *b);
-            *w1 = *a / (*a + *b);
+            *w = b / (a + b);
+            *w1 = a / (a + b);
             return;
         }
+
         bool ind = false;
-        a0 = *a;
-        b0 = *b;
-        x0 = *x;
-        y0 = *y;
-        if (min(a0, b0) > 1.0e0)
+        double a0 = a;
+        double b0 = b;
+        double x0 = x;
+        double y0 = y;
+        if (min(a0, b0) > 1)
         {
+            double lambda;
             //
             //  PROCEDURE FOR A0 .GT. 1 AND B0 .GT. 1
             //
-            if (*a > *b)
+            if (a > b)
             {
-                lambda = (*a + *b) * *y - *b;
+                lambda = (a + b) * y - b;
             }
             else
             {
-                lambda = *a - (*a + *b) * *x;
+                lambda = a - (a + b) * x;
             }
-            if (lambda < 0.0e0)
+            if (lambda < 0)
             {
                 ind = true;
-                a0 = *b;
-                b0 = *a;
-                x0 = *y;
-                y0 = *x;
+                a0 = b;
+                b0 = a;
+                x0 = y;
+                y0 = x;
                 lambda = fabs(lambda);
             }
-            if (b0 < 40.0e0 && b0 * x0 <= 0.7e0)
+
+            if (b0 < 40)
             {
-                *w = beta_pser(&a0, &b0, &x0, &eps);
-                *w1 = 0.5e0 + (0.5e0 - *w);
-                if (ind)
+                if (b0 * x0 <= 0.7)
                 {
-                    t = *w;
-                    *w = *w1;
-                    *w1 = t;
+                    *w = beta_pser(&a0, &b0, &x0, &eps);
+                    *w1 = 1 - *w;
+                    goto flipIfInd;
                 }
+
+                int n = (int)b0;
+                b0 -= (double)n; // b0 is always < 1
+                if (b0 == 0)
+                {
+                    n -= 1;
+                    b0 = 1;
+                }
+
+                *w = beta_up(&b0, &a0, &y0, &x0, &n, &eps);
+                if (x0 <= 0.7)
+                {
+                    *w = *w + beta_pser(&a0, &b0, &x0, &eps);
+                    *w1 = 1 - *w;
+                    goto flipIfInd;
+                }
+                if (a0 > 15.0)
+                {
+                    double T4 = 15.0 * eps;
+                    int ierr1;
+                    beta_grat(&a0, &b0, &x0, &y0, w, &T4, &ierr1);
+                    *w1 = 1 - *w;
+                    goto flipIfInd;
+                }
+                n = 20;
+                *w = *w + beta_up(&a0, &b0, &x0, &y0, &n, &eps);
+                // a0 = a0 + (double)n;
                 return;
-            }
-            if (b0 < 40.0e0)
-            {
-                goto S160;
             }
             if (a0 > b0)
             {
                 if ((lambda > 0.03 * b0) || (b0 <= 100))
                 {
-                    goto S130;
+                    double T2 = 15.0 * eps;
+                    *w = beta_frac(&a0, &b0, &x0, &y0, &lambda, &T2);
                 }
-
-                T5 = 100.0e0 * eps;
-                *w = beta_asym(&a0, &b0, &lambda, &T5);
-                *w1 = 0.5e0 + (0.5e0 - *w);
-                if (ind)
+                else
                 {
-                    t = *w;
-                    *w = *w1;
-                    *w1 = t;
+                    double T5 = 100 * eps;
+                    *w = beta_asym(&a0, &b0, &lambda, &T5);
                 }
-                return;
             }
-            if ((a0 <= 100) || (lambda > 0.03e0 * a0))
+            else
             {
-                goto S130;
+                if ((a0 <= 100) || (lambda > 0.03 * a0))
+                {
+                    double T2 = 15.0 * eps;
+                    *w = beta_frac(&a0, &b0, &x0, &y0, &lambda, &T2);
+                }
+                else
+                {
+                    double T5 = 100 * eps;
+                    *w = beta_asym(&a0, &b0, &lambda, &T5);
+                }
             }
-
-            T5 = 100.0e0 * eps;
-            *w = beta_asym(&a0, &b0, &lambda, &T5);
-            *w1 = 0.5e0 + (0.5e0 - *w);
-            if (ind)
-            {
-                t = *w;
-                *w = *w1;
-                *w1 = t;
-            }
-            return;
+            *w1 = 1 - *w;
+            goto flipIfInd;
         }
         //
         //  PROCEDURE FOR A0 .LE. 1 OR B0 .LE. 1
         //
-        if (*x > 0.5e0)
+        if (x > 0.5)
         {
             ind = true;
-            a0 = *b;
-            b0 = *a;
-            x0 = *y;
-            y0 = *x;
+            a0 = b;
+            b0 = a;
+            x0 = y;
+            y0 = x;
         }
         if (b0 < min(eps, eps * a0))
         {
@@ -155,26 +167,14 @@ namespace qAlgorithms
             //  EVALUATION OF THE APPROPRIATE ALGORITHM
             //
             *w = fpser(&a0, &b0, &x0, &eps);
-            *w1 = 0.5e0 + (0.5e0 - *w);
-            if (ind)
-            {
-                t = *w;
-                *w = *w1;
-                *w1 = t;
-            }
-            return;
+            *w1 = 1 - *w;
+            goto flipIfInd;
         }
         if (a0 < min(eps, eps * b0) && b0 * x0 <= 1)
         {
             *w1 = apser(&a0, &b0, &x0, &eps);
-            *w = 0.5e0 + (0.5e0 - *w1);
-            if (ind)
-            {
-                t = *w;
-                *w = *w1;
-                *w1 = t;
-            }
-            return;
+            *w = 1 - *w1;
+            goto flipIfInd;
         }
         if (max(a0, b0) <= 1)
         {
@@ -182,138 +182,55 @@ namespace qAlgorithms
             {
                 *w = beta_pser(&a0, &b0, &x0, &eps);
                 *w1 = 1 - *w;
-                if (ind)
-                {
-                    t = *w;
-                    *w = *w1;
-                    *w1 = t;
-                }
-                return;
+                goto flipIfInd;
             }
-            if (x0 >= 0.3e0)
+            if (x0 >= 0.3)
             {
                 *w1 = beta_pser(&b0, &a0, &y0, &eps);
-                *w = 0.5e0 + (0.5e0 - *w1);
-                if (ind)
-                {
-                    t = *w;
-                    *w = *w1;
-                    *w1 = t;
-                }
-                return;
+                *w = 1 - *w1;
+                goto flipIfInd;
             }
-            n = 20;
-            goto S140;
+        }
+        else
+        {
+            bool use_beta_pser = b0 <= 1;
+            use_beta_pser = use_beta_pser || ((pow(x0 * b0, a0) <= 0.7) && (x0 < 0.1));
+            if (use_beta_pser)
+            {
+                *w = beta_pser(&a0, &b0, &x0, &eps);
+                *w1 = 1 - *w;
+                goto flipIfInd;
+            }
+
+            if (x0 >= 0.3)
+            {
+                *w1 = beta_pser(&b0, &a0, &y0, &eps);
+                *w = 1 - *w1;
+                goto flipIfInd;
+            }
+            if (b0 > 15.0)
+            {
+                double T3 = 15.0 * eps;
+                int ierr1;
+                beta_grat(&b0, &a0, &y0, &x0, w1, &T3, &ierr1);
+                *w = 1 - *w1;
+                goto flipIfInd;
+            }
+        }
+        {
+            int m = 20;
+            *w1 = beta_up(&b0, &a0, &y0, &x0, &m, &eps);
+            // b0 = b0 + (double)m;
         }
 
-        if (b0 <= 1.0e0)
-        {
-            *w = beta_pser(&a0, &b0, &x0, &eps);
-            *w1 = 0.5e0 + (0.5e0 - *w);
-            if (ind)
-            {
-                t = *w;
-                *w = *w1;
-                *w1 = t;
-            }
-            return;
-        }
-        if (x0 >= 0.3e0)
-        {
-            *w1 = beta_pser(&b0, &a0, &y0, &eps);
-            *w = 0.5e0 + (0.5e0 - *w1);
-            if (ind)
-            {
-                t = *w;
-                *w = *w1;
-                *w1 = t;
-            }
-            return;
-        }
-
-        if ((pow(x0 * b0, a0) <= 0.7e0) && x0 < 0.1)
-        {
-            *w = beta_pser(&a0, &b0, &x0, &eps);
-            *w1 = 0.5e0 + (0.5e0 - *w);
-            if (ind)
-            {
-                t = *w;
-                *w = *w1;
-                *w1 = t;
-            }
-            return;
-        }
-        if (b0 > 15.0e0)
-        {
-            T3 = 15.0e0 * eps;
-            beta_grat(&b0, &a0, &y0, &x0, w1, &T3, &ierr1);
-            *w = 0.5e0 + (0.5e0 - *w1);
-            if (ind)
-            {
-                t = *w;
-                *w = *w1;
-                *w1 = t;
-            }
-            return;
-        }
-        n = 20;
-        goto S140;
-
-    S130:
-        T2 = 15.0e0 * eps;
-        *w = beta_frac(&a0, &b0, &x0, &y0, &lambda, &T2);
-        *w1 = 0.5e0 + (0.5e0 - *w);
+    flipIfInd:
         if (ind)
         {
-            t = *w;
+            double t = *w;
             *w = *w1;
             *w1 = t;
         }
         return;
-    S140:
-        *w1 = beta_up(&b0, &a0, &y0, &x0, &n, &eps);
-        b0 = b0 + (double)n;
-
-    S160:
-        n = (int)b0;
-        b0 -= (double)n;
-        if (b0 == 0.0e0)
-        {
-            n -= 1;
-            b0 = 1.0e0;
-        }
-        *w = beta_up(&b0, &a0, &y0, &x0, &n, &eps);
-        if (x0 <= 0.7e0)
-        {
-            *w = *w + beta_pser(&a0, &b0, &x0, &eps);
-            *w1 = 0.5e0 + (0.5e0 - *w);
-            if (ind)
-            {
-                t = *w;
-                *w = *w1;
-                *w1 = t;
-            }
-            return;
-        }
-        if (a0 > 15.0e0)
-        {
-            T4 = 15.0e0 * eps;
-            beta_grat(&a0, &b0, &x0, &y0, w, &T4, &ierr1);
-            *w1 = 0.5e0 + (0.5e0 - *w);
-            if (ind)
-            {
-                t = *w;
-                *w = *w1;
-                *w1 = t;
-            }
-            return;
-        }
-        n = 20;
-        *w = *w + beta_up(&a0, &b0, &x0, &y0, &n, &eps);
-        a0 = a0 + (double)n;
-        return;
-
-    flipIfInd:
     }
 
     void cumf_2(const double f, const double dfn, const double dfd,
@@ -345,7 +262,12 @@ namespace qAlgorithms
     //    the complementary F CDF.
     //
     {
-        assert(f > 0);
+        if (f <= 0)
+        {
+            *cum = 0;
+            *ccum = 1;
+            return;
+        }
 
         //
         //     XX is such that the incomplete beta with parameters
@@ -377,19 +299,19 @@ namespace qAlgorithms
         double xxa = xx;
         double yya = yy;
 
-        double ccuma = 0;
-        double cuma = 0;
+        double ccuma = *ccum;
+        double cuma = *cum;
 
         beta_inc(&T1, &T2, &xx, &yy, ccum, cum, &ierr);
 
-        beta_inc_2(&T1a, &T2a, &xxa, &yya, &ccuma, &cuma);
+        beta_inc_2(T1a, T2a, xxa, yya, &ccuma, &cuma);
 
         assert(T1 == T1a);
         assert(T2 == T2a);
         assert(xx == xxa);
         assert(yy == yya);
         assert(*ccum == ccuma);
-        assert(*cum == cuma);
+        assert(float(*cum) == float(cuma));
 
         return;
     }
@@ -418,23 +340,32 @@ namespace qAlgorithms
             static double T3 = 1.0e300;
             static double T6 = (1.0e-50);
             static double T7 = (1.0e-8);
-            static double K2 = 0.0e0;
-            static double K4 = 0.5e0;
-            static double K5 = 5.0e0;
+            static double K2 = 0;
+            static double K4 = 0.5;
+            static double K5 = 5;
             dstinv(&K2, &T3, &K4, &K4, &K5, &T6, &T7);
         }
 
         static double fx, cum, ccum;
         static unsigned long qhi, qleft;
         int status = 0;
-        *f = 5.0e0;
+        *f = 5;
         dinvr(&status, f, &fx, &qleft, &qhi);
 
         double p = 1 - alpha;
 
         while (status == 1)
         {
+            double f2 = *f;
+            double cum2 = cum;
+            double ccum2 = ccum;
+
             cumf(f, &dfn, &dfd, &cum, &ccum);
+
+            cumf_2(f2, dfn, dfd, &cum2, &ccum2);
+            assert(f2 == *f);
+            assert(ccum2 == ccum);
+            assert(cum2 == cum);
 
             // select minimum of p or q
             fx = p <= alpha ? cum - p : ccum - alpha;
